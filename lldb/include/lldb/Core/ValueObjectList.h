@@ -50,20 +50,20 @@ public:
     lldb::ValueObjectSP
     FindValueObjectByPointer (ValueObject *valobj);
 
-    uint32_t
+    size_t
     GetSize () const;
     
     void
-    Resize (uint32_t size);
+    Resize (size_t size);
 
     lldb::ValueObjectSP
-    GetValueObjectAtIndex (uint32_t idx);
+    GetValueObjectAtIndex (size_t idx);
 
     lldb::ValueObjectSP
-    RemoveValueObjectAtIndex (uint32_t idx);
+    RemoveValueObjectAtIndex (size_t idx);
     
     void
-    SetValueObjectAtIndex (uint32_t idx, 
+    SetValueObjectAtIndex (size_t idx, 
                            const lldb::ValueObjectSP &valobj_sp);
     
     lldb::ValueObjectSP

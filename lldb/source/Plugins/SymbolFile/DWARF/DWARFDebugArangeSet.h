@@ -41,12 +41,12 @@ public:
         void        SetHeader(uint16_t version, uint32_t cu_offset, uint8_t addr_size, uint8_t seg_size);
         void        AddDescriptor(const DWARFDebugArangeSet::Descriptor& range);
         void        Compact();
-        bool        Extract(const lldb_private::DataExtractor &data, uint32_t* offset_ptr);
+        bool        Extract(const lldb_private::DataExtractor &data, lldb::offset_t *offset_ptr);
         void        Dump(lldb_private::Stream *s) const;
         dw_offset_t GetCompileUnitDIEOffset() const { return m_header.cu_offset; }
         dw_offset_t GetOffsetOfNextEntry() const;
         dw_offset_t FindAddress(dw_addr_t address) const;
-        uint32_t    NumDescriptors() const { return m_arange_descriptors.size(); }
+        size_t      NumDescriptors() const { return m_arange_descriptors.size(); }
         const Header&       GetHeader() const { return m_header; }
         const Descriptor*   GetDescriptor(uint32_t i) const
         {

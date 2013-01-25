@@ -88,8 +88,8 @@ public:
 
     virtual size_t
     Decode (const Disassembler &disassembler, 
-            const DataExtractor& data, 
-            uint32_t data_offset) = 0;
+            const DataExtractor& data,
+            lldb::offset_t data_offset) = 0;
             
     virtual void
     SetDescription (const char *) {}  // May be overridden in sub-classes that have descriptions.
@@ -166,7 +166,7 @@ public:
     GetMaxOpcocdeByteSize () const;
 
     lldb::InstructionSP
-    GetInstructionAtIndex (uint32_t idx) const;
+    GetInstructionAtIndex (size_t idx) const;
     
     uint32_t
     GetIndexOfNextBranchInstruction(uint32_t start) const;
@@ -218,7 +218,7 @@ public:
     virtual size_t
     Decode (const Disassembler &disassembler,
             const DataExtractor &data,
-            uint32_t data_offset);
+            lldb::offset_t data_offset);
             
     void
     SetOpcode (size_t opcode_size, void *opcode_data);
@@ -350,8 +350,8 @@ public:
     virtual size_t
     DecodeInstructions (const Address &base_addr,
                         const DataExtractor& data,
-                        uint32_t data_offset,
-                        uint32_t num_instructions,
+                        lldb::offset_t data_offset,
+                        size_t num_instructions,
                         bool append) = 0;
     
     InstructionList &

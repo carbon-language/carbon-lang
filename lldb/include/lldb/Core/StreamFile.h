@@ -57,7 +57,7 @@ public:
     virtual void
     Flush ();
 
-    virtual int
+    virtual size_t
     Write (const void *s, size_t length);
 
 protected:

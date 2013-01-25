@@ -340,7 +340,7 @@ public:
         return false;
     }
     
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor)
     {
         return 0;

@@ -205,12 +205,12 @@ protected:
         }
         else
         {
-            uint32_t num_args = command.GetArgumentCount();
+            const size_t num_args = command.GetArgumentCount();
             Process *process = m_exe_ctx.GetProcessPtr();
             Mutex::Locker locker (process->GetThreadList().GetMutex());
             std::vector<ThreadSP> thread_sps;
 
-            for (uint32_t i = 0; i < num_args; i++)
+            for (size_t i = 0; i < num_args; i++)
             {
                 bool success;
                 

@@ -42,10 +42,10 @@ public:
     Dump(Stream *s, bool show_context) const;
 
     lldb::VariableSP
-    GetVariableAtIndex(uint32_t idx) const;
+    GetVariableAtIndex(size_t idx) const;
 
     lldb::VariableSP
-    RemoveVariableAtIndex (uint32_t idx);
+    RemoveVariableAtIndex (size_t idx);
     
     lldb::VariableSP
     FindVariable (const ConstString& name);

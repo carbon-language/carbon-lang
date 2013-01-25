@@ -808,7 +808,7 @@ ClangASTType::DumpValue
             const clang::EnumDecl *enum_decl = enum_type->getDecl();
             assert(enum_decl);
             clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
-            uint32_t offset = data_byte_offset;
+            lldb::offset_t offset = data_byte_offset;
             const int64_t enum_value = data.GetMaxU64Bitfield(&offset, data_byte_size, bitfield_bit_size, bitfield_bit_offset);
             for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
             {
@@ -1029,7 +1029,7 @@ ClangASTType::DumpTypeValue (clang::ASTContext *ast_context,
                 const clang::EnumDecl *enum_decl = enum_type->getDecl();
                 assert(enum_decl);
                 clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
-                uint32_t offset = byte_offset;
+                lldb::offset_t offset = byte_offset;
                 const int64_t enum_value = data.GetMaxU64Bitfield (&offset, byte_size, bitfield_bit_size, bitfield_bit_offset);
                 for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
                 {
@@ -1160,7 +1160,7 @@ ClangASTType::DumpSummary
             Process *process = exe_ctx->GetProcessPtr();
             if (process)
             {
-                uint32_t offset = data_byte_offset;
+                lldb::offset_t offset = data_byte_offset;
                 lldb::addr_t pointer_addresss = data.GetMaxU64(&offset, data_byte_size);
                 std::vector<uint8_t> buf;
                 if (length > 0)
@@ -1436,7 +1436,7 @@ ClangASTType::GetValueAsScalar
 
         uint64_t bit_width = ast_context->getTypeSize(qual_type);
         uint32_t byte_size = (bit_width + 7 ) / 8;
-        uint32_t offset = data_byte_offset;
+        lldb::offset_t offset = data_byte_offset;
         switch (encoding)
         {
         case lldb::eEncodingInvalid:

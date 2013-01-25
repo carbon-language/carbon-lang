@@ -306,8 +306,9 @@ struct DWARFMappedHash
 //        void
 //        Dump (std::ostream* ostrm_ptr);        
         
-        uint32_t
-        Read (const lldb_private::DataExtractor &data, uint32_t offset)
+        lldb::offset_t
+        Read (const lldb_private::DataExtractor &data,
+              lldb::offset_t offset)
         {
             ClearAtoms ();
             
@@ -379,8 +380,8 @@ struct DWARFMappedHash
         //        virtual void
         //        Dump (std::ostream* ostrm_ptr);        
         //        
-        virtual uint32_t
-        Read (lldb_private::DataExtractor &data, uint32_t offset)
+        virtual lldb::offset_t
+        Read (lldb_private::DataExtractor &data, lldb::offset_t offset)
         {
             offset = MappedHash::Header<Prologue>::Read (data, offset);
             if (offset != UINT32_MAX)
@@ -392,7 +393,7 @@ struct DWARFMappedHash
         
         bool
         Read (const lldb_private::DataExtractor &data, 
-              uint32_t *offset_ptr, 
+              lldb::offset_t *offset_ptr, 
               DIEInfo &hash_data) const
         {
             const size_t num_atoms = header_data.atoms.size();
@@ -409,14 +410,14 @@ struct DWARFMappedHash
                 switch (header_data.atoms[i].type)
                 {
                     case eAtomTypeDIEOffset:    // DIE offset, check form for encoding
-                        hash_data.offset = form_value.Reference (header_data.die_base_offset);
+                        hash_data.offset = (dw_offset_t)form_value.Reference (header_data.die_base_offset);
                         break;
 
                     case eAtomTypeTag:          // DW_TAG value for the DIE
-                        hash_data.tag = form_value.Unsigned ();
+                        hash_data.tag = (dw_tag_t)form_value.Unsigned ();
                         
                     case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
-                        hash_data.type_flags = form_value.Unsigned ();
+                        hash_data.type_flags = (uint32_t)form_value.Unsigned ();
                         break;
                     default:
                         return false;
@@ -559,7 +560,7 @@ struct DWARFMappedHash
         
         virtual Result
         GetHashDataForName (const char *name,
-                            uint32_t* hash_data_offset_ptr, 
+                            lldb::offset_t* hash_data_offset_ptr, 
                             Pair &pair) const
         {
             pair.key = m_data.GetU32 (hash_data_offset_ptr);
@@ -580,7 +581,7 @@ struct DWARFMappedHash
             }
 
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const uint32_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
+            const size_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
                 // We have at least one HashData entry, and we have enough
@@ -637,7 +638,7 @@ struct DWARFMappedHash
 
         virtual Result
         AppendHashDataForRegularExpression (const lldb_private::RegularExpression& regex,
-                                            uint32_t* hash_data_offset_ptr, 
+                                            lldb::offset_t* hash_data_offset_ptr, 
                                             Pair &pair) const
         {
             pair.key = m_data.GetU32 (hash_data_offset_ptr);
@@ -653,7 +654,7 @@ struct DWARFMappedHash
                 return eResultError;
             
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const uint32_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
+            const size_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
                 const bool match = regex.Execute(strp_cstr);
@@ -712,10 +713,10 @@ struct DWARFMappedHash
             Pair pair;
             for (uint32_t offset_idx=0; offset_idx<hash_count; ++offset_idx)
             {
-                uint32_t hash_data_offset = GetHashDataOffset (offset_idx);
+                lldb::offset_t hash_data_offset = GetHashDataOffset (offset_idx);
                 while (hash_data_offset != UINT32_MAX)
                 {
-                    const uint32_t prev_hash_data_offset = hash_data_offset;
+                    const lldb::offset_t prev_hash_data_offset = hash_data_offset;
                     Result hash_result = AppendHashDataForRegularExpression (regex, &hash_data_offset, pair);
                     if (prev_hash_data_offset == hash_data_offset)
                         break;
@@ -749,7 +750,7 @@ struct DWARFMappedHash
             for (uint32_t offset_idx=0; offset_idx<hash_count; ++offset_idx)
             {
                 bool done = false;
-                uint32_t hash_data_offset = GetHashDataOffset (offset_idx);
+                lldb::offset_t hash_data_offset = GetHashDataOffset (offset_idx);
                 while (!done && hash_data_offset != UINT32_MAX)
                 {
                     KeyType key = m_data.GetU32 (&hash_data_offset);

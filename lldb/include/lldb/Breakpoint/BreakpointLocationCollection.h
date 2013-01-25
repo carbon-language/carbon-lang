@@ -101,7 +101,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    GetByIndex (uint32_t i);
+    GetByIndex (size_t i);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint location with index
@@ -115,7 +115,7 @@ public:
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointLocationSP
-    GetByIndex (uint32_t i) const;
+    GetByIndex (size_t i) const;
 
     //------------------------------------------------------------------
     /// Returns the number of elements in this breakpoint location list.

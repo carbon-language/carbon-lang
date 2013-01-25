@@ -419,7 +419,7 @@ protected:
                 {
                     if (m_option_variable.use_regex)
                     {
-                        const uint32_t regex_start_index = regex_var_list.GetSize();
+                        const size_t regex_start_index = regex_var_list.GetSize();
                         RegularExpression regex (name_cstr);
                         if (regex.Compile(name_cstr))
                         {
@@ -429,7 +429,7 @@ protected:
                                                                                                      num_matches);
                             if (num_new_regex_vars > 0)
                             {
-                                for (uint32_t regex_idx = regex_start_index, end_index = regex_var_list.GetSize(); 
+                                for (size_t regex_idx = regex_start_index, end_index = regex_var_list.GetSize();
                                      regex_idx < end_index;
                                      ++regex_idx)
                                 {
@@ -512,10 +512,10 @@ protected:
             }
             else // No command arg specified.  Use variable_list, instead.
             {
-                const uint32_t num_variables = variable_list->GetSize();
+                const size_t num_variables = variable_list->GetSize();
                 if (num_variables > 0)
                 {
-                    for (uint32_t i=0; i<num_variables; i++)
+                    for (size_t i=0; i<num_variables; i++)
                     {
                         var_sp = variable_list->GetVariableAtIndex(i);
                         bool dump_variable = true;

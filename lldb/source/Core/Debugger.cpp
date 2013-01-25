@@ -999,7 +999,7 @@ Debugger::GetAsyncErrorStream ()
                                                CommandInterpreter::eBroadcastBitAsynchronousErrorData));
 }    
 
-uint32_t
+size_t
 Debugger::GetNumDebuggers()
 {
     if (g_shared_debugger_refcount > 0)
@@ -1011,7 +1011,7 @@ Debugger::GetNumDebuggers()
 }
 
 lldb::DebuggerSP
-Debugger::GetDebuggerAtIndex (uint32_t index)
+Debugger::GetDebuggerAtIndex (size_t index)
 {
     DebuggerSP debugger_sp;
     
@@ -1228,7 +1228,7 @@ ScanBracketedRange (const char* var_name_begin,
         {
             if (log)
                 log->Printf("[ScanBracketedRange] swapping indices");
-            int temp = *index_lower;
+            int64_t temp = *index_lower;
             *index_lower = *index_higher;
             *index_higher = temp;
         }
@@ -1240,7 +1240,7 @@ ScanBracketedRange (const char* var_name_begin,
 
 static ValueObjectSP
 ExpandIndexedExpression (ValueObject* valobj,
-                         uint32_t index,
+                         size_t index,
                          StackFrame* frame,
                          bool deref_pointer)
 {
@@ -2539,8 +2539,7 @@ Debugger::FormatPrompt
                     unsigned long octal_value = ::strtoul (oct_str, NULL, 8);
                     if (octal_value <= UINT8_MAX)
                     {
-                        char octal_char = octal_value;
-                        s.Write (&octal_char, 1);
+                        s.PutChar((char)octal_value);
                     }
                 }
                 break;
@@ -2563,7 +2562,7 @@ Debugger::FormatPrompt
 
                     unsigned long hex_value = strtoul (hex_str, NULL, 16);                    
                     if (hex_value <= UINT8_MAX)
-                        s.PutChar (hex_value);
+                        s.PutChar ((char)hex_value);
                 }
                 else
                 {

@@ -38,7 +38,7 @@ Symtab::~Symtab()
 }
 
 void
-Symtab::Reserve(uint32_t count)
+Symtab::Reserve(size_t count)
 {
     // Clients should grab the mutex from this symbol table and lock it manually
     // when calling this function to avoid performance issues.
@@ -46,7 +46,7 @@ Symtab::Reserve(uint32_t count)
 }
 
 Symbol *
-Symtab::Resize(uint32_t count)
+Symtab::Resize(size_t count)
 {
     // Clients should grab the mutex from this symbol table and lock it manually
     // when calling this function to avoid performance issues.
@@ -150,7 +150,7 @@ Symtab::Dump (Stream *s, Target *target, SortOrder sort_order)
             std::vector<uint32_t>::const_iterator end = m_addr_indexes.end();
             for (pos = m_addr_indexes.begin(); pos != end; ++pos)
             {
-                uint32_t idx = *pos;
+                size_t idx = *pos;
                 if (idx < num_symbols)
                 {
                     s->Indent();
@@ -180,7 +180,7 @@ Symtab::Dump(Stream *s, Target *target, std::vector<uint32_t>& indexes) const
         DumpSymbolHeader (s);
         for (pos = indexes.begin(); pos != end; ++pos)
         {
-            uint32_t idx = *pos;
+            size_t idx = *pos;
             if (idx < num_symbols)
             {
                 s->Indent();
@@ -230,7 +230,7 @@ Symtab::FindSymbolByID (lldb::user_id_t symbol_uid) const
 
 
 Symbol *
-Symtab::SymbolAtIndex(uint32_t idx)
+Symtab::SymbolAtIndex(size_t idx)
 {
     // Clients should grab the mutex from this symbol table and lock it manually
     // when calling this function to avoid performance issues.
@@ -241,7 +241,7 @@ Symtab::SymbolAtIndex(uint32_t idx)
 
 
 const Symbol *
-Symtab::SymbolAtIndex(uint32_t idx) const
+Symtab::SymbolAtIndex(size_t idx) const
 {
     // Clients should grab the mutex from this symbol table and lock it manually
     // when calling this function to avoid performance issues.
@@ -657,7 +657,7 @@ Symtab::FindSymbolWithType (SymbolType symbol_type, Debug symbol_debug_type, Vis
     Mutex::Locker locker (m_mutex);
 
     const size_t count = m_symbols.size();
-    for (uint32_t idx = start_idx; idx < count; ++idx)
+    for (size_t idx = start_idx; idx < count; ++idx)
     {
         if (symbol_type == eSymbolTypeAny || m_symbols[idx].GetType() == symbol_type)
         {

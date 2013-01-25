@@ -1044,7 +1044,7 @@ SymbolContextList::Dump(Stream *s, Target *target) const
 }
 
 bool
-SymbolContextList::GetContextAtIndex(uint32_t idx, SymbolContext& sc) const
+SymbolContextList::GetContextAtIndex(size_t idx, SymbolContext& sc) const
 {
     if (idx < m_symbol_contexts.size())
     {
@@ -1055,7 +1055,7 @@ SymbolContextList::GetContextAtIndex(uint32_t idx, SymbolContext& sc) const
 }
 
 bool
-SymbolContextList::RemoveContextAtIndex (uint32_t idx)
+SymbolContextList::RemoveContextAtIndex (size_t idx)
 {
     if (idx < m_symbol_contexts.size())
     {
@@ -1075,8 +1075,8 @@ uint32_t
 SymbolContextList::NumLineEntriesWithLine (uint32_t line) const
 {
     uint32_t match_count = 0;
-    const uint32_t size = m_symbol_contexts.size();
-    for (uint32_t idx = 0; idx<size; ++idx)
+    const size_t size = m_symbol_contexts.size();
+    for (size_t idx = 0; idx<size; ++idx)
     {
         if (m_symbol_contexts[idx].line_entry.line == line)
             ++match_count;
@@ -1089,8 +1089,8 @@ SymbolContextList::GetDescription(Stream *s,
                                   lldb::DescriptionLevel level, 
                                   Target *target) const
 {
-    const uint32_t size = m_symbol_contexts.size();
-    for (uint32_t idx = 0; idx<size; ++idx)
+    const size_t size = m_symbol_contexts.size();
+    for (size_t idx = 0; idx<size; ++idx)
         m_symbol_contexts[idx].GetDescription (s, level, target);
 }
 

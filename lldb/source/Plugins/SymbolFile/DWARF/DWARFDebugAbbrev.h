@@ -43,7 +43,7 @@ public:
     void Clear();
     dw_offset_t GetOffset() const { return m_offset; }
     void Dump(lldb_private::Stream *s) const;
-    bool Extract(const lldb_private::DataExtractor& data, uint32_t* offset_ptr);
+    bool Extract(const lldb_private::DataExtractor& data, lldb::offset_t *offset_ptr);
     //void Encode(BinaryStreamBuf& debug_abbrev_buf) const;
     dw_uleb128_t AppendAbbrevDeclSequential(const DWARFAbbreviationDeclaration& abbrevDecl);
 

@@ -296,14 +296,14 @@ ModuleList::ClearImpl (bool use_notifier)
 }
 
 Module*
-ModuleList::GetModulePointerAtIndex (uint32_t idx) const
+ModuleList::GetModulePointerAtIndex (size_t idx) const
 {
     Mutex::Locker locker(m_modules_mutex);
     return GetModulePointerAtIndexUnlocked(idx);
 }
 
 Module*
-ModuleList::GetModulePointerAtIndexUnlocked (uint32_t idx) const
+ModuleList::GetModulePointerAtIndexUnlocked (size_t idx) const
 {
     if (idx < m_modules.size())
         return m_modules[idx].get();
@@ -311,14 +311,14 @@ ModuleList::GetModulePointerAtIndexUnlocked (uint32_t idx) const
 }
 
 ModuleSP
-ModuleList::GetModuleAtIndex(uint32_t idx) const
+ModuleList::GetModuleAtIndex(size_t idx) const
 {
     Mutex::Locker locker(m_modules_mutex);
     return GetModuleAtIndexUnlocked(idx);
 }
 
 ModuleSP
-ModuleList::GetModuleAtIndexUnlocked(uint32_t idx) const
+ModuleList::GetModuleAtIndexUnlocked(size_t idx) const
 {
     ModuleSP module_sp;
     if (idx < m_modules.size())
@@ -326,7 +326,7 @@ ModuleList::GetModuleAtIndexUnlocked(uint32_t idx) const
     return module_sp;
 }
 
-uint32_t
+size_t
 ModuleList::FindFunctions (const ConstString &name, 
                            uint32_t name_type_mask, 
                            bool include_symbols,
@@ -347,7 +347,7 @@ ModuleList::FindFunctions (const ConstString &name,
     return sc_list.GetSize();
 }
 
-uint32_t
+size_t
 ModuleList::FindCompileUnits (const FileSpec &path, 
                               bool append, 
                               SymbolContextList &sc_list) const
@@ -365,10 +365,10 @@ ModuleList::FindCompileUnits (const FileSpec &path,
     return sc_list.GetSize();
 }
 
-uint32_t
+size_t
 ModuleList::FindGlobalVariables (const ConstString &name, 
                                  bool append, 
-                                 uint32_t max_matches, 
+                                 size_t max_matches,
                                  VariableList& variable_list) const
 {
     size_t initial_size = variable_list.GetSize();
@@ -382,10 +382,10 @@ ModuleList::FindGlobalVariables (const ConstString &name,
 }
 
 
-uint32_t
+size_t
 ModuleList::FindGlobalVariables (const RegularExpression& regex, 
                                  bool append, 
-                                 uint32_t max_matches, 
+                                 size_t max_matches,
                                  VariableList& variable_list) const
 {
     size_t initial_size = variable_list.GetSize();
@@ -495,12 +495,12 @@ ModuleList::FindModule (const UUID &uuid) const
 }
 
 
-uint32_t
-ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, uint32_t max_matches, TypeList& types) const
+size_t
+ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool name_is_fully_qualified, size_t max_matches, TypeList& types) const
 {
     Mutex::Locker locker(m_modules_mutex);
 
-    uint32_t total_matches = 0;
+    size_t total_matches = 0;
     collection::const_iterator pos, end = m_modules.end();
     if (sc.module_sp)
     {
@@ -689,7 +689,7 @@ ModuleList::ResolveSymbolContextsForFileSpec (const FileSpec &file_spec, uint32_
     return sc_list.GetSize();
 }
 
-uint32_t
+size_t
 ModuleList::GetIndexForModule (const Module *module) const
 {
     if (module)
@@ -737,7 +737,7 @@ ModuleList::FindSharedModules (const ModuleSpec &module_spec, ModuleList &matchi
     return GetSharedModuleList ().FindModules (module_spec, matching_module_list);
 }
 
-uint32_t
+size_t
 ModuleList::RemoveOrphanSharedModules (bool mandatory)
 {
     return GetSharedModuleList ().RemoveOrphans(mandatory);
@@ -781,7 +781,7 @@ ModuleList::GetSharedModule
         const size_t num_matching_modules = shared_module_list.FindModules (module_spec, matching_module_list);
         if (num_matching_modules > 0)
         {
-            for (uint32_t module_idx = 0; module_idx < num_matching_modules; ++module_idx)
+            for (size_t module_idx = 0; module_idx < num_matching_modules; ++module_idx)
             {
                 module_sp = matching_module_list.GetModuleAtIndex(module_idx);
                 

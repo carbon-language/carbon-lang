@@ -27,7 +27,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, size_t size, const ClangASTType *type, bool hardware) :
+Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, uint32_t size, const ClangASTType *type, bool hardware) :
     StoppointLocation (0, addr, size, hardware),
     m_target(target),
     m_enabled(false),

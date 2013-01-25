@@ -55,7 +55,7 @@ StreamCallback::Flush ()
     out_stream.Clear();
 }
 
-int
+size_t
 StreamCallback::Write (const void *s, size_t length)
 {
     lldb::tid_t cur_tid = Host::GetCurrentThreadID();

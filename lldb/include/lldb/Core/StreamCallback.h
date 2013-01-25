@@ -29,7 +29,7 @@ public:
     virtual void
     Flush ();
     
-    virtual int
+    virtual size_t
     Write (const void *src, size_t src_len);
     
     

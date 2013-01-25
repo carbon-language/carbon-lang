@@ -15,7 +15,7 @@
 
 using namespace lldb_private;
 
-static int print_dwarf_exp_op (Stream &s, const DataExtractor& data, uint32_t* offset_ptr, int address_size, int dwarf_ref_size);
+static int print_dwarf_exp_op (Stream &s, const DataExtractor& data, lldb::offset_t *offset_ptr, int address_size, int dwarf_ref_size);
 
 int
 print_dwarf_expression (Stream &s,
@@ -25,7 +25,7 @@ print_dwarf_expression (Stream &s,
                         bool location_expression)
 {
     int op_count = 0;
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     while (data.ValidOffset(offset))
     {
         if (location_expression && op_count > 0)
@@ -48,7 +48,7 @@ print_dwarf_expression (Stream &s,
 static int
 print_dwarf_exp_op (Stream &s,
                     const DataExtractor& data,
-                    uint32_t* offset_ptr,
+                    lldb::offset_t *offset_ptr,
                     int address_size,
                     int dwarf_ref_size)
 {

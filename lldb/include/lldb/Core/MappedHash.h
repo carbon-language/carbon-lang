@@ -36,7 +36,7 @@ public:
     }
     
     static uint32_t
-    HashString (const uint8_t hash_function, const char *s)
+    HashString (uint32_t hash_function, const char *s)
     {
         switch (hash_function)
         {
@@ -115,8 +115,8 @@ public:
             s.Printf ("header.header_data_len    = 0x%8.8x %u\n", header_data_len, header_data_len);
         }
         
-        virtual uint32_t
-        Read (lldb_private::DataExtractor &data, uint32_t offset)
+        virtual lldb::offset_t
+        Read (lldb_private::DataExtractor &data, lldb::offset_t offset)
         {
             if (data.ValidOffsetForDataOfSize (offset, 
                                                sizeof (magic) + 
@@ -140,14 +140,14 @@ public:
                                 data.SetByteOrder(lldb::eByteOrderBig);
                                 break;
                             default:
-                                return UINT32_MAX;
+                                return LLDB_INVALID_OFFSET;
                         }
                     }
                     else
                     {
                         // Magic bytes didn't match
                         version = 0;
-                        return UINT32_MAX;
+                        return LLDB_INVALID_OFFSET;
                     }
                 }
                 
@@ -155,7 +155,7 @@ public:
                 if (version != 1)
                 {
                     // Unsupported version
-                    return UINT32_MAX;
+                    return LLDB_INVALID_OFFSET;
                 }
                 hash_function       = data.GetU16 (&offset);
                 if (hash_function == 4)
@@ -165,7 +165,7 @@ public:
                 header_data_len     = data.GetU32 (&offset);
                 return offset;
             }
-            return UINT32_MAX;
+            return LLDB_INVALID_OFFSET;
         }
 //        
 //        // Returns a buffer that contains a serialized version of this table
@@ -379,8 +379,8 @@ public:
             m_hash_values (NULL),
             m_hash_offsets (NULL)
         {
-            uint32_t offset = m_header.Read (data, 0);
-            if (offset != UINT32_MAX && IsValid ())
+            lldb::offset_t offset = m_header.Read (data, 0);
+            if (offset != LLDB_INVALID_OFFSET && IsValid ())
             {
                 m_hash_indexes = (uint32_t *)data.GetData (&offset, m_header.bucket_count * sizeof(uint32_t));
                 m_hash_values  = (uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
@@ -443,10 +443,10 @@ public:
                         const uint32_t curr_hash_value = GetHashValue (hash_idx);
                         if (curr_hash_value == hash_value)
                         {
-                            uint32_t hash_data_offset = GetHashDataOffset (hash_idx);
+                            lldb::offset_t hash_data_offset = GetHashDataOffset (hash_idx);
                             while (hash_data_offset != UINT32_MAX)
                             {
-                                const uint32_t prev_hash_data_offset = hash_data_offset;
+                                const lldb::offset_t prev_hash_data_offset = hash_data_offset;
                                 Result hash_result = GetHashDataForName (name, &hash_data_offset, pair);
                                 // Check the result of getting our hash data
                                 switch (hash_result)
@@ -505,7 +505,7 @@ public:
 
         virtual Result
         GetHashDataForName (const char *name,
-                            uint32_t* hash_data_offset_ptr, 
+                            lldb::offset_t* hash_data_offset_ptr, 
                             Pair &pair) const = 0;
 
         const HeaderType &

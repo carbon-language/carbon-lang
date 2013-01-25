@@ -34,13 +34,13 @@ public:
     virtual
     ~SectionList();
 
-    uint32_t
+    size_t
     AddSection (const lldb::SectionSP& section_sp);
 
-    uint32_t
+    size_t
     AddUniqueSection (const lldb::SectionSP& section_sp);
 
-    uint32_t
+    size_t
     FindSectionIndex (const Section* sect);
 
     bool
@@ -56,7 +56,7 @@ public:
     FindSectionByID (lldb::user_id_t sect_id) const;
 
     lldb::SectionSP
-    FindSectionByType (lldb::SectionType sect_type, bool check_children, uint32_t start_idx = 0) const;
+    FindSectionByType (lldb::SectionType sect_type, bool check_children, size_t start_idx = 0) const;
 
     lldb::SectionSP
     FindSectionContainingFileAddress (lldb::addr_t addr, uint32_t depth = UINT32_MAX) const;
@@ -82,7 +82,7 @@ public:
     ReplaceSection (lldb::user_id_t sect_id, const lldb::SectionSP& section_sp, uint32_t depth = UINT32_MAX);
 
     lldb::SectionSP
-    GetSectionAtIndex (uint32_t idx) const;
+    GetSectionAtIndex (size_t idx) const;
 
     size_t
     Slide (lldb::addr_t slide_amount, bool slide_children);

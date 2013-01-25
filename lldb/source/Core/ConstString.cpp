@@ -87,7 +87,7 @@ public:
     }
 
     const char *
-    GetConstCStringWithLength (const char *cstr, int cstr_len)
+    GetConstCStringWithLength (const char *cstr, size_t cstr_len)
     {
         if (cstr)
         {
@@ -132,11 +132,11 @@ public:
     }
 
     const char *
-    GetConstTrimmedCStringWithLength (const char *cstr, int cstr_len)
+    GetConstTrimmedCStringWithLength (const char *cstr, size_t cstr_len)
     {
         if (cstr)
         {
-            int trimmed_len = std::min<int> (strlen (cstr), cstr_len);
+            const size_t trimmed_len = std::min<size_t> (strlen (cstr), cstr_len);
             return GetConstCStringWithLength (cstr, trimmed_len);
         }
         return NULL;

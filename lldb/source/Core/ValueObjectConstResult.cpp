@@ -124,7 +124,7 @@ ValueObjectConstResult::Create
     const ConstString &name,
     const lldb::DataBufferSP &data_sp,
     lldb::ByteOrder data_byte_order, 
-    uint8_t data_addr_size,
+    uint32_t data_addr_size,
     lldb::addr_t address
 )
 {
@@ -155,7 +155,7 @@ ValueObjectConstResult::ValueObjectConstResult
     const ConstString &name,
     const lldb::DataBufferSP &data_sp,
     lldb::ByteOrder data_byte_order, 
-    uint8_t data_addr_size,
+    uint32_t data_addr_size,
     lldb::addr_t address
 ) :
     ValueObject (exe_scope),
@@ -185,7 +185,7 @@ ValueObjectConstResult::Create
     const ConstString &name,
     lldb::addr_t address,
     AddressType address_type,
-    uint8_t addr_byte_size
+    uint32_t addr_byte_size
 )
 {
     return (new ValueObjectConstResult (exe_scope,
@@ -205,7 +205,7 @@ ValueObjectConstResult::ValueObjectConstResult
     const ConstString &name,
     lldb::addr_t address,
     AddressType address_type,
-    uint8_t addr_byte_size
+    uint32_t addr_byte_size
 ) :
     ValueObject (exe_scope),
     m_clang_ast (clang_ast),
@@ -300,7 +300,7 @@ ValueObjectConstResult::SetByteSize (size_t size)
     m_byte_size = size;
 }
 
-uint32_t
+size_t
 ValueObjectConstResult::CalculateNumChildren()
 {
     return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
@@ -363,7 +363,7 @@ ValueObjectConstResult::GetAddressOf (bool scalar_is_load_address,
 }
 
 ValueObject *
-ValueObjectConstResult::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
+ValueObjectConstResult::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
     return m_impl.CreateChildAtIndex(idx, synthetic_array_member, synthetic_index);
 }

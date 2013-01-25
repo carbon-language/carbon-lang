@@ -506,7 +506,7 @@ public:
             
             size_t value_size = m_target_data.getTypeStoreSize(value->getType());
                         
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             uint64_t u64value = value_extractor->GetMaxU64(&offset, value_size);
                     
             return AssignToMatchType(scalar, u64value, value->getType());
@@ -885,7 +885,7 @@ public:
             return false;
         Type *R_ty = pointer_ptr_ty->getElementType();
                 
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         lldb::addr_t pointer = P_extractor->GetAddress(&offset);
         
         Memory::Region R = m_memory.Lookup(pointer, R_ty);
@@ -1693,7 +1693,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 DataExtractorSP P_extractor(memory.GetExtractor(P));
                 DataEncoderSP D_encoder(memory.GetEncoder(D));
 
-                uint32_t offset = 0;
+                lldb::offset_t offset = 0;
                 lldb::addr_t pointer = P_extractor->GetAddress(&offset);
                 
                 Memory::Region R = memory.Lookup(pointer, target_ty);
@@ -1806,7 +1806,7 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 if (!P_extractor || !D_extractor)
                     return false;
                 
-                uint32_t offset = 0;
+                lldb::offset_t offset = 0;
                 lldb::addr_t pointer = P_extractor->GetAddress(&offset);
                 
                 Memory::Region R = memory.Lookup(pointer, target_ty);

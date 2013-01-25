@@ -49,7 +49,9 @@ public:
     void                SetForm(dw_form_t form) { m_form = form; }
     const ValueType&    Value() const { return m_value; }
     void                Dump(lldb_private::Stream &s, const lldb_private::DataExtractor* debug_str_data, const DWARFCompileUnit* cu) const;
-    bool                ExtractValue(const lldb_private::DataExtractor& data, uint32_t* offset_ptr, const DWARFCompileUnit* cu);
+    bool                ExtractValue(const lldb_private::DataExtractor& data,
+                                     lldb::offset_t* offset_ptr,
+                                     const DWARFCompileUnit* cu);
     bool                IsInlinedCStr() const { return (m_value.data != NULL) && m_value.data == (uint8_t*)m_value.value.cstr; }
     const uint8_t*      BlockData() const;
     uint64_t            Reference(const DWARFCompileUnit* cu) const;
@@ -60,9 +62,9 @@ public:
     int64_t             Signed() const { return m_value.value.sval; }
     void                SetSigned(int64_t sval) { m_value.value.sval = sval; }
     const char*         AsCString(const lldb_private::DataExtractor* debug_str_data_ptr) const;
-    bool                SkipValue(const lldb_private::DataExtractor& debug_info_data, uint32_t* offset_ptr, const DWARFCompileUnit* cu) const;
-    static bool         SkipValue(const dw_form_t form, const lldb_private::DataExtractor& debug_info_data, uint32_t* offset_ptr, const DWARFCompileUnit* cu);
-//  static bool         TransferValue(dw_form_t form, const lldb_private::DataExtractor& debug_info_data, uint32_t* offset_ptr, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff);
+    bool                SkipValue(const lldb_private::DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu) const;
+    static bool         SkipValue(const dw_form_t form, const lldb_private::DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu);
+//  static bool         TransferValue(dw_form_t form, const lldb_private::DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff);
 //  static bool         TransferValue(const DWARFFormValue& formValue, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff);
 //  static bool         PutUnsigned(dw_form_t form, dw_offset_t offset, uint64_t value, BinaryStreamBuf& out_buff, const DWARFCompileUnit* cu, bool fixup_cu_relative_refs);
     static bool         IsBlockForm(const dw_form_t form);

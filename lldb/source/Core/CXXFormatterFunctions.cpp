@@ -1092,7 +1092,7 @@ m_data_64(NULL)
     }
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSArrayMSyntheticFrontEnd::CalculateNumChildren ()
 {
     if (m_data_32)
@@ -1103,7 +1103,7 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::CalculateNumChildren ()
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     if (!m_data_32 && !m_data_64)
         return lldb::ValueObjectSP();
@@ -1112,7 +1112,7 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (uint32_t i
     lldb::addr_t object_at_idx = (m_data_32 ? m_data_32->_data : m_data_64->_data);
     object_at_idx += (idx * m_ptr_size);
     StreamString idx_name;
-    idx_name.Printf("[%d]",idx);
+    idx_name.Printf("[%zu]",idx);
     lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(),
                                                                               object_at_idx,
                                                                               m_exe_ctx_ref,
@@ -1240,7 +1240,7 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::GetIndexOfChildWithName (co
     return idx;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSArrayISyntheticFrontEnd::CalculateNumChildren ()
 {
     return m_items;
@@ -1286,7 +1286,7 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::MightHaveChildren ()
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     if (idx >= CalculateNumChildren())
         return lldb::ValueObjectSP();
@@ -1302,7 +1302,7 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (uint32_t i
     StreamString expr;
     expr.Printf("(id)%" PRIu64,object_at_idx);
     StreamString idx_name;
-    idx_name.Printf("[%d]",idx);
+    idx_name.Printf("[%zu]",idx);
     lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
     m_children.push_back(retval_sp);
     return retval_sp;
@@ -1353,7 +1353,7 @@ lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::NSArrayCodeRunnin
 SyntheticChildrenFrontEnd(*valobj_sp.get())
 {}
 
-uint32_t
+size_t
 lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::CalculateNumChildren ()
 {
     uint64_t count = 0;
@@ -1363,10 +1363,10 @@ lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::CalculateNumChild
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     StreamString idx_name;
-    idx_name.Printf("[%d]",idx);
+    idx_name.Printf("[%zu]",idx);
     lldb::ValueObjectSP valobj_sp = CallSelectorOnObject(m_backend,"id","objectAtIndex:",idx);
     if (valobj_sp)
         valobj_sp->SetName(ConstString(idx_name.GetData()));
@@ -1440,7 +1440,7 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::NSDictionary
 SyntheticChildrenFrontEnd(*valobj_sp.get())
 {}
 
-uint32_t
+size_t
 lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::CalculateNumChildren ()
 {
     uint64_t count = 0;
@@ -1450,14 +1450,14 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::CalculateNum
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     StreamString idx_name;
-    idx_name.Printf("[%d]",idx);
+    idx_name.Printf("[%zu]",idx);
     StreamString valobj_expr_path;
     m_backend.GetExpressionPath(valobj_expr_path, false);
     StreamString key_fetcher_expr;
-    key_fetcher_expr.Printf("(id)[(NSArray*)[%s allKeys] objectAtIndex:%d]",valobj_expr_path.GetData(),idx);
+    key_fetcher_expr.Printf("(id)[(NSArray*)[%s allKeys] objectAtIndex:%zu]",valobj_expr_path.GetData(),idx);
     StreamString value_fetcher_expr;
     value_fetcher_expr.Printf("(id)[%s objectForKey:%s]",valobj_expr_path.GetData(),key_fetcher_expr.GetData());
     StreamString object_fetcher_expr;
@@ -1520,7 +1520,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetIndexOfChildWithNam
     return idx;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::CalculateNumChildren ()
 {
     if (!m_data_32 && !m_data_64)
@@ -1581,7 +1581,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::MightHaveChildren ()
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     uint32_t num_children = CalculateNumChildren();
     
@@ -1633,7 +1633,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (uint3
         StreamString expr;
         expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%" PRIu64 " ; _lldb_valgen_item.value = (id)%" PRIu64 "; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
         StreamString idx_name;
-        idx_name.Printf("[%d]",idx);
+        idx_name.Printf("[%zu]",idx);
         dict_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
     }
     return dict_item.valobj_sp;
@@ -1668,7 +1668,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetIndexOfChildWithNam
     return idx;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::CalculateNumChildren ()
 {
     if (!m_data_32 && !m_data_64)
@@ -1728,7 +1728,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::MightHaveChildren ()
 }
 
 lldb::ValueObjectSP
-lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (uint32_t idx)
+lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     lldb::addr_t m_keys_ptr = (m_data_32 ? m_data_32->_keys_addr : m_data_64->_keys_addr);
     lldb::addr_t m_values_ptr = (m_data_32 ? m_data_32->_objs_addr : m_data_64->_objs_addr);
@@ -1783,7 +1783,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (uint3
         StreamString expr;
         expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = (id)%" PRIu64 " ; _lldb_valgen_item.value = (id)%" PRIu64 "; _lldb_valgen_item;",dict_item.key_ptr,dict_item.val_ptr);
         StreamString idx_name;
-        idx_name.Printf("[%d]",idx);
+        idx_name.Printf("[%zu]",idx);
         dict_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
     }
     return dict_item.valobj_sp;

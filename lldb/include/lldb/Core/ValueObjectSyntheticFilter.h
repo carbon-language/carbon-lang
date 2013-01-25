@@ -42,19 +42,19 @@ public:
     virtual bool
     MightHaveChildren();
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
 
     virtual lldb::ValueType
     GetValueType() const;
     
     virtual lldb::ValueObjectSP
-    GetChildAtIndex (uint32_t idx, bool can_create);
+    GetChildAtIndex (size_t idx, bool can_create);
     
     virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);
     
-    virtual uint32_t
+    virtual size_t
     GetIndexOfChildWithName (const ConstString &name);
 
     virtual bool

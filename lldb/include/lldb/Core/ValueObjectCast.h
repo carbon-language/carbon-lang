@@ -35,7 +35,7 @@ public:
     virtual size_t
     GetByteSize();
     
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
     
     virtual lldb::ValueType

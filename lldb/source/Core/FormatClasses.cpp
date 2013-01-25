@@ -345,7 +345,7 @@ TypeSyntheticImpl::FrontEnd::~FrontEnd()
 }
 
 lldb::ValueObjectSP
-TypeSyntheticImpl::FrontEnd::GetChildAtIndex (uint32_t idx)
+TypeSyntheticImpl::FrontEnd::GetChildAtIndex (size_t idx)
 {
     if (!m_wrapper_sp || !m_interpreter)
         return lldb::ValueObjectSP();
@@ -369,7 +369,7 @@ TypeSyntheticImpl::GetDescription()
 #endif // #ifndef LLDB_DISABLE_PYTHON
 
 int
-SyntheticArrayView::GetRealIndexForIndex(int i)
+SyntheticArrayView::GetRealIndexForIndex(size_t i)
 {
     if (i >= GetCount())
         return -1;

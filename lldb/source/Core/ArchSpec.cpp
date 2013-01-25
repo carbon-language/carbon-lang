@@ -118,7 +118,7 @@ struct ArchDefinition
 };
 
 
-uint32_t
+size_t
 ArchSpec::AutoComplete (const char *name, StringList &matches)
 {
     uint32_t i;
@@ -495,11 +495,11 @@ ParseMachCPUDashSubtypeTriple (const char *triple_cstr, ArchSpec &arch)
     {
         char *end = NULL;
         errno = 0;
-        uint32_t cpu = ::strtoul (triple_cstr, &end, 0);
+        uint32_t cpu = (uint32_t)::strtoul (triple_cstr, &end, 0);
         if (errno == 0 && cpu != 0 && end && ((*end == '-') || (*end == '.')))
         {
             errno = 0;
-            uint32_t sub = ::strtoul (end + 1, &end, 0);
+            uint32_t sub = (uint32_t)::strtoul (end + 1, &end, 0);
             if (errno == 0 && end && ((*end == '-') || (*end == '.') || (*end == '\0')))
             {
                 if (arch.SetArchitecture (eArchTypeMachO, cpu, sub))
@@ -513,7 +513,7 @@ ParseMachCPUDashSubtypeTriple (const char *triple_cstr, ArchSpec &arch)
                             llvm::StringRef vendor_str(vendor_os.substr(0, dash_pos));
                             arch.GetTriple().setVendorName(vendor_str);
                             const size_t vendor_start_pos = dash_pos+1;
-                            dash_pos = vendor_os.find(vendor_start_pos, '-');
+                            dash_pos = vendor_os.find('-', vendor_start_pos);
                             if (dash_pos == llvm::StringRef::npos)
                             {
                                 if (vendor_start_pos < vendor_os.size())

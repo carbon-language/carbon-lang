@@ -74,6 +74,7 @@ namespace lldb
     typedef uint64_t    user_id_t;
     typedef uint64_t    pid_t;
     typedef uint64_t    tid_t;
+    typedef uint64_t    offset_t;
     typedef int32_t     break_id_t;
     typedef int32_t     watch_id_t;
     typedef void *      clang_type_t;

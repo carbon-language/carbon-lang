@@ -66,7 +66,7 @@ public:
     {
         return m_aranges.IsEmpty(); 
     }
-    uint32_t
+    size_t
     GetNumRanges() const
     {
         return m_aranges.GetSize();

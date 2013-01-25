@@ -596,7 +596,7 @@ ProcessGDBRemote::CheckForKernel (Stream *strm)
         DataExtractor data4 (buf, sizeof(buf), gdb_remote_arch.GetByteOrder(), 4);
         if (DoReadMemory (0xffff0110, buf, 4, error) == 4)
         {
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             kernel_addr = data4.GetU32(&offset);
             memory_module_sp = ReadModuleFromMemory (FileSpec("mach_kernel", false), kernel_addr, false, false);
             if (!memory_module_sp.get()
@@ -616,7 +616,7 @@ ProcessGDBRemote::CheckForKernel (Stream *strm)
         DataExtractor data8 (buf, sizeof(buf), gdb_remote_arch.GetByteOrder(), 8);
         if (DoReadMemory (0xffffff8000002010ULL, buf, 8, error) == 8)
         {   
-            uint32_t offset = 0; 
+            lldb::offset_t offset = 0; 
             kernel_addr = data8.GetU64(&offset);
             memory_module_sp = ReadModuleFromMemory (FileSpec("mach_kernel", false), kernel_addr, false, false);
             if (!memory_module_sp.get()
@@ -3041,7 +3041,7 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         Error error;
         if (ReadMemory (m_dispatch_queue_offsets_addr, memory_buffer, sizeof(dispatch_queue_offsets), error) == sizeof(dispatch_queue_offsets))
         {
-            uint32_t data_offset = 0;
+            lldb::offset_t data_offset = 0;
             if (data.GetU16(&data_offset, &dispatch_queue_offsets.dqo_version, sizeof(dispatch_queue_offsets)/sizeof(uint16_t)))
             {
                 if (ReadMemory (thread_dispatch_qaddr, &memory_buffer, data.GetAddressByteSize(), error) == data.GetAddressByteSize())

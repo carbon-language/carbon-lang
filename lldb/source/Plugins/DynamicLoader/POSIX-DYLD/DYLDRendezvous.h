@@ -73,7 +73,7 @@ public:
     GetRendezvousAddress() const { return m_rendezvous_addr; }
 
     /// @returns the version of the rendezvous protocol being used.
-    int
+    uint64_t
     GetVersion() const { return m_current.version; }
 
     /// @returns address in the inferiors address space containing the linked
@@ -92,7 +92,7 @@ public:
     GetBreakAddress() const { return m_current.brk; }
 
     /// Returns the current state of the rendezvous structure.
-    int
+    uint64_t
     GetState() const { return m_current.state; }
 
     /// @returns the base address of the runtime linker in the inferiors address

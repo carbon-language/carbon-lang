@@ -2001,7 +2001,7 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
         }
         else
         {
-            bp_site_sp.reset (new BreakpointSite (&m_breakpoint_site_list, owner, load_addr, LLDB_INVALID_THREAD_ID, use_hardware));
+            bp_site_sp.reset (new BreakpointSite (&m_breakpoint_site_list, owner, load_addr, use_hardware));
             if (bp_site_sp)
             {
                 if (EnableBreakpoint (bp_site_sp.get()).Success())
@@ -2520,7 +2520,7 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 }
 
 size_t
-Process::WriteScalarToMemory (addr_t addr, const Scalar &scalar, uint32_t byte_size, Error &error)
+Process::WriteScalarToMemory (addr_t addr, const Scalar &scalar, size_t byte_size, Error &error)
 {
     if (byte_size == UINT32_MAX)
         byte_size = scalar.GetByteSize();
@@ -2555,7 +2555,7 @@ Process::ReadScalarIntegerFromMemory (addr_t addr,
         if (bytes_read == byte_size)
         {
             DataExtractor data (&uval, sizeof(uval), GetByteOrder(), GetAddressByteSize());
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             if (byte_size <= 4)
                 scalar = data.GetMaxU32 (&offset, byte_size);
             else

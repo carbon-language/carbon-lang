@@ -215,30 +215,33 @@ OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict
     if (thread_dict)
     {
         PythonString tid_pystr("tid");
-        PythonString name_pystr("name");
-        PythonString queue_pystr("queue");
-        PythonString state_pystr("state");
-        PythonString stop_reason_pystr("stop_reason");
-        PythonString reg_data_addr_pystr ("register_data_addr");
-    
         const tid_t tid = thread_dict.GetItemForKeyAsInteger (tid_pystr, LLDB_INVALID_THREAD_ID);
-        const addr_t reg_data_addr = thread_dict.GetItemForKeyAsInteger (reg_data_addr_pystr, LLDB_INVALID_ADDRESS);
-        const char *name = thread_dict.GetItemForKeyAsString (name_pystr);
-        const char *queue = thread_dict.GetItemForKeyAsString (queue_pystr);
-        //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
-        //const char *stop_reason = thread_dict.GetItemForKeyAsString (stop_reason_pystr);
-        
-        if (old_thread_list_ptr)
-            thread_sp = old_thread_list_ptr->FindThreadByID (tid, false);
-        if (!thread_sp)
+        if (tid != LLDB_INVALID_THREAD_ID)
         {
-            if (did_create_ptr)
-                *did_create_ptr = true;
-            thread_sp.reset (new ThreadMemory (*m_process,
-                                               tid,
-                                               name,
-                                               queue,
-                                               reg_data_addr));
+            PythonString name_pystr("name");
+            PythonString queue_pystr("queue");
+            PythonString state_pystr("state");
+            PythonString stop_reason_pystr("stop_reason");
+            PythonString reg_data_addr_pystr ("register_data_addr");
+            
+            const addr_t reg_data_addr = thread_dict.GetItemForKeyAsInteger (reg_data_addr_pystr, LLDB_INVALID_ADDRESS);
+            const char *name = thread_dict.GetItemForKeyAsString (name_pystr);
+            const char *queue = thread_dict.GetItemForKeyAsString (queue_pystr);
+            //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
+            //const char *stop_reason = thread_dict.GetItemForKeyAsString (stop_reason_pystr);
+            
+            if (old_thread_list_ptr)
+                thread_sp = old_thread_list_ptr->FindThreadByID (tid, false);
+            if (!thread_sp)
+            {
+                if (did_create_ptr)
+                    *did_create_ptr = true;
+                thread_sp.reset (new ThreadMemory (*m_process,
+                                                   tid,
+                                                   name,
+                                                   queue,
+                                                   reg_data_addr));
+            }
         }
     }
     return thread_sp;

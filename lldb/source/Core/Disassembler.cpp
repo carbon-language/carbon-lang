@@ -638,7 +638,7 @@ Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type dat
 
         std::string line (buffer);
         
-        int len = line.size();
+        size_t len = line.size();
         if (line[len-1] == '\n')
         {
             line[len-1] = '\0';
@@ -706,7 +706,7 @@ Instruction::ReadDictionary (FILE *in_file, Stream *out_stream)
         // Check to see if the line contains the end-of-dictionary marker ("}")
         std::string line (buffer);
 
-        int len = line.size();
+        size_t len = line.size();
         if (line[len-1] == '\n')
         {
             line[len-1] = '\0';
@@ -776,7 +776,7 @@ Instruction::ReadDictionary (FILE *in_file, Stream *out_stream)
             }
             else
             {
-                int len = value.size();
+                size_t len = value.size();
                 if ((value[0] == '"') && (value[len-1] == '"'))
                     value = value.substr (1, len-2);
                 value_sp.reset (new OptionValueString (value.c_str(), ""));
@@ -945,7 +945,7 @@ InstructionList::GetMaxOpcocdeByteSize () const
 
 
 InstructionSP
-InstructionList::GetInstructionAtIndex (uint32_t idx) const
+InstructionList::GetInstructionAtIndex (size_t idx) const
 {
     InstructionSP inst_sp;
     if (idx < m_instructions.size())
@@ -1007,9 +1007,9 @@ InstructionList::GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Tar
 {
     Address address;
     address.SetLoadAddress(load_addr, &target);
-    uint32_t num_instructions = m_instructions.size();
+    size_t num_instructions = m_instructions.size();
     uint32_t index = UINT32_MAX;
-    for (int i = 0; i < num_instructions; i++)
+    for (size_t i = 0; i < num_instructions; i++)
     {
         if (m_instructions[i]->GetAddress() == address)
         {
@@ -1171,7 +1171,7 @@ PseudoInstruction::DoesBranch () const
 size_t
 PseudoInstruction::Decode (const lldb_private::Disassembler &disassembler,
                            const lldb_private::DataExtractor &data,
-                           uint32_t data_offset)
+                           lldb::offset_t data_offset)
 {
     return m_opcode.GetByteSize();
 }

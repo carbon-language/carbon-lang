@@ -26,21 +26,25 @@ using namespace lldb_private;
 
 static bool
 GetMaxU64(DataExtractor &data,
-          uint32_t *offset, uint64_t *value, unsigned int byte_size)
+          lldb::offset_t *offset_ptr,
+          uint64_t *value,
+          unsigned int byte_size)
 {
-    uint32_t saved_offset = *offset;
-    *value = data.GetMaxU64(offset, byte_size);
-    return *offset != saved_offset;
+    lldb::offset_t saved_offset = *offset_ptr;
+    *value = data.GetMaxU64(offset_ptr, byte_size);
+    return *offset_ptr != saved_offset;
 }
 
 static bool
-ParseAuxvEntry(DataExtractor &data, AuxVector::Entry &entry, 
-               uint32_t *offset, unsigned int byte_size)
+ParseAuxvEntry(DataExtractor &data,
+               AuxVector::Entry &entry,
+               lldb::offset_t *offset_ptr,
+               unsigned int byte_size)
 {
-    if (!GetMaxU64(data, offset, &entry.type, byte_size))
+    if (!GetMaxU64(data, offset_ptr, &entry.type, byte_size))
         return false;
 
-    if (!GetMaxU64(data, offset, &entry.value, byte_size))
+    if (!GetMaxU64(data, offset_ptr, &entry.value, byte_size))
         return false;
 
     return true;
@@ -57,7 +61,7 @@ void
 AuxVector::ParseAuxv(DataExtractor &data)
 {
     const unsigned int byte_size  = m_process->GetAddressByteSize();
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
 
     for (;;) 
     {

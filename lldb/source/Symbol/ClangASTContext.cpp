@@ -3372,7 +3372,7 @@ ClangASTContext::GetNumFields (clang::ASTContext *ast, clang_type_t clang_type)
 clang_type_t
 ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast, 
                                             clang_type_t clang_type,
-                                            uint32_t idx, 
+                                            size_t idx, 
                                             uint32_t *bit_offset_ptr)
 {
     if (clang_type == NULL)
@@ -3457,7 +3457,7 @@ ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast,
 clang_type_t
 ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast, 
                                              clang_type_t clang_type,
-                                             uint32_t idx, 
+                                             size_t idx, 
                                              uint32_t *bit_offset_ptr)
 {
     if (clang_type == NULL)
@@ -3516,7 +3516,7 @@ ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast,
 clang_type_t
 ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast, 
                                   clang_type_t clang_type,
-                                  uint32_t idx, 
+                                  size_t idx, 
                                   std::string& name,
                                   uint64_t *bit_offset_ptr,
                                   uint32_t *bitfield_bit_size_ptr,
@@ -3824,7 +3824,7 @@ ClangASTContext::GetChildClangTypeAtIndex
     ExecutionContext *exe_ctx,
     const char *parent_name,
     clang_type_t parent_clang_type,
-    uint32_t idx,
+    size_t idx,
     bool transparent_pointers,
     bool omit_empty_base_classes,
     bool ignore_array_bounds,
@@ -3864,7 +3864,7 @@ ClangASTContext::GetChildClangTypeAtIndex
     ASTContext *ast,
     const char *parent_name,
     clang_type_t parent_clang_type,
-    uint32_t idx,
+    size_t idx,
     bool transparent_pointers,
     bool omit_empty_base_classes,
     bool ignore_array_bounds,
@@ -4168,7 +4168,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                         std::pair<uint64_t, unsigned> field_type_info = ast->getTypeInfo(array->getElementType());
                         
                         char element_name[64];
-                        ::snprintf (element_name, sizeof (element_name), "[%u]", idx);
+                        ::snprintf (element_name, sizeof (element_name), "[%zu]", idx);
                         
                         child_name.assign(element_name);
                         assert(field_type_info.first % 8 == 0);

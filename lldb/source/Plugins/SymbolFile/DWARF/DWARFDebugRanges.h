@@ -26,14 +26,14 @@ public:
     DWARFDebugRanges();
     ~DWARFDebugRanges();
     void Extract(SymbolFileDWARF* dwarf2Data);
-    static void Dump(lldb_private::Stream &s, const lldb_private::DataExtractor& debug_ranges_data, uint32_t* offset_ptr, dw_addr_t cu_base_addr);
+    static void Dump(lldb_private::Stream &s, const lldb_private::DataExtractor& debug_ranges_data, lldb::offset_t *offset_ptr, dw_addr_t cu_base_addr);
     bool FindRanges(dw_offset_t debug_ranges_offset, DWARFDebugRanges::RangeList& range_list) const;
 
 protected:
 
     bool
     Extract (SymbolFileDWARF* dwarf2Data, 
-             uint32_t* offset_ptr, 
+             lldb::offset_t *offset_ptr, 
              RangeList &range_list);
 
     typedef std::map<dw_offset_t, RangeList>    range_map;

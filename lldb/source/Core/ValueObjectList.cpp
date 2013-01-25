@@ -61,20 +61,20 @@ ValueObjectList::Append (const ValueObjectList &valobj_list)
 }
 
 
-uint32_t
+size_t
 ValueObjectList::GetSize() const
 {
     return m_value_objects.size();
 }
 
 void
-ValueObjectList::Resize (uint32_t size)
+ValueObjectList::Resize (size_t size)
 {
     m_value_objects.resize (size);
 }
 
 lldb::ValueObjectSP
-ValueObjectList::GetValueObjectAtIndex (uint32_t idx)
+ValueObjectList::GetValueObjectAtIndex (size_t idx)
 {
     lldb::ValueObjectSP valobj_sp;
     if (idx < m_value_objects.size())
@@ -83,7 +83,7 @@ ValueObjectList::GetValueObjectAtIndex (uint32_t idx)
 }
 
 lldb::ValueObjectSP
-ValueObjectList::RemoveValueObjectAtIndex (uint32_t idx)
+ValueObjectList::RemoveValueObjectAtIndex (size_t idx)
 {
     lldb::ValueObjectSP valobj_sp;
     if (idx < m_value_objects.size())
@@ -95,7 +95,7 @@ ValueObjectList::RemoveValueObjectAtIndex (uint32_t idx)
 }
 
 void
-ValueObjectList::SetValueObjectAtIndex (uint32_t idx, const ValueObjectSP &valobj_sp)
+ValueObjectList::SetValueObjectAtIndex (size_t idx, const ValueObjectSP &valobj_sp)
 {
     if (idx >= m_value_objects.size())
         m_value_objects.resize (idx + 1);

@@ -92,7 +92,7 @@ public:
     ///   breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointSP
-    GetBreakpointAtIndex (uint32_t i);
+    GetBreakpointAtIndex (size_t i);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the breakpoint with index \a i, const version
@@ -105,7 +105,7 @@ public:
     ///   breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointSP
-    GetBreakpointAtIndex (uint32_t i) const;
+    GetBreakpointAtIndex (size_t i) const;
 
     //------------------------------------------------------------------
     /// Returns the number of elements in this breakpoint list.

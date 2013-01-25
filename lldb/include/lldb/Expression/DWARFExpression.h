@@ -59,8 +59,8 @@ public:
     ///     The byte length of the location expression.
     //------------------------------------------------------------------
     DWARFExpression(const DataExtractor& data,
-                    uint32_t data_offset,
-                    uint32_t data_length);
+                    lldb::offset_t data_offset,
+                    lldb::offset_t data_length);
 
     //------------------------------------------------------------------
     /// Copy constructor
@@ -184,7 +184,7 @@ public:
     ///     The byte length of the location expression.
     //------------------------------------------------------------------
     void
-    SetOpcodeData(const DataExtractor& data, uint32_t data_offset, uint32_t data_length);
+    SetOpcodeData(const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length);
 
     //------------------------------------------------------------------
     /// Copy the DWARF location expression into a local buffer.
@@ -212,8 +212,8 @@ public:
     //------------------------------------------------------------------
     void
     CopyOpcodeData (const DataExtractor& data,
-                    uint32_t data_offset,
-                    uint32_t data_length);
+                    lldb::offset_t data_offset,
+                    lldb::offset_t data_length);
     
 
     //------------------------------------------------------------------
@@ -340,8 +340,8 @@ public:
               ClangExpressionDeclMap *decl_map,
               RegisterContext *reg_ctx,
               const DataExtractor& opcodes,
-              const uint32_t offset,
-              const uint32_t length,
+              const lldb::offset_t offset,
+              const lldb::offset_t length,
               const uint32_t reg_set,
               const Value* initial_value_ptr,
               Value& result,
@@ -403,16 +403,16 @@ protected:
     //------------------------------------------------------------------
     void
     DumpLocation(Stream *s, 
-                 uint32_t offset, 
-                 uint32_t length, 
+                 lldb::offset_t offset,
+                 lldb::offset_t length,
                  lldb::DescriptionLevel level,
                  ABI *abi) const;
     
     bool
     GetLocation (lldb::addr_t base_addr, 
                  lldb::addr_t pc, 
-                 uint32_t &offset, 
-                 uint32_t &len);
+                 lldb::offset_t &offset, 
+                 lldb::offset_t &len);
 
     //------------------------------------------------------------------
     /// Classes that inherit from DWARFExpression can see and modify these

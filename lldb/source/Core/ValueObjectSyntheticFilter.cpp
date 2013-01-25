@@ -27,14 +27,14 @@ public:
     SyntheticChildrenFrontEnd(backend)
     {}
 
-    uint32_t
+    size_t
     CalculateNumChildren()
     {
         return 0;
     }
     
     lldb::ValueObjectSP
-    GetChildAtIndex (uint32_t idx)
+    GetChildAtIndex (size_t idx)
     {
         return lldb::ValueObjectSP();
     }
@@ -95,7 +95,7 @@ ValueObjectSynthetic::GetTypeName()
     return m_parent->GetTypeName();
 }
 
-uint32_t
+size_t
 ValueObjectSynthetic::CalculateNumChildren()
 {
     UpdateValueIfNeeded();
@@ -183,7 +183,7 @@ ValueObjectSynthetic::UpdateValue ()
 }
 
 lldb::ValueObjectSP
-ValueObjectSynthetic::GetChildAtIndex (uint32_t idx, bool can_create)
+ValueObjectSynthetic::GetChildAtIndex (size_t idx, bool can_create)
 {
     UpdateValueIfNeeded();
     
@@ -219,7 +219,7 @@ ValueObjectSynthetic::GetChildMemberWithName (const ConstString &name, bool can_
     return GetChildAtIndex(index, can_create);
 }
 
-uint32_t
+size_t
 ValueObjectSynthetic::GetIndexOfChildWithName (const ConstString &name)
 {
     UpdateValueIfNeeded();

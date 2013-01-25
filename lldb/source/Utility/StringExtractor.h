@@ -45,10 +45,10 @@ public:
     bool
     IsGood() const
     {
-        return m_index != UINT32_MAX;
+        return m_index != UINT64_MAX;
     }
 
-    uint32_t
+    uint64_t
     GetFilePos () const
     {
         return m_index;
@@ -79,7 +79,7 @@ public:
         return m_packet.empty();
     }
 
-    uint32_t
+    size_t
     GetBytesLeft ()
     {
         if (m_index < m_packet.size())
@@ -126,9 +126,9 @@ protected:
     // For StringExtractor only
     //------------------------------------------------------------------
     std::string m_packet;   // The string in which to extract data.
-    uint32_t m_index;       // When extracting data from a packet, this index
+    uint64_t m_index;       // When extracting data from a packet, this index
                             // will march along as things get extracted. If set
-                            // to UINT32_MAX the end of the packet data was
+                            // to UINT64_MAX the end of the packet data was
                             // reached when decoding information
 };
 

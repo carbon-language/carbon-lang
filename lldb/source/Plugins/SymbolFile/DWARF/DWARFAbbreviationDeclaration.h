@@ -32,7 +32,7 @@ public:
     void            SetCode(dw_uleb128_t code) { m_code = code; }
     dw_tag_t        Tag() const { return m_tag; }
     bool            HasChildren() const { return m_has_children; }
-    uint32_t        NumAttributes() const { return m_attributes.size(); }
+    size_t          NumAttributes() const { return m_attributes.size(); }
     dw_attr_t       GetAttrByIndex(uint32_t idx) const { return m_attributes.size() > idx ? m_attributes[idx].get_attr() : 0; }
     dw_form_t       GetFormByIndex(uint32_t idx) const { return m_attributes.size() > idx ? m_attributes[idx].get_form() : 0; }
     bool            GetAttrAndFormByIndex(uint32_t idx, dw_attr_t& attr, dw_form_t& form) const
@@ -63,8 +63,8 @@ public:
                         const DWARFCompileUnit* cu,
                         const uint32_t strp_min_len);
     uint32_t        FindAttributeIndex(dw_attr_t attr) const;
-    bool            Extract(const lldb_private::DataExtractor& data, uint32_t* offset_ptr);
-    bool            Extract(const lldb_private::DataExtractor& data, uint32_t* offset_ptr, dw_uleb128_t code);
+    bool            Extract(const lldb_private::DataExtractor& data, lldb::offset_t *offset_ptr);
+    bool            Extract(const lldb_private::DataExtractor& data, lldb::offset_t *offset_ptr, dw_uleb128_t code);
 //  void            Append(BinaryStreamBuf& out_buff) const;
     bool            IsValid();
     void            Dump(lldb_private::Stream *s) const;

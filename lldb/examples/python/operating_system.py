@@ -25,8 +25,9 @@ class OperatingSystemPlugIn(object):
         return self.process.target
 
     def create_thread(self, tid, context):
+        print 'tid type is: ' + str(type(tid))
         if tid == 0x444444444:
-            thread_info = { 'tid' : 0x444444444, 'name' : 'four'  , 'queue' : 'queue4', 'state' : 'stopped', 'stop_reason' : 'none' }
+            thread_info = { 'tid' : tid, 'name' : 'four'  , 'queue' : 'queue4', 'state' : 'stopped', 'stop_reason' : 'none' }
             self.threads.append(thread_info)
             return thread_info
         return None

@@ -132,7 +132,8 @@ public:
     /// @return
     ///     The number of errors.
 	//------------------------------------------------------------------
-    unsigned CompileFunction (Stream &errors);
+    unsigned
+    CompileFunction (Stream &errors);
     
     //------------------------------------------------------------------
 	/// Insert the default function wrapper and its default argument struct  
@@ -152,9 +153,10 @@ public:
     /// @return
     ///     True on success; false otherwise.
 	//------------------------------------------------------------------
-    bool InsertFunction (ExecutionContext &exe_ctx, 
-                         lldb::addr_t &args_addr_ref, 
-                         Stream &errors);
+    bool
+    InsertFunction (ExecutionContext &exe_ctx,
+                    lldb::addr_t &args_addr_ref,
+                    Stream &errors);
 
     //------------------------------------------------------------------
 	/// Insert the default function wrapper (using the JIT)

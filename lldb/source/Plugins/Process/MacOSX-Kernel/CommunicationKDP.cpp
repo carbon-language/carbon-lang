@@ -122,7 +122,7 @@ CommunicationKDP::SendRequestAndGetReply (const CommandType command,
     {
         if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, GetPacketTimeoutInMicroSeconds ()))
         {
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             const uint8_t reply_command = reply_packet.GetU8 (&offset);
             const uint8_t reply_sequence_id = reply_packet.GetU8 (&offset);
             if ((reply_command & eCommandTypeMask) == command)
@@ -273,7 +273,7 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
     if (bytes_available >= 8)
     {
         packet.SetData (&m_bytes[0], bytes_available, m_byte_order);
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         uint8_t reply_command = packet.GetU8(&offset);
         switch (reply_command)
         {
@@ -406,7 +406,7 @@ CommunicationKDP::SendRequestReattach (uint16_t reply_port)
     {
         // Reset the sequence ID to zero for reattach
         ClearKDPSettings ();
-        uint32_t offset = 4;
+        lldb::offset_t offset = 4;
         m_session_key = reply_packet.GetU32 (&offset);
         return true;
     }
@@ -440,7 +440,7 @@ CommunicationKDP::SendRequestVersion ()
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         m_kdp_version_version = reply_packet.GetU32 (&offset);
         m_kdp_version_feature = reply_packet.GetU32 (&offset);
         return true;
@@ -568,7 +568,7 @@ CommunicationKDP::SendRequestHostInfo ()
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         m_kdp_hostinfo_cpu_mask     = reply_packet.GetU32 (&offset);
         m_kdp_hostinfo_cpu_type     = reply_packet.GetU32 (&offset);
         m_kdp_hostinfo_cpu_subtype  = reply_packet.GetU32 (&offset);
@@ -648,7 +648,7 @@ CommunicationKDP::SendRequestReadMemory (lldb::addr_t addr,
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         uint32_t kdp_error = reply_packet.GetU32 (&offset);
         uint32_t src_len = reply_packet.GetByteSize() - 12;
         
@@ -696,7 +696,7 @@ CommunicationKDP::SendRequestWriteMemory (lldb::addr_t addr,
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         uint32_t kdp_error = reply_packet.GetU32 (&offset);
         if (kdp_error)
             error.SetErrorStringWithFormat ("kdp write memory failed (error %u)", kdp_error);
@@ -730,7 +730,7 @@ CommunicationKDP::SendRawRequest (uint8_t command_byte,
     
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         uint32_t kdp_error = reply_packet.GetU32 (&offset);
         if (kdp_error)
             error.SetErrorStringWithFormat ("request packet 0x%8.8x failed (error %u)", command_byte, kdp_error);
@@ -799,7 +799,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
     }
     else
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         const uint8_t first_packet_byte = packet.GetU8 (&offset);
         const uint8_t sequence_id = packet.GetU8 (&offset);
         const uint16_t length = packet.GetU16 (&offset);
@@ -1152,7 +1152,7 @@ CommunicationKDP::SendRequestReadRegisters (uint32_t cpu,
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         uint32_t kdp_error = reply_packet.GetU32 (&offset);
         uint32_t src_len = reply_packet.GetByteSize() - 12;
         
@@ -1200,7 +1200,7 @@ CommunicationKDP::SendRequestWriteRegisters (uint32_t cpu,
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         uint32_t kdp_error = reply_packet.GetU32 (&offset);
         if (kdp_error == 0)
             return src_len;
@@ -1247,7 +1247,7 @@ CommunicationKDP::SendRequestBreakpoint (bool set, addr_t addr)
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
-        uint32_t offset = 8;
+        lldb::offset_t offset = 8;
         uint32_t kdp_error = reply_packet.GetU32 (&offset);        
         if (kdp_error == 0)
             return true;

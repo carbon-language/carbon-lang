@@ -47,7 +47,7 @@ public:
         // Nothing to do when flushing a buffer based stream...
     }
 
-    virtual int
+    virtual size_t
     Write (const void *s, size_t length)
     {
         if (s && length)

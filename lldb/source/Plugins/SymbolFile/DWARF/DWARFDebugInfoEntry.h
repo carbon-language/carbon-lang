@@ -75,7 +75,7 @@ public:
         bool ContainsAttribute(dw_attr_t attr) const;
         bool RemoveAttribute(dw_attr_t attr);
         void Clear() { m_infos.clear(); }
-        uint32_t Size() const { return m_infos.size(); }
+        size_t Size() const { return m_infos.size(); }
 
     protected:
         struct Info
@@ -145,12 +145,12 @@ public:
                     const lldb_private::DataExtractor& debug_info_data,
                     const DWARFCompileUnit* cu,
                     const uint8_t *fixed_form_sizes,
-                    dw_offset_t* offset_ptr);
+                    lldb::offset_t* offset_ptr);
 
     bool        Extract(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
-                    dw_offset_t* offset_ptr);
+                    lldb::offset_t* offset_ptr);
 
     bool        LookupAddress(
                     const dw_addr_t address,
@@ -277,7 +277,7 @@ public:
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     const lldb_private::DataExtractor& debug_info_data,
-                    uint32_t* offset_ptr,
+                    lldb::offset_t *offset_ptr,
                     lldb_private::Stream &s,
                     dw_attr_t attr,
                     dw_form_t form);
@@ -304,7 +304,7 @@ public:
     const DWARFAbbreviationDeclaration* 
     GetAbbreviationDeclarationPtr (SymbolFileDWARF* dwarf2Data,
                                    const DWARFCompileUnit *cu,
-                                   dw_offset_t &offset) const;
+                                   lldb::offset_t &offset) const;
 
     dw_tag_t
     Tag () const 

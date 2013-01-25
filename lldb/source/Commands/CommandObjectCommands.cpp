@@ -188,7 +188,7 @@ public:
         return "";
     }
     
-    int
+    virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -285,7 +285,7 @@ protected:
     bool
     DoExecute(Args& command, CommandReturnObject &result)
     {
-        const int argc = command.GetArgumentCount();
+        const size_t argc = command.GetArgumentCount();
         if (argc == 1)
         {
             const char *filename = command.GetArgumentAtIndex(0);
@@ -1289,7 +1289,7 @@ public:
     {
     }
     
-    int
+    virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,

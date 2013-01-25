@@ -351,13 +351,9 @@ class CommandDictCommandPartialMatch
         {
             // A NULL or empty string matches everything.
             if (m_match_str == NULL || *m_match_str == '\0')
-                return 1;
+                return true;
 
-            size_t found = map_element.first.find (m_match_str, 0);
-            if (found == std::string::npos)
-                return 0;
-            else
-                return found == 0;
+            return map_element.first.find (m_match_str, 0) == 0;
         }
 
     private:

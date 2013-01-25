@@ -43,7 +43,7 @@ public:
     Dereference (Error &error);
     
     virtual ValueObject *
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
     virtual lldb::clang_type_t
     GetClangType ()

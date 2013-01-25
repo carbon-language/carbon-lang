@@ -227,11 +227,11 @@ public:
     static lldb::DebuggerSP
     FindDebuggerWithInstanceName (const ConstString &instance_name);
     
-    static uint32_t
+    static size_t
     GetNumDebuggers();
     
     static lldb::DebuggerSP
-    GetDebuggerAtIndex (uint32_t);
+    GetDebuggerAtIndex (size_t index);
 
     static bool
     FormatPrompt (const char *format,

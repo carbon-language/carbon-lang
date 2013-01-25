@@ -1256,7 +1256,7 @@ private:
             
             DataExtractor extractor(objc_class_buf.GetBytes(), objc_class_size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_isa           = extractor.GetAddress_unchecked(&cursor);   // uintptr_t isa;
             m_superclass    = extractor.GetAddress_unchecked(&cursor);   // Class superclass;
@@ -1315,7 +1315,7 @@ private:
             
             DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_flags             = extractor.GetU32_unchecked(&cursor);
             m_instanceStart     = extractor.GetU32_unchecked(&cursor);
@@ -1386,13 +1386,13 @@ private:
             
             DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_flags             = extractor.GetU32_unchecked(&cursor);
             m_version           = extractor.GetU32_unchecked(&cursor);
-            m_ro_ptr             = extractor.GetAddress_unchecked(&cursor);
-            m_method_list_ptr    = extractor.GetAddress_unchecked(&cursor);
-            m_properties_ptr     = extractor.GetAddress_unchecked(&cursor);
+            m_ro_ptr            = extractor.GetAddress_unchecked(&cursor);
+            m_method_list_ptr   = extractor.GetAddress_unchecked(&cursor);
+            m_properties_ptr    = extractor.GetAddress_unchecked(&cursor);
             m_firstSubclass     = extractor.GetAddress_unchecked(&cursor);
             m_nextSiblingClass  = extractor.GetAddress_unchecked(&cursor);
             
@@ -1422,7 +1422,7 @@ private:
             
             DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_entsize   = extractor.GetU32_unchecked(&cursor) & ~(uint32_t)3;
             m_count     = extractor.GetU32_unchecked(&cursor);
@@ -1465,7 +1465,7 @@ private:
             
             DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_name_ptr   = extractor.GetAddress_unchecked(&cursor);
             m_types_ptr  = extractor.GetAddress_unchecked(&cursor);
@@ -1508,7 +1508,7 @@ private:
             
             DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_entsize   = extractor.GetU32_unchecked(&cursor);
             m_count     = extractor.GetU32_unchecked(&cursor);
@@ -1555,7 +1555,7 @@ private:
             
             DataExtractor extractor(buffer.GetBytes(), size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t cursor = 0;
+            lldb::offset_t cursor = 0;
             
             m_offset_ptr = extractor.GetAddress_unchecked(&cursor);
             m_name_ptr   = extractor.GetAddress_unchecked(&cursor);
@@ -2176,11 +2176,11 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
             
             DataExtractor isa_extractor(isas_buffer.GetBytes(), isas_allocation_size, process->GetByteOrder(), process->GetAddressByteSize());
             
-            uint32_t offset_ptr = 0;
+            lldb::offset_t offset = 0;
             
             for (size_t index = 0; index < num_isas; ++index)
             {
-                uint64_t isa = isa_extractor.GetPointer(&offset_ptr);
+                uint64_t isa = isa_extractor.GetPointer(&offset);
                 
                 const char *name = (const char*)(names_buffer.GetBytes() + (name_size * index));
                 

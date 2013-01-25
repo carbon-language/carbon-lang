@@ -298,7 +298,7 @@ RegisterContextDarwin_i386::GetRegisterCount ()
 }
 
 const RegisterInfo *
-RegisterContextDarwin_i386::GetRegisterInfoAtIndex (uint32_t reg)
+RegisterContextDarwin_i386::GetRegisterInfoAtIndex (size_t reg)
 {
     assert(k_num_register_infos == k_num_registers);
     if (reg < k_num_registers)
@@ -410,7 +410,7 @@ RegisterContextDarwin_i386::GetRegisterSetCount ()
 }
 
 const RegisterSet *
-RegisterContextDarwin_i386::GetRegisterSet (uint32_t reg_set)
+RegisterContextDarwin_i386::GetRegisterSet (size_t reg_set)
 {
     if (reg_set < k_num_regsets)
         return &g_reg_sets[reg_set];

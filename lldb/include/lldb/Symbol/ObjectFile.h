@@ -214,7 +214,7 @@ public:
     ///     architecture (and object for archives). Returns zero if no
     ///     architecture or object has been selected.
     //------------------------------------------------------------------
-    virtual size_t
+    virtual uint32_t
     GetAddressByteSize ()  const = 0;
 
     //------------------------------------------------------------------

@@ -80,7 +80,7 @@ RegisterContextMemory::GetRegisterCount ()
 }
 
 const RegisterInfo *
-RegisterContextMemory::GetRegisterInfoAtIndex (uint32_t reg)
+RegisterContextMemory::GetRegisterInfoAtIndex (size_t reg)
 {
     return m_reg_infos.GetRegisterInfoAtIndex (reg);
 }
@@ -92,7 +92,7 @@ RegisterContextMemory::GetRegisterSetCount ()
 }
 
 const RegisterSet *
-RegisterContextMemory::GetRegisterSet (uint32_t reg_set)
+RegisterContextMemory::GetRegisterSet (size_t reg_set)
 {
     return m_reg_infos.GetRegisterSet (reg_set);
 }

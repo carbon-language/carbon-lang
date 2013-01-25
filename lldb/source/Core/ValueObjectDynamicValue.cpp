@@ -87,7 +87,7 @@ ValueObjectDynamicValue::GetQualifiedTypeName()
     return m_parent->GetTypeName();
 }
 
-uint32_t
+size_t
 ValueObjectDynamicValue::CalculateNumChildren()
 {
     const bool success = UpdateValueIfNeeded(false);

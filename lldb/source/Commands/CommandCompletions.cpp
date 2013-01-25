@@ -131,7 +131,7 @@ DiskFilesOrDirectories
     // I'm going to  use the "glob" function with GLOB_TILDE for user directory expansion.  
     // If it is not defined on your host system, you'll need to implement it yourself...
     
-    int partial_name_len = strlen(partial_file_name);
+    size_t partial_name_len = strlen(partial_file_name);
     
     if (partial_name_len >= PATH_MAX)
         return matches.GetSize();

@@ -80,7 +80,7 @@ public:
     // Subclass specific functions
     //---------------------------------------------------------------------
     
-    uint32_t
+    size_t
     GetNumValues() const
     {
         return m_values.size();

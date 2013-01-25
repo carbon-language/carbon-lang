@@ -47,7 +47,7 @@ public:
             const ConstString &name,
             const lldb::DataBufferSP &result_data_sp,
             lldb::ByteOrder byte_order, 
-            uint8_t addr_size,
+            uint32_t addr_size,
             lldb::addr_t address = LLDB_INVALID_ADDRESS);
 
     static lldb::ValueObjectSP
@@ -57,7 +57,7 @@ public:
             const ConstString &name,
             lldb::addr_t address,
             AddressType address_type,
-            uint8_t addr_byte_size);
+            uint32_t addr_byte_size);
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
@@ -78,7 +78,7 @@ public:
     virtual lldb::ValueType
     GetValueType() const;
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
 
     virtual ConstString
@@ -101,7 +101,7 @@ public:
     Dereference (Error &error);
     
     virtual ValueObject *
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
     
     virtual lldb::ValueObjectSP
     GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create);
@@ -147,7 +147,7 @@ protected:
 
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
-    uint32_t m_byte_size;
+    size_t m_byte_size;
     
     ValueObjectConstResultImpl m_impl;
 
@@ -171,7 +171,7 @@ private:
                             const ConstString &name,
                             const lldb::DataBufferSP &result_data_sp,
                             lldb::ByteOrder byte_order, 
-                            uint8_t addr_size,
+                            uint32_t addr_size,
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
@@ -180,7 +180,7 @@ private:
                             const ConstString &name,
                             lldb::addr_t address,
                             AddressType address_type,
-                            uint8_t addr_byte_size);
+                            uint32_t addr_byte_size);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             clang::ASTContext *clang_ast,

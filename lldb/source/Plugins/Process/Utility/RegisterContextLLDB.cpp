@@ -760,7 +760,7 @@ RegisterContextLLDB::GetRegisterCount ()
 }
 
 const RegisterInfo *
-RegisterContextLLDB::GetRegisterInfoAtIndex (uint32_t reg)
+RegisterContextLLDB::GetRegisterInfoAtIndex (size_t reg)
 {
     return m_thread.GetRegisterContext()->GetRegisterInfoAtIndex (reg);
 }
@@ -772,7 +772,7 @@ RegisterContextLLDB::GetRegisterSetCount ()
 }
 
 const RegisterSet *
-RegisterContextLLDB::GetRegisterSet (uint32_t reg_set)
+RegisterContextLLDB::GetRegisterSet (size_t reg_set)
 {
     return m_thread.GetRegisterContext()->GetRegisterSet (reg_set);
 }

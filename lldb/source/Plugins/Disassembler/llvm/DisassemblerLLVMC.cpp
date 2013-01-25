@@ -68,7 +68,7 @@ public:
     virtual size_t
     Decode (const lldb_private::Disassembler &disassembler,
             const lldb_private::DataExtractor &data,
-            uint32_t data_offset)
+            lldb::offset_t data_offset)
     {
         // All we have to do is read the opcode which can be easy for some
         // architetures
@@ -239,7 +239,7 @@ public:
                 m_comment.assign ("unknown opcode");
                 inst_size = m_opcode.GetByteSize();
                 StreamString mnemonic_strm;
-                uint32_t offset = 0;
+                lldb::offset_t offset = 0;
                 switch (inst_size)
                 {
                     case 1:
@@ -486,8 +486,8 @@ DisassemblerLLVMC::~DisassemblerLLVMC()
 size_t
 DisassemblerLLVMC::DecodeInstructions (const Address &base_addr,
                                        const DataExtractor& data,
-                                       uint32_t data_offset,
-                                       uint32_t num_instructions,
+                                       lldb::offset_t data_offset,
+                                       size_t num_instructions,
                                        bool append)
 {
     if (!append)

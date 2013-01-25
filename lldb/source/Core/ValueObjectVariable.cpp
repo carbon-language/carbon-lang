@@ -80,7 +80,7 @@ ValueObjectVariable::GetQualifiedTypeName()
     return ConstString();
 }
 
-uint32_t
+size_t
 ValueObjectVariable::CalculateNumChildren()
 {    
     ClangASTType type(GetClangAST(),

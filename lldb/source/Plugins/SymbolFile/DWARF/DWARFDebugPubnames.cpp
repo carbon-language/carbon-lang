@@ -40,7 +40,7 @@ DWARFDebugPubnames::Extract(const DataExtractor& data)
 
     if (data.ValidOffset(0))
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
 
         DWARFDebugPubnamesSet set;
         while (data.ValidOffset(offset))

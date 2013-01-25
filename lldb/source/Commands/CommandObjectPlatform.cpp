@@ -386,7 +386,7 @@ protected:
         if (platform_sp)
         {
             Error error;
-            const uint32_t argc = args.GetArgumentCount();
+            const size_t argc = args.GetArgumentCount();
             Target *target = m_exe_ctx.GetTargetPtr();
             Module *exe_module = target->GetExecutableModulePointer();
             if (exe_module)

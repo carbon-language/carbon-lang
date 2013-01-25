@@ -84,7 +84,7 @@ ValueObjectConstResultImpl::Dereference (Error &error)
 }
 
 ValueObject *
-ValueObjectConstResultImpl::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
+ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
     if (m_impl_backend == NULL)
         return NULL;

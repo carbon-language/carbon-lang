@@ -457,10 +457,10 @@ public:
     ///     Variable arguments that are needed for the printf style
     ///     format string \a format.
     //------------------------------------------------------------------
-    int
+    size_t
     Printf (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
     
-    int
+    size_t
     PrintfVarArg(const char *format, va_list args);
 
 protected:

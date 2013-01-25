@@ -30,9 +30,9 @@ DWARFAbbreviationDeclarationSet::Clear()
 // DWARFAbbreviationDeclarationSet::Extract()
 //----------------------------------------------------------------------
 bool
-DWARFAbbreviationDeclarationSet::Extract(const DataExtractor& data, uint32_t* offset_ptr)
+DWARFAbbreviationDeclarationSet::Extract(const DataExtractor& data, lldb::offset_t *offset_ptr)
 {
-    const uint32_t begin_offset = *offset_ptr;
+    const lldb::offset_t begin_offset = *offset_ptr;
     m_offset = begin_offset;
     Clear();
     DWARFAbbreviationDeclaration abbrevDeclaration;
@@ -144,7 +144,7 @@ DWARFDebugAbbrev::DWARFDebugAbbrev() :
 void
 DWARFDebugAbbrev::Parse(const DataExtractor& data)
 {
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
 
     while (data.ValidOffset(offset))
     {

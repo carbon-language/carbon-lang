@@ -98,7 +98,7 @@ public:
                            lldb::tid_t tid,
                            lldb::addr_t context);
     
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor);
     
     virtual lldb::ValueObjectSP

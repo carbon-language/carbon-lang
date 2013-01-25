@@ -637,7 +637,7 @@ public:
     const FileAction *
     GetFileActionForFD (int fd) const
     {
-        for (uint32_t idx=0, count=m_file_actions.size(); idx < count; ++idx)
+        for (size_t idx=0, count=m_file_actions.size(); idx < count; ++idx)
         {
             if (m_file_actions[idx].GetFD () == fd)
                 return &m_file_actions[idx];
@@ -1069,7 +1069,7 @@ public:
         m_infos.clear();
     }
     
-    uint32_t
+    size_t
     GetSize()
     {
         return m_infos.size();
@@ -1082,7 +1082,7 @@ public:
     }
 
     const char *
-    GetProcessNameAtIndex (uint32_t idx)
+    GetProcessNameAtIndex (size_t idx)
     {
         if (idx < m_infos.size())
             return m_infos[idx].GetName();
@@ -1090,7 +1090,7 @@ public:
     }
 
     size_t
-    GetProcessNameLengthAtIndex (uint32_t idx)
+    GetProcessNameLengthAtIndex (size_t idx)
     {
         if (idx < m_infos.size())
             return m_infos[idx].GetNameLength();
@@ -1098,7 +1098,7 @@ public:
     }
 
     lldb::pid_t
-    GetProcessIDAtIndex (uint32_t idx)
+    GetProcessIDAtIndex (size_t idx)
     {
         if (idx < m_infos.size())
             return m_infos[idx].GetProcessID();
@@ -1106,7 +1106,7 @@ public:
     }
 
     bool
-    GetInfoAtIndex (uint32_t idx, ProcessInstanceInfo &info)
+    GetInfoAtIndex (size_t idx, ProcessInstanceInfo &info)
     {
         if (idx < m_infos.size())
         {
@@ -1118,7 +1118,7 @@ public:
     
     // You must ensure "idx" is valid before calling this function
     const ProcessInstanceInfo &
-    GetProcessInfoAtIndex (uint32_t idx) const
+    GetProcessInfoAtIndex (size_t idx) const
     {
         assert (idx < m_infos.size());
         return m_infos[idx];
@@ -2769,7 +2769,7 @@ public:
     size_t
     WriteScalarToMemory (lldb::addr_t vm_addr, 
                          const Scalar &scalar, 
-                         uint32_t size, 
+                         size_t size, 
                          Error &error);
 
     size_t

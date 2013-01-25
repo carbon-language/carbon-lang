@@ -588,7 +588,7 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
         DataExtractor data;
         size_t num_bytes = new_value_sp->GetData(data);
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         if (num_bytes <= 8)
         {
             uint64_t raw_value = data.GetMaxU64(&offset, num_bytes);
@@ -727,7 +727,7 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
                 DataExtractor data;
                 if (xmm0_value.GetData(data))
                 {
-                    uint32_t offset = 0;
+                    lldb::offset_t offset = 0;
                     switch (bit_width)
                     {
                         default:

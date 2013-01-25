@@ -46,11 +46,11 @@ public:
     virtual ConstString
     GetQualifiedTypeName();
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
 
     virtual ValueObject *
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
 protected:
     virtual bool
@@ -96,16 +96,16 @@ public:
     virtual ConstString
     GetQualifiedTypeName();
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
 
     virtual ValueObject *
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
     
     virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);
 
-    virtual uint32_t
+    virtual size_t
     GetIndexOfChildWithName (const ConstString &name);
 
 
@@ -154,7 +154,7 @@ public:
     virtual ConstString
     GetTypeName();
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
     
     virtual bool

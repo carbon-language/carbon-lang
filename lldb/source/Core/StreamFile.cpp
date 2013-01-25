@@ -64,7 +64,7 @@ StreamFile::Flush ()
     m_file.Flush();
 }
 
-int
+size_t
 StreamFile::Write (const void *s, size_t length)
 {
     m_file.Write (s, length);

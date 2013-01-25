@@ -35,11 +35,11 @@ void
 DWARFDebugLine::Parse(const DataExtractor& debug_line_data)
 {
     m_lineTableMap.clear();
-    dw_offset_t offset = 0;
+    lldb::offset_t offset = 0;
     LineTable::shared_ptr line_table_sp(new LineTable);
     while (debug_line_data.ValidOffset(offset))
     {
-        const uint32_t debug_line_offset = offset;
+        const lldb::offset_t debug_line_offset = offset;
 
         if (line_table_sp.get() == NULL)
             break;
@@ -135,7 +135,7 @@ DWARFDebugLine::DumpStatementTable(Log *log, const DataExtractor& debug_line_dat
 {
     if (debug_line_data.ValidOffset(debug_line_offset))
     {
-        uint32_t offset = debug_line_offset;
+        lldb::offset_t offset = debug_line_offset;
         log->Printf(  "----------------------------------------------------------------------\n"
                     "debug_line[0x%8.8x]\n"
                     "----------------------------------------------------------------------\n", debug_line_offset);
@@ -185,7 +185,7 @@ DWARFDebugLine::DumpOpcodes(Log *log, SymbolFileDWARF* dwarf2Data, dw_offset_t d
 dw_offset_t
 DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_data, const dw_offset_t debug_line_offset, uint32_t flags)
 {
-    uint32_t offset = debug_line_offset;
+    lldb::offset_t offset = debug_line_offset;
     if (debug_line_data.ValidOffset(offset))
     {
         Prologue prologue;
@@ -200,7 +200,7 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_d
         else
         {
             offset = debug_line_offset;
-            log->Printf( "0x%8.8x: skipping pad byte %2.2x", offset, debug_line_data.GetU8(&offset));
+            log->Printf( "0x%8.8" PRIx64 ": skipping pad byte %2.2x", offset, debug_line_data.GetU8(&offset));
             return offset;
         }
 
@@ -388,7 +388,7 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_d
 void
 DWARFDebugLine::Parse(const DataExtractor& debug_line_data, DWARFDebugLine::State::Callback callback, void* userData)
 {
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     if (debug_line_data.ValidOffset(offset))
     {
         if (!ParseStatementTable(debug_line_data, &offset, callback, userData))
@@ -401,9 +401,9 @@ DWARFDebugLine::Parse(const DataExtractor& debug_line_data, DWARFDebugLine::Stat
 // DWARFDebugLine::ParsePrologue
 //----------------------------------------------------------------------
 bool
-DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t* offset_ptr, Prologue* prologue)
+DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, lldb::offset_t* offset_ptr, Prologue* prologue)
 {
-    const uint32_t prologue_offset = *offset_ptr;
+    const lldb::offset_t prologue_offset = *offset_ptr;
 
     //DEBUG_PRINTF("0x%8.8x: ParsePrologue()\n", *offset_ptr);
 
@@ -416,7 +416,7 @@ DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t*
       return false;
 
     prologue->prologue_length   = debug_line_data.GetU32(offset_ptr);
-    const dw_offset_t end_prologue_offset = prologue->prologue_length + *offset_ptr;
+    const lldb::offset_t end_prologue_offset = prologue->prologue_length + *offset_ptr;
     prologue->min_inst_length   = debug_line_data.GetU8(offset_ptr);
     prologue->default_is_stmt   = debug_line_data.GetU8(offset_ptr);
     prologue->line_base         = debug_line_data.GetU8(offset_ptr);
@@ -459,8 +459,8 @@ DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t*
     if (*offset_ptr != end_prologue_offset)
     {
         Host::SystemLog (Host::eSystemLogWarning, 
-                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
-                         prologue_offset, 
+                         "warning: parsing line table prologue at 0x%8.8" PRIx64 " should have ended at 0x%8.8" PRIx64 " but it ended ad 0x%8.8" PRIx64 "\n",
+                         prologue_offset,
                          end_prologue_offset, 
                          *offset_ptr);
     }
@@ -474,7 +474,7 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
                                    dw_offset_t stmt_list,
                                    FileSpecList &support_files)
 {
-    uint32_t offset = stmt_list + 4;    // Skip the total length
+    lldb::offset_t offset = stmt_list + 4;    // Skip the total length
     const char * s;
     uint32_t version = debug_line_data.GetU16(&offset);
     if (version != 2)
@@ -554,7 +554,7 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
     if (offset != end_prologue_offset)
     {
         Host::SystemLog (Host::eSystemLogError, 
-                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
+                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8" PRIx64 "\n",
                          stmt_list, 
                          end_prologue_offset, 
                          offset);
@@ -573,7 +573,7 @@ bool
 DWARFDebugLine::ParseStatementTable
 (
     const DataExtractor& debug_line_data,
-    dw_offset_t* offset_ptr,
+    lldb::offset_t* offset_ptr,
     DWARFDebugLine::State::Callback callback,
     void* userData
 )
@@ -613,7 +613,7 @@ DWARFDebugLine::ParseStatementTable
         {
             // Extended Opcodes always start with a zero opcode followed by
             // a uleb128 length so you can skip ones you don't know about
-            dw_offset_t ext_offset = *offset_ptr;
+            lldb::offset_t ext_offset = *offset_ptr;
             dw_uleb128_t len = debug_line_data.GetULEB128(offset_ptr);
             dw_offset_t arg_size = len - (*offset_ptr - ext_offset);
 
@@ -873,7 +873,7 @@ ParseStatementTableCallback(dw_offset_t offset, const DWARFDebugLine::State& sta
 // the prologue and all rows.
 //----------------------------------------------------------------------
 bool
-DWARFDebugLine::ParseStatementTable(const DataExtractor& debug_line_data, uint32_t* offset_ptr, LineTable* line_table)
+DWARFDebugLine::ParseStatementTable(const DataExtractor& debug_line_data, lldb::offset_t *offset_ptr, LineTable* line_table)
 {
     return ParseStatementTable(debug_line_data, offset_ptr, ParseStatementTableCallback, line_table);
 }

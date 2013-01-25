@@ -58,7 +58,7 @@ public:
     void
     SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         SetError (GPRRegSet, Read, -1);
         SetError (FPURegSet, Read, -1);
         SetError (EXCRegSet, Read, -1);
@@ -166,7 +166,7 @@ public:
     void
     SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         SetError (GPRRegSet, Read, -1);
         SetError (FPURegSet, Read, -1);
         SetError (EXCRegSet, Read, -1);
@@ -273,7 +273,7 @@ public:
     void
     SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         SetError (GPRRegSet, Read, -1);
         SetError (FPURegSet, Read, -1);
         SetError (EXCRegSet, Read, -1);
@@ -472,7 +472,7 @@ ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp,
 {
     DataExtractor data;
     data.SetData (data_sp, data_offset, data_length);
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
     return MachHeaderSizeFromMagic(magic) != 0;
 }
@@ -522,7 +522,7 @@ ObjectFileMachO::ParseHeader ()
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         bool can_parse = false;
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         m_data.SetByteOrder (lldb::endian::InlHostByteOrder());
         // Leave magic in the original byte order
         m_header.magic = m_data.GetU32(&offset);
@@ -612,7 +612,7 @@ ObjectFileMachO::IsExecutable() const
     return m_header.filetype == HeaderFileTypeExecutable;
 }
 
-size_t
+uint32_t
 ObjectFileMachO::GetAddressByteSize () const
 {
     return m_data.GetAddressByteSize ();
@@ -769,7 +769,7 @@ ObjectFileMachO::ParseSections ()
 {
     lldb::user_id_t segID = 0;
     lldb::user_id_t sectID = 0;
-    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+    lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
     const bool is_core = GetType() == eTypeCoreFile;
     //bool dump_sections = false;
@@ -780,7 +780,7 @@ ObjectFileMachO::ParseSections ()
     encryption_info_command encryption_cmd;
     for (i=0; i<m_header.ncmds; ++i)
     {
-        const uint32_t load_cmd_offset = offset;
+        const lldb::offset_t load_cmd_offset = offset;
         if (m_data.GetU32(&offset, &encryption_cmd, 2) == NULL)
             break;
         
@@ -805,7 +805,7 @@ ObjectFileMachO::ParseSections ()
     struct segment_command_64 load_cmd;
     for (i=0; i<m_header.ncmds; ++i)
     {
-        const uint32_t load_cmd_offset = offset;
+        const lldb::offset_t load_cmd_offset = offset;
         if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
             break;
 
@@ -826,7 +826,7 @@ ObjectFileMachO::ParseSections ()
                     // get at data that isn't stored in the abstracted Sections.
                     m_mach_segments.push_back (load_cmd);
 
-                    ConstString segment_name (load_cmd.segname, std::min<int>(strlen(load_cmd.segname), sizeof(load_cmd.segname)));
+                    ConstString segment_name (load_cmd.segname, std::min<size_t>(strlen(load_cmd.segname), sizeof(load_cmd.segname)));
                     // Use a segment ID of the segment index shifted left by 8 so they
                     // never conflict with any of the sections.
                     SectionSP segment_sp;
@@ -1209,14 +1209,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
     struct linkedit_data_command function_starts_load_command = { 0, 0, 0, 0 };
     typedef AddressDataArray<lldb::addr_t, bool, 100> FunctionStarts;
     FunctionStarts function_starts;
-    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+    lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
 
     for (i=0; i<m_header.ncmds; ++i)
     {
-        const uint32_t cmd_offset = offset;
+        const lldb::offset_t cmd_offset = offset;
         // Read in the load command and load command size
         struct load_command lc;
         if (m_data.GetU32(&offset, &lc, 2) == NULL)
@@ -1282,13 +1282,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         ProcessSP process_sp (m_process_wp.lock());
         Process *process = process_sp.get();
 
-        const size_t addr_byte_size = m_data.GetAddressByteSize();
+        const uint32_t addr_byte_size = m_data.GetAddressByteSize();
+        const ByteOrder byte_order = m_data.GetByteOrder();
         bool bit_width_32 = addr_byte_size == 4;
         const size_t nlist_byte_size = bit_width_32 ? sizeof(struct nlist) : sizeof(struct nlist_64);
 
-        DataExtractor nlist_data (NULL, 0, m_data.GetByteOrder(), m_data.GetAddressByteSize());
-        DataExtractor strtab_data (NULL, 0, m_data.GetByteOrder(), m_data.GetAddressByteSize());
-        DataExtractor function_starts_data (NULL, 0, m_data.GetByteOrder(), m_data.GetAddressByteSize());
+        DataExtractor nlist_data (NULL, 0, byte_order, addr_byte_size);
+        DataExtractor strtab_data (NULL, 0, byte_order, addr_byte_size);
+        DataExtractor function_starts_data (NULL, 0, byte_order, addr_byte_size);
         
         const addr_t nlist_data_byte_size = symtab_load_command.nsyms * nlist_byte_size;
         const addr_t strtab_data_byte_size = symtab_load_command.strsize;
@@ -1420,7 +1421,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         {
             FunctionStarts::Entry function_start_entry;
             function_start_entry.data = false;
-            uint32_t function_start_offset = 0;
+            lldb::offset_t function_start_offset = 0;
             function_start_entry.addr = text_section_sp->GetFileAddress();
             uint64_t delta;
             while ((delta = function_starts_data.GetULEB128(&function_start_offset)) > 0)
@@ -1431,11 +1432,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             }
         }
         
-        const uint32_t function_starts_count = function_starts.GetSize();
+        const size_t function_starts_count = function_starts.GetSize();
 
-        uint8_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NListSectionNoSection;
+        const user_id_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NListSectionNoSection;
 
-        uint32_t nlist_data_offset = 0;
+        lldb::offset_t nlist_data_offset = 0;
 
         uint32_t N_SO_index = UINT32_MAX;
 
@@ -1457,7 +1458,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
         uint32_t sym_idx = 0;
         Symbol *sym = NULL;
-        uint32_t num_syms = 0;
+        size_t num_syms = 0;
         std::string memory_symbol_name;
         uint32_t unmapped_local_symbols_found = 0;
 
@@ -1547,7 +1548,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
             if (DataBufferSP dsc_data_sp = dsc_filespec.MemoryMapFileContents(0, sizeof(struct lldb_copy_dyld_cache_header))) 
             {
-                DataExtractor dsc_header_data(dsc_data_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
+                DataExtractor dsc_header_data(dsc_data_sp, byte_order, addr_byte_size);
 
                 uint32_t offset = offsetof (struct lldb_copy_dyld_cache_header, mappingOffset); 
                 uint32_t mappingOffset = dsc_header_data.GetU32(&offset);
@@ -1566,7 +1567,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         // Map the local symbols
                         if (DataBufferSP dsc_local_symbols_data_sp = dsc_filespec.MemoryMapFileContents(localSymbolsOffset, localSymbolsSize)) 
                         {
-                            DataExtractor dsc_local_symbols_data(dsc_local_symbols_data_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
+                            DataExtractor dsc_local_symbols_data(dsc_local_symbols_data_sp, byte_order, addr_byte_size);
 
                             offset = 0;
 
@@ -2382,7 +2383,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             const char *symbol_name_non_abi_mangled = NULL;
 
             SectionSP symbol_section;
-            uint32_t symbol_byte_size = 0;
+            lldb::addr_t symbol_byte_size = 0;
             bool add_nlist = true;
             bool is_debug = ((nlist.n_type & NlistMaskStab) != 0);
             bool demangled_is_synthesized = false;
@@ -3191,7 +3192,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         {
                             const uint32_t symbol_stub_index = symbol_stub_index_offset + stub_idx;
                             const lldb::addr_t symbol_stub_addr = m_mach_sections[sect_idx].addr + (stub_idx * symbol_stub_byte_size);
-                            uint32_t symbol_stub_offset = symbol_stub_index * 4;
+                            lldb::offset_t symbol_stub_offset = symbol_stub_index * 4;
                             if (indirect_symbol_index_data.ValidOffsetForDataOfSize(symbol_stub_offset, 4))
                             {
                                 const uint32_t stub_sym_id = indirect_symbol_index_data.GetU32 (&symbol_stub_offset);
@@ -3299,11 +3300,11 @@ ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         struct uuid_command load_cmd;
-        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
         uint32_t i;
         for (i=0; i<m_header.ncmds; ++i)
         {
-            const uint32_t cmd_offset = offset;
+            const lldb::offset_t cmd_offset = offset;
             if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
                 break;
 
@@ -3346,7 +3347,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         struct load_command load_cmd;
-        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
         const bool resolve_path = false; // Don't resolve the dependend file paths since they may not reside on this system
         uint32_t i;
         for (i=0; i<m_header.ncmds; ++i)
@@ -3419,14 +3420,14 @@ ObjectFileMachO::GetEntryPointAddress ()
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         struct load_command load_cmd;
-        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
         uint32_t i;
         lldb::addr_t start_address = LLDB_INVALID_ADDRESS;
         bool done = false;
         
         for (i=0; i<m_header.ncmds; ++i)
         {
-            const uint32_t cmd_offset = offset;
+            const lldb::offset_t cmd_offset = offset;
             if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
                 break;
 
@@ -3563,7 +3564,7 @@ ObjectFileMachO::GetNumThreadContexts ()
         if (!m_thread_context_offsets_valid)
         {
             m_thread_context_offsets_valid = true;
-            uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+            lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
             FileRangeArray::Entry file_range;
             thread_command thread_cmd;
             for (uint32_t i=0; i<m_header.ncmds; ++i)
@@ -3729,13 +3730,13 @@ ObjectFileMachO::GetVersion (uint32_t *versions, uint32_t num_versions)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         struct dylib_command load_cmd;
-        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
         uint32_t version_cmd = 0;
         uint64_t version = 0;
         uint32_t i;
         for (i=0; i<m_header.ncmds; ++i)
         {
-            const uint32_t cmd_offset = offset;
+            const lldb::offset_t cmd_offset = offset;
             if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
                 break;
             

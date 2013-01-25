@@ -97,8 +97,8 @@ protected:
         void
         Clear();
 
-        uint32_t
-        Extract (const lldb_private::DataExtractor& data, uint32_t offset);
+        lldb::offset_t
+        Extract (const lldb_private::DataExtractor& data, lldb::offset_t offset);
 
         lldb_private::ConstString       ar_name;        // name
         uint32_t        ar_date;        // modification time
@@ -106,8 +106,8 @@ protected:
         uint16_t        ar_gid;         // group id
         uint16_t        ar_mode;        // octal file permissions
         uint32_t        ar_size;        // size in bytes
-        uint32_t        ar_file_offset; // file offset in bytes from the beginning of the file of the object data
-        uint32_t        ar_file_size;   // length of the object data
+        lldb::offset_t  ar_file_offset; // file offset in bytes from the beginning of the file of the object data
+        lldb::offset_t  ar_file_size;   // length of the object data
 
         typedef std::vector<Object>         collection;
         typedef collection::iterator        iterator;
@@ -170,14 +170,14 @@ protected:
         HasNoExternalReferences() const;
 
     protected:
-
+        typedef lldb_private::UniqueCStringMap<uint32_t> ObjectNameToIndexMap;
         //----------------------------------------------------------------------
         // Member Variables
         //----------------------------------------------------------------------
         lldb_private::ArchSpec m_arch;
         lldb_private::TimeValue m_time;
         Object::collection m_objects;
-        lldb_private::UniqueCStringMap<uint32_t> m_object_name_to_index_map;
+        ObjectNameToIndexMap m_object_name_to_index_map;
     };
 
     void

@@ -40,7 +40,7 @@ VMRange::ContainsRange(const VMRange::collection& coll, const VMRange& range)
     return false;
 }
 
-uint32_t
+size_t
 VMRange::FindRangeIndexThatContainsValue (const VMRange::collection& coll, lldb::addr_t value)
 {
     ValueInRangeUnaryPredicate in_range_predicate(value);

@@ -299,7 +299,7 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        const int argc = command.GetArgumentCount();
+        const size_t argc = command.GetArgumentCount();
 
         if (argc != 0)
         {
@@ -320,10 +320,11 @@ protected:
             bool append = true;
             size_t num_matches = 0;
             
-            if (m_options.modules.size() > 0)
+            const size_t num_modules = m_options.modules.size();
+            if (num_modules > 0)
             {
                 ModuleList matching_modules;
-                for (unsigned i = 0, e = m_options.modules.size(); i != e; i++)
+                for (size_t i = 0; i < num_modules; ++i)
                 {
                     FileSpec module_file_spec(m_options.modules[i].c_str(), false);
                     if (module_file_spec)
@@ -423,7 +424,7 @@ protected:
             // This is a little hacky, but the first line table entry for a function points to the "{" that 
             // starts the function block.  It would be nice to actually get the function
             // declaration in there too.  So back up a bit, but not further than what you're going to display.
-            size_t lines_to_back_up = m_options.num_lines >= 10 ? 5 : m_options.num_lines/2;
+            uint32_t lines_to_back_up = m_options.num_lines >= 10 ? 5 : m_options.num_lines/2;
             uint32_t line_no;
             if (start_line <= lines_to_back_up)
                 line_no = 1;
@@ -475,8 +476,8 @@ protected:
                 // The target isn't loaded yet, we need to lookup the file address
                 // in all modules
                 const ModuleList &module_list = target->GetImages();
-                const uint32_t num_modules = module_list.GetSize();
-                for (uint32_t i=0; i<num_modules; ++i)
+                const size_t num_modules = module_list.GetSize();
+                for (size_t i=0; i<num_modules; ++i)
                 {
                     ModuleSP module_sp (module_list.GetModuleAtIndex(i));
                     if (module_sp && module_sp->ResolveFileAddress(m_options.address, so_addr))
@@ -621,7 +622,7 @@ protected:
             if (m_options.modules.size() > 0)
             {
                 ModuleList matching_modules;
-                for (unsigned i = 0, e = m_options.modules.size(); i != e; i++)
+                for (size_t i = 0, e = m_options.modules.size(); i < e; ++i)
                 {
                     FileSpec module_file_spec(m_options.modules[i].c_str(), false);
                     if (module_file_spec)

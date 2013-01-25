@@ -144,7 +144,7 @@ Value::GetType()
 }
 
 void
-Value::ResizeData(int len)
+Value::ResizeData(size_t len)
 {
     m_value_type = eValueTypeHostAddress;
     m_data_buffer.SetByteSize(len);
@@ -560,7 +560,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     }
 
     // If we got here, we need to read the value from memory
-    uint32_t byte_size = GetValueByteSize (ast_context, &error);
+    size_t byte_size = GetValueByteSize (ast_context, &error);
 
     // Bail if we encountered any errors getting the byte size
     if (error.Fail())

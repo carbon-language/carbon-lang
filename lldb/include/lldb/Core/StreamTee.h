@@ -93,14 +93,14 @@ public:
         }
     }
 
-    virtual int
+    virtual size_t
     Write (const void *s, size_t length)
     {
         Mutex::Locker locker (m_streams_mutex);
         if (m_streams.empty())
             return 0;
     
-        int min_bytes_written = INT_MAX;
+        size_t min_bytes_written = SIZE_MAX;
         collection::iterator pos, end;
         for (pos = m_streams.begin(), end = m_streams.end(); pos != end; ++pos)
         {
@@ -111,11 +111,13 @@ public:
             Stream *strm = pos->get();
             if (strm)
             {
-                int bytes_written = strm->Write (s, length);
+                const size_t bytes_written = strm->Write (s, length);
                 if (min_bytes_written > bytes_written)
                     min_bytes_written = bytes_written;
             }
         }
+        if (min_bytes_written == SIZE_MAX)
+            return 0;
         return min_bytes_written;
     }
 

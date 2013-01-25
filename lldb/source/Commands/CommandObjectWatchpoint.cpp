@@ -975,9 +975,9 @@ public:
     }
 
 protected:
-    static uint32_t GetVariableCallback (void *baton,
-                                         const char *name,
-                                         VariableList &variable_list)
+    static size_t GetVariableCallback (void *baton,
+                                       const char *name,
+                                       VariableList &variable_list)
     {
         Target *target = static_cast<Target *>(baton);
         if (target)

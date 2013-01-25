@@ -301,7 +301,7 @@ RegisterValue::SetType (const RegisterInfo *reg_info)
 }
 
 Error
-RegisterValue::SetValueFromData (const RegisterInfo *reg_info, DataExtractor &src, uint32_t src_offset, bool partial_data_ok)
+RegisterValue::SetValueFromData (const RegisterInfo *reg_info, DataExtractor &src, lldb::offset_t src_offset, bool partial_data_ok)
 {
     Error error;
     

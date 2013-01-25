@@ -459,10 +459,10 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     bool
-    GetContextAtIndex(uint32_t idx, SymbolContext& sc) const;
+    GetContextAtIndex(size_t idx, SymbolContext& sc) const;
 
     bool
-    RemoveContextAtIndex (uint32_t idx);
+    RemoveContextAtIndex (size_t idx);
     //------------------------------------------------------------------
     /// Get accessor for a symbol context list size.
     ///

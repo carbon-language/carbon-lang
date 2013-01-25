@@ -60,7 +60,7 @@ DWARFDebugAranges::Extract(const DataExtractor &debug_aranges_data)
 {
     if (debug_aranges_data.ValidOffset(0))
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
 
         DWARFDebugArangeSet set;
         Range range;

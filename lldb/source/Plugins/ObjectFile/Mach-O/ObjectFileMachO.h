@@ -85,7 +85,7 @@ public:
     virtual bool
     IsExecutable () const;
 
-    virtual size_t
+    virtual uint32_t
     GetAddressByteSize ()  const;
 
     virtual lldb::AddressClass

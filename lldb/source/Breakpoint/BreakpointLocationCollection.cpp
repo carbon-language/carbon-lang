@@ -115,7 +115,7 @@ BreakpointLocationCollection::FindByIDPair (lldb::break_id_t break_id, lldb::bre
 }
 
 BreakpointLocationSP
-BreakpointLocationCollection::GetByIndex (uint32_t i)
+BreakpointLocationCollection::GetByIndex (size_t i)
 {
     BreakpointLocationSP stop_sp;
     if (i < m_break_loc_collection.size())
@@ -125,7 +125,7 @@ BreakpointLocationCollection::GetByIndex (uint32_t i)
 }
 
 const BreakpointLocationSP
-BreakpointLocationCollection::GetByIndex (uint32_t i) const
+BreakpointLocationCollection::GetByIndex (size_t i) const
 {
     BreakpointLocationSP stop_sp;
     if (i < m_break_loc_collection.size())

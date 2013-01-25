@@ -247,7 +247,7 @@ public:
     /// @return
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindCompileUnits (const FileSpec &path,
                       bool append,
                       SymbolContextList &sc_list);
@@ -284,7 +284,7 @@ public:
     /// @return
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindFunctions (const ConstString &name,
                    const ClangNamespaceDecl *namespace_decl,
                    uint32_t name_type_mask, 
@@ -315,7 +315,7 @@ public:
     /// @return
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindFunctions (const RegularExpression& regex, 
                    bool symbols_ok, 
                    bool inlines_ok,
@@ -348,11 +348,11 @@ public:
     /// @return
     ///     The number of matches added to \a variable_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindGlobalVariables (const ConstString &name,
                          const ClangNamespaceDecl *namespace_decl,
                          bool append, 
-                         uint32_t max_matches, 
+                         size_t max_matches,
                          VariableList& variable_list);
 
     //------------------------------------------------------------------
@@ -377,10 +377,10 @@ public:
     /// @return
     ///     The number of matches added to \a variable_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindGlobalVariables (const RegularExpression& regex, 
                          bool append, 
-                         uint32_t max_matches, 
+                         size_t max_matches,
                          VariableList& variable_list);
 
     //------------------------------------------------------------------
@@ -424,11 +424,11 @@ public:
     /// @return
     ///     The number of matches added to \a type_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindTypes (const SymbolContext& sc,
                const ConstString &type_name,
                bool exact_match,
-               uint32_t max_matches,
+               size_t max_matches,
                TypeList& types);
 
     lldb::TypeSP
@@ -458,11 +458,11 @@ public:
     /// @return
     ///     The number of matches added to \a type_list.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     FindTypesInNamespace (const SymbolContext& sc,
                           const ConstString &type_name,
                           const ClangNamespaceDecl *namespace_decl,
-                          uint32_t max_matches,
+                          size_t max_matches,
                           TypeList& type_list);
 
     //------------------------------------------------------------------
@@ -570,11 +570,11 @@ public:
     ///     The number of compile units that the symbol vendor plug-in
     ///     finds.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     GetNumCompileUnits();
 
     lldb::CompUnitSP
-    GetCompileUnitAtIndex (uint32_t);
+    GetCompileUnitAtIndex (size_t idx);
 
     const ConstString &
     GetObjectName() const;
@@ -963,12 +963,12 @@ protected:
 
 private:
 
-    uint32_t
+    size_t
     FindTypes_Impl (const SymbolContext& sc, 
                     const ConstString &name,
                     const ClangNamespaceDecl *namespace_decl,
                     bool append, 
-                    uint32_t max_matches, 
+                    size_t max_matches,
                     TypeList& types);
 
     

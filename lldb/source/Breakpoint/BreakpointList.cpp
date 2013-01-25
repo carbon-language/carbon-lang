@@ -172,13 +172,13 @@ BreakpointList::Dump (Stream *s) const
 
 
 BreakpointSP
-BreakpointList::GetBreakpointAtIndex (uint32_t i)
+BreakpointList::GetBreakpointAtIndex (size_t i)
 {
     Mutex::Locker locker(m_mutex);
     BreakpointSP stop_sp;
     bp_collection::iterator end = m_breakpoints.end();
     bp_collection::iterator pos;
-    uint32_t curr_i = 0;
+    size_t curr_i = 0;
     for (pos = m_breakpoints.begin(), curr_i = 0; pos != end; ++pos, ++curr_i)
     {
         if (curr_i == i)
@@ -188,13 +188,13 @@ BreakpointList::GetBreakpointAtIndex (uint32_t i)
 }
 
 const BreakpointSP
-BreakpointList::GetBreakpointAtIndex (uint32_t i) const
+BreakpointList::GetBreakpointAtIndex (size_t i) const
 {
     Mutex::Locker locker(m_mutex);
     BreakpointSP stop_sp;
     bp_collection::const_iterator end = m_breakpoints.end();
     bp_collection::const_iterator pos;
-    uint32_t curr_i = 0;
+    size_t curr_i = 0;
     for (pos = m_breakpoints.begin(), curr_i = 0; pos != end; ++pos, ++curr_i)
     {
         if (curr_i == i)

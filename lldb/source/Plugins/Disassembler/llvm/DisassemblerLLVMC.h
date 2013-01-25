@@ -50,8 +50,8 @@ public:
     size_t
     DecodeInstructions (const lldb_private::Address &base_addr,
                         const lldb_private::DataExtractor& data,
-                        uint32_t data_offset,
-                        uint32_t num_instructions,
+                        lldb::offset_t data_offset,
+                        size_t num_instructions,
                         bool append);
     
     //------------------------------------------------------------------

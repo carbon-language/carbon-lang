@@ -34,7 +34,7 @@ StreamString::Flush ()
     // Nothing to do when flushing a buffer based stream...
 }
 
-int
+size_t
 StreamString::Write (const void *s, size_t length)
 {
     m_packet.append ((char *)s, length);

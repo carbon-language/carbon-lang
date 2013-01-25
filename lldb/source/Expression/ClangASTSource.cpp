@@ -615,9 +615,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
         const ModuleList &target_images = m_target->GetImages();
         Mutex::Locker modules_locker (target_images.GetMutex());
         
-        for (uint32_t i = 0, e = target_images.GetSize();
-             i != e;
-             ++i)
+        for (size_t i = 0, e = target_images.GetSize(); i < e; ++i)
         {
             lldb::ModuleSP image = target_images.GetModuleAtIndexUnlocked(i);
             
@@ -1602,9 +1600,7 @@ ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespac
         
         ClangNamespaceDecl null_namespace_decl;
         
-        for (uint32_t i = 0, e = target_images.GetSize();
-             i != e;
-             ++i)
+        for (size_t i = 0, e = target_images.GetSize(); i < e; ++i)
         {
             lldb::ModuleSP image = target_images.GetModuleAtIndexUnlocked(i);
             

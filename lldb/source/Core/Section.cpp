@@ -162,10 +162,10 @@ Section::GetLoadBaseAddress (Target *target) const
 bool
 Section::ResolveContainedAddress (addr_t offset, Address &so_addr) const
 {
-    const uint32_t num_children = m_children.GetSize();
+    const size_t num_children = m_children.GetSize();
     if (num_children > 0)
     {
-        for (uint32_t i=0; i<num_children; i++)
+        for (size_t i=0; i<num_children; i++)
         {
             Section* child_section = m_children.GetSectionAtIndex (i).get();
 
@@ -395,17 +395,17 @@ SectionList::~SectionList ()
 {
 }
 
-uint32_t
+size_t
 SectionList::AddSection (const lldb::SectionSP& section_sp)
 {
     assert (section_sp.get());
-    uint32_t section_index = m_sections.size();
+    size_t section_index = m_sections.size();
     m_sections.push_back(section_sp);
     InvalidateRangeCache();
     return section_index;
 }
 
-uint32_t
+size_t
 SectionList::FindSectionIndex (const Section* sect)
 {
     iterator sect_iter;
@@ -422,10 +422,10 @@ SectionList::FindSectionIndex (const Section* sect)
     return UINT32_MAX;
 }
 
-uint32_t
+size_t
 SectionList::AddUniqueSection (const lldb::SectionSP& sect_sp)
 {
-    uint32_t sect_idx = FindSectionIndex (sect_sp.get());
+    size_t sect_idx = FindSectionIndex (sect_sp.get());
     if (sect_idx == UINT32_MAX)
         sect_idx = AddSection (sect_sp);
     return sect_idx;
@@ -470,7 +470,7 @@ SectionList::GetNumSections (uint32_t depth) const
 }
 
 SectionSP
-SectionList::GetSectionAtIndex (uint32_t idx) const
+SectionList::GetSectionAtIndex (size_t idx) const
 {
     SectionSP sect_sp;
     if (idx < m_sections.size())
@@ -530,11 +530,11 @@ SectionList::FindSectionByID (user_id_t sect_id) const
 
 
 SectionSP
-SectionList::FindSectionByType (SectionType sect_type, bool check_children, uint32_t start_idx) const
+SectionList::FindSectionByType (SectionType sect_type, bool check_children, size_t start_idx) const
 {
     SectionSP sect_sp;
-    uint32_t num_sections = m_sections.size();
-    for (uint32_t idx = start_idx; idx < num_sections; ++idx)
+    size_t num_sections = m_sections.size();
+    for (size_t idx = start_idx; idx < num_sections; ++idx)
     {
         if (m_sections[idx]->GetType() == sect_type)
         {

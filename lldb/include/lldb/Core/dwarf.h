@@ -34,7 +34,6 @@ typedef uint32_t    dw_offset_t;    // Dwarf Debug Information Entry offset for 
 #endif
 
 /* Constants */
-#define DW_INVALID_ADDRESS                  (~(dw_addr_t)0)
 #define DW_INVALID_OFFSET                   (~(dw_offset_t)0)
 #define DW_INVALID_INDEX                    0xFFFFFFFFul
 

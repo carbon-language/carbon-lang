@@ -279,7 +279,7 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
         Error error;
         if (m_process->ReadMemory (shlib_addr, buf, 4, error) == 4)
         {
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             uint32_t magic = data.GetU32 (&offset);
             switch (magic)
             {
@@ -449,8 +449,8 @@ DynamicLoaderMacOSXDYLD::UpdateCommPageLoadAddress(Module *module)
             SectionList *section_list = image_object_file->GetSectionList ();
             if (section_list)
             {
-                uint32_t num_sections = section_list->GetSize();
-                for (uint32_t i=0; i<num_sections; ++i)
+                const size_t num_sections = section_list->GetSize();
+                for (size_t i=0; i<num_sections; ++i)
                 {
                     SectionSP section_sp (section_list->GetSectionAtIndex (i));
                     if (section_sp)
@@ -490,8 +490,8 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                 std::vector<uint32_t> inaccessible_segment_indexes;
                 // We now know the slide amount, so go through all sections
                 // and update the load addresses with the correct values.
-                uint32_t num_segments = info.segments.size();
-                for (uint32_t i=0; i<num_segments; ++i)
+                const size_t num_segments = info.segments.size();
+                for (size_t i=0; i<num_segments; ++i)
                 {
                     // Only load a segment if it has protections. Things like
                     // __PAGEZERO don't have any protections, and they shouldn't
@@ -585,8 +585,8 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
             SectionList *section_list = image_object_file->GetSectionList ();
             if (section_list)
             {
-                uint32_t num_segments = info.segments.size();
-                for (uint32_t i=0; i<num_segments; ++i)
+                const size_t num_segments = info.segments.size();
+                for (size_t i=0; i<num_segments; ++i)
                 {
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     if (section_sp)
@@ -715,7 +715,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
 
         uint8_t buf[256];
         DataExtractor data (buf, sizeof(buf), byte_order, addr_size);
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
 
         const size_t count_v2 =  sizeof (uint32_t) + // version
                                  sizeof (uint32_t) + // infoArrayCount
@@ -740,7 +740,6 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
                                  addr_size;          // errorSymbol
         assert (sizeof (buf) >= count_v11);
 
-        int count;
         Error error;
         if (m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, 4, error) == 4)
         {
@@ -767,10 +766,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
             return false;
         }
 
-        if (m_dyld_all_image_infos.version >= 11)
-            count = count_v11;
-        else
-            count = count_v2;
+        const size_t count = (m_dyld_all_image_infos.version >= 11) ? count_v11 : count_v2;
 
         const size_t bytes_read = m_process->ReadMemory (m_dyld_all_image_infos_addr, buf, count, error);
         if (bytes_read == count)
@@ -1049,7 +1045,7 @@ DynamicLoaderMacOSXDYLD::ReadImageInfos (lldb::addr_t image_infos_addr,
                                                      error);
     if (bytes_read == count)
     {
-        uint32_t info_data_offset = 0;
+        lldb::offset_t info_data_offset = 0;
         DataExtractor info_data_ref(info_data.GetBytes(), info_data.GetByteSize(), endian, addr_size);
         for (int i = 0; i < image_infos.size() && info_data_ref.ValidOffset(info_data_offset); i++)
         {
@@ -1167,7 +1163,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, llvm::MachO::mach_he
                                                error);
     if (bytes_read == sizeof(llvm::MachO::mach_header))
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         ::memset (header, 0, sizeof(llvm::MachO::mach_header));
 
         // Get the magic byte unswapped so we can figure out what we are dealing with
@@ -1229,7 +1225,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, llvm::MachO::mach_he
 uint32_t
 DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImageInfo& dylib_info, FileSpec *lc_id_dylinker)
 {
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     uint32_t cmd_idx;
     Segment segment;
     dylib_info.Clear (true);
@@ -1242,7 +1238,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
         if (data.ValidOffsetForDataOfSize (offset, sizeof(llvm::MachO::load_command)))
         {
             llvm::MachO::load_command load_cmd;
-            uint32_t load_cmd_offset = offset;
+            lldb::offset_t load_cmd_offset = offset;
             load_cmd.cmd = data.GetU32 (&offset);
             load_cmd.cmdsize = data.GetU32 (&offset);
             switch (load_cmd.cmd)
@@ -1276,7 +1272,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
             case llvm::MachO::LoadCommandDynamicLinkerIdent:
                 if (lc_id_dylinker)
                 {
-                    uint32_t name_offset = load_cmd_offset + data.GetU32 (&offset);
+                    const lldb::offset_t name_offset = load_cmd_offset + data.GetU32 (&offset);
                     const char *path = data.PeekCStr (name_offset);
                     lc_id_dylinker->SetFile (path, true);
                 }

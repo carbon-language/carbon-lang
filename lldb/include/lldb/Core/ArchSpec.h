@@ -159,7 +159,7 @@ public:
     const ArchSpec&
     operator= (const ArchSpec& rhs);
 
-    static uint32_t
+    static size_t
     AutoComplete (const char *name, 
                   StringList &matches);
 

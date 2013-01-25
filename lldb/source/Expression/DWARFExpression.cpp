@@ -233,7 +233,7 @@ DWARFExpression::DWARFExpression(const DWARFExpression& rhs) :
 }
 
 
-DWARFExpression::DWARFExpression(const DataExtractor& data, uint32_t data_offset, uint32_t data_length) :
+DWARFExpression::DWARFExpression(const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length) :
     m_data(data, data_offset, data_length),
     m_reg_kind (eRegisterKindDWARF),
     m_loclist_slide(LLDB_INVALID_ADDRESS)
@@ -261,7 +261,7 @@ DWARFExpression::SetOpcodeData (const DataExtractor& data)
 }
 
 void
-DWARFExpression::CopyOpcodeData (const DataExtractor& data, uint32_t data_offset, uint32_t data_length)
+DWARFExpression::CopyOpcodeData (const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
 {
     const uint8_t *bytes = data.PeekData(data_offset, data_length);
     if (bytes)
@@ -273,21 +273,21 @@ DWARFExpression::CopyOpcodeData (const DataExtractor& data, uint32_t data_offset
 }
 
 void
-DWARFExpression::SetOpcodeData (const DataExtractor& data, uint32_t data_offset, uint32_t data_length)
+DWARFExpression::SetOpcodeData (const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
 {
     m_data.SetData(data, data_offset, data_length);
 }
 
 void
-DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb::DescriptionLevel level, ABI *abi) const
+DWARFExpression::DumpLocation (Stream *s, lldb::offset_t offset, lldb::offset_t length, lldb::DescriptionLevel level, ABI *abi) const
 {
     if (!m_data.ValidOffsetForDataOfSize(offset, length))
         return;
-    const uint32_t start_offset = offset;
-    const uint32_t end_offset = offset + length;
+    const lldb::offset_t start_offset = offset;
+    const lldb::offset_t end_offset = offset + length;
     while (m_data.ValidOffset(offset) && offset < end_offset)
     {
-        const uint32_t op_offset = offset;
+        const lldb::offset_t op_offset = offset;
         const uint8_t op = m_data.GetU8(&offset);
 
         switch (level)
@@ -308,7 +308,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
             if (level == lldb::eDescriptionLevelFull)
                 break;
             // Fall through for verbose and print offset and DW_OP prefix..
-            s->Printf("0x%8.8x: %s", op_offset, op >= DW_OP_APPLE_uninit ? "DW_OP_APPLE_" : "DW_OP_");
+            s->Printf("0x%8.8" PRIx64 ": %s", op_offset, op >= DW_OP_APPLE_uninit ? "DW_OP_APPLE_" : "DW_OP_");
             break;
         }
 
@@ -506,7 +506,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 
         case DW_OP_regx:                                                    // 0x90 1 ULEB128 register
             {
-                uint64_t reg_num = m_data.GetULEB128(&offset);
+                uint32_t reg_num = m_data.GetULEB128(&offset);
                 if (abi)
                 {
                     RegisterInfo reg_info;
@@ -524,7 +524,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
                         }
                     }
                 }
-                s->Printf("DW_OP_regx(%" PRIu64 ")", reg_num); break;
+                s->Printf("DW_OP_regx(%" PRIu32 ")", reg_num); break;
             }
             break;
         case DW_OP_fbreg:                                                   // 0x91 1 SLEB128 offset
@@ -551,7 +551,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
                         }
                     }
                 }
-                s->Printf("DW_OP_bregx(reg=%u,offset=%" PRIi64 ")", reg_num, reg_offset);
+                s->Printf("DW_OP_bregx(reg=%" PRIu32 ",offset=%" PRIi64 ")", reg_num, reg_offset);
             }
             break;
         case DW_OP_piece:                                                   // 0x93 1 ULEB128 size of piece addressed
@@ -664,7 +664,7 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t
     if (IsLocationList())
     {
         // We have a location list
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         uint32_t count = 0;
         addr_t curr_base_addr = location_list_base_addr;
         while (m_data.ValidOffset(offset))
@@ -678,7 +678,7 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t
                 VMRange addr_range(curr_base_addr + begin_addr_offset, curr_base_addr + end_addr_offset);
                 addr_range.Dump(s, 0, 8);
                 s->PutChar('{');
-                uint32_t location_length = m_data.GetU16(&offset);
+                lldb::offset_t location_length = m_data.GetU16(&offset);
                 DumpLocation (s, offset, location_length, level, abi);
                 s->PutChar('}');
                 offset += location_length;
@@ -782,7 +782,7 @@ ReadRegisterValueAsScalar
 //
 //    if (IsLocationList())
 //    {
-//        uint32_t offset = 0;
+//        lldb::offset_t offset = 0;
 //
 //        addr_t loc_list_base_addr = m_loclist_slide.GetLoadAddress(process);
 //
@@ -811,10 +811,10 @@ ReadRegisterValueAsScalar
 //    return false;
 //}
 
-static uint32_t
-GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const uint8_t op)
+static offset_t
+GetOpcodeDataSize (const DataExtractor &data, const lldb::offset_t data_offset, const uint8_t op)
 {
-    uint32_t offset = data_offset;
+    lldb::offset_t offset = data_offset;
     switch (op)
     {
         case DW_OP_addr:    
@@ -1006,7 +1006,7 @@ GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const 
         default:
             break;
     }
-    return UINT32_MAX;
+    return LLDB_INVALID_OFFSET;
 }
 
 bool
@@ -1015,7 +1015,7 @@ DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr, bool &erro
     error = false;
     if (IsLocationList())
         return false;
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     while (m_data.ValidOffset(offset))
     {
         const uint8_t op = m_data.GetU8(&offset);
@@ -1030,8 +1030,8 @@ DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr, bool &erro
         }
         else
         {
-            const uint32_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
-            if (op_arg_size == UINT32_MAX)
+            const offset_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
+            if (op_arg_size == LLDB_INVALID_OFFSET)
             {
                 error = true;
                 break;
@@ -1047,14 +1047,14 @@ DWARFExpression::Update_DW_OP_addr (lldb::addr_t file_addr)
 {
     if (IsLocationList())
         return false;
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     while (m_data.ValidOffset(offset))
     {
         const uint8_t op = m_data.GetU8(&offset);
         
         if (op == DW_OP_addr)
         {
-            const uint8_t addr_byte_size = m_data.GetAddressByteSize();
+            const uint32_t addr_byte_size = m_data.GetAddressByteSize();
             // We have to make a copy of the data as we don't know if this
             // data is from a read only memory mapped buffer, so we duplicate
             // all of the data first, then modify it, and if all goes well,
@@ -1083,8 +1083,8 @@ DWARFExpression::Update_DW_OP_addr (lldb::addr_t file_addr)
         }
         else
         {
-            const uint32_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
-            if (op_arg_size == UINT32_MAX)
+            const offset_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
+            if (op_arg_size == LLDB_INVALID_OFFSET)
                 break;
             offset += op_arg_size;
         }
@@ -1100,7 +1100,7 @@ DWARFExpression::LocationListContainsAddress (lldb::addr_t loclist_base_addr, ll
 
     if (IsLocationList())
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
 
         if (loclist_base_addr == LLDB_INVALID_ADDRESS)
             return false;
@@ -1128,7 +1128,7 @@ DWARFExpression::LocationListContainsAddress (lldb::addr_t loclist_base_addr, ll
 }
 
 bool
-DWARFExpression::GetLocation (addr_t base_addr, addr_t pc, uint32_t &offset, uint32_t &length)
+DWARFExpression::GetLocation (addr_t base_addr, addr_t pc, lldb::offset_t &offset, lldb::offset_t &length)
 {
     offset = 0;
     if (!IsLocationList())
@@ -1164,7 +1164,7 @@ DWARFExpression::GetLocation (addr_t base_addr, addr_t pc, uint32_t &offset, uin
             }
         }
     }
-    offset = UINT32_MAX;
+    offset = LLDB_INVALID_OFFSET;
     length = 0;
     return false;
 }
@@ -1176,8 +1176,8 @@ DWARFExpression::DumpLocationForAddress (Stream *s,
                                          addr_t address,
                                          ABI *abi)
 {
-    uint32_t offset = 0;
-    uint32_t length = 0;
+    lldb::offset_t offset = 0;
+    lldb::offset_t length = 0;
     
     if (GetLocation (base_addr, address, offset, length))
     {
@@ -1223,7 +1223,7 @@ DWARFExpression::Evaluate
 {
     if (IsLocationList())
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         addr_t pc;
         StackFrame *frame = NULL;
         if (reg_ctx)
@@ -1294,8 +1294,8 @@ DWARFExpression::Evaluate
     ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
     const DataExtractor& opcodes,
-    const uint32_t opcodes_offset,
-    const uint32_t opcodes_length,
+    const lldb::offset_t opcodes_offset,
+    const lldb::offset_t opcodes_length,
     const uint32_t reg_kind,
     const Value* initial_value_ptr,
     Value& result,
@@ -1318,8 +1318,8 @@ DWARFExpression::Evaluate
     if (initial_value_ptr)
         stack.push_back(*initial_value_ptr);
 
-    uint32_t offset = opcodes_offset;
-    const uint32_t end_offset = opcodes_offset + opcodes_length;
+    lldb::offset_t offset = opcodes_offset;
+    const lldb::offset_t end_offset = opcodes_offset + opcodes_length;
     Value tmp;
     uint32_t reg_num;
 
@@ -1335,7 +1335,7 @@ DWARFExpression::Evaluate
 
     while (opcodes.ValidOffset(offset) && offset < end_offset)
     {
-        const uint32_t op_offset = offset;
+        const lldb::offset_t op_offset = offset;
         const uint8_t op = opcodes.GetU8(&offset);
 
         if (log && log->GetVerbose())
@@ -1349,7 +1349,7 @@ DWARFExpression::Evaluate
                 stack[i].Dump(&new_value);
                 log->Printf("  %s", new_value.GetData());
             }
-            log->Printf("0x%8.8x: %s", op_offset, DW_OP_value_to_name(op));
+            log->Printf("0x%8.8" PRIx64 ": %s", op_offset, DW_OP_value_to_name(op));
         }
         switch (op)
         {
@@ -1431,7 +1431,7 @@ DWARFExpression::Evaluate
                             if (process->ReadMemory(pointer_addr, &addr_bytes, addr_size, error) == addr_size)
                             {
                                 DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), process->GetByteOrder(), addr_size);
-                                uint32_t addr_data_offset = 0;
+                                lldb::offset_t addr_data_offset = 0;
                                 stack.back().GetScalar() = addr_data.GetPointer(&addr_data_offset);
                                 stack.back().ClearContext();
                             }
@@ -1522,7 +1522,7 @@ DWARFExpression::Evaluate
                             if (process->ReadMemory(pointer_addr, &addr_bytes, size, error) == size)
                             {
                                 DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), process->GetByteOrder(), size);
-                                uint32_t addr_data_offset = 0;
+                                lldb::offset_t addr_data_offset = 0;
                                 switch (size)
                                 {
                                     case 1: stack.back().GetScalar() = addr_data.GetU8(&addr_data_offset); break;
@@ -1996,7 +1996,7 @@ DWARFExpression::Evaluate
             }
             else
             {
-                uint32_t uconst_value = opcodes.GetULEB128(&offset);
+                const uint64_t uconst_value = opcodes.GetULEB128(&offset);
                 // Implicit conversion from a UINT to a Scalar...
                 stack.back().ResolveValue(exe_ctx, ast_context) += uconst_value;
                 if (!stack.back().ResolveValue(exe_ctx, ast_context).IsValid())
@@ -2113,7 +2113,7 @@ DWARFExpression::Evaluate
         case DW_OP_skip:
             {
                 int16_t skip_offset = (int16_t)opcodes.GetU16(&offset);
-                uint32_t new_offset = offset + skip_offset;
+                lldb::offset_t new_offset = offset + skip_offset;
                 if (new_offset >= opcodes_offset && new_offset < end_offset)
                     offset = new_offset;
                 else
@@ -2143,7 +2143,7 @@ DWARFExpression::Evaluate
                 Scalar zero(0);
                 if (tmp.ResolveValue(exe_ctx, ast_context) != zero)
                 {
-                    uint32_t new_offset = offset + bra_offset;
+                    lldb::offset_t new_offset = offset + bra_offset;
                     if (new_offset >= opcodes_offset && new_offset < end_offset)
                         offset = new_offset;
                     else

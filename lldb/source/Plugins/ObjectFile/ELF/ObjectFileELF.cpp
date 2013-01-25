@@ -53,7 +53,7 @@ public:
     ~ELFRelocation();
 
     bool
-    Parse(const lldb_private::DataExtractor &data, uint32_t *offset);
+    Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset);
 
     static unsigned
     RelocType32(const ELFRelocation &rel);
@@ -94,7 +94,7 @@ ELFRelocation::~ELFRelocation()
 }
 
 bool
-ELFRelocation::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+ELFRelocation::Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset)
 {
     if (reloc.is<ELFRel*>())
         return reloc.get<ELFRel*>()->Parse(data, offset);
@@ -270,28 +270,28 @@ ObjectFileELF::GetByteOrder() const
     return eByteOrderInvalid;
 }
 
-size_t
+uint32_t
 ObjectFileELF::GetAddressByteSize() const
 {
     return m_data.GetAddressByteSize();
 }
 
-unsigned
+size_t
 ObjectFileELF::SectionIndex(const SectionHeaderCollIter &I)
 {
-    return std::distance(m_section_headers.begin(), I) + 1;
+    return std::distance(m_section_headers.begin(), I) + 1u;
 }
 
-unsigned
+size_t
 ObjectFileELF::SectionIndex(const SectionHeaderCollConstIter &I) const
 {
-    return std::distance(m_section_headers.begin(), I) + 1;
+    return std::distance(m_section_headers.begin(), I) + 1u;
 }
 
 bool
 ObjectFileELF::ParseHeader()
 {
-    uint32_t offset = GetOffset();
+    lldb::offset_t offset = GetOffset();
     return m_header.Parse(m_data, &offset);
 }
 
@@ -445,8 +445,8 @@ ObjectFileELF::ParseDependentModules()
         ReadSectionData(dynstr, dynstr_data))
     {
         ELFDynamic symbol;
-        const unsigned section_size = dynsym_data.GetByteSize();
-        unsigned offset = 0;
+        const lldb::offset_t section_size = dynsym_data.GetByteSize();
+        lldb::offset_t offset = 0;
 
         // The only type of entries we are concerned with are tagged DT_NEEDED,
         // yielding the name of a required library.
@@ -492,7 +492,7 @@ ObjectFileELF::ParseProgramHeaders()
         return 0;
 
     uint32_t idx;
-    uint32_t offset;
+    lldb::offset_t offset;
     for (idx = 0, offset = 0; idx < m_header.e_phnum; ++idx)
     {
         if (m_program_headers[idx].Parse(data, &offset) == false)
@@ -530,7 +530,7 @@ ObjectFileELF::ParseSectionHeaders()
         return 0;
 
     uint32_t idx;
-    uint32_t offset;
+    lldb::offset_t offset;
     for (idx = 0, offset = 0; idx < m_header.e_shnum; ++idx)
     {
         if (m_section_headers[idx].Parse(data, &offset) == false)
@@ -698,9 +698,8 @@ ParseSymbols(Symtab *symtab,
              const DataExtractor &strtab_data)
 {
     ELFSymbol symbol;
-    uint32_t offset = 0;
-    const unsigned num_symbols = 
-        symtab_data.GetByteSize() / symtab_shdr->sh_entsize;
+    lldb::offset_t offset = 0;
+    const size_t num_symbols = symtab_data.GetByteSize() / symtab_shdr->sh_entsize;
 
     static ConstString text_section_name(".text");
     static ConstString init_section_name(".init");
@@ -877,8 +876,8 @@ ObjectFileELF::ParseDynamicSymbols()
     DataExtractor dynsym_data;
     if (ReadSectionData(dynsym, dynsym_data))
     {
-        const unsigned section_size = dynsym_data.GetByteSize();
-        unsigned cursor = 0;
+        const lldb::offset_t section_size = dynsym_data.GetByteSize();
+        lldb::offset_t cursor = 0;
 
         while (cursor < section_size)
         {
@@ -956,9 +955,9 @@ ParsePLTRelocations(Symtab *symbol_table,
 {
     ELFRelocation rel(rel_type);
     ELFSymbol symbol;
-    uint32_t offset = 0;
-    const unsigned plt_entsize = plt_hdr->sh_entsize;
-    const unsigned num_relocations = rel_hdr->sh_size / rel_hdr->sh_entsize;
+    lldb::offset_t offset = 0;
+    const elf_xword plt_entsize = plt_hdr->sh_entsize;
+    const elf_xword num_relocations = rel_hdr->sh_size / rel_hdr->sh_entsize;
 
     typedef unsigned (*reloc_info_fn)(const ELFRelocation &rel);
     reloc_info_fn reloc_type;
@@ -985,7 +984,7 @@ ParsePLTRelocations(Symtab *symbol_table,
         if (reloc_type(rel) != slot_type)
             continue;
 
-        unsigned symbol_offset = reloc_symbol(rel) * sym_hdr->sh_entsize;
+        lldb::offset_t symbol_offset = reloc_symbol(rel) * sym_hdr->sh_entsize;
         uint64_t plt_index = (i + 1) * plt_entsize;
 
         if (!symbol.Parse(symtab_data, &symbol_offset))
@@ -1378,7 +1377,7 @@ ObjectFileELF::DumpELFSectionHeader_sh_type(Stream *s, elf_word sh_type)
 // Dump an token value for the ELF section header member sh_flags
 //----------------------------------------------------------------------
 void
-ObjectFileELF::DumpELFSectionHeader_sh_flags(Stream *s, elf_word sh_flags)
+ObjectFileELF::DumpELFSectionHeader_sh_flags(Stream *s, elf_xword sh_flags)
 {
     *s  << ((sh_flags & SHF_WRITE) ? "WRITE" : "     ")
         << (((sh_flags & SHF_WRITE) && (sh_flags & SHF_ALLOC)) ? '+' : ' ')

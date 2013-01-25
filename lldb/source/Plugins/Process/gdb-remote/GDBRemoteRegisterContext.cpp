@@ -85,7 +85,7 @@ GDBRemoteRegisterContext::GetRegisterCount ()
 }
 
 const RegisterInfo *
-GDBRemoteRegisterContext::GetRegisterInfoAtIndex (uint32_t reg)
+GDBRemoteRegisterContext::GetRegisterInfoAtIndex (size_t reg)
 {
     return m_reg_info.GetRegisterInfoAtIndex (reg);
 }
@@ -99,7 +99,7 @@ GDBRemoteRegisterContext::GetRegisterSetCount ()
 
 
 const RegisterSet *
-GDBRemoteRegisterContext::GetRegisterSet (uint32_t reg_set)
+GDBRemoteRegisterContext::GetRegisterSet (size_t reg_set)
 {
     return m_reg_info.GetRegisterSet (reg_set);
 }
@@ -857,7 +857,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     static ConstString gpr_reg_set ("General Purpose Registers");
     static ConstString sfp_reg_set ("Software Floating Point Registers");
     static ConstString vfp_reg_set ("Floating Point Registers");
-    uint32_t i;
+    size_t i;
     if (from_scratch)
     {
         // Calculate the offsets of the registers
@@ -905,8 +905,8 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     else
     {
         // Add composite registers to our primordial registers, then.
-        const uint32_t num_composites = llvm::array_lengthof(g_composites);
-        const uint32_t num_primordials = GetNumRegisters();
+        const size_t num_composites = llvm::array_lengthof(g_composites);
+        const size_t num_primordials = GetNumRegisters();
         RegisterInfo *g_comp_register_infos = g_register_infos + (num_registers - num_composites);
         for (i=0; i<num_composites; ++i)
         {

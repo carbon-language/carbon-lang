@@ -136,7 +136,7 @@ public:
         static lldb::BreakpointLocationSP
         GetBreakpointLocationAtIndexFromEvent (const lldb::EventSP &event_sp, uint32_t loc_idx);
         
-        static uint32_t
+        static size_t
         GetNumBreakpointLocationsFromEvent (const lldb::EventSP &event_sp);
 
         static const BreakpointEventData *
@@ -310,7 +310,7 @@ public:
     ///     greater than then number of actual locations.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    GetLocationAtIndex (uint32_t index);
+    GetLocationAtIndex (size_t index);
 
     //------------------------------------------------------------------
     // The next section deals with various breakpoint options.

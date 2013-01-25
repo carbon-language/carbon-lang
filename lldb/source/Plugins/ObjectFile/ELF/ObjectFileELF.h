@@ -84,7 +84,7 @@ public:
     virtual bool
     IsExecutable () const;
 
-    virtual size_t
+    virtual uint32_t
     GetAddressByteSize() const;
 
     virtual lldb_private::Symtab *
@@ -168,11 +168,11 @@ private:
     lldb_private::Address  m_entry_point_address;
 
     /// Returns a 1 based index of the given section header.
-    unsigned
+    size_t
     SectionIndex(const SectionHeaderCollIter &I);
 
     /// Returns a 1 based index of the given section header.
-    unsigned
+    size_t
     SectionIndex(const SectionHeaderCollConstIter &I) const;
 
     /// Parses all section headers present in this object file and populates
@@ -282,7 +282,7 @@ private:
 
     static void
     DumpELFSectionHeader_sh_flags(lldb_private::Stream *s, 
-                                  elf::elf_word sh_flags);
+                                  elf::elf_xword sh_flags);
     //@}
 
     /// ELF dependent module dump routine.

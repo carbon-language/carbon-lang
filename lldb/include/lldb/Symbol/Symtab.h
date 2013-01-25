@@ -41,8 +41,8 @@ public:
                         Symtab(ObjectFile *objfile);
                         ~Symtab();
 
-            void        Reserve (uint32_t count);
-            Symbol *    Resize (uint32_t count);
+            void        Reserve (size_t count);
+            Symbol *    Resize (size_t count);
             uint32_t    AddSymbol(const Symbol& symbol);
             size_t      GetNumSymbols() const;
             void        Dump(Stream *s, Target *target, SortOrder sort_type);
@@ -53,8 +53,8 @@ public:
                             return m_mutex;
                         }
             Symbol *    FindSymbolByID (lldb::user_id_t uid) const;
-            Symbol *    SymbolAtIndex (uint32_t idx);
-    const   Symbol *    SymbolAtIndex (uint32_t idx) const;
+            Symbol *    SymbolAtIndex (size_t idx);
+    const   Symbol *    SymbolAtIndex (size_t idx) const;
             Symbol *    FindSymbolWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t &start_idx);
             uint32_t    AppendSymbolIndexesWithType (lldb::SymbolType symbol_type, std::vector<uint32_t>& indexes, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
             uint32_t    AppendSymbolIndexesWithTypeAndFlagsValue (lldb::SymbolType symbol_type, uint32_t flags_value, std::vector<uint32_t>& indexes, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
@@ -114,7 +114,7 @@ protected:
 private:
 
     bool
-    CheckSymbolAtIndex (uint32_t idx, Debug symbol_debug_type, Visibility symbol_visibility) const
+    CheckSymbolAtIndex (size_t idx, Debug symbol_debug_type, Visibility symbol_visibility) const
     {
         switch (symbol_debug_type)
         {

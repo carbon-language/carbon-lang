@@ -49,8 +49,8 @@ ObjectContainerBSDArchive::Object::Clear()
     ar_file_size = 0;
 }
 
-uint32_t
-ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, uint32_t offset)
+lldb::offset_t
+ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, lldb::offset_t offset)
 {
     size_t ar_name_len = 0;
     std::string str;
@@ -98,7 +98,7 @@ ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, uint32_t 
         ar_file_size = ar_size - ar_name_len;
         return offset;
     }
-    return LLDB_INVALID_INDEX32;
+    return LLDB_INVALID_OFFSET;
 }
 
 ObjectContainerBSDArchive::Archive::Archive
@@ -120,7 +120,7 @@ size_t
 ObjectContainerBSDArchive::Archive::ParseObjects (DataExtractor &data)
 {
     std::string str;
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     str.assign((const char *)data.GetData(&offset, SARMAG), SARMAG);
     if (str == ARMAG)
     {
@@ -128,9 +128,9 @@ ObjectContainerBSDArchive::Archive::ParseObjects (DataExtractor &data)
         do
         {
             offset = obj.Extract (data, offset);
-            if (offset == LLDB_INVALID_INDEX32)
+            if (offset == LLDB_INVALID_OFFSET)
                 break;
-            uint32_t obj_idx = m_objects.size();
+            size_t obj_idx = m_objects.size();
             m_objects.push_back(obj);
             // Insert all of the C strings out of order for now...
             m_object_name_to_index_map.Append (obj.ar_name.GetCString(), obj_idx);
@@ -147,7 +147,7 @@ ObjectContainerBSDArchive::Archive::ParseObjects (DataExtractor &data)
 ObjectContainerBSDArchive::Object *
 ObjectContainerBSDArchive::Archive::FindObject (const ConstString &object_name)
 {
-    const UniqueCStringMap<uint32_t>::Entry *match = m_object_name_to_index_map.FindFirstValueForName (object_name.GetCString());
+    const ObjectNameToIndexMap::Entry *match = m_object_name_to_index_map.FindFirstValueForName (object_name.GetCString());
     if (match)
         return &m_objects[match->value];
     return NULL;

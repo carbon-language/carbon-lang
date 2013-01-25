@@ -79,14 +79,14 @@ public:
     // Subclass specific functions
     //---------------------------------------------------------------------
 
-    uint32_t
+    size_t
     GetSize () const
     {
         return m_values.size();
     }
 
     lldb::OptionValueSP
-    operator[](uint32_t idx) const
+    operator[](size_t idx) const
     {
         lldb::OptionValueSP value_sp;
         if (idx < m_values.size())
@@ -95,7 +95,7 @@ public:
     }
 
     lldb::OptionValueSP
-    GetValueAtIndex (uint32_t idx) const
+    GetValueAtIndex (size_t idx) const
     {
         lldb::OptionValueSP value_sp;
         if (idx < m_values.size())
@@ -117,7 +117,7 @@ public:
     }
     
     bool
-    InsertValue (uint32_t idx, const lldb::OptionValueSP &value_sp)
+    InsertValue (size_t idx, const lldb::OptionValueSP &value_sp)
     {
         // Make sure the value_sp object is allowed to contain
         // values of the type passed in...
@@ -133,7 +133,7 @@ public:
     }
 
     bool
-    ReplaceValue (uint32_t idx, const lldb::OptionValueSP &value_sp)
+    ReplaceValue (size_t idx, const lldb::OptionValueSP &value_sp)
     {
         // Make sure the value_sp object is allowed to contain
         // values of the type passed in...
@@ -149,7 +149,7 @@ public:
     }
 
     bool
-    DeleteValue (uint32_t idx)
+    DeleteValue (size_t idx)
     {
         if (idx < m_values.size())
         {

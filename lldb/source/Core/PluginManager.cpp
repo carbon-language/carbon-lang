@@ -1346,7 +1346,7 @@ PluginManager::GetPlatformCreateCallbackForPluginName (const char *name)
     return NULL;
 }
 
-uint32_t
+size_t
 PluginManager::AutoCompletePlatformName (const char *name, StringList &matches)
 {
     if (name && name[0])

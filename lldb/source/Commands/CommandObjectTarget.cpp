@@ -192,7 +192,7 @@ public:
         return &m_option_group;
     }
 
-    int
+    virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -220,7 +220,7 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        const int argc = command.GetArgumentCount();
+        const size_t argc = command.GetArgumentCount();
         FileSpec core_file (m_core_file.GetOptionValue().GetCurrentValue());
 
         if (argc == 1 || core_file)
@@ -697,9 +697,9 @@ public:
     }
     
     
-    static uint32_t GetVariableCallback (void *baton, 
-                                         const char *name,
-                                         VariableList &variable_list)
+    static size_t GetVariableCallback (void *baton,
+                                       const char *name,
+                                       VariableList &variable_list)
     {
         Target *target = static_cast<Target *>(baton);
         if (target)
@@ -782,7 +782,7 @@ protected:
                 ValueObjectList valobj_list;
 
                 const char *arg = args.GetArgumentAtIndex(idx);
-                uint32_t matches = 0;
+                size_t matches = 0;
                 bool use_var_name = false;
                 if (m_option_variable.use_regex)
                 {
@@ -1019,7 +1019,7 @@ protected:
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
-            uint32_t argc = command.GetArgumentCount();
+            const size_t argc = command.GetArgumentCount();
             if (argc & 1)
             {
                 result.AppendError ("add requires an even number of arguments\n");
@@ -1027,7 +1027,7 @@ protected:
             }
             else
             {
-                for (uint32_t i=0; i<argc; i+=2)
+                for (size_t i=0; i<argc; i+=2)
                 {
                     const char *from = command.GetArgumentAtIndex(i);
                     const char *to = command.GetArgumentAtIndex(i+1);
@@ -1156,7 +1156,7 @@ protected:
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target)
         {
-            uint32_t argc = command.GetArgumentCount();
+            size_t argc = command.GetArgumentCount();
             // check for at least 3 arguments and an odd nubmer of parameters
             if (argc >= 3 && argc & 1)
             {
@@ -1670,7 +1670,7 @@ DumpSymbolContextList (ExecutionContextScope *exe_scope, Stream &strm, SymbolCon
     strm.IndentLess ();
 }
 
-static uint32_t
+static size_t
 LookupFunctionInModule (CommandInterpreter &interpreter,
                         Stream &strm,
                         Module *module,
@@ -1684,7 +1684,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter,
     {
         SymbolContextList sc_list;
         const bool append = true;
-        uint32_t num_matches = 0;
+        size_t num_matches = 0;
         if (name_is_regex)
         {
             RegularExpression function_name_regex (name);
@@ -1709,7 +1709,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter,
         if (num_matches)
         {
             strm.Indent ();
-            strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
+            strm.Printf("%zu match%s found in ", num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
             DumpSymbolContextList (interpreter.GetExecutionContext().GetBestExecutionContextScope(), strm, sc_list, verbose);
@@ -1719,7 +1719,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter,
     return 0;
 }
 
-static uint32_t
+static size_t
 LookupTypeInModule (CommandInterpreter &interpreter,
                     Stream &strm, 
                     Module *module, 
@@ -1730,7 +1730,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
     {
         TypeList type_list;
         const uint32_t max_num_matches = UINT32_MAX;
-        uint32_t num_matches = 0;
+        size_t num_matches = 0;
         bool name_is_fully_qualified = false;
         SymbolContext sc;
 
@@ -1740,7 +1740,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
         if (num_matches)
         {
             strm.Indent ();
-            strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
+            strm.Printf("%zu match%s found in ", num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
             const uint32_t num_types = type_list.GetSize();
@@ -1774,7 +1774,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
     return 0;
 }
 
-static uint32_t
+static size_t
 LookupTypeHere (CommandInterpreter &interpreter,
                 Stream &strm,
                 const SymbolContext &sym_ctx,
@@ -1786,7 +1786,7 @@ LookupTypeHere (CommandInterpreter &interpreter,
     
     TypeList type_list;
     const uint32_t max_num_matches = UINT32_MAX;
-    uint32_t num_matches = 1;
+    size_t num_matches = 1;
     bool name_is_fully_qualified = false;
     
     ConstString name(name_cstr);
@@ -1873,9 +1873,9 @@ FindModulesByName (Target *target,
     {
         // Check the global list
         Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex());
-        const uint32_t num_modules = Module::GetNumberAllocatedModules();
+        const size_t num_modules = Module::GetNumberAllocatedModules();
         ModuleSP module_sp;
-        for (uint32_t image_idx = 0; image_idx<num_modules; ++image_idx)
+        for (size_t image_idx = 0; image_idx<num_modules; ++image_idx)
         {
             Module *module = Module::GetAllocatedModuleAtIndex(image_idx);
             
@@ -2145,11 +2145,11 @@ protected:
             {
                 // Dump all sections for all modules images
                 Mutex::Locker modules_locker(target->GetImages().GetMutex());
-                const uint32_t num_modules = target->GetImages().GetSize();
+                const size_t num_modules = target->GetImages().GetSize();
                 if (num_modules > 0)
                 {
-                    result.GetOutputStream().Printf("Dumping symbol table for %u modules.\n", num_modules);
-                    for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
+                    result.GetOutputStream().Printf("Dumping symbol table for %zu modules.\n", num_modules);
+                    for (size_t image_idx = 0; image_idx<num_modules; ++image_idx)
                     {
                         if (num_dumped > 0)
                         {
@@ -2278,11 +2278,11 @@ protected:
             if (command.GetArgumentCount() == 0)
             {
                 // Dump all sections for all modules images
-                const uint32_t num_modules = target->GetImages().GetSize();
+                const size_t num_modules = target->GetImages().GetSize();
                 if (num_modules > 0)
                 {
-                    result.GetOutputStream().Printf("Dumping sections for %u modules.\n", num_modules);
-                    for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
+                    result.GetOutputStream().Printf("Dumping sections for %zu modules.\n", num_modules);
+                    for (size_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         num_dumped++;
                         DumpModuleSections (m_interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx));
@@ -2386,10 +2386,10 @@ protected:
                 // Dump all sections for all modules images
                 const ModuleList &target_modules = target->GetImages();
                 Mutex::Locker modules_locker (target_modules.GetMutex());
-                const uint32_t num_modules = target_modules.GetSize();
+                const size_t num_modules = target_modules.GetSize();
                 if (num_modules > 0)
                 {
-                    result.GetOutputStream().Printf("Dumping debug symbols for %u modules.\n", num_modules);
+                    result.GetOutputStream().Printf("Dumping debug symbols for %zu modules.\n", num_modules);
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         if (DumpModuleSymbolVendor (result.GetOutputStream(), target_modules.GetModulePointerAtIndexUnlocked(image_idx)))
@@ -2491,7 +2491,7 @@ protected:
                 
                 const ModuleList &target_modules = target->GetImages();
                 Mutex::Locker modules_locker(target_modules.GetMutex());
-                const uint32_t num_modules = target_modules.GetSize();
+                const size_t num_modules = target_modules.GetSize();
                 if (num_modules > 0)
                 {
                     uint32_t num_dumped = 0;
@@ -2582,7 +2582,7 @@ public:
         return &m_option_group;
     }
     
-    int
+    virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -3037,7 +3037,7 @@ public:
             }
             else
             {
-                uint32_t width = 0;
+                unsigned long width = 0;
                 if (option_arg)
                     width = strtoul (option_arg, NULL, 0);
                 m_format_array.push_back(std::make_pair(short_option, width));
@@ -3129,7 +3129,7 @@ protected:
                         ModuleSP module_sp (module_address.GetModule());
                         if (module_sp)
                         {
-                            PrintModule (target, module_sp.get(), UINT32_MAX, 0, strm);
+                            PrintModule (target, module_sp.get(), 0, strm);
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -3152,7 +3152,7 @@ protected:
                 return result.Succeeded();
             }
             
-            uint32_t num_modules = 0;
+            size_t num_modules = 0;
             Mutex::Locker locker;      // This locker will be locked on the mutex in module_list_ptr if it is non-NULL.
                                        // Otherwise it will lock the AllocationModuleCollectionMutex when accessing
                                        // the global module list directly.
@@ -3214,8 +3214,8 @@ protected:
                         module_sp = module->shared_from_this();
                     }
                     
-                    int indent = strm.Printf("[%3u] ", image_idx);
-                    PrintModule (target, module, image_idx, indent, strm);
+                    const size_t indent = strm.Printf("[%3u] ", image_idx);
+                    PrintModule (target, module, indent, strm);
 
                 }
                 result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -3244,7 +3244,7 @@ protected:
     }
 
     void
-    PrintModule (Target *target, Module *module, uint32_t idx, int indent, Stream &strm)
+    PrintModule (Target *target, Module *module, int indent, Stream &strm)
     {
 
         if (module == NULL)
@@ -3338,7 +3338,7 @@ protected:
                     break;
                 case 'r':
                     {
-                        uint32_t ref_count = 0;
+                        size_t ref_count = 0;
                         ModuleSP module_sp (module->shared_from_this());
                         if (module_sp)
                         {
@@ -3346,9 +3346,9 @@ protected:
                             ref_count = module_sp.use_count() - 1;
                         }
                         if (width)
-                            strm.Printf("{%*u}", width, ref_count);
+                            strm.Printf("{%*zu}", width, ref_count);
                         else
-                            strm.Printf("{%u}", ref_count);
+                            strm.Printf("{%zu}", ref_count);
                     }
                     break;
 
@@ -3581,7 +3581,7 @@ protected:
         if (m_options.m_type == eLookupTypeFunctionOrSymbol)
         {
             SymbolContextList sc_list;
-            uint32_t num_matches;
+            size_t num_matches;
             ConstString function_name (m_options.m_str.c_str());
             num_matches = target->GetImages().FindFunctions (function_name, eFunctionNameTypeAuto, true, false, true, sc_list);
             for (uint32_t idx = 0; idx < num_matches; idx++)
@@ -4038,7 +4038,7 @@ protected:
                 
                 const ModuleList &target_modules = target->GetImages();
                 Mutex::Locker modules_locker(target_modules.GetMutex());
-                const uint32_t num_modules = target_modules.GetSize();
+                const size_t num_modules = target_modules.GetSize();
                 if (num_modules > 0)
                 {
                     for (i = 0; i<num_modules && syntax_error == false; ++i)
@@ -4217,7 +4217,7 @@ public:
     {
     }
     
-    int
+    virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,

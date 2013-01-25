@@ -304,7 +304,7 @@ DYLDRendezvous::DumpToLog(LogSP log) const
 
     log->PutCString("DYLDRendezvous:");
     log->Printf("   Address: %" PRIx64, GetRendezvousAddress());
-    log->Printf("   Version: %d",  GetVersion());
+    log->Printf("   Version: %" PRIu64, GetVersion());
     log->Printf("   Link   : %" PRIx64, GetLinkMapAddress());
     log->Printf("   Break  : %" PRIx64, GetBreakAddress());
     log->Printf("   LDBase : %" PRIx64, GetLDBase());

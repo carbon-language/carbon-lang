@@ -237,11 +237,11 @@ public:
     {
     }
     
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren () = 0;
     
     virtual lldb::ValueObjectSP
-    GetChildAtIndex (uint32_t idx) = 0;
+    GetChildAtIndex (size_t idx) = 0;
     
     virtual uint32_t
     GetIndexOfChildWithName (const ConstString &name) = 0;
@@ -479,14 +479,14 @@ public:
         m_expression_paths.clear();
     }
     
-    int
+    size_t
     GetCount() const
     {
         return m_expression_paths.size();
     }
     
     const char*
-    GetExpressionPathAtIndex(int i) const
+    GetExpressionPathAtIndex(size_t i) const
     {
         return m_expression_paths[i].c_str();
     }
@@ -556,14 +556,14 @@ public:
         {
         }
         
-        virtual uint32_t
+        virtual size_t
         CalculateNumChildren()
         {
             return filter->GetCount();
         }
         
         virtual lldb::ValueObjectSP
-        GetChildAtIndex (uint32_t idx)
+        GetChildAtIndex (size_t idx)
         {
             if (idx >= filter->GetCount())
                 return lldb::ValueObjectSP();
@@ -720,7 +720,7 @@ public:
         virtual
         ~FrontEnd();
         
-        virtual uint32_t
+        virtual size_t
         CalculateNumChildren()
         {
             if (!m_wrapper_sp || m_interpreter == NULL)
@@ -729,7 +729,7 @@ public:
         }
         
         virtual lldb::ValueObjectSP
-        GetChildAtIndex (uint32_t idx);
+        GetChildAtIndex (size_t idx);
         
         virtual bool
         Update()
@@ -911,7 +911,7 @@ public:
     }
     
     int
-    GetRealIndexForIndex(int i);
+    GetRealIndexForIndex(size_t i);
     
     bool
     IsScripted()
@@ -939,7 +939,7 @@ public:
         {
         }
         
-        virtual uint32_t
+        virtual size_t
         CalculateNumChildren()
         {
             return filter->GetCount();
@@ -952,7 +952,7 @@ public:
         }
         
         virtual lldb::ValueObjectSP
-        GetChildAtIndex (uint32_t idx)
+        GetChildAtIndex (size_t idx)
         {
             if (idx >= filter->GetCount())
                 return lldb::ValueObjectSP();

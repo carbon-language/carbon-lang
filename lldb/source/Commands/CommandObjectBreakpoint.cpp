@@ -396,7 +396,7 @@ protected:
             case eSetTypeFileAndLine: // Breakpoint by source position
                 {
                     FileSpec file;
-                    uint32_t num_files = m_options.m_filenames.GetSize();
+                    const size_t num_files = m_options.m_filenames.GetSize();
                     if (num_files == 0)
                     {
                         if (!GetDefaultFile (target, file, result))
@@ -469,7 +469,7 @@ protected:
                 break;
             case eSetTypeSourceRegexp: // Breakpoint by regexp on source text.
                 {
-                    int num_files = m_options.m_filenames.GetSize();
+                    const size_t num_files = m_options.m_filenames.GetSize();
                     
                     if (num_files == 0)
                     {
@@ -1794,7 +1794,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
             Breakpoint *breakpoint = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
             if (breakpoint != NULL)
             {
-                int num_locations = breakpoint->GetNumLocations();
+                const size_t num_locations = breakpoint->GetNumLocations();
                 if (cur_bp_id.GetLocationID() > num_locations)
                 {
                     StreamString id_str;

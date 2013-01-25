@@ -86,7 +86,7 @@ ReadUIntMax64 (ExecutionContextScope *exe_scope, const Address &address, uint32_
         if (GetByteOrderAndAddressSize (exe_scope, address, byte_order, addr_size))
         {
             DataExtractor data (&buf, sizeof(buf), byte_order, addr_size);
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             uval64 = data.GetU64(&offset);
         }
         else
@@ -696,8 +696,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                                stop_if_block_is_inlined_function, 
                                                &variable_list);
                     
-                    uint32_t num_variables = variable_list.GetSize();
-                    for (uint32_t var_idx = 0; var_idx < num_variables; ++var_idx)
+                    const size_t num_variables = variable_list.GetSize();
+                    for (size_t var_idx = 0; var_idx < num_variables; ++var_idx)
                     {
                         Variable *var = variable_list.GetVariableAtIndex (var_idx).get();
                         if (var && var->LocationIsValidForAddress (*this))

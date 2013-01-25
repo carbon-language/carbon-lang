@@ -89,7 +89,7 @@ bool
 DWARFDebugInfoEntry::Attributes::ExtractFormValueAtIndex (SymbolFileDWARF* dwarf2Data, uint32_t i, DWARFFormValue &form_value) const
 {
     form_value.SetForm(FormAtIndex(i));
-    dw_offset_t offset = DIEOffsetAtIndex(i);
+    lldb::offset_t offset = DIEOffsetAtIndex(i);
     return form_value.ExtractValue(dwarf2Data->get_debug_info_data(), &offset, CompileUnitAtIndex(i));
 }
 
@@ -119,7 +119,7 @@ DWARFDebugInfoEntry::FastExtract
     const DataExtractor& debug_info_data,
     const DWARFCompileUnit* cu,
     const uint8_t *fixed_form_sizes,
-    uint32_t* offset_ptr
+    lldb::offset_t *offset_ptr
 )
 {
     m_offset = *offset_ptr;
@@ -134,7 +134,7 @@ DWARFDebugInfoEntry::FastExtract
     
     if (m_abbr_idx)
     {
-        uint32_t offset = *offset_ptr;
+        lldb::offset_t offset = *offset_ptr;
 
         const DWARFAbbreviationDeclaration *abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(m_abbr_idx);
         
@@ -273,14 +273,14 @@ DWARFDebugInfoEntry::Extract
 (
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
-    uint32_t* offset_ptr
+    lldb::offset_t *offset_ptr
 )
 {
     const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 //    const DataExtractor& debug_str_data = dwarf2Data->get_debug_str_data();
     const uint32_t cu_end_offset = cu->GetNextCompileUnitOffset();
     const uint8_t cu_addr_size = cu->GetAddressByteSize();
-    uint32_t offset = *offset_ptr;
+    lldb::offset_t offset = *offset_ptr;
 //  if (offset >= cu_end_offset)
 //      Log::Error("DIE at offset 0x%8.8x is beyond the end of the current compile unit (0x%8.8x)", m_offset, cu_end_offset);
     if ((offset < cu_end_offset) && debug_info_data.ValidOffset(offset))
@@ -745,12 +745,12 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
     if (dwarf2Data == NULL)
         return false;
 
-    dw_addr_t lo_pc = DW_INVALID_ADDRESS;
-    dw_addr_t hi_pc = DW_INVALID_ADDRESS;
+    dw_addr_t lo_pc = LLDB_INVALID_ADDRESS;
+    dw_addr_t hi_pc = LLDB_INVALID_ADDRESS;
     std::vector<dw_offset_t> die_offsets;
     bool set_frame_base_loclist_addr = false;
     
-    dw_offset_t offset;
+    lldb::offset_t offset;
     const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
     if (abbrevDecl)
@@ -859,7 +859,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                             if (loc_list_length > 0)
                             {
                                 frame_base->SetOpcodeData(debug_loc_data, debug_loc_offset, loc_list_length);
-                                if (lo_pc != DW_INVALID_ADDRESS)
+                                if (lo_pc != LLDB_INVALID_ADDRESS)
                                 {
                                     assert (lo_pc >= cu->GetBaseAddress());
                                     frame_base->SetLocationListSlide(lo_pc - cu->GetBaseAddress());
@@ -882,9 +882,9 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
 
     if (ranges.IsEmpty())
     {
-        if (lo_pc != DW_INVALID_ADDRESS)
+        if (lo_pc != LLDB_INVALID_ADDRESS)
         {
-            if (hi_pc != DW_INVALID_ADDRESS && hi_pc > lo_pc)
+            if (hi_pc != LLDB_INVALID_ADDRESS && hi_pc > lo_pc)
                 ranges.Append(DWARFDebugRanges::Range (lo_pc, hi_pc - lo_pc));
             else
                 ranges.Append(DWARFDebugRanges::Range (lo_pc, 0));
@@ -934,7 +934,7 @@ DWARFDebugInfoEntry::Dump
 ) const
 {
     const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
-    uint32_t offset = m_offset;
+    lldb::offset_t offset = m_offset;
 
     if (debug_info_data.ValidOffset(offset))
     {
@@ -1028,7 +1028,7 @@ DWARFDebugInfoEntry::DumpAttribute
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
     const DataExtractor& debug_info_data,
-    uint32_t* offset_ptr,
+    lldb::offset_t *offset_ptr,
     Stream &s,
     dw_attr_t attr,
     dw_form_t form
@@ -1158,7 +1158,7 @@ DWARFDebugInfoEntry::DumpAttribute
         {
             if ( !verbose )
                 form_value.Dump(s, debug_str_data, cu);
-            uint32_t ranges_offset = form_value.Unsigned();
+            lldb::offset_t ranges_offset = form_value.Unsigned();
             dw_addr_t base_addr = cu ? cu->GetBaseAddress() : 0;
             if (dwarf2Data)
                 DWARFDebugRanges::Dump(s, dwarf2Data->get_debug_ranges_data(), &ranges_offset, base_addr);
@@ -1190,7 +1190,7 @@ DWARFDebugInfoEntry::GetAttributes
     uint32_t curr_depth
 ) const
 {
-    uint32_t offset;
+    lldb::offset_t offset;
     const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
     if (abbrevDecl)
@@ -1287,7 +1287,7 @@ DWARFDebugInfoEntry::GetAttributeValue
     dw_offset_t* end_attr_offset_ptr
 ) const
 {
-    uint32_t offset;
+    lldb::offset_t offset;
     const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
     if (abbrevDecl)
@@ -1438,7 +1438,7 @@ DWARFDebugInfoEntry::GetAttributeValueAsLocation
             // We have a location list offset as the value that is
             // the offset into the .debug_loc section that describes
             // the value over it's lifetime
-            dw_offset_t debug_loc_offset = form_value.Unsigned();
+            lldb::offset_t debug_loc_offset = form_value.Unsigned();
             if (dwarf2Data)
             {
                 assert(dwarf2Data->get_debug_loc_data().GetAddressByteSize() == cu->GetAddressByteSize());
@@ -1553,7 +1553,7 @@ DWARFDebugInfoEntry::GetName
 (
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
-    const uint32_t die_offset,
+    const dw_offset_t die_offset,
     Stream &s
 )
 {
@@ -1564,7 +1564,7 @@ DWARFDebugInfoEntry::GetName
     }
     
     DWARFDebugInfoEntry die;
-    uint32_t offset = die_offset;
+    lldb::offset_t offset = die_offset;
     if (die.Extract(dwarf2Data, cu, &offset))
     {
         if (die.IsNULL())
@@ -1602,7 +1602,7 @@ DWARFDebugInfoEntry::AppendTypeName
 (
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
-    const uint32_t die_offset,
+    const dw_offset_t die_offset,
     Stream &s
 )
 {
@@ -1613,7 +1613,7 @@ DWARFDebugInfoEntry::AppendTypeName
     }
     
     DWARFDebugInfoEntry die;
-    uint32_t offset = die_offset;
+    lldb::offset_t offset = die_offset;
     if (die.Extract(dwarf2Data, cu, &offset))
     {
         if (die.IsNULL())
@@ -1720,11 +1720,11 @@ DWARFDebugInfoEntry::BuildAddressRangeTable
     {
         if (m_tag == DW_TAG_subprogram)
         {
-            dw_addr_t hi_pc = DW_INVALID_ADDRESS;
-            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
-            if (lo_pc != DW_INVALID_ADDRESS)
-                hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
-            if (hi_pc != DW_INVALID_ADDRESS)
+            dw_addr_t hi_pc = LLDB_INVALID_ADDRESS;
+            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            if (lo_pc != LLDB_INVALID_ADDRESS)
+                hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, LLDB_INVALID_ADDRESS);
+            if (hi_pc != LLDB_INVALID_ADDRESS)
             {
             /// printf("BuildAddressRangeTable() 0x%8.8x: %30s: [0x%8.8x - 0x%8.8x)\n", m_offset, DW_TAG_value_to_name(tag), lo_pc, hi_pc);
                 debug_aranges->AppendRange (cu->GetOffset(), lo_pc, hi_pc);
@@ -1761,11 +1761,11 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
     {
         if (m_tag == DW_TAG_subprogram)
         {
-            dw_addr_t hi_pc = DW_INVALID_ADDRESS;
-            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
-            if (lo_pc != DW_INVALID_ADDRESS)
-                hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
-            if (hi_pc != DW_INVALID_ADDRESS)
+            dw_addr_t hi_pc = LLDB_INVALID_ADDRESS;
+            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            if (lo_pc != LLDB_INVALID_ADDRESS)
+                hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, LLDB_INVALID_ADDRESS);
+            if (hi_pc != LLDB_INVALID_ADDRESS)
             {
             //  printf("BuildAddressRangeTable() 0x%8.8x: [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", m_offset, lo_pc, hi_pc); // DEBUG ONLY
                 debug_aranges->AppendRange (GetOffset(), lo_pc, hi_pc);
@@ -2052,11 +2052,11 @@ DWARFDebugInfoEntry::LookupAddress
 
         if (match_addr_range)
         {
-            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
-            if (lo_pc != DW_INVALID_ADDRESS)
+            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            if (lo_pc != LLDB_INVALID_ADDRESS)
             {
-                dw_addr_t hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
-                if (hi_pc != DW_INVALID_ADDRESS)
+                dw_addr_t hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, LLDB_INVALID_ADDRESS);
+                if (hi_pc != LLDB_INVALID_ADDRESS)
                 {
                     //  printf("\n0x%8.8x: %30s: address = 0x%8.8x  [0x%8.8x - 0x%8.8x) ", m_offset, DW_TAG_value_to_name(tag), address, lo_pc, hi_pc);
                     if ((lo_pc <= address) && (address < hi_pc))
@@ -2166,7 +2166,7 @@ DWARFDebugInfoEntry::LookupAddress
 const DWARFAbbreviationDeclaration* 
 DWARFDebugInfoEntry::GetAbbreviationDeclarationPtr (SymbolFileDWARF* dwarf2Data,
                                                     const DWARFCompileUnit *cu,
-                                                    dw_offset_t &offset) const
+                                                    lldb::offset_t &offset) const
 {
     if (dwarf2Data)
     {

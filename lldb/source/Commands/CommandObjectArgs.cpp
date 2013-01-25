@@ -120,7 +120,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         return false;
     }
     
-    int num_args = args.GetArgumentCount ();
+    const size_t num_args = args.GetArgumentCount ();
     int arg_index;
     
     if (!num_args)

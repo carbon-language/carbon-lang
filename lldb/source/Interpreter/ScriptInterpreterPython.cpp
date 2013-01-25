@@ -2360,7 +2360,7 @@ ScriptInterpreterPython::PythonInputReaderManager::RunPythonInputReader (lldb::t
     return NULL;
 }
 
-uint32_t
+size_t
 ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor_sp)
 {
     if (!implementor_sp)

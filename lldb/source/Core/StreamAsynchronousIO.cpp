@@ -44,7 +44,7 @@ StreamAsynchronousIO::Flush ()
     }
 }
 
-int
+size_t
 StreamAsynchronousIO::Write (const void *s, size_t length)
 {
     m_accumulated_data.Write (s, length);

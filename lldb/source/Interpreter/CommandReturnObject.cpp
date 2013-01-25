@@ -123,13 +123,10 @@ CommandReturnObject::AppendWarning (const char *in_string)
 // don't append "\n" to the end of it.
 
 void
-CommandReturnObject::AppendRawWarning (const char *in_string, int len)
+CommandReturnObject::AppendRawWarning (const char *in_string)
 {
-    if (!in_string)
-        return;
-    if (len < 0)
-        len = ::strlen (in_string);
-    GetErrorStream().Printf("%*.*s", len, len, in_string);
+    if (in_string && in_string[0])
+        GetErrorStream().PutCString(in_string);
 }
 
 void
@@ -153,13 +150,10 @@ CommandReturnObject::SetError (const Error &error, const char *fallback_error_cs
 // don't append "\n" to the end of it.
 
 void
-CommandReturnObject::AppendRawError (const char *in_string, int len)
+CommandReturnObject::AppendRawError (const char *in_string)
 {
-    if (!in_string)
-        return;
-    if (len < 0)
-        len = ::strlen (in_string);
-    GetErrorStream().Printf ("%*.*s", len, len, in_string);
+    if (in_string && in_string[0])
+        GetErrorStream().PutCString(in_string);
 }
 
 void

@@ -108,7 +108,7 @@ Breakpoint::FindLocationByID (break_id_t bp_loc_id)
 }
 
 BreakpointLocationSP
-Breakpoint::GetLocationAtIndex (uint32_t index)
+Breakpoint::GetLocationAtIndex (size_t index)
 {
     return m_locations.GetByIndex(index);
 }
@@ -760,7 +760,7 @@ Breakpoint::BreakpointEventData::GetBreakpointFromEvent (const EventSP &event_sp
     return bp_sp;
 }
 
-uint32_t
+size_t
 Breakpoint::BreakpointEventData::GetNumBreakpointLocationsFromEvent (const EventSP &event_sp)
 {
     const BreakpointEventData *data = GetEventDataFromEvent (event_sp.get());

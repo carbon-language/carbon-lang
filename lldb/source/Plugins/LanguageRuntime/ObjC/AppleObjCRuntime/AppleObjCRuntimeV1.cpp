@@ -385,7 +385,7 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
                 const uint32_t addr_size = m_process->GetAddressByteSize();
                 const ByteOrder byte_order = m_process->GetByteOrder();
                 DataExtractor data (buffer.GetBytes(), buffer.GetByteSize(), byte_order, addr_size);
-                uint32_t offset = addr_size; // Skip prototype
+                lldb::offset_t offset = addr_size; // Skip prototype
                 const uint32_t count = data.GetU32(&offset);
                 const uint32_t num_buckets = data.GetU32(&offset);
                 const addr_t buckets_ptr = data.GetPointer(&offset);

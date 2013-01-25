@@ -37,7 +37,7 @@ public:
             bool is_artificial,
             const lldb::SectionSP &section_sp,
             lldb::addr_t value,
-            uint32_t size,
+            lldb::addr_t size,
             uint32_t flags);
 
     Symbol (uint32_t symID,
@@ -209,7 +209,7 @@ public:
     GetByteSize () const;
     
     void
-    SetByteSize (uint32_t size)
+    SetByteSize (lldb::addr_t size)
     {
         m_calculated_size = size > 0;
         m_addr_range.SetByteSize(size);

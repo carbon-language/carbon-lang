@@ -151,7 +151,7 @@ SBData::SetByteOrder (lldb::ByteOrder endian)
 
 
 float
-SBData::GetFloat (lldb::SBError& error, uint32_t offset)
+SBData::GetFloat (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     float value = 0;
@@ -167,13 +167,13 @@ SBData::GetFloat (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetFloat (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetFloat (error=%p,offset=%" PRIu64 ") => "
                      "(%f)", error.get(), offset, value);
     return value;
 }
 
 double
-SBData::GetDouble (lldb::SBError& error, uint32_t offset)
+SBData::GetDouble (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     double value = 0;
@@ -189,13 +189,13 @@ SBData::GetDouble (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetDouble (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetDouble (error=%p,offset=%" PRIu64 ") => "
                      "(%f)", error.get(), offset, value);
     return value;
 }
 
 long double
-SBData::GetLongDouble (lldb::SBError& error, uint32_t offset)
+SBData::GetLongDouble (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     long double value = 0;
@@ -211,13 +211,13 @@ SBData::GetLongDouble (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetLongDouble (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetLongDouble (error=%p,offset=%" PRIu64 ") => "
                      "(%Lf)", error.get(), offset, value);
     return value;
 }
 
 lldb::addr_t
-SBData::GetAddress (lldb::SBError& error, uint32_t offset)
+SBData::GetAddress (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     lldb::addr_t value = 0;
@@ -233,13 +233,13 @@ SBData::GetAddress (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetAddress (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetAddress (error=%p,offset=%" PRIu64 ") => "
                      "(%p)", error.get(), offset, (void*)value);
     return value;
 }
 
 uint8_t
-SBData::GetUnsignedInt8 (lldb::SBError& error, uint32_t offset)
+SBData::GetUnsignedInt8 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     uint8_t value = 0;
@@ -255,13 +255,13 @@ SBData::GetUnsignedInt8 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetUnsignedInt8 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetUnsignedInt8 (error=%p,offset=%" PRIu64 ") => "
                      "(%c)", error.get(), offset, value);
     return value;
 }
 
 uint16_t
-SBData::GetUnsignedInt16 (lldb::SBError& error, uint32_t offset)
+SBData::GetUnsignedInt16 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     uint16_t value = 0;
@@ -277,13 +277,13 @@ SBData::GetUnsignedInt16 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetUnsignedInt16 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetUnsignedInt16 (error=%p,offset=%" PRIu64 ") => "
                      "(%hd)", error.get(), offset, value);
     return value;
 }
 
 uint32_t
-SBData::GetUnsignedInt32 (lldb::SBError& error, uint32_t offset)
+SBData::GetUnsignedInt32 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     uint32_t value = 0;
@@ -299,13 +299,13 @@ SBData::GetUnsignedInt32 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetUnsignedInt32 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetUnsignedInt32 (error=%p,offset=%" PRIu64 ") => "
                      "(%d)", error.get(), offset, value);
     return value;
 }
 
 uint64_t
-SBData::GetUnsignedInt64 (lldb::SBError& error, uint32_t offset)
+SBData::GetUnsignedInt64 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     uint64_t value = 0;
@@ -321,13 +321,13 @@ SBData::GetUnsignedInt64 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetUnsignedInt64 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetUnsignedInt64 (error=%p,offset=%" PRIu64 ") => "
                      "(%" PRId64 ")", error.get(), offset, value);
     return value;
 }
 
 int8_t
-SBData::GetSignedInt8 (lldb::SBError& error, uint32_t offset)
+SBData::GetSignedInt8 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     int8_t value = 0;
@@ -343,13 +343,13 @@ SBData::GetSignedInt8 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetSignedInt8 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetSignedInt8 (error=%p,offset=%" PRIu64 ") => "
                      "(%c)", error.get(), offset, value);
     return value;
 }
 
 int16_t
-SBData::GetSignedInt16 (lldb::SBError& error, uint32_t offset)
+SBData::GetSignedInt16 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     int16_t value = 0;
@@ -365,13 +365,13 @@ SBData::GetSignedInt16 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetSignedInt16 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetSignedInt16 (error=%p,offset=%" PRIu64 ") => "
                      "(%hd)", error.get(), offset, value);
     return value;
 }
 
 int32_t
-SBData::GetSignedInt32 (lldb::SBError& error, uint32_t offset)
+SBData::GetSignedInt32 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     int32_t value = 0;
@@ -387,13 +387,13 @@ SBData::GetSignedInt32 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetSignedInt32 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetSignedInt32 (error=%p,offset=%" PRIu64 ") => "
                      "(%d)", error.get(), offset, value);
     return value;
 }
 
 int64_t
-SBData::GetSignedInt64 (lldb::SBError& error, uint32_t offset)
+SBData::GetSignedInt64 (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     int64_t value = 0;
@@ -409,13 +409,13 @@ SBData::GetSignedInt64 (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetSignedInt64 (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetSignedInt64 (error=%p,offset=%" PRIu64 ") => "
                      "(%" PRId64 ")", error.get(), offset, value);
     return value;
 }
 
 const char*
-SBData::GetString (lldb::SBError& error, uint32_t offset)
+SBData::GetString (lldb::SBError& error, lldb::offset_t offset)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char* value = 0;
@@ -431,7 +431,7 @@ SBData::GetString (lldb::SBError& error, uint32_t offset)
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::GetString (error=%p,offset=%d) => "
+        log->Printf ("SBData::GetString (error=%p,offset=%" PRIu64 ") => "
                      "(%p)", error.get(), offset, value);
     return value;
 }
@@ -461,7 +461,7 @@ SBData::GetDescription (lldb::SBStream &description, lldb::addr_t base_addr)
 
 size_t
 SBData::ReadRawData (lldb::SBError& error,
-                     uint32_t offset,
+                     lldb::offset_t offset,
                      void *buf,
                      size_t size)
 {
@@ -479,7 +479,7 @@ SBData::ReadRawData (lldb::SBError& error,
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::ReadRawData (error=%p,offset=%d,buf=%p,size=%lu) => "
+        log->Printf ("SBData::ReadRawData (error=%p,offset=%" PRIu64 ",buf=%p,size=%lu) => "
                      "(%p)", error.get(), offset, buf, size, ok);
     return ok ? size : 0;
 }

@@ -216,7 +216,7 @@ public:
     static const char *
     GetPlatformPluginDescriptionAtIndex (uint32_t idx);
 
-    static uint32_t
+    static size_t
     AutoCompletePlatformName (const char *partial_name, 
                               StringList &matches);
     //------------------------------------------------------------------

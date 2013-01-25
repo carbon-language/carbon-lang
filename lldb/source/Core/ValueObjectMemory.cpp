@@ -146,7 +146,7 @@ ValueObjectMemory::GetTypeName()
     return ClangASTType::GetConstTypeName (GetClangAST(), m_clang_type.GetOpaqueQualType());
 }
 
-uint32_t
+size_t
 ValueObjectMemory::CalculateNumChildren()
 {
     if (m_type_sp)

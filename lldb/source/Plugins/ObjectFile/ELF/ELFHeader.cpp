@@ -23,20 +23,24 @@ using namespace llvm::ELF;
 // GetMaxU64 and GetMaxS64 wrap the similarly named methods from DataExtractor
 // with error handling code and provide for parsing a sequence of values.
 static bool
-GetMaxU64(const lldb_private::DataExtractor &data, 
-          uint32_t *offset, uint64_t *value, uint32_t byte_size) 
+GetMaxU64(const lldb_private::DataExtractor &data,
+          lldb::offset_t *offset,
+          uint64_t *value,
+          uint32_t byte_size)
 {
-    const uint32_t saved_offset = *offset;
+    const lldb::offset_t saved_offset = *offset;
     *value = data.GetMaxU64(offset, byte_size);
     return *offset != saved_offset;
 }
 
 static bool
 GetMaxU64(const lldb_private::DataExtractor &data, 
-          uint32_t *offset, uint64_t *value, uint32_t byte_size, 
+          lldb::offset_t *offset,
+          uint64_t *value,
+          uint32_t byte_size,
           uint32_t count) 
 {
-    uint32_t saved_offset = *offset;
+    lldb::offset_t saved_offset = *offset;
 
     for (uint32_t i = 0; i < count; ++i, ++value)
     {
@@ -51,19 +55,23 @@ GetMaxU64(const lldb_private::DataExtractor &data,
 
 static bool
 GetMaxS64(const lldb_private::DataExtractor &data, 
-          uint32_t *offset, int64_t *value, uint32_t byte_size) 
+          lldb::offset_t *offset,
+          int64_t *value,
+          uint32_t byte_size)
 {
-    const uint32_t saved_offset = *offset;
+    const lldb::offset_t saved_offset = *offset;
     *value = data.GetMaxS64(offset, byte_size);
     return *offset != saved_offset;
 }
 
 static bool
 GetMaxS64(const lldb_private::DataExtractor &data, 
-          uint32_t *offset, int64_t *value, uint32_t byte_size, 
+          lldb::offset_t *offset,
+          int64_t *value,
+          uint32_t byte_size,
           uint32_t count) 
 {
-    uint32_t saved_offset = *offset;
+    lldb::offset_t saved_offset = *offset;
 
     for (uint32_t i = 0; i < count; ++i, ++value)
     {
@@ -95,7 +103,7 @@ ELFHeader::GetByteOrder() const
 }
 
 bool
-ELFHeader::Parse(lldb_private::DataExtractor &data, uint32_t *offset) 
+ELFHeader::Parse(lldb_private::DataExtractor &data, lldb::offset_t *offset) 
 {
     // Read e_ident.  This provides byte order and address size info.
     if (data.GetU8(offset, &e_ident, EI_NIDENT) == NULL)
@@ -190,7 +198,7 @@ ELFSectionHeader::ELFSectionHeader()
 
 bool
 ELFSectionHeader::Parse(const lldb_private::DataExtractor &data,
-                        uint32_t *offset) 
+                        lldb::offset_t *offset)
 {
     const unsigned byte_size = data.GetAddressByteSize();
 
@@ -226,7 +234,7 @@ ELFSymbol::ELFSymbol()
 }
 
 bool
-ELFSymbol::Parse(const lldb_private::DataExtractor &data, uint32_t *offset) 
+ELFSymbol::Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset)
 {
     const unsigned byte_size = data.GetAddressByteSize();
     const bool parsing_32 = byte_size == 4;
@@ -276,7 +284,7 @@ ELFProgramHeader::ELFProgramHeader()
 
 bool
 ELFProgramHeader::Parse(const lldb_private::DataExtractor &data, 
-                        uint32_t *offset) 
+                        lldb::offset_t *offset)
 {
     const uint32_t byte_size = data.GetAddressByteSize();
     const bool parsing_32 = byte_size == 4;
@@ -320,7 +328,7 @@ ELFDynamic::ELFDynamic()
 }
 
 bool
-ELFDynamic::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+ELFDynamic::Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset)
 {
     const unsigned byte_size = data.GetAddressByteSize();
     return GetMaxS64(data, offset, &d_tag, byte_size, 2);
@@ -335,7 +343,7 @@ ELFRel::ELFRel()
 }
 
 bool
-ELFRel::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+ELFRel::Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset)
 {
     const unsigned byte_size = data.GetAddressByteSize();
 
@@ -355,7 +363,7 @@ ELFRela::ELFRela()
 }
 
 bool
-ELFRela::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+ELFRela::Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset)
 {
     const unsigned byte_size = data.GetAddressByteSize();
 

@@ -117,13 +117,13 @@ DWARFCallFrameInfo::CIESP
 DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
 {
     CIESP cie_sp(new CIE(cie_offset));
-    dw_offset_t offset = cie_offset;
+    lldb::offset_t offset = cie_offset;
     if (m_cfi_data_initialized == false)
         GetCFIData();
     const uint32_t length = m_cfi_data.GetU32(&offset);
     const dw_offset_t cie_id = m_cfi_data.GetU32(&offset);
     const dw_offset_t end_offset = cie_offset + length + 4;
-    if (length > 0 && ((!m_is_eh_frame && cie_id == 0xfffffffful) || (m_is_eh_frame && cie_id == 0ul)))
+    if (length > 0 && ((!m_is_eh_frame && cie_id == UINT32_MAX) || (m_is_eh_frame && cie_id == 0ul)))
     {
         size_t i;
         //    cie.offset = cie_offset;
@@ -302,7 +302,7 @@ DWARFCallFrameInfo::GetFDEIndex ()
     if (m_fde_index_initialized) // if two threads hit the locker
         return;
 
-    dw_offset_t offset = 0;
+    lldb::offset_t offset = 0;
     if (m_cfi_data_initialized == false)
         GetCFIData();
     while (m_cfi_data.ValidOffsetForDataOfSize (offset, 8))
@@ -349,9 +349,10 @@ DWARFCallFrameInfo::GetFDEIndex ()
 }
 
 bool
-DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, UnwindPlan& unwind_plan)
+DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr, UnwindPlan& unwind_plan)
 {
-    dw_offset_t current_entry = offset;
+    lldb::offset_t offset = dwarf_offset;
+    lldb::offset_t current_entry = offset;
 
     if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
         return false;

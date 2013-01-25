@@ -809,7 +809,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     InstructionList &instruction_list = disassembler->GetInstructionList();
     const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
-    for (uint32_t instruction_index = 0, num_instructions = instruction_list.GetSize(); 
+    for (size_t instruction_index = 0, num_instructions = instruction_list.GetSize();
          instruction_index < num_instructions; 
          ++instruction_index)
     {

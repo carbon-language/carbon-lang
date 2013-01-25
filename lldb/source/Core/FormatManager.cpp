@@ -615,7 +615,7 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
 }
 
 TypeCategoryImplSP
-CategoryMap::GetAtIndex (uint32_t index)
+CategoryMap::GetAtIndex (size_t index)
 {
     Mutex::Locker locker(m_map_mutex);
     

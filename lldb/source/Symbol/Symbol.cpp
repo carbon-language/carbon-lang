@@ -52,7 +52,7 @@ Symbol::Symbol
     bool is_artificial,
     const lldb::SectionSP &section_sp,
     addr_t offset,
-    uint32_t size,
+    addr_t size,
     uint32_t flags
 ) :
     SymbolContextScope (),

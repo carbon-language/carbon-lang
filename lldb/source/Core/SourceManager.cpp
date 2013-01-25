@@ -284,13 +284,18 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
         if (executable_ptr)
         {
             SymbolContextList sc_list;
-            uint32_t num_matches;
             ConstString main_name("main");
             bool symbols_okay = false;  // Force it to be a debug symbol.
             bool inlines_okay = true;
             bool append = false;
-            num_matches = executable_ptr->FindFunctions (main_name, NULL, lldb::eFunctionNameTypeBase, inlines_okay, symbols_okay, append, sc_list);
-            for (uint32_t idx = 0; idx < num_matches; idx++)
+            size_t num_matches = executable_ptr->FindFunctions (main_name,
+                                                                NULL,
+                                                                lldb::eFunctionNameTypeBase,
+                                                                inlines_okay,
+                                                                symbols_okay,
+                                                                append,
+                                                                sc_list);
+            for (size_t idx = 0; idx < num_matches; idx++)
             {
                 SymbolContext sc;
                 sc_list.GetContextAtIndex(idx, sc);
@@ -584,14 +589,14 @@ SourceManager::File::CalculateLineOffsets (uint32_t line)
         else
         {
             // Some lines have been populated, start where we last left off
-            assert(!"Not implemented yet");
+            assert("Not implemented yet" == NULL);
         }
 
     }
     else
     {
         // Calculate all line offsets up to "line"
-        assert(!"Not implemented yet");
+        assert("Not implemented yet" == NULL);
     }
     return false;
 }
@@ -602,8 +607,8 @@ SourceManager::File::GetLine (uint32_t line_no, std::string &buffer)
     if (!LineIsValid(line_no))
         return false;
 
-    uint32_t start_offset = GetLineOffset (line_no);
-    uint32_t end_offset = GetLineOffset (line_no + 1);
+    size_t start_offset = GetLineOffset (line_no);
+    size_t end_offset = GetLineOffset (line_no + 1);
     if (end_offset == UINT32_MAX)
     {
         end_offset = m_data_sp->GetByteSize();

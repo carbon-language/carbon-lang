@@ -510,7 +510,7 @@ ValueObject::SetValueDidChange (bool value_changed)
 }
 
 ValueObjectSP
-ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
+ValueObject::GetChildAtIndex (size_t idx, bool can_create)
 {
     ValueObjectSP child_sp;
     // We may need to update our value if we are dynamic
@@ -534,13 +534,13 @@ ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
 }
 
 ValueObjectSP
-ValueObject::GetChildAtIndexPath (const std::initializer_list<uint32_t>& idxs,
-                                  uint32_t* index_of_error)
+ValueObject::GetChildAtIndexPath (const std::initializer_list<size_t>& idxs,
+                                  size_t* index_of_error)
 {
     if (idxs.size() == 0)
         return GetSP();
     ValueObjectSP root(GetSP());
-    for (uint32_t idx : idxs)
+    for (size_t idx : idxs)
     {
         root = root->GetChildAtIndex(idx, true);
         if (!root)
@@ -554,13 +554,13 @@ ValueObject::GetChildAtIndexPath (const std::initializer_list<uint32_t>& idxs,
 }
 
 ValueObjectSP
-ValueObject::GetChildAtIndexPath (const std::initializer_list< std::pair<uint32_t, bool> >& idxs,
-                                  uint32_t* index_of_error)
+ValueObject::GetChildAtIndexPath (const std::initializer_list< std::pair<size_t, bool> >& idxs,
+                                  size_t* index_of_error)
 {
     if (idxs.size() == 0)
         return GetSP();
     ValueObjectSP root(GetSP());
-    for (std::pair<uint32_t, bool> idx : idxs)
+    for (std::pair<size_t, bool> idx : idxs)
     {
         root = root->GetChildAtIndex(idx.first, idx.second);
         if (!root)
@@ -574,13 +574,13 @@ ValueObject::GetChildAtIndexPath (const std::initializer_list< std::pair<uint32_
 }
 
 lldb::ValueObjectSP
-ValueObject::GetChildAtIndexPath (const std::vector<uint32_t> &idxs,
-                                  uint32_t* index_of_error)
+ValueObject::GetChildAtIndexPath (const std::vector<size_t> &idxs,
+                                  size_t* index_of_error)
 {
     if (idxs.size() == 0)
         return GetSP();
     ValueObjectSP root(GetSP());
-    for (uint32_t idx : idxs)
+    for (size_t idx : idxs)
     {
         root = root->GetChildAtIndex(idx, true);
         if (!root)
@@ -594,13 +594,13 @@ ValueObject::GetChildAtIndexPath (const std::vector<uint32_t> &idxs,
 }
 
 lldb::ValueObjectSP
-ValueObject::GetChildAtIndexPath (const std::vector< std::pair<uint32_t, bool> > &idxs,
-                                  uint32_t* index_of_error)
+ValueObject::GetChildAtIndexPath (const std::vector< std::pair<size_t, bool> > &idxs,
+                                  size_t* index_of_error)
 {
     if (idxs.size() == 0)
         return GetSP();
     ValueObjectSP root(GetSP());
-    for (std::pair<uint32_t, bool> idx : idxs)
+    for (std::pair<size_t, bool> idx : idxs)
     {
         root = root->GetChildAtIndex(idx.first, idx.second);
         if (!root)
@@ -613,7 +613,7 @@ ValueObject::GetChildAtIndexPath (const std::vector< std::pair<uint32_t, bool> >
     return root;
 }
 
-uint32_t
+size_t
 ValueObject::GetIndexOfChildWithName (const ConstString &name)
 {
     bool omit_empty_base_classes = true;
@@ -668,7 +668,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 }
 
 
-uint32_t
+size_t
 ValueObject::GetNumChildren ()
 {
     UpdateValueIfNeeded();
@@ -703,7 +703,7 @@ ValueObject::MightHaveChildren()
 
 // Should only be called by ValueObject::GetNumChildren()
 void
-ValueObject::SetNumChildren (uint32_t num_children)
+ValueObject::SetNumChildren (size_t num_children)
 {
     m_children_count_valid = true;
     m_children.SetChildrenCount(num_children);
@@ -716,7 +716,7 @@ ValueObject::SetName (const ConstString &name)
 }
 
 ValueObject *
-ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
+ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
     ValueObject *valobj = NULL;
     
@@ -1474,10 +1474,10 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 if ((custom_format == eFormatBytes) ||
                     (custom_format == eFormatBytesWithASCII))
                 {
-                    uint32_t count = GetNumChildren();
+                    const size_t count = GetNumChildren();
                                     
                     s << '[';
-                    for (uint32_t low = 0; low < count; low++)
+                    for (size_t low = 0; low < count; low++)
                     {
                         
                         if (low)
@@ -1510,12 +1510,12 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                     (custom_format == eFormatVectorOfUInt64) ||
                     (custom_format == eFormatVectorOfUInt8)) // arrays of bytes, bytes with ASCII or any vector format should be printed directly
                 {
-                    uint32_t count = GetNumChildren();
+                    const size_t count = GetNumChildren();
 
                     Format format = FormatManager::GetSingleItemFormat(custom_format);
                     
                     s << '[';
-                    for (uint32_t low = 0; low < count; low++)
+                    for (size_t low = 0; low < count; low++)
                     {
                         
                         if (low)
@@ -1564,8 +1564,8 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
     bool var_success = false;
     
     {
-        const char * return_value;
-        std::string alloc_mem;
+        const char *cstr = NULL;
+        StreamString strm;
 
         if (custom_format != eFormatInvalid)
             SetFormat(custom_format);
@@ -1573,59 +1573,49 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
         switch(val_obj_display)
         {
             case eValueObjectRepresentationStyleValue:
-                return_value = GetValueAsCString();
+                cstr = GetValueAsCString();
                 break;
                 
             case eValueObjectRepresentationStyleSummary:
-                return_value = GetSummaryAsCString();
+                cstr = GetSummaryAsCString();
                 break;
                 
             case eValueObjectRepresentationStyleLanguageSpecific:
-                return_value = GetObjectDescription();
+                cstr = GetObjectDescription();
                 break;
                 
             case eValueObjectRepresentationStyleLocation:
-                return_value = GetLocationAsCString();
+                cstr = GetLocationAsCString();
                 break;
                 
             case eValueObjectRepresentationStyleChildrenCount:
-            {
-                alloc_mem.resize(512);
-                return_value = &alloc_mem[0];
-                int count = GetNumChildren();
-                snprintf((char*)return_value, 512, "%d", count);
-            }
+                strm.Printf("%zu", GetNumChildren());
+                cstr = strm.GetString().c_str();
                 break;
                 
             case eValueObjectRepresentationStyleType:
-                return_value = GetTypeName().AsCString();
+                cstr = GetTypeName().AsCString();
                 break;
         }
         
-        if (!return_value)
+        if (!cstr)
         {
             if (val_obj_display == eValueObjectRepresentationStyleValue)
-                return_value = GetSummaryAsCString();        
+                cstr = GetSummaryAsCString();
             else if (val_obj_display == eValueObjectRepresentationStyleSummary)
             {
                 if (ClangASTContext::IsAggregateType (GetClangType()) == true)
                 {
-                    // this thing has no value, and it seems to have no summary
-                    // some combination of unitialized data and other factors can also
-                    // raise this condition, so let's print a nice generic description
-                    {
-                        alloc_mem.resize(684);
-                        return_value = &alloc_mem[0];
-                        snprintf((char*)return_value, 684, "%s @ %s", GetTypeName().AsCString(), GetLocationAsCString());
-                    }
+                    strm.Printf("%s @ %s", GetTypeName().AsCString(), GetLocationAsCString());
+                    cstr = strm.GetString().c_str();
                 }
                 else
-                    return_value = GetValueAsCString();
+                    cstr = GetValueAsCString();
             }
         }
         
-        if (return_value)
-            s.PutCString(return_value);
+        if (cstr)
+            s.PutCString(cstr);
         else
         {
             if (m_error.Fail())
@@ -1706,7 +1696,7 @@ ValueObject::GetPointerValue (AddressType *address_type)
     case Value::eValueTypeLoadAddress:
     case Value::eValueTypeFileAddress:
         {
-            uint32_t data_offset = 0;
+            lldb::offset_t data_offset = 0;
             address = m_data.GetPointer(&data_offset);
         }
         break;
@@ -1913,7 +1903,7 @@ ValueObject::IsObjCNil ()
 }
 
 ValueObjectSP
-ValueObject::GetSyntheticArrayMember (int32_t index, bool can_create)
+ValueObject::GetSyntheticArrayMember (size_t index, bool can_create)
 {
     if (IsArrayType())
         return GetSyntheticArrayMemberFromArray(index, can_create);
@@ -1926,13 +1916,13 @@ ValueObject::GetSyntheticArrayMember (int32_t index, bool can_create)
 }
 
 ValueObjectSP
-ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
+ValueObject::GetSyntheticArrayMemberFromPointer (size_t index, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
     if (IsPointerType ())
     {
         char index_str[64];
-        snprintf(index_str, sizeof(index_str), "[%i]", index);
+        snprintf(index_str, sizeof(index_str), "[%zu]", index);
         ConstString index_const_str(index_str);
         // Check if we have already created a synthetic array member in this
         // valid object. If we have we will re-use it.
@@ -1969,13 +1959,13 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
 // there are more items in "item_array".
 
 ValueObjectSP
-ValueObject::GetSyntheticArrayMemberFromArray (int32_t index, bool can_create)
+ValueObject::GetSyntheticArrayMemberFromArray (size_t index, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
     if (IsArrayType ())
     {
         char index_str[64];
-        snprintf(index_str, sizeof(index_str), "[%i]", index);
+        snprintf(index_str, sizeof(index_str), "[%zu]", index);
         ConstString index_const_str(index_str);
         // Check if we have already created a synthetic array member in this
         // valid object. If we have we will re-use it.
@@ -3057,8 +3047,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     }
                     else // expand this into list
                     {
-                        int max_index = root->GetNumChildren() - 1;
-                        for (int index = 0; index < max_index; index++)
+                        const size_t max_index = root->GetNumChildren() - 1;
+                        for (size_t index = 0; index < max_index; index++)
                         {
                             ValueObjectSP child = 
                                 root->GetChildAtIndex(index, true);
@@ -3094,8 +3084,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     {
                         if (root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
                         {
-                            int max_index = root->GetNumChildren() - 1;
-                            for (int index = 0; index < max_index; index++)
+                            const size_t max_index = root->GetNumChildren() - 1;
+                            for (size_t index = 0; index < max_index; index++)
                             {
                                 ValueObjectSP child = 
                                 root->GetChildAtIndex(index, true);
@@ -3467,7 +3457,7 @@ DumpValueObject_Impl (Stream &s,
                     ValueObjectSP synth_valobj_sp = valobj->GetSyntheticValue (options.m_use_synthetic);
                     synth_valobj = (synth_valobj_sp ? synth_valobj_sp.get() : valobj);
                     
-                    uint32_t num_children = synth_valobj->GetNumChildren();
+                    size_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
                     if (num_children)
                     {
@@ -3483,7 +3473,7 @@ DumpValueObject_Impl (Stream &s,
                             s.IndentMore();
                         }
                         
-                        uint32_t max_num_children = valobj->GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
+                        const size_t max_num_children = valobj->GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
                         
                         if (num_children > max_num_children && !options.m_ignore_cap)
                         {
@@ -3495,7 +3485,7 @@ DumpValueObject_Impl (Stream &s,
                         child_options.SetFormat(options.m_format).SetSummary().SetRootValueObjectName();
                         child_options.SetScopeChecked(true)
                         .SetOmitSummaryDepth(child_options.m_omit_summary_depth > 1 ? child_options.m_omit_summary_depth - 1 : 0);
-                        for (uint32_t idx=0; idx<num_children; ++idx)
+                        for (size_t idx=0; idx<num_children; ++idx)
                         {
                             ValueObjectSP child_sp(synth_valobj->GetChildAtIndex(idx, true));
                             if (child_sp.get())

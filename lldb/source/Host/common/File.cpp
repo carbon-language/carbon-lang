@@ -625,12 +625,12 @@ File::Write (const void *buf, size_t &num_bytes, off_t &offset)
 //------------------------------------------------------------------
 // Print some formatted output to the stream.
 //------------------------------------------------------------------
-int
+size_t
 File::Printf (const char *format, ...)
 {
     va_list args;
     va_start (args, format);
-    int result = PrintfVarArg (format, args);
+    size_t result = PrintfVarArg (format, args);
     va_end (args);
     return result;
 }
@@ -638,10 +638,10 @@ File::Printf (const char *format, ...)
 //------------------------------------------------------------------
 // Print some formatted output to the stream.
 //------------------------------------------------------------------
-int
+size_t
 File::PrintfVarArg (const char *format, va_list args)
 {
-    int result = 0;
+    size_t result = 0;
     if (DescriptorIsValid())
     {
         char *s = NULL;

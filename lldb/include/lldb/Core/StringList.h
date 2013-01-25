@@ -48,7 +48,7 @@ public:
     bool
     ReadFileLines (FileSpec &input_file);
     
-    uint32_t
+    size_t
     GetSize () const;
 
     const char *

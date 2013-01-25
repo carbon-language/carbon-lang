@@ -213,7 +213,7 @@ public:
     }
 
     void
-    ResizeData(int len);
+    ResizeData(size_t len);
 
     bool
     ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context);

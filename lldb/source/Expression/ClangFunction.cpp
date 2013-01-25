@@ -136,7 +136,7 @@ ClangFunction::CompileFunction (Stream &errors)
     // to pull the defined arguments out of the function, then add the types from the
     // arguments list for the variable arguments.
 
-    uint32_t num_args = UINT32_MAX;
+    size_t num_args = UINT32_MAX;
     bool trust_function = false;
     // GetArgumentCount returns -1 for an unprototyped function.
     if (m_function_ptr)
@@ -338,7 +338,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
 
     // TODO: verify fun_addr needs to be a callable address
     Scalar fun_addr (function_address.GetCallableLoadAddress(exe_ctx.GetTargetPtr()));
-    int first_offset = m_member_offsets[0];
+    uint64_t first_offset = m_member_offsets[0];
     process->WriteScalarToMemory(args_addr_ref + first_offset, fun_addr, process->GetAddressByteSize(), error);
 
     // FIXME: We will need to extend this for Variadic functions.
@@ -356,7 +356,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
     {
         // FIXME: We should sanity check sizes.
 
-        int offset = m_member_offsets[i+1]; // Clang sizes are in bytes.
+        uint64_t offset = m_member_offsets[i+1]; // Clang sizes are in bytes.
         Value *arg_value = arg_values.GetValueAtIndex(i);
         
         // FIXME: For now just do scalars:

@@ -51,7 +51,7 @@ public:
                  lldb_private::ConstString &reg_alt_name, 
                  lldb_private::ConstString &set_name)
     {
-        const uint32_t reg_num = m_regs.size();
+        const uint32_t reg_num = (uint32_t)m_regs.size();
         m_reg_names.push_back (reg_name);
         m_reg_alt_names.push_back (reg_alt_name);
         reg_info.name = reg_name.AsCString();
@@ -73,7 +73,7 @@ public:
             reg_info.invalidate_regs = m_invalidate_regs_map[reg_num].data();
         }
         m_regs.push_back (reg_info);
-        uint32_t set = GetRegisterSetIndexByName (set_name, true);
+        uint32_t set = GetRegisterSetIndexByName (set_name);
         assert (set < m_sets.size());
         assert (set < m_set_reg_nums.size());
         assert (set < m_set_names.size());
@@ -129,20 +129,20 @@ public:
     }
 
     uint32_t
-    GetRegisterSetIndexByName (lldb_private::ConstString &set_name, bool can_create)
+    GetRegisterSetIndexByName (lldb_private::ConstString &set_name)
     {
         name_collection::iterator pos, end = m_set_names.end();
         for (pos = m_set_names.begin(); pos != end; ++pos)
         {
             if (*pos == set_name)
-                return std::distance (m_set_names.begin(), pos);
+                return static_cast<uint32_t>(std::distance (m_set_names.begin(), pos));
         }
 
         m_set_names.push_back(set_name);
         m_set_reg_nums.resize(m_set_reg_nums.size()+1);
         lldb_private::RegisterSet new_set = { set_name.AsCString(), NULL, 0, NULL };
         m_sets.push_back (new_set);
-        return m_sets.size() - 1;
+        return static_cast<uint32_t>(m_sets.size() - 1);
     }
 
     uint32_t
@@ -152,7 +152,7 @@ public:
         for (pos = m_regs.begin(); pos != end; ++pos)
         {
             if (pos->kinds[kind] == num)
-                return std::distance (m_regs.begin(), pos);
+                return static_cast<uint32_t>(std::distance (m_regs.begin(), pos));
         }
 
         return LLDB_INVALID_REGNUM;
@@ -217,13 +217,13 @@ public:
     GetRegisterCount ();
 
     virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex (uint32_t reg);
+    GetRegisterInfoAtIndex (size_t reg);
 
     virtual size_t
     GetRegisterSetCount ();
 
     virtual const lldb_private::RegisterSet *
-    GetRegisterSet (uint32_t reg_set);
+    GetRegisterSet (size_t reg_set);
 
     virtual bool
     ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);

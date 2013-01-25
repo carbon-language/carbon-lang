@@ -1206,7 +1206,7 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
                         SectionSP(),
                         llvm::OwningPtr<LineSequence>()
                     };
-                    uint32_t offset = cu_line_offset;
+                    lldb::offset_t offset = cu_line_offset;
                     DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);
                     sc.comp_unit->SetLineTable(line_table_ap.release());
                     return true;
@@ -6858,8 +6858,8 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
         {
             const DWARFDebugInfoEntry *function_die = dwarf_cu->GetDIEPtr(sc.function->GetID());
             
-            dw_addr_t func_lo_pc = function_die->GetAttributeValueAsUnsigned (this, dwarf_cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
-            if (func_lo_pc != DW_INVALID_ADDRESS)
+            dw_addr_t func_lo_pc = function_die->GetAttributeValueAsUnsigned (this, dwarf_cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
+            if (func_lo_pc != LLDB_INVALID_ADDRESS)
             {
                 const size_t num_variables = ParseVariables(sc, dwarf_cu, func_lo_pc, function_die->GetFirstChild(), true, true);
             

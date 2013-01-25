@@ -28,7 +28,7 @@ void
 DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data)
 {
     RangeList range_list;
-    dw_offset_t offset = 0;
+    lldb::offset_t offset = 0;
     dw_offset_t debug_ranges_offset = offset;
     while (Extract(dwarf2Data, &offset, range_list))
     {
@@ -82,11 +82,11 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data)
 //}
 
 bool
-DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offset_ptr, RangeList &range_list)
+DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, lldb::offset_t *offset_ptr, RangeList &range_list)
 {
     range_list.Clear();
 
-    uint32_t range_offset = *offset_ptr;
+    lldb::offset_t range_offset = *offset_ptr;
     const DataExtractor& debug_ranges_data = dwarf2Data->get_debug_ranges_data();
     uint32_t addr_size = debug_ranges_data.GetAddressByteSize();
 
@@ -105,12 +105,12 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offset_ptr, Ran
         {
         case 2:
             if (begin == 0xFFFFull)
-                begin = DW_INVALID_ADDRESS;
+                begin = LLDB_INVALID_ADDRESS;
             break;
 
         case 4:
             if (begin == 0xFFFFFFFFull)
-                begin = DW_INVALID_ADDRESS;
+                begin = LLDB_INVALID_ADDRESS;
             break;
 
         case 8:
@@ -130,60 +130,9 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offset_ptr, Ran
     return range_offset != *offset_ptr;
 }
 
-//
-//dw_addr_t
-//DWARFDebugRanges::RangeList::LowestAddress(const dw_addr_t cu_base_addr) const
-//{
-//    dw_addr_t addr = DW_INVALID_ADDRESS;
-//    dw_addr_t curr_base_addr = cu_base_addr;
-//    if (!ranges.empty())
-//    {
-//        Range::const_iterator pos = ranges.begin();
-//        Range::const_iterator end_pos = ranges.end();
-//        for (pos = ranges.begin(); pos != end_pos; ++pos)
-//        {
-//            if (pos->begin_offset == DW_INVALID_ADDRESS)
-//                curr_base_addr = pos->end_offset;
-//            else if (curr_base_addr != DW_INVALID_ADDRESS)
-//            {
-//                dw_addr_t curr_addr = curr_base_addr + pos->begin_offset;
-//                if (addr > curr_addr)
-//                    addr = curr_addr;
-//            }
-//        }
-//    }
-//    return addr;
-//}
-//
-//dw_addr_t
-//DWARFDebugRanges::RangeList::HighestAddress(const dw_addr_t cu_base_addr) const
-//{
-//    dw_addr_t addr = 0;
-//    dw_addr_t curr_base_addr = cu_base_addr;
-//    if (!ranges.empty())
-//    {
-//        Range::const_iterator pos = ranges.begin();
-//        Range::const_iterator end_pos = ranges.end();
-//        for (pos = ranges.begin(); pos != end_pos; ++pos)
-//        {
-//            if (pos->begin_offset == DW_INVALID_ADDRESS)
-//                curr_base_addr = pos->end_offset;
-//            else if (curr_base_addr != DW_INVALID_ADDRESS)
-//            {
-//                dw_addr_t curr_addr = curr_base_addr + pos->end_offset;
-//                if (addr < curr_addr)
-//                    addr = curr_addr;
-//            }
-//        }
-//    }
-//    if (addr != 0)
-//        return addr;
-//    return DW_INVALID_ADDRESS;
-//}
-//
 
 void
-DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, uint32_t* offset_ptr, dw_addr_t cu_base_addr)
+DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, lldb::offset_t *offset_ptr, dw_addr_t cu_base_addr)
 {
     uint32_t addr_size = s.GetAddressByteSize();
     bool verbose = s.GetVerbose();
@@ -196,7 +145,7 @@ DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, uint32
         // Extend 4 byte addresses that consits of 32 bits of 1's to be 64 bits
         // of ones
         if (begin == 0xFFFFFFFFull && addr_size == 4)
-            begin = DW_INVALID_ADDRESS;
+            begin = LLDB_INVALID_ADDRESS;
 
         s.Indent();
         if (verbose)
@@ -210,7 +159,7 @@ DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, uint32
             s.PutCString(" End");
             break;
         }
-        else if (begin == DW_INVALID_ADDRESS)
+        else if (begin == LLDB_INVALID_ADDRESS)
         {
             // A base address selection entry
             base_addr = end;

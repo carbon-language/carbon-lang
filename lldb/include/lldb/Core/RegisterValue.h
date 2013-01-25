@@ -345,7 +345,7 @@ namespace lldb_private {
         Error
         SetValueFromData (const RegisterInfo *reg_info, 
                           DataExtractor &data, 
-                          uint32_t offset,
+                          lldb::offset_t offset,
                           bool partial_data_ok);
 
         // The default value of 0 for reg_name_right_align_at means no alignment at all.

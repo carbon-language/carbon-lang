@@ -29,8 +29,8 @@ public:
 
     DWARFCompileUnit(SymbolFileDWARF* dwarf2Data);
 
-    bool        Extract(const lldb_private::DataExtractor &debug_info, uint32_t* offset_ptr);
-    dw_offset_t Extract(dw_offset_t offset, const lldb_private::DataExtractor& debug_info_data, const DWARFAbbreviationDeclarationSet* abbrevs);
+    bool        Extract(const lldb_private::DataExtractor &debug_info, lldb::offset_t *offset_ptr);
+    dw_offset_t Extract(lldb::offset_t offset, const lldb_private::DataExtractor& debug_info_data, const DWARFAbbreviationDeclarationSet* abbrevs);
     size_t      ExtractDIEsIfNeeded (bool cu_die_only);
     bool        LookupAddress(
                     const dw_addr_t address,

@@ -194,7 +194,7 @@ ThreadKDP::GetPrivateStopReason ()
 void
 ThreadKDP::SetStopInfoFrom_KDP_EXCEPTION (const DataExtractor &exc_reply_packet)
 {
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     uint8_t reply_command = exc_reply_packet.GetU8(&offset);
     if (reply_command == CommunicationKDP::KDP_EXCEPTION)
     {

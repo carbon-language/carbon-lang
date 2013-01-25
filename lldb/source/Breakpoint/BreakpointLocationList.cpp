@@ -138,7 +138,7 @@ BreakpointLocationList::Dump (Stream *s) const
 
 
 BreakpointLocationSP
-BreakpointLocationList::GetByIndex (uint32_t i)
+BreakpointLocationList::GetByIndex (size_t i)
 {
     Mutex::Locker locker (m_mutex);
     BreakpointLocationSP bp_loc_sp;
@@ -149,7 +149,7 @@ BreakpointLocationList::GetByIndex (uint32_t i)
 }
 
 const BreakpointLocationSP
-BreakpointLocationList::GetByIndex (uint32_t i) const
+BreakpointLocationList::GetByIndex (size_t i) const
 {
     Mutex::Locker locker (m_mutex);
     BreakpointLocationSP bp_loc_sp;

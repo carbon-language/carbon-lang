@@ -178,7 +178,7 @@ UUID::SetFromCString (const char *cstr)
     while (isspace(*p))
         ++p;
     
-    const uint32_t uuid_byte_idx = UUID::DecodeUUIDBytesFromCString (p, m_uuid, &p);
+    const size_t uuid_byte_idx = UUID::DecodeUUIDBytesFromCString (p, m_uuid, &p);
 
     // If we successfully decoded a UUID, return the amount of characters that
     // were consumed

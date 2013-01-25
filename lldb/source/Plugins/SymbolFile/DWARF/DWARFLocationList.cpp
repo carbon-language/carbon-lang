@@ -18,7 +18,7 @@
 using namespace lldb_private;
 
 dw_offset_t
-DWARFLocationList::Dump(Stream &s, const DWARFCompileUnit* cu, const DataExtractor& debug_loc_data, dw_offset_t offset)
+DWARFLocationList::Dump(Stream &s, const DWARFCompileUnit* cu, const DataExtractor& debug_loc_data, lldb::offset_t offset)
 {
     uint64_t start_addr, end_addr;
     uint32_t addr_size = DWARFCompileUnit::GetAddressByteSize(cu);
@@ -52,7 +52,7 @@ DWARFLocationList::Dump(Stream &s, const DWARFCompileUnit* cu, const DataExtract
 }
 
 bool
-DWARFLocationList::Extract(const DataExtractor& debug_loc_data, dw_offset_t* offset_ptr, DataExtractor& location_list_data)
+DWARFLocationList::Extract(const DataExtractor& debug_loc_data, lldb::offset_t* offset_ptr, DataExtractor& location_list_data)
 {
     // Initialize with no data just in case we don't find anything
     location_list_data.Clear();
@@ -69,7 +69,7 @@ DWARFLocationList::Extract(const DataExtractor& debug_loc_data, dw_offset_t* off
 }
 
 size_t
-DWARFLocationList::Size(const DataExtractor& debug_loc_data, dw_offset_t offset)
+DWARFLocationList::Size(const DataExtractor& debug_loc_data, lldb::offset_t offset)
 {
     const dw_offset_t debug_loc_offset = offset;
 

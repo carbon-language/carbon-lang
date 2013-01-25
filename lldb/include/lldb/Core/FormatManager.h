@@ -150,7 +150,7 @@ public:
 #endif
     
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierForSummaryAtIndex (uint32_t index)
+    GetTypeNameSpecifierForSummaryAtIndex (size_t index)
     {
         if (index < m_summary_nav->GetCount())
             return m_summary_nav->GetTypeNameSpecifierAtIndex(index);
@@ -159,7 +159,7 @@ public:
     }
     
     SummaryNavigator::MapValueType
-    GetSummaryAtIndex (uint32_t index)
+    GetSummaryAtIndex (size_t index)
     {
         if (index < m_summary_nav->GetCount())
             return m_summary_nav->GetAtIndex(index);
@@ -168,7 +168,7 @@ public:
     }
 
     FilterNavigator::MapValueType
-    GetFilterAtIndex (uint32_t index)
+    GetFilterAtIndex (size_t index)
     {
         if (index < m_filter_nav->GetCount())
             return m_filter_nav->GetAtIndex(index);
@@ -177,7 +177,7 @@ public:
     }
     
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierForFilterAtIndex (uint32_t index)
+    GetTypeNameSpecifierForFilterAtIndex (size_t index)
     {
         if (index < m_filter_nav->GetCount())
             return m_filter_nav->GetTypeNameSpecifierAtIndex(index);
@@ -199,7 +199,7 @@ public:
     }
     
     SynthNavigator::MapValueType
-    GetSyntheticAtIndex (uint32_t index)
+    GetSyntheticAtIndex (size_t index)
     {
         if (index < m_synth_nav->GetCount())
             return m_synth_nav->GetAtIndex(index);
@@ -208,7 +208,7 @@ public:
     }
     
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierForSyntheticAtIndex (uint32_t index)
+    GetTypeNameSpecifierForSyntheticAtIndex (size_t index)
     {
         if (index < m_synth_nav->GetCount())
             return m_synth_nav->GetTypeNameSpecifierAtIndex(index);
@@ -486,7 +486,7 @@ public:
     LoopThrough (CallbackType callback, void* param);
     
     lldb::TypeCategoryImplSP
-    GetAtIndex (uint32_t);
+    GetAtIndex (size_t index);
     
     bool
     AnyMatches (ConstString type_name,
@@ -495,7 +495,7 @@ public:
                 const char** matching_category = NULL,
                 TypeCategoryImpl::FormatCategoryItems* matching_type = NULL);
     
-    uint32_t
+    size_t
     GetCount ()
     {
         return m_map.size();
@@ -615,14 +615,14 @@ public:
         return m_categories_map.Clear();
     }
     
-    uint32_t
+    size_t
     GetCategoriesCount ()
     {
         return m_categories_map.GetCount();
     }
     
     lldb::TypeCategoryImplSP
-    GetCategoryAtIndex (uint32_t index)
+    GetCategoryAtIndex (size_t index)
     {
         return m_categories_map.GetAtIndex(index);
     }

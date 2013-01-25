@@ -53,7 +53,7 @@ public:
     virtual lldb::ValueType
     GetValueType() const;
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
 
     virtual ConstString

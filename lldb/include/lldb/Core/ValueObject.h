@@ -732,32 +732,32 @@ public:
     GetName() const;
 
     virtual lldb::ValueObjectSP
-    GetChildAtIndex (uint32_t idx, bool can_create);
+    GetChildAtIndex (size_t idx, bool can_create);
 
     // this will always create the children if necessary
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::initializer_list<uint32_t> &idxs,
-                         uint32_t* index_of_error = NULL);
+    GetChildAtIndexPath (const std::initializer_list<size_t> &idxs,
+                         size_t* index_of_error = NULL);
     
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::vector<uint32_t> &idxs,
-                         uint32_t* index_of_error = NULL);
+    GetChildAtIndexPath (const std::vector<size_t> &idxs,
+                         size_t* index_of_error = NULL);
     
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::initializer_list< std::pair<uint32_t, bool> > &idxs,
-                         uint32_t* index_of_error = NULL);
+    GetChildAtIndexPath (const std::initializer_list< std::pair<size_t, bool> > &idxs,
+                         size_t* index_of_error = NULL);
 
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::vector< std::pair<uint32_t, bool> > &idxs,
-                         uint32_t* index_of_error = NULL);
+    GetChildAtIndexPath (const std::vector< std::pair<size_t, bool> > &idxs,
+                         size_t* index_of_error = NULL);
     
     virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);
 
-    virtual uint32_t
+    virtual size_t
     GetIndexOfChildWithName (const ConstString &name);
 
-    uint32_t
+    size_t
     GetNumChildren ();
 
     const Value &
@@ -833,13 +833,13 @@ public:
     GetSyntheticChild (const ConstString &key) const;
     
     lldb::ValueObjectSP
-    GetSyntheticArrayMember (int32_t index, bool can_create);
+    GetSyntheticArrayMember (size_t index, bool can_create);
 
     lldb::ValueObjectSP
-    GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
+    GetSyntheticArrayMemberFromPointer (size_t index, bool can_create);
     
     lldb::ValueObjectSP
-    GetSyntheticArrayMemberFromArray (int32_t index, bool can_create);
+    GetSyntheticArrayMemberFromArray (size_t index, bool can_create);
     
     lldb::ValueObjectSP
     GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);
@@ -1117,13 +1117,13 @@ protected:
     {
     public:
         ChildrenManager() :
-        m_mutex(Mutex::eMutexTypeRecursive),
-        m_children(),
-        m_children_count(0)
+            m_mutex(Mutex::eMutexTypeRecursive),
+            m_children(),
+            m_children_count(0)
         {}
         
         bool
-        HasChildAtIndex (uint32_t idx)
+        HasChildAtIndex (size_t idx)
         {
             Mutex::Locker locker(m_mutex);
             ChildrenIterator iter = m_children.find(idx);
@@ -1132,7 +1132,7 @@ protected:
         }
         
         ValueObject*
-        GetChildAtIndex (uint32_t idx)
+        GetChildAtIndex (size_t idx)
         {
             Mutex::Locker locker(m_mutex);
             ChildrenIterator iter = m_children.find(idx);
@@ -1144,7 +1144,7 @@ protected:
         }
         
         void
-        SetChildAtIndex (uint32_t idx, ValueObject* valobj)
+        SetChildAtIndex (size_t idx, ValueObject* valobj)
         {
             ChildrenPair pair(idx,valobj); // we do not need to be mutex-protected to make a pair
             Mutex::Locker locker(m_mutex);
@@ -1152,12 +1152,12 @@ protected:
         }
         
         void
-        SetChildrenCount (uint32_t count)
+        SetChildrenCount (size_t count)
         {
             m_children_count = count;
         }
         
-        uint32_t
+        size_t
         GetChildrenCount ()
         {
             return m_children_count;
@@ -1172,12 +1172,12 @@ protected:
         }
         
     private:
-        typedef std::map<uint32_t, ValueObject*> ChildrenMap;
+        typedef std::map<size_t, ValueObject*> ChildrenMap;
         typedef ChildrenMap::iterator ChildrenIterator;
         typedef ChildrenMap::value_type ChildrenPair;
         Mutex m_mutex;
         ChildrenMap m_children;
-        uint32_t m_children_count;
+        size_t m_children_count;
     };
 
     //------------------------------------------------------------------
@@ -1279,14 +1279,14 @@ protected:
     // Should only be called by ValueObject::GetChildAtIndex()
     // Returns a ValueObject managed by this ValueObject's manager.
     virtual ValueObject *
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
     // Should only be called by ValueObject::GetNumChildren()
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren() = 0;
 
     void
-    SetNumChildren (uint32_t num_children);
+    SetNumChildren (size_t num_children);
 
     void
     SetValueDidChange (bool value_changed);

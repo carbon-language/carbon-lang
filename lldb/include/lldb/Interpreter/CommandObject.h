@@ -409,7 +409,7 @@ public:
     /// total number of matches, and the window the user wants returned.
     ///
     /// @return
-    ///     \btrue if we were in an option, \bfalse otherwise.
+    ///     The number of completions.
     //------------------------------------------------------------------
 
     virtual int

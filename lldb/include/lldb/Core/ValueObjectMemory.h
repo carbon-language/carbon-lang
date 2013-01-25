@@ -47,7 +47,7 @@ public:
     virtual ConstString
     GetTypeName();
 
-    virtual uint32_t
+    virtual size_t
     CalculateNumChildren();
 
     virtual lldb::ValueType

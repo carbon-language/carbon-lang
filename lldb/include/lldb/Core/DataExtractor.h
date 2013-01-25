@@ -86,7 +86,7 @@ public:
     /// @param[in] addr_size
     ///     A new address byte size value.
     //------------------------------------------------------------------
-    DataExtractor (const void* data, uint32_t data_length, lldb::ByteOrder byte_order, uint8_t addr_size);
+    DataExtractor (const void* data, lldb::offset_t data_length, lldb::ByteOrder byte_order, uint32_t addr_size);
 
     //------------------------------------------------------------------
     /// Construct with shared data.
@@ -105,7 +105,7 @@ public:
     /// @param[in] addr_size
     ///     A new address byte size value.
     //------------------------------------------------------------------
-    DataExtractor (const lldb::DataBufferSP& data_sp, lldb::ByteOrder byte_order, uint8_t addr_size);
+    DataExtractor (const lldb::DataBufferSP& data_sp, lldb::ByteOrder byte_order, uint32_t addr_size);
 
     //------------------------------------------------------------------
     /// Construct with a subset of \a data.
@@ -130,7 +130,7 @@ public:
     /// @param[in] length
     ///     The length in bytes of the subset of data.
     //------------------------------------------------------------------
-    DataExtractor (const DataExtractor& data, uint32_t offset, uint32_t length);
+    DataExtractor (const DataExtractor& data, lldb::offset_t offset, lldb::offset_t length);
 
     DataExtractor (const DataExtractor& rhs);
     //------------------------------------------------------------------
@@ -204,10 +204,10 @@ public:
     /// @return
     ///     The offset at which dumping ended.
     //------------------------------------------------------------------
-    uint32_t
+    lldb::offset_t
     PutToLog (Log *log,
-              uint32_t offset,
-              uint32_t length,
+              lldb::offset_t offset,
+              lldb::offset_t length,
               uint64_t base_addr,
               uint32_t num_per_line,
               Type type,
@@ -273,13 +273,13 @@ public:
     /// @return
     ///     The offset at which dumping ended.
     //------------------------------------------------------------------
-    uint32_t
+    lldb::offset_t
     Dump (Stream *s,
-          uint32_t offset,
+          lldb::offset_t offset,
           lldb::Format item_format,
-          uint32_t item_byte_size,
-          uint32_t item_count,
-          uint32_t num_per_line,
+          size_t item_byte_size,
+          size_t item_count,
+          size_t num_per_line,
           uint64_t base_addr,
           uint32_t item_bit_size,
           uint32_t item_bit_offset,
@@ -300,7 +300,7 @@ public:
     ///     UUID value.
     //------------------------------------------------------------------
     void
-    DumpUUID (Stream *s, uint32_t offset) const;
+    DumpUUID (Stream *s, lldb::offset_t offset) const;
 
     //------------------------------------------------------------------
     /// Extract an arbitrary number of bytes in the specified byte
@@ -332,7 +332,7 @@ public:
     ///     if there aren't enough bytes at the specified offset.
     //------------------------------------------------------------------
     size_t
-    ExtractBytes (uint32_t offset, uint32_t length, lldb::ByteOrder dst_byte_order, void *dst) const;
+    ExtractBytes (lldb::offset_t offset, lldb::offset_t length, lldb::ByteOrder dst_byte_order, void *dst) const;
 
     //------------------------------------------------------------------
     /// Extract an address from \a *offset_ptr.
@@ -353,10 +353,10 @@ public:
     ///     The extracted address value.
     //------------------------------------------------------------------
     uint64_t
-    GetAddress (uint32_t *offset_ptr) const;
+    GetAddress (lldb::offset_t *offset_ptr) const;
     
     uint64_t
-    GetAddress_unchecked (uint32_t *offset_ptr) const;
+    GetAddress_unchecked (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Get the current address size.
@@ -367,7 +367,7 @@ public:
     /// @return
     ///     The size in bytes of address values that will be extracted.
     //------------------------------------------------------------------
-    uint8_t
+    uint32_t
     GetAddressByteSize () const
     {
         return m_addr_size;
@@ -379,7 +379,7 @@ public:
     /// @return
     ///     The total number of bytes of data this object refers to.
     //------------------------------------------------------------------
-    size_t
+    uint64_t
     GetByteSize () const
     {
         return m_end - m_start;
@@ -408,7 +408,7 @@ public:
     ///     NULL will be returned.
     //------------------------------------------------------------------
     const char *
-    GetCStr (uint32_t *offset_ptr) const;
+    GetCStr (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Extract \a length bytes from \a *offset_ptr.
@@ -434,7 +434,7 @@ public:
     ///     and length are valid, or NULL otherwise.
     //------------------------------------------------------------------
     const void*
-    GetData (uint32_t *offset_ptr, uint32_t length) const;
+    GetData (lldb::offset_t *offset_ptr, lldb::offset_t length) const;
     
     //------------------------------------------------------------------
     /// Copy \a dst_len bytes from \a *offset_ptr and ensure the copied
@@ -475,11 +475,11 @@ public:
     ///     Returns the number of bytes that were copied, or zero if 
     ///     anything goes wrong.
     //------------------------------------------------------------------
-    uint32_t
-    CopyByteOrderedData (uint32_t src_offset, 
-                         uint32_t src_len,
+    lldb::offset_t
+    CopyByteOrderedData (lldb::offset_t src_offset,
+                         lldb::offset_t src_len,
                          void *dst, 
-                         uint32_t dst_len, 
+                         lldb::offset_t dst_len,
                          lldb::ByteOrder dst_byte_order) const;
 
     //------------------------------------------------------------------
@@ -538,13 +538,13 @@ public:
     ///     The floating value that was extracted, or zero on failure.
     //------------------------------------------------------------------
     float
-    GetFloat (uint32_t *offset_ptr) const;
+    GetFloat (lldb::offset_t *offset_ptr) const;
 
     double
-    GetDouble (uint32_t *offset_ptr) const;
+    GetDouble (lldb::offset_t *offset_ptr) const;
 
     long double
-    GetLongDouble (uint32_t *offset_ptr) const;
+    GetLongDouble (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Extract a GNU encoded pointer value from \a *offset_ptr.
@@ -575,7 +575,11 @@ public:
     ///     The extracted GNU encoded pointer value.
     //------------------------------------------------------------------
     uint64_t
-    GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb::addr_t pc_rel_addr, lldb::addr_t text_addr, lldb::addr_t data_addr);
+    GetGNUEHPointer (lldb::offset_t *offset_ptr,
+                     uint32_t eh_ptr_enc,
+                     lldb::addr_t pc_rel_addr,
+                     lldb::addr_t text_addr,
+                     lldb::addr_t data_addr);
 
     //------------------------------------------------------------------
     /// Extract an integer of size \a byte_size from \a *offset_ptr.
@@ -601,7 +605,7 @@ public:
     ///     The integer value that was extracted, or zero on failure.
     //------------------------------------------------------------------
     uint32_t
-    GetMaxU32 (uint32_t *offset_ptr, uint32_t byte_size) const;
+    GetMaxU32 (lldb::offset_t *offset_ptr, size_t byte_size) const;
 
     //------------------------------------------------------------------
     /// Extract an unsigned integer of size \a byte_size from \a
@@ -630,10 +634,10 @@ public:
     ///     failure.
     //------------------------------------------------------------------
     uint64_t
-    GetMaxU64 (uint32_t *offset_ptr, uint32_t byte_size) const;
+    GetMaxU64 (lldb::offset_t *offset_ptr, size_t byte_size) const;
 
     uint64_t
-    GetMaxU64_unchecked (uint32_t *offset_ptr, uint32_t byte_size) const;
+    GetMaxU64_unchecked (lldb::offset_t *offset_ptr, size_t byte_size) const;
 
     //------------------------------------------------------------------
     /// Extract an signed integer of size \a byte_size from \a *offset_ptr.
@@ -661,7 +665,7 @@ public:
     ///     or zero on failure.
     //------------------------------------------------------------------
     int64_t
-    GetMaxS64 (uint32_t *offset_ptr, uint32_t size) const;
+    GetMaxS64 (lldb::offset_t *offset_ptr, size_t size) const;
 
     //------------------------------------------------------------------
     /// Extract an unsigned integer of size \a byte_size from \a
@@ -700,7 +704,10 @@ public:
     ///     zero on failure.
     //------------------------------------------------------------------
     uint64_t
-    GetMaxU64Bitfield (uint32_t *offset_ptr, uint32_t size, uint32_t bitfield_bit_size, uint32_t bitfield_bit_offset) const;
+    GetMaxU64Bitfield (lldb::offset_t *offset_ptr,
+                       size_t size,
+                       uint32_t bitfield_bit_size,
+                       uint32_t bitfield_bit_offset) const;
 
     //------------------------------------------------------------------
     /// Extract an signed integer of size \a byte_size from \a
@@ -739,7 +746,10 @@ public:
     ///     zero on failure.
     //------------------------------------------------------------------
     int64_t
-    GetMaxS64Bitfield (uint32_t *offset_ptr, uint32_t size, uint32_t bitfield_bit_size, uint32_t bitfield_bit_offset) const;
+    GetMaxS64Bitfield (lldb::offset_t *offset_ptr,
+                       size_t size,
+                       uint32_t bitfield_bit_size,
+                       uint32_t bitfield_bit_offset) const;
 
     //------------------------------------------------------------------
     /// Extract an pointer from \a *offset_ptr.
@@ -760,7 +770,7 @@ public:
     ///     The extracted pointer value as a 64 integer.
     //------------------------------------------------------------------
     uint64_t
-    GetPointer (uint32_t *offset_ptr) const;
+    GetPointer (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Get the current byte order value.
@@ -792,10 +802,10 @@ public:
     ///     The extracted uint8_t value.
     //------------------------------------------------------------------
     uint8_t
-    GetU8 ( uint32_t *offset_ptr) const;
+    GetU8 ( lldb::offset_t *offset_ptr) const;
 
     uint8_t
-    GetU8_unchecked (uint32_t *offset_ptr) const
+    GetU8_unchecked (lldb::offset_t *offset_ptr) const
     {
         uint8_t val = m_start[*offset_ptr];
         *offset_ptr += 1;
@@ -803,13 +813,13 @@ public:
     }
     
     uint16_t
-    GetU16_unchecked (uint32_t *offset_ptr) const;
+    GetU16_unchecked (lldb::offset_t *offset_ptr) const;
 
     uint32_t
-    GetU32_unchecked (uint32_t *offset_ptr) const;
+    GetU32_unchecked (lldb::offset_t *offset_ptr) const;
 
     uint64_t
-    GetU64_unchecked (uint32_t *offset_ptr) const;
+    GetU64_unchecked (lldb::offset_t *offset_ptr) const;
     //------------------------------------------------------------------
     /// Extract \a count uint8_t values from \a *offset_ptr.
     ///
@@ -836,7 +846,7 @@ public:
     ///     NULL otherise.
     //------------------------------------------------------------------
     void *
-    GetU8 ( uint32_t *offset_ptr, void *dst, uint32_t count) const;
+    GetU8 (lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
 
     //------------------------------------------------------------------
     /// Extract a uint16_t value from \a *offset_ptr.
@@ -855,7 +865,7 @@ public:
     ///     The extracted uint16_t value.
     //------------------------------------------------------------------
     uint16_t
-    GetU16 (uint32_t *offset_ptr) const;
+    GetU16 (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Extract \a count uint16_t values from \a *offset_ptr.
@@ -883,7 +893,7 @@ public:
     ///     NULL otherise.
     //------------------------------------------------------------------
     void *
-    GetU16 (uint32_t *offset_ptr, void *dst, uint32_t count) const;
+    GetU16 (lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
 
     //------------------------------------------------------------------
     /// Extract a uint32_t value from \a *offset_ptr.
@@ -902,7 +912,7 @@ public:
     ///     The extracted uint32_t value.
     //------------------------------------------------------------------
     uint32_t
-    GetU32 (uint32_t *offset_ptr) const;
+    GetU32 (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Extract \a count uint32_t values from \a *offset_ptr.
@@ -930,7 +940,7 @@ public:
     ///     NULL otherise.
     //------------------------------------------------------------------
     void *
-    GetU32 (uint32_t *offset_ptr, void *dst, uint32_t count) const;
+    GetU32 (lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
 
     //------------------------------------------------------------------
     /// Extract a uint64_t value from \a *offset_ptr.
@@ -949,7 +959,7 @@ public:
     ///     The extracted uint64_t value.
     //------------------------------------------------------------------
     uint64_t
-    GetU64 (uint32_t *offset_ptr) const;
+    GetU64 (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Extract \a count uint64_t values from \a *offset_ptr.
@@ -977,7 +987,7 @@ public:
     ///     NULL otherise.
     //------------------------------------------------------------------
     void *
-    GetU64 ( uint32_t *offset_ptr, void *dst, uint32_t count) const;
+    GetU64 ( lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
 
     //------------------------------------------------------------------
     /// Extract a signed LEB128 value from \a *offset_ptr.
@@ -998,7 +1008,7 @@ public:
     ///     The extracted signed integer value.
     //------------------------------------------------------------------
     int64_t
-    GetSLEB128 (uint32_t *offset_ptr) const;
+    GetSLEB128 (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Extract a unsigned LEB128 value from \a *offset_ptr.
@@ -1019,7 +1029,7 @@ public:
     ///     The extracted unsigned integer value.
     //------------------------------------------------------------------
     uint64_t
-    GetULEB128 (uint32_t *offset_ptr) const;
+    GetULEB128 (lldb::offset_t *offset_ptr) const;
 
     lldb::DataBufferSP &
     GetSharedDataBuffer ()
@@ -1042,7 +1052,7 @@ public:
     ///     NULL otherwise.
     //------------------------------------------------------------------
     const char *
-    PeekCStr (uint32_t offset) const;
+    PeekCStr (lldb::offset_t offset) const;
 
     //------------------------------------------------------------------
     /// Peek at a bytes at \a offset.
@@ -1056,7 +1066,7 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     const uint8_t*
-    PeekData (uint32_t offset, uint32_t length) const;
+    PeekData (lldb::offset_t offset, lldb::offset_t length) const;
 
     //------------------------------------------------------------------
     /// Set the address byte size.
@@ -1068,7 +1078,7 @@ public:
     ///     The size in bytes to use when extracting addresses.
     //------------------------------------------------------------------
     void
-    SetAddressByteSize (uint8_t addr_size)
+    SetAddressByteSize (uint32_t addr_size)
     {
         m_addr_size = addr_size;
     }
@@ -1094,8 +1104,8 @@ public:
     /// @return
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
-    uint32_t
-    SetData (const void *bytes, uint32_t length, lldb::ByteOrder byte_order);
+    lldb::offset_t
+    SetData (const void *bytes, lldb::offset_t length, lldb::ByteOrder byte_order);
 
     //------------------------------------------------------------------
     /// Adopt a subset of \a data.
@@ -1123,8 +1133,8 @@ public:
     /// @return
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
-    uint32_t
-    SetData (const DataExtractor& data, uint32_t offset, uint32_t length);
+    lldb::offset_t
+    SetData (const DataExtractor& data, lldb::offset_t offset, lldb::offset_t length);
 
     //------------------------------------------------------------------
     /// Adopt a subset of shared data in \a data_sp.
@@ -1151,8 +1161,8 @@ public:
     /// @return
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
-    uint32_t
-    SetData (const lldb::DataBufferSP& data_sp, uint32_t offset = 0, uint32_t length = UINT32_MAX);
+    lldb::offset_t
+    SetData (const lldb::DataBufferSP& data_sp, lldb::offset_t offset = 0, lldb::offset_t length = LLDB_INVALID_OFFSET);
 
     //------------------------------------------------------------------
     /// Set the byte_order value.
@@ -1188,7 +1198,7 @@ public:
     //      The number of bytes consumed during the extraction.
     //------------------------------------------------------------------
     uint32_t
-    Skip_LEB128 (uint32_t *offset_ptr) const;
+    Skip_LEB128 (lldb::offset_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Test the validity of \a offset.
@@ -1198,7 +1208,7 @@ public:
     ///     object, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ValidOffset (uint32_t offset) const
+    ValidOffset (lldb::offset_t offset) const
     {
         return offset < GetByteSize();
     }
@@ -1211,7 +1221,7 @@ public:
     ///     length bytes available at that offset, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ValidOffsetForDataOfSize (uint32_t offset, uint32_t length) const;
+    ValidOffsetForDataOfSize (lldb::offset_t offset, lldb::offset_t length) const;
 
     size_t
     Copy (DataExtractor& dest_data) const;
@@ -1220,7 +1230,7 @@ public:
     Append (DataExtractor& rhs);
     
     bool
-    Append (void* bytes, uint32_t length);
+    Append (void* bytes, lldb::offset_t length);
     
 protected:
     //------------------------------------------------------------------
@@ -1229,7 +1239,7 @@ protected:
     const uint8_t * m_start;        ///< A pointer to the first byte of data.
     const uint8_t * m_end;          ///< A pointer to the byte that is past the end of the data.
     lldb::ByteOrder m_byte_order;   ///< The byte order of the data we are extracting from.
-    uint8_t         m_addr_size;    ///< The address size to use when extracting pointers or addresses
+    uint32_t m_addr_size;           ///< The address size to use when extracting pointers or addresses
     mutable lldb::DataBufferSP m_data_sp; ///< The shared pointer to data that can be shared among multilple instances
 };
 

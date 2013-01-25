@@ -742,10 +742,10 @@ protected:
             {
                 if (m_memory_options.m_output_as_binary)
                 {
-                    int bytes_written = outfile_stream.Write (data_sp->GetBytes(), bytes_read);
+                    const size_t bytes_written = outfile_stream.Write (data_sp->GetBytes(), bytes_read);
                     if (bytes_written > 0)
                     {
-                        result.GetOutputStream().Printf ("%i bytes %s to '%s'\n", 
+                        result.GetOutputStream().Printf ("%zi bytes %s to '%s'\n", 
                                                          bytes_written, 
                                                          append ? "appended" : "written", 
                                                          path);
@@ -835,16 +835,16 @@ protected:
 
 
         assert (output_stream);
-        uint32_t bytes_dumped = data.Dump (output_stream,
-                                           0,
-                                           m_format_options.GetFormat(),
-                                           item_byte_size,
-                                           item_count,
-                                           num_per_line,
-                                           addr,
-                                           0,
-                                           0,
-                                           exe_scope);
+        size_t bytes_dumped = data.Dump (output_stream,
+                                         0,
+                                         m_format_options.GetFormat(),
+                                         item_byte_size,
+                                         item_count,
+                                         num_per_line,
+                                         addr,
+                                         0,
+                                         0,
+                                         exe_scope);
         m_next_addr = addr + bytes_dumped;
         output_stream->EOL();
         return true;
@@ -1129,9 +1129,8 @@ protected:
         uint64_t uval64;
         int64_t sval64;
         bool success = false;
-        const uint32_t num_value_args = command.GetArgumentCount();
-        uint32_t i;
-        for (i=0; i<num_value_args; ++i)
+        const size_t num_value_args = command.GetArgumentCount();
+        for (size_t i=0; i<num_value_args; ++i)
         {
             const char *value_str = command.GetArgumentAtIndex(i);
 

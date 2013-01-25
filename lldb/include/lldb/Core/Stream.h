@@ -87,13 +87,13 @@ public:
     /// @return
     ///     The number of bytes that were appended to the stream.
     //------------------------------------------------------------------
-    virtual int
+    virtual size_t
     Write (const void *src, size_t src_len) = 0;
 
     //------------------------------------------------------------------
     // Member functions
     //------------------------------------------------------------------
-    int
+    size_t
     PutChar (char ch);
 
     //------------------------------------------------------------------
@@ -125,7 +125,7 @@ public:
     /// @return
     ///     The number of bytes that were appended to the stream.
     //------------------------------------------------------------------
-    int
+    size_t
     PrintfAsRawHex8 (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
     //------------------------------------------------------------------
@@ -142,59 +142,59 @@ public:
     /// @return
     ///     The number of bytes that were appended to the stream.
     //------------------------------------------------------------------
-    int
+    size_t
     PutHex8 (uint8_t uvalue);
 
-    int
+    size_t
     PutNHex8 (size_t n, uint8_t uvalue);
 
-    int
+    size_t
     PutHex16 (uint16_t uvalue,
               lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutHex32 (uint32_t uvalue,
               lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutHex64 (uint64_t uvalue,
               lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutMaxHex64 (uint64_t uvalue,
                  size_t byte_size,
                  lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
-    int
+    size_t
     PutFloat (float f,
               lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutDouble (double d,
                lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutLongDouble (long double ld,
                    lldb::ByteOrder byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutPointer (void *ptr);
 
     // Append \a src_len bytes from \a src to the stream as hex characters
     // (two ascii characters per byte of input data)
-    int
+    size_t
     PutBytesAsRawHex8 (const void *src,
                        size_t src_len,
                        lldb::ByteOrder src_byte_order = lldb::eByteOrderInvalid,
                        lldb::ByteOrder dst_byte_order = lldb::eByteOrderInvalid);
 
     // Append \a src_len bytes from \a s to the stream as binary data.
-    int
+    size_t
     PutRawBytes (const void *s, 
                  size_t src_len,
                  lldb::ByteOrder src_byte_order = lldb::eByteOrderInvalid,
                  lldb::ByteOrder dst_byte_order = lldb::eByteOrderInvalid);
 
-    int
+    size_t
     PutCStringAsRawHex8 (const char *s);
 
     //------------------------------------------------------------------
@@ -359,7 +359,7 @@ public:
     ///     A suffix C string. If NULL, no suffix will be output.
     //------------------------------------------------------------------
     void
-    Address (uint64_t addr, int addr_size, const char *prefix = NULL, const char *suffix = NULL);
+    Address (uint64_t addr, uint32_t addr_size, const char *prefix = NULL, const char *suffix = NULL);
 
     //------------------------------------------------------------------
     /// Output an address range to this stream.
@@ -383,7 +383,7 @@ public:
     ///     A suffix C string. If NULL, no suffix will be output.
     //------------------------------------------------------------------
     void
-    AddressRange(uint64_t lo_addr, uint64_t hi_addr, int addr_size, const char *prefix = NULL, const char *suffix = NULL);
+    AddressRange(uint64_t lo_addr, uint64_t hi_addr, uint32_t addr_size, const char *prefix = NULL, const char *suffix = NULL);
 
     //------------------------------------------------------------------
     /// Output a C string to the stream.
@@ -393,13 +393,13 @@ public:
     /// @param[in] cstr
     ///     The string to be output to the stream.
     //------------------------------------------------------------------
-    int
+    size_t
     PutCString (const char *cstr);
 
     //------------------------------------------------------------------
     /// Output and End of Line character to the stream.
     //------------------------------------------------------------------
-    int
+    size_t
     EOL();
 
     //------------------------------------------------------------------
@@ -409,7 +409,7 @@ public:
     ///     The size of an address in bytes that is used when outputting
     ///     address and pointer values to the stream.
     //------------------------------------------------------------------
-    uint8_t
+    uint32_t
     GetAddressByteSize () const;
 
     //------------------------------------------------------------------
@@ -478,7 +478,7 @@ public:
     ///     A C string to print following the indentation. If NULL, just
     ///     output the indentation characters.
     //------------------------------------------------------------------
-    int
+    size_t
     Indent(const char *s = NULL);
 
     //------------------------------------------------------------------
@@ -520,10 +520,10 @@ public:
     ///     Variable arguments that are needed for the printf style
     ///     format string \a format.
     //------------------------------------------------------------------
-    int
+    size_t
     Printf (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
-    int
+    size_t
     PrintfVarArg(const char *format, va_list args);
 
     //------------------------------------------------------------------
@@ -549,7 +549,7 @@ public:
     ///     address and pointer values.
     //------------------------------------------------------------------
     void
-    SetAddressByteSize (uint8_t addr_size);
+    SetAddressByteSize (uint32_t addr_size);
 
     //------------------------------------------------------------------
     /// Set the current indentation level.
@@ -572,7 +572,7 @@ public:
     /// @param[in] format
     ///     The optional printf format that can be overridden.
     //------------------------------------------------------------------
-    int
+    size_t
     PutSLEB128 (int64_t uval);
 
     //------------------------------------------------------------------
@@ -587,7 +587,7 @@ public:
     /// @param[in] format
     ///     The optional printf format that can be overridden.
     //------------------------------------------------------------------
-    int
+    size_t
     PutULEB128 (uint64_t uval);
 
     static void
@@ -597,12 +597,12 @@ protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    Flags m_flags;      ///< Dump flags.
-    uint8_t m_addr_size;    ///< Size of an address in bytes.
-    lldb::ByteOrder m_byte_order;///< Byte order to use when encoding scalar types.
-    int m_indent_level;     ///< Indention level.
+    Flags m_flags;                  ///< Dump flags.
+    uint32_t m_addr_size;           ///< Size of an address in bytes.
+    lldb::ByteOrder m_byte_order;   ///< Byte order to use when encoding scalar types.
+    int m_indent_level;             ///< Indention level.
 
-    int _PutHex8 (uint8_t uvalue, bool add_prefix);
+    size_t _PutHex8 (uint8_t uvalue, bool add_prefix);
 };
 
 } // namespace lldb_private

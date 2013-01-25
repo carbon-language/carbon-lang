@@ -75,9 +75,9 @@ StringList::AppendList (const char **strv, int strc)
 void
 StringList::AppendList (StringList strings)
 {
-    uint32_t len = strings.GetSize();
+    size_t len = strings.GetSize();
 
-    for (uint32_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; ++i)
         m_strings.push_back (strings.GetStringAtIndex(i));
 }
 
@@ -87,7 +87,7 @@ StringList::ReadFileLines (FileSpec &input_file)
     return input_file.ReadFileLines (m_strings);
 }
 
-uint32_t
+size_t
 StringList::GetSize () const
 {
     return m_strings.size();
@@ -104,7 +104,7 @@ StringList::GetStringAtIndex (size_t idx) const
 void
 StringList::Join (const char *separator, Stream &strm)
 {
-    uint32_t size = GetSize();
+    size_t size = GetSize();
     
     if (size == 0)
         return;
@@ -127,8 +127,8 @@ void
 StringList::LongestCommonPrefix (std::string &common_prefix)
 {
     //arg_sstr_collection::iterator pos, end = m_args.end();
-    int pos = 0;
-    int end = m_strings.size();
+    size_t pos = 0;
+    size_t end = m_strings.size();
 
     if (pos == end)
         common_prefix.clear();

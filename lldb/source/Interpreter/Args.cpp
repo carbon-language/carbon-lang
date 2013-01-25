@@ -98,15 +98,15 @@ Args::~Args ()
 void
 Args::Dump (Stream *s)
 {
-    const int argc = m_argv.size();
-    for (int i=0; i<argc; ++i)
+    const size_t argc = m_argv.size();
+    for (size_t i=0; i<argc; ++i)
     {
         s->Indent();
         const char *arg_cstr = m_argv[i];
         if (arg_cstr)
-            s->Printf("argv[%i]=\"%s\"\n", i, arg_cstr);
+            s->Printf("argv[%zi]=\"%s\"\n", i, arg_cstr);
         else
-            s->Printf("argv[%i]=NULL\n", i);
+            s->Printf("argv[%zi]=NULL\n", i);
     }
     s->EOL();
 }
@@ -115,8 +115,8 @@ bool
 Args::GetCommandString (std::string &command) const
 {
     command.clear();
-    int argc = GetArgumentCount();
-    for (int i=0; i<argc; ++i)
+    const size_t argc = GetArgumentCount();
+    for (size_t i=0; i<argc; ++i)
     {
         if (i > 0)
             command += ' ';
@@ -129,7 +129,7 @@ bool
 Args::GetQuotedCommandString (std::string &command) const
 {
     command.clear ();
-    size_t argc = GetArgumentCount ();
+    const size_t argc = GetArgumentCount();
     for (size_t i = 0; i < argc; ++i)
     {
         if (i > 0)
@@ -571,7 +571,7 @@ Args::DeleteArgumentAtIndex (size_t idx)
 }
 
 void
-Args::SetArguments (int argc, const char **argv)
+Args::SetArguments (size_t argc, const char **argv)
 {
     // m_argv will be rebuilt in UpdateArgvFromArgs() below, so there is
     // no need to clear it here.
@@ -723,11 +723,12 @@ Args::StringToSInt32 (const char *s, int32_t fail_value, int base, bool *success
     if (s && s[0])
     {
         char *end = NULL;
-        int32_t uval = ::strtol (s, &end, base);
+        const long sval = ::strtol (s, &end, base);
         if (*end == '\0')
         {
-            if (success_ptr) *success_ptr = true;
-            return uval; // All characters were used, return the result
+            if (success_ptr)
+                *success_ptr = ((sval <= INT32_MAX) && (sval >= INT32_MIN));
+            return (int32_t)sval; // All characters were used, return the result
         }
     }
     if (success_ptr) *success_ptr = false;
@@ -740,11 +741,12 @@ Args::StringToUInt32 (const char *s, uint32_t fail_value, int base, bool *succes
     if (s && s[0])
     {
         char *end = NULL;
-        uint32_t uval = ::strtoul (s, &end, base);
+        const unsigned long uval = ::strtoul (s, &end, base);
         if (*end == '\0')
         {
-            if (success_ptr) *success_ptr = true;
-            return uval; // All characters were used, return the result
+            if (success_ptr)
+                *success_ptr = (uval <= UINT32_MAX);
+            return (uint32_t)uval; // All characters were used, return the result
         }
     }
     if (success_ptr) *success_ptr = false;
@@ -941,8 +943,7 @@ Args::StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t
     if (s && s[0])
     {
         char *pos = NULL;
-        uint32_t uval32;
-        uval32 = ::strtoul (s, &pos, 0);
+        unsigned long uval32 = ::strtoul (s, &pos, 0);
         if (pos == s)
             return s;
         major = uval32;
@@ -992,7 +993,7 @@ Args::GetShellSafeArgument (const char *unsafe_arg, std::string &safe_arg)
 }
 
 
-int32_t
+int64_t
 Args::StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, Error &error)
 {    
     if (enum_values)
@@ -1052,7 +1053,7 @@ Args::StringToFormat
 (
     const char *s,
     lldb::Format &format,
-    uint32_t *byte_size_ptr
+    size_t *byte_size_ptr
 )
 {
     format = eFormatInvalid;
@@ -1674,8 +1675,7 @@ Args::EncodeEscapeSequences (const char *src, std::string &dst)
                         unsigned long octal_value = ::strtoul (oct_str, NULL, 8);
                         if (octal_value <= UINT8_MAX)
                         {
-                            const char octal_char = octal_value;
-                            dst.append(1, octal_char);
+                            dst.append(1, (char)octal_value);
                         }
                     }
                         break;

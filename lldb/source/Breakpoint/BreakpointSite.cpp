@@ -25,10 +25,9 @@ BreakpointSite::BreakpointSite
     BreakpointSiteList *list,
     const BreakpointLocationSP& owner,
     lldb::addr_t addr,
-    lldb::tid_t tid,
     bool use_hardware
 ) :
-    StoppointLocation(GetNextID(), addr, tid, use_hardware),
+    StoppointLocation(GetNextID(), addr, 0, use_hardware),
     m_type (eSoftware), // Process subclasses need to set this correctly using SetType()
     m_saved_opcode(),
     m_trap_opcode(),
@@ -118,7 +117,7 @@ BreakpointSite::GetTrapOpcodeMaxByteSize() const
 }
 
 bool
-BreakpointSite::SetTrapOpcode (const uint8_t *trap_opcode, size_t trap_opcode_size)
+BreakpointSite::SetTrapOpcode (const uint8_t *trap_opcode, uint32_t trap_opcode_size)
 {
     if (trap_opcode_size > 0 && trap_opcode_size <= sizeof(m_trap_opcode))
     {
@@ -160,21 +159,21 @@ BreakpointSite::AddOwner (const BreakpointLocationSP &owner)
     m_owners.Add(owner);
 }
 
-uint32_t
+size_t
 BreakpointSite::RemoveOwner (lldb::break_id_t break_id, lldb::break_id_t break_loc_id)
 {
     m_owners.Remove(break_id, break_loc_id);
     return m_owners.GetSize();
 }
 
-uint32_t
+size_t
 BreakpointSite::GetNumberOfOwners ()
 {
     return m_owners.GetSize();
 }
 
 BreakpointLocationSP
-BreakpointSite::GetOwnerAtIndex (uint32_t index)
+BreakpointSite::GetOwnerAtIndex (size_t index)
 {
     return m_owners.GetByIndex (index);
 }

@@ -39,7 +39,7 @@ public:
 
     bool
     Extract(const lldb_private::DataExtractor& mac_info_data,
-            dw_offset_t* offset_ptr);
+            lldb::offset_t* offset_ptr);
 
 protected:
 

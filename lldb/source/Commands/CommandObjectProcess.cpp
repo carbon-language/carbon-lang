@@ -69,7 +69,7 @@ public:
     {
     }
 
-    int
+    virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -446,10 +446,10 @@ public:
                         match_info.SetNameMatchType(eNameMatchStartsWith);
                     }
                     platform_sp->FindProcesses (match_info, process_infos);
-                    const uint32_t num_matches = process_infos.GetSize();
+                    const size_t num_matches = process_infos.GetSize();
                     if (num_matches > 0)
                     {
-                        for (uint32_t i=0; i<num_matches; ++i)
+                        for (size_t i=0; i<num_matches; ++i)
                         {
                             matches.AppendString (process_infos.GetProcessNameAtIndex(i), 
                                                   process_infos.GetProcessNameLengthAtIndex(i));
@@ -773,12 +773,12 @@ protected:
                     StopInfoSP stop_info_sp = sel_thread_sp->GetStopInfo();
                     if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
                     {
-                        uint64_t bp_site_id = stop_info_sp->GetValue();
+                        lldb::break_id_t bp_site_id = (lldb::break_id_t)stop_info_sp->GetValue();
                         BreakpointSiteSP bp_site_sp(process->GetBreakpointSiteList().FindByID(bp_site_id));
                         if (bp_site_sp)
                         {
-                            uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
-                            for (uint32_t i = 0; i < num_owners; i++)
+                            const size_t num_owners = bp_site_sp->GetNumberOfOwners();
+                            for (size_t i = 0; i < num_owners; i++)
                             {
                                 Breakpoint &bp_ref = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint();
                                 if (!bp_ref.IsInternal())
@@ -1134,7 +1134,7 @@ protected:
     {
         Process *process = m_exe_ctx.GetProcessPtr();
 
-        const uint32_t argc = command.GetArgumentCount();
+        const size_t argc = command.GetArgumentCount();
         
         for (uint32_t i=0; i<argc; ++i)
         {
@@ -1191,7 +1191,7 @@ protected:
     {
         Process *process = m_exe_ctx.GetProcessPtr();
 
-        const uint32_t argc = command.GetArgumentCount();
+        const size_t argc = command.GetArgumentCount();
         
         for (uint32_t i=0; i<argc; ++i)
         {

@@ -135,11 +135,11 @@ namespace lldb_private {
         public:
             NSArrayMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual uint32_t
+            virtual size_t
             CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
-            GetChildAtIndex (uint32_t idx);
+            GetChildAtIndex (size_t idx);
             
             virtual bool
             Update();
@@ -166,11 +166,11 @@ namespace lldb_private {
         public:
             NSArrayISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual uint32_t
+            virtual size_t
             CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
-            GetChildAtIndex (uint32_t idx);
+            GetChildAtIndex (size_t idx);
             
             virtual bool
             Update();
@@ -186,7 +186,7 @@ namespace lldb_private {
         private:
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
-            uint64_t m_items;
+            size_t m_items;
             lldb::addr_t m_data_ptr;
             ClangASTType m_id_type;
             std::vector<lldb::ValueObjectSP> m_children;
@@ -197,11 +197,11 @@ namespace lldb_private {
         public:
             NSArrayCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual uint32_t
+            virtual size_t
             CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
-            GetChildAtIndex (uint32_t idx);
+            GetChildAtIndex (size_t idx);
             
             virtual bool
             Update();
@@ -242,11 +242,11 @@ namespace lldb_private {
         public:
             NSDictionaryISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual uint32_t
+            virtual size_t
             CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
-            GetChildAtIndex (uint32_t idx);
+            GetChildAtIndex (size_t idx);
             
             virtual bool
             Update();
@@ -298,11 +298,11 @@ namespace lldb_private {
         public:
             NSDictionaryMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual uint32_t
+            virtual size_t
             CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
-            GetChildAtIndex (uint32_t idx);
+            GetChildAtIndex (size_t idx);
             
             virtual bool
             Update();
@@ -328,11 +328,11 @@ namespace lldb_private {
         public:
             NSDictionaryCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual uint32_t
+            virtual size_t
             CalculateNumChildren ();
             
             virtual lldb::ValueObjectSP
-            GetChildAtIndex (uint32_t idx);
+            GetChildAtIndex (size_t idx);
             
             virtual bool
             Update();

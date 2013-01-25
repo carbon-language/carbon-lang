@@ -73,10 +73,9 @@ DWARFDebugInfo::GetCompileUnitAranges ()
                 log->Printf ("DWARFDebugInfo::GetCompileUnitAranges() for \"%s/%s\" by parsing", 
                              m_dwarf2Data->GetObjectFile()->GetFileSpec().GetDirectory().GetCString(),
                              m_dwarf2Data->GetObjectFile()->GetFileSpec().GetFilename().GetCString());
-            const uint32_t num_compile_units = GetNumCompileUnits();
-            uint32_t idx;
+            const size_t num_compile_units = GetNumCompileUnits();
             const bool clear_dies_if_already_not_parsed = true;
-            for (idx = 0; idx < num_compile_units; ++idx)
+            for (size_t idx = 0; idx < num_compile_units; ++idx)
             {
                 DWARFCompileUnit* cu = GetCompileUnitAtIndex(idx);
                 if (cu)
@@ -148,7 +147,7 @@ DWARFDebugInfo::ParseCompileUnitHeadersIfNeeded()
     {
         if (m_dwarf2Data != NULL)
         {
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             const DataExtractor &debug_info_data = m_dwarf2Data->get_debug_info_data();
             while (debug_info_data.ValidOffset(offset))
             {
@@ -168,7 +167,7 @@ DWARFDebugInfo::ParseCompileUnitHeadersIfNeeded()
     }
 }
 
-uint32_t
+size_t
 DWARFDebugInfo::GetNumCompileUnits()
 {
     ParseCompileUnitHeadersIfNeeded();
@@ -395,7 +394,7 @@ DWARFDebugInfo::Parse(SymbolFileDWARF* dwarf2Data, Callback callback, void* user
 {
     if (dwarf2Data)
     {
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         uint32_t depth = 0;
         DWARFCompileUnitSP cu(new DWARFCompileUnit(dwarf2Data));
         if (cu.get() == NULL)

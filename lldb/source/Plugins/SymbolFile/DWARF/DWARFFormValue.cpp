@@ -114,7 +114,7 @@ DWARFFormValue::DWARFFormValue(dw_form_t form) :
 }
 
 bool
-DWARFFormValue::ExtractValue(const DataExtractor& data, uint32_t* offset_ptr, const DWARFCompileUnit* cu)
+DWARFFormValue::ExtractValue(const DataExtractor& data, lldb::offset_t* offset_ptr, const DWARFCompileUnit* cu)
 {
     bool indirect = false;
     bool is_block = false;
@@ -178,13 +178,13 @@ DWARFFormValue::ExtractValue(const DataExtractor& data, uint32_t* offset_ptr, co
 }
 
 bool
-DWARFFormValue::SkipValue(const DataExtractor& debug_info_data, uint32_t* offset_ptr, const DWARFCompileUnit* cu) const
+DWARFFormValue::SkipValue(const DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu) const
 {
     return DWARFFormValue::SkipValue(m_form, debug_info_data, offset_ptr, cu);
 }
 
 bool
-DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, uint32_t* offset_ptr, const DWARFCompileUnit* cu)
+DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu)
 {
     switch (form)
     {

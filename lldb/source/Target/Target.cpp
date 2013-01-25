@@ -1418,7 +1418,7 @@ Target::ReadScalarIntegerFromMemory (const Address& addr,
         if (bytes_read == byte_size)
         {
             DataExtractor data (&uval, sizeof(uval), m_arch.GetByteOrder(), m_arch.GetAddressByteSize());
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             if (byte_size <= 4)
                 scalar = data.GetMaxU32 (&offset, byte_size);
             else

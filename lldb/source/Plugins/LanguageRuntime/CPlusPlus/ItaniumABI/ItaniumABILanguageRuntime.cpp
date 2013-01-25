@@ -90,10 +90,10 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
             return false;
         }
         
-        uint32_t offset_ptr = 0;
-        lldb::addr_t vtable_address_point = data.GetAddress (&offset_ptr);
+        lldb::offset_t offset = 0;
+        lldb::addr_t vtable_address_point = data.GetAddress (&offset);
             
-        if (offset_ptr == 0)
+        if (offset == 0)
             return false;
         
         // Now find the symbol that contains this address:
@@ -255,8 +255,8 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                                 return false;
                             }
                             
-                            offset_ptr = 0;
-                            int64_t offset_to_top = data.GetMaxS64(&offset_ptr, process->GetAddressByteSize());
+                            offset = 0;
+                            int64_t offset_to_top = data.GetMaxS64(&offset, process->GetAddressByteSize());
                             
                             // So the dynamic type is a value that starts at offset_to_top
                             // above the original address.

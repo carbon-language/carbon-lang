@@ -245,8 +245,8 @@ SearchFilter::DoCUIteration (const ModuleSP &module_sp, const SymbolContext &con
     Searcher::CallbackReturn shouldContinue;
     if (context.comp_unit == NULL)
     {
-        uint32_t num_comp_units = module_sp->GetNumCompileUnits();
-        for (uint32_t i = 0; i < num_comp_units; i++)
+        const size_t num_comp_units = module_sp->GetNumCompileUnits();
+        for (size_t i = 0; i < num_comp_units; i++)
         {
             CompUnitSP cu_sp (module_sp->GetCompileUnitAtIndex (i));
             if (cu_sp)
@@ -617,7 +617,7 @@ SearchFilterByModuleList::Search (Searcher &searcher)
 void
 SearchFilterByModuleList::GetDescription (Stream *s)
 {
-    uint32_t num_modules = m_module_spec_list.GetSize();
+    size_t num_modules = m_module_spec_list.GetSize();
     if (num_modules == 1)
     {
         s->Printf (", module = ");
@@ -634,8 +634,8 @@ SearchFilterByModuleList::GetDescription (Stream *s)
     }
     else
     {
-        s->Printf (", modules(%u) = ", num_modules);
-        for (uint32_t i = 0; i < num_modules; i++)
+        s->Printf (", modules(%zu) = ", num_modules);
+        for (size_t i = 0; i < num_modules; i++)
         {
             if (s->GetVerbose())
             {
@@ -812,7 +812,7 @@ SearchFilterByModuleListAndCU::Search (Searcher &searcher)
 void
 SearchFilterByModuleListAndCU::GetDescription (Stream *s)
 {
-    uint32_t num_modules = m_module_spec_list.GetSize();
+    size_t num_modules = m_module_spec_list.GetSize();
     if (num_modules == 1)
     {
         s->Printf (", module = ");
@@ -829,8 +829,8 @@ SearchFilterByModuleListAndCU::GetDescription (Stream *s)
     }
     else if (num_modules > 0)
     {
-        s->Printf (", modules(%d) = ", num_modules);
-        for (uint32_t i = 0; i < num_modules; i++)
+        s->Printf (", modules(%zd) = ", num_modules);
+        for (size_t i = 0; i < num_modules; i++)
         {
             if (s->GetVerbose())
             {

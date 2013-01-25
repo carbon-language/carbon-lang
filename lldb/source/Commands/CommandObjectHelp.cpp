@@ -64,7 +64,7 @@ CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
 {
     CommandObject::CommandMap::iterator pos;
     CommandObject *cmd_obj;
-    const int argc = command.GetArgumentCount ();
+    const size_t argc = command.GetArgumentCount ();
     
     // 'help' doesn't take any arguments, other than command names.  If argc is 0, we show the user
     // all commands (aliases and user commands if asked for).  Otherwise every argument must be the name of a command or a sub-command.
@@ -224,8 +224,8 @@ CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
         {
             Stream &output_strm = result.GetOutputStream();
             output_strm.Printf("Help requested with ambiguous command name, possible completions:\n");
-            const uint32_t match_count = matches.GetSize();
-            for (uint32_t i = 0; i < match_count; i++)
+            const size_t match_count = matches.GetSize();
+            for (size_t i = 0; i < match_count; i++)
             {
                 output_strm.Printf("\t%s\n", matches.GetStringAtIndex(i));
             }

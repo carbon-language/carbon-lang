@@ -19,16 +19,16 @@ public:
     Dump (lldb_private::Stream &s,
           const DWARFCompileUnit* cu,
           const lldb_private::DataExtractor& debug_loc_data,
-          dw_offset_t offset);
+          lldb::offset_t offset);
 
     static bool
     Extract (const lldb_private::DataExtractor& debug_loc_data,
-             dw_offset_t* offset_ptr,
+             lldb::offset_t* offset_ptr,
              lldb_private::DataExtractor& location_list_data);
 
     static size_t
     Size (const lldb_private::DataExtractor& debug_loc_data,
-          dw_offset_t offset);
+          lldb::offset_t offset);
 
 };
 #endif  // SymbolFileDWARF_DWARFLocationList_h_

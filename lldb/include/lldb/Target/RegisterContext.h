@@ -45,13 +45,13 @@ public:
     GetRegisterCount () = 0;
 
     virtual const RegisterInfo *
-    GetRegisterInfoAtIndex (uint32_t reg) = 0;
+    GetRegisterInfoAtIndex (size_t reg) = 0;
 
     virtual size_t
     GetRegisterSetCount () = 0;
 
     virtual const RegisterSet *
-    GetRegisterSet (uint32_t reg_set) = 0;
+    GetRegisterSet (size_t reg_set) = 0;
 
     virtual bool
     ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value) = 0;

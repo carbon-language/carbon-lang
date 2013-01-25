@@ -144,9 +144,9 @@ public:
         m_loc_is_const_data = b;
     }
     
-    typedef uint32_t (*GetVariableCallback) (void *baton, 
-                                             const char *name,
-                                             VariableList &var_list);
+    typedef size_t (*GetVariableCallback) (void *baton,
+                                           const char *name,
+                                           VariableList &var_list);
 
 
     static Error

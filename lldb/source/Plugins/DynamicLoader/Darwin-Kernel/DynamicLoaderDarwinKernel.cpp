@@ -612,7 +612,7 @@ DynamicLoaderDarwinKernel::ReadKextSummaryHeader ()
                 const size_t bytes_read = m_process->GetTarget().ReadMemory (m_kext_summary_header_addr, prefer_file_cache, buf, count, error);
                 if (bytes_read == count)
                 {
-                    uint32_t offset = 0;
+                    lldb::offset_t offset = 0;
                     m_kext_summary_header.version = data.GetU32(&offset);
                     if (m_kext_summary_header.version >= 2)
                     {
@@ -723,7 +723,7 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
              i < image_infos.size() && extractor.ValidOffsetForDataOfSize(kext_summary_offset, m_kext_summary_header.entry_size); 
              ++i, kext_summary_offset += m_kext_summary_header.entry_size)
         {
-            uint32_t offset = kext_summary_offset;
+            lldb::offset_t offset = kext_summary_offset;
             const void *name_data = extractor.GetData(&offset, KERNEL_MODULE_MAX_NAME);
             if (name_data == NULL)
                 break;

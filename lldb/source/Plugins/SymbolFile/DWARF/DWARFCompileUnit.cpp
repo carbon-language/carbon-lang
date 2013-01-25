@@ -68,7 +68,7 @@ DWARFCompileUnit::Clear()
 }
 
 bool
-DWARFCompileUnit::Extract(const DataExtractor &debug_info, uint32_t* offset_ptr)
+DWARFCompileUnit::Extract(const DataExtractor &debug_info, lldb::offset_t *offset_ptr)
 {
     Clear();
 
@@ -103,7 +103,7 @@ DWARFCompileUnit::Extract(const DataExtractor &debug_info, uint32_t* offset_ptr)
 
 
 dw_offset_t
-DWARFCompileUnit::Extract(dw_offset_t offset, const DataExtractor& debug_info_data, const DWARFAbbreviationDeclarationSet* abbrevs)
+DWARFCompileUnit::Extract(lldb::offset_t offset, const DataExtractor& debug_info_data, const DWARFAbbreviationDeclarationSet* abbrevs)
 {
     Clear();
 
@@ -167,8 +167,8 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
 
     // Set the offset to that of the first DIE and calculate the start of the
     // next compilation unit header.
-    uint32_t offset = GetFirstDIEOffset();
-    uint32_t next_cu_offset = GetNextCompileUnitOffset();
+    lldb::offset_t offset = GetFirstDIEOffset();
+    lldb::offset_t next_cu_offset = GetNextCompileUnitOffset();
 
     DWARFDebugInfoEntry die;
         // Keep a flat array of the DIE for binary lookup by DIE offset
@@ -273,7 +273,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     // unit header).
     if (offset > next_cu_offset)
     {
-        m_dwarf2Data->GetObjectFile()->GetModule()->ReportWarning ("DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x\n", 
+        m_dwarf2Data->GetObjectFile()->GetModule()->ReportWarning ("DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8" PRIx64 "\n",
                                                                    GetOffset(), 
                                                                    offset);
     }

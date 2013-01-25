@@ -162,7 +162,7 @@ DWARFDebugArangeSet::AddDescriptor(const DWARFDebugArangeSet::Descriptor& range)
 }
 
 bool
-DWARFDebugArangeSet::Extract(const DataExtractor &data, uint32_t* offset_ptr)
+DWARFDebugArangeSet::Extract(const DataExtractor &data, lldb::offset_t *offset_ptr)
 {
     if (data.ValidOffset(*offset_ptr))
     {

@@ -67,7 +67,7 @@ ValueObjectCast::GetClangTypeImpl ()
     return m_cast_type.GetOpaqueQualType();
 }
 
-uint32_t
+size_t
 ValueObjectCast::CalculateNumChildren()
 {
     return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);

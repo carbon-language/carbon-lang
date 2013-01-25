@@ -316,8 +316,14 @@ PythonDictionary::GetItemForKeyAsInteger (const PythonString &key, int64_t fail_
     if (m_py_obj && key)
     {
         PyObject *py_obj = PyDict_GetItem(m_py_obj, key.GetPythonObject());
-        if (py_obj && PyInt_Check(py_obj))
-            return PyInt_AsLong(py_obj);
+        if (py_obj)
+        {
+            if (PyInt_Check(py_obj))
+                return PyInt_AsLong(py_obj);
+
+            if (PyLong_Check(py_obj))
+                return PyLong_AsLong(py_obj);
+        }
     }
     return fail_value;
 }

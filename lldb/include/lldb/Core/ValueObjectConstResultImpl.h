@@ -39,7 +39,7 @@ public:
     Dereference (Error &error);
     
     ValueObject *
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
     
     lldb::ValueObjectSP
     GetSyntheticChildAtOffset (uint32_t offset, const ClangASTType& type, bool can_create);

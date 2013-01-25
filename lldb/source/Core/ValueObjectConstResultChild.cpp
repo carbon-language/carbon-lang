@@ -68,7 +68,7 @@ ValueObjectConstResultChild::AddressOf (Error &error)
 }
 
 ValueObject *
-ValueObjectConstResultChild::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
+ValueObjectConstResultChild::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
     return m_impl.CreateChildAtIndex(idx, synthetic_array_member, synthetic_index);
 }

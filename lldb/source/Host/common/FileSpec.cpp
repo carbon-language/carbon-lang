@@ -110,7 +110,7 @@ FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
     }
     else
     {
-        int user_name_len = first_slash - src_path - 1;
+        size_t user_name_len = first_slash - src_path - 1;
         ::memcpy (user_home, src_path + 1, user_name_len);
         user_home[user_name_len] = '\0';
         user_name = user_home;

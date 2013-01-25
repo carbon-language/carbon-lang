@@ -185,14 +185,14 @@ public:
         }
     }
     
-    uint32_t
+    size_t
     GetCount ()
     {
         return m_map.size();
     }
     
     ValueSP
-    GetValueAtIndex (uint32_t index)
+    GetValueAtIndex (size_t index)
     {
         Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.begin();
@@ -208,7 +208,7 @@ public:
     }
     
     KeyType
-    GetKeyAtIndex (uint32_t index)
+    GetKeyAtIndex (size_t index)
     {
         Mutex::Locker locker(m_map_mutex);
         MapIterator iter = m_map.begin();
@@ -316,13 +316,13 @@ public:
     }
     
     MapValueType
-    GetAtIndex (uint32_t index)
+    GetAtIndex (size_t index)
     {
         return m_format_map.GetValueAtIndex(index);
     }
     
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierAtIndex (uint32_t index)
+    GetTypeNameSpecifierAtIndex (size_t index)
     {
         return GetTypeNameSpecifierAtIndex_Impl(index, (KeyType*)NULL);
     }
@@ -339,7 +339,7 @@ public:
         m_format_map.LoopThrough(callback,param);
     }
     
-    uint32_t
+    size_t
     GetCount ()
     {
         return m_format_map.GetCount();
@@ -405,7 +405,7 @@ protected:
     }
     
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, ConstString *dummy)
+    GetTypeNameSpecifierAtIndex_Impl (size_t index, ConstString *dummy)
     {
         ConstString key = m_format_map.GetKeyAtIndex(index);
         if (key)
@@ -416,7 +416,7 @@ protected:
     }
     
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, lldb::RegularExpressionSP *dummy)
+    GetTypeNameSpecifierAtIndex_Impl (size_t index, lldb::RegularExpressionSP *dummy)
     {
         lldb::RegularExpressionSP regex = m_format_map.GetKeyAtIndex(index);
         if (regex.get() == NULL)

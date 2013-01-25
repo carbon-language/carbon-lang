@@ -161,7 +161,7 @@ public:
 
     // Returns a valid index into coll when a match is found, else UINT32_MAX
     // is returned
-    static uint32_t
+    static size_t
     FindRangeIndexThatContainsValue (const VMRange::collection& coll, lldb::addr_t value);
 
 protected:

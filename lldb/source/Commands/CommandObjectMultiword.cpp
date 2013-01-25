@@ -143,7 +143,7 @@ CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &re
                 else
                 {
                     std::string error_msg;
-                    int num_subcmd_matches = matches.GetSize();
+                    const size_t num_subcmd_matches = matches.GetSize();
                     if (num_subcmd_matches > 0)
                         error_msg.assign ("ambiguous command ");
                     else
@@ -158,14 +158,14 @@ CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &re
                     if (num_subcmd_matches > 0)
                     {
                         error_msg.append (" Possible completions:");
-                        for (int i = 0; i < num_subcmd_matches; i++)
+                        for (size_t i = 0; i < num_subcmd_matches; i++)
                         {
                             error_msg.append ("\n\t");
                             error_msg.append (matches.GetStringAtIndex (i));
                         }
                     }
                     error_msg.append ("\n");
-                    result.AppendRawError (error_msg.c_str(), error_msg.size());
+                    result.AppendRawError (error_msg.c_str());
                     result.SetStatus (eReturnStatusFailed);
                 }
             }

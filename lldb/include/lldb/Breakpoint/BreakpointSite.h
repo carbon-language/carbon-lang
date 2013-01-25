@@ -83,7 +83,7 @@ public:
     //------------------------------------------------------------------
     bool
     SetTrapOpcode (const uint8_t *trap_opcode,
-                   size_t trap_opcode_size);
+                   uint32_t trap_opcode_size);
 
     //------------------------------------------------------------------
     /// Gets the original instruction bytes that were overwritten by the trap
@@ -168,7 +168,7 @@ public:
     /// @return
     ///    The number of owners.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     GetNumberOfOwners ();
 
     //------------------------------------------------------------------
@@ -183,7 +183,7 @@ public:
     ///    A shared pointer to the breakpoint location at that index.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    GetOwnerAtIndex (uint32_t index);
+    GetOwnerAtIndex (size_t idx);
     
     //------------------------------------------------------------------
     /// Check whether the owners of this breakpoint site have any
@@ -244,7 +244,7 @@ private:
     /// @param[in] context
     ///    \a break_loc_id is the Breakpoint Location to remove.
     //------------------------------------------------------------------
-    uint32_t
+    size_t
     RemoveOwner (lldb::break_id_t break_id,
                  lldb::break_id_t break_loc_id);
 
@@ -265,7 +265,6 @@ private:
     BreakpointSite (BreakpointSiteList *list,
                     const lldb::BreakpointLocationSP& owner,
                     lldb::addr_t m_addr,
-                    lldb::tid_t tid,
                     bool use_hardware);
 
     DISALLOW_COPY_AND_ASSIGN(BreakpointSite);

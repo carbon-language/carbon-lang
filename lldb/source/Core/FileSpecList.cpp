@@ -106,17 +106,16 @@ FileSpecList::Dump(Stream *s, const char *separator_cstr) const
 // Returns the valid index of the file that matches "file_spec" if
 // it is found, else UINT32_MAX is returned.
 //------------------------------------------------------------------
-uint32_t
-FileSpecList::FindFileIndex (uint32_t start_idx, const FileSpec &file_spec, bool full) const
+size_t
+FileSpecList::FindFileIndex (size_t start_idx, const FileSpec &file_spec, bool full) const
 {
-    const uint32_t num_files = m_files.size();
-    uint32_t idx;
+    const size_t num_files = m_files.size();
 
     // When looking for files, we will compare only the filename if the
     // FILE_SPEC argument is empty
     bool compare_filename_only = file_spec.GetDirectory().IsEmpty();
 
-    for (idx = start_idx; idx < num_files; ++idx)
+    for (size_t idx = start_idx; idx < num_files; ++idx)
     {
         if (compare_filename_only)
         {
@@ -139,7 +138,7 @@ FileSpecList::FindFileIndex (uint32_t start_idx, const FileSpec &file_spec, bool
 // range, then an empty FileSpec object will be returned.
 //------------------------------------------------------------------
 const FileSpec &
-FileSpecList::GetFileSpecAtIndex(uint32_t idx) const
+FileSpecList::GetFileSpecAtIndex(size_t idx) const
 {
 
     if (idx < m_files.size())
@@ -149,7 +148,7 @@ FileSpecList::GetFileSpecAtIndex(uint32_t idx) const
 }
 
 const FileSpec *
-FileSpecList::GetFileSpecPointerAtIndex(uint32_t idx) const
+FileSpecList::GetFileSpecPointerAtIndex(size_t idx) const
 {
     if (idx < m_files.size())
         return &m_files[idx];
@@ -179,7 +178,7 @@ FileSpecList::MemorySize () const
 //------------------------------------------------------------------
 // Return the number of files in the file spec list.
 //------------------------------------------------------------------
-uint32_t
+size_t
 FileSpecList::GetSize() const
 {
     return m_files.size();

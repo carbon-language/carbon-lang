@@ -75,7 +75,7 @@ ObjectContainerUniversalMachO::CreateInstance
 bool
 ObjectContainerUniversalMachO::MagicBytesMatch (const DataExtractor &data)
 {
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
     return magic == UniversalMagic || magic == UniversalMagicSwapped;
 }
@@ -105,7 +105,7 @@ ObjectContainerUniversalMachO::ParseHeader ()
 {
     // Store the file offset for this universal file as we could have a universal .o file
     // in a BSD archive, or be contained in another kind of object.
-    uint32_t offset = 0;
+    lldb::offset_t offset = 0;
     // Universal mach-o files always have their headers in big endian.
     m_data.SetByteOrder (eByteOrderBig);
     m_header.magic = m_data.GetU32(&offset);

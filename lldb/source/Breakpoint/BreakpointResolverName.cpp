@@ -170,13 +170,13 @@ BreakpointResolverName::SearchCallback
                 size_t num_names = m_func_names.size();
                 for (int j = 0; j < num_names; j++)
                 {
-                    uint32_t num_functions = context.module_sp->FindFunctions (m_func_names[j], 
-                                                                               NULL,
-                                                                               m_func_name_type_mask, 
-                                                                               include_symbols,
-                                                                               include_inlines, 
-                                                                               append, 
-                                                                               func_list);
+                    size_t num_functions = context.module_sp->FindFunctions (m_func_names[j],
+                                                                             NULL,
+                                                                             m_func_name_type_mask,
+                                                                             include_symbols,
+                                                                             include_inlines,
+                                                                             append,
+                                                                             func_list);
                     // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
                     // symbols, since all the ones from a set compilation unit will have been found above already.
                     

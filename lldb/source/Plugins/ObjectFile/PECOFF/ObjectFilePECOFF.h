@@ -68,7 +68,7 @@ public:
     virtual bool
     IsExecutable () const;
     
-    virtual size_t
+    virtual uint32_t
     GetAddressByteSize ()  const;
     
 //    virtual lldb_private::AddressClass
@@ -212,8 +212,8 @@ protected:
 	} coff_symbol_t;
     
 	bool ParseDOSHeader ();
-	bool ParseCOFFHeader (uint32_t* offset_ptr);
-	bool ParseCOFFOptionalHeader (uint32_t* offset_ptr);
+	bool ParseCOFFHeader (lldb::offset_t *offset_ptr);
+	bool ParseCOFFOptionalHeader (lldb::offset_t *offset_ptr);
 	bool ParseSectionHeaders (uint32_t offset);
 	
 	static	void DumpDOSHeader(lldb_private::Stream *s, const dos_header_t& header);

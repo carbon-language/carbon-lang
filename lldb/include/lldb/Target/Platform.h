@@ -480,13 +480,13 @@ namespace lldb_private {
         }
 
         // Used for column widths
-        uint32_t
+        size_t
         GetMaxUserIDNameLength() const
         {
             return m_max_uid_name_len;
         }
         // Used for column widths
-        uint32_t
+        size_t
         GetMaxGroupIDNameLength() const
         {
             return m_max_gid_name_len;
@@ -550,8 +550,8 @@ namespace lldb_private {
         Mutex m_gid_map_mutex;
         IDToNameMap m_uid_map;
         IDToNameMap m_gid_map;
-        uint32_t m_max_uid_name_len;
-        uint32_t m_max_gid_name_len;
+        size_t m_max_uid_name_len;
+        size_t m_max_gid_name_len;
         
         const char *
         GetCachedUserName (uint32_t uid)

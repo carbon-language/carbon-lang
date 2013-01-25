@@ -134,7 +134,7 @@ StringExtractor::GetChar (char fail_value)
         ++m_index;
         return ch;
     }
-    m_index = UINT32_MAX;
+    m_index = UINT64_MAX;
     return fail_value;
 }
 
@@ -157,7 +157,7 @@ StringExtractor::GetHexU8 (uint8_t fail_value, bool set_eof_on_fail)
         }
     }
     if (set_eof_on_fail || m_index >= m_packet.size())
-        m_index = UINT32_MAX;
+        m_index = UINT64_MAX;
     return fail_value;
 }
 
@@ -195,7 +195,7 @@ StringExtractor::GetHexMaxU32 (bool little_endian, uint32_t fail_value)
             // Make sure we don't exceed the size of a uint32_t...
             if (nibble_count >= (sizeof(uint32_t) * 2))
             {
-                m_index = UINT32_MAX;
+                m_index = UINT64_MAX;
                 return fail_value;
             }
 
@@ -227,7 +227,7 @@ StringExtractor::GetHexMaxU32 (bool little_endian, uint32_t fail_value)
             // Make sure we don't exceed the size of a uint32_t...
             if (nibble_count >= (sizeof(uint32_t) * 2))
             {
-                m_index = UINT32_MAX;
+                m_index = UINT64_MAX;
                 return fail_value;
             }
 
@@ -257,7 +257,7 @@ StringExtractor::GetHexMaxU64 (bool little_endian, uint64_t fail_value)
             // Make sure we don't exceed the size of a uint64_t...
             if (nibble_count >= (sizeof(uint64_t) * 2))
             {
-                m_index = UINT32_MAX;
+                m_index = UINT64_MAX;
                 return fail_value;
             }
 
@@ -289,7 +289,7 @@ StringExtractor::GetHexMaxU64 (bool little_endian, uint64_t fail_value)
             // Make sure we don't exceed the size of a uint64_t...
             if (nibble_count >= (sizeof(uint64_t) * 2))
             {
-                m_index = UINT32_MAX;
+                m_index = UINT64_MAX;
                 return fail_value;
             }
 
@@ -341,7 +341,7 @@ StringExtractor::GetHexWithFixedSize (uint32_t byte_size, bool little_endian, ui
             // Little Endian
             uint32_t shift_amount;
             for (i = 0, shift_amount = 0;
-                 i < byte_size && m_index != UINT32_MAX;
+                 i < byte_size && IsGood();
                  ++i, shift_amount += 8)
             {
                 result |= ((uint64_t)GetHexU8() << shift_amount);
@@ -350,14 +350,14 @@ StringExtractor::GetHexWithFixedSize (uint32_t byte_size, bool little_endian, ui
         else
         {
             // Big Endian
-            for (i = 0; i < byte_size && m_index != UINT32_MAX; ++i)
+            for (i = 0; i < byte_size && IsGood(); ++i)
             {
                 result <<= 8;
                 result |= GetHexU8();
             }
         }
     }
-    m_index = UINT32_MAX;
+    m_index = UINT64_MAX;
     return fail_value;
 }
 
@@ -392,6 +392,6 @@ StringExtractor::GetNameColonValue (std::string &name, std::string &value)
             }
         }
     }
-    m_index = UINT32_MAX;
+    m_index = UINT64_MAX;
     return false;
 }

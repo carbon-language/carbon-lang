@@ -278,7 +278,7 @@ public:
                              const char *command_word,
                              const char *separator,
                              const char *help_text,
-                             uint32_t max_word_len);
+                             size_t max_word_len);
     
     // this mimics OutputFormattedHelpText but it does perform a much simpler
     // formatting, basically ensuring line alignment. This is only good if you have

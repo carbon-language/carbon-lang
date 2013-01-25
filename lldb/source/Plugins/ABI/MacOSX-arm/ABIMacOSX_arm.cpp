@@ -548,7 +548,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
     {
         DataExtractor data;
         size_t num_bytes = new_value_sp->GetData(data);
-        uint32_t offset = 0;
+        lldb::offset_t offset = 0;
         if (num_bytes <= 8)
         {
             const RegisterInfo *r0_info = reg_ctx->GetRegisterInfoByName("r0", 0);

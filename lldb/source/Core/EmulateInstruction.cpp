@@ -186,7 +186,7 @@ EmulateInstruction::ReadMemoryUnsigned (const Context &context, lldb::addr_t add
         size_t bytes_read = m_read_mem_callback (this, m_baton, context, addr, buf, byte_size);
         if (bytes_read == byte_size)
         {
-            uint32_t offset = 0;
+            lldb::offset_t offset = 0;
             DataExtractor data (buf, byte_size, GetByteOrder(), GetAddressByteSize());
             uval64 = data.GetMaxU64 (&offset, byte_size);
             success = true;

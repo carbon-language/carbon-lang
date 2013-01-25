@@ -49,47 +49,47 @@ public:
     SetByteOrder (lldb::ByteOrder endian);
     
     float
-    GetFloat (lldb::SBError& error, uint32_t offset);
+    GetFloat (lldb::SBError& error, lldb::offset_t offset);
     
     double
-    GetDouble (lldb::SBError& error, uint32_t offset);
+    GetDouble (lldb::SBError& error, lldb::offset_t offset);
 
     long double
-    GetLongDouble (lldb::SBError& error, uint32_t offset);
+    GetLongDouble (lldb::SBError& error, lldb::offset_t offset);
     
     lldb::addr_t
-    GetAddress (lldb::SBError& error, uint32_t offset);
+    GetAddress (lldb::SBError& error, lldb::offset_t offset);
     
     uint8_t
-    GetUnsignedInt8 (lldb::SBError& error, uint32_t offset);
+    GetUnsignedInt8 (lldb::SBError& error, lldb::offset_t offset);
 
     uint16_t
-    GetUnsignedInt16 (lldb::SBError& error, uint32_t offset);
+    GetUnsignedInt16 (lldb::SBError& error, lldb::offset_t offset);
 
     uint32_t
-    GetUnsignedInt32 (lldb::SBError& error, uint32_t offset);
+    GetUnsignedInt32 (lldb::SBError& error, lldb::offset_t offset);
 
     uint64_t
-    GetUnsignedInt64 (lldb::SBError& error, uint32_t offset);
+    GetUnsignedInt64 (lldb::SBError& error, lldb::offset_t offset);
     
     int8_t
-    GetSignedInt8 (lldb::SBError& error, uint32_t offset);
+    GetSignedInt8 (lldb::SBError& error, lldb::offset_t offset);
     
     int16_t
-    GetSignedInt16 (lldb::SBError& error, uint32_t offset);
+    GetSignedInt16 (lldb::SBError& error, lldb::offset_t offset);
     
     int32_t
-    GetSignedInt32 (lldb::SBError& error, uint32_t offset);
+    GetSignedInt32 (lldb::SBError& error, lldb::offset_t offset);
     
     int64_t
-    GetSignedInt64 (lldb::SBError& error, uint32_t offset);
+    GetSignedInt64 (lldb::SBError& error, lldb::offset_t offset);
     
     const char*
-    GetString (lldb::SBError& error, uint32_t offset);
+    GetString (lldb::SBError& error, lldb::offset_t offset);
     
     size_t
     ReadRawData (lldb::SBError& error,
-                 uint32_t offset,
+                 lldb::offset_t offset,
                  void *buf,
                  size_t size);
     

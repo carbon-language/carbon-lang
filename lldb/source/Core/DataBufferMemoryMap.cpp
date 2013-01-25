@@ -116,8 +116,7 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
             if (error.Success())
             {
                 const bool fd_is_file = true;
-                MemoryMapFromFileDescriptor (file.GetDescriptor(), offset, length, writeable, fd_is_file);
-                return GetByteSize();
+                return MemoryMapFromFileDescriptor (file.GetDescriptor(), offset, length, writeable, fd_is_file);
             }
         }
     }

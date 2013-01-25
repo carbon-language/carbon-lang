@@ -76,7 +76,7 @@ public:
         DISALLOW_COPY_AND_ASSIGN (WatchpointEventData);
     };
 
-    Watchpoint (Target& target, lldb::addr_t addr, size_t size, const ClangASTType *type, bool hardware = true);
+    Watchpoint (Target& target, lldb::addr_t addr, uint32_t size, const ClangASTType *type, bool hardware = true);
     ~Watchpoint ();
 
     void

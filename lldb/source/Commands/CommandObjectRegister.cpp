@@ -129,7 +129,7 @@ public:
     DumpRegisterSet (const ExecutionContext &exe_ctx,
                      Stream &strm,
                      RegisterContext *reg_ctx,
-                     uint32_t set_idx,
+                     size_t set_idx,
                      bool primitive_only=false)
     {
         uint32_t unavailable_count = 0;
@@ -139,8 +139,8 @@ public:
         {
             strm.Printf ("%s:\n", reg_set->name);
             strm.IndentMore ();
-            const uint32_t num_registers = reg_set->num_registers;
-            for (uint32_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)
+            const size_t num_registers = reg_set->num_registers;
+            for (size_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)
             {
                 const uint32_t reg = reg_set->registers[reg_idx];
                 const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex(reg);
@@ -173,20 +173,20 @@ protected:
         const RegisterInfo *reg_info = NULL;
         if (command.GetArgumentCount() == 0)
         {
-            uint32_t set_idx;
+            size_t set_idx;
             
-            uint32_t num_register_sets = 1;
-            const uint32_t set_array_size = m_command_options.set_indexes.GetSize();
+            size_t num_register_sets = 1;
+            const size_t set_array_size = m_command_options.set_indexes.GetSize();
             if (set_array_size > 0)
             {
-                for (uint32_t i=0; i<set_array_size; ++i)
+                for (size_t i=0; i<set_array_size; ++i)
                 {
                     set_idx = m_command_options.set_indexes[i]->GetUInt64Value (UINT32_MAX, NULL);
                     if (set_idx != UINT32_MAX)
                     {
                         if (!DumpRegisterSet (m_exe_ctx, strm, reg_ctx, set_idx))
                         {
-                            result.AppendErrorWithFormat ("invalid register set index: %u\n", set_idx);
+                            result.AppendErrorWithFormat ("invalid register set index: %zu\n", set_idx);
                             result.SetStatus (eReturnStatusFailed);
                             break;
                         }
