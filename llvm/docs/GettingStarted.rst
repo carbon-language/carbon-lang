@@ -655,10 +655,10 @@ consider placing the following git script in your path under the name
   fi
 
   git fetch
-  old_branch=$(git rev-parse --abbrev-ref HEAD)
+  OLD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
   git checkout master 2> /dev/null
   git svn rebase -l
-  git checkout $old_breanch 2> /dev/null
+  git checkout $OLD_BRANCH 2> /dev/null
 
   if [ ! -z $STASH ]; then
       git stash pop >/dev/null
