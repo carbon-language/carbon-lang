@@ -46,7 +46,7 @@ public:
     }
 
     void
-    AddRegister (lldb_private::RegisterInfo &reg_info, 
+    AddRegister (lldb_private::RegisterInfo reg_info, 
                  lldb_private::ConstString &reg_name, 
                  lldb_private::ConstString &reg_alt_name, 
                  lldb_private::ConstString &set_name)
