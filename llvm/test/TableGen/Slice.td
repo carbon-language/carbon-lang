@@ -1,5 +1,4 @@
-// RUN: llvm-tblgen %s | grep "\[(set" | count 2
-// RUN: llvm-tblgen %s | grep "\[\]" | count 2
+// RUN: llvm-tblgen %s | FileCheck %s
 
 class ValueType<int size, int value> {
   int Size = size;
@@ -85,3 +84,8 @@ multiclass myscalar<bits<8> opcode, string asmstr = "", list<list<dag>> patterns
   vscalar<opcode, asmstr, patterns>;
 
 defm NOT : myscalar<0x10, "not", [[], [(set FR32:$dst, (f32 (not FR32:$src)))]]>;
+
+// CHECK: Pattern = [(set FR32:$dst, (f32 (not FR32:$src)))];
+// CHECK: Pattern = [];
+// CHECK: Pattern = [(set FR32:$dst, (f32 (not FR32:$src)))];
+// CHECK: Pattern = [];

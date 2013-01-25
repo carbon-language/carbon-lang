@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
-; RUN:   grep "ldr.*\[.*\]," | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
 
 define i32 @test(i32 %a, i32 %b, i32 %c) {
         %tmp1 = mul i32 %a, %b          ; <i32> [#uses=2]
@@ -9,4 +8,5 @@ define i32 @test(i32 %a, i32 %b, i32 %c) {
         %tmp5 = mul i32 %tmp4, %tmp3            ; <i32> [#uses=1]
         ret i32 %tmp5
 }
+; CHECK: 	ldr	r{{.*}},	[{{.*}}],
 

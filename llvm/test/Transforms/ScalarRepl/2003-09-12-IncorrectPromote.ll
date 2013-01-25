@@ -1,7 +1,6 @@
 ; Scalar replacement was incorrectly promoting this alloca!!
 ;
-; RUN: opt < %s -scalarrepl -S | \
-; RUN:   sed "s/;.*//g" | grep "\["
+; RUN: opt < %s -scalarrepl -S | FileCheck %s
 
 define i8* @test() {
 	%A = alloca [30 x i8]		; <[30 x i8]*> [#uses=1]
@@ -10,4 +9,4 @@ define i8* @test() {
 	store i8 0, i8* %B
 	ret i8* %C
 }
-
+; CHECK: alloca [
