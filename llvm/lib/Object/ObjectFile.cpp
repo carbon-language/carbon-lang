@@ -33,6 +33,8 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   sys::LLVMFileType type = sys::IdentifyFileType(Object->getBufferStart(),
                                 static_cast<unsigned>(Object->getBufferSize()));
   switch (type) {
+    case sys::Unknown_FileType:
+      return 0;
     case sys::ELF_Relocatable_FileType:
     case sys::ELF_Executable_FileType:
     case sys::ELF_SharedObject_FileType:
@@ -52,7 +54,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
     case sys::COFF_FileType:
       return createCOFFObjectFile(Object);
     default:
-      llvm_unreachable("Unknown Object File Type");
+      llvm_unreachable("Unexpected Object File Type");
   }
 }
 

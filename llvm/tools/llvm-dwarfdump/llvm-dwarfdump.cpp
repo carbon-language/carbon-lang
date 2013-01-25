@@ -86,6 +86,11 @@ static void DumpInput(const StringRef &Filename) {
   }
 
   OwningPtr<ObjectFile> Obj(ObjectFile::createObjectFile(Buff.take()));
+  if (!Obj) {
+    errs() << Filename << ": Unknown object file format\n";
+    return;
+  }
+
   OwningPtr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
 
   if (Address == -1ULL) {
