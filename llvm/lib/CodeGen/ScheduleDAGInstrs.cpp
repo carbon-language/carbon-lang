@@ -1039,37 +1039,17 @@ public:
   void visitPostorder(const SUnit *SU, const SDep *PredDep, const SUnit *Parent) {
     R.DFSData[SU->NodeNum].SubtreeID = SU->NodeNum;
 
-    // Join the child to its parent if they are connected via data dependence
-    // and do not exceed the limit.
-    if (!Parent || PredDep->getKind() != SDep::Data)
+    if (!Parent)
       return;
+    assert(PredDep && "PredDep required for non-root node");
 
-    unsigned PredCnt = R.DFSData[SU->NodeNum].InstrCount;
-    if (PredCnt > R.SubtreeLimit)
-      return;
-
-    R.DFSData[SU->NodeNum].SubtreeID = Parent->NodeNum;
-
-    // Add the recently finished predecessor's bottom-up descendent count.
-    R.DFSData[Parent->NodeNum].InstrCount += PredCnt;
-    SubtreeClasses.join(Parent->NodeNum, SU->NodeNum);
+    joinPredSubtree(*PredDep, Parent);
   }
 
   /// Determine whether the DFS cross edge should be considered a subtree edge
   /// or a connection between subtrees.
   void visitCross(const SDep &PredDep, const SUnit *Succ) {
-    if (PredDep.getKind() == SDep::Data) {
-      // If this is a cross edge to a root, join the subtrees. This happens when
-      // the root was first reached by a non-data dependence.
-      unsigned NodeNum = PredDep.getSUnit()->NodeNum;
-      unsigned PredCnt = R.DFSData[NodeNum].InstrCount;
-      if (R.DFSData[NodeNum].SubtreeID == NodeNum && PredCnt < R.SubtreeLimit) {
-        R.DFSData[NodeNum].SubtreeID = Succ->NodeNum;
-        R.DFSData[Succ->NodeNum].InstrCount += PredCnt;
-        SubtreeClasses.join(Succ->NodeNum, NodeNum);
-        return;
-      }
-    }
+    joinPredSubtree(PredDep, Succ);
     ConnectionPairs.push_back(std::make_pair(PredDep.getSUnit(), Succ));
   }
 
@@ -1099,6 +1079,34 @@ public:
   }
 
 protected:
+  void joinPredSubtree(const SDep &PredDep, const SUnit *Succ) {
+    // Join the child to its parent if they are connected via data dependence.
+    if (PredDep.getKind() != SDep::Data)
+      return;
+
+    // Four is the magic number of successors before a node is considered a
+    // pinch point.
+    unsigned NumDataSucs = 0;
+    const SUnit *PredSU = PredDep.getSUnit();
+    for (SUnit::const_succ_iterator SI = PredSU->Succs.begin(),
+           SE = PredSU->Succs.end(); SI != SE; ++SI) {
+      if (SI->getKind() == SDep::Data) {
+        if (++NumDataSucs >= 4)
+          return;
+      }
+    }
+    // If this is a cross edge to a root, join the subtrees. This happens when
+    // the root was first reached by a non-data dependence.
+    unsigned NodeNum = PredSU->NodeNum;
+    unsigned PredCnt = R.DFSData[NodeNum].InstrCount;
+    if (R.DFSData[NodeNum].SubtreeID == NodeNum && PredCnt < R.SubtreeLimit) {
+      R.DFSData[NodeNum].SubtreeID = Succ->NodeNum;
+      R.DFSData[Succ->NodeNum].InstrCount += PredCnt;
+      SubtreeClasses.join(Succ->NodeNum, NodeNum);
+      return;
+    }
+  }
+
   /// Called by finalize() to record a connection between trees.
   void addConnection(unsigned FromTree, unsigned ToTree, unsigned Depth) {
     if (!Depth)
