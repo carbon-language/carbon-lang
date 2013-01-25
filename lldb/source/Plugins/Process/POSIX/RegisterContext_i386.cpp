@@ -387,7 +387,7 @@ RegisterContext_i386::GetRegisterCount()
 }
 
 const RegisterInfo *
-RegisterContext_i386::GetRegisterInfoAtIndex(uint32_t reg)
+RegisterContext_i386::GetRegisterInfoAtIndex(size_t reg)
 {
     assert(k_num_register_infos == k_num_registers);
     if (reg < k_num_registers)
@@ -403,7 +403,7 @@ RegisterContext_i386::GetRegisterSetCount()
 }
 
 const RegisterSet *
-RegisterContext_i386::GetRegisterSet(uint32_t set)
+RegisterContext_i386::GetRegisterSet(size_t set)
 {
     if (set < k_num_register_sets)
         return &g_reg_sets[set];

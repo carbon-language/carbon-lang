@@ -457,7 +457,7 @@ RegisterContext_x86_64::GetRegisterCount()
 }
 
 const RegisterInfo *
-RegisterContext_x86_64::GetRegisterInfoAtIndex(uint32_t reg)
+RegisterContext_x86_64::GetRegisterInfoAtIndex(size_t reg)
 {
     if (reg < k_num_registers)
         return &g_register_infos[reg];
@@ -472,7 +472,7 @@ RegisterContext_x86_64::GetRegisterSetCount()
 }
 
 const RegisterSet *
-RegisterContext_x86_64::GetRegisterSet(uint32_t set)
+RegisterContext_x86_64::GetRegisterSet(size_t set)
 {
     if (set < k_num_register_sets)
         return &g_reg_sets[set];
