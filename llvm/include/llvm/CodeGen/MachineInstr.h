@@ -948,7 +948,8 @@ public:
   //
   // Debugging support
   //
-  void print(raw_ostream &OS, const TargetMachine *TM = 0) const;
+  void print(raw_ostream &OS, const TargetMachine *TM = 0,
+             bool SkipOpers = false) const;
   void dump() const;
 
   //===--------------------------------------------------------------------===//

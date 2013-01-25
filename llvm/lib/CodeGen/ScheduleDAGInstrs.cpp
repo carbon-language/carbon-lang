@@ -994,7 +994,7 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
   else if (SU == &ExitSU)
     oss << "<exit>";
   else
-    SU->getInstr()->print(oss);
+    SU->getInstr()->print(oss, &TM, /*SkipOpers=*/true);
   return oss.str();
 }
 

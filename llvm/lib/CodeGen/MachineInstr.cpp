@@ -1428,7 +1428,8 @@ static void printDebugLoc(DebugLoc DL, const MachineFunction *MF,
   }
 }
 
-void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
+void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
+                         bool SkipOpers) const {
   // We can be a bit tidier if we know the TargetMachine and/or MachineFunction.
   const MachineFunction *MF = 0;
   const MachineRegisterInfo *MRI = 0;
@@ -1464,6 +1465,9 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << TM->getInstrInfo()->getName(getOpcode());
   else
     OS << "UNKNOWN";
+
+  if (SkipOpers)
+    return;
 
   // Print the rest of the operands.
   bool OmittedAnyCallClobbers = false;

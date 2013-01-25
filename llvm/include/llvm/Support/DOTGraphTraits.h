@@ -79,6 +79,11 @@ public:
     return false;
   }
 
+  template<typename GraphType>
+  static std::string getNodeDescription(const void *, const GraphType &) {
+    return "";
+  }
+
   /// If you want to specify custom node attributes, this is the place to do so
   ///
   template<typename GraphType>

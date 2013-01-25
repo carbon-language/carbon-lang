@@ -41,6 +41,10 @@ namespace llvm {
       return true;
     }
 
+    static bool isNodeHidden(const SUnit *Node) {
+      return (Node->NumPreds > 10 || Node->NumSuccs > 10);
+    }
+
     static bool hasNodeAddressLabel(const SUnit *Node,
                                     const ScheduleDAG *Graph) {
       return true;

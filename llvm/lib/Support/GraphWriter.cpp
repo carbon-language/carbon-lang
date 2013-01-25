@@ -53,6 +53,17 @@ std::string llvm::DOT::EscapeString(const std::string &Label) {
   return Str;
 }
 
+/// \brief Get a color string for this node number. Simply round-robin selects
+/// from a reasonable number of colors.
+StringRef llvm::DOT::getColorString(unsigned ColorNumber) {
+  static const int NumColors = 20;
+  static const char* Colors[NumColors] = {
+    "aaaaaa", "aa0000", "00aa00", "aa5500", "0055ff", "aa00aa", "00aaaa",
+    "555555", "ff5555", "55ff55", "ffff55", "5555ff", "ff55ff", "55ffff",
+    "ffaaaa", "aaffaa", "ffffaa", "aaaaff", "ffaaff", "aaffff"};
+  return Colors[ColorNumber % NumColors];
+}
+
 // Execute the graph viewer. Return true if successful.
 static bool LLVM_ATTRIBUTE_UNUSED
 ExecGraphViewer(const sys::Path &ExecPath, std::vector<const char*> &args,
