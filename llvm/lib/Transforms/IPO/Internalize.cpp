@@ -50,6 +50,8 @@ namespace {
     explicit InternalizePass();
     explicit InternalizePass(ArrayRef<const char *> exportList);
     void LoadFile(const char *Filename);
+    void ClearExportList();
+    void AddToExportList(const std::string &val);
     virtual bool runOnModule(Module &M);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -95,6 +97,14 @@ void InternalizePass::LoadFile(const char *Filename) {
     if (!Symbol.empty())
       ExternalNames.insert(Symbol);
   }
+}
+
+void InternalizePass::ClearExportList() {
+  ExternalNames.clear();
+}
+
+void InternalizePass::AddToExportList(const std::string &val) {
+  ExternalNames.insert(val);
 }
 
 bool InternalizePass::runOnModule(Module &M) {
