@@ -117,6 +117,9 @@ class CompilerInstance : public ModuleLoader {
   /// have finished with this translation unit.
   bool BuildGlobalModuleIndex;
 
+  /// \brief One or more modules failed to build.
+  bool ModuleBuildFailed;
+
   /// \brief Holds information about the output file.
   ///
   /// If TempFilename is not empty we must rename it to Filename at the end.
@@ -191,8 +194,8 @@ public:
   void setInvocation(CompilerInvocation *Value);
 
   /// \brief Indicates whether we should (re)build the global module index.
-  bool getBuildGlobalModuleIndex() const { return BuildGlobalModuleIndex; }
-
+  bool shouldBuildGlobalModuleIndex() const;
+  
   /// \brief Set the flag indicating whether we should (re)build the global
   /// module index.
   void setBuildGlobalModuleIndex(bool Build) {
@@ -549,7 +552,8 @@ public:
                              bool DisablePCHValidation,
                              bool AllowPCHWithCompilerErrors,
                              Preprocessor &PP, ASTContext &Context,
-                             void *DeserializationListener, bool Preamble);
+                             void *DeserializationListener, bool Preamble,
+                             bool UseGlobalModuleIndex);
 
   /// Create a code completion consumer using the invocation; note that this
   /// will cause the source manager to truncate the input source file at the

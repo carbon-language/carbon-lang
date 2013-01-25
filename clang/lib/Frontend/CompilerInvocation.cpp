@@ -689,7 +689,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.FixAndRecompile = Args.hasArg(OPT_fixit_recompile);
   Opts.FixToTemporaries = Args.hasArg(OPT_fixit_to_temp);
   Opts.ASTDumpFilter = Args.getLastArgValue(OPT_ast_dump_filter);
-  Opts.GenerateModuleIndex = Args.hasArg(OPT_generate_module_index);
+  Opts.UseGlobalModuleIndex = Args.hasArg(OPT_fmodules_global_index);
+  Opts.GenerateGlobalModuleIndex = Opts.UseGlobalModuleIndex;
   
   Opts.CodeCompleteOpts.IncludeMacros
     = Args.hasArg(OPT_code_completion_macros);

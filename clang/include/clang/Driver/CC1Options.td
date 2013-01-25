@@ -289,7 +289,7 @@ def ast_dump_filter : Separate<["-"], "ast-dump-filter">,
   HelpText<"Use with -ast-dump or -ast-print to dump/print only AST declaration"
            " nodes having a certain substring in a qualified name. Use"
            " -ast-list to list all filterable declaration node names.">;
-def generate_module_index : Flag<["-"], "generate-module-index">,
+def fmodules_global_index : Flag<["-"], "fmodules-global-index">,
   HelpText<"Automatically generate or update the global module index">;
 
 let Group = Action_Group in {

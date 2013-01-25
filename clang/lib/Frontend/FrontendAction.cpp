@@ -382,10 +382,9 @@ bool FrontendAction::Execute() {
   else ExecuteAction();
 
   // If we are supposed to rebuild the global module index, do so now unless
-  // an error occurred.
-  if (CI.getBuildGlobalModuleIndex() && CI.hasFileManager() &&
-      CI.hasPreprocessor() &&
-      (!CI.hasDiagnostics() || !CI.getDiagnostics().hasErrorOccurred())) {
+  // there were any module-build failures.
+  if (CI.shouldBuildGlobalModuleIndex() && CI.hasFileManager() &&
+      CI.hasPreprocessor()) {
     GlobalModuleIndex::writeIndex(
       CI.getFileManager(),
       CI.getPreprocessor().getHeaderSearchInfo().getModuleCachePath());

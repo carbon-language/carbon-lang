@@ -137,9 +137,11 @@ public:
                                            /// speed up parsing in cases you do
                                            /// not need them (e.g. with code
                                            /// completion).
-  unsigned GenerateModuleIndex : 1;        ///< Whether to auto-generate a
-                                           ///< global module index when a new
-                                           ///< module has been built.
+  unsigned UseGlobalModuleIndex : 1;       ///< Whether we can use the
+                                           ///< global module index if available.
+  unsigned GenerateGlobalModuleIndex : 1;  ///< Whether we can generate the
+                                           ///< global module index if needed.
+
   CodeCompleteOptions CodeCompleteOpts;
 
   enum {
@@ -211,7 +213,8 @@ public:
     ShowStats(false), ShowTimers(false), ShowVersion(false),
     FixWhatYouCan(false), FixOnlyWarnings(false), FixAndRecompile(false),
     FixToTemporaries(false), ARCMTMigrateEmitARCErrors(false),
-    SkipFunctionBodies(false), GenerateModuleIndex(false),
+    SkipFunctionBodies(false), UseGlobalModuleIndex(false),
+    GenerateGlobalModuleIndex(false),
     ARCMTAction(ARCMT_None), ObjCMTAction(ObjCMT_None),
     ProgramAction(frontend::ParseSyntaxOnly)
   {}

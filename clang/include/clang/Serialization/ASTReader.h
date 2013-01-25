@@ -692,6 +692,12 @@ private:
   /// \brief Whether to accept an AST file with compiler errors.
   bool AllowASTWithCompilerErrors;
 
+  /// \brief Whether we are allowed to use the global module index.
+  bool UseGlobalIndex;
+
+  /// \brief Whether we have tried loading the global module index yet.
+  bool TriedLoadingGlobalIndex;
+
   /// \brief The current "generation" of the module file import stack, which 
   /// indicates how many separate module file load operations have occurred.
   unsigned CurrentGeneration;
@@ -1081,9 +1087,13 @@ public:
   /// \param AllowASTWithCompilerErrors If true, the AST reader will accept an
   /// AST file the was created out of an AST with compiler errors,
   /// otherwise it will reject it.
+  ///
+  /// \param UseGlobalIndex If true, the AST reader will try to load and use
+  /// the global module index.
   ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot = "",
             bool DisableValidation = false,
-            bool AllowASTWithCompilerErrors = false);
+            bool AllowASTWithCompilerErrors = false,
+            bool UseGlobalIndex = true);
 
   ~ASTReader();
 

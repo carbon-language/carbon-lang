@@ -49,7 +49,7 @@ using namespace clang;
 
 CompilerInstance::CompilerInstance()
   : Invocation(new CompilerInvocation()), ModuleManager(0),
-    BuildGlobalModuleIndex(false) {
+    BuildGlobalModuleIndex(false), ModuleBuildFailed(false) {
 }
 
 CompilerInstance::~CompilerInstance() {
@@ -58,6 +58,10 @@ CompilerInstance::~CompilerInstance() {
 
 void CompilerInstance::setInvocation(CompilerInvocation *Value) {
   Invocation = Value;
+}
+
+bool CompilerInstance::shouldBuildGlobalModuleIndex() const {
+  return BuildGlobalModuleIndex && !ModuleBuildFailed;
 }
 
 void CompilerInstance::setDiagnostics(DiagnosticsEngine *Value) {
@@ -290,7 +294,8 @@ void CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                           AllowPCHWithCompilerErrors,
                                           getPreprocessor(), getASTContext(),
                                           DeserializationListener,
-                                          Preamble));
+                                          Preamble,
+                                       getFrontendOpts().UseGlobalModuleIndex));
   ModuleManager = static_cast<ASTReader*>(Source.get());
   getASTContext().setExternalSource(Source);
 }
@@ -303,12 +308,14 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              Preprocessor &PP,
                                              ASTContext &Context,
                                              void *DeserializationListener,
-                                             bool Preamble) {
+                                             bool Preamble,
+                                             bool UseGlobalModuleIndex) {
   OwningPtr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, Context,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation,
-                             AllowPCHWithCompilerErrors));
+                             AllowPCHWithCompilerErrors,
+                             UseGlobalModuleIndex));
 
   Reader->setDeserializationListener(
             static_cast<ASTDeserializationListener *>(DeserializationListener));
@@ -786,7 +793,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   FrontendOpts.OutputFile = ModuleFileName.str();
   FrontendOpts.DisableFree = false;
-  FrontendOpts.GenerateModuleIndex = false;
+  FrontendOpts.GenerateGlobalModuleIndex = false;
   FrontendOpts.Inputs.clear();
   InputKind IK = getSourceInputKindFromOptions(*Invocation->getLangOpts());
 
@@ -863,7 +870,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
 
   // We've rebuilt a module. If we're allowed to generate or update the global
   // module index, record that fact in the importing compiler instance.
-  if (ImportingInstance.getFrontendOpts().GenerateModuleIndex) {
+  if (ImportingInstance.getFrontendOpts().GenerateGlobalModuleIndex) {
     ImportingInstance.setBuildGlobalModuleIndex(true);
   }
 }
@@ -953,7 +960,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_built)
           << ModuleName
           << SourceRange(ImportLoc, ModuleNameLoc);
-
+        ModuleBuildFailed = true;
         return ModuleLoadResult();
       }
 
@@ -971,6 +978,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
                                             : diag::err_module_not_found)
         << ModuleName
         << SourceRange(ImportLoc, ModuleNameLoc);
+      ModuleBuildFailed = true;
       return ModuleLoadResult();
     }
 
@@ -983,7 +991,9 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       const PreprocessorOptions &PPOpts = getPreprocessorOpts();
       ModuleManager = new ASTReader(getPreprocessor(), *Context,
                                     Sysroot.empty() ? "" : Sysroot.c_str(),
-                                    PPOpts.DisablePCHValidation);
+                                    PPOpts.DisablePCHValidation,
+                                    /*AllowASTWithCompilerErrors=*/false,
+                                    getFrontendOpts().UseGlobalModuleIndex);
       if (hasASTConsumer()) {
         ModuleManager->setDeserializationListener(
           getASTConsumer().GetASTDeserializationListener());
@@ -1024,6 +1034,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_built)
           << ModuleName
           << SourceRange(ImportLoc, ModuleNameLoc);
+        ModuleBuildFailed = true;
 
         return ModuleLoadResult();
       }
@@ -1039,6 +1050,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         if (getPreprocessorOpts().FailedModules)
           getPreprocessorOpts().FailedModules->addFailed(ModuleName);
         KnownModules[Path[0].first] = 0;
+        ModuleBuildFailed = true;
         return ModuleLoadResult();
       }
 
@@ -1057,6 +1069,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     case ASTReader::Failure:
       // Already complained, but note now that we failed.
       KnownModules[Path[0].first] = 0;
+      ModuleBuildFailed = true;
       return ModuleLoadResult();
     }
     

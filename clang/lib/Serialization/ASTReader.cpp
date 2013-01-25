@@ -6941,13 +6941,14 @@ void ASTReader::FinishedDeserializing() {
 
 ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
                      StringRef isysroot, bool DisableValidation,
-                     bool AllowASTWithCompilerErrors)
+                     bool AllowASTWithCompilerErrors, bool UseGlobalIndex)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
     Consumer(0), ModuleMgr(PP.getFileManager()),
     isysroot(isysroot), DisableValidation(DisableValidation),
     AllowASTWithCompilerErrors(AllowASTWithCompilerErrors),
+    UseGlobalIndex(UseGlobalIndex), TriedLoadingGlobalIndex(false),
     CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
