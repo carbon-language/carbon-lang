@@ -152,6 +152,12 @@ void VLIWMachineScheduler::schedule() {
   // Postprocess the DAG to add platform specific artificial dependencies.
   postprocessDAG();
 
+  SmallVector<SUnit*, 8> TopRoots, BotRoots;
+  findRootsAndBiasEdges(TopRoots, BotRoots);
+
+  // Initialize the strategy before modifying the DAG.
+  SchedImpl->initialize(this);
+
   // To view Height/Depth correctly, they should be accessed at least once.
   DEBUG(unsigned maxH = 0;
         for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
@@ -166,7 +172,7 @@ void VLIWMachineScheduler::schedule() {
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 
-  initQueues();
+  initQueues(TopRoots, BotRoots);
 
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {

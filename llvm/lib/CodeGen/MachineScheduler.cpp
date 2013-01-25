@@ -510,10 +510,19 @@ void ScheduleDAGMI::schedule() {
 
   postprocessDAG();
 
+  SmallVector<SUnit*, 8> TopRoots, BotRoots;
+  findRootsAndBiasEdges(TopRoots, BotRoots);
+
+  // Initialize the strategy before modifying the DAG.
+  // This may initialize a DFSResult to be used for queue priority.
+  SchedImpl->initialize(this);
+
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
+  if (ViewMISchedDAGs) viewGraph();
 
-  initQueues();
+  // Initialize ready queues now that the DAG and priority data are finalized.
+  initQueues(TopRoots, BotRoots);
 
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
@@ -561,25 +570,18 @@ void ScheduleDAGMI::postprocessDAG() {
   }
 }
 
-void ScheduleDAGMI::initDFSResult() {
+void ScheduleDAGMI::computeDFSResult() {
   if (!DFSResult)
     DFSResult = new SchedDFSResult(/*BottomU*/true, MinSubtreeSize);
   DFSResult->clear();
-  DFSResult->resize(SUnits.size());
   ScheduledTrees.clear();
-}
-
-void ScheduleDAGMI::computeDFSResult(ArrayRef<SUnit*> Roots) {
-  DFSResult->compute(Roots);
+  DFSResult->resize(SUnits.size());
+  DFSResult->compute(SUnits);
   ScheduledTrees.resize(DFSResult->getNumSubtrees());
 }
 
-// Release all DAG roots for scheduling.
-//
-// Nodes with unreleased weak edges can still be roots.
-void ScheduleDAGMI::releaseRoots() {
-  SmallVector<SUnit*, 16> BotRoots;
-
+void ScheduleDAGMI::findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
+                                          SmallVectorImpl<SUnit*> &BotRoots) {
   for (std::vector<SUnit>::iterator
          I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
     SUnit *SU = &(*I);
@@ -589,28 +591,33 @@ void ScheduleDAGMI::releaseRoots() {
 
     // A SUnit is ready to top schedule if it has no predecessors.
     if (!I->NumPredsLeft && SU != &EntrySU)
-      SchedImpl->releaseTopNode(SU);
+      TopRoots.push_back(SU);
     // A SUnit is ready to bottom schedule if it has no successors.
     if (!I->NumSuccsLeft && SU != &ExitSU)
       BotRoots.push_back(SU);
   }
-  // Release bottom roots in reverse order so the higher priority nodes appear
-  // first. This is more natural and slightly more efficient.
-  for (SmallVectorImpl<SUnit*>::const_reverse_iterator
-         I = BotRoots.rbegin(), E = BotRoots.rend(); I != E; ++I)
-    SchedImpl->releaseBottomNode(*I);
 }
 
 /// Identify DAG roots and setup scheduler queues.
-void ScheduleDAGMI::initQueues() {
+void ScheduleDAGMI::initQueues(ArrayRef<SUnit*> TopRoots,
+                               ArrayRef<SUnit*> BotRoots) {
   NextClusterSucc = NULL;
   NextClusterPred = NULL;
 
-  // Initialize the strategy before modifying the DAG.
-  SchedImpl->initialize(this);
-
   // Release all DAG roots for scheduling, not including EntrySU/ExitSU.
-  releaseRoots();
+  //
+  // Nodes with unreleased weak edges can still be roots.
+  // Release top roots in forward order.
+  for (SmallVectorImpl<SUnit*>::const_iterator
+         I = TopRoots.begin(), E = TopRoots.end(); I != E; ++I) {
+    SchedImpl->releaseTopNode(*I);
+  }
+  // Release bottom roots in reverse order so the higher priority nodes appear
+  // first. This is more natural and slightly more efficient.
+  for (SmallVectorImpl<SUnit*>::const_reverse_iterator
+         I = BotRoots.rbegin(), E = BotRoots.rend(); I != E; ++I) {
+    SchedImpl->releaseBottomNode(*I);
+  }
 
   releaseSuccessors(&EntrySU);
   releasePredecessors(&ExitSU);
@@ -1216,7 +1223,7 @@ void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   Top.init(DAG, SchedModel, &Rem);
   Bot.init(DAG, SchedModel, &Rem);
 
-  DAG->initDFSResult();
+  DAG->computeDFSResult();
 
   // Initialize resource counts.
 
@@ -1278,8 +1285,6 @@ void ConvergingScheduler::registerRoots() {
       Rem.CriticalPath = (*I)->getDepth();
   }
   DEBUG(dbgs() << "Critical Path: " << Rem.CriticalPath << '\n');
-
-  DAG->computeDFSResult(Bot.Available.elements());
 }
 
 /// Does this SU have a hazard within the current instruction group.
@@ -2140,14 +2145,13 @@ public:
 
   virtual void initialize(ScheduleDAGMI *dag) {
     DAG = dag;
-    DAG->initDFSResult();
+    DAG->computeDFSResult();
     Cmp.DFSResult = DAG->getDFSResult();
     Cmp.ScheduledTrees = &DAG->getScheduledTrees();
     ReadyQ.clear();
   }
 
   virtual void registerRoots() {
-    DAG->computeDFSResult(ReadyQ);
     // Restore the heap in ReadyQ with the updated DFS results.
     std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }

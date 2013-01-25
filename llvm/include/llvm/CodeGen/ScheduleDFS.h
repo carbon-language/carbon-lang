@@ -127,7 +127,7 @@ public:
   }
 
   /// \brief Compute various metrics for the DAG with given roots.
-  void compute(ArrayRef<SUnit *> Roots);
+  void compute(ArrayRef<SUnit> SUnits);
 
   /// \brief Get the ILP value for a DAG node.
   ///
@@ -140,7 +140,12 @@ public:
   unsigned getNumSubtrees() const { return SubtreeConnectLevels.size(); }
 
   /// \brief Get the ID of the subtree the given DAG node belongs to.
+  ///
+  /// For convenience, if DFSResults have not been computed yet, give everything
+  /// tree ID 0.
   unsigned getSubtreeID(const SUnit *SU) const {
+    if (empty())
+      return 0;
     assert(SU->NodeNum < DFSData.size() &&  "New Node");
     return DFSData[SU->NodeNum].SubtreeID;
   }

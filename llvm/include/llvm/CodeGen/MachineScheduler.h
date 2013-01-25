@@ -316,12 +316,9 @@ public:
 
   const SUnit *getNextClusterSucc() const { return NextClusterSucc; }
 
-  /// Initialize a DFSResult after DAG building is complete, and before any
+  /// Compute a DFSResult after DAG building is complete, and before any
   /// queue comparisons.
-  void initDFSResult();
-
-  /// Compute DFS result once all interesting roots are discovered.
-  void computeDFSResult(ArrayRef<SUnit*> Roots);
+  void computeDFSResult();
 
   /// Return a non-null DFS result if the scheduling strategy initialized it.
   const SchedDFSResult *getDFSResult() const { return DFSResult; }
@@ -341,8 +338,8 @@ protected:
   /// instances of ScheduleDAGMI to perform custom DAG postprocessing.
   void postprocessDAG();
 
-  /// Identify DAG roots and setup scheduler queues.
-  void initQueues();
+  /// Release ExitSU predecessors and setup scheduler queues.
+  void initQueues(ArrayRef<SUnit*> TopRoots, ArrayRef<SUnit*> BotRoots);
 
   /// Move an instruction and update register pressure.
   void scheduleMI(SUnit *SU, bool IsTopNode);
@@ -365,7 +362,8 @@ protected:
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
   bool checkSchedLimit();
 
-  void releaseRoots();
+  void findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
+                             SmallVectorImpl<SUnit*> &BotRoots);
 
   void releaseSucc(SUnit *SU, SDep *SuccEdge);
   void releaseSuccessors(SUnit *SU);

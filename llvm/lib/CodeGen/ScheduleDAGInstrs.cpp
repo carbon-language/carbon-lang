@@ -1188,16 +1188,20 @@ static bool hasDataSucc(const SUnit *SU) {
 
 /// Compute an ILP metric for all nodes in the subDAG reachable via depth-first
 /// search from this root.
-void SchedDFSResult::compute(ArrayRef<SUnit *> Roots) {
+void SchedDFSResult::compute(ArrayRef<SUnit> SUnits) {
   if (!IsBottomUp)
     llvm_unreachable("Top-down ILP metric is unimplemnted");
 
   SchedDFSImpl Impl(*this);
-  for (ArrayRef<const SUnit*>::const_iterator
-         RootI = Roots.begin(), RootE = Roots.end(); RootI != RootE; ++RootI) {
+  for (ArrayRef<SUnit>::const_iterator
+         SI = SUnits.begin(), SE = SUnits.end(); SI != SE; ++SI) {
+    const SUnit *SU = &*SI;
+    if (Impl.isVisited(SU) || hasDataSucc(SU))
+      continue;
+
     SchedDAGReverseDFS DFS;
-    Impl.visitPreorder(*RootI);
-    DFS.follow(*RootI);
+    Impl.visitPreorder(SU);
+    DFS.follow(SU);
     for (;;) {
       // Traverse the leftmost path as far as possible.
       while (DFS.getPred() != DFS.getPredEnd()) {
