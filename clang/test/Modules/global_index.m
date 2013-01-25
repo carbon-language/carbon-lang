@@ -7,7 +7,6 @@
 // RUN: ls %t|grep modules.idx
 // Run and use the global module index
 // RUN: %clang_cc1 -Wauto-import -fmodule-cache-path %t -fdisable-module-hash -fmodules -fmodules-global-index -F %S/Inputs %s -verify -print-stats 2>&1 | FileCheck %s
-// REQUIRES: shell
 
 // expected-no-diagnostics
 @import DependsOnModule;

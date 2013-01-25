@@ -2,7 +2,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %t.dir
 // RUN: ls %t.dir | grep report | count 0
 // RUN: rm -fR %t.dir
-// REQUIRES: shell
 
 // This tests that we do not currently emit HTML diagnostics for reports that
 // cross file boundaries.
