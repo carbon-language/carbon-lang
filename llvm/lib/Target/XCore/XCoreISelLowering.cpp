@@ -54,6 +54,7 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::LMUL              : return "XCoreISD::LMUL";
     case XCoreISD::MACCU             : return "XCoreISD::MACCU";
     case XCoreISD::MACCS             : return "XCoreISD::MACCS";
+    case XCoreISD::CRC8              : return "XCoreISD::CRC8";
     case XCoreISD::BR_JT             : return "XCoreISD::BR_JT";
     case XCoreISD::BR_JT32           : return "XCoreISD::BR_JT32";
     default                          : return NULL;
@@ -152,6 +153,9 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::INIT_TRAMPOLINE, MVT::Other, Custom);
   setOperationAction(ISD::ADJUST_TRAMPOLINE, MVT::Other, Custom);
 
+  // We want to custom lower some of our intrinsics.
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+
   maxStoresPerMemset = maxStoresPerMemsetOptSize = 4;
   maxStoresPerMemmove = maxStoresPerMemmoveOptSize
     = maxStoresPerMemcpy = maxStoresPerMemcpyOptSize = 2;
@@ -167,24 +171,25 @@ SDValue XCoreTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode())
   {
-  case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
-  case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
-  case ISD::BlockAddress:     return LowerBlockAddress(Op, DAG);
-  case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
-  case ISD::BR_JT:            return LowerBR_JT(Op, DAG);
-  case ISD::LOAD:             return LowerLOAD(Op, DAG);
-  case ISD::STORE:            return LowerSTORE(Op, DAG);
-  case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
-  case ISD::VAARG:            return LowerVAARG(Op, DAG);
-  case ISD::VASTART:          return LowerVASTART(Op, DAG);
-  case ISD::SMUL_LOHI:        return LowerSMUL_LOHI(Op, DAG);
-  case ISD::UMUL_LOHI:        return LowerUMUL_LOHI(Op, DAG);
+  case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
+  case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
+  case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
+  case ISD::BR_JT:              return LowerBR_JT(Op, DAG);
+  case ISD::LOAD:               return LowerLOAD(Op, DAG);
+  case ISD::STORE:              return LowerSTORE(Op, DAG);
+  case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
+  case ISD::VAARG:              return LowerVAARG(Op, DAG);
+  case ISD::VASTART:            return LowerVASTART(Op, DAG);
+  case ISD::SMUL_LOHI:          return LowerSMUL_LOHI(Op, DAG);
+  case ISD::UMUL_LOHI:          return LowerUMUL_LOHI(Op, DAG);
   // FIXME: Remove these when LegalizeDAGTypes lands.
   case ISD::ADD:
-  case ISD::SUB:              return ExpandADDSUB(Op.getNode(), DAG);
-  case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
-  case ISD::INIT_TRAMPOLINE:  return LowerINIT_TRAMPOLINE(Op, DAG);
-  case ISD::ADJUST_TRAMPOLINE: return LowerADJUST_TRAMPOLINE(Op, DAG);
+  case ISD::SUB:                return ExpandADDSUB(Op.getNode(), DAG);
+  case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
+  case ISD::INIT_TRAMPOLINE:    return LowerINIT_TRAMPOLINE(Op, DAG);
+  case ISD::ADJUST_TRAMPOLINE:  return LowerADJUST_TRAMPOLINE(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   default:
     llvm_unreachable("unimplemented operand");
   }
@@ -856,6 +861,23 @@ LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
                               0);
 
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 5);
+}
+
+SDValue XCoreTargetLowering::
+LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const {
+  DebugLoc DL = Op.getDebugLoc();
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  switch (IntNo) {
+    case Intrinsic::xcore_crc8:
+      EVT VT = Op.getValueType();
+      SDValue Data =
+        DAG.getNode(XCoreISD::CRC8, DL, DAG.getVTList(VT, VT),
+                    Op.getOperand(1), Op.getOperand(2) , Op.getOperand(3));
+      SDValue Crc(Data.getNode(), 1);
+      SDValue Results[] = { Crc, Data };
+      return DAG.getMergeValues(Results, 2, DL);
+  }
+  return SDValue();
 }
 
 //===----------------------------------------------------------------------===//

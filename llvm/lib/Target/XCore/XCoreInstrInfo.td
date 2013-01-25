@@ -477,10 +477,10 @@ def MACCS_l4r : _L4R<(outs GRRegs:$dst1, GRRegs:$dst2),
                     []>;
 }
 
-let Constraints = "$src1 = $dst1" in
+let Constraints = "$src1 = $dst2" in
 def CRC8_l4r : _L4R<(outs GRRegs:$dst1, GRRegs:$dst2),
                     (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                    "crc8 $dst1, $dst2, $src2, $src3",
+                    "crc8 $dst2, $dst1, $src2, $src3",
                     []>;
 
 // Five operand long
