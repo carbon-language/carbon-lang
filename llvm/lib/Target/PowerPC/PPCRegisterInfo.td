@@ -75,72 +75,16 @@ foreach Index = 0-31 in {
 }
 
 // Floating-point registers
-def F0  : FPR< 0,  "f0">, DwarfRegNum<[32, 32]>;
-def F1  : FPR< 1,  "f1">, DwarfRegNum<[33, 33]>;
-def F2  : FPR< 2,  "f2">, DwarfRegNum<[34, 34]>;
-def F3  : FPR< 3,  "f3">, DwarfRegNum<[35, 35]>;
-def F4  : FPR< 4,  "f4">, DwarfRegNum<[36, 36]>;
-def F5  : FPR< 5,  "f5">, DwarfRegNum<[37, 37]>;
-def F6  : FPR< 6,  "f6">, DwarfRegNum<[38, 38]>;
-def F7  : FPR< 7,  "f7">, DwarfRegNum<[39, 39]>;
-def F8  : FPR< 8,  "f8">, DwarfRegNum<[40, 40]>;
-def F9  : FPR< 9,  "f9">, DwarfRegNum<[41, 41]>;
-def F10 : FPR<10, "f10">, DwarfRegNum<[42, 42]>;
-def F11 : FPR<11, "f11">, DwarfRegNum<[43, 43]>;
-def F12 : FPR<12, "f12">, DwarfRegNum<[44, 44]>;
-def F13 : FPR<13, "f13">, DwarfRegNum<[45, 45]>;
-def F14 : FPR<14, "f14">, DwarfRegNum<[46, 46]>;
-def F15 : FPR<15, "f15">, DwarfRegNum<[47, 47]>;
-def F16 : FPR<16, "f16">, DwarfRegNum<[48, 48]>;
-def F17 : FPR<17, "f17">, DwarfRegNum<[49, 49]>;
-def F18 : FPR<18, "f18">, DwarfRegNum<[50, 50]>;
-def F19 : FPR<19, "f19">, DwarfRegNum<[51, 51]>;
-def F20 : FPR<20, "f20">, DwarfRegNum<[52, 52]>;
-def F21 : FPR<21, "f21">, DwarfRegNum<[53, 53]>;
-def F22 : FPR<22, "f22">, DwarfRegNum<[54, 54]>;
-def F23 : FPR<23, "f23">, DwarfRegNum<[55, 55]>;
-def F24 : FPR<24, "f24">, DwarfRegNum<[56, 56]>;
-def F25 : FPR<25, "f25">, DwarfRegNum<[57, 57]>;
-def F26 : FPR<26, "f26">, DwarfRegNum<[58, 58]>;
-def F27 : FPR<27, "f27">, DwarfRegNum<[59, 59]>;
-def F28 : FPR<28, "f28">, DwarfRegNum<[60, 60]>;
-def F29 : FPR<29, "f29">, DwarfRegNum<[61, 61]>;
-def F30 : FPR<30, "f30">, DwarfRegNum<[62, 62]>;
-def F31 : FPR<31, "f31">, DwarfRegNum<[63, 63]>;
+foreach Index = 0-31 in {
+  def F#Index : FPR<Index, "f"#Index>,
+                DwarfRegNum<[!add(Index, 32), !add(Index, 32)]>;
+}
 
 // Vector registers
-def V0  : VR< 0,  "v0">, DwarfRegNum<[77, 77]>;
-def V1  : VR< 1,  "v1">, DwarfRegNum<[78, 78]>;
-def V2  : VR< 2,  "v2">, DwarfRegNum<[79, 79]>;
-def V3  : VR< 3,  "v3">, DwarfRegNum<[80, 80]>;
-def V4  : VR< 4,  "v4">, DwarfRegNum<[81, 81]>;
-def V5  : VR< 5,  "v5">, DwarfRegNum<[82, 82]>;
-def V6  : VR< 6,  "v6">, DwarfRegNum<[83, 83]>;
-def V7  : VR< 7,  "v7">, DwarfRegNum<[84, 84]>;
-def V8  : VR< 8,  "v8">, DwarfRegNum<[85, 85]>;
-def V9  : VR< 9,  "v9">, DwarfRegNum<[86, 86]>;
-def V10 : VR<10, "v10">, DwarfRegNum<[87, 87]>;
-def V11 : VR<11, "v11">, DwarfRegNum<[88, 88]>;
-def V12 : VR<12, "v12">, DwarfRegNum<[89, 89]>;
-def V13 : VR<13, "v13">, DwarfRegNum<[90, 90]>;
-def V14 : VR<14, "v14">, DwarfRegNum<[91, 91]>;
-def V15 : VR<15, "v15">, DwarfRegNum<[92, 92]>;
-def V16 : VR<16, "v16">, DwarfRegNum<[93, 93]>;
-def V17 : VR<17, "v17">, DwarfRegNum<[94, 94]>;
-def V18 : VR<18, "v18">, DwarfRegNum<[95, 95]>;
-def V19 : VR<19, "v19">, DwarfRegNum<[96, 96]>;
-def V20 : VR<20, "v20">, DwarfRegNum<[97, 97]>;
-def V21 : VR<21, "v21">, DwarfRegNum<[98, 98]>;
-def V22 : VR<22, "v22">, DwarfRegNum<[99, 99]>;
-def V23 : VR<23, "v23">, DwarfRegNum<[100, 100]>;
-def V24 : VR<24, "v24">, DwarfRegNum<[101, 101]>;
-def V25 : VR<25, "v25">, DwarfRegNum<[102, 102]>;
-def V26 : VR<26, "v26">, DwarfRegNum<[103, 103]>;
-def V27 : VR<27, "v27">, DwarfRegNum<[104, 104]>;
-def V28 : VR<28, "v28">, DwarfRegNum<[105, 105]>;
-def V29 : VR<29, "v29">, DwarfRegNum<[106, 106]>;
-def V30 : VR<30, "v30">, DwarfRegNum<[107, 107]>;
-def V31 : VR<31, "v31">, DwarfRegNum<[108, 108]>;
+foreach Index = 0-31 in {
+  def V#Index : VR<Index, "v"#Index>,
+                DwarfRegNum<[!add(Index, 77), !add(Index, 77)]>;
+}
 
 // Condition register bits
 def CR0LT : CRBIT< 0, "0">;
