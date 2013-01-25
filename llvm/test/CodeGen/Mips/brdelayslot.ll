@@ -67,3 +67,16 @@ if.end:
   ret void
 }
 
+; Check that delay slot filler can place mov.s or mov.d in delay slot.
+;
+; Default:     foo6:
+; Default-NOT: nop
+
+define void @foo6(float %a0, double %a1) nounwind {
+entry:
+  tail call void @foo7(double %a1, float %a0) nounwind
+  ret void
+}
+
+declare void @foo7(double, float)
+

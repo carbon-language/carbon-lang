@@ -107,7 +107,8 @@ multiclass ADDS_M<string opstr, InstrItinClass Itin, bit IsComm,
 class ABSS_FT<string opstr, RegisterClass DstRC, RegisterClass SrcRC,
               InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs DstRC:$fd), (ins SrcRC:$fs), !strconcat(opstr, "\t$fd, $fs"),
-         [(set DstRC:$fd, (OpNode SrcRC:$fs))], Itin, FrmFR>;
+         [(set DstRC:$fd, (OpNode SrcRC:$fs))], Itin, FrmFR>,
+  NeverHasSideEffects;
 
 multiclass ABSS_M<string opstr, InstrItinClass Itin,
                   SDPatternOperator OpNode= null_frag> {
@@ -213,15 +214,13 @@ def ROUND_W_S  : ABSS_FT<"round.w.s", FGR32, FGR32, IIFcvt>, ABSS_FM<0xc, 16>;
 def TRUNC_W_S  : ABSS_FT<"trunc.w.s", FGR32, FGR32, IIFcvt>, ABSS_FM<0xd, 16>;
 def CEIL_W_S   : ABSS_FT<"ceil.w.s", FGR32, FGR32, IIFcvt>, ABSS_FM<0xe, 16>;
 def FLOOR_W_S  : ABSS_FT<"floor.w.s", FGR32, FGR32, IIFcvt>, ABSS_FM<0xf, 16>;
-def CVT_W_S    : ABSS_FT<"cvt.w.s", FGR32, FGR32, IIFcvt>, ABSS_FM<0x24, 16>,
-                 NeverHasSideEffects;
+def CVT_W_S    : ABSS_FT<"cvt.w.s", FGR32, FGR32, IIFcvt>, ABSS_FM<0x24, 16>;
 
 defm ROUND_W : ROUND_M<"round.w.d", IIFcvt>, ABSS_FM<0xc, 17>;
 defm TRUNC_W : ROUND_M<"trunc.w.d", IIFcvt>, ABSS_FM<0xd, 17>;
 defm CEIL_W  : ROUND_M<"ceil.w.d", IIFcvt>, ABSS_FM<0xe, 17>;
 defm FLOOR_W : ROUND_M<"floor.w.d", IIFcvt>, ABSS_FM<0xf, 17>;
-defm CVT_W   : ROUND_M<"cvt.w.d", IIFcvt>, ABSS_FM<0x24, 17>,
-               NeverHasSideEffects;
+defm CVT_W   : ROUND_M<"cvt.w.d", IIFcvt>, ABSS_FM<0x24, 17>;
 
 let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def ROUND_L_S : ABSS_FT<"round.l.s", FGR64, FGR32, IIFcvt>, ABSS_FM<0x8, 16>;
@@ -238,19 +237,16 @@ let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
 }
 
 def CVT_S_W : ABSS_FT<"cvt.s.w", FGR32, FGR32, IIFcvt>, ABSS_FM<0x20, 20>;
-def CVT_L_S : ABSS_FT<"cvt.l.s", FGR64, FGR32, IIFcvt>, ABSS_FM<0x25, 16>,
-              NeverHasSideEffects;
-def CVT_L_D64: ABSS_FT<"cvt.l.d", FGR64, FGR64, IIFcvt>, ABSS_FM<0x25, 17>,
-               NeverHasSideEffects;
+def CVT_L_S : ABSS_FT<"cvt.l.s", FGR64, FGR32, IIFcvt>, ABSS_FM<0x25, 16>;
+def CVT_L_D64: ABSS_FT<"cvt.l.d", FGR64, FGR64, IIFcvt>, ABSS_FM<0x25, 17>;
 
-let Predicates = [NotFP64bit, HasStdEnc], neverHasSideEffects = 1 in {
+let Predicates = [NotFP64bit, HasStdEnc] in {
   def CVT_S_D32 : ABSS_FT<"cvt.s.d", FGR32, AFGR64, IIFcvt>, ABSS_FM<0x20, 17>;
   def CVT_D32_W : ABSS_FT<"cvt.d.w", AFGR64, FGR32, IIFcvt>, ABSS_FM<0x21, 20>;
   def CVT_D32_S : ABSS_FT<"cvt.d.s", AFGR64, FGR32, IIFcvt>, ABSS_FM<0x21, 16>;
 }
 
-let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64",
-    neverHasSideEffects = 1 in {
+let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
  def CVT_S_D64 : ABSS_FT<"cvt.s.d", FGR32, FGR64, IIFcvt>, ABSS_FM<0x20, 17>;
  def CVT_S_L   : ABSS_FT<"cvt.s.l", FGR32, FGR64, IIFcvt>, ABSS_FM<0x20, 21>;
  def CVT_D64_W : ABSS_FT<"cvt.d.w", FGR64, FGR32, IIFcvt>, ABSS_FM<0x21, 20>;
