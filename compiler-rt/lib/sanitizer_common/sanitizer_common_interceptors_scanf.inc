@@ -23,6 +23,7 @@ struct ScanfSpec {
 
 // One-letter specs.
 static const ScanfSpec scanf_specs[] = {
+  {'c', sizeof(char)},
   {'p', sizeof(void *)},
   {'e', sizeof(float)},
   {'E', sizeof(float)},
@@ -96,16 +97,27 @@ static void scanf_common(void *ctx, const char *format, va_list ap_const) {
       continue;
     }
     ++p;
-    if (*p == '*' || *p == '%' || *p == 0) {
-      ++p;
+    if (*p == '*' || *p == '%' || *p == '\0') {
+      if (*p != '\0')
+        ++p;
       continue;
     }
-    if (*p == '0' || (*p >= '1' && *p <= '9')) {
-      size = internal_atoll(p);
-      // +1 for the \0 at the end
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, va_arg(aq, void *), size + 1);
-      ++p;
-      continue;
+
+    unsigned field_width = 0;
+    if (*p >= '0' && *p <= '9') {
+      field_width = internal_atoll(p);
+      while (*p >= '0' && *p <= '9')
+        p++;
+    }
+    if (field_width > 0) {
+      // +1 for the \0 at the end.
+      if (*p == 's')
+        field_width++;
+      if (*p == 's' || *p == 'c') {
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, va_arg(aq, void*), field_width);
+        ++p;
+        continue;
+      }
     }
 
     if (*p == 'L' || *p == 'q') {

@@ -65,6 +65,7 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%ld", 1, L);
   testScanf("%llu", 1, LL);
   testScanf("a %hd%hhx", 2, S, C);
+  testScanf("%c", 1, C);
 
   testScanf("%%", 0);
   testScanf("a%%", 0);
@@ -79,7 +80,10 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%nf", 1, I);
 
   testScanf("%10s", 1, 11);
+  testScanf("%10c", 1, 10);
   testScanf("%%10s", 0);
   testScanf("%*10s", 0);
   testScanf("%*d", 0);
+
+  testScanf("%4d%8f%c", 3, I, F, C);
 }
