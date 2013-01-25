@@ -3276,7 +3276,7 @@ def note_deleted_assign_field : Note<
 // This should eventually be an error.
 def warn_undefined_internal : Warning<
   "%select{function|variable}0 %q1 has internal linkage but is not defined">,
-  DiagGroup<"undefined-internal">;
+  InGroup<DiagGroup<"undefined-internal">>;
 def note_used_here : Note<"used here">;
 
 def warn_internal_in_extern_inline : ExtWarn<
