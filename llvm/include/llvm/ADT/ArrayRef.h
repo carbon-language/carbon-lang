@@ -33,6 +33,8 @@ namespace llvm {
     typedef const T *const_iterator;
     typedef size_t size_type;
 
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+
   private:
     /// The start of the array, in an external buffer.
     const T *Data;
@@ -83,6 +85,9 @@ namespace llvm {
 
     iterator begin() const { return Data; }
     iterator end() const { return Data + Length; }
+
+    reverse_iterator rbegin() const { return reverse_iterator(end()); }
+    reverse_iterator rend() const { return reverse_iterator(begin()); }
 
     /// empty - Check if the array is empty.
     bool empty() const { return Length == 0; }
