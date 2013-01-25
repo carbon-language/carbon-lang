@@ -59,8 +59,12 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
                                          Reloc::Model RM, CodeModel::Model CM,
                                          CodeGenOpt::Level OL)
   : X86TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true),
-    DL("e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128-f128:128:128-"
-               "n8:16:32:64-S128"),
+    // The x32 ABI dictates the ILP32 programming model for x64.
+    DL(getSubtargetImpl()->isTarget64BitILP32() ?
+        "e-p:32:32-s:64-f64:64:64-i64:64:64-f80:128:128-f128:128:128-"
+        "n8:16:32:64-S128" :
+        "e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128-f128:128:128-"
+        "n8:16:32:64-S128"),
     InstrInfo(*this),
     TLInfo(*this),
     TSInfo(*this),

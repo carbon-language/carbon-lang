@@ -177,20 +177,21 @@ X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC) const{
 const TargetRegisterClass *
 X86RegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
                                                                          const {
+  const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
   switch (Kind) {
   default: llvm_unreachable("Unexpected Kind in getPointerRegClass!");
   case 0: // Normal GPRs.
-    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+    if (Subtarget.isTarget64BitLP64())
       return &X86::GR64RegClass;
     return &X86::GR32RegClass;
   case 1: // Normal GPRs except the stack pointer (for encoding reasons).
-    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+    if (Subtarget.isTarget64BitLP64())
       return &X86::GR64_NOSPRegClass;
     return &X86::GR32_NOSPRegClass;
   case 2: // Available for tailcall (not callee-saved GPRs).
-    if (TM.getSubtarget<X86Subtarget>().isTargetWin64())
+    if (Subtarget.isTargetWin64())
       return &X86::GR64_TCW64RegClass;
-    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+    else if (Subtarget.is64Bit())
       return &X86::GR64_TCRegClass;
 
     const Function *F = MF.getFunction();
