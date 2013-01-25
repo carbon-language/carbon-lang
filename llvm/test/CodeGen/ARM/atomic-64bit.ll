@@ -133,7 +133,7 @@ define i64 @test10(i64* %ptr, i64 %val) {
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
 ; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
 ; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
-; CHECK: ble
+; CHECK: blt
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
@@ -148,7 +148,7 @@ define i64 @test11(i64* %ptr, i64 %val) {
 ; CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], [[REG2:(r[0-9]?[13579])]]
 ; CHECK: subs {{[a-z0-9]+}}, [[REG1]], [[REG3:(r[0-9]?[02468])]]
 ; CHECK: sbcs {{[a-z0-9]+}}, [[REG2]], [[REG4:(r[0-9]?[13579])]]
-; CHECK: bls
+; CHECK: blo
 ; CHECK: strexd {{[a-z0-9]+}}, [[REG3]], [[REG4]]
 ; CHECK: cmp
 ; CHECK: bne
