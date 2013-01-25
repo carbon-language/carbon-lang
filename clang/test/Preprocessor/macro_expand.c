@@ -1,11 +1,10 @@
-// RUN: %clang_cc1 -E %s | grep '^A: Y$'
-// RUN: %clang_cc1 -E %s | grep '^B: f()$'
-// RUN: %clang_cc1 -E %s | grep '^C: for()$'
+// RUN: %clang_cc1 -E %s | FileCheck --strict-whitespace %s
 
 #define X() Y
 #define Y() X
 
 A: X()()()
+// CHECK: {{^}}A: Y{{$}}
 
 // PR3927
 #define f(x) h(x
@@ -13,6 +12,9 @@ A: X()()()
 #define h(x) x()
 B: f(f))
 C: for(for))
+
+// CHECK: {{^}}B: f(){{$}}
+// CHECK: {{^}}C: for(){{$}}
 
 // rdar://6880648
 #define f(x,y...) y
