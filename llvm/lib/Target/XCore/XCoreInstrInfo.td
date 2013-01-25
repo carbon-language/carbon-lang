@@ -495,10 +495,9 @@ def LSUB_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
                     "lsub $dst1, $dst2, $src1, $src2, $src3",
                     []>;
 
-def LDIV_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                    "ldiv $dst1, $dst2, $src1, $src2, $src3",
-                    []>;
+def LDIVU_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
+                     (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
+                     "ldivu $dst1, $dst2, $src1, $src2, $src3", []>;
 
 // Six operand long
 
