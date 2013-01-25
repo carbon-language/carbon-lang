@@ -120,7 +120,7 @@ public:
   /// \brief Get the ILP value for a DAG node.
   ///
   /// A leaf node has an ILP of 1/1.
-  ILPValue getILP(const SUnit *SU) {
+  ILPValue getILP(const SUnit *SU) const {
     return ILPValue(DFSData[SU->NodeNum].InstrCount, 1 + SU->getDepth());
   }
 
@@ -128,7 +128,8 @@ public:
   unsigned getNumSubtrees() const { return SubtreeConnectLevels.size(); }
 
   /// \brief Get the ID of the subtree the given DAG node belongs to.
-  unsigned getSubtreeID(const SUnit *SU) {
+  unsigned getSubtreeID(const SUnit *SU) const {
+    assert(SU->NodeNum < DFSData.size() &&  "New Node");
     return DFSData[SU->NodeNum].SubtreeID;
   }
 
@@ -136,7 +137,7 @@ public:
   ///
   /// For bottom-up trees, the connection level is the latency depth (in cycles)
   /// of the deepest connection to another subtree.
-  unsigned getSubtreeLevel(unsigned SubtreeID) {
+  unsigned getSubtreeLevel(unsigned SubtreeID) const {
     return SubtreeConnectLevels[SubtreeID];
   }
 
