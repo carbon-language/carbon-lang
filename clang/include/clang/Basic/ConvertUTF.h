@@ -217,7 +217,7 @@ static inline ConversionResult convertUTF8Sequence(const UTF8 **source,
   if (*source == sourceEnd)
     return sourceExhausted;
   unsigned size = getNumBytesForUTF8(**source);
-  if (size > sourceEnd - *source)
+  if ((ptrdiff_t)size > sourceEnd - *source)
     return sourceExhausted;
   return ConvertUTF8toUTF32(source, *source + size, &target, target + 1, flags);
 }
