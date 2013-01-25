@@ -467,7 +467,8 @@ void ScheduleDAGMI::initRegPressure() {
   // Cache the list of excess pressure sets in this region. This will also track
   // the max pressure in the scheduled code for these sets.
   RegionCriticalPSets.clear();
-  std::vector<unsigned> RegionPressure = RPTracker.getPressure().MaxSetPressure;
+  const std::vector<unsigned> &RegionPressure =
+    RPTracker.getPressure().MaxSetPressure;
   for (unsigned i = 0, e = RegionPressure.size(); i < e; ++i) {
     unsigned Limit = TRI->getRegPressureSetLimit(i);
     DEBUG(dbgs() << TRI->getRegPressureSetName(i)
