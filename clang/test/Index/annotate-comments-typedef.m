@@ -17,7 +17,7 @@ typedef enum : NSUInteger {
         MyEnumBar, /**< value Bar */
         MyEnumBaz, /**< value Baz */
 } MyEnum;
-// CHECK: TypedefDecl=MyEnum:[[@LINE-1]]:3 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for MyEnum </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="3"><Name>&lt;anonymous&gt;</Name><USR>c:@EA@MyEnum</USR><Declaration>typedef enum MyEnum MyEnum</Declaration><Abstract><Para> Documentation for MyEnum </Para></Abstract></Typedef>] CommentXMLValid
+// CHECK: TypedefDecl=MyEnum:[[@LINE-1]]:3 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for MyEnum </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="3"><Name>&lt;anonymous&gt;</Name><USR>c:@EA@MyEnum</USR><Declaration>typedef enum MyEnum MyEnum</Declaration><Abstract><Para> Documentation for MyEnum </Para></Abstract></Typedef>]
 
 
 /** Documentation for E */
@@ -27,4 +27,4 @@ enum E {
         MyEnumBaz, /**< value Baz */
 };
 typedef enum E E_T;
-// CHECK: TypedefDecl=E_T:[[@LINE-1]]:16 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="16"><Name>E</Name><USR>c:@E@E</USR><Declaration>typedef enum E E_T</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Typedef>] CommentXMLValid
+// CHECK: TypedefDecl=E_T:[[@LINE-1]]:16 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="16"><Name>E</Name><USR>c:@E@E</USR><Declaration>typedef enum E E_T</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Typedef>]
