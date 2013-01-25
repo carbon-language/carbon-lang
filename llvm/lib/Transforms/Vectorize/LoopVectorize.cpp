@@ -187,6 +187,10 @@ private:
   /// of scalars.
   void scalarizeInstruction(Instruction *Instr);
 
+  /// Vectorize Load and Store instructions,
+  void vectorizeMemoryInstruction(Instruction *Instr,
+                                  LoopVectorizationLegality *Legal);
+
   /// Create a broadcast instruction. This method generates a broadcast
   /// instruction (shuffle) for loop invariant values and for the induction
   /// value. If this is the induction variable then we extend it to N, N+1, ...
@@ -832,6 +836,111 @@ Value *InnerLoopVectorizer::reverseVector(Value *Vec) {
                                      "reverse");
 }
 
+
+void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
+                                             LoopVectorizationLegality *Legal) {
+  // Attempt to issue a wide load.
+  LoadInst *LI = dyn_cast<LoadInst>(Instr);
+  StoreInst *SI = dyn_cast<StoreInst>(Instr);
+
+  assert((LI || SI) && "Invalid Load/Store instruction");
+
+  Type *ScalarDataTy = LI ? LI->getType() : SI->getValueOperand()->getType();
+  Type *DataTy = VectorType::get(ScalarDataTy, VF);
+  Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
+  unsigned Alignment = LI ? LI->getAlignment() : SI->getAlignment();
+
+  // If the pointer is loop invariant or if it is non consecutive,
+  // scalarize the load.
+  int Stride = Legal->isConsecutivePtr(Ptr);
+  bool Reverse = Stride < 0;
+  bool UniformLoad = LI && Legal->isUniform(Ptr);
+  if (Stride == 0 || UniformLoad)
+    return scalarizeInstruction(Instr);
+
+  Constant *Zero = Builder.getInt32(0);
+  VectorParts &Entry = WidenMap.get(Instr);
+
+  // Handle consecutive loads/stores.
+  GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
+  if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
+    Value *PtrOperand = Gep->getPointerOperand();
+    Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
+    FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
+
+    // Create the new GEP with the new induction variable.
+    GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
+    Gep2->setOperand(0, FirstBasePtr);
+    Gep2->setName("gep.indvar.base");
+    Ptr = Builder.Insert(Gep2);
+  } else if (Gep) {
+    assert(SE->isLoopInvariant(SE->getSCEV(Gep->getPointerOperand()),
+                               OrigLoop) && "Base ptr must be invariant");
+
+    // The last index does not have to be the induction. It can be
+    // consecutive and be a function of the index. For example A[I+1];
+    unsigned NumOperands = Gep->getNumOperands();
+
+    Value *LastGepOperand = Gep->getOperand(NumOperands - 1);
+    VectorParts &GEPParts = getVectorValue(LastGepOperand);
+    Value *LastIndex = GEPParts[0];
+    LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
+
+    // Create the new GEP with the new induction variable.
+    GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
+    Gep2->setOperand(NumOperands - 1, LastIndex);
+    Gep2->setName("gep.indvar.idx");
+    Ptr = Builder.Insert(Gep2);
+  } else {
+    // Use the induction element ptr.
+    assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
+    VectorParts &PtrVal = getVectorValue(Ptr);
+    Ptr = Builder.CreateExtractElement(PtrVal[0], Zero);
+  }
+
+  // Handle Stores:
+  if (SI) {
+    assert(!Legal->isUniform(SI->getPointerOperand()) &&
+           "We do not allow storing to uniform addresses");
+
+    VectorParts &StoredVal = getVectorValue(SI->getValueOperand());
+    for (unsigned Part = 0; Part < UF; ++Part) {
+      // Calculate the pointer for the specific unroll-part.
+      Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
+
+      if (Reverse) {
+        // If we store to reverse consecutive memory locations then we need
+        // to reverse the order of elements in the stored value.
+        StoredVal[Part] = reverseVector(StoredVal[Part]);
+        // If the address is consecutive but reversed, then the
+        // wide store needs to start at the last vector element.
+        PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
+        PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
+      }
+
+      Value *VecPtr = Builder.CreateBitCast(PartPtr, DataTy->getPointerTo());
+      Builder.CreateStore(StoredVal[Part], VecPtr)->setAlignment(Alignment);
+    }
+  }
+
+  for (unsigned Part = 0; Part < UF; ++Part) {
+    // Calculate the pointer for the specific unroll-part.
+    Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
+
+    if (Reverse) {
+      // If the address is consecutive but reversed, then the
+      // wide store needs to start at the last vector element.
+      PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
+      PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
+    }
+
+    Value *VecPtr = Builder.CreateBitCast(PartPtr, DataTy->getPointerTo());
+    Value *LI = Builder.CreateLoad(VecPtr, "wide.load");
+    cast<LoadInst>(LI)->setAlignment(Alignment);
+    Entry[Part] = Reverse ? reverseVector(LI) :  LI;
+  }
+}
+
 void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
   assert(!Instr->getType()->isAggregateType() && "Can't handle vectors");
   // Holds vector parameters or scalars, in case of uniform vals.
@@ -1353,9 +1462,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   // the cost-model.
   //
   //===------------------------------------------------===//
-  BasicBlock &BB = *OrigLoop->getHeader();
-  Constant *Zero =
-  ConstantInt::get(IntegerType::getInt32Ty(BB.getContext()), 0);
+  Constant *Zero = Builder.getInt32(0);
 
   // In order to support reduction variables we need to be able to vectorize
   // Phi nodes. Phi nodes have cycles, so we need to vectorize them in two
@@ -1592,8 +1699,6 @@ InnerLoopVectorizer::createBlockInMask(BasicBlock *BB) {
 void
 InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
                                           BasicBlock *BB, PhiVector *PV) {
-  Constant *Zero = Builder.getInt32(0);
-
   // For each instruction in the old loop.
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     VectorParts &Entry = WidenMap.get(it);
@@ -1808,147 +1913,10 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       break;
     }
 
-    case Instruction::Store: {
-      // Attempt to issue a wide store.
-      StoreInst *SI = dyn_cast<StoreInst>(it);
-      Type *StTy = VectorType::get(SI->getValueOperand()->getType(), VF);
-      Value *Ptr = SI->getPointerOperand();
-      unsigned Alignment = SI->getAlignment();
-
-      assert(!Legal->isUniform(Ptr) &&
-             "We do not allow storing to uniform addresses");
-
-
-      int Stride = Legal->isConsecutivePtr(Ptr);
-      bool Reverse = Stride < 0;
-      if (Stride == 0) {
-        scalarizeInstruction(it);
+    case Instruction::Store:
+    case Instruction::Load:
+        vectorizeMemoryInstruction(it, Legal);
         break;
-      }
-
-      // Handle consecutive stores.
-
-      GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-      if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
-        Value *PtrOperand = Gep->getPointerOperand();
-        Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
-        FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
-
-        // Create the new GEP with the new induction variable.
-        GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-        Gep2->setOperand(0, FirstBasePtr);
-        Ptr = Builder.Insert(Gep2);
-      } else if (Gep) {
-        assert(SE->isLoopInvariant(SE->getSCEV(Gep->getPointerOperand()),
-               OrigLoop) && "Base ptr must be invariant");
-
-        // The last index does not have to be the induction. It can be
-        // consecutive and be a function of the index. For example A[I+1];
-        unsigned NumOperands = Gep->getNumOperands();
-
-        Value *LastGepOperand = Gep->getOperand(NumOperands - 1);
-        VectorParts &GEPParts = getVectorValue(LastGepOperand);
-        Value *LastIndex = GEPParts[0];
-        LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
-
-        // Create the new GEP with the new induction variable.
-        GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-        Gep2->setOperand(NumOperands - 1, LastIndex);
-        Ptr = Builder.Insert(Gep2);
-      } else {
-        // Use the induction element ptr.
-        assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
-        VectorParts &PtrVal = getVectorValue(Ptr);
-        Ptr = Builder.CreateExtractElement(PtrVal[0], Zero);
-      }
-
-      VectorParts &StoredVal = getVectorValue(SI->getValueOperand());
-      for (unsigned Part = 0; Part < UF; ++Part) {
-        // Calculate the pointer for the specific unroll-part.
-        Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
-
-        if (Reverse) {
-          // If we store to reverse consecutive memory locations then we need
-          // to reverse the order of elements in the stored value.
-          StoredVal[Part] = reverseVector(StoredVal[Part]);
-          // If the address is consecutive but reversed, then the
-          // wide store needs to start at the last vector element.
-          PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
-          PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
-        }
-
-        Value *VecPtr = Builder.CreateBitCast(PartPtr, StTy->getPointerTo());
-        Builder.CreateStore(StoredVal[Part], VecPtr)->setAlignment(Alignment);
-      }
-      break;
-    }
-    case Instruction::Load: {
-      // Attempt to issue a wide load.
-      LoadInst *LI = dyn_cast<LoadInst>(it);
-      Type *RetTy = VectorType::get(LI->getType(), VF);
-      Value *Ptr = LI->getPointerOperand();
-      unsigned Alignment = LI->getAlignment();
-
-      // If the pointer is loop invariant or if it is non consecutive,
-      // scalarize the load.
-      int Stride = Legal->isConsecutivePtr(Ptr);
-      bool Reverse = Stride < 0;
-      if (Legal->isUniform(Ptr) || Stride == 0) {
-        scalarizeInstruction(it);
-        break;
-      }
-
-      GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-      if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
-        Value *PtrOperand = Gep->getPointerOperand();
-        Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
-        FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
-        // Create the new GEP with the new induction variable.
-        GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-        Gep2->setOperand(0, FirstBasePtr);
-        Ptr = Builder.Insert(Gep2);
-      } else if (Gep) {
-        assert(SE->isLoopInvariant(SE->getSCEV(Gep->getPointerOperand()),
-                                   OrigLoop) && "Base ptr must be invariant");
-
-        // The last index does not have to be the induction. It can be
-        // consecutive and be a function of the index. For example A[I+1];
-        unsigned NumOperands = Gep->getNumOperands();
-
-        Value *LastGepOperand = Gep->getOperand(NumOperands - 1);
-        VectorParts &GEPParts = getVectorValue(LastGepOperand);
-        Value *LastIndex = GEPParts[0];
-        LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
-
-        // Create the new GEP with the new induction variable.
-        GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-        Gep2->setOperand(NumOperands - 1, LastIndex);
-        Ptr = Builder.Insert(Gep2);
-      } else {
-        // Use the induction element ptr.
-        assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
-        VectorParts &PtrVal = getVectorValue(Ptr);
-        Ptr = Builder.CreateExtractElement(PtrVal[0], Zero);
-      }
-
-      for (unsigned Part = 0; Part < UF; ++Part) {
-        // Calculate the pointer for the specific unroll-part.
-        Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
-
-        if (Reverse) {
-          // If the address is consecutive but reversed, then the
-          // wide store needs to start at the last vector element.
-          PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
-          PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
-        }
-
-        Value *VecPtr = Builder.CreateBitCast(PartPtr, RetTy->getPointerTo());
-        Value *LI = Builder.CreateLoad(VecPtr, "wide.load");
-        cast<LoadInst>(LI)->setAlignment(Alignment);
-        Entry[Part] = Reverse ? reverseVector(LI) :  LI;
-      }
-      break;
-    }
     case Instruction::ZExt:
     case Instruction::SExt:
     case Instruction::FPToUI:
