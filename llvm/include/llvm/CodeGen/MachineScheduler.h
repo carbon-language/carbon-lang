@@ -325,6 +325,9 @@ public:
 
   BitVector &getScheduledTrees() { return ScheduledTrees; }
 
+  void viewGraph(const Twine &Name, const Twine &Title) LLVM_OVERRIDE;
+  void viewGraph() LLVM_OVERRIDE;
+
 protected:
   // Top-Level entry points for the schedule() driver...
 

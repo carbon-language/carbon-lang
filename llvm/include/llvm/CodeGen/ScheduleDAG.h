@@ -578,8 +578,8 @@ namespace llvm {
     /// viewGraph - Pop up a GraphViz/gv window with the ScheduleDAG rendered
     /// using 'dot'.
     ///
-    void viewGraph(const Twine &Name, const Twine &Title);
-    void viewGraph();
+    virtual void viewGraph(const Twine &Name, const Twine &Title);
+    virtual void viewGraph();
 
     virtual void dumpNode(const SUnit *SU) const = 0;
 
