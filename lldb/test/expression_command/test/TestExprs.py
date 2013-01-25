@@ -28,6 +28,11 @@ class BasicExprCommandsTestCase(TestBase):
         self.line = line_number('main.cpp',
                                 '// Please test many expressions while stopped at this line:')
 
+        # Disable confirmation prompt to avoid infinite wait
+        self.runCmd("settings set auto-confirm true")
+        self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
+
+
     def test_many_expr_commands(self):
         """These basic expression commands should work as expected."""
         self.buildDefault()

@@ -733,6 +733,7 @@ class Base(unittest2.TestCase):
             if self.child_in_script_interpreter:
                 self.child.sendline('quit()')
                 self.child.expect_exact(self.child_prompt)
+            self.child.sendline('settings set interpreter.prompt-on-quit false')
             self.child.sendline('quit')
             try:
                 self.child.expect(pexpect.EOF)
