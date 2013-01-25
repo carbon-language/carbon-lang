@@ -137,3 +137,66 @@ end:
   ret i16 %x
 }
 
+define i16 @test6(i1* %dummy, i64 %a, i64 %b) {
+; Test that we speculate no-op instructions when those instructions are in the
+; predecessor but could potentially be sunk.
+; CHECK: @test6
+
+entry:
+  %cond1 = load volatile i1* %dummy
+  %a.conv = trunc i64 %a to i16
+  %b.conv = trunc i64 %b to i16
+  br i1 %cond1, label %if, label %end
+
+if:
+  %cond2 = load volatile i1* %dummy
+  %cond3 = load volatile i1* %dummy
+  %cond4 = load volatile i1* %dummy
+  %cmp = icmp ult i16 %a.conv, %b.conv
+  %a.conv2 = trunc i64 %a to i32
+  %b.conv2 = trunc i64 %b to i32
+  br i1 %cond2, label %then, label %end
+
+then:
+  %sub = sub i32 %a.conv2, %b.conv2
+  %sub.conv = trunc i32 %sub to i16
+  br label %end
+
+end:
+  %x = phi i16 [ %a.conv, %entry ], [ %b.conv, %if ], [ %sub.conv, %then ]
+; CHECK-NOT: phi
+; CHECK: select i1
+
+  ret i16 %x
+}
+
+define i16 @test7(i1* %dummy, i16 %a, i16 %b, i32 %x) {
+; Test that we don't speculate when there are instructions that could
+; potentially sink into the conditional block.
+; CHECK: @test7
+
+entry:
+  %cond1 = load volatile i1* %dummy
+  br i1 %cond1, label %if, label %end
+
+if:
+  %cond2 = load volatile i1* %dummy
+  %a.conv = sext i16 %a to i32
+  %b.conv = sext i16 %b to i32
+  %cmp = icmp ult i32 %a.conv, %b.conv
+  %a.conv2 = add i32 %a.conv, %x
+  br i1 %cond2, label %then, label %end
+
+then:
+  %sub = sub i32 %a.conv2, %b.conv
+  %sub.conv = trunc i32 %sub to i16
+  br label %end
+
+end:
+  %y = phi i16 [ %a, %entry ], [ %b, %if ], [ %sub.conv, %then ]
+; CHECK-NOT: select
+; CHECK: phi i16
+
+  ret i16 %y
+}
+

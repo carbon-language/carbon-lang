@@ -1388,6 +1388,13 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
   }
   assert(EndBB == BI->getSuccessor(!Invert) && "No edge from to end block");
 
+  // Keep a count of how many times instructions are used within CondBB when
+  // they are candidates for sinking into CondBB. Specifically:
+  // - They are defined in BB, and
+  // - They have no side effects, and
+  // - All of their uses are in CondBB.
+  SmallDenseMap<Instruction *, unsigned, 4> SinkCandidateUseCounts;
+
   unsigned SpeculationCost = 0;
   for (BasicBlock::iterator BBI = ThenBB->begin(),
                             BBE = llvm::prior(ThenBB->end());
@@ -1406,9 +1413,11 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
     // Don't hoist the instruction if it's unsafe or expensive.
     if (!isSafeToSpeculativelyExecute(I))
       return false;
-    // FIXME: This should really be a cost metric, but our cost model doesn't
-    // accurately model the expense of select.
-    if (isa<SelectInst>(I))
+    // FIXME: These should really be cost metrics, but our cost model doesn't
+    // accurately model the expense of selects and floating point operations.
+    // FIXME: Is it really safe to speculate floating point operations?
+    // Signaling NaNs break with this, but we shouldn't care, right?
+    if (isa<SelectInst>(I) || I->getType()->isFPOrFPVectorTy())
       return false;
     // FIXME: The cost metric currently doesn't reason accurately about simple
     // versus complex GEPs, take a conservative approach here.
@@ -1422,12 +1431,25 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
     for (User::op_iterator i = I->op_begin(), e = I->op_end();
          i != e; ++i) {
       Instruction *OpI = dyn_cast<Instruction>(*i);
-      if (OpI && OpI->getParent() == BB &&
-          !OpI->mayHaveSideEffects() &&
-          !OpI->isUsedInBasicBlock(BB))
-        return false;
+      if (!OpI || OpI->getParent() != BB ||
+          OpI->mayHaveSideEffects())
+        continue; // Not a candidate for sinking.
+
+      ++SinkCandidateUseCounts[OpI];
     }
   }
+
+  // Consider any sink candidates which are only used in CondBB as costs for
+  // speculation. Note, while we iterate over a DenseMap here, we are summing
+  // and so iteration order isn't significant.
+  for (SmallDenseMap<Instruction *, unsigned, 4>::iterator I =
+           SinkCandidateUseCounts.begin(), E = SinkCandidateUseCounts.end();
+       I != E; ++I)
+    if (I->first->getNumUses() == I->second) {
+      SpeculationCost += TTI.getUserCost(I->first);
+      if (SpeculationCost > TargetTransformInfo::TCC_Basic)
+        return false;
+    }
 
   // Check that the PHI nodes can be converted to selects.
   bool HaveRewritablePHIs = false;
