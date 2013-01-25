@@ -68,6 +68,9 @@ public:
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
   virtual bool addCodeEmitter(PassManagerBase &PM,
                               JITCodeEmitter &JCE);
+
+  /// \brief Register PPC analysis passes with a pass manager.
+  virtual void addAnalysisPasses(PassManagerBase &PM);
 };
 
 /// PPC32TargetMachine - PowerPC 32-bit target machine.

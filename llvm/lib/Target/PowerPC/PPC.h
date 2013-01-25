@@ -25,6 +25,7 @@
 namespace llvm {
   class PPCTargetMachine;
   class FunctionPass;
+  class ImmutablePass;
   class JITCodeEmitter;
   class MachineInstr;
   class AsmPrinter;
@@ -37,6 +38,9 @@ namespace llvm {
                                             JITCodeEmitter &MCE);
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                     AsmPrinter &AP, bool isDarwin);
+
+  /// \brief Creates an PPC-specific Target Transformation Info pass.
+  ImmutablePass *createPPCTargetTransformInfoPass(const PPCTargetMachine *TM);
   
   namespace PPCII {
     
