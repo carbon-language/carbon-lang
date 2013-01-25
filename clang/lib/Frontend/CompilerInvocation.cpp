@@ -830,7 +830,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
     frontend::IncludeDirGroup Group 
       = IsIndexHeaderMap? frontend::IndexHeaderMap : frontend::Angled;
     
-    Opts.AddPath((*it)->getValue(), Group, true,
+    Opts.AddPath((*it)->getValue(), Group,
                  /*IsFramework=*/ (*it)->getOption().matches(OPT_F), false);
     IsIndexHeaderMap = false;
   }
@@ -845,41 +845,39 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
       Prefix = A->getValue();
     else if (A->getOption().matches(OPT_iwithprefix))
       Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::After, false, false, false);
+                   frontend::After, false, false);
     else
       Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::Angled, false, false, false);
+                   frontend::Angled, false, false);
   }
 
   for (arg_iterator it = Args.filtered_begin(OPT_idirafter),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::After, true, false, false);
+    Opts.AddPath((*it)->getValue(), frontend::After, false, false);
   for (arg_iterator it = Args.filtered_begin(OPT_iquote),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::Quoted, true, false, false);
+    Opts.AddPath((*it)->getValue(), frontend::Quoted, false, false);
   for (arg_iterator it = Args.filtered_begin(OPT_isystem,
          OPT_iwithsysroot), ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::System, true, false,
+    Opts.AddPath((*it)->getValue(), frontend::System, false,
                  !(*it)->getOption().matches(OPT_iwithsysroot));
   for (arg_iterator it = Args.filtered_begin(OPT_iframework),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::System, true, true,
-                 true);
+    Opts.AddPath((*it)->getValue(), frontend::System, true, true);
 
   // Add the paths for the various language specific isystem flags.
   for (arg_iterator it = Args.filtered_begin(OPT_c_isystem),
        ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::CSystem, true, false, true);
+    Opts.AddPath((*it)->getValue(), frontend::CSystem, false, true);
   for (arg_iterator it = Args.filtered_begin(OPT_cxx_isystem),
        ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::CXXSystem, true, false, true);
+    Opts.AddPath((*it)->getValue(), frontend::CXXSystem, false, true);
   for (arg_iterator it = Args.filtered_begin(OPT_objc_isystem),
        ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::ObjCSystem, true, false,true);
+    Opts.AddPath((*it)->getValue(), frontend::ObjCSystem, false,true);
   for (arg_iterator it = Args.filtered_begin(OPT_objcxx_isystem),
        ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::ObjCXXSystem, true, false,
-                 true);
+    Opts.AddPath((*it)->getValue(), frontend::ObjCXXSystem, false, true);
 
   // Add the internal paths from a driver that detects standard include paths.
   for (arg_iterator I = Args.filtered_begin(OPT_internal_isystem,
@@ -887,7 +885,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
                     E = Args.filtered_end();
        I != E; ++I)
     Opts.AddPath((*I)->getValue(), frontend::System,
-                 false, false, /*IgnoreSysRoot=*/true, /*IsInternal=*/true,
+                 false, /*IgnoreSysRoot=*/true, /*IsInternal=*/true,
                  (*I)->getOption().matches(OPT_internal_externc_isystem));
 
   // Add the path prefixes which are implicitly treated as being system headers.
