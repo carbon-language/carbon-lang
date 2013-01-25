@@ -40,7 +40,7 @@ class VectorLegalizer {
   /// LegalizedNodes - For nodes that are of legal width, and that have more
   /// than one use, this map indicates what regularized operand to use.  This
   /// allows us to avoid legalizing the same thing more than once.
-  DenseMap<SDValue, SDValue> LegalizedNodes;
+  SmallDenseMap<SDValue, SDValue, 64> LegalizedNodes;
 
   // Adds a node to the translation cache
   void AddLegalizedOperand(SDValue From, SDValue To) {

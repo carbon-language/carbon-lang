@@ -80,35 +80,35 @@ private:
 
   /// PromotedIntegers - For integer nodes that are below legal width, this map
   /// indicates what promoted value to use.
-  DenseMap<SDValue, SDValue> PromotedIntegers;
+  SmallDenseMap<SDValue, SDValue, 8> PromotedIntegers;
 
   /// ExpandedIntegers - For integer nodes that need to be expanded this map
   /// indicates which operands are the expanded version of the input.
-  DenseMap<SDValue, std::pair<SDValue, SDValue> > ExpandedIntegers;
+  SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> ExpandedIntegers;
 
   /// SoftenedFloats - For floating point nodes converted to integers of
   /// the same size, this map indicates the converted value to use.
-  DenseMap<SDValue, SDValue> SoftenedFloats;
+  SmallDenseMap<SDValue, SDValue, 8> SoftenedFloats;
 
   /// ExpandedFloats - For float nodes that need to be expanded this map
   /// indicates which operands are the expanded version of the input.
-  DenseMap<SDValue, std::pair<SDValue, SDValue> > ExpandedFloats;
+  SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> ExpandedFloats;
 
   /// ScalarizedVectors - For nodes that are <1 x ty>, this map indicates the
   /// scalar value of type 'ty' to use.
-  DenseMap<SDValue, SDValue> ScalarizedVectors;
+  SmallDenseMap<SDValue, SDValue, 8> ScalarizedVectors;
 
   /// SplitVectors - For nodes that need to be split this map indicates
   /// which operands are the expanded version of the input.
-  DenseMap<SDValue, std::pair<SDValue, SDValue> > SplitVectors;
+  SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> SplitVectors;
 
   /// WidenedVectors - For vector nodes that need to be widened, indicates
   /// the widened value to use.
-  DenseMap<SDValue, SDValue> WidenedVectors;
+  SmallDenseMap<SDValue, SDValue, 8> WidenedVectors;
 
   /// ReplacedValues - For values that have been replaced with another,
   /// indicates the replacement value to use.
-  DenseMap<SDValue, SDValue> ReplacedValues;
+  SmallDenseMap<SDValue, SDValue, 8> ReplacedValues;
 
   /// Worklist - This defines a worklist of nodes to process.  In order to be
   /// pushed onto this worklist, all operands of a node must have already been
