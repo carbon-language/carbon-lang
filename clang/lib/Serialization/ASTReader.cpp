@@ -1378,17 +1378,15 @@ namespace {
   class IdentifierLookupVisitor {
     StringRef Name;
     unsigned PriorGeneration;
-    GlobalModuleIndex::SkipSet &SkipSet;
     unsigned &NumIdentifierLookups;
     unsigned &NumIdentifierLookupHits;
     IdentifierInfo *Found;
 
   public:
     IdentifierLookupVisitor(StringRef Name, unsigned PriorGeneration,
-                            GlobalModuleIndex::SkipSet &SkipSet,
                             unsigned &NumIdentifierLookups,
                             unsigned &NumIdentifierLookupHits)
-      : Name(Name), PriorGeneration(PriorGeneration), SkipSet(SkipSet),
+      : Name(Name), PriorGeneration(PriorGeneration),
         NumIdentifierLookups(NumIdentifierLookups),
         NumIdentifierLookupHits(NumIdentifierLookupHits),
         Found()
@@ -1402,10 +1400,6 @@ namespace {
       // If we've already searched this module file, skip it now.
       if (M.Generation <= This->PriorGeneration)
         return true;
-
-      // If this module file is in the skip set, don't bother looking in it.
-      if (This->SkipSet.count(M.File))
-        return false;
 
       ASTIdentifierLookupTable *IdTable
         = (ASTIdentifierLookupTable *)M.IdentifierLookupTable;
@@ -1443,18 +1437,18 @@ void ASTReader::updateOutOfDateIdentifier(IdentifierInfo &II) {
 
   // If there is a global index, look there first to determine which modules
   // provably do not have any results for this identifier.
-  GlobalModuleIndex::SkipSet SkipSet;
+  GlobalModuleIndex::HitSet Hits;
+  GlobalModuleIndex::HitSet *HitsPtr = 0;
   if (!loadGlobalIndex()) {
-    SmallVector<const FileEntry *, 4> ModuleFiles;
-    if (GlobalIndex->lookupIdentifier(II.getName(), ModuleFiles)) {
-      SkipSet = GlobalIndex->computeSkipSet(ModuleFiles);
+    if (GlobalIndex->lookupIdentifier(II.getName(), Hits)) {
+      HitsPtr = &Hits;
     }
   }
 
-  IdentifierLookupVisitor Visitor(II.getName(), PriorGeneration, SkipSet,
+  IdentifierLookupVisitor Visitor(II.getName(), PriorGeneration,
                                   NumIdentifierLookups,
                                   NumIdentifierLookupHits);
-  ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
+  ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor, HitsPtr);
   markIdentifierUpToDate(&II);
 }
 
@@ -2695,6 +2689,7 @@ bool ASTReader::loadGlobalIndex() {
     return true;
 
   GlobalIndex.reset(Result.first);
+  ModuleMgr.setGlobalIndex(GlobalIndex.get());
   return false;
 }
 
@@ -2725,6 +2720,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     // If we find that any modules are unusable, the global index is going
     // to be out-of-date. Just remove it.
     GlobalIndex.reset();
+    ModuleMgr.setGlobalIndex(0);
     return ReadResult;
 
   case Success:
@@ -5760,17 +5756,17 @@ IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
 
   // If there is a global index, look there first to determine which modules
   // provably do not have any results for this identifier.
-  GlobalModuleIndex::SkipSet SkipSet;
+  GlobalModuleIndex::HitSet Hits;
+  GlobalModuleIndex::HitSet *HitsPtr = 0;
   if (!loadGlobalIndex()) {
-    SmallVector<const FileEntry *, 4> ModuleFiles;
-    if (GlobalIndex->lookupIdentifier(Name, ModuleFiles)) {
-      SkipSet = GlobalIndex->computeSkipSet(ModuleFiles);
+    if (GlobalIndex->lookupIdentifier(Name, Hits)) {
+      HitsPtr = &Hits;
     }
   }
-  IdentifierLookupVisitor Visitor(Name, /*PriorGeneration=*/0, SkipSet,
+  IdentifierLookupVisitor Visitor(Name, /*PriorGeneration=*/0,
                                   NumIdentifierLookups,
                                   NumIdentifierLookupHits);
-  ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
+  ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor, HitsPtr);
   IdentifierInfo *II = Visitor.getIdentifierInfo();
   markIdentifierUpToDate(II);
   return II;

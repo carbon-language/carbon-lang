@@ -93,9 +93,6 @@ class GlobalModuleIndex {
   /// identifier.
   unsigned NumIdentifierLookupHits;
 
-  /// \brief The number of modules provided via skip sets.
-  unsigned NumIdentifierModulesSkipped;
-
   /// \brief Internal constructor. Use \c readIndex() to read an index.
   explicit GlobalModuleIndex(FileManager &FileMgr, llvm::MemoryBuffer *Buffer,
                              llvm::BitstreamCursor Cursor);
@@ -142,31 +139,20 @@ public:
   void getModuleDependencies(const FileEntry *ModuleFile,
                              SmallVectorImpl<const FileEntry *> &Dependencies);
 
+  /// \brief A set of module files in which we found a result.
+  typedef llvm::SmallPtrSet<const FileEntry *, 4> HitSet;
+  
   /// \brief Look for all of the module files with a namespace-scope binding
   /// for the given identifier, e.g., a global function, variable, or type with
   /// that name, or declare a method with the selector.
   ///
   /// \param Name The identifier to look for.
   ///
-  /// \param ModuleFiles Will be populated with the list of module
+  /// \param Hits Will be populated with the set of module
   /// files that declare entities with the given name.
   ///
-  /// \returns true if any module files were found, false otherwise.
-  bool lookupIdentifier(StringRef Name,
-                        SmallVectorImpl<const FileEntry *> &ModuleFiles);
-
-  /// \brief A set of module files into which name lookup can be skipped,
-  /// because they are known not to contain any bindings for the given name.
-  typedef llvm::SmallPtrSet<const FileEntry *, 16> SkipSet;
-
-  /// \brief Compute the "skip set", meaning those known modules that do not
-  /// have some particular property.
-  ///
-  /// \param ModuleFiles The set of module files that has some property.
-  ///
-  /// \returns The set of known modules that do not have the property exhibited
-  /// by the files in \p ModuleFiles.
-  SkipSet computeSkipSet(const SmallVectorImpl<const FileEntry *> &ModuleFiles);
+  /// \returns true if the identifier is known to the index, false otherwise.
+  bool lookupIdentifier(StringRef Name, HitSet &Hits);
 
   /// \brief Print statistics to standard error.
   void printStats();

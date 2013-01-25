@@ -21,6 +21,8 @@
 
 namespace clang { 
 
+class GlobalModuleIndex;
+
 namespace serialization {
   
 /// \brief Manages the set of modules loaded by an AST reader.
@@ -41,6 +43,25 @@ class ModuleManager {
 
   /// \brief The visitation order.
   SmallVector<ModuleFile *, 4> VisitOrder;
+
+  /// \brief The list of module files that both we and the global module index
+  /// know about.
+  ///
+  /// Either the global index or the module manager may have modules that the
+  /// other does not know about, because the global index can be out-of-date
+  /// (in which case the module manager could have modules it does not) and
+  /// this particular translation unit might not have loaded all of the modules
+  /// known to the global index.
+  SmallVector<ModuleFile *, 4> ModulesInCommonWithGlobalIndex;
+
+  /// \brief The global module index, if one is attached.
+  ///
+  /// The global module index will actually be owned by the ASTReader; this is
+  /// just an non-owning pointer.
+  GlobalModuleIndex *GlobalIndex;
+
+  /// \brief Update the set of modules files we know about known to the global index.
+  void updateModulesInCommonWithGlobalIndex();
 
 public:
   typedef SmallVector<ModuleFile*, 2>::iterator ModuleIterator;
@@ -117,7 +138,10 @@ public:
 
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
-  
+
+  /// \brief Set the global module index.
+  void setGlobalIndex(GlobalModuleIndex *Index);
+
   /// \brief Visit each of the modules.
   ///
   /// This routine visits each of the modules, starting with the
@@ -136,7 +160,13 @@ public:
   ///
   /// \param UserData User data associated with the visitor object, which
   /// will be passed along to the visitor.
-  void visit(bool (*Visitor)(ModuleFile &M, void *UserData), void *UserData);
+  ///
+  /// \param ModuleFilesHit If non-NULL, contains the set of module files
+  /// that we know we need to visit because the global module index told us to.
+  /// Any module that is known to both the global module index and the module
+  /// manager that is *not* in this set can be skipped.
+  void visit(bool (*Visitor)(ModuleFile &M, void *UserData), void *UserData,
+             llvm::SmallPtrSet<const FileEntry *, 4> *ModuleFilesHit = 0);
   
   /// \brief Visit each of the modules with a depth-first traversal.
   ///

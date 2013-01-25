@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Serialization/ModuleManager.h"
+#include "clang/Serialization/GlobalModuleIndex.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
@@ -140,17 +141,45 @@ void ModuleManager::addInMemoryBuffer(StringRef FileName,
   InMemoryBuffers[Entry] = Buffer;
 }
 
-ModuleManager::ModuleManager(FileManager &FileMgr) : FileMgr(FileMgr) { }
+void ModuleManager::updateModulesInCommonWithGlobalIndex() {
+  ModulesInCommonWithGlobalIndex.clear();
+
+  if (!GlobalIndex)
+    return;
+
+  // Collect the set of modules known to the global index.
+  SmallVector<const FileEntry *, 16> KnownModules;
+  GlobalIndex->getKnownModules(KnownModules);
+
+  // Map those modules to AST files known to the module manager.
+  for (unsigned I = 0, N = KnownModules.size(); I != N; ++I) {
+    llvm::DenseMap<const FileEntry *, ModuleFile *>::iterator Known
+      = Modules.find(KnownModules[I]);
+    if (Known == Modules.end())
+      continue;
+
+    ModulesInCommonWithGlobalIndex.push_back(Known->second);
+  }
+}
+
+void ModuleManager::setGlobalIndex(GlobalModuleIndex *Index) {
+  GlobalIndex = Index;
+  updateModulesInCommonWithGlobalIndex();
+}
+
+ModuleManager::ModuleManager(FileManager &FileMgr)
+  : FileMgr(FileMgr), GlobalIndex() { }
 
 ModuleManager::~ModuleManager() {
   for (unsigned i = 0, e = Chain.size(); i != e; ++i)
     delete Chain[e - i - 1];
 }
 
-void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData), 
-                          void *UserData) {
-  // If the visitation number array is the wrong size, resize it and recompute
-  // an order.
+void
+ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
+                     void *UserData,
+                     llvm::SmallPtrSet<const FileEntry *, 4> *ModuleFilesHit) {
+  // If the visitation order vector is the wrong size, recompute the order.
   if (VisitOrder.size() != Chain.size()) {
     unsigned N = size();
     VisitOrder.clear();
@@ -196,10 +225,27 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     }
 
     assert(VisitOrder.size() == N && "Visitation order is wrong?");
+
+    // We may need to update the set of modules we have in common with the
+    // global module index, since modules could have been added to the module
+    // manager since we loaded the global module index.
+    updateModulesInCommonWithGlobalIndex();
   }
 
   SmallVector<ModuleFile *, 4> Stack;
   SmallVector<bool, 4> Visited(size(), false);
+
+  // If the caller has provided us with a hit-set that came from the global
+  // module index, mark every module file in common with the global module
+  // index that is *not* in that set as 'visited'.
+  if (ModuleFilesHit && !ModulesInCommonWithGlobalIndex.empty()) {
+    for (unsigned I = 0, N = ModulesInCommonWithGlobalIndex.size(); I != N; ++I)
+    {
+      ModuleFile *M = ModulesInCommonWithGlobalIndex[I];
+      if (!ModuleFilesHit->count(M->File))
+        Visited[M->Index] = true;
+    }
+  }
 
   for (unsigned I = 0, N = VisitOrder.size(); I != N; ++I) {
     ModuleFile *CurrentModule = VisitOrder[I];

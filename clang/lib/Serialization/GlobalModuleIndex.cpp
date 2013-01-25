@@ -127,7 +127,8 @@ struct LoadedModuleInfo {
 GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
                                      llvm::MemoryBuffer *Buffer,
                                      llvm::BitstreamCursor Cursor)
-  : Buffer(Buffer), IdentifierIndex()
+  : Buffer(Buffer), IdentifierIndex(),
+    NumIdentifierLookups(), NumIdentifierLookupHits()
 {
   typedef llvm::DenseMap<unsigned, LoadedModuleInfo> LoadedModulesMap;
   LoadedModulesMap LoadedModules;
@@ -368,10 +369,8 @@ void GlobalModuleIndex::getModuleDependencies(
   Dependencies = Modules[Known->second].Dependencies;
 }
 
-bool GlobalModuleIndex::lookupIdentifier(
-       StringRef Name,
-       SmallVectorImpl<const FileEntry *> &ModuleFiles) {
-  ModuleFiles.clear();
+bool GlobalModuleIndex::lookupIdentifier(StringRef Name, HitSet &Hits) {
+  Hits.clear();
   
   // If there's no identifier index, there is nothing we can do.
   if (!IdentifierIndex)
@@ -392,27 +391,11 @@ bool GlobalModuleIndex::lookupIdentifier(
     if (ID >= Modules.size() || !Modules[ID].File)
       continue;
 
-    ModuleFiles.push_back(Modules[ID].File);
+    Hits.insert(Modules[ID].File);
   }
 
   ++NumIdentifierLookupHits;
   return true;
-}
-
-GlobalModuleIndex::SkipSet
-GlobalModuleIndex::computeSkipSet(
-  const SmallVectorImpl<const FileEntry *> &ModuleFiles) {
-  llvm::SmallPtrSet<const FileEntry *, 8> Found(ModuleFiles.begin(),
-                                                ModuleFiles.end());
-
-  SkipSet Result;
-  for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
-    if (Modules[I].File && !Found.count(Modules[I].File))
-      Result.insert(Modules[I].File);
-  }
-
-  NumIdentifierModulesSkipped += Result.size();
-  return Result;
 }
 
 void GlobalModuleIndex::printStats() {
@@ -421,10 +404,6 @@ void GlobalModuleIndex::printStats() {
     fprintf(stderr, "  %u / %u identifier lookups succeeded (%f%%)\n",
             NumIdentifierLookupHits, NumIdentifierLookups,
             (double)NumIdentifierLookupHits*100.0/NumIdentifierLookups);
-  }
-  if (NumIdentifierLookups && NumIdentifierModulesSkipped) {
-    fprintf(stderr, "  %f modules skipped per lookup (on average)\n",
-            (double)NumIdentifierModulesSkipped/NumIdentifierLookups);
   }
   std::fprintf(stderr, "\n");
 }
