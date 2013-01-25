@@ -65,7 +65,7 @@ inline bool isShiftedInt(int64_t x) {
 /// isUInt - Checks if an unsigned integer fits into the given bit width.
 template<unsigned N>
 inline bool isUInt(uint64_t x) {
-  return N >= 64 || x < (UINT64_C(1)<<N);
+  return N >= 64 || x < (UINT64_C(1)<<(N));
 }
 // Template specializations to get better code for common cases.
 template<>
