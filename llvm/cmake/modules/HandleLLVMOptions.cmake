@@ -169,6 +169,7 @@ if( MSVC )
     -wd4551 # Suppress 'function call missing argument list'
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
     -wd4715 # Suppress ''function' : not all control paths return a value'
+    -wd4722 # Suppress ''function' : destructor never returns, potential memory leak'
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
 
     # Promoted warnings.
