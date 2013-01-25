@@ -9,3 +9,4 @@
 #include "header2.h"
 
 // CHECK: fatal error: file {{.*}} has been modified since the precompiled header was built
+// REQUIRES: shell
