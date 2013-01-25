@@ -1018,31 +1018,39 @@ class SchedDFSImpl {
   /// List PredSU, SuccSU pairs that represent data edges between subtrees.
   std::vector<std::pair<const SUnit*, const SUnit*> > ConnectionPairs;
 
+  struct RootData {
+    unsigned NodeID;
+    unsigned ParentNodeID;  // Parent node (member of the parent subtree).
+    unsigned SubInstrCount; // Instr count in this tree only, not children.
+
+    RootData(unsigned id): NodeID(id),
+                           ParentNodeID(SchedDFSResult::InvalidSubtreeID),
+                           SubInstrCount(0) {}
+
+    unsigned getSparseSetIndex() const { return NodeID; }
+  };
+
+  SparseSet<RootData> RootSet;
+
 public:
-  SchedDFSImpl(SchedDFSResult &r): R(r), SubtreeClasses(R.DFSData.size()) {}
+  SchedDFSImpl(SchedDFSResult &r): R(r), SubtreeClasses(R.DFSNodeData.size()) {
+    RootSet.setUniverse(R.DFSNodeData.size());
+  }
 
   /// Return true if this node been visited by the DFS traversal.
   ///
   /// During visitPostorderNode the Node's SubtreeID is assigned to the Node
   /// ID. Later, SubtreeID is updated but remains valid.
   bool isVisited(const SUnit *SU) const {
-    return R.DFSData[SU->NodeNum].SubtreeID != SchedDFSResult::InvalidSubtreeID;
+    return R.DFSNodeData[SU->NodeNum].SubtreeID
+      != SchedDFSResult::InvalidSubtreeID;
   }
 
   /// Initialize this node's instruction count. We don't need to flag the node
   /// visited until visitPostorder because the DAG cannot have cycles.
   void visitPreorder(const SUnit *SU) {
-    R.DFSData[SU->NodeNum].InstrCount = SU->getInstr()->isTransient() ? 0 : 1;
-    R.DFSData[SU->NodeNum].SubInstrCount = R.DFSData[SU->NodeNum].InstrCount;
-  }
-
-  /// Called once for each tree edge after calling visitPostOrderNode on the
-  /// predecessor. Increment the parent node's instruction count and
-  /// preemptively join this subtree to its parent's if it is small enough.
-  void visitPostorderEdge(const SDep &PredDep, const SUnit *Succ) {
-    R.DFSData[Succ->NodeNum].InstrCount
-      += R.DFSData[PredDep.getSUnit()->NodeNum].InstrCount;
-    joinPredSubtree(PredDep, Succ);
+    R.DFSNodeData[SU->NodeNum].InstrCount =
+      SU->getInstr()->isTransient() ? 0 : 1;
   }
 
   /// Called once for each node after all predecessors are visited. Revisit this
@@ -1051,22 +1059,42 @@ public:
   void visitPostorderNode(const SUnit *SU) {
     // Mark this node as the root of a subtree. It may be joined with its
     // successors later.
-    R.DFSData[SU->NodeNum].SubtreeID = SU->NodeNum;
+    R.DFSNodeData[SU->NodeNum].SubtreeID = SU->NodeNum;
+    RootData RData(SU->NodeNum);
+    RData.SubInstrCount = SU->getInstr()->isTransient() ? 0 : 1;
 
     // If any predecessors are still in their own subtree, they either cannot be
     // joined or are large enough to remain separate. If this parent node's
     // total instruction count is not greater than a child subtree by at least
     // the subtree limit, then try to join it now since splitting subtrees is
     // only useful if multiple high-pressure paths are possible.
-    unsigned InstrCount = R.DFSData[SU->NodeNum].InstrCount;
+    unsigned InstrCount = R.DFSNodeData[SU->NodeNum].InstrCount;
     for (SUnit::const_pred_iterator
            PI = SU->Preds.begin(), PE = SU->Preds.end(); PI != PE; ++PI) {
       if (PI->getKind() != SDep::Data)
         continue;
       unsigned PredNum = PI->getSUnit()->NodeNum;
-      if ((InstrCount - R.DFSData[PredNum].InstrCount) < R.SubtreeLimit)
+      if ((InstrCount - R.DFSNodeData[PredNum].InstrCount) < R.SubtreeLimit)
         joinPredSubtree(*PI, SU, /*CheckLimit=*/false);
+
+      // Either link or merge the TreeData entry from the child to the parent.
+      if (R.DFSNodeData[PredNum].SubtreeID == PredNum)
+        RootSet[PredNum].ParentNodeID = SU->NodeNum;
+      else {
+        RData.SubInstrCount += RootSet[PredNum].SubInstrCount;
+        RootSet.erase(PredNum);
+      }
     }
+    RootSet[SU->NodeNum] = RData;
+  }
+
+  /// Called once for each tree edge after calling visitPostOrderNode on the
+  /// predecessor. Increment the parent node's instruction count and
+  /// preemptively join this subtree to its parent's if it is small enough.
+  void visitPostorderEdge(const SDep &PredDep, const SUnit *Succ) {
+    R.DFSNodeData[Succ->NodeNum].InstrCount
+      += R.DFSNodeData[PredDep.getSUnit()->NodeNum].InstrCount;
+    joinPredSubtree(PredDep, Succ);
   }
 
   /// Add a connection for cross edges.
@@ -1078,13 +1106,25 @@ public:
   /// between trees.
   void finalize() {
     SubtreeClasses.compress();
+    R.DFSTreeData.resize(SubtreeClasses.getNumClasses());
+    assert(SubtreeClasses.getNumClasses() == RootSet.size()
+           && "number of roots should match trees");
+    for (SparseSet<RootData>::const_iterator
+           RI = RootSet.begin(), RE = RootSet.end(); RI != RE; ++RI) {
+      unsigned TreeID = SubtreeClasses[RI->NodeID];
+      if (RI->ParentNodeID != SchedDFSResult::InvalidSubtreeID)
+        R.DFSTreeData[TreeID].ParentTreeID = SubtreeClasses[RI->ParentNodeID];
+      R.DFSTreeData[TreeID].SubInstrCount = RI->SubInstrCount;
+      assert(RI->SubInstrCount <= R.DFSNodeData[RI->NodeID].InstrCount &&
+             "Bad SubInstrCount");
+    }
     R.SubtreeConnections.resize(SubtreeClasses.getNumClasses());
     R.SubtreeConnectLevels.resize(SubtreeClasses.getNumClasses());
     DEBUG(dbgs() << R.getNumSubtrees() << " subtrees:\n");
-    for (unsigned Idx = 0, End = R.DFSData.size(); Idx != End; ++Idx) {
-      R.DFSData[Idx].SubtreeID = SubtreeClasses[Idx];
+    for (unsigned Idx = 0, End = R.DFSNodeData.size(); Idx != End; ++Idx) {
+      R.DFSNodeData[Idx].SubtreeID = SubtreeClasses[Idx];
       DEBUG(dbgs() << "  SU(" << Idx << ") in tree "
-            << R.DFSData[Idx].SubtreeID << '\n');
+            << R.DFSNodeData[Idx].SubtreeID << '\n');
     }
     for (std::vector<std::pair<const SUnit*, const SUnit*> >::const_iterator
            I = ConnectionPairs.begin(), E = ConnectionPairs.end();
@@ -1109,7 +1149,7 @@ protected:
     // Check if the predecessor is already joined.
     const SUnit *PredSU = PredDep.getSUnit();
     unsigned PredNum = PredSU->NodeNum;
-    if (R.DFSData[PredNum].SubtreeID != PredNum)
+    if (R.DFSNodeData[PredNum].SubtreeID != PredNum)
       return false;
 
     // Four is the magic number of successors before a node is considered a
@@ -1122,11 +1162,9 @@ protected:
           return false;
       }
     }
-    if (CheckLimit && R.DFSData[PredNum].SubInstrCount > R.SubtreeLimit)
+    if (CheckLimit && R.DFSNodeData[PredNum].InstrCount > R.SubtreeLimit)
       return false;
-
-    R.DFSData[PredNum].SubtreeID = Succ->NodeNum;
-    R.DFSData[Succ->NodeNum].SubInstrCount += R.DFSData[PredNum].SubInstrCount;
+    R.DFSNodeData[PredNum].SubtreeID = Succ->NodeNum;
     SubtreeClasses.join(Succ->NodeNum, PredNum);
     return true;
   }
@@ -1136,16 +1174,19 @@ protected:
     if (!Depth)
       return;
 
-    SmallVectorImpl<SchedDFSResult::Connection> &Connections =
-      R.SubtreeConnections[FromTree];
-    for (SmallVectorImpl<SchedDFSResult::Connection>::iterator
-           I = Connections.begin(), E = Connections.end(); I != E; ++I) {
-      if (I->TreeID == ToTree) {
-        I->Level = std::max(I->Level, Depth);
-        return;
+    do {
+      SmallVectorImpl<SchedDFSResult::Connection> &Connections =
+        R.SubtreeConnections[FromTree];
+      for (SmallVectorImpl<SchedDFSResult::Connection>::iterator
+             I = Connections.begin(), E = Connections.end(); I != E; ++I) {
+        if (I->TreeID == ToTree) {
+          I->Level = std::max(I->Level, Depth);
+          return;
+        }
       }
-    }
-    Connections.push_back(SchedDFSResult::Connection(ToTree, Depth));
+      Connections.push_back(SchedDFSResult::Connection(ToTree, Depth));
+      FromTree = R.DFSTreeData[FromTree].ParentTreeID;
+    } while (FromTree != SchedDFSResult::InvalidSubtreeID);
   }
 };
 } // namespace llvm

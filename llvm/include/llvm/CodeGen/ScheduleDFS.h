@@ -78,10 +78,17 @@ class SchedDFSResult {
   /// finalization.
   struct NodeData {
     unsigned InstrCount;
-    unsigned SubInstrCount;
     unsigned SubtreeID;
 
-    NodeData(): InstrCount(0), SubInstrCount(0), SubtreeID(InvalidSubtreeID) {}
+    NodeData(): InstrCount(0), SubtreeID(InvalidSubtreeID) {}
+  };
+
+  /// \brief Per-Subtree data computed during DFS.
+  struct TreeData {
+    unsigned ParentTreeID;
+    unsigned SubInstrCount;
+
+    TreeData(): ParentTreeID(InvalidSubtreeID), SubInstrCount(0) {}
   };
 
   /// \brief Record a connection between subtrees and the connection level.
@@ -95,7 +102,10 @@ class SchedDFSResult {
   bool IsBottomUp;
   unsigned SubtreeLimit;
   /// DFS results for each SUnit in this DAG.
-  std::vector<NodeData> DFSData;
+  std::vector<NodeData> DFSNodeData;
+
+  // Store per-tree data indexed on tree ID,
+  SmallVector<TreeData, 16> DFSTreeData;
 
   // For each subtree discovered during DFS, record its connections to other
   // subtrees.
@@ -109,31 +119,47 @@ public:
   SchedDFSResult(bool IsBU, unsigned lim)
     : IsBottomUp(IsBU), SubtreeLimit(lim) {}
 
+  /// \brief Get the node cutoff before subtrees are considered significant.
+  unsigned getSubtreeLimit() const { return SubtreeLimit; }
+
   /// \brief Return true if this DFSResult is uninitialized.
   ///
   /// resize() initializes DFSResult, while compute() populates it.
-  bool empty() const { return DFSData.empty(); }
+  bool empty() const { return DFSNodeData.empty(); }
 
   /// \brief Clear the results.
   void clear() {
-    DFSData.clear();
+    DFSNodeData.clear();
+    DFSTreeData.clear();
     SubtreeConnections.clear();
     SubtreeConnectLevels.clear();
   }
 
   /// \brief Initialize the result data with the size of the DAG.
   void resize(unsigned NumSUnits) {
-    DFSData.resize(NumSUnits);
+    DFSNodeData.resize(NumSUnits);
   }
 
   /// \brief Compute various metrics for the DAG with given roots.
   void compute(ArrayRef<SUnit> SUnits);
 
+  /// \brief Get the number of instructions in the given subtree and its
+  /// children.
+  unsigned getNumInstrs(const SUnit *SU) const {
+    return DFSNodeData[SU->NodeNum].InstrCount;
+  }
+
+  /// \brief Get the number of instructions in the given subtree not including
+  /// children.
+  unsigned getNumSubInstrs(unsigned SubtreeID) const {
+    return DFSTreeData[SubtreeID].SubInstrCount;
+  }
+
   /// \brief Get the ILP value for a DAG node.
   ///
   /// A leaf node has an ILP of 1/1.
   ILPValue getILP(const SUnit *SU) const {
-    return ILPValue(DFSData[SU->NodeNum].InstrCount, 1 + SU->getDepth());
+    return ILPValue(DFSNodeData[SU->NodeNum].InstrCount, 1 + SU->getDepth());
   }
 
   /// \brief The number of subtrees detected in this DAG.
@@ -146,8 +172,8 @@ public:
   unsigned getSubtreeID(const SUnit *SU) const {
     if (empty())
       return 0;
-    assert(SU->NodeNum < DFSData.size() &&  "New Node");
-    return DFSData[SU->NodeNum].SubtreeID;
+    assert(SU->NodeNum < DFSNodeData.size() &&  "New Node");
+    return DFSNodeData[SU->NodeNum].SubtreeID;
   }
 
   /// \brief Get the connection level of a subtree.
