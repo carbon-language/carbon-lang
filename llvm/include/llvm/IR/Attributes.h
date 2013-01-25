@@ -336,10 +336,6 @@ public:
   /// \brief Return the attributes at the given slot.
   AttributeSet getSlotAttributes(unsigned Slot) const;
 
-  /// \brief Return the AttributeWithIndex at the specified slot.  This holds a
-  /// index number plus a set of attributes.
-  const AttributeWithIndex &getSlot(unsigned Slot) const;
-
   void dump() const;
 };
 

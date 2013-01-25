@@ -649,14 +649,6 @@ AttributeSet AttributeSet::getSlotAttributes(unsigned Slot) const {
   return AttrList->getSlotAttributes(Slot);
 }
 
-/// getSlot - Return the AttributeWithIndex at the specified slot.  This
-/// holds a number plus a set of attributes.
-const AttributeWithIndex &AttributeSet::getSlot(unsigned Slot) const {
-  assert(AttrList && Slot < AttrList->getNumAttributes() &&
-         "Slot # out of range!");
-  return AttrList->getAttributes()[Slot];
-}
-
 bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
   return getAttributes(Index).hasAttribute(Kind);
 }
