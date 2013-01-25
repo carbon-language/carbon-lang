@@ -27,6 +27,9 @@ class SUnit;
 
 /// \brief Represent the ILP of the subDAG rooted at a DAG node.
 ///
+/// ILPValues summarize the DAG subtree rooted at each node. ILPValues are
+/// valid for all nodes regardless of their subtree membership.
+///
 /// When computed using bottom-up DFS, this metric assumes that the DAG is a
 /// forest of trees with roots at the bottom of the schedule branching upward.
 struct ILPValue {
@@ -62,19 +65,23 @@ struct ILPValue {
 };
 
 /// \brief Compute the values of each DAG node for various metrics during DFS.
-///
-/// ILPValues summarize the DAG subtree rooted at each node up to
-/// SubtreeLimit. ILPValues are also valid for interior nodes of a subtree, not
-/// just the root.
 class SchedDFSResult {
   friend class SchedDFSImpl;
 
+  static const unsigned InvalidSubtreeID = ~0u;
+
   /// \brief Per-SUnit data computed during DFS for various metrics.
+  ///
+  /// A node's SubtreeID is set to itself when it is visited to indicate that it
+  /// is the root of a subtree. Later it is set to its parent to indicate an
+  /// interior node. Finally, it is set to a representative subtree ID during
+  /// finalization.
   struct NodeData {
     unsigned InstrCount;
+    unsigned SubInstrCount;
     unsigned SubtreeID;
 
-    NodeData(): InstrCount(0), SubtreeID(0) {}
+    NodeData(): InstrCount(0), SubInstrCount(0), SubtreeID(InvalidSubtreeID) {}
   };
 
   /// \brief Record a connection between subtrees and the connection level.
@@ -101,6 +108,11 @@ class SchedDFSResult {
 public:
   SchedDFSResult(bool IsBU, unsigned lim)
     : IsBottomUp(IsBU), SubtreeLimit(lim) {}
+
+  /// \brief Return true if this DFSResult is uninitialized.
+  ///
+  /// resize() initializes DFSResult, while compute() populates it.
+  bool empty() const { return DFSData.empty(); }
 
   /// \brief Clear the results.
   void clear() {
