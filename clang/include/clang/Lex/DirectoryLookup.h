@@ -50,10 +50,6 @@ private:
   /// SrcMgr::CharacteristicKind.
   unsigned DirCharacteristic : 2;
 
-  /// UserSupplied - True if this is a user-supplied directory.
-  ///
-  bool UserSupplied : 1;
-
   /// LookupType - This indicates whether this DirectoryLookup object is a
   /// normal directory, a framework, or a headermap.
   unsigned LookupType : 2;
@@ -65,8 +61,8 @@ public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'dir'.
   DirectoryLookup(const DirectoryEntry *dir, SrcMgr::CharacteristicKind DT,
-                  bool isUser, bool isFramework)
-    : DirCharacteristic(DT), UserSupplied(isUser), 
+                  bool isFramework)
+    : DirCharacteristic(DT),
       LookupType(isFramework ? LT_Framework : LT_NormalDir),
       IsIndexHeaderMap(false) {
     u.Dir = dir;
@@ -75,8 +71,8 @@ public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'map'.
   DirectoryLookup(const HeaderMap *map, SrcMgr::CharacteristicKind DT,
-                  bool isUser, bool isIndexHeaderMap)
-    : DirCharacteristic(DT), UserSupplied(isUser), LookupType(LT_HeaderMap),
+                  bool isIndexHeaderMap)
+    : DirCharacteristic(DT), LookupType(LT_HeaderMap),
       IsIndexHeaderMap(isIndexHeaderMap) {
     u.Map = map;
   }
@@ -118,10 +114,6 @@ public:
   SrcMgr::CharacteristicKind getDirCharacteristic() const {
     return (SrcMgr::CharacteristicKind)DirCharacteristic;
   }
-
-  /// isUserSupplied - True if this is a user-supplied directory.
-  ///
-  bool isUserSupplied() const { return UserSupplied; }
 
   /// \brief Whether this header map is building a framework or not.
   bool isIndexHeaderMap() const { 

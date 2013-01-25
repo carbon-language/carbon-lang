@@ -141,8 +141,8 @@ void InitHeaderSearch::AddPath(const Twine &Path,
 
   // If the directory exists, add it.
   if (const DirectoryEntry *DE = FM.getDirectory(MappedPathStr)) {
-    IncludePath.push_back(std::make_pair(Group, DirectoryLookup(DE, Type,
-                          isUserSupplied, isFramework)));
+    IncludePath.push_back(
+      std::make_pair(Group, DirectoryLookup(DE, Type, isFramework)));
     return;
   }
 
@@ -152,8 +152,9 @@ void InitHeaderSearch::AddPath(const Twine &Path,
     if (const FileEntry *FE = FM.getFile(MappedPathStr)) {
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
-        IncludePath.push_back(std::make_pair(Group, DirectoryLookup(HM, Type,
-                              isUserSupplied, Group == IndexHeaderMap)));
+        IncludePath.push_back(
+          std::make_pair(Group,
+                         DirectoryLookup(HM, Type, Group == IndexHeaderMap)));
         return;
       }
     }
