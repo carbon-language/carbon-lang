@@ -1015,7 +1015,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
       AttrBuilder RAttrs(CallerPAL, AttributeSet::ReturnIndex);
-      if (RAttrs.hasAttributes(Attribute::typeIncompatible(NewRetTy)))
+      if (RAttrs.hasAttributes(AttributeFuncs::typeIncompatible(NewRetTy)))
         return false;   // Attribute not compatible with transformed value.
     }
 
@@ -1045,7 +1045,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this parameter value.
 
     if (AttrBuilder(CallerPAL.getParamAttributes(i + 1), i + 1).
-          hasAttributes(Attribute::typeIncompatible(ParamTy)))
+          hasAttributes(AttributeFuncs::typeIncompatible(ParamTy)))
       return false;   // Attribute not compatible with transformed value.
 
     // If the parameter is passed as a byval argument, then we have to have a
@@ -1101,11 +1101,13 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // won't be dropping them.  Check that these extra arguments have attributes
     // that are compatible with being a vararg call argument.
     for (unsigned i = CallerPAL.getNumSlots(); i; --i) {
-      if (CallerPAL.getSlotIndex(i - 1) <= FT->getNumParams())
+      unsigned Index = CallerPAL.getSlotIndex(i - 1);
+      if (Index <= FT->getNumParams())
         break;
-      Attribute PAttrs = CallerPAL.getSlot(i - 1).Attrs;
+
       // Check if it has an attribute that's incompatible with varargs.
-      if (PAttrs.hasAttribute(Attribute::StructRet))
+      AttributeSet PAttrs = CallerPAL.getSlotAttributes(i - 1);
+      if (PAttrs.hasAttribute(Index, Attribute::StructRet))
         return false;
     }
 
@@ -1122,7 +1124,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
-  RAttrs.removeAttributes(Attribute::typeIncompatible(NewRetTy));
+  RAttrs.removeAttributes(AttributeFuncs::typeIncompatible(NewRetTy));
 
   // Add the new return attributes.
   if (RAttrs.hasAttributes())

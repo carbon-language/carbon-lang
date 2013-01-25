@@ -173,9 +173,11 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     const AttributeSet &A = Attrs[i];
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
-      const AttributeWithIndex &PAWI = A.getSlot(i);
-      Record.push_back(A.getSlotIndex(i));
-      Record.push_back(Attribute::encodeLLVMAttributesForBitcode(PAWI.Attrs));
+      unsigned Index = A.getSlotIndex(i);
+      Record.push_back(Index);
+      Record.push_back(AttributeFuncs::
+                       encodeLLVMAttributesForBitcode(A.getSlotAttributes(i),
+                                                      Index));
     }
 
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);

@@ -2068,11 +2068,12 @@ static void ChangeCalleesToFastCall(Function *F) {
 
 static AttributeSet StripNest(LLVMContext &C, const AttributeSet &Attrs) {
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    if (!Attrs.getSlot(i).Attrs.hasAttribute(Attribute::Nest))
+    unsigned Index = Attrs.getSlotIndex(i);
+    if (!Attrs.getSlotAttributes(i).hasAttribute(Index, Attribute::Nest))
       continue;
 
     // There can be only one.
-    return Attrs.removeAttribute(C, Attrs.getSlotIndex(i), Attribute::Nest);
+    return Attrs.removeAttribute(C, Index, Attribute::Nest);
   }
 
   return Attrs;

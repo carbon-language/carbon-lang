@@ -693,9 +693,9 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, uint64_t Idx, Type *Ty,
           "'noinline and alwaysinline' are incompatible!", V);
 
   Assert1(!AttrBuilder(Attrs, Idx).
-            hasAttributes(Attribute::typeIncompatible(Ty)),
+            hasAttributes(AttributeFuncs::typeIncompatible(Ty)),
           "Wrong types for attribute: " +
-          Attribute::typeIncompatible(Ty).getAsString(), V);
+          AttributeFuncs::typeIncompatible(Ty).getAsString(), V);
 
   if (PointerType *PTy = dyn_cast<PointerType>(Ty))
     Assert1(!Attrs.hasAttribute(Idx, Attribute::ByVal) ||

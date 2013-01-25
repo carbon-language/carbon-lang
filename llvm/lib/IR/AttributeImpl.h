@@ -104,6 +104,8 @@ public:
 /// \brief This class represents a set of attributes that apply to the function,
 /// return type, and parameters.
 class AttributeSetImpl : public FoldingSetNode {
+  friend class AttributeSet;
+
   LLVMContext &Context;
   SmallVector<AttributeWithIndex, 4> AttrList;
 
@@ -125,6 +127,10 @@ public:
   unsigned getSlotIndex(unsigned Slot) const {
     // FIXME: This needs to use AttrNodes instead.
     return AttrList[Slot].Index;
+  }
+  AttributeSet getSlotAttributes(unsigned Slot) const {
+    // FIXME: This needs to use AttrNodes instead.
+    return AttributeSet::get(Context, AttrList[Slot]);
   }
 
   void Profile(FoldingSetNodeID &ID) const {

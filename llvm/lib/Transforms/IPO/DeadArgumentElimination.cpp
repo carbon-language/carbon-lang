@@ -273,13 +273,15 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     // Drop any attributes that were on the vararg arguments.
     AttributeSet PAL = CS.getAttributes();
     if (!PAL.isEmpty() && PAL.getSlotIndex(PAL.getNumSlots() - 1) > NumArgs) {
-      SmallVector<AttributeWithIndex, 8> AttributesVec;
+      SmallVector<AttributeSet, 8> AttributesVec;
       for (unsigned i = 0; PAL.getSlotIndex(i) <= NumArgs; ++i)
-        AttributesVec.push_back(PAL.getSlot(i));
+        AttributesVec.push_back(PAL.getSlotAttributes(i));
       if (PAL.hasAttributes(AttributeSet::FunctionIndex))
-        AttributesVec.push_back(AttributeWithIndex::get(Fn.getContext(),
-                                                        AttributeSet::FunctionIndex,
-                                                        PAL.getFnAttributes()));
+        AttributesVec.push_back(
+          AttributeSet::get(Fn.getContext(),
+                            AttributeWithIndex::get(Fn.getContext(),
+                                                    AttributeSet::FunctionIndex,
+                                                    PAL.getFnAttributes())));
       PAL = AttributeSet::get(Fn.getContext(), AttributesVec);
     }
 
@@ -765,10 +767,10 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     RAttrs =
       AttributeSet::get(NRetTy->getContext(), AttributeSet::ReturnIndex,
                         AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-                         removeAttributes(Attribute::typeIncompatible(NRetTy)));
+                    removeAttributes(AttributeFuncs::typeIncompatible(NRetTy)));
   else
     assert(!AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-             hasAttributes(Attribute::typeIncompatible(NRetTy)) &&
+             hasAttributes(AttributeFuncs::typeIncompatible(NRetTy)) &&
            "Return attributes no longer compatible?");
 
   if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
@@ -846,7 +848,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     RAttrs =
       AttributeSet::get(NF->getContext(), AttributeSet::ReturnIndex,
                         AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-           removeAttributes(Attribute::typeIncompatible(NF->getReturnType())));
+      removeAttributes(AttributeFuncs::typeIncompatible(NF->getReturnType())));
     if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
       AttributesVec.push_back(AttributeWithIndex::get(NF->getContext(),
                                                       AttributeSet::ReturnIndex,

@@ -103,63 +103,6 @@ uint64_t Attribute::Raw() const {
   return pImpl ? pImpl->Raw() : 0;
 }
 
-Attribute Attribute::typeIncompatible(Type *Ty) {
-  AttrBuilder Incompatible;
-
-  if (!Ty->isIntegerTy())
-    // Attribute that only apply to integers.
-    Incompatible.addAttribute(Attribute::SExt)
-      .addAttribute(Attribute::ZExt);
-
-  if (!Ty->isPointerTy())
-    // Attribute that only apply to pointers.
-    Incompatible.addAttribute(Attribute::ByVal)
-      .addAttribute(Attribute::Nest)
-      .addAttribute(Attribute::NoAlias)
-      .addAttribute(Attribute::NoCapture)
-      .addAttribute(Attribute::StructRet);
-
-  return Attribute::get(Ty->getContext(), Incompatible);
-}
-
-/// encodeLLVMAttributesForBitcode - This returns an integer containing an
-/// encoding of all the LLVM attributes found in the given attribute bitset.
-/// Any change to this encoding is a breaking change to bitcode compatibility.
-uint64_t Attribute::encodeLLVMAttributesForBitcode(Attribute Attrs) {
-  // FIXME: It doesn't make sense to store the alignment information as an
-  // expanded out value, we should store it as a log2 value.  However, we can't
-  // just change that here without breaking bitcode compatibility.  If this ever
-  // becomes a problem in practice, we should introduce new tag numbers in the
-  // bitcode file and have those tags use a more efficiently encoded alignment
-  // field.
-
-  // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
-  // log2 encoded value. Shift the bits above the alignment up by 11 bits.
-  uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
-  if (Attrs.hasAttribute(Attribute::Alignment))
-    EncodedAttrs |= Attrs.getAlignment() << 16;
-  EncodedAttrs |= (Attrs.Raw() & (0xffffULL << 21)) << 11;
-  return EncodedAttrs;
-}
-
-/// decodeLLVMAttributesForBitcode - This returns an attribute bitset containing
-/// the LLVM attributes that have been decoded from the given integer.  This
-/// function must stay in sync with 'encodeLLVMAttributesForBitcode'.
-Attribute Attribute::decodeLLVMAttributesForBitcode(LLVMContext &C,
-                                                    uint64_t EncodedAttrs) {
-  // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
-  // the bits above 31 down by 11 bits.
-  unsigned Alignment = (EncodedAttrs & (0xffffULL << 16)) >> 16;
-  assert((!Alignment || isPowerOf2_32(Alignment)) &&
-         "Alignment must be a power of two.");
-
-  AttrBuilder B(EncodedAttrs & 0xffff);
-  if (Alignment)
-    B.addAlignmentAttr(Alignment);
-  B.addRawValue((EncodedAttrs & (0xffffULL << 32)) >> 11);
-  return Attribute::get(C, B);
-}
-
 std::string Attribute::getAsString() const {
   std::string Result;
   if (hasAttribute(Attribute::ZExt))
@@ -666,6 +609,18 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
   return get(C, AttributeWithIndex::get(Idx, Attribute::get(C, Kind)));
 }
 
+AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
+  SmallVector<AttributeWithIndex, 8> AttrList;
+  for (ArrayRef<AttributeSet>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    AttributeSet AS = *I;
+    if (!AS.AttrList) continue;
+    AttrList.append(AS.AttrList->AttrList.begin(), AS.AttrList->AttrList.end());
+  }
+
+  return get(C, AttrList);
+}
+
 //===----------------------------------------------------------------------===//
 // AttributeSet Method Implementations
 //===----------------------------------------------------------------------===//
@@ -686,6 +641,12 @@ unsigned AttributeSet::getSlotIndex(unsigned Slot) const {
   assert(AttrList && Slot < AttrList->getNumAttributes() &&
          "Slot # out of range!");
   return AttrList->getSlotIndex(Slot);
+}
+
+AttributeSet AttributeSet::getSlotAttributes(unsigned Slot) const {
+  assert(AttrList && Slot < AttrList->getNumAttributes() &&
+         "Slot # out of range!");
+  return AttrList->getSlotAttributes(Slot);
 }
 
 /// getSlot - Return the AttributeWithIndex at the specified slot.  This
@@ -859,3 +820,66 @@ void AttributeSet::dump() const {
 
   dbgs() << "]\n";
 }
+
+//===----------------------------------------------------------------------===//
+// AttributeFuncs Function Defintions
+//===----------------------------------------------------------------------===//
+
+Attribute AttributeFuncs::typeIncompatible(Type *Ty) {
+  AttrBuilder Incompatible;
+
+  if (!Ty->isIntegerTy())
+    // Attribute that only apply to integers.
+    Incompatible.addAttribute(Attribute::SExt)
+      .addAttribute(Attribute::ZExt);
+
+  if (!Ty->isPointerTy())
+    // Attribute that only apply to pointers.
+    Incompatible.addAttribute(Attribute::ByVal)
+      .addAttribute(Attribute::Nest)
+      .addAttribute(Attribute::NoAlias)
+      .addAttribute(Attribute::NoCapture)
+      .addAttribute(Attribute::StructRet);
+
+  return Attribute::get(Ty->getContext(), Incompatible);
+}
+
+/// encodeLLVMAttributesForBitcode - This returns an integer containing an
+/// encoding of all the LLVM attributes found in the given attribute bitset.
+/// Any change to this encoding is a breaking change to bitcode compatibility.
+uint64_t AttributeFuncs::encodeLLVMAttributesForBitcode(AttributeSet Attrs,
+                                                        unsigned Index) {
+  // FIXME: It doesn't make sense to store the alignment information as an
+  // expanded out value, we should store it as a log2 value.  However, we can't
+  // just change that here without breaking bitcode compatibility.  If this ever
+  // becomes a problem in practice, we should introduce new tag numbers in the
+  // bitcode file and have those tags use a more efficiently encoded alignment
+  // field.
+
+  // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
+  // log2 encoded value. Shift the bits above the alignment up by 11 bits.
+  uint64_t EncodedAttrs = Attrs.Raw(Index) & 0xffff;
+  if (Attrs.hasAttribute(Index, Attribute::Alignment))
+    EncodedAttrs |= Attrs.getParamAlignment(Index) << 16;
+  EncodedAttrs |= (Attrs.Raw(Index) & (0xffffULL << 21)) << 11;
+  return EncodedAttrs;
+}
+
+/// decodeLLVMAttributesForBitcode - This returns an attribute bitset containing
+/// the LLVM attributes that have been decoded from the given integer.  This
+/// function must stay in sync with 'encodeLLVMAttributesForBitcode'.
+Attribute AttributeFuncs::decodeLLVMAttributesForBitcode(LLVMContext &C,
+                                                         uint64_t EncodedAttrs){
+  // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
+  // the bits above 31 down by 11 bits.
+  unsigned Alignment = (EncodedAttrs & (0xffffULL << 16)) >> 16;
+  assert((!Alignment || isPowerOf2_32(Alignment)) &&
+         "Alignment must be a power of two.");
+
+  AttrBuilder B(EncodedAttrs & 0xffff);
+  if (Alignment)
+    B.addAlignmentAttr(Alignment);
+  B.addRawValue((EncodedAttrs & (0xffffULL << 32)) >> 11);
+  return Attribute::get(C, B);
+}
+

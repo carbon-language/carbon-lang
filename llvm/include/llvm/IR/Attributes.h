@@ -146,20 +146,6 @@ public:
 
   uint64_t Raw() const;
 
-  /// \brief Which attributes cannot be applied to a type.
-  static Attribute typeIncompatible(Type *Ty);
-
-  /// \brief This returns an integer containing an encoding of all the LLVM
-  /// attributes found in the given attribute bitset.  Any change to this
-  /// encoding is a breaking change to bitcode compatibility.
-  static uint64_t encodeLLVMAttributesForBitcode(Attribute Attrs);
-
-  /// \brief This returns an attribute bitset containing the LLVM attributes
-  /// that have been decoded from the given integer.  This function must stay in
-  /// sync with 'encodeLLVMAttributesForBitcode'.
-  static Attribute decodeLLVMAttributesForBitcode(LLVMContext &C,
-                                                  uint64_t EncodedAttrs);
-
   /// \brief The Attribute is converted to a string of equivalent mnemonic. This
   /// is, presumably, for writing out the mnemonics for the assembly writer.
   std::string getAsString() const;
@@ -236,6 +222,7 @@ public:
 
   /// \brief Return an AttributeSet with the specified parameters in it.
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
+  static AttributeSet get(LLVMContext &C, ArrayRef<AttributeSet> Attrs);
   static AttributeSet get(LLVMContext &C, unsigned Idx,
                           Attribute::AttrKind Kind);
   static AttributeSet get(LLVMContext &C, unsigned Idx, AttrBuilder &B);
@@ -296,6 +283,10 @@ public:
   /// \brief Return true if attribute exists at the given index.
   bool hasAttributes(unsigned Index) const;
 
+  /// \brief Returns the alignment field of an attribute as a byte alignment
+  /// value.
+  unsigned getAlignment(unsigned Index) const;
+
   /// \brief Get the stack alignment.
   unsigned getStackAlignment(unsigned Index) const;
 
@@ -341,6 +332,9 @@ public:
 
   /// \brief Return the index for the given slot.
   unsigned getSlotIndex(unsigned Slot) const;
+
+  /// \brief Return the attributes at the given slot.
+  AttributeSet getSlotAttributes(unsigned Slot) const;
 
   /// \brief Return the AttributeWithIndex at the specified slot.  This holds a
   /// index number plus a set of attributes.
@@ -478,6 +472,24 @@ public:
     return !(*this == B);
   }
 };
+
+namespace AttributeFuncs {
+
+/// \brief Which attributes cannot be applied to a type.
+Attribute typeIncompatible(Type *Ty);
+
+/// \brief This returns an integer containing an encoding of all the LLVM
+/// attributes found in the given attribute bitset.  Any change to this encoding
+/// is a breaking change to bitcode compatibility.
+uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs, unsigned Index);
+
+/// \brief This returns an attribute bitset containing the LLVM attributes that
+/// have been decoded from the given integer.  This function must stay in sync
+/// with 'encodeLLVMAttributesForBitcode'.
+Attribute decodeLLVMAttributesForBitcode(LLVMContext &C,
+                                         uint64_t EncodedAttrs);
+
+} // end AttributeFuncs namespace
 
 } // end llvm namespace
 
