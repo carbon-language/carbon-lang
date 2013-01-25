@@ -524,12 +524,12 @@ bool AttributeImpl::hasAttributes() const {
 
 uint64_t AttributeImpl::getAlignment() const {
   uint64_t Mask = Raw() & getAttrMask(Attribute::Alignment);
-  return 1U << ((Mask >> 16) - 1);
+  return 1ULL << ((Mask >> 16) - 1);
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
   uint64_t Mask = Raw() & getAttrMask(Attribute::StackAlignment);
-  return 1U << ((Mask >> 26) - 1);
+  return 1ULL << ((Mask >> 26) - 1);
 }
 
 void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data,
