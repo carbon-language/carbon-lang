@@ -19,3 +19,4 @@ typedef DenseMap<uint64_t, std::pair<uint8_t, int64_t> > RelocAddrMap;
 } // namespace llvm
 
 #endif // LLVM_DEBUGINFO_DWARFRELOCMAP_H
+
