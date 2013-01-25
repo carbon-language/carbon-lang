@@ -7,6 +7,5 @@
 // CHECK-CODE-COMPLETE-CRASH: Unable to perform code completion!
 //
 // REQUIRES: crash-recovery
-// REQUIRES: shell
 
 #warning parsing original file
