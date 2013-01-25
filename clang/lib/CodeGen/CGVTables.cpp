@@ -31,33 +31,6 @@ using namespace CodeGen;
 CodeGenVTables::CodeGenVTables(CodeGenModule &CGM)
   : CGM(CGM), VTContext(CGM.getContext()) { }
 
-bool CodeGenVTables::ShouldEmitVTableInThisTU(const CXXRecordDecl *RD) {
-  assert(RD->isDynamicClass() && "Non dynamic classes have no VTable.");
-
-  TemplateSpecializationKind TSK = RD->getTemplateSpecializationKind();
-  if (TSK == TSK_ExplicitInstantiationDeclaration)
-    return false;
-
-  const CXXMethodDecl *KeyFunction = CGM.getContext().getKeyFunction(RD);
-  if (!KeyFunction)
-    return true;
-
-  // Itanium C++ ABI, 5.2.6 Instantiated Templates:
-  //    An instantiation of a class template requires:
-  //        - In the object where instantiated, the virtual table...
-  if (TSK == TSK_ImplicitInstantiation ||
-      TSK == TSK_ExplicitInstantiationDefinition)
-    return true;
-
-  // If we're building with optimization, we always emit VTables since that
-  // allows for virtual function calls to be devirtualized.
-  // (We don't want to do this in -fapple-kext mode however).
-  if (CGM.getCodeGenOpts().OptimizationLevel && !CGM.getLangOpts().AppleKext)
-    return true;
-
-  return KeyFunction->hasBody();
-}
-
 llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
                                               const ThunkInfo &Thunk) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
@@ -645,9 +618,8 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   if (VTable)
     return VTable;
 
-  // We may need to generate a definition for this vtable.
-  if (ShouldEmitVTableInThisTU(RD))
-    CGM.DeferredVTables.push_back(RD);
+  // Queue up this v-table for possible deferred emission.
+  CGM.addDeferredVTable(RD);
 
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
@@ -734,13 +706,108 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   return VTable;
 }
 
+/// Compute the required linkage of the v-table for the given class.
+///
+/// Note that we only call this at the end of the translation unit.
+llvm::GlobalVariable::LinkageTypes 
+CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
+  if (RD->getLinkage() != ExternalLinkage)
+    return llvm::GlobalVariable::InternalLinkage;
+
+  // We're at the end of the translation unit, so the current key
+  // function is fully correct.
+  if (const CXXMethodDecl *keyFunction = Context.getCurrentKeyFunction(RD)) {
+    // If this class has a key function, use that to determine the
+    // linkage of the vtable.
+    const FunctionDecl *def = 0;
+    if (keyFunction->hasBody(def))
+      keyFunction = cast<CXXMethodDecl>(def);
+    
+    switch (keyFunction->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ExplicitSpecialization:
+        // When compiling with optimizations turned on, we emit all vtables,
+        // even if the key function is not defined in the current translation
+        // unit. If this is the case, use available_externally linkage.
+        if (!def && CodeGenOpts.OptimizationLevel)
+          return llvm::GlobalVariable::AvailableExternallyLinkage;
+
+        if (keyFunction->isInlined())
+          return !Context.getLangOpts().AppleKext ?
+                   llvm::GlobalVariable::LinkOnceODRLinkage :
+                   llvm::Function::InternalLinkage;
+        
+        return llvm::GlobalVariable::ExternalLinkage;
+        
+      case TSK_ImplicitInstantiation:
+        return !Context.getLangOpts().AppleKext ?
+                 llvm::GlobalVariable::LinkOnceODRLinkage :
+                 llvm::Function::InternalLinkage;
+
+      case TSK_ExplicitInstantiationDefinition:
+        return !Context.getLangOpts().AppleKext ?
+                 llvm::GlobalVariable::WeakODRLinkage :
+                 llvm::Function::InternalLinkage;
+  
+      case TSK_ExplicitInstantiationDeclaration:
+        // FIXME: Use available_externally linkage. However, this currently
+        // breaks LLVM's build due to undefined symbols.
+        //      return llvm::GlobalVariable::AvailableExternallyLinkage;
+        return !Context.getLangOpts().AppleKext ?
+                 llvm::GlobalVariable::LinkOnceODRLinkage :
+                 llvm::Function::InternalLinkage;
+    }
+  }
+
+  // -fapple-kext mode does not support weak linkage, so we must use
+  // internal linkage.
+  if (Context.getLangOpts().AppleKext)
+    return llvm::Function::InternalLinkage;
+  
+  switch (RD->getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization:
+  case TSK_ImplicitInstantiation:
+    return llvm::GlobalVariable::LinkOnceODRLinkage;
+
+  case TSK_ExplicitInstantiationDeclaration:
+    // FIXME: Use available_externally linkage. However, this currently
+    // breaks LLVM's build due to undefined symbols.
+    //   return llvm::GlobalVariable::AvailableExternallyLinkage;
+    return llvm::GlobalVariable::LinkOnceODRLinkage;
+
+  case TSK_ExplicitInstantiationDefinition:
+      return llvm::GlobalVariable::WeakODRLinkage;
+  }
+
+  llvm_unreachable("Invalid TemplateSpecializationKind!");
+}
+
+/// This is a callback from Sema to tell us that it believes that a
+/// particular v-table is required to be emitted in this translation
+/// unit.
+///
+/// The reason we don't simply trust this callback is because Sema
+/// will happily report that something is used even when it's used
+/// only in code that we don't actually have to emit.
+///
+/// \param isRequired - if true, the v-table is mandatory, e.g.
+///   because the translation unit defines the key function
+void CodeGenModule::EmitVTable(CXXRecordDecl *theClass, bool isRequired) {
+  if (!isRequired) return;
+
+  VTables.GenerateClassData(theClass);
+}
+
 void 
-CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
-                                  const CXXRecordDecl *RD) {
+CodeGenVTables::GenerateClassData(const CXXRecordDecl *RD) {
+  // First off, check whether we've already emitted the v-table and
+  // associated stuff.
   llvm::GlobalVariable *VTable = GetAddrOfVTable(RD);
   if (VTable->hasInitializer())
     return;
 
+  llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
   EmitVTableDefinition(VTable, Linkage, RD);
 
   if (RD->getNumVBases()) {
@@ -759,4 +826,81 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
       cast<NamespaceDecl>(DC)->getIdentifier()->isStr("__cxxabiv1") &&
       DC->getParent()->isTranslationUnit())
     CGM.EmitFundamentalRTTIDescriptors();
+}
+
+/// At this point in the translation unit, does it appear that can we
+/// rely on the vtable being defined elsewhere in the program?
+///
+/// The response is really only definitive when called at the end of
+/// the translation unit.
+///
+/// The only semantic restriction here is that the object file should
+/// not contain a v-table definition when that v-table is defined
+/// strongly elsewhere.  Otherwise, we'd just like to avoid emitting
+/// v-tables when unnecessary.
+bool CodeGenVTables::isVTableExternal(const CXXRecordDecl *RD) {
+  assert(RD->isDynamicClass() && "Non dynamic classes have no VTable.");
+
+  // If we have an explicit instantiation declaration (and not a
+  // definition), the v-table is defined elsewhere.
+  TemplateSpecializationKind TSK = RD->getTemplateSpecializationKind();
+  if (TSK == TSK_ExplicitInstantiationDeclaration)
+    return true;
+
+  // Otherwise, if the class is an instantiated template, the
+  // v-table must be defined here.
+  if (TSK == TSK_ImplicitInstantiation ||
+      TSK == TSK_ExplicitInstantiationDefinition)
+    return false;
+
+  // Otherwise, if the class doesn't have a key function (possibly
+  // anymore), the v-table must be defined here.
+  const CXXMethodDecl *keyFunction = CGM.getContext().getCurrentKeyFunction(RD);
+  if (!keyFunction)
+    return false;
+
+  // Otherwise, if we don't have a definition of the key function, the
+  // v-table must be defined somewhere else.
+  return !keyFunction->hasBody();
+}
+
+/// Given that we're currently at the end of the translation unit, and
+/// we've emitted a reference to the v-table for this class, should
+/// we define that v-table?
+static bool shouldEmitVTableAtEndOfTranslationUnit(CodeGenModule &CGM,
+                                                   const CXXRecordDecl *RD) {
+  // If we're building with optimization, we always emit v-tables
+  // since that allows for virtual function calls to be devirtualized.
+  // If the v-table is defined strongly elsewhere, this definition
+  // will be emitted available_externally.
+  //
+  // However, we don't want to do this in -fapple-kext mode, because
+  // kext mode does not permit devirtualization.
+  if (CGM.getCodeGenOpts().OptimizationLevel && !CGM.getLangOpts().AppleKext)
+    return true;
+
+  return !CGM.getVTables().isVTableExternal(RD);
+}
+
+/// Given that at some point we emitted a reference to one or more
+/// v-tables, and that we are now at the end of the translation unit,
+/// decide whether we should emit them.
+void CodeGenModule::EmitDeferredVTables() {
+#ifndef NDEBUG
+  // Remember the size of DeferredVTables, because we're going to assume
+  // that this entire operation doesn't modify it.
+  size_t savedSize = DeferredVTables.size();
+#endif
+
+  typedef std::vector<const CXXRecordDecl *>::const_iterator const_iterator;
+  for (const_iterator i = DeferredVTables.begin(),
+                      e = DeferredVTables.end(); i != e; ++i) {
+    const CXXRecordDecl *RD = *i;
+    if (shouldEmitVTableAtEndOfTranslationUnit(*this, RD))
+      VTables.GenerateClassData(RD);
+  }
+
+  assert(savedSize == DeferredVTables.size() &&
+         "deferred extra v-tables during v-table emission?");
+  DeferredVTables.clear();
 }

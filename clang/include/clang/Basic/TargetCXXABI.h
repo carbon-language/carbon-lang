@@ -142,6 +142,47 @@ public:
     return isItaniumFamily();
   }
 
+  /// \brief Can an out-of-line inline function serve as a key function?
+  ///
+  /// This flag is only useful in ABIs where type data (for example,
+  /// v-tables and type_info objects) are emitted only after processing
+  /// the definition of a special "key" virtual function.  (This is safe
+  /// because the ODR requires that every virtual function be defined
+  /// somewhere in a program.)  This usually permits such data to be
+  /// emitted in only a single object file, as opposed to redundantly
+  /// in every object file that requires it.
+  ///
+  /// One simple and common definition of "key function" is the first
+  /// virtual function in the class definition which is not defined there.
+  /// This rule works very well when that function has a non-inline
+  /// definition in some non-header file.  Unfortunately, when that
+  /// function is defined inline, this rule requires the type data
+  /// to be emitted weakly, as if there were no key function.
+  ///
+  /// The ARM ABI observes that the ODR provides an additional guarantee:
+  /// a virtual function is always ODR-used, so if it is defined inline,
+  /// that definition must appear in every translation unit that defines
+  /// the class.  Therefore, there is no reason to allow such functions
+  /// to serve as key functions.
+  ///
+  /// Because this changes the rules for emitting type data,
+  /// it can cause type data to be emitted with both weak and strong
+  /// linkage, which is not allowed on all platforms.  Therefore,
+  /// exploiting this observation requires an ABI break and cannot be
+  /// done on a generic Itanium platform.
+  bool canKeyFunctionBeInline() const {
+    switch (getKind()) {
+    case GenericARM:
+      return false;
+
+    case GenericItanium:
+    case iOS:   // old iOS compilers did not follow this rule
+    case Microsoft:
+      return true;
+    }
+    llvm_unreachable("bad ABI kind");
+  }
+
   /// Try to parse an ABI name, returning false on error.
   bool tryParse(llvm::StringRef name);
 

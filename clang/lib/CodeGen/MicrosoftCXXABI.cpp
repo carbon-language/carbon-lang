@@ -60,9 +60,6 @@ public:
                        llvm::GlobalVariable *DeclPtr,
                        bool PerformInit);
 
-  void EmitVTables(const CXXRecordDecl *Class);
-
-
   // ==== Notes on array cookies =========
   //
   // MSVC seems to only use cookies when the class has a destructor; a
@@ -204,10 +201,6 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 
   // Emit the initializer and add a global destructor if appropriate.
   CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
-}
-
-void MicrosoftCXXABI::EmitVTables(const CXXRecordDecl *Class) {
-  CGM.getVTables().GenerateClassData(CGM.getVTableLinkage(Class), Class);
 }
 
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {

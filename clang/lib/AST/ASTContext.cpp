@@ -7559,13 +7559,16 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
     if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
       return true;
     
-    // The key function for a class is required.
-    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      const CXXRecordDecl *RD = MD->getParent();
-      if (MD->isOutOfLine() && RD->isDynamicClass()) {
-        const CXXMethodDecl *KeyFunc = getKeyFunction(RD);
-        if (KeyFunc && KeyFunc->getCanonicalDecl() == MD->getCanonicalDecl())
-          return true;
+    // The key function for a class is required.  This rule only comes
+    // into play when inline functions can be key functions, though.
+    if (getTargetInfo().getCXXABI().canKeyFunctionBeInline()) {
+      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+        const CXXRecordDecl *RD = MD->getParent();
+        if (MD->isOutOfLine() && RD->isDynamicClass()) {
+          const CXXMethodDecl *KeyFunc = getCurrentKeyFunction(RD);
+          if (KeyFunc && KeyFunc->getCanonicalDecl() == MD->getCanonicalDecl())
+            return true;
+        }
       }
     }
 

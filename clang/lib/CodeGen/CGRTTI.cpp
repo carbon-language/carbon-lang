@@ -251,10 +251,12 @@ static bool IsStandardLibraryRTTIDescriptor(QualType Ty) {
 /// the given type exists somewhere else, and that we should not emit the type
 /// information in this translation unit.  Assumes that it is not a
 /// standard-library type.
-static bool ShouldUseExternalRTTIDescriptor(CodeGenModule &CGM, QualType Ty) {
+static bool ShouldUseExternalRTTIDescriptor(CodeGenModule &CGM,
+                                            QualType Ty) {
   ASTContext &Context = CGM.getContext();
 
-  // If RTTI is disabled, don't consider key functions.
+  // If RTTI is disabled, assume it might be disabled in the
+  // translation unit that defines any potential key function, too.
   if (!Context.getLangOpts().RTTI) return false;
 
   if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
@@ -265,7 +267,9 @@ static bool ShouldUseExternalRTTIDescriptor(CodeGenModule &CGM, QualType Ty) {
     if (!RD->isDynamicClass())
       return false;
 
-    return !CGM.getVTables().ShouldEmitVTableInThisTU(RD);
+    // FIXME: this may need to be reconsidered if the key function
+    // changes.
+    return CGM.getVTables().isVTableExternal(RD);
   }
   
   return false;

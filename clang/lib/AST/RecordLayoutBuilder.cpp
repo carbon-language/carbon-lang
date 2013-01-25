@@ -795,8 +795,6 @@ protected:
 
   RecordLayoutBuilder(const RecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
   void operator=(const RecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
-public:
-  static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };
 } // end anonymous namespace
 
@@ -2347,8 +2345,8 @@ void RecordLayoutBuilder::CheckFieldPadding(uint64_t Offset,
         << D->getIdentifier();
 }
 
-const CXXMethodDecl *
-RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
+static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
+                                               const CXXRecordDecl *RD) {
   // If a class isn't polymorphic it doesn't have a key function.
   if (!RD->isPolymorphic())
     return 0;
@@ -2365,6 +2363,9 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   if (TSK == TSK_ImplicitInstantiation ||
       TSK == TSK_ExplicitInstantiationDefinition)
     return 0;
+
+  bool allowInlineFunctions =
+    Context.getTargetInfo().getCXXABI().canKeyFunctionBeInline();
 
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
          E = RD->method_end(); I != E; ++I) {
@@ -2390,6 +2391,13 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
     // Ignore inline deleted or defaulted functions.
     if (!MD->isUserProvided())
       continue;
+
+    // In certain ABIs, ignore functions with out-of-line inline definitions.
+    if (!allowInlineFunctions) {
+      const FunctionDecl *Def;
+      if (MD->hasBody(Def) && Def->isInlineSpecified())
+        continue;
+    }
 
     // We found it.
     return MD;
@@ -2496,15 +2504,37 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
   return *NewEntry;
 }
 
-const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
+const CXXMethodDecl *ASTContext::getCurrentKeyFunction(const CXXRecordDecl *RD) {
+  assert(RD->getDefinition() && "Cannot get key function for forward decl!");
   RD = cast<CXXRecordDecl>(RD->getDefinition());
-  assert(RD && "Cannot get key function for forward declarations!");
 
-  const CXXMethodDecl *&Entry = KeyFunctions[RD];
-  if (!Entry)
-    Entry = RecordLayoutBuilder::ComputeKeyFunction(RD);
+  const CXXMethodDecl *&entry = KeyFunctions[RD];
+  if (!entry) {
+    entry = computeKeyFunction(*this, RD);
+  }
 
-  return Entry;
+  return entry;
+}
+
+void ASTContext::setNonKeyFunction(const CXXMethodDecl *method) {
+  assert(method == method->getFirstDeclaration() &&
+         "not working with method declaration from class definition");
+
+  // Look up the cache entry.  Since we're working with the first
+  // declaration, its parent must be the class definition, which is
+  // the correct key for the KeyFunctions hash.
+  llvm::DenseMap<const CXXRecordDecl*, const CXXMethodDecl*>::iterator
+    i = KeyFunctions.find(method->getParent());
+
+  // If it's not cached, there's nothing to do.
+  if (i == KeyFunctions.end()) return;
+
+  // If it is cached, check whether it's the target method, and if so,
+  // remove it from the cache.
+  if (i->second == method) {
+    // FIXME: remember that we did this for module / chained PCH state?
+    KeyFunctions.erase(i);
+  }
 }
 
 static uint64_t getFieldOffset(const ASTContext &C, const FieldDecl *FD) {

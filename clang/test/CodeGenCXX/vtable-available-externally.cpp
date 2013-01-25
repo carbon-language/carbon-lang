@@ -6,13 +6,14 @@
 
 #include <typeinfo>
 
-// Test1::A's key function (f) is not defined in this translation unit, but in
-// order to devirtualize calls, we emit the class related data with
+// Test1::A's key function (f) is not defined in this translation
+// unit, but in order to devirtualize calls, we emit the v-table with
 // available_externally linkage.
+//
+// There's no real reason to do this to the RTTI, though.
 
 // CHECK-TEST1: @_ZTVN5Test11AE = available_externally
-// CHECK-TEST1: @_ZTSN5Test11AE = available_externally
-// CHECK-TEST1: @_ZTIN5Test11AE = available_externally
+// CHECK-TEST1: @_ZTIN5Test11AE = external constant i8*
 namespace Test1 {
 
 struct A {
