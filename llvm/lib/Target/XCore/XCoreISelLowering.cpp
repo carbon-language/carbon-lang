@@ -736,13 +736,13 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG) const
   unsigned Opcode = (N->getOpcode() == ISD::ADD) ? XCoreISD::LADD :
                                                    XCoreISD::LSUB;
   SDValue Zero = DAG.getConstant(0, MVT::i32);
-  SDValue Carry = DAG.getNode(Opcode, dl, DAG.getVTList(MVT::i32, MVT::i32),
-                                  LHSL, RHSL, Zero);
-  SDValue Lo(Carry.getNode(), 1);
+  SDValue Lo = DAG.getNode(Opcode, dl, DAG.getVTList(MVT::i32, MVT::i32),
+                           LHSL, RHSL, Zero);
+  SDValue Carry(Lo.getNode(), 1);
 
-  SDValue Ignored = DAG.getNode(Opcode, dl, DAG.getVTList(MVT::i32, MVT::i32),
-                                  LHSH, RHSH, Carry);
-  SDValue Hi(Ignored.getNode(), 1);
+  SDValue Hi = DAG.getNode(Opcode, dl, DAG.getVTList(MVT::i32, MVT::i32),
+                           LHSH, RHSH, Carry);
+  SDValue Ignored(Hi.getNode(), 1);
   // Merge the pieces
   return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
 }
@@ -1353,13 +1353,13 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue Carry = DAG.getConstant(0, VT);
       SDValue Result = DAG.getNode(ISD::AND, dl, VT, N2,
                                    DAG.getConstant(1, VT));
-      SDValue Ops [] = { Carry, Result };
+      SDValue Ops[] = { Result, Carry };
       return DAG.getMergeValues(Ops, 2, dl);
     }
 
     // fold (ladd x, 0, y) -> 0, add x, y iff carry is unused and y has only the
     // low bit set
-    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 0)) {
+    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 1)) {
       APInt KnownZero, KnownOne;
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
@@ -1367,7 +1367,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       if ((KnownZero & Mask) == Mask) {
         SDValue Carry = DAG.getConstant(0, VT);
         SDValue Result = DAG.getNode(ISD::ADD, dl, VT, N0, N2);
-        SDValue Ops [] = { Carry, Result };
+        SDValue Ops[] = { Result, Carry };
         return DAG.getMergeValues(Ops, 2, dl);
       }
     }
@@ -1391,14 +1391,14 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         SDValue Borrow = N2;
         SDValue Result = DAG.getNode(ISD::SUB, dl, VT,
                                      DAG.getConstant(0, VT), N2);
-        SDValue Ops [] = { Borrow, Result };
+        SDValue Ops[] = { Result, Borrow };
         return DAG.getMergeValues(Ops, 2, dl);
       }
     }
 
     // fold (lsub x, 0, y) -> 0, sub x, y iff borrow is unused and y has only the
     // low bit set
-    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 0)) {
+    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 1)) {
       APInt KnownZero, KnownOne;
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
@@ -1406,7 +1406,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       if ((KnownZero & Mask) == Mask) {
         SDValue Borrow = DAG.getConstant(0, VT);
         SDValue Result = DAG.getNode(ISD::SUB, dl, VT, N0, N2);
-        SDValue Ops [] = { Borrow, Result };
+        SDValue Ops[] = { Result, Borrow };
         return DAG.getMergeValues(Ops, 2, dl);
       }
     }
@@ -1432,11 +1432,15 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       // If the high result is unused fold to add(a, b)
       if (N->hasNUsesOfValue(0, 0)) {
         SDValue Lo = DAG.getNode(ISD::ADD, dl, VT, N2, N3);
-        SDValue Ops [] = { Lo, Lo };
+        SDValue Ops[] = { Lo, Lo };
         return DAG.getMergeValues(Ops, 2, dl);
       }
       // Otherwise fold to ladd(a, b, 0)
-      return DAG.getNode(XCoreISD::LADD, dl, DAG.getVTList(VT, VT), N2, N3, N1);
+      SDValue Result =
+        DAG.getNode(XCoreISD::LADD, dl, DAG.getVTList(VT, VT), N2, N3, N1);
+      SDValue Carry(Result.getNode(), 1);
+      SDValue Ops[] = { Carry, Result };
+      return DAG.getMergeValues(Ops, 2, dl);
     }
   }
   break;
@@ -1530,7 +1534,7 @@ void XCoreTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   default: break;
   case XCoreISD::LADD:
   case XCoreISD::LSUB:
-    if (Op.getResNo() == 0) {
+    if (Op.getResNo() == 1) {
       // Top bits of carry / borrow are clear.
       KnownZero = APInt::getHighBitsSet(KnownZero.getBitWidth(),
                                         KnownZero.getBitWidth() - 1);
