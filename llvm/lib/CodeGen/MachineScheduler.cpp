@@ -56,6 +56,9 @@ static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
 static cl::opt<bool> EnableMacroFusion("misched-fusion", cl::Hidden,
   cl::desc("Enable scheduling for macro fusion."), cl::init(true));
 
+// DAG subtrees must have at least this many nodes.
+static const unsigned MinSubtreeSize = 8;
+
 //===----------------------------------------------------------------------===//
 // Machine Instruction Scheduling Pass and Registry
 //===----------------------------------------------------------------------===//
@@ -301,6 +304,12 @@ void ReadyQueue::dump() {
 // preservation.
 //===----------------------------------------------------------------------===//
 
+ScheduleDAGMI::~ScheduleDAGMI() {
+  delete DFSResult;
+  DeleteContainerPointers(Mutations);
+  delete SchedImpl;
+}
+
 bool ScheduleDAGMI::addEdge(SUnit *SuccSU, const SDep &PredDep) {
   if (SuccSU != &ExitSU) {
     // Do not use WillCreateCycle, it assumes SD scheduling.
@@ -504,8 +513,6 @@ void ScheduleDAGMI::schedule() {
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 
-  if (ViewMISchedDAGs) viewGraph();
-
   initQueues();
 
   bool IsTopNode = false;
@@ -552,6 +559,19 @@ void ScheduleDAGMI::postprocessDAG() {
   for (unsigned i = 0, e = Mutations.size(); i < e; ++i) {
     Mutations[i]->apply(this);
   }
+}
+
+void ScheduleDAGMI::initDFSResult() {
+  if (!DFSResult)
+    DFSResult = new SchedDFSResult(/*BottomU*/true, MinSubtreeSize);
+  DFSResult->clear();
+  DFSResult->resize(SUnits.size());
+  ScheduledTrees.clear();
+}
+
+void ScheduleDAGMI::computeDFSResult(ArrayRef<SUnit*> Roots) {
+  DFSResult->compute(Roots);
+  ScheduledTrees.resize(DFSResult->getNumSubtrees());
 }
 
 // Release all DAG roots for scheduling.
@@ -654,6 +674,15 @@ void ScheduleDAGMI::updateQueues(SUnit *SU, bool IsTopNode) {
     releasePredecessors(SU);
 
   SU->isScheduled = true;
+
+  if (DFSResult) {
+    unsigned SubtreeID = DFSResult->getSubtreeID(SU);
+    if (!ScheduledTrees.test(SubtreeID)) {
+      ScheduledTrees.set(SubtreeID);
+      DFSResult->scheduleTree(SubtreeID);
+      SchedImpl->scheduleTree(SubtreeID);
+    }
+  }
 
   // Notify the scheduling strategy after updating the DAG.
   SchedImpl->schedNode(SU, IsTopNode);
@@ -1187,6 +1216,8 @@ void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   Top.init(DAG, SchedModel, &Rem);
   Bot.init(DAG, SchedModel, &Rem);
 
+  DAG->initDFSResult();
+
   // Initialize resource counts.
 
   // Initialize the HazardRecognizers. If itineraries don't exist, are empty, or
@@ -1247,6 +1278,8 @@ void ConvergingScheduler::registerRoots() {
       Rem.CriticalPath = (*I)->getDepth();
   }
   DEBUG(dbgs() << "Critical Path: " << Rem.CriticalPath << '\n');
+
+  DAG->computeDFSResult(Bot.Available.elements());
 }
 
 /// Does this SU have a hazard within the current instruction group.
@@ -2056,12 +2089,11 @@ ConvergingSchedRegistry("converge", "Standard converging scheduler.",
 namespace {
 /// \brief Order nodes by the ILP metric.
 struct ILPOrder {
-  SchedDFSResult *DFSResult;
-  BitVector *ScheduledTrees;
+  const SchedDFSResult *DFSResult;
+  const BitVector *ScheduledTrees;
   bool MaximizeILP;
 
-  ILPOrder(SchedDFSResult *dfs, BitVector *schedtrees, bool MaxILP)
-    : DFSResult(dfs), ScheduledTrees(schedtrees), MaximizeILP(MaxILP) {}
+  ILPOrder(bool MaxILP): DFSResult(0), ScheduledTrees(0), MaximizeILP(MaxILP) {}
 
   /// \brief Apply a less-than relation on node priority.
   ///
@@ -2099,26 +2131,23 @@ class ILPScheduler : public MachineSchedStrategy {
   /// (a motivating test case must be found).
   static const unsigned SubtreeLimit = 16;
 
-  SchedDFSResult DFSResult;
-  BitVector ScheduledTrees;
+  ScheduleDAGMI *DAG;
   ILPOrder Cmp;
 
   std::vector<SUnit*> ReadyQ;
 public:
-  ILPScheduler(bool MaximizeILP)
-  : DFSResult(/*BottomUp=*/true, SubtreeLimit),
-    Cmp(&DFSResult, &ScheduledTrees, MaximizeILP) {}
+  ILPScheduler(bool MaximizeILP): DAG(0), Cmp(MaximizeILP) {}
 
-  virtual void initialize(ScheduleDAGMI *DAG) {
+  virtual void initialize(ScheduleDAGMI *dag) {
+    DAG = dag;
+    DAG->initDFSResult();
+    Cmp.DFSResult = DAG->getDFSResult();
+    Cmp.ScheduledTrees = &DAG->getScheduledTrees();
     ReadyQ.clear();
-    DFSResult.clear();
-    DFSResult.resize(DAG->SUnits.size());
-    ScheduledTrees.clear();
   }
 
   virtual void registerRoots() {
-    DFSResult.compute(ReadyQ);
-    ScheduledTrees.resize(DFSResult.getNumSubtrees());
+    DAG->computeDFSResult(ReadyQ);
     // Restore the heap in ReadyQ with the updated DFS results.
     std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
@@ -2135,21 +2164,22 @@ public:
     IsTopNode = false;
     DEBUG(dbgs() << "*** Scheduling " << "SU(" << SU->NodeNum << "): "
           << *SU->getInstr()
-          << " ILP: " << DFSResult.getILP(SU)
-          << " Tree: " << DFSResult.getSubtreeID(SU) << " @"
-          << DFSResult.getSubtreeLevel(DFSResult.getSubtreeID(SU))<< '\n');
+          << " ILP: " << DAG->getDFSResult()->getILP(SU)
+          << " Tree: " << DAG->getDFSResult()->getSubtreeID(SU) << " @"
+          << DAG->getDFSResult()->getSubtreeLevel(
+            DAG->getDFSResult()->getSubtreeID(SU)) << '\n');
     return SU;
+  }
+
+  /// \brief Scheduler callback to notify that a new subtree is scheduled.
+  virtual void scheduleTree(unsigned SubtreeID) {
+    std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
 
   /// Callback after a node is scheduled. Mark a newly scheduled tree, notify
   /// DFSResults, and resort the priority Q.
   virtual void schedNode(SUnit *SU, bool IsTopNode) {
     assert(!IsTopNode && "SchedDFSResult needs bottom-up");
-    if (!ScheduledTrees.test(DFSResult.getSubtreeID(SU))) {
-      ScheduledTrees.set(DFSResult.getSubtreeID(SU));
-      DFSResult.scheduleTree(DFSResult.getSubtreeID(SU));
-      std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
-    }
   }
 
   virtual void releaseTopNode(SUnit *) { /*only called for top roots*/ }

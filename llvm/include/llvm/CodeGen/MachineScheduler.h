@@ -43,6 +43,7 @@ class MachineDominatorTree;
 class MachineLoopInfo;
 class RegisterClassInfo;
 class ScheduleDAGInstrs;
+class SchedDFSResult;
 
 /// MachineSchedContext provides enough context from the MachineScheduler pass
 /// for the target to instantiate a scheduler.
@@ -119,6 +120,9 @@ public:
   /// be scheduled at the bottom.
   virtual SUnit *pickNode(bool &IsTopNode) = 0;
 
+  /// \brief Scheduler callback to notify that a new subtree is scheduled.
+  virtual void scheduleTree(unsigned SubtreeID) {}
+
   /// Notify MachineSchedStrategy that ScheduleDAGMI has scheduled an
   /// instruction and updated scheduled/remaining flags in the DAG nodes.
   virtual void schedNode(SUnit *SU, bool IsTopNode) = 0;
@@ -164,6 +168,8 @@ public:
 
   iterator end() { return Queue.end(); }
 
+  ArrayRef<SUnit*> elements() { return Queue; }
+
   iterator find(SUnit *SU) {
     return std::find(Queue.begin(), Queue.end(), SU);
   }
@@ -201,6 +207,11 @@ protected:
   AliasAnalysis *AA;
   RegisterClassInfo *RegClassInfo;
   MachineSchedStrategy *SchedImpl;
+
+  /// Information about DAG subtrees. If DFSResult is NULL, then SchedulerTrees
+  /// will be empty.
+  SchedDFSResult *DFSResult;
+  BitVector ScheduledTrees;
 
   /// Topo - A topological ordering for SUnits which permits fast IsReachable
   /// and similar queries.
@@ -243,7 +254,7 @@ protected:
 public:
   ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
-    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
+    AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S), DFSResult(0),
     Topo(SUnits, &ExitSU), RPTracker(RegPressure), CurrentTop(),
     TopRPTracker(TopPressure), CurrentBottom(), BotRPTracker(BotPressure),
     NextClusterPred(NULL), NextClusterSucc(NULL) {
@@ -252,10 +263,7 @@ public:
 #endif
   }
 
-  virtual ~ScheduleDAGMI() {
-    DeleteContainerPointers(Mutations);
-    delete SchedImpl;
-  }
+  virtual ~ScheduleDAGMI();
 
   /// Add a postprocessing step to the DAG builder.
   /// Mutations are applied in the order that they are added after normal DAG
@@ -307,6 +315,18 @@ public:
   const SUnit *getNextClusterPred() const { return NextClusterPred; }
 
   const SUnit *getNextClusterSucc() const { return NextClusterSucc; }
+
+  /// Initialize a DFSResult after DAG building is complete, and before any
+  /// queue comparisons.
+  void initDFSResult();
+
+  /// Compute DFS result once all interesting roots are discovered.
+  void computeDFSResult(ArrayRef<SUnit*> Roots);
+
+  /// Return a non-null DFS result if the scheduling strategy initialized it.
+  const SchedDFSResult *getDFSResult() const { return DFSResult; }
+
+  BitVector &getScheduledTrees() { return ScheduledTrees; }
 
 protected:
   // Top-Level entry points for the schedule() driver...
