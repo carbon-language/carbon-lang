@@ -35,6 +35,7 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 #include "sanitizer/asan_interface.h"
+#include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_mutex.h"
 
@@ -712,6 +713,7 @@ void *asan_malloc(uptr size, StackTrace *stack) {
 }
 
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
+  if (__sanitizer::CallocShouldReturnNullDueToOverflow(size, nmemb)) return 0;
   void *ptr = (void*)Allocate(0, nmemb * size, stack, FROM_MALLOC);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);

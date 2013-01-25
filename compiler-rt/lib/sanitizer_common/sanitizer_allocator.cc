@@ -75,4 +75,9 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback) {
   low_level_alloc_callback = callback;
 }
 
+bool CallocShouldReturnNullDueToOverflow(uptr size, uptr n) {
+  uptr mul = size * n;
+  return mul < size || mul < n;
+}
+
 }  // namespace __sanitizer

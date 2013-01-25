@@ -326,6 +326,7 @@ TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
 }
 
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
+  if (__sanitizer::CallocShouldReturnNullDueToOverflow(size, n)) return 0;
   void *p = 0;
   {
     SCOPED_INTERCEPTOR_RAW(calloc, size, n);

@@ -1685,6 +1685,14 @@ NOINLINE void RecursiveMalloc(int depth) {
   delete x2;
 }
 
+TEST(MemorySanitizer, CallocOverflow) {
+  size_t kArraySize = 4096;
+  volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
+  volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;
+  void *p = calloc(kArraySize, kArraySize2);  // Should return 0.
+  EXPECT_EQ(0L, Ident(p));
+}
+
 TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
   RecursiveMalloc(22);
 }

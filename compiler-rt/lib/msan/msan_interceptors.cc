@@ -18,6 +18,7 @@
 #include "interception/interception.h"
 #include "msan.h"
 #include "msan_platform_limits_posix.h"
+#include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
@@ -683,6 +684,7 @@ INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct msghdr *msg, int flags) {
 }
 
 INTERCEPTOR(void *, calloc, SIZE_T nmemb, SIZE_T size) {
+  if (CallocShouldReturnNullDueToOverflow(size, nmemb)) return 0;
   GET_MALLOC_STACK_TRACE;
   if (!msan_inited) {
     // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.

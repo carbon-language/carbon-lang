@@ -1098,6 +1098,9 @@ class CombinedAllocator {
   AllocatorGlobalStats stats_;
 };
 
+// Returns true if calloc(size, n) should return 0 due to overflow in size*n.
+bool CallocShouldReturnNullDueToOverflow(uptr size, uptr n);
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_ALLOCATOR_H

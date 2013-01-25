@@ -607,6 +607,7 @@ void *asan_malloc(uptr size, StackTrace *stack) {
 }
 
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
+  if (CallocShouldReturnNullDueToOverflow(size, nmemb)) return 0;
   void *ptr = Allocate(nmemb * size, 8, stack, FROM_MALLOC);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);

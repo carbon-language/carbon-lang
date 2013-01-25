@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include <limits>
 #include "tsan_mman.h"
 #include "tsan_rtl.h"
 #include "gtest/gtest.h"
@@ -145,4 +146,13 @@ TEST(Mman, Stats) {
   EXPECT_EQ(__tsan_get_free_bytes(), free0);
   EXPECT_EQ(__tsan_get_unmapped_bytes(), unmapped0);
 }
+
+TEST(Mman, CallocOverflow) {
+  size_t kArraySize = 4096;
+  volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
+  volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;
+  volatile void *p = calloc(kArraySize, kArraySize2);  // Should return 0.
+  EXPECT_EQ(0L, p);
+}
+
 }  // namespace __tsan

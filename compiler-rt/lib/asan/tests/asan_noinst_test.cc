@@ -25,6 +25,7 @@
 #include <string.h>  // for memset()
 #include <algorithm>
 #include <vector>
+#include <limits>
 
 
 TEST(AddressSanitizer, InternalSimpleDeathTest) {
@@ -830,4 +831,12 @@ TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   }
   for (size_t i = 0, n = pointers.size(); i < n; i++)
     free(pointers[i]);
+}
+
+TEST(AddressSanitizerInterface, CallocOverflow) {
+  size_t kArraySize = 4096;
+  volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
+  volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;
+  void *p = calloc(kArraySize, kArraySize2);  // Should return 0.
+  EXPECT_EQ(0L, Ident(p));
 }
