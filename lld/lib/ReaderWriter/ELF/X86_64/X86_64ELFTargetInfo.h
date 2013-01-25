@@ -36,6 +36,9 @@ public:
     return _options._baseAddress;
   }
 
+  virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const;
+  virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const;
+
 };
 } // elf
 } // lld
