@@ -24,6 +24,7 @@ set(LLVM_TEST_DEPENDS UnitTests
           llvm-nm
           llvm-objdump
           llvm-readobj
+          llvm-rtdyld
           macho-dump opt
           profile_rt-shared
           FileCheck count not
