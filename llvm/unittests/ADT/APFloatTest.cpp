@@ -794,6 +794,32 @@ TEST(APFloatTest, convert) {
   test.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &losesInfo);
   EXPECT_EQ(4294967295.0, test.convertToDouble());
   EXPECT_FALSE(losesInfo);
+
+  test = APFloat::getSNaN(APFloat::IEEEsingle);
+  APFloat X87SNaN = APFloat::getSNaN(APFloat::x87DoubleExtended);
+  test.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
+               &losesInfo);
+  EXPECT_TRUE(test.bitwiseIsEqual(X87SNaN));
+  EXPECT_FALSE(losesInfo);
+
+  test = APFloat::getQNaN(APFloat::IEEEsingle);
+  APFloat X87QNaN = APFloat::getQNaN(APFloat::x87DoubleExtended);
+  test.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
+               &losesInfo);
+  EXPECT_TRUE(test.bitwiseIsEqual(X87QNaN));
+  EXPECT_FALSE(losesInfo);
+
+  test = APFloat::getSNaN(APFloat::x87DoubleExtended);
+  test.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
+               &losesInfo);
+  EXPECT_TRUE(test.bitwiseIsEqual(X87SNaN));
+  EXPECT_FALSE(losesInfo);
+
+  test = APFloat::getQNaN(APFloat::x87DoubleExtended);
+  test.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
+               &losesInfo);
+  EXPECT_TRUE(test.bitwiseIsEqual(X87QNaN));
+  EXPECT_FALSE(losesInfo);
 }
 
 TEST(APFloatTest, PPCDoubleDouble) {

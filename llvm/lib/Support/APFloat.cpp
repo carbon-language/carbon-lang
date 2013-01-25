@@ -1913,6 +1913,12 @@ APFloat::convert(const fltSemantics &toSemantics,
     *losesInfo = (fs != opOK);
   } else if (category == fcNaN) {
     *losesInfo = lostFraction != lfExactlyZero || X86SpecialNan;
+
+    // For x87 extended precision, we want to make a NaN, not a special NaN if
+    // the input wasn't special either.
+    if (!X86SpecialNan && semantics == &APFloat::x87DoubleExtended)
+      APInt::tcSetBit(significandParts(), semantics->precision - 1);
+
     // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
