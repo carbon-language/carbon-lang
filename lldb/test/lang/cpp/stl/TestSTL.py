@@ -36,7 +36,7 @@ class STLTestCase(TestBase):
         self.buildDsym()
         self.sbtype_template_apis()
 
-   @skipIfGcc # bugzilla 15036: crashes during DWARF parsing when built with GCC
+    @skipIfGcc # bugzilla 15036: crashes during DWARF parsing when built with GCC
     @python_api_test
     @dwarf_test
     def test_SBType_template_aspects_with_dwarf(self):
