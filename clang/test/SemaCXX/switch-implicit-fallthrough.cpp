@@ -38,6 +38,18 @@ int fallthrough(int n) {
     case 68:
       break;
   }
+  switch (n / 15) {
+label_case_70:
+    case 70:
+      n += 333;
+      break;
+    case 71:
+      n += 334;
+      goto label_case_70;
+    case 72:
+      n += 335;
+      break;
+  }
   switch (n / 20) {
     case 7:
       n += 400;

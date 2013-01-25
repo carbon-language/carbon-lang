@@ -722,6 +722,10 @@ namespace {
         if (SW && SW->getSubStmt() == B.getLabel() && P->begin() == P->end())
           continue; // Previous case label has no statements, good.
 
+        const LabelStmt *L = dyn_cast_or_null<LabelStmt>(P->getLabel());
+        if (L && L->getSubStmt() == B.getLabel() && P->begin() == P->end())
+          continue; // Case label is preceded with a normal label, good.
+
         if (P->pred_begin() == P->pred_end()) {  // The block is unreachable.
           // This only catches trivially unreachable blocks.
           for (CFGBlock::const_iterator ElIt = P->begin(), ElEnd = P->end();
