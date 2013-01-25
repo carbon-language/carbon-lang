@@ -518,7 +518,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
   
-  uint64_t virtualAddress = _targetInfo.getLinkerOptions()._baseAddress;
+  uint64_t virtualAddress = _targetInfo.getBaseAddress();
   
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address

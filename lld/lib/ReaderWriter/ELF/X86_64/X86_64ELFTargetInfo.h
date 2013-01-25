@@ -30,6 +30,12 @@ public:
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 
+  virtual uint64_t getBaseAddress() const {
+    if (_options._baseAddress == 0)
+      return 0x400000;
+    return _options._baseAddress;
+  }
+
 };
 } // elf
 } // lld

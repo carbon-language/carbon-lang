@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_TARGET_INFO_H
 #define LLD_READER_WRITER_ELF_TARGET_INFO_H
 
+#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/TargetInfo.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -32,6 +33,8 @@ protected:
 public:
   uint16_t getOutputType() const;
   uint16_t getOutputMachine() const;
+
+  virtual uint64_t getBaseAddress() const { return _options._baseAddress; }
 
   static std::unique_ptr<ELFTargetInfo> create(const LinkerOptions &lo);
 
