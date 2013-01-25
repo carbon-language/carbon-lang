@@ -18,6 +18,7 @@ set(ADTSources
   IntEqClassesTest.cpp
   IntervalMapTest.cpp
   IntrusiveRefCntPtrTest.cpp
+  MapVectorTest.cpp
   PackedVectorTest.cpp
   SCCIteratorTest.cpp
   SmallPtrSetTest.cpp
