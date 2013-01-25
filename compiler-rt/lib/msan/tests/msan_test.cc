@@ -1332,6 +1332,83 @@ TEST(MemorySanitizer, SignedCompareWithZero) {
   EXPECT_UMR(applySlt<S4>(0xF, 0xFFFFFFFF));
 }
 
+template <class T, class S>
+static T poisoned(T Va, S Sa) {
+  char SIZE_CHECK1[(ssize_t)sizeof(T) - (ssize_t)sizeof(S)];
+  char SIZE_CHECK2[(ssize_t)sizeof(S) - (ssize_t)sizeof(T)];
+  T a;
+  a = Va;
+  __msan_partial_poison(&a, &Sa, sizeof(T));
+  return a;
+}
+
+TEST(MemorySanitizer, ICmpRelational) {
+  EXPECT_NOT_POISONED(poisoned(0, 0) < poisoned(0, 0));
+  EXPECT_NOT_POISONED(poisoned(0U, 0) < poisoned(0U, 0));
+  EXPECT_NOT_POISONED(poisoned(0LL, 0LLU) < poisoned(0LL, 0LLU));
+  EXPECT_NOT_POISONED(poisoned(0LLU, 0LLU) < poisoned(0LLU, 0LLU));
+  EXPECT_POISONED(poisoned(0xFF, 0xFF) < poisoned(0xFF, 0xFF));
+  EXPECT_POISONED(poisoned(0xFFFFFFFFU, 0xFFFFFFFFU) <
+                  poisoned(0xFFFFFFFFU, 0xFFFFFFFFU));
+  EXPECT_POISONED(poisoned(-1, 0xFFFFFFFFU) <
+                  poisoned(-1, 0xFFFFFFFFU));
+
+  EXPECT_NOT_POISONED(poisoned(0, 0) <= poisoned(0, 0));
+  EXPECT_NOT_POISONED(poisoned(0U, 0) <= poisoned(0U, 0));
+  EXPECT_NOT_POISONED(poisoned(0LL, 0LLU) <= poisoned(0LL, 0LLU));
+  EXPECT_NOT_POISONED(poisoned(0LLU, 0LLU) <= poisoned(0LLU, 0LLU));
+  EXPECT_POISONED(poisoned(0xFF, 0xFF) <= poisoned(0xFF, 0xFF));
+  EXPECT_POISONED(poisoned(0xFFFFFFFFU, 0xFFFFFFFFU) <=
+                  poisoned(0xFFFFFFFFU, 0xFFFFFFFFU));
+  EXPECT_POISONED(poisoned(-1, 0xFFFFFFFFU) <=
+                  poisoned(-1, 0xFFFFFFFFU));
+
+  EXPECT_NOT_POISONED(poisoned(0, 0) > poisoned(0, 0));
+  EXPECT_NOT_POISONED(poisoned(0U, 0) > poisoned(0U, 0));
+  EXPECT_NOT_POISONED(poisoned(0LL, 0LLU) > poisoned(0LL, 0LLU));
+  EXPECT_NOT_POISONED(poisoned(0LLU, 0LLU) > poisoned(0LLU, 0LLU));
+  EXPECT_POISONED(poisoned(0xFF, 0xFF) > poisoned(0xFF, 0xFF));
+  EXPECT_POISONED(poisoned(0xFFFFFFFFU, 0xFFFFFFFFU) >
+                  poisoned(0xFFFFFFFFU, 0xFFFFFFFFU));
+  EXPECT_POISONED(poisoned(-1, 0xFFFFFFFFU) >
+                  poisoned(-1, 0xFFFFFFFFU));
+
+  EXPECT_NOT_POISONED(poisoned(0, 0) >= poisoned(0, 0));
+  EXPECT_NOT_POISONED(poisoned(0U, 0) >= poisoned(0U, 0));
+  EXPECT_NOT_POISONED(poisoned(0LL, 0LLU) >= poisoned(0LL, 0LLU));
+  EXPECT_NOT_POISONED(poisoned(0LLU, 0LLU) >= poisoned(0LLU, 0LLU));
+  EXPECT_POISONED(poisoned(0xFF, 0xFF) >= poisoned(0xFF, 0xFF));
+  EXPECT_POISONED(poisoned(0xFFFFFFFFU, 0xFFFFFFFFU) >=
+                  poisoned(0xFFFFFFFFU, 0xFFFFFFFFU));
+  EXPECT_POISONED(poisoned(-1, 0xFFFFFFFFU) >=
+                  poisoned(-1, 0xFFFFFFFFU));
+
+  EXPECT_NOT_POISONED(poisoned(32, 0x7) > poisoned(7, 0));
+  EXPECT_NOT_POISONED(poisoned(33, 0x7) > poisoned(7, 0));
+  EXPECT_NOT_POISONED(poisoned(9, 0x7) > poisoned(7, 0));
+  EXPECT_NOT_POISONED(poisoned(8, 0x7) > poisoned(7, 0));
+  EXPECT_NOT_POISONED(poisoned(7, 0x7) > poisoned(7, 0));
+  EXPECT_NOT_POISONED(poisoned(6, 0x7) > poisoned(7, 0));
+  EXPECT_POISONED(poisoned(6, 0xF) > poisoned(7, 0));
+  EXPECT_POISONED(poisoned(0xF, 0xF) > poisoned(7, 0));
+
+  EXPECT_NOT_POISONED(poisoned(-1, 0x80000000U) >= poisoned(-1, 0U));
+  EXPECT_POISONED(poisoned(42, 0x80000000U) > poisoned(0, 0U));
+}
+
+#if MSAN_HAS_M128
+TEST(MemorySanitizer, ICmpVectorRelational) {
+  EXPECT_NOT_POISONED(poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0)) <
+                      poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0)));
+  EXPECT_NOT_POISONED(poisoned(_mm_set1_epi32(0), _mm_set1_epi32(0)) <
+                      poisoned(_mm_set1_epi32(0), _mm_set1_epi32(0)));
+  EXPECT_POISONED(poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0xFFFF)) <
+                  poisoned(_mm_set1_epi16(0), _mm_set1_epi16(0xFFFF)));
+  EXPECT_POISONED(poisoned(_mm_set1_epi16(6), _mm_set1_epi16(0xF)) >
+                  poisoned(_mm_set1_epi16(7), _mm_set1_epi16(0)));
+}
+#endif
+
 // Volatile bitfield store is implemented as load-mask-store
 // Test that we don't warn on the store of (uninitialized) padding.
 struct VolatileBitfieldStruct {
