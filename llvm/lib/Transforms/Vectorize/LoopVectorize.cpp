@@ -1051,10 +1051,6 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   BasicBlock *ScalarPH =
   MiddleBlock->splitBasicBlock(MiddleBlock->getTerminator(), "scalar.ph");
 
-  // This is the location in which we add all of the logic for bypassing
-  // the new vector loop.
-  Instruction *Loc = BypassBlock->getTerminator();
-
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
@@ -1065,6 +1061,11 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   // times the unroll factor (num of SIMD instructions).
   Constant *Step = ConstantInt::get(IdxTy, VF * UF);
 
+  // This is the IR builder that we use to add all of the logic for bypassing
+  // the new vector loop.
+  IRBuilder<> BypassBuilder(OldBasicBlock->getContext());
+  BypassBuilder.SetInsertPoint(BypassBlock->getTerminator());
+
   // We may need to extend the index in case there is a type mismatch.
   // We know that the count starts at zero and does not overflow.
   unsigned IdxTyBW = IdxTy->getScalarSizeInBits();
@@ -1072,36 +1073,36 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     // The exit count can be of pointer type. Convert it to the correct
     // integer type.
     if (ExitCount->getType()->isPointerTy())
-      Count = CastInst::CreatePointerCast(Count, IdxTy, "ptrcnt.to.int", Loc);
-    else if (IdxTyBW < Count->getType()->getScalarSizeInBits())
-      Count = CastInst::CreateTruncOrBitCast(Count, IdxTy, "tr.cnt", Loc);
+      Count = BypassBuilder.CreatePointerCast(Count, IdxTy, "ptrcnt.to.int");
     else
-      Count = CastInst::CreateZExtOrBitCast(Count, IdxTy, "zext.cnt", Loc);
+      Count = BypassBuilder.CreateZExtOrTrunc(Count, IdxTy, "cnt.cast");
   }
 
   // Add the start index to the loop count to get the new end index.
-  Value *IdxEnd = BinaryOperator::CreateAdd(Count, StartIdx, "end.idx", Loc);
+  Value *IdxEnd = BypassBuilder.CreateAdd(Count, StartIdx, "end.idx");
 
   // Now we need to generate the expression for N - (N % VF), which is
   // the part that the vectorized body will execute.
-  Value *R = BinaryOperator::CreateURem(Count, Step, "n.mod.vf", Loc);
-  Value *CountRoundDown = BinaryOperator::CreateSub(Count, R, "n.vec", Loc);
-  Value *IdxEndRoundDown = BinaryOperator::CreateAdd(CountRoundDown, StartIdx,
-                                                     "end.idx.rnd.down", Loc);
+  Value *R = BypassBuilder.CreateURem(Count, Step, "n.mod.vf");
+  Value *CountRoundDown = BypassBuilder.CreateSub(Count, R, "n.vec");
+  Value *IdxEndRoundDown = BypassBuilder.CreateAdd(CountRoundDown, StartIdx,
+                                                     "end.idx.rnd.down");
 
   // Now, compare the new count to zero. If it is zero skip the vector loop and
   // jump to the scalar loop.
-  Value *Cmp = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ,
-                               IdxEndRoundDown,
-                               StartIdx,
-                               "cmp.zero", Loc);
+  Value *Cmp = BypassBuilder.CreateICmp(CmpInst::ICMP_EQ, IdxEndRoundDown,
+                               StartIdx, "cmp.zero");
+
+  BasicBlock *LastBypassBlock = BypassBlock;
 
   // Generate the code that checks in runtime if arrays overlap. We put the
   // checks into a separate block to make the more common case of few elements
   // faster.
-  if (Instruction *MemoryRuntimeCheck = addRuntimeCheck(Legal, Loc)) {
+  Instruction *MemRuntimeCheck = addRuntimeCheck(Legal,
+                                                 BypassBlock->getTerminator());
+  if (MemRuntimeCheck) {
     // Create a new block containing the memory check.
-    BasicBlock *CheckBlock = BypassBlock->splitBasicBlock(MemoryRuntimeCheck,
+    BasicBlock *CheckBlock = BypassBlock->splitBasicBlock(MemRuntimeCheck,
                                                           "vector.memcheck");
     LoopBypassBlocks.push_back(CheckBlock);
 
@@ -1111,13 +1112,13 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     BranchInst::Create(MiddleBlock, CheckBlock, Cmp, OldTerm);
     OldTerm->eraseFromParent();
 
-    Cmp = MemoryRuntimeCheck;
-    assert(Loc == CheckBlock->getTerminator());
+    Cmp = MemRuntimeCheck;
+    LastBypassBlock = CheckBlock;
   }
 
-  BranchInst::Create(MiddleBlock, VectorPH, Cmp, Loc);
-  // Remove the old terminator.
-  Loc->eraseFromParent();
+  LastBypassBlock->getTerminator()->eraseFromParent();
+  BranchInst::Create(MiddleBlock, VectorPH, Cmp,
+                     LastBypassBlock);
 
   // We are going to resume the execution of the scalar loop.
   // Go over all of the induction variables that we found and fix the
