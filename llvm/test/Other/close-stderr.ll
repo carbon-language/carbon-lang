@@ -9,5 +9,8 @@
 ; XFAIL: vg_leak
 ; REQUIRES: shell
 
+; opt will fail to open /dev/null on native win32.
+; XFAIL: win32
+
 ; Test that the error handling when writing to stderr fails exits the
 ; program cleanly rather than aborting.
