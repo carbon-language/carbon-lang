@@ -1211,6 +1211,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     A = IRB.CreatePointerCast(A, Sa->getType());
     B = IRB.CreatePointerCast(B, Sb->getType());
 
+    // Let [a0, a1] be the interval of possible values of A, taking into account
+    // its undefined bits. Let [b0, b1] be the interval of possible values of B.
+    // Then (A cmp B) is defined iff (a0 cmp b1) == (a1 cmp b0).
     bool IsSigned = I.isSigned();
     Value *S1 = IRB.CreateICmp(I.getPredicate(),
                                getLowestPossibleValue(IRB, A, Sa, IsSigned),
