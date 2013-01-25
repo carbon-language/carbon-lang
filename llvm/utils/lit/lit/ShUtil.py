@@ -129,7 +129,7 @@ class ShLexer:
         lex_one_token - Lex a single 'sh' token. """
 
         c = self.eat()
-        if c in ';!':
+        if c == ';':
             return (c,)
         if c == '|':
             if self.maybe_eat('|'):
@@ -219,9 +219,6 @@ class ShParser:
 
     def parse_pipeline(self):
         negate = False
-        if self.look() == ('!',):
-            self.lex()
-            negate = True
 
         commands = [self.parse_command()]
         while self.look() == ('|',):
@@ -316,10 +313,6 @@ class TestShParse(unittest.TestCase):
                                    Command(['b'], []),
                                    Command(['c'], [])],
                                   False))
-
-        self.assertEqual(self.parse('! a'),
-                         Pipeline([Command(['a'], [])],
-                                  True))
 
     def test_list(self):        
         self.assertEqual(self.parse('a ; b'),
