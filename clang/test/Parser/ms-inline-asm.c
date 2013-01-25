@@ -1,3 +1,4 @@
+// REQUIRES: disabled
 // RUN: %clang_cc1 %s -triple i386-apple-darwin10 -verify -fasm-blocks
 
 #define M __asm int 0x2c
