@@ -34,6 +34,8 @@ int fallthrough(int n) {
     case 6:  // expected-warning{{unannotated fall-through between switch labels}} expected-note{{insert '[[clang::fallthrough]];' to silence this warning}} expected-note{{insert 'break;' to avoid fall-through}}
       n += 300;
     case 66:  // expected-warning{{unannotated fall-through between switch labels}} expected-note{{insert 'break;' to avoid fall-through}}
+    case 67:
+    case 68:
       break;
   }
   switch (n / 20) {
