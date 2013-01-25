@@ -401,7 +401,7 @@ DecodeL2OpInstructionFail(MCInst &Inst, unsigned Insn, uint64_t Address,
                     fieldFromInstruction(Insn, 27, 5) << 4;
   switch (Opcode) {
   case 0x0c:
-    Inst.setOpcode(XCore::STW_3r);
+    Inst.setOpcode(XCore::STW_l3r);
     return DecodeL3RInstruction(Inst, Insn, Address, Decoder);
   case 0x1c:
     Inst.setOpcode(XCore::XOR_l3r);

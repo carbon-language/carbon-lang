@@ -384,9 +384,9 @@ def LD8U_3r :  _F3R<0b10001, (outs GRRegs:$dst),
 }
 
 let mayStore=1 in {
-def STW_3r : _FL3R<0b000001100, (outs),
-                   (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
-                   "stw $val, $addr[$offset]", []>;
+def STW_l3r : _FL3R<0b000001100, (outs),
+                    (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
+                    "stw $val, $addr[$offset]", []>;
 
 def STW_2rus : _F2RUS<0b0000, (outs),
                       (ins GRRegs:$val, GRRegs:$addr, i32imm:$offset),
@@ -783,9 +783,9 @@ def SETD_2r : _FR2R<0b000101, (outs), (ins GRRegs:$r, GRRegs:$val),
                     "setd res[$r], $val",
                     [(int_xcore_setd GRRegs:$r, GRRegs:$val)]>;
 
-def SETPSC_l2r : _FR2R<0b110000, (outs), (ins GRRegs:$src1, GRRegs:$src2),
-                       "setpsc res[$src1], $src2",
-                       [(int_xcore_setpsc GRRegs:$src1, GRRegs:$src2)]>;
+def SETPSC_2r : _FR2R<0b110000, (outs), (ins GRRegs:$src1, GRRegs:$src2),
+                      "setpsc res[$src1], $src2",
+                      [(int_xcore_setpsc GRRegs:$src1, GRRegs:$src2)]>;
 
 def GETST_2r : _F2R<0b000001, (outs GRRegs:$dst), (ins GRRegs:$r),
                     "getst $dst, res[$r]",
@@ -1006,7 +1006,7 @@ def : Pat<(truncstorei16 GRRegs:$val, GRRegs:$addr),
           (ST16_l3r GRRegs:$val, GRRegs:$addr, (LDC_ru6 0))>;
 
 def : Pat<(store GRRegs:$val, (ldawf GRRegs:$addr, GRRegs:$offset)),
-          (STW_3r GRRegs:$val, GRRegs:$addr, GRRegs:$offset)>;
+          (STW_l3r GRRegs:$val, GRRegs:$addr, GRRegs:$offset)>;
 def : Pat<(store GRRegs:$val, (add GRRegs:$addr, immUs4:$offset)),
           (STW_2rus GRRegs:$val, GRRegs:$addr, (div4_xform immUs4:$offset))>;
 def : Pat<(store GRRegs:$val, GRRegs:$addr),

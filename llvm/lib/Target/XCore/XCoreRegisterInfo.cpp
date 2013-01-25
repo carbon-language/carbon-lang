@@ -231,7 +231,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
               .addReg(ScratchReg, RegState::Kill);
         break;
       case XCore::STWFI:
-        BuildMI(MBB, II, dl, TII.get(XCore::STW_3r))
+        BuildMI(MBB, II, dl, TII.get(XCore::STW_l3r))
               .addReg(Reg, getKillRegState(isKill))
               .addReg(FrameReg)
               .addReg(ScratchReg, RegState::Kill);
