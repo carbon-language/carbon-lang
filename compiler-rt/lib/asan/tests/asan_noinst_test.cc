@@ -840,3 +840,12 @@ TEST(AddressSanitizerInterface, CallocOverflow) {
   void *p = calloc(kArraySize, kArraySize2);  // Should return 0.
   EXPECT_EQ(0L, Ident(p));
 }
+
+TEST(AddressSanitizerInterface, CallocOverflow2) {
+#if SANITIZER_WORDSIZE == 32
+  size_t kArraySize = 112;
+  volatile size_t kArraySize2 = 43878406;
+  void *p = calloc(kArraySize, kArraySize2);  // Should return 0.
+  EXPECT_EQ(0L, Ident(p));
+#endif
+}
