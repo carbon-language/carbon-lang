@@ -13,6 +13,8 @@
 // RUN: test ! -f %t.o
 // RUN: test -f %t.d
 
+// FIXME: %t.o is not touched with -no-integrated-as.
+// XFAIL: mingw32,ppc
 // REQUIRES: shell
 // REQUIRES: crash-recovery
 
