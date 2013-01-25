@@ -122,6 +122,10 @@ public:
   LLVMContext &getContext() { return Context; }
   ArrayRef<AttributeWithIndex> getAttributes() const { return AttrList; }
   unsigned getNumAttributes() const { return AttrList.size(); }
+  unsigned getSlotIndex(unsigned Slot) const {
+    // FIXME: This needs to use AttrNodes instead.
+    return AttrList[Slot].Index;
+  }
 
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, AttrList);

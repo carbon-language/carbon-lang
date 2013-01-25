@@ -339,6 +339,9 @@ public:
   /// function itself).
   unsigned getNumSlots() const;
 
+  /// \brief Return the index for the given slot.
+  unsigned getSlotIndex(unsigned Slot) const;
+
   /// \brief Return the AttributeWithIndex at the specified slot.  This holds a
   /// index number plus a set of attributes.
   const AttributeWithIndex &getSlot(unsigned Slot) const;

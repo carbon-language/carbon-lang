@@ -718,25 +718,25 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
   bool SawNest = false;
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    const AttributeWithIndex &Attr = Attrs.getSlot(i);
+    unsigned Index = Attrs.getSlotIndex(i);
 
     Type *Ty;
-    if (Attr.Index == 0)
+    if (Index == 0)
       Ty = FT->getReturnType();
-    else if (Attr.Index-1 < FT->getNumParams())
-      Ty = FT->getParamType(Attr.Index-1);
+    else if (Index-1 < FT->getNumParams())
+      Ty = FT->getParamType(Index-1);
     else
       break;  // VarArgs attributes, verified elsewhere.
 
-    VerifyParameterAttrs(Attrs, Attr.Index, Ty, Attr.Index == 0, V);
+    VerifyParameterAttrs(Attrs, Index, Ty, Index == 0, V);
 
-    if (Attrs.hasAttribute(Attr.Index, Attribute::Nest)) {
+    if (Attrs.hasAttribute(i, Attribute::Nest)) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
       SawNest = true;
     }
 
-    if (Attrs.hasAttribute(Attr.Index, Attribute::StructRet))
-      Assert1(Attr.Index == 1, "Attribute sret is not on first parameter!", V);
+    if (Attrs.hasAttribute(Index, Attribute::StructRet))
+      Assert1(Index == 1, "Attribute sret is not on first parameter!", V);
   }
 
   if (!Attrs.hasAttributes(AttributeSet::FunctionIndex))
@@ -801,12 +801,12 @@ static bool VerifyAttributeCount(const AttributeSet &Attrs, unsigned Params) {
     return true;
 
   unsigned LastSlot = Attrs.getNumSlots() - 1;
-  unsigned LastIndex = Attrs.getSlot(LastSlot).Index;
+  unsigned LastIndex = Attrs.getSlotIndex(LastSlot);
   if (LastIndex <= Params
-      || (LastIndex == (unsigned)~0
-          && (LastSlot == 0 || Attrs.getSlot(LastSlot - 1).Index <= Params)))  
+      || (LastIndex == AttributeSet::FunctionIndex
+          && (LastSlot == 0 || Attrs.getSlotIndex(LastSlot - 1) <= Params)))
     return true;
-
+ 
   return false;
 }
 
