@@ -222,8 +222,13 @@ class _L4R<dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
 }
 
-class _L5R<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FL5R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
+  let Inst{31-27} = opc{5-1};
+  let Inst{20} = opc{0};
+  let Inst{15-11} = 0b11111;
+
+  let DecoderMethod = "DecodeL5RInstruction";
 }
 
 class _FL6R<bits<5> opc, dag outs, dag ins, string asmstr, list<dag> pattern>

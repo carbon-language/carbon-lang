@@ -485,19 +485,18 @@ def CRC8_l4r : _L4R<(outs GRRegs:$dst1, GRRegs:$dst2),
 
 // Five operand long
 
-def LADD_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                    "ladd $dst2, $dst1, $src1, $src2, $src3",
-                    []>;
-
-def LSUB_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                    "lsub $dst2, $dst1, $src1, $src2, $src3",
-                    []>;
-
-def LDIVU_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
+def LADD_l5r : _FL5R<0b000001, (outs GRRegs:$dst1, GRRegs:$dst2),
                      (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                     "ldivu $dst1, $dst2, $src3, $src1, $src2", []>;
+                     "ladd $dst2, $dst1, $src1, $src2, $src3",
+                     []>;
+
+def LSUB_l5r : _FL5R<0b000010, (outs GRRegs:$dst1, GRRegs:$dst2),
+                     (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
+                     "lsub $dst2, $dst1, $src1, $src2, $src3", []>;
+
+def LDIVU_l5r : _FL5R<0b000000, (outs GRRegs:$dst1, GRRegs:$dst2),
+                      (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
+                      "ldivu $dst1, $dst2, $src3, $src1, $src2", []>;
 
 // Six operand long
 
