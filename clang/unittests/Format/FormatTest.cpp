@@ -909,7 +909,7 @@ TEST_F(FormatTest, ConstructorInitializers) {
 
   // This test takes VERY long when memoization is broken.
   std::string input = "Constructor()\n"
-                 "    : aaaa(a,\n";
+                      "    : aaaa(a,\n";
   for (unsigned i = 0, e = 80; i != e; ++i) {
     input += "           a,\n";
   }
@@ -952,6 +952,12 @@ TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&\n"
       "                                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaaaa(new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
+  verifyFormat(
+      "aaaaaa(aaa, new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
 
   // This test case breaks on an incorrect memoization, i.e. an optimization not
   // taking into account the StopAt value.
@@ -1202,6 +1208,9 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "template <typename T1, typename T2 = char, typename T3 = char,\n"
       "          typename T4 = char>\n"
       "void f();");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaa<aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa>(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
@@ -2071,7 +2080,7 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat(
       "void f() {\n"
       "  if ((self = [super initWithContentRect:contentRect styleMask:styleMask\n"
-      "                  backing:NSBackingStoreBuffered defer:YES]))");
+      "          backing:NSBackingStoreBuffered defer:YES]))");
   
   verifyFormat("[foo checkThatBreakingAfterColonWorksOk:\n"
                "    [bar ifItDoes:reduceOverallLineLengthLikeInThisCase]];");

@@ -609,7 +609,7 @@ private:
         // Treat the condition inside an if as if it was a second function
         // parameter, i.e. let nested calls have an indent of 4.
         State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
-      else if (Spaces > 0 && ParenLevel != 0)
+      else if (Previous.is(tok::comma) && ParenLevel != 0)
         // Top-level spaces are exempt as that mostly leads to better results.
         State.Stack.back().LastSpace = State.Column;
     }
@@ -706,7 +706,7 @@ private:
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return 20;
 
-    if (Left.is(tok::l_paren))
+    if (Left.is(tok::l_paren) || Left.Type == TT_TemplateOpener)
       return 20;
 
     if (Left.is(tok::question) || Left.Type == TT_ConditionalExpr)
