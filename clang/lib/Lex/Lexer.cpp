@@ -2749,7 +2749,7 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
 
   if (Result) {
     Result->setFlag(Token::HasUCN);
-    if (CurPtr - StartPtr == NumHexDigits + 2)
+    if (CurPtr - StartPtr == (ptrdiff_t)NumHexDigits + 2)
       StartPtr = CurPtr;
     else
       while (StartPtr != CurPtr)
