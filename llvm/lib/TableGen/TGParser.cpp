@@ -912,6 +912,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   }
 
   case tgtok::XConcat:
+  case tgtok::XADD:
   case tgtok::XSRA:
   case tgtok::XSRL:
   case tgtok::XSHL:
@@ -927,6 +928,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     switch (OpTok) {
     default: llvm_unreachable("Unhandled code!");
     case tgtok::XConcat: Code = BinOpInit::CONCAT;Type = DagRecTy::get(); break;
+    case tgtok::XADD:    Code = BinOpInit::ADD;   Type = IntRecTy::get(); break;
     case tgtok::XSRA:    Code = BinOpInit::SRA;   Type = IntRecTy::get(); break;
     case tgtok::XSRL:    Code = BinOpInit::SRL;   Type = IntRecTy::get(); break;
     case tgtok::XSHL:    Code = BinOpInit::SHL;   Type = IntRecTy::get(); break;
@@ -1142,6 +1144,7 @@ RecTy *TGParser::ParseOperatorType() {
 ///   SimpleValue ::= '[' ValueList ']'
 ///   SimpleValue ::= '(' IDValue DagArgList ')'
 ///   SimpleValue ::= CONCATTOK '(' Value ',' Value ')'
+///   SimpleValue ::= ADDTOK '(' Value ',' Value ')'
 ///   SimpleValue ::= SHLTOK '(' Value ',' Value ')'
 ///   SimpleValue ::= SRATOK '(' Value ',' Value ')'
 ///   SimpleValue ::= SRLTOK '(' Value ',' Value ')'
@@ -1397,6 +1400,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XEmpty:
   case tgtok::XCast:  // Value ::= !unop '(' Value ')'
   case tgtok::XConcat:
+  case tgtok::XADD:
   case tgtok::XSRA:
   case tgtok::XSRL:
   case tgtok::XSHL:

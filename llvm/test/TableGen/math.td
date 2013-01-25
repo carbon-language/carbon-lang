@@ -1,0 +1,15 @@
+// RUN: llvm-tblgen %s | FileCheck %s
+
+class Int<int value> {
+  int Value = value;
+}
+
+def v1024   : Int<1024>;
+// CHECK: Value = 1024
+
+def v1025   : Int<!add(v1024.Value, 1)>;
+// CHECK: Value = 1025
+
+def v2048   : Int<!add(v1024.Value, v1024.Value)>;
+// CHECK: Value = 2048
+
