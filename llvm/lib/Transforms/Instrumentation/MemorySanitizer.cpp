@@ -127,6 +127,10 @@ static cl::opt<bool> ClHandleICmp("msan-handle-icmp",
        cl::desc("propagate shadow through ICmpEQ and ICmpNE"),
        cl::Hidden, cl::init(true));
 
+static cl::opt<bool> ClHandleICmpExact("msan-handle-icmp-exact",
+       cl::desc("exact handling of relational integer ICmp"),
+       cl::Hidden, cl::init(true));
+
 static cl::opt<bool> ClStoreCleanOrigin("msan-store-clean-origin",
        cl::desc("store origin for clean (fully initialized) values"),
        cl::Hidden, cl::init(false));
@@ -1155,6 +1159,70 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setOriginForNaryOp(I);
   }
 
+  /// \brief Build the lowest possible value of V, taking into account V's
+  ///        uninitialized bits.
+  Value *getLowestPossibleValue(IRBuilder<> &IRB, Value *A, Value *Sa,
+                                bool isSigned) {
+    if (isSigned) {
+      // Split shadow into sign bit and other bits.
+      Value *SaOtherBits = IRB.CreateLShr(IRB.CreateShl(Sa, 1), 1);
+      Value *SaSignBit = IRB.CreateXor(Sa, SaOtherBits);
+      // Maximise the undefined shadow bit, minimize other undefined bits.
+      return
+        IRB.CreateOr(IRB.CreateAnd(A, IRB.CreateNot(SaOtherBits)), SaSignBit);
+    } else {
+      // Minimize undefined bits.
+      return IRB.CreateAnd(A, IRB.CreateNot(Sa));
+    }
+  }
+
+  /// \brief Build the highest possible value of V, taking into account V's
+  ///        uninitialized bits.
+  Value *getHighestPossibleValue(IRBuilder<> &IRB, Value *A, Value *Sa,
+                                bool isSigned) {
+    if (isSigned) {
+      // Split shadow into sign bit and other bits.
+      Value *SaOtherBits = IRB.CreateLShr(IRB.CreateShl(Sa, 1), 1);
+      Value *SaSignBit = IRB.CreateXor(Sa, SaOtherBits);
+      // Minimise the undefined shadow bit, maximise other undefined bits.
+      return
+        IRB.CreateOr(IRB.CreateAnd(A, IRB.CreateNot(SaSignBit)), SaOtherBits);
+    } else {
+      // Maximize undefined bits.
+      return IRB.CreateOr(A, Sa);
+    }
+  }
+
+  /// \brief Instrument relational comparisons.
+  ///
+  /// This function does exact shadow propagation for all relational
+  /// comparisons of integers, pointers and vectors of those.
+  /// FIXME: output seems suboptimal when one of the operands is a constant
+  void handleRelationalComparisonExact(ICmpInst &I) {
+    IRBuilder<> IRB(&I);
+    Value *A = I.getOperand(0);
+    Value *B = I.getOperand(1);
+    Value *Sa = getShadow(A);
+    Value *Sb = getShadow(B);
+
+    // Get rid of pointers and vectors of pointers.
+    // For ints (and vectors of ints), types of A and Sa match,
+    // and this is a no-op.
+    A = IRB.CreatePointerCast(A, Sa->getType());
+    B = IRB.CreatePointerCast(B, Sb->getType());
+
+    bool IsSigned = I.isSigned();
+    Value *S1 = IRB.CreateICmp(I.getPredicate(),
+                               getLowestPossibleValue(IRB, A, Sa, IsSigned),
+                               getHighestPossibleValue(IRB, B, Sb, IsSigned));
+    Value *S2 = IRB.CreateICmp(I.getPredicate(),
+                               getHighestPossibleValue(IRB, A, Sa, IsSigned),
+                               getLowestPossibleValue(IRB, B, Sb, IsSigned));
+    Value *Si = IRB.CreateXor(S1, S2);
+    setShadow(&I, Si);
+    setOriginForNaryOp(I);
+  }
+
   /// \brief Instrument signed relational comparisons.
   ///
   /// Handle (x<0) and (x>=0) comparisons (essentially, sign bit tests) by
@@ -1186,6 +1254,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   void visitICmpInst(ICmpInst &I) {
     if (ClHandleICmp && I.isEquality())
       handleEqualityComparison(I);
+    else if (ClHandleICmp && ClHandleICmpExact && I.isRelational())
+      handleRelationalComparisonExact(I);
     else if (ClHandleICmp && I.isSigned() && I.isRelational())
       handleSignedRelationalComparison(I);
     else
