@@ -168,8 +168,7 @@ unsigned PPCTTI::getMaximumUnrollFactor() const {
 }
 
 unsigned PPCTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
-  int ISD = TLI->InstructionOpcodeToISD(Opcode);
-  assert(ISD && "Invalid opcode");
+  assert(TLI->InstructionOpcodeToISD(Opcode) && "Invalid opcode");
 
   // Fallback to the default implementation.
   return TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty);
@@ -181,8 +180,7 @@ unsigned PPCTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
 }
 
 unsigned PPCTTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
-  int ISD = TLI->InstructionOpcodeToISD(Opcode);
-  assert(ISD && "Invalid opcode");
+  assert(TLI->InstructionOpcodeToISD(Opcode) && "Invalid opcode");
 
   return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 }
