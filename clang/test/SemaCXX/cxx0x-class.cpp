@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wno-error=static-float-init %s 
 
 int vs = 0;
 
@@ -17,11 +17,11 @@ public:
 };
 
 namespace rdar8367341 {
-  float foo(); // expected-note {{here}}
+  float foo(); // expected-note 2{{here}}
 
   struct A {
-    static const float x = 5.0f; // expected-warning {{GNU extension}} expected-note {{use 'constexpr' specifier to silence this warning}}
-    static const float y = foo(); // expected-warning {{GNU extension}} expected-note {{use 'constexpr' specifier to silence this warning}} expected-error {{in-class initializer for static data member is not a constant expression}}
+    static const float x = 5.0f; // expected-warning {{requires 'constexpr'}}
+    static const float y = foo(); // expected-warning {{requires 'constexpr'}} expected-error {{constexpr variable 'y' must be initialized by a constant expression}} expected-note {{non-constexpr function 'foo'}}
     static constexpr float x2 = 5.0f;
     static constexpr float y2 = foo(); // expected-error {{must be initialized by a constant expression}} expected-note {{non-constexpr function 'foo'}}
   };

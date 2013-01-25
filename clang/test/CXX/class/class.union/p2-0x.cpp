@@ -7,7 +7,7 @@ union U1 {
   static const int k2 = k1;
   static int k3 = k2; // expected-error {{non-const static data member must be initialized out of line}}
   static constexpr double k4 = k2;
-  static const double k5 = k4; // expected-warning {{GNU extension}} expected-note {{use 'constexpr'}}
+  static const double k5 = k4; // expected-error {{requires 'constexpr' specifier}}
   int n[k1 + 3];
 };
 

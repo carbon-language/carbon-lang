@@ -212,6 +212,8 @@ def : DiagGroup<"synth">;
 def SizeofArrayArgument : DiagGroup<"sizeof-array-argument">;
 def SizeofPointerMemaccess : DiagGroup<"sizeof-pointer-memaccess">;
 def StaticInInline : DiagGroup<"static-in-inline">;
+def GNUStaticFloatInit : DiagGroup<"gnu-static-float-init">;
+def StaticFloatInit : DiagGroup<"static-float-init", [GNUStaticFloatInit]>;
 def StringPlusInt : DiagGroup<"string-plus-int">;
 def StrncatSize : DiagGroup<"strncat-size">;
 def TautologicalOutOfRangeCompare : DiagGroup<"tautological-constant-out-of-range-compare">;
@@ -474,7 +476,8 @@ def C11 : DiagGroup<"c11-extensions">;
 def C99 : DiagGroup<"c99-extensions">;
 
 // A warning group for warnings about GCC extensions.
-def GNU : DiagGroup<"gnu", [GNUDesignator, VLAExtension, ZeroLengthArray]>;
+def GNU : DiagGroup<"gnu", [GNUDesignator, VLAExtension,
+                            ZeroLengthArray, GNUStaticFloatInit]>;
 // A warning group for warnings about code that clang accepts but gcc doesn't.
 def GccCompat : DiagGroup<"gcc-compat">;
 
