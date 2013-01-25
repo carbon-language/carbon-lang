@@ -1078,9 +1078,17 @@ public:
         joinPredSubtree(*PI, SU, /*CheckLimit=*/false);
 
       // Either link or merge the TreeData entry from the child to the parent.
-      if (R.DFSNodeData[PredNum].SubtreeID == PredNum)
-        RootSet[PredNum].ParentNodeID = SU->NodeNum;
-      else {
+      if (R.DFSNodeData[PredNum].SubtreeID == PredNum) {
+        // If the predecessor's parent is invalid, this is a tree edge and the
+        // current node is the parent.
+        if (RootSet[PredNum].ParentNodeID == SchedDFSResult::InvalidSubtreeID)
+          RootSet[PredNum].ParentNodeID = SU->NodeNum;
+      }
+      else if (RootSet.count(PredNum)) {
+        // The predecessor is not a root, but is still in the root set. This
+        // must be the new parent that it was just joined to. Note that
+        // RootSet[PredNum].ParentNodeID may either be invalid or may still be
+        // set to the original parent.
         RData.SubInstrCount += RootSet[PredNum].SubInstrCount;
         RootSet.erase(PredNum);
       }
@@ -1115,8 +1123,10 @@ public:
       if (RI->ParentNodeID != SchedDFSResult::InvalidSubtreeID)
         R.DFSTreeData[TreeID].ParentTreeID = SubtreeClasses[RI->ParentNodeID];
       R.DFSTreeData[TreeID].SubInstrCount = RI->SubInstrCount;
-      assert(RI->SubInstrCount <= R.DFSNodeData[RI->NodeID].InstrCount &&
-             "Bad SubInstrCount");
+      // Note that SubInstrCount may be greater than InstrCount if we joined
+      // subtrees across a cross edge. InstrCount will be attributed to the
+      // original parent, while SubInstrCount will be attributed to the joined
+      // parent.
     }
     R.SubtreeConnections.resize(SubtreeClasses.getNumClasses());
     R.SubtreeConnectLevels.resize(SubtreeClasses.getNumClasses());
@@ -1221,7 +1231,7 @@ public:
 static bool hasDataSucc(const SUnit *SU) {
   for (SUnit::const_succ_iterator
          SI = SU->Succs.begin(), SE = SU->Succs.end(); SI != SE; ++SI) {
-    if (SI->getKind() == SDep::Data)
+    if (SI->getKind() == SDep::Data && !SI->getSUnit()->isBoundaryNode())
       return true;
   }
   return false;
@@ -1249,8 +1259,10 @@ void SchedDFSResult::compute(ArrayRef<SUnit> SUnits) {
         const SDep &PredDep = *DFS.getPred();
         DFS.advance();
         // Ignore non-data edges.
-        if (PredDep.getKind() != SDep::Data)
+        if (PredDep.getKind() != SDep::Data
+            || PredDep.getSUnit()->isBoundaryNode()) {
           continue;
+        }
         // An already visited edge is a cross edge, assuming an acyclic DAG.
         if (Impl.isVisited(PredDep.getSUnit())) {
           Impl.visitCrossEdge(PredDep, DFS.getCurr());

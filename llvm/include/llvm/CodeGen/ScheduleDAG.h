@@ -258,6 +258,8 @@ namespace llvm {
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
   class SUnit {
   private:
+    enum { BoundaryID = ~0u };
+
     SDNode *Node;                       // Representative node.
     MachineInstr *Instr;                // Alternatively, a MachineInstr.
   public:
@@ -343,7 +345,7 @@ namespace llvm {
 
     /// SUnit - Construct a placeholder SUnit.
     SUnit()
-      : Node(0), Instr(0), OrigNode(0), SchedClass(0), NodeNum(~0u),
+      : Node(0), Instr(0), OrigNode(0), SchedClass(0), NodeNum(BoundaryID),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), WeakPredsLeft(0), WeakSuccsLeft(0), NumRegDefsLeft(0),
         Latency(0), isVRegCycle(false), isCall(false), isCallOp(false),
@@ -353,6 +355,15 @@ namespace llvm {
         isCloned(false), SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         TopReadyCycle(0), BotReadyCycle(0), CopyDstRC(NULL), CopySrcRC(NULL) {}
+
+    /// \brief Boundary nodes are placeholders for the boundary of the
+    /// scheduling region.
+    ///
+    /// BoundaryNodes can have DAG edges, including Data edges, but they do not
+    /// correspond to schedulable entities (e.g. instructions) and do not have a
+    /// valid ID. Consequently, always check for boundary nodes before accessing
+    /// an assoicative data structure keyed on node ID.
+    bool isBoundaryNode() const { return NodeNum == BoundaryID; };
 
     /// setNode - Assign the representative SDNode for this SUnit.
     /// This may be used during pre-regalloc scheduling.
