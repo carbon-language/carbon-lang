@@ -92,6 +92,22 @@ public:
   }
 };
 
+/// Selects which debug sections get dumped.
+enum DIDumpType {
+  DIDT_Null,
+  DIDT_All,
+  DIDT_Abbrev,
+  DIDT_AbbrevDwo,
+  DIDT_Aranges,
+  DIDT_Info,
+  DIDT_InfoDwo,
+  DIDT_Line,
+  DIDT_Ranges,
+  DIDT_Str,
+  DIDT_StrDwo,
+  DIDT_StrOffsetsDwo
+};
+
 // In place of applying the relocations to the data we've read from disk we use
 // a separate mapping table to the side and checking that at locations in the
 // dwarf where we expect relocated values. This adds a bit of complexity to the
@@ -106,7 +122,7 @@ public:
   /// getDWARFContext - get a context for binary DWARF data.
   static DIContext *getDWARFContext(object::ObjectFile *);
 
-  virtual void dump(raw_ostream &OS) = 0;
+  virtual void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All) = 0;
 
   virtual DILineInfo getLineInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier()) = 0;

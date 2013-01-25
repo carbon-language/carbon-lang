@@ -52,6 +52,23 @@ static cl::opt<bool>
 PrintInlining("inlining", cl::init(false),
               cl::desc("Print all inlined frames for a given address"));
 
+static cl::opt<DIDumpType>
+DumpType("debug-dump", cl::init(DIDT_All),
+  cl::desc("Dump of debug sections:"),
+  cl::values(
+        clEnumValN(DIDT_All, "all", "Dump all debug sections"),
+        clEnumValN(DIDT_Abbrev, "abbrev", ".debug_abbrev"),
+        clEnumValN(DIDT_AbbrevDwo, "abbrev.dwo", ".debug_abbrev.dwo"),
+        clEnumValN(DIDT_Aranges, "aranges", ".debug_aranges"),
+        clEnumValN(DIDT_Info, "info", ".debug_info"),
+        clEnumValN(DIDT_InfoDwo, "info.dwo", ".debug_info.dwo"),
+        clEnumValN(DIDT_Line, "line", ".debug_line"),
+        clEnumValN(DIDT_Ranges, "ranges", ".debug_ranges"),
+        clEnumValN(DIDT_Str, "str", ".debug_str"),
+        clEnumValN(DIDT_StrDwo, "str.dwo", ".debug_str.dwo"),
+        clEnumValN(DIDT_StrOffsetsDwo, "str_offsets.dwo", ".debug_str_offsets.dwo"),
+        clEnumValEnd));
+
 static void PrintDILineInfo(DILineInfo dli) {
   if (PrintFunctions)
     outs() << (dli.getFunctionName() ? dli.getFunctionName() : "<unknown>")
@@ -75,7 +92,7 @@ static void DumpInput(const StringRef &Filename) {
     outs() << Filename
            << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
     // Dump the complete DWARF structure.
-    DICtx->dump(outs());
+    DICtx->dump(outs(), DumpType);
   } else {
     // Print line info for the specified address.
     int SpecFlags = DILineInfoSpecifier::FileLineInfo |

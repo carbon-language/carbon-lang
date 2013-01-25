@@ -19,80 +19,100 @@ using namespace dwarf;
 
 typedef DWARFDebugLine::LineTable DWARFLineTable;
 
-void DWARFContext::dump(raw_ostream &OS) {
-  OS << ".debug_abbrev contents:\n";
-  getDebugAbbrev()->dump(OS);
+void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
+  if (DumpType == DIDT_All || DumpType == DIDT_Abbrev) {
+    OS << ".debug_abbrev contents:\n";
+    getDebugAbbrev()->dump(OS);
+  }
 
-  OS << "\n.debug_info contents:\n";
-  for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i)
-    getCompileUnitAtIndex(i)->dump(OS);
+  if (DumpType == DIDT_All || DumpType == DIDT_Info) {
+    OS << "\n.debug_info contents:\n";
+    for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i)
+      getCompileUnitAtIndex(i)->dump(OS);
+  }
 
-  OS << "\n.debug_aranges contents:\n";
-  DataExtractor arangesData(getARangeSection(), isLittleEndian(), 0);
   uint32_t offset = 0;
-  DWARFDebugArangeSet set;
-  while (set.extract(arangesData, &offset))
-    set.dump(OS);
+  if (DumpType == DIDT_All || DumpType == DIDT_Aranges) {
+    OS << "\n.debug_aranges contents:\n";
+    DataExtractor arangesData(getARangeSection(), isLittleEndian(), 0);
+    DWARFDebugArangeSet set;
+    while (set.extract(arangesData, &offset))
+      set.dump(OS);
+  }
 
   uint8_t savedAddressByteSize = 0;
-  OS << "\n.debug_line contents:\n";
-  for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i) {
-    DWARFCompileUnit *cu = getCompileUnitAtIndex(i);
-    savedAddressByteSize = cu->getAddressByteSize();
-    unsigned stmtOffset =
-      cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
-                                                           -1U);
-    if (stmtOffset != -1U) {
-      DataExtractor lineData(getLineSection(), isLittleEndian(),
-                             savedAddressByteSize);
-      DWARFDebugLine::DumpingState state(OS);
-      DWARFDebugLine::parseStatementTable(lineData, &stmtOffset, state);
+  if (DumpType == DIDT_All || DumpType == DIDT_Line) {
+    OS << "\n.debug_line contents:\n";
+    for (unsigned i = 0, e = getNumCompileUnits(); i != e; ++i) {
+      DWARFCompileUnit *cu = getCompileUnitAtIndex(i);
+      savedAddressByteSize = cu->getAddressByteSize();
+      unsigned stmtOffset =
+        cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
+                                                             -1U);
+      if (stmtOffset != -1U) {
+        DataExtractor lineData(getLineSection(), isLittleEndian(),
+                               savedAddressByteSize);
+        DWARFDebugLine::DumpingState state(OS);
+        DWARFDebugLine::parseStatementTable(lineData, &stmtOffset, state);
+      }
     }
   }
 
-  OS << "\n.debug_str contents:\n";
-  DataExtractor strData(getStringSection(), isLittleEndian(), 0);
-  offset = 0;
-  uint32_t strOffset = 0;
-  while (const char *s = strData.getCStr(&offset)) {
-    OS << format("0x%8.8x: \"%s\"\n", strOffset, s);
-    strOffset = offset;
+  if (DumpType == DIDT_All || DumpType == DIDT_Str) {
+    OS << "\n.debug_str contents:\n";
+    DataExtractor strData(getStringSection(), isLittleEndian(), 0);
+    offset = 0;
+    uint32_t strOffset = 0;
+    while (const char *s = strData.getCStr(&offset)) {
+      OS << format("0x%8.8x: \"%s\"\n", strOffset, s);
+      strOffset = offset;
+    }
   }
 
-  OS << "\n.debug_ranges contents:\n";
-  // In fact, different compile units may have different address byte
-  // sizes, but for simplicity we just use the address byte size of the last
-  // compile unit (there is no easy and fast way to associate address range
-  // list and the compile unit it describes).
-  DataExtractor rangesData(getRangeSection(), isLittleEndian(),
-                           savedAddressByteSize);
-  offset = 0;
-  DWARFDebugRangeList rangeList;
-  while (rangeList.extract(rangesData, &offset))
-    rangeList.dump(OS);
-
-  OS << "\n.debug_abbrev.dwo contents:\n";
-  getDebugAbbrevDWO()->dump(OS);
-
-  OS << "\n.debug_info.dwo contents:\n";
-  for (unsigned i = 0, e = getNumDWOCompileUnits(); i != e; ++i)
-    getDWOCompileUnitAtIndex(i)->dump(OS);
-
-  OS << "\n.debug_str.dwo contents:\n";
-  DataExtractor strDWOData(getStringDWOSection(), isLittleEndian(), 0);
-  offset = 0;
-  uint32_t strDWOOffset = 0;
-  while (const char *s = strDWOData.getCStr(&offset)) {
-    OS << format("0x%8.8x: \"%s\"\n", strDWOOffset, s);
-    strDWOOffset = offset;
+  if (DumpType == DIDT_All || DumpType == DIDT_Ranges) {
+    OS << "\n.debug_ranges contents:\n";
+    // In fact, different compile units may have different address byte
+    // sizes, but for simplicity we just use the address byte size of the last
+    // compile unit (there is no easy and fast way to associate address range
+    // list and the compile unit it describes).
+    DataExtractor rangesData(getRangeSection(), isLittleEndian(),
+                             savedAddressByteSize);
+    offset = 0;
+    DWARFDebugRangeList rangeList;
+    while (rangeList.extract(rangesData, &offset))
+      rangeList.dump(OS);
   }
 
-  OS << "\n.debug_str_offsets.dwo contents:\n";
-  DataExtractor strOffsetExt(getStringOffsetDWOSection(), isLittleEndian(), 0);
-  offset = 0;
-  while (offset < getStringOffsetDWOSection().size()) {
-    OS << format("0x%8.8x: ", offset);
-    OS << format("%8.8x\n", strOffsetExt.getU32(&offset));
+  if (DumpType == DIDT_All || DumpType == DIDT_AbbrevDwo) {
+    OS << "\n.debug_abbrev.dwo contents:\n";
+    getDebugAbbrevDWO()->dump(OS);
+  }
+
+  if (DumpType == DIDT_All || DumpType == DIDT_InfoDwo) {
+    OS << "\n.debug_info.dwo contents:\n";
+    for (unsigned i = 0, e = getNumDWOCompileUnits(); i != e; ++i)
+      getDWOCompileUnitAtIndex(i)->dump(OS);
+  }
+
+  if (DumpType == DIDT_All || DumpType == DIDT_StrDwo) {
+    OS << "\n.debug_str.dwo contents:\n";
+    DataExtractor strDWOData(getStringDWOSection(), isLittleEndian(), 0);
+    offset = 0;
+    uint32_t strDWOOffset = 0;
+    while (const char *s = strDWOData.getCStr(&offset)) {
+      OS << format("0x%8.8x: \"%s\"\n", strDWOOffset, s);
+      strDWOOffset = offset;
+    }
+  }
+
+  if (DumpType == DIDT_All || DumpType == DIDT_StrOffsetsDwo) {
+    OS << "\n.debug_str_offsets.dwo contents:\n";
+    DataExtractor strOffsetExt(getStringOffsetDWOSection(), isLittleEndian(), 0);
+    offset = 0;
+    while (offset < getStringOffsetDWOSection().size()) {
+      OS << format("0x%8.8x: ", offset);
+      OS << format("%8.8x\n", strOffsetExt.getU32(&offset));
+    }
   }
 }
 

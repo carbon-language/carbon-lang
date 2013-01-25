@@ -45,7 +45,7 @@ class DWARFContext : public DIContext {
 
 public:
   DWARFContext() {}
-  virtual void dump(raw_ostream &OS);
+  virtual void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All);
 
   /// Get the number of compile units in this context.
   unsigned getNumCompileUnits() {

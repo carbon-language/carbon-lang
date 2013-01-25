@@ -1,0 +1,13 @@
+; RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test.elf-x86-64 -debug-dump=all | FileCheck %s -check-prefix DUMP_ALL
+; RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test.elf-x86-64 -debug-dump=info | FileCheck %s -check-prefix DUMP_INFO
+; RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test.elf-x86-64 -debug-dump=ranges | FileCheck %s -check-prefix DUMP_RANGES
+
+; DUMP_ALL: .debug_info
+; DUMP_ALL: .debug_ranges
+
+; DUMP_INFO: .debug_info
+; DUMP_INFO-NOT: .debug_ranges
+
+; DUMP_RANGES-NOT: .debug_info
+; DUMP_RANGES: .debug_ranges
+
