@@ -941,30 +941,23 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
     }
   }
 
-  IRBuilder<> ChkBuilder(Loc->getContext());
-  ChkBuilder.SetInsertPoint(Loc);
+  IRBuilder<> ChkBuilder(Loc);
 
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
-      Instruction::CastOps Op = Instruction::BitCast;
-      Value *Start0 = ChkBuilder.CreateCast(Op, Starts[i], PtrArithTy, "bc");
-      Value *Start1 = ChkBuilder.CreateCast(Op, Starts[j], PtrArithTy, "bc");
-      Value *End0 =   ChkBuilder.CreateCast(Op, Ends[i],   PtrArithTy, "bc");
-      Value *End1 =   ChkBuilder.CreateCast(Op, Ends[j],   PtrArithTy, "bc");
+      Value *Start0 = ChkBuilder.CreateBitCast(Starts[i], PtrArithTy, "bc");
+      Value *Start1 = ChkBuilder.CreateBitCast(Starts[j], PtrArithTy, "bc");
+      Value *End0 =   ChkBuilder.CreateBitCast(Ends[i],   PtrArithTy, "bc");
+      Value *End1 =   ChkBuilder.CreateBitCast(Ends[j],   PtrArithTy, "bc");
 
-      Value *Cmp0 = ChkBuilder.CreateICmp(CmpInst::ICMP_ULE,
-                                          Start0, End1, "bound0");
-      Value *Cmp1 = ChkBuilder.CreateICmp(CmpInst::ICMP_ULE,
-                                          Start1, End0, "bound1");
-      Value *IsConflict = ChkBuilder.CreateBinOp(Instruction::And, Cmp0, Cmp1,
-                                                 "found.conflict");
-      if (MemoryRuntimeCheck) {
-        Value *B = ChkBuilder.CreateBinOp(Instruction::Or, MemoryRuntimeCheck,
-                               IsConflict, "conflict.rdx");
-        MemoryRuntimeCheck = cast<Instruction>(B);
-      } else {
-        MemoryRuntimeCheck = cast<Instruction>(IsConflict);
-      }
+      Value *Cmp0 = ChkBuilder.CreateICmpULE(Start0, End1, "bound0");
+      Value *Cmp1 = ChkBuilder.CreateICmpULE(Start1, End0, "bound1");
+      Value *IsConflict = ChkBuilder.CreateAnd(Cmp0, Cmp1, "found.conflict");
+      if (MemoryRuntimeCheck)
+        IsConflict = ChkBuilder.CreateOr(MemoryRuntimeCheck, IsConflict,
+                                         "conflict.rdx");
+
+      MemoryRuntimeCheck = cast<Instruction>(IsConflict);
     }
   }
 
@@ -1063,12 +1056,10 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // This is the IR builder that we use to add all of the logic for bypassing
   // the new vector loop.
-  IRBuilder<> BypassBuilder(OldBasicBlock->getContext());
-  BypassBuilder.SetInsertPoint(BypassBlock->getTerminator());
+  IRBuilder<> BypassBuilder(BypassBlock->getTerminator());
 
   // We may need to extend the index in case there is a type mismatch.
   // We know that the count starts at zero and does not overflow.
-  unsigned IdxTyBW = IdxTy->getScalarSizeInBits();
   if (Count->getType() != IdxTy) {
     // The exit count can be of pointer type. Convert it to the correct
     // integer type.
@@ -1090,8 +1081,8 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Now, compare the new count to zero. If it is zero skip the vector loop and
   // jump to the scalar loop.
-  Value *Cmp = BypassBuilder.CreateICmp(CmpInst::ICMP_EQ, IdxEndRoundDown,
-                               StartIdx, "cmp.zero");
+  Value *Cmp = BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx,
+                                          "cmp.zero");
 
   BasicBlock *LastBypassBlock = BypassBlock;
 
