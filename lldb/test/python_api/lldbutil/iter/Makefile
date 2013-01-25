@@ -1,7 +1,7 @@
 LEVEL = ../../../make
 
 CFLAGS_EXTRAS := -D__STDC_LIMIT_MACROS
-LDFLAGS := -lpthread
+LD_EXTRAS := -lpthread
 CXX_SOURCES := main.cpp
 MAKE_DSYM :=NO
 

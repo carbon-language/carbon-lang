@@ -1,5 +1,5 @@
 LEVEL = ../../make
 
 C_SOURCES := main.c
-LDFLAGS := -lpthread
+LD_EXTRAS := -lpthread
 include $(LEVEL)/Makefile.rules

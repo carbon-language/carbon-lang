@@ -54,25 +54,48 @@ ifeq "$(CC)" "cc"
 endif
 
 #----------------------------------------------------------------------
+# ARCHFLAG is the flag used to tell the compiler which architecture
+# to compile for. The default is the flag that clang accepts.
+#----------------------------------------------------------------------
+ARCHFLAG ?= -arch 
+
+#----------------------------------------------------------------------
 # Change any build/tool options needed
 #----------------------------------------------------------------------
-CFLAGS ?= -gdwarf-2 -O0
-CFLAGS += $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
 ifeq "$(OS)" "Darwin"
-	CFLAGS += -arch $(ARCH)
 	DS := dsymutil
 	DSFLAGS =
 	DSYM = $(EXE).dSYM
 	AR := libtool
 	ARFLAGS := -static -o
+else
+	# On non-Apple platforms, -arch becomes -m
+	ARCHFLAG := -m
+
+	# i386 becomes 32, and x86_64 becomes 64
+	ifeq "$(ARCH)" "x86_64"
+	    override ARCH := $(subst x86_64,64,$(ARCH))
+	endif
+	ifeq "$(ARCH)" "i386"
+	    override ARCH := $(subst i386,32,$(ARCH))
+	endif
 endif
+
+CFLAGS ?= -gdwarf-2 -O0
+CFLAGS += $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
 
 CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
-LDFLAGS += $(LD_EXTRAS) -arch $(ARCH)
+LDFLAGS += $(LD_EXTRAS)
 OBJECTS =
 EXE ?= a.out
+
+ifneq (,$(findstring g++,$(CXX)))
+	# GCC 4.6 cannot handle -std=c++11, so replace it with -std=c++0x
+	# instead. FIXME: remove once GCC version is upgraded.
+	override CXXFLAGS := $(subst -std=c++11,-std=c++0x,$(CXXFLAGS))
+endif
 
 ifneq "$(DYLIB_NAME)" ""
 	ifeq "$(OS)" "Darwin"
@@ -208,7 +231,7 @@ EXE = $(DYLIB_FILENAME)
 endif
 else
 $(EXE) : $(OBJECTS) $(ARCHIVE_NAME)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(ARCHIVE_NAME) -o "$(EXE)"
+	$(LD) $(OBJECTS) $(LDFLAGS) $(ARCHIVE_NAME) -o "$(EXE)"
 endif
 
 #----------------------------------------------------------------------
