@@ -3535,7 +3535,7 @@ LexNextToken:
     
     // Non-ASCII characters tend to creep into source code unintentionally.
     // Instead of letting the parser complain about the unknown token,
-    // just warn that we don't have valid UTF-8, then drop the character.
+    // just diagnose the invalid UTF-8, then drop the character.
     if (!isLexingRawMode())
       Diag(CurPtr, diag::err_invalid_utf8);
 
