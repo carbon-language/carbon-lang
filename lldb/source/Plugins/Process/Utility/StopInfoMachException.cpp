@@ -389,7 +389,7 @@ StopInfoMachException::CreateStopReasonWithMachException
                     break;
                 
                 case llvm::Triple::arm:
-                    if (exc_code == 0x102)
+                    if (exc_code == 0x102) // EXC_ARM_DA_DEBUG
                     {
                         // It's a watchpoint, then, if the exc_sub_code indicates a known/enabled
                         // data break address from our watchpoint list.
@@ -408,7 +408,7 @@ StopInfoMachException::CreateStopReasonWithMachException
                         if (thread.GetTemporaryResumeState() == eStateStepping)
                             return StopInfo::CreateStopReasonToTrace(thread);
                     }
-                    else if (exc_code == 1)
+                    else if (exc_code == 1) // EXC_ARM_BREAKPOINT
                     {
                         is_software_breakpoint = true;
                         is_trace_if_software_breakpoint_missing = true;
