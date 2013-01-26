@@ -1108,6 +1108,14 @@ public:
   /// defined in <stddef.h> as defined by the target.
   QualType getWIntType() const { return WIntTy; }
 
+  /// \brief Return a type compatible with "intptr_t" (C99 7.18.1.4),
+  /// as defined by the target.
+  QualType getIntPtrType() const;
+
+  /// \brief Return a type compatible with "uintptr_t" (C99 7.18.1.4),
+  /// as defined by the target.
+  QualType getUIntPtrType() const;
+
   /// \brief Return the unique type for "ptrdiff_t" (C99 7.17) defined in
   /// <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
   QualType getPointerDiffType() const;

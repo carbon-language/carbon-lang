@@ -3589,6 +3589,14 @@ QualType ASTContext::getUnsignedWCharType() const {
   return UnsignedIntTy;
 }
 
+QualType ASTContext::getIntPtrType() const {
+  return getFromTargetType(Target->getIntPtrType());
+}
+
+QualType ASTContext::getUIntPtrType() const {
+  return getCorrespondingUnsignedType(getIntPtrType());
+}
+
 /// getPointerDiffType - Return the unique type for "ptrdiff_t" (C99 7.17)
 /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
 QualType ASTContext::getPointerDiffType() const {
