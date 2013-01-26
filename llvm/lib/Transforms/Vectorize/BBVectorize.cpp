@@ -994,6 +994,12 @@ namespace {
       unsigned JCost = getInstrCost(J->getOpcode(), JT1, JT2);
       Type *VT1 = getVecTypeForPair(IT1, JT1),
            *VT2 = getVecTypeForPair(IT2, JT2);
+
+      // Note that this procedure is incorrect for insert and extract element
+      // instructions (because combining these often results in a shuffle),
+      // but this cost is ignored (because insert and extract element
+      // instructions are assigned a zero depth factor and are not really
+      // fused in general).
       unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2);
 
       if (VCost > ICost + JCost)
