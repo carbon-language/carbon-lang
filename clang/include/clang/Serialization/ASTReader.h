@@ -677,6 +677,9 @@ private:
   /// \brief A list of the namespaces we've seen.
   SmallVector<uint64_t, 4> KnownNamespaces;
 
+  /// \brief A list of undefined decls with internal linkage.
+  SmallVector<uint64_t, 8> UndefinedInternals;
+
   /// \brief A list of modules that were imported by precompiled headers or
   /// any other non-module AST file.
   SmallVector<serialization::SubmoduleID, 2> ImportedModules;
@@ -1505,6 +1508,9 @@ public:
   virtual void ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces);
 
+  virtual void ReadUndefinedInternals(
+                       llvm::MapVector<NamedDecl *, SourceLocation> &Undefined);
+
   virtual void ReadTentativeDefinitions(
                  SmallVectorImpl<VarDecl *> &TentativeDefs);
 
@@ -1675,13 +1681,13 @@ public:
 
   /// \brief Read a source location.
   SourceLocation ReadSourceLocation(ModuleFile &ModuleFile,
-                                    const RecordData &Record, unsigned& Idx) {
+                                    const RecordData &Record, unsigned &Idx) {
     return ReadSourceLocation(ModuleFile, Record[Idx++]);
   }
 
   /// \brief Read a source range.
   SourceRange ReadSourceRange(ModuleFile &F,
-                              const RecordData &Record, unsigned& Idx);
+                              const RecordData &Record, unsigned &Idx);
 
   /// \brief Read an integral value
   llvm::APInt ReadAPInt(const RecordData &Record, unsigned &Idx);

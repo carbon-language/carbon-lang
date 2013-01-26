@@ -3857,7 +3857,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         KnownNamespaces[ExternalKnownNamespaces[I]] = true;
     }
     
-    for (llvm::DenseMap<NamespaceDecl*, bool>::iterator 
+    for (llvm::MapVector<NamespaceDecl*, bool>::iterator 
            KNI = KnownNamespaces.begin(),
            KNIEnd = KnownNamespaces.end();
          KNI != KNIEnd; ++KNI)

@@ -740,7 +740,7 @@ public:
 
   /// UndefinedInternals - all the used, undefined objects with
   /// internal linkage in this translation unit.
-  llvm::DenseMap<NamedDecl*, SourceLocation> UndefinedInternals;
+  llvm::MapVector<NamedDecl*, SourceLocation> UndefinedInternals;
 
   typedef std::pair<ObjCMethodList, ObjCMethodList> GlobalMethods;
   typedef llvm::DenseMap<Selector, GlobalMethods> GlobalMethodPool;
@@ -2234,7 +2234,7 @@ private:
   //
   // The boolean value will be true to indicate that the namespace was loaded
   // from an AST/PCH file, or false otherwise.
-  llvm::DenseMap<NamespaceDecl*, bool> KnownNamespaces;
+  llvm::MapVector<NamespaceDecl*, bool> KnownNamespaces;
 
   /// \brief Whether we have already loaded known namespaces from an extenal
   /// source.

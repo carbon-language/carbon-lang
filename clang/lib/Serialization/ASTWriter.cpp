@@ -824,6 +824,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(OPENCL_EXTENSIONS);
   RECORD(DELEGATING_CTORS);
   RECORD(KNOWN_NAMESPACES);
+  RECORD(UNDEFINED_INTERNALS);
   RECORD(MODULE_OFFSET_MAP);
   RECORD(SOURCE_MANAGER_LINE_TABLE);
   RECORD(OBJC_CATEGORIES_MAP);
@@ -3581,12 +3582,22 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   // Build a record containing all of the known namespaces.
   RecordData KnownNamespaces;
-  for (llvm::DenseMap<NamespaceDecl*, bool>::iterator 
+  for (llvm::MapVector<NamespaceDecl*, bool>::iterator
             I = SemaRef.KnownNamespaces.begin(),
          IEnd = SemaRef.KnownNamespaces.end();
        I != IEnd; ++I) {
     if (!I->second)
       AddDeclRef(I->first, KnownNamespaces);
+  }
+
+  // Build a record of all used, undefined objects with internal linkage.
+  RecordData UndefinedInternals;
+  for (llvm::MapVector<NamedDecl*, SourceLocation>::iterator
+            I = SemaRef.UndefinedInternals.begin(),
+         IEnd = SemaRef.UndefinedInternals.end();
+       I != IEnd; ++I) {
+    AddDeclRef(I->first, UndefinedInternals);
+    AddSourceLocation(I->second, UndefinedInternals);
   }
 
   // Write the control block
@@ -3803,6 +3814,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   // Write the known namespaces.
   if (!KnownNamespaces.empty())
     Stream.EmitRecord(KNOWN_NAMESPACES, KnownNamespaces);
+
+  // Write the undefined internal functions and variables.
+  if (!UndefinedInternals.empty())
+    Stream.EmitRecord(UNDEFINED_INTERNALS, UndefinedInternals);
   
   // Write the visible updates to DeclContexts.
   for (llvm::SmallPtrSet<const DeclContext *, 16>::iterator

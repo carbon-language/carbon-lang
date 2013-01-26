@@ -252,6 +252,9 @@ public:
   /// \brief Load the set of namespaces that are known to the external source,
   /// which will be used during typo correction.
   virtual void ReadKnownNamespaces(SmallVectorImpl<NamespaceDecl*> &Namespaces);
+
+  virtual void ReadUndefinedInternals(
+                        llvm::MapVector<NamedDecl*, SourceLocation> &Undefined);
   
   /// \brief Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.

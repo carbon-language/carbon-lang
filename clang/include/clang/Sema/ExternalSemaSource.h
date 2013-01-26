@@ -15,6 +15,7 @@
 
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/Sema/Weak.h"
+#include "llvm/ADT/MapVector.h"
 #include <utility>
 
 namespace clang {
@@ -65,6 +66,9 @@ public:
   /// which will be used during typo correction.
   virtual void ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces);
+
+  virtual void ReadUndefinedInternals(
+                        llvm::MapVector<NamedDecl*, SourceLocation> &Undefined);
   
   /// \brief Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.

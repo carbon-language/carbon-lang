@@ -2461,7 +2461,24 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
         KnownNamespaces.push_back(getGlobalDeclID(F, Record[I]));
       break;
-        
+
+    case UNDEFINED_INTERNALS:
+      if (UndefinedInternals.size() % 2 != 0) {
+        Error("Invalid existing UndefinedInternals");
+        return true;
+      }
+
+      if (Record.size() % 2 != 0) {
+        Error("invalid undefined internals record");
+        return true;
+      }
+      for (unsigned I = 0, N = Record.size(); I != N; /* in loop */) {
+        UndefinedInternals.push_back(getGlobalDeclID(F, Record[I++]));
+        UndefinedInternals.push_back(
+            ReadSourceLocation(F, Record, I).getRawEncoding());
+      }
+      break;
+
     case IMPORTED_MODULES: {
       if (F.Kind != MK_Module) {
         // If we aren't loading a module (which has its own exports), make
@@ -5933,6 +5950,17 @@ void ASTReader::ReadKnownNamespaces(
       Namespaces.push_back(Namespace);
   }
 }
+
+void ASTReader::ReadUndefinedInternals(
+                       llvm::MapVector<NamedDecl*, SourceLocation> &Undefined) {
+  for (unsigned Idx = 0, N = UndefinedInternals.size(); Idx != N;) {
+    NamedDecl *D = cast<NamedDecl>(GetDecl(UndefinedInternals[Idx++]));
+    SourceLocation Loc =
+        SourceLocation::getFromRawEncoding(UndefinedInternals[Idx++]);
+    Undefined.insert(std::make_pair(D, Loc));
+  }
+}
+    
 
 void ASTReader::ReadTentativeDefinitions(
                   SmallVectorImpl<VarDecl *> &TentativeDefs) {
