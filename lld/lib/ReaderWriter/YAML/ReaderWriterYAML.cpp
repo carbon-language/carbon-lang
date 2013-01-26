@@ -167,7 +167,7 @@ private:
      // We want _stringCopies to own the string memory so it is deallocated
     // when the File object is destroyed.  But we need a StringRef that
     // points into that memory.
-    std::unique_ptr<char> s = std::unique_ptr<char>(new char[str.size()]);
+    std::unique_ptr<char[]> s(new char[str.size()]);
     memcpy(s.get(), str.data(), str.size());
     llvm::StringRef r = llvm::StringRef(s.get(), str.size());
     _stringCopies.push_back(std::move(s));
@@ -178,7 +178,7 @@ private:
   unsigned int                        _unnamedCounter;
   NameToAtom                          _nameMap;
   AtomToRefName                       _refNames;
-  std::vector<std::unique_ptr<char>>  _stringCopies;
+  std::vector<std::unique_ptr<char[]>>  _stringCopies;
 };
 
 
@@ -706,7 +706,7 @@ struct MappingTraits<const lld::File*> {
       // We want _stringCopies to own the string memory so it is deallocated
       // when the File object is destroyed.  But we need a StringRef that
       // points into that memory.
-      std::unique_ptr<char> s = std::unique_ptr<char>(new char[str.size()]);
+      std::unique_ptr<char[]> s(new char[str.size()]);
       memcpy(s.get(), str.data(), str.size());
       llvm::StringRef r = llvm::StringRef(s.get(), str.size());
       _stringCopies.push_back(std::move(s));
@@ -720,7 +720,7 @@ struct MappingTraits<const lld::File*> {
     AtomList<lld::UndefinedAtom>       _undefinedAtoms;
     AtomList<lld::SharedLibraryAtom>   _sharedLibraryAtoms;
     AtomList<lld::AbsoluteAtom>        _absoluteAtoms;
-    std::vector<std::unique_ptr<char>> _stringCopies;
+    std::vector<std::unique_ptr<char[]>> _stringCopies;
   };
 
 

@@ -360,7 +360,7 @@ public:
     delete _sharedLibraryAtoms._arrayStart;
     delete _absoluteAtoms._arrayStart;
     delete _references.arrayStart;
-    delete _targetsTable;
+    delete [] _targetsTable;
   }
 
   virtual const atom_collection<DefinedAtom>&  defined() const {
