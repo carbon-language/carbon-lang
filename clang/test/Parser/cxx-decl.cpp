@@ -162,6 +162,24 @@ bitand r2 = v;
 
 }
 
+struct DIE {
+  void foo() {}
+};
+
+void test (DIE die, DIE *Die, DIE INT, DIE *FLOAT) {
+  DIE.foo();  // expected-error {{cannot use dot operator on a type}}
+  die.foo();
+
+  DIE->foo();  // expected-error {{cannot use arrow operator on a type}}
+  Die->foo();
+
+  int.foo();  // expected-error {{cannot use dot operator on a type}}
+  INT.foo();
+
+  float->foo();  // expected-error {{cannot use arrow operator on a type}}
+  FLOAT->foo();
+}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \
