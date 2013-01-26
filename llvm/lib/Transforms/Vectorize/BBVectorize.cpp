@@ -1367,7 +1367,7 @@ namespace {
       IsInPair.insert(C->second);
     }
 
-    // Iterate through the basic block, recording all Users of each
+    // Iterate through the basic block, recording all users of each
     // pairable instruction.
 
     BasicBlock::iterator E = BB.end();
