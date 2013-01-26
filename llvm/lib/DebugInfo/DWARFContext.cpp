@@ -325,6 +325,64 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t Address,
                     Line, Column);
 }
 
+DILineInfoTable DWARFContext::getLineInfoForAddressRange(uint64_t Address,
+    uint64_t Size,
+    DILineInfoSpecifier Specifier) {
+  DILineInfoTable  Lines;
+  DWARFCompileUnit *CU = getCompileUnitForAddress(Address);
+  if (!CU)
+    return Lines;
+
+  std::string FunctionName = "<invalid>";
+  if (Specifier.needs(DILineInfoSpecifier::FunctionName)) {
+    // The address may correspond to instruction in some inlined function,
+    // so we have to build the chain of inlined functions and take the
+    // name of the topmost function in it.
+    const DWARFDebugInfoEntryMinimal::InlinedChain &InlinedChain =
+        CU->getInlinedChainForAddress(Address);
+    if (InlinedChain.size() > 0) {
+      const DWARFDebugInfoEntryMinimal &TopFunctionDIE = InlinedChain[0];
+      if (const char *Name = TopFunctionDIE.getSubroutineName(CU))
+        FunctionName = Name;
+    }
+  }
+
+  StringRef  FuncNameRef = StringRef(FunctionName);
+
+  // If the Specifier says we don't need FileLineInfo, just
+  // return the top-most function at the starting address.
+  if (!Specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
+    Lines.push_back(std::make_pair(Address, 
+                                   DILineInfo(StringRef("<invalid>"), 
+                                              FuncNameRef, 0, 0)));
+    return Lines;
+  }
+
+  const DWARFLineTable *LineTable = getLineTableForCompileUnit(CU);
+  const bool NeedsAbsoluteFilePath =
+      Specifier.needs(DILineInfoSpecifier::AbsoluteFilePath);
+
+  // Get the index of row we're looking for in the line table.
+  std::vector<uint32_t> RowVector;
+  if (!LineTable->lookupAddressRange(Address, Size, RowVector))
+    return Lines;
+
+  uint32_t NumRows = RowVector.size();
+  for (uint32_t i = 0; i < NumRows; ++i) {
+    uint32_t RowIndex = RowVector[i];
+    // Take file number and line/column from the row.
+    const DWARFDebugLine::Row &Row = LineTable->Rows[RowIndex];
+    std::string FileName = "<invalid>";
+    getFileNameForCompileUnit(CU, LineTable, Row.File,
+                              NeedsAbsoluteFilePath, FileName);
+    Lines.push_back(std::make_pair(Row.Address, 
+                                   DILineInfo(StringRef(FileName),
+                                         FuncNameRef, Row.Line, Row.Column)));
+  }
+
+  return Lines;
+}
+
 DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
     DILineInfoSpecifier Specifier) {
   DWARFCompileUnit *CU = getCompileUnitForAddress(Address);

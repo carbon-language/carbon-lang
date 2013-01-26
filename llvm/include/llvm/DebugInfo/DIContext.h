@@ -58,6 +58,8 @@ public:
   }
 };
 
+typedef SmallVector<std::pair<uint64_t, DILineInfo>, 16> DILineInfoTable;
+
 /// DIInliningInfo - a format-neutral container for inlined code description.
 class DIInliningInfo {
   SmallVector<DILineInfo, 4> Frames;
@@ -126,6 +128,8 @@ public:
 
   virtual DILineInfo getLineInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier()) = 0;
+  virtual DILineInfoTable getLineInfoForAddressRange(uint64_t Address,
+      uint64_t Size, DILineInfoSpecifier Specifier = DILineInfoSpecifier()) = 0;
   virtual DIInliningInfo getInliningInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier()) = 0;
 };

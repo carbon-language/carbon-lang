@@ -178,6 +178,10 @@ public:
     // or -1 if there is no such row.
     uint32_t lookupAddress(uint64_t address) const;
 
+    bool lookupAddressRange(uint64_t address,
+                            uint64_t size, 
+                            std::vector<uint32_t>& result) const;
+
     // Extracts filename by its index in filename table in prologue.
     // Returns true on success.
     bool getFileNameByIndex(uint64_t FileIndex,

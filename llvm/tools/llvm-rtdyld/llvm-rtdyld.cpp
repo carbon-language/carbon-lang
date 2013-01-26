@@ -163,8 +163,14 @@ static int printLineInfoForInput() {
 
         outs() << "Function: " << Name << ", Size = " << Size << "\n";
 
-        DILineInfo Result = Context->getLineInfoForAddress(Addr);
-        outs() << "  Line info:" << Result.getFileName() << ", line:" << Result.getLine() << "\n";
+        DILineInfoTable Lines = Context->getLineInfoForAddressRange(Addr, Size);
+        DILineInfoTable::iterator  Begin = Lines.begin();
+        DILineInfoTable::iterator  End = Lines.end();
+        for (DILineInfoTable::iterator It = Begin; It != End; ++It) {
+          outs() << "  Line info @ " << It->first - Addr << ": "
+                 << It->second.getFileName()
+                 << ", line:" << It->second.getLine() << "\n";
+        }
       }
     }
   }

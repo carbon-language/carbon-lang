@@ -90,6 +90,8 @@ public:
 
   virtual DILineInfo getLineInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier());
+  virtual DILineInfoTable getLineInfoForAddressRange(uint64_t Address,
+      uint64_t Size, DILineInfoSpecifier Specifier = DILineInfoSpecifier());
   virtual DIInliningInfo getInliningInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier());
 
