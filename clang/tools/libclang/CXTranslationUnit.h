@@ -16,17 +16,20 @@
 
 #include "clang-c/Index.h"
 
-extern "C" {
+namespace clang {
+  class ASTUnit;
+  class CIndexer;
+} // namespace clang
+
 struct CXTranslationUnitImpl {
   void *CIdx;
-  void *TUData;
+  clang::ASTUnit *TheASTUnit;
   void *StringPool;
   void *Diagnostics;
   void *OverridenCursorsPool;
   void *FormatContext;
   unsigned FormatInMemoryUniqueId;
 };
-}
 
 namespace clang {
   class ASTUnit;
@@ -34,10 +37,10 @@ namespace clang {
 
 namespace cxtu {
 
-CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *TU);
+CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU);
 
 static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
-  return static_cast<ASTUnit *>(TU->TUData);
+  return TU->TheASTUnit;
 }
 
 class CXTUOwner {

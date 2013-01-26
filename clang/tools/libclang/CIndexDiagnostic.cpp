@@ -209,7 +209,7 @@ CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
 extern "C" {
 
 unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
-  if (!Unit->TUData)
+  if (!cxtu::getASTUnit(Unit))
     return 0;
   return lazyCreateDiags(Unit, /*checkIfChanged=*/true)->getNumDiagnostics();
 }
@@ -227,7 +227,7 @@ CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
 }
   
 CXDiagnosticSet clang_getDiagnosticSetFromTU(CXTranslationUnit Unit) {
-  if (!Unit->TUData)
+  if (!cxtu::getASTUnit(Unit))
     return 0;
   return static_cast<CXDiagnostic>(lazyCreateDiags(Unit));
 }
