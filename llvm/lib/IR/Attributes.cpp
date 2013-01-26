@@ -605,8 +605,14 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
-                               Attribute::AttrKind Kind) {
-  return get(C, AttributeWithIndex::get(Idx, Attribute::get(C, Kind)));
+                               ArrayRef<Attribute::AttrKind> Kind) {
+  // FIXME: This is temporary. Ultimately, the AttributeWithIndex will be
+  // replaced by an object that holds multiple Attribute::AttrKinds.
+  AttrBuilder B;
+  for (ArrayRef<Attribute::AttrKind>::iterator I = Kind.begin(),
+         E = Kind.end(); I != E; ++I)
+    B.addAttribute(*I);
+  return get(C, Idx, B);
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {

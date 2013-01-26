@@ -224,7 +224,7 @@ public:
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeSet> Attrs);
   static AttributeSet get(LLVMContext &C, unsigned Idx,
-                          Attribute::AttrKind Kind);
+                          ArrayRef<Attribute::AttrKind> Kind);
   static AttributeSet get(LLVMContext &C, unsigned Idx, AttrBuilder &B);
 
   /// \brief Add an attribute to the attribute set at the given index. Since
