@@ -61,6 +61,14 @@ void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
     ShuffleMask.push_back(NElts+i);
 }
 
+void DecodePALIGNMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned Offset = Imm * (VT.getVectorElementType().getSizeInBits() / 8);
+
+  for (unsigned i = 0; i != NumElts; ++i)
+    ShuffleMask.push_back((i + Offset) % (NumElts * 2));
+}
+
 /// DecodePSHUFMask - This decodes the shuffle masks for pshufd, and vpermilp*.
 /// VT indicates the type of the vector allowing it to handle different
 /// datatypes and vector widths.

@@ -4592,6 +4592,10 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
   case X86ISD::MOVLHPS:
     DecodeMOVLHPSMask(NumElems, Mask);
     break;
+  case X86ISD::PALIGN:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodePALIGNMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
   case X86ISD::PSHUFD:
   case X86ISD::VPERMILP:
     ImmN = N->getOperand(N->getNumOperands()-1);
@@ -4635,7 +4639,6 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
   case X86ISD::MOVLPS:
   case X86ISD::MOVSHDUP:
   case X86ISD::MOVSLDUP:
-  case X86ISD::PALIGN:
     // Not yet implemented
     return false;
   default: llvm_unreachable("unknown target shuffle node");
