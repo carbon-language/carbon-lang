@@ -228,7 +228,7 @@ void CursorVisitor::visitFileRegion() {
   if (RegionOfInterest.isInvalid())
     return;
 
-  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
   SourceManager &SM = Unit->getSourceManager();
   
   std::pair<FileID, unsigned>
@@ -274,7 +274,7 @@ static bool isInLexicalContext(Decl *D, DeclContext *DC) {
 
 void CursorVisitor::visitDeclsFromFileRegion(FileID File,
                                              unsigned Offset, unsigned Length) {
-  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
   SourceManager &SM = Unit->getSourceManager();
   SourceRange Range = RegionOfInterest;
 
@@ -485,8 +485,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   }
 
   if (clang_isTranslationUnit(Cursor.kind)) {
-    CXTranslationUnit tu = getCursorTU(Cursor);
-    ASTUnit *CXXUnit = static_cast<ASTUnit*>(tu->TUData);
+    CXTranslationUnit TU = getCursorTU(Cursor);
+    ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
     
     int VisitOrder[2] = { VisitPreprocessorLast, !VisitPreprocessorLast };
     for (unsigned I = 0; I != 2; ++I) {
@@ -496,7 +496,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
           for (ASTUnit::top_level_iterator TL = CXXUnit->top_level_begin(),
                                         TLEnd = CXXUnit->top_level_end();
                TL != TLEnd; ++TL) {
-            if (Visit(MakeCXCursor(*TL, tu, RegionOfInterest), true))
+            if (Visit(MakeCXCursor(*TL, TU, RegionOfInterest), true))
               return true;
           }
         } else if (VisitDeclContext(
@@ -2762,7 +2762,7 @@ static void clang_saveTranslationUnit_Impl(void *UserData) {
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
     setThreadBackgroundPriority();
 
-  bool hadError = static_cast<ASTUnit *>(STUI->TU->TUData)->Save(STUI->FileName);
+  bool hadError = cxtu::getASTUnit(STUI->TU)->Save(STUI->FileName);
   STUI->result = hadError ? CXSaveError_Unknown : CXSaveError_None;
 }
 
@@ -2775,7 +2775,7 @@ int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
   if (!TU)
     return CXSaveError_InvalidTU;
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   if (!CXXUnit->hasSema())
     return CXSaveError_InvalidTU;
@@ -2816,10 +2816,10 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
   if (CTUnit) {
     // If the translation unit has been marked as unsafe to free, just discard
     // it.
-    if (static_cast<ASTUnit *>(CTUnit->TUData)->isUnsafeToFree())
+    if (cxtu::getASTUnit(CTUnit)->isUnsafeToFree())
       return;
 
-    delete static_cast<ASTUnit *>(CTUnit->TUData);
+    delete cxtu::getASTUnit(CTUnit);
     disposeCXStringPool(CTUnit->StringPool);
     delete static_cast<CXDiagnosticSetImpl *>(CTUnit->Diagnostics);
     disposeOverridenCXCursorsPool(CTUnit->OverridenCursorsPool);
@@ -2861,7 +2861,7 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
     setThreadBackgroundPriority();
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   
   OwningPtr<std::vector<ASTUnit::RemappedFile> >
@@ -2904,7 +2904,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
 
   if (!RunSafely(CRC, clang_reparseTranslationUnit_Impl, &RTUI)) {
     fprintf(stderr, "libclang: crash detected during reparsing\n");
-    static_cast<ASTUnit *>(TU->TUData)->setUnsafeToFree(true);
+    cxtu::getASTUnit(TU)->setUnsafeToFree(true);
     return 1;
   } else if (getenv("LIBCLANG_RESOURCE_USAGE"))
     PrintLibclangResourceUsage(TU);
@@ -2917,12 +2917,12 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   if (!CTUnit)
     return createCXString("");
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(CTUnit);
   return createCXString(CXXUnit->getOriginalSourceFileName(), true);
 }
 
 CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit*>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   return MakeCXCursor(CXXUnit->getASTContext().getTranslationUnitDecl(), TU);
 }
 
@@ -2949,21 +2949,21 @@ time_t clang_getFileTime(CXFile SFile) {
   return FEnt->getModificationTime();
 }
 
-CXFile clang_getFile(CXTranslationUnit tu, const char *file_name) {
-  if (!tu)
+CXFile clang_getFile(CXTranslationUnit TU, const char *file_name) {
+  if (!TU)
     return 0;
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
 
   FileManager &FMgr = CXXUnit->getFileManager();
   return const_cast<FileEntry *>(FMgr.getFile(file_name));
 }
 
-unsigned clang_isFileMultipleIncludeGuarded(CXTranslationUnit tu, CXFile file) {
-  if (!tu || !file)
+unsigned clang_isFileMultipleIncludeGuarded(CXTranslationUnit TU, CXFile file) {
+  if (!TU || !file)
     return 0;
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   FileEntry *FEnt = static_cast<FileEntry *>(file);
   return CXXUnit->getPreprocessor().getHeaderSearchInfo()
                                           .isFileMultipleIncludeGuarded(FEnt);
@@ -3849,7 +3849,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   if (!TU)
     return clang_getNullCursor();
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
@@ -4122,7 +4122,7 @@ CXCursor cxcursor::getCursor(CXTranslationUnit TU, SourceLocation SLoc) {
   if (SLoc.isInvalid())
     return clang_getNullCursor();
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
 
   // Translate the given source location to make it point at the beginning of
   // the token under the cursor.
@@ -4387,9 +4387,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     case CXCursor_LabelRef:
       // FIXME: We end up faking the "parent" declaration here because we
       // don't want to make CXCursor larger.
-      return MakeCXCursor(getCursorLabelRef(C).first, 
-               static_cast<ASTUnit*>(tu->TUData)->getASTContext()
-                          .getTranslationUnitDecl(),
+      return MakeCXCursor(getCursorLabelRef(C).first,
+                          cxtu::getASTUnit(tu)->getASTContext()
+                              .getTranslationUnitDecl(),
                           tu);
 
     case CXCursor_OverloadedDeclRef:
@@ -4790,7 +4790,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
 
   // We have to find the starting buffer pointer the hard way, by
   // deconstructing the source location.
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   if (!CXXUnit)
     return createCXString("");
 
@@ -4807,7 +4807,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
 }
 
 CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   if (!CXXUnit)
     return clang_getNullLocation();
 
@@ -4816,7 +4816,7 @@ CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
 }
 
 CXSourceRange clang_getTokenExtent(CXTranslationUnit TU, CXToken CXTok) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   if (!CXXUnit)
     return clang_getNullRange();
 
@@ -4907,7 +4907,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   if (NumTokens)
     *NumTokens = 0;
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   if (!CXXUnit || !Tokens || !NumTokens)
     return;
 
@@ -4982,17 +4982,17 @@ class AnnotateTokensWorker {
 
 public:
   AnnotateTokensWorker(CXToken *tokens, CXCursor *cursors, unsigned numTokens,
-                       CXTranslationUnit tu, SourceRange RegionOfInterest)
+                       CXTranslationUnit TU, SourceRange RegionOfInterest)
     : Tokens(tokens), Cursors(cursors),
       NumTokens(numTokens), TokIdx(0), PreprocessingTokIdx(0),
-      AnnotateVis(tu,
+      AnnotateVis(TU,
                   AnnotateTokensVisitor, this,
                   /*VisitPreprocessorLast=*/true,
                   /*VisitIncludedEntities=*/false,
                   RegionOfInterest,
                   /*VisitDeclsOnly=*/false,
                   AnnotateTokensPostChildrenVisitor),
-      SrcMgr(static_cast<ASTUnit*>(tu->TUData)->getSourceManager()),
+      SrcMgr(cxtu::getASTUnit(TU)->getSourceManager()),
       HasContextSensitiveKeywords(false) { }
 
   void VisitChildren(CXCursor C) { AnnotateVis.VisitChildren(C); }
@@ -5369,7 +5369,7 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
                                        CXCursor *Cursors,
                                        CXToken *Tokens,
                                        unsigned NumTokens) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
 
   Preprocessor &PP = CXXUnit->getPreprocessor();
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
@@ -5591,7 +5591,7 @@ void clang_annotateTokens(CXTranslationUnit TU,
   for (unsigned I = 0; I != NumTokens; ++I)
     Cursors[I] = C;
 
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   if (!CXXUnit)
     return;
 
@@ -6089,7 +6089,7 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
     return usage;
   }
   
-  ASTUnit *astUnit = static_cast<ASTUnit*>(TU->TUData);
+  ASTUnit *astUnit = cxtu::getASTUnit(TU);
   OwningPtr<MemUsageEntries> entries(new MemUsageEntries());
   ASTContext &astContext = astUnit->getASTContext();
   
@@ -6260,7 +6260,7 @@ MacroInfo *cxindex::getMacroInfo(const IdentifierInfo &II,
   if (!II.hadMacroDefinition())
     return 0;
 
-  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
   Preprocessor &PP = Unit->getPreprocessor();
   MacroInfo *MI = PP.getMacroInfoHistory(&II);
   while (MI) {
@@ -6295,7 +6295,7 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
     return 0;
   SourceRange DefRange(MI->getReplacementToken(0).getLocation(),
                        MI->getDefinitionEndLoc());
-  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
 
   // Check that the token is inside the definition and not its argument list.
   SourceManager &SM = Unit->getSourceManager();
@@ -6333,7 +6333,7 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
 
   if (MI->getNumTokens() == 0)
     return 0;
-  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
   Preprocessor &PP = Unit->getPreprocessor();
   if (!PP.getPreprocessingRecord())
     return 0;
@@ -6355,7 +6355,7 @@ CXString clang_getClangVersion() {
 
 Logger &cxindex::Logger::operator<<(CXTranslationUnit TU) {
   if (TU) {
-    if (ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData)) {
+    if (ASTUnit *Unit = cxtu::getASTUnit(TU)) {
       LogOS << '<' << Unit->getMainFileName() << '>';
       return *this;
     }

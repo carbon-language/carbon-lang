@@ -148,7 +148,7 @@ public:
                 SourceRange RegionOfInterest = SourceRange(),
                 bool VisitDeclsOnly = false,
                 PostChildrenVisitorTy PostChildrenVisitor = 0)
-    : TU(TU), AU(static_cast<ASTUnit*>(TU->TUData)),
+    : TU(TU), AU(cxtu::getASTUnit(TU)),
       Visitor(Visitor), PostChildrenVisitor(PostChildrenVisitor),
       ClientData(ClientData),
       VisitPreprocessorLast(VisitPreprocessorLast),
@@ -172,7 +172,7 @@ public:
     }
   }
 
-  ASTUnit *getASTUnit() const { return static_cast<ASTUnit*>(TU->TUData); }
+  ASTUnit *getASTUnit() const { return AU; }
   CXTranslationUnit getTU() const { return TU; }
 
   bool Visit(CXCursor Cursor, bool CheckedRegionOfInterest = false);

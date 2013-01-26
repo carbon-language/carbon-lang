@@ -97,7 +97,7 @@ CXType cxtype::MakeCXType(QualType T, CXTranslationUnit TU) {
   CXTypeKind TK = CXType_Invalid;
 
   if (TU && !T.isNull()) {
-    ASTContext &Ctx = static_cast<ASTUnit *>(TU->TUData)->getASTContext();
+    ASTContext &Ctx = cxtu::getASTUnit(TU)->getASTContext();
     if (Ctx.getLangOpts().ObjC1) {
       QualType UnqualT = T.getUnqualifiedType();
       if (Ctx.isObjCIdType(UnqualT))
@@ -134,7 +134,7 @@ CXType clang_getCursorType(CXCursor C) {
   if (!TU)
     return MakeCXType(QualType(), TU);
 
-  ASTContext &Context = static_cast<ASTUnit *>(TU->TUData)->getASTContext();
+  ASTContext &Context = cxtu::getASTUnit(TU)->getASTContext();
   if (clang_isExpression(C.kind)) {
     QualType T = cxcursor::getCursorExpr(C)->getType();
     return MakeCXType(T, TU);
@@ -293,8 +293,9 @@ CXType clang_getCanonicalType(CXType CT) {
   if (T.isNull())
     return MakeCXType(QualType(), GetTU(CT));
 
-  ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
-  return MakeCXType(AU->getASTContext().getCanonicalType(T), TU);
+  return MakeCXType(cxtu::getASTUnit(TU)->getASTContext()
+                        .getCanonicalType(T),
+                    TU);
 }
 
 unsigned clang_isConstQualifiedType(CXType CT) {
@@ -552,9 +553,8 @@ unsigned clang_isPODType(CXType X) {
     return 0;
   
   CXTranslationUnit TU = GetTU(X);
-  ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
 
-  return T.isPODType(AU->getASTContext()) ? 1 : 0;
+  return T.isPODType(cxtu::getASTUnit(TU)->getASTContext()) ? 1 : 0;
 }
 
 CXType clang_getElementType(CXType CT) {

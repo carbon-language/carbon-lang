@@ -158,7 +158,7 @@ public:
 
 CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
                                              bool checkIfChanged) {
-  ASTUnit *AU = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *AU = cxtu::getASTUnit(TU);
 
   if (TU->Diagnostics && checkIfChanged) {
     // In normal use, ASTUnit's diagnostics should not change unless we reparse.

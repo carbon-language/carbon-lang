@@ -25,7 +25,7 @@ extern "C" {
 void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
                          CXClientData clientData) {
   
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   SourceManager &SM = CXXUnit->getSourceManager();
   ASTContext &Ctx = CXXUnit->getASTContext();
 

@@ -196,11 +196,11 @@ const char *ScratchAlloc::copyCStr(StringRef Str) {
 
 void IndexingContext::setASTContext(ASTContext &ctx) {
   Ctx = &ctx;
-  static_cast<ASTUnit*>(CXTU->TUData)->setASTContext(&ctx);
+  cxtu::getASTUnit(CXTU)->setASTContext(&ctx);
 }
 
 void IndexingContext::setPreprocessor(Preprocessor &PP) {
-  static_cast<ASTUnit*>(CXTU->TUData)->setPreprocessor(&PP);
+  cxtu::getASTUnit(CXTU)->setPreprocessor(&PP);
 }
 
 bool IndexingContext::isFunctionLocalDecl(const Decl *D) {

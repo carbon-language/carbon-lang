@@ -1367,7 +1367,7 @@ CXString clang_FullComment_getAsXML(CXComment CXC) {
     return createCXString((const char *) 0);
   ASTContext &Context = FC->getDeclInfo()->CurrentDecl->getASTContext();
   CXTranslationUnit TU = CXC.TranslationUnit;
-  SourceManager &SM = static_cast<ASTUnit *>(TU->TUData)->getSourceManager();
+  SourceManager &SM = cxtu::getASTUnit(TU)->getSourceManager();
   
   SimpleFormatContext *SFC =
     static_cast<SimpleFormatContext*>(TU->FormatContext);

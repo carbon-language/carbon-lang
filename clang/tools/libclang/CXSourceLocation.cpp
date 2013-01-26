@@ -119,15 +119,15 @@ CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
 
 extern "C" {
   
-CXSourceLocation clang_getLocation(CXTranslationUnit tu,
+CXSourceLocation clang_getLocation(CXTranslationUnit TU,
                                    CXFile file,
                                    unsigned line,
                                    unsigned column) {
-  if (!tu || !file)
+  if (!TU || !file)
     return clang_getNullLocation();
   
   LogRef Log = Logger::make(LLVM_FUNCTION_NAME);
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   const FileEntry *File = static_cast<const FileEntry *>(file);
   SourceLocation SLoc = CXXUnit->getLocation(File, line, column);
@@ -147,13 +147,13 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
   return CXLoc;
 }
   
-CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
+CXSourceLocation clang_getLocationForOffset(CXTranslationUnit TU,
                                             CXFile file,
                                             unsigned offset) {
-  if (!tu || !file)
+  if (!TU || !file)
     return clang_getNullLocation();
   
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
 
   SourceLocation SLoc 
     = CXXUnit->getLocation(static_cast<const FileEntry *>(file), offset);

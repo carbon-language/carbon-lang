@@ -62,7 +62,7 @@ struct FindFileIdRefVisitData {
   }
 
   ASTContext &getASTContext() const {
-    return static_cast<ASTUnit *>(TU->TUData)->getASTContext();
+    return cxtu::getASTUnit(TU)->getASTContext();
   }
 
   /// \brief We are looking to find all semantically relevant identifiers,
@@ -215,8 +215,7 @@ static void findIdRefsInFile(CXTranslationUnit TU, CXCursor declCursor,
                            const FileEntry *File,
                            CXCursorAndRangeVisitor Visitor) {
   assert(clang_isDeclaration(declCursor.kind));
-  ASTUnit *Unit = static_cast<ASTUnit*>(TU->TUData);
-  SourceManager &SM = Unit->getSourceManager();
+  SourceManager &SM = cxtu::getASTUnit(TU)->getSourceManager();
 
   FileID FID = SM.translateFile(File);
   const Decl *Dcl = cxcursor::getCursorDecl(declCursor);
@@ -313,7 +312,7 @@ static void findMacroRefsInFile(CXTranslationUnit TU, CXCursor Cursor,
       Cursor.kind != CXCursor_MacroExpansion)
     return;
 
-  ASTUnit *Unit = static_cast<ASTUnit*>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
   SourceManager &SM = Unit->getSourceManager();
 
   FileID FID = SM.translateFile(File);

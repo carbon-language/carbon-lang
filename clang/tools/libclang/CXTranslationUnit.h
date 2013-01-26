@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_CXTRANSLATIONUNIT_H
 #define LLVM_CLANG_CXTRANSLATIONUNIT_H
 
+#include "clang-c/Index.h"
+
 extern "C" {
 struct CXTranslationUnitImpl {
   void *CIdx;
@@ -33,7 +35,11 @@ namespace clang {
 namespace cxtu {
 
 CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *TU);
-  
+
+static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
+  return static_cast<ASTUnit *>(TU->TUData);
+}
+
 class CXTUOwner {
   CXTranslationUnitImpl *TU;
   

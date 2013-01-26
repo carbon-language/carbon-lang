@@ -49,7 +49,7 @@ inline const T *getASTNodeAs(CXComment CXC) {
 }
 
 inline ASTContext &getASTContext(CXComment CXC) {
-  return static_cast<ASTUnit *>(CXC.TranslationUnit->TUData)->getASTContext();
+  return cxtu::getASTUnit(CXC.TranslationUnit)->getASTContext();
 }
 
 inline comments::CommandTraits &getCommandTraits(CXComment CXC) {

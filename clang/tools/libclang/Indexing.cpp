@@ -783,7 +783,7 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingConsumer>
     IndexConsumerCleanup(IndexConsumer.get());
 
-  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
   if (!Unit)
     return;
 
