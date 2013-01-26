@@ -30,6 +30,46 @@ using namespace clang::comments;
 //===----------------------------------------------------------------------===//
 
 namespace  {
+  // Colors used for various parts of the AST dump
+
+  struct TerminalColor {
+    raw_ostream::Colors Color;
+    bool Bold;
+  };
+
+  // Decl kind names (VarDecl, FunctionDecl, etc)
+  static const TerminalColor DeclKindNameColor = { raw_ostream::GREEN, true };
+  // Attr names (CleanupAttr, GuardedByAttr, etc)
+  static const TerminalColor AttrColor = { raw_ostream::BLUE, true };
+  // Statement names (DeclStmt, ImplicitCastExpr, etc)
+  static const TerminalColor StmtColor = { raw_ostream::MAGENTA, true };
+  // Comment names (FullComment, ParagraphComment, TextComment, etc)
+  static const TerminalColor CommentColor = { raw_ostream::YELLOW, true };
+
+  // Type names (int, float, etc, plus user defined types)
+  static const TerminalColor TypeColor = { raw_ostream::GREEN, false };
+
+  // Pointer address
+  static const TerminalColor AddressColor = { raw_ostream::YELLOW, false };
+  // Source locations
+  static const TerminalColor LocationColor = { raw_ostream::YELLOW, false };
+
+  // lvalue/xvalue
+  static const TerminalColor ValueKindColor = { raw_ostream::CYAN, false };
+  // bitfield/objcproperty/objcsubscript/vectorcomponent
+  static const TerminalColor ObjectKindColor = { raw_ostream::CYAN, false };
+
+  // Null statements
+  static const TerminalColor NullColor = { raw_ostream::BLUE, false };
+
+  // CastKind from CastExpr's
+  static const TerminalColor CastColor = { raw_ostream::RED, false };
+
+  // Value of the statement
+  static const TerminalColor ValueColor = { raw_ostream::CYAN, true };
+  // Decl names
+  static const TerminalColor DeclNameColor = { raw_ostream::CYAN, true };
+
   class ASTDumper
       : public DeclVisitor<ASTDumper>, public StmtVisitor<ASTDumper>,
         public ConstCommentVisitor<ASTDumper> {
@@ -47,6 +87,8 @@ namespace  {
     /// The \c FullComment parent of the comment being dumped.
     const FullComment *FC;
 
+    bool ShowColors;
+
     class IndentScope {
       ASTDumper &Dumper;
     public:
@@ -58,11 +100,31 @@ namespace  {
       }
     };
 
+    class ColorScope {
+      ASTDumper &Dumper;
+    public:
+      ColorScope(ASTDumper &Dumper, TerminalColor Color)
+        : Dumper(Dumper) {
+        if (Dumper.ShowColors)
+          Dumper.OS.changeColor(Color.Color, Color.Bold);
+      }
+      ~ColorScope() {
+        if (Dumper.ShowColors)
+          Dumper.OS.resetColor();
+      }
+    };
+
   public:
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM)
       : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
-        LastLocFilename(""), LastLocLine(~0U), FC(0) { }
+        LastLocFilename(""), LastLocLine(~0U), FC(0),
+        ShowColors(SM && SM->getDiagnostics().getShowColors()) { }
+
+    ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
+              const SourceManager *SM, bool ShowColors)
+      : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
+        LastLocFilename(""), LastLocLine(~0U), ShowColors(ShowColors) { }
 
     ~ASTDumper() {
       OS << "\n";
@@ -238,10 +300,12 @@ void ASTDumper::unindent() {
 }
 
 void ASTDumper::dumpPointer(const void *Ptr) {
+  ColorScope Color(*this, AddressColor);
   OS << ' ' << Ptr;
 }
 
 void ASTDumper::dumpLocation(SourceLocation Loc) {
+  ColorScope Color(*this, LocationColor);
   SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
 
   // The general format we print out is filename:line:col, but we drop pieces
@@ -285,6 +349,8 @@ void ASTDumper::dumpSourceRange(SourceRange R) {
 }
 
 void ASTDumper::dumpBareType(QualType T) {
+  ColorScope Color(*this, TypeColor);
+  
   SplitQualType T_split = T.split();
   OS << "'" << QualType::getAsString(T_split) << "'";
 
@@ -302,10 +368,14 @@ void ASTDumper::dumpType(QualType T) {
 }
 
 void ASTDumper::dumpBareDeclRef(const Decl *D) {
-  OS << D->getDeclKindName();
+  {
+    ColorScope Color(*this, DeclKindNameColor);
+    OS << D->getDeclKindName();
+  }
   dumpPointer(D);
 
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+    ColorScope Color(*this, DeclNameColor);
     OS << " '";
     ND->getDeclName().printName(OS);
     OS << "'";
@@ -326,8 +396,10 @@ void ASTDumper::dumpDeclRef(const Decl *D, const char *Label) {
 }
 
 void ASTDumper::dumpName(const NamedDecl *ND) {
-  if (ND->getDeclName())
+  if (ND->getDeclName()) {
+    ColorScope Color(*this, DeclNameColor);
     OS << ' ' << ND->getNameAsString();
+  }
 }
 
 void ASTDumper::dumpDeclContext(const DeclContext *DC) {
@@ -340,12 +412,15 @@ void ASTDumper::dumpDeclContext(const DeclContext *DC) {
 
 void ASTDumper::dumpAttr(const Attr *A) {
   IndentScope Indent(*this);
-  switch (A->getKind()) {
+  {
+    ColorScope Color(*this, AttrColor);
+    switch (A->getKind()) {
 #define ATTR(X) case attr::X: OS << #X; break;
 #include "clang/Basic/AttrList.inc"
-  default: llvm_unreachable("unexpected attribute kind");
+    default: llvm_unreachable("unexpected attribute kind");
+    }
+    OS << "Attr";
   }
-  OS << "Attr";
   dumpPointer(A);
   dumpSourceRange(A->getRange());
 #include "clang/AST/AttrDump.inc"
@@ -460,11 +535,15 @@ void ASTDumper::dumpDecl(Decl *D) {
   IndentScope Indent(*this);
 
   if (!D) {
+    ColorScope Color(*this, NullColor);
     OS << "<<<NULL>>>";
     return;
   }
 
-  OS << D->getDeclKindName() << "Decl";
+  {
+    ColorScope Color(*this, DeclKindNameColor);
+    OS << D->getDeclKindName() << "Decl";
+  }
   dumpPointer(D);
   dumpSourceRange(D->getSourceRange());
   DeclVisitor<ASTDumper>::Visit(D);
@@ -981,6 +1060,7 @@ void ASTDumper::dumpStmt(Stmt *S) {
   IndentScope Indent(*this);
 
   if (!S) {
+    ColorScope Color(*this, NullColor);
     OS << "<<<NULL>>>";
     return;
   }
@@ -996,7 +1076,10 @@ void ASTDumper::dumpStmt(Stmt *S) {
 }
 
 void ASTDumper::VisitStmt(Stmt *Node) {
-  OS << Node->getStmtClassName();
+  {   
+    ColorScope Color(*this, StmtColor);
+    OS << Node->getStmtClassName();
+  }
   dumpPointer(Node);
   dumpSourceRange(Node->getSourceRange());
 }
@@ -1034,32 +1117,38 @@ void ASTDumper::VisitExpr(Expr *Node) {
   VisitStmt(Node);
   dumpType(Node->getType());
 
-  switch (Node->getValueKind()) {
-  case VK_RValue:
-    break;
-  case VK_LValue:
-    OS << " lvalue";
-    break;
-  case VK_XValue:
-    OS << " xvalue";
-    break;
+  {
+    ColorScope Color(*this, ValueKindColor);
+    switch (Node->getValueKind()) {
+    case VK_RValue:
+      break;
+    case VK_LValue:
+      OS << " lvalue";
+      break;
+    case VK_XValue:
+      OS << " xvalue";
+      break;
+    }
   }
 
-  switch (Node->getObjectKind()) {
-  case OK_Ordinary:
-    break;
-  case OK_BitField:
-    OS << " bitfield";
-    break;
-  case OK_ObjCProperty:
-    OS << " objcproperty";
-    break;
-  case OK_ObjCSubscript:
-    OS << " objcsubscript";
-    break;
-  case OK_VectorComponent:
-    OS << " vectorcomponent";
-    break;
+  {
+    ColorScope Color(*this, ObjectKindColor);
+    switch (Node->getObjectKind()) {
+    case OK_Ordinary:
+      break;
+    case OK_BitField:
+      OS << " bitfield";
+      break;
+    case OK_ObjCProperty:
+      OS << " objcproperty";
+      break;
+    case OK_ObjCSubscript:
+      OS << " objcsubscript";
+      break;
+    case OK_VectorComponent:
+      OS << " vectorcomponent";
+      break;
+    }
   }
 }
 
@@ -1089,7 +1178,11 @@ static void dumpBasePath(raw_ostream &OS, CastExpr *Node) {
 
 void ASTDumper::VisitCastExpr(CastExpr *Node) {
   VisitExpr(Node);
-  OS << " <" << Node->getCastKindName();
+  OS << " <";
+  {
+    ColorScope Color(*this, CastColor);
+    OS << Node->getCastKindName();
+  }
   dumpBasePath(OS, Node);
   OS << ">";
 }
@@ -1124,8 +1217,11 @@ void ASTDumper::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
 void ASTDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   VisitExpr(Node);
 
-  OS << " " << Node->getDecl()->getDeclKindName()
-     << "Decl='" << *Node->getDecl() << "'";
+  {
+    ColorScope Color(*this, DeclKindNameColor);
+    OS << " " << Node->getDecl()->getDeclKindName() << "Decl";
+  }
+  OS << "='" << *Node->getDecl() << "'";
   dumpPointer(Node->getDecl());
   if (Node->isFreeIvar())
     OS << " isFreeIvar";
@@ -1144,6 +1240,7 @@ void ASTDumper::VisitPredefinedExpr(PredefinedExpr *Node) {
 
 void ASTDumper::VisitCharacterLiteral(CharacterLiteral *Node) {
   VisitExpr(Node);
+  ColorScope Color(*this, ValueColor);
   OS << " " << Node->getValue();
 }
 
@@ -1151,16 +1248,19 @@ void ASTDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
   VisitExpr(Node);
 
   bool isSigned = Node->getType()->isSignedIntegerType();
+  ColorScope Color(*this, ValueColor);
   OS << " " << Node->getValue().toString(10, isSigned);
 }
 
 void ASTDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   VisitExpr(Node);
+  ColorScope Color(*this, ValueColor);
   OS << " " << Node->getValueAsApproximateDouble();
 }
 
 void ASTDumper::VisitStringLiteral(StringLiteral *Str) {
   VisitExpr(Str);
+  ColorScope Color(*this, ValueColor);
   OS << " ";
   Str->outputString(OS);
 }
@@ -1429,11 +1529,15 @@ void ASTDumper::dumpComment(const Comment *C) {
   IndentScope Indent(*this);
 
   if (!C) {
+    ColorScope Color(*this, NullColor);
     OS << "<<<NULL>>>";
     return;
   }
 
-  OS << C->getCommentKindName();
+  {
+    ColorScope Color(*this, CommentColor);
+    OS << C->getCommentKindName();
+  }
   dumpPointer(C);
   dumpSourceRange(C->getSourceRange());
   ConstCommentVisitor<ASTDumper>::visit(C);
@@ -1556,6 +1660,11 @@ void Decl::dump(raw_ostream &OS) const {
   P.dumpDecl(const_cast<Decl*>(this));
 }
 
+void Decl::dumpColor() const {
+  ASTDumper P(llvm::errs(), &getASTContext().getCommentCommandTraits(),
+              &getASTContext().getSourceManager(), /*ShowColors*/true);
+  P.dumpDecl(const_cast<Decl*>(this));
+}
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
@@ -1571,6 +1680,11 @@ void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
 
 void Stmt::dump() const {
   ASTDumper P(llvm::errs(), 0, 0);
+  P.dumpStmt(const_cast<Stmt*>(this));
+}
+
+void Stmt::dumpColor() const {
+  ASTDumper P(llvm::errs(), 0, 0, /*ShowColors*/true);
   P.dumpStmt(const_cast<Stmt*>(this));
 }
 
@@ -1591,5 +1705,11 @@ void Comment::dump(raw_ostream &OS, const CommandTraits *Traits,
                    const SourceManager *SM) const {
   const FullComment *FC = dyn_cast<FullComment>(this);
   ASTDumper D(OS, Traits, SM);
+  D.dumpFullComment(FC);
+}
+
+void Comment::dumpColor() const {
+  const FullComment *FC = dyn_cast<FullComment>(this);
+  ASTDumper D(llvm::errs(), 0, 0, /*ShowColors*/true);
   D.dumpFullComment(FC);
 }

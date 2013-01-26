@@ -171,6 +171,7 @@ public:
   const char *getCommentKindName() const;
 
   LLVM_ATTRIBUTE_USED void dump() const;
+  LLVM_ATTRIBUTE_USED void dumpColor() const;
   LLVM_ATTRIBUTE_USED void dump(const ASTContext &Context) const;
   void dump(raw_ostream &OS, const CommandTraits *Traits,
             const SourceManager *SM) const;
