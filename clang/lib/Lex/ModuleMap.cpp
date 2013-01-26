@@ -163,20 +163,12 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   
   const DirectoryEntry *Dir = File->getDir();
   SmallVector<const DirectoryEntry *, 2> SkippedDirs;
-#ifdef LLVM_ON_UNIX
+
   // Note: as an egregious but useful hack we use the real path here, because
   // frameworks moving from top-level frameworks to embedded frameworks tend
   // to be symlinked from the top-level location to the embedded location,
   // and we need to resolve lookups as if we had found the embedded location.
-  char RealDirName[PATH_MAX];
-  StringRef DirName;
-  if (realpath(Dir->getName(), RealDirName))
-    DirName = RealDirName;
-  else
-    DirName = Dir->getName();
-#else
-  StringRef DirName = Dir->getName();
-#endif
+  StringRef DirName = SourceMgr->getFileManager().getCanonicalName(Dir);
 
   // Keep walking up the directory hierarchy, looking for a directory with
   // an umbrella header.
@@ -420,16 +412,13 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   // a framework module, do so.
   if (!Parent) {
     // Determine whether we're allowed to infer a module map.
-    StringRef FrameworkDirName = FrameworkDir->getName();
-#ifdef LLVM_ON_UNIX
+
     // Note: as an egregious but useful hack we use the real path here, because
     // we might be looking at an embedded framework that symlinks out to a
     // top-level framework, and we need to infer as if we were naming the
     // top-level framework.
-    char RealFrameworkDirName[PATH_MAX];
-    if (realpath(FrameworkDir->getName(), RealFrameworkDirName))
-      FrameworkDirName = RealFrameworkDirName;
-#endif
+    StringRef FrameworkDirName
+      = SourceMgr->getFileManager().getCanonicalName(FrameworkDir);
 
     bool canInfer = false;
     if (llvm::sys::path::has_parent_path(FrameworkDirName)) {
@@ -527,29 +516,23 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
       // check whether it is actually a subdirectory of the parent directory.
       // This will not be the case if the 'subframework' is actually a symlink
       // out to a top-level framework.
-#ifdef LLVM_ON_UNIX
-      char RealSubframeworkDirName[PATH_MAX];
-      if (realpath(Dir->path().c_str(), RealSubframeworkDirName)) {
-        StringRef SubframeworkDirName = RealSubframeworkDirName;
+      StringRef SubframeworkDirName = FileMgr.getCanonicalName(SubframeworkDir);
+      bool FoundParent = false;
+      do {
+        // Get the parent directory name.
+        SubframeworkDirName
+          = llvm::sys::path::parent_path(SubframeworkDirName);
+        if (SubframeworkDirName.empty())
+          break;
 
-        bool FoundParent = false;
-        do {
-          // Get the parent directory name.
-          SubframeworkDirName
-            = llvm::sys::path::parent_path(SubframeworkDirName);
-          if (SubframeworkDirName.empty())
-            break;
+        if (FileMgr.getDirectory(SubframeworkDirName) == FrameworkDir) {
+          FoundParent = true;
+          break;
+        }
+      } while (true);
 
-          if (FileMgr.getDirectory(SubframeworkDirName) == FrameworkDir) {
-            FoundParent = true;
-            break;
-          }
-        } while (true);
-
-        if (!FoundParent)
-          continue;
-      }
-#endif
+      if (!FoundParent)
+        continue;
 
       // FIXME: Do we want to warn about subframeworks without umbrella headers?
       SmallString<32> NameBuf;

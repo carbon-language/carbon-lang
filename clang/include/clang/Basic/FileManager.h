@@ -17,6 +17,7 @@
 
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/LLVM.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -152,6 +153,12 @@ class FileManager : public RefCountedBase<FileManager> {
   /// \see SeenDirEntries
   llvm::StringMap<FileEntry*, llvm::BumpPtrAllocator> SeenFileEntries;
 
+  /// \brief The canonical names of directories.
+  llvm::DenseMap<const DirectoryEntry *, llvm::StringRef> CanonicalDirNames;
+
+  /// \brief Storage for canonical names that we have computed.
+  llvm::BumpPtrAllocator CanonicalNameStorage;
+
   /// \brief Each FileEntry we create is assigned a unique ID #.
   ///
   unsigned NextFileUID;
@@ -256,6 +263,13 @@ public:
   /// FileEntry. Use with caution.
   static void modifyFileEntry(FileEntry *File, off_t Size,
                               time_t ModificationTime);
+
+  /// \brief Retrieve the canonical name for a given directory.
+  ///
+  /// This is a very expensive operation, despite its results being cached,
+  /// and should only be used when the physical layout of the file system is
+  /// required, which is (almost) never.
+  StringRef getCanonicalName(const DirectoryEntry *Dir);
 
   void PrintStats() const;
 };

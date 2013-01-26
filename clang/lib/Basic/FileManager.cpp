@@ -40,6 +40,11 @@
 #define S_ISFIFO(x) (0)
 #endif
 #endif
+#if defined(LLVM_ON_UNIX)
+#if defined(__linux__)
+#include <linux/limits.h>
+#endif
+#endif
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.
@@ -620,6 +625,29 @@ void FileManager::modifyFileEntry(FileEntry *File,
   File->ModTime = ModificationTime;
 }
 
+StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
+  // FIXME: use llvm::sys::fs::canonical() when it gets implemented
+#ifdef LLVM_ON_UNIX
+  llvm::DenseMap<const DirectoryEntry *, llvm::StringRef>::iterator Known
+    = CanonicalDirNames.find(Dir);
+  if (Known != CanonicalDirNames.end())
+    return Known->second;
+
+  StringRef CanonicalName(Dir->getName());
+  char CanonicalNameBuf[PATH_MAX];
+  if (realpath(Dir->getName(), CanonicalNameBuf)) {
+    unsigned Len = strlen(CanonicalNameBuf);
+    char *Mem = static_cast<char *>(CanonicalNameStorage.Allocate(Len, 1));
+    memcpy(Mem, CanonicalNameBuf, Len);
+    CanonicalName = StringRef(Mem, Len);
+  }
+
+  CanonicalDirNames.insert(std::make_pair(Dir, CanonicalName));
+  return CanonicalName;
+#else
+  return StringRef(Dir->getName());
+#endif
+}
 
 void FileManager::PrintStats() const {
   llvm::errs() << "\n*** File Manager Stats:\n";
