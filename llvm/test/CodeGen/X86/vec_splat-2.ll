@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=+sse2 | grep pshufd | count 1
+; RUN: llc < %s -march=x86 -mcpu=pentium4 -mattr=+sse2 | FileCheck %s
 
 define void @test(<2 x i64>* %P, i8 %x) nounwind {
 	%tmp = insertelement <16 x i8> zeroinitializer, i8 %x, i32 0		; <<16 x i8>> [#uses=1]
@@ -23,4 +23,11 @@ define void @test(<2 x i64>* %P, i8 %x) nounwind {
 	%tmp73.upgrd.1 = bitcast <16 x i8> %tmp73 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	store <2 x i64> %tmp73.upgrd.1, <2 x i64>* %P
 	ret void
+
+; CHECK: test:
+; CHECK-NOT: pshufd
+; CHECK: punpcklbw
+; CHECK: punpcklbw
+; CHECK: pshufd $0
+; CHECK-NOT: pshufd
 }
