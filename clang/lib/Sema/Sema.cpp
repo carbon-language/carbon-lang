@@ -373,10 +373,6 @@ namespace {
     UndefinedInternal(NamedDecl *decl, FullSourceLoc useLoc)
       : decl(decl), useLoc(useLoc) {}
   };
-
-  bool operator<(const UndefinedInternal &l, const UndefinedInternal &r) {
-    return l.useLoc.isBeforeInTranslationUnitThan(r.useLoc);
-  }
 }
 
 /// checkUndefinedInternals - Check for undefined objects with internal linkage.
