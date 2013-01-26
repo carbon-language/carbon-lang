@@ -1550,7 +1550,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             {
                 DataExtractor dsc_header_data(dsc_data_sp, byte_order, addr_byte_size);
 
-                uint32_t offset = offsetof (struct lldb_copy_dyld_cache_header, mappingOffset); 
+                lldb::offset_t offset = offsetof (struct lldb_copy_dyld_cache_header, mappingOffset); 
                 uint32_t mappingOffset = dsc_header_data.GetU32(&offset);
 
                 // If the mappingOffset points to a location inside the header, we've
