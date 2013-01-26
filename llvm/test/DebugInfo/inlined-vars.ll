@@ -39,19 +39,17 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; ARGUMENT: {{.*Abbrev.*DW_TAG_formal_parameter}}
 ; ARGUMENT-NOT: {{.*Abbrev.*DW_TAG_formal_parameter}}
 
-!16 = metadata !{i32 786688, metadata !17, metadata !"local", metadata !6, i32 4, metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ]
+!16 = metadata !{i32 786688, metadata !10, metadata !"local", metadata !6, i32 4, metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ]
 
 ; Two DW_TAG_variable: one abstract and one inlined.
 ; VARIABLE: {{.*Abbrev.*DW_TAG_variable}}
 ; VARIABLE: {{.*Abbrev.*DW_TAG_variable}}
 ; VARIABLE-NOT: {{.*Abbrev.*DW_TAG_variable}}
 
-!17 = metadata !{i32 786443, metadata !10, i32 3, i32 35, metadata !6, i32 1} ; [ DW_TAG_lexical_block ]
 !18 = metadata !{i32 786689, metadata !10, metadata !"argument", metadata !6, i32 16777219, metadata !9, i32 0, metadata !19} ; [ DW_TAG_arg_variable ]
-!19 = metadata !{i32 11, i32 10, metadata !20, null}
-!20 = metadata !{i32 786443, metadata !5, i32 10, i32 12, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!19 = metadata !{i32 11, i32 10, metadata !5, null}
 !21 = metadata !{i32 3, i32 25, metadata !10, metadata !19}
-!22 = metadata !{i32 786688, metadata !17, metadata !"local", metadata !6, i32 4, metadata !9, i32 0, metadata !19} ; [ DW_TAG_auto_variable ]
-!23 = metadata !{i32 4, i32 16, metadata !17, metadata !19}
-!24 = metadata !{i32 5, i32 3, metadata !17, metadata !19}
-!25 = metadata !{i32 6, i32 3, metadata !17, metadata !19}
+!22 = metadata !{i32 786688, metadata !10, metadata !"local", metadata !6, i32 4, metadata !9, i32 0, metadata !19} ; [ DW_TAG_auto_variable ]
+!23 = metadata !{i32 4, i32 16, metadata !10, metadata !19}
+!24 = metadata !{i32 5, i32 3, metadata !10, metadata !19}
+!25 = metadata !{i32 6, i32 3, metadata !10, metadata !19}

@@ -6,7 +6,7 @@
 ; It's a lot easier to do this in two passes than in one.
 ; PR14471
 
-; LLVM IR generated using: clang -emit-llvm -S
+; LLVM IR generated using: clang -emit-llvm -S -g
 ; (with the Clang part of this patch applied).
 ;
 ; class C
@@ -44,11 +44,11 @@ entry:
   %retval = alloca i32, align 4
   %instance_C = alloca %class.C, align 4
   store i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata !{%class.C* %instance_C}, metadata !29), !dbg !31
-  %d = getelementptr inbounds %class.C* %instance_C, i32 0, i32 0, !dbg !32
-  store i32 8, i32* %d, align 4, !dbg !32
-  %0 = load i32* @_ZN1C1cE, align 4, !dbg !33
-  ret i32 %0, !dbg !33
+  call void @llvm.dbg.declare(metadata !{%class.C* %instance_C}, metadata !29), !dbg !30
+  %d = getelementptr inbounds %class.C* %instance_C, i32 0, i32 0, !dbg !31
+  store i32 8, i32* %d, align 4, !dbg !31
+  %0 = load i32* @_ZN1C1cE, align 4, !dbg !32
+  ret i32 %0, !dbg !32
 }
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
@@ -60,35 +60,34 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4}
 !4 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 22, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !1, i32 23} ; [ DW_TAG_subprogram ] [line 22] [def] [scope 23] [main]
+!5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 18, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !1, i32 23} ; [ DW_TAG_subprogram ] [line 18] [def] [scope 23] [main]
 !6 = metadata !{i32 786473, metadata !"/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", metadata !"/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{metadata !11}
 !11 = metadata !{metadata !12, metadata !27, metadata !28}
-!12 = metadata !{i32 786484, i32 0, metadata !13, metadata !"a", metadata !"a", metadata !"_ZN1C1aE", metadata !6, i32 18, metadata !9, i32 0, i32 1, i32* @_ZN1C1aE, metadata !15} ; [ DW_TAG_variable ] [a] [line 18] [def]
-!13 = metadata !{i32 786434, null, metadata !"C", metadata !6, i32 5, i64 32, i64 32, i32 0, i32 0, null, metadata !14, i32 0, null, null} ; [ DW_TAG_class_type ] [C] [line 5, size 32, align 32, offset 0] [from ]
+!12 = metadata !{i32 786484, i32 0, metadata !13, metadata !"a", metadata !"a", metadata !"_ZN1C1aE", metadata !6, i32 14, metadata !9, i32 0, i32 1, i32* @_ZN1C1aE, metadata !15} ; [ DW_TAG_variable ] [a] [line 14] [def]
+!13 = metadata !{i32 786434, null, metadata !"C", metadata !6, i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !14, i32 0, null, null} ; [ DW_TAG_class_type ] [C] [line 1, size 32, align 32, offset 0] [from ]
 !14 = metadata !{metadata !15, metadata !16, metadata !19, metadata !20, metadata !23, metadata !24, metadata !26}
-!15 = metadata !{i32 786445, metadata !13, metadata !"a", metadata !6, i32 7, i64 0, i64 0, i64 0, i32 4097, metadata !9, null} ; [ DW_TAG_member ] [a] [line 7, size 0, align 0, offset 0] [private] [static] [from int]
-!16 = metadata !{i32 786445, metadata !13, metadata !"const_a", metadata !6, i32 8, i64 0, i64 0, i64 0, i32 4097, metadata !17, i1 true} ; [ DW_TAG_member ] [const_a] [line 8, size 0, align 0, offset 0] [private] [static] [from ]
+!15 = metadata !{i32 786445, metadata !13, metadata !"a", metadata !6, i32 3, i64 0, i64 0, i64 0, i32 4097, metadata !9, null} ; [ DW_TAG_member ] [a] [line 3, size 0, align 0, offset 0] [private] [static] [from int]
+!16 = metadata !{i32 786445, metadata !13, metadata !"const_a", metadata !6, i32 4, i64 0, i64 0, i64 0, i32 4097, metadata !17, i1 true} ; [ DW_TAG_member ] [const_a] [line 4, size 0, align 0, offset 0] [private] [static] [from ]
 !17 = metadata !{i32 786470, null, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !18} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from bool]
 !18 = metadata !{i32 786468, null, metadata !"bool", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
-!19 = metadata !{i32 786445, metadata !13, metadata !"b", metadata !6, i32 10, i64 0, i64 0, i64 0, i32 4098, metadata !9, null} ; [ DW_TAG_member ] [b] [line 10, size 0, align 0, offset 0] [protected] [static] [from int]
-!20 = metadata !{i32 786445, metadata !13, metadata !"const_b", metadata !6, i32 11, i64 0, i64 0, i64 0, i32 4098, metadata !21, float 0x40091EB860000000} ; [ DW_TAG_member ] [const_b] [line 11, size 0, align 0, offset 0] [protected] [static] [from ]
+!19 = metadata !{i32 786445, metadata !13, metadata !"b", metadata !6, i32 6, i64 0, i64 0, i64 0, i32 4098, metadata !9, null} ; [ DW_TAG_member ] [b] [line 6, size 0, align 0, offset 0] [protected] [static] [from int]
+!20 = metadata !{i32 786445, metadata !13, metadata !"const_b", metadata !6, i32 7, i64 0, i64 0, i64 0, i32 4098, metadata !21, float 0x40091EB860000000} ; [ DW_TAG_member ] [const_b] [line 7, size 0, align 0, offset 0] [protected] [static] [from ]
 !21 = metadata !{i32 786470, null, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !22} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from float]
 !22 = metadata !{i32 786468, null, metadata !"float", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ] [float] [line 0, size 32, align 32, offset 0, enc DW_ATE_float]
-!23 = metadata !{i32 786445, metadata !13, metadata !"c", metadata !6, i32 13, i64 0, i64 0, i64 0, i32 4096, metadata !9, null} ; [ DW_TAG_member ] [c] [line 13, size 0, align 0, offset 0] [static] [from int]
-!24 = metadata !{i32 786445, metadata !13, metadata !"const_c", metadata !6, i32 14, i64 0, i64 0, i64 0, i32 4096, metadata !25, i32 18} ; [ DW_TAG_member ] [const_c] [line 14, size 0, align 0, offset 0] [static] [from ]
+!23 = metadata !{i32 786445, metadata !13, metadata !"c", metadata !6, i32 9, i64 0, i64 0, i64 0, i32 4096, metadata !9, null} ; [ DW_TAG_member ] [c] [line 9, size 0, align 0, offset 0] [static] [from int]
+!24 = metadata !{i32 786445, metadata !13, metadata !"const_c", metadata !6, i32 10, i64 0, i64 0, i64 0, i32 4096, metadata !25, i32 18} ; [ DW_TAG_member ] [const_c] [line 10, size 0, align 0, offset 0] [static] [from ]
 !25 = metadata !{i32 786470, null, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !9} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from int]
-!26 = metadata !{i32 786445, metadata !13, metadata !"d", metadata !6, i32 15, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ] [d] [line 15, size 32, align 32, offset 0] [from int]
-!27 = metadata !{i32 786484, i32 0, metadata !13, metadata !"b", metadata !"b", metadata !"_ZN1C1bE", metadata !6, i32 19, metadata !9, i32 0, i32 1, i32* @_ZN1C1bE, metadata !19} ; [ DW_TAG_variable ] [b] [line 19] [def]
-!28 = metadata !{i32 786484, i32 0, metadata !13, metadata !"c", metadata !"c", metadata !"_ZN1C1cE", metadata !6, i32 20, metadata !9, i32 0, i32 1, i32* @_ZN1C1cE, metadata !23} ; [ DW_TAG_variable ] [c] [line 20] [def]
-!29 = metadata !{i32 786688, metadata !30, metadata !"instance_C", metadata !6, i32 24, metadata !13, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [instance_C] [line 24]
-!30 = metadata !{i32 786443, metadata !5, i32 23, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm//usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp]
-!31 = metadata !{i32 24, i32 0, metadata !30, null}
-!32 = metadata !{i32 25, i32 0, metadata !30, null}
-!33 = metadata !{i32 26, i32 0, metadata !30, null}
+!26 = metadata !{i32 786445, metadata !13, metadata !"d", metadata !6, i32 11, i64 32, i64 32, i64 0, i32 0, metadata !9} ; [ DW_TAG_member ] [d] [line 11, size 32, align 32, offset 0] [from int]
+!27 = metadata !{i32 786484, i32 0, metadata !13, metadata !"b", metadata !"b", metadata !"_ZN1C1bE", metadata !6, i32 15, metadata !9, i32 0, i32 1, i32* @_ZN1C1bE, metadata !19} ; [ DW_TAG_variable ] [b] [line 15] [def]
+!28 = metadata !{i32 786484, i32 0, metadata !13, metadata !"c", metadata !"c", metadata !"_ZN1C1cE", metadata !6, i32 16, metadata !9, i32 0, i32 1, i32* @_ZN1C1cE, metadata !23} ; [ DW_TAG_variable ] [c] [line 16] [def]
+!29 = metadata !{i32 786688, metadata !5, metadata !"instance_C", metadata !6, i32 20, metadata !13, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [instance_C] [line 20]
+!30 = metadata !{i32 20, i32 0, metadata !5, null}
+!31 = metadata !{i32 21, i32 0, metadata !5, null}
+!32 = metadata !{i32 22, i32 0, metadata !5, null}
 ; PRESENT verifies that static member declarations have these attributes:
 ; external, declaration, accessibility, and either DW_AT_MIPS_linkage_name
 ; (for variables) or DW_AT_const_value (for constants).
