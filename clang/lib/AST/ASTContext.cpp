@@ -428,7 +428,7 @@ comments::FullComment *ASTContext::getCommentForDecl(
           return cloneFullComment(FC, D);
     }
     else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-      // Attach enum's documentation to its typedef if latter
+      // Attach any tag type's documentation to its typedef if latter
       // does not have one of its own.
       QualType QT = TD->getUnderlyingType();
       if (const TagType *TT = QT->getAs<TagType>())
