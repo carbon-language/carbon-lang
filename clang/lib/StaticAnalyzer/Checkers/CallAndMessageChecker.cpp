@@ -76,6 +76,8 @@ void CallAndMessageChecker::emitBadCall(BugType *BT, CheckerContext &C,
   BugReport *R = new BugReport(*BT, BT->getName(), N);
   if (BadE) {
     R->addRange(BadE->getSourceRange());
+    if (BadE->isGLValue())
+      BadE = bugreporter::getDerefExpr(BadE);
     bugreporter::trackNullOrUndefValue(N, BadE, *R);
   }
   C.emitReport(R);
