@@ -245,7 +245,7 @@ const Decl *getCursorDecl(CXCursor Cursor);
 const Expr *getCursorExpr(CXCursor Cursor);
 const Stmt *getCursorStmt(CXCursor Cursor);
 const Attr *getCursorAttr(CXCursor Cursor);
-Decl *getCursorParentDecl(CXCursor Cursor);
+const Decl *getCursorParentDecl(CXCursor Cursor);
 
 ASTContext &getCursorContext(CXCursor Cursor);
 ASTUnit *getCursorASTUnit(CXCursor Cursor);

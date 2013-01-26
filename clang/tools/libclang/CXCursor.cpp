@@ -798,8 +798,8 @@ const Attr *cxcursor::getCursorAttr(CXCursor Cursor) {
   return static_cast<const Attr *>(Cursor.data[1]);
 }
 
-Decl *cxcursor::getCursorParentDecl(CXCursor Cursor) {
-  return static_cast<Decl*>(const_cast<void*>(Cursor.data[0]));
+const Decl *cxcursor::getCursorParentDecl(CXCursor Cursor) {
+  return static_cast<const Decl *>(Cursor.data[0]);
 }
 
 ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
