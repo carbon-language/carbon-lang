@@ -525,12 +525,21 @@ Breakpoint::GetNumLocations() const
 void
 Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_locations)
 {
-    const size_t num_locations = GetNumLocations ();
-    const size_t num_resolved_locations = GetNumResolvedLocations ();
-
     assert (s != NULL);
     
-
+    if (!m_kind_description.empty())
+    {
+        if (eDescriptionLevelBrief)
+        {
+            s->PutCString (GetBreakpointKind());
+            return;
+        }
+        else
+            s->Printf("Kind: %s\n", GetBreakpointKind ());
+    }
+    
+    const size_t num_locations = GetNumLocations ();
+    const size_t num_resolved_locations = GetNumResolvedLocations ();
     
     // They just made the breakpoint, they don't need to be told HOW they made it...
     // Also, we'll print the breakpoint number differently depending on whether there is 1 or more locations.

@@ -334,8 +334,13 @@ ThreadPlanStepRange::SetNextBranchBreakpoint ()
             const bool is_internal = true;
             run_to_address = instructions->GetInstructionAtIndex(branch_index)->GetAddress();
             m_next_branch_bp_sp = GetTarget().CreateBreakpoint(run_to_address, is_internal);
-            m_next_branch_bp_sp->SetThreadID(m_thread.GetID());
-            return true;
+            if (m_next_branch_bp_sp)
+            {
+                m_next_branch_bp_sp->SetThreadID(m_thread.GetID());
+                m_next_branch_bp_sp->SetBreakpointKind ("next-branch-location");
+            }
+            else
+                return false;
         }
     }
     return false;

@@ -220,9 +220,29 @@ public:
     GetDescription (Stream *s,
                     lldb::DescriptionLevel level);
 
+    //------------------------------------------------------------------
+    /// Tell whether a breakpoint has a location at this site.
+    ///
+    /// @param[in] bp_id
+    ///     The breakpoint id to query.
+    ///
+    /// @result
+    ///     \b true if bp_id has a location that is at this site,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
     bool
     IsBreakpointAtThisSite (lldb::break_id_t bp_id);
 
+    //------------------------------------------------------------------
+    /// Tell whether ALL the breakpoints in the location collection are internal.
+    ///
+    /// @result
+    ///     \b true if all breakpoint locations are owned by internal breakpoints,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsInternal () const;
+    
     BreakpointSite::Type
     GetType () const
     {

@@ -171,6 +171,14 @@ public:
     //------------------------------------------------------------------
     bool ValidForThisThread (Thread *thread);
 
+    //------------------------------------------------------------------
+    /// Tell whether ALL the breakpoints in the location collection are internal.
+    ///
+    /// @result
+    ///     \b true if all breakpoint locations are owned by internal breakpoints,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
+    bool IsInternal() const;
 
 
 protected:

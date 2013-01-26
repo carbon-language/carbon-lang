@@ -418,6 +418,7 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
         SearchFilterSP filter_sp = target.GetSearchFilterForModule(NULL);
         
         m_cxx_exception_bp_sp = target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal);
+        m_cxx_exception_bp_sp->SetBreakpointKind("c++ exception");
     }
     else
         m_cxx_exception_bp_sp->SetEnabled (true);

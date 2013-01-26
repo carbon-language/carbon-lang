@@ -229,7 +229,6 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     Process* m_process; ///< The process that this dynamic loader plug-in is tracking.
-    bool m_stop_when_images_change; ///< Boolean value that indicates if the process should stop when imamges change.
 private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoader);
 

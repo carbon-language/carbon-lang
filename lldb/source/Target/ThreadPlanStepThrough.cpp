@@ -61,6 +61,7 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, StackID &m_stack_i
             {
                 return_bp->SetThreadID(m_thread.GetID());
                 m_backstop_bkpt_id = return_bp->GetID();
+                return_bp->SetBreakpointKind("step-through-backstop");
             }
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (log)

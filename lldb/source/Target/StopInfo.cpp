@@ -206,6 +206,22 @@ public:
             if (bp_site_sp)
             {
                 StreamString strm;
+                // If we have just hit an internal breakpoint, and it has a kind description, print that instead of the
+                // full breakpoint printing:
+                if (bp_site_sp->IsInternal())
+                {
+                    size_t num_owners = bp_site_sp->GetNumberOfOwners();
+                    for (size_t idx = 0; idx < num_owners; idx++)
+                    {
+                        const char *kind = bp_site_sp->GetOwnerAtIndex(idx)->GetBreakpoint().GetBreakpointKind();
+                        if (kind != NULL)
+                        {
+                            m_description.assign (kind);
+                            return kind;
+                        }
+                    }
+                }
+                
                 strm.Printf("breakpoint ");
                 bp_site_sp->GetDescription(&strm, eDescriptionLevelBrief);
                 m_description.swap (strm.GetString());

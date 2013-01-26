@@ -382,6 +382,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                     {
                         m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();
                         trampolines_changed_bp_sp->SetCallback (RefreshTrampolines, this, true);
+                        trampolines_changed_bp_sp->SetBreakpointKind ("objc-trampolines-changed");
                         return true;
                     }
                 }

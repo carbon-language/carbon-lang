@@ -107,6 +107,7 @@ ThreadPlanStepOut::ThreadPlanStepOut
         {
             return_bp->SetThreadID(m_thread.GetID());
             m_return_bp_id = return_bp->GetID();
+            return_bp->SetBreakpointKind ("step-out");
         }
         
         if (immediate_return_from_sp)

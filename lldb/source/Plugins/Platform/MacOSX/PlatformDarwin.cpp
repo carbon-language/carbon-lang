@@ -964,6 +964,7 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
                                      eFunctionNameTypeFull,
                                      skip_prologue,
                                      internal);
+    bp_sp->SetBreakpointKind("thread-creation");
 
     return bp_sp;
 }

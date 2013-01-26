@@ -61,6 +61,8 @@ LanguageRuntime::CreateExceptionBreakpoint(
     SearchFilterSP filter_sp(target.GetSearchFilterForModule(NULL));
     
     exc_breakpt_sp = target.CreateBreakpoint (filter_sp, resolver_sp, is_internal);
+    if (is_internal)
+        exc_breakpt_sp->SetBreakpointKind("exception");
     
     return exc_breakpt_sp;
 }

@@ -202,6 +202,7 @@ DynamicLoaderPOSIXDYLD::ProbeEntry()
     
     entry_break = m_process->GetTarget().CreateBreakpoint(entry, true).get();
     entry_break->SetCallback(EntryBreakpointHit, this, true);
+    entry_break->SetBreakpointKind("shared-library-event");
 }
 
 // The runtime linker has run and initialized the rendezvous structure once the
@@ -233,6 +234,7 @@ DynamicLoaderPOSIXDYLD::SetRendezvousBreakpoint()
     break_addr = m_rendezvous.GetBreakAddress();
     dyld_break = m_process->GetTarget().CreateBreakpoint(break_addr, true).get();
     dyld_break->SetCallback(RendezvousBreakpointHit, this, true);
+    dyld_break->SetBreakpointKind ("shared-library-event");
 }
 
 bool

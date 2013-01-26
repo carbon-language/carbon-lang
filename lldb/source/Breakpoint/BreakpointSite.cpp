@@ -98,6 +98,12 @@ BreakpointSite::GetDescription (Stream *s, lldb::DescriptionLevel level)
     m_owners.GetDescription (s, level);
 }
 
+bool
+BreakpointSite::IsInternal() const
+{
+    return m_owners.IsInternal();
+}
+
 uint8_t *
 BreakpointSite::GetTrapOpcodeBytes()
 {

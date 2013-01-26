@@ -9,6 +9,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Core/PluginManager.h"
 
 using namespace lldb;
@@ -45,8 +46,7 @@ DynamicLoader::FindPlugin (Process *process, const char *plugin_name)
 // DynamicLoader constructor
 //----------------------------------------------------------------------
 DynamicLoader::DynamicLoader(Process *process) :
-    m_process (process),
-    m_stop_when_images_change(false)    // Stop the process by default when a process' images change
+    m_process (process)
 {
 }
 
@@ -64,12 +64,12 @@ DynamicLoader::~DynamicLoader()
 bool
 DynamicLoader::GetStopWhenImagesChange () const
 {
-    return m_stop_when_images_change;
+    return m_process->GetStopOnSharedLibraryEvents();
 }
 
 void
 DynamicLoader::SetStopWhenImagesChange (bool stop)
 {
-    m_stop_when_images_change = stop;
+    m_process->SetStopOnSharedLibraryEvents (stop);
 }
 

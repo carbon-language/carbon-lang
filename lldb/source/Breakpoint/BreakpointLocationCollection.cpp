@@ -162,6 +162,25 @@ BreakpointLocationCollection::ValidForThisThread (Thread *thread)
     return false;
 }
 
+bool 
+BreakpointLocationCollection::IsInternal () const
+{
+    collection::const_iterator pos,
+        begin = m_break_loc_collection.begin(),
+        end = m_break_loc_collection.end();
+
+    bool is_internal = true;
+    
+    for (pos = begin; pos != end; ++pos)
+    {
+        if (!(*pos)->GetBreakpoint().IsInternal ())
+        {
+            is_internal = false;
+            break;
+        }
+    }
+    return is_internal;
+}
 
 void
 BreakpointLocationCollection::GetDescription (Stream *s, lldb::DescriptionLevel level)

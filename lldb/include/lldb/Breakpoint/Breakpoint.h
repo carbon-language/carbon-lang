@@ -489,6 +489,32 @@ public:
     GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_locations = false);
 
     //------------------------------------------------------------------
+    /// Set the "kind" description for a breakpoint.  If the breakpoint is hit
+    /// the stop info will show this "kind" description instead of the breakpoint
+    /// number.  Mostly useful for internal breakpoints, where the breakpoint number
+    /// doesn't have meaning to the user.
+    ///
+    /// @param[in] kind
+    ///     New "kind" description.
+    //------------------------------------------------------------------
+    void
+    SetBreakpointKind (const char *kind)
+    {
+        m_kind_description.assign (kind);
+    }
+    
+    //------------------------------------------------------------------
+    /// Return the "kind" description for a breakpoint.
+    ///
+    /// @return
+    ///     The breakpoint kind, or NULL if none is set.
+    //------------------------------------------------------------------
+    const char *GetBreakpointKind () const
+    {
+        return m_kind_description.c_str();
+    }
+
+    //------------------------------------------------------------------
     /// Accessor for the breakpoint Target.
     /// @return
     ///     This breakpoint's Target.
@@ -588,6 +614,7 @@ private:
     lldb::BreakpointResolverSP m_resolver_sp; // The resolver that defines this breakpoint.
     BreakpointOptions m_options;              // Settable breakpoint options
     BreakpointLocationList m_locations;       // The list of locations currently found for this breakpoint.
+    std::string            m_kind_description;
     
     void
     SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind);

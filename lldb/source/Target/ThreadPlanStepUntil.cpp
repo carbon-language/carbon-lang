@@ -73,6 +73,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
             {
                 return_bp->SetThreadID(thread_id);
                 m_return_bp_id = return_bp->GetID();
+                return_bp->SetBreakpointKind ("until-return-backstop");
             }
         }
 
@@ -86,6 +87,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
             {
                 until_bp->SetThreadID(thread_id);
                 m_until_points[address_list[i]] = until_bp->GetID();
+                until_bp->SetBreakpointKind("until-target");
             }
             else
             {

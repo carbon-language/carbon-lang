@@ -85,6 +85,12 @@ public:
     
     void
     SetUnwindOnErrorInExpressions (bool ignore);
+    
+    bool
+    GetStopOnSharedLibraryEvents () const;
+    
+    void
+    SetStopOnSharedLibraryEvents (bool stop);
 };
 
 typedef STD_SHARED_PTR(ProcessProperties) ProcessPropertiesSP;

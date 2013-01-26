@@ -100,6 +100,7 @@ g_properties[] =
     { "ignore-breakpoints-in-expressions", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, breakpoints will be ignored during expression evaluation." },
     { "unwind-on-error-in-expressions", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, errors in expression evaluation will unwind the stack back to the state before the call." },
     { "python-os-plugin-path", OptionValue::eTypeFileSpec, false, true, NULL, NULL, "A path to a python OS plug-in module file that contains a OperatingSystemPlugIn class." },
+    { "stop-on-sharedlibrary-events" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, stop when a shared library is loaded or unloaded." },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
 };
 
@@ -108,7 +109,8 @@ enum {
     ePropertyExtraStartCommand,
     ePropertyIgnoreBreakpointsInExpressions,
     ePropertyUnwindOnErrorInExpressions,
-    ePropertyPythonOSPluginPath
+    ePropertyPythonOSPluginPath,
+    ePropertyStopOnSharedLibraryEvents
 };
 
 ProcessProperties::ProcessProperties (bool is_global) :
@@ -119,7 +121,7 @@ ProcessProperties::ProcessProperties (bool is_global) :
         m_collection_sp.reset (new ProcessOptionValueProperties(ConstString("process")));
         m_collection_sp->Initialize(g_properties);
         m_collection_sp->AppendProperty(ConstString("thread"),
-                                        ConstString("Settings specify to threads."),
+                                        ConstString("Settings specific to threads."),
                                         true,
                                         Thread::GetGlobalProperties()->GetValueProperties());
     }
@@ -195,6 +197,20 @@ ProcessProperties::SetUnwindOnErrorInExpressions (bool ignore)
 {
     const uint32_t idx = ePropertyUnwindOnErrorInExpressions;
     m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, ignore);
+}
+
+bool
+ProcessProperties::GetStopOnSharedLibraryEvents () const
+{
+    const uint32_t idx = ePropertyStopOnSharedLibraryEvents;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean(NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+    
+void
+ProcessProperties::SetStopOnSharedLibraryEvents (bool stop)
+{
+    const uint32_t idx = ePropertyStopOnSharedLibraryEvents;
+    m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, stop);
 }
 
 void

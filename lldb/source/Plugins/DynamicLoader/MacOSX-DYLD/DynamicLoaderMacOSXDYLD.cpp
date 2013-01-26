@@ -238,7 +238,7 @@ DynamicLoaderMacOSXDYLD::Clear (bool clear_process)
     Mutex::Locker locker(m_mutex);
 
     if (m_process->IsAlive() && LLDB_BREAK_ID_IS_VALID(m_break_id))
-        m_process->ClearBreakpointSiteByID(m_break_id);
+        m_process->GetTarget().RemoveBreakpointByID (m_break_id);
 
     if (clear_process)
         m_process = NULL;
@@ -1565,6 +1565,7 @@ DynamicLoaderMacOSXDYLD::SetNotificationBreakpoint ()
             {
                 Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true).get();
                 dyld_break->SetCallback (DynamicLoaderMacOSXDYLD::NotifyBreakpointHit, this, true);
+                dyld_break->SetBreakpointKind ("shared-library-event");
                 m_break_id = dyld_break->GetID();
             }
         }
