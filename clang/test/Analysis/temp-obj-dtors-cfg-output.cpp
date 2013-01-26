@@ -1,6 +1,7 @@
 // RUN: rm -f %t
 // RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -analyzer-config cfg-temporary-dtors=true %s > %t 2>&1
 // RUN: FileCheck --input-file=%t %s
+// XPASS: *
 
 class A {
 public:

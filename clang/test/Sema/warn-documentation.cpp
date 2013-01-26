@@ -836,3 +836,31 @@ typedef const struct test_nocrash7 * test_nocrash8;
 /// aaa \unknown aaa \unknown aaa
 int test_nocrash9;
 
+
+// We used to crash on this.  PR15068
+
+// expected-warning@+2 {{empty paragraph passed to '\param' command}}
+// expected-warning@+2 {{empty paragraph passed to '\param' command}}
+///@param x
+///@param y
+int test_nocrash10(int x, int y);
+
+// expected-warning@+2 {{empty paragraph passed to '\param' command}} expected-warning@+2 {{parameter 'x' not found in the function declaration}}
+// expected-warning@+2 {{empty paragraph passed to '\param' command}} expected-warning@+2 {{parameter 'y' not found in the function declaration}}
+///@param x
+///@param y
+int test_nocrash11();
+
+// expected-warning@+3 {{empty paragraph passed to '\param' command}} expected-warning@+3 {{parameter 'x' not found in the function declaration}}
+// expected-warning@+3 {{empty paragraph passed to '\param' command}} expected-warning@+3 {{parameter 'y' not found in the function declaration}}
+/**
+@param x
+@param y
+**/
+int test_nocrash12();
+
+// expected-warning@+2 {{empty paragraph passed to '\param' command}}
+// expected-warning@+1 {{empty paragraph passed to '\param' command}}
+///@param x@param y
+int test_nocrash13(int x, int y);
+

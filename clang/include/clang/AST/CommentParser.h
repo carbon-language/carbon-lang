@@ -86,6 +86,11 @@ class Parser {
     Tok = Toks[0];
   }
 
+  bool isTokBlockCommand() {
+    return Tok.is(tok::command) &&
+           Traits.getCommandInfo(Tok.getCommandID())->IsBlockCommand;
+  }
+
 public:
   Parser(Lexer &L, Sema &S, llvm::BumpPtrAllocator &Allocator,
          const SourceManager &SourceMgr, DiagnosticsEngine &Diags,
