@@ -4620,7 +4620,7 @@ static bool TryCopyInitialization(const CanQualType FromQTy,
 /// parameter of the given member function (@c Method) from the
 /// expression @p From.
 static ImplicitConversionSequence
-TryObjectArgumentInitialization(Sema &S, QualType OrigFromType,
+TryObjectArgumentInitialization(Sema &S, QualType FromType,
                                 Expr::Classification FromClassification,
                                 CXXMethodDecl *Method,
                                 CXXRecordDecl *ActingContext) {
@@ -4636,7 +4636,6 @@ TryObjectArgumentInitialization(Sema &S, QualType OrigFromType,
   ImplicitConversionSequence ICS;
 
   // We need to have an object of class type.
-  QualType FromType = OrigFromType;
   if (const PointerType *PT = FromType->getAs<PointerType>()) {
     FromType = PT->getPointeeType();
 
@@ -4671,7 +4670,7 @@ TryObjectArgumentInitialization(Sema &S, QualType OrigFromType,
                                     != FromTypeCanon.getLocalCVRQualifiers() &&
       !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon)) {
     ICS.setBad(BadConversionSequence::bad_qualifiers,
-               OrigFromType, ImplicitParamType);
+               FromType, ImplicitParamType);
     return ICS;
   }
 

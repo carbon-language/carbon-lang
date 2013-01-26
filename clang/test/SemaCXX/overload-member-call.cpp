@@ -105,3 +105,11 @@ namespace test1 {
   }
 }
 
+namespace b7398190 {
+  struct S {
+    int f(); // expected-note {{'this' argument has type 'const b7398190::S', but method is not marked const}}
+    void f(int); // expected-note {{requires 1 argument, but 0 were provided}}
+  };
+  const S *p;
+  int k = p->f(); // expected-error {{no matching member function for call to 'f'}}
+}
