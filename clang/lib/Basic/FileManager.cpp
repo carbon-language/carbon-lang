@@ -41,9 +41,7 @@
 #endif
 #endif
 #if defined(LLVM_ON_UNIX)
-#if defined(__linux__)
-#include <linux/limits.h>
-#endif
+#include <limits.h>
 #endif
 using namespace clang;
 
