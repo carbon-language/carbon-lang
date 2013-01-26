@@ -2960,6 +2960,21 @@ unsigned clang_isFileMultipleIncludeGuarded(CXTranslationUnit tu, CXFile file) {
                                           .isFileMultipleIncludeGuarded(FEnt);
 }
 
+int clang_getFileUniqueID(CXFile file, CXFileUniqueID *outID) {
+  if (!file || !outID)
+    return 1;
+
+#ifdef LLVM_ON_WIN32
+  return 1; // inodes not supported on windows.
+#else
+  FileEntry *FEnt = static_cast<FileEntry *>(file);
+  outID->data[0] = FEnt->getDevice();
+  outID->data[1] = FEnt->getInode();
+  outID->data[2] = FEnt->getModificationTime();
+  return 0;
+#endif
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//

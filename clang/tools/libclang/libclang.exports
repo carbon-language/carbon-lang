@@ -166,6 +166,7 @@ clang_getFile
 clang_getFileLocation
 clang_getFileName
 clang_getFileTime
+clang_getFileUniqueID
 clang_getFunctionTypeCallingConv
 clang_getIBOutletCollectionType
 clang_getIncludedFile

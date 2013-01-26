@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 10
+#define CINDEX_VERSION_MINOR 11
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -295,6 +295,24 @@ CINDEX_LINKAGE CXString clang_getFileName(CXFile SFile);
  * \brief Retrieve the last modification time of the given file.
  */
 CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
+
+/**
+ * \brief Uniquely identifies a CXFile, that refers to the same underlying file,
+ * across an indexing session.
+ */
+typedef struct {
+  unsigned long long data[3];
+} CXFileUniqueID;
+
+/**
+ * \brief Retrieve the unique ID for the given \c file.
+ *
+ * \param file the file to get the ID for.
+ * \param outID stores the returned CXFileUniqueID.
+ * \returns If there was a failure getting the unique ID, returns non-zero,
+ * otherwise returns 0.
+*/
+CINDEX_LINKAGE int clang_getFileUniqueID(CXFile file, CXFileUniqueID *outID);
 
 /**
  * \brief Determine whether the given header is guarded against
