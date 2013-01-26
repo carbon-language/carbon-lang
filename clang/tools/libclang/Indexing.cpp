@@ -759,7 +759,7 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
   if (!client_index_callbacks || index_callbacks_size == 0)
     return;
 
-  CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
+  CIndexer *CXXIdx = TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
     setThreadBackgroundPriority();
 

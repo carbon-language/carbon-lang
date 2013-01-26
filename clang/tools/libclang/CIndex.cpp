@@ -2758,7 +2758,7 @@ static void clang_saveTranslationUnit_Impl(void *UserData) {
   SaveTranslationUnitInfo *STUI =
     static_cast<SaveTranslationUnitInfo*>(UserData);
 
-  CIndexer *CXXIdx = (CIndexer*)STUI->TU->CIdx;
+  CIndexer *CXXIdx = STUI->TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
     setThreadBackgroundPriority();
 
@@ -2857,7 +2857,7 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   (void) options;
   RTUI->result = 1;
 
-  CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
+  CIndexer *CXXIdx = TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
     setThreadBackgroundPriority();
 
@@ -5475,7 +5475,7 @@ static void clang_annotateTokensImpl(void *UserData) {
   const unsigned NumTokens = ((clang_annotateTokens_Data*)UserData)->NumTokens;
   CXCursor *Cursors = ((clang_annotateTokens_Data*)UserData)->Cursors;
 
-  CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
+  CIndexer *CXXIdx = TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
     setThreadBackgroundPriority();
 

@@ -23,7 +23,7 @@ namespace clang {
 } // namespace clang
 
 struct CXTranslationUnitImpl {
-  void *CIdx;
+  clang::CIndexer *CIdx;
   clang::ASTUnit *TheASTUnit;
   void *StringPool;
   void *Diagnostics;
