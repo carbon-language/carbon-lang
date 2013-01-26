@@ -111,7 +111,7 @@ After strength reduction:
 
 .. code-block:: llvm
 
-    %result = shl i32 %X, i8 3
+    %result = shl i32 %X, 3
 
 And the hard way:
 
