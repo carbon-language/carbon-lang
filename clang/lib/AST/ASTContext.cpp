@@ -431,9 +431,9 @@ comments::FullComment *ASTContext::getCommentForDecl(
       // Attach enum's documentation to its typedef if latter
       // does not have one of its own.
       QualType QT = TD->getUnderlyingType();
-      if (const EnumType *ET = QT->getAs<EnumType>())
-        if (const EnumDecl *ED = ET->getDecl())
-          if (comments::FullComment *FC = getCommentForDecl(ED, PP))
+      if (const TagType *TT = QT->getAs<TagType>())
+        if (const Decl *TD = TT->getDecl())
+          if (comments::FullComment *FC = getCommentForDecl(TD, PP))
             return cloneFullComment(FC, D);
     }
     return NULL;
