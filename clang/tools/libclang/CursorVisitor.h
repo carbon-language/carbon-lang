@@ -33,10 +33,11 @@ public:
               MemberRefVisitKind, SizeOfPackExprPartsKind,
               LambdaExprPartsKind, PostChildrenVisitKind };
 protected:
-  void *data[3];
+  const void *data[3];
   CXCursor parent;
   Kind K;
-  VisitorJob(CXCursor C, Kind k, void *d1, void *d2 = 0, void *d3 = 0)
+  VisitorJob(CXCursor C, Kind k, const void *d1, const void *d2 = 0,
+             const void *d3 = 0)
     : parent(C), K(k) {
     data[0] = d1;
     data[1] = d2;
@@ -258,8 +259,8 @@ public:
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
-  void EnqueueWorkList(VisitorWorkList &WL, Stmt *S);
-  LLVM_ATTRIBUTE_NOINLINE bool Visit(Stmt *S);
+  void EnqueueWorkList(VisitorWorkList &WL, const Stmt *S);
+  LLVM_ATTRIBUTE_NOINLINE bool Visit(const Stmt *S);
 };
 
 }

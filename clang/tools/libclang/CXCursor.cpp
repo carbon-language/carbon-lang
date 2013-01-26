@@ -781,17 +781,17 @@ const Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
   return static_cast<const Decl *>(Cursor.data[0]);
 }
 
-Expr *cxcursor::getCursorExpr(CXCursor Cursor) {
+const Expr *cxcursor::getCursorExpr(CXCursor Cursor) {
   return dyn_cast_or_null<Expr>(getCursorStmt(Cursor));
 }
 
-Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
+const Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
   if (Cursor.kind == CXCursor_ObjCSuperClassRef ||
       Cursor.kind == CXCursor_ObjCProtocolRef ||
       Cursor.kind == CXCursor_ObjCClassRef)
     return 0;
 
-  return static_cast<Stmt*>(const_cast<void*>(Cursor.data[1]));
+  return static_cast<const Stmt *>(Cursor.data[1]);
 }
 
 Attr *cxcursor::getCursorAttr(CXCursor Cursor) {
@@ -882,12 +882,13 @@ CXCursor cxcursor::getTypeRefCursor(CXCursor cursor) {
   if (cursor.xdata == 0)
     return cursor;
 
-  Expr *E = getCursorExpr(cursor);
+  const Expr *E = getCursorExpr(cursor);
   TypeSourceInfo *Type = 0;
-  if (CXXUnresolvedConstructExpr *
+  if (const CXXUnresolvedConstructExpr *
         UnCtor = dyn_cast<CXXUnresolvedConstructExpr>(E)) {
     Type = UnCtor->getTypeSourceInfo();
-  } else if (CXXTemporaryObjectExpr *Tmp = dyn_cast<CXXTemporaryObjectExpr>(E)){
+  } else if (const CXXTemporaryObjectExpr *Tmp =
+                 dyn_cast<CXXTemporaryObjectExpr>(E)){
     Type = Tmp->getTypeSourceInfo();
   }
 
