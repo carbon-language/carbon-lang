@@ -140,8 +140,8 @@ bool AnalyzerOptions::mayInlineObjCMethod() {
                           /* Default = */ true);
 }
 
-bool AnalyzerOptions::shouldPruneNullReturnPaths() {
-  return getBooleanOption(PruneNullReturnPaths,
+bool AnalyzerOptions::shouldSuppressNullReturnPaths() {
+  return getBooleanOption(SuppressNullReturnPaths,
                           "suppress-null-return-paths",
                           /* Default = */ true);
 }

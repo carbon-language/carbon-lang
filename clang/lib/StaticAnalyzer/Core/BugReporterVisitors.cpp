@@ -251,7 +251,7 @@ public:
       // the report is resurrected as valid later on.
       ExprEngine &Eng = BRC.getBugReporter().getEngine();
       AnalyzerOptions &Options = Eng.getAnalysisManager().options;
-      if (Options.shouldPruneNullReturnPaths()) {
+      if (Options.shouldSuppressNullReturnPaths()) {
         if (hasCounterSuppression(Options))
           Mode = MaybeSuppress;
         else
