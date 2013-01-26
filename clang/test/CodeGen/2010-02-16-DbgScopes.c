@@ -4,7 +4,6 @@
 // CHECK: DW_TAG_lexical_block
 // CHECK: DW_TAG_lexical_block
 // CHECK: DW_TAG_lexical_block
-// CHECK: DW_TAG_lexical_block
 
 extern int bar();
 extern void foobar();

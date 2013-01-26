@@ -1411,7 +1411,7 @@ public:
 
   /// EmitReturnBlock - Emit the unified return block, trying to avoid its
   /// emission when possible.
-  void EmitReturnBlock();
+  bool EmitReturnBlock();
 
   /// FinishFunction - Complete IR generation of the current function. It is
   /// legal to call this function even if there is no current insertion point.
@@ -2013,6 +2013,9 @@ public:
 
   RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false,
                           AggValueSlot AVS = AggValueSlot::ignored());
+  RValue EmitCompoundStmtWithoutScope(const CompoundStmt &S,
+                                      bool GetLast = false, AggValueSlot AVS =
+                                          AggValueSlot::ignored());
 
   /// EmitLabel - Emit the block for the given label. It is legal to call this
   /// function even if there is no current insertion point.

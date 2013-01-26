@@ -1,9 +1,8 @@
 // RUN: %clang -emit-llvm -S -g %s -o - | FileCheck %s
 
 // Radar 8396182
-// There is only one lexical block, but we need a DILexicalBlock and two
-// DILexicalBlockFile to correctly represent file info. This means we have
-// two lexical blocks shown as the latter is also tagged as a lexical block.
+// There are no lexical blocks, but we need two DILexicalBlockFiles to
+// correctly represent file info.
 
 int foo() {
   int i = 1;
@@ -15,7 +14,6 @@ int foo() {
   return i + j;
 }
 
-// CHECK: DW_TAG_lexical_block
 // CHECK: DW_TAG_lexical_block
 // CHECK: !"m.h"
 // CHECK: DW_TAG_lexical_block

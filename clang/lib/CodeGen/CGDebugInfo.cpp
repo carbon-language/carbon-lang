@@ -79,7 +79,7 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
     llvm::MDNode *N = D;
     LexicalBlockStack.pop_back();
     LexicalBlockStack.push_back(N);
-  } else if (Scope.isLexicalBlock()) {
+  } else if (Scope.isLexicalBlock() || Scope.isSubprogram()) {
     llvm::DIDescriptor D
       = DBuilder.createLexicalBlockFile(Scope, getOrCreateFile(CurLoc));
     llvm::MDNode *N = D;

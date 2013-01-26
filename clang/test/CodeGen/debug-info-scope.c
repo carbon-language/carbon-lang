@@ -4,10 +4,12 @@
 int main() {
 	int j = 0;
 	int k = 0;
-// CHECK: DW_TAG_auto_variable
+// CHECK: DW_TAG_auto_variable ] [i]
 // CHECK-NEXT: DW_TAG_lexical_block
 	for (int i = 0; i < 10; i++)
 		j++;
+// CHECK: DW_TAG_auto_variable ] [i]
+// CHECK-NEXT: DW_TAG_lexical_block
 	for (int i = 0; i < 10; i++)
 		k++;
 	return 0;

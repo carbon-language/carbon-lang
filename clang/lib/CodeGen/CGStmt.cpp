@@ -198,6 +198,12 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // Keep track of the current cleanup stack depth, including debug scopes.
   LexicalScope Scope(*this, S.getSourceRange());
 
+  return EmitCompoundStmtWithoutScope(S, GetLast, AggSlot);
+}
+
+RValue CodeGenFunction::EmitCompoundStmtWithoutScope(const CompoundStmt &S, bool GetLast,
+                                         AggValueSlot AggSlot) {
+
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);

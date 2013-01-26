@@ -117,7 +117,7 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType type) {
   llvm_unreachable("unknown type kind!");
 }
 
-void CodeGenFunction::EmitReturnBlock() {
+bool CodeGenFunction::EmitReturnBlock() {
   // For cleanliness, we try to avoid emitting the return block for
   // simple cases.
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
@@ -132,7 +132,7 @@ void CodeGenFunction::EmitReturnBlock() {
       delete ReturnBlock.getBlock();
     } else
       EmitBlock(ReturnBlock.getBlock());
-    return;
+    return false;
   }
 
   // Otherwise, if the return block is the target of a single direct
@@ -148,7 +148,7 @@ void CodeGenFunction::EmitReturnBlock() {
       Builder.SetInsertPoint(BI->getParent());
       BI->eraseFromParent();
       delete ReturnBlock.getBlock();
-      return;
+      return true;
     }
   }
 
@@ -157,6 +157,7 @@ void CodeGenFunction::EmitReturnBlock() {
   // region.end for now.
 
   EmitBlock(ReturnBlock.getBlock());
+  return false;
 }
 
 static void EmitIfUsed(CodeGenFunction &CGF, llvm::BasicBlock *BB) {
@@ -178,14 +179,14 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     PopCleanupBlocks(PrologueCleanupDepth);
 
   // Emit function epilog (to return).
-  EmitReturnBlock();
+  bool MoveEndLoc = EmitReturnBlock();
 
   if (ShouldInstrumentFunction())
     EmitFunctionInstrumentation("__cyg_profile_func_exit");
 
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    DI->setLocation(EndLoc);
+    if (!MoveEndLoc) DI->setLocation(EndLoc);
     DI->EmitFunctionEnd(Builder);
   }
 
@@ -486,7 +487,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {
   const FunctionDecl *FD = cast<FunctionDecl>(CurGD.getDecl());
   assert(FD->getBody());
-  EmitStmt(FD->getBody());
+  if (const CompoundStmt *S = dyn_cast<CompoundStmt>(FD->getBody()))
+    EmitCompoundStmtWithoutScope(*S);
+  else
+    EmitStmt(FD->getBody());
 }
 
 /// Tries to mark the given function nounwind based on the
