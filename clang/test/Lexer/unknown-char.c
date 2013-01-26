@@ -1,2 +1,4 @@
-// RUN: %clang_cc1 -E %s 2>&1 | grep -v '^#' | not grep error
+// RUN: %clang_cc1 -E -verify %s
+// expected-no-diagnostics
+
  ` ` ` `
