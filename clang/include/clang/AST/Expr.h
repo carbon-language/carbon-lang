@@ -4037,9 +4037,9 @@ public:
   void setDesignators(ASTContext &C, const Designator *Desigs,
                       unsigned NumDesigs);
 
-  Expr *getArrayIndex(const Designator& D);
-  Expr *getArrayRangeStart(const Designator& D);
-  Expr *getArrayRangeEnd(const Designator& D);
+  Expr *getArrayIndex(const Designator &D) const;
+  Expr *getArrayRangeStart(const Designator &D) const;
+  Expr *getArrayRangeEnd(const Designator &D) const;
 
   /// @brief Retrieve the location of the '=' that precedes the
   /// initializer value itself, if present.
