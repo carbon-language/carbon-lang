@@ -2823,7 +2823,7 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
     disposeCXStringPool(CTUnit->StringPool);
     delete static_cast<CXDiagnosticSetImpl *>(CTUnit->Diagnostics);
     disposeOverridenCXCursorsPool(CTUnit->OverridenCursorsPool);
-    delete static_cast<SimpleFormatContext*>(CTUnit->FormatContext);
+    delete CTUnit->FormatContext;
     delete CTUnit;
   }
 }

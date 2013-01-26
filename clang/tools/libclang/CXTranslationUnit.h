@@ -19,6 +19,7 @@
 namespace clang {
   class ASTUnit;
   class CIndexer;
+  class SimpleFormatContext;
 } // namespace clang
 
 struct CXTranslationUnitImpl {
@@ -27,14 +28,11 @@ struct CXTranslationUnitImpl {
   void *StringPool;
   void *Diagnostics;
   void *OverridenCursorsPool;
-  void *FormatContext;
+  clang::SimpleFormatContext *FormatContext;
   unsigned FormatInMemoryUniqueId;
 };
 
 namespace clang {
-  class ASTUnit;
-  class CIndexer;
-
 namespace cxtu {
 
 CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU);

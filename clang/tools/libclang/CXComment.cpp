@@ -1368,23 +1368,20 @@ CXString clang_FullComment_getAsXML(CXComment CXC) {
   ASTContext &Context = FC->getDeclInfo()->CurrentDecl->getASTContext();
   CXTranslationUnit TU = CXC.TranslationUnit;
   SourceManager &SM = cxtu::getASTUnit(TU)->getSourceManager();
-  
-  SimpleFormatContext *SFC =
-    static_cast<SimpleFormatContext*>(TU->FormatContext);
-  if (!SFC) {
-    SFC = new SimpleFormatContext(Context.getLangOpts());
-    TU->FormatContext = SFC;
+
+  if (!TU->FormatContext) {
+    TU->FormatContext = new SimpleFormatContext(Context.getLangOpts());
   } else if ((TU->FormatInMemoryUniqueId % 1000) == 0) {
     // Delete after some number of iterators, so the buffers don't grow
     // too large.
-    delete SFC;
-    SFC = new SimpleFormatContext(Context.getLangOpts());
-    TU->FormatContext = SFC;
+    delete TU->FormatContext;
+    TU->FormatContext = new SimpleFormatContext(Context.getLangOpts());
   }
 
   SmallString<1024> XML;
   CommentASTToXMLConverter Converter(FC, XML, getCommandTraits(CXC), SM,
-                                     *SFC, TU->FormatInMemoryUniqueId++);
+                                     *TU->FormatContext,
+                                     TU->FormatInMemoryUniqueId++);
   Converter.visit(FC);
   return createCXString(XML.str(), /* DupString = */ true);
 }
