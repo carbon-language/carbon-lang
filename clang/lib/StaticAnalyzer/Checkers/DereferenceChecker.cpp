@@ -157,7 +157,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
                   buf.empty() ? BT_null->getDescription() : buf.str(),
                   N);
 
-  bugreporter::trackNullOrUndefValue(N, bugreporter::GetDerefExpr(N), *report);
+  bugreporter::trackNullOrUndefValue(N, bugreporter::getDerefExpr(S), *report);
 
   for (SmallVectorImpl<SourceRange>::iterator
        I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
@@ -176,7 +176,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
 
       BugReport *report =
         new BugReport(*BT_undef, BT_undef->getDescription(), N);
-      bugreporter::trackNullOrUndefValue(N, bugreporter::GetDerefExpr(N),
+      bugreporter::trackNullOrUndefValue(N, bugreporter::getDerefExpr(S),
                                          *report);
       C.emitReport(report);
     }

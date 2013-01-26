@@ -275,7 +275,7 @@ namespace bugreporter {
 bool trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S, BugReport &R,
                            bool IsArg = false);
 
-const Stmt *GetDerefExpr(const ExplodedNode *N);
+const Expr *getDerefExpr(const Stmt *S);
 const Stmt *GetDenomExpr(const ExplodedNode *N);
 const Stmt *GetRetValExpr(const ExplodedNode *N);
 bool isDeclRefExprToReference(const Expr *E);

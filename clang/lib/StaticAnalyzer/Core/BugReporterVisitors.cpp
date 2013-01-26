@@ -38,37 +38,33 @@ bool bugreporter::isDeclRefExprToReference(const Expr *E) {
   return false;
 }
 
-const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
+const Expr *bugreporter::getDerefExpr(const Stmt *S) {
   // Pattern match for a few useful cases (do something smarter later):
   //   a[0], p->f, *p
-  const PostStmt *Loc = N->getLocationAs<PostStmt>();
-  if (!Loc)
+  const Expr *E = dyn_cast<Expr>(S);
+  if (!E)
     return 0;
-
-  const Expr *S = dyn_cast<Expr>(Loc->getStmt());
-  if (!S)
-    return 0;
-  S = S->IgnoreParenCasts();
+  E = E->IgnoreParenCasts();
 
   while (true) {
-    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(E)) {
       assert(B->isAssignmentOp());
-      S = B->getLHS()->IgnoreParenCasts();
+      E = B->getLHS()->IgnoreParenCasts();
       continue;
     }
-    else if (const UnaryOperator *U = dyn_cast<UnaryOperator>(S)) {
+    else if (const UnaryOperator *U = dyn_cast<UnaryOperator>(E)) {
       if (U->getOpcode() == UO_Deref)
         return U->getSubExpr()->IgnoreParenCasts();
     }
-    else if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
+    else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
       if (ME->isArrow() || isDeclRefExprToReference(ME->getBase())) {
         return ME->getBase()->IgnoreParenCasts();
       }
     }
-    else if (const ObjCIvarRefExpr *IvarRef = dyn_cast<ObjCIvarRefExpr>(S)) {
+    else if (const ObjCIvarRefExpr *IvarRef = dyn_cast<ObjCIvarRefExpr>(E)) {
       return IvarRef->getBase()->IgnoreParenCasts();
     }
-    else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
+    else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(E)) {
       return AE->getBase();
     }
     break;
