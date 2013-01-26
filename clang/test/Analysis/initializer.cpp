@@ -80,3 +80,33 @@ class StringWrapper {
 public:
   StringWrapper(const char *input) : str(strdup(input)) {} // no-warning
 };
+
+
+// PR15070 - Constructing a type containing a non-POD array mistakenly
+// tried to perform a bind instead of relying on the CXXConstructExpr,
+// which caused a cast<> failure in RegionStore.
+namespace DefaultConstructorWithCleanups {
+  class Element {
+  public:
+    int value;
+
+    class Helper {
+    public:
+      ~Helper();
+    };
+    Element(Helper h = Helper());
+  };
+  class Wrapper {
+  public:
+    Element arr[2];
+
+    Wrapper();
+  };
+
+  Wrapper::Wrapper() /* initializers synthesized */ {}
+
+  int test() {
+    Wrapper w;
+    return w.arr[0].value; // no-warning
+  }
+}
