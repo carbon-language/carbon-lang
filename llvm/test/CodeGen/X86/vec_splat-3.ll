@@ -1,14 +1,12 @@
 ; RUN: llc <%s -march=x86 -mcpu=penryn -mattr=sse41 | FileCheck %s
 
 ; Splat test for v8i16
-; Should generate with pshufd with masks $0, $85, $170, $255 (each mask is used twice)
 define <8 x i16> @shuf_8i16_0(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 	%tmp6 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> <i32 0, i32 undef, i32 undef, i32 0, i32 undef, i32 undef, i32 undef, i32 undef>
 	ret <8 x i16> %tmp6
 
 ; CHECK: shuf_8i16_0:
-; CHECK: punpcklwd
-; CHECK-NEXT: pshufd $0
+; CHECK: pshuflw $0
 }
 
 define <8 x i16> @shuf_8i16_1(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
@@ -16,8 +14,7 @@ define <8 x i16> @shuf_8i16_1(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 	ret <8 x i16> %tmp6
 
 ; CHECK: shuf_8i16_1:
-; CHECK: punpcklwd
-; CHECK-NEXT: pshufd $85
+; CHECK: pshuflw $5
 }
 
 define <8 x i16> @shuf_8i16_2(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
@@ -34,8 +31,7 @@ define <8 x i16> @shuf_8i16_3(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 	ret <8 x i16> %tmp6
 
 ; CHECK: shuf_8i16_3:
-; CHECK: punpcklwd
-; CHECK-NEXT: pshufd $-1
+; CHECK: pshuflw $15
 }
 
 define <8 x i16> @shuf_8i16_4(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
@@ -43,8 +39,7 @@ define <8 x i16> @shuf_8i16_4(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 	ret <8 x i16> %tmp6
 
 ; CHECK: shuf_8i16_4:
-; CHECK: punpckhwd
-; CHECK-NEXT: pshufd $0
+; CHECK: movhlps
 }
 
 define <8 x i16> @shuf_8i16_5(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
@@ -65,7 +60,6 @@ define <8 x i16> @shuf_8i16_6(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 ; CHECK-NEXT: pshufd $-86
 }
 
-
 define <8 x i16> @shuf_8i16_7(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 	%tmp6 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> <i32 7, i32 undef, i32 undef, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
 	ret <8 x i16> %tmp6
@@ -74,8 +68,6 @@ define <8 x i16> @shuf_8i16_7(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 ; CHECK: punpckhwd
 ; CHECK-NEXT: pshufd $-1
 }
-
-; Should generate with pshufd with masks $0, $85, $170, $255 (each mask is used 4 times)
 
 ; Splat test for v16i8
 define <16 x i8> @shuf_16i8_8(<16 x i8> %T0, <16 x i8> %T1) nounwind readnone {
@@ -124,9 +116,7 @@ define <16 x i8> @shuf_16i8_12(<16 x i8> %T0, <16 x i8> %T1) nounwind readnone {
 	ret <16 x i8> %tmp6
 
 ; CHECK: shuf_16i8_12:
-; CHECK: punpcklbw
-; CHECK-NEXT: punpckhbw
-; CHECK-NEXT: pshufd $0
+; CHECK: pshufd $5
 }
 
 define <16 x i8> @shuf_16i8_13(<16 x i8> %T0, <16 x i8> %T1) nounwind readnone {

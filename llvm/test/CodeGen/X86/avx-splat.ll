@@ -3,8 +3,8 @@
 
 ; CHECK: vpunpcklbw %xmm
 ; CHECK-NEXT: vpunpckhbw %xmm
+; CHECK-NEXT: vpshufd $85
 ; CHECK-NEXT: vinsertf128 $1
-; CHECK-NEXT: vpermilps $85
 define <32 x i8> @funcA(<32 x i8> %a) nounwind uwtable readnone ssp {
 entry:
   %shuffle = shufflevector <32 x i8> %a, <32 x i8> undef, <32 x i32> <i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
@@ -12,8 +12,8 @@ entry:
 }
 
 ; CHECK: vpunpckhwd %xmm
+; CHECK-NEXT: vpshufd $85
 ; CHECK-NEXT: vinsertf128 $1
-; CHECK-NEXT: vpermilps $85
 define <16 x i16> @funcB(<16 x i16> %a) nounwind uwtable readnone ssp {
 entry:
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
