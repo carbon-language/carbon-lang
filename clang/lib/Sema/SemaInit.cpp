@@ -4914,7 +4914,6 @@ InitializationSequence::Perform(Sema &S,
 
   if (S.getLangOpts().CPlusPlus11 && Entity.getType()->isReferenceType() &&
       Args.size() == 1 && isa<InitListExpr>(Args[0]) &&
-      cast<InitListExpr>(Args[0])->getNumInits() == 1 &&
       Entity.getKind() != InitializedEntity::EK_Parameter) {
     // Produce a C++98 compatibility warning if we are initializing a reference
     // from an initializer list. For parameters, we produce a better warning

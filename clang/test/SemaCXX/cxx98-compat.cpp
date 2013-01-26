@@ -109,7 +109,9 @@ void RangeFor() {
   // expected-warning@-1 {{range-based for loop is incompatible with C++98}}
   // expected-warning@-2 {{'auto' type specifier is incompatible with C++98}}
   // expected-warning@-3 {{initialization of initializer_list object is incompatible with C++98}}
+  // expected-warning@-4 {{reference initialized from initializer list is incompatible with C++98}}
   }
+  struct Agg { int a, b; } const &agg = { 1, 2 }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
 }
 
 struct InClassInit {
