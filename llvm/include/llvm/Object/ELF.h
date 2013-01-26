@@ -2345,6 +2345,8 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
       return "ELF32-arm";
     case ELF::EM_HEXAGON:
       return "ELF32-hexagon";
+    case ELF::EM_MIPS:
+      return "ELF32-mips";
     default:
       return "ELF32-unknown";
     }
