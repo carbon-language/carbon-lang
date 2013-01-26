@@ -597,6 +597,8 @@ DWARFDebugLine::LineTable::lookupAddressRange(uint64_t address,
 
     ++seq_pos;
   }
+
+  return true;
 }
 
 bool
