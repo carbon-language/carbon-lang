@@ -428,8 +428,7 @@ public:
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
-    if (!getCurrentDebugLocation().isUnknown())
-      this->SetInstDebugLocation(I);
+    this->SetInstDebugLocation(I);
     return I;
   }
 
