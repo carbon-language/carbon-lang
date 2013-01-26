@@ -206,14 +206,14 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 namespace {
-  struct eqstr {
+  struct ltstr {
     bool operator()(const char *s1, const char *s2) const
     {
-      return strcmp(s1, s2) == 0;
+      return strcmp(s1, s2) < 0;
     }
   };
 
-  std::set<const char*, eqstr> noHelperNeeded;
+  std::set<const char*, ltstr> noHelperNeeded;
 
   const char* addToNoHelperNeeded(const char* s) {
     noHelperNeeded.insert(s);
