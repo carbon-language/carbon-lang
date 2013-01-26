@@ -522,7 +522,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   }
 
   if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
-    IBOutletCollectionAttr *A =
+    const IBOutletCollectionAttr *A =
       cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(Cursor));
     if (const ObjCInterfaceType *InterT = A->getInterface()->getAs<ObjCInterfaceType>())
       return Visit(cxcursor::MakeCursorObjCClassRef(InterT->getInterface(),
@@ -3258,12 +3258,12 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return getDeclSpelling(getCursorDecl(C));
 
   if (C.kind == CXCursor_AnnotateAttr) {
-    AnnotateAttr *AA = cast<AnnotateAttr>(cxcursor::getCursorAttr(C));
+    const AnnotateAttr *AA = cast<AnnotateAttr>(cxcursor::getCursorAttr(C));
     return createCXString(AA->getAnnotation());
   }
 
   if (C.kind == CXCursor_AsmLabelAttr) {
-    AsmLabelAttr *AA = cast<AsmLabelAttr>(cxcursor::getCursorAttr(C));
+    const AsmLabelAttr *AA = cast<AsmLabelAttr>(cxcursor::getCursorAttr(C));
     return createCXString(AA->getLabel());
   }
 
@@ -6012,7 +6012,7 @@ CXType clang_getIBOutletCollectionType(CXCursor C) {
   if (C.kind != CXCursor_IBOutletCollectionAttr)
     return cxtype::MakeCXType(QualType(), cxcursor::getCursorTU(C));
   
-  IBOutletCollectionAttr *A =
+  const IBOutletCollectionAttr *A =
     cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(C));
   
   return cxtype::MakeCXType(A->getInterface(), cxcursor::getCursorTU(C));  

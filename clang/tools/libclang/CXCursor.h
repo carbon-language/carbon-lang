@@ -244,7 +244,7 @@ std::pair<OverloadedDeclRefStorage, SourceLocation>
 const Decl *getCursorDecl(CXCursor Cursor);
 const Expr *getCursorExpr(CXCursor Cursor);
 const Stmt *getCursorStmt(CXCursor Cursor);
-Attr *getCursorAttr(CXCursor Cursor);
+const Attr *getCursorAttr(CXCursor Cursor);
 Decl *getCursorParentDecl(CXCursor Cursor);
 
 ASTContext &getCursorContext(CXCursor Cursor);
