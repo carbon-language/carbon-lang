@@ -68,37 +68,29 @@ CXString cxstring::createCXString(CXStringBuf *buf) {
 // String pools.
 //===----------------------------------------------------------------------===//
 
-  
-typedef std::vector<CXStringBuf *> CXStringPool;
-
-void *cxstring::createCXStringPool() {
-  return new CXStringPool();
-}
-
-void cxstring::disposeCXStringPool(void *p) {
-  CXStringPool *pool = static_cast<CXStringPool*>(p);
-  if (pool) {
-    for (CXStringPool::iterator I = pool->begin(), E = pool->end();
-         I != E; ++I) {
-      delete *I;
-    }
-    delete pool;
+cxstring::CXStringPool::~CXStringPool() {
+  for (std::vector<CXStringBuf *>::iterator I = Pool.begin(), E = Pool.end();
+       I != E; ++I) {
+    delete *I;
   }
 }
 
-CXStringBuf *cxstring::getCXStringBuf(CXTranslationUnit TU) {
-  CXStringPool *pool = static_cast<CXStringPool*>(TU->StringPool);
-  if (pool->empty())
+CXStringBuf *cxstring::CXStringPool::getCXStringBuf(CXTranslationUnit TU) {
+  if (Pool.empty())
     return new CXStringBuf(TU);
-  CXStringBuf *buf = pool->back();
-  buf->Data.clear();
-  pool->pop_back();
-  return buf;
+
+  CXStringBuf *Buf = Pool.back();
+  Buf->Data.clear();
+  Pool.pop_back();
+  return Buf;
 }
 
-void cxstring::disposeCXStringBuf(CXStringBuf *buf) {
-  if (buf)
-    static_cast<CXStringPool*>(buf->TU->StringPool)->push_back(buf);
+CXStringBuf *cxstring::getCXStringBuf(CXTranslationUnit TU) {
+  return TU->StringPool->getCXStringBuf(TU);
+}
+
+void cxstring::CXStringBuf::dispose() {
+  TU->StringPool->Pool.push_back(this);
 }
 
 bool cxstring::isManagedByPool(CXString str) {
@@ -126,8 +118,8 @@ void clang_disposeString(CXString string) {
         free(const_cast<void *>(string.data));
       break;
     case CXS_StringBuf:
-      disposeCXStringBuf(static_cast<CXStringBuf *>(
-                             const_cast<void *>(string.data)));
+      static_cast<CXStringBuf *>(
+          const_cast<void *>(string.data))->dispose();
       break;
   }
 }

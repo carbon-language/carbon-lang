@@ -66,7 +66,7 @@ CXTranslationUnit cxtu::MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU) {
   CXTranslationUnit D = new CXTranslationUnitImpl();
   D->CIdx = CIdx;
   D->TheASTUnit = AU;
-  D->StringPool = createCXStringPool();
+  D->StringPool = new CXStringPool();
   D->Diagnostics = 0;
   D->OverridenCursorsPool = createOverridenCXCursorsPool();
   D->FormatContext = 0;
@@ -2820,7 +2820,7 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
       return;
 
     delete cxtu::getASTUnit(CTUnit);
-    disposeCXStringPool(CTUnit->StringPool);
+    delete CTUnit->StringPool;
     delete static_cast<CXDiagnosticSetImpl *>(CTUnit->Diagnostics);
     disposeOverridenCXCursorsPool(CTUnit->OverridenCursorsPool);
     delete CTUnit->FormatContext;

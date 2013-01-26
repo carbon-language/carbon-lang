@@ -15,6 +15,7 @@
 #define LLVM_CLANG_CXTRANSLATIONUNIT_H
 
 #include "clang-c/Index.h"
+#include "CXString.h"
 
 namespace clang {
   class ASTUnit;
@@ -25,7 +26,7 @@ namespace clang {
 struct CXTranslationUnitImpl {
   clang::CIndexer *CIdx;
   clang::ASTUnit *TheASTUnit;
-  void *StringPool;
+  clang::cxstring::CXStringPool *StringPool;
   void *Diagnostics;
   void *OverridenCursorsPool;
   clang::SimpleFormatContext *FormatContext;

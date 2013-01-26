@@ -835,7 +835,7 @@ CXString clang_getCursorUSR(CXCursor C) {
 
     bool Ignore = cxcursor::getDeclCursorUSR(D, buf->Data);
     if (Ignore) {
-      disposeCXStringBuf(buf);
+      buf->dispose();
       return createCXString("");
     }
 
