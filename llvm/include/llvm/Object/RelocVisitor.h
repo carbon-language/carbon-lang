@@ -77,6 +77,7 @@ public:
         return RelocToApply();
       }
     }
+    HasError = true;
     return RelocToApply();
   }
 
