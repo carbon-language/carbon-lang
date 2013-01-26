@@ -297,6 +297,13 @@ public:
   /// option, which accepts the values "true" and "false".
   bool shouldAvoidSuppressingNullArgumentPaths();
 
+  /// Returns whether irrelevant parts of a bug report path should be pruned
+  /// out of the final output.
+  ///
+  /// This is controlled by the 'prune-paths' config option, which accepts the
+  /// values "true" and "false".
+  bool shouldPrunePaths();
+
   // Returns the size of the functions (in basic blocks), which should be
   // considered to be small enough to always inline.
   //

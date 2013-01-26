@@ -186,3 +186,7 @@ unsigned AnalyzerOptions::getMaxTimesInlineLarge() {
 bool AnalyzerOptions::shouldSynthesizeBodies() {
   return getBooleanOption("faux-bodies", true);
 }
+
+bool AnalyzerOptions::shouldPrunePaths() {
+  return getBooleanOption("prune-paths", true);
+}

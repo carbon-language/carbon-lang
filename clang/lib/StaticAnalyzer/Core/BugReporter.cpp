@@ -2123,7 +2123,8 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
     // Remove messages that are basically the same.
     removeRedundantMsgs(PD.getMutablePieces());
 
-    if (R->shouldPrunePath()) {
+    if (R->shouldPrunePath() &&
+        getEngine().getAnalysisManager().options.shouldPrunePaths()) {
       bool hasSomethingInteresting = RemoveUnneededCalls(PD.getMutablePieces(),
                                                          R);
       assert(hasSomethingInteresting);
