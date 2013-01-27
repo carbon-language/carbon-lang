@@ -32,6 +32,10 @@ class AttributeImpl : public FoldingSetNode {
   LLVMContext &Context;
   Constant *Data;
   SmallVector<Constant*, 0> Vals;
+
+  // AttributesImpl is uniqued, these should not be publicly available.
+  void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
+  AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
 public:
   explicit AttributeImpl(LLVMContext &C, uint64_t data);
   explicit AttributeImpl(LLVMContext &C, Attribute::AttrKind data);
@@ -78,6 +82,10 @@ class AttributeSetNode : public FoldingSetNode {
 
   AttributeSetNode(ArrayRef<Attribute> Attrs)
     : AttrList(Attrs.begin(), Attrs.end()) {}
+
+  // AttributesSetNode is uniqued, these should not be publicly available.
+  void operator=(const AttributeSetNode &) LLVM_DELETED_FUNCTION;
+  AttributeSetNode(const AttributeSetNode &) LLVM_DELETED_FUNCTION;
 public:
   static AttributeSetNode *get(LLVMContext &C, ArrayRef<Attribute> Attrs);
 
