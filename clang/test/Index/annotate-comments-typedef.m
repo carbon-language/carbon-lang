@@ -28,9 +28,3 @@ enum E {
 };
 typedef enum E E_T;
 // CHECK: TypedefDecl=E_T:[[@LINE-1]]:16 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="16"><Name>E</Name><USR>c:@E@E</USR><Declaration>typedef enum E E_T</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Typedef>]
-
-/** Comment about Foo */
-typedef struct {
-	  int iii;
-        } Foo;
-// CHECK: TypedefDecl=Foo:[[@LINE-1]]:11 (Definition) FullCommentAsHTML=[<p class="para-brief"> Comment about Foo </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="11"><Name>&lt;anonymous&gt;</Name><USR>c:@SA@Foo</USR><Declaration>typedef struct Foo Foo</Declaration><Abstract><Para> Comment about Foo </Para></Abstract></Typedef>]
