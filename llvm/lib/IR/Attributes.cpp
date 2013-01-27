@@ -863,8 +863,13 @@ AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
 void AttributeSet::dump() const {
   dbgs() << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
-    unsigned Index = getSlotIndex(i);
-    dbgs() << "{ " << Index << " => " << getAsString(Index) << " } ";
+    uint64_t Index = getSlotIndex(i);
+    dbgs() << "  { ";
+    if (Index == ~0U)
+      dbgs() << "~0U";
+    else
+      dbgs() << Index;
+    dbgs() << " => " << getAsString(Index) << " }\n";
   }
 
   dbgs() << "]\n";
