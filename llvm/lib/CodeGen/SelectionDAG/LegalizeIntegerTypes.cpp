@@ -2098,9 +2098,13 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     EVT VT = LHSL.getValueType();
 
     // If the shift amount operand is coming from a vector legalization it may
-    // not have the right return type.  Fix that first by casting the operand.
+    // have an illegal type.  Fix that first by casting the operand.  Otherwise
+    // the new SHL_PARTS operation would need further legalization, and the
+    // legalizer assumes that illegal SHL_PARTS never occur.
     SDValue ShiftOp = N->getOperand(1);
     MVT ShiftTy = TLI.getShiftAmountTy(VT);
+    assert(ShiftTy.getSizeInBits() >= Log2_32_Ceil(VT.getSizeInBits()) &&
+           "ShiftAmountTy is too small to cover the range of this type!");
     if (ShiftOp.getValueType() != ShiftTy)
       ShiftOp = DAG.getZExtOrTrunc(ShiftOp, dl, ShiftTy);
 
