@@ -134,6 +134,9 @@ public:
   bool operator==(AttrKind K) const;
   bool operator!=(AttrKind K) const;
 
+  bool operator==(Attribute A) const { return pImpl == A.pImpl; }
+  bool operator!=(Attribute A) const { return pImpl != A.pImpl; }
+
   /// \brief Less-than operator. Useful for sorting the attributes list.
   bool operator<(Attribute A) const;
 
