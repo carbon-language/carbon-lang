@@ -2698,8 +2698,6 @@ bool Lexer::isCodeCompletionPoint(const char *CurPtr) const {
 
 uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
                            Token *Result) {
-  assert(LangOpts.CPlusPlus || LangOpts.C99);
-
   unsigned CharSize;
   char Kind = getCharAndSize(StartPtr, CharSize);
 
@@ -2710,6 +2708,11 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
     NumHexDigits = 8;
   else
     return 0;
+
+  if (!LangOpts.CPlusPlus && !LangOpts.C99) {
+    Diag(SlashLoc, diag::warn_ucn_not_valid_in_c89);
+    return 0;
+  }
 
   const char *CurPtr = StartPtr + CharSize;
   const char *KindLoc = &CurPtr[-1];
@@ -2737,7 +2740,7 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
           }
         }
       }
-      
+
       return 0;
     }
 

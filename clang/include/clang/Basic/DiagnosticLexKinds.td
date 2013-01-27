@@ -127,6 +127,11 @@ def warn_cxx98_compat_literal_ucn_escape_basic_scs : Warning<
 def warn_cxx98_compat_literal_ucn_control_character : Warning<
   "universal character name referring to a control character "
   "is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
+def warn_ucn_not_valid_in_c89 : Warning<
+  "universal character names are only valid in C99 or C++; "
+  "treating as '\\' followed by identifier">, InGroup<Unicode>;
+def warn_ucn_not_valid_in_c89_literal : ExtWarn<
+  "universal character names are only valid in C99 or C++">, InGroup<Unicode>;
 
 
 // Literal
@@ -165,8 +170,6 @@ def ext_string_too_long : Extension<"string literal of length %0 exceeds "
   "support">, InGroup<OverlengthStrings>;
 def err_character_too_large : Error<
   "character too large for enclosing character literal type">;
-def warn_ucn_not_valid_in_c89 : ExtWarn<
-  "unicode escape sequences are only valid in C99 or C++">, InGroup<Unicode>;
 def warn_cxx98_compat_unicode_literal : Warning<
   "unicode literals are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;

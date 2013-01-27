@@ -277,7 +277,7 @@ static bool ProcessUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
 
   if (!Features.CPlusPlus && !Features.C99 && Diags)
     Diag(Diags, Features, Loc, ThisTokBegin, UcnBegin, ThisTokBuf,
-         diag::warn_ucn_not_valid_in_c89);
+         diag::warn_ucn_not_valid_in_c89_literal);
 
   return true;
 }

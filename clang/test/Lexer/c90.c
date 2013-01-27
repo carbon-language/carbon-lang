@@ -29,8 +29,8 @@ void test2() {
 }
 
 void test3() {
-  (void)L"\u1234";  // expected-error {{unicode escape sequences are only valid in C99 or C++}}
-  (void)L'\u1234';  // expected-error {{unicode escape sequences are only valid in C99 or C++}}
+  (void)L"\u1234";  // expected-error {{universal character names are only valid in C99 or C++}}
+  (void)L'\u1234';  // expected-error {{universal character names are only valid in C99 or C++}}
 }
 
 #define PREFIX(x) foo ## x
@@ -39,3 +39,5 @@ int test4() {
   int *p = &PREFIX(0p+1);
   return p[-1];
 }
+
+#define MY_UCN \u00FC // expected-warning {{universal character names are only valid in C99 or C++; treating as '\' followed by identifier}}
