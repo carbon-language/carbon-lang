@@ -21,13 +21,13 @@ TEST(Attributes, Uniquing) {
   Attribute AttrB = Attribute::get(C, Attribute::AlwaysInline);
   EXPECT_EQ(AttrA, AttrB);
 
-  AttributeWithIndex AWIs[] = {
-    AttributeWithIndex::get(C, 1, Attribute::ZExt),
-    AttributeWithIndex::get(C, 2, Attribute::SExt)
+  AttributeSet ASs[] = {
+    AttributeSet::get(C, 1, Attribute::ZExt),
+    AttributeSet::get(C, 2, Attribute::SExt)
   };
 
-  AttributeSet SetA = AttributeSet::get(C, AWIs);
-  AttributeSet SetB = AttributeSet::get(C, AWIs);
+  AttributeSet SetA = AttributeSet::get(C, ASs);
+  AttributeSet SetB = AttributeSet::get(C, ASs);
   EXPECT_EQ(SetA, SetB);
 }
 
