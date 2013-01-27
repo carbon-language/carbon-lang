@@ -27,7 +27,7 @@ enum E {
         E_MyEnumBaz, /**< value Baz */
 };
 typedef enum E E_T;
-// CHECK: EnumDecl=E:[[@LINE-6]]:6 (Definition) {{.*}} BriefComment=[Documentation for E] FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Enum file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-6]]" column="6"><Name>E</Name><USR>c:@E@E</USR><Declaration>enum E {}</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Enum>]
+// CHECK: EnumDecl=E:[[@LINE-6]]:6 (Definition) {{.*}} BriefComment=[Documentation for E] FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Enum file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-6]]" column="6"><Name>E</Name><USR>c:@E@E</USR><Declaration>enum E{{( : int)?}} {}</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Enum>]
 // CHECK: TypedefDecl=E_T:[[@LINE-2]]:16 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-2]]" column="16"><Name>E</Name><USR>c:@E@E</USR><Declaration>typedef enum E E_T</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Typedef>]
 
 
