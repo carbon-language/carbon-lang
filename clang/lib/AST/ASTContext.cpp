@@ -85,6 +85,14 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
       return NULL;
   }
 
+  if (const ClassTemplateSpecializationDecl *CTSD =
+          dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    TemplateSpecializationKind TSK = CTSD->getSpecializationKind();
+    if (TSK == TSK_ImplicitInstantiation ||
+        TSK == TSK_Undeclared)
+      return NULL;
+  }
+
   if (const EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
     if (ED->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
       return NULL;
@@ -428,12 +436,12 @@ comments::FullComment *ASTContext::getCommentForDecl(
           return cloneFullComment(FC, D);
     }
     else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-      // Attach enum's documentation to its typedef if latter
+      // Attach any tag type's documentation to its typedef if latter
       // does not have one of its own.
       QualType QT = TD->getUnderlyingType();
-      if (const EnumType *ET = QT->getAs<EnumType>())
-        if (const EnumDecl *ED = ET->getDecl())
-          if (comments::FullComment *FC = getCommentForDecl(ED, PP))
+      if (const TagType *TT = QT->getAs<TagType>())
+        if (const Decl *TD = TT->getDecl())
+          if (comments::FullComment *FC = getCommentForDecl(TD, PP))
             return cloneFullComment(FC, D);
     }
     return NULL;

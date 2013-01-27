@@ -27,4 +27,23 @@ enum E {
         E_MyEnumBaz, /**< value Baz */
 };
 typedef enum E E_T;
-// CHECK: TypedefDecl=E_T:[[@LINE-1]]:16 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="16"><Name>E</Name><USR>c:@E@E</USR><Declaration>typedef enum E E_T</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Typedef>]
+// CHECK: EnumDecl=E:[[@LINE-6]]:6 (Definition) {{.*}} BriefComment=[Documentation for E] FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Enum file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-6]]" column="6"><Name>E</Name><USR>c:@E@E</USR><Declaration>enum E {}</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Enum>]
+// CHECK: TypedefDecl=E_T:[[@LINE-2]]:16 (Definition) FullCommentAsHTML=[<p class="para-brief"> Documentation for E </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-2]]" column="16"><Name>E</Name><USR>c:@E@E</USR><Declaration>typedef enum E E_T</Declaration><Abstract><Para> Documentation for E </Para></Abstract></Typedef>]
+
+
+/** Comment about Foo */
+typedef struct {
+         int iii;
+        } Foo;
+// CHECK: TypedefDecl=Foo:[[@LINE-1]]:11 (Definition) FullCommentAsHTML=[<p class="para-brief"> Comment about Foo </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-1]]" column="11"><Name>&lt;anonymous&gt;</Name><USR>c:@SA@Foo</USR><Declaration>typedef struct Foo Foo</Declaration><Abstract><Para> Comment about Foo </Para></Abstract></Typedef>]
+// CHECK: StructDecl=:[[@LINE-4]]:9 (Definition) {{.*}} BriefComment=[Comment about Foo] FullCommentAsHTML=[<p class="para-brief"> Comment about Foo </p>] FullCommentAsXML=[<Class file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-4]]" column="9"><Name>&lt;anonymous&gt;</Name><USR>c:@SA@Foo</USR><Declaration>struct {}</Declaration><Abstract><Para> Comment about Foo </Para></Abstract></Class>]
+
+
+struct Foo1 {
+  int iii;
+};
+/** About Foo1T */
+typedef struct Foo1 Foo1T;
+// FIXME: we don't attach this comment to 'struct Foo1'
+// CHECK: TypedefDecl=Foo1T:[[@LINE-2]]:21 (Definition) {{.*}} FullCommentAsHTML=[<p class="para-brief"> About Foo1T </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-2]]" column="21"><Name>Foo1T</Name><USR>c:annotate-comments-typedef.m@{{[0-9]+}}@T@Foo1T</USR><Declaration>typedef struct Foo1 Foo1T</Declaration><Abstract><Para> About Foo1T </Para></Abstract></Typedef>]
+
