@@ -924,11 +924,20 @@ def EEU_1r : _F1R<0b000001, (outs), (ins GRRegs:$a),
                [(int_xcore_eeu GRRegs:$a)]>;
 
 // Zero operand short
-// TODO freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
-// stet, getkep, getksp, setkep, getid, kret, dcall, dret,
-// dentsp, drestsp
 
 def CLRE_0R : _F0R<0b0000001101, (outs), (ins), "clre", [(int_xcore_clre)]>;
+
+def DCALL_0R : _F0R<0b0000011100, (outs), (ins), "dcall", []>;
+
+let Defs = [SP], Uses = [SP] in
+def DENTSP_0R : _F0R<0b0001001100, (outs), (ins), "dentsp", []>;
+
+let Defs = [SP] in
+def DRESTSP_0R : _F0R<0b0001001101, (outs), (ins), "drestsp", []>;
+
+def DRET_0R : _F0R<0b0000011110, (outs), (ins), "dret", []>;
+
+def FREET_0R : _F0R<0b0000001111, (outs), (ins), "freet", []>;
 
 let Defs = [R11] in {
 def GETID_0R : _F0R<0b0001001110, (outs), (ins),
@@ -942,11 +951,43 @@ def GETED_0R : _F0R<0b0000111110, (outs), (ins),
 def GETET_0R : _F0R<0b0000111111, (outs), (ins),
                     "get r11, et",
                     [(set R11, (int_xcore_getet))]>;
+
+def GETKEP_0R : _F0R<0b0001001111, (outs), (ins),
+                     "get r11, kep", []>;
+
+def GETKSP_0R : _F0R<0b0001011100, (outs), (ins),
+                     "get r11, ksp", []>;
 }
+
+let Defs = [SP] in
+def KRET_0R : _F0R<0b0000011101, (outs), (ins), "kret", []>;
+
+let Uses = [SP], mayLoad = 1 in {
+def LDET_0R : _F0R<0b0001011110, (outs), (ins), "ldw et, sp[4]", []>;
+
+def LDSED_0R : _F0R<0b0001011101, (outs), (ins), "ldw sed, sp[3]", []>;
+
+def LDSPC_0R : _F0R<0b0000101100, (outs), (ins), "ldw spc, sp[1]", []>;
+
+def LDSSR_0R : _F0R<0b0000101110, (outs), (ins), "ldw ssr, sp[2]", []>;
+}
+
+let Uses=[R11] in
+def SETKEP_0R : _F0R<0b0000011111, (outs), (ins), "set kep, r11", []>;
 
 def SSYNC_0r : _F0R<0b0000001110, (outs), (ins),
                     "ssync",
                     [(int_xcore_ssync)]>;
+
+let Uses = [SP], mayStore = 1 in {
+def STET_0R : _F0R<0b0000111101, (outs), (ins), "stw et, sp[4]", []>;
+
+def STSED_0R : _F0R<0b0000111100, (outs), (ins), "stw sed, sp[3]", []>;
+
+def STSPC_0R : _F0R<0b0000101101, (outs), (ins), "stw spc, sp[1]", []>;
+
+def STSSR_0R : _F0R<0b0000101111, (outs), (ins), "stw ssr, sp[2]", []>;
+}
 
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1,
     hasSideEffects = 1 in
