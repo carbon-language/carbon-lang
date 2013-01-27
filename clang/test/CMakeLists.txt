@@ -73,8 +73,7 @@ else()
       COMMAND ${PYTHON_EXECUTABLE}
               ${LIT}
               --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-              --param build_config=${CMAKE_CFG_INTDIR}
-              --param build_mode=${RUNTIME_BUILD_MODE}
+              --param build_mode=${CMAKE_CFG_INTDIR}
               ${LIT_ARGS}
               ${CMAKE_CURRENT_BINARY_DIR}
       COMMENT "Running Clang regression tests"

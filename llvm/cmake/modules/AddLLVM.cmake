@@ -157,11 +157,7 @@ endmacro(add_llvm_external_project)
 
 # Returns directory where unittest should reside.
 function(get_unittest_directory dir)
-  if (CMAKE_BUILD_TYPE)
-   set(result ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
-  else()
-   set(result ${CMAKE_CURRENT_BINARY_DIR})
-  endif()
+  set(result ${CMAKE_CURRENT_BINARY_DIR})
   set(${dir} ${result} PARENT_SCOPE)
 endfunction()
 
@@ -245,8 +241,8 @@ function(configure_lit_site_cfg input output)
 
   set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
-  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
-  set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/%(build_config)s")
+  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_mode)s")
+  set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/%(build_mode)s")
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
   set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
   set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
@@ -272,8 +268,7 @@ function(add_lit_target target comment)
   set(LIT_COMMAND
     ${PYTHON_EXECUTABLE}
     ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py
-    --param build_config=${CMAKE_CFG_INTDIR}
-    --param build_mode=${RUNTIME_BUILD_MODE}
+    --param build_mode=${CMAKE_CFG_INTDIR}
     ${LIT_ARGS}
     )
   foreach(param ${ARG_PARAMS})

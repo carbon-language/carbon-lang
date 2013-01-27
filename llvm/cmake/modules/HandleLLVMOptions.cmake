@@ -11,20 +11,6 @@ elseif( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
   set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
 endif()
 
-# Run-time build mode; It is used for unittests.
-if(MSVC_IDE)
-  # Expect "$(Configuration)", "$(OutDir)", etc.
-  # It is expanded by msbuild or similar.
-  set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
-elseif(NOT CMAKE_BUILD_TYPE STREQUAL "")
-  # Expect "Release" "Debug", etc.
-  # Or unittests could not run.
-  set(RUNTIME_BUILD_MODE ${CMAKE_BUILD_TYPE})
-else()
-  # It might be "."
-  set(RUNTIME_BUILD_MODE "${CMAKE_CFG_INTDIR}")
-endif()
-
 if( LLVM_ENABLE_ASSERTIONS )
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
   if( NOT MSVC )
