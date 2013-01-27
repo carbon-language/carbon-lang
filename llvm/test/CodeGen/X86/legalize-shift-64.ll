@@ -54,3 +54,14 @@ define i64 @test4(i64 %xx, i32 %test) nounwind {
 ; CHECK: orl	%esi, %eax
 ; CHECK: sarl	%cl, %edx
 }
+
+; PR14668
+define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) {
+  %shl = shl <2 x i64> %A, %B
+  ret <2 x i64> %shl
+; CHECK: test5
+; CHECK: shl
+; CHECK: shldl
+; CHECK: shl
+; CHECK: shldl
+}

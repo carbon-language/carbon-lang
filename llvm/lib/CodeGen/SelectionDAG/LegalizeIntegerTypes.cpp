@@ -2095,9 +2095,16 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     // Expand the subcomponents.
     SDValue LHSL, LHSH;
     GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
-
-    SDValue Ops[] = { LHSL, LHSH, N->getOperand(1) };
     EVT VT = LHSL.getValueType();
+
+    // If the shift amount operand is coming from a vector legalization it may
+    // not have the right return type.  Fix that first by casting the operand.
+    SDValue ShiftOp = N->getOperand(1);
+    MVT ShiftTy = TLI.getShiftAmountTy(VT);
+    if (ShiftOp.getValueType() != ShiftTy)
+      ShiftOp = DAG.getZExtOrTrunc(ShiftOp, dl, ShiftTy);
+
+    SDValue Ops[] = { LHSL, LHSH, ShiftOp };
     Lo = DAG.getNode(PartsOpc, dl, DAG.getVTList(VT, VT), Ops, 3);
     Hi = Lo.getValue(1);
     return;
