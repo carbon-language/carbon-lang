@@ -137,7 +137,7 @@ public:
   /// is the index of the return, parameter, or function object that the
   /// attributes are applied to, not the index into the AttrNodes list where the
   /// attributes reside.
-  unsigned getSlotIndex(unsigned Slot) const { return AttrNodes[Slot].first; }
+  uint64_t getSlotIndex(unsigned Slot) const { return AttrNodes[Slot].first; }
 
   /// \brief Retrieve the attributes for the given "slot" in the AttrNode list.
   /// \p Slot is an index into the AttrNodes list, not the index of the return /
