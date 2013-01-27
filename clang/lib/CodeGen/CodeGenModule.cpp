@@ -1875,15 +1875,14 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
       continue;
 
     // Get the call site's attribute list.
-    SmallVector<llvm::AttributeWithIndex, 8> newAttrs;
+    SmallVector<llvm::AttributeSet, 8> newAttrs;
     llvm::AttributeSet oldAttrs = callSite.getAttributes();
 
     // Collect any return attributes from the call.
     if (oldAttrs.hasAttributes(llvm::AttributeSet::ReturnIndex))
       newAttrs.push_back(
-        llvm::AttributeWithIndex::get(newFn->getContext(),
-                                      llvm::AttributeSet::ReturnIndex,
-                                      oldAttrs.getRetAttributes()));
+        llvm::AttributeSet::get(newFn->getContext(),
+                                oldAttrs.getRetAttributes()));
 
     // If the function was passed too few arguments, don't transform.
     unsigned newNumArgs = newFn->arg_size();
@@ -1903,19 +1902,16 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
       // Add any parameter attributes.
       if (oldAttrs.hasAttributes(argNo + 1))
         newAttrs.
-          push_back(llvm::AttributeWithIndex::
-                    get(newFn->getContext(),
-                        argNo + 1,
-                        oldAttrs.getParamAttributes(argNo + 1)));
+          push_back(llvm::
+                    AttributeSet::get(newFn->getContext(),
+                                      oldAttrs.getParamAttributes(argNo + 1)));
     }
     if (dontTransform)
       continue;
 
     if (oldAttrs.hasAttributes(llvm::AttributeSet::FunctionIndex))
-      newAttrs.push_back(llvm::
-                      AttributeWithIndex::get(newFn->getContext(),
-                                              llvm::AttributeSet::FunctionIndex,
-                                              oldAttrs.getFnAttributes()));
+      newAttrs.push_back(llvm::AttributeSet::get(newFn->getContext(),
+                                                 oldAttrs.getFnAttributes()));
 
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
