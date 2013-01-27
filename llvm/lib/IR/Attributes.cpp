@@ -183,7 +183,7 @@ std::string Attribute::getAsString() const {
 
 AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
   : Alignment(0), StackAlignment(0) {
-  AttributeSetImpl *pImpl = AS.AttrList;
+  AttributeSetImpl *pImpl = AS.pImpl;
   if (!pImpl) return;
 
   ArrayRef<AttributeWithIndex> AttrList = pImpl->getAttributes();
@@ -569,16 +569,16 @@ AttributeSetImpl(LLVMContext &C,
 
 AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
   // FIXME: Remove.
-  return AttrList && hasAttributes(Idx) ?
-    AttributeSet::get(AttrList->getContext(),
+  return pImpl && hasAttributes(Idx) ?
+    AttributeSet::get(pImpl->getContext(),
                       AttributeWithIndex::get(Idx, getAttributes(Idx))) :
     AttributeSet();
 }
 
 AttributeSet AttributeSet::getRetAttributes() const {
   // FIXME: Remove.
-  return AttrList && hasAttributes(ReturnIndex) ?
-    AttributeSet::get(AttrList->getContext(),
+  return pImpl && hasAttributes(ReturnIndex) ?
+    AttributeSet::get(pImpl->getContext(),
                       AttributeWithIndex::get(ReturnIndex,
                                               getAttributes(ReturnIndex))) :
     AttributeSet();
@@ -586,8 +586,8 @@ AttributeSet AttributeSet::getRetAttributes() const {
 
 AttributeSet AttributeSet::getFnAttributes() const {
   // FIXME: Remove.
-  return AttrList && hasAttributes(FunctionIndex) ?
-    AttributeSet::get(AttrList->getContext(),
+  return pImpl && hasAttributes(FunctionIndex) ?
+    AttributeSet::get(pImpl->getContext(),
                       AttributeWithIndex::get(FunctionIndex,
                                               getAttributes(FunctionIndex))) :
     AttributeSet();
@@ -651,15 +651,15 @@ AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
   for (ArrayRef<AttributeSet>::iterator I = Attrs.begin(), E = Attrs.end();
        I != E; ++I) {
     AttributeSet AS = *I;
-    if (!AS.AttrList) continue;
-    AttrList.append(AS.AttrList->AttrList.begin(), AS.AttrList->AttrList.end());
+    if (!AS.pImpl) continue;
+    AttrList.append(AS.pImpl->AttrList.begin(), AS.pImpl->AttrList.end());
   }
 
   return get(C, AttrList);
 }
 
 const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
-  AttrList = RHS.AttrList;
+  pImpl = RHS.pImpl;
   return *this;
 }
 
@@ -667,19 +667,19 @@ const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
 /// This is the number of arguments that have an attribute set on them
 /// (including the function itself).
 unsigned AttributeSet::getNumSlots() const {
-  return AttrList ? AttrList->getNumAttributes() : 0;
+  return pImpl ? pImpl->getNumAttributes() : 0;
 }
 
 unsigned AttributeSet::getSlotIndex(unsigned Slot) const {
-  assert(AttrList && Slot < AttrList->getNumAttributes() &&
+  assert(pImpl && Slot < pImpl->getNumAttributes() &&
          "Slot # out of range!");
-  return AttrList->getSlotIndex(Slot);
+  return pImpl->getSlotIndex(Slot);
 }
 
 AttributeSet AttributeSet::getSlotAttributes(unsigned Slot) const {
-  assert(AttrList && Slot < AttrList->getNumAttributes() &&
+  assert(pImpl && Slot < pImpl->getNumAttributes() &&
          "Slot # out of range!");
-  return AttrList->getSlotAttributes(Slot);
+  return pImpl->getSlotAttributes(Slot);
 }
 
 bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
@@ -709,9 +709,9 @@ uint64_t AttributeSet::Raw(unsigned Index) const {
 
 /// getAttributes - The attributes for the specified index are returned.
 Attribute AttributeSet::getAttributes(unsigned Idx) const {
-  if (AttrList == 0) return Attribute();
+  if (pImpl == 0) return Attribute();
 
-  ArrayRef<AttributeWithIndex> Attrs = AttrList->getAttributes();
+  ArrayRef<AttributeWithIndex> Attrs = pImpl->getAttributes();
   for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
     if (Attrs[i].Index == Idx)
       return Attrs[i].Attrs;
@@ -722,9 +722,9 @@ Attribute AttributeSet::getAttributes(unsigned Idx) const {
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
 /// least one parameter or for the return value.
 bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
-  if (AttrList == 0) return false;
+  if (pImpl == 0) return false;
 
-  ArrayRef<AttributeWithIndex> Attrs = AttrList->getAttributes();
+  ArrayRef<AttributeWithIndex> Attrs = pImpl->getAttributes();
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
     if (Attrs[i].Attrs.hasAttribute(Attr))
       return true;
@@ -760,10 +760,10 @@ AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
     return *this;
 
   SmallVector<AttributeWithIndex, 8> NewAttrList;
-  if (AttrList == 0)
+  if (pImpl == 0)
     NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
   else {
-    ArrayRef<AttributeWithIndex> OldAttrList = AttrList->getAttributes();
+    ArrayRef<AttributeWithIndex> OldAttrList = pImpl->getAttributes();
     unsigned i = 0, e = OldAttrList.size();
     // Copy attributes for arguments before this one.
     for (; i != e && OldAttrList[i].Index < Idx; ++i)
@@ -805,7 +805,7 @@ AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
   assert(!Attrs.hasAttribute(Attribute::Alignment) &&
          "Attempt to exclude alignment!");
 #endif
-  if (AttrList == 0) return AttributeSet();
+  if (pImpl == 0) return AttributeSet();
 
   Attribute OldAttrs = getAttributes(Idx);
   AttrBuilder NewAttrs =
@@ -814,7 +814,7 @@ AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
     return *this;
 
   SmallVector<AttributeWithIndex, 8> NewAttrList;
-  ArrayRef<AttributeWithIndex> OldAttrList = AttrList->getAttributes();
+  ArrayRef<AttributeWithIndex> OldAttrList = pImpl->getAttributes();
   unsigned i = 0, e = OldAttrList.size();
 
   // Copy attributes for arguments before this one.

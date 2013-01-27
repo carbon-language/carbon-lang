@@ -210,7 +210,7 @@ private:
 
   /// \brief The attributes that we are managing.  This can be null to represent
   /// the empty attributes list.
-  AttributeSetImpl *AttrList;
+  AttributeSetImpl *pImpl;
 
   /// \brief The attributes for the specified index are returned.  Attributes
   /// for the result are denoted with Idx = 0.
@@ -230,10 +230,10 @@ private:
   /// N.B. this is only temporary. It will be disappearing in the future.
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
 
-  explicit AttributeSet(AttributeSetImpl *LI) : AttrList(LI) {}
+  explicit AttributeSet(AttributeSetImpl *LI) : pImpl(LI) {}
 public:
-  AttributeSet() : AttrList(0) {}
-  AttributeSet(const AttributeSet &P) : AttrList(P.AttrList) {}
+  AttributeSet() : pImpl(0) {}
+  AttributeSet(const AttributeSet &P) : pImpl(P.pImpl) {}
   const AttributeSet &operator=(const AttributeSet &RHS);
 
   //===--------------------------------------------------------------------===//
@@ -320,10 +320,10 @@ public:
 
   /// operator==/!= - Provide equality predicates.
   bool operator==(const AttributeSet &RHS) const {
-    return AttrList == RHS.AttrList;
+    return pImpl == RHS.pImpl;
   }
   bool operator!=(const AttributeSet &RHS) const {
-    return AttrList != RHS.AttrList;
+    return pImpl != RHS.pImpl;
   }
 
   //===--------------------------------------------------------------------===//
@@ -332,7 +332,7 @@ public:
 
   /// \brief Return a raw pointer that uniquely identifies this attribute list.
   void *getRawPointer() const {
-    return AttrList;
+    return pImpl;
   }
 
   // Attributes are stored as a dense set of slots, where there is one slot for
@@ -341,7 +341,7 @@ public:
 
   /// \brief Return true if there are no attributes.
   bool isEmpty() const {
-    return AttrList == 0;
+    return pImpl == 0;
   }
 
   /// \brief Return the number of slots used in this attribute list.  This is
