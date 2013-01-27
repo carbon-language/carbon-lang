@@ -1369,8 +1369,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
 /// \endcode
 ///
 /// \returns true if the conditional block is removed.
-static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
-                                   const TargetTransformInfo &TTI) {
+static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
   // Be conservative for now. FP select instruction can often be expensive.
   Value *BrCond = BI->getCondition();
   if (isa<FCmpInst>(BrCond))
@@ -1406,24 +1405,15 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
 
     // Only speculatively execution a single instruction (not counting the
     // terminator) for now.
-    SpeculationCost += TTI.getUserCost(I);
-    if (SpeculationCost > TargetTransformInfo::TCC_Basic)
+    ++SpeculationCost;
+    if (SpeculationCost > 1)
       return false;
 
     // Don't hoist the instruction if it's unsafe or expensive.
     if (!isSafeToSpeculativelyExecute(I))
       return false;
-    // FIXME: These should really be cost metrics, but our cost model doesn't
-    // accurately model the expense of selects and floating point operations.
-    // FIXME: Is it really safe to speculate floating point operations?
-    // Signaling NaNs break with this, but we shouldn't care, right?
-    if (isa<SelectInst>(I) || I->getType()->isFPOrFPVectorTy())
+    if (ComputeSpeculationCost(I) > PHINodeFoldingThreshold)
       return false;
-    // FIXME: The cost metric currently doesn't reason accurately about simple
-    // versus complex GEPs, take a conservative approach here.
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(I))
-      if (!GEP->hasAllConstantIndices())
-        return false;
 
     // Do not hoist the instruction if any of its operands are defined but not
     // used in this BB. The transformation will prevent the operand from
@@ -1446,8 +1436,8 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
            SinkCandidateUseCounts.begin(), E = SinkCandidateUseCounts.end();
        I != E; ++I)
     if (I->first->getNumUses() == I->second) {
-      SpeculationCost += TTI.getUserCost(I->first);
-      if (SpeculationCost > TargetTransformInfo::TCC_Basic)
+      ++SpeculationCost;
+      if (SpeculationCost > 1)
         return false;
     }
 
@@ -1469,20 +1459,15 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
 
     if (!isSafeToSpeculativelyExecute(CE))
       return false;
-
-    // Don't speculate into a select with a constant select expression operand.
-    // FIXME: This should really be a cost metric, but our cost model doesn't
-    // accurately model the expense of select.
-    if (Operator::getOpcode(CE) == Instruction::Select)
+    if (ComputeSpeculationCost(CE) > PHINodeFoldingThreshold)
       return false;
 
     // Account for the cost of an unfolded ConstantExpr which could end up
     // getting expanded into Instructions.
     // FIXME: This doesn't account for how many operations are combined in the
-    // constant expression. The cost functions in TTI don't yet correctly model
-    // constant expression costs.
-    SpeculationCost += TargetTransformInfo::TCC_Basic;
-    if (SpeculationCost > TargetTransformInfo::TCC_Basic)
+    // constant expression.
+    ++SpeculationCost;
+    if (SpeculationCost > 1)
       return false;
   }
 
@@ -3899,7 +3884,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
       TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
       if (Succ0TI->getNumSuccessors() == 1 &&
           Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
-        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0), TTI))
+        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
           return SimplifyCFG(BB, TTI, TD) | true;
     }
   } else if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
@@ -3908,7 +3893,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
     if (Succ1TI->getNumSuccessors() == 1 &&
         Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
-      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1), TTI))
+      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
         return SimplifyCFG(BB, TTI, TD) | true;
   }
 
