@@ -553,12 +553,14 @@ AttributeSetImpl(LLVMContext &C,
     AttrNodes.push_back(std::make_pair(AWI.Index,
                                        AttributeSetNode::get(C, Attrs)));
   }
-}
 
-AttributeSetImpl::
-AttributeSetImpl(LLVMContext &C,
-                 ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs)
-  : Context(C), AttrNodes(attrs.begin(), attrs.end()) {
+  assert(AttrNodes.size() == AttrList.size() &&
+         "Number of attributes is different between lists!");
+#ifndef NDEBUG
+  for (unsigned I = 0, E = AttrNodes.size(); I != E; ++I)
+    assert((I == 0 || AttrNodes[I - 1].first < AttrNodes[I].first) &&
+           "Attributes not in ascending order!");
+#endif
 }
 
 //===----------------------------------------------------------------------===//

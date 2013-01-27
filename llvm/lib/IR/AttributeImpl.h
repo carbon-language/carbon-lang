@@ -116,15 +116,14 @@ class AttributeSetImpl : public FoldingSetNode {
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
   AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs);
-  AttributeSetImpl(LLVMContext &C,
-                   ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs);
 
   LLVMContext &getContext() { return Context; }
   ArrayRef<AttributeWithIndex> getAttributes() const { return AttrList; }
-  unsigned getNumAttributes() const { return AttrList.size(); }
+  unsigned getNumAttributes() const {
+    return AttrNodes.size();
+  }
   unsigned getSlotIndex(unsigned Slot) const {
-    // FIXME: This needs to use AttrNodes instead.
-    return AttrList[Slot].Index;
+    return AttrNodes[Slot].first;
   }
   AttributeSet getSlotAttributes(unsigned Slot) const {
     // FIXME: This needs to use AttrNodes instead.
