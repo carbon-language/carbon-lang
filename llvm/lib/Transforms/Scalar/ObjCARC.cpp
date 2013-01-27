@@ -223,26 +223,26 @@ namespace {
   }
 }
 
-/// \brief Test whether the given value is possible a reference-counted pointer.
-static bool IsPotentialUse(const Value *Op) {
-  // Pointers to static or stack storage are not reference-counted pointers.
+/// \brief Test whether the given value is possible a retainable object pointer.
+static bool IsPotentialRetainableObjPtr(const Value *Op) {
+  // Pointers to static or stack storage are not valid retainable object pointers.
   if (isa<Constant>(Op) || isa<AllocaInst>(Op))
     return false;
-  // Special arguments are not reference-counted.
+  // Special arguments can not be a valid retainable object pointer.
   if (const Argument *Arg = dyn_cast<Argument>(Op))
     if (Arg->hasByValAttr() ||
         Arg->hasNestAttr() ||
         Arg->hasStructRetAttr())
       return false;
   // Only consider values with pointer types.
+  //
   // It seemes intuitive to exclude function pointer types as well, since
-  // functions are never reference-counted, however clang occasionally
-  // bitcasts reference-counted pointers to function-pointer type
-  // temporarily.
+  // functions are never retainable object pointers, however clang occasionally
+  // bitcasts retainable object pointers to function-pointer type temporarily.
   PointerType *Ty = dyn_cast<PointerType>(Op->getType());
   if (!Ty)
     return false;
-  // Conservatively assume anything else is a potential use.
+  // Conservatively assume anything else is a potential retainable object pointer.
   return true;
 }
 
@@ -251,7 +251,7 @@ static bool IsPotentialUse(const Value *Op) {
 static InstructionClass GetCallSiteClass(ImmutableCallSite CS) {
   for (ImmutableCallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
        I != E; ++I)
-    if (IsPotentialUse(*I))
+    if (IsPotentialRetainableObjPtr(*I))
       return CS.onlyReadsMemory() ? IC_User : IC_CallOrUser;
 
   return CS.onlyReadsMemory() ? IC_None : IC_Call;
@@ -400,7 +400,7 @@ static InstructionClass GetInstructionClass(const Value *V) {
       // Comparing a pointer with null, or any other constant, isn't an
       // interesting use, because we don't care what the pointer points to, or
       // about the values of any other dynamic reference-counted pointers.
-      if (IsPotentialUse(I->getOperand(1)))
+      if (IsPotentialRetainableObjPtr(I->getOperand(1)))
         return IC_User;
       break;
     default:
@@ -411,7 +411,7 @@ static InstructionClass GetInstructionClass(const Value *V) {
       // it, so we have to consider it potentially used.
       for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
-        if (IsPotentialUse(*OI))
+        if (IsPotentialRetainableObjPtr(*OI))
           return IC_User;
     }
   }
@@ -2023,9 +2023,9 @@ Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
 
 /// Test whether the given value is possible a reference-counted pointer,
 /// including tests which utilize AliasAnalysis.
-static bool IsPotentialUse(const Value *Op, AliasAnalysis &AA) {
+static bool IsPotentialRetainableObjPtr(const Value *Op, AliasAnalysis &AA) {
   // First make the rudimentary check.
-  if (!IsPotentialUse(Op))
+  if (!IsPotentialRetainableObjPtr(Op))
     return false;
 
   // Objects in constant memory are not reference-counted.
@@ -2066,7 +2066,7 @@ CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
     for (ImmutableCallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
          I != E; ++I) {
       const Value *Op = *I;
-      if (IsPotentialUse(Op, *PA.getAA()) && PA.related(Ptr, Op))
+      if (IsPotentialRetainableObjPtr(Op, *PA.getAA()) && PA.related(Ptr, Op))
         return true;
     }
     return false;
@@ -2091,14 +2091,14 @@ CanUse(const Instruction *Inst, const Value *Ptr, ProvenanceAnalysis &PA,
     // Comparing a pointer with null, or any other constant, isn't really a use,
     // because we don't care what the pointer points to, or about the values
     // of any other dynamic reference-counted pointers.
-    if (!IsPotentialUse(ICI->getOperand(1), *PA.getAA()))
+    if (!IsPotentialRetainableObjPtr(ICI->getOperand(1), *PA.getAA()))
       return false;
   } else if (ImmutableCallSite CS = static_cast<const Value *>(Inst)) {
     // For calls, just check the arguments (and not the callee operand).
     for (ImmutableCallSite::arg_iterator OI = CS.arg_begin(),
          OE = CS.arg_end(); OI != OE; ++OI) {
       const Value *Op = *OI;
-      if (IsPotentialUse(Op, *PA.getAA()) && PA.related(Ptr, Op))
+      if (IsPotentialRetainableObjPtr(Op, *PA.getAA()) && PA.related(Ptr, Op))
         return true;
     }
     return false;
@@ -2108,14 +2108,14 @@ CanUse(const Instruction *Inst, const Value *Ptr, ProvenanceAnalysis &PA,
     const Value *Op = GetUnderlyingObjCPtr(SI->getPointerOperand());
     // If we can't tell what the underlying object was, assume there is a
     // dependence.
-    return IsPotentialUse(Op, *PA.getAA()) && PA.related(Op, Ptr);
+    return IsPotentialRetainableObjPtr(Op, *PA.getAA()) && PA.related(Op, Ptr);
   }
 
   // Check each operand for a match.
   for (User::const_op_iterator OI = Inst->op_begin(), OE = Inst->op_end();
        OI != OE; ++OI) {
     const Value *Op = *OI;
-    if (IsPotentialUse(Op, *PA.getAA()) && PA.related(Ptr, Op))
+    if (IsPotentialRetainableObjPtr(Op, *PA.getAA()) && PA.related(Ptr, Op))
       return true;
   }
   return false;
