@@ -853,9 +853,6 @@ def SETRDY_l2r : _FLR2R<0b0010111000, (outs), (ins GRRegs:$src1, GRRegs:$src2),
                         [(int_xcore_setrdy GRRegs:$src1, GRRegs:$src2)]>;
 
 // One operand short
-// TODO edu, eeu, waitet, waitef, tstart, clrtp
-// setdp, setcp, setev, kcall
-// dgetreg
 def MSYNC_1r : _F1R<0b000111, (outs), (ins GRRegs:$a),
                     "msync res[$a]",
                     [(int_xcore_msync GRRegs:$a)]>;
@@ -879,9 +876,13 @@ def BR_JT32 : PseudoInstXCore<(outs), (ins InlineJT32:$t, GRRegs:$i),
                               [(XCoreBR_JT32 tjumptable:$t, GRRegs:$i)]>;
 
 let Defs=[SP], neverHasSideEffects=1 in
-def SETSP_1r : _F1R<0b001011, (outs), (ins GRRegs:$a),
-                 "set sp, $a",
-                 []>;
+def SETSP_1r : _F1R<0b001011, (outs), (ins GRRegs:$a), "set sp, $a", []>;
+
+let neverHasSideEffects=1 in
+def SETDP_1r : _F1R<0b001100, (outs), (ins GRRegs:$a), "set dp, $a", []>;
+
+let neverHasSideEffects=1 in
+def SETCP_1r : _F1R<0b001101, (outs), (ins GRRegs:$a), "set cp, $a", []>;
 
 let hasCtrlDep = 1 in 
 def ECALLT_1r : _F1R<0b010011, (outs), (ins GRRegs:$a),
@@ -919,9 +920,23 @@ def SETEV_1r : _F1R<0b001111, (outs), (ins GRRegs:$a),
                     [(int_xcore_setev GRRegs:$a, R11)]>;
 }
 
+def DGETREG_1r : _F1R<0b001110, (outs GRRegs:$a), (ins), "dgetreg $a", []>;
+
+def EDU_1r : _F1R<0b000000, (outs), (ins GRRegs:$a), "edu res[$a]", []>;
+
 def EEU_1r : _F1R<0b000001, (outs), (ins GRRegs:$a),
                "eeu res[$a]",
                [(int_xcore_eeu GRRegs:$a)]>;
+
+def KCALL_1r : _F1R<0b010000, (outs), (ins GRRegs:$a), "kcall $a", []>;
+
+def WAITEF_1R : _F1R<0b000011, (outs), (ins GRRegs:$a), "waitef $a", []>;
+
+def WAITET_1R : _F1R<0b000010, (outs), (ins GRRegs:$a), "waitet $a", []>;
+
+def TSTART_1R : _F1R<0b000110, (outs), (ins GRRegs:$a), "start t[$a]", []>;
+
+def CLRPT_1R : _F1R<0b100000, (outs), (ins GRRegs:$a), "clrpt res[$a]", []>;
 
 // Zero operand short
 

@@ -110,6 +110,33 @@
 # CHECK: eeu res[r11]
 0xfb 0x07
 
+# CHECK: set dp, r5
+0xe5 0x37
+
+# CHECK: set cp, r0
+0xf0 0x37
+
+# CHECK: dgetreg r11
+0xeb 0x3f
+
+# CHECK: edu res[r8]
+0xe8 0x07
+
+# CHECK: kcall r2
+0xe2 0x47
+
+# CHECK: waitef r10
+0xfa 0x0f
+
+# CHECK: waitet r7
+0xe7 0x0f
+
+# CHECK: start t[r4]
+0xe4 0x1f
+
+# CHECK: clrpt res[r9]
+0xe9 0x87
+
 # 2r instructions
 
 # CHECK: not r1, r8
