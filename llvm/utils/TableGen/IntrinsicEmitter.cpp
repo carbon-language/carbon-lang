@@ -534,9 +534,8 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
     N = ++AttrNum;
   }
 
-  // Emit an array of AttributeWithIndex.  Most intrinsics will have
-  // at least one entry, for the function itself (index ~1), which is
-  // usually nounwind.
+  // Emit an array of AttributeSet.  Most intrinsics will have at least one
+  // entry, for the function itself (index ~1), which is usually nounwind.
   OS << "  static const uint8_t IntrinsicsToAttributesMap[] = {\n";
 
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
@@ -547,7 +546,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   }
   OS << "  };\n\n";
 
-  OS << "  AttributeWithIndex AWI[" << maxArgAttrs+1 << "];\n";
+  OS << "  AttributeSet AS[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
   OS << "  if (id != 0) {\n";
   OS << "    SmallVector<Attribute::AttrKind, 8> AttrVec;\n";
@@ -585,7 +584,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
           ++ai;
         } while (ai != ae && intrinsic.ArgumentAttributes[ai].first == argNo);
 
-        OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(C, "
+        OS << "      AS[" << numAttrs++ << "] = AttributeSet::get(C, "
            << argNo+1 << ", AttrVec);\n";
       }
     }
@@ -609,7 +608,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         OS << "      AttrVec.push_back(Attribute::ReadNone);\n"; 
         break;
       }
-      OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(C, "
+      OS << "      AS[" << numAttrs++ << "] = AttributeSet::get(C, "
          << "AttributeSet::FunctionIndex, AttrVec);\n";
     }
 
@@ -623,7 +622,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   
   OS << "    }\n";
   OS << "  }\n";
-  OS << "  return AttributeSet::get(C, ArrayRef<AttributeWithIndex>(AWI, "
+  OS << "  return AttributeSet::get(C, ArrayRef<AttributeSet>(AS, "
              "NumAttrs));\n";
   OS << "}\n";
   OS << "#endif // GET_INTRINSIC_ATTRIBUTES\n\n";
