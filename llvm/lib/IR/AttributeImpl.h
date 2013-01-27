@@ -115,11 +115,9 @@ class AttributeSetImpl : public FoldingSetNode {
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
-  AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs)
-    : Context(C), AttrList(attrs.begin(), attrs.end()) {}
+  AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs);
   AttributeSetImpl(LLVMContext &C,
-                   ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs)
-    : Context(C), AttrNodes(attrs.begin(), attrs.end()) {}
+                   ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs);
 
   LLVMContext &getContext() { return Context; }
   ArrayRef<AttributeWithIndex> getAttributes() const { return AttrList; }

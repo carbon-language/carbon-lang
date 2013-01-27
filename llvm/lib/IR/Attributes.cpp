@@ -525,6 +525,46 @@ AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//
 
+AttributeSetImpl::
+AttributeSetImpl(LLVMContext &C,
+                 ArrayRef<AttributeWithIndex> attrs)
+  : Context(C), AttrList(attrs.begin(), attrs.end()) {
+  for (unsigned I = 0, E = attrs.size(); I != E; ++I) {
+    const AttributeWithIndex &AWI = attrs[I];
+    uint64_t Mask = AWI.Attrs.Raw();
+    SmallVector<Attribute, 8> Attrs;
+
+    for (Attribute::AttrKind II = Attribute::None;
+         II != Attribute::EndAttrKinds; II = Attribute::AttrKind(II + 1)) {
+      if (uint64_t A = (Mask & AttributeImpl::getAttrMask(II))) {
+        AttrBuilder B;
+
+        if (II == Attribute::Alignment)
+          B.addAlignmentAttr(1ULL << ((A >> 16) - 1));
+        else if (II == Attribute::StackAlignment)
+          B.addStackAlignmentAttr(1ULL << ((A >> 26) - 1));
+        else
+          B.addAttribute(II);
+
+        Attrs.push_back(Attribute::get(C, B));
+      }
+    }
+
+    AttrNodes.push_back(std::make_pair(AWI.Index,
+                                       AttributeSetNode::get(C, Attrs)));
+  }
+}
+
+AttributeSetImpl::
+AttributeSetImpl(LLVMContext &C,
+                 ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs)
+  : Context(C), AttrNodes(attrs.begin(), attrs.end()) {
+}
+
+//===----------------------------------------------------------------------===//
+// AttributeSet Method Implementations
+//===----------------------------------------------------------------------===//
+
 AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
   // FIXME: Remove.
   return AttrList && hasAttributes(Idx) ?
@@ -615,10 +655,6 @@ AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
 
   return get(C, AttrList);
 }
-
-//===----------------------------------------------------------------------===//
-// AttributeSet Method Implementations
-//===----------------------------------------------------------------------===//
 
 const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
   AttrList = RHS.AttrList;
