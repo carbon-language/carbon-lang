@@ -694,7 +694,7 @@ unsigned AttributeSet::getNumSlots() const {
   return pImpl ? pImpl->getNumAttributes() : 0;
 }
 
-unsigned AttributeSet::getSlotIndex(unsigned Slot) const {
+uint64_t AttributeSet::getSlotIndex(unsigned Slot) const {
   assert(pImpl && Slot < pImpl->getNumAttributes() &&
          "Slot # out of range!");
   return pImpl->getSlotIndex(Slot);
