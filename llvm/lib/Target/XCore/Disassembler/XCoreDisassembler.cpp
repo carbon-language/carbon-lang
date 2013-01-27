@@ -449,6 +449,12 @@ DecodeL2OpInstructionFail(MCInst &Inst, unsigned Insn, uint64_t Address,
   case 0x12c:
     Inst.setOpcode(XCore::ASHR_l2rus);
     return DecodeL2RUSBitpInstruction(Inst, Insn, Address, Decoder);
+  case 0x12d:
+    Inst.setOpcode(XCore::OUTPW_l2rus);
+    return DecodeL2RUSBitpInstruction(Inst, Insn, Address, Decoder);
+  case 0x12e:
+    Inst.setOpcode(XCore::INPW_l2rus);
+    return DecodeL2RUSBitpInstruction(Inst, Insn, Address, Decoder);
   case 0x13c:
     Inst.setOpcode(XCore::LDAWF_l2rus);
     return DecodeL2RUSInstruction(Inst, Insn, Address, Decoder);

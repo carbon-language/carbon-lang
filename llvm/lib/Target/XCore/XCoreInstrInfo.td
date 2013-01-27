@@ -451,7 +451,6 @@ def CRC_l3r : _FL3RSrcDst<0b101011100, (outs GRRegs:$dst),
                              (int_xcore_crc32 GRRegs:$src1, GRRegs:$src2,
                                               GRRegs:$src3))]>;
 
-// TODO inpw, outpw
 let mayStore=1 in {
 def ST16_l3r : _FL3R<0b100001100, (outs),
                      (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
@@ -461,6 +460,14 @@ def ST8_l3r : _FL3R<0b100011100, (outs),
                     (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
                     "st8 $val, $addr[$offset]", []>;
 }
+
+def INPW_l2rus : _FL2RUSBitp<0b100101110, (outs GRRegs:$a),
+                             (ins GRRegs:$b, i32imm:$c), "inpw $a, res[$b], $c",
+                             []>;
+
+def OUTPW_l2rus : _FL2RUSBitp<0b100101101, (outs),
+                              (ins GRRegs:$a, GRRegs:$b, i32imm:$c),
+                              "outpw res[$b], $a, $c", []>;
 
 // Four operand long
 let Constraints = "$e = $a,$f = $b" in {
