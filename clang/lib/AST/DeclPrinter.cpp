@@ -646,9 +646,13 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
   Expr *Init = D->getInit();
   if (!Policy.SuppressInitializers && Init) {
     bool ImplicitInit = false;
-    if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init))
-      ImplicitInit = D->getInitStyle() == VarDecl::CallInit &&
-          Construct->getNumArgs() == 0 && !Construct->isListInitialization();
+    if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init)) {
+      if (D->getInitStyle() == VarDecl::CallInit &&
+          !Construct->isListInitialization()) {
+        ImplicitInit = Construct->getNumArgs() == 0 ||
+          Construct->getArg(0)->isDefaultArgument();
+      }
+    }
     if (!ImplicitInit) {
       if ((D->getInitStyle() == VarDecl::CallInit) && !isa<ParenListExpr>(Init))
         Out << "(";

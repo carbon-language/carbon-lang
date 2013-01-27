@@ -99,3 +99,24 @@ int test11() {
   return test10::M::X<INT>::value;
 }
 
+
+struct DefaultArgClass
+{
+  DefaultArgClass(int a = 1) {}
+};
+
+struct NoArgClass
+{
+  NoArgClass() {}
+};
+
+// CHECK: test12
+// CHECK-NEXT: DefaultArgClass useDefaultArg;
+// CHECK-NEXT: DefaultArgClass overrideDefaultArg(1);
+// CHECK-NEXT: NoArgClass noArg;
+void test12() {
+  DefaultArgClass useDefaultArg;
+  DefaultArgClass overrideDefaultArg(1);
+  NoArgClass noArg;
+}
+
