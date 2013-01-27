@@ -191,6 +191,7 @@ public:
   };
 private:
   friend class AttrBuilder;
+  friend class AttributeSetImpl;
 
   /// \brief The attributes that we are managing.  This can be null to represent
   /// the empty attributes list.
@@ -210,6 +211,10 @@ private:
   /// list.
   AttributeSet removeAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
 
+  /// \brief Create an AttributeSet from the AttributeWithIndex structures.
+  /// N.B. this is only temporary. It will be disappearing in the future.
+  static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
+
   explicit AttributeSet(AttributeSetImpl *LI) : AttrList(LI) {}
 public:
   AttributeSet() : AttrList(0) {}
@@ -221,7 +226,6 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// \brief Return an AttributeSet with the specified parameters in it.
-  static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeSet> Attrs);
   static AttributeSet get(LLVMContext &C, unsigned Idx,
                           ArrayRef<Attribute::AttrKind> Kind);
