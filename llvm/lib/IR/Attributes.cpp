@@ -62,6 +62,17 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   return Attribute(PA);
 }
 
+Attribute Attribute::getWithAlignment(LLVMContext &Context, uint64_t Align) {
+  AttrBuilder B;
+  return get(Context, B.addAlignmentAttr(Align));
+}
+
+Attribute Attribute::getWithStackAlignment(LLVMContext &Context,
+                                           uint64_t Align) {
+  AttrBuilder B;
+  return get(Context, B.addStackAlignmentAttr(Align));
+}
+
 bool Attribute::hasAttribute(AttrKind Val) const {
   return pImpl && pImpl->hasAttribute(Val);
 }

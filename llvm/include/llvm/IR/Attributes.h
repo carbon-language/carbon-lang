@@ -107,10 +107,14 @@ private:
 public:
   Attribute() : pImpl(0) {}
 
-  /// \brief Return a uniquified Attribute object. This takes the uniquified
-  /// value from the Builder and wraps it in the Attribute class.
+  /// \brief Return a uniquified Attribute object.
   static Attribute get(LLVMContext &Context, ArrayRef<AttrKind> Kinds);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
+
+  /// \brief Return a uniquified Attribute object that has the specific
+  /// alignment set.
+  static Attribute getWithAlignment(LLVMContext &Context, uint64_t Align);
+  static Attribute getWithStackAlignment(LLVMContext &Context, uint64_t Align);
 
   /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
@@ -130,25 +134,18 @@ public:
   bool operator==(AttrKind K) const;
   bool operator!=(AttrKind K) const;
 
+  /// \brief Less-than operator. Useful for sorting the attributes list.
   bool operator<(Attribute A) const;
+
+  /// \brief The Attribute is converted to a string of equivalent mnemonic. This
+  /// is, presumably, for writing out the mnemonics for the assembly writer.
+  std::string getAsString() const;
 
   void Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(pImpl);
   }
 
-  // FIXME: Remove these 'operator' methods.
-  bool operator==(const Attribute &A) const {
-    return pImpl == A.pImpl;
-  }
-  bool operator!=(const Attribute &A) const {
-    return pImpl != A.pImpl;
-  }
-
   uint64_t Raw() const;
-
-  /// \brief The Attribute is converted to a string of equivalent mnemonic. This
-  /// is, presumably, for writing out the mnemonics for the assembly writer.
-  std::string getAsString() const;
 };
 
 //===----------------------------------------------------------------------===//
