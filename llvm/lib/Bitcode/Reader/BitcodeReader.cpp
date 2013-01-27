@@ -437,7 +437,7 @@ bool BitcodeReader::ParseAttributeBlock() {
 
   SmallVector<uint64_t, 64> Record;
 
-  SmallVector<AttributeWithIndex, 8> Attrs;
+  SmallVector<AttributeSet, 8> Attrs;
 
   // Read all the records.
   while (1) {
@@ -472,8 +472,7 @@ bool BitcodeReader::ParseAttributeBlock() {
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         AttrBuilder B(Record[i+1]);
         if (B.hasAttributes())
-          Attrs.push_back(AttributeWithIndex::get(Record[i],
-                                                  Attribute::get(Context, B)));
+          Attrs.push_back(AttributeSet::get(Context, Record[i], B));
       }
 
       MAttributes.push_back(AttributeSet::get(Context, Attrs));
