@@ -234,7 +234,10 @@ private:
 public:
   AttributeSet() : pImpl(0) {}
   AttributeSet(const AttributeSet &P) : pImpl(P.pImpl) {}
-  const AttributeSet &operator=(const AttributeSet &RHS);
+  const AttributeSet &operator=(const AttributeSet &RHS) {
+    pImpl = RHS.pImpl;
+    return *this;
+  }
 
   //===--------------------------------------------------------------------===//
   // Attribute List Construction and Mutation

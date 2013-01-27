@@ -574,6 +574,24 @@ AttributeSetImpl(LLVMContext &C,
 #endif
 }
 
+uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
+  for (unsigned I = 0, E = getNumAttributes(); I != E; ++I) {
+    if (getSlotIndex(I) != Index) continue;
+    const AttributeSetNode *ASN = AttrNodes[I].second;
+    AttrBuilder B;
+
+    for (AttributeSetNode::const_iterator II = ASN->begin(),
+           IE = ASN->end(); II != IE; ++II)
+      B.addAttributes(*II);
+
+    assert(B.Raw() == AttrList[I].Attrs.Raw() &&
+           "Attributes aren't the same!");
+    return B.Raw();
+  }
+
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // AttributeSet Method Implementations
 //===----------------------------------------------------------------------===//
@@ -669,14 +687,9 @@ AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
   return get(C, AttrList);
 }
 
-const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
-  pImpl = RHS.pImpl;
-  return *this;
-}
-
-/// getNumSlots - Return the number of slots used in this attribute list.
-/// This is the number of arguments that have an attribute set on them
-/// (including the function itself).
+/// \brief Return the number of slots used in this attribute list.  This is the
+/// number of arguments that have an attribute set on them (including the
+/// function itself).
 unsigned AttributeSet::getNumSlots() const {
   return pImpl ? pImpl->getNumAttributes() : 0;
 }
@@ -715,7 +728,7 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
 
 uint64_t AttributeSet::Raw(unsigned Index) const {
   // FIXME: Remove this.
-  return getAttributes(Index).Raw();
+  return pImpl ? pImpl->Raw(Index) : 0;
 }
 
 /// getAttributes - The attributes for the specified index are returned.

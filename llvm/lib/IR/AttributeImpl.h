@@ -165,6 +165,9 @@ public:
       ID.AddPointer(Nodes[i].second);
     }
   }
+
+  // FIXME: This atrocity is temporary.
+  uint64_t Raw(uint64_t Index) const;
 };
 
 } // end llvm namespace
