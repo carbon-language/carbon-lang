@@ -177,7 +177,22 @@ template<> struct DenseMapInfo<Attribute::AttrKind> {
 
 class AttrBuilder;
 class AttributeSetImpl;
-struct AttributeWithIndex;
+
+//===----------------------------------------------------------------------===//
+/// \class
+/// \brief This is just a pair of values to associate a set of attributes with
+/// an index.
+struct AttributeWithIndex {
+  Attribute Attrs;  ///< The attributes that are set, or'd together.
+  unsigned Index;   ///< Index of the parameter for which the attributes apply.
+
+  static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
+    AttributeWithIndex P;
+    P.Index = Idx;
+    P.Attrs = Attrs;
+    return P;
+  }
+};
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -341,22 +356,6 @@ public:
   AttributeSet getSlotAttributes(unsigned Slot) const;
 
   void dump() const;
-};
-
-//===----------------------------------------------------------------------===//
-/// \class
-/// \brief This is just a pair of values to associate a set of attributes with
-/// an index.
-struct AttributeWithIndex {
-  Attribute Attrs;  ///< The attributes that are set, or'd together.
-  unsigned Index;   ///< Index of the parameter for which the attributes apply.
-
-  static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
-    AttributeWithIndex P;
-    P.Index = Idx;
-    P.Attrs = Attrs;
-    return P;
-  }
 };
 
 //===----------------------------------------------------------------------===//
