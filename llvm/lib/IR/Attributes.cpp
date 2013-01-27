@@ -30,8 +30,11 @@ using namespace llvm;
 // Attribute Implementation
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, AttrKind Kind) {
-  AttrBuilder B(Kind);
+Attribute Attribute::get(LLVMContext &Context, ArrayRef<AttrKind> Kinds) {
+  AttrBuilder B;
+  for (ArrayRef<AttrKind>::iterator I = Kinds.begin(), E = Kinds.end();
+       I != E; ++I)
+    B.addAttribute(*I);
   return Attribute::get(Context, B);
 }
 

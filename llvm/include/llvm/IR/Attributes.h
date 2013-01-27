@@ -109,7 +109,7 @@ public:
 
   /// \brief Return a uniquified Attribute object. This takes the uniquified
   /// value from the Builder and wraps it in the Attribute class.
-  static Attribute get(LLVMContext &Context, AttrKind Kind);
+  static Attribute get(LLVMContext &Context, ArrayRef<AttrKind> Kinds);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
   /// \brief Return true if the attribute is present.
