@@ -30,11 +30,8 @@ using namespace llvm;
 // Attribute Implementation
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, ArrayRef<AttrKind> Vals) {
-  AttrBuilder B;
-  for (ArrayRef<AttrKind>::iterator I = Vals.begin(), E = Vals.end();
-       I != E; ++I)
-    B.addAttribute(*I);
+Attribute Attribute::get(LLVMContext &Context, AttrKind Kind) {
+  AttrBuilder B(Kind);
   return Attribute::get(Context, B);
 }
 
@@ -484,17 +481,6 @@ void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data,
        I != E; ++I)
     ID.AddPointer(*I);
 #endif
-}
-
-//===----------------------------------------------------------------------===//
-// AttributeWithIndex Definition
-//===----------------------------------------------------------------------===//
-
-AttributeWithIndex AttributeWithIndex::get(LLVMContext &C, unsigned Idx,
-                                           AttributeSet AS) {
-  // FIXME: This is temporary, but necessary for the conversion.
-  AttrBuilder B(AS, Idx);
-  return get(Idx, Attribute::get(C, B));
 }
 
 //===----------------------------------------------------------------------===//

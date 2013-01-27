@@ -109,7 +109,7 @@ public:
 
   /// \brief Return a uniquified Attribute object. This takes the uniquified
   /// value from the Builder and wraps it in the Attribute class.
-  static Attribute get(LLVMContext &Context, ArrayRef<AttrKind> Vals);
+  static Attribute get(LLVMContext &Context, AttrKind Kind);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
   /// \brief Return true if the attribute is present.
@@ -351,12 +351,6 @@ struct AttributeWithIndex {
   Attribute Attrs;  ///< The attributes that are set, or'd together.
   unsigned Index;   ///< Index of the parameter for which the attributes apply.
 
-  // FIXME: These methods all need to be revised. The first one is temporary.
-  static AttributeWithIndex get(LLVMContext &C, unsigned Idx, AttributeSet AS);
-  static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
-                                ArrayRef<Attribute::AttrKind> Attrs) {
-    return get(Idx, Attribute::get(C, Attrs));
-  }
   static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
     AttributeWithIndex P;
     P.Index = Idx;
