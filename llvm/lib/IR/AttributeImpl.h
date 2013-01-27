@@ -117,14 +117,23 @@ class AttributeSetImpl : public FoldingSetNode {
 public:
   AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs);
 
+  /// \brief Get the context that created this AttributeSetImpl.
   LLVMContext &getContext() { return Context; }
+
   ArrayRef<AttributeWithIndex> getAttributes() const { return AttrList; }
-  unsigned getNumAttributes() const {
-    return AttrNodes.size();
-  }
-  unsigned getSlotIndex(unsigned Slot) const {
-    return AttrNodes[Slot].first;
-  }
+
+  /// \brief Return the number of attributes this AttributeSet contains.
+  unsigned getNumAttributes() const { return AttrNodes.size(); }
+
+  /// \brief Get the index of the given "slot" in the AttrNodes list. This index
+  /// is the index of the return, parameter, or function object that the
+  /// attributes are applied to, not the index into the AttrNodes list where the
+  /// attributes reside.
+  unsigned getSlotIndex(unsigned Slot) const { return AttrNodes[Slot].first; }
+
+  /// \brief Retrieve the attributes for the given "slot" in the AttrNode list.
+  /// \p Slot is an index into the AttrNodes list, not the index of the return /
+  /// parameter/ function which the attributes apply to.
   AttributeSet getSlotAttributes(unsigned Slot) const {
     // FIXME: This needs to use AttrNodes instead.
     return AttributeSet::get(Context, AttrList[Slot]);
