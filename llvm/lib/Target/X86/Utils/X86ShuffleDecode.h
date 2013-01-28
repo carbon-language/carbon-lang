@@ -35,7 +35,7 @@ void DecodeMOVHLPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask);
 // <0,2> or <0,1,4,5>
 void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask);
 
-void DecodePALIGNMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+void DecodePALIGNRMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 void DecodePSHUFMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 

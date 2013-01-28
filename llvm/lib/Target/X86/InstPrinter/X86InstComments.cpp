@@ -77,9 +77,9 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
   case X86::VPALIGNR128rm:
     Src2Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
-    DecodePALIGNMask(MVT::v16i8,
-                     MI->getOperand(MI->getNumOperands()-1).getImm(),
-                     ShuffleMask);
+    DecodePALIGNRMask(MVT::v16i8,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
     break;
   case X86::VPALIGNR256rr:
     Src1Name = getRegName(MI->getOperand(2).getReg());
@@ -87,9 +87,9 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
   case X86::VPALIGNR256rm:
     Src2Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
-    DecodePALIGNMask(MVT::v32i8,
-                     MI->getOperand(MI->getNumOperands()-1).getImm(),
-                     ShuffleMask);
+    DecodePALIGNRMask(MVT::v32i8,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
 
   case X86::PSHUFDri:
   case X86::VPSHUFDri:

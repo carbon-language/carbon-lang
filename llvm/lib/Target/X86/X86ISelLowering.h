@@ -294,7 +294,7 @@ namespace llvm {
       TESTP,
 
       // Several flavors of instructions with vector shuffle behaviors.
-      PALIGN,
+      PALIGNR,
       PSHUFD,
       PSHUFHW,
       PSHUFLW,

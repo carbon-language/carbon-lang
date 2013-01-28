@@ -61,7 +61,8 @@ void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
     ShuffleMask.push_back(NElts+i);
 }
 
-void DecodePALIGNMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
+void DecodePALIGNRMask(MVT VT, unsigned Imm,
+                       SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
   unsigned Offset = Imm * (VT.getVectorElementType().getSizeInBits() / 8);
 
