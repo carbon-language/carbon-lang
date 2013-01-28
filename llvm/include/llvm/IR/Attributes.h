@@ -287,19 +287,19 @@ public:
   AttributeSet getFnAttributes() const;
 
   /// \brief Return true if the attribute exists at the given index.
-  bool hasAttribute(uint64_t Index, Attribute::AttrKind Kind) const;
+  bool hasAttribute(unsigned Index, Attribute::AttrKind Kind) const;
 
   /// \brief Return true if attribute exists at the given index.
-  bool hasAttributes(uint64_t Index) const;
+  bool hasAttributes(unsigned Index) const;
 
   /// \brief Return the alignment for the specified function parameter.
-  unsigned getParamAlignment(uint64_t Idx) const;
+  unsigned getParamAlignment(unsigned Idx) const;
 
   /// \brief Get the stack alignment.
-  unsigned getStackAlignment(uint64_t Index) const;
+  unsigned getStackAlignment(unsigned Index) const;
 
   /// \brief Return the attributes at the index as a string.
-  std::string getAsString(uint64_t Index) const;
+  std::string getAsString(unsigned Index) const;
 
   uint64_t Raw(unsigned Index) const;
 

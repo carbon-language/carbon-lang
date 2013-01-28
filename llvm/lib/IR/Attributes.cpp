@@ -710,23 +710,23 @@ AttributeSet AttributeSet::getSlotAttributes(unsigned Slot) const {
   return pImpl->getSlotAttributes(Slot);
 }
 
-bool AttributeSet::hasAttribute(uint64_t Index, Attribute::AttrKind Kind) const{
+bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
   return getAttributes(Index).hasAttribute(Kind);
 }
 
-bool AttributeSet::hasAttributes(uint64_t Index) const {
+bool AttributeSet::hasAttributes(unsigned Index) const {
   return getAttributes(Index).hasAttributes();
 }
 
-std::string AttributeSet::getAsString(uint64_t Index) const {
+std::string AttributeSet::getAsString(unsigned Index) const {
   return getAttributes(Index).getAsString();
 }
 
-unsigned AttributeSet::getParamAlignment(uint64_t Idx) const {
+unsigned AttributeSet::getParamAlignment(unsigned Idx) const {
   return getAttributes(Idx).getAlignment();
 }
 
-unsigned AttributeSet::getStackAlignment(uint64_t Index) const {
+unsigned AttributeSet::getStackAlignment(unsigned Index) const {
   return getAttributes(Index).getStackAlignment();
 }
 
