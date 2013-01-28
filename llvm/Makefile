@@ -248,13 +248,26 @@ build-for-llvm-top:
 SVN = svn
 SVN-UPDATE-OPTIONS =
 AWK = awk
-SUB-SVN-DIRS = $(AWK) '/I|\?      / {print $$2}'   \
-		| LC_ALL=C xargs $(SVN) info 2>/dev/null \
-		| $(AWK) '/^Path:\ / {print $$2}'
+
+# Multiline variable defining a recursive function for finding svn repos rooted at
+# a given path. svnup() requires one argument: the root to search from.
+define SUB_SVN_DIRS
+svnup() {
+  dirs=`svn status --no-ignore $$1 | awk '/I|\?      / {print $$2}' | LC_ALL=C xargs svn info 2>/dev/null | awk '/^Path:\ / {print $$2}'`;
+  if [ "$$dirs" = "" ]; then
+    return;
+  fi;
+  for f in $$dirs; do
+	  echo $$f;
+    svnup $$f;
+  done
+}
+endef
+export SUB_SVN_DIRS
 
 update:
 	$(SVN) $(SVN-UPDATE-OPTIONS) update $(LLVM_SRC_ROOT)
-	@ $(SVN) status --no-ignore $(LLVM_SRC_ROOT) | $(SUB-SVN-DIRS) | xargs $(SVN) $(SVN-UPDATE-OPTIONS) update
+	@eval $$SUB_SVN_DIRS; $(SVN) status --no-ignore $(LLVM_SRC_ROOT) | svnup $(LLVM_SRC_ROOT) | xargs $(SVN) $(SVN-UPDATE-OPTIONS) update
 
 happiness: update all check-all
 
