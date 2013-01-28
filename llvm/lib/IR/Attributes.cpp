@@ -197,17 +197,21 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
   AttributeSetImpl *pImpl = AS.pImpl;
   if (!pImpl) return;
 
-  ArrayRef<AttributeWithIndex> AttrList = pImpl->getAttributes();
-  const AttributeWithIndex *AWI = 0;
-  for (unsigned I = 0, E = AttrList.size(); I != E; ++I)
-    if (AttrList[I].Index == Idx) {
-      AWI = &AttrList[I];
-      break;
-    }
+  AttrBuilder B;
 
-  if (!AWI) return;
+  for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I) {
+    if (pImpl->getSlotIndex(I) != Idx) continue;
 
-  uint64_t Mask = AWI->Attrs.Raw();
+    for (AttributeSetNode::const_iterator II = pImpl->begin(I),
+           IE = pImpl->end(I); II != IE; ++II)
+      B.addAttributes(*II);
+
+    break;
+  }
+
+  if (!B.hasAttributes()) return;
+
+  uint64_t Mask = B.Raw();
 
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
@@ -861,8 +865,8 @@ AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
 }
 
 void AttributeSet::dump() const {
-  dbgs() << "PAL[ ";
-  for (unsigned i = 0; i < getNumSlots(); ++i) {
+  dbgs() << "PAL[\n";
+  for (unsigned i = 0, e = getNumSlots(); i < e; ++i) {
     uint64_t Index = getSlotIndex(i);
     dbgs() << "  { ";
     if (Index == ~0U)

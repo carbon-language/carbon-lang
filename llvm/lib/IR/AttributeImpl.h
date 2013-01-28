@@ -117,7 +117,8 @@ class AttributeSetImpl : public FoldingSetNode {
   LLVMContext &Context;
   SmallVector<AttributeWithIndex, 4> AttrList;
 
-  SmallVector<std::pair<uint64_t, AttributeSetNode*>, 4> AttrNodes;
+  typedef std::pair<uint64_t, AttributeSetNode*> IndexAttrPair;
+  SmallVector<IndexAttrPair, 4> AttrNodes;
 
   // AttributesSet is uniqued, these should not be publicly available.
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
@@ -137,7 +138,9 @@ public:
   /// is the index of the return, parameter, or function object that the
   /// attributes are applied to, not the index into the AttrNodes list where the
   /// attributes reside.
-  uint64_t getSlotIndex(unsigned Slot) const { return AttrNodes[Slot].first; }
+  uint64_t getSlotIndex(unsigned Slot) const {
+    return AttrNodes[Slot].first;
+  }
 
   /// \brief Retrieve the attributes for the given "slot" in the AttrNode list.
   /// \p Slot is an index into the AttrNodes list, not the index of the return /
@@ -146,6 +149,19 @@ public:
     // FIXME: This needs to use AttrNodes instead.
     return AttributeSet::get(Context, AttrList[Slot]);
   }
+
+  typedef AttributeSetNode::iterator       iterator;
+  typedef AttributeSetNode::const_iterator const_iterator;
+
+  iterator begin(unsigned Idx)
+    { return AttrNodes[Idx].second->begin(); }
+  iterator end(unsigned Idx)
+    { return AttrNodes[Idx].second->end(); }
+
+  const_iterator begin(unsigned Idx) const
+    { return AttrNodes[Idx].second->begin(); }
+  const_iterator end(unsigned Idx) const
+    { return AttrNodes[Idx].second->end(); }
 
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, AttrList);
