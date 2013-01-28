@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-dispatch-method=mixed -emit-llvm -o %t %s
-// RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
 
 // RUN: grep '@"OBJC_CLASS_$_A" = global' %t
 // RUN: grep '@"OBJC_CLASS_$_B" = external global' %t

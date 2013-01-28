@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -triple x86_64 -emit-llvm -o - %s | opt -S -strip -o %t
-// RUX: llvm-gcc -flto -S -O3 -o %t %s
 // RUN: FileCheck --check-prefix=CHECK-GLOBAL < %t %s
 // RUN: FileCheck --check-prefix=CHECK-FUNCTIONS < %t %s
 

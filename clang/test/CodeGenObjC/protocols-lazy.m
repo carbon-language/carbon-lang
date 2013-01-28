@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -emit-llvm -triple i686-apple-darwin8 -fobjc-runtime=macosx-fragile-10.5 -o %t %s
-// RUNX: llvm-gcc -S -emit-llvm -o %t %s &&
 
 // No object generated
 // RUN: grep OBJC_PROTOCOL_P0 %t | count 0
