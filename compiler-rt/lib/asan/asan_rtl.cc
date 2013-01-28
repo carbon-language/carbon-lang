@@ -97,6 +97,8 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size");
   ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit");
   ParseFlag(str, &f->abort_on_error, "abort_on_error");
+  ParseFlag(str, &f->print_stats, "print_stats");
+  ParseFlag(str, &f->print_legend, "print_legend");
   ParseFlag(str, &f->atexit, "atexit");
   ParseFlag(str, &f->disable_core, "disable_core");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
@@ -135,6 +137,8 @@ void InitializeFlags(Flags *f, const char *env) {
   f->check_malloc_usable_size = true;
   f->unmap_shadow_on_exit = false;
   f->abort_on_error = false;
+  f->print_stats = false;
+  f->print_legend = true;
   f->atexit = false;
   f->disable_core = (SANITIZER_WORDSIZE == 64);
   f->strip_path_prefix = "";

@@ -120,19 +120,7 @@ static void PrintShadowBytes(const char *before, u8 *bytes,
   Printf("\n");
 }
 
-static void PrintShadowMemoryForAddress(uptr addr) {
-  if (!AddrIsInMem(addr))
-    return;
-  uptr shadow_addr = MemToShadow(addr);
-  const uptr n_bytes_per_row = 16;
-  uptr aligned_shadow = shadow_addr & ~(n_bytes_per_row - 1);
-  Printf("Shadow bytes around the buggy address:\n");
-  for (int i = -5; i <= 5; i++) {
-    const char *prefix = (i == 0) ? "=>" : "  ";
-    PrintShadowBytes(prefix,
-                     (u8*)(aligned_shadow + i * n_bytes_per_row),
-                     (u8*)shadow_addr, n_bytes_per_row);
-  }
+static void PrintLegend() {
   Printf("Shadow byte legend (one shadow byte represents %d "
          "application bytes):\n", (int)SHADOW_GRANULARITY);
   PrintShadowByte("  Addressable:           ", 0);
@@ -153,6 +141,23 @@ static void PrintShadowMemoryForAddress(uptr addr) {
   PrintShadowByte("  Global init order:     ", kAsanInitializationOrderMagic);
   PrintShadowByte("  Poisoned by user:      ", kAsanUserPoisonedMemoryMagic);
   PrintShadowByte("  ASan internal:         ", kAsanInternalHeapMagic);
+}
+
+static void PrintShadowMemoryForAddress(uptr addr) {
+  if (!AddrIsInMem(addr))
+    return;
+  uptr shadow_addr = MemToShadow(addr);
+  const uptr n_bytes_per_row = 16;
+  uptr aligned_shadow = shadow_addr & ~(n_bytes_per_row - 1);
+  Printf("Shadow bytes around the buggy address:\n");
+  for (int i = -5; i <= 5; i++) {
+    const char *prefix = (i == 0) ? "=>" : "  ";
+    PrintShadowBytes(prefix,
+                     (u8*)(aligned_shadow + i * n_bytes_per_row),
+                     (u8*)shadow_addr, n_bytes_per_row);
+  }
+  if (flags()->print_legend)
+    PrintLegend();
 }
 
 static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
@@ -446,7 +451,8 @@ class ScopedInErrorReport {
       DescribeThread(curr_thread->summary());
     }
     // Print memory stats.
-    __asan_print_accumulated_stats();
+    if (flags()->print_stats)
+      __asan_print_accumulated_stats();
     if (error_report_callback) {
       error_report_callback(error_message_buffer);
     }

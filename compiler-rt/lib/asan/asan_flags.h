@@ -79,6 +79,10 @@ struct Flags {
   bool unmap_shadow_on_exit;
   // If set, calls abort() instead of _exit() after printing an error report.
   bool abort_on_error;
+  // Print various statistics after printing an error message or if atexit=1.
+  bool print_stats;
+  // Print the legend for the shadow bytes.
+  bool print_legend;
   // If set, prints ASan exit stats even after program terminates successfully.
   bool atexit;
   // By default, disable core dumper on 64-bit - it makes little sense
