@@ -14,14 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "ObjCARC.h"
-
-#include "llvm-c/Initialization.h"
-#include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/IR/DataLayout.h"
+#include "llvm-c/Core.h"
 #include "llvm/InitializePasses.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
+
+namespace llvm {
+  class PassRegistry;
+}
 
 using namespace llvm;
 using namespace llvm::objcarc;

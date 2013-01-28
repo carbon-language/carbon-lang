@@ -21,8 +21,18 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "objc-arc-aa"
+
 #include "ObjCARC.h"
 #include "ObjCARCAliasAnalysis.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/PassAnalysisSupport.h"
+#include "llvm/PassSupport.h"
+
+namespace llvm {
+  class Function;
+  class Value;
+}
 
 #include "llvm/IR/Instruction.h"
 #include "llvm/InitializePasses.h"
@@ -161,4 +171,3 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   // and OnlyAccessesArgumentPointees calls or other well-behaved calls.
   return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
-

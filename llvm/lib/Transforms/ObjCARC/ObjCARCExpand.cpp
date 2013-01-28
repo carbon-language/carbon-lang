@@ -24,7 +24,26 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "objc-arc-expand"
+
 #include "ObjCARC.h"
+
+#include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Value.h"
+#include "llvm/Pass.h"
+#include "llvm/PassAnalysisSupport.h"
+#include "llvm/PassRegistry.h"
+#include "llvm/PassSupport.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/InstIterator.h"
+#include "llvm/Support/raw_ostream.h"
+
+namespace llvm {
+  class Module;
+}
 
 using namespace llvm;
 using namespace llvm::objcarc;
@@ -108,4 +127,3 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 
   return Changed;
 }
-
