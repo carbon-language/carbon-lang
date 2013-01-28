@@ -549,7 +549,7 @@ private:
     GlobalSelectorMapType;
 
   /// \brief Mapping from global selector IDs to the module in which the
-  /// selector resides along with the offset that should be added to the
+
   /// global selector ID to produce a local ID.
   GlobalSelectorMapType GlobalSelectorMap;
 
@@ -752,8 +752,20 @@ private:
   unsigned NumMethodPoolEntriesRead;
 
   /// \brief The number of times we have looked up a selector in the method
-  /// pool and not found anything interesting.
-  unsigned NumMethodPoolMisses;
+  /// pool.
+  unsigned NumMethodPoolLookups;
+
+  /// \brief The number of times we have looked up a selector in the method
+  /// pool and found something.
+  unsigned NumMethodPoolHits;
+
+  /// \brief The number of times we have looked up a selector in the method
+  /// pool within a specific module.
+  unsigned NumMethodPoolTableLookups;
+
+  /// \brief The number of times we have looked up a selector in the method
+  /// pool within a specific module and found something.
+  unsigned NumMethodPoolTableHits;
 
   /// \brief The total number of method pool entries in the selector table.
   unsigned TotalNumMethodPoolEntries;

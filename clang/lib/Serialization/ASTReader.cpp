@@ -5655,8 +5655,19 @@ void ASTReader::PrintStats() {
                  NumMethodPoolEntriesRead, TotalNumMethodPoolEntries,
                  ((float)NumMethodPoolEntriesRead/TotalNumMethodPoolEntries
                   * 100));
-    std::fprintf(stderr, "  %u method pool misses\n", NumMethodPoolMisses);
   }
+  if (NumMethodPoolLookups) {
+    std::fprintf(stderr, "  %u/%u method pool lookups succeeded (%f%%)\n",
+                 NumMethodPoolHits, NumMethodPoolLookups,
+                 ((float)NumMethodPoolHits/NumMethodPoolLookups * 100.0));
+  }
+  if (NumMethodPoolTableLookups) {
+    std::fprintf(stderr, "  %u/%u method pool table lookups succeeded (%f%%)\n",
+                 NumMethodPoolTableHits, NumMethodPoolTableLookups,
+                 ((float)NumMethodPoolTableHits/NumMethodPoolTableLookups
+                  * 100.0));
+  }
+
   if (NumIdentifierLookupHits) {
     std::fprintf(stderr,
                  "  %u / %u identifier table lookups succeeded (%f%%)\n",
@@ -5872,12 +5883,14 @@ namespace clang { namespace serialization {
       if (M.Generation <= This->PriorGeneration)
         return true;
 
+      ++This->Reader.NumMethodPoolTableLookups;
       ASTSelectorLookupTable *PoolTable
         = (ASTSelectorLookupTable*)M.SelectorLookupTable;
       ASTSelectorLookupTable::iterator Pos = PoolTable->find(This->Sel);
       if (Pos == PoolTable->end())
         return false;
-      
+
+      ++This->Reader.NumMethodPoolTableHits;
       ++This->Reader.NumSelectorsRead;
       // FIXME: Not quite happy with the statistics here. We probably should
       // disable this tracking when called via LoadSelector.
@@ -5920,15 +5933,16 @@ void ASTReader::ReadMethodPool(Selector Sel) {
   Generation = CurrentGeneration;
   
   // Search for methods defined with this selector.
+  ++NumMethodPoolLookups;
   ReadMethodPoolVisitor Visitor(*this, Sel, PriorGeneration);
   ModuleMgr.visit(&ReadMethodPoolVisitor::visit, &Visitor);
   
   if (Visitor.getInstanceMethods().empty() &&
-      Visitor.getFactoryMethods().empty()) {
-    ++NumMethodPoolMisses;
+      Visitor.getFactoryMethods().empty())
     return;
-  }
-  
+
+  ++NumMethodPoolHits;
+
   if (!getSema())
     return;
   
@@ -7038,7 +7052,9 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
     TotalNumMacros(0), NumIdentifierLookups(0), NumIdentifierLookupHits(0),
     NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
-    NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0), 
+    NumMethodPoolLookups(0), NumMethodPoolHits(0),
+    NumMethodPoolTableLookups(0), NumMethodPoolTableHits(0),
+    TotalNumMethodPoolEntries(0),
     NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0), 
     NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
     TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
