@@ -295,7 +295,11 @@ void llvm::sys::PrintStackTrace(FILE *FD) {
       else           fputs(d, FD);
       free(d);
 
-      fprintf(FD, " + %tu",(char*)StackTrace[i]-(char*)dlinfo.dli_saddr);
+      // FIXME: When we move to C++11, use %t length modifier. It's not in
+      // C++03 and causes gcc to issue warnings. Losing the upper 32 bits of
+      // the stack offset for a stack dump isn't likely to cause any problems.
+      fprintf(FD, " + %u",(unsigned)((char*)StackTrace[i]-
+                                     (char*)dlinfo.dli_saddr));
     }
     fputc('\n', FD);
   }
