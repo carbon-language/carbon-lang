@@ -723,6 +723,12 @@ private:
     if (Left.Type == TT_RangeBasedForLoopColon)
       return 5;
 
+    if (Right.is(tok::arrow) || Right.is(tok::period)) {
+      if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
+        return 5; // Should be smaller than breaking at a nested comma.
+      return 150;
+    }
+
     // In for-loops, prefer breaking at ',' and ';'.
     if (RootToken.is(tok::kw_for) &&
         (Left.isNot(tok::comma) && Left.isNot(tok::semi)))
@@ -752,12 +758,6 @@ private:
 
     if (Level != prec::Unknown)
       return Level;
-
-    if (Right.is(tok::arrow) || Right.is(tok::period)) {
-      if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
-        return 5; // Should be smaller than breaking at a nested comma.
-      return 150;
-    }
 
     return 3;
   }

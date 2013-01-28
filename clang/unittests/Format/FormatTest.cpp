@@ -239,6 +239,18 @@ TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat(
       "for (MachineFun::iterator IIII = PrevIt, EEEE = F.end(); IIII != EEEE;\n"
       "     ++IIIII) {\n}");
+  verifyFormat(
+      "for (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaa =\n"
+      "         aaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa;\n"
+      "     aaaaaaaaaaa != aaaaaaaaaaaaaaaaaaa; ++aaaaaaaaaaa) {\n}");
+
+  // FIXME: Not sure whether we want extra identation in line 3 here:
+  verifyFormat(
+      "for (aaaaaaaaaaaaaaaaa aaaaaaaaaaa = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n"
+      "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa !=\n"
+      "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
+      "     ++aaaaaaaaaaa) {\n}");
 }
 
 TEST_F(FormatTest, RangeBasedForLoops) {
