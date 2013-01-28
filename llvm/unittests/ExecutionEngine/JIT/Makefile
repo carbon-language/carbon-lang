@@ -24,7 +24,7 @@ ifeq ($(USE_INTEL_JITEVENTS), 1)
   CPPFLAGS += -I$(INTEL_JITEVENTS_INCDIR)
 
   # Link against the LLVM Intel JIT Evens interface library
-  LINK_COMPONENTS += inteljitevents
+  LINK_COMPONENTS += debuginfo inteljitevents object
 endif
 
 ifeq ($(USE_OPROFILE), 1)

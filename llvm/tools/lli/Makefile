@@ -17,7 +17,7 @@ LINK_COMPONENTS := mcjit jit interpreter nativecodegen bitreader asmparser selec
 # If Intel JIT Events support is confiured, link against the LLVM Intel JIT
 # Events interface library
 ifeq ($(USE_INTEL_JITEVENTS), 1)
-  LINK_COMPONENTS += inteljitevents
+  LINK_COMPONENTS += debuginfo inteljitevents object
 endif
 
 # If oprofile support is confiured, link against the LLVM oprofile interface

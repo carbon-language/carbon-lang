@@ -22,7 +22,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Errno.h"
@@ -74,6 +76,18 @@ static LineNumberInfo LineStartToIntelJITFormat(
 
   Result.Offset = Address - StartAddress;
   Result.LineNumber = Loc.getLine();
+
+  return Result;
+}
+
+static LineNumberInfo DILineInfoToIntelJITFormat(uintptr_t StartAddress,
+                                                 uintptr_t Address,
+                                                 DILineInfo Line)
+{
+  LineNumberInfo Result;
+
+  Result.Offset = Address - StartAddress;
+  Result.LineNumber = Line.getLine();
 
   return Result;
 }
@@ -177,6 +191,7 @@ void IntelJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
 void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
   // Get the address of the object image for use as a unique identifier
   const void* ObjData = Obj.getData().data();
+  DIContext* Context = DIContext::getDWARFContext(Obj.getObjectFile());
   MethodAddressVector Functions;
 
   // Use symbol info to iterate functions in the object.
@@ -185,12 +200,15 @@ void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
                                E = Obj.end_symbols();
                         I != E && !ec;
                         I.increment(ec)) {
+    std::vector<LineNumberInfo> LineInfo;
+    std::string SourceFileName;
+
     object::SymbolRef::Type SymType;
     if (I->getType(SymType)) continue;
     if (SymType == object::SymbolRef::ST_Function) {
-      StringRef Name;
-      uint64_t  Addr;
-      uint64_t  Size;
+      StringRef  Name;
+      uint64_t   Addr;
+      uint64_t   Size;
       if (I->getName(Name)) continue;
       if (I->getAddress(Addr)) continue;
       if (I->getSize(Size)) continue;
@@ -203,11 +221,30 @@ void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
                                            Name.data(),
                                            Addr,
                                            Size);
-
-      // FIXME: Try to find line info for this function in the DWARF sections.
-      FunctionMessage.source_file_name = 0;
-      FunctionMessage.line_number_size = 0;
-      FunctionMessage.line_number_table = 0;
+      if (Context) {
+        DILineInfoTable  Lines = Context->getLineInfoForAddressRange(Addr, Size);
+        DILineInfoTable::iterator  Begin = Lines.begin();
+        DILineInfoTable::iterator  End = Lines.end();
+        for (DILineInfoTable::iterator It = Begin; It != End; ++It) {
+          LineInfo.push_back(DILineInfoToIntelJITFormat((uintptr_t)Addr,
+                                                        It->first,
+                                                        It->second));
+        }
+        if (LineInfo.size() == 0) {
+          FunctionMessage.source_file_name = 0;
+          FunctionMessage.line_number_size = 0;
+          FunctionMessage.line_number_table = 0;
+        } else {
+          SourceFileName = Lines.front().second.getFileName();
+          FunctionMessage.source_file_name = (char *)SourceFileName.c_str();
+          FunctionMessage.line_number_size = LineInfo.size();
+          FunctionMessage.line_number_table = &*LineInfo.begin();
+        }
+      } else {
+        FunctionMessage.source_file_name = 0;
+        FunctionMessage.line_number_size = 0;
+        FunctionMessage.line_number_table = 0;
+      }
 
       Wrapper->iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_LOAD_FINISHED,
                                 &FunctionMessage);
