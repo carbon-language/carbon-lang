@@ -214,7 +214,7 @@ private:
 
   /// \brief The attributes for the specified index are returned.  Attributes
   /// for the result are denoted with Idx = 0.
-  Attribute getAttributes(uint64_t Idx) const;
+  Attribute getAttributes(unsigned Idx) const;
 
   /// \brief Add the specified attribute at the specified index to this
   /// attribute list.  Since attribute lists are immutable, this returns the new
@@ -297,25 +297,25 @@ public:
   AttributeSet getFnAttributes() const;
 
   /// \brief Return the alignment for the specified function parameter.
-  unsigned getParamAlignment(uint64_t Idx) const;
+  unsigned getParamAlignment(unsigned Idx) const;
 
   /// \brief Return true if the attribute exists at the given index.
-  bool hasAttribute(uint64_t Index, Attribute::AttrKind Kind) const;
+  bool hasAttribute(unsigned Index, Attribute::AttrKind Kind) const;
 
   /// \brief Return true if attribute exists at the given index.
-  bool hasAttributes(uint64_t Index) const;
+  bool hasAttributes(unsigned Index) const;
 
   /// \brief Returns the alignment field of an attribute as a byte alignment
   /// value.
-  unsigned getAlignment(uint64_t Index) const;
+  unsigned getAlignment(unsigned Index) const;
 
   /// \brief Get the stack alignment.
-  unsigned getStackAlignment(uint64_t Index) const;
+  unsigned getStackAlignment(unsigned Index) const;
 
   /// \brief Return the attributes at the index as a string.
-  std::string getAsString(uint64_t Index) const;
+  std::string getAsString(unsigned Index) const;
 
-  uint64_t Raw(uint64_t Index) const;
+  uint64_t Raw(unsigned Index) const;
 
   /// \brief Return true if the specified attribute is set for at least one
   /// parameter or for the return value.
