@@ -32,61 +32,66 @@ public:
   /// ScopeFlags - These are bitfields that are or'd together when creating a
   /// scope, which defines the sorts of things the scope contains.
   enum ScopeFlags {
-    /// FnScope - This indicates that the scope corresponds to a function, which
+    /// \brief This indicates that the scope corresponds to a function, which
     /// means that labels are set here.
     FnScope       = 0x01,
 
-    /// BreakScope - This is a while,do,switch,for, etc that can have break
-    /// stmts embedded into it.
+    /// \brief This is a while, do, switch, for, etc that can have break
+    /// statements embedded into it.
     BreakScope    = 0x02,
 
-    /// ContinueScope - This is a while,do,for, which can have continue
-    /// stmt embedded into it.
+    /// \brief This is a while, do, for, which can have continue statements
+    /// embedded into it.
     ContinueScope = 0x04,
 
-    /// DeclScope - This is a scope that can contain a declaration.  Some scopes
+    /// \brief This is a scope that can contain a declaration.  Some scopes
     /// just contain loop constructs but don't contain decls.
     DeclScope = 0x08,
 
-    /// ControlScope - The controlling scope in a if/switch/while/for statement.
+    /// \brief The controlling scope in a if/switch/while/for statement.
     ControlScope = 0x10,
 
-    /// ClassScope - The scope of a struct/union/class definition.
+    /// \brief The scope of a struct/union/class definition.
     ClassScope = 0x20,
 
-    /// BlockScope - This is a scope that corresponds to a block/closure object.
+    /// \brief This is a scope that corresponds to a block/closure object.
     /// Blocks serve as top-level scopes for some objects like labels, they
     /// also prevent things like break and continue.  BlockScopes always have
     /// the FnScope and DeclScope flags set as well.
     BlockScope = 0x40,
 
-    /// TemplateParamScope - This is a scope that corresponds to the
+    /// \brief This is a scope that corresponds to the
     /// template parameters of a C++ template. Template parameter
     /// scope starts at the 'template' keyword and ends when the
     /// template declaration ends.
     TemplateParamScope = 0x80,
 
-    /// FunctionPrototypeScope - This is a scope that corresponds to the
+    /// \brief This is a scope that corresponds to the
     /// parameters within a function prototype.
     FunctionPrototypeScope = 0x100,
 
-    /// AtCatchScope - This is a scope that corresponds to the Objective-C
+    /// \brief This is a scope that corresponds to the parameters within
+    /// a function prototype for a function declaration (as opposed to any
+    /// other kind of function declarator). Always has FunctionPrototypeScope
+    /// set as well.
+    FunctionDeclarationScope = 0x200,
+
+    /// \brief This is a scope that corresponds to the Objective-C
     /// \@catch statement.
-    AtCatchScope = 0x200,
+    AtCatchScope = 0x400,
     
-    /// ObjCMethodScope - This scope corresponds to an Objective-C method body.
+    /// \brief This scope corresponds to an Objective-C method body.
     /// It always has FnScope and DeclScope set as well.
-    ObjCMethodScope = 0x400,
+    ObjCMethodScope = 0x800,
 
-    /// SwitchScope - This is a scope that corresponds to a switch statement.
-    SwitchScope = 0x800,
+    /// \brief This is a scope that corresponds to a switch statement.
+    SwitchScope = 0x1000,
 
-    /// TryScope - This is the scope of a C++ try statement.
-    TryScope = 0x1000,
+    /// \brief This is the scope of a C++ try statement.
+    TryScope = 0x2000,
 
-    /// FnTryCatchScope - This is the scope for a function-level C++ try or
-    /// catch scope.
-    FnTryCatchScope = 0x2000
+    /// \brief This is the scope for a function-level C++ try or catch scope.
+    FnTryCatchScope = 0x4000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit

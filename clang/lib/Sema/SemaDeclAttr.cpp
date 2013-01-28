@@ -24,6 +24,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Scope.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace sema;
@@ -1815,13 +1816,25 @@ static void handleVecReturnAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                            Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleDependencyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isa<FunctionDecl>(D) && !isa<ParmVarDecl>(D)) {
+static void handleDependencyAttr(Sema &S, Scope *Scope, Decl *D,
+                                 const AttributeList &Attr) {
+  if (isa<ParmVarDecl>(D)) {
+    // [[carries_dependency]] can only be applied to a parameter if it is a
+    // parameter of a function declaration or lambda.
+    if (!(Scope->getFlags() & clang::Scope::FunctionDeclarationScope)) {
+      S.Diag(Attr.getLoc(),
+             diag::err_carries_dependency_param_not_function_decl);
+      return;
+    }
+  } else if (!isa<FunctionDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionMethodOrParameter;
     return;
   }
-  // FIXME: Actually store the attribute on the declaration
+
+  D->addAttr(::new (S.Context) CarriesDependencyAttr(
+                                   Attr.getRange(), S.Context,
+                                   Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -4494,7 +4507,8 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Annotate:    handleAnnotateAttr    (S, D, Attr); break;
   case AttributeList::AT_Availability:handleAvailabilityAttr(S, D, Attr); break;
   case AttributeList::AT_CarriesDependency:
-                                      handleDependencyAttr  (S, D, Attr); break;
+    handleDependencyAttr(S, scope, D, Attr);
+    break;
   case AttributeList::AT_Common:      handleCommonAttr      (S, D, Attr); break;
   case AttributeList::AT_CUDAConstant:handleConstantAttr    (S, D, Attr); break;
   case AttributeList::AT_Constructor: handleConstructorAttr (S, D, Attr); break;

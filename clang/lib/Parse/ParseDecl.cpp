@@ -4522,7 +4522,10 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       // Enter function-declaration scope, limiting any declarators to the
       // function prototype scope, including parameter declarators.
       ParseScope PrototypeScope(this,
-                                Scope::FunctionPrototypeScope|Scope::DeclScope);
+                                Scope::FunctionPrototypeScope|Scope::DeclScope|
+                                (D.isFunctionDeclaratorAFunctionDeclaration()
+                                   ? Scope::FunctionDeclarationScope : 0));
+
       // The paren may be part of a C++ direct initializer, eg. "int x(1);".
       // In such a case, check if we actually have a function declarator; if it
       // is not, the declarator has been fully parsed.
@@ -4652,7 +4655,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // Enter function-declaration scope, limiting any declarators to the
   // function prototype scope, including parameter declarators.
   ParseScope PrototypeScope(this,
-                            Scope::FunctionPrototypeScope|Scope::DeclScope);
+                            Scope::FunctionPrototypeScope | Scope::DeclScope |
+                            (D.isFunctionDeclaratorAFunctionDeclaration()
+                               ? Scope::FunctionDeclarationScope : 0));
   ParseFunctionDeclarator(D, attrs, T, false, RequiresArg);
   PrototypeScope.Exit();
 }

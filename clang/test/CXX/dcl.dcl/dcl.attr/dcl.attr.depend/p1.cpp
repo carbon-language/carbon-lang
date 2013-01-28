@@ -10,6 +10,20 @@ int f3(int param [[carries_dependency]]); // ok
 [[carries_dependency]] int (*f4)(); // expected-error {{'carries_dependency' attribute only applies to functions, methods, and parameters}}
 int (*f5 [[carries_dependency]])(); // expected-error {{'carries_dependency' attribute only applies to functions, methods, and parameters}}
 int (*f6)() [[carries_dependency]]; // expected-error {{'carries_dependency' attribute cannot be applied to types}}
+int (*f7)(int n [[carries_dependency]]); // expected-error {{'[[carries_dependency]]' attribute only allowed on parameter in a function declaration}}
+int (((f8)))(int n [[carries_dependency]]); // ok
+int (*f9(int n))(int n [[carries_dependency]]); // expected-error {{'[[carries_dependency]]' attribute only allowed on parameter in a function declaration}}
+int typedef f10(int n [[carries_dependency]]); // expected-error {{'[[carries_dependency]]' attribute only allowed on parameter in a function declaration}}
+using T = int(int n [[carries_dependency]]); // expected-error {{'[[carries_dependency]]' attribute only allowed on parameter in a function declaration}}
+struct S {
+  [[carries_dependency]] int f(int n [[carries_dependency]]); // ok
+  int (*p)(int n [[carries_dependency]]); // expected-error {{'[[carries_dependency]]' attribute only allowed on parameter in a function declaration}}
+};
+void f() {
+  [[carries_dependency]] int f(int n [[carries_dependency]]); // ok
+  [[carries_dependency]] // expected-error {{'carries_dependency' attribute only applies to functions, methods, and parameters}}
+      int (*p)(int n [[carries_dependency]]); // expected-error {{'[[carries_dependency]]' attribute only allowed on parameter in a function declaration}}
+}
 
 auto l1 = [](int n [[carries_dependency]]) {};
 // There's no way to write a lambda such that the return value carries

@@ -1879,6 +1879,44 @@ public:
   /// type. This routine checks for both cases.
   bool isDeclarationOfFunction() const;
   
+  /// \brief Return true if a function declarator at this position would be a
+  /// function declaration.
+  bool isFunctionDeclaratorAFunctionDeclaration() const {
+    if (getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+      return false;
+
+    for (unsigned I = 0, N = getNumTypeObjects(); I != N; ++I)
+      if (getTypeObject(I).Kind != DeclaratorChunk::Paren)
+        return false;
+
+    switch (Context) {
+    case FileContext:
+    case MemberContext:
+    case BlockContext:
+      return true;
+
+    case ForContext:
+    case ConditionContext:
+    case KNRTypeListContext:
+    case TypeNameContext:
+    case AliasDeclContext:
+    case AliasTemplateContext:
+    case PrototypeContext:
+    case ObjCParameterContext:
+    case ObjCResultContext:
+    case TemplateParamContext:
+    case CXXNewContext:
+    case CXXCatchContext:
+    case ObjCCatchContext:
+    case BlockLiteralContext:
+    case LambdaExprContext:
+    case TemplateTypeArgContext:
+    case TrailingReturnContext:
+      return false;
+    }
+    llvm_unreachable("unknown context kind!");
+  }
+
   /// takeAttributes - Takes attributes from the given parsed-attributes
   /// set and add them to this declarator.
   ///

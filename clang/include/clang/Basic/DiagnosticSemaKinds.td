@@ -5898,6 +5898,14 @@ def err_noreturn_missing_on_first_decl : Error<
   "function declared '[[noreturn]]' after its first declaration">;
 def note_noreturn_missing_first_decl : Note<
   "declaration missing '[[noreturn]]' attribute is here">;
+def err_carries_dependency_missing_on_first_decl : Error<
+  "%select{function|parameter}0 declared '[[carries_dependency]]' "
+  "after its first declaration">;
+def note_carries_dependency_missing_first_decl : Note<
+  "declaration missing '[[carries_dependency]]' attribute is here">;
+def err_carries_dependency_param_not_function_decl : Error<
+  "'[[carries_dependency]]' attribute only allowed on parameter in a function "
+  "declaration or lambda">;
 def err_block_on_nonlocal : Error<
   "__block attribute not allowed, only allowed on local variables">;
 def err_block_on_vm : Error<
