@@ -2710,7 +2710,8 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
     return 0;
 
   if (!LangOpts.CPlusPlus && !LangOpts.C99) {
-    Diag(SlashLoc, diag::warn_ucn_not_valid_in_c89);
+    if (Result && !isLexingRawMode())
+      Diag(SlashLoc, diag::warn_ucn_not_valid_in_c89);
     return 0;
   }
 

@@ -41,3 +41,6 @@ int test4() {
 }
 
 #define MY_UCN \u00FC // expected-warning {{universal character names are only valid in C99 or C++; treating as '\' followed by identifier}}
+#define NOT_A_UCN \h // no-warning
+
+extern int idWithUCN\u00FC; // expected-warning {{universal character names are only valid in C99 or C++; treating as '\' followed by identifier}} expected-error {{expected ';'}}
