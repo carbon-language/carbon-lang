@@ -771,16 +771,11 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
 
 AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
                                         Attribute::AttrKind Attr) const {
-  return addAttr(C, Idx, AttributeSet::get(C, Idx, Attr));
+  return addAttributes(C, Idx, AttributeSet::get(C, Idx, Attr));
 }
 
 AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
                                          AttributeSet Attrs) const {
-  return addAttr(C, Idx, Attrs);
-}
-
-AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
-                                   AttributeSet Attrs) const {
   if (!pImpl) return Attrs;
   if (!Attrs.pImpl) return *this;
 
@@ -830,51 +825,54 @@ AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
 
 AttributeSet AttributeSet::removeAttribute(LLVMContext &C, unsigned Idx,
                                            Attribute::AttrKind Attr) const {
-  return removeAttr(C, Idx, Attribute::get(C, Attr));
+  return removeAttributes(C, Idx, AttributeSet::get(C, Idx, Attr));
 }
 
 AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
                                             AttributeSet Attrs) const {
-  return removeAttr(C, Idx, Attrs.getAttributes(Idx));
-}
+  if (!pImpl) return AttributeSet();
+  if (!Attrs.pImpl) return *this;
 
-AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
-                                      Attribute Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
-  assert(!Attrs.hasAttribute(Attribute::Alignment) &&
-         "Attempt to exclude alignment!");
+  assert(!Attrs.hasAttribute(Idx, Attribute::Alignment) &&
+         "Attempt to change alignment!");
 #endif
-  if (pImpl == 0) return AttributeSet();
 
-  Attribute OldAttrs = getAttributes(Idx);
-  AttrBuilder NewAttrs =
-    AttrBuilder(OldAttrs).removeAttributes(Attrs);
-  if (NewAttrs == AttrBuilder(OldAttrs))
-    return *this;
+  // Add the attribute slots before the one we're trying to add.
+  SmallVector<AttributeSet, 4> AttrSet;
+  uint64_t NumAttrs = pImpl->getNumAttributes();
+  AttributeSet AS;
+  uint64_t LastIndex = 0;
+  for (unsigned I = 0, E = NumAttrs; I != E; ++I) {
+    if (getSlotIndex(I) >= Idx) {
+      if (getSlotIndex(I) == Idx) AS = getSlotAttributes(LastIndex++);
+      break;
+    }
+    LastIndex = I + 1;
+    AttrSet.push_back(getSlotAttributes(I));
+  }
 
-  SmallVector<AttributeWithIndex, 8> NewAttrList;
-  ArrayRef<AttributeWithIndex> OldAttrList = pImpl->getAttributes();
-  unsigned i = 0, e = OldAttrList.size();
+  // Now add the attribute into the correct slot. There may already be an
+  // AttributeSet there.
+  AttrBuilder B(AS, Idx);
 
-  // Copy attributes for arguments before this one.
-  for (; i != e && OldAttrList[i].Index < Idx; ++i)
-    NewAttrList.push_back(OldAttrList[i]);
+  for (unsigned I = 0, E = Attrs.pImpl->getNumAttributes(); I != E; ++I)
+    if (Attrs.getSlotIndex(I) == Idx) {
+      for (AttributeSetImpl::const_iterator II = Attrs.pImpl->begin(I),
+             IE = Attrs.pImpl->end(I); II != IE; ++II)
+        B.removeAttributes(*II);
+      break;
+    }
 
-  // If there are attributes already at this index, merge them in.
-  assert(OldAttrList[i].Index == Idx && "Attribute isn't set?");
-  Attrs = Attribute::get(C, AttrBuilder(OldAttrList[i].Attrs).
-                          removeAttributes(Attrs));
-  ++i;
-  if (Attrs.hasAttributes()) // If any attributes left for this param, add them.
-    NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
+  AttrSet.push_back(AttributeSet::get(C, Idx, B));
 
-  // Copy attributes for arguments after this one.
-  NewAttrList.insert(NewAttrList.end(),
-                     OldAttrList.begin()+i, OldAttrList.end());
+  // Add the remaining attribute slots.
+  for (unsigned I = LastIndex, E = NumAttrs; I < E; ++I)
+    AttrSet.push_back(getSlotAttributes(I));
 
-  return get(C, NewAttrList);
+  return get(C, AttrSet);
 }
 
 void AttributeSet::dump() const {

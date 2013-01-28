@@ -216,16 +216,6 @@ private:
   /// for the result are denoted with Idx = 0.
   Attribute getAttributes(unsigned Idx) const;
 
-  /// \brief Add the specified attribute at the specified index to this
-  /// attribute list.  Since attribute lists are immutable, this returns the new
-  /// list.
-  AttributeSet addAttr(LLVMContext &C, unsigned Idx, AttributeSet Attrs) const;
-
-  /// \brief Remove the specified attribute at the specified index from this
-  /// attribute list.  Since attribute lists are immutable, this returns the new
-  /// list.
-  AttributeSet removeAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
-
   /// \brief Create an AttributeSet from the AttributeWithIndex structures.
   /// N.B. this is only temporary. It will be disappearing in the future.
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
