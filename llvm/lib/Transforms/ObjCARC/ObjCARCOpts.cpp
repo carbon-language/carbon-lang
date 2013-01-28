@@ -1,4 +1,4 @@
-//===- ObjCARC.cpp - ObjC ARC Optimization --------------------------------===//
+//===- ObjCARCOpts.cpp - ObjC ARC Optimization ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -932,7 +932,7 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
 /// @{
 
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/ObjCARC.h"
 
 namespace {
   /// \brief Early ARC transformations.

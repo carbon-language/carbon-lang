@@ -31,6 +31,10 @@ void initializeTransformUtils(PassRegistry&);
 /// ScalarOpts library.
 void initializeScalarOpts(PassRegistry&);
 
+/// initializeObjCARCOpts - Initialize all passes linked into the ObjCARCOpts
+/// library.
+void initializeObjCARCOpts(PassRegistry&);
+
 /// initializeVectorization - Initialize all passes linked into the
 /// Vectorize library.
 void initializeVectorization(PassRegistry&);
