@@ -710,27 +710,27 @@ AttributeSet AttributeSet::getSlotAttributes(unsigned Slot) const {
   return pImpl->getSlotAttributes(Slot);
 }
 
-bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
+bool AttributeSet::hasAttribute(uint64_t Index, Attribute::AttrKind Kind) const{
   return getAttributes(Index).hasAttribute(Kind);
 }
 
-bool AttributeSet::hasAttributes(unsigned Index) const {
+bool AttributeSet::hasAttributes(uint64_t Index) const {
   return getAttributes(Index).hasAttributes();
 }
 
-std::string AttributeSet::getAsString(unsigned Index) const {
+std::string AttributeSet::getAsString(uint64_t Index) const {
   return getAttributes(Index).getAsString();
 }
 
-unsigned AttributeSet::getParamAlignment(unsigned Idx) const {
+unsigned AttributeSet::getParamAlignment(uint64_t Idx) const {
   return getAttributes(Idx).getAlignment();
 }
 
-unsigned AttributeSet::getStackAlignment(unsigned Index) const {
+unsigned AttributeSet::getStackAlignment(uint64_t Index) const {
   return getAttributes(Index).getStackAlignment();
 }
 
-uint64_t AttributeSet::Raw(unsigned Index) const {
+uint64_t AttributeSet::Raw(uint64_t Index) const {
   // FIXME: Remove this.
   return pImpl ? pImpl->Raw(Index) : 0;
 }
@@ -738,7 +738,7 @@ uint64_t AttributeSet::Raw(unsigned Index) const {
 /// \brief The attributes for the specified index are returned.
 ///
 /// FIXME: This shouldn't return 'Attribute'.
-Attribute AttributeSet::getAttributes(unsigned Idx) const {
+Attribute AttributeSet::getAttributes(uint64_t Idx) const {
   if (pImpl == 0) return Attribute();
 
   // Loop through to find the attribute we want.
