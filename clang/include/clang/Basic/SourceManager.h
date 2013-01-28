@@ -1620,12 +1620,5 @@ public:
 
 }  // end namespace clang
 
-namespace llvm {
-  // SrcMgr::SLocEntry's are POD-like.
-  template<>
-  struct isPodLike<clang::SrcMgr::SLocEntry> {
-    static const bool value = true;
-  };
-}
 
 #endif
