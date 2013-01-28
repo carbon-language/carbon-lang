@@ -149,7 +149,7 @@ void ELFExecutableWriter<ELFT>::assignSectionsWithNoSegments() {
 /// absolute symbols
 template<class ELFT>
 void ELFExecutableWriter<ELFT>::addDefaultAtoms() {
-  _runtimeFile.addUndefinedAtom("_start");
+  _runtimeFile.addUndefinedAtom(_targetInfo.getEntry());
   _runtimeFile.addAbsoluteAtom("__bss_start");
   _runtimeFile.addAbsoluteAtom("__bss_end");
   _runtimeFile.addAbsoluteAtom("_end");
@@ -268,7 +268,7 @@ ELFExecutableWriter<ELFT>::writeFile(const lld::File &file, StringRef path) {
   _elfHeader->e_shnum(_shdrtab->numHeaders());
   _elfHeader->e_shstrndx(_shstrtab->ordinal());
   uint64_t virtualAddr = 0;
-  _layout->findAtomAddrByName("_start", virtualAddr);
+  _layout->findAtomAddrByName(_targetInfo.getEntry(), virtualAddr);
   _elfHeader->e_entry(virtualAddr);
 
   // HACK: We have to write out the header and program header here even though

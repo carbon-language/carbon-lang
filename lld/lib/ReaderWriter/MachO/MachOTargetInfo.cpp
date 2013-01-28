@@ -70,8 +70,6 @@ public:
   virtual uint64_t getPageZeroSize() const { return getPageSize(); }
 
   virtual StringRef getEntry() const {
-    if (_options._outputKind != OutputKind::Executable)
-      return "";
     if (!_options._entrySymbol.empty())
       return _options._entrySymbol;
     return "_main";

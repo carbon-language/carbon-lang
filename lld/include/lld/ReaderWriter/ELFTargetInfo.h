@@ -34,6 +34,7 @@ public:
   uint16_t getOutputType() const;
   uint16_t getOutputMachine() const;
 
+  virtual StringRef getEntry() const;
   virtual uint64_t getBaseAddress() const { return _options._baseAddress; }
 
   static std::unique_ptr<ELFTargetInfo> create(const LinkerOptions &lo);

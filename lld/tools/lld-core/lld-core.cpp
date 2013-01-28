@@ -92,6 +92,11 @@ llvm::cl::opt<bool>
 cmdLineGlobalsNotDeadStrip("keep-globals", 
           llvm::cl::desc("All global symbols are roots for dead-strip"));
 
+llvm::cl::opt<std::string>
+cmdLineEntryPoint("entry",
+              llvm::cl::desc("Specify entry point symbol"),
+              llvm::cl::value_desc("symbol"));
+
 
 enum WriteChoice {
   writeYAML, writeMachO, writePECOFF, writeELF
@@ -221,6 +226,7 @@ int main(int argc, char *argv[]) {
   lo._globalsAreDeadStripRoots = cmdLineGlobalsNotDeadStrip;
   lo._forceLoadArchives = cmdLineForceLoad;
   lo._outputKind = OutputKind::Executable;
+  lo._entrySymbol = cmdLineEntryPoint;
 
   switch (archSelected) {
   case i386:

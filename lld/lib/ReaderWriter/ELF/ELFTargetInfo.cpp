@@ -68,4 +68,11 @@ std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(const LinkerOptions &lo) {
     return std::unique_ptr<ELFTargetInfo>();
   }
 }
+
+StringRef ELFTargetInfo::getEntry() const {
+  if (!_options._entrySymbol.empty())
+    return _options._entrySymbol;
+  return "_start";
+}
+
 } // end namespace lld
