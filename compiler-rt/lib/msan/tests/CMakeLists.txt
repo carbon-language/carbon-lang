@@ -77,9 +77,7 @@ endmacro()
 
 macro(msan_link_shared so_list so_name arch)
   parse_arguments(SOURCE "OBJECTS;LINKFLAGS;DEPS" "" ${ARGN})
-  get_unittest_directory(OUTPUT_DIR)
-  file(MAKE_DIRECTORY ${OUTPUT_DIR})
-  set(output_so "${OUTPUT_DIR}/${so_name}.${arch}.so")
+  set(output_so "${CMAKE_CURRENT_BINARY_DIR}/${so_name}.${arch}.so")
   get_target_flags_for_arch(${arch} TARGET_LINKFLAGS)
   clang_link_shared(${output_so}
                 OBJECTS ${SOURCE_OBJECTS}
@@ -92,13 +90,12 @@ endmacro()
 # of objects in ${ARGN}.
 macro(add_msan_test test_suite test_name arch)
   get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
-  get_unittest_directory(OUTPUT_DIR)
   add_compiler_rt_test(${test_suite} ${test_name}
                        OBJECTS ${ARGN}
                        DEPS ${MSAN_RUNTIME_LIBRARIES} ${ARGN}
                        LINK_FLAGS ${MSAN_UNITTEST_LINK_FLAGS}
                                   ${TARGET_LINK_FLAGS}
-                                  "-Wl,-rpath=${OUTPUT_DIR}")
+                                  "-Wl,-rpath=${CMAKE_CURRENT_BINARY_DIR}")
 endmacro()
 
 # Main MemorySanitizer unit tests.

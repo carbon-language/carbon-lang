@@ -113,9 +113,7 @@ set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
 #                      LINK_FLAGS <link flags>)
 macro(add_compiler_rt_test test_suite test_name)
   parse_arguments(TEST "OBJECTS;DEPS;LINK_FLAGS" "" ${ARGN})
-  set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  file(MAKE_DIRECTORY ${OUTPUT_DIR})
-  set(output_bin "${OUTPUT_DIR}/${test_name}")
+  set(output_bin "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
   add_custom_command(
     OUTPUT ${output_bin}
     COMMAND clang ${TEST_OBJECTS} -o "${output_bin}"

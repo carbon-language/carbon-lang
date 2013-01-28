@@ -196,9 +196,8 @@ if(ANDROID)
     $<TARGET_OBJECTS:asan_inst_test>
   )
   # Setup correct output directory and link flags.
-  get_unittest_directory(OUTPUT_DIR)
   set_target_properties(AsanTest PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_target_link_flags(AsanTest ${ASAN_LINK_FLAGS})
   target_link_libraries(AsanTest clang_rt.asan-arm-android)
   # Add unit test to test suite.
