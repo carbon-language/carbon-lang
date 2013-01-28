@@ -219,7 +219,7 @@ private:
   /// \brief Add the specified attribute at the specified index to this
   /// attribute list.  Since attribute lists are immutable, this returns the new
   /// list.
-  AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
+  AttributeSet addAttr(LLVMContext &C, unsigned Idx, AttributeSet Attrs) const;
 
   /// \brief Remove the specified attribute at the specified index from this
   /// attribute list.  Since attribute lists are immutable, this returns the new
@@ -284,7 +284,7 @@ public:
                                 AttributeSet Attrs) const;
 
   //===--------------------------------------------------------------------===//
-  // Attribute List Accessors
+  // Attribute Set Accessors
   //===--------------------------------------------------------------------===//
 
   /// \brief The attributes for the specified index are returned.
@@ -296,24 +296,20 @@ public:
   /// \brief The function attributes are returned.
   AttributeSet getFnAttributes() const;
 
-  /// \brief Return the alignment for the specified function parameter.
-  unsigned getParamAlignment(unsigned Idx) const;
-
   /// \brief Return true if the attribute exists at the given index.
-  bool hasAttribute(unsigned Index, Attribute::AttrKind Kind) const;
+  bool hasAttribute(uint64_t Index, Attribute::AttrKind Kind) const;
 
   /// \brief Return true if attribute exists at the given index.
-  bool hasAttributes(unsigned Index) const;
+  bool hasAttributes(uint64_t Index) const;
 
-  /// \brief Returns the alignment field of an attribute as a byte alignment
-  /// value.
-  unsigned getAlignment(unsigned Index) const;
+  /// \brief Return the alignment for the specified function parameter.
+  unsigned getParamAlignment(uint64_t Idx) const;
 
   /// \brief Get the stack alignment.
-  unsigned getStackAlignment(unsigned Index) const;
+  unsigned getStackAlignment(uint64_t Index) const;
 
   /// \brief Return the attributes at the index as a string.
-  std::string getAsString(unsigned Index) const;
+  std::string getAsString(uint64_t Index) const;
 
   uint64_t Raw(unsigned Index) const;
 
@@ -389,11 +385,14 @@ public:
   /// \brief Remove an attribute from the builder.
   AttrBuilder &removeAttribute(Attribute::AttrKind Val);
 
-  /// \brief Add the attributes from A to the builder.
-  AttrBuilder &addAttributes(const Attribute &A);
+  /// \brief Add the attributes to the builder.
+  AttrBuilder &addAttributes(Attribute A);
 
-  /// \brief Remove the attributes from A from the builder.
-  AttrBuilder &removeAttributes(const Attribute &A);
+  /// \brief Remove the attributes from the builder.
+  AttrBuilder &removeAttributes(Attribute A);
+
+  /// \brief Add the attributes to the builder.
+  AttrBuilder &addAttributes(AttributeSet A);
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;

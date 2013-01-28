@@ -246,6 +246,39 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
   return *this;
 }
 
+AttrBuilder &AttrBuilder::addAttributes(Attribute Attr) {
+  uint64_t Mask = Attr.Raw();
+
+  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
+       I = Attribute::AttrKind(I + 1))
+    if ((Mask & AttributeImpl::getAttrMask(I)) != 0)
+      Attrs.insert(I);
+
+  if (Attr.getAlignment())
+    Alignment = Attr.getAlignment();
+  if (Attr.getStackAlignment())
+    StackAlignment = Attr.getStackAlignment();
+  return *this;
+}
+
+AttrBuilder &AttrBuilder::removeAttributes(Attribute A) {
+  uint64_t Mask = A.Raw();
+
+  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
+       I = Attribute::AttrKind(I + 1)) {
+    if (Mask & AttributeImpl::getAttrMask(I)) {
+      Attrs.erase(I);
+
+      if (I == Attribute::Alignment)
+        Alignment = 0;
+      else if (I == Attribute::StackAlignment)
+        StackAlignment = 0;
+    }
+  }
+
+  return *this;
+}
+
 AttrBuilder &AttrBuilder::addAlignmentAttr(unsigned Align) {
   if (Align == 0) return *this;
 
@@ -282,39 +315,6 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
     }
   }
  
-  return *this;
-}
-
-AttrBuilder &AttrBuilder::addAttributes(const Attribute &Attr) {
-  uint64_t Mask = Attr.Raw();
-
-  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
-       I = Attribute::AttrKind(I + 1))
-    if ((Mask & AttributeImpl::getAttrMask(I)) != 0)
-      Attrs.insert(I);
-
-  if (Attr.getAlignment())
-    Alignment = Attr.getAlignment();
-  if (Attr.getStackAlignment())
-    StackAlignment = Attr.getStackAlignment();
-  return *this;
-}
-
-AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
-  uint64_t Mask = A.Raw();
-
-  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
-       I = Attribute::AttrKind(I + 1)) {
-    if (Mask & AttributeImpl::getAttrMask(I)) {
-      Attrs.erase(I);
-
-      if (I == Attribute::Alignment)
-        Alignment = 0;
-      else if (I == Attribute::StackAlignment)
-        StackAlignment = 0;
-    }
-  }
-
   return *this;
 }
 
@@ -710,23 +710,23 @@ AttributeSet AttributeSet::getSlotAttributes(unsigned Slot) const {
   return pImpl->getSlotAttributes(Slot);
 }
 
-bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
+bool AttributeSet::hasAttribute(uint64_t Index, Attribute::AttrKind Kind) const{
   return getAttributes(Index).hasAttribute(Kind);
 }
 
-bool AttributeSet::hasAttributes(unsigned Index) const {
+bool AttributeSet::hasAttributes(uint64_t Index) const {
   return getAttributes(Index).hasAttributes();
 }
 
-std::string AttributeSet::getAsString(unsigned Index) const {
+std::string AttributeSet::getAsString(uint64_t Index) const {
   return getAttributes(Index).getAsString();
 }
 
-unsigned AttributeSet::getParamAlignment(unsigned Idx) const {
+unsigned AttributeSet::getParamAlignment(uint64_t Idx) const {
   return getAttributes(Idx).getAlignment();
 }
 
-unsigned AttributeSet::getStackAlignment(unsigned Index) const {
+unsigned AttributeSet::getStackAlignment(uint64_t Index) const {
   return getAttributes(Index).getStackAlignment();
 }
 
@@ -771,58 +771,61 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
 
 AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
                                         Attribute::AttrKind Attr) const {
-  return addAttr(C, Idx, Attribute::get(C, Attr));
+  return addAttr(C, Idx, AttributeSet::get(C, Idx, Attr));
 }
 
 AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
                                          AttributeSet Attrs) const {
-  return addAttr(C, Idx, Attrs.getAttributes(Idx));
+  return addAttr(C, Idx, Attrs);
 }
 
 AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
-                                   Attribute Attrs) const {
-  Attribute OldAttrs = getAttributes(Idx);
+                                   AttributeSet Attrs) const {
+  if (!pImpl) return Attrs;
+  if (!Attrs.pImpl) return *this;
+
 #ifndef NDEBUG
-  // FIXME it is not obvious how this should work for alignment.
-  // For now, say we can't change a known alignment.
-  unsigned OldAlign = OldAttrs.getAlignment();
-  unsigned NewAlign = Attrs.getAlignment();
+  // FIXME it is not obvious how this should work for alignment. For now, say
+  // we can't change a known alignment.
+  unsigned OldAlign = getParamAlignment(Idx);
+  unsigned NewAlign = Attrs.getParamAlignment(Idx);
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
 
-  AttrBuilder NewAttrs =
-    AttrBuilder(OldAttrs).addAttributes(Attrs);
-  if (NewAttrs == AttrBuilder(OldAttrs))
-    return *this;
-
-  SmallVector<AttributeWithIndex, 8> NewAttrList;
-  if (pImpl == 0) {
-    NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
-  } else {
-    ArrayRef<AttributeWithIndex> OldAttrList = pImpl->getAttributes();
-    unsigned i = 0, e = OldAttrList.size();
-
-    // Copy attributes for arguments before this one.
-    for (; i != e && OldAttrList[i].Index < Idx; ++i)
-      NewAttrList.push_back(OldAttrList[i]);
-
-    // If there are attributes already at this index, merge them in.
-    if (i != e && OldAttrList[i].Index == Idx) {
-      Attrs =
-        Attribute::get(C, AttrBuilder(Attrs).
-                        addAttributes(OldAttrList[i].Attrs));
-      ++i;
+  // Add the attribute slots before the one we're trying to add.
+  SmallVector<AttributeSet, 4> AttrSet;
+  uint64_t NumAttrs = pImpl->getNumAttributes();
+  AttributeSet AS;
+  uint64_t LastIndex = 0;
+  for (unsigned I = 0, E = NumAttrs; I != E; ++I) {
+    if (getSlotIndex(I) >= Idx) {
+      if (getSlotIndex(I) == Idx) AS = getSlotAttributes(LastIndex++);
+      break;
     }
-
-    NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
-
-    // Copy attributes for arguments after this one.
-    NewAttrList.insert(NewAttrList.end(),
-                       OldAttrList.begin()+i, OldAttrList.end());
+    LastIndex = I + 1;
+    AttrSet.push_back(getSlotAttributes(I));
   }
 
-  return get(C, NewAttrList);
+  // Now add the attribute into the correct slot. There may already be an
+  // AttributeSet there.
+  AttrBuilder B(AS, Idx);
+
+  for (unsigned I = 0, E = Attrs.pImpl->getNumAttributes(); I != E; ++I)
+    if (Attrs.getSlotIndex(I) == Idx) {
+      for (AttributeSetImpl::const_iterator II = Attrs.pImpl->begin(I),
+             IE = Attrs.pImpl->end(I); II != IE; ++II)
+        B.addAttributes(*II);
+      break;
+    }
+
+  AttrSet.push_back(AttributeSet::get(C, Idx, B));
+
+  // Add the remaining attribute slots.
+  for (unsigned I = LastIndex, E = NumAttrs; I < E; ++I)
+    AttrSet.push_back(getSlotAttributes(I));
+
+  return get(C, AttrSet);
 }
 
 AttributeSet AttributeSet::removeAttribute(LLVMContext &C, unsigned Idx,
