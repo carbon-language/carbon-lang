@@ -114,12 +114,10 @@ set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
 macro(add_compiler_rt_test test_suite test_name)
   parse_arguments(TEST "OBJECTS;DEPS;LINK_FLAGS" "" ${ARGN})
   set(output_bin "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
-  add_custom_command(
-    OUTPUT ${output_bin}
+  add_custom_target(${test_name}
     COMMAND clang ${TEST_OBJECTS} -o "${output_bin}"
             ${TEST_LINK_FLAGS}
     DEPENDS clang ${TEST_DEPS})
-  add_custom_target(${test_name} DEPENDS ${output_bin})
   # Make the test suite depend on the binary.
   add_dependencies(${test_suite} ${test_name})
 endmacro()
