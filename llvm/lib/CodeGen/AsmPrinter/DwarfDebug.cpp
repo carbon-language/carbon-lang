@@ -1191,7 +1191,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       continue;
     }
 
-    // handle multiple DBG_VALUE instructions describing one variable.
+    // Handle multiple DBG_VALUE instructions describing one variable.
     RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
 
     for (SmallVectorImpl<const MachineInstr*>::const_iterator
