@@ -20,6 +20,7 @@
 #include "msan_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 #include <stdarg.h>
@@ -708,6 +709,18 @@ INTERCEPTOR(void *, realloc, void *ptr, SIZE_T size) {
 INTERCEPTOR(void *, malloc, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   return MsanReallocate(&stack, 0, size, sizeof(u64), false);
+}
+
+void __msan_allocated_memory(void* data, uptr size) {
+  GET_MALLOC_STACK_TRACE;
+  if (flags()->poison_in_malloc)
+    __msan_poison(data, size);
+  if (__msan_get_track_origins()) {
+    u32 stack_id = StackDepotPut(stack.trace, stack.size);
+    CHECK(stack_id);
+    CHECK_EQ((stack_id >> 31), 0);  // Higher bit is occupied by stack origins.
+    __msan_set_origin(data, size, stack_id);
+  }
 }
 
 INTERCEPTOR(void *, mmap, void *addr, SIZE_T length, int prot, int flags,

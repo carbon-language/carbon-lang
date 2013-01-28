@@ -117,6 +117,11 @@ const char *__msan_get_origin_descr_if_stack(u32 id);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_partial_poison(void* data, void* shadow, uptr size);
 
+// Tell MSan about newly allocated memory (ex.: custom allocator).
+// Memory will be marked uninitialized, with origin at the call site.
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_allocated_memory(void* data, uptr size);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
