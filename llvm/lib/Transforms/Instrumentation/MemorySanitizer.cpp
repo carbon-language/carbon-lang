@@ -129,7 +129,7 @@ static cl::opt<bool> ClHandleICmp("msan-handle-icmp",
 
 static cl::opt<bool> ClHandleICmpExact("msan-handle-icmp-exact",
        cl::desc("exact handling of relational integer ICmp"),
-       cl::Hidden, cl::init(true));
+       cl::Hidden, cl::init(false));
 
 static cl::opt<bool> ClStoreCleanOrigin("msan-store-clean-origin",
        cl::desc("store origin for clean (fully initialized) values"),
