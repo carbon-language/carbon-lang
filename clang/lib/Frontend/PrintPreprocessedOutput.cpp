@@ -139,11 +139,15 @@ public:
                                 diag::Mapping Map, StringRef Str);
 
   bool HandleFirstTokOnLine(Token &Tok);
+
+  /// Move to the line of the provided source location. This will
+  /// return true if the output stream required adjustment or if
+  /// the requested location is on the first line.
   bool MoveToLine(SourceLocation Loc) {
     PresumedLoc PLoc = SM.getPresumedLoc(Loc);
     if (PLoc.isInvalid())
       return false;
-    return MoveToLine(PLoc.getLine());
+    return MoveToLine(PLoc.getLine()) || (PLoc.getLine() == 1);
   }
   bool MoveToLine(unsigned LineNo);
 
