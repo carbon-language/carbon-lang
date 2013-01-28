@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 /// \brief All ELF targets would want to override the way the ELF file gets
 /// processed by the linker. This class serves as an interface which would be
@@ -89,6 +90,10 @@ public:
   //  segment or not
   bool hasOutputSegment(Section<ELFT> *section) = 0;
 
+  /// Returns the target Section for a section name and content Type
+  Section<ELFT> *getSection(const StringRef name,
+                            DefinedAtom::ContentPermissions permissions) = 0;
+
 private:
   const ELFTargetInfo &_targetInfo;
   const DefaultELFLayout<ELFT> &_layout;
@@ -99,8 +104,31 @@ private:
 template <class ELFT> class ELFTargetHandler : public ELFTargetHandlerBase {
 
 public:
-
   ELFTargetHandler(ELFTargetInfo &targetInfo) : _targetInfo(targetInfo) {}
+
+  /// Register a Target, so that the target backend may choose on how to merge
+  /// individual atoms within the section, this is a way to control output order
+  /// of atoms that is determined by the target
+  void registerTargetSection(StringRef name,
+                             DefinedAtom::ContentPermissions perm) {
+    const TargetSectionKey targetSection(name, perm);
+    if (_registeredTargetSections.find(targetSection) ==
+        _registeredTargetSections.end())
+      _registeredTargetSections.insert(std::make_pair(targetSection, true));
+  }
+
+  /// Check if the section is registered given the section name and its
+  /// contentType, if they are registered the target would need to 
+  /// create a section so that atoms insert, atom virtual address assignment
+  /// could be overridden and controlled by the Target
+  bool isSectionRegisteredByTarget(StringRef name,
+                                   DefinedAtom::ContentPermissions perm) {
+    const TargetSectionKey targetSection(name, perm);
+    if (_registeredTargetSections.find(targetSection) ==
+        _registeredTargetSections.end())
+      return false;
+    return true;
+  }
 
   /// If the target overrides ELF header information, this API would
   /// return true, so that the target can set all fields specific to
@@ -132,8 +160,37 @@ public:
   /// symbols over to small data, this would also be used 
   virtual void allocateCommons() = 0;
 
+private:
+  struct TargetSectionKey {
+    TargetSectionKey(StringRef name, DefinedAtom::ContentPermissions perm)
+        : _name(name), _perm(perm) {
+    }
+
+    // Data members
+    const StringRef _name;
+    DefinedAtom::ContentPermissions _perm;
+  };
+
+  struct TargetSectionKeyHash {
+    int64_t operator()(const TargetSectionKey &k) const {
+      return llvm::hash_combine(k._name, k._perm);
+    }
+  };
+
+  struct TargetSectionKeyEq {
+    bool operator()(const TargetSectionKey &lhs,
+                    const TargetSectionKey &rhs) const {
+      return ((lhs._name == rhs._name) && (lhs._perm == rhs._perm));
+    }
+  };
+
+  typedef std::unordered_map<TargetSectionKey, bool, TargetSectionKeyHash,
+                             TargetSectionKeyEq> RegisteredTargetSectionMapT;
+  typedef typename RegisteredTargetSectionMapT::iterator RegisteredTargetSectionMapIterT;
+
 protected:
   const ELFTargetInfo &_targetInfo;
+  RegisteredTargetSectionMapT _registeredTargetSections;
 };
 
 } // elf

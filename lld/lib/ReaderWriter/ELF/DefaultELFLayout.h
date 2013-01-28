@@ -84,9 +84,29 @@ public:
 
   // The Key used for creating Sections
   // The sections are created using
-  // SectionName, [contentType, contentPermissions]
-  typedef std::pair<StringRef,
-                    std::pair<int32_t, int32_t>> Key;
+  // SectionName, contentPermissions
+  struct SectionKey {
+    SectionKey(StringRef name, DefinedAtom::ContentPermissions perm)
+        : _name(name), _perm(perm) {
+    }
+
+    // Data members
+    const StringRef _name;
+    DefinedAtom::ContentPermissions _perm;
+  };
+
+  struct SectionKeyHash {
+    int64_t operator()(const SectionKey &k) const {
+      return llvm::hash_combine(k._name, k._perm);
+    }
+  };
+
+  struct SectionKeyEq {
+    bool operator()(const SectionKey &lhs, const SectionKey &rhs) const {
+      return ((lhs._name == rhs._name) && (lhs._perm == rhs._perm));
+    }
+  };
+
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
   // The key used for Segments
   // The segments are created using
@@ -95,18 +115,8 @@ public:
   // Merged Sections contain the map of Sectionnames to a vector of sections,
   // that have been merged to form a single section
   typedef std::map<StringRef, MergedSections<ELFT> *> MergedSectionMapT;
-  typedef typename std::vector<MergedSections<ELFT> *>::iterator
-    MergedSectionIter;
-
-  // HashKey for the Section
-  class HashKey {
-  public:
-    int64_t operator() (const Key &k) const {
-      // k.first = section Name
-      // k.second = [contentType, Permissions]
-      return llvm::hash_combine(k.first, k.second.first, k.second.second);
-    }
-  };
+  typedef typename std::vector<
+      MergedSections<ELFT> *>::iterator MergedSectionIter;
 
   // HashKey for the Segment
   class SegmentHashKey {
@@ -118,9 +128,9 @@ public:
     }
   };
 
-  typedef std::unordered_map<Key, Section<ELFT>*, HashKey> SectionMapT;
-  typedef std::unordered_map<SegmentKey,
-                             Segment<ELFT>*,
+  typedef std::unordered_map<SectionKey, Section<ELFT> *, SectionKeyHash,
+                             SectionKeyEq> SectionMapT;
+  typedef std::unordered_map<SegmentKey, Segment<ELFT> *,
                              SegmentHashKey> SegmentMapT;
 
   /// \brief All absolute atoms are created in the ELF Layout by using 
@@ -384,42 +394,35 @@ template<class ELFT>
 error_code
 DefaultELFLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
-    const StringRef sectionName =
-                getSectionName(definedAtom->customSectionName(),
-                               definedAtom->contentType());
+    const StringRef sectionName = getSectionName(
+        definedAtom->customSectionName(), definedAtom->contentType());
     const lld::DefinedAtom::ContentPermissions permissions =
-                                  definedAtom->permissions();
+        definedAtom->permissions();
     const lld::DefinedAtom::ContentType contentType =
-                                  definedAtom->contentType();
-    const Key key(sectionName, std::make_pair(contentType, permissions));
-    const std::pair<Key, Section<ELFT> *>currentSection(key, nullptr);
-    std::pair<typename SectionMapT::iterator, bool>
-      sectionInsert(_sectionMap.insert(currentSection));
+        definedAtom->contentType();
+    const SectionKey sectionKey(sectionName, permissions);
     Section<ELFT> *section;
-    // the section is already in the map
-    if (!sectionInsert.second) {
-      section = sectionInsert.first->second;
-      section->setContentPermissions(permissions);
-    } else {
-      SectionOrder section_order = getSectionOrder(sectionName,
-                                     contentType,
-                                     permissions);
-      section = new (_allocator.Allocate<Section<ELFT>>()) Section<ELFT>(
-        sectionName, contentType, permissions, section_order);
-      sectionInsert.first->second = section;
+
+    if (_sectionMap.find(sectionKey) == _sectionMap.end()) {
+      SectionOrder section_order =
+          getSectionOrder(sectionName, contentType, permissions);
+      section = new (_allocator.Allocate<Section<ELFT> >())
+          Section<ELFT>(sectionName, contentType, permissions, section_order);
       section->setOrder(section_order);
       _sections.push_back(section);
+      _sectionMap.insert(std::make_pair(sectionKey, section));
+    } else {
+      section = _sectionMap[sectionKey];
     }
     section->appendAtom(atom);
-  }
-  // Absolute atoms are not part of any section, they are global for the whole
-  // link
-  else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
-    _absoluteAtoms.push_back(AbsoluteAtomPair(absoluteAtom, 
+  } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
+    // Absolute atoms are not part of any section, they are global for the whole
+    // link
+    _absoluteAtoms.push_back(AbsoluteAtomPair(absoluteAtom,
                                               absoluteAtom->value()));
-  }
-  else 
+  } else {
     llvm_unreachable("Only absolute / defined atoms can be added here");
+  }
   return error_code::success();
 }
 
