@@ -21,7 +21,6 @@
 
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
-#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -33,6 +32,8 @@
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/Core/ValueObjectSyntheticFilter.h"
+
+#include "lldb/DataFormatters/DataVisualization.h"
 
 #include "lldb/Host/Endian.h"
 
@@ -83,7 +84,6 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
-    m_last_format_mgr_dynamic(parent.m_last_format_mgr_dynamic),
     m_type_summary_sp(),
     m_type_format_sp(),
     m_synthetic_children_sp(),
@@ -129,7 +129,6 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
-    m_last_format_mgr_dynamic(eNoDynamicValues),
     m_type_summary_sp(),
     m_type_format_sp(),
     m_synthetic_children_sp(),
@@ -161,17 +160,11 @@ ValueObject::~ValueObject ()
 bool
 ValueObject::UpdateValueIfNeeded (bool update_format)
 {
-    return UpdateValueIfNeeded(m_last_format_mgr_dynamic, update_format);
-}
-
-bool
-ValueObject::UpdateValueIfNeeded (DynamicValueType use_dynamic, bool update_format)
-{
     
     bool did_change_formats = false;
     
     if (update_format)
-        did_change_formats = UpdateFormatsIfNeeded(use_dynamic);
+        did_change_formats = UpdateFormatsIfNeeded();
     
     // If this is a constant value, then our success is predicated on whether
     // we have an error or not
@@ -238,7 +231,7 @@ ValueObject::UpdateValueIfNeeded (DynamicValueType use_dynamic, bool update_form
 }
 
 bool
-ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
+ValueObject::UpdateFormatsIfNeeded()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     if (log)
@@ -250,17 +243,15 @@ ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
     
     bool any_change = false;
     
-    if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()) ||
-          m_last_format_mgr_dynamic != use_dynamic)
+    if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()))
     {
         SetValueFormat(DataVisualization::ValueFormats::GetFormat (*this, eNoDynamicValues));
-        SetSummaryFormat(DataVisualization::GetSummaryFormat (*this, use_dynamic));
+        SetSummaryFormat(DataVisualization::GetSummaryFormat (*this, GetDynamicValueType()));
 #ifndef LLDB_DISABLE_PYTHON
-        SetSyntheticChildren(DataVisualization::GetSyntheticChildren (*this, use_dynamic));
+        SetSyntheticChildren(DataVisualization::GetSyntheticChildren (*this, GetDynamicValueType()));
 #endif
 
         m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
-        m_last_format_mgr_dynamic = use_dynamic;
         
         any_change = true;
     }
@@ -2033,42 +2024,6 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
 }
 
 ValueObjectSP
-ValueObject::GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_create)
-{
-    ValueObjectSP synthetic_child_sp;
-    if (IsArrayType () || IsPointerType ())
-    {
-        char index_str[64];
-        snprintf(index_str, sizeof(index_str), "[%i-%i]", from, to);
-        ConstString index_const_str(index_str);
-        // Check if we have already created a synthetic array member in this
-        // valid object. If we have we will re-use it.
-        synthetic_child_sp = GetSyntheticChild (index_const_str);
-        if (!synthetic_child_sp)
-        {
-            ValueObjectSynthetic *synthetic_child;
-            
-            // We haven't made a synthetic array member for INDEX yet, so
-            // lets make one and cache it for any future reference.
-            SyntheticArrayView *view = new SyntheticArrayView(SyntheticChildren::Flags());
-            view->AddRange(from,to);
-            SyntheticChildrenSP view_sp(view);
-            synthetic_child = new ValueObjectSynthetic(*this, view_sp);
-            
-            // Cache the value if we got one back...
-            if (synthetic_child)
-            {
-                AddSyntheticChild(index_const_str, synthetic_child);
-                synthetic_child_sp = synthetic_child->GetSP();
-                synthetic_child_sp->SetName(ConstString(index_str));
-                synthetic_child_sp->m_is_bitfield_for_scalar = true;
-            }
-        }
-    }
-    return synthetic_child_sp;
-}
-
-ValueObjectSP
 ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create)
 {
     
@@ -2168,7 +2123,7 @@ ValueObject::CalculateSyntheticValue (bool use_synthetic)
     
     lldb::SyntheticChildrenSP current_synth_sp(m_synthetic_children_sp);
     
-    if (!UpdateFormatsIfNeeded(m_last_format_mgr_dynamic) && m_synthetic_value)
+    if (!UpdateFormatsIfNeeded() && m_synthetic_value)
         return;
     
     if (m_synthetic_children_sp.get() == NULL)
@@ -2243,7 +2198,7 @@ ValueObject::GetSyntheticValue (bool use_synthetic)
 bool
 ValueObject::HasSyntheticValue()
 {
-    UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+    UpdateFormatsIfNeeded();
     
     if (m_synthetic_children_sp.get() == NULL)
         return false;
@@ -3285,7 +3240,7 @@ DumpValueObject_Impl (Stream &s,
 {
     if (valobj)
     {
-        bool update_success = valobj->UpdateValueIfNeeded (options.m_use_dynamic, true);
+        bool update_success = valobj->UpdateValueIfNeeded (true);
 
         const char *root_valobj_name = 
             options.m_root_valobj_name.empty() ? 

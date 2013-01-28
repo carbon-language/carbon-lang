@@ -90,6 +90,12 @@ public:
     virtual bool
     SetValueFromCString (const char *value_str, Error& error);
     
+    virtual lldb::DynamicValueType
+    GetDynamicValueType ()
+    {
+        return m_use_dynamic;
+    }
+    
 protected:
     virtual bool
     UpdateValue ();

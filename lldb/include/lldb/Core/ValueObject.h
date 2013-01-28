@@ -808,10 +808,7 @@ public:
     UpdateValueIfNeeded (bool update_format = true);
     
     bool
-    UpdateValueIfNeeded (lldb::DynamicValueType use_dynamic, bool update_format = true);
-    
-    bool
-    UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic = lldb::eNoDynamicValues);
+    UpdateFormatsIfNeeded();
 
     lldb::ValueObjectSP
     GetSP ()
@@ -843,10 +840,7 @@ public:
     
     lldb::ValueObjectSP
     GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);
-    
-    lldb::ValueObjectSP
-    GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_create);
-    
+
     lldb::ValueObjectSP
     GetSyntheticExpressionPathChild(const char* expression, bool can_create);
     
@@ -855,6 +849,15 @@ public:
     
     virtual lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
+    
+    virtual lldb::DynamicValueType
+    GetDynamicValueType ()
+    {
+        if (m_parent)
+            return m_parent->GetDynamicValueType ();
+        else
+            return lldb::eNoDynamicValues;
+    }
     
     virtual lldb::ValueObjectSP
     GetStaticValue ();
@@ -1009,7 +1012,7 @@ public:
     lldb::TypeSummaryImplSP
     GetSummaryFormat()
     {
-        UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+        UpdateFormatsIfNeeded();
         return m_type_summary_sp;
     }
     
@@ -1030,7 +1033,7 @@ public:
     lldb::TypeFormatImplSP
     GetValueFormat()
     {
-        UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+        UpdateFormatsIfNeeded();
         return m_type_format_sp;
     }
     
@@ -1046,7 +1049,7 @@ public:
     lldb::SyntheticChildrenSP
     GetSyntheticChildren()
     {
-        UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+        UpdateFormatsIfNeeded();
         return m_synthetic_children_sp;
     }
 
@@ -1218,7 +1221,6 @@ protected:
 
     lldb::Format                m_format;
     uint32_t                    m_last_format_mgr_revision;
-    lldb::DynamicValueType      m_last_format_mgr_dynamic;
     lldb::TypeSummaryImplSP     m_type_summary_sp;
     lldb::TypeFormatImplSP      m_type_format_sp;
     lldb::SyntheticChildrenSP   m_synthetic_children_sp;

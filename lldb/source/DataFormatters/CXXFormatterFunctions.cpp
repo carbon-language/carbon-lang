@@ -9,7 +9,7 @@
 
 #include "lldb/lldb-python.h"
 
-#include "lldb/Core/CXXFormatterFunctions.h"
+#include "lldb/DataFormatters/CXXFormatterFunctions.h"
 
 // needed to get ConvertUTF16/32ToUTF8
 #define CLANG_NEEDS_THESE_ONE_DAY
@@ -1192,7 +1192,7 @@ ExtractIndexFromString (const char* item_name)
     return idx;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     if (!m_data_32 && !m_data_64)
@@ -1230,7 +1230,7 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::~NSArrayISyntheticFrontEnd 
 {
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSArrayISyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     const char* item_name = name.GetCString();
@@ -1385,7 +1385,7 @@ lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::MightHaveChildren
     return true;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     return 0;
@@ -1482,7 +1482,7 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::MightHaveChi
     return true;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     return 0;
@@ -1510,7 +1510,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::~NSDictionaryISyntheti
     m_data_64 = NULL;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     const char* item_name = name.GetCString();
@@ -1658,7 +1658,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::~NSDictionaryMSyntheti
     m_data_64 = NULL;
 }
 
-uint32_t
+size_t
 lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     const char* item_name = name.GetCString();

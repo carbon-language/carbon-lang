@@ -20,7 +20,6 @@
 
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Scalar.h"
@@ -30,6 +29,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Declaration.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -740,7 +740,7 @@ SBValue::GetTypeSynthetic ()
                     
                     if (children_sp && children_sp->IsScripted())
                     {
-                        TypeSyntheticImplSP synth_sp = STD_STATIC_POINTER_CAST(TypeSyntheticImpl,children_sp);
+                        ScriptedSyntheticChildrenSP synth_sp = STD_STATIC_POINTER_CAST(ScriptedSyntheticChildren,children_sp);
                         synthetic.SetSP(synth_sp);
                     }
                 }

@@ -38,6 +38,9 @@ public:
     
     virtual ConstString
     GetTypeName();
+    
+    virtual ConstString
+    GetQualifiedTypeName();
 
     virtual bool
     MightHaveChildren();
@@ -57,6 +60,9 @@ public:
     virtual size_t
     GetIndexOfChildWithName (const ConstString &name);
 
+    virtual lldb::ValueObjectSP
+    GetDynamicValue (lldb::DynamicValueType valueType);
+    
     virtual bool
     IsInScope ();
     

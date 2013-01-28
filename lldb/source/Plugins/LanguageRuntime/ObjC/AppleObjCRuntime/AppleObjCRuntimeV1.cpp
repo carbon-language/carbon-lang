@@ -49,13 +49,26 @@ AppleObjCRuntimeV1::AppleObjCRuntimeV1(Process *process) :
 {
 }
 
+// for V1 runtime we just try to return a class name as that is the minimum level of support
+// required for the data formatters to work
 bool
 AppleObjCRuntimeV1::GetDynamicTypeAndAddress (ValueObject &in_value,
                                              lldb::DynamicValueType use_dynamic, 
                                              TypeAndOrName &class_type_or_name, 
                                              Address &address)
 {
-    return false;
+    class_type_or_name.Clear();
+    if (CouldHaveDynamicValue(in_value))
+    {
+        auto class_descriptor(GetClassDescriptor(in_value));
+        if (class_descriptor && class_descriptor->IsValid() && class_descriptor->GetClassName())
+        {
+            const addr_t object_ptr = in_value.GetPointerValue();
+            address.SetRawAddress(object_ptr);
+            class_type_or_name.SetName(class_descriptor->GetClassName());
+        }
+    }
+    return class_type_or_name.IsEmpty() == false;
 }
 
 //------------------------------------------------------------------

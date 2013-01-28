@@ -16,8 +16,8 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ConstString.h"
-#include "lldb/Core/FormatClasses.h"
-#include "lldb/Core/FormatManager.h"
+#include "lldb/DataFormatters/FormatClasses.h"
+#include "lldb/DataFormatters/FormatManager.h"
 
 namespace lldb_private {
 
@@ -57,14 +57,14 @@ public:
         static void
         LoopThrough (TypeFormatImpl::ValueCallback callback, void* callback_baton);
         
-        static uint32_t
+        static size_t
         GetCount ();
         
         static lldb::TypeNameSpecifierImplSP
-        GetTypeNameSpecifierForFormatAtIndex (uint32_t);
+        GetTypeNameSpecifierForFormatAtIndex (size_t);
         
         static lldb::TypeFormatImplSP
-        GetFormatAtIndex (uint32_t);
+        GetFormatAtIndex (size_t);
     };
     
     static lldb::TypeSummaryImplSP
@@ -83,7 +83,7 @@ public:
     GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp);
 
 #ifndef LLDB_DISABLE_PYTHON
-    static lldb::TypeSyntheticImplSP
+    static lldb::ScriptedSyntheticChildrenSP
     GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp);
 #endif
     
@@ -145,14 +145,14 @@ public:
         
         static void
         Enable (const ConstString& category,
-                CategoryMap::Position = CategoryMap::Default);
+                TypeCategoryMap::Position = TypeCategoryMap::Default);
         
         static void
         Disable (const ConstString& category);
 
         static void
         Enable (const lldb::TypeCategoryImplSP& category,
-                CategoryMap::Position = CategoryMap::Default);
+                TypeCategoryMap::Position = TypeCategoryMap::Default);
         
         static void
         Disable (const lldb::TypeCategoryImplSP& category);
@@ -164,7 +164,7 @@ public:
         GetCount ();
         
         static lldb::TypeCategoryImplSP
-        GetCategoryAtIndex (uint32_t);
+        GetCategoryAtIndex (size_t);
     };
 };
 

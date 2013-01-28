@@ -14,14 +14,13 @@
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/ConstString.h"
-#include "lldb/Core/FormatClasses.h"
+#include "lldb/DataFormatters/FormatClasses.h"
 
 #include "clang/AST/ASTContext.h"
 
 namespace lldb_private {
     namespace formatters
     {
-        
         bool
         ExtractValueFromObjCExpression (ValueObject &valobj,
                                         const char* target_type,
@@ -147,7 +146,7 @@ namespace lldb_private {
             virtual bool
             MightHaveChildren ();
             
-            virtual uint32_t
+            virtual size_t
             GetIndexOfChildWithName (const ConstString &name);
             
             virtual
@@ -178,7 +177,7 @@ namespace lldb_private {
             virtual bool
             MightHaveChildren ();
             
-            virtual uint32_t
+            virtual size_t
             GetIndexOfChildWithName (const ConstString &name);
             
             virtual
@@ -186,7 +185,7 @@ namespace lldb_private {
         private:
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
-            size_t m_items;
+            uint64_t m_items;
             lldb::addr_t m_data_ptr;
             ClangASTType m_id_type;
             std::vector<lldb::ValueObjectSP> m_children;
@@ -209,7 +208,7 @@ namespace lldb_private {
             virtual bool
             MightHaveChildren ();
             
-            virtual uint32_t
+            virtual size_t
             GetIndexOfChildWithName (const ConstString &name);
             
             virtual
@@ -254,7 +253,7 @@ namespace lldb_private {
             virtual bool
             MightHaveChildren ();
             
-            virtual uint32_t
+            virtual size_t
             GetIndexOfChildWithName (const ConstString &name);
             
             virtual
@@ -310,7 +309,7 @@ namespace lldb_private {
             virtual bool
             MightHaveChildren ();
             
-            virtual uint32_t
+            virtual size_t
             GetIndexOfChildWithName (const ConstString &name);
             
             virtual
@@ -340,7 +339,7 @@ namespace lldb_private {
             virtual bool
             MightHaveChildren ();
             
-            virtual uint32_t
+            virtual size_t
             GetIndexOfChildWithName (const ConstString &name);
             
             virtual

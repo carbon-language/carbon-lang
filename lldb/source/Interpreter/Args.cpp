@@ -16,10 +16,10 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Args.h"
-#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"

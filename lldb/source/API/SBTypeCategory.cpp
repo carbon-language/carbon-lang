@@ -18,8 +18,8 @@
 #include "lldb/API/SBTypeNameSpecifier.h"
 #include "lldb/API/SBStream.h"
 
-#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 
@@ -233,7 +233,7 @@ SBTypeCategory::GetSyntheticForType (SBTypeNameSpecifier spec)
     if (!children_sp)
         return lldb::SBTypeSynthetic();
     
-    TypeSyntheticImplSP synth_sp = STD_STATIC_POINTER_CAST(TypeSyntheticImpl,children_sp);
+    ScriptedSyntheticChildrenSP synth_sp = STD_STATIC_POINTER_CAST(ScriptedSyntheticChildren,children_sp);
     
     return lldb::SBTypeSynthetic(synth_sp);
 }
@@ -285,7 +285,7 @@ SBTypeCategory::GetSyntheticAtIndex (uint32_t index)
     if (!children_sp.get())
         return lldb::SBTypeSynthetic();
     
-    TypeSyntheticImplSP synth_sp = STD_STATIC_POINTER_CAST(TypeSyntheticImpl,children_sp);
+    ScriptedSyntheticChildrenSP synth_sp = STD_STATIC_POINTER_CAST(ScriptedSyntheticChildren,children_sp);
     
     return lldb::SBTypeSynthetic(synth_sp);
 }

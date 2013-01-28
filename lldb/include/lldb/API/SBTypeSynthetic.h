@@ -79,15 +79,15 @@ namespace lldb {
         friend class SBTypeCategory;
         friend class SBValue;
         
-        lldb::TypeSyntheticImplSP
+        lldb::ScriptedSyntheticChildrenSP
         GetSP ();
         
         void
-        SetSP (const lldb::TypeSyntheticImplSP &typefilter_impl_sp);    
+        SetSP (const lldb::ScriptedSyntheticChildrenSP &typefilter_impl_sp);    
         
-        lldb::TypeSyntheticImplSP m_opaque_sp;
+        lldb::ScriptedSyntheticChildrenSP m_opaque_sp;
         
-        SBTypeSynthetic (const lldb::TypeSyntheticImplSP &);
+        SBTypeSynthetic (const lldb::ScriptedSyntheticChildrenSP &);
         
         bool
         CopyOnWrite_Impl();

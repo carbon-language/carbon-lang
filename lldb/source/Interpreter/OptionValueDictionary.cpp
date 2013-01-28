@@ -16,8 +16,8 @@
 // Other libraries and framework includes
 #include "llvm/ADT/StringRef.h"
 // Project includes
-#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/State.h"
+#include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/OptionValueString.h"
 

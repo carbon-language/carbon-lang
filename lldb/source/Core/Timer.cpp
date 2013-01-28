@@ -25,7 +25,7 @@ uint32_t Timer::g_depth = 0;
 uint32_t Timer::g_display_depth = 0;
 FILE * Timer::g_file = NULL;
 typedef std::vector<Timer *> TimerStack;
-typedef std::map<const char *, uint64_t> CategoryMap;
+typedef std::map<const char *, uint64_t> TimerCategoryMap;
 static pthread_key_t g_key;
 
 static Mutex &
@@ -35,10 +35,10 @@ GetCategoryMutex()
     return g_category_mutex;
 }
 
-static CategoryMap &
+static TimerCategoryMap &
 GetCategoryMap()
 {
-    static CategoryMap g_category_map;
+    static TimerCategoryMap g_category_map;
     return g_category_map;
 }
 
@@ -153,7 +153,7 @@ Timer::~Timer()
 
         // Keep total results for each category so we can dump results.
         Mutex::Locker locker (GetCategoryMutex());
-        CategoryMap &category_map = GetCategoryMap();
+        TimerCategoryMap &category_map = GetCategoryMap();
         category_map[m_category] += timer_nsec_uint;
     }
     if (g_depth > 0)
@@ -214,7 +214,7 @@ Timer::SetDisplayDepth (uint32_t depth)
  * - returns whether a person is less than another person
  */
 static bool
-CategoryMapIteratorSortCriterion (const CategoryMap::const_iterator& lhs, const CategoryMap::const_iterator& rhs)
+CategoryMapIteratorSortCriterion (const TimerCategoryMap::const_iterator& lhs, const TimerCategoryMap::const_iterator& rhs)
 {
     return lhs->second > rhs->second;
 }
@@ -224,7 +224,7 @@ void
 Timer::ResetCategoryTimes ()
 {
     Mutex::Locker locker (GetCategoryMutex());
-    CategoryMap &category_map = GetCategoryMap();
+    TimerCategoryMap &category_map = GetCategoryMap();
     category_map.clear();
 }
 
@@ -232,9 +232,9 @@ void
 Timer::DumpCategoryTimes (Stream *s)
 {
     Mutex::Locker locker (GetCategoryMutex());
-    CategoryMap &category_map = GetCategoryMap();
-    std::vector<CategoryMap::const_iterator> sorted_iterators;
-    CategoryMap::const_iterator pos, end = category_map.end();
+    TimerCategoryMap &category_map = GetCategoryMap();
+    std::vector<TimerCategoryMap::const_iterator> sorted_iterators;
+    TimerCategoryMap::const_iterator pos, end = category_map.end();
     for (pos = category_map.begin(); pos != end; ++pos)
     {
         sorted_iterators.push_back (pos);

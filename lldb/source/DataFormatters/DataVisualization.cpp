@@ -9,7 +9,7 @@
 
 #include "lldb/lldb-python.h"
 
-#include "lldb/Core/DataVisualization.h"
+#include "lldb/DataFormatters/DataVisualization.h"
 
 // C Includes
 // C++ Includes
@@ -80,20 +80,20 @@ DataVisualization::ValueFormats::LoopThrough (TypeFormatImpl::ValueCallback call
     GetFormatManager().GetValueNavigator().LoopThrough(callback, callback_baton);
 }
 
-uint32_t
+size_t
 DataVisualization::ValueFormats::GetCount ()
 {
     return GetFormatManager().GetValueNavigator().GetCount();
 }
 
 lldb::TypeNameSpecifierImplSP
-DataVisualization::ValueFormats::GetTypeNameSpecifierForFormatAtIndex (uint32_t index)
+DataVisualization::ValueFormats::GetTypeNameSpecifierForFormatAtIndex (size_t index)
 {
     return GetFormatManager().GetValueNavigator().GetTypeNameSpecifierAtIndex(index);
 }
 
 lldb::TypeFormatImplSP
-DataVisualization::ValueFormats::GetFormatAtIndex (uint32_t index)
+DataVisualization::ValueFormats::GetFormatAtIndex (size_t index)
 {
     return GetFormatManager().GetValueNavigator().GetAtIndex(index);
 }
@@ -135,7 +135,7 @@ DataVisualization::GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp)
 }
 
 #ifndef LLDB_DISABLE_PYTHON
-lldb::TypeSyntheticImplSP
+lldb::ScriptedSyntheticChildrenSP
 DataVisualization::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
     return GetFormatManager().GetSyntheticForType(type_sp);
@@ -191,7 +191,7 @@ DataVisualization::Categories::Clear (const ConstString &category)
 
 void
 DataVisualization::Categories::Enable (const ConstString& category,
-                                       CategoryMap::Position pos)
+                                       TypeCategoryMap::Position pos)
 {
     if (GetFormatManager().GetCategory(category)->IsEnabled())
         GetFormatManager().DisableCategory(category);
@@ -207,7 +207,7 @@ DataVisualization::Categories::Disable (const ConstString& category)
 
 void
 DataVisualization::Categories::Enable (const lldb::TypeCategoryImplSP& category,
-                                       CategoryMap::Position pos)
+                                       TypeCategoryMap::Position pos)
 {
     if (category.get())
     {
@@ -237,7 +237,7 @@ DataVisualization::Categories::GetCount ()
 }
 
 lldb::TypeCategoryImplSP
-DataVisualization::Categories::GetCategoryAtIndex (uint32_t index)
+DataVisualization::Categories::GetCategoryAtIndex (size_t index)
 {
     return GetFormatManager().GetCategoryAtIndex(index);
 }

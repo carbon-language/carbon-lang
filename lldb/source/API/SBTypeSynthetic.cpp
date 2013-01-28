@@ -13,7 +13,7 @@
 
 #include "lldb/API/SBStream.h"
 
-#include "lldb/Core/DataVisualization.h"
+#include "lldb/DataFormatters/DataVisualization.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -30,7 +30,7 @@ SBTypeSynthetic::CreateWithClassName (const char* data, uint32_t options)
 {
     if (!data || data[0] == 0)
         return SBTypeSynthetic();
-    return SBTypeSynthetic(TypeSyntheticImplSP(new TypeSyntheticImpl(options, data, "")));
+    return SBTypeSynthetic(ScriptedSyntheticChildrenSP(new ScriptedSyntheticChildren(options, data, "")));
 }
 
 SBTypeSynthetic
@@ -38,7 +38,7 @@ SBTypeSynthetic::CreateWithScriptCode (const char* data, uint32_t options)
 {
     if (!data || data[0] == 0)
         return SBTypeSynthetic();
-    return SBTypeSynthetic(TypeSyntheticImplSP(new TypeSyntheticImpl(options, "", data)));
+    return SBTypeSynthetic(ScriptedSyntheticChildrenSP(new ScriptedSyntheticChildren(options, "", data)));
 }
 
 SBTypeSynthetic::SBTypeSynthetic (const lldb::SBTypeSynthetic &rhs) :
@@ -172,19 +172,19 @@ SBTypeSynthetic::operator != (lldb::SBTypeSynthetic &rhs)
     return m_opaque_sp != rhs.m_opaque_sp;
 }
 
-lldb::TypeSyntheticImplSP
+lldb::ScriptedSyntheticChildrenSP
 SBTypeSynthetic::GetSP ()
 {
     return m_opaque_sp;
 }
 
 void
-SBTypeSynthetic::SetSP (const lldb::TypeSyntheticImplSP &TypeSynthetic_impl_sp)
+SBTypeSynthetic::SetSP (const lldb::ScriptedSyntheticChildrenSP &TypeSynthetic_impl_sp)
 {
     m_opaque_sp = TypeSynthetic_impl_sp;
 }
 
-SBTypeSynthetic::SBTypeSynthetic (const lldb::TypeSyntheticImplSP &TypeSynthetic_impl_sp) :
+SBTypeSynthetic::SBTypeSynthetic (const lldb::ScriptedSyntheticChildrenSP &TypeSynthetic_impl_sp) :
 m_opaque_sp(TypeSynthetic_impl_sp)
 {
 }
@@ -197,7 +197,7 @@ SBTypeSynthetic::CopyOnWrite_Impl()
     if (m_opaque_sp.unique())
         return true;
     
-    TypeSyntheticImplSP new_sp(new TypeSyntheticImpl(m_opaque_sp->GetOptions(),
+    ScriptedSyntheticChildrenSP new_sp(new ScriptedSyntheticChildren(m_opaque_sp->GetOptions(),
                                                      m_opaque_sp->GetPythonClassName(),
                                                      m_opaque_sp->GetPythonCode()));
     

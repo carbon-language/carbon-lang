@@ -15,8 +15,8 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/DataFormatters/FormatClasses.h"
 
 using namespace lldb_private;
 
@@ -39,7 +39,7 @@ public:
         return lldb::ValueObjectSP();
     }
     
-    uint32_t
+    size_t
     GetIndexOfChildWithName (const ConstString &name)
     {
         return UINT32_MAX;
@@ -95,6 +95,12 @@ ValueObjectSynthetic::GetTypeName()
     return m_parent->GetTypeName();
 }
 
+ConstString
+ValueObjectSynthetic::GetQualifiedTypeName()
+{
+    return m_parent->GetQualifiedTypeName();
+}
+
 size_t
 ValueObjectSynthetic::CalculateNumChildren()
 {
@@ -102,6 +108,16 @@ ValueObjectSynthetic::CalculateNumChildren()
     if (m_synthetic_children_count < UINT32_MAX)
         return m_synthetic_children_count;
     return (m_synthetic_children_count = m_synth_filter_ap->CalculateNumChildren());
+}
+
+lldb::ValueObjectSP
+ValueObjectSynthetic::GetDynamicValue (lldb::DynamicValueType valueType)
+{
+    if (!m_parent)
+        return lldb::ValueObjectSP();
+    if (m_parent->IsDynamic() && m_parent->GetDynamicValueType() == valueType)
+        return m_parent->GetSP();
+    return ValueObject::GetDynamicValue(valueType);
 }
 
 bool

@@ -17,13 +17,13 @@
 
 // C++ Includes
 
-#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReaderEZ.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StringList.h"
+#include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -1961,7 +1961,7 @@ protected:
         if (argc == 1 && strcmp(command.GetArgumentAtIndex(0),"*") == 0)
         {
             // we want to make sure to enable "system" last and "default" first
-            DataVisualization::Categories::Enable(ConstString("default"), CategoryMap::First);
+            DataVisualization::Categories::Enable(ConstString("default"), TypeCategoryMap::First);
             uint32_t num_categories = DataVisualization::Categories::GetCount();
             for (uint32_t i = 0; i < num_categories; i++)
             {
@@ -1972,10 +1972,10 @@ protected:
                          ::strcmp(category_sp->GetName(), "default") == 0 )
                         continue;
                     else
-                        DataVisualization::Categories::Enable(category_sp, CategoryMap::Default);
+                        DataVisualization::Categories::Enable(category_sp, TypeCategoryMap::Default);
                 }
             }
-            DataVisualization::Categories::Enable(ConstString("system"), CategoryMap::Last);
+            DataVisualization::Categories::Enable(ConstString("system"), TypeCategoryMap::Last);
         }
         else
         {
@@ -3385,10 +3385,10 @@ public:
         // everything should be fine now, let's add the synth provider class
         
         SyntheticChildrenSP synth_provider;
-        synth_provider.reset(new TypeSyntheticImpl(SyntheticChildren::Flags().SetCascades(options->m_cascade).
-                                                         SetSkipPointers(options->m_skip_pointers).
-                                                         SetSkipReferences(options->m_skip_references),
-                                                         class_name_str.c_str()));
+        synth_provider.reset(new ScriptedSyntheticChildren(SyntheticChildren::Flags().SetCascades(options->m_cascade).
+                                                           SetSkipPointers(options->m_skip_pointers).
+                                                           SetSkipReferences(options->m_skip_references),
+                                                           class_name_str.c_str()));
         
         
         lldb::TypeCategoryImplSP category;
@@ -3504,11 +3504,11 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     
     SyntheticChildrenSP entry;
     
-    TypeSyntheticImpl* impl = new TypeSyntheticImpl(SyntheticChildren::Flags().
-                                                    SetCascades(m_options.m_cascade).
-                                                    SetSkipPointers(m_options.m_skip_pointers).
-                                                    SetSkipReferences(m_options.m_skip_references),
-                                                    m_options.m_class_name.c_str());
+    ScriptedSyntheticChildren* impl = new ScriptedSyntheticChildren(SyntheticChildren::Flags().
+                                                                    SetCascades(m_options.m_cascade).
+                                                                    SetSkipPointers(m_options.m_skip_pointers).
+                                                                    SetSkipReferences(m_options.m_skip_references),
+                                                                    m_options.m_class_name.c_str());
     
     entry.reset(impl);
     
