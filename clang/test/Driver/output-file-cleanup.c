@@ -1,20 +1,18 @@
-// RUN: touch %t.o
-// RUN: not %clang -c -DCRASH -o %t.o -MMD -MF %t.d %s
-// RUN: test ! -f %t.o
+// RUN: touch %t.s
+// RUN: not %clang -S -DCRASH -o %t.s -MMD -MF %t.d %s
+// RUN: test ! -f %t.s
 // RUN: test ! -f %t.d
 
-// RUN: touch %t.o
-// RUN: not %clang -c -DMISSING -o %t.o -MMD -MF %t.d %s
-// RUN: test ! -f %t.o
+// RUN: touch %t.s
+// RUN: not %clang -S -DMISSING -o %t.s -MMD -MF %t.d %s
+// RUN: test ! -f %t.s
 // RUN: test ! -f %t.d
 
-// RUN: touch %t.o
-// RUN: not %clang -c -o %t.o -MMD -MF %t.d %s
-// RUN: test ! -f %t.o
+// RUN: touch %t.s
+// RUN: not %clang -S -o %t.s -MMD -MF %t.d %s
+// RUN: test ! -f %t.s
 // RUN: test -f %t.d
 
-// FIXME: %t.o is not touched with -no-integrated-as.
-// XFAIL: mingw32,powerpc,arm
 // REQUIRES: shell
 // REQUIRES: crash-recovery
 
@@ -28,13 +26,13 @@ invalid C code
 
 // RUN: touch %t1.c
 // RUN: echo "invalid C code" > %t2.c
-// RUN: cd %T && not %clang -c %t1.c %t2.c
-// RUN: test -f %t1.o
-// RUN: test ! -f %t2.o
+// RUN: cd %T && not %clang -S %t1.c %t2.c
+// RUN: test -f %t1.s
+// RUN: test ! -f %t2.s
 
 // RUN: touch %t1.c
 // RUN: touch %t2.c
 // RUN: chmod -r %t2.c
-// RUN: cd %T && not %clang -c %t1.c %t2.c
-// RUN: test -f %t1.o
-// RUN: test ! -f %t2.o
+// RUN: cd %T && not %clang -S %t1.c %t2.c
+// RUN: test -f %t1.s
+// RUN: test ! -f %t2.s
