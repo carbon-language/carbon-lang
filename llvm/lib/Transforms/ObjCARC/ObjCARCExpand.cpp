@@ -109,5 +109,3 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
   return Changed;
 }
 
-/// @}
-///
