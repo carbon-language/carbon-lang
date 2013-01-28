@@ -213,8 +213,8 @@ public:
     ShowStats(false), ShowTimers(false), ShowVersion(false),
     FixWhatYouCan(false), FixOnlyWarnings(false), FixAndRecompile(false),
     FixToTemporaries(false), ARCMTMigrateEmitARCErrors(false),
-    SkipFunctionBodies(false), UseGlobalModuleIndex(false),
-    GenerateGlobalModuleIndex(false),
+    SkipFunctionBodies(false), UseGlobalModuleIndex(true),
+    GenerateGlobalModuleIndex(true),
     ARCMTAction(ARCMT_None), ObjCMTAction(ObjCMT_None),
     ProgramAction(frontend::ParseSyntaxOnly)
   {}
