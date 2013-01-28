@@ -90,6 +90,7 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DecodePALIGNRMask(MVT::v32i8,
                       MI->getOperand(MI->getNumOperands()-1).getImm(),
                       ShuffleMask);
+    break;
 
   case X86::PSHUFDri:
   case X86::VPSHUFDri:
