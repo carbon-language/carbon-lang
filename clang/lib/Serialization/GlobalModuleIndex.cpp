@@ -665,8 +665,6 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
       }
     }
 
-    // FIXME: Handle the selector table.
-    
     // We don't care about this record.
   }
 
@@ -785,8 +783,6 @@ void GlobalModuleIndexBuilder::writeIndex(llvm::BitstreamWriter &Stream) {
     Record.push_back(BucketOffset);
     Stream.EmitRecordWithBlob(IDTableAbbrev, Record, IdentifierTable.str());
   }
-
-  // FIXME: Selectors.
 
   Stream.ExitBlock();
 }

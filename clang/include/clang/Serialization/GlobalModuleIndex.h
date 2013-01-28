@@ -8,11 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the GlobalModuleIndex class, which manages a global index
-// containing all of the identifiers with namespace-scope bindings attached to
-// them as well as all of the selectors that name methods, across all of the
-// modules within a given subdirectory of the module cache. It is used to
-// improve the performance of queries such as "does this identifier have any
-// top-level bindings in any module?"
+// containing all of the identifiers known to the various modules within a given
+// subdirectory of the module cache. It is used to improve the performance of
+// queries such as "do any modules know about this identifier?"
 //
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_SERIALIZATION_GLOBAL_MODULE_INDEX_H
@@ -41,17 +39,16 @@ using llvm::SmallVectorImpl;
 using llvm::StringRef;
 
 /// \brief A global index for a set of module files, providing information about
-/// the top-level identifiers and selectors within those module files.
+/// the identifiers within those module files.
 ///
 /// The global index is an aid for name lookup into modules, offering a central
-/// place where one can look for identifiers or selectors to determine which
-/// module files contain a namespace-scope identity with that identifier or
-/// a method with that selector, respectively. This allows the client to
-/// restrict the search to only those module files known to have a binding for
-/// that identifier or selector, improving performance. Moreover, the global
-/// module index may know about module files that have not been imported, and
-/// can be queried to determine which modules the currently translation could
-/// or should load to fix a problem.
+/// place where one can look for identifiers determine which
+/// module files contain any information about that identifier. This
+/// allows the client to restrict the search to only those module files known
+/// to have a information about that identifier, improving performance. Moreover,
+/// the global module index may know about module files that have not been
+/// imported, and can be queried to determine which modules the current
+/// translation could or should load to fix a problem.
 class GlobalModuleIndex {
   /// \brief Buffer containing the index file, which is lazily accessed so long
   /// as the global module index is live.
@@ -142,14 +139,13 @@ public:
   /// \brief A set of module files in which we found a result.
   typedef llvm::SmallPtrSet<const FileEntry *, 4> HitSet;
   
-  /// \brief Look for all of the module files with a namespace-scope binding
-  /// for the given identifier, e.g., a global function, variable, or type with
-  /// that name, or declare a method with the selector.
+  /// \brief Look for all of the module files with information about the given
+  /// identifier, e.g., a global function, variable, or type with that name.
   ///
   /// \param Name The identifier to look for.
   ///
-  /// \param Hits Will be populated with the set of module
-  /// files that declare entities with the given name.
+  /// \param Hits Will be populated with the set of module files that have
+  /// information about this name.
   ///
   /// \returns true if the identifier is known to the index, false otherwise.
   bool lookupIdentifier(StringRef Name, HitSet &Hits);
