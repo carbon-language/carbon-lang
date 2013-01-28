@@ -1383,17 +1383,10 @@ TEST(MemorySanitizer, ICmpRelational) {
   EXPECT_POISONED(poisoned(-1, 0xFFFFFFFFU) >=
                   poisoned(-1, 0xFFFFFFFFU));
 
-  EXPECT_NOT_POISONED(poisoned(32, 0x7) > poisoned(7, 0));
-  EXPECT_NOT_POISONED(poisoned(33, 0x7) > poisoned(7, 0));
-  EXPECT_NOT_POISONED(poisoned(9, 0x7) > poisoned(7, 0));
-  EXPECT_NOT_POISONED(poisoned(8, 0x7) > poisoned(7, 0));
-  EXPECT_NOT_POISONED(poisoned(7, 0x7) > poisoned(7, 0));
-  EXPECT_NOT_POISONED(poisoned(6, 0x7) > poisoned(7, 0));
   EXPECT_POISONED(poisoned(6, 0xF) > poisoned(7, 0));
   EXPECT_POISONED(poisoned(0xF, 0xF) > poisoned(7, 0));
 
   EXPECT_NOT_POISONED(poisoned(-1, 0x80000000U) >= poisoned(-1, 0U));
-  EXPECT_POISONED(poisoned(42, 0x80000000U) > poisoned(0, 0U));
 }
 
 #if MSAN_HAS_M128
