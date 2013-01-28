@@ -10516,7 +10516,7 @@ void Sema::ActOnFields(Scope* S,
           }
         } else {
           Diag(FD->getLocation(), diag::err_arc_objc_object_in_tag) 
-            << T->isBlockPointerType() << T << Record->getTagKind();
+            << T->isBlockPointerType() << Record->getTagKind();
         }
         ARCErrReported = true;
       }

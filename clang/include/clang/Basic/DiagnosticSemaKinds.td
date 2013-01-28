@@ -3697,8 +3697,8 @@ def err_arc_mismatched_cast : Error<
 def err_arc_nolifetime_behavior : Error<
   "explicit ownership qualifier on cast result has no effect">;
 def err_arc_objc_object_in_tag : Error<
-  "ARC forbids %select{Objective-C objects|blocks}0 of type %1 in "
-  "%select{struct|interface|union|<<ERROR>>|enum}2">;
+  "ARC forbids %select{Objective-C objects|blocks}0 in "
+  "%select{struct|interface|union|<<ERROR>>|enum}1">;
 def err_arc_objc_property_default_assign_on_object : Error<
   "ARC forbids synthesizing a property of an Objective-C object "
   "with unspecified ownership or storage attribute">;

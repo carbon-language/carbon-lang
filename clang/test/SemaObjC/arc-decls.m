@@ -3,17 +3,17 @@
 // rdar://8843524
 
 struct A {
-    id x; // expected-error {{ARC forbids Objective-C objects of type '__strong id' in struct}}
+    id x; // expected-error {{ARC forbids Objective-C objects in struct}}
 };
 
 union u {
-    id u; // expected-error {{ARC forbids Objective-C objects of type '__strong id' in union}}
+    id u; // expected-error {{ARC forbids Objective-C objects in union}}
 };
 
 @interface I {
    struct A a; 
    struct B {
-    id y[10][20]; // expected-error {{ARC forbids Objective-C objects}}
+    id y[10][20]; // expected-error {{ARC forbids Objective-C objects in struct}}
     id z;
    } b;
 
@@ -23,7 +23,7 @@ union u {
 
 // rdar://10260525
 struct r10260525 {
-  id (^block) (); // expected-error {{ARC forbids blocks of type 'id (^__strong)()' in struct}}
+  id (^block) (); // expected-error {{ARC forbids blocks in struct}}
 };
 
 struct S { 
