@@ -856,7 +856,7 @@ TEST_F(FormatTest, FormatsAwesomeMethodCall) {
       "                   SecondLongCall(parameter));");
 }
 
-TEST_F(FormatTest, HigherIndentsForDeeperNestedParameters) {
+TEST_F(FormatTest, PreventConfusingIndents) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -872,6 +872,9 @@ TEST_F(FormatTest, HigherIndentsForDeeperNestedParameters) {
       "    aaaaaaaaaaaaaaaaaaaaaaaa<\n"
       "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>,\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaa>;");
+  verifyFormat("int a = bbbb && ccc && fffff(\n"
+               "#define A Just forcing a new line\n"
+               "                           ddd);");
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {

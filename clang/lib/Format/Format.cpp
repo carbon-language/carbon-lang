@@ -158,6 +158,11 @@ static prec::Level getPrecedence(const AnnotatedToken &Tok) {
   return getBinOpPrecedence(Tok.FormatTok.Tok.getKind(), true, true);
 }
 
+bool isBinaryOperator(const AnnotatedToken &Tok) {
+  // Comma is a binary operator, but does not behave as such wrt. formatting.
+  return getPrecedence(Tok) > prec::Comma;
+}
+
 FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
   LLVMStyle.ColumnLimit = 80;
@@ -200,7 +205,6 @@ FormatStyle getChromiumStyle() {
 
 struct OptimizationParameters {
   unsigned PenaltyIndentLevel;
-  unsigned PenaltyLevelDecrease;
   unsigned PenaltyExcessCharacter;
 };
 
@@ -345,7 +349,6 @@ public:
         FirstIndent(FirstIndent), RootToken(RootToken),
         Whitespaces(Whitespaces) {
     Parameters.PenaltyIndentLevel = 20;
-    Parameters.PenaltyLevelDecrease = 30;
     Parameters.PenaltyExcessCharacter = 1000000;
   }
 
@@ -361,7 +364,6 @@ public:
     State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent));
     State.ForLoopVariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
-    State.StartOfLineLevel = 1;
 
     DEBUG({
       DebugTokenState(*State.NextToken);
@@ -493,9 +495,6 @@ private:
     /// \brief The token that needs to be next formatted.
     const AnnotatedToken *NextToken;
 
-    /// \brief The parenthesis level of the first token on the current line.
-    unsigned StartOfLineLevel;
-
     /// \brief The column of the first variable in a for-loop declaration.
     ///
     /// Used to align the second variable if necessary.
@@ -514,8 +513,6 @@ private:
         return Other.NextToken > NextToken;
       if (Other.Column != Column)
         return Other.Column > Column;
-      if (Other.StartOfLineLevel != StartOfLineLevel)
-        return Other.StartOfLineLevel > StartOfLineLevel;
       if (Other.ForLoopVariablePos != ForLoopVariablePos)
         return Other.ForLoopVariablePos < ForLoopVariablePos;
       if (Other.LineContainsContinuedForLoopSection !=
@@ -569,10 +566,6 @@ private:
         State.Column = State.Stack[ParenLevel].Indent;
       }
 
-      // A line starting with a closing brace is assumed to be correct for the
-      // same level as before the opening brace.
-      State.StartOfLineLevel = ParenLevel + (Current.is(tok::r_brace) ? 0 : 1);
-
       if (RootToken.is(tok::kw_for))
         State.LineContainsContinuedForLoopSection = Previous.isNot(tok::semi);
 
@@ -621,6 +614,9 @@ private:
         State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
       else if (Previous.is(tok::comma) && ParenLevel != 0)
         // Top-level spaces are exempt as that mostly leads to better results.
+        State.Stack.back().LastSpace = State.Column;
+      else if (Previous.Type == TT_BinaryOperator &&
+               getPrecedence(Previous) != prec::Assignment)
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.ParameterCount > 1 &&
                (Previous.is(tok::l_paren) || Previous.is(tok::l_square) ||
@@ -739,7 +735,7 @@ private:
 
     if (Right.is(tok::arrow) || Right.is(tok::period)) {
       if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
-        return 15; // Should be smaller than breaking at a nested comma.
+        return 5; // Should be smaller than breaking at a nested comma.
       return 150;
     }
 
@@ -792,15 +788,9 @@ private:
       return UINT_MAX;
 
     unsigned CurrentPenalty = 0;
-    if (NewLine) {
+    if (NewLine)
       CurrentPenalty += Parameters.PenaltyIndentLevel * State.Stack.size() +
                         splitPenalty(*State.NextToken->Parent);
-    } else {
-      if (State.Stack.size() < State.StartOfLineLevel &&
-          State.NextToken->is(tok::identifier))
-        CurrentPenalty += Parameters.PenaltyLevelDecrease *
-                          (State.StartOfLineLevel - State.Stack.size());
-    }
 
     addTokenToState(NewLine, true, State);
 
@@ -1200,6 +1190,7 @@ public:
 
     LineType parseLine() {
       int PeriodsAndArrows = 0;
+      bool CanBeBuilderTypeStmt = true;
       if (CurrentToken->is(tok::hash)) {
         parsePreprocessorDirective();
         return LT_PreprocessorDirective;
@@ -1210,6 +1201,9 @@ public:
           KeywordVirtualFound = true;
         if (CurrentToken->is(tok::period) || CurrentToken->is(tok::arrow))
           ++PeriodsAndArrows;
+        if (getPrecedence(*CurrentToken) > prec::Assignment &&
+            CurrentToken->isNot(tok::less) && CurrentToken->isNot(tok::greater))
+          CanBeBuilderTypeStmt = false;
         if (!consumeToken())
           return LT_Invalid;
       }
@@ -1217,7 +1211,7 @@ public:
         return LT_VirtualFunctionDecl;
 
       // Assume a builder-type call if there are 2 or more "." and "->".
-      if (PeriodsAndArrows >= 2)
+      if (PeriodsAndArrows >= 2 && CanBeBuilderTypeStmt)
         return LT_BuilderTypeCall;
 
       return LT_Other;
@@ -1352,11 +1346,6 @@ private:
 
     if (!Current.Children.empty())
       determineTokenTypes(Current.Children[0], IsExpression);
-  }
-
-  bool isBinaryOperator(const AnnotatedToken &Tok) {
-    // Comma is a binary operator, but does not behave as such wrt. formatting.
-    return getPrecedence(Tok) > prec::Comma;
   }
 
   /// \brief Returns the previous token ignoring comments.
