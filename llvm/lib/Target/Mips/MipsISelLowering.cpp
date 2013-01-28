@@ -214,12 +214,6 @@ namespace {
   };
 
   std::set<const char*, ltstr> noHelperNeeded;
-
-  const char* addToNoHelperNeeded(const char* s) {
-    noHelperNeeded.insert(s);
-    return s;
-  }
-
 }
 
 void MipsTargetLowering::SetMips16LibcallName
