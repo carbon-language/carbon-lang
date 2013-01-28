@@ -179,7 +179,7 @@ struct SkipBodyAction : public clang::ASTFrontendAction {
   }
 };
 
-TEST(runToolOnCode, TestSkipFunctionBoddy) {
+TEST(runToolOnCode, TestSkipFunctionBody) {
   EXPECT_TRUE(runToolOnCode(new SkipBodyAction,
                             "int skipMe() { an_error_here }"));
   EXPECT_FALSE(runToolOnCode(new SkipBodyAction,
