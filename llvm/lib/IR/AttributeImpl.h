@@ -115,7 +115,6 @@ class AttributeSetImpl : public FoldingSetNode {
   friend class AttributeSet;
 
   LLVMContext &Context;
-  SmallVector<AttributeWithIndex, 4> AttrList;
 
   typedef std::pair<uint64_t, AttributeSetNode*> IndexAttrPair;
   SmallVector<IndexAttrPair, 4> AttrNodes;
@@ -124,12 +123,12 @@ class AttributeSetImpl : public FoldingSetNode {
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
-  AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs);
+  AttributeSetImpl(LLVMContext &C,
+                   ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs)
+    : Context(C), AttrNodes(attrs.begin(), attrs.end()) {}
 
   /// \brief Get the context that created this AttributeSetImpl.
   LLVMContext &getContext() { return Context; }
-
-  ArrayRef<AttributeWithIndex> getAttributes() const { return AttrList; }
 
   /// \brief Return the number of attributes this AttributeSet contains.
   unsigned getNumAttributes() const { return AttrNodes.size(); }
@@ -147,7 +146,7 @@ public:
   /// parameter/ function which the attributes apply to.
   AttributeSet getSlotAttributes(unsigned Slot) const {
     // FIXME: This needs to use AttrNodes instead.
-    return AttributeSet::get(Context, AttrList[Slot]);
+    return AttributeSet::get(Context, AttrNodes[Slot]);
   }
 
   typedef AttributeSetNode::iterator       iterator;
@@ -164,16 +163,8 @@ public:
     { return AttrNodes[Idx].second->end(); }
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, AttrList);
+    Profile(ID, AttrNodes);
   }
-  static void Profile(FoldingSetNodeID &ID,
-                      ArrayRef<AttributeWithIndex> AttrList) {
-    for (unsigned i = 0, e = AttrList.size(); i != e; ++i) {
-      ID.AddInteger(AttrList[i].Index);
-      ID.AddInteger(AttrList[i].Attrs.Raw());
-    }
-  }
-
   static void Profile(FoldingSetNodeID &ID,
                       ArrayRef<std::pair<uint64_t, AttributeSetNode*> > Nodes) {
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {

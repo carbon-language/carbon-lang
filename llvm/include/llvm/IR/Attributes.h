@@ -177,22 +177,7 @@ template<> struct DenseMapInfo<Attribute::AttrKind> {
 
 class AttrBuilder;
 class AttributeSetImpl;
-
-//===----------------------------------------------------------------------===//
-/// \class
-/// \brief This is just a pair of values to associate a set of attributes with
-/// an index.
-struct AttributeWithIndex {
-  Attribute Attrs;  ///< The attributes that are set, or'd together.
-  unsigned Index;   ///< Index of the parameter for which the attributes apply.
-
-  static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
-    AttributeWithIndex P;
-    P.Index = Idx;
-    P.Attrs = Attrs;
-    return P;
-  }
-};
+class AttributeSetNode;
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -216,9 +201,17 @@ private:
   /// for the result are denoted with Idx = 0.
   Attribute getAttributes(unsigned Idx) const;
 
-  /// \brief Create an AttributeSet from the AttributeWithIndex structures.
-  /// N.B. this is only temporary. It will be disappearing in the future.
-  static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
+  /// \brief Create an AttributeSet with the specified parameters in it.
+  static AttributeSet get(LLVMContext &C,
+                          ArrayRef<std::pair<uint64_t, Attribute> > Attrs);
+  static AttributeSet get(LLVMContext &C,
+                          ArrayRef<std::pair<uint64_t,
+                                             AttributeSetNode*> > Attrs);
+
+  static AttributeSet getImpl(LLVMContext &C,
+                              ArrayRef<std::pair<uint64_t,
+                                                 AttributeSetNode*> > Attrs);
+
 
   explicit AttributeSet(AttributeSetImpl *LI) : pImpl(LI) {}
 public:
