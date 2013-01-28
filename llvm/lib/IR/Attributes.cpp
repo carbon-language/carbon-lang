@@ -752,10 +752,11 @@ Attribute AttributeSet::getAttributes(unsigned Idx) const {
 bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   if (pImpl == 0) return false;
 
-  ArrayRef<AttributeWithIndex> Attrs = pImpl->getAttributes();
-  for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
-    if (Attrs[i].Attrs.hasAttribute(Attr))
-      return true;
+  for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
+    for (AttributeSetImpl::iterator II = pImpl->begin(I),
+           IE = pImpl->end(I); II != IE; ++II)
+      if (II->hasAttribute(Attr))
+        return true;
 
   return false;
 }
@@ -788,11 +789,12 @@ AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
     return *this;
 
   SmallVector<AttributeWithIndex, 8> NewAttrList;
-  if (pImpl == 0)
+  if (pImpl == 0) {
     NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
-  else {
+  } else {
     ArrayRef<AttributeWithIndex> OldAttrList = pImpl->getAttributes();
     unsigned i = 0, e = OldAttrList.size();
+
     // Copy attributes for arguments before this one.
     for (; i != e && OldAttrList[i].Index < Idx; ++i)
       NewAttrList.push_back(OldAttrList[i]);
