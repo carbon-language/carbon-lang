@@ -31,12 +31,9 @@ using namespace llvm;
 // Attribute Implementation
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, ArrayRef<AttrKind> Kinds) {
+Attribute Attribute::get(LLVMContext &Context, AttrKind Kind) {
   AttrBuilder B;
-  for (ArrayRef<AttrKind>::iterator I = Kinds.begin(), E = Kinds.end();
-       I != E; ++I)
-    B.addAttribute(*I);
-  return Attribute::get(Context, B);
+  return Attribute::get(Context, B.addAttribute(Kind));
 }
 
 Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
@@ -564,7 +561,7 @@ AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
   // FIXME: Remove.
   return pImpl && hasAttributes(Idx) ?
     AttributeSet::get(pImpl->getContext(),
-                      ArrayRef<std::pair<uint64_t, Attribute> >(
+                      ArrayRef<std::pair<unsigned, Attribute> >(
                         std::make_pair(Idx, getAttributes(Idx)))) :
     AttributeSet();
 }
@@ -573,7 +570,7 @@ AttributeSet AttributeSet::getRetAttributes() const {
   // FIXME: Remove.
   return pImpl && hasAttributes(ReturnIndex) ?
     AttributeSet::get(pImpl->getContext(),
-                      ArrayRef<std::pair<uint64_t, Attribute> >(
+                      ArrayRef<std::pair<unsigned, Attribute> >(
                         std::make_pair(ReturnIndex,
                                        getAttributes(ReturnIndex)))) :
     AttributeSet();
@@ -583,14 +580,14 @@ AttributeSet AttributeSet::getFnAttributes() const {
   // FIXME: Remove.
   return pImpl && hasAttributes(FunctionIndex) ?
     AttributeSet::get(pImpl->getContext(),
-                      ArrayRef<std::pair<uint64_t, Attribute> >(
+                      ArrayRef<std::pair<unsigned, Attribute> >(
                         std::make_pair(FunctionIndex,
                                        getAttributes(FunctionIndex)))) :
     AttributeSet();
 }
 
 AttributeSet AttributeSet::getImpl(LLVMContext &C,
-                                   ArrayRef<std::pair<uint64_t,
+                                   ArrayRef<std::pair<unsigned,
                                                    AttributeSetNode*> > Attrs) {
   LLVMContextImpl *pImpl = C.pImpl;
   FoldingSetNodeID ID;
@@ -611,7 +608,7 @@ AttributeSet AttributeSet::getImpl(LLVMContext &C,
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C,
-                               ArrayRef<std::pair<uint64_t, Attribute> > Attrs){
+                               ArrayRef<std::pair<unsigned, Attribute> > Attrs){
   // If there are no attributes then return a null AttributesList pointer.
   if (Attrs.empty())
     return AttributeSet();
@@ -625,12 +622,12 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   }
 #endif
 
-  // Create a vector if (uint64_t, AttributeSetNode*) pairs from the attributes
+  // Create a vector if (unsigned, AttributeSetNode*) pairs from the attributes
   // list.
-  SmallVector<std::pair<uint64_t, AttributeSetNode*>, 8> AttrPairVec;
-  for (ArrayRef<std::pair<uint64_t, Attribute> >::iterator I = Attrs.begin(),
+  SmallVector<std::pair<unsigned, AttributeSetNode*>, 8> AttrPairVec;
+  for (ArrayRef<std::pair<unsigned, Attribute> >::iterator I = Attrs.begin(),
          E = Attrs.end(); I != E; ) {
-    uint64_t Index = I->first;
+    unsigned Index = I->first;
     SmallVector<Attribute, 4> AttrVec;
     while (I->first == Index && I != E) {
       AttrVec.push_back(I->second);
@@ -645,7 +642,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C,
-                               ArrayRef<std::pair<uint64_t,
+                               ArrayRef<std::pair<unsigned,
                                                   AttributeSetNode*> > Attrs) {
   // If there are no attributes then return a null AttributesList pointer.
   if (Attrs.empty())
@@ -657,13 +654,13 @@ AttributeSet AttributeSet::get(LLVMContext &C,
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
   if (!B.hasAttributes())
     return AttributeSet();
-  return get(C, ArrayRef<std::pair<uint64_t, Attribute> >(
+  return get(C, ArrayRef<std::pair<unsigned, Attribute> >(
                std::make_pair(Idx, Attribute::get(C, B))));
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
                                ArrayRef<Attribute::AttrKind> Kind) {
-  SmallVector<std::pair<uint64_t, Attribute>, 8> Attrs;
+  SmallVector<std::pair<unsigned, Attribute>, 8> Attrs;
   for (ArrayRef<Attribute::AttrKind>::iterator I = Kind.begin(),
          E = Kind.end(); I != E; ++I)
     Attrs.push_back(std::make_pair(Idx, Attribute::get(C, *I)));
@@ -671,7 +668,7 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
-  SmallVector<std::pair<uint64_t, AttributeSetNode*>, 8> AttrNodeVec;
+  SmallVector<std::pair<unsigned, AttributeSetNode*>, 8> AttrNodeVec;
   for (unsigned I = 0, E = Attrs.size(); I != E; ++I) {
     AttributeSet AS = Attrs[I];
     if (!AS.pImpl) continue;

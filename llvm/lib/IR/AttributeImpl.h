@@ -116,7 +116,7 @@ class AttributeSetImpl : public FoldingSetNode {
 
   LLVMContext &Context;
 
-  typedef std::pair<uint64_t, AttributeSetNode*> IndexAttrPair;
+  typedef std::pair<unsigned, AttributeSetNode*> IndexAttrPair;
   SmallVector<IndexAttrPair, 4> AttrNodes;
 
   // AttributesSet is uniqued, these should not be publicly available.
@@ -124,7 +124,7 @@ class AttributeSetImpl : public FoldingSetNode {
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
   AttributeSetImpl(LLVMContext &C,
-                   ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs)
+                   ArrayRef<std::pair<unsigned, AttributeSetNode*> > attrs)
     : Context(C), AttrNodes(attrs.begin(), attrs.end()) {}
 
   /// \brief Get the context that created this AttributeSetImpl.
@@ -166,7 +166,7 @@ public:
     Profile(ID, AttrNodes);
   }
   static void Profile(FoldingSetNodeID &ID,
-                      ArrayRef<std::pair<uint64_t, AttributeSetNode*> > Nodes) {
+                      ArrayRef<std::pair<unsigned, AttributeSetNode*> > Nodes) {
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
       ID.AddInteger(Nodes[i].first);
       ID.AddPointer(Nodes[i].second);

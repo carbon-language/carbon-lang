@@ -108,7 +108,7 @@ public:
   Attribute() : pImpl(0) {}
 
   /// \brief Return a uniquified Attribute object.
-  static Attribute get(LLVMContext &Context, ArrayRef<AttrKind> Kinds);
+  static Attribute get(LLVMContext &Context, AttrKind Kind);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
   /// \brief Return a uniquified Attribute object that has the specific
@@ -203,13 +203,13 @@ private:
 
   /// \brief Create an AttributeSet with the specified parameters in it.
   static AttributeSet get(LLVMContext &C,
-                          ArrayRef<std::pair<uint64_t, Attribute> > Attrs);
+                          ArrayRef<std::pair<unsigned, Attribute> > Attrs);
   static AttributeSet get(LLVMContext &C,
-                          ArrayRef<std::pair<uint64_t,
+                          ArrayRef<std::pair<unsigned,
                                              AttributeSetNode*> > Attrs);
 
   static AttributeSet getImpl(LLVMContext &C,
-                              ArrayRef<std::pair<uint64_t,
+                              ArrayRef<std::pair<unsigned,
                                                  AttributeSetNode*> > Attrs);
 
 
