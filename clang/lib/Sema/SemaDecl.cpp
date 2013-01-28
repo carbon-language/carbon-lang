@@ -10498,44 +10498,42 @@ void Sema::ActOnFields(Scope* S,
         << FixItHint::CreateInsertion(FD->getLocation(), "*");
       QualType T = Context.getObjCObjectPointerType(FD->getType());
       FD->setType(T);
-    } else if (!getLangOpts().CPlusPlus) {
-      if (getLangOpts().ObjCAutoRefCount && Record && !ARCErrReported) {
-        // It's an error in ARC if a field has lifetime.
-        // We don't want to report this in a system header, though,
-        // so we just make the field unavailable.
-        // FIXME: that's really not sufficient; we need to make the type
-        // itself invalid to, say, initialize or copy.
-        QualType T = FD->getType();
-        Qualifiers::ObjCLifetime lifetime = T.getObjCLifetime();
-        if (lifetime && lifetime != Qualifiers::OCL_ExplicitNone) {
-          SourceLocation loc = FD->getLocation();
-          if (getSourceManager().isInSystemHeader(loc)) {
-            if (!FD->hasAttr<UnavailableAttr>()) {
-              FD->addAttr(new (Context) UnavailableAttr(loc, Context,
-                                "this system field has retaining ownership"));
-            }
-          } else {
-            Diag(FD->getLocation(), diag::err_arc_objc_object_in_struct) 
-              << T->isBlockPointerType();
+    } else if (getLangOpts().ObjCAutoRefCount && Record && !ARCErrReported &&
+               (!getLangOpts().CPlusPlus || Record->isUnion())) {
+      // It's an error in ARC if a field has lifetime.
+      // We don't want to report this in a system header, though,
+      // so we just make the field unavailable.
+      // FIXME: that's really not sufficient; we need to make the type
+      // itself invalid to, say, initialize or copy.
+      QualType T = FD->getType();
+      Qualifiers::ObjCLifetime lifetime = T.getObjCLifetime();
+      if (lifetime && lifetime != Qualifiers::OCL_ExplicitNone) {
+        SourceLocation loc = FD->getLocation();
+        if (getSourceManager().isInSystemHeader(loc)) {
+          if (!FD->hasAttr<UnavailableAttr>()) {
+            FD->addAttr(new (Context) UnavailableAttr(loc, Context,
+                              "this system field has retaining ownership"));
           }
-          ARCErrReported = true;
+        } else {
+          Diag(FD->getLocation(), diag::err_arc_objc_object_in_tag) 
+            << T->isBlockPointerType() << T << Record->getTagKind();
         }
+        ARCErrReported = true;
       }
-      else if (getLangOpts().ObjC1 &&
+    } else if (getLangOpts().ObjC1 &&
                getLangOpts().getGC() != LangOptions::NonGC &&
                Record && !Record->hasObjectMember()) {
-        if (FD->getType()->isObjCObjectPointerType() ||
-            FD->getType().isObjCGCStrong())
+      if (FD->getType()->isObjCObjectPointerType() ||
+          FD->getType().isObjCGCStrong())
+        Record->setHasObjectMember(true);
+      else if (Context.getAsArrayType(FD->getType())) {
+        QualType BaseType = Context.getBaseElementType(FD->getType());
+        if (BaseType->isRecordType() && 
+            BaseType->getAs<RecordType>()->getDecl()->hasObjectMember())
           Record->setHasObjectMember(true);
-        else if (Context.getAsArrayType(FD->getType())) {
-          QualType BaseType = Context.getBaseElementType(FD->getType());
-          if (BaseType->isRecordType() && 
-              BaseType->getAs<RecordType>()->getDecl()->hasObjectMember())
-            Record->setHasObjectMember(true);
-          else if (BaseType->isObjCObjectPointerType() ||
-                   BaseType.isObjCGCStrong())
-                 Record->setHasObjectMember(true);
-        }
+        else if (BaseType->isObjCObjectPointerType() ||
+                 BaseType.isObjCGCStrong())
+               Record->setHasObjectMember(true);
       }
     }
     if (Record && FD->getType().isVolatileQualified())
