@@ -21,7 +21,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
-#include "llvm/Support/Commandline.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;
