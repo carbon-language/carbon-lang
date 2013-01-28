@@ -371,12 +371,13 @@ CriticalAntiDepBreaker::isNewRegClobberedByRefs(RegRefIter RegRefBegin,
   return false;
 }
 
-unsigned
-CriticalAntiDepBreaker::findSuitableFreeRegister(RegRefIter RegRefBegin,
-                                                 RegRefIter RegRefEnd,
-                                                 unsigned AntiDepReg,
-                                                 unsigned LastNewReg,
-                                                 const TargetRegisterClass *RC)
+unsigned CriticalAntiDepBreaker::
+findSuitableFreeRegister(RegRefIter RegRefBegin,
+                         RegRefIter RegRefEnd,
+                         unsigned AntiDepReg,
+                         unsigned LastNewReg,
+                         const TargetRegisterClass *RC,
+                         SmallVector<unsigned, 2> &Forbid)
 {
   ArrayRef<MCPhysReg> Order = RegClassInfo.getOrder(RC);
   for (unsigned i = 0; i != Order.size(); ++i) {
@@ -401,6 +402,15 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(RegRefIter RegRefBegin,
         Classes[NewReg] == reinterpret_cast<TargetRegisterClass *>(-1) ||
         KillIndices[AntiDepReg] > DefIndices[NewReg])
       continue;
+    // If NewReg overlaps any of the forbidden registers, we can't use it.
+    bool Forbidden = false;
+    for (SmallVector<unsigned, 2>::iterator it = Forbid.begin(),
+           ite = Forbid.end(); it != ite; ++it)
+      if (TRI->regsOverlap(NewReg, *it)) {
+        Forbidden = true;
+        break;
+      }
+    if (Forbidden) continue;
     return NewReg;
   }
 
@@ -564,6 +574,8 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
 
     PrescanInstruction(MI);
 
+    SmallVector<unsigned, 2> ForbidRegs;
+
     // If MI's defs have a special allocation requirement, don't allow
     // any def registers to be changed. Also assume all registers
     // defined in a call must not be changed (ABI).
@@ -574,7 +586,9 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
       AntiDepReg = 0;
     else if (AntiDepReg) {
       // If this instruction has a use of AntiDepReg, breaking it
-      // is invalid.
+      // is invalid.  If the instruction defines other registers,
+      // save a list of them so that we don't pick a new register
+      // that overlaps any of them.
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI->getOperand(i);
         if (!MO.isReg()) continue;
@@ -584,6 +598,8 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
           AntiDepReg = 0;
           break;
         }
+        if (MO.isDef() && Reg != AntiDepReg)
+          ForbidRegs.push_back(Reg);
       }
     }
 
@@ -606,7 +622,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
       if (unsigned NewReg = findSuitableFreeRegister(Range.first, Range.second,
                                                      AntiDepReg,
                                                      LastNewReg[AntiDepReg],
-                                                     RC)) {
+                                                     RC, ForbidRegs)) {
         DEBUG(dbgs() << "Breaking anti-dependence edge on "
               << TRI->getName(AntiDepReg)
               << " with " << RegRefs.count(AntiDepReg) << " references"

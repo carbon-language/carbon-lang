@@ -102,7 +102,8 @@ class TargetRegisterInfo;
                                       RegRefIter RegRefEnd,
                                       unsigned AntiDepReg,
                                       unsigned LastNewReg,
-                                      const TargetRegisterClass *RC);
+                                      const TargetRegisterClass *RC,
+                                      SmallVector<unsigned, 2> &Forbid);
   };
 }
 
