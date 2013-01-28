@@ -313,7 +313,7 @@ class SizeClassAllocator64 {
       alignment <= SizeClassMap::kMaxSize;
   }
 
-  Batch *NOINLINE AllocateBatch(AllocatorStats *stat, AllocatorCache *c,
+  NOINLINE Batch* AllocateBatch(AllocatorStats *stat, AllocatorCache *c,
                                 uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
@@ -324,7 +324,7 @@ class SizeClassAllocator64 {
     return b;
   }
 
-  void NOINLINE DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
+  NOINLINE void DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
     region->free_list.Push(b);
     region->n_freed += b->count;
@@ -451,7 +451,7 @@ class SizeClassAllocator64 {
     return offset / (u32)size;
   }
 
-  Batch *NOINLINE PopulateFreeList(AllocatorStats *stat, AllocatorCache *c,
+  NOINLINE Batch* PopulateFreeList(AllocatorStats *stat, AllocatorCache *c,
                                    uptr class_id, RegionInfo *region) {
     BlockingMutexLock l(&region->mutex);
     Batch *b = region->free_list.Pop();
@@ -573,7 +573,7 @@ class SizeClassAllocator32 {
     return reinterpret_cast<void*>(meta);
   }
 
-  Batch *NOINLINE AllocateBatch(AllocatorStats *stat, AllocatorCache *c,
+  NOINLINE Batch* AllocateBatch(AllocatorStats *stat, AllocatorCache *c,
                                 uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
@@ -586,7 +586,7 @@ class SizeClassAllocator32 {
     return b;
   }
 
-  void NOINLINE DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
+  NOINLINE void DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
     CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
     SpinMutexLock l(&sci->mutex);
@@ -782,7 +782,7 @@ struct SizeClassAllocatorLocalCache {
     }
   }
 
-  void NOINLINE Refill(SizeClassAllocator *allocator, uptr class_id) {
+  NOINLINE void Refill(SizeClassAllocator *allocator, uptr class_id) {
     InitCache();
     PerClass *c = &per_class_[class_id];
     Batch *b = allocator->AllocateBatch(&stats_, this, class_id);
@@ -794,7 +794,7 @@ struct SizeClassAllocatorLocalCache {
       Deallocate(allocator, SizeClassMap::ClassID(sizeof(Batch)), b);
   }
 
-  void NOINLINE Drain(SizeClassAllocator *allocator, uptr class_id) {
+  NOINLINE void Drain(SizeClassAllocator *allocator, uptr class_id) {
     InitCache();
     PerClass *c = &per_class_[class_id];
     Batch *b;
