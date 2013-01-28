@@ -42,6 +42,8 @@ enum AllocType {
 static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
+void InitializeAllocator();
+
 class AsanChunkView {
  public:
   explicit AsanChunkView(AsanChunk *chunk) : chunk_(chunk) {}

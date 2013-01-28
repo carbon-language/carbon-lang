@@ -688,6 +688,8 @@ void __asan_free_hook(void *ptr) {
 
 namespace __asan {
 
+void InitializeAllocator() { }
+
 void PrintInternalAllocatorStats() {
 }
 

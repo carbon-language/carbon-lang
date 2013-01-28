@@ -295,18 +295,15 @@ struct QuarantineCallback {
   AllocatorCache *cache_;
 };
 
-static void Init() {
-  static int inited = 0;
-  if (inited) return;
-  __asan_init();
-  inited = true;  // this must happen before any threads are created.
+void InitializeAllocator() {
   allocator.Init();
   quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
 }
 
 static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
                       AllocType alloc_type) {
-  Init();
+  if (!asan_inited)
+    __asan_init();
   CHECK(stack);
   const uptr min_alignment = SHADOW_GRANULARITY;
   if (alignment < min_alignment)

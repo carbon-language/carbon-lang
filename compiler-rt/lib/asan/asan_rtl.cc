@@ -426,6 +426,8 @@ void __asan_init() {
   asanThreadRegistry().GetMain()->ThreadStart();
   force_interface_symbols();  // no-op.
 
+  InitializeAllocator();
+
   if (flags()->verbosity) {
     Report("AddressSanitizer Init done\n");
   }
