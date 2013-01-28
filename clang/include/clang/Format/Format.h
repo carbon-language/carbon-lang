@@ -65,6 +65,9 @@ struct FormatStyle {
   /// the next line without calling this bin-packing.
   bool AllowAllParametersOnNextLine;
 
+  /// \brief Allow putting the return type of a function onto its own line.
+  bool AllowReturnTypeOnItsOwnLine;
+
   /// \brief If the constructor initializers don't fit on a line, put each
   /// initializer on its own line.
   bool ConstructorInitializerAllOnOneLineOrOnePerLine;

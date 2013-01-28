@@ -1511,6 +1511,9 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
       "TypeSpecDecl *\n"
       "TypeSpecDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,\n"
       "                     IdentifierIn *II, Type *T) {\n}");
+  verifyGoogleFormat(
+      "TypeSpecDecl* TypeSpecDecl::Create(\n"
+      "    ASTContext& C, DeclContext* DC, SourceLocation L) {\n}");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {

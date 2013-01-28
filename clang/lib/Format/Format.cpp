@@ -176,6 +176,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.BinPackParameters = true;
   LLVMStyle.AllowAllParametersOnNextLine = true;
+  LLVMStyle.AllowReturnTypeOnItsOwnLine = true;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
@@ -193,6 +194,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.BinPackParameters = false;
   GoogleStyle.AllowAllParametersOnNextLine = true;
+  GoogleStyle.AllowReturnTypeOnItsOwnLine = false;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
@@ -1628,7 +1630,7 @@ private:
         // Don't break at ':' if identifier before it can beak.
         return false;
     }
-    if (Right.Type == TT_StartOfName)
+    if (Right.Type == TT_StartOfName && Style.AllowReturnTypeOnItsOwnLine)
       return true;
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return false;
