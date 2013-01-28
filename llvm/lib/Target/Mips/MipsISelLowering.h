@@ -176,6 +176,8 @@ namespace llvm {
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   private:
 
+    void SetMips16LibcallName(RTLIB::Libcall, const char *Name);
+
     void setMips16HardFloatLibCalls();
 
     unsigned int
