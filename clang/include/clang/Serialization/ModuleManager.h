@@ -43,7 +43,7 @@ class ModuleManager {
 
   /// \brief The visitation order.
   SmallVector<ModuleFile *, 4> VisitOrder;
-
+      
   /// \brief The list of module files that both we and the global module index
   /// know about.
   ///
@@ -62,6 +62,40 @@ class ModuleManager {
 
   /// \brief Update the set of modules files we know about known to the global index.
   void updateModulesInCommonWithGlobalIndex();
+
+  /// \brief State used by the "visit" operation to avoid malloc traffic in
+  /// calls to visit().
+  struct VisitState {
+    explicit VisitState(unsigned N)
+      : VisitNumber(N, 0), NextVisitNumber(1), NextState(0)
+    {
+      Stack.reserve(N);
+    }
+
+    ~VisitState() {
+      delete NextState;
+    }
+
+    /// \brief The stack used when marking the imports of a particular module
+    /// as not-to-be-visited.
+    SmallVector<ModuleFile *, 4> Stack;
+
+    /// \brief The visit number of each module file, which indicates when
+    /// this module file was last visited.
+    SmallVector<unsigned, 4> VisitNumber;
+
+    /// \brief The next visit number to use to mark visited module files.
+    unsigned NextVisitNumber;
+
+    /// \brief The next visit state.
+    VisitState *NextState;
+  };
+
+  /// \brief The first visit() state in the chain.
+  VisitState *FirstVisitState;
+
+  VisitState *allocateVisitState();
+  void returnVisitState(VisitState *State);
 
 public:
   typedef SmallVector<ModuleFile*, 2>::iterator ModuleIterator;

@@ -162,17 +162,37 @@ void ModuleManager::updateModulesInCommonWithGlobalIndex() {
   }
 }
 
+ModuleManager::VisitState *ModuleManager::allocateVisitState() {
+  // Fast path: if we have a cached state, use it.
+  if (FirstVisitState) {
+    VisitState *Result = FirstVisitState;
+    FirstVisitState = FirstVisitState->NextState;
+    Result->NextState = 0;
+    return Result;
+  }
+
+  // Allocate and return a new state.
+  return new VisitState(size());
+}
+
+void ModuleManager::returnVisitState(VisitState *State) {
+  assert(State->NextState == 0 && "Visited state is in list?");
+  State->NextState = FirstVisitState;
+  FirstVisitState = State;
+}
+
 void ModuleManager::setGlobalIndex(GlobalModuleIndex *Index) {
   GlobalIndex = Index;
   updateModulesInCommonWithGlobalIndex();
 }
 
 ModuleManager::ModuleManager(FileManager &FileMgr)
-  : FileMgr(FileMgr), GlobalIndex() { }
+  : FileMgr(FileMgr), GlobalIndex(), FirstVisitState(0) { }
 
 ModuleManager::~ModuleManager() {
   for (unsigned i = 0, e = Chain.size(); i != e; ++i)
     delete Chain[e - i - 1];
+  delete FirstVisitState;
 }
 
 void
@@ -230,10 +250,13 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     // global module index, since modules could have been added to the module
     // manager since we loaded the global module index.
     updateModulesInCommonWithGlobalIndex();
+
+    delete FirstVisitState;
+    FirstVisitState = 0;
   }
 
-  SmallVector<ModuleFile *, 4> Stack;
-  SmallVector<bool, 4> Visited(size(), false);
+  VisitState *State = allocateVisitState();
+  unsigned VisitNumber = State->NextVisitNumber++;
 
   // If the caller has provided us with a hit-set that came from the global
   // module index, mark every module file in common with the global module
@@ -243,18 +266,19 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     {
       ModuleFile *M = ModulesInCommonWithGlobalIndex[I];
       if (!ModuleFilesHit->count(M->File))
-        Visited[M->Index] = true;
+        State->VisitNumber[M->Index] = VisitNumber;
     }
   }
 
   for (unsigned I = 0, N = VisitOrder.size(); I != N; ++I) {
     ModuleFile *CurrentModule = VisitOrder[I];
     // Should we skip this module file?
-    if (Visited[CurrentModule->Index])
+    if (State->VisitNumber[CurrentModule->Index] == VisitNumber)
       continue;
 
     // Visit the module.
-    Visited[CurrentModule->Index] = true;
+    assert(State->VisitNumber[CurrentModule->Index] == VisitNumber - 1);
+    State->VisitNumber[CurrentModule->Index] = VisitNumber;
     if (!Visitor(*CurrentModule, UserData))
       continue;
 
@@ -262,7 +286,6 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     // module that the current module depends on. To indicate this
     // behavior, we mark all of the reachable modules as having been visited.
     ModuleFile *NextModule = CurrentModule;
-    Stack.reserve(size());
     do {
       // For any module that this module depends on, push it on the
       // stack (if it hasn't already been marked as visited).
@@ -270,20 +293,22 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
              M = NextModule->Imports.begin(),
              MEnd = NextModule->Imports.end();
            M != MEnd; ++M) {
-        if (!Visited[(*M)->Index]) {
-          Stack.push_back(*M);
-          Visited[(*M)->Index] = true;
+        if (State->VisitNumber[(*M)->Index] != VisitNumber) {
+          State->Stack.push_back(*M);
+          State->VisitNumber[(*M)->Index] = VisitNumber;
         }
       }
 
-      if (Stack.empty())
+      if (State->Stack.empty())
         break;
 
       // Pop the next module off the stack.
-      NextModule = Stack.back();
-      Stack.pop_back();
+      NextModule = State->Stack.back();
+      State->Stack.pop_back();
     } while (true);
   }
+
+  returnVisitState(State);
 }
 
 /// \brief Perform a depth-first visit of the current module.
