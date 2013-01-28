@@ -14,6 +14,12 @@
 // ("and i32 %x, %x" -> "%x").  If the simplification is also an instruction
 // then it dominates the original instruction.
 //
+// These routines implicitly resolve undef uses. The easiest way to be safe when
+// using these routines to obtain simplified values for existing instructions is
+// to always replace all uses of the instructions with the resulting simplified
+// values. This will prevent other code from seeing the same undef uses and
+// resolving them to different values.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
