@@ -612,7 +612,7 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
 }
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
-  if (p == 0)
+  if (p == 0 || reinterpret_cast<uptr>(p) == kReturnOnZeroMalloc)
     return Allocate(size, 8, stack, FROM_MALLOC);
   if (size == 0) {
     Deallocate(p, stack, FROM_MALLOC);

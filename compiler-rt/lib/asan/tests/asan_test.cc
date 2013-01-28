@@ -380,6 +380,15 @@ TEST(AddressSanitizer, ReallocTest) {
         (my_rand() % 1000 + kMinElem) * sizeof(int));
     EXPECT_EQ(3, ptr[3]);
   }
+  free(ptr);
+  // Realloc pointer returned by malloc(0).
+  int *ptr2 = Ident((int*)malloc(0));
+  fprintf(stderr, "Malloc(0): %p\n", ptr2);
+  ptr2 = Ident((int*)realloc(ptr2, sizeof(*ptr2)));
+  fprintf(stderr, "Realloc(0, 4): %p\n", ptr2);
+  *ptr2 = 42;
+  EXPECT_EQ(42, *ptr2);
+  free(ptr2);
 }
 
 #ifndef __APPLE__
