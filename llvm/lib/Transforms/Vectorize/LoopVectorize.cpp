@@ -516,14 +516,18 @@ public:
                              const TargetTransformInfo &TTI)
       : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI) {}
 
+  /// Information about vectorization costs
+  struct VectorizationFactor {
+    unsigned Width; // Vector width with best cost
+    unsigned Cost; // Cost of the loop with that width
+  };
   /// \return The most profitable vectorization factor and the cost of that VF.
   /// This method checks every power of two up to VF. If UserVF is not ZERO
   /// then this vectorization factor will be selected if vectorization is
   /// possible.
-  std::pair<unsigned, unsigned>
-  selectVectorizationFactor(bool OptForSize, unsigned UserVF);
+  VectorizationFactor selectVectorizationFactor(bool OptForSize, unsigned UserVF);
 
-  /// \returns The size (in bits) of the widest type in the code that
+  /// \return The size (in bits) of the widest type in the code that
   /// needs to be vectorized. We ignore values that remain scalar such as
   /// 64 bit loop indices.
   unsigned getWidestType();
@@ -633,24 +637,23 @@ struct LoopVectorize : public LoopPass {
     }
 
     // Select the optimal vectorization factor.
-    std::pair<unsigned, unsigned> VFPair;
-    VFPair = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
+    LoopVectorizationCostModel::VectorizationFactor VF;
+    VF = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
     // Select the unroll factor.
     unsigned UF = CM.selectUnrollFactor(OptForSize, VectorizationUnroll,
-                                        VFPair.first, VFPair.second);
-    unsigned VF = VFPair.first;
+                                        VF.Width, VF.Cost);
 
-    if (VF == 1) {
+    if (VF.Width == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
       return false;
     }
 
-    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ") in "<<
+    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF.Width << ") in "<<
           F->getParent()->getModuleIdentifier()<<"\n");
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << "\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
-    InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF, UF);
+    InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF.Width, UF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -2675,12 +2678,14 @@ bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
   return AR->isAffine();
 }
 
-std::pair<unsigned, unsigned>
+LoopVectorizationCostModel::VectorizationFactor
 LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
                                                       unsigned UserVF) {
+  // Width 1 means no vectorize
+  VectorizationFactor Factor = { 1U, 0U };
   if (OptForSize && Legal->getRuntimePointerCheck()->Need) {
     DEBUG(dbgs() << "LV: Aborting. Runtime ptr check is required in Os.\n");
-    return std::make_pair(1U, 0U);
+    return Factor;
   }
 
   // Find the trip count.
@@ -2708,7 +2713,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     // If we are unable to calculate the trip count then don't try to vectorize.
     if (TC < 2) {
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
-      return std::make_pair(1U, 0U);
+      return Factor;
     }
 
     // Find the maximum SIMD width that can fit within the trip count.
@@ -2721,7 +2726,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     // zero then we require a tail.
     if (VF < 2) {
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
-      return std::make_pair(1U, 0U);
+      return Factor;
     }
   }
 
@@ -2729,7 +2734,8 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     assert(isPowerOf2_32(UserVF) && "VF needs to be a power of two");
     DEBUG(dbgs() << "LV: Using user VF "<<UserVF<<".\n");
 
-    return std::make_pair(UserVF, 0U);
+    Factor.Width = UserVF;
+    return Factor;
   }
 
   float Cost = expectedCost(1);
@@ -2749,8 +2755,9 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   }
 
   DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
-  unsigned LoopCost = VF * Cost;
-  return std::make_pair(Width, LoopCost);
+  Factor.Width = Width;
+  Factor.Cost = Width * Cost;
+  return Factor;
 }
 
 unsigned LoopVectorizationCostModel::getWidestType() {
