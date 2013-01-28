@@ -40,7 +40,6 @@ enum TokenType {
   TT_CastRParen,
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
-  TT_RangeBasedForLoopColon,
   TT_ImplicitStringLiteral,
   TT_LineComment,
   TT_ObjCBlockLParen,
@@ -51,6 +50,8 @@ enum TokenType {
   TT_OverloadedOperator,
   TT_PointerOrReference,
   TT_PureVirtualSpecifier,
+  TT_RangeBasedForLoopColon,
+  TT_StartOfName,
   TT_TemplateCloser,
   TT_TemplateOpener,
   TT_TrailingUnaryOperator,
@@ -566,7 +567,8 @@ private:
       } else if (RootToken.is(tok::kw_for) && ParenLevel == 1 &&
                  Previous.is(tok::comma)) {
         State.Column = State.ForLoopVariablePos;
-      } else if (State.NextToken->Parent->ClosesTemplateDeclaration) {
+      } else if (State.NextToken->Parent->ClosesTemplateDeclaration ||
+                 Current.Type == TT_StartOfName) {
         State.Column = State.Stack[ParenLevel].Indent - 4;
       } else if (Previous.Type == TT_BinaryOperator &&
                  State.Stack.back().AssignmentColumn != 0) {
@@ -894,7 +896,6 @@ public:
 
       void markEnd(AnnotatedToken &Right) { Right.Type = TT_ObjCMethodExpr; }
     };
-
 
     bool parseAngle() {
       if (CurrentToken == NULL)
@@ -1289,7 +1290,9 @@ public:
     if (Line.Type == LT_Invalid)
       return;
 
-    determineTokenTypes(Line.First, /*IsExpression=*/ false);
+    bool LookForFunctionName = Line.MustBeDeclaration;
+    determineTokenTypes(Line.First, /*IsExpression=*/ false,
+                        LookForFunctionName);
 
     if (Line.First.Type == TT_ObjCMethodSpecifier)
       Line.Type = LT_ObjCMethodDecl;
@@ -1308,7 +1311,8 @@ public:
   }
 
 private:
-  void determineTokenTypes(AnnotatedToken &Current, bool IsExpression) {
+  void determineTokenTypes(AnnotatedToken &Current, bool IsExpression,
+                           bool LookForFunctionName) {
     if (getPrecedence(Current) == prec::Assignment) {
       IsExpression = true;
       AnnotatedToken *Previous = Current.Parent;
@@ -1326,7 +1330,10 @@ private:
       IsExpression = true;
 
     if (Current.Type == TT_Unknown) {
-      if (Current.is(tok::star) || Current.is(tok::amp)) {
+      if (LookForFunctionName && Current.is(tok::l_paren)) {
+        findFunctionName(&Current);
+        LookForFunctionName = false;
+      } else if (Current.is(tok::star) || Current.is(tok::amp)) {
         Current.Type = determineStarAmpUsage(Current, IsExpression);
       } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
                  Current.is(tok::caret)) {
@@ -1370,7 +1377,24 @@ private:
     }
 
     if (!Current.Children.empty())
-      determineTokenTypes(Current.Children[0], IsExpression);
+      determineTokenTypes(Current.Children[0], IsExpression,
+                          LookForFunctionName);
+  }
+
+  /// \brief Starting from \p Current, this searches backwards for an
+  /// identifier which could be the start of a function name and marks it.
+  void findFunctionName(AnnotatedToken *Current) {
+    AnnotatedToken *Parent = Current->Parent;
+    while (Parent != NULL && Parent->Parent != NULL) {
+      if (Parent->is(tok::identifier) &&
+          (Parent->Parent->is(tok::identifier) ||
+           Parent->Parent->Type == TT_PointerOrReference ||
+           Parent->Parent->Type == TT_TemplateCloser)) {
+        Parent->Type = TT_StartOfName;
+        break;
+      }
+      Parent = Parent->Parent;
+    }
   }
 
   /// \brief Returns the previous token ignoring comments.
@@ -1604,6 +1628,8 @@ private:
         // Don't break at ':' if identifier before it can beak.
         return false;
     }
+    if (Right.Type == TT_StartOfName)
+      return true;
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return false;
     if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)

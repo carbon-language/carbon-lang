@@ -1504,13 +1504,13 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("int(*func)(void *);");
 }
 
-TEST_F(FormatTest, DoesNotBreakBeforePointerOrReference) {
-  verifyFormat("int *someFunction(int LoooooooooooooooongParam1,\n"
-               "                  int LoooooooooooooooongParam2) {\n}");
+TEST_F(FormatTest, BreaksFunctionDeclarations) {
+  verifyFormat("int *someFunction(int LoooooooooooooooooooongParam1,\n"
+               "                  int LoooooooooooooooooooongParam2) {\n}");
   verifyFormat(
-      "TypeSpecDecl *TypeSpecDecl::Create(ASTContext &C, DeclContext *DC,\n"
-      "                                   SourceLocation L, IdentifierIn *II,\n"
-      "                                   Type *T) {\n}");
+      "TypeSpecDecl *\n"
+      "TypeSpecDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,\n"
+      "                     IdentifierIn *II, Type *T) {\n}");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
