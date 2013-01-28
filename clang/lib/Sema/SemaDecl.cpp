@@ -3198,6 +3198,12 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
               << (int)Record->isUnion();
             Invalid = true;
           }
+        } else {
+          // This is an anonymous type definition within another anonymous type.
+          // This is a popular extension, provided by Plan9, MSVC and GCC, but
+          // not part of standard C++.
+          Diag(MemRecord->getLocation(),
+               diag::ext_anonymous_record_with_anonymous_type);
         }
       } else if (isa<AccessSpecDecl>(*Mem)) {
         // Any access specifier is fine.

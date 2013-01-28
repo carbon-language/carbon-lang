@@ -1153,8 +1153,8 @@ namespace ConvertedConstantExpr {
 namespace IndirectField {
   struct S {
     struct { // expected-warning {{GNU extension}}
-      union {
-        struct { // expected-warning {{GNU extension}}
+      union { // expected-warning {{nested anonymous types are an extension}}
+        struct { // expected-warning {{GNU extension}} expected-warning {{nested anonymous types are an extension}}
           int a;
           int b;
         };
