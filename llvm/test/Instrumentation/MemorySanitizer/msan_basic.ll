@@ -323,8 +323,6 @@ define zeroext i1 @ICmpSLT(i32 %x) nounwind uwtable readnone {
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp slt
-; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret i1
 
 define zeroext i1 @ICmpSGE(i32 %x) nounwind uwtable readnone {
@@ -333,9 +331,7 @@ define zeroext i1 @ICmpSGE(i32 %x) nounwind uwtable readnone {
 }
 
 ; CHECK: @ICmpSGE
-; CHECK: icmp sge
-; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp sge
+; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sge
 ; CHECK-NOT: call void @__msan_warning
@@ -347,9 +343,7 @@ define zeroext i1 @ICmpSGT(i32 %x) nounwind uwtable readnone {
 }
 
 ; CHECK: @ICmpSGT
-; CHECK: icmp sgt
-; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp sgt
+; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sgt
 ; CHECK-NOT: call void @__msan_warning
@@ -361,9 +355,7 @@ define zeroext i1 @ICmpSLE(i32 %x) nounwind uwtable readnone {
 }
 
 ; CHECK: @ICmpSLE
-; CHECK: icmp sle
-; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp sle
+; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sle
 ; CHECK-NOT: call void @__msan_warning
@@ -381,27 +373,26 @@ define <2 x i1> @ICmpSLT_vector(<2 x i32*> %x) nounwind uwtable readnone {
 ; CHECK: @ICmpSLT_vector
 ; CHECK: icmp slt <2 x i64>
 ; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp slt <2 x i64>
-; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp slt <2 x i32*>
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret <2 x i1>
 
 
-; Check that we propagate shadow for arbitrary relational comparisons
+; Check that we propagate shadow for unsigned relational comparisons with
+; constants
 
-define zeroext i1 @ICmpSLENonZero(i32 %x, i32 %y) nounwind uwtable readnone {
+define zeroext i1 @ICmpUGTConst(i32 %x) nounwind uwtable readnone {
 entry:
-  %cmp = icmp sle i32 %x, %y
+  %cmp = icmp ugt i32 %x, 7
   ret i1 %cmp
 }
 
-; CHECK: @ICmpSLENonZero
-; CHECK: icmp sle i32
+; CHECK: @ICmpUGTConst
+; CHECK: icmp ugt i32
 ; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp sle i32
+; CHECK: icmp ugt i32
 ; CHECK-NOT: call void @__msan_warning
-; CHECK: icmp sle i32
+; CHECK: icmp ugt i32
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret i1
 

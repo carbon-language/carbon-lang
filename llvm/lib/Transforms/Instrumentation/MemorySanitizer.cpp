@@ -129,7 +129,7 @@ static cl::opt<bool> ClHandleICmp("msan-handle-icmp",
 
 static cl::opt<bool> ClHandleICmpExact("msan-handle-icmp-exact",
        cl::desc("exact handling of relational integer ICmp"),
-       cl::Hidden, cl::init(true));
+       cl::Hidden, cl::init(false));
 
 static cl::opt<bool> ClStoreCleanOrigin("msan-store-clean-origin",
        cl::desc("store origin for clean (fully initialized) values"),
@@ -1255,14 +1255,32 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void visitICmpInst(ICmpInst &I) {
-    if (ClHandleICmp && I.isEquality())
-      handleEqualityComparison(I);
-    else if (ClHandleICmp && ClHandleICmpExact && I.isRelational())
-      handleRelationalComparisonExact(I);
-    else if (ClHandleICmp && I.isSigned() && I.isRelational())
-      handleSignedRelationalComparison(I);
-    else
+    if (!ClHandleICmp) {
       handleShadowOr(I);
+      return;
+    }
+    if (I.isEquality()) {
+      handleEqualityComparison(I);
+      return;
+    }
+
+    assert(I.isRelational());
+    if (ClHandleICmpExact) {
+      handleRelationalComparisonExact(I);
+      return;
+    }
+    if (I.isSigned()) {
+      handleSignedRelationalComparison(I);
+      return;
+    }
+
+    assert(I.isUnsigned());
+    if ((isa<Constant>(I.getOperand(0)) || isa<Constant>(I.getOperand(1)))) {
+      handleRelationalComparisonExact(I);
+      return;
+    }
+
+    handleShadowOr(I);
   }
 
   void visitFCmpInst(FCmpInst &I) {
