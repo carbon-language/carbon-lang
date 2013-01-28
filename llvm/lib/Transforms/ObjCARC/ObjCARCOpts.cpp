@@ -30,6 +30,7 @@
 
 #define DEBUG_TYPE "objc-arc-opts"
 #include "ObjCARC.h"
+#include "ObjCARCAliasAnalysis.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -131,7 +132,6 @@ namespace {
 /// \defgroup ARCUtilities Utility declarations/definitions specific to ARC.
 /// @{
 
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -260,76 +260,6 @@ static InstructionClass GetInstructionClass(const Value *V) {
   return IC_None;
 }
 
-/// \brief Test if the given class is objc_retain or equivalent.
-static bool IsRetain(InstructionClass Class) {
-  return Class == IC_Retain ||
-         Class == IC_RetainRV;
-}
-
-/// \brief Test if the given class is objc_autorelease or equivalent.
-static bool IsAutorelease(InstructionClass Class) {
-  return Class == IC_Autorelease ||
-         Class == IC_AutoreleaseRV;
-}
-
-/// \brief Test if the given class represents instructions which return their
-/// argument verbatim.
-static bool IsForwarding(InstructionClass Class) {
-  // objc_retainBlock technically doesn't always return its argument
-  // verbatim, but it doesn't matter for our purposes here.
-  return Class == IC_Retain ||
-         Class == IC_RetainRV ||
-         Class == IC_Autorelease ||
-         Class == IC_AutoreleaseRV ||
-         Class == IC_RetainBlock ||
-         Class == IC_NoopCast;
-}
-
-/// \brief Test if the given class represents instructions which do nothing if
-/// passed a null pointer.
-static bool IsNoopOnNull(InstructionClass Class) {
-  return Class == IC_Retain ||
-         Class == IC_RetainRV ||
-         Class == IC_Release ||
-         Class == IC_Autorelease ||
-         Class == IC_AutoreleaseRV ||
-         Class == IC_RetainBlock;
-}
-
-/// \brief Test if the given class represents instructions which are always safe
-/// to mark with the "tail" keyword.
-static bool IsAlwaysTail(InstructionClass Class) {
-  // IC_RetainBlock may be given a stack argument.
-  return Class == IC_Retain ||
-         Class == IC_RetainRV ||
-         Class == IC_AutoreleaseRV;
-}
-
-/// \brief Test if the given class represents instructions which are never safe
-/// to mark with the "tail" keyword.
-static bool IsNeverTail(InstructionClass Class) {
-  /// It is never safe to tail call objc_autorelease since by tail calling
-  /// objc_autorelease, we also tail call -[NSObject autorelease] which supports
-  /// fast autoreleasing causing our object to be potentially reclaimed from the
-  /// autorelease pool which violates the semantics of __autoreleasing types in
-  /// ARC.
-  return Class == IC_Autorelease;
-}
-
-/// \brief Test if the given class represents instructions which are always safe
-/// to mark with the nounwind attribute.
-static bool IsNoThrow(InstructionClass Class) {
-  // objc_retainBlock is not nounwind because it calls user copy constructors
-  // which could theoretically throw.
-  return Class == IC_Retain ||
-         Class == IC_RetainRV ||
-         Class == IC_Release ||
-         Class == IC_Autorelease ||
-         Class == IC_AutoreleaseRV ||
-         Class == IC_AutoreleasepoolPush ||
-         Class == IC_AutoreleasepoolPop;
-}
-
 /// \brief Erase the given instruction.
 ///
 /// Many ObjC calls return their argument verbatim,
@@ -352,46 +282,6 @@ static void EraseInstruction(Instruction *CI) {
 
   if (Unused)
     RecursivelyDeleteTriviallyDeadInstructions(OldArg);
-}
-
-/// \brief This is a wrapper around getUnderlyingObject which also knows how to
-/// look through objc_retain and objc_autorelease calls, which we know to return
-/// their argument verbatim.
-static const Value *GetUnderlyingObjCPtr(const Value *V) {
-  for (;;) {
-    V = GetUnderlyingObject(V);
-    if (!IsForwarding(GetBasicInstructionClass(V)))
-      break;
-    V = cast<CallInst>(V)->getArgOperand(0);
-  }
-
-  return V;
-}
-
-/// \brief This is a wrapper around Value::stripPointerCasts which also knows
-/// how to look through objc_retain and objc_autorelease calls, which we know to
-/// return their argument verbatim.
-static const Value *StripPointerCastsAndObjCCalls(const Value *V) {
-  for (;;) {
-    V = V->stripPointerCasts();
-    if (!IsForwarding(GetBasicInstructionClass(V)))
-      break;
-    V = cast<CallInst>(V)->getArgOperand(0);
-  }
-  return V;
-}
-
-/// \brief This is a wrapper around Value::stripPointerCasts which also knows
-/// how to look through objc_retain and objc_autorelease calls, which we know to
-/// return their argument verbatim.
-static Value *StripPointerCastsAndObjCCalls(Value *V) {
-  for (;;) {
-    V = V->stripPointerCasts();
-    if (!IsForwarding(GetBasicInstructionClass(V)))
-      break;
-    V = cast<CallInst>(V)->getArgOperand(0);
-  }
-  return V;
 }
 
 /// \brief Assuming the given instruction is one of the special calls such as
@@ -549,177 +439,6 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
   // No escapes found.
   DEBUG(dbgs() << "DoesObjCBlockEscape: Block does not escape.\n");
   return false;
-}
-
-/// @}
-///
-/// \defgroup ARCAA Extends alias analysis using ObjC specific knowledge.
-/// @{
-
-namespace {
-  /// \brief This is a simple alias analysis implementation that uses knowledge
-  /// of ARC constructs to answer queries.
-  ///
-  /// TODO: This class could be generalized to know about other ObjC-specific
-  /// tricks. Such as knowing that ivars in the non-fragile ABI are non-aliasing
-  /// even though their offsets are dynamic.
-  class ObjCARCAliasAnalysis : public ImmutablePass,
-                               public AliasAnalysis {
-  public:
-    static char ID; // Class identification, replacement for typeinfo
-    ObjCARCAliasAnalysis() : ImmutablePass(ID) {
-      initializeObjCARCAliasAnalysisPass(*PassRegistry::getPassRegistry());
-    }
-
-  private:
-    virtual void initializePass() {
-      InitializeAliasAnalysis(this);
-    }
-
-    /// This method is used when a pass implements an analysis interface through
-    /// multiple inheritance.  If needed, it should override this to adjust the
-    /// this pointer as needed for the specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const void *PI) {
-      if (PI == &AliasAnalysis::ID)
-        return static_cast<AliasAnalysis *>(this);
-      return this;
-    }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual AliasResult alias(const Location &LocA, const Location &LocB);
-    virtual bool pointsToConstantMemory(const Location &Loc, bool OrLocal);
-    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS);
-    virtual ModRefBehavior getModRefBehavior(const Function *F);
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
-                                       const Location &Loc);
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                                       ImmutableCallSite CS2);
-  };
-}  // End of anonymous namespace
-
-// Register this pass...
-char ObjCARCAliasAnalysis::ID = 0;
-INITIALIZE_AG_PASS(ObjCARCAliasAnalysis, AliasAnalysis, "objc-arc-aa",
-                   "ObjC-ARC-Based Alias Analysis", false, true, false)
-
-ImmutablePass *llvm::createObjCARCAliasAnalysisPass() {
-  return new ObjCARCAliasAnalysis();
-}
-
-void
-ObjCARCAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-  AliasAnalysis::getAnalysisUsage(AU);
-}
-
-AliasAnalysis::AliasResult
-ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
-  if (!EnableARCOpts)
-    return AliasAnalysis::alias(LocA, LocB);
-
-  // First, strip off no-ops, including ObjC-specific no-ops, and try making a
-  // precise alias query.
-  const Value *SA = StripPointerCastsAndObjCCalls(LocA.Ptr);
-  const Value *SB = StripPointerCastsAndObjCCalls(LocB.Ptr);
-  AliasResult Result =
-    AliasAnalysis::alias(Location(SA, LocA.Size, LocA.TBAATag),
-                         Location(SB, LocB.Size, LocB.TBAATag));
-  if (Result != MayAlias)
-    return Result;
-
-  // If that failed, climb to the underlying object, including climbing through
-  // ObjC-specific no-ops, and try making an imprecise alias query.
-  const Value *UA = GetUnderlyingObjCPtr(SA);
-  const Value *UB = GetUnderlyingObjCPtr(SB);
-  if (UA != SA || UB != SB) {
-    Result = AliasAnalysis::alias(Location(UA), Location(UB));
-    // We can't use MustAlias or PartialAlias results here because
-    // GetUnderlyingObjCPtr may return an offsetted pointer value.
-    if (Result == NoAlias)
-      return NoAlias;
-  }
-
-  // If that failed, fail. We don't need to chain here, since that's covered
-  // by the earlier precise query.
-  return MayAlias;
-}
-
-bool
-ObjCARCAliasAnalysis::pointsToConstantMemory(const Location &Loc,
-                                             bool OrLocal) {
-  if (!EnableARCOpts)
-    return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
-
-  // First, strip off no-ops, including ObjC-specific no-ops, and try making
-  // a precise alias query.
-  const Value *S = StripPointerCastsAndObjCCalls(Loc.Ptr);
-  if (AliasAnalysis::pointsToConstantMemory(Location(S, Loc.Size, Loc.TBAATag),
-                                            OrLocal))
-    return true;
-
-  // If that failed, climb to the underlying object, including climbing through
-  // ObjC-specific no-ops, and try making an imprecise alias query.
-  const Value *U = GetUnderlyingObjCPtr(S);
-  if (U != S)
-    return AliasAnalysis::pointsToConstantMemory(Location(U), OrLocal);
-
-  // If that failed, fail. We don't need to chain here, since that's covered
-  // by the earlier precise query.
-  return false;
-}
-
-AliasAnalysis::ModRefBehavior
-ObjCARCAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
-  // We have nothing to do. Just chain to the next AliasAnalysis.
-  return AliasAnalysis::getModRefBehavior(CS);
-}
-
-AliasAnalysis::ModRefBehavior
-ObjCARCAliasAnalysis::getModRefBehavior(const Function *F) {
-  if (!EnableARCOpts)
-    return AliasAnalysis::getModRefBehavior(F);
-
-  switch (GetFunctionClass(F)) {
-  case IC_NoopCast:
-    return DoesNotAccessMemory;
-  default:
-    break;
-  }
-
-  return AliasAnalysis::getModRefBehavior(F);
-}
-
-AliasAnalysis::ModRefResult
-ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
-  if (!EnableARCOpts)
-    return AliasAnalysis::getModRefInfo(CS, Loc);
-
-  switch (GetBasicInstructionClass(CS.getInstruction())) {
-  case IC_Retain:
-  case IC_RetainRV:
-  case IC_Autorelease:
-  case IC_AutoreleaseRV:
-  case IC_NoopCast:
-  case IC_AutoreleasepoolPush:
-  case IC_FusedRetainAutorelease:
-  case IC_FusedRetainAutoreleaseRV:
-    // These functions don't access any memory visible to the compiler.
-    // Note that this doesn't include objc_retainBlock, because it updates
-    // pointers when it copies block data.
-    return NoModRef;
-  default:
-    break;
-  }
-
-  return AliasAnalysis::getModRefInfo(CS, Loc);
-}
-
-AliasAnalysis::ModRefResult
-ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
-                                    ImmutableCallSite CS2) {
-  // TODO: Theoretically we could check for dependencies between objc_* calls
-  // and OnlyAccessesArgumentPointees calls or other well-behaved calls.
-  return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
 
 /// @}

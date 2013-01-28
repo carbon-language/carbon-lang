@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -145,10 +146,81 @@ static raw_ostream &operator<<(raw_ostream &OS, const InstructionClass Class) {
   llvm_unreachable("Unknown instruction class!");
 }
 
+/// \brief Test if the given class is objc_retain or equivalent.
+static inline bool IsRetain(InstructionClass Class) {
+  return Class == IC_Retain ||
+         Class == IC_RetainRV;
+}
+
+/// \brief Test if the given class is objc_autorelease or equivalent.
+static inline bool IsAutorelease(InstructionClass Class) {
+  return Class == IC_Autorelease ||
+         Class == IC_AutoreleaseRV;
+}
+
+/// \brief Test if the given class represents instructions which return their
+/// argument verbatim.
+static inline bool IsForwarding(InstructionClass Class) {
+  // objc_retainBlock technically doesn't always return its argument
+  // verbatim, but it doesn't matter for our purposes here.
+  return Class == IC_Retain ||
+         Class == IC_RetainRV ||
+         Class == IC_Autorelease ||
+         Class == IC_AutoreleaseRV ||
+         Class == IC_RetainBlock ||
+         Class == IC_NoopCast;
+}
+
+/// \brief Test if the given class represents instructions which do nothing if
+/// passed a null pointer.
+static inline bool IsNoopOnNull(InstructionClass Class) {
+  return Class == IC_Retain ||
+         Class == IC_RetainRV ||
+         Class == IC_Release ||
+         Class == IC_Autorelease ||
+         Class == IC_AutoreleaseRV ||
+         Class == IC_RetainBlock;
+}
+
+/// \brief Test if the given class represents instructions which are always safe
+/// to mark with the "tail" keyword.
+static inline bool IsAlwaysTail(InstructionClass Class) {
+  // IC_RetainBlock may be given a stack argument.
+  return Class == IC_Retain ||
+         Class == IC_RetainRV ||
+         Class == IC_AutoreleaseRV;
+}
+
+/// \brief Test if the given class represents instructions which are never safe
+/// to mark with the "tail" keyword.
+static inline bool IsNeverTail(InstructionClass Class) {
+  /// It is never safe to tail call objc_autorelease since by tail calling
+  /// objc_autorelease, we also tail call -[NSObject autorelease] which supports
+  /// fast autoreleasing causing our object to be potentially reclaimed from the
+  /// autorelease pool which violates the semantics of __autoreleasing types in
+  /// ARC.
+  return Class == IC_Autorelease;
+}
+
+/// \brief Test if the given class represents instructions which are always safe
+/// to mark with the nounwind attribute.
+static inline bool IsNoThrow(InstructionClass Class) {
+  // objc_retainBlock is not nounwind because it calls user copy constructors
+  // which could theoretically throw.
+  return Class == IC_Retain ||
+         Class == IC_RetainRV ||
+         Class == IC_Release ||
+         Class == IC_Autorelease ||
+         Class == IC_AutoreleaseRV ||
+         Class == IC_AutoreleasepoolPush ||
+         Class == IC_AutoreleasepoolPop;
+}
 
 /// \brief Determine if F is one of the special known Functions.  If it isn't,
 /// return IC_CallOrUser.
-static inline InstructionClass GetFunctionClass(const Function *F) {
+static InstructionClass GetFunctionClass(const Function *F)
+  LLVM_ATTRIBUTE_USED;
+static InstructionClass GetFunctionClass(const Function *F) {
   Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
 
   // No arguments.
@@ -235,6 +307,48 @@ static inline InstructionClass GetBasicInstructionClass(const Value *V) {
   // Otherwise, be conservative.
   return isa<InvokeInst>(V) ? IC_CallOrUser : IC_User;
 }
+
+
+/// \brief This is a wrapper around getUnderlyingObject which also knows how to
+/// look through objc_retain and objc_autorelease calls, which we know to return
+/// their argument verbatim.
+static inline const Value *GetUnderlyingObjCPtr(const Value *V) {
+  for (;;) {
+    V = GetUnderlyingObject(V);
+    if (!IsForwarding(GetBasicInstructionClass(V)))
+      break;
+    V = cast<CallInst>(V)->getArgOperand(0);
+  }
+
+  return V;
+}
+
+/// \brief This is a wrapper around Value::stripPointerCasts which also knows
+/// how to look through objc_retain and objc_autorelease calls, which we know to
+/// return their argument verbatim.
+static inline const Value *StripPointerCastsAndObjCCalls(const Value *V) {
+  for (;;) {
+    V = V->stripPointerCasts();
+    if (!IsForwarding(GetBasicInstructionClass(V)))
+      break;
+    V = cast<CallInst>(V)->getArgOperand(0);
+  }
+  return V;
+}
+
+/// \brief This is a wrapper around Value::stripPointerCasts which also knows
+/// how to look through objc_retain and objc_autorelease calls, which we know to
+/// return their argument verbatim.
+static inline Value *StripPointerCastsAndObjCCalls(Value *V) {
+  for (;;) {
+    V = V->stripPointerCasts();
+    if (!IsForwarding(GetBasicInstructionClass(V)))
+      break;
+    V = cast<CallInst>(V)->getArgOperand(0);
+  }
+  return V;
+}
+
 
 } // end namespace objcarc
 } // end namespace llvm
