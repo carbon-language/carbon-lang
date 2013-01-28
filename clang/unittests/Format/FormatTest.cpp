@@ -796,13 +796,15 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
             "    a;",
             format("int\n#define A\na;"));
   verifyFormat(
-      "functionCallTo(someOtherFunction(\n"
-      "    withSomeParameters, whichInSequence,\n"
-      "    areLongerThanALine(andAnotherCall,\n"
+      "functionCallTo(\n"
+      "    someOtherFunction(\n"
+      "        withSomeParameters, whichInSequence,\n"
+      "        areLongerThanALine(andAnotherCall,\n"
       "#define A B\n"
-      "                       withMoreParamters,\n"
-      "                       whichStronglyInfluenceTheLayout),\n"
-      "    andMoreParameters), trailing);", getLLVMStyleWithColumns(69));
+      "                           withMoreParamters,\n"
+      "                           whichStronglyInfluenceTheLayout),\n"
+      "        andMoreParameters), trailing);",
+      getLLVMStyleWithColumns(69));
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {
@@ -849,9 +851,27 @@ TEST_F(FormatTest, FormatsFunctionDefinition) {
 
 TEST_F(FormatTest, FormatsAwesomeMethodCall) {
   verifyFormat(
-      "SomeLongMethodName(SomeReallyLongMethod(\n"
-      "    CallOtherReallyLongMethod(parameter, parameter, parameter)),\n"
+      "SomeLongMethodName(SomeReallyLongMethod(CallOtherReallyLongMethod(\n"
+      "                       parameter, parameter, parameter)),\n"
       "                   SecondLongCall(parameter));");
+}
+
+TEST_F(FormatTest, HigherIndentsForDeeperNestedParameters) {
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa[\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa],\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa];");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa<\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>,\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa>;");
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {

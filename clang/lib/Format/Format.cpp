@@ -73,7 +73,9 @@ public:
   explicit AnnotatedToken(const FormatToken &FormatTok)
       : FormatTok(FormatTok), Type(TT_Unknown), SpaceRequiredBefore(false),
         CanBreakBefore(false), MustBreakBefore(false),
-        ClosesTemplateDeclaration(false), MatchingParen(NULL), Parent(NULL) {}
+        ClosesTemplateDeclaration(false), MatchingParen(NULL),
+        ParameterCount(1), Parent(NULL) {
+  }
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
   bool isNot(tok::TokenKind Kind) const { return FormatTok.Tok.isNot(Kind); }
@@ -93,6 +95,13 @@ public:
   bool ClosesTemplateDeclaration;
 
   AnnotatedToken *MatchingParen;
+
+  /// \brief Number of parameters, if this is "(", "[" or "<".
+  ///
+  /// This is initialized to 1 as we don't need to distinguish functions with
+  /// 0 parameters from functions with 1 parameter. Thus, we can simply count
+  /// the number of commas.
+  unsigned ParameterCount;
 
   /// \brief The total length of the line up to and including this token.
   unsigned TotalLength;
@@ -612,6 +621,12 @@ private:
       else if (Previous.is(tok::comma) && ParenLevel != 0)
         // Top-level spaces are exempt as that mostly leads to better results.
         State.Stack.back().LastSpace = State.Column;
+      else if (Previous.ParameterCount > 1 &&
+               (Previous.is(tok::l_paren) || Previous.is(tok::l_square) ||
+                Previous.Type == TT_TemplateOpener))
+        // If this function has multiple parameters, indent nested calls from
+        // the start of the first parameter.
+        State.Stack.back().LastSpace = State.Column;
     }
 
     // If we break after an {, we should also break before the corresponding }.
@@ -706,8 +721,13 @@ private:
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return 20;
 
-    if (Left.is(tok::l_paren) || Left.Type == TT_TemplateOpener)
+    if (Left.is(tok::l_paren))
       return 20;
+    // FIXME: The penalty for a trailing "<" or "[" being higher than the
+    // penalty for a trainling "(" is a temporary workaround until we can
+    // properly avoid breaking in array subscripts or template parameters.
+    if (Left.is(tok::l_square) || Left.Type == TT_TemplateOpener)
+      return 50;
 
     if (Left.is(tok::question) || Left.Type == TT_ConditionalExpr)
       return prec::Assignment;
@@ -887,6 +907,8 @@ public:
         if (CurrentToken->is(tok::pipepipe) || CurrentToken->is(tok::ampamp) ||
             CurrentToken->is(tok::question) || CurrentToken->is(tok::colon))
           return false;
+        if (CurrentToken->is(tok::comma))
+          ++Left->ParameterCount;
         if (!consumeToken())
           return false;
       }
@@ -941,6 +963,8 @@ public:
         }
         if (CurrentToken->is(tok::r_square) || CurrentToken->is(tok::r_brace))
           return false;
+        if (CurrentToken->is(tok::comma))
+          ++Left->ParameterCount;
         if (!consumeToken())
           return false;
       }
@@ -984,6 +1008,8 @@ public:
         }
         if (CurrentToken->is(tok::r_paren) || CurrentToken->is(tok::r_brace))
           return false;
+        if (CurrentToken->is(tok::comma))
+          ++Left->ParameterCount;
         if (!consumeToken())
           return false;
       }
@@ -1604,7 +1630,8 @@ private:
            Left.is(tok::question) || Left.Type == TT_ConditionalExpr ||
            (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
             Right.is(tok::identifier)) ||
-           (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
+           (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
+           (Left.is(tok::l_square) && !Right.is(tok::r_square));
   }
 
   FormatStyle Style;
