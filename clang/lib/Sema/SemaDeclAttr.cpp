@@ -1816,7 +1816,7 @@ static void handleVecReturnAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleDependencyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!isFunctionOrMethod(D) && !isa<ParmVarDecl>(D)) {
+  if (!isa<FunctionDecl>(D) && !isa<ParmVarDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionMethodOrParameter;
     return;
