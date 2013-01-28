@@ -550,9 +550,10 @@ private:
                  State.Stack[ParenLevel].FirstLessLess != 0) {
         State.Column = State.Stack[ParenLevel].FirstLessLess;
       } else if (ParenLevel != 0 &&
-                 (Previous.is(tok::equal) || Current.is(tok::arrow) ||
-                  Current.is(tok::period) || Previous.is(tok::question) ||
-                  Previous.Type == TT_ConditionalExpr)) {
+                 (Previous.is(tok::equal) || Previous.is(tok::coloncolon) ||
+                  Previous.is(tok::question) ||
+                  Previous.Type == TT_ConditionalExpr ||
+                  Current.is(tok::period) || Current.is(tok::arrow))) {
         // Indent and extra 4 spaces after if we know the current expression is
         // continued.  Don't do that on the top level, as we already indent 4
         // there.

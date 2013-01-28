@@ -1252,7 +1252,7 @@ TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
   // "bbbbb..." here instead of what we are doing now.
   verifyFormat(
       "aaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb::\n"
-      "                cccccccccccccccccccccccccccccccccccccccccccccccccc());");
+      "                    cccccccccccccccccccccccccccccccccccccccccccccc());");
 
   // Breaking at nested name specifiers is generally not desirable.
   verifyFormat(
