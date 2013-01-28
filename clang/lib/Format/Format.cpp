@@ -625,7 +625,8 @@ private:
         // Top-level spaces are exempt as that mostly leads to better results.
         State.Stack.back().LastSpace = State.Column;
       else if ((Previous.Type == TT_BinaryOperator ||
-                Previous.Type == TT_ConditionalExpr) &&
+                Previous.Type == TT_ConditionalExpr ||
+                Previous.Type == TT_CtorInitializerColon) &&
                getPrecedence(Previous) != prec::Assignment)
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.ParameterCount > 1 &&
