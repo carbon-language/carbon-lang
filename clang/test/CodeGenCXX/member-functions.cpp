@@ -1,66 +1,85 @@
-// RUN: %clang_cc1 -emit-llvm %s -triple x86_64-apple-darwin9 -o %t
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin9 -o - %s | FileCheck %s
+
 struct C {
   void f();
   void g(int, ...);
 };
 
-// RUN: grep "define void @_ZN1C1fEv" %t | count 1
+// CHECK: define void @_ZN1C1fEv
 void C::f() {
 }
 
+// CHECK: define void @_Z5test1v
 void test1() {
   C c;
-  
-// RUN: grep "call void @_ZN1C1fEv" %t | count 1
+
+  // CHECK: call void @_ZN1C1fEv
   c.f();
-  
-// RUN: grep "call void (.struct.C\*, i32, ...)\* @_ZN1C1gEiz" %t | count 1
+
+  // CHECK: call void (%struct.C*, i32, ...)* @_ZN1C1gEiz
   c.g(1, 2, 3);
 }
 
 
 struct S {
-  // RUN: grep "define linkonce_odr void @_ZN1SC1Ev.*unnamed_addr" %t
   inline S() { }
-  // RUN: grep "define linkonce_odr void @_ZN1SC1Ev.*unnamed_addr" %t
   inline ~S() { }
-  
-  
-  // RUN: grep "define linkonce_odr void @_ZN1S9f_inline1Ev" %t
+
   void f_inline1() { }
-  // RUN: grep "define linkonce_odr void @_ZN1S9f_inline2Ev" %t
   inline void f_inline2() { }
-  
-  // RUN: grep "define linkonce_odr void @_ZN1S1gEv" %t
+
   static void g() { }
-  
   static void f();
 
-  // RUN: grep "define linkonce_odr void @_ZN1S1vEv.*unnamed_addr" %t
   virtual void v() {}
 };
 
-// RUN: grep "define void @_ZN1S1fEv" %t
+// CHECK: define void @_ZN1S1fEv
 void S::f() {
 }
 
 void test2() {
   S s;
-  
+
   s.f_inline1();
   s.f_inline2();
-  
+
   S::g();
-  
 }
+
+// S::S()
+// CHECK: define linkonce_odr void @_ZN1SC1Ev{{.*}} unnamed_addr
+
+// S::f_inline1()
+// CHECK: define linkonce_odr void @_ZN1S9f_inline1Ev
+
+// S::f_inline2()
+// CHECK: define linkonce_odr void @_ZN1S9f_inline2Ev
+
+// S::g()
+// CHECK: define linkonce_odr void @_ZN1S1gEv
+
+// S::~S()
+// CHECK: define linkonce_odr void @_ZN1SD1Ev{{.*}} unnamed_addr
 
 struct T {
   T operator+(const T&);
 };
 
+// CHECK: define void @_Z5test3v
 void test3() {
   T t1, t2;
-  
-  // RUN: grep "call void @_ZN1TplERKS_" %t
+
+  // CHECK: call void @_ZN1TplERKS_
   T result = t1 + t2;
 }
+
+// S::~S()
+// CHECK: define linkonce_odr void @_ZN1SD2Ev{{.*}} unnamed_addr
+
+// S::S()
+// CHECK: define linkonce_odr void @_ZN1SC2Ev{{.*}} unnamed_addr
+
+// S::v()
+// CHECK: define linkonce_odr void @_ZN1S1vEv{{.*}}unnamed_addr
+
