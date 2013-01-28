@@ -33,7 +33,7 @@ class SanitizerArgs {
 #define SANITIZER(NAME, ID) ID = 1 << SO_##ID,
 #define SANITIZER_GROUP(NAME, ID, ALIAS) ID = ALIAS,
 #include "clang/Basic/Sanitizers.def"
-    NeedsAsanRt = AddressFull,
+    NeedsAsanRt = Address,
     NeedsTsanRt = Thread,
     NeedsMsanRt = Memory,
     NeedsUbsanRt = (Undefined & ~Bounds) | Integer

@@ -1447,7 +1447,8 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
 SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
     : Kind(0), BlacklistFile(""), MsanTrackOrigins(false),
       AsanZeroBaseShadow(false) {
-
+  unsigned AllKinds = 0;  // All kinds of sanitizers that were turned on
+                          // at least once (possibly, disabled further).
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add, Remove;
     if (!parse(D, Args, *I, Add, Remove, true))
@@ -1455,6 +1456,7 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
     (*I)->claim();
     Kind |= Add;
     Kind &= ~Remove;
+    AllKinds |= Add;
   }
 
   // Only one runtime library can be used at once.
@@ -1475,11 +1477,12 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
       << lastArgumentForKind(D, Args, NeedsMsanRt);
 
   // If -fsanitize contains extra features of ASan, it should also
-  // explicitly contain -fsanitize=address.
-  if (NeedsAsan && ((Kind & Address) == 0))
-    D.Diag(diag::err_drv_argument_only_allowed_with)
-      << lastArgumentForKind(D, Args, NeedsAsanRt)
-      << "-fsanitize=address";
+  // explicitly contain -fsanitize=address (probably, turned off later in the
+  // command line).
+  if ((Kind & AddressFull) != 0 && (AllKinds & Address) == 0)
+    D.Diag(diag::warn_drv_unused_sanitizer)
+     << lastArgumentForKind(D, Args, AddressFull)
+     << "-fsanitize=address";
 
   // Parse -f(no-)sanitize-blacklist options.
   if (Arg *BLArg = Args.getLastArg(options::OPT_fsanitize_blacklist,

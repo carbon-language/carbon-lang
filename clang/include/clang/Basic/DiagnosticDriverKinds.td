@@ -123,6 +123,8 @@ def warn_drv_unused_argument : Warning<
 def warn_drv_empty_joined_argument : Warning<
   "joined argument expects additional value: '%0'">,
   InGroup<UnusedCommandLineArgument>;
+def warn_drv_unused_sanitizer : Warning<"'%0' is ignored in absence of '%1'">,
+  InGroup<UnusedSanitizeArgument>;
 def warn_drv_clang_unsupported : Warning<
   "the clang compiler does not support '%0'">;
 def warn_drv_deprecated_arg : Warning<

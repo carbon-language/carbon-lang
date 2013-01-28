@@ -276,7 +276,9 @@ def IgnoredAttributes : DiagGroup<"ignored-attributes">;
 def UnnamedTypeTemplateArgs : DiagGroup<"unnamed-type-template-args",
                                         [CXX98CompatUnnamedTypeTemplateArgs]>;
 def UnusedArgument : DiagGroup<"unused-argument">;
-def UnusedCommandLineArgument : DiagGroup<"unused-command-line-argument">;
+def UnusedSanitizeArgument : DiagGroup<"unused-sanitize-argument">;
+def UnusedCommandLineArgument : DiagGroup<"unused-command-line-argument",
+                                          [UnusedSanitizeArgument]>;
 def UnusedComparison : DiagGroup<"unused-comparison">;
 def UnusedExceptionParameter : DiagGroup<"unused-exception-parameter">;
 def UnneededInternalDecl : DiagGroup<"unneeded-internal-declaration">;

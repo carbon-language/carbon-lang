@@ -31,7 +31,13 @@
 // CHECK-ASAN-TSAN: '-faddress-sanitizer' not allowed with '-fthread-sanitizer'
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=init-order %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ONLY-EXTRA-ASAN
-// CHECK-ONLY-EXTRA-ASAN: argument '-fsanitize=init-order' only allowed with '-fsanitize=address'
+// CHECK-ONLY-EXTRA-ASAN: '-fsanitize=init-order' is ignored in absence of '-fsanitize=address'
+
+// RUN: %clang -target x86_64-linux-gnu -Wno-unused-sanitize-argument -fsanitize=init-order %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-WNO-UNUSED-SANITIZE-ARGUMENT
+// CHECK-WNO-UNUSED-SANITIZE-ARGUMENT-NOT: '-fsanitize=init-order' is ignored in absence of '-fsanitize=address'
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=address,init-order -fno-sanitize=address %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-NOWARN-ONLY-EXTRA-ASAN
+// CHECK-NOWARN-ONLY-EXTRA-ASAN-NOT: is ignored in absence of '-fsanitize=address'
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize-memory-track-origins -pie %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ONLY-TRACK-ORIGINS
 // CHECK-ONLY-TRACK-ORIGINS: warning: argument unused during compilation: '-fsanitize-memory-track-origins'
