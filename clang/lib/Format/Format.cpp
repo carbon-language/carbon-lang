@@ -433,7 +433,7 @@ private:
   struct ParenState {
     ParenState(unsigned Indent, unsigned LastSpace)
         : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
-          FirstLessLess(0), BreakBeforeClosingBrace(false),
+          FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
           BreakAfterComma(false), HasMultiParameterLine(false) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
@@ -463,6 +463,9 @@ private:
     /// was a newline after the beginning left brace.
     bool BreakBeforeClosingBrace;
 
+    /// \brief The column of a \c ? in a conditional expression;
+    unsigned QuestionColumn;
+
     bool BreakAfterComma;
     bool HasMultiParameterLine;
 
@@ -477,6 +480,8 @@ private:
         return FirstLessLess < Other.FirstLessLess;
       if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
         return BreakBeforeClosingBrace;
+      if (QuestionColumn != Other.QuestionColumn)
+        return QuestionColumn < Other.QuestionColumn;
       if (BreakAfterComma != Other.BreakAfterComma)
         return BreakAfterComma;
       if (HasMultiParameterLine != Other.HasMultiParameterLine)
@@ -548,13 +553,15 @@ private:
         State.Column = State.Stack[ParenLevel].FirstLessLess;
       } else if (ParenLevel != 0 &&
                  (Previous.is(tok::equal) || Previous.is(tok::coloncolon) ||
-                  Previous.is(tok::question) ||
-                  Previous.Type == TT_ConditionalExpr ||
-                  Current.is(tok::period) || Current.is(tok::arrow))) {
+                  Current.is(tok::period) || Current.is(tok::arrow) ||
+                  Current.is(tok::question))) {
         // Indent and extra 4 spaces after if we know the current expression is
         // continued.  Don't do that on the top level, as we already indent 4
         // there.
-        State.Column = State.Stack[ParenLevel].Indent + 4;
+        State.Column = std::max(State.Stack.back().LastSpace,
+                                State.Stack.back().Indent) + 4;
+      } else if (Current.Type == TT_ConditionalExpr) {
+        State.Column = State.Stack.back().QuestionColumn;
       } else if (RootToken.is(tok::kw_for) && Previous.is(tok::comma)) {
         State.Column = State.ForLoopVariablePos;
       } else if (State.NextToken->Parent->ClosesTemplateDeclaration) {
@@ -579,7 +586,7 @@ private:
       }
 
       State.Stack[ParenLevel].LastSpace = State.Column;
-      if (Current.is(tok::colon) && State.NextToken->Type != TT_ConditionalExpr)
+      if (Current.is(tok::colon) && Current.Type != TT_ConditionalExpr)
         State.Stack[ParenLevel].Indent += 2;
     } else {
       if (Current.is(tok::equal) && RootToken.is(tok::kw_for))
@@ -615,7 +622,8 @@ private:
       else if (Previous.is(tok::comma) && ParenLevel != 0)
         // Top-level spaces are exempt as that mostly leads to better results.
         State.Stack.back().LastSpace = State.Column;
-      else if (Previous.Type == TT_BinaryOperator &&
+      else if ((Previous.Type == TT_BinaryOperator ||
+                Previous.Type == TT_ConditionalExpr) &&
                getPrecedence(Previous) != prec::Assignment)
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.ParameterCount > 1 &&
@@ -656,6 +664,8 @@ private:
 
     if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0)
       State.Stack.back().FirstLessLess = State.Column;
+    if (Current.is(tok::question))
+      State.Stack.back().QuestionColumn = State.Column;
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
@@ -726,7 +736,7 @@ private:
     if (Left.is(tok::l_square) || Left.Type == TT_TemplateOpener)
       return 50;
 
-    if (Left.is(tok::question) || Left.Type == TT_ConditionalExpr)
+    if (Left.Type == TT_ConditionalExpr)
       return prec::Assignment;
     prec::Level Level = getPrecedence(Left);
 
@@ -1587,8 +1597,11 @@ private:
       return true;
     if (Left.ClosesTemplateDeclaration)
       return true;
+    if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
+      return true;
     if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
-        Left.Type == TT_UnaryOperator || Right.Type == TT_ConditionalExpr)
+        Left.Type == TT_UnaryOperator || Left.Type == TT_ConditionalExpr ||
+        Left.is(tok::question))
       return false;
     if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
       return false;
@@ -1617,7 +1630,6 @@ private:
            Right.is(tok::arrow) || Right.is(tok::period) ||
            Right.is(tok::colon) || Left.is(tok::coloncolon) ||
            Left.is(tok::semi) || Left.is(tok::l_brace) ||
-           Left.is(tok::question) || Left.Type == TT_ConditionalExpr ||
            (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
             Right.is(tok::identifier)) ||
            (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
