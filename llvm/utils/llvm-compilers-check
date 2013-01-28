@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 ##===- utils/llvmbuild - Build the LLVM project ----------------*-python-*-===##
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 ##===----------------------------------------------------------------------===##
 #
 # This script builds many different flavors of the LLVM ecosystem.  It
@@ -147,6 +147,8 @@ def add_options(parser):
                       help=("Do not build dragonegg"))
     parser.add_option("--no-install", default=False, action="store_true",
                       help=("Do not do installs"))
+    parser.add_option("--keep-going", default=False, action="store_true",
+                      help=("Keep going after failures"))
     return
 
 def check_options(parser, options, valid_builds):
@@ -282,7 +284,7 @@ class Builder(threading.Thread):
 
         for key, value in env.items():
             execenv[key] = value
- 
+
         self.logger.debug("[" + prefix + "] " + "env " + str(env) + " "
                           + " ".join(command));
 
@@ -298,6 +300,11 @@ class Builder(threading.Thread):
                 self.logger.info("[" + prefix + "] "
                                  + str(line, "utf-8").rstrip())
                 line = proc.stdout.readline()
+
+            (stdoutdata, stderrdata) = proc.communicate()
+            retcode = proc.wait()
+
+            return retcode
 
         except:
             traceback.print_exc()
@@ -327,6 +334,7 @@ class Builder(threading.Thread):
                     self.logger.debug("Start Gather")
                     gather = True
                 line = proc.stdout.readline()
+
         except:
             traceback.print_exc()
         self.logger.debug(includes)
@@ -438,7 +446,7 @@ class Builder(threading.Thread):
 
         for component in components:
             comp = component[:]
-            
+
             if (self.options.no_dragonegg):
                 if (comp == 'dragonegg'):
                     self.logger.info("Skipping " + component + " in "
@@ -458,43 +466,74 @@ class Builder(threading.Thread):
                                        "").split())
 
             self.logger.info("Configuring " + component + " in " + builddir)
-            self.configure(component, srcdir, builddir,
-                           config_args,
-                           configure_env[comp_key][build])
+            configrc = self.configure(component, srcdir, builddir,
+                                      config_args,
+                                      configure_env[comp_key][build])
 
-            self.logger.info("Building " + component + " in " + builddir)
-            self.logger.info("Build: make " + str(make_flags[comp_key][build]))
-            self.make(component, srcdir, builddir,
-                      make_flags[comp_key][build],
-                      make_env[comp_key][build])
+            if (configrc == None) :
+                self.logger.info("[None] Failed to configure " + component + " in " + installdir)
 
-            if (not self.options.no_install):
-                self.logger.info("Installing " + component + " in " + installdir)
-                self.make(component, srcdir, builddir,
-                          make_install_flags[comp_key][build],
-                          make_install_env[comp_key][build])
+            if (configrc == 0 or self.options.keep_going) :
+                self.logger.info("Building " + component + " in " + builddir)
+                self.logger.info("Build: make " + str(make_flags[comp_key][build]))
+                buildrc = self.make(component, srcdir, builddir,
+                                    make_flags[comp_key][build],
+                                    make_env[comp_key][build])
 
-            self.logger.info("Testing " + component + " in " + builddir)
-            self.logger.info("Test: make "
-                             + str(make_check_flags[comp_key][build]))
-            self.make(component, srcdir, builddir,
-                      make_check_flags[comp_key][build],
-                      make_check_env[comp_key][build])
+                if (buildrc == None) :
+                    self.logger.info("[None] Failed to build " + component + " in " + installdir)
 
+                if (buildrc == 0 or self.options.keep_going) :
+                    self.logger.info("Testing " + component + " in " + builddir)
+                    self.logger.info("Test: make "
+                                     + str(make_check_flags[comp_key][build]))
+                    testrc = self.make(component, srcdir, builddir,
+                                       make_check_flags[comp_key][build],
+                                       make_check_env[comp_key][build])
+
+                    if (testrc == None) :
+                        self.logger.info("[None] Failed to test " + component + " in " + installdir)
+
+                    if ((testrc == 0  or self.options.keep_going)
+                        and not self.options.no_install):
+                        self.logger.info("Installing " + component + " in " + installdir)
+                        self.make(component, srcdir, builddir,
+                                  make_install_flags[comp_key][build],
+                                  make_install_env[comp_key][build])
+                    else :
+                        self.logger.info("Failed testing " + component + " in " + installdir)
+
+                else :
+                    self.logger.info("Failed to build " + component + " in " + installdir)
+
+            else :
+                self.logger.info("Failed to configure " + component + " in " + installdir)
 
     def configure(self, component, srcdir, builddir, flags, env):
+        prefix = self.component_abbrev[component.replace("-", "_")]
+
         self.logger.debug("Configure " + str(flags) + " " + str(srcdir) + " -> "
                           + str(builddir))
 
         configure_files = dict(
             llvm=[(srcdir + "/configure", builddir + "/Makefile")],
-            dragonegg=[("","")])
+            dragonegg=[(None,None)])
 
 
         doconfig = False
         for conf, mf in configure_files[component.replace("-", "_")]:
+            if conf is None:
+                # No configure necessary
+                return 0
+
             if not os.path.exists(conf):
-                return
+                self.logger.info("[" + prefix + "] Configure failed, no configure script " + conf)
+                return -1
+
+            if not os.path.exists(mf):
+                self.logger.info("[" + prefix + "] Configure failed, no makefile " + mf)
+                return -1
+
             if os.path.exists(conf) and os.path.exists(mf):
                 confstat = os.stat(conf)
                 makestat = os.stat(mf)
@@ -506,16 +545,17 @@ class Builder(threading.Thread):
                 break
 
         if not doconfig and not self.options.force_configure:
-            return
+            return 0
 
         program = srcdir + "/configure"
         if not is_executable(program):
-            return
+            self.logger.info("[" + prefix + "] Configure failed, cannot execute " + program)
+            return -1
 
         args = [program]
         args += ["--verbose"]
         args += flags
-        self.execute(args, builddir, env, component)
+        return self.execute(args, builddir, env, component)
 
     def make(self, component, srcdir, builddir, flags, env):
         program = find_executable("make")
@@ -527,7 +567,7 @@ class Builder(threading.Thread):
 
         args = [program]
         args += flags
-        self.execute(args, builddir, env, component)
+        return self.execute(args, builddir, env, component)
 
 # Global constants
 build_abbrev = dict(debug="dbg", release="opt", paranoid="par")
