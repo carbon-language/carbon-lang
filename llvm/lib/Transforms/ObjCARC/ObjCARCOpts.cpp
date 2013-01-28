@@ -30,8 +30,11 @@
 
 #define DEBUG_TYPE "objc-arc-opts"
 #include "ObjCARC.h"
+
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/STLExtras.h"
+
 using namespace llvm;
 using namespace llvm::objcarc;
 
@@ -717,154 +720,6 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   // TODO: Theoretically we could check for dependencies between objc_* calls
   // and OnlyAccessesArgumentPointees calls or other well-behaved calls.
   return AliasAnalysis::getModRefInfo(CS1, CS2);
-}
-
-/// @}
-///
-/// \defgroup ARCAPElim ARC Autorelease Pool Elimination.
-/// @{
-
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/Constants.h"
-
-namespace {
-  /// \brief Autorelease pool elimination.
-  class ObjCARCAPElim : public ModulePass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool runOnModule(Module &M);
-
-    static bool MayAutorelease(ImmutableCallSite CS, unsigned Depth = 0);
-    static bool OptimizeBB(BasicBlock *BB);
-
-  public:
-    static char ID;
-    ObjCARCAPElim() : ModulePass(ID) {
-      initializeObjCARCAPElimPass(*PassRegistry::getPassRegistry());
-    }
-  };
-}
-
-char ObjCARCAPElim::ID = 0;
-INITIALIZE_PASS(ObjCARCAPElim,
-                "objc-arc-apelim",
-                "ObjC ARC autorelease pool elimination",
-                false, false)
-
-Pass *llvm::createObjCARCAPElimPass() {
-  return new ObjCARCAPElim();
-}
-
-void ObjCARCAPElim::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-}
-
-/// Interprocedurally determine if calls made by the given call site can
-/// possibly produce autoreleases.
-bool ObjCARCAPElim::MayAutorelease(ImmutableCallSite CS, unsigned Depth) {
-  if (const Function *Callee = CS.getCalledFunction()) {
-    if (Callee->isDeclaration() || Callee->mayBeOverridden())
-      return true;
-    for (Function::const_iterator I = Callee->begin(), E = Callee->end();
-         I != E; ++I) {
-      const BasicBlock *BB = I;
-      for (BasicBlock::const_iterator J = BB->begin(), F = BB->end();
-           J != F; ++J)
-        if (ImmutableCallSite JCS = ImmutableCallSite(J))
-          // This recursion depth limit is arbitrary. It's just great
-          // enough to cover known interesting testcases.
-          if (Depth < 3 &&
-              !JCS.onlyReadsMemory() &&
-              MayAutorelease(JCS, Depth + 1))
-            return true;
-    }
-    return false;
-  }
-
-  return true;
-}
-
-bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
-  bool Changed = false;
-
-  Instruction *Push = 0;
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-    Instruction *Inst = I++;
-    switch (GetBasicInstructionClass(Inst)) {
-    case IC_AutoreleasepoolPush:
-      Push = Inst;
-      break;
-    case IC_AutoreleasepoolPop:
-      // If this pop matches a push and nothing in between can autorelease,
-      // zap the pair.
-      if (Push && cast<CallInst>(Inst)->getArgOperand(0) == Push) {
-        Changed = true;
-        DEBUG(dbgs() << "ObjCARCAPElim::OptimizeBB: Zapping push pop "
-                        "autorelease pair:\n"
-                        "                           Pop: " << *Inst << "\n"
-                     << "                           Push: " << *Push << "\n");
-        Inst->eraseFromParent();
-        Push->eraseFromParent();
-      }
-      Push = 0;
-      break;
-    case IC_CallOrUser:
-      if (MayAutorelease(ImmutableCallSite(Inst)))
-        Push = 0;
-      break;
-    default:
-      break;
-    }
-  }
-
-  return Changed;
-}
-
-bool ObjCARCAPElim::runOnModule(Module &M) {
-  if (!EnableARCOpts)
-    return false;
-
-  // If nothing in the Module uses ARC, don't do anything.
-  if (!ModuleHasARC(M))
-    return false;
-
-  // Find the llvm.global_ctors variable, as the first step in
-  // identifying the global constructors. In theory, unnecessary autorelease
-  // pools could occur anywhere, but in practice it's pretty rare. Global
-  // ctors are a place where autorelease pools get inserted automatically,
-  // so it's pretty common for them to be unnecessary, and it's pretty
-  // profitable to eliminate them.
-  GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
-  if (!GV)
-    return false;
-
-  assert(GV->hasDefinitiveInitializer() &&
-         "llvm.global_ctors is uncooperative!");
-
-  bool Changed = false;
-
-  // Dig the constructor functions out of GV's initializer.
-  ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
-  for (User::op_iterator OI = Init->op_begin(), OE = Init->op_end();
-       OI != OE; ++OI) {
-    Value *Op = *OI;
-    // llvm.global_ctors is an array of pairs where the second members
-    // are constructor functions.
-    Function *F = dyn_cast<Function>(cast<ConstantStruct>(Op)->getOperand(1));
-    // If the user used a constructor function with the wrong signature and
-    // it got bitcasted or whatever, look the other way.
-    if (!F)
-      continue;
-    // Only look at function definitions.
-    if (F->isDeclaration())
-      continue;
-    // Only look at functions with one basic block.
-    if (llvm::next(F->begin()) != F->end())
-      continue;
-    // Ok, a single-block constructor function definition. Try to optimize it.
-    Changed |= OptimizeBB(F->begin());
-  }
-
-  return Changed;
 }
 
 /// @}
