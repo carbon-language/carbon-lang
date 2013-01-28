@@ -40,6 +40,7 @@ enum TokenType {
   TT_CastRParen,
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
+  TT_RangeBasedForLoopColon,
   TT_ImplicitStringLiteral,
   TT_LineComment,
   TT_ObjCBlockLParen,
@@ -562,7 +563,8 @@ private:
                                 State.Stack.back().Indent) + 4;
       } else if (Current.Type == TT_ConditionalExpr) {
         State.Column = State.Stack.back().QuestionColumn;
-      } else if (RootToken.is(tok::kw_for) && Previous.is(tok::comma)) {
+      } else if (RootToken.is(tok::kw_for) && ParenLevel == 1 &&
+                 Previous.is(tok::comma)) {
         State.Column = State.ForLoopVariablePos;
       } else if (State.NextToken->Parent->ClosesTemplateDeclaration) {
         State.Column = State.Stack[ParenLevel].Indent - 4;
@@ -712,6 +714,9 @@ private:
       return 150;
     if (Left.is(tok::coloncolon))
       return 500;
+
+    if (Left.Type == TT_RangeBasedForLoopColon)
+      return 5;
 
     // In for-loops, prefer breaking at ',' and ';'.
     if (RootToken.is(tok::kw_for) &&
@@ -869,7 +874,7 @@ public:
   public:
     AnnotatingParser(AnnotatedToken &RootToken)
         : CurrentToken(&RootToken), KeywordVirtualFound(false),
-          ColonIsObjCMethodExpr(false) {}
+          ColonIsObjCMethodExpr(false), ColonIsForRangeExpr(false) {}
 
     /// \brief A helper class to manage AnnotatingParser::ColonIsObjCMethodExpr.
     struct ObjCSelectorRAII {
@@ -1077,8 +1082,10 @@ public:
         // Colons from ?: are handled in parseConditional().
         if (Tok->Parent->is(tok::r_paren))
           Tok->Type = TT_CtorInitializerColon;
-        if (ColonIsObjCMethodExpr)
+        else if (ColonIsObjCMethodExpr)
           Tok->Type = TT_ObjCMethodExpr;
+        else if (ColonIsForRangeExpr)
+          Tok->Type = TT_RangeBasedForLoopColon;
         break;
       case tok::kw_if:
       case tok::kw_while:
@@ -1087,6 +1094,12 @@ public:
           if (!parseParens(/*LookForDecls=*/true))
             return false;
         }
+        break;
+      case tok::kw_for:
+        ColonIsForRangeExpr = true;
+        next();
+        if (!parseParens())
+          return false;
         break;
       case tok::l_paren:
         if (!parseParens())
@@ -1238,6 +1251,7 @@ public:
     AnnotatedToken *CurrentToken;
     bool KeywordVirtualFound;
     bool ColonIsObjCMethodExpr;
+    bool ColonIsForRangeExpr;
   };
 
   void calculateExtraInformation(AnnotatedToken &Current) {
@@ -1598,6 +1612,8 @@ private:
     if (Left.ClosesTemplateDeclaration)
       return true;
     if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
+      return true;
+    if (Left.Type == TT_RangeBasedForLoopColon)
       return true;
     if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
         Left.Type == TT_UnaryOperator || Left.Type == TT_ConditionalExpr ||

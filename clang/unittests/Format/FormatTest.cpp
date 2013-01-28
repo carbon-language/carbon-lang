@@ -241,6 +241,13 @@ TEST_F(FormatTest, FormatsForLoop) {
       "     ++IIIII) {\n}");
 }
 
+TEST_F(FormatTest, RangeBasedForLoops) {
+  verifyFormat("for (auto aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :\n"
+               "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
+  verifyFormat("for (auto aaaaaaaaaaaaaaaaaaaaa :\n"
+               "     aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa, aaaaaaaaaaaaa)) {\n}");
+}
+
 TEST_F(FormatTest, FormatsWhileLoop) {
   verifyFormat("while (true) {\n}");
   verifyFormat("while (true)\n"
