@@ -735,14 +735,22 @@ uint64_t AttributeSet::Raw(unsigned Index) const {
   return pImpl ? pImpl->Raw(Index) : 0;
 }
 
-/// getAttributes - The attributes for the specified index are returned.
+/// \brief The attributes for the specified index are returned.
+///
+/// FIXME: This shouldn't return 'Attribute'.
 Attribute AttributeSet::getAttributes(unsigned Idx) const {
   if (pImpl == 0) return Attribute();
 
-  ArrayRef<AttributeWithIndex> Attrs = pImpl->getAttributes();
-  for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
-    if (Attrs[i].Index == Idx)
-      return Attrs[i].Attrs;
+  // Loop through to find the attribute we want.
+  for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I) {
+    if (pImpl->getSlotIndex(I) != Idx) continue;
+
+    AttrBuilder B;
+    for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
+           IE = pImpl->end(I); II != IE; ++II)
+      B.addAttributes(*II);
+    return Attribute::get(pImpl->getContext(), B);
+  }
 
   return Attribute();
 }
@@ -753,7 +761,7 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   if (pImpl == 0) return false;
 
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
-    for (AttributeSetImpl::iterator II = pImpl->begin(I),
+    for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
            IE = pImpl->end(I); II != IE; ++II)
       if (II->hasAttribute(Attr))
         return true;
