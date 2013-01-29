@@ -776,8 +776,11 @@ static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
     } else if (Variety == "Declspec") {
       Prefix = " __declspec(";
       Suffix = ")";
+    } else if (Variety == "Keyword") {
+      Prefix = " ";
+      Suffix = "";
     } else {
-      llvm_unreachable("Unkown attribute syntax variety!");
+      llvm_unreachable("Unknown attribute syntax variety!");
     }
 
     Spelling += Name;
@@ -1149,6 +1152,7 @@ void EmitClangAttrSpellingListIndex(RecordKeeper &Records, raw_ostream &OS) {
             .Case("GNU", 0)
             .Case("CXX11", 1)
             .Case("Declspec", 2)
+            .Case("Keyword", 3)
             .Default(0)
           << " && Scope == \"" << Namespace << "\")\n"
           << "        return " << I << ";\n";

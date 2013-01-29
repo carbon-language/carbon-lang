@@ -29,8 +29,8 @@ class SubsetSubject<AttrSubject base, string description, code check>
   code CheckCode = check;
 }
 
-// This is the type of a variable which C++11 defines [[aligned()]] as being
-// a possible subject.
+// This is the type of a variable which C++11 allows alignas(...) to appertain
+// to.
 def NormalVar : SubsetSubject<Var, "non-register, non-parameter variable",
                               [{S->getStorageClass() != VarDecl::Register &&
                                 S->getKind() != Decl::ImplicitParam &&
@@ -91,6 +91,7 @@ class Declspec<string name> : Spelling<name, "Declspec">;
 class CXX11<string namespace, string name> : Spelling<name, "CXX11"> {
   string Namespace = namespace;
 }
+class Keyword<string name> : Spelling<name, "Keyword">;
 
 class Attr {
   // The various ways in which an attribute can be spelled in source
@@ -125,6 +126,13 @@ class InheritableAttr : Attr;
 /// redeclarations, even when it's written on a parameter.
 class InheritableParamAttr : InheritableAttr;
 
+/// An ignored attribute, which we parse but discard with no checking.
+class IgnoredAttr : Attr {
+  let Ignored = 1;
+  let ASTNode = 0;
+  let SemaHandler = 0;
+}
+
 //
 // Attributes begin here
 //
@@ -141,7 +149,8 @@ def Alias : InheritableAttr {
 }
 
 def Aligned : InheritableAttr {
-  let Spellings = [GNU<"aligned">, GNU<"align">, CXX11<"gnu", "aligned">];
+  let Spellings = [GNU<"aligned">, Declspec<"align">, CXX11<"gnu", "aligned">,
+                   Keyword<"alignas">];
   let Subjects = [NonBitField, NormalVar, Tag];
   let Args = [AlignedArgument<"Alignment">, BoolArgument<"IsMSDeclSpec">];
 }
@@ -200,11 +209,8 @@ def Blocks : InheritableAttr {
   let Args = [EnumArgument<"Type", "BlockType", ["byref"], ["ByRef"]>];
 }
 
-def Bounded : Attr {
+def Bounded : IgnoredAttr {
   let Spellings = [GNU<"bounded">];
-  let ASTNode = 0;
-  let SemaHandler = 0;
-  let Ignored = 1;
 }
 
 def CarriesDependency : InheritableParamAttr {
@@ -214,7 +220,7 @@ def CarriesDependency : InheritableParamAttr {
 }
 
 def CDecl : InheritableAttr {
-  let Spellings = [GNU<"cdecl">, GNU<"__cdecl">, CXX11<"gnu", "cdecl">];
+  let Spellings = [GNU<"cdecl">, CXX11<"gnu", "cdecl">, Keyword<"__cdecl">];
 }
 
 // cf_audited_transfer indicates that the given function has been
@@ -302,7 +308,7 @@ def CXX11NoReturn : InheritableAttr {
 }
 
 def OpenCLKernel : Attr {
-  let Spellings = [GNU<"opencl_kernel_function">];
+  let Spellings = [Keyword<"__kernel">, Keyword<"kernel">];
 }
 
 def OpenCLImageAccess : Attr {
@@ -333,8 +339,8 @@ def FallThrough : Attr {
 }
 
 def FastCall : InheritableAttr {
-  let Spellings = [GNU<"fastcall">, GNU<"__fastcall">,
-                   CXX11<"gnu", "fastcall">];
+  let Spellings = [GNU<"fastcall">, CXX11<"gnu", "fastcall">,
+                   Keyword<"__fastcall">];
 }
 
 def Final : InheritableAttr {
@@ -631,16 +637,17 @@ def Sentinel : InheritableAttr {
 }
 
 def StdCall : InheritableAttr {
-  let Spellings = [GNU<"stdcall">, GNU<"__stdcall">, CXX11<"gnu", "stdcall">];
+  let Spellings = [GNU<"stdcall">, CXX11<"gnu", "stdcall">,
+                   Keyword<"__stdcall">];
 }
 
 def ThisCall : InheritableAttr {
-  let Spellings = [GNU<"thiscall">, GNU<"__thiscall">,
-                   CXX11<"gnu", "thiscall">];
+  let Spellings = [GNU<"thiscall">, CXX11<"gnu", "thiscall">,
+                   Keyword<"__thiscall">];
 }
 
 def Pascal : InheritableAttr {
-  let Spellings = [GNU<"pascal">];
+  let Spellings = [GNU<"pascal">, Keyword<"__pascal">];
 }
 
 def TransparentUnion : InheritableAttr {
@@ -694,11 +701,8 @@ def VectorSize : Attr {
   let ASTNode = 0;
 }
 
-def VecTypeHint : Attr {
+def VecTypeHint : IgnoredAttr {
   let Spellings = [GNU<"vec_type_hint">];
-  let ASTNode = 0;
-  let SemaHandler = 0;
-  let Ignored = 1;
 }
 
 def Visibility : InheritableAttr {
@@ -894,29 +898,33 @@ def DLLImport : InheritableAttr {
 }
 
 def ForceInline : InheritableAttr {
-  let Spellings = [Declspec<"__forceinline">];
+  let Spellings = [Keyword<"__forceinline">];
 }
 
 def Win64 : InheritableAttr {
-  let Spellings = [Declspec<"w64">];
+  let Spellings = [Keyword<"__w64">];
 }
 
 def Ptr32 : InheritableAttr {
-  let Spellings = [Declspec<"__ptr32">];
+  let Spellings = [Keyword<"__ptr32">];
 }
 
 def Ptr64 : InheritableAttr {
-  let Spellings = [Declspec<"__ptr64">];
+  let Spellings = [Keyword<"__ptr64">];
 }
 
 def SingleInheritance : InheritableAttr {
-  let Spellings = [Declspec<"__single_inheritance">];
+  let Spellings = [Keyword<"__single_inheritance">];
 }
 
 def MultipleInheritance : InheritableAttr {
-  let Spellings = [Declspec<"__multiple_inheritance">];
+  let Spellings = [Keyword<"__multiple_inheritance">];
 }
 
 def VirtualInheritance : InheritableAttr {
-  let Spellings = [Declspec<"__virtual_inheritance">];
+  let Spellings = [Keyword<"__virtual_inheritance">];
+}
+
+def Unaligned : IgnoredAttr {
+  let Spellings = [Keyword<"__unaligned">];
 }

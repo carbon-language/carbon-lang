@@ -56,12 +56,14 @@ class AttributeList { // TODO: This should really be called ParsedAttribute
 public:
   /// The style used to specify an attribute.
   enum Syntax {
+    /// __attribute__((...))
     AS_GNU,
+    /// [[...]]
     AS_CXX11,
+    /// __declspec(...)
     AS_Declspec,
-    // eg) __w64, __ptr32, etc.  It is implied that an MSTypespec is also
-    // a declspec.
-    AS_MSTypespec   
+    /// __ptr16, alignas(...), etc.
+    AS_Keyword
   };
 private:
   IdentifierInfo *AttrName;
@@ -227,12 +229,9 @@ public:
   IdentifierInfo *getParameterName() const { return ParmName; }
   SourceLocation getParameterLoc() const { return ParmLoc; }
 
-  /// Returns true if the attribute is a pure __declspec or a synthesized
-  /// declspec representing a type specification (like __w64 or __ptr32).
-  bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec ||
-                                            SyntaxUsed == AS_MSTypespec; }
+  bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec; }
   bool isCXX11Attribute() const { return SyntaxUsed == AS_CXX11; }
-  bool isMSTypespecAttribute() const { return SyntaxUsed == AS_MSTypespec; }
+  bool isKeywordAttribute() const { return SyntaxUsed == AS_Keyword; }
 
   bool isInvalid() const { return Invalid; }
   void setInvalid(bool b = true) const { Invalid = b; }

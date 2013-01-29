@@ -1,12 +1,13 @@
-// RUN: %clang_cc1 %s -ast-print | FileCheck %s
+// RUN: %clang_cc1 %s -ast-print -fms-extensions | FileCheck %s
 
 // FIXME: align attribute print
 
 // CHECK: int x __attribute__((aligned(4, 0)));
 int x __attribute__((aligned(4)));
 
-// CHECK: int y __attribute__((align(4, 0)));
-int y __attribute__((align(4)));
+// FIXME: Print this at a valid location for a __declspec attr.
+// CHECK: int y __declspec(align(4, 1));
+__declspec(align(4)) int y;
 
 // CHECK: void foo() __attribute__((const));
 void foo() __attribute__((const));

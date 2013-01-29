@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -fborland-extensions
-// expected-no-diagnostics
+// RUN: %clang_cc1 %s -fsyntax-only -fborland-extensions -triple x86_64-linux-gnu -verify
+// RUN: %clang_cc1 %s -fsyntax-only -fborland-extensions -triple i686-linux-gnu -Werror
 
 // Borland extensions
 
@@ -9,13 +9,18 @@ int dummy_function() { return 0; }
 // 2. test __pascal
 int _pascal f2();
 
+// expected-warning@+1 {{calling convention '__pascal' ignored for this target}}
 float __pascal gi2(int, int); 
+// expected-warning@+1 {{calling convention '__pascal' ignored for this target}}
 template<typename T> T g2(T (__pascal * const )(int, int)) { return 0; }
 
 struct M {
+    // expected-warning@+1 {{calling convention '__pascal' ignored for this target}}
     int __pascal addP();
+    // expected-warning@+1 {{calling convention '__pascal' ignored for this target}}
     float __pascal subtractP(); 
 };
+// expected-warning@+1 {{calling convention '__pascal' ignored for this target}}
 template<typename T> int h2(T (__pascal M::* const )()) { return 0; }
 void m2() {
     int i; float f;

@@ -4336,13 +4336,6 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       attr.setUsedAsTypeAttr();
       break;
 
-    case AttributeList::AT_Win64:
-    case AttributeList::AT_Ptr32:
-    case AttributeList::AT_Ptr64:
-      // FIXME: don't ignore these
-      attr.setUsedAsTypeAttr();
-      break;
-
     case AttributeList::AT_NSReturnsRetained:
       if (!state.getSema().getLangOpts().ObjCAutoRefCount)
         break;
