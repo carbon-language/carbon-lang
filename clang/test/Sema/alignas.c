@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -Dalignof=__alignof %s
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -Dalignof=_Alignof %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -Dalignof=_Alignof -DUSING_C11_SYNTAX %s
 
 _Alignas(3) int align_illegal; //expected-error {{requested alignment is not a power of 2}}
 _Alignas(int) char align_big;
@@ -17,6 +17,11 @@ void f(_Alignas(1) char c) { // expected-error {{'_Alignas' attribute cannot be 
   _Alignas(1) register char k; // expected-error {{'_Alignas' attribute cannot be applied to a variable with 'register' storage class}}
 }
 
+#ifdef USING_C11_SYNTAX
+// expected-warning@+4{{'_Alignof' applied to an expression is a GNU extension}}
+// expected-warning@+4{{'_Alignof' applied to an expression is a GNU extension}}
+// expected-warning@+4{{'_Alignof' applied to an expression is a GNU extension}}
+#endif
 _Static_assert(alignof(align_big) == alignof(int), "k's alignment is wrong");
 _Static_assert(alignof(align_small) == 1, "j's alignment is wrong");
 _Static_assert(alignof(align_multiple) == 8, "l's alignment is wrong");
