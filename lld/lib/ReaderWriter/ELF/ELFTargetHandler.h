@@ -6,6 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief These interfaces provide target specific hooks to change the linker's
+/// behaivor.
+///
+//===----------------------------------------------------------------------===//
+
 #ifndef LLD_READER_WRITER_ELF_TARGETHANDLER_H
 #define LLD_READER_WRITER_ELF_TARGETHANDLER_H
 
@@ -20,20 +27,12 @@
 #include <vector>
 #include <unordered_map>
 
-/// \brief All ELF targets would want to override the way the ELF file gets
-/// processed by the linker. This class serves as an interface which would be
-/// used to derive the needed functionality of a particular target/platform.
-
+namespace lld {
+template <class ELFT> class ELFDefinedAtom;
+namespace elf {
 /// \brief The target registers a set of handlers for overriding target specific
 /// attributes for a DefinedAtom. The Reader uses this class to query for the
 /// type of atom and its permissions 
-
-namespace lld {
-
-template <class ELFT> class ELFDefinedAtom;
-
-namespace elf {
-
 template <class ELFT> class ELFTargetAtomHandler {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
