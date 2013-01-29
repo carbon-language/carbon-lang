@@ -11,6 +11,6 @@ int main(int argc, char **argv) {
   struct rlimit mmap_resource_limit = { 0, 0 };
   assert(0 == setrlimit(RLIMIT_AS, &mmap_resource_limit));
   x = malloc(10000000);
-// CHECK: AddressSanitizer is unable to mmap
+// CHECK: ERROR: Failed to mmap
   return 0;
 }
