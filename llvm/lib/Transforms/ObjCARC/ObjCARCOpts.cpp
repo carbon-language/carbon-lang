@@ -312,13 +312,35 @@ namespace {
   /// objc_retain and objc_release are actually needed.
   enum Sequence {
     S_None,
-    S_Retain,         ///< objc_retain(x)
-    S_CanRelease,     ///< foo(x) -- x could possibly see a ref count decrement
-    S_Use,            ///< any use of x
-    S_Stop,           ///< like S_Release, but code motion is stopped
-    S_Release,        ///< objc_release(x)
-    S_MovableRelease  ///< objc_release(x), !clang.imprecise_release
+    S_Retain,         ///< objc_retain(x).
+    S_CanRelease,     ///< foo(x) -- x could possibly see a ref count decrement.
+    S_Use,            ///< any use of x.
+    S_Release,        ///< objc_release(x).
+    S_MovableRelease, ///< objc_release(x), !clang.imprecise_release.
+    S_Stop            ///< like S_Release, but code motion is stopped.
   };
+
+  raw_ostream &operator<<(raw_ostream &OS, const Sequence S)
+    LLVM_ATTRIBUTE_UNUSED;
+  raw_ostream &operator<<(raw_ostream &OS, const Sequence S) {
+    switch (S) {
+    case S_None:
+      return OS << "S_None";
+    case S_Retain:
+      return OS << "S_Retain";
+    case S_CanRelease:
+      return OS << "S_CanRelease";
+    case S_Use:
+      return OS << "S_Use";
+    case S_Release:
+      return OS << "S_Release";
+    case S_MovableRelease:
+      return OS << "S_MovableRelease";
+    case S_Stop:
+      return OS << "S_Stop";
+    }
+    llvm_unreachable("Unknown sequence type.");
+  }
 }
 
 static Sequence MergeSeqs(Sequence A, Sequence B, bool TopDown) {
