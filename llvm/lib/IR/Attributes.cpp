@@ -445,8 +445,21 @@ AttributeSet AttributeSet::get(LLVMContext &C,
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
   if (!B.hasAttributes())
     return AttributeSet();
-  return get(C, ArrayRef<std::pair<unsigned, Attribute> >(
-               std::make_pair(Idx, Attribute::get(C, B))));
+
+  SmallVector<std::pair<unsigned, Attribute>, 8> Attrs;
+  for (AttrBuilder::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    Attribute::AttrKind Kind = *I;
+    if (Kind == Attribute::Alignment)
+      Attrs.push_back(std::make_pair(Idx, Attribute::
+                                     getWithAlignment(C, B.getAlignment())));
+    else if (Kind == Attribute::StackAlignment)
+      Attrs.push_back(std::make_pair(Idx, Attribute::
+                              getWithStackAlignment(C, B.getStackAlignment())));
+    else
+      Attrs.push_back(std::make_pair(Idx, Attribute::get(C, Kind)));
+  }
+
+  return get(C, Attrs);
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
