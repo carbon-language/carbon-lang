@@ -7,7 +7,8 @@
 // RUN:    -cursor-at=%S/getcursor-preamble.h:7:7 \
 // RUN:             %s | FileCheck %s
 
-// RUN: CINDEXTEST_EDITING=1 c-index-test -cursor-at=%S/getcursor-preamble.h:2:10 \
+// RUN: env CINDEXTEST_EDITING=1 c-index-test \
+// RUN:    -cursor-at=%S/getcursor-preamble.h:2:10 \
 // RUN:    -cursor-at=%S/getcursor-preamble.h:3:9 \
 // RUN:    -cursor-at=%S/getcursor-preamble.h:4:6 \
 // RUN:    -cursor-at=%S/getcursor-preamble.h:5:8 \
