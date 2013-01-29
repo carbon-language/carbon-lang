@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ..
-DIRS := API Breakpoint Commands Core Expression Host Interpreter Plugins Symbol Target Utility
+DIRS := API Breakpoint Commands Core DataFormatters Expression Host Interpreter Plugins Symbol Target Utility
 LIBRARYNAME := lldbInitAndLog
 BUILD_ARCHIVE = 1
 
