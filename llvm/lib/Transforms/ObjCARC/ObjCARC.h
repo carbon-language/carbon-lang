@@ -29,10 +29,12 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/ObjCARC.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 namespace llvm {
 namespace objcarc {
@@ -163,6 +165,24 @@ static inline bool IsNoThrow(InstructionClass Class) {
          Class == IC_AutoreleasepoolPop;
 }
 
+/// Test whether the given instruction can autorelease any pointer or cause an
+/// autoreleasepool pop.
+static inline bool
+CanInterruptRV(InstructionClass Class) {
+  switch (Class) {
+  case IC_AutoreleasepoolPop:
+  case IC_CallOrUser:
+  case IC_Call:
+  case IC_Autorelease:
+  case IC_AutoreleaseRV:
+  case IC_FusedRetainAutorelease:
+  case IC_FusedRetainAutoreleaseRV:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /// \brief Determine if F is one of the special known Functions.  If it isn't,
 /// return IC_CallOrUser.
 InstructionClass GetFunctionClass(const Function *F);
@@ -184,6 +204,8 @@ static inline InstructionClass GetBasicInstructionClass(const Value *V) {
   return isa<InvokeInst>(V) ? IC_CallOrUser : IC_User;
 }
 
+/// \brief Determine what kind of construct V is.
+InstructionClass GetInstructionClass(const Value *V);
 
 /// \brief This is a wrapper around getUnderlyingObject which also knows how to
 /// look through objc_retain and objc_autorelease calls, which we know to return
@@ -225,6 +247,137 @@ static inline Value *StripPointerCastsAndObjCCalls(Value *V) {
   return V;
 }
 
+/// \brief Assuming the given instruction is one of the special calls such as
+/// objc_retain or objc_release, return the argument value, stripped of no-op
+/// casts and forwarding calls.
+static inline Value *GetObjCArg(Value *Inst) {
+  return StripPointerCastsAndObjCCalls(cast<CallInst>(Inst)->getArgOperand(0));
+}
+
+static inline bool isNullOrUndef(const Value *V) {
+  return isa<ConstantPointerNull>(V) || isa<UndefValue>(V);
+}
+
+static inline bool isNoopInstruction(const Instruction *I) {
+  return isa<BitCastInst>(I) ||
+    (isa<GetElementPtrInst>(I) &&
+     cast<GetElementPtrInst>(I)->hasAllZeroIndices());
+}
+
+
+/// \brief Erase the given instruction.
+///
+/// Many ObjC calls return their argument verbatim,
+/// so if it's such a call and the return value has users, replace them with the
+/// argument value.
+///
+static inline void EraseInstruction(Instruction *CI) {
+  Value *OldArg = cast<CallInst>(CI)->getArgOperand(0);
+
+  bool Unused = CI->use_empty();
+
+  if (!Unused) {
+    // Replace the return value with the argument.
+    assert(IsForwarding(GetBasicInstructionClass(CI)) &&
+           "Can't delete non-forwarding instruction with users!");
+    CI->replaceAllUsesWith(OldArg);
+  }
+
+  CI->eraseFromParent();
+
+  if (Unused)
+    RecursivelyDeleteTriviallyDeadInstructions(OldArg);
+}
+
+/// \brief Test whether the given value is possible a retainable object pointer.
+static inline bool IsPotentialRetainableObjPtr(const Value *Op) {
+  // Pointers to static or stack storage are not valid retainable object pointers.
+  if (isa<Constant>(Op) || isa<AllocaInst>(Op))
+    return false;
+  // Special arguments can not be a valid retainable object pointer.
+  if (const Argument *Arg = dyn_cast<Argument>(Op))
+    if (Arg->hasByValAttr() ||
+        Arg->hasNestAttr() ||
+        Arg->hasStructRetAttr())
+      return false;
+  // Only consider values with pointer types.
+  //
+  // It seemes intuitive to exclude function pointer types as well, since
+  // functions are never retainable object pointers, however clang occasionally
+  // bitcasts retainable object pointers to function-pointer type temporarily.
+  PointerType *Ty = dyn_cast<PointerType>(Op->getType());
+  if (!Ty)
+    return false;
+  // Conservatively assume anything else is a potential retainable object pointer.
+  return true;
+}
+
+static inline bool IsPotentialRetainableObjPtr(const Value *Op,
+                                               AliasAnalysis &AA) {
+  // First make the rudimentary check.
+  if (!IsPotentialRetainableObjPtr(Op))
+    return false;
+
+  // Objects in constant memory are not reference-counted.
+  if (AA.pointsToConstantMemory(Op))
+    return false;
+
+  // Pointers in constant memory are not pointing to reference-counted objects.
+  if (const LoadInst *LI = dyn_cast<LoadInst>(Op))
+    if (AA.pointsToConstantMemory(LI->getPointerOperand()))
+      return false;
+
+  // Otherwise assume the worst.
+  return true;
+}
+
+/// \brief Helper for GetInstructionClass. Determines what kind of construct CS
+/// is.
+static inline InstructionClass GetCallSiteClass(ImmutableCallSite CS) {
+  for (ImmutableCallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+       I != E; ++I)
+    if (IsPotentialRetainableObjPtr(*I))
+      return CS.onlyReadsMemory() ? IC_User : IC_CallOrUser;
+
+  return CS.onlyReadsMemory() ? IC_None : IC_Call;
+}
+
+/// \brief Return true if this value refers to a distinct and identifiable
+/// object.
+///
+/// This is similar to AliasAnalysis's isIdentifiedObject, except that it uses
+/// special knowledge of ObjC conventions.
+static inline bool IsObjCIdentifiedObject(const Value *V) {
+  // Assume that call results and arguments have their own "provenance".
+  // Constants (including GlobalVariables) and Allocas are never
+  // reference-counted.
+  if (isa<CallInst>(V) || isa<InvokeInst>(V) ||
+      isa<Argument>(V) || isa<Constant>(V) ||
+      isa<AllocaInst>(V))
+    return true;
+
+  if (const LoadInst *LI = dyn_cast<LoadInst>(V)) {
+    const Value *Pointer =
+      StripPointerCastsAndObjCCalls(LI->getPointerOperand());
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Pointer)) {
+      // A constant pointer can't be pointing to an object on the heap. It may
+      // be reference-counted, but it won't be deleted.
+      if (GV->isConstant())
+        return true;
+      StringRef Name = GV->getName();
+      // These special variables are known to hold values which are not
+      // reference-counted pointers.
+      if (Name.startswith("\01L_OBJC_SELECTOR_REFERENCES_") ||
+          Name.startswith("\01L_OBJC_CLASSLIST_REFERENCES_") ||
+          Name.startswith("\01L_OBJC_CLASSLIST_SUP_REFS_$_") ||
+          Name.startswith("\01L_OBJC_METH_VAR_NAME_") ||
+          Name.startswith("\01l_objc_msgSend_fixup_"))
+        return true;
+    }
+  }
+
+  return false;
+}
 
 } // end namespace objcarc
 } // end namespace llvm

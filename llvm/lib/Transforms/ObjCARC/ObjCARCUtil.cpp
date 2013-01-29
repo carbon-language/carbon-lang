@@ -21,6 +21,8 @@
 
 #include "ObjCARC.h"
 
+#include "llvm/IR/Intrinsics.h"
+
 using namespace llvm;
 using namespace llvm::objcarc;
 
@@ -146,4 +148,95 @@ InstructionClass llvm::objcarc::GetFunctionClass(const Function *F) {
 
   // Anything else.
   return IC_CallOrUser;
+}
+
+/// \brief Determine what kind of construct V is.
+InstructionClass
+llvm::objcarc::GetInstructionClass(const Value *V) {
+  if (const Instruction *I = dyn_cast<Instruction>(V)) {
+    // Any instruction other than bitcast and gep with a pointer operand have a
+    // use of an objc pointer. Bitcasts, GEPs, Selects, PHIs transfer a pointer
+    // to a subsequent use, rather than using it themselves, in this sense.
+    // As a short cut, several other opcodes are known to have no pointer
+    // operands of interest. And ret is never followed by a release, so it's
+    // not interesting to examine.
+    switch (I->getOpcode()) {
+    case Instruction::Call: {
+      const CallInst *CI = cast<CallInst>(I);
+      // Check for calls to special functions.
+      if (const Function *F = CI->getCalledFunction()) {
+        InstructionClass Class = GetFunctionClass(F);
+        if (Class != IC_CallOrUser)
+          return Class;
+
+        // None of the intrinsic functions do objc_release. For intrinsics, the
+        // only question is whether or not they may be users.
+        switch (F->getIntrinsicID()) {
+        case Intrinsic::returnaddress: case Intrinsic::frameaddress:
+        case Intrinsic::stacksave: case Intrinsic::stackrestore:
+        case Intrinsic::vastart: case Intrinsic::vacopy: case Intrinsic::vaend:
+        case Intrinsic::objectsize: case Intrinsic::prefetch:
+        case Intrinsic::stackprotector:
+        case Intrinsic::eh_return_i32: case Intrinsic::eh_return_i64:
+        case Intrinsic::eh_typeid_for: case Intrinsic::eh_dwarf_cfa:
+        case Intrinsic::eh_sjlj_lsda: case Intrinsic::eh_sjlj_functioncontext:
+        case Intrinsic::init_trampoline: case Intrinsic::adjust_trampoline:
+        case Intrinsic::lifetime_start: case Intrinsic::lifetime_end:
+        case Intrinsic::invariant_start: case Intrinsic::invariant_end:
+        // Don't let dbg info affect our results.
+        case Intrinsic::dbg_declare: case Intrinsic::dbg_value:
+          // Short cut: Some intrinsics obviously don't use ObjC pointers.
+          return IC_None;
+        default:
+          break;
+        }
+      }
+      return GetCallSiteClass(CI);
+    }
+    case Instruction::Invoke:
+      return GetCallSiteClass(cast<InvokeInst>(I));
+    case Instruction::BitCast:
+    case Instruction::GetElementPtr:
+    case Instruction::Select: case Instruction::PHI:
+    case Instruction::Ret: case Instruction::Br:
+    case Instruction::Switch: case Instruction::IndirectBr:
+    case Instruction::Alloca: case Instruction::VAArg:
+    case Instruction::Add: case Instruction::FAdd:
+    case Instruction::Sub: case Instruction::FSub:
+    case Instruction::Mul: case Instruction::FMul:
+    case Instruction::SDiv: case Instruction::UDiv: case Instruction::FDiv:
+    case Instruction::SRem: case Instruction::URem: case Instruction::FRem:
+    case Instruction::Shl: case Instruction::LShr: case Instruction::AShr:
+    case Instruction::And: case Instruction::Or: case Instruction::Xor:
+    case Instruction::SExt: case Instruction::ZExt: case Instruction::Trunc:
+    case Instruction::IntToPtr: case Instruction::FCmp:
+    case Instruction::FPTrunc: case Instruction::FPExt:
+    case Instruction::FPToUI: case Instruction::FPToSI:
+    case Instruction::UIToFP: case Instruction::SIToFP:
+    case Instruction::InsertElement: case Instruction::ExtractElement:
+    case Instruction::ShuffleVector:
+    case Instruction::ExtractValue:
+      break;
+    case Instruction::ICmp:
+      // Comparing a pointer with null, or any other constant, isn't an
+      // interesting use, because we don't care what the pointer points to, or
+      // about the values of any other dynamic reference-counted pointers.
+      if (IsPotentialRetainableObjPtr(I->getOperand(1)))
+        return IC_User;
+      break;
+    default:
+      // For anything else, check all the operands.
+      // Note that this includes both operands of a Store: while the first
+      // operand isn't actually being dereferenced, it is being stored to
+      // memory where we can no longer track who might read it and dereference
+      // it, so we have to consider it potentially used.
+      for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
+           OI != OE; ++OI)
+        if (IsPotentialRetainableObjPtr(*OI))
+          return IC_User;
+    }
+  }
+
+  // Otherwise, it's totally inert for ARC purposes.
+  return IC_None;
 }
