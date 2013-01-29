@@ -392,6 +392,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     Args.hasArg(OPT_fsanitize_memory_track_origins);
   Opts.SanitizeAddressZeroBaseShadow =
     Args.hasArg(OPT_fsanitize_address_zero_base_shadow);
+  Opts.SanitizeUndefinedTrapOnError =
+    Args.hasArg(OPT_fsanitize_undefined_trap_on_error);
   Opts.SSPBufferSize =
     Args.getLastArgIntValue(OPT_stack_protector_buffer_size, 8, Diags);
   Opts.StackRealignment = Args.hasArg(OPT_mstackrealign);

@@ -867,6 +867,14 @@ are listed below.
       includes all of the checks listed below other than
       ``unsigned-integer-overflow``.
 
+      ``-fsanitize=undefined-trap``: This includes all sanitizers
+      included by ``-fsanitize=undefined``, except those that require
+      runtime support.  This group of sanitizers are generally used
+      in conjunction with the ``-fsanitize-undefined-trap-on-error``
+      flag, which causes traps to be emitted, rather than calls to
+      runtime libraries. This includes all of the checks listed below
+      other than ``unsigned-integer-overflow`` and ``vptr``.
+
    The following more fine-grained checks are also available:
 
    -  ``-fsanitize=alignment``: Use of a misaligned pointer or creation

@@ -1459,6 +1459,33 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
     AllKinds |= Add;
   }
 
+  UbsanTrapOnError =
+    Args.hasArg(options::OPT_fcatch_undefined_behavior) ||
+    Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
+                 options::OPT_fno_sanitize_undefined_trap_on_error, false);
+
+  if (Args.hasArg(options::OPT_fcatch_undefined_behavior) &&
+      !Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
+                    options::OPT_fno_sanitize_undefined_trap_on_error, true)) {
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << "-fcatch-undefined-behavior"
+      << "-fno-sanitize-undefined-trap-on-error";
+  }
+
+  // Warn about undefined sanitizer options that require runtime support.
+  if (UbsanTrapOnError && notAllowedWithTrap()) {
+    if (Args.hasArg(options::OPT_fcatch_undefined_behavior))
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+        << lastArgumentForKind(D, Args, NotAllowedWithTrap)
+        << "-fcatch-undefined-behavior";
+    else if (Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
+                          options::OPT_fno_sanitize_undefined_trap_on_error,
+                          false))
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+        << lastArgumentForKind(D, Args, NotAllowedWithTrap)
+        << "-fsanitize-undefined-trap-on-error";
+  }
+
   // Only one runtime library can be used at once.
   bool NeedsAsan = needsAsanRt();
   bool NeedsTsan = needsTsanRt();
@@ -2500,6 +2527,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_sanitize_recover,
                     true))
     CmdArgs.push_back("-fno-sanitize-recover");
+
+  if (Args.hasArg(options::OPT_fcatch_undefined_behavior) ||
+      Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
+                   options::OPT_fno_sanitize_undefined_trap_on_error, false))
+    CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
 
   // Report and error for -faltivec on anything other then PowerPC.
   if (const Arg *A = Args.getLastArg(options::OPT_faltivec))

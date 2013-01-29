@@ -2044,7 +2044,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
     if (!isSigned || CGF.SanOpts->SignedIntegerOverflow)
       EmitBinOpCheck(Builder.CreateNot(overflow), Ops);
     else
-      CGF.EmitTrapvCheck(Builder.CreateNot(overflow));
+      CGF.EmitTrapCheck(Builder.CreateNot(overflow));
     return result;
   }
 

@@ -74,14 +74,23 @@ SANITIZER("vptr", Vptr)
 // IntegerSanitizer
 SANITIZER("unsigned-integer-overflow", UnsignedIntegerOverflow)
 
-// -fsanitize=undefined (and its alias -fcatch-undefined-behavior). This should
-// include all the sanitizers which have low overhead, no ABI or address space
-// layout implications, and only catch undefined behavior.
+// -fsanitize=undefined includes all the sanitizers which have low overhead, no
+// ABI or address space layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
                 Alignment | Bool | Bounds | Enum | FloatCastOverflow |
                 FloatDivideByZero | IntegerDivideByZero | Null | ObjectSize |
                 Return | Shift | SignedIntegerOverflow | Unreachable |
                 VLABound | Vptr)
+
+// -fsanitize=undefined-trap (and its alias -fcatch-undefined-behavior) includes
+// all sanitizers included by -fsanitize=undefined, except those that require
+// runtime support.  This group is generally used in conjunction with the
+// -fsanitize-undefined-trap-on-error flag.
+SANITIZER_GROUP("undefined-trap", UndefinedTrap,
+                Alignment | Bool | Bounds | Enum | FloatCastOverflow |
+                FloatDivideByZero | IntegerDivideByZero | Null | ObjectSize |
+                Return | Shift | SignedIntegerOverflow | Unreachable |
+                VLABound)
 
 SANITIZER_GROUP("integer", Integer,
                 SignedIntegerOverflow | UnsignedIntegerOverflow | Shift |
