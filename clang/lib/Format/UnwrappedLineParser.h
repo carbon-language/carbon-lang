@@ -11,9 +11,6 @@
 /// \brief This file contains the declaration of the UnwrappedLineParser,
 /// which turns a stream of tokens into UnwrappedLines.
 ///
-/// This is EXPERIMENTAL code under heavy development. It is not in a state yet,
-/// where it can be used to format real code.
-///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
