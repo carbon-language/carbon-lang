@@ -318,7 +318,7 @@ namespace {
     S_Use,            ///< any use of x.
     S_Stop,           ///< like S_Release, but code motion is stopped.
     S_Release,        ///< objc_release(x).
-    S_MovableRelease, ///< objc_release(x), !clang.imprecise_release.
+    S_MovableRelease  ///< objc_release(x), !clang.imprecise_release.
   };
 
   raw_ostream &operator<<(raw_ostream &OS, const Sequence S)
