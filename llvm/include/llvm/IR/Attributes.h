@@ -461,11 +461,12 @@ Attribute typeIncompatible(Type *Ty);
 /// is a breaking change to bitcode compatibility.
 uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs, unsigned Index);
 
-/// \brief This returns an attribute bitset containing the LLVM attributes that
-/// have been decoded from the given integer.  This function must stay in sync
-/// with 'encodeLLVMAttributesForBitcode'.
-Attribute decodeLLVMAttributesForBitcode(LLVMContext &C,
-                                         uint64_t EncodedAttrs);
+/// \brief This fills an AttrBuilder object with the LLVM attributes that have
+/// been decoded from the given integer. This function must stay in sync with
+/// 'encodeLLVMAttributesForBitcode'.
+/// N.B. This should be used only by the bitcode reader!
+void decodeLLVMAttributesForBitcode(LLVMContext &C, AttrBuilder &B,
+                                    uint64_t EncodedAttrs);
 
 } // end AttributeFuncs namespace
 

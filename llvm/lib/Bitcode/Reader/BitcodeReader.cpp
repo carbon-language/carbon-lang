@@ -464,15 +464,10 @@ bool BitcodeReader::ParseAttributeBlock() {
         return Error("Invalid ENTRY record");
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        Attribute ReconstitutedAttr =
-          AttributeFuncs::decodeLLVMAttributesForBitcode(Context, Record[i+1]);
-        Record[i+1] = ReconstitutedAttr.Raw();
-      }
-
-      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        AttrBuilder B(Record[i+1]);
-        if (B.hasAttributes())
-          Attrs.push_back(AttributeSet::get(Context, Record[i], B));
+        AttrBuilder B;
+        AttributeFuncs::decodeLLVMAttributesForBitcode(Context, B,
+                                                       Record[i+1]);
+        Attrs.push_back(AttributeSet::get(Context, Record[i], B));
       }
 
       MAttributes.push_back(AttributeSet::get(Context, Attrs));

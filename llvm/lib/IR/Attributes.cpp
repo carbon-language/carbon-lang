@@ -377,9 +377,9 @@ uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
 // AttributeSet Construction and Mutation Methods
 //===----------------------------------------------------------------------===//
 
-AttributeSet AttributeSet::getImpl(LLVMContext &C,
-                                   ArrayRef<std::pair<unsigned,
-                                                   AttributeSetNode*> > Attrs) {
+AttributeSet
+AttributeSet::getImpl(LLVMContext &C,
+                      ArrayRef<std::pair<unsigned, AttributeSetNode*> > Attrs) {
   LLVMContextImpl *pImpl = C.pImpl;
   FoldingSetNodeID ID;
   AttributeSetImpl::Profile(ID, Attrs);
@@ -855,6 +855,8 @@ bool AttrBuilder::operator==(const AttrBuilder &B) {
 }
 
 AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
+  if (!Val) return *this;
+
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
     if (uint64_t A = (Val & AttributeImpl::getAttrMask(I))) {
@@ -914,6 +916,7 @@ Attribute AttributeFuncs::typeIncompatible(Type *Ty) {
 /// \brief This returns an integer containing an encoding of all the LLVM
 /// attributes found in the given attribute bitset.  Any change to this encoding
 /// is a breaking change to bitcode compatibility.
+/// N.B. This should be used only by the bitcode reader!
 uint64_t AttributeFuncs::encodeLLVMAttributesForBitcode(AttributeSet Attrs,
                                                         unsigned Index) {
   // FIXME: It doesn't make sense to store the alignment information as an
@@ -932,21 +935,22 @@ uint64_t AttributeFuncs::encodeLLVMAttributesForBitcode(AttributeSet Attrs,
   return EncodedAttrs;
 }
 
-/// \brief This returns an attribute bitset containing the LLVM attributes that
-/// have been decoded from the given integer.  This function must stay in sync
-/// with 'encodeLLVMAttributesForBitcode'.
-Attribute AttributeFuncs::decodeLLVMAttributesForBitcode(LLVMContext &C,
-                                                         uint64_t EncodedAttrs){
+/// \brief This fills an AttrBuilder object with the LLVM attributes that have
+/// been decoded from the given integer. This function must stay in sync with
+/// 'encodeLLVMAttributesForBitcode'.
+/// N.B. This should be used only by the bitcode reader!
+void AttributeFuncs::decodeLLVMAttributesForBitcode(LLVMContext &C,
+                                                    AttrBuilder &B,
+                                                    uint64_t EncodedAttrs) {
   // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
   // the bits above 31 down by 11 bits.
   unsigned Alignment = (EncodedAttrs & (0xffffULL << 16)) >> 16;
   assert((!Alignment || isPowerOf2_32(Alignment)) &&
          "Alignment must be a power of two.");
 
-  AttrBuilder B(EncodedAttrs & 0xffff);
+  B.addRawValue(EncodedAttrs & 0xffff);
   if (Alignment)
     B.addAlignmentAttr(Alignment);
   B.addRawValue((EncodedAttrs & (0xffffULL << 32)) >> 11);
-  return Attribute::get(C, B);
 }
 
