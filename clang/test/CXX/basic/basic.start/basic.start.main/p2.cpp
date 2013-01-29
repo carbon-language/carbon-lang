@@ -12,6 +12,10 @@
 // RUN: not %clang_cc1 -x c++ %t -std=c++11 -fixit -DTEST9
 // RUN: %clang_cc1 -x c++ %t -std=c++11 -fsyntax-only -DTEST9
 
+// RUN: %clang_cc1 -fsyntax-only -verify %s -DTEST10
+// RUN: %clang_cc1 -fsyntax-only -verify %s -DTEST11
+// RUN: %clang_cc1 -fsyntax-only -verify %s -DTEST12
+
 #if TEST1
 
 // expected-no-diagnostics
@@ -70,6 +74,25 @@ int main() { } // expected-error{{'main' cannot be a template}}
 #elif TEST9
 
 constexpr int main() { } // expected-error{{'main' is not allowed to be declared constexpr}}
+
+#elif TEST10
+
+// PR15100
+// expected-no-diagnostics
+typedef char charT;
+int main(int, const charT**) {}
+
+#elif TEST11
+
+// expected-no-diagnostics
+typedef char charT;
+int main(int, charT* const *) {}
+
+#elif TEST12
+
+// expected-no-diagnostics
+typedef char charT;
+int main(int, const charT* const *) {}
 
 #else
 

@@ -6647,7 +6647,8 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
       const PointerType* PT;
       if ((PT = qs.strip(AT)->getAs<PointerType>()) &&
           (PT = qs.strip(PT->getPointeeType())->getAs<PointerType>()) &&
-          (QualType(qs.strip(PT->getPointeeType()), 0) == Context.CharTy)) {
+          Context.hasSameType(QualType(qs.strip(PT->getPointeeType()), 0),
+                              Context.CharTy)) {
         qs.removeConst();
         mismatch = !qs.empty();
       }
