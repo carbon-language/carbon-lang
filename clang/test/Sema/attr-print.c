@@ -15,3 +15,10 @@ void foo() __attribute__((const));
 
 // CHECK: void bar() __attribute__((__const));
 void bar() __attribute__((__const));
+
+// FIXME: Print these at a valid location for these attributes.
+// CHECK: int *p32 __ptr32;
+int * __ptr32 p32;
+
+// CHECK: int *p64 __ptr64;
+int * __ptr64 p64;
