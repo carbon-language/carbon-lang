@@ -282,11 +282,18 @@ private:
   /// it stands for (e.g., "<").
   StringRef resolveHTMLNamedCharacterReference(StringRef Name) const;
 
+  /// Given a Doxygen-supported named character reference (e.g., "&trade;"),
+  /// it returns its UTF8 encoding.
+  StringRef HTMLDoxygenCharacterReference(StringRef Name) const;
+
   /// Given a Unicode codepoint as base-10 integer, return the character.
   StringRef resolveHTMLDecimalCharacterReference(StringRef Name) const;
 
   /// Given a Unicode codepoint as base-16 integer, return the character.
   StringRef resolveHTMLHexCharacterReference(StringRef Name) const;
+  
+  /// Helper routine to do part of the work for resolveHTMLHexCharacterReference.
+  StringRef helperResolveHTMLHexCharacterReference(unsigned CodePoint) const;
 
   void formTokenWithChars(Token &Result, const char *TokEnd,
                           tok::TokenKind Kind) {
