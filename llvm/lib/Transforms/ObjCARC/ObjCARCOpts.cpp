@@ -177,14 +177,14 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
 /// argument to a call is not considered an escape.
 ///
 static bool DoesRetainableObjPtrEscape(const User *Ptr) {
-
   DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Target: " << *Ptr << "\n");
 
   // Walk the def-use chains.
   SmallVector<const Value *, 4> Worklist;
   Worklist.push_back(Ptr);
   // If Ptr has any operands add them as well.
-  for (User::const_op_iterator I = Ptr->op_begin(), E = Ptr->op_end(); I != E; ++I) {
+  for (User::const_op_iterator I = Ptr->op_begin(), E = Ptr->op_end(); I != E;
+       ++I) {
     Worklist.push_back(*I);
   }
 
@@ -210,8 +210,8 @@ static bool DoesRetainableObjPtrEscape(const User *Ptr) {
       case IC_StoreStrong:
       case IC_Autorelease:
       case IC_AutoreleaseRV: {
-        DEBUG(dbgs() << "DoesRetainableObjPtrEscape: User copies pointer arguments. "
-                        "Block Escapes!\n");
+        DEBUG(dbgs() << "DoesRetainableObjPtrEscape: User copies pointer "
+              "arguments. Pointer Escapes!\n");
         // These special functions make copies of their pointer arguments.
         return true;
       }
@@ -223,11 +223,12 @@ static bool DoesRetainableObjPtrEscape(const User *Ptr) {
             isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
 
           if (!VisitedSet.insert(UUser)) {
-            DEBUG(dbgs() << "DoesRetainableObjPtrEscape: User copies value. Escapes "
-                            "if result escapes. Adding to list.\n");
+            DEBUG(dbgs() << "DoesRetainableObjPtrEscape: User copies value. "
+                  "Ptr escapes if result escapes. Adding to list.\n");
             Worklist.push_back(UUser);
           } else {
-            DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Already visited node.\n");
+            DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Already visited node."
+                  "\n");
           }
           continue;
         }
@@ -244,13 +245,13 @@ static bool DoesRetainableObjPtrEscape(const User *Ptr) {
         continue;
       }
       // Otherwise, conservatively assume an escape.
-      DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Assuming block escapes.\n");
+      DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Assuming ptr escapes.\n");
       return true;
     }
   } while (!Worklist.empty());
 
   // No escapes found.
-  DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Block does not escape.\n");
+  DEBUG(dbgs() << "DoesRetainableObjPtrEscape: Ptr does not escape.\n");
   return false;
 }
 
