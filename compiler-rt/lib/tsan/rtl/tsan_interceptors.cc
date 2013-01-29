@@ -1065,6 +1065,66 @@ TSAN_INTERCEPTOR(int, sem_getvalue, void *s, int *sval) {
   return res;
 }
 
+TSAN_INTERCEPTOR(int, __xstat, int version, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__xstat, version, path, buf);
+  return REAL(__xstat)(version, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, stat, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__xstat, 0, path, buf);
+  return REAL(__xstat)(0, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, __xstat64, int version, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__xstat64, version, path, buf);
+  return REAL(__xstat64)(version, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, stat64, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__xstat64, 0, path, buf);
+  return REAL(__xstat64)(0, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, __lxstat, int version, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__lxstat, version, path, buf);
+  return REAL(__lxstat)(version, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, lstat, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__lxstat, 0, path, buf);
+  return REAL(__lxstat)(0, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, __lxstat64, int version, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__lxstat64, version, path, buf);
+  return REAL(__lxstat64)(version, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, lstat64, const char *path, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__lxstat64, 0, path, buf);
+  return REAL(__lxstat64)(0, path, buf);
+}
+
+TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__fxstat, version, fd, buf);
+  return REAL(__fxstat)(version, fd, buf);
+}
+
+TSAN_INTERCEPTOR(int, fstat, int fd, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__fxstat, 0, fd, buf);
+  return REAL(__fxstat)(0, fd, buf);
+}
+
+TSAN_INTERCEPTOR(int, __fxstat64, int version, int fd, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__fxstat64, version, fd, buf);
+  return REAL(__fxstat64)(version, fd, buf);
+}
+
+TSAN_INTERCEPTOR(int, fstat64, int fd, void *buf) {
+  SCOPED_TSAN_INTERCEPTOR(__fxstat64, 0, fd, buf);
+  return REAL(__fxstat64)(0, fd, buf);
+}
+
 TSAN_INTERCEPTOR(int, open, const char *name, int flags, int mode) {
   SCOPED_TSAN_INTERCEPTOR(open, name, flags, mode);
   int fd = REAL(open)(name, flags, mode);
@@ -1768,6 +1828,18 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(sem_post);
   TSAN_INTERCEPT(sem_getvalue);
 
+  TSAN_INTERCEPT(stat);
+  TSAN_INTERCEPT(__xstat);
+  TSAN_INTERCEPT(stat64);
+  TSAN_INTERCEPT(__xstat64);
+  TSAN_INTERCEPT(lstat);
+  TSAN_INTERCEPT(__lxstat);
+  TSAN_INTERCEPT(lstat64);
+  TSAN_INTERCEPT(__lxstat64);
+  TSAN_INTERCEPT(fstat);
+  TSAN_INTERCEPT(__fxstat);
+  TSAN_INTERCEPT(fstat64);
+  TSAN_INTERCEPT(__fxstat64);
   TSAN_INTERCEPT(open);
   TSAN_INTERCEPT(open64);
   TSAN_INTERCEPT(creat);
