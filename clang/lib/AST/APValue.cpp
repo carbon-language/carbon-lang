@@ -348,6 +348,8 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
     bool IsReference = Ty->isReferenceType();
     QualType InnerTy
       = IsReference ? Ty.getNonReferenceType() : Ty->getPointeeType();
+    if (InnerTy.isNull())
+      InnerTy = Ty;
 
     if (!hasLValuePath()) {
       // No lvalue path: just print the offset.
