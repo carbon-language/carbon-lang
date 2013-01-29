@@ -108,6 +108,9 @@ public:
   /// \brief The total length of the line up to and including this token.
   unsigned TotalLength;
 
+  /// \brief Penalty for inserting a line break before this token.
+  unsigned SplitPenalty;
+
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;
 
@@ -709,60 +712,6 @@ private:
     State.Column += Current.FormatTok.TokenLength;
   }
 
-  /// \brief Calculate the penalty for splitting after the token at \p Index.
-  unsigned splitPenalty(const AnnotatedToken &Tok) {
-    const AnnotatedToken &Left = Tok;
-    const AnnotatedToken &Right = Tok.Children[0];
-
-    if (Left.is(tok::l_brace) && Right.isNot(tok::l_brace))
-      return 50;
-    if (Left.is(tok::equal) && Right.is(tok::l_brace))
-      return 150;
-    if (Left.is(tok::coloncolon))
-      return 500;
-
-    if (Left.Type == TT_RangeBasedForLoopColon)
-      return 5;
-
-    if (Right.is(tok::arrow) || Right.is(tok::period)) {
-      if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
-        return 5; // Should be smaller than breaking at a nested comma.
-      return 150;
-    }
-
-    // In for-loops, prefer breaking at ',' and ';'.
-    if (RootToken.is(tok::kw_for) &&
-        (Left.isNot(tok::comma) && Left.isNot(tok::semi)))
-      return 20;
-
-    if (Left.is(tok::semi) || Left.is(tok::comma))
-      return 0;
-
-    // In Objective-C method expressions, prefer breaking before "param:" over
-    // breaking after it.
-    if (isObjCSelectorName(Right))
-      return 0;
-    if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
-      return 20;
-
-    if (Left.is(tok::l_paren))
-      return 20;
-    // FIXME: The penalty for a trailing "<" or "[" being higher than the
-    // penalty for a trainling "(" is a temporary workaround until we can
-    // properly avoid breaking in array subscripts or template parameters.
-    if (Left.is(tok::l_square) || Left.Type == TT_TemplateOpener)
-      return 50;
-
-    if (Left.Type == TT_ConditionalExpr)
-      return prec::Assignment;
-    prec::Level Level = getPrecedence(Left);
-
-    if (Level != prec::Unknown)
-      return Level;
-
-    return 3;
-  }
-
   unsigned getColumnLimit() {
     return Style.ColumnLimit - (Line.InPPDirective ? 1 : 0);
   }
@@ -811,7 +760,7 @@ private:
     unsigned CurrentPenalty = 0;
     if (NewLine)
       CurrentPenalty += Parameters.PenaltyIndentLevel * State.Stack.size() +
-                        splitPenalty(*State.NextToken->Parent);
+                        State.NextToken->SplitPenalty;
 
     addTokenToState(NewLine, true, State);
 
@@ -1285,6 +1234,8 @@ public:
       Current.TotalLength =
           Current.Parent->TotalLength + Current.FormatTok.TokenLength +
           (Current.SpaceRequiredBefore ? 1 : 0);
+    if (Current.CanBreakBefore)
+      Current.SplitPenalty = splitPenalty(Current);
     if (!Current.Children.empty())
       calculateExtraInformation(Current.Children[0]);
   }
@@ -1316,6 +1267,60 @@ public:
   }
 
 private:
+  /// \brief Calculate the penalty for splitting before \c Tok.
+  unsigned splitPenalty(const AnnotatedToken &Tok) {
+    const AnnotatedToken &Left = *Tok.Parent;
+    const AnnotatedToken &Right = Tok;
+
+    if (Left.is(tok::l_brace) && Right.isNot(tok::l_brace))
+      return 50;
+    if (Left.is(tok::equal) && Right.is(tok::l_brace))
+      return 150;
+    if (Left.is(tok::coloncolon))
+      return 500;
+
+    if (Left.Type == TT_RangeBasedForLoopColon)
+      return 5;
+
+    if (Right.is(tok::arrow) || Right.is(tok::period)) {
+      if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
+        return 5; // Should be smaller than breaking at a nested comma.
+      return 150;
+    }
+
+    // In for-loops, prefer breaking at ',' and ';'.
+    if (Line.First.is(tok::kw_for) &&
+        (Left.isNot(tok::comma) && Left.isNot(tok::semi)))
+      return 20;
+
+    if (Left.is(tok::semi) || Left.is(tok::comma))
+      return 0;
+
+    // In Objective-C method expressions, prefer breaking before "param:" over
+    // breaking after it.
+    if (isObjCSelectorName(Right))
+      return 0;
+    if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
+      return 20;
+
+    if (Left.is(tok::l_paren))
+      return 20;
+    // FIXME: The penalty for a trailing "<" or "[" being higher than the
+    // penalty for a trainling "(" is a temporary workaround until we can
+    // properly avoid breaking in array subscripts or template parameters.
+    if (Left.is(tok::l_square) || Left.Type == TT_TemplateOpener)
+      return 50;
+
+    if (Left.Type == TT_ConditionalExpr)
+      return prec::Assignment;
+    prec::Level Level = getPrecedence(Left);
+
+    if (Level != prec::Unknown)
+      return Level;
+
+    return 3;
+  }
+
   void determineTokenTypes(AnnotatedToken &Current, bool IsExpression,
                            bool LookForFunctionName) {
     if (getPrecedence(Current) == prec::Assignment) {
