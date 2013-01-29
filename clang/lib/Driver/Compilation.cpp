@@ -329,6 +329,7 @@ void Compilation::initCompilationForDiagnostics() {
   // Clear temporary/results file lists.
   TempFiles.clear();
   ResultFiles.clear();
+  FailureResultFiles.clear();
 
   // Remove any user specified output.  Claim any unclaimed arguments, so as
   // to avoid emitting warnings about unused args.

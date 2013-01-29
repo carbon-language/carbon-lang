@@ -398,6 +398,12 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     }
   }
 
+  if (Inputs.empty()) {
+    Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "Error generating preprocessed source(s) - no preprocessable inputs.";
+    return;
+  }
+
   // Don't attempt to generate preprocessed files if multiple -arch options are
   // used, unless they're all duplicates.
   llvm::StringSet<> ArchNames;
@@ -413,12 +419,6 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s) - cannot generate "
       "preprocessed source with multiple -arch options.";
-    return;
-  }
-
-  if (Inputs.empty()) {
-    Diag(clang::diag::note_drv_command_failed_diag_msg)
-      << "Error generating preprocessed source(s) - no preprocessable inputs.";
     return;
   }
 
