@@ -391,6 +391,26 @@ TEST(AddressSanitizer, ReallocTest) {
   free(ptr2);
 }
 
+TEST(AddressSanitizer, ZeroSizeMallocTest) {
+  // Test that malloc(0) and similar functions don't return NULL.
+  void *ptr = Ident(malloc(0));
+  EXPECT_FALSE(0 == ptr);
+  free(ptr);
+#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
+  int pm_res = posix_memalign(&ptr, 1<<20, 0);
+  EXPECT_EQ(0, pm_res);
+  EXPECT_FALSE(0 == ptr);
+  free(ptr);
+#endif
+  int *int_ptr = new int [0];
+  int *int_ptr2 = new int[0];
+  EXPECT_FALSE(0 == int_ptr);
+  EXPECT_FALSE(0 == int_ptr2);
+  EXPECT_FALSE(int_ptr == int_ptr2);
+  delete[] int_ptr;
+  delete[] int_ptr2;
+}
+
 #ifndef __APPLE__
 static const char *kMallocUsableSizeErrorMsg =
   "AddressSanitizer: attempting to call malloc_usable_size()";

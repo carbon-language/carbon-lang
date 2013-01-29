@@ -95,8 +95,6 @@ static const uptr kMaxAllowedMallocSize =
 static const uptr kMaxThreadLocalQuarantine =
   FIRST_32_SECOND_64(1 << 18, 1 << 20);
 
-static const uptr kReturnOnZeroMalloc = 2048;  // Zero page is protected.
-
 // Every chunk of memory allocated by this allocator can be in one of 3 states:
 // CHUNK_AVAILABLE: the chunk is in the free list and ready to be allocated.
 // CHUNK_ALLOCATED: the chunk is allocated and not yet freed.
@@ -309,10 +307,12 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   if (alignment < min_alignment)
     alignment = min_alignment;
   if (size == 0) {
-    if (alignment <= kReturnOnZeroMalloc)
-      return reinterpret_cast<void *>(kReturnOnZeroMalloc);
-    else
-      return 0;  // 0 bytes with large alignment requested. Just return 0.
+    // We'd be happy to avoid allocating memory for zero-size requests, but
+    // some programs/tests depend on this behavior and assume that malloc would
+    // not return NULL even for zero-size allocations. Moreover, it looks like
+    // operator new should never return NULL, and results of consecutive "new"
+    // calls must be different even if the allocated size is zero.
+    size = 1;
   }
   CHECK(IsPowerOfTwo(alignment));
   uptr rz_log = ComputeRZLog(size);
@@ -418,7 +418,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
 
 static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   uptr p = reinterpret_cast<uptr>(ptr);
-  if (p == 0 || p == kReturnOnZeroMalloc) return;
+  if (p == 0) return;
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
 
@@ -612,7 +612,7 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
 }
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
-  if (p == 0 || reinterpret_cast<uptr>(p) == kReturnOnZeroMalloc)
+  if (p == 0)
     return Allocate(size, 8, stack, FROM_MALLOC);
   if (size == 0) {
     Deallocate(p, stack, FROM_MALLOC);
@@ -678,7 +678,7 @@ uptr __asan_get_estimated_allocated_size(uptr size) {
 
 bool __asan_get_ownership(const void *p) {
   uptr ptr = reinterpret_cast<uptr>(p);
-  return (ptr == kReturnOnZeroMalloc) || (AllocationSize(ptr) > 0);
+  return (AllocationSize(ptr) > 0);
 }
 
 uptr __asan_get_allocated_size(const void *p) {
@@ -686,7 +686,7 @@ uptr __asan_get_allocated_size(const void *p) {
   uptr ptr = reinterpret_cast<uptr>(p);
   uptr allocated_size = AllocationSize(ptr);
   // Die if p is not malloced or if it is already freed.
-  if (allocated_size == 0 && ptr != kReturnOnZeroMalloc) {
+  if (allocated_size == 0) {
     GET_STACK_TRACE_FATAL_HERE;
     ReportAsanGetAllocatedSizeNotOwned(ptr, &stack);
   }
