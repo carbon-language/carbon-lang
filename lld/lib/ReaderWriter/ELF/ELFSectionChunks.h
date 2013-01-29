@@ -159,8 +159,7 @@ public:
   inline void finalize() { }
 
   /// \brief Write the section and the atom contents to the buffer
-  void write(ELFWriter *writer,
-             llvm::OwningPtr<llvm::FileOutputBuffer> &buffer);
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   /// Atom Iterators
   typedef typename std::vector<AtomLayout>::iterator atom_iter;
@@ -336,11 +335,9 @@ Section<ELFT>::segmentKindToStr() const {
 }
 
 /// \brief Write the section and the atom contents to the buffer
-template<class ELFT>
-void 
-Section<ELFT>::write(ELFWriter *writer,
-                     llvm::OwningPtr<llvm::FileOutputBuffer> &buffer) {
-  uint8_t *chunkBuffer = buffer->getBufferStart();
+template <class ELFT>
+void Section<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+  uint8_t *chunkBuffer = buffer.getBufferStart();
   for (auto &ai : _atoms) {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(ai._atom);
     if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
@@ -509,8 +506,7 @@ public:
 
   uint64_t addString(const llvm::StringRef symname);
 
-  void write(ELFWriter *writer,
-             llvm::OwningPtr<llvm::FileOutputBuffer> &buffer);
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   inline void finalize() { }
 
@@ -544,11 +540,10 @@ ELFStringTable<ELFT>::addString(const StringRef symname) {
   return offset;
 }
 
-template<class ELFT>
-void
-ELFStringTable<ELFT>::write(ELFWriter *writer,
-           llvm::OwningPtr<llvm::FileOutputBuffer> &buffer) {
-  uint8_t *chunkBuffer = buffer->getBufferStart();
+template <class ELFT>
+void ELFStringTable<ELFT>::write(ELFWriter *writer,
+                                 llvm::FileOutputBuffer &buffer) {
+  uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
   for (auto si : _strings) {
     memcpy(dest, si.data(), si.size());
@@ -570,8 +565,7 @@ public:
 
   void finalize();
 
-  void write(ELFWriter *writer,
-             llvm::OwningPtr<llvm::FileOutputBuffer> &buffer);
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   static inline bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Section<ELFT>::K_SymbolTable;
@@ -688,11 +682,10 @@ ELFSymbolTable<ELFT>::finalize() {
   this->setLink(_stringSection->ordinal());
 }
 
-template<class ELFT>
-void 
-ELFSymbolTable<ELFT>::write(ELFWriter *writer,
-           llvm::OwningPtr<llvm::FileOutputBuffer> &buffer) {
-  uint8_t *chunkBuffer = buffer->getBufferStart();
+template <class ELFT>
+void ELFSymbolTable<ELFT>::write(ELFWriter *writer,
+                                 llvm::FileOutputBuffer &buffer) {
+  uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
   for (auto sti : _symbolTable) {
     memcpy(dest, sti, sizeof(Elf_Sym));

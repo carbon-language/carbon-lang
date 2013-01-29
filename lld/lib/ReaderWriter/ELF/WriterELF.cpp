@@ -274,11 +274,11 @@ ELFExecutableWriter<ELFT>::writeFile(const lld::File &file, StringRef path) {
   // HACK: We have to write out the header and program header here even though
   // they are a member of a segment because only sections are written in the
   // following loop.
-  _elfHeader->write(this, buffer);
-  _programHeader->write(this, buffer);
+  _elfHeader->write(this, *buffer);
+  _programHeader->write(this, *buffer);
 
   for (auto section : _layout->sections())
-    section->write(this, buffer);
+    section->write(this, *buffer);
 
   return buffer->commit();
 }

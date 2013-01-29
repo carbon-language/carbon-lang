@@ -76,8 +76,7 @@ public:
   uint64_t            memSize() const { return _msize; }
   void               setMemSize(uint64_t msize) { _msize = msize; }
   // Writer the chunk
-  virtual void       write(ELFWriter *writer,
-                           llvm::OwningPtr<llvm::FileOutputBuffer> &buffer) = 0;
+  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) = 0;
   // Finalize the chunk before writing
   virtual void       finalize() = 0;
 

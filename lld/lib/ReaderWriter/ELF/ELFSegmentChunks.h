@@ -144,7 +144,7 @@ public:
   void assignVirtualAddress(uint64_t &addr);
 
   // Write the Segment
-  void write(ELFWriter *writer, OwningPtr<llvm::FileOutputBuffer> &buffer);
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   int64_t flags() const;
 
@@ -356,9 +356,8 @@ Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
 }
 
 // Write the Segment
-template<class ELFT>
-void 
-Segment<ELFT>::write(ELFWriter *writer, OwningPtr<llvm::FileOutputBuffer> &buffer) {
+template <class ELFT>
+void Segment<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
   for (auto slice : slices())
     for (auto section : slice->sections())
       section->write(writer, buffer);
