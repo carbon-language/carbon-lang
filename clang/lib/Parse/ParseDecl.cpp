@@ -3890,6 +3890,9 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_explicit:
   case tok::kw__Noreturn:
 
+    // alignment-specifier
+  case tok::kw__Alignas:
+
     // friend keyword.
   case tok::kw_friend:
 

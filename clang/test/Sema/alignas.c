@@ -8,13 +8,17 @@ _Alignas(1) unsigned _Alignas(8) int _Alignas(1) align_multiple;
 
 struct align_member {
   _Alignas(8) int member;
+  _Alignas(1) char bitfield : 1; // expected-error {{'_Alignas' attribute cannot be applied to a bit-field}}
 };
 
-typedef _Alignas(8) char align_typedef; // FIXME: this should be rejected
+typedef _Alignas(8) char align_typedef; // expected-error {{'_Alignas' attribute only applies to variables, functions and tag types}}
+
+void f(_Alignas(1) char c) { // expected-error {{'_Alignas' attribute cannot be applied to a function parameter}}
+  _Alignas(1) register char k; // expected-error {{'_Alignas' attribute cannot be applied to a variable with 'register' storage class}}
+}
 
 _Static_assert(alignof(align_big) == alignof(int), "k's alignment is wrong");
 _Static_assert(alignof(align_small) == 1, "j's alignment is wrong");
 _Static_assert(alignof(align_multiple) == 8, "l's alignment is wrong");
 _Static_assert(alignof(struct align_member) == 8, "quuux's alignment is wrong");
 _Static_assert(sizeof(struct align_member) == 8, "quuux's size is wrong");
-_Static_assert(alignof(align_typedef) == 8, "typedef's alignment is wrong");

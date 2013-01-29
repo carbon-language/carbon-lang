@@ -3272,9 +3272,47 @@ static void handleAlignedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  //FIXME: The C++0x version of this attribute has more limited applicabilty
-  //       than GNU's, and should error out when it is used to specify a
-  //       weaker alignment, rather than being silently ignored.
+  // C++11 alignas(...) and C11 _Alignas(...) have additional requirements.
+  // FIXME: Use a more reliable mechanism to determine how the attribute was
+  //        spelled.
+  if (Attr.isKeywordAttribute()) {
+    // C++11 [dcl.align]p1:
+    //   An alignment-specifier may be applied to a variable or to a class
+    //   data member, but it shall not be applied to a bit-field, a function
+    //   parameter, the formal parameter of a catch clause, or a variable
+    //   declared with the register storage class specifier. An
+    //   alignment-specifier may also be applied to the declaration of a class
+    //   or enumeration type.
+    // C11 6.7.5/2:
+    //   An alignment attribute shall not be specified in a declaration of
+    //   a typedef, or a bit-field, or a function, or a parameter, or an
+    //   object declared with the register storage-class specifier.
+    int DiagKind = -1;
+    if (isa<ParmVarDecl>(D)) {
+      DiagKind = 0;
+    } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      if (VD->getStorageClass() == SC_Register)
+        DiagKind = 1;
+      if (VD->isExceptionVariable())
+        DiagKind = 2;
+    } else if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+      if (FD->isBitField())
+        DiagKind = 3;
+    } else if (!isa<TagDecl>(D)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+        << Attr.getName() << ExpectedVariableFunctionOrTag;
+      return;
+    }
+    if (DiagKind != -1) {
+      S.Diag(Attr.getLoc(), diag::err_alignas_attribute_wrong_decl_type)
+        << Attr.getName() << DiagKind;
+      return;
+    }
+  }
+
+  // FIXME: The C++11 version of this attribute should error out when it is
+  //        used to specify a weaker alignment, rather than being silently
+  //        ignored.
 
   if (Attr.getNumArgs() == 0) {
     D->addAttr(::new (S.Context) AlignedAttr(Attr.getRange(), S.Context, 

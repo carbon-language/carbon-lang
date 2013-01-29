@@ -2156,14 +2156,13 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc, bool FnTry) {
 
 /// ParseCXXCatchBlock - Parse a C++ catch block, called handler in the standard
 ///
-///       handler:
-///         'catch' '(' exception-declaration ')' compound-statement
+///   handler:
+///     'catch' '(' exception-declaration ')' compound-statement
 ///
-///       exception-declaration:
-///         type-specifier-seq declarator
-///         type-specifier-seq abstract-declarator
-///         type-specifier-seq
-///         '...'
+///   exception-declaration:
+///     attribute-specifier-seq[opt] type-specifier-seq declarator
+///     attribute-specifier-seq[opt] type-specifier-seq abstract-declarator[opt]
+///     '...'
 ///
 StmtResult Parser::ParseCXXCatchBlock(bool FnCatch) {
   assert(Tok.is(tok::kw_catch) && "Expected 'catch'");
@@ -2184,9 +2183,15 @@ StmtResult Parser::ParseCXXCatchBlock(bool FnCatch) {
   // without default arguments.
   Decl *ExceptionDecl = 0;
   if (Tok.isNot(tok::ellipsis)) {
+    ParsedAttributesWithRange Attributes(AttrFactory);
+    MaybeParseCXX11Attributes(Attributes);
+
     DeclSpec DS(AttrFactory);
+    DS.takeAttributesFrom(Attributes);
+
     if (ParseCXXTypeSpecifierSeq(DS))
       return StmtError();
+
     Declarator ExDecl(DS, Declarator::CXXCatchContext);
     ParseDeclarator(ExDecl);
     ExceptionDecl = Actions.ActOnExceptionDeclarator(getCurScope(), ExDecl);
