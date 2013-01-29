@@ -82,8 +82,7 @@ static LineNumberInfo LineStartToIntelJITFormat(
 
 static LineNumberInfo DILineInfoToIntelJITFormat(uintptr_t StartAddress,
                                                  uintptr_t Address,
-                                                 DILineInfo Line)
-{
+                                                 DILineInfo Line) {
   LineNumberInfo Result;
 
   Result.Offset = Address - StartAddress;
