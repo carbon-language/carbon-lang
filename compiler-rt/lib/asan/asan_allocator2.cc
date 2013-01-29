@@ -419,6 +419,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
 static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   uptr p = reinterpret_cast<uptr>(ptr);
   if (p == 0) return;
+  ASAN_FREE_HOOK(ptr);
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
 
@@ -468,8 +469,6 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
     quarantine.Put(&fallback_quarantine_cache, QuarantineCallback(ac),
                    m, m->UsedSize());
   }
-
-  ASAN_FREE_HOOK(ptr);
 }
 
 static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
