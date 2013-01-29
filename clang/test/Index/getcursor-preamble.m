@@ -1,6 +1,7 @@
 #include "getcursor-preamble.h"
 
-// RUN: c-index-test -cursor-at=%S/getcursor-preamble.h:2:10 \
+// RUN: c-index-test \
+// RUN:    -cursor-at=%S/getcursor-preamble.h:2:10 \
 // RUN:    -cursor-at=%S/getcursor-preamble.h:3:9 \
 // RUN:    -cursor-at=%S/getcursor-preamble.h:4:6 \
 // RUN:    -cursor-at=%S/getcursor-preamble.h:5:8 \
