@@ -240,8 +240,8 @@ public:
         Comments.back().Spaces = Spaces;
         Comments.back().NewLines = NewLines;
         Comments.back().MinColumn = WhitespaceStartColumn + Spaces;
-        Comments.back().MaxColumn = Style.ColumnLimit -
-                                    Spaces - Tok.FormatTok.TokenLength;
+        Comments.back().MaxColumn =
+            Style.ColumnLimit - Spaces - Tok.FormatTok.TokenLength;
         return;
       }
     }
@@ -263,8 +263,8 @@ public:
                            const FormatStyle &Style) {
     std::string NewLineText;
     if (NewLines > 0) {
-      unsigned Offset = std::min<int>(Style.ColumnLimit - 1,
-                                      WhitespaceStartColumn);
+      unsigned Offset =
+          std::min<int>(Style.ColumnLimit - 1, WhitespaceStartColumn);
       for (unsigned i = 0; i < NewLines; ++i) {
         NewLineText += std::string(Style.ColumnLimit - Offset - 1, ' ');
         NewLineText += "\\\n";
@@ -384,8 +384,8 @@ public:
         // newlines. If it does, fix!
         State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
                         State.NextToken->FormatTok.TokenLength;
-        State.NextToken = State.NextToken->Children.empty() ? NULL :
-                          &State.NextToken->Children[0];
+        State.NextToken = State.NextToken->Children.empty()
+            ? NULL : &State.NextToken->Children[0];
       } else if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
         addTokenToState(false, false, State);
       } else {
@@ -419,9 +419,8 @@ public:
 private:
   void DebugTokenState(const AnnotatedToken &AnnotatedTok) {
     const Token &Tok = AnnotatedTok.FormatTok.Tok;
-    llvm::errs()
-        << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
-                     Tok.getLength());
+    llvm::errs() << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
+                              Tok.getLength());
     llvm::errs();
   }
 
@@ -438,7 +437,8 @@ private:
     ParenState(unsigned Indent, unsigned LastSpace)
         : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
           FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
-          BreakAfterComma(false), HasMultiParameterLine(false) {}
+          BreakAfterComma(false), HasMultiParameterLine(false) {
+    }
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -504,9 +504,9 @@ private:
     /// \brief The token that needs to be next formatted.
     const AnnotatedToken *NextToken;
 
-    /// \brief The column of first variable name in a variable declaration.
+    /// \brief The column of the first variable name in a variable declaration.
     ///
-    /// Used to align the further variables if necessary.
+    /// Used to align further variables if necessary.
     unsigned VariablePos;
 
     /// \brief \c true if this line contains a continued for-loop section.
@@ -689,8 +689,8 @@ private:
       } else {
         NewIndent = 4 + State.Stack.back().LastSpace;
       }
-      State.Stack.push_back(
-          ParenState(NewIndent, State.Stack.back().LastSpace));
+      State.Stack.push_back(ParenState(NewIndent,
+                                       State.Stack.back().LastSpace));
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -869,7 +869,8 @@ class TokenAnnotator {
 public:
   TokenAnnotator(const FormatStyle &Style, SourceManager &SourceMgr, Lexer &Lex,
                  AnnotatedLine &Line)
-      : Style(Style), SourceMgr(SourceMgr), Lex(Lex), Line(Line) {}
+      : Style(Style), SourceMgr(SourceMgr), Lex(Lex), Line(Line) {
+  }
 
   /// \brief A parser that gathers additional information about tokens.
   ///
@@ -880,7 +881,8 @@ public:
   public:
     AnnotatingParser(AnnotatedToken &RootToken)
         : CurrentToken(&RootToken), KeywordVirtualFound(false),
-          ColonIsObjCMethodExpr(false), ColonIsForRangeExpr(false) {}
+          ColonIsObjCMethodExpr(false), ColonIsForRangeExpr(false) {
+    }
 
     /// \brief A helper class to manage AnnotatingParser::ColonIsObjCMethodExpr.
     struct ObjCSelectorRAII {
@@ -888,7 +890,8 @@ public:
       bool ColonWasObjCMethodExpr;
 
       ObjCSelectorRAII(AnnotatingParser &P)
-          : P(P), ColonWasObjCMethodExpr(P.ColonIsObjCMethodExpr) {}
+          : P(P), ColonWasObjCMethodExpr(P.ColonIsObjCMethodExpr) {
+      }
 
       ~ObjCSelectorRAII() { P.ColonIsObjCMethodExpr = ColonWasObjCMethodExpr; }
 
@@ -994,8 +997,8 @@ public:
           !Left->Parent || Left->Parent->is(tok::colon) ||
           Left->Parent->is(tok::l_square) || Left->Parent->is(tok::l_paren) ||
           Left->Parent->is(tok::kw_return) || Left->Parent->is(tok::kw_throw) ||
-          getBinOpPrecedence(Left->Parent->FormatTok.Tok.getKind(),
-                             true, true) > prec::Unknown;
+          getBinOpPrecedence(Left->Parent->FormatTok.Tok.getKind(), true,
+                             true) > prec::Unknown;
 
       ObjCSelectorRAII objCSelector(*this);
       if (StartsObjCMethodExpr)
@@ -1096,7 +1099,7 @@ public:
       case tok::kw_while:
         if (CurrentToken != NULL && CurrentToken->is(tok::l_paren)) {
           next();
-          if (!parseParens(/*LookForDecls=*/true))
+          if (!parseParens(/*LookForDecls=*/ true))
             return false;
         }
         break;
@@ -1279,9 +1282,9 @@ public:
     if (Current.MustBreakBefore)
       Current.TotalLength = Current.Parent->TotalLength + Style.ColumnLimit;
     else
-      Current.TotalLength = Current.Parent->TotalLength +
-                            Current.FormatTok.TokenLength +
-                            (Current.SpaceRequiredBefore ? 1 : 0);
+      Current.TotalLength =
+          Current.Parent->TotalLength + Current.FormatTok.TokenLength +
+          (Current.SpaceRequiredBefore ? 1 : 0);
     if (!Current.Children.empty())
       calculateExtraInformation(Current.Children[0]);
   }
@@ -1421,8 +1424,8 @@ private:
   }
 
   /// \brief Return the type of the given token assuming it is * or &.
-  TokenType determineStarAmpUsage(const AnnotatedToken &Tok,
-                                  bool IsExpression) {
+  TokenType
+  determineStarAmpUsage(const AnnotatedToken &Tok, bool IsExpression) {
     const AnnotatedToken *PrevToken = getPreviousToken(Tok);
     if (PrevToken == NULL)
       return TT_UnaryOperator;
@@ -1715,8 +1718,8 @@ public:
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {
       FormatTok.NewlinesBefore += Text.count('\n');
-      FormatTok.HasUnescapedNewline = Text.count("\\\n") !=
-                                      FormatTok.NewlinesBefore;
+      FormatTok.HasUnescapedNewline =
+          Text.count("\\\n") != FormatTok.NewlinesBefore;
       FormatTok.WhiteSpaceLength += FormatTok.Tok.getLength();
 
       if (FormatTok.Tok.is(tok::eof))
@@ -1776,7 +1779,8 @@ public:
             SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
       : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
-        Whitespaces(SourceMgr), Ranges(Ranges) {}
+        Whitespaces(SourceMgr), Ranges(Ranges) {
+  }
 
   virtual ~Formatter() {}
 
@@ -1794,9 +1798,9 @@ public:
          I != E; ++I) {
       const AnnotatedLine &TheLine = *I;
       if (touchesRanges(TheLine) && TheLine.Type != LT_Invalid) {
-        unsigned Indent = formatFirstToken(TheLine.First, TheLine.Level,
-                                           TheLine.InPPDirective,
-                                           PreviousEndOfLineColumn);
+        unsigned Indent =
+            formatFirstToken(TheLine.First, TheLine.Level,
+                             TheLine.InPPDirective, PreviousEndOfLineColumn);
         tryFitMultipleLinesInOne(Indent, I, E);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
                                          TheLine.First, Whitespaces,
@@ -1810,8 +1814,7 @@ public:
             SourceMgr.getSpellingColumnNumber(
                 TheLine.Last->FormatTok.Tok.getLocation()) +
             Lex.MeasureTokenLength(TheLine.Last->FormatTok.Tok.getLocation(),
-                                   SourceMgr, Lex.getLangOpts()) -
-            1;
+                                   SourceMgr, Lex.getLangOpts()) - 1;
       }
     }
     return Whitespaces.generateReplacements();
@@ -1891,8 +1894,8 @@ private:
   }
 
   void tryMergeSimpleBlock(std::vector<AnnotatedLine>::iterator &I,
-                        std::vector<AnnotatedLine>::iterator E,
-                        unsigned Limit){
+                           std::vector<AnnotatedLine>::iterator E,
+                           unsigned Limit) {
     // First, check that the current line allows merging. This is the case if
     // we're not in a control flow statement and the last token is an opening
     // brace.
@@ -1960,8 +1963,7 @@ private:
     const FormatToken *First = &TheLine.First.FormatTok;
     const FormatToken *Last = &TheLine.Last->FormatTok;
     CharSourceRange LineRange = CharSourceRange::getTokenRange(
-                                    First->Tok.getLocation(),
-                                    Last->Tok.getLocation());
+        First->Tok.getLocation(), Last->Tok.getLocation());
     for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
       if (!SourceMgr.isBeforeInTranslationUnit(LineRange.getEnd(),
                                                Ranges[i].getBegin()) &&
@@ -1986,8 +1988,8 @@ private:
     if (!Tok.WhiteSpaceStart.isValid() || StructuralError)
       return SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1;
 
-    unsigned Newlines = std::min(Tok.NewlinesBefore,
-                                 Style.MaxEmptyLinesToKeep + 1);
+    unsigned Newlines =
+        std::min(Tok.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
     if (Newlines == 0 && !Tok.IsFirst)
       Newlines = 1;
     unsigned Indent = Level * 2;
@@ -2025,10 +2027,9 @@ private:
   bool StructuralError;
 };
 
-tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
-                               SourceManager &SourceMgr,
-                               std::vector<CharSourceRange> Ranges,
-                               DiagnosticConsumer *DiagClient) {
+tooling::Replacements
+reformat(const FormatStyle &Style, Lexer &Lex, SourceManager &SourceMgr,
+         std::vector<CharSourceRange> Ranges, DiagnosticConsumer *DiagClient) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   OwningPtr<DiagnosticConsumer> DiagPrinter;
   if (DiagClient == 0) {
