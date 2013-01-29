@@ -525,6 +525,7 @@ bool IsExpectedReport(uptr addr, uptr size);
 
 u32 CurrentStackId(ThreadState *thr, uptr pc);
 void PrintCurrentStack(ThreadState *thr, uptr pc);
+void PrintCurrentStackSlow();  // uses libunwind
 
 void Initialize(ThreadState *thr);
 int Finalize(ThreadState *thr);

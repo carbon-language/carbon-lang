@@ -15,6 +15,7 @@
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
 #include "tsan_suppressions.h"
@@ -29,12 +30,15 @@ namespace __tsan {
 
 using namespace __sanitizer;  // NOLINT
 
+static ReportStack *SymbolizeStack(const StackTrace& trace);
+
 void TsanCheckFailed(const char *file, int line, const char *cond,
                      u64 v1, u64 v2) {
   ScopedInRtl in_rtl;
   Printf("FATAL: ThreadSanitizer CHECK failed: "
          "%s:%d \"%s\" (0x%zx, 0x%zx)\n",
          file, line, cond, (uptr)v1, (uptr)v2);
+  PrintCurrentStackSlow();
   Die();
 }
 
@@ -612,6 +616,18 @@ void PrintCurrentStack(ThreadState *thr, uptr pc) {
   StackTrace trace;
   trace.ObtainCurrent(thr, pc);
   PrintStack(SymbolizeStack(trace));
+}
+
+void PrintCurrentStackSlow() {
+#ifndef TSAN_GO
+  __sanitizer::StackTrace *ptrace = new(internal_alloc(MBlockStackTrace,
+      sizeof(__sanitizer::StackTrace))) __sanitizer::StackTrace;
+  ptrace->SlowUnwindStack(__sanitizer::StackTrace::GetCurrentPc(),
+      kStackTraceMax);
+  StackTrace trace;
+  trace.Init(ptrace->trace, ptrace->size);
+  PrintStack(SymbolizeStack(trace));
+#endif
 }
 
 }  // namespace __tsan
