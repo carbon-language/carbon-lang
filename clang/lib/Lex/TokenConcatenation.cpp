@@ -156,9 +156,10 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
   // First, check to see if the tokens were directly adjacent in the original
   // source.  If they were, it must be okay to stick them together: if there
   // were an issue, the tokens would have been lexed differently.
-  if (PrevTok.getLocation().isFileID() && Tok.getLocation().isFileID() &&
-      PrevTok.getLocation().getLocWithOffset(PrevTok.getLength()) ==
-        Tok.getLocation())
+  SourceManager &SM = PP.getSourceManager();
+  SourceLocation PrevSpellLoc = SM.getSpellingLoc(PrevTok.getLocation());
+  SourceLocation SpellLoc = SM.getSpellingLoc(Tok.getLocation());
+  if (PrevSpellLoc.getLocWithOffset(PrevTok.getLength()) == SpellLoc)
     return false;
 
   tok::TokenKind PrevKind = PrevTok.getKind();

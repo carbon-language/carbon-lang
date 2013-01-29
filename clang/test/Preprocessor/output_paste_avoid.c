@@ -31,3 +31,9 @@ E: test(str)
 #define equal =
 F: >>equal
 // CHECK: F: >> =
+
+// Make sure we don't introduce spaces in the guid because we try to avoid
+// pasting '-' to a numeric constant.
+#define TYPEDEF(guid)   typedef [uuid(guid)]
+TYPEDEF(66504301-BE0F-101A-8BBB-00AA00300CAB) long OLE_COLOR;
+// CHECK: typedef [uuid(66504301-BE0F-101A-8BBB-00AA00300CAB)] long OLE_COLOR;
