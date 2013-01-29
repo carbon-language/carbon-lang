@@ -1015,6 +1015,9 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
   case tok::l_square: // enum E [[]] x
     // Note, no tok::kw_alignas here; alignas cannot appertain to a type.
     return getLangOpts().CPlusPlus11 && NextToken().is(tok::l_square);
+  case tok::greater:
+    // template<class T = class X>
+    return getLangOpts().CPlusPlus;
   }
   return false;
 }
