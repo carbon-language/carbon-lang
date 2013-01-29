@@ -58,7 +58,7 @@ void *MmapOrDie(uptr size, const char *mem_type) {
     if (recursion_count) {
       // The Report() and CHECK calls below may call mmap recursively and fail.
       // If we went into recursion, just die.
-      RawWrite("AddressSanitizer is unable to mmap\n");
+      RawWrite("ERROR: Failed to mmap\n");
       Die();
     }
     recursion_count++;
