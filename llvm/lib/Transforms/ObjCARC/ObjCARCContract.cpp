@@ -532,6 +532,3 @@ bool ObjCARCContract::runOnFunction(Function &F) {
 
   return Changed;
 }
-
-/// @}
-///

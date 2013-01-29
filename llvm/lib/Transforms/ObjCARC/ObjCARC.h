@@ -293,7 +293,8 @@ static inline void EraseInstruction(Instruction *CI) {
 
 /// \brief Test whether the given value is possible a retainable object pointer.
 static inline bool IsPotentialRetainableObjPtr(const Value *Op) {
-  // Pointers to static or stack storage are not valid retainable object pointers.
+  // Pointers to static or stack storage are not valid retainable object
+  // pointers.
   if (isa<Constant>(Op) || isa<AllocaInst>(Op))
     return false;
   // Special arguments can not be a valid retainable object pointer.
@@ -310,7 +311,8 @@ static inline bool IsPotentialRetainableObjPtr(const Value *Op) {
   PointerType *Ty = dyn_cast<PointerType>(Op->getType());
   if (!Ty)
     return false;
-  // Conservatively assume anything else is a potential retainable object pointer.
+  // Conservatively assume anything else is a potential retainable object
+  // pointer.
   return true;
 }
 

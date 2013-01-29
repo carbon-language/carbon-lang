@@ -36,6 +36,7 @@ namespace llvm {
 
 namespace llvm {
 namespace objcarc {
+
 /// \brief This is similar to BasicAliasAnalysis, and it uses many of the same
 /// techniques, except it uses special ObjC-specific reasoning about pointer
 /// relationships.
