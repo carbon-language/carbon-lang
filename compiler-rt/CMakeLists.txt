@@ -149,6 +149,39 @@ endif()
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386 powerpc64 powerpc)
 
+file(GLOB_RECURSE COMPILER_RT_HEADERS
+  RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "include/*.h")
+
+set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
+
+if(MSVC_IDE OR XCODE)
+   set(other_output_dir ${LLVM_BINARY_DIR}/bin/lib/clang/${CLANG_VERSION}/include)
+endif()
+
+# Copy compiler-rt headers to the build tree.
+set(out_files)
+foreach( f ${COMPILER_RT_HEADERS} )
+  set( src ${CMAKE_CURRENT_SOURCE_DIR}/include/${f} )
+  set( dst ${output_dir}/${f} )
+  add_custom_command(OUTPUT ${dst}
+    DEPENDS ${src}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} ${dst}
+    COMMENT "Copying compiler-rt's ${f}...")
+  list(APPEND out_files ${dst})
+
+  if(other_output_dir)
+   set(other_dst ${other_output_dir}/${f})
+    add_custom_command(OUTPUT ${other_dst}
+      DEPENDS ${src}
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} ${other_dst}
+      COMMENT "Copying compiler-rt's ${f}...")    
+    list(APPEND out_files ${other_dst})
+  endif()
+endforeach( f )
+
+add_custom_target(compiler-rt-headers ALL DEPENDS ${out_files})
+
 # Install compiler-rt headers.
 install(DIRECTORY include/
   DESTINATION ${LIBCLANG_INSTALL_PATH}/include
