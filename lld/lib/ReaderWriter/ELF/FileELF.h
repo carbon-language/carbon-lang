@@ -52,6 +52,9 @@ public:
   FileELF(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
           llvm::error_code &EC)
       : File(MB->getBufferIdentifier()), _elfTargetInfo(ti) {
+    static uint32_t lastOrdinal = 0;
+    _ordinal = lastOrdinal++;
+
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     EC = createBinary(MB.release(), binaryFile);
     if (EC)

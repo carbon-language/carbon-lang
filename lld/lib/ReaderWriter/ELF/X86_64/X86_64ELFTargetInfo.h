@@ -30,10 +30,17 @@ public:
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 
+  virtual void addPasses(PassManager &) const;
+
   virtual uint64_t getBaseAddress() const {
     if (_options._baseAddress == 0)
       return 0x400000;
     return _options._baseAddress;
+  }
+
+  virtual bool isRuntimeRelocation(const DefinedAtom &,
+                                   const Reference &r) const {
+    return r.kind() == llvm::ELF::R_X86_64_IRELATIVE;
   }
 
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const;

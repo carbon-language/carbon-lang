@@ -61,6 +61,7 @@ public:
     ORDER_TEXT = 70,
     ORDER_PLT = 80,
     ORDER_FINI = 90,
+    ORDER_REL = 95,
     ORDER_RODATA = 100,
     ORDER_EH_FRAME = 110,
     ORDER_EH_FRAMEHDR = 120,
@@ -251,6 +252,16 @@ public:
     return _programHeader;
   }
 
+  ELFRelocationTable<ELFT> *getRelocationTable() {
+    // Only create the relocation table if it is needed.
+    if (!_relocationTable) {
+      _relocationTable = new (_allocator)
+          ELFRelocationTable<ELFT>(_targetInfo, ".rela.plt", ORDER_REL);
+      addSection(_relocationTable);
+    }
+    return _relocationTable;
+  }
+
 private:
   SectionMapT _sectionMap;
   MergedSectionMapT _mergedSectionMap;
@@ -260,6 +271,7 @@ private:
   std::vector<MergedSections<ELFT> *> _mergedSections;
   ELFHeader<ELFT> *_elfHeader;
   ELFProgramHeader<ELFT> *_programHeader;
+  ELFRelocationTable<ELFT> *_relocationTable;
   std::vector<AbsoluteAtomPair> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const ELFTargetInfo &_targetInfo;
@@ -272,6 +284,7 @@ DefaultELFLayout<ELFT>::getSectionOrder(const StringRef name,
                                         int32_t contentPermissions)
 {
   switch (contentType) {
+  case DefinedAtom::typeResolver:
   case DefinedAtom::typeCode:
     return llvm::StringSwitch<Reference::Kind>(name)
       .StartsWith(".eh_frame_hdr", ORDER_EH_FRAMEHDR)
@@ -291,6 +304,11 @@ DefaultELFLayout<ELFT>::getSectionOrder(const StringRef name,
   
   case DefinedAtom::typeZeroFill:
     return ORDER_BSS;
+
+  case DefinedAtom::typeGOT:
+    return ORDER_GOT;
+  case DefinedAtom::typeStub:
+    return ORDER_PLT;
   
   default:
     // If we get passed in a section push it to OTHER
@@ -327,6 +345,7 @@ DefaultELFLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
   case ORDER_HASH:
   case ORDER_DYNAMIC_SYMBOLS:
   case ORDER_DYNAMIC_STRINGS:
+  case ORDER_REL:
   case ORDER_INIT:
   case ORDER_PLT:
   case ORDER_FINI:
@@ -343,9 +362,9 @@ DefaultELFLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
 
   case ORDER_CTORS:
   case ORDER_DTORS:
-  case ORDER_GOT:
     return llvm::ELF::PT_GNU_RELRO;
 
+  case ORDER_GOT:
   case ORDER_GOT_PLT:
   case ORDER_DATA:
   case ORDER_BSS:
@@ -366,6 +385,7 @@ DefaultELFLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   case ORDER_HASH:
   case ORDER_DYNAMIC_SYMBOLS:
   case ORDER_DYNAMIC_STRINGS:
+  case ORDER_REL:
   case ORDER_INIT:
   case ORDER_PLT:
   case ORDER_TEXT:
@@ -415,6 +435,10 @@ DefaultELFLayout<ELFT>::addAtom(const Atom *atom) {
       section = _sectionMap[sectionKey];
     }
     section->appendAtom(atom);
+    // Add runtime relocations to the .rela section.
+    for (const auto &reloc : *definedAtom)
+      if (_targetInfo.isRuntimeRelocation(*definedAtom, *reloc))
+        getRelocationTable()->addRelocation(*definedAtom, *reloc);
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
     // Absolute atoms are not part of any section, they are global for the whole
     // link

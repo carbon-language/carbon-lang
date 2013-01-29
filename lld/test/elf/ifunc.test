@@ -1,6 +1,27 @@
 RUN: lld -core -target x86_64-linux -emit-yaml -output=- %p/Inputs/ifunc.x86-64 \
 RUN: | FileCheck %s
+RUN: lld -core -target x86_64-linux -emit-yaml -output=- %p/Inputs/ifunc.x86-64 \
+RUN: %p/Inputs/ifunc.cpp.x86-64 | FileCheck %s --check-prefix=PLT
 
 CHECK: name: hey
 CHECK: scope: global
 CHECK: type: resolver
+
+// Get the target that main references.
+PLT: name: main
+PLT: scope: global
+PLT: references
+PLT: kind: R_X86_64_PC32
+PLT: target: [[PLTNAME:[a-zA-Z0-9-]+]]
+
+// Make sure there's a got entry with a IRELATIVE relocation.
+PLT: type: got
+PLT: kind: R_X86_64_IRELATIVE
+
+// Make sure the target of main's relocation is a stub with a PC32 relocation.
+// This relocation is to the got atom, but you can't really write that check in
+// FileCheck.
+PLT: name: [[PLTNAME]]
+PLT: type: stub
+PLT: references
+PLT: kind: R_X86_64_PC32

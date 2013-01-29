@@ -112,6 +112,8 @@ bool X86_64KindHandler::isLazyTarget(Kind kind) {
 void X86_64KindHandler::applyFixup(int32_t reloc, uint64_t addend,
                                    uint8_t *location, uint64_t fixupAddress,
                                    uint64_t targetAddress) {
+  if (reloc == llvm::ELF::R_X86_64_IRELATIVE)
+    return;
   if (_fixupHandler[reloc])
     _fixupHandler[reloc](location, fixupAddress, targetAddress, addend);
   else {

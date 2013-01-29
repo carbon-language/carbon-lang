@@ -156,6 +156,8 @@ void ELFExecutableWriter<ELFT>::addDefaultAtoms() {
   _runtimeFile.addAbsoluteAtom("end");
   _runtimeFile.addAbsoluteAtom("__init_array_start");
   _runtimeFile.addAbsoluteAtom("__init_array_end");
+  _runtimeFile.addAbsoluteAtom("__rela_iplt_start");
+  _runtimeFile.addAbsoluteAtom("__rela_iplt_end");
 }
 
 /// \brief Hook in lld to add CRuntime file 
@@ -169,41 +171,47 @@ void ELFExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
 /// created
 template<class ELFT>
 void ELFExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
- auto bssStartAtomIter = _layout->findAbsoluteAtom("__bss_start");
- auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
- auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
- auto endAtomIter = _layout->findAbsoluteAtom("end");
- auto initArrayStartIter = _layout->findAbsoluteAtom("__init_array_start");
- auto initArrayEndIter = _layout->findAbsoluteAtom("__init_array_end");
+  auto bssStartAtomIter = _layout->findAbsoluteAtom("__bss_start");
+  auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
+  auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
+  auto endAtomIter = _layout->findAbsoluteAtom("end");
+  auto initArrayStartIter = _layout->findAbsoluteAtom("__init_array_start");
+  auto initArrayEndIter = _layout->findAbsoluteAtom("__init_array_end");
+  auto realIpltStartIter = _layout->findAbsoluteAtom("__rela_iplt_start");
+  auto realIpltEndIter = _layout->findAbsoluteAtom("__rela_iplt_end");
 
- auto section = _layout->findOutputSection(".init_array");
- if (section) {
-   initArrayStartIter->setValue(section->virtualAddr());
-   initArrayEndIter->setValue(section->virtualAddr() +
-                              section->memSize());
- } else {
-   initArrayStartIter->setValue(0);
-   initArrayEndIter->setValue(0);
- }
+  auto startEnd = [&](typename DefaultELFLayout<ELFT>::AbsoluteAtomIterT start,
+                      typename DefaultELFLayout<ELFT>::AbsoluteAtomIterT end,
+                      StringRef sec) -> void {
+    auto section = _layout->findOutputSection(sec);
+    if (section) {
+      start->setValue(section->virtualAddr());
+      end->setValue(section->virtualAddr() + section->memSize());
+    } else {
+      start->setValue(0);
+      end->setValue(0);
+    }
+  };
 
- assert(!(bssStartAtomIter == _layout->absoluteAtoms().end() ||
-         bssEndAtomIter == _layout->absoluteAtoms().end() ||
-         underScoreEndAtomIter == _layout->absoluteAtoms().end() ||
-         endAtomIter == _layout->absoluteAtoms().end()) &&
-        "Unable to find the absolute atoms that have been added by lld");
+  startEnd(initArrayStartIter, initArrayEndIter, ".init_array");
+  startEnd(realIpltStartIter, realIpltEndIter, ".rela.plt");
 
- auto phe = _programHeader->findProgramHeader(
-                                 llvm::ELF::PT_LOAD,
-                                 llvm::ELF::PF_W,
-                                 llvm::ELF::PF_X);
+  assert(!(bssStartAtomIter == _layout->absoluteAtoms().end() ||
+           bssEndAtomIter == _layout->absoluteAtoms().end() ||
+           underScoreEndAtomIter == _layout->absoluteAtoms().end() ||
+           endAtomIter == _layout->absoluteAtoms().end()) &&
+         "Unable to find the absolute atoms that have been added by lld");
 
- assert(!(phe == _programHeader->end()) &&
-       "Can't find a data segment in the program header!");
+  auto phe = _programHeader->findProgramHeader(
+      llvm::ELF::PT_LOAD, llvm::ELF::PF_W, llvm::ELF::PF_X);
 
- bssStartAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_filesz);
- bssEndAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
- underScoreEndAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
- endAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
+  assert(!(phe == _programHeader->end()) &&
+         "Can't find a data segment in the program header!");
+
+  bssStartAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_filesz);
+  bssEndAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_memsz);
+  underScoreEndAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_memsz);
+  endAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_memsz);
 }
 
 template<class ELFT>

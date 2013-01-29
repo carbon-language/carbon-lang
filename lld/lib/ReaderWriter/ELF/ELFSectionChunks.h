@@ -227,9 +227,16 @@ Section<ELFT>::appendAtom(const Atom *atom) {
     case  DefinedAtom::typeCode:
     case  DefinedAtom::typeData:
     case  DefinedAtom::typeConstant:
+    case DefinedAtom::typeGOT:
+    case DefinedAtom::typeStub:
+    case DefinedAtom::typeResolver:
       _atoms.push_back(AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
+      DEBUG_WITH_TYPE("Section",
+                      llvm::dbgs() << "[" << this->name() << " " << this << "] "
+                                   << "Adding atom: " << atom->name() << "@"
+                                   << fOffset << "\n");
       break;
     case  DefinedAtom::typeZeroFill:
       _atoms.push_back(AtomLayout(atom, mOffset, 0));
@@ -286,10 +293,16 @@ Section<ELFT>::flags() {
 template<class ELFT>
 int 
 Section<ELFT>::type() {
+  if (_sectionKind == K_SymbolTable)
+    return llvm::ELF::SHT_SYMTAB;
+
   switch (_contentType) {
   case DefinedAtom::typeCode:
   case DefinedAtom::typeData:
   case DefinedAtom::typeConstant:
+  case DefinedAtom::typeGOT:
+  case DefinedAtom::typeStub:
+  case DefinedAtom::typeResolver:
     return llvm::ELF::SHT_PROGBITS;
 
   case DefinedAtom::typeZeroFill:
@@ -332,6 +345,9 @@ template <class ELFT>
 void Section<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   for (auto &ai : _atoms) {
+    DEBUG_WITH_TYPE("Section",
+                    llvm::dbgs() << "Writing atom: " << ai._atom->name()
+                                 << " | " << ai._fileOffset << "\n");
     const DefinedAtom *definedAtom = cast<DefinedAtom>(ai._atom);
     if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
       continue;
@@ -603,11 +619,17 @@ ELFSymbolTable<ELFT>::addSymbol(const Atom *atom,
     lld::DefinedAtom::ContentType ct;
     switch (ct = da->contentType()){
     case  DefinedAtom::typeCode:
+    case DefinedAtom::typeStub:
       symbol->st_value = addr;
       type = llvm::ELF::STT_FUNC;
       break;
+    case DefinedAtom::typeResolver:
+      symbol->st_value = addr;
+      type = llvm::ELF::STT_GNU_IFUNC;
+      break;
     case  DefinedAtom::typeData:
     case  DefinedAtom::typeConstant:
+    case DefinedAtom::typeGOT:
       symbol->st_value = addr;
       type = llvm::ELF::STT_OBJECT;
       break;
@@ -677,6 +699,46 @@ void ELFSymbolTable<ELFT>::write(ELFWriter *writer,
     dest += sizeof(Elf_Sym);
   }
 }
+
+template <class ELFT> class ELFRelocationTable : public Section<ELFT> {
+public:
+  typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
+
+  ELFRelocationTable(const ELFTargetInfo &ti, StringRef str, int32_t order)
+      : Section<ELFT>(ti, str, llvm::ELF::SHT_RELA, DefinedAtom::permR__, order,
+                      Section<ELFT>::K_Default) {
+    this->setOrder(order);
+    this->_entSize = sizeof(Elf_Rela);
+    this->_align2 = llvm::alignOf<Elf_Rela>();
+  }
+
+  void addRelocation(const DefinedAtom &da, const Reference &r) {
+    _relocs.emplace_back(da, r);
+    this->_fsize = _relocs.size() * sizeof(Elf_Rela);
+    this->_msize = this->_fsize;
+  }
+
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+    uint8_t *chunkBuffer = buffer.getBufferStart();
+    uint8_t *dest = chunkBuffer + this->fileOffset();
+    for (const auto &rel : _relocs) {
+      Elf_Rela *r = reinterpret_cast<Elf_Rela *>(dest);
+      r->setSymbolAndType(0, rel.second.kind());
+      r->r_offset =
+          writer->addressOfAtom(&rel.first) + rel.second.offsetInAtom();
+      r->r_addend =
+          writer->addressOfAtom(rel.second.target()) + rel.second.addend();
+      dest += sizeof(Elf_Rela);
+      DEBUG_WITH_TYPE("ELFRelocationTable", llvm::dbgs()
+                      << "IRELATIVE relocation at " << rel.first.name() << "@"
+                      << r->r_offset << " to " << rel.second.target()->name()
+                      << "@" << r->r_addend << "\n");
+    }
+  }
+
+private:
+  std::vector<std::pair<const DefinedAtom &, const Reference &>> _relocs;
+};
 
 } // elf
 } // lld

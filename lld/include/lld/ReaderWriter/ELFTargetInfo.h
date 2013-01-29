@@ -18,6 +18,8 @@
 #include <memory>
 
 namespace lld {
+class DefinedAtom;
+class Reference;
 
 namespace elf { template <typename ELFT> class ELFTargetHandler; }
 
@@ -36,6 +38,11 @@ public:
 
   virtual StringRef getEntry() const;
   virtual uint64_t getBaseAddress() const { return _options._baseAddress; }
+
+  virtual bool isRuntimeRelocation(const DefinedAtom &,
+                                   const Reference &) const {
+    return false;
+  }
 
   static std::unique_ptr<ELFTargetInfo> create(const LinkerOptions &lo);
 

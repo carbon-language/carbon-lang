@@ -23,7 +23,10 @@
 namespace lld {
 class SimpleFile : public MutableFile {
 public:
-  SimpleFile(const TargetInfo &ti, StringRef path) : MutableFile(ti, path) {}
+  SimpleFile(const TargetInfo &ti, StringRef path) : MutableFile(ti, path) {
+    static uint32_t lastOrdinal = 0;
+    _ordinal = lastOrdinal++;
+  }
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {
