@@ -12067,17 +12067,7 @@ SDValue X86TargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
                        /*doesNotRet=*/false, /*isReturnValueUsed*/true,
                        Callee, Args, DAG, dl);
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
-#if 1
   return CallResult.first;
-#else
-  SDValue RetSin = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, ArgVT,
-                               CallResult.first, DAG.getIntPtrConstant(0));
-  SDValue RetCos = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, ArgVT,
-                               CallResult.first, DAG.getIntPtrConstant(1));
-  
-  SDVTList Tys = DAG.getVTList(ArgVT, ArgVT);
-  return DAG.getNode(ISD::MERGE_VALUES, dl, Tys, RetSin, RetCos);
-#endif
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
