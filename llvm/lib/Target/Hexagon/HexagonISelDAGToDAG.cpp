@@ -608,8 +608,8 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, DebugLoc dl) {
   // Offset value must be within representable range
   // and must have correct alignment properties.
   if (TII->isValidAutoIncImm(StoredVT, Val)) {
-    SDValue Ops[] = { Value, Base,
-                      CurDAG->getTargetConstant(Val, MVT::i32), Chain};
+    SDValue Ops[] = {Base, CurDAG->getTargetConstant(Val, MVT::i32), Value,
+                     Chain};
     unsigned Opcode = 0;
 
     // Figure out the post inc version of opcode.

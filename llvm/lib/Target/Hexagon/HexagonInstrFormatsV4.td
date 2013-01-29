@@ -46,11 +46,10 @@ class NVInstPost_V4<dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 // Post increment ST Instruction.
-class NVInstPI_V4<dag outs, dag ins, string asmstr, list<dag> pattern,
-                  string cstr>
-  : NVInstPost_V4<outs, ins, asmstr, pattern, cstr> {
-  let rt{0-4} = 0;
-}
+let mayStore = 1 in
+class NVInstPI_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+               string cstr = "">
+  : NVInstPost_V4<outs, ins, asmstr, pattern, cstr>;
 
 class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstHexagon<outs, ins, asmstr, pattern, "", MEM_V4, TypeMEMOP> {

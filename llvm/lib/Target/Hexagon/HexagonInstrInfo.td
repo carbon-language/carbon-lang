@@ -1419,35 +1419,71 @@ def STd_GP : STInst2<(outs),
             []>,
             Requires<[NoV4T]>;
 
-let hasCtrlDep = 1, isPredicable = 1 in
-def POST_STdri : STInstPI<(outs IntRegs:$dst),
-            (ins DoubleRegs:$src1, IntRegs:$src2, s4Imm:$offset),
-            "memd($src2++#$offset) = $src1",
-            [(set IntRegs:$dst,
-            (post_store (i64 DoubleRegs:$src1), (i32 IntRegs:$src2),
-                        s4_3ImmPred:$offset))],
+//===----------------------------------------------------------------------===//
+// Post increment store
+//===----------------------------------------------------------------------===//
+
+multiclass ST_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
+                            bit isNot, bit isPredNew> {
+  let PNewValue = !if(isPredNew, "new", "") in
+  def NAME : STInst2PI<(outs IntRegs:$dst),
+            (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset, RC:$src3),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#mnemonic#"($src2++#$offset) = $src3",
+            [],
             "$src2 = $dst">;
+}
 
-// if ([!]Pv) memd(Rx++#s4:3)=Rtt
-// if (Pv) memd(Rx++#s4:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def POST_STdri_cPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, DoubleRegs:$src2, IntRegs:$src3,
-                 s4_3Imm:$offset),
-            "if ($src1) memd($src3++#$offset) = $src2",
-            [],
-            "$src3 = $dst">;
+multiclass ST_PostInc_Pred<string mnemonic, RegisterClass RC,
+                           Operand ImmOp, bit PredNot> {
+  let PredSense = !if(PredNot, "false", "true") in {
+    defm _c#NAME# : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
+    // Predicate new
+    let Predicates = [HasV4T], validSubTargets = HasV4SubT in
+    defm _cdn#NAME#_V4 : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 1>;
+  }
+}
 
-// if (!Pv) memd(Rx++#s4:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1, isPredicated = 1,
-    isPredicated = 1 in
-def POST_STdri_cNotPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, DoubleRegs:$src2, IntRegs:$src3,
-                 s4_3Imm:$offset),
-            "if (!$src1) memd($src3++#$offset) = $src2",
-            [],
-            "$src3 = $dst">;
+let hasCtrlDep = 1, isNVStorable = 1, neverHasSideEffects = 1 in
+multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
+                      Operand ImmOp> {
+
+  let hasCtrlDep = 1, BaseOpcode = "POST_"#BaseOp in {
+    let isPredicable = 1 in
+    def NAME : STInst2PI<(outs IntRegs:$dst),
+                (ins IntRegs:$src1, ImmOp:$offset, RC:$src2),
+                #mnemonic#"($src1++#$offset) = $src2",
+                [],
+                "$src1 = $dst">;
+
+    let isPredicated = 1 in {
+      defm Pt : ST_PostInc_Pred<mnemonic, RC, ImmOp, 0 >;
+      defm NotPt : ST_PostInc_Pred<mnemonic, RC, ImmOp, 1 >;
+    }
+  }
+}
+
+defm POST_STbri: ST_PostInc <"memb", "STrib", IntRegs, s4_0Imm>, AddrModeRel;
+defm POST_SThri: ST_PostInc <"memh", "STrih", IntRegs, s4_1Imm>, AddrModeRel;
+defm POST_STwri: ST_PostInc <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
+
+let isNVStorable = 0 in
+defm POST_STdri: ST_PostInc <"memd", "STrid", DoubleRegs, s4_3Imm>, AddrModeRel;
+
+def : Pat<(post_truncsti8 (i32 IntRegs:$src1), IntRegs:$src2,
+                           s4_3ImmPred:$offset),
+          (POST_STbri IntRegs:$src2, s4_0ImmPred:$offset, IntRegs:$src1)>;
+
+def : Pat<(post_truncsti16 (i32 IntRegs:$src1), IntRegs:$src2,
+                            s4_3ImmPred:$offset),
+          (POST_SThri IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
+
+def : Pat<(post_store (i32 IntRegs:$src1), IntRegs:$src2, s4_2ImmPred:$offset),
+          (POST_STwri IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
+
+def : Pat<(post_store (i64 DoubleRegs:$src1), IntRegs:$src2,
+                       s4_3ImmPred:$offset),
+          (POST_STdri IntRegs:$src2, s4_3ImmPred:$offset, DoubleRegs:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // multiclass for the store instructions with MEMri operand.
@@ -1609,32 +1645,6 @@ def STb_GP : STInst2<(outs),
             []>,
             Requires<[NoV4T]>;
 
-// memb(Rx++#s4:0)=Rt
-let hasCtrlDep = 1, isPredicable = 1 in
-def POST_STbri : STInstPI<(outs IntRegs:$dst), (ins IntRegs:$src1,
-                                                    IntRegs:$src2,
-                                                    s4Imm:$offset),
-            "memb($src2++#$offset) = $src1",
-            [(set IntRegs:$dst,
-            (post_truncsti8 (i32 IntRegs:$src1), (i32 IntRegs:$src2),
-                            s4_0ImmPred:$offset))],
-            "$src2 = $dst">;
-
-// if ([!]Pv) memb(Rx++#s4:0)=Rt
-// if (Pv) memb(Rx++#s4:0)=Rt
-let hasCtrlDep = 1, isPredicated = 1 in
-def POST_STbri_cPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
-            "if ($src1) memb($src3++#$offset) = $src2",
-            [],"$src3 = $dst">;
-
-// if (!Pv) memb(Rx++#s4:0)=Rt
-let hasCtrlDep = 1, isPredicated = 1 in
-def POST_STbri_cNotPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
-            "if (!$src1) memb($src3++#$offset) = $src2",
-            [],"$src3 = $dst">;
-
 let neverHasSideEffects = 1 in
 def STrih_GP : STInst2<(outs),
             (ins globaladdress:$global, u16Imm:$offset, IntRegs:$src),
@@ -1650,31 +1660,6 @@ def STh_GP   : STInst2<(outs),
             Requires<[NoV4T]>;
 
 // memh(Rx++#s4:1)=Rt.H
-// memh(Rx++#s4:1)=Rt
-let hasCtrlDep = 1, isPredicable = 1 in
-def POST_SThri : STInstPI<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, s4Imm:$offset),
-            "memh($src2++#$offset) = $src1",
-            [(set IntRegs:$dst,
-            (post_truncsti16 (i32 IntRegs:$src1), (i32 IntRegs:$src2),
-                             s4_1ImmPred:$offset))],
-            "$src2 = $dst">;
-
-// if ([!]Pv) memh(Rx++#s4:1)=Rt
-// if (Pv) memh(Rx++#s4:1)=Rt
-let hasCtrlDep = 1, isPredicated = 1 in
-def POST_SThri_cPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_1Imm:$offset),
-            "if ($src1) memh($src3++#$offset) = $src2",
-            [],"$src3 = $dst">;
-
-// if (!Pv) memh(Rx++#s4:1)=Rt
-let hasCtrlDep = 1, isPredicated = 1 in
-def POST_SThri_cNotPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_1Imm:$offset),
-            "if (!$src1) memh($src3++#$offset) = $src2",
-            [],"$src3 = $dst">;
-
 
 // Store word.
 // Store predicate.
@@ -1697,32 +1682,6 @@ def STw_GP : STInst2<(outs),
             "memw(#$global) = $src",
             []>,
             Requires<[NoV4T]>;
-
-let hasCtrlDep = 1, isPredicable = 1  in
-def POST_STwri : STInstPI<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, s4Imm:$offset),
-            "memw($src2++#$offset) = $src1",
-            [(set IntRegs:$dst,
-            (post_store (i32 IntRegs:$src1), (i32 IntRegs:$src2),
-                        s4_2ImmPred:$offset))],
-            "$src2 = $dst">;
-
-// if ([!]Pv) memw(Rx++#s4:2)=Rt
-// if (Pv) memw(Rx++#s4:2)=Rt
-let hasCtrlDep = 1, isPredicated = 1 in
-def POST_STwri_cPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_2Imm:$offset),
-            "if ($src1) memw($src3++#$offset) = $src2",
-            [],"$src3 = $dst">;
-
-// if (!Pv) memw(Rx++#s4:2)=Rt
-let hasCtrlDep = 1, isPredicated = 1 in
-def POST_STwri_cNotPt : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_2Imm:$offset),
-            "if (!$src1) memw($src3++#$offset) = $src2",
-            [],"$src3 = $dst">;
-
-
 
 // Allocate stack frame.
 let Defs = [R29, R30], Uses = [R31, R30], neverHasSideEffects = 1 in {
