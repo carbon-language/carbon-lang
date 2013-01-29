@@ -366,7 +366,7 @@ public:
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
     State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent));
-    State.ForLoopVariablePos = 0;
+    State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
 
     DEBUG({
@@ -504,10 +504,10 @@ private:
     /// \brief The token that needs to be next formatted.
     const AnnotatedToken *NextToken;
 
-    /// \brief The column of the first variable in a for-loop declaration.
+    /// \brief The column of first variable name in a variable declaration.
     ///
-    /// Used to align the second variable if necessary.
-    unsigned ForLoopVariablePos;
+    /// Used to align the further variables if necessary.
+    unsigned VariablePos;
 
     /// \brief \c true if this line contains a continued for-loop section.
     bool LineContainsContinuedForLoopSection;
@@ -522,8 +522,8 @@ private:
         return Other.NextToken > NextToken;
       if (Other.Column != Column)
         return Other.Column > Column;
-      if (Other.ForLoopVariablePos != ForLoopVariablePos)
-        return Other.ForLoopVariablePos < ForLoopVariablePos;
+      if (Other.VariablePos != VariablePos)
+        return Other.VariablePos < VariablePos;
       if (Other.LineContainsContinuedForLoopSection !=
           LineContainsContinuedForLoopSection)
         return LineContainsContinuedForLoopSection;
@@ -566,9 +566,10 @@ private:
                                 State.Stack.back().Indent) + 4;
       } else if (Current.Type == TT_ConditionalExpr) {
         State.Column = State.Stack.back().QuestionColumn;
-      } else if (RootToken.is(tok::kw_for) && ParenLevel == 1 &&
-                 Previous.is(tok::comma)) {
-        State.Column = State.ForLoopVariablePos;
+      } else if (Previous.is(tok::comma) && State.VariablePos != 0 &&
+                 ((RootToken.is(tok::kw_for) && ParenLevel == 1) ||
+                  ParenLevel == 0)) {
+        State.Column = State.VariablePos;
       } else if (State.NextToken->Parent->ClosesTemplateDeclaration ||
                  Current.Type == TT_StartOfName) {
         State.Column = State.Stack[ParenLevel].Indent - 4;
@@ -595,9 +596,9 @@ private:
       if (Current.is(tok::colon) && Current.Type != TT_ConditionalExpr)
         State.Stack[ParenLevel].Indent += 2;
     } else {
-      if (Current.is(tok::equal) && RootToken.is(tok::kw_for))
-        State.ForLoopVariablePos = State.Column -
-                                   Previous.FormatTok.TokenLength;
+      if (Current.is(tok::equal) &&
+          (RootToken.is(tok::kw_for) || ParenLevel == 0))
+        State.VariablePos = State.Column - Previous.FormatTok.TokenLength;
 
       unsigned Spaces = State.NextToken->SpaceRequiredBefore ? 1 : 0;
       if (State.NextToken->Type == TT_LineComment)
@@ -652,7 +653,7 @@ private:
            Previous.Type != TT_TemplateOpener) ||
           !Style.AllowAllParametersOnNextLine)
         State.Stack.back().BreakAfterComma = true;
-      
+
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
@@ -1008,7 +1009,7 @@ public:
             // FIXME: Do we incorrectly label ":" with this?
             StartsObjCMethodExpr = false;
             Left->Type = TT_Unknown;
-	  }
+          }
           if (StartsObjCMethodExpr)
             objCSelector.markEnd(*CurrentToken);
           Left->MatchingParen = CurrentToken;
@@ -1223,7 +1224,6 @@ public:
         return LT_PreprocessorDirective;
       }
       while (CurrentToken != NULL) {
-        
         if (CurrentToken->is(tok::kw_virtual))
           KeywordVirtualFound = true;
         if (CurrentToken->is(tok::period) || CurrentToken->is(tok::arrow))

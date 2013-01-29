@@ -1161,6 +1161,24 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
                "       aaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
+TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
+  verifyFormat("bool aaaaaaaaaaaaaaaaa = aaaaaa->aaaaaaaaaaaaaaaaa(),\n"
+               "     aaaaaaaaaaa = aaaaaa->aaaaaaaaaaa();");
+  verifyFormat("bool a = true, b = false;");
+
+  // FIXME: Indentation looks weird.
+  verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa),\n"
+               "     bbbbbbbbbbbbbbbbbbbbbbbbb =\n"
+               "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(bbbbbbbbbbbbbbbb);");
+
+  // FIXME: This is bad as we hide "d".
+  verifyFormat(
+      "bool aaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb &&\n"
+      "                             cccccccccccccccccccccccccccc, d = e && f;");
+
+}
+
 TEST_F(FormatTest, ConditionalExpressionsInBrackets) {
   verifyFormat("arr[foo ? bar : baz];");
   verifyFormat("f()[foo ? bar : baz];");
