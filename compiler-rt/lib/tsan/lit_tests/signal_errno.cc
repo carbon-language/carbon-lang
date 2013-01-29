@@ -38,5 +38,5 @@ int main() {
 }
 
 // CHECK: WARNING: ThreadSanitizer: signal handler spoils errno
-// CHECK:     #0 handler(int, siginfo*, void*) {{.*}}signal_errno.cc
+// CHECK:     #0 handler(int, siginfo{{(_t)?}}*, void*) {{.*}}signal_errno.cc
 
