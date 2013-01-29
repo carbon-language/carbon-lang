@@ -1234,8 +1234,9 @@ public:
       Current.TotalLength =
           Current.Parent->TotalLength + Current.FormatTok.TokenLength +
           (Current.SpaceRequiredBefore ? 1 : 0);
-    if (Current.CanBreakBefore)
-      Current.SplitPenalty = splitPenalty(Current);
+    // FIXME: Only calculate this if CanBreakBefore is true once static
+    // initializers etc. are sorted out.
+    Current.SplitPenalty = splitPenalty(Current);
     if (!Current.Children.empty())
       calculateExtraInformation(Current.Children[0]);
   }
