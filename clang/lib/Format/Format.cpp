@@ -178,7 +178,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.BinPackParameters = true;
-  LLVMStyle.AllowAllParametersOnNextLine = true;
+  LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   LLVMStyle.AllowReturnTypeOnItsOwnLine = true;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
@@ -196,7 +196,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.BinPackParameters = false;
-  GoogleStyle.AllowAllParametersOnNextLine = true;
+  GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   GoogleStyle.AllowReturnTypeOnItsOwnLine = false;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
@@ -206,7 +206,7 @@ FormatStyle getGoogleStyle() {
 
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
-  ChromiumStyle.AllowAllParametersOnNextLine = false;
+  ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
   ChromiumStyle.SplitTemplateClosingGreater = true;
   return ChromiumStyle;
 }
@@ -652,10 +652,11 @@ private:
 
     if (!Style.BinPackParameters && Newline) {
       // If we are breaking after '(', '{', '<', this is not bin packing unless
-      // AllowAllParametersOnNextLine is false.
+      // AllowAllParametersOfDeclarationOnNextLine is false.
       if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
            Previous.Type != TT_TemplateOpener) ||
-          !Style.AllowAllParametersOnNextLine)
+          (!Style.AllowAllParametersOfDeclarationOnNextLine &&
+           Line.MustBeDeclaration))
         State.Stack.back().BreakAfterComma = true;
 
       // Any break on this level means that the parent level has been broken

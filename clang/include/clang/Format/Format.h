@@ -61,9 +61,9 @@ struct FormatStyle {
   /// will either all be on the same line or will have one line each.
   bool BinPackParameters;
 
-  /// \brief Allow putting all parameters of a function declaration/call onto
-  /// the next line without calling this bin-packing.
-  bool AllowAllParametersOnNextLine;
+  /// \brief Allow putting all parameters of a function declaration onto
+  /// the next line even if \c BinPackParameters is \c false.
+  bool AllowAllParametersOfDeclarationOnNextLine;
 
   /// \brief Allow putting the return type of a function onto its own line.
   bool AllowReturnTypeOnItsOwnLine;

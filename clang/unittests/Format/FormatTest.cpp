@@ -1051,10 +1051,15 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
                      "  a);");
 
   FormatStyle Style = getGoogleStyle();
-  Style.AllowAllParametersOnNextLine = false;
-  verifyFormat("aaaaaaaaaaaaaaa(aaaaaaaaa,\n"
+  Style.AllowAllParametersOfDeclarationOnNextLine = false;
+  verifyFormat("void aaaaaaaaaa(aaaaaaaaa,\n"
                "                aaaaaaaaa,\n"
-               "                aaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();",
+               "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
+               Style);
+  verifyFormat("void f() {\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "      aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa).aaaaaaa();\n"
+               "}",
                Style);
 }
 
