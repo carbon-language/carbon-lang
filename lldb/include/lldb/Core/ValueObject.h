@@ -232,6 +232,8 @@ public:
         lldb::TypeSummaryImplSP m_summary_sp;
         std::string m_root_valobj_name;
         bool m_hide_root_type;
+        bool m_hide_name;
+        bool m_hide_value;
         
         DumpValueObjectOptions() :
             m_max_ptr_depth(0),
@@ -248,7 +250,9 @@ public:
             m_format (lldb::eFormatDefault),
             m_summary_sp(),
             m_root_valobj_name(),
-            m_hide_root_type(false)  // <rdar://problem/11505459> provide a special compact display for "po",
+            m_hide_root_type(false),  // provide a special compact display for "po"
+            m_hide_name(false), // provide a special compact display for "po"
+            m_hide_value(false) // provide a special compact display for "po"
         {}
         
         static const DumpValueObjectOptions
@@ -274,7 +278,9 @@ public:
             m_format(rhs.m_format),
             m_summary_sp(rhs.m_summary_sp),
             m_root_valobj_name(rhs.m_root_valobj_name),
-            m_hide_root_type(rhs.m_hide_root_type)
+            m_hide_root_type(rhs.m_hide_root_type),
+            m_hide_name(rhs.m_hide_name),
+            m_hide_value(rhs.m_hide_value)
         {}
         
         DumpValueObjectOptions&
@@ -372,12 +378,16 @@ public:
                 SetUseSyntheticValue(false);
                 SetOmitSummaryDepth(UINT32_MAX);
                 SetIgnoreCap(true);
+                SetHideName(false);
+                SetHideValue(false);
             }
             else
             {
                 SetUseSyntheticValue(true);
                 SetOmitSummaryDepth(0);
                 SetIgnoreCap(false);
+                SetHideName(false);
+                SetHideValue(false);
             }
             return *this;
         }
@@ -412,7 +422,20 @@ public:
             m_hide_root_type = hide_root_type;
             return *this;
         }
+        
+        DumpValueObjectOptions&
+        SetHideName (bool hide_name = false)
+        {
+            m_hide_name = hide_name;
+            return *this;
+        }
 
+        DumpValueObjectOptions&
+        SetHideValue (bool hide_value = false)
+        {
+            m_hide_value = hide_value;
+            return *this;
+        }        
     };
 
     class EvaluationPoint

@@ -400,7 +400,9 @@ CommandObjectExpression::EvaluateExpression
                     .SetFormat(format)
                     .SetSummary()
                     .SetShowSummary(!m_varobj_options.use_objc)
-                    .SetHideRootType(m_varobj_options.use_objc);
+                    .SetHideRootType(m_varobj_options.use_objc)
+                    .SetHideName(m_varobj_options.use_objc)
+                    .SetHideValue(m_varobj_options.use_objc);
                     
                     if (m_varobj_options.be_raw)
                         options.SetRawDisplay(true);

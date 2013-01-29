@@ -3287,10 +3287,13 @@ DumpValueObject_Impl (Stream &s,
             {
                 // If we are showing types, also qualify the C++ base classes 
                 const bool qualify_cxx_base_classes = options.m_show_types;
-                valobj->GetExpressionPath(s, qualify_cxx_base_classes);
-                s.PutCString(" =");
+                if (!options.m_hide_name)
+                {
+                    valobj->GetExpressionPath(s, qualify_cxx_base_classes);
+                    s.PutCString(" =");
+                }
             }
-            else
+            else if (!options.m_hide_name)
             {
                 const char *name_cstr = root_valobj_name ? root_valobj_name : valobj->GetName().AsCString("");
                 s.Printf ("%s =", name_cstr);
@@ -3354,7 +3357,7 @@ DumpValueObject_Impl (Stream &s,
                 // Make sure we have a value and make sure the summary didn't
                 // specify that the value should not be printed - and do not print
                 // the value if this thing is nil
-                if (!is_nil && !value_str.empty() && (entry == NULL || entry->DoesPrintValue() || sum_cstr == NULL))
+                if (!is_nil && !value_str.empty() && (entry == NULL || entry->DoesPrintValue() || sum_cstr == NULL) && !options.m_hide_value)
                     s.Printf(" %s", value_str.c_str());
 
                 if (sum_cstr)
@@ -3363,11 +3366,13 @@ DumpValueObject_Impl (Stream &s,
                 // let's avoid the overly verbose no description error for a nil thing
                 if (options.m_use_objc && !is_nil)
                 {
+                    if (!options.m_hide_value || !options.m_hide_name)
+                        s.Printf(" ");
                     const char *object_desc = valobj->GetObjectDescription();
                     if (object_desc)
-                        s.Printf(" %s\n", object_desc);
+                        s.Printf("%s\n", object_desc);
                     else
-                        s.Printf (" [no Objective-C description available]\n");
+                        s.Printf ("[no Objective-C description available]\n");
                     return;
                 }
             }
@@ -3438,7 +3443,7 @@ DumpValueObject_Impl (Stream &s,
 
                         ValueObject::DumpValueObjectOptions child_options(options);
                         child_options.SetFormat(options.m_format).SetSummary().SetRootValueObjectName();
-                        child_options.SetScopeChecked(true)
+                        child_options.SetScopeChecked(true).SetHideName(options.m_hide_name).SetHideValue(options.m_hide_value)
                         .SetOmitSummaryDepth(child_options.m_omit_summary_depth > 1 ? child_options.m_omit_summary_depth - 1 : 0);
                         for (size_t idx=0; idx<num_children; ++idx)
                         {

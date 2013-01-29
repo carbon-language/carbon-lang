@@ -216,7 +216,7 @@ class FoundationTestCase2(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         self.expect("po [NSError errorWithDomain:@\"Hello\" code:35 userInfo:nil]",
-            substrs = ["$", "= 0x", "Error Domain=Hello", "Code=35", "be completed."])
+            substrs = ["Error Domain=Hello", "Code=35", "be completed."])
         self.runCmd("process continue")
 
     def NSError_p(self):
