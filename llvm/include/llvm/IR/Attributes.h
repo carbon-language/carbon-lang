@@ -180,7 +180,7 @@ private:
 
   /// \brief The attributes for the specified index are returned.  Attributes
   /// for the result are denoted with Idx = 0.
-  Attribute getAttributes(unsigned Idx) const;
+  AttributeSetNode *getAttributes(unsigned Idx) const;
 
   /// \brief Create an AttributeSet with the specified parameters in it.
   static AttributeSet get(LLVMContext &C,

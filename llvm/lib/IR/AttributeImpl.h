@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/IR/Attributes.h"
+#include <string>
 
 namespace llvm {
 
@@ -92,6 +93,13 @@ class AttributeSetNode : public FoldingSetNode {
 public:
   static AttributeSetNode *get(LLVMContext &C, ArrayRef<Attribute> Attrs);
 
+  bool hasAttribute(Attribute::AttrKind Kind) const;
+  bool hasAttributes() const { return !AttrList.empty(); }
+
+  unsigned getAlignment() const;
+  unsigned getStackAlignment() const;
+  std::string getAsString() const;
+
   typedef SmallVectorImpl<Attribute>::iterator       iterator;
   typedef SmallVectorImpl<Attribute>::const_iterator const_iterator;
 
@@ -150,6 +158,12 @@ public:
   AttributeSet getSlotAttributes(unsigned Slot) const {
     // FIXME: This needs to use AttrNodes instead.
     return AttributeSet::get(Context, AttrNodes[Slot]);
+  }
+
+  /// \brief Retrieve the attribute set node for the given "slot" in the
+  /// AttrNode list.
+  AttributeSetNode *getSlotNode(unsigned Slot) const {
+    return AttrNodes[Slot].second;
   }
 
   typedef AttributeSetNode::iterator       iterator;

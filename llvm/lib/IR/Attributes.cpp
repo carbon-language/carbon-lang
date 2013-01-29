@@ -99,77 +99,78 @@ unsigned Attribute::getStackAlignment() const {
 }
 
 std::string Attribute::getAsString() const {
-  std::string Result;
   if (hasAttribute(Attribute::ZExt))
-    Result += "zeroext ";
+    return "zeroext";
   if (hasAttribute(Attribute::SExt))
-    Result += "signext ";
+    return "signext";
   if (hasAttribute(Attribute::NoReturn))
-    Result += "noreturn ";
+    return "noreturn";
   if (hasAttribute(Attribute::NoUnwind))
-    Result += "nounwind ";
+    return "nounwind";
   if (hasAttribute(Attribute::UWTable))
-    Result += "uwtable ";
+    return "uwtable";
   if (hasAttribute(Attribute::ReturnsTwice))
-    Result += "returns_twice ";
+    return "returns_twice";
   if (hasAttribute(Attribute::InReg))
-    Result += "inreg ";
+    return "inreg";
   if (hasAttribute(Attribute::NoAlias))
-    Result += "noalias ";
+    return "noalias";
   if (hasAttribute(Attribute::NoCapture))
-    Result += "nocapture ";
+    return "nocapture";
   if (hasAttribute(Attribute::StructRet))
-    Result += "sret ";
+    return "sret";
   if (hasAttribute(Attribute::ByVal))
-    Result += "byval ";
+    return "byval";
   if (hasAttribute(Attribute::Nest))
-    Result += "nest ";
+    return "nest";
   if (hasAttribute(Attribute::ReadNone))
-    Result += "readnone ";
+    return "readnone";
   if (hasAttribute(Attribute::ReadOnly))
-    Result += "readonly ";
+    return "readonly";
   if (hasAttribute(Attribute::OptimizeForSize))
-    Result += "optsize ";
+    return "optsize";
   if (hasAttribute(Attribute::NoInline))
-    Result += "noinline ";
+    return "noinline";
   if (hasAttribute(Attribute::InlineHint))
-    Result += "inlinehint ";
+    return "inlinehint";
   if (hasAttribute(Attribute::AlwaysInline))
-    Result += "alwaysinline ";
+    return "alwaysinline";
   if (hasAttribute(Attribute::StackProtect))
-    Result += "ssp ";
+    return "ssp";
   if (hasAttribute(Attribute::StackProtectReq))
-    Result += "sspreq ";
+    return "sspreq";
   if (hasAttribute(Attribute::StackProtectStrong))
-    Result += "sspstrong ";
+    return "sspstrong";
   if (hasAttribute(Attribute::NoRedZone))
-    Result += "noredzone ";
+    return "noredzone";
   if (hasAttribute(Attribute::NoImplicitFloat))
-    Result += "noimplicitfloat ";
+    return "noimplicitfloat";
   if (hasAttribute(Attribute::Naked))
-    Result += "naked ";
+    return "naked";
   if (hasAttribute(Attribute::NonLazyBind))
-    Result += "nonlazybind ";
+    return "nonlazybind";
   if (hasAttribute(Attribute::AddressSafety))
-    Result += "address_safety ";
+    return "address_safety";
   if (hasAttribute(Attribute::MinSize))
-    Result += "minsize ";
+    return "minsize";
   if (hasAttribute(Attribute::StackAlignment)) {
+    std::string Result;
     Result += "alignstack(";
     Result += utostr(getStackAlignment());
-    Result += ") ";
+    Result += ")";
+    return Result;
   }
   if (hasAttribute(Attribute::Alignment)) {
+    std::string Result;
     Result += "align ";
     Result += utostr(getAlignment());
-    Result += " ";
+    Result += "";
+    return Result;
   }
   if (hasAttribute(Attribute::NoDuplicate))
-    Result += "noduplicate ";
-  // Trim the trailing space.
-  assert(!Result.empty() && "Unknown attribute!");
-  Result.erase(Result.end()-1);
-  return Result;
+    return "noduplicate";
+
+  llvm_unreachable("Unknown attribute");
 }
 
 bool Attribute::operator==(AttrKind K) const {
@@ -352,6 +353,40 @@ AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
 
   // Return the AttributesListNode that we found or created.
   return PA;
+}
+
+bool AttributeSetNode::hasAttribute(Attribute::AttrKind Kind) const {
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I)
+    if (I->hasAttribute(Kind))
+      return true;
+  return false;
+}
+
+unsigned AttributeSetNode::getAlignment() const {
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I)
+    if (I->hasAttribute(Attribute::Alignment))
+      return I->getAlignment();
+  return 0;
+}
+
+unsigned AttributeSetNode::getStackAlignment() const {
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I)
+    if (I->hasAttribute(Attribute::StackAlignment))
+      return I->getStackAlignment();
+  return 0;
+}
+
+std::string AttributeSetNode::getAsString() const {
+  std::string Str = "";
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I) {
+    if (I != AttrList.begin()) Str += " ";
+    Str += I->getAsString();
+  }
+  return Str;
 }
 
 //===----------------------------------------------------------------------===//
@@ -597,7 +632,7 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
 AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
   return pImpl && hasAttributes(Idx) ?
     AttributeSet::get(pImpl->getContext(),
-                      ArrayRef<std::pair<unsigned, Attribute> >(
+                      ArrayRef<std::pair<unsigned, AttributeSetNode*> >(
                         std::make_pair(Idx, getAttributes(Idx)))) :
     AttributeSet();
 }
@@ -605,7 +640,7 @@ AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
 AttributeSet AttributeSet::getRetAttributes() const {
   return pImpl && hasAttributes(ReturnIndex) ?
     AttributeSet::get(pImpl->getContext(),
-                      ArrayRef<std::pair<unsigned, Attribute> >(
+                      ArrayRef<std::pair<unsigned, AttributeSetNode*> >(
                         std::make_pair(ReturnIndex,
                                        getAttributes(ReturnIndex)))) :
     AttributeSet();
@@ -614,18 +649,20 @@ AttributeSet AttributeSet::getRetAttributes() const {
 AttributeSet AttributeSet::getFnAttributes() const {
   return pImpl && hasAttributes(FunctionIndex) ?
     AttributeSet::get(pImpl->getContext(),
-                      ArrayRef<std::pair<unsigned, Attribute> >(
+                      ArrayRef<std::pair<unsigned, AttributeSetNode*> >(
                         std::make_pair(FunctionIndex,
                                        getAttributes(FunctionIndex)))) :
     AttributeSet();
 }
 
 bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
-  return getAttributes(Index).hasAttribute(Kind);
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->hasAttribute(Kind) : false;
 }
 
 bool AttributeSet::hasAttributes(unsigned Index) const {
-  return getAttributes(Index).hasAttributes();
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->hasAttributes() : false;
 }
 
 /// \brief Return true if the specified attribute is set for at least one
@@ -642,36 +679,31 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   return false;
 }
 
-unsigned AttributeSet::getParamAlignment(unsigned Idx) const {
-  return getAttributes(Idx).getAlignment();
+unsigned AttributeSet::getParamAlignment(unsigned Index) const {
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getAlignment() : 0;
 }
 
 unsigned AttributeSet::getStackAlignment(unsigned Index) const {
-  return getAttributes(Index).getStackAlignment();
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getStackAlignment() : 0;
 }
 
 std::string AttributeSet::getAsString(unsigned Index) const {
-  return getAttributes(Index).getAsString();
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getAsString() : std::string("");
 }
 
 /// \brief The attributes for the specified index are returned.
-///
-/// FIXME: This shouldn't return 'Attribute'.
-Attribute AttributeSet::getAttributes(unsigned Idx) const {
-  if (pImpl == 0) return Attribute();
+AttributeSetNode *AttributeSet::getAttributes(unsigned Idx) const {
+  if (!pImpl) return 0;
 
-  // Loop through to find the attribute we want.
-  for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I) {
-    if (pImpl->getSlotIndex(I) != Idx) continue;
+  // Loop through to find the attribute node we want.
+  for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
+    if (pImpl->getSlotIndex(I) == Idx)
+      return pImpl->getSlotNode(I);
 
-    AttrBuilder B;
-    for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
-           IE = pImpl->end(I); II != IE; ++II)
-      B.addAttributes(*II);
-    return Attribute::get(pImpl->getContext(), B);
-  }
-
-  return Attribute();
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -948,9 +980,8 @@ void AttributeFuncs::decodeLLVMAttributesForBitcode(LLVMContext &C,
   assert((!Alignment || isPowerOf2_32(Alignment)) &&
          "Alignment must be a power of two.");
 
-  B.addRawValue(EncodedAttrs & 0xffff);
   if (Alignment)
     B.addAlignmentAttr(Alignment);
-  B.addRawValue((EncodedAttrs & (0xffffULL << 32)) >> 11);
+  B.addRawValue(((EncodedAttrs & (0xffffULL << 32)) >> 11) |
+                (EncodedAttrs & 0xffff));
 }
-
