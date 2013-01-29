@@ -447,6 +447,9 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
             format("int i;\\\n// single line trailing comment"));
 
   verifyGoogleFormat("int a;  // Trailing comment.");
+
+  verifyFormat("someFunction(anotherFunction( // Force break.\n"
+               "    parameter));");
 }
 
 TEST_F(FormatTest, UnderstandsMultiLineComments) {
@@ -461,6 +464,11 @@ TEST_F(FormatTest, UnderstandsMultiLineComments) {
       "  /* Leading comment for bb... */ bbbbbbbbbbbbbbbbbbbbbbbbb);",
       format("f(aaaaaaaaaaaaaaaaaaaaaaaaa    ,   \n"
              "/* Leading comment for bb... */   bbbbbbbbbbbbbbbbbbbbbbbbb);"));
+
+  verifyGoogleFormat("aaaaaaaa(/* parameter 1 */ aaaaaa,\n"
+                     "         /* parameter 2 */ aaaaaa,\n"
+                     "         /* parameter 3 */ aaaaaa,\n"
+                     "         /* parameter 4 */ aaaaaa);");
 }
 
 TEST_F(FormatTest, CommentsInStaticInitializers) {

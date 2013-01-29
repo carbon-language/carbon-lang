@@ -617,12 +617,11 @@ private:
           (getPrecedence(Previous) == prec::Assignment ||
            Previous.is(tok::kw_return)))
         State.Stack.back().AssignmentColumn = State.Column + Spaces;
-      if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
-          State.NextToken->Parent->Type == TT_TemplateOpener)
+      if (Current.Type != TT_LineComment &&
+          (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
+           State.NextToken->Parent->Type == TT_TemplateOpener))
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
-      if (Current.getPreviousNoneComment() != NULL &&
-          Current.getPreviousNoneComment()->is(tok::comma) &&
-          Current.isNot(tok::comment))
+      if (Previous.is(tok::comma) && Current.Type != TT_LineComment)
         State.Stack[ParenLevel].HasMultiParameterLine = true;
 
       State.Column += Spaces;
@@ -746,7 +745,7 @@ private:
         State.LineContainsContinuedForLoopSection)
       return UINT_MAX;
     if (!NewLine && State.NextToken->Parent->is(tok::comma) &&
-        State.NextToken->isNot(tok::comment) &&
+        State.NextToken->Type != TT_LineComment &&
         State.Stack.back().BreakAfterComma)
       return UINT_MAX;
     // Trying to insert a parameter on a new line if there are already more than
