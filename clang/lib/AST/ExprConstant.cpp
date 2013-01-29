@@ -4723,7 +4723,7 @@ bool DataRecursiveIntBinOpEvaluator::
     case BO_Shl: {
       if (Info.getLangOpts().OpenCL)
         // OpenCL 6.3j: shift values are effectively % word size of LHS.
-        RHS &= APSInt(llvm::APInt(LHS.getBitWidth(),
+        RHS &= APSInt(llvm::APInt(RHS.getBitWidth(),
                       static_cast<uint64_t>(LHS.getBitWidth() - 1)),
                       RHS.isUnsigned());
       else if (RHS.isSigned() && RHS.isNegative()) {
@@ -4755,7 +4755,7 @@ bool DataRecursiveIntBinOpEvaluator::
     case BO_Shr: {
       if (Info.getLangOpts().OpenCL)
         // OpenCL 6.3j: shift values are effectively % word size of LHS.
-        RHS &= APSInt(llvm::APInt(LHS.getBitWidth(),
+        RHS &= APSInt(llvm::APInt(RHS.getBitWidth(),
                       static_cast<uint64_t>(LHS.getBitWidth() - 1)),
                       RHS.isUnsigned());
       else if (RHS.isSigned() && RHS.isNegative()) {
