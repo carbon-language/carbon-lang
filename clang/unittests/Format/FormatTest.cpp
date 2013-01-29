@@ -136,7 +136,6 @@ TEST_F(FormatTest, FormatsUnwrappedLinesAtFirstFormat) {
 
 TEST_F(FormatTest, FormatsNestedBlockStatements) {
   EXPECT_EQ("{\n  {\n    {}\n  }\n}", format("{{{}}}"));
-  EXPECT_EQ("{\n  {\n    {}\n  }\n}", format("{{{}}\n\n}"));
 }
 
 TEST_F(FormatTest, FormatsNestedCall) {
