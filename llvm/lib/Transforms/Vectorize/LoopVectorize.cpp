@@ -101,7 +101,9 @@ EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
                    cl::desc("Enable if-conversion during vectorization."));
 
 /// We don't vectorize loops with a known constant trip count below this number.
-static const unsigned TinyTripCountVectorThreshold = 16;
+static cl::opt<unsigned>
+TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16), cl::Hidden,
+                             cl::desc("The minimum trip count in the loops to vectorize."));
 
 /// We don't unroll loops with a known constant trip count below this number.
 static const unsigned TinyTripCountUnrollThreshold = 128;
