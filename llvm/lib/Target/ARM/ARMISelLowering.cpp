@@ -5969,9 +5969,6 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
     MRI.constrainRegClass(ptr, &ARM::rGPRRegClass);
   }
 
-  unsigned ldrOpc = isThumb2 ? ARM::t2LDREXD : ARM::LDREXD;
-  unsigned strOpc = isThumb2 ? ARM::t2STREXD : ARM::STREXD;
-
   MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *contBB = 0, *cont2BB = 0;
   if (IsCmpxchg || IsMinMax)
@@ -6009,42 +6006,26 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
   //   cmp storesuccess, #0
   //   bne- loopMBB
   //   fallthrough --> exitMBB
-  //
-  // Note that the registers are explicitly specified because there is not any
-  // way to force the register allocator to allocate a register pair.
-  //
-  // FIXME: The hardcoded registers are not necessary for Thumb2, but we
-  // need to properly enforce the restriction that the two output registers
-  // for ldrexd must be different.
   BB = loopMBB;
+
   // Load
-  unsigned GPRPair0 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-  unsigned GPRPair1 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-  unsigned GPRPair2;
-  if (IsMinMax) {
-    //We need an extra double register for doing min/max.
-    unsigned undef = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    unsigned r1 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    GPRPair2 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    BuildMI(BB, dl, TII->get(TargetOpcode::IMPLICIT_DEF), undef);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), r1)
-      .addReg(undef)
-      .addReg(vallo)
-      .addImm(ARM::gsub_0);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), GPRPair2)
-      .addReg(r1)
-      .addReg(valhi)
-      .addImm(ARM::gsub_1);
+  if (isThumb2) {
+    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2LDREXD))
+                   .addReg(destlo, RegState::Define)
+                   .addReg(desthi, RegState::Define)
+                   .addReg(ptr));
+  } else {
+    unsigned GPRPair0 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
+    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::LDREXD))
+                   .addReg(GPRPair0, RegState::Define).addReg(ptr));
+    // Copy r2/r3 into dest.  (This copy will normally be coalesced.)
+    BuildMI(BB, dl, TII->get(TargetOpcode::COPY), destlo)
+      .addReg(GPRPair0, 0, ARM::gsub_0);
+    BuildMI(BB, dl, TII->get(TargetOpcode::COPY), desthi)
+      .addReg(GPRPair0, 0, ARM::gsub_1);
   }
 
-  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc))
-                 .addReg(GPRPair0, RegState::Define).addReg(ptr));
-  // Copy r2/r3 into dest.  (This copy will normally be coalesced.)
-  BuildMI(BB, dl, TII->get(TargetOpcode::COPY), destlo)
-    .addReg(GPRPair0, 0, ARM::gsub_0);
-  BuildMI(BB, dl, TII->get(TargetOpcode::COPY), desthi)
-    .addReg(GPRPair0, 0, ARM::gsub_1);
-
+  unsigned StoreLo, StoreHi;
   if (IsCmpxchg) {
     // Add early exit
     for (unsigned i = 0; i < 2; i++) {
@@ -6060,19 +6041,8 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
     }
 
     // Copy to physregs for strexd
-    unsigned setlo = MI->getOperand(5).getReg();
-    unsigned sethi = MI->getOperand(6).getReg();
-    unsigned undef = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    unsigned r1 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    BuildMI(BB, dl, TII->get(TargetOpcode::IMPLICIT_DEF), undef);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), r1)
-      .addReg(undef)
-      .addReg(setlo)
-      .addImm(ARM::gsub_0);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), GPRPair1)
-      .addReg(r1)
-      .addReg(sethi)
-      .addImm(ARM::gsub_1);
+    StoreLo = MI->getOperand(5).getReg();
+    StoreHi = MI->getOperand(6).getReg();
   } else if (Op1) {
     // Perform binary operation
     unsigned tmpRegLo = MRI.createVirtualRegister(TRC);
@@ -6084,32 +6054,13 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
                    .addReg(desthi).addReg(valhi))
         .addReg(IsMinMax ? ARM::CPSR : 0, getDefRegState(IsMinMax));
 
-    unsigned UndefPair = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    BuildMI(BB, dl, TII->get(TargetOpcode::IMPLICIT_DEF), UndefPair);
-    unsigned r1 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), r1)
-      .addReg(UndefPair)
-      .addReg(tmpRegLo)
-      .addImm(ARM::gsub_0);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), GPRPair1)
-      .addReg(r1)
-      .addReg(tmpRegHi)
-      .addImm(ARM::gsub_1);
+    StoreLo = tmpRegLo;
+    StoreHi = tmpRegHi;
   } else {
     // Copy to physregs for strexd
-    unsigned UndefPair = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    unsigned r1 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
-    BuildMI(BB, dl, TII->get(TargetOpcode::IMPLICIT_DEF), UndefPair);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), r1)
-      .addReg(UndefPair)
-      .addReg(vallo)
-      .addImm(ARM::gsub_0);
-    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), GPRPair1)
-      .addReg(r1)
-      .addReg(valhi)
-      .addImm(ARM::gsub_1);
+    StoreLo = vallo;
+    StoreHi = valhi;
   }
-  unsigned GPRPairStore = GPRPair1;
   if (IsMinMax) {
     // Compare and branch to exit block.
     BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))
@@ -6117,12 +6068,33 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
     BB->addSuccessor(exitMBB);
     BB->addSuccessor(contBB);
     BB = contBB;
-    GPRPairStore = GPRPair2;
+    StoreLo = vallo;
+    StoreHi = valhi;
   }
 
   // Store
-  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), storesuccess)
-                 .addReg(GPRPairStore).addReg(ptr));
+  if (isThumb2) {
+    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2STREXD), storesuccess)
+                   .addReg(StoreLo).addReg(StoreHi).addReg(ptr));
+  } else {
+    // Marshal a pair...
+    unsigned StorePair = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
+    unsigned UndefPair = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
+    unsigned r1 = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
+    BuildMI(BB, dl, TII->get(TargetOpcode::IMPLICIT_DEF), UndefPair);
+    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), r1)
+      .addReg(UndefPair)
+      .addReg(StoreLo)
+      .addImm(ARM::gsub_0);
+    BuildMI(BB, dl, TII->get(TargetOpcode::INSERT_SUBREG), StorePair)
+      .addReg(r1)
+      .addReg(StoreHi)
+      .addImm(ARM::gsub_1);
+
+    // ...and store it
+    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::STREXD), storesuccess)
+                   .addReg(StorePair).addReg(ptr));
+  }
   // Cmp+jump
   AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
                  .addReg(storesuccess).addImm(0));
