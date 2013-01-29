@@ -913,6 +913,8 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       } else {
         DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
         addType(Arg, DIType(Ty));
+        if (DIType(Ty).isArtificial())
+          addFlag(Arg, dwarf::DW_AT_artificial);
         Buffer.addChild(Arg);
       }
     }
