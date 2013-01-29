@@ -1990,6 +1990,8 @@ private:
                                  Style.MaxEmptyLinesToKeep + 1);
     if (Newlines == 0 && !Tok.IsFirst)
       Newlines = 1;
+    if (Tok.Tok.is(tok::r_brace) && Newlines > 1)
+      Newlines = 1;
     unsigned Indent = Level * 2;
 
     bool IsAccessModifier = false;
