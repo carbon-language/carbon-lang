@@ -25,9 +25,8 @@
 
 #define DEBUG_TYPE "objc-arc-contract"
 #include "ObjCARC.h"
-#include "ProvenanceAnalysis.h"
 #include "DependencyAnalysis.h"
-
+#include "ProvenanceAnalysis.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/IR/InlineAsm.h"

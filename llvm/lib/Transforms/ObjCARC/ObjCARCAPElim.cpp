@@ -30,7 +30,6 @@
 
 #define DEBUG_TYPE "objc-arc-ap-elim"
 #include "ObjCARC.h"
-
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
 

@@ -24,8 +24,8 @@
 
 #include "ObjCARC.h"
 #include "ProvenanceAnalysis.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;

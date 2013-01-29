@@ -20,7 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ObjCARC.h"
-
 #include "llvm/IR/Intrinsics.h"
 
 using namespace llvm;

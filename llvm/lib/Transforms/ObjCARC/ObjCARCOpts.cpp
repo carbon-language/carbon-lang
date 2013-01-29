@@ -30,13 +30,14 @@
 
 #define DEBUG_TYPE "objc-arc-opts"
 #include "ObjCARC.h"
+#include "DependencyAnalysis.h"
 #include "ObjCARCAliasAnalysis.h"
 #include "ProvenanceAnalysis.h"
-#include "DependencyAnalysis.h"
-
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CFG.h"
 
 using namespace llvm;
@@ -290,10 +291,6 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
 // TODO: The pointer returned from objc_loadWeakRetained is retained.
 
 // TODO: Delete release+retain pairs (rare).
-
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/IR/LLVMContext.h"
 
 STATISTIC(NumNoops,       "Number of no-op objc calls eliminated");
 STATISTIC(NumPartialNoops, "Number of partially no-op objc calls eliminated");

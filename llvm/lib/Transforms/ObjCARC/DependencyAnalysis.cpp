@@ -22,9 +22,8 @@
 
 #define DEBUG_TYPE "objc-arc-dependency"
 #include "ObjCARC.h"
-#include "ProvenanceAnalysis.h"
 #include "DependencyAnalysis.h"
-
+#include "ProvenanceAnalysis.h"
 #include "llvm/Support/CFG.h"
 
 using namespace llvm;
