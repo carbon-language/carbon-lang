@@ -55,3 +55,24 @@ inline void f7 [[gnu::gnu_inline]] ();
 // arguments printing
 // CHECK: __attribute__((format("printf", 2, 3)));
 void f8 (void *, const char *, ...) __attribute__ ((format (printf, 2, 3)));
+
+// CHECK: int m __attribute__((aligned(4
+// CHECK: int n alignas(4
+// CHECK: static int f() __attribute__((pure))
+// CHECK: static int g() {{\[}}[gnu::pure]]
+template <typename T> struct S {
+  __attribute__((aligned(4))) int m;
+  alignas(4) int n;
+  __attribute__((pure)) static int f() {
+    return 0;
+  }
+  [[gnu::pure]] static int g() {
+    return 1;
+  }
+};
+
+// CHECK: int m __attribute__((aligned(4
+// CHECK: int n alignas(4
+// CHECK: static int f() __attribute__((pure))
+// CHECK: static int g() {{\[}}[gnu::pure]]
+template struct S<int>;

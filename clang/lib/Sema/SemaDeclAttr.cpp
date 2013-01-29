@@ -3330,11 +3330,11 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
 }
 
 void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS, 
-                          bool isDeclSpec) {
+                          bool isDeclSpec, unsigned SpellingListIndex) {
   // FIXME: Cache the number on the Attr object if non-dependent?
   // FIXME: Perform checking of type validity
   D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, false, TS, 
-                                         isDeclSpec));
+                                         isDeclSpec, SpellingListIndex));
   return;
 }
 

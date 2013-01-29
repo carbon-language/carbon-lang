@@ -937,7 +937,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
       OS << ", ";
       (*ai)->writeCloneArgs(OS);
     }
-    OS << ");\n}\n\n";
+    OS << ", getSpellingListIndex());\n}\n\n";
 
     writePrettyPrintFunction(R, Args, OS);
   }
