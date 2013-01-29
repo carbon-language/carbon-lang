@@ -161,7 +161,7 @@ namespace test9 {
   // CHECK: define void @_ZN5test93fooEPNS_1SEPNS_1TE([[S:%.*]]*, [[T:%.*]]*)
   void foo(S*, T*) {}
 
-  // CHECK: define void @_ZN5test91aEiiiiNS_1TEPv([[S]]* noalias sret {{%.*}}, i32, i32, i32, i32, [[T]]* byval align 8, i8*)
+  // CHECK: define void @_ZN5test91aEiiiiNS_1TEPv([[S]]* sret noalias {{%.*}}, i32, i32, i32, i32, [[T]]* byval align 8, i8*)
   S a(int, int, int, int, T, void*) {
     return S();
   }
@@ -171,7 +171,7 @@ namespace test9 {
     return sret;
   }
 
-  // CHECK: define void @_ZN5test91cEiiiNS_1TEPv([[S]]* noalias sret {{%.*}}, i32, i32, i32, i8* {{%.*}}, i8* {{%.*}}, i8*)
+  // CHECK: define void @_ZN5test91cEiiiNS_1TEPv([[S]]* sret noalias {{%.*}}, i32, i32, i32, i8* {{%.*}}, i8* {{%.*}}, i8*)
   S c(int, int, int, T, void*) {
     return S();
   }

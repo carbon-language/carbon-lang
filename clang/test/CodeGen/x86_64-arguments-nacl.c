@@ -61,7 +61,7 @@ void f12_1(struct s12 a0) {}
 
 // Check that sret parameter is accounted for when checking available integer
 // registers.
-// CHECK: define void @f13(%struct.s13_0* noalias sret %agg.result, i32 %a, i32 %b, i32 %c, i32 %d, {{.*}}* byval align 8 %e, i32 %f)
+// CHECK: define void @f13(%struct.s13_0* sret noalias %agg.result, i32 %a, i32 %b, i32 %c, i32 %d, {{.*}}* byval align 8 %e, i32 %f)
 
 struct s13_0 { long long f0[3]; };
 struct s13_1 { long long f0[2]; };
@@ -99,7 +99,7 @@ typedef struct {
 // CHECK: define i32 @f48(%struct.s1* byval %s)
 int __attribute__((pnaclcall)) f48(s1 s) { return s.a; }
 
-// CHECK: define void @f49(%struct.s1* noalias sret %agg.result)
+// CHECK: define void @f49(%struct.s1* sret noalias %agg.result)
 s1 __attribute__((pnaclcall)) f49() { s1 s; s.a = s.b = 1; return s; }
 
 union simple_union {

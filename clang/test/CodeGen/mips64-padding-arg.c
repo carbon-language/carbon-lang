@@ -32,7 +32,7 @@ void foo3(int a0, long double a1) {
 
 // Insert padding after hidden argument.
 //
-// N64: define void @foo5(%struct.S0* noalias sret %agg.result, i64, fp128 %a0)
+// N64: define void @foo5(%struct.S0* sret noalias %agg.result, i64, fp128 %a0)
 // N64: call void @foo6(%struct.S0* sret %agg.result, i32 1, i32 2, i64 undef, fp128 %a0)
 // N64: declare void @foo6(%struct.S0* sret, i32, i32, i64, fp128)
 

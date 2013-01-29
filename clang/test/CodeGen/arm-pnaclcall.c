@@ -12,7 +12,7 @@ typedef struct {
 // CHECK: define i32 @f48(%struct.s1* byval %s)
 int __attribute__((pnaclcall)) f48(s1 s) { return s.a; }
 
-// CHECK: define void @f49(%struct.s1* noalias sret %agg.result)
+// CHECK: define void @f49(%struct.s1* sret noalias %agg.result)
 s1 __attribute__((pnaclcall)) f49() { s1 s; s.a = s.b = 1; return s; }
 
 union simple_union {

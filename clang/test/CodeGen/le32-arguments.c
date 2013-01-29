@@ -17,7 +17,7 @@ typedef struct {
   int cc;
 } s2;
 // Structs should be returned sret and not simplified by the frontend
-// CHECK: define void @f2(%struct.s2* noalias sret %agg.result)
+// CHECK: define void @f2(%struct.s2* sret noalias %agg.result)
 s2 f2() {
   s2 foo;
   return foo;
