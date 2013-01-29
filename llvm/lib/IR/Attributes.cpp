@@ -83,6 +83,14 @@ bool Attribute::hasAttributes() const {
   return pImpl && pImpl->hasAttributes();
 }
 
+Constant *Attribute::getAttributeKind() const {
+  return pImpl ? pImpl->getAttributeKind() : 0;
+}
+
+ArrayRef<Constant*> Attribute::getAttributeValues() const {
+  return pImpl ? pImpl->getAttributeValues() : ArrayRef<Constant*>();
+}
+
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attribute::getAlignment() const {
   if (!hasAttribute(Attribute::Alignment))

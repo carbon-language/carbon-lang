@@ -28,6 +28,7 @@ class AttrBuilder;
 class AttributeImpl;
 class AttributeSetImpl;
 class AttributeSetNode;
+class Constant;
 class LLVMContext;
 class Type;
 
@@ -129,6 +130,12 @@ public:
 
   /// \brief Return true if attributes exist
   bool hasAttributes() const;
+
+  /// \brief Return the kind of this attribute.
+  Constant *getAttributeKind() const;
+
+  /// \brief Return the value (if present) of the non-target-specific attribute.
+  ArrayRef<Constant*> getAttributeValues() const;
 
   /// \brief Returns the alignment field of an attribute as a byte alignment
   /// value.
