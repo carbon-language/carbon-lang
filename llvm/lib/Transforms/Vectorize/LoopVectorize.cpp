@@ -223,31 +223,34 @@ private:
     ValueMap(unsigned UnrollFactor) : UF(UnrollFactor) {}
 
     /// \return True if 'Key' is saved in the Value Map.
-    bool has(Value *Key) { return MapStoreage.count(Key); }
+    bool has(Value *Key) const { return MapStorage.count(Key); }
 
     /// Initializes a new entry in the map. Sets all of the vector parts to the
     /// save value in 'Val'.
     /// \return A reference to a vector with splat values.
     VectorParts &splat(Value *Key, Value *Val) {
-      MapStoreage[Key].clear();
-      MapStoreage[Key].append(UF, Val);
-      return MapStoreage[Key];
+      VectorParts &Entry = MapStorage[Key];
+      Entry.assign(UF, Val);
+      return Entry;
     }
 
     ///\return A reference to the value that is stored at 'Key'.
     VectorParts &get(Value *Key) {
-      if (!has(Key))
-        MapStoreage[Key].resize(UF);
-      return MapStoreage[Key];
+      VectorParts &Entry = MapStorage[Key];
+      if (Entry.empty())
+        Entry.resize(UF);
+      assert(Entry.size() == UF);
+      return Entry;
     }
 
+  private:
     /// The unroll factor. Each entry in the map stores this number of vector
     /// elements.
     unsigned UF;
 
     /// Map storage. We use std::map and not DenseMap because insertions to a
     /// dense map invalidates its iterators.
-    std::map<Value*, VectorParts> MapStoreage;
+    std::map<Value *, VectorParts> MapStorage;
   };
 
   /// The original loop.
@@ -824,8 +827,7 @@ InnerLoopVectorizer::getVectorValue(Value *V) {
   // If this scalar is unknown, assume that it is a constant or that it is
   // loop invariant. Broadcast V and save the value for future uses.
   Value *B = getBroadcastInstrs(V);
-  WidenMap.splat(V, B);
-  return WidenMap.get(V);
+  return WidenMap.splat(V, B);
 }
 
 Value *InnerLoopVectorizer::reverseVector(Value *Vec) {
