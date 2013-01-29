@@ -326,6 +326,7 @@ struct ThreadState {
   const int tid;
   const int unique_id;
   int in_rtl;
+  bool in_symbolizer;
   bool is_alive;
   const uptr stk_addr;
   const uptr stk_size;
