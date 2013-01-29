@@ -20,4 +20,4 @@ type = Library
 name = ObjCARC
 parent = Transforms
 library_name = ObjCARCOpts
-required_libraries = Analysis Core InstCombine Support Target TransformUtils
+required_libraries = Analysis Core Support TransformUtils
