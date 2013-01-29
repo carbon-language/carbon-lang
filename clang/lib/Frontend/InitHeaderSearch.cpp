@@ -103,6 +103,14 @@ public:
 
 }  // end anonymous namespace.
 
+static bool CanPrefixSysroot(StringRef Path) {
+#if defined(_WIN32)
+  return !Path.empty() && llvm::sys::path::is_separator(Path[0]);
+#else
+  return llvm::sys::path::is_absolute(Path);
+#endif
+}
+
 void InitHeaderSearch::AddPath(const Twine &Path,
                                IncludeDirGroup Group, bool isCXXAware,
                                bool isFramework, bool IgnoreSysRoot) {
@@ -115,16 +123,9 @@ void InitHeaderSearch::AddPath(const Twine &Path,
 
   // Handle isysroot.
   if ((Group == System || Group == CXXSystem) && !IgnoreSysRoot &&
-#if defined(_WIN32)
-      !MappedPathStr.empty() &&
-      llvm::sys::path::is_separator(MappedPathStr[0]) &&
-#else
-      llvm::sys::path::is_absolute(MappedPathStr) &&
-#endif
-      IsNotEmptyOrRoot) {
+      CanPrefixSysroot(MappedPathStr) && IsNotEmptyOrRoot) {
     MappedPathStorage.clear();
-    MappedPathStr =
-      (IncludeSysroot + Path).toStringRef(MappedPathStorage);
+    MappedPathStr = (IncludeSysroot + Path).toStringRef(MappedPathStorage);
   }
 
   // Compute the DirectoryLookup type.
