@@ -833,7 +833,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
       = IsIndexHeaderMap? frontend::IndexHeaderMap : frontend::Angled;
     
     Opts.AddPath((*it)->getValue(), Group,
-                 /*IsFramework=*/ (*it)->getOption().matches(OPT_F), false);
+                 /*IsFramework=*/ (*it)->getOption().matches(OPT_F), true);
     IsIndexHeaderMap = false;
   }
 
@@ -847,18 +847,18 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
       Prefix = A->getValue();
     else if (A->getOption().matches(OPT_iwithprefix))
       Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::After, false, false);
+                   frontend::After, false, true);
     else
       Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::Angled, false, false);
+                   frontend::Angled, false, true);
   }
 
   for (arg_iterator it = Args.filtered_begin(OPT_idirafter),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::After, false, false);
+    Opts.AddPath((*it)->getValue(), frontend::After, false, true);
   for (arg_iterator it = Args.filtered_begin(OPT_iquote),
          ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::Quoted, false, false);
+    Opts.AddPath((*it)->getValue(), frontend::Quoted, false, true);
   for (arg_iterator it = Args.filtered_begin(OPT_isystem,
          OPT_iwithsysroot), ie = Args.filtered_end(); it != ie; ++it)
     Opts.AddPath((*it)->getValue(), frontend::System, false,

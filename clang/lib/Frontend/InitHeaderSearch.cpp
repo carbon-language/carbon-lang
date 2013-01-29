@@ -122,9 +122,7 @@ void InitHeaderSearch::AddPath(const Twine &Path,
   StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
 
   // Prepend the sysroot, if desired and this is a system header group.
-  if (HasSysroot && !IgnoreSysRoot &&
-      (Group == System || Group == CXXSystem) &&
-      CanPrefixSysroot(MappedPathStr)) {
+  if (HasSysroot && !IgnoreSysRoot && CanPrefixSysroot(MappedPathStr)) {
     MappedPathStorage.clear();
     MappedPathStr = (IncludeSysroot + Path).toStringRef(MappedPathStorage);
   }
