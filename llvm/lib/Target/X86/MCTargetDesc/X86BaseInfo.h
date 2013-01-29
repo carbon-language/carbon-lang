@@ -104,7 +104,7 @@ namespace X86II {
 
     /// MO_TLSLD - On a symbol operand this indicates that the immediate is
     /// the offset of the GOT entry with the TLS index for the module that
-    /// contains the symbol. When this index is passed to a call to to
+    /// contains the symbol. When this index is passed to a call to
     /// __tls_get_addr, the function will return the base address of the TLS
     /// block for the symbol. Used in the x86-64 local dynamic TLS access model.
     ///
@@ -114,7 +114,7 @@ namespace X86II {
 
     /// MO_TLSLDM - On a symbol operand this indicates that the immediate is
     /// the offset of the GOT entry with the TLS index for the module that
-    /// contains the symbol. When this index is passed to a call to to
+    /// contains the symbol. When this index is passed to a call to
     /// ___tls_get_addr, the function will return the base address of the TLS
     /// block for the symbol. Used in the IA32 local dynamic TLS access model.
     ///
