@@ -21,8 +21,8 @@ namespace elf {
 /// be changed in the final layout
 template <class ELFT> class ELFTargetLayout : public DefaultELFLayout<ELFT> {
 public:
-  ELFTargetLayout(ELFTargetInfo &targetInfo, DefaultELFLayout<ELFT> &layout)
-      : _targetInfo(targetInfo), _layout(layout) {
+  ELFTargetLayout(ELFTargetInfo &targetInfo)
+      : DefaultELFLayout<ELFT>(targetInfo) {
   }
 
   /// isTargetSection provides a way to determine if the section that
@@ -57,9 +57,6 @@ public:
   Section<ELFT> *getSection(const StringRef name,
                             DefinedAtom::ContentPermissions permissions) = 0;
 
-private:
-  const ELFTargetInfo &_targetInfo;
-  const DefaultELFLayout<ELFT> &_layout;
 };
 } // end namespace elf
 } // end namespace lld
