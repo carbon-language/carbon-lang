@@ -1,4 +1,4 @@
-;===- ./lib/Transforms/ObjCARC/LLVMBuild.txt ---       ---------*- Conf -*--===;
+;===- ./lib/Transforms/ObjCARC/LLVMBuild.txt -------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
