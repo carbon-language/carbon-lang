@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/DataLayout.h"
@@ -274,8 +275,17 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
   // the expansion of custom DAG-to-DAG patterns.
   if (VT == MVT::Untyped) {
     const SDNode *Node = RegDefPos.GetNode();
-    unsigned Opcode = Node->getMachineOpcode();
 
+    // Special handling for CopyFromReg of untyped values.
+    if (!Node->isMachineOpcode() && Node->getOpcode() == ISD::CopyFromReg) {
+      unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
+      const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(Reg);
+      RegClass = RC->getID();
+      Cost = 1;
+      return;
+    }
+
+    unsigned Opcode = Node->getMachineOpcode();
     if (Opcode == TargetOpcode::REG_SEQUENCE) {
       unsigned DstRCIdx = cast<ConstantSDNode>(Node->getOperand(0))->getZExtValue();
       const TargetRegisterClass *RC = TRI->getRegClass(DstRCIdx);
