@@ -53,9 +53,12 @@ extern "C" int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
 extern "C" int sigfillset(sigset_t *set);
 extern "C" void *pthread_self();
 extern "C" void _exit(int status);
-extern "C" int __cxa_atexit(void (*func)(void *arg), void *arg, void *dso);
 extern "C" int *__errno_location();
 extern "C" int fileno_unlocked(void *stream);
+extern "C" void *__libc_malloc(uptr size);
+extern "C" void *__libc_calloc(uptr size, uptr n);
+extern "C" void *__libc_realloc(void *ptr, uptr size);
+extern "C" void __libc_free(void *ptr);
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int kPthreadAttrSize = 56;
@@ -240,12 +243,15 @@ class AtExitContext {
 
   typedef void(*atexit_t)();
 
-  int atexit(ThreadState *thr, uptr pc, atexit_t f) {
+  int atexit(ThreadState *thr, uptr pc, bool is_on_exit,
+             atexit_t f, void *arg) {
     Lock l(&mtx_);
     if (pos_ == kMaxAtExit)
       return 1;
     Release(thr, pc, (uptr)this);
     stack_[pos_] = f;
+    args_[pos_] = arg;
+    is_on_exits_[pos_] = is_on_exit;
     pos_++;
     return 0;
   }
@@ -254,11 +260,15 @@ class AtExitContext {
     CHECK_EQ(thr->in_rtl, 0);
     for (;;) {
       atexit_t f = 0;
+      void *arg = 0;
+      bool is_on_exit = false;
       {
         Lock l(&mtx_);
         if (pos_) {
           pos_--;
           f = stack_[pos_];
+          arg = args_[pos_];
+          is_on_exit = is_on_exits_[pos_];
           ScopedInRtl in_rtl;
           Acquire(thr, pc, (uptr)this);
         }
@@ -267,7 +277,10 @@ class AtExitContext {
         break;
       DPrintf("#%d: executing atexit func %p\n", thr->tid, f);
       CHECK_EQ(thr->in_rtl, 0);
-      f();
+      if (is_on_exit)
+        ((void(*)(int status, void *arg))f)(0, arg);
+      else
+        ((void(*)(void *arg, void *dso))f)(arg, 0);
     }
   }
 
@@ -275,6 +288,8 @@ class AtExitContext {
   static const int kMaxAtExit = 128;
   Mutex mtx_;
   atexit_t stack_[kMaxAtExit];
+  void *args_[kMaxAtExit];
+  bool is_on_exits_[kMaxAtExit];
   int pos_;
 };
 
@@ -284,18 +299,32 @@ static void finalize(void *arg) {
   ThreadState * thr = cur_thread();
   uptr pc = 0;
   atexit_ctx->exit(thr, pc);
-  {
-    ScopedInRtl in_rtl;
-    DestroyAndFree(atexit_ctx);
-  }
   int status = Finalize(cur_thread());
   if (status)
     _exit(status);
 }
 
 TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
+  if (cur_thread()->in_symbolizer)
+    return 0;
   SCOPED_TSAN_INTERCEPTOR(atexit, f);
-  return atexit_ctx->atexit(thr, pc, f);
+  return atexit_ctx->atexit(thr, pc, false, (void(*)())f, 0);
+}
+
+TSAN_INTERCEPTOR(int, on_exit, void(*f)(int, void*), void *arg) {
+  if (cur_thread()->in_symbolizer)
+    return 0;
+  SCOPED_TSAN_INTERCEPTOR(on_exit, f, arg);
+  return atexit_ctx->atexit(thr, pc, true, (void(*)())f, arg);
+}
+
+TSAN_INTERCEPTOR(int, __cxa_atexit, void (*f)(void *a), void *arg, void *dso) {
+  if (cur_thread()->in_symbolizer)
+    return 0;
+  SCOPED_TSAN_INTERCEPTOR(__cxa_atexit, f, arg, dso);
+  if (dso)
+    return REAL(__cxa_atexit)(f, arg, dso);
+  return atexit_ctx->atexit(thr, pc, false, (void(*)())f, arg);
 }
 
 TSAN_INTERCEPTOR(void, longjmp, void *env, int val) {
@@ -311,6 +340,8 @@ TSAN_INTERCEPTOR(void, siglongjmp, void *env, int val) {
 }
 
 TSAN_INTERCEPTOR(void*, malloc, uptr size) {
+  if (cur_thread()->in_symbolizer)
+    return __libc_malloc(size);
   void *p = 0;
   {
     SCOPED_INTERCEPTOR_RAW(malloc, size);
@@ -326,6 +357,8 @@ TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
 }
 
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
+  if (cur_thread()->in_symbolizer)
+    return __libc_calloc(size, n);
   if (__sanitizer::CallocShouldReturnNullDueToOverflow(size, n)) return 0;
   void *p = 0;
   {
@@ -338,6 +371,8 @@ TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
 }
 
 TSAN_INTERCEPTOR(void*, realloc, void *p, uptr size) {
+  if (cur_thread()->in_symbolizer)
+    return __libc_realloc(p, size);
   if (p)
     invoke_free_hook(p);
   {
@@ -351,6 +386,8 @@ TSAN_INTERCEPTOR(void*, realloc, void *p, uptr size) {
 TSAN_INTERCEPTOR(void, free, void *p) {
   if (p == 0)
     return;
+  if (cur_thread()->in_symbolizer)
+    return __libc_free(p);
   invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(free, p);
   user_free(thr, pc, p);
@@ -359,12 +396,16 @@ TSAN_INTERCEPTOR(void, free, void *p) {
 TSAN_INTERCEPTOR(void, cfree, void *p) {
   if (p == 0)
     return;
+  if (cur_thread()->in_symbolizer)
+    return __libc_free(p);
   invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(cfree, p);
   user_free(thr, pc, p);
 }
 
 #define OPERATOR_NEW_BODY(mangled_name) \
+  if (cur_thread()->in_symbolizer) \
+    return __libc_malloc(size); \
   void *p = 0; \
   {  \
     SCOPED_INTERCEPTOR_RAW(mangled_name, size); \
@@ -388,6 +429,8 @@ void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
 
 #define OPERATOR_DELETE_BODY(mangled_name) \
   if (ptr == 0) return;  \
+  if (cur_thread()->in_symbolizer) \
+    return __libc_free(ptr); \
   invoke_free_hook(ptr);  \
   SCOPED_INTERCEPTOR_RAW(mangled_name, ptr);  \
   user_free(thr, pc, ptr);
@@ -1901,6 +1944,8 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(munlockall);
 
   TSAN_INTERCEPT(fork);
+  TSAN_INTERCEPT(on_exit);
+  TSAN_INTERCEPT(__cxa_atexit);
 
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.
@@ -1908,7 +1953,7 @@ void InitializeInterceptors() {
   atexit_ctx = new(internal_alloc(MBlockAtExit, sizeof(AtExitContext)))
       AtExitContext();
 
-  if (__cxa_atexit(&finalize, 0, 0)) {
+  if (REAL(__cxa_atexit)(&finalize, 0, 0)) {
     Printf("ThreadSanitizer: failed to setup atexit callback\n");
     Die();
   }

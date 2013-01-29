@@ -253,6 +253,8 @@ enum StatType {
   StatInt_scanf,
   StatInt_sscanf,
   StatInt_fscanf,
+  StatInt_on_exit,
+  StatInt___cxa_atexit,
 
   // Dynamic annotations.
   StatAnnotation,

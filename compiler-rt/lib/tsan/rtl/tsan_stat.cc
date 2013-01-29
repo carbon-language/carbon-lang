@@ -254,6 +254,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_scanf]                    = "  scanf                           ";
   name[StatInt_sscanf]                   = "  sscanf                          ";
   name[StatInt_fscanf]                   = "  fscanf                          ";
+  name[StatInt_on_exit]                  = "  on_exit                         ";
+  name[StatInt___cxa_atexit]             = "  __cxa_atexit                    ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
