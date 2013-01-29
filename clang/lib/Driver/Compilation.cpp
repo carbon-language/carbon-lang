@@ -307,17 +307,17 @@ int Compilation::ExecuteCommand(const Command &C,
   return Res;
 }
 
-int Compilation::ExecuteJob(const Job &J,
-                            const Command *&FailingCommand) const {
+void Compilation::ExecuteJob(const Job &J,
+    SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) const {
   if (const Command *C = dyn_cast<Command>(&J)) {
-    return ExecuteCommand(*C, FailingCommand);
+    const Command *FailingCommand = 0;
+    if (int Res = ExecuteCommand(*C, FailingCommand))
+      FailingCommands.push_back(std::make_pair(Res, FailingCommand));
   } else {
     const JobList *Jobs = cast<JobList>(&J);
-    for (JobList::const_iterator
-           it = Jobs->begin(), ie = Jobs->end(); it != ie; ++it)
-      if (int Res = ExecuteJob(**it, FailingCommand))
-        return Res;
-    return 0;
+    for (JobList::const_iterator it = Jobs->begin(), ie = Jobs->end();
+         it != ie; ++it)
+      ExecuteJob(**it, FailingCommands);
   }
 }
 

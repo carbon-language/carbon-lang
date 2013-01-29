@@ -272,7 +272,7 @@ public:
   /// to just running the subprocesses, for example reporting errors, removing
   /// temporary files, etc.
   int ExecuteCompilation(const Compilation &C,
-                         const Command *&FailingCommand) const;
+     SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) const;
   
   /// generateCompilationDiagnostics - Generate diagnostics information 
   /// including preprocessed source file(s).

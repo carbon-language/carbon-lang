@@ -466,21 +466,35 @@ int main(int argc_, const char **argv_) {
 
   OwningPtr<Compilation> C(TheDriver.BuildCompilation(argv));
   int Res = 0;
-  const Command *FailingCommand = 0;
+  SmallVector<std::pair<int, const Command *>, 4> FailingCommands;
   if (C.get())
-    Res = TheDriver.ExecuteCompilation(*C, FailingCommand);
+    Res = TheDriver.ExecuteCompilation(*C, FailingCommands);
 
   // Force a crash to test the diagnostics.
   if (::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH")) {
     Diags.Report(diag::err_drv_force_crash) << "FORCE_CLANG_DIAGNOSTICS_CRASH";
-    Res = -1;
+    const Command *FailingCommand = 0;
+    FailingCommands.push_back(std::make_pair(-1, FailingCommand));
   }
 
-  // If result status is < 0, then the driver command signalled an error.
-  // If result status is 70, then the driver command reported a fatal error.
-  // In these cases, generate additional diagnostic information if possible.
-  if (Res < 0 || Res == 70)
-    TheDriver.generateCompilationDiagnostics(*C, FailingCommand);
+  for (SmallVectorImpl< std::pair<int, const Command *> >::iterator it =
+         FailingCommands.begin(), ie = FailingCommands.end(); it != ie; ++it) {
+    int CommandRes = it->first;
+    const Command *FailingCommand = it->second;
+    if (!Res)
+      Res = CommandRes;
+
+    // If result status is < 0, then the driver command signalled an error.
+    // If result status is 70, then the driver command reported a fatal error.
+    // In these cases, generate additional diagnostic information if possible.
+    if (CommandRes < 0 || CommandRes == 70) {
+      TheDriver.generateCompilationDiagnostics(*C, FailingCommand);
+
+      // FIXME: generateCompilationDiagnostics() needs to be tested when there
+      // are multiple failing commands.
+      break;
+    }
+  }
 
   // If any timers were active but haven't been destroyed yet, print their
   // results now.  This happens in -disable-free mode.
@@ -496,5 +510,7 @@ int main(int argc_, const char **argv_) {
     Res = 1;
 #endif
 
+  // If we have multiple failing commands, we return the result of the first
+  // failing command.
   return Res;
 }

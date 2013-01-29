@@ -175,10 +175,10 @@ public:
 
   /// ExecuteJob - Execute a single job.
   ///
-  /// \param FailingCommand - For non-zero results, this will be set to the
-  /// Command which failed.
-  /// \return The accumulated result code of the job.
-  int ExecuteJob(const Job &J, const Command *&FailingCommand) const;
+  /// \param FailingCommands - For non-zero results, this will be a vector of
+  /// failing commands and their associated result code.
+  void ExecuteJob(const Job &J,
+     SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) const;
 
   /// initCompilationForDiagnostics - Remove stale state and suppress output
   /// so compilation can be reexecuted to generate additional diagnostic

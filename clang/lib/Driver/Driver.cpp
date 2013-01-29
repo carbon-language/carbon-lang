@@ -440,11 +440,11 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   }
 
   // Generate preprocessed output.
-  FailingCommand = 0;
-  int Res = C.ExecuteJob(C.getJobs(), FailingCommand);
+  SmallVector<std::pair<int, const Command *>, 4> FailingCommands;
+  C.ExecuteJob(C.getJobs(), FailingCommands);
 
   // If the command succeeded, we are done.
-  if (Res == 0) {
+  if (FailingCommands.empty()) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "\n********************\n\n"
       "PLEASE ATTACH THE FOLLOWING FILES TO THE BUG REPORT:\n"
@@ -495,7 +495,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 }
 
 int Driver::ExecuteCompilation(const Compilation &C,
-                               const Command *&FailingCommand) const {
+    SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) const {
   // Just print if -### was present.
   if (C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     C.PrintJob(llvm::errs(), C.getJobs(), "\n", true);
@@ -506,45 +506,52 @@ int Driver::ExecuteCompilation(const Compilation &C,
   if (Diags.hasErrorOccurred())
     return 1;
 
-  int Res = C.ExecuteJob(C.getJobs(), FailingCommand);
+  C.ExecuteJob(C.getJobs(), FailingCommands);
 
   // Remove temp files.
   C.CleanupFileList(C.getTempFiles());
 
   // If the command succeeded, we are done.
-  if (Res == 0)
-    return Res;
+  if (FailingCommands.empty())
+    return 0;
 
-  // Otherwise, remove result files as well.
-  if (!C.getArgs().hasArg(options::OPT_save_temps)) {
-    const JobAction *JA = cast<JobAction>(&FailingCommand->getSource());
-    C.CleanupFileMap(C.getResultFiles(), JA, true);
+  // Otherwise, remove result files and print extra information about abnormal
+  // failures.
+  for (SmallVectorImpl< std::pair<int, const Command *> >::iterator it =
+         FailingCommands.begin(), ie = FailingCommands.end(); it != ie; ++it) {
+    int Res = it->first;
+    const Command *FailingCommand = it->second;
 
-    // Failure result files are valid unless we crashed.
-    if (Res < 0)
-      C.CleanupFileMap(C.getFailureResultFiles(), JA, true);
+    // Remove result files if we're not saving temps.
+    if (!C.getArgs().hasArg(options::OPT_save_temps)) {
+      const JobAction *JA = cast<JobAction>(&FailingCommand->getSource());
+      C.CleanupFileMap(C.getResultFiles(), JA, true);
+
+      // Failure result files are valid unless we crashed.
+      if (Res < 0)
+        C.CleanupFileMap(C.getFailureResultFiles(), JA, true);
+    }
+
+    // Print extra information about abnormal failures, if possible.
+    //
+    // This is ad-hoc, but we don't want to be excessively noisy. If the result
+    // status was 1, assume the command failed normally. In particular, if it 
+    // was the compiler then assume it gave a reasonable error code. Failures
+    // in other tools are less common, and they generally have worse
+    // diagnostics, so always print the diagnostic there.
+    const Tool &FailingTool = FailingCommand->getCreator();
+
+    if (!FailingCommand->getCreator().hasGoodDiagnostics() || Res != 1) {
+      // FIXME: See FIXME above regarding result code interpretation.
+      if (Res < 0)
+        Diag(clang::diag::err_drv_command_signalled)
+          << FailingTool.getShortName();
+      else
+        Diag(clang::diag::err_drv_command_failed)
+          << FailingTool.getShortName() << Res;
+    }
   }
-
-  // Print extra information about abnormal failures, if possible.
-  //
-  // This is ad-hoc, but we don't want to be excessively noisy. If the result
-  // status was 1, assume the command failed normally. In particular, if it was
-  // the compiler then assume it gave a reasonable error code. Failures in other
-  // tools are less common, and they generally have worse diagnostics, so always
-  // print the diagnostic there.
-  const Tool &FailingTool = FailingCommand->getCreator();
-
-  if (!FailingCommand->getCreator().hasGoodDiagnostics() || Res != 1) {
-    // FIXME: See FIXME above regarding result code interpretation.
-    if (Res < 0)
-      Diag(clang::diag::err_drv_command_signalled)
-        << FailingTool.getShortName();
-    else
-      Diag(clang::diag::err_drv_command_failed)
-        << FailingTool.getShortName() << Res;
-  }
-
-  return Res;
+  return 0;
 }
 
 void Driver::PrintOptions(const ArgList &Args) const {
