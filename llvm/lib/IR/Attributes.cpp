@@ -195,20 +195,20 @@ uint64_t Attribute::Raw() const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data)
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind kind)
   : Context(C) {
-  Data = ConstantInt::get(Type::getInt64Ty(C), data);
+  Kind = ConstantInt::get(Type::getInt64Ty(C), kind);
 }
-AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind kind,
                              ArrayRef<Constant*> values)
   : Context(C) {
-  Data = ConstantInt::get(Type::getInt64Ty(C), data);
+  Kind = ConstantInt::get(Type::getInt64Ty(C), kind);
   Vals.reserve(values.size());
   Vals.append(values.begin(), values.end());
 }
-AttributeImpl::AttributeImpl(LLVMContext &C, StringRef data)
+AttributeImpl::AttributeImpl(LLVMContext &C, StringRef kind)
   : Context(C) {
-  Data = ConstantDataArray::getString(C, data);
+  Kind = ConstantDataArray::getString(C, kind);
 }
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
@@ -229,36 +229,36 @@ uint64_t AttributeImpl::getStackAlignment() const {
   return 1ULL << ((Mask >> 26) - 1);
 }
 
-bool AttributeImpl::operator==(Attribute::AttrKind Kind) const {
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Data))
-    return CI->getZExtValue() == Kind;
+bool AttributeImpl::operator==(Attribute::AttrKind kind) const {
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Kind))
+    return CI->getZExtValue() == kind;
   return false;
 }
-bool AttributeImpl::operator!=(Attribute::AttrKind Kind) const {
-  return !(*this == Kind);
+bool AttributeImpl::operator!=(Attribute::AttrKind kind) const {
+  return !(*this == kind);
 }
 
-bool AttributeImpl::operator==(StringRef Kind) const {
-  if (ConstantDataArray *CDA = dyn_cast<ConstantDataArray>(Data))
+bool AttributeImpl::operator==(StringRef kind) const {
+  if (ConstantDataArray *CDA = dyn_cast<ConstantDataArray>(Kind))
     if (CDA->isString())
-      return CDA->getAsString() == Kind;
+      return CDA->getAsString() == kind;
   return false;
 }
 
-bool AttributeImpl::operator!=(StringRef Kind) const {
-  return !(*this == Kind);
+bool AttributeImpl::operator!=(StringRef kind) const {
+  return !(*this == kind);
 }
 
 bool AttributeImpl::operator<(const AttributeImpl &AI) const {
-  if (!Data && !AI.Data) return false;
-  if (!Data && AI.Data) return true;
-  if (Data && !AI.Data) return false;
+  if (!Kind && !AI.Kind) return false;
+  if (!Kind && AI.Kind) return true;
+  if (Kind && !AI.Kind) return false;
 
-  ConstantInt *ThisCI = dyn_cast<ConstantInt>(Data);
-  ConstantInt *ThatCI = dyn_cast<ConstantInt>(AI.Data);
+  ConstantInt *ThisCI = dyn_cast<ConstantInt>(Kind);
+  ConstantInt *ThatCI = dyn_cast<ConstantInt>(AI.Kind);
 
-  ConstantDataArray *ThisCDA = dyn_cast<ConstantDataArray>(Data);
-  ConstantDataArray *ThatCDA = dyn_cast<ConstantDataArray>(AI.Data);
+  ConstantDataArray *ThisCDA = dyn_cast<ConstantDataArray>(Kind);
+  ConstantDataArray *ThatCDA = dyn_cast<ConstantDataArray>(AI.Kind);
 
   if (ThisCI && ThatCI)
     return ThisCI->getZExtValue() < ThatCI->getZExtValue();
@@ -274,7 +274,7 @@ bool AttributeImpl::operator<(const AttributeImpl &AI) const {
 
 uint64_t AttributeImpl::Raw() const {
   // FIXME: Remove this.
-  return cast<ConstantInt>(Data)->getZExtValue();
+  return cast<ConstantInt>(Kind)->getZExtValue();
 }
 
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {

@@ -31,15 +31,15 @@ class LLVMContext;
 /// could be a single enum, a tuple, or a string.
 class AttributeImpl : public FoldingSetNode {
   LLVMContext &Context;
-  Constant *Data;
+  Constant *Kind;
   SmallVector<Constant*, 0> Vals;
 
   // AttributesImpl is uniqued, these should not be publicly available.
   void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
   AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
 public:
-  AttributeImpl(LLVMContext &C, Constant *Data)
-    : Context(C), Data(Data) {}
+  AttributeImpl(LLVMContext &C, Constant *Kind)
+    : Context(C), Kind(Kind) {}
   explicit AttributeImpl(LLVMContext &C, Attribute::AttrKind data);
   AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
                 ArrayRef<Constant*> values);
@@ -47,6 +47,9 @@ public:
 
   bool hasAttribute(Attribute::AttrKind A) const;
   bool hasAttributes() const;
+
+  Constant *getAttributeKind() const { return Kind; }
+  ArrayRef<Constant*> getAttributeValues() const { return Vals; }
 
   LLVMContext &getContext() { return Context; }
   ArrayRef<Constant*> getValues() const { return Vals; }
@@ -63,11 +66,11 @@ public:
   bool operator<(const AttributeImpl &AI) const;
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, Data, Vals);
+    Profile(ID, Kind, Vals);
   }
-  static void Profile(FoldingSetNodeID &ID, Constant *Data,
+  static void Profile(FoldingSetNodeID &ID, Constant *Kind,
                       ArrayRef<Constant*> Vals) {
-    ID.AddPointer(Data);
+    ID.AddPointer(Kind);
     for (unsigned I = 0, E = Vals.size(); I != E; ++I)
       ID.AddPointer(Vals[I]);
   }
