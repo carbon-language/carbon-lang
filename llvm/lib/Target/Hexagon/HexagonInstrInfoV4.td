@@ -3061,31 +3061,37 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
 
 //  Add and accumulate.
 //  Rd=add(Rs,add(Ru,#s6))
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 6,
+validSubTargets = HasV4SubT in
 def ADDr_ADDri_V4 : MInst<(outs IntRegs:$dst),
-          (ins IntRegs:$src1, IntRegs:$src2, s6Imm:$src3),
+          (ins IntRegs:$src1, IntRegs:$src2, s6Ext:$src3),
           "$dst = add($src1, add($src2, #$src3))",
           [(set (i32 IntRegs:$dst),
            (add (i32 IntRegs:$src1), (add (i32 IntRegs:$src2),
-                                          s6ImmPred:$src3)))]>,
+                                          s6_16ExtPred:$src3)))]>,
           Requires<[HasV4T]>;
 
 //  Rd=add(Rs,sub(#s6,Ru))
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 6,
+validSubTargets = HasV4SubT in
 def ADDr_SUBri_V4 : MInst<(outs IntRegs:$dst),
-          (ins IntRegs:$src1, s6Imm:$src2, IntRegs:$src3),
+          (ins IntRegs:$src1, s6Ext:$src2, IntRegs:$src3),
           "$dst = add($src1, sub(#$src2, $src3))",
           [(set (i32 IntRegs:$dst),
-           (add (i32 IntRegs:$src1), (sub s6ImmPred:$src2,
+           (add (i32 IntRegs:$src1), (sub s6_10ExtPred:$src2,
                                           (i32 IntRegs:$src3))))]>,
           Requires<[HasV4T]>;
 
 // Generates the same instruction as ADDr_SUBri_V4 but matches different
 // pattern.
 //  Rd=add(Rs,sub(#s6,Ru))
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 6,
+validSubTargets = HasV4SubT in
 def ADDri_SUBr_V4 : MInst<(outs IntRegs:$dst),
-          (ins IntRegs:$src1, s6Imm:$src2, IntRegs:$src3),
+          (ins IntRegs:$src1, s6Ext:$src2, IntRegs:$src3),
           "$dst = add($src1, sub(#$src2, $src3))",
           [(set (i32 IntRegs:$dst),
-                (sub (add (i32 IntRegs:$src1), s6ImmPred:$src2),
+                (sub (add (i32 IntRegs:$src1), s6_10ExtPred:$src2),
                      (i32 IntRegs:$src3)))]>,
           Requires<[HasV4T]>;
 
@@ -3099,6 +3105,7 @@ def ADDri_SUBr_V4 : MInst<(outs IntRegs:$dst),
 
 //  Logical doublewords.
 //  Rdd=and(Rtt,~Rss)
+let validSubTargets = HasV4SubT in
 def ANDd_NOTd_V4 : MInst<(outs DoubleRegs:$dst),
           (ins DoubleRegs:$src1, DoubleRegs:$src2),
           "$dst = and($src1, ~$src2)",
@@ -3107,6 +3114,7 @@ def ANDd_NOTd_V4 : MInst<(outs DoubleRegs:$dst),
           Requires<[HasV4T]>;
 
 //  Rdd=or(Rtt,~Rss)
+let validSubTargets = HasV4SubT in
 def ORd_NOTd_V4 : MInst<(outs DoubleRegs:$dst),
           (ins DoubleRegs:$src1, DoubleRegs:$src2),
           "$dst = or($src1, ~$src2)",
@@ -3117,6 +3125,7 @@ def ORd_NOTd_V4 : MInst<(outs DoubleRegs:$dst),
 
 //  Logical-logical doublewords.
 //  Rxx^=xor(Rss,Rtt)
+let validSubTargets = HasV4SubT in
 def XORd_XORdd: MInst_acc<(outs DoubleRegs:$dst),
           (ins DoubleRegs:$src1, DoubleRegs:$src2, DoubleRegs:$src3),
           "$dst ^= xor($src2, $src3)",
@@ -3129,17 +3138,20 @@ def XORd_XORdd: MInst_acc<(outs DoubleRegs:$dst),
 
 // Logical-logical words.
 // Rx=or(Ru,and(Rx,#s10))
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 10,
+validSubTargets = HasV4SubT in
 def ORr_ANDri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs: $src2, s10Imm:$src3),
+            (ins IntRegs:$src1, IntRegs: $src2, s10Ext:$src3),
             "$dst = or($src1, and($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (or (i32 IntRegs:$src1), (and (i32 IntRegs:$src2),
-                                                s10ImmPred:$src3)))],
+                                                s10ExtPred:$src3)))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 // Rx[&|^]=and(Rs,Rt)
 // Rx&=and(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def ANDr_ANDrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst &= and($src2, $src3)",
@@ -3150,6 +3162,7 @@ def ANDr_ANDrr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx|=and(Rs,Rt)
+let validSubTargets = HasV4SubT, CextOpcode = "ORr_ANDr", InputType = "reg" in
 def ORr_ANDrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst |= and($src2, $src3)",
@@ -3157,9 +3170,10 @@ def ORr_ANDrr_V4 : MInst_acc<(outs IntRegs:$dst),
                   (or (i32 IntRegs:$src1), (and (i32 IntRegs:$src2),
                                                 (i32 IntRegs:$src3))))],
             "$src1 = $dst">,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Rx^=and(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def XORr_ANDrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst ^= and($src2, $src3)",
@@ -3171,6 +3185,7 @@ def XORr_ANDrr_V4 : MInst_acc<(outs IntRegs:$dst),
 
 // Rx[&|^]=and(Rs,~Rt)
 // Rx&=and(Rs,~Rt)
+let validSubTargets = HasV4SubT in
 def ANDr_ANDr_NOTr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst &= and($src2, ~$src3)",
@@ -3181,6 +3196,7 @@ def ANDr_ANDr_NOTr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx|=and(Rs,~Rt)
+let validSubTargets = HasV4SubT in
 def ORr_ANDr_NOTr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst |= and($src2, ~$src3)",
@@ -3191,6 +3207,7 @@ def ORr_ANDr_NOTr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx^=and(Rs,~Rt)
+let validSubTargets = HasV4SubT in
 def XORr_ANDr_NOTr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst ^= and($src2, ~$src3)",
@@ -3202,6 +3219,7 @@ def XORr_ANDr_NOTr_V4 : MInst_acc<(outs IntRegs:$dst),
 
 // Rx[&|^]=or(Rs,Rt)
 // Rx&=or(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def ANDr_ORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst &= or($src2, $src3)",
@@ -3212,6 +3230,7 @@ def ANDr_ORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx|=or(Rs,Rt)
+let validSubTargets = HasV4SubT, CextOpcode = "ORr_ORr", InputType = "reg" in
 def ORr_ORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst |= or($src2, $src3)",
@@ -3219,9 +3238,10 @@ def ORr_ORrr_V4 : MInst_acc<(outs IntRegs:$dst),
                   (or (i32 IntRegs:$src1), (or (i32 IntRegs:$src2),
                                                (i32 IntRegs:$src3))))],
             "$src1 = $dst">,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Rx^=or(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def XORr_ORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst ^= or($src2, $src3)",
@@ -3233,6 +3253,7 @@ def XORr_ORrr_V4 : MInst_acc<(outs IntRegs:$dst),
 
 // Rx[&|^]=xor(Rs,Rt)
 // Rx&=xor(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def ANDr_XORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst &= xor($src2, $src3)",
@@ -3243,6 +3264,7 @@ def ANDr_XORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx|=xor(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def ORr_XORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst |= xor($src2, $src3)",
@@ -3253,6 +3275,7 @@ def ORr_XORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx^=xor(Rs,Rt)
+let validSubTargets = HasV4SubT in
 def XORr_XORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs: $src2, IntRegs:$src3),
             "$dst ^= xor($src2, $src3)",
@@ -3263,24 +3286,28 @@ def XORr_XORrr_V4 : MInst_acc<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rx|=and(Rs,#s10)
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 10,
+validSubTargets = HasV4SubT, CextOpcode = "ORr_ANDr", InputType = "imm" in
 def ORr_ANDri2_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs: $src2, s10Imm:$src3),
+            (ins IntRegs:$src1, IntRegs: $src2, s10Ext:$src3),
             "$dst |= and($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
                   (or (i32 IntRegs:$src1), (and (i32 IntRegs:$src2),
-                                                s10ImmPred:$src3)))],
+                                                s10ExtPred:$src3)))],
             "$src1 = $dst">,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Rx|=or(Rs,#s10)
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 10,
+validSubTargets = HasV4SubT, CextOpcode = "ORr_ORr", InputType = "imm" in
 def ORr_ORri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs: $src2, s10Imm:$src3),
+            (ins IntRegs:$src1, IntRegs: $src2, s10Ext:$src3),
             "$dst |= or($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
                   (or (i32 IntRegs:$src1), (and (i32 IntRegs:$src2),
-                                                s10ImmPred:$src3)))],
+                                                s10ExtPred:$src3)))],
             "$src1 = $dst">,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 
 //    Modulo wrap
@@ -3327,25 +3354,41 @@ def ORr_ORri_V4 : MInst_acc<(outs IntRegs:$dst),
 
 // Multiply and user lower result.
 // Rd=add(#u6,mpyi(Rs,#U6))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 6,
+validSubTargets = HasV4SubT in
 def ADDi_MPYri_V4 : MInst<(outs IntRegs:$dst),
-            (ins u6Imm:$src1, IntRegs:$src2, u6Imm:$src3),
+            (ins u6Ext:$src1, IntRegs:$src2, u6Imm:$src3),
             "$dst = add(#$src1, mpyi($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (add (mul (i32 IntRegs:$src2), u6ImmPred:$src3),
-                       u6ImmPred:$src1))]>,
+                       u6ExtPred:$src1))]>,
             Requires<[HasV4T]>;
 
-// Rd=add(#u6,mpyi(Rs,Rt))
+// Rd=add(##,mpyi(Rs,#U6))
+def : Pat <(add (mul (i32 IntRegs:$src2), u6ImmPred:$src3),
+                     (HexagonCONST32 tglobaladdr:$src1)),
+           (i32 (ADDi_MPYri_V4 tglobaladdr:$src1, IntRegs:$src2,
+                               u6ImmPred:$src3))>;
 
+// Rd=add(#u6,mpyi(Rs,Rt))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 6,
+validSubTargets = HasV4SubT, InputType = "imm", CextOpcode = "ADD_MPY" in
 def ADDi_MPYrr_V4 : MInst<(outs IntRegs:$dst),
-            (ins u6Imm:$src1, IntRegs:$src2, IntRegs:$src3),
+            (ins u6Ext:$src1, IntRegs:$src2, IntRegs:$src3),
             "$dst = add(#$src1, mpyi($src2, $src3))",
             [(set (i32 IntRegs:$dst),
                   (add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
-                       u6ImmPred:$src1))]>,
-            Requires<[HasV4T]>;
+                       u6ExtPred:$src1))]>,
+            Requires<[HasV4T]>, ImmRegRel;
+
+// Rd=add(##,mpyi(Rs,Rt))
+def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
+                     (HexagonCONST32 tglobaladdr:$src1)),
+           (i32 (ADDi_MPYrr_V4 tglobaladdr:$src1, IntRegs:$src2,
+                               IntRegs:$src3))>;
 
 // Rd=add(Ru,mpyi(#u6:2,Rs))
+let validSubTargets = HasV4SubT in
 def ADDr_MPYir_V4 : MInst<(outs IntRegs:$dst),
             (ins IntRegs:$src1, u6Imm:$src2, IntRegs:$src3),
             "$dst = add($src1, mpyi(#$src2, $src3))",
@@ -3355,15 +3398,18 @@ def ADDr_MPYir_V4 : MInst<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 // Rd=add(Ru,mpyi(Rs,#u6))
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 0, opExtentBits = 6,
+validSubTargets = HasV4SubT, InputType = "imm", CextOpcode = "ADD_MPY" in
 def ADDr_MPYri_V4 : MInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u6Imm:$src3),
+            (ins IntRegs:$src1, IntRegs:$src2, u6Ext:$src3),
             "$dst = add($src1, mpyi($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (add (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
-                                                 u6ImmPred:$src3)))]>,
-            Requires<[HasV4T]>;
+                                                 u6ExtPred:$src3)))]>,
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Rx=add(Ru,mpyi(Rx,Rs))
+let validSubTargets = HasV4SubT, InputType = "reg", CextOpcode = "ADD_MPY" in
 def ADDr_MPYrr_V4 : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "$dst = add($src1, mpyi($src2, $src3))",
@@ -3371,7 +3417,7 @@ def ADDr_MPYrr_V4 : MInst_acc<(outs IntRegs:$dst),
              (add (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
                                             (i32 IntRegs:$src3))))],
             "$src2 = $dst">,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 
 // Polynomial multiply words
@@ -3414,92 +3460,107 @@ def ADDr_MPYrr_V4 : MInst_acc<(outs IntRegs:$dst),
 
 // Shift by immediate and accumulate.
 // Rx=add(#u8,asl(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+validSubTargets = HasV4SubT in
 def ADDi_ASLri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = add(#$src1, asl($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (add (shl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                       u8ImmPred:$src1))],
+                       u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 // Rx=add(#u8,lsr(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+validSubTargets = HasV4SubT in
 def ADDi_LSRri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = add(#$src1, lsr($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (add (srl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                       u8ImmPred:$src1))],
+                       u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 // Rx=sub(#u8,asl(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+validSubTargets = HasV4SubT in
 def SUBi_ASLri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = sub(#$src1, asl($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (sub (shl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                       u8ImmPred:$src1))],
+                       u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 // Rx=sub(#u8,lsr(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+validSubTargets = HasV4SubT in
 def SUBi_LSRri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = sub(#$src1, lsr($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (sub (srl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                       u8ImmPred:$src1))],
+                       u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 
 //Shift by immediate and logical.
 //Rx=and(#u8,asl(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+validSubTargets = HasV4SubT in
 def ANDi_ASLri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = and(#$src1, asl($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (and (shl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                       u8ImmPred:$src1))],
+                       u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 //Rx=and(#u8,lsr(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+validSubTargets = HasV4SubT in
 def ANDi_LSRri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = and(#$src1, lsr($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (and (srl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                       u8ImmPred:$src1))],
+                       u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 //Rx=or(#u8,asl(Rx,#U5))
-let AddedComplexity = 30 in
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+AddedComplexity = 30, validSubTargets = HasV4SubT in
 def ORi_ASLri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = or(#$src1, asl($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (or (shl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                      u8ImmPred:$src1))],
+                      u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 //Rx=or(#u8,lsr(Rx,#U5))
-let AddedComplexity = 30 in
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+AddedComplexity = 30, validSubTargets = HasV4SubT in
 def ORi_LSRri_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins u8Imm:$src1, IntRegs:$src2, u5Imm:$src3),
+            (ins u8Ext:$src1, IntRegs:$src2, u5Imm:$src3),
             "$dst = or(#$src1, lsr($src2, #$src3))",
             [(set (i32 IntRegs:$dst),
                   (or (srl (i32 IntRegs:$src2), u5ImmPred:$src3),
-                      u8ImmPred:$src1))],
+                      u8ExtPred:$src1))],
             "$src2 = $dst">,
             Requires<[HasV4T]>;
 
 
 //Shift by register.
 //Rd=lsl(#s6,Rt)
+let validSubTargets = HasV4SubT in {
 def LSLi_V4 : MInst<(outs IntRegs:$dst), (ins s6Imm:$src1, IntRegs:$src2),
             "$dst = lsl(#$src1, $src2)",
             [(set (i32 IntRegs:$dst), (shl s6ImmPred:$src1,
@@ -3547,7 +3608,7 @@ def LSRd_rr_xor_V4 : MInst_acc<(outs DoubleRegs:$dst),
                                                     (i32 IntRegs:$src3))))],
             "$src1 = $dst">,
             Requires<[HasV4T]>;
-
+}
 
 //===----------------------------------------------------------------------===//
 // XTYPE/SHIFT -
@@ -3990,7 +4051,7 @@ def CMPbEQri_V4 : MInst<(outs PredRegs:$dst),
             Requires<[HasV4T]>;
 
 // Pd=cmpb.eq(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPbEQrr_ubub_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmpb.eq($src1, $src2)",
@@ -4000,7 +4061,7 @@ def CMPbEQrr_ubub_V4 : MInst<(outs PredRegs:$dst),
             Requires<[HasV4T]>;
 
 // Pd=cmpb.eq(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPbEQrr_sbsb_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmpb.eq($src1, $src2)",
@@ -4010,7 +4071,7 @@ def CMPbEQrr_sbsb_V4 : MInst<(outs PredRegs:$dst),
             Requires<[HasV4T]>;
 
 // Pd=cmpb.gt(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPbGTrr_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmpb.gt($src1, $src2)",
@@ -4020,13 +4081,14 @@ def CMPbGTrr_V4 : MInst<(outs PredRegs:$dst),
             Requires<[HasV4T]>;
 
 // Pd=cmpb.gtu(Rs,#u7)
-let isCompare = 1 in
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 7,
+isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPbGTU", InputType = "imm" in
 def CMPbGTUri_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, u7Imm:$src2),
+            (ins IntRegs:$src1, u7Ext:$src2),
             "$dst = cmpb.gtu($src1, #$src2)",
             [(set (i1 PredRegs:$dst), (setugt (and (i32 IntRegs:$src1), 255),
-                                              u7ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
+                                              u7ExtPred:$src2))]>,
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Pd=cmpb.gtu(Rs,Rt)
 let isCompare = 1 in

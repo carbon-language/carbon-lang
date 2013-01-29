@@ -1195,57 +1195,65 @@ let Defs = [R29, R30, R31], Uses = [R29], neverHasSideEffects = 1 in {
 //===----------------------------------------------------------------------===//
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
-def MPYI_riu : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Imm:$src2),
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 8 in
+def MPYI_riu : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Ext:$src2),
               "$dst =+ mpyi($src1, #$src2)",
               [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             u8ImmPred:$src2))]>;
+                                             u8ExtPred:$src2))]>;
 
 // Rd=-mpyi(Rs,#u8)
-def MPYI_rin : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, n8Imm:$src2),
+def MPYI_rin : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Imm:$src2),
               "$dst =- mpyi($src1, #$src2)",
-              [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             n8ImmPred:$src2))]>;
+              [(set (i32 IntRegs:$dst), (ineg (mul (i32 IntRegs:$src1),
+                                                   u8ImmPred:$src2)))]>;
 
 // Rd=mpyi(Rs,#m9)
 // s9 is NOT the same as m9 - but it works.. so far.
 // Assembler maps to either Rd=+mpyi(Rs,#u8 or Rd=-mpyi(Rs,#u8)
 // depending on the value of m9. See Arch Spec.
-def MPYI_ri : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Imm:$src2),
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 9,
+CextOpcode = "MPYI", InputType = "imm" in
+def MPYI_ri : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Ext:$src2),
               "$dst = mpyi($src1, #$src2)",
               [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             s9ImmPred:$src2))]>;
+                                             s9ExtPred:$src2))]>, ImmRegRel;
 
 // Rd=mpyi(Rs,Rt)
+let CextOpcode = "MPYI", InputType = "reg" in
 def MPYI : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
            "$dst = mpyi($src1, $src2)",
            [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                          (i32 IntRegs:$src2)))]>;
+                                          (i32 IntRegs:$src2)))]>, ImmRegRel;
 
 // Rx+=mpyi(Rs,#u8)
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 0, opExtentBits = 8,
+CextOpcode = "MPYI_acc", InputType = "imm" in
 def MPYI_acc_ri : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u8Imm:$src3),
+            (ins IntRegs:$src1, IntRegs:$src2, u8Ext:$src3),
             "$dst += mpyi($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
-                  (add (mul (i32 IntRegs:$src2), u8ImmPred:$src3),
+                  (add (mul (i32 IntRegs:$src2), u8ExtPred:$src3),
                        (i32 IntRegs:$src1)))],
-            "$src1 = $dst">;
+            "$src1 = $dst">, ImmRegRel;
 
 // Rx+=mpyi(Rs,Rt)
+let CextOpcode = "MPYI_acc", InputType = "reg" in
 def MPYI_acc_rr : MInst_acc<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "$dst += mpyi($src2, $src3)",
             [(set (i32 IntRegs:$dst),
                   (add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
                        (i32 IntRegs:$src1)))],
-            "$src1 = $dst">;
+            "$src1 = $dst">, ImmRegRel;
 
 // Rx-=mpyi(Rs,#u8)
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 0, opExtentBits = 8 in
 def MPYI_sub_ri : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u8Imm:$src3),
+            (ins IntRegs:$src1, IntRegs:$src2, u8Ext:$src3),
             "$dst -= mpyi($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
                   (sub (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
-                                                 u8ImmPred:$src3)))],
+                                                 u8ExtPred:$src3)))],
             "$src1 = $dst">;
 
 // Multiply and use upper result.
@@ -1314,7 +1322,7 @@ def MPYU64_acc : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
 // Rxx-=mpyu(Rs,Rt)
 def MPYU64_sub : MInst_acc<(outs DoubleRegs:$dst),
             (ins DoubleRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst += mpyu($src2, $src3)",
+            "$dst -= mpyu($src2, $src3)",
             [(set (i64 DoubleRegs:$dst),
                   (sub (i64 DoubleRegs:$src1),
                        (mul (i64 (anyext (i32 IntRegs:$src2))),
@@ -1322,37 +1330,43 @@ def MPYU64_sub : MInst_acc<(outs DoubleRegs:$dst),
             "$src1 = $dst">;
 
 
+let InputType = "reg", CextOpcode = "ADD_acc" in
 def ADDrr_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
                             IntRegs:$src2, IntRegs:$src3),
              "$dst += add($src2, $src3)",
              [(set (i32 IntRegs:$dst), (add (add (i32 IntRegs:$src2),
                                                  (i32 IntRegs:$src3)),
                                             (i32 IntRegs:$src1)))],
-             "$src1 = $dst">;
+             "$src1 = $dst">, ImmRegRel;
 
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
+InputType = "imm", CextOpcode = "ADD_acc" in
 def ADDri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, s8Imm:$src3),
+                            IntRegs:$src2, s8Ext:$src3),
              "$dst += add($src2, #$src3)",
              [(set (i32 IntRegs:$dst), (add (add (i32 IntRegs:$src2),
-                                                 s8ImmPred:$src3),
+                                                 s8_16ExtPred:$src3),
                                             (i32 IntRegs:$src1)))],
-             "$src1 = $dst">;
+             "$src1 = $dst">, ImmRegRel;
 
+let CextOpcode = "SUB_acc", InputType = "reg" in
 def SUBrr_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
                             IntRegs:$src2, IntRegs:$src3),
              "$dst -= add($src2, $src3)",
              [(set (i32 IntRegs:$dst),
                    (sub (i32 IntRegs:$src1), (add (i32 IntRegs:$src2),
                                                   (i32 IntRegs:$src3))))],
-             "$src1 = $dst">;
+             "$src1 = $dst">, ImmRegRel;
 
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
+CextOpcode = "SUB_acc", InputType = "imm" in
 def SUBri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, s8Imm:$src3),
+                            IntRegs:$src2, s8Ext:$src3),
              "$dst -= add($src2, #$src3)",
              [(set (i32 IntRegs:$dst), (sub (i32 IntRegs:$src1),
                                             (add (i32 IntRegs:$src2),
-                                                 s8ImmPred:$src3)))],
-             "$src1 = $dst">;
+                                                 s8_16ExtPred:$src3)))],
+             "$src1 = $dst">, ImmRegRel;
 
 //===----------------------------------------------------------------------===//
 // MTYPE/MPYH -
