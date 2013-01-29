@@ -315,6 +315,12 @@ class Symbolizer {
     return true;
   }
 
+  bool IsSymbolizerAvailable() {
+    if (internal_symbolizer_ == 0)
+      internal_symbolizer_ = InternalSymbolizer::get();
+    return internal_symbolizer_ || external_symbolizer_;
+  }
+
  private:
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     // First, try to use internal symbolizer.
@@ -395,6 +401,10 @@ bool SymbolizeData(uptr address, DataInfo *info) {
 
 bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {
   return symbolizer.InitializeExternalSymbolizer(path_to_symbolizer);
+}
+
+bool IsSymbolizerAvailable() {
+  return symbolizer.IsSymbolizerAvailable();
 }
 
 }  // namespace __sanitizer

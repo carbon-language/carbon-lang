@@ -55,34 +55,33 @@ static ReportStack *NewReportStackEntry(const AddressInfo &info) {
 }
 
 ReportStack *SymbolizeCode(uptr addr) {
-  if (flags()->external_symbolizer_path[0]) {
-    static const uptr kMaxAddrFrames = 16;
-    InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
-    for (uptr i = 0; i < kMaxAddrFrames; i++)
-      new(&addr_frames[i]) AddressInfo();
-    uptr addr_frames_num = __sanitizer::SymbolizeCode(addr, addr_frames.data(),
-                                                      kMaxAddrFrames);
-    if (addr_frames_num == 0)
-      return NewReportStackEntry(addr);
-    ReportStack *top = 0;
-    ReportStack *bottom = 0;
-    for (uptr i = 0; i < addr_frames_num; i++) {
-      ReportStack *cur_entry = NewReportStackEntry(addr_frames[i]);
-      CHECK(cur_entry);
-      addr_frames[i].Clear();
-      if (i == 0)
-        top = cur_entry;
-      else
-        bottom->next = cur_entry;
-      bottom = cur_entry;
-    }
-    return top;
+  if (!IsSymbolizerAvailable())
+    return SymbolizeCodeAddr2Line(addr);
+  static const uptr kMaxAddrFrames = 16;
+  InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
+  for (uptr i = 0; i < kMaxAddrFrames; i++)
+    new(&addr_frames[i]) AddressInfo();
+  uptr addr_frames_num = __sanitizer::SymbolizeCode(addr, addr_frames.data(),
+                                                    kMaxAddrFrames);
+  if (addr_frames_num == 0)
+    return NewReportStackEntry(addr);
+  ReportStack *top = 0;
+  ReportStack *bottom = 0;
+  for (uptr i = 0; i < addr_frames_num; i++) {
+    ReportStack *cur_entry = NewReportStackEntry(addr_frames[i]);
+    CHECK(cur_entry);
+    addr_frames[i].Clear();
+    if (i == 0)
+      top = cur_entry;
+    else
+      bottom->next = cur_entry;
+    bottom = cur_entry;
   }
-  return SymbolizeCodeAddr2Line(addr);
+  return top;
 }
 
 ReportLocation *SymbolizeData(uptr addr) {
-  if (flags()->external_symbolizer_path[0] == 0)
+  if (!IsSymbolizerAvailable())
     return 0;
   DataInfo info;
   if (!__sanitizer::SymbolizeData(addr, &info))

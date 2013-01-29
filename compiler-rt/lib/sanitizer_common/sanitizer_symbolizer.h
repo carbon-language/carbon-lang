@@ -69,6 +69,8 @@ struct DataInfo {
 uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
 bool SymbolizeData(uptr address, DataInfo *info);
 
+bool IsSymbolizerAvailable();
+
 // Attempts to demangle the provided C++ mangled name.
 const char *Demangle(const char *Name);
 
