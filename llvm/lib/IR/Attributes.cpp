@@ -16,7 +16,6 @@
 #include "llvm/IR/Attributes.h"
 #include "AttributeImpl.h"
 #include "LLVMContextImpl.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Atomic.h"
@@ -28,7 +27,7 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// Attribute Implementation
+// Attribute Construction Methods
 //===----------------------------------------------------------------------===//
 
 Attribute Attribute::get(LLVMContext &Context, AttrKind Kind) {
@@ -71,6 +70,10 @@ Attribute Attribute::getWithStackAlignment(LLVMContext &Context,
   AttrBuilder B;
   return get(Context, B.addStackAlignmentAttr(Align));
 }
+
+//===----------------------------------------------------------------------===//
+// Attribute Accessor Methods
+//===----------------------------------------------------------------------===//
 
 bool Attribute::hasAttribute(AttrKind Val) const {
   return pImpl && pImpl->hasAttribute(Val);

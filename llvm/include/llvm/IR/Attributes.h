@@ -19,7 +19,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <string>
 
@@ -27,7 +26,8 @@ namespace llvm {
 
 class AttrBuilder;
 class AttributeImpl;
-class Constant;
+class AttributeSetImpl;
+class AttributeSetNode;
 class LLVMContext;
 class Type;
 
@@ -159,14 +159,6 @@ public:
   // FIXME: Remove this.
   uint64_t Raw() const;
 };
-
-//===----------------------------------------------------------------------===//
-// AttributeSet Smart Pointer
-//===----------------------------------------------------------------------===//
-
-class AttrBuilder;
-class AttributeSetImpl;
-class AttributeSetNode;
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -415,6 +407,7 @@ public:
 
   iterator begin()             { return Attrs.begin(); }
   iterator end()               { return Attrs.end(); }
+
   const_iterator begin() const { return Attrs.begin(); }
   const_iterator end() const   { return Attrs.end(); }
 
