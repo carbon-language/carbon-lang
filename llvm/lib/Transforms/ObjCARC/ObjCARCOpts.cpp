@@ -39,6 +39,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;

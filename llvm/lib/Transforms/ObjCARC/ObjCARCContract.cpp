@@ -31,6 +31,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;

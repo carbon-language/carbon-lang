@@ -32,6 +32,7 @@
 #include "ObjCARC.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;
