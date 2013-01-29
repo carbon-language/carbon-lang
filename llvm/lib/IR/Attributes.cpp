@@ -455,7 +455,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
          E = Attrs.end(); I != E; ) {
     unsigned Index = I->first;
     SmallVector<Attribute, 4> AttrVec;
-    while (I->first == Index && I != E) {
+    while (I != E && I->first == Index) {
       AttrVec.push_back(I->second);
       ++I;
     }
