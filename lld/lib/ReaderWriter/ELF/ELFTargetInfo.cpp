@@ -9,13 +9,13 @@
 
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
+#include "ELFTargetHandler.h"
+#include "ELFTargets.h"
+
 #include "lld/Core/LinkerOptions.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
-
-#include "ELFTargetHandler.h"
-#include "ELFTargets.h"
 
 namespace lld {
 uint16_t ELFTargetInfo::getOutputType() const {

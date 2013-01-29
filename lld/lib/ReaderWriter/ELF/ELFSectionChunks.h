@@ -10,24 +10,23 @@
 #ifndef LLD_READER_WRITER_ELF_SECTION_CHUNKS_H_
 #define LLD_READER_WRITER_ELF_SECTION_CHUNKS_H_
 
+#include "ELFChunk.h"
+#include "ELFLayout.h"
+#include "ELFTargetHandler.h"
+#include "ELFWriter.h"
+
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/range.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-
 #include "llvm/Object/ELF.h"
-
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
-
-#include "ELFChunk.h"
-#include "ELFLayout.h"
-#include "ELFWriter.h"
 
 namespace lld {
 namespace elf {

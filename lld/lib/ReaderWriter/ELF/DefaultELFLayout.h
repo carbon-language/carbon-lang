@@ -10,6 +10,12 @@
 #ifndef LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
 #define LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
 
+#include "ELFChunk.h"
+#include "ELFHeaderChunks.h"
+#include "ELFLayout.h"
+#include "ELFSectionChunks.h"
+#include "ELFSegmentChunks.h"
+
 #include "lld/Core/LinkerOptions.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -22,15 +28,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 
-#include "ELFChunk.h"
-#include "ELFHeaderChunks.h"
-#include "ELFLayout.h"
-#include "ELFSectionChunks.h"
-#include "ELFSegmentChunks.h"
-
 #include <map>
-#include <unordered_map>
 #include <tuple>
+#include <unordered_map>
 
 /// \brief The DefaultELFLayout class is used by the Writer to arrange
 ///        sections and segments in the order determined by the target ELF

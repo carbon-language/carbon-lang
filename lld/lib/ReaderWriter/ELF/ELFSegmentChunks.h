@@ -10,25 +10,23 @@
 #ifndef LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H_
 #define LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H_
 
+#include "ELFChunk.h"
+#include "ELFLayout.h"
+#include "ELFSectionChunks.h"
+#include "ELFWriter.h"
+
 #include "lld/Core/range.h"
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-
 #include "llvm/Object/ELF.h"
-
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
-
-#include "ELFChunk.h"
-#include "ELFLayout.h"
-#include "ELFSectionChunks.h"
-#include "ELFWriter.h"
 
 /// \brief A segment can be divided into segment slices
 ///        depending on how the segments can be split

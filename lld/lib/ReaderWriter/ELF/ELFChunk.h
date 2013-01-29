@@ -20,8 +20,9 @@
 #include "llvm/Support/FileOutputBuffer.h"
 
 namespace lld {
-namespace elf {  
+class ELFTargetInfo;
 
+namespace elf {
 class ELFWriter;
 
 /// \brief A chunk is a contiguous region of space

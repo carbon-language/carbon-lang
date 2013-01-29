@@ -7,10 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "DefaultELFLayout.h"
 #include "ExecutableAtoms.h"
+
+#include "lld/ReaderWriter/ELFTargetInfo.h"
 
 using namespace llvm;
 using namespace llvm::object;

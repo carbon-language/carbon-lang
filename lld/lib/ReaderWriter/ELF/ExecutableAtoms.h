@@ -10,13 +10,14 @@
 #ifndef LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
 #define LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
 
+#include "AtomsELF.h"
+#include "FileELF.h"
+
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/ReaderWriter/Writer.h"
-#include "AtomsELF.h"
-#include "FileELF.h"
 
 namespace lld {
 namespace elf {

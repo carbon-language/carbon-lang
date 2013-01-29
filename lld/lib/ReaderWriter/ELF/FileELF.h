@@ -12,6 +12,8 @@
 #ifndef LLD_READER_WRITER_FILE_ELF_H
 #define LLD_READER_WRITER_FILE_ELF_H
 
+#include "AtomsELF.h"
+
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
@@ -23,18 +25,18 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "AtomsELF.h"
+
+#include <map>
 
 namespace lld {
 
@@ -322,10 +324,8 @@ private:
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries. -- .rel or .rela is prepended to create
   /// the SHT_REL(A) section name.
-  std::map<llvm::StringRef,
-           std::vector<const Elf_Rela *> > _relocationAddendRefences;
-  std::map<llvm::StringRef,
-           std::vector<const Elf_Rel *> > _relocationReferences;
+  std::map<StringRef, std::vector<const Elf_Rela *> > _relocationAddendRefences;
+  std::map<StringRef, std::vector<const Elf_Rel *> > _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
   llvm::BumpPtrAllocator _readerStorage;
@@ -333,4 +333,4 @@ private:
 };
 } // lld
 
-#endif // LLD_READER_WRITER_FILE_ELF_H
+#endif

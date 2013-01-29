@@ -10,10 +10,11 @@
 #ifndef LLD_READER_WRITER_ELF_WRITER_H_
 #define LLD_READER_WRITER_ELF_WRITER_H_
 
+#include "ReferenceKinds.h"
+
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/ReaderWriter/Writer.h"
-#include "ReferenceKinds.h"
 
 namespace lld {
 namespace elf {

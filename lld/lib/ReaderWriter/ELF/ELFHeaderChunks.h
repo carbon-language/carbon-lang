@@ -10,15 +10,14 @@
 #ifndef LLD_READER_WRITER_ELF_HEADER_CHUNKS_H_
 #define LLD_READER_WRITER_ELF_HEADER_CHUNKS_H_
 
-#include "llvm/Object/ELF.h"
+#include "ELFSegmentChunks.h"
 
+#include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
-
-#include "ELFSegmentChunks.h"
 
 /// \brief An ELFHeader represents the Elf[32/64]_Ehdr structure at the
 ///        start of an ELF executable file.

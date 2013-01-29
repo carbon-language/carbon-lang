@@ -15,6 +15,9 @@
 
 #include "lld/ReaderWriter/Reader.h"
 
+#include "AtomsELF.h"
+#include "FileELF.h"
+
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
@@ -26,19 +29,16 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "AtomsELF.h"
-#include "FileELF.h"
 
 #include <map>
 #include <vector>

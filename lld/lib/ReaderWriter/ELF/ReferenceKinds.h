@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLD_READER_WRITER_ELF_REFERENCE_KINDS_H
+#define LLD_READER_WRITER_ELF_REFERENCE_KINDS_H
+
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -19,9 +22,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-
-#ifndef LLD_READER_WRITER_ELF_REFERENCE_KINDS_H
-#define LLD_READER_WRITER_ELF_REFERENCE_KINDS_H
 
 namespace lld {
 namespace elf {

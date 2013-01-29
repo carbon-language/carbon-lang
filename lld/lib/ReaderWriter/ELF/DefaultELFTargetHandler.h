@@ -9,15 +9,14 @@
 #ifndef LLD_READER_WRITER_DEFAULT_ELF_TARGETHANDLER_H
 #define LLD_READER_WRITER_DEFAULT_ELF_TARGETHANDLER_H
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "DefaultELFLayout.h"
+#include "ELFTargetHandler.h"
 
 #include "lld/Core/LinkerOptions.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
-
-#include "DefaultELFLayout.h"
-#include "ELFTargetHandler.h"
 
 namespace lld {
 namespace elf {

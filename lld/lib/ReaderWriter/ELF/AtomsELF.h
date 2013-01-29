@@ -1,8 +1,20 @@
-#ifndef LLD_ELFATOMS_H
-#define LLD_ELFATOMS_H
+//===- lib/ReaderWriter/ELF/AtomELF.h -------------------------------------===//
+//
+//                             The LLVM Linker
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLD_READER_WRITER_ELF_ATOMS_ELF_H
+#define LLD_READER_WRITER_ELF_ATOMS_ELF_H
+
+#include "ELFTargetHandler.h"
 
 #include "lld/Core/LLVM.h"
-#include "ELFTargetHandler.h"
+
+#include "llvm/ADT/ArrayRef.h"
 
 #include <memory>
 #include <vector>
