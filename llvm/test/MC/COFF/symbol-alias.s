@@ -23,8 +23,11 @@ _bar:
 	.long	0                       # 0x0
 
 
+# Order is important here. Assign _bar_alias_alias before _bar_alias.
 	.globl	_foo_alias
 _foo_alias = _foo
+	.globl	_bar_alias_alias
+_bar_alias_alias = _bar_alias
 	.globl	_bar_alias
 _bar_alias = _bar
 
@@ -51,6 +54,14 @@ _bar_alias = _bar
 // CHECK-NEXT: ComplexType        = [[FOO_COMPLEX_TYPE]]
 // CHECK-NEXT: StorageClass       = [[FOO_STORAGE_CLASS]]
 // CHECK-NEXT: NumberOfAuxSymbols = [[FOO_NUMBER_OF_AUX_SYMBOLS]]
+
+// CHECK:      Name               = {{_?}}bar_alias_alias
+// CHECK-NEXT: Value              = [[BAR_VALUE]]
+// CHECK-NEXT: SectionNumber      = [[BAR_SECTION_NUMBER]]
+// CHECK-NEXT: SimpleType         = [[BAR_SIMPLE_TYPE]]
+// CHECK-NEXT: ComplexType        = [[BAR_COMPLEX_TYPE]]
+// CHECK-NEXT: StorageClass       = [[BAR_STORAGE_CLASS]]
+// CHECK-NEXT: NumberOfAuxSymbols = [[BAR_NUMBER_OF_AUX_SYMBOLS]]
 
 // CHECK:      Name               = {{_?}}bar_alias
 // CHECK-NEXT: Value              = [[BAR_VALUE]]

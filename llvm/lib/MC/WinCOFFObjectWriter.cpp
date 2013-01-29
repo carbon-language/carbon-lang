@@ -147,7 +147,9 @@ public:
   object_t *createCOFFEntity(StringRef Name, list_t &List);
 
   void DefineSection(MCSectionData const &SectionData);
-  void DefineSymbol(MCSymbolData const &SymbolData, MCAssembler &Assembler);
+  void DefineSymbol(MCSymbol const &Symbol,
+                    MCSymbolData const &SymbolData,
+                    MCAssembler &Assembler);
 
   void MakeSymbolReal(COFFSymbol &S, size_t Index);
   void MakeSectionReal(COFFSection &S, size_t Number);
@@ -408,9 +410,10 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
 
 /// This function takes a section data object from the assembler
 /// and creates the associated COFF symbol staging object.
-void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
+void WinCOFFObjectWriter::DefineSymbol(MCSymbol const &Symbol,
+                                       MCSymbolData const &SymbolData,
                                        MCAssembler &Assembler) {
-  COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&SymbolData.getSymbol());
+  COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
 
   coff_symbol->Data.Type         = (SymbolData.getFlags() & 0x0000FFFF) >>  0;
   coff_symbol->Data.StorageClass = (SymbolData.getFlags() & 0x00FF0000) >> 16;
@@ -418,9 +421,9 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
   if (SymbolData.getFlags() & COFF::SF_WeakExternal) {
     coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
 
-    if (SymbolData.getSymbol().isVariable()) {
+    if (Symbol.isVariable()) {
       coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
-      const MCExpr *Value = SymbolData.getSymbol().getVariableValue();
+      const MCExpr *Value = Symbol.getVariableValue();
 
       // FIXME: This assert message isn't very good.
       assert(Value->getKind() == MCExpr::SymbolRef &&
@@ -428,10 +431,10 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
       const MCSymbolRefExpr *SymbolRef =
         static_cast<const MCSymbolRefExpr *>(Value);
-      coff_symbol->Other = GetOrCreateCOFFSymbol(&SymbolRef->getSymbol());
+      coff_symbol->Other = GetOrCreateCOFFSymbol(&Symbol);
     } else {
       std::string WeakName = std::string(".weak.")
-                           +  SymbolData.getSymbol().getName().str()
+                           +  Symbol.getName().str()
                            + ".default";
       COFFSymbol *WeakDefault = createSymbol(WeakName);
       WeakDefault->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
@@ -464,7 +467,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
   // Bind internal COFF symbol to MC symbol.
   coff_symbol->MCData = &SymbolData;
-  SymbolMap[&SymbolData.getSymbol()] = coff_symbol;
+  SymbolMap[&Symbol] = coff_symbol;
 }
 
 /// making a section real involves assigned it a number and putting
@@ -619,8 +622,11 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
 
   for (MCAssembler::const_symbol_iterator i = Asm.symbol_begin(),
                                           e = Asm.symbol_end(); i != e; i++) {
-    if (ExportSymbol(*i, Asm))
-      DefineSymbol(*i, Asm);
+    if (ExportSymbol(*i, Asm)) {
+      const MCSymbol &Alias = i->getSymbol();
+      const MCSymbol &Symbol = Alias.AliasedSymbol();
+      DefineSymbol(Alias, Asm.getSymbolData(Symbol), Asm);
+    }
   }
 }
 

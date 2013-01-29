@@ -55,7 +55,6 @@ public:
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void BeginCOFFSymbolDef(MCSymbol const *Symbol);
@@ -199,44 +198,6 @@ void WinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 
 void WinCOFFStreamer::EmitThumbFunc(MCSymbol *Func) {
   llvm_unreachable("not implemented");
-}
-
-void WinCOFFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
-  assert((Symbol->isInSection()
-         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
-         : true) && "Got non COFF section in the COFF backend!");
-  // FIXME: This is all very ugly and depressing. What needs to happen here
-  // depends on quite a few things that are all part of relaxation, which we
-  // don't really even do.
-
-  if (Value->getKind() != MCExpr::SymbolRef) {
-    MCObjectStreamer::EmitAssignment(Symbol, Value);
-  } else {
-    // FIXME: This is a horrible way to do this :(. This should really be
-    // handled after we are done with the MC* objects and immediately before
-    // writing out the object file when we know exactly what the symbol should
-    // look like in the coff symbol table. I'm not doing that now because the
-    // COFF object writer doesn't have a clearly defined separation between MC
-    // data structures, the object writers data structures, and the raw, POD,
-    // data structures that get written to disk.
-
-    // Copy over the aliased data.
-    MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-    const MCSymbolData &RealSD = getAssembler().getOrCreateSymbolData(
-      dyn_cast<const MCSymbolRefExpr>(Value)->getSymbol());
-
-    // FIXME: This is particularly nasty because it breaks as soon as any data
-    // members of MCSymbolData change.
-    SD.CommonAlign     = RealSD.CommonAlign;
-    SD.CommonSize      = RealSD.CommonSize;
-    SD.Flags           = RealSD.Flags;
-    SD.Fragment        = RealSD.Fragment;
-    SD.Index           = RealSD.Index;
-    SD.IsExternal      = RealSD.IsExternal;
-    SD.IsPrivateExtern = RealSD.IsPrivateExtern;
-    SD.Offset          = RealSD.Offset;
-    SD.SymbolSize      = RealSD.SymbolSize;
-  }
 }
 
 void WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
