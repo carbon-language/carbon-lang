@@ -369,6 +369,7 @@ namespace lldb {
     typedef enum CommandArgumentType
     {
         eArgTypeAddress = 0,
+        eArgTypeAddressOrExpression,
         eArgTypeAliasName,
         eArgTypeAliasOptions,
         eArgTypeArchitecture,

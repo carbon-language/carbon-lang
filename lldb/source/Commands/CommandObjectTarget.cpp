@@ -3419,7 +3419,7 @@ protected:
 OptionDefinition
 CommandObjectTargetModulesList::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "address",    'a', required_argument, NULL, 0, eArgTypeAddress, "Display the image at this address."},
+    { LLDB_OPT_SET_1, false, "address",    'a', required_argument, NULL, 0, eArgTypeAddressOrExpression, "Display the image at this address."},
     { LLDB_OPT_SET_1, false, "arch",       'A', optional_argument, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
     { LLDB_OPT_SET_1, false, "triple",     't', optional_argument, NULL, 0, eArgTypeWidth,   "Display the triple when listing images."},
     { LLDB_OPT_SET_1, false, "header",     'h', no_argument,       NULL, 0, eArgTypeNone,    "Display the image header address as a load address if debugging, a file address otherwise."},

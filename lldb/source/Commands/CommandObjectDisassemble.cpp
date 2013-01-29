@@ -191,8 +191,8 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "plugin"       , 'P', required_argument  , NULL, 0, eArgTypePlugin,      "Name of the disassembler plugin you want to use."},
 { LLDB_OPT_SET_ALL, false, "arch"         , 'a', required_argument  , NULL, 0, eArgTypeArchitecture,"Specify the architecture to use from cross disassembly."},
 { LLDB_OPT_SET_1  |
-  LLDB_OPT_SET_2  , true , "start-address", 's', required_argument  , NULL, 0, eArgTypeStartAddress,"Address at which to start disassembling."},
-{ LLDB_OPT_SET_1  , false, "end-address"  , 'e', required_argument  , NULL, 0, eArgTypeEndAddress,  "Address at which to end disassembling."},
+  LLDB_OPT_SET_2  , true , "start-address", 's', required_argument  , NULL, 0, eArgTypeAddressOrExpression,"Address at which to start disassembling."},
+{ LLDB_OPT_SET_1  , false, "end-address"  , 'e', required_argument  , NULL, 0, eArgTypeAddressOrExpression,  "Address at which to end disassembling."},
 { LLDB_OPT_SET_2  |
   LLDB_OPT_SET_3  |
   LLDB_OPT_SET_4  |

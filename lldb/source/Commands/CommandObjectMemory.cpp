@@ -317,14 +317,14 @@ public:
         CommandArgumentData end_addr_arg;
         
         // Define the first (and only) variant of this arg.
-        start_addr_arg.arg_type = eArgTypeStartAddress;
+        start_addr_arg.arg_type = eArgTypeAddressOrExpression;
         start_addr_arg.arg_repetition = eArgRepeatPlain;
         
         // There is only one variant this argument could be; put it into the argument entry.
         arg1.push_back (start_addr_arg);
         
         // Define the first (and only) variant of this arg.
-        end_addr_arg.arg_type = eArgTypeEndAddress;
+        end_addr_arg.arg_type = eArgTypeAddressOrExpression;
         end_addr_arg.arg_repetition = eArgRepeatOptional;
         
         // There is only one variant this argument could be; put it into the argument entry.
