@@ -366,7 +366,7 @@ AMDGPUPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb)  {
     std::string buffer(F->getName().str() + "_noret");
     F = dyn_cast<Function>(
           F->getParent()->getOrInsertFunction(buffer, F->getFunctionType()));
-    atomicFuncs.push_back(std::make_pair <CallInst*, Function*>(CI, F));
+    atomicFuncs.push_back(std::make_pair(CI, F));
   }
   
   if (!mSTM->device()->isSupported(AMDGPUDeviceInfo::ArenaSegment)
