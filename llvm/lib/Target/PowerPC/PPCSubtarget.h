@@ -160,6 +160,8 @@ public:
   bool isDarwin() const { return TargetTriple.isMacOSX(); }
   /// isBGP - True if this is a BG/P platform.
   bool isBGP() const { return TargetTriple.getVendor() == Triple::BGP; }
+  /// isBGQ - True if this is a BG/Q platform.
+  bool isBGQ() const { return TargetTriple.getVendor() == Triple::BGQ; }
 
   bool isDarwinABI() const { return isDarwin(); }
   bool isSVR4ABI() const { return !isDarwin(); }
