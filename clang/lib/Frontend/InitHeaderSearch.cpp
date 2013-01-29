@@ -43,13 +43,13 @@ class InitHeaderSearch {
   HeaderSearch &Headers;
   bool Verbose;
   std::string IncludeSysroot;
-  bool IsNotEmptyOrRoot;
+  bool HasSysroot;
 
 public:
 
   InitHeaderSearch(HeaderSearch &HS, bool verbose, StringRef sysroot)
     : Headers(HS), Verbose(verbose), IncludeSysroot(sysroot),
-      IsNotEmptyOrRoot(!(sysroot.empty() || sysroot == "/")) {
+      HasSysroot(!(sysroot.empty() || sysroot == "/")) {
   }
 
   /// AddPath - Add the specified path to the specified group list.
@@ -121,9 +121,10 @@ void InitHeaderSearch::AddPath(const Twine &Path,
   SmallString<256> MappedPathStorage;
   StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
 
-  // Handle isysroot.
-  if ((Group == System || Group == CXXSystem) && !IgnoreSysRoot &&
-      CanPrefixSysroot(MappedPathStr) && IsNotEmptyOrRoot) {
+  // Prepend the sysroot, if desired and this is a system header group.
+  if (HasSysroot && !IgnoreSysRoot &&
+      (Group == System || Group == CXXSystem) &&
+      CanPrefixSysroot(MappedPathStr)) {
     MappedPathStorage.clear();
     MappedPathStr = (IncludeSysroot + Path).toStringRef(MappedPathStorage);
   }
