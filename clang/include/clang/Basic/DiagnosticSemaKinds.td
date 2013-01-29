@@ -5311,6 +5311,7 @@ def ext_in_class_initializer_float_type : ExtWarn<
 def ext_in_class_initializer_float_type_cxx11 : ExtWarn<
   "in-class initializer for static data member of type %0 requires "
   "'constexpr' specifier">, InGroup<StaticFloatInit>, DefaultError;
+def note_in_class_initializer_float_type_cxx11 : Note<"add 'constexpr'">;
 def err_in_class_initializer_literal_type : Error<
   "in-class initializer for static data member of type %0 requires "
   "'constexpr' specifier">;

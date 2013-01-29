@@ -10,9 +10,10 @@
 #if NONE
 // expected-no-diagnostics
 #elif ERR
-// expected-error@19 {{in-class initializer for static data member of type 'const double' requires 'constexpr' specifier}}
+// expected-error@20 {{in-class initializer for static data member of type 'const double' requires 'constexpr' specifier}}
+// expected-note@20 {{add 'constexpr'}}
 #elif EXT
-// expected-warning@19 {{in-class initializer for static data member of type 'const double' is a GNU extension}}
+// expected-warning@20 {{in-class initializer for static data member of type 'const double' is a GNU extension}}
 #endif
 
 struct X {

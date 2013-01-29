@@ -13,7 +13,7 @@ struct S {
   static const int d2 = 0;
 
   static constexpr double e = 0.0; // ok
-  static const double f = 0.0; // expected-error {{requires 'constexpr' specifier}}
+  static const double f = 0.0; // expected-error {{requires 'constexpr' specifier}} expected-note {{add 'constexpr'}}
   static char *const g = 0; // expected-error {{requires 'constexpr' specifier}}
   static const NonLit h = NonLit(); // expected-error {{must be initialized out of line}}
 };
