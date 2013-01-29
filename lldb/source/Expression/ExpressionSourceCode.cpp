@@ -37,7 +37,6 @@ static const char *global_defines =
 "typedef unsigned __INTPTR_TYPE__ uintptr_t;\n"
 "typedef __SIZE_TYPE__ size_t; \n"
 "typedef __PTRDIFF_TYPE__ ptrdiff_t;\n"
-"typedef __WCHAR_TYPE__ wchar_t;\n"
 "typedef unsigned short unichar;\n";
 
 
