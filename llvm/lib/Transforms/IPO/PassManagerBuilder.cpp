@@ -214,6 +214,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
       MPM.add(createGVNPass());                   // Remove redundancies
     else
       MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
+
+    // BBVectorize may have significantly shortened a loop body; unroll again.
+    if (!DisableUnrollLoops)
+      MPM.add(createLoopUnrollPass());
   }
 
   MPM.add(createAggressiveDCEPass());         // Delete dead instructions
