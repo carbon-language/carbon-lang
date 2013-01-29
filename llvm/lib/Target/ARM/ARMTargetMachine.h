@@ -46,6 +46,10 @@ public:
 
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
+  virtual const ARMTargetLowering *getTargetLowering() const {
+    // Implemented by derived classes
+    llvm_unreachable("getTargetLowering not implemented");
+  }
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return &InstrItins;
   }
