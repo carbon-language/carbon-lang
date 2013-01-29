@@ -7203,11 +7203,15 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       // In C++98, this is a GNU extension. In C++11, it is not, but we support
       // it anyway and provide a fixit to add the 'constexpr'.
       if (getLangOpts().CPlusPlus11) {
-        Diag(VDecl->getLocation(),
-             diag::ext_in_class_initializer_float_type_cxx11)
-          << DclT << Init->getSourceRange()
-          << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
-        VDecl->setConstexpr(true);
+        SemaDiagnosticBuilder D = Diag(VDecl->getLocation(),
+             diag::ext_in_class_initializer_float_type_cxx11);
+        D << DclT << Init->getSourceRange();
+        if (Diags.getDiagnosticLevel(diag::warn_initializer_out_of_order,
+                                     VDecl->getLocation()) >=
+            DiagnosticsEngine::Error) {
+          D << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
+          VDecl->setConstexpr(true);
+        }
       } else {
         Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
           << DclT << Init->getSourceRange();
