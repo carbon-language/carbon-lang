@@ -74,7 +74,7 @@ static bool TrackingOrigins() {
       action;                                       \
       __msan_set_expect_umr(0);                     \
       if (TrackingOrigins())                        \
-        EXPECT_EQ(origin, __msan_get_origin_tls()); \
+        EXPECT_EQ(origin, __msan_get_umr_origin()); \
     } while (0)
 
 #define EXPECT_UMR_S(action, stack_origin) \
@@ -82,7 +82,7 @@ static bool TrackingOrigins() {
       __msan_set_expect_umr(1);                     \
       action;                                       \
       __msan_set_expect_umr(0);                     \
-      u32 id = __msan_get_origin_tls();             \
+      u32 id = __msan_get_umr_origin();             \
       const char *str = __msan_get_origin_descr_if_stack(id); \
       if (!str || strcmp(str, stack_origin)) {      \
         fprintf(stderr, "EXPECT_POISONED_S: id=%u %s, %s", \
@@ -167,6 +167,14 @@ static volatile int g_1 = 1;
 S4 a_s4[100];
 S8 a_s8[100];
 
+// Check that malloc poisons memory.
+// A lot of tests below depend on this.
+TEST(MemorySanitizerSanity, PoisonInMalloc) {
+  int *x = (int*)malloc(sizeof(int));
+  EXPECT_POISONED(*x);
+  free(x);
+}
+
 TEST(MemorySanitizer, NegativeTest1) {
   S4 *x = GetPoisoned<S4>();
   if (g_one)
@@ -221,7 +229,7 @@ TEST(MemorySanitizer, Phi1) {
   if (g_one) {
     c = *GetPoisoned<S4>();
   } else {
-    __msan_break_optimization(0);
+    break_optimization(0);
     c = 0;
   }
   EXPECT_POISONED(c);
@@ -393,14 +401,14 @@ NOINLINE static int GetPoisonedZero() {
 TEST(MemorySanitizer, LoadFromDirtyAddress) {
   int *a = new int;
   *a = 0;
-  EXPECT_UMR(__msan_break_optimization((void*)(U8)a[GetPoisonedZero()]));
+  EXPECT_UMR(break_optimization((void*)(U8)a[GetPoisonedZero()]));
   delete a;
 }
 
 TEST(MemorySanitizer, StoreToDirtyAddress) {
   int *a = new int;
   EXPECT_UMR(a[GetPoisonedZero()] = 0);
-  __msan_break_optimization(a);
+  break_optimization(a);
   delete a;
 }
 
@@ -412,12 +420,12 @@ NOINLINE void StackTestFunc() {
   S2 ok2 = 1;
   S1 p1;
   S1 ok1 = 1;
-  __msan_break_optimization(&p4);
-  __msan_break_optimization(&ok4);
-  __msan_break_optimization(&p2);
-  __msan_break_optimization(&ok2);
-  __msan_break_optimization(&p1);
-  __msan_break_optimization(&ok1);
+  break_optimization(&p4);
+  break_optimization(&ok4);
+  break_optimization(&p2);
+  break_optimization(&ok2);
+  break_optimization(&p1);
+  break_optimization(&ok1);
 
   EXPECT_POISONED(p4);
   EXPECT_POISONED(p2);
@@ -433,7 +441,7 @@ TEST(MemorySanitizer, StackTest) {
 
 NOINLINE void StackStressFunc() {
   int foo[10000];
-  __msan_break_optimization(foo);
+  break_optimization(foo);
 }
 
 TEST(MemorySanitizer, DISABLED_StackStressTest) {
@@ -445,7 +453,7 @@ template<class T>
 void TestFloatingPoint() {
   static volatile T v;
   static T g[100];
-  __msan_break_optimization(&g);
+  break_optimization(&g);
   T *x = GetPoisoned<T>();
   T *y = GetPoisoned<T>(1);
   EXPECT_POISONED(*x);
@@ -723,7 +731,7 @@ TEST(MemorySanitizer, strtold) {
 
 TEST(MemorySanitizer, sprintf) {  // NOLINT
   char buff[10];
-  __msan_break_optimization(buff);
+  break_optimization(buff);
   EXPECT_POISONED(buff[0]);
   int res = sprintf(buff, "%d", 1234567);  // NOLINT
   assert(res == 7);
@@ -737,7 +745,7 @@ TEST(MemorySanitizer, sprintf) {  // NOLINT
 
 TEST(MemorySanitizer, snprintf) {
   char buff[10];
-  __msan_break_optimization(buff);
+  break_optimization(buff);
   EXPECT_POISONED(buff[0]);
   int res = snprintf(buff, sizeof(buff), "%d", 1234567);
   assert(res == 7);
@@ -752,7 +760,7 @@ TEST(MemorySanitizer, snprintf) {
 TEST(MemorySanitizer, swprintf) {
   wchar_t buff[10];
   assert(sizeof(wchar_t) == 4);
-  __msan_break_optimization(buff);
+  break_optimization(buff);
   EXPECT_POISONED(buff[0]);
   int res = swprintf(buff, 9, L"%d", 1234567);
   assert(res == 7);
@@ -777,8 +785,8 @@ TEST(MemorySanitizer, wcstombs) {
 TEST(MemorySanitizer, gettimeofday) {
   struct timeval tv;
   struct timezone tz;
-  __msan_break_optimization(&tv);
-  __msan_break_optimization(&tz);
+  break_optimization(&tv);
+  break_optimization(&tz);
   assert(sizeof(tv) == 16);
   assert(sizeof(tz) == 8);
   EXPECT_POISONED(tv.tv_sec);
@@ -815,8 +823,8 @@ TEST(MemorySanitizer, mmap) {
 // FIXME: check why msandr does nt handle fcvt.
 TEST(MemorySanitizer, fcvt) {
   int a, b;
-  __msan_break_optimization(&a);
-  __msan_break_optimization(&b);
+  break_optimization(&a);
+  break_optimization(&b);
   EXPECT_POISONED(a);
   EXPECT_POISONED(b);
   char *str = fcvt(12345.6789, 10, &a, &b);
@@ -824,20 +832,12 @@ TEST(MemorySanitizer, fcvt) {
   EXPECT_NOT_POISONED(b);
 }
 
-TEST(MemorySanitizer, LoadUnpoisoned) {
-  S8 s = *GetPoisoned<S8>();
-  EXPECT_POISONED(s);
-  S8 safe = *GetPoisoned<S8>();
-  __msan_load_unpoisoned(&s, sizeof(s), &safe);
-  EXPECT_NOT_POISONED(safe);
-}
-
 struct StructWithDtor {
   ~StructWithDtor();
 };
 
 NOINLINE StructWithDtor::~StructWithDtor() {
-  __msan_break_optimization(0);
+  break_optimization(0);
 }
 
 TEST(MemorySanitizer, Invoke) {
@@ -1106,7 +1106,7 @@ NOINLINE StructWithHole ReturnStructWithHole() {
 
 TEST(MemorySanitizer, StructWithHole) {
   StructWithHole a = ReturnStructWithHole();
-  __msan_break_optimization(&a);
+  break_optimization(&a);
 }
 
 template <class T>
@@ -1518,7 +1518,7 @@ void BinaryOpOriginTest(BinaryOp op) {
   // y is poisoned, x is not.
   *x = 10101;
   *y = *GetPoisonedO<T>(1, oy);
-  __msan_break_optimization(x);
+  break_optimization(x);
   __msan_set_origin(z, sizeof(*z), 0);
   *z = op(*x, *y);
   EXPECT_POISONED_O(*z, oy);
@@ -1527,7 +1527,7 @@ void BinaryOpOriginTest(BinaryOp op) {
   // x is poisoned, y is not.
   *x = *GetPoisonedO<T>(0, ox);
   *y = 10101010;
-  __msan_break_optimization(y);
+  break_optimization(y);
   __msan_set_origin(z, sizeof(*z), 0);
   *z = op(*x, *y);
   EXPECT_POISONED_O(*z, ox);
@@ -1645,7 +1645,7 @@ TEST(MemorySanitizerOrigins, Select) {
   EXPECT_NOT_POISONED(g_one ? 1 : *GetPoisonedO<S4>(0, __LINE__));
   EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
   S4 x;
-  __msan_break_optimization(&x);
+  break_optimization(&x);
   x = g_1 ? *GetPoisonedO<S4>(0, __LINE__) : 0;
 
   EXPECT_POISONED_O(g_1 ? *GetPoisonedO<S4>(0, __LINE__) : 1, __LINE__);
@@ -1655,7 +1655,7 @@ TEST(MemorySanitizerOrigins, Select) {
 extern "C"
 NOINLINE char AllocaTO() {
   int ar[100];
-  __msan_break_optimization(ar);
+  break_optimization(ar);
   return ar[10];
   // fprintf(stderr, "Descr: %s\n",
   //        __msan_get_origin_descr_if_stack(__msan_get_origin_tls()));
@@ -1677,7 +1677,7 @@ TEST(MemorySanitizerOrigins, DISABLED_AllocaDeath) {
 
 NOINLINE int RetvalOriginTest(u32 origin) {
   int *a = new int;
-  __msan_break_optimization(a);
+  break_optimization(a);
   __msan_set_origin(a, sizeof(*a), origin);
   int res = *a;
   delete a;
@@ -1697,7 +1697,7 @@ TEST(MemorySanitizerOrigins, Param) {
   if (!TrackingOrigins()) return;
   int *a = new int;
   u32 origin = __LINE__;
-  __msan_break_optimization(a);
+  break_optimization(a);
   __msan_set_origin(a, sizeof(*a), origin);
   ParamOriginTest(*a, origin);
   delete a;
@@ -1711,7 +1711,7 @@ TEST(MemorySanitizerOrigins, Invoke) {
 
 TEST(MemorySanitizerOrigins, strlen) {
   S8 alignment;
-  __msan_break_optimization(&alignment);
+  break_optimization(&alignment);
   char x[4] = {'a', 'b', 0, 0};
   __msan_poison(&x[2], 1);
   u32 origin = __LINE__;
@@ -1745,8 +1745,8 @@ NOINLINE void RecursiveMalloc(int depth) {
     printf("RecursiveMalloc: %d\n", count);
   int *x1 = new int;
   int *x2 = new int;
-  __msan_break_optimization(x1);
-  __msan_break_optimization(x2);
+  break_optimization(x1);
+  break_optimization(x2);
   if (depth > 0) {
     RecursiveMalloc(depth-1);
     RecursiveMalloc(depth-1);
@@ -1768,7 +1768,6 @@ TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
 }
 
 int main(int argc, char **argv) {
-  __msan_set_poison_in_malloc(1);
   testing::InitGoogleTest(&argc, argv);
   int res = RUN_ALL_TESTS();
   return res;

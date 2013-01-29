@@ -34,3 +34,5 @@ int dso_stack_store(void (*fn)(int*, int*), int x) {
   fn(&x, &y);
   return y;
 }
+
+void break_optimization(void *x) {}

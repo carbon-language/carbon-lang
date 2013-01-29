@@ -19,5 +19,6 @@ void dso_memfill(char* s, unsigned n);
 int dso_callfn(int (*fn)(void));
 int dso_callfn1(int (*fn)(long long, long long, long long));  //NOLINT
 int dso_stack_store(void (*fn)(int*, int*), int x);
+void break_optimization(void *x);
 
 #endif

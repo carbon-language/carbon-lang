@@ -32,7 +32,10 @@ set(MSAN_LIBCXX_LINK_FLAGS
 
 # Unittest sources and build flags.
 set(MSAN_UNITTEST_SOURCE msan_test.cc)
-set(MSAN_UNITTEST_HEADERS msandr_test_so.h)
+set(MSAN_UNITTEST_HEADERS
+  msandr_test_so.h
+  ../../../include/sanitizer/msan_interface.h
+)
 set(MSANDR_UNITTEST_SOURCE msandr_test_so.cc)
 set(MSAN_UNITTEST_COMMON_CFLAGS
   -I${MSAN_LIBCXX_PATH}/include

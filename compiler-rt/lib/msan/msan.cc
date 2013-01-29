@@ -306,8 +306,6 @@ int __msan_set_poison_in_malloc(int do_poison) {
   return old;
 }
 
-void __msan_break_optimization(void *x) { }
-
 int  __msan_has_dynamic_component() {
   return msan_running_under_dr;
 }
@@ -413,6 +411,6 @@ u32 __msan_get_origin(void *a) {
   return *(u32*)origin_ptr;
 }
 
-u32 __msan_get_origin_tls() {
+u32 __msan_get_umr_origin() {
   return __msan_origin_tls;
 }

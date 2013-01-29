@@ -24,103 +24,99 @@ using __sanitizer::u32;
 extern "C" {
 #endif
 
-// FIXME: document all interface functions.
+#if defined(__has_feature) && __has_feature(memory_sanitizer)
 
-SANITIZER_INTERFACE_ATTRIBUTE
-int __msan_get_track_origins();
+  /* Returns a string describing a stack origin.
+     Return NULL if the origin is invalid, or is not a stack origin. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  const char *__msan_get_origin_descr_if_stack(u32 id);
 
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_init();
 
-// Print a warning and maybe return.
-// This function can die based on flags()->exit_code.
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_warning();
+  /* Set raw origin for the memory range. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_set_origin(void *a, uptr size, u32 origin);
 
-// Print a warning and die.
-// Intrumentation inserts calls to this function when building in "fast" mode
-// (i.e. -mllvm -msan-keep-going)
-SANITIZER_INTERFACE_ATTRIBUTE __attribute__((noreturn))
-void __msan_warning_noreturn();
+  /* Get raw origin for an address. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  u32 __msan_get_origin(void *a);
 
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_unpoison(void *a, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_clear_and_unpoison(void *a, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void* __msan_memcpy(void *dst, const void *src, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void* __msan_memset(void *s, int c, uptr n);
-SANITIZER_INTERFACE_ATTRIBUTE
-void* __msan_memmove(void* dest, const void* src, uptr n);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_copy_poison(void *dst, const void *src, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_copy_origin(void *dst, const void *src, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_move_poison(void *dst, const void *src, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_poison(void *a, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_poison_stack(void *a, uptr size);
+  /* Returns non-zero if tracking origins. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  int __msan_get_track_origins();
 
-// Copy size bytes from src to dst and unpoison the result.
-// Useful to implement unsafe loads.
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_load_unpoisoned(void *src, uptr size, void *dst);
+  /* Returns the origin id of the latest UMR in the calling thread. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  u32 __msan_get_umr_origin();
 
-// Returns the offset of the first (at least partially) poisoned byte,
-// or -1 if the whole range is good.
-SANITIZER_INTERFACE_ATTRIBUTE
-sptr __msan_test_shadow(const void *x, uptr size);
+  /* Make memory region fully initialized (without changing its contents). */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_unpoison(void *a, uptr size);
 
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_origin(void *a, uptr size, u32 origin);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_alloca_origin(void *a, uptr size, const char *descr);
-SANITIZER_INTERFACE_ATTRIBUTE
-u32 __msan_get_origin(void *a);
+  /* Make memory region fully uninitialized (without changing its contents). */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_poison(void *a, uptr size);
 
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_clear_on_return();
+  /* Make memory region partially uninitialized (without changing its contents).
+   */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_partial_poison(void* data, void* shadow, uptr size);
 
-// Default: -1 (don't exit on error).
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_exit_code(int exit_code);
+  /* Returns the offset of the first (at least partially) poisoned byte in the
+     memory range, or -1 if the whole range is good. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  sptr __msan_test_shadow(const void *x, uptr size);
 
-SANITIZER_INTERFACE_ATTRIBUTE
-int __msan_set_poison_in_malloc(int do_poison);
+  /* Set exit code when error(s) were detected.
+     Value of 0 means don't change the program exit code. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_set_exit_code(int exit_code);
 
-// For testing.
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_expect_umr(int expect_umr);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_break_optimization(void *x);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_print_shadow(const void *x, uptr size);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_print_param_shadow();
-SANITIZER_INTERFACE_ATTRIBUTE
-int  __msan_has_dynamic_component();
+  /* For testing:
+     __msan_set_expect_umr(1);
+     ... some buggy code ...
+     __msan_set_expect_umr(0);
+     The last line will verify that a UMR happened. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_set_expect_umr(int expect_umr);
 
-// Returns x such that %fs:x is the first byte of __msan_retval_tls.
-SANITIZER_INTERFACE_ATTRIBUTE
-int __msan_get_retval_tls_offset();
-SANITIZER_INTERFACE_ATTRIBUTE
-int __msan_get_param_tls_offset();
+  /* Print shadow and origin for the memory range to stdout in a human-readable
+     format. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_print_shadow(const void *x, uptr size);
 
-// For testing.
-SANITIZER_INTERFACE_ATTRIBUTE
-u32 __msan_get_origin_tls();
-SANITIZER_INTERFACE_ATTRIBUTE
-const char *__msan_get_origin_descr_if_stack(u32 id);
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_partial_poison(void* data, void* shadow, uptr size);
+  /* Print current function arguments shadow and origin to stdout in a
+     human-readable format. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_print_param_shadow();
 
-// Tell MSan about newly allocated memory (ex.: custom allocator).
-// Memory will be marked uninitialized, with origin at the call site.
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_allocated_memory(void* data, uptr size);
+  /* Returns true if running under a dynamic tool (DynamoRio-based). */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  int  __msan_has_dynamic_component();
+
+  /* Tell MSan about newly allocated memory (ex.: custom allocator).
+     Memory will be marked uninitialized, with origin at the call site. */
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __msan_allocated_memory(void* data, uptr size);
+
+#else  // __has_feature(memory_sanitizer)
+
+#define __msan_get_origin_descr_if_stack(u32 id) ((const char*)0)
+#define __msan_set_origin(void *a, uptr size, u32 origin)
+#define __msan_get_origin(void *a) ((u32)-1)
+#define __msan_get_track_origins() (0)
+#define __msan_get_umr_origin() ((u32)-1)
+#define __msan_unpoison(void *a, uptr size)
+#define __msan_poison(void *a, uptr size)
+#define __msan_partial_poison(void* data, void* shadow, uptr size)
+#define __msan_test_shadow(const void *x, uptr size) ((sptr)-1)
+#define __msan_set_exit_code(int exit_code)
+#define __msan_set_expect_umr(int expect_umr)
+#define __msan_print_shadow(const void *x, uptr size)
+#define __msan_print_param_shadow()
+#define __msan_has_dynamic_component() (0)
+#define __msan_allocated_memory(data, size)
+
+#endif   // __has_feature(memory_sanitizer)
 
 #ifdef __cplusplus
 }  // extern "C"
