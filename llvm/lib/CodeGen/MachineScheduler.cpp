@@ -587,17 +587,19 @@ void ScheduleDAGMI::findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
   for (std::vector<SUnit>::iterator
          I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
     SUnit *SU = &(*I);
+    assert(!SU->isBoundaryNode() && "Boundary node should not be in SUnits");
 
     // Order predecessors so DFSResult follows the critical path.
     SU->biasCriticalPath();
 
     // A SUnit is ready to top schedule if it has no predecessors.
-    if (!I->NumPredsLeft && SU != &EntrySU)
+    if (!I->NumPredsLeft)
       TopRoots.push_back(SU);
     // A SUnit is ready to bottom schedule if it has no successors.
-    if (!I->NumSuccsLeft && SU != &ExitSU)
+    if (!I->NumSuccsLeft)
       BotRoots.push_back(SU);
   }
+  ExitSU.biasCriticalPath();
 }
 
 /// Identify DAG roots and setup scheduler queues.
