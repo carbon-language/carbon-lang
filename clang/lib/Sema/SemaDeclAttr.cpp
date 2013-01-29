@@ -4851,7 +4851,7 @@ bool Sema::ProcessAccessDeclAttributeList(AccessSpecDecl *ASDecl,
 static void checkUnusedDeclAttributes(Sema &S, const AttributeList *A) {
   for ( ; A; A = A->getNext()) {
     // Only warn if the attribute is an unignored, non-type attribute.
-    if (A->isUsedAsTypeAttr()) continue;
+    if (A->isUsedAsTypeAttr() || A->isInvalid()) continue;
     if (A->getKind() == AttributeList::IgnoredAttribute) continue;
 
     if (A->getKind() == AttributeList::UnknownAttribute) {

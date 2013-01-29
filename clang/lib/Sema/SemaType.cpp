@@ -4283,9 +4283,11 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
     switch (attr.getKind()) {
     default:
       // A C++11 attribute on a declarator chunk must appertain to a type.
-      if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk)
+      if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk) {
         state.getSema().Diag(attr.getLoc(), diag::err_attribute_not_type_attr)
-          << attr.getName()->getName();
+          << attr.getName();
+        attr.setUsedAsTypeAttr();
+      }
       break;
 
     case AttributeList::UnknownAttribute:
@@ -4333,6 +4335,14 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       break;
     case AttributeList::AT_OpenCLImageAccess:
       HandleOpenCLImageAccessAttribute(type, attr, state.getSema());
+      attr.setUsedAsTypeAttr();
+      break;
+
+    case AttributeList::AT_Win64:
+    case AttributeList::AT_Ptr32:
+    case AttributeList::AT_Ptr64:
+      // FIXME: Don't ignore these. We have partial handling for them as
+      // declaration attributes in SemaDeclAttr.cpp; that should be moved here.
       attr.setUsedAsTypeAttr();
       break;
 

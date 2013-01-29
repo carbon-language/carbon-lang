@@ -229,8 +229,15 @@ public:
   IdentifierInfo *getParameterName() const { return ParmName; }
   SourceLocation getParameterLoc() const { return ParmLoc; }
 
+  bool isAlignasAttribute() const {
+    // FIXME: Use a better mechanism to determine this.
+    return getKind() == AT_Aligned && SyntaxUsed == AS_Keyword;
+  }
+
   bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec; }
-  bool isCXX11Attribute() const { return SyntaxUsed == AS_CXX11; }
+  bool isCXX11Attribute() const {
+    return SyntaxUsed == AS_CXX11 || isAlignasAttribute();
+  }
   bool isKeywordAttribute() const { return SyntaxUsed == AS_Keyword; }
 
   bool isInvalid() const { return Invalid; }
