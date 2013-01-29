@@ -36,6 +36,7 @@
       					<li><a href="#breakpoint">Breakpoint</a></li>
       					<li><a href="#commands">Commands</a></li>
       					<li><a href="#core">Core</a></li>
+      					<li><a href="#dataformatters">DataFormatters</a></li>
        					<li><a href="#expression">Expression</a></li>
        					<li><a href="#host">Host</a></li>
        					<li><a href="#interpreter">Interpreter</a></li>
@@ -140,6 +141,23 @@
            					<li>Streams</li>
            					<li>Value objects</li>
        				    </ul>
+				</div>
+				<div class="postfooter"></div>
+			</div>
+			<a name="dataformatters"></a>
+			<div class="post">
+				<h1 class ="postheader">DataFormatters</h1>
+				<div class="postcontent">
+
+				   <p>A collection of classes that implement the data formatters subsystem.</p>
+				<p>The main entry point for interacting with the LLDB data formatters is the DataVisualization class. It provides
+					a relatively stable front-end interface to ask questions of the data formatters regardless of the internal implementation.</p>
+				<p>For people actively maintaining the data formatters subsystem itself, however, the FormatManager class is the relevant point of entry.
+					This class is subject to more frequent changes as the formatters evolve. Currently, it provides a thin caching layer on top of a list of categories
+					that each export a group of formatters.
+					</p>
+				<p>From an end-user perspective, the "type" LLDB command is the point of access to the data formatters. A large group of generally-useful formatters
+					is provided by default and loaded upon debugger startup.
 				</div>
 				<div class="postfooter"></div>
 			</div>
