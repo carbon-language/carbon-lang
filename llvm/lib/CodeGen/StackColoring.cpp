@@ -202,9 +202,8 @@ void StackColoring::getAnalysisUsage(AnalysisUsage &AU) const {
 void StackColoring::dump() {
   for (df_iterator<MachineFunction*> FI = df_begin(MF), FE = df_end(MF);
        FI != FE; ++FI) {
-    unsigned Num = BasicBlocks[*FI];
-    DEBUG(dbgs()<<"Inspecting block #"<<Num<<" ["<<FI->getName()<<"]\n");
-    Num = 0;
+    DEBUG(dbgs()<<"Inspecting block #"<<BasicBlocks[*FI]<<
+          " ["<<FI->getName()<<"]\n");
     DEBUG(dbgs()<<"BEGIN  : {");
     for (unsigned i=0; i < BlockLiveness[*FI].Begin.size(); ++i)
       DEBUG(dbgs()<<BlockLiveness[*FI].Begin.test(i)<<" ");

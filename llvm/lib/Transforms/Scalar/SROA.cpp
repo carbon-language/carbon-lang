@@ -2971,6 +2971,7 @@ private:
     else
       New = IRB.CreateLifetimeEnd(Ptr, Size);
 
+    (void)New;
     DEBUG(dbgs() << "          to: " << *New << "\n");
     return true;
   }
