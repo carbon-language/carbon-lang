@@ -107,6 +107,10 @@ private:
 public:
   Attribute() : pImpl(0) {}
 
+  //===--------------------------------------------------------------------===//
+  // Attribute Construction
+  //===--------------------------------------------------------------------===//
+
   /// \brief Return a uniquified Attribute object.
   static Attribute get(LLVMContext &Context, AttrKind Kind);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
@@ -115,6 +119,10 @@ public:
   /// alignment set.
   static Attribute getWithAlignment(LLVMContext &Context, uint64_t Align);
   static Attribute getWithStackAlignment(LLVMContext &Context, uint64_t Align);
+
+  //===--------------------------------------------------------------------===//
+  // Attribute Accessors
+  //===--------------------------------------------------------------------===//
 
   /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
@@ -130,6 +138,10 @@ public:
   /// alignment value.
   unsigned getStackAlignment() const;
 
+  /// \brief The Attribute is converted to a string of equivalent mnemonic. This
+  /// is, presumably, for writing out the mnemonics for the assembly writer.
+  std::string getAsString() const;
+
   /// \brief Equality and non-equality query methods.
   bool operator==(AttrKind K) const;
   bool operator!=(AttrKind K) const;
@@ -140,35 +152,12 @@ public:
   /// \brief Less-than operator. Useful for sorting the attributes list.
   bool operator<(Attribute A) const;
 
-  /// \brief The Attribute is converted to a string of equivalent mnemonic. This
-  /// is, presumably, for writing out the mnemonics for the assembly writer.
-  std::string getAsString() const;
-
   void Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(pImpl);
   }
 
+  // FIXME: Remove this.
   uint64_t Raw() const;
-};
-
-//===----------------------------------------------------------------------===//
-/// \class
-/// \brief Provide DenseMapInfo for Attribute::AttrKinds. This is used by
-/// AttrBuilder.
-template<> struct DenseMapInfo<Attribute::AttrKind> {
-  static inline Attribute::AttrKind getEmptyKey() {
-    return Attribute::AttrKindEmptyKey;
-  }
-  static inline Attribute::AttrKind getTombstoneKey() {
-    return Attribute::AttrKindTombstoneKey;
-  }
-  static unsigned getHashValue(const Attribute::AttrKind &Val) {
-    return Val * 37U;
-  }
-  static bool isEqual(const Attribute::AttrKind &LHS,
-                      const Attribute::AttrKind &RHS) {
-    return LHS == RHS;
-  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -223,7 +212,7 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
-  // Attribute List Construction and Mutation
+  // AttributeSet Construction and Mutation
   //===--------------------------------------------------------------------===//
 
   /// \brief Return an AttributeSet with the specified parameters in it.
@@ -267,7 +256,7 @@ public:
                                 AttributeSet Attrs) const;
 
   //===--------------------------------------------------------------------===//
-  // Attribute Set Accessors
+  // AttributeSet Accessors
   //===--------------------------------------------------------------------===//
 
   /// \brief The attributes for the specified index are returned.
@@ -285,6 +274,10 @@ public:
   /// \brief Return true if attribute exists at the given index.
   bool hasAttributes(unsigned Index) const;
 
+  /// \brief Return true if the specified attribute is set for at least one
+  /// parameter or for the return value.
+  bool hasAttrSomewhere(Attribute::AttrKind Attr) const;
+
   /// \brief Return the alignment for the specified function parameter.
   unsigned getParamAlignment(unsigned Idx) const;
 
@@ -293,12 +286,6 @@ public:
 
   /// \brief Return the attributes at the index as a string.
   std::string getAsString(unsigned Index) const;
-
-  uint64_t Raw(unsigned Index) const;
-
-  /// \brief Return true if the specified attribute is set for at least one
-  /// parameter or for the return value.
-  bool hasAttrSomewhere(Attribute::AttrKind Attr) const;
 
   /// operator==/!= - Provide equality predicates.
   bool operator==(const AttributeSet &RHS) const {
@@ -309,17 +296,16 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
-  // Attribute List Introspection
+  // AttributeSet Introspection
   //===--------------------------------------------------------------------===//
+
+  // FIXME: Remove this.
+  uint64_t Raw(unsigned Index) const;
 
   /// \brief Return a raw pointer that uniquely identifies this attribute list.
   void *getRawPointer() const {
     return pImpl;
   }
-
-  // Attributes are stored as a dense set of slots, where there is one slot for
-  // each argument that has an attribute.  This allows walking over the dense
-  // set instead of walking the sparse list of attributes.
 
   /// \brief Return true if there are no attributes.
   bool isEmpty() const {
@@ -338,6 +324,26 @@ public:
   AttributeSet getSlotAttributes(unsigned Slot) const;
 
   void dump() const;
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
+/// \brief Provide DenseMapInfo for Attribute::AttrKinds. This is used by
+/// AttrBuilder.
+template<> struct DenseMapInfo<Attribute::AttrKind> {
+  static inline Attribute::AttrKind getEmptyKey() {
+    return Attribute::AttrKindEmptyKey;
+  }
+  static inline Attribute::AttrKind getTombstoneKey() {
+    return Attribute::AttrKindTombstoneKey;
+  }
+  static unsigned getHashValue(const Attribute::AttrKind &Val) {
+    return Val * 37U;
+  }
+  static bool isEqual(const Attribute::AttrKind &LHS,
+                      const Attribute::AttrKind &RHS) {
+    return LHS == RHS;
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -407,16 +413,10 @@ public:
   typedef DenseSet<Attribute::AttrKind>::iterator       iterator;
   typedef DenseSet<Attribute::AttrKind>::const_iterator const_iterator;
 
-  iterator begin() { return Attrs.begin(); }
-  iterator end()   { return Attrs.end(); }
-
+  iterator begin()             { return Attrs.begin(); }
+  iterator end()               { return Attrs.end(); }
   const_iterator begin() const { return Attrs.begin(); }
   const_iterator end() const   { return Attrs.end(); }
-
-  /// \brief Add the raw value to the internal representation.
-  /// 
-  /// N.B. This should be used ONLY for decoding LLVM bitcode!
-  AttrBuilder &addRawValue(uint64_t Val);
 
   /// \brief Remove attributes that are used on functions only.
   void removeFunctionOnlyAttrs() {
@@ -443,12 +443,19 @@ public:
       .removeAttribute(Attribute::NoDuplicate);
   }
 
-  uint64_t Raw() const;
-
   bool operator==(const AttrBuilder &B);
   bool operator!=(const AttrBuilder &B) {
     return !(*this == B);
   }
+
+  // FIXME: Remove these.
+
+  /// \brief Add the raw value to the internal representation.
+  /// 
+  /// N.B. This should be used ONLY for decoding LLVM bitcode!
+  AttrBuilder &addRawValue(uint64_t Val);
+
+  uint64_t Raw() const;
 };
 
 namespace AttributeFuncs {

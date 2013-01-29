@@ -37,19 +37,18 @@ class AttributeImpl : public FoldingSetNode {
   void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
   AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
 public:
-  explicit AttributeImpl(LLVMContext &C, uint64_t data);
+  AttributeImpl(LLVMContext &C, Constant *Data)
+    : Context(C), Data(Data) {}
   explicit AttributeImpl(LLVMContext &C, Attribute::AttrKind data);
   AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
                 ArrayRef<Constant*> values);
   AttributeImpl(LLVMContext &C, StringRef data);
 
-  LLVMContext &getContext() { return Context; }
-
-  ArrayRef<Constant*> getValues() const { return Vals; }
-
   bool hasAttribute(Attribute::AttrKind A) const;
-
   bool hasAttributes() const;
+
+  LLVMContext &getContext() { return Context; }
+  ArrayRef<Constant*> getValues() const { return Vals; }
 
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
@@ -62,15 +61,19 @@ public:
 
   bool operator<(const AttributeImpl &AI) const;
 
-  uint64_t Raw() const;         // FIXME: Remove.
-
-  static uint64_t getAttrMask(Attribute::AttrKind Val);
-
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Data, Vals);
   }
   static void Profile(FoldingSetNodeID &ID, Constant *Data,
-                      ArrayRef<Constant*> Vals);
+                      ArrayRef<Constant*> Vals) {
+    ID.AddPointer(Data);
+    for (unsigned I = 0, E = Vals.size(); I != E; ++I)
+      ID.AddPointer(Vals[I]);
+  }
+
+  // FIXME: Remove these!
+  uint64_t Raw() const;
+  static uint64_t getAttrMask(Attribute::AttrKind Val);
 };
 
 //===----------------------------------------------------------------------===//
