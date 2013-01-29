@@ -423,14 +423,11 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbol const &Symbol,
 
     if (Symbol.isVariable()) {
       coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
-      const MCExpr *Value = Symbol.getVariableValue();
 
       // FIXME: This assert message isn't very good.
-      assert(Value->getKind() == MCExpr::SymbolRef &&
+      assert(Symbol.getVariableValue()->getKind() == MCExpr::SymbolRef &&
               "Value must be a SymbolRef!");
 
-      const MCSymbolRefExpr *SymbolRef =
-        static_cast<const MCSymbolRefExpr *>(Value);
       coff_symbol->Other = GetOrCreateCOFFSymbol(&Symbol);
     } else {
       std::string WeakName = std::string(".weak.")
