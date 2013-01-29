@@ -207,6 +207,7 @@ FormatStyle getGoogleStyle() {
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOnNextLine = false;
+  ChromiumStyle.SplitTemplateClosingGreater = true;
   return ChromiumStyle;
 }
 
