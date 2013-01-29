@@ -328,6 +328,10 @@ public:
   /// memset with zero passed as the second argument. Otherwise it
   /// returns null.
   const char *getBZeroEntry() const;
+  
+  /// This function returns true if the target has sincos() routine in its
+  /// compiler runtime or math libraries.
+  bool hasSinCos() const;
 
   /// enablePostRAScheduler - run for Atom optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,

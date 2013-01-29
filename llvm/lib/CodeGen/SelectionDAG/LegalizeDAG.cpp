@@ -102,7 +102,8 @@ private:
                                                  SDNode *Node, bool isSigned);
   SDValue ExpandFPLibCall(SDNode *Node, RTLIB::Libcall Call_F32,
                           RTLIB::Libcall Call_F64, RTLIB::Libcall Call_F80,
-                          RTLIB::Libcall Call_F128, RTLIB::Libcall Call_PPCF128);
+                          RTLIB::Libcall Call_F128,
+                          RTLIB::Libcall Call_PPCF128);
   SDValue ExpandIntLibCall(SDNode *Node, bool isSigned,
                            RTLIB::Libcall Call_I8,
                            RTLIB::Libcall Call_I16,
@@ -110,6 +111,7 @@ private:
                            RTLIB::Libcall Call_I64,
                            RTLIB::Libcall Call_I128);
   void ExpandDivRemLibCall(SDNode *Node, SmallVectorImpl<SDValue> &Results);
+  void ExpandSinCosLibCall(SDNode *Node, SmallVectorImpl<SDValue> &Results);
 
   SDValue EmitStackConvert(SDValue SrcOp, EVT SlotVT, EVT DestVT, DebugLoc dl);
   SDValue ExpandBUILD_VECTOR(SDNode *Node);
@@ -2095,6 +2097,106 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
   Results.push_back(Rem);
 }
 
+/// isSinCosLibcallAvailable - Return true if sincos libcall is available.
+static bool isSinCosLibcallAvailable(SDNode *Node, const TargetLowering &TLI) {
+  RTLIB::Libcall LC;
+  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  default: llvm_unreachable("Unexpected request for libcall!");
+  case MVT::f32:     LC = RTLIB::SINCOS_F32; break;
+  case MVT::f64:     LC = RTLIB::SINCOS_F64; break;
+  case MVT::f80:     LC = RTLIB::SINCOS_F80; break;
+  case MVT::f128:    LC = RTLIB::SINCOS_F128; break;
+  case MVT::ppcf128: LC = RTLIB::SINCOS_PPCF128; break;
+  }
+  return TLI.getLibcallName(LC) != 0;
+}
+
+/// useSinCos - Only issue sincos libcall if both sin and cos are
+/// needed.
+static bool useSinCos(SDNode *Node) {
+  unsigned OtherOpcode = Node->getOpcode() == ISD::FSIN
+    ? ISD::FCOS : ISD::FSIN;
+  
+  SDValue Op0 = Node->getOperand(0);
+  for (SDNode::use_iterator UI = Op0.getNode()->use_begin(),
+       UE = Op0.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User == Node)
+      continue;
+    // The other user might have been turned into sincos already.
+    if (User->getOpcode() == OtherOpcode || User->getOpcode() == ISD::FSINCOS)
+      return true;
+  }
+  return false;
+}
+
+/// ExpandSinCosLibCall - Issue libcalls to sincos to compute sin / cos
+/// pairs.
+void
+SelectionDAGLegalize::ExpandSinCosLibCall(SDNode *Node,
+                                          SmallVectorImpl<SDValue> &Results) {
+  RTLIB::Libcall LC;
+  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  default: llvm_unreachable("Unexpected request for libcall!");
+  case MVT::f32:     LC = RTLIB::SINCOS_F32; break;
+  case MVT::f64:     LC = RTLIB::SINCOS_F64; break;
+  case MVT::f80:     LC = RTLIB::SINCOS_F80; break;
+  case MVT::f128:    LC = RTLIB::SINCOS_F128; break;
+  case MVT::ppcf128: LC = RTLIB::SINCOS_PPCF128; break;
+  }
+  
+  // The input chain to this libcall is the entry node of the function.
+  // Legalizing the call will automatically add the previous call to the
+  // dependence.
+  SDValue InChain = DAG.getEntryNode();
+  
+  EVT RetVT = Node->getValueType(0);
+  Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+  
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  
+  // Pass the argument.
+  Entry.Node = Node->getOperand(0);
+  Entry.Ty = RetTy;
+  Entry.isSExt = false;
+  Entry.isZExt = false;
+  Args.push_back(Entry);
+  
+  // Pass the return address of sin.
+  SDValue SinPtr = DAG.CreateStackTemporary(RetVT);
+  Entry.Node = SinPtr;
+  Entry.Ty = RetTy->getPointerTo();
+  Entry.isSExt = false;
+  Entry.isZExt = false;
+  Args.push_back(Entry);
+  
+  // Also pass the return address of the cos.
+  SDValue CosPtr = DAG.CreateStackTemporary(RetVT);
+  Entry.Node = CosPtr;
+  Entry.Ty = RetTy->getPointerTo();
+  Entry.isSExt = false;
+  Entry.isZExt = false;
+  Args.push_back(Entry);
+  
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                         TLI.getPointerTy());
+  
+  DebugLoc dl = Node->getDebugLoc();
+  TargetLowering::
+  CallLoweringInfo CLI(InChain, Type::getVoidTy(*DAG.getContext()),
+                       false, false, false, false,
+                       0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,
+                       /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
+                       Callee, Args, DAG, dl);
+  std::pair<SDValue, SDValue> CallInfo = TLI.LowerCallTo(CLI);
+
+  Results.push_back(DAG.getLoad(RetVT, dl, CallInfo.second, SinPtr,
+                                MachinePointerInfo(), false, false, false, 0));
+  Results.push_back(DAG.getLoad(RetVT, dl, CallInfo.second, CosPtr,
+                                MachinePointerInfo(), false, false, false, 0));
+}
+
 /// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
 /// INT_TO_FP operation of the specified operand when the target requests that
 /// we expand it.  At this point, we know that the result and operand types are
@@ -3041,14 +3143,33 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                       RTLIB::SQRT_PPCF128));
     break;
   case ISD::FSIN:
-    Results.push_back(ExpandFPLibCall(Node, RTLIB::SIN_F32, RTLIB::SIN_F64,
-                                      RTLIB::SIN_F80, RTLIB::SIN_F128,
-                                      RTLIB::SIN_PPCF128));
+  case ISD::FCOS: {
+    EVT VT = Node->getValueType(0);
+    bool isSIN = Node->getOpcode() == ISD::FSIN;
+    // Turn fsin / fcos into ISD::FSINCOS node if there are a pair of fsin /
+    // fcos which share the same operand and both are used.
+    if ((TLI.isOperationLegalOrCustom(ISD::FSINCOS, VT) ||
+         isSinCosLibcallAvailable(Node, TLI))
+        && useSinCos(Node)) {
+      SDVTList VTs = DAG.getVTList(VT, VT);
+      Tmp1 = DAG.getNode(ISD::FSINCOS, dl, VTs, Node->getOperand(0));
+      if (!isSIN)
+        Tmp1 = Tmp1.getValue(1);
+      Results.push_back(Tmp1);
+    } else if (isSIN) {
+      Results.push_back(ExpandFPLibCall(Node, RTLIB::SIN_F32, RTLIB::SIN_F64,
+                                        RTLIB::SIN_F80, RTLIB::SIN_F128,
+                                        RTLIB::SIN_PPCF128));
+    } else {
+      Results.push_back(ExpandFPLibCall(Node, RTLIB::COS_F32, RTLIB::COS_F64,
+                                        RTLIB::COS_F80, RTLIB::COS_F128,
+                                        RTLIB::COS_PPCF128));
+    }
     break;
-  case ISD::FCOS:
-    Results.push_back(ExpandFPLibCall(Node, RTLIB::COS_F32, RTLIB::COS_F64,
-                                      RTLIB::COS_F80, RTLIB::COS_F128,
-                                      RTLIB::COS_PPCF128));
+  }
+  case ISD::FSINCOS:
+    // Expand into sincos libcall.
+    ExpandSinCosLibCall(Node, Results);
     break;
   case ISD::FLOG:
     Results.push_back(ExpandFPLibCall(Node, RTLIB::LOG_F32, RTLIB::LOG_F64,
@@ -3181,7 +3302,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   case ISD::UREM:
   case ISD::SREM: {
     EVT VT = Node->getValueType(0);
-    SDVTList VTs = DAG.getVTList(VT, VT);
     bool isSigned = Node->getOpcode() == ISD::SREM;
     unsigned DivOpc = isSigned ? ISD::SDIV : ISD::UDIV;
     unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
@@ -3192,6 +3312,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
          // If div is legal, it's better to do the normal expansion
          !TLI.isOperationLegalOrCustom(DivOpc, Node->getValueType(0)) &&
          useDivRem(Node, isSigned, false))) {
+      SDVTList VTs = DAG.getVTList(VT, VT);
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
     } else if (TLI.isOperationLegalOrCustom(DivOpc, VT)) {
       // X % Y -> X-X/Y*Y

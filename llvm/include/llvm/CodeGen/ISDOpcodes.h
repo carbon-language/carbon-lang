@@ -455,6 +455,9 @@ namespace ISD {
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR,
+    
+    /// FSINCOS - Compute both fsin and fcos as a single operation.
+    FSINCOS,
 
     /// LOAD and STORE have token chains as their first operand, then the same
     /// operands as an LLVM load/store instruction, then an offset node that

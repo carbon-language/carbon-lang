@@ -1364,6 +1364,8 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::FSIN , MVT::f32, Expand);
     setOperationAction(ISD::FCOS , MVT::f32, Expand);
     setOperationAction(ISD::FREM , MVT::f32, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
     setOperationAction(ISD::CTPOP, MVT::i32, Expand);
     setOperationAction(ISD::CTTZ , MVT::i32, Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);

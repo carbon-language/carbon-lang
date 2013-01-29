@@ -340,6 +340,13 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SYNC_FETCH_AND_NAND_2] = "__sync_fetch_and_nand_2";
   Names[RTLIB::SYNC_FETCH_AND_NAND_4] = "__sync_fetch_and_nand_4";
   Names[RTLIB::SYNC_FETCH_AND_NAND_8] = "__sync_fetch_and_nand_8";
+  
+  // These are generally not available.
+  Names[RTLIB::SINCOS_F32] = 0;
+  Names[RTLIB::SINCOS_F64] = 0;
+  Names[RTLIB::SINCOS_F80] = 0;
+  Names[RTLIB::SINCOS_F128] = 0;
+  Names[RTLIB::SINCOS_PPCF128] = 0;
 }
 
 /// InitLibcallCallingConvs - Set default libcall CallingConvs.

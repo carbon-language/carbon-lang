@@ -605,10 +605,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FGETSIGN, MVT::i32, Custom);
 
     // We don't support sin/cos/fmod
-    setOperationAction(ISD::FSIN , MVT::f64, Expand);
-    setOperationAction(ISD::FCOS , MVT::f64, Expand);
-    setOperationAction(ISD::FSIN , MVT::f32, Expand);
-    setOperationAction(ISD::FCOS , MVT::f32, Expand);
+    setOperationAction(ISD::FSIN   , MVT::f64, Expand);
+    setOperationAction(ISD::FCOS   , MVT::f64, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
+    setOperationAction(ISD::FSIN   , MVT::f32, Expand);
+    setOperationAction(ISD::FCOS   , MVT::f32, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
 
     // Expand FP immediates into loads from the stack, except for the special
     // cases we handle.
@@ -633,8 +635,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
 
     // We don't support sin/cos/fmod
-    setOperationAction(ISD::FSIN , MVT::f32, Expand);
-    setOperationAction(ISD::FCOS , MVT::f32, Expand);
+    setOperationAction(ISD::FSIN   , MVT::f32, Expand);
+    setOperationAction(ISD::FCOS   , MVT::f32, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
 
     // Special cases we handle for FP constants.
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
@@ -644,8 +647,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
 
     if (!TM.Options.UnsafeFPMath) {
-      setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
-      setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
+      setOperationAction(ISD::FSIN   , MVT::f64, Expand);
+      setOperationAction(ISD::FCOS   , MVT::f64, Expand);
+      setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
     }
   } else if (!TM.Options.UseSoftFloat) {
     // f32 and f64 in x87.
@@ -659,10 +663,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
 
     if (!TM.Options.UnsafeFPMath) {
-      setOperationAction(ISD::FSIN           , MVT::f32  , Expand);
-      setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
-      setOperationAction(ISD::FCOS           , MVT::f32  , Expand);
-      setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
+      setOperationAction(ISD::FSIN   , MVT::f64, Expand);
+      setOperationAction(ISD::FSIN   , MVT::f32, Expand);
+      setOperationAction(ISD::FCOS   , MVT::f64, Expand);
+      setOperationAction(ISD::FCOS   , MVT::f32, Expand);
+      setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
+      setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
     }
     addLegalFPImmediate(APFloat(+0.0)); // FLD0
     addLegalFPImmediate(APFloat(+1.0)); // FLD1
@@ -699,8 +705,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
 
     if (!TM.Options.UnsafeFPMath) {
-      setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
-      setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
+      setOperationAction(ISD::FSIN   , MVT::f80, Expand);
+      setOperationAction(ISD::FCOS   , MVT::f80, Expand);
+      setOperationAction(ISD::FSINCOS, MVT::f80, Expand);
     }
 
     setOperationAction(ISD::FFLOOR, MVT::f80, Expand);
@@ -748,7 +755,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::INSERT_SUBVECTOR, VT,Expand);
     setOperationAction(ISD::FABS, VT, Expand);
     setOperationAction(ISD::FSIN, VT, Expand);
+    setOperationAction(ISD::FSINCOS, VT, Expand);
     setOperationAction(ISD::FCOS, VT, Expand);
+    setOperationAction(ISD::FSINCOS, VT, Expand);
     setOperationAction(ISD::FREM, VT, Expand);
     setOperationAction(ISD::FMA,  VT, Expand);
     setOperationAction(ISD::FPOWI, VT, Expand);
@@ -1279,6 +1288,19 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setLibcallName(RTLIB::SHL_I128, 0);
     setLibcallName(RTLIB::SRL_I128, 0);
     setLibcallName(RTLIB::SRA_I128, 0);
+  }
+
+  // Combine sin / cos into one node or libcall if possible.
+  if (Subtarget->hasSinCos()) {
+    setLibcallName(RTLIB::SINCOS_F32, "sincosf");
+    setLibcallName(RTLIB::SINCOS_F64, "sincos");
+    if (Subtarget->isTargetDarwin() && Subtarget->is64Bit()) {
+      // For MacOSX, we don't want to the normal expansion of a libcall to
+      // sincos. We want to issue a libcall to __sincos_stret to avoid memory
+      // traffic.
+      setOperationAction(ISD::FSINCOS, MVT::f64, Custom);
+      setOperationAction(ISD::FSINCOS, MVT::f32, Custom);
+    }
   }
 
   // We have target-specific dag combine patterns for the following nodes:
@@ -12014,6 +12036,50 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
                      Op.getOperand(1), Op.getOperand(2));
 }
 
+SDValue X86TargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
+  assert(Subtarget->isTargetDarwin());
+ 
+  // For MacOSX, we want to call an alternative entry point: __sincos_stret,
+  // which returns the values in two XMM registers.
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Arg = Op.getOperand(0);
+  EVT ArgVT = Arg.getValueType();
+  Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+  
+  ArgListTy Args;
+  ArgListEntry Entry;
+  
+  Entry.Node = Arg;
+  Entry.Ty = ArgTy;
+  Entry.isSExt = false;
+  Entry.isZExt = false;
+  Args.push_back(Entry);
+  
+  const char *LibcallName = (ArgVT == MVT::f64)
+    ? "__sincos_stret" : "__sincosf_stret";
+  SDValue Callee = DAG.getExternalSymbol(LibcallName, getPointerTy());
+  
+  StructType *RetTy = StructType::get(ArgTy, ArgTy, NULL);
+  TargetLowering::
+  CallLoweringInfo CLI(DAG.getEntryNode(), RetTy,
+                       false, false, false, false, 0,
+                       CallingConv::C, /*isTaillCall=*/false,
+                       /*doesNotRet=*/false, /*isReturnValueUsed*/true,
+                       Callee, Args, DAG, dl);
+  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
+#if 1
+  return CallResult.first;
+#else
+  SDValue RetSin = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, ArgVT,
+                               CallResult.first, DAG.getIntPtrConstant(0));
+  SDValue RetCos = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, ArgVT,
+                               CallResult.first, DAG.getIntPtrConstant(1));
+  
+  SDVTList Tys = DAG.getVTList(ArgVT, ArgVT);
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Tys, RetSin, RetCos);
+#endif
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
@@ -12096,6 +12162,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADD:                return LowerADD(Op, DAG);
   case ISD::SUB:                return LowerSUB(Op, DAG);
   case ISD::SDIV:               return LowerSDIV(Op, DAG);
+  case ISD::FSINCOS:            return LowerFSINCOS(Op, DAG);
   }
 }
 
