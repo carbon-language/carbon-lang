@@ -2411,6 +2411,48 @@ RecordLayoutBuilder::Diag(SourceLocation Loc, unsigned DiagID) {
   return Context.getDiagnostics().Report(Loc, DiagID);
 }
 
+/// Does the target C++ ABI require us to skip over the tail-padding
+/// of the given class (considering it as a base class) when allocating
+/// objects?
+static bool mustSkipTailPadding(TargetCXXABI ABI, const CXXRecordDecl *RD) {
+  switch (ABI.getTailPaddingUseRules()) {
+  case TargetCXXABI::AlwaysUseTailPadding:
+    return false;
+
+  case TargetCXXABI::UseTailPaddingUnlessPOD03:
+    // FIXME: To the extent that this is meant to cover the Itanium ABI
+    // rules, we should implement the restrictions about over-sized
+    // bitfields:
+    //
+    // http://mentorembedded.github.com/cxx-abi/abi.html#POD :
+    //   In general, a type is considered a POD for the purposes of
+    //   layout if it is a POD type (in the sense of ISO C++
+    //   [basic.types]). However, a POD-struct or POD-union (in the
+    //   sense of ISO C++ [class]) with a bitfield member whose
+    //   declared width is wider than the declared type of the
+    //   bitfield is not a POD for the purpose of layout.  Similarly,
+    //   an array type is not a POD for the purpose of layout if the
+    //   element type of the array is not a POD for the purpose of
+    //   layout.
+    //
+    //   Where references to the ISO C++ are made in this paragraph,
+    //   the Technical Corrigendum 1 version of the standard is
+    //   intended.
+    return RD->isPOD();
+
+  case TargetCXXABI::UseTailPaddingUnlessPOD11:
+    // This is equivalent to RD->getTypeForDecl().isCXX11PODType(),
+    // but with a lot of abstraction penalty stripped off.  This does
+    // assume that these properties are set correctly even in C++98
+    // mode; fortunately, that is true because we want to assign
+    // consistently semantics to the type-traits intrinsics (or at
+    // least as many of them as possible).
+    return RD->isTrivial() && RD->isStandardLayout();
+  }
+
+  llvm_unreachable("bad tail-padding use kind");
+}
+
 /// getASTRecordLayout - Get or compute information about the layout of the
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
@@ -2455,18 +2497,17 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       Builder.Layout(RD);
     }
 
-    // FIXME: This is not always correct. See the part about bitfields at
-    // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
-    // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
-    // This does not affect the calculations of MSVC layouts
-    bool IsPODForThePurposeOfLayout = 
-      (!Builder.isMicrosoftCXXABI() && cast<CXXRecordDecl>(D)->isPOD());
+    // In certain situations, we are allowed to lay out objects in the
+    // tail-padding of base classes.  This is ABI-dependent.
+    // FIXME: this should be stored in the record layout.
+    bool skipTailPadding =
+      mustSkipTailPadding(getTargetInfo().getCXXABI(), cast<CXXRecordDecl>(D));
 
     // FIXME: This should be done in FinalizeLayout.
     CharUnits DataSize =
-      IsPODForThePurposeOfLayout ? Builder.getSize() : Builder.getDataSize();
+      skipTailPadding ? Builder.getSize() : Builder.getDataSize();
     CharUnits NonVirtualSize = 
-      IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
+      skipTailPadding ? DataSize : Builder.NonVirtualSize;
 
     NewEntry =
       new (*this) ASTRecordLayout(*this, Builder.getSize(), 

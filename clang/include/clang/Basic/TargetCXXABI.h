@@ -183,6 +183,55 @@ public:
     llvm_unreachable("bad ABI kind");
   }
 
+  /// When is record layout allowed to allocate objects in the tail
+  /// padding of a base class?
+  ///
+  /// This decision cannot be changed without breaking platform ABI
+  /// compatibility, and yet it is tied to language guarantees which
+  /// the committee has so far seen fit to strengthen no less than
+  /// three separate times:
+  ///   - originally, there were no restrictions at all;
+  ///   - C++98 declared that objects could not be allocated in the
+  ///     tail padding of a POD type;
+  ///   - C++03 extended the definition of POD to include classes
+  ///     containing member pointers; and
+  ///   - C++11 greatly broadened the definition of POD to include
+  ///     all trivial standard-layout classes.
+  /// Each of these changes technically took several existing
+  /// platforms and made them permanently non-conformant.
+  enum TailPaddingUseRules {
+    /// The tail-padding of a base class is always theoretically
+    /// available, even if it's POD.  This is not strictly conforming
+    /// in any language mode.
+    AlwaysUseTailPadding,
+
+    /// Only allocate objects in the tail padding of a base class if
+    /// the base class is not POD according to the rules of C++ TR1.
+    /// This is non strictly conforming in C++11 mode.
+    UseTailPaddingUnlessPOD03,
+
+    /// Only allocate objects in the tail padding of a base class if
+    /// the base class is not POD according to the rules of C++11.
+    UseTailPaddingUnlessPOD11
+  };
+  TailPaddingUseRules getTailPaddingUseRules() const {
+    switch (getKind()) {
+    // To preserve binary compatibility, the generic Itanium ABI has
+    // permanently locked the definition of POD to the rules of C++ TR1,
+    // and that trickles down to all the derived ABIs.
+    case GenericItanium:
+    case GenericARM:
+    case iOS:
+      return UseTailPaddingUnlessPOD03;
+
+    // MSVC always allocates fields in the tail-padding of a base class
+    // subobject, even if they're POD.
+    case Microsoft:
+      return AlwaysUseTailPadding;
+    }
+    llvm_unreachable("bad ABI kind");
+  }
+
   /// Try to parse an ABI name, returning false on error.
   bool tryParse(llvm::StringRef name);
 
