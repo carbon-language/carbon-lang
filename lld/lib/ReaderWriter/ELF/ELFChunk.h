@@ -37,16 +37,10 @@ public:
     K_ELFSection, // Section
     K_ELFSectionHeader // Section header
   };
-  Chunk(llvm::StringRef name, Kind kind)
-    : _name(name)
-    , _kind(kind)
-    , _fsize(0)
-    , _msize(0)
-    , _align2(0)
-    , _order(0)
-    , _ordinal(1)
-    , _start(0)
-    , _fileoffset(0) {}
+  Chunk(llvm::StringRef name, Kind kind, const ELFTargetInfo &ti)
+      : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
+        _ordinal(1), _start(0), _fileoffset(0), _targetInfo(ti) {
+  }
   virtual             ~Chunk() {}
   // Does the chunk occupy disk space
   virtual bool        occupiesNoDiskSpace() const {
@@ -90,6 +84,7 @@ protected:
   uint64_t _ordinal;
   uint64_t _start;
   uint64_t _fileoffset;
+  const ELFTargetInfo &_targetInfo;
 };
 
 } // elf

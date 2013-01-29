@@ -46,11 +46,9 @@ public:
   };
   // Create a section object, the section is set to the default type if the
   // caller doesnot set it
-  Section(const llvm::StringRef sectionName,
-          const int32_t contentType,
-          const int32_t contentPermissions,
-          const int32_t order,
-          const SectionKind kind = K_Default);
+  Section(const ELFTargetInfo &, const llvm::StringRef sectionName,
+          const int32_t contentType, const int32_t contentPermissions,
+          const int32_t order, const SectionKind kind = K_Default);
 
   /// return the section kind
   inline SectionKind sectionKind() const {
@@ -179,19 +177,14 @@ protected:
 
 // Create a section object, the section is set to the default type if the
 // caller doesnot set it
-template<class ELFT>
-Section<ELFT>::Section(const StringRef sectionName,
+template <class ELFT>
+Section<ELFT>::Section(const ELFTargetInfo &ti, const StringRef sectionName,
                        const int32_t contentType,
-                       const int32_t contentPermissions,
-                       const int32_t order,
+                       const int32_t contentPermissions, const int32_t order,
                        const SectionKind kind)
-  : Chunk<ELFT>(sectionName, Chunk<ELFT>::K_ELFSection)
-  , _contentType(contentType)
-  , _contentPermissions(contentPermissions)
-  , _sectionKind(kind)
-  , _entSize(0)
-  , _shInfo(0)
-  , _link(0) {
+    : Chunk<ELFT>(sectionName, Chunk<ELFT>::K_ELFSection, ti),
+      _contentType(contentType), _contentPermissions(contentPermissions),
+      _sectionKind(kind), _entSize(0), _shInfo(0), _link(0) {
   this->setOrder(order);
 }
 
@@ -498,7 +491,7 @@ MergedSections<ELFT>::appendSection(Chunk<ELFT> *c) {
 template<class ELFT>
 class ELFStringTable : public Section<ELFT> {
 public:
-  ELFStringTable(const char *str, int32_t order);
+  ELFStringTable(const ELFTargetInfo &, const char *str, int32_t order);
 
   static inline bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Section<ELFT>::K_StringTable;
@@ -514,15 +507,11 @@ private:
   std::vector<llvm::StringRef> _strings;
 };
 
-template<class ELFT>
-ELFStringTable<ELFT>::ELFStringTable(const char *str, 
+template <class ELFT>
+ELFStringTable<ELFT>::ELFStringTable(const ELFTargetInfo &ti, const char *str,
                                      int32_t order)
-  : Section<ELFT>(
-      str,
-      llvm::ELF::SHT_STRTAB,
-      DefinedAtom::perm___,
-      order,
-      Section<ELFT>::K_StringTable) {
+    : Section<ELFT>(ti, str, llvm::ELF::SHT_STRTAB, DefinedAtom::perm___, order,
+                    Section<ELFT>::K_StringTable) {
   // the string table has a NULL entry for which
   // add an empty string
   _strings.push_back("");
@@ -559,7 +548,7 @@ class ELFSymbolTable : public Section<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  ELFSymbolTable(const char *str, int32_t order);
+  ELFSymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0);
 
@@ -583,15 +572,11 @@ private:
 };
 
 /// ELF Symbol Table 
-template<class ELFT>
-ELFSymbolTable<ELFT>::ELFSymbolTable(const char *str, 
+template <class ELFT>
+ELFSymbolTable<ELFT>::ELFSymbolTable(const ELFTargetInfo &ti, const char *str,
                                      int32_t order)
-  : Section<ELFT>(
-      str,
-      llvm::ELF::SHT_SYMTAB,
-      0,
-      order,
-      Section<ELFT>::K_SymbolTable) {
+    : Section<ELFT>(ti, str, llvm::ELF::SHT_SYMTAB, 0, order,
+                    Section<ELFT>::K_SymbolTable) {
   this->setOrder(order);
   Elf_Sym *symbol = new (_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
   memset((void *)symbol, 0, sizeof(Elf_Sym));

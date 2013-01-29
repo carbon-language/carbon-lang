@@ -406,8 +406,8 @@ DefaultELFLayout<ELFT>::addAtom(const Atom *atom) {
     if (_sectionMap.find(sectionKey) == _sectionMap.end()) {
       SectionOrder section_order =
           getSectionOrder(sectionName, contentType, permissions);
-      section = new (_allocator.Allocate<Section<ELFT> >())
-          Section<ELFT>(sectionName, contentType, permissions, section_order);
+      section = new (_allocator) Section<ELFT>(
+          _targetInfo, sectionName, contentType, permissions, section_order);
       section->setOrder(section_order);
       _sections.push_back(section);
       _sectionMap.insert(std::make_pair(sectionKey, section));
@@ -487,8 +487,8 @@ DefaultELFLayout<ELFT>::assignSectionsToSegments() {
         if (!segmentInsert.second) {
           segment = segmentInsert.first->second;
         } else {
-          segment = new (_allocator.Allocate<Segment<ELFT>>()) Segment<ELFT>(
-            segmentName, getSegmentType(section), _targetInfo);
+          segment = new (_allocator)
+              Segment<ELFT>(_targetInfo, segmentName, getSegmentType(section));
           segmentInsert.first->second = segment;
           _segments.push_back(segment);
         }

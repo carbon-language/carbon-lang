@@ -285,19 +285,19 @@ ELFExecutableWriter<ELFT>::writeFile(const lld::File &file, StringRef path) {
 
 template<class ELFT>
 void ELFExecutableWriter<ELFT>::createDefaultSections() {
-  _elfHeader = new ELFHeader<ELFT>();
-  _programHeader = new ELFProgramHeader<ELFT>();
+  _elfHeader = new ELFHeader<ELFT>(_targetInfo);
+  _programHeader = new ELFProgramHeader<ELFT>(_targetInfo);
   _layout->setELFHeader(_elfHeader);
   _layout->setProgramHeader(_programHeader);
 
-  _symtab = new ELFSymbolTable<ELFT>(
-    ".symtab", DefaultELFLayout<ELFT>::ORDER_SYMBOL_TABLE);
-  _strtab = new ELFStringTable<ELFT>(
-    ".strtab", DefaultELFLayout<ELFT>::ORDER_STRING_TABLE);
+  _symtab = new ELFSymbolTable<
+      ELFT>(_targetInfo, ".symtab", DefaultELFLayout<ELFT>::ORDER_SYMBOL_TABLE);
+  _strtab = new ELFStringTable<
+      ELFT>(_targetInfo, ".strtab", DefaultELFLayout<ELFT>::ORDER_STRING_TABLE);
   _shstrtab = new ELFStringTable<ELFT>(
-    ".shstrtab", DefaultELFLayout<ELFT>::ORDER_SECTION_STRINGS);
-  _shdrtab  = new ELFSectionHeader<ELFT>(
-    DefaultELFLayout<ELFT>::ORDER_SECTION_HEADERS);
+      _targetInfo, ".shstrtab", DefaultELFLayout<ELFT>::ORDER_SECTION_STRINGS);
+  _shdrtab = new ELFSectionHeader<
+      ELFT>(_targetInfo, DefaultELFLayout<ELFT>::ORDER_SECTION_HEADERS);
   _layout->addSection(_symtab);
   _layout->addSection(_strtab);
   _layout->addSection(_shstrtab);

@@ -30,7 +30,7 @@ class ELFHeader : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  ELFHeader();
+  ELFHeader(const ELFTargetInfo &);
 
   void e_ident(int I, unsigned char C) { _eh.e_ident[I] = C; }
   void e_type(uint16_t type)           { _eh.e_type = type; }
@@ -60,9 +60,9 @@ private:
   Elf_Ehdr _eh;
 };
 
-template<class ELFT>
-ELFHeader<ELFT>::ELFHeader()
-: Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_ELFHeader) {
+template <class ELFT>
+ELFHeader<ELFT>::ELFHeader(const ELFTargetInfo &ti)
+    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_ELFHeader, ti) {
   this->_align2 = ELFT::Is64Bits ? 8 : 4;
   this->_fsize = sizeof(Elf_Ehdr);
   this->_msize = sizeof(Elf_Ehdr);
@@ -111,8 +111,8 @@ public:
     uint64_t _flagsClear;
   };
 
-  ELFProgramHeader()
-  : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ELFProgramHeader) {
+  ELFProgramHeader(const ELFTargetInfo &ti)
+      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ELFProgramHeader, ti) {
     this->_align2 = ELFT::Is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
@@ -213,7 +213,7 @@ class ELFSectionHeader : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
-  ELFSectionHeader(int32_t order);
+  ELFSectionHeader(const ELFTargetInfo &, int32_t order);
 
   void appendSection(MergedSections<ELFT> *section);
   
@@ -249,9 +249,9 @@ private:
   llvm::BumpPtrAllocator                  _sectionAllocate;
 };
 
-template<class ELFT>
-ELFSectionHeader<ELFT>::ELFSectionHeader(int32_t order) 
-  : Chunk<ELFT>("shdr", Chunk<ELFT>::K_ELFSectionHeader) {
+template <class ELFT>
+ELFSectionHeader<ELFT>::ELFSectionHeader(const ELFTargetInfo &ti, int32_t order)
+    : Chunk<ELFT>("shdr", Chunk<ELFT>::K_ELFSectionHeader, ti) {
   this->_fsize = 0;
   this->_align2 = 8;
   this->setOrder(order);
