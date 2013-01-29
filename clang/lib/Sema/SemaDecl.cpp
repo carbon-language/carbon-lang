@@ -6211,7 +6211,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   }
 
   if (NewFD->hasAttr<OpenCLKernelAttr>()) {
-
     // OpenCL v1.2 s6.8 static is invalid for kernel functions.
     if ((getLangOpts().OpenCLVersion >= 120)
         && (SC == SC_Static)) {
@@ -6219,17 +6218,27 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       D.setInvalidType();
     }
 
-    // OpenCL v1.2 s6.8 n:
-    // Arguments to kernel functions in a program cannot be declared to be of
-    // type event_t.
     for (FunctionDecl::param_iterator PI = NewFD->param_begin(),
          PE = NewFD->param_end(); PI != PE; ++PI) {
-      if ((*PI)->getType()->isEventT()) {
-        Diag((*PI)->getLocation(), diag::err_event_t_kernel_arg);
+      ParmVarDecl *Param = *PI;
+      QualType PT = Param->getType();
+
+      // OpenCL v1.2 s6.9.a:
+      // A kernel function argument cannot be declared as a
+      // pointer to a pointer type.
+      if (PT->isPointerType() && PT->getPointeeType()->isPointerType()) {
+        Diag(Param->getLocation(), diag::err_opencl_ptrptr_kernel_arg);
+        D.setInvalidType();
+      }
+
+      // OpenCL v1.2 s6.8 n:
+      // A kernel function argument cannot be declared
+      // of event_t type.
+      if (PT->isEventT()) {
+        Diag(Param->getLocation(), diag::err_event_t_kernel_arg);
         D.setInvalidType();
       }
     }
-    
   }
 
   MarkUnusedFileScopedDecl(NewFD);
