@@ -826,6 +826,7 @@ example:
     return from the function to see if it has been overwritten. A
     heuristic is used to determine if a function needs stack protectors
     or not. The heuristic used will enable protectors for functions with:
+
     - Character arrays larger than ``ssp-buffer-size`` (default 8).
     - Aggregates containing character arrays larger than ``ssp-buffer-size``.
     - Calls to alloca() with variable sizes or constant sizes greater than
@@ -848,6 +849,7 @@ example:
     protector. This attribute causes a strong heuristic to be used when
     determining if a function needs stack protectors.  The strong heuristic
     will enable protectors for functions with:
+
     - Arrays of any size and type
     - Aggregates containing an array of any size and type.
     - Calls to alloca().
