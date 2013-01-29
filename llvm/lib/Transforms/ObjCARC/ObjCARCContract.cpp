@@ -1,4 +1,4 @@
-//===- ObjCARCOpts.cpp - ObjC ARC Optimization ----------------------------===//
+//===- ObjCARCContract.cpp - ObjC ARC Optimization ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- ObjCARCUtil.h - ObjC ARC Optimization ----------*- mode: c++ -*-----===//
+//===- ObjCARCUtil.cpp - ObjC ARC Optimization --------*- mode: c++ -*-----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
