@@ -2074,15 +2074,15 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
 /// alignment-specifier:
 /// [C11]   '_Alignas' '(' type-id ')'
 /// [C11]   '_Alignas' '(' constant-expression ')'
-/// [C++0x] 'alignas' '(' type-id ...[opt] ')'
-/// [C++0x] 'alignas' '(' assignment-expression ...[opt] ')'
+/// [C++11] 'alignas' '(' type-id ...[opt] ')'
+/// [C++11] 'alignas' '(' assignment-expression ...[opt] ')'
 void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
                                      SourceLocation *endLoc) {
   assert((Tok.is(tok::kw_alignas) || Tok.is(tok::kw__Alignas)) &&
          "Not an alignment-specifier!");
 
-  SourceLocation KWLoc = Tok.getLocation();
-  ConsumeToken();
+  IdentifierInfo *KWName = Tok.getIdentifierInfo();
+  SourceLocation KWLoc = ConsumeToken();
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.expectAndConsume(diag::err_expected_lparen))
@@ -2107,12 +2107,8 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
 
   ExprVector ArgExprs;
   ArgExprs.push_back(ArgExpr.release());
-  // FIXME: This should not be GNU, but we since the attribute used is
-  //        based on the spelling, and there is no true spelling for
-  //        C++11 attributes, this isn't accepted.
-  Attrs.addNew(PP.getIdentifierInfo("aligned"), KWLoc, 0, KWLoc,
-               0, T.getOpenLocation(), ArgExprs.data(), 1,
-               AttributeList::AS_GNU);
+  Attrs.addNew(KWName, KWLoc, 0, KWLoc, 0, T.getOpenLocation(),
+               ArgExprs.data(), 1, AttributeList::AS_Keyword);
 }
 
 /// ParseDeclarationSpecifiers

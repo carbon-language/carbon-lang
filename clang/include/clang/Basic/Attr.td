@@ -150,7 +150,7 @@ def Alias : InheritableAttr {
 
 def Aligned : InheritableAttr {
   let Spellings = [GNU<"aligned">, Declspec<"align">, CXX11<"gnu", "aligned">,
-                   Keyword<"alignas">];
+                   Keyword<"alignas">, Keyword<"_Alignas">];
   let Subjects = [NonBitField, NormalVar, Tag];
   let Args = [AlignedArgument<"Alignment">, BoolArgument<"IsMSDeclSpec">];
 }

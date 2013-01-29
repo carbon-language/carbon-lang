@@ -17,6 +17,12 @@ int a __attribute__((deprecated("warning")));
 // CHECK: gnu::deprecated("warning")]];
 int b [[gnu::deprecated("warning")]];
 
+// CHECK: int cxx11_alignas alignas(4, 0);
+alignas(4) int cxx11_alignas;
+
+// CHECK: int c11_alignas _Alignas(alignof(int), 0);
+_Alignas(int) int c11_alignas;
+
 // CHECK: void foo() __attribute__((const));
 void foo() __attribute__((const));
 
