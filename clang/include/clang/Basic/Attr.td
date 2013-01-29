@@ -220,7 +220,8 @@ def CarriesDependency : InheritableParamAttr {
 }
 
 def CDecl : InheritableAttr {
-  let Spellings = [GNU<"cdecl">, CXX11<"gnu", "cdecl">, Keyword<"__cdecl">];
+  let Spellings = [GNU<"cdecl">, CXX11<"gnu", "cdecl">, Keyword<"__cdecl">,
+                   Keyword<"_cdecl">];
 }
 
 // cf_audited_transfer indicates that the given function has been
@@ -340,7 +341,7 @@ def FallThrough : Attr {
 
 def FastCall : InheritableAttr {
   let Spellings = [GNU<"fastcall">, CXX11<"gnu", "fastcall">,
-                   Keyword<"__fastcall">];
+                   Keyword<"__fastcall">, Keyword<"_fastcall">];
 }
 
 def Final : InheritableAttr {
@@ -638,16 +639,16 @@ def Sentinel : InheritableAttr {
 
 def StdCall : InheritableAttr {
   let Spellings = [GNU<"stdcall">, CXX11<"gnu", "stdcall">,
-                   Keyword<"__stdcall">];
+                   Keyword<"__stdcall">, Keyword<"_stdcall">];
 }
 
 def ThisCall : InheritableAttr {
   let Spellings = [GNU<"thiscall">, CXX11<"gnu", "thiscall">,
-                   Keyword<"__thiscall">];
+                   Keyword<"__thiscall">, Keyword<"_thiscall">];
 }
 
 def Pascal : InheritableAttr {
-  let Spellings = [GNU<"pascal">, Keyword<"__pascal">];
+  let Spellings = [GNU<"pascal">, Keyword<"__pascal">, Keyword<"_pascal">];
 }
 
 def TransparentUnion : InheritableAttr {

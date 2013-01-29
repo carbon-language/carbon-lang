@@ -4759,13 +4759,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   if (Attr.isInvalid())
     return;
 
-  // FIXME: Ignore unknown keyword attributes for now. We see this in the case
-  // of some Borland attributes, like __pascal.
-  // FIXME: Add these attributes to Attr.td and mark as ignored!
-  if (Attr.isKeywordAttribute() &&
-      Attr.getKind() == AttributeList::UnknownAttribute)
-    return;
-
   // Ignore C++11 attributes on declarator chunks: they appertain to the type
   // instead.
   if (Attr.isCXX11Attribute() && !IncludeCXX11Attributes)
