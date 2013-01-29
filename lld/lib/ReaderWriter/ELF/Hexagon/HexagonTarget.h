@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/X86ELFTarget.h -----------------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/HexagonTarget.h -----------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,4 +7,4 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86_64ELFTargetInfo.h"
+#include "HexagonTargetInfo.h"

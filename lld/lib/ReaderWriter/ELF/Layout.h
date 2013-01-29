@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFLayout.h ---------------------------------===//
+//===- lib/ReaderWriter/ELF/Layout.h --------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_LAYOUT_H_
-#define LLD_READER_WRITER_ELF_LAYOUT_H_
+#ifndef LLD_READER_WRITER_ELF_LAYOUT_H
+#define LLD_READER_WRITER_ELF_LAYOUT_H
 
 #include "lld/Core/DefinedAtom.h"
 
@@ -20,12 +20,12 @@
 
 namespace lld {
 namespace elf {
-/// \brief The ELFLayout is an abstract class for managing the final layout for
+/// \brief The Layout is an abstract class for managing the final layout for
 ///        the kind of binaries(Shared Libraries / Relocatables / Executables 0
 ///        Each architecture (Hexagon, PowerPC, MIPS) would have a concrete
-///        subclass derived from ELFLayout for generating each binary thats
+///        subclass derived from Layout for generating each binary thats
 //         needed by the lld linker
-class ELFLayout {
+class Layout {
 public:
   typedef uint32_t SectionOrder;
   typedef uint32_t SegmentType;
@@ -34,13 +34,13 @@ public:
 public:
   /// Return the order the section would appear in the output file
   virtual SectionOrder getSectionOrder
-                        (const llvm::StringRef name,
+                        (const StringRef name,
                          int32_t contentType,
                          int32_t contentPerm) = 0;
   /// append the Atom to the layout and create appropriate sections
   virtual error_code addAtom(const Atom *atom) = 0;
   /// find the Atom Address in the current layout
-  virtual bool findAtomAddrByName(const llvm::StringRef name, 
+  virtual bool findAtomAddrByName(const StringRef name, 
                                   uint64_t &addr) = 0;
   /// associates a section to a segment
   virtual void assignSectionsToSegments() = 0;
@@ -50,9 +50,9 @@ public:
   virtual void assignFileOffsets() = 0;
 
 public:
-  ELFLayout() {}
+  Layout() {}
 
-  virtual ~ELFLayout() { }
+  virtual ~Layout() { }
 };
 
 struct AtomLayout {
@@ -66,7 +66,7 @@ struct AtomLayout {
   uint64_t _fileOffset;
   uint64_t _virtualAddr;
 };
-} // lld
-} // elf
+} // end namespace elf
+} // end namespace lld
 
-#endif // LLD_READER_WRITER_ELF_LAYOUT_H_
+#endif

@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFTargetLayout.h -----------------------------===//
+//===- lib/ReaderWriter/ELF/TargetLayout.h --------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -10,18 +10,18 @@
 #ifndef LLD_READER_WRITER_ELF_TARGET_LAYOUT_H
 #define LLD_READER_WRITER_ELF_TARGET_LAYOUT_H
 
-#include "DefaultELFLayout.h"
+#include "DefaultLayout.h"
 
 #include "lld/Core/LLVM.h"
 
 namespace lld {
 namespace elf {
-/// \brief The target can override certain functions in the DefaultELFLayout
+/// \brief The target can override certain functions in the DefaultLayout
 /// class so that the order, the name of the section and the segment type could
 /// be changed in the final layout
-template <class ELFT> class ELFTargetLayout : public DefaultELFLayout<ELFT> {
+template <class ELFT> class TargetLayout : public DefaultLayout<ELFT> {
 public:
-  ELFTargetLayout(ELFTargetInfo &targetInfo)
+  TargetLayout(ELFTargetInfo &targetInfo)
       : DefaultELFLayout<ELFT>(targetInfo) {
   }
 
@@ -42,12 +42,12 @@ public:
 
   /// The target may want to override the section order that has been 
   /// set by the DefaultLayout
-  virtual ELFLayout::SectionOrder getSectionOrder(
+  virtual Layout::SectionOrder getSectionOrder(
       const StringRef name, int32_t contentType,
       int32_t contentPermissions) = 0;
 
   /// The target can set the segment type for a Section
-  virtual ELFLayout::SegmentType segmentType(Section<ELFT> *section) const = 0;
+  virtual Layout::SegmentType segmentType(Section<ELFT> *section) const = 0;
 
   /// Returns true/false depending on whether the section has a Output
   //  segment or not

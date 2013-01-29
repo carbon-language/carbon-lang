@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFTargets.h ----------------------------------===//
+//===- lib/ReaderWriter/ELF/Targets.h -------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -10,9 +10,9 @@
 #ifndef LLD_READER_WRITER_ELF_TARGETS_H
 #define LLD_READER_WRITER_ELF_TARGETS_H
 
-#include "Hexagon/HexagonELFTarget.h"
-#include "PPC/PPCELFTarget.h"
-#include "X86/X86ELFTarget.h"
-#include "X86_64/X86_64ELFTarget.h"
+#include "Hexagon/HexagonTarget.h"
+#include "PPC/PPCTarget.h"
+#include "X86/X86Target.h"
+#include "X86_64/X86_64Target.h"
 
 #endif

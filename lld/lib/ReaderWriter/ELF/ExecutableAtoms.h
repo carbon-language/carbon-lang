@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ExecutableAtoms.h ----------------------------===//
+//===- lib/ReaderWriter/ELF/ExecutableAtoms.h -----------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
-#define LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
+#ifndef LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H
+#define LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H
 
-#include "AtomsELF.h"
-#include "FileELF.h"
+#include "Atoms.h"
+#include "File.h"
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
@@ -21,16 +21,15 @@
 
 namespace lld {
 namespace elf {
-
 /// \brief All atoms are owned by a File. To add linker specific atoms
 /// the atoms need to be inserted to a file called (CRuntimeFile) which 
 /// are basically additional symbols required by libc and other runtime 
 /// libraries part of executing a program. This class provides support
 /// for adding absolute symbols and undefined symbols
-template <class ELFT> class CRuntimeFileELF : public FileELF<ELFT> {
+template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFileELF(const ELFTargetInfo &ti) : FileELF<ELFT>(ti, "C runtime") {}
+  CRuntimeFile(const ELFTargetInfo &ti) : ELFFile<ELFT>(ti, "C runtime") {}
 
   /// \brief add a global absolute atom
   void addAbsoluteAtom(const StringRef symbolName) {
@@ -42,25 +41,21 @@ public:
                               llvm::ELF::STT_OBJECT);
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
-    auto *newAtom = new (_allocator.Allocate<
-      ELFAbsoluteAtom<ELFT> > ())
-      ELFAbsoluteAtom<ELFT>(
-        *this, symbolName, symbol, -1);
+    auto *newAtom =
+        new (_allocator) ELFAbsoluteAtom<ELFT>(*this, symbolName, symbol, -1);
     _absoluteAtoms._atoms.push_back(newAtom);
   }
 
   /// \brief add an undefined atom 
   void addUndefinedAtom(const StringRef symbolName) {
-    Elf_Sym *symbol = new(_allocator.Allocate<Elf_Sym>()) Elf_Sym;
+    Elf_Sym *symbol = new (_allocator) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_UNDEF;
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
-    auto *newAtom = new (_allocator.Allocate<
-      ELFUndefinedAtom<ELFT> > ())
-      ELFUndefinedAtom<ELFT>(
-        *this, symbolName, symbol);
+    auto *newAtom =
+        new (_allocator) ELFUndefinedAtom<ELFT>(*this, symbolName, symbol);
     _undefinedAtoms._atoms.push_back(newAtom);
   }
 
@@ -92,8 +87,7 @@ private:
   File::atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   File::atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
+} // end namespace elf
+} // end namespace lld 
 
-} // namespace elf
-} // namespace lld 
-
-#endif // LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
+#endif

@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFWriter.h ---------------------------------===//
+//===- lib/ReaderWriter/ELF/Writer.h --------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_WRITER_H_
-#define LLD_READER_WRITER_ELF_WRITER_H_
+#ifndef LLD_READER_WRITER_ELF_WRITER_H
+#define LLD_READER_WRITER_ELF_WRITER_H
 
 #include "ReferenceKinds.h"
 
@@ -18,7 +18,7 @@
 
 namespace lld {
 namespace elf {
-/// \brief The ELFWriter class is a base class for the linker to write
+/// \brief The Writer class is a base class for the linker to write
 ///        various kinds of ELF files.
 class ELFWriter : public Writer {
 public:
@@ -27,10 +27,10 @@ public:
 public:
   /// \brief builds the chunks that needs to be written to the output
   ///        ELF file
-  virtual void buildChunks(const lld::File &file) = 0;
+  virtual void buildChunks(const File &file) = 0;
 
   /// \brief Writes the chunks into the output file specified by path
-  virtual error_code writeFile(const lld::File &File, StringRef path) = 0;
+  virtual error_code writeFile(const File &File, StringRef path) = 0;
 
   /// \brief Get the virtual address of \p atom after layout.
   virtual uint64_t addressOfAtom(const Atom *atom) = 0;
@@ -38,8 +38,7 @@ public:
   /// \brief Return the processing function to apply Relocations
   virtual KindHandler *kindHandler()  = 0;
 };
+} // end namespace elf
+} // end namespace lld
 
-} // elf
-} // lld
-
-#endif // LLD_READER_WRITER_ELF_WRITER_H_
+#endif

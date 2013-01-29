@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/DefaultELFLayout.h ---------------------------===//
+//===- lib/ReaderWriter/ELF/DefaultLayout.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
-#define LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
+#ifndef LLD_READER_WRITER_ELF_DEFAULT_LAYOUT_H
+#define LLD_READER_WRITER_ELF_DEFAULT_LAYOUT_H
 
-#include "ELFChunk.h"
-#include "ELFHeaderChunks.h"
-#include "ELFLayout.h"
-#include "ELFSectionChunks.h"
-#include "ELFSegmentChunks.h"
+#include "Chunk.h"
+#include "HeaderChunks.h"
+#include "Layout.h"
+#include "SectionChunks.h"
+#include "SegmentChunks.h"
 
 #include "lld/Core/LinkerOptions.h"
 
@@ -32,16 +32,14 @@
 #include <tuple>
 #include <unordered_map>
 
-/// \brief The DefaultELFLayout class is used by the Writer to arrange
-///        sections and segments in the order determined by the target ELF
-///        format. The writer creates a single instance of the DefaultELFLayout
-///        class
-
 namespace lld {
 namespace elf {
-
+/// \brief The DefaultLayout class is used by the Writer to arrange
+///        sections and segments in the order determined by the target ELF
+///        format. The writer creates a single instance of the DefaultLayout
+///        class
 template<class ELFT>
-class DefaultELFLayout : public ELFLayout {
+class DefaultLayout : public Layout {
 public:
 
   // The order in which the sections appear in the output file
@@ -163,7 +161,7 @@ public:
 
   typedef typename std::vector<AbsoluteAtomPair>::iterator AbsoluteAtomIterT;
 
-  DefaultELFLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
+  DefaultLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
 
   /// \brief Return the section order for a input section
   virtual SectionOrder getSectionOrder
@@ -176,7 +174,7 @@ public:
                            const int32_t contentType);
 
   /// \brief Gets the segment for a output section
-  virtual ELFLayout::SegmentType getSegmentType(Section<ELFT> *section) const;
+  virtual Layout::SegmentType getSegmentType(Section<ELFT> *section) const;
 
   /// \brief Returns true/false depending on whether the section has a Output
   //         segment or not
@@ -230,11 +228,11 @@ public:
     return false;
   }
 
-  inline void setELFHeader(ELFHeader<ELFT> *e) {
-    _elfHeader = e;
+  inline void setHeader(Header<ELFT> *e) {
+    _header = e;
   }
 
-  inline void setProgramHeader(ELFProgramHeader<ELFT> *p) {
+  inline void setProgramHeader(ProgramHeader<ELFT> *p) {
     _programHeader = p;
   }
 
@@ -244,19 +242,19 @@ public:
 
   inline range<ChunkIter> segments() { return _segments; }
 
-  inline ELFHeader<ELFT> *elfHeader() {
-    return _elfHeader;
+  inline Header<ELFT> *getHeader() {
+    return _header;
   }
 
-  inline ELFProgramHeader<ELFT> *elfProgramHeader() {
+  inline ProgramHeader<ELFT> *getProgramHeader() {
     return _programHeader;
   }
 
-  ELFRelocationTable<ELFT> *getRelocationTable() {
+  RelocationTable<ELFT> *getRelocationTable() {
     // Only create the relocation table if it is needed.
     if (!_relocationTable) {
       _relocationTable = new (_allocator)
-          ELFRelocationTable<ELFT>(_targetInfo, ".rela.plt", ORDER_REL);
+          RelocationTable<ELFT>(_targetInfo, ".rela.plt", ORDER_REL);
       addSection(_relocationTable);
     }
     return _relocationTable;
@@ -269,17 +267,17 @@ private:
   std::vector<Chunk<ELFT> *> _sections;
   std::vector<Segment<ELFT> *> _segments;
   std::vector<MergedSections<ELFT> *> _mergedSections;
-  ELFHeader<ELFT> *_elfHeader;
-  ELFProgramHeader<ELFT> *_programHeader;
-  ELFRelocationTable<ELFT> *_relocationTable;
+  Header<ELFT> *_header;
+  ProgramHeader<ELFT> *_programHeader;
+  RelocationTable<ELFT> *_relocationTable;
   std::vector<AbsoluteAtomPair> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const ELFTargetInfo &_targetInfo;
 };
 
 template<class ELFT>
-ELFLayout::SectionOrder
-DefaultELFLayout<ELFT>::getSectionOrder(const StringRef name, 
+Layout::SectionOrder
+DefaultLayout<ELFT>::getSectionOrder(const StringRef name, 
                                         int32_t contentType,
                                         int32_t contentPermissions)
 {
@@ -322,7 +320,7 @@ DefaultELFLayout<ELFT>::getSectionOrder(const StringRef name,
 /// \brief This maps the input sections to the output section names
 template<class ELFT>
 StringRef 
-DefaultELFLayout<ELFT>::getSectionName(const StringRef name, 
+DefaultLayout<ELFT>::getSectionName(const StringRef name, 
                                        const int32_t contentType) {
   if (contentType == DefinedAtom::typeZeroFill)
     return ".bss";
@@ -335,8 +333,8 @@ DefaultELFLayout<ELFT>::getSectionName(const StringRef name,
 
 /// \brief Gets the segment for a output section
 template<class ELFT>
-ELFLayout::SegmentType 
-DefaultELFLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
+Layout::SegmentType 
+DefaultLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
   switch(section->order()) {
   case ORDER_INTERP:
     return llvm::ELF::PT_INTERP;
@@ -379,7 +377,7 @@ DefaultELFLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
 
 template<class ELFT>
 bool
-DefaultELFLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
+DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   switch(section->order()) {
   case ORDER_INTERP:
   case ORDER_HASH:
@@ -412,13 +410,13 @@ DefaultELFLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
 
 template<class ELFT>
 error_code
-DefaultELFLayout<ELFT>::addAtom(const Atom *atom) {
+DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     const StringRef sectionName = getSectionName(
         definedAtom->customSectionName(), definedAtom->contentType());
-    const lld::DefinedAtom::ContentPermissions permissions =
+    const DefinedAtom::ContentPermissions permissions =
         definedAtom->permissions();
-    const lld::DefinedAtom::ContentType contentType =
+    const DefinedAtom::ContentType contentType =
         definedAtom->contentType();
     const SectionKey sectionKey(sectionName, permissions);
     Section<ELFT> *section;
@@ -453,7 +451,7 @@ DefaultELFLayout<ELFT>::addAtom(const Atom *atom) {
 /// Merge sections with the same name into a MergedSections
 template<class ELFT>
 void 
-DefaultELFLayout<ELFT>::mergeSimiliarSections() {
+DefaultLayout<ELFT>::mergeSimiliarSections() {
   MergedSections<ELFT> *mergedSection;
 
   for (auto &si : _sections) {
@@ -476,7 +474,7 @@ DefaultELFLayout<ELFT>::mergeSimiliarSections() {
 
 template<class ELFT>
 void 
-DefaultELFLayout<ELFT>::assignSectionsToSegments() {
+DefaultLayout<ELFT>::assignSectionsToSegments() {
   // sort the sections by their order as defined by the layout
   std::stable_sort(_sections.begin(), _sections.end(),
   [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
@@ -524,7 +522,7 @@ DefaultELFLayout<ELFT>::assignSectionsToSegments() {
 
 template<class ELFT>
 void
-DefaultELFLayout<ELFT>::assignFileOffsets() {
+DefaultLayout<ELFT>::assignFileOffsets() {
   std::sort(_segments.begin(), _segments.end(),
             Segment<ELFT>::compareSegments);
   int ordinal = 0;
@@ -541,7 +539,7 @@ DefaultELFLayout<ELFT>::assignFileOffsets() {
 
 template<class ELFT>
 void
-DefaultELFLayout<ELFT>::assignVirtualAddress() {
+DefaultLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
   
@@ -553,7 +551,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
   // at runtime. To do this we simply prepend them to the first Segment and
   // let the layout logic take care of it.
   _segments[0]->prepend(_programHeader);
-  _segments[0]->prepend(_elfHeader);
+  _segments[0]->prepend(_header);
   
   bool newSegmentHeaderAdded = true;
   while (true) {
@@ -589,7 +587,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
   // Fix the offsets of all the atoms within a section
   for (auto &si : _sections) {
     section = dyn_cast<Section<ELFT>>(si);
-    if (section && DefaultELFLayout<ELFT>::hasOutputSegment(section))
+    if (section && DefaultLayout<ELFT>::hasOutputSegment(section))
       section->assignOffsets(section->fileOffset());
   }
   // Set the size of the merged Sections
@@ -632,7 +630,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
 
 template<class ELFT>
 void
-DefaultELFLayout<ELFT>::assignOffsetsForMiscSections() {
+DefaultLayout<ELFT>::assignOffsetsForMiscSections() {
   uint64_t fileoffset = 0;
   uint64_t size = 0;
   for (auto si : _segments) {
@@ -643,7 +641,7 @@ DefaultELFLayout<ELFT>::assignOffsetsForMiscSections() {
   Section<ELFT> *section;
   for (auto si : _sections) {
     section = dyn_cast<Section<ELFT>>(si);
-    if (section && DefaultELFLayout<ELFT>::hasOutputSegment(section))
+    if (section && DefaultLayout<ELFT>::hasOutputSegment(section))
       continue;
     fileoffset = llvm::RoundUpToAlignment(fileoffset, si->align2());
     si->setFileOffset(fileoffset);
@@ -651,8 +649,7 @@ DefaultELFLayout<ELFT>::assignOffsetsForMiscSections() {
     fileoffset += si->fileSize();
   }
 }
+} // end namespace elf
+} // end namespace lld
 
-} // elf
-} // lld
-
-#endif // LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
+#endif

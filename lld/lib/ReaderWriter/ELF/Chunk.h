@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFChunks.h ---------------------------------===//
+//===- lib/ReaderWriter/ELF/Chunks.h --------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_CHUNKS_H_
-#define LLD_READER_WRITER_ELF_CHUNKS_H_
+#ifndef LLD_READER_WRITER_ELF_CHUNKS_H
+#define LLD_READER_WRITER_ELF_CHUNKS_H
+
+#include "lld/Core/LLVM.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -32,13 +34,13 @@ public:
 
   /// \brief Describes the type of Chunk
   enum Kind {
-    K_ELFHeader, // ELF Header
-    K_ELFProgramHeader, // Program Header
+    K_Header, // ELF Header
+    K_ProgramHeader, // Program Header
     K_ELFSegment, // Segment
     K_ELFSection, // Section
-    K_ELFSectionHeader // Section header
+    K_SectionHeader // Section header
   };
-  Chunk(llvm::StringRef name, Kind kind, const ELFTargetInfo &ti)
+  Chunk(StringRef name, Kind kind, const ELFTargetInfo &ti)
       : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
         _ordinal(1), _start(0), _fileoffset(0), _targetInfo(ti) {
   }
@@ -48,7 +50,7 @@ public:
     return false;
   }
   // The name of the chunk
-  llvm::StringRef name() const { return _name; }
+  StringRef name() const { return _name; }
   // Kind of chunk
   Kind kind() const { return _kind; }
   uint64_t            fileSize() const { return _fsize; }
@@ -76,7 +78,7 @@ public:
   virtual void       finalize() = 0;
 
 protected:
-  llvm::StringRef _name;
+  StringRef _name;
   Kind _kind;
   uint64_t _fsize;
   uint64_t _msize;
@@ -88,7 +90,7 @@ protected:
   const ELFTargetInfo &_targetInfo;
 };
 
-} // elf
-} // lld
+} // end namespace elf
+} // end namespace lld
 
-#endif // LLD_READER_WRITER_ELF_CHUNKS_H_
+#endif

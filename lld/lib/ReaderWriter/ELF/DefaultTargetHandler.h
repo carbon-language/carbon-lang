@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/DefaultELFTargetHandler.h ---------------------===//
+//===- lib/ReaderWriter/ELF/DefaultTargetHandler.h ------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,11 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_DEFAULT_ELF_TARGETHANDLER_H
-#define LLD_READER_WRITER_DEFAULT_ELF_TARGETHANDLER_H
 
-#include "DefaultELFLayout.h"
-#include "ELFTargetHandler.h"
+#ifndef LLD_READER_WRITER_ELF_DEFAULT_TARGETHANDLER_H
+#define LLD_READER_WRITER_ELF_DEFAULT_TARGETHANDLER_H
+
+#include "DefaultLayout.h"
+#include "TargetHandler.h"
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
@@ -20,28 +21,27 @@
 
 namespace lld {
 namespace elf {
-
 template <class ELFT>
-class DefaultELFTargetHandler : public ELFTargetHandler<ELFT> {
+class DefaultTargetHandler : public TargetHandler<ELFT> {
 
 public:
-  DefaultELFTargetHandler(ELFTargetInfo &targetInfo)
-      : ELFTargetHandler<ELFT>(targetInfo) {
+  DefaultTargetHandler(ELFTargetInfo &targetInfo)
+      : TargetHandler<ELFT>(targetInfo) {
   }
 
-  bool doesOverrideELFHeader() { return false; }
+  bool doesOverrideHeader() { return false; }
 
-  void setELFHeaderInfo(ELFHeader<ELFT> *elfHeader) {
+  void setHeaderInfo(Header<ELFT> *Header) {
     llvm_unreachable("Target should provide implementation for function ");
   }
 
-  /// ELFTargetLayout 
-  ELFTargetLayout<ELFT> &targetLayout() {
+  /// TargetLayout 
+  TargetLayout<ELFT> &targetLayout() {
     llvm_unreachable("Target should provide implementation for function ");
   }
 
-  /// ELFTargetAtomHandler
-  ELFTargetAtomHandler<ELFT> &targetAtomHandler() {
+  /// TargetAtomHandler
+  TargetAtomHandler<ELFT> &targetAtomHandler() {
     llvm_unreachable("Target should provide implementation for function ");
   }
 
@@ -61,8 +61,7 @@ public:
   /// symbols over to small data, this would also be used 
   void allocateCommons() {}
 };
-
-} // elf
-} // lld
+} // end namespace elf
+} // end namespace lld
 
 #endif

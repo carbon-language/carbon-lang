@@ -21,11 +21,11 @@ namespace lld {
 class DefinedAtom;
 class Reference;
 
-namespace elf { template <typename ELFT> class ELFTargetHandler; }
+namespace elf { template <typename ELFT> class TargetHandler; }
 
-class ELFTargetHandlerBase {
+class TargetHandlerBase {
 public:
-  virtual ~ELFTargetHandlerBase() {}
+  virtual ~TargetHandlerBase() {}
 };
 
 class ELFTargetInfo : public TargetInfo {
@@ -47,13 +47,12 @@ public:
   static std::unique_ptr<ELFTargetInfo> create(const LinkerOptions &lo);
 
   template <typename ELFT>
-  lld::elf::ELFTargetHandler<ELFT> &getTargetHandler() const {
-    return static_cast<
-        lld::elf::ELFTargetHandler<ELFT> &>(*_targetHandler.get());
+  lld::elf::TargetHandler<ELFT> &getTargetHandler() const {
+    return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
   }
 
 protected:
-  std::unique_ptr<ELFTargetHandlerBase> _targetHandler;
+  std::unique_ptr<TargetHandlerBase> _targetHandler;
 };
 } // end namespace lld
 

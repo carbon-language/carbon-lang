@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFHeaderChunks.h -----------------------------===//
+//===- lib/ReaderWriter/ELF/HeaderChunks.h --------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_HEADER_CHUNKS_H_
-#define LLD_READER_WRITER_ELF_HEADER_CHUNKS_H_
+#ifndef LLD_READER_WRITER_ELF_HEADER_CHUNKS_H
+#define LLD_READER_WRITER_ELF_HEADER_CHUNKS_H
 
-#include "ELFSegmentChunks.h"
+#include "SegmentChunks.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"
@@ -19,17 +19,16 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
-/// \brief An ELFHeader represents the Elf[32/64]_Ehdr structure at the
+/// \brief An Header represents the Elf[32/64]_Ehdr structure at the
 ///        start of an ELF executable file.
 namespace lld {
 namespace elf {
-
 template<class ELFT>
-class ELFHeader : public Chunk<ELFT> {
+class Header : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  ELFHeader(const ELFTargetInfo &);
+  Header(const ELFTargetInfo &);
 
   void e_ident(int I, unsigned char C) { _eh.e_ident[I] = C; }
   void e_type(uint16_t type)           { _eh.e_type = type; }
@@ -48,7 +47,7 @@ public:
   uint64_t  fileSize()                 { return sizeof (Elf_Ehdr); }
 
   static inline bool classof(const Chunk<ELFT> *c) {
-    return c->Kind() == Chunk<ELFT>::K_ELFHeader;
+    return c->Kind() == Chunk<ELFT>::K_Header;
   }
 
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
@@ -60,8 +59,8 @@ private:
 };
 
 template <class ELFT>
-ELFHeader<ELFT>::ELFHeader(const ELFTargetInfo &ti)
-    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_ELFHeader, ti) {
+Header<ELFT>::Header(const ELFTargetInfo &ti)
+    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_Header, ti) {
   this->_align2 = ELFT::Is64Bits ? 8 : 4;
   this->_fsize = sizeof(Elf_Ehdr);
   this->_msize = sizeof(Elf_Ehdr);
@@ -75,16 +74,16 @@ ELFHeader<ELFT>::ELFHeader(const ELFTargetInfo &ti)
 }
 
 template <class ELFT>
-void ELFHeader<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+void Header<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *atomContent = chunkBuffer + this->fileOffset();
   memcpy(atomContent, &_eh, fileSize());
 }
 
-/// \brief An ELFProgramHeader represents the Elf[32/64]_Phdr structure at the
+/// \brief An ProgramHeader represents the Elf[32/64]_Phdr structure at the
 ///        start of an ELF executable file.
 template<class ELFT>
-class ELFProgramHeader : public Chunk<ELFT> {
+class ProgramHeader : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Phdr_Impl<ELFT> Elf_Phdr;
   typedef typename std::vector<Elf_Phdr *>::iterator PhIterT;
@@ -110,8 +109,8 @@ public:
     uint64_t _flagsClear;
   };
 
-  ELFProgramHeader(const ELFTargetInfo &ti)
-      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ELFProgramHeader, ti) {
+  ProgramHeader(const ELFTargetInfo &ti)
+      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ProgramHeader, ti) {
     this->_align2 = ELFT::Is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
@@ -127,7 +126,7 @@ public:
   }
 
   static inline bool classof(const Chunk<ELFT> *c) {
-    return c->Kind() == Chunk<ELFT>::K_ELFProgramHeader;
+    return c->Kind() == Chunk<ELFT>::K_ProgramHeader;
   }
 
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
@@ -164,7 +163,7 @@ private:
 
 template<class ELFT>
 bool
-ELFProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
+ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   Elf_Phdr *phdr = nullptr;
   bool ret = false;
 
@@ -195,7 +194,7 @@ ELFProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
 }
 
 template <class ELFT>
-void ELFProgramHeader<ELFT>::write(ELFWriter *writer,
+void ProgramHeader<ELFT>::write(ELFWriter *writer,
                                    llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -205,24 +204,24 @@ void ELFProgramHeader<ELFT>::write(ELFWriter *writer,
   }
 }
 
-/// \brief An ELFSectionHeader represents the Elf[32/64]_Shdr structure
+/// \brief An SectionHeader represents the Elf[32/64]_Shdr structure
 /// at the end of the file
 template<class ELFT>
-class ELFSectionHeader : public Chunk<ELFT> {
+class SectionHeader : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
-  ELFSectionHeader(const ELFTargetInfo &, int32_t order);
+  SectionHeader(const ELFTargetInfo &, int32_t order);
 
   void appendSection(MergedSections<ELFT> *section);
   
   void updateSection(Section<ELFT> *section);
   
   static inline bool classof(const Chunk<ELFT> *c) {
-    return c->getChunkKind() == Chunk<ELFT>::K_ELFSectionHeader;
+    return c->getChunkKind() == Chunk<ELFT>::K_SectionHeader;
   }
   
-  void setStringSection(ELFStringTable<ELFT> *s) {
+  void setStringSection(StringTable<ELFT> *s) {
     _stringSection = s;
   }
 
@@ -243,14 +242,14 @@ public:
   }
 
 private:
-  ELFStringTable<ELFT> *_stringSection;
+  StringTable<ELFT> *_stringSection;
   std::vector<Elf_Shdr*>                  _sectionInfo;
   llvm::BumpPtrAllocator                  _sectionAllocate;
 };
 
 template <class ELFT>
-ELFSectionHeader<ELFT>::ELFSectionHeader(const ELFTargetInfo &ti, int32_t order)
-    : Chunk<ELFT>("shdr", Chunk<ELFT>::K_ELFSectionHeader, ti) {
+SectionHeader<ELFT>::SectionHeader(const ELFTargetInfo &ti, int32_t order)
+    : Chunk<ELFT>("shdr", Chunk<ELFT>::K_SectionHeader, ti) {
   this->_fsize = 0;
   this->_align2 = 8;
   this->setOrder(order);
@@ -263,7 +262,7 @@ ELFSectionHeader<ELFT>::ELFSectionHeader(const ELFTargetInfo &ti, int32_t order)
 
 template<class ELFT>
 void 
-ELFSectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
+SectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
   Elf_Shdr *shdr = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
   shdr->sh_name   = _stringSection->addString(section->name());
   shdr->sh_type   = section->type();
@@ -280,7 +279,7 @@ ELFSectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
 
 template<class ELFT>
 void 
-ELFSectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
+SectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
   Elf_Shdr *shdr = _sectionInfo[section->ordinal()];
   shdr->sh_type   = section->type();
   shdr->sh_flags  = section->flags();
@@ -294,7 +293,7 @@ ELFSectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
 }
 
 template <class ELFT>
-void ELFSectionHeader<ELFT>::write(ELFWriter *writer,
+void SectionHeader<ELFT>::write(ELFWriter *writer,
                                    llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -304,8 +303,7 @@ void ELFSectionHeader<ELFT>::write(ELFWriter *writer,
   }
   _stringSection->write(writer, buffer);
 }
+} // end namespace elf
+} // end namespace lld
 
-} // elf
-} // lld
-
-#endif // LLD_READER_WRITER_ELF_HEADER_CHUNKS_H_
+#endif

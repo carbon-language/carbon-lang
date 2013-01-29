@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/FileELF.h ------------------------------------===//
+//===- lib/ReaderWriter/ELF/File.h ----------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,14 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-/// \brief Read a binary, find out based on the symbol table contents what kind
-/// of symbol it is and create corresponding atoms for it
 
-#ifndef LLD_READER_WRITER_FILE_ELF_H
-#define LLD_READER_WRITER_FILE_ELF_H
+#ifndef LLD_READER_WRITER_ELF_FILE_H
+#define LLD_READER_WRITER_ELF_FILE_H
 
-#include "AtomsELF.h"
+#include "Atoms.h"
 
+#include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
@@ -39,19 +38,21 @@
 #include <map>
 
 namespace lld {
-
-template <class ELFT> class FileELF : public File {
+namespace elf {
+/// \brief Read a binary, find out based on the symbol table contents what kind
+/// of symbol it is and create corresponding atoms for it
+template <class ELFT> class ELFFile : public File {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
 public:
-  FileELF(const ELFTargetInfo &ti, const StringRef name)
+  ELFFile(const ELFTargetInfo &ti, const StringRef name)
       : File(name), _elfTargetInfo(ti) {
   }
 
-  FileELF(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
+  ELFFile(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
           llvm::error_code &EC)
       : File(MB->getBufferIdentifier()), _elfTargetInfo(ti) {
     static uint32_t lastOrdinal = 0;
@@ -87,7 +88,7 @@ public:
       const Elf_Shdr *section = _objFile->getElfSection(sit);
 
       if (section->sh_type == llvm::ELF::SHT_RELA) {
-        llvm::StringRef sectionName;
+        StringRef sectionName;
         if ((EC = _objFile->getSectionName(section, sectionName)))
           return;
         // Get rid of the leading .rela so Atoms can use their own section
@@ -104,7 +105,7 @@ public:
       }
 
       if (section->sh_type == llvm::ELF::SHT_REL) {
-        llvm::StringRef sectionName;
+        StringRef sectionName;
         if ((EC = _objFile->getSectionName(section, sectionName)))
           return;
         // Get rid of the leading .rel so Atoms can use their own section
@@ -136,7 +137,7 @@ public:
       const Elf_Shdr *section = _objFile->getElfSection(sit);
       const Elf_Sym *symbol = _objFile->getElfSymbol(it);
 
-      llvm::StringRef symbolName;
+      StringRef symbolName;
       if ((EC = _objFile->getSymbolName(section, symbol, symbolName)))
         return;
 
@@ -185,13 +186,13 @@ public:
       if ((EC = _objFile->getSectionContents(i.first, sectionContents)))
         return;
 
-      llvm::StringRef sectionName;
+      StringRef sectionName;
       if ((EC = _objFile->getSectionName(i.first, sectionName)))
         return;
 
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
-        llvm::StringRef symbolName;
+        StringRef symbolName;
         if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
           return;
 
@@ -202,10 +203,10 @@ public:
 
         if (((*si)->st_shndx >= llvm::ELF::SHN_LOPROC) &&
             ((*si)->st_shndx <= llvm::ELF::SHN_HIPROC)) {
-          elf::ELFTargetHandler<ELFT> &elfTargetHandler =
+          TargetHandler<ELFT> &TargetHandler =
               _elfTargetInfo.getTargetHandler<ELFT>();
-          elf::ELFTargetAtomHandler<ELFT> &elfAtomHandler =
-              elfTargetHandler.targetAtomHandler();
+          TargetAtomHandler<ELFT> &elfAtomHandler =
+              TargetHandler.targetAtomHandler();
           c = elfAtomHandler.contentType(*si);
 
           if (c == DefinedAtom::typeZeroFill)
@@ -331,6 +332,7 @@ private:
   llvm::BumpPtrAllocator _readerStorage;
   const ELFTargetInfo &_elfTargetInfo;
 };
-} // lld
+} // end namespace elf
+} // end namespace lld
 
 #endif

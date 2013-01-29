@@ -15,15 +15,15 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
-#include "DefaultELFTargetHandler.h"
+#include "DefaultTargetHandler.h"
 
 namespace lld {
 namespace elf {
-class HexagonELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
+class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  HexagonELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
-    _targetHandler = std::unique_ptr<ELFTargetHandlerBase>(
-        new DefaultELFTargetHandler<llvm::object::ELFType<llvm::support::little,
+  HexagonTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+    _targetHandler = std::unique_ptr<TargetHandlerBase>(
+        new DefaultTargetHandler<llvm::object::ELFType<llvm::support::little,
                                                           4, false> >(*this));
   }
 

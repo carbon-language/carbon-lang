@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/X86ELFTarget.h -----------------------===//
+//===- lib/ReaderWriter/ELF/PPC/PPCTarget.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,4 +6,5 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#include "X86ELFTargetInfo.h"
+
+#include "PPCTargetInfo.h"

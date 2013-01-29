@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/HexagonELFTarget.h ---------------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/X86Target.h ---------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,4 +6,5 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#include "HexagonELFTargetInfo.h"
+
+#include "X86_64TargetInfo.h"

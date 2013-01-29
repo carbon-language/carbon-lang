@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFSectionChunks.h -----------------------------===//
+//===- lib/ReaderWriter/ELF/SectionChunks.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_SECTION_CHUNKS_H_
-#define LLD_READER_WRITER_ELF_SECTION_CHUNKS_H_
+#ifndef LLD_READER_WRITER_ELF_SECTION_CHUNKS_H
+#define LLD_READER_WRITER_ELF_SECTION_CHUNKS_H
 
-#include "ELFChunk.h"
-#include "ELFLayout.h"
-#include "ELFTargetHandler.h"
-#include "ELFWriter.h"
+#include "Chunk.h"
+#include "Layout.h"
+#include "TargetHandler.h"
+#include "Writer.h"
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/range.h"
@@ -45,7 +45,7 @@ public:
   };
   // Create a section object, the section is set to the default type if the
   // caller doesnot set it
-  Section(const ELFTargetInfo &, const llvm::StringRef sectionName,
+  Section(const ELFTargetInfo &, const StringRef sectionName,
           const int32_t contentType, const int32_t contentPermissions,
           const int32_t order, const SectionKind kind = K_Default);
 
@@ -83,7 +83,7 @@ public:
   /// \brief Find the Atom address given a name, this is needed to to properly
   ///  apply relocation. The section class calls this to find the atom address
   ///  to fix the relocation
-  inline bool findAtomAddrByName(const llvm::StringRef name, uint64_t &addr) {
+  inline bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
     for (auto ai : _atoms) {
       if (ai._atom->name() == name) {
         addr = ai._virtualAddr;
@@ -113,7 +113,7 @@ public:
 
   /// \brief convert the segment type to a String for diagnostics
   ///        and printing purposes
-  llvm::StringRef segmentKindToStr() const;
+  StringRef segmentKindToStr() const;
 
   /// \brief Return the raw flags, we need this to sort segments
   inline int64_t atomflags() const {
@@ -143,7 +143,7 @@ public:
   }
 
   /// \brief Records the segmentType, that this section belongs to
-  inline void setSegment(const ELFLayout::SegmentType segmentType) {
+  inline void setSegment(const Layout::SegmentType segmentType) {
     _segmentType = segmentType;
   }
 
@@ -168,7 +168,7 @@ protected:
   int32_t _contentPermissions;
   SectionKind _sectionKind;
   std::vector<AtomLayout> _atoms;
-  ELFLayout::SegmentType _segmentType;
+  Layout::SegmentType _segmentType;
   int64_t _entSize;
   int64_t _shInfo;
   int64_t _link;
@@ -382,7 +382,7 @@ public:
   // Iterators
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
 
-  MergedSections(llvm::StringRef name);
+  MergedSections(StringRef name);
 
   // Appends a section into the list of sections that are part of this Merged
   // Section
@@ -422,7 +422,7 @@ public:
   // The below functions returns the properties of the MergeSection
   inline bool hasSegment() const { return _hasSegment; }
 
-  inline llvm::StringRef name() const { return _name; }
+  inline StringRef name() const { return _name; }
 
   inline int64_t shinfo() const { return _shInfo; }
 
@@ -449,7 +449,7 @@ public:
   inline uint64_t memSize() { return _memSize; }
 
 private:
-  llvm::StringRef _name;
+  StringRef _name;
   bool _hasSegment;
   uint64_t _ordinal;
   int64_t _flags;
@@ -504,26 +504,26 @@ MergedSections<ELFT>::appendSection(Chunk<ELFT> *c) {
 
 /// \brief The class represents the ELF String Table
 template<class ELFT>
-class ELFStringTable : public Section<ELFT> {
+class StringTable : public Section<ELFT> {
 public:
-  ELFStringTable(const ELFTargetInfo &, const char *str, int32_t order);
+  StringTable(const ELFTargetInfo &, const char *str, int32_t order);
 
   static inline bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Section<ELFT>::K_StringTable;
   }
 
-  uint64_t addString(const llvm::StringRef symname);
+  uint64_t addString(const StringRef symname);
 
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   inline void finalize() { }
 
 private:
-  std::vector<llvm::StringRef> _strings;
+  std::vector<StringRef> _strings;
 };
 
 template <class ELFT>
-ELFStringTable<ELFT>::ELFStringTable(const ELFTargetInfo &ti, const char *str,
+StringTable<ELFT>::StringTable(const ELFTargetInfo &ti, const char *str,
                                      int32_t order)
     : Section<ELFT>(ti, str, llvm::ELF::SHT_STRTAB, DefinedAtom::perm___, order,
                     Section<ELFT>::K_StringTable) {
@@ -537,7 +537,7 @@ ELFStringTable<ELFT>::ELFStringTable(const ELFTargetInfo &ti, const char *str,
 
 template<class ELFT>
 uint64_t
-ELFStringTable<ELFT>::addString(const StringRef symname) {
+StringTable<ELFT>::addString(const StringRef symname) {
   _strings.push_back(symname);
   uint64_t offset = this->_fsize;
   this->_fsize += symname.size() + 1;
@@ -545,7 +545,7 @@ ELFStringTable<ELFT>::addString(const StringRef symname) {
 }
 
 template <class ELFT>
-void ELFStringTable<ELFT>::write(ELFWriter *writer,
+void StringTable<ELFT>::write(ELFWriter *writer,
                                  llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -557,13 +557,13 @@ void ELFStringTable<ELFT>::write(ELFWriter *writer,
   }
 }
 
-/// \brief The ELFSymbolTable class represents the symbol table in a ELF file
+/// \brief The SymbolTable class represents the symbol table in a ELF file
 template<class ELFT>
-class ELFSymbolTable : public Section<ELFT> {
+class SymbolTable : public Section<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  ELFSymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
+  SymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0);
 
@@ -575,12 +575,12 @@ public:
     return c->kind() == Section<ELFT>::K_SymbolTable;
   }
 
-  inline void setStringSection(ELFStringTable<ELFT> *s) {
+  inline void setStringSection(StringTable<ELFT> *s) {
     _stringSection = s;
   }
 
 private:
-  ELFStringTable<ELFT> *_stringSection;
+  StringTable<ELFT> *_stringSection;
   std::vector<Elf_Sym*> _symbolTable;
   llvm::BumpPtrAllocator _symbolAllocate;
   int64_t _link;
@@ -588,7 +588,7 @@ private:
 
 /// ELF Symbol Table 
 template <class ELFT>
-ELFSymbolTable<ELFT>::ELFSymbolTable(const ELFTargetInfo &ti, const char *str,
+SymbolTable<ELFT>::SymbolTable(const ELFTargetInfo &ti, const char *str,
                                      int32_t order)
     : Section<ELFT>(ti, str, llvm::ELF::SHT_SYMTAB, 0, order,
                     Section<ELFT>::K_SymbolTable) {
@@ -603,7 +603,7 @@ ELFSymbolTable<ELFT>::ELFSymbolTable(const ELFTargetInfo &ti, const char *str,
 
 template<class ELFT>
 void 
-ELFSymbolTable<ELFT>::addSymbol(const Atom *atom, 
+SymbolTable<ELFT>::addSymbol(const Atom *atom, 
                                 int32_t sectionIndex, 
                                 uint64_t addr) {
   Elf_Sym *symbol = new(_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
@@ -615,9 +615,9 @@ ELFSymbolTable<ELFT>::addSymbol(const Atom *atom,
   symbol->st_other = llvm::ELF::STV_DEFAULT;
   if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom)){
     symbol->st_size = da->size();
-    lld::DefinedAtom::ContentType ct;
+    DefinedAtom::ContentType ct;
     switch (ct = da->contentType()){
-    case  DefinedAtom::typeCode:
+    case DefinedAtom::typeCode:
     case DefinedAtom::typeStub:
       symbol->st_value = addr;
       type = llvm::ELF::STT_FUNC;
@@ -626,13 +626,13 @@ ELFSymbolTable<ELFT>::addSymbol(const Atom *atom,
       symbol->st_value = addr;
       type = llvm::ELF::STT_GNU_IFUNC;
       break;
-    case  DefinedAtom::typeData:
-    case  DefinedAtom::typeConstant:
+    case DefinedAtom::typeData:
+    case DefinedAtom::typeConstant:
     case DefinedAtom::typeGOT:
       symbol->st_value = addr;
       type = llvm::ELF::STT_OBJECT;
       break;
-    case  DefinedAtom::typeZeroFill:
+    case DefinedAtom::typeZeroFill:
       type = llvm::ELF::STT_OBJECT;
       symbol->st_value = addr;
       break;
@@ -671,7 +671,7 @@ ELFSymbolTable<ELFT>::addSymbol(const Atom *atom,
 
 template<class ELFT>
 void 
-ELFSymbolTable<ELFT>::finalize() {
+SymbolTable<ELFT>::finalize() {
   // sh_info should be one greater than last symbol with STB_LOCAL binding
   // we sort the symbol table to keep all local symbols at the beginning
   std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
@@ -689,7 +689,7 @@ ELFSymbolTable<ELFT>::finalize() {
 }
 
 template <class ELFT>
-void ELFSymbolTable<ELFT>::write(ELFWriter *writer,
+void SymbolTable<ELFT>::write(ELFWriter *writer,
                                  llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
@@ -699,11 +699,11 @@ void ELFSymbolTable<ELFT>::write(ELFWriter *writer,
   }
 }
 
-template <class ELFT> class ELFRelocationTable : public Section<ELFT> {
+template <class ELFT> class RelocationTable : public Section<ELFT> {
 public:
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
-  ELFRelocationTable(const ELFTargetInfo &ti, StringRef str, int32_t order)
+  RelocationTable(const ELFTargetInfo &ti, StringRef str, int32_t order)
       : Section<ELFT>(ti, str, llvm::ELF::SHT_RELA, DefinedAtom::permR__, order,
                       Section<ELFT>::K_Default) {
     this->setOrder(order);
@@ -738,8 +738,7 @@ public:
 private:
   std::vector<std::pair<const DefinedAtom &, const Reference &>> _relocs;
 };
+} // end namespace elf
+} // end namespace lld
 
-} // elf
-} // lld
-
-#endif //LLD_READER_WRITER_ELF_SECTION_CHUNKS_H_
+#endif

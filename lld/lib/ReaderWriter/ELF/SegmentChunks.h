@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFSegmentChunks.h -----------------------------===//
+//===- lib/ReaderWriter/ELF/SegmentChunks.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H_
-#define LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H_
+#ifndef LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H
+#define LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H
 
-#include "ELFChunk.h"
-#include "ELFLayout.h"
-#include "ELFSectionChunks.h"
-#include "ELFWriter.h"
+#include "Chunk.h"
+#include "Layout.h"
+#include "SectionChunks.h"
+#include "Writer.h"
 
 #include "lld/Core/range.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -28,11 +28,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
-/// \brief A segment can be divided into segment slices
-///        depending on how the segments can be split
 namespace lld {
 namespace elf {
-
+/// \brief A segment can be divided into segment slices
+///        depending on how the segments can be split
 template<class ELFT>
 class SegmentSlice {
 public:
@@ -110,7 +109,7 @@ public:
   typedef typename std::vector<Chunk<ELFT> *>::iterator SectionIter;
 
   Segment(const ELFTargetInfo &ti, const StringRef name,
-          const ELFLayout::SegmentType type);
+          const Layout::SegmentType type);
 
   /// append a section to a segment
   void append(Section<ELFT> *section);
@@ -163,7 +162,7 @@ public:
     return _sections.size();
   }
 
-  inline ELFLayout::SegmentType segmentType() { return _segmentType; }
+  inline Layout::SegmentType segmentType() { return _segmentType; }
 
   inline int pageSize() const { return this->_targetInfo.getPageSize(); }
 
@@ -189,7 +188,7 @@ protected:
   /// \brief Section or some other chunk type.
   std::vector<Chunk<ELFT> *> _sections;
   std::vector<SegmentSlice<ELFT> *> _segmentSlices;
-  ELFLayout::SegmentType _segmentType;
+  Layout::SegmentType _segmentType;
   int64_t _flags;
   int64_t _atomflags;
   llvm::BumpPtrAllocator _segmentAllocate;
@@ -197,7 +196,7 @@ protected:
 
 template <class ELFT>
 Segment<ELFT>::Segment(const ELFTargetInfo &ti, const StringRef name,
-                       const ELFLayout::SegmentType type)
+                       const Layout::SegmentType type)
     : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment, ti), _segmentType(type),
       _flags(0), _atomflags(0) {
   this->_align2 = 0;
@@ -367,8 +366,7 @@ Segment<ELFT>::flags() const {
     fl |= llvm::ELF::PF_X;
   return fl;
 }
+} // end namespace elf
+} // end namespace lld
 
-} // elf
-} // lld
-
-#endif // LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H_
+#endif

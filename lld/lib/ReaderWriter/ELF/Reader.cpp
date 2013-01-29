@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ReaderELF.cpp ---------------------------------===//
+//===- lib/ReaderWriter/ELF/Reader.cpp ------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -15,8 +15,8 @@
 
 #include "lld/ReaderWriter/Reader.h"
 
-#include "AtomsELF.h"
-#include "FileELF.h"
+#include "Atoms.h"
+#include "File.h"
 
 #include "lld/Core/Reference.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
@@ -43,17 +43,17 @@
 #include <map>
 #include <vector>
 
-using namespace lld;
 using llvm::support::endianness;
 using namespace llvm::object;
 
-namespace {
-/// \brief A reader object that will instantiate correct FileELF by examining the
+namespace lld {
+namespace elf {
+/// \brief A reader object that will instantiate correct File by examining the
 /// memory buffer for ELF class and bit width
-class ReaderELF : public Reader {
+class ELFReader : public Reader {
 public:
-  ReaderELF(const ELFTargetInfo &ti, std::function<ReaderFunc> read)
-      : Reader(ti), _elfTargetInfo(ti), _readerArchive(ti, read) {
+  ELFReader(const ELFTargetInfo &ti, std::function<ReaderFunc> read)
+      : lld::Reader(ti), _elfTargetInfo(ti), _readerArchive(ti, read) {
   }
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
@@ -71,46 +71,46 @@ public:
     case llvm::sys::ELF_Relocatable_FileType: {
       std::pair<unsigned char, unsigned char> Ident = getElfArchType(&*mb);
       std::unique_ptr<File> f;
-      // Instantiate the correct FileELF template instance based on the Ident
+      // Instantiate the correct File template instance based on the Ident
       // pair. Once the File is created we push the file to the vector of files
       // already created during parser's life.
       if (Ident.first == llvm::ELF::ELFCLASS32 &&
           Ident.second == llvm::ELF::ELFDATA2LSB) {
         if (MaxAlignment >= 4)
-          f.reset(new FileELF<ELFType<llvm::support::little, 4, false> >(
+          f.reset(new ELFFile<ELFType<llvm::support::little, 4, false> >(
                           _elfTargetInfo, std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(new FileELF<ELFType<llvm::support::little, 2, false> >(
+          f.reset(new ELFFile<ELFType<llvm::support::little, 2, false> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS32 &&
                  Ident.second == llvm::ELF::ELFDATA2MSB) {
         if (MaxAlignment >= 4)
-          f.reset(new FileELF<ELFType<llvm::support::big, 4, false> >(
+          f.reset(new ELFFile<ELFType<llvm::support::big, 4, false> >(
                           _elfTargetInfo, std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(new FileELF<ELFType<llvm::support::big, 2, false> >(
+          f.reset(new ELFFile<ELFType<llvm::support::big, 2, false> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS64 &&
                  Ident.second == llvm::ELF::ELFDATA2MSB) {
         if (MaxAlignment >= 8)
-          f.reset(new FileELF<ELFType<llvm::support::big, 8, true> >(
+          f.reset(new ELFFile<ELFType<llvm::support::big, 8, true> >(
                           _elfTargetInfo, std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(new FileELF<ELFType<llvm::support::big, 2, true> >(
+          f.reset(new ELFFile<ELFType<llvm::support::big, 2, true> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS64 &&
                  Ident.second == llvm::ELF::ELFDATA2LSB) {
         if (MaxAlignment >= 8)
-          f.reset(new FileELF<ELFType<llvm::support::little, 8, true> >(
+          f.reset(new ELFFile<ELFType<llvm::support::little, 8, true> >(
                           _elfTargetInfo, std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(new FileELF<ELFType<llvm::support::little, 2, true> >(
+          f.reset(new ELFFile<ELFType<llvm::support::little, 2, true> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
@@ -137,11 +137,10 @@ private:
   const ELFTargetInfo &_elfTargetInfo;
   ReaderArchive _readerArchive;
 };
-} // end anon namespace.
+} // end namespace elf
 
-namespace lld {
 std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &eti,
                                         std::function<ReaderFunc> read) {
-  return std::unique_ptr<Reader>(new ReaderELF(eti, std::move(read)));
+  return std::unique_ptr<Reader>(new elf::ELFReader(eti, std::move(read)));
 }
 } // end namespace lld

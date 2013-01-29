@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFTargetHandler.h -----------------------------===//
+//===- lib/ReaderWriter/ELF/TargetHandler.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_TARGETHANDLER_H
-#define LLD_READER_WRITER_ELF_TARGETHANDLER_H
+#ifndef LLD_READER_WRITER_ELF_TARGET_HANDLER_H
+#define LLD_READER_WRITER_ELF_TARGET_HANDLER_H
 
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/LinkerOptions.h"
@@ -29,21 +29,21 @@
 #include <unordered_map>
 
 namespace lld {
-template <class ELFT> class ELFDefinedAtom;
 namespace elf {
-template <class ELFT> class ELFTargetLayout;
-template <class ELFT> class ELFHeader;
+template <class ELFT> class ELFDefinedAtom;
+template <class ELFT> class Header;
 template <class ELFT> class Section;
+template <class ELFT> class TargetLayout;
 
 /// \brief The target registers a set of handlers for overriding target specific
 /// attributes for a DefinedAtom. The Reader uses this class to query for the
 /// type of atom and its permissions 
-template <class ELFT> class ELFTargetAtomHandler {
+template <class ELFT> class TargetAtomHandler {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
   virtual DefinedAtom::ContentType contentType(
-      const lld::ELFDefinedAtom<ELFT> *atom) const {
+      const ELFDefinedAtom<ELFT> *atom) const {
     return atom->contentType();
   }
 
@@ -52,17 +52,17 @@ public:
   }
 
   virtual DefinedAtom::ContentPermissions contentPermissions(
-      const lld::ELFDefinedAtom<ELFT> *atom) const {
+      const ELFDefinedAtom<ELFT> *atom) const {
     return atom->permissions();
   }
 };
 
 /// \brief An interface to override functions that are provided by the 
 /// the default ELF Layout
-template <class ELFT> class ELFTargetHandler : public ELFTargetHandlerBase {
+template <class ELFT> class TargetHandler : public TargetHandlerBase {
 
 public:
-  ELFTargetHandler(ELFTargetInfo &targetInfo) : _targetInfo(targetInfo) {}
+  TargetHandler(ELFTargetInfo &targetInfo) : _targetInfo(targetInfo) {}
 
   /// Register a Target, so that the target backend may choose on how to merge
   /// individual atoms within the section, this is a way to control output order
@@ -91,16 +91,16 @@ public:
   /// If the target overrides ELF header information, this API would
   /// return true, so that the target can set all fields specific to
   /// that target
-  virtual bool doesOverrideELFHeader() = 0;
+  virtual bool doesOverrideHeader() = 0;
 
   /// Set the ELF Header information 
-  virtual void setELFHeaderInfo(ELFHeader<ELFT> *elfHeader) = 0;
+  virtual void setHeaderInfo(Header<ELFT> *Header) = 0;
 
-  /// ELFTargetLayout 
-  virtual ELFTargetLayout<ELFT> &targetLayout() = 0;
+  /// TargetLayout 
+  virtual TargetLayout<ELFT> &targetLayout() = 0;
 
-  /// ELFTargetAtomHandler
-  virtual ELFTargetAtomHandler<ELFT> &targetAtomHandler() = 0;
+  /// TargetAtomHandler
+  virtual TargetAtomHandler<ELFT> &targetAtomHandler() = 0;
 
   /// Create a set of Default target sections that a target might needj
   virtual void createDefaultSections() = 0;
@@ -150,8 +150,7 @@ protected:
   const ELFTargetInfo &_targetInfo;
   RegisteredTargetSectionMapT _registeredTargetSections;
 };
+} // end namespace elf
+} // end namespace lld
 
-} // elf
-} // lld
-
-#endif // LLD_READER_WRITER_ELF_TARGETHANDLER_H
+#endif

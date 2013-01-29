@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/X86_64TargetInfo.h -----------------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/X86_64TargetInfo.h --------------------===//
 //
 //                             The LLVM Linker
 //
@@ -10,7 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
 
-#include "DefaultELFTargetHandler.h"
+#include "DefaultTargetHandler.h"
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
@@ -20,11 +20,11 @@
 
 namespace lld {
 namespace elf {
-class X86_64ELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
+class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  X86_64ELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
-    _targetHandler = std::unique_ptr<ELFTargetHandlerBase>(
-        new DefaultELFTargetHandler<llvm::object::ELFType<llvm::support::little,
+  X86_64TargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+    _targetHandler = std::unique_ptr<TargetHandlerBase>(
+        new DefaultTargetHandler<llvm::object::ELFType<llvm::support::little,
                                                           8, false> >(*this));
   }
 

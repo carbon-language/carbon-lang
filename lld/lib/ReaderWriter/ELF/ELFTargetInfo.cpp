@@ -9,8 +9,8 @@
 
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
-#include "ELFTargetHandler.h"
-#include "ELFTargets.h"
+#include "TargetHandler.h"
+#include "Targets.h"
 
 #include "lld/Core/LinkerOptions.h"
 
@@ -55,15 +55,15 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
 std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(const LinkerOptions &lo) {
   switch (llvm::Triple(llvm::Triple::normalize(lo._target)).getArch()) {
   case llvm::Triple::x86:
-    return std::unique_ptr<ELFTargetInfo>(new lld::elf::X86ELFTargetInfo(lo));
+    return std::unique_ptr<ELFTargetInfo>(new lld::elf::X86TargetInfo(lo));
   case llvm::Triple::x86_64:
     return std::unique_ptr<
-        ELFTargetInfo>(new lld::elf::X86_64ELFTargetInfo(lo));
+        ELFTargetInfo>(new lld::elf::X86_64TargetInfo(lo));
   case llvm::Triple::hexagon:
     return std::unique_ptr<
-        ELFTargetInfo>(new lld::elf::HexagonELFTargetInfo(lo));
+        ELFTargetInfo>(new lld::elf::HexagonTargetInfo(lo));
   case llvm::Triple::ppc:
-    return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCELFTargetInfo(lo));
+    return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCTargetInfo(lo));
   default:
     return std::unique_ptr<ELFTargetInfo>();
   }

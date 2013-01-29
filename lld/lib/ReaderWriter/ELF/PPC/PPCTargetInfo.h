@@ -15,15 +15,15 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
-#include "DefaultELFTargetHandler.h"
+#include "DefaultTargetHandler.h"
 
 namespace lld {
 namespace elf {
-class PPCELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
+class PPCTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  PPCELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
-    _targetHandler = std::unique_ptr<ELFTargetHandlerBase>(
-        new DefaultELFTargetHandler<
+  PPCTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+    _targetHandler = std::unique_ptr<TargetHandlerBase>(
+        new DefaultTargetHandler<
                 llvm::object::ELFType<llvm::support::big, 4, false> >(*this));
   }
 

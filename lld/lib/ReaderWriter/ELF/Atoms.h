@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/AtomELF.h -------------------------------------===//
+//===- lib/ReaderWriter/ELF/Atoms.h ---------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_ATOMS_ELF_H
-#define LLD_READER_WRITER_ELF_ATOMS_ELF_H
+#ifndef LLD_READER_WRITER_ELF_ATOMS_H
+#define LLD_READER_WRITER_ELF_ATOMS_H
 
-#include "ELFTargetHandler.h"
+#include "TargetHandler.h"
 
 #include "lld/Core/LLVM.h"
 
@@ -20,10 +20,10 @@
 #include <vector>
 
 namespace lld {
+namespace elf {
+template <typename ELFT> class ELFFile;
+template <typename ELFT> class TargetAtomHandler;
 
-template <typename ELFT> class FileELF;
-
-namespace elf { template <typename ELFT> class ELFTargetAtomHandler; }
 /// \brief Relocation References: Defined Atoms may contain references that will
 /// need to be patched before the executable is written.
 template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
@@ -93,12 +93,12 @@ class ELFAbsoluteAtom LLVM_FINAL : public AbsoluteAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
-  ELFAbsoluteAtom(const FileELF<ELFT> &file, llvm::StringRef name,
+  ELFAbsoluteAtom(const ELFFile<ELFT> &file, StringRef name,
                   const Elf_Sym *symbol, uint64_t value)
       : _owningFile(file), _name(name), _symbol(symbol), _value(value) {
   }
 
-  virtual const class FileELF<ELFT> &file() const {
+  virtual const class ELFFile<ELFT> &file() const {
     return _owningFile;
   } virtual Scope scope() const {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
@@ -109,7 +109,7 @@ public:
       return scopeGlobal;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _name;
   }
 
@@ -118,8 +118,8 @@ public:
   }
 
 private:
-  const FileELF<ELFT> &_owningFile;
-  llvm::StringRef _name;
+  const ELFFile<ELFT> &_owningFile;
+  StringRef _name;
   const Elf_Sym *_symbol;
   uint64_t _value;
 };
@@ -127,19 +127,19 @@ private:
 /// \brief ELFUndefinedAtom: These atoms store undefined symbols and are place
 /// holders that will be replaced by defined atoms later in the linking process.
 template<class ELFT>
-class ELFUndefinedAtom LLVM_FINAL : public UndefinedAtom {
+class ELFUndefinedAtom LLVM_FINAL : public lld::UndefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
-  ELFUndefinedAtom(const FileELF<ELFT> &file, llvm::StringRef name,
+  ELFUndefinedAtom(const ELFFile<ELFT> &file, StringRef name,
                    const Elf_Sym *symbol)
       : _owningFile(file), _name(name), _symbol(symbol) {}
 
-  virtual const class FileELF<ELFT> &file() const {
+  virtual const class ELFFile<ELFT> &file() const {
     return _owningFile;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _name;
   }
 
@@ -154,8 +154,8 @@ public:
   }
 
 private:
-  const FileELF<ELFT> &_owningFile;
-  llvm::StringRef _name;
+  const ELFFile<ELFT> &_owningFile;
+  StringRef _name;
   const Elf_Sym *_symbol;
 };
 
@@ -167,9 +167,9 @@ class ELFDefinedAtom LLVM_FINAL : public DefinedAtom {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  ELFDefinedAtom(const FileELF<ELFT> &file,
-                 llvm::StringRef symbolName,
-                 llvm::StringRef sectionName,
+  ELFDefinedAtom(const ELFFile<ELFT> &file,
+                 StringRef symbolName,
+                 StringRef sectionName,
                  const Elf_Sym *symbol,
                  const Elf_Shdr *section,
                  llvm::ArrayRef<uint8_t> contentData,
@@ -190,11 +190,11 @@ public:
     _ordinal = ++orderNumber;
   }
 
-  virtual const class FileELF<ELFT> &file() const {
+  virtual const class ELFFile<ELFT> &file() const {
     return _owningFile;
   }
 
-  virtual llvm::StringRef name() const {
+  virtual StringRef name() const {
     return _symbolName;
   }
 
@@ -246,10 +246,10 @@ public:
         _symbol->st_shndx < llvm::ELF::SHN_HIPROC) {
       const ELFTargetInfo &eti =
           (_owningFile.getTargetInfo());
-      elf::ELFTargetHandler<ELFT> &elfTargetHandler =
+      TargetHandler<ELFT> &TargetHandler =
           eti.getTargetHandler<ELFT>();
-      elf::ELFTargetAtomHandler<ELFT> &elfAtomHandler =
-          elfTargetHandler.targetAtomHandler();
+      TargetAtomHandler<ELFT> &elfAtomHandler =
+          TargetHandler.targetAtomHandler();
       return elfAtomHandler.contentType(this);
     }
 
@@ -315,7 +315,7 @@ public:
     return sectionCustomRequired;
   }
 
-  virtual llvm::StringRef customSectionName() const {
+  virtual StringRef customSectionName() const {
     if ((contentType() == typeZeroFill) ||
         (_symbol->st_shndx == llvm::ELF::SHN_COMMON))
       return ".bss";
@@ -418,9 +418,9 @@ public:
 
 private:
 
-  const FileELF<ELFT> &_owningFile;
-  llvm::StringRef _symbolName;
-  llvm::StringRef _sectionName;
+  const ELFFile<ELFT> &_owningFile;
+  StringRef _symbolName;
+  StringRef _sectionName;
   const Elf_Sym *_symbol;
   const Elf_Shdr *_section;
   /// \brief Holds the bits that make up the atom.
@@ -432,5 +432,7 @@ private:
   std::vector<ELFReference<ELFT>*> &
     _referenceList;
 };
-} // namespace lld
+} // end namespace elf
+} // end namespace lld
+
 #endif

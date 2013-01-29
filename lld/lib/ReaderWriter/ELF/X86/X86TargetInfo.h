@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/X86TargetInfo.h -----------------------===//
+//===- lib/ReaderWriter/ELF/X86/X86TargetInfo.h ---------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -10,25 +10,26 @@
 #ifndef LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "DefaultTargetHandler.h"
+
 #include "lld/Core/LinkerOptions.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
+
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
-#include "DefaultELFTargetHandler.h"
-
 namespace lld {
 namespace elf {
-class X86ELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
+class X86TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  X86ELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
-    _targetHandler = std::unique_ptr<ELFTargetHandlerBase>(
-        new DefaultELFTargetHandler<llvm::object::ELFType<llvm::support::little,
+  X86TargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
+    _targetHandler = std::unique_ptr<TargetHandlerBase>(
+        new DefaultTargetHandler<llvm::object::ELFType<llvm::support::little,
                                                           4, false> >(*this));
   }
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 };
-}      // elf
-}      // lld
-#endif // LLD_READER_WRITER_ELF_X86_TARGETINFO_H
+} // end namespace elf
+} // end namespace lld
+#endif

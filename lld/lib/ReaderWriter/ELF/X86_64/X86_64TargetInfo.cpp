@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/X86_64/X86_64ELFTargetInfo.cpp ----------------===//
+//===- lib/ReaderWriter/ELF/X86_64/X86_64TargetInfo.cpp -------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86_64ELFTargetInfo.h"
+#include "X86_64TargetInfo.h"
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
@@ -128,13 +128,14 @@ private:
 };
 } // end anon namespace
 
-void elf::X86_64ELFTargetInfo::addPasses(PassManager &pm) const {
+void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new PLTPass(*this)));
 }
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
 
-ErrorOr<int32_t> elf::X86_64ELFTargetInfo::relocKindFromString(StringRef str) const {
+ErrorOr<int32_t> elf::X86_64TargetInfo::relocKindFromString(
+    StringRef str) const {
   int32_t ret = llvm::StringSwitch<int32_t>(str)
     LLD_CASE(R_X86_64_NONE)
     LLD_CASE(R_X86_64_64)
@@ -185,7 +186,8 @@ ErrorOr<int32_t> elf::X86_64ELFTargetInfo::relocKindFromString(StringRef str) co
 
 #define LLD_CASE(name) case llvm::ELF::name: return std::string(#name);
 
-ErrorOr<std::string> elf::X86_64ELFTargetInfo::stringFromRelocKind(int32_t kind) const {
+ErrorOr<std::string> elf::X86_64TargetInfo::stringFromRelocKind(
+    int32_t kind) const {
   switch (kind) {
   LLD_CASE(R_X86_64_NONE)
   LLD_CASE(R_X86_64_64)
