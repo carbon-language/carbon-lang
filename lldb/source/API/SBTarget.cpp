@@ -2329,7 +2329,13 @@ SBTarget::SetSectionLoadAddress (lldb::SBSection section,
                 }
                 else
                 {
-                    target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp, section_base_addr);
+                    if (target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp, section_base_addr))
+                    {
+                        // Flush info in the process (stack frames, etc)
+                        ProcessSP process_sp (target_sp->GetProcessSP());
+                        if (process_sp)
+                            process_sp->Flush();
+                    }
                 }
             }
         }
@@ -2355,7 +2361,13 @@ SBTarget::ClearSectionLoadAddress (lldb::SBSection section)
         }
         else
         {
-            target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSP());
+            if (target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSP()))
+            {
+                // Flush info in the process (stack frames, etc)
+                ProcessSP process_sp (target_sp->GetProcessSP());
+                if (process_sp)
+                    process_sp->Flush();                
+            }
         }
     }
     else
@@ -2386,6 +2398,10 @@ SBTarget::SetModuleLoadAddress (lldb::SBModule module, int64_t slide_offset)
                     ModuleList module_list;
                     module_list.Append(module_sp);
                     target_sp->ModulesDidLoad (module_list);
+                    // Flush info in the process (stack frames, etc)
+                    ProcessSP process_sp (target_sp->GetProcessSP());
+                    if (process_sp)
+                        process_sp->Flush();
                 }
             }
         }
@@ -2420,12 +2436,20 @@ SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
                 SectionList *section_list = objfile->GetSectionList();
                 if (section_list)
                 {
+                    bool changed = false;
                     const size_t num_sections = section_list->GetSize();
                     for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
                     {
                         SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
                         if (section_sp)
-                            target_sp->GetSectionLoadList().SetSectionUnloaded (section_sp);
+                            changed |= target_sp->GetSectionLoadList().SetSectionUnloaded (section_sp) > 0;
+                    }
+                    if (changed)
+                    {
+                        // Flush info in the process (stack frames, etc)
+                        ProcessSP process_sp (target_sp->GetProcessSP());
+                        if (process_sp)
+                            process_sp->Flush();                        
                     }
                 }
                 else

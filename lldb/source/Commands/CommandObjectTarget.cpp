@@ -2915,7 +2915,12 @@ protected:
                                 }
                                 
                                 if (changed)
+                                {
                                     target->ModulesDidLoad (matching_modules);
+                                    Process *process = m_exe_ctx.GetProcessPtr();
+                                    if (process)
+                                        process->Flush();
+                                }
                             }
                             else
                             {
@@ -4171,7 +4176,6 @@ public:
     {
         LoadSubCommand ("add",          CommandObjectSP (new CommandObjectTargetModulesAdd (interpreter)));
         LoadSubCommand ("load",         CommandObjectSP (new CommandObjectTargetModulesLoad (interpreter)));
-        //LoadSubCommand ("unload",       CommandObjectSP (new CommandObjectTargetModulesUnload (interpreter)));
         LoadSubCommand ("dump",         CommandObjectSP (new CommandObjectTargetModulesDump (interpreter)));
         LoadSubCommand ("list",         CommandObjectSP (new CommandObjectTargetModulesList (interpreter)));
         LoadSubCommand ("lookup",       CommandObjectSP (new CommandObjectTargetModulesLookup (interpreter)));

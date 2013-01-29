@@ -155,6 +155,7 @@ SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp)
         sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section_sp.get());
         if (sta_pos != m_sect_to_addr.end())
         {
+            ++unload_count;
             addr_t load_addr = sta_pos->second;
             m_sect_to_addr.erase (sta_pos);
 
