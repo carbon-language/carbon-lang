@@ -50,15 +50,12 @@ private:
     return _atomToAddressMap[atom];
   }
 
-  KindHandler *kindHandler() { return _referenceKindHandler.get(); }
-
   void createDefaultSections();
 
   const ELFTargetInfo &_targetInfo;
   TargetHandler<ELFT> &_targetHandler;
 
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
-  std::unique_ptr<KindHandler> _referenceKindHandler;
   AtomToAddress _atomToAddressMap;
   llvm::BumpPtrAllocator _chunkAllocate;
   TargetLayout<ELFT> *_layout;
@@ -77,8 +74,6 @@ private:
 template <class ELFT>
 ExecutableWriter<ELFT>::ExecutableWriter(const ELFTargetInfo &ti)
     : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()),
-      _referenceKindHandler(KindHandler::makeHandler(ti.getTriple().getArch(),
-                                                     ti.isLittleEndian())),
       _runtimeFile(ti) {
   _layout = new TargetLayout<ELFT>(_targetInfo);
 }

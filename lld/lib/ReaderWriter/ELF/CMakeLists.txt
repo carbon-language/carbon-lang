@@ -1,12 +1,7 @@
 add_lld_library(lldELF
   ELFTargetInfo.cpp
-  HexagonReference.cpp
-  PPCReference.cpp
   Reader.cpp
-  ReferenceKinds.cpp
   Writer.cpp
-  X86Reference.cpp
-  X86_64Reference.cpp
   )
 
 target_link_libraries(lldELF

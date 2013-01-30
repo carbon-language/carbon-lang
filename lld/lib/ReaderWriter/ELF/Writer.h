@@ -10,8 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_WRITER_H
 #define LLD_READER_WRITER_ELF_WRITER_H
 
-#include "ReferenceKinds.h"
-
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -34,9 +32,6 @@ public:
 
   /// \brief Get the virtual address of \p atom after layout.
   virtual uint64_t addressOfAtom(const Atom *atom) = 0;
-
-  /// \brief Return the processing function to apply Relocations
-  virtual KindHandler *kindHandler()  = 0;
 };
 } // end namespace elf
 } // end namespace lld

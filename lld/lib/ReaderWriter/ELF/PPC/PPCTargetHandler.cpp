@@ -29,9 +29,9 @@ int relocB24PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
     result &= ~-(0x1000000);
     *reinterpret_cast<llvm::support::ubig32_t *>(location) = result |
                (uint32_t)*reinterpret_cast<llvm::support::ubig32_t *>(location);
-    return PPCKindHandler::NoError;
+    return 0;
   }
-  return PPCKindHandler::Overflow;
+  return 1;
 }
 } // end anon namespace
 

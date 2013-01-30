@@ -23,9 +23,9 @@ int relocB22PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
     result = ((result<<1) & 0x3ffe) | ((result<<3) & 0x01ff0000);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
-    return HexagonKindHandler::NoError;
+    return 0;
   }
-  return HexagonKindHandler::Overflow;
+  return 1;
 }
 
 /// \brief Word32_B15: 0x00df20fe : (S + A - P) >> 2 : Verify
@@ -35,9 +35,9 @@ int relocB15PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
     result = ((result<<1) & 0x20fe) | ((result<<7) & 0x00df0000);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
-    return HexagonKindHandler::NoError;
+    return 0;
   }
-  return HexagonKindHandler::Overflow;
+  return 1;
 }
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) : Truncate
@@ -46,7 +46,7 @@ int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   result = ((result & 0x3fff) | ((result << 8) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  return HexagonKindHandler::NoError;
+  return 0;
 }
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
@@ -55,7 +55,7 @@ int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   result = ((result & 0x3fff) | ((result << 8) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  return HexagonKindHandler::NoError;
+  return 0;
 }
 
 /// \brief Word32: 0xffffffff : (S + A) : Truncate
@@ -63,7 +63,7 @@ int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
-  return HexagonKindHandler::NoError;
+  return 0;
 }
 } // end anon namespace
 
