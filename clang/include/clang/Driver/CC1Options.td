@@ -86,10 +86,6 @@ def analyzer_inline_max_function_size : Separate<["-"], "analyzer-inline-max-fun
 def analyzer_inline_max_function_size_EQ : Joined<["-"], "analyzer-inline-max-function-size=">, 
   Alias<analyzer_inline_max_function_size>;
 
-def analyzer_ipa : Separate<["-"], "analyzer-ipa">,
-  HelpText<"Specify the inter-procedural analysis mode">;
-def analyzer_ipa_EQ : Joined<["-"], "analyzer-ipa=">, Alias<analyzer_ipa>;
-  
 def analyzer_inlining_mode : Separate<["-"], "analyzer-inlining-mode">,
   HelpText<"Specify the function selection heuristic used during inlining">;
 def analyzer_inlining_mode_EQ : Joined<["-"], "analyzer-inlining-mode=">, Alias<analyzer_inlining_mode>;

@@ -27,7 +27,7 @@ AnalyzerOptions::UserModeKind AnalyzerOptions::getUserMode() {
       .Case("shallow", UMK_Shallow)
       .Case("deep", UMK_Deep)
       .Default(UMK_NotSet);
-    assert(UserMode != UMK_NotSet && "User mode is not set or invalid.");
+    assert(UserMode != UMK_NotSet && "User mode is invalid.");
   }
   return UserMode;
 }
@@ -55,7 +55,7 @@ IPAKind AnalyzerOptions::getIPAMode() {
             .Case("dynamic", IPAK_DynamicDispatch)
             .Case("dynamic-bifurcate", IPAK_DynamicDispatchBifurcate)
             .Default(IPAK_NotSet);
-    assert(IPAConfig != IPAK_NotSet && "IPA Mode is not set or invalid.");
+    assert(IPAConfig != IPAK_NotSet && "IPA Mode is invalid.");
 
     // Set the member variable.
     IPAMode = IPAConfig;

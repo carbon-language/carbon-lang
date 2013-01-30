@@ -2,36 +2,37 @@ Inlining
 ========
 
 There are several options that control which calls the analyzer will consider for
-inlining. The major one is -analyzer-ipa:
+inlining. The major one is -analyzer-config ipa:
 
-  -analyzer-ipa=none - All inlining is disabled. This is the only mode available
-     in LLVM 3.1 and earlier and in Xcode 4.3 and earlier.
+  -analyzer-config ipa=none - All inlining is disabled. This is the only mode 
+     available in LLVM 3.1 and earlier and in Xcode 4.3 and earlier.
 
-  -analyzer-ipa=basic-inlining - Turns on inlining for C functions, C++ static
-     member functions, and blocks -- essentially, the calls that behave like
-     simple C function calls. This is essentially the mode used in Xcode 4.4.
+  -analyzer-config ipa=basic-inlining - Turns on inlining for C functions, C++ 
+     static member functions, and blocks -- essentially, the calls that behave 
+     like simple C function calls. This is essentially the mode used in 
+     Xcode 4.4.
 
-  -analyzer-ipa=inlining - Turns on inlining when we can confidently find the
-    function/method body corresponding to the call. (C functions, static
+  -analyzer-config ipa=inlining - Turns on inlining when we can confidently find
+    the function/method body corresponding to the call. (C functions, static
     functions, devirtualized C++ methods, Objective-C class methods, Objective-C
     instance methods when ExprEngine is confident about the dynamic type of the
     instance).
 
-  -analyzer-ipa=dynamic - Inline instance methods for which the type is
+  -analyzer-config ipa=dynamic - Inline instance methods for which the type is
    determined at runtime and we are not 100% sure that our type info is
    correct. For virtual calls, inline the most plausible definition.
 
-  -analyzer-ipa=dynamic-bifurcate - Same as -analyzer-ipa=dynamic, but the path
-   is split. We inline on one branch and do not inline on the other. This mode
-   does not drop the coverage in cases when the parent class has code that is
-   only exercised when some of its methods are overridden.
+  -analyzer-config ipa=dynamic-bifurcate - Same as -analyzer-config ipa=dynamic,
+   but the path is split. We inline on one branch and do not inline on the 
+   other. This mode does not drop the coverage in cases when the parent class 
+   has code that is only exercised when some of its methods are overridden.
 
-Currently, -analyzer-ipa=dynamic-bifurcate is the default mode.
+Currently, -analyzer-config ipa=dynamic-bifurcate is the default mode.
 
-While -analyzer-ipa determines in general how aggressively the analyzer will try to
-inline functions, several additional options control which types of functions can
-inlined, in an all-or-nothing way. These options use the analyzer's configuration
-table, so they are all specified as follows:
+While -analyzer-config ipa determines in general how aggressively the analyzer 
+will try to inline functions, several additional options control which types of 
+functions can inlined, in an all-or-nothing way. These options use the 
+analyzer's configuration table, so they are all specified as follows:
 
     -analyzer-config OPTION=VALUE
 
@@ -47,8 +48,8 @@ constructors, for example.
 
 The default c++-inlining mode is 'methods', meaning only regular member
 functions and overloaded operators will be inlined. Note that no C++ member
-functions will be inlined under -analyzer-ipa=none or
--analyzer-ipa=basic-inlining.
+functions will be inlined under -analyzer-config ipa=none or
+-analyzer-config ipa=basic-inlining.
 
 ### c++-template-inlining ###
 
@@ -229,31 +230,31 @@ inlined.
 
  == Inlining Dynamic Calls ==
 
-The -analyzer-ipa option has five different modes: none, basic-inlining,
-inlining, dynamic, and dynamic-bifurcate. Under -analyzer-ipa=dynamic, all
-dynamic calls are inlined, whether we are certain or not that this will actually
-be the definition used at runtime. Under -analyzer-ipa=inlining, only
-"near-perfect" devirtualized calls are inlined*, and other dynamic calls are
-evaluated conservatively (as if no definition were available). 
+The -analyzer-config ipa option has five different modes: none, basic-inlining,
+inlining, dynamic, and dynamic-bifurcate. Under -analyzer-config ipa=dynamic,
+all dynamic calls are inlined, whether we are certain or not that this will
+actually be the definition used at runtime. Under -analyzer-config ipa=inlining,
+only "near-perfect" devirtualized calls are inlined*, and other dynamic calls
+are evaluated conservatively (as if no definition were available). 
 
 * Currently, no Objective-C messages are not inlined under
-  -analyzer-ipa=inlining, even if we are reasonably confident of the type of the
-  receiver. We plan to enable this once we have tested our heuristics more
-  thoroughly.
+  -analyzer-config ipa=inlining, even if we are reasonably confident of the type
+  of the receiver. We plan to enable this once we have tested our heuristics
+  more thoroughly.
 
-The last option, -analyzer-ipa=dynamic-bifurcate, behaves similarly to
+The last option, -analyzer-config ipa=dynamic-bifurcate, behaves similarly to
 "dynamic", but performs a conservative invalidation in the general virtual case
 in *addition* to inlining. The details of this are discussed below.
 
-As stated above, -analyzer-ipa=basic-inlining does not inline any C++ member
-functions or Objective-C method calls, even if they are non-virtual or can be
-safely devirtualized.
+As stated above, -analyzer-config ipa=basic-inlining does not inline any C++ 
+member functions or Objective-C method calls, even if they are non-virtual or 
+can be safely devirtualized.
 
 
 Bifurcation
 -----------
 
-ExprEngine::BifurcateCall implements the -analyzer-ipa=dynamic-bifurcate
+ExprEngine::BifurcateCall implements the -analyzer-config ipa=dynamic-bifurcate
 mode.
 
 When a call is made on an object with imprecise dynamic type information 
