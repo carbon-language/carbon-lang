@@ -49,7 +49,7 @@ enum KASLRScanType
 {
     eKASLRScanNone = 0,         // No reading into the inferior at all
     eKASLRScanLowgloAddresses,  // Check one word of memory for a possible kernel addr, then see if a kernel is there
-    eKASLRScanNearPC,           // Scan backwards from the current $pc looking for kernel; checking at 64 locations total
+    eKASLRScanNearPC,           // Scan backwards from the current $pc looking for kernel; checking at 96 locations total
     eKASLRScanExhaustiveScan    // Scan through the entire possible kernel address range looking for a kernel
 };
 
@@ -110,7 +110,7 @@ public:
     GetScanType() const
     {
         const uint32_t idx = ePropertyScanType;
-        return (KASLRScanType) m_collection_sp->SetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
+        return (KASLRScanType) m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
     }
 
 
