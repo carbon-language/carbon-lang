@@ -791,6 +791,10 @@ Expressions used by code generator to describe instructions and isel patterns:
 TableGen backends
 =================
 
+Until we get a step-by-step HowTo for writing TableGen backends, you can at
+least grab the boilerplate (build system, new files, etc.) from Clang's
+r173931.
+
 TODO: How they work, how to write one.  This section should not contain details
 about any particular backend, except maybe ``-print-enums`` as an example.  This
 should highlight the APIs in ``TableGen/Record.h``.
