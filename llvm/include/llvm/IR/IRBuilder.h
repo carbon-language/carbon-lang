@@ -1056,20 +1056,6 @@ public:
       return CreateTrunc(V, DestTy, Name);
     return V;
   }
-  /// \brief Create a FPExt or FPTrunc from the float value V to DestTy. Return
-  /// the value untouched if the type of V is already DestTy.
-  Value *CreateFPExtOrFPTrunc(Value *V, Type *DestTy,
-                           const Twine &Name = "") {
-    assert(V->getType()->isFPOrFPVectorTy() &&
-           DestTy->isFPOrFPVectorTy() &&
-           "Can only FPExt/FPTrunc floating point types!");
-    Type *VTy = V->getType();
-    if (VTy->getScalarSizeInBits() < DestTy->getScalarSizeInBits())
-      return CreateFPExt(V, DestTy, Name);
-    if (VTy->getScalarSizeInBits() > DestTy->getScalarSizeInBits())
-      return CreateFPTrunc(V, DestTy, Name);
-    return V;
-  }
   Value *CreateFPToUI(Value *V, Type *DestTy, const Twine &Name = ""){
     return CreateCast(Instruction::FPToUI, V, DestTy, Name);
   }
