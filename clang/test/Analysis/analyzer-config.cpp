@@ -19,7 +19,8 @@ public:
 // CHECK-NEXT: graph-trim-interval = 1000
 // CHECK-NEXT: ipa = dynamic-bifurcate
 // CHECK-NEXT: ipa-always-inline-size = 3
+// CHECK-NEXT: max-inlinable-size = 50
 // CHECK-NEXT: max-times-inline-large = 32
 // CHECK-NEXT: mode = deep
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 10
+// CHECK-NEXT: num-entries = 11

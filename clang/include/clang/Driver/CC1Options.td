@@ -81,11 +81,6 @@ def analyzer_inline_max_stack_depth : Separate<["-"], "analyzer-inline-max-stack
 def analyzer_inline_max_stack_depth_EQ : Joined<["-"], "analyzer-inline-max-stack-depth=">, 
   Alias<analyzer_inline_max_stack_depth>;
   
-def analyzer_inline_max_function_size : Separate<["-"], "analyzer-inline-max-function-size">,
-  HelpText<"Bound on the number of basic blocks in an inlined function (200 by default)">;
-def analyzer_inline_max_function_size_EQ : Joined<["-"], "analyzer-inline-max-function-size=">, 
-  Alias<analyzer_inline_max_function_size>;
-
 def analyzer_inlining_mode : Separate<["-"], "analyzer-inlining-mode">,
   HelpText<"Specify the function selection heuristic used during inlining">;
 def analyzer_inlining_mode_EQ : Joined<["-"], "analyzer-inlining-mode=">, Alias<analyzer_inlining_mode>;

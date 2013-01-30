@@ -169,9 +169,6 @@ public:
   unsigned InlineMaxStackDepth;
   
   /// \brief The mode of function selection used during inlining.
-  unsigned InlineMaxFunctionSize;
-
-  /// \brief The mode of function selection used during inlining.
   AnalysisInliningMode InliningMode;
 
 private:
@@ -213,6 +210,9 @@ private:
 
   /// \sa shouldSuppressNullReturnPaths
   llvm::Optional<bool> SuppressNullReturnPaths;
+
+  // \sa getMaxInlinableSize
+  llvm::Optional<unsigned> MaxInlinableSize;
 
   /// \sa shouldAvoidSuppressingNullArgumentPaths
   llvm::Optional<bool> AvoidSuppressingNullArgumentPaths;
@@ -309,7 +309,13 @@ public:
   //
   // This is controlled by "ipa-always-inline-size" analyzer-config option.
   unsigned getAlwaysInlineSize();
-  
+
+  // Returns the bound on the number of basic blocks in an inlined function
+  // (50 by default).
+  //
+  // This is controlled by "-analyzer-config max-inlinable-size" option.
+  unsigned getMaxInlinableSize();
+
   /// Returns true if the analyzer engine should synthesize fake bodies
   /// for well-known functions.
   bool shouldSynthesizeBodies();
@@ -345,7 +351,6 @@ public:
     NoRetryExhausted(0),
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
     InlineMaxStackDepth(5),
-    InlineMaxFunctionSize(50),
     InliningMode(NoRedundancy),
     UserMode(UMK_NotSet),
     IPAMode(IPAK_NotSet),

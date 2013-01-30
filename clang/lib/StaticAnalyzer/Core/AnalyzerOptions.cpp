@@ -171,6 +171,12 @@ unsigned AnalyzerOptions::getAlwaysInlineSize() {
   return AlwaysInlineSize.getValue();
 }
 
+unsigned AnalyzerOptions::getMaxInlinableSize() {
+  if (!MaxInlinableSize.hasValue())
+    MaxInlinableSize = getOptionAsInteger("max-inlinable-size", 50);
+  return MaxInlinableSize.getValue();
+}
+
 unsigned AnalyzerOptions::getGraphTrimInterval() {
   if (!GraphTrimInterval.hasValue())
     GraphTrimInterval = getOptionAsInteger("graph-trim-interval", 1000);

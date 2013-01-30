@@ -224,9 +224,6 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.InlineMaxStackDepth =
     Args.getLastArgIntValue(OPT_analyzer_inline_max_stack_depth,
                             Opts.InlineMaxStackDepth, Diags);
-  Opts.InlineMaxFunctionSize =
-    Args.getLastArgIntValue(OPT_analyzer_inline_max_function_size,
-                            Opts.InlineMaxFunctionSize, Diags);
 
   Opts.CheckersControlList.clear();
   for (arg_iterator it = Args.filtered_begin(OPT_analyzer_checker,

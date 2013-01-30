@@ -415,7 +415,7 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   if (Engine.FunctionSummaries->hasReachedMaxBlockCount(D))
     return false;
 
-  if (CalleeCFG->getNumBlockIDs() > AMgr.options.InlineMaxFunctionSize)
+  if (CalleeCFG->getNumBlockIDs() > AMgr.options.getMaxInlinableSize())
     return false;
 
   // Do not inline variadic calls (for now).
