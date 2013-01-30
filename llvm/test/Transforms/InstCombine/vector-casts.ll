@@ -64,7 +64,8 @@ entry:
         
 ; CHECK: @test5
 ; CHECK:   sext <4 x i1> %cmp to <4 x i32>	
-; CHECK:   sext <4 x i1> %cmp4 to <4 x i32>	
+; The sext-and pair is canonicalized to a select.
+; CHECK:   select <4 x i1> %cmp4, <4 x i32>	%sext, <4 x i32> zeroinitializer
 }
 
 

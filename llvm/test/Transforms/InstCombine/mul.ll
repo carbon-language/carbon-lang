@@ -138,9 +138,8 @@ define i32 @test16(i32 %b, i1 %c) {
         ; e = b & (a >> 31)
         %e = mul i32 %d, %b             ; <i32> [#uses=1]
         ret i32 %e
-; CHECK: [[TEST16:%.*]] = sext i1 %c to i32
-; CHECK-NEXT: %e = and i32 %1, %b
-; CHECK-NEXT: ret i32 %e
+; CHECK: [[TEST16:%.*]] = select i1 %c, i32 %b, i32 0
+; CHECK-NEXT: ret i32 [[TEST16]]
 }
 
 ; X * Y (when Y is 0 or 1) --> x & (0-Y)
