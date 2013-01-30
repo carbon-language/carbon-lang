@@ -19,7 +19,7 @@ public:
   MipsELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter,
                   bool RelaxAll, bool NoExecStack)
-    : MCELFStreamer(Context, TAB, OS, Emitter), EFlags(0) {
+    : MCELFStreamer(Context, TAB, OS, Emitter) {
   }
 
   ~MipsELFStreamer() {}
