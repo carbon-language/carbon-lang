@@ -16,7 +16,7 @@ Trivial getTrivial() {
 }
 
 const Trivial &getTrivialRef() {
-  return Trivial(42); // expected-warning {{Address of stack memory associated with temporary object of type 'struct Trivial' returned to caller}}
+  return Trivial(42); // expected-warning {{Address of stack memory associated with temporary object of type 'const struct Trivial' returned to caller}}
 }
 
 
@@ -25,6 +25,6 @@ NonTrivial getNonTrivial() {
 }
 
 const NonTrivial &getNonTrivialRef() {
-  return NonTrivial(42); // expected-warning {{Address of stack memory associated with temporary object of type 'struct NonTrivial' returned to caller}}
+  return NonTrivial(42); // expected-warning {{Address of stack memory associated with temporary object of type 'const struct NonTrivial' returned to caller}}
 }
 
