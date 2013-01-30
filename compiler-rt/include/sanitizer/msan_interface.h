@@ -24,8 +24,7 @@ using __sanitizer::u32;
 extern "C" {
 #endif
 
-#if defined(__has_feature) && __has_feature(memory_sanitizer)
-
+#if __has_feature(memory_sanitizer)
   /* Returns a string describing a stack origin.
      Return NULL if the origin is invalid, or is not a stack origin. */
   SANITIZER_INTERFACE_ATTRIBUTE
