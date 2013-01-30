@@ -55,7 +55,6 @@ public:
   Kind kind() const { return _kind; }
   uint64_t            fileSize() const { return _fsize; }
   uint64_t            align2() const { return _align2; }
-  void                appendAtom() const;
 
   // The ordinal value of the chunk
   uint64_t            ordinal() const { return _ordinal;}

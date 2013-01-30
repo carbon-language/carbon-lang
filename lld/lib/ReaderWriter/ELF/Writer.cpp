@@ -97,7 +97,7 @@ void ExecutableWriter<ELFT>::buildSymbolTable () {
   for (auto sec : _layout->sections())
     if (auto section = dyn_cast<Section<ELFT>>(sec))
       for (const auto &atom : section->atoms())
-        _symtab->addSymbol(atom._atom, section->ordinal(), atom._virtualAddr);
+        _symtab->addSymbol(atom->_atom, section->ordinal(), atom->_virtualAddr);
 }
 
 template<class ELFT>
@@ -106,7 +106,7 @@ ExecutableWriter<ELFT>::addAbsoluteUndefinedSymbols(const File &file) {
   // add all the absolute symbols that the layout contains to the output symbol
   // table
   for (auto &atom : _layout->absoluteAtoms())
-    _symtab->addSymbol(atom.absoluteAtom(), ELF::SHN_ABS, atom.value());
+    _symtab->addSymbol(atom->_atom, ELF::SHN_ABS, atom->_virtualAddr);
   for (const UndefinedAtom *a : file.undefined())
     _symtab->addSymbol(a, ELF::SHN_UNDEF);
 }
@@ -116,10 +116,10 @@ void ExecutableWriter<ELFT>::buildAtomToAddressMap () {
   for (auto sec : _layout->sections())
     if (auto section = dyn_cast<Section<ELFT>>(sec))
       for (const auto &atom : section->atoms())
-        _atomToAddressMap[atom._atom] = atom._virtualAddr;
+        _atomToAddressMap[atom->_atom] = atom->_virtualAddr;
   // build the atomToAddressMap that contains absolute symbols too
   for (auto &atom : _layout->absoluteAtoms())
-    _atomToAddressMap[atom.absoluteAtom()] = atom.value();
+    _atomToAddressMap[atom->_atom] = atom->_virtualAddr;
 }
 
 template<class ELFT>
@@ -187,11 +187,11 @@ void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
                       StringRef sec) -> void {
     auto section = _layout->findOutputSection(sec);
     if (section) {
-      start->setValue(section->virtualAddr());
-      end->setValue(section->virtualAddr() + section->memSize());
+      (*start)->_virtualAddr = section->virtualAddr();
+      (*end)->_virtualAddr = section->virtualAddr() + section->memSize();
     } else {
-      start->setValue(0);
-      end->setValue(0);
+      (*start)->_virtualAddr = 0;
+      (*end)->_virtualAddr = 0;
     }
   };
 
@@ -210,10 +210,10 @@ void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   assert(!(phe == _programHeader->end()) &&
          "Can't find a data segment in the program header!");
 
-  bssStartAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_filesz);
-  bssEndAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_memsz);
-  underScoreEndAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_memsz);
-  endAtomIter->setValue((*phe)->p_vaddr + (*phe)->p_memsz);
+  (*bssStartAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_filesz;
+  (*bssEndAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
+  (*underScoreEndAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
+  (*endAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
 }
 
 template<class ELFT>

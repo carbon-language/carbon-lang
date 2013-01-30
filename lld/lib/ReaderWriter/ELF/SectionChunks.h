@@ -60,14 +60,14 @@ public:
   // \brief Append an atom to a Section. The atom gets pushed into a vector
   // contains the atom, the atom file offset, the atom virtual address
   // the atom file offset is aligned appropriately as set by the Reader
-  void appendAtom(const Atom *atom);
+  const AtomLayout &appendAtom(const Atom *atom);
 
   /// \brief Set the virtual address of each Atom in the Section. This
   /// routine gets called after the linker fixes up the virtual address
   /// of the section
   inline void assignVirtualAddress(uint64_t &addr) {
     for (auto &ai : _atoms) {
-      ai._virtualAddr = addr + ai._fileOffset;
+      ai->_virtualAddr = addr + ai->_fileOffset;
     }
     addr += this->memSize();
   }
@@ -76,7 +76,7 @@ public:
   /// gets called after the linker fixes up the section offset
   inline void assignOffsets(uint64_t offset) {
     for (auto &ai : _atoms) {
-      ai._fileOffset = offset + ai._fileOffset;
+      ai->_fileOffset = offset + ai->_fileOffset;
     }
   }
 
@@ -85,8 +85,8 @@ public:
   ///  to fix the relocation
   inline bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
     for (auto ai : _atoms) {
-      if (ai._atom->name() == name) {
-        addr = ai._virtualAddr;
+      if (ai->_atom->name() == name) {
+        addr = ai->_virtualAddr;
         return true;
       }
     }
@@ -159,7 +159,7 @@ public:
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   /// Atom Iterators
-  typedef typename std::vector<AtomLayout>::iterator atom_iter;
+  typedef typename std::vector<AtomLayout *>::iterator atom_iter;
 
   range<atom_iter> atoms() { return _atoms; }
 
@@ -167,11 +167,12 @@ protected:
   int32_t _contentType;
   int32_t _contentPermissions;
   SectionKind _sectionKind;
-  std::vector<AtomLayout> _atoms;
+  std::vector<AtomLayout *> _atoms;
   Layout::SegmentType _segmentType;
   int64_t _entSize;
   int64_t _shInfo;
   int64_t _link;
+  llvm::BumpPtrAllocator _alloc;
 };
 
 // Create a section object, the section is set to the default type if the
@@ -207,9 +208,8 @@ Section<ELFT>::alignOffset(uint64_t offset, DefinedAtom::Alignment &atomAlign) {
 // \brief Append an atom to a Section. The atom gets pushed into a vector
 // contains the atom, the atom file offset, the atom virtual address
 // the atom file offset is aligned appropriately as set by the Reader
-template<class ELFT>
-void 
-Section<ELFT>::appendAtom(const Atom *atom) {
+template <class ELFT>
+const AtomLayout &Section<ELFT>::appendAtom(const Atom *atom) {
   Atom::Definition atomType = atom->definition();
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
@@ -229,7 +229,7 @@ Section<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeGOT:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
-      _atoms.push_back(AtomLayout(atom, fOffset, 0));
+      _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
       DEBUG_WITH_TYPE("Section",
@@ -238,13 +238,12 @@ Section<ELFT>::appendAtom(const Atom *atom) {
                                    << fOffset << "\n");
       break;
     case  DefinedAtom::typeZeroFill:
-      _atoms.push_back(AtomLayout(atom, mOffset, 0));
+      _atoms.push_back(new (_alloc) AtomLayout(atom, mOffset, 0));
       this->_msize = mOffset + definedAtom->size();
       break;
     default:
-      this->_fsize = fOffset + definedAtom->size();
-      this->_msize = mOffset + definedAtom->size();
-      break;
+      llvm::dbgs() << definedAtom->contentType() << "\n";
+      llvm_unreachable("Uexpected content type.");
     }
     break;
   default:
@@ -255,6 +254,8 @@ Section<ELFT>::appendAtom(const Atom *atom) {
   // std::max doesnot support uint64_t
   if (this->_align2 < align2)
     this->_align2 = align2;
+
+  return *_atoms.back();
 }
 
 /// \brief Get the section flags, defined by the permissions of the section
@@ -345,9 +346,9 @@ void Section<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   for (auto &ai : _atoms) {
     DEBUG_WITH_TYPE("Section",
-                    llvm::dbgs() << "Writing atom: " << ai._atom->name()
-                                 << " | " << ai._fileOffset << "\n");
-    const DefinedAtom *definedAtom = cast<DefinedAtom>(ai._atom);
+                    llvm::dbgs() << "Writing atom: " << ai->_atom->name()
+                                 << " | " << ai->_fileOffset << "\n");
+    const DefinedAtom *definedAtom = cast<DefinedAtom>(ai->_atom);
     if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
       continue;
     // Copy raw content of atom to file buffer.
@@ -355,14 +356,14 @@ void Section<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
     uint64_t contentSize = content.size();
     if (contentSize == 0)
       continue;
-    uint8_t *atomContent = chunkBuffer + ai._fileOffset;
+    uint8_t *atomContent = chunkBuffer + ai->_fileOffset;
     std::copy_n(content.data(), contentSize, atomContent);
     for (const auto ref : *definedAtom) {
       uint32_t offset = ref->offsetInAtom();
       uint64_t targetAddress = 0;
       assert(ref->target() != nullptr && "Found the target to be NULL");
       targetAddress = writer->addressOfAtom(ref->target());
-      uint64_t fixupAddress = writer->addressOfAtom(ai._atom) + offset;
+      uint64_t fixupAddress = writer->addressOfAtom(ai->_atom) + offset;
       // apply the relocation
       writer->kindHandler()->applyFixup(ref->kind(),
                                         ref->addend(),

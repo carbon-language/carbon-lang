@@ -132,34 +132,14 @@ public:
   typedef std::unordered_map<SegmentKey, Segment<ELFT> *,
                              SegmentHashKey> SegmentMapT;
 
-  /// \brief All absolute atoms are created in the ELF Layout by using 
-  /// an AbsoluteAtomPair. Contains a pair of AbsoluteAtom and the 
-  /// value which is the address of the absolute atom
-  class AbsoluteAtomPair {
-  public:
-    AbsoluteAtomPair(const AbsoluteAtom *a, int64_t value) 
-                     : _absoluteAtom(a)
-                     , _value(value) { }
-
-    const AbsoluteAtom *absoluteAtom() { return _absoluteAtom; }
-    int64_t value() const { return _value; }
-    void setValue(int64_t val) { _value = val; }
-
-  private:
-    const AbsoluteAtom *_absoluteAtom;
-    int64_t _value;
-  };
-
   /// \brief find a absolute atom pair given a absolute atom name
   struct FindByName {
     const std::string _name;
     FindByName(StringRef name) : _name(name) {}
-    bool operator()(AbsoluteAtomPair& j) { 
-      return j.absoluteAtom()->name() == _name; 
-    }
+    bool operator()(const AtomLayout *j) { return j->_atom->name() == _name; }
   };
 
-  typedef typename std::vector<AbsoluteAtomPair>::iterator AbsoluteAtomIterT;
+  typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
   DefaultLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
 
@@ -181,7 +161,7 @@ public:
   static bool hasOutputSegment(Section<ELFT> *section);
 
   // Adds an atom to the section
-  virtual error_code addAtom(const Atom *atom);
+  virtual ErrorOr<const AtomLayout &> addAtom(const Atom *atom);
 
   /// \brief Find an output Section given a section name.
   MergedSections<ELFT> *findOutputSection(StringRef name) {
@@ -270,7 +250,7 @@ private:
   Header<ELFT> *_header;
   ProgramHeader<ELFT> *_programHeader;
   RelocationTable<ELFT> *_relocationTable;
-  std::vector<AbsoluteAtomPair> _absoluteAtoms;
+  std::vector<AtomLayout *> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const ELFTargetInfo &_targetInfo;
 };
@@ -408,10 +388,14 @@ DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   }
 }
 
-template<class ELFT>
-error_code
-DefaultLayout<ELFT>::addAtom(const Atom *atom) {
+template <class ELFT>
+ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
+    // HACK: Ignore undefined atoms. We need to adjust the interface so that
+    // undefined atoms can still be included in the output symbol table for
+    // -noinhibit-exec.
+    if (definedAtom->contentType() == DefinedAtom::typeUnknown)
+      return make_error_code(llvm::errc::invalid_argument);
     const StringRef sectionName = getSectionName(
         definedAtom->customSectionName(), definedAtom->contentType());
     const DefinedAtom::ContentPermissions permissions =
@@ -432,7 +416,7 @@ DefaultLayout<ELFT>::addAtom(const Atom *atom) {
     } else {
       section = _sectionMap[sectionKey];
     }
-    section->appendAtom(atom);
+    return section->appendAtom(atom);
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom)
       if (_targetInfo.isRuntimeRelocation(*definedAtom, *reloc))
@@ -440,12 +424,12 @@ DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
     // Absolute atoms are not part of any section, they are global for the whole
     // link
-    _absoluteAtoms.push_back(AbsoluteAtomPair(absoluteAtom,
-                                              absoluteAtom->value()));
+    _absoluteAtoms.push_back(
+        new (_allocator) AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
+    return *_absoluteAtoms.back();
   } else {
     llvm_unreachable("Only absolute / defined atoms can be added here");
   }
-  return error_code::success();
 }
 
 /// Merge sections with the same name into a MergedSections
