@@ -308,7 +308,7 @@ public:
 
   /// \brief Return true if there are no attributes.
   bool isEmpty() const {
-    return pImpl == 0;
+    return getNumSlots() == 0;
   }
 
   /// \brief Return the number of slots used in this attribute list.  This is
