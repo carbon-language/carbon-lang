@@ -767,32 +767,14 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
   AttributeSetImpl *pImpl = AS.pImpl;
   if (!pImpl) return;
 
-  AttrBuilder B;
-
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I) {
     if (pImpl->getSlotIndex(I) != Idx) continue;
 
-    for (AttributeSetNode::const_iterator II = pImpl->begin(I),
+    for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
            IE = pImpl->end(I); II != IE; ++II)
-      B.addAttributes(*II);
+      addAttributes(*II);
 
     break;
-  }
-
-  if (!B.hasAttributes()) return;
-
-  uint64_t Mask = B.Raw();
-
-  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
-       I = Attribute::AttrKind(I + 1)) {
-    if (uint64_t A = (Mask & AttributeImpl::getAttrMask(I))) {
-      Attrs.insert(I);
-
-      if (I == Attribute::Alignment)
-        Alignment = 1ULL << ((A >> 16) - 1);
-      else if (I == Attribute::StackAlignment)
-        StackAlignment = 1ULL << ((A >> 26)-1);
-    }
   }
 }
 
