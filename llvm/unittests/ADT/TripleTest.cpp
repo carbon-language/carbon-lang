@@ -407,6 +407,11 @@ TEST(TripleTest, getOSVersion) {
   unsigned Major, Minor, Micro;
 
   T = Triple("i386-apple-darwin9");
+  EXPECT_TRUE(T.isMacOSX());
+  EXPECT_FALSE(T.isiOS());
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_TRUE(T.isArch32Bit());
+  EXPECT_FALSE(T.isArch64Bit());
   T.getMacOSXVersion(Major, Minor, Micro);
   EXPECT_EQ((unsigned)10, Major);
   EXPECT_EQ((unsigned)5, Minor);
@@ -417,6 +422,11 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)0, Micro);
 
   T = Triple("x86_64-apple-darwin9");
+  EXPECT_TRUE(T.isMacOSX());
+  EXPECT_FALSE(T.isiOS());
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_FALSE(T.isArch32Bit());
+  EXPECT_TRUE(T.isArch64Bit());
   T.getMacOSXVersion(Major, Minor, Micro);
   EXPECT_EQ((unsigned)10, Major);
   EXPECT_EQ((unsigned)5, Minor);
@@ -427,6 +437,11 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)0, Micro);
 
   T = Triple("x86_64-apple-macosx");
+  EXPECT_TRUE(T.isMacOSX());
+  EXPECT_FALSE(T.isiOS());
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_FALSE(T.isArch32Bit());
+  EXPECT_TRUE(T.isArch64Bit());
   T.getMacOSXVersion(Major, Minor, Micro);
   EXPECT_EQ((unsigned)10, Major);
   EXPECT_EQ((unsigned)4, Minor);
@@ -437,6 +452,11 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)0, Micro);
 
   T = Triple("x86_64-apple-macosx10.7");
+  EXPECT_TRUE(T.isMacOSX());
+  EXPECT_FALSE(T.isiOS());
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_FALSE(T.isArch32Bit());
+  EXPECT_TRUE(T.isArch64Bit());
   T.getMacOSXVersion(Major, Minor, Micro);
   EXPECT_EQ((unsigned)10, Major);
   EXPECT_EQ((unsigned)7, Minor);
@@ -447,6 +467,11 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)0, Micro);
 
   T = Triple("armv7-apple-ios");
+  EXPECT_FALSE(T.isMacOSX());
+  EXPECT_TRUE(T.isiOS());
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_TRUE(T.isArch32Bit());
+  EXPECT_FALSE(T.isArch64Bit());
   T.getMacOSXVersion(Major, Minor, Micro);
   EXPECT_EQ((unsigned)10, Major);
   EXPECT_EQ((unsigned)4, Minor);
@@ -457,6 +482,11 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)0, Micro);
 
   T = Triple("armv7-apple-ios5.0");
+  EXPECT_FALSE(T.isMacOSX());
+  EXPECT_TRUE(T.isiOS());
+  EXPECT_FALSE(T.isArch16Bit());
+  EXPECT_TRUE(T.isArch32Bit());
+  EXPECT_FALSE(T.isArch64Bit());
   T.getMacOSXVersion(Major, Minor, Micro);
   EXPECT_EQ((unsigned)10, Major);
   EXPECT_EQ((unsigned)4, Minor);
