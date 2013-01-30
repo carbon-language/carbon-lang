@@ -3,8 +3,14 @@
 
 config.target_triple = "@TARGET_TRIPLE@"
 config.llvm_src_root = "@LLVM_SOURCE_DIR@"
-config.build_type = "@CMAKE_BUILD_TYPE@"
+config.llvm_build_mode = "@LLVM_BUILD_MODE@"
 config.asan_binary_dir = "@ASAN_BINARY_DIR@"
+
+try:
+  config.llvm_build_mode = config.llvm_build_mode % lit.params
+except KeyError,e:
+  key, = e.args
+  lit.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key, key))
 
 # Let the main config do the real work.
 lit.load_config(config, "@ASAN_SOURCE_DIR@/lit_tests/Unit/lit.cfg")
