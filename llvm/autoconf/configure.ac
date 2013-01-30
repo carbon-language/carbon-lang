@@ -1503,11 +1503,11 @@ AC_LINK_IFELSE(
 ],
 [
   AC_MSG_RESULT([yes])
-  AC_DEFINE([HAVE_CRASHREPORTER_INFO], [1], [Can use __crashreporter_info__])
+  AC_DEFINE([HAVE_CRASHREPORTER_INFO], [1], [can use __crashreporter_info__])
 ],
 [
   AC_MSG_RESULT([no])
-  AC_DEFINE([HAVE_CRASHREPORTER_INFO], [0], [Define if __crashreporter_info__ exists.])
+  AC_DEFINE([HAVE_CRASHREPORTER_INFO], [0], [can use __crashreporter_info__])
 ])
 
 dnl===-----------------------------------------------------------------------===

@@ -72,7 +72,7 @@
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 #undef HAVE_CRASHREPORTERCLIENT_H
 
-/* Define if __crashreporter_info__ exists. */
+/* can use __crashreporter_info__ */
 #undef HAVE_CRASHREPORTER_INFO
 
 /* Define to 1 if you have the <ctype.h> header file. */
