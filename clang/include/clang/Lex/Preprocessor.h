@@ -160,6 +160,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief True if pragmas are enabled.
   bool PragmasEnabled : 1;
 
+  /// \brief True if the current build action is a preprocessing action.
+  bool PreprocessedOutput : 1;
+
   /// \brief True if we are currently preprocessing a #if or #elif directive
   bool ParsingIfOrElifDirective;
 
@@ -473,6 +476,16 @@ public:
   bool GetSuppressIncludeNotFoundError() {
     return SuppressIncludeNotFoundError;
   }
+
+  /// Sets whether the preprocessor is responsible for producing output or if
+  /// it is producing tokens to be consumed by Parse and Sema.
+  void setPreprocessedOutput(bool IsPreprocessedOutput) {
+    PreprocessedOutput = IsPreprocessedOutput;
+  }
+
+  /// Returns true if the preprocessor is responsible for generating output,
+  /// false if it is producing tokens to be consumed by Parse and Sema.
+  bool isPreprocessedOutput() const { return PreprocessedOutput; }
 
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.

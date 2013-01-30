@@ -1395,9 +1395,48 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
 }
 
 static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
-                                        ArgList &Args) {
+                                        ArgList &Args,
+                                        frontend::ActionKind Action) {
   using namespace options;
-  Opts.ShowCPP = !Args.hasArg(OPT_dM);
+
+  switch (Action) {
+  case frontend::ASTDeclList:
+  case frontend::ASTDump:
+  case frontend::ASTDumpXML:
+  case frontend::ASTPrint:
+  case frontend::ASTView:
+  case frontend::EmitAssembly:
+  case frontend::EmitBC:
+  case frontend::EmitHTML:
+  case frontend::EmitLLVM:
+  case frontend::EmitLLVMOnly:
+  case frontend::EmitCodeGenOnly:
+  case frontend::EmitObj:
+  case frontend::FixIt:
+  case frontend::GenerateModule:
+  case frontend::GeneratePCH:
+  case frontend::GeneratePTH:
+  case frontend::ParseSyntaxOnly:
+  case frontend::PluginAction:
+  case frontend::PrintDeclContext:
+  case frontend::RewriteObjC:
+  case frontend::RewriteTest:
+  case frontend::RunAnalysis:
+  case frontend::MigrateSource:
+    Opts.ShowCPP = 0;
+    break;
+
+  case frontend::DumpRawTokens:
+  case frontend::DumpTokens:
+  case frontend::InitOnly:
+  case frontend::PrintPreamble:
+  case frontend::PrintPreprocessedInput:
+  case frontend::RewriteMacros:
+  case frontend::RunPreprocessorOnly:
+    Opts.ShowCPP = !Args.hasArg(OPT_dM);
+    break;
+  }
+
   Opts.ShowComments = Args.hasArg(OPT_C);
   Opts.ShowLineMarkers = !Args.hasArg(OPT_P);
   Opts.ShowMacroComments = Args.hasArg(OPT_CC);
@@ -1478,7 +1517,8 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // parameters from the function and the "FileManager.h" #include.
   FileManager FileMgr(Res.getFileSystemOpts());
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
-  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
+  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args,
+                              Res.getFrontendOpts().ProgramAction);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
 
   return Success;

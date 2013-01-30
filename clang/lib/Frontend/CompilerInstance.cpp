@@ -243,6 +243,8 @@ void CompilerInstance::createPreprocessor() {
 
   InitializePreprocessor(*PP, PPOpts, getHeaderSearchOpts(), getFrontendOpts());
 
+  PP->setPreprocessedOutput(getPreprocessorOutputOpts().ShowCPP);
+
   // Set up the module path, including the hash for the
   // module-creation options.
   SmallString<256> SpecificModuleCache(

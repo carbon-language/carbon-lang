@@ -25,7 +25,7 @@ public:
 
 public:
   PreprocessorOutputOptions() {
-    ShowCPP = 1;
+    ShowCPP = 0;
     ShowComments = 0;
     ShowLineMarkers = 1;
     ShowMacroComments = 0;

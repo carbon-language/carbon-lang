@@ -2811,14 +2811,13 @@ static bool isUnicodeWhitespace(uint32_t C) {
 }
 
 void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
-  if (isUnicodeWhitespace(C)) {
-    if (!isLexingRawMode()) {
-      CharSourceRange CharRange =
-        CharSourceRange::getCharRange(getSourceLocation(),
-                                      getSourceLocation(CurPtr));
-      Diag(BufferPtr, diag::ext_unicode_whitespace)
-        << CharRange;
-    }
+  if (!isLexingRawMode() && !PP->isPreprocessedOutput() &&
+      isUnicodeWhitespace(C)) {
+    CharSourceRange CharRange =
+      CharSourceRange::getCharRange(getSourceLocation(),
+                                    getSourceLocation(CurPtr));
+    Diag(BufferPtr, diag::ext_unicode_whitespace)
+      << CharRange;
 
     Result.setFlag(Token::LeadingSpace);
     if (SkipWhitespace(Result, CurPtr))
@@ -2832,7 +2831,8 @@ void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
     return LexIdentifier(Result, CurPtr);
   }
 
-  if (!isASCII(*BufferPtr) && !isAllowedIDChar(C)) {
+  if (!isLexingRawMode() && !PP->isPreprocessedOutput() &&
+      !isASCII(*BufferPtr) && !isAllowedIDChar(C)) {
     // Non-ASCII characters tend to creep into source code unintentionally.
     // Instead of letting the parser complain about the unknown token,
     // just drop the character.
@@ -2842,13 +2842,11 @@ void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
     // loophole in the mapping of Unicode characters to basic character set
     // characters that allows us to map these particular characters to, say,
     // whitespace.
-    if (!isLexingRawMode()) {
-      CharSourceRange CharRange =
-        CharSourceRange::getCharRange(getSourceLocation(),
-                                      getSourceLocation(CurPtr));
-      Diag(BufferPtr, diag::err_non_ascii)
-        << FixItHint::CreateRemoval(CharRange);
-    }
+    CharSourceRange CharRange =
+      CharSourceRange::getCharRange(getSourceLocation(),
+                                    getSourceLocation(CurPtr));
+    Diag(BufferPtr, diag::err_non_ascii)
+      << FixItHint::CreateRemoval(CharRange);
 
     BufferPtr = CurPtr;
     return LexTokenInternal(Result);
@@ -3537,11 +3535,15 @@ LexNextToken:
     if (Status == conversionOK)
       return LexUnicode(Result, CodePoint, CurPtr);
     
+    if (isLexingRawMode() || PP->isPreprocessedOutput()) {
+      Kind = tok::unknown;
+      break;
+    }
+
     // Non-ASCII characters tend to creep into source code unintentionally.
     // Instead of letting the parser complain about the unknown token,
     // just diagnose the invalid UTF-8, then drop the character.
-    if (!isLexingRawMode())
-      Diag(CurPtr, diag::err_invalid_utf8);
+    Diag(CurPtr, diag::err_invalid_utf8);
 
     BufferPtr = CurPtr+1;
     goto LexNextToken;
