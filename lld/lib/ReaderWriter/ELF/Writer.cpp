@@ -10,6 +10,7 @@
 #include "lld/ReaderWriter/Writer.h"
 
 #include "DefaultLayout.h"
+#include "TargetLayout.h"
 #include "ExecutableAtoms.h"
 
 #include "lld/ReaderWriter/ELFTargetInfo.h"
@@ -54,8 +55,9 @@ private:
   void createDefaultSections();
 
   const ELFTargetInfo &_targetInfo;
+  TargetHandler<ELFT> &_targetHandler;
 
-  typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
+  typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
   std::unique_ptr<KindHandler> _referenceKindHandler;
   AtomToAddress _atomToAddressMap;
   llvm::BumpPtrAllocator _chunkAllocate;
@@ -72,17 +74,17 @@ private:
 //===----------------------------------------------------------------------===//
 //  ExecutableWriter
 //===----------------------------------------------------------------------===//
-template<class ELFT>
+template <class ELFT>
 ExecutableWriter<ELFT>::ExecutableWriter(const ELFTargetInfo &ti)
-  : _targetInfo(ti)
-  , _referenceKindHandler(KindHandler::makeHandler(
-                              ti.getTriple().getArch(), ti.isLittleEndian()))
-  , _runtimeFile(ti) {
-  _layout = new DefaultLayout<ELFT>(ti);
+    : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()),
+      _referenceKindHandler(KindHandler::makeHandler(ti.getTriple().getArch(),
+                                                     ti.isLittleEndian())),
+      _runtimeFile(ti) {
+  _layout = new TargetLayout<ELFT>(_targetInfo);
 }
 
-template<class ELFT>
-void ExecutableWriter<ELFT>::buildChunks(const File &file){
+template <class ELFT>
+void ExecutableWriter<ELFT>::buildChunks(const File &file) {
   for (const DefinedAtom *definedAtom : file.defined() ) {
     _layout->addAtom(definedAtom);
   }
@@ -163,10 +165,12 @@ void ExecutableWriter<ELFT>::addDefaultAtoms() {
 }
 
 /// \brief Hook in lld to add CRuntime file 
-template<class ELFT>
+template <class ELFT>
 void ExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   addDefaultAtoms();
   inputFiles.prependFile(_runtimeFile);
+  // Give a chance for the target to add atoms
+  _targetHandler.addFiles(inputFiles);
 }
 
 /// Finalize the value of all the absolute symbols that we 
@@ -260,16 +264,21 @@ ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   if (ec)
     return ec;
 
-  _Header->e_ident(ELF::EI_CLASS, _targetInfo.is64Bits() ? ELF::ELFCLASS64
-                                                            : ELF::ELFCLASS32);
-  _Header->e_ident(ELF::EI_DATA, _targetInfo.isLittleEndian()
-                                    ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
-  _Header->e_ident(ELF::EI_VERSION, 1);
-  _Header->e_ident(ELF::EI_OSABI, 0);
+  _Header->e_ident(ELF::EI_CLASS, _targetInfo.is64Bits() ? ELF::ELFCLASS64 :
+                       ELF::ELFCLASS32);
+  _Header->e_ident(ELF::EI_DATA, _targetInfo.isLittleEndian() ?
+                       ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
   _Header->e_type(_targetInfo.getOutputType());
   _Header->e_machine(_targetInfo.getOutputMachine());
-  _Header->e_version(1);
-  _Header->e_entry(0ULL);
+
+  if (!_targetHandler.doesOverrideHeader()) {
+    _Header->e_ident(ELF::EI_VERSION, 1);
+    _Header->e_ident(ELF::EI_OSABI, 0);
+    _Header->e_version(1);
+  } else {
+    // override the contents of the ELF Header
+    _targetHandler.setHeaderInfo(_Header);
+  }
   _Header->e_phoff(_programHeader->fileOffset());
   _Header->e_shoff(_shdrtab->fileOffset());
   _Header->e_phentsize(_programHeader->entsize());
@@ -314,6 +323,9 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
   _shdrtab->setStringSection(_shstrtab);
   _symtab->setStringSection(_strtab);
   _layout->addSection(_shdrtab);
+
+  // give a chance for the target to add sections
+  _targetHandler.createDefaultSections();
 }
 } // namespace elf
 

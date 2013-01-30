@@ -48,7 +48,7 @@ template <class ELFT> class ELFFile : public File {
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
 public:
-  ELFFile(const ELFTargetInfo &ti, const StringRef name)
+  ELFFile(const ELFTargetInfo &ti, StringRef name)
       : File(name), _elfTargetInfo(ti) {
   }
 

@@ -90,7 +90,7 @@ public:
     }
 
     // Data members
-    const StringRef _name;
+    StringRef _name;
     DefinedAtom::ContentPermissions _perm;
   };
 
@@ -141,17 +141,22 @@ public:
 
   typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
-  DefaultLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
+  DefaultLayout(const ELFTargetInfo &ti)
+      : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()) {
+  }
 
   /// \brief Return the section order for a input section
-  virtual SectionOrder getSectionOrder
-              (const StringRef name,
-              int32_t contentType,
-              int32_t contentPermissions);
+  virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
+                                       int32_t contentPermissions);
 
   /// \brief This maps the input sections to the output section names
-  StringRef getSectionName(const StringRef name,
-                           const int32_t contentType);
+  virtual StringRef getSectionName(StringRef name, const int32_t contentType,
+                                   const int32_t contentPermissions);
+
+  /// \brief Returns the section to be created
+  virtual Section<ELFT> *getSection(StringRef name, const int32_t contentType,
+                                    const int32_t contentPermissions,
+                                    const int32_t sectionOrder);
 
   /// \brief Gets the segment for a output section
   virtual Layout::SegmentType getSegmentType(Section<ELFT> *section) const;
@@ -172,9 +177,9 @@ public:
   }
 
   /// \brief find a absolute atom given a name
-  AbsoluteAtomIterT findAbsoluteAtom(const StringRef name) {
+  AbsoluteAtomIterT findAbsoluteAtom(StringRef name) {
     return std::find_if(_absoluteAtoms.begin(), _absoluteAtoms.end(),
-                                                FindByName(name));
+                        FindByName(name));
   }
 
   // Merge sections with the same name into a MergedSections
@@ -200,9 +205,9 @@ public:
       si->finalize();
   }
 
-  inline bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
+  inline bool findAtomAddrByName(StringRef name, uint64_t &addr) {
     for (auto sec : _sections)
-      if (auto section = dyn_cast<Section<ELFT>>(sec))
+      if (auto section = dyn_cast<Section<ELFT> >(sec))
         if (section->findAtomAddrByName(name, addr))
          return true;
     return false;
@@ -253,14 +258,12 @@ private:
   std::vector<AtomLayout *> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const ELFTargetInfo &_targetInfo;
+  TargetHandler<ELFT> &_targetHandler;
 };
 
-template<class ELFT>
-Layout::SectionOrder
-DefaultLayout<ELFT>::getSectionOrder(const StringRef name, 
-                                        int32_t contentType,
-                                        int32_t contentPermissions)
-{
+template <class ELFT>
+Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
+    StringRef name, int32_t contentType, int32_t contentPermissions) {
   switch (contentType) {
   case DefinedAtom::typeResolver:
   case DefinedAtom::typeCode:
@@ -298,10 +301,10 @@ DefaultLayout<ELFT>::getSectionOrder(const StringRef name,
 }
 
 /// \brief This maps the input sections to the output section names
-template<class ELFT>
-StringRef 
-DefaultLayout<ELFT>::getSectionName(const StringRef name, 
-                                       const int32_t contentType) {
+template <class ELFT>
+StringRef DefaultLayout<ELFT>::getSectionName(
+    StringRef name, const int32_t contentType,
+    const int32_t contentPermissions) {
   if (contentType == DefinedAtom::typeZeroFill)
     return ".bss";
   if (name.startswith(".text"))
@@ -312,10 +315,11 @@ DefaultLayout<ELFT>::getSectionName(const StringRef name,
 }
 
 /// \brief Gets the segment for a output section
-template<class ELFT>
-Layout::SegmentType 
-DefaultLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
-  switch(section->order()) {
+template <class ELFT>
+Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
+    Section<ELFT> *section) const {
+
+  switch (section->order()) {
   case ORDER_INTERP:
     return llvm::ELF::PT_INTERP;
 
@@ -355,10 +359,12 @@ DefaultLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
   }
 }
 
-template<class ELFT>
-bool
-DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
-  switch(section->order()) {
+template <class ELFT>
+bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
+  if (section->sectionKind() == Section<ELFT>::K_Target)
+    return section->hasOutputSegment();
+
+  switch (section->order()) {
   case ORDER_INTERP:
   case ORDER_HASH:
   case ORDER_DYNAMIC_SYMBOLS:
@@ -389,6 +395,14 @@ DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
 }
 
 template <class ELFT>
+Section<ELFT> *DefaultLayout<ELFT>::getSection(
+    StringRef sectionName, int32_t contentType, int32_t permissions,
+    int32_t sectionOrder) {
+  return new (_allocator) Section<ELFT>(_targetInfo, sectionName, contentType,
+                                        permissions, sectionOrder);
+}
+
+template <class ELFT>
 ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     // HACK: Ignore undefined atoms. We need to adjust the interface so that
@@ -396,20 +410,21 @@ ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
     // -noinhibit-exec.
     if (definedAtom->contentType() == DefinedAtom::typeUnknown)
       return make_error_code(llvm::errc::invalid_argument);
-    const StringRef sectionName = getSectionName(
-        definedAtom->customSectionName(), definedAtom->contentType());
+    StringRef sectionName = definedAtom->customSectionName();
     const DefinedAtom::ContentPermissions permissions =
         definedAtom->permissions();
-    const DefinedAtom::ContentType contentType =
-        definedAtom->contentType();
+    const DefinedAtom::ContentType contentType = definedAtom->contentType();
+
+    sectionName = getSectionName(sectionName, contentType, permissions);
+
     const SectionKey sectionKey(sectionName, permissions);
     Section<ELFT> *section;
 
     if (_sectionMap.find(sectionKey) == _sectionMap.end()) {
       SectionOrder section_order =
           getSectionOrder(sectionName, contentType, permissions);
-      section = new (_allocator) Section<ELFT>(
-          _targetInfo, sectionName, contentType, permissions, section_order);
+      section =
+          getSection(sectionName, contentType, permissions, section_order);
       section->setOrder(section_order);
       _sections.push_back(section);
       _sectionMap.insert(std::make_pair(sectionKey, section));
@@ -456,13 +471,13 @@ DefaultLayout<ELFT>::mergeSimiliarSections() {
   }
 }
 
-template<class ELFT>
-void 
-DefaultLayout<ELFT>::assignSectionsToSegments() {
+template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
+  // TODO: Do we want to give a chance for the targetHandlers
+  // to sort segments in an arbitrary order ? 
   // sort the sections by their order as defined by the layout
   std::stable_sort(_sections.begin(), _sections.end(),
-  [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
-     return A->order() < B->order();
+                   [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
+    return A->order() < B->order();
   });
   // Merge all sections
   mergeSimiliarSections();
@@ -482,11 +497,11 @@ DefaultLayout<ELFT>::assignSectionsToSegments() {
           continue;
         msi->setHasSegment();
         section->setSegment(getSegmentType(section));
-        const StringRef segmentName = section->segmentKindToStr();
+        StringRef segmentName = section->segmentKindToStr();
         // Use the flags of the merged Section for the segment
         const SegmentKey key(segmentName, msi->flags());
-        const std::pair<SegmentKey, Segment<ELFT> *>
-          currentSegment(key, nullptr);
+        const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key,
+                                                                    nullptr);
         std::pair<typename SegmentMapT::iterator, bool>
                             segmentInsert(_segmentMap.insert(currentSegment));
         Segment<ELFT> *segment;
@@ -504,11 +519,10 @@ DefaultLayout<ELFT>::assignSectionsToSegments() {
   }
 }
 
-template<class ELFT>
-void
-DefaultLayout<ELFT>::assignFileOffsets() {
-  std::sort(_segments.begin(), _segments.end(),
-            Segment<ELFT>::compareSegments);
+template <class ELFT> void DefaultLayout<ELFT>::assignFileOffsets() {
+  // TODO: Do we want to give a chance for the targetHandlers
+  // to sort segments in an arbitrary order ? 
+  std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
   int ordinal = 0;
   // Compute the number of segments that might be needed, so that the
   // size of the program header can be computed

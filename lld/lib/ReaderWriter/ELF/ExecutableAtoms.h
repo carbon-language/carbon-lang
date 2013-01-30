@@ -32,8 +32,8 @@ public:
   CRuntimeFile(const ELFTargetInfo &ti) : ELFFile<ELFT>(ti, "C runtime") {}
 
   /// \brief add a global absolute atom
-  void addAbsoluteAtom(const StringRef symbolName) {
-    Elf_Sym *symbol = new(_allocator.Allocate<Elf_Sym>()) Elf_Sym;
+  void addAbsoluteAtom(StringRef symbolName) {
+    Elf_Sym *symbol = new (_allocator.Allocate<Elf_Sym>()) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_ABS;
@@ -47,7 +47,7 @@ public:
   }
 
   /// \brief add an undefined atom 
-  void addUndefinedAtom(const StringRef symbolName) {
+  void addUndefinedAtom(StringRef symbolName) {
     Elf_Sym *symbol = new (_allocator) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;

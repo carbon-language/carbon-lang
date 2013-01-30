@@ -44,11 +44,9 @@ public:
       : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
         _ordinal(1), _start(0), _fileoffset(0), _targetInfo(ti) {
   }
-  virtual             ~Chunk() {}
+  virtual ~Chunk() {}
   // Does the chunk occupy disk space
-  virtual bool        occupiesNoDiskSpace() const {
-    return false;
-  }
+  virtual bool occupiesNoDiskSpace() const { return false; }
   // The name of the chunk
   StringRef name() const { return _name; }
   // Kind of chunk
@@ -74,7 +72,7 @@ public:
   // Writer the chunk
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) = 0;
   // Finalize the chunk before writing
-  virtual void       finalize() = 0;
+  virtual void finalize() = 0;
 
 protected:
   StringRef _name;

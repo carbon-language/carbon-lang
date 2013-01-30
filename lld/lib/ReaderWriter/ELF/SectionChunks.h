@@ -45,13 +45,25 @@ public:
   };
   // Create a section object, the section is set to the default type if the
   // caller doesnot set it
-  Section(const ELFTargetInfo &, const StringRef sectionName,
+  Section(const ELFTargetInfo &, StringRef sectionName,
           const int32_t contentType, const int32_t contentPermissions,
           const int32_t order, const SectionKind kind = K_Default);
 
   /// return the section kind
   inline SectionKind sectionKind() const {
     return _sectionKind;
+  }
+
+  /// set the section Kind, this function is needed by the targetHandler
+  /// to set the target section
+  inline void setKind(SectionKind k) { _sectionKind = k; }
+
+  /// Is the section part of any segment, Target sections must override 
+  /// this function
+  virtual bool hasOutputSegment() {
+    assert((_sectionKind != K_Target) && 
+           "Cannot determine if the targetSection has any output segment");
+    return false;
   }
 
   /// Align the offset to the required modulus defined by the atom alignment
@@ -83,7 +95,7 @@ public:
   /// \brief Find the Atom address given a name, this is needed to to properly
   ///  apply relocation. The section class calls this to find the atom address
   ///  to fix the relocation
-  inline bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
+  inline bool findAtomAddrByName(StringRef name, uint64_t &addr) {
     for (auto ai : _atoms) {
       if (ai->_atom->name() == name) {
         addr = ai->_virtualAddr;
@@ -178,7 +190,7 @@ protected:
 // Create a section object, the section is set to the default type if the
 // caller doesnot set it
 template <class ELFT>
-Section<ELFT>::Section(const ELFTargetInfo &ti, const StringRef sectionName,
+Section<ELFT>::Section(const ELFTargetInfo &ti, StringRef sectionName,
                        const int32_t contentType,
                        const int32_t contentPermissions, const int32_t order,
                        const SectionKind kind)
@@ -513,7 +525,7 @@ public:
     return c->kind() == Section<ELFT>::K_StringTable;
   }
 
-  uint64_t addString(const StringRef symname);
+  uint64_t addString(StringRef symname);
 
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
@@ -536,9 +548,7 @@ StringTable<ELFT>::StringTable(const ELFTargetInfo &ti, const char *str,
   this->setOrder(order);
 }
 
-template<class ELFT>
-uint64_t
-StringTable<ELFT>::addString(const StringRef symname) {
+template <class ELFT> uint64_t StringTable<ELFT>::addString(StringRef symname) {
   _strings.push_back(symname);
   uint64_t offset = this->_fsize;
   this->_fsize += symname.size() + 1;

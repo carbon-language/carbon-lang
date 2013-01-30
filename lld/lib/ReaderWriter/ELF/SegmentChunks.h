@@ -108,7 +108,7 @@ public:
   typedef typename std::vector<SegmentSlice<ELFT> *>::iterator SliceIter;
   typedef typename std::vector<Chunk<ELFT> *>::iterator SectionIter;
 
-  Segment(const ELFTargetInfo &ti, const StringRef name,
+  Segment(const ELFTargetInfo &ti, StringRef name,
           const Layout::SegmentType type);
 
   /// append a section to a segment
@@ -195,7 +195,7 @@ protected:
 };
 
 template <class ELFT>
-Segment<ELFT>::Segment(const ELFTargetInfo &ti, const StringRef name,
+Segment<ELFT>::Segment(const ELFTargetInfo &ti, StringRef name,
                        const Layout::SegmentType type)
     : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment, ti), _segmentType(type),
       _flags(0), _atomflags(0) {
