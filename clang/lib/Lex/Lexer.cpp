@@ -3538,6 +3538,7 @@ LexNextToken:
       return LexUnicode(Result, CodePoint, CurPtr);
     
     if (isLexingRawMode() || PP->isPreprocessedOutput()) {
+      ++CurPtr;
       Kind = tok::unknown;
       break;
     }
