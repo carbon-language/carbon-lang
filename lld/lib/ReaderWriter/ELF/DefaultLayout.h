@@ -142,7 +142,7 @@ public:
   typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
   DefaultLayout(const ELFTargetInfo &ti)
-      : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()) {
+      : _targetInfo(ti) {
   }
 
   /// \brief Return the section order for a input section
@@ -258,7 +258,6 @@ private:
   std::vector<AtomLayout *> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const ELFTargetInfo &_targetInfo;
-  TargetHandler<ELFT> &_targetHandler;
 };
 
 template <class ELFT>

@@ -48,6 +48,7 @@ public:
 
   template <typename ELFT>
   lld::elf::TargetHandler<ELFT> &getTargetHandler() const {
+    assert(_targetHandler && "Got null TargetHandler!");
     return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
   }
 
