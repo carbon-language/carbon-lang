@@ -59,9 +59,6 @@ public:
     /// system.
     unsigned IsInternal : 1;
 
-    /// \brief True if this entry's headers should be wrapped in extern "C".
-    unsigned ImplicitExternC : 1;
-
     Entry(StringRef path, frontend::IncludeDirGroup group,
           bool isFramework, bool ignoreSysRoot, bool isInternal)
       : Path(path), Group(group), IsFramework(isFramework),
