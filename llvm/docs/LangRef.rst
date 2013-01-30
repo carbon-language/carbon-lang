@@ -1080,6 +1080,11 @@ volatile operations. The optimizers *may* change the order of volatile
 operations relative to non-volatile operations. This is not Java's
 "volatile" and has no cross-thread synchronization behavior.
 
+IR-level volatile loads and stores cannot safely be optimized into
+llvm.memcpy or llvm.memmove intrinsics even when those intrinsics are
+flagged volatile. Likewise, the backend should never split or merge
+target-legal volatile load/store instructions.
+
 .. _memmodel:
 
 Memory Model for Concurrent Operations
