@@ -625,7 +625,7 @@ private:
 
   bool sanityCheckUnresolved() const {
     for (iterator I = begin(), E = end(); I != E; ++I)
-      if (isa<UnresolvedUsingValueDecl>(*I))
+      if (isa<UnresolvedUsingValueDecl>((*I)->getUnderlyingDecl()))
         return true;
     return false;
   }
