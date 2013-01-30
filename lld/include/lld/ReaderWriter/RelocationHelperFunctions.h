@@ -14,7 +14,7 @@ namespace lld {
 
 /// \brief Return the bits that are described by the mask
 template < typename T > 
-T BitsGather(T val, T mask)
+T gatherBits(T val, T mask)
 {
   T result = 0;
   size_t off = 0;
@@ -30,8 +30,9 @@ T BitsGather(T val, T mask)
   return result;
 }
 
+/// \brief Set the bits as described by the mask
 template <typename T> 
-T BitsScatter(T val, T mask)
+T scatterBits(T val, T mask)
 {
   T result = 0;
   size_t off = 0;
