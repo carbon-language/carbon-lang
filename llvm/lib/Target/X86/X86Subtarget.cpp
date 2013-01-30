@@ -157,7 +157,8 @@ const char *X86Subtarget::getBZeroEntry() const {
 
 bool X86Subtarget::hasSinCos() const {
   return getTargetTriple().isMacOSX() &&
-    !getTargetTriple().isMacOSXVersionLT(10, 9);
+    !getTargetTriple().isMacOSXVersionLT(10, 9) &&
+    is64Bit();
 }
 
 /// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls

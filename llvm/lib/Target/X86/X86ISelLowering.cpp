@@ -1294,7 +1294,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->hasSinCos()) {
     setLibcallName(RTLIB::SINCOS_F32, "sincosf");
     setLibcallName(RTLIB::SINCOS_F64, "sincos");
-    if (Subtarget->isTargetDarwin() && Subtarget->is64Bit()) {
+    if (Subtarget->isTargetDarwin()) {
       // For MacOSX, we don't want to the normal expansion of a libcall to
       // sincos. We want to issue a libcall to __sincos_stret to avoid memory
       // traffic.
@@ -12037,7 +12037,7 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue X86TargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
-  assert(Subtarget->isTargetDarwin());
+  assert(Subtarget->isTargetDarwin() && Subtarget->is64Bit());
  
   // For MacOSX, we want to call an alternative entry point: __sincos_stret,
   // which returns the values in two XMM registers.
@@ -12054,18 +12054,21 @@ SDValue X86TargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
   Entry.isSExt = false;
   Entry.isZExt = false;
   Args.push_back(Entry);
-  
+
+  // Only optimize x86_64 for now. i386 is a bit messy. For f32,
+  // the small struct {f32, f32} is returned in (eax, edx). For f64,
+  // the results are returned via SRet in memory.
   const char *LibcallName = (ArgVT == MVT::f64)
     ? "__sincos_stret" : "__sincosf_stret";
   SDValue Callee = DAG.getExternalSymbol(LibcallName, getPointerTy());
-  
+
   StructType *RetTy = StructType::get(ArgTy, ArgTy, NULL);
   TargetLowering::
-  CallLoweringInfo CLI(DAG.getEntryNode(), RetTy,
-                       false, false, false, false, 0,
-                       CallingConv::C, /*isTaillCall=*/false,
-                       /*doesNotRet=*/false, /*isReturnValueUsed*/true,
-                       Callee, Args, DAG, dl);
+    CallLoweringInfo CLI(DAG.getEntryNode(), RetTy,
+                         false, false, false, false, 0,
+                         CallingConv::C, /*isTaillCall=*/false,
+                         /*doesNotRet=*/false, /*isReturnValueUsed*/true,
+                         Callee, Args, DAG, dl);
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   return CallResult.first;
 }
