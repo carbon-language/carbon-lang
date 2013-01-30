@@ -744,8 +744,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
         const char *Pipe = ScanFormat(Argument, Argument + ArgumentLen, '|');
         const char *FirstDollar = ScanFormat(Argument, Pipe, '$');
         const char *SecondDollar = ScanFormat(FirstDollar + 1, Pipe, '$');
-        const char ArgStr1[] = { '%', (char)('0' + ArgNo) };
-        const char ArgStr2[] = { '%', (char)('0' + ArgNo2) };
+        const char ArgStr1[] = { '%', static_cast<char>('0' + ArgNo) };
+        const char ArgStr2[] = { '%', static_cast<char>('0' + ArgNo2) };
         FormatDiagnostic(Argument, FirstDollar, OutStr);
         FormatDiagnostic(ArgStr1, ArgStr1 + 2, OutStr);
         FormatDiagnostic(FirstDollar + 1, SecondDollar, OutStr);
