@@ -10,7 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
 
-#include "DefaultTargetHandler.h"
+#include "X86_64TargetHandler.h"
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
@@ -20,12 +20,13 @@
 
 namespace lld {
 namespace elf {
+typedef llvm::object::ELFType<llvm::support::little, 8, false> X86_64ELFType;
+
 class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   X86_64TargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
-    _targetHandler = std::unique_ptr<TargetHandlerBase>(
-        new DefaultTargetHandler<llvm::object::ELFType<llvm::support::little,
-                                                          8, false> >(*this));
+    _targetHandler =
+        std::unique_ptr<TargetHandlerBase>(new X86_64TargetHandler(*this));
   }
 
   virtual uint64_t getPageSize() const { return 0x1000; }
@@ -47,7 +48,7 @@ public:
   virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const;
 
 };
-} // elf
-} // lld
+} // end namespace elf
+} // end namespace lld
 
-#endif // LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
+#endif
