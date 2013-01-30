@@ -69,7 +69,7 @@ protected:
   /// before BeginSourceFileAction is called.
   ///
   /// \return True on success; on failure BeginSourceFileAction(),
-  /// ExecutionAction() and EndSourceFileAction() will not be called.
+  /// ExecuteAction() and EndSourceFileAction() will not be called.
   virtual bool BeginInvocation(CompilerInstance &CI) { return true; }
 
   /// \brief Callback at the start of processing a single input.
