@@ -22,8 +22,8 @@ using namespace lldb_private;
 FormatCache::Entry::Entry () :
 m_summary_cached(false),
 m_synthetic_cached(false),
-m_summary_sp(nullptr),
-m_synthetic_sp(nullptr)
+m_summary_sp(),
+m_synthetic_sp()
 {}
 
 FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp) : FormatCache::Entry()
