@@ -179,6 +179,7 @@ RANLIB     := @RANLIB@
 RM         := @RM@
 SED        := @SED@
 TAR        := @TAR@
+PYTHON     := @PYTHON@
 
 # Paths to miscellaneous programs we hope are present but might not be
 BZIP2      := @BZIP2@

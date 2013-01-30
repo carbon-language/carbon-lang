@@ -1298,6 +1298,35 @@ else
 fi
 AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED])
 
+AC_ARG_WITH([python],
+            [AS_HELP_STRING([--with-python], [path to python])],
+            [PYTHON="$withval"])
+
+if test -n "$PYTHON" && test -x "$PYTHON" ; then
+  AC_MSG_CHECKING([for python])
+  AC_MSG_RESULT([user defined: $with_python])
+else
+  if test -n "$PYTHON" ; then
+    AC_MSG_WARN([specified python ($PYTHON) is not usable, searching path])
+  fi
+
+  AC_PATH_PROG([PYTHON], [python python2 python26],
+               [AC_MSG_RESULT([not found])
+                AC_MSG_ERROR([could not find python 2.5 or higher])])
+fi
+
+AC_MSG_CHECKING([for python >= 2.5])
+ac_python_version=`$PYTHON -c 'import sys; print sys.version.split()[[0]]'`
+ac_python_version_major=`echo $ac_python_version | cut -d'.' -f1`
+ac_python_version_minor=`echo $ac_python_version | cut -d'.' -f2`
+ac_python_version_patch=`echo $ac_python_version | cut -d'.' -f3`
+if   test "$ac_python_version_major" -eq "2" \
+   && test "$ac_python_version_minor" -ge "5" ; then
+  AC_MSG_RESULT([$PYTHON ($ac_python_version)])
+else
+  AC_MSG_RESULT([not found])
+  AC_MSG_FAILURE([found python $ac_python_version ($PYTHON); required >= 2.5])
+fi
 
 dnl===-----------------------------------------------------------------------===
 dnl===
