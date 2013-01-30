@@ -303,6 +303,12 @@ def CUDAShared : InheritableAttr {
   let Spellings = [GNU<"shared">];
 }
 
+def C11NoReturn : InheritableAttr {
+  let Spellings = [Keyword<"_Noreturn">];
+  let Subjects = [Function];
+  let SemaHandler = 0;
+}
+
 def CXX11NoReturn : InheritableAttr {
   let Spellings = [CXX11<"","noreturn">, CXX11<"std","noreturn">];
   let Subjects = [Function];

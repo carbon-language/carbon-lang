@@ -36,7 +36,7 @@ test4() {
   test2_positive();
 }
 
-// FIXME: do not warn here.
-_Noreturn void test5() { // expected-warning {{could be declared with attribute 'noreturn'}}
+// Do not warn here.
+_Noreturn void test5() {
   test2_positive();
 }

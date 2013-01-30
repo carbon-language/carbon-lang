@@ -1812,6 +1812,7 @@ bool FunctionDecl::isGlobal() const {
 
 bool FunctionDecl::isNoReturn() const {
   return hasAttr<NoReturnAttr>() || hasAttr<CXX11NoReturnAttr>() ||
+         hasAttr<C11NoReturnAttr>() ||
          getType()->getAs<FunctionType>()->getNoReturnAttr();
 }
 

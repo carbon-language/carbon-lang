@@ -1900,6 +1900,11 @@ static void checkNewAttributesAfterDef(Sema &S, Decl *New, const Decl *Old) {
       ++I;
       continue; // regular attr merging will take care of validating this.
     }
+    // C's _Noreturn is allowed to be added to a function after it is defined.
+    if (isa<C11NoReturnAttr>(NewAttribute)) {
+      ++I;
+      continue;
+    }
     S.Diag(NewAttribute->getLocation(),
            diag::warn_attribute_precede_definition);
     S.Diag(Def->getLocation(), diag::note_previous_definition);
@@ -5888,6 +5893,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // which would otherwise incorrectly end up in the translation unit scope.
   NewFD->setDeclsInPrototypeScope(DeclsInPrototypeScope);
   DeclsInPrototypeScope.clear();
+
+  if (D.getDeclSpec().isNoreturnSpecified())
+    NewFD->addAttr(
+        ::new(Context) C11NoReturnAttr(D.getDeclSpec().getNoreturnSpecLoc(),
+                                       Context));
 
   // Process the non-inheritable attributes on this declaration.
   ProcessDeclAttributes(S, NewFD, D,

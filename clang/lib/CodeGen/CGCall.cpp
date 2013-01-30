@@ -983,18 +983,16 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       FuncAttrs.addAttribute(llvm::Attribute::ReturnsTwice);
     if (TargetDecl->hasAttr<NoThrowAttr>())
       FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
-    else if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
+    if (TargetDecl->hasAttr<NoReturnAttr>())
+      FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
+
+    if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
       const FunctionProtoType *FPT = Fn->getType()->getAs<FunctionProtoType>();
       if (FPT && FPT->isNothrow(getContext()))
         FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
+      if (Fn->isNoReturn())
+        FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
     }
-
-    if (TargetDecl->hasAttr<NoReturnAttr>() ||
-        TargetDecl->hasAttr<CXX11NoReturnAttr>())
-      FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
-
-    if (TargetDecl->hasAttr<ReturnsTwiceAttr>())
-      FuncAttrs.addAttribute(llvm::Attribute::ReturnsTwice);
 
     // 'const' and 'pure' attribute functions are also nounwind.
     if (TargetDecl->hasAttr<ConstAttr>()) {
