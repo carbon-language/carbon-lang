@@ -15,8 +15,6 @@ namespace llvm {
 class MipsSubtarget;
 
 class MipsELFStreamer : public MCELFStreamer {
-private:
-  unsigned EFlags;
 public:
   MipsELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter,
