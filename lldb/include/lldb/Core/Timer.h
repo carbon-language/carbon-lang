@@ -91,49 +91,6 @@ private:
     Timer();
     DISALLOW_COPY_AND_ASSIGN (Timer);
 };
-
-    class ScopedTimer
-    {
-    public:
-        ScopedTimer() :
-            m_start (TimeValue::Now())
-        {
-        }
-        
-        uint64_t
-        GetElapsedNanoSeconds() const
-        {
-            return TimeValue::Now() - m_start;
-        }
-
-    protected:
-        TimeValue m_start;
-    };
-    
-    class ScopedTimerAggregator
-    {
-    public:
-        ScopedTimerAggregator(const char *desc) :
-            m_description (desc),
-            m_total_nsec()
-        {
-        }
-        
-        ~ScopedTimerAggregator()
-        {
-            printf ("Total nsec spent in %s is %llu\n", m_description.c_str(), m_total_nsec);
-        }
-        void
-        Aggregate (const ScopedTimer &scoped_timer)
-        {
-            m_total_nsec += scoped_timer.GetElapsedNanoSeconds();
-        }
-        
-    protected:
-        std::string m_description;
-        uint64_t m_total_nsec;
-    };
-
     
 } // namespace lldb_private
 
