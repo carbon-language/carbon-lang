@@ -194,6 +194,11 @@ private:
   /// \brief Stores \p Text as the replacement for the whitespace in front of
   /// \p Tok.
   void storeReplacement(const FormatToken &Tok, const std::string Text) {
+    // Don't create a replacement, if it does not change anything.
+    if (StringRef(SourceMgr.getCharacterData(Tok.WhiteSpaceStart),
+                  Tok.WhiteSpaceLength) == Text)
+      return;
+
     Replaces.insert(tooling::Replacement(SourceMgr, Tok.WhiteSpaceStart,
                                          Tok.WhiteSpaceLength, Text));
   }

@@ -38,6 +38,7 @@ protected:
     tooling::Replacements Replace = reformat(Style, Lex, Context.Sources,
                                              Ranges,
                                              new IgnoringDiagConsumer());
+    ReplacementCount = Replace.size();
     EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
     DEBUG(llvm::errs() << "\n" << Context.getRewrittenText(ID) << "\n\n");
     return Context.getRewrittenText(ID);
@@ -105,6 +106,8 @@ protected:
     verifyFormat(text);
     verifyFormat(llvm::Twine("void f() { " + text + " }").str());
   }
+
+  int ReplacementCount;
 };
 
 TEST_F(FormatTest, MessUp) {
@@ -146,6 +149,19 @@ TEST_F(FormatTest, FormatsNestedCall) {
 
 TEST_F(FormatTest, ImportantSpaces) {
   verifyFormat("vector< ::Type> v;");
+}
+
+TEST_F(FormatTest, OnlyGeneratesNecessaryReplacements) {
+  EXPECT_EQ("if (a) {\n"
+            "  f();\n"
+            "}", format("if(a){f();}"));
+  EXPECT_EQ(4, ReplacementCount);
+  EXPECT_EQ("if (a) {\n"
+            "  f();\n"
+            "}", format("if (a) {\n"
+                        "  f();\n"
+                        "}"));
+  EXPECT_EQ(0, ReplacementCount);
 }
 
 //===----------------------------------------------------------------------===//
