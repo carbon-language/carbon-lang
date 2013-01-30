@@ -6712,10 +6712,10 @@ static bool IsWithinTemplateSpecialization(Decl *D) {
 }
 
 /// If two different enums are compared, raise a warning.
-static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &LHS,
-                                ExprResult &RHS) {
-  QualType LHSStrippedType = LHS.get()->IgnoreParenImpCasts()->getType();
-  QualType RHSStrippedType = RHS.get()->IgnoreParenImpCasts()->getType();
+static void checkEnumComparison(Sema &S, SourceLocation Loc, Expr *LHS,
+                                Expr *RHS) {
+  QualType LHSStrippedType = LHS->IgnoreParenImpCasts()->getType();
+  QualType RHSStrippedType = RHS->IgnoreParenImpCasts()->getType();
 
   const EnumType *LHSEnumType = LHSStrippedType->getAs<EnumType>();
   if (!LHSEnumType)
@@ -6735,7 +6735,7 @@ static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &LHS,
 
   S.Diag(Loc, diag::warn_comparison_of_mixed_enum_types)
       << LHSStrippedType << RHSStrippedType
-      << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+      << LHS->getSourceRange() << RHS->getSourceRange();
 }
 
 /// \brief Diagnose bad pointer comparisons.
@@ -6978,7 +6978,7 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
   Expr *LHSStripped = LHS.get()->IgnoreParenImpCasts();
   Expr *RHSStripped = RHS.get()->IgnoreParenImpCasts();
 
-  checkEnumComparison(*this, Loc, LHS, RHS);
+  checkEnumComparison(*this, Loc, LHS.get(), RHS.get());
 
   if (!LHSType->hasFloatingRepresentation() &&
       !(LHSType->isBlockPointerType() && IsRelational) &&
