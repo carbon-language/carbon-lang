@@ -45,6 +45,10 @@ public:
     llvm_unreachable("Target should provide implementation for function ");
   }
 
+  const TargetRelocationHandler<ELFT> &getRelocationHandler() const {
+    llvm_unreachable("Target should provide implementation for function ");
+  }
+
   /// Create a set of Default target sections that a target might needj
   void createDefaultSections() {}
 
