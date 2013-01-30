@@ -53,8 +53,7 @@ typedef int Bool;
 // CHECK-ADD-ADD: ObjCInstanceMethodDecl:{ResultType void}{TypedText last} (35)
 
 // RUN: c-index-test -code-completion-at=%s:24:10 %s | FileCheck -check-prefix=CHECK-SELECTOR-SELECTOR %s
-// CHECK-SELECTOR-SELECTOR-NOT: x
-// CHECK-SELECTOR-SELECTOR: ObjCClassMethodDecl:{ResultType void}{TypedText last} (35)
+// CHECK-SELECTOR-SELECTOR: ObjCInstanceMethodDecl:{ResultType void}{TypedText last} (35)
 // CHECK-SELECTOR-SELECTOR: ObjCClassMethodDecl:{ResultType void}{TypedText select:}{Placeholder condition}{HorizontalSpace  }{Text first:}{Placeholder a}{HorizontalSpace  }{Text second:}{Placeholder b} (20)
 
 // Check "super" completion at the second identifier

@@ -193,6 +193,7 @@ void test_DO(DO *d, A* a) {
 // CHECK-CC1: {TypedText categoryClassMethod} (35)
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)} (35)
 // CHECK-CC1: {TypedText classMethod2} (35)
+// CHECK-CC1: {TypedText instanceMethod1} (35)
 // CHECK-CC1: {TypedText new} (35)
 // CHECK-CC1: {TypedText protocolClassMethod} (37)
 // CHECK-CC1: Completion contexts:
