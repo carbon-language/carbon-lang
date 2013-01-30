@@ -36,6 +36,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
   , Use64BitRegs(false)
   , IsPPC64(is64Bit)
   , HasAltivec(false)
+  , HasQPX(false)
   , HasFSQRT(false)
   , HasSTFIWX(false)
   , HasISEL(false)
