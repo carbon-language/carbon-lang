@@ -9,6 +9,7 @@
 
 #include "HexagonTargetHandler.h"
 #include "HexagonTargetInfo.h"
+#include "lld/ReaderWriter/RelocationHelperFunctions.h"
 
 using namespace lld;
 using namespace elf;
@@ -20,7 +21,7 @@ namespace {
 int relocB22PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(((S + A) - P)>>2);
   if ((result < 0x200000) && (result > -0x200000)) {
-    result = ((result<<1) & 0x3ffe) | ((result<<3) & 0x01ff0000);
+    result = lld::scatterBits<int32_t>(result, 0x01ff3ffe);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
     return 0;
@@ -32,7 +33,7 @@ int relocB22PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 int relocB15PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(((S + A) - P)>>2);
   if ((result < 0x8000) && (result > -0x8000)) {
-    result = ((result<<1) & 0x20fe) | ((result<<7) & 0x00df0000);
+    result = lld::scatterBits<int32_t>(result, 0x00df20fe);
     *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
     return 0;
@@ -43,7 +44,7 @@ int relocB15PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 /// \brief Word32_LO: 0x00c03fff : (S + A) : Truncate
 int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
-  result = ((result & 0x3fff) | ((result << 8) & 0x00c00000));
+  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return 0;
@@ -52,7 +53,7 @@ int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
 int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A)>>16);
-  result = ((result & 0x3fff) | ((result << 8) & 0x00c00000));
+  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return 0;
