@@ -3253,7 +3253,8 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           if (const UnaryOperator *UnaryOp = dyn_cast<UnaryOperator>(Dest))
             if (UnaryOp->getOpcode() == UO_AddrOf)
               ActionIdx = 1; // If its an address-of operator, just remove it.
-          if (Context.getTypeSize(PointeeTy) == Context.getCharWidth())
+          if (!PointeeTy->isIncompleteType() &&
+              (Context.getTypeSize(PointeeTy) == Context.getCharWidth()))
             ActionIdx = 2; // If the pointee's size is sizeof(char),
                            // suggest an explicit length.
 
