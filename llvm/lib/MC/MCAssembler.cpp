@@ -264,7 +264,7 @@ MCAssembler::MCAssembler(MCContext &Context_, MCAsmBackend &Backend_,
                          raw_ostream &OS_)
   : Context(Context_), Backend(Backend_), Emitter(Emitter_), Writer(Writer_),
     OS(OS_), BundleAlignSize(0), RelaxAll(false), NoExecStack(false),
-    SubsectionsViaSymbols(false) {
+    SubsectionsViaSymbols(false), ELFHeaderEFlags(0) {
 }
 
 MCAssembler::~MCAssembler() {
@@ -281,6 +281,7 @@ void MCAssembler::reset() {
   RelaxAll = false;
   NoExecStack = false;
   SubsectionsViaSymbols = false;
+  ELFHeaderEFlags = 0;
 
   // reset objects owned by us
   getBackend().reset();

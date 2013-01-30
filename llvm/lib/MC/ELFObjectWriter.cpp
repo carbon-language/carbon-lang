@@ -142,16 +142,12 @@ class ELFObjectWriter : public MCObjectWriter {
     bool hasRelocationAddend() const {
       return TargetObjectWriter->hasRelocationAddend();
     }
-    unsigned getEFlags() const {
-      return TargetObjectWriter->getEFlags();
-    }
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel, bool IsRelocWithSymbol,
                           int64_t Addend) const {
       return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel,
                                               IsRelocWithSymbol, Addend);
     }
-
 
   public:
     ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
@@ -233,7 +229,8 @@ class ELFObjectWriter : public MCObjectWriter {
       F.getContents().append(&buf[0], &buf[8]);
     }
 
-    void WriteHeader(uint64_t SectionDataSize,
+    void WriteHeader(const MCAssembler &Asm,
+                     uint64_t SectionDataSize,
                      unsigned NumberOfSections);
 
     void WriteSymbolEntry(MCDataFragment *SymtabF,
@@ -373,7 +370,8 @@ ELFObjectWriter::~ELFObjectWriter()
 {}
 
 // Emit the ELF header.
-void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
+void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
+                                  uint64_t SectionDataSize,
                                   unsigned NumberOfSections) {
   // ELF Header
   // ----------
@@ -411,7 +409,7 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
             sizeof(ELF::Elf32_Ehdr)));  // e_shoff = sec hdr table off in bytes
 
   // e_flags = whatever the target wants
-  Write32(getEFlags());
+  Write32(Asm.getELFHeaderEFlags());
 
   // e_ehsize = ELF header size
   Write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
@@ -1534,7 +1532,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   }
 
   // Write out the ELF header ...
-  WriteHeader(SectionHeaderOffset, NumSections + 1);
+  WriteHeader(Asm, SectionHeaderOffset, NumSections + 1);
 
   // ... then the regular sections ...
   // + because of .shstrtab

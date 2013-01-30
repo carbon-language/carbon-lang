@@ -24,11 +24,6 @@ MCELFObjectTargetWriter::MCELFObjectTargetWriter(bool Is64Bit_,
     IsN64(IsN64_){
 }
 
-/// Default e_flags = 0
-unsigned MCELFObjectTargetWriter::getEFlags() const {
-  return 0;
-}
-
 const MCSymbol *MCELFObjectTargetWriter::ExplicitRelSym(const MCAssembler &Asm,
                                                         const MCValue &Target,
                                                         const MCFragment &F,

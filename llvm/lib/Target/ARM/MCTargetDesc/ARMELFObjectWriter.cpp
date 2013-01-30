@@ -37,7 +37,6 @@ namespace {
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend) const;
-    virtual unsigned getEFlags() const;
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                    const MCValue &Target,
                                    const MCFragment &F,
@@ -52,11 +51,6 @@ ARMELFObjectWriter::ARMELFObjectWriter(uint8_t OSABI)
                             /*HasRelocationAddend*/ false) {}
 
 ARMELFObjectWriter::~ARMELFObjectWriter() {}
-
-// FIXME: get the real EABI Version from the Triple.
-unsigned ARMELFObjectWriter::getEFlags() const {
-  return ELF::EF_ARM_EABIMASK & DefaultEABIVersion;
-}
 
 // In ARM, _MergedGlobals and other most symbols get emitted directly.
 // I.e. not as an offset to a section symbol.

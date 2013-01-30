@@ -42,7 +42,6 @@ namespace {
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend) const;
-    virtual unsigned getEFlags() const;
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                            const MCValue &Target,
                                            const MCFragment &F,
@@ -60,19 +59,6 @@ MipsELFObjectWriter::MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI,
                             /*IsN64*/ _isN64) {}
 
 MipsELFObjectWriter::~MipsELFObjectWriter() {}
-
-// FIXME: get the real EABI Version from the Subtarget class.
-unsigned MipsELFObjectWriter::getEFlags() const {
-
-  // FIXME: We can't tell if we are PIC (dynamic) or CPIC (static)
-  unsigned Flag = ELF::EF_MIPS_NOREORDER;
-
-  if (is64Bit())
-    Flag |= ELF::EF_MIPS_ARCH_64R2;
-  else
-    Flag |= ELF::EF_MIPS_ARCH_32R2;
-  return Flag;
-}
 
 const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
                                                     const MCValue &Target,
