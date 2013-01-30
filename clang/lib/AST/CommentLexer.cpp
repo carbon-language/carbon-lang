@@ -30,22 +30,8 @@ bool isHTMLHexCharacterReferenceCharacter(char C) {
          (C >= 'A' && C <= 'F');
 }
 
-#include "clang/AST/CommentHTMLTags.inc"
-
-} // unnamed namespace
-
-static unsigned getCodePoint(StringRef Name) {
-  unsigned CodePoint = 0;
-  for (unsigned i = 0, e = Name.size(); i != e; ++i) {
-    CodePoint *= 16;
-    const char C = Name[i];
-    assert(isHTMLHexCharacterReferenceCharacter(C));
-    CodePoint += llvm::hexDigitValue(C);
-  }
-  return CodePoint;
-}
-
-StringRef Lexer::helperResolveHTMLHexCharacterReference(unsigned CodePoint) const {
+StringRef convertCodePointToUTF8(llvm::BumpPtrAllocator &Allocator,
+                                 unsigned CodePoint) {
   char *Resolved = Allocator.Allocate<char>(UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
   char *ResolvedPtr = Resolved;
   if (llvm::ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
@@ -53,164 +39,22 @@ StringRef Lexer::helperResolveHTMLHexCharacterReference(unsigned CodePoint) cons
   else
     return StringRef();
 }
-  
-StringRef Lexer::resolveHTMLHexCharacterReference(StringRef Name) const {
-  unsigned CodePoint = getCodePoint(Name);
-  return helperResolveHTMLHexCharacterReference(CodePoint);
-}
+
+#include "clang/AST/CommentHTMLTags.inc"
+#include "clang/AST/CommentHTMLNamedCharacterReferences.inc"
+
+} // unnamed namespace
 
 StringRef Lexer::resolveHTMLNamedCharacterReference(StringRef Name) const {
+  // Fast path, first check a few most widely used named character references.
   return llvm::StringSwitch<StringRef>(Name)
       .Case("amp", "&")
       .Case("lt", "<")
       .Case("gt", ">")
       .Case("quot", "\"")
       .Case("apos", "\'")
-      .Default("");
-}
-  
-StringRef Lexer::HTMLDoxygenCharacterReference(StringRef Name) const {
-  return llvm::StringSwitch<StringRef>(Name)
-  .Case("copy", helperResolveHTMLHexCharacterReference(0x000A9))
-  .Case("trade",        helperResolveHTMLHexCharacterReference(0x02122))
-  .Case("reg",  helperResolveHTMLHexCharacterReference(0x000AE))
-  .Case("lt",   helperResolveHTMLHexCharacterReference(0x0003C))
-  .Case("gt",   helperResolveHTMLHexCharacterReference(0x0003C))
-  .Case("amp",  helperResolveHTMLHexCharacterReference(0x00026))
-  .Case("apos", helperResolveHTMLHexCharacterReference(0x00027))
-  .Case("quot", helperResolveHTMLHexCharacterReference(0x00022))
-  .Case("lsquo",        helperResolveHTMLHexCharacterReference(0x02018))
-  .Case("rsquo",        helperResolveHTMLHexCharacterReference(0x02019))
-  .Case("ldquo",        helperResolveHTMLHexCharacterReference(0x0201C))
-  .Case("rdquo",        helperResolveHTMLHexCharacterReference(0x0201D))
-  .Case("ndash",        helperResolveHTMLHexCharacterReference(0x02013))
-  .Case("mdash",        helperResolveHTMLHexCharacterReference(0x02014))
-  .Case("Auml", helperResolveHTMLHexCharacterReference(0x000C4))
-  .Case("Euml", helperResolveHTMLHexCharacterReference(0x000CB))
-  .Case("Iuml", helperResolveHTMLHexCharacterReference(0x000CF))
-  .Case("Ouml", helperResolveHTMLHexCharacterReference(0x000D6))
-  .Case("Uuml", helperResolveHTMLHexCharacterReference(0x000DC))
-  .Case("Yuml", helperResolveHTMLHexCharacterReference(0x00178))
-  .Case("auml", helperResolveHTMLHexCharacterReference(0x000E4))
-  .Case("euml", helperResolveHTMLHexCharacterReference(0x000EB))
-  .Case("iuml", helperResolveHTMLHexCharacterReference(0x000EF))
-  .Case("ouml", helperResolveHTMLHexCharacterReference(0x000F6))
-  .Case("uuml", helperResolveHTMLHexCharacterReference(0x000FC))
-  .Case("yuml", helperResolveHTMLHexCharacterReference(0x000FF))
-  .Case("Aacute",       helperResolveHTMLHexCharacterReference(0x000C1))
-  .Case("Eacute",       helperResolveHTMLHexCharacterReference(0x000C9))
-  .Case("Iacute",       helperResolveHTMLHexCharacterReference(0x000CD))
-  .Case("Oacute",       helperResolveHTMLHexCharacterReference(0x000D3))
-  .Case("Uacute",       helperResolveHTMLHexCharacterReference(0x000DA))
-  .Case("Yacute",       helperResolveHTMLHexCharacterReference(0x000DD))
-  .Case("aacute",       helperResolveHTMLHexCharacterReference(0x000E1))
-  .Case("eacute",       helperResolveHTMLHexCharacterReference(0x000E9))
-  .Case("iacute",       helperResolveHTMLHexCharacterReference(0x000ED))
-  .Case("oacute",       helperResolveHTMLHexCharacterReference(0x000F3))
-  .Case("uacute",       helperResolveHTMLHexCharacterReference(0x000FA))
-  .Case("yacute",       helperResolveHTMLHexCharacterReference(0x000FD))
-  .Case("Agrave",       helperResolveHTMLHexCharacterReference(0x000C0))
-  .Case("Egrave",       helperResolveHTMLHexCharacterReference(0x000C8))
-  .Case("Igrave",       helperResolveHTMLHexCharacterReference(0x000CC))
-  .Case("Ograve",       helperResolveHTMLHexCharacterReference(0x000D2))
-  .Case("Ugrave",       helperResolveHTMLHexCharacterReference(0x000D9))
-  .Case("agrave",       helperResolveHTMLHexCharacterReference(0x000E0))
-  .Case("egrave",       helperResolveHTMLHexCharacterReference(0x000E8))
-  .Case("igrave",       helperResolveHTMLHexCharacterReference(0x000EC))
-  .Case("ograve",       helperResolveHTMLHexCharacterReference(0x000F2))
-  .Case("ugrave",       helperResolveHTMLHexCharacterReference(0x000F9))
-  .Case("ygrave",       helperResolveHTMLHexCharacterReference(0x01EF3))
-  .Case("Acirc",        helperResolveHTMLHexCharacterReference(0x000C2))
-  .Case("Ecirc",        helperResolveHTMLHexCharacterReference(0x000CA))
-  .Case("Icirc",        helperResolveHTMLHexCharacterReference(0x000CE))
-  .Case("Ocirc",        helperResolveHTMLHexCharacterReference(0x000D4))
-  .Case("Ucirc",        helperResolveHTMLHexCharacterReference(0x000DB))
-  .Case("acirc",        helperResolveHTMLHexCharacterReference(0x000E2))
-  .Case("ecirc",        helperResolveHTMLHexCharacterReference(0x000EA))
-  .Case("icirc",        helperResolveHTMLHexCharacterReference(0x000EE))
-  .Case("ocirc",        helperResolveHTMLHexCharacterReference(0x000F4))
-  .Case("ucirc",        helperResolveHTMLHexCharacterReference(0x000FB))
-  .Case("ycirc",        helperResolveHTMLHexCharacterReference(0x00177))
-  .Case("Atilde",       helperResolveHTMLHexCharacterReference(0x000C3))
-  .Case("Ntilde",       helperResolveHTMLHexCharacterReference(0x000D1))
-  .Case("Otilde",       helperResolveHTMLHexCharacterReference(0x000D5))
-  .Case("atilde",       helperResolveHTMLHexCharacterReference(0x000E3))
-  .Case("ntilde",       helperResolveHTMLHexCharacterReference(0x000F1))
-  .Case("otilde",       helperResolveHTMLHexCharacterReference(0x000F5))
-  .Case("szlig",        helperResolveHTMLHexCharacterReference(0x000DF))
-  .Case("ccedil",       helperResolveHTMLHexCharacterReference(0x000E7))
-  .Case("Ccedil",       helperResolveHTMLHexCharacterReference(0x000C7))
-  .Case("aring",        helperResolveHTMLHexCharacterReference(0x000E5))
-  .Case("Aring",        helperResolveHTMLHexCharacterReference(0x000C5))
-  .Case("nbsp", helperResolveHTMLHexCharacterReference(0x000A0))
-  .Case("Gamma",        helperResolveHTMLHexCharacterReference(0x00393))
-  .Case("Delta",        helperResolveHTMLHexCharacterReference(0x00394))
-  .Case("Theta",        helperResolveHTMLHexCharacterReference(0x00398))
-  .Case("Lambda",       helperResolveHTMLHexCharacterReference(0x0039B))
-  .Case("Xi",   helperResolveHTMLHexCharacterReference(0x0039E))
-  .Case("Pi",   helperResolveHTMLHexCharacterReference(0x003A0))
-  .Case("Sigma",        helperResolveHTMLHexCharacterReference(0x003A3))
-  .Case("Upsilon",      helperResolveHTMLHexCharacterReference(0x003A5))
-  .Case("Phi",  helperResolveHTMLHexCharacterReference(0x003A6))
-  .Case("Psi",  helperResolveHTMLHexCharacterReference(0x003A8))
-  .Case("Omega",        helperResolveHTMLHexCharacterReference(0x003A9))
-  .Case("alpha",        helperResolveHTMLHexCharacterReference(0x003B1))
-  .Case("beta", helperResolveHTMLHexCharacterReference(0x003B2))
-  .Case("gamma",        helperResolveHTMLHexCharacterReference(0x003B3))
-  .Case("delta",        helperResolveHTMLHexCharacterReference(0x003B4))
-  .Case("epsilon",      helperResolveHTMLHexCharacterReference(0x003B5))
-  .Case("zeta", helperResolveHTMLHexCharacterReference(0x003B6))
-  .Case("eta",  helperResolveHTMLHexCharacterReference(0x003B7))
-  .Case("theta",        helperResolveHTMLHexCharacterReference(0x003B8))
-  .Case("iota", helperResolveHTMLHexCharacterReference(0x003B9))
-  .Case("kappa",        helperResolveHTMLHexCharacterReference(0x003BA))
-  .Case("lambda",       helperResolveHTMLHexCharacterReference(0x003BB))
-  .Case("mu",   helperResolveHTMLHexCharacterReference(0x003BC))
-  .Case("nu",   helperResolveHTMLHexCharacterReference(0x003BD))
-  .Case("xi",   helperResolveHTMLHexCharacterReference(0x003BE))
-  .Case("pi",   helperResolveHTMLHexCharacterReference(0x003C0))
-  .Case("rho",  helperResolveHTMLHexCharacterReference(0x003C1))
-  .Case("sigma",        helperResolveHTMLHexCharacterReference(0x003C3))
-  .Case("tau",  helperResolveHTMLHexCharacterReference(0x003C4))
-  .Case("upsilon",      helperResolveHTMLHexCharacterReference(0x003C5))
-  .Case("phi",  helperResolveHTMLHexCharacterReference(0x003C6))
-  .Case("chi",  helperResolveHTMLHexCharacterReference(0x003C7))
-  .Case("psi",  helperResolveHTMLHexCharacterReference(0x003C8))
-  .Case("omega",        helperResolveHTMLHexCharacterReference(0x003C9))
-  .Case("sigmaf",       helperResolveHTMLHexCharacterReference(0x003C2))
-  .Case("sect", helperResolveHTMLHexCharacterReference(0x000A7))
-  .Case("deg",  helperResolveHTMLHexCharacterReference(0x000B0))
-  .Case("prime",        helperResolveHTMLHexCharacterReference(0x02032))
-  .Case("Prime",        helperResolveHTMLHexCharacterReference(0x02033))
-  .Case("infin",        helperResolveHTMLHexCharacterReference(0x0221E))
-  .Case("empty",        helperResolveHTMLHexCharacterReference(0x02205))
-  .Case("plusmn",       helperResolveHTMLHexCharacterReference(0x000B1))
-  .Case("times",        helperResolveHTMLHexCharacterReference(0x000D7))
-  .Case("minus",        helperResolveHTMLHexCharacterReference(0x02212))
-  .Case("sdot", helperResolveHTMLHexCharacterReference(0x022C5))
-  .Case("part", helperResolveHTMLHexCharacterReference(0x02202))
-  .Case("nabla",        helperResolveHTMLHexCharacterReference(0x02207))
-  .Case("radic",        helperResolveHTMLHexCharacterReference(0x0221A))
-  .Case("perp", helperResolveHTMLHexCharacterReference(0x022A5))
-  .Case("sum",  helperResolveHTMLHexCharacterReference(0x02211))
-  .Case("int",  helperResolveHTMLHexCharacterReference(0x0222B))
-  .Case("prod", helperResolveHTMLHexCharacterReference(0x0220F))
-  .Case("sim",  helperResolveHTMLHexCharacterReference(0x0223C))
-  .Case("asymp",        helperResolveHTMLHexCharacterReference(0x02248))
-  .Case("ne",   helperResolveHTMLHexCharacterReference(0x02260))
-  .Case("equiv",        helperResolveHTMLHexCharacterReference(0x02261))
-  .Case("prop", helperResolveHTMLHexCharacterReference(0x0221D))
-  .Case("le",   helperResolveHTMLHexCharacterReference(0x02264))
-  .Case("ge",   helperResolveHTMLHexCharacterReference(0x02265))
-  .Case("larr", helperResolveHTMLHexCharacterReference(0x02190))
-  .Case("rarr", helperResolveHTMLHexCharacterReference(0x02192))
-  .Case("isin", helperResolveHTMLHexCharacterReference(0x02208))
-  .Case("notin",        helperResolveHTMLHexCharacterReference(0x02209))
-  .Case("lceil",        helperResolveHTMLHexCharacterReference(0x02308))
-  .Case("rceil",        helperResolveHTMLHexCharacterReference(0x02309))
-  .Case("lfloor",       helperResolveHTMLHexCharacterReference(0x0230A))
-  .Case("rfloor",       helperResolveHTMLHexCharacterReference(0x0230B))
-  .Default("");
+      // Slow path.
+      .Default(translateHTMLNamedCharacterReferenceToUTF8(Name));
 }
 
 StringRef Lexer::resolveHTMLDecimalCharacterReference(StringRef Name) const {
@@ -220,13 +64,18 @@ StringRef Lexer::resolveHTMLDecimalCharacterReference(StringRef Name) const {
     CodePoint *= 10;
     CodePoint += Name[i] - '0';
   }
+  return convertCodePointToUTF8(Allocator, CodePoint);
+}
 
-  char *Resolved = Allocator.Allocate<char>(UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
-  char *ResolvedPtr = Resolved;
-  if (llvm::ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
-    return StringRef(Resolved, ResolvedPtr - Resolved);
-  else
-    return StringRef();
+StringRef Lexer::resolveHTMLHexCharacterReference(StringRef Name) const {
+  unsigned CodePoint = 0;
+  for (unsigned i = 0, e = Name.size(); i != e; ++i) {
+    CodePoint *= 16;
+    const char C = Name[i];
+    assert(isHTMLHexCharacterReferenceCharacter(C));
+    CodePoint += llvm::hexDigitValue(C);
+  }
+  return convertCodePointToUTF8(Allocator, CodePoint);
 }
 
 void Lexer::skipLineStartingDecorations() {
@@ -725,17 +574,8 @@ void Lexer::lexHTMLCharacterReference(Token &T) {
   StringRef Name(NamePtr, TokenPtr - NamePtr);
   TokenPtr++; // Skip semicolon.
   StringRef Resolved;
-  if (isNamed) {
+  if (isNamed)
     Resolved = resolveHTMLNamedCharacterReference(Name);
-    if (Resolved.empty()) {
-      Resolved = HTMLDoxygenCharacterReference(Name);
-      if (!Resolved.empty()) {
-        formTokenWithChars(T, TokenPtr, tok::text);
-        T.setText(Resolved);
-        return;
-      }
-    }
-  }
   else if (isDecimal)
     Resolved = resolveHTMLDecimalCharacterReference(Name);
   else
