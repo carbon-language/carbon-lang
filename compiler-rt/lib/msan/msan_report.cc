@@ -97,4 +97,4 @@ void ReportAtExitStatistics() {
 }
 
 
-}  // namespace msan
+}  // namespace __msan

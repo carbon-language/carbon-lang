@@ -152,7 +152,7 @@ SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr) {
   return 0;
 }
 
-}  // namespace __tsan {
+}  // namespace __tsan
 
 #define SCOPED_JAVA_FUNC(func) \
   ThreadState *thr = cur_thread(); \

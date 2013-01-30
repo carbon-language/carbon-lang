@@ -127,7 +127,7 @@ struct SignalContext {
   int pending_signal_count;
   SignalDesc pending_signals[kSigCount];
 };
-}
+}  // namespace __tsan
 
 static SignalContext *SigCtx(ThreadState *thr) {
   SignalContext *ctx = (SignalContext*)thr->signal_ctx;

@@ -87,6 +87,6 @@ static void MsanAtExit(void) {
 void InstallAtExitHandler() {
   atexit(MsanAtExit);
 }
-}
+}  // namespace __msan
 
 #endif  // __linux__

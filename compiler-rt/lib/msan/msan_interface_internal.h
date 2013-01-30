@@ -18,7 +18,6 @@
 #include <sanitizer/common_interface_defs.h>
 
 extern "C" {
-
 // FIXME: document all interface functions.
 
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -114,7 +113,6 @@ void __msan_partial_poison(void* data, void* shadow, uptr size);
 // Memory will be marked uninitialized, with origin at the call site.
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_allocated_memory(void* data, uptr size);
-
 }  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H

@@ -68,6 +68,6 @@ struct LFStack {
 
   atomic_uint64_t head_;
 };
-}
+}  // namespace __sanitizer
 
 #endif  // #ifndef SANITIZER_LFSTACK_H

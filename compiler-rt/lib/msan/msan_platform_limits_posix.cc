@@ -54,6 +54,6 @@ namespace __msan {
   uptr __msan_get_socklen_t(void* socklen_ptr) {
     return *(socklen_t*)socklen_ptr;
   }
-}
+}  // namespace __msan
 
 #endif  // __linux__

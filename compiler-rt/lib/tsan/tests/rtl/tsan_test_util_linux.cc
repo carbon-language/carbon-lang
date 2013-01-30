@@ -73,7 +73,7 @@ bool OnReport(const ReportDesc *rep, bool suppressed) {
   expect_report_reported = true;
   return true;
 }
-}
+}  // namespace __tsan
 
 static void* allocate_addr(int size, int offset_from_aligned = 0) {
   static uintptr_t foo;

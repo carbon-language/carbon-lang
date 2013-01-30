@@ -16,7 +16,7 @@ struct YYY {
     // CHECK: {{Address 0x.* is .* frame <XXX::YYY::ZZZ(.*)>}}
   }
 };
-};
+}  // namespace XXX
 
 int main(int argc, char **argv) {
   int res = XXX::YYY::ZZZ(argc + 10);

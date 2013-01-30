@@ -239,7 +239,7 @@ void Initialize(ThreadState *thr) {
     Printf("ThreadSanitizer is suspended at startup (pid %d)."
            " Call __tsan_resume().\n",
            GetPid());
-    while (__tsan_resumed == 0);
+    while (__tsan_resumed == 0) {}
   }
 }
 

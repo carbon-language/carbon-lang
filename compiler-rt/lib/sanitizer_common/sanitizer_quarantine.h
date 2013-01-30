@@ -167,6 +167,6 @@ class QuarantineCache {
     return b;
   }
 };
-}
+}  // namespace __sanitizer
 
 #endif  // #ifndef SANITIZER_QUARANTINE_H

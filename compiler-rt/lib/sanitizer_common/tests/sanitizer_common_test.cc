@@ -96,4 +96,4 @@ TEST(SanitizerCommon, SanitizerSetThreadName) {
 }
 #endif
 
-}  // namespace sanitizer
+}  // namespace __sanitizer

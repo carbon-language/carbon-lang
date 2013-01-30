@@ -86,6 +86,6 @@ struct Flags {
 
 Flags *flags();
 void InitializeFlags(Flags *flags, const char *env);
-}
+}  // namespace __tsan
 
 #endif  // TSAN_FLAGS_H
