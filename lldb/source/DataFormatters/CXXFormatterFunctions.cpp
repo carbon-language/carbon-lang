@@ -13,7 +13,7 @@
 
 // needed to get ConvertUTF16/32ToUTF8
 #define CLANG_NEEDS_THESE_ONE_DAY
-#include "clang/Basic/ConvertUTF.h"
+#include "llvm/Support/ConvertUTF.h"
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
