@@ -100,7 +100,7 @@ private:
 
   SmallVector<unsigned char, 8> LegalIntWidths; ///< Legal Integers.
 
-  /// Alignments- Where the primitive type alignment data is stored.
+  /// Alignments - Where the primitive type alignment data is stored.
   ///
   /// @sa init().
   /// @note Could support multiple size pointer alignments, e.g., 32-bit
@@ -324,11 +324,9 @@ public:
   /// an integer type of the specified bitwidth.
   unsigned getABIIntegerTypeAlignment(unsigned BitWidth) const;
 
-
   /// getCallFrameTypeAlignment - Return the minimum ABI-required alignment
   /// for the specified type when it is part of a call frame.
   unsigned getCallFrameTypeAlignment(Type *Ty) const;
-
 
   /// getPrefTypeAlignment - Return the preferred stack/global alignment for
   /// the specified type.  This is always at least as good as the ABI alignment.
@@ -336,7 +334,6 @@ public:
 
   /// getPreferredTypeAlignmentShift - Return the preferred alignment for the
   /// specified type, returned as log2 of the value (a shift amount).
-  ///
   unsigned getPreferredTypeAlignmentShift(Type *Ty) const;
 
   /// getIntPtrType - Return an integer type with size at least as big as that
@@ -350,7 +347,6 @@ public:
 
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
-  ///
   uint64_t getIndexedOffset(Type *Ty, ArrayRef<Value *> Indices) const;
 
   /// getStructLayout - Return a StructLayout object, indicating the alignment

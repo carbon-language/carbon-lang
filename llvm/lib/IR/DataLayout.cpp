@@ -126,7 +126,7 @@ DataLayout::InvalidAlignmentElem = LayoutAlignElem::get(INVALID_ALIGN, 0, 0, 0);
 
 PointerAlignElem
 PointerAlignElem::get(uint32_t addr_space, unsigned abi_align,
-                     unsigned pref_align, uint32_t bit_width) {
+                      unsigned pref_align, uint32_t bit_width) {
   assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
   PointerAlignElem retval;
   retval.AddressSpace = addr_space;
@@ -309,7 +309,7 @@ void DataLayout::parseSpecifier(StringRef Desc) {
 /// used.
 DataLayout::DataLayout() : ImmutablePass(ID) {
   report_fatal_error("Bad DataLayout ctor used.  "
-                    "Tool did not specify a DataLayout to use?");
+                     "Tool did not specify a DataLayout to use?");
 }
 
 DataLayout::DataLayout(const Module *M)
@@ -371,7 +371,7 @@ unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
       // The "best match" for integers is the smallest size that is larger than
       // the BitWidth requested.
       if (Alignments[i].TypeBitWidth > BitWidth && (BestMatchIdx == -1 ||
-           Alignments[i].TypeBitWidth < Alignments[BestMatchIdx].TypeBitWidth))
+          Alignments[i].TypeBitWidth < Alignments[BestMatchIdx].TypeBitWidth))
         BestMatchIdx = i;
       // However, if there isn't one that's larger, then we must use the
       // largest one we have (see below)
@@ -512,7 +512,7 @@ uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   case Type::PointerTyID: {
     unsigned AS = dyn_cast<PointerType>(Ty)->getAddressSpace();
     return getPointerSizeInBits(AS);
-    }
+  }
   case Type::ArrayTyID: {
     ArrayType *ATy = cast<ArrayType>(Ty);
     return getTypeAllocSizeInBits(ATy->getElementType())*ATy->getNumElements();
