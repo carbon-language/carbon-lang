@@ -54,28 +54,36 @@ class GoogleTest(object):
             else:
                 yield ''.join(nested_tests) + ln
 
+    def getTestsInExecutable(self, testSuite, path_in_suite, execpath,
+                             litConfig, localConfig):
+        if not execpath.endswith(self.test_suffix):
+            return
+        (dirname, basename) = os.path.split(execpath)
+        # Discover the tests in this executable.
+        for testname in self.getGTestTests(execpath, litConfig, localConfig):
+            testPath = path_in_suite + (dirname, basename, testname)
+            yield Test.Test(testSuite, testPath, localConfig)
+    
     def getTestsInDirectory(self, testSuite, path_in_suite,
                             litConfig, localConfig):
         source_path = testSuite.getSourcePath(path_in_suite)
         for filename in os.listdir(source_path):
-            # Check for the one subdirectory (build directory) tests will be in.
-            if not '.' in self.test_sub_dir:
+            filepath = os.path.join(source_path, filename)
+            if os.path.isdir(filepath):
+                # Iterate over executables in a directory.
                 if not os.path.normcase(filename) in self.test_sub_dir:
                     continue
-
-            filepath = os.path.join(source_path, filename)
-            if not os.path.isdir(filepath):
-                continue
-
-            for subfilename in os.listdir(filepath):
-                if subfilename.endswith(self.test_suffix):
+                for subfilename in os.listdir(filepath):
                     execpath = os.path.join(filepath, subfilename)
-
-                    # Discover the tests in this executable.
-                    for name in self.getGTestTests(execpath, litConfig,
-                                                   localConfig):
-                        testPath = path_in_suite + (filename, subfilename, name)
-                        yield Test.Test(testSuite, testPath, localConfig)
+                    for test in self.getTestsInExecutable(
+                            testSuite, path_in_suite, execpath,
+                            litConfig, localConfig):
+                      yield test
+            elif ('.' in self.test_sub_dir):
+                for test in self.getTestsInExecutable(
+                        testSuite, path_in_suite, filepath,
+                        litConfig, localConfig):
+                    yield test
 
     def execute(self, test, litConfig):
         testPath,testName = os.path.split(test.getSourcePath())
