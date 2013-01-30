@@ -84,7 +84,7 @@ UniversalArchs.ubsan_osx := $(call CheckArches,i386 x86_64,ubsan_osx)
 # build the libraries themselves so that Clang can find them where it expects
 # them, even though they might not have an expected slice.
 ifneq ($(shell which sw_vers),)
-ifeq ($(shell sw_vers -productVersion | grep 10.6),)
+ifneq ($(shell sw_vers -productVersion | grep 10.6),)
 UniversalArchs.ios := $(filter-out armv7, $(UniversalArchs.ios))
 UniversalArchs.cc_kext := $(filter-out armv7, $(UniversalArchs.cc_kext))
 UniversalArchs.cc_kext_ios5 := $(filter-out armv7, $(UniversalArchs.cc_kext_ios5))
