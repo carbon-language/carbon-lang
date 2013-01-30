@@ -581,8 +581,9 @@ ExprResult Sema::UsualUnaryConversions(Expr *E) {
 }
 
 /// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
-/// do not have a prototype. Arguments that have type float are promoted to
-/// double. All other argument types are converted by UsualUnaryConversions().
+/// do not have a prototype. Arguments that have type float or __fp16
+/// are promoted to double. All other argument types are converted by
+/// UsualUnaryConversions().
 ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
   QualType Ty = E->getType();
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
@@ -592,8 +593,11 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
     return Owned(E);
   E = Res.take();
 
-  // If this is a 'float' (CVR qualified or typedef) promote to double.
-  if (Ty->isSpecificBuiltinType(BuiltinType::Float))
+  // If this is a 'float' or '__fp16' (CVR qualified or typedef) promote to
+  // double.
+  const BuiltinType *BTy = Ty->getAs<BuiltinType>();
+  if (BTy && (BTy->getKind() == BuiltinType::Half ||
+              BTy->getKind() == BuiltinType::Float))
     E = ImpCastExprToType(E, Context.DoubleTy, CK_FloatingCast).take();
 
   // C++ performs lvalue-to-rvalue conversion as a default argument
