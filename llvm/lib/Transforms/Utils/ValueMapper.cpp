@@ -63,14 +63,23 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
     // Check all operands to see if any need to be remapped.
     for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
       Value *OP = MD->getOperand(i);
-      if (OP == 0 || MapValue(OP, VM, Flags, TypeMapper) == OP) continue;
+      if (OP == 0) continue;
+      Value *Mapped_OP = MapValue(OP, VM, Flags, TypeMapper);
+      // If Mapped_Op is null, we should use indentity map.
+      if (Mapped_OP == OP || Mapped_OP == 0) continue;
 
       // Ok, at least one operand needs remapping.  
       SmallVector<Value*, 4> Elts;
       Elts.reserve(MD->getNumOperands());
       for (i = 0; i != e; ++i) {
         Value *Op = MD->getOperand(i);
-        Elts.push_back(Op ? MapValue(Op, VM, Flags, TypeMapper) : 0);
+        if (Op == 0)
+          Elts.push_back(0);
+        else {
+          Value *Mapped_Op = MapValue(Op, VM, Flags, TypeMapper);
+          // If Mapped_Op is null, we should use indentity map.
+          Elts.push_back(Mapped_Op ? Mapped_Op : Op);
+        }
       }
       MDNode *NewMD = MDNode::get(V->getContext(), Elts);
       Dummy->replaceAllUsesWith(NewMD);
