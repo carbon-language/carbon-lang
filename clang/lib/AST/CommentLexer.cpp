@@ -1,8 +1,8 @@
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentCommandTraits.h"
-#include "clang/Basic/ConvertUTF.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
@@ -48,7 +48,7 @@ static unsigned getCodePoint(StringRef Name) {
 StringRef Lexer::helperResolveHTMLHexCharacterReference(unsigned CodePoint) const {
   char *Resolved = Allocator.Allocate<char>(UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
   char *ResolvedPtr = Resolved;
-  if (ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
+  if (llvm::ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
     return StringRef(Resolved, ResolvedPtr - Resolved);
   else
     return StringRef();
@@ -223,7 +223,7 @@ StringRef Lexer::resolveHTMLDecimalCharacterReference(StringRef Name) const {
 
   char *Resolved = Allocator.Allocate<char>(UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
   char *ResolvedPtr = Resolved;
-  if (ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
+  if (llvm::ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
     return StringRef(Resolved, ResolvedPtr - Resolved);
   else
     return StringRef();

@@ -25,7 +25,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Lexer.h"
-#include "clang/Basic/ConvertUTF.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/LexDiagnostic.h"
@@ -34,6 +33,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
 using namespace clang;
@@ -1655,10 +1655,11 @@ FinishIdentifier:
     } else if (!isASCII(C)) {
       const char *UnicodePtr = CurPtr;
       UTF32 CodePoint;
-      ConversionResult Result = convertUTF8Sequence((const UTF8 **)&UnicodePtr,
-                                                    (const UTF8 *)BufferEnd,
-                                                    &CodePoint,
-                                                    strictConversion);
+      ConversionResult Result =
+          llvm::convertUTF8Sequence((const UTF8 **)&UnicodePtr,
+                                    (const UTF8 *)BufferEnd,
+                                    &CodePoint,
+                                    strictConversion);
       if (Result != conversionOK ||
           !isAllowedIDChar(static_cast<uint32_t>(CodePoint)))
         goto FinishIdentifier;
@@ -3528,10 +3529,11 @@ LexNextToken:
     // We can't just reset CurPtr to BufferPtr because BufferPtr may point to
     // an escaped newline.
     --CurPtr;
-    ConversionResult Status = convertUTF8Sequence((const UTF8 **)&CurPtr,
-                                                  (const UTF8 *)BufferEnd,
-                                                  &CodePoint,
-                                                  strictConversion);
+    ConversionResult Status =
+        llvm::convertUTF8Sequence((const UTF8 **)&CurPtr,
+                                  (const UTF8 *)BufferEnd,
+                                  &CodePoint,
+                                  strictConversion);
     if (Status == conversionOK)
       return LexUnicode(Result, CodePoint, CurPtr);
     

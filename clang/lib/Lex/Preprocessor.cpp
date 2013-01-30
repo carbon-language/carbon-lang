@@ -27,7 +27,6 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "MacroArgs.h"
-#include "clang/Basic/ConvertUTF.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -47,6 +46,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Capacity.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -501,7 +501,7 @@ static void appendCodePoint(unsigned Codepoint,
                             llvm::SmallVectorImpl<char> &Str) {
   char ResultBuf[4];
   char *ResultPtr = ResultBuf;
-  bool Res = ConvertCodePointToUTF8(Codepoint, ResultPtr);
+  bool Res = llvm::ConvertCodePointToUTF8(Codepoint, ResultPtr);
   (void)Res;
   assert(Res && "Unexpected conversion failure");
   Str.append(ResultBuf, ResultPtr);
