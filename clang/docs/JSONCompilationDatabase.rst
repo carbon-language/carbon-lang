@@ -57,7 +57,7 @@ Example:
 
     [
       { "directory": "/home/user/llvm/build",
-        "command": "/usr/bin/clang++ -Irelative -DSOMEDEF='\"With spaces and quotes.\"' -c -o file.o file.cc",
+        "command": "/usr/bin/clang++ -Irelative -DSOMEDEF=\"With spaces, quotes and \\-es.\" -c -o file.o file.cc",
         "file": "file.cc" },
       ...
     ]
