@@ -764,28 +764,22 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                 {
                     // Note, this check is also done in ParseMethodName, but since this is a hot loop, we do the
                     // simple inlined check outside the call.
-                    if (ObjCLanguageRuntime::IsPossibleObjCMethodName(name))
+                    ObjCLanguageRuntime::MethodName objc_method(name, true);
+                    if (objc_method.IsValid(true))
                     {
-                        ConstString objc_class_name;
-                        ConstString objc_selector_name;
-                        ConstString objc_fullname_no_category_name;
-                        ConstString objc_class_name_no_category;
-                        if (ObjCLanguageRuntime::ParseMethodName (name,
-                                                                  &objc_class_name,
-                                                                  &objc_selector_name,
-                                                                  &objc_fullname_no_category_name,
-                                                                  &objc_class_name_no_category))
-                        {
-                            func_fullnames.Insert (ConstString(name), die.GetOffset());
-                            if (objc_class_name)
-                                objc_class_selectors.Insert(objc_class_name, die.GetOffset());
-                            if (objc_class_name_no_category)
-                                objc_class_selectors.Insert(objc_class_name_no_category, die.GetOffset());
-                            if (objc_selector_name)
-                                func_selectors.Insert (objc_selector_name, die.GetOffset());
-                            if (objc_fullname_no_category_name)
-                                func_fullnames.Insert (objc_fullname_no_category_name, die.GetOffset());
-                        }
+                        ConstString objc_class_name_with_category (objc_method.GetClassNameWithCategory());
+                        ConstString objc_selector_name (objc_method.GetSelector());
+                        ConstString objc_fullname_no_category_name (objc_method.GetFullNameWithoutCategory(true));
+                        ConstString objc_class_name_no_category (objc_method.GetClassName());
+                        func_fullnames.Insert (ConstString(name), die.GetOffset());
+                        if (objc_class_name_with_category)
+                            objc_class_selectors.Insert(objc_class_name_with_category, die.GetOffset());
+                        if (objc_class_name_no_category && objc_class_name_no_category != objc_class_name_with_category)
+                            objc_class_selectors.Insert(objc_class_name_no_category, die.GetOffset());
+                        if (objc_selector_name)
+                            func_selectors.Insert (objc_selector_name, die.GetOffset());
+                        if (objc_fullname_no_category_name)
+                            func_fullnames.Insert (objc_fullname_no_category_name, die.GetOffset());
                     }
                     // If we have a mangled name, then the DW_AT_name attribute
                     // is usually the method name without the class or any parameters

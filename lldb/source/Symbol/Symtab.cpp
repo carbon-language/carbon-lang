@@ -310,18 +310,18 @@ Symtab::InitNameIndexes()
                 
             // If the demangled name turns out to be an ObjC name, and
             // is a category name, add the version without categories to the index too.
-            ConstString objc_selector_name;
-            ConstString objc_base_name;
-            if (ObjCLanguageRuntime::ParseMethodName (entry.cstring,
-                                                      NULL,
-                                                      &objc_selector_name,
-                                                      &objc_base_name,
-                                                      NULL))
+            ObjCLanguageRuntime::MethodName objc_method (entry.cstring, true);
+            if (objc_method.IsValid(true))
             {
-                entry.cstring = objc_base_name.GetCString();
-                m_name_to_index.Append (entry);
-                entry.cstring = objc_selector_name.GetCString();
+                entry.cstring = objc_method.GetSelector().GetCString();
                 m_selector_to_index.Append (entry);
+                
+                ConstString objc_method_no_category (objc_method.GetFullNameWithoutCategory(true));
+                if (objc_method_no_category)
+                {
+                    entry.cstring = objc_method_no_category.GetCString();
+                    m_name_to_index.Append (entry);
+                }
             }
                                                         
         }

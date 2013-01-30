@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/RegularExpression.h"
+#include "llvm/ADT/StringRef.h"
 #include <string.h>
 
 using namespace lldb_private;
@@ -146,6 +147,34 @@ RegularExpression::Execute(const char* s, size_t num_matches, int execute_flags)
 }
 
 bool
+RegularExpression::ExecuteThreadSafe (const char* s, llvm::StringRef *match_srefs, size_t count, int execute_flags) const
+{
+    bool success = false;
+    if (m_comp_err == 0)
+    {
+        std::vector<regmatch_t> matches;
+        
+        if (match_srefs && count > 0)
+            matches.resize(count + 1);
+        
+        success = ::regexec (&m_preg,
+                             s,
+                             matches.size(),
+                             matches.data(),
+                             execute_flags) == 0;
+        for (size_t i=0; i<count; ++i)
+        {
+            size_t match_idx = i+1;
+            if (success && matches[match_idx].rm_so < matches[match_idx].rm_eo)
+                match_srefs[i] = llvm::StringRef(s + matches[match_idx].rm_so, matches[match_idx].rm_eo - matches[match_idx].rm_so);
+            else
+                match_srefs[i] = llvm::StringRef();
+        }
+    }
+    return success;
+}
+
+bool
 RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, std::string& match_str) const
 {
     if (idx <= m_preg.re_nsub && idx < m_matches.size())
@@ -160,6 +189,46 @@ RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, std::string& ma
         {
             match_str.assign (s + m_matches[idx].rm_so,
                               m_matches[idx].rm_eo - m_matches[idx].rm_so);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, llvm::StringRef& match_str) const
+{
+    if (idx <= m_preg.re_nsub && idx < m_matches.size())
+    {
+        if (m_matches[idx].rm_eo == m_matches[idx].rm_so)
+        {
+            // Matched the empty string...
+            match_str = llvm::StringRef();
+            return true;
+        }
+        else if (m_matches[idx].rm_eo > m_matches[idx].rm_so)
+        {
+            match_str = llvm::StringRef (s + m_matches[idx].rm_so, m_matches[idx].rm_eo - m_matches[idx].rm_so);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+RegularExpression::GetMatchSpanningIndices (const char* s, uint32_t idx1, uint32_t idx2, llvm::StringRef& match_str) const
+{
+    if (idx1 <= m_preg.re_nsub && idx1 < m_matches.size() && idx2 <= m_preg.re_nsub && idx2 < m_matches.size())
+    {
+        if (m_matches[idx1].rm_so == m_matches[idx2].rm_eo)
+        {
+            // Matched the empty string...
+            match_str = llvm::StringRef();
+            return true;
+        }
+        else if (m_matches[idx1].rm_so < m_matches[idx2].rm_eo)
+        {
+            match_str = llvm::StringRef (s + m_matches[idx1].rm_so, m_matches[idx2].rm_eo - m_matches[idx1].rm_so);
             return true;
         }
     }

@@ -11,12 +11,15 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
+
+#include "llvm/ADT/StringRef.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -131,88 +134,374 @@ ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const
     return LLDB_INVALID_IVAR_OFFSET;
 }
 
-
-uint32_t
-ObjCLanguageRuntime::ParseMethodName (const char *name, 
-                                      ConstString *class_name,              // Class name (with category if any)
-                                      ConstString *selector_name,           // selector on its own
-                                      ConstString *name_sans_category,      // Full function prototype with no category
-                                      ConstString *class_name_sans_category)// Class name with no category (or empty if no category as answer will be in "class_name"
+void
+ObjCLanguageRuntime::MethodName::Clear()
 {
-    if (class_name)
-        class_name->Clear();
-    if (selector_name)
-        selector_name->Clear();
-    if (name_sans_category)
-        name_sans_category->Clear();
-    if (class_name_sans_category)
-        class_name_sans_category->Clear();
-    
-    uint32_t result = 0;
+    m_full.Clear();
+    m_class.Clear();
+    m_category.Clear();
+    m_selector.Clear();
+    m_type = eTypeUnspecified;
+    m_category_is_valid = false;
+}
 
-    if (IsPossibleObjCMethodName (name))
+//bool
+//ObjCLanguageRuntime::MethodName::SetName (const char *name, bool strict)
+//{
+//    Clear();
+//    if (name && name[0])
+//    {
+//        // If "strict" is true. then the method must be specified with a
+//        // '+' or '-' at the beginning. If "strict" is false, then the '+'
+//        // or '-' can be omitted
+//        bool valid_prefix = false;
+//        
+//        if (name[0] == '+' || name[0] == '-')
+//        {
+//            valid_prefix = name[1] == '[';
+//        }
+//        else if (!strict)
+//        {
+//            // "strict" is false, the name just needs to start with '['
+//            valid_prefix = name[0] == '[';
+//        }
+//
+//        if (valid_prefix)
+//        {
+//            static RegularExpression g_regex("^([-+]?)\\[([A-Za-z_][A-Za-z_0-9]*)(\\([A-Za-z_][A-Za-z_0-9]*\\))? ([A-Za-z_][A-Za-z_0-9:]*)\\]$");
+//            llvm::StringRef matches[4];
+//            // Since we are using a global regular expression, we must use the threadsafe version of execute
+//            if (g_regex.ExecuteThreadSafe(name, matches, 4))
+//            {
+//                m_full.SetCString(name);
+//                if (matches[0].empty())
+//                    m_type = eTypeUnspecified;
+//                else if (matches[0][0] == '+')
+//                    m_type = eTypeClassMethod;
+//                else
+//                    m_type = eTypeInstanceMethod;
+//                m_class.SetString(matches[1]);
+//                m_selector.SetString(matches[3]);
+//                if (!matches[2].empty())
+//                    m_category.SetString(matches[2]);
+//            }
+//        }
+//    }
+//    return IsValid(strict);
+//}
+
+bool
+ObjCLanguageRuntime::MethodName::SetName (const char *name, bool strict)
+{
+    Clear();
+    if (name && name[0])
     {
-        int name_len = strlen (name);
-        // Objective C methods must have at least:
-        //      "-[" or "+[" prefix
-        //      One character for a class name
-        //      One character for the space between the class name
-        //      One character for the method name
-        //      "]" suffix
-        if (name_len >= 6 && name[name_len - 1] == ']')
+        // If "strict" is true. then the method must be specified with a
+        // '+' or '-' at the beginning. If "strict" is false, then the '+'
+        // or '-' can be omitted
+        bool valid_prefix = false;
+        
+        if (name[0] == '+' || name[0] == '-')
         {
-            const char *selector_name_ptr = strchr (name, ' ');
-            if (selector_name_ptr)
+            valid_prefix = name[1] == '[';
+            if (name[0] == '+')
+                m_type = eTypeClassMethod;
+            else
+                m_type = eTypeInstanceMethod;
+        }
+        else if (!strict)
+        {
+            // "strict" is false, the name just needs to start with '['
+            valid_prefix = name[0] == '[';
+        }
+        
+        if (valid_prefix)
+        {
+            int name_len = strlen (name);
+            // Objective C methods must have at least:
+            //      "-[" or "+[" prefix
+            //      One character for a class name
+            //      One character for the space between the class name
+            //      One character for the method name
+            //      "]" suffix
+            if (name_len >= (5 + (strict ? 1 : 0)) && name[name_len - 1] == ']')
             {
-                if (class_name)
+                m_full.SetCStringWithLength(name, name_len);
+            }
+        }
+    }
+    return IsValid(strict);
+}
+
+const ConstString &
+ObjCLanguageRuntime::MethodName::GetClassName ()
+{
+    if (!m_class)
+    {
+        if (IsValid(false))
+        {
+            const char *full = m_full.GetCString();
+            const char *class_start = (full[0] == '[' ? full + 1 : full + 2);
+            const char *paren_pos = strchr (class_start, '(');
+            if (paren_pos)
+            {
+                m_class.SetCStringWithLength (class_start, paren_pos - class_start);
+            }
+            else
+            {
+                // No '(' was found in the full name, we can definitively say
+                // that our category was valid (and empty).
+                m_category_is_valid = true;
+                const char *space_pos = strchr (full, ' ');
+                if (space_pos)
                 {
-                    class_name->SetCStringWithLength (name + 2, selector_name_ptr - name - 2);
-                    ++result;
-                }    
-                
-                // Skip the space
-                ++selector_name_ptr;
-                // Extract the objective C basename and add it to the
-                // accelerator tables
-                size_t selector_name_len = name_len - (selector_name_ptr - name) - 1;
-                if (selector_name)
-                {
-                    selector_name->SetCStringWithLength (selector_name_ptr, selector_name_len);                                
-                    ++result;
-                }
-                
-                // Also see if this is a "category" on our class.  If so strip off the category name,
-                // and add the class name without it to the basename table. 
-                
-                if (name_sans_category || class_name_sans_category)
-                {
-                    const char *open_paren = strchr (name, '(');
-                    if (open_paren)
+                    m_class.SetCStringWithLength (class_start, space_pos - class_start);
+                    if (!m_class_category)
                     {
-                        if (class_name_sans_category)
-                        {
-                            class_name_sans_category->SetCStringWithLength (name + 2, open_paren - name - 2);
-                            ++result;
-                        }
-                        
-                        if (name_sans_category)
-                        {
-                            const char *close_paren = strchr (open_paren, ')');
-                            if (open_paren < close_paren)
-                            {
-                                std::string buffer (name, open_paren - name);
-                                buffer.append (close_paren + 1);
-                                name_sans_category->SetCString (buffer.c_str());
-                                ++result;
-                            }
-                        }
+                        // No category in name, so we can also fill in the m_class_category
+                        m_class_category = m_class;
                     }
                 }
             }
         }
     }
-    return result;
+    return m_class;
 }
+
+const ConstString &
+ObjCLanguageRuntime::MethodName::GetClassNameWithCategory () 
+{
+    if (!m_class_category)
+    {
+        if (IsValid(false))
+        {
+            const char *full = m_full.GetCString();
+            const char *class_start = (full[0] == '[' ? full + 1 : full + 2);
+            const char *space_pos = strchr (full, ' ');
+            if (space_pos)
+            {
+                m_class_category.SetCStringWithLength (class_start, space_pos - class_start);
+                // If m_class hasn't been filled in and the class with category doesn't
+                // contain a '(', then we can also fill in the m_class
+                if (!m_class && strchr (m_class_category.GetCString(), '(') == NULL)
+                {
+                    m_class = m_class_category;
+                    // No '(' was found in the full name, we can definitively say
+                    // that our category was valid (and empty).
+                    m_category_is_valid = true;
+
+                }
+            }
+        }
+    }
+    return m_class_category;
+}
+
+const ConstString &
+ObjCLanguageRuntime::MethodName::GetSelector ()
+{
+    if (!m_selector)
+    {
+        if (IsValid(false))
+        {
+            const char *full = m_full.GetCString();
+            const char *space_pos = strchr (full, ' ');
+            if (space_pos)
+            {
+                ++space_pos; // skip the space
+                m_selector.SetCStringWithLength (space_pos, m_full.GetLength() - (space_pos - full) - 1);
+            }
+        }
+    }
+    return m_selector;
+}
+
+const ConstString &
+ObjCLanguageRuntime::MethodName::GetCategory ()
+{
+    if (!m_category_is_valid && !m_category)
+    {
+        if (IsValid(false))
+        {
+            m_category_is_valid = true;
+            const char *full = m_full.GetCString();
+            const char *class_start = (full[0] == '[' ? full + 1 : full + 2);
+            const char *open_paren_pos = strchr (class_start, '(');
+            if (open_paren_pos)
+            {
+                ++open_paren_pos; // Skip the open paren
+                const char *close_paren_pos = strchr (open_paren_pos, ')');
+                if (close_paren_pos)
+                    m_category.SetCStringWithLength (open_paren_pos, close_paren_pos - open_paren_pos);
+            }
+        }
+    }
+    return m_category;
+}
+
+ConstString
+ObjCLanguageRuntime::MethodName::GetFullNameWithoutCategory (bool empty_if_no_category)
+{
+    if (IsValid(false))
+    {
+        if (HasCategory())
+        {
+            StreamString strm;
+            if (m_type == eTypeClassMethod)
+                strm.PutChar('+');
+            else if (m_type == eTypeInstanceMethod)
+                strm.PutChar('-');
+            strm.Printf("[%s %s]", GetClassName().GetCString(), GetSelector().GetCString());
+            return ConstString(strm.GetString().c_str());
+        }
+        
+        if (!empty_if_no_category)
+        {
+            // Just return the full name since it doesn't have a category
+            return GetFullName();
+        }
+    }
+    return ConstString();
+}
+
+size_t
+ObjCLanguageRuntime::MethodName::GetFullNames (std::vector<ConstString> &names, bool append)
+{
+    if (!append)
+        names.clear();
+    if (IsValid(false))
+    {
+        StreamString strm;
+        const bool is_class_method = m_type == eTypeClassMethod;
+        const bool is_instance_method = m_type == eTypeInstanceMethod;
+        const ConstString &category = GetCategory();
+        if (is_class_method || is_instance_method)
+        {
+            names.push_back (m_full);
+            if (category)
+            {
+                strm.Printf("%c[%s %s]",
+                            is_class_method ? '+' : '-',
+                            GetClassName().GetCString(),
+                            GetSelector().GetCString());
+                names.push_back(ConstString(strm.GetString().c_str()));
+            }
+        }
+        else
+        {
+            const ConstString &class_name = GetClassName();
+            const ConstString &selector = GetSelector();
+            strm.Printf("+[%s %s]", class_name.GetCString(), selector.GetCString());
+            names.push_back(ConstString(strm.GetString().c_str()));
+            strm.Clear();
+            strm.Printf("-[%s %s]", class_name.GetCString(), selector.GetCString());
+            names.push_back(ConstString(strm.GetString().c_str()));
+            strm.Clear();
+            if (category)
+            {
+                strm.Printf("+[%s(%s) %s]", class_name.GetCString(), category.GetCString(), selector.GetCString());
+                names.push_back(ConstString(strm.GetString().c_str()));
+                strm.Clear();
+                strm.Printf("-[%s(%s) %s]", class_name.GetCString(), category.GetCString(), selector.GetCString());
+                names.push_back(ConstString(strm.GetString().c_str()));
+            }
+        }
+    }
+    return names.size();
+}
+
+
+//uint32_t
+//ObjCLanguageRuntime::ParseMethodName (const char *name, 
+//                                      ConstString *class_name,              // Class name (with category if any)
+//                                      ConstString *selector_name,           // selector on its own
+//                                      ConstString *name_sans_category,      // Full function prototype with no category
+//                                      ConstString *class_name_sans_category)// Class name with no category (or empty if no category as answer will be in "class_name"
+//{
+//    static ScopedTimerAggregator g_scoped_timer_aggregator ("ObjCLanguageRuntime::ParseMethodName");
+//    ScopedTimer scoped_timer;
+//    uint32_t result = 0;
+//    if (class_name)
+//        class_name->Clear();
+//    if (selector_name)
+//        selector_name->Clear();
+//    if (name_sans_category)
+//        name_sans_category->Clear();
+//    if (class_name_sans_category)
+//        class_name_sans_category->Clear();
+//    
+//
+//    if (IsPossibleObjCMethodName (name))
+//    {
+//        int name_len = strlen (name);
+//        // Objective C methods must have at least:
+//        //      "-[" or "+[" prefix
+//        //      One character for a class name
+//        //      One character for the space between the class name
+//        //      One character for the method name
+//        //      "]" suffix
+//        if (name_len >= 6 && name[name_len - 1] == ']')
+//        {
+//            const char *selector_name_ptr = strchr (name, ' ');
+//            if (selector_name_ptr)
+//            {
+//                if (class_name)
+//                {
+//                    class_name->SetCStringWithLength (name + 2, selector_name_ptr - name - 2);
+//                    ++result;
+//                }    
+//                
+//                // Skip the space
+//                ++selector_name_ptr;
+//                // Extract the objective C basename and add it to the
+//                // accelerator tables
+//                size_t selector_name_len = name_len - (selector_name_ptr - name) - 1;
+//                if (selector_name)
+//                {
+//                    selector_name->SetCStringWithLength (selector_name_ptr, selector_name_len);                                
+//                    ++result;
+//                }
+//                
+//                // Also see if this is a "category" on our class.  If so strip off the category name,
+//                // and add the class name without it to the basename table. 
+//                
+//                if (name_sans_category || class_name_sans_category)
+//                {
+//                    const char *open_paren = strchr (name, '(');
+//                    if (open_paren)
+//                    {
+//                        if (class_name_sans_category)
+//                        {
+//                            class_name_sans_category->SetCStringWithLength (name + 2, open_paren - name - 2);
+//                            ++result;
+//                        }
+//                        
+//                        if (name_sans_category)
+//                        {
+//                            const char *close_paren = strchr (open_paren, ')');
+//                            if (open_paren < close_paren)
+//                            {
+//                                std::string buffer (name, open_paren - name);
+//                                buffer.append (close_paren + 1);
+//                                name_sans_category->SetCString (buffer.c_str());
+//                                ++result;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    ObjCLanguageRuntime::MethodName method_name(name, true);
+//    if (class_name)
+//        assert (*class_name == method_name.GetClassNameWithCategory());
+//    if (selector_name)
+//        assert (*selector_name == method_name.GetSelector());
+//    if (class_name_sans_category)
+//        assert (*class_name_sans_category == method_name.GetClassName());
+//    g_scoped_timer_aggregator.Aggregate (scoped_timer);
+//    return result;
+//}
 
 bool
 ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,

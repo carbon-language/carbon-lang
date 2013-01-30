@@ -22,6 +22,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -54,7 +55,12 @@ BreakpointResolverName::BreakpointResolverName
     }
     else
     {
-        m_func_names.push_back(ConstString(func_name));
+        const bool append = true;
+        ObjCLanguageRuntime::MethodName objc_name(func_name, false);
+        if (objc_name.IsValid(false))
+            objc_name.GetFullNames(m_func_names, append);
+        else
+            m_func_names.push_back(ConstString(func_name));
     }
 }
 
@@ -68,9 +74,14 @@ BreakpointResolverName::BreakpointResolverName (Breakpoint *bkpt,
     m_match_type (Breakpoint::Exact),
     m_skip_prologue (skip_prologue)
 {
+    const bool append = true;
     for (size_t i = 0; i < num_names; i++)
     {
-        m_func_names.push_back (ConstString (names[i]));
+        ObjCLanguageRuntime::MethodName objc_name(names[i], false);
+        if (objc_name.IsValid(false))
+            objc_name.GetFullNames(m_func_names, append);
+        else
+            m_func_names.push_back (ConstString (names[i]));
     }
 }
 
@@ -84,10 +95,14 @@ BreakpointResolverName::BreakpointResolverName (Breakpoint *bkpt,
     m_skip_prologue (skip_prologue)
 {
     size_t num_names = names.size();
-    
+    const bool append = true;    
     for (size_t i = 0; i < num_names; i++)
     {
-        m_func_names.push_back (ConstString (names[i].c_str()));
+        ObjCLanguageRuntime::MethodName objc_name(names[i].c_str(), false);
+        if (objc_name.IsValid(false))
+            objc_name.GetFullNames(m_func_names, append);
+        else
+            m_func_names.push_back (ConstString (names[i].c_str()));
     }
 }
 

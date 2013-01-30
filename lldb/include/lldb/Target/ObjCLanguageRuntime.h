@@ -31,7 +31,109 @@ class ObjCLanguageRuntime :
     public LanguageRuntime
 {
 public:
-    
+    class MethodName
+    {
+    public:
+        enum Type
+        {
+            eTypeUnspecified,
+            eTypeClassMethod,
+            eTypeInstanceMethod
+        };
+        
+        MethodName () :
+            m_full(),
+            m_class(),
+            m_category(),
+            m_selector(),
+            m_type (eTypeUnspecified),
+            m_category_is_valid (false)
+        {
+        }
+
+        MethodName (const char *name, bool strict) :
+            m_full(),
+            m_class(),
+            m_category(),
+            m_selector(),
+            m_type (eTypeUnspecified),
+            m_category_is_valid (false)
+        {
+            SetName (name, strict);
+        }
+
+        void
+        Clear();
+
+        bool
+        IsValid (bool strict) const
+        {
+            // If "strict" is true, the name must have everything specified including
+            // the leading "+" or "-" on the method name
+            if (strict && m_type == eTypeUnspecified)
+                return false;
+            // Other than that, m_full will only be filled in if the objective C
+            // name is valid.
+            return (bool)m_full;
+        }
+        
+        bool
+        HasCategory()
+        {
+            return (bool)GetCategory();
+        }
+
+        Type
+        GetType () const
+        {
+            return m_type;
+        }
+        
+        const ConstString &
+        GetFullName () const
+        {
+            return m_full;
+        }
+        
+        ConstString
+        GetFullNameWithoutCategory (bool empty_if_no_category);
+
+        bool
+        SetName (const char *name, bool strict);
+
+        const ConstString &
+        GetClassName ();
+
+        const ConstString &
+        GetClassNameWithCategory ();
+
+        const ConstString &
+        GetCategory ();
+        
+        const ConstString &
+        GetSelector ();
+
+        // Get all possible names for a method. Examples:
+        // If name is "+[NSString(my_additions) myStringWithCString:]"
+        //  names[0] => "+[NSString(my_additions) myStringWithCString:]"
+        //  names[1] => "+[NSString myStringWithCString:]"
+        // If name is specified without the leading '+' or '-' like "[NSString(my_additions) myStringWithCString:]"
+        //  names[0] => "+[NSString(my_additions) myStringWithCString:]"
+        //  names[1] => "-[NSString(my_additions) myStringWithCString:]"
+        //  names[2] => "+[NSString myStringWithCString:]"
+        //  names[3] => "-[NSString myStringWithCString:]"
+        size_t
+        GetFullNames (std::vector<ConstString> &names, bool append);
+    protected:
+        ConstString m_full;     // Full name:   "+[NSString(my_additions) myStringWithCString:]"
+        ConstString m_class;    // Class name:  "NSString"
+        ConstString m_class_category; // Class with category: "NSString(my_additions)"
+        ConstString m_category; // Category:    "my_additions"
+        ConstString m_selector; // Selector:    "myStringWithCString:"
+        Type m_type;
+        bool m_category_is_valid;
+
+    };
     typedef lldb::addr_t ObjCISA;
     
     class ClassDescriptor;
@@ -351,12 +453,12 @@ public:
     ///     Returns the number of strings that were successfully filled
     ///     in.
     //------------------------------------------------------------------
-    static uint32_t
-    ParseMethodName (const char *name, 
-                     ConstString *class_name,               // Class name (with category if there is one)
-                     ConstString *selector_name,            // selector only
-                     ConstString *name_sans_category,       // full function name with no category (empty if no category)
-                     ConstString *class_name_sans_category);// Class name without category (empty if no category)
+//    static uint32_t
+//    ParseMethodName (const char *name, 
+//                     ConstString *class_name,               // Class name (with category if there is one)
+//                     ConstString *selector_name,            // selector only
+//                     ConstString *name_sans_category,       // full function name with no category (empty if no category)
+//                     ConstString *class_name_sans_category);// Class name without category (empty if no category)
     
     static bool
     IsPossibleObjCMethodName (const char *name)

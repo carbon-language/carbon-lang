@@ -1715,22 +1715,14 @@ SymbolFileDWARF::ParseChildMembers
                         
                         if (prop_getter_name && prop_getter_name[0] == '-')
                         {
-                            ObjCLanguageRuntime::ParseMethodName (prop_getter_name,
-                                                                  NULL,
-                                                                  &fixed_getter,
-                                                                  NULL,
-                                                                  NULL);
-                            prop_getter_name = fixed_getter.GetCString();
+                            ObjCLanguageRuntime::MethodName prop_getter_method(prop_getter_name, true);
+                            prop_getter_name = prop_getter_method.GetSelector().GetCString();
                         }
                         
                         if (prop_setter_name && prop_setter_name[0] == '-')
                         {
-                            ObjCLanguageRuntime::ParseMethodName (prop_setter_name,
-                                                                  NULL,
-                                                                  &fixed_setter,
-                                                                  NULL,
-                                                                  NULL);
-                            prop_setter_name = fixed_setter.GetCString();
+                            ObjCLanguageRuntime::MethodName prop_setter_method(prop_setter_name, true);
+                            prop_setter_name = prop_setter_method.GetSelector().GetCString();
                         }
                         
                         // If the names haven't been provided, they need to be
@@ -6281,16 +6273,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         bool type_handled = false;
                         if (tag == DW_TAG_subprogram)
                         {
-                            ConstString class_name;
-                            ConstString class_name_no_category;
-                            if (ObjCLanguageRuntime::ParseMethodName (type_name_cstr, &class_name, NULL, NULL, &class_name_no_category))
+                            ObjCLanguageRuntime::MethodName objc_method (type_name_cstr, true);
+                            if (objc_method.IsValid(true))
                             {
-                                // Use the class name with no category if there is one
-                                if (class_name_no_category)
-                                    class_name = class_name_no_category;
-
                                 SymbolContext empty_sc;
                                 clang_type_t class_opaque_type = NULL;
+                                ConstString class_name(objc_method.GetClassName());
                                 if (class_name)
                                 {
                                     TypeList types;

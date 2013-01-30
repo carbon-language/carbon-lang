@@ -17,6 +17,11 @@
 #include <string>
 #include <vector>
 
+namespace llvm
+{
+    class StringRef;
+}
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------
@@ -123,11 +128,22 @@ public:
     bool
     Execute (const char* string, size_t match_count = 0, int execute_flags = 0) const;
 
+    bool
+    ExecuteThreadSafe (const char* s,
+                       llvm::StringRef *matches,
+                       size_t num_matches,
+                       int execute_flags = 0) const;
     size_t
     GetErrorAsCString (char *err_str, size_t err_str_max_len) const;
 
     bool
     GetMatchAtIndex (const char* s, uint32_t idx, std::string& match_str) const;
+
+    bool
+    GetMatchAtIndex (const char* s, uint32_t idx, llvm::StringRef& match_str) const;
+    
+    bool
+    GetMatchSpanningIndices (const char* s, uint32_t idx1, uint32_t idx2, llvm::StringRef& match_str) const;
     //------------------------------------------------------------------
     /// Free the compiled regular expression.
     ///
