@@ -797,7 +797,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
 }
 
 static bool VerifyAttributeCount(const AttributeSet &Attrs, unsigned Params) {
-  if (Attrs.isEmpty())
+  if (Attrs.getNumSlots() == 0)
     return true;
 
   unsigned LastSlot = Attrs.getNumSlots() - 1;
