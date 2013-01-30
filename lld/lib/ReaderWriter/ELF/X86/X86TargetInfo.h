@@ -10,7 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 
-#include "DefaultTargetHandler.h"
+#include "X86TargetHandler.h"
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
@@ -24,8 +24,7 @@ class X86TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   X86TargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
     _targetHandler = std::unique_ptr<TargetHandlerBase>(
-        new DefaultTargetHandler<llvm::object::ELFType<llvm::support::little,
-                                                          4, false> >(*this));
+        new X86TargetHandler(*this));
   }
 
   virtual uint64_t getPageSize() const { return 0x1000; }

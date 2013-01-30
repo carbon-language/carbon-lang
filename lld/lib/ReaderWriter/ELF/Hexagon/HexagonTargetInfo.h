@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/HexagonTargetInfo.h ------------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/HexagonTargetInfo.h -------------------===//
 //
 //                             The LLVM Linker
 //
@@ -10,12 +10,13 @@
 #ifndef LLD_READER_WRITER_ELF_HEXAGON_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_HEXAGON_TARGETINFO_H
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "HexagonTargetHandler.h"
+
 #include "lld/Core/LinkerOptions.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
+
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
-
-#include "DefaultTargetHandler.h"
 
 namespace lld {
 namespace elf {
@@ -23,8 +24,7 @@ class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   HexagonTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
     _targetHandler = std::unique_ptr<TargetHandlerBase>(
-        new DefaultTargetHandler<llvm::object::ELFType<llvm::support::little,
-                                                          4, false> >(*this));
+        new HexagonTargetHandler(*this));
   }
 
   virtual uint64_t getPageSize() const { return 0x1000; }

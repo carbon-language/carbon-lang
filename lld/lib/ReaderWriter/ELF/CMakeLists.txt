@@ -10,8 +10,11 @@ add_lld_library(lldELF
   )
 
 target_link_libraries(lldELF
+  lldHexagonELFTarget
+  lldPPCELFTarget
   lldReaderWriter
   lldX86_64ELFTarget
+  lldX86ELFTarget
   )
 
 include_directories(.)

@@ -20,7 +20,6 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 8, false> X86_64ELFType;
 
 class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:

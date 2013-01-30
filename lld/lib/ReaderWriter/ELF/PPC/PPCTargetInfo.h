@@ -10,12 +10,13 @@
 #ifndef LLD_READER_WRITER_ELF_PPC_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_PPC_TARGETINFO_H
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "PPCTargetHandler.h"
+
 #include "lld/Core/LinkerOptions.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
+
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
-
-#include "DefaultTargetHandler.h"
 
 namespace lld {
 namespace elf {
@@ -23,8 +24,7 @@ class PPCTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   PPCTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {
     _targetHandler = std::unique_ptr<TargetHandlerBase>(
-        new DefaultTargetHandler<
-                llvm::object::ELFType<llvm::support::big, 4, false> >(*this));
+        new PPCTargetHandler(*this));
   }
 
   virtual bool isLittleEndian() const { return false; }
