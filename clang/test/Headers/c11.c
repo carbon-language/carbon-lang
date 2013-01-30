@@ -10,3 +10,9 @@ int g();
 noreturn int g();
 int noreturn g();
 int g();
+
+#include <stdalign.h>
+_Static_assert(__alignas_is_defined, "");
+_Static_assert(__alignof_is_defined, "");
+alignas(alignof(int)) char c[4];
+_Static_assert(__alignof(c) == 4, "");
