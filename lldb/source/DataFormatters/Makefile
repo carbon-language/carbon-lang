@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ../..
-LIBRARYNAME := lldbCore
+LIBRARYNAME := lldbDataFormatters
 BUILD_ARCHIVE = 1
 
 # Enable RTTI on GCC builds because one source file in this directory

@@ -24,6 +24,7 @@ USEDLIBS = lldbAPI.a \
 	lldbBreakpoint.a \
 	lldbCommands.a \
 	lldbCore.a \
+	lldbDataFormatters.a \
 	lldbExpression.a \
 	lldbHostCommon.a \
 	lldbInitAndLog.a \
