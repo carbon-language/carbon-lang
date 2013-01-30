@@ -23,7 +23,6 @@ namespace lld {
 namespace elf {
 template <class ELFT>
 class DefaultTargetHandler : public TargetHandler<ELFT> {
-
 public:
   DefaultTargetHandler(ELFTargetInfo &targetInfo)
       : TargetHandler<ELFT>(targetInfo) {
