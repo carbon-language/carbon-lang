@@ -2166,8 +2166,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         HasInitializer = true;
         if (!DeclaratorInfo.isDeclarationOfFunction() &&
             DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-              != DeclSpec::SCS_static &&
-            DeclaratorInfo.getDeclSpec().getStorageClassSpec()
               != DeclSpec::SCS_typedef)
           HasInClassInit = Tok.is(tok::equal) ? ICIS_CopyInit : ICIS_ListInit;
       }
@@ -2218,7 +2216,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     LateParsedAttrs.clear();
 
     // Handle the initializer.
-    if (HasInClassInit != ICIS_NoInit) {
+    if (HasInClassInit != ICIS_NoInit &&
+        DeclaratorInfo.getDeclSpec().getStorageClassSpec() !=
+        DeclSpec::SCS_static) {
       // The initializer was deferred; parse it and cache the tokens.
       Diag(Tok, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_nonstatic_member_init :

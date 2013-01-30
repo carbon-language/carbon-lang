@@ -120,3 +120,15 @@ namespace MissingSemi {
     struct d // expected-error {{expected ';' after struct}}
   }
 }
+
+namespace NonStaticConstexpr {
+  struct foo {
+    constexpr int i; // expected-error {{non-static data member cannot be constexpr; did you intend to make it const?}}
+    constexpr int j = 7; // expected-error {{non-static data member cannot be constexpr; did you intend to make it static?}}
+    foo() : i(3) {
+    }
+    static int get_j() {
+      return j;
+    }
+  };
+}

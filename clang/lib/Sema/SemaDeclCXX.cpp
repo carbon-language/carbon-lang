@@ -1666,6 +1666,35 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                        DS.getStorageClassSpec() == DeclSpec::SCS_mutable) &&
                       !isFunc);
 
+  if (DS.isConstexprSpecified() && isInstField) {
+    SemaDiagnosticBuilder B =
+        Diag(DS.getConstexprSpecLoc(), diag::err_invalid_constexpr_member);
+    SourceLocation ConstexprLoc = DS.getConstexprSpecLoc();
+    if (InitStyle == ICIS_NoInit) {
+      B << 0 << 0 << FixItHint::CreateReplacement(ConstexprLoc, "const");
+      D.getMutableDeclSpec().ClearConstexprSpec();
+      const char *PrevSpec;
+      unsigned DiagID;
+      bool Failed = D.getMutableDeclSpec().SetTypeQual(DeclSpec::TQ_const, ConstexprLoc,
+                                         PrevSpec, DiagID, getLangOpts());
+      assert(!Failed && "Making a constexpr member const shouldn't fail");
+    } else {
+      B << 1;
+      const char *PrevSpec;
+      unsigned DiagID;
+      DeclSpec::SCS PrevSCS = DS.getStorageClassSpec();
+      if (D.getMutableDeclSpec().SetStorageClassSpec(
+          *this, DeclSpec::SCS_static, ConstexprLoc, PrevSpec, DiagID)) {
+        assert(PrevSCS == DeclSpec::SCS_mutable &&
+               "This is the only DeclSpec that should fail to be applied");
+        B << 1;
+      } else {
+        B << 0 << FixItHint::CreateInsertion(ConstexprLoc, "static ");
+        isInstField = false;
+      }
+    }
+  }
+
   NamedDecl *Member;
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
@@ -1720,7 +1749,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                          InitStyle, AS);
     assert(Member && "HandleField never returns null");
   } else {
-    assert(InitStyle == ICIS_NoInit);
+    assert(InitStyle == ICIS_NoInit || D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static);
 
     Member = HandleDeclarator(S, D, TemplateParameterLists);
     if (!Member) {

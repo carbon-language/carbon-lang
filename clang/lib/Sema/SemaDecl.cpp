@@ -9927,9 +9927,6 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
-  if (D.getDeclSpec().isConstexprSpecified())
-    Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_invalid_constexpr)
-      << 2;
   
   // Check to see if this name was declared as a member previously
   NamedDecl *PrevDecl = 0;

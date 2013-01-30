@@ -25,8 +25,10 @@ constexpr notlit nl1; // expected-error {{constexpr variable cannot have non-lit
 void f2(constexpr int i) {} // expected-error {{function parameter cannot be constexpr}}
 // non-static member
 struct s2 {
-  constexpr int mi1; // expected-error {{non-static data member cannot be constexpr}}
+  constexpr int mi1; // expected-error {{non-static data member cannot be constexpr; did you intend to make it const?}}
   static constexpr int mi2; // expected-error {{requires an initializer}}
+  // FIXME: verify that there's no extra suffix in this error. -verify doesn't support anything like that at the moment as far as I know
+  mutable constexpr int mi3; // expected-error {{non-static data member cannot be constexpr}} expected-error {{'mutable' and 'const' cannot be mixed}}
 };
 // typedef
 typedef constexpr int CI; // expected-error {{typedef cannot be constexpr}}

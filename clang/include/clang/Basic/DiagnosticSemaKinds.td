@@ -1536,6 +1536,8 @@ def warn_cxx98_compat_constexpr : Warning<
 def err_invalid_constexpr : Error<
   "%select{function parameter|typedef|non-static data member}0 "
   "cannot be constexpr">;
+def err_invalid_constexpr_member : Error<"non-static data member cannot be "
+  "constexpr%select{; did you intend to make it %select{const|static}0?|}1">;
 def err_constexpr_tag : Error<
   "%select{class|struct|interface|union|enum}0 cannot be marked constexpr">;
 def err_constexpr_dtor : Error<"destructor cannot be marked constexpr">;
