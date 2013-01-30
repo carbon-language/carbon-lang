@@ -33,6 +33,9 @@ Currently `CMake <http://cmake.org>`_ (since 2.8.5) supports generation
 of compilation databases for Unix Makefile builds (Ninja builds in the
 works) with the option ``CMAKE_EXPORT_COMPILE_COMMANDS``.
 
+For projects on Linux, there is an alternative to intercept compiler
+calls with a tool called `Bear <https://github.com/rizsotto/Bear>`_.
+
 Clang's tooling interface supports reading compilation databases; see
 the :doc:`LibTooling documentation <LibTooling>`. libclang and its
 python bindings also support this (since clang 3.2); see
