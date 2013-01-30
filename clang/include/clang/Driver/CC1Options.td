@@ -88,8 +88,6 @@ def analyzer_inlining_mode_EQ : Joined<["-"], "analyzer-inlining-mode=">, Alias<
 def analyzer_disable_retry_exhausted : Flag<["-"], "analyzer-disable-retry-exhausted">,
   HelpText<"Do not re-analyze paths leading to exhausted nodes with a different strategy (may decrease code coverage)">;
   
-def analyzer_max_nodes : Separate<["-"], "analyzer-max-nodes">,
-  HelpText<"The maximum number of nodes the analyzer can generate (150000 default, 0 = no limit)">;
 def analyzer_max_loop : Separate<["-"], "analyzer-max-loop">,
   HelpText<"The maximum number of times the analyzer will go through a loop">;
 def analyzer_stats : Flag<["-"], "analyzer-stats">,

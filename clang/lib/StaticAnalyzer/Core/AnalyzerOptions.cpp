@@ -15,6 +15,7 @@
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -41,7 +42,7 @@ IPAKind AnalyzerOptions::getIPAMode() {
     const char *DefaultIPA = 0;
     UserModeKind HighLevelMode = getUserMode();
     if (HighLevelMode == UMK_Shallow)
-      DefaultIPA = "basic-inlining";
+      DefaultIPA = "inlining";
     else if (HighLevelMode == UMK_Deep)
       DefaultIPA = "dynamic-bifurcate";
     assert(DefaultIPA);
@@ -172,8 +173,23 @@ unsigned AnalyzerOptions::getAlwaysInlineSize() {
 }
 
 unsigned AnalyzerOptions::getMaxInlinableSize() {
-  if (!MaxInlinableSize.hasValue())
-    MaxInlinableSize = getOptionAsInteger("max-inlinable-size", 50);
+  if (!MaxInlinableSize.hasValue()) {
+
+    int DefaultValue = 0;
+    UserModeKind HighLevelMode = getUserMode();
+    switch (HighLevelMode) {
+      default:
+        llvm_unreachable("Invalid mode.");
+      case UMK_Shallow:
+        DefaultValue = 4;
+        break;
+      case UMK_Deep:
+        DefaultValue = 50;
+        break;
+    }
+
+    MaxInlinableSize = getOptionAsInteger("max-inlinable-size", DefaultValue);
+  }
   return MaxInlinableSize.getValue();
 }
 
@@ -187,6 +203,25 @@ unsigned AnalyzerOptions::getMaxTimesInlineLarge() {
   if (!MaxTimesInlineLarge.hasValue())
     MaxTimesInlineLarge = getOptionAsInteger("max-times-inline-large", 32);
   return MaxTimesInlineLarge.getValue();
+}
+
+unsigned AnalyzerOptions::getMaxNodesPerTopLevelFunction() {
+  if (!MaxNodesPerTopLevelFunction.hasValue()) {
+    int DefaultValue = 0;
+    UserModeKind HighLevelMode = getUserMode();
+    switch (HighLevelMode) {
+      default:
+        llvm_unreachable("Invalid mode.");
+      case UMK_Shallow:
+        DefaultValue = 75000;
+        break;
+      case UMK_Deep:
+        DefaultValue = 150000;
+        break;
+    }
+    MaxNodesPerTopLevelFunction = getOptionAsInteger("max-nodes", DefaultValue);
+  }
+  return MaxNodesPerTopLevelFunction.getValue();
 }
 
 bool AnalyzerOptions::shouldSynthesizeBodies() {

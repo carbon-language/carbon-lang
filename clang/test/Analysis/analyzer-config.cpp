@@ -20,7 +20,8 @@ public:
 // CHECK-NEXT: ipa = dynamic-bifurcate
 // CHECK-NEXT: ipa-always-inline-size = 3
 // CHECK-NEXT: max-inlinable-size = 50
+// CHECK-NEXT: max-nodes = 150000
 // CHECK-NEXT: max-times-inline-large = 32
 // CHECK-NEXT: mode = deep
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 11
+// CHECK-NEXT: num-entries = 12

@@ -132,9 +132,6 @@ public:
   
   std::string AnalyzeSpecificFunction;
   
-  /// \brief The maximum number of exploded nodes the analyzer will generate.
-  unsigned MaxNodes;
-  
   /// \brief The maximum number of times the analyzer visits a block.
   unsigned maxBlockVisitOnPath;
   
@@ -222,6 +219,9 @@ private:
 
   /// \sa getMaxTimesInlineLarge
   llvm::Optional<unsigned> MaxTimesInlineLarge;
+
+  /// \sa getMaxNodesPerTopLevelFunction
+  llvm::Optional<unsigned> MaxNodesPerTopLevelFunction;
 
   /// Interprets an option's string value as a boolean.
   ///
@@ -331,6 +331,13 @@ public:
   ///
   /// This is controlled by the 'max-times-inline-large' config option.
   unsigned getMaxTimesInlineLarge();
+
+  /// Returns the maximum number of nodes the analyzer can generate while
+  /// exploring a top level function (for each exploded graph).
+  /// 150000 is default; 0 means no limit.
+  ///
+  /// This is controlled by the 'max-nodes' config option.
+  unsigned getMaxNodesPerTopLevelFunction();
 
 public:
   AnalyzerOptions() :
