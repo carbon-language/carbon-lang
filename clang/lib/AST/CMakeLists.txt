@@ -68,7 +68,6 @@ add_dependencies(clangAST
   ClangCommentNodes
   ClangCommentHTMLTags
   ClangCommentHTMLTagsProperties
-  ClangCommentHTMLNamedCharacterReferences
   ClangDeclNodes
   ClangDiagnosticAST
   ClangDiagnosticComment
