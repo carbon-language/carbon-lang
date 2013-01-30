@@ -16,7 +16,7 @@
 
 #define z(x) (z)(x)
 
-p // expected-warning {{recursive macro}}
+p // no warning
 
 a // expected-warning {{recursive macro}}
 

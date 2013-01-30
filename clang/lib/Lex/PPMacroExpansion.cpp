@@ -459,7 +459,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       if (MacroInfo *NewMI = getMacroInfo(NewII))
         if (!NewMI->isEnabled() || NewMI == MI) {
           Identifier.setFlag(Token::DisableExpand);
-          Diag(Identifier, diag::pp_disabled_macro_expansion);
+          // Don't warn for "#define X X" like "#define bool bool" from
+          // stdbool.h.
+          if (NewMI != MI)
+            Diag(Identifier, diag::pp_disabled_macro_expansion);
         }
     }
 
