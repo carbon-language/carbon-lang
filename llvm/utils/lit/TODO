@@ -7,3 +7,20 @@
  - Support valgrind in all configs, and LLVM style valgrind.
 
  - Support a timeout / ulimit.
+
+ - Rename 'lit' injected variable for config to be lit_config.
+
+ - Allow import of 'lit' in test suite definitions.
+
+ - Create an explicit test suite object (instead of using the top-level
+   TestingConfig object).
+
+ - Allow 'lit' driver to cooperate with test suites to add options (or at least
+   sanitize accepted params).
+
+ - Consider move to identifying all tests by path-to-test-suite and then path to
+   subtest, and don't use test suite names.
+
+ - Consider move to change workflow to always load suites, then resolve command
+   line arguments.
+
