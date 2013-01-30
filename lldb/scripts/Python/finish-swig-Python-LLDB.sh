@@ -192,14 +192,14 @@ create_python_package () {
     package_init_file="${package_dir}/__init__.py"
     if [ ! -f "${package_init_file}" ]
     then
-        echo -n "__all__ = [" > "${package_init_file}"
+        printf "__all__ = [" > "${package_init_file}"
         python_module_separator=""
         for package_file in $package_files
         do
             if [ -f "${package_file}" ]
             then
                 package_file_basename=$(basename "${package_file}")
-                echo -n "${python_module_separator}\"${package_file_basename%.*}\"" >> "${package_init_file}"
+                printf "${python_module_separator}\"${package_file_basename%.*}\"" >> "${package_init_file}"
                 python_module_separator=", "
             fi
         done
