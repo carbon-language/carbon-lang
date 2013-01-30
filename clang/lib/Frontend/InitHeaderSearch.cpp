@@ -52,9 +52,14 @@ public:
       HasSysroot(!(sysroot.empty() || sysroot == "/")) {
   }
 
-  /// AddPath - Add the specified path to the specified group list.
-  void AddPath(const Twine &Path, IncludeDirGroup Group, bool isFramework,
-               bool IgnoreSysRoot = false);
+  /// AddPath - Add the specified path to the specified group list, prefixing
+  /// the sysroot if used.
+  void AddPath(const Twine &Path, IncludeDirGroup Group, bool isFramework);
+
+  /// AddUnmappedPath - Add the specified path to the specified group list,
+  /// without performing any sysroot remapping.
+  void AddUnmappedPath(const Twine &Path, IncludeDirGroup Group,
+                       bool isFramework);
 
   /// AddSystemHeaderPrefix - Add the specified prefix to the system header
   /// prefix list.
@@ -112,19 +117,28 @@ static bool CanPrefixSysroot(StringRef Path) {
 }
 
 void InitHeaderSearch::AddPath(const Twine &Path, IncludeDirGroup Group,
-                               bool isFramework, bool IgnoreSysRoot) {
-  assert(!Path.isTriviallyEmpty() && "can't handle empty path here");
-  FileManager &FM = Headers.getFileMgr();
+                               bool isFramework) {
+  // Add the path with sysroot prepended, if desired and this is a system header
+  // group.
+  if (HasSysroot) {
+    SmallString<256> MappedPathStorage;
+    StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
+    if (CanPrefixSysroot(MappedPathStr)) {
+      AddUnmappedPath(IncludeSysroot + Path, Group, isFramework);
+      return;
+    }
+  }
 
-  // Compute the actual path, taking into consideration -isysroot.
+  AddUnmappedPath(Path, Group, isFramework);
+}
+
+void InitHeaderSearch::AddUnmappedPath(const Twine &Path, IncludeDirGroup Group,
+                                       bool isFramework) {
+  assert(!Path.isTriviallyEmpty() && "can't handle empty path here");
+
+  FileManager &FM = Headers.getFileMgr();
   SmallString<256> MappedPathStorage;
   StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
-
-  // Prepend the sysroot, if desired and this is a system header group.
-  if (HasSysroot && !IgnoreSysRoot && CanPrefixSysroot(MappedPathStr)) {
-    MappedPathStorage.clear();
-    MappedPathStr = (IncludeSysroot + Path).toStringRef(MappedPathStorage);
-  }
 
   // Compute the DirectoryLookup type.
   SrcMgr::CharacteristicKind Type;
@@ -231,7 +245,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     // supplied path.
     llvm::sys::Path P(HSOpts.ResourceDir);
     P.appendComponent("include");
-    AddPath(P.str(), ExternCSystem, false, /*IgnoreSysRoot=*/true);
+    AddUnmappedPath(P.str(), ExternCSystem, false);
   }
 
   // All remaining additions are for system include directories, early exit if
@@ -462,7 +476,7 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
           // Get foo/lib/c++/v1
           P.appendComponent("c++");
           P.appendComponent("v1");
-          AddPath(P.str(), CXXSystem, false, true);
+          AddUnmappedPath(P.str(), CXXSystem, false);
         }
       }
       // On Solaris, include the support directory for things like xlocale and
@@ -656,7 +670,11 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   // Add the user defined entries.
   for (unsigned i = 0, e = HSOpts.UserEntries.size(); i != e; ++i) {
     const HeaderSearchOptions::Entry &E = HSOpts.UserEntries[i];
-    Init.AddPath(E.Path, E.Group, E.IsFramework, E.IgnoreSysRoot);
+    if (E.IgnoreSysRoot) {
+      Init.AddUnmappedPath(E.Path, E.Group, E.IsFramework);
+    } else {
+      Init.AddPath(E.Path, E.Group, E.IsFramework);
+    }
   }
 
   Init.AddDefaultIncludePaths(Lang, Triple, HSOpts);
