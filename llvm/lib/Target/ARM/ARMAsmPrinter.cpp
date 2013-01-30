@@ -37,6 +37,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCObjectStreamer.h"
@@ -45,6 +46,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -698,6 +700,15 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
+  }
+  // FIXME: This should eventually end up somewhere else where more
+  // intelligent flag decisions can be made. For now we are just maintaining
+  // the status quo for ARM and setting EF_ARM_EABI_VER5 as the default.
+  if (Subtarget->isTargetELF()) {
+    if (OutStreamer.hasRawTextSupport()) return;
+
+    MCELFStreamer &MES = static_cast<MCELFStreamer &>(OutStreamer);
+    MES.getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
   }
 }
 

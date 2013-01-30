@@ -1,4 +1,3 @@
-@ XFAIL:
 @ RUN: llvm-mc %s -triple=armv7-linux-gnueabi -filetype=obj -o - | \
 @ RUN:    elf-dump --dump-section-data  | FileCheck -check-prefix=OBJ %s
 	.syntax unified
