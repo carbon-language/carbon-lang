@@ -80,6 +80,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , FPOnlySP(false)
   , AllowsUnalignedMem(false)
   , Thumb2DSP(false)
+  , UseNaClTrap(false)
   , stackAlignment(4)
   , CPUString(CPU)
   , TargetTriple(TT)

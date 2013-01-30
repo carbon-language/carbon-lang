@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMMCTargetDesc.h"
 #include "ARMBaseInfo.h"
 #include "ARMELFStreamer.h"
 #include "ARMMCAsmInfo.h"
+#include "ARMMCTargetDesc.h"
 #include "InstPrinter/ARMInstPrinter.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -37,6 +38,8 @@
 using namespace llvm;
 
 std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
+  Triple triple(TT);
+
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   unsigned Len = TT.size();
@@ -117,6 +120,13 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
       ARMArchFeature = "+thumb-mode";
     else
       ARMArchFeature += ",+thumb-mode";
+  }
+
+  if (triple.isOSNaCl()) {
+    if (ARMArchFeature.empty())
+      ARMArchFeature = "+nacl-trap";
+    else
+      ARMArchFeature += ",+nacl-trap";
   }
 
   return ARMArchFeature;

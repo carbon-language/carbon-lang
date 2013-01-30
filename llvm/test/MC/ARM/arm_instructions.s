@@ -1,7 +1,14 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding %s \
+@ RUN:  | FileCheck %s -check-prefix=ALL
+@ RUN: llvm-mc -mcpu=cortex-a9-mp -triple armv7-unknown-nacl -show-encoding %s \
+@ RUN:  | FileCheck %s -check-prefix=NACL
+@ RUN: llvm-mc -mcpu=cortex-a8 -mattr=+nacl-trap -triple armv7 -show-encoding %s \
+@ RUN:  | FileCheck %s -check-prefix=NACL
 
-@ CHECK: trap
-@ CHECK: encoding: [0xfe,0xde,0xff,0xe7]
+@ ALL: trap
+@ ALL: encoding: [0xfe,0xde,0xff,0xe7]
+@ NACL: trap
+@ NACL: encoding: [0xf0,0xde,0xfe,0xe7]
         trap
 
 @ CHECK: bx	lr

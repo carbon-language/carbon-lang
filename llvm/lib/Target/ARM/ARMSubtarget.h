@@ -156,6 +156,9 @@ protected:
   /// and such) instructions in Thumb2 code.
   bool Thumb2DSP;
 
+  /// NaCl TRAP instruction is generated instead of the regular TRAP.
+  bool UseNaClTrap;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -241,6 +244,7 @@ protected:
   bool hasRAS() const { return HasRAS; }
   bool hasMPExtension() const { return HasMPExtension; }
   bool hasThumb2DSP() const { return Thumb2DSP; }
+  bool useNaClTrap() const { return UseNaClTrap; }
 
   bool hasFP16() const { return HasFP16; }
   bool hasD16() const { return HasD16; }

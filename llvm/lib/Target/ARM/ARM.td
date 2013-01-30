@@ -110,6 +110,11 @@ def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
 def FeatureMClass : SubtargetFeature<"mclass", "IsMClass", "true",
                                      "Is microcontroller profile ('M' series)">;
 
+// Special TRAP encoding for NaCl, which looks like a TRAP in Thumb too.
+// See ARMInstrInfo.td for details.
+def FeatureNaClTrap : SubtargetFeature<"nacl-trap", "UseNaClTrap", "true",
+                                       "NaCl trap">;
+
 // ARM ISAs.
 def HasV4TOps   : SubtargetFeature<"v4t", "HasV4TOps", "true",
                                    "Support ARM v4T instructions">;

@@ -1693,6 +1693,13 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     break;
   }
+  case ARM::TRAPNaCl: {
+    //.long 0xe7fedef0 @ trap
+    uint32_t Val = 0xe7fedef0UL;
+    OutStreamer.AddComment("trap");
+    OutStreamer.EmitIntValue(Val, 4);
+    return;
+  }
   case ARM::tTRAP: {
     // Non-Darwin binutils don't yet support the "trap" mnemonic.
     // FIXME: Remove this special case when they do.

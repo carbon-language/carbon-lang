@@ -6303,7 +6303,16 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   DispatchBB->setIsLandingPad();
 
   MachineBasicBlock *TrapBB = MF->CreateMachineBasicBlock();
-  BuildMI(TrapBB, dl, TII->get(Subtarget->isThumb() ? ARM::tTRAP : ARM::TRAP));
+  unsigned trap_opcode;
+  if (Subtarget->isThumb()) {
+    trap_opcode = ARM::tTRAP;
+  } else {
+    if (Subtarget->useNaClTrap())
+      trap_opcode = ARM::TRAPNaCl;
+    else
+      trap_opcode = ARM::TRAP;
+  }
+  BuildMI(TrapBB, dl, TII->get(trap_opcode));
   DispatchBB->addSuccessor(TrapBB);
 
   MachineBasicBlock *DispContBB = MF->CreateMachineBasicBlock();
@@ -10317,4 +10326,3 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
 
   return false;
 }
-
