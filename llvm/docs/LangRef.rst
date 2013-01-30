@@ -971,22 +971,20 @@ specifications are given in this list:
 
 -  ``E`` - big endian
 -  ``p:64:64:64`` - 64-bit pointers with 64-bit alignment
--  ``p1:32:32:32`` - 32-bit pointers with 32-bit alignment for address
-   space 1
--  ``p2:16:32:32`` - 16-bit pointers with 32-bit alignment for address
-   space 2
+-  ``S0`` - natural stack alignment is unspecified
 -  ``i1:8:8`` - i1 is 8-bit (byte) aligned
 -  ``i8:8:8`` - i8 is 8-bit (byte) aligned
 -  ``i16:16:16`` - i16 is 16-bit aligned
 -  ``i32:32:32`` - i32 is 32-bit aligned
 -  ``i64:32:64`` - i64 has ABI alignment of 32-bits but preferred
    alignment of 64-bits
+-  ``f16:16:16`` - half is 16-bit aligned
 -  ``f32:32:32`` - float is 32-bit aligned
 -  ``f64:64:64`` - double is 64-bit aligned
+-  ``f128:128:128`` - quad is 128-bit aligned
 -  ``v64:64:64`` - 64-bit vector is 64-bit aligned
 -  ``v128:128:128`` - 128-bit vector is 128-bit aligned
--  ``a0:0:1`` - aggregates are 8-bit aligned
--  ``s0:64:64`` - stack objects are 64-bit aligned
+-  ``a0:0:64`` - aggregates are 64-bit aligned
 
 When LLVM is determining the alignment for a given type, it uses the
 following rules:
