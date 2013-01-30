@@ -239,10 +239,8 @@ DynamicLoaderDarwinKernel::SearchForKernelAtSameLoadAddr (Process *process)
 lldb::addr_t
 DynamicLoaderDarwinKernel::SearchForKernelWithDebugHints (Process *process)
 {
-#if 0
     if (GetGlobalProperties()->GetScanType() == eKASLRScanNone)
         return LLDB_INVALID_ADDRESS;
-#endif
 
     Error read_err;
     addr_t addr = LLDB_INVALID_ADDRESS;
@@ -276,13 +274,11 @@ DynamicLoaderDarwinKernel::SearchForKernelWithDebugHints (Process *process)
 lldb::addr_t
 DynamicLoaderDarwinKernel::SearchForKernelNearPC (Process *process)
 {
-#if 0
     if (GetGlobalProperties()->GetScanType() == eKASLRScanNone 
         || GetGlobalProperties()->GetScanType() == eKASLRScanLowgloAddresses)
     {
         return LLDB_INVALID_ADDRESS;
     }
-#endif
 
     ThreadSP thread = process->GetThreadList().GetSelectedThread ();
     if (thread.get() == NULL)
@@ -339,12 +335,10 @@ DynamicLoaderDarwinKernel::SearchForKernelNearPC (Process *process)
 lldb::addr_t
 DynamicLoaderDarwinKernel::SearchForKernelViaExhaustiveSearch (Process *process)
 {
-#if 0
     if (GetGlobalProperties()->GetScanType() != eKASLRScanExhaustiveScan)
     {
         return LLDB_INVALID_ADDRESS;
     }
-#endif
 
     addr_t kernel_range_low, kernel_range_high;
     if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
