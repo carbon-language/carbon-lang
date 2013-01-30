@@ -1,8 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -E %s -o /dev/null
 
-// Note: this file contains invalid UTF-8 before the variable name in the
-// next line. Please do not fix!
+// Note: This file deliberately contains invalid UTF-8. Please do not fix!
 
 extern int ‚x; // expected-error{{source file is not valid UTF-8}}
 
