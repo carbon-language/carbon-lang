@@ -30,11 +30,14 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 #include <unwind.h>
 #include <errno.h>
-#include <sys/prctl.h>
-#include <linux/futex.h>
+
+// <linux/futex.h> is broken on some linux distributions.
+const int FUTEX_WAIT = 0;
+const int FUTEX_WAKE = 1;
 
 // Are we using 32-bit or 64-bit syscalls?
 // x32 (which defines __x86_64__) has SANITIZER_WORDSIZE == 32
