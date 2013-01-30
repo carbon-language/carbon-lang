@@ -28,6 +28,9 @@ public:
   }
 
   virtual uint64_t getPageSize() const { return 0x1000; }
+
+  virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const;
+  virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const;
 };
 
 } // elf
