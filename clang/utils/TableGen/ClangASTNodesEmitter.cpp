@@ -133,6 +133,8 @@ std::pair<Record *, Record *> ClangASTNodesEmitter::EmitNode(
 }
 
 void ClangASTNodesEmitter::run(raw_ostream &OS) {
+  emitSourceFileHeader("List of AST nodes of a particular kind", OS);
+
   // Write the preamble
   OS << "#ifndef ABSTRACT_" << macroName(Root.getName()) << "\n";
   OS << "#  define ABSTRACT_" << macroName(Root.getName()) << "(Type) Type\n";
@@ -182,6 +184,8 @@ void EmitClangASTNodes(RecordKeeper &RK, raw_ostream &OS,
 // contexts.
 void EmitClangDeclContext(RecordKeeper &Records, raw_ostream &OS) {
   // FIXME: Find a .td file format to allow for this to be represented better.
+
+  emitSourceFileHeader("List of AST Decl nodes", OS);
 
   OS << "#ifndef DECL_CONTEXT\n";
   OS << "#  define DECL_CONTEXT(DECL)\n";
