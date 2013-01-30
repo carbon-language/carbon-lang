@@ -15,7 +15,7 @@
 #ifndef MSAN_INTERFACE_INTERNAL_H
 #define MSAN_INTERFACE_INTERNAL_H
 
-#include <sanitizer/common_interface_defs.h>
+#include "sanitizer_common/sanitizer_internal_defs.h"
 
 extern "C" {
 // FIXME: document all interface functions.

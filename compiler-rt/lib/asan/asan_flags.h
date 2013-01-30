@@ -15,7 +15,7 @@
 #ifndef ASAN_FLAGS_H
 #define ASAN_FLAGS_H
 
-#include "sanitizer/common_interface_defs.h"
+#include "sanitizer_common/sanitizer_internal_defs.h"
 
 // ASan flag values can be defined in three ways:
 // 1) initialized with default values at startup.

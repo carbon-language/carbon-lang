@@ -16,7 +16,7 @@
 #ifndef TSAN_INTERFACE_H
 #define TSAN_INTERFACE_H
 
-#include <sanitizer/common_interface_defs.h>
+#include <sanitizer_common/sanitizer_internal_defs.h>
 
 // This header should NOT include any other headers.
 // All functions in this header are extern "C" and start with __tsan_.

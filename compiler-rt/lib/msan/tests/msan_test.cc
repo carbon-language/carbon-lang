@@ -56,7 +56,7 @@ typedef   signed long long S8;  // NOLINT
 static bool TrackingOrigins() {
   S8 x;
   __msan_set_origin(&x, sizeof(x), 0x1234);
-  u32 origin = __msan_get_origin(&x);
+  U4 origin = __msan_get_origin(&x);
   __msan_set_origin(&x, sizeof(x), 0);
   return origin == 0x1234;
 }
@@ -82,7 +82,7 @@ static bool TrackingOrigins() {
       __msan_set_expect_umr(1);                     \
       action;                                       \
       __msan_set_expect_umr(0);                     \
-      u32 id = __msan_get_umr_origin();             \
+      U4 id = __msan_get_umr_origin();             \
       const char *str = __msan_get_origin_descr_if_stack(id); \
       if (!str || strcmp(str, stack_origin)) {      \
         fprintf(stderr, "EXPECT_POISONED_S: id=%u %s, %s", \
@@ -114,7 +114,7 @@ void ExpectPoisonedWithOrigin(const T& t, unsigned origin) {
 template<typename T>
 void ExpectPoisonedWithStackOrigin(const T& t, const char *stack_origin) {
   EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
-  u32 id = __msan_get_origin((void*)&t);
+  U4 id = __msan_get_origin((void*)&t);
   const char *str = __msan_get_origin_descr_if_stack(id);
   if (!str || strcmp(str, stack_origin)) {
     fprintf(stderr, "EXPECT_POISONED_S: id=%u %s, %s",
@@ -140,7 +140,7 @@ T *GetPoisoned(int i = 0, T val = 0) {
 }
 
 template<class T>
-T *GetPoisonedO(int i, u32 origin, T val = 0) {
+T *GetPoisonedO(int i, U4 origin, T val = 0) {
   T *res = (T*)&poisoned_array[i];
   *res = val;
   __msan_poison(&poisoned_array[i], sizeof(T));
@@ -853,11 +853,11 @@ TEST(MemorySanitizer, ptrtoint) {
   // Test that shadow is propagated through pointer-to-integer conversion.
   void* p = (void*)0xABCD;
   __msan_poison(((char*)&p) + 1, sizeof(p));
-  EXPECT_NOT_POISONED((((uptr)p) & 0xFF) == 0);
+  EXPECT_NOT_POISONED((((uintptr_t)p) & 0xFF) == 0);
 
   void* q = (void*)0xABCD;
   __msan_poison(&q, sizeof(q) - 1);
-  EXPECT_POISONED((((uptr)q) & 0xFF) == 0);
+  EXPECT_POISONED((((uintptr_t)q) & 0xFF) == 0);
 }
 
 static void vaargsfn2(int guard, ...) {
@@ -1490,7 +1490,7 @@ TEST(MemorySanitizerOrigins, DISABLED_InitializedStoreDoesNotChangeOrigin) {
   if (!TrackingOrigins()) return;
 
   S s;
-  u32 origin = rand();  // NOLINT
+  U4 origin = rand();  // NOLINT
   s.a = *GetPoisonedO<U2>(0, origin);
   EXPECT_EQ(origin, __msan_get_origin(&s.a));
   EXPECT_EQ(origin, __msan_get_origin(&s.b));
@@ -1504,14 +1504,14 @@ TEST(MemorySanitizerOrigins, DISABLED_InitializedStoreDoesNotChangeOrigin) {
 template<class T, class BinaryOp>
 INLINE
 void BinaryOpOriginTest(BinaryOp op) {
-  u32 ox = rand();  //NOLINT
-  u32 oy = rand();  //NOLINT
+  U4 ox = rand();  //NOLINT
+  U4 oy = rand();  //NOLINT
   T *x = GetPoisonedO<T>(0, ox, 0);
   T *y = GetPoisonedO<T>(1, oy, 0);
   T *z = GetPoisonedO<T>(2, 0, 0);
 
   *z = op(*x, *y);
-  u32 origin = __msan_get_origin(z);
+  U4 origin = __msan_get_origin(z);
   EXPECT_POISONED_O(*z, origin);
   EXPECT_EQ(true, origin == ox || origin == oy);
 
@@ -1675,7 +1675,7 @@ TEST(MemorySanitizerOrigins, DISABLED_AllocaDeath) {
   EXPECT_DEATH(AllocaTO(), "ORIGIN: stack allocation: ar@AllocaTO");
 }
 
-NOINLINE int RetvalOriginTest(u32 origin) {
+NOINLINE int RetvalOriginTest(U4 origin) {
   int *a = new int;
   break_optimization(a);
   __msan_set_origin(a, sizeof(*a), origin);
@@ -1689,14 +1689,14 @@ TEST(MemorySanitizerOrigins, Retval) {
   EXPECT_POISONED_O(RetvalOriginTest(__LINE__), __LINE__);
 }
 
-NOINLINE void ParamOriginTest(int param, u32 origin) {
+NOINLINE void ParamOriginTest(int param, U4 origin) {
   EXPECT_POISONED_O(param, origin);
 }
 
 TEST(MemorySanitizerOrigins, Param) {
   if (!TrackingOrigins()) return;
   int *a = new int;
-  u32 origin = __LINE__;
+  U4 origin = __LINE__;
   break_optimization(a);
   __msan_set_origin(a, sizeof(*a), origin);
   ParamOriginTest(*a, origin);
@@ -1714,14 +1714,14 @@ TEST(MemorySanitizerOrigins, strlen) {
   break_optimization(&alignment);
   char x[4] = {'a', 'b', 0, 0};
   __msan_poison(&x[2], 1);
-  u32 origin = __LINE__;
+  U4 origin = __LINE__;
   __msan_set_origin(x, sizeof(x), origin);
   EXPECT_UMR_O(volatile unsigned y = strlen(x), origin);
 }
 
 TEST(MemorySanitizerOrigins, wcslen) {
   wchar_t w[3] = {'a', 'b', 0};
-  u32 origin = __LINE__;
+  U4 origin = __LINE__;
   __msan_set_origin(w, sizeof(w), origin);
   __msan_poison(&w[2], sizeof(wchar_t));
   EXPECT_UMR_O(volatile unsigned y = wcslen(w), origin);
@@ -1730,7 +1730,7 @@ TEST(MemorySanitizerOrigins, wcslen) {
 #if MSAN_HAS_M128
 TEST(MemorySanitizerOrigins, StoreIntrinsic) {
   __m128 x, y;
-  u32 origin = __LINE__;
+  U4 origin = __LINE__;
   __msan_set_origin(&x, sizeof(x), origin);
   __msan_poison(&x, sizeof(x));
   __builtin_ia32_storeups((float*)&y, x);

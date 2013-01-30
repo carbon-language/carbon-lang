@@ -13,7 +13,7 @@
 #ifndef SANITIZER_STACKDEPOT_H
 #define SANITIZER_STACKDEPOT_H
 
-#include "sanitizer/common_interface_defs.h"
+#include "sanitizer_internal_defs.h"
 
 namespace __sanitizer {
 
