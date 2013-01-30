@@ -8,6 +8,8 @@
 // RUN: FileCheck %s -check-prefix=WRONG < %t/out
 // WRONG-NOT: CommentXMLInvalid
 
+// XFAIL: valgrind
+
 // rdar://12392215
 @interface I
 @end
