@@ -612,15 +612,13 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
     AttrSet.push_back(getSlotAttributes(I));
   }
 
-  // Now add the attribute into the correct slot. There may already be an
+  // Now remove the attribute from the correct slot. There may already be an
   // AttributeSet there.
   AttrBuilder B(AS, Idx);
 
   for (unsigned I = 0, E = Attrs.pImpl->getNumAttributes(); I != E; ++I)
     if (Attrs.getSlotIndex(I) == Idx) {
-      for (AttributeSetImpl::const_iterator II = Attrs.pImpl->begin(I),
-             IE = Attrs.pImpl->end(I); II != IE; ++II)
-        B.removeAttributes(*II);
+      B.removeAttributes(Attrs.pImpl->getSlotAttributes(I), Idx);
       break;
     }
 
@@ -813,8 +811,8 @@ AttrBuilder &AttrBuilder::addAttributes(Attribute Attr) {
   return *this;
 }
 
-AttrBuilder &AttrBuilder::removeAttributes(Attribute A) {
-  uint64_t Mask = A.Raw();
+AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
+  uint64_t Mask = A.Raw(Index);
 
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
@@ -862,8 +860,8 @@ bool AttrBuilder::hasAttributes() const {
   return !Attrs.empty();
 }
 
-bool AttrBuilder::hasAttributes(const Attribute &A) const {
-  return Raw() & A.Raw();
+bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
+  return Raw() & A.Raw(Index);
 }
 
 bool AttrBuilder::hasAlignmentAttr() const {
@@ -916,7 +914,7 @@ uint64_t AttrBuilder::Raw() const {
 // AttributeFuncs Function Defintions
 //===----------------------------------------------------------------------===//
 
-Attribute AttributeFuncs::typeIncompatible(Type *Ty) {
+AttributeSet AttributeFuncs::typeIncompatible(Type *Ty, uint64_t Index) {
   AttrBuilder Incompatible;
 
   if (!Ty->isIntegerTy())
@@ -932,7 +930,7 @@ Attribute AttributeFuncs::typeIncompatible(Type *Ty) {
       .addAttribute(Attribute::NoCapture)
       .addAttribute(Attribute::StructRet);
 
-  return Attribute::get(Ty->getContext(), Incompatible);
+  return AttributeSet::get(Ty->getContext(), Index, Incompatible);
 }
 
 /// \brief This returns an integer containing an encoding of all the LLVM

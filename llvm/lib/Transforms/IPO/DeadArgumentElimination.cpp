@@ -764,10 +764,14 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     RAttrs =
       AttributeSet::get(NRetTy->getContext(), AttributeSet::ReturnIndex,
                         AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-                    removeAttributes(AttributeFuncs::typeIncompatible(NRetTy)));
+         removeAttributes(AttributeFuncs::
+                          typeIncompatible(NRetTy, AttributeSet::ReturnIndex),
+                          AttributeSet::ReturnIndex));
   else
     assert(!AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-             hasAttributes(AttributeFuncs::typeIncompatible(NRetTy)) &&
+             hasAttributes(AttributeFuncs::
+                           typeIncompatible(NRetTy, AttributeSet::ReturnIndex),
+                           AttributeSet::ReturnIndex) &&
            "Return attributes no longer compatible?");
 
   if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
@@ -841,7 +845,10 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     RAttrs =
       AttributeSet::get(NF->getContext(), AttributeSet::ReturnIndex,
                         AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-      removeAttributes(AttributeFuncs::typeIncompatible(NF->getReturnType())));
+        removeAttributes(AttributeFuncs::
+                         typeIncompatible(NF->getReturnType(),
+                                          AttributeSet::ReturnIndex),
+                         AttributeSet::ReturnIndex));
     if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
       AttributesVec.push_back(AttributeSet::get(NF->getContext(), RAttrs));
 

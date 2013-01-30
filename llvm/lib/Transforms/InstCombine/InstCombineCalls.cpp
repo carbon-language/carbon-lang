@@ -1015,7 +1015,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
       AttrBuilder RAttrs(CallerPAL, AttributeSet::ReturnIndex);
-      if (RAttrs.hasAttributes(AttributeFuncs::typeIncompatible(NewRetTy)))
+      if (RAttrs.
+          hasAttributes(AttributeFuncs::
+                        typeIncompatible(NewRetTy, AttributeSet::ReturnIndex),
+                        AttributeSet::ReturnIndex))
         return false;   // Attribute not compatible with transformed value.
     }
 
@@ -1045,7 +1048,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this parameter value.
 
     if (AttrBuilder(CallerPAL.getParamAttributes(i + 1), i + 1).
-          hasAttributes(AttributeFuncs::typeIncompatible(ParamTy)))
+          hasAttributes(AttributeFuncs::
+                        typeIncompatible(ParamTy, i + 1), i + 1))
       return false;   // Attribute not compatible with transformed value.
 
     // If the parameter is passed as a byval argument, then we have to have a
@@ -1124,7 +1128,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
-  RAttrs.removeAttributes(AttributeFuncs::typeIncompatible(NewRetTy));
+  RAttrs.
+    removeAttributes(AttributeFuncs::
+                     typeIncompatible(NewRetTy, AttributeSet::ReturnIndex),
+                     AttributeSet::ReturnIndex);
 
   // Add the new return attributes.
   if (RAttrs.hasAttributes())

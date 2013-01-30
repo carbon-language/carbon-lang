@@ -377,10 +377,7 @@ public:
   AttrBuilder &addAttributes(Attribute A);
 
   /// \brief Remove the attributes from the builder.
-  AttrBuilder &removeAttributes(Attribute A);
-
-  /// \brief Add the attributes to the builder.
-  AttrBuilder &addAttributes(AttributeSet A);
+  AttrBuilder &removeAttributes(AttributeSet A, uint64_t Index);
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;
@@ -390,7 +387,7 @@ public:
 
   /// \brief Return true if the builder has any attribute that's in the
   /// specified attribute.
-  bool hasAttributes(const Attribute &A) const;
+  bool hasAttributes(AttributeSet A, uint64_t Index) const;
 
   /// \brief Return true if the builder has an alignment attribute.
   bool hasAlignmentAttr() const;
@@ -461,7 +458,7 @@ public:
 namespace AttributeFuncs {
 
 /// \brief Which attributes cannot be applied to a type.
-Attribute typeIncompatible(Type *Ty);
+AttributeSet typeIncompatible(Type *Ty, uint64_t Index);
 
 /// \brief This returns an integer containing an encoding of all the LLVM
 /// attributes found in the given attribute bitset.  Any change to this encoding
