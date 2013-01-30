@@ -83,6 +83,12 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
   // Set up darwin-specific properties.
   if (isDarwin())
     HasLazyResolverStubs = true;
+
+  // QPX requires a 32-byte aligned stack. Note that we need to do this if
+  // we're compiling for a BG/Q system regardless of whether or not QPX
+  // is enabled because external functions will assume this alignment.
+  if (hasQPX() || isBGQ())
+    StackAlignment = 32;
 }
 
 /// SetJITMode - This is called to inform the subtarget info that we are

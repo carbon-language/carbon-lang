@@ -27,7 +27,8 @@ class PPCFrameLowering: public TargetFrameLowering {
 
 public:
   PPCFrameLowering(const PPCSubtarget &sti)
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 16, 0),
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
+        (sti.hasQPX() || sti.isBGQ()) ? 32 : 16, 0),
       Subtarget(sti) {
   }
 
