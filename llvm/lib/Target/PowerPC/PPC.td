@@ -58,6 +58,8 @@ def FeatureISEL      : SubtargetFeature<"isel","HasISEL", "true",
                                         "Enable the isel instruction">;
 def FeatureBookE     : SubtargetFeature<"booke", "IsBookE", "true",
                                         "Enable Book E instructions">;
+def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
+                                        "Enable QPX instructions">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -109,6 +111,11 @@ def : Processor<"a2", PPCA2Itineraries, [DirectiveA2, FeatureBookE,
                                          FeatureSTFIWX, FeatureISEL,
                                          Feature64Bit
                                      /*, Feature64BitRegs */]>;
+def : Processor<"a2q", PPCA2Itineraries, [DirectiveA2, FeatureBookE,
+                                          FeatureMFOCRF, FeatureFSqrt,
+                                          FeatureSTFIWX, FeatureISEL,
+                                          Feature64Bit /*, Feature64BitRegs */,
+                                          FeatureQPX]>;
 def : Processor<"pwr6", G5Itineraries,
                   [DirectivePwr6, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,

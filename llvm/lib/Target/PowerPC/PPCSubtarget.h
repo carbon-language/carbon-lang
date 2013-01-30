@@ -70,6 +70,7 @@ protected:
   bool Use64BitRegs;
   bool IsPPC64;
   bool HasAltivec;
+  bool HasQPX;
   bool HasFSQRT;
   bool HasSTFIWX;
   bool HasISEL;
@@ -150,6 +151,7 @@ public:
   bool hasFSQRT() const { return HasFSQRT; }
   bool hasSTFIWX() const { return HasSTFIWX; }
   bool hasAltivec() const { return HasAltivec; }
+  bool hasQPX() const { return HasQPX; }
   bool hasMFOCRF() const { return HasMFOCRF; }
   bool hasISEL() const { return HasISEL; }
   bool isBookE() const { return IsBookE; }
