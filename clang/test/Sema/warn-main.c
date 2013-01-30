@@ -22,6 +22,7 @@ inline int main() {
   return 0;
 }
 
+// expected-warning@+6 {{function 'main' declared 'noreturn' should not return}}
 // expected-error@+3 {{redefinition of 'main'}}
 // expected-warning@+2 {{'main' is not allowed to be declared _Noreturn}}
 // expected-note@+1 {{remove '_Noreturn'}}
