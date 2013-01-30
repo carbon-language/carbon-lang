@@ -726,15 +726,33 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
     unsigned ArgNo2 = ArgNo;
 
     DiagnosticsEngine::ArgumentKind Kind = getArgKind(ArgNo);
-    if (Kind == DiagnosticsEngine::ak_qualtype &&
-        ModifierIs(Modifier, ModifierLen, "diff")) {
-      Kind = DiagnosticsEngine::ak_qualtype_pair;
+    if (ModifierIs(Modifier, ModifierLen, "diff")) {
       assert(*DiagStr == ',' && isdigit(*(DiagStr + 1)) &&
              "Invalid format for diff modifier");
       ++DiagStr;  // Comma.
       ArgNo2 = *DiagStr++ - '0';
-      assert(getArgKind(ArgNo2) == DiagnosticsEngine::ak_qualtype &&
-             "Second value of type diff must be a qualtype");
+      DiagnosticsEngine::ArgumentKind Kind2 = getArgKind(ArgNo2);
+      if (Kind == DiagnosticsEngine::ak_qualtype &&
+          Kind2 == DiagnosticsEngine::ak_qualtype)
+        Kind = DiagnosticsEngine::ak_qualtype_pair;
+      else {
+        // %diff only supports QualTypes.  For other kinds of arguments,
+        // use the default printing.  For example, if the modifier is:
+        //   "%diff{compare $ to $|other text}1,2"
+        // treat it as:
+        //   "compare %1 to %2"
+        const char *Pipe = ScanFormat(Argument, Argument + ArgumentLen, '|');
+        const char *FirstDollar = ScanFormat(Argument, Pipe, '$');
+        const char *SecondDollar = ScanFormat(FirstDollar + 1, Pipe, '$');
+        const char ArgStr1[] = { '%', '0' + ArgNo };
+        const char ArgStr2[] = { '%', '0' + ArgNo2 };
+        FormatDiagnostic(Argument, FirstDollar, OutStr);
+        FormatDiagnostic(ArgStr1, ArgStr1 + 2, OutStr);
+        FormatDiagnostic(FirstDollar + 1, SecondDollar, OutStr);
+        FormatDiagnostic(ArgStr2, ArgStr2 + 2, OutStr);
+        FormatDiagnostic(SecondDollar + 1, Pipe, OutStr);
+        continue;
+      }
     }
     
     switch (Kind) {

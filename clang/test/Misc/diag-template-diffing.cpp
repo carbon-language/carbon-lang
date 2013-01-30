@@ -830,6 +830,21 @@ namespace rdar12456626 {
   };
 }
 
+namespace PR15023 {
+  // Don't crash when non-QualTypes are passed to a diff modifier.
+  template <typename... Args>
+  void func(void (*func)(Args...), Args...) { }
+
+  void bar(int, int &) {
+  }
+
+  void foo(int x) {
+    func(bar, 1, x)
+  }
+  // CHECK-ELIDE-NOTREE: no matching function for call to 'func'
+  // CHECK-ELIDE-NOTREE: candidate template ignored: deduced conflicting types for parameter 'Args' (<int, int &> vs. <int, int>)
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
