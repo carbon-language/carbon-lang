@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_X86_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "TargetLayout.h"
 
 namespace lld {
 namespace elf {
@@ -35,12 +36,17 @@ class X86TargetHandler LLVM_FINAL
 public:
   X86TargetHandler(X86TargetInfo &targetInfo);
 
+  virtual TargetLayout<X86ELFType> &targetLayout() {
+    return _targetLayout;
+  }
+
   virtual const X86TargetRelocationHandler &getRelocationHandler() const {
     return _relocationHandler;
   }
 
 private:
   X86TargetRelocationHandler _relocationHandler;
+  TargetLayout<X86ELFType> _targetLayout;
 };
 } // end namespace elf
 } // end namespace lld

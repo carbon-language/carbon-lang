@@ -62,5 +62,6 @@ ErrorOr<void> PPCTargetRelocationHandler::applyRelocation(
 }
 
 PPCTargetHandler::PPCTargetHandler(PPCTargetInfo &targetInfo)
-    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo) {
+    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
+      _targetLayout(targetInfo) {
 }

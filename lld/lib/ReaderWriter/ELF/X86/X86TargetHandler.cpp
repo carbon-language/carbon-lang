@@ -63,5 +63,6 @@ ErrorOr<void> X86TargetRelocationHandler::applyRelocation(
 }
 
 X86TargetHandler::X86TargetHandler(X86TargetInfo &targetInfo)
-    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo) {
+    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
+      _targetLayout(targetInfo) {
 }

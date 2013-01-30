@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_HEXAGON_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "TargetLayout.h"
 
 namespace lld {
 namespace elf {
@@ -35,12 +36,17 @@ class HexagonTargetHandler LLVM_FINAL
 public:
   HexagonTargetHandler(HexagonTargetInfo &targetInfo);
 
+  virtual TargetLayout<HexagonELFType> &targetLayout() {
+    return _targetLayout;
+  }
+
   virtual const HexagonTargetRelocationHandler &getRelocationHandler() const {
     return _relocationHandler;
   }
 
 private:
   HexagonTargetRelocationHandler _relocationHandler;
+  TargetLayout<HexagonELFType> _targetLayout;
 };
 } // end namespace elf
 } // end namespace lld

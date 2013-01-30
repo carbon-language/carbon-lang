@@ -107,5 +107,6 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
 }
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonTargetInfo &targetInfo)
-    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo){
+    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
+      _targetLayout(targetInfo) {
 }

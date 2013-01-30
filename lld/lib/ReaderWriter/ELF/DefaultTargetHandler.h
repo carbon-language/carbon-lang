@@ -34,11 +34,6 @@ public:
     llvm_unreachable("Target should provide implementation for function ");
   }
 
-  /// TargetLayout 
-  TargetLayout<ELFT> &targetLayout() {
-    llvm_unreachable("Target should provide implementation for function ");
-  }
-
   /// TargetAtomHandler
   TargetAtomHandler<ELFT> &targetAtomHandler() {
     llvm_unreachable("Target should provide implementation for function ");

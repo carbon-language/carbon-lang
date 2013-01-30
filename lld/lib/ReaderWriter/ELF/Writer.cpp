@@ -75,7 +75,7 @@ template <class ELFT>
 ExecutableWriter<ELFT>::ExecutableWriter(const ELFTargetInfo &ti)
     : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()),
       _runtimeFile(ti) {
-  _layout = new TargetLayout<ELFT>(_targetInfo);
+  _layout = &_targetHandler.targetLayout();
 }
 
 template <class ELFT>

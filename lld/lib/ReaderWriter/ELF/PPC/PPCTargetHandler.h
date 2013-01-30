@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_PPC_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "TargetLayout.h"
 
 namespace lld {
 namespace elf {
@@ -35,12 +36,17 @@ class PPCTargetHandler LLVM_FINAL
 public:
   PPCTargetHandler(PPCTargetInfo &targetInfo);
 
+  virtual TargetLayout<PPCELFType> &targetLayout() {
+    return _targetLayout;
+  }
+
   virtual const PPCTargetRelocationHandler &getRelocationHandler() const {
     return _relocationHandler;
   }
 
 private:
   PPCTargetRelocationHandler _relocationHandler;
+  TargetLayout<PPCELFType> _targetLayout;
 };
 } // end namespace elf
 } // end namespace lld
