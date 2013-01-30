@@ -1383,9 +1383,9 @@ void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   const AttributeSet PAL = Func->getAttributes();
   AttrBuilder B(PA);
   const AttributeSet PALnew =
-    PAL.addFnAttributes(Func->getContext(),
-                        AttributeSet::get(Func->getContext(),
-                                          AttributeSet::FunctionIndex, B));
+    PAL.addAttributes(Func->getContext(), AttributeSet::FunctionIndex,
+                      AttributeSet::get(Func->getContext(),
+                                        AttributeSet::FunctionIndex, B));
   Func->setAttributes(PALnew);
 }
 
