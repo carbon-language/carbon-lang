@@ -2047,6 +2047,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   // Register additional node visitors.
   R->addVisitor(new NilReceiverBRVisitor());
   R->addVisitor(new ConditionBRVisitor());
+  R->addVisitor(new LikelyFalsePositiveSuppressionBRVisitor());
 
   BugReport::VisitorList visitors;
   unsigned originalReportConfigToken, finalReportConfigToken;
@@ -2067,16 +2068,17 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
     // Generate the very last diagnostic piece - the piece is visible before 
     // the trace is expanded.
-    if (PDB.getGenerationScheme() != PathDiagnosticConsumer::None) {
-      PathDiagnosticPiece *LastPiece = 0;
-      for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
-           I != E; ++I) {
-        if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
-          assert (!LastPiece &&
-                  "There can only be one final piece in a diagnostic.");
-          LastPiece = Piece;
-        }
+    PathDiagnosticPiece *LastPiece = 0;
+    for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
+        I != E; ++I) {
+      if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
+        assert (!LastPiece &&
+            "There can only be one final piece in a diagnostic.");
+        LastPiece = Piece;
       }
+    }
+
+    if (PDB.getGenerationScheme() != PathDiagnosticConsumer::None) {
       if (!LastPiece)
         LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
       if (LastPiece)
@@ -2141,32 +2143,7 @@ void BugReporter::Register(BugType *BT) {
   BugTypes = F.add(BugTypes, BT);
 }
 
-bool BugReporter::suppressReport(BugReport *R) {
-  const Stmt *S = R->getStmt();
-  if (!S)
-    return false;
-
-  // Here we suppress false positives coming from system macros. This list is
-  // based on known issues.
-
-  // Skip reports within the sys/queue.h macros as we do not have the ability to
-  // reason about data structure shapes.
-  SourceManager &SM = getSourceManager();
-  SourceLocation Loc = S->getLocStart();
-  while (Loc.isMacroID()) {
-    if (SM.isInSystemMacro(Loc) &&
-       (SM.getFilename(SM.getSpellingLoc(Loc)).endswith("sys/queue.h")))
-      return true;
-    Loc = SM.getSpellingLoc(Loc);
-  }
-
-  return false;
-}
-
 void BugReporter::emitReport(BugReport* R) {
-  if (suppressReport(R))
-    return;
-
   // Compute the bug report's hash to determine its equivalence class.
   llvm::FoldingSetNodeID ID;
   R->Profile(ID);

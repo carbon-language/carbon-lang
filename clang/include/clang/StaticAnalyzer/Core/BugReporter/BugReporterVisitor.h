@@ -230,6 +230,33 @@ public:
                     llvm::Optional<bool> &prunable);
 };
 
+/// \brief Suppress reports that might lead to known false positives.
+///
+/// Currently this suppresses reports based on locations of bugs.
+class LikelyFalsePositiveSuppressionBRVisitor
+  : public BugReporterVisitorImpl<LikelyFalsePositiveSuppressionBRVisitor> {
+public:
+  static void *getTag() {
+    static int Tag = 0;
+    return static_cast<void *>(&Tag);
+  }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddPointer(getTag());
+  }
+
+  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                         const ExplodedNode *Prev,
+                                         BugReporterContext &BRC,
+                                         BugReport &BR) {
+    return 0;
+  }
+
+  virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                          const ExplodedNode *N,
+                                          BugReport &BR);
+};
+
 /// \brief When a region containing undefined value or '0' value is passed 
 /// as an argument in a call, marks the call as interesting.
 ///

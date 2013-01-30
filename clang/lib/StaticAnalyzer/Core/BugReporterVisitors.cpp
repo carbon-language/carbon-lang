@@ -1157,6 +1157,33 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
 }
 
 PathDiagnosticPiece *
+LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
+                                                    const ExplodedNode *N,
+                                                    BugReport &BR) {
+  const Stmt *S = BR.getStmt();
+  if (!S)
+    return 0;
+
+  // Here we suppress false positives coming from system macros. This list is
+  // based on known issues.
+
+  // Skip reports within the sys/queue.h macros as we do not have the ability to
+  // reason about data structure shapes.
+  SourceManager &SM = BRC.getSourceManager();
+  SourceLocation Loc = S->getLocStart();
+  while (Loc.isMacroID()) {
+    if (SM.isInSystemMacro(Loc) &&
+       (SM.getFilename(SM.getSpellingLoc(Loc)).endswith("sys/queue.h"))) {
+      BR.markInvalid(getTag(), 0);
+      return 0;
+    }
+    Loc = SM.getSpellingLoc(Loc);
+  }
+
+  return 0;
+}
+
+PathDiagnosticPiece *
 UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
                                   const ExplodedNode *PrevN,
                                   BugReporterContext &BRC,
