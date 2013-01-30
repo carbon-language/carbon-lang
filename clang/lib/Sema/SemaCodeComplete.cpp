@@ -4966,6 +4966,11 @@ void Sema::CodeCompleteObjCPassingType(Scope *S, ObjCDeclSpec &DS,
     Builder.AddTextChunk("sender");
     Results.AddResult(CodeCompletionResult(Builder.TakeString()));
   }
+
+  // If we're completing the return type, provide 'instancetype'.
+  if (!IsParameter) {
+    Results.AddResult(CodeCompletionResult("instancetype"));
+  }
   
   // Add various builtin type names and specifiers.
   AddOrdinaryNameResults(PCC_Type, S, *this, Results);
