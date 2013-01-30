@@ -882,6 +882,36 @@ sub RunXcodebuild {
   if ($IgnoreErrors) {
     AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
   }
+
+  # Detect the version of Xcode.  If Xcode 4.6 or higher, use new
+  # in situ support for analyzer interposition without needed to override
+  # the compiler.
+  open(DETECT_XCODE, "xcodebuild -version |") or
+    die "error: cannot detect version of xcodebuild\n";
+
+  my $oldBehavior = 1;
+
+  while(<DETECT_XCODE>) {
+    if (/^Xcode (.+)$/) {
+      if ($1 >= 4.6) {
+        $oldBehavior = 0;
+        last;
+      }
+    }
+  }
+  close(DETECT_XCODE);
+  
+  if ($oldBehavior == 0) {
+    my $OutputDir = $Options->{"OUTPUT_DIR"};
+    my $CLANG = $Options->{"CLANG"};
+    push @$Args,
+        "RUN_CLANG_STATIC_ANALYZER=YES",
+        "CLANG_ANALYZER_OUTPUT=plist-html",
+        "CLANG_ANALYZER_EXEC=$CLANG",
+        "CLANG_ANALYZER_OUTPUT_DIR=$OutputDir";
+
+    return (system(@$Args) >> 8);
+  }
   
   # Default to old behavior where we insert a bogus compiler.
   SetEnv($Options);
