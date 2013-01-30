@@ -370,19 +370,11 @@ void Section<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
       continue;
     uint8_t *atomContent = chunkBuffer + ai->_fileOffset;
     std::copy_n(content.data(), contentSize, atomContent);
-    for (const auto ref : *definedAtom) {
-      uint32_t offset = ref->offsetInAtom();
-      uint64_t targetAddress = 0;
-      assert(ref->target() != nullptr && "Found the target to be NULL");
-      targetAddress = writer->addressOfAtom(ref->target());
-      uint64_t fixupAddress = writer->addressOfAtom(ai->_atom) + offset;
-      // apply the relocation
-      writer->kindHandler()->applyFixup(ref->kind(),
-                                        ref->addend(),
-                                        &atomContent[offset],
-                                        fixupAddress,
-                                        targetAddress);
-    }
+    const TargetRelocationHandler<ELFT> &relHandler =
+        this->_targetInfo.template getTargetHandler<ELFT>()
+        .getRelocationHandler();
+    for (const auto ref : *definedAtom)
+      relHandler.applyRelocation(*writer, buffer, *ai, *ref);
   }
 }
 
