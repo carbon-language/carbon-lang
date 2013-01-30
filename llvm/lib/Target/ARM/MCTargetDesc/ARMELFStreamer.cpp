@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARMUnwindOp.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -56,10 +57,24 @@ public:
   ARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                  raw_ostream &OS, MCCodeEmitter *Emitter, bool IsThumb)
     : MCELFStreamer(Context, TAB, OS, Emitter),
-      IsThumb(IsThumb), MappingSymbolCounter(0), LastEMS(EMS_None) {
+      IsThumb(IsThumb), MappingSymbolCounter(0), LastEMS(EMS_None),
+      ExTab(0), FnStart(0), Personality(0), CantUnwind(false) {
   }
 
   ~ARMELFStreamer() {}
+
+  // ARM exception handling directives
+  virtual void EmitFnStart();
+  virtual void EmitFnEnd();
+  virtual void EmitCantUnwind();
+  virtual void EmitPersonality(const MCSymbol *Per);
+  virtual void EmitHandlerData();
+  virtual void EmitSetFP(unsigned NewFpReg,
+                         unsigned NewSpReg,
+                         int64_t Offset = 0);
+  virtual void EmitPad(int64_t Offset);
+  virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                           bool isVector);
 
   virtual void ChangeSection(const MCSection *Section) {
     // We have to keep track of the mapping symbol state of any sections we
@@ -172,6 +187,15 @@ private:
     SD.setFlags(SD.getFlags() | ELF_Other_ThumbFunc);
   }
 
+  // Helper functions for ARM exception handling directives
+  void Reset();
+
+  void EmitPersonalityFixup(StringRef Name);
+
+  void SwitchToEHSection(const char *Prefix, unsigned Type, unsigned Flags,
+                         SectionKind Kind, const MCSymbol &Fn);
+  void SwitchToExTabSection(const MCSymbol &FnStart);
+  void SwitchToExIdxSection(const MCSymbol &FnStart);
 
   bool IsThumb;
   int64_t MappingSymbolCounter;
@@ -179,8 +203,198 @@ private:
   DenseMap<const MCSection *, ElfMappingSymbol> LastMappingSymbols;
   ElfMappingSymbol LastEMS;
 
-  /// @}
+  // ARM Exception Handling Frame Information
+  MCSymbol *ExTab;
+  MCSymbol *FnStart;
+  const MCSymbol *Personality;
+  bool CantUnwind;
 };
+}
+
+inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
+                                              unsigned Type,
+                                              unsigned Flags,
+                                              SectionKind Kind,
+                                              const MCSymbol &Fn) {
+  const MCSectionELF &FnSection =
+    static_cast<const MCSectionELF &>(Fn.getSection());
+
+  // Create the name for new section
+  StringRef FnSecName(FnSection.getSectionName());
+  SmallString<128> EHSecName(Prefix);
+  if (FnSecName != ".text") {
+    EHSecName += FnSecName;
+  }
+
+  // Get .ARM.extab or .ARM.exidx section
+  const MCSectionELF *EHSection = NULL;
+  if (const MCSymbol *Group = FnSection.getGroup()) {
+    EHSection = getContext().getELFSection(
+      EHSecName, Type, Flags | ELF::SHF_GROUP, Kind,
+      FnSection.getEntrySize(), Group->getName());
+  } else {
+    EHSection = getContext().getELFSection(EHSecName, Type, Flags, Kind);
+  }
+  assert(EHSection);
+
+  // Switch to .ARM.extab or .ARM.exidx section
+  SwitchSection(EHSection);
+  EmitCodeAlignment(4, 0);
+}
+
+inline void ARMELFStreamer::SwitchToExTabSection(const MCSymbol &FnStart) {
+  SwitchToEHSection(".ARM.extab",
+                    ELF::SHT_PROGBITS,
+                    ELF::SHF_ALLOC,
+                    SectionKind::getDataRel(),
+                    FnStart);
+}
+
+inline void ARMELFStreamer::SwitchToExIdxSection(const MCSymbol &FnStart) {
+  SwitchToEHSection(".ARM.exidx",
+                    ELF::SHT_ARM_EXIDX,
+                    ELF::SHF_ALLOC | ELF::SHF_LINK_ORDER,
+                    SectionKind::getDataRel(),
+                    FnStart);
+}
+
+void ARMELFStreamer::Reset() {
+  ExTab = NULL;
+  FnStart = NULL;
+  Personality = NULL;
+  CantUnwind = false;
+}
+
+// Add the R_ARM_NONE fixup at the same position
+void ARMELFStreamer::EmitPersonalityFixup(StringRef Name) {
+  const MCSymbol *PersonalitySym = getContext().GetOrCreateSymbol(Name);
+
+  const MCSymbolRefExpr *PersonalityRef =
+    MCSymbolRefExpr::Create(PersonalitySym,
+                            MCSymbolRefExpr::VK_ARM_NONE,
+                            getContext());
+
+  AddValueSymbols(PersonalityRef);
+  MCDataFragment *DF = getOrCreateDataFragment();
+  DF->getFixups().push_back(
+    MCFixup::Create(DF->getContents().size(), PersonalityRef,
+                    MCFixup::getKindForSize(4, false)));
+}
+
+void ARMELFStreamer::EmitFnStart() {
+  assert(FnStart == 0);
+  FnStart = getContext().CreateTempSymbol();
+  EmitLabel(FnStart);
+}
+
+void ARMELFStreamer::EmitFnEnd() {
+  assert(FnStart && ".fnstart must preceeds .fnend");
+
+  // Emit unwind opcodes if there is no .handlerdata directive
+  int PersonalityIndex = -1;
+  if (!ExTab && !CantUnwind) {
+    // For __aeabi_unwind_cpp_pr1, we have to emit opcodes in .ARM.extab.
+    SwitchToExTabSection(*FnStart);
+
+    // Create .ARM.extab label for offset in .ARM.exidx
+    ExTab = getContext().CreateTempSymbol();
+    EmitLabel(ExTab);
+
+    PersonalityIndex = 1;
+
+    uint32_t Entry = 0;
+    uint32_t NumExtraEntryWords = 0;
+    Entry |= NumExtraEntryWords << 24;
+    Entry |= (EHT_COMPACT | PersonalityIndex) << 16;
+
+    // TODO: This should be generated according to .save, .vsave, .setfp
+    // directives.  Currently, we are simply generating FINISH opcode.
+    Entry |= UNWIND_OPCODE_FINISH << 8;
+    Entry |= UNWIND_OPCODE_FINISH;
+
+    EmitIntValue(Entry, 4, 0);
+  }
+
+  // Emit the exception index table entry
+  SwitchToExIdxSection(*FnStart);
+
+  if (PersonalityIndex == 1)
+    EmitPersonalityFixup("__aeabi_unwind_cpp_pr1");
+
+  const MCSymbolRefExpr *FnStartRef =
+    MCSymbolRefExpr::Create(FnStart,
+                            MCSymbolRefExpr::VK_ARM_PREL31,
+                            getContext());
+
+  EmitValue(FnStartRef, 4, 0);
+
+  if (CantUnwind) {
+    EmitIntValue(EXIDX_CANTUNWIND, 4, 0);
+  } else {
+    const MCSymbolRefExpr *ExTabEntryRef =
+      MCSymbolRefExpr::Create(ExTab,
+                              MCSymbolRefExpr::VK_ARM_PREL31,
+                              getContext());
+    EmitValue(ExTabEntryRef, 4, 0);
+  }
+
+  // Clean exception handling frame information
+  Reset();
+}
+
+void ARMELFStreamer::EmitCantUnwind() {
+  CantUnwind = true;
+}
+
+void ARMELFStreamer::EmitHandlerData() {
+  SwitchToExTabSection(*FnStart);
+
+  // Create .ARM.extab label for offset in .ARM.exidx
+  assert(!ExTab);
+  ExTab = getContext().CreateTempSymbol();
+  EmitLabel(ExTab);
+
+  // Emit Personality
+  assert(Personality && ".personality directive must preceed .handlerdata");
+
+  const MCSymbolRefExpr *PersonalityRef =
+    MCSymbolRefExpr::Create(Personality,
+                            MCSymbolRefExpr::VK_ARM_PREL31,
+                            getContext());
+
+  EmitValue(PersonalityRef, 4, 0);
+
+  // Emit unwind opcodes
+  uint32_t Entry = 0;
+  uint32_t NumExtraEntryWords = 0;
+
+  // TODO: This should be generated according to .save, .vsave, .setfp
+  // directives.  Currently, we are simply generating FINISH opcode.
+  Entry |= NumExtraEntryWords << 24;
+  Entry |= UNWIND_OPCODE_FINISH << 16;
+  Entry |= UNWIND_OPCODE_FINISH << 8;
+  Entry |= UNWIND_OPCODE_FINISH;
+
+  EmitIntValue(Entry, 4, 0);
+}
+
+void ARMELFStreamer::EmitPersonality(const MCSymbol *Per) {
+  Personality = Per;
+}
+
+void ARMELFStreamer::EmitSetFP(unsigned NewFpReg,
+                               unsigned NewSpReg,
+                               int64_t Offset) {
+  // TODO: Not implemented
+}
+
+void ARMELFStreamer::EmitPad(int64_t Offset) {
+  // TODO: Not implemented
+}
+
+void ARMELFStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                                 bool IsVector) {
+  // TODO: Not implemented
 }
 
 namespace llvm {
