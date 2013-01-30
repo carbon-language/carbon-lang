@@ -162,6 +162,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::GPRel:             return "MipsISD::GPRel";
   case MipsISD::ThreadPointer:     return "MipsISD::ThreadPointer";
   case MipsISD::Ret:               return "MipsISD::Ret";
+  case MipsISD::EH_RETURN:         return "MipsISD::EH_RETURN";
   case MipsISD::FPBrcond:          return "MipsISD::FPBrcond";
   case MipsISD::FPCmp:             return "MipsISD::FPCmp";
   case MipsISD::CMovFP_T:          return "MipsISD::CMovFP_T";
@@ -444,6 +445,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::EXCEPTIONADDR,     MVT::i64, Expand);
   setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);
   setOperationAction(ISD::EHSELECTION,       MVT::i64, Expand);
+
+  setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
 
   setOperationAction(ISD::VAARG,             MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
@@ -1045,6 +1048,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::FABS:               return LowerFABS(Op, DAG);
     case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
     case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
+    case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
     case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op, DAG);
     case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op, DAG);
     case ISD::SHL_PARTS:          return LowerShiftLeftParts(Op, DAG);
@@ -2226,6 +2230,34 @@ SDValue MipsTargetLowering::LowerRETURNADDR(SDValue Op,
   // Return RA, which contains the return address. Mark it an implicit live-in.
   unsigned Reg = MF.addLiveIn(RA, getRegClassFor(VT));
   return DAG.getCopyFromReg(DAG.getEntryNode(), Op.getDebugLoc(), Reg, VT);
+}
+
+// An EH_RETURN is the result of lowering llvm.eh.return which in turn is
+// generated from __builtin_eh_return (offset, handler)
+// The effect of this is to adjust the stack pointer by "offset"
+// and then branch to "handler".
+SDValue MipsTargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
+                                                                     const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+
+  MipsFI->setCallsEhReturn();
+  SDValue Chain     = Op.getOperand(0);
+  SDValue Offset    = Op.getOperand(1);
+  SDValue Handler   = Op.getOperand(2);
+  DebugLoc DL       = Op.getDebugLoc();
+  EVT Ty = IsN64 ? MVT::i64 : MVT::i32;
+
+  // Store stack offset in V1, store jump target in V0. Glue CopyToReg and
+  // EH_RETURN nodes, so that instructions are emitted back-to-back.
+  unsigned OffsetReg = IsN64 ? Mips::V1_64 : Mips::V1;
+  unsigned AddrReg = IsN64 ? Mips::V0_64 : Mips::V0;
+  Chain = DAG.getCopyToReg(Chain, DL, OffsetReg, Offset, SDValue());
+  Chain = DAG.getCopyToReg(Chain, DL, AddrReg, Handler, Chain.getValue(1));
+  return DAG.getNode(MipsISD::EH_RETURN, DL, MVT::Other, Chain,
+                     DAG.getRegister(OffsetReg, Ty),
+                     DAG.getRegister(AddrReg, getPointerTy()),
+                     Chain.getValue(1));
 }
 
 // TODO: set SType according to the desired memory barrier behavior.

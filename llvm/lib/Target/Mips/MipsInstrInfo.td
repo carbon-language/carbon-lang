@@ -867,6 +867,27 @@ def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
 def RET : RetBase<CPURegs>, MTLO_FM<8>;
 
+// Exception handling related node and instructions.
+// The conversion sequence is:
+// ISD::EH_RETURN -> MipsISD::EH_RETURN ->
+// MIPSeh_return -> (stack change + indirect branch)
+//
+// MIPSeh_return takes the place of regular return instruction
+// but takes two arguments (V1, V0) which are used for storing
+// the offset and return address respectively.
+def SDT_MipsEHRET : SDTypeProfile<0, 2, [SDTCisInt<0>, SDTCisPtrTy<1>]>;
+
+def MIPSehret : SDNode<"MipsISD::EH_RETURN", SDT_MipsEHRET,
+                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
+let Uses = [V0, V1], isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  def MIPSeh_return32 : MipsPseudo<(outs), (ins CPURegs:$spoff, CPURegs:$dst),
+                                [(MIPSehret CPURegs:$spoff, CPURegs:$dst)]>;
+  def MIPSeh_return64 : MipsPseudo<(outs), (ins CPU64Regs:$spoff,
+                                                CPU64Regs:$dst),
+                                [(MIPSehret CPU64Regs:$spoff, CPU64Regs:$dst)]>;
+}
+
 /// Multiply and Divide Instructions.
 def MULT  : Mult<"mult", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x18>;
 def MULTu : Mult<"multu", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x19>;

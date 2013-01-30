@@ -37,6 +37,7 @@ public:
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS) const;
+  unsigned ehDataReg(unsigned I) const;
 };
 
 } // End llvm namespace

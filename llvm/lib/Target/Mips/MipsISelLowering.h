@@ -65,6 +65,8 @@ namespace llvm {
       // Return
       Ret,
 
+      EH_RETURN,
+
       // MAdd/Sub nodes
       MAdd,
       MAddu,
@@ -275,6 +277,7 @@ namespace llvm {
     SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG& DAG) const;
     SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
     SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG& DAG) const;

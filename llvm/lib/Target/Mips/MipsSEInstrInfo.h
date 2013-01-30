@@ -85,6 +85,8 @@ private:
                                MachineBasicBlock::iterator I) const;
   void ExpandBuildPairF64(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator I) const;
+  void ExpandEhReturn(MachineBasicBlock &MBB,
+                      MachineBasicBlock::iterator I) const;
 };
 
 }

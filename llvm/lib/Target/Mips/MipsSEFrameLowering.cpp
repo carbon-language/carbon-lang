@@ -29,9 +29,21 @@
 
 using namespace llvm;
 
+unsigned MipsSEFrameLowering::ehDataReg(unsigned I) const {
+  static const unsigned EhDataReg[] = {
+    Mips::A0, Mips::A1, Mips::A2, Mips::A3
+  };
+  static const unsigned EhDataReg64[] = {
+    Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64
+  };
+
+  return STI.isABI_N64() ? EhDataReg64[I] : EhDataReg[I];
+}
+
 void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   const MipsRegisterInfo *RegInfo =
     static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MipsSEInstrInfo &TII =
@@ -105,6 +117,30 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
     }
   }
 
+  if (MipsFI->callsEhReturn()) {
+    const TargetRegisterClass *RC = STI.isABI_N64() ?
+        &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+
+    // Insert instructions that spill eh data registers.
+    for (int I = 0; I < 4; ++I) {
+      if (!MBB.isLiveIn(ehDataReg(I)))
+        MBB.addLiveIn(ehDataReg(I));
+      TII.storeRegToStackSlot(MBB, MBBI, ehDataReg(I), false,
+                              MipsFI->getEhDataRegFI(I), RC, RegInfo);
+    }
+
+    // Emit .cfi_offset directives for eh data registers.
+    MCSymbol *CSLabel2 = MMI.getContext().CreateTempSymbol();
+    BuildMI(MBB, MBBI, dl,
+            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel2);
+    for (int I = 0; I < 4; ++I) {
+      int64_t Offset = MFI->getObjectOffset(MipsFI->getEhDataRegFI(I));
+      DstML = MachineLocation(MachineLocation::VirtualFP, Offset);
+      SrcML = MachineLocation(ehDataReg(I));
+      Moves.push_back(MachineMove(CSLabel2, DstML, SrcML));
+    }
+  }
+
   // if framepointer enabled, set it to point to the stack pointer.
   if (hasFP(MF)) {
     // Insert instruction "move $fp, $sp" at this location.
@@ -124,6 +160,9 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo *MFI            = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  const MipsRegisterInfo *RegInfo =
+    static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MipsSEInstrInfo &TII =
     *static_cast<const MipsSEInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
@@ -142,6 +181,22 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Insert instruction "move $sp, $fp" at this location.
     BuildMI(MBB, I, dl, TII.get(ADDu), SP).addReg(FP).addReg(ZERO);
+  }
+
+  if (MipsFI->callsEhReturn()) {
+    const TargetRegisterClass *RC = STI.isABI_N64() ?
+        &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+
+    // Find first instruction that restores a callee-saved register.
+    MachineBasicBlock::iterator I = MBBI;
+    for (unsigned i = 0; i < MFI->getCalleeSavedInfo().size(); ++i)
+      --I;
+
+    // Insert instructions that restore eh data registers.
+    for (int J = 0; J < 4; ++J) {
+      TII.loadRegFromStackSlot(MBB, I, ehDataReg(J), MipsFI->getEhDataRegFI(J),
+                               RC, RegInfo);
+    }
   }
 
   // Get the number of bytes from FrameInfo
@@ -198,11 +253,16 @@ void MipsSEFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   MachineRegisterInfo &MRI = MF.getRegInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
 
   // Mark $fp as used if function has dedicated frame pointer.
   if (hasFP(MF))
     MRI.setPhysRegUsed(FP);
+
+  // Create spill slots for eh data registers if function calls eh_return.
+  if (MipsFI->callsEhReturn())
+    MipsFI->createEhDataRegsFI();
 
   // Set scavenging frame index if necessary.
   uint64_t MaxSPOffset = MF.getInfo<MipsFunctionInfo>()->getIncomingArgSize() +
