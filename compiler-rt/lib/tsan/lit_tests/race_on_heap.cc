@@ -39,8 +39,8 @@ int main() {
 // ...
 // CHECK: Location is heap block of size 99 at [[ADDR]] allocated by thread T1:
 // CHCEKL     #0 malloc
-// CHECK:     #1 alloc
-// CHECK:     #2 AllocThread
+// CHECK:     #{{1|2}} alloc
+// CHECK:     #{{2|3}} AllocThread
 // ...
 // CHECK:   Thread T1 (tid={{.*}}, finished) created by main thread at:
 // CHECK:     #0 pthread_create

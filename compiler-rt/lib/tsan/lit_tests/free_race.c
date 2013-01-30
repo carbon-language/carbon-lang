@@ -40,4 +40,4 @@ int main() {
 // CHECK:     #1 main
 // CHECK:   Previous write of size 8 at {{.*}} by thread T1{{.*}}:
 // CHECK:     #0 free
-// CHECK:     #1 Thread1
+// CHECK:     #{{(1|2)}} Thread1
