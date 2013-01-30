@@ -64,7 +64,6 @@
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
 
-#include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
 
 namespace lldb
 {
@@ -204,7 +203,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_waiting_for_attach (false),
     m_destroy_tried_resuming (false),
     m_dyld_plugin_name(),
-    m_kernel_load_addr (LLDB_INVALID_ADDRESS),
     m_command_sp ()
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
@@ -494,8 +492,6 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
         return error;
     StartAsyncThread ();
 
-    CheckForKernel (strm);
-
     lldb::pid_t pid = m_gdb_comm.GetCurrentProcessID ();
     if (pid == LLDB_INVALID_PROCESS_ID)
     {
@@ -535,110 +531,6 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
     }
 
     return error;
-}
-
-// When we are establishing a connection to a remote system and we have no executable specified,
-// or the executable is a kernel, we may be looking at a KASLR situation (where the kernel has been
-// slid in memory.)
-//
-// This function tries to locate the kernel in memory if this is possibly a kernel debug session.
-//
-// If a kernel is found, return the address of the kernel in GetImageInfoAddress() -- the 
-// DynamicLoaderDarwinKernel plugin uses this address as the kernel load address and will load the
-// binary, if needed, along with all the kexts.
-
-void
-ProcessGDBRemote::CheckForKernel (Stream *strm)
-{
-    // early return if this isn't an "unknown" system (kernel debugging doesn't have a system type)
-    const ArchSpec &gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
-    if (!gdb_remote_arch.IsValid() || gdb_remote_arch.GetTriple().getVendor() != llvm::Triple::UnknownVendor)
-        return;
-
-    Module *exe_module = GetTarget().GetExecutableModulePointer();
-    ObjectFile *exe_objfile = NULL;
-    if (exe_module)
-        exe_objfile = exe_module->GetObjectFile();
-
-    // early return if we have an executable and it is not a kernel--this is very unlikely to be a kernel debug session.
-    if (exe_objfile
-        && (exe_objfile->GetType() != ObjectFile::eTypeExecutable 
-            || exe_objfile->GetStrata() != ObjectFile::eStrataKernel))
-        return;
-
-    // See if the kernel is in memory at the File address (slide == 0) -- no work needed, if so.
-    if (exe_objfile && exe_objfile->GetHeaderAddress().IsValid())
-    {
-        ModuleSP memory_module_sp;
-        memory_module_sp = ReadModuleFromMemory (exe_module->GetFileSpec(), exe_objfile->GetHeaderAddress().GetFileAddress(), false, false);
-        if (memory_module_sp.get() 
-            && memory_module_sp->GetUUID().IsValid() 
-            && memory_module_sp->GetUUID() == exe_module->GetUUID())
-        {
-            m_kernel_load_addr = exe_objfile->GetHeaderAddress().GetFileAddress();
-            m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
-            SetCanJIT(false);
-            return;
-        }
-    }
-
-    // See if the kernel's load address is stored in the kernel's low globals page; this is
-    // done when a debug boot-arg has been set.  
-
-    Error error;
-    uint8_t buf[24];
-    ModuleSP memory_module_sp;
-    addr_t kernel_addr = LLDB_INVALID_ADDRESS;
-    
-    // First try the 32-bit 
-    if (memory_module_sp.get() == NULL)
-    {
-        DataExtractor data4 (buf, sizeof(buf), gdb_remote_arch.GetByteOrder(), 4);
-        if (DoReadMemory (0xffff0110, buf, 4, error) == 4)
-        {
-            lldb::offset_t offset = 0;
-            kernel_addr = data4.GetU32(&offset);
-            memory_module_sp = ReadModuleFromMemory (FileSpec("mach_kernel", false), kernel_addr, false, false);
-            if (!memory_module_sp.get()
-                || !memory_module_sp->GetUUID().IsValid()
-                || memory_module_sp->GetObjectFile() == NULL
-                || memory_module_sp->GetObjectFile()->GetType() != ObjectFile::eTypeExecutable
-                || memory_module_sp->GetObjectFile()->GetStrata() != ObjectFile::eStrataKernel)
-            {
-                memory_module_sp.reset();
-            }
-        }
-    }
-
-    // Now try the 64-bit location
-    if (memory_module_sp.get() == NULL)
-    {
-        DataExtractor data8 (buf, sizeof(buf), gdb_remote_arch.GetByteOrder(), 8);
-        if (DoReadMemory (0xffffff8000002010ULL, buf, 8, error) == 8)
-        {   
-            lldb::offset_t offset = 0; 
-            kernel_addr = data8.GetU64(&offset);
-            memory_module_sp = ReadModuleFromMemory (FileSpec("mach_kernel", false), kernel_addr, false, false);
-            if (!memory_module_sp.get()
-                || !memory_module_sp->GetUUID().IsValid()
-                || memory_module_sp->GetObjectFile() == NULL
-                || memory_module_sp->GetObjectFile()->GetType() != ObjectFile::eTypeExecutable
-                || memory_module_sp->GetObjectFile()->GetStrata() != ObjectFile::eStrataKernel)
-            {
-                memory_module_sp.reset();
-            }
-        }
-    }
-
-    if (memory_module_sp.get() 
-        && memory_module_sp->GetArchitecture().IsValid() 
-        && memory_module_sp->GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
-    {
-        m_kernel_load_addr = kernel_addr;
-        m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
-        SetCanJIT(false);
-        return;
-    }
 }
 
 Error
@@ -2085,16 +1977,10 @@ ProcessGDBRemote::IsAlive ()
     return m_gdb_comm.IsConnected() && m_private_state.GetValue() != eStateExited;
 }
 
-// For kernel debugging, we return the load address of the kernel binary as the
-// ImageInfoAddress and we return the DynamicLoaderDarwinKernel as the GetDynamicLoader()
-// name so the correct DynamicLoader plugin is chosen.
 addr_t
 ProcessGDBRemote::GetImageInfoAddress()
 {
-    if (m_kernel_load_addr != LLDB_INVALID_ADDRESS)
-        return m_kernel_load_addr;
-    else
-        return m_gdb_comm.GetShlibInfoAddr();
+    return m_gdb_comm.GetShlibInfoAddr();
 }
 
 //------------------------------------------------------------------

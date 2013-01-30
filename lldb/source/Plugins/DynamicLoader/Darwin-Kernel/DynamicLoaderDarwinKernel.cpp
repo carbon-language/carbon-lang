@@ -41,15 +41,39 @@
 using namespace lldb;
 using namespace lldb_private;
 
+// Progressively greater amounts of scanning we will allow
+// For some targets very early in startup, we can't do any random reads of memory or we can crash the device
+// so a setting is needed that can completely disable the KASLR scans.
+
+enum KASLRScanType
+{
+    eKASLRScanNone = 0,         // No reading into the inferior at all
+    eKASLRScanLowgloAddresses,  // Check one word of memory for a possible kernel addr, then see if a kernel is there
+    eKASLRScanNearPC,           // Scan backwards from the current $pc looking for kernel; checking at 64 locations total
+    eKASLRScanExhaustiveScan    // Scan through the entire possible kernel address range looking for a kernel
+};
+
+OptionEnumValueElement
+g_kaslr_kernel_scan_enum_values[] =
+{
+    { eKASLRScanNone,            "none",            "Do not read memory looking for a Darwin kernel when attaching." },
+    { eKASLRScanLowgloAddresses, "basic",           "Check for the Darwin kernel's load addr in the lowglo page (boot-args=debug) only." },
+    { eKASLRScanNearPC,          "fast-scan",       "Scan near the pc value on attach to find the Darwin kernel's load address."},
+    { eKASLRScanExhaustiveScan,  "exhaustive-scan", "Scan through the entire potential address range of Darwin kernel (only on 32-bit targets)."},
+    { 0, NULL, NULL }
+};
+
 static PropertyDefinition
 g_properties[] =
 {
     { "load-kexts" , OptionValue::eTypeBoolean, true, true, NULL, NULL, "Automatically loads kext images when attaching to a kernel." },
+    { "scan-type",   OptionValue::eTypeEnum,    true, eKASLRScanNearPC, NULL, g_kaslr_kernel_scan_enum_values, "Control how many reads lldb will make while searching for a Darwin kernel on attach." },
     {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
 };
 
 enum {
-    ePropertyLoadKexts
+    ePropertyLoadKexts,
+    ePropertyScanType
 };
 
 class DynamicLoaderDarwinKernelProperties : public Properties
@@ -74,14 +98,22 @@ public:
     ~DynamicLoaderDarwinKernelProperties()
     {
     }
-    
+
     bool
     GetLoadKexts() const
     {
         const uint32_t idx = ePropertyLoadKexts;
         return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
     }
-    
+
+    KASLRScanType
+    GetScanType() const
+    {
+        const uint32_t idx = ePropertyScanType;
+        return (KASLRScanType) m_collection_sp->SetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
+    }
+
+
 };
 
 typedef STD_SHARED_PTR(DynamicLoaderDarwinKernelProperties) DynamicLoaderDarwinKernelPropertiesSP;
@@ -103,49 +135,320 @@ GetGlobalProperties()
 DynamicLoader *
 DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
 {
-    bool create = force;
-    if (!create)
+    if (!force)
     {
+        // If the user provided an executable binary and it is not a kernel,
+        // this plugin should not create an instance.
         Module* exe_module = process->GetTarget().GetExecutableModulePointer();
         if (exe_module)
         {
             ObjectFile *object_file = exe_module->GetObjectFile();
             if (object_file)
             {
-                create = (object_file->GetStrata() == ObjectFile::eStrataKernel);
+                if (object_file->GetStrata() != ObjectFile::eStrataKernel)
+                {
+                    return NULL;
+                }
             }
         }
-        
-        if (create)
+
+        // If the target's architecture does not look like an Apple environment,
+        // this plugin should not create an instance.
+        const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
+        switch (triple_ref.getOS())
         {
-            const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
-            switch (triple_ref.getOS())
+            case llvm::Triple::Darwin:
+            case llvm::Triple::MacOSX:
+            case llvm::Triple::IOS:
+                if (triple_ref.getVendor() != llvm::Triple::Apple)
+                {
+                   return NULL;
+                }
+                break;
+            // If we have triple like armv7-unknown-unknown, we should try looking for a Darwin kernel.
+            case llvm::Triple::UnknownOS:
+                break;
+            default:
+                return NULL;
+                break;
+        }
+    }
+
+    // At this point if there is an ExecutableModule, it is a kernel and the Target is some variant of an Apple system.  
+    // If the Process hasn't provided the kernel load address, we need to look around in memory to find it.
+
+    addr_t kernel_load_address = process->GetImageInfoAddress();
+    if (kernel_load_address == LLDB_INVALID_ADDRESS)
+    {
+        kernel_load_address = SearchForKernelAtSameLoadAddr (process);
+        if (kernel_load_address == LLDB_INVALID_ADDRESS)
+        {
+            kernel_load_address = SearchForKernelWithDebugHints (process);
+            if (kernel_load_address == LLDB_INVALID_ADDRESS)
             {
-                case llvm::Triple::Darwin:
-                case llvm::Triple::MacOSX:
-                case llvm::Triple::IOS:
-                    create = triple_ref.getVendor() == llvm::Triple::Apple;
-                    break;
-                default:
-                    create = false;
-                    break;
+                kernel_load_address = SearchForKernelNearPC (process);
+                if (kernel_load_address == LLDB_INVALID_ADDRESS)
+                {
+                    kernel_load_address = SearchForKernelViaExhaustiveSearch (process);
+                }
             }
         }
     }
-    
-    if (create)
+
+    if (kernel_load_address != LLDB_INVALID_ADDRESS)
     {
         process->SetCanJIT(false);
-        return new DynamicLoaderDarwinKernel (process);
+        return new DynamicLoaderDarwinKernel (process, kernel_load_address);
     }
     return NULL;
 }
 
 //----------------------------------------------------------------------
+// Check if the kernel binary is loaded in memory without a slide.
+// First verify that the ExecutableModule is a kernel before we proceed.
+// Returns the address of the kernel if one was found, else LLDB_INVALID_ADDRESS.
+//----------------------------------------------------------------------
+lldb::addr_t
+DynamicLoaderDarwinKernel::SearchForKernelAtSameLoadAddr (Process *process)
+{
+    Module *exe_module = process->GetTarget().GetExecutableModulePointer();
+    if (exe_module == NULL)
+        return LLDB_INVALID_ADDRESS;
+
+    ObjectFile *exe_objfile = exe_module->GetObjectFile();
+    if (exe_objfile == NULL)
+        return LLDB_INVALID_ADDRESS;
+
+    if (exe_objfile->GetType() != ObjectFile::eTypeExecutable || exe_objfile->GetStrata() != ObjectFile::eStrataKernel)
+        return LLDB_INVALID_ADDRESS;
+
+    if (!exe_objfile->GetHeaderAddress().IsValid())
+        return LLDB_INVALID_ADDRESS;
+
+    if (CheckForKernelImageAtAddress (exe_objfile->GetHeaderAddress().GetFileAddress(), process) == exe_module->GetUUID())
+        return exe_objfile->GetHeaderAddress().GetFileAddress();
+
+    return LLDB_INVALID_ADDRESS;
+}
+
+//----------------------------------------------------------------------
+// If the debug flag is included in the boot-args nvram setting, the kernel's load address
+// will be noted in the lowglo page at a fixed address
+// Returns the address of the kernel if one was found, else LLDB_INVALID_ADDRESS.
+//----------------------------------------------------------------------
+lldb::addr_t
+DynamicLoaderDarwinKernel::SearchForKernelWithDebugHints (Process *process)
+{
+#if 0
+    if (GetGlobalProperties()->GetScanType() == eKASLRScanNone)
+        return LLDB_INVALID_ADDRESS;
+#endif
+
+    Error read_err;
+    addr_t addr = LLDB_INVALID_ADDRESS;
+    if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
+    {
+        addr = process->ReadUnsignedIntegerFromMemory (0xffffff8000002010ULL, 8, LLDB_INVALID_ADDRESS, read_err);
+    }
+    else
+    {
+        addr = process->ReadUnsignedIntegerFromMemory (0xffff0110, 4, LLDB_INVALID_ADDRESS, read_err);
+    }
+
+    if (addr == 0)
+        addr = LLDB_INVALID_ADDRESS;
+
+    if (addr != LLDB_INVALID_ADDRESS)
+    {
+        if (CheckForKernelImageAtAddress (addr, process).IsValid())
+            return addr;
+    }
+
+    return LLDB_INVALID_ADDRESS;
+}
+
+//----------------------------------------------------------------------
+// If the kernel is currently executing when lldb attaches, and we don't have
+// a better way of finding the kernel's load address, try searching backwards
+// from the current pc value looking for the kernel's Mach header in memory.
+// Returns the address of the kernel if one was found, else LLDB_INVALID_ADDRESS.
+//----------------------------------------------------------------------
+lldb::addr_t
+DynamicLoaderDarwinKernel::SearchForKernelNearPC (Process *process)
+{
+#if 0
+    if (GetGlobalProperties()->GetScanType() == eKASLRScanNone 
+        || GetGlobalProperties()->GetScanType() == eKASLRScanLowgloAddresses)
+    {
+        return LLDB_INVALID_ADDRESS;
+    }
+#endif
+
+    ThreadSP thread = process->GetThreadList().GetSelectedThread ();
+    if (thread.get() == NULL)
+        return LLDB_INVALID_ADDRESS;
+    addr_t pc = thread->GetRegisterContext ()->GetPC(LLDB_INVALID_ADDRESS);
+
+    if (pc == LLDB_INVALID_ADDRESS)
+        return LLDB_INVALID_ADDRESS;
+
+    addr_t kernel_range_low, kernel_range_high;
+    if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
+    {
+        kernel_range_low = 1ULL << 63;
+        kernel_range_high = UINT64_MAX;
+    }
+    else
+    {
+        kernel_range_low = 1ULL << 31;
+        kernel_range_high = UINT32_MAX;
+    }
+
+    // Outside the normal kernel address range, this is probably userland code running right now
+    if (pc < kernel_range_low)
+        LLDB_INVALID_ADDRESS;
+
+    // The kernel will load at at one megabyte boundary (0x100000), or at that boundary plus 
+    // an offset of one page (0x1000) or two, depending on the device.
+
+    // Round the current pc down to the nearest one megabyte boundary - the place where we will start searching.
+    addr_t addr = pc & ~0xfffff;
+
+    int i = 0;
+    while (i < 32 && pc >= kernel_range_low)
+    {
+        if (CheckForKernelImageAtAddress (addr, process).IsValid())
+            return addr;
+        if (CheckForKernelImageAtAddress (addr + 0x1000, process).IsValid())
+            return addr + 0x1000;
+        if (CheckForKernelImageAtAddress (addr + 0x2000, process).IsValid())
+            return addr + 0x2000;
+        i++;
+        addr -= 0x100000;
+    }
+
+    return LLDB_INVALID_ADDRESS;
+}
+
+//----------------------------------------------------------------------
+// Scan through the valid address range for a kernel binary.
+// This is uselessly slow in 64-bit environments so we don't even try it.
+// This scan is not enabled by default even for 32-bit targets.
+// Returns the address of the kernel if one was found, else LLDB_INVALID_ADDRESS.
+//----------------------------------------------------------------------
+lldb::addr_t
+DynamicLoaderDarwinKernel::SearchForKernelViaExhaustiveSearch (Process *process)
+{
+#if 0
+    if (GetGlobalProperties()->GetScanType() != eKASLRScanExhaustiveScan)
+    {
+        return LLDB_INVALID_ADDRESS;
+    }
+#endif
+
+    addr_t kernel_range_low, kernel_range_high;
+    if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
+    {
+        kernel_range_low = 1ULL << 63;
+        kernel_range_high = UINT64_MAX;
+    }
+    else
+    {
+        kernel_range_low = 1ULL << 31;
+        kernel_range_high = UINT32_MAX;
+    }
+
+    // Stepping through memory at one-megabyte resolution looking for a kernel
+    // rarely works (fast enough) with a 64-bit address space -- for now, let's
+    // not even bother.  We may be attaching to something which *isn't* a kernel
+    // and we don't want to spin for minutes on-end looking for a kernel.
+    if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
+        return LLDB_INVALID_ADDRESS;
+
+    addr_t addr = kernel_range_low;
+
+    while (addr >= kernel_range_low && addr < kernel_range_high)
+    {
+        if (CheckForKernelImageAtAddress (addr, process).IsValid())
+            return addr;
+        if (CheckForKernelImageAtAddress (addr + 0x1000, process).IsValid())
+            return addr + 0x1000;
+        if (CheckForKernelImageAtAddress (addr + 0x2000, process).IsValid())
+            return addr + 0x2000;
+        addr += 0x100000;
+    }
+    return LLDB_INVALID_ADDRESS;
+}
+
+//----------------------------------------------------------------------
+// Given an address in memory, look to see if there is a kernel image at that
+// address.  
+// Returns a UUID; if a kernel was not found at that address, UUID.IsValid() will be false.
+//----------------------------------------------------------------------
+lldb_private::UUID
+DynamicLoaderDarwinKernel::CheckForKernelImageAtAddress (lldb::addr_t addr, Process *process)
+{
+    if (addr == LLDB_INVALID_ADDRESS)
+        return UUID();
+
+    // First try a quick test -- read the first 4 bytes and see if there is a valid Mach-O magic field there
+    // (the first field of the mach_header/mach_header_64 struct).
+
+    Error read_error;
+    uint64_t result = process->ReadUnsignedIntegerFromMemory (addr, 4, LLDB_INVALID_ADDRESS, read_error);
+    if (result != llvm::MachO::HeaderMagic64
+        && result != llvm::MachO::HeaderMagic32
+        && result != llvm::MachO::HeaderMagic32Swapped 
+        && result != llvm::MachO::HeaderMagic64Swapped)
+    {
+        return UUID();
+    }
+
+    // Read the mach header and see whether it looks like a kernel
+    llvm::MachO::mach_header header;
+    if (process->DoReadMemory (addr, &header, sizeof(header), read_error) != sizeof(header))
+        return UUID();
+
+    if (header.magic == llvm::MachO::HeaderMagic32Swapped ||
+        header.magic == llvm::MachO::HeaderMagic64Swapped)
+    {
+        header.magic        = llvm::ByteSwap_32(header.magic);
+        header.cputype      = llvm::ByteSwap_32(header.cputype);
+        header.cpusubtype   = llvm::ByteSwap_32(header.cpusubtype);
+        header.filetype     = llvm::ByteSwap_32(header.filetype);
+        header.ncmds        = llvm::ByteSwap_32(header.ncmds);
+        header.sizeofcmds   = llvm::ByteSwap_32(header.sizeofcmds);
+        header.flags        = llvm::ByteSwap_32(header.flags);
+    }
+
+    // A kernel is an executable which does not have the dynamic link object flag set.
+    if (header.filetype == llvm::MachO::HeaderFileTypeExecutable
+        && (header.flags & llvm::MachO::HeaderFlagBitIsDynamicLinkObject) == 0)
+    {
+        // Create a full module to get the UUID
+        ModuleSP memory_module_sp = process->ReadModuleFromMemory (FileSpec ("temp_mach_kernel", false), addr, false, false);
+        if (!memory_module_sp.get())
+            return UUID();
+
+        ObjectFile *exe_objfile = memory_module_sp->GetObjectFile();
+        if (exe_objfile == NULL)
+            return UUID();
+
+        if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
+        {
+            return memory_module_sp->GetUUID();
+        }
+    }
+
+    return UUID();
+}
+
+//----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------
-DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process) :
+DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process, lldb::addr_t kernel_addr) :
     DynamicLoader(process),
+    m_kernel_load_address (kernel_addr),
     m_kernel(),
     m_kext_summary_header_ptr_addr (),
     m_kext_summary_header_addr (),
@@ -492,7 +795,7 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
 
         if (m_kernel.address == LLDB_INVALID_ADDRESS)
         {
-            m_kernel.address = m_process->GetImageInfoAddress ();
+            m_kernel.address = m_kernel_load_address;
             if (m_kernel.address == LLDB_INVALID_ADDRESS && m_kernel.module_sp)
             {
                 // We didn't get a hint from the process, so we will

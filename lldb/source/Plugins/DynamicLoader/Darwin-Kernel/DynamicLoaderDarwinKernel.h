@@ -50,7 +50,7 @@ public:
     static void
     DebuggerInitialize (lldb_private::Debugger &debugger);
 
-    DynamicLoaderDarwinKernel (lldb_private::Process *process);
+    DynamicLoaderDarwinKernel (lldb_private::Process *process, lldb::addr_t kernel_addr);
 
     virtual
     ~DynamicLoaderDarwinKernel ();
@@ -308,6 +308,22 @@ protected:
                        uint32_t image_infos_count, 
                        OSKextLoadedKextSummary::collection &image_infos);
     
+    static lldb::addr_t
+    SearchForKernelAtSameLoadAddr (lldb_private::Process *process);
+
+    static lldb::addr_t
+    SearchForKernelWithDebugHints (lldb_private::Process *process);
+
+    static lldb::addr_t
+    SearchForKernelNearPC (lldb_private::Process *process);
+
+    static lldb::addr_t
+    SearchForKernelViaExhaustiveSearch (lldb_private::Process *process);
+
+    static lldb_private::UUID
+    CheckForKernelImageAtAddress (lldb::addr_t addr, lldb_private::Process *process);
+
+    lldb::addr_t m_kernel_load_address; 
     OSKextLoadedKextSummary m_kernel; // Info about the current kernel image being used
     lldb_private::Address m_kext_summary_header_ptr_addr;
     lldb_private::Address m_kext_summary_header_addr;

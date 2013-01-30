@@ -299,26 +299,6 @@ ProcessMachCore::DoLoadCore ()
     if (arch.IsValid())
         m_target.SetArchitecture(arch);            
 
-    if (m_dyld_addr == LLDB_INVALID_ADDRESS)
-    {
-        // Check the magic kernel address for the mach image header address in case
-        // it is there. 
-        if (arch.GetAddressByteSize() == 8)
-        {
-            Error header_addr_error;
-            addr_t header_addr = ReadPointerFromMemory (0xffffff8000002010ull, header_addr_error);
-            if (header_addr != LLDB_INVALID_ADDRESS)
-                GetDynamicLoaderAddress (header_addr);
-        }
-        else
-        {
-            Error header_addr_error;
-            addr_t header_addr = ReadPointerFromMemory (0xffff0110, header_addr_error);
-            if (header_addr != LLDB_INVALID_ADDRESS)
-                GetDynamicLoaderAddress (header_addr);
-        }
-    }
-
     return error;
 }
 

@@ -297,9 +297,6 @@ protected:
         m_last_stop_packet = response;
     }
 
-    void
-    CheckForKernel (lldb_private::Stream *strm);
-
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------
@@ -342,7 +339,6 @@ protected:
     bool m_waiting_for_attach;
     bool m_destroy_tried_resuming;
     std::string m_dyld_plugin_name;
-    lldb::addr_t m_kernel_load_addr;
     lldb::CommandObjectSP m_command_sp;
     
     bool
