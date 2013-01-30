@@ -6227,7 +6227,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       Diag(D.getIdentifierLoc(), diag::err_static_kernel);
       D.setInvalidType();
     }
-
+    
+    // OpenCL v1.2, s6.9 -- Kernels can only have return type void.
+    if (!NewFD->getResultType()->isVoidType()) {
+      Diag(D.getIdentifierLoc(),
+           diag::err_expected_kernel_void_return_type);
+      D.setInvalidType();
+    }
+    
     for (FunctionDecl::param_iterator PI = NewFD->param_begin(),
          PE = NewFD->param_end(); PI != PE; ++PI) {
       ParmVarDecl *Param = *PI;

@@ -6124,6 +6124,8 @@ def err_event_t_struct_field : Error<
   "the event_t type cannot be used to declare a structure or union field">;
 def err_event_t_addr_space_qual : Error<
   "the event_t type can only be used with __private address space qualifier">;
+def err_expected_kernel_void_return_type : Error<
+  "kernel must have void return type">;
 
 } // end of sema category
 
