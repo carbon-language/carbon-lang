@@ -885,10 +885,13 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   for (arg_iterator I = Args.filtered_begin(OPT_internal_isystem,
                                             OPT_internal_externc_isystem),
                     E = Args.filtered_end();
-       I != E; ++I)
-    Opts.AddPath((*I)->getValue(), frontend::System,
-                 false, /*IgnoreSysRoot=*/true, /*IsInternal=*/true,
-                 (*I)->getOption().matches(OPT_internal_externc_isystem));
+       I != E; ++I) {
+    frontend::IncludeDirGroup Group = frontend::System;
+    if ((*I)->getOption().matches(OPT_internal_externc_isystem))
+      Group = frontend::ExternCSystem;
+    Opts.AddPath((*I)->getValue(), Group, false, /*IgnoreSysRoot=*/true,
+                 /*IsInternal=*/true);
+  }
 
   // Add the path prefixes which are implicitly treated as being system headers.
   for (arg_iterator I = Args.filtered_begin(OPT_isystem_prefix,

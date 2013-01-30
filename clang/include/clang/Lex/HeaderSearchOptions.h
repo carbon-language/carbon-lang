@@ -28,6 +28,8 @@ namespace frontend {
     IndexHeaderMap, ///< Like Angled, but marks header maps used when
                        ///  building frameworks.
     System,         ///< Like Angled, but marks system directories.
+    ExternCSystem,  ///< Like System, but headers are implicitly wrapped in
+                    ///  extern "C".
     CSystem,        ///< Like System, but only used for C.
     CXXSystem,      ///< Like System, but only used for C++.
     ObjCSystem,     ///< Like System, but only used for ObjC.
@@ -61,11 +63,9 @@ public:
     unsigned ImplicitExternC : 1;
 
     Entry(StringRef path, frontend::IncludeDirGroup group,
-          bool isFramework, bool ignoreSysRoot, bool isInternal,
-          bool implicitExternC)
+          bool isFramework, bool ignoreSysRoot, bool isInternal)
       : Path(path), Group(group), IsFramework(isFramework),
-        IgnoreSysRoot(ignoreSysRoot), IsInternal(isInternal),
-        ImplicitExternC(implicitExternC) {}
+        IgnoreSysRoot(ignoreSysRoot), IsInternal(isInternal) {}
   };
 
   struct SystemHeaderPrefix {
@@ -126,10 +126,9 @@ public:
 
   /// AddPath - Add the \p Path path to the specified \p Group list.
   void AddPath(StringRef Path, frontend::IncludeDirGroup Group,
-               bool IsFramework, bool IgnoreSysRoot,
-               bool IsInternal = false, bool ImplicitExternC = false) {
+               bool IsFramework, bool IgnoreSysRoot, bool IsInternal = false) {
     UserEntries.push_back(Entry(Path, Group, IsFramework,
-                                IgnoreSysRoot, IsInternal, ImplicitExternC));
+                                IgnoreSysRoot, IsInternal));
   }
 
   /// AddSystemHeaderPrefix - Override whether \#include directives naming a

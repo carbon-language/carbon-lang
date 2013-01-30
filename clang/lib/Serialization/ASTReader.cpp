@@ -3692,10 +3692,9 @@ bool ASTReader::ParseHeaderSearchOptions(const RecordData &Record,
     bool IsFramework = Record[Idx++];
     bool IgnoreSysRoot = Record[Idx++];
     bool IsInternal = Record[Idx++];
-    bool ImplicitExternC = Record[Idx++];
     HSOpts.UserEntries.push_back(
       HeaderSearchOptions::Entry(Path, Group, IsFramework, IgnoreSysRoot,
-                                 IsInternal, ImplicitExternC));
+                                 IsInternal));
   }
 
   // System header prefixes.
