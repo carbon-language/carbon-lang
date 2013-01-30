@@ -1096,17 +1096,25 @@ void TextDiagnostic::emitSnippetAndCaret(
 
   unsigned LineNo = SM.getLineNumber(FID, FileOffset);
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
+  
+  // Arbitrarily stop showing snippets when the line is too long.
+  static const unsigned MaxLineLength = 4096;
+  if (ColNo > MaxLineLength)
+    return;
 
   // Rewind from the current position to the start of the line.
   const char *TokPtr = BufStart+FileOffset;
   const char *LineStart = TokPtr-ColNo+1; // Column # is 1-based.
-
 
   // Compute the line end.  Scan forward from the error position to the end of
   // the line.
   const char *LineEnd = TokPtr;
   while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
     ++LineEnd;
+
+  // Arbitrarily stop showing snippets when the line is too long.
+  if (LineEnd - LineStart > MaxLineLength)
+    return;
 
   // Copy the line of code into an std::string for ease of manipulation.
   std::string SourceLine(LineStart, LineEnd);
