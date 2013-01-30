@@ -37,6 +37,13 @@ THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 
+// Can be overriden by a front-end.
+#ifndef TSAN_GO
+bool WEAK OnFinalize(bool failed) {
+  return failed;
+}
+#endif
+
 static Context *ctx;
 Context *CTX() {
   return ctx;
@@ -276,6 +283,10 @@ int Finalize(ThreadState *thr) {
     Printf("ThreadSanitizer: missed %d expected races\n",
         ctx->nmissed_expected);
   }
+
+#ifndef TSAN_GO
+  failed = OnFinalize(failed);
+#endif
 
   StatAggregate(ctx->stat, thr->stat);
   StatOutput(ctx->stat);
