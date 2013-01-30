@@ -52,17 +52,10 @@ public:
     /// path.
     unsigned IgnoreSysRoot : 1;
 
-    /// \brief True if this entry is an internal search path.
-    ///
-    /// This typically indicates that users didn't directly provide it, but
-    /// instead it was provided by a compatibility layer for a particular
-    /// system.
-    unsigned IsInternal : 1;
-
-    Entry(StringRef path, frontend::IncludeDirGroup group,
-          bool isFramework, bool ignoreSysRoot, bool isInternal)
+    Entry(StringRef path, frontend::IncludeDirGroup group, bool isFramework,
+          bool ignoreSysRoot)
       : Path(path), Group(group), IsFramework(isFramework),
-        IgnoreSysRoot(ignoreSysRoot), IsInternal(isInternal) {}
+        IgnoreSysRoot(ignoreSysRoot) {}
   };
 
   struct SystemHeaderPrefix {
@@ -123,9 +116,8 @@ public:
 
   /// AddPath - Add the \p Path path to the specified \p Group list.
   void AddPath(StringRef Path, frontend::IncludeDirGroup Group,
-               bool IsFramework, bool IgnoreSysRoot, bool IsInternal = false) {
-    UserEntries.push_back(Entry(Path, Group, IsFramework,
-                                IgnoreSysRoot, IsInternal));
+               bool IsFramework, bool IgnoreSysRoot) {
+    UserEntries.push_back(Entry(Path, Group, IsFramework, IgnoreSysRoot));
   }
 
   /// AddSystemHeaderPrefix - Override whether \#include directives naming a

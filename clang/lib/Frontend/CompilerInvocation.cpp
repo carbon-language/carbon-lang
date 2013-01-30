@@ -889,8 +889,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
     frontend::IncludeDirGroup Group = frontend::System;
     if ((*I)->getOption().matches(OPT_internal_externc_isystem))
       Group = frontend::ExternCSystem;
-    Opts.AddPath((*I)->getValue(), Group, false, /*IgnoreSysRoot=*/true,
-                 /*IsInternal=*/true);
+    Opts.AddPath((*I)->getValue(), Group, false, true);
   }
 
   // Add the path prefixes which are implicitly treated as being system headers.

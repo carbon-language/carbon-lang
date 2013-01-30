@@ -1114,7 +1114,6 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Record.push_back(static_cast<unsigned>(Entry.Group));
     Record.push_back(Entry.IsFramework);
     Record.push_back(Entry.IgnoreSysRoot);
-    Record.push_back(Entry.IsInternal);
   }
 
   // System header prefixes.
