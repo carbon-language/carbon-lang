@@ -19,7 +19,7 @@
 # error "Interception doesn't work on this operating system."
 #endif
 
-#include "../sanitizer_common/sanitizer_internal_defs.h"
+#include "sanitizer_common/sanitizer_internal_defs.h"
 
 // These typedefs should be used only in the interceptor definitions to replace
 // the standard system types (e.g. SSIZE_T instead of ssize_t)

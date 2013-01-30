@@ -10,6 +10,8 @@ set(MACH_OVERRIDE_SOURCES
   mach_override/mach_override.c
   )
 
+include_directories(..)
+
 # Only add this C file if we're building on a Mac. Other source files can be
 # harmlessly compiled on any platform, but the C file is complained about due
 # to pedantic rules about empty translation units.

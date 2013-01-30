@@ -20,6 +20,7 @@ Implementation := Generic
 Dependencies := $(wildcard $(Dir)/*.h)
 Dependencies += $(wildcard $(Dir)/../../interception/*.h)
 Dependencies += $(wildcard $(Dir)/../../interception/mach_override/*.h)
+Dependencies += $(wildcard $(Dir)/../../sanitizer_common/*.h)
 
 # Define a convenience variable for all the tsan functions.
 TsanFunctions += $(Sources:%.cc=%) $(AsmSources:%.S=%)
