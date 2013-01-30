@@ -285,12 +285,10 @@ The ``TargetInstrInfo`` class
 -----------------------------
 
 The ``TargetInstrInfo`` class is used to describe the machine instructions
-supported by the target. It is essentially an array of ``TargetInstrDescriptor``
-objects, each of which describes one instruction the target
-supports. Descriptors define things like the mnemonic for the opcode, the number
-of operands, the list of implicit register uses and defs, whether the
-instruction has certain target-independent properties (accesses memory, is
-commutable, etc), and holds any target-specific flags.
+supported by the target.  Descriptions define things like the mnemonic for
+the opcode, the number of operands, the list of implicit register uses and defs,
+whether the instruction has certain target-independent properties (accesses
+memory, is commutable, etc), and holds any target-specific flags.
 
 The ``TargetFrameInfo`` class
 -----------------------------
