@@ -61,7 +61,7 @@ private:
   std::unique_ptr<KindHandler> _referenceKindHandler;
   AtomToAddress _atomToAddressMap;
   llvm::BumpPtrAllocator _chunkAllocate;
-  DefaultLayout<ELFT> *_layout;
+  TargetLayout<ELFT> *_layout;
   Header<ELFT> *_Header;
   ProgramHeader<ELFT> *_programHeader;
   SymbolTable<ELFT> * _symtab;
