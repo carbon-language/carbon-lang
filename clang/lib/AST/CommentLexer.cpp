@@ -66,8 +66,6 @@ StringRef Lexer::resolveHTMLNamedCharacterReference(StringRef Name) const {
       .Case("gt", ">")
       .Case("quot", "\"")
       .Case("apos", "\'")
-      .Case("minus", "-")
-      .Case("sim", "~")
       .Default("");
 }
   
