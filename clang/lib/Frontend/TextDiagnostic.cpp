@@ -1098,8 +1098,8 @@ void TextDiagnostic::emitSnippetAndCaret(
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   
   // Arbitrarily stop showing snippets when the line is too long.
-  static const unsigned MaxLineLength = 4096;
-  if (ColNo > MaxLineLength)
+  static const unsigned MaxLineLengthToPrint = 4096;
+  if (ColNo > MaxLineLengthToPrint)
     return;
 
   // Rewind from the current position to the start of the line.
@@ -1113,7 +1113,7 @@ void TextDiagnostic::emitSnippetAndCaret(
     ++LineEnd;
 
   // Arbitrarily stop showing snippets when the line is too long.
-  if (LineEnd - LineStart > MaxLineLength)
+  if (LineEnd - LineStart > MaxLineLengthToPrint)
     return;
 
   // Copy the line of code into an std::string for ease of manipulation.
