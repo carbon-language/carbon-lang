@@ -19897,6 +19897,7 @@ _ACEOF
 fi
 
 
+
 { echo "$as_me:$LINENO: checking for isinf in <math.h>" >&5
 echo $ECHO_N "checking for isinf in <math.h>... $ECHO_C" >&6; }
 if test "${ac_cv_func_isinf_in_math_h+set}" = set; then
