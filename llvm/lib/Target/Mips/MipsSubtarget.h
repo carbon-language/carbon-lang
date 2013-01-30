@@ -100,6 +100,9 @@ protected:
   // The instance to the register info section object
   MipsReginfo MRI;
 
+  // Relocation Model
+  Reloc::Model RM;
+
 public:
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
@@ -152,6 +155,9 @@ public:
 
   // Grab MipsRegInfo object
   const MipsReginfo &getMReginfo() const { return MRI; }
+
+  // Grab relocation model
+  Reloc::Model getRelocationModel() const {return RM;}
 };
 } // End llvm namespace
 

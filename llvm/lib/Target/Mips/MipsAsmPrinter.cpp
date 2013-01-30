@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "mips-asm-printer"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MCTargetDesc/MipsELFStreamer.h"
 #include "Mips.h"
 #include "MipsAsmPrinter.h"
 #include "MipsInstrInfo.h"
@@ -545,9 +546,13 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
 void MipsAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
+  if (OutStreamer.hasRawTextSupport()) return;
+
   // Emit Mips ELF register info
   Subtarget->getMReginfo().emitMipsReginfoSectionCG(
              OutStreamer, getObjFileLowering(), *Subtarget);
+  MipsELFStreamer & MES = static_cast<MipsELFStreamer &>(OutStreamer);
+  MES.emitELFHeaderFlagsCG(*Subtarget);
 }
 
 MachineLocation
