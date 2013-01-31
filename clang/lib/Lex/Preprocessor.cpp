@@ -97,6 +97,7 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
   NumCachedTokenLexers = 0;
   PragmasEnabled = true;
   ParsingIfOrElifDirective = false;
+  PreprocessedOutput = false;
 
   CachedLexPos = 0;
 
