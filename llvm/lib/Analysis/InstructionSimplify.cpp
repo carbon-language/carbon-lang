@@ -667,11 +667,16 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// This is very similar to GetPointerBaseWithConstantOffset except it doesn't
 /// follow non-inbounds geps. This allows it to remain usable for icmp ult/etc.
 /// folding.
-static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
+static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
                                                 Value *&V) {
   assert(V->getType()->isPointerTy());
 
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  // Without DataLayout, just be conservative for now. Theoretically, more could
+  // be done in this case.
+  if (!TD)
+    return ConstantInt::get(IntegerType::get(V->getContext(), 64), 0);
+
+  unsigned IntPtrWidth = TD->getPointerSizeInBits();
   APInt Offset = APInt::getNullValue(IntPtrWidth);
 
   // Even though we don't look through PHI nodes, we could be called on an
@@ -680,7 +685,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
   Visited.insert(V);
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      if (!GEP->isInBounds() || !GEP->accumulateConstantOffset(TD, Offset))
+      if (!GEP->isInBounds() || !GEP->accumulateConstantOffset(*TD, Offset))
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
@@ -695,13 +700,13 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   } while (Visited.insert(V));
 
-  Type *IntPtrTy = TD.getIntPtrType(V->getContext());
+  Type *IntPtrTy = TD->getIntPtrType(V->getContext());
   return ConstantInt::get(IntPtrTy, Offset);
 }
 
 /// \brief Compute the constant difference between two pointer values.
 /// If the difference is not a constant, returns zero.
-static Constant *computePointerDifference(const DataLayout &TD,
+static Constant *computePointerDifference(const DataLayout *TD,
                                           Value *LHS, Value *RHS) {
   Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
   Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
@@ -818,9 +823,9 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
           return W;
 
   // Variations on GEP(base, I, ...) - GEP(base, i, ...) -> GEP(null, I-i, ...).
-  if (Q.TD && match(Op0, m_PtrToInt(m_Value(X))) &&
+  if (match(Op0, m_PtrToInt(m_Value(X))) &&
       match(Op1, m_PtrToInt(m_Value(Y))))
-    if (Constant *Result = computePointerDifference(*Q.TD, X, Y))
+    if (Constant *Result = computePointerDifference(Q.TD, X, Y))
       return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
 
   // Mul distributes over Sub.  Try some generic simplifications based on this.
@@ -1683,7 +1688,7 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
   return 0;
 }
 
-static Constant *computePointerICmp(const DataLayout &TD,
+static Constant *computePointerICmp(const DataLayout *TD,
                                     CmpInst::Predicate Pred,
                                     Value *LHS, Value *RHS) {
   // We can only fold certain predicates on pointer comparisons.
@@ -2463,8 +2468,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // Simplify comparisons of related pointers using a powerful, recursive
   // GEP-walk when we have target data available..
-  if (Q.TD && LHS->getType()->isPointerTy())
-    if (Constant *C = computePointerICmp(*Q.TD, Pred, LHS, RHS))
+  if (LHS->getType()->isPointerTy())
+    if (Constant *C = computePointerICmp(Q.TD, Pred, LHS, RHS))
       return C;
 
   if (GetElementPtrInst *GLHS = dyn_cast<GetElementPtrInst>(LHS)) {
