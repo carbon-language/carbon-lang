@@ -95,6 +95,7 @@ unsigned TargetCodeGenInfo::getSizeOfUnwindException() const {
   //   x86-32     FreeBSD, Linux, Darwin
   //   PowerPC    Linux, Darwin
   //   ARM        Darwin (*not* EABI)
+  //   AArch64    Linux
   return 32;
 }
 
@@ -3591,6 +3592,420 @@ llvm::Value *NaClARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 }
 
 //===----------------------------------------------------------------------===//
+// AArch64 ABI Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class AArch64ABIInfo : public ABIInfo {
+public:
+  AArch64ABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
+private:
+  // The AArch64 PCS is explicit about return types and argument types being
+  // handled identically, so we don't need to draw a distinction between
+  // Argument and Return classification.
+  ABIArgInfo classifyGenericType(QualType Ty, int &FreeIntRegs,
+                                 int &FreeVFPRegs) const;
+
+  ABIArgInfo tryUseRegs(QualType Ty, int &FreeRegs, int RegsNeeded, bool IsInt,
+                        llvm::Type *DirectTy = 0) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI) const;
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+
+class AArch64TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  AArch64TargetCodeGenInfo(CodeGenTypes &CGT)
+    :TargetCodeGenInfo(new AArch64ABIInfo(CGT)) {}
+
+  const AArch64ABIInfo &getABIInfo() const {
+    return static_cast<const AArch64ABIInfo&>(TargetCodeGenInfo::getABIInfo());
+  }
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
+    return 31;
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const {
+    // 0-31 are x0-x30 and sp: 8 bytes each
+    llvm::Value *Eight8 = llvm::ConstantInt::get(CGF.Int8Ty, 8);
+    AssignToArrayRange(CGF.Builder, Address, Eight8, 0, 31);
+
+    // 64-95 are v0-v31: 16 bytes each
+    llvm::Value *Sixteen8 = llvm::ConstantInt::get(CGF.Int8Ty, 16);
+    AssignToArrayRange(CGF.Builder, Address, Sixteen8, 64, 95);
+
+    return false;
+  }
+
+};
+
+}
+
+void AArch64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  int FreeIntRegs = 8, FreeVFPRegs = 8;
+
+  FI.getReturnInfo() = classifyGenericType(FI.getReturnType(),
+                                           FreeIntRegs, FreeVFPRegs);
+
+  FreeIntRegs = FreeVFPRegs = 8;
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it) {
+    it->info = classifyGenericType(it->type, FreeIntRegs, FreeVFPRegs);
+
+  }
+}
+
+ABIArgInfo
+AArch64ABIInfo::tryUseRegs(QualType Ty, int &FreeRegs, int RegsNeeded,
+                           bool IsInt, llvm::Type *DirectTy) const {
+  if (FreeRegs >= RegsNeeded) {
+    FreeRegs -= RegsNeeded;
+    return ABIArgInfo::getDirect(DirectTy);
+  }
+
+  llvm::Type *Padding = 0;
+
+  // We need padding so that later arguments don't get filled in anyway. That
+  // wouldn't happen if only ByVal arguments followed in the same category, but
+  // a large structure will simply seem to be a pointer as far as LLVM is
+  // concerned.
+  if (FreeRegs > 0) {
+    if (IsInt)
+      Padding = llvm::Type::getInt64Ty(getVMContext());
+    else
+      Padding = llvm::Type::getFloatTy(getVMContext());
+
+    // Either [N x i64] or [N x float].
+    Padding = llvm::ArrayType::get(Padding, FreeRegs);
+    FreeRegs = 0;
+  }
+
+  return ABIArgInfo::getIndirect(getContext().getTypeAlign(Ty) / 8,
+                                 /*IsByVal=*/ true, /*Realign=*/ false,
+                                 Padding);
+}
+
+
+ABIArgInfo AArch64ABIInfo::classifyGenericType(QualType Ty,
+                                               int &FreeIntRegs,
+                                               int &FreeVFPRegs) const {
+  // Can only occurs for return, but harmless otherwise.
+  if (Ty->isVoidType())
+    return ABIArgInfo::getIgnore();
+
+  // Large vector types should be returned via memory. There's no such concept
+  // in the ABI, but they'd be over 16 bytes anyway so no matter how they're
+  // classified they'd go into memory (see B.3).
+  if (Ty->isVectorType() && getContext().getTypeSize(Ty) > 128) {
+    if (FreeIntRegs > 0)
+      --FreeIntRegs;
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
+
+  // All non-aggregate LLVM types have a concrete ABI representation so they can
+  // be passed directly. After this block we're guaranteed to be in a
+  // complicated case.
+  if (!isAggregateTypeForABI(Ty)) {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
+    if (Ty->isFloatingType() || Ty->isVectorType())
+      return tryUseRegs(Ty, FreeVFPRegs, /*RegsNeeded=*/ 1, /*IsInt=*/ false);
+
+    assert(getContext().getTypeSize(Ty) <= 128 &&
+           "unexpectedly large scalar type");
+
+    int RegsNeeded = getContext().getTypeSize(Ty) > 64 ? 2 : 1;
+
+    // If the type may need padding registers to ensure "alignment", we must be
+    // careful when this is accounted for. Increasing the effective size covers
+    // all cases.
+    if (getContext().getTypeAlign(Ty) == 128)
+      RegsNeeded += FreeIntRegs % 2 != 0;
+
+    return tryUseRegs(Ty, FreeIntRegs, RegsNeeded, /*IsInt=*/ true);
+  }
+
+  // Structures with either a non-trivial destructor or a non-trivial
+  // copy constructor are always indirect.
+  if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty)) {
+    if (FreeIntRegs > 0)
+      --FreeIntRegs;
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
+
+  if (isEmptyRecord(getContext(), Ty, true)) {
+    if (!getContext().getLangOpts().CPlusPlus) {
+      // Empty structs outside C++ mode are a GNU extension, so no ABI can
+      // possibly tell us what to do. It turns out (I believe) that GCC ignores
+      // the object for parameter-passsing purposes.
+      return ABIArgInfo::getIgnore();
+    }
+
+    // The combination of C++98 9p5 (sizeof(struct) != 0) and the pseudocode
+    // description of va_arg in the PCS require that an empty struct does
+    // actually occupy space for parameter-passing. I'm hoping for a
+    // clarification giving an explicit paragraph to point to in future.
+    return tryUseRegs(Ty, FreeIntRegs, /*RegsNeeded=*/ 1, /*IsInt=*/ true,
+                      llvm::Type::getInt8Ty(getVMContext()));
+  }
+
+  // Homogeneous vector aggregates get passed in registers or on the stack.
+  const Type *Base = 0;
+  uint64_t NumMembers = 0;
+  if (isHomogeneousAggregate(Ty, Base, getContext(), &NumMembers)) {
+    assert(Base && "Base class should be set for homogeneous aggregate");
+    // Homogeneous aggregates are passed and returned directly.
+    return tryUseRegs(Ty, FreeVFPRegs, /*RegsNeeded=*/ NumMembers,
+                      /*IsInt=*/ false);
+  }
+
+  uint64_t Size = getContext().getTypeSize(Ty);
+  if (Size <= 128) {
+    // Small structs can use the same direct type whether they're in registers
+    // or on the stack.
+    llvm::Type *BaseTy;
+    unsigned NumBases;
+    int SizeInRegs = (Size + 63) / 64;
+
+    if (getContext().getTypeAlign(Ty) == 128) {
+      BaseTy = llvm::Type::getIntNTy(getVMContext(), 128);
+      NumBases = 1;
+
+      // If the type may need padding registers to ensure "alignment", we must
+      // be careful when this is accounted for. Increasing the effective size
+      // covers all cases.
+      SizeInRegs += FreeIntRegs % 2 != 0;
+    } else {
+      BaseTy = llvm::Type::getInt64Ty(getVMContext());
+      NumBases = SizeInRegs;
+    }
+    llvm::Type *DirectTy = llvm::ArrayType::get(BaseTy, NumBases);
+
+    return tryUseRegs(Ty, FreeIntRegs, /*RegsNeeded=*/ SizeInRegs,
+                      /*IsInt=*/ true, DirectTy);
+  }
+
+  // If the aggregate is > 16 bytes, it's passed and returned indirectly. In
+  // LLVM terms the return uses an "sret" pointer, but that's handled elsewhere.
+  --FreeIntRegs;
+  return ABIArgInfo::getIndirect(0, /* byVal = */ false);
+}
+
+llvm::Value *AArch64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  // The AArch64 va_list type and handling is specified in the Procedure Call
+  // Standard, section B.4:
+  //
+  // struct {
+  //   void *__stack;
+  //   void *__gr_top;
+  //   void *__vr_top;
+  //   int __gr_offs;
+  //   int __vr_offs;
+  // };
+
+  assert(!CGF.CGM.getDataLayout().isBigEndian()
+         && "va_arg not implemented for big-endian AArch64");
+
+  int FreeIntRegs = 8, FreeVFPRegs = 8;
+  Ty = CGF.getContext().getCanonicalType(Ty);
+  ABIArgInfo AI = classifyGenericType(Ty, FreeIntRegs, FreeVFPRegs);
+
+  llvm::BasicBlock *MaybeRegBlock = CGF.createBasicBlock("vaarg.maybe_reg");
+  llvm::BasicBlock *InRegBlock = CGF.createBasicBlock("vaarg.in_reg");
+  llvm::BasicBlock *OnStackBlock = CGF.createBasicBlock("vaarg.on_stack");
+  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("vaarg.end");
+
+  llvm::Value *reg_offs_p = 0, *reg_offs = 0;
+  int reg_top_index;
+  int RegSize;
+  if (FreeIntRegs < 8) {
+    assert(FreeVFPRegs == 8 && "Arguments never split between int & VFP regs");
+    // 3 is the field number of __gr_offs
+    reg_offs_p = CGF.Builder.CreateStructGEP(VAListAddr, 3, "gr_offs_p");
+    reg_offs = CGF.Builder.CreateLoad(reg_offs_p, "gr_offs");
+    reg_top_index = 1; // field number for __gr_top
+    RegSize = 8 * (8 - FreeIntRegs);
+  } else {
+    assert(FreeVFPRegs < 8 && "Argument must go in VFP or int regs");
+    // 4 is the field number of __vr_offs.
+    reg_offs_p = CGF.Builder.CreateStructGEP(VAListAddr, 4, "vr_offs_p");
+    reg_offs = CGF.Builder.CreateLoad(reg_offs_p, "vr_offs");
+    reg_top_index = 2; // field number for __vr_top
+    RegSize = 16 * (8 - FreeVFPRegs);
+  }
+
+  //=======================================
+  // Find out where argument was passed
+  //=======================================
+
+  // If reg_offs >= 0 we're already using the stack for this type of
+  // argument. We don't want to keep updating reg_offs (in case it overflows,
+  // though anyone passing 2GB of arguments, each at most 16 bytes, deserves
+  // whatever they get).
+  llvm::Value *UsingStack = 0;
+  UsingStack = CGF.Builder.CreateICmpSGE(reg_offs,
+                                         llvm::ConstantInt::get(CGF.Int32Ty, 0));
+
+  CGF.Builder.CreateCondBr(UsingStack, OnStackBlock, MaybeRegBlock);
+
+  // Otherwise, at least some kind of argument could go in these registers, the
+  // quesiton is whether this particular type is too big.
+  CGF.EmitBlock(MaybeRegBlock);
+
+  // Integer arguments may need to correct register alignment (for example a
+  // "struct { __int128 a; };" gets passed in x_2N, x_{2N+1}). In this case we
+  // align __gr_offs to calculate the potential address.
+  if (FreeIntRegs < 8 && AI.isDirect() && getContext().getTypeAlign(Ty) > 64) {
+    int Align = getContext().getTypeAlign(Ty) / 8;
+
+    reg_offs = CGF.Builder.CreateAdd(reg_offs,
+                                 llvm::ConstantInt::get(CGF.Int32Ty, Align - 1),
+                                 "align_regoffs");
+    reg_offs = CGF.Builder.CreateAnd(reg_offs,
+                                    llvm::ConstantInt::get(CGF.Int32Ty, -Align),
+                                    "aligned_regoffs");
+  }
+
+  // Update the gr_offs/vr_offs pointer for next call to va_arg on this va_list.
+  llvm::Value *NewOffset = 0;
+  NewOffset = CGF.Builder.CreateAdd(reg_offs,
+                                    llvm::ConstantInt::get(CGF.Int32Ty, RegSize),
+                                    "new_reg_offs");
+  CGF.Builder.CreateStore(NewOffset, reg_offs_p);
+
+  // Now we're in a position to decide whether this argument really was in
+  // registers or not.
+  llvm::Value *InRegs = 0;
+  InRegs = CGF.Builder.CreateICmpSLE(NewOffset,
+                                     llvm::ConstantInt::get(CGF.Int32Ty, 0),
+                                     "inreg");
+
+  CGF.Builder.CreateCondBr(InRegs, InRegBlock, OnStackBlock);
+
+  //=======================================
+  // Argument was in registers
+  //=======================================
+
+  // Now we emit the code for if the argument was originally passed in
+  // registers. First start the appropriate block:
+  CGF.EmitBlock(InRegBlock);
+
+  llvm::Value *reg_top_p = 0, *reg_top = 0;
+  reg_top_p = CGF.Builder.CreateStructGEP(VAListAddr, reg_top_index, "reg_top_p");
+  reg_top = CGF.Builder.CreateLoad(reg_top_p, "reg_top");
+  llvm::Value *BaseAddr = CGF.Builder.CreateGEP(reg_top, reg_offs);
+  llvm::Value *RegAddr = 0;
+  llvm::Type *MemTy = llvm::PointerType::getUnqual(CGF.ConvertTypeForMem(Ty));
+
+  if (!AI.isDirect()) {
+    // If it's been passed indirectly (actually a struct), whatever we find from
+    // stored registers or on the stack will actually be a struct **.
+    MemTy = llvm::PointerType::getUnqual(MemTy);
+  }
+
+  const Type *Base = 0;
+  uint64_t NumMembers;
+  if (isHomogeneousAggregate(Ty, Base, getContext(), &NumMembers)
+      && NumMembers > 1) {
+    // Homogeneous aggregates passed in registers will have their elements split
+    // and stored 16-bytes apart regardless of size (they're notionally in qN,
+    // qN+1, ...). We reload and store into a temporary local variable
+    // contiguously.
+    assert(AI.isDirect() && "Homogeneous aggregates should be passed directly");
+    llvm::Type *BaseTy = CGF.ConvertType(QualType(Base, 0));
+    llvm::Type *HFATy = llvm::ArrayType::get(BaseTy, NumMembers);
+    llvm::Value *Tmp = CGF.CreateTempAlloca(HFATy);
+
+    for (unsigned i = 0; i < NumMembers; ++i) {
+      llvm::Value *BaseOffset = llvm::ConstantInt::get(CGF.Int32Ty, 16 * i);
+      llvm::Value *LoadAddr = CGF.Builder.CreateGEP(BaseAddr, BaseOffset);
+      LoadAddr = CGF.Builder.CreateBitCast(LoadAddr,
+                                           llvm::PointerType::getUnqual(BaseTy));
+      llvm::Value *StoreAddr = CGF.Builder.CreateStructGEP(Tmp, i);
+
+      llvm::Value *Elem = CGF.Builder.CreateLoad(LoadAddr);
+      CGF.Builder.CreateStore(Elem, StoreAddr);
+    }
+
+    RegAddr = CGF.Builder.CreateBitCast(Tmp, MemTy);
+  } else {
+    // Otherwise the object is contiguous in memory
+    RegAddr = CGF.Builder.CreateBitCast(BaseAddr, MemTy);
+  }
+
+  CGF.EmitBranch(ContBlock);
+
+  //=======================================
+  // Argument was on the stack
+  //=======================================
+  CGF.EmitBlock(OnStackBlock);
+
+  llvm::Value *stack_p = 0, *OnStackAddr = 0;
+  stack_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "stack_p");
+  OnStackAddr = CGF.Builder.CreateLoad(stack_p, "stack");
+
+  // Again, stack arguments may need realigmnent. In this case both integer and
+  // floating-point ones might be affected.
+  if (AI.isDirect() && getContext().getTypeAlign(Ty) > 64) {
+    int Align = getContext().getTypeAlign(Ty) / 8;
+
+    OnStackAddr = CGF.Builder.CreatePtrToInt(OnStackAddr, CGF.Int64Ty);
+
+    OnStackAddr = CGF.Builder.CreateAdd(OnStackAddr,
+                                 llvm::ConstantInt::get(CGF.Int64Ty, Align - 1),
+                                 "align_stack");
+    OnStackAddr = CGF.Builder.CreateAnd(OnStackAddr,
+                                    llvm::ConstantInt::get(CGF.Int64Ty, -Align),
+                                    "align_stack");
+
+    OnStackAddr = CGF.Builder.CreateIntToPtr(OnStackAddr, CGF.Int8PtrTy);
+  }
+
+  uint64_t StackSize;
+  if (AI.isDirect())
+    StackSize = getContext().getTypeSize(Ty) / 8;
+  else
+    StackSize = 8;
+
+  // All stack slots are 8 bytes
+  StackSize = llvm::RoundUpToAlignment(StackSize, 8);
+
+  llvm::Value *StackSizeC = llvm::ConstantInt::get(CGF.Int32Ty, StackSize);
+  llvm::Value *NewStack = CGF.Builder.CreateGEP(OnStackAddr, StackSizeC,
+                                                "new_stack");
+
+  // Write the new value of __stack for the next call to va_arg
+  CGF.Builder.CreateStore(NewStack, stack_p);
+
+  OnStackAddr = CGF.Builder.CreateBitCast(OnStackAddr, MemTy);
+
+  CGF.EmitBranch(ContBlock);
+
+  //=======================================
+  // Tidy up
+  //=======================================
+  CGF.EmitBlock(ContBlock);
+
+  llvm::PHINode *ResAddr = CGF.Builder.CreatePHI(MemTy, 2, "vaarg.addr");
+  ResAddr->addIncoming(RegAddr, InRegBlock);
+  ResAddr->addIncoming(OnStackAddr, OnStackBlock);
+
+  if (AI.isDirect())
+    return ResAddr;
+
+  return CGF.Builder.CreateLoad(ResAddr, "vaarg.addr");
+}
+
+//===----------------------------------------------------------------------===//
 // NVPTX ABI Implementation
 //===----------------------------------------------------------------------===//
 
@@ -4396,6 +4811,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
     return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, false));
+
+  case llvm::Triple::aarch64:
+    return *(TheTargetCodeGenInfo = new AArch64TargetCodeGenInfo(Types));
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:

@@ -181,6 +181,12 @@ CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
   case TargetCXXABI::iOS:
     return new ARMCXXABI(CGM);
 
+  // Note that AArch64 uses the generic ItaniumCXXABI class since it doesn't
+  // include the other 32-bit ARM oddities: constructor/destructor return values
+  // and array cookies.
+  case TargetCXXABI::GenericAArch64:
+    return  new ItaniumCXXABI(CGM, /*IsARM = */ true);
+
   case TargetCXXABI::GenericItanium:
     return new ItaniumCXXABI(CGM);
 
@@ -1015,8 +1021,9 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   if (useInt8GuardVariable) {
     guardTy = CGF.Int8Ty;
   } else {
-    // Guard variables are 64 bits in the generic ABI and 32 bits on ARM.
-    guardTy = (IsARM ? CGF.Int32Ty : CGF.Int64Ty);
+    // Guard variables are 64 bits in the generic ABI and size width on ARM
+    // (i.e. 32-bit on AArch32, 64-bit on AArch64).
+    guardTy = (IsARM ? CGF.SizeTy : CGF.Int64Ty);
   }
   llvm::PointerType *guardPtrTy = guardTy->getPointerTo();
 
@@ -1059,7 +1066,8 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   //     }
   if (IsARM && !useInt8GuardVariable) {
     llvm::Value *V = Builder.CreateLoad(guard);
-    V = Builder.CreateAnd(V, Builder.getInt32(1));
+    llvm::Value *Test1 = llvm::ConstantInt::get(guardTy, 1);
+    V = Builder.CreateAnd(V, Test1);
     isInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
 
   // Itanium C++ ABI 3.3.2:

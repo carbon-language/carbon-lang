@@ -102,8 +102,10 @@ namespace clang {
       return ABIArgInfo(Ignore, 0, 0, false, false, false, false, 0);
     }
     static ABIArgInfo getIndirect(unsigned Alignment, bool ByVal = true
-                                  , bool Realign = false) {
-      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, false, false, 0);
+                                  , bool Realign = false
+                                  , llvm::Type *Padding = 0) {
+      return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, false, false, 
+                        Padding);
     }
     static ABIArgInfo getIndirectInReg(unsigned Alignment, bool ByVal = true
                                   , bool Realign = false) {

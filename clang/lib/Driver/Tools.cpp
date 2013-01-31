@@ -549,6 +549,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   default:
     return true;
 
+  case llvm::Triple::aarch64:
   case llvm::Triple::arm:
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
@@ -5578,6 +5579,8 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-m");
   if (ToolChain.getArch() == llvm::Triple::x86)
     CmdArgs.push_back("elf_i386");
+  else if (ToolChain.getArch() == llvm::Triple::aarch64)
+    CmdArgs.push_back("aarch64linux");
   else if (ToolChain.getArch() == llvm::Triple::arm
            ||  ToolChain.getArch() == llvm::Triple::thumb)
     CmdArgs.push_back("armelf_linux_eabi");
@@ -5626,6 +5629,8 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("/system/bin/linker");
     else if (ToolChain.getArch() == llvm::Triple::x86)
       CmdArgs.push_back("/lib/ld-linux.so.2");
+    else if (ToolChain.getArch() == llvm::Triple::aarch64)
+      CmdArgs.push_back("/lib/ld-linux-aarch64.so.1");
     else if (ToolChain.getArch() == llvm::Triple::arm ||
              ToolChain.getArch() == llvm::Triple::thumb) {
       if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF)
