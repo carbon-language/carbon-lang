@@ -59,7 +59,7 @@ public:
   const Atom *findByName(StringRef sym);
 
   /// @brief returns vector of remaining UndefinedAtoms
-  void undefines(std::vector<const Atom *>&);
+  void undefines(std::vector<const UndefinedAtom *>&);
   
   /// returns vector of tentative definitions
   void tentativeDefinitions(std::vector<StringRef> &);

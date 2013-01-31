@@ -191,7 +191,7 @@ void Resolver::resolveUndefines() {
   unsigned int undefineGenCount = 0xFFFFFFFF;
   while (undefineGenCount != _symbolTable.size()) {
     undefineGenCount = _symbolTable.size();
-    std::vector<const Atom *> undefines;
+    std::vector<const UndefinedAtom *> undefines;
     _symbolTable.undefines(undefines);
     for ( const Atom *undefAtom : undefines ) {
       StringRef undefName = undefAtom->name();
@@ -301,7 +301,7 @@ void Resolver::checkUndefines(bool final) {
     return;
 
   // build vector of remaining undefined symbols
-  std::vector<const Atom *> undefinedAtoms;
+  std::vector<const UndefinedAtom *> undefinedAtoms;
   _symbolTable.undefines(undefinedAtoms);
   if (_targetInfo.getLinkerOptions()._deadStrip) {
     // When dead code stripping, we don't care if dead atoms are undefined.
@@ -315,11 +315,15 @@ void Resolver::checkUndefines(bool final) {
       (!_targetInfo.getLinkerOptions()._noInhibitExec ||
        _targetInfo.getLinkerOptions()._outputKind == OutputKind::Relocatable)) {
     // FIXME: need diagonstics interface for writing error messages
-    llvm::errs() << "Undefined symbols:\n";
-    for ( const Atom *undefAtom : undefinedAtoms ) {
-      llvm::errs() << "  " << undefAtom->name() << "\n";
+    bool isError = false;
+    for (const UndefinedAtom *undefAtom : undefinedAtoms) {
+      if (undefAtom->canBeNull() == UndefinedAtom::canBeNullNever) {
+        llvm::errs() << "Undefined Symbol: " << undefAtom->name() << "\n";
+        isError = true;
+      }
     }
-    llvm::report_fatal_error("symbol(s) not found");
+    if (isError)
+      llvm::report_fatal_error("symbol(s) not found");
   }
 }
 

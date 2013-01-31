@@ -332,13 +332,13 @@ unsigned int SymbolTable::size() {
   return _nameTable.size();
 }
 
-void SymbolTable::undefines(std::vector<const Atom *> &undefs) {
+void SymbolTable::undefines(std::vector<const UndefinedAtom *> &undefs) {
   for (NameToAtom::iterator it = _nameTable.begin(),
        end = _nameTable.end(); it != end; ++it) {
     const Atom *atom = it->second;
     assert(atom != nullptr);
-    if (atom->definition() == Atom::definitionUndefined)
-      undefs.push_back(atom);
+    if (const auto undef = dyn_cast<const UndefinedAtom>(atom))
+      undefs.push_back(undef);
   }
 }
 
