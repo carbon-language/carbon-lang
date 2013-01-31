@@ -30,6 +30,8 @@ const uptr kCacheLineSize = 128;
 const uptr kCacheLineSize = 64;
 #endif
 
+extern const char *SanitizerToolName;  // Can be changed by the tool.
+
 uptr GetPageSize();
 uptr GetPageSizeCached();
 uptr GetMmapGranularity();

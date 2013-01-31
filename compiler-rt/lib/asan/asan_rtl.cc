@@ -319,6 +319,7 @@ void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
 
 void __asan_init() {
   if (asan_inited) return;
+  SanitizerToolName = "AddressSanitizer";
   CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
   InitializeHighMemEnd();

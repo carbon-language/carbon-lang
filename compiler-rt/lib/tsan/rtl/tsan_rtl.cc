@@ -187,6 +187,7 @@ void Initialize(ThreadState *thr) {
   if (is_initialized)
     return;
   is_initialized = true;
+  SanitizerToolName = "ThreadSanitizer";
   // Install tool-specific callbacks in sanitizer_common.
   SetCheckFailedCallback(TsanCheckFailed);
 

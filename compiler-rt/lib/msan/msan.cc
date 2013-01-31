@@ -204,6 +204,7 @@ void __msan_warning_noreturn() {
 void __msan_init() {
   if (msan_inited) return;
   msan_init_is_running = 1;
+  SanitizerToolName = "MemorySanitizer";
 
   InstallAtExitHandler();
   SetDieCallback(MsanDie);

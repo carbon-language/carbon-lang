@@ -62,8 +62,8 @@ void *MmapOrDie(uptr size, const char *mem_type) {
       Die();
     }
     recursion_count++;
-    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s: %s\n",
-           size, size, mem_type, strerror(errno));
+    Report("ERROR: %s failed to allocate 0x%zx (%zd) bytes of %s: %s\n",
+           SanitizerToolName, size, size, mem_type, strerror(errno));
     DumpProcessMap();
     CHECK("unable to mmap" && 0);
   }
@@ -74,8 +74,8 @@ void UnmapOrDie(void *addr, uptr size) {
   if (!addr || !size) return;
   int res = internal_munmap(addr, size);
   if (res != 0) {
-    Report("ERROR: Failed to deallocate 0x%zx (%zd) bytes at address %p\n",
-           size, size, addr);
+    Report("ERROR: %s failed to deallocate 0x%zx (%zd) bytes at address %p\n",
+           SanitizerToolName, size, size, addr);
     CHECK("unable to unmap" && 0);
   }
 }
@@ -88,8 +88,9 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
       -1, 0);
   if (p == (void*)-1)
-    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
-           size, size, fixed_addr, errno);
+    Report("ERROR: "
+           "%s failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
+           SanitizerToolName, size, size, fixed_addr, errno);
   return p;
 }
 
@@ -101,8 +102,9 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
       MAP_PRIVATE | MAP_ANON | MAP_FIXED,
       -1, 0);
   if (p == (void*)-1) {
-    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
-           size, size, fixed_addr, errno);
+    Report("ERROR:"
+           " %s failed to allocate 0x%zx (%zd) bytes at address %p (%d)\n",
+           SanitizerToolName, size, size, fixed_addr, errno);
     CHECK("unable to mmap" && 0);
   }
   return p;
@@ -189,7 +191,7 @@ void SetStackSizeLimitInBytes(uptr limit) {
   rlim.rlim_cur = limit;
   rlim.rlim_max = limit;
   if (setrlimit(RLIMIT_STACK, &rlim)) {
-    Report("setrlimit() failed %d\n", errno);
+    Report("ERROR: %s setrlimit() failed %d\n", SanitizerToolName, errno);
     Die();
   }
   CHECK(!StackSizeIsUnlimited());
