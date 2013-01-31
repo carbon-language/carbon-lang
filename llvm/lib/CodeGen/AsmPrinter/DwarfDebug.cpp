@@ -540,6 +540,12 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return NULL;
 
+  DIScope DS(Scope->getScopeNode());
+  // Early return to avoid creating dangling variable|scope DIEs.
+  if (!Scope->getInlinedAt() && DS.isSubprogram() && Scope->isAbstractScope() &&
+      !TheCU->getDIE(DS))
+    return NULL;
+
   SmallVector<DIE *, 8> Children;
   DIE *ObjectPointer = NULL;
 
@@ -565,7 +571,6 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   for (unsigned j = 0, M = Scopes.size(); j < M; ++j)
     if (DIE *Nested = constructScopeDIE(TheCU, Scopes[j]))
       Children.push_back(Nested);
-  DIScope DS(Scope->getScopeNode());
   DIE *ScopeDIE = NULL;
   if (Scope->getInlinedAt())
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
