@@ -783,6 +783,10 @@ public:
   ///
   /// Executing \c getUnqualifiedType() on the type \c DifferenceType will
   /// desugar until we hit the type \c Integer, which has no qualifiers on it.
+  ///
+  /// The resulting type might still be qualified if it's sugar for an array
+  /// type.  To strip qualifiers even from within a sugared array type, use
+  /// ASTContext::getUnqualifiedArrayType.
   inline QualType getUnqualifiedType() const;
 
   /// getSplitUnqualifiedType - Retrieve the unqualified variant of the
@@ -790,6 +794,10 @@ public:
   ///
   /// Like getUnqualifiedType(), but also returns the set of
   /// qualifiers that were built up.
+  ///
+  /// The resulting type might still be qualified if it's sugar for an array
+  /// type.  To strip qualifiers even from within a sugared array type, use
+  /// ASTContext::getUnqualifiedArrayType.
   inline SplitQualType getSplitUnqualifiedType() const;
 
   /// \brief Determine whether this type is more qualified than the other
