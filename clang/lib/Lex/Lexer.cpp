@@ -2832,7 +2832,8 @@ void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
     return LexIdentifier(Result, CurPtr);
   }
 
-  if (!isLexingRawMode() && !PP->isPreprocessedOutput() &&
+  if (!isLexingRawMode() && !ParsingPreprocessorDirective &&
+      !PP->isPreprocessedOutput() &&
       !isASCII(*BufferPtr) && !isAllowedIDChar(C)) {
     // Non-ASCII characters tend to creep into source code unintentionally.
     // Instead of letting the parser complain about the unknown token,
@@ -3537,7 +3538,8 @@ LexNextToken:
     if (Status == conversionOK)
       return LexUnicode(Result, CodePoint, CurPtr);
     
-    if (isLexingRawMode() || PP->isPreprocessedOutput()) {
+    if (isLexingRawMode() || ParsingPreprocessorDirective ||
+        PP->isPreprocessedOutput()) {
       ++CurPtr;
       Kind = tok::unknown;
       break;
