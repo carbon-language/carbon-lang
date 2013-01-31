@@ -20,6 +20,13 @@
 // values. This will prevent other code from seeing the same undef uses and
 // resolving them to different values.
 //
+// These routines are designed to tolerate moderately incomplete IR, such as
+// instructions that are not connected to basic blocks yet. However, they do
+// require that all the IR that they encounter be valid. In particular, they
+// require that all non-constant values be defined in the same function, and the
+// same call context of that function (and not split between caller and callee
+// contexts of a directly recursive call, for example).
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
