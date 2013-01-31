@@ -105,6 +105,8 @@ public:
 private:
   AttributeImpl *pImpl;
   Attribute(AttributeImpl *A) : pImpl(A) {}
+
+  static Attribute get(LLVMContext &Context, AttrBuilder &B);
 public:
   Attribute() : pImpl(0) {}
 
@@ -114,7 +116,6 @@ public:
 
   /// \brief Return a uniquified Attribute object.
   static Attribute get(LLVMContext &Context, AttrKind Kind);
-  static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
   /// \brief Return a uniquified Attribute object that has the specific
   /// alignment set.
