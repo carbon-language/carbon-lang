@@ -30,24 +30,15 @@ using namespace llvm;
 // Attribute Construction Methods
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, AttrKind Kind) {
-  AttrBuilder B;
-  return Attribute::get(Context, B.addAttribute(Kind));
-}
-
-Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
-  // If there are no attributes, return an empty Attribute class.
-  if (!B.hasAttributes())
-    return Attribute();
-
-  assert(std::distance(B.begin(), B.end()) == 1 &&
-         "The Attribute object should represent one attribute only!");
+Attribute Attribute::get(LLVMContext &Context, AttrKind Kind,
+                         Constant *Val) {
+  if (Kind == None) return Attribute();
 
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  ConstantInt *CI = ConstantInt::get(Type::getInt64Ty(Context), B.Raw());
-  ID.AddPointer(CI);
+  ID.AddInteger(Kind);
+  ID.AddPointer(Val);
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -55,7 +46,9 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributeImpl(Context, CI);
+    PA = (!Val) ?
+      new AttributeImpl(Context, Kind) :
+      new AttributeImpl(Context, Kind, Val);
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -64,14 +57,14 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
 }
 
 Attribute Attribute::getWithAlignment(LLVMContext &Context, uint64_t Align) {
-  AttrBuilder B;
-  return get(Context, B.addAlignmentAttr(Align));
+  return get(Context, Attribute::Alignment,
+             ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
 Attribute Attribute::getWithStackAlignment(LLVMContext &Context,
                                            uint64_t Align) {
-  AttrBuilder B;
-  return get(Context, B.addStackAlignmentAttr(Align));
+  return get(Context, Attribute::StackAlignment,
+             ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
 //===----------------------------------------------------------------------===//
