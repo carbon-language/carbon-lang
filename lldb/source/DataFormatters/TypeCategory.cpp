@@ -349,6 +349,7 @@ TypeCategoryImpl::GetTypeNameSpecifierForFilterAtIndex (size_t index)
         return m_regex_filter_nav->GetTypeNameSpecifierAtIndex(index-m_filter_nav->GetCount());
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 TypeCategoryImpl::SynthNavigator::MapValueType
 TypeCategoryImpl::GetSyntheticAtIndex (size_t index)
 {
@@ -366,6 +367,7 @@ TypeCategoryImpl::GetTypeNameSpecifierForSyntheticAtIndex (size_t index)
     else
         return m_regex_synth_nav->GetTypeNameSpecifierAtIndex(index - m_synth_nav->GetCount());
 }
+#endif
 
 void
 TypeCategoryImpl::Enable (bool value, uint32_t position)
