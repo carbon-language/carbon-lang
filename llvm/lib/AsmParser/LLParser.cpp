@@ -1472,6 +1472,7 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
   if (ParseToken(lltok::lparen, "expected '(' in call"))
     return true;
 
+  unsigned AttrIndex = 1;
   while (Lex.getKind() != lltok::rparen) {
     // If this isn't the first argument, we need a comma.
     if (!ArgList.empty() &&
@@ -1489,8 +1490,9 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     // Otherwise, handle normal operands.
     if (ParseOptionalParamAttrs(ArgAttrs) || ParseValue(ArgTy, V, PFS))
       return true;
-    ArgList.push_back(ParamInfo(ArgLoc, V, Attribute::get(V->getContext(),
-                                                           ArgAttrs)));
+    ArgList.push_back(ParamInfo(ArgLoc, V, AttributeSet::get(V->getContext(),
+                                                             AttrIndex++,
+                                                             ArgAttrs)));
   }
 
   Lex.Lex();  // Lex the ')'.
@@ -1539,9 +1541,10 @@ bool LLParser::ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList,
     if (!FunctionType::isValidArgumentType(ArgTy))
       return Error(TypeLoc, "invalid type for function argument");
 
+    unsigned AttrIndex = 1;
     ArgList.push_back(ArgInfo(TypeLoc, ArgTy,
-                              Attribute::get(ArgTy->getContext(),
-                                              Attrs), Name));
+                              AttributeSet::get(ArgTy->getContext(),
+                                                AttrIndex++, Attrs), Name));
 
     while (EatIfPresent(lltok::comma)) {
       // Handle ... at end of arg list.
@@ -1568,7 +1571,8 @@ bool LLParser::ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList,
         return Error(TypeLoc, "invalid type for function argument");
 
       ArgList.push_back(ArgInfo(TypeLoc, ArgTy,
-                                Attribute::get(ArgTy->getContext(), Attrs),
+                                AttributeSet::get(ArgTy->getContext(),
+                                                  AttrIndex++, Attrs),
                                 Name));
     }
   }
@@ -1593,7 +1597,7 @@ bool LLParser::ParseFunctionType(Type *&Result) {
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
     if (!ArgList[i].Name.empty())
       return Error(ArgList[i].Loc, "argument name invalid in function type");
-    if (ArgList[i].Attrs.hasAttributes())
+    if (ArgList[i].Attrs.hasAttributes(i + 1))
       return Error(ArgList[i].Loc,
                    "argument attributes invalid in function type");
   }
@@ -2822,8 +2826,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
     ParamTypeList.push_back(ArgList[i].Ty);
-    if (ArgList[i].Attrs.hasAttributes()) {
-      AttrBuilder B(ArgList[i].Attrs);
+    if (ArgList[i].Attrs.hasAttributes(i + 1)) {
+      AttrBuilder B(ArgList[i].Attrs, i + 1);
       Attrs.push_back(AttributeSet::get(RetType->getContext(), i + 1, B));
     }
   }
@@ -3382,8 +3386,8 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
       return Error(ArgList[i].Loc, "argument is not of expected type '" +
                    getTypeString(ExpectedTy) + "'");
     Args.push_back(ArgList[i].V);
-    if (ArgList[i].Attrs.hasAttributes()) {
-      AttrBuilder B(ArgList[i].Attrs);
+    if (ArgList[i].Attrs.hasAttributes(i + 1)) {
+      AttrBuilder B(ArgList[i].Attrs, i + 1);
       Attrs.push_back(AttributeSet::get(RetType->getContext(), i + 1, B));
     }
   }
@@ -3784,8 +3788,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
       return Error(ArgList[i].Loc, "argument is not of expected type '" +
                    getTypeString(ExpectedTy) + "'");
     Args.push_back(ArgList[i].V);
-    if (ArgList[i].Attrs.hasAttributes()) {
-      AttrBuilder B(ArgList[i].Attrs);
+    if (ArgList[i].Attrs.hasAttributes(i + 1)) {
+      AttrBuilder B(ArgList[i].Attrs, i + 1);
       Attrs.push_back(AttributeSet::get(RetType->getContext(), i + 1, B));
     }
   }

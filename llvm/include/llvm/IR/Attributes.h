@@ -41,13 +41,13 @@ class Type;
 class Attribute {
 public:
   /// This enumeration lists the attributes that can be associated with
-  /// parameters, function results or the function itself.
+  /// parameters, function results, or the function itself.
   ///
-  /// Note: uwtable is about the ABI or the user mandating an entry in the
-  /// unwind table. The nounwind attribute is about an exception passing by the
-  /// function.
+  /// Note: The `uwtable' attribute is about the ABI or the user mandating an
+  /// entry in the unwind table. The `nounwind' attribute is about an exception
+  /// passing by the function.
   ///
-  /// In a theoretical system that uses tables for profiling and sjlj for
+  /// In a theoretical system that uses tables for profiling and SjLj for
   /// exceptions, they would be fully independent. In a normal system that uses
   /// tables for both, the semantics are:
   ///
@@ -181,12 +181,11 @@ private:
   friend class AttrBuilder;
   friend class AttributeSetImpl;
 
-  /// \brief The attributes that we are managing.  This can be null to represent
+  /// \brief The attributes that we are managing. This can be null to represent
   /// the empty attributes list.
   AttributeSetImpl *pImpl;
 
-  /// \brief The attributes for the specified index are returned.  Attributes
-  /// for the result are denoted with Idx = 0.
+  /// \brief The attributes for the specified index are returned.
   AttributeSetNode *getAttributes(unsigned Idx) const;
 
   /// \brief Create an AttributeSet with the specified parameters in it.

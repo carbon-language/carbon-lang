@@ -40,6 +40,9 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   if (!B.hasAttributes())
     return Attribute();
 
+  assert(std::distance(B.begin(), B.end()) == 1 &&
+         "The Attribute object should represent one attribute only!");
+
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
