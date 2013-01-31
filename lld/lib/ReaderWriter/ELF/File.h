@@ -87,6 +87,10 @@ public:
 
       const Elf_Shdr *section = _objFile->getElfSection(sit);
 
+      // Create a sectionSymbols entry for every progbits section.
+      if (section->sh_type == llvm::ELF::SHT_PROGBITS)
+        sectionSymbols[section];
+
       if (section->sh_type == llvm::ELF::SHT_RELA) {
         StringRef sectionName;
         if ((EC = _objFile->getSectionName(section, sectionName)))
@@ -189,6 +193,24 @@ public:
       StringRef sectionName;
       if ((EC = _objFile->getSectionName(i.first, sectionName)))
         return;
+
+      // If the section has no symbols, create a custom atom for it.
+      if (i.first->sh_type == llvm::ELF::SHT_PROGBITS && symbols.empty() &&
+          !sectionContents.empty()) {
+        Elf_Sym *sym = new (_readerStorage) Elf_Sym;
+        sym->st_name = 0;
+        sym->setBindingAndType(llvm::ELF::STB_LOCAL, llvm::ELF::STT_SECTION);
+        sym->st_other = 0;
+        sym->st_shndx = 0;
+        sym->st_value = 0;
+        sym->st_size = 0;
+        ArrayRef<uint8_t> content((const uint8_t *)sectionContents.data(),
+                                  sectionContents.size());
+        _definedAtoms._atoms.push_back(
+            new (_readerStorage)
+            ELFDefinedAtom<ELFT>(*this, sectionName, sectionName, sym, i.first,
+                                 content, 0, 0, _references));
+      }
 
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
