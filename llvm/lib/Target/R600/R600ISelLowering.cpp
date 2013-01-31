@@ -991,6 +991,14 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
         return Arg->getOperand(Element);
       }
     }
+    if (Arg.getOpcode() == ISD::BITCAST &&
+        Arg.getOperand(0).getOpcode() == ISD::BUILD_VECTOR) {
+      if (ConstantSDNode *Const = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+        unsigned Element = Const->getZExtValue();
+        return DAG.getNode(ISD::BITCAST, N->getDebugLoc(), N->getVTList(),
+            Arg->getOperand(0).getOperand(Element));
+      }
+    }
   }
   }
   return SDValue();

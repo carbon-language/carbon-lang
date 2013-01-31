@@ -318,6 +318,9 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
       }
       }
       break;
+    case ISD::BITCAST:
+      Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
+      return true;
     default:
       break;
     }
