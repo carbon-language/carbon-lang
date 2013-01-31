@@ -22,7 +22,6 @@
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
 #include "interception/interception.h"
-#include "sanitizer/asan_interface.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {

@@ -18,7 +18,6 @@
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
-#include "sanitizer/asan_interface.h"
 #include "sanitizer_common/sanitizer_mutex.h"
 
 namespace __asan {

@@ -15,6 +15,7 @@
 #define ASAN_INTERNAL_H
 
 #include "asan_flags.h"
+#include "asan_interface_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"

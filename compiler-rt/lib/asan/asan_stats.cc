@@ -15,7 +15,6 @@
 #include "asan_internal.h"
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
-#include "sanitizer/asan_interface.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
 namespace __asan {

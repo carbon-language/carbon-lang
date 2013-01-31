@@ -11,9 +11,9 @@
 //
 // Code for ASan stack trace.
 //===----------------------------------------------------------------------===//
+#include "asan_internal.h"
 #include "asan_flags.h"
 #include "asan_stack.h"
-#include "sanitizer/asan_interface.h"
 
 namespace __asan {
 

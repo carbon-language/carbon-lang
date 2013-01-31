@@ -17,7 +17,6 @@
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_test_utils.h"
-#include "sanitizer/asan_interface.h"
 
 #include <assert.h>
 #include <stdio.h>

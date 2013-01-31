@@ -20,7 +20,6 @@
 #include "asan_internal.h"
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
-#include "sanitizer/asan_interface.h"
 
 #if ASAN_ANDROID
 DECLARE_REAL_AND_INTERCEPTOR(void*, malloc, uptr size)

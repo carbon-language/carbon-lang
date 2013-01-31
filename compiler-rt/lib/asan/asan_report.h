@@ -15,7 +15,6 @@
 #include "asan_allocator.h"
 #include "asan_internal.h"
 #include "asan_thread.h"
-#include "sanitizer/asan_interface.h"
 
 namespace __asan {
 

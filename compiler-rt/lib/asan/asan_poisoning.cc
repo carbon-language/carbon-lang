@@ -15,7 +15,6 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
-#include "sanitizer/asan_interface.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {
