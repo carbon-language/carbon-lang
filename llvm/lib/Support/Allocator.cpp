@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/Recycler.h"
@@ -102,6 +103,10 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   // Check if we can hold it.
   if (Ptr + Size <= End) {
     CurPtr = Ptr + Size;
+    // Update the allocation point of this memory block in MemorySanitizer.
+    // Without this, MemorySanitizer reports for values originating from it will
+    // point to the allocation point of the entire slab.
+    __msan_allocated_memory(Ptr, Size);
     return Ptr;
   }
 
@@ -117,6 +122,7 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
 
     Ptr = AlignPtr((char*)(NewSlab + 1), Alignment);
     assert((uintptr_t)Ptr + Size <= (uintptr_t)NewSlab + NewSlab->Size);
+    __msan_allocated_memory(Ptr, Size);
     return Ptr;
   }
 
@@ -125,6 +131,7 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   Ptr = AlignPtr(CurPtr, Alignment);
   CurPtr = Ptr + Size;
   assert(CurPtr <= End && "Unable to allocate memory!");
+  __msan_allocated_memory(Ptr, Size);
   return Ptr;
 }
 

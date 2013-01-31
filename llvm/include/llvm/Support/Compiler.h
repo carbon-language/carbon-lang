@@ -15,6 +15,8 @@
 #ifndef LLVM_SUPPORT_COMPILER_H
 #define LLVM_SUPPORT_COMPILER_H
 
+#include "llvm/Config/config.h"
+
 #ifndef __has_feature
 # define __has_feature(x) 0
 #endif
@@ -291,6 +293,22 @@
 # define LLVM_FUNCTION_NAME __FUNCTION__
 #else
 # define LLVM_FUNCTION_NAME __func__
+#endif
+
+/// \macro LLVM_ENABLE_MSAN_ANNOTATIONS
+/// \brief Are MemorySanitizer annotations available.
+#if defined(HAVE_SANITIZER_MSAN_INTERFACE_H)
+# include <sanitizer/msan_interface.h>
+#else
+# define __msan_allocated_memory(p, size)
+#endif
+
+/// \macro LLVM_MEMORY_SANITIZER_BUILD
+/// \brief Whether LLVM itself is built with MemorySanitizer instrumentation.
+#if __has_feature(memory_sanitizer)
+# define LLVM_MEMORY_SANITIZER_BUILD 1
+#else
+# define LLVM_MEMORY_SANITIZER_BUILD 0
 #endif
 
 #endif
