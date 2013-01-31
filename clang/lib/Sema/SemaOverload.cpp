@@ -588,8 +588,11 @@ static MakeDeductionFailureInfo(ASTContext &Context,
     }
     break;
 
-  case Sema::TDK_NonDeducedMismatch:
   case Sema::TDK_FailedOverloadResolution:
+    Result.Data = Info.Expression;
+    break;
+
+  case Sema::TDK_NonDeducedMismatch:
     break;
   }
 
@@ -737,6 +740,15 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
   case Sema::TDK_FailedOverloadResolution:
     break;
   }
+
+  return 0;
+}
+
+Expr *
+OverloadCandidate::DeductionFailureInfo::getExpr() {
+  if (static_cast<Sema::TemplateDeductionResult>(Result) ==
+        Sema::TDK_FailedOverloadResolution)
+    return static_cast<Expr*>(Data);
 
   return 0;
 }
@@ -8442,10 +8454,18 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
     return;
   }
 
+  case Sema::TDK_FailedOverloadResolution: {
+    OverloadExpr::FindResult R =
+        OverloadExpr::find(Cand->DeductionFailure.getExpr());
+    S.Diag(Fn->getLocation(),
+           diag::note_ovl_candidate_failed_overload_resolution)
+      << R.Expression->getName();
+    return;
+  }
+
   // TODO: diagnose these individually, then kill off
   // note_ovl_candidate_bad_deduction, which is uselessly vague.
   case Sema::TDK_NonDeducedMismatch:
-  case Sema::TDK_FailedOverloadResolution:
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_deduction);
     MaybeEmitInheritedConstructorNote(S, Fn);
     return;

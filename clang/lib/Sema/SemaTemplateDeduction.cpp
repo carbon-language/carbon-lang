@@ -2879,7 +2879,8 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
 /// described in C++ [temp.deduct.call].
 ///
 /// \returns true if the caller should not attempt to perform any template
-/// argument deduction based on this P/A pair.
+/// argument deduction based on this P/A pair because the argument is an
+/// overloaded function set that could not be resolved.
 static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
                                           TemplateParameterList *TemplateParams,
                                                       QualType &ParamType,
@@ -2895,7 +2896,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
   if (ParamRefType) {
     QualType PointeeType = ParamRefType->getPointeeType();
 
-    // If the argument has incomplete array type, try to complete it's type.
+    // If the argument has incomplete array type, try to complete its type.
     if (ArgType->isIncompleteArrayType() && !S.RequireCompleteExprType(Arg, 0))
       ArgType = Arg->getType();
 
@@ -2993,8 +2994,8 @@ static bool hasDeducibleTemplateParameters(Sema &S,
 
 /// \brief Perform template argument deduction by matching a parameter type
 ///        against a single expression, where the expression is an element of
-///        an initializer list that was originally matched against the argument
-///        type.
+///        an initializer list that was originally matched against a parameter
+///        of type \c initializer_list\<ParamType\>.
 static Sema::TemplateDeductionResult
 DeduceTemplateArgumentByListElement(Sema &S,
                                     TemplateParameterList *TemplateParams,
@@ -3023,8 +3024,10 @@ DeduceTemplateArgumentByListElement(Sema &S,
   // For all other cases, just match by type.
   QualType ArgType = Arg->getType();
   if (AdjustFunctionParmAndArgTypesForDeduction(S, TemplateParams, ParamType, 
-                                                ArgType, Arg, TDF))
+                                                ArgType, Arg, TDF)) {
+    Info.Expression = Arg;
     return Sema::TDK_FailedOverloadResolution;
+  }
   return DeduceTemplateArgumentsByTypeMatch(S, TemplateParams, ParamType,
                                             ArgType, Info, Deduced, TDF);
 }
