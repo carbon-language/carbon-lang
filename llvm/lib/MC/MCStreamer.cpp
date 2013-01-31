@@ -21,10 +21,9 @@
 #include <cstdlib>
 using namespace llvm;
 
-MCStreamer::MCStreamer(MCContext &Ctx)
-  : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
-    CurrentW64UnwindInfo(0), LastSymbol(0),
-    AutoInitSections(false) {
+MCStreamer::MCStreamer(StreamerKind Kind, MCContext &Ctx)
+    : Kind(Kind), Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
+      CurrentW64UnwindInfo(0), LastSymbol(0), AutoInitSections(false) {
   const MCSection *section = NULL;
   SectionStack.push_back(std::make_pair(section, section));
 }

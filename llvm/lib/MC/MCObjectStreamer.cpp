@@ -20,22 +20,19 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                   raw_ostream &OS, MCCodeEmitter *Emitter_)
-  : MCStreamer(Context),
-    Assembler(new MCAssembler(Context, TAB,
-                              *Emitter_, *TAB.createObjectWriter(OS),
-                              OS)),
-    CurSectionData(0)
-{
-}
+MCObjectStreamer::MCObjectStreamer(StreamerKind Kind, MCContext &Context,
+                                   MCAsmBackend &TAB, raw_ostream &OS,
+                                   MCCodeEmitter *Emitter_)
+    : MCStreamer(Kind, Context),
+      Assembler(new MCAssembler(Context, TAB, *Emitter_,
+                                *TAB.createObjectWriter(OS), OS)),
+      CurSectionData(0) {}
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                   raw_ostream &OS, MCCodeEmitter *Emitter_,
+MCObjectStreamer::MCObjectStreamer(StreamerKind Kind, MCContext &Context,
+                                   MCAsmBackend &TAB, raw_ostream &OS,
+                                   MCCodeEmitter *Emitter_,
                                    MCAssembler *_Assembler)
-  : MCStreamer(Context), Assembler(_Assembler), CurSectionData(0)
-{
-}
+    : MCStreamer(Kind, Context), Assembler(_Assembler), CurSectionData(0) {}
 
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();

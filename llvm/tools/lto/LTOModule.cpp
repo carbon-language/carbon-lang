@@ -733,7 +733,8 @@ namespace {
       return Symbols.end();
     }
 
-    RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
+    RecordStreamer(MCContext &Context)
+        : MCStreamer(SK_RecordStreamer, Context) {}
 
     virtual void EmitInstruction(const MCInst &Inst) {
       // Scan for values.
@@ -804,6 +805,10 @@ namespace {
                                           const MCSymbol *Label,
                                           unsigned PointerSize) {}
     virtual void FinishImpl() {}
+
+    static bool classof(const MCStreamer *S) {
+      return S->getKind == SK_RecordStreamer;
+    }
   };
 } // end anonymous namespace
 

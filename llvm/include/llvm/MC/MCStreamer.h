@@ -46,6 +46,22 @@ namespace llvm {
   /// a .s file, and implementations that write out .o files of various formats.
   ///
   class MCStreamer {
+  public:
+    enum StreamerKind {
+      SK_AsmStreamer,
+      SK_NullStreamer,
+      SK_RecordStreamer,
+
+      // MCObjectStreamer subclasses.
+      SK_ELFStreamer,
+      SK_ARMELFStreamer,
+      SK_MachOStreamer,
+      SK_PureStreamer,
+      SK_WinCOFFStreamer
+    };
+
+  private:
+    const StreamerKind Kind;
     MCContext &Context;
 
     MCStreamer(const MCStreamer&) LLVM_DELETED_FUNCTION;
@@ -74,7 +90,7 @@ namespace llvm {
     bool AutoInitSections;
 
   protected:
-    MCStreamer(MCContext &Ctx);
+    MCStreamer(StreamerKind Kind, MCContext &Ctx);
 
     const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
                                   const MCSymbol *B);
@@ -92,6 +108,8 @@ namespace llvm {
 
   public:
     virtual ~MCStreamer();
+
+    StreamerKind getKind() const { return Kind; }
 
     /// State management
     ///

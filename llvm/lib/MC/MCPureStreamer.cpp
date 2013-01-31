@@ -28,9 +28,9 @@ private:
   virtual void EmitInstToData(const MCInst &Inst);
 
 public:
-  MCPureStreamer(MCContext &Context, MCAsmBackend &TAB,
-                 raw_ostream &OS, MCCodeEmitter *Emitter)
-    : MCObjectStreamer(Context, TAB, OS, Emitter) {}
+  MCPureStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
+                 MCCodeEmitter *Emitter)
+      : MCObjectStreamer(SK_PureStreamer, Context, TAB, OS, Emitter) {}
 
   /// @name MCStreamer Interface
   /// @{
@@ -100,6 +100,10 @@ public:
   }
 
   /// @}
+
+  static bool classof(const MCStreamer *S) {
+    return S->getKind() == SK_PureStreamer;
+  }
 };
 
 } // end anonymous namespace.

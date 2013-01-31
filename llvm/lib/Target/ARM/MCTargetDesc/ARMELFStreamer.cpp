@@ -54,12 +54,11 @@ namespace {
 /// by MachO. Beware!
 class ARMELFStreamer : public MCELFStreamer {
 public:
-  ARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                 raw_ostream &OS, MCCodeEmitter *Emitter, bool IsThumb)
-    : MCELFStreamer(Context, TAB, OS, Emitter),
-      IsThumb(IsThumb), MappingSymbolCounter(0), LastEMS(EMS_None),
-      ExTab(0), FnStart(0), Personality(0), CantUnwind(false) {
-  }
+  ARMELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
+                 MCCodeEmitter *Emitter, bool IsThumb)
+      : MCELFStreamer(SK_ARMELFStreamer, Context, TAB, OS, Emitter),
+        IsThumb(IsThumb), MappingSymbolCounter(0), LastEMS(EMS_None), ExTab(0),
+        FnStart(0), Personality(0), CantUnwind(false) {}
 
   ~ARMELFStreamer() {}
 
@@ -132,6 +131,10 @@ public:
     case MCAF_SubsectionsViaSymbols:
       return;
     }
+  }
+
+  static bool classof(const MCStreamer *S) {
+    return S->getKind() == SK_ARMELFStreamer;
   }
 
 private:

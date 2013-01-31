@@ -19,7 +19,7 @@ namespace {
 
   class MCNullStreamer : public MCStreamer {
   public:
-    MCNullStreamer(MCContext &Context) : MCStreamer(Context) {}
+    MCNullStreamer(MCContext &Context) : MCStreamer(SK_NullStreamer, Context) {}
 
     /// @name MCStreamer Interface
     /// @{
@@ -109,6 +109,11 @@ namespace {
     }
 
     /// @}
+
+    static bool classof(const MCStreamer *S) {
+      return S->getKind() == SK_NullStreamer;
+    }
+
   };
 
 }

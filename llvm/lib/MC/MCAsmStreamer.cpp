@@ -71,7 +71,7 @@ public:
                 MCInstPrinter *printer, MCCodeEmitter *emitter,
                 MCAsmBackend *asmbackend,
                 bool showInst)
-    : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
+    : MCStreamer(SK_AsmStreamer, Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
       CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
       ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
@@ -277,6 +277,10 @@ public:
   virtual void FinishImpl();
 
   /// @}
+
+  static bool classof(const MCStreamer *S) {
+    return S->getKind() == SK_NullStreamer;
+  }
 };
 
 } // end anonymous namespace.
