@@ -35,7 +35,7 @@ class ShLexer:
         if ('|' in chunk or '&' in chunk or 
             '<' in chunk or '>' in chunk or
             "'" in chunk or '"' in chunk or
-            '\\' in chunk):
+            ';' in chunk or '\\' in chunk):
             return None
         
         self.pos = self.pos - 1 + len(chunk)
@@ -48,7 +48,7 @@ class ShLexer:
             str = c
         while self.pos != self.end:
             c = self.look()
-            if c.isspace() or c in "|&":
+            if c.isspace() or c in "|&;":
                 break
             elif c in '><':
                 # This is an annoying case; we treat '2>' as a single token so
@@ -250,9 +250,9 @@ class TestShLexer(unittest.TestCase):
         return list(ShLexer(str, *args, **kwargs).lex())
 
     def test_basic(self):
-        self.assertEqual(self.lex('a|b>c&d<e'),
+        self.assertEqual(self.lex('a|b>c&d<e;f'),
                          ['a', ('|',), 'b', ('>',), 'c', ('&',), 'd', 
-                          ('<',), 'e'])
+                          ('<',), 'e', (';',), 'f'])
 
     def test_redirection_tokens(self):
         self.assertEqual(self.lex('a2>c'),
@@ -341,6 +341,11 @@ class TestShParse(unittest.TestCase):
                                  Pipeline([Command(['b'], [])], False)),
                              '||',
                              Pipeline([Command(['c'], [])], False)))
+
+        self.assertEqual(self.parse('a; b'),
+                         Seq(Pipeline([Command(['a'], [])], False),
+                             ';',
+                             Pipeline([Command(['b'], [])], False)))
 
 if __name__ == '__main__':
     unittest.main()
