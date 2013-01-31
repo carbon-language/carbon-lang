@@ -30,24 +30,11 @@ using namespace llvm;
 // Attribute Construction Methods
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, AttrKind Kind) {
-  AttrBuilder B;
-  return Attribute::get(Context, B.addAttribute(Kind));
-}
-
-Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
-  // If there are no attributes, return an empty Attribute class.
-  if (!B.hasAttributes())
-    return Attribute();
-
-  assert(std::distance(B.begin(), B.end()) == 1 &&
-         "The Attribute object should represent one attribute only!");
-
-  // Otherwise, build a key to look up the existing attributes.
+Attribute Attribute::get(LLVMContext &Context, Constant *Kind, Constant *Val) {
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  ConstantInt *CI = ConstantInt::get(Type::getInt64Ty(Context), B.Raw());
-  ID.AddPointer(CI);
+  ID.AddPointer(Kind);
+  if (Val) ID.AddPointer(Val);
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -55,7 +42,9 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributeImpl(Context, CI);
+    PA = (!Val) ?
+      new AttributeImpl(Context, Kind) :
+      new AttributeImpl(Context, Kind, Val);
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -63,15 +52,24 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   return Attribute(PA);
 }
 
+Attribute Attribute::get(LLVMContext &Context, AttrKind Kind, Constant *Val) {
+  ConstantInt *KindVal = ConstantInt::get(Type::getInt64Ty(Context), Kind);
+  return get(Context, KindVal, Val);
+}
+
 Attribute Attribute::getWithAlignment(LLVMContext &Context, uint64_t Align) {
-  AttrBuilder B;
-  return get(Context, B.addAlignmentAttr(Align));
+  assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
+  assert(Align <= 0x40000000 && "Alignment too large.");
+  return get(Context, Alignment,
+             ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
 Attribute Attribute::getWithStackAlignment(LLVMContext &Context,
                                            uint64_t Align) {
-  AttrBuilder B;
-  return get(Context, B.addStackAlignmentAttr(Align));
+  assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
+  assert(Align <= 0x100 && "Alignment too large.");
+  return get(Context, StackAlignment,
+             ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
 //===----------------------------------------------------------------------===//
@@ -250,17 +248,21 @@ AttributeImpl::AttributeImpl(LLVMContext &C, StringRef kind)
 }
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
-  return (Raw() & getAttrMask(A)) != 0;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Kind))
+    return CI->getZExtValue() == A;
+  return false;
 }
 
 uint64_t AttributeImpl::getAlignment() const {
-  uint64_t Mask = Raw() & getAttrMask(Attribute::Alignment);
-  return 1ULL << ((Mask >> 16) - 1);
+  assert(hasAttribute(Attribute::Alignment) &&
+         "Trying to retrieve the alignment from a non-alignment attr!");
+  return cast<ConstantInt>(Vals[0])->getZExtValue();
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
-  uint64_t Mask = Raw() & getAttrMask(Attribute::StackAlignment);
-  return 1ULL << ((Mask >> 26) - 1);
+  assert(hasAttribute(Attribute::StackAlignment) &&
+         "Trying to retrieve the stack alignment from a non-alignment attr!");
+  return cast<ConstantInt>(Vals[0])->getZExtValue();
 }
 
 bool AttributeImpl::operator==(Attribute::AttrKind kind) const {
@@ -808,12 +810,15 @@ void AttrBuilder::clear() {
 }
 
 AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
+  assert(Val != Attribute::Alignment && Val != Attribute::StackAlignment &&
+         "Adding alignment attribute without adding alignment value!");
   Attrs.insert(Val);
   return *this;
 }
 
 AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
   Attrs.erase(Val);
+
   if (Val == Attribute::Alignment)
     Alignment = 0;
   else if (Val == Attribute::StackAlignment)
@@ -823,16 +828,13 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::addAttributes(Attribute Attr) {
-  uint64_t Mask = Attr.Raw();
+  ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
+  Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
+  Attrs.insert(KindVal);
 
-  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
-       I = Attribute::AttrKind(I + 1))
-    if ((Mask & AttributeImpl::getAttrMask(I)) != 0)
-      Attrs.insert(I);
-
-  if (Attr.getAlignment())
+  if (KindVal == Attribute::Alignment)
     Alignment = Attr.getAlignment();
-  if (Attr.getStackAlignment())
+  else if (KindVal == Attribute::StackAlignment)
     StackAlignment = Attr.getStackAlignment();
   return *this;
 }

@@ -70,20 +70,20 @@ define void @test4(i8 *%P) {
   %A = alloca %1
   %a = bitcast %1* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %P, i64 8, i32 4, i1 false)
-  call void @test4a(i8* byval align 1 %a)
+  call void @test4a(i8* align 1 byval %a)
   ret void
 ; CHECK: @test4
 ; CHECK-NEXT: call void @test4a(
 }
 
-declare void @test4a(i8* byval align 1)
+declare void @test4a(i8* align 1 byval)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 %struct.S = type { i128, [4 x i8]}
 
 @sS = external global %struct.S, align 16
 
-declare void @test5a(%struct.S* byval align 16) nounwind ssp
+declare void @test5a(%struct.S* align 16 byval) nounwind ssp
 
 
 ; rdar://8713376 - This memcpy can't be eliminated.
@@ -94,11 +94,11 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp, i8* bitcast (%struct.S* @sS to i8*), i64 32, i32 16, i1 false)
   %a = getelementptr %struct.S* %y, i64 0, i32 1, i64 0
   store i8 4, i8* %a
-  call void @test5a(%struct.S* byval align 16 %y)
+  call void @test5a(%struct.S* align 16 byval %y)
   ret i32 0
   ; CHECK: @test5(
   ; CHECK: store i8 4
-  ; CHECK: call void @test5a(%struct.S* byval align 16 %y)
+  ; CHECK: call void @test5a(%struct.S* align 16 byval %y)
 }
 
 ;; Noop memcpy should be zapped.
@@ -114,19 +114,19 @@ define void @test6(i8 *%P) {
 ; isn't itself 8 byte aligned.
 %struct.p = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 
-define i32 @test7(%struct.p* nocapture byval align 8 %q) nounwind ssp {
+define i32 @test7(%struct.p* nocapture align 8 byval %q) nounwind ssp {
 entry:
   %agg.tmp = alloca %struct.p, align 4
   %tmp = bitcast %struct.p* %agg.tmp to i8*
   %tmp1 = bitcast %struct.p* %q to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp, i8* %tmp1, i64 48, i32 4, i1 false)
-  %call = call i32 @g(%struct.p* byval align 8 %agg.tmp) nounwind
+  %call = call i32 @g(%struct.p* align 8 byval %agg.tmp) nounwind
   ret i32 %call
 ; CHECK: @test7
-; CHECK: call i32 @g(%struct.p* byval align 8 %q) nounwind
+; CHECK: call i32 @g(%struct.p* align 8 byval %q) nounwind
 }
 
-declare i32 @g(%struct.p* byval align 8)
+declare i32 @g(%struct.p* align 8 byval)
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 
@@ -152,7 +152,7 @@ declare noalias i8* @malloc(i32)
 ; rdar://11341081
 %struct.big = type { [50 x i32] }
 
-define void @test9() nounwind uwtable ssp {
+define void @test9() nounwind ssp uwtable {
 entry:
 ; CHECK: test9
 ; CHECK: f1

@@ -40,6 +40,8 @@ class AttributeImpl : public FoldingSetNode {
 public:
   AttributeImpl(LLVMContext &C, Constant *Kind)
     : Context(C), Kind(Kind) {}
+  AttributeImpl(LLVMContext &C, Constant *Kind, ArrayRef<Constant*> Vals)
+    : Context(C), Kind(Kind), Vals(Vals.begin(), Vals.end()) {}
   explicit AttributeImpl(LLVMContext &C, Attribute::AttrKind data);
   AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
                 ArrayRef<Constant*> values);
