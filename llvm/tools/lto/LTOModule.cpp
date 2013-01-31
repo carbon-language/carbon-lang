@@ -807,7 +807,7 @@ namespace {
     virtual void FinishImpl() {}
 
     static bool classof(const MCStreamer *S) {
-      return S->getKind == SK_RecordStreamer;
+      return S->getKind() == SK_RecordStreamer;
     }
   };
 } // end anonymous namespace
