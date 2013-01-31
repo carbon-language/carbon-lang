@@ -56,9 +56,9 @@ do {
       break;
     goto RACE;
   }
-
   // Do the memory access intersect?
-  if (Shadow::TwoRangesIntersect(old, cur, kAccessSize)) {
+  // In Go all memory accesses are 1 byte, so there can't be no intersections.
+  if (kCppMode && Shadow::TwoRangesIntersect(old, cur, kAccessSize)) {
     StatInc(thr, StatShadowIntersect);
     if (Shadow::TidsAreEqual(old, cur)) {
       StatInc(thr, StatShadowSameThread);
