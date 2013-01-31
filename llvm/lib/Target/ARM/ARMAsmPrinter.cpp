@@ -704,12 +704,8 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
   // FIXME: This should eventually end up somewhere else where more
   // intelligent flag decisions can be made. For now we are just maintaining
   // the status quo for ARM and setting EF_ARM_EABI_VER5 as the default.
-  if (Subtarget->isTargetELF()) {
-    if (OutStreamer.hasRawTextSupport()) return;
-
-    MCELFStreamer &MES = static_cast<MCELFStreamer &>(OutStreamer);
-    MES.getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
-  }
+  if (MCELFStreamer *MES = dyn_cast<MCELFStreamer>(&OutStreamer))
+    MES->getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
 }
 
 //===----------------------------------------------------------------------===//
