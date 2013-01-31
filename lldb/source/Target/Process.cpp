@@ -97,8 +97,8 @@ g_properties[] =
     { "disable-memory-cache" , OptionValue::eTypeBoolean, false, DISABLE_MEM_CACHE_DEFAULT, NULL, NULL, "Disable reading and caching of memory in fixed-size units." },
     { "extra-startup-command", OptionValue::eTypeArray  , false, OptionValue::eTypeString, NULL, NULL, "A list containing extra commands understood by the particular process plugin used.  "
                                                                                                        "For instance, to turn on debugserver logging set this to \"QSetLogging:bitmask=LOG_DEFAULT;\"" },
-    { "ignore-breakpoints-in-expressions", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, breakpoints will be ignored during expression evaluation." },
-    { "unwind-on-error-in-expressions", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, errors in expression evaluation will unwind the stack back to the state before the call." },
+    { "ignore-breakpoints-in-expressions", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, breakpoints will be ignored during expression evaluation." },
+    { "unwind-on-error-in-expressions", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, errors in expression evaluation will unwind the stack back to the state before the call." },
     { "python-os-plugin-path", OptionValue::eTypeFileSpec, false, true, NULL, NULL, "A path to a python OS plug-in module file that contains a OperatingSystemPlugIn class." },
     { "stop-on-sharedlibrary-events" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, stop when a shared library is loaded or unloaded." },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
