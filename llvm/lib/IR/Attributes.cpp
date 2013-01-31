@@ -106,60 +106,70 @@ unsigned Attribute::getStackAlignment() const {
 }
 
 std::string Attribute::getAsString() const {
-  if (hasAttribute(Attribute::ZExt))
-    return "zeroext";
-  if (hasAttribute(Attribute::SExt))
-    return "signext";
-  if (hasAttribute(Attribute::NoReturn))
-    return "noreturn";
-  if (hasAttribute(Attribute::NoUnwind))
-    return "nounwind";
-  if (hasAttribute(Attribute::UWTable))
-    return "uwtable";
-  if (hasAttribute(Attribute::ReturnsTwice))
-    return "returns_twice";
+  if (!pImpl) return "";
+
+  if (hasAttribute(Attribute::AddressSafety))
+    return "address_safety";
+  if (hasAttribute(Attribute::AlwaysInline))
+    return "alwaysinline";
+  if (hasAttribute(Attribute::ByVal))
+    return "byval";
+  if (hasAttribute(Attribute::InlineHint))
+    return "inlinehint";
   if (hasAttribute(Attribute::InReg))
     return "inreg";
+  if (hasAttribute(Attribute::MinSize))
+    return "minsize";
+  if (hasAttribute(Attribute::Naked))
+    return "naked";
+  if (hasAttribute(Attribute::Nest))
+    return "nest";
   if (hasAttribute(Attribute::NoAlias))
     return "noalias";
   if (hasAttribute(Attribute::NoCapture))
     return "nocapture";
-  if (hasAttribute(Attribute::StructRet))
-    return "sret";
-  if (hasAttribute(Attribute::ByVal))
-    return "byval";
-  if (hasAttribute(Attribute::Nest))
-    return "nest";
+  if (hasAttribute(Attribute::NoDuplicate))
+    return "noduplicate";
+  if (hasAttribute(Attribute::NoImplicitFloat))
+    return "noimplicitfloat";
+  if (hasAttribute(Attribute::NoInline))
+    return "noinline";
+  if (hasAttribute(Attribute::NonLazyBind))
+    return "nonlazybind";
+  if (hasAttribute(Attribute::NoRedZone))
+    return "noredzone";
+  if (hasAttribute(Attribute::NoReturn))
+    return "noreturn";
+  if (hasAttribute(Attribute::NoUnwind))
+    return "nounwind";
+  if (hasAttribute(Attribute::OptimizeForSize))
+    return "optsize";
   if (hasAttribute(Attribute::ReadNone))
     return "readnone";
   if (hasAttribute(Attribute::ReadOnly))
     return "readonly";
-  if (hasAttribute(Attribute::OptimizeForSize))
-    return "optsize";
-  if (hasAttribute(Attribute::NoInline))
-    return "noinline";
-  if (hasAttribute(Attribute::InlineHint))
-    return "inlinehint";
-  if (hasAttribute(Attribute::AlwaysInline))
-    return "alwaysinline";
+  if (hasAttribute(Attribute::ReturnsTwice))
+    return "returns_twice";
+  if (hasAttribute(Attribute::SExt))
+    return "signext";
   if (hasAttribute(Attribute::StackProtect))
     return "ssp";
   if (hasAttribute(Attribute::StackProtectReq))
     return "sspreq";
   if (hasAttribute(Attribute::StackProtectStrong))
     return "sspstrong";
-  if (hasAttribute(Attribute::NoRedZone))
-    return "noredzone";
-  if (hasAttribute(Attribute::NoImplicitFloat))
-    return "noimplicitfloat";
-  if (hasAttribute(Attribute::Naked))
-    return "naked";
-  if (hasAttribute(Attribute::NonLazyBind))
-    return "nonlazybind";
-  if (hasAttribute(Attribute::AddressSafety))
-    return "address_safety";
-  if (hasAttribute(Attribute::MinSize))
-    return "minsize";
+  if (hasAttribute(Attribute::StructRet))
+    return "sret";
+  if (hasAttribute(Attribute::UWTable))
+    return "uwtable";
+  if (hasAttribute(Attribute::ZExt))
+    return "zeroext";
+
+  // FIXME: These should be output like this:
+  //
+  //   align=4
+  //   alignstack=8
+  //
   if (hasAttribute(Attribute::StackAlignment)) {
     std::string Result;
     Result += "alignstack(";
@@ -171,17 +181,38 @@ std::string Attribute::getAsString() const {
     std::string Result;
     Result += "align ";
     Result += utostr(getAlignment());
-    Result += "";
     return Result;
   }
-  if (hasAttribute(Attribute::NoDuplicate))
-    return "noduplicate";
+
+  // Convert target-dependent attributes to strings of the form:
+  //
+  //   "kind"
+  //   "kind" = "value"
+  //   "kind" = ("value1" "value2" "value3" )
+  //
+  if (ConstantDataArray *CDA =
+      dyn_cast<ConstantDataArray>(pImpl->getAttributeKind())) {
+    std::string Result;
+    Result += '\"' + CDA->getAsString().str() + '"';
+
+    ArrayRef<Constant*> Vals = pImpl->getAttributeValues();
+    if (Vals.empty()) return Result;
+    Result += " = ";
+    if (Vals.size() > 1) Result += '(';
+    for (ArrayRef<Constant*>::iterator I = Vals.begin(), E = Vals.end();
+         I != E; ) {
+      ConstantDataArray *CDA = cast<ConstantDataArray>(*I++);
+      Result += '\"' + CDA->getAsString().str() + '"';
+      if (I != E) Result += ' ';
+    }
+    if (Vals.size() > 1) Result += ')';
+  }
 
   llvm_unreachable("Unknown attribute");
 }
 
 bool Attribute::operator==(AttrKind K) const {
-  return pImpl && *pImpl == K;
+  return (pImpl && *pImpl == K) || (!pImpl && K == None);
 }
 bool Attribute::operator!=(AttrKind K) const {
   return !(*this == K);

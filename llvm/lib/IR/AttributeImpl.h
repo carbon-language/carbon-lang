@@ -45,23 +45,24 @@ public:
                 ArrayRef<Constant*> values);
   AttributeImpl(LLVMContext &C, StringRef data);
 
+  LLVMContext &getContext() { return Context; }
+
   bool hasAttribute(Attribute::AttrKind A) const;
 
   Constant *getAttributeKind() const { return Kind; }
   ArrayRef<Constant*> getAttributeValues() const { return Vals; }
 
-  LLVMContext &getContext() { return Context; }
-  ArrayRef<Constant*> getValues() const { return Vals; }
-
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
 
+  /// \brief Equality and non-equality comparison operators.
   bool operator==(Attribute::AttrKind Kind) const;
   bool operator!=(Attribute::AttrKind Kind) const;
 
   bool operator==(StringRef Kind) const;
   bool operator!=(StringRef Kind) const;
 
+  /// \brief Used when sorting the attributes.
   bool operator<(const AttributeImpl &AI) const;
 
   void Profile(FoldingSetNodeID &ID) const {
