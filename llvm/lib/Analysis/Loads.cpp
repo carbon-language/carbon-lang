@@ -57,8 +57,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
                                        unsigned Align, const DataLayout *TD) {
   int64_t ByteOffset = 0;
   Value *Base = V;
-  if (TD)
-    Base = GetPointerBaseWithConstantOffset(V, ByteOffset, *TD);
+  Base = GetPointerBaseWithConstantOffset(V, ByteOffset, TD);
 
   if (ByteOffset < 0) // out of bounds
     return false;

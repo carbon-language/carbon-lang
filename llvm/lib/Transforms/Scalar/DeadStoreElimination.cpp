@@ -376,10 +376,10 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
   // Check to see if the later store is to the entire object (either a global,
   // an alloca, or a byval argument).  If so, then it clearly overwrites any
   // other store to the same object.
-  const DataLayout &TD = *AA.getDataLayout();
+  const DataLayout *TD = AA.getDataLayout();
 
-  const Value *UO1 = GetUnderlyingObject(P1, &TD),
-              *UO2 = GetUnderlyingObject(P2, &TD);
+  const Value *UO1 = GetUnderlyingObject(P1, TD),
+              *UO2 = GetUnderlyingObject(P2, TD);
 
   // If we can't resolve the same pointers to the same object, then we can't
   // analyze them at all.

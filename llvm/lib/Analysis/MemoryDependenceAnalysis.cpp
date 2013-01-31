@@ -262,7 +262,7 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
 
   // If we haven't already computed the base/offset of MemLoc, do so now.
   if (MemLocBase == 0)
-    MemLocBase = GetPointerBaseWithConstantOffset(MemLoc.Ptr, MemLocOffs, *TD);
+    MemLocBase = GetPointerBaseWithConstantOffset(MemLoc.Ptr, MemLocOffs, TD);
 
   unsigned Size = MemoryDependenceAnalysis::
     getLoadLoadClobberFullWidthSize(MemLocBase, MemLocOffs, MemLoc.Size,
@@ -287,7 +287,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   // Get the base of this load.
   int64_t LIOffs = 0;
   const Value *LIBase = 
-    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, TD);
+    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, &TD);
   
   // If the two pointers are not based on the same pointer, we can't tell that
   // they are related.

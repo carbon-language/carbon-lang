@@ -1671,8 +1671,10 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
 /// it can be expressed as a base pointer plus a constant offset.  Return the
 /// base and offset to the caller.
 Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
-                                              const DataLayout &TD) {
-  unsigned BitWidth = TD.getPointerSizeInBits();
+                                              const DataLayout *TD) {
+  // Without DataLayout, conservatively assume 64-bit offsets, which is
+  // the widest we support.
+  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 64;
   APInt ByteOffset(BitWidth, 0);
   while (1) {
     if (Ptr->getType()->isVectorTy())
@@ -1680,7 +1682,7 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
       APInt GEPOffset(BitWidth, 0);
-      if (!GEP->accumulateConstantOffset(TD, GEPOffset))
+      if (TD && !GEP->accumulateConstantOffset(*TD, GEPOffset))
         break;
       ByteOffset += GEPOffset;
       Ptr = GEP->getPointerOperand();

@@ -117,10 +117,10 @@ namespace llvm {
   /// it can be expressed as a base pointer plus a constant offset.  Return the
   /// base and offset to the caller.
   Value *GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
-                                          const DataLayout &TD);
+                                          const DataLayout *TD);
   static inline const Value *
   GetPointerBaseWithConstantOffset(const Value *Ptr, int64_t &Offset,
-                                   const DataLayout &TD) {
+                                   const DataLayout *TD) {
     return GetPointerBaseWithConstantOffset(const_cast<Value*>(Ptr), Offset,TD);
   }
   
