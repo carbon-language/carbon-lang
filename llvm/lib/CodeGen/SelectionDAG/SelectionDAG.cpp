@@ -3561,6 +3561,15 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   if (DstAlignCanChange) {
     Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
     unsigned NewAlign = (unsigned) TLI.getDataLayout()->getABITypeAlignment(Ty);
+
+    // Don't promote to an alignment that would require dynamic stack
+    // realignment.  
+    const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+    if (!TRI->needsStackRealignment(MF))
+       while (NewAlign > Align &&
+             TLI.getDataLayout()->exceedsNaturalStackAlignment(NewAlign))
+          NewAlign /= 2;
+
     if (NewAlign > Align) {
       // Give the stack frame object a larger alignment if needed.
       if (MFI->getObjectAlignment(FI->getIndex()) < NewAlign)
