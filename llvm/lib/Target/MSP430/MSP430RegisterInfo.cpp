@@ -167,7 +167,6 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                         RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
-  unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
