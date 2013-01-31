@@ -5,11 +5,11 @@ void foo2(void* const);
 
 
 void bar() {
-  // CHECK:  (FunctionDecl {{.*}} <line:{{.*}}, line:{{.*}}> bar 'void ()'
+  // CHECK:  FunctionDecl {{.*}} <line:{{.*}}, line:{{.*}}> bar 'void ()'
 
   foo1(0);
-  // CHECK: (ImplicitCastExpr {{.*}} <col:{{.*}}> 'void *' <NullToPointer>
+  // CHECK: ImplicitCastExpr {{.*}} <col:{{.*}}> 'void *' <NullToPointer>
 
   foo2(0);
-  // CHECK: (ImplicitCastExpr {{.*}} <col:{{.*}}> 'void *' <NullToPointer>
+  // CHECK: ImplicitCastExpr {{.*}} <col:{{.*}}> 'void *' <NullToPointer>
 }

@@ -6,10 +6,10 @@ int TestLocation = 0;
 
 int TestIndent = 1 + (1);
 // CHECK:      VarDecl{{.*}}TestIndent
-// CHECK-NEXT: {{^  \(BinaryOperator[^()]*$}}
-// CHECK-NEXT: {{^    \(IntegerLiteral.*0[^()]*\)$}}
-// CHECK-NEXT: {{^    \(ParenExpr.*0[^()]*$}}
-// CHECK-NEXT: {{^      \(IntegerLiteral.*0[^()]*\)\)\)\)$}}
+// CHECK-NEXT: {{^}}`-BinaryOperator{{[^()]*$}}
+// CHECK-NEXT: {{^}}  |-IntegerLiteral{{.*0[^()]*$}}
+// CHECK-NEXT: {{^}}  `-ParenExpr{{.*0[^()]*$}}
+// CHECK-NEXT: {{^}}    `-IntegerLiteral{{.*0[^()]*$}}
 
 void TestDeclStmt() {
   int x = 0;

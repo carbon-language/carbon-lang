@@ -7,8 +7,8 @@ int TestLocation;
 struct TestIndent {
   int x;
 };
-// CHECK:      {{^\(RecordDecl.*TestIndent[^()]*$}}
-// CHECK-NEXT: {{^  \(FieldDecl.*x[^()]*\)\)$}}
+// CHECK:      {{^}}RecordDecl{{.*TestIndent[^()]*$}}
+// CHECK-NEXT: {{^}}`-FieldDecl{{.*x[^()]*$}}
 
 struct TestChildren {
   int x;

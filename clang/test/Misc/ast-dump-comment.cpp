@@ -7,8 +7,8 @@ int TestLocation;
 
 ///
 int TestIndent;
-// CHECK:      {{^\(VarDecl.*TestIndent[^()]*$}}
-// CHECK-NEXT: {{^  \(FullComment.*>\)\)$}}
+// CHECK:      {{^VarDecl.*TestIndent[^()]*$}}
+// CHECK-NEXT: {{^`-FullComment.*>$}}
 
 /// Aaa
 int Test_TextComment;

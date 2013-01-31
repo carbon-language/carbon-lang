@@ -127,6 +127,7 @@ namespace {
     virtual void writeValue(raw_ostream &OS) const = 0;
     virtual void writeDump(raw_ostream &OS) const = 0;
     virtual void writeDumpChildren(raw_ostream &OS) const {}
+    virtual void writeHasChildren(raw_ostream &OS) const { OS << "false"; }
   };
 
   class SimpleArgument : public Argument {
@@ -384,11 +385,15 @@ namespace {
     void writeDump(raw_ostream &OS) const {
     }
     void writeDumpChildren(raw_ostream &OS) const {
-      OS << "    if (SA->is" << getUpperName() << "Expr())\n";
+      OS << "    if (SA->is" << getUpperName() << "Expr()) {\n";
+      OS << "      lastChild();\n";
       OS << "      dumpStmt(SA->get" << getUpperName() << "Expr());\n";
-      OS << "    else\n";
+      OS << "    } else\n";
       OS << "      dumpType(SA->get" << getUpperName()
          << "Type()->getType());\n";
+    }
+    void writeHasChildren(raw_ostream &OS) const {
+      OS << "SA->is" << getUpperName() << "Expr()";
     }
   };
 
@@ -635,8 +640,10 @@ namespace {
     }
 
     void writeDumpChildren(raw_ostream &OS) const {
+      OS << "    lastChild();\n";
       OS << "    dumpStmt(SA->get" << getUpperName() << "());\n";
     }
+    void writeHasChildren(raw_ostream &OS) const { OS << "true"; }
   };
 
   class VariadicExprArgument : public VariadicArgument {
@@ -676,8 +683,16 @@ namespace {
     void writeDumpChildren(raw_ostream &OS) const {
       OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
          << "_iterator I = SA->" << getLowerName() << "_begin(), E = SA->"
-         << getLowerName() << "_end(); I != E; ++I)\n";
+         << getLowerName() << "_end(); I != E; ++I) {\n";
+      OS << "      if (I + 1 == E)\n";
+      OS << "        lastChild();\n";
       OS << "      dumpStmt(*I);\n";
+      OS << "    }\n";
+    }
+
+    void writeHasChildren(raw_ostream &OS) const {
+      OS << "SA->" << getLowerName() << "_begin() != "
+         << "SA->" << getLowerName() << "_end()";
     }
   };
 }
@@ -1386,9 +1401,27 @@ void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
       for (std::vector<Record*>::iterator I = Args.begin(), E = Args.end();
            I != E; ++I)
         createArgument(**I, R.getName())->writeDump(OS);
+
+      // Code for detecting the last child.
+      OS << "    bool OldMoreChildren = hasMoreChildren();\n";
+      OS << "    bool MoreChildren = OldMoreChildren;\n";     
+
       for (std::vector<Record*>::iterator I = Args.begin(), E = Args.end();
-           I != E; ++I)
+           I != E; ++I) {
+        // More code for detecting the last child.
+        OS << "    MoreChildren = OldMoreChildren";
+        for (std::vector<Record*>::iterator Next = I + 1; Next != E; ++Next) {
+          OS << " || ";
+          createArgument(**Next, R.getName())->writeHasChildren(OS);
+        }
+        OS << ";\n";
+        OS << "    setMoreChildren(MoreChildren);\n";
+
         createArgument(**I, R.getName())->writeDumpChildren(OS);
+      }
+
+      // Reset the last child.
+      OS << "    setMoreChildren(OldMoreChildren);\n";
     }
     OS <<
       "    break;\n"

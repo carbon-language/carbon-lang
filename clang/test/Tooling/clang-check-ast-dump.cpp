@@ -1,21 +1,21 @@
 // RUN: clang-check -ast-dump "%s" -- 2>&1 | FileCheck %s
-// CHECK: (NamespaceDecl{{.*}}test_namespace
-// CHECK-NEXT: (CXXRecordDecl{{.*}}TheClass
-// CHECK: (CXXMethodDecl{{.*}}theMethod
-// CHECK-NEXT: (ParmVarDecl{{.*}}x
-// CHECK-NEXT: (CompoundStmt
-// CHECK-NEXT:   (ReturnStmt
-// CHECK-NEXT:     (BinaryOperator
+// CHECK: NamespaceDecl{{.*}}test_namespace
+// CHECK-NEXT: CXXRecordDecl{{.*}}TheClass
+// CHECK: CXXMethodDecl{{.*}}theMethod
+// CHECK-NEXT: ParmVarDecl{{.*}}x
+// CHECK-NEXT: CompoundStmt
+// CHECK-NEXT:   ReturnStmt
+// CHECK-NEXT:     BinaryOperator
 //
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::TheClass::theMethod "%s" -- 2>&1 | FileCheck -check-prefix CHECK-FILTER %s
 // CHECK-FILTER-NOT: NamespaceDecl
 // CHECK-FILTER-NOT: CXXRecordDecl
 // CHECK-FILTER: {{^}}Dumping test_namespace::TheClass::theMethod
-// CHECK-FILTER-NEXT: {{^}}(CXXMethodDecl{{.*}}theMethod
-// CHECK-FILTER-NEXT: (ParmVarDecl{{.*}}x
-// CHECK-FILTER-NEXT: (CompoundStmt
-// CHECK-FILTER-NEXT:   (ReturnStmt
-// CHECK-FILTER-NEXT:     (BinaryOperator
+// CHECK-FILTER-NEXT: {{^}}CXXMethodDecl{{.*}}theMethod
+// CHECK-FILTER-NEXT: ParmVarDecl{{.*}}x
+// CHECK-FILTER-NEXT: CompoundStmt
+// CHECK-FILTER-NEXT:   ReturnStmt
+// CHECK-FILTER-NEXT:     BinaryOperator
 //
 // RUN: clang-check -ast-print "%s" -- 2>&1 | FileCheck -check-prefix CHECK-PRINT %s
 // CHECK-PRINT: namespace test_namespace
@@ -30,9 +30,9 @@
 //
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::TheClass::n "%s" -- 2>&1 | FileCheck -check-prefix CHECK-ATTR %s
 // CHECK-ATTR: test_namespace
-// CHECK-ATTR-NEXT: (FieldDecl{{.*}}n
-// CHECK-ATTR-NEXT:   (AlignedAttr
-// CHECK-ATTR-NEXT:     (BinaryOperator
+// CHECK-ATTR-NEXT: FieldDecl{{.*}}n
+// CHECK-ATTR-NEXT:   AlignedAttr
+// CHECK-ATTR-NEXT:     BinaryOperator
 //
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::AfterNullNode "%s" -- 2>&1 | FileCheck -check-prefix CHECK-AFTER-NULL %s
 // CHECK-AFTER-NULL: class AfterNullNode

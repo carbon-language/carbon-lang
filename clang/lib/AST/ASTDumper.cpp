@@ -70,6 +70,9 @@ namespace  {
   // Decl names
   static const TerminalColor DeclNameColor = { raw_ostream::CYAN, true };
 
+  // Indents ( `, -. | )
+  static const TerminalColor IndentColor = { raw_ostream::BLUE, false };
+
   class ASTDumper
       : public DeclVisitor<ASTDumper>, public StmtVisitor<ASTDumper>,
         public ConstCommentVisitor<ASTDumper> {
@@ -78,6 +81,19 @@ namespace  {
     const SourceManager *SM;
     unsigned IndentLevel;
     bool IsFirstLine;
+
+    // Indicates whether more child are expected at the current tree depth
+    enum IndentType { IT_Child, IT_LastChild };
+
+    /// Indents[i] indicates if another child exists at level i.
+    /// Used by Indent() to print the tree structure. 
+    llvm::SmallVector<IndentType, 32> Indents;
+
+    /// Indicates that more children will be needed at this indent level.
+    /// If true, prevents lastChild() from marking the node as the last child.
+    /// This is used when there are multiple collections of children to be
+    /// dumped as well as during conditional node dumping.
+    bool MoreChildren;
 
     /// Keep track of the last location we print out so that we can
     /// print out deltas from then on out.
@@ -91,11 +107,16 @@ namespace  {
 
     class IndentScope {
       ASTDumper &Dumper;
+      // Preserve the Dumper's MoreChildren value from the previous IndentScope
+      bool MoreChildren;
     public:
       IndentScope(ASTDumper &Dumper) : Dumper(Dumper) {
+        MoreChildren = Dumper.hasMoreChildren();
+        Dumper.setMoreChildren(false);
         Dumper.indent();
       }
       ~IndentScope() {
+        Dumper.setMoreChildren(MoreChildren);
         Dumper.unindent();
       }
     };
@@ -118,13 +139,14 @@ namespace  {
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM)
       : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
-        LastLocFilename(""), LastLocLine(~0U), FC(0),
+        MoreChildren(false), LastLocFilename(""), LastLocLine(~0U), FC(0),
         ShowColors(SM && SM->getDiagnostics().getShowColors()) { }
 
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM, bool ShowColors)
       : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
-        LastLocFilename(""), LastLocLine(~0U), ShowColors(ShowColors) { }
+        MoreChildren(false), LastLocFilename(""), LastLocLine(~0U),
+        ShowColors(ShowColors) { }
 
     ~ASTDumper() {
       OS << "\n";
@@ -134,9 +156,14 @@ namespace  {
     void dumpStmt(Stmt *S);
     void dumpFullComment(const FullComment *C);
 
-    // Utilities
+    // Formatting
     void indent();
     void unindent();
+    void lastChild();
+    bool hasMoreChildren();
+    void setMoreChildren(bool Value);
+
+    // Utilities
     void dumpPointer(const void *Ptr);
     void dumpSourceRange(SourceRange R);
     void dumpLocation(SourceLocation Loc);
@@ -145,6 +172,7 @@ namespace  {
     void dumpBareDeclRef(const Decl *Node);
     void dumpDeclRef(const Decl *Node, const char *Label = 0);
     void dumpName(const NamedDecl *D);
+    bool hasNodes(const DeclContext *DC);
     void dumpDeclContext(const DeclContext *DC);
     void dumpAttr(const Attr *A);
 
@@ -284,19 +312,66 @@ namespace  {
 //  Utilities
 //===----------------------------------------------------------------------===//
 
+// Print out the appropriate tree structure using the Indents vector.
+// Example of tree and the Indents vector at each level.
+// A        { }
+// |-B      { IT_Child }
+// | `-C    { IT_Child,     IT_LastChild }
+// `-D      { IT_LastChild }
+//   |-E    { IT_LastChild, IT_Child }
+//   `-F    { IT_LastChild, IT_LastChild }
+// Type            non-last element, last element
+// IT_Child        "| "              "|-"
+// IT_LastChild    "  "              "`-"
 void ASTDumper::indent() {
   if (IsFirstLine)
     IsFirstLine = false;
   else
     OS << "\n";
-  OS.indent(IndentLevel * 2);
-  OS << "(";
-  IndentLevel++;
+
+  ColorScope Color(*this, IndentColor);
+  for (llvm::SmallVector<IndentType, 32>::const_iterator I =
+           Indents.begin(), E = Indents.end();
+       I != E; ++I) {
+    switch (*I) {
+      case IT_Child:
+        if (I == E - 1)
+          OS << "|-";
+        else
+          OS << "| ";
+        break;
+      case IT_LastChild:
+        if (I == E - 1)
+          OS << "`-";
+        else
+          OS << "  ";
+        break;
+      default:
+        llvm_unreachable("Invalid IndentType");
+    }
+  }
+  Indents.push_back(IT_Child);
 }
 
 void ASTDumper::unindent() {
-  OS << ")";
-  IndentLevel--;
+  Indents.pop_back();
+}
+
+// Call before each potential last child node is to be dumped.  If MoreChildren
+// is false, then this is the last child, otherwise treat as a regular node.
+void ASTDumper::lastChild() {
+  if (!hasMoreChildren())
+    Indents.back() = IT_LastChild;
+}
+
+// MoreChildren should be set before calling another function that may print
+// additional nodes to prevent conflicting final child nodes.
+bool ASTDumper::hasMoreChildren() {
+  return MoreChildren;
+}
+
+void ASTDumper::setMoreChildren(bool Value) {
+  MoreChildren = Value;
 }
 
 void ASTDumper::dumpPointer(const void *Ptr) {
@@ -402,12 +477,24 @@ void ASTDumper::dumpName(const NamedDecl *ND) {
   }
 }
 
+bool ASTDumper::hasNodes(const DeclContext *DC) {
+  if (!DC)
+    return false;
+
+  return DC->decls_begin() != DC->decls_end();
+}
+
 void ASTDumper::dumpDeclContext(const DeclContext *DC) {
   if (!DC)
     return;
   for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
-       I != E; ++I)
+       I != E; ++I) {
+    DeclContext::decl_iterator Next = I;
+    ++Next;
+    if (Next == E)
+      lastChild();
     dumpDecl(*I);
+  }
 }
 
 void ASTDumper::dumpAttr(const Attr *A) {
@@ -469,8 +556,11 @@ void ASTDumper::dumpTemplateParameters(const TemplateParameterList *TPL) {
 
 void ASTDumper::dumpTemplateArgumentListInfo(
     const TemplateArgumentListInfo &TALI) {
-  for (unsigned i = 0, e = TALI.size(); i < e; ++i)
+  for (unsigned i = 0, e = TALI.size(); i < e; ++i) {
+    if (i + 1 == e)
+      lastChild();
     dumpTemplateArgumentLoc(TALI[i]);
+  }
 }
 
 void ASTDumper::dumpTemplateArgumentLoc(const TemplateArgumentLoc &A) {
@@ -494,10 +584,12 @@ void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R) {
     break;
   case TemplateArgument::Type:
     OS << " type";
+    lastChild();
     dumpType(A.getAsType());
     break;
   case TemplateArgument::Declaration:
     OS << " decl";
+    lastChild();
     dumpDeclRef(A.getAsDecl());
     break;
   case TemplateArgument::NullPtr:
@@ -516,13 +608,17 @@ void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R) {
     break;
   case TemplateArgument::Expression:
     OS << " expr";
+    lastChild();
     dumpStmt(A.getAsExpr());
     break;
   case TemplateArgument::Pack:
     OS << " pack";
     for (TemplateArgument::pack_iterator I = A.pack_begin(), E = A.pack_end();
-         I != E; ++I)
+         I != E; ++I) {
+      if (I + 1 == E)
+        lastChild();
       dumpTemplateArgument(*I);
+    }
     break;
   }
 }
@@ -546,15 +642,32 @@ void ASTDumper::dumpDecl(Decl *D) {
   }
   dumpPointer(D);
   dumpSourceRange(D->getSourceRange());
-  DeclVisitor<ASTDumper>::Visit(D);
-  if (D->hasAttrs()) {
-    for (AttrVec::const_iterator I = D->getAttrs().begin(),
-         E = D->getAttrs().end(); I != E; ++I)
-      dumpAttr(*I);
-  }
-  dumpFullComment(D->getASTContext().getCommentForDecl(D, 0));
+
+  bool HasAttrs = D->hasAttrs() && D->getAttrs().begin() != D->getAttrs().end();
+  bool HasComment = D->getASTContext().getCommentForDecl(D, 0);
   // Decls within functions are visited by the body
-  if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D))
+  bool HasDeclContext = !isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D) &&
+                         hasNodes(dyn_cast<DeclContext>(D));
+
+  setMoreChildren(HasAttrs || HasComment || HasDeclContext);
+  DeclVisitor<ASTDumper>::Visit(D);
+
+  setMoreChildren(HasComment || HasDeclContext);
+  if (HasAttrs) {
+    for (AttrVec::const_iterator I = D->getAttrs().begin(),
+         E = D->getAttrs().end(); I != E; ++I) {
+      if (I + 1 == E)
+        lastChild();
+      dumpAttr(*I);
+    }
+  }
+
+  setMoreChildren(HasDeclContext);
+  lastChild();
+  dumpFullComment(D->getASTContext().getCommentForDecl(D, 0));
+
+  setMoreChildren(false);
+  if (HasDeclContext)
     dumpDeclContext(dyn_cast<DeclContext>(D));
 }
 
@@ -593,16 +706,21 @@ void ASTDumper::VisitRecordDecl(RecordDecl *D) {
 void ASTDumper::VisitEnumConstantDecl(EnumConstantDecl *D) {
   dumpName(D);
   dumpType(D->getType());
-  if (Expr *Init = D->getInitExpr())
+  if (Expr *Init = D->getInitExpr()) {
+    lastChild();
     dumpStmt(Init);
+  }
 }
 
 void ASTDumper::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   dumpName(D);
   dumpType(D->getType());
   for (IndirectFieldDecl::chain_iterator I = D->chain_begin(),
-       E = D->chain_end(); I != E; ++I)
+       E = D->chain_end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDeclRef(*I);
+  }
 }
 
 void ASTDumper::VisitFunctionDecl(FunctionDecl *D) {
@@ -624,26 +742,60 @@ void ASTDumper::VisitFunctionDecl(FunctionDecl *D) {
   else if (D->isDeletedAsWritten())
     OS << " delete";
 
-  if (const FunctionTemplateSpecializationInfo *FTSI =
-      D->getTemplateSpecializationInfo())
-    dumpTemplateArgumentList(*FTSI->TemplateArguments);
+  bool OldMoreChildren = hasMoreChildren();
+  const FunctionTemplateSpecializationInfo *FTSI =
+      D->getTemplateSpecializationInfo();
+  bool HasTemplateSpecialization = FTSI;
 
+  bool HasNamedDecls = D->getDeclsInPrototypeScope().begin() !=
+                       D->getDeclsInPrototypeScope().end();
+
+  bool HasFunctionDecls = D->param_begin() != D->param_end();
+
+  CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D);
+  bool HasCtorInitializers = C && C->init_begin() != C->init_end();
+
+  bool HasDeclarationBody = D->doesThisDeclarationHaveABody();
+
+  setMoreChildren(OldMoreChildren || HasNamedDecls || HasFunctionDecls ||
+                  HasCtorInitializers || HasDeclarationBody);
+  if (HasTemplateSpecialization) {
+    lastChild();
+    dumpTemplateArgumentList(*FTSI->TemplateArguments);
+  }
+
+  setMoreChildren(OldMoreChildren || HasFunctionDecls ||
+                  HasCtorInitializers || HasDeclarationBody);
   for (ArrayRef<NamedDecl *>::iterator
        I = D->getDeclsInPrototypeScope().begin(),
-       E = D->getDeclsInPrototypeScope().end(); I != E; ++I)
+       E = D->getDeclsInPrototypeScope().end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDecl(*I);
+  }
 
+  setMoreChildren(OldMoreChildren || HasCtorInitializers || HasDeclarationBody);
   for (FunctionDecl::param_iterator I = D->param_begin(), E = D->param_end();
-       I != E; ++I)
+       I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDecl(*I);
-
-  if (CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D))
+  }
+ 
+  setMoreChildren(OldMoreChildren || HasDeclarationBody);
+  if (HasCtorInitializers)
     for (CXXConstructorDecl::init_const_iterator I = C->init_begin(),
-         E = C->init_end(); I != E; ++I)
+         E = C->init_end(); I != E; ++I) {
+      if (I + 1 == E)
+        lastChild();
       dumpCXXCtorInitializer(*I);
+  }
 
-  if (D->doesThisDeclarationHaveABody())
+  setMoreChildren(OldMoreChildren);
+  if (HasDeclarationBody) {
+    lastChild();
     dumpStmt(D->getBody());
+  }
 }
 
 void ASTDumper::VisitFieldDecl(FieldDecl *D) {
@@ -653,10 +805,22 @@ void ASTDumper::VisitFieldDecl(FieldDecl *D) {
     OS << " mutable";
   if (D->isModulePrivate())
     OS << " __module_private__";
-  if (D->isBitField())
+
+  bool OldMoreChildren = hasMoreChildren();
+  bool IsBitField = D->isBitField();
+  Expr *Init = D->getInClassInitializer();
+  bool HasInit = Init;
+
+  setMoreChildren(OldMoreChildren || HasInit);
+  if (IsBitField) {
+    lastChild();
     dumpStmt(D->getBitWidth());
-  if (Expr *Init = D->getInClassInitializer())
+  }
+  setMoreChildren(OldMoreChildren);
+  if (HasInit) {
+    lastChild();
     dumpStmt(Init);
+  }
 }
 
 void ASTDumper::VisitVarDecl(VarDecl *D) {
@@ -671,11 +835,14 @@ void ASTDumper::VisitVarDecl(VarDecl *D) {
     OS << " __module_private__";
   if (D->isNRVOVariable())
     OS << " nrvo";
-  if (D->hasInit())
+  if (D->hasInit()) {
+    lastChild();
     dumpStmt(D->getInit());
+  }
 }
 
 void ASTDumper::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
+  lastChild();
   dumpStmt(D->getAsmString());
 }
 
@@ -735,6 +902,7 @@ void ASTDumper::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
 void ASTDumper::VisitStaticAssertDecl(StaticAssertDecl *D) {
   dumpStmt(D->getAssertExpr());
+  lastChild();
   dumpStmt(D->getMessage());
 }
 
@@ -744,6 +912,10 @@ void ASTDumper::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   dumpDecl(D->getTemplatedDecl());
   for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(),
        E = D->spec_end(); I != E; ++I) {
+    FunctionTemplateDecl::spec_iterator Next = I;
+    ++Next;
+    if (Next == E)
+      lastChild();
     switch (I->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
     case TSK_ImplicitInstantiation:
@@ -761,9 +933,16 @@ void ASTDumper::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
 void ASTDumper::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   dumpName(D);
   dumpTemplateParameters(D->getTemplateParameters());
+
+  if (D->spec_begin() == D->spec_end())
+    lastChild();
   dumpDecl(D->getTemplatedDecl());
   for (ClassTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
        I != E; ++I) {
+    ClassTemplateDecl::spec_iterator Next = I;
+    ++Next;
+    if (Next == E)
+      lastChild();
     switch (I->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
     case TSK_ImplicitInstantiation:
@@ -908,66 +1087,99 @@ void ASTDumper::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   dumpName(D);
   dumpType(D->getResultType());
 
-  if (D->isThisDeclarationADefinition())
+  bool OldMoreChildren = hasMoreChildren();
+  bool IsVariadic = D->isVariadic();
+  bool HasBody = D->hasBody();
+
+  setMoreChildren(OldMoreChildren || IsVariadic || HasBody);
+  if (D->isThisDeclarationADefinition()) {
+    lastChild();
     dumpDeclContext(D);
-  else {
+  } else {
     for (ObjCMethodDecl::param_iterator I = D->param_begin(),
          E = D->param_end(); I != E; ++I) {
+      if (I + 1 == E)
+        lastChild();
       dumpDecl(*I);
     }
   }
 
-  if (D->isVariadic()) {
+  setMoreChildren(OldMoreChildren || HasBody);
+  if (IsVariadic) {
+    lastChild();
     IndentScope Indent(*this);
     OS << "...";
   }
 
-  if (D->hasBody())
+  setMoreChildren(OldMoreChildren);
+  if (HasBody) {
+    lastChild();
     dumpStmt(D->getBody());
+  }
 }
 
 void ASTDumper::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   dumpName(D);
   dumpDeclRef(D->getClassInterface());
+  if (D->protocol_begin() == D->protocol_end())
+    lastChild();
   dumpDeclRef(D->getImplementation());
   for (ObjCCategoryDecl::protocol_iterator I = D->protocol_begin(),
-       E = D->protocol_end(); I != E; ++I)
+       E = D->protocol_end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDeclRef(*I);
+  }
 }
 
 void ASTDumper::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   dumpName(D);
   dumpDeclRef(D->getClassInterface());
+  lastChild();
   dumpDeclRef(D->getCategoryDecl());
 }
 
 void ASTDumper::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   dumpName(D);
   for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(),
-       E = D->protocol_end(); I != E; ++I)
+       E = D->protocol_end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDeclRef(*I);
+  }
 }
 
 void ASTDumper::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   dumpName(D);
   dumpDeclRef(D->getSuperClass(), "super");
+  if (D->protocol_begin() == D->protocol_end())
+    lastChild();
   dumpDeclRef(D->getImplementation());
   for (ObjCInterfaceDecl::protocol_iterator I = D->protocol_begin(),
-       E = D->protocol_end(); I != E; ++I)
+       E = D->protocol_end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDeclRef(*I);
+  }
 }
 
 void ASTDumper::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   dumpName(D);
   dumpDeclRef(D->getSuperClass(), "super");
+  if (D->init_begin() == D->init_end())
+    lastChild();
   dumpDeclRef(D->getClassInterface());
   for (ObjCImplementationDecl::init_iterator I = D->init_begin(),
-       E = D->init_end(); I != E; ++I)
+       E = D->init_end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpCXXCtorInitializer(*I);
+  }
 }
 
 void ASTDumper::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D) {
   dumpName(D);
+  lastChild();
   dumpDeclRef(D->getClassInterface());
 }
 
@@ -1002,10 +1214,15 @@ void ASTDumper::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
       OS << " strong";
     if (Attrs & ObjCPropertyDecl::OBJC_PR_unsafe_unretained)
       OS << " unsafe_unretained";
-    if (Attrs & ObjCPropertyDecl::OBJC_PR_getter)
+    if (Attrs & ObjCPropertyDecl::OBJC_PR_getter) {
+      if (!(Attrs & ObjCPropertyDecl::OBJC_PR_setter))
+        lastChild();
       dumpDeclRef(D->getGetterMethodDecl(), "getter");
-    if (Attrs & ObjCPropertyDecl::OBJC_PR_setter)
+    }
+    if (Attrs & ObjCPropertyDecl::OBJC_PR_setter) {
+      lastChild();
       dumpDeclRef(D->getSetterMethodDecl(), "setter");
+    }
   }
 }
 
@@ -1016,6 +1233,7 @@ void ASTDumper::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   else
     OS << " dynamic";
   dumpDeclRef(D->getPropertyDecl());
+  lastChild();
   dumpDeclRef(D->getPropertyIvarDecl());
 }
 
@@ -1048,7 +1266,7 @@ void ASTDumper::VisitBlockDecl(BlockDecl *D) {
     if (I->hasCopyExpr())
       dumpStmt(I->getCopyExpr());
   }
-
+  lastChild();
   dumpStmt(D->getBody());
 }
 
@@ -1070,9 +1288,16 @@ void ASTDumper::dumpStmt(Stmt *S) {
     return;
   }
 
+  setMoreChildren(S->children());
   StmtVisitor<ASTDumper>::Visit(S);
-  for (Stmt::child_range CI = S->children(); CI; ++CI)
+  setMoreChildren(false);
+  for (Stmt::child_range CI = S->children(); CI; ++CI) {
+    Stmt::child_range Next = CI;
+    ++Next;
+    if (!Next)
+      lastChild();
     dumpStmt(*CI);
+  }
 }
 
 void ASTDumper::VisitStmt(Stmt *Node) {
@@ -1087,15 +1312,21 @@ void ASTDumper::VisitStmt(Stmt *Node) {
 void ASTDumper::VisitDeclStmt(DeclStmt *Node) {
   VisitStmt(Node);
   for (DeclStmt::decl_iterator I = Node->decl_begin(), E = Node->decl_end();
-       I != E; ++I)
+       I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpDecl(*I);
+  }
 }
 
 void ASTDumper::VisitAttributedStmt(AttributedStmt *Node) {
   VisitStmt(Node);
   for (ArrayRef<const Attr*>::iterator I = Node->getAttrs().begin(),
-       E = Node->getAttrs().end(); I != E; ++I)
+       E = Node->getAttrs().end(); I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpAttr(*I);
+  }
 }
 
 void ASTDumper::VisitLabelStmt(LabelStmt *Node) {
@@ -1321,8 +1552,10 @@ void ASTDumper::VisitBlockExpr(BlockExpr *Node) {
 void ASTDumper::VisitOpaqueValueExpr(OpaqueValueExpr *Node) {
   VisitExpr(Node);
 
-  if (Expr *Source = Node->getSourceExpr())
+  if (Expr *Source = Node->getSourceExpr()) {
+    lastChild();
     dumpStmt(Source);
+  }
 }
 
 // GNU extensions.
@@ -1542,8 +1775,11 @@ void ASTDumper::dumpComment(const Comment *C) {
   dumpSourceRange(C->getSourceRange());
   ConstCommentVisitor<ASTDumper>::visit(C);
   for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
-       I != E; ++I)
+       I != E; ++I) {
+    if (I + 1 == E)
+      lastChild();
     dumpComment(*I);
+  }
 }
 
 void ASTDumper::visitTextComment(const TextComment *C) {

@@ -7,8 +7,8 @@ __attribute__((unused));
 
 int TestIndent
 __attribute__((unused));
-// CHECK:      {{^\(VarDecl.*TestIndent[^()]*$}}
-// CHECK-NEXT: {{^  \(UnusedAttr[^()]*\)\)$}}
+// CHECK:      {{^}}VarDecl{{.*TestIndent[^()]*$}}
+// CHECK-NEXT: {{^}}`-UnusedAttr{{[^()]*$}}
 
 void TestAttributedStmt() {
   switch (1) {
