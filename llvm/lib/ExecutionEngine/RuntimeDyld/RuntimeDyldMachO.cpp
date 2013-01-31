@@ -96,6 +96,7 @@ bool RuntimeDyldMachO::resolveI386Relocation(uint8_t *LocalAddress,
       *p++ = (uint8_t)(ValueToWrite & 0xff);
       ValueToWrite >>= 8;
     }
+    return false;
   }
   case macho::RIT_Difference:
   case macho::RIT_Generic_LocalDifference:
