@@ -215,7 +215,7 @@ void UnwrappedLineParser::parsePPDirective() {
   nextToken();
 
   if (FormatTok.Tok.getIdentifierInfo() == NULL) {
-    addUnwrappedLine();
+    parsePPUnknown();
     return;
   }
 

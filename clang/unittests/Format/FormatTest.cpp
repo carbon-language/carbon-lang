@@ -714,8 +714,10 @@ TEST_F(FormatTest, DoesNotBreakPureVirtualFunctionDefinition) {
                "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
 }
 
-TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
-  EXPECT_EQ("#\n;", format("#;"));
+TEST_F(FormatTest, LayoutUnknownPPDirective) {
+  EXPECT_EQ("#123 \"A string literal\"",
+            format("   #     123    \"A string literal\""));
+  EXPECT_EQ("#;", format("#;"));
   verifyFormat("#\n;\n;\n;");
 }
 
