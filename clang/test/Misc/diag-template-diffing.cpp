@@ -845,7 +845,24 @@ namespace PR15023 {
   // CHECK-ELIDE-NOTREE: candidate template ignored: deduced conflicting types for parameter 'Args' (<int, int &> vs. <int, int>)
 }
 
+namespace rdar12931988 {
+  namespace A {
+    template<typename T> struct X { };
+  }
+
+  namespace B {
+    template<typename T> struct X { };
+  }
+
+  void foo(A::X<int> &ax, B::X<int> bx) {
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'B::X<int>' to 'const rdar12931988::A::X<int>'
+    ax = bx;
+  }
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-TREE: {{[0-9]*}} errors generated.
+
