@@ -12038,17 +12038,17 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
 
 SDValue X86TargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
   assert(Subtarget->isTargetDarwin() && Subtarget->is64Bit());
- 
+
   // For MacOSX, we want to call an alternative entry point: __sincos_stret,
   // which returns the values in two XMM registers.
   DebugLoc dl = Op.getDebugLoc();
   SDValue Arg = Op.getOperand(0);
   EVT ArgVT = Arg.getValueType();
   Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
-  
+
   ArgListTy Args;
   ArgListEntry Entry;
-  
+
   Entry.Node = Arg;
   Entry.Ty = ArgTy;
   Entry.isSExt = false;
@@ -16512,8 +16512,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
 
     // Represent the data using the same element type that is stored in
     // memory. In practice, we ''widen'' MemVT.
-    EVT WideVecVT = 
-	  EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
+    EVT WideVecVT =
+          EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
                        loadRegZize/MemVT.getScalarType().getSizeInBits());
 
     assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
@@ -17199,8 +17199,8 @@ static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-// Helper function of PerformSETCCCombine. It is to materialize "setb reg" 
-// as "sbb reg,reg", since it can be extended without zext and produces 
+// Helper function of PerformSETCCCombine. It is to materialize "setb reg"
+// as "sbb reg,reg", since it can be extended without zext and produces
 // an all-ones bit which is more useful than 0/1 in some cases.
 static SDValue MaterializeSETB(DebugLoc DL, SDValue EFLAGS, SelectionDAG &DAG) {
   return DAG.getNode(ISD::AND, DL, MVT::i8,
@@ -17218,13 +17218,13 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
   SDValue EFLAGS = N->getOperand(1);
 
   if (CC == X86::COND_A) {
-    // Try to convert COND_A into COND_B in an attempt to facilitate 
+    // Try to convert COND_A into COND_B in an attempt to facilitate
     // materializing "setb reg".
     //
     // Do not flip "e > c", where "c" is a constant, because Cmp instruction
     // cannot take an immediate as its first operand.
     //
-    if (EFLAGS.getOpcode() == X86ISD::SUB && EFLAGS.hasOneUse() && 
+    if (EFLAGS.getOpcode() == X86ISD::SUB && EFLAGS.hasOneUse() &&
         EFLAGS.getValueType().isInteger() &&
         !isa<ConstantSDNode>(EFLAGS.getOperand(1))) {
       SDValue NewSub = DAG.getNode(X86ISD::SUB, EFLAGS.getDebugLoc(),
