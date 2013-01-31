@@ -1,0 +1,3 @@
+# Run a command that fails with error on stdout.
+#
+# RUN: cat "does-not-exist"
