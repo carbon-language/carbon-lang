@@ -29,6 +29,6 @@ let TargetPrefix = "R600", isTarget = 1 in {
       Intrinsic<[], [llvm_float_ty], []>;
   def int_R600_store_pixel_stencil :
       Intrinsic<[], [llvm_float_ty], []>;
-  def int_R600_store_pixel_dummy :
-      Intrinsic<[], [], []>;
+  def int_R600_store_dummy :
+      Intrinsic<[], [llvm_i32_ty], []>;
 }

@@ -589,9 +589,14 @@ multiclass ExportPattern<Instruction ExportInst, bits<8> cf_inst> {
         0, 61, 7, 0, 7, 7, cf_inst, 0)
   >;
 
-  def : Pat<(int_R600_store_pixel_dummy),
+  def : Pat<(int_R600_store_dummy (i32 imm:$type)),
     (ExportInst
-        (v4f32 (IMPLICIT_DEF)), 0, 0, 7, 7, 7, 7, cf_inst, 0)
+        (v4f32 (IMPLICIT_DEF)), imm:$type, 0, 7, 7, 7, 7, cf_inst, 0)
+  >;
+
+  def : Pat<(int_R600_store_dummy 1),
+    (ExportInst
+        (v4f32 (IMPLICIT_DEF)), 1, 60, 7, 7, 7, 7, cf_inst, 0)
   >;
 
   def : Pat<(EXPORT (v4f32 R600_Reg128:$src), (i32 0),
