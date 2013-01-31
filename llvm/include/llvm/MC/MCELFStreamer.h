@@ -87,7 +87,7 @@ public:
   /// @}
 
   static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_ELFStreamer && S->getKind() == SK_ARMELFStreamer;
+    return S->getKind() == SK_ELFStreamer || S->getKind() == SK_ARMELFStreamer;
   }
 
 private:
