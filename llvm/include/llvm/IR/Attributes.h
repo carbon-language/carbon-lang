@@ -107,9 +107,6 @@ private:
   Attribute(AttributeImpl *A) : pImpl(A) {}
 
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
-
-  /// \brief Return true if the attribute is present.
-  bool hasAttribute(AttrKind Val) const;
 public:
   Attribute() : pImpl(0) {}
 
@@ -128,6 +125,12 @@ public:
   //===--------------------------------------------------------------------===//
   // Attribute Accessors
   //===--------------------------------------------------------------------===//
+
+  /// \brief Return true if the attribute is present.
+  bool hasAttribute(AttrKind Val) const;
+
+  /// \brief Return true if attributes exist
+  bool hasAttributes() const;
 
   /// \brief Return the kind of this attribute.
   Constant *getAttributeKind() const;

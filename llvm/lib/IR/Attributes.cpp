@@ -82,6 +82,10 @@ bool Attribute::hasAttribute(AttrKind Val) const {
   return pImpl && pImpl->hasAttribute(Val);
 }
 
+bool Attribute::hasAttributes() const {
+  return pImpl && pImpl->hasAttributes();
+}
+
 Constant *Attribute::getAttributeKind() const {
   return pImpl ? pImpl->getAttributeKind() : 0;
 }
@@ -181,7 +185,7 @@ std::string Attribute::getAsString() const {
 }
 
 bool Attribute::operator==(AttrKind K) const {
-  return (pImpl && *pImpl == K) || (!pImpl && K == None);
+  return pImpl && *pImpl == K;
 }
 bool Attribute::operator!=(AttrKind K) const {
   return !(*this == K);
@@ -220,6 +224,10 @@ AttributeImpl::AttributeImpl(LLVMContext &C, StringRef kind)
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   return (Raw() & getAttrMask(A)) != 0;
+}
+
+bool AttributeImpl::hasAttributes() const {
+  return Raw() != 0;
 }
 
 uint64_t AttributeImpl::getAlignment() const {
@@ -361,7 +369,7 @@ AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
 bool AttributeSetNode::hasAttribute(Attribute::AttrKind Kind) const {
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ++I)
-    if (*I == Kind)
+    if (I->hasAttribute(Kind))
       return true;
   return false;
 }
@@ -369,7 +377,7 @@ bool AttributeSetNode::hasAttribute(Attribute::AttrKind Kind) const {
 unsigned AttributeSetNode::getAlignment() const {
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ++I)
-    if (*I == Attribute::Alignment)
+    if (I->hasAttribute(Attribute::Alignment))
       return I->getAlignment();
   return 0;
 }
@@ -377,7 +385,7 @@ unsigned AttributeSetNode::getAlignment() const {
 unsigned AttributeSetNode::getStackAlignment() const {
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ++I)
-    if (*I == Attribute::StackAlignment)
+    if (I->hasAttribute(Attribute::StackAlignment))
       return I->getStackAlignment();
   return 0;
 }
@@ -446,7 +454,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     assert((!i || Attrs[i-1].first <= Attrs[i].first) &&
            "Misordered Attributes list!");
-    assert(Attrs[i].second != Attribute::None &&
+    assert(Attrs[i].second.hasAttributes() &&
            "Pointless attribute!");
   }
 #endif
@@ -674,7 +682,7 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
     for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
            IE = pImpl->end(I); II != IE; ++II)
-      if (*II == Attr)
+      if (II->hasAttribute(Attr))
         return true;
 
   return false;
