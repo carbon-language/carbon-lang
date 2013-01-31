@@ -465,11 +465,11 @@ more information on under which circumstances the different models may
 be used. The target may choose a different TLS model if the specified
 model is not supported, or if a better choice of model can be made.
 
-A variable may be defined as a global "constant," which indicates that
+A variable may be marked with ``constant``, which indicates that
 the contents of the variable will **never** be modified (enabling better
 optimization, allowing the global data to be placed in the read-only
 section of an executable, etc). Note that variables that need runtime
-initialization cannot be marked "constant" as there is a store to the
+initialization cannot be marked ``constant`` as there is a store to the
 variable.
 
 LLVM explicitly allows *declarations* of global variables to be marked
