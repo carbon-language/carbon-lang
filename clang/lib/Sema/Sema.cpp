@@ -366,13 +366,52 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
 }
 
 namespace {
-  struct UndefinedInternal {
-    NamedDecl *decl;
-    FullSourceLoc useLoc;
+  struct SortUndefinedInternal {
+    const SourceManager &SM;
+    explicit SortUndefinedInternal(SourceManager &SM) : SM(SM) {}
 
-    UndefinedInternal(NamedDecl *decl, FullSourceLoc useLoc)
-      : decl(decl), useLoc(useLoc) {}
+    bool operator()(const std::pair<NamedDecl *, SourceLocation> &l,
+                    const std::pair<NamedDecl *, SourceLocation> &r) const {
+      if (l.second != r.second)
+        return SM.isBeforeInTranslationUnit(l.second, r.second);
+      return SM.isBeforeInTranslationUnit(l.first->getLocation(),
+                                          r.first->getLocation());
+    }
   };
+}
+
+/// Obtains a sorted list of functions that are undefined but ODR-used.
+void Sema::getUndefinedInternals(
+    SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> > &Undefined) {
+  for (llvm::DenseMap<NamedDecl *, SourceLocation>::iterator
+         I = UndefinedInternals.begin(), E = UndefinedInternals.end();
+       I != E; ++I) {
+    NamedDecl *ND = I->first;
+
+    // Ignore attributes that have become invalid.
+    if (ND->isInvalidDecl()) continue;
+
+    // If we found out that the decl is external, don't warn.
+    if (ND->getLinkage() == ExternalLinkage) continue;
+
+    // __attribute__((weakref)) is basically a definition.
+    if (ND->hasAttr<WeakRefAttr>()) continue;
+
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
+      if (FD->isDefined())
+        continue;
+    } else {
+      if (cast<VarDecl>(ND)->hasDefinition() != VarDecl::DeclarationOnly)
+        continue;
+    }
+
+    Undefined.push_back(std::make_pair(ND, I->second));
+  }
+
+  // Sort (in order of use site) so that we're not (as) dependent on
+  // the iteration order through an llvm::DenseMap.
+  std::sort(Undefined.begin(), Undefined.end(),
+            SortUndefinedInternal(Context.getSourceManager()));
 }
 
 /// checkUndefinedInternals - Check for undefined objects with internal linkage.
@@ -380,32 +419,17 @@ static void checkUndefinedInternals(Sema &S) {
   if (S.UndefinedInternals.empty()) return;
 
   // Collect all the still-undefined entities with internal linkage.
-  SmallVector<UndefinedInternal, 16> undefined;
-  for (llvm::MapVector<NamedDecl*,SourceLocation>::iterator
-         i = S.UndefinedInternals.begin(), e = S.UndefinedInternals.end();
-       i != e; ++i) {
-    NamedDecl *decl = i->first;
+  SmallVector<std::pair<NamedDecl *, SourceLocation>, 16> Undefined;
+  S.getUndefinedInternals(Undefined);
+  if (Undefined.empty()) return;
 
-    // Ignore attributes that have become invalid.
-    if (decl->isInvalidDecl()) continue;
+  for (SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> >::iterator
+         I = Undefined.begin(), E = Undefined.end(); I != E; ++I) {
+    NamedDecl *ND = I->first;
 
-    // If we found out that the decl is external, don't warn.
-    if (decl->getLinkage() == ExternalLinkage) continue;
-
-    // __attribute__((weakref)) is basically a definition.
-    if (decl->hasAttr<WeakRefAttr>()) continue;
-
-    if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
-      if (fn->isDefined())
-        continue;
-    } else {
-      if (cast<VarDecl>(decl)->hasDefinition() != VarDecl::DeclarationOnly)
-        continue;
-    }
-
-    S.Diag(decl->getLocation(), diag::warn_undefined_internal)
-      << isa<VarDecl>(decl) << decl;
-    S.Diag(i->second, diag::note_used_here);
+    S.Diag(ND->getLocation(), diag::warn_undefined_internal)
+      << isa<VarDecl>(ND) << ND;
+    S.Diag(I->second, diag::note_used_here);
   }
 }
 
@@ -1065,7 +1089,7 @@ void ExternalSemaSource::ReadKnownNamespaces(
 }
 
 void ExternalSemaSource::ReadUndefinedInternals(
-                      llvm::MapVector<NamedDecl *, SourceLocation> &Undefined) {
+                       llvm::DenseMap<NamedDecl *, SourceLocation> &Undefined) {
 }
 
 void PrettyDeclStackTraceEntry::print(raw_ostream &OS) const {

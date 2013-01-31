@@ -1521,7 +1521,7 @@ public:
                            SmallVectorImpl<NamespaceDecl *> &Namespaces);
 
   virtual void ReadUndefinedInternals(
-                       llvm::MapVector<NamedDecl *, SourceLocation> &Undefined);
+                        llvm::DenseMap<NamedDecl *, SourceLocation> &Undefined);
 
   virtual void ReadTentativeDefinitions(
                  SmallVectorImpl<VarDecl *> &TentativeDefs);

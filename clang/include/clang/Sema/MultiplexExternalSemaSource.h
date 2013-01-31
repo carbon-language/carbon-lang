@@ -254,7 +254,7 @@ public:
   virtual void ReadKnownNamespaces(SmallVectorImpl<NamespaceDecl*> &Namespaces);
 
   virtual void ReadUndefinedInternals(
-                        llvm::MapVector<NamedDecl*, SourceLocation> &Undefined);
+                         llvm::DenseMap<NamedDecl*, SourceLocation> &Undefined);
   
   /// \brief Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.

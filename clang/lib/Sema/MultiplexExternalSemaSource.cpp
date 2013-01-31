@@ -202,7 +202,7 @@ void MultiplexExternalSemaSource::ReadKnownNamespaces(
 }
 
 void MultiplexExternalSemaSource::ReadUndefinedInternals(
-                        llvm::MapVector<NamedDecl*, SourceLocation> &Undefined){
+                         llvm::DenseMap<NamedDecl*, SourceLocation> &Undefined){
   for(size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->ReadUndefinedInternals(Undefined);
 }

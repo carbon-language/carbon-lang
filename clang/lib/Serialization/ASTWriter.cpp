@@ -3590,10 +3590,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   // Build a record of all used, undefined objects with internal linkage.
   RecordData UndefinedInternals;
-  for (llvm::MapVector<NamedDecl*, SourceLocation>::iterator
-            I = SemaRef.UndefinedInternals.begin(),
-         IEnd = SemaRef.UndefinedInternals.end();
-       I != IEnd; ++I) {
+
+  SmallVector<std::pair<NamedDecl *, SourceLocation>, 16> Undefined;
+  SemaRef.getUndefinedInternals(Undefined);
+  for (SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> >::iterator
+         I = Undefined.begin(), E = Undefined.end(); I != E; ++I) {
     AddDeclRef(I->first, UndefinedInternals);
     AddSourceLocation(I->second, UndefinedInternals);
   }

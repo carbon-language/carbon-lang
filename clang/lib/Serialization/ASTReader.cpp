@@ -1,4 +1,4 @@
-//===--- ASTReader.cpp - AST File Reader ------------------------*- C++ -*-===//
+//===--- ASTReader.cpp - AST File Reader ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -5963,7 +5963,7 @@ void ASTReader::ReadKnownNamespaces(
 }
 
 void ASTReader::ReadUndefinedInternals(
-                       llvm::MapVector<NamedDecl*, SourceLocation> &Undefined) {
+                        llvm::DenseMap<NamedDecl*, SourceLocation> &Undefined) {
   for (unsigned Idx = 0, N = UndefinedInternals.size(); Idx != N;) {
     NamedDecl *D = cast<NamedDecl>(GetDecl(UndefinedInternals[Idx++]));
     SourceLocation Loc =
