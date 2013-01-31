@@ -1384,9 +1384,31 @@ RegionStoreManager::getBindingForDerivedDefaultValue(RegionBindingsConstRef B,
 
 SVal RegionStoreManager::getLazyBinding(const MemRegion *LazyBindingRegion,
                                         RegionBindingsRef LazyBinding) {
+  SVal Result;
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(LazyBindingRegion))
-    return getBindingForElement(LazyBinding, ER);
-  return getBindingForField(LazyBinding, cast<FieldRegion>(LazyBindingRegion));
+    Result = getBindingForElement(LazyBinding, ER);
+  else
+    Result = getBindingForField(LazyBinding,
+                                cast<FieldRegion>(LazyBindingRegion));
+
+  // This is a hack to deal with RegionStore's inability to distinguish a
+  // default value for /part/ of an aggregate from a default value for the
+  // /entire/ aggregate. The most common case of this is when struct Outer
+  // has as its first member a struct Inner, which is copied in from a stack
+  // variable. In this case, even if the Outer's default value is symbolic, 0,
+  // or unknown, it gets overridden by the Inner's default value of undefined.
+  //
+  // This is a general problem -- if the Inner is zero-initialized, the Outer
+  // will now look zero-initialized. The proper way to solve this is with a
+  // new version of RegionStore that tracks the extent of a binding as well
+  // as the offset.
+  //
+  // This hack only takes care of the undefined case because that can very
+  // quickly result in a warning.
+  if (Result.isUndef())
+    Result = UnknownVal();
+
+  return Result;
 }
                                         
 SVal
