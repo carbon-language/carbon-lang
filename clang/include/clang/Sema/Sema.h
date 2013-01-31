@@ -5451,10 +5451,8 @@ public:
     /// \brief Substitution of the deduced template argument values
     /// resulted in an error.
     TDK_SubstitutionFailure,
-    /// \brief Substitution of the deduced template argument values
-    /// into a non-deduced context produced a type or value that
-    /// produces a type that does not match the original template
-    /// arguments provided.
+    /// \brief A non-depnedent component of the parameter did not match the
+    /// corresponding component of the argument.
     TDK_NonDeducedMismatch,
     /// \brief When performing template argument deduction for a function
     /// template, there were too many call arguments.
@@ -5467,7 +5465,9 @@ public:
     TDK_InvalidExplicitArguments,
     /// \brief The arguments included an overloaded function name that could
     /// not be resolved to a suitable function.
-    TDK_FailedOverloadResolution
+    TDK_FailedOverloadResolution,
+    /// \brief Deduction failed; that's all we know.
+    TDK_MiscellaneousDeductionFailure
   };
 
   TemplateDeductionResult

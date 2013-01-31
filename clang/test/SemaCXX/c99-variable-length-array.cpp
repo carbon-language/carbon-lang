@@ -64,8 +64,9 @@ X1<HasConstantValue> x1a;
 X1<HasNonConstantValue> x1b; // expected-note{{in instantiation of}}
 
 // Template argument deduction does not allow deducing a size from a VLA.
+// FIXME: This diagnostic should make it clear that the two 'N's are different entities!
 template<typename T, unsigned N>
-void accept_array(T (&array)[N]); // expected-note{{candidate template ignored: failed template argument deduction}}
+void accept_array(T (&array)[N]); // expected-note{{candidate template ignored: could not match 'T [N]' against 'int [N]'}}
 
 void test_accept_array(int N) {
   int array[N]; // expected-warning{{variable length arrays are a C99 feature}}

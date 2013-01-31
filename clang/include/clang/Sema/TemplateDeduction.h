@@ -141,12 +141,15 @@ public:
   ///   TDK_SubstitutionFailure: this argument is the template
   ///   argument we were instantiating when we encountered an error.
   ///
-  ///   TDK_NonDeducedMismatch: this is the template argument
-  ///   provided in the source code.
+  ///   TDK_NonDeducedMismatch: this is the component of the 'parameter'
+  ///   of the deduction, directly provided in the source code.
   TemplateArgument FirstArg;
 
   /// \brief The second template argument to which the template
   /// argument deduction failure refers.
+  ///
+  ///   TDK_NonDeducedMismatch: this is the mismatching component of the
+  ///   'argument' of the deduction, from which we are deducing arguments.
   ///
   /// FIXME: Finish documenting this.
   TemplateArgument SecondArg;

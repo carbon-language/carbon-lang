@@ -2334,6 +2334,8 @@ def note_ovl_candidate_disabled_by_enable_if : Note<
 def note_ovl_candidate_failed_overload_resolution : Note<
     "candidate template ignored: couldn't resolve reference to overloaded "
     "function %0">;
+def note_ovl_candidate_non_deduced_mismatch : Note<
+    "candidate template ignored: could not match %diff{$ against $|types}0,1">;
     
 // Note that we don't treat templates differently for this diagnostic.
 def note_ovl_candidate_arity : Note<"candidate "

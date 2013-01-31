@@ -488,13 +488,19 @@ DeduceTemplateArguments(Sema &S,
   // perform template argument deduction using its template
   // arguments.
   const RecordType *RecordArg = dyn_cast<RecordType>(Arg);
-  if (!RecordArg)
+  if (!RecordArg) {
+    Info.FirstArg = TemplateArgument(QualType(Param, 0));
+    Info.SecondArg = TemplateArgument(Arg);
     return Sema::TDK_NonDeducedMismatch;
+  }
 
   ClassTemplateSpecializationDecl *SpecArg
     = dyn_cast<ClassTemplateSpecializationDecl>(RecordArg->getDecl());
-  if (!SpecArg)
+  if (!SpecArg) {
+    Info.FirstArg = TemplateArgument(QualType(Param, 0));
+    Info.SecondArg = TemplateArgument(Arg);
     return Sema::TDK_NonDeducedMismatch;
+  }
 
   // Perform template argument deduction for the template name.
   if (Sema::TemplateDeductionResult Result
@@ -708,7 +714,7 @@ DeduceTemplateArguments(Sema &S,
   if (NumParams != NumArgs &&
       !(NumParams && isa<PackExpansionType>(Params[NumParams - 1])) &&
       !(NumArgs && isa<PackExpansionType>(Args[NumArgs - 1])))
-    return Sema::TDK_NonDeducedMismatch;
+    return Sema::TDK_MiscellaneousDeductionFailure;
 
   // C++0x [temp.deduct.type]p10:
   //   Similarly, if P has a form that contains (T), then each parameter type
@@ -725,14 +731,14 @@ DeduceTemplateArguments(Sema &S,
 
       // Make sure we have an argument.
       if (ArgIdx >= NumArgs)
-        return Sema::TDK_NonDeducedMismatch;
+        return Sema::TDK_MiscellaneousDeductionFailure;
 
       if (isa<PackExpansionType>(Args[ArgIdx])) {
         // C++0x [temp.deduct.type]p22:
         //   If the original function parameter associated with A is a function
         //   parameter pack and the function parameter associated with P is not
         //   a function parameter pack, then template argument deduction fails.
-        return Sema::TDK_NonDeducedMismatch;
+        return Sema::TDK_MiscellaneousDeductionFailure;
       }
 
       if (Sema::TemplateDeductionResult Result
@@ -825,7 +831,7 @@ DeduceTemplateArguments(Sema &S,
 
   // Make sure we don't have any extra arguments.
   if (ArgIdx < NumArgs)
-    return Sema::TDK_NonDeducedMismatch;
+    return Sema::TDK_MiscellaneousDeductionFailure;
 
   return Sema::TDK_Success;
 }
@@ -1772,7 +1778,7 @@ DeduceTemplateArguments(Sema &S,
       if (Args[ArgIdx].isPackExpansion()) {
         // FIXME: We follow the logic of C++0x [temp.deduct.type]p22 here,
         // but applied to pack expansions that are template arguments.
-        return Sema::TDK_NonDeducedMismatch;
+        return Sema::TDK_MiscellaneousDeductionFailure;
       }
 
       // Perform deduction for this Pi/Ai pair.
@@ -3365,7 +3371,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // specialization, template argument deduction fails.
   if (!ArgFunctionType.isNull() &&
       !Context.hasSameType(ArgFunctionType, Specialization->getType()))
-    return TDK_NonDeducedMismatch;
+    return TDK_MiscellaneousDeductionFailure;
 
   return TDK_Success;
 }
