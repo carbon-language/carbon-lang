@@ -5,7 +5,7 @@
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LINUX %s
 //
-// CHECK-LINUX: "{{.*[^-.0-9A-Z_a-z]}}ld{{(.exe)?}}"
+// CHECK-LINUX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-LINUX-NOT: "-lc"
 // CHECK-LINUX: libclang_rt.asan-i386.a"
 // CHECK-LINUX: "-lpthread"
@@ -17,7 +17,7 @@
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LINUX-CXX %s
 //
-// CHECK-LINUX-CXX: "{{.*[^-.0-9A-Z_a-z]}}ld{{(.exe)?}}"
+// CHECK-LINUX-CXX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-LINUX-CXX-NOT: "-lc"
 // CHECK-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.asan-i386.a" "-no-whole-archive"
 // CHECK-LINUX-CXX: "-lpthread"
@@ -30,7 +30,7 @@
 // RUN:     -lstdc++ -static 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-LINUX-CXX-STATIC %s
 //
-// CHECK-LINUX-CXX-STATIC: "{{.*[^-.0-9A-Z_a-z]}}ld{{(.exe)?}}"
+// CHECK-LINUX-CXX-STATIC: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-LINUX-CXX-STATIC-NOT: stdc++
 // CHECK-LINUX-CXX-STATIC: "-whole-archive" "{{.*}}libclang_rt.asan-i386.a" "-no-whole-archive"
 // CHECK-LINUX-CXX-STATIC: stdc++
@@ -40,7 +40,7 @@
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
 //
-// CHECK-ANDROID: "{{.*[^-.0-9A-Z_a-z]}}ld{{(.exe)?}}"
+// CHECK-ANDROID: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ANDROID-NOT: "-lc"
 // CHECK-ANDROID: libclang_rt.asan-arm-android.so"
 // CHECK-ANDROID-NOT: "-lpthread"
@@ -51,7 +51,7 @@
 // RUN:     -shared \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-SHARED %s
 //
-// CHECK-ANDROID-SHARED: "{{.*[^-.0-9A-Z_a-z]}}ld{{(.exe)?}}"
+// CHECK-ANDROID-SHARED: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ANDROID-SHARED-NOT: "-lc"
 // CHECK-ANDROID-SHARED: libclang_rt.asan-arm-android.so"
 // CHECK-ANDROID-SHARED-NOT: "-lpthread"
