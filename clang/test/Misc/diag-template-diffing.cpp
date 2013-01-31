@@ -859,6 +859,14 @@ namespace rdar12931988 {
     // CHECK-ELIDE-NOTREE: no known conversion from 'B::X<int>' to 'const rdar12931988::A::X<int>'
     ax = bx;
   }
+
+  template<template<typename> class> class Y {};
+
+  void bar(Y<A::X> ya, Y<B::X> yb) {
+    // CHECK-ELIDE-NOTREE: no viable overloaded '='
+    // CHECK-ELIDE-NOTREE: no known conversion from 'Y<template rdar12931988::B::X>' to 'Y<template rdar12931988::A::X>'
+    ya = yb;
+  }
 }
 
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
