@@ -489,8 +489,7 @@ public: // Part of public interface to class.
   /// Get the state and region whose binding this region R corresponds to.
   std::pair<Store, const MemRegion*>
   getLazyBinding(RegionBindingsConstRef B, const MemRegion *R,
-                 const MemRegion *originalRegion,
-                 bool includeSuffix = false);
+                 const MemRegion *originalRegion);
 
   //===------------------------------------------------------------------===//
   // State pruning.
@@ -1220,9 +1219,7 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
 std::pair<Store, const MemRegion *>
 RegionStoreManager::getLazyBinding(RegionBindingsConstRef B,
                                    const MemRegion *R,
-                                   const MemRegion *originalRegion,
-                                   bool includeSuffix) {
-  
+                                   const MemRegion *originalRegion) {
   if (originalRegion != R) {
     if (Optional<SVal> OV = B.getDefaultBinding(R)) {
       if (const nonloc::LazyCompoundVal *V =
@@ -1244,10 +1241,8 @@ RegionStoreManager::getLazyBinding(RegionBindingsConstRef B,
       getLazyBinding(B, FR->getSuperRegion(), originalRegion);
 
     if (X.second) {
-      if (includeSuffix)
-        return std::make_pair(X.first,
-                              MRMgr.getFieldRegionWithSuper(FR, X.second));
-      return X;
+      return std::make_pair(X.first,
+                            MRMgr.getFieldRegionWithSuper(FR, X.second));
     }
         
   }
@@ -1259,11 +1254,9 @@ RegionStoreManager::getLazyBinding(RegionBindingsConstRef B,
       getLazyBinding(B, baseReg->getSuperRegion(), originalRegion);
     
     if (X.second) {
-      if (includeSuffix)
-        return std::make_pair(X.first,
-                              MRMgr.getCXXBaseObjectRegionWithSuper(baseReg,
-                                                                    X.second));
-      return X;
+      return std::make_pair(X.first,
+                            MRMgr.getCXXBaseObjectRegionWithSuper(baseReg,
+                                                                  X.second));
     }
   }
 
@@ -1408,8 +1401,7 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
   // Lazy binding?
   Store lazyBindingStore = NULL;
   const MemRegion *lazyBindingRegion = NULL;
-  llvm::tie(lazyBindingStore, lazyBindingRegion) = getLazyBinding(B, R, R,
-                                                                  true);
+  llvm::tie(lazyBindingStore, lazyBindingRegion) = getLazyBinding(B, R, R);
   if (lazyBindingRegion)
     return getLazyBinding(lazyBindingRegion,
                           getRegionBindings(lazyBindingStore));

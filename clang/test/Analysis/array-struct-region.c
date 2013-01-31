@@ -253,6 +253,19 @@ int testStructFieldChainsNested(int index, int anotherIndex) {
   return 0;
 }
 
+typedef struct {
+  int zoomLevel;
+  struct point center;
+} Outer;
+
+extern int test13116945(struct point x);
+static void radar13116945(struct point centerCoordinate) {
+  Outer zoomRegion;
+  zoomRegion.zoomLevel = 0;
+  zoomRegion.center = centerCoordinate;
+  Outer r = zoomRegion;
+  test13116945(r.center); // no-warning
+}
 
 // --------------------
 // False positives
@@ -289,4 +302,3 @@ void testFieldChainIsNotEnough(int index) {
   // FIXME: Should be TRUE.
   clang_analyzer_eval(vals[index].a[0].x == 42); // expected-warning{{UNKNOWN}}
 }
-
