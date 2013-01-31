@@ -20,7 +20,7 @@ class LitConfig:
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
                  noExecute, ignoreStdErr, debug, isWindows,
-                 params):
+                 params, config_prefix = None):
         # The name of the test runner.
         self.progname = progname
         # The items to add to the PATH environment variable.
@@ -35,6 +35,12 @@ class LitConfig:
         self.isWindows = bool(isWindows)
         self.params = dict(params)
         self.bashPath = None
+
+        # Configuration files to look for when discovering test suites.
+        self.config_prefix = config_prefix or 'lit'
+        self.config_name = '%s.cfg' % (self.config_prefix,)
+        self.site_config_name = '%s.site.cfg' % (self.config_prefix,)
+        self.local_config_name = '%s.local.cfg' % (self.config_prefix,)
 
         self.numErrors = 0
         self.numWarnings = 0
