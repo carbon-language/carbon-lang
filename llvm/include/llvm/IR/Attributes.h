@@ -129,9 +129,6 @@ public:
   /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
 
-  /// \brief Return true if attributes exist
-  bool hasAttributes() const;
-
   /// \brief Return the kind of this attribute.
   Constant *getAttributeKind() const;
 

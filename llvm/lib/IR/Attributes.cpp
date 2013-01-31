@@ -82,10 +82,6 @@ bool Attribute::hasAttribute(AttrKind Val) const {
   return pImpl && pImpl->hasAttribute(Val);
 }
 
-bool Attribute::hasAttributes() const {
-  return pImpl && pImpl->hasAttributes();
-}
-
 Constant *Attribute::getAttributeKind() const {
   return pImpl ? pImpl->getAttributeKind() : 0;
 }
@@ -224,10 +220,6 @@ AttributeImpl::AttributeImpl(LLVMContext &C, StringRef kind)
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   return (Raw() & getAttrMask(A)) != 0;
-}
-
-bool AttributeImpl::hasAttributes() const {
-  return Raw() != 0;
 }
 
 uint64_t AttributeImpl::getAlignment() const {
@@ -454,7 +446,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     assert((!i || Attrs[i-1].first <= Attrs[i].first) &&
            "Misordered Attributes list!");
-    assert(Attrs[i].second.hasAttributes() &&
+    assert(Attrs[i].second != Attribute::None &&
            "Pointless attribute!");
   }
 #endif
