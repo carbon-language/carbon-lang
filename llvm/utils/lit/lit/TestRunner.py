@@ -49,13 +49,14 @@ def executeShCmd(cmd, cfg, cwd, results):
             return executeShCmd(cmd.rhs, cfg, cwd, results)
 
         if cmd.op == '&':
-            raise NotImplementedError,"unsupported test command: '&'"
+            raise InternalShellError(cmd,"unsupported shell operator: '&'")
 
         if cmd.op == '||':
             res = executeShCmd(cmd.lhs, cfg, cwd, results)
             if res != 0:
                 res = executeShCmd(cmd.rhs, cfg, cwd, results)
             return res
+
         if cmd.op == '&&':
             res = executeShCmd(cmd.lhs, cfg, cwd, results)
             if res is None:
@@ -98,7 +99,7 @@ def executeShCmd(cmd, cfg, cwd, results):
             elif r[0] == ('<',):
                 redirects[0] = [r[1], 'r', None]
             else:
-                raise NotImplementedError,"Unsupported redirect: %r" % (r,)
+                raise InternalShellError(j,"Unsupported redirect: %r" % (r,))
 
         # Map from the final redirections to something subprocess can handle.
         final_redirects = []
@@ -107,14 +108,14 @@ def executeShCmd(cmd, cfg, cwd, results):
                 result = input
             elif r == (1,):
                 if index == 0:
-                    raise NotImplementedError,"Unsupported redirect for stdin"
+                    raise InternalShellError(j,"Unsupported redirect for stdin")
                 elif index == 1:
                     result = subprocess.PIPE
                 else:
                     result = subprocess.STDOUT
             elif r == (2,):
                 if index != 2:
-                    raise NotImplementedError,"Unsupported redirect on stdout"
+                    raise InternalShellError(j,"Unsupported redirect on stdout")
                 result = subprocess.PIPE
             else:
                 if r[2] is None:
