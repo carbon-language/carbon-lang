@@ -55,7 +55,8 @@ class SessionSkipBodyData { };
 class TUSkipBodyControl {
 public:
   TUSkipBodyControl(SessionSkipBodyData &sessionData,
-                    PPConditionalDirectiveRecord &ppRec) { }
+                    PPConditionalDirectiveRecord &ppRec,
+                    Preprocessor &pp) { }
   bool isParsed(SourceLocation Loc, FileID FID, const FileEntry *FE) {
     return false;
   }
