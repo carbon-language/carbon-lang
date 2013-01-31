@@ -1,0 +1,7 @@
+include TODO lit.py
+recursive-include tests *
+global-exclude *pyc
+global-exclude *~
+prune tests/Output
+prune tests/*/Output
+prune tests/*/*/Output
