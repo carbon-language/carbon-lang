@@ -183,6 +183,11 @@ namespace llvm {
   bool isSafeToSpeculativelyExecute(const Value *V,
                                     const DataLayout *TD = 0);
 
+  /// isKnownNonNull - Return true if this pointer couldn't possibly be null by
+  /// its definition.  This returns true for allocas, non-extern-weak globals
+  /// and byval arguments.
+  bool isKnownNonNull(const Value *V);
+
 } // end namespace llvm
 
 #endif

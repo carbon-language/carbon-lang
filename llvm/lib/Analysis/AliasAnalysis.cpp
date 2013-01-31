@@ -555,19 +555,3 @@ bool llvm::isIdentifiedObject(const Value *V) {
     return A->hasNoAliasAttr() || A->hasByValAttr();
   return false;
 }
-
-/// isKnownNonNull - Return true if we know that the specified value is never
-/// null.
-bool llvm::isKnownNonNull(const Value *V) {
-  // Alloca never returns null, malloc might.
-  if (isa<AllocaInst>(V)) return true;
-
-  // A byval argument is never null.
-  if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasByValAttr();
-
-  // Global values are not null unless extern weak.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return !GV->hasExternalWeakLinkage();
-  return false;
-}

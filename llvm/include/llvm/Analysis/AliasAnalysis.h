@@ -593,11 +593,6 @@ bool isNoAliasCall(const Value *V);
 ///
 bool isIdentifiedObject(const Value *V);
 
-/// isKnownNonNull - Return true if this pointer couldn't possibly be null by
-/// its definition.  This returns true for allocas, non-extern-weak globals and
-/// byval arguments.
-bool isKnownNonNull(const Value *V);
-
 } // End llvm namespace
 
 #endif
