@@ -229,7 +229,8 @@ public:
     LineState State;
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent));
+    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent,
+                                     !Style.BinPackParameters));
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
 
@@ -298,10 +299,11 @@ private:
   }
 
   struct ParenState {
-    ParenState(unsigned Indent, unsigned LastSpace)
+    ParenState(unsigned Indent, unsigned LastSpace, bool AvoidBinPacking)
         : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
           FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
-          BreakAfterComma(false), HasMultiParameterLine(false) {
+          AvoidBinPacking(AvoidBinPacking), BreakAfterComma(false),
+          HasMultiParameterLine(false) {
     }
 
     /// \brief The position to which a specific parenthesis level needs to be
@@ -334,7 +336,15 @@ private:
     /// \brief The column of a \c ? in a conditional expression;
     unsigned QuestionColumn;
 
+    /// \brief Avoid bin packing, i.e. multiple parameters/elements on multiple
+    /// lines, in this context.
+    bool AvoidBinPacking;
+
+    /// \brief Break after the next comma (or all the commas in this context if
+    /// \c AvoidBinPacking is \c true).
     bool BreakAfterComma;
+
+    /// \brief This context already has a line with more than one parameter.
     bool HasMultiParameterLine;
 
     bool operator<(const ParenState &Other) const {
@@ -350,6 +360,8 @@ private:
         return BreakBeforeClosingBrace;
       if (QuestionColumn != Other.QuestionColumn)
         return QuestionColumn < Other.QuestionColumn;
+      if (AvoidBinPacking != Other.AvoidBinPacking)
+        return AvoidBinPacking;
       if (BreakAfterComma != Other.BreakAfterComma)
         return BreakAfterComma;
       if (HasMultiParameterLine != Other.HasMultiParameterLine)
@@ -444,6 +456,9 @@ private:
         State.Column = State.Stack[ParenLevel].Indent;
       }
 
+      if (Previous.is(tok::comma) && !State.Stack.back().AvoidBinPacking)
+        State.Stack.back().BreakAfterComma = false;
+
       if (RootToken.is(tok::kw_for))
         State.LineContainsContinuedForLoopSection = Previous.isNot(tok::semi);
 
@@ -499,6 +514,7 @@ private:
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.ParameterCount > 1 &&
                (Previous.is(tok::l_paren) || Previous.is(tok::l_square) ||
+                Previous.is(tok::l_brace) ||
                 Previous.Type == TT_TemplateOpener))
         // If this function has multiple parameters, indent nested calls from
         // the start of the first parameter.
@@ -509,7 +525,7 @@ private:
     if (Newline && Previous.is(tok::l_brace))
       State.Stack.back().BreakBeforeClosingBrace = true;
 
-    if (!Style.BinPackParameters && Newline) {
+    if (State.Stack.back().AvoidBinPacking && Newline) {
       // If we are breaking after '(', '{', '<', this is not bin packing unless
       // AllowAllParametersOfDeclarationOnNextLine is false.
       if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
@@ -538,6 +554,17 @@ private:
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
+    if (Current.is(tok::l_brace) && Current.MatchingParen != NULL &&
+        Current.Children[0].isNot(tok::l_brace) &&
+        !Current.MatchingParen->MustBreakBefore) {
+      AnnotatedToken *End = Current.MatchingParen;
+      while (!End->Children.empty() && !End->Children[0].CanBreakBefore) {
+        End = &End->Children[0];
+      }
+      unsigned Length = End->TotalLength - Current.TotalLength + 1;
+      if (Length + State.Column > getColumnLimit())
+        State.Stack.back().BreakAfterComma = true;
+    }
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
@@ -545,16 +572,16 @@ private:
         Current.is(tok::l_brace) ||
         State.NextToken->Type == TT_TemplateOpener) {
       unsigned NewIndent;
+      bool AvoidBinPacking;
       if (Current.is(tok::l_brace)) {
-        // FIXME: This does not work with nested static initializers.
-        // Implement a better handling for static initializers and similar
-        // constructs.
-        NewIndent = Line.Level * 2 + 2;
+        NewIndent = 2 + State.Stack.back().LastSpace;
+        AvoidBinPacking = false;
       } else {
         NewIndent = 4 + State.Stack.back().LastSpace;
+        AvoidBinPacking = !Style.BinPackParameters;
       }
-      State.Stack.push_back(ParenState(NewIndent,
-                                       State.Stack.back().LastSpace));
+      State.Stack.push_back(ParenState(NewIndent, State.Stack.back().LastSpace,
+                                       AvoidBinPacking));
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -611,7 +638,8 @@ private:
     // Trying to insert a parameter on a new line if there are already more than
     // one parameter on the current line is bin packing.
     if (NewLine && State.NextToken->Parent->is(tok::comma) &&
-        State.Stack.back().HasMultiParameterLine && !Style.BinPackParameters)
+        State.Stack.back().HasMultiParameterLine &&
+        State.Stack.back().AvoidBinPacking)
       return UINT_MAX;
     if (!NewLine && (State.NextToken->Type == TT_CtorInitializerColon ||
                      (State.NextToken->Parent->ClosesTemplateDeclaration &&

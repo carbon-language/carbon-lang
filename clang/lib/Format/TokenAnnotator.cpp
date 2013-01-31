@@ -206,6 +206,8 @@ public:
       }
       if (CurrentToken->is(tok::r_paren) || CurrentToken->is(tok::r_square))
         return false;
+      if (CurrentToken->is(tok::comma))
+        ++Left->ParameterCount;
       if (!consumeToken())
         return false;
     }

@@ -506,13 +506,20 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
                "                         bbbbbbbbbbb, ccccccccccc };");
   verifyGoogleFormat(
       "static SomeType type = { aaaaaaaaaaa,  // comment for aa...\n"
-      "                         bbbbbbbbbbb,\n"
-      "                         ccccccccccc };");
+      "                         bbbbbbbbbbb, ccccccccccc };");
   verifyGoogleFormat("static SomeType type = { aaaaaaaaaaa,\n"
                      "                         // comment for bb....\n"
-                     "                         bbbbbbbbbbb,\n"
-                     "                         ccccccccccc };");
+                     "                         bbbbbbbbbbb, ccccccccccc };");
 
+  verifyFormat("S s = { { a, b, c },   // Group #1\n"
+               "        { d, e, f },   // Group #2\n"
+               "        { g, h, i } }; // Group #3");
+  verifyFormat("S s = { { // Group #1\n"
+               "          a, b, c },\n"
+               "        { // Group #2\n"
+               "          d, e, f },\n"
+               "        { // Group #3\n"
+               "          g, h, i } };");
 }
 
 //===----------------------------------------------------------------------===//
@@ -649,6 +656,12 @@ TEST_F(FormatTest, StaticInitializers) {
       "static SomeClass = { a, b, c, d, e, f, g, h, i, j,\n"
       "                     looooooooooooooooooooooooooooooooooongname,\n"
       "                     looooooooooooooooooooooooooooooong };");
+  // Allow bin-packing in static initializers as this would often lead to
+  // terrible results, e.g.:
+  verifyGoogleFormat(
+      "static SomeClass = { a, b, c, d, e, f, g, h, i, j,\n"
+      "                     looooooooooooooooooooooooooooooooooongname,\n"
+      "                     looooooooooooooooooooooooooooooong };");
 }
 
 TEST_F(FormatTest, NestedStaticInitializers) {
@@ -657,7 +670,12 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "static A x = { { { init1, init2, init3, init4 },\n"
       "                 { init1, init2, init3, init4 } } };");
 
-  // FIXME: Fix this in general and verify that it works in LLVM style again.
+  verifyFormat(
+      "somes Status::global_reps[3] = {\n"
+      "  { kGlobalRef, OK_CODE, NULL, NULL, NULL },\n"
+      "  { kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL },\n"
+      "  { kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL }\n"
+      "};");
   verifyGoogleFormat(
       "somes Status::global_reps[3] = {\n"
       "  { kGlobalRef, OK_CODE, NULL, NULL, NULL },\n"
@@ -668,6 +686,13 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "CGRect cg_rect = { { rect.fLeft, rect.fTop },\n"
       "                   { rect.fRight - rect.fLeft, rect.fBottom - rect.fTop"
       " } };");
+
+  verifyFormat(
+      "SomeArrayOfSomeType a = { { { 1, 2, 3 }, { 1, 2, 3 },\n"
+      "                            { 111111111111111111111111111111,\n"
+      "                              222222222222222222222222222222,\n"
+      "                              333333333333333333333333333333 },\n"
+      "                            { 1, 2, 3 }, { 1, 2, 3 } } };");
 
   // FIXME: We might at some point want to handle this similar to parameter
   // lists, where we have an option to put each on a single line.
