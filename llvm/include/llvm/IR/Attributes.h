@@ -345,7 +345,7 @@ public:
     addRawValue(B);
   }
   AttrBuilder(const Attribute &A) : Alignment(0), StackAlignment(0) {
-    addAttributes(A);
+    addAttribute(A);
   }
   AttrBuilder(AttributeSet AS, unsigned Idx);
 
@@ -354,11 +354,11 @@ public:
   /// \brief Add an attribute to the builder.
   AttrBuilder &addAttribute(Attribute::AttrKind Val);
 
+  /// \brief Add the Attribute object to the builder.
+  AttrBuilder &addAttribute(Attribute A);
+
   /// \brief Remove an attribute from the builder.
   AttrBuilder &removeAttribute(Attribute::AttrKind Val);
-
-  /// \brief Add the attributes to the builder.
-  AttrBuilder &addAttributes(Attribute A);
 
   /// \brief Remove the attributes from the builder.
   AttrBuilder &removeAttributes(AttributeSet A, uint64_t Index);

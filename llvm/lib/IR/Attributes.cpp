@@ -437,7 +437,7 @@ uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
 
     for (AttributeSetNode::const_iterator II = ASN->begin(),
            IE = ASN->end(); II != IE; ++II)
-      B.addAttributes(*II);
+      B.addAttribute(*II);
     return B.Raw();
   }
 
@@ -596,7 +596,7 @@ AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
     if (Attrs.getSlotIndex(I) == Idx) {
       for (AttributeSetImpl::const_iterator II = Attrs.pImpl->begin(I),
              IE = Attrs.pImpl->end(I); II != IE; ++II)
-        B.addAttributes(*II);
+        B.addAttribute(*II);
       break;
     }
 
@@ -798,7 +798,7 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
 
     for (AttributeSetImpl::const_iterator II = pImpl->begin(I),
            IE = pImpl->end(I); II != IE; ++II)
-      addAttributes(*II);
+      addAttribute(*II);
 
     break;
   }
@@ -816,18 +816,7 @@ AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
   return *this;
 }
 
-AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
-  Attrs.erase(Val);
-
-  if (Val == Attribute::Alignment)
-    Alignment = 0;
-  else if (Val == Attribute::StackAlignment)
-    StackAlignment = 0;
-
-  return *this;
-}
-
-AttrBuilder &AttrBuilder::addAttributes(Attribute Attr) {
+AttrBuilder &AttrBuilder::addAttribute(Attribute Attr) {
   ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
   Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
   Attrs.insert(KindVal);
@@ -836,6 +825,17 @@ AttrBuilder &AttrBuilder::addAttributes(Attribute Attr) {
     Alignment = Attr.getAlignment();
   else if (KindVal == Attribute::StackAlignment)
     StackAlignment = Attr.getStackAlignment();
+  return *this;
+}
+
+AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
+  Attrs.erase(Val);
+
+  if (Val == Attribute::Alignment)
+    Alignment = 0;
+  else if (Val == Attribute::StackAlignment)
+    StackAlignment = 0;
+
   return *this;
 }
 
