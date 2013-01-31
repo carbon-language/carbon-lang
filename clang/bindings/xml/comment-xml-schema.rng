@@ -25,6 +25,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Headerfile" />
+      </optional>
+      <optional>
         <ref name="Declaration" />
       </optional>
       <optional>
@@ -74,6 +77,9 @@
       </optional>
       <!-- TODO: Add exception specification. -->
       <optional>
+        <ref name="Headerfile" />
+      </optional>
+      <optional>
         <ref name="Declaration" />
       </optional>
       <optional>
@@ -121,6 +127,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Headerfile" />
+      </optional>
+      <optional>
         <ref name="Declaration" />
       </optional>
       <optional>
@@ -151,6 +160,9 @@
       <ref name="Name" />
       <optional>
         <ref name="USR" />
+      </optional>
+      <optional>
+        <ref name="Headerfile" />
       </optional>
       <optional>
         <ref name="Declaration" />
@@ -186,6 +198,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Headerfile" />
+      </optional>
+      <optional>
         <ref name="Declaration" />
       </optional>
       <optional>
@@ -219,6 +234,9 @@
         <ref name="USR" />
       </optional>
       <optional>
+        <ref name="Headerfile" />
+      </optional>
+      <optional>
         <ref name="Declaration" />
       </optional>
       <optional>
@@ -250,6 +268,9 @@
       <ref name="Name" />
       <optional>
         <ref name="USR" />
+      </optional>
+      <optional>
+        <ref name="Headerfile" />
       </optional>
       <optional>
         <ref name="Declaration" />
@@ -326,6 +347,14 @@
     <element name="Declaration">
       <!-- Non-empty text content. -->
       <data type="string"/>
+    </element>
+  </define>
+
+  <define name="Headerfile">
+    <element name="Headerfile">
+      <oneOrMore>
+        <ref name="TextBlockContent" />
+      </oneOrMore>
     </element>
   </define>
 

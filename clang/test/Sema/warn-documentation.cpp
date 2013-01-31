@@ -887,3 +887,11 @@ int test_nocrash12();
 ///@param x@param y
 int test_nocrash13(int x, int y);
 
+// rdar://12397511
+
+// expected-note@+2 {{previous command '\headerfile' here}}
+// expected-warning@+2 {{duplicated command '\headerfile'}}
+/// \headerfile "" 
+/// \headerfile foo.h 
+int test_duplicate_headerfile1(int);
+

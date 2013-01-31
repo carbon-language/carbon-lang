@@ -12,6 +12,7 @@ class Command<string name> {
   bit IsParamCommand = 0;
   bit IsTParamCommand = 0;
   bit IsDeprecatedCommand = 0;
+  bit IsHeaderfileCommand = 0;
 
   bit IsEmptyParagraphAllowed = 0;
 
@@ -80,7 +81,7 @@ def Deprecated : BlockCommand<"deprecated"> {
   let IsEmptyParagraphAllowed = 1;
   let IsDeprecatedCommand = 1;
 }
-
+def Headerfile : BlockCommand<"headerfile"> { let IsHeaderfileCommand = 1; }
 def Author     : BlockCommand<"author">;
 def Authors    : BlockCommand<"authors">;
 def Bug        : BlockCommand<"bug">;
