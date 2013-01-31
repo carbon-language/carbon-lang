@@ -27,7 +27,8 @@ FriendDecl *FriendDecl::getNextFriendSlowCase() {
 FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,
                                FriendUnion Friend,
-                               SourceLocation FriendL) {
+                               SourceLocation FriendL,
+                        ArrayRef<TemplateParameterList*> FriendTypeTPLists) {
 #ifndef NDEBUG
   if (Friend.is<NamedDecl*>()) {
     NamedDecl *D = Friend.get<NamedDecl*>();
@@ -40,15 +41,25 @@ FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
     // to the original declaration when instantiating members.
     assert(D->getFriendObjectKind() ||
            (cast<CXXRecordDecl>(DC)->getTemplateSpecializationKind()));
+    // These template parameters are for friend types only.
+    assert(FriendTypeTPLists.size() == 0);
   }
 #endif
 
-  FriendDecl *FD = new (C) FriendDecl(DC, L, Friend, FriendL);
+  std::size_t Size = sizeof(FriendDecl)
+    + FriendTypeTPLists.size() * sizeof(TemplateParameterList*);
+  void *Mem = C.Allocate(Size);
+  FriendDecl *FD = new (Mem) FriendDecl(DC, L, Friend, FriendL,
+                                        FriendTypeTPLists);
   cast<CXXRecordDecl>(DC)->pushFriendDecl(FD);
   return FD;
 }
 
-FriendDecl *FriendDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
-  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(FriendDecl));
-  return new (Mem) FriendDecl(EmptyShell());
+FriendDecl *FriendDecl::CreateDeserialized(ASTContext &C, unsigned ID,
+                                           unsigned FriendTypeNumTPLists) {
+  std::size_t Size = sizeof(FriendDecl)
+    + FriendTypeNumTPLists * sizeof(TemplateParameterList*);
+  void *Mem = AllocateDeserializedDecl(C, ID, Size);
+  return new (Mem) FriendDecl(EmptyShell(), FriendTypeNumTPLists);
 }
+

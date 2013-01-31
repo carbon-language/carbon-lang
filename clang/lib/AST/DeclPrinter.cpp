@@ -83,7 +83,7 @@ namespace {
     void VisitUsingShadowDecl(UsingShadowDecl *D);
 
     void PrintTemplateParameters(const TemplateParameterList *Params,
-                                 const TemplateArgumentList *Args);
+                                 const TemplateArgumentList *Args = 0);
     void prettyPrintAttributes(Decl *D);
   };
 }
@@ -580,6 +580,9 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
 void DeclPrinter::VisitFriendDecl(FriendDecl *D) {
   if (TypeSourceInfo *TSI = D->getFriendType()) {
+    unsigned NumTPLists = D->getFriendTypeNumTemplateParameterLists();
+    for (unsigned i = 0; i < NumTPLists; ++i)
+      PrintTemplateParameters(D->getFriendTypeTemplateParameterList(i));
     Out << "friend ";
     Out << " " << TSI->getType().getAsString(Policy);
   }
@@ -771,8 +774,8 @@ void DeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
     Visit(*D->decls_begin());
 }
 
-void DeclPrinter::PrintTemplateParameters(
-    const TemplateParameterList *Params, const TemplateArgumentList *Args = 0) {
+void DeclPrinter::PrintTemplateParameters(const TemplateParameterList *Params,
+                                          const TemplateArgumentList *Args) {
   assert(Params);
   assert(!Args || Params->size() == Args->size());
 
