@@ -178,6 +178,19 @@ if( MSVC )
 elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
   if (LLVM_ENABLE_WARNINGS)
     add_llvm_definitions( -Wall -W -Wno-unused-parameter -Wwrite-strings )
+
+    # Turn off missing field initializer warnings for gcc to avoid noise from
+    # false positives with empty {}. Turn them on otherwise (they're off by
+    # default for clang).
+    check_cxx_compiler_flag("-Wmissing-field-initializers" CXX_SUPPORTS_MISSING_FIELD_INITIALIZERS_FLAG)
+    if (CXX_SUPPORTS_MISSING_FIELD_INITIALIZERS_FLAG)
+      if (CMAKE_COMPILER_IS_GNUCXX)
+        add_llvm_definitions( -Wno-missing-field-initializers )
+      else()
+        add_llvm_definitions( -Wmissing-field-initializers )
+      endif()
+    endif()
+
     if (LLVM_ENABLE_PEDANTIC)
       add_llvm_definitions( -pedantic -Wno-long-long )
     endif (LLVM_ENABLE_PEDANTIC)
