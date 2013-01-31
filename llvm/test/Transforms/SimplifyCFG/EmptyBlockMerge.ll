@@ -1,8 +1,6 @@
 ; Basic block #2 should not be merged into BB #3!
 ;
-; RUN: opt < %s -simplifycfg -S | \
-; RUN:   grep "br label"
-;
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
 
 declare void @foo()
 
@@ -13,6 +11,7 @@ bb0:
 	br i1 %cond218, label %bb3, label %bb2
 bb2:		; preds = %bb0
 	call void @foo( )
+; CHECK: br label %bb3
 	br label %bb3
 bb3:		; preds = %bb2, %bb0
 	%reg117 = phi i32 [ 110, %bb2 ], [ %reg108, %bb0 ]		; <i32> [#uses=1]
