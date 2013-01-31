@@ -41,6 +41,7 @@ public:
   unsigned getFrameRegister(const MachineFunction &MF) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
+                           unsigned FIOperandNum,
                            RegScavenger *Rs = NULL) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

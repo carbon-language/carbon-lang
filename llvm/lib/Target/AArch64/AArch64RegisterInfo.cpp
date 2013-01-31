@@ -78,7 +78,9 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 void
 AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
-                                         int SPAdj, RegScavenger *RS) const {
+                                         int SPAdj,
+                                         unsigned FIOperandNum,
+                                         RegScavenger *RS) const {
   assert(SPAdj == 0 && "Cannot deal with nonzero SPAdj yet");
   MachineInstr &MI = *MBBI;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -86,12 +88,6 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const AArch64FrameLowering *TFI =
     static_cast<const AArch64FrameLowering *>(MF.getTarget().getFrameLowering());
-
-  unsigned i = 0;
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have a FrameIndex Operand");
-  }
 
   // In order to work out the base and offset for addressing, the FrameLowering
   // code needs to know (sometimes) whether the instruction is storing/loading a
@@ -107,7 +103,7 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
     MaxCSFI = CSI[CSI.size() - 1].getFrameIdx();
   }
 
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   bool IsCalleeSaveOp = FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI;
 
   unsigned FrameReg;
@@ -115,13 +111,13 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   Offset = TFI->resolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj,
                                            IsCalleeSaveOp);
 
-  Offset += MI.getOperand(i+1).getImm();
+  Offset += MI.getOperand(FIOperandNum + 1).getImm();
 
   // DBG_VALUE instructions have no real restrictions so they can be handled
   // easily.
   if (MI.isDebugValue()) {
-    MI.getOperand(i).ChangeToRegister(FrameReg, /*isDef=*/ false);
-    MI.getOperand(i+1).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, /*isDef=*/ false);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
     return;
   }
 
@@ -151,8 +147,8 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   // now this checks nothing has gone horribly wrong.
   assert(Offset >= 0 && "Unexpected negative offset from SP");
 
-  MI.getOperand(i).ChangeToRegister(FrameReg, false, false, true);
-  MI.getOperand(i+1).ChangeToImmediate(Offset / OffsetScale);
+  MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false, false, true);
+  MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset / OffsetScale);
 }
 
 void
