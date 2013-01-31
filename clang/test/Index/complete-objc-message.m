@@ -239,15 +239,15 @@ void test_DO(DO *d, A* a) {
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)}
 // CHECK-CC9: Objective-C selector: Method:Arg1:
 // RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCA %s
-// CHECK-CCA: TypedefDecl:{TypedText Class}
-// CHECK-CCA-NEXT: ObjCInterfaceDecl:{TypedText Foo}
-// CHECK-CCA-NOT: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
-// CHECK-CCA:FunctionDecl:{ResultType MyClass *}{TypedText getMyClass}{LeftParen (}{RightParen )}
-// CHECK-CCA: TypedefDecl:{TypedText id}
-// CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass}
-// CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass}
-// CHECK-CCA: {ResultType Class}{TypedText self}
-// CHECK-CCA: {TypedText super}
+// CHECK-CCA: TypedefDecl:{TypedText Class} (50)
+// CHECK-CCA-NEXT: ObjCInterfaceDecl:{TypedText Foo} (50)
+// CHECK-CCA-NOT: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )} (50)
+// CHECK-CCA:FunctionDecl:{ResultType MyClass *}{TypedText getMyClass}{LeftParen (}{RightParen )} (50)
+// CHECK-CCA: TypedefDecl:{TypedText id} (50)
+// CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass} (50)
+// CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass} (50)
+// CHECK-CCA: {ResultType Class}{TypedText self} (34)
+// CHECK-CCA: {TypedText super} (40)
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
 // CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int), ...}
 // CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText SentinelMethod:}{Placeholder (int), ...}{Text , nil}

@@ -66,4 +66,4 @@ void f5(float f) {
 // CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f3}{LeftParen (}{Placeholder const char *, ...}{Text , NULL}{RightParen )} (50)
 // CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f4}{LeftParen (}{Placeholder const char *str}{RightParen )} (50)
 // CHECK-CC7: FunctionDecl:{ResultType void}{TypedText f5}{LeftParen (}{Placeholder float f}{RightParen )} (50)
-// CHECK-CC7: TypedefDecl:{TypedText type}
+// CHECK-CC7: TypedefDecl:{TypedText type} (50)

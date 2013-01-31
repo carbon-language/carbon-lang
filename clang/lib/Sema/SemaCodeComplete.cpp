@@ -733,7 +733,15 @@ unsigned ResultBuilder::getBasePriority(const NamedDecl *ND) {
   if (isa<EnumConstantDecl>(ND))
     return CCP_Constant;
 
-  if ((isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND)))
+  // Use CCP_Type for type declarations unless we're in a statement, Objective-C
+  // message receiver, or parenthesized expression context. There, it's as
+  // likely that the user will want to write a type as other declarations.
+  if ((isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND)) &&
+      !(CompletionContext.getKind() == CodeCompletionContext::CCC_Statement ||
+        CompletionContext.getKind()
+          == CodeCompletionContext::CCC_ObjCMessageReceiver ||
+        CompletionContext.getKind()
+          == CodeCompletionContext::CCC_ParenthesizedExpression))
     return CCP_Type;
 
   return CCP_Declaration;
