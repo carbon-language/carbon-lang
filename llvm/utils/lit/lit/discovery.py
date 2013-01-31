@@ -6,7 +6,7 @@ import os
 import sys
 
 from lit.TestingConfig import TestingConfig
-from lit import Test
+from lit import LitConfig, Test
 
 def dirContainsTestSuite(path, lit_config):
     cfgpath = os.path.join(path, lit_config.site_config_name)
@@ -208,3 +208,27 @@ def find_tests_for_inputs(lit_config, inputs):
         sys.exit(2)
 
     return tests
+
+def load_test_suite(inputs):
+    import platform
+    import unittest
+    from lit.LitTestCase import LitTestCase
+
+    # Create the global config object.
+    litConfig = LitConfig.LitConfig(progname = 'lit',
+                                    path = [],
+                                    quiet = False,
+                                    useValgrind = False,
+                                    valgrindLeakCheck = False,
+                                    valgrindArgs = [],
+                                    noExecute = False,
+                                    ignoreStdErr = False,
+                                    debug = False,
+                                    isWindows = (platform.system()=='Windows'),
+                                    params = {})
+
+    tests = find_tests_for_inputs(litConfig, inputs)
+
+    # Return a unittest test suite which just runs the tests in order.
+    return unittest.TestSuite([LitTestCase(test, litConfig) for test in tests])
+

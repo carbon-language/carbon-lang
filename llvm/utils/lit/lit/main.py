@@ -148,28 +148,6 @@ def runTests(numThreads, litConfig, provider, display):
     except KeyboardInterrupt:
         sys.exit(2)
 
-def load_test_suite(inputs):
-    import unittest
-
-    # Create the global config object.
-    litConfig = LitConfig.LitConfig(progname = 'lit',
-                                    path = [],
-                                    quiet = False,
-                                    useValgrind = False,
-                                    valgrindLeakCheck = False,
-                                    valgrindArgs = [],
-                                    noExecute = False,
-                                    ignoreStdErr = False,
-                                    debug = False,
-                                    isWindows = (platform.system()=='Windows'),
-                                    params = {})
-
-    tests = lit.discovery.find_tests_for_inputs(litConfig, inputs)
-
-    # Return a unittest test suite which just runs the tests in order.
-    from LitTestCase import LitTestCase
-    return unittest.TestSuite([LitTestCase(test, litConfig) for test in tests])
-
 def main(builtinParameters = {}):
     # Bump the GIL check interval, its more important to get any one thread to a
     # blocking operation (hopefully exec) than to try and unblock other threads.
