@@ -318,9 +318,13 @@ Segment<ELFT>::assignOffsets(uint64_t startOffset) {
 }
 
 /// \brief Assign virtual addresses to the slices
-template<class ELFT>
-void 
-Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
+template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
+  // Check if the segment is of type TLS 
+  // The sections that belong to the TLS segment have their 
+  // virtual addresses that are relative To TP
+  bool isTLSSegment = (segmentType() == llvm::ELF::PT_TLS);
+  uint64_t tlsStartAddr = 0;
+
   for (auto slice : slices()) {
     // Align to a page
     addr = llvm::RoundUpToAlignment(addr, this->_targetInfo.getPageSize());
@@ -331,15 +335,20 @@ Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
     for (auto section : slice->sections()) {
       // Align the section address
       addr = llvm::RoundUpToAlignment(addr, section->align2());
+      tlsStartAddr = (isTLSSegment) ?
+                    llvm::RoundUpToAlignment(tlsStartAddr, section->align2()):0;
       if (!virtualAddressSet) {
         slice->setVAddr(addr);
         virtualAddressSet = true;
       }
       section->setVAddr(addr);
-      if (auto s = dyn_cast<Section<ELFT>>(section))
-        s->assignVirtualAddress(addr);
-      else
-        addr += section->memSize();
+      if (auto s = dyn_cast<Section<ELFT> >(section)) {
+        if (isTLSSegment)
+          s->assignVirtualAddress(tlsStartAddr);
+        else
+          s->assignVirtualAddress(addr);
+      }
+      addr += section->memSize();
       section->setMemSize(addr - section->virtualAddr());
     }
     slice->setMemSize(addr - slice->virtualAddr());

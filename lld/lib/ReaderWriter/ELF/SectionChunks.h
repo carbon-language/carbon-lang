@@ -81,7 +81,6 @@ public:
     for (auto &ai : _atoms) {
       ai->_virtualAddr = addr + ai->_fileOffset;
     }
-    addr += this->memSize();
   }
 
   /// \brief Set the file offset of each Atom in the section. This routine

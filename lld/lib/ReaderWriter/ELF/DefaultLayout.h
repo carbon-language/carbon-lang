@@ -63,6 +63,8 @@ public:
     ORDER_RODATA = 100,
     ORDER_EH_FRAME = 110,
     ORDER_EH_FRAMEHDR = 120,
+    ORDER_TDATA = 124,
+    ORDER_TBSS = 128,
     ORDER_CTORS = 130,
     ORDER_DTORS = 140,
     ORDER_INIT_ARRAY = 150,
@@ -353,6 +355,10 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
   case ORDER_FINI_ARRAY:
     return llvm::ELF::PT_LOAD;
 
+  case ORDER_TDATA:
+  case ORDER_TBSS:
+    return llvm::ELF::PT_TLS;
+
   default:
     return llvm::ELF::PT_NULL;
   }
@@ -376,6 +382,8 @@ bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   case ORDER_RODATA:
   case ORDER_EH_FRAME:
   case ORDER_EH_FRAMEHDR:
+  case ORDER_TDATA:
+  case ORDER_TBSS:
   case ORDER_NOTE:
   case ORDER_DYNAMIC:
   case ORDER_CTORS:
