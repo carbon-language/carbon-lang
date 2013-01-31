@@ -428,17 +428,14 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     isXFail = isExpectedFail(test, xfails)
     return script,isXFail,tmpBase,execdir
 
-def formatTestOutput(status, out, err, exitCode, failDueToStderr, script):
+def formatTestOutput(status, out, err, exitCode, script):
     output = StringIO.StringIO()
     print >>output, "Script:"
     print >>output, "--"
     print >>output, '\n'.join(script)
     print >>output, "--"
     print >>output, "Exit Code: %r" % exitCode,
-    if failDueToStderr:
-        print >>output, "(but there was output on stderr)"
-    else:
-        print >>output
+    print >>output
     if out:
         print >>output, "Command Output (stdout):"
         print >>output, "--"
@@ -492,7 +489,4 @@ def executeShTest(test, litConfig, useExternalSh,
     if ok:
         return (status,'')
 
-    # Sh tests are not considered to fail just from stderr output.
-    failDueToStderr = False
-
-    return formatTestOutput(status, out, err, exitCode, failDueToStderr, script)
+    return formatTestOutput(status, out, err, exitCode, script)
