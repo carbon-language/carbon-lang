@@ -68,8 +68,8 @@ struct CommandInfo {
 
   /// True if this command is \\deprecated or an alias.
   unsigned IsDeprecatedCommand : 1;
-  
-  /// \brief True if this is a \headerfile-like documentation
+
+  /// \brief True if this is a \\headerfile-like command.
   unsigned IsHeaderfileCommand : 1;
 
   /// True if we don't want to warn about this command being passed an empty
