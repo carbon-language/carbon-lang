@@ -3242,7 +3242,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
           // This is a popular extension, provided by Plan9, MSVC and GCC, but
           // not part of standard C++.
           Diag(MemRecord->getLocation(),
-               diag::ext_anonymous_record_with_anonymous_type);
+               diag::ext_anonymous_record_with_anonymous_type)
+            << (int)Record->isUnion();
         }
       } else if (isa<AccessSpecDecl>(*Mem)) {
         // Any access specifier is fine.

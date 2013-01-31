@@ -5351,8 +5351,8 @@ def ext_anonymous_record_with_type : Extension<
   "types declared in an anonymous %select{struct|union}0 are a Microsoft "
   "extension">, InGroup<Microsoft>;
 def ext_anonymous_record_with_anonymous_type : Extension<
-  "nested anonymous types are an extension">,
-  InGroup<DiagGroup<"nested-anon-types">>;
+  "anonymous types declared in an anonymous %select{struct|union}0 "
+  "are an extension">, InGroup<DiagGroup<"nested-anon-types">>;
 def err_anonymous_record_with_function : Error<
   "functions cannot be declared in an anonymous %select{struct|union}0">;
 def err_anonymous_record_with_static : Error<
