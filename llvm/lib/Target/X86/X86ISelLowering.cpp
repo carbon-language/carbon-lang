@@ -18170,7 +18170,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         Res.first = DestReg;
         Res.second = &X86::GR8RegClass;
       }
-    } else if (VT == MVT::i32) {
+    } else if (VT == MVT::i32 || VT == MVT::f32) {
       unsigned DestReg = 0;
       switch (Res.first) {
       default: break;
@@ -18187,7 +18187,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         Res.first = DestReg;
         Res.second = &X86::GR32RegClass;
       }
-    } else if (VT == MVT::i64) {
+    } else if (VT == MVT::i64 || VT == MVT::f64) {
       unsigned DestReg = 0;
       switch (Res.first) {
       default: break;
