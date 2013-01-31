@@ -2459,7 +2459,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // Simplify comparisons of related pointers using a powerful, recursive
   // GEP-walk when we have target data available..
-  if (Q.TD && LHS->getType()->isPointerTy() && RHS->getType()->isPointerTy())
+  if (Q.TD && LHS->getType()->isPointerTy())
     if (Constant *C = computePointerICmp(*Q.TD, Pred, LHS, RHS))
       return C;
 
