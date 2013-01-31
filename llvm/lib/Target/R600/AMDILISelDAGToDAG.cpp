@@ -272,7 +272,11 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
     const R600InstrInfo *TII =
         static_cast<const R600InstrInfo*>(TM.getInstrInfo());
-    if (Result && TII->isALUInstr(Result->getMachineOpcode())) {
+    if (Result && Result->isMachineOpcode()
+        && TII->isALUInstr(Result->getMachineOpcode())) {
+      // Fold FNEG/FABS/CONST_ADDRESS
+      // TODO: Isel can generate multiple MachineInst, we need to recursively
+      // parse Result
       bool IsModified = false;
       do {
         std::vector<SDValue> Ops;
@@ -281,10 +285,28 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
           Ops.push_back(*I);
         IsModified = FoldOperands(Result->getMachineOpcode(), TII, Ops);
         if (IsModified) {
-          Result = CurDAG->MorphNodeTo(Result, Result->getOpcode(),
-              Result->getVTList(), Ops.data(), Ops.size());
+          Result = CurDAG->UpdateNodeOperands(Result, Ops.data(), Ops.size());
         }
       } while (IsModified);
+
+      // If node has a single use which is CLAMP_R600, folds it
+      if (Result->hasOneUse() && Result->isMachineOpcode()) {
+        SDNode *PotentialClamp = *Result->use_begin();
+        if (PotentialClamp->isMachineOpcode() &&
+            PotentialClamp->getMachineOpcode() == AMDGPU::CLAMP_R600) {
+          unsigned ClampIdx =
+            TII->getOperandIdx(Result->getMachineOpcode(), R600Operands::CLAMP);
+          std::vector<SDValue> Ops;
+          unsigned NumOp = Result->getNumOperands();
+          for (unsigned i = 0; i < NumOp; ++i) {
+            Ops.push_back(Result->getOperand(i));
+          }
+          Ops[ClampIdx - 1] = CurDAG->getTargetConstant(1, MVT::i32);
+          Result = CurDAG->SelectNodeTo(PotentialClamp,
+              Result->getMachineOpcode(), PotentialClamp->getVTList(),
+              Ops.data(), NumOp);
+        }
+      }
     }
   }
 
@@ -303,6 +325,17 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
     TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL),
     TII->getOperandIdx(Opcode, R600Operands::SRC2_SEL)
   };
+  int NegIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG),
+    TII->getOperandIdx(Opcode, R600Operands::SRC2_NEG)
+  };
+  int AbsIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS),
+    -1
+  };
+
   for (unsigned i = 0; i < 3; i++) {
     if (OperandIdx[i] < 0)
       return false;
@@ -318,6 +351,18 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
       }
       }
       break;
+    case ISD::FNEG:
+      if (NegIdx[i] < 0)
+        break;
+      Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
+      Ops[NegIdx[i] - 1] = CurDAG->getTargetConstant(1, MVT::i32);
+      return true;
+    case ISD::FABS:
+      if (AbsIdx[i] < 0)
+        break;
+      Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
+      Ops[AbsIdx[i] - 1] = CurDAG->getTargetConstant(1, MVT::i32);
+      return true;
     case ISD::BITCAST:
       Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
       return true;
