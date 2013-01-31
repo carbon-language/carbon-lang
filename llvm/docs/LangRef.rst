@@ -1085,6 +1085,16 @@ llvm.memcpy or llvm.memmove intrinsics even when those intrinsics are
 flagged volatile. Likewise, the backend should never split or merge
 target-legal volatile load/store instructions.
 
+.. admonition:: Rationale
+
+ Platforms may rely on volatile loads and stores of natively supported
+ data width to be executed as single instruction. For example, in C
+ this holds for an l-value of volatile primitive type with native
+ hardware support, but not necessarily for aggregate types. The
+ frontend upholds these expectations, which are intentionally
+ unspecified in the IR. The rules above ensure that IR transformation
+ do not violate the frontend's contract with the language.
+
 .. _memmodel:
 
 Memory Model for Concurrent Operations
