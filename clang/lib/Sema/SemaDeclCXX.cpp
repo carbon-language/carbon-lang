@@ -1677,15 +1677,15 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       unsigned DiagID;
       bool Failed = D.getMutableDeclSpec().SetTypeQual(DeclSpec::TQ_const, ConstexprLoc,
                                          PrevSpec, DiagID, getLangOpts());
+      (void)Failed;
       assert(!Failed && "Making a constexpr member const shouldn't fail");
     } else {
       B << 1;
       const char *PrevSpec;
       unsigned DiagID;
-      DeclSpec::SCS PrevSCS = DS.getStorageClassSpec();
       if (D.getMutableDeclSpec().SetStorageClassSpec(
           *this, DeclSpec::SCS_static, ConstexprLoc, PrevSpec, DiagID)) {
-        assert(PrevSCS == DeclSpec::SCS_mutable &&
+        assert(DS.getStorageClassSpec() == DeclSpec::SCS_mutable &&
                "This is the only DeclSpec that should fail to be applied");
         B << 1;
       } else {
