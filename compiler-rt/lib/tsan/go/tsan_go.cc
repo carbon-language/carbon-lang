@@ -18,10 +18,6 @@
 
 namespace __tsan {
 
-const int kMaxGoroutinesEver = 128*1024;
-
-static ThreadState *goroutines[kMaxGoroutinesEver];
-
 void InitializeInterceptors() {
 }
 
@@ -80,20 +76,18 @@ ReportStack *SymbolizeCode(uptr addr) {
 
 extern "C" {
 
-static void AllocGoroutine(int tid) {
-  if (tid >= kMaxGoroutinesEver) {
-    Printf("FATAL: Reached goroutine limit\n");
-    Die();
-  }
+static ThreadState *main_thr;
+
+static ThreadState *AllocGoroutine() {
   ThreadState *thr = (ThreadState*)internal_alloc(MBlockThreadContex,
       sizeof(ThreadState));
   internal_memset(thr, 0, sizeof(*thr));
-  goroutines[tid] = thr;
+  return thr;
 }
 
-void __tsan_init() {
-  AllocGoroutine(0);
-  ThreadState *thr = goroutines[0];
+void __tsan_init(ThreadState **thrp) {
+  ThreadState *thr = AllocGoroutine();
+  main_thr = *thrp = thr;
   thr->in_rtl++;
   Initialize(thr);
   thr->in_rtl--;
@@ -101,7 +95,7 @@ void __tsan_init() {
 
 void __tsan_fini() {
   // FIXME: Not necessary thread 0.
-  ThreadState *thr = goroutines[0];
+  ThreadState *thr = main_thr;
   thr->in_rtl++;
   int res = Finalize(thr);
   thr->in_rtl--;
@@ -112,40 +106,35 @@ void __tsan_map_shadow(uptr addr, uptr size) {
   MapShadow(addr, size);
 }
 
-void __tsan_read(int goid, void *addr, void *pc) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_read(ThreadState *thr, void *addr, void *pc) {
   MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, false);
 }
 
-void __tsan_write(int goid, void *addr, void *pc) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_write(ThreadState *thr, void *addr, void *pc) {
   MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, true);
 }
 
-void __tsan_read_range(int goid, void *addr, uptr size, uptr step, void *pc) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_read_range(ThreadState *thr, void *addr, uptr size, uptr step,
+                       void *pc) {
   for (uptr i = 0; i < size; i += step)
 	  MemoryAccess(thr, (uptr)pc, (uptr)addr + i, 0, false);
 }
 
-void __tsan_write_range(int goid, void *addr, uptr size, uptr step, void *pc) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_write_range(ThreadState *thr, void *addr, uptr size, uptr step,
+                        void *pc) {
   for (uptr i = 0; i < size; i += step)
 	  MemoryAccess(thr, (uptr)pc, (uptr)addr + i, 0, true);
 }
 
-void __tsan_func_enter(int goid, void *pc) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_func_enter(ThreadState *thr, void *pc) {
   FuncEntry(thr, (uptr)pc);
 }
 
-void __tsan_func_exit(int goid) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_func_exit(ThreadState *thr) {
   FuncExit(thr);
 }
 
-void __tsan_malloc(int goid, void *p, uptr sz, void *pc) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_malloc(ThreadState *thr, void *p, uptr sz, void *pc) {
   if (thr == 0)  // probably before __tsan_init()
     return;
   thr->in_rtl++;
@@ -157,52 +146,43 @@ void __tsan_free(void *p) {
   (void)p;
 }
 
-void __tsan_go_start(int pgoid, int chgoid, void *pc) {
-  if (chgoid == 0)
-    return;
-  AllocGoroutine(chgoid);
-  ThreadState *thr = goroutines[chgoid];
-  ThreadState *parent = goroutines[pgoid];
+void __tsan_go_start(ThreadState *parent, ThreadState **pthr, void *pc) {
+  ThreadState *thr = AllocGoroutine();
+  *pthr = thr;
   thr->in_rtl++;
   parent->in_rtl++;
-  int goid2 = ThreadCreate(parent, (uptr)pc, 0, true);
-  ThreadStart(thr, goid2, 0);
+  int goid = ThreadCreate(parent, (uptr)pc, 0, true);
+  ThreadStart(thr, goid, 0);
   parent->in_rtl--;
   thr->in_rtl--;
 }
 
-void __tsan_go_end(int goid) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_go_end(ThreadState *thr) {
   thr->in_rtl++;
   ThreadFinish(thr);
   thr->in_rtl--;
   internal_free(thr);
-  goroutines[goid] = 0;
 }
 
-void __tsan_acquire(int goid, void *addr) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_acquire(ThreadState *thr, void *addr) {
   thr->in_rtl++;
   Acquire(thr, 0, (uptr)addr);
   thr->in_rtl--;
 }
 
-void __tsan_release(int goid, void *addr) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_release(ThreadState *thr, void *addr) {
   thr->in_rtl++;
   ReleaseStore(thr, 0, (uptr)addr);
   thr->in_rtl--;
 }
 
-void __tsan_release_merge(int goid, void *addr) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_release_merge(ThreadState *thr, void *addr) {
   thr->in_rtl++;
   Release(thr, 0, (uptr)addr);
   thr->in_rtl--;
 }
 
-void __tsan_finalizer_goroutine(int goid) {
-  ThreadState *thr = goroutines[goid];
+void __tsan_finalizer_goroutine(ThreadState *thr) {
   AcquireGlobal(thr, 0);
 }
 
