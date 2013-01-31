@@ -10506,8 +10506,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   }
 
   // Keep track of used but undefined functions.
-  if (!Func->isPure() && !Func->hasBody() &&
-      Func->getLinkage() != ExternalLinkage) {
+  if (!Func->isDefined() && Func->getLinkage() != ExternalLinkage) {
     SourceLocation &old = UndefinedInternals[Func->getCanonicalDecl()];
     if (old.isInvalid()) old = Loc;
   }
@@ -11167,6 +11166,17 @@ void Sema::MarkDeclRefReferenced(DeclRefExpr *E) {
 
 /// \brief Perform reference-marking and odr-use handling for a MemberExpr.
 void Sema::MarkMemberReferenced(MemberExpr *E) {
+  // C++11 [basic.def.odr]p2
+  //   A non-overloaded function whose name appears as a potentially-evaluated
+  //   expression or a member of a set of candidate functions, if selected by
+  //   overload resolution when referred to from a potentially-evaluated
+  //   expression, is odr-used, unless it is a pure virtual function and its
+  //   name is not explicitly qualified.
+  if (!E->hasQualifier()) {
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(E->getMemberDecl()))
+      if (Method->isPure())
+        return;
+  }
   MarkExprReferenced(*this, E->getMemberLoc(), E->getMemberDecl(), E);
 }
 

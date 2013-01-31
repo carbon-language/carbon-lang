@@ -396,7 +396,7 @@ static void checkUndefinedInternals(Sema &S) {
     if (decl->hasAttr<WeakRefAttr>()) continue;
 
     if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
-      if (fn->isPure() || fn->hasBody())
+      if (fn->isDefined())
         continue;
     } else {
       if (cast<VarDecl>(decl)->hasDefinition() != VarDecl::DeclarationOnly)

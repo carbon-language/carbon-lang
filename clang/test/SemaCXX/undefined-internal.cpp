@@ -199,3 +199,16 @@ namespace test8 {
     }
   } *A;
 }
+
+namespace test9 {
+  namespace {
+    struct X {
+      virtual void notused() = 0;
+      virtual void used() = 0; // expected-warning {{function 'test9::<anonymous namespace>::X::used' has internal linkage but is not defined}}
+    };
+  }
+  void test(X &x) {
+    x.notused();
+    x.X::used(); // expected-note {{used here}}
+  }
+}
