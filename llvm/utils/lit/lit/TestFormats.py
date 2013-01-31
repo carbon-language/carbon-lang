@@ -221,12 +221,3 @@ class OneCommandPerFileTest:
         report += """Output:\n--\n%s--""" % diags
 
         return Test.FAIL, report
-
-class SyntaxCheckTest(OneCommandPerFileTest):
-    def __init__(self, compiler, dir, extra_cxx_args=[], *args, **kwargs):
-        cmd = [compiler, '-x', 'c++', '-fsyntax-only'] + extra_cxx_args
-        OneCommandPerFileTest.__init__(self, cmd, dir,
-                                       useTempInput=1, *args, **kwargs)
-
-    def createTempInput(self, tmp, test):
-        print >>tmp, '#include "%s"' % test.source_path

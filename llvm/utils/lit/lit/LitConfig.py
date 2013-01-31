@@ -12,7 +12,7 @@ class LitConfig:
     import Test
 
     # Provide access to built-in formats.
-    import LitFormats as formats
+    import TestFormats as formats
 
     # Provide access to built-in utility functions.
     import Util as util
