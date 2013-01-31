@@ -53,6 +53,7 @@ struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
 
   const uint16_t* getCalleeSavedRegs(const MachineFunction *MF) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+                           unsigned FIOperandNum,
                            RegScavenger *RS) const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
 

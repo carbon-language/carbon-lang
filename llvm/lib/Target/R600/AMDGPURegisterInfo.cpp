@@ -38,6 +38,7 @@ const uint16_t* AMDGPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF
 
 void AMDGPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                              int SPAdj,
+                                             unsigned FIOperandNum,
                                              RegScavenger *RS) const {
   assert(!"Subroutines not supported yet");
 }
