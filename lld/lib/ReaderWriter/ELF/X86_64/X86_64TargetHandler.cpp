@@ -76,8 +76,9 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
     std::string str;
     llvm::raw_string_ostream s(str);
     auto name = _targetInfo.stringFromRelocKind(ref.kind());
-    s << "Unhandled relocation: "
-      << (name ? *name : "<unknown>" ) << " (" << ref.kind() << ")";
+    s << "Unhandled relocation: " << atom._atom->file().path() << ":"
+      << atom._atom->name() << "@" << ref.offsetInAtom() << " "
+      << (name ? *name : "<unknown>") << " (" << ref.kind() << ")";
     s.flush();
     llvm_unreachable(str.c_str());
   }
