@@ -665,8 +665,7 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// no constant offsets applied.
 static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
                                                 Value *&V) {
-  if (!V->getType()->isPointerTy())
-    return 0;
+  assert(V->getType()->isPointerTy());
 
   unsigned IntPtrWidth = TD.getPointerSizeInBits();
   APInt Offset = APInt::getNullValue(IntPtrWidth);
@@ -701,11 +700,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
 static Constant *computePointerDifference(const DataLayout &TD,
                                           Value *LHS, Value *RHS) {
   Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
-  if (!LHSOffset)
-    return 0;
   Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
-  if (!RHSOffset)
-    return 0;
 
   // If LHS and RHS are not related via constant offsets to the same base
   // value, there is nothing we can do here.
@@ -1710,11 +1705,7 @@ static Constant *computePointerICmp(const DataLayout &TD,
   }
 
   Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
-  if (!LHSOffset)
-    return 0;
   Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
-  if (!RHSOffset)
-    return 0;
 
   // If LHS and RHS are not related via constant offsets to the same base
   // value, there is nothing we can do here.
