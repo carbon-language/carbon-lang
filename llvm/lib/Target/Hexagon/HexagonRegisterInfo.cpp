@@ -133,21 +133,14 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 }
 
 void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                            int SPAdj, RegScavenger *RS) const {
-
+                                              int SPAdj, unsigned FIOperandNum,
+                                              RegScavenger *RS) const {
   //
   // Hexagon_TODO: Do we need to enforce this for Hexagon?
   assert(SPAdj == 0 && "Unexpected");
 
-
-  unsigned i = 0;
   MachineInstr &MI = *II;
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
   // Addressable stack objects are accessed using neg. offsets from %fp.
   MachineFunction &MF = *MI.getParent()->getParent();
@@ -167,8 +160,9 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       TII.isValidOffset(MI.getOpcode(), (FrameSize+Offset)) &&
       !TII.isSpillPredRegOp(&MI)) {
     // Replace frame index with a stack pointer reference.
-    MI.getOperand(i).ChangeToRegister(getStackRegister(), false, false, true);
-    MI.getOperand(i+1).ChangeToImmediate(FrameSize+Offset);
+    MI.getOperand(FIOperandNum).ChangeToRegister(getStackRegister(), false,
+                                                 false, true);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(FrameSize+Offset);
   } else {
     // Replace frame index with a frame pointer reference.
     if (!TII.isValidOffset(MI.getOpcode(), Offset)) {
@@ -205,8 +199,8 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                   dstReg).addReg(FrameReg).addImm(Offset);
         }
 
-        MI.getOperand(i).ChangeToRegister(dstReg, false, false, true);
-        MI.getOperand(i+1).ChangeToImmediate(0);
+        MI.getOperand(FIOperandNum).ChangeToRegister(dstReg, false, false,true);
+        MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
       } else if ((MI.getOpcode() == Hexagon::STriw_indexed) ||
                  (MI.getOpcode() == Hexagon::STriw) ||
                  (MI.getOpcode() == Hexagon::STrid) ||
@@ -233,29 +227,31 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                   TII.get(Hexagon::ADD_ri),
                   resReg).addReg(FrameReg).addImm(Offset);
         }
-        MI.getOperand(i).ChangeToRegister(resReg, false, false, true);
-        MI.getOperand(i+1).ChangeToImmediate(0);
+        MI.getOperand(FIOperandNum).ChangeToRegister(resReg, false, false,true);
+        MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
       } else if (TII.isMemOp(&MI)) {
         unsigned resReg = HEXAGON_RESERVED_REG_1;
         if (!MFI.hasVarSizedObjects() &&
             TII.isValidOffset(MI.getOpcode(), (FrameSize+Offset))) {
-          MI.getOperand(i).ChangeToRegister(getStackRegister(), false, false,
-                                            true);
-          MI.getOperand(i+1).ChangeToImmediate(FrameSize+Offset);
+          MI.getOperand(FIOperandNum).ChangeToRegister(getStackRegister(),
+                                                       false, false, true);
+          MI.getOperand(FIOperandNum+1).ChangeToImmediate(FrameSize+Offset);
         } else if (!TII.isValidOffset(Hexagon::ADD_ri, Offset)) {
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                   TII.get(Hexagon::CONST32_Int_Real), resReg).addImm(Offset);
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                   TII.get(Hexagon::ADD_rr),
                   resReg).addReg(FrameReg).addReg(resReg);
-          MI.getOperand(i).ChangeToRegister(resReg, false, false, true);
-          MI.getOperand(i+1).ChangeToImmediate(0);
+          MI.getOperand(FIOperandNum).ChangeToRegister(resReg, false, false,
+                                                       true);
+          MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
         } else {
           BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
                   TII.get(Hexagon::ADD_ri),
                   resReg).addReg(FrameReg).addImm(Offset);
-          MI.getOperand(i).ChangeToRegister(resReg, false, false, true);
-          MI.getOperand(i+1).ChangeToImmediate(0);
+          MI.getOperand(FIOperandNum).ChangeToRegister(resReg, false, false,
+                                                       true);
+          MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
         }
       } else {
         unsigned dstReg = MI.getOperand(0).getReg();
@@ -265,14 +261,14 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                 TII.get(Hexagon::ADD_rr),
                 dstReg).addReg(FrameReg).addReg(dstReg);
         // Can we delete MI??? r2 = add (r2, #0).
-        MI.getOperand(i).ChangeToRegister(dstReg, false, false, true);
-        MI.getOperand(i+1).ChangeToImmediate(0);
+        MI.getOperand(FIOperandNum).ChangeToRegister(dstReg, false, false,true);
+        MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
       }
     } else {
       // If the offset is small enough to fit in the immediate field, directly
       // encode it.
-      MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.getOperand(i+1).ChangeToImmediate(Offset);
+      MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false);
+      MI.getOperand(FIOperandNum+1).ChangeToImmediate(Offset);
     }
   }
 

@@ -62,7 +62,8 @@ public:
                              const TargetRegisterClass *RC,
                              unsigned Reg) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, RegScavenger *RS = NULL) const;
+                           int SPAdj, unsigned FIOperandNum,
+                           RegScavenger *RS = NULL) const;
 };
 }
 

@@ -316,6 +316,16 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator StartMI,
   return Survivor;
 }
 
+static unsigned getFrameIndexOperandNum(MachineInstr *MI) {
+  unsigned i = 0;
+  while (!MI->getOperand(i).isFI()) {
+    ++i;
+    assert(i < MI->getNumOperands() &&
+           "Instr doesn't have FrameIndex operand!");
+  }
+  return i;
+}
+
 unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
                                         MachineBasicBlock::iterator I,
                                         int SPAdj) {
@@ -364,12 +374,16 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
            "Cannot scavenge register without an emergency spill slot!");
     TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC,TRI);
     MachineBasicBlock::iterator II = prior(I);
-    TRI->eliminateFrameIndex(II, SPAdj, this);
+
+    unsigned FIOperandNum = getFrameIndexOperandNum(II);
+    TRI->eliminateFrameIndex(II, SPAdj, FIOperandNum, this);
 
     // Restore the scavenged register before its use (or first terminator).
     TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC, TRI);
     II = prior(UseMI);
-    TRI->eliminateFrameIndex(II, SPAdj, this);
+
+    FIOperandNum = getFrameIndexOperandNum(II);
+    TRI->eliminateFrameIndex(II, SPAdj, FIOperandNum, this);
   }
 
   ScavengeRestore = prior(UseMI);

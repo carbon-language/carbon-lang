@@ -55,7 +55,7 @@ public:
   virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                   int SPAdj,
+                                   int SPAdj, unsigned FIOperandNum,
                                    RegScavenger *RS=NULL) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

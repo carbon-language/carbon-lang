@@ -61,7 +61,8 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
                                      MachineBasicBlock::iterator I) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, RegScavenger *RS = NULL) const;
+                           int SPAdj, unsigned FIOperandNum,
+                           RegScavenger *RS = NULL) const;
 
   /// determineFrameLayout - Determine the size of the frame and maximum call
   /// frame size.

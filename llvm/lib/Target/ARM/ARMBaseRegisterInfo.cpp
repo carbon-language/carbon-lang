@@ -717,8 +717,8 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
 
 void
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                         int SPAdj, RegScavenger *RS) const {
-  unsigned i = 0;
+                                         int SPAdj, unsigned FIOperandNum,
+                                         RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
@@ -727,13 +727,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
          "This eliminateFrameIndex does not support Thumb1!");
-
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   unsigned FrameReg;
 
   int Offset = TFI->ResolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj);
@@ -755,18 +749,18 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Special handling of dbg_value instructions.
   if (MI.isDebugValue()) {
-    MI.getOperand(i).  ChangeToRegister(FrameReg, false /*isDef*/);
-    MI.getOperand(i+1).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum).  ChangeToRegister(FrameReg, false /*isDef*/);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
     return;
   }
 
   // Modify MI as necessary to handle as much of 'Offset' as possible
   bool Done = false;
   if (!AFI->isThumbFunction())
-    Done = rewriteARMFrameIndex(MI, i, FrameReg, Offset, TII);
+    Done = rewriteARMFrameIndex(MI, FIOperandNum, FrameReg, Offset, TII);
   else {
     assert(AFI->isThumb2Function());
-    Done = rewriteT2FrameIndex(MI, i, FrameReg, Offset, TII);
+    Done = rewriteT2FrameIndex(MI, FIOperandNum, FrameReg, Offset, TII);
   }
   if (Done)
     return;
@@ -786,7 +780,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned PredReg = (PIdx == -1) ? 0 : MI.getOperand(PIdx+1).getReg();
   if (Offset == 0)
     // Must be addrmode4/6.
-    MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
+    MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false, false, false);
   else {
     ScratchReg = MF.getRegInfo().createVirtualRegister(&ARM::GPRRegClass);
     if (!AFI->isThumbFunction())
@@ -798,6 +792,6 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                              Offset, Pred, PredReg, TII);
     }
     // Update the original instruction to use the scratch register.
-    MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
+    MI.getOperand(FIOperandNum).ChangeToRegister(ScratchReg, false, false,true);
   }
 }

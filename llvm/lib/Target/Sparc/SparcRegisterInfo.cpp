@@ -71,30 +71,25 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void
 SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                       int SPAdj, RegScavenger *RS) const {
+                                       int SPAdj, unsigned FIOperandNum,
+                                       RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
-  unsigned i = 0;
   MachineInstr &MI = *II;
   DebugLoc dl = MI.getDebugLoc();
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
   // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(i+1).getImm();
+               MI.getOperand(FIOperandNum + 1).getImm();
 
   // Replace frame index with a frame pointer reference.
   if (Offset >= -4096 && Offset <= 4095) {
     // If the offset is small enough to fit in the immediate field, directly
     // encode it.
-    MI.getOperand(i).ChangeToRegister(SP::I6, false);
-    MI.getOperand(i+1).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum).ChangeToRegister(SP::I6, false);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
   } else {
     // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to 
     // scavenge a register here instead of reserving G1 all of the time.
@@ -104,8 +99,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     BuildMI(*MI.getParent(), II, dl, TII.get(SP::ADDrr), SP::G1).addReg(SP::G1)
       .addReg(SP::I6);
     // Insert: G1+%lo(offset) into the user.
-    MI.getOperand(i).ChangeToRegister(SP::G1, false);
-    MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
+    MI.getOperand(FIOperandNum).ChangeToRegister(SP::G1, false);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset & ((1 << 10)-1));
   }
 }
 

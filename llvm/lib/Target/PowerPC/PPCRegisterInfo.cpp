@@ -510,7 +510,8 @@ PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
 
 void
 PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                     int SPAdj, RegScavenger *RS) const {
+                                     int SPAdj, unsigned FIOperandNum,
+                                     RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
   // Get the instruction.
@@ -524,20 +525,13 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   DebugLoc dl = MI.getDebugLoc();
 
-  // Find out which operand is the frame index.
-  unsigned FIOperandNo = 0;
-  while (!MI.getOperand(FIOperandNo).isFI()) {
-    ++FIOperandNo;
-    assert(FIOperandNo != MI.getNumOperands() &&
-           "Instr doesn't have FrameIndex operand!");
-  }
   // Take into account whether it's an add or mem instruction
-  unsigned OffsetOperandNo = (FIOperandNo == 2) ? 1 : 2;
+  unsigned OffsetOperandNo = (FIOperandNum == 2) ? 1 : 2;
   if (MI.isInlineAsm())
-    OffsetOperandNo = FIOperandNo-1;
+    OffsetOperandNo = FIOperandNum-1;
 
   // Get the frame index.
-  int FrameIndex = MI.getOperand(FIOperandNo).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
   // Get the frame pointer save index.  Users of this index are primarily
   // DYNALLOC instructions.
@@ -567,7 +561,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
 
   bool is64Bit = Subtarget.isPPC64();
-  MI.getOperand(FIOperandNo).ChangeToRegister(TFI->hasFP(MF) ?
+  MI.getOperand(FIOperandNum).ChangeToRegister(TFI->hasFP(MF) ?
                                               (is64Bit ? PPC::X31 : PPC::R31) :
                                                 (is64Bit ? PPC::X1 : PPC::R1),
                                               false);
@@ -649,7 +643,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     OperandBase = OffsetOperandNo;
   }
 
-  unsigned StackReg = MI.getOperand(FIOperandNo).getReg();
+  unsigned StackReg = MI.getOperand(FIOperandNum).getReg();
   MI.getOperand(OperandBase).ChangeToRegister(StackReg, false);
   MI.getOperand(OperandBase + 1).ChangeToRegister(SReg, false, false, true);
 }

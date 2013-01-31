@@ -155,18 +155,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void
 XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                       int SPAdj, RegScavenger *RS) const {
+                                       int SPAdj, unsigned FIOperandNum,
+                                       RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
   MachineInstr &MI = *II;
   DebugLoc dl = MI.getDebugLoc();
-  unsigned i = 0;
-
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
-  MachineOperand &FrameOp = MI.getOperand(i);
+  MachineOperand &FrameOp = MI.getOperand(FIOperandNum);
   int FrameIndex = FrameOp.getIndex();
 
   MachineFunction &MF = *MI.getParent()->getParent();
@@ -190,14 +184,14 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Special handling of DBG_VALUE instructions.
   if (MI.isDebugValue()) {
-    MI.getOperand(i).ChangeToRegister(FrameReg, false /*isDef*/);
-    MI.getOperand(i+1).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false /*isDef*/);
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
     return;
   }
 
   // fold constant into offset.
-  Offset += MI.getOperand(i + 1).getImm();
-  MI.getOperand(i + 1).ChangeToImmediate(0);
+  Offset += MI.getOperand(FIOperandNum + 1).getImm();
+  MI.getOperand(FIOperandNum + 1).ChangeToImmediate(0);
   
   assert(Offset%4 == 0 && "Misaligned stack offset");
 

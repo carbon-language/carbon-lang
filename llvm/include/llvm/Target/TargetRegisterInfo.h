@@ -767,10 +767,11 @@ public:
   /// referenced by the iterator contains an MO_FrameIndex operand which must be
   /// eliminated by this method.  This method may modify or replace the
   /// specified instruction, as long as it keeps the iterator pointing at the
-  /// finished product. SPAdj is the SP adjustment due to call frame setup
-  /// instruction.
+  /// finished product.  SPAdj is the SP adjustment due to call frame setup
+  /// instruction.  FIOperandNum is the FI operand number.
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                   int SPAdj, RegScavenger *RS=NULL) const = 0;
+                                   int SPAdj, unsigned FIOperandNum,
+                                   RegScavenger *RS = NULL) const = 0;
 
   //===--------------------------------------------------------------------===//
   /// Debug information queries.

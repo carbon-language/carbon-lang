@@ -163,7 +163,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void
 MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                        int SPAdj, RegScavenger *RS) const {
+                                        int SPAdj, unsigned FIOperandNum,
+                                        RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
   unsigned i = 0;
@@ -172,12 +173,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   DebugLoc dl = MI.getDebugLoc();
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
   unsigned BasePtr = (TFI->hasFP(MF) ? MSP430::FPW : MSP430::SPW);
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
@@ -191,7 +187,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset += 2; // Skip the saved FPW
 
   // Fold imm into offset
-  Offset += MI.getOperand(i+1).getImm();
+  Offset += MI.getOperand(FIOperandNum + 1).getImm();
 
   if (MI.getOpcode() == MSP430::ADD16ri) {
     // This is actually "load effective address" of the stack slot
@@ -199,7 +195,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // expand it into mov + add
 
     MI.setDesc(TII.get(MSP430::MOV16rr));
-    MI.getOperand(i).ChangeToRegister(BasePtr, false);
+    MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
 
     if (Offset == 0)
       return;
@@ -216,8 +212,8 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return;
   }
 
-  MI.getOperand(i).ChangeToRegister(BasePtr, false);
-  MI.getOperand(i+1).ChangeToImmediate(Offset);
+  MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
+  MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
 }
 
 unsigned MSP430RegisterInfo::getFrameRegister(const MachineFunction &MF) const {

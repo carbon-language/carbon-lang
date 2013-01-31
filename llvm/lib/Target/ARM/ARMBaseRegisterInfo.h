@@ -173,7 +173,8 @@ public:
                                            MachineBasicBlock::iterator I) const;
 
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                   int SPAdj, RegScavenger *RS = NULL) const;
+                                   int SPAdj, unsigned FIOperandNum,
+                                   RegScavenger *RS = NULL) const;
 };
 
 } // end namespace llvm

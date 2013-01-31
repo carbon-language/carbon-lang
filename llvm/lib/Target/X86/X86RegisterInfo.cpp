@@ -544,20 +544,14 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void
 X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                     int SPAdj, RegScavenger *RS) const {
+                                     int SPAdj, unsigned FIOperandNum,
+                                     RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
-  unsigned i = 0;
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   unsigned BasePtr;
 
   unsigned Opc = MI.getOpcode();
@@ -573,7 +567,7 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add an offset to the offset.
-  MI.getOperand(i).ChangeToRegister(BasePtr, false);
+  MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
 
   // Now add the frame object offset to the offset from EBP.
   int FIOffset;
@@ -584,17 +578,18 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   } else
     FIOffset = TFI->getFrameIndexOffset(MF, FrameIndex);
 
-  if (MI.getOperand(i+3).isImm()) {
+  if (MI.getOperand(FIOperandNum+3).isImm()) {
     // Offset is a 32-bit integer.
-    int Imm = (int)(MI.getOperand(i + 3).getImm());
+    int Imm = (int)(MI.getOperand(FIOperandNum + 3).getImm());
     int Offset = FIOffset + Imm;
     assert((!Is64Bit || isInt<32>((long long)FIOffset + Imm)) &&
            "Requesting 64-bit offset in 32-bit immediate!");
-    MI.getOperand(i + 3).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum + 3).ChangeToImmediate(Offset);
   } else {
     // Offset is symbolic. This is extremely rare.
-    uint64_t Offset = FIOffset + (uint64_t)MI.getOperand(i+3).getOffset();
-    MI.getOperand(i+3).setOffset(Offset);
+    uint64_t Offset = FIOffset +
+      (uint64_t)MI.getOperand(FIOperandNum+3).getOffset();
+    MI.getOperand(FIOperandNum + 3).setOffset(Offset);
   }
 }
 

@@ -177,21 +177,14 @@ MipsRegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
 // direct reference.
 void MipsRegisterInfo::
 eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
-                    RegScavenger *RS) const {
+                    unsigned FIOperandNum, RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
-
-  unsigned i = 0;
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() &&
-           "Instr doesn't have FrameIndex operand!");
-  }
 
   DEBUG(errs() << "\nFunction : " << MF.getName() << "\n";
         errs() << "<--------->\n" << MI);
 
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   uint64_t stackSize = MF.getFrameInfo()->getStackSize();
   int64_t spOffset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
@@ -199,7 +192,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                << "spOffset   : " << spOffset << "\n"
                << "stackSize  : " << stackSize << "\n");
 
-  eliminateFI(MI, i, FrameIndex, stackSize, spOffset);
+  eliminateFI(MI, FIOperandNum, FrameIndex, stackSize, spOffset);
 }
 
 unsigned MipsRegisterInfo::

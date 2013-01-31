@@ -593,9 +593,9 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
 
 void
 Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                        int SPAdj, RegScavenger *RS) const {
+                                        int SPAdj, unsigned FIOperandNum,
+                                        RegScavenger *RS) const {
   unsigned VReg = 0;
-  unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
@@ -603,13 +603,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   DebugLoc dl = MI.getDebugLoc();
   MachineInstrBuilder MIB(*MBB.getParent(), &MI);
 
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
-  }
-
   unsigned FrameReg = ARM::SP;
-  int FrameIndex = MI.getOperand(i).getIndex();
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                MF.getFrameInfo()->getStackSize() + SPAdj;
 
@@ -646,15 +641,15 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Special handling of dbg_value instructions.
   if (MI.isDebugValue()) {
-    MI.getOperand(i).  ChangeToRegister(FrameReg, false /*isDef*/);
-    MI.getOperand(i+1).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum).  ChangeToRegister(FrameReg, false /*isDef*/);
+    MI.getOperand(FIOperandNum+1).ChangeToImmediate(Offset);
     return;
   }
 
   // Modify MI as necessary to handle as much of 'Offset' as possible
   assert(AFI->isThumbFunction() &&
          "This eliminateFrameIndex only supports Thumb1!");
-  if (rewriteFrameIndex(MI, i, FrameReg, Offset, TII))
+  if (rewriteFrameIndex(MI, FIOperandNum, FrameReg, Offset, TII))
     return;
 
   // If we get here, the immediate doesn't fit into the instruction.  We folded
@@ -687,11 +682,12 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
     MI.setDesc(TII.get(UseRR ? ARM::tLDRr : ARM::tLDRi));
-    MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
+    MI.getOperand(FIOperandNum).ChangeToRegister(TmpReg, false, false, true);
     if (UseRR)
       // Use [reg, reg] addrmode. Replace the immediate operand w/ the frame
       // register. The offset is already handled in the vreg value.
-      MI.getOperand(i+1).ChangeToRegister(FrameReg, false, false, false);
+      MI.getOperand(FIOperandNum+1).ChangeToRegister(FrameReg, false, false,
+                                                     false);
   } else if (MI.mayStore()) {
       VReg = MF.getRegInfo().createVirtualRegister(&ARM::tGPRRegClass);
       bool UseRR = false;
@@ -708,11 +704,12 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         emitThumbRegPlusImmediate(MBB, II, dl, VReg, FrameReg, Offset, TII,
                                   *this);
       MI.setDesc(TII.get(UseRR ? ARM::tSTRr : ARM::tSTRi));
-      MI.getOperand(i).ChangeToRegister(VReg, false, false, true);
+      MI.getOperand(FIOperandNum).ChangeToRegister(VReg, false, false, true);
       if (UseRR)
         // Use [reg, reg] addrmode. Replace the immediate operand w/ the frame
         // register. The offset is already handled in the vreg value.
-        MI.getOperand(i+1).ChangeToRegister(FrameReg, false, false, false);
+        MI.getOperand(FIOperandNum+1).ChangeToRegister(FrameReg, false, false,
+                                                       false);
   } else {
     llvm_unreachable("Unexpected opcode!");
   }

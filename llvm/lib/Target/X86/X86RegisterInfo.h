@@ -122,7 +122,8 @@ public:
                                      MachineBasicBlock::iterator MI) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                           int SPAdj, RegScavenger *RS = NULL) const;
+                           int SPAdj, unsigned FIOperandNum,
+                           RegScavenger *RS = NULL) const;
 
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;
