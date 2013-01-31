@@ -90,6 +90,10 @@ E: sabre@nondot.org
 W: http://nondot.org/~sabre/
 D: Everything not covered by someone else
 
+N: Tim Northover
+E: Tim.Northover@arm.com
+D: AArch64 backend
+
 N: Jakob Olesen
 D: Register allocators and TableGen
 
