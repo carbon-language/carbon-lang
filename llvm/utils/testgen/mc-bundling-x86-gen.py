@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 
 # Auto-generates an exhaustive and repetitive test for correct bundle-locked
@@ -40,7 +41,7 @@ def print_bundle_locked_sequence(len, align_to_end=False):
 
 def generate(align_to_end=False):
   print(PREAMBLE)
-  
+
   ntest = 0
   for instlen in range(1, BUNDLE_SIZE + 1):
     for offset in range(0, BUNDLE_SIZE):
@@ -56,13 +57,15 @@ def generate(align_to_end=False):
       base_offset = ntest * 2 * BUNDLE_SIZE
       inst_orig_offset = base_offset + offset  # had it not been padded...
 
-      def print_check(adjusted_offset=None):
+      def print_check(adjusted_offset=None, nop_split_offset=None):
         if adjusted_offset is not None:
           print('# CHECK: {0:x}: nop'.format(inst_orig_offset))
+          if nop_split_offset is not None:
+            print('# CHECK: {0:x}: nop'.format(nop_split_offset))
           print('# CHECK: {0:x}: incl'.format(adjusted_offset))
         else:
           print('# CHECK: {0:x}: incl'.format(inst_orig_offset))
-      
+
       if align_to_end:
         if offset + instlen == BUNDLE_SIZE:
           # No padding needed
@@ -72,9 +75,13 @@ def generate(align_to_end=False):
           offset_to_end = base_offset + (BUNDLE_SIZE - instlen)
           print_check(offset_to_end)
         else: # offset + instlen > BUNDLE_SIZE
-          # Pad to end at next bundle boundary
+          # Pad to end at next bundle boundary, splitting the nop sequence
+          # at the nearest bundle boundary
+          offset_to_nearest_bundle = base_offset + BUNDLE_SIZE
           offset_to_end = base_offset + (BUNDLE_SIZE * 2 - instlen)
-          print_check(offset_to_end)
+          if offset_to_nearest_bundle == offset_to_end:
+            offset_to_nearest_bundle = None
+          print_check(offset_to_end, offset_to_nearest_bundle)
       else:
         if offset + instlen > BUNDLE_SIZE:
           # Padding needed
@@ -94,5 +101,3 @@ if __name__ == '__main__':
                          help='generate .bundle_lock with align_to_end option')
   args = argparser.parse_args()
   generate(align_to_end=args.align_to_end)
-
-

@@ -26,7 +26,8 @@ foo:
 # Here we have to pad until the end of the *next* boundary because
 # otherwise the group crosses a boundary.
 # CHECK:      1a: nop
+# The nop sequence may be implemented as one instruction or many, but if
+# it's one instruction, that instruction cannot itself cross the boundary.
+# CHECK:      20: nop
 # CHECK-NEXT: 26: callq
 # CHECK-NEXT: 2b: callq
-
-

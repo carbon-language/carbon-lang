@@ -467,7 +467,7 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
   //
   //
   //        BundlePadding
-  //             ||| 
+  //             |||
   // -------------------------------------
   //   Prev  |##########|       F        |
   // -------------------------------------
@@ -506,6 +506,9 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
                           const MCFragment &F) {
   MCObjectWriter *OW = &Asm.getWriter();
 
+  // FIXME: Embed in fragments instead?
+  uint64_t FragmentSize = Asm.computeFragmentSize(Layout, F);
+
   // Should NOP padding be written out before this fragment?
   unsigned BundlePadding = F.getBundlePadding();
   if (BundlePadding > 0) {
@@ -514,6 +517,22 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     assert(F.hasInstructions() &&
            "Writing bundle padding for a fragment without instructions");
 
+    unsigned TotalLength = BundlePadding + static_cast<unsigned>(FragmentSize);
+    if (F.alignToBundleEnd() && TotalLength > Asm.getBundleAlignSize()) {
+      // If the padding itself crosses a bundle boundary, it must be emitted
+      // in 2 pieces, since even nop instructions must not cross boundaries.
+      //             v--------------v   <- BundleAlignSize
+      //        v---------v             <- BundlePadding
+      // ----------------------------
+      // | Prev |####|####|    F    |
+      // ----------------------------
+      //        ^-------------------^   <- TotalLength
+      unsigned DistanceToBoundary = TotalLength - Asm.getBundleAlignSize();
+      if (!Asm.getBackend().writeNopData(DistanceToBoundary, OW))
+          report_fatal_error("unable to write NOP sequence of " +
+                             Twine(DistanceToBoundary) + " bytes");
+      BundlePadding -= DistanceToBoundary;
+    }
     if (!Asm.getBackend().writeNopData(BundlePadding, OW))
       report_fatal_error("unable to write NOP sequence of " +
                          Twine(BundlePadding) + " bytes");
@@ -526,8 +545,6 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   ++stats::EmittedFragments;
 
-  // FIXME: Embed in fragments instead?
-  uint64_t FragmentSize = Asm.computeFragmentSize(Layout, F);
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
     ++stats::EmittedAlignFragments;
@@ -1134,4 +1151,3 @@ void MCOrgFragment::anchor() { }
 void MCLEBFragment::anchor() { }
 void MCDwarfLineAddrFragment::anchor() { }
 void MCDwarfCallFrameFragment::anchor() { }
-

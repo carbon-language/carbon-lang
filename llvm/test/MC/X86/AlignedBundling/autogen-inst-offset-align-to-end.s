@@ -354,6 +354,7 @@ INSTRLEN_2_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 3ef: nop
+# CHECK: 3f0: nop
 # CHECK: 3fe: incl
 
   .align 32, 0x90
@@ -517,6 +518,7 @@ INSTRLEN_3_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 5ce: nop
+# CHECK: 5d0: nop
 # CHECK: 5dd: incl
 
   .align 32, 0x90
@@ -528,6 +530,7 @@ INSTRLEN_3_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 5ef: nop
+# CHECK: 5f0: nop
 # CHECK: 5fd: incl
 
   .align 32, 0x90
@@ -680,6 +683,7 @@ INSTRLEN_4_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 7ad: nop
+# CHECK: 7b0: nop
 # CHECK: 7bc: incl
 
   .align 32, 0x90
@@ -691,6 +695,7 @@ INSTRLEN_4_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 7ce: nop
+# CHECK: 7d0: nop
 # CHECK: 7dc: incl
 
   .align 32, 0x90
@@ -702,6 +707,7 @@ INSTRLEN_4_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 7ef: nop
+# CHECK: 7f0: nop
 # CHECK: 7fc: incl
 
   .align 32, 0x90
@@ -843,6 +849,7 @@ INSTRLEN_5_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 98c: nop
+# CHECK: 990: nop
 # CHECK: 99b: incl
 
   .align 32, 0x90
@@ -854,6 +861,7 @@ INSTRLEN_5_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 9ad: nop
+# CHECK: 9b0: nop
 # CHECK: 9bb: incl
 
   .align 32, 0x90
@@ -865,6 +873,7 @@ INSTRLEN_5_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 9ce: nop
+# CHECK: 9d0: nop
 # CHECK: 9db: incl
 
   .align 32, 0x90
@@ -876,6 +885,7 @@ INSTRLEN_5_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 9ef: nop
+# CHECK: 9f0: nop
 # CHECK: 9fb: incl
 
   .align 32, 0x90
@@ -1006,6 +1016,7 @@ INSTRLEN_6_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: b6b: nop
+# CHECK: b70: nop
 # CHECK: b7a: incl
 
   .align 32, 0x90
@@ -1017,6 +1028,7 @@ INSTRLEN_6_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: b8c: nop
+# CHECK: b90: nop
 # CHECK: b9a: incl
 
   .align 32, 0x90
@@ -1028,6 +1040,7 @@ INSTRLEN_6_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: bad: nop
+# CHECK: bb0: nop
 # CHECK: bba: incl
 
   .align 32, 0x90
@@ -1039,6 +1052,7 @@ INSTRLEN_6_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: bce: nop
+# CHECK: bd0: nop
 # CHECK: bda: incl
 
   .align 32, 0x90
@@ -1050,6 +1064,7 @@ INSTRLEN_6_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: bef: nop
+# CHECK: bf0: nop
 # CHECK: bfa: incl
 
   .align 32, 0x90
@@ -1169,6 +1184,7 @@ INSTRLEN_7_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: d4a: nop
+# CHECK: d50: nop
 # CHECK: d59: incl
 
   .align 32, 0x90
@@ -1180,6 +1196,7 @@ INSTRLEN_7_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: d6b: nop
+# CHECK: d70: nop
 # CHECK: d79: incl
 
   .align 32, 0x90
@@ -1191,6 +1208,7 @@ INSTRLEN_7_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: d8c: nop
+# CHECK: d90: nop
 # CHECK: d99: incl
 
   .align 32, 0x90
@@ -1202,6 +1220,7 @@ INSTRLEN_7_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: dad: nop
+# CHECK: db0: nop
 # CHECK: db9: incl
 
   .align 32, 0x90
@@ -1213,6 +1232,7 @@ INSTRLEN_7_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: dce: nop
+# CHECK: dd0: nop
 # CHECK: dd9: incl
 
   .align 32, 0x90
@@ -1224,6 +1244,7 @@ INSTRLEN_7_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: def: nop
+# CHECK: df0: nop
 # CHECK: df9: incl
 
   .align 32, 0x90
@@ -1332,6 +1353,7 @@ INSTRLEN_8_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: f29: nop
+# CHECK: f30: nop
 # CHECK: f38: incl
 
   .align 32, 0x90
@@ -1343,6 +1365,7 @@ INSTRLEN_8_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: f4a: nop
+# CHECK: f50: nop
 # CHECK: f58: incl
 
   .align 32, 0x90
@@ -1354,6 +1377,7 @@ INSTRLEN_8_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: f6b: nop
+# CHECK: f70: nop
 # CHECK: f78: incl
 
   .align 32, 0x90
@@ -1365,6 +1389,7 @@ INSTRLEN_8_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: f8c: nop
+# CHECK: f90: nop
 # CHECK: f98: incl
 
   .align 32, 0x90
@@ -1376,6 +1401,7 @@ INSTRLEN_8_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: fad: nop
+# CHECK: fb0: nop
 # CHECK: fb8: incl
 
   .align 32, 0x90
@@ -1387,6 +1413,7 @@ INSTRLEN_8_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: fce: nop
+# CHECK: fd0: nop
 # CHECK: fd8: incl
 
   .align 32, 0x90
@@ -1398,6 +1425,7 @@ INSTRLEN_8_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: fef: nop
+# CHECK: ff0: nop
 # CHECK: ff8: incl
 
   .align 32, 0x90
@@ -1495,6 +1523,7 @@ INSTRLEN_9_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1108: nop
+# CHECK: 1110: nop
 # CHECK: 1117: incl
 
   .align 32, 0x90
@@ -1506,6 +1535,7 @@ INSTRLEN_9_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1129: nop
+# CHECK: 1130: nop
 # CHECK: 1137: incl
 
   .align 32, 0x90
@@ -1517,6 +1547,7 @@ INSTRLEN_9_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 114a: nop
+# CHECK: 1150: nop
 # CHECK: 1157: incl
 
   .align 32, 0x90
@@ -1528,6 +1559,7 @@ INSTRLEN_9_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 116b: nop
+# CHECK: 1170: nop
 # CHECK: 1177: incl
 
   .align 32, 0x90
@@ -1539,6 +1571,7 @@ INSTRLEN_9_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 118c: nop
+# CHECK: 1190: nop
 # CHECK: 1197: incl
 
   .align 32, 0x90
@@ -1550,6 +1583,7 @@ INSTRLEN_9_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 11ad: nop
+# CHECK: 11b0: nop
 # CHECK: 11b7: incl
 
   .align 32, 0x90
@@ -1561,6 +1595,7 @@ INSTRLEN_9_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 11ce: nop
+# CHECK: 11d0: nop
 # CHECK: 11d7: incl
 
   .align 32, 0x90
@@ -1572,6 +1607,7 @@ INSTRLEN_9_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 11ef: nop
+# CHECK: 11f0: nop
 # CHECK: 11f7: incl
 
   .align 32, 0x90
@@ -1658,6 +1694,7 @@ INSTRLEN_10_OFFSET_7:
   .endr
   .bundle_unlock
 # CHECK: 12e7: nop
+# CHECK: 12f0: nop
 # CHECK: 12f6: incl
 
   .align 32, 0x90
@@ -1669,6 +1706,7 @@ INSTRLEN_10_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1308: nop
+# CHECK: 1310: nop
 # CHECK: 1316: incl
 
   .align 32, 0x90
@@ -1680,6 +1718,7 @@ INSTRLEN_10_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1329: nop
+# CHECK: 1330: nop
 # CHECK: 1336: incl
 
   .align 32, 0x90
@@ -1691,6 +1730,7 @@ INSTRLEN_10_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 134a: nop
+# CHECK: 1350: nop
 # CHECK: 1356: incl
 
   .align 32, 0x90
@@ -1702,6 +1742,7 @@ INSTRLEN_10_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 136b: nop
+# CHECK: 1370: nop
 # CHECK: 1376: incl
 
   .align 32, 0x90
@@ -1713,6 +1754,7 @@ INSTRLEN_10_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 138c: nop
+# CHECK: 1390: nop
 # CHECK: 1396: incl
 
   .align 32, 0x90
@@ -1724,6 +1766,7 @@ INSTRLEN_10_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 13ad: nop
+# CHECK: 13b0: nop
 # CHECK: 13b6: incl
 
   .align 32, 0x90
@@ -1735,6 +1778,7 @@ INSTRLEN_10_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 13ce: nop
+# CHECK: 13d0: nop
 # CHECK: 13d6: incl
 
   .align 32, 0x90
@@ -1746,6 +1790,7 @@ INSTRLEN_10_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 13ef: nop
+# CHECK: 13f0: nop
 # CHECK: 13f6: incl
 
   .align 32, 0x90
@@ -1821,6 +1866,7 @@ INSTRLEN_11_OFFSET_6:
   .endr
   .bundle_unlock
 # CHECK: 14c6: nop
+# CHECK: 14d0: nop
 # CHECK: 14d5: incl
 
   .align 32, 0x90
@@ -1832,6 +1878,7 @@ INSTRLEN_11_OFFSET_7:
   .endr
   .bundle_unlock
 # CHECK: 14e7: nop
+# CHECK: 14f0: nop
 # CHECK: 14f5: incl
 
   .align 32, 0x90
@@ -1843,6 +1890,7 @@ INSTRLEN_11_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1508: nop
+# CHECK: 1510: nop
 # CHECK: 1515: incl
 
   .align 32, 0x90
@@ -1854,6 +1902,7 @@ INSTRLEN_11_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1529: nop
+# CHECK: 1530: nop
 # CHECK: 1535: incl
 
   .align 32, 0x90
@@ -1865,6 +1914,7 @@ INSTRLEN_11_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 154a: nop
+# CHECK: 1550: nop
 # CHECK: 1555: incl
 
   .align 32, 0x90
@@ -1876,6 +1926,7 @@ INSTRLEN_11_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 156b: nop
+# CHECK: 1570: nop
 # CHECK: 1575: incl
 
   .align 32, 0x90
@@ -1887,6 +1938,7 @@ INSTRLEN_11_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 158c: nop
+# CHECK: 1590: nop
 # CHECK: 1595: incl
 
   .align 32, 0x90
@@ -1898,6 +1950,7 @@ INSTRLEN_11_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 15ad: nop
+# CHECK: 15b0: nop
 # CHECK: 15b5: incl
 
   .align 32, 0x90
@@ -1909,6 +1962,7 @@ INSTRLEN_11_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 15ce: nop
+# CHECK: 15d0: nop
 # CHECK: 15d5: incl
 
   .align 32, 0x90
@@ -1920,6 +1974,7 @@ INSTRLEN_11_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 15ef: nop
+# CHECK: 15f0: nop
 # CHECK: 15f5: incl
 
   .align 32, 0x90
@@ -1984,6 +2039,7 @@ INSTRLEN_12_OFFSET_5:
   .endr
   .bundle_unlock
 # CHECK: 16a5: nop
+# CHECK: 16b0: nop
 # CHECK: 16b4: incl
 
   .align 32, 0x90
@@ -1995,6 +2051,7 @@ INSTRLEN_12_OFFSET_6:
   .endr
   .bundle_unlock
 # CHECK: 16c6: nop
+# CHECK: 16d0: nop
 # CHECK: 16d4: incl
 
   .align 32, 0x90
@@ -2006,6 +2063,7 @@ INSTRLEN_12_OFFSET_7:
   .endr
   .bundle_unlock
 # CHECK: 16e7: nop
+# CHECK: 16f0: nop
 # CHECK: 16f4: incl
 
   .align 32, 0x90
@@ -2017,6 +2075,7 @@ INSTRLEN_12_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1708: nop
+# CHECK: 1710: nop
 # CHECK: 1714: incl
 
   .align 32, 0x90
@@ -2028,6 +2087,7 @@ INSTRLEN_12_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1729: nop
+# CHECK: 1730: nop
 # CHECK: 1734: incl
 
   .align 32, 0x90
@@ -2039,6 +2099,7 @@ INSTRLEN_12_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 174a: nop
+# CHECK: 1750: nop
 # CHECK: 1754: incl
 
   .align 32, 0x90
@@ -2050,6 +2111,7 @@ INSTRLEN_12_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 176b: nop
+# CHECK: 1770: nop
 # CHECK: 1774: incl
 
   .align 32, 0x90
@@ -2061,6 +2123,7 @@ INSTRLEN_12_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 178c: nop
+# CHECK: 1790: nop
 # CHECK: 1794: incl
 
   .align 32, 0x90
@@ -2072,6 +2135,7 @@ INSTRLEN_12_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 17ad: nop
+# CHECK: 17b0: nop
 # CHECK: 17b4: incl
 
   .align 32, 0x90
@@ -2083,6 +2147,7 @@ INSTRLEN_12_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 17ce: nop
+# CHECK: 17d0: nop
 # CHECK: 17d4: incl
 
   .align 32, 0x90
@@ -2094,6 +2159,7 @@ INSTRLEN_12_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 17ef: nop
+# CHECK: 17f0: nop
 # CHECK: 17f4: incl
 
   .align 32, 0x90
@@ -2147,6 +2213,7 @@ INSTRLEN_13_OFFSET_4:
   .endr
   .bundle_unlock
 # CHECK: 1884: nop
+# CHECK: 1890: nop
 # CHECK: 1893: incl
 
   .align 32, 0x90
@@ -2158,6 +2225,7 @@ INSTRLEN_13_OFFSET_5:
   .endr
   .bundle_unlock
 # CHECK: 18a5: nop
+# CHECK: 18b0: nop
 # CHECK: 18b3: incl
 
   .align 32, 0x90
@@ -2169,6 +2237,7 @@ INSTRLEN_13_OFFSET_6:
   .endr
   .bundle_unlock
 # CHECK: 18c6: nop
+# CHECK: 18d0: nop
 # CHECK: 18d3: incl
 
   .align 32, 0x90
@@ -2180,6 +2249,7 @@ INSTRLEN_13_OFFSET_7:
   .endr
   .bundle_unlock
 # CHECK: 18e7: nop
+# CHECK: 18f0: nop
 # CHECK: 18f3: incl
 
   .align 32, 0x90
@@ -2191,6 +2261,7 @@ INSTRLEN_13_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1908: nop
+# CHECK: 1910: nop
 # CHECK: 1913: incl
 
   .align 32, 0x90
@@ -2202,6 +2273,7 @@ INSTRLEN_13_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1929: nop
+# CHECK: 1930: nop
 # CHECK: 1933: incl
 
   .align 32, 0x90
@@ -2213,6 +2285,7 @@ INSTRLEN_13_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 194a: nop
+# CHECK: 1950: nop
 # CHECK: 1953: incl
 
   .align 32, 0x90
@@ -2224,6 +2297,7 @@ INSTRLEN_13_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 196b: nop
+# CHECK: 1970: nop
 # CHECK: 1973: incl
 
   .align 32, 0x90
@@ -2235,6 +2309,7 @@ INSTRLEN_13_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 198c: nop
+# CHECK: 1990: nop
 # CHECK: 1993: incl
 
   .align 32, 0x90
@@ -2246,6 +2321,7 @@ INSTRLEN_13_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 19ad: nop
+# CHECK: 19b0: nop
 # CHECK: 19b3: incl
 
   .align 32, 0x90
@@ -2257,6 +2333,7 @@ INSTRLEN_13_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 19ce: nop
+# CHECK: 19d0: nop
 # CHECK: 19d3: incl
 
   .align 32, 0x90
@@ -2268,6 +2345,7 @@ INSTRLEN_13_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 19ef: nop
+# CHECK: 19f0: nop
 # CHECK: 19f3: incl
 
   .align 32, 0x90
@@ -2310,6 +2388,7 @@ INSTRLEN_14_OFFSET_3:
   .endr
   .bundle_unlock
 # CHECK: 1a63: nop
+# CHECK: 1a70: nop
 # CHECK: 1a72: incl
 
   .align 32, 0x90
@@ -2321,6 +2400,7 @@ INSTRLEN_14_OFFSET_4:
   .endr
   .bundle_unlock
 # CHECK: 1a84: nop
+# CHECK: 1a90: nop
 # CHECK: 1a92: incl
 
   .align 32, 0x90
@@ -2332,6 +2412,7 @@ INSTRLEN_14_OFFSET_5:
   .endr
   .bundle_unlock
 # CHECK: 1aa5: nop
+# CHECK: 1ab0: nop
 # CHECK: 1ab2: incl
 
   .align 32, 0x90
@@ -2343,6 +2424,7 @@ INSTRLEN_14_OFFSET_6:
   .endr
   .bundle_unlock
 # CHECK: 1ac6: nop
+# CHECK: 1ad0: nop
 # CHECK: 1ad2: incl
 
   .align 32, 0x90
@@ -2354,6 +2436,7 @@ INSTRLEN_14_OFFSET_7:
   .endr
   .bundle_unlock
 # CHECK: 1ae7: nop
+# CHECK: 1af0: nop
 # CHECK: 1af2: incl
 
   .align 32, 0x90
@@ -2365,6 +2448,7 @@ INSTRLEN_14_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1b08: nop
+# CHECK: 1b10: nop
 # CHECK: 1b12: incl
 
   .align 32, 0x90
@@ -2376,6 +2460,7 @@ INSTRLEN_14_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1b29: nop
+# CHECK: 1b30: nop
 # CHECK: 1b32: incl
 
   .align 32, 0x90
@@ -2387,6 +2472,7 @@ INSTRLEN_14_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 1b4a: nop
+# CHECK: 1b50: nop
 # CHECK: 1b52: incl
 
   .align 32, 0x90
@@ -2398,6 +2484,7 @@ INSTRLEN_14_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 1b6b: nop
+# CHECK: 1b70: nop
 # CHECK: 1b72: incl
 
   .align 32, 0x90
@@ -2409,6 +2496,7 @@ INSTRLEN_14_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 1b8c: nop
+# CHECK: 1b90: nop
 # CHECK: 1b92: incl
 
   .align 32, 0x90
@@ -2420,6 +2508,7 @@ INSTRLEN_14_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 1bad: nop
+# CHECK: 1bb0: nop
 # CHECK: 1bb2: incl
 
   .align 32, 0x90
@@ -2431,6 +2520,7 @@ INSTRLEN_14_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 1bce: nop
+# CHECK: 1bd0: nop
 # CHECK: 1bd2: incl
 
   .align 32, 0x90
@@ -2442,6 +2532,7 @@ INSTRLEN_14_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 1bef: nop
+# CHECK: 1bf0: nop
 # CHECK: 1bf2: incl
 
   .align 32, 0x90
@@ -2473,6 +2564,7 @@ INSTRLEN_15_OFFSET_2:
   .endr
   .bundle_unlock
 # CHECK: 1c42: nop
+# CHECK: 1c50: nop
 # CHECK: 1c51: incl
 
   .align 32, 0x90
@@ -2484,6 +2576,7 @@ INSTRLEN_15_OFFSET_3:
   .endr
   .bundle_unlock
 # CHECK: 1c63: nop
+# CHECK: 1c70: nop
 # CHECK: 1c71: incl
 
   .align 32, 0x90
@@ -2495,6 +2588,7 @@ INSTRLEN_15_OFFSET_4:
   .endr
   .bundle_unlock
 # CHECK: 1c84: nop
+# CHECK: 1c90: nop
 # CHECK: 1c91: incl
 
   .align 32, 0x90
@@ -2506,6 +2600,7 @@ INSTRLEN_15_OFFSET_5:
   .endr
   .bundle_unlock
 # CHECK: 1ca5: nop
+# CHECK: 1cb0: nop
 # CHECK: 1cb1: incl
 
   .align 32, 0x90
@@ -2517,6 +2612,7 @@ INSTRLEN_15_OFFSET_6:
   .endr
   .bundle_unlock
 # CHECK: 1cc6: nop
+# CHECK: 1cd0: nop
 # CHECK: 1cd1: incl
 
   .align 32, 0x90
@@ -2528,6 +2624,7 @@ INSTRLEN_15_OFFSET_7:
   .endr
   .bundle_unlock
 # CHECK: 1ce7: nop
+# CHECK: 1cf0: nop
 # CHECK: 1cf1: incl
 
   .align 32, 0x90
@@ -2539,6 +2636,7 @@ INSTRLEN_15_OFFSET_8:
   .endr
   .bundle_unlock
 # CHECK: 1d08: nop
+# CHECK: 1d10: nop
 # CHECK: 1d11: incl
 
   .align 32, 0x90
@@ -2550,6 +2648,7 @@ INSTRLEN_15_OFFSET_9:
   .endr
   .bundle_unlock
 # CHECK: 1d29: nop
+# CHECK: 1d30: nop
 # CHECK: 1d31: incl
 
   .align 32, 0x90
@@ -2561,6 +2660,7 @@ INSTRLEN_15_OFFSET_10:
   .endr
   .bundle_unlock
 # CHECK: 1d4a: nop
+# CHECK: 1d50: nop
 # CHECK: 1d51: incl
 
   .align 32, 0x90
@@ -2572,6 +2672,7 @@ INSTRLEN_15_OFFSET_11:
   .endr
   .bundle_unlock
 # CHECK: 1d6b: nop
+# CHECK: 1d70: nop
 # CHECK: 1d71: incl
 
   .align 32, 0x90
@@ -2583,6 +2684,7 @@ INSTRLEN_15_OFFSET_12:
   .endr
   .bundle_unlock
 # CHECK: 1d8c: nop
+# CHECK: 1d90: nop
 # CHECK: 1d91: incl
 
   .align 32, 0x90
@@ -2594,6 +2696,7 @@ INSTRLEN_15_OFFSET_13:
   .endr
   .bundle_unlock
 # CHECK: 1dad: nop
+# CHECK: 1db0: nop
 # CHECK: 1db1: incl
 
   .align 32, 0x90
@@ -2605,6 +2708,7 @@ INSTRLEN_15_OFFSET_14:
   .endr
   .bundle_unlock
 # CHECK: 1dce: nop
+# CHECK: 1dd0: nop
 # CHECK: 1dd1: incl
 
   .align 32, 0x90
@@ -2616,6 +2720,7 @@ INSTRLEN_15_OFFSET_15:
   .endr
   .bundle_unlock
 # CHECK: 1def: nop
+# CHECK: 1df0: nop
 # CHECK: 1df1: incl
 
   .align 32, 0x90
