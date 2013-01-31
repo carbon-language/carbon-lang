@@ -1828,18 +1828,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       else if (Pred == CmpInst::ICMP_NE)
         return ConstantInt::get(ITy, true);
     }
-  } else if (Argument *LHSArg = dyn_cast<Argument>(LHSPtr)) {
-    RHSPtr = RHSPtr->stripInBoundsOffsets();
-    // An alloca can't be equal to an argument unless they come from separate
-    // functions via inlining.
-    if (AllocaInst *RHSInst = dyn_cast<AllocaInst>(RHSPtr)) {
-      if (LHSArg->getParent() == RHSInst->getParent()->getParent()) {
-        if (Pred == CmpInst::ICMP_EQ)
-          return ConstantInt::get(ITy, false);
-        else if (Pred == CmpInst::ICMP_NE)
-          return ConstantInt::get(ITy, true);
-      }
-    }
   }
 
   // If we are comparing with zero then try hard since this is a common case.

@@ -647,3 +647,16 @@ unreachableblock:
   %Y = icmp eq i32* %X, null
   ret i1 %Y
 }
+
+; It's not valid to fold a comparison of an argument with an alloca, even though
+; that's tempting. An argument can't *alias* an alloca, however the aliasing rule
+; relies on restrictions against guessing an object's address and dereferencing.
+; There are no restrictions against guessing an object's address and comparing.
+
+define i1 @alloca_argument_compare(i64* %arg) {
+  %alloc = alloca i64
+  %cmp = icmp eq i64* %arg, %alloc
+  ret i1 %cmp
+  ; CHECK: alloca_argument_compare
+  ; CHECK: ret i1 %cmp
+}
