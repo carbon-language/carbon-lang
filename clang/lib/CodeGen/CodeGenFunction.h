@@ -1816,7 +1816,8 @@ public:
   void EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                         const FunctionArgList &Args);
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
-                              bool ForVirtualBase, llvm::Value *This,
+                              bool ForVirtualBase, bool Delegating,
+                              llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,
                               CallExpr::const_arg_iterator ArgEnd);
   
@@ -1842,7 +1843,8 @@ public:
   static Destroyer destroyCXXObject;
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
-                             bool ForVirtualBase, llvm::Value *This);
+                             bool ForVirtualBase, bool Delegating,
+                             llvm::Value *This);
 
   void EmitNewArrayInitializer(const CXXNewExpr *E, QualType elementType,
                                llvm::Value *NewPtr, llvm::Value *NumElements);

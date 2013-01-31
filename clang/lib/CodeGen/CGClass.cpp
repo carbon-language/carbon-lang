@@ -282,7 +282,8 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
 /// GetVTTParameter - Return the VTT parameter that should be passed to a
 /// base constructor/destructor with virtual bases.
 static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
-                                    bool ForVirtualBase) {
+                                    bool ForVirtualBase,
+                                    bool Delegating) {
   if (!CodeGenVTables::needsVTTParameter(GD)) {
     // This constructor/destructor does not need a VTT parameter.
     return 0;
@@ -295,9 +296,12 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
 
   uint64_t SubVTTIndex;
 
-  // If the record matches the base, this is the complete ctor/dtor
-  // variant calling the base variant in a class with virtual bases.
-  if (RD == Base) {
+  if (Delegating) {
+    // If this is a delegating constructor call, just load the VTT.
+    return CGF.LoadCXXVTT();
+  } else if (RD == Base) {
+    // If the record matches the base, this is the complete ctor/dtor
+    // variant calling the base variant in a class with virtual bases.
     assert(!CodeGenVTables::needsVTTParameter(CGF.CurGD) &&
            "doing no-op VTT offset in base dtor/ctor?");
     assert(!ForVirtualBase && "Can't have same class as virtual base!");
@@ -344,7 +348,8 @@ namespace {
         CGF.GetAddressOfDirectBaseInCompleteClass(CGF.LoadCXXThis(),
                                                   DerivedClass, BaseClass,
                                                   BaseIsVirtual);
-      CGF.EmitCXXDestructorCall(D, Dtor_Base, BaseIsVirtual, Addr);
+      CGF.EmitCXXDestructorCall(D, Dtor_Base, BaseIsVirtual,
+                                /*Delegating=*/false, Addr);
     }
   };
 
@@ -537,7 +542,7 @@ namespace {
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete, /*ForVirtualBase=*/false,
-                                V);
+                                /*Delegating=*/false, V);
     }
   };
 }
@@ -893,7 +898,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   if (DtorType == Dtor_Deleting) {
     EnterDtorCleanups(Dtor, Dtor_Deleting);
     EmitCXXDestructorCall(Dtor, Dtor_Complete, /*ForVirtualBase=*/false,
-                          LoadCXXThis());
+                          /*Delegating=*/false, LoadCXXThis());
     PopCleanupBlock();
     return;
   }
@@ -923,7 +928,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     if (!isTryBody &&
         CGM.getContext().getTargetInfo().getCXXABI().hasDestructorVariants()) {
       EmitCXXDestructorCall(Dtor, Dtor_Base, /*ForVirtualBase=*/false,
-                            LoadCXXThis());
+                            /*Delegating=*/false, LoadCXXThis());
       break;
     }
     // Fallthrough: act like we're in the base variant.
@@ -1188,7 +1193,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
     }
 
     EmitCXXConstructorCall(ctor, Ctor_Complete, /*ForVirtualBase=*/ false,
-                           cur, argBegin, argEnd);
+                           /*Delegating=*/false, cur, argBegin, argEnd);
   }
 
   // Go to the next element.
@@ -1216,12 +1221,13 @@ void CodeGenFunction::destroyCXXObject(CodeGenFunction &CGF,
   const CXXDestructorDecl *dtor = record->getDestructor();
   assert(!dtor->isTrivial());
   CGF.EmitCXXDestructorCall(dtor, Dtor_Complete, /*for vbase*/ false,
-                            addr);
+                            /*Delegating=*/false, addr);
 }
 
 void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         CXXCtorType Type, bool ForVirtualBase,
+                                        bool Delegating,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
@@ -1255,7 +1261,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     return;
   }
 
-  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(D, Type), ForVirtualBase);
+  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(D, Type), ForVirtualBase,
+                                     Delegating);
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
   // FIXME: Provide a source location here.
@@ -1331,7 +1338,8 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 
   // vtt
   if (llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(Ctor, CtorType),
-                                         /*ForVirtualBase=*/false)) {
+                                         /*ForVirtualBase=*/false,
+                                         /*Delegating=*/true)) {
     QualType VoidPP = getContext().getPointerType(getContext().VoidPtrTy);
     DelegateArgs.add(RValue::get(VTT), VoidPP);
 
@@ -1365,7 +1373,7 @@ namespace {
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitCXXDestructorCall(Dtor, Type, /*ForVirtualBase=*/false,
-                                Addr);
+                                /*Delegating=*/true, Addr);
     }
   };
 }
@@ -1401,9 +1409,10 @@ CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             CXXDtorType Type,
                                             bool ForVirtualBase,
+                                            bool Delegating,
                                             llvm::Value *This) {
   llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(DD, Type), 
-                                     ForVirtualBase);
+                                     ForVirtualBase, Delegating);
   llvm::Value *Callee = 0;
   if (getLangOpts().AppleKext)
     Callee = BuildAppleKextVirtualDestructorCall(DD, Type, 
@@ -1427,7 +1436,8 @@ namespace {
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
-                                /*ForVirtualBase=*/false, Addr);
+                                /*ForVirtualBase=*/false,
+                                /*Delegating=*/false, Addr);
     }
   };
 }

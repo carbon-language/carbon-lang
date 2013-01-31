@@ -485,11 +485,13 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   } else {
     CXXCtorType Type = Ctor_Complete;
     bool ForVirtualBase = false;
-
+    bool Delegating = false;
+    
     switch (E->getConstructionKind()) {
      case CXXConstructExpr::CK_Delegating:
       // We should be emitting a constructor; GlobalDecl will assert this
       Type = CurGD.getCtorType();
+      Delegating = true;
       break;
 
      case CXXConstructExpr::CK_Complete:
@@ -505,7 +507,7 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
     }
     
     // Call the constructor.
-    EmitCXXConstructorCall(CD, Type, ForVirtualBase, Dest.getAddr(),
+    EmitCXXConstructorCall(CD, Type, ForVirtualBase, Delegating, Dest.getAddr(),
                            E->arg_begin(), E->arg_end());
   }
 }
@@ -1425,7 +1427,9 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
 
   if (Dtor)
     CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
-                              /*ForVirtualBase=*/false, Ptr);
+                              /*ForVirtualBase=*/false,
+                              /*Delegating=*/false,
+                              Ptr);
   else if (CGF.getLangOpts().ObjCAutoRefCount &&
            ElementType->isObjCLifetimeType()) {
     switch (ElementType.getObjCLifetime()) {

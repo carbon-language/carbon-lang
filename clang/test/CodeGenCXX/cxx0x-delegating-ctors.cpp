@@ -65,3 +65,37 @@ namespace PR12890 {
 }
 // CHECK: define {{.*}} @_ZN7PR128901XC1Ei(%"class.PR12890::X"* %this, i32)
 // CHECK: call void @llvm.memset.p0i8.{{i32|i64}}(i8* {{.*}}, i8 0, {{i32|i64}} 4, i32 4, i1 false)
+
+namespace PR14588 {
+  void other();
+
+  class Base {
+  public:
+    Base() { squawk(); }
+    virtual ~Base() {}
+
+    virtual void squawk() { other(); }
+  };
+
+
+  class Foo : public virtual Base {
+  public:
+    Foo();
+    Foo(const void * inVoid);
+    virtual ~Foo() {}
+
+    virtual void squawk() { other(); }
+  };
+
+  // CHECK: define void @_ZN7PR145883FooC1Ev(%"class.PR14588::Foo"*
+  // CHECK: call void @_ZN7PR145883FooC1EPKv(
+  // CHECK: invoke void @_ZN7PR145885otherEv()
+  // CHECK: call void @_ZN7PR145883FooD1Ev
+  // CHECK: resume
+
+  Foo::Foo() : Foo(__null) { other(); }
+  Foo::Foo(const void *inVoid) {
+    squawk();
+  }
+
+}

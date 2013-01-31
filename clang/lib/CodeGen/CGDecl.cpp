@@ -386,7 +386,9 @@ namespace {
       }
 
       CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
-                                /*ForVirtualBase=*/false, Loc);
+                                /*ForVirtualBase=*/false,
+                                /*Delegating=*/false,
+                                Loc);
 
       if (NRVO) CGF.EmitBlock(SkipDtorBB);
     }
