@@ -25,8 +25,8 @@ void f6(signed short x) { }
 void f7(unsigned short x) { }
 
 // CHECK: define void @f8()
-// CHECK: nounwind
 // CHECK: alwaysinline
+// CHECK: nounwind
 // CHECK: {
 void __attribute__((always_inline)) f8(void) { }
 
@@ -56,7 +56,7 @@ int f12(int arg) {
   return arg ? 0 : f10_t();
 }
 
-// CHECK: define void @f13() nounwind readnone
+// CHECK: define void @f13() nounwind optsize readnone
 void f13(void) __attribute__((pure)) __attribute__((const));
 void f13(void){}
 

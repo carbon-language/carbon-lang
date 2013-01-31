@@ -34,7 +34,7 @@ int
 main(void) {
   // The presence of double c means that foo* d is not passed inreg. This
   // behavior is different from current x86-32 behavior
-  // CHECK: call void @reduced(i8 signext inreg 0, {{.*}} %struct.foo* null
+  // CHECK: call void @reduced(i8 inreg signext 0, {{.*}} %struct.foo* null
   reduced(0, 0.0, 0, 0.0, 0);
   // CHECK: call void {{.*}}(i32 inreg 1, i32 inreg 2)
   bar(1,2);
