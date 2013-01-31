@@ -1784,6 +1784,13 @@ extern id NSApp;
       id contextObject = (id)contextInfo;
       [contextObject release];
 }
+
+- (id)copyAutoreleaseRadar13081402 {
+  id x = [[[NSString alloc] initWithUTF8String:"foo"] autorelease];
+  [x retain];
+  return x; // no warning
+}
+
 @end
 //===----------------------------------------------------------------------===//
 // Test returning allocated memory in a struct.
@@ -1959,6 +1966,7 @@ void test_drain() {
   [obj drain];
   [obj release]; // no-warning
 }
+
 
 
 // CHECK:  <key>diagnostics</key>
