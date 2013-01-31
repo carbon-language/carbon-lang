@@ -184,6 +184,18 @@ static void addMemorySanitizerPass(const PassManagerBuilder &Builder,
   const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
   PM.add(createMemorySanitizerPass(CGOpts.SanitizeMemoryTrackOrigins,
                                    CGOpts.SanitizerBlacklistFile));
+
+  // MemorySanitizer inserts complex instrumentation that mostly follows
+  // the logic of the original code, but operates on "shadow" values.
+  // It can benefit from re-running some general purpose optimization passes.
+  if (Builder.OptLevel > 0) {
+    PM.add(createEarlyCSEPass());
+    PM.add(createReassociatePass());
+    PM.add(createLICMPass());
+    PM.add(createGVNPass());
+    PM.add(createInstructionCombiningPass());
+    PM.add(createDeadStoreEliminationPass());
+  }
 }
 
 static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
