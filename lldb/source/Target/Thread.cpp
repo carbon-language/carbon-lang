@@ -323,6 +323,33 @@ Thread::SetSelectedFrameByIndex (uint32_t frame_idx, bool broadcast)
         return false;
 }
 
+bool
+Thread::SetSelectedFrameByIndexNoisily (uint32_t frame_idx, Stream &output_stream)
+{
+    const bool broadcast = true;
+    bool success = SetSelectedFrameByIndex (frame_idx, broadcast);
+    if (success)
+    {
+        StackFrameSP frame_sp = GetSelectedFrame();
+        if (frame_sp)
+        {
+            bool already_shown = false;
+            SymbolContext frame_sc(frame_sp->GetSymbolContext(eSymbolContextLineEntry));
+            if (GetProcess()->GetTarget().GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+            {
+                already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+            }
+
+            bool show_frame_info = true;
+            bool show_source = !already_shown;
+            return frame_sp->GetStatus (output_stream, show_frame_info, show_source);
+        }
+        return false;
+    }
+    else
+        return false;
+}
+
 
 lldb::StopInfoSP
 Thread::GetStopInfo ()
@@ -1165,6 +1192,28 @@ Thread::PlanIsBasePlan (ThreadPlan *plan_ptr)
        return m_plan_stack[0].get() == plan_ptr;
 }
 
+Error
+Thread::UnwindInnermostExpression()
+{
+    Error error;
+    int stack_size = m_plan_stack.size();
+    
+    // If the input plan is NULL, discard all plans.  Otherwise make sure this plan is in the
+    // stack, and if so discard up to and including it.
+    
+    for (int i = stack_size - 1; i > 0; i--)
+    {
+        if (m_plan_stack[i]->GetKind() == ThreadPlan::eKindCallFunction)
+        {
+            DiscardThreadPlansUpToPlan(m_plan_stack[i].get());
+            return error;
+        }
+    }
+    error.SetErrorString("No expressions currently active on this thread");
+    return error;
+}
+
+
 ThreadPlan *
 Thread::QueueFundamentalPlan (bool abort_other_plans)
 {
@@ -1478,6 +1527,11 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
     Thread *thread = frame_sp->GetThread().get();
     uint32_t older_frame_idx = frame_sp->GetFrameIndex() + 1;
     StackFrameSP older_frame_sp = thread->GetStackFrameAtIndex(older_frame_idx);
+    if (!older_frame_sp)
+    {
+        return_error.SetErrorString("No older frame to return to.");
+        return return_error;
+    }
     
     if (return_value_sp)
     {    
@@ -1519,20 +1573,29 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
     
     // Now write the return registers for the chosen frame:
     // Note, we can't use ReadAllRegisterValues->WriteAllRegisterValues, since the read & write
-    // cook their data 
-    bool copy_success = thread->GetStackFrameAtIndex(0)->GetRegisterContext()->CopyFromRegisterContext(older_frame_sp->GetRegisterContext());
-    if (copy_success)
+    // cook their data
+    
+    StackFrameSP youngest_frame_sp = thread->GetStackFrameAtIndex(0);
+    if (youngest_frame_sp)
     {
-        thread->DiscardThreadPlans(true);
-        thread->ClearStackFrames();
-        if (broadcast && EventTypeHasListeners(eBroadcastBitStackChanged))
-            BroadcastEvent(eBroadcastBitStackChanged, new ThreadEventData (this->shared_from_this()));
-        return return_error;
+        bool copy_success = youngest_frame_sp->GetRegisterContext()->CopyFromRegisterContext(older_frame_sp->GetRegisterContext());
+        if (copy_success)
+        {
+            thread->DiscardThreadPlans(true);
+            thread->ClearStackFrames();
+            if (broadcast && EventTypeHasListeners(eBroadcastBitStackChanged))
+                BroadcastEvent(eBroadcastBitStackChanged, new ThreadEventData (this->shared_from_this()));
+            return return_error;
+        }
+        else
+        {
+            return_error.SetErrorString("Could not reset register values.");
+            return return_error;
+        }
     }
     else
     {
-        return_error.SetErrorString("Could not reset register values.");
-        return return_error;
+        return_error.SetErrorString("Returned past top frame.");
     }
 }
 

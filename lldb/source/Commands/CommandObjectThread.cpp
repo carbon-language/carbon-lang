@@ -1248,25 +1248,104 @@ protected:
     }
 };
 
+//-------------------------------------------------------------------------
+// CommandObjectThreadReturn
+//-------------------------------------------------------------------------
+
 class CommandObjectThreadReturn : public CommandObjectRaw
 {
 public:
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
+            m_from_expression (false)
+        {
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'x':
+                {
+                    bool success;
+                    bool tmp_value = Args::StringToBoolean (option_arg, false, &success);
+                    if (success)
+                        m_from_expression = tmp_value;
+                    else
+                    {
+                        error.SetErrorStringWithFormat ("invalid boolean value '%s' for 'x' option", option_arg);
+                    }
+                }
+                break;
+                default:
+                    error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
+                    break;
+
+            }
+            return error;
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_from_expression = false;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        bool m_from_expression;
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+    };
+
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
     CommandObjectThreadReturn (CommandInterpreter &interpreter) :
         CommandObjectRaw (interpreter,
                           "thread return",
-                          "Return from the currently selected frame, short-circuiting execution of the frames below it, with an optional return value.",
+                          "Return from the currently selected frame, short-circuiting execution of the frames below it, with an optional return value,"
+                          " or with the -x option from the innermost function evaluation.",
                           "thread return",
                           eFlagRequiresFrame         |
                           eFlagTryTargetAPILock      |
                           eFlagProcessMustBeLaunched |
-                          eFlagProcessMustBePaused   )
+                          eFlagProcessMustBePaused   ),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData expression_arg;
 
         // Define the first (and only) variant of this arg.
         expression_arg.arg_type = eArgTypeExpression;
-        expression_arg.arg_repetition = eArgRepeatPlain;
+        expression_arg.arg_repetition = eArgRepeatOptional;
 
         // There is only one variant this argument could be; put it into the argument entry.
         arg.push_back (expression_arg);
@@ -1289,6 +1368,38 @@ protected:
         CommandReturnObject &result
     )
     {
+        // I am going to handle this by hand, because I don't want you to have to say:
+        // "thread return -- -5".
+        if (command[0] == '-' && command[1] == 'x')
+        {
+            if (command && command[2] != '\0')
+                result.AppendWarning("Return values ignored when returning from user called expressions");
+            
+            Thread *thread = m_exe_ctx.GetThreadPtr();
+            Error error;
+            error = thread->UnwindInnermostExpression();
+            if (!error.Success())
+            {
+                result.AppendErrorWithFormat ("Unwinding expression failed - %s.", error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else
+            {
+                bool success = thread->SetSelectedFrameByIndexNoisily (0, result.GetOutputStream());
+                if (success)
+                {
+                    m_exe_ctx.SetFrameSP(thread->GetSelectedFrame ());
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("Could not select 0th frame after unwinding expression.");
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+            return result.Succeeded();
+        }
+        
         ValueObjectSP return_valobj_sp;
         
         StackFrameSP frame_sp = m_exe_ctx.GetFrameSP();
@@ -1340,7 +1451,15 @@ protected:
         result.SetStatus (eReturnStatusSuccessFinishResult);
         return true;
     }
+    
+    CommandOptions m_options;
 
+};
+OptionDefinition
+CommandObjectThreadReturn::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_ALL, false, "from-expression",  'x', no_argument, NULL,               0, eArgTypeNone,     "Return from the innermost expression evaluation."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

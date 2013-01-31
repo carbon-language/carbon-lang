@@ -394,8 +394,12 @@ public:
     uint32_t
     SetSelectedFrame (lldb_private::StackFrame *frame, bool broadcast = false);
 
+
     bool
     SetSelectedFrameByIndex (uint32_t frame_idx, bool broadcast = false);
+
+    bool
+    SetSelectedFrameByIndexNoisily (uint32_t frame_idx, Stream &output_stream);
 
     void
     SetDefaultFileAndLineToSelectedFrame()
@@ -663,6 +667,17 @@ public:
     //------------------------------------------------------------------
     ThreadPlan *
     GetCurrentPlan ();
+    
+    //------------------------------------------------------------------
+    /// Unwinds the thread stack for the innermost expression plan currently
+    /// on the thread plan stack.
+    ///
+    /// @return
+    ///     An error if the thread plan could not be unwound.
+    //------------------------------------------------------------------
+
+    Error
+    UnwindInnermostExpression();
 
 private:
     bool

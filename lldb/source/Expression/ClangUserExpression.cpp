@@ -759,9 +759,9 @@ ClangUserExpression::Execute (Stream &error_stream,
                 
             if ((execution_result == eExecutionInterrupted && unwind_on_error)
                 || (execution_result == eExecutionHitBreakpoint && ignore_breakpoints))
-                error_stream.Printf ("\nThe process has been returned to the state before execution.");
+                error_stream.Printf ("\nThe process has been returned to the state before expression evaluation.");
             else
-                error_stream.Printf ("\nThe process has been left at the point where it was interrupted.");
+                error_stream.Printf ("\nThe process has been left at the point where it was interrupted, use \"thread return -x\" to return to the state before expression evaluation.");
 
             return execution_result;
         }

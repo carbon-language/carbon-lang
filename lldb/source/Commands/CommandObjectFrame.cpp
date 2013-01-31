@@ -261,33 +261,19 @@ protected:
             }
         }
 
-        const bool broadcast = true;
-        bool success = thread->SetSelectedFrameByIndex (frame_idx, broadcast);
+        bool success = thread->SetSelectedFrameByIndexNoisily (frame_idx, result.GetOutputStream());
         if (success)
         {
             m_exe_ctx.SetFrameSP(thread->GetSelectedFrame ());
-            StackFrame *frame = m_exe_ctx.GetFramePtr();
-            if (frame)
-            {
-                bool already_shown = false;
-                SymbolContext frame_sc(frame->GetSymbolContext(eSymbolContextLineEntry));
-                if (m_interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
-                {
-                    already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
-                }
-
-                bool show_frame_info = true;
-                bool show_source = !already_shown;
-                if (frame->GetStatus (result.GetOutputStream(), show_frame_info, show_source))
-                {
-                    result.SetStatus (eReturnStatusSuccessFinishResult);
-                    return result.Succeeded();
-                }
-            }
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
-        result.AppendErrorWithFormat ("Frame index (%u) out of range.\n", frame_idx);
-        result.SetStatus (eReturnStatusFailed);
-        return false;
+        else
+        {
+            result.AppendErrorWithFormat ("Frame index (%u) out of range.\n", frame_idx);
+            result.SetStatus (eReturnStatusFailed);
+        }
+        
+        return result.Succeeded();
     }
 protected:
 
