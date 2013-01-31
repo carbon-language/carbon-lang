@@ -162,7 +162,7 @@ namespace {
     /// \brief If we are in an instance method definition, the \@implementation
     /// object.
     ObjCImplementationDecl *ObjCImplementation;
-    
+
     void AdjustResultPriorityForDecl(Result &R);
 
     void MaybeAddConstructorResults(Result R);
@@ -196,7 +196,10 @@ namespace {
         break;
       }
     }
-    
+
+    /// \brief Determine the priority for a reference to the given declaration.
+    unsigned getBasePriority(const NamedDecl *D);
+
     /// \brief Whether we should include code patterns in the completion
     /// results.
     bool includeCodePatterns() const {
@@ -707,6 +710,35 @@ QualType clang::getDeclUsageType(ASTContext &C, const NamedDecl *ND) {
   return T;
 }
 
+unsigned ResultBuilder::getBasePriority(const NamedDecl *ND) {
+  if (!ND)
+    return CCP_Unlikely;
+
+  // Context-based decisions.
+  const DeclContext *DC = ND->getDeclContext()->getRedeclContext();
+  if (DC->isFunctionOrMethod() || isa<BlockDecl>(DC)) {
+    // _cmd is relatively rare
+    if (const ImplicitParamDecl *ImplicitParam =
+        dyn_cast<ImplicitParamDecl>(ND))
+      if (ImplicitParam->getIdentifier() &&
+          ImplicitParam->getIdentifier()->isStr("_cmd"))
+        return CCP_ObjC_cmd;
+
+    return CCP_LocalDeclaration;
+  }
+  if (DC->isRecord() || isa<ObjCContainerDecl>(DC))
+    return CCP_MemberDeclaration;
+
+  // Content-based decisions.
+  if (isa<EnumConstantDecl>(ND))
+    return CCP_Constant;
+
+  if ((isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND)))
+    return CCP_Type;
+
+  return CCP_Declaration;
+}
+
 void ResultBuilder::AdjustResultPriorityForDecl(Result &R) {
   // If this is an Objective-C method declaration whose selector matches our
   // preferred selector, give it a priority boost.
@@ -783,7 +815,10 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   // Look through using declarations.
   if (const UsingShadowDecl *Using =
           dyn_cast<UsingShadowDecl>(R.Declaration)) {
-    MaybeAddResult(Result(Using->getTargetDecl(), R.Qualifier), CurContext);
+    MaybeAddResult(Result(Using->getTargetDecl(),
+                          getBasePriority(Using->getTargetDecl()),
+                          R.Qualifier),
+                   CurContext);
     return;
   }
   
@@ -895,7 +930,10 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
 
   // Look through using declarations.
   if (const UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(R.Declaration)) {
-    AddResult(Result(Using->getTargetDecl(), R.Qualifier), CurContext, Hiding);
+    AddResult(Result(Using->getTargetDecl(),
+                     getBasePriority(Using->getTargetDecl()),
+                     R.Qualifier),
+              CurContext, Hiding);
     return;
   }
   
@@ -1213,7 +1251,8 @@ namespace {
       if (Ctx)
         Accessible = Results.getSema().IsSimplyAccessible(ND, Ctx);
       
-      ResultBuilder::Result Result(ND, 0, false, Accessible);
+      ResultBuilder::Result Result(ND, Results.getBasePriority(ND), 0, false,
+                                   Accessible);
       Results.AddResult(Result, CurContext, Hiding, InBaseClass);
     }
   };
@@ -3405,7 +3444,8 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
        P != PEnd;
        ++P) {
     if (AddedProperties.insert(P->getIdentifier()))
-      Results.MaybeAddResult(Result(*P, 0), CurContext);
+      Results.MaybeAddResult(Result(*P, Results.getBasePriority(*P), 0),
+                             CurContext);
   }
   
   // Add nullary methods
@@ -3736,8 +3776,7 @@ void Sema::CodeCompleteCase(Scope *S) {
     if (EnumeratorsSeen.count(*E))
       continue;
     
-    CodeCompletionResult R(*E, Qualifier);
-    R.Priority = CCP_EnumInCase;
+    CodeCompletionResult R(*E, CCP_EnumInCase, Qualifier);
     Results.AddResult(R, CurContext, 0, false);
   }
   Results.ExitScope();
@@ -4106,7 +4145,8 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
               NS = OrigToLatest.begin(),
            NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
-      Results.AddResult(CodeCompletionResult(NS->second, 0),
+      Results.AddResult(CodeCompletionResult(
+                          NS->second, Results.getBasePriority(NS->second), 0),
                         CurContext, 0, false);
     Results.ExitScope();
   }
@@ -4320,7 +4360,8 @@ void Sema::CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
         continue;
       
       if (Known.insert(Var->getIdentifier()))
-        Results.AddResult(CodeCompletionResult(Var), CurContext, 0, false);
+        Results.AddResult(CodeCompletionResult(Var, CCP_LocalDeclaration),
+                          CurContext, 0, false);
     }
   }
 
@@ -4787,7 +4828,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
       if (!Selectors.insert(M->getSelector()))
         continue;
       
-      Result R = Result(*M, 0);
+      Result R = Result(*M, Results.getBasePriority(*M), 0);
       R.StartParameter = NumSelIdents;
       R.AllParametersAreInformative = (WantKind != MK_Any);
       if (!InOriginalClass)
@@ -5390,7 +5431,7 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
                                     NumSelIdents))
           continue;
         
-        Result R(MethList->Method, 0);
+        Result R(MethList->Method, Results.getBasePriority(MethList->Method),0);
         R.StartParameter = NumSelIdents;
         R.AllParametersAreInformative = false;
         Results.MaybeAddResult(R, SemaRef.CurContext);
@@ -5566,7 +5607,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
         if (!Selectors.insert(MethList->Method->getSelector()))
           continue;
         
-        Result R(MethList->Method, 0);
+        Result R(MethList->Method, Results.getBasePriority(MethList->Method),0);
         R.StartParameter = NumSelIdents;
         R.AllParametersAreInformative = false;
         Results.MaybeAddResult(R, CurContext);
@@ -5684,7 +5725,8 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
     // Record any protocols we find.
     if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
       if (!OnlyForwardDeclarations || !Proto->hasDefinition())
-        Results.AddResult(Result(Proto, 0), CurContext, 0, false);
+        Results.AddResult(Result(Proto, Results.getBasePriority(Proto), 0),
+                          CurContext, 0, false);
   }
 }
 
@@ -5752,7 +5794,8 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
     if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*D))
       if ((!OnlyForwardDeclarations || !Class->hasDefinition()) &&
           (!OnlyUnimplemented || !Class->getImplementation()))
-        Results.AddResult(Result(Class, 0), CurContext, 0, false);
+        Results.AddResult(Result(Class, Results.getBasePriority(Class), 0),
+                          CurContext, 0, false);
   }
 }
 
@@ -5851,7 +5894,8 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
        D != DEnd; ++D) 
     if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(*D))
       if (CategoryNames.insert(Category->getIdentifier()))
-        Results.AddResult(Result(Category, 0), CurContext, 0, false);
+        Results.AddResult(Result(Category, Results.getBasePriority(Category),0),
+                          CurContext, 0, false);
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
@@ -5890,7 +5934,8 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
          Cat != CatEnd; ++Cat) {
       if ((!IgnoreImplemented || !Cat->getImplementation()) &&
           CategoryNames.insert(Cat->getIdentifier()))
-        Results.AddResult(Result(*Cat, 0), CurContext, 0, false);
+        Results.AddResult(Result(*Cat, Results.getBasePriority(*Cat), 0),
+                          CurContext, 0, false);
     }
     
     Class = Class->getSuperClass();
@@ -5991,7 +6036,8 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
   for(; Class; Class = Class->getSuperClass()) {
     for (ObjCIvarDecl *Ivar = Class->all_declared_ivar_begin(); Ivar; 
          Ivar = Ivar->getNextIvar()) {
-      Results.AddResult(Result(Ivar, 0), CurContext, 0, false);
+      Results.AddResult(Result(Ivar, Results.getBasePriority(Ivar), 0),
+                        CurContext, 0, false);
       
       // Determine whether we've seen an ivar with a name similar to the 
       // property.
@@ -7015,7 +7061,7 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
         continue;
       }
       
-      Result R(MethList->Method, 0);
+      Result R(MethList->Method, Results.getBasePriority(MethList->Method), 0);
       R.StartParameter = NumSelIdents;
       R.AllParametersAreInformative = false;
       R.DeclaringEntity = true;

@@ -1043,7 +1043,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
     const Decl *decl = getCursorDecl(cursor);
     if (const NamedDecl *namedDecl = dyn_cast_or_null<NamedDecl>(decl)) {
       ASTUnit *unit = getCursorASTUnit(cursor);
-      CodeCompletionResult Result(namedDecl);
+      CodeCompletionResult Result(namedDecl, CCP_Declaration);
       CodeCompletionString *String
         = Result.CreateCodeCompletionString(unit->getASTContext(),
                                             unit->getPreprocessor(),

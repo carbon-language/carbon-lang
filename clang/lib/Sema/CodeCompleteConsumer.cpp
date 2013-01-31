@@ -396,34 +396,6 @@ void CodeCompletionBuilder::addBriefComment(StringRef Comment) {
   BriefComment = Allocator.CopyString(Comment);
 }
 
-unsigned CodeCompletionResult::getPriorityFromDecl(const NamedDecl *ND) {
-  if (!ND)
-    return CCP_Unlikely;
-  
-  // Context-based decisions.
-  const DeclContext *DC = ND->getDeclContext()->getRedeclContext();
-  if (DC->isFunctionOrMethod() || isa<BlockDecl>(DC)) {
-    // _cmd is relatively rare
-    if (const ImplicitParamDecl *ImplicitParam =
-            dyn_cast<ImplicitParamDecl>(ND))
-      if (ImplicitParam->getIdentifier() &&
-          ImplicitParam->getIdentifier()->isStr("_cmd"))
-        return CCP_ObjC_cmd;
-    
-    return CCP_LocalDeclaration;
-  }
-  if (DC->isRecord() || isa<ObjCContainerDecl>(DC))
-    return CCP_MemberDeclaration;
-  
-  // Content-based decisions.
-  if (isa<EnumConstantDecl>(ND))
-    return CCP_Constant;
-  if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND))
-    return CCP_Type;
-  
-  return CCP_Declaration;
-}
-
 //===----------------------------------------------------------------------===//
 // Code completion overload candidate implementation
 //===----------------------------------------------------------------------===//

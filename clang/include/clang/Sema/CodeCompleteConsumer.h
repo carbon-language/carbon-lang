@@ -245,7 +245,8 @@ public:
     /// \brief Code completion in a parenthesized expression, which means that
     /// we may also have types here in C and Objective-C (as well as in C++).
     CCC_ParenthesizedExpression,
-    /// \brief Code completion where an Objective-C instance message is expcted.
+    /// \brief Code completion where an Objective-C instance message is
+    /// expected.
     CCC_ObjCInstanceMessage,
     /// \brief Code completion where an Objective-C class message is expected.
     CCC_ObjCClassMessage,
@@ -705,10 +706,11 @@ public:
 
   /// \brief Build a result that refers to a declaration.
   CodeCompletionResult(const NamedDecl *Declaration,
+                       unsigned Priority,
                        NestedNameSpecifier *Qualifier = 0,
                        bool QualifierIsInformative = false,
                        bool Accessible = true)
-    : Declaration(Declaration), Priority(getPriorityFromDecl(Declaration)),
+    : Declaration(Declaration), Priority(Priority),
       StartParameter(0), Kind(RK_Declaration),
       Availability(CXAvailability_Available), Hidden(false),
       QualifierIsInformative(QualifierIsInformative),
@@ -791,9 +793,6 @@ public:
                                            CodeCompletionAllocator &Allocator,
                                            CodeCompletionTUInfo &CCTUInfo,
                                            bool IncludeBriefComments);
-
-  /// \brief Determine a base priority for the given declaration.
-  static unsigned getPriorityFromDecl(const NamedDecl *ND);
 
 private:
   void computeCursorKindAndAvailability(bool Accessible = true);
