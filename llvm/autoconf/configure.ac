@@ -1264,6 +1264,7 @@ dnl Check optional compiler flags.
 AC_MSG_CHECKING([optional compiler flags])
 CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
 CXX_FLAG_CHECK(NO_MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
+CXX_FLAG_CHECK(NO_NESTED_ANON_TYPES, [-Wno-nested-anon-types])
 CXX_FLAG_CHECK(COVERED_SWITCH_DEFAULT, [-Wcovered-switch-default])
 dnl GCC's potential uninitialized use analysis is weak and presents lots of
 dnl false positives, so disable it.
@@ -1299,7 +1300,7 @@ else
   NO_UNINITIALIZED=
   NO_MAYBE_UNINITIALIZED=
 fi
-AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED])
+AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $NO_NESTED_ANON_TYPES $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED])
 
 AC_ARG_WITH([python],
             [AS_HELP_STRING([--with-python], [path to python])],
