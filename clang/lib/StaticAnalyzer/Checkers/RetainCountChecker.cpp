@@ -50,7 +50,6 @@ using llvm::StrInStrNoCase;
 enum ArgEffect { DoNothing, Autorelease, Dealloc, DecRef, DecRefMsg,
                  DecRefBridgedTransfered,
                  IncRefMsg, IncRef, MakeCollectable, MayEscape,
-                 NewAutoreleasePool,
 
                  // Stop tracking the argument - the effect of the call is
                  // unknown.
@@ -895,7 +894,6 @@ static ArgEffect getStopTrackingHardEquivalent(ArgEffect E) {
   case IncRefMsg:
   case MakeCollectable:
   case MayEscape:
-  case NewAutoreleasePool:
   case StopTracking:
   case StopTrackingHard:
     return StopTrackingHard;
@@ -1578,10 +1576,6 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   Summ = getPersistentSummary(NoRet, Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
 
-  // Specially handle NSAutoreleasePool.
-  addInstMethSummary("NSAutoreleasePool", "init",
-                     getPersistentSummary(NoRet, NewAutoreleasePool));
-
   // For NSWindow, allocated objects are (initially) self-owned.
   // FIXME: For now we opt for false negatives with NSWindow, as these objects
   //  self-own themselves.  However, they only do this once they are displayed.
@@ -1600,10 +1594,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   //   as for NSWindow objects.
   addClassMethSummary("NSPanel", "alloc", NoTrackYet);
 
-  // Don't track allocated autorelease pools yet, as it is okay to prematurely
+  // Don't track allocated autorelease pools, as it is okay to prematurely
   // exit a method.
   addClassMethSummary("NSAutoreleasePool", "alloc", NoTrackYet);
   addClassMethSummary("NSAutoreleasePool", "allocWithZone", NoTrackYet, false);
+  addClassMethSummary("NSAutoreleasePool", "new", NoTrackYet);
 
   // Create summaries QCRenderer/QCView -createSnapShotImageOfType:
   addInstMethSummary("QCRenderer", AllocSumm,
@@ -2939,9 +2934,6 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
   case MakeCollectable:
     E = C.isObjCGCEnabled() ? DecRef : DoNothing;
     break;
-  case NewAutoreleasePool:
-    E = C.isObjCGCEnabled() ? DoNothing : NewAutoreleasePool;
-    break;
   }
 
   // Handle all use-after-releases.
@@ -2980,10 +2972,6 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
           break;
       }
       break;
-
-    case NewAutoreleasePool:
-      assert(!C.isObjCGCEnabled());
-      return state;
 
     case MayEscape:
       if (V.getKind() == RefVal::Owned) {
