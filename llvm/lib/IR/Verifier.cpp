@@ -745,9 +745,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
   AttrBuilder NotFn(Attrs, AttributeSet::FunctionIndex);
   NotFn.removeFunctionOnlyAttrs();
   Assert1(!NotFn.hasAttributes(), "Attribute '" +
-          AttributeSet::get(V->getContext(),
-                            AttributeSet::FunctionIndex,
-                            NotFn).getAsString(AttributeSet::FunctionIndex) +
+          Attribute::get(V->getContext(), NotFn).getAsString() +
           "' do not apply to the function!", V);
 
   // Check for mutually incompatible attributes.

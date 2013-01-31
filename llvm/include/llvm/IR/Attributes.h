@@ -113,7 +113,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// \brief Return a uniquified Attribute object.
-  static Attribute get(LLVMContext &Context, AttrKind Kind, Constant *Val = 0);
+  static Attribute get(LLVMContext &Context, AttrKind Kind);
+  static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
   /// \brief Return a uniquified Attribute object that has the specific
   /// alignment set.
