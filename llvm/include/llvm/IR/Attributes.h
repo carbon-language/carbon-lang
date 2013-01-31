@@ -270,6 +270,11 @@ public:
   /// \brief Return the attributes at the index as a string.
   std::string getAsString(unsigned Index) const;
 
+  typedef ArrayRef<Attribute>::iterator iterator;
+
+  iterator begin(unsigned Idx);
+  iterator end(unsigned Idx);
+
   /// operator==/!= - Provide equality predicates.
   bool operator==(const AttributeSet &RHS) const {
     return pImpl == RHS.pImpl;

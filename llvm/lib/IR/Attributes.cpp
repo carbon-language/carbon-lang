@@ -740,6 +740,18 @@ AttributeSetNode *AttributeSet::getAttributes(unsigned Idx) const {
   return 0;
 }
 
+AttributeSet::iterator AttributeSet::begin(unsigned Idx) {
+  if (!pImpl)
+    return ArrayRef<Attribute>().begin();
+  return pImpl->begin(Idx);
+}
+
+AttributeSet::iterator AttributeSet::end(unsigned Idx) {
+  if (!pImpl)
+    return ArrayRef<Attribute>().end();
+  return pImpl->begin(Idx);
+}
+
 //===----------------------------------------------------------------------===//
 // AttributeSet Introspection Methods
 //===----------------------------------------------------------------------===//
