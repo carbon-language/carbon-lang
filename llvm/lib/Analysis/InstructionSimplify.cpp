@@ -663,6 +663,10 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// accumulates the total constant offset applied in the returned constant. It
 /// returns 0 if V is not a pointer, and returns the constant '0' if there are
 /// no constant offsets applied.
+///
+/// This is very similar to GetPointerBaseWithConstantOffset except it doesn't
+/// follow non-inbounds geps. This allows it to remain usable for icmp ult/etc.
+/// folding.
 static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
                                                 Value *&V) {
   assert(V->getType()->isPointerTy());
