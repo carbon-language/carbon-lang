@@ -11166,7 +11166,7 @@ void Sema::MarkDeclRefReferenced(DeclRefExpr *E) {
 
 /// \brief Perform reference-marking and odr-use handling for a MemberExpr.
 void Sema::MarkMemberReferenced(MemberExpr *E) {
-  // C++11 [basic.def.odr]p2
+  // C++11 [basic.def.odr]p2:
   //   A non-overloaded function whose name appears as a potentially-evaluated
   //   expression or a member of a set of candidate functions, if selected by
   //   overload resolution when referred to from a potentially-evaluated
