@@ -1198,6 +1198,12 @@ void CodeGenRegBank::computeSubRegIndexLaneMasks() {
     if (Idx->getComposites().empty()) {
       Idx->LaneMask = 1u << Bit;
       // Share bit 31 in the unlikely case there are more than 32 leafs.
+      //
+      // Sharing bits is harmless; it allows graceful degradation in targets
+      // with more than 32 vector lanes. They simply get a limited resolution
+      // view of lanes beyond the 32nd.
+      //
+      // See also the comment for getSubRegIndexLaneMask().
       if (Bit < 31) ++Bit;
     } else {
       Idx->LaneMask = 0;
