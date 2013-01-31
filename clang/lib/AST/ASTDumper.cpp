@@ -79,7 +79,6 @@ namespace  {
     raw_ostream &OS;
     const CommandTraits *Traits;
     const SourceManager *SM;
-    unsigned IndentLevel;
     bool IsFirstLine;
 
     // Indicates whether more child are expected at the current tree depth
@@ -138,14 +137,14 @@ namespace  {
   public:
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM)
-      : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
-        MoreChildren(false), LastLocFilename(""), LastLocLine(~0U), FC(0),
+      : OS(OS), Traits(Traits), SM(SM), IsFirstLine(true), MoreChildren(false),
+        LastLocFilename(""), LastLocLine(~0U), FC(0),
         ShowColors(SM && SM->getDiagnostics().getShowColors()) { }
 
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM, bool ShowColors)
-      : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
-        MoreChildren(false), LastLocFilename(""), LastLocLine(~0U),
+      : OS(OS), Traits(Traits), SM(SM), IsFirstLine(true), MoreChildren(false),
+        LastLocFilename(""), LastLocLine(~0U),
         ShowColors(ShowColors) { }
 
     ~ASTDumper() {
@@ -334,21 +333,20 @@ void ASTDumper::indent() {
            Indents.begin(), E = Indents.end();
        I != E; ++I) {
     switch (*I) {
-      case IT_Child:
-        if (I == E - 1)
-          OS << "|-";
-        else
-          OS << "| ";
-        break;
-      case IT_LastChild:
-        if (I == E - 1)
-          OS << "`-";
-        else
-          OS << "  ";
-        break;
-      default:
-        llvm_unreachable("Invalid IndentType");
+    case IT_Child:
+      if (I == E - 1)
+        OS << "|-";
+      else
+        OS << "| ";
+      continue;
+    case IT_LastChild:
+      if (I == E - 1)
+        OS << "`-";
+      else
+        OS << "  ";
+      continue;
     }
+    llvm_unreachable("Invalid IndentType");
   }
   Indents.push_back(IT_Child);
 }
