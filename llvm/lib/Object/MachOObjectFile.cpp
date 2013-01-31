@@ -1076,6 +1076,7 @@ error_code MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
         printRelocationTargetName(RENext, fmt);
         fmt << "-";
         printRelocationTargetName(RE, fmt);
+        break;
       }
       case macho::RIT_X86_64_TLV:
         printRelocationTargetName(RE, fmt);
