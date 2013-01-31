@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCOBJECTWRITER_H
 #define LLVM_MC_MCOBJECTWRITER_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/raw_ostream.h"

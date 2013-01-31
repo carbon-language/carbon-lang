@@ -1,0 +1,117 @@
+; RUN: llc -march=aarch64 < %s | FileCheck %s
+
+define i64 @test_inline_constraint_r(i64 %base, i32 %offset) {
+; CHECK: test_inline_constraint_r:
+  %val = call i64 asm "add $0, $1, $2, sxtw", "=r,r,r"(i64 %base, i32 %offset)
+; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, {{w[0-9]+}}, sxtw
+  ret i64 %val
+}
+
+define i16 @test_small_reg(i16 %lhs, i16 %rhs) {
+; CHECK: test_small_reg:
+  %val = call i16 asm sideeffect "add $0, $1, $2, sxth", "=r,r,r"(i16 %lhs, i16 %rhs)
+; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, sxth
+  ret i16 %val
+}
+
+define i64 @test_inline_constraint_r_imm(i64 %base, i32 %offset) {
+; CHECK: test_inline_constraint_r_imm:
+  %val = call i64 asm "add $0, $1, $2, sxtw", "=r,r,r"(i64 4, i32 12)
+; CHECK: movz [[FOUR:x[0-9]+]], #4
+; CHECK: movz [[TWELVE:w[0-9]+]], #12
+; CHECK: add {{x[0-9]+}}, [[FOUR]], [[TWELVE]], sxtw
+  ret i64 %val
+}
+
+; m is permitted to have a base/offset form. We don't do that
+; currently though.
+define i32 @test_inline_constraint_m(i32 *%ptr) {
+; CHECK: test_inline_constraint_m:
+  %val = call i32 asm "ldr $0, $1", "=r,m"(i32 *%ptr)
+; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}]
+  ret i32 %val
+}
+
+@arr = global [8 x i32] zeroinitializer
+
+; Q should *never* have base/offset form even if given the chance.
+define i32 @test_inline_constraint_Q(i32 *%ptr) {
+; CHECK: test_inline_constraint_Q:
+  %val = call i32 asm "ldr $0, $1", "=r,Q"(i32* getelementptr([8 x i32]* @arr, i32 0, i32 1))
+; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}]
+  ret i32 %val
+}
+
+@dump = global fp128 zeroinitializer
+
+define void @test_inline_constraint_I() {
+; CHECK: test_inline_constraint_I:
+  call void asm sideeffect "add x0, x0, $0", "I"(i32 0)
+  call void asm sideeffect "add x0, x0, $0", "I"(i64 4095)
+; CHECK: add x0, x0, #0
+; CHECK: add x0, x0, #4095
+
+  ret void
+}
+
+; Skip J because it's useless
+
+define void @test_inline_constraint_K() {
+; CHECK: test_inline_constraint_K:
+  call void asm sideeffect "and w0, w0, $0", "K"(i32 2863311530) ; = 0xaaaaaaaa
+  call void asm sideeffect "and w0, w0, $0", "K"(i32 65535)
+; CHECK: and w0, w0, #-1431655766
+; CHECK: and w0, w0, #65535
+
+  ret void
+}
+
+define void @test_inline_constraint_L() {
+; CHECK: test_inline_constraint_L:
+  call void asm sideeffect "and x0, x0, $0", "L"(i64 4294967296) ; = 0xaaaaaaaa
+  call void asm sideeffect "and x0, x0, $0", "L"(i64 65535)
+; CHECK: and x0, x0, #4294967296
+; CHECK: and x0, x0, #65535
+
+  ret void
+}
+
+; Skip M and N because we don't support MOV pseudo-instructions yet.
+
+@var = global i32 0
+
+define void @test_inline_constraint_S() {
+; CHECK: test_inline_constraint_S:
+  call void asm sideeffect "adrp x0, $0", "S"(i32* @var)
+  call void asm sideeffect "adrp x0, ${0:A}", "S"(i32* @var)
+  call void asm sideeffect "add x0, x0, ${0:L}", "S"(i32* @var)
+; CHECK: adrp x0, var
+; CHECK: adrp x0, var
+; CHECK: add x0, x0, #:lo12:var
+  ret void
+}
+
+define i32 @test_inline_constraint_S_label(i1 %in) {
+; CHECK: test_inline_constraint_S_label:
+  call void asm sideeffect "adr x0, $0", "S"(i8* blockaddress(@test_inline_constraint_S_label, %loc))
+; CHECK: adr x0, .Ltmp{{[0-9]+}}
+  br i1 %in, label %loc, label %loc2
+loc:
+  ret i32 0
+loc2:
+  ret i32 42
+}
+
+define void @test_inline_constraint_Y() {
+; CHECK: test_inline_constraint_Y:
+  call void asm sideeffect "fcmp s0, $0", "Y"(float 0.0)
+; CHECK: fcmp s0, #0.0
+  ret void
+}
+
+define void @test_inline_constraint_Z() {
+; CHECK: test_inline_constraint_Z:
+  call void asm sideeffect "cmp w0, $0", "Z"(i32 0)
+; CHECK: cmp w0, #0
+  ret void
+}

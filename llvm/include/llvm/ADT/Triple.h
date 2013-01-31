@@ -44,6 +44,7 @@ public:
     UnknownArch,
 
     arm,     // ARM; arm, armv.*, xscale
+    aarch64, // AArch64: aarch64
     hexagon, // Hexagon: hexagon
     mips,    // MIPS: mips, mipsallegrex
     mipsel,  // MIPSEL: mipsel, mipsallegrexel

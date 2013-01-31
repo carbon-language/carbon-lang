@@ -389,6 +389,7 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   arm*-*)                 llvm_cv_target_arch="ARM" ;;
+  aarch64*-*)             llvm_cv_target_arch="AArch64" ;;
   mips-* | mips64-*)      llvm_cv_target_arch="Mips" ;;
   mipsel-* | mips64el-*)  llvm_cv_target_arch="Mips" ;;
   xcore-*)                llvm_cv_target_arch="XCore" ;;
@@ -422,6 +423,7 @@ case $host in
   sparc*-*)               host_arch="Sparc" ;;
   powerpc*-*)             host_arch="PowerPC" ;;
   arm*-*)                 host_arch="ARM" ;;
+  aarch64*-*)             host_arch="AArch64" ;;
   mips-* | mips64-*)      host_arch="Mips" ;;
   mipsel-* | mips64el-*)  host_arch="Mips" ;;
   xcore-*)                host_arch="XCore" ;;
@@ -640,6 +642,7 @@ else
     PowerPC)     AC_SUBST(TARGET_HAS_JIT,1) ;;
     x86_64)      AC_SUBST(TARGET_HAS_JIT,1) ;;
     ARM)         AC_SUBST(TARGET_HAS_JIT,1) ;;
+    AArch64)     AC_SUBST(TARGET_HAS_JIT,0) ;;
     Mips)        AC_SUBST(TARGET_HAS_JIT,1) ;;
     XCore)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     MSP430)      AC_SUBST(TARGET_HAS_JIT,0) ;;
@@ -771,7 +774,7 @@ dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all or target1,target2,... Valid targets are:
-     host, x86, x86_64, sparc, powerpc, arm, mips, hexagon,
+     host, x86, x86_64, sparc, powerpc, arm, aarch64, mips, hexagon,
      xcore, msp430, nvptx, and cpp (default=all)]),,
     enableval=all)
 if test "$enableval" = host-only ; then

@@ -1438,8 +1438,8 @@ Optional Features:
                           YES)
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
-                          x86_64, sparc, powerpc, arm, mips, hexagon, xcore,
-                          msp430, nvptx, and cpp (default=all)
+                          x86_64, sparc, powerpc, arm, aarch64, mips, hexagon,
+                          xcore, msp430, nvptx, and cpp (default=all)
   --enable-experimental-targets
                           Build experimental host targets: disable or
                           target1,target2,... (default=disable)
@@ -4008,6 +4008,7 @@ else
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   arm*-*)                 llvm_cv_target_arch="ARM" ;;
+  aarch64*-*)             llvm_cv_target_arch="AArch64" ;;
   mips-* | mips64-*)      llvm_cv_target_arch="Mips" ;;
   mipsel-* | mips64el-*)  llvm_cv_target_arch="Mips" ;;
   xcore-*)                llvm_cv_target_arch="XCore" ;;
@@ -4041,6 +4042,7 @@ case $host in
   sparc*-*)               host_arch="Sparc" ;;
   powerpc*-*)             host_arch="PowerPC" ;;
   arm*-*)                 host_arch="ARM" ;;
+  aarch64*-*)             host_arch="AArch64" ;;
   mips-* | mips64-*)      host_arch="Mips" ;;
   mipsel-* | mips64el-*)  host_arch="Mips" ;;
   xcore-*)                host_arch="XCore" ;;
@@ -5372,6 +5374,8 @@ else
     x86_64)      TARGET_HAS_JIT=1
  ;;
     ARM)         TARGET_HAS_JIT=1
+ ;;
+    AArch64)     TARGET_HAS_JIT=0
  ;;
     Mips)        TARGET_HAS_JIT=1
  ;;
@@ -10489,7 +10493,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10492 "configure"
+#line 10496 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

@@ -22,6 +22,11 @@ ARM
 
 * `ABI <http://www.arm.com/products/DevTools/ABI.html>`_
 
+AArch64
+-------
+
+* `ARMv8 Instruction Set Overview <http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.genc010197a/index.html>`_
+
 Itanium (ia64)
 --------------
 
@@ -99,6 +104,8 @@ Linux
 -----
 
 * `PowerPC 64-bit ELF ABI Supplement <http://www.linuxbase.org/spec/ELF/ppc64/>`_
+* `Procedure Call Standard for the AArch64 Architecture <http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055a/IHI0055A_aapcs64.pdf>`_
+* `ELF for the ARM 64-bit Architecture (AArch64) <http://infocenter.arm.com/help/topic/com.arm.doc.ihi0056a/IHI0056A_aaelf64.pdf>`_
 
 OS X
 ----

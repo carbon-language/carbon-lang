@@ -472,6 +472,8 @@ public:
   virtual void AddValueSymbols(MCAssembler *) const = 0;
   virtual const MCSection *FindAssociatedSection() const = 0;
 
+  virtual void fixELFSymbolsInTLSFixups(MCAssembler &) const = 0;
+
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;
   }

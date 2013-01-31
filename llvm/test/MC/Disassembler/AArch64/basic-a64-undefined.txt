@@ -1,0 +1,43 @@
+# These spawn another process so they're rather expensive. Not many.
+
+# Instructions notionally in the add/sub (extended register) sheet, but with
+# invalid shift amount or "opt" field.
+# RUN: echo "0x00 0x10 0xa0 0x0b" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x10 0x60 0x0b" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x14 0x20 0x0b" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Instructions notionally in the add/sub (immediate) sheet, but with
+# invalid "shift" field.
+# RUN: echo "0xdf 0x3 0x80 0x91" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0xed 0x8e 0xc4 0x31" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x62 0xfc 0xbf 0x11" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x3 0xff 0xff 0x91" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Instructions notionally in the load/store (unsigned immediate) sheet.
+# Only unallocated (int-register) variants are: opc=0b11, size=0b10, 0b11
+# RUN: echo "0xd7 0xfc 0xff 0xb9" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0xd7 0xfc 0xcf 0xf9" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Instructions notionally in the floating-point <-> fixed-point conversion
+# Scale field is 64-<imm> and <imm> should be 1-32 for a 32-bit int register.
+# RUN: echo "0x23 0x01 0x18 0x1e" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x23 0x25 0x42 0x1e" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Instructions notionally in the logical (shifted register) sheet, but with out
+# of range shift: w-registers can only have 0-31.
+# RUN: echo "0x00 0x80 0x00 0x0a" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Instructions notionally in the move wide (immediate) sheet, but with out
+# of range shift: w-registers can only have 0 or 16.
+# RUN: echo "0x00 0x00 0xc0 0x12" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x12 0x34 0xe0 0x52" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Data-processing instructions are undefined when S=1 and for the 0b0000111 value in opcode:sf
+# RUN: echo "0x00 0x00 0xc0 0x5f" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x56 0x0c 0xc0 0x5a" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# Data-processing instructions (2 source) are undefined for a value of 0001xx:0:x or 0011xx:0:x for opcode:S:sf
+# RUN: echo "0x00 0x30 0xc1 0x1a" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x10 0xc1 0x1a" | llvm-mc -triple=aarch64 -disassemble 2>&1 | FileCheck %s
+
+# CHECK: invalid instruction encoding

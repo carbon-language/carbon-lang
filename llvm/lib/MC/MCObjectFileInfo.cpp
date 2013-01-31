@@ -256,6 +256,25 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       TTypeEncoding = (CMModel == CodeModel::Small)
         ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_absptr;
     }
+  }  else if (T.getArch() ==  Triple::aarch64) {
+    FDECFIEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+
+    // The small model guarantees static code/data size < 4GB, but not where it
+    // will be in memory. Most of these could end up >2GB away so even a signed
+    // pc-relative 32-bit address is insufficient, theoretically.
+    if (RelocM == Reloc::PIC_) {
+      PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata8;
+      LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata8;
+      FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+      TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata8;
+    } else {
+      PersonalityEncoding = dwarf::DW_EH_PE_absptr;
+      LSDAEncoding = dwarf::DW_EH_PE_absptr;
+      FDEEncoding = dwarf::DW_EH_PE_udata4;
+      TTypeEncoding = dwarf::DW_EH_PE_absptr;
+    }
   } else if (T.getArch() == Triple::ppc64) {
     PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
       dwarf::DW_EH_PE_udata8;

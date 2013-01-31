@@ -300,7 +300,9 @@ void MCELFStreamer::EmitFileDirective(StringRef Filename) {
 
 void  MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
   switch (expr->getKind()) {
-  case MCExpr::Target: llvm_unreachable("Can't handle target exprs yet!");
+  case MCExpr::Target:
+    cast<MCTargetExpr>(expr)->fixELFSymbolsInTLSFixups(getAssembler());
+    break;
   case MCExpr::Constant:
     break;
 
