@@ -771,22 +771,24 @@ sub dump_general_query_rsp
 			
 				my $reg_name = undef;
 				my $byte_size = 0;
+				my $pseudo = 0;
 				foreach (@name_and_values)
 				{
 					my ($name, $value) = split /:/;				
 					if    ($name eq "name") { $reg_name = $value; }
-					elsif ($name eq "bitsize") { $byte_size = $value / 8; last; }
+					elsif ($name eq "bitsize") { $byte_size = $value / 8; }
+					elsif ($name eq "container-regs") { $pseudo = 1; }
 				}
 				if (defined $reg_name and $byte_size > 0)
 				{
-					if    ($byte_size == 4)  {push @$registers_aref, { name => $reg_name, info => $reg32_href };}
-					elsif ($byte_size == 8)  {push @$registers_aref, { name => $reg_name, info => $reg64_href };}
-					elsif ($byte_size == 1)  {push @$registers_aref, { name => $reg_name, info => $reg8_href };}
-					elsif ($byte_size == 2)  {push @$registers_aref, { name => $reg_name, info => $reg16_href };}
-					elsif ($byte_size == 10) {push @$registers_aref, { name => $reg_name, info => $reg80_href };}
-					elsif ($byte_size == 12) {push @$registers_aref, { name => $reg_name, info => $float96_href };}
-					elsif ($byte_size == 16) {push @$registers_aref, { name => $reg_name, info => $reg128_href };}
-					elsif ($byte_size == 32) {push @$registers_aref, { name => $reg_name, info => $reg256_href };}
+					if    ($byte_size == 4)  {push @$registers_aref, { name => $reg_name, info => $reg32_href   , pseudo => $pseudo };}
+					elsif ($byte_size == 8)  {push @$registers_aref, { name => $reg_name, info => $reg64_href   , pseudo => $pseudo };}
+					elsif ($byte_size == 1)  {push @$registers_aref, { name => $reg_name, info => $reg8_href    , pseudo => $pseudo };}
+					elsif ($byte_size == 2)  {push @$registers_aref, { name => $reg_name, info => $reg16_href   , pseudo => $pseudo };}
+					elsif ($byte_size == 10) {push @$registers_aref, { name => $reg_name, info => $reg80_href   , pseudo => $pseudo };}
+					elsif ($byte_size == 12) {push @$registers_aref, { name => $reg_name, info => $float96_href , pseudo => $pseudo };}
+					elsif ($byte_size == 16) {push @$registers_aref, { name => $reg_name, info => $reg128_href  , pseudo => $pseudo };}
+					elsif ($byte_size == 32) {push @$registers_aref, { name => $reg_name, info => $reg256_href  , pseudo => $pseudo };}
 				}
 			}
 			elsif ($gen_query_rsp_len == 3 and index($gen_query_rsp, 'E') == 0)
@@ -883,12 +885,15 @@ sub dump_write_regs_cmd
     foreach my $reg_href (@$registers_aref)
     {
 		last if ($_[0] eq '#');
-        my $reg_info_href = $reg_href->{info};
-        my $reg_name = $reg_href->{name};
-        my $reg_extract = $reg_info_href->{extract};
-        my $reg_format = $reg_info_href->{format};
-        my $reg_val = &$reg_extract(\@_);
-		printf("\t%*s = $reg_format\n", $max_register_name_len, $reg_name, $reg_val);
+		if ($reg_href->{pseudo} == 0)
+		{
+            my $reg_info_href = $reg_href->{info};
+            my $reg_name = $reg_href->{name};
+            my $reg_extract = $reg_info_href->{extract};
+            my $reg_format = $reg_info_href->{format};
+            my $reg_val = &$reg_extract(\@_);
+    		printf("\t%*s = $reg_format\n", $max_register_name_len, $reg_name, $reg_val);		    
+		}
 	}			
 }
 
@@ -901,12 +906,15 @@ sub dump_read_regs_rsp
 	    foreach my $reg_href (@$registers_aref)
 	    {
 			last if ($_[0] eq '#');
-	        my $reg_info_href = $reg_href->{info};
-	        my $reg_name = $reg_href->{name};
-	        my $reg_extract = $reg_info_href->{extract};
-            my $reg_format = $reg_info_href->{format};
-            my $reg_val = &$reg_extract(\@_);
-			printf("\t%*s = $reg_format\n", $max_register_name_len, $reg_name, $reg_val);
+    		if ($reg_href->{pseudo} == 0)
+    		{
+    	        my $reg_info_href = $reg_href->{info};
+    	        my $reg_name = $reg_href->{name};
+    	        my $reg_extract = $reg_info_href->{extract};
+                my $reg_format = $reg_info_href->{format};
+                my $reg_val = &$reg_extract(\@_);
+    			printf("\t%*s = $reg_format\n", $max_register_name_len, $reg_name, $reg_val);
+			}
 		}			
 	}
 }
