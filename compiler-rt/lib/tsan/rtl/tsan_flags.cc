@@ -45,6 +45,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->report_thread_leaks = true;
   f->report_destroy_locked = true;
   f->report_signal_unsafe = true;
+  f->report_atomic_races = true;
   f->force_seq_cst_atomics = false;
   f->strip_path_prefix = "";
   f->suppressions = "";
@@ -72,6 +73,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
   ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked");
   ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe");
+  ParseFlag(env, &f->report_atomic_races, "report_atomic_races");
   ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
   ParseFlag(env, &f->strip_path_prefix, "strip_path_prefix");
   ParseFlag(env, &f->suppressions, "suppressions");
