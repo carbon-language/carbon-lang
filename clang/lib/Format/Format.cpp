@@ -595,7 +595,7 @@ private:
     // Insert start element into queue.
     std::multimap<unsigned, QueueItem> Queue;
     Queue.insert(std::pair<unsigned, QueueItem>(
-        0, QueueItem(InitialState, Edge(false, NULL))));
+        0, QueueItem(InitialState, Edge(false, (const LineState *) 0))));
     std::map<LineState, Edge> Seen;
 
     // While not empty, take first element and follow edges.
