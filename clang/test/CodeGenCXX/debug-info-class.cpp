@@ -30,8 +30,9 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-// CHECK: unwind label %terminate.lpad, !dbg ![[EXCEPTLOC:.*]]
-// CHECK: store i32 0, i32* %retval, !dbg ![[RETLOC:.*]]
+// CHECK: invoke void @_ZN1BD1Ev(%class.B* %b)
+// CHECK-NEXT: unwind label %{{.+}}, !dbg ![[EXCEPTLOC:.*]]
+// CHECK: store i32 0, i32* %{{.+}}, !dbg ![[RETLOC:.*]]
 // CHECK: DW_TAG_structure_type ] [foo]
 // CHECK: DW_TAG_class_type ] [bar]
 // CHECK: DW_TAG_union_type ] [baz]
