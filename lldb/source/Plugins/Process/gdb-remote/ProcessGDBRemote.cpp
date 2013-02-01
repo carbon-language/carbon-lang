@@ -3149,6 +3149,59 @@ public:
     }
 };
 
+class CommandObjectProcessGDBRemotePacketMonitor : public CommandObjectRaw
+{
+private:
+    
+public:
+    CommandObjectProcessGDBRemotePacketMonitor(CommandInterpreter &interpreter) :
+        CommandObjectRaw (interpreter,
+                         "process plugin packet monitor",
+                         "Send a qCmd packet through the GDB remote protocol and print the response."
+                         "The argument passed to this command will be hex encoded into a valid 'qCmd' packet, sent and the response will be printed.",
+                         NULL)
+    {
+    }
+    
+    ~CommandObjectProcessGDBRemotePacketMonitor ()
+    {
+    }
+    
+    bool
+    DoExecute (const char *command, CommandReturnObject &result)
+    {
+        if (command == NULL || command[0] == '\0')
+        {
+            result.AppendErrorWithFormat ("'%s' takes a command string argument", m_cmd_name.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        ProcessGDBRemote *process = (ProcessGDBRemote *)m_interpreter.GetExecutionContext().GetProcessPtr();
+        if (process)
+        {
+            StreamString packet;
+            packet.PutCString("qCmd,");
+            packet.PutBytesAsRawHex8(command, strlen(command));
+            const char *packet_cstr = packet.GetString().c_str();
+            
+            bool send_async = true;
+            StringExtractorGDBRemote response;
+            process->GetGDBRemote().SendPacketAndWaitForResponse(packet_cstr, response, send_async);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+            Stream &output_strm = result.GetOutputStream();
+            output_strm.Printf ("  packet: %s\n", packet_cstr);
+            const std::string &response_str = response.GetStringRef();
+            
+            if (response_str.empty())
+                output_strm.PutCString ("response: \nerror: UNIMPLEMENTED\n");
+            else
+                output_strm.Printf ("response: %s\n", response.GetStringRef().c_str());
+        }
+        return true;
+    }
+};
+
 class CommandObjectProcessGDBRemotePacket : public CommandObjectMultiword
 {
 private:
@@ -3162,6 +3215,7 @@ public:
     {
         LoadSubCommand ("history", CommandObjectSP (new CommandObjectProcessGDBRemotePacketHistory (interpreter)));
         LoadSubCommand ("send", CommandObjectSP (new CommandObjectProcessGDBRemotePacketSend (interpreter)));
+        LoadSubCommand ("monitor", CommandObjectSP (new CommandObjectProcessGDBRemotePacketMonitor (interpreter)));
     }
     
     ~CommandObjectProcessGDBRemotePacket ()
