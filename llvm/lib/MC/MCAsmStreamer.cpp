@@ -279,7 +279,7 @@ public:
   /// @}
 
   static bool classof(const MCStreamer *S) {
-    return S->getKind() == SK_NullStreamer;
+    return S->getKind() == SK_AsmStreamer;
   }
 };
 
