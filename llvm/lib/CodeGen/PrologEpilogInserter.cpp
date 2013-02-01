@@ -752,32 +752,33 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       MachineInstr *MI = I;
       bool DoIncr = true;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        if (MI->getOperand(i).isFI()) {
-          // Some instructions (e.g. inline asm instructions) can have
-          // multiple frame indices and/or cause eliminateFrameIndex
-          // to insert more than one instruction. We need the register
-          // scavenger to go through all of these instructions so that
-          // it can update its register information. We keep the
-          // iterator at the point before insertion so that we can
-          // revisit them in full.
-          bool AtBeginning = (I == BB->begin());
-          if (!AtBeginning) --I;
+        if (!MI->getOperand(i).isFI())
+            continue;
 
-          // If this instruction has a FrameIndex operand, we need to
-          // use that target machine register info object to eliminate
-          // it.
-          TRI.eliminateFrameIndex(MI, SPAdj, i,
-                                  FrameIndexVirtualScavenging ?  NULL : RS);
+        // Some instructions (e.g. inline asm instructions) can have
+        // multiple frame indices and/or cause eliminateFrameIndex
+        // to insert more than one instruction. We need the register
+        // scavenger to go through all of these instructions so that
+        // it can update its register information. We keep the
+        // iterator at the point before insertion so that we can
+        // revisit them in full.
+        bool AtBeginning = (I == BB->begin());
+        if (!AtBeginning) --I;
 
-          // Reset the iterator if we were at the beginning of the BB.
-          if (AtBeginning) {
-            I = BB->begin();
-            DoIncr = false;
-          }
+        // If this instruction has a FrameIndex operand, we need to
+        // use that target machine register info object to eliminate
+        // it.
+        TRI.eliminateFrameIndex(MI, SPAdj, i,
+                                FrameIndexVirtualScavenging ?  NULL : RS);
 
-          MI = 0;
-          break;
+        // Reset the iterator if we were at the beginning of the BB.
+        if (AtBeginning) {
+          I = BB->begin();
+          DoIncr = false;
         }
+
+        MI = 0;
+        break;
       }
 
       if (DoIncr && I != BB->end()) ++I;
