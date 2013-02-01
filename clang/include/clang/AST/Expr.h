@@ -1488,7 +1488,7 @@ public:
                      getByteLength());
   }
 
-  void outputString(raw_ostream &OS);
+  void outputString(raw_ostream &OS) const;
 
   uint32_t getCodeUnit(size_t i) const {
     assert(i < Length && "out of bounds access");

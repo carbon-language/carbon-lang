@@ -771,7 +771,7 @@ StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
   return SL;
 }
 
-void StringLiteral::outputString(raw_ostream &OS) {
+void StringLiteral::outputString(raw_ostream &OS) const {
   switch (getKind()) {
   case Ascii: break; // no prefix.
   case Wide:  OS << 'L'; break;
