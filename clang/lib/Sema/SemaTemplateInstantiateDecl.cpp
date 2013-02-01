@@ -347,6 +347,9 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   }
   SemaRef.InstantiateAttrs(TemplateArgs, D, Var, LateAttrs, StartingScope);
 
+  if (Var->hasAttrs())
+    SemaRef.CheckAlignasUnderalignment(Var);
+
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
   if (Var->isStaticDataMember())
@@ -458,6 +461,9 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   }
 
   SemaRef.InstantiateAttrs(TemplateArgs, D, Field, LateAttrs, StartingScope);
+
+  if (Field->hasAttrs())
+    SemaRef.CheckAlignasUnderalignment(Field);
 
   if (Invalid)
     Field->setInvalidDecl();

@@ -1657,6 +1657,8 @@ def err_alignas_attribute_wrong_decl_type : Error<
   "%0 attribute cannot be applied to a %select{"
   "function parameter|variable with 'register' storage class|"
   "'catch' variable|bit-field}1">;
+def err_alignas_underaligned : Error<
+  "requested alignment is less than minimum alignment of %1 for type %0">;
 def err_attribute_first_argument_not_int_or_bool : Error<
   "%0 attribute first argument must be of int or bool type">;
 def err_attribute_argument_outof_range : Error<

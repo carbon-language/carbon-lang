@@ -3,7 +3,7 @@
 
 _Alignas(3) int align_illegal; //expected-error {{requested alignment is not a power of 2}}
 _Alignas(int) char align_big;
-_Alignas(1) int align_small; // FIXME: this should be rejected
+_Alignas(1) int align_small; // expected-error {{requested alignment is less than minimum}}
 _Alignas(1) unsigned _Alignas(8) int _Alignas(1) align_multiple;
 
 struct align_member {

@@ -161,8 +161,9 @@ def Aligned : InheritableAttr {
   let Subjects = [NonBitField, NormalVar, Tag];
   let Args = [AlignedArgument<"Alignment">];
   let Accessors = [Accessor<"isGNU", [GNU<"aligned">, CXX11<"gnu","aligned">]>,
-                   Accessor<"isAlignas",
-                   [Keyword<"alignas">, Keyword<"_Alignas">]>,
+                   Accessor<"isC11", [Keyword<"_Alignas">]>,
+                   Accessor<"isAlignas", [Keyword<"alignas">,
+                                          Keyword<"_Alignas">]>,
                    Accessor<"isDeclspec",[Declspec<"align">]>];
 }
 

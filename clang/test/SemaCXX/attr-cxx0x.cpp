@@ -2,7 +2,7 @@
 
 int align_illegal alignas(3); //expected-error {{requested alignment is not a power of 2}}
 char align_big alignas(int);
-int align_small alignas(1); // FIXME: this should be rejected
+int align_small alignas(1); // expected-error {{requested alignment is less than minimum}}
 int align_multiple alignas(1) alignas(8) alignas(1);
 alignas(4) int align_before;
 
