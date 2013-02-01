@@ -68,7 +68,7 @@ static void MaybeOpenReportFile() {
   InternalScopedBuffer<char> report_path_full(4096);
   internal_snprintf(report_path_full.data(), report_path_full.size(),
                     "%s.%d", report_path_prefix, GetPid());
-  fd_t fd = internal_open(report_path_full.data(), true);
+  fd_t fd = OpenFile(report_path_full.data(), true);
   if (fd == kInvalidFd) {
     report_fd = kStderrFd;
     log_to_file = false;
@@ -107,7 +107,7 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
-    fd_t fd = internal_open(file_name, /*write*/ false);
+    fd_t fd = OpenFile(file_name, /*write*/ false);
     if (fd == kInvalidFd) return 0;
     UnmapOrDie(*buff, *buff_size);
     *buff = (char*)MmapOrDie(size, __FUNCTION__);

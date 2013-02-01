@@ -143,7 +143,7 @@ static void InitializeMemoryProfile() {
   InternalScopedBuffer<char> filename(4096);
   internal_snprintf(filename.data(), filename.size(), "%s.%d",
       flags()->profile_memory, GetPid());
-  fd_t fd = internal_open(filename.data(), true);
+  fd_t fd = OpenFile(filename.data(), true);
   if (fd == kInvalidFd) {
     Printf("Failed to open memory profile file '%s'\n", &filename[0]);
     Die();

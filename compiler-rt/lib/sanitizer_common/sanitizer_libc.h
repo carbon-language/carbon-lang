@@ -57,14 +57,17 @@ void *internal_mmap(void *addr, uptr length, int prot, int flags,
 int internal_munmap(void *addr, uptr length);
 
 // I/O
-typedef int fd_t;
 const fd_t kInvalidFd = -1;
 const fd_t kStdinFd = 0;
 const fd_t kStdoutFd = 1;
 const fd_t kStderrFd = 2;
 int internal_close(fd_t fd);
 int internal_isatty(fd_t fd);
-fd_t internal_open(const char *filename, bool write);
+
+// Use __sanitizer::OpenFile() instead.
+fd_t internal_open(const char *filename, int flags);
+fd_t internal_open(const char *filename, int flags, mode_t mode);
+
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
 uptr internal_filesize(fd_t fd);  // -1 on error.

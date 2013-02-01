@@ -48,9 +48,17 @@ int internal_close(fd_t fd) {
   return close(fd);
 }
 
-fd_t internal_open(const char *filename, bool write) {
-  return open(filename,
-              write ? O_WRONLY | O_CREAT : O_RDONLY, 0660);
+fd_t internal_open(const char *filename, int flags) {
+  return open(filename, flags);
+}
+
+fd_t internal_open(const char *filename, int flags, mode_t mode) {
+  return open(filename, flags, mode);
+}
+
+fd_t OpenFile(const char *filename, bool write) {
+  return internal_open(filename,
+      write ? O_WRONLY | O_CREAT : O_RDONLY, 0660);
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {

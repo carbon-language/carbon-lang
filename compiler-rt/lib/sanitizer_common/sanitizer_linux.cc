@@ -68,8 +68,16 @@ int internal_close(fd_t fd) {
   return syscall(__NR_close, fd);
 }
 
-fd_t internal_open(const char *filename, bool write) {
-  return syscall(__NR_open, filename,
+fd_t internal_open(const char *filename, int flags) {
+  return syscall(__NR_open, filename, flags);
+}
+
+fd_t internal_open(const char *filename, int flags, mode_t mode) {
+  return syscall(__NR_open, filename, flags, mode);
+}
+
+fd_t OpenFile(const char *filename, bool write) {
+  return internal_open(filename,
       write ? O_WRONLY | O_CREAT /*| O_CLOEXEC*/ : O_RDONLY, 0660);
 }
 

@@ -67,13 +67,13 @@ TEST(Platform, FileOps) {
   const char *str2 = "zxcv";
   uptr len2 = internal_strlen(str2);
 
-  fd_t fd = internal_open("./tsan_test.tmp", true);
+  fd_t fd = OpenFile("./tsan_test.tmp", true);
   EXPECT_NE(fd, kInvalidFd);
   EXPECT_EQ(len1, internal_write(fd, str1, len1));
   EXPECT_EQ(len2, internal_write(fd, str2, len2));
   internal_close(fd);
 
-  fd = internal_open("./tsan_test.tmp", false);
+  fd = OpenFile("./tsan_test.tmp", false);
   EXPECT_NE(fd, kInvalidFd);
   EXPECT_EQ(len1 + len2, internal_filesize(fd));
   char buf[64] = {};

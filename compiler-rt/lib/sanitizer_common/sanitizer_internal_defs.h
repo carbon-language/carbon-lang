@@ -64,6 +64,8 @@ typedef signed   char s8;
 typedef signed   short s16;  // NOLINT
 typedef signed   int s32;
 typedef signed   long long s64;  // NOLINT
+typedef int fd_t;
+typedef u32 mode_t;
 
 }  // namespace __sanitizer
 

@@ -38,7 +38,7 @@ static char *ReadFile(const char *filename) {
     internal_snprintf(tmp.data(), tmp.size(), "%s", filename);
   else
     internal_snprintf(tmp.data(), tmp.size(), "%s/%s", GetPwd(), filename);
-  fd_t fd = internal_open(tmp.data(), false);
+  fd_t fd = OpenFile(tmp.data(), false);
   if (fd == kInvalidFd) {
     Printf("ThreadSanitizer: failed to open suppressions file '%s'\n",
                tmp.data());

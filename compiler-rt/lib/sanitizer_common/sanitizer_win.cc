@@ -191,7 +191,15 @@ int internal_isatty(fd_t fd) {
   return _isatty(fd);
 }
 
-fd_t internal_open(const char *filename, bool write) {
+fd_t internal_open(const char *filename, int flags) {
+  UNIMPLEMENTED();
+}
+
+fd_t internal_open(const char *filename, int flags, mode_t mode) {
+  UNIMPLEMENTED();
+}
+
+fd_t OpenFile(const char *filename, bool write) {
   UNIMPLEMENTED();
 }
 

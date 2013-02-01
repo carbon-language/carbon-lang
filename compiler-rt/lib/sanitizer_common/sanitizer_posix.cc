@@ -122,7 +122,7 @@ void FlushUnneededShadowMemory(uptr addr, uptr size) {
 }
 
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
-  fd_t fd = internal_open(file_name, false);
+  fd_t fd = OpenFile(file_name, false);
   CHECK_NE(fd, kInvalidFd);
   uptr fsize = internal_filesize(fd);
   CHECK_NE(fsize, (uptr)-1);
