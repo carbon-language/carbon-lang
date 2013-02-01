@@ -267,6 +267,50 @@ static void radar13116945(struct point centerCoordinate) {
   test13116945(r.center); // no-warning
 }
 
+
+typedef struct {
+  char data[4];
+} ShortString;
+
+typedef struct {
+  ShortString str;
+  int length;
+} ShortStringWrapper;
+
+void testArrayStructCopy() {
+  ShortString s = { "abc" };
+  ShortString s2 = s;
+  ShortString s3 = s2;
+
+  clang_analyzer_eval(s3.data[0] == 'a'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(s3.data[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(s3.data[2] == 'c'); // expected-warning{{TRUE}}
+}
+
+void testArrayStructCopyNested() {
+  ShortString s = { "abc" };
+  ShortString s2 = s;
+
+  ShortStringWrapper w = { s2, 0 };
+
+  clang_analyzer_eval(w.str.data[0] == 'a'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w.str.data[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w.str.data[2] == 'c'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w.length == 0); // expected-warning{{TRUE}}
+
+  ShortStringWrapper w2 = w;
+  clang_analyzer_eval(w2.str.data[0] == 'a'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w2.str.data[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w2.str.data[2] == 'c'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w2.length == 0); // expected-warning{{TRUE}}
+
+  ShortStringWrapper w3 = w2;
+  clang_analyzer_eval(w3.str.data[0] == 'a'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w3.str.data[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w3.str.data[2] == 'c'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(w3.length == 0); // expected-warning{{TRUE}}
+}
+
 // --------------------
 // False positives
 // --------------------

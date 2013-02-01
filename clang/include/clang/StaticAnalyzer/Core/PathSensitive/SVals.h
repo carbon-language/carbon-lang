@@ -33,7 +33,7 @@ class LazyCompoundValData;
 class ProgramState;
 class BasicValueFactory;
 class MemRegion;
-class TypedRegion;
+class TypedValueRegion;
 class MemRegionManager;
 class ProgramStateManager;
 class SValBuilder;
@@ -379,7 +379,7 @@ public:
     return static_cast<const LazyCompoundValData*>(Data);
   }
   const void *getStore() const;
-  const TypedRegion *getRegion() const;
+  const TypedValueRegion *getRegion() const;
 
   static bool classof(const SVal *V) {
     return V->getBaseKind() == NonLocKind &&

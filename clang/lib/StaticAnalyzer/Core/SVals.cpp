@@ -144,7 +144,7 @@ const void *nonloc::LazyCompoundVal::getStore() const {
   return static_cast<const LazyCompoundValData*>(Data)->getStore();
 }
 
-const TypedRegion *nonloc::LazyCompoundVal::getRegion() const {
+const TypedValueRegion *nonloc::LazyCompoundVal::getRegion() const {
   return static_cast<const LazyCompoundValData*>(Data)->getRegion();
 }
 
