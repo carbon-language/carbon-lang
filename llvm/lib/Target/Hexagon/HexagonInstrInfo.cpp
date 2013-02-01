@@ -1500,25 +1500,10 @@ unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
       return Hexagon::JMPR_cPt;
 
   // V4 indexed+scaled load.
-    case Hexagon::LDrid_indexed_cPt_V4:
-      return Hexagon::LDrid_indexed_cNotPt_V4;
-    case Hexagon::LDrid_indexed_cNotPt_V4:
-      return Hexagon::LDrid_indexed_cPt_V4;
-
     case Hexagon::LDrid_indexed_shl_cPt_V4:
       return Hexagon::LDrid_indexed_shl_cNotPt_V4;
     case Hexagon::LDrid_indexed_shl_cNotPt_V4:
       return Hexagon::LDrid_indexed_shl_cPt_V4;
-
-    case Hexagon::LDrib_indexed_cPt_V4:
-      return Hexagon::LDrib_indexed_cNotPt_V4;
-    case Hexagon::LDrib_indexed_cNotPt_V4:
-      return Hexagon::LDrib_indexed_cPt_V4;
-
-    case Hexagon::LDriub_indexed_cPt_V4:
-      return Hexagon::LDriub_indexed_cNotPt_V4;
-    case Hexagon::LDriub_indexed_cNotPt_V4:
-      return Hexagon::LDriub_indexed_cPt_V4;
 
     case Hexagon::LDrib_indexed_shl_cPt_V4:
       return Hexagon::LDrib_indexed_shl_cNotPt_V4;
@@ -1530,16 +1515,6 @@ unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
     case Hexagon::LDriub_indexed_shl_cNotPt_V4:
       return Hexagon::LDriub_indexed_shl_cPt_V4;
 
-    case Hexagon::LDrih_indexed_cPt_V4:
-      return Hexagon::LDrih_indexed_cNotPt_V4;
-    case Hexagon::LDrih_indexed_cNotPt_V4:
-      return Hexagon::LDrih_indexed_cPt_V4;
-
-    case Hexagon::LDriuh_indexed_cPt_V4:
-      return Hexagon::LDriuh_indexed_cNotPt_V4;
-    case Hexagon::LDriuh_indexed_cNotPt_V4:
-      return Hexagon::LDriuh_indexed_cPt_V4;
-
     case Hexagon::LDrih_indexed_shl_cPt_V4:
       return Hexagon::LDrih_indexed_shl_cNotPt_V4;
     case Hexagon::LDrih_indexed_shl_cNotPt_V4:
@@ -1549,11 +1524,6 @@ unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
       return Hexagon::LDriuh_indexed_shl_cNotPt_V4;
     case Hexagon::LDriuh_indexed_shl_cNotPt_V4:
       return Hexagon::LDriuh_indexed_shl_cPt_V4;
-
-    case Hexagon::LDriw_indexed_cPt_V4:
-      return Hexagon::LDriw_indexed_cNotPt_V4;
-    case Hexagon::LDriw_indexed_cNotPt_V4:
-      return Hexagon::LDriw_indexed_cPt_V4;
 
     case Hexagon::LDriw_indexed_shl_cPt_V4:
       return Hexagon::LDriw_indexed_shl_cNotPt_V4;
@@ -1965,51 +1935,21 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
                               Hexagon::JMPR_cNotPt;
 
   // V4 indexed+scaled load.
-  case Hexagon::LDrid_indexed_V4:
-    return !invertPredicate ? Hexagon::LDrid_indexed_cPt_V4 :
-                              Hexagon::LDrid_indexed_cNotPt_V4;
   case Hexagon::LDrid_indexed_shl_V4:
     return !invertPredicate ? Hexagon::LDrid_indexed_shl_cPt_V4 :
                               Hexagon::LDrid_indexed_shl_cNotPt_V4;
-  case Hexagon::LDrib_indexed_V4:
-    return !invertPredicate ? Hexagon::LDrib_indexed_cPt_V4 :
-                              Hexagon::LDrib_indexed_cNotPt_V4;
-  case Hexagon::LDriub_indexed_V4:
-    return !invertPredicate ? Hexagon::LDriub_indexed_cPt_V4 :
-                              Hexagon::LDriub_indexed_cNotPt_V4;
-  case Hexagon::LDriub_ae_indexed_V4:
-    return !invertPredicate ? Hexagon::LDriub_indexed_cPt_V4 :
-                              Hexagon::LDriub_indexed_cNotPt_V4;
   case Hexagon::LDrib_indexed_shl_V4:
     return !invertPredicate ? Hexagon::LDrib_indexed_shl_cPt_V4 :
                               Hexagon::LDrib_indexed_shl_cNotPt_V4;
   case Hexagon::LDriub_indexed_shl_V4:
     return !invertPredicate ? Hexagon::LDriub_indexed_shl_cPt_V4 :
                               Hexagon::LDriub_indexed_shl_cNotPt_V4;
-  case Hexagon::LDriub_ae_indexed_shl_V4:
-    return !invertPredicate ? Hexagon::LDriub_indexed_shl_cPt_V4 :
-                              Hexagon::LDriub_indexed_shl_cNotPt_V4;
-  case Hexagon::LDrih_indexed_V4:
-    return !invertPredicate ? Hexagon::LDrih_indexed_cPt_V4 :
-                              Hexagon::LDrih_indexed_cNotPt_V4;
-  case Hexagon::LDriuh_indexed_V4:
-    return !invertPredicate ? Hexagon::LDriuh_indexed_cPt_V4 :
-                              Hexagon::LDriuh_indexed_cNotPt_V4;
-  case Hexagon::LDriuh_ae_indexed_V4:
-    return !invertPredicate ? Hexagon::LDriuh_indexed_cPt_V4 :
-                              Hexagon::LDriuh_indexed_cNotPt_V4;
   case Hexagon::LDrih_indexed_shl_V4:
     return !invertPredicate ? Hexagon::LDrih_indexed_shl_cPt_V4 :
                               Hexagon::LDrih_indexed_shl_cNotPt_V4;
   case Hexagon::LDriuh_indexed_shl_V4:
     return !invertPredicate ? Hexagon::LDriuh_indexed_shl_cPt_V4 :
                               Hexagon::LDriuh_indexed_shl_cNotPt_V4;
-  case Hexagon::LDriuh_ae_indexed_shl_V4:
-    return !invertPredicate ? Hexagon::LDriuh_indexed_shl_cPt_V4 :
-                              Hexagon::LDriuh_indexed_shl_cNotPt_V4;
-  case Hexagon::LDriw_indexed_V4:
-    return !invertPredicate ? Hexagon::LDriw_indexed_cPt_V4 :
-                              Hexagon::LDriw_indexed_cNotPt_V4;
   case Hexagon::LDriw_indexed_shl_V4:
     return !invertPredicate ? Hexagon::LDriw_indexed_shl_cPt_V4 :
                               Hexagon::LDriw_indexed_shl_cNotPt_V4;
@@ -2647,28 +2587,16 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::POST_LDriub_cPt :
     case Hexagon::POST_LDriub_cNotPt :
       return QRI.Subtarget.hasV4TOps();
-    case Hexagon::LDrid_indexed_cPt_V4 :
-    case Hexagon::LDrid_indexed_cNotPt_V4 :
     case Hexagon::LDrid_indexed_shl_cPt_V4 :
     case Hexagon::LDrid_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDrib_indexed_cPt_V4 :
-    case Hexagon::LDrib_indexed_cNotPt_V4 :
     case Hexagon::LDrib_indexed_shl_cPt_V4 :
     case Hexagon::LDrib_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDriub_indexed_cPt_V4 :
-    case Hexagon::LDriub_indexed_cNotPt_V4 :
     case Hexagon::LDriub_indexed_shl_cPt_V4 :
     case Hexagon::LDriub_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDrih_indexed_cPt_V4 :
-    case Hexagon::LDrih_indexed_cNotPt_V4 :
     case Hexagon::LDrih_indexed_shl_cPt_V4 :
     case Hexagon::LDrih_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDriuh_indexed_cPt_V4 :
-    case Hexagon::LDriuh_indexed_cNotPt_V4 :
     case Hexagon::LDriuh_indexed_shl_cPt_V4 :
     case Hexagon::LDriuh_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDriw_indexed_cPt_V4 :
-    case Hexagon::LDriw_indexed_cNotPt_V4 :
     case Hexagon::LDriw_indexed_shl_cPt_V4 :
     case Hexagon::LDriw_indexed_shl_cNotPt_V4 :
       return QRI.Subtarget.hasV4TOps();

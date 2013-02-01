@@ -1092,23 +1092,11 @@ static int GetDotNewPredOp(const int opc) {
 
   // V4 indexed+scaled load
 
-  case Hexagon::LDrid_indexed_cPt_V4 :
-    return Hexagon::LDrid_indexed_cdnPt_V4;
-
-  case Hexagon::LDrid_indexed_cNotPt_V4 :
-    return Hexagon::LDrid_indexed_cdnNotPt_V4;
-
   case Hexagon::LDrid_indexed_shl_cPt_V4 :
     return Hexagon::LDrid_indexed_shl_cdnPt_V4;
 
   case Hexagon::LDrid_indexed_shl_cNotPt_V4 :
     return Hexagon::LDrid_indexed_shl_cdnNotPt_V4;
-
-  case Hexagon::LDrib_indexed_cPt_V4 :
-    return Hexagon::LDrib_indexed_cdnPt_V4;
-
-  case Hexagon::LDrib_indexed_cNotPt_V4 :
-    return Hexagon::LDrib_indexed_cdnNotPt_V4;
 
   case Hexagon::LDrib_indexed_shl_cPt_V4 :
     return Hexagon::LDrib_indexed_shl_cdnPt_V4;
@@ -1116,23 +1104,11 @@ static int GetDotNewPredOp(const int opc) {
   case Hexagon::LDrib_indexed_shl_cNotPt_V4 :
     return Hexagon::LDrib_indexed_shl_cdnNotPt_V4;
 
-  case Hexagon::LDriub_indexed_cPt_V4 :
-    return Hexagon::LDriub_indexed_cdnPt_V4;
-
-  case Hexagon::LDriub_indexed_cNotPt_V4 :
-    return Hexagon::LDriub_indexed_cdnNotPt_V4;
-
   case Hexagon::LDriub_indexed_shl_cPt_V4 :
     return Hexagon::LDriub_indexed_shl_cdnPt_V4;
 
   case Hexagon::LDriub_indexed_shl_cNotPt_V4 :
     return Hexagon::LDriub_indexed_shl_cdnNotPt_V4;
-
-  case Hexagon::LDrih_indexed_cPt_V4 :
-    return Hexagon::LDrih_indexed_cdnPt_V4;
-
-  case Hexagon::LDrih_indexed_cNotPt_V4 :
-    return Hexagon::LDrih_indexed_cdnNotPt_V4;
 
   case Hexagon::LDrih_indexed_shl_cPt_V4 :
     return Hexagon::LDrih_indexed_shl_cdnPt_V4;
@@ -1140,23 +1116,11 @@ static int GetDotNewPredOp(const int opc) {
   case Hexagon::LDrih_indexed_shl_cNotPt_V4 :
     return Hexagon::LDrih_indexed_shl_cdnNotPt_V4;
 
-  case Hexagon::LDriuh_indexed_cPt_V4 :
-    return Hexagon::LDriuh_indexed_cdnPt_V4;
-
-  case Hexagon::LDriuh_indexed_cNotPt_V4 :
-    return Hexagon::LDriuh_indexed_cdnNotPt_V4;
-
   case Hexagon::LDriuh_indexed_shl_cPt_V4 :
     return Hexagon::LDriuh_indexed_shl_cdnPt_V4;
 
   case Hexagon::LDriuh_indexed_shl_cNotPt_V4 :
     return Hexagon::LDriuh_indexed_shl_cdnNotPt_V4;
-
-  case Hexagon::LDriw_indexed_cPt_V4 :
-    return Hexagon::LDriw_indexed_cdnPt_V4;
-
-  case Hexagon::LDriw_indexed_cNotPt_V4 :
-    return Hexagon::LDriw_indexed_cdnNotPt_V4;
 
   case Hexagon::LDriw_indexed_shl_cPt_V4 :
     return Hexagon::LDriw_indexed_shl_cdnPt_V4;
@@ -1623,23 +1587,11 @@ static int GetDotOldOp(const int opc) {
 
   // V4 indexed+scaled Load
 
-  case Hexagon::LDrid_indexed_cdnPt_V4 :
-    return Hexagon::LDrid_indexed_cPt_V4;
-
-  case Hexagon::LDrid_indexed_cdnNotPt_V4 :
-    return Hexagon::LDrid_indexed_cNotPt_V4;
-
   case Hexagon::LDrid_indexed_shl_cdnPt_V4 :
     return Hexagon::LDrid_indexed_shl_cPt_V4;
 
   case Hexagon::LDrid_indexed_shl_cdnNotPt_V4 :
     return Hexagon::LDrid_indexed_shl_cNotPt_V4;
-
-  case Hexagon::LDrib_indexed_cdnPt_V4 :
-    return Hexagon::LDrib_indexed_cPt_V4;
-
-  case Hexagon::LDrib_indexed_cdnNotPt_V4 :
-    return Hexagon::LDrib_indexed_cNotPt_V4;
 
   case Hexagon::LDrib_indexed_shl_cdnPt_V4 :
     return Hexagon::LDrib_indexed_shl_cPt_V4;
@@ -1647,23 +1599,11 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::LDrib_indexed_shl_cdnNotPt_V4 :
     return Hexagon::LDrib_indexed_shl_cNotPt_V4;
 
-  case Hexagon::LDriub_indexed_cdnPt_V4 :
-    return Hexagon::LDriub_indexed_cPt_V4;
-
-  case Hexagon::LDriub_indexed_cdnNotPt_V4 :
-    return Hexagon::LDriub_indexed_cNotPt_V4;
-
   case Hexagon::LDriub_indexed_shl_cdnPt_V4 :
     return Hexagon::LDriub_indexed_shl_cPt_V4;
 
   case Hexagon::LDriub_indexed_shl_cdnNotPt_V4 :
     return Hexagon::LDriub_indexed_shl_cNotPt_V4;
-
-  case Hexagon::LDrih_indexed_cdnPt_V4 :
-    return Hexagon::LDrih_indexed_cPt_V4;
-
-  case Hexagon::LDrih_indexed_cdnNotPt_V4 :
-    return Hexagon::LDrih_indexed_cNotPt_V4;
 
   case Hexagon::LDrih_indexed_shl_cdnPt_V4 :
     return Hexagon::LDrih_indexed_shl_cPt_V4;
@@ -1671,23 +1611,11 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::LDrih_indexed_shl_cdnNotPt_V4 :
     return Hexagon::LDrih_indexed_shl_cNotPt_V4;
 
-  case Hexagon::LDriuh_indexed_cdnPt_V4 :
-    return Hexagon::LDriuh_indexed_cPt_V4;
-
-  case Hexagon::LDriuh_indexed_cdnNotPt_V4 :
-    return Hexagon::LDriuh_indexed_cNotPt_V4;
-
   case Hexagon::LDriuh_indexed_shl_cdnPt_V4 :
     return Hexagon::LDriuh_indexed_shl_cPt_V4;
 
   case Hexagon::LDriuh_indexed_shl_cdnNotPt_V4 :
     return Hexagon::LDriuh_indexed_shl_cNotPt_V4;
-
-  case Hexagon::LDriw_indexed_cdnPt_V4 :
-    return Hexagon::LDriw_indexed_cPt_V4;
-
-  case Hexagon::LDriw_indexed_cdnNotPt_V4 :
-    return Hexagon::LDriw_indexed_cNotPt_V4;
 
   case Hexagon::LDriw_indexed_shl_cdnPt_V4 :
     return Hexagon::LDriw_indexed_shl_cPt_V4;
@@ -2249,28 +2177,16 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::LDriub_indexed_cdnPt :
   case Hexagon::POST_LDriub_cPt :
   case Hexagon::POST_LDriub_cdnPt_V4 :
-  case Hexagon::LDrid_indexed_cPt_V4 :
-  case Hexagon::LDrid_indexed_cdnPt_V4 :
   case Hexagon::LDrid_indexed_shl_cPt_V4 :
   case Hexagon::LDrid_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrib_indexed_cPt_V4 :
-  case Hexagon::LDrib_indexed_cdnPt_V4 :
   case Hexagon::LDrib_indexed_shl_cPt_V4 :
   case Hexagon::LDrib_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriub_indexed_cPt_V4 :
-  case Hexagon::LDriub_indexed_cdnPt_V4 :
   case Hexagon::LDriub_indexed_shl_cPt_V4 :
   case Hexagon::LDriub_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrih_indexed_cPt_V4 :
-  case Hexagon::LDrih_indexed_cdnPt_V4 :
   case Hexagon::LDrih_indexed_shl_cPt_V4 :
   case Hexagon::LDrih_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriuh_indexed_cPt_V4 :
-  case Hexagon::LDriuh_indexed_cdnPt_V4 :
   case Hexagon::LDriuh_indexed_shl_cPt_V4 :
   case Hexagon::LDriuh_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriw_indexed_cPt_V4 :
-  case Hexagon::LDriw_indexed_cdnPt_V4 :
   case Hexagon::LDriw_indexed_shl_cPt_V4 :
   case Hexagon::LDriw_indexed_shl_cdnPt_V4 :
   case Hexagon::ADD_ri_cPt :
@@ -2420,28 +2336,16 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::LDriub_indexed_cdnNotPt :
   case Hexagon::POST_LDriub_cNotPt :
   case Hexagon::POST_LDriub_cdnNotPt_V4 :
-  case Hexagon::LDrid_indexed_cNotPt_V4 :
-  case Hexagon::LDrid_indexed_cdnNotPt_V4 :
   case Hexagon::LDrid_indexed_shl_cNotPt_V4 :
   case Hexagon::LDrid_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrib_indexed_cNotPt_V4 :
-  case Hexagon::LDrib_indexed_cdnNotPt_V4 :
   case Hexagon::LDrib_indexed_shl_cNotPt_V4 :
   case Hexagon::LDrib_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriub_indexed_cNotPt_V4 :
-  case Hexagon::LDriub_indexed_cdnNotPt_V4 :
   case Hexagon::LDriub_indexed_shl_cNotPt_V4 :
   case Hexagon::LDriub_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrih_indexed_cNotPt_V4 :
-  case Hexagon::LDrih_indexed_cdnNotPt_V4 :
   case Hexagon::LDrih_indexed_shl_cNotPt_V4 :
   case Hexagon::LDrih_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriuh_indexed_cNotPt_V4 :
-  case Hexagon::LDriuh_indexed_cdnNotPt_V4 :
   case Hexagon::LDriuh_indexed_shl_cNotPt_V4 :
   case Hexagon::LDriuh_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriw_indexed_cNotPt_V4 :
-  case Hexagon::LDriw_indexed_cdnNotPt_V4 :
   case Hexagon::LDriw_indexed_shl_cNotPt_V4 :
   case Hexagon::LDriw_indexed_shl_cdnNotPt_V4 :
   case Hexagon::ADD_ri_cNotPt :
@@ -2563,28 +2467,16 @@ bool HexagonPacketizerList::isDotNewInst(MachineInstr* MI) {
   case Hexagon::POST_LDriub_cdnPt_V4 :
   case Hexagon::POST_LDriub_cdnNotPt_V4 :
 
-  case Hexagon::LDrid_indexed_cdnPt_V4 :
-  case Hexagon::LDrid_indexed_cdnNotPt_V4 :
   case Hexagon::LDrid_indexed_shl_cdnPt_V4 :
   case Hexagon::LDrid_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrib_indexed_cdnPt_V4 :
-  case Hexagon::LDrib_indexed_cdnNotPt_V4 :
   case Hexagon::LDrib_indexed_shl_cdnPt_V4 :
   case Hexagon::LDrib_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriub_indexed_cdnPt_V4 :
-  case Hexagon::LDriub_indexed_cdnNotPt_V4 :
   case Hexagon::LDriub_indexed_shl_cdnPt_V4 :
   case Hexagon::LDriub_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrih_indexed_cdnPt_V4 :
-  case Hexagon::LDrih_indexed_cdnNotPt_V4 :
   case Hexagon::LDrih_indexed_shl_cdnPt_V4 :
   case Hexagon::LDrih_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriuh_indexed_cdnPt_V4 :
-  case Hexagon::LDriuh_indexed_cdnNotPt_V4 :
   case Hexagon::LDriuh_indexed_shl_cdnPt_V4 :
   case Hexagon::LDriuh_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriw_indexed_cdnPt_V4 :
-  case Hexagon::LDriw_indexed_cdnNotPt_V4 :
   case Hexagon::LDriw_indexed_shl_cdnPt_V4 :
   case Hexagon::LDriw_indexed_shl_cdnNotPt_V4 :
 

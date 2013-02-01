@@ -389,25 +389,6 @@ def LDriw_abs_set_V4 : LDInst2<(outs IntRegs:$dst1, IntRegs:$dst2),
             Requires<[HasV4T]>;
 }
 
-// Load doubleword.
-//
-// Make sure that in post increment load, the first operand is always the post
-// increment operand.
-//
-// Rdd=memd(Rs+Rt<<#u2)
-// Special case pattern for indexed load without offset which is easier to
-// match. AddedComplexity of this pattern should be lower than base+offset load
-// and lower yet than the more generic version with offset/shift below
-// Similar approach is taken for all other base+index loads.
-let AddedComplexity = 10, isPredicable = 1 in
-def LDrid_indexed_V4 : LDInst<(outs DoubleRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memd($src1+$src2<<#0)",
-                    [(set (i64 DoubleRegs:$dst),
-                          (i64 (load (add (i32 IntRegs:$src1),
-                                          (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
 // multiclass for load instructions with base + register offset
 // addressing mode
 multiclass ld_idxd_shl_pbase<string mnemonic, RegisterClass RC, bit isNot,
@@ -506,314 +487,42 @@ def : Pat <(i64 (load (add IntRegs:$src1,
             Requires<[HasV4T]>;
 }
 
-//// Load doubleword conditionally.
-// if ([!]Pv[.new]) Rd=memd(Rs+Rt<<#u2)
-// if (Pv) Rd=memd(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrid_indexed_cPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1) $dst=memd($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
 
-// if (Pv.new) Rd=memd(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrid_indexed_cdnPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1.new) $dst=memd($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv) Rd=memd(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrid_indexed_cNotPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1) $dst=memd($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv.new) Rd=memd(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrid_indexed_cdnNotPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1.new) $dst=memd($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// Rdd=memd(Rt<<#u2+#U6)
-
-//// Load byte.
-// Rd=memb(Rs+Rt<<#u2)
-let AddedComplexity = 10, isPredicable = 1 in
-def LDrib_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memb($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (sextloadi8 (add (i32 IntRegs:$src1),
-                                                (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
-let AddedComplexity = 10, isPredicable = 1 in
-def LDriub_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memub($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (zextloadi8 (add (i32 IntRegs:$src1),
-                                                (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
-let AddedComplexity = 10, isPredicable = 1 in
-def LDriub_ae_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memub($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (extloadi8 (add (i32 IntRegs:$src1),
-                                               (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
-let AddedComplexity = 40, isPredicable = 1 in
-def LDriub_ae_indexed_shl_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2, u2Imm:$offset),
-                    "$dst=memub($src1+$src2<<#$offset)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (extloadi8 (add (i32 IntRegs:$src1),
-                                               (shl (i32 IntRegs:$src2),
-                                                    u2ImmPred:$offset)))))]>,
-                    Requires<[HasV4T]>;
-
-//// Load byte conditionally.
-// if ([!]Pv[.new]) Rd=memb(Rs+Rt<<#u2)
-// if (Pv) Rd=memb(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrib_indexed_cPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1) $dst=memb($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (Pv.new) Rd=memb(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrib_indexed_cdnPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1.new) $dst=memb($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv) Rd=memb(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrib_indexed_cNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1) $dst=memb($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv.new) Rd=memb(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrib_indexed_cdnNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1.new) $dst=memb($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-//// Load unsigned byte conditionally.
-// if ([!]Pv[.new]) Rd=memub(Rs+Rt<<#u2)
-// if (Pv) Rd=memub(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriub_indexed_cPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1) $dst=memub($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (Pv.new) Rd=memub(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriub_indexed_cdnPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1.new) $dst=memub($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv) Rd=memub(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriub_indexed_cNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1) $dst=memub($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv.new) Rd=memub(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriub_indexed_cdnNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1.new) $dst=memub($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// Rd=memb(Rt<<#u2+#U6)
-
-//// Load halfword
-// Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 10, isPredicable = 1 in
-def LDrih_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memh($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (sextloadi16 (add (i32 IntRegs:$src1),
-                                                 (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
-let AddedComplexity = 10, isPredicable = 1 in
-def LDriuh_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memuh($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (zextloadi16 (add (i32 IntRegs:$src1),
-                                                 (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
-let AddedComplexity = 10, isPredicable = 1 in
-def LDriuh_ae_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memuh($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (extloadi16 (add (i32 IntRegs:$src1),
-                                                (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
-
-let AddedComplexity = 40, isPredicable = 1 in
-def LDriuh_ae_indexed_shl_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2, u2Imm:$offset),
-                    "$dst=memuh($src1+$src2<<#$offset)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (extloadi16 (add (i32 IntRegs:$src1),
-                                                (shl (i32 IntRegs:$src2),
-                                                     u2ImmPred:$offset)))))]>,
-                    Requires<[HasV4T]>;
-
-//// Load halfword conditionally.
-// if ([!]Pv[.new]) Rd=memh(Rs+Rt<<#u2)
-// if (Pv) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrih_indexed_cPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1) $dst=memh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (Pv.new) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrih_indexed_cdnPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1.new) $dst=memh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrih_indexed_cNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1) $dst=memh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv.new) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDrih_indexed_cdnNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1.new) $dst=memh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-//// Load unsigned halfword conditionally.
-// if ([!]Pv[.new]) Rd=memuh(Rs+Rt<<#u2)
-// if (Pv) Rd=memuh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriuh_indexed_cPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1) $dst=memuh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (Pv.new) Rd=memuh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriuh_indexed_cdnPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1.new) $dst=memuh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv) Rd=memuh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriuh_indexed_cNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1) $dst=memuh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// if (!Pv.new) Rd=memuh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriuh_indexed_cdnNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1.new) $dst=memuh($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
-
-// Rd=memh(Rt<<#u2+#U6)
-
-//// Load word.
-// Load predicate: Fix for bug 5279.
-let neverHasSideEffects = 1 in
-def LDriw_pred_V4 : LDInst2<(outs PredRegs:$dst),
-            (ins MEMri:$addr),
-            "Error; should not emit",
-            []>,
+// 'def pats' for load instruction base + register offset and
+// zero immediate value.
+let AddedComplexity = 10 in {
+def : Pat <(i64 (load (add IntRegs:$src1, IntRegs:$src2))),
+           (LDrid_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
-// Rd=memw(Re=#U6)
+def : Pat <(i32 (sextloadi8 (add IntRegs:$src1, IntRegs:$src2))),
+           (LDrib_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
 
-// Rd=memw(Rs+Rt<<#u2)
-let AddedComplexity = 10, isPredicable = 1 in
-def LDriw_indexed_V4 : LDInst<(outs IntRegs:$dst),
-                    (ins IntRegs:$src1, IntRegs:$src2),
-                    "$dst=memw($src1+$src2<<#0)",
-                    [(set (i32 IntRegs:$dst),
-                          (i32 (load (add (i32 IntRegs:$src1),
-                                          (i32 IntRegs:$src2)))))]>,
-                    Requires<[HasV4T]>;
+def : Pat <(i32 (zextloadi8 (add IntRegs:$src1, IntRegs:$src2))),
+           (LDriub_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
 
-//// Load word conditionally.
-// if ([!]Pv[.new]) Rd=memw(Rs+Rt<<#u2)
-// if (Pv) Rd=memw(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriw_indexed_cPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1) $dst=memw($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
+def : Pat <(i32 (extloadi8 (add IntRegs:$src1, IntRegs:$src2))),
+           (LDriub_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
 
-// if (Pv.new) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriw_indexed_cdnPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if ($src1.new) $dst=memw($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
+def : Pat <(i32 (sextloadi16 (add IntRegs:$src1, IntRegs:$src2))),
+           (LDrih_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
 
-// if (!Pv) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriw_indexed_cNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1) $dst=memw($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
+def : Pat <(i32 (zextloadi16 (add IntRegs:$src1, IntRegs:$src2))),
+           (LDriuh_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
 
-// if (!Pv.new) Rd=memh(Rs+Rt<<#u2)
-let AddedComplexity = 15, isPredicated = 1 in
-def LDriw_indexed_cdnNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-                    (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-                    "if (!$src1.new) $dst=memw($src2+$src3<<#0)",
-                    []>,
-                    Requires<[HasV4T]>;
+def : Pat <(i32 (extloadi16 (add IntRegs:$src1, IntRegs:$src2))),
+           (LDriuh_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
+
+def : Pat <(i32 (load (add IntRegs:$src1, IntRegs:$src2))),
+           (LDriw_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+            Requires<[HasV4T]>;
+}
 
 /// Load from global offset
 
