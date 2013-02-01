@@ -975,7 +975,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::annot_typename:
     if (isStartOfObjCClassMessageMissingOpenBracket()) {
       ParsedType Type = getTypeAnnotation(Tok);
-      
+
       // Fake up a Declarator to use with ActOnTypeName.
       DeclSpec DS(AttrFactory);
       DS.SetRangeStart(Tok.getLocation());
@@ -985,7 +985,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       unsigned DiagID;
       DS.SetTypeSpecType(TST_typename, Tok.getAnnotationEndLoc(),
                          PrevSpec, DiagID, Type);
-      
+
       Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
       TypeResult Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
       if (Ty.isInvalid())
@@ -997,7 +997,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       break;
     }
     // Fall through
-      
+
   case tok::annot_decltype:
   case tok::kw_char:
   case tok::kw_wchar_t:
@@ -1023,8 +1023,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_image1d_buffer_t:
   case tok::kw_image2d_t:
   case tok::kw_image2d_array_t:
-  case tok::kw_image3d_t: {
-  case tok::kw_event_t:
+  case tok::kw_image3d_t:
+  case tok::kw_event_t: {
     if (!getLangOpts().CPlusPlus) {
       Diag(Tok, diag::err_expected_expression);
       return ExprError();
