@@ -1,7 +1,12 @@
 RUN: lld -core -target x86_64-linux -emit-yaml -output=- %p/Inputs/ifunc.x86-64 \
 RUN: | FileCheck %s
+
 RUN: lld -core -target x86_64-linux -emit-yaml -output=- %p/Inputs/ifunc.x86-64 \
 RUN: %p/Inputs/ifunc.cpp.x86-64 | FileCheck %s --check-prefix=PLT
+
+RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/ifunc.x86-64 \
+RUN: %p/Inputs/ifunc.cpp.x86-64 && llvm-objdump -d %t| FileCheck %s \
+RUN:   --check-prefix=BIN
 
 CHECK: name: hey
 CHECK: scope: global
@@ -25,3 +30,9 @@ PLT: name: [[PLTNAME]]
 PLT: type: stub
 PLT: references
 PLT: kind: R_X86_64_PC32
+
+// This is a horribly brittle test. We need a way to do arithmetic on captured
+// variables.
+BIN: 400136: ff 25 c4 0e 00 00 jumpq *3780(%rip)
+BIN: .got.plt:
+BIN-NEXT: 401000 00000000 00000000

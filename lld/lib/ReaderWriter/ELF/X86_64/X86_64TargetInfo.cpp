@@ -157,7 +157,7 @@ class GOTPLTPass LLVM_FINAL : public Pass {
     auto ga = new (_file._alloc) GOTAtom(_file, ".got.plt");
     ga->addReference(R_X86_64_IRELATIVE, 0, &da, 0);
     auto pa = new (_file._alloc) PLTAtom(_file, ".plt");
-    pa->addReference(R_X86_64_PC32, 2, ga, 0);
+    pa->addReference(R_X86_64_PC32, 2, ga, -4);
 #ifndef NDEBUG
     ga->_name = "__got_ifunc_";
     ga->_name += da.name();

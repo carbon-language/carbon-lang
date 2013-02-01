@@ -442,11 +442,11 @@ ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
     } else {
       section = _sectionMap[sectionKey];
     }
-    return section->appendAtom(atom);
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom)
       if (_targetInfo.isRuntimeRelocation(*definedAtom, *reloc))
         getRelocationTable()->addRelocation(*definedAtom, *reloc);
+    return section->appendAtom(atom);
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
     // Absolute atoms are not part of any section, they are global for the whole
     // link
