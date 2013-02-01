@@ -30,24 +30,23 @@ class LLVMContext;
 /// \brief This class represents a single, uniqued attribute. That attribute
 /// could be a single enum, a tuple, or a string.
 class AttributeImpl : public FoldingSetNode {
-  LLVMContext &Context;
-  Constant *Kind;
-  SmallVector<Constant*, 0> Vals;
+  LLVMContext &Context; ///< Global context for uniquing objects
+  Constant *Kind;       ///< Kind of attribute: enum or string
+  Constant *Values;     ///< Values associated with the attribute
 
   // AttributesImpl is uniqued, these should not be publicly available.
   void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
   AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
 public:
-  AttributeImpl(LLVMContext &C, Constant *Kind,
-                ArrayRef<Constant*> Vals = ArrayRef<Constant*>())
-    : Context(C), Kind(Kind), Vals(Vals.begin(), Vals.end()) {}
+  AttributeImpl(LLVMContext &C, Constant *Kind, Constant *Values = 0)
+    : Context(C), Kind(Kind), Values(Values) {}
 
   LLVMContext &getContext() { return Context; }
 
   bool hasAttribute(Attribute::AttrKind A) const;
 
   Constant *getAttributeKind() const { return Kind; }
-  ArrayRef<Constant*> getAttributeValues() const { return Vals; }
+  Constant *getAttributeValues() const { return Values; }
 
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
@@ -63,13 +62,12 @@ public:
   bool operator<(const AttributeImpl &AI) const;
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, Kind, Vals);
+    Profile(ID, Kind, Values);
   }
-  static void Profile(FoldingSetNodeID &ID, Constant *Kind,
-                      ArrayRef<Constant*> Vals) {
+  static void Profile(FoldingSetNodeID &ID, Constant *Kind, Constant *Values) {
     ID.AddPointer(Kind);
-    for (unsigned I = 0, E = Vals.size(); I != E; ++I)
-      ID.AddPointer(Vals[I]);
+    if (Values)
+      ID.AddPointer(Values);
   }
 
   // FIXME: Remove this!

@@ -128,11 +128,13 @@ public:
   /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
 
-  /// \brief Return the kind of this attribute.
+  /// \brief Return the kind of this attribute: enum or string.
   Constant *getAttributeKind() const;
 
-  /// \brief Return the value (if present) of the non-target-specific attribute.
-  ArrayRef<Constant*> getAttributeValues() const;
+  /// \brief Return the values (if present) of the attribute. This may be a
+  /// ConstantVector to represent a list of values associated with the
+  /// attribute.
+  Constant *getAttributeValues() const;
 
   /// \brief Returns the alignment field of an attribute as a byte alignment
   /// value.

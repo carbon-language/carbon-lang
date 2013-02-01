@@ -84,8 +84,8 @@ Constant *Attribute::getAttributeKind() const {
   return pImpl ? pImpl->getAttributeKind() : 0;
 }
 
-ArrayRef<Constant*> Attribute::getAttributeValues() const {
-  return pImpl ? pImpl->getAttributeValues() : ArrayRef<Constant*>();
+Constant *Attribute::getAttributeValues() const {
+  return pImpl ? pImpl->getAttributeValues() : 0;
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
@@ -186,24 +186,22 @@ std::string Attribute::getAsString() const {
   //
   //   "kind"
   //   "kind" = "value"
-  //   "kind" = ("value1" "value2" "value3" )
+  //   "kind" = ( "value1" "value2" "value3" )
   //
   if (ConstantDataArray *CDA =
       dyn_cast<ConstantDataArray>(pImpl->getAttributeKind())) {
     std::string Result;
     Result += '\"' + CDA->getAsString().str() + '"';
 
-    ArrayRef<Constant*> Vals = pImpl->getAttributeValues();
-    if (Vals.empty()) return Result;
+    Constant *Vals = pImpl->getAttributeValues();
+    if (!Vals) return Result;
+
+    // FIXME: This should support more than just ConstantDataArrays. Also,
+    // support a vector of attribute values.
+
     Result += " = ";
-    if (Vals.size() > 1) Result += '(';
-    for (ArrayRef<Constant*>::iterator I = Vals.begin(), E = Vals.end();
-         I != E; ) {
-      ConstantDataArray *CDA = cast<ConstantDataArray>(*I++);
-      Result += '\"' + CDA->getAsString().str() + '"';
-      if (I != E) Result += ' ';
-    }
-    if (Vals.size() > 1) Result += ')';
+    Result += '\"' + cast<ConstantDataArray>(Vals)->getAsString().str() + '"';
+
     return Result;
   }
 
@@ -237,13 +235,13 @@ bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
 uint64_t AttributeImpl::getAlignment() const {
   assert(hasAttribute(Attribute::Alignment) &&
          "Trying to retrieve the alignment from a non-alignment attr!");
-  return cast<ConstantInt>(Vals[0])->getZExtValue();
+  return cast<ConstantInt>(Values)->getZExtValue();
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
   assert(hasAttribute(Attribute::StackAlignment) &&
          "Trying to retrieve the stack alignment from a non-alignment attr!");
-  return cast<ConstantInt>(Vals[0])->getZExtValue();
+  return cast<ConstantInt>(Values)->getZExtValue();
 }
 
 bool AttributeImpl::operator==(Attribute::AttrKind kind) const {
