@@ -6964,11 +6964,12 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
       hasIsEqualMethod(S, LHS.get(), RHS.get())) {
     SourceLocation Start = LHS.get()->getLocStart();
     SourceLocation End = S.PP.getLocForEndOfToken(RHS.get()->getLocEnd());
-    SourceRange OpRange(Loc, S.PP.getLocForEndOfToken(Loc));
+    CharSourceRange OpRange =
+      CharSourceRange::getCharRange(Loc, S.PP.getLocForEndOfToken(Loc));
 
     S.Diag(Loc, diag::note_objc_literal_comparison_isequal)
       << FixItHint::CreateInsertion(Start, Opc == BO_EQ ? "[" : "![")
-      << FixItHint::CreateReplacement(OpRange, "isEqual:")
+      << FixItHint::CreateReplacement(OpRange, " isEqual:")
       << FixItHint::CreateInsertion(End, "]");
   }
 }
