@@ -366,12 +366,16 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
 }
 
 namespace {
-  struct SortUndefinedInternal {
+  struct SortUndefinedButUsed {
     const SourceManager &SM;
-    explicit SortUndefinedInternal(SourceManager &SM) : SM(SM) {}
+    explicit SortUndefinedButUsed(SourceManager &SM) : SM(SM) {}
 
     bool operator()(const std::pair<NamedDecl *, SourceLocation> &l,
                     const std::pair<NamedDecl *, SourceLocation> &r) const {
+      if (l.second.isValid() && !r.second.isValid())
+        return true;
+      if (!l.second.isValid() && r.second.isValid())
+        return false;
       if (l.second != r.second)
         return SM.isBeforeInTranslationUnit(l.second, r.second);
       return SM.isBeforeInTranslationUnit(l.first->getLocation(),
@@ -381,18 +385,15 @@ namespace {
 }
 
 /// Obtains a sorted list of functions that are undefined but ODR-used.
-void Sema::getUndefinedInternals(
+void Sema::getUndefinedButUsed(
     SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> > &Undefined) {
   for (llvm::DenseMap<NamedDecl *, SourceLocation>::iterator
-         I = UndefinedInternals.begin(), E = UndefinedInternals.end();
+         I = UndefinedButUsed.begin(), E = UndefinedButUsed.end();
        I != E; ++I) {
     NamedDecl *ND = I->first;
 
     // Ignore attributes that have become invalid.
     if (ND->isInvalidDecl()) continue;
-
-    // If we found out that the decl is external, don't warn.
-    if (ND->getLinkage() == ExternalLinkage) continue;
 
     // __attribute__((weakref)) is basically a definition.
     if (ND->hasAttr<WeakRefAttr>()) continue;
@@ -400,36 +401,49 @@ void Sema::getUndefinedInternals(
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
       if (FD->isDefined())
         continue;
+      if (FD->getLinkage() == ExternalLinkage &&
+          !FD->getMostRecentDecl()->isInlined())
+        continue;
     } else {
       if (cast<VarDecl>(ND)->hasDefinition() != VarDecl::DeclarationOnly)
+        continue;
+      if (ND->getLinkage() == ExternalLinkage)
         continue;
     }
 
     Undefined.push_back(std::make_pair(ND, I->second));
   }
 
-  // Sort (in order of use site) so that we're not (as) dependent on
-  // the iteration order through an llvm::DenseMap.
+  // Sort (in order of use site) so that we're not dependent on the iteration
+  // order through an llvm::DenseMap.
   std::sort(Undefined.begin(), Undefined.end(),
-            SortUndefinedInternal(Context.getSourceManager()));
+            SortUndefinedButUsed(Context.getSourceManager()));
 }
 
-/// checkUndefinedInternals - Check for undefined objects with internal linkage.
-static void checkUndefinedInternals(Sema &S) {
-  if (S.UndefinedInternals.empty()) return;
+/// checkUndefinedButUsed - Check for undefined objects with internal linkage
+/// or that are inline.
+static void checkUndefinedButUsed(Sema &S) {
+  if (S.UndefinedButUsed.empty()) return;
 
   // Collect all the still-undefined entities with internal linkage.
   SmallVector<std::pair<NamedDecl *, SourceLocation>, 16> Undefined;
-  S.getUndefinedInternals(Undefined);
+  S.getUndefinedButUsed(Undefined);
   if (Undefined.empty()) return;
 
   for (SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> >::iterator
          I = Undefined.begin(), E = Undefined.end(); I != E; ++I) {
     NamedDecl *ND = I->first;
 
-    S.Diag(ND->getLocation(), diag::warn_undefined_internal)
-      << isa<VarDecl>(ND) << ND;
-    S.Diag(I->second, diag::note_used_here);
+    if (ND->getLinkage() != ExternalLinkage) {
+      S.Diag(ND->getLocation(), diag::warn_undefined_internal)
+        << isa<VarDecl>(ND) << ND;
+    } else {
+      assert(cast<FunctionDecl>(ND)->getMostRecentDecl()->isInlined() &&
+             "used object requires definition but isn't inline or internal?");
+      S.Diag(ND->getLocation(), diag::warn_undefined_inline) << ND;
+    }
+    if (I->second.isValid())
+      S.Diag(I->second, diag::note_used_here);
   }
 }
 
@@ -743,8 +757,8 @@ void Sema::ActOnEndOfTranslationUnit() {
     }
 
     if (ExternalSource)
-      ExternalSource->ReadUndefinedInternals(UndefinedInternals);
-    checkUndefinedInternals(*this);
+      ExternalSource->ReadUndefinedButUsed(UndefinedButUsed);
+    checkUndefinedButUsed(*this);
   }
 
   if (Diags.getDiagnosticLevel(diag::warn_unused_private_field,
@@ -1088,7 +1102,7 @@ void ExternalSemaSource::ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces) {
 }
 
-void ExternalSemaSource::ReadUndefinedInternals(
+void ExternalSemaSource::ReadUndefinedButUsed(
                        llvm::DenseMap<NamedDecl *, SourceLocation> &Undefined) {
 }
 

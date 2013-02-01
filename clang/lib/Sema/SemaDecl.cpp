@@ -2215,6 +2215,23 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
     New->setType(QualType(NewType, 0));
     NewQType = Context.getCanonicalType(New->getType());
   }
+
+  // If this redeclaration makes the function inline, we may need to add it to
+  // UndefinedButUsed.
+  if (!Old->isInlined() && New->isInlined() &&
+      !New->hasAttr<GNUInlineAttr>() &&
+      (getLangOpts().CPlusPlus || !getLangOpts().GNUInline) &&
+      Old->isUsed(false) &&
+      !Old->isDefined() && !New->isThisDeclarationADefinition())
+    UndefinedButUsed.insert(std::make_pair(Old->getCanonicalDecl(),
+                                           SourceLocation()));
+
+  // If this redeclaration makes it newly gnu_inline, we don't want to warn
+  // about it.
+  if (New->hasAttr<GNUInlineAttr>() &&
+      Old->isInlined() && !Old->hasAttr<GNUInlineAttr>()) {
+    UndefinedButUsed.erase(Old->getCanonicalDecl());
+  }
   
   if (getLangOpts().CPlusPlus) {
     // (C++98 13.1p2):
@@ -8431,12 +8448,17 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   if (FD) {
     FD->setBody(Body);
 
-    // The only way to be included in UndefinedInternals is if there is an
-    // ODR-use before the definition. Avoid the expensive map lookup if this
+    // The only way to be included in UndefinedButUsed is if there is an
+    // ODR use before the definition. Avoid the expensive map lookup if this
     // is the first declaration.
-    if (FD->getPreviousDecl() != 0 && FD->getPreviousDecl()->isUsed() &&
-        FD->getLinkage() != ExternalLinkage)
-      UndefinedInternals.erase(FD);
+    if (FD->getPreviousDecl() != 0 && FD->getPreviousDecl()->isUsed()) {
+      if (FD->getLinkage() != ExternalLinkage)
+        UndefinedButUsed.erase(FD);
+      else if (FD->isInlined() &&
+               (LangOpts.CPlusPlus || !LangOpts.GNUInline) &&
+               (!FD->getPreviousDecl()->hasAttr<GNUInlineAttr>()))
+        UndefinedButUsed.erase(FD);
+    }
 
     // If the function implicitly returns zero (like 'main') or is naked,
     // don't complain about missing return statements.

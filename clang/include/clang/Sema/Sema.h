@@ -738,12 +738,12 @@ public:
   // argument locations.
   llvm::DenseMap<ParmVarDecl *, SourceLocation> UnparsedDefaultArgLocs;
 
-  /// UndefinedInternals - all the used, undefined objects with
-  /// internal linkage in this translation unit.
-  llvm::DenseMap<NamedDecl *, SourceLocation> UndefinedInternals;
+  /// UndefinedInternals - all the used, undefined objects which require a
+  /// definition in this translation unit.
+  llvm::DenseMap<NamedDecl *, SourceLocation> UndefinedButUsed;
 
   /// Obtain a sorted list of functions that are undefined but ODR-used.
-  void getUndefinedInternals(
+  void getUndefinedButUsed(
     llvm::SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> > &Undefined);
 
   typedef std::pair<ObjCMethodList, ObjCMethodList> GlobalMethods;

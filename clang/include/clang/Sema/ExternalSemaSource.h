@@ -67,9 +67,11 @@ public:
   virtual void ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces);
 
-  virtual void ReadUndefinedInternals(
+  /// \brief Load the set of used but not defined functions or variables with
+  /// internal linkage, or used but not defined internal functions.
+  virtual void ReadUndefinedButUsed(
                          llvm::DenseMap<NamedDecl*, SourceLocation> &Undefined);
-  
+
   /// \brief Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.
   ///

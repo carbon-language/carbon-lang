@@ -677,8 +677,9 @@ private:
   /// \brief A list of the namespaces we've seen.
   SmallVector<uint64_t, 4> KnownNamespaces;
 
-  /// \brief A list of undefined decls with internal linkage.
-  SmallVector<uint64_t, 8> UndefinedInternals;
+  /// \brief A list of undefined decls with internal linkage followed by the
+  /// SourceLocation of a matching ODR-use.
+  SmallVector<uint64_t, 8> UndefinedButUsed;
 
   /// \brief A list of modules that were imported by precompiled headers or
   /// any other non-module AST file.
@@ -1520,7 +1521,7 @@ public:
   virtual void ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces);
 
-  virtual void ReadUndefinedInternals(
+  virtual void ReadUndefinedButUsed(
                         llvm::DenseMap<NamedDecl *, SourceLocation> &Undefined);
 
   virtual void ReadTentativeDefinitions(

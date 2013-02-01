@@ -3284,10 +3284,12 @@ def note_deleted_assign_field : Note<
   "%select{copy|move}0 assignment operator of %1 is implicitly deleted "
   "because field %2 is of %select{reference|const-qualified}4 type %3">;
 
-// This should eventually be an error.
+// These should be errors.
 def warn_undefined_internal : Warning<
   "%select{function|variable}0 %q1 has internal linkage but is not defined">,
   InGroup<DiagGroup<"undefined-internal">>;
+def warn_undefined_inline : Warning<"inline function %q0 is not defined">,
+  InGroup<DiagGroup<"undefined-inline">>;
 def note_used_here : Note<"used here">;
 
 def warn_internal_in_extern_inline : ExtWarn<

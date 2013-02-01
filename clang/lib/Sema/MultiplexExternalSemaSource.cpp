@@ -201,10 +201,10 @@ void MultiplexExternalSemaSource::ReadKnownNamespaces(
     Sources[i]->ReadKnownNamespaces(Namespaces);
 }
 
-void MultiplexExternalSemaSource::ReadUndefinedInternals(
+void MultiplexExternalSemaSource::ReadUndefinedButUsed(
                          llvm::DenseMap<NamedDecl*, SourceLocation> &Undefined){
   for(size_t i = 0; i < Sources.size(); ++i)
-    Sources[i]->ReadUndefinedInternals(Undefined);
+    Sources[i]->ReadUndefinedButUsed(Undefined);
 }
   
 bool MultiplexExternalSemaSource::LookupUnqualified(LookupResult &R, Scope *S){ 

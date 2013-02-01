@@ -10506,9 +10506,13 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   }
 
   // Keep track of used but undefined functions.
-  if (!Func->isDefined() && Func->getLinkage() != ExternalLinkage) {
-    SourceLocation &old = UndefinedInternals[Func->getCanonicalDecl()];
-    if (old.isInvalid()) old = Loc;
+  if (!Func->isDefined()) {
+    if (Func->getLinkage() != ExternalLinkage)
+      UndefinedButUsed.insert(std::make_pair(Func->getCanonicalDecl(), Loc));
+    else if (Func->getMostRecentDecl()->isInlined() &&
+             (LangOpts.CPlusPlus || !LangOpts.GNUInline) &&
+             !Func->getMostRecentDecl()->hasAttr<GNUInlineAttr>())
+      UndefinedButUsed.insert(std::make_pair(Func->getCanonicalDecl(), Loc));
   }
 
   // Normally the must current decl is marked used while processing the use and
@@ -11021,7 +11025,7 @@ static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
   if (Var->hasDefinition(SemaRef.Context) == VarDecl::DeclarationOnly &&
       Var->getLinkage() != ExternalLinkage &&
       !(Var->isStaticDataMember() && Var->hasInit())) {
-    SourceLocation &old = SemaRef.UndefinedInternals[Var->getCanonicalDecl()];
+    SourceLocation &old = SemaRef.UndefinedButUsed[Var->getCanonicalDecl()];
     if (old.isInvalid()) old = Loc;
   }
 

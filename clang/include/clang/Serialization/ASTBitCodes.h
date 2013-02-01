@@ -526,9 +526,9 @@ namespace clang {
       /// being deserialized.
       MACRO_UPDATES = 48,
 
-      /// \brief Record code for undefined but used internal functions and
-      /// variables.
-      UNDEFINED_INTERNALS = 49
+      /// \brief Record code for undefined but used functions and variables that
+      /// need a definition in this TU.
+      UNDEFINED_BUT_USED = 49
     };
 
     /// \brief Record types used within a source manager block.

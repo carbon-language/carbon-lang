@@ -16,7 +16,7 @@ typedef struct {
     int cur;
     int end;
 } IB;
-inline unsigned long gl(IB *input);
+unsigned long gl(IB *input);
 inline void gbs(IB *input, unsigned char *buf, int count);
 void getB(IB *st, Hdr2 *usedtobeundef);
 inline unsigned char gb(IB *input) {

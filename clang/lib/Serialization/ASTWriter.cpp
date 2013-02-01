@@ -824,7 +824,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(OPENCL_EXTENSIONS);
   RECORD(DELEGATING_CTORS);
   RECORD(KNOWN_NAMESPACES);
-  RECORD(UNDEFINED_INTERNALS);
+  RECORD(UNDEFINED_BUT_USED);
   RECORD(MODULE_OFFSET_MAP);
   RECORD(SOURCE_MANAGER_LINE_TABLE);
   RECORD(OBJC_CATEGORIES_MAP);
@@ -3588,15 +3588,15 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
       AddDeclRef(I->first, KnownNamespaces);
   }
 
-  // Build a record of all used, undefined objects with internal linkage.
-  RecordData UndefinedInternals;
+  // Build a record of all used, undefined objects that require definitions.
+  RecordData UndefinedButUsed;
 
   SmallVector<std::pair<NamedDecl *, SourceLocation>, 16> Undefined;
-  SemaRef.getUndefinedInternals(Undefined);
+  SemaRef.getUndefinedButUsed(Undefined);
   for (SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> >::iterator
          I = Undefined.begin(), E = Undefined.end(); I != E; ++I) {
-    AddDeclRef(I->first, UndefinedInternals);
-    AddSourceLocation(I->second, UndefinedInternals);
+    AddDeclRef(I->first, UndefinedButUsed);
+    AddSourceLocation(I->second, UndefinedButUsed);
   }
 
   // Write the control block
@@ -3814,9 +3814,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   if (!KnownNamespaces.empty())
     Stream.EmitRecord(KNOWN_NAMESPACES, KnownNamespaces);
 
-  // Write the undefined internal functions and variables.
-  if (!UndefinedInternals.empty())
-    Stream.EmitRecord(UNDEFINED_INTERNALS, UndefinedInternals);
+  // Write the undefined internal functions and variables, and inline functions.
+  if (!UndefinedButUsed.empty())
+    Stream.EmitRecord(UNDEFINED_BUT_USED, UndefinedButUsed);
   
   // Write the visible updates to DeclContexts.
   for (llvm::SmallPtrSet<const DeclContext *, 16>::iterator
