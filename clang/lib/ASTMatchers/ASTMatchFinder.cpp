@@ -467,6 +467,26 @@ public:
     return matchesAncestorOfRecursively(Node, Matcher, Builder, MatchMode);
   }
 
+  // Matches all registered matchers on the given node and calls the
+  // result callback for every node that matches.
+  void match(const ast_type_traits::DynTypedNode& Node) {
+    for (std::vector<std::pair<const internal::DynTypedMatcher*,
+                               MatchCallback*> >::const_iterator
+             I = MatcherCallbackPairs->begin(), E = MatcherCallbackPairs->end();
+         I != E; ++I) {
+      BoundNodesTreeBuilder Builder;
+      if (I->first->matches(Node, this, &Builder)) {
+        BoundNodesTree BoundNodes = Builder.build();
+        MatchVisitor Visitor(ActiveASTContext, I->second);
+        BoundNodes.visitMatches(&Visitor);
+      }
+    }
+  }
+
+  template <typename T> void match(const T &Node) {
+    match(ast_type_traits::DynTypedNode::create(Node));
+  }
+
   // Implements ASTMatchFinder::getASTContext.
   virtual ASTContext &getASTContext() const { return *ActiveASTContext; }
 
@@ -542,24 +562,6 @@ private:
         return true;
     }
     return false;
-  }
-
-  // Matches all registered matchers on the given node and calls the
-  // result callback for every node that matches.
-  template <typename T>
-  void match(const T &node) {
-    for (std::vector<std::pair<const internal::DynTypedMatcher*,
-                               MatchCallback*> >::const_iterator
-             I = MatcherCallbackPairs->begin(), E = MatcherCallbackPairs->end();
-         I != E; ++I) {
-      BoundNodesTreeBuilder Builder;
-      if (I->first->matches(ast_type_traits::DynTypedNode::create(node),
-                            this, &Builder)) {
-        BoundNodesTree BoundNodes = Builder.build();
-        MatchVisitor Visitor(ActiveASTContext, I->second);
-        BoundNodes.visitMatches(&Visitor);
-      }
-    }
   }
 
   std::vector<std::pair<const internal::DynTypedMatcher*,
@@ -777,16 +779,11 @@ ASTConsumer *MatchFinder::newASTConsumer() {
   return new internal::MatchASTConsumer(&MatcherCallbackPairs, ParsingDone);
 }
 
-void MatchFinder::findAll(const Decl &Node, ASTContext &Context) {
+void MatchFinder::match(const clang::ast_type_traits::DynTypedNode &Node,
+                        ASTContext &Context) {
   internal::MatchASTVisitor Visitor(&MatcherCallbackPairs);
   Visitor.set_active_ast_context(&Context);
-  Visitor.TraverseDecl(const_cast<Decl*>(&Node));
-}
-
-void MatchFinder::findAll(const Stmt &Node, ASTContext &Context) {
-  internal::MatchASTVisitor Visitor(&MatcherCallbackPairs);
-  Visitor.set_active_ast_context(&Context);
-  Visitor.TraverseStmt(const_cast<Stmt*>(&Node));
+  Visitor.match(Node);
 }
 
 void MatchFinder::registerTestCallbackAfterParsing(

@@ -134,11 +134,17 @@ public:
   /// \brief Creates a clang ASTConsumer that finds all matches.
   clang::ASTConsumer *newASTConsumer();
 
-  /// \brief Finds all matches on the given \c Node.
+  /// \brief Calls the registered callbacks on all matches on the given \p Node.
+  ///
+  /// Note that there can be multiple matches on a single node, for
+  /// example when using decl(forEachDescendant(stmt())).
   ///
   /// @{
-  void findAll(const Decl &Node, ASTContext &Context);
-  void findAll(const Stmt &Node, ASTContext &Context);
+  template <typename T> void match(const T &Node, ASTContext &Context) {
+    match(clang::ast_type_traits::DynTypedNode::create(Node), Context);
+  }
+  void match(const clang::ast_type_traits::DynTypedNode &Node,
+             ASTContext &Context);
   /// @}
 
   /// \brief Registers a callback to notify the end of parsing.
@@ -157,6 +163,52 @@ private:
   /// \brief Called when parsing is done.
   ParsingDoneTestCallback *ParsingDone;
 };
+
+/// \brief Returns the results of matching \p Matcher on \p Node.
+///
+/// Collects the \c BoundNodes of all callback invocations when matching
+/// \p Matcher on \p Node and returns the collected results.
+///
+/// Multiple results occur when using matchers like \c forEachDescendant,
+/// which generate a result for each sub-match.
+///
+/// @{
+template <typename MatcherT, typename NodeT>
+SmallVector<BoundNodes, 1>
+match(MatcherT Matcher, const NodeT &Node, ASTContext &Context);
+
+template <typename MatcherT>
+SmallVector<BoundNodes, 1>
+match(MatcherT Matcher, const ast_type_traits::DynTypedNode &Node,
+      ASTContext &Context);
+/// @}
+
+namespace internal {
+class CollectMatchesCallback : public MatchFinder::MatchCallback {
+public:
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    Nodes.push_back(Result.Nodes);
+  }
+  SmallVector<BoundNodes, 1> Nodes;
+};
+}
+
+template <typename MatcherT>
+SmallVector<BoundNodes, 1>
+match(MatcherT Matcher, const ast_type_traits::DynTypedNode &Node,
+      ASTContext &Context) {
+  internal::CollectMatchesCallback Callback;
+  MatchFinder Finder;
+  Finder.addMatcher(Matcher, &Callback);
+  Finder.match(Node, Context);
+  return Callback.Nodes;
+}
+
+template <typename MatcherT, typename NodeT>
+SmallVector<BoundNodes, 1>
+match(MatcherT Matcher, const NodeT &Node, ASTContext &Context) {
+  return match(Matcher, ast_type_traits::DynTypedNode::create(Node), Context);
+}
 
 } // end namespace ast_matchers
 } // end namespace clang
