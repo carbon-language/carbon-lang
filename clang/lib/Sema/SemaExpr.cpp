@@ -940,54 +940,24 @@ static QualType handleFloatConversion(Sema &S, ExprResult &LHS,
                                     /*convertFloat=*/!IsCompAssign);
 }
 
-/// \brief Handle conversions with GCC complex int extension.  Helper function
-/// of UsualArithmeticConversions()
-// FIXME: if the operands are (int, _Complex long), we currently
-// don't promote the complex.  Also, signedness?
-static QualType handleComplexIntConversion(Sema &S, ExprResult &LHS,
-                                           ExprResult &RHS, QualType LHSType,
-                                           QualType RHSType,
-                                           bool IsCompAssign) {
-  const ComplexType *LHSComplexInt = LHSType->getAsComplexIntegerType();
-  const ComplexType *RHSComplexInt = RHSType->getAsComplexIntegerType();
+typedef ExprResult PerformCastFn(Sema &S, Expr *operand, QualType toType);
 
-  if (LHSComplexInt && RHSComplexInt) {
-    int order = S.Context.getIntegerTypeOrder(LHSComplexInt->getElementType(),
-                                              RHSComplexInt->getElementType());
-    assert(order && "inequal types with equal element ordering");
-    if (order > 0) {
-      // _Complex int -> _Complex long
-      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralComplexCast);
-      return LHSType;
-    }
+namespace {
+/// These helper callbacks are placed in an anonymous namespace to
+/// permit their use as function template parameters.
+ExprResult doIntegralCast(Sema &S, Expr *op, QualType toType) {
+  return S.ImpCastExprToType(op, toType, CK_IntegralCast);
+}
 
-    if (!IsCompAssign)
-      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralComplexCast);
-    return RHSType;
-  }
-
-  if (LHSComplexInt) {
-    // int -> _Complex int
-    // FIXME: This needs to take integer ranks into account
-    RHS = S.ImpCastExprToType(RHS.take(), LHSComplexInt->getElementType(),
-                              CK_IntegralCast);
-    RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralRealToComplex);
-    return LHSType;
-  }
-
-  assert(RHSComplexInt);
-  // int -> _Complex int
-  // FIXME: This needs to take integer ranks into account
-  if (!IsCompAssign) {
-    LHS = S.ImpCastExprToType(LHS.take(), RHSComplexInt->getElementType(),
-                              CK_IntegralCast);
-    LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralRealToComplex);
-  }
-  return RHSType;
+ExprResult doComplexIntegralCast(Sema &S, Expr *op, QualType toType) {
+  return S.ImpCastExprToType(op, S.Context.getComplexType(toType),
+                             CK_IntegralComplexCast);
+}
 }
 
 /// \brief Handle integer arithmetic conversions.  Helper function of
 /// UsualArithmeticConversions()
+template <PerformCastFn doLHSCast, PerformCastFn doRHSCast>
 static QualType handleIntegerConversion(Sema &S, ExprResult &LHS,
                                         ExprResult &RHS, QualType LHSType,
                                         QualType RHSType, bool IsCompAssign) {
@@ -998,29 +968,29 @@ static QualType handleIntegerConversion(Sema &S, ExprResult &LHS,
   if (LHSSigned == RHSSigned) {
     // Same signedness; use the higher-ranked type
     if (order >= 0) {
-      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralCast);
+      RHS = (*doRHSCast)(S, RHS.take(), LHSType);
       return LHSType;
     } else if (!IsCompAssign)
-      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralCast);
+      LHS = (*doLHSCast)(S, LHS.take(), RHSType);
     return RHSType;
   } else if (order != (LHSSigned ? 1 : -1)) {
     // The unsigned type has greater than or equal rank to the
     // signed type, so use the unsigned type
     if (RHSSigned) {
-      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralCast);
+      RHS = (*doRHSCast)(S, RHS.take(), LHSType);
       return LHSType;
     } else if (!IsCompAssign)
-      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralCast);
+      LHS = (*doLHSCast)(S, LHS.take(), RHSType);
     return RHSType;
   } else if (S.Context.getIntWidth(LHSType) != S.Context.getIntWidth(RHSType)) {
     // The two types are different widths; if we are here, that
     // means the signed type is larger than the unsigned type, so
     // use the signed type.
     if (LHSSigned) {
-      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralCast);
+      RHS = (*doRHSCast)(S, RHS.take(), LHSType);
       return LHSType;
     } else if (!IsCompAssign)
-      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralCast);
+      LHS = (*doLHSCast)(S, LHS.take(), RHSType);
     return RHSType;
   } else {
     // The signed type is higher-ranked than the unsigned type,
@@ -1029,19 +999,62 @@ static QualType handleIntegerConversion(Sema &S, ExprResult &LHS,
     // to the signed type.
     QualType result =
       S.Context.getCorrespondingUnsignedType(LHSSigned ? LHSType : RHSType);
-    RHS = S.ImpCastExprToType(RHS.take(), result, CK_IntegralCast);
+    RHS = (*doRHSCast)(S, RHS.take(), result);
     if (!IsCompAssign)
-      LHS = S.ImpCastExprToType(LHS.take(), result, CK_IntegralCast);
+      LHS = (*doLHSCast)(S, LHS.take(), result);
     return result;
   }
+}
+
+/// \brief Handle conversions with GCC complex int extension.  Helper function
+/// of UsualArithmeticConversions()
+static QualType handleComplexIntConversion(Sema &S, ExprResult &LHS,
+                                           ExprResult &RHS, QualType LHSType,
+                                           QualType RHSType,
+                                           bool IsCompAssign) {
+  const ComplexType *LHSComplexInt = LHSType->getAsComplexIntegerType();
+  const ComplexType *RHSComplexInt = RHSType->getAsComplexIntegerType();
+
+  if (LHSComplexInt && RHSComplexInt) {
+    QualType LHSEltType = LHSComplexInt->getElementType();
+    QualType RHSEltType = RHSComplexInt->getElementType();
+    QualType ScalarType =
+      handleIntegerConversion<doComplexIntegralCast, doComplexIntegralCast>
+        (S, LHS, RHS, LHSEltType, RHSEltType, IsCompAssign);
+
+    return S.Context.getComplexType(ScalarType);
+  }
+
+  if (LHSComplexInt) {
+    QualType LHSEltType = LHSComplexInt->getElementType();
+    QualType ScalarType =
+      handleIntegerConversion<doComplexIntegralCast, doIntegralCast>
+        (S, LHS, RHS, LHSEltType, RHSType, IsCompAssign);
+    QualType ComplexType = S.Context.getComplexType(ScalarType);
+    RHS = S.ImpCastExprToType(RHS.take(), ComplexType,
+                              CK_IntegralRealToComplex);
+ 
+    return ComplexType;
+  }
+
+  assert(RHSComplexInt);
+
+  QualType RHSEltType = RHSComplexInt->getElementType();
+  QualType ScalarType =
+    handleIntegerConversion<doIntegralCast, doComplexIntegralCast>
+      (S, LHS, RHS, LHSType, RHSEltType, IsCompAssign);
+  QualType ComplexType = S.Context.getComplexType(ScalarType);
+  
+  if (!IsCompAssign)
+    LHS = S.ImpCastExprToType(LHS.take(), ComplexType,
+                              CK_IntegralRealToComplex);
+  return ComplexType;
 }
 
 /// UsualArithmeticConversions - Performs various conversions that are common to
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is
 /// responsible for emitting appropriate error diagnostics.
-/// FIXME: verify the conversion rules for "complex int" are consistent with
-/// GCC.
 QualType Sema::UsualArithmeticConversions(ExprResult &LHS, ExprResult &RHS,
                                           bool IsCompAssign) {
   if (!IsCompAssign) {
@@ -1106,9 +1119,10 @@ QualType Sema::UsualArithmeticConversions(ExprResult &LHS, ExprResult &RHS,
                                       IsCompAssign);
 
   // Finally, we have two differing integer types.
-  return handleIntegerConversion(*this, LHS, RHS, LHSType, RHSType,
-                                 IsCompAssign);
+  return handleIntegerConversion<doIntegralCast, doIntegralCast>
+           (*this, LHS, RHS, LHSType, RHSType, IsCompAssign);
 }
+
 
 //===----------------------------------------------------------------------===//
 //  Semantic Analysis for various Expression Types
