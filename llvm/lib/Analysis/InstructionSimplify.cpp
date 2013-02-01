@@ -21,10 +21,10 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/Operator.h"
@@ -667,8 +667,8 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// This is very similar to GetPointerBaseWithConstantOffset except it doesn't
 /// follow non-inbounds geps. This allows it to remain usable for icmp ult/etc.
 /// folding.
-static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
-                                                Value *&V) {
+static ConstantInt *stripAndComputeConstantOffsets(const DataLayout *TD,
+                                                   Value *&V) {
   assert(V->getType()->isPointerTy());
 
   // Without DataLayout, just be conservative for now. Theoretically, more could
@@ -701,7 +701,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
   } while (Visited.insert(V));
 
   Type *IntPtrTy = TD->getIntPtrType(V->getContext());
-  return ConstantInt::get(IntPtrTy, Offset);
+  return cast<ConstantInt>(ConstantInt::get(IntPtrTy, Offset));
 }
 
 /// \brief Compute the constant difference between two pointer values.
@@ -1689,8 +1689,19 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
 }
 
 static Constant *computePointerICmp(const DataLayout *TD,
+                                    const TargetLibraryInfo *TLI,
                                     CmpInst::Predicate Pred,
                                     Value *LHS, Value *RHS) {
+  // First, skip past any trivial no-ops.
+  LHS = LHS->stripPointerCasts();
+  RHS = RHS->stripPointerCasts();
+
+  // A non-null pointer is not equal to a null pointer.
+  if (llvm::isKnownNonNull(LHS) && isa<ConstantPointerNull>(RHS) &&
+      (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::ICMP_NE))
+    return ConstantInt::get(GetCompareTy(LHS),
+                            !CmpInst::isTrueWhenEqual(Pred));
+
   // We can only fold certain predicates on pointer comparisons.
   switch (Pred) {
   default:
@@ -1713,15 +1724,80 @@ static Constant *computePointerICmp(const DataLayout *TD,
     break;
   }
 
-  Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
-  Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
+  // Strip off any constant offsets so that we can reason about them.
+  // It's tempting to use getUnderlyingObject or even just stripInBoundsOffsets
+  // here and compare base addresses like AliasAnalysis does, however there are
+  // numerous hazards. AliasAnalysis and its utilities rely on special rules
+  // governing loads and stores which don't apply to icmps. Also, AliasAnalysis
+  // doesn't need to guarantee pointer inequality when it says NoAlias.
+  ConstantInt *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
+  ConstantInt *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
 
-  // If LHS and RHS are not related via constant offsets to the same base
-  // value, there is nothing we can do here.
-  if (LHS != RHS)
-    return 0;
+  // If LHS and RHS are related via constant offsets to the same base
+  // value, we can replace it with an icmp which just compares the offsets.
+  if (LHS == RHS)
+    return ConstantExpr::getICmp(Pred, LHSOffset, RHSOffset);
 
-  return ConstantExpr::getICmp(Pred, LHSOffset, RHSOffset);
+  // Various optimizations for (in)equality comparisons.
+  if (Pred == CmpInst::ICMP_EQ || Pred == CmpInst::ICMP_NE) {
+    // Different non-empty allocations that exist at the same time have
+    // different addresses (if the program can tell). Global variables always
+    // exist, so they always exist during the lifetime of each other and all
+    // allocas. Two different allocas usually have different addresses...
+    //
+    // However, if there's an @llvm.stackrestore dynamically in between two
+    // allocas, they may have the same address. It's tempting to reduce the
+    // scope of the problem by only looking at *static* allocas here. That would
+    // cover the majority of allocas while significantly reducing the likelihood
+    // of having an @llvm.stackrestore pop up in the middle. However, it's not
+    // actually impossible for an @llvm.stackrestore to pop up in the middle of
+    // an entry block. Also, if we have a block that's not attached to a
+    // function, we can't tell if it's "static" under the current definition.
+    // Theoretically, this problem could be fixed by creating a new kind of
+    // instruction kind specifically for static allocas. Such a new instruction
+    // could be required to be at the top of the entry block, thus preventing it
+    // from being subject to a @llvm.stackrestore. Instcombine could even
+    // convert regular allocas into these special allocas. It'd be nifty.
+    // However, until then, this problem remains open.
+    //
+    // So, we'll assume that two non-empty allocas have different addresses
+    // for now.
+    //
+    // With all that, if the offsets are within the bounds of their allocations
+    // (and not one-past-the-end! so we can't use inbounds!), and their
+    // allocations aren't the same, the pointers are not equal.
+    //
+    // Note that it's not necessary to check for LHS being a global variable
+    // address, due to canonicalization and constant folding.
+    if (isa<AllocaInst>(LHS) &&
+        (isa<AllocaInst>(RHS) || isa<GlobalVariable>(RHS))) {
+      uint64_t LHSSize, RHSSize;
+      if (getObjectSize(LHS, LHSSize, TD, TLI) &&
+          getObjectSize(RHS, RHSSize, TD, TLI)) {
+        const APInt &LHSOffsetValue = LHSOffset->getValue();
+        const APInt &RHSOffsetValue = RHSOffset->getValue();
+        if (!LHSOffsetValue.isNegative() &&
+            !RHSOffsetValue.isNegative() &&
+            LHSOffsetValue.ult(LHSSize) &&
+            RHSOffsetValue.ult(RHSSize)) {
+          return ConstantInt::get(GetCompareTy(LHS),
+                                  !CmpInst::isTrueWhenEqual(Pred));
+        }
+      }
+
+      // Repeat the above check but this time without depending on DataLayout
+      // or being able to compute a precise size.
+      if (!cast<PointerType>(LHS->getType())->isEmptyTy() &&
+          !cast<PointerType>(RHS->getType())->isEmptyTy() &&
+          LHSOffset->isNullValue() &&
+          RHSOffset->isNullValue())
+        return ConstantInt::get(GetCompareTy(LHS),
+                                !CmpInst::isTrueWhenEqual(Pred));
+    }
+  }
+
+  // Otherwise, fail.
+  return 0;
 }
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
@@ -1783,50 +1859,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       if (match(RHS, m_One()))
         return LHS;
       break;
-    }
-  }
-
-  // icmp <object*>, <object*/null> - Different identified objects have
-  // different addresses (unless null), and what's more the address of an
-  // identified local is never equal to another argument (again, barring null).
-  // Note that generalizing to the case where LHS is a global variable address
-  // or null is pointless, since if both LHS and RHS are constants then we
-  // already constant folded the compare, and if only one of them is then we
-  // moved it to RHS already.
-  Value *LHSPtr = LHS->stripPointerCasts();
-  Value *RHSPtr = RHS->stripPointerCasts();
-  if (LHSPtr == RHSPtr)
-    return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
-
-  // Be more aggressive about stripping pointer adjustments when checking a
-  // comparison of an alloca address to another object.  We can rip off all
-  // inbounds GEP operations, even if they are variable.
-  LHSPtr = LHSPtr->stripInBoundsOffsets();
-  if (llvm::isIdentifiedObject(LHSPtr)) {
-    RHSPtr = RHSPtr->stripInBoundsOffsets();
-    if (llvm::isKnownNonNull(LHSPtr) || llvm::isKnownNonNull(RHSPtr)) {
-      // If both sides are different identified objects, they aren't equal
-      // unless they're null.
-      if (LHSPtr != RHSPtr && llvm::isIdentifiedObject(RHSPtr) &&
-          Pred == CmpInst::ICMP_EQ)
-        return ConstantInt::get(ITy, false);
-
-      // A local identified object (alloca or noalias call) can't equal any
-      // incoming argument, unless they're both null or they belong to
-      // different functions. The latter happens during inlining.
-      if (Instruction *LHSInst = dyn_cast<Instruction>(LHSPtr))
-        if (Argument *RHSArg = dyn_cast<Argument>(RHSPtr))
-          if (LHSInst->getParent()->getParent() == RHSArg->getParent() &&
-              Pred == CmpInst::ICMP_EQ)
-            return ConstantInt::get(ITy, false);
-    }
-
-    // Assume that the constant null is on the right.
-    if (llvm::isKnownNonNull(LHSPtr) && isa<ConstantPointerNull>(RHSPtr)) {
-      if (Pred == CmpInst::ICMP_EQ)
-        return ConstantInt::get(ITy, false);
-      else if (Pred == CmpInst::ICMP_NE)
-        return ConstantInt::get(ITy, true);
     }
   }
 
@@ -2457,7 +2489,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // Simplify comparisons of related pointers using a powerful, recursive
   // GEP-walk when we have target data available..
   if (LHS->getType()->isPointerTy())
-    if (Constant *C = computePointerICmp(Q.TD, Pred, LHS, RHS))
+    if (Constant *C = computePointerICmp(Q.TD, Q.TLI, Pred, LHS, RHS))
       return C;
 
   if (GetElementPtrInst *GLHS = dyn_cast<GetElementPtrInst>(LHS)) {

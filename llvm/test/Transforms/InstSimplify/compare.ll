@@ -660,3 +660,25 @@ define i1 @alloca_argument_compare(i64* %arg) {
   ; CHECK: alloca_argument_compare
   ; CHECK: ret i1 %cmp
 }
+
+; As above, but with the operands reversed.
+
+define i1 @alloca_argument_compare_swapped(i64* %arg) {
+  %alloc = alloca i64
+  %cmp = icmp eq i64* %alloc, %arg
+  ret i1 %cmp
+  ; CHECK: alloca_argument_compare_swapped
+  ; CHECK: ret i1 %cmp
+}
+
+; Don't assume that a noalias argument isn't equal to a global variable's
+; address. This is an example where AliasAnalysis' NoAlias concept is
+; different from actual pointer inequality.
+
+@y = external global i32
+define zeroext i1 @external_compare(i32* noalias %x) {
+  %cmp = icmp eq i32* %x, @y
+  ret i1 %cmp
+  ; CHECK: external_compare
+  ; CHECK: ret i1 %cmp
+}
