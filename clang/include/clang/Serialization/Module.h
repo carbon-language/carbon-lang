@@ -124,6 +124,14 @@ public:
   /// \brief The main bitstream cursor for the main block.
   llvm::BitstreamCursor Stream;
 
+  /// \brief The source location where the module was explicitly or implicitly
+  /// imported in the local translation unit.
+  ///
+  /// If module A depends on and imports module B, both modules will have the
+  /// same DirectImportLoc, but different ImportLoc (B's ImportLoc will be a
+  /// source location inside module A).
+  SourceLocation DirectImportLoc;
+
   /// \brief The source location where this module was first imported.
   SourceLocation ImportLoc;
 

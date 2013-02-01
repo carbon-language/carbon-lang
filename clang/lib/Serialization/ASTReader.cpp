@@ -2779,6 +2779,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                               MEnd = Loaded.end();
        M != MEnd; ++M) {
     ModuleFile &F = *M->Mod;
+    F.DirectImportLoc = ImportLoc;
     if (!M->ImportedBy)
       F.ImportLoc = M->ImportLoc;
     else
