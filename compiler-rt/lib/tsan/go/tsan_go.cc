@@ -107,23 +107,23 @@ void __tsan_map_shadow(uptr addr, uptr size) {
 }
 
 void __tsan_read(ThreadState *thr, void *addr, void *pc) {
-  MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, false);
+  MemoryRead(thr, (uptr)pc, (uptr)addr, kSizeLog1);
 }
 
 void __tsan_write(ThreadState *thr, void *addr, void *pc) {
-  MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, true);
+  MemoryWrite(thr, (uptr)pc, (uptr)addr, kSizeLog1);
 }
 
 void __tsan_read_range(ThreadState *thr, void *addr, uptr size, uptr step,
                        void *pc) {
   for (uptr i = 0; i < size; i += step)
-	  MemoryAccess(thr, (uptr)pc, (uptr)addr + i, 0, false);
+	  MemoryRead(thr, (uptr)pc, (uptr)addr + i, kSizeLog1);
 }
 
 void __tsan_write_range(ThreadState *thr, void *addr, uptr size, uptr step,
                         void *pc) {
   for (uptr i = 0; i < size; i += step)
-	  MemoryAccess(thr, (uptr)pc, (uptr)addr + i, 0, true);
+	  MemoryWrite(thr, (uptr)pc, (uptr)addr + i, kSizeLog1);
 }
 
 void __tsan_func_enter(ThreadState *thr, void *pc) {

@@ -150,7 +150,7 @@ void FdAcquire(ThreadState *thr, uptr pc, int fd) {
   FdDesc *d = fddesc(thr, pc, fd);
   FdSync *s = d->sync;
   DPrintf("#%d: FdAcquire(%d) -> %p\n", thr->tid, fd, s);
-  MemoryRead8Byte(thr, pc, (uptr)d);
+  MemoryRead(thr, pc, (uptr)d, kSizeLog8);
   if (s)
     Acquire(thr, pc, (uptr)s);
 }
@@ -161,20 +161,20 @@ void FdRelease(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdRelease(%d) -> %p\n", thr->tid, fd, s);
   if (s)
     Release(thr, pc, (uptr)s);
-  MemoryRead8Byte(thr, pc, (uptr)d);
+  MemoryRead(thr, pc, (uptr)d, kSizeLog8);
 }
 
 void FdAccess(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdAccess(%d)\n", thr->tid, fd);
   FdDesc *d = fddesc(thr, pc, fd);
-  MemoryRead8Byte(thr, pc, (uptr)d);
+  MemoryRead(thr, pc, (uptr)d, kSizeLog8);
 }
 
 void FdClose(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdClose(%d)\n", thr->tid, fd);
   FdDesc *d = fddesc(thr, pc, fd);
   // To catch races between fd usage and close.
-  MemoryWrite8Byte(thr, pc, (uptr)d);
+  MemoryWrite(thr, pc, (uptr)d, kSizeLog8);
   // We need to clear it, because if we do not intercept any call out there
   // that creates fd, we will hit false postives.
   MemoryResetRange(thr, pc, (uptr)d, 8);
@@ -193,7 +193,7 @@ void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd) {
   DPrintf("#%d: FdDup(%d, %d)\n", thr->tid, oldfd, newfd);
   // Ignore the case when user dups not yet connected socket.
   FdDesc *od = fddesc(thr, pc, oldfd);
-  MemoryRead8Byte(thr, pc, (uptr)od);
+  MemoryRead(thr, pc, (uptr)od, kSizeLog8);
   FdClose(thr, pc, newfd);
   init(thr, pc, newfd, ref(od->sync));
 }

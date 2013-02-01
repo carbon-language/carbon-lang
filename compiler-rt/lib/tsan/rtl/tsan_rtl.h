@@ -173,6 +173,7 @@ class FastState {
 //   freed           : 1
 //   tid             : kTidBits
 //   epoch           : kClkBits
+//   is_atomic       : 1
 //   is_write        : 1
 //   size_log        : 2
 //   addr0           : 3
@@ -200,10 +201,23 @@ class Shadow : public FastState {
     DCHECK_EQ(x_ & 32, 0);
     if (kAccessIsWrite)
       x_ |= 32;
-    DCHECK_EQ(kAccessIsWrite, is_write());
+    DCHECK_EQ(kAccessIsWrite, IsWrite());
   }
 
-  bool IsZero() const { return x_ == 0; }
+  void SetAtomic(bool kIsAtomic) {
+    DCHECK(!IsAtomic());
+    if (kIsAtomic)
+      x_ |= kAtomicBit;
+    DCHECK_EQ(IsAtomic(), kIsAtomic);
+  }
+
+  bool IsAtomic() const {
+    return x_ & kAtomicBit;
+  }
+
+  bool IsZero() const {
+    return x_ == 0;
+  }
 
   static inline bool TidsAreEqual(const Shadow s1, const Shadow s2) {
     u64 shifted_xor = (s1.x_ ^ s2.x_) >> kTidShift;
@@ -250,7 +264,8 @@ class Shadow : public FastState {
   }
   u64 addr0() const { return x_ & 7; }
   u64 size() const { return 1ull << size_log(); }
-  bool is_write() const { return x_ & 32; }
+  bool IsWrite() const { return x_ & 32; }
+  bool IsRead() const { return !IsWrite(); }
 
   // The idea behind the freed bit is as follows.
   // When the memory is freed (or otherwise unaccessible) we write to the shadow
@@ -271,7 +286,36 @@ class Shadow : public FastState {
     return res;
   }
 
+  bool IsBothReadsOrAtomic(bool kIsWrite, bool kIsAtomic) const {
+    // analyzes 5-th bit (is_write) and 6-th bit (is_atomic)
+    bool v = ((x_ ^ kWriteBit)
+        & u64(((kIsWrite ^ 1) << kWriteShift) | (kIsAtomic << kAtomicShift)));
+    DCHECK_EQ(v, (!IsWrite() && !kIsWrite) || (IsAtomic() && kIsAtomic));
+    return v;
+  }
+
+  bool IsRWNotWeaker(bool kIsWrite, bool kIsAtomic) const {
+    bool v = (((x_ >> kWriteShift) & 3) ^ 1)
+        <= u64((kIsWrite ^ 1) | (kIsAtomic << 1));
+    DCHECK_EQ(v, (IsAtomic() < kIsAtomic) ||
+        (IsAtomic() == kIsAtomic && !IsWrite() <= !kIsWrite));
+    return v;
+  }
+
+  bool IsRWWeakerOrEqual(bool kIsWrite, bool kIsAtomic) const {
+    bool v = (((x_ >> kWriteShift) & 3) ^ 1)
+        >= u64((kIsWrite ^ 1) | (kIsAtomic << 1));
+    DCHECK_EQ(v, (IsAtomic() > kIsAtomic) ||
+        (IsAtomic() == kIsAtomic && !IsWrite() >= !kIsWrite));
+    return v;
+  }
+
  private:
+  static const u64 kWriteShift  = 5;
+  static const u64 kWriteBit    = 1ull << kWriteShift;
+  static const u64 kAtomicShift = 6;
+  static const u64 kAtomicBit   = 1ull << kAtomicShift;
+
   u64 size_log() const { return (x_ >> 3) & 3; }
 
   static bool TwoRangesIntersectSLOW(const Shadow s1, const Shadow s2) {
@@ -535,16 +579,38 @@ SyncVar* GetJavaSync(ThreadState *thr, uptr pc, uptr addr,
 SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr);
 
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
-    int kAccessSizeLog, bool kAccessIsWrite);
+    int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic);
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
-    int kAccessSizeLog, bool kAccessIsWrite,
+    int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur);
-void MemoryRead1Byte(ThreadState *thr, uptr pc, uptr addr);
-void MemoryWrite1Byte(ThreadState *thr, uptr pc, uptr addr);
-void MemoryRead8Byte(ThreadState *thr, uptr pc, uptr addr);
-void MemoryWrite8Byte(ThreadState *thr, uptr pc, uptr addr);
 void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
-                       uptr size, bool is_write);
+    uptr size, bool is_write);
+
+const int kSizeLog1 = 0;
+const int kSizeLog2 = 1;
+const int kSizeLog4 = 2;
+const int kSizeLog8 = 3;
+
+void ALWAYS_INLINE INLINE MemoryRead(ThreadState *thr, uptr pc,
+                                     uptr addr, int kAccessSizeLog) {
+  MemoryAccess(thr, pc, addr, kAccessSizeLog, false, false);
+}
+
+void ALWAYS_INLINE INLINE MemoryWrite(ThreadState *thr, uptr pc,
+                                      uptr addr, int kAccessSizeLog) {
+  MemoryAccess(thr, pc, addr, kAccessSizeLog, true, false);
+}
+
+void ALWAYS_INLINE INLINE MemoryReadAtomic(ThreadState *thr, uptr pc,
+                                           uptr addr, int kAccessSizeLog) {
+  MemoryAccess(thr, pc, addr, kAccessSizeLog, false, true);
+}
+
+void ALWAYS_INLINE INLINE MemoryWriteAtomic(ThreadState *thr, uptr pc,
+                                            uptr addr, int kAccessSizeLog) {
+  MemoryAccess(thr, pc, addr, kAccessSizeLog, true, true);
+}
+
 void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size);
 void MemoryRangeImitateWrite(ThreadState *thr, uptr pc, uptr addr, uptr size);

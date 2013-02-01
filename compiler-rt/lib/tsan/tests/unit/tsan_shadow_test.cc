@@ -25,7 +25,7 @@ TEST(Shadow, FastState) {
   EXPECT_EQ(s.GetHistorySize(), 0);
   EXPECT_EQ(s.addr0(), (u64)0);
   EXPECT_EQ(s.size(), (u64)1);
-  EXPECT_EQ(s.is_write(), false);
+  EXPECT_EQ(s.IsWrite(), false);
 
   s.IncrementEpoch();
   EXPECT_EQ(s.epoch(), (u64)23);

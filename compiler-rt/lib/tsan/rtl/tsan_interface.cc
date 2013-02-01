@@ -24,13 +24,13 @@ void __tsan_init() {
 }
 
 void __tsan_read16(void *addr) {
-  MemoryRead8Byte(cur_thread(), CALLERPC, (uptr)addr);
-  MemoryRead8Byte(cur_thread(), CALLERPC, (uptr)addr + 8);
+  MemoryRead(cur_thread(), CALLERPC, (uptr)addr, kSizeLog8);
+  MemoryRead(cur_thread(), CALLERPC, (uptr)addr + 8, kSizeLog8);
 }
 
 void __tsan_write16(void *addr) {
-  MemoryWrite8Byte(cur_thread(), CALLERPC, (uptr)addr);
-  MemoryWrite8Byte(cur_thread(), CALLERPC, (uptr)addr + 8);
+  MemoryWrite(cur_thread(), CALLERPC, (uptr)addr, kSizeLog8);
+  MemoryWrite(cur_thread(), CALLERPC, (uptr)addr + 8, kSizeLog8);
 }
 
 void __tsan_acquire(void *addr) {

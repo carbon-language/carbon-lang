@@ -40,7 +40,7 @@ const char *const kTsanOptionsEnv = "TSAN_OPTIONS";
 const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
-const int kClkBits = 43;
+const int kClkBits = 42;
 #ifndef TSAN_GO
 const int kShadowStackSize = 4 * 1024;
 const int kTraceStackSize = 256;

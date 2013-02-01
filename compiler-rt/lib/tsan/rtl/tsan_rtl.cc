@@ -371,18 +371,6 @@ static inline void HandleRace(ThreadState *thr, u64 *shadow_mem,
 #endif
 }
 
-static inline bool BothReads(Shadow s, int kAccessIsWrite) {
-  return !kAccessIsWrite && !s.is_write();
-}
-
-static inline bool OldIsRWNotWeaker(Shadow old, int kAccessIsWrite) {
-  return old.is_write() || !kAccessIsWrite;
-}
-
-static inline bool OldIsRWWeakerOrEqual(Shadow old, int kAccessIsWrite) {
-  return !old.is_write() || kAccessIsWrite;
-}
-
 static inline bool OldIsInSameSynchEpoch(Shadow old, ThreadState *thr) {
   return old.epoch() >= thr->fast_synch_epoch;
 }
@@ -393,7 +381,7 @@ static inline bool HappensBefore(Shadow old, ThreadState *thr) {
 
 ALWAYS_INLINE
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
-    int kAccessSizeLog, bool kAccessIsWrite,
+    int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic,
     u64 *shadow_mem, Shadow cur) {
   StatInc(thr, StatMop);
   StatInc(thr, kAccessIsWrite ? StatMopWrite : StatMopRead);
@@ -467,7 +455,7 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
 
 ALWAYS_INLINE
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
-    int kAccessSizeLog, bool kAccessIsWrite) {
+    int kAccessSizeLog, bool kAccessIsWrite, bool kIsAtomic) {
   u64 *shadow_mem = (u64*)MemToShadow(addr);
   DPrintf2("#%d: MemoryAccess: @%p %p size=%d"
       " is_write=%d shadow_mem=%p {%zx, %zx, %zx, %zx}\n",
@@ -494,12 +482,13 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   Shadow cur(fast_state);
   cur.SetAddr0AndSizeLog(addr & 7, kAccessSizeLog);
   cur.SetWrite(kAccessIsWrite);
+  cur.SetAtomic(kIsAtomic);
 
   // We must not store to the trace if we do not store to the shadow.
   // That is, this call must be moved somewhere below.
   TraceAddEvent(thr, fast_state, EventTypeMop, pc);
 
-  MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite,
+  MemoryAccessImpl(thr, addr, kAccessSizeLog, kAccessIsWrite, kIsAtomic,
       shadow_mem, cur);
 }
 

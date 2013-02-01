@@ -224,19 +224,36 @@ a128 func_cas(volatile a128 *v, a128 cmp, a128 xch) {
 /**/
 
 template<typename T>
+static int SizeLog() {
+  if (sizeof(T) <= 1)
+    return kSizeLog1;
+  else if (sizeof(T) <= 2)
+    return kSizeLog2;
+  else if (sizeof(T) <= 4)
+    return kSizeLog4;
+  else
+    return kSizeLog8;
+  // For 16-byte atomics we also use 8-byte memory access,
+  // this leads to false negatives only in very obscure cases.
+}
+
+template<typename T>
 static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
     morder mo) {
   CHECK(IsLoadOrder(mo));
   // This fast-path is critical for performance.
   // Assume the access is atomic.
-  if (!IsAcquireOrder(mo) && sizeof(T) <= sizeof(a))
+  if (!IsAcquireOrder(mo) && sizeof(T) <= sizeof(a)) {
+    MemoryReadAtomic(thr, pc, (uptr)a, SizeLog<T>());
     return *a;
+  }
   SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, false);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   thr->clock.acquire(&s->clock);
   T v = *a;
   s->mtx.ReadUnlock();
   __sync_synchronize();
+    MemoryReadAtomic(thr, pc, (uptr)a, SizeLog<T>());
   return v;
 }
 
@@ -244,6 +261,7 @@ template<typename T>
 static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     morder mo) {
   CHECK(IsStoreOrder(mo));
+  MemoryWriteAtomic(thr, pc, (uptr)a, SizeLog<T>());
   // This fast-path is critical for performance.
   // Assume the access is atomic.
   // Strictly saying even relaxed store cuts off release sequence,
@@ -265,6 +283,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
 
 template<typename T, T (*F)(volatile T *v, T op)>
 static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
+  MemoryWriteAtomic(thr, pc, (uptr)a, SizeLog<T>());
   SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   if (IsAcqRelOrder(mo))
@@ -324,6 +343,7 @@ template<typename T>
 static bool AtomicCAS(ThreadState *thr, uptr pc,
     volatile T *a, T *c, T v, morder mo, morder fmo) {
   (void)fmo;  // Unused because llvm does not pass it yet.
+  MemoryWriteAtomic(thr, pc, (uptr)a, SizeLog<T>());
   SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   if (IsAcqRelOrder(mo))

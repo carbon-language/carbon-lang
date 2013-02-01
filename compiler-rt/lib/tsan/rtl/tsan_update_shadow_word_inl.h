@@ -34,7 +34,7 @@ do {
     if (Shadow::TidsAreEqual(old, cur)) {
       StatInc(thr, StatShadowSameThread);
       if (OldIsInSameSynchEpoch(old, thr)) {
-        if (OldIsRWNotWeaker(old, kAccessIsWrite)) {
+        if (old.IsRWNotWeaker(kAccessIsWrite, kIsAtomic)) {
           // found a slot that holds effectively the same info
           // (that is, same tid, same sync epoch and same size)
           StatInc(thr, StatMopSame);
@@ -43,7 +43,7 @@ do {
         StoreIfNotYetStored(sp, &store_word);
         break;
       }
-      if (OldIsRWWeakerOrEqual(old, kAccessIsWrite))
+      if (old.IsRWWeakerOrEqual(kAccessIsWrite, kIsAtomic))
         StoreIfNotYetStored(sp, &store_word);
       break;
     }
@@ -52,12 +52,12 @@ do {
       StoreIfNotYetStored(sp, &store_word);
       break;
     }
-    if (BothReads(old, kAccessIsWrite))
+    if (old.IsBothReadsOrAtomic(kAccessIsWrite, kIsAtomic))
       break;
     goto RACE;
   }
   // Do the memory access intersect?
-  // In Go all memory accesses are 1 byte, so there can't be no intersections.
+  // In Go all memory accesses are 1 byte, so there can be no intersections.
   if (kCppMode && Shadow::TwoRangesIntersect(old, cur, kAccessSize)) {
     StatInc(thr, StatShadowIntersect);
     if (Shadow::TidsAreEqual(old, cur)) {
@@ -65,12 +65,10 @@ do {
       break;
     }
     StatInc(thr, StatShadowAnotherThread);
+    if (old.IsBothReadsOrAtomic(kAccessIsWrite, kIsAtomic))
+      break;
     if (HappensBefore(old, thr))
       break;
-
-    if (BothReads(old, kAccessIsWrite))
-      break;
-
     goto RACE;
   }
   // The accesses do not intersect.
