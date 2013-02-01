@@ -343,7 +343,7 @@ a ``foreach``.
 --------
 
 .. productionlist::
-   Defm: "defm" `TokIdentifier` ":" `BaseClassList` ";"
+   Defm: "defm" `TokIdentifier` ":" `BaseClassListNE` ";"
 
 Note that in the :token:`BaseClassList`, all of the ``multiclass``'s must
 precede any ``class``'s that appear.
