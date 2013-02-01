@@ -829,6 +829,51 @@ static void writePrettyPrintFunction(Record &R, std::vector<Argument*> &Args,
   OS << "}\n\n";
 }
 
+/// \brief Return the index of a spelling in a spelling list.
+static unsigned getSpellingListIndex(const std::vector<Record*> &SpellingList,
+                                     const Record &Spelling) {
+  assert(SpellingList.size() && "Spelling list is empty!");
+
+  for (unsigned Index = 0; Index < SpellingList.size(); ++Index) {
+    Record *S = SpellingList[Index];
+    if (S->getValueAsString("Variety") != Spelling.getValueAsString("Variety"))
+      continue;
+    if (S->getValueAsString("Variety") == "CXX11" &&
+        S->getValueAsString("Namespace") !=
+        Spelling.getValueAsString("Namespace"))
+      continue;
+    if (S->getValueAsString("Name") != Spelling.getValueAsString("Name"))
+      continue;
+
+    return Index;
+  }
+
+  llvm_unreachable("Unknown spelling!");
+}
+
+static void writeAttrAccessorDefinition(Record &R, raw_ostream &OS) {
+  std::vector<Record*> Accessors = R.getValueAsListOfDefs("Accessors");
+  for (std::vector<Record*>::const_iterator I = Accessors.begin(),
+       E = Accessors.end(); I != E; ++I) {
+    Record *Accessor = *I;
+    std::string Name = Accessor->getValueAsString("Name");
+    std::vector<Record*> Spellings = Accessor->getValueAsListOfDefs(
+      "Spellings");
+    std::vector<Record*> SpellingList = R.getValueAsListOfDefs("Spellings");
+    assert(SpellingList.size() &&
+           "Attribute with empty spelling list can't have accessors!");
+
+    OS << "  bool " << Name << "() const { return SpellingListIndex == ";
+    for (unsigned Index = 0; Index < Spellings.size(); ++Index) {
+      OS << getSpellingListIndex(SpellingList, *Spellings[Index]);
+      if (Index != Spellings.size() -1)
+        OS << " ||\n    SpellingListIndex == ";
+      else
+        OS << "; }\n";
+    }
+  }
+}
+
 namespace clang {
 
 // Emits the class definitions for attributes.
@@ -902,6 +947,8 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     OS << "  virtual " << R.getName() << "Attr *clone (ASTContext &C) const;\n";
     OS << "  virtual void printPretty(raw_ostream &OS,\n"
        << "                           const PrintingPolicy &Policy) const;\n";
+
+    writeAttrAccessorDefinition(R, OS);
 
     for (ai = Args.begin(); ai != ae; ++ai) {
       (*ai)->writeAccessors(OS);

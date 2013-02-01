@@ -79,8 +79,7 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
           ExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
                                         TemplateArgs);
           if (!Result.isInvalid())
-            AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>(), 
-                           Aligned->getIsMSDeclSpec(),
+            AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>(),
                            Aligned->getSpellingListIndex());
         } else {
           TypeSourceInfo *Result = SubstType(Aligned->getAlignmentType(),
@@ -89,7 +88,6 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                                              DeclarationName());
           if (Result)
             AddAlignedAttr(Aligned->getLocation(), New, Result,
-                           Aligned->getIsMSDeclSpec(),
                            Aligned->getSpellingListIndex());
         }
         continue;

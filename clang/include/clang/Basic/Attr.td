@@ -93,6 +93,11 @@ class CXX11<string namespace, string name> : Spelling<name, "CXX11"> {
 }
 class Keyword<string name> : Spelling<name, "Keyword">;
 
+class Accessor<string name, list<Spelling> spellings> {
+  string Name = name;
+  list<Spelling> Spellings = spellings;
+}
+
 class Attr {
   // The various ways in which an attribute can be spelled in source
   list<Spelling> Spellings;
@@ -100,8 +105,10 @@ class Attr {
   list<AttrSubject> Subjects;
   // The arguments allowed on an attribute
   list<Argument> Args = [];
-  // Set to true for attributes with arguments which require delayed parsing. 
-  bit LateParsed = 0;  
+  // Accessors which should be generated for the attribute.
+  list<Accessor> Accessors = [];
+  // Set to true for attributes with arguments which require delayed parsing.
+  bit LateParsed = 0;
   // Set to false to prevent an attribute from being propagated from a template
   // to the instantiation.
   bit Clone = 1;
@@ -115,7 +122,7 @@ class Attr {
   bit Ignored = 0;
   // Set to true if each of the spellings is a distinct attribute.
   bit DistinctSpellings = 0;
-  // Any additional text that should be included verbatim in the class.  
+  // Any additional text that should be included verbatim in the class.
   code AdditionalMembers = [{}];
 }
 
@@ -140,7 +147,7 @@ class IgnoredAttr : Attr {
 def AddressSpace : Attr {
   let Spellings = [GNU<"address_space">];
   let Args = [IntArgument<"AddressSpace">];
-  let ASTNode = 0;  
+  let ASTNode = 0;
 }
 
 def Alias : InheritableAttr {
@@ -152,7 +159,11 @@ def Aligned : InheritableAttr {
   let Spellings = [GNU<"aligned">, Declspec<"align">, CXX11<"gnu", "aligned">,
                    Keyword<"alignas">, Keyword<"_Alignas">];
   let Subjects = [NonBitField, NormalVar, Tag];
-  let Args = [AlignedArgument<"Alignment">, BoolArgument<"IsMSDeclSpec">];
+  let Args = [AlignedArgument<"Alignment">];
+  let Accessors = [Accessor<"isGNU", [GNU<"aligned">, CXX11<"gnu","aligned">]>,
+                   Accessor<"isAlignas",
+                   [Keyword<"alignas">, Keyword<"_Alignas">]>,
+                   Accessor<"isDeclspec",[Declspec<"align">]>];
 }
 
 def AlignMac68k : InheritableAttr {
