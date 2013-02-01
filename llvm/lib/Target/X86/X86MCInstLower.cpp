@@ -239,7 +239,8 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
     if (!MI->getOperand(OpNo+i).isReg()) continue;
 
     unsigned Reg = MI->getOperand(OpNo+i).getReg();
-    if (Reg == 0) continue;
+    // LEAs can use RIP-relative addressing, and RIP has no sub/super register.
+    if (Reg == 0 || Reg == X86::RIP) continue;
 
     MI->getOperand(OpNo+i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
   }

@@ -29,11 +29,11 @@ def LEA32r   : I<0x8D, MRMSrcMem,
 def LEA64_32r : I<0x8D, MRMSrcMem,
                   (outs GR32:$dst), (ins lea64_32mem:$src),
                   "lea{l}\t{$src|$dst}, {$dst|$src}",
-                  [(set GR32:$dst, lea32addr:$src)], IIC_LEA>,
+                  [(set GR32:$dst, lea64_32addr:$src)], IIC_LEA>,
                   Requires<[In64BitMode]>;
 
 let isReMaterializable = 1 in
-def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins lea64mem:$src),
                   "lea{q}\t{$src|$dst}, {$dst|$src}",
                   [(set GR64:$dst, lea64addr:$src)], IIC_LEA>;
 
