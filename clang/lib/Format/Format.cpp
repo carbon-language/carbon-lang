@@ -241,44 +241,16 @@ public:
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State);
 
-    // Start iterating at 1 as we have correctly formatted of Token #0 above.
-    while (State.NextToken != NULL) {
-      if (State.NextToken->Type == TT_ImplicitStringLiteral) {
-        // Calculating the column is important for aligning trailing comments.
-        // FIXME: This does not seem to happen in conjunction with escaped
-        // newlines. If it does, fix!
-        State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
-                        State.NextToken->FormatTok.TokenLength;
-        State.NextToken = State.NextToken->Children.empty()
-            ? NULL : &State.NextToken->Children[0];
-      } else if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
+    // If everything fits on a single line, just put it there.
+    if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
+      while (State.NextToken != NULL) {
         addTokenToState(false, false, State);
-      } else {
-        unsigned NoBreak = calcPenalty(State, false, UINT_MAX);
-        unsigned Break = calcPenalty(State, true, NoBreak);
-        DEBUG({
-          if (Break < NoBreak)
-            llvm::errs() << "\n";
-          else
-            llvm::errs() << " ";
-          llvm::errs() << "<";
-          DebugPenalty(Break, Break < NoBreak);
-          llvm::errs() << "/";
-          DebugPenalty(NoBreak, !(Break < NoBreak));
-          llvm::errs() << "> ";
-          DebugTokenState(*State.NextToken);
-        });
-        addTokenToState(Break < NoBreak, false, State);
-        if (State.NextToken != NULL &&
-            State.NextToken->Parent->Type == TT_CtorInitializerColon) {
-          if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine &&
-              Line.Last->TotalLength > getColumnLimit() - State.Column - 1)
-            State.Stack.back().BreakAfterComma = true;
-        }
       }
+      return State.Column;
     }
-    DEBUG(llvm::errs() << "\n");
-    return State.Column;
+
+    // Find best solution in solution space.
+    return analyzeSolutionSpace(State);
   }
 
 private:
@@ -287,15 +259,6 @@ private:
     llvm::errs() << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
                               Tok.getLength());
     llvm::errs();
-  }
-
-  void DebugPenalty(unsigned Penalty, bool Winner) {
-    llvm::errs().changeColor(Winner ? raw_ostream::GREEN : raw_ostream::RED);
-    if (Penalty == UINT_MAX)
-      llvm::errs() << "MAX";
-    else
-      llvm::errs() << Penalty;
-    llvm::errs().resetColor();
   }
 
   struct ParenState {
@@ -420,6 +383,16 @@ private:
     const AnnotatedToken &Previous = *State.NextToken->Parent;
     assert(State.Stack.size());
     unsigned ParenLevel = State.Stack.size() - 1;
+
+    if (Current.Type == TT_ImplicitStringLiteral) {
+      State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
+                      State.NextToken->FormatTok.TokenLength;
+      if (State.NextToken->Children.empty())
+        State.NextToken = NULL;
+      else
+        State.NextToken = &State.NextToken->Children[0];
+      return;
+    }
 
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
@@ -604,87 +577,123 @@ private:
     return Style.ColumnLimit - (Line.InPPDirective ? 1 : 0);
   }
 
-  /// \brief Calculate the number of lines needed to format the remaining part
-  /// of the unwrapped line.
+  /// \brief An edge in the solution space starting from the \c LineState and
+  /// inserting a newline dependent on the \c bool.
+  typedef std::pair<bool, const LineState *> Edge;
+
+  /// \brief An item in the prioritized BFS search queue. The \c LineState was
+  /// reached using the \c Edge.
+  typedef std::pair<LineState, Edge> QueueItem;
+
+  /// \brief Analyze the entire solution space starting from \p InitialState.
   ///
-  /// Assumes the formatting so far has led to
-  /// the \c LineSta \p State. If \p NewLine is set, a new line will be
-  /// added after the previous token.
-  ///
-  /// \param StopAt is used for optimization. If we can determine that we'll
-  /// definitely need at least \p StopAt additional lines, we already know of a
-  /// better solution.
-  unsigned calcPenalty(LineState State, bool NewLine, unsigned StopAt) {
-    // We are at the end of the unwrapped line, so we don't need any more lines.
-    if (State.NextToken == NULL)
+  /// This implements a variant of Dijkstra's algorithm on the graph that spans
+  /// the solution space (\c LineStates are the nodes). The algorithm tries to
+  /// find the shortest path (the one with lowest penalty) from \p InitialState
+  /// to a state where all tokens are placed.
+  unsigned analyzeSolutionSpace(const LineState &InitialState) {
+    // Insert start element into queue.
+    std::multimap<unsigned, QueueItem> Queue;
+    Queue.insert(std::pair<unsigned, QueueItem>(
+        0, QueueItem(InitialState, Edge(false, NULL))));
+    std::map<LineState, Edge> Seen;
+
+    // While not empty, take first element and follow edges.
+    while (!Queue.empty()) {
+      unsigned Penalty = Queue.begin()->first;
+      QueueItem Item = Queue.begin()->second;
+      if (Item.first.NextToken == NULL)
+        break;
+      Queue.erase(Queue.begin());
+
+      if (Seen.find(Item.first) != Seen.end())
+        continue; // State already examined with lower penalty.
+
+      const LineState &SavedState = Seen.insert(std::pair<LineState, Edge>(
+          Item.first,
+          Edge(Item.second.first, Item.second.second))).first->first;
+
+      addNextStateToQueue(SavedState, Penalty, /*NewLine=*/ false, Queue);
+      addNextStateToQueue(SavedState, Penalty, /*NewLine=*/ true, Queue);
+    }
+
+    if (Queue.empty())
+      // We were unable to find a solution, do nothing.
+      // FIXME: Add diagnostic?
       return 0;
 
-    if (!NewLine && State.NextToken->MustBreakBefore)
-      return UINT_MAX;
-    if (NewLine && !State.NextToken->CanBreakBefore &&
-        !(State.NextToken->is(tok::r_brace) &&
-          State.Stack.back().BreakBeforeClosingBrace))
-      return UINT_MAX;
-    if (!NewLine && State.NextToken->is(tok::r_brace) &&
-        State.Stack.back().BreakBeforeClosingBrace)
-      return UINT_MAX;
-    if (!NewLine && State.NextToken->Parent->is(tok::semi) &&
-        State.LineContainsContinuedForLoopSection)
-      return UINT_MAX;
-    if (!NewLine && State.NextToken->Parent->is(tok::comma) &&
-        State.NextToken->Type != TT_LineComment &&
-        State.Stack.back().BreakAfterComma)
-      return UINT_MAX;
-    // Trying to insert a parameter on a new line if there are already more than
-    // one parameter on the current line is bin packing.
-    if (NewLine && State.NextToken->Parent->is(tok::comma) &&
-        State.Stack.back().HasMultiParameterLine &&
-        State.Stack.back().AvoidBinPacking)
-      return UINT_MAX;
-    if (!NewLine && (State.NextToken->Type == TT_CtorInitializerColon ||
-                     (State.NextToken->Parent->ClosesTemplateDeclaration &&
-                      State.Stack.size() == 1)))
-      return UINT_MAX;
+    // Reconstruct the solution.
+    // FIXME: Add debugging output.
+    Edge *CurrentEdge = &Queue.begin()->second.second;
+    while (CurrentEdge->second != NULL) {
+      LineState CurrentState = *CurrentEdge->second;
+      addTokenToState(CurrentEdge->first, false, CurrentState);
+      CurrentEdge = &Seen[*CurrentEdge->second];
+    }
 
-    unsigned CurrentPenalty = 0;
+    // Return the column after the last token of the solution.
+    return Queue.begin()->second.first.Column;
+  }
+
+  /// \brief Add the following state to the analysis queue \p Queue.
+  ///
+  /// Assume the current state is \p OldState and has been reached with a
+  /// penalty of \p Penalty. Insert a line break if \p NewLine is \c true.
+  void addNextStateToQueue(const LineState &OldState, unsigned Penalty,
+                           bool NewLine,
+                           std::multimap<unsigned, QueueItem> &Queue) {
+    if (NewLine && !canBreak(OldState))
+      return;
+    if (!NewLine && mustBreak(OldState))
+      return;
+    LineState State(OldState);
     if (NewLine)
-      CurrentPenalty += Parameters.PenaltyIndentLevel * State.Stack.size() +
-                        State.NextToken->SplitPenalty;
-
+      Penalty += Parameters.PenaltyIndentLevel * State.Stack.size() +
+                 State.NextToken->SplitPenalty;
     addTokenToState(NewLine, true, State);
-
-    // Exceeding column limit is bad, assign penalty.
     if (State.Column > getColumnLimit()) {
       unsigned ExcessCharacters = State.Column - getColumnLimit();
-      CurrentPenalty += Parameters.PenaltyExcessCharacter * ExcessCharacters;
+      Penalty += Parameters.PenaltyExcessCharacter * ExcessCharacters;
     }
+    Queue.insert(std::pair<unsigned, QueueItem>(
+        Penalty, QueueItem(State, Edge(NewLine, &OldState))));
+  }
 
-    if (StopAt <= CurrentPenalty)
-      return UINT_MAX;
-    StopAt -= CurrentPenalty;
-    StateMap::iterator I = Memory.find(State);
-    if (I != Memory.end()) {
-      // If this state has already been examined, we can safely return the
-      // previous result if we
-      // - have not hit the optimatization (and thus returned UINT_MAX) OR
-      // - are now computing for a smaller or equal StopAt.
-      unsigned SavedResult = I->second.first;
-      unsigned SavedStopAt = I->second.second;
-      if (SavedResult != UINT_MAX)
-        return SavedResult + CurrentPenalty;
-      else if (StopAt <= SavedStopAt)
-        return UINT_MAX;
-    }
+  /// \brief Returns \c true, if a line break after \p State is allowed.
+  bool canBreak(const LineState &State) {
+    if (!State.NextToken->CanBreakBefore &&
+        !(State.NextToken->is(tok::r_brace) &&
+          State.Stack.back().BreakBeforeClosingBrace))
+      return false;
+    // Trying to insert a parameter on a new line if there are already more than
+    // one parameter on the current line is bin packing.
+    if (State.NextToken->Parent->is(tok::comma) &&
+        State.Stack.back().HasMultiParameterLine &&
+        State.Stack.back().AvoidBinPacking)
+      return false;
+    return true;
+  }
 
-    unsigned NoBreak = calcPenalty(State, false, StopAt);
-    unsigned WithBreak = calcPenalty(State, true, std::min(StopAt, NoBreak));
-    unsigned Result = std::min(NoBreak, WithBreak);
 
-    // We have to store 'Result' without adding 'CurrentPenalty' as the latter
-    // can depend on 'NewLine'.
-    Memory[State] = std::pair<unsigned, unsigned>(Result, StopAt);
-
-    return Result == UINT_MAX ? UINT_MAX : Result + CurrentPenalty;
+  /// \brief Returns \c true, if a line break after \p State is mandatory.
+  bool mustBreak(const LineState &State) {
+    if (State.NextToken->MustBreakBefore)
+      return true;
+    if (State.NextToken->is(tok::r_brace) &&
+        State.Stack.back().BreakBeforeClosingBrace)
+      return true;
+    if (State.NextToken->Parent->is(tok::semi) &&
+        State.LineContainsContinuedForLoopSection)
+      return true;
+    if (State.NextToken->Parent->is(tok::comma) &&
+        State.Stack.back().BreakAfterComma &&
+        State.NextToken->Type != TT_LineComment)
+      return true;
+    if ((State.NextToken->Type == TT_CtorInitializerColon ||
+         (State.NextToken->Parent->ClosesTemplateDeclaration &&
+          State.Stack.size() == 1)))
+      return true;
+    return false;
   }
 
   FormatStyle Style;
@@ -693,10 +702,6 @@ private:
   const unsigned FirstIndent;
   const AnnotatedToken &RootToken;
   WhitespaceManager &Whitespaces;
-
-  // A map from an indent state to a pair (Result, Used-StopAt).
-  typedef std::map<LineState, std::pair<unsigned, unsigned> > StateMap;
-  StateMap Memory;
 
   OptimizationParameters Parameters;
 };
