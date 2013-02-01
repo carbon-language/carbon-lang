@@ -188,10 +188,9 @@ use the API calls instead of calls like <tt>__builtin_ia32_paddw128</tt>.</p>
 different type. Clang produces an error on similar code, e.g.,</p>
 
 <pre>
-lvalue.c:2:3: error: assignment to cast is illegal, lvalue casts are not
-      supported
+<b>lvalue.c:2:3: <span class="error">error:</span> assignment to cast is illegal, lvalue casts are not supported</b>
   (int*)addr = val;
-  ^~~~~~~~~~ ~
+<span class="caret">  ^~~~~~~~~~ ~</span>
 </pre>
 
 <p>To fix this problem, move the cast to the right-hand side. In this
@@ -232,12 +231,12 @@ the stack is fresh, i.e. still zeroed.)  Therefore, Clang rejects this
 code with a hard error:</p>
 
 <pre>
-t.c:3:5: error: goto into protected scope
+<b>t.c:3:5: <span class="error">error:</span> goto into protected scope</b>
     goto error;
-    ^
-t.c:5:15: note: jump bypasses setup of __block variable
+<span class="caret">    ^</span>
+<b>t.c:5:15: <span class="note">note:</note></b> jump bypasses setup of __block variable
   __block int result;
-              ^
+<span class="caret">              ^</span>
 </pre>
 
 <p>The fix is to rewrite the code to not require jumping into a
@@ -308,10 +307,9 @@ rejects the instruction with this error message:
 </p>
 
 <pre>
-&lt;inline asm&gt;:3:1: error: ambiguous instructions require an explicit suffix (could be 'addb', 'addw', 'addl', or 'addq')
+<b>&lt;inline asm&gt;:3:1: <span class="error">error:</span> ambiguous instructions require an explicit suffix (could be 'addb', 'addw', 'addl', or 'addq')</b>
 add $4, (%rax)
-^
-1 error generated.
+<span class="caret">^</span>
 </pre>
 
 <p>To fix this compatibility issue, add an explicit suffix to the instruction:
@@ -331,9 +329,9 @@ can, among other things, be cast to a different type. Clang treats
 type-cast of <code>super</code>:</p>
 
 <pre>
-super.m:11:12: error: cannot cast 'super' (it isn't an expression)
+<b>super.m:11:12: <span class="error">error:</span> cannot cast 'super' (it isn't an expression)</b>
   [(Super*)super add:4];
-   ~~~~~~~~^
+<span class="caret">   ~~~~~~~~^</span>
 </pre>
 
 <p>To fix this problem, remove the type cast, e.g.</p>
@@ -352,10 +350,9 @@ Objective-C class may change over time as instance variables are added
 ABI:</p>
 
 <pre>
-sizeof.m:4:14: error: invalid application of 'sizeof' to interface 'NSArray' in
-      non-fragile ABI
+<b>sizeof.m:4:14: <span class="error">error:</span> invalid application of 'sizeof' to interface 'NSArray' in non-fragile ABI</b>
   int size = sizeof(NSArray);
-             ^     ~~~~~~~~~
+<span class="caret">             ^     ~~~~~~~~~</span>
 </pre>
 
 <p>Code that relies on the size of an Objective-C class is likely to
@@ -377,12 +374,12 @@ this problem, use the Objective-C runtime API function
 internal Objective-C structures as implementation detail and won't do implicit conversions:
 
 <pre>
-t.mm:11:2: error: no matching function for call to 'f'
+<b>t.mm:11:2: <span class="error">error:</span> no matching function for call to 'f'</b>
         f((struct objc_object *)p);
-        ^
-t.mm:5:6: note: candidate function not viable: no known conversion from 'struct objc_object *' to 'id' for 1st argument
+<span class="caret">        ^</span>
+<b>t.mm:5:6: <span class="note">note:</note></b> candidate function not viable: no known conversion from 'struct objc_object *' to 'id' for 1st argument
 void f(id x);
-     ^
+<span class="caret">     ^</span>
 </pre>
 
 <p>Code should use types <tt>id</tt>, <tt>SEL</tt>, and <tt>Class</tt>
@@ -465,15 +462,16 @@ int main() {
 
 <p>Clang complains:
 
-<pre>  <b>my_file.cpp:2:10: <span class="error">error:</span> call to function 'Multiply' that is neither visible in the template definition nor found by argument-dependent lookup</b>
-    return Multiply(x, x);
-  <span class="caret">         ^</span>
-  <b>my_file.cpp:10:3: <span class="note">note:</span> in instantiation of function template specialization 'Squared&lt;int&gt;' requested here</b>
-    Squared(5);
-  <span class="caret">  ^</span>
-  <b>my_file.cpp:5:5: <span class="note">note:</span> 'Multiply' should be declared prior to the call site</b>
-  int Multiply(int x, int y) {
-  <span class="caret">    ^</span>
+<pre>
+<b>my_file.cpp:2:10: <span class="error">error:</span> call to function 'Multiply' that is neither visible in the template definition nor found by argument-dependent lookup</b>
+  return Multiply(x, x);
+<span class="caret">         ^</span>
+<b>my_file.cpp:10:3: <span class="note">note:</span></b> in instantiation of function template specialization 'Squared&lt;int&gt;' requested here
+  Squared(5);
+<span class="caret">  ^</span>
+<b>my_file.cpp:5:5: <span class="note">note:</span></b> 'Multiply' should be declared prior to the call site
+int Multiply(int x, int y) {
+<span class="caret">    ^</span>
 </pre>
 
 <p>The C++ standard says that unqualified names like <q>Multiply</q>
@@ -526,15 +524,16 @@ void Use() {
 
 <p>Again, Clang complains:</p>
 
-<pre>  <b>my_file2.cpp:5:13: <span class="error">error:</span> call to function 'operator&lt;&lt;' that is neither visible in the template definition nor found by argument-dependent lookup</b>
-    std::cout &lt;&lt; value &lt;&lt; "\n";
-  <span class="caret">            ^</span>
-  <b>my_file2.cpp:17:3: <span class="error">note:</span> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here</b>
-    Dump(ns::Data());
-  <span class="caret">  ^</span>
-  <b>my_file2.cpp:12:15: <span class="error">note:</span> 'operator&lt;&lt;' should be declared prior to the call site or in namespace 'ns'</b>
-  std::ostream&amp; operator&lt;&lt;(std::ostream&amp; out, ns::Data data) {
-  <span class="caret">              ^</span>
+<pre>
+<b>my_file2.cpp:5:13: <span class="error">error:</span> call to function 'operator&lt;&lt;' that is neither visible in the template definition nor found by argument-dependent lookup</b>
+  std::cout &lt;&lt; value &lt;&lt; "\n";
+<span class="caret">            ^</span>
+<b>my_file2.cpp:17:3: <span class="note">note:</span></b> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here
+  Dump(ns::Data());
+<span class="caret">  ^</span>
+<b>my_file2.cpp:12:15: <span class="note">note:</span></b> 'operator&lt;&lt;' should be declared prior to the call site or in namespace 'ns'
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; out, ns::Data data) {
+<span class="caret">              ^</span>
 </pre>
 
 <p>Just like before, unqualified lookup didn't find any declarations
@@ -587,18 +586,18 @@ Clang correctly rejects it with the following errors
 (when <tt>Derived</tt> is eventually instantiated):
 
 <pre>
-my_file.cpp:8:5: error: use of undeclared identifier 'DoThis'
+<b>my_file.cpp:8:5: <span class="error">error:</span> use of undeclared identifier 'DoThis'</b>
     DoThis(x);
-    ^
+<span class="caret">    ^</span>
     this-&gt;
-my_file.cpp:2:8: note: must qualify identifier to find this declaration in dependent base class
+<b>my_file.cpp:2:8: <span class="note">note:</note></b> must qualify identifier to find this declaration in dependent base class
   void DoThis(T x) {}
-       ^
-my_file.cpp:9:5: error: use of undeclared identifier 'DoThat'
+<span class="caret">       ^</span>
+<b>my_file.cpp:9:5: <span class="error">error:</span> use of undeclared identifier 'DoThat'</b>
     DoThat(x);
-    ^
+<span class="caret">    ^</span>
     this-&gt;
-my_file.cpp:3:15: note: must qualify identifier to find this declaration in dependent base class
+<b>my_file.cpp:3:15: <span class="note">note:</note></b> must qualify identifier to find this declaration in dependent base class
   static void DoThat(T x) {}
 </pre>
 
@@ -820,13 +819,13 @@ void g(Base *p) {
 <p>Clang produces the following error:</p>
 
 <pre>
-downcast.mm:6:3: error: no matching function for call to 'f'
+<b>downcast.mm:6:3: <span class="error">error:</span> no matching function for call to 'f'</b>
   f(p);
-  ^
-downcast.mm:4:6: note: candidate function not viable: cannot convert from
+<span class="caret">  ^</span>
+<b>downcast.mm:4:6: <span class="note">note:</note></b> candidate function not viable: cannot convert from
       superclass 'Base *' to subclass 'Derived *' for 1st argument
 void f(Derived *p);
-     ^
+<span class="caret">     ^</span>
 </pre>
 
 <p>If the downcast is actually correct (e.g., because the code has
