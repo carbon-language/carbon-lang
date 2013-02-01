@@ -1688,6 +1688,34 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
   return 0;
 }
 
+// A significant optimization not implemented here is assuming that alloca
+// addresses are not equal to incoming argument values. They don't *alias*,
+// as we say, but that doesn't mean they aren't equal, so we take a
+// conservative approach.
+//
+// This is inspired in part by C++11 5.10p1:
+//   "Two pointers of the same type compare equal if and only if they are both
+//    null, both point to the same function, or both represent the same
+//    address."
+//
+// This is pretty permissive.
+//
+// It's also partly due to C11 6.5.9p6:
+//   "Two pointers compare equal if and only if both are null pointers, both are
+//    pointers to the same object (including a pointer to an object and a
+//    subobject at its beginning) or function, both are pointers to one past the
+//    last element of the same array object, or one is a pointer to one past the
+//    end of one array object and the other is a pointer to the start of a
+//    different array object that happens to immediately follow the ﬁrst array
+//    object in the address space.)
+//
+// C11's version is more restrictive, however there's no reason why an argument
+// couldn't be a one-past-the-end value for a stack object in the caller and be
+// equal to the beginning of a stack object in the callee.
+//
+// If the C and C++ standards are ever made sufficiently restrictive in this
+// area, it may be possible to update LLVM's semantics accordingly and reinstate
+// this optimization.
 static Constant *computePointerICmp(const DataLayout *TD,
                                     const TargetLibraryInfo *TLI,
                                     CmpInst::Predicate Pred,
