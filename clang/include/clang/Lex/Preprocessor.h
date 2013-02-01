@@ -507,7 +507,7 @@ public:
   PreprocessorLexer *getCurrentFileLexer() const;
 
   /// \brief Returns the file ID for the preprocessor predefines.
-  FileID getPredefinesFileID() { return PredefinesFileID; }
+  FileID getPredefinesFileID() const { return PredefinesFileID; }
 
   /// getPPCallbacks/addPPCallbacks - Accessors for preprocessor callbacks.
   /// Note that this class takes ownership of any PPCallbacks object given to
