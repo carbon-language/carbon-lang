@@ -749,7 +749,7 @@ AttributeSet::iterator AttributeSet::begin(unsigned Idx) {
 AttributeSet::iterator AttributeSet::end(unsigned Idx) {
   if (!pImpl)
     return ArrayRef<Attribute>().end();
-  return pImpl->begin(Idx);
+  return pImpl->end(Idx);
 }
 
 //===----------------------------------------------------------------------===//
@@ -852,18 +852,24 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
-  uint64_t Mask = A.Raw(Index);
-
-  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
-       I = Attribute::AttrKind(I + 1)) {
-    if (Mask & AttributeImpl::getAttrMask(I)) {
-      Attrs.erase(I);
-
-      if (I == Attribute::Alignment)
-        Alignment = 0;
-      else if (I == Attribute::StackAlignment)
-        StackAlignment = 0;
+  unsigned Idx = ~0U;
+  for (unsigned I = 0, E = A.getNumSlots(); I != E; ++I)
+    if (A.getSlotIndex(I) == Index) {
+      Idx = I;
+      break;
     }
+
+  assert(Idx != ~0U && "Couldn't find index in AttributeSet!");
+
+  for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx); I != E; ++I) {
+    ConstantInt *CI = cast<ConstantInt>(I->getAttributeKind());
+    Attribute::AttrKind Kind = Attribute::AttrKind(CI->getZExtValue());
+    Attrs.erase(Kind);
+
+    if (Kind == Attribute::Alignment)
+      Alignment = 0;
+    else if (Kind == Attribute::StackAlignment)
+      StackAlignment = 0;
   }
 
   return *this;
