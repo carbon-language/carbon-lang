@@ -1585,18 +1585,17 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
             thread->ClearStackFrames();
             if (broadcast && EventTypeHasListeners(eBroadcastBitStackChanged))
                 BroadcastEvent(eBroadcastBitStackChanged, new ThreadEventData (this->shared_from_this()));
-            return return_error;
         }
         else
         {
             return_error.SetErrorString("Could not reset register values.");
-            return return_error;
         }
     }
     else
     {
         return_error.SetErrorString("Returned past top frame.");
     }
+    return return_error;
 }
 
 void
