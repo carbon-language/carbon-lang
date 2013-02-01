@@ -5170,6 +5170,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       Res = DAG.getNode(Opcode, dl, MVT::Other, Ops, 2);
       DAG.setRoot(Res);
     }
+    return 0;
   }
   case Intrinsic::invariant_start:
     // Discard region information.
