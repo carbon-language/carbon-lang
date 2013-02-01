@@ -50,6 +50,7 @@ public:
   virtual bool hasIntegratedAssembler() const { return false; }
   virtual bool hasIntegratedCPP() const = 0;
   virtual bool isLinkJob() const { return false; }
+  virtual bool isDsymutilJob() const { return false; }
 
   /// \brief Does this tool have "good" standardized diagnostics, or should the
   /// driver add an additional "command failed" diagnostic on failures.

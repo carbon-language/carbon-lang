@@ -339,8 +339,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   if (C.getArgs().hasArg(options::OPT_fno_crash_diagnostics))
     return;
 
-  // Don't try to generate diagnostics for link jobs.
-  if (FailingCommand && FailingCommand->getCreator().isLinkJob())
+  // Don't try to generate diagnostics for link or dsymutil jobs.
+  if (FailingCommand && (FailingCommand->getCreator().isLinkJob() ||
+                         FailingCommand->getCreator().isDsymutilJob()))
     return;
 
   // Print the version of the compiler.

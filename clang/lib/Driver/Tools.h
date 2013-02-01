@@ -278,6 +278,7 @@ namespace darwin {
                                                "dsymutil", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
+    virtual bool isDsymutilJob() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
