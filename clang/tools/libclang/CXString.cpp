@@ -29,6 +29,13 @@ enum CXStringFlag { CXS_Unmanaged, CXS_Malloc, CXS_StringBuf };
 // Basic generation of CXStrings.
 //===----------------------------------------------------------------------===//
 
+CXString cxstring::createEmpty() {
+  CXString Str;
+  Str.data = "";
+  Str.private_flags = CXS_Unmanaged;
+  return Str;
+}
+
 CXString cxstring::createNull() {
   CXString Str;
   Str.data = 0;

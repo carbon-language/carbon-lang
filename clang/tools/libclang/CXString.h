@@ -25,6 +25,9 @@ namespace cxstring {
 
 struct CXStringBuf;
 
+/// \brief Create a CXString object for an empty "" string.
+CXString createEmpty();
+
 /// \brief Create a CXString object for an NULL string.
 CXString createNull();
 

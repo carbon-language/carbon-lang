@@ -102,7 +102,7 @@ CXString CXLoadedDiagnostic::getSpelling() const {
 
 CXString CXLoadedDiagnostic::getDiagnosticOption(CXString *Disable) const {
   if (DiagOption.empty())
-    return createCXString("");
+    return cxstring::createEmpty();
 
   // FIXME: possibly refactor with logic in CXStoredDiagnostic.
   if (Disable)
@@ -241,7 +241,7 @@ public:
       if (error)
         *error = CXLoadDiag_None;
       if (errorString)
-        *errorString = createCXString("");
+        *errorString = cxstring::createEmpty();
     }
 
   CXDiagnosticSet load(const char *file);

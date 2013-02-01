@@ -67,7 +67,7 @@ CXString CXStoredDiagnostic::getDiagnosticOption(CXString *Disable) const {
     return createCXString("-ferror-limit=");
   }
 
-  return createCXString("");
+  return cxstring::createEmpty();
 }
 
 unsigned CXStoredDiagnostic::getCategory() const {

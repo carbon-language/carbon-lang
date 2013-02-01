@@ -636,7 +636,7 @@ long long clang_getArraySize(CXType CT) {
 
 CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
-    return cxstring::createCXString("");
+    return cxstring::createEmpty();
 
   const Decl *D = static_cast<const Decl*>(C.data[0]);
   ASTUnit *AU = cxcursor::getCursorASTUnit(C);
