@@ -20,7 +20,8 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
@@ -531,11 +532,26 @@ public:
 
 private:
   std::vector<StringRef> _strings;
+
+  struct StringRefMappingInfo {
+    static StringRef getEmptyKey() { return StringRef(); }
+    static StringRef getTombstoneKey() { return StringRef(" ", 0); }
+    static unsigned getHashValue(StringRef const val) {
+      return llvm::HashString(val);
+    }
+    static bool isEqual(StringRef const lhs, StringRef const rhs) {
+      return lhs.equals(rhs);
+    }
+  };
+  typedef typename llvm::DenseMap<StringRef, uint64_t,
+                                  StringRefMappingInfo> StringMapT;
+  typedef typename StringMapT::iterator StringMapTIter;
+  StringMapT _stringMap;
 };
 
 template <class ELFT>
 StringTable<ELFT>::StringTable(const ELFTargetInfo &ti, const char *str,
-                                     int32_t order)
+                               int32_t order)
     : Section<ELFT>(ti, str, llvm::ELF::SHT_STRTAB, DefinedAtom::perm___, order,
                     Section<ELFT>::K_StringTable) {
   // the string table has a NULL entry for which
@@ -547,15 +563,23 @@ StringTable<ELFT>::StringTable(const ELFTargetInfo &ti, const char *str,
 }
 
 template <class ELFT> uint64_t StringTable<ELFT>::addString(StringRef symname) {
-  _strings.push_back(symname);
-  uint64_t offset = this->_fsize;
-  this->_fsize += symname.size() + 1;
-  return offset;
+
+  if (symname.size() == 0)
+    return 0;
+  StringMapTIter stringIter = _stringMap.find(symname);
+  if (stringIter == _stringMap.end()) {
+    _strings.push_back(symname);
+    uint64_t offset = this->_fsize;
+    this->_fsize += symname.size() + 1;
+    _stringMap[symname] = offset;
+    return offset;
+  }
+  return stringIter->second;
 }
 
 template <class ELFT>
 void StringTable<ELFT>::write(ELFWriter *writer,
-                                 llvm::FileOutputBuffer &buffer) {
+                              llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
   for (auto si : _strings) {
