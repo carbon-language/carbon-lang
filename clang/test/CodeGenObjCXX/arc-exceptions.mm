@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-arc -fexceptions -fobjc-exceptions -fcxx-exceptions -fobjc-runtime-has-weak -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-arc -fexceptions -fobjc-exceptions -fcxx-exceptions -fobjc-runtime-has-weak -o - -fobjc-arc-exceptions %s | FileCheck %s
 
 @class Ety;
 
@@ -81,3 +81,42 @@ void test3(void) {
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[ETY]]** [[E]] to i8**
 // CHECK-NEXT: call void @objc_destroyWeak(i8** [[T0]]) nounwind
 // CHECK-NEXT: call void @__cxa_end_catch() nounwind
+
+namespace test4 {
+  struct A {
+    id single;
+    id array[2][3];
+
+    A();
+  };
+
+  A::A() {
+    throw 0;
+  }
+  // CHECK:    define void @_ZN5test41AC2Ev(
+  // CHECK:      [[THIS:%.*]] = load [[A:%.*]]** {{%.*}}
+  //   Construct single.
+  // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 0
+  // CHECK-NEXT: store i8* null, i8** [[SINGLE]], align 8
+  //   Construct array.
+  // CHECK-NEXT: [[ARRAY:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 1
+  // CHECK-NEXT: [[T0:%.*]] = bitcast [2 x [3 x i8*]]* [[ARRAY]] to i8*
+  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 8, i1 false)
+  //   throw 0;
+  // CHECK:      invoke void @__cxa_throw(
+  //   Landing pad from throw site:
+  // CHECK:      landingpad
+  //     - First, destroy all of array.
+  // CHECK:      [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x i8*]]* [[ARRAY]], i32 0, i32 0, i32 0
+  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds i8** [[ARRAYBEGIN]], i64 6
+  // CHECK-NEXT: br label
+  // CHECK:      [[AFTER:%.*]] = phi i8** [ [[ARRAYEND]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[ELT]] = getelementptr inbounds i8** [[AFTER]], i64 -1
+  // CHECK-NEXT: call void @objc_storeStrong(i8** [[ELT]], i8* null) nounwind
+  // CHECK-NEXT: [[DONE:%.*]] = icmp eq i8** [[ELT]], [[ARRAYBEGIN]]
+  // CHECK-NEXT: br i1 [[DONE]],
+  //     - Next, destroy single.
+  // CHECK:      call void @objc_storeStrong(i8** [[SINGLE]], i8* null) nounwind
+  // CHECK:      br label
+  // CHECK:      resume
+}

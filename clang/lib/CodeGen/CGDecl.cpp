@@ -1242,7 +1242,18 @@ CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
   llvm_unreachable("Unknown DestructionKind");
 }
 
-/// pushDestroy - Push the standard destructor for the given type.
+/// pushEHDestroy - Push the standard destructor for the given type as
+/// an EH-only cleanup.
+void CodeGenFunction::pushEHDestroy(QualType::DestructionKind dtorKind,
+                                  llvm::Value *addr, QualType type) {
+  assert(dtorKind && "cannot push destructor for trivial type");
+  assert(needsEHCleanup(dtorKind));
+
+  pushDestroy(EHCleanup, addr, type, getDestroyer(dtorKind), true);
+}
+
+/// pushDestroy - Push the standard destructor for the given type as
+/// at least a normal cleanup.
 void CodeGenFunction::pushDestroy(QualType::DestructionKind dtorKind,
                                   llvm::Value *addr, QualType type) {
   assert(dtorKind && "cannot push destructor for trivial type");

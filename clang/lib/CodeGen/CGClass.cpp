@@ -532,21 +532,6 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
   CGF.EmitBlock(AfterFor, true);
 }
 
-namespace {
-  struct CallMemberDtor : EHScopeStack::Cleanup {
-    llvm::Value *V;
-    CXXDestructorDecl *Dtor;
-
-    CallMemberDtor(llvm::Value *V, CXXDestructorDecl *Dtor)
-      : V(V), Dtor(Dtor) {}
-
-    void Emit(CodeGenFunction &CGF, Flags flags) {
-      CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete, /*ForVirtualBase=*/false,
-                                /*Delegating=*/false, V);
-    }
-  };
-}
-
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
                                   CXXCtorInitializer *MemberInit,
@@ -652,22 +637,13 @@ void CodeGenFunction::EmitInitializerForField(FieldDecl *Field,
     
     EmitAggMemberInitializer(*this, LHS, Init, ArrayIndexVar, FieldType,
                              ArrayIndexes, 0);
-    
-    if (!CGM.getLangOpts().Exceptions)
-      return;
-
-    // FIXME: If we have an array of classes w/ non-trivial destructors, 
-    // we need to destroy in reverse order of construction along the exception
-    // path.
-    const RecordType *RT = FieldType->getAs<RecordType>();
-    if (!RT)
-      return;
-    
-    CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    if (!RD->hasTrivialDestructor())
-      EHStack.pushCleanup<CallMemberDtor>(EHCleanup, LHS.getAddress(),
-                                          RD->getDestructor());
   }
+
+  // Ensure that we destroy this object if an exception is thrown
+  // later in the constructor.
+  QualType::DestructionKind dtorKind = FieldType.isDestructedType();
+  if (needsEHCleanup(dtorKind))
+    pushEHDestroy(dtorKind, LHS.getAddress(), FieldType);
 }
 
 /// Checks whether the given constructor is a valid subject for the

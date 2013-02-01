@@ -451,3 +451,70 @@ namespace test10 {
   // CHECK:      invoke void @__cxa_rethrow()
   // CHECK:      unreachable
 }
+
+// Ensure that an exception in a constructor destroys
+// already-constructed array members.  PR14514
+namespace test11 {
+  struct A {
+    A();
+    ~A() {}
+  };
+
+  struct C {
+    A single;
+    A array[2][3];
+
+    C();
+  };
+
+  C::C() {
+    throw 0;
+  }
+  // CHECK:    define void @_ZN6test111CC2Ev(
+  // CHECK:      [[THIS:%.*]] = load [[C:%.*]]** {{%.*}}
+  //   Construct single.
+  // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[C]]* [[THIS]], i32 0, i32 0
+  // CHECK-NEXT: call void @_ZN6test111AC1Ev([[A:%.*]]* [[SINGLE]])
+  //   Construct array.
+  // CHECK-NEXT: [[ARRAY:%.*]] = getelementptr inbounds [[C]]* [[THIS]], i32 0, i32 1
+  // CHECK-NEXT: [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x [[A]]]]* [[ARRAY]], i32 0, i32 0, i32 0
+  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds [[A]]* [[ARRAYBEGIN]], i64 6
+  // CHECK-NEXT: br label
+  // CHECK:      [[CUR:%.*]] = phi [[A]]* [ [[ARRAYBEGIN]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: invoke void @_ZN6test111AC1Ev([[A:%.*]]* [[CUR]])
+  // CHECK:      [[NEXT]] = getelementptr inbounds [[A]]* [[CUR]], i64 1
+  // CHECK-NEXT: [[DONE:%.*]] = icmp eq [[A]]* [[NEXT]], [[ARRAYEND]]
+  // CHECK-NEXT: br i1 [[DONE]],
+  //   throw 0;
+  // CHECK:      invoke void @__cxa_throw(
+  //   Landing pad 1, from constructor in array-initialization loop:
+  // CHECK:      landingpad
+  //     - First, destroy already-constructed bits of array.
+  // CHECK:      [[EMPTY:%.*]] = icmp eq [[A]]* [[ARRAYBEGIN]], [[CUR]]
+  // CHECK-NEXT: br i1 [[EMPTY]]
+  // CHECK:      [[AFTER:%.*]] = phi [[A]]* [ [[CUR]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[ELT]] = getelementptr inbounds [[A]]* [[AFTER]], i64 -1
+  // CHECK-NEXT: invoke void @_ZN6test111AD1Ev([[A]]* [[ELT]])
+  // CHECK:      [[DONE:%.*]] = icmp eq [[A]]* [[ELT]], [[ARRAYBEGIN]]
+  // CHECK-NEXT: br i1 [[DONE]],
+  //     - Next, chain to cleanup for single.
+  // CHECK:      br label
+  //   Landing pad 2, from throw site.
+  // CHECK:      landingpad
+  //     - First, destroy all of array.
+  // CHECK:      [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x [[A]]]]* [[ARRAY]], i32 0, i32 0, i32 0
+  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds [[A]]* [[ARRAYBEGIN]], i64 6
+  // CHECK-NEXT: br label
+  // CHECK:      [[AFTER:%.*]] = phi [[A]]* [ [[ARRAYEND]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[ELT]] = getelementptr inbounds [[A]]* [[AFTER]], i64 -1
+  // CHECK-NEXT: invoke void @_ZN6test111AD1Ev([[A]]* [[ELT]])
+  // CHECK:      [[DONE:%.*]] = icmp eq [[A]]* [[ELT]], [[ARRAYBEGIN]]
+  // CHECK-NEXT: br i1 [[DONE]],
+  //     - Next, chain to cleanup for single.
+  // CHECK:      br label
+  //   Finally, the cleanup for single.
+  // CHECK:      invoke void @_ZN6test111AD1Ev([[A]]* [[SINGLE]])
+  // CHECK:      br label
+  // CHECK:      resume
+  //   (After this is a terminate landingpad.)
+}
