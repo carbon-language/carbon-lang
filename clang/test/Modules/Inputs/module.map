@@ -155,3 +155,7 @@ module autolink {
     link framework "autolink_framework"
   }
 }
+
+module weird_objc {
+  header "weird_objc.h"
+}

@@ -2053,8 +2053,24 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
 
     case SPECIAL_TYPES:
-      for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        SpecialTypes.push_back(getGlobalTypeID(F, Record[I]));
+      if (SpecialTypes.empty()) {
+        for (unsigned I = 0, N = Record.size(); I != N; ++I)
+          SpecialTypes.push_back(getGlobalTypeID(F, Record[I]));
+        break;
+      }
+
+      if (SpecialTypes.size() != Record.size()) {
+        Error("invalid special-types record");
+        return true;
+      }
+
+      for (unsigned I = 0, N = Record.size(); I != N; ++I) {
+        serialization::TypeID ID = getGlobalTypeID(F, Record[I]);
+        if (!SpecialTypes[I])
+          SpecialTypes[I] = ID;
+        // FIXME: If ID && SpecialTypes[I] != ID, do we need a separate
+        // merge step?
+      }
       break;
 
     case STATISTICS:
