@@ -709,6 +709,12 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
       match(I.getOperand(1), m_Constant(C2)))
     return BinaryOperator::CreateShl(ConstantExpr::getShl(C1, C2), A);
 
+  // shl (c1 , add(y , c2)) -> (shl (shl(c1, c2)), y)
+  if (match(I.getOperand(0), m_Constant(C1)) &&
+      match(I.getOperand(1), m_Add(m_Value(A), m_Constant(C2)))) {
+    return BinaryOperator::CreateShl(ConstantExpr::getShl(C1, C2), A);
+  }
+
   return 0;
 }
 
