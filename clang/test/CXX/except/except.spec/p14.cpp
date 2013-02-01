@@ -101,3 +101,14 @@ namespace PR14141 {
     ~Derived3() noexcept(true) = default; // expected-error {{does not match the calculated}}
   };
 }
+
+namespace rdar13017229 {
+  struct Base {
+    virtual ~Base() {}
+  };
+  
+  struct Derived : Base {
+    virtual ~Derived();
+    Typo foo(); // expected-error{{unknown type name 'Typo'}}
+  };
+}

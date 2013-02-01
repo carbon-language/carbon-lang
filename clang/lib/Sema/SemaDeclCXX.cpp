@@ -7871,6 +7871,14 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 /// \brief Perform any semantic analysis which needs to be delayed until all
 /// pending class member declarations have been parsed.
 void Sema::ActOnFinishCXXMemberDecls() {
+  // If the context is an invalid C++ class, just suppress these checks.
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(CurContext)) {
+    if (Record->isInvalidDecl()) {
+      DelayedDestructorExceptionSpecChecks.clear();
+      return;
+    }
+  }
+
   // Perform any deferred checking of exception specifications for virtual
   // destructors.
   for (unsigned i = 0, e = DelayedDestructorExceptionSpecChecks.size();
