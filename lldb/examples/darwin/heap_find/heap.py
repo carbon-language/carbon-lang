@@ -22,14 +22,93 @@ import lldb.utils.symbolication
 g_libheap_dylib_dir = None
 g_libheap_dylib_dict = dict()
 
-def get_iterate_memory_expr(process, user_init_code, user_return_code):
-    return '''
+def get_iterate_memory_expr(options, process, user_init_code, user_return_code):
+    expr = '''
 typedef unsigned natural_t;
 typedef uintptr_t vm_size_t;
 typedef uintptr_t vm_address_t;
 typedef natural_t task_t;
 typedef int kern_return_t;
 #define KERN_SUCCESS 0
+typedef void (*range_callback_t)(task_t task, void *baton, unsigned type, uintptr_t ptr_addr, uintptr_t ptr_size);
+''';
+    if options.search_vm_regions:
+        expr += '''
+typedef int vm_prot_t;
+typedef unsigned int vm_inherit_t;
+typedef unsigned long long	memory_object_offset_t;
+typedef unsigned int boolean_t;
+typedef int vm_behavior_t;
+typedef uint32_t vm32_object_id_t;
+typedef natural_t mach_msg_type_number_t;
+typedef uint64_t mach_vm_address_t;
+typedef uint64_t mach_vm_offset_t;
+typedef uint64_t mach_vm_size_t;
+typedef uint64_t vm_map_offset_t;
+typedef uint64_t vm_map_address_t;
+typedef uint64_t vm_map_size_t;
+#define	VM_PROT_NONE ((vm_prot_t) 0x00)
+#define VM_PROT_READ ((vm_prot_t) 0x01)
+#define VM_PROT_WRITE ((vm_prot_t) 0x02)
+#define VM_PROT_EXECUTE ((vm_prot_t) 0x04)
+typedef struct vm_region_submap_short_info_data_64_t {
+    vm_prot_t protection;
+    vm_prot_t max_protection;
+    vm_inherit_t inheritance;
+    memory_object_offset_t offset;		// offset into object/map
+    unsigned int user_tag;	// user tag on map entry
+    unsigned int ref_count;	 // obj/map mappers, etc
+    unsigned short shadow_depth; 	// only for obj
+    unsigned char external_pager;  // only for obj
+    unsigned char share_mode;	// see enumeration
+    boolean_t is_submap;	// submap vs obj
+    vm_behavior_t behavior;	// access behavior hint
+    vm32_object_id_t object_id;	// obj/map name, not a handle
+    unsigned short user_wired_count; 
+} vm_region_submap_short_info_data_64_t;
+#define VM_REGION_SUBMAP_SHORT_INFO_COUNT_64 ((mach_msg_type_number_t)(sizeof(vm_region_submap_short_info_data_64_t)/sizeof(int)))''';
+        if user_init_code:
+            expr += user_init_code;
+        expr += '''
+task_t task = (task_t)mach_task_self();
+mach_vm_address_t vm_region_base_addr;
+mach_vm_size_t vm_region_size;
+natural_t vm_region_depth;
+vm_region_submap_short_info_data_64_t vm_region_info;
+kern_return_t err;
+for (vm_region_base_addr = 0, vm_region_size = 1; vm_region_size != 0; vm_region_base_addr += vm_region_size)
+{
+    mach_msg_type_number_t vm_region_info_size = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
+    err = (kern_return_t)mach_vm_region_recurse (task,
+                                                 &vm_region_base_addr,
+                                                 &vm_region_size,
+                                                 &vm_region_depth,
+                                                 &vm_region_info,
+                                                 &vm_region_info_size);
+    if (err)
+        break;
+    // Check all read + write regions. This will cover the thread stacks 
+    // and any regions of memory like __DATA segments, that might contain
+    // data we are looking for
+    if (vm_region_info.protection & VM_PROT_WRITE && 
+        vm_region_info.protection & VM_PROT_READ)
+    {
+        baton.callback (task, 
+                        &baton, 
+                        64, 
+                        vm_region_base_addr, 
+                        vm_region_size);
+    }
+}'''
+    else:
+        if options.search_stack:
+            expr += get_thread_stack_ranges_struct (process)
+        if options.search_segments:
+            expr += get_sections_ranges_struct (process)
+        if user_init_code:
+            expr += user_init_code
+        if options.search_heap:
+            expr += '''
 #define MALLOC_PTR_IN_USE_RANGE_TYPE 1
 typedef struct vm_range_t {
     vm_address_t	address;
@@ -37,7 +116,6 @@ typedef struct vm_range_t {
 } vm_range_t;
 typedef kern_return_t (*memory_reader_t)(task_t task, vm_address_t remote_address, vm_size_t size, void **local_memory);
 typedef void (*vm_range_recorder_t)(task_t task, void *baton, unsigned type, vm_range_t *range, unsigned size);
-typedef void (*range_callback_t)(task_t task, void *baton, unsigned type, uintptr_t ptr_addr, uintptr_t ptr_size);
 typedef struct malloc_introspection_t {
     kern_return_t (*enumerator)(task_t task, void *, unsigned type_mask, vm_address_t zone_address, memory_reader_t reader, vm_range_recorder_t recorder); /* enumerates all the malloc pointers in use */
 } malloc_introspection_t;
@@ -50,11 +128,7 @@ memory_reader_t task_peek = [](task_t task, vm_address_t remote_address, vm_size
     return KERN_SUCCESS;
 };
 vm_address_t *zones = 0;
-unsigned int num_zones = 0;
-%s
-%s
-%s
-task_t task = 0;
+unsigned int num_zones = 0;task_t task = 0;
 kern_return_t err = (kern_return_t)malloc_get_all_zones (task, task_peek, &zones, &num_zones);
 if (KERN_SUCCESS == err)
 {
@@ -76,14 +150,29 @@ if (KERN_SUCCESS == err)
                                               }
                                           });    
     }
-}
+}'''
+
+        if options.search_stack:
+            expr += '''
 // Call the callback for the thread stack ranges
-for (uint32_t i=0; i<NUM_STACKS; ++i)
+for (uint32_t i=0; i<NUM_STACKS; ++i) {
     range_callback(task, &baton, 8, stacks[i].base, stacks[i].size);
+    if (STACK_RED_ZONE_SIZE > 0) {
+        range_callback(task, &baton, 16, stacks[i].base - STACK_RED_ZONE_SIZE, STACK_RED_ZONE_SIZE);
+    }
+}
+    '''
+    
+        if options.search_segments:
+            expr += '''
 // Call the callback for all segments
 for (uint32_t i=0; i<NUM_SEGMENTS; ++i)
-    range_callback(task, &baton, 16, segments[i].base, segments[i].size);
-%s''' % (get_thread_stack_ranges_struct (process), get_sections_ranges_struct(process), user_init_code, user_return_code)
+    range_callback(task, &baton, 32, segments[i].base, segments[i].size);'''
+
+    if user_return_code:
+        expr += "\n%s" % (user_return_code,)
+    
+    return expr
 
 def get_member_types_for_offset(value_type, offset, member_list):
     member = value_type.GetFieldAtIndex(0)
@@ -142,7 +231,10 @@ def add_common_options(parser):
     parser.add_option('-H', '--max-history', type='int', dest='max_history', help='the maximum number of stack history backtraces to print for each allocation when using the --stack-history option (default=16)', default=16)
     parser.add_option('-M', '--max-matches', type='int', dest='max_matches', help='the maximum number of matches to print', default=32)
     parser.add_option('-O', '--offset', type='int', dest='offset', help='the matching data must be at this offset', default=-1)
-    parser.add_option('-V', '--vm-regions', action='store_true', dest='check_vm_regions', help='Also check the VM regions', default=False)
+    parser.add_option('--ignore-stack', action='store_false', dest='search_stack', help="Don't search the stack when enumerating memory", default=True)
+    parser.add_option('--ignore-heap', action='store_false', dest='search_heap', help="Don't search the heap allocations when enumerating memory", default=True)
+    parser.add_option('--ignore-segments', action='store_false', dest='search_segments', help="Don't search readable executable segments enumerating memory", default=True)
+    parser.add_option('-V', '--vm-regions', action='store_true', dest='search_vm_regions', help='Check all VM regions instead of searching the heap, stack and segments', default=False)
 
 def type_flags_to_string(type_flags):
     if type_flags == 0:
@@ -156,7 +248,11 @@ def type_flags_to_string(type_flags):
     elif type_flags & 8:
         type_str = 'stack'
     elif type_flags & 16:
+        type_str = 'stack (red zone)'
+    elif type_flags & 32:
         type_str = 'segment'
+    elif type_flags & 64:
+        type_str = 'vm_region'
     else:
         type_str = hex(type_flags)
     return type_str
@@ -171,8 +267,13 @@ def type_flags_to_description(type_flags, ptr_addr, ptr_size, offset):
     elif type_flags & 8:
         type_str = 'stack'
     elif type_flags & 16:
+        type_str = 'stack (red zone)'
+    elif type_flags & 32:
         sb_addr = lldb.debugger.GetSelectedTarget().ResolveLoadAddress(ptr_addr + offset)
         type_str = 'segment [%#x - %#x), %s + %u, %s' % (ptr_addr, ptr_addr + ptr_size, sb_addr.section.name, sb_addr.offset, sb_addr)
+    elif type_flags & 64:
+        sb_addr = lldb.debugger.GetSelectedTarget().ResolveLoadAddress(ptr_addr + offset)
+        type_str = 'vm_region [%#x - %#x), %s + %u, %s' % (ptr_addr, ptr_addr + ptr_size, sb_addr.section.name, sb_addr.offset, sb_addr)
     else:
         type_str = '%#x' % (ptr_addr,)
         show_offset = True
@@ -357,66 +458,83 @@ def display_match_results (result, options, arg_str_description, expr, print_no_
                     print_entry = False
                 else:                    
                     match_addr = malloc_addr + offset
-                    dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
                     type_flags = int(match_entry.type)
-                    description = '%#16.16x: %s' % (match_addr, type_flags_to_description(type_flags, malloc_addr, malloc_size, offset))
-                    if options.show_size:
-                        description += ' <%5u>' % (malloc_size)
-                    if options.show_range:
-                        description += ' [%#x - %#x)' % (malloc_addr, malloc_addr + malloc_size)
-                    derefed_dynamic_value = None
-                    if dynamic_value.type.name == 'void *':
-                        if options.type == 'pointer' and malloc_size == 4096:
-                            error = lldb.SBError()
-                            process = expr_sbvalue.GetProcess()
-                            target = expr_sbvalue.GetTarget()
-                            data = bytearray(process.ReadMemory(malloc_addr, 16, error))
-                            if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
-                                ptr_size = target.addr_size
-                                thread = process.ReadUnsignedFromMemory (malloc_addr + 16 + ptr_size, ptr_size, error)
-                                #   4 bytes  0xa1a1a1a1
-                                #  12 bytes  'AUTORELEASE!'
-                                # ptr bytes  autorelease insertion point
-                                # ptr bytes  pthread_t
-                                # ptr bytes  next colder page
-                                # ptr bytes  next hotter page
-                                #   4 bytes  this page's depth in the list
-                                #   4 bytes  high-water mark
-                                description += ' AUTORELEASE! for pthread_t %#x' % (thread)
-                        #     else:
-                        #         description += 'malloc(%u)' % (malloc_size)
-                        # else:
-                        #     description += 'malloc(%u)' % (malloc_size)
-                    else:
-                        derefed_dynamic_value = dynamic_value.deref
-                        if derefed_dynamic_value:                        
-                            derefed_dynamic_type = derefed_dynamic_value.type
-                            derefed_dynamic_type_size = derefed_dynamic_type.size
-                            derefed_dynamic_type_name = derefed_dynamic_type.name
-                            description += ' '
-                            description += derefed_dynamic_type_name
-                            if offset < derefed_dynamic_type_size:
-                                member_list = list();
-                                get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
-                                if member_list:
-                                    member_path = ''
-                                    for member in member_list:
-                                        member_name = member.name
-                                        if member_name: 
-                                            if member_path:
-                                                member_path += '.'
-                                            member_path += member_name
-                                    if member_path:
-                                        if options.ivar_regex_blacklist:
-                                            for ivar_regex in options.ivar_regex_blacklist:
-                                                if ivar_regex.match(member_path):
-                                                    print_entry = False
-                                        description += '.%s' % (member_path)
-                            else:
-                                description += '%u bytes after %s' % (offset - derefed_dynamic_type_size, derefed_dynamic_type_name)
+                    #result.AppendMessage (hex(malloc_addr + offset))
+                    if type_flags == 64:
+                        search_stack_old = options.search_stack
+                        search_segments_old = options.search_segments
+                        search_heap_old = options.search_heap
+                        search_vm_regions = options.search_vm_regions
+                        options.search_stack = True
+                        options.search_segments = True
+                        options.search_heap = True
+                        options.search_vm_regions = False
+                        if malloc_info_impl (lldb.debugger, result, options, [hex(malloc_addr + offset)]):
+                            print_entry = False
+                        options.search_stack = search_stack_old
+                        options.search_segments = search_segments_old
+                        options.search_heap = search_heap_old
+                        options.search_vm_regions = search_vm_regions
+                    if print_entry:
+                        description = '%#16.16x: %s' % (match_addr, type_flags_to_description(type_flags, malloc_addr, malloc_size, offset))
+                        if options.show_size:
+                            description += ' <%5u>' % (malloc_size)
+                        if options.show_range:
+                            description += ' [%#x - %#x)' % (malloc_addr, malloc_addr + malloc_size)
+                        derefed_dynamic_value = None
+                        dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
+                        if dynamic_value.type.name == 'void *':
+                            if options.type == 'pointer' and malloc_size == 4096:
+                                error = lldb.SBError()
+                                process = expr_sbvalue.GetProcess()
+                                target = expr_sbvalue.GetTarget()
+                                data = bytearray(process.ReadMemory(malloc_addr, 16, error))
+                                if data == '\xa1\xa1\xa1\xa1AUTORELEASE!':
+                                    ptr_size = target.addr_size
+                                    thread = process.ReadUnsignedFromMemory (malloc_addr + 16 + ptr_size, ptr_size, error)
+                                    #   4 bytes  0xa1a1a1a1
+                                    #  12 bytes  'AUTORELEASE!'
+                                    # ptr bytes  autorelease insertion point
+                                    # ptr bytes  pthread_t
+                                    # ptr bytes  next colder page
+                                    # ptr bytes  next hotter page
+                                    #   4 bytes  this page's depth in the list
+                                    #   4 bytes  high-water mark
+                                    description += ' AUTORELEASE! for pthread_t %#x' % (thread)
+                            #     else:
+                            #         description += 'malloc(%u)' % (malloc_size)
+                            # else:
+                            #     description += 'malloc(%u)' % (malloc_size)
                         else:
-                            # strip the "*" from the end of the name since we were unable to dereference this
-                            description += dynamic_value.type.name[0:-1]
+                            derefed_dynamic_value = dynamic_value.deref
+                            if derefed_dynamic_value:                        
+                                derefed_dynamic_type = derefed_dynamic_value.type
+                                derefed_dynamic_type_size = derefed_dynamic_type.size
+                                derefed_dynamic_type_name = derefed_dynamic_type.name
+                                description += ' '
+                                description += derefed_dynamic_type_name
+                                if offset < derefed_dynamic_type_size:
+                                    member_list = list();
+                                    get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
+                                    if member_list:
+                                        member_path = ''
+                                        for member in member_list:
+                                            member_name = member.name
+                                            if member_name: 
+                                                if member_path:
+                                                    member_path += '.'
+                                                member_path += member_name
+                                        if member_path:
+                                            if options.ivar_regex_blacklist:
+                                                for ivar_regex in options.ivar_regex_blacklist:
+                                                    if ivar_regex.match(member_path):
+                                                        print_entry = False
+                                            description += '.%s' % (member_path)
+                                else:
+                                    description += '%u bytes after %s' % (offset - derefed_dynamic_type_size, derefed_dynamic_type_name)
+                            else:
+                                # strip the "*" from the end of the name since we were unable to dereference this
+                                description += dynamic_value.type.name[0:-1]
                 if print_entry:
                     match_idx += 1
                     result_output = ''
@@ -536,7 +654,7 @@ baton.matches'''
         # Iterate through all of our pointer expressions and display the results
         for ptr_expr in args:
             user_init_code = user_init_code_format % (options.max_matches, ptr_expr)
-            expr = get_iterate_memory_expr(process, user_init_code, user_return_code)          
+            expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
             arg_str_description = 'malloc block containing pointer %s' % ptr_expr
             display_match_results (result, options, arg_str_description, expr)
     else:
@@ -630,7 +748,7 @@ baton.matches'''
         # Iterate through all of our pointer expressions and display the results
         for cstr in args:
             user_init_code = user_init_code_format % (options.max_matches, cstr)
-            expr = get_iterate_memory_expr(process, user_init_code, user_return_code)          
+            expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
             arg_str_description = 'malloc block containing "%s"' % cstr            
             display_match_results (result, options, arg_str_description, expr)
     else:
@@ -655,7 +773,11 @@ def malloc_info(debugger, command, result, dict):
         (options, args) = parser.parse_args(command_args)
     except:
         return
-    options.type = 'addr'
+    malloc_info_impl (debugger, result, options, args)
+
+def malloc_info_impl (debugger, result, options, args):
+    # We are specifically looking for something on the heap only
+    options.type = 'malloc_info'
 
     process = lldb.debugger.GetSelectedTarget().GetProcess()
     if not process:
@@ -698,13 +820,16 @@ callback_baton_t baton = { range_callback, 0, {0}, (void *)%s };
 baton.matches[0].addr = 0;
 baton.matches[1].addr = 0;'''
     if args:
+        total_matches = 0
         for ptr_expr in args:
             user_init_code = user_init_code_format % (ptr_expr)
-            expr = get_iterate_memory_expr(process, user_init_code, 'baton.matches')          
+            expr = get_iterate_memory_expr(options, process, user_init_code, 'baton.matches')          
             arg_str_description = 'malloc block that contains %s' % ptr_expr
-            display_match_results (result, options, arg_str_description, expr)
+            total_matches += display_match_results (result, options, arg_str_description, expr)
+        return total_matches
     else:
         result.AppendMessage('error: command takes one or more pointer expressions')
+        return 0
 
 def get_thread_stack_ranges_struct (process):
     '''Create code that defines a structure that represents threads stack bounds
@@ -727,8 +852,9 @@ def get_thread_stack_ranges_struct (process):
     if stack_dicts_len > 0:
         result = '''
 #define NUM_STACKS %u
+#define STACK_RED_ZONE_SIZE %u
 typedef struct thread_stack_t { uint64_t tid, base, size; } thread_stack_t;
-thread_stack_t stacks[NUM_STACKS];''' % (stack_dicts_len,)
+thread_stack_t stacks[NUM_STACKS];''' % (stack_dicts_len, process.target.GetStackRedZoneSize())
         for stack_dict in stack_dicts:
             result += '''
 stacks[%(index)u].tid  = 0x%(tid)x;
@@ -870,7 +996,8 @@ def objc_refs(debugger, command, result, dict):
         # a member named "callback" whose type is "range_callback_t". This
         # will be used by our zone callbacks to call the range callback for
         # each malloc range.
-        user_init_code_format = '''#define MAX_MATCHES %u
+        user_init_code_format = '''
+#define MAX_MATCHES %u
 struct $malloc_match {
     void *addr;
     uintptr_t size;
@@ -954,7 +1081,7 @@ int nc = (int)objc_getClassList(baton.classes, sizeof(baton.classes)/sizeof(Clas
                     options.type = 'isa'
                     result.AppendMessage('Searching for all instances of classes or subclasses of "%s" (isa=0x%x)' % (class_name, isa))
                     user_init_code = user_init_code_format % (options.max_matches, num_objc_classes, isa)
-                    expr = get_iterate_memory_expr(process, user_init_code, user_return_code)          
+                    expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
                     arg_str_description = 'objective C classes with isa 0x%x' % isa
                     display_match_results (result, options, arg_str_description, expr)
                 else:

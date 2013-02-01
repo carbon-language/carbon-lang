@@ -2568,3 +2568,22 @@ SBTarget::EvaluateExpression (const char *expr, const SBExpressionOptions &optio
     return expr_result;
 }
 
+
+lldb::addr_t
+SBTarget::GetStackRedZoneSize()
+{
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        ABISP abi_sp;
+        ProcessSP process_sp (target_sp->GetProcessSP());
+        if (process_sp)
+            abi_sp = process_sp->GetABI();
+        else
+            abi_sp = ABI::FindPlugin(target_sp->GetArchitecture());
+        if (abi_sp)
+            return abi_sp->GetRedZoneSize();
+    }
+    return 0;
+}
+

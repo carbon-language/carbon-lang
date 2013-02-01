@@ -765,6 +765,9 @@ public:
     lldb::SBValue
     EvaluateExpression (const char *expr, const SBExpressionOptions &options);
 
+    lldb::addr_t
+    GetStackRedZoneSize();
+    
 protected:
     friend class SBAddress;
     friend class SBBlock;

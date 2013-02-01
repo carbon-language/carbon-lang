@@ -712,6 +712,9 @@ public:
     bool
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
     
+    lldb::addr_t
+    GetStackRedZoneSize();
+
     lldb::SBValue
     EvaluateExpression (const char *expr, const lldb::SBExpressionOptions &options);
     %pythoncode %{
