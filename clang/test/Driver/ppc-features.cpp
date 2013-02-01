@@ -62,3 +62,9 @@
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -fno-altivec -mcpu=ppc64 -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-15 %s
 // CHECK-15: "-target-feature" "-altivec"
 
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-qpx -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOQPX %s
+// CHECK-NOQPX: "-target-feature" "-qpx"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-qpx -mqpx -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-QPX %s
+// CHECK-QPX-NOT: "-target-feature" "-qpx"
+

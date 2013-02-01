@@ -1091,6 +1091,11 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("-altivec");
   }
+
+  if (Args.hasFlag(options::OPT_mno_qpx, options::OPT_mqpx, false)) {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-qpx");
+  }
 }
 
 void Clang::AddSparcTargetArgs(const ArgList &Args,

@@ -946,12 +946,14 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Case("pwr7", true)
     .Case("ppc64", true)
     .Default(false);
+
+  Features["qpx"] = (CPU == "a2q");
 }
 
 bool PPCTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
                                          StringRef Name,
                                          bool Enabled) const {
-  if (Name == "altivec") {
+  if (Name == "altivec" || Name == "qpx") {
     Features[Name] = Enabled;
     return true;
   }
