@@ -1380,8 +1380,22 @@ void CodeGenSchedModels::collectProcResources() {
        SCI != SCE; ++SCI) {
     if (SCI->ItinClassDef)
       collectItinProcResources(SCI->ItinClassDef);
-    else
+    else {
+      // This class may have a default ReadWrite list which can be overriden by
+      // InstRW definitions.
+      if (!SCI->InstRWs.empty()) {
+        for (RecIter RWI = SCI->InstRWs.begin(), RWE = SCI->InstRWs.end();
+             RWI != RWE; ++RWI) {
+          Record *RWModelDef = (*RWI)->getValueAsDef("SchedModel");
+          IdxVec ProcIndices(1, getProcModel(RWModelDef).Index);
+          IdxVec Writes, Reads;
+          findRWs((*RWI)->getValueAsListOfDefs("OperandReadWrites"),
+                  Writes, Reads);
+          collectRWResources(Writes, Reads, ProcIndices);
+        }
+      }
       collectRWResources(SCI->Writes, SCI->Reads, SCI->ProcIndices);
+    }
   }
   // Add resources separately defined by each subtarget.
   RecVec WRDefs = Records.getAllDerivedDefinitions("WriteRes");
