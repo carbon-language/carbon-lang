@@ -595,6 +595,8 @@ TSAN_INTERCEPTOR(void*, mmap, void *addr, long_t sz, int prot,
     return MAP_FAILED;
   void *res = REAL(mmap)(addr, sz, prot, flags, fd, off);
   if (res != MAP_FAILED) {
+    if (fd > 0)
+      FdAccess(thr, pc, fd);
     MemoryResetRange(thr, pc, (uptr)res, sz);
   }
   return res;
@@ -607,6 +609,8 @@ TSAN_INTERCEPTOR(void*, mmap64, void *addr, long_t sz, int prot,
     return MAP_FAILED;
   void *res = REAL(mmap64)(addr, sz, prot, flags, fd, off);
   if (res != MAP_FAILED) {
+    if (fd > 0)
+      FdAccess(thr, pc, fd);
     MemoryResetRange(thr, pc, (uptr)res, sz);
   }
   return res;
@@ -1150,21 +1154,29 @@ TSAN_INTERCEPTOR(int, lstat64, const char *path, void *buf) {
 
 TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat, version, fd, buf);
+  if (fd > 0)
+    FdAccess(thr, pc, fd);
   return REAL(__fxstat)(version, fd, buf);
 }
 
 TSAN_INTERCEPTOR(int, fstat, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat, 0, fd, buf);
+  if (fd > 0)
+    FdAccess(thr, pc, fd);
   return REAL(__fxstat)(0, fd, buf);
 }
 
 TSAN_INTERCEPTOR(int, __fxstat64, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat64, version, fd, buf);
+  if (fd > 0)
+    FdAccess(thr, pc, fd);
   return REAL(__fxstat64)(version, fd, buf);
 }
 
 TSAN_INTERCEPTOR(int, fstat64, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat64, 0, fd, buf);
+  if (fd > 0)
+    FdAccess(thr, pc, fd);
   return REAL(__fxstat64)(0, fd, buf);
 }
 
