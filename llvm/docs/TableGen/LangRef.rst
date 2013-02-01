@@ -298,7 +298,7 @@ Bodies
 
 .. productionlist::
    ObjectBody: `BaseClassList` `Body`
-   BaseClassList: [`BaseClassListNE`]
+   BaseClassList: [":" `BaseClassListNE`]
    BaseClassListNE: `SubClassRef` ("," `SubClassRef`)*
    SubClassRef: (`ClassID` | `MultiClassID`) ["<" `ValueList` ">"]
    DefmID: `TokIdentifier`
