@@ -714,7 +714,7 @@ namespace {
         for (CFGBlock::const_succ_iterator I = P->succ_begin(),
                                            E = P->succ_end();
              I != E; ++I) {
-          if (ReachableBlocks.insert(*I))
+          if (*I && ReachableBlocks.insert(*I))
             BlockQueue.push_back(*I);
         }
       }

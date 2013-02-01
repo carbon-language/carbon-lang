@@ -172,6 +172,11 @@ int fallthrough_macro1(int n) {
   return n;
 }
 
+void fallthrough_cfgblock_with_null_successor(int x) {
+  (x && "") ? (void)(0) : (void)(1);
+  switch (x) {}
+}
+
 int fallthrough_position(int n) {
   switch (n) {
       [[clang::fallthrough]];  // expected-warning{{fallthrough annotation in unreachable code}}
