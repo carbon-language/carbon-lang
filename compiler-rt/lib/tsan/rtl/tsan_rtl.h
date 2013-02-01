@@ -174,7 +174,7 @@ class FastState {
 //   tid             : kTidBits
 //   epoch           : kClkBits
 //   is_atomic       : 1
-//   is_write        : 1
+//   is_read         : 1
 //   size_log        : 2
 //   addr0           : 3
 class Shadow : public FastState {
@@ -198,9 +198,9 @@ class Shadow : public FastState {
   }
 
   void SetWrite(unsigned kAccessIsWrite) {
-    DCHECK_EQ(x_ & 32, 0);
-    if (kAccessIsWrite)
-      x_ |= 32;
+    DCHECK_EQ(x_ & kReadBit, 0);
+    if (!kAccessIsWrite)
+      x_ |= kReadBit;
     DCHECK_EQ(kAccessIsWrite, IsWrite());
   }
 
@@ -264,8 +264,8 @@ class Shadow : public FastState {
   }
   u64 addr0() const { return x_ & 7; }
   u64 size() const { return 1ull << size_log(); }
-  bool IsWrite() const { return x_ & 32; }
-  bool IsRead() const { return !IsWrite(); }
+  bool IsWrite() const { return !IsRead(); }
+  bool IsRead() const { return x_ & kReadBit; }
 
   // The idea behind the freed bit is as follows.
   // When the memory is freed (or otherwise unaccessible) we write to the shadow
@@ -287,15 +287,15 @@ class Shadow : public FastState {
   }
 
   bool IsBothReadsOrAtomic(bool kIsWrite, bool kIsAtomic) const {
-    // analyzes 5-th bit (is_write) and 6-th bit (is_atomic)
-    bool v = ((x_ ^ kWriteBit)
-        & u64(((kIsWrite ^ 1) << kWriteShift) | (kIsAtomic << kAtomicShift)));
+    // analyzes 5-th bit (is_read) and 6-th bit (is_atomic)
+    bool v = x_ & u64(((kIsWrite ^ 1) << kReadShift)
+        | (kIsAtomic << kAtomicShift));
     DCHECK_EQ(v, (!IsWrite() && !kIsWrite) || (IsAtomic() && kIsAtomic));
     return v;
   }
 
   bool IsRWNotWeaker(bool kIsWrite, bool kIsAtomic) const {
-    bool v = (((x_ >> kWriteShift) & 3) ^ 1)
+    bool v = ((x_ >> kReadShift) & 3)
         <= u64((kIsWrite ^ 1) | (kIsAtomic << 1));
     DCHECK_EQ(v, (IsAtomic() < kIsAtomic) ||
         (IsAtomic() == kIsAtomic && !IsWrite() <= !kIsWrite));
@@ -303,7 +303,7 @@ class Shadow : public FastState {
   }
 
   bool IsRWWeakerOrEqual(bool kIsWrite, bool kIsAtomic) const {
-    bool v = (((x_ >> kWriteShift) & 3) ^ 1)
+    bool v = ((x_ >> kReadShift) & 3)
         >= u64((kIsWrite ^ 1) | (kIsAtomic << 1));
     DCHECK_EQ(v, (IsAtomic() > kIsAtomic) ||
         (IsAtomic() == kIsAtomic && !IsWrite() >= !kIsWrite));
@@ -311,8 +311,8 @@ class Shadow : public FastState {
   }
 
  private:
-  static const u64 kWriteShift  = 5;
-  static const u64 kWriteBit    = 1ull << kWriteShift;
+  static const u64 kReadShift   = 5;
+  static const u64 kReadBit     = 1ull << kReadShift;
   static const u64 kAtomicShift = 6;
   static const u64 kAtomicBit   = 1ull << kAtomicShift;
 
