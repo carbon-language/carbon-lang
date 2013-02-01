@@ -46,3 +46,14 @@ define i64 @ptrdiff3(i8* %ptr) {
   %diff = sub i64 %last.int, %first.int
   ret i64 %diff
 }
+
+define <4 x i32> @ptrdiff4(<4 x i8*> %arg) nounwind {
+; Handle simple cases of vectors of pointers.
+; CHECK: @ptrdiff4
+; CHECK: ret <4 x i32> zeroinitializer
+  %p1 = ptrtoint <4 x i8*> %arg to <4 x i32>
+  %bc = bitcast <4 x i8*> %arg to <4 x i32*>
+  %p2 = ptrtoint <4 x i32*> %bc to <4 x i32>
+  %sub = sub <4 x i32> %p1, %p2
+  ret <4 x i32> %sub
+}

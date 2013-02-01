@@ -667,9 +667,9 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// This is very similar to GetPointerBaseWithConstantOffset except it doesn't
 /// follow non-inbounds geps. This allows it to remain usable for icmp ult/etc.
 /// folding.
-static ConstantInt *stripAndComputeConstantOffsets(const DataLayout *TD,
-                                                   Value *&V) {
-  assert(V->getType()->isPointerTy());
+static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
+                                                Value *&V) {
+  assert(V->getType()->getScalarType()->isPointerTy());
 
   // Without DataLayout, just be conservative for now. Theoretically, more could
   // be done in this case.
@@ -697,11 +697,16 @@ static ConstantInt *stripAndComputeConstantOffsets(const DataLayout *TD,
     } else {
       break;
     }
-    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
+    assert(V->getType()->getScalarType()->isPointerTy() &&
+           "Unexpected operand type!");
   } while (Visited.insert(V));
 
   Type *IntPtrTy = TD->getIntPtrType(V->getContext());
-  return cast<ConstantInt>(ConstantInt::get(IntPtrTy, Offset));
+  Constant *OffsetIntPtr = ConstantInt::get(IntPtrTy, Offset);
+  if (V->getType()->isVectorTy())
+    return ConstantVector::getSplat(V->getType()->getVectorNumElements(),
+                                    OffsetIntPtr);
+  return OffsetIntPtr;
 }
 
 /// \brief Compute the constant difference between two pointer values.
@@ -1758,8 +1763,8 @@ static Constant *computePointerICmp(const DataLayout *TD,
   // numerous hazards. AliasAnalysis and its utilities rely on special rules
   // governing loads and stores which don't apply to icmps. Also, AliasAnalysis
   // doesn't need to guarantee pointer inequality when it says NoAlias.
-  ConstantInt *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
-  ConstantInt *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
+  Constant *LHSOffset = stripAndComputeConstantOffsets(TD, LHS);
+  Constant *RHSOffset = stripAndComputeConstantOffsets(TD, RHS);
 
   // If LHS and RHS are related via constant offsets to the same base
   // value, we can replace it with an icmp which just compares the offsets.
@@ -1799,11 +1804,14 @@ static Constant *computePointerICmp(const DataLayout *TD,
     // address, due to canonicalization and constant folding.
     if (isa<AllocaInst>(LHS) &&
         (isa<AllocaInst>(RHS) || isa<GlobalVariable>(RHS))) {
+      ConstantInt *LHSOffsetCI = dyn_cast<ConstantInt>(LHSOffset);
+      ConstantInt *RHSOffsetCI = dyn_cast<ConstantInt>(RHSOffset);
       uint64_t LHSSize, RHSSize;
-      if (getObjectSize(LHS, LHSSize, TD, TLI) &&
+      if (LHSOffsetCI && RHSOffsetCI &&
+          getObjectSize(LHS, LHSSize, TD, TLI) &&
           getObjectSize(RHS, RHSSize, TD, TLI)) {
-        const APInt &LHSOffsetValue = LHSOffset->getValue();
-        const APInt &RHSOffsetValue = RHSOffset->getValue();
+        const APInt &LHSOffsetValue = LHSOffsetCI->getValue();
+        const APInt &RHSOffsetValue = RHSOffsetCI->getValue();
         if (!LHSOffsetValue.isNegative() &&
             !RHSOffsetValue.isNegative() &&
             LHSOffsetValue.ult(LHSSize) &&
