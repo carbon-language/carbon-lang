@@ -29,6 +29,8 @@ struct CXStringBuf;
 CXString createEmpty();
 
 /// \brief Create a CXString object for an NULL string.
+///
+/// A NULL string should be used as an "invalid" value in case of errors.
 CXString createNull();
 
 /// \brief Create a CXString object from a C string.
