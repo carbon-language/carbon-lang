@@ -159,9 +159,6 @@ public:
   void Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(pImpl);
   }
-
-  // FIXME: Remove this.
-  uint64_t Raw() const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -272,8 +269,8 @@ public:
 
   typedef ArrayRef<Attribute>::iterator iterator;
 
-  iterator begin(unsigned Idx);
-  iterator end(unsigned Idx);
+  iterator begin(unsigned Idx) const;
+  iterator end(unsigned Idx) const;
 
   /// operator==/!= - Provide equality predicates.
   bool operator==(const AttributeSet &RHS) const {

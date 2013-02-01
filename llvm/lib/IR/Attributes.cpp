@@ -223,10 +223,6 @@ bool Attribute::operator<(Attribute A) const {
   return *pImpl < *A.pImpl;
 }
 
-uint64_t Attribute::Raw() const {
-  return pImpl ? pImpl->Raw() : 0;
-}
-
 //===----------------------------------------------------------------------===//
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
@@ -306,11 +302,6 @@ bool AttributeImpl::operator<(const AttributeImpl &AI) const {
     return false;
 
   return ThisCDA->getAsString() < ThatCDA->getAsString();
-}
-
-uint64_t AttributeImpl::Raw() const {
-  // FIXME: Remove this.
-  return cast<ConstantInt>(Kind)->getZExtValue();
 }
 
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
@@ -740,13 +731,13 @@ AttributeSetNode *AttributeSet::getAttributes(unsigned Idx) const {
   return 0;
 }
 
-AttributeSet::iterator AttributeSet::begin(unsigned Idx) {
+AttributeSet::iterator AttributeSet::begin(unsigned Idx) const {
   if (!pImpl)
     return ArrayRef<Attribute>().begin();
   return pImpl->begin(Idx);
 }
 
-AttributeSet::iterator AttributeSet::end(unsigned Idx) {
+AttributeSet::iterator AttributeSet::end(unsigned Idx) const {
   if (!pImpl)
     return ArrayRef<Attribute>().end();
   return pImpl->end(Idx);

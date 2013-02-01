@@ -77,8 +77,7 @@ public:
       ID.AddPointer(Vals[I]);
   }
 
-  // FIXME: Remove these!
-  uint64_t Raw() const;
+  // FIXME: Remove this!
   static uint64_t getAttrMask(Attribute::AttrKind Val);
 };
 
