@@ -1171,10 +1171,10 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
     Dest.IntVal = Src.IntVal;
-    IMPLEMENT_VAARG(Pointer);
-    IMPLEMENT_VAARG(Float);
-    IMPLEMENT_VAARG(Double);
     break;
+  IMPLEMENT_VAARG(Pointer);
+  IMPLEMENT_VAARG(Float);
+  IMPLEMENT_VAARG(Double);
   default:
     dbgs() << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
     llvm_unreachable(0);
