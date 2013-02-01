@@ -745,23 +745,3 @@ define i32 @test62(i32 %x) {
 ; CHECK: @test62
 ; CHECK: ashr exact i32 %x, 3
 }
-
-; CHECK: @test63
-; CHECK: shl <4 x i32> <i32 1, i32 2, i32 4, i32 8>, %B
-define <4 x i32> @test63(i32 %n) {
-entry:
-  %K = insertelement <4 x i32> undef, i32 %n, i32 0
-  %B = shufflevector <4 x i32> %K, <4 x i32> undef, <4 x i32> zeroinitializer
-  %A = add <4 x i32> %B, <i32 0, i32 1, i32 2, i32 3>
-  %T = shl <4 x i32> <i32 1, i32 1, i32 1, i32 1>, %A
-  ret <4 x i32> %T
-}
-
-; CHECK: @test64
-; CHECK: shl i32 524288, %n
-define i32 @test64(i32 %n) {
-entry:
-  %A = add i32 %n, 19
-  %T = shl i32 1 , %A
-  ret i32 %T
-}
