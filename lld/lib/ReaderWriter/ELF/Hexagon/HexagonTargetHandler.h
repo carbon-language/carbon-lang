@@ -11,25 +11,13 @@
 #define LLD_READER_WRITER_ELF_HEXAGON_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "HexagonRelocationHandler.h"
 #include "TargetLayout.h"
 
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 4, false> HexagonELFType;
 class HexagonTargetInfo;
-
-class HexagonTargetRelocationHandler LLVM_FINAL
-    : public TargetRelocationHandler<HexagonELFType> {
-public:
-  HexagonTargetRelocationHandler(const HexagonTargetInfo &ti) : _targetInfo(ti) {}
-
-  virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const AtomLayout &,
-                                        const Reference &)const;
-
-private:
-  const HexagonTargetInfo &_targetInfo;
-};
 
 class HexagonTargetHandler LLVM_FINAL
     : public DefaultTargetHandler<HexagonELFType> {
