@@ -16,6 +16,10 @@ using namespace elf;
 
 using namespace llvm::ELF;
 
+X86_64TargetHandler::X86_64TargetHandler(X86_64TargetInfo &targetInfo)
+    : DefaultTargetHandler(targetInfo), _gotFile(targetInfo),
+      _relocationHandler(targetInfo), _targetLayout(targetInfo) {}
+
 namespace {
 /// \brief R_X86_64_64 - word64: S + A
 void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
@@ -87,7 +91,32 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   return error_code::success();
 }
 
-X86_64TargetHandler::X86_64TargetHandler(X86_64TargetInfo &targetInfo)
-    : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
-      _targetLayout(targetInfo) {
+namespace {
+class GLOBAL_OFFSET_TABLEAtom : public SimpleDefinedAtom {
+public:
+  GLOBAL_OFFSET_TABLEAtom(const File &f) : SimpleDefinedAtom(f) {}
+
+  virtual StringRef name() const { return "_GLOBAL_OFFSET_TABLE_"; }
+
+  virtual Scope scope() const { return scopeGlobal; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return ".got"; }
+
+  virtual ContentType contentType() const { return typeGOT; }
+
+  virtual uint64_t size() const { return 0; }
+
+  virtual ContentPermissions permissions() const { return permRW_; }
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>();
+  }
+};
+} // end anon namespace
+
+void X86_64TargetHandler::addFiles(InputFiles &f) {
+  _gotFile.addAtom(*new (_gotFile._alloc) GLOBAL_OFFSET_TABLEAtom(_gotFile));
+  f.appendFile(_gotFile);
 }

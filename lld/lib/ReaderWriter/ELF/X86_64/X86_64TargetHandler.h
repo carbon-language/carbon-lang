@@ -13,6 +13,8 @@
 #include "DefaultTargetHandler.h"
 #include "TargetLayout.h"
 
+#include "lld/ReaderWriter/Simple.h"
+
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 8, true> X86_64ELFType;
@@ -44,7 +46,15 @@ public:
     return _relocationHandler;
   }
 
+  virtual void addFiles(InputFiles &f);
+
 private:
+  class GOTFile : public SimpleFile {
+  public:
+    GOTFile(const ELFTargetInfo &eti) : SimpleFile(eti, "GOTFile") {}
+    llvm::BumpPtrAllocator _alloc;
+  } _gotFile;
+
   X86_64TargetRelocationHandler _relocationHandler;
   TargetLayout<X86_64ELFType> _targetLayout;
 };
