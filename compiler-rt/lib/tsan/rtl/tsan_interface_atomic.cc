@@ -20,25 +20,41 @@
 // http://www.hpl.hp.com/personal/Hans_Boehm/c++mm/
 
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "tsan_interface_atomic.h"
 #include "tsan_flags.h"
 #include "tsan_rtl.h"
 
 using namespace __tsan;  // NOLINT
 
+#define SCOPED_ATOMIC(func, ...) \
+    const uptr callpc = (uptr)__builtin_return_address(0); \
+    const uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
+    mo = ConvertOrder(mo); \
+    mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
+    ThreadState *const thr = cur_thread(); \
+    AtomicStatInc(thr, sizeof(*a), mo, StatAtomic##func); \
+    ScopedAtomic sa(thr, callpc, __FUNCTION__); \
+    return Atomic##func(thr, pc, __VA_ARGS__); \
+/**/
+
 class ScopedAtomic {
  public:
   ScopedAtomic(ThreadState *thr, uptr pc, const char *func)
       : thr_(thr) {
-    CHECK_EQ(thr_->in_rtl, 1);  // 1 due to our own ScopedInRtl member.
+    CHECK_EQ(thr_->in_rtl, 0);
+    ProcessPendingSignals(thr);
+    FuncEntry(thr_, pc);
     DPrintf("#%d: %s\n", thr_->tid, func);
+    thr_->in_rtl++;
   }
   ~ScopedAtomic() {
-    CHECK_EQ(thr_->in_rtl, 1);
+    thr_->in_rtl--;
+    CHECK_EQ(thr_->in_rtl, 0);
+    FuncExit(thr_);
   }
  private:
   ThreadState *thr_;
-  ScopedInRtl in_rtl_;
 };
 
 // Some shortcuts.
@@ -211,17 +227,6 @@ a128 func_cas(volatile a128 *v, a128 cmp, a128 xch) {
   return cur;
 }
 #endif
-
-#define SCOPED_ATOMIC(func, ...) \
-    mo = ConvertOrder(mo); \
-    mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
-    ThreadState *const thr = cur_thread(); \
-    ProcessPendingSignals(thr); \
-    const uptr pc = (uptr)__builtin_return_address(0); \
-    AtomicStatInc(thr, sizeof(*a), mo, StatAtomic##func); \
-    ScopedAtomic sa(thr, pc, __FUNCTION__); \
-    return Atomic##func(thr, pc, __VA_ARGS__); \
-/**/
 
 template<typename T>
 static int SizeLog() {
