@@ -24,7 +24,7 @@ static const char *global_defines =
 "#define nil ((id)0)               \n"
 "#define YES ((BOOL)1)             \n"
 "#define NO ((BOOL)0)              \n"
-"typedef int BOOL;                 \n"
+"typedef signed char BOOL;         \n"
 "typedef signed __INT8_TYPE__ int8_t;\n"
 "typedef unsigned __INT8_TYPE__ uint8_t;\n"
 "typedef signed __INT16_TYPE__ int16_t;\n"
