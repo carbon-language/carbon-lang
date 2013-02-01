@@ -438,7 +438,7 @@
   <define name="Availability">
     <element name="Availability">
       <attribute name="distribution">
-          <data type="string" />
+        <data type="string" />
       </attribute>
       <optional>
         <element name="IntroducedInVersion">
