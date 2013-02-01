@@ -7075,7 +7075,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 // the .o file might not have allocated a virtual
                                 // address for the global variable. In this case it will
                                 // have created a symbol for the global variable
-                                // that is undefined and external and the value will
+                                // that is undefined/data and external and the value will
                                 // be the byte size of the variable. When we do the
                                 // address map in SymbolFileDWARFDebugMap we rely on
                                 // having an address, we need to do some magic here
@@ -7095,13 +7095,13 @@ SymbolFileDWARF::ParseVariableDIE
                                     Symtab *symtab = m_obj_file->GetSymtab();
                                     if (symtab)
                                     {
-                                        ConstString const_name(name);
-                                        Symbol *undefined_symbol = symtab->FindFirstSymbolWithNameAndType (const_name,
-                                                                                                           eSymbolTypeUndefined, 
-                                                                                                           Symtab::eDebugNo, 
-                                                                                                           Symtab::eVisibilityExtern);
+                                        ConstString const_name(mangled ? mangled : name);
+                                        Symbol *o_symbol = symtab->FindFirstSymbolWithNameAndType (const_name,
+                                                                                                   eSymbolTypeAny,
+                                                                                                   Symtab::eDebugNo,
+                                                                                                   Symtab::eVisibilityExtern);
                                         
-                                        if (undefined_symbol)
+                                        if (o_symbol)
                                         {
                                             ObjectFile *debug_map_objfile = m_debug_map_symfile->GetObjectFile();
                                             if (debug_map_objfile)
