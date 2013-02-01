@@ -93,3 +93,4 @@ clean:
 	rm -f asm_*.s libtsan.nm libtsan.objdump */*.o tsan_test
 	rm -rf $(GTEST_BUILD_DIR)
 	$(MAKE) clean -C rtl -f Makefile.old
+	rm -f go/*.s
