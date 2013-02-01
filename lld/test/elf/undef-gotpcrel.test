@@ -1,0 +1,10 @@
+RUN: lld -core -target x86_64-linux -output=- -entry=main \
+RUN:   %p/Inputs/undef-gotpcrel.x86-64 -emit-yaml -noinhibit-exec \
+RUN: | FileCheck %s -check-prefix=YAML
+
+YAML: name: main
+YAML: kind: R_X86_64_PC32
+YAML: target: [[NULLGOT:[a-zA-Z0-9_]+]]
+
+YAML: name: [[NULLGOT]]
+YAML: content: [ 00, 00, 00, 00, 00, 00, 00, 00 ]

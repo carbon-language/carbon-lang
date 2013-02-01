@@ -73,6 +73,7 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_32S:
     reloc32S(location, relocVAddress, targetVAddress, ref.addend());
     break;
+  case R_X86_64_TPOFF64:
   case R_X86_64_TPOFF32: {
     // Get the start and end of the TLS segment.
     if (_tlsSize == 0) {
@@ -87,8 +88,13 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
       if (tbss)
         _tlsSize += tbss->memSize();
     }
-    int32_t result = (int32_t)(targetVAddress - _tlsSize);
-    *reinterpret_cast<llvm::support::little32_t *>(location) = result;
+    if (ref.kind() == R_X86_64_TPOFF32) {
+      int32_t result = (int32_t)(targetVAddress - _tlsSize);
+      *reinterpret_cast<llvm::support::little32_t *>(location) = result;
+    } else {
+      int64_t result = (int64_t)(targetVAddress - _tlsSize);
+      *reinterpret_cast<llvm::support::little64_t *>(location) = result;
+    }
     break;
   }
   // Runtime only relocations. Ignore here.

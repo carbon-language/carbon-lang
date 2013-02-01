@@ -12,7 +12,7 @@ PLT: name: main
 PLT: scope: global
 PLT: references
 PLT: kind: R_X86_64_PC32
-PLT: target: [[PLTNAME:[a-zA-Z0-9-]+]]
+PLT: target: [[PLTNAME:[-a-zA-Z0-9_]+]]
 
 // Make sure there's a got entry with a IRELATIVE relocation.
 PLT: type: got
