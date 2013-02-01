@@ -531,10 +531,26 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
   return false;
 }
 
+static bool RaceBetweenAtomicAndFree(ThreadState *thr) {
+  Shadow s0(thr->racy_state[0]);
+  Shadow s1(thr->racy_state[1]);
+  CHECK(!(s0.IsAtomic() && s1.IsAtomic()));
+  if (!s0.IsAtomic() && !s1.IsAtomic())
+    return true;
+  if (s0.IsAtomic() && s1.IsFreed())
+    return true;
+  if (s1.IsAtomic() && thr->is_freeing)
+    return true;
+  return false;
+}
+
 void ReportRace(ThreadState *thr) {
   if (!flags()->report_bugs)
     return;
   ScopedInRtl in_rtl;
+
+  if (!flags()->report_atomic_races && !RaceBetweenAtomicAndFree(thr))
+    return;
 
   if (thr->in_signal_handler)
     Printf("ThreadSanitizer: printing report from signal handler."

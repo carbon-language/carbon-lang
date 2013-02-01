@@ -26,8 +26,12 @@ void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: MutexCreate %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexCreate);
-  if (!linker_init && IsAppMem(addr))
+  if (!linker_init && IsAppMem(addr)) {
+    CHECK(!thr->is_freeing);
+    thr->is_freeing = true;
     MemoryWrite(thr, pc, addr, kSizeLog1);
+    thr->is_freeing = false;
+  }
   SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
   s->is_rw = rw;
   s->is_recursive = recursive;
@@ -49,8 +53,12 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;
-  if (IsAppMem(addr))
+  if (IsAppMem(addr)) {
+    CHECK(!thr->is_freeing);
+    thr->is_freeing = true;
     MemoryWrite(thr, pc, addr, kSizeLog1);
+    thr->is_freeing = false;
+  }
   if (flags()->report_destroy_locked
       && s->owner_tid != SyncVar::kInvalidTid
       && !s->is_broken) {

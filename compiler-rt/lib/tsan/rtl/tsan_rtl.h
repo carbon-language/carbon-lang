@@ -280,6 +280,10 @@ class Shadow : public FastState {
      x_ |= kFreedBit;
   }
 
+  bool IsFreed() const {
+    return x_ & kFreedBit;
+  }
+
   bool GetFreedAndReset() {
     bool res = x_ & kFreedBit;
     x_ &= ~kFreedBit;
@@ -372,6 +376,7 @@ struct ThreadState {
   int in_rtl;
   bool in_symbolizer;
   bool is_alive;
+  bool is_freeing;
   const uptr stk_addr;
   const uptr stk_size;
   const uptr tls_addr;

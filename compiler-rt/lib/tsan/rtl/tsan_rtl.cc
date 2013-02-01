@@ -535,7 +535,10 @@ void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 }
 
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
+  CHECK_EQ(thr->is_freeing, false);
+  thr->is_freeing = true;
   MemoryAccessRange(thr, pc, addr, size, true);
+  thr->is_freeing = false;
   Shadow s(thr->fast_state);
   s.ClearIgnoreBit();
   s.MarkAsFreed();
