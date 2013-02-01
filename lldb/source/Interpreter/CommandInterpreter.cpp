@@ -220,7 +220,7 @@ CommandInterpreter::Initialize ()
         AddAlias ("t", cmd_obj_sp);
     }
 
-    cmd_obj_sp = GetCommandSPExact ("source list", false);
+    cmd_obj_sp = GetCommandSPExact ("_regexp-list", false);
     if (cmd_obj_sp)
     {
         AddAlias ("l", cmd_obj_sp);
@@ -577,6 +577,24 @@ CommandInterpreter::LoadCommandDictionary ()
         {
             CommandObjectSP command_sp(bt_regex_cmd_ap.release());
             m_command_dict[command_sp->GetCommandName ()] = command_sp;
+        }
+    }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    list_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                     "_regexp-list",
+                                                     "Implements the GDB 'list' command in all of its forms except FILE:FUNCTION and maps them to the appropriate 'source list' commands.",
+                                                     "_regexp-list [<line>]\n_regexp-attach [<file>:<line>]\n_regexp-attach [<file>:<line>]", 2));
+    if (list_regex_cmd_ap.get())
+    {
+        if (list_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "source list --line %1") &&
+            list_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "source list --file '%1' --line %2") &&
+            list_regex_cmd_ap->AddRegexCommand("^\\*?(0x[[:xdigit:]]+)[[:space:]]*$", "source list --address %1") &&
+            list_regex_cmd_ap->AddRegexCommand("^(.+)$", "source list --name \"%1\"") &&
+            list_regex_cmd_ap->AddRegexCommand("^$", "source list"))
+        {
+            CommandObjectSP list_regex_cmd_sp(list_regex_cmd_ap.release());
+            m_command_dict[list_regex_cmd_sp->GetCommandName ()] = list_regex_cmd_sp;
         }
     }
 
