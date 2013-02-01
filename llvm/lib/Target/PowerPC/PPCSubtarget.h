@@ -43,7 +43,12 @@ namespace PPC {
     DIR_A2,
     DIR_E500mc,
     DIR_E5500,
+    DIR_PWR3,
+    DIR_PWR4,
+    DIR_PWR5,
+    DIR_PWR5X,
     DIR_PWR6,
+    DIR_PWR6X,
     DIR_PWR7,
     DIR_64
   };
