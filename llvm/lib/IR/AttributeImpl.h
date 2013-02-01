@@ -38,14 +38,9 @@ class AttributeImpl : public FoldingSetNode {
   void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
   AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
 public:
-  AttributeImpl(LLVMContext &C, Constant *Kind)
-    : Context(C), Kind(Kind) {}
-  AttributeImpl(LLVMContext &C, Constant *Kind, ArrayRef<Constant*> Vals)
+  AttributeImpl(LLVMContext &C, Constant *Kind,
+                ArrayRef<Constant*> Vals = ArrayRef<Constant*>())
     : Context(C), Kind(Kind), Vals(Vals.begin(), Vals.end()) {}
-  explicit AttributeImpl(LLVMContext &C, Attribute::AttrKind data);
-  AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
-                ArrayRef<Constant*> values);
-  AttributeImpl(LLVMContext &C, StringRef data);
 
   LLVMContext &getContext() { return Context; }
 

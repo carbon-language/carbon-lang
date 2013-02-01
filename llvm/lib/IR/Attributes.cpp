@@ -90,16 +90,16 @@ ArrayRef<Constant*> Attribute::getAttributeValues() const {
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attribute::getAlignment() const {
-  if (!hasAttribute(Attribute::Alignment))
-    return 0;
+  assert(hasAttribute(Attribute::Alignment) &&
+         "Trying to get alignment from non-alignment attribute!");
   return pImpl->getAlignment();
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 unsigned Attribute::getStackAlignment() const {
-  if (!hasAttribute(Attribute::StackAlignment))
-    return 0;
+  assert(hasAttribute(Attribute::StackAlignment) &&
+         "Trying to get alignment from non-alignment attribute!");
   return pImpl->getStackAlignment();
 }
 
@@ -204,6 +204,7 @@ std::string Attribute::getAsString() const {
       if (I != E) Result += ' ';
     }
     if (Vals.size() > 1) Result += ')';
+    return Result;
   }
 
   llvm_unreachable("Unknown attribute");
@@ -226,22 +227,6 @@ bool Attribute::operator<(Attribute A) const {
 //===----------------------------------------------------------------------===//
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
-
-AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind kind)
-  : Context(C) {
-  Kind = ConstantInt::get(Type::getInt64Ty(C), kind);
-}
-AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind kind,
-                             ArrayRef<Constant*> values)
-  : Context(C) {
-  Kind = ConstantInt::get(Type::getInt64Ty(C), kind);
-  Vals.reserve(values.size());
-  Vals.append(values.begin(), values.end());
-}
-AttributeImpl::AttributeImpl(LLVMContext &C, StringRef kind)
-  : Context(C) {
-  Kind = ConstantDataArray::getString(C, kind);
-}
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Kind))
@@ -282,6 +267,9 @@ bool AttributeImpl::operator!=(StringRef kind) const {
 }
 
 bool AttributeImpl::operator<(const AttributeImpl &AI) const {
+  // This sorts the attributes with Attribute::AttrKinds coming first (sorted
+  // relative to their enum value) and then strings.
+
   if (!Kind && !AI.Kind) return false;
   if (!Kind && AI.Kind) return true;
   if (Kind && !AI.Kind) return false;
@@ -409,9 +397,9 @@ unsigned AttributeSetNode::getStackAlignment() const {
 std::string AttributeSetNode::getAsString() const {
   std::string Str = "";
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
-         E = AttrList.end(); I != E; ++I) {
-    if (I != AttrList.begin()) Str += " ";
+         E = AttrList.end(); I != E; ) {
     Str += I->getAsString();
+    if (++I != E) Str += " ";
   }
   return Str;
 }
@@ -951,6 +939,7 @@ uint64_t AttrBuilder::Raw() const {
 // AttributeFuncs Function Defintions
 //===----------------------------------------------------------------------===//
 
+/// \brief Which attributes cannot be applied to a type.
 AttributeSet AttributeFuncs::typeIncompatible(Type *Ty, uint64_t Index) {
   AttrBuilder Incompatible;
 
