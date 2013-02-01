@@ -364,7 +364,9 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
         if (process_sp)
         {
             Error error;
-            return process_sp->ReadMemory (section->GetLoadBaseAddress (&process_sp->GetTarget()) + section_offset, dst, dst_len, error);
+            const addr_t base_load_addr = section->GetLoadBaseAddress (&process_sp->GetTarget());
+            if (base_load_addr != LLDB_INVALID_ADDRESS)
+                return process_sp->ReadMemory (base_load_addr + section_offset, dst, dst_len, error);
         }
     }
     else
@@ -406,13 +408,17 @@ ObjectFile::ReadSectionData (const Section *section, DataExtractor& section_data
         ProcessSP process_sp (m_process_wp.lock());
         if (process_sp)
         {
-            DataBufferSP data_sp (ReadMemory (process_sp, section->GetLoadBaseAddress (&process_sp->GetTarget()), section->GetByteSize()));
-            if (data_sp)
+            const addr_t base_load_addr = section->GetLoadBaseAddress (&process_sp->GetTarget());
+            if (base_load_addr != LLDB_INVALID_ADDRESS)
             {
-                section_data.SetData (data_sp, 0, data_sp->GetByteSize());
-                section_data.SetByteOrder (process_sp->GetByteOrder());
-                section_data.SetAddressByteSize (process_sp->GetAddressByteSize());
-                return section_data.GetByteSize();
+                DataBufferSP data_sp (ReadMemory (process_sp, base_load_addr, section->GetByteSize()));
+                if (data_sp)
+                {
+                    section_data.SetData (data_sp, 0, data_sp->GetByteSize());
+                    section_data.SetByteOrder (process_sp->GetByteOrder());
+                    section_data.SetAddressByteSize (process_sp->GetAddressByteSize());
+                    return section_data.GetByteSize();
+                }
             }
         }
     }

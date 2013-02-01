@@ -216,9 +216,10 @@ SectionLoadList::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
         {
             if (load_addr != pos->first && pos != m_addr_to_sect.begin())
                 --pos;
-            if (load_addr >= pos->first)
+            const addr_t pos_load_addr = pos->first;
+            if (load_addr >= pos_load_addr)
             {
-                addr_t offset = load_addr - pos->first;
+                addr_t offset = load_addr - pos_load_addr;
                 if (offset < pos->second->GetByteSize())
                 {
                     // We have found the top level section, now we need to find the

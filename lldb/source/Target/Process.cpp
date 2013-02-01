@@ -2666,9 +2666,7 @@ Process::DeallocateMemory (addr_t ptr)
 
 ModuleSP
 Process::ReadModuleFromMemory (const FileSpec& file_spec, 
-                               lldb::addr_t header_addr, 
-                               bool add_image_to_target,
-                               bool load_sections_in_target)
+                               lldb::addr_t header_addr)
 {
     ModuleSP module_sp (new Module (file_spec, ArchSpec()));
     if (module_sp)
@@ -2676,18 +2674,7 @@ Process::ReadModuleFromMemory (const FileSpec& file_spec,
         Error error;
         ObjectFile *objfile = module_sp->GetMemoryObjectFile (shared_from_this(), header_addr, error);
         if (objfile)
-        {
-            if (add_image_to_target)
-            {
-                m_target.GetImages().Append(module_sp);
-                if (load_sections_in_target)
-                {
-                    bool changed = false;
-                    module_sp->SetLoadAddress (m_target, 0, changed);
-                }
-            }
             return module_sp;
-        }
     }
     return ModuleSP();
 }

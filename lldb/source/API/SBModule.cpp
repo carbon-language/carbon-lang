@@ -50,12 +50,14 @@ SBModule::SBModule (lldb::SBProcess &process, lldb::addr_t header_addr) :
     ProcessSP process_sp (process.GetSP());
     if (process_sp)
     {
-        const bool add_image_to_target = true;
-        const bool load_image_sections_in_target = true;
-        m_opaque_sp = process_sp->ReadModuleFromMemory (FileSpec(), 
-                                                        header_addr, 
-                                                        add_image_to_target,
-                                                        load_image_sections_in_target);
+        m_opaque_sp = process_sp->ReadModuleFromMemory (FileSpec(), header_addr);
+        if (m_opaque_sp)
+        {
+            Target &target = process_sp->GetTarget();
+            bool changed = false;
+            m_opaque_sp->SetLoadAddress(target, 0, changed);
+            target.GetImages().Append(m_opaque_sp);
+        }
     }
 }
 

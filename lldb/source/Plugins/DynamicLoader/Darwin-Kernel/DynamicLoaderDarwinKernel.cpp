@@ -420,7 +420,7 @@ DynamicLoaderDarwinKernel::CheckForKernelImageAtAddress (lldb::addr_t addr, Proc
         && (header.flags & llvm::MachO::HeaderFlagBitIsDynamicLinkObject) == 0)
     {
         // Create a full module to get the UUID
-        ModuleSP memory_module_sp = process->ReadModuleFromMemory (FileSpec ("temp_mach_kernel", false), addr, false, false);
+        ModuleSP memory_module_sp = process->ReadModuleFromMemory (FileSpec ("temp_mach_kernel", false), addr);
         if (!memory_module_sp.get())
             return UUID();
 
@@ -557,7 +557,7 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
         else
             file_spec.SetFile (name, false);
         
-        memory_module_sp = process->ReadModuleFromMemory (file_spec, address, false, false);
+        memory_module_sp = process->ReadModuleFromMemory (file_spec, address);
         if (memory_module_sp && !uuid_is_valid)
         {
             uuid = memory_module_sp->GetUUID();
