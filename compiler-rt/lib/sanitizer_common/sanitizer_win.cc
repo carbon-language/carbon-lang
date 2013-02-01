@@ -195,7 +195,7 @@ fd_t internal_open(const char *filename, int flags) {
   UNIMPLEMENTED();
 }
 
-fd_t internal_open(const char *filename, int flags, mode_t mode) {
+fd_t internal_open(const char *filename, int flags, u32 mode) {
   UNIMPLEMENTED();
 }
 

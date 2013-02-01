@@ -52,7 +52,7 @@ fd_t internal_open(const char *filename, int flags) {
   return open(filename, flags);
 }
 
-fd_t internal_open(const char *filename, int flags, mode_t mode) {
+fd_t internal_open(const char *filename, int flags, u32 mode) {
   return open(filename, flags, mode);
 }
 

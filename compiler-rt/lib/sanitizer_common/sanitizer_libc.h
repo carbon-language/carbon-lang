@@ -66,7 +66,7 @@ int internal_isatty(fd_t fd);
 
 // Use __sanitizer::OpenFile() instead.
 fd_t internal_open(const char *filename, int flags);
-fd_t internal_open(const char *filename, int flags, mode_t mode);
+fd_t internal_open(const char *filename, int flags, u32 mode);
 
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
