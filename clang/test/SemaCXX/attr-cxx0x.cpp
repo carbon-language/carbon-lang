@@ -25,7 +25,7 @@ template <unsigned A> struct alignas(A) align_class_template {};
 template <typename... T> alignas(T...) struct align_class_temp_pack_type {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}
 template <unsigned... A> alignas(A...) struct align_class_temp_pack_expr {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}
 
-typedef char align_typedef alignas(8); // expected-error {{'alignas' attribute only applies to variables, functions and tag types}}
+typedef char align_typedef alignas(8); // expected-error {{'alignas' attribute only applies to variables, data members and tag types}}
 template<typename T> using align_alias_template = align_typedef alignas(8); // expected-error {{'alignas' attribute cannot be applied to types}}
 
 static_assert(alignof(align_big) == alignof(int), "k's alignment is wrong"); // expected-warning{{'alignof' applied to an expression is a GNU extension}}

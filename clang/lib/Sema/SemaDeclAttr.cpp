@@ -47,7 +47,9 @@ enum AttributeDeclKind {
   ExpectedFieldOrGlobalVar,
   ExpectedStruct,
   ExpectedVariableFunctionOrTag,
-  ExpectedTLSVar
+  ExpectedTLSVar,
+  ExpectedVariableOrField,
+  ExpectedVariableFieldOrTag
 };
 
 //===----------------------------------------------------------------------===//
@@ -3323,7 +3325,8 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
     } else if (!isa<TagDecl>(D)) {
       Diag(AttrLoc, diag::err_attribute_wrong_decl_type)
         << (TmpAttr.isC11() ? "'_Alignas'" : "'alignas'")
-        << ExpectedVariableFunctionOrTag;
+        << (TmpAttr.isC11() ? ExpectedVariableOrField
+                            : ExpectedVariableFieldOrTag);
       return;
     }
     if (DiagKind != -1) {
