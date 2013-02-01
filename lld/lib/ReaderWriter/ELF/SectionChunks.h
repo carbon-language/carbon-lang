@@ -240,6 +240,7 @@ const AtomLayout &Section<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeGOT:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
+    case DefinedAtom::typeTLVInitialData:
       _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
@@ -249,6 +250,7 @@ const AtomLayout &Section<ELFT>::appendAtom(const Atom *atom) {
                                    << fOffset << "\n");
       break;
     case  DefinedAtom::typeZeroFill:
+    case DefinedAtom::typeTLVInitialZeroFill:
       _atoms.push_back(new (_alloc) AtomLayout(atom, mOffset, 0));
       this->_msize = mOffset + definedAtom->size();
       break;
@@ -285,7 +287,10 @@ Section<ELFT>::flags() {
 
   case DefinedAtom::permRW_:
   case DefinedAtom::permRW_L:
-      return llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE;
+    if (_contentType == DefinedAtom::typeTLVInitialData ||
+        _contentType == DefinedAtom::typeTLVInitialZeroFill)
+      return llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE | llvm::ELF::SHF_TLS;
+    return llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE;
 
   case DefinedAtom::permRWX:
       return llvm::ELF::SHF_ALLOC |
@@ -314,9 +319,11 @@ Section<ELFT>::type() {
   case DefinedAtom::typeGOT:
   case DefinedAtom::typeStub:
   case DefinedAtom::typeResolver:
+  case DefinedAtom::typeTLVInitialData:
     return llvm::ELF::SHT_PROGBITS;
 
   case DefinedAtom::typeZeroFill:
+  case DefinedAtom::typeTLVInitialZeroFill:
    return llvm::ELF::SHT_NOBITS;
 
   // Case to handle section types
@@ -636,6 +643,11 @@ SymbolTable<ELFT>::addSymbol(const Atom *atom,
       break;
     case DefinedAtom::typeZeroFill:
       type = llvm::ELF::STT_OBJECT;
+      symbol->st_value = addr;
+      break;
+    case DefinedAtom::typeTLVInitialData:
+    case DefinedAtom::typeTLVInitialZeroFill:
+      type = llvm::ELF::STT_TLS;
       symbol->st_value = addr;
       break;
     default:

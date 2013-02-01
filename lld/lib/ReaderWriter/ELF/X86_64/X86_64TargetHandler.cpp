@@ -73,6 +73,24 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_32S:
     reloc32S(location, relocVAddress, targetVAddress, ref.addend());
     break;
+  case R_X86_64_TPOFF32: {
+    // Get the start and end of the TLS segment.
+    if (_tlsSize == 0) {
+      auto tdata = _targetInfo.getTargetHandler<X86_64ELFType>().targetLayout()
+          .findOutputSection(".tdata");
+      auto tbss = _targetInfo.getTargetHandler<X86_64ELFType>().targetLayout()
+          .findOutputSection(".tbss");
+      // HACK: The tdata and tbss sections end up together to from the TLS
+      // segment. This should actually use the TLS program header entry.
+      if (tdata)
+        _tlsSize = tdata->memSize();
+      if (tbss)
+        _tlsSize += tbss->memSize();
+    }
+    int32_t result = (int32_t)(targetVAddress - _tlsSize);
+    *reinterpret_cast<llvm::support::little32_t *>(location) = result;
+    break;
+  }
   // Runtime only relocations. Ignore here.
   case R_X86_64_IRELATIVE:
     break;

@@ -291,7 +291,11 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
     return ORDER_GOT;
   case DefinedAtom::typeStub:
     return ORDER_PLT;
-  
+
+  case DefinedAtom::typeTLVInitialData:
+    return ORDER_TDATA;
+  case DefinedAtom::typeTLVInitialZeroFill:
+    return ORDER_TBSS;
   default:
     // If we get passed in a section push it to OTHER
     if (contentPermissions == DefinedAtom::perm___)

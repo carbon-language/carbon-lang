@@ -253,6 +253,12 @@ public:
       return elfAtomHandler.contentType(this);
     }
 
+    if (_section->sh_flags ==
+        (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE | llvm::ELF::SHF_TLS)) {
+      return _section->sh_type == llvm::ELF::SHT_NOBITS ? typeTLVInitialZeroFill
+                                                        : typeTLVInitialData;
+    }
+
     if (_symbol->getType() == llvm::ELF::STT_GNU_IFUNC)
       return typeResolver;
 

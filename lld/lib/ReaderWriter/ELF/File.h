@@ -231,7 +231,8 @@ public:
               TargetHandler.targetAtomHandler();
           c = elfAtomHandler.contentType(*si);
 
-          if (c == DefinedAtom::typeZeroFill)
+          if (c == DefinedAtom::typeZeroFill ||
+              c == DefinedAtom::typeTLVInitialZeroFill)
             isCommon = true;
         }
 

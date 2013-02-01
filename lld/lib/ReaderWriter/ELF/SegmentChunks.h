@@ -348,6 +348,8 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
         else
           s->assignVirtualAddress(addr);
       }
+      if (isTLSSegment)
+        tlsStartAddr += section->memSize();
       addr += section->memSize();
       section->setMemSize(addr - section->virtualAddr());
     }

@@ -156,20 +156,11 @@ public:
   }
 
 private:
-  std::vector<Elf_Phdr *> _ph;
-  PhIterT _phi;
-  llvm::BumpPtrAllocator  _allocator;
-};
-
-template<class ELFT>
-bool
-ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
-  Elf_Phdr *phdr = nullptr;
-  bool ret = false;
-
-  for (auto slice : segment->slices()) {
+  std::pair<Elf_Phdr *, bool> allocateProgramHeader() {
+    Elf_Phdr *phdr;
+    bool ret = false;
     if (_phi == _ph.end()) {
-      phdr = new(_allocator.Allocate<Elf_Phdr>()) Elf_Phdr;
+      phdr = new (_allocator) Elf_Phdr;
       _ph.push_back(phdr);
       _phi = _ph.end();
       ret = true;
@@ -177,20 +168,50 @@ ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
       phdr = (*_phi);
       ++_phi;
     }
-    phdr->p_type = segment->segmentType();
-    phdr->p_offset = slice->fileOffset();
-    phdr->p_vaddr = slice->virtualAddr();
-    phdr->p_paddr = slice->virtualAddr();
-    phdr->p_filesz = slice->fileSize();
-    phdr->p_memsz = slice->memSize();
-    phdr->p_flags = segment->flags();
-    phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ?
-                     segment->pageSize() : slice->align2();
+
+    return std::make_pair(phdr, ret);
+  }
+
+  std::vector<Elf_Phdr *> _ph;
+  PhIterT _phi;
+  llvm::BumpPtrAllocator _allocator;
+};
+
+template <class ELFT>
+bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
+  bool allocatedNew = false;
+  for (auto slice : segment->slices()) {
+    // If we have a TLS segment, emit a LOAD first.
+    if (segment->segmentType() == llvm::ELF::PT_TLS) {
+      auto phdr = allocateProgramHeader();
+      if (phdr.second)
+        allocatedNew = true;
+      phdr.first->p_type = llvm::ELF::PT_LOAD;
+      phdr.first->p_offset = slice->fileOffset();
+      phdr.first->p_vaddr = slice->virtualAddr();
+      phdr.first->p_paddr = slice->virtualAddr();
+      phdr.first->p_filesz = slice->fileSize();
+      phdr.first->p_memsz = slice->memSize();
+      phdr.first->p_flags = segment->flags();
+      phdr.first->p_align = slice->align2();
+    }
+    auto phdr = allocateProgramHeader();
+    if (phdr.second)
+      allocatedNew = true;
+    phdr.first->p_type = segment->segmentType();
+    phdr.first->p_offset = slice->fileOffset();
+    phdr.first->p_vaddr = slice->virtualAddr();
+    phdr.first->p_paddr = slice->virtualAddr();
+    phdr.first->p_filesz = slice->fileSize();
+    phdr.first->p_memsz = slice->memSize();
+    phdr.first->p_flags = segment->flags();
+    phdr.first->p_align = (phdr.first->p_type == llvm::ELF::PT_LOAD) ?
+                          segment->pageSize() : slice->align2();
   }
   this->_fsize = fileSize();
   this->_msize = this->_fsize;
 
-  return ret;
+  return allocatedNew;
 }
 
 template <class ELFT>

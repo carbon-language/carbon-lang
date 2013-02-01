@@ -23,13 +23,16 @@ class X86_64TargetInfo;
 class X86_64TargetRelocationHandler LLVM_FINAL
     : public TargetRelocationHandler<X86_64ELFType> {
 public:
-  X86_64TargetRelocationHandler(const X86_64TargetInfo &ti) : _targetInfo(ti) {}
+  X86_64TargetRelocationHandler(const X86_64TargetInfo &ti)
+      : _tlsSize(0), _targetInfo(ti) {}
 
   virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                         const AtomLayout &,
                                         const Reference &)const;
 
 private:
+  // Cached size of the TLS segment.
+  mutable uint64_t _tlsSize;
   const X86_64TargetInfo &_targetInfo;
 };
 

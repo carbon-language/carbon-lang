@@ -1,0 +1,8 @@
+RUN: lld -core -target x86_64-linux %p/Inputs/tls.x86-64 -output=%t \
+RUN:   -noinhibit-exec -entry=main && llvm-objdump -d %t | FileCheck %s
+
+// Verify that the TLS accesses have the correct offsets.
+
+CHECK: movl %fs:-8
+CHECK: movl %fs:-4
+CHECK: movl %fs:-12
