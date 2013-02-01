@@ -483,6 +483,7 @@ void Preprocessor::EnterMainSourceFile() {
   assert(SB && "Cannot create predefined source buffer");
   FileID FID = SourceMgr.createFileIDForMemBuffer(SB);
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
+  setPredefinesFileID(FID);
 
   // Start parsing the predefines.
   EnterSourceFile(FID, 0, SourceLocation());

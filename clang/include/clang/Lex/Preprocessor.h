@@ -348,6 +348,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// should use from the command line etc.
   std::string Predefines;
 
+  /// \brief The file ID for the preprocessor predefines.
+  FileID PredefinesFileID;
+
   /// TokenLexerCache - Cache macro expanders to reduce malloc traffic.
   enum { TokenLexerCacheSize = 8 };
   unsigned NumCachedTokenLexers;
@@ -502,6 +505,9 @@ public:
   /// Note that this ignores any potentially active macro expansions and _Pragma
   /// expansions going on at the time.
   PreprocessorLexer *getCurrentFileLexer() const;
+
+  /// \brief Returns the file ID for the preprocessor predefines.
+  FileID getPredefinesFileID() { return PredefinesFileID; }
 
   /// getPPCallbacks/addPPCallbacks - Accessors for preprocessor callbacks.
   /// Note that this class takes ownership of any PPCallbacks object given to
@@ -1356,6 +1362,12 @@ private:
   /// EnterSourceFileWithPTH - Add a lexer to the top of the include stack and
   /// start getting tokens from it using the PTH cache.
   void EnterSourceFileWithPTH(PTHLexer *PL, const DirectoryLookup *Dir);
+
+  /// \brief Set the file ID for the preprocessor predefines.
+  void setPredefinesFileID(FileID FID) {
+    assert(PredefinesFileID.isInvalid() && "PredefinesFileID already set!");
+    PredefinesFileID = FID;
+  }
 
   /// IsFileLexer - Returns true if we are lexing from a file and not a
   ///  pragma or a macro.
