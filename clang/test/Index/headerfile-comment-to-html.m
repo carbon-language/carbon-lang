@@ -17,7 +17,7 @@
 */
 @interface Device
 @end
-// CHECK: headerfile-comment-to-html.m:[[@LINE-2]]:12: ObjCInterfaceDecl=Device:{{.*}} FullCommentAsXML=[<Other file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-2]]" column="12"><Name>Device</Name><USR>c:objc(cs)Device</USR><Headerfile><Para> Device.h &lt;Foundation/Device.h&gt;</Para></Headerfile><Declaration>@interface Device\n@end</Declaration><Abstract><Para>      A Device represents a remote or local computer or device with which the Developer Tools can interact.  Each Device supports blah blah blah from doing blah blah blah.</Para></Abstract></Other>] CommentXMLValid
+// CHECK: headerfile-comment-to-html.m:[[@LINE-2]]:12: ObjCInterfaceDecl=Device:{{.*}} FullCommentAsXML=[<Other file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-2]]" column="12"><Name>Device</Name><USR>c:objc(cs)Device</USR><Headerfile><Para> Device.h &lt;Foundation/Device.h&gt;</Para></Headerfile><Declaration>@interface Device\n@end</Declaration><Abstract><Para>      A Device represents a remote or local computer or device with which the Developer Tools can interact.  Each Device supports blah blah blah from doing blah blah blah.</Para></Abstract></Other>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -39,7 +39,7 @@
 
 @interface Sensor
 @end
-// CHECK: headerfile-comment-to-html.m:[[@LINE-2]]:12: ObjCInterfaceDecl=Sensor:{{.*}} FullCommentAsXML=[<Other file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-2]]" column="12"><Name>Sensor</Name><USR>c:objc(cs)Sensor</USR><Headerfile><Para> Sensor.h &quot;Sensor.h&quot;</Para></Headerfile><Declaration>@interface Sensor\n@end</Declaration><Abstract><Para> This is Sensor on the Device.    Its purpose is not to Sense Device&apos;s heat.</Para></Abstract></Other>] CommentXMLValid
+// CHECK: headerfile-comment-to-html.m:[[@LINE-2]]:12: ObjCInterfaceDecl=Sensor:{{.*}} FullCommentAsXML=[<Other file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-2]]" column="12"><Name>Sensor</Name><USR>c:objc(cs)Sensor</USR><Headerfile><Para> Sensor.h &quot;Sensor.h&quot;</Para></Headerfile><Declaration>@interface Sensor\n@end</Declaration><Abstract><Para> This is Sensor on the Device.    Its purpose is not to Sense Device&apos;s heat.</Para></Abstract></Other>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -62,7 +62,7 @@
 */
 @interface VTDevice : Device
 @end
-// CHECK: headerfile-comment-to-html.m:[[@LINE-2]]:12: ObjCInterfaceDecl=VTDevice:{{.*}} FullCommentAsXML=[<Other file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-2]]" column="12"><Name>VTDevice</Name><USR>c:objc(cs)VTDevice</USR><Headerfile><Para> VTDevice.h &lt;VTFoundation/VTDevice.h&gt;</Para></Headerfile><Declaration>@interface VTDevice : Device\n@end</Declaration><Abstract><Para> Test that headerfile can come after brief.    </Para></Abstract><Discussion><Para>    More property decription goes here.</Para></Discussion></Other>] CommentXMLValid
+// CHECK: headerfile-comment-to-html.m:[[@LINE-2]]:12: ObjCInterfaceDecl=VTDevice:{{.*}} FullCommentAsXML=[<Other file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-2]]" column="12"><Name>VTDevice</Name><USR>c:objc(cs)VTDevice</USR><Headerfile><Para> VTDevice.h &lt;VTFoundation/VTDevice.h&gt;</Para></Headerfile><Declaration>@interface VTDevice : Device\n@end</Declaration><Abstract><Para> Test that headerfile can come after brief.    </Para></Abstract><Discussion><Para>    More property decription goes here.</Para></Discussion></Other>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -83,7 +83,7 @@
   \headerfile  <stdio.h>
 */
 extern void uses_stdio_h();
-// CHECK: headerfile-comment-to-html.m:[[@LINE-1]]:13: FunctionDecl=uses_stdio_h:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-1]]" column="13"><Name>uses_stdio_h</Name><USR>c:@F@uses_stdio_h</USR><Headerfile><Para>  &lt;stdio.h&gt;</Para></Headerfile><Declaration>extern void uses_stdio_h()</Declaration></Function>] CommentXMLValid
+// CHECK: headerfile-comment-to-html.m:[[@LINE-1]]:13: FunctionDecl=uses_stdio_h:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-1]]" column="13"><Name>uses_stdio_h</Name><USR>c:@F@uses_stdio_h</USR><Headerfile><Para>  &lt;stdio.h&gt;</Para></Headerfile><Declaration>extern void uses_stdio_h()</Declaration></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -99,7 +99,7 @@ extern void uses_stdio_h();
   \headerfile  <algorithm>
 */
 extern void uses_argorithm();
-// CHECK: headerfile-comment-to-html.m:[[@LINE-1]]:13: FunctionDecl=uses_argorithm:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-1]]" column="13"><Name>uses_argorithm</Name><USR>c:@F@uses_argorithm</USR><Headerfile><Para>  &lt;algorithm&gt;</Para></Headerfile><Declaration>extern void uses_argorithm()</Declaration></Function>] CommentXMLValid
+// CHECK: headerfile-comment-to-html.m:[[@LINE-1]]:13: FunctionDecl=uses_argorithm:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}headerfile-comment-to-html.m" line="[[@LINE-1]]" column="13"><Name>uses_argorithm</Name><USR>c:@F@uses_argorithm</USR><Headerfile><Para>  &lt;algorithm&gt;</Para></Headerfile><Declaration>extern void uses_argorithm()</Declaration></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
