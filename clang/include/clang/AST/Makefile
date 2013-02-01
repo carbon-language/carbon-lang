@@ -65,3 +65,8 @@ $(ObjDir)/CommentCommandInfo.inc.tmp : $(PROJ_SRC_DIR)/CommentCommands.td \
 	$(Echo) "Building Clang comment command info with tblgen"
 	$(Verb) $(ClangTableGen) -gen-clang-comment-command-info -o $(call SYSPATH, $@) $<
 
+$(ObjDir)/CommentCommandList.inc.tmp : $(PROJ_SRC_DIR)/CommentCommands.td \
+                                              $(CLANG_TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang list of comment commands with tblgen"
+	$(Verb) $(ClangTableGen) -gen-clang-comment-command-list -o $(call SYSPATH, $@) $<
+

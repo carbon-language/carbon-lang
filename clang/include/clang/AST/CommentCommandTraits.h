@@ -109,6 +109,13 @@ struct CommandInfo {
 /// in comments.
 class CommandTraits {
 public:
+  enum KnownCommandIDs {
+#define COMMENT_COMMAND(NAME) KCI_##NAME,
+#include "clang/AST/CommentCommandList.inc"
+#undef COMMENT_COMMAND
+    KCI_Last
+  };
+
   CommandTraits(llvm::BumpPtrAllocator &Allocator);
 
   /// \returns a CommandInfo object for a given command name or

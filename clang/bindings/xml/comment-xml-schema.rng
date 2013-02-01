@@ -499,6 +499,29 @@
   <define name="TextBlockContent">
     <choice>
       <element name="Para">
+        <optional>
+          <attribute name="kind">
+            <choice>
+              <value>author</value>
+              <value>authors</value>
+              <value>bug</value>
+              <value>copyright</value>
+              <value>date</value>
+              <value>invariant</value>
+              <value>note</value>
+              <value>post</value>
+              <value>pre</value>
+              <value>remark</value>
+              <value>remarks</value>
+              <value>sa</value>
+              <value>see</value>
+              <value>since</value>
+              <value>todo</value>
+              <value>version</value>
+              <value>warning</value>
+            </choice>
+          </attribute>
+        </optional>
         <zeroOrMore>
           <ref name="TextInlineContent" />
         </zeroOrMore>

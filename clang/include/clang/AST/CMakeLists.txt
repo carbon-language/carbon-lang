@@ -41,3 +41,7 @@ clang_tablegen(CommentCommandInfo.inc -gen-clang-comment-command-info
   SOURCE CommentCommands.td
   TARGET ClangCommentCommandInfo)
 
+clang_tablegen(CommentCommandList.inc -gen-clang-comment-command-list
+  SOURCE CommentCommands.td
+  TARGET ClangCommentCommandList)
+

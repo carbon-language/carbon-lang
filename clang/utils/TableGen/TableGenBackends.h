@@ -54,6 +54,7 @@ void EmitClangCommentHTMLTagsProperties(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangCommentHTMLNamedCharacterReferences(RecordKeeper &Records, raw_ostream &OS);
 
 void EmitClangCommentCommandInfo(RecordKeeper &Records, raw_ostream &OS);
+void EmitClangCommentCommandList(RecordKeeper &Records, raw_ostream &OS);
 
 void EmitNeon(RecordKeeper &Records, raw_ostream &OS);
 void EmitNeonSema(RecordKeeper &Records, raw_ostream &OS);

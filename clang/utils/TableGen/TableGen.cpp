@@ -46,6 +46,7 @@ enum ActionType {
   GenClangCommentHTMLTagsProperties,
   GenClangCommentHTMLNamedCharacterReferences,
   GenClangCommentCommandInfo,
+  GenClangCommentCommandList,
   GenOptParserDefs, GenOptParserImpl,
   GenArmNeon,
   GenArmNeonSema,
@@ -118,6 +119,10 @@ namespace {
                                "references to UTF-8 sequences"),
                     clEnumValN(GenClangCommentCommandInfo,
                                "gen-clang-comment-command-info",
+                               "Generate command properties for commands that "
+                               "are used in documentation comments"),
+                    clEnumValN(GenClangCommentCommandList,
+                               "gen-clang-comment-command-list",
                                "Generate list of commands that are used in "
                                "documentation comments"),
                     clEnumValN(GenArmNeon, "gen-arm-neon",
@@ -204,6 +209,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenClangCommentCommandInfo:
     EmitClangCommentCommandInfo(Records, OS);
+    break;
+  case GenClangCommentCommandList:
+    EmitClangCommentCommandList(Records, OS);
     break;
   case GenOptParserDefs:
     EmitOptParser(Records, OS, true);

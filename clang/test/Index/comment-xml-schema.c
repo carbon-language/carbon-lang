@@ -30,6 +30,8 @@
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-typedef-02.xml
 //
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-enum-01.xml
+//
+// RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/valid-para-kind-01.xml
 
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-function-01.xml 2>&1 | FileCheck %s -check-prefix=INVALID
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-function-02.xml 2>&1 | FileCheck %s -check-prefix=INVALID
@@ -43,6 +45,9 @@
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-function-10.xml 2>&1 | FileCheck %s -check-prefix=INVALID
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-function-11.xml 2>&1 | FileCheck %s -check-prefix=INVALID
 // RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-function-12.xml 2>&1 | FileCheck %s -check-prefix=INVALID
+//
+// RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-para-kind-01.xml 2>&1 | FileCheck %s -check-prefix=INVALID
+// RUN: xmllint --noout --relaxng %S/../../bindings/xml/comment-xml-schema.rng %S/Inputs/CommentXML/invalid-para-kind-02.xml 2>&1 | FileCheck %s -check-prefix=INVALID
 
 // CHECK-INVALID: fails to validate
 

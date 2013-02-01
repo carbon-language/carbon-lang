@@ -882,6 +882,10 @@ public:
 
   // Block content.
   void visitParagraphComment(const ParagraphComment *C);
+
+  void appendParagraphCommentWithKind(const ParagraphComment *C,
+                                      StringRef Kind);
+
   void visitBlockCommandComment(const BlockCommandComment *C);
   void visitParamCommandComment(const ParamCommandComment *C);
   void visitTParamCommandComment(const TParamCommandComment *C);
@@ -893,7 +897,7 @@ public:
 
   // Helpers.
   void appendToResultWithXMLEscaping(StringRef S);
-      
+
   void formatTextOfDeclaration(const DeclInfo *DI,
                                SmallString<128> &Declaration);
 
@@ -1006,10 +1010,20 @@ void CommentASTToXMLConverter::visitHTMLEndTagComment(const HTMLEndTagComment *C
 }
 
 void CommentASTToXMLConverter::visitParagraphComment(const ParagraphComment *C) {
+  appendParagraphCommentWithKind(C, StringRef());
+}
+
+void CommentASTToXMLConverter::appendParagraphCommentWithKind(
+                                  const ParagraphComment *C,
+                                  StringRef ParagraphKind) {
   if (C->isWhitespace())
     return;
 
-  Result << "<Para>";
+  if (ParagraphKind.empty())
+    Result << "<Para>";
+  else
+    Result << "<Para kind=\"" << ParagraphKind << "\">";
+
   for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
        I != E; ++I) {
     visit(*I);
@@ -1018,7 +1032,32 @@ void CommentASTToXMLConverter::visitParagraphComment(const ParagraphComment *C) 
 }
 
 void CommentASTToXMLConverter::visitBlockCommandComment(const BlockCommandComment *C) {
-  visit(C->getParagraph());
+  StringRef ParagraphKind;
+
+  switch (C->getCommandID()) {
+  case CommandTraits::KCI_author:
+  case CommandTraits::KCI_authors:
+  case CommandTraits::KCI_bug:
+  case CommandTraits::KCI_copyright:
+  case CommandTraits::KCI_date:
+  case CommandTraits::KCI_invariant:
+  case CommandTraits::KCI_note:
+  case CommandTraits::KCI_post:
+  case CommandTraits::KCI_pre:
+  case CommandTraits::KCI_remark:
+  case CommandTraits::KCI_remarks:
+  case CommandTraits::KCI_sa:
+  case CommandTraits::KCI_see:
+  case CommandTraits::KCI_since:
+  case CommandTraits::KCI_todo:
+  case CommandTraits::KCI_version:
+  case CommandTraits::KCI_warning:
+    ParagraphKind = C->getCommandName(Traits);
+  default:
+    break;
+  }
+
+  appendParagraphCommentWithKind(C->getParagraph(), ParagraphKind);
 }
 
 void CommentASTToXMLConverter::visitParamCommandComment(const ParamCommandComment *C) {

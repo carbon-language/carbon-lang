@@ -77,6 +77,9 @@ def Em : InlineCommand<"em">;
 def Brief : BlockCommand<"brief"> { let IsBriefCommand = 1; }
 def Short : BlockCommand<"short"> { let IsBriefCommand = 1; }
 
+// Opposite of \brief, it is the default in our implementation.
+def Details : BlockCommand<"details">;
+
 def Returns : BlockCommand<"returns"> { let IsReturnsCommand = 1; }
 def Return  : BlockCommand<"return"> { let IsReturnsCommand = 1; }
 def Result  : BlockCommand<"result"> { let IsReturnsCommand = 1; }
@@ -104,7 +107,6 @@ def Authors    : BlockCommand<"authors">;
 def Bug        : BlockCommand<"bug">;
 def Copyright  : BlockCommand<"copyright">;
 def Date       : BlockCommand<"date">;
-def Details    : BlockCommand<"details">;
 def Invariant  : BlockCommand<"invariant">;
 def Note       : BlockCommand<"note">;
 def Post       : BlockCommand<"post">;

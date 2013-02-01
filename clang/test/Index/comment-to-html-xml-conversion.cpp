@@ -766,5 +766,31 @@ enum class comment_to_xml_conversion_17 {
 // CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:3: EnumConstantDecl=comment_to_xml_conversion_18:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="3"><Name>comment_to_xml_conversion_18</Name><USR>c:@E@comment_to_xml_conversion_17@comment_to_xml_conversion_18</USR><Declaration>comment_to_xml_conversion_18</Declaration><Abstract><Para> Aaa.</Para></Abstract></Variable>]
 };
 
+/// Aaa.
+/// \todo Bbb.
+void comment_to_xml_conversion_todo_1();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_todo_1:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_todo_1</Name><USR>c:@F@comment_to_xml_conversion_todo_1#</USR><Declaration>void comment_to_xml_conversion_todo_1()</Declaration><Abstract><Para> Aaa. </Para></Abstract><Discussion><Para kind="todo"> Bbb.</Para></Discussion></Function>]
+
+/// Aaa.
+/// \todo Bbb.
+///
+/// Ccc.
+void comment_to_xml_conversion_todo_2();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_todo_2:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_todo_2</Name><USR>c:@F@comment_to_xml_conversion_todo_2#</USR><Declaration>void comment_to_xml_conversion_todo_2()</Declaration><Abstract><Para> Aaa. </Para></Abstract><Discussion><Para kind="todo"> Bbb.</Para><Para> Ccc.</Para></Discussion></Function>]
+
+/// Aaa.
+/// \todo Bbb.
+///
+/// Ccc.
+/// \todo Ddd.
+void comment_to_xml_conversion_todo_3();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_todo_3:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_todo_3</Name><USR>c:@F@comment_to_xml_conversion_todo_3#</USR><Declaration>void comment_to_xml_conversion_todo_3()</Declaration><Abstract><Para> Aaa. </Para></Abstract><Discussion><Para kind="todo"> Bbb.</Para><Para> Ccc. </Para><Para kind="todo"> Ddd.</Para></Discussion></Function>]
+
+/// Aaa.
+/// \todo Bbb.
+/// \todo Ccc.
+void comment_to_xml_conversion_todo_4();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_todo_4:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_todo_4</Name><USR>c:@F@comment_to_xml_conversion_todo_4#</USR><Declaration>void comment_to_xml_conversion_todo_4()</Declaration><Abstract><Para> Aaa. </Para></Abstract><Discussion><Para kind="todo"> Bbb. </Para><Para kind="todo"> Ccc.</Para></Discussion></Function>]
+
 #endif
 
