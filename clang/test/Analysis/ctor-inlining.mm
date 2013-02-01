@@ -1,7 +1,14 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -fobjc-arc -analyzer-config c++-inlining=constructors -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -fobjc-arc -analyzer-config c++-inlining=constructors -Wno-null-dereference -std=c++11 -verify %s
 
 void clang_analyzer_eval(bool);
 void clang_analyzer_checkInlined(bool);
+
+// A simplified version of std::move.
+template <typename T>
+T &&move(T &obj) {
+  return static_cast<T &&>(obj);
+}
+
 
 struct Wrapper {
   __strong id obj;
@@ -115,5 +122,98 @@ namespace ConstructorUsedAsRValue {
   void test() {
     bool result = extractValue(BoolWrapper());
     clang_analyzer_eval(result); // expected-warning{{TRUE}}
+  }
+}
+
+namespace PODUninitialized {
+  class POD {
+  public:
+    int x, y;
+  };
+
+  class PODWrapper {
+  public:
+    POD p;
+  };
+
+  class NonPOD {
+  public:
+    int x, y;
+
+    NonPOD() {}
+    NonPOD(const NonPOD &Other)
+      : x(Other.x), y(Other.y) // expected-warning {{undefined}}
+    {
+    }
+    NonPOD(NonPOD &&Other)
+    : x(Other.x), y(Other.y) // expected-warning {{undefined}}
+    {
+    }
+  };
+
+  class NonPODWrapper {
+  public:
+    class Inner {
+    public:
+      int x, y;
+
+      Inner() {}
+      Inner(const Inner &Other)
+        : x(Other.x), y(Other.y) // expected-warning {{undefined}}
+      {
+      }
+      Inner(Inner &&Other)
+      : x(Other.x), y(Other.y) // expected-warning {{undefined}}
+      {
+      }
+    };
+
+    Inner p;
+  };
+
+  void testPOD() {
+    POD p;
+    p.x = 1;
+    POD p2 = p; // no-warning
+    clang_analyzer_eval(p2.x == 1); // expected-warning{{TRUE}}
+    POD p3 = move(p); // no-warning
+    clang_analyzer_eval(p3.x == 1); // expected-warning{{TRUE}}
+
+    // Use rvalues as well.
+    clang_analyzer_eval(POD(p3).x == 1); // expected-warning{{TRUE}}
+
+    PODWrapper w;
+    w.p.y = 1;
+    PODWrapper w2 = w; // no-warning
+    clang_analyzer_eval(w2.p.y == 1); // expected-warning{{TRUE}}
+    PODWrapper w3 = move(w); // no-warning
+    clang_analyzer_eval(w3.p.y == 1); // expected-warning{{TRUE}}
+
+    // Use rvalues as well.
+    clang_analyzer_eval(PODWrapper(w3).p.y == 1); // expected-warning{{TRUE}}
+  }
+
+  void testNonPOD() {
+    NonPOD p;
+    p.x = 1;
+    NonPOD p2 = p;
+  }
+
+  void testNonPODMove() {
+    NonPOD p;
+    p.x = 1;
+    NonPOD p2 = move(p);
+  }
+
+  void testNonPODWrapper() {
+    NonPODWrapper w;
+    w.p.y = 1;
+    NonPODWrapper w2 = w;
+  }
+
+  void testNonPODWrapperMove() {
+    NonPODWrapper w;
+    w.p.y = 1;
+    NonPODWrapper w2 = move(w);
   }
 }
