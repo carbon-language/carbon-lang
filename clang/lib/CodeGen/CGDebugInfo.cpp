@@ -2205,7 +2205,9 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {
   if (CurLoc == PrevLoc ||
       SM.getExpansionLoc(CurLoc) == SM.getExpansionLoc(PrevLoc))
     // New Builder may not be in sync with CGDebugInfo.
-    if (!Builder.getCurrentDebugLocation().isUnknown())
+    if (!Builder.getCurrentDebugLocation().isUnknown() &&
+        Builder.getCurrentDebugLocation().getScope(CGM.getLLVMContext()) ==
+          LexicalBlockStack.back())
       return;
   
   // Update last state.

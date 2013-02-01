@@ -117,7 +117,7 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType type) {
   llvm_unreachable("unknown type kind!");
 }
 
-bool CodeGenFunction::EmitReturnBlock() {
+void CodeGenFunction::EmitReturnBlock() {
   // For cleanliness, we try to avoid emitting the return block for
   // simple cases.
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
@@ -132,7 +132,7 @@ bool CodeGenFunction::EmitReturnBlock() {
       delete ReturnBlock.getBlock();
     } else
       EmitBlock(ReturnBlock.getBlock());
-    return false;
+    return;
   }
 
   // Otherwise, if the return block is the target of a single direct
@@ -144,11 +144,13 @@ bool CodeGenFunction::EmitReturnBlock() {
     if (BI && BI->isUnconditional() &&
         BI->getSuccessor(0) == ReturnBlock.getBlock()) {
       // Reset insertion point, including debug location, and delete the branch.
+      // this is really subtle & only works because the next change in location
+      // will hit the caching in CGDebugInfo::EmitLocation & not override this
       Builder.SetCurrentDebugLocation(BI->getDebugLoc());
       Builder.SetInsertPoint(BI->getParent());
       BI->eraseFromParent();
       delete ReturnBlock.getBlock();
-      return true;
+      return;
     }
   }
 
@@ -157,7 +159,6 @@ bool CodeGenFunction::EmitReturnBlock() {
   // region.end for now.
 
   EmitBlock(ReturnBlock.getBlock());
-  return false;
 }
 
 static void EmitIfUsed(CodeGenFunction &CGF, llvm::BasicBlock *BB) {
@@ -171,6 +172,9 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
+  if (CGDebugInfo *DI = getDebugInfo())
+    DI->EmitLocation(Builder, EndLoc);
+
   // Pop any cleanups that might have been associated with the
   // parameters.  Do this in whatever block we're currently in; it's
   // important to do this before we enter the return block or return
@@ -179,14 +183,13 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     PopCleanupBlocks(PrologueCleanupDepth);
 
   // Emit function epilog (to return).
-  bool MoveEndLoc = EmitReturnBlock();
+  EmitReturnBlock();
 
   if (ShouldInstrumentFunction())
     EmitFunctionInstrumentation("__cyg_profile_func_exit");
 
   // Emit debug descriptor for function end.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    if (!MoveEndLoc) DI->setLocation(EndLoc);
     DI->EmitFunctionEnd(Builder);
   }
 
