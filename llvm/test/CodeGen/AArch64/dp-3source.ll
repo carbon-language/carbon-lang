@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 define i32 @test_madd32(i32 %val0, i32 %val1, i32 %val2) {
 ; CHECK: test_madd32:

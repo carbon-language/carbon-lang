@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -disable-fp-elim < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-fp-elim < %s | FileCheck %s
 @var = global i32 0
 
 declare void @bar()

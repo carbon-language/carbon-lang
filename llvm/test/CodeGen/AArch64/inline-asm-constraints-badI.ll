@@ -1,4 +1,4 @@
-; RUN: not llc -march=aarch64 < %s
+; RUN: not llc -mtriple=aarch64-none-linux-gnu < %s
 
 define void @foo() {
   ; Out of range immediate for I.

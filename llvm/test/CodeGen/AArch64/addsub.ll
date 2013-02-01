@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 ; Note that this should be refactored (for efficiency if nothing else)
 ; when the PCS is implemented so we don't have to worry about the

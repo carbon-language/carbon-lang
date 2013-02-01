@@ -1,5 +1,5 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -O0 | FileCheck %s
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -O0 -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP %s
 
 ; Make sure a reasonably sane prologue and epilogue are
 ; generated. This test is not robust in the face of an frame-handling

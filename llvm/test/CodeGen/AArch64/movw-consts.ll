@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -O0 < %s -march=aarch64 | FileCheck %s
+; RUN: llc -verify-machineinstrs -O0 < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 define i64 @test0() {
 ; CHECK: test0:

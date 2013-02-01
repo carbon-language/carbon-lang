@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 @var32_0 = global i32 0
 @var32_1 = global i32 0

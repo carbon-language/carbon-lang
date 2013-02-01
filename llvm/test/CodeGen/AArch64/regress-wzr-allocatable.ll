@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -O0
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0
 
 ; When WZR wasn't marked as reserved, this function tried to allocate
 ; it at O0 and then generated an internal fault (mostly incidentally)

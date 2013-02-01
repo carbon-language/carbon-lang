@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -fp-contract=fast | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -fp-contract=fast | FileCheck %s
 
 declare float @llvm.fma.f32(float, float, float)
 declare double @llvm.fma.f64(double, double, double)

@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 
 ; We used to not mark NZCV as being used in the continuation basic-block
 ; when lowering a 128-bit "select" to branches. This meant a subsequent use

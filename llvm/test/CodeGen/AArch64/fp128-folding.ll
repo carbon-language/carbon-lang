@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 declare void @bar(i8*, i8*, i32*)
 
 ; SelectionDAG used to try to fold some fp128 operations using the ppc128 type,

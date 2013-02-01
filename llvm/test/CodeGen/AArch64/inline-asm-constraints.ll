@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
 
 define i64 @test_inline_constraint_r(i64 %base, i32 %offset) {
 ; CHECK: test_inline_constraint_r:

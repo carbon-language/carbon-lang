@@ -1,5 +1,5 @@
-; RUN: llc -verify-machineinstrs -march aarch64 < %s | FileCheck %s
-; RUN: llc -verify-machineinstrs -march aarch64 -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-WITH-FP
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-WITH-FP
 
 @bigspace = global [8 x i64] zeroinitializer
 

@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 
 @var32 = global [3 x i32] zeroinitializer
 @var64 = global [3 x i64] zeroinitializer

@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -march=aarch64 < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
 
 ; When generating DAG selection tables, TableGen used to only flag an
 ; instruction as needing a chain on its own account if it had a built-in pattern

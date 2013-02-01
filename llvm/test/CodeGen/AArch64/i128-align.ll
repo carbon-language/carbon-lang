@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 
 %struct = type { i32, i128, i8 }
 

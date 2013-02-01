@@ -1,4 +1,4 @@
-; RUN: not llc -march=aarch64 < %s
+; RUN: not llc -mtriple=aarch64-none-linux-gnu < %s
 
 define void @foo() {
   ; 32-bit bitpattern ending in 1101 can't be produced.

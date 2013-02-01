@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
 
 define i32 @foo(i32* %var, i1 %cond) {
 ; CHECK: foo:

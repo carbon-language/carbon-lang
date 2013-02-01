@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -march=aarch64 %s -filetype=obj -o %t
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu %s -filetype=obj -o %t
 ; RUN: llvm-objdump -s %t | FileCheck %s
 @var = global i32 0
 

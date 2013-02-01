@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -tailcallopt | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -tailcallopt | FileCheck %s
 
 declare fastcc void @callee_stack0()
 declare fastcc void @callee_stack8([8 x i32], i64)

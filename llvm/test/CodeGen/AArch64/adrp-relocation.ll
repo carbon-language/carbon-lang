@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -verify-machineinstrs -filetype=obj < %s | elf-dump | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -filetype=obj < %s | elf-dump | FileCheck %s
 
 define fp128 @testfn() nounwind {
 entry:

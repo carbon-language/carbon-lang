@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -disable-fp-elim < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-fp-elim < %s | FileCheck %s
 
 ; This is a regression test making sure the location of variables is correct in
 ; debugging information, even if they're addressed via the frame pointer.

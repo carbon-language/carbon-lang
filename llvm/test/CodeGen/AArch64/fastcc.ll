@@ -1,5 +1,5 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -tailcallopt | FileCheck %s -check-prefix CHECK-TAIL
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -tailcallopt | FileCheck %s -check-prefix CHECK-TAIL
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 ; Without tailcallopt fastcc still means the caller cleans up the
 ; stack, so try to make sure this is respected.

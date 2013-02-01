@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 
 ; CallingConv.td requires a bitcast for vector arguments. Make sure we're
 ; actually capable of that (the test was omitted from LowerFormalArguments).

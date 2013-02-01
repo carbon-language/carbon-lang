@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -march=aarch64 %s -filetype=obj -o %t
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu %s -filetype=obj -o %t
 ; RUN: llvm-objdump -s %t | FileCheck %s
 
 declare i32 @__gxx_personality_v0(...)

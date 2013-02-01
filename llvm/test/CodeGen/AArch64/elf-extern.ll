@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs < %s -march=aarch64 -filetype=obj | elf-dump | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -filetype=obj | elf-dump | FileCheck %s
 
 ; External symbols are a different concept to global variables but should still
 ; get relocations and so on when used.

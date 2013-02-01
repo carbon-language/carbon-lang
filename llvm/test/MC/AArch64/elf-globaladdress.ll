@@ -1,8 +1,8 @@
-;; RUN: llc -march=aarch64 -filetype=obj %s -o - | \
+;; RUN: llc -mtriple=aarch64-none-linux-gnu -filetype=obj %s -o - | \
 ;; RUN:   elf-dump | FileCheck -check-prefix=OBJ %s
 
 ; Also take it on a round-trip through llvm-mc to stretch assembly-parsing's legs:
-;; RUN: llc -march=aarch64 %s -o - | \
+;; RUN: llc -mtriple=aarch64-none-linux-gnu %s -o - | \
 ;; RUN:     llvm-mc -arch=aarch64 -filetype=obj -o - | \
 ;; RUN:     elf-dump | FileCheck -check-prefix=OBJ %s
 

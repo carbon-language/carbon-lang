@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -march=aarch64 < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
 declare void @use_addr(i8*)
 
 @addr = global i8* null

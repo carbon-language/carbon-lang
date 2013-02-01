@@ -1,5 +1,5 @@
-; RUN: llc -march=aarch64 -relocation-model=pic < %s | FileCheck %s
-; RUN: llc -march=aarch64 -relocation-model=pic -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-ELF %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-ELF %s
 
 @var_simple = hidden global i32 0
 @var_got = global i32 0
