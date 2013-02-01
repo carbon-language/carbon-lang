@@ -5,7 +5,8 @@ BUILT_SOURCES = Attrs.inc AttrImpl.inc AttrDump.inc \
                 CommentNodes.inc CommentHTMLTags.inc \
                 CommentHTMLTagsProperties.inc \
                 CommentHTMLNamedCharacterReferences.inc \
-                CommentCommandInfo.inc
+                CommentCommandInfo.inc \
+                CommentCommandList.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
