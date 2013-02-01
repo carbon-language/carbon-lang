@@ -1084,6 +1084,12 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(Args.MakeArgString(TargetCPUName.c_str()));
   }
+
+  // Allow override of the Altivec feature.
+  if (Args.hasFlag(options::OPT_fno_altivec, options::OPT_faltivec, false)) {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-altivec");
+  }
 }
 
 void Clang::AddSparcTargetArgs(const ArgList &Args,

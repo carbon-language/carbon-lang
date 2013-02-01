@@ -291,6 +291,7 @@ def faccess_control : Flag<["-"], "faccess-control">, Group<f_Group>;
 def fallow_unsupported : Flag<["-"], "fallow-unsupported">, Group<f_Group>;
 def faltivec : Flag<["-"], "faltivec">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable AltiVec vector initializer syntax">;
+def fno_altivec : Flag<["-"], "fno-altivec">, Group<f_Group>, Flags<[CC1Option]>;
 def fapple_kext : Flag<["-"], "fapple-kext">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Use Apple's kernel extensions ABI">;
 def fapple_pragma_pack : Flag<["-"], "fapple-pragma-pack">, Group<f_Group>, Flags<[CC1Option]>,
@@ -809,6 +810,7 @@ def m64 : Flag<["-"], "m64">, Group<m_Group>, Flags<[DriverOption]>;
 def mabi_EQ : Joined<["-"], "mabi=">, Group<m_Group>;
 def march_EQ : Joined<["-"], "march=">, Group<m_Group>;
 def maltivec : Flag<["-"], "maltivec">, Alias<faltivec>;
+def mno_altivec : Flag<["-"], "mno-altivec">, Alias<fno_altivec>;
 def mcmodel_EQ : Joined<["-"], "mcmodel=">, Group<m_Group>;
 def mconstant_cfstrings : Flag<["-"], "mconstant-cfstrings">, Group<clang_ignored_m_Group>;
 def mcpu_EQ : Joined<["-"], "mcpu=">, Group<m_Group>;
