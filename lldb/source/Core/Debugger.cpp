@@ -1246,16 +1246,16 @@ ExpandIndexedExpression (ValueObject* valobj,
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     const char* ptr_deref_format = "[%d]";
-    std::auto_ptr<char> ptr_deref_buffer(new char[10]);
-    ::sprintf(ptr_deref_buffer.get(), ptr_deref_format, index);
+    std::string ptr_deref_buffer(10,0);
+    ::sprintf(&ptr_deref_buffer[0], ptr_deref_format, index);
     if (log)
-        log->Printf("[ExpandIndexedExpression] name to deref: %s",ptr_deref_buffer.get());
+        log->Printf("[ExpandIndexedExpression] name to deref: %s",ptr_deref_buffer.c_str());
     const char* first_unparsed;
     ValueObject::GetValueForExpressionPathOptions options;
     ValueObject::ExpressionPathEndResultType final_value_type;
     ValueObject::ExpressionPathScanEndReason reason_to_stop;
     ValueObject::ExpressionPathAftermath what_next = (deref_pointer ? ValueObject::eExpressionPathAftermathDereference : ValueObject::eExpressionPathAftermathNothing);
-    ValueObjectSP item = valobj->GetValueForExpressionPath (ptr_deref_buffer.get(),
+    ValueObjectSP item = valobj->GetValueForExpressionPath (ptr_deref_buffer.c_str(),
                                                           &first_unparsed,
                                                           &reason_to_stop,
                                                           &final_value_type,
@@ -1481,15 +1481,14 @@ Debugger::FormatPrompt
                                                         &index_higher);
                                                                     
                                     Error error;
-                                                                        
-                                    std::auto_ptr<char> expr_path(new char[var_name_final-var_name_begin-1]);
-                                    ::memset(expr_path.get(), 0, var_name_final-var_name_begin-1);
-                                    memcpy(expr_path.get(), var_name_begin+3,var_name_final-var_name_begin-3);
-                                                                        
-                                    if (log)
-                                        log->Printf("[Debugger::FormatPrompt] symbol to expand: %s",expr_path.get());
                                     
-                                    target = valobj->GetValueForExpressionPath(expr_path.get(),
+                                    std::string expr_path(var_name_final-var_name_begin-1,0);
+                                    memcpy(&expr_path[0], var_name_begin+3,var_name_final-var_name_begin-3);
+
+                                    if (log)
+                                        log->Printf("[Debugger::FormatPrompt] symbol to expand: %s",expr_path.c_str());
+                                    
+                                    target = valobj->GetValueForExpressionPath(expr_path.c_str(),
                                                                              &first_unparsed,
                                                                              &reason_to_stop,
                                                                              &final_value_type,
