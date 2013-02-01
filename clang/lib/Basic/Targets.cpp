@@ -661,11 +661,19 @@ public:
     ArchDefine603   = 1 << 4,
     ArchDefine604   = 1 << 5,
     ArchDefinePwr4  = 1 << 6,
-    ArchDefinePwr6  = 1 << 7,
-    ArchDefineA2    = 1 << 8,
-    ArchDefineA2q   = 1 << 9
+    ArchDefinePwr5  = 1 << 7,
+    ArchDefinePwr5x = 1 << 8,
+    ArchDefinePwr6  = 1 << 9,
+    ArchDefinePwr6x = 1 << 10,
+    ArchDefinePwr7  = 1 << 11,
+    ArchDefineA2    = 1 << 12,
+    ArchDefineA2q   = 1 << 13
   } ArchDefineTypes;
 
+  // Note: GCC recognizes the following additional cpus:
+  //  401, 403, 405, 405fp, 440fp, 464, 464fp, 476, 476fp, 505, 740, 801,
+  //  821, 823, 8540, 8548, e300c2, e300c3, e500mc64, e6500, 860, cell,
+  //  titan, rs64.
   virtual bool setCPU(const std::string &Name) {
     bool CPUKnown = llvm::StringSwitch<bool>(Name)
       .Case("generic", true)
@@ -679,6 +687,7 @@ public:
       .Case("604", true)
       .Case("604e", true)
       .Case("620", true)
+      .Case("630", true)
       .Case("g3", true)
       .Case("7400", true)
       .Case("g4", true)
@@ -691,9 +700,23 @@ public:
       .Case("a2q", true)
       .Case("e500mc", true)
       .Case("e5500", true)
+      .Case("power3", true)
+      .Case("pwr3", true)
+      .Case("power4", true)
+      .Case("pwr4", true)
+      .Case("power5", true)
+      .Case("pwr5", true)
+      .Case("power5x", true)
+      .Case("pwr5x", true)
+      .Case("power6", true)
       .Case("pwr6", true)
+      .Case("power6x", true)
+      .Case("pwr6x", true)
+      .Case("power7", true)
       .Case("pwr7", true)
+      .Case("powerpc", true)
       .Case("ppc", true)
+      .Case("powerpc64", true)
       .Case("ppc64", true)
       .Default(false);
 
@@ -889,16 +912,42 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
     .Case("604",   ArchDefineName | ArchDefinePpcgr)
     .Case("604e",  ArchDefineName | ArchDefine604 | ArchDefinePpcgr)
     .Case("620",   ArchDefineName | ArchDefinePpcgr)
+    .Case("630",   ArchDefineName | ArchDefinePpcgr)
     .Case("7400",  ArchDefineName | ArchDefinePpcgr)
     .Case("7450",  ArchDefineName | ArchDefinePpcgr)
     .Case("750",   ArchDefineName | ArchDefinePpcgr)
     .Case("970",   ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr
                      | ArchDefinePpcsq)
-    .Case("pwr6",  ArchDefinePwr6 | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("pwr7",  ArchDefineName | ArchDefinePwr6 | ArchDefinePpcgr
-                     | ArchDefinePpcsq)
     .Case("a2",    ArchDefineA2)
     .Case("a2q",   ArchDefineName | ArchDefineA2 | ArchDefineA2q)
+    .Case("pwr3",  ArchDefinePpcgr)
+    .Case("pwr4",  ArchDefineName | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("pwr5",  ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr
+                     | ArchDefinePpcsq)
+    .Case("pwr5x", ArchDefineName | ArchDefinePwr5 | ArchDefinePwr4
+                     | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("pwr6",  ArchDefineName | ArchDefinePwr5x | ArchDefinePwr5
+                     | ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("pwr6x", ArchDefineName | ArchDefinePwr6 | ArchDefinePwr5x
+                     | ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
+                     | ArchDefinePpcsq)
+    .Case("pwr7",  ArchDefineName | ArchDefinePwr6x | ArchDefinePwr6
+                     | ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4
+                     | ArchDefinePwr6 | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("power3",  ArchDefinePpcgr)
+    .Case("power4",  ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("power5",  ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
+                       | ArchDefinePpcsq)
+    .Case("power5x", ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4
+                       | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("power6",  ArchDefinePwr6 | ArchDefinePwr5x | ArchDefinePwr5
+                       | ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("power6x", ArchDefinePwr6x | ArchDefinePwr6 | ArchDefinePwr5x
+                       | ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
+                       | ArchDefinePpcsq)
+    .Case("power7",  ArchDefinePwr7 | ArchDefinePwr6x | ArchDefinePwr6
+                       | ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4
+                       | ArchDefinePwr6 | ArchDefinePpcgr | ArchDefinePpcsq)
     .Default(ArchDefineNone);
 
   if (defs & ArchDefineName)
@@ -913,12 +962,18 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("_ARCH_603");
   if (defs & ArchDefine604)
     Builder.defineMacro("_ARCH_604");
-  if (defs & (ArchDefinePwr4 | ArchDefinePwr6))
+  if (defs & ArchDefinePwr4)
     Builder.defineMacro("_ARCH_PWR4");
-  if (defs & ArchDefinePwr6) {
+  if (defs & ArchDefinePwr5)
     Builder.defineMacro("_ARCH_PWR5");
+  if (defs & ArchDefinePwr5x)
+    Builder.defineMacro("_ARCH_PWR5X");
+  if (defs & ArchDefinePwr6)
     Builder.defineMacro("_ARCH_PWR6");
-  }
+  if (defs & ArchDefinePwr6x)
+    Builder.defineMacro("_ARCH_PWR6X");
+  if (defs & ArchDefinePwr7)
+    Builder.defineMacro("_ARCH_PWR7");
   if (defs & ArchDefineA2)
     Builder.defineMacro("_ARCH_A2");
   if (defs & ArchDefineA2q) {
@@ -932,6 +987,27 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__bgq__");
     Builder.defineMacro("__TOS_BGQ__");
   }
+
+  // FIXME: The following are not yet generated here by Clang, but are
+  //        generated by GCC:
+  //
+  //   _SOFT_FLOAT_
+  //   __RECIP_PRECISION__
+  //   __APPLE_ALTIVEC__
+  //   __VSX__
+  //   __RECIP__
+  //   __RECIPF__
+  //   __RSQRTE__
+  //   __RSQRTEF__
+  //   _SOFT_DOUBLE_
+  //   __NO_LWSYNC__
+  //   __HAVE_BSWAP__
+  //   __LONGDOUBLE128
+  //   __CMODEL_MEDIUM__
+  //   __CMODEL_LARGE__
+  //   _CALL_SYSV
+  //   _CALL_DARWIN
+  //   __NO_FPRS__
 }
 
 void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
