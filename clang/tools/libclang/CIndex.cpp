@@ -2935,7 +2935,7 @@ CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
 extern "C" {
 CXString clang_getFileName(CXFile SFile) {
   if (!SFile)
-    return createCXString((const char*)NULL);
+    return cxstring::createNull();
 
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return createCXString(FEnt->getName());
@@ -5875,7 +5875,7 @@ CXSourceRange clang_Cursor_getCommentRange(CXCursor C) {
 
 CXString clang_Cursor_getRawCommentText(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
-    return createCXString((const char *) NULL);
+    return cxstring::createNull();
 
   const Decl *D = getCursorDecl(C);
   ASTContext &Context = getCursorContext(C);
@@ -5890,7 +5890,7 @@ CXString clang_Cursor_getRawCommentText(CXCursor C) {
 
 CXString clang_Cursor_getBriefCommentText(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
-    return createCXString((const char *) NULL);
+    return cxstring::createNull();
 
   const Decl *D = getCursorDecl(C);
   const ASTContext &Context = getCursorContext(C);
@@ -5904,7 +5904,7 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
     return createCXString(BriefText, false);
   }
 
-  return createCXString((const char *) NULL);
+  return cxstring::createNull();
 }
 
 CXComment clang_Cursor_getParsedComment(CXCursor C) {

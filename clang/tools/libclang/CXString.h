@@ -25,6 +25,9 @@ namespace cxstring {
 
 struct CXStringBuf;
 
+/// \brief Create a CXString object for an NULL string.
+CXString createNull();
+
 /// \brief Create a CXString object from a C string.
 CXString createCXString(const char *String, bool DupString = false);
 

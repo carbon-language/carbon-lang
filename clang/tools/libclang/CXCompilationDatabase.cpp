@@ -107,7 +107,7 @@ CXString
 clang_CompileCommand_getDirectory(CXCompileCommand CCmd)
 {
   if (!CCmd)
-    return createCXString((const char*)NULL);
+    return cxstring::createNull();
 
   CompileCommand *cmd = static_cast<CompileCommand *>(CCmd);
   return createCXString(cmd->Directory.c_str(), /*DupString=*/false);
@@ -126,12 +126,12 @@ CXString
 clang_CompileCommand_getArg(CXCompileCommand CCmd, unsigned Arg)
 {
   if (!CCmd)
-    return createCXString((const char*)NULL);
+    return cxstring::createNull();
 
   CompileCommand *Cmd = static_cast<CompileCommand *>(CCmd);
 
   if (Arg >= Cmd->CommandLine.size())
-    return createCXString((const char*)NULL);
+    return cxstring::createNull();
 
   return createCXString(Cmd->CommandLine[Arg].c_str(), /*DupString=*/false);
 }

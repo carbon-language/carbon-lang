@@ -29,6 +29,13 @@ enum CXStringFlag { CXS_Unmanaged, CXS_Malloc, CXS_StringBuf };
 // Basic generation of CXStrings.
 //===----------------------------------------------------------------------===//
 
+CXString cxstring::createNull() {
+  CXString Str;
+  Str.data = 0;
+  Str.private_flags = CXS_Unmanaged;
+  return Str;
+}
+
 CXString cxstring::createCXString(const char *String, bool DupString){
   CXString Str;
   if (DupString) {

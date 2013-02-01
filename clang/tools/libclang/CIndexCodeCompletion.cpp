@@ -112,7 +112,7 @@ CXString clang_getCompletionChunkText(CXCompletionString completion_string,
                                       unsigned chunk_number) {
   CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
   if (!CCStr || chunk_number >= CCStr->size())
-    return createCXString((const char*)0);
+    return cxstring::createNull();
 
   switch ((*CCStr)[chunk_number].Kind) {
   case CodeCompletionString::CK_TypedText:
@@ -211,7 +211,7 @@ CXString clang_getCompletionAnnotation(CXCompletionString completion_string,
                                        unsigned annotation_number) {
   CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
   return CCStr ? createCXString(CCStr->getAnnotation(annotation_number))
-               : createCXString((const char *) 0);
+               : cxstring::createNull();
 }
 
 CXString
@@ -222,7 +222,7 @@ clang_getCompletionParent(CXCompletionString completion_string,
   
   CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
   if (!CCStr)
-    return createCXString((const char *)0);
+    return cxstring::createNull();
   
   return createCXString(CCStr->getParentContextName(), /*DupString=*/false);
 }
@@ -232,7 +232,7 @@ clang_getCompletionBriefComment(CXCompletionString completion_string) {
   CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
 
   if (!CCStr)
-    return createCXString((const char *) NULL);
+    return cxstring::createNull();
 
   return createCXString(CCStr->getBriefComment(), /*DupString=*/false);
 }
