@@ -1164,7 +1164,8 @@ public:
   /// \param NameVisibility The level of visibility to give the names in the
   /// module.  Visibility can only be increased over time.
   void makeModuleVisible(Module *Mod, 
-                         Module::NameVisibilityKind NameVisibility);
+                         Module::NameVisibilityKind NameVisibility,
+                         SourceLocation ImportLoc);
   
   /// \brief Make the names within this set of hidden names visible.
   void makeNamesVisible(const HiddenNames &Names);

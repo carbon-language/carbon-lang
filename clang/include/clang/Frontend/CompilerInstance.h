@@ -662,7 +662,8 @@ public:
                                       bool IsInclusionDirective);
 
   virtual void makeModuleVisible(Module *Mod,
-                                 Module::NameVisibilityKind Visibility);
+                                 Module::NameVisibilityKind Visibility,
+                                 SourceLocation ImportLoc);
 
 };
 

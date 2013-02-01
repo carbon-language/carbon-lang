@@ -890,7 +890,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
   if (!ImportLoc.isInvalid() && LastModuleImportLoc == ImportLoc) {
     // Make the named module visible.
     if (LastModuleImportResult)
-      ModuleManager->makeModuleVisible(LastModuleImportResult, Visibility);
+      ModuleManager->makeModuleVisible(LastModuleImportResult, Visibility,
+                                       ImportLoc);
     return LastModuleImportResult;
   }
   
@@ -1178,7 +1179,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       return ModuleLoadResult();
     }
 
-    ModuleManager->makeModuleVisible(Module, Visibility);
+    ModuleManager->makeModuleVisible(Module, Visibility, ImportLoc);
   }
   
   // If this module import was due to an inclusion directive, create an 
@@ -1199,7 +1200,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 }
 
 void CompilerInstance::makeModuleVisible(Module *Mod,
-                                         Module::NameVisibilityKind Visibility){
-  ModuleManager->makeModuleVisible(Mod, Visibility);
+                                         Module::NameVisibilityKind Visibility,
+                                         SourceLocation ImportLoc){
+  ModuleManager->makeModuleVisible(Mod, Visibility, ImportLoc);
 }
 

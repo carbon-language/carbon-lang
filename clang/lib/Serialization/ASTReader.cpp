@@ -2591,7 +2591,8 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
 }
 
 void ASTReader::makeModuleVisible(Module *Mod, 
-                                  Module::NameVisibilityKind NameVisibility) {
+                                  Module::NameVisibilityKind NameVisibility,
+                                  SourceLocation ImportLoc) {
   llvm::SmallPtrSet<Module *, 4> Visited;
   SmallVector<Module *, 4> Stack;
   Stack.push_back(Mod);  
@@ -3082,7 +3083,8 @@ void ASTReader::InitializeContext() {
   // Re-export any modules that were imported by a non-module AST file.
   for (unsigned I = 0, N = ImportedModules.size(); I != N; ++I) {
     if (Module *Imported = getSubmodule(ImportedModules[I]))
-      makeModuleVisible(Imported, Module::AllVisible);
+      makeModuleVisible(Imported, Module::AllVisible,
+                        /*ImportLoc=*/SourceLocation());
   }
   ImportedModules.clear();
 }

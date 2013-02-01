@@ -11514,7 +11514,7 @@ void Sema::createImplicitModuleImport(SourceLocation Loc, Module *Mod) {
   Consumer.HandleImplicitImportDecl(ImportD);
 
   // Make the module visible.
-  PP.getModuleLoader().makeModuleVisible(Mod, Module::AllVisible);
+  PP.getModuleLoader().makeModuleVisible(Mod, Module::AllVisible, Loc);
 }
 
 void Sema::ActOnPragmaRedefineExtname(IdentifierInfo* Name,
