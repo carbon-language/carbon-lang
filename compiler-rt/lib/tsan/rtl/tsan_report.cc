@@ -89,11 +89,17 @@ static void PrintMutexSet(Vector<ReportMopMutex> const& mset) {
   }
 }
 
+static const char *MopDesc(bool first, bool write, bool atomic) {
+  return atomic ? (first ? (write ? "Atomic write" : "Atomic read")
+                : (write ? "Previous atomic write" : "Previous atomic read"))
+                : (first ? (write ? "Write" : "Read")
+                : (write ? "Previous write" : "Previous read"));
+}
+
 static void PrintMop(const ReportMop *mop, bool first) {
   char thrbuf[kThreadBufSize];
   Printf("  %s of size %d at %p by %s",
-      (first ? (mop->write ? "Write" : "Read")
-             : (mop->write ? "Previous write" : "Previous read")),
+      MopDesc(first, mop->write, mop->atomic),
       mop->size, (void*)mop->addr,
       thread_name(thrbuf, mop->tid));
   PrintMutexSet(mop->mset);

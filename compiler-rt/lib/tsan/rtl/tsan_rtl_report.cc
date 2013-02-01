@@ -151,6 +151,7 @@ void ScopedReport::AddMemoryAccess(uptr addr, Shadow s,
   mop->addr = addr + s.addr0();
   mop->size = s.size();
   mop->write = s.IsWrite();
+  mop->atomic = s.IsAtomic();
   mop->stack = SymbolizeStack(*stack);
   for (uptr i = 0; i < mset->Size(); i++) {
     MutexSet::Desc d = mset->Get(i);

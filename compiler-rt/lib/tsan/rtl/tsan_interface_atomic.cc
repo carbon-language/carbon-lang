@@ -29,7 +29,8 @@ using namespace __tsan;  // NOLINT
 
 #define SCOPED_ATOMIC(func, ...) \
     const uptr callpc = (uptr)__builtin_return_address(0); \
-    const uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
+    uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
+    pc = __sanitizer::StackTrace::GetPreviousInstructionPc(pc); \
     mo = ConvertOrder(mo); \
     mo = flags()->force_seq_cst_atomics ? (morder)mo_seq_cst : mo; \
     ThreadState *const thr = cur_thread(); \
