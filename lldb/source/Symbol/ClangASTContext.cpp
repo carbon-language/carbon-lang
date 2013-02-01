@@ -3711,6 +3711,13 @@ ClangASTContext::GetLLDBBasicTypeEnumeration (clang_type_t clang_type)
             case clang::BuiltinType::UnknownAny:
             case clang::BuiltinType::BuiltinFn:
             case clang::BuiltinType::ARCUnbridgedCast:
+            case clang::BuiltinType::OCLEvent:
+            case clang::BuiltinType::OCLImage1d:
+            case clang::BuiltinType::OCLImage1dArray:
+            case clang::BuiltinType::OCLImage1dBuffer:
+            case clang::BuiltinType::OCLImage2d:
+            case clang::BuiltinType::OCLImage2dArray:
+            case clang::BuiltinType::OCLImage3d:
                 return eBasicTypeOther;
             }
         }
@@ -3742,6 +3749,13 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::UnknownAny:
         case clang::BuiltinType::Void:
         case clang::BuiltinType::NullPtr:  
+        case clang::BuiltinType::OCLEvent:
+        case clang::BuiltinType::OCLImage1d:
+        case clang::BuiltinType::OCLImage1dArray:
+        case clang::BuiltinType::OCLImage1dBuffer:
+        case clang::BuiltinType::OCLImage2d:
+        case clang::BuiltinType::OCLImage2dArray:
+        case clang::BuiltinType::OCLImage3d:
             return 0;
         case clang::BuiltinType::Bool:
         case clang::BuiltinType::Char_U:
@@ -5690,6 +5704,13 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                         case clang::BuiltinType::ARCUnbridgedCast:          
                         case clang::BuiltinType::PseudoObject:
                         case clang::BuiltinType::BuiltinFn:
+                        case clang::BuiltinType::OCLEvent:
+                        case clang::BuiltinType::OCLImage1d:
+                        case clang::BuiltinType::OCLImage1dArray:
+                        case clang::BuiltinType::OCLImage1dBuffer:
+                        case clang::BuiltinType::OCLImage2d:
+                        case clang::BuiltinType::OCLImage2dArray:
+                        case clang::BuiltinType::OCLImage3d:
                             break;
                     }
                     break;

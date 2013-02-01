@@ -565,6 +565,13 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::ARCUnbridgedCast:          
         case clang::BuiltinType::PseudoObject:
         case clang::BuiltinType::BuiltinFn:
+        case clang::BuiltinType::OCLEvent:
+        case clang::BuiltinType::OCLImage1d:
+        case clang::BuiltinType::OCLImage1dArray:
+        case clang::BuiltinType::OCLImage1dBuffer:
+        case clang::BuiltinType::OCLImage2d:
+        case clang::BuiltinType::OCLImage2dArray:
+        case clang::BuiltinType::OCLImage3d:
             return lldb::eFormatHex;
         }
         break;
