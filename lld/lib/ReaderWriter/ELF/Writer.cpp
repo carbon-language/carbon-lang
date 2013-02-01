@@ -153,10 +153,14 @@ void ExecutableWriter<ELFT>::addDefaultAtoms() {
   _runtimeFile.addAbsoluteAtom("__bss_end");
   _runtimeFile.addAbsoluteAtom("_end");
   _runtimeFile.addAbsoluteAtom("end");
+  _runtimeFile.addAbsoluteAtom("__preinit_array_start");
+  _runtimeFile.addAbsoluteAtom("__preinit_array_end");
   _runtimeFile.addAbsoluteAtom("__init_array_start");
   _runtimeFile.addAbsoluteAtom("__init_array_end");
   _runtimeFile.addAbsoluteAtom("__rela_iplt_start");
   _runtimeFile.addAbsoluteAtom("__rela_iplt_end");
+  _runtimeFile.addAbsoluteAtom("__fini_array_start");
+  _runtimeFile.addAbsoluteAtom("__fini_array_end");
 }
 
 /// \brief Hook in lld to add CRuntime file 
@@ -176,26 +180,30 @@ void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
   auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
   auto endAtomIter = _layout->findAbsoluteAtom("end");
-  auto initArrayStartIter = _layout->findAbsoluteAtom("__init_array_start");
-  auto initArrayEndIter = _layout->findAbsoluteAtom("__init_array_end");
-  auto realIpltStartIter = _layout->findAbsoluteAtom("__rela_iplt_start");
-  auto realIpltEndIter = _layout->findAbsoluteAtom("__rela_iplt_end");
 
-  auto startEnd = [&](typename DefaultLayout<ELFT>::AbsoluteAtomIterT start,
-                      typename DefaultLayout<ELFT>::AbsoluteAtomIterT end,
-                      StringRef sec) -> void {
+  auto startEnd = [&](StringRef sym, StringRef sec) -> void {
+    // TODO: This looks like a good place to use Twine...
+    std::string start("__"), end("__");
+    start += sym;
+    start += "_start";
+    end += sym;
+    end += "_end";
+    auto s = _layout->findAbsoluteAtom(start);
+    auto e = _layout->findAbsoluteAtom(end);
     auto section = _layout->findOutputSection(sec);
     if (section) {
-      (*start)->_virtualAddr = section->virtualAddr();
-      (*end)->_virtualAddr = section->virtualAddr() + section->memSize();
+      (*s)->_virtualAddr = section->virtualAddr();
+      (*e)->_virtualAddr = section->virtualAddr() + section->memSize();
     } else {
-      (*start)->_virtualAddr = 0;
-      (*end)->_virtualAddr = 0;
+      (*s)->_virtualAddr = 0;
+      (*e)->_virtualAddr = 0;
     }
   };
 
-  startEnd(initArrayStartIter, initArrayEndIter, ".init_array");
-  startEnd(realIpltStartIter, realIpltEndIter, ".rela.plt");
+  startEnd("preinit_array", ".preinit_array");
+  startEnd("init_array", ".init_array");
+  startEnd("rela_iplt", ".rela.plt");
+  startEnd("fini_array", ".fini_array");
 
   assert(!(bssStartAtomIter == _layout->absoluteAtoms().end() ||
            bssEndAtomIter == _layout->absoluteAtoms().end() ||
