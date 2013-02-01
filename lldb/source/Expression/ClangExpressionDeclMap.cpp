@@ -2650,7 +2650,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (method_decl)
             {
-            
                 clang::CXXRecordDecl *class_decl = method_decl->getParent();
                 
                 QualType class_qual_type(class_decl->getTypeForDecl(), 0);
@@ -2664,7 +2663,28 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     log->Printf("  CEDM::FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
                 }
                 
-                AddOneType(context, class_user_type, current_id, true);
+                TypeFromParser class_type = CopyClassType(class_user_type, current_id);
+                
+                if (!class_type.IsValid())
+                    return;
+                
+                TypeSourceInfo *type_source_info = m_ast_context->CreateTypeSourceInfo(QualType::getFromOpaquePtr(class_type.GetOpaqueQualType()));
+                
+                if (!type_source_info)
+                    return;
+                
+                TypedefDecl *typedef_decl = TypedefDecl::Create(*m_ast_context,
+                                                                m_ast_context->getTranslationUnitDecl(),
+                                                                SourceLocation(),
+                                                                SourceLocation(),
+                                                                context.m_decl_name.getAsIdentifierInfo(),
+                                                                type_source_info);
+                
+                
+                if (!typedef_decl)
+                    return;
+                
+                context.AddNamedDecl(typedef_decl);
                 
                 if (method_decl->isInstance())
                 {
@@ -2715,7 +2735,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         
                         TypeFromUser class_user_type (class_type.getAsOpaquePtr(),
                                                         this_type->GetClangAST());
-                        AddOneType(context, class_user_type, current_id, false);
+                        AddOneType(context, class_user_type, current_id);
                                     
                                     
                         TypeFromUser this_user_type(this_type->GetClangFullType(),
@@ -2774,7 +2794,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
                 }
                     
-                AddOneType(context, class_user_type, current_id, false);
+                AddOneType(context, class_user_type, current_id);
                                 
                 if (method_decl->isInstanceMethod())
                 {
@@ -2841,7 +2861,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         TypeFromUser class_user_type (class_type.getAsOpaquePtr(),
                                                       self_type->GetClangAST());
                         
-                        AddOneType(context, class_user_type, current_id, false);
+                        AddOneType(context, class_user_type, current_id);
                                     
                         TypeFromUser self_user_type(self_type->GetClangFullType(),
                                                     self_type->GetClangAST());
@@ -3605,28 +3625,26 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     }
 }
 
-void 
-ClangExpressionDeclMap::AddOneType(NameSearchContext &context, 
-                                   TypeFromUser &ut,
-                                   unsigned int current_id,
-                                   bool add_method)
+TypeFromParser
+ClangExpressionDeclMap::CopyClassType(TypeFromUser &ut,
+                                      unsigned int current_id)
 {
     ASTContext *parser_ast_context = m_ast_context;
     ASTContext *user_ast_context = ut.GetASTContext();
-    
+
     void *copied_type = GuardedCopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
     
     if (!copied_type)
     {
         lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-
-        if (log)
-            log->Printf("ClangExpressionDeclMap::AddOneType - Couldn't import the type");
         
-        return;
+        if (log)
+            log->Printf("ClangExpressionDeclMap::CopyClassType - Couldn't import the type");
+        
+        return TypeFromParser();
     }
-     
-    if (add_method && ClangASTContext::IsAggregateType(copied_type) && ClangASTContext::GetCompleteType (parser_ast_context, copied_type))
+
+    if (ClangASTContext::IsAggregateType(copied_type) && ClangASTContext::GetCompleteType (parser_ast_context, copied_type))
     {
         void *args[1];
         
@@ -3657,6 +3675,29 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                                    is_explicit,
                                                    is_attr_used,
                                                    is_artificial);
+    }
+    
+    return TypeFromParser(copied_type, parser_ast_context);
+}
+
+void 
+ClangExpressionDeclMap::AddOneType(NameSearchContext &context, 
+                                   TypeFromUser &ut,
+                                   unsigned int current_id)
+{
+    ASTContext *parser_ast_context = m_ast_context;
+    ASTContext *user_ast_context = ut.GetASTContext();
+    
+    void *copied_type = GuardedCopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
+    
+    if (!copied_type)
+    {
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+            log->Printf("ClangExpressionDeclMap::AddOneType - Couldn't import the type");
+        
+        return;
     }
     
     context.AddTypeDecl(copied_type);

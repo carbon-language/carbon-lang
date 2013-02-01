@@ -1309,8 +1309,8 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
 
     // With templated classes, we say that a class is templated with
     // specializations, but that the bare class has no functions.
-    template_cxx_decl->startDefinition();
-    template_cxx_decl->completeDefinition();
+    //template_cxx_decl->startDefinition();
+    //template_cxx_decl->completeDefinition();
     
     class_template_decl = ClassTemplateDecl::Create (*ast,
                                                      decl_ctx,  // What decl context do we use here? TU? The actual decl context?
@@ -1355,6 +1355,8 @@ ClangASTContext::CreateClassTemplateSpecializationDecl (DeclContext *decl_ctx,
                                                                                                                    &template_param_infos.args.front(),
                                                                                                                    template_param_infos.args.size(),
                                                                                                                    NULL);
+    
+    class_template_specialization_decl->setSpecializationKind(TSK_ExplicitSpecialization);
     
     return class_template_specialization_decl;
 }

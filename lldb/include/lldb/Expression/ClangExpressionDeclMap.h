@@ -1017,16 +1017,23 @@ private:
     ///
     /// @param[in] type
     ///     The type that needs to be created.
-    ///
-    /// @param[in] add_method
-    ///     True if a method with signature void $__lldb_expr(void*)
-    ///     should be added to the C++ class type passed in
     //------------------------------------------------------------------
     void 
     AddOneType (NameSearchContext &context, 
                 TypeFromUser &type,
-                unsigned int current_id,
-                bool add_method);
+                unsigned int current_id);
+    
+    //------------------------------------------------------------------
+    /// Copy a C++ class type into the parser's AST context and add a
+    /// member function declaration to it for the expression.
+    ///
+    /// @param[in] type
+    ///     The type that needs to be created.
+    //------------------------------------------------------------------
+
+    TypeFromParser
+    CopyClassType(TypeFromUser &type,
+                  unsigned int current_id);
     
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing the struct.

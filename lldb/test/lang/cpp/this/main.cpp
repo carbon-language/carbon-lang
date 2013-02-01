@@ -9,45 +9,45 @@
 
 #include <stdio.h>
 
-class A
+template <class T> class A
 {
 public:
-  void accessMember(int a);
-  int accessMemberConst() const;
+  void accessMember(T a);
+  T accessMemberConst() const;
   static int accessStaticMember();
 
-  void accessMemberInline(int a) __attribute__ ((always_inline))
+  void accessMemberInline(T a) __attribute__ ((always_inline))
   {
     m_a = a; // breakpoint 4
   }
 
-  int m_a;
+  T m_a;
   static int s_a;
 };
 
-int A::s_a = 5;
+template <class T> int A<T>::s_a = 5;
 
-void A::accessMember(int a)
+template <class T> void A<T>::accessMember(T a)
 {
   m_a = a; // breakpoint 1
 }
 
-int A::accessMemberConst() const
+template <class T> T A<T>::accessMemberConst() const
 {
   return m_a; // breakpoint 2
 }
 
-int A::accessStaticMember()
+template <class T> int A<T>::accessStaticMember()
 {
   return s_a; // breakpoint 3
 } 
 
 int main()
 {
-  A my_a;
+  A<int> my_a;
 
   my_a.accessMember(3);
   my_a.accessMemberConst();
-  A::accessStaticMember();
+  A<int>::accessStaticMember();
   my_a.accessMemberInline(5);
 }
