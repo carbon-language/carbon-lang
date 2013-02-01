@@ -1286,6 +1286,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   // If this is a static data member definition, some attributes belong
   // to the declaration DIE.
   DIE *VariableDIE = NULL;
+  bool IsStaticMember = false;
   DIDerivedType SDMDecl = GV.getStaticDataMemberDeclaration();
   if (SDMDecl.Verify()) {
     assert(SDMDecl.isStaticMember() && "Expected static member decl");
@@ -1295,6 +1296,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     getOrCreateContextDIE(SDMDecl.getContext());
     VariableDIE = getDIE(SDMDecl);
     assert(VariableDIE && "Static member decl has no context?");
+    IsStaticMember = true;
   }
 
   // If this is not a static data member definition, create the variable
@@ -1348,9 +1350,13 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
                 getRealLinkageName(LinkageName));
   } else if (const ConstantInt *CI =
-             dyn_cast_or_null<ConstantInt>(GV.getConstant()))
-    addConstantValue(VariableDIE, CI, GTy.isUnsignedDIType());
-  else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
+             dyn_cast_or_null<ConstantInt>(GV.getConstant())) {
+    // AT_const_value was added when the static memeber was created. To avoid
+    // emitting AT_const_value multiple times, we only add AT_const_value when
+    // it is not a static member.
+    if (!IsStaticMember)
+      addConstantValue(VariableDIE, CI, GTy.isUnsignedDIType());
+  } else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
     addToAccelTable = true;
     // GV is a merged global.
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
