@@ -237,7 +237,7 @@ struct Formula {
 
   /// BaseRegs - The list of "base" registers for this use. When this is
   /// non-empty,
-  SmallVector<const SCEV *, 2> BaseRegs;
+  SmallVector<const SCEV *, 4> BaseRegs;
 
   /// ScaledReg - The 'scaled' register for this use. This should be non-null
   /// when Scale is not zero.
@@ -1087,19 +1087,19 @@ namespace {
 /// UniquifierDenseMapInfo - A DenseMapInfo implementation for holding
 /// DenseMaps and DenseSets of sorted SmallVectors of const SCEV*.
 struct UniquifierDenseMapInfo {
-  static SmallVector<const SCEV *, 2> getEmptyKey() {
-    SmallVector<const SCEV *, 2> V;
+  static SmallVector<const SCEV *, 4> getEmptyKey() {
+    SmallVector<const SCEV *, 4>  V;
     V.push_back(reinterpret_cast<const SCEV *>(-1));
     return V;
   }
 
-  static SmallVector<const SCEV *, 2> getTombstoneKey() {
-    SmallVector<const SCEV *, 2> V;
+  static SmallVector<const SCEV *, 4> getTombstoneKey() {
+    SmallVector<const SCEV *, 4> V;
     V.push_back(reinterpret_cast<const SCEV *>(-2));
     return V;
   }
 
-  static unsigned getHashValue(const SmallVector<const SCEV *, 2> &V) {
+  static unsigned getHashValue(const SmallVector<const SCEV *, 4> &V) {
     unsigned Result = 0;
     for (SmallVectorImpl<const SCEV *>::const_iterator I = V.begin(),
          E = V.end(); I != E; ++I)
@@ -1107,8 +1107,8 @@ struct UniquifierDenseMapInfo {
     return Result;
   }
 
-  static bool isEqual(const SmallVector<const SCEV *, 2> &LHS,
-                      const SmallVector<const SCEV *, 2> &RHS) {
+  static bool isEqual(const SmallVector<const SCEV *, 4> &LHS,
+                      const SmallVector<const SCEV *, 4> &RHS) {
     return LHS == RHS;
   }
 };
@@ -1119,7 +1119,7 @@ struct UniquifierDenseMapInfo {
 /// the user itself, and information about how the use may be satisfied.
 /// TODO: Represent multiple users of the same expression in common?
 class LSRUse {
-  DenseSet<SmallVector<const SCEV *, 2>, UniquifierDenseMapInfo> Uniquifier;
+  DenseSet<SmallVector<const SCEV *, 4>, UniquifierDenseMapInfo> Uniquifier;
 
 public:
   /// KindType - An enum for a kind of use, indicating what types of
@@ -1178,7 +1178,7 @@ public:
 /// HasFormula - Test whether this use as a formula which has the same
 /// registers as the given formula.
 bool LSRUse::HasFormulaWithSameRegs(const Formula &F) const {
-  SmallVector<const SCEV *, 2> Key = F.BaseRegs;
+  SmallVector<const SCEV *, 4> Key = F.BaseRegs;
   if (F.ScaledReg) Key.push_back(F.ScaledReg);
   // Unstable sort by host order ok, because this is only used for uniquifying.
   std::sort(Key.begin(), Key.end());
@@ -1188,7 +1188,7 @@ bool LSRUse::HasFormulaWithSameRegs(const Formula &F) const {
 /// InsertFormula - If the given formula has not yet been inserted, add it to
 /// the list, and return true. Return false otherwise.
 bool LSRUse::InsertFormula(const Formula &F) {
-  SmallVector<const SCEV *, 2> Key = F.BaseRegs;
+  SmallVector<const SCEV *, 4> Key = F.BaseRegs;
   if (F.ScaledReg) Key.push_back(F.ScaledReg);
   // Unstable sort by host order ok, because this is only used for uniquifying.
   std::sort(Key.begin(), Key.end());
@@ -3656,7 +3656,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 
   // Collect the best formula for each unique set of shared registers. This
   // is reset for each use.
-  typedef DenseMap<SmallVector<const SCEV *, 2>, size_t, UniquifierDenseMapInfo>
+  typedef DenseMap<SmallVector<const SCEV *, 4>, size_t, UniquifierDenseMapInfo>
     BestFormulaeTy;
   BestFormulaeTy BestFormulae;
 
@@ -3691,7 +3691,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
               dbgs() << "\n");
       }
       else {
-        SmallVector<const SCEV *, 2> Key;
+        SmallVector<const SCEV *, 4> Key;
         for (SmallVectorImpl<const SCEV *>::const_iterator J = F.BaseRegs.begin(),
                JE = F.BaseRegs.end(); J != JE; ++J) {
           const SCEV *Reg = *J;
