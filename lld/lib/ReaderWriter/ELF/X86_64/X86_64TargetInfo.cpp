@@ -48,6 +48,11 @@ public:
     return ArrayRef<uint8_t>(_defaultContent, 8);
   }
 
+  virtual Alignment alignment() const {
+    // The alignment should be 8 byte aligned
+    return Alignment(3);
+  }
+
 #ifndef NDEBUG
   virtual StringRef name() const { return _name; }
 
@@ -82,6 +87,11 @@ public:
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>(_defaultContent, 16);
+  }
+
+  virtual Alignment alignment() const {
+    // The alignment should be 4 byte aligned
+    return Alignment(2);
   }
 
 #ifndef NDEBUG

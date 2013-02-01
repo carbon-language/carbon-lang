@@ -134,6 +134,11 @@ public:
 
   virtual ContentPermissions permissions() const { return permRW_; }
 
+  virtual Alignment alignment() const {
+    // Needs 8 byte alignment
+    return Alignment(3);
+  }
+
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>();
   }
