@@ -66,6 +66,23 @@ def FeatureBookE     : SubtargetFeature<"booke", "IsBookE", "true",
 def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
                                         "Enable QPX instructions">;
 
+// Note: Future features to add when support is extended to more
+// recent ISA levels:
+//
+// CMPB         p6, p6x, p7        cmpb
+// DFP          p6, p6x, p7        decimal floating-point instructions
+// FLT_CVT      p7                 fcfids, fcfidu, fcfidus, fcfiduz, fctiwuz
+// FPRND        p5x, p6, p6x, p7   frim, frin, frip, friz
+// FRE          p5 through p7      fre (vs. fres, available since p3)
+// FRSQRTES     p5 through p7      frsqrtes (vs. frsqrte, available since p3)
+// LDBRX        p7                 load with byte reversal
+// LFIWAX       p6, p6x, p7        lfiwax
+// LFIWZX       p7                 lfiwzx
+// POPCNTB      p5 through p7      popcntb and related instructions
+// POPCNTD      p7                 popcntd and related instructions
+// RECIP_PREC   p6, p6x, p7        higher precision reciprocal estimates
+// VSX          p7                 vector-scalar instruction set
+
 //===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
