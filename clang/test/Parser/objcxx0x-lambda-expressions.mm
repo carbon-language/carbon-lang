@@ -10,7 +10,7 @@ class C {
 
     []; // expected-error {{expected body of lambda expression}}
     [=,foo+] {}; // expected-error {{expected ',' or ']' in lambda capture list}}
-    [&this] {}; // expected-error {{address expression must be an lvalue}}
+    [&this] {}; // expected-error {{cannot take the address of an rvalue of type 'C *'}}
     [] {}; 
     [=] (int i) {}; 
     [&] (int) mutable -> void {}; 

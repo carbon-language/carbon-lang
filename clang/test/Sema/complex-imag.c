@@ -4,7 +4,7 @@ void f1() {
   int a = 1;
   int b = __imag a;
   int *c = &__real a;
-  int *d = &__imag a; // expected-error {{must be an lvalue}}
+  int *d = &__imag a; // expected-error {{cannot take the address of an rvalue of type 'int'}}
 }
 
 void f2() {
@@ -18,7 +18,7 @@ void f3() {
   double a = 1;
   double b = __imag a;
   double *c = &__real a;
-  double *d = &__imag a; // expected-error {{must be an lvalue}}
+  double *d = &__imag a; // expected-error {{cannot take the address of an rvalue of type 'double'}}
 }
 
 void f4() {

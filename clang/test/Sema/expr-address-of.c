@@ -90,8 +90,8 @@ void f5() {
      lvalue we would need to give a warning. Note that gcc warns about
      this as a register before it warns about it as an invalid
      lvalue. */
-  int *_dummy0 = &(int*) arr; // expected-error {{address expression must be an lvalue or a function designator}}
-  int *_dummy1 = &(arr + 1); // expected-error {{address expression must be an lvalue or a function designator}}
+  int *_dummy0 = &(int*) arr; // expected-error {{cannot take the address of an rvalue}}
+  int *_dummy1 = &(arr + 1); // expected-error {{cannot take the address of an rvalue}}
 }
 
 void f6(register int x) {
@@ -109,12 +109,12 @@ char* f7() {
 }
 
 void f8() {
-  void *dummy0 = &f8(); // expected-error {{address expression must be an lvalue or a function designator}}
+  void *dummy0 = &f8(); // expected-error {{cannot take the address of an rvalue of type 'void'}}
 
   extern void v;
-  void *dummy1 = &(1 ? v : f8()); // expected-error {{address expression must be an lvalue or a function designator}}
+  void *dummy1 = &(1 ? v : f8()); // expected-error {{cannot take the address of an rvalue of type 'void'}}
 
-  void *dummy2 = &(f8(), v); // expected-error {{address expression must be an lvalue or a function designator}}
+  void *dummy2 = &(f8(), v); // expected-error {{cannot take the address of an rvalue of type 'void'}}
 
-  void *dummy3 = &({ ; }); // expected-error {{address expression must be an lvalue or a function designator}}
+  void *dummy3 = &({ ; }); // expected-error {{cannot take the address of an rvalue of type 'void'}}
 }

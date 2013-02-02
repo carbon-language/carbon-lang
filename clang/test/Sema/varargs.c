@@ -57,7 +57,7 @@ void f7(int a, ...) {
   __builtin_va_start(ap, a);
   // FIXME: This error message is sub-par.
   __builtin_va_arg(ap, int) = 1; // expected-error {{expression is not assignable}}
-  int *x = &__builtin_va_arg(ap, int); // expected-error {{address expression must be an lvalue or a function designator}}
+  int *x = &__builtin_va_arg(ap, int); // expected-error {{cannot take the address of an rvalue}}
   __builtin_va_end(ap);
 }
 

@@ -328,7 +328,7 @@ namespace rdar13000548 {
   template<typename R, R F(int)>
   struct X {
     typedef R (*fptype)(int);
-    static fptype f() { return &F; } // expected-error{{address expression must be an lvalue or a function designator}}
+    static fptype f() { return &F; } // expected-error{{cannot take the address of an rvalue of type 'int (*)(int)'}}
   };
 
   int g(int);

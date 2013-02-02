@@ -53,6 +53,7 @@ namespace array_dtor {
   struct S { S(); ~S(); };
   using T = S[3];
   void f(const T &);
+  void f(T *);
   // CHECK: define void @_ZN10array_dtor1gEv(
   void g() {
     // CHECK: %[[ARRAY:.*]] = alloca [3 x
@@ -68,10 +69,9 @@ namespace array_dtor {
     // Destruct loop.
     // CHECK: call void @_ZN10array_dtor1SD1Ev(
     // CHECK: br i1
+    f(T{});
 
     // CHECK: ret void
-
-    f(T{});
   }
   // CHECK: define void @_ZN10array_dtor1hEv(
   void h() {
@@ -88,6 +88,23 @@ namespace array_dtor {
 
     // CHECK: call void @_ZN10array_dtor1SD1Ev(
     // CHECK: br i1
+
+    // CHECK: ret void
+  }
+  // CHECK: define void @_ZN10array_dtor1iEv(
+  void i() {
+    // CHECK: %[[ARRAY:.*]] = alloca [3 x
+    // CHECK: br
+
+    // CHECK: call void @_ZN10array_dtor1SC1Ev(
+    // CHECK: br i1
+
+    // CHECK: call void @_ZN10array_dtor1fEPA3_NS_1SE(
+    // CHECK: br
+
+    // CHECK: call void @_ZN10array_dtor1SD1Ev(
+    // CHECK: br i1
+    f(&T{});
 
     // CHECK: ret void
   }
