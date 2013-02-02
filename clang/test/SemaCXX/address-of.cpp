@@ -44,3 +44,11 @@ void PR11066::test() {
   int (PR11066::*ptr)(int) = & &PR11066::foo; // expected-error{{address expression must be an lvalue or a function designator}}
 }
 
+namespace test3 {
+  // emit no error
+  template<typename T> struct S {
+    virtual void f() = 0;
+  };
+  template<typename T> void S<T>::f() { T::error; }
+  void (S<int>::*p)() = &S<int>::f;
+}

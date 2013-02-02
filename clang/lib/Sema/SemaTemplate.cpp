@@ -3950,7 +3950,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   // Create the template argument.
   Converted = TemplateArgument(cast<ValueDecl>(Entity->getCanonicalDecl()),
                                ParamType->isReferenceType());
-  S.MarkAnyDeclReferenced(Arg->getLocStart(), Entity);
+  S.MarkAnyDeclReferenced(Arg->getLocStart(), Entity, false);
   return false;
 }
 

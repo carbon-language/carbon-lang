@@ -212,3 +212,22 @@ namespace test9 {
     x.X::used(); // expected-note {{used here}}
   }
 }
+
+namespace test10 {
+  namespace {
+    struct X {
+      virtual void notused() = 0;
+      virtual void used() = 0; // expected-warning {{function 'test10::<anonymous namespace>::X::used' has internal linkage but is not defined}}
+
+      void test() {
+        notused();
+        (void)&X::notused;
+        (this->*&X::notused)();
+        X::used();  // expected-note {{used here}}
+      }
+    };
+    struct Y : X {
+      using X::notused;
+    };
+  }
+}
