@@ -219,7 +219,8 @@ public:
     }
   }
 
-  void DisplayFunction(const Decl *D, AnalysisMode Mode) {
+  void DisplayFunction(const Decl *D, AnalysisMode Mode,
+                       ExprEngine::InliningModes IMode) {
     if (!Opts->AnalyzerDisplayProgress)
       return;
 
@@ -230,8 +231,18 @@ public:
 
       if (Mode == AM_Syntax)
         llvm::errs() << " (Syntax)";
-      else if (Mode == AM_Path)
-        llvm::errs() << " (Path)";
+      else if (Mode == AM_Path) {
+        llvm::errs() << " (Path, ";
+        switch (IMode) {
+          case ExprEngine::Inline_None:
+            llvm::errs() << " Inline_None";
+            break;
+          case ExprEngine::Inline_All:
+            llvm::errs() << " Inline_All";
+            break;
+        }
+        llvm::errs() << ")";
+      }
       else
         assert(Mode == (AM_Syntax | AM_Path) && "Unexpected mode!");
 
@@ -569,7 +580,7 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
   if (Mode == AM_None)
     return;
 
-  DisplayFunction(D, Mode);
+  DisplayFunction(D, Mode, IMode);
   CFG *DeclCFG = Mgr->getCFG(D);
   if (DeclCFG) {
     unsigned CFGSize = DeclCFG->size();
