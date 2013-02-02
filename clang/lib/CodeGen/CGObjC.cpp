@@ -1705,15 +1705,17 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
                                                 StringRef fnName) {
   llvm::Constant *fn = CGM.CreateRuntimeFunction(type, fnName);
 
+  if (llvm::Function *f = dyn_cast<llvm::Function>(fn)) {
   // If the target runtime doesn't naturally support ARC, emit weak
   // references to the runtime support library.  We don't really
   // permit this to fail, but we need a particular relocation style.
-  if (llvm::Function *f = dyn_cast<llvm::Function>(fn)) {
-    if (!CGM.getLangOpts().ObjCRuntime.hasNativeARC())
+    if (!CGM.getLangOpts().ObjCRuntime.hasNativeARC()) {
       f->setLinkage(llvm::Function::ExternalWeakLinkage);
-    // set nonlazybind attribute for these APIs for performance.
-    if (fnName == "objc_retain" || fnName  == "objc_release")
+    } else if (fnName == "objc_retain" || fnName  == "objc_release") {
+      // If we have Native ARC, set nonlazybind attribute for these APIs for
+      // performance.
       f->addFnAttr(llvm::Attribute::NonLazyBind);
+  }
   }
 
   return fn;

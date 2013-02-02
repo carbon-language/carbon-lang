@@ -1,6 +1,37 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -O2 -disable-llvm-optzns -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -o - %s | FileCheck -check-prefix=CHECK-GLOBALS %s
 
+// rdar://13129783. Check both native/non-native arc platforms. Here we check
+// that they treat nonlazybind differently.
+// RUN: %clang_cc1 -fobjc-runtime=macosx-10.6.0 -triple x86_64-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -o - %s | FileCheck -check-prefix=ARC-ALIEN %s
+// RUN: %clang_cc1 -fobjc-runtime=macosx-10.7.0 -triple x86_64-apple-darwin11 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -o - %s | FileCheck -check-prefix=ARC-NATIVE %s
+
+// ARC-ALIEN: declare extern_weak i8* @objc_retain(i8*)
+// ARC-ALIEN: declare extern_weak void @objc_storeStrong(i8**, i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_autoreleaseReturnValue(i8*)
+// ARC-ALIEN: declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
+// ARC-ALIEN: declare extern_weak void @objc_release(i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_retainAutoreleasedReturnValue(i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_initWeak(i8**, i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_storeWeak(i8**, i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_loadWeakRetained(i8**)
+// ARC-ALIEN: declare extern_weak void @objc_destroyWeak(i8**)
+// ARC-ALIEN: declare extern_weak i8* @objc_autorelease(i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_retainAutorelease(i8*)
+
+// ARC-NATIVE: declare i8* @objc_retain(i8*) nonlazybind
+// ARC-NATIVE: declare void @objc_storeStrong(i8**, i8*)
+// ARC-NATIVE: declare i8* @objc_autoreleaseReturnValue(i8*)
+// ARC-NATIVE: declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
+// ARC-NATIVE: declare void @objc_release(i8*) nonlazybind
+// ARC-NATIVE: declare i8* @objc_retainAutoreleasedReturnValue(i8*)
+// ARC-NATIVE: declare i8* @objc_initWeak(i8**, i8*)
+// ARC-NATIVE: declare i8* @objc_storeWeak(i8**, i8*)
+// ARC-NATIVE: declare i8* @objc_loadWeakRetained(i8**)
+// ARC-NATIVE: declare void @objc_destroyWeak(i8**)
+// ARC-NATIVE: declare i8* @objc_autorelease(i8*)
+// ARC-NATIVE: declare i8* @objc_retainAutorelease(i8*)
+
 // CHECK: define void @test0
 void test0(id x) {
   // CHECK:      [[X:%.*]] = alloca i8*
@@ -9,9 +40,6 @@ void test0(id x) {
   // CHECK-NEXT: [[TMP:%.*]] = load i8** [[X]]
   // CHECK-NEXT: call void @objc_release(i8* [[TMP]])
   // CHECK-NEXT: ret void
-// rdar://12040837
-  // CHECK: declare extern_weak i8* @objc_retain(i8*) nonlazybind
-  // CHECK: declare extern_weak void @objc_release(i8*) nonlazybind
 }
 
 // CHECK: define i8* @test1(i8*
