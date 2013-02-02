@@ -858,7 +858,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
   
   // Special case: 'rhs' is an integer that has the same width as a pointer and
   // we are using the integer location in a comparison.  Normally this cannot be
-  // triggered, but transfer functions like those for OSCommpareAndSwapBarrier32
+  // triggered, but transfer functions like those for OSCompareAndSwapBarrier32
   // can generate comparisons that trigger this code.
   // FIXME: Are all locations guaranteed to have pointer width?
   if (BinaryOperator::isComparisonOp(op)) {
