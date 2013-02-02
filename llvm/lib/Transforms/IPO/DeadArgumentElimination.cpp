@@ -36,12 +36,14 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <map>
 #include <set>
 using namespace llvm;
 
-STATISTIC(NumArgumentsEliminated, "Number of unread args removed");
-STATISTIC(NumRetValsEliminated  , "Number of unused return values removed");
+STATISTIC(NumArgumentsEliminated , "Number of unread args removed");
+STATISTIC(NumRetValsEliminated   , "Number of unused return values removed");
+STATISTIC(NumParametersEliminated, "Number of parameters replaced with undef");
 STATISTIC(NumArgumentsReplacedWithUndef, 
           "Number of unread args replaced with undef");
 namespace {
@@ -161,6 +163,7 @@ namespace {
     void MarkLive(const Function &F);
     void PropagateLiveness(const RetOrArg &RA);
     bool RemoveDeadStuffFromFunction(Function *F);
+    bool RemoveDeadParamsFromCallersOf(Function *F);
     bool DeleteDeadVarargs(Function &Fn);
     bool RemoveDeadArgumentsFromCallers(Function &Fn);
   };
@@ -249,8 +252,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   FunctionType *FTy = Fn.getFunctionType();
 
   std::vector<Type*> Params(FTy->param_begin(), FTy->param_end());
-  FunctionType *NFTy = FunctionType::get(FTy->getReturnType(),
-                                                Params, false);
+  FunctionType *NFTy = FunctionType::get(FTy->getReturnType(), Params, false);
   unsigned NumArgs = Params.size();
 
   // Create the new function body and insert it into the module...
@@ -505,7 +507,9 @@ DAE::Liveness DAE::SurveyUses(const Value *V, UseVector &MaybeLiveUses) {
 // map.
 //
 // We consider arguments of non-internal functions to be intrinsically alive as
-// well as arguments to functions which have their "address taken".
+// well as arguments to functions which have their "address taken". Externally
+// visible functions are assumed to only have their return values intrinsically
+// alive, permitting removal of parameters to unused arguments in callers.
 //
 void DAE::SurveyFunction(const Function &F) {
   unsigned RetCount = NumRetVals(&F);
@@ -528,7 +532,14 @@ void DAE::SurveyFunction(const Function &F) {
         return;
       }
 
-  if (!F.hasLocalLinkage() && (!ShouldHackArguments() || F.isIntrinsic())) {
+  if (F.hasExternalLinkage() && !F.isDeclaration()) {
+    DEBUG(dbgs() << "DAE - Intrinsically live return from " << F.getName()
+                 << "\n");
+    // Mark the return values alive.
+    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
+      MarkLive(CreateRet(&F, i));
+  } else if (!F.hasLocalLinkage() &&
+             (!ShouldHackArguments() || F.isIntrinsic())) {
     MarkLive(F);
     return;
   }
@@ -1032,6 +1043,46 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   return true;
 }
 
+// RemoveDeadParamsFromCallersOf - Replace any parameters that are never used
+// by the callee with undef.
+//
+bool DAE::RemoveDeadParamsFromCallersOf(Function *F) {
+  // Don't modify fully live functions
+  if (LiveFunctions.count(F))
+    return false;
+
+  // Make a list of the dead arguments.
+  SmallVector<int, 10> ArgDead;
+  unsigned i = 0;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++i) {
+    RetOrArg Arg = CreateArg(F, i);
+    if (!LiveValues.count(Arg))
+      ArgDead.push_back(i);
+  }
+  if (ArgDead.empty())
+    return false;
+
+  bool MadeChange = false;
+  for (Function::use_iterator I = F->use_begin(), E = F->use_end();
+       I != E; ++I) {
+    CallSite CS = CallSite(*I);
+    if (CS.getInstruction() && CS.isCallee(I)) {
+      for (unsigned i = 0, e = ArgDead.size(); i != e; ++i) {
+        Value *A = CS.getArgument(ArgDead[i]);
+        if (!isa<UndefValue>(A)) {
+          ++NumParametersEliminated;
+          MadeChange = true;
+          CS.setArgument(ArgDead[i], UndefValue::get(A->getType()));
+          RecursivelyDeleteTriviallyDeadInstructions(A);
+        }
+      }
+    }
+  }
+
+  return MadeChange;
+}
+
 bool DAE::runOnModule(Module &M) {
   bool Changed = false;
 
@@ -1063,7 +1114,10 @@ bool DAE::runOnModule(Module &M) {
     // Increment now, because the function will probably get removed (ie.
     // replaced by a new one).
     Function *F = I++;
-    Changed |= RemoveDeadStuffFromFunction(F);
+    if (F->hasExternalLinkage() && !F->isDeclaration())
+      Changed |= RemoveDeadParamsFromCallersOf(F);
+    else
+      Changed |= RemoveDeadStuffFromFunction(F);
   }
 
   // Finally, look for any unused parameters in functions with non-local
