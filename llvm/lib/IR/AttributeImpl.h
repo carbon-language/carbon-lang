@@ -153,7 +153,6 @@ public:
   /// \p Slot is an index into the AttrNodes list, not the index of the return /
   /// parameter/ function which the attributes apply to.
   AttributeSet getSlotAttributes(unsigned Slot) const {
-    // FIXME: This needs to use AttrNodes instead.
     return AttributeSet::get(Context, AttrNodes[Slot]);
   }
 

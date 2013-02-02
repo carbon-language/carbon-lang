@@ -42,9 +42,7 @@ Attribute Attribute::get(LLVMContext &Context, Constant *Kind, Constant *Val) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = (!Val) ?
-      new AttributeImpl(Context, Kind) :
-      new AttributeImpl(Context, Kind, Val);
+    PA = new AttributeImpl(Context, Kind, Val);
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -884,7 +882,27 @@ bool AttrBuilder::hasAttributes() const {
 }
 
 bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
-  return Raw() & A.Raw(Index);
+  unsigned Idx = ~0U;
+  for (unsigned I = 0, E = A.getNumSlots(); I != E; ++I)
+    if (A.getSlotIndex(I) == Index) {
+      Idx = I;
+      break;
+    }
+
+  assert(Idx != ~0U && "Couldn't find the index!");
+
+  for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx);
+       I != E; ++I) {
+    Attribute Attr = *I;
+    // FIXME: Support StringRefs.
+    Attribute::AttrKind Kind = Attribute::AttrKind(
+      cast<ConstantInt>(Attr.getAttributeKind())->getZExtValue());
+
+    if (Attrs.count(Kind))
+      return true;
+  }
+
+  return false;
 }
 
 bool AttrBuilder::hasAlignmentAttr() const {
