@@ -4,8 +4,8 @@
 
 define i32 @main() uwtable {
 entry:
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !18), !dbg !21
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !22), !dbg !23
+  tail call void @llvm.dbg.value(metadata !1, i64 0, metadata !18), !dbg !21
+  tail call void @llvm.dbg.value(metadata !1, i64 0, metadata !22), !dbg !23
   tail call void @smth(i32 0), !dbg !24
   tail call void @smth(i32 0), !dbg !25
   ret i32 0, !dbg !19
@@ -18,10 +18,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !"inline-bug.cc", metadata !"/tmp/dbginfo/pr13202", metadata !"clang version 3.2 (trunk 159419)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5, metadata !10}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5, metadata !10}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 10, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 ()* @main, null, null, metadata !1, i32 10} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !"inline-bug.cc", metadata !"/tmp/dbginfo/pr13202", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]

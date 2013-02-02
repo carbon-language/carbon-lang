@@ -84,20 +84,12 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
          "Unable to create compile unit without filename");
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
   TempEnumTypes = MDNode::getTemporary(VMContext, TElts);
-  Value *THElts[] = { TempEnumTypes };
-  MDNode *EnumHolder = MDNode::get(VMContext, THElts);
 
   TempRetainTypes = MDNode::getTemporary(VMContext, TElts);
-  Value *TRElts[] = { TempRetainTypes };
-  MDNode *RetainHolder = MDNode::get(VMContext, TRElts);
 
   TempSubprograms = MDNode::getTemporary(VMContext, TElts);
-  Value *TSElts[] = { TempSubprograms };
-  MDNode *SPHolder = MDNode::get(VMContext, TSElts);
 
   TempGVs = MDNode::getTemporary(VMContext, TElts);
-  Value *TVElts[] = { TempGVs };
-  MDNode *GVHolder = MDNode::get(VMContext, TVElts);
 
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_compile_unit),
@@ -111,10 +103,10 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     MDString::get(VMContext, Flags),
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeVer),
-    EnumHolder,
-    RetainHolder,
-    SPHolder,
-    GVHolder
+    TempEnumTypes,
+    TempRetainTypes,
+    TempSubprograms,
+    TempGVs
   };
   TheCU = DICompileUnit(MDNode::get(VMContext, Elts));
 

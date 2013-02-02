@@ -15,18 +15,15 @@ entry:
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 720913, i32 0, i32 12, metadata !"small.c", metadata !"/private/tmp", metadata !"clang version 3.1 (trunk 144833)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !11} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5}
 !5 = metadata !{i32 720942, i32 0, metadata !6, metadata !"bar", metadata !"bar", metadata !"", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @bar, null, null, metadata !9} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 720937, metadata !"small.c", metadata !"/private/tmp", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}
 !9 = metadata !{metadata !10}
 !10 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
-!11 = metadata !{metadata !12}
-!12 = metadata !{metadata !13}
+!11 = metadata !{metadata !13}
 !13 = metadata !{i32 720948, i32 0, null, metadata !"s", metadata !"s", metadata !"", metadata !6, i32 2, metadata !14, i32 0, i32 1, [4294967296 x i8]* @s} ; [ DW_TAG_variable ]
 !14 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 34359738368, i64 8, i32 0, i32 0, metadata !15, metadata !16, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !15 = metadata !{i32 720932, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]

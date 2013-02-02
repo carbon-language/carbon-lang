@@ -89,10 +89,8 @@ entry:
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 720913, i32 0, i32 4, metadata !"main.cpp", metadata !"/Users/echristo/tmp/bad-struct-ref", metadata !"clang version 3.1 (trunk 146596)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !3, metadata !27, metadata !1} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5, metadata !9}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5, metadata !9}
 !5 = metadata !{i32 720898, null, metadata !"bar", metadata !6, i32 9, i64 128, i64 64, i32 0, i32 0, null, metadata !7, i32 0, null, null} ; [ DW_TAG_class_type ]
 !6 = metadata !{i32 720937, metadata !"main.cpp", metadata !"/Users/echristo/tmp/bad-struct-ref", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{metadata !8, metadata !19, metadata !21}
@@ -115,8 +113,7 @@ entry:
 !24 = metadata !{i32 720911, i32 0, metadata !"", i32 0, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !5} ; [ DW_TAG_pointer_type ]
 !25 = metadata !{metadata !26}
 !26 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
-!27 = metadata !{metadata !28}
-!28 = metadata !{metadata !29, metadata !37, metadata !40, metadata !43, metadata !46}
+!27 = metadata !{metadata !29, metadata !37, metadata !40, metadata !43, metadata !46}
 !29 = metadata !{i32 720942, i32 0, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 17, metadata !30, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32, i8**)* @main, null, null, metadata !35} ; [ DW_TAG_subprogram ]
 !30 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !31, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !31 = metadata !{metadata !12, metadata !12, metadata !32}

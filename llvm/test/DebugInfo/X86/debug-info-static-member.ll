@@ -56,17 +56,14 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !"debug-info-static-member.cpp", metadata !"/home/probinson/projects/upstream/static-member/test", metadata !"clang version 3.3 (trunk 171914)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !10} ; [ DW_TAG_compile_unit ] [/home/probinson/projects/upstream/static-member/test/debug-info-static-member.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"main", metadata !"main", metadata !"", metadata !6, i32 18, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !1, i32 23} ; [ DW_TAG_subprogram ] [line 18] [def] [scope 23] [main]
 !6 = metadata !{i32 786473, metadata !"/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", metadata !"/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{metadata !11}
-!11 = metadata !{metadata !12, metadata !27, metadata !28}
+!10 = metadata !{metadata !12, metadata !27, metadata !28}
 !12 = metadata !{i32 786484, i32 0, metadata !13, metadata !"a", metadata !"a", metadata !"_ZN1C1aE", metadata !6, i32 14, metadata !9, i32 0, i32 1, i32* @_ZN1C1aE, metadata !15} ; [ DW_TAG_variable ] [a] [line 14] [def]
 !13 = metadata !{i32 786434, null, metadata !"C", metadata !6, i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !14, i32 0, null, null} ; [ DW_TAG_class_type ] [C] [line 1, size 32, align 32, offset 0] [from ]
 !14 = metadata !{metadata !15, metadata !16, metadata !19, metadata !20, metadata !23, metadata !24, metadata !26}

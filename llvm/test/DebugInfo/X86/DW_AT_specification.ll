@@ -17,10 +17,8 @@ entry:
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 720913, i32 0, i32 4, metadata !"<unknown>", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/toolkit/library", metadata !"clang version 3.0 ()", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !18} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5}
 !5 = metadata !{i32 720942, i32 0, null, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEv", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @_ZN3foo3barEv, null, metadata !11, metadata !16} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 720937, metadata !"nsNativeAppSupportBase.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/toolkit/library", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -34,8 +32,7 @@ entry:
 !15 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
 !16 = metadata !{metadata !17}
 !17 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
-!18 = metadata !{metadata !19}
-!19 = metadata !{metadata !20}
+!18 = metadata !{metadata !20}
 !20 = metadata !{i32 720948, i32 0, metadata !5, metadata !"x", metadata !"x", metadata !"", metadata !6, i32 5, metadata !21, i32 1, i32 1, i32* @_ZZN3foo3barEvE1x} ; [ DW_TAG_variable ]
 !21 = metadata !{i32 720934, null, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !22} ; [ DW_TAG_const_type ]
 !22 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

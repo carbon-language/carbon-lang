@@ -78,10 +78,8 @@ entry:
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !"BPLFunctionWriter.cpp", metadata !"/home/peter/crashdelta", metadata !"clang version 3.2 ", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !128} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5, metadata !106, metadata !107, metadata !126, metadata !127}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5, metadata !106, metadata !107, metadata !126, metadata !127}
 !5 = metadata !{i32 786478, i32 0, null, metadata !"writeExpr", metadata !"writeExpr", metadata !"_ZN17BPLFunctionWriter9writeExprEv", metadata !6, i32 19, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.BPLFunctionWriter*)* @_ZN17BPLFunctionWriter9writeExprEv, null, metadata !103, metadata !1, i32 19} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !"BPLFunctionWriter2.ii", metadata !"/home/peter/crashdelta", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -205,8 +203,7 @@ entry:
 !125 = metadata !{i32 786468}                     ; [ DW_TAG_base_type ]
 !126 = metadata !{i32 786478, i32 0, null, metadata !"function<BPLFunctionWriter::<lambda at BPLFunctionWriter2.ii:20:36> >", metadata !"function<BPLFunctionWriter::<lambda at BPLFunctionWriter2.ii:20:36> >", metadata !"_ZN8functionIFvvEEC2IZN17BPLFunctionWriter9writeExprEvE3$_0EET_", metadata !6, i32 8, metadata !23, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.function*)* @"_ZN8functionIFvvEEC2IZN17BPLFunctionWriter9writeExprEvE3$_0EET_", metadata !47, metadata !22, metadata !1, i32 8} ; [ DW_TAG_subprogram ]
 !127 = metadata !{i32 786478, i32 0, null, metadata !"_M_not_empty_function<BPLFunctionWriter::<lambda at BPLFunctionWriter2.ii:20:36> >", metadata !"_M_not_empty_function<BPLFunctionWriter::<lambda at BPLFunctionWriter2.ii:20:36> >", metadata !"_ZN13_Base_manager21_M_not_empty_functionIZN17BPLFunctionWriter9writeExprEvE3$_0EEvRKT_", metadata !6, i32 3, metadata !117, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.anon*)* @"_ZN13_Base_manager21_M_not_empty_functionIZN17BPLFunctionWriter9writeExprEvE3$_0EEvRKT_", metadata !120, metadata !116, metadata !1, i32 3} ; [ DW_TAG_subprogram ]
-!128 = metadata !{metadata !129}
-!129 = metadata !{metadata !130}
+!128 = metadata !{metadata !130}
 !130 = metadata !{i32 786484, i32 0, metadata !114, metadata !"__stored_locally", metadata !"__stored_locally", metadata !"__stored_locally", metadata !6, i32 2, metadata !131, i32 1, i32 1, i1 true} ; [ DW_TAG_variable ]
 !131 = metadata !{i32 786470, null, metadata !"", null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !132} ; [ DW_TAG_const_type ]
 !132 = metadata !{i32 786468, null, metadata !"bool", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ]

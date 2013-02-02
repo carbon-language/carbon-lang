@@ -35,10 +35,8 @@ declare void @_Z8moz_freePv(i8*)
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 720913, i32 0, i32 4, metadata !"nsAutoRefCnt.cpp", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/netwerk/base/src", metadata !"clang version 3.1 ()", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !47} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5, metadata !23, metadata !27, metadata !31}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5, metadata !23, metadata !27, metadata !31}
 !5 = metadata !{i32 720942, i32 0, null, metadata !"Release", metadata !"Release", metadata !"_ZN17nsAutoRefCnt7ReleaseEv", metadata !6, i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32* null, null, metadata !12, metadata !20} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 720937, metadata !"nsAutoRefCnt.ii", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/netwerk/base/src", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -81,8 +79,7 @@ declare void @_Z8moz_freePv(i8*)
 !44 = metadata !{metadata !45, metadata !46}
 !45 = metadata !{i32 721153, metadata !31, metadata !"this", metadata !6, i32 16777220, metadata !34, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !46 = metadata !{i32 721153, metadata !31, metadata !"aValue", metadata !6, i32 33554436, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
-!47 = metadata !{metadata !48}
-!48 = metadata !{metadata !49}
+!47 = metadata !{metadata !49}
 !49 = metadata !{i32 720948, i32 0, null, metadata !"mRefCnt", metadata !"mRefCnt", metadata !"", metadata !6, i32 9, metadata !37, i32 0, i32 1, i32* null} ; [ DW_TAG_variable ]
 !50 = metadata !{i32 5, i32 5, metadata !51, metadata !52}
 !51 = metadata !{i32 720907, metadata !31, i32 4, i32 29, metadata !6, i32 2} ; [ DW_TAG_lexical_block ]

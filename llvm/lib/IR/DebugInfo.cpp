@@ -652,8 +652,7 @@ DIArray DICompileUnit::getEnumTypes() const {
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(10)))
-    if (MDNode *A = dyn_cast_or_null<MDNode>(N->getOperand(0)))
-      return DIArray(A);
+    return DIArray(N);
   return DIArray();
 }
 
@@ -662,8 +661,7 @@ DIArray DICompileUnit::getRetainedTypes() const {
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(11)))
-    if (MDNode *A = dyn_cast_or_null<MDNode>(N->getOperand(0)))
-      return DIArray(A);
+    return DIArray(N);
   return DIArray();
 }
 
@@ -672,9 +670,7 @@ DIArray DICompileUnit::getSubprograms() const {
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(12)))
-    if (N->getNumOperands() > 0)
-      if (MDNode *A = dyn_cast_or_null<MDNode>(N->getOperand(0)))
-        return DIArray(A);
+    return DIArray(N);
   return DIArray();
 }
 
@@ -684,8 +680,7 @@ DIArray DICompileUnit::getGlobalVariables() const {
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(13)))
-    if (MDNode *A = dyn_cast_or_null<MDNode>(N->getOperand(0)))
-      return DIArray(A);
+    return DIArray(N);
   return DIArray();
 }
 
