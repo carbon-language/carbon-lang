@@ -77,18 +77,25 @@ CXString cxstring::createDup(const char *String) {
   return Str;
 }
 
-CXString cxstring::createCXString(StringRef String, bool DupString) {
+CXString cxstring::createRef(StringRef String) {
+  // If the string is not nul-terminated, we have to make a copy.
+  // This is doing a one past end read, and should be removed!
+  if (!String.empty() && String.data()[String.size()] != 0)
+    return cxstring::createDup(String);
+
   CXString Result;
-  if (DupString || (!String.empty() && String.data()[String.size()] != 0)) {
-    char *Spelling = static_cast<char *>(malloc(String.size() + 1));
-    memmove(Spelling, String.data(), String.size());
-    Spelling[String.size()] = 0;
-    Result.data = Spelling;
-    Result.private_flags = (unsigned) CXS_Malloc;
-  } else {
-    Result.data = String.data();
-    Result.private_flags = (unsigned) CXS_Unmanaged;
-  }
+  Result.data = String.data();
+  Result.private_flags = (unsigned) CXS_Unmanaged;
+  return Result;
+}
+
+CXString cxstring::createDup(StringRef String) {
+  CXString Result;
+  char *Spelling = static_cast<char *>(malloc(String.size() + 1));
+  memmove(Spelling, String.data(), String.size());
+  Spelling[String.size()] = 0;
+  Result.data = Spelling;
+  Result.private_flags = (unsigned) CXS_Malloc;
   return Result;
 }
 

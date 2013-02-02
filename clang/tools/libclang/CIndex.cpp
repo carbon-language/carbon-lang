@@ -2918,7 +2918,7 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
     return cxstring::createEmpty();
 
   ASTUnit *CXXUnit = cxtu::getASTUnit(CTUnit);
-  return createCXString(CXXUnit->getOriginalSourceFileName(), true);
+  return cxstring::createDup(CXXUnit->getOriginalSourceFileName());
 }
 
 CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
@@ -3114,17 +3114,17 @@ static CXString getDeclSpelling(const Decl *D) {
     if (const ObjCPropertyImplDecl *PropImpl =
             dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
-        return createCXString(Property->getIdentifier()->getName());
+        return cxstring::createDup(Property->getIdentifier()->getName());
     
     if (const ImportDecl *ImportD = dyn_cast<ImportDecl>(D))
       if (Module *Mod = ImportD->getImportedModule())
-        return createCXString(Mod->getFullModuleName());
+        return cxstring::createDup(Mod->getFullModuleName());
 
     return cxstring::createEmpty();
   }
   
   if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
-    return createCXString(OMD->getSelector().getAsString());
+    return cxstring::createDup(OMD->getSelector().getAsString());
 
   if (const ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
@@ -3139,7 +3139,7 @@ static CXString getDeclSpelling(const Decl *D) {
   llvm::raw_svector_ostream os(S);
   ND->printName(os);
   
-  return createCXString(os.str());
+  return cxstring::createDup(os.str());
 }
 
 CXString clang_getCursorSpelling(CXCursor C) {
@@ -3163,34 +3163,34 @@ CXString clang_getCursorSpelling(CXCursor C) {
     }
     case CXCursor_CXXBaseSpecifier: {
       const CXXBaseSpecifier *B = getCursorCXXBaseSpecifier(C);
-      return createCXString(B->getType().getAsString());
+      return cxstring::createDup(B->getType().getAsString());
     }
     case CXCursor_TypeRef: {
       const TypeDecl *Type = getCursorTypeRef(C).first;
       assert(Type && "Missing type decl");
 
-      return createCXString(getCursorContext(C).getTypeDeclType(Type).
+      return cxstring::createDup(getCursorContext(C).getTypeDeclType(Type).
                               getAsString());
     }
     case CXCursor_TemplateRef: {
       const TemplateDecl *Template = getCursorTemplateRef(C).first;
       assert(Template && "Missing template decl");
       
-      return createCXString(Template->getNameAsString());
+      return cxstring::createDup(Template->getNameAsString());
     }
         
     case CXCursor_NamespaceRef: {
       const NamedDecl *NS = getCursorNamespaceRef(C).first;
       assert(NS && "Missing namespace decl");
       
-      return createCXString(NS->getNameAsString());
+      return cxstring::createDup(NS->getNameAsString());
     }
 
     case CXCursor_MemberRef: {
       const FieldDecl *Field = getCursorMemberRef(C).first;
       assert(Field && "Missing member decl");
       
-      return createCXString(Field->getNameAsString());
+      return cxstring::createDup(Field->getNameAsString());
     }
 
     case CXCursor_LabelRef: {
@@ -3204,23 +3204,23 @@ CXString clang_getCursorSpelling(CXCursor C) {
       OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(C).first;
       if (const Decl *D = Storage.dyn_cast<const Decl *>()) {
         if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
-          return createCXString(ND->getNameAsString());
+          return cxstring::createDup(ND->getNameAsString());
         return cxstring::createEmpty();
       }
       if (const OverloadExpr *E = Storage.dyn_cast<const OverloadExpr *>())
-        return createCXString(E->getName().getAsString());
+        return cxstring::createDup(E->getName().getAsString());
       OverloadedTemplateStorage *Ovl
         = Storage.get<OverloadedTemplateStorage*>();
       if (Ovl->size() == 0)
         return cxstring::createEmpty();
-      return createCXString((*Ovl->begin())->getNameAsString());
+      return cxstring::createDup((*Ovl->begin())->getNameAsString());
     }
         
     case CXCursor_VariableRef: {
       const VarDecl *Var = getCursorVariableRef(C).first;
       assert(Var && "Missing variable decl");
       
-      return createCXString(Var->getNameAsString());
+      return cxstring::createDup(Var->getNameAsString());
     }
         
     default:
@@ -3252,19 +3252,19 @@ CXString clang_getCursorSpelling(CXCursor C) {
                                                            ->getNameStart());
 
   if (C.kind == CXCursor_InclusionDirective)
-    return createCXString(getCursorInclusionDirective(C)->getFileName());
+    return cxstring::createDup(getCursorInclusionDirective(C)->getFileName());
       
   if (clang_isDeclaration(C.kind))
     return getDeclSpelling(getCursorDecl(C));
 
   if (C.kind == CXCursor_AnnotateAttr) {
     const AnnotateAttr *AA = cast<AnnotateAttr>(cxcursor::getCursorAttr(C));
-    return createCXString(AA->getAnnotation());
+    return cxstring::createDup(AA->getAnnotation());
   }
 
   if (C.kind == CXCursor_AsmLabelAttr) {
     const AsmLabelAttr *AA = cast<AsmLabelAttr>(cxcursor::getCursorAttr(C));
-    return createCXString(AA->getLabel());
+    return cxstring::createDup(AA->getLabel());
   }
 
   return cxstring::createEmpty();
@@ -3383,7 +3383,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
       OS << "...";
     }
     OS << ")";
-    return createCXString(OS.str());
+    return cxstring::createDup(OS.str());
   }
   
   if (const ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D)) {
@@ -3414,14 +3414,14 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     }
     
     OS << ">";
-    return createCXString(OS.str());
+    return cxstring::createDup(OS.str());
   }
   
   if (const ClassTemplateSpecializationDecl *ClassSpec
                               = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
     // If the type was explicitly written, use that.
     if (TypeSourceInfo *TSInfo = ClassSpec->getTypeAsWritten())
-      return createCXString(TSInfo->getType().getAsString(Policy));
+      return cxstring::createDup(TSInfo->getType().getAsString(Policy));
     
     SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
@@ -3430,7 +3430,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
                                       ClassSpec->getTemplateArgs().data(),
                                       ClassSpec->getTemplateArgs().size(),
                                                                 Policy);
-    return createCXString(OS.str());
+    return cxstring::createDup(OS.str());
   }
   
   return clang_getCursorSpelling(C);
@@ -4780,7 +4780,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   case CXToken_Literal: {
     // We have stashed the starting pointer in the ptr_data field. Use it.
     const char *Text = static_cast<const char *>(CXTok.ptr_data);
-    return createCXString(StringRef(Text, CXTok.int_data[2]));
+    return cxstring::createDup(StringRef(Text, CXTok.int_data[2]));
   }
 
   case CXToken_Punctuation:
@@ -4803,7 +4803,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   if (Invalid)
     return cxstring::createEmpty();
 
-  return createCXString(Buffer.substr(LocInfo.second, CXTok.int_data[2]));
+  return cxstring::createDup(Buffer.substr(LocInfo.second, CXTok.int_data[2]));
 }
 
 CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
@@ -5754,7 +5754,7 @@ int clang_getCursorPlatformAvailability(CXCursor cursor,
       if (always_deprecated)
         *always_deprecated = 1;
       if (deprecated_message)
-        *deprecated_message = cxstring::createCXString(Deprecated->getMessage());
+        *deprecated_message = cxstring::createDup(Deprecated->getMessage());
       continue;
     }
     
@@ -5762,8 +5762,7 @@ int clang_getCursorPlatformAvailability(CXCursor cursor,
       if (always_unavailable)
         *always_unavailable = 1;
       if (unavailable_message) {
-        *unavailable_message
-          = cxstring::createCXString(Unavailable->getMessage());
+        *unavailable_message = cxstring::createDup(Unavailable->getMessage());
       }
       continue;
     }
@@ -5771,12 +5770,12 @@ int clang_getCursorPlatformAvailability(CXCursor cursor,
     if (AvailabilityAttr *Avail = dyn_cast<AvailabilityAttr>(*A)) {
       if (N < availability_size) {
         availability[N].Platform
-          = cxstring::createCXString(Avail->getPlatform()->getName());
+          = cxstring::createDup(Avail->getPlatform()->getName());
         availability[N].Introduced = convertVersion(Avail->getIntroduced());
         availability[N].Deprecated = convertVersion(Avail->getDeprecated());
         availability[N].Obsoleted = convertVersion(Avail->getObsoleted());
         availability[N].Unavailable = Avail->getUnavailable();
-        availability[N].Message = cxstring::createCXString(Avail->getMessage());
+        availability[N].Message = cxstring::createDup(Avail->getMessage());
       }
       ++N;
     }
@@ -5885,7 +5884,7 @@ CXString clang_Cursor_getRawCommentText(CXCursor C) {
 
   // Don't duplicate the string because RawText points directly into source
   // code.
-  return createCXString(RawText, false);
+  return cxstring::createRef(RawText);
 }
 
 CXString clang_Cursor_getBriefCommentText(CXCursor C) {
@@ -5901,7 +5900,7 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
 
     // Don't duplicate the string because RawComment ensures that this memory
     // will not go away.
-    return createCXString(BriefText, false);
+    return cxstring::createRef(BriefText);
   }
 
   return cxstring::createNull();
@@ -5939,14 +5938,14 @@ CXString clang_Module_getName(CXModule CXMod) {
   if (!CXMod)
     return cxstring::createEmpty();
   Module *Mod = static_cast<Module*>(CXMod);
-  return createCXString(Mod->Name);
+  return cxstring::createDup(Mod->Name);
 }
 
 CXString clang_Module_getFullName(CXModule CXMod) {
   if (!CXMod)
     return cxstring::createEmpty();
   Module *Mod = static_cast<Module*>(CXMod);
-  return createCXString(Mod->getFullModuleName());
+  return cxstring::createDup(Mod->getFullModuleName());
 }
 
 unsigned clang_Module_getNumTopLevelHeaders(CXModule CXMod) {
@@ -6348,7 +6347,7 @@ MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
 extern "C" {
 
 CXString clang_getClangVersion() {
-  return createCXString(getClangFullVersion());
+  return cxstring::createDup(getClangFullVersion());
 }
 
 } // end: extern "C"

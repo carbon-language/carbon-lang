@@ -49,7 +49,7 @@ CXSourceLocation CXStoredDiagnostic::getLocation() const {
 }
 
 CXString CXStoredDiagnostic::getSpelling() const {
-  return createCXString(Diag.getMessage(), false);
+  return cxstring::createRef(Diag.getMessage());
 }
 
 CXString CXStoredDiagnostic::getDiagnosticOption(CXString *Disable) const {
@@ -57,8 +57,8 @@ CXString CXStoredDiagnostic::getDiagnosticOption(CXString *Disable) const {
   StringRef Option = DiagnosticIDs::getWarningOptionForDiag(ID);
   if (!Option.empty()) {
     if (Disable)
-      *Disable = createCXString((Twine("-Wno-") + Option).str());
-    return createCXString((Twine("-W") + Option).str());
+      *Disable = cxstring::createDup((Twine("-Wno-") + Option).str());
+    return cxstring::createDup((Twine("-W") + Option).str());
   }
   
   if (ID == diag::fatal_too_many_errors) {
@@ -76,7 +76,7 @@ unsigned CXStoredDiagnostic::getCategory() const {
 
 CXString CXStoredDiagnostic::getCategoryText() const {
   unsigned catID = DiagnosticIDs::getCategoryNumberForDiag(Diag.getID());
-  return createCXString(DiagnosticIDs::getCategoryNameFromID(catID));
+  return cxstring::createRef(DiagnosticIDs::getCategoryNameFromID(catID));
 }
 
 unsigned CXStoredDiagnostic::getNumRanges() const {
@@ -109,6 +109,6 @@ CXString CXStoredDiagnostic::getFixIt(unsigned FixIt,
     *ReplacementRange = translateSourceRange(Diag.getLocation().getManager(),
                                              LangOpts, Hint.RemoveRange);
   }
-  return createCXString(Hint.CodeToInsert);
+  return cxstring::createDup(Hint.CodeToInsert);
 }
 

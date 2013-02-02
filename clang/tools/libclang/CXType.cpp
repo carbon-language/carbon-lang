@@ -660,7 +660,7 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
     Ctx.getObjCEncodingForType(Ty, encoding);
   }
 
-  return cxstring::createCXString(encoding);
+  return cxstring::createDup(encoding);
 }
 
 } // end: extern "C"

@@ -224,7 +224,7 @@ clang_getCompletionParent(CXCompletionString completion_string,
   if (!CCStr)
     return cxstring::createNull();
   
-  return createCXString(CCStr->getParentContextName(), /*DupString=*/false);
+  return cxstring::createRef(CCStr->getParentContextName());
 }
 
 CXString
@@ -923,7 +923,7 @@ CXString clang_codeCompleteGetObjCSelector(CXCodeCompleteResults *ResultsIn) {
   if (!Results)
     return cxstring::createEmpty();
   
-  return createCXString(Results->Selector);
+  return cxstring::createDup(Results->Selector);
 }
   
 } // end extern "C"

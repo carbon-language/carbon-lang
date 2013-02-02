@@ -871,7 +871,7 @@ CXString clang_constructUSR_ObjCIvar(const char *name, CXString classUSR) {
   USRGenerator UG;
   UG << extractUSRSuffix(clang_getCString(classUSR));
   UG->GenObjCIvar(name);
-  return createCXString(UG.str(), true);
+  return cxstring::createDup(UG.str());
 }
 
 CXString clang_constructUSR_ObjCMethod(const char *name,
@@ -880,26 +880,26 @@ CXString clang_constructUSR_ObjCMethod(const char *name,
   USRGenerator UG;
   UG << extractUSRSuffix(clang_getCString(classUSR));
   UG->GenObjCMethod(name, isInstanceMethod);
-  return createCXString(UG.str(), true);
+  return cxstring::createDup(UG.str());
 }
 
 CXString clang_constructUSR_ObjCClass(const char *name) {
   USRGenerator UG;
   UG->GenObjCClass(name);
-  return createCXString(UG.str(), true);
+  return cxstring::createDup(UG.str());
 }
 
 CXString clang_constructUSR_ObjCProtocol(const char *name) {
   USRGenerator UG;
   UG->GenObjCProtocol(name);
-  return createCXString(UG.str(), true);
+  return cxstring::createDup(UG.str());
 }
 
 CXString clang_constructUSR_ObjCCategory(const char *class_name,
                                          const char *category_name) {
   USRGenerator UG;
   UG->GenObjCCategory(class_name, category_name);
-  return createCXString(UG.str(), true);
+  return cxstring::createDup(UG.str());
 }
 
 CXString clang_constructUSR_ObjCProperty(const char *property,
@@ -907,7 +907,7 @@ CXString clang_constructUSR_ObjCProperty(const char *property,
   USRGenerator UG;
   UG << extractUSRSuffix(clang_getCString(classUSR));
   UG->GenObjCProperty(property);
-  return createCXString(UG.str(), true);
+  return cxstring::createDup(UG.str());
 }
 
 } // end extern "C"

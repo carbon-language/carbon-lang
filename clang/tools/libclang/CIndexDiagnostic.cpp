@@ -62,7 +62,7 @@ public:
   }
   
   CXString getSpelling() const {
-    return createCXString(StringRef(Message), false);
+    return cxstring::createRef(Message.c_str());
   }
   
   CXString getDiagnosticOption(CXString *Disable) const {
@@ -354,7 +354,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
       Out << "]";
   }
   
-  return createCXString(Out.str(), true);
+  return cxstring::createDup(Out.str());
 }
 
 unsigned clang_defaultDiagnosticDisplayOptions() {
@@ -398,7 +398,7 @@ unsigned clang_getDiagnosticCategory(CXDiagnostic Diag) {
   
 CXString clang_getDiagnosticCategoryName(unsigned Category) {
   // Kept for backwards compatibility.
-  return createCXString(DiagnosticIDs::getCategoryNameFromID(Category));
+  return cxstring::createRef(DiagnosticIDs::getCategoryNameFromID(Category));
 }
   
 CXString clang_getDiagnosticCategoryText(CXDiagnostic Diag) {

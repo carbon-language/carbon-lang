@@ -122,13 +122,11 @@ unsigned clang_remap_getNumFiles(CXRemapping map) {
 void clang_remap_getFilenames(CXRemapping map, unsigned index,
                               CXString *original, CXString *transformed) {
   if (original)
-    *original = cxstring::createCXString(
-                                    static_cast<Remap *>(map)->Vec[index].first,
-                                        /*DupString =*/ true);
+    *original = cxstring::createDup(
+                    static_cast<Remap *>(map)->Vec[index].first);
   if (transformed)
-    *transformed = cxstring::createCXString(
-                                   static_cast<Remap *>(map)->Vec[index].second,
-                                  /*DupString =*/ true);
+    *transformed = cxstring::createDup(
+                    static_cast<Remap *>(map)->Vec[index].second);
 }
 
 void clang_remap_dispose(CXRemapping map) {
