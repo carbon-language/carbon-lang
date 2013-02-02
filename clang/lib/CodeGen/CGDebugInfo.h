@@ -34,7 +34,6 @@ namespace clang {
   class ObjCInterfaceDecl;
   class ClassTemplateSpecializationDecl;
   class GlobalDecl;
-  class UsingDirectiveDecl;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -247,9 +246,6 @@ public:
 
   /// EmitGlobalVariable - Emit global variable's debug info.
   void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
-
-  /// \brief Emit a C++ using directive.
-  void EmitUsingDirectiveDecl(const UsingDirectiveDecl &UD);
 
   /// getOrCreateRecordType - Emit record type's standalone debug info. 
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);

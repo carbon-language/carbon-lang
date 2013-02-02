@@ -111,9 +111,6 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context) {
       return llvm::DIDescriptor(Ty);
     }
   }
-
-  if (!LexicalBlockStack.empty())
-    return llvm::DIDescriptor(LexicalBlockStack.back());
   return TheCU;
 }
 
@@ -2823,12 +2820,6 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
                                 getLineNumber(VD->getLocation()),
                                 Ty, true, Init,
                                 getStaticDataMemberDeclaration(VD));
-}
-
-void CGDebugInfo::EmitUsingDirectiveDecl(const UsingDirectiveDecl &UD) {
-  SourceLocation Loc = UD.getNamespaceKeyLocation();
-  llvm::DIFile Unit = getOrCreateFile(Loc);
-  DBuilder.createUsingDirective(getContextDescriptor(&UD), Unit, getLineNumber(Loc), getOrCreateNameSpace(UD.getNominatedNamespace()));
 }
 
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
