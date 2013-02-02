@@ -4204,7 +4204,7 @@ public:
         CommandObjectParsed (interpreter,
                              "target symbols add",
                              "Add a debug symbol file to one of the target's current modules by specifying a path to a debug symbols file, or using the options to specify a module to download symbols for.",
-                             "target symbols add [<symfile>]"),
+                             "target symbols add [<symfile>]", eFlagRequiresTarget),
         m_option_group (interpreter),
         m_file_option (LLDB_OPT_SET_1, false, "shlib", 's', CommandCompletions::eModuleCompletion, eArgTypeShlibName, "Fullpath or basename for module to find debug symbols for."),
         m_current_frame_option (LLDB_OPT_SET_2, false, "frame", 'F', "Locate the debug symbols the currently selected frame.", false, true)
