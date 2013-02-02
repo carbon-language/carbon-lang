@@ -439,8 +439,6 @@ public:
   /// 
   /// N.B. This should be used ONLY for decoding LLVM bitcode!
   AttrBuilder &addRawValue(uint64_t Val);
-
-  uint64_t Raw() const;
 };
 
 namespace AttributeFuncs {

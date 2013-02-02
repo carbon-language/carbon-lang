@@ -408,12 +408,23 @@ uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
   for (unsigned I = 0, E = getNumAttributes(); I != E; ++I) {
     if (getSlotIndex(I) != Index) continue;
     const AttributeSetNode *ASN = AttrNodes[I].second;
-    AttrBuilder B;
+    uint64_t Mask = 0;
 
     for (AttributeSetNode::const_iterator II = ASN->begin(),
-           IE = ASN->end(); II != IE; ++II)
-      B.addAttribute(*II);
-    return B.Raw();
+           IE = ASN->end(); II != IE; ++II) {
+      Attribute Attr = *II;
+      ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
+      Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
+
+      if (KindVal == Attribute::Alignment)
+        Mask |= (Log2_32(ASN->getAlignment()) + 1) << 16;
+      else if (KindVal == Attribute::StackAlignment)
+        Mask |= (Log2_32(ASN->getStackAlignment()) + 1) << 26;
+      else
+        Mask |= AttributeImpl::getAttrMask(KindVal);
+    }
+
+    return Mask;
   }
 
   return 0;
@@ -895,10 +906,10 @@ bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
        I != E; ++I) {
     Attribute Attr = *I;
     // FIXME: Support StringRefs.
-    Attribute::AttrKind Kind = Attribute::AttrKind(
-      cast<ConstantInt>(Attr.getAttributeKind())->getZExtValue());
+    ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
+    Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
 
-    if (Attrs.count(Kind))
+    if (Attrs.count(KindVal))
       return true;
   }
 
@@ -931,24 +942,6 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
   }
  
   return *this;
-}
-
-uint64_t AttrBuilder::Raw() const {
-  uint64_t Mask = 0;
-
-  for (DenseSet<Attribute::AttrKind>::const_iterator I = Attrs.begin(),
-         E = Attrs.end(); I != E; ++I) {
-    Attribute::AttrKind Kind = *I;
-
-    if (Kind == Attribute::Alignment)
-      Mask |= (Log2_32(Alignment) + 1) << 16;
-    else if (Kind == Attribute::StackAlignment)
-      Mask |= (Log2_32(StackAlignment) + 1) << 26;
-    else
-      Mask |= AttributeImpl::getAttrMask(Kind);
-  }
-
-  return Mask;
 }
 
 //===----------------------------------------------------------------------===//
