@@ -5832,13 +5832,6 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                            N1, NewCFP);
       }
 
-      // (fadd (fadd x, x), x) -> (fmul 3.0, x)
-      if (!CFP00 && !CFP01 && N0.getOperand(0) == N0.getOperand(1) &&
-          N0.getOperand(0) == N1) {
-        return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
-                           N1, DAG.getConstantFP(3.0, VT));
-      }
-
       // (fadd (fmul c, x), (fadd x, x)) -> (fmul c+2, x)
       if (CFP00 && !CFP01 && N1.getOpcode() == ISD::FADD &&
           N1.getOperand(0) == N1.getOperand(1) &&
@@ -5884,12 +5877,6 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                            N0, NewCFP);
       }
 
-      // (fadd x, (fadd x, x)) -> (fmul 3.0, x)
-      if (!CFP10 && !CFP11 && N1.getOperand(0) == N1.getOperand(1) &&
-          N1.getOperand(0) == N0) {
-        return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
-                           N0, DAG.getConstantFP(3.0, VT));
-      }
 
       // (fadd (fadd x, x), (fmul c, x)) -> (fmul c+2, x)
       if (CFP10 && !CFP11 && N1.getOpcode() == ISD::FADD &&
@@ -5911,6 +5898,26 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                                      DAG.getConstantFP(2.0, VT));
         return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
                            N0.getOperand(0), NewCFP);
+      }
+    }
+
+    if (N0.getOpcode() == ISD::FADD) {
+      ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N0.getOperand(0));
+      // (fadd (fadd x, x), x) -> (fmul 3.0, x)
+      if (!CFP && N0.getOperand(0) == N0.getOperand(1) &&
+          (N0.getOperand(0) == N1)) {
+        return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
+                           N1, DAG.getConstantFP(3.0, VT));
+      }
+    }
+
+    if (N1.getOpcode() == ISD::FADD) {
+      ConstantFPSDNode *CFP10 = dyn_cast<ConstantFPSDNode>(N1.getOperand(0));
+      // (fadd x, (fadd x, x)) -> (fmul 3.0, x)
+      if (!CFP10 && N1.getOperand(0) == N1.getOperand(1) &&
+          N1.getOperand(0) == N0) {
+        return DAG.getNode(ISD::FMUL, N->getDebugLoc(), VT,
+                           N0, DAG.getConstantFP(3.0, VT));
       }
     }
 
