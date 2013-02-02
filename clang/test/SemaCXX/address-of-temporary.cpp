@@ -15,8 +15,13 @@ namespace PointerToArrayDecay {
   struct Y {
     int a[4];
   };
+  struct Z {
+    int n;
+    ~Z();
+  };
 
   typedef int A[4];
+  typedef Z AZ[4];
 
   template<typename T> void consume(T);
   struct S { int *p; };
@@ -25,11 +30,13 @@ namespace PointerToArrayDecay {
   void g1() { int *p = Y{}.a; } // expected-warning{{pointer is initialized by a temporary array}}
   void g2() { int *p = A{}; } // expected-warning{{pointer is initialized by a temporary array}}
   void g3() { int *p = (A){}; } // expected-warning{{pointer is initialized by a temporary array}}
+  void g4() { Z *p = AZ{}; } // expected-warning{{pointer is initialized by a temporary array}}
 
   void h0() { consume(Y().a); }
   void h1() { consume(Y{}.a); }
   void h2() { consume(A{}); }
   void h3() { consume((A){}); }
+  void h4() { consume(AZ{}); }
 
   void i0() { S s = { Y().a }; } // expected-warning{{pointer is initialized by a temporary array}}
   void i1() { S s = { Y{}.a }; } // expected-warning{{pointer is initialized by a temporary array}}
