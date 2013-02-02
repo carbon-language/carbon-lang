@@ -404,3 +404,27 @@ void testOSCompareAndSwapXXBarrier_parameter_no_direct_release(NSString **old) {
   else    
     return;
 }
+
+@interface AlwaysInlineBodyFarmBodies : NSObject {
+  NSString *_value;
+}
+  - (NSString *)_value;
+  - (void)callValue;
+@end
+
+@implementation AlwaysInlineBodyFarmBodies
+
+- (NSString *)_value {
+  if (!_value) {
+    NSString *s = [[NSString alloc] init];
+    if (!OSAtomicCompareAndSwapPtr(0, s, (void**)&_value)) {
+      [s release];
+    }
+  }
+  return _value;
+}
+
+- (void)callValue {
+  [self _value];
+}
+@end

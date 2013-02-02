@@ -86,11 +86,13 @@ static BodyFarm &getBodyFarm(ASTContext &C) {
   return *BF;
 }
 
-Stmt *AnalysisDeclContext::getBody() const {
+Stmt *AnalysisDeclContext::getBody(bool &IsAutosynthesized) const {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     Stmt *Body = FD->getBody();
-    if (!Body && Manager && Manager->synthesizeBodies())
+    if (!Body && Manager && Manager->synthesizeBodies()) {
+      IsAutosynthesized = true;
       return getBodyFarm(getASTContext()).getBody(FD);
+    }
     return Body;
   }
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
@@ -102,6 +104,17 @@ Stmt *AnalysisDeclContext::getBody() const {
     return FunTmpl->getTemplatedDecl()->getBody();
 
   llvm_unreachable("unknown code decl");
+}
+
+Stmt *AnalysisDeclContext::getBody() const {
+  bool Tmp;
+  return getBody(Tmp);
+}
+
+bool AnalysisDeclContext::isBodyAutosynthesized() const {
+  bool Tmp;
+  getBody(Tmp);
+  return Tmp;
 }
 
 const ImplicitParamDecl *AnalysisDeclContext::getSelfDecl() const {
