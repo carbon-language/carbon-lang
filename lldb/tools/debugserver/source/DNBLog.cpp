@@ -84,6 +84,12 @@ DNBLogSetLogCallback (DNBCallbackLog callback, void *baton)
     g_log_baton = baton;
 }
 
+DNBCallbackLog
+DNBLogGetLogCallback ()
+{
+    return g_log_callback;
+}
+
 bool
 DNBLogEnabled ()
 {

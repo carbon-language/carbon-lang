@@ -30,7 +30,6 @@
 
 #include <iomanip>
 #include <sstream>
-
 #include <TargetConditionals.h> // for endianness predefines
 
 //----------------------------------------------------------------------
@@ -155,9 +154,9 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (remove_read_watch_bp,          &RNBRemote::HandlePacket_z,             NULL, "z3", "Remove read watchpoint"));
     t.push_back (Packet (insert_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "Z4", "Insert access watchpoint"));
     t.push_back (Packet (remove_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "z4", "Remove access watchpoint"));
+    t.push_back (Packet (query_monitor,                 &RNBRemote::HandlePacket_qCmd,          NULL, "qCmd", "Monitor command"));
     t.push_back (Packet (query_current_thread_id,       &RNBRemote::HandlePacket_qC,            NULL, "qC", "Query current thread ID"));
     t.push_back (Packet (query_get_pid,                 &RNBRemote::HandlePacket_qGetPid,       NULL, "qGetPid", "Query process id"));
-//  t.push_back (Packet (query_memory_crc,              &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qCRC:", "Compute CRC of memory region"));
     t.push_back (Packet (query_thread_ids_first,        &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qfThreadInfo", "Get list of active threads (first req)"));
     t.push_back (Packet (query_thread_ids_subsequent,   &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qsThreadInfo", "Get list of active threads (subsequent req)"));
     // APPLE LOCAL: qThreadStopInfo
@@ -1433,6 +1432,135 @@ RNBRemote::HandlePacket_qThreadExtraInfo (const char *p)
     }
 
     return SendPacket ("");
+}
+
+
+const char *k_space_delimiters = " \t";
+static void
+skip_spaces (std::string &line)
+{
+    if (!line.empty())
+    {
+        size_t space_pos = line.find_first_not_of (k_space_delimiters);
+        if (space_pos > 0)
+            line.erase(0, space_pos);
+    }
+}
+
+static std::string
+get_identifier (std::string &line)
+{
+    std::string word;
+    skip_spaces (line);
+    const size_t line_size = line.size();
+    size_t end_pos;
+    for (end_pos = 0; end_pos < line_size; ++end_pos)
+    {
+        if (end_pos == 0)
+        {
+            if (isalpha(line[end_pos]) || line[end_pos] == '_')
+                continue;
+        }
+        else if (isalnum(line[end_pos]) || line[end_pos] == '_')
+            continue;
+        break;
+    }
+    word.assign (line, 0, end_pos);
+    line.erase(0, end_pos);
+    return word;
+}
+
+static std::string
+get_operator (std::string &line)
+{
+    std::string op;
+    skip_spaces (line);
+    if (!line.empty())
+    {
+        if (line[0] == '=')
+        {
+            op = '=';
+            line.erase(0,1);
+        }
+    }
+    return op;
+}
+
+static std::string
+get_value (std::string &line)
+{
+    std::string value;
+    skip_spaces (line);
+    if (!line.empty())
+    {
+        value.swap(line);
+    }
+    return value;
+}
+
+
+extern void FileLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
+extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
+
+rnb_err_t
+RNBRemote::HandlePacket_qCmd (const char *p)
+{
+    const char *c = p + strlen("qCmd,");
+    std::string line;
+    while (c[0] && c[1])
+    {
+        char smallbuf[3] = { c[0], c[1], '\0' };
+        errno = 0;
+        int ch = strtoul (smallbuf, NULL, 16);
+        if (errno != 0 && ch == 0)
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in payload of qCmd packet");
+        line.push_back(ch);
+        c += 2;
+    }
+    if (*c == '\0')
+    {
+        std::string command = get_identifier(line);
+        if (command.compare("set") == 0)
+        {
+            std::string variable = get_identifier (line);
+            std::string op = get_operator (line);
+            std::string value = get_value (line);
+            if (variable.compare("logfile") == 0)
+            {
+                FILE *log_file = fopen(value.c_str(), "w");
+                if (log_file)
+                {
+                    DNBLogSetLogCallback(FileLogCallback, log_file);
+                    return SendPacket ("OK");
+                }
+                return SendPacket ("E71");
+            }
+            else if (variable.compare("logmask") == 0)
+            {
+                char *end;
+                errno = 0;
+                uint32_t logmask = strtoul (value.c_str(), &end, 0);
+                if (errno == 0 && end && *end == '\0')
+                {
+                    DNBLogSetLogMask (logmask);
+                    if (!DNBLogGetLogCallback())
+                        DNBLogSetLogCallback(ASLLogCallback, NULL);
+                    return SendPacket ("OK");
+                }
+                errno = 0;
+                logmask = strtoul (value.c_str(), &end, 16);
+                if (errno == 0 && end && *end == '\0')
+                {
+                    DNBLogSetLogMask (logmask);
+                    return SendPacket ("OK");
+                }
+                return SendPacket ("E72");
+            }
+            return SendPacket ("E70");
+        }
+        return SendPacket ("E69");
+    }
+    return SendPacket ("E73");
 }
 
 rnb_err_t

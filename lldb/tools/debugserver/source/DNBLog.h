@@ -50,6 +50,7 @@ bool        DNBLogCheckLogBit (uint32_t bit) DNB_EXPORT;
 uint32_t    DNBLogSetLogMask (uint32_t mask) DNB_EXPORT;
 uint32_t    DNBLogGetLogMask () DNB_EXPORT;
 void        DNBLogSetLogCallback (DNBCallbackLog callback, void *baton) DNB_EXPORT;
+DNBCallbackLog DNBLogGetLogCallback () DNB_EXPORT;
 bool        DNBLogEnabled () DNB_EXPORT;
 bool        DNBLogEnabledForAny (uint32_t mask) DNB_EXPORT;
 int         DNBLogGetDebug () DNB_EXPORT;
