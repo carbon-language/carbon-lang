@@ -1715,7 +1715,7 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
       // If we have Native ARC, set nonlazybind attribute for these APIs for
       // performance.
       f->addFnAttr(llvm::Attribute::NonLazyBind);
-  }
+    }
   }
 
   return fn;
