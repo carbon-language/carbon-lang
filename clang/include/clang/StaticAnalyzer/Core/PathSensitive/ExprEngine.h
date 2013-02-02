@@ -44,7 +44,6 @@ namespace ento {
 class AnalysisManager;
 class CallEvent;
 class SimpleCall;
-class CXXConstructorCall;
 
 class ExprEngine : public SubEngine {
 public:
@@ -547,10 +546,6 @@ private:
                      ExplodedNode *Pred);
 
   bool replayWithoutInlining(ExplodedNode *P, const LocationContext *CalleeLC);
-
-  /// Models a trivial copy or move constructor call with a simple bind.
-  void performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
-                          const CXXConstructorCall &Call);
 };
 
 /// Traits for storing the call processing policy inside GDM.
