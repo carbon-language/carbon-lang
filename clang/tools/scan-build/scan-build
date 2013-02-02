@@ -17,6 +17,7 @@ use warnings;
 use FindBin qw($RealBin);
 use Digest::MD5;
 use File::Basename;
+use File::Find;
 use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
 use Cwd qw/ getcwd abs_path /;
@@ -470,6 +471,19 @@ sub CalcStats {
 # Postprocess - Postprocess the results of an analysis scan.
 ##----------------------------------------------------------------------------##
 
+my @filesFound;
+my $baseDir;
+sub FileWanted { 
+    my $baseDirRegEx = quotemeta $baseDir;
+    my $file = $File::Find::name;
+    if ($file =~ /report-.*\.html$/) {
+       my $relative_file = $file;
+       $relative_file =~ s/$baseDirRegEx//g;
+       push @filesFound, $relative_file;
+       print $relative_file;
+    }
+}
+
 sub Postprocess {
   
   my $Dir           = shift;
@@ -483,12 +497,11 @@ sub Postprocess {
     Diag("No bugs found.\n");
     return 0;
   }
-  
-  opendir(DIR, $Dir);
-  my @files = grep { /^report-.*\.html$/ } readdir(DIR);
-  closedir(DIR);
 
-  if (scalar(@files) == 0 and ! -e "$Dir/failures") {
+  $baseDir = $Dir . "/";
+  find({ wanted => \&FileWanted, follow => 0}, $Dir);
+
+  if (scalar(@filesFound) == 0 and ! -e "$Dir/failures") {
     if (! $KeepEmpty) {
       Diag("Removing directory '$Dir' because it contains no reports.\n");
       system ("rm", "-fR", $Dir);
@@ -499,7 +512,7 @@ sub Postprocess {
   # Scan each report file and build an index.  
   my @Index;
   my @Stats;
-  foreach my $file (@files) { ScanFile(\@Index, $Dir, $file, \@Stats); }
+  foreach my $file (@filesFound) { ScanFile(\@Index, $Dir, $file, \@Stats); }
   
   # Scan the failures directory and use the information in the .info files
   # to update the common prefix directory.
@@ -601,7 +614,7 @@ print OUT <<ENDTEXT;
 </table>
 ENDTEXT
 
-  if (scalar(@files)) {
+  if (scalar(@filesFound)) {
     # Print out the summary table.
     my %Totals;
 
@@ -1523,8 +1536,8 @@ else {
   }
   else {
     $Clang = Cwd::realpath($AnalyzerDiscoveryMethod);
-	if (! -x $Clang) {
-   	  DieDiag("Cannot find an executable clang at '$Clang'\n");
+	if (!defined $Clang or not -x $Clang) {
+   	  DieDiag("Cannot find an executable clang at '$AnalyzerDiscoveryMethod'\n");
 	}
   }
 }
