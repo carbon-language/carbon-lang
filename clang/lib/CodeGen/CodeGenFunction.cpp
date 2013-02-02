@@ -144,8 +144,8 @@ void CodeGenFunction::EmitReturnBlock() {
     if (BI && BI->isUnconditional() &&
         BI->getSuccessor(0) == ReturnBlock.getBlock()) {
       // Reset insertion point, including debug location, and delete the branch.
-      // this is really subtle & only works because the next change in location
-      // will hit the caching in CGDebugInfo::EmitLocation & not override this
+      // This is really subtle & only works because the next change in location
+      // will hit the caching in CGDebugInfo::EmitLocation & not override this.
       Builder.SetCurrentDebugLocation(BI->getDebugLoc());
       Builder.SetInsertPoint(BI->getParent());
       BI->eraseFromParent();
