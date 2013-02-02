@@ -232,6 +232,10 @@ def calltarget64: Operand<i64>;
 def simm16      : Operand<i32> {
   let DecoderMethod= "DecodeSimm16";
 }
+
+def simm20      : Operand<i32> {
+}
+
 def simm16_64   : Operand<i64>;
 def shamt       : Operand<i32>;
 

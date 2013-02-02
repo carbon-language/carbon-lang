@@ -1,6 +1,8 @@
 ; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=C1
 ; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=C2
 ; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=PE
+; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST1
+; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST2
 ;
 ; re-enable this when mips16's jalr is fixed.
 ; DISABLED: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR
@@ -29,6 +31,11 @@ entry:
 ; PE:	li	$2, 0
 ; PE:	jrc 	$ra
 
+; ST1:  li	${{[0-9]+}}, %hi($.str)
+; ST1:  sll     ${{[0-9]+}}, ${{[0-9]+}}, 16
+; ST1:	addiu	${{[0-9]+}}, %lo($.str)
+; ST2:  li	${{[0-9]+}}, %hi($.str)
+; ST2:  jal     printf
 }
 
 declare i32 @printf(i8*, ...)

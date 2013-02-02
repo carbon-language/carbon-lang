@@ -44,6 +44,15 @@ class FEXT_CCRXI16_ins<bits<5> _op, string asmstr,
   let isCodeGenOnly=1;
 }
 
+// JAL and JALX instruction format
+//
+class FJAL16_ins<bits<1> _X, string asmstr,
+                 InstrItinClass itin>:
+  FJAL16<_X, (outs), (ins simm20:$imm),
+         !strconcat(asmstr, "\t$imm\n\tnop"),[],
+         itin>  {
+  let isCodeGenOnly=1;
+}
 //
 // EXT-I instruction format
 //
@@ -526,7 +535,19 @@ def DivRxRy16: FRR16_div_ins<0b11010, "div", IIAlu> {
 def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
   let Defs = [HI, LO];
 }
+//
+// Format: JAL target MIPS16e
+// Purpose: Jump and Link
+// To execute a procedure call within the current 256 MB-aligned
+// region and preserve the current ISA.
+//
 
+def Jal16 : FJAL16_ins<0b0, "jal", IIAlu> {
+  let isBranch = 1;
+  let hasDelaySlot = 0;  // not true, but we add the nop for now
+  let isTerminator=1;
+  let isBarrier=1;
+}
 
 //
 // Format: JR ra MIPS16e
@@ -1070,11 +1091,13 @@ class UncondBranch16_pat<SDNode OpNode, Instruction I>:
     let Predicates = [RelocPIC, InMips16Mode];
   }
 
+def : Mips16Pat<(MipsJmpLink (i32 tglobaladdr:$dst)),
+                (Jal16 tglobaladdr:$dst)>;
+
 // Indirect branch
 def: Mips16Pat<
   (brind CPU16Regs:$rs),
   (JrcRx16 CPU16Regs:$rs)>;
-
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=0 in
@@ -1562,6 +1585,8 @@ def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
 
 // hi/lo relocs
 
+def : Mips16Pat<(MipsHi tglobaladdr:$in), 
+                (SllX16 (LiRxImmX16 tglobaladdr:$in), 16)>;
 def : Mips16Pat<(MipsHi tglobaltlsaddr:$in),
                 (SllX16 (LiRxImmX16 tglobaltlsaddr:$in), 16)>;
 
