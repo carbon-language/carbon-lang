@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown -std=c++11 -S -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -std=c++11 -S -emit-llvm -o - %s -Wno-address-of-temporary | FileCheck %s
 
 // CHECK: @[[THREE_NULL_MEMPTRS:.*]] = private constant [3 x i32] [i32 -1, i32 -1, i32 -1]
 
@@ -46,5 +46,49 @@ namespace ValueInitArrayOfMemPtr {
   void g() {
     // CHECK: store i32 -1,
     f(a{});
+  }
+}
+
+namespace array_dtor {
+  struct S { S(); ~S(); };
+  using T = S[3];
+  void f(const T &);
+  // CHECK: define void @_ZN10array_dtor1gEv(
+  void g() {
+    // CHECK: %[[ARRAY:.*]] = alloca [3 x
+    // CHECK: br
+
+    // Construct loop.
+    // CHECK: call void @_ZN10array_dtor1SC1Ev(
+    // CHECK: br i1
+
+    // CHECK: call void @_ZN10array_dtor1fERA3_KNS_1SE(
+    // CHECK: br
+
+    // Destruct loop.
+    // CHECK: call void @_ZN10array_dtor1SD1Ev(
+    // CHECK: br i1
+
+    // CHECK: ret void
+
+    f(T{});
+  }
+  // CHECK: define void @_ZN10array_dtor1hEv(
+  void h() {
+    // CHECK: %[[ARRAY:.*]] = alloca [3 x
+    // CHECK: br
+
+    // CHECK: call void @_ZN10array_dtor1SC1Ev(
+    // CHECK: br i1
+    T &&t = T{};
+
+    // CHECK: call void @_ZN10array_dtor1fERA3_KNS_1SE(
+    // CHECK: br
+    f(t);
+
+    // CHECK: call void @_ZN10array_dtor1SD1Ev(
+    // CHECK: br i1
+
+    // CHECK: ret void
   }
 }

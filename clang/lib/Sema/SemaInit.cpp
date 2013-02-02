@@ -5240,7 +5240,8 @@ InitializationSequence::Perform(Sema &S,
       QualType Ty = ResultType ? ResultType->getNonReferenceType() : Step->Type;
       bool IsTemporary = Entity.getType()->isReferenceType();
       InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(Ty);
-      InitListChecker PerformInitList(S, IsTemporary ? TempEntity : Entity,
+      InitializedEntity InitEntity = IsTemporary ? TempEntity : Entity;
+      InitListChecker PerformInitList(S, InitEntity,
           InitList, Ty, /*VerifyOnly=*/false,
           Kind.getKind() != InitializationKind::IK_DirectList ||
             !S.getLangOpts().CPlusPlus11);
@@ -5259,7 +5260,9 @@ InitializationSequence::Perform(Sema &S,
       InitListExpr *StructuredInitList =
           PerformInitList.getFullyStructuredList();
       CurInit.release();
-      CurInit = S.Owned(StructuredInitList);
+      CurInit = shouldBindAsTemporary(InitEntity)
+          ? S.MaybeBindToTemporary(StructuredInitList)
+          : S.Owned(StructuredInitList);
       break;
     }
 
