@@ -314,24 +314,22 @@ bool LexicalScopes::dominates(DebugLoc DL, MachineBasicBlock *MBB) {
 void LexicalScope::anchor() { }
 
 /// dump - Print data structures.
-void LexicalScope::dump() const {
+void LexicalScope::dump(unsigned Indent) const {
 #ifndef NDEBUG
   raw_ostream &err = dbgs();
-  err.indent(IndentLevel);
+  err.indent(Indent);
   err << "DFSIn: " << DFSIn << " DFSOut: " << DFSOut << "\n";
   const MDNode *N = Desc;
+  err.indent(Indent);
   N->dump();
   if (AbstractScope)
-    err << "Abstract Scope\n";
+    err << std::string(Indent, ' ') << "Abstract Scope\n";
 
-  IndentLevel += 2;
   if (!Children.empty())
-    err << "Children ...\n";
+    err << std::string(Indent + 2, ' ') << "Children ...\n";
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     if (Children[i] != this)
-      Children[i]->dump();
-
-  IndentLevel -= 2;
+      Children[i]->dump(Indent + 2);
 #endif
 }
 
