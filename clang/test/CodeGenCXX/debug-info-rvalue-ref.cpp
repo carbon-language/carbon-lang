@@ -8,4 +8,4 @@ void foo (int &&i)
   printf("%d\n", i);
 }
 
-// CHECK: metadata !{i32 {{.*}}, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_rvalue_reference_type ]
+// CHECK: metadata !{i32 {{.*}}, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !{{.*}}} ; [ DW_TAG_rvalue_reference_type ]

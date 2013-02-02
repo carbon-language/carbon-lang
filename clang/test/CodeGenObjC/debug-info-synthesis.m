@@ -30,5 +30,5 @@ int main(int argc, char *argv[]) {
   }
 }
 
-// CHECK: !7 = metadata !{i32 {{.*}}, metadata !"./foo.h"
-// CHECK: !29 = metadata !{i32 {{.*}}, i32 0, metadata !7, metadata !"-[Foo dict]", metadata !"-[Foo dict]", metadata !"", metadata !7, i32 8, metadata !30, i1 true, i1 true, i32 0, i32 0, null, i32 320, i1 false, %1* (%0*, i8*)* @"\01-[Foo dict]", null, null, metadata !1, i32 8} ; [ DW_TAG_subprogram ]
+// CHECK: ![[FILE:.*]] = metadata !{i32 {{.*}}, metadata !"./foo.h"
+// CHECK: !{{.*}} = metadata !{i32 {{.*}}, i32 0, metadata ![[FILE]], metadata !"-[Foo dict]", metadata !"-[Foo dict]", metadata !"", metadata ![[FILE]], i32 8, metadata !{{.*}}, i1 true, i1 true, i32 0, i32 0, null, i32 320, i1 false, %1* (%0*, i8*)* @"\01-[Foo dict]", null, null, metadata !{{.*}}, i32 8} ; [ DW_TAG_subprogram ]
