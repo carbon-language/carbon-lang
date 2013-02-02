@@ -33,8 +33,17 @@ CXString createEmpty();
 /// A NULL string should be used as an "invalid" value in case of errors.
 CXString createNull();
 
-/// \brief Create a CXString object from a C string.
-CXString createCXString(const char *String, bool DupString = false);
+/// \brief Create a CXString object from a nul-terminated C string.  New
+/// CXString may contain a pointer to \p String.
+///
+/// \p String should not be changed by the caller afterwards.
+CXString createRef(const char *String);
+
+/// \brief Create a CXString object from a nul-terminated C string.  New
+/// CXString will contain a copy of \p String.
+///
+/// \p String can be changed or freed by the caller.
+CXString createDup(const char *String);
 
 /// \brief Create a CXString object from a StringRef.
 CXString createCXString(StringRef String, bool DupString = true);

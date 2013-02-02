@@ -54,15 +54,26 @@ CXString cxstring::createNull() {
   return Str;
 }
 
-CXString cxstring::createCXString(const char *String, bool DupString){
+CXString cxstring::createRef(const char *String) {
+  if (String && String[0] == '\0')
+    return cxstring::createEmpty();
+
   CXString Str;
-  if (DupString) {
-    Str.data = strdup(String);
-    Str.private_flags = (unsigned) CXS_Malloc;
-  } else {
-    Str.data = String;
-    Str.private_flags = (unsigned) CXS_Unmanaged;
-  }
+  Str.data = String;
+  Str.private_flags = CXS_Unmanaged;
+  return Str;
+}
+
+CXString cxstring::createDup(const char *String) {
+  if (!String)
+    return cxstring::createNull();
+
+  if (String[0] == '\0')
+    return cxstring::createEmpty();
+
+  CXString Str;
+  Str.data = strdup(String);
+  Str.private_flags = CXS_Malloc;
   return Str;
 }
 

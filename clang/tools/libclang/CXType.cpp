@@ -446,7 +446,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(Vector);
   }
 #undef TKIND
-  return cxstring::createCXString(s);
+  return cxstring::createRef(s);
 }
 
 unsigned clang_equalTypes(CXType A, CXType B) {
@@ -645,7 +645,7 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
 
   if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))  {
     if (Ctx.getObjCEncodingForMethodDecl(OMD, encoding))
-      return cxstring::createCXString("?");
+      return cxstring::createRef("?");
   } else if (const ObjCPropertyDecl *OPD = dyn_cast<ObjCPropertyDecl>(D))
     Ctx.getObjCEncodingForPropertyDecl(OPD, NULL, encoding);
   else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
@@ -656,7 +656,7 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
       Ty = Ctx.getTypeDeclType(TD);
     if (const ValueDecl *VD = dyn_cast<ValueDecl>(D))
       Ty = VD->getType();
-    else return cxstring::createCXString("?");
+    else return cxstring::createRef("?");
     Ctx.getObjCEncodingForType(Ty, encoding);
   }
 

@@ -263,7 +263,7 @@ void clang_getPresumedLocation(CXSourceLocation location,
     PresumedLoc PreLoc = SM.getPresumedLoc(Loc);
     
     if (filename)
-      *filename = createCXString(PreLoc.getFilename());
+      *filename = cxstring::createRef(PreLoc.getFilename());
     if (line)
       *line = PreLoc.getLine();
     if (column)

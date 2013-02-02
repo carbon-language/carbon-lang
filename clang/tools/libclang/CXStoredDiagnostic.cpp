@@ -63,8 +63,8 @@ CXString CXStoredDiagnostic::getDiagnosticOption(CXString *Disable) const {
   
   if (ID == diag::fatal_too_many_errors) {
     if (Disable)
-      *Disable = createCXString("-ferror-limit=0");
-    return createCXString("-ferror-limit=");
+      *Disable = cxstring::createRef("-ferror-limit=0");
+    return cxstring::createRef("-ferror-limit=");
   }
 
   return cxstring::createEmpty();
