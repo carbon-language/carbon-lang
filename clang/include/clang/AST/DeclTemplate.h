@@ -1464,8 +1464,7 @@ public:
           = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
       return PartialSpec->PartialSpecialization;
 
-    return const_cast<ClassTemplateDecl*>(
-                             SpecializedTemplate.get<ClassTemplateDecl*>());
+    return SpecializedTemplate.get<ClassTemplateDecl*>();
   }
 
   /// \brief Retrieve the class template or class template partial
@@ -1477,8 +1476,7 @@ public:
           = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
       return PartialSpec->PartialSpecialization;
 
-    return const_cast<ClassTemplateDecl*>(
-                             SpecializedTemplate.get<ClassTemplateDecl*>());
+    return SpecializedTemplate.get<ClassTemplateDecl*>();
   }
 
   /// \brief Retrieve the set of template arguments that should be used

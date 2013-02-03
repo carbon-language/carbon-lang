@@ -1501,9 +1501,8 @@ inline internal::PolymorphicMatcherWithParam1< internal::HasDeclarationMatcher,
 /// FIXME: Overload to allow directly matching types?
 AST_MATCHER_P(CXXMemberCallExpr, on, internal::Matcher<Expr>,
               InnerMatcher) {
-  const Expr *ExprNode = const_cast<CXXMemberCallExpr&>(Node)
-      .getImplicitObjectArgument()
-      ->IgnoreParenImpCasts();
+  const Expr *ExprNode = Node.getImplicitObjectArgument()
+                            ->IgnoreParenImpCasts();
   return (ExprNode != NULL &&
           InnerMatcher.matches(*ExprNode, Finder, Builder));
 }
@@ -1649,8 +1648,7 @@ inline internal::Matcher<QualType> references(
 
 AST_MATCHER_P(CXXMemberCallExpr, onImplicitObjectArgument,
               internal::Matcher<Expr>, InnerMatcher) {
-  const Expr *ExprNode =
-      const_cast<CXXMemberCallExpr&>(Node).getImplicitObjectArgument();
+  const Expr *ExprNode = Node.getImplicitObjectArgument();
   return (ExprNode != NULL &&
           InnerMatcher.matches(*ExprNode, Finder, Builder));
 }
