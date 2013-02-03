@@ -810,7 +810,7 @@ bool cxcursor::getDeclCursorUSR(const Decl *D, SmallVectorImpl<char> &Buf) {
     return true;
 
   USRGenerator UG(&D->getASTContext(), &Buf);
-  UG->Visit(const_cast<Decl*>(D));
+  UG->Visit(D);
 
   if (UG->ignoreResults())
     return true;
