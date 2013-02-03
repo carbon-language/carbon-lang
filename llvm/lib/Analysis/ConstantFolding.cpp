@@ -235,38 +235,13 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
     return IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD);
 
   // i32* getelementptr ([5 x i32]* @a, i32 0, i32 5)
-  if (CE->getOpcode() == Instruction::GetElementPtr) {
-    // Cannot compute this if the element type of the pointer is missing size
-    // info.
-    if (!cast<PointerType>(CE->getOperand(0)->getType())
-                 ->getElementType()->isSized())
-      return false;
-
+  if (GEPOperator *GEP = dyn_cast<GEPOperator>(CE)) {
     // If the base isn't a global+constant, we aren't either.
     if (!IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD))
       return false;
 
     // Otherwise, add any offset that our operands provide.
-    gep_type_iterator GTI = gep_type_begin(CE);
-    for (User::const_op_iterator i = CE->op_begin() + 1, e = CE->op_end();
-         i != e; ++i, ++GTI) {
-      ConstantInt *CI = dyn_cast<ConstantInt>(*i);
-      if (!CI) return false;  // Index isn't a simple constant?
-      if (CI->isZero()) continue;  // Not adding anything.
-
-      if (StructType *ST = dyn_cast<StructType>(*GTI)) {
-        // N = N + Offset
-        Offset +=
-            APInt(Offset.getBitWidth(),
-                  TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue()));
-      } else {
-        SequentialType *SQT = cast<SequentialType>(*GTI);
-        Offset += APInt(Offset.getBitWidth(),
-                        TD.getTypeAllocSize(SQT->getElementType()) *
-                        CI->getSExtValue());
-      }
-    }
-    return true;
+    return GEP->accumulateConstantOffset(TD, Offset);
   }
 
   return false;
