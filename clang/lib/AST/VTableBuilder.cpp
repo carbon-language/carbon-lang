@@ -257,11 +257,9 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
                                     const CXXRecordDecl *DerivedRD) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
                      /*RecordPaths=*/true, /*DetectVirtual=*/false);
-  
-  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
-      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
+
+  if (!DerivedRD->isDerivedFrom(BaseRD, Paths))
     llvm_unreachable("Class must be derived from the passed in base class!");
-  }
 
   return ComputeBaseOffset(Context, DerivedRD, Paths.front());
 }
@@ -1202,10 +1200,8 @@ VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   CXXBasePaths Paths(/*FindAmbiguities=*/true,
                      /*RecordPaths=*/true, /*DetectVirtual=*/true);
 
-  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
-      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
+  if (!DerivedRD->isDerivedFrom(BaseRD, Paths))
     llvm_unreachable("Class must be derived from the passed in base class!");
-  }
 
   // We have to go through all the paths, and see which one leads us to the
   // right base subobject.
