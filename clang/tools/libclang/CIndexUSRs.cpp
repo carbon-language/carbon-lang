@@ -22,7 +22,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
-using namespace clang::cxstring;
 
 //===----------------------------------------------------------------------===//
 // USR generation.
@@ -832,7 +831,7 @@ CXString clang_getCursorUSR(CXCursor C) {
     if (!TU)
       return cxstring::createEmpty();
 
-    CXStringBuf *buf = cxstring::getCXStringBuf(TU);
+    cxstring::CXStringBuf *buf = cxstring::getCXStringBuf(TU);
     if (!buf)
       return cxstring::createEmpty();
 
@@ -853,7 +852,7 @@ CXString clang_getCursorUSR(CXCursor C) {
     if (!TU)
       return cxstring::createEmpty();
 
-    CXStringBuf *buf = cxstring::getCXStringBuf(TU);
+    cxstring::CXStringBuf *buf = cxstring::getCXStringBuf(TU);
     if (!buf)
       return cxstring::createEmpty();
 

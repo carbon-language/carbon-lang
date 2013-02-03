@@ -29,7 +29,6 @@
 #include <climits>
 
 using namespace clang;
-using namespace clang::cxstring;
 using namespace clang::comments;
 using namespace clang::cxcomment;
 

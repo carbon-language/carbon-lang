@@ -33,7 +33,6 @@
 #include "llvm/Support/MutexGuard.h"
 
 using namespace clang;
-using namespace cxstring;
 using namespace cxtu;
 using namespace cxindex;
 

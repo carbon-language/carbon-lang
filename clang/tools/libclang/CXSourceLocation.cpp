@@ -22,7 +22,6 @@
 #include "llvm/Support/Format.h"
 
 using namespace clang;
-using namespace clang::cxstring;
 using namespace clang::cxindex;
 
 //===----------------------------------------------------------------------===//

@@ -56,7 +56,6 @@
 
 using namespace clang;
 using namespace clang::cxcursor;
-using namespace clang::cxstring;
 using namespace clang::cxtu;
 using namespace clang::cxindex;
 
@@ -66,7 +65,7 @@ CXTranslationUnit cxtu::MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU) {
   CXTranslationUnit D = new CXTranslationUnitImpl();
   D->CIdx = CIdx;
   D->TheASTUnit = AU;
-  D->StringPool = new CXStringPool();
+  D->StringPool = new cxstring::CXStringPool();
   D->Diagnostics = 0;
   D->OverridenCursorsPool = createOverridenCXCursorsPool();
   D->FormatContext = 0;

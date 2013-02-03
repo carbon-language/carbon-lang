@@ -24,7 +24,6 @@
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 using namespace clang;
-using namespace clang::cxstring;
 
 //===----------------------------------------------------------------------===//
 // Extend CXDiagnosticSetImpl which contains strings for diagnostics.

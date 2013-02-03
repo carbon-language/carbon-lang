@@ -26,7 +26,6 @@
 
 using namespace clang;
 using namespace clang::cxloc;
-using namespace clang::cxstring;
 
 CXDiagnosticSeverity CXStoredDiagnostic::getSeverity() const {
   switch (Diag.getLevel()) {

@@ -48,7 +48,6 @@
 #endif
 
 using namespace clang;
-using namespace clang::cxstring;
 using namespace clang::cxindex;
 
 extern "C" {

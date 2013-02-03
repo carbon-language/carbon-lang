@@ -27,7 +27,6 @@
 
 using namespace clang;
 using namespace clang::cxloc;
-using namespace clang::cxstring;
 using namespace clang::cxdiag;
 using namespace llvm;
 

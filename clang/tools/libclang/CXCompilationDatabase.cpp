@@ -4,7 +4,6 @@
 
 using namespace clang;
 using namespace clang::tooling;
-using namespace clang::cxstring;
 
 extern "C" {
 
