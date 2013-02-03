@@ -311,4 +311,17 @@
 # define LLVM_MEMORY_SANITIZER_BUILD 0
 #endif
 
+/// \macro LLVM_IS_UNALIGNED_ACCESS_FAST
+/// \brief Is unaligned memory access fast on the host machine.
+///
+/// Don't specialize on alignment for platforms where unaligned memory accesses
+/// generates the same code as aligned memory accesses for common types.
+#if defined(_M_AMD64) || defined(_M_IX86) || defined(__amd64) || \
+    defined(__amd64__) || defined(__x86_64) || defined(__x86_64__) || \
+    defined(_X86_) || defined(__i386) || defined(__i386__)
+# define LLVM_IS_UNALIGNED_ACCESS_FAST 1
+#else
+# define LLVM_IS_UNALIGNED_ACCESS_FAST 0
+#endif
+
 #endif

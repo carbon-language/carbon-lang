@@ -27,30 +27,42 @@ ObjectFile *ObjectFile::createELFObjectFile(MemoryBuffer *Object) {
     1ULL << CountTrailingZeros_64(uintptr_t(Object->getBufferStart()));
 
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)
       return new ELFObjectFile<ELFType<support::little, 4, false> >(Object, ec);
-    else if (MaxAlignment >= 2)
+    else
+#endif
+    if (MaxAlignment >= 2)
       return new ELFObjectFile<ELFType<support::little, 2, false> >(Object, ec);
     else
       llvm_unreachable("Invalid alignment for ELF file!");
   else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB)
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)
       return new ELFObjectFile<ELFType<support::big, 4, false> >(Object, ec);
-    else if (MaxAlignment >= 2)
+    else
+#endif
+    if (MaxAlignment >= 2)
       return new ELFObjectFile<ELFType<support::big, 2, false> >(Object, ec);
     else
       llvm_unreachable("Invalid alignment for ELF file!");
   else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB)
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 8)
       return new ELFObjectFile<ELFType<support::big, 8, true> >(Object, ec);
-    else if (MaxAlignment >= 2)
+    else
+#endif
+    if (MaxAlignment >= 2)
       return new ELFObjectFile<ELFType<support::big, 2, true> >(Object, ec);
     else
       llvm_unreachable("Invalid alignment for ELF file!");
   else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB) {
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 8)
       return new ELFObjectFile<ELFType<support::little, 8, true> >(Object, ec);
-    else if (MaxAlignment >= 2)
+    else
+#endif
+    if (MaxAlignment >= 2)
       return new ELFObjectFile<ELFType<support::little, 2, true> >(Object, ec);
     else
       llvm_unreachable("Invalid alignment for ELF file!");
