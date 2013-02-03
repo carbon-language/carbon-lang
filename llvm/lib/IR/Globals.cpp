@@ -82,13 +82,16 @@ bool GlobalValue::isDeclaration() const {
 //===----------------------------------------------------------------------===//
 
 GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
-                               Constant *InitVal, const Twine &Name,
-                               ThreadLocalMode TLMode, unsigned AddressSpace)
+                               Constant *InitVal,
+                               const Twine &Name, ThreadLocalMode TLMode,
+                               unsigned AddressSpace,
+                               bool isExternallyInitialized)
   : GlobalValue(PointerType::get(Ty, AddressSpace),
                 Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
-    isConstantGlobal(constant), threadLocalMode(TLMode) {
+    isConstantGlobal(constant), threadLocalMode(TLMode),
+    isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
@@ -102,12 +105,14 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
                                LinkageTypes Link, Constant *InitVal,
                                const Twine &Name,
                                GlobalVariable *Before, ThreadLocalMode TLMode,
-                               unsigned AddressSpace)
+                               unsigned AddressSpace,
+                               bool isExternallyInitialized)
   : GlobalValue(PointerType::get(Ty, AddressSpace),
                 Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
-    isConstantGlobal(constant), threadLocalMode(TLMode) {
+    isConstantGlobal(constant), threadLocalMode(TLMode),
+    isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");

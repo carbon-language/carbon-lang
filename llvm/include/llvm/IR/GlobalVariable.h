@@ -40,9 +40,14 @@ class GlobalVariable : public GlobalValue, public ilist_node<GlobalVariable> {
 
   void setParent(Module *parent);
 
-  bool isConstantGlobal : 1;           // Is this a global constant?
-  unsigned threadLocalMode : 3;        // Is this symbol "Thread Local",
-                                       // if so, what is the desired model?
+  bool isConstantGlobal : 1;                   // Is this a global constant?
+  unsigned threadLocalMode : 3;                // Is this symbol "Thread Local",
+                                               // if so, what is the desired
+                                               // model?
+  bool isExternallyInitializedConstant : 1;    // Is this a global whose value
+                                               // can change from its initial
+                                               // value before global
+                                               // initializers are run?
 
 public:
   // allocate space for exactly one operand
@@ -62,15 +67,15 @@ public:
   /// automatically inserted into the end of the specified modules global list.
   GlobalVariable(Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer = 0, const Twine &Name = "",
-                 ThreadLocalMode = NotThreadLocal, unsigned AddressSpace = 0);
+                 ThreadLocalMode = NotThreadLocal, unsigned AddressSpace = 0,
+                 bool isExternallyInitialized = false);
   /// GlobalVariable ctor - This creates a global and inserts it before the
   /// specified other global.
   GlobalVariable(Module &M, Type *Ty, bool isConstant,
                  LinkageTypes Linkage, Constant *Initializer,
-                 const Twine &Name = "",
-                 GlobalVariable *InsertBefore = 0,
-                 ThreadLocalMode = NotThreadLocal,
-                 unsigned AddressSpace = 0);
+                 const Twine &Name = "", GlobalVariable *InsertBefore = 0,
+                 ThreadLocalMode = NotThreadLocal, unsigned AddressSpace = 0,
+                 bool isExternallyInitialized = false);
 
   ~GlobalVariable() {
     NumOperands = 1; // FIXME: needed by operator delete
@@ -153,6 +158,13 @@ public:
   void setThreadLocalMode(ThreadLocalMode Val) { threadLocalMode = Val; }
   ThreadLocalMode getThreadLocalMode() const {
     return static_cast<ThreadLocalMode>(threadLocalMode);
+  }
+
+  bool isExternallyInitialized() const {
+    return isExternallyInitializedConstant;
+  }
+  void setExternallyInitialized(bool Val) {
+    isExternallyInitializedConstant = Val;
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
