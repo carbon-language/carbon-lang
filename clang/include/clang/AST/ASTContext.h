@@ -1982,7 +1982,7 @@ public:
   /// \brief Returns the Objective-C interface that \p ND belongs to if it is
   /// an Objective-C method/property/ivar etc. that is part of an interface,
   /// otherwise returns null.
-  ObjCInterfaceDecl *getObjContainingInterface(NamedDecl *ND) const;
+  const ObjCInterfaceDecl *getObjContainingInterface(const NamedDecl *ND) const;
   
   /// \brief Set the copy inialization expression of a block var decl.
   void setBlockVarCopyInits(VarDecl*VD, Expr* Init);
