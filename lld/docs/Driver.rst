@@ -22,8 +22,8 @@ ld64, and Microsoft's link.exe.
 Flavors
 -------
 
-Each of these different interfaces is refered to as a flavor. There is also an
-extra flavor for ``lld -core``. This is eqivilent to ``-cc1`` in clang.
+Each of these different interfaces is referred to as a flavor. There is also an
+extra flavor for ``lld -core``. This is equivalent to ``-cc1`` in clang.
 The current flavors are.
 
 * ld
@@ -68,7 +68,7 @@ Adding an Option
 #. If there is no ``lld -core`` option, add the option to
    :file:`lib/Driver/CoreOptions.td`. All ``lld -core`` start with a single -
    and if they have a value, it is joined with a =. ``lld -core`` options should
-   have sensible, non-abbrivated names and should be shared between flavors
+   have sensible, non-abbreviated names and should be shared between flavors
    where possible.
 
 #. Modify the ``{flavor}Driver::transform`` function to transform the added
@@ -96,7 +96,7 @@ Adding a Flavor
 #. Add a tablegen file called :file:`lib/Driver/{flavor}Options.td` that
    describes the options. If the options are a superset of another driver, that
    driver's td file can simply be included. The :file:`{flavor}Options.td` file
-   must also be added to :file:`lib/Driver/CMakeListst.txt`.
+   must also be added to :file:`lib/Driver/CMakeLists.txt`.
 
 #. Add a ``{flavor}::{flavor}OptTable`` as a subclass of
    :cpp:class:`llvm::opt::OptTable` in :file:`lib/Driver/Drivers.cpp`.

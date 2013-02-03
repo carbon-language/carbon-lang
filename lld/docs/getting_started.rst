@@ -103,4 +103,4 @@ More Information
 
 For more information on using CMake see the `LLVM CMake guide`_.
 
-.. _LLVM Cmake guide: http://llvm.org/docs/CMake.html
+.. _LLVM CMake guide: http://llvm.org/docs/CMake.html

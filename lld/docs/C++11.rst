@@ -11,7 +11,7 @@ Allowed Features
 ----------------
 
 Allowed features are based on what these compilers support. Features that are ok
-to ommit (such as final or = delete) may be conditionally used via macros.
+to omit (such as final or = delete) may be conditionally used via macros.
 
 * All of the C++11 standard library, including threading and atomics
 * auto
@@ -30,6 +30,6 @@ to ommit (such as final or = delete) may be conditionally used via macros.
 * Range based for loop
 * final via LLVM_FINAL
 
-Note that some of these features may not be fullly or correctly implemented in
+Note that some of these features may not be fully or correctly implemented in
 all compilers. Issues using these features should be added here as they are
 encountered.

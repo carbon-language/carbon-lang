@@ -63,7 +63,7 @@ There are only four different types of atoms:
 	* AbsoluteAtom
 		This is for embedded support where some stuff is implemented in ROM at
 		some fixed address.  This atom has no content.  It is just an address
-		that the Writer needs to fixup any references to point to.
+		that the Writer needs to fix up any references to point to.
 
 
 File Model
@@ -148,7 +148,7 @@ Reader defines the class ReaderOptionsMachO).  This options class is the
 one-and-only way to control how the Reader operates when parsing an input file
 into an Atom graph.  For instance, you may want the Reader to only accept
 certain architectures.  The options class can be instantiated from command
-line options, or it can be subclassed and the ivars programatically set. 
+line options, or it can be subclassed and the ivars programmatically set. 
 
 
 Resolving
@@ -215,7 +215,7 @@ modify or enhance the current lld::File object. Some example Passes are:
 
   * TLV instantiation (Darwin specific)
 
-  * dtrace probe processing (Darwin specific)
+  * DTrace probe processing (Darwin specific)
 
   * compact unwind encoding (Darwin specific)
 
@@ -241,7 +241,7 @@ object.  The writer's job is to create the executable content file wrapper and
 place the content of the atoms into it.
 
 lld uses a plug-in model for writing output files. All concrete writers (e.g.
-ELF, mach-o, etc) are subclasses of the lld::Writer classs.  
+ELF, mach-o, etc) are subclasses of the lld::Writer class.  
 
 Unlike the Reader class which has just one method to instantiate an lld::File,
 the Writer class has multiple methods.  The crucial method is to generate the 
@@ -264,7 +264,7 @@ one-and-only way to control how the Writer operates when producing an output
 file from an Atom graph.  For instance, you may want the Writer to optimize
 the output for certain OS versions, or strip local symbols, etc. The options 
 class can be instantiated from command line options, or it can be subclassed 
-and the ivars programatically set. 
+and the ivars programmatically set. 
 
 
 lld::File representations
