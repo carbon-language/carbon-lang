@@ -42,16 +42,23 @@ public:
     if (member == _symbolMemberMap.end())
       return nullptr;
 
-    error_code ec;
     llvm::object::Archive::child_iterator ci = member->second;
     
-    if (dataSymbolOnly && (ec = isDataSymbol(ci->getBuffer(), name)))
-      return nullptr;
+    if (dataSymbolOnly) {
+      OwningPtr<MemoryBuffer> buff;
+      if (ci->getMemoryBuffer(buff, true))
+        return nullptr;
+      if (isDataSymbol(buff.take(), name))
+        return nullptr;
+    }
     
     std::vector<std::unique_ptr<File>> result;
 
-    LinkerInput li(std::unique_ptr<MemoryBuffer>(ci->getBuffer()));
-    if ((ec = _getReader(li)->parseFile(li.takeBuffer(), result)))
+    OwningPtr<MemoryBuffer> buff;
+    if (ci->getMemoryBuffer(buff, true))
+      return nullptr;
+    LinkerInput li(std::unique_ptr<MemoryBuffer>(buff.take()));
+    if (_getReader(li)->parseFile(li.takeBuffer(), result))
       return nullptr;
 
     assert(result.size() == 1);
@@ -173,7 +180,10 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
     
     for (auto mf = _archive->begin_children(), 
               me = _archive->end_children(); mf != me; ++mf) {
-      LinkerInput li(std::unique_ptr<MemoryBuffer>(mf->getBuffer()));
+      OwningPtr<MemoryBuffer> buff;
+      if ((ec = mf->getMemoryBuffer(buff, true)))
+        return ec;
+      LinkerInput li(std::unique_ptr<MemoryBuffer>(buff.take()));
       if ((ec = _getReader(li)->parseFile(li.takeBuffer(), result)))
         return ec;
     }
