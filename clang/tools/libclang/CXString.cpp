@@ -21,7 +21,6 @@
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
-using namespace clang::cxstring;
 
 /// Describes the kind of underlying data in CXString.
 enum CXStringFlag {
@@ -36,27 +35,30 @@ enum CXStringFlag {
   CXS_StringBuf
 };
 
+namespace clang {
+namespace cxstring {
+
 //===----------------------------------------------------------------------===//
 // Basic generation of CXStrings.
 //===----------------------------------------------------------------------===//
 
-CXString cxstring::createEmpty() {
+CXString createEmpty() {
   CXString Str;
   Str.data = "";
   Str.private_flags = CXS_Unmanaged;
   return Str;
 }
 
-CXString cxstring::createNull() {
+CXString createNull() {
   CXString Str;
   Str.data = 0;
   Str.private_flags = CXS_Unmanaged;
   return Str;
 }
 
-CXString cxstring::createRef(const char *String) {
+CXString createRef(const char *String) {
   if (String && String[0] == '\0')
-    return cxstring::createEmpty();
+    return createEmpty();
 
   CXString Str;
   Str.data = String;
@@ -64,12 +66,12 @@ CXString cxstring::createRef(const char *String) {
   return Str;
 }
 
-CXString cxstring::createDup(const char *String) {
+CXString createDup(const char *String) {
   if (!String)
-    return cxstring::createNull();
+    return createNull();
 
   if (String[0] == '\0')
-    return cxstring::createEmpty();
+    return createEmpty();
 
   CXString Str;
   Str.data = strdup(String);
@@ -77,11 +79,11 @@ CXString cxstring::createDup(const char *String) {
   return Str;
 }
 
-CXString cxstring::createRef(StringRef String) {
+CXString createRef(StringRef String) {
   // If the string is not nul-terminated, we have to make a copy.
   // This is doing a one past end read, and should be removed!
   if (!String.empty() && String.data()[String.size()] != 0)
-    return cxstring::createDup(String);
+    return createDup(String);
 
   CXString Result;
   Result.data = String.data();
@@ -89,7 +91,7 @@ CXString cxstring::createRef(StringRef String) {
   return Result;
 }
 
-CXString cxstring::createDup(StringRef String) {
+CXString createDup(StringRef String) {
   CXString Result;
   char *Spelling = static_cast<char *>(malloc(String.size() + 1));
   memmove(Spelling, String.data(), String.size());
@@ -99,7 +101,7 @@ CXString cxstring::createDup(StringRef String) {
   return Result;
 }
 
-CXString cxstring::createCXString(CXStringBuf *buf) {
+CXString createCXString(CXStringBuf *buf) {
   CXString Str;
   Str.data = buf;
   Str.private_flags = (unsigned) CXS_StringBuf;
@@ -111,14 +113,14 @@ CXString cxstring::createCXString(CXStringBuf *buf) {
 // String pools.
 //===----------------------------------------------------------------------===//
 
-cxstring::CXStringPool::~CXStringPool() {
+CXStringPool::~CXStringPool() {
   for (std::vector<CXStringBuf *>::iterator I = Pool.begin(), E = Pool.end();
        I != E; ++I) {
     delete *I;
   }
 }
 
-CXStringBuf *cxstring::CXStringPool::getCXStringBuf(CXTranslationUnit TU) {
+CXStringBuf *CXStringPool::getCXStringBuf(CXTranslationUnit TU) {
   if (Pool.empty())
     return new CXStringBuf(TU);
 
@@ -128,17 +130,20 @@ CXStringBuf *cxstring::CXStringPool::getCXStringBuf(CXTranslationUnit TU) {
   return Buf;
 }
 
-CXStringBuf *cxstring::getCXStringBuf(CXTranslationUnit TU) {
+CXStringBuf *getCXStringBuf(CXTranslationUnit TU) {
   return TU->StringPool->getCXStringBuf(TU);
 }
 
-void cxstring::CXStringBuf::dispose() {
+void CXStringBuf::dispose() {
   TU->StringPool->Pool.push_back(this);
 }
 
-bool cxstring::isManagedByPool(CXString str) {
+bool isManagedByPool(CXString str) {
   return ((CXStringFlag) str.private_flags) == CXS_StringBuf;
 }
+
+} // end namespace cxstring
+} // end namespace clang
 
 //===----------------------------------------------------------------------===//
 // libClang public APIs.
@@ -147,7 +152,7 @@ bool cxstring::isManagedByPool(CXString str) {
 extern "C" {
 const char *clang_getCString(CXString string) {
   if (string.private_flags == (unsigned) CXS_StringBuf) {
-    return static_cast<const CXStringBuf *>(string.data)->Data.data();
+    return static_cast<const cxstring::CXStringBuf *>(string.data)->Data.data();
   }
   return static_cast<const char *>(string.data);
 }
@@ -161,7 +166,7 @@ void clang_disposeString(CXString string) {
         free(const_cast<void *>(string.data));
       break;
     case CXS_StringBuf:
-      static_cast<CXStringBuf *>(
+      static_cast<cxstring::CXStringBuf *>(
           const_cast<void *>(string.data))->dispose();
       break;
   }
