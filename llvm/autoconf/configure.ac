@@ -788,6 +788,7 @@ case "$enableval" in
         x86_64)   TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
         sparc)    TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
         powerpc)  TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
+        aarch64)  TARGETS_TO_BUILD="AArch64 $TARGETS_TO_BUILD" ;;
         arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)     TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         mipsel)   TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
