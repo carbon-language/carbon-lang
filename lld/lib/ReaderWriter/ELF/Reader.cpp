@@ -76,40 +76,52 @@ public:
       // already created during parser's life.
       if (Ident.first == llvm::ELF::ELFCLASS32 &&
           Ident.second == llvm::ELF::ELFDATA2LSB) {
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
         if (MaxAlignment >= 4)
           f.reset(new ELFFile<ELFType<llvm::support::little, 4, false> >(
                           _elfTargetInfo, std::move(mb), ec));
-        else if (MaxAlignment >= 2)
+        else
+#endif
+        if (MaxAlignment >= 2)
           f.reset(new ELFFile<ELFType<llvm::support::little, 2, false> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS32 &&
                  Ident.second == llvm::ELF::ELFDATA2MSB) {
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
         if (MaxAlignment >= 4)
           f.reset(new ELFFile<ELFType<llvm::support::big, 4, false> >(
                           _elfTargetInfo, std::move(mb), ec));
-        else if (MaxAlignment >= 2)
+        else
+#endif
+        if (MaxAlignment >= 2)
           f.reset(new ELFFile<ELFType<llvm::support::big, 2, false> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS64 &&
                  Ident.second == llvm::ELF::ELFDATA2MSB) {
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
         if (MaxAlignment >= 8)
           f.reset(new ELFFile<ELFType<llvm::support::big, 8, true> >(
                           _elfTargetInfo, std::move(mb), ec));
-        else if (MaxAlignment >= 2)
+        else
+#endif
+        if (MaxAlignment >= 2)
           f.reset(new ELFFile<ELFType<llvm::support::big, 2, true> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS64 &&
                  Ident.second == llvm::ELF::ELFDATA2LSB) {
+#if !LLVM_IS_UNALIGNED_ACCESS_FAST
         if (MaxAlignment >= 8)
           f.reset(new ELFFile<ELFType<llvm::support::little, 8, true> >(
                           _elfTargetInfo, std::move(mb), ec));
-        else if (MaxAlignment >= 2)
+        else
+#endif
+        if (MaxAlignment >= 2)
           f.reset(new ELFFile<ELFType<llvm::support::little, 2, true> >(
                           _elfTargetInfo, std::move(mb), ec));
         else
