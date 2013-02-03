@@ -110,13 +110,30 @@ struct NoArgClass
   NoArgClass() {}
 };
 
+struct VirualDestrClass
+{
+  VirualDestrClass(int arg);
+  virtual ~VirualDestrClass();
+};
+
+struct ConstrWithCleanupsClass
+{
+  ConstrWithCleanupsClass(const VirualDestrClass& cplx = VirualDestrClass(42));
+};
+
 // CHECK: test12
 // CHECK-NEXT: DefaultArgClass useDefaultArg;
 // CHECK-NEXT: DefaultArgClass overrideDefaultArg(1);
 // CHECK-NEXT: NoArgClass noArg;
+// CHECK-NEXT: ConstrWithCleanupsClass cwcNoArg;
+// CHECK-NEXT: ConstrWithCleanupsClass cwcOverrideArg(48);
+// CHECK-NEXT: ConstrWithCleanupsClass cwcExplicitArg(VirualDestrClass(56));
 void test12() {
   DefaultArgClass useDefaultArg;
   DefaultArgClass overrideDefaultArg(1);
   NoArgClass noArg;
+  ConstrWithCleanupsClass cwcNoArg;
+  ConstrWithCleanupsClass cwcOverrideArg(48);
+  ConstrWithCleanupsClass cwcExplicitArg(VirualDestrClass(56));
 }
 
