@@ -22,9 +22,9 @@ class X : public XA, public XB, public XC { };
 
 void test(A *a, B *b) {
   volatile C *ac = dynamic_cast<C *>(a);
-// CHECK: call i8* @__dynamic_cast(i8* %2, i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast ({ i8*, i8*, i32, i32, i8*, i64 }* @_ZTI1C to i8*), i64 -2)
+// CHECK: i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast ({ i8*, i8*, i32, i32, i8*, i64 }* @_ZTI1C to i8*), i64 -2)
   volatile D *ad = dynamic_cast<D *>(a);
-// CHECK: call i8* @__dynamic_cast(i8* %8, i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast ({ i8*, i8*, i8* }* @_ZTI1D to i8*), i64 0)
+// CHECK: i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast ({ i8*, i8*, i8* }* @_ZTI1D to i8*), i64 0)
   volatile E *ae = dynamic_cast<E *>(a);
 // CHECK: i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast ({ i8*, i8*, i32, i32, i8*, i64, i8*, i64 }* @_ZTI1E to i8*), i64 0)
   volatile F *af = dynamic_cast<F *>(a);
