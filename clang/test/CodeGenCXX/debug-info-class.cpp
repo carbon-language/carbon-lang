@@ -1,4 +1,3 @@
-// RUN: %clang  -emit-llvm -g -S %s -o - | FileCheck %s
 struct foo;
 void func(foo *f) {
 }
@@ -8,6 +7,7 @@ void func(bar *f) {
 union baz;
 void func(baz *f) {
 }
+
 class B {
 public:
   virtual ~B();
@@ -30,7 +30,11 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-// CHECK: invoke void @_ZN1BD1Ev(%class.B* %b)
+// RUN: %clang -target x86_64-unknown_unknown -emit-llvm -g -S %s -o - | FileCheck %s
+// RUN: %clang -target i686-cygwin -emit-llvm -g -S %s -o - | FileCheck %s
+// RUN: %clang -target armv7l-unknown-linux-gnueabihf -emit-llvm -g -S %s -o - | FileCheck %s
+
+// CHECK: invoke {{.+}} @_ZN1BD1Ev(%class.B* %b)
 // CHECK-NEXT: unwind label %{{.+}}, !dbg ![[EXCEPTLOC:.*]]
 // CHECK: store i32 0, i32* %{{.+}}, !dbg ![[RETLOC:.*]]
 // CHECK: DW_TAG_structure_type ] [foo]
