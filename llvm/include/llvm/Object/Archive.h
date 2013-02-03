@@ -14,22 +14,78 @@
 #ifndef LLVM_OBJECT_ARCHIVE_H
 #define LLVM_OBJECT_ARCHIVE_H
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 namespace llvm {
 namespace object {
+struct ArchiveMemberHeader {
+  char Name[16];
+  char LastModified[12];
+  char UID[6];
+  char GID[6];
+  char AccessMode[8];
+  char Size[10]; ///< Size of data, not including header or padding.
+  char Terminator[2];
+
+  ///! Get the name without looking up long names.
+  llvm::StringRef getName() const {
+    char EndCond;
+    if (Name[0] == '/' || Name[0] == '#')
+      EndCond = ' ';
+    else
+      EndCond = '/';
+    llvm::StringRef::size_type end =
+        llvm::StringRef(Name, sizeof(Name)).find(EndCond);
+    if (end == llvm::StringRef::npos)
+      end = sizeof(Name);
+    assert(end <= sizeof(Name) && end > 0);
+    // Don't include the EndCond if there is one.
+    return llvm::StringRef(Name, end);
+  }
+
+  uint64_t getSize() const {
+    uint64_t ret;
+    if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret))
+      llvm_unreachable("Size is not an integer.");
+    return ret;
+  }
+};
+
+static const ArchiveMemberHeader *ToHeader(const char *base) {
+  return reinterpret_cast<const ArchiveMemberHeader *>(base);
+}
 
 class Archive : public Binary {
   virtual void anchor();
 public:
   class Child {
     const Archive *Parent;
+    /// \brief Includes header but not padding byte.
     StringRef Data;
+    /// \brief Offset from Data to the start of the file.
+    uint16_t StartOfFile;
 
   public:
-    Child(const Archive *p, StringRef d) : Parent(p), Data(d) {}
+    Child(const Archive *p, StringRef d) : Parent(p), Data(d) {
+      if (!p || d.empty())
+        return;
+      // Setup StartOfFile and PaddingBytes.
+      StartOfFile = sizeof(ArchiveMemberHeader);
+      // Don't include attached name.
+      StringRef Name = ToHeader(Data.data())->getName();
+      if (Name.startswith("#1/")) {
+        uint64_t NameSize;
+        if (Name.substr(3).rtrim(" ").getAsInteger(10, NameSize))
+          llvm_unreachable("Long name length is not an integer");
+        StartOfFile += NameSize;
+      }
+    }
 
     bool operator ==(const Child &other) const {
       return (Parent == other.Parent) && (Data.begin() == other.Data.begin());
@@ -39,16 +95,48 @@ public:
       return Data.begin() < other.Data.begin();
     }
 
-    Child getNext() const;
+    Child getNext() const {
+      size_t SpaceToSkip = Data.size();
+      // If it's odd, add 1 to make it even.
+      if (SpaceToSkip & 1)
+        ++SpaceToSkip;
+
+      const char *NextLoc = Data.data() + SpaceToSkip;
+
+      // Check to see if this is past the end of the archive.
+      if (NextLoc >= Parent->Data->getBufferEnd())
+        return Child(Parent, StringRef(0, 0));
+
+      size_t NextSize =
+          sizeof(ArchiveMemberHeader) + ToHeader(NextLoc)->getSize();
+
+      return Child(Parent, StringRef(NextLoc, NextSize));
+    }
+
     error_code getName(StringRef &Result) const;
     int getLastModified() const;
     int getUID() const;
     int getGID() const;
     int getAccessMode() const;
-    ///! Return the size of the archive member without the header or padding.
-    uint64_t getSize() const;
+    /// \return the size of the archive member without the header or padding.
+    uint64_t getSize() const { return Data.size() - StartOfFile; }
 
-    MemoryBuffer *getBuffer() const;
+    StringRef getBuffer() const {
+      return StringRef(Data.data() + StartOfFile, getSize());
+    }
+
+    error_code getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
+                               bool FullPath = false) const {
+      StringRef Name;
+      if (error_code ec = getName(Name))
+        return ec;
+      SmallString<128> Path;
+      Result.reset(MemoryBuffer::getMemBuffer(
+          getBuffer(), FullPath ? (Twine(Parent->getFileName()) + "(" + Name +
+                                   ")").toStringRef(Path) : Name, false));
+      return error_code::success();
+    }
+
     error_code getAsBinary(OwningPtr<Binary> &Result) const;
   };
 

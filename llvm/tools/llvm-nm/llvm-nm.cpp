@@ -384,7 +384,9 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
         OwningPtr<Binary> child;
         if (i->getAsBinary(child)) {
           // Try opening it as a bitcode file.
-          OwningPtr<MemoryBuffer> buff(i->getBuffer());
+          OwningPtr<MemoryBuffer> buff;
+          if (error(i->getMemoryBuffer(buff)))
+            return;
           Module *Result = 0;
           if (buff)
             Result = ParseBitcodeFile(buff.get(), Context, &ErrorMessage);

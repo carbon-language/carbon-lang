@@ -14,52 +14,12 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 using namespace object;
 
 static const char *Magic = "!<arch>\n";
-
-namespace {
-struct ArchiveMemberHeader {
-  char Name[16];
-  char LastModified[12];
-  char UID[6];
-  char GID[6];
-  char AccessMode[8];
-  char Size[10]; ///< Size of data, not including header or padding.
-  char Terminator[2];
-
-  ///! Get the name without looking up long names.
-  StringRef getName() const {
-    char EndCond;
-    if (Name[0] == '/' || Name[0] == '#')
-      EndCond = ' ';
-    else
-      EndCond = '/';
-    StringRef::size_type end = StringRef(Name, sizeof(Name)).find(EndCond);
-    if (end == StringRef::npos)
-      end = sizeof(Name);
-    assert(end <= sizeof(Name) && end > 0);
-    // Don't include the EndCond if there is one.
-    return StringRef(Name, end);
-  }
-
-  uint64_t getSize() const {
-    uint64_t ret;
-    if (StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret))
-      llvm_unreachable("Size is not an integer.");
-    return ret;
-  }
-};
-}
-
-static const ArchiveMemberHeader *ToHeader(const char *base) {
-  return reinterpret_cast<const ArchiveMemberHeader *>(base);
-}
-
 
 static bool isInternalMember(const ArchiveMemberHeader &amh) {
   static const char *const internals[] = {
@@ -77,25 +37,6 @@ static bool isInternalMember(const ArchiveMemberHeader &amh) {
 }
 
 void Archive::anchor() { }
-
-Archive::Child Archive::Child::getNext() const {
-  size_t SpaceToSkip = sizeof(ArchiveMemberHeader) +
-    ToHeader(Data.data())->getSize();
-  // If it's odd, add 1 to make it even.
-  if (SpaceToSkip & 1)
-    ++SpaceToSkip;
-
-  const char *NextLoc = Data.data() + SpaceToSkip;
-
-  // Check to see if this is past the end of the archive.
-  if (NextLoc >= Parent->Data->getBufferEnd())
-    return Child(Parent, StringRef(0, 0));
-
-  size_t NextSize = sizeof(ArchiveMemberHeader) +
-    ToHeader(NextLoc)->getSize();
-
-  return Child(Parent, StringRef(NextLoc, NextSize));
-}
 
 error_code Archive::Child::getName(StringRef &Result) const {
   StringRef name = ToHeader(Data.data())->getName();
@@ -149,39 +90,12 @@ error_code Archive::Child::getName(StringRef &Result) const {
   return object_error::success;
 }
 
-uint64_t Archive::Child::getSize() const {
-  uint64_t size = ToHeader(Data.data())->getSize();
-  // Don't include attached name.
-  StringRef name =  ToHeader(Data.data())->getName();
-  if (name.startswith("#1/")) {
-    uint64_t name_size;
-    if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
-      llvm_unreachable("Long name length is not an integer");
-    size -= name_size;
-  }
-  return size;
-}
-
-MemoryBuffer *Archive::Child::getBuffer() const {
-  StringRef name = ToHeader(Data.data())->getName();
-  int size = sizeof(ArchiveMemberHeader);
-  if (name.startswith("#1/")) {
-    uint64_t name_size;
-    if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
-      llvm_unreachable("Long name length is not an integer");
-    size += name_size;
-  }
-  if (getName(name))
-    return 0;
-  return MemoryBuffer::getMemBuffer(Data.substr(size, getSize()),
-                                    name,
-                                    false);
-}
-
 error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
   OwningPtr<Binary> ret;
-  if (error_code ec =
-    createBinary(getBuffer(), ret))
+  OwningPtr<MemoryBuffer> Buff;
+  if (error_code ec = getMemoryBuffer(Buff))
+    return ec;
+  if (error_code ec = createBinary(Buff.take(), ret))
     return ec;
   Result.swap(ret);
   return object_error::success;
@@ -270,13 +184,12 @@ Archive::child_iterator Archive::end_children() const {
 }
 
 error_code Archive::Symbol::getName(StringRef &Result) const {
-  Result =
-    StringRef(Parent->SymbolTable->getBuffer()->getBufferStart() + StringIndex);
+  Result = StringRef(Parent->SymbolTable->getBuffer().begin() + StringIndex);
   return object_error::success;
 }
 
 error_code Archive::Symbol::getMember(child_iterator &Result) const {
-  const char *Buf = Parent->SymbolTable->getBuffer()->getBufferStart();
+  const char *Buf = Parent->SymbolTable->getBuffer().begin();
   const char *Offsets = Buf + 4;
   uint32_t Offset = 0;
   if (Parent->kind() == K_GNU) {
@@ -326,13 +239,13 @@ Archive::Symbol Archive::Symbol::getNext() const {
   Symbol t(*this);
   // Go to one past next null.
   t.StringIndex =
-    Parent->SymbolTable->getBuffer()->getBuffer().find('\0', t.StringIndex) + 1;
+      Parent->SymbolTable->getBuffer().find('\0', t.StringIndex) + 1;
   ++t.SymbolIndex;
   return t;
 }
 
 Archive::symbol_iterator Archive::begin_symbols() const {
-  const char *buf = SymbolTable->getBuffer()->getBufferStart();
+  const char *buf = SymbolTable->getBuffer().begin();
   if (kind() == K_GNU) {
     uint32_t symbol_count = 0;
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
@@ -347,13 +260,12 @@ Archive::symbol_iterator Archive::begin_symbols() const {
     symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
     buf += 4 + (symbol_count * 2); // Skip indices.
   }
-  uint32_t string_start_offset =
-    buf - SymbolTable->getBuffer()->getBufferStart();
+  uint32_t string_start_offset = buf - SymbolTable->getBuffer().begin();
   return symbol_iterator(Symbol(this, 0, string_start_offset));
 }
 
 Archive::symbol_iterator Archive::end_symbols() const {
-  const char *buf = SymbolTable->getBuffer()->getBufferStart();
+  const char *buf = SymbolTable->getBuffer().begin();
   uint32_t symbol_count = 0;
   if (kind() == K_GNU) {
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
