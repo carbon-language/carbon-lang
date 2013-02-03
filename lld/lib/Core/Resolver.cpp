@@ -318,7 +318,8 @@ void Resolver::checkUndefines(bool final) {
     bool isError = false;
     for (const UndefinedAtom *undefAtom : undefinedAtoms) {
       if (undefAtom->canBeNull() == UndefinedAtom::canBeNullNever) {
-        llvm::errs() << "Undefined Symbol: " << undefAtom->name() << "\n";
+        llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
+                     << " : " << undefAtom->name() << "\n";
         isError = true;
       }
     }
