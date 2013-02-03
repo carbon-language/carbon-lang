@@ -528,7 +528,6 @@ private:
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
     if (Current.is(tok::l_brace) && Current.MatchingParen != NULL &&
-        Current.Children[0].isNot(tok::l_brace) &&
         !Current.MatchingParen->MustBreakBefore) {
       AnnotatedToken *End = Current.MatchingParen;
       while (!End->Children.empty() && !End->Children[0].CanBreakBefore) {

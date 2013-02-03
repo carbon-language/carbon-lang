@@ -693,6 +693,12 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "                              222222222222222222222222222222,\n"
       "                              333333333333333333333333333333 },\n"
       "                            { 1, 2, 3 }, { 1, 2, 3 } } };");
+  verifyFormat(
+      "SomeArrayOfSomeType a = { { { 1, 2, 3 } }, { { 1, 2, 3 } },\n"
+      "                          { { 111111111111111111111111111111,\n"
+      "                              222222222222222222222222222222,\n"
+      "                              333333333333333333333333333333 } },\n"
+      "                          { { 1, 2, 3 } }, { { 1, 2, 3 } } };");
 
   // FIXME: We might at some point want to handle this similar to parameter
   // lists, where we have an option to put each on a single line.
