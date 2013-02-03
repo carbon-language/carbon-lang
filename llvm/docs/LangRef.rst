@@ -506,7 +506,8 @@ variables defined within the module are not modified from their
 initial values before the start of the global initializer.  This is
 true even for variables potentially accessible from outside the
 module, including those with external linkage or appearing in
-``@llvm.used``.
+``@llvm.used``. This assumption may be suppressed by marking the
+variable with ``externally_initialized``.
 
 An explicit alignment may be specified for a global, which must be a
 power of 2. If not present, or if the alignment is set to zero, the
