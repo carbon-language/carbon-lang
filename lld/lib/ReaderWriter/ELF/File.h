@@ -36,6 +36,17 @@
 #include "llvm/Support/system_error.h"
 
 #include <map>
+#include <unordered_map>
+
+namespace std {
+template <> struct hash<llvm::StringRef> {
+public:
+  size_t operator()(const llvm::StringRef &s) const {
+    using llvm::hash_value;
+    return hash_value(s);
+  }
+};
+}
 
 namespace lld {
 namespace elf {
@@ -86,6 +97,15 @@ public:
         return;
 
       const Elf_Shdr *section = _objFile->getElfSection(sit);
+      switch (section->sh_type) {
+      case llvm::ELF::SHT_NOTE:
+      case llvm::ELF::SHT_STRTAB:
+      case llvm::ELF::SHT_SYMTAB:
+      case llvm::ELF::SHT_SYMTAB_SHNDX:
+        continue;
+      }
+      if (section->sh_size == 0)
+        continue;
 
       // Create a sectionSymbols entry for every progbits section.
       if (section->sh_type == llvm::ELF::SHT_PROGBITS)
@@ -312,24 +332,34 @@ private:
     // Only relocations that are inside the domain of the atom are added.
 
     // Add Rela (those with r_addend) references:
-    for (auto &rai : _relocationAddendRefences[sectionName]) {
-      if (!((rai->r_offset >= symbol->st_value) &&
-            (rai->r_offset < symbol->st_value + content.size())))
-        continue;
-      auto *ERef = new (_readerStorage)
-          ELFReference<ELFT>(rai, rai->r_offset - symbol->st_value, nullptr);
-      _references.push_back(ERef);
-    }
-
-    // Add Rel references.
-    for (auto &ri : _relocationReferences[sectionName]) {
-      if ((ri->r_offset >= symbol->st_value) &&
-          (ri->r_offset < symbol->st_value + content.size())) {
+    auto rari = _relocationAddendRefences.find(sectionName);
+    auto rri = _relocationReferences.find(sectionName);
+    unsigned refs = 0;
+    if (rari != _relocationAddendRefences.end())
+      refs += rari->second.size();
+    if (rri != _relocationReferences.end())
+      refs += rri->second.size();
+    _references.reserve(_references.size() + refs);
+    if (rari != _relocationAddendRefences.end())
+      for (auto &rai : rari->second) {
+        if (!((rai->r_offset >= symbol->st_value) &&
+              (rai->r_offset < symbol->st_value + content.size())))
+          continue;
         auto *ERef = new (_readerStorage)
-            ELFReference<ELFT>(ri, ri->r_offset - symbol->st_value, nullptr);
+            ELFReference<ELFT>(rai, rai->r_offset - symbol->st_value, nullptr);
         _references.push_back(ERef);
       }
-    }
+
+    // Add Rel references.
+    if (rri != _relocationReferences.end())
+      for (auto &ri : rri->second) {
+        if ((ri->r_offset >= symbol->st_value) &&
+            (ri->r_offset < symbol->st_value + content.size())) {
+          auto *ERef = new (_readerStorage)
+              ELFReference<ELFT>(ri, ri->r_offset - symbol->st_value, nullptr);
+          _references.push_back(ERef);
+        }
+      }
 
     // Create the DefinedAtom and add it to the list of DefinedAtoms.
     return new (_readerStorage) ELFDefinedAtom<
@@ -348,8 +378,10 @@ private:
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries. -- .rel or .rela is prepended to create
   /// the SHT_REL(A) section name.
-  std::map<StringRef, std::vector<const Elf_Rela *> > _relocationAddendRefences;
-  std::map<StringRef, std::vector<const Elf_Rel *> > _relocationReferences;
+  std::unordered_map<StringRef,
+                     std::vector<const Elf_Rela *> > _relocationAddendRefences;
+  std::unordered_map<StringRef,
+                     std::vector<const Elf_Rel *> > _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
   llvm::BumpPtrAllocator _readerStorage;
