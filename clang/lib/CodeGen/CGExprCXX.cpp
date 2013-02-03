@@ -1713,6 +1713,58 @@ static void EmitBadCastCall(CodeGenFunction &CGF) {
   CGF.Builder.CreateUnreachable();
 }
 
+/// \brief Compute the src2dst_offset hint as described in the
+/// Itanium C++ ABI [2.9.7]
+static CharUnits computeOffsetHint(ASTContext &Context,
+                                   const CXXRecordDecl *Src,
+                                   const CXXRecordDecl *Dst) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                     /*DetectVirtual=*/false);
+
+  // If Dst is not derived from Src we can skip the whole computation below and
+  // return that Src is not a public base of Dst.  Record all inheritance paths.
+  if (!Dst->isDerivedFrom(Src, Paths))
+    return CharUnits::fromQuantity(-2ULL);
+
+  unsigned NumPublicPaths = 0;
+  CharUnits Offset;
+
+  // Now walk all possible inheritance paths.
+  for (CXXBasePaths::paths_iterator I = Paths.begin(), E = Paths.end();
+       I != E; ++I) {
+    if (I->Access != AS_public) // Ignore non-public inheritance.
+      continue;
+
+    ++NumPublicPaths;
+
+    for (CXXBasePath::iterator J = I->begin(), JE = I->end(); J != JE; ++J) {
+      // If the path contains a virtual base class we can't give any hint.
+      // -1: no hint.
+      if (J->Base->isVirtual())
+        return CharUnits::fromQuantity(-1ULL);
+
+      if (NumPublicPaths > 1) // Won't use offsets, skip computation.
+        continue;
+
+      // Accumulate the base class offsets.
+      const ASTRecordLayout &L = Context.getASTRecordLayout(J->Class);
+      Offset += L.getBaseClassOffset(J->Base->getType()->getAsCXXRecordDecl());
+    }
+  }
+
+  // -2: Src is not a public base of Dst.
+  if (NumPublicPaths == 0)
+    return CharUnits::fromQuantity(-2ULL);
+
+  // -3: Src is a multiple public base type but never a virtual base type.
+  if (NumPublicPaths > 1)
+    return CharUnits::fromQuantity(-3ULL);
+
+  // Otherwise, the Src type is a unique public nonvirtual base type of Dst.
+  // Return the offset of Src from the origin of Dst.
+  return Offset;
+}
+
 static llvm::Value *
 EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
                     QualType SrcTy, QualType DestTy,
@@ -1762,8 +1814,13 @@ EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
   llvm::Value *DestRTTI =
     CGF.CGM.GetAddrOfRTTIDescriptor(DestRecordTy.getUnqualifiedType());
 
-  // FIXME: Actually compute a hint here.
-  llvm::Value *OffsetHint = llvm::ConstantInt::get(PtrDiffLTy, -1ULL);
+  // Compute the offset hint.
+  const CXXRecordDecl *SrcDecl = SrcRecordTy->getAsCXXRecordDecl();
+  const CXXRecordDecl *DestDecl = DestRecordTy->getAsCXXRecordDecl();
+  llvm::Value *OffsetHint =
+    llvm::ConstantInt::get(PtrDiffLTy,
+                           computeOffsetHint(CGF.getContext(), SrcDecl,
+                                             DestDecl).getQuantity());
 
   // Emit the call to __dynamic_cast.
   Value = CGF.EmitCastToVoidPtr(Value);
