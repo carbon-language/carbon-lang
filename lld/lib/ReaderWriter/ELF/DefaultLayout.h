@@ -144,7 +144,7 @@ public:
   typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
   DefaultLayout(const ELFTargetInfo &ti)
-      : _targetInfo(ti) {
+      : _relocationTable(nullptr), _targetInfo(ti) {
   }
 
   /// \brief Return the section order for a input section
