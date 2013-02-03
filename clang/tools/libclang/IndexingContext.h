@@ -494,7 +494,7 @@ private:
   void getContainerInfo(const DeclContext *DC, ContainerInfo &ContInfo);
 
   CXCursor getCursor(const Decl *D) {
-    return cxcursor::MakeCXCursor(const_cast<Decl*>(D), CXTU);
+    return cxcursor::MakeCXCursor(D, CXTU);
   }
 
   CXCursor getRefCursor(const NamedDecl *D, SourceLocation Loc);

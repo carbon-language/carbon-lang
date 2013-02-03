@@ -1681,7 +1681,7 @@ class DeclVisit : public VisitorJob {
 public:
   DeclVisit(const Decl *D, CXCursor parent, bool isFirst) :
     VisitorJob(parent, VisitorJob::DeclVisitKind,
-               const_cast<Decl *>(D), isFirst ? (void*) 1 : (void*) 0) {}
+               D, isFirst ? (void*) 1 : (void*) 0) {}
   static bool classof(const VisitorJob *VJ) {
     return VJ->getKind() == DeclVisitKind;
   }
@@ -1742,8 +1742,7 @@ public:
 class DeclarationNameInfoVisit : public VisitorJob {
 public:
   DeclarationNameInfoVisit(const Stmt *S, CXCursor parent)
-    : VisitorJob(parent, VisitorJob::DeclarationNameInfoVisitKind,
-                 const_cast<Stmt *>(S)) {}
+    : VisitorJob(parent, VisitorJob::DeclarationNameInfoVisitKind, S) {}
   static bool classof(const VisitorJob *VJ) {
     return VJ->getKind() == VisitorJob::DeclarationNameInfoVisitKind;
   }
