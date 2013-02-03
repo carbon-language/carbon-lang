@@ -29,7 +29,7 @@ using namespace clang::cxstring;
 //===----------------------------------------------------------------------===//
 
 namespace {
-class USRGenerator : public DeclVisitor<USRGenerator> {
+class USRGenerator : public ConstDeclVisitor<USRGenerator> {
   OwningPtr<SmallString<128> > OwnedBuf;
   SmallVectorImpl<char> &Buf;
   llvm::raw_svector_ostream Out;
@@ -67,37 +67,37 @@ public:
   bool ignoreResults() const { return IgnoreResults; }
 
   // Visitation methods from generating USRs from AST elements.
-  void VisitDeclContext(DeclContext *D);
-  void VisitFieldDecl(FieldDecl *D);
-  void VisitFunctionDecl(FunctionDecl *D);
-  void VisitNamedDecl(NamedDecl *D);
-  void VisitNamespaceDecl(NamespaceDecl *D);
-  void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
-  void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
-  void VisitClassTemplateDecl(ClassTemplateDecl *D);
-  void VisitObjCContainerDecl(ObjCContainerDecl *CD);
-  void VisitObjCMethodDecl(ObjCMethodDecl *MD);
-  void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
-  void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
-  void VisitTagDecl(TagDecl *D);
-  void VisitTypedefDecl(TypedefDecl *D);
-  void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
-  void VisitVarDecl(VarDecl *D);
-  void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
-  void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
-  void VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+  void VisitDeclContext(const DeclContext *D);
+  void VisitFieldDecl(const FieldDecl *D);
+  void VisitFunctionDecl(const FunctionDecl *D);
+  void VisitNamedDecl(const NamedDecl *D);
+  void VisitNamespaceDecl(const NamespaceDecl *D);
+  void VisitNamespaceAliasDecl(const NamespaceAliasDecl *D);
+  void VisitFunctionTemplateDecl(const FunctionTemplateDecl *D);
+  void VisitClassTemplateDecl(const ClassTemplateDecl *D);
+  void VisitObjCContainerDecl(const ObjCContainerDecl *CD);
+  void VisitObjCMethodDecl(const ObjCMethodDecl *MD);
+  void VisitObjCPropertyDecl(const ObjCPropertyDecl *D);
+  void VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D);
+  void VisitTagDecl(const TagDecl *D);
+  void VisitTypedefDecl(const TypedefDecl *D);
+  void VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D);
+  void VisitVarDecl(const VarDecl *D);
+  void VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D);
+  void VisitTemplateTemplateParmDecl(const TemplateTemplateParmDecl *D);
+  void VisitLinkageSpecDecl(const LinkageSpecDecl *D) {
     IgnoreResults = true;
   }
-  void VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+  void VisitUsingDirectiveDecl(const UsingDirectiveDecl *D) {
     IgnoreResults = true;
   }
-  void VisitUsingDecl(UsingDecl *D) { 
+  void VisitUsingDecl(const UsingDecl *D) {
     IgnoreResults = true;
   }
-  void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) { 
+  void VisitUnresolvedUsingValueDecl(const UnresolvedUsingValueDecl *D) {
     IgnoreResults = true;
   }
-  void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) { 
+  void VisitUnresolvedUsingTypenameDecl(const UnresolvedUsingTypenameDecl *D) {
     IgnoreResults = true;
   }
   
@@ -155,15 +155,15 @@ static inline bool ShouldGenerateLocation(const NamedDecl *D) {
   return D->getLinkage() != ExternalLinkage;
 }
 
-void USRGenerator::VisitDeclContext(DeclContext *DC) {
-  if (NamedDecl *D = dyn_cast<NamedDecl>(DC))
+void USRGenerator::VisitDeclContext(const DeclContext *DC) {
+  if (const NamedDecl *D = dyn_cast<NamedDecl>(DC))
     Visit(D);
 }
 
-void USRGenerator::VisitFieldDecl(FieldDecl *D) {
+void USRGenerator::VisitFieldDecl(const FieldDecl *D) {
   // The USR for an ivar declared in a class extension is based on the
   // ObjCInterfaceDecl, not the ObjCCategoryDecl.
-  if (ObjCInterfaceDecl *ID = Context->getObjContainingInterface(D))
+  if (const ObjCInterfaceDecl *ID = Context->getObjContainingInterface(D))
     Visit(ID);
   else
     VisitDeclContext(D->getDeclContext());
@@ -175,7 +175,7 @@ void USRGenerator::VisitFieldDecl(FieldDecl *D) {
   }
 }
 
-void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
+void USRGenerator::VisitFunctionDecl(const FunctionDecl *D) {
   if (ShouldGenerateLocation(D) && GenLoc(D))
     return;
 
@@ -202,7 +202,8 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   }
 
   // Mangle in type information for the arguments.
-  for (FunctionDecl::param_iterator I = D->param_begin(), E = D->param_end();
+  for (FunctionDecl::param_const_iterator I = D->param_begin(),
+                                          E = D->param_end();
        I != E; ++I) {
     Out << '#';
     if (ParmVarDecl *PD = *I)
@@ -211,7 +212,7 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   if (D->isVariadic())
     Out << '.';
   Out << '#';
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     if (MD->isStatic())
       Out << 'S';
     if (unsigned quals = MD->getTypeQualifiers())
@@ -219,7 +220,7 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   }
 }
 
-void USRGenerator::VisitNamedDecl(NamedDecl *D) {
+void USRGenerator::VisitNamedDecl(const NamedDecl *D) {
   VisitDeclContext(D->getDeclContext());
   Out << "@";
 
@@ -232,7 +233,7 @@ void USRGenerator::VisitNamedDecl(NamedDecl *D) {
   }
 }
 
-void USRGenerator::VisitVarDecl(VarDecl *D) {
+void USRGenerator::VisitVarDecl(const VarDecl *D) {
   // VarDecls can be declared 'extern' within a function or method body,
   // but their enclosing DeclContext is the function, not the TU.  We need
   // to check the storage class to correctly generate the USR.
@@ -254,17 +255,19 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
     Out << '@' << s;
 }
 
-void USRGenerator::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
+void USRGenerator::VisitNonTypeTemplateParmDecl(
+                                        const NonTypeTemplateParmDecl *D) {
   GenLoc(D);
   return;
 }
 
-void USRGenerator::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
+void USRGenerator::VisitTemplateTemplateParmDecl(
+                                        const TemplateTemplateParmDecl *D) {
   GenLoc(D);
   return;
 }
 
-void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
+void USRGenerator::VisitNamespaceDecl(const NamespaceDecl *D) {
   if (D->isAnonymousNamespace()) {
     Out << "@aN";
     return;
@@ -275,29 +278,29 @@ void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
     Out << "@N@" << D->getName();
 }
 
-void USRGenerator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
+void USRGenerator::VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
   VisitFunctionDecl(D->getTemplatedDecl());
 }
 
-void USRGenerator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+void USRGenerator::VisitClassTemplateDecl(const ClassTemplateDecl *D) {
   VisitTagDecl(D->getTemplatedDecl());
 }
 
-void USRGenerator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+void USRGenerator::VisitNamespaceAliasDecl(const NamespaceAliasDecl *D) {
   VisitDeclContext(D->getDeclContext());
   if (!IgnoreResults)
     Out << "@NA@" << D->getName();  
 }
 
-void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
-  DeclContext *container = D->getDeclContext();
-  if (ObjCProtocolDecl *pd = dyn_cast<ObjCProtocolDecl>(container)) {
+void USRGenerator::VisitObjCMethodDecl(const ObjCMethodDecl *D) {
+  const DeclContext *container = D->getDeclContext();
+  if (const ObjCProtocolDecl *pd = dyn_cast<ObjCProtocolDecl>(container)) {
     Visit(pd);
   }
   else {
     // The USR for a method declared in a class extension or category is based on
     // the ObjCInterfaceDecl, not the ObjCCategoryDecl.
-    ObjCInterfaceDecl *ID = D->getClassInterface();
+    const ObjCInterfaceDecl *ID = D->getClassInterface();
     if (!ID) {
       IgnoreResults = true;
       return;
@@ -312,7 +315,7 @@ void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   N.printName(Out);
 }
 
-void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
+void USRGenerator::VisitObjCContainerDecl(const ObjCContainerDecl *D) {
   switch (D->getKind()) {
     default:
       llvm_unreachable("Invalid ObjC container.");
@@ -321,8 +324,8 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
       GenObjCClass(D->getName());
       break;
     case Decl::ObjCCategory: {
-      ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
-      ObjCInterfaceDecl *ID = CD->getClassInterface();
+      const ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
+      const ObjCInterfaceDecl *ID = CD->getClassInterface();
       if (!ID) {
         // Handle invalid code where the @interface might not
         // have been specified.
@@ -343,8 +346,8 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
       break;
     }
     case Decl::ObjCCategoryImpl: {
-      ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
-      ObjCInterfaceDecl *ID = CD->getClassInterface();
+      const ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
+      const ObjCInterfaceDecl *ID = CD->getClassInterface();
       if (!ID) {
         // Handle invalid code where the @interface might not
         // have been specified.
@@ -362,17 +365,17 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   }
 }
 
-void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+void USRGenerator::VisitObjCPropertyDecl(const ObjCPropertyDecl *D) {
   // The USR for a property declared in a class extension or category is based
   // on the ObjCInterfaceDecl, not the ObjCCategoryDecl.
-  if (ObjCInterfaceDecl *ID = Context->getObjContainingInterface(D))
+  if (const ObjCInterfaceDecl *ID = Context->getObjContainingInterface(D))
     Visit(ID);
   else
     Visit(cast<Decl>(D->getDeclContext()));
   GenObjCProperty(D->getName());
 }
 
-void USRGenerator::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
+void USRGenerator::VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D) {
   if (ObjCPropertyDecl *PD = D->getPropertyDecl()) {
     VisitObjCPropertyDecl(PD);
     return;
@@ -381,7 +384,7 @@ void USRGenerator::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   IgnoreResults = true;
 }
 
-void USRGenerator::VisitTagDecl(TagDecl *D) {
+void USRGenerator::VisitTagDecl(const TagDecl *D) {
   // Add the location of the tag decl to handle resolution across
   // translation units.
   if (ShouldGenerateLocation(D) && GenLoc(D))
@@ -391,7 +394,7 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   VisitDeclContext(D->getDeclContext());
 
   bool AlreadyStarted = false;
-  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D)) {
+  if (const CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D)) {
     if (ClassTemplateDecl *ClassTmpl = CXXRecord->getDescribedClassTemplate()) {
       AlreadyStarted = true;
       
@@ -403,7 +406,7 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
       case TTK_Enum: llvm_unreachable("enum template");
       }
       VisitTemplateParameterList(ClassTmpl->getTemplateParameters());
-    } else if (ClassTemplatePartialSpecializationDecl *PartialSpec
+    } else if (const ClassTemplatePartialSpecializationDecl *PartialSpec
                 = dyn_cast<ClassTemplatePartialSpecializationDecl>(CXXRecord)) {
       AlreadyStarted = true;
       
@@ -443,7 +446,7 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   }
   
   // For a class template specialization, mangle the template arguments.
-  if (ClassTemplateSpecializationDecl *Spec
+  if (const ClassTemplateSpecializationDecl *Spec
                               = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
     const TemplateArgumentList &Args = Spec->getTemplateInstantiationArgs();
     Out << '>';
@@ -454,17 +457,17 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   }
 }
 
-void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
+void USRGenerator::VisitTypedefDecl(const TypedefDecl *D) {
   if (ShouldGenerateLocation(D) && GenLoc(D))
     return;
-  DeclContext *DC = D->getDeclContext();
-  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
+  const DeclContext *DC = D->getDeclContext();
+  if (const NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
     Visit(DCN);
   Out << "@T@";
   Out << D->getName();
 }
 
-void USRGenerator::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
+void USRGenerator::VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D) {
   GenLoc(D);
   return;
 }
