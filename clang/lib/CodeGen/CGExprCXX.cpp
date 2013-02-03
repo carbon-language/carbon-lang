@@ -1689,11 +1689,16 @@ static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
 
   llvm::Type *Args[4] = { Int8PtrTy, Int8PtrTy, Int8PtrTy, PtrDiffTy };
-  
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(Int8PtrTy, Args, false);
-  
-  return CGF.CGM.CreateRuntimeFunction(FTy, "__dynamic_cast");
+
+  llvm::FunctionType *FTy = llvm::FunctionType::get(Int8PtrTy, Args, false);
+
+  // Mark the function as nounwind readonly.
+  llvm::Attribute::AttrKind FuncAttrs[] = { llvm::Attribute::NoUnwind,
+                                            llvm::Attribute::ReadOnly };
+  llvm::AttributeSet Attrs = llvm::AttributeSet::get(
+      CGF.getLLVMContext(), llvm::AttributeSet::FunctionIndex, FuncAttrs);
+
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__dynamic_cast", Attrs);
 }
 
 static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {

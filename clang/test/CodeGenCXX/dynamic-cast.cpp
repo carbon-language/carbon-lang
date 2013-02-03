@@ -16,3 +16,5 @@ const B& f(A *a) {
   }
   return fail;
 }
+
+// CHECK: declare i8* @__dynamic_cast(i8*, i8*, i8*, i64) nounwind readonly
