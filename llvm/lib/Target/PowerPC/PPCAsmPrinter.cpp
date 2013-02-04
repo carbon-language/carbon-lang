@@ -821,7 +821,12 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
     "ppcA2",
     "ppce500mc",
     "ppce5500",
+    "power3",
+    "power4",
+    "power5",
+    "power5x",
     "power6",
+    "power6x",
     "power7",
     "ppc64"
   };
