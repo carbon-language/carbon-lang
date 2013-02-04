@@ -206,7 +206,7 @@ s64 internal_simple_strtoll(const char *nptr, char **endptr, int base) {
 }
 
 bool mem_is_zero(const char *beg, uptr size) {
-  CHECK_LE(size, 1UL << FIRST_32_SECOND_64(30, 40));  // Sanity check.
+  CHECK_LE(size, 1ULL << FIRST_32_SECOND_64(30, 40));  // Sanity check.
   const char *end = beg + size;
   uptr *aligned_beg = (uptr *)RoundUpTo((uptr)beg, sizeof(uptr));
   uptr *aligned_end = (uptr *)RoundDownTo((uptr)end, sizeof(uptr));

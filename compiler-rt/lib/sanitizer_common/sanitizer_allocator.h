@@ -116,7 +116,7 @@ class SizeClassMap {
   static uptr MaxCached(uptr class_id) {
     if (class_id == 0) return 0;
     uptr n = (1UL << kMaxBytesCachedLog) / Size(class_id);
-    return Max(1UL, Min(kMaxNumCached, n));
+    return Max<uptr>(1, Min(kMaxNumCached, n));
   }
 
   static void Print() {

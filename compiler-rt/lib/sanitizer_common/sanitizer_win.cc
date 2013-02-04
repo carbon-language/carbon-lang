@@ -262,12 +262,12 @@ void BlockingMutex::Lock() {
     // locks while we're starting in one thread to avoid double-init races.
   }
   EnterCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
-  CHECK(owner_ == LOCK_READY);
+  CHECK_EQ(owner_, LOCK_READY);
   owner_ = GetThreadSelf();
 }
 
 void BlockingMutex::Unlock() {
-  CHECK(owner_ == GetThreadSelf());
+  CHECK_EQ(owner_, GetThreadSelf());
   owner_ = LOCK_READY;
   LeaveCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
 }
