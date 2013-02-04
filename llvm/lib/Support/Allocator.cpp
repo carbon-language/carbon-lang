@@ -104,8 +104,8 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   if (Ptr + Size <= End) {
     CurPtr = Ptr + Size;
     // Update the allocation point of this memory block in MemorySanitizer.
-    // Without this, MemorySanitizer reports for values originating from it will
-    // point to the allocation point of the entire slab.
+    // Without this, MemorySanitizer messages for values originated from here
+    // will point to the allocation of the entire slab.
     __msan_allocated_memory(Ptr, Size);
     return Ptr;
   }

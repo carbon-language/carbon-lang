@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/FileSystem.h"
 #include <llvm/Config/config.h>
 #if HAVE_SYS_STAT_H
@@ -164,10 +165,14 @@ static void SetMemoryLimits (unsigned size)
   setrlimit (RLIMIT_RSS, &r);
 #endif
 #ifdef RLIMIT_AS  // e.g. NetBSD doesn't have it.
+  // Don't set virtual memory limit if built with any Sanitizer. They need 80Tb
+  // of virtual memory for shadow memory mapping.
+#if !LLVM_MEMORY_SANITIZER_BUILD && !LLVM_ADDRESS_SANITIZER_BUILD
   // Virtual memory.
   getrlimit (RLIMIT_AS, &r);
   r.rlim_cur = limit;
   setrlimit (RLIMIT_AS, &r);
+#endif
 #endif
 #endif
 }

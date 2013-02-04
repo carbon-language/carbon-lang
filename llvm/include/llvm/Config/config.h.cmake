@@ -468,9 +468,6 @@
 /* Define to 1 if the system has the type `u_int64_t'. */
 #cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
-/* Define to 1 if you have the <sanitizer/msan_interface.h> header file. */
-#cmakedefine HAVE_SANITIZER_MSAN_INTERFACE_H ${HAVE_SANITIZER_MSAN_INTERFACE_H}
-
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #cmakedefine HAVE_VALGRIND_VALGRIND_H ${HAVE_VALGRIND_VALGRIND_H}
 

@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_COMPILER_H
 #define LLVM_SUPPORT_COMPILER_H
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 
 #ifndef __has_feature
 # define __has_feature(x) 0
@@ -295,12 +295,11 @@
 # define LLVM_FUNCTION_NAME __func__
 #endif
 
-/// \macro LLVM_ENABLE_MSAN_ANNOTATIONS
-/// \brief Are MemorySanitizer annotations available.
-#if defined(HAVE_SANITIZER_MSAN_INTERFACE_H)
+#if defined(LLVM_HAVE_MSAN_ANNOTATIONS)
 # include <sanitizer/msan_interface.h>
 #else
 # define __msan_allocated_memory(p, size)
+# define __msan_unpoison(p, size)
 #endif
 
 /// \macro LLVM_MEMORY_SANITIZER_BUILD
@@ -309,6 +308,14 @@
 # define LLVM_MEMORY_SANITIZER_BUILD 1
 #else
 # define LLVM_MEMORY_SANITIZER_BUILD 0
+#endif
+
+/// \macro LLVM_ADDRESS_SANITIZER_BUILD
+/// \brief Whether LLVM itself is built with AddressSanitizer instrumentation.
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+# define LLVM_ADDRESS_SANITIZER_BUILD 1
+#else
+# define LLVM_ADDRESS_SANITIZER_BUILD 0
 #endif
 
 /// \macro LLVM_IS_UNALIGNED_ACCESS_FAST
