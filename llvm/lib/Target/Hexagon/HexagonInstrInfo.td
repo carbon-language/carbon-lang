@@ -2825,23 +2825,42 @@ def : Pat <(i32 (zext (i1 PredRegs:$src1))),
 
 // i1 -> i64
 def : Pat <(i64 (zext (i1 PredRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI 0), (MUX_ii (i1 PredRegs:$src1), 1, 0)))>;
+      (i64 (COMBINE_rr (TFRI 0), (MUX_ii (i1 PredRegs:$src1), 1, 0)))>,
+      Requires<[NoV4T]>;
 
 // i32 -> i64
 def : Pat <(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI 0), (i32 IntRegs:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (i32 IntRegs:$src1)))>,
+      Requires<[NoV4T]>;
 
 // i8 -> i64
 def:  Pat <(i64 (zextloadi8 ADDRriS11_0:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriub ADDRriS11_0:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (LDriub ADDRriS11_0:$src1)))>,
+      Requires<[NoV4T]>;
+
+let AddedComplexity = 20 in
+def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
+                                s11_0ExtPred:$offset))),
+      (i64 (COMBINE_rr (TFRI 0), (LDriub_indexed IntRegs:$src1,
+                                  s11_0ExtPred:$offset)))>,
+      Requires<[NoV4T]>;
 
 // i16 -> i64
 def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriuh ADDRriS11_1:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (LDriuh ADDRriS11_1:$src1)))>,
+      Requires<[NoV4T]>;
+
+let AddedComplexity = 20 in
+def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
+                                  s11_1ExtPred:$offset))),
+      (i64 (COMBINE_rr (TFRI 0), (LDriuh_indexed IntRegs:$src1,
+                                  s11_1ExtPred:$offset)))>,
+      Requires<[NoV4T]>;
 
 // i32 -> i64
 def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
+      Requires<[NoV4T]>;
 
 def:  Pat <(i32 (zextloadi1 ADDRriS11_0:$src1)),
       (i32 (LDriw ADDRriS11_0:$src1))>;
@@ -2862,15 +2881,41 @@ def : Pat <(i64 (anyext (i1 PredRegs:$src1))),
 // Any extended 64-bit load.
 // anyext i32 -> i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (LDriw ADDRriS11_2:$src1)))>,
+      Requires<[NoV4T]>;
+
+// When there is an offset we should prefer the pattern below over the pattern above.
+// The complexity of the above is 13 (gleaned from HexagonGenDAGIsel.inc)
+// So this complexity below is comfortably higher to allow for choosing the below.
+// If this is not done then we generate addresses such as
+// ********************************************
+//        r1 = add (r0, #4)
+//        r1 = memw(r1 + #0)
+//  instead of
+//        r1 = memw(r0 + #4)
+// ********************************************
+let AddedComplexity = 100 in
+def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
+      (i64 (COMBINE_rr (TFRI 0), (LDriw_indexed IntRegs:$src1,
+                                  s11_2ExtPred:$offset)))>,
+      Requires<[NoV4T]>;
 
 // anyext i16 -> i64.
 def:  Pat <(i64 (extloadi16 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_rr (TFRI 0), (LDrih ADDRriS11_2:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (LDrih ADDRriS11_2:$src1)))>,
+      Requires<[NoV4T]>;
+
+let AddedComplexity = 20 in
+def:  Pat <(i64 (extloadi16 (add (i32 IntRegs:$src1),
+                                  s11_1ExtPred:$offset))),
+      (i64 (COMBINE_rr (TFRI 0), (LDrih_indexed IntRegs:$src1,
+                                  s11_1ExtPred:$offset)))>,
+      Requires<[NoV4T]>;
 
 // Map from Rdd = zxtw(Rs) -> Rdd = combine(0, Rs).
 def : Pat<(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (COMBINE_rr (TFRI 0), (i32 IntRegs:$src1)))>;
+      (i64 (COMBINE_rr (TFRI 0), (i32 IntRegs:$src1)))>,
+      Requires<[NoV4T]>;
 
 // Multiply 64-bit unsigned and use upper result.
 def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),

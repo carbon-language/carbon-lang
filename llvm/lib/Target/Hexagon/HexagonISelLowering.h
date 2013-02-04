@@ -52,6 +52,8 @@ namespace llvm {
       WrapperCP,
       WrapperCombineII,
       WrapperCombineRR,
+      WrapperCombineRI_V4,
+      WrapperCombineIR_V4,
       WrapperPackhl,
       WrapperSplatB,
       WrapperSplatH,
