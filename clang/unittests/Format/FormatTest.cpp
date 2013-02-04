@@ -1908,6 +1908,15 @@ TEST_F(FormatTest, BlockComments) {
             "    parameter);",
             format("#define A\n"
                    "/* */someCall(parameter);", getLLVMStyleWithColumns(15)));
+
+  EXPECT_EQ("someFunction(1, /* comment 1 */\n"
+            "             2, /* comment 2 */\n"
+            "             3, /* comment 3 */\n"
+            "             aaaa);",
+            format("someFunction (1,   /* comment 1 */\n"
+                   "                2, /* comment 2 */  \n"
+                   "               3,   /* comment 3 */\n"
+                   "aaaa );", getGoogleStyle()));
 }
 
 TEST_F(FormatTest, FormatStarDependingOnContext) {

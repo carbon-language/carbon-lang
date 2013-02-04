@@ -662,17 +662,15 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedToken &Current) {
 
   if (Current.FormatTok.MustBreakBefore) {
     Current.MustBreakBefore = true;
+  } else if (Current.Type == TT_LineComment) {
+    Current.MustBreakBefore = Current.FormatTok.NewlinesBefore > 0;
+  } else if ((Current.Parent->is(tok::comment) &&
+              Current.FormatTok.NewlinesBefore > 0) ||
+             (Current.is(tok::string_literal) &&
+              Current.Parent->is(tok::string_literal))) {
+    Current.MustBreakBefore = true;
   } else {
-    if (Current.Type == TT_LineComment) {
-      Current.MustBreakBefore = Current.FormatTok.NewlinesBefore > 0;
-    } else if ((Current.Parent->is(tok::comment) &&
-                Current.FormatTok.NewlinesBefore > 0) ||
-               (Current.is(tok::string_literal) &&
-                Current.Parent->is(tok::string_literal))) {
-      Current.MustBreakBefore = true;
-    } else {
-      Current.MustBreakBefore = false;
-    }
+    Current.MustBreakBefore = false;
   }
   Current.CanBreakBefore = Current.MustBreakBefore || canBreakBefore(Current);
   if (Current.MustBreakBefore)

@@ -690,7 +690,8 @@ private:
       return true;
     if (State.NextToken->Parent->is(tok::comma) &&
         State.Stack.back().BreakAfterComma &&
-        State.NextToken->Type != TT_LineComment)
+        (State.NextToken->isNot(tok::comment) ||
+         !State.NextToken->Children[0].MustBreakBefore))
       return true;
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&
