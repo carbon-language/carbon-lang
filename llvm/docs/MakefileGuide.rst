@@ -699,6 +699,9 @@ The override variables are given below:
 ``CFLAGS``
     Additional flags to be passed to the 'C' compiler.
 
+``CPPFLAGS``
+    Additional flags passed to the C/C++ preprocessor.
+
 ``CXX``
     Specifies the path to the C++ compiler.
 

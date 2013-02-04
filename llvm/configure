@@ -1981,6 +1981,9 @@ echo "$as_me: error: Already configured in ${srcdir}" >&2;}
   fi
 fi
 
+${CFLAGS=}
+${CXXFLAGS=}
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5606,8 +5609,8 @@ case "$enableval" in
         x86_64)   TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
         sparc)    TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
         powerpc)  TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
-        arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         aarch64)  TARGETS_TO_BUILD="AArch64 $TARGETS_TO_BUILD" ;;
+        arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)     TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         mipsel)   TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         mips64)   TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
@@ -8716,7 +8719,9 @@ if test "${enable_ltdl_install+set}" = set; then
 fi
 
 
- if test x"${enable_ltdl_install-no}" != xno; then
+
+
+if test x"${enable_ltdl_install-no}" != xno; then
   INSTALL_LTDL_TRUE=
   INSTALL_LTDL_FALSE='#'
 else
@@ -8724,7 +8729,9 @@ else
   INSTALL_LTDL_FALSE=
 fi
 
- if test x"${enable_ltdl_convenience-no}" != xno; then
+
+
+if test x"${enable_ltdl_convenience-no}" != xno; then
   CONVENIENCE_LTDL_TRUE=
   CONVENIENCE_LTDL_FALSE='#'
 else
@@ -10491,7 +10498,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10493 "configure"
+#line 10501 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

@@ -156,8 +156,17 @@ CXX = @CXX@
 # Path to the CC binary, which use used by testcases for native builds.
 CC := @CC@
 
+# C/C++ preprocessor flags.
+CPPFLAGS += @CPPFLAGS@
+
+# C compiler flags.
+CFLAGS += @CFLAGS@
+
+# C++ compiler flags.
+CXXFLAGS += @CXXFLAGS@
+
 # Linker flags.
-LDFLAGS+=@LDFLAGS@
+LDFLAGS += @LDFLAGS@
 
 # Path to the library archiver program.
 AR_PATH = @AR@
