@@ -1088,6 +1088,34 @@ flushes the output stream.  In other words, these are equivalent:
 Most of the time, you probably have no reason to flush the output stream, so
 it's better to use a literal ``'\n'``.
 
+Don't use ``inline`` when defining a function in a class definition
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A member function defined in a class definition is implicitly inline, so don't
+put the ``inline`` keyword in this case.
+
+Don't:
+
+.. code-block:: c++
+
+  class Foo {
+  public:
+    inline void bar() {
+      // ...
+    }
+  };
+
+Do:
+
+.. code-block:: c++
+
+  class Foo {
+  public:
+    void bar() {
+      // ...
+    }
+  };
+
 Microscopic Details
 -------------------
 
