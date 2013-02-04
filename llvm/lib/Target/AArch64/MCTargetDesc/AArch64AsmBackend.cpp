@@ -552,7 +552,7 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
     // 2^32.
     assert((int64_t)Value >= -(1LL << 32) &&
            (int64_t)Value < (1LL << 32) && "Out of range ADRP fixup");
-    return ADRImmBits((Value & 0x1fffff000) >> 12);
+    return ADRImmBits((Value & 0x1fffff000ULL) >> 12);
 
   case AArch64::fixup_a64_ld64_gottprel_lo12_nc:
     // R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC: Set an LD offset field to bits FF8
