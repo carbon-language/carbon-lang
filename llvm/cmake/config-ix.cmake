@@ -305,6 +305,24 @@ include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 
+set(USE_NO_MAYBE_UNINITIALIZED 0)
+set(USE_NO_UNINITIALIZED 0)
+
+# Disable gcc's potentially uninitialized use analysis as it presents lots of
+# false positives.
+if (CMAKE_COMPILER_IS_GNUCXX)
+  check_cxx_compiler_flag("-Wmaybe-uninitialized" HAS_MAYBE_UNINITIALIZED)
+  if (HAS_MAYBE_UNINITIALIZED)
+    set(USE_NO_MAYBE_UNINITIALIZED 1)
+  else()
+    # Only recent versions of gcc make the distinction between -Wuninitialized
+    # and -Wmaybe-uninitialized. If -Wmaybe-uninitialized isn't supported, just
+    # turn off all uninitialized use warnings.
+    check_cxx_compiler_flag("-Wuninitialized" HAS_UNINITIALIZED)
+    set(USE_NO_UNINITIALIZED ${HAS_UNINITIALIZED})
+  endif()
+endif()
+
 include(GetHostTriple)
 get_host_triple(LLVM_HOST_TRIPLE)
 
