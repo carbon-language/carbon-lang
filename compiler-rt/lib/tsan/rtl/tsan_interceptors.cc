@@ -1295,6 +1295,22 @@ TSAN_INTERCEPTOR(int, connect, int fd, void *addr, unsigned addrlen) {
   return res;
 }
 
+TSAN_INTERCEPTOR(int, bind, int fd, void *addr, unsigned addrlen) {
+  SCOPED_TSAN_INTERCEPTOR(bind, fd, addr, addrlen);
+  int res = REAL(bind)(fd, addr, addrlen);
+  if (fd > 0 && res == 0)
+    FdAccess(thr, pc, fd);
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, listen, int fd, int backlog) {
+  SCOPED_TSAN_INTERCEPTOR(listen, fd, backlog);
+  int res = REAL(listen)(fd, backlog);
+  if (fd > 0 && res == 0)
+    FdAccess(thr, pc, fd);
+  return res;
+}
+
 TSAN_INTERCEPTOR(int, accept, int fd, void *addr, unsigned *addrlen) {
   SCOPED_TSAN_INTERCEPTOR(accept, fd, addr, addrlen);
   int fd2 = REAL(accept)(fd, addr, addrlen);
@@ -1909,6 +1925,8 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(socket);
   TSAN_INTERCEPT(socketpair);
   TSAN_INTERCEPT(connect);
+  TSAN_INTERCEPT(bind);
+  TSAN_INTERCEPT(listen);
   TSAN_INTERCEPT(accept);
   TSAN_INTERCEPT(accept4);
   TSAN_INTERCEPT(epoll_create);

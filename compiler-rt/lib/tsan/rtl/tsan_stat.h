@@ -202,6 +202,8 @@ enum StatType {
   StatInt_socket,
   StatInt_socketpair,
   StatInt_connect,
+  StatInt_bind,
+  StatInt_listen,
   StatInt_accept,
   StatInt_accept4,
   StatInt_epoll_create,
@@ -303,6 +305,7 @@ enum StatType {
   StatMtxAtExit,
   StatMtxMBlock,
   StatMtxJavaMBlock,
+  StatMtxFD,
 
   // This must be the last.
   StatCnt

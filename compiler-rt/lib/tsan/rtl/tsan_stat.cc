@@ -207,6 +207,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_socket]                   = "  socket                          ";
   name[StatInt_socketpair]               = "  socketpair                      ";
   name[StatInt_connect]                  = "  connect                         ";
+  name[StatInt_bind]                     = "  bind                            ";
+  name[StatInt_listen]                   = "  listen                          ";
   name[StatInt_accept]                   = "  accept                          ";
   name[StatInt_accept4]                  = "  accept4                         ";
   name[StatInt_epoll_create]             = "  epoll_create                    ";
@@ -301,6 +303,7 @@ void StatOutput(u64 *stat) {
   name[StatMtxAnnotations]               = "  Annotations                     ";
   name[StatMtxMBlock]                    = "  MBlock                          ";
   name[StatMtxJavaMBlock]                = "  JavaMBlock                      ";
+  name[StatMtxFD]                        = "  FD                              ";
 
   Printf("Statistics:\n");
   for (int i = 0; i < StatCnt; i++)
