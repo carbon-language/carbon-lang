@@ -669,6 +669,10 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedToken &Current) {
              (Current.is(tok::string_literal) &&
               Current.Parent->is(tok::string_literal))) {
     Current.MustBreakBefore = true;
+  } else if (Current.is(tok::lessless) && !Current.Children.empty() &&
+             Current.Parent->is(tok::string_literal) &&
+             Current.Children[0].is(tok::string_literal)) {
+    Current.MustBreakBefore = true;
   } else {
     Current.MustBreakBefore = false;
   }

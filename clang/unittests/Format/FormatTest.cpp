@@ -1289,6 +1289,13 @@ TEST_F(FormatTest, AlignsPipes) {
       "aaaaaaaa << (aaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "                                 << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "         << aaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+
+  verifyFormat("return out << \"somepacket = {\\n\"\n"
+               "           << \"  aaaaaa = \" << pkt.aaaaaa << \"\\n\"\n"
+               "           << \"  bbbb = \" << pkt.bbbb << \"\\n\"\n"
+               "           << \"  cccccc = \" << pkt.cccccc << \"\\n\"\n"
+               "           << \"  ddd = [\" << pkt.ddd << \"]\\n\"\n"
+               "           << \"}\";");
 }
 
 TEST_F(FormatTest, UnderstandsEquals) {
