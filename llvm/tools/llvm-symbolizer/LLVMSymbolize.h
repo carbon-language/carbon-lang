@@ -59,7 +59,7 @@ private:
   typedef std::map<std::string, ModuleInfo*> ModuleMapTy;
   ModuleMapTy Modules;
   Options Opts;
-  static const std::string kBadString;
+  static const char kBadString[];
 };
 
 class ModuleInfo {

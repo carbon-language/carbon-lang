@@ -132,7 +132,7 @@ bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
   return false;
 }
 
-const std::string LLVMSymbolizer::kBadString = "??";
+const char LLVMSymbolizer::kBadString[] = "??";
 
 std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
                                           uint64_t ModuleOffset) {
