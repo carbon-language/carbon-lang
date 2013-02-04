@@ -3,6 +3,19 @@
 ; This is a regression test making sure the location of variables is correct in
 ; debugging information, even if they're addressed via the frame pointer.
 
+; In case it needs, regenerating, the following suffices:
+; int printf(const char *, ...);
+; void populate_array(int *, int);
+; int sum_array(int *, int);
+
+; int main() {
+;     int main_arr[100], val;
+;     populate_array(main_arr, 100);
+;     val = sum_array(main_arr, 100);
+;     printf("Total is %d\n", val);
+;     return 0;
+; }
+
   ; First make sure main_arr is where we expect it: sp + 12 == x29 - 420:
 ; CHECK: main:
 ; CHECK: sub sp, sp, #448
@@ -57,10 +70,8 @@ declare i32 @printf(i8*, ...)
 !llvm.dbg.cu = !{!0}
 
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !"simple.c", metadata !"/home/timnor01/a64-trunk/build", metadata !"clang version 3.2 ", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [/home/timnor01/a64-trunk/build/simple.c] [DW_LANG_C99]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5, metadata !11, metadata !14}
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5, metadata !11, metadata !14}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"populate_array", metadata !"populate_array", metadata !"", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32*, i32)* @populate_array, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [populate_array]
 !6 = metadata !{i32 786473, metadata !"simple.c", metadata !"/home/timnor01/a64-trunk/build", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
@@ -76,8 +87,7 @@ declare i32 @printf(i8*, ...)
 !17 = metadata !{i32 786688, metadata !18, metadata !"main_arr", metadata !6, i32 19, metadata !19, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [main_arr] [line 19]
 !18 = metadata !{i32 786443, metadata !14, i32 18, i32 16, metadata !6, i32 4} ; [ DW_TAG_lexical_block ] [/home/timnor01/a64-trunk/build/simple.c]
 !19 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 3200, i64 32, i32 0, i32 0, metadata !10, metadata !20, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 3200, align 32, offset 0] [from int]
-!20 = metadata !{metadata !21}
-!21 = metadata !{i32 786465, i64 0, i64 99}       ; [ DW_TAG_subrange_type ] [0, 99]
+!20 = metadata !{i32 786465, i64 0, i64 99}       ; [ DW_TAG_subrange_type ] [0, 99]
 !22 = metadata !{i32 19, i32 7, metadata !18, null}
 !23 = metadata !{i32 786688, metadata !18, metadata !"val", metadata !6, i32 20, metadata !10, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [val] [line 20]
 !24 = metadata !{i32 20, i32 7, metadata !18, null}
