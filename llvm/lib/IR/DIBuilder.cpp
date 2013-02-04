@@ -900,10 +900,6 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
                                        MDNode *TParams,
                                        MDNode *Decl) {
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
-  MDNode *Temp = MDNode::getTemporary(VMContext, TElts);
-  Value *TVElts[] = { Temp };
-  MDNode *THolder = MDNode::get(VMContext, TVElts);
-
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -924,7 +920,7 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
     Fn,
     TParams,
     Decl,
-    THolder,
+    MDNode::getTemporary(VMContext, TElts),
     ConstantInt::get(Type::getInt32Ty(VMContext), ScopeLine)
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
@@ -949,10 +945,6 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
                                      Function *Fn,
                                      MDNode *TParam) {
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
-  MDNode *Temp = MDNode::getTemporary(VMContext, TElts);
-  Value *TVElts[] = { Temp };
-  MDNode *THolder = MDNode::get(VMContext, TVElts);
-
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -973,7 +965,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
     Fn,
     TParam,
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    THolder,
+    MDNode::getTemporary(VMContext, TElts),
     // FIXME: Do we want to use different scope/lines?
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo)
   };

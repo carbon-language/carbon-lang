@@ -49,6 +49,5 @@ entry:
 !21 = metadata !{i32 9, i32 0, metadata !11, metadata !17}
 !22 = metadata !{i32 11, i32 0, metadata !11, metadata !17}
 !23 = metadata !{i32 16, i32 0, metadata !18, null}
-!24 = metadata !{metadata !25}
-!25 = metadata !{metadata !9, metadata !10}
+!24 = metadata !{metadata !9, metadata !10}
 

@@ -50,18 +50,14 @@ declare void @_Z8moz_freePv(i8*)
 !15 = metadata !{i32 720942, i32 0, metadata !13, metadata !"~nsAutoRefCnt", metadata !"~nsAutoRefCnt", metadata !"", metadata !6, i32 12, metadata !16, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 true, null, null, i32 0, metadata !18} ; [ DW_TAG_subprogram ]
 !16 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !17, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !17 = metadata !{null, metadata !10}
-!18 = metadata !{metadata !19}
-!19 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
-!20 = metadata !{metadata !21}
-!21 = metadata !{metadata !22}
+!18 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
+!20 = metadata !{metadata !22}
 !22 = metadata !{i32 721153, metadata !5, metadata !"this", metadata !6, i32 16777230, metadata !10, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !23 = metadata !{i32 720942, i32 0, null, metadata !"~nsAutoRefCnt", metadata !"~nsAutoRefCnt", metadata !"_ZN17nsAutoRefCntD1Ev", metadata !6, i32 18, metadata !16, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32* null, null, metadata !15, metadata !24} ; [ DW_TAG_subprogram ]
-!24 = metadata !{metadata !25}
-!25 = metadata !{metadata !26}
+!24 = metadata !{metadata !26}
 !26 = metadata !{i32 721153, metadata !23, metadata !"this", metadata !6, i32 16777234, metadata !10, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !27 = metadata !{i32 720942, i32 0, null, metadata !"~nsAutoRefCnt", metadata !"~nsAutoRefCnt", metadata !"_ZN17nsAutoRefCntD2Ev", metadata !6, i32 18, metadata !16, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32* null, null, metadata !15, metadata !28} ; [ DW_TAG_subprogram ]
-!28 = metadata !{metadata !29}
-!29 = metadata !{metadata !30}
+!28 = metadata !{metadata !30}
 !30 = metadata !{i32 721153, metadata !27, metadata !"this", metadata !6, i32 16777234, metadata !10, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !31 = metadata !{i32 720942, i32 0, null, metadata !"operator=", metadata !"operator=", metadata !"_ZN12nsAutoRefCntaSEi", metadata !6, i32 4, metadata !32, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, metadata !36, metadata !43} ; [ DW_TAG_subprogram ]
 !32 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !33, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -75,8 +71,7 @@ declare void @_Z8moz_freePv(i8*)
 !40 = metadata !{i32 720942, i32 0, metadata !37, metadata !"nsAutoRefCnt", metadata !"nsAutoRefCnt", metadata !"", metadata !6, i32 3, metadata !41, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 true, null, null, i32 0, metadata !18} ; [ DW_TAG_subprogram ]
 !41 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !42, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !42 = metadata !{null, metadata !34}
-!43 = metadata !{metadata !44}
-!44 = metadata !{metadata !45, metadata !46}
+!43 = metadata !{metadata !45, metadata !46}
 !45 = metadata !{i32 721153, metadata !31, metadata !"this", metadata !6, i32 16777220, metadata !34, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !46 = metadata !{i32 721153, metadata !31, metadata !"aValue", metadata !6, i32 33554436, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !47 = metadata !{metadata !49}
