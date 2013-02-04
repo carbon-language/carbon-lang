@@ -117,6 +117,7 @@ public:
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                       Type *Src) const;
 
+  unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const;
   /// @}
 };
 
@@ -196,4 +197,16 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
   }
 
   return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
+}
+
+unsigned ARMTTI::getVectorInstrCost(unsigned Opcode, Type *ValTy,
+                                    unsigned Index) const {
+  // Penalize inserting into an D-subregister.
+  if (ST->isSwift() &&
+      Opcode == Instruction::InsertElement &&
+      ValTy->isVectorTy() &&
+      ValTy->getScalarSizeInBits() <= 32)
+    return 2;
+
+  return TargetTransformInfo::getVectorInstrCost(Opcode, ValTy, Index);
 }
