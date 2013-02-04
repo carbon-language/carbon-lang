@@ -70,15 +70,15 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
 }
 
 int internal_stat(const char *path, void *buf) {
-  return stat(path, buf);
+  return stat(path, (struct stat *)buf);
 }
 
 int internal_lstat(const char *path, void *buf) {
-  return lstat(path, buf);
+  return lstat(path, (struct stat *)buf);
 }
 
 int internal_fstat(fd_t fd, void *buf) {
-  return fstat(fd, buf);
+  return fstat(fd, (struct stat *)buf);
 }
 
 uptr internal_filesize(fd_t fd) {
