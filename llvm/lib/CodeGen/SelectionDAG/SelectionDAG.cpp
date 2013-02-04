@@ -2680,44 +2680,117 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode,
-                                             EVT VT,
-                                             ConstantSDNode *Cst1,
-                                             ConstantSDNode *Cst2) {
-  const APInt &C1 = Cst1->getAPIntValue(), &C2 = Cst2->getAPIntValue();
+SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, EVT VT,
+                                             SDNode *Cst1, SDNode *Cst2) {
+  SmallVector<std::pair<ConstantSDNode *, ConstantSDNode *>, 4> Inputs;
+  SmallVector<SDValue, 4> Outputs;
+  EVT SVT = VT.getScalarType();
 
-  switch (Opcode) {
-  case ISD::ADD:  return getConstant(C1 + C2, VT);
-  case ISD::SUB:  return getConstant(C1 - C2, VT);
-  case ISD::MUL:  return getConstant(C1 * C2, VT);
-  case ISD::UDIV:
-    if (C2.getBoolValue()) return getConstant(C1.udiv(C2), VT);
-    break;
-  case ISD::UREM:
-    if (C2.getBoolValue()) return getConstant(C1.urem(C2), VT);
-    break;
-  case ISD::SDIV:
-    if (C2.getBoolValue()) return getConstant(C1.sdiv(C2), VT);
-    break;
-  case ISD::SREM:
-    if (C2.getBoolValue()) return getConstant(C1.srem(C2), VT);
-    break;
-  case ISD::AND:  return getConstant(C1 & C2, VT);
-  case ISD::OR:   return getConstant(C1 | C2, VT);
-  case ISD::XOR:  return getConstant(C1 ^ C2, VT);
-  case ISD::SHL:  return getConstant(C1 << C2, VT);
-  case ISD::SRL:  return getConstant(C1.lshr(C2), VT);
-  case ISD::SRA:  return getConstant(C1.ashr(C2), VT);
-  case ISD::ROTL: return getConstant(C1.rotl(C2), VT);
-  case ISD::ROTR: return getConstant(C1.rotr(C2), VT);
-  default: break;
+  ConstantSDNode *Scalar1 = dyn_cast<ConstantSDNode>(Cst1);
+  ConstantSDNode *Scalar2 = dyn_cast<ConstantSDNode>(Cst2);
+  if (Scalar1 && Scalar2) {
+    // Scalar instruction.
+    Inputs.push_back(std::make_pair(Scalar1, Scalar2));
+  } else {
+    // For vectors extract each constant element into Inputs so we can constant
+    // fold them individually.
+    BuildVectorSDNode *BV1 = dyn_cast<BuildVectorSDNode>(Cst1);
+    BuildVectorSDNode *BV2 = dyn_cast<BuildVectorSDNode>(Cst2);
+    if (!BV1 || !BV2)
+      return SDValue();
+
+    assert(BV1->getNumOperands() == BV2->getNumOperands() && "Out of sync!");
+
+    for (unsigned I = 0, E = BV1->getNumOperands(); I != E; ++I) {
+      ConstantSDNode *V1 = dyn_cast<ConstantSDNode>(BV1->getOperand(I));
+      ConstantSDNode *V2 = dyn_cast<ConstantSDNode>(BV2->getOperand(I));
+      if (!V1 || !V2) // Not a constant, bail.
+        return SDValue();
+
+      // Avoid BUILD_VECTOR nodes that perform implicit truncation.
+      // FIXME: This is valid and could be handled by truncating the APInts.
+      if (V1->getValueType(0) != SVT || V2->getValueType(0) != SVT)
+        return SDValue();
+
+      Inputs.push_back(std::make_pair(V1, V2));
+    }
   }
 
-  return SDValue();
+  // We have a number of constant values, constant fold them element by element.
+  for (unsigned I = 0, E = Inputs.size(); I != E; ++I) {
+    const APInt &C1 = Inputs[I].first->getAPIntValue();
+    const APInt &C2 = Inputs[I].second->getAPIntValue();
+
+    switch (Opcode) {
+    case ISD::ADD:
+      Outputs.push_back(getConstant(C1 + C2, SVT));
+      break;
+    case ISD::SUB:
+      Outputs.push_back(getConstant(C1 - C2, SVT));
+      break;
+    case ISD::MUL:
+      Outputs.push_back(getConstant(C1 * C2, SVT));
+      break;
+    case ISD::UDIV:
+      if (!C2.getBoolValue())
+        return SDValue();
+      Outputs.push_back(getConstant(C1.udiv(C2), SVT));
+      break;
+    case ISD::UREM:
+      if (!C2.getBoolValue())
+        return SDValue();
+      Outputs.push_back(getConstant(C1.urem(C2), SVT));
+      break;
+    case ISD::SDIV:
+      if (!C2.getBoolValue())
+        return SDValue();
+      Outputs.push_back(getConstant(C1.sdiv(C2), SVT));
+      break;
+    case ISD::SREM:
+      if (!C2.getBoolValue())
+        return SDValue();
+      Outputs.push_back(getConstant(C1.srem(C2), SVT));
+      break;
+    case ISD::AND:
+      Outputs.push_back(getConstant(C1 & C2, SVT));
+      break;
+    case ISD::OR:
+      Outputs.push_back(getConstant(C1 | C2, SVT));
+      break;
+    case ISD::XOR:
+      Outputs.push_back(getConstant(C1 ^ C2, SVT));
+      break;
+    case ISD::SHL:
+      Outputs.push_back(getConstant(C1 << C2, SVT));
+      break;
+    case ISD::SRL:
+      Outputs.push_back(getConstant(C1.lshr(C2), SVT));
+      break;
+    case ISD::SRA:
+      Outputs.push_back(getConstant(C1.ashr(C2), SVT));
+      break;
+    case ISD::ROTL:
+      Outputs.push_back(getConstant(C1.rotl(C2), SVT));
+      break;
+    case ISD::ROTR:
+      Outputs.push_back(getConstant(C1.rotr(C2), SVT));
+      break;
+    default:
+      return SDValue();
+    }
+  }
+
+  // Handle the scalar case first.
+  if (Outputs.size() == 1)
+    return Outputs.back();
+
+  // Otherwise build a big vector out of the scalar elements we generated.
+  return getNode(ISD::BUILD_VECTOR, DebugLoc(), VT, Outputs.data(),
+                 Outputs.size());
 }
 
-SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
-                              SDValue N1, SDValue N2) {
+SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT, SDValue N1,
+                              SDValue N2) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
   switch (Opcode) {
@@ -3013,16 +3086,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   }
   }
 
-  if (N1C) {
-    if (N2C) {
-      SDValue SV = FoldConstantArithmetic(Opcode, VT, N1C, N2C);
-      if (SV.getNode()) return SV;
-    } else {      // Cannonicalize constant to RHS if commutative
-      if (isCommutativeBinOp(Opcode)) {
-        std::swap(N1C, N2C);
-        std::swap(N1, N2);
-      }
-    }
+  // Perform trivial constant folding.
+  SDValue SV = FoldConstantArithmetic(Opcode, VT, N1.getNode(), N2.getNode());
+  if (SV.getNode()) return SV;
+
+  // Canonicalize constant to RHS if commutative.
+  if (N1C && !N2C && isCommutativeBinOp(Opcode)) {
+    std::swap(N1C, N2C);
+    std::swap(N1, N2);
   }
 
   // Constant fold FP operations.
@@ -3030,7 +3101,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.getNode());
   if (N1CFP) {
     if (!N2CFP && isCommutativeBinOp(Opcode)) {
-      // Cannonicalize constant to RHS if commutative
+      // Canonicalize constant to RHS if commutative.
       std::swap(N1CFP, N2CFP);
       std::swap(N1, N2);
     } else if (N2CFP) {

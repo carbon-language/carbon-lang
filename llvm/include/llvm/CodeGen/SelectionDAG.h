@@ -992,10 +992,8 @@ public:
   SDValue CreateStackTemporary(EVT VT1, EVT VT2);
 
   /// FoldConstantArithmetic -
-  SDValue FoldConstantArithmetic(unsigned Opcode,
-                                 EVT VT,
-                                 ConstantSDNode *Cst1,
-                                 ConstantSDNode *Cst2);
+  SDValue FoldConstantArithmetic(unsigned Opcode, EVT VT,
+                                 SDNode *Cst1, SDNode *Cst2);
 
   /// FoldSetCC - Constant fold a setcc to true or false.
   SDValue FoldSetCC(EVT VT, SDValue N1,

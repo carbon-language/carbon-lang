@@ -8,9 +8,9 @@ target triple = "x86_64-apple-macosx10.6.6"
 ; CHECK: pblendvb        %xmm1, %xmm2
 ; CHECK: ret
 
-define void @select_func() {
+define void @select_func(<8 x i16> %in) {
 entry:
-  %c.lobit.i.i.i = ashr <8 x i16> <i16 17, i16 5, i16 1, i16 15, i16 19, i16 15, i16 4, i16 1> , <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+  %c.lobit.i.i.i = ashr <8 x i16> %in, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
   %and.i56.i.i.i = and <8 x i16> %c.lobit.i.i.i, <i16 25, i16 8, i16 65, i16 25, i16 8, i16 95, i16 15, i16 45>
   %and.i5.i.i.i = bitcast <8 x i16> %and.i56.i.i.i to <2 x i64>
   %neg.i.i.i.i = xor <8 x i16> %c.lobit.i.i.i, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>

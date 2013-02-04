@@ -8,10 +8,8 @@ entry:
   %vecinit2.i = insertelement <4 x i32*> %vecinit.i, i32* %ptr, i32 1
   %vecinit4.i = insertelement <4 x i32*> %vecinit2.i, i32* %ptr, i32 2
   %vecinit6.i = insertelement <4 x i32*> %vecinit4.i, i32* %ptr, i32 3
-;CHECK: pslld $2
 ;CHECK: padd
   %A2 = getelementptr <4 x i32*> %vecinit6.i, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
-;CHECK: pslld $2
 ;CHECK: padd
   %A3 = getelementptr <4 x i32*> %A2, <4 x i32> <i32 10, i32 14, i32 19, i32 233>
   ret <4 x i32*> %A3
@@ -21,7 +19,6 @@ entry:
 ;CHECK: AGEP1:
 define i32 @AGEP1(<4 x i32*> %param) nounwind {
 entry:
-;CHECK: pslld $2
 ;CHECK: padd
   %A2 = getelementptr <4 x i32*> %param, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
   %k = extractelement <4 x i32*> %A2, i32 3

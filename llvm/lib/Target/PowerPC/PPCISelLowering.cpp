@@ -5032,9 +5032,14 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   // If this value is in the range [-32,30] and is even, use:
   //    tmp = VSPLTI[bhw], result = add tmp, tmp
   if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
+    // FIXME: This is currently disabled because the ADD will be folded back
+    // into an invalid BUILD_VECTOR immediately.
+    return SDValue();
+#if 0
     SDValue Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG, dl);
     Res = DAG.getNode(ISD::ADD, dl, Res.getValueType(), Res, Res);
     return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), Res);
+#endif
   }
 
   // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is
