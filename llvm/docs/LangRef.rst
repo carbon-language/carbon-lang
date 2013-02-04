@@ -501,7 +501,7 @@ is zero. The address space qualifier must precede any other attributes.
 LLVM allows an explicit section to be specified for globals. If the
 target supports it, it will emit globals to the section specified.
 
-By default, LLVM optimizes global initializers by assuming that global
+By default, global initializers are optimized by assuming that global
 variables defined within the module are not modified from their
 initial values before the start of the global initializer.  This is
 true even for variables potentially accessible from outside the
