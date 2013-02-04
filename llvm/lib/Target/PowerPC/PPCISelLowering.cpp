@@ -5138,14 +5138,16 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   // Three instruction sequences.
 
   // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
-  if (SextVal >= 0 && SextVal <= 31) {
+  // FIXME: Disabled because the add gets constant folded.
+  if (0 && SextVal >= 0 && SextVal <= 31) {
     SDValue LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG, dl);
     SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
     LHS = DAG.getNode(ISD::SUB, dl, LHS.getValueType(), LHS, RHS);
     return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), LHS);
   }
   // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
-  if (SextVal >= -31 && SextVal <= 0) {
+  // FIXME: Disabled because the add gets constant folded.
+  if (0 && SextVal >= -31 && SextVal <= 0) {
     SDValue LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG, dl);
     SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
     LHS = DAG.getNode(ISD::ADD, dl, LHS.getValueType(), LHS, RHS);
