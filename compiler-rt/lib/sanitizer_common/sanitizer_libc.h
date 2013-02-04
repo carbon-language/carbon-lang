@@ -71,6 +71,10 @@ fd_t internal_open(const char *filename, int flags, u32 mode);
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
 uptr internal_filesize(fd_t fd);  // -1 on error.
+int internal_stat(const char *path, void *buf);
+int internal_lstat(const char *path, void *buf);
+int internal_fstat(fd_t fd, void *buf);
+
 int internal_dup2(int oldfd, int newfd);
 uptr internal_readlink(const char *path, char *buf, uptr bufsize);
 int internal_snprintf(char *buffer, uptr length, const char *format, ...);

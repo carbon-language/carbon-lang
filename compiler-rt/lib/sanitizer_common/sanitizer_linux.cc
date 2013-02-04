@@ -93,16 +93,38 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return res;
 }
 
+int internal_stat(const char *path, void *buf) {
+#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
+  return syscall(__NR_stat, path, buf);
+#else
+  return syscall(__NR_stat64, path, buf);
+#endif
+}
+
+int internal_lstat(const char *path, void *buf) {
+#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
+  return syscall(__NR_lstat, path, buf);
+#else
+  return syscall(__NR_lstat64, path, buf);
+#endif
+}
+
+int internal_fstat(fd_t fd, void *buf) {
+#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
+  return syscall(__NR_fstat, fd, buf);
+#else
+  return syscall(__NR_fstat64, fd, buf);
+#endif
+}
+
 uptr internal_filesize(fd_t fd) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
   struct stat st;
-  if (syscall(__NR_fstat, fd, &st))
-    return -1;
 #else
   struct stat64 st;
-  if (syscall(__NR_fstat64, fd, &st))
-    return -1;
 #endif
+  if (internal_fstat(fd, &st))
+    return -1;
   return (uptr)st.st_size;
 }
 

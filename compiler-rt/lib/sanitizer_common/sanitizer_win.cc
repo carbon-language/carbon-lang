@@ -219,6 +219,18 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return ret;
 }
 
+int internal_stat(const char *path, void *buf) {
+  UNIMPLEMENTED();
+}
+
+int internal_lstat(const char *path, void *buf) {
+  UNIMPLEMENTED();
+}
+
+int internal_fstat(fd_t fd, void *buf) {
+  UNIMPLEMENTED();
+}
+
 uptr internal_filesize(fd_t fd) {
   UNIMPLEMENTED();
 }

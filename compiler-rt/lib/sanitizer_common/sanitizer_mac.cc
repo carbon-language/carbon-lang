@@ -69,9 +69,21 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return write(fd, buf, count);
 }
 
+int internal_stat(const char *path, void *buf) {
+  return stat(path, buf);
+}
+
+int internal_lstat(const char *path, void *buf) {
+  return lstat(path, buf);
+}
+
+int internal_fstat(fd_t fd, void *buf) {
+  return fstat(fd, buf);
+}
+
 uptr internal_filesize(fd_t fd) {
   struct stat st;
-  if (fstat(fd, &st))
+  if (internal_fstat(fd, &st))
     return -1;
   return (uptr)st.st_size;
 }
