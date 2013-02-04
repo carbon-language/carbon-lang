@@ -714,8 +714,10 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
       (Left.isNot(tok::comma) && Left.isNot(tok::semi)))
     return 20;
 
-  if (Left.is(tok::semi) || Left.is(tok::comma))
+  if (Left.is(tok::semi))
     return 0;
+  if (Left.is(tok::comma))
+    return 1;
 
   // In Objective-C method expressions, prefer breaking before "param:" over
   // breaking after it.

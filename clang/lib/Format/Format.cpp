@@ -493,7 +493,8 @@ private:
     if (Newline && Previous.is(tok::l_brace))
       State.Stack.back().BreakBeforeClosingBrace = true;
 
-    if (State.Stack.back().AvoidBinPacking && Newline) {
+    if (State.Stack.back().AvoidBinPacking && Newline &&
+        (Line.First.isNot(tok::kw_for) || ParenLevel != 1)) {
       // If we are breaking after '(', '{', '<', this is not bin packing unless
       // AllowAllParametersOfDeclarationOnNextLine is false.
       if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
@@ -505,7 +506,8 @@ private:
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
-        State.Stack[i].BreakAfterComma = true;
+        if (Line.First.isNot(tok::kw_for) || i != 1)
+          State.Stack[i].BreakAfterComma = true;
       }
     }
 

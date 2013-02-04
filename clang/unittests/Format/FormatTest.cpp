@@ -267,6 +267,19 @@ TEST_F(FormatTest, FormatsForLoop) {
       "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
       "     ++aaaaaaaaaaa) {\n}");
+
+  verifyGoogleFormat(
+      "for (int aaaaaaaaaaa = 1; aaaaaaaaaaa <= bbbbbbbbbbbbbbb;\n"
+      "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
+      "}");
+  verifyGoogleFormat(
+      "for (int aaaaaaaaaaa = 1;\n"
+      "     aaaaaaaaaaa <= aaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa,\n"
+      "                                           aaaaaaaaaaaaaaaa,\n"
+      "                                           aaaaaaaaaaaaaaaa,\n"
+      "                                           aaaaaaaaaaaaaaaa);\n"
+      "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
+      "}");
 }
 
 TEST_F(FormatTest, RangeBasedForLoops) {
@@ -1357,8 +1370,8 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
   verifyFormat(
-      "a<aaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa>(a(aaaaaaaaaaaaaaaaaa,\n"
-      "                                                aaaaaaaaaaaaaaaa));");
+      "a<aaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa>(\n"
+      "    a(aaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaa));");
 }
 
 TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
