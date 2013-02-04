@@ -1919,11 +1919,12 @@ TEST_F(FormatTest, BlockComments) {
   EXPECT_EQ("someFunction(1, /* comment 1 */\n"
             "             2, /* comment 2 */\n"
             "             3, /* comment 3 */\n"
-            "             aaaa);",
+            "             aaaa,\n"
+            "             bbbb);",
             format("someFunction (1,   /* comment 1 */\n"
                    "                2, /* comment 2 */  \n"
                    "               3,   /* comment 3 */\n"
-                   "aaaa );", getGoogleStyle()));
+                   "aaaa, bbbb );", getGoogleStyle()));
 }
 
 TEST_F(FormatTest, FormatStarDependingOnContext) {
