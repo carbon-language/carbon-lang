@@ -428,6 +428,26 @@ Type *BitcodeReader::getTypeByID(unsigned ID) {
 //  Functions for parsing blocks from the bitcode file
 //===----------------------------------------------------------------------===//
 
+
+/// \brief This fills an AttrBuilder object with the LLVM attributes that have
+/// been decoded from the given integer. This function must stay in sync with
+/// 'encodeLLVMAttributesForBitcode'.
+static void decodeLLVMAttributesForBitcode(AttrBuilder &B,
+                                           uint64_t EncodedAttrs) {
+  // FIXME: Remove in 4.0.
+
+  // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
+  // the bits above 31 down by 11 bits.
+  unsigned Alignment = (EncodedAttrs & (0xffffULL << 16)) >> 16;
+  assert((!Alignment || isPowerOf2_32(Alignment)) &&
+         "Alignment must be a power of two.");
+
+  if (Alignment)
+    B.addAlignmentAttr(Alignment);
+  B.addRawValue(((EncodedAttrs & (0xffffULL << 32)) >> 11) |
+                (EncodedAttrs & 0xffff));
+}
+
 bool BitcodeReader::ParseAttributeBlock() {
   if (Stream.EnterSubBlock(bitc::PARAMATTR_BLOCK_ID))
     return Error("Malformed block record");
@@ -459,14 +479,14 @@ bool BitcodeReader::ParseAttributeBlock() {
     switch (Stream.readRecord(Entry.ID, Record)) {
     default:  // Default behavior: ignore.
       break;
-    case bitc::PARAMATTR_CODE_ENTRY: { // ENTRY: [paramidx0, attr0, ...]
+    case bitc::PARAMATTR_CODE_ENTRY_OLD: { // ENTRY: [paramidx0, attr0, ...]
+      // FIXME: Remove in 4.0.
       if (Record.size() & 1)
         return Error("Invalid ENTRY record");
 
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         AttrBuilder B;
-        AttributeFuncs::decodeLLVMAttributesForBitcode(Context, B,
-                                                       Record[i+1]);
+        decodeLLVMAttributesForBitcode(B, Record[i+1]);
         Attrs.push_back(AttributeSet::get(Context, Record[i], B));
       }
 

@@ -161,7 +161,30 @@ static void WriteStringRecord(unsigned Code, StringRef Str,
   Stream.EmitRecord(Code, Vals, AbbrevToUse);
 }
 
-// Emit information about parameter attributes.
+/// \brief This returns an integer containing an encoding of all the LLVM
+/// attributes found in the given attribute bitset.  Any change to this encoding
+/// is a breaking change to bitcode compatibility.
+/// N.B. This should be used only by the bitcode writer!
+static uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs,
+                                               unsigned Index) {
+  // FIXME: Remove in 4.0!
+
+  // FIXME: It doesn't make sense to store the alignment information as an
+  // expanded out value, we should store it as a log2 value.  However, we can't
+  // just change that here without breaking bitcode compatibility.  If this ever
+  // becomes a problem in practice, we should introduce new tag numbers in the
+  // bitcode file and have those tags use a more efficiently encoded alignment
+  // field.
+
+  // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
+  // log2 encoded value. Shift the bits above the alignment up by 11 bits.
+  uint64_t EncodedAttrs = Attrs.Raw(Index) & 0xffff;
+  if (Attrs.hasAttribute(Index, Attribute::Alignment))
+    EncodedAttrs |= Attrs.getParamAlignment(Index) << 16;
+  EncodedAttrs |= (Attrs.Raw(Index) & (0xffffULL << 21)) << 11;
+  return EncodedAttrs;
+}
+
 static void WriteAttributeTable(const ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
   const std::vector<AttributeSet> &Attrs = VE.getAttributes();
@@ -175,12 +198,11 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
       unsigned Index = A.getSlotIndex(i);
       Record.push_back(Index);
-      Record.push_back(AttributeFuncs::
-                       encodeLLVMAttributesForBitcode(A.getSlotAttributes(i),
+      Record.push_back(encodeLLVMAttributesForBitcode(A.getSlotAttributes(i),
                                                       Index));
     }
 
-    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
+    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY_OLD, Record);
     Record.clear();
   }
 

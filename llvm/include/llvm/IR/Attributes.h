@@ -345,8 +345,8 @@ class AttrBuilder {
   uint64_t StackAlignment;
 public:
   AttrBuilder() : Alignment(0), StackAlignment(0) {}
-  explicit AttrBuilder(uint64_t B) : Alignment(0), StackAlignment(0) {
-    addRawValue(B);
+  explicit AttrBuilder(uint64_t Val) : Alignment(0), StackAlignment(0) {
+    addRawValue(Val);
   }
   AttrBuilder(const Attribute &A) : Alignment(0), StackAlignment(0) {
     addAttribute(A);
@@ -433,11 +433,9 @@ public:
     return !(*this == B);
   }
 
-  // FIXME: Remove these.
+  // FIXME: Remove this in 4.0.
 
   /// \brief Add the raw value to the internal representation.
-  /// 
-  /// N.B. This should be used ONLY for decoding LLVM bitcode!
   AttrBuilder &addRawValue(uint64_t Val);
 };
 
@@ -445,18 +443,6 @@ namespace AttributeFuncs {
 
 /// \brief Which attributes cannot be applied to a type.
 AttributeSet typeIncompatible(Type *Ty, uint64_t Index);
-
-/// \brief This returns an integer containing an encoding of all the LLVM
-/// attributes found in the given attribute bitset.  Any change to this encoding
-/// is a breaking change to bitcode compatibility.
-uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs, unsigned Index);
-
-/// \brief This fills an AttrBuilder object with the LLVM attributes that have
-/// been decoded from the given integer. This function must stay in sync with
-/// 'encodeLLVMAttributesForBitcode'.
-/// N.B. This should be used only by the bitcode reader!
-void decodeLLVMAttributesForBitcode(LLVMContext &C, AttrBuilder &B,
-                                    uint64_t EncodedAttrs);
 
 } // end AttributeFuncs namespace
 

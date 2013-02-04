@@ -77,7 +77,11 @@ namespace bitc {
 
   /// PARAMATTR blocks have code for defining a parameter attribute set.
   enum AttributeCodes {
-    PARAMATTR_CODE_ENTRY = 1   // ENTRY: [paramidx0, attr0, paramidx1, attr1...]
+    // FIXME: Remove `PARAMATTR_CODE_ENTRY_OLD' in 4.0
+    PARAMATTR_CODE_ENTRY_OLD = 1, // ENTRY: [paramidx0, attr0,
+                                  //         paramidx1, attr1...]
+    PARAMATTR_CODE_ENTRY = 2      // ENTRY: [paramidx0, attrgrp0,
+                                  //         paramidx1, attrgrp1...]
   };
 
   /// TYPE blocks have codes for each type primitive they use.
@@ -143,6 +147,7 @@ namespace bitc {
     METADATA_NAMED_NODE    = 10,  // NAMED_NODE:    [n x mdnodes]
     METADATA_ATTACHMENT    = 11   // [m x [value, [n x [id, mdnode]]]
   };
+
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.
   enum ConstantsCodes {
