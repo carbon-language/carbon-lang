@@ -1207,8 +1207,8 @@ AArch64AsmParser::ParseRelocPrefix(AArch64MCExpr::VariantKind &RefKind) {
     return MatchOperand_ParseFail;
   }
 
-  StringRef lowerCase = Parser.getTok().getIdentifier().lower();
-  RefKind = StringSwitch<AArch64MCExpr::VariantKind>(lowerCase)
+  std::string LowerCase = Parser.getTok().getIdentifier().lower();
+  RefKind = StringSwitch<AArch64MCExpr::VariantKind>(LowerCase)
     .Case("got",              AArch64MCExpr::VK_AARCH64_GOT)
     .Case("got_lo12",         AArch64MCExpr::VK_AARCH64_GOT_LO12)
     .Case("lo12",             AArch64MCExpr::VK_AARCH64_LO12)
@@ -1343,7 +1343,8 @@ AArch64AsmParser::ParseCRxOperand(
     return MatchOperand_ParseFail;
   }
 
-  StringRef Tok = Parser.getTok().getIdentifier().lower();
+  std::string LowerTok = Parser.getTok().getIdentifier().lower();
+  StringRef Tok(LowerTok);
   if (Tok[0] != 'c') {
     Error(S, "Expected cN operand where 0 <= N <= 15");
     return MatchOperand_ParseFail;
