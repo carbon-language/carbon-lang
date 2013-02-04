@@ -112,6 +112,16 @@ define <8 x i32> @vshift08(<8 x i32> %a) nounwind {
   ret <8 x i32> %bitop
 }
 
+; PR15141
+; CHECK: _vshift13:
+; CHECK-NOT: vpsll
+; CHECK: vcvttps2dq
+; CHECK-NEXT: vpmulld
+define <4 x i32> @vshift13(<4 x i32> %in) {
+  %T = shl <4 x i32> %in, <i32 0, i32 1, i32 2, i32 4>
+  ret <4 x i32> %T
+}
+
 ;;; Uses shifts for sign extension
 ; CHECK: _sext_v16i16
 ; CHECK: vpsllw
