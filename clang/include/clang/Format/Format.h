@@ -32,6 +32,9 @@ struct FormatStyle {
   /// \brief The column limit.
   unsigned ColumnLimit;
 
+  /// \brief The penalty for each character outside of the column limit.
+  unsigned PenaltyExcessCharacter;
+
   /// \brief The maximum number of consecutive empty lines to keep.
   unsigned MaxEmptyLinesToKeep;
 

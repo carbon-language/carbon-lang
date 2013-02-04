@@ -34,6 +34,27 @@ static bool isBinaryOperator(const AnnotatedToken &Tok) {
   return getPrecedence(Tok) > prec::Comma;
 }
 
+// Returns the previous token ignoring comments.
+static const AnnotatedToken *getPreviousToken(const AnnotatedToken &Tok) {
+  const AnnotatedToken *PrevToken = Tok.Parent;
+  while (PrevToken != NULL && PrevToken->is(tok::comment))
+    PrevToken = PrevToken->Parent;
+  return PrevToken;
+}
+
+// Returns the next token ignoring comments.
+static const AnnotatedToken *getNextToken(const AnnotatedToken &Tok) {
+  if (Tok.Children.empty())
+    return NULL;
+  const AnnotatedToken *NextToken = &Tok.Children[0];
+  while (NextToken->is(tok::comment)) {
+    if (NextToken->Children.empty())
+      return NULL;
+    NextToken = &NextToken->Children[0];
+  }
+  return NextToken;
+}
+
 /// \brief A parser that gathers additional information about tokens.
 ///
 /// The \c TokenAnnotator tries to matches parenthesis and square brakets and
@@ -41,9 +62,11 @@ static bool isBinaryOperator(const AnnotatedToken &Tok) {
 /// into template parameter lists.
 class AnnotatingParser {
 public:
-  AnnotatingParser(AnnotatedToken &RootToken)
-      : CurrentToken(&RootToken), KeywordVirtualFound(false),
-        ColonIsObjCMethodExpr(false), ColonIsForRangeExpr(false) {
+  AnnotatingParser(SourceManager &SourceMgr, Lexer &Lex, AnnotatedLine &Line)
+      : SourceMgr(SourceMgr), Lex(Lex), Line(Line), CurrentToken(&Line.First),
+        KeywordVirtualFound(false), ColonIsObjCMethodExpr(false),
+        ColonIsForRangeExpr(false), IsExpression(false),
+        LookForFunctionName(Line.MustBeDeclaration), BindingStrength(1) {
   }
 
   /// \brief A helper class to manage AnnotatingParser::ColonIsObjCMethodExpr.
@@ -65,9 +88,22 @@ public:
     void markEnd(AnnotatedToken &Right) { Right.Type = TT_ObjCMethodExpr; }
   };
 
+  struct ScopedBindingStrengthIncrease {
+    AnnotatingParser &P;
+    unsigned Increase;
+
+    ScopedBindingStrengthIncrease(AnnotatingParser &P, unsigned Increase)
+        : P(P), Increase(Increase) {
+      P.BindingStrength += Increase;
+    }
+
+    ~ScopedBindingStrengthIncrease() { P.BindingStrength -= Increase; }
+  };
+
   bool parseAngle() {
     if (CurrentToken == NULL)
       return false;
+    ScopedBindingStrengthIncrease Increase(*this, 10);
     AnnotatedToken *Left = CurrentToken->Parent;
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::greater)) {
@@ -94,6 +130,7 @@ public:
   bool parseParens(bool LookForDecls = false) {
     if (CurrentToken == NULL)
       return false;
+    ScopedBindingStrengthIncrease Increase(*this, 1);
     bool StartsObjCMethodExpr = false;
     AnnotatedToken *Left = CurrentToken->Parent;
     if (CurrentToken->is(tok::caret)) {
@@ -150,6 +187,7 @@ public:
   bool parseSquare() {
     if (!CurrentToken)
       return false;
+    ScopedBindingStrengthIncrease Increase(*this, 10);
 
     // A '[' could be an index subscript (after an indentifier or after
     // ')' or ']'), or it could be the start of an Objective-C method
@@ -175,8 +213,12 @@ public:
           StartsObjCMethodExpr = false;
           Left->Type = TT_Unknown;
         }
-        if (StartsObjCMethodExpr)
+        if (StartsObjCMethodExpr) {
           objCSelector.markEnd(*CurrentToken);
+          if (Left->Parent != NULL &&
+              (Left->Parent->is(tok::star) || Left->Parent->is(tok::amp)))
+            Left->Parent->Type = TT_BinaryOperator;
+        }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
         next();
@@ -196,6 +238,7 @@ public:
     // Lines are fine to end with '{'.
     if (CurrentToken == NULL)
       return true;
+    ScopedBindingStrengthIncrease Increase(*this, 1);
     AnnotatedToken *Left = CurrentToken->Parent;
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::r_brace)) {
@@ -411,6 +454,11 @@ public:
   }
 
   void next() {
+    if (CurrentToken != NULL) {
+      determineTokenType(*CurrentToken);
+      CurrentToken->BindingStrength = BindingStrength;
+    }
+
     if (CurrentToken != NULL && !CurrentToken->Children.empty())
       CurrentToken = &CurrentToken->Children[0];
     else
@@ -418,20 +466,180 @@ public:
   }
 
 private:
+  SourceManager &SourceMgr;
+  Lexer &Lex;
+  AnnotatedLine &Line;
   AnnotatedToken *CurrentToken;
   bool KeywordVirtualFound;
   bool ColonIsObjCMethodExpr;
   bool ColonIsForRangeExpr;
+  bool IsExpression;
+  bool LookForFunctionName;
+
+  unsigned BindingStrength;
+
+  void determineTokenType(AnnotatedToken &Current) {
+    if (getPrecedence(Current) == prec::Assignment) {
+      IsExpression = true;
+      AnnotatedToken *Previous = Current.Parent;
+      while (Previous != NULL) {
+        if (Previous->Type == TT_BinaryOperator &&
+            (Previous->is(tok::star) || Previous->is(tok::amp))) {
+          Previous->Type = TT_PointerOrReference;
+        }
+        Previous = Previous->Parent;
+      }
+    }
+    if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
+        (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
+         (Current.Parent == NULL || Current.Parent->isNot(tok::kw_for))))
+      IsExpression = true;
+
+    if (Current.Type == TT_Unknown) {
+      if (LookForFunctionName && Current.is(tok::l_paren)) {
+        findFunctionName(&Current);
+        LookForFunctionName = false;
+      } else if (Current.is(tok::star) || Current.is(tok::amp)) {
+        Current.Type = determineStarAmpUsage(Current, IsExpression);
+      } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
+                 Current.is(tok::caret)) {
+        Current.Type = determinePlusMinusCaretUsage(Current);
+      } else if (Current.is(tok::minusminus) || Current.is(tok::plusplus)) {
+        Current.Type = determineIncrementUsage(Current);
+      } else if (Current.is(tok::exclaim)) {
+        Current.Type = TT_UnaryOperator;
+      } else if (isBinaryOperator(Current)) {
+        Current.Type = TT_BinaryOperator;
+      } else if (Current.is(tok::comment)) {
+        std::string Data(Lexer::getSpelling(Current.FormatTok.Tok, SourceMgr,
+                                            Lex.getLangOpts()));
+        if (StringRef(Data).startswith("//"))
+          Current.Type = TT_LineComment;
+        else
+          Current.Type = TT_BlockComment;
+      } else if (Current.is(tok::r_paren) &&
+                 (Current.Parent->Type == TT_PointerOrReference ||
+                  Current.Parent->Type == TT_TemplateCloser) &&
+                 (Current.Children.empty() ||
+                  (Current.Children[0].isNot(tok::equal) &&
+                   Current.Children[0].isNot(tok::semi) &&
+                   Current.Children[0].isNot(tok::l_brace)))) {
+        // FIXME: We need to get smarter and understand more cases of casts.
+        Current.Type = TT_CastRParen;
+      } else if (Current.is(tok::at) && Current.Children.size()) {
+        switch (Current.Children[0].FormatTok.Tok.getObjCKeywordID()) {
+        case tok::objc_interface:
+        case tok::objc_implementation:
+        case tok::objc_protocol:
+          Current.Type = TT_ObjCDecl;
+          break;
+        case tok::objc_property:
+          Current.Type = TT_ObjCProperty;
+          break;
+        default:
+          break;
+        }
+      }
+    }
+  }
+
+  /// \brief Starting from \p Current, this searches backwards for an
+  /// identifier which could be the start of a function name and marks it.
+  void findFunctionName(AnnotatedToken *Current) {
+    AnnotatedToken *Parent = Current->Parent;
+    while (Parent != NULL && Parent->Parent != NULL) {
+      if (Parent->is(tok::identifier) &&
+          (Parent->Parent->is(tok::identifier) ||
+           Parent->Parent->Type == TT_PointerOrReference ||
+           Parent->Parent->Type == TT_TemplateCloser)) {
+        Parent->Type = TT_StartOfName;
+        break;
+      }
+      Parent = Parent->Parent;
+    }
+  }
+
+  /// \brief Return the type of the given token assuming it is * or &.
+  TokenType
+  determineStarAmpUsage(const AnnotatedToken &Tok, bool IsExpression) {
+    const AnnotatedToken *PrevToken = getPreviousToken(Tok);
+    if (PrevToken == NULL)
+      return TT_UnaryOperator;
+
+    const AnnotatedToken *NextToken = getNextToken(Tok);
+    if (NextToken == NULL)
+      return TT_Unknown;
+
+    if (NextToken->is(tok::l_square))
+      return TT_PointerOrReference;
+
+    if (PrevToken->is(tok::l_paren) || PrevToken->is(tok::l_square) ||
+        PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
+        PrevToken->is(tok::kw_return) || PrevToken->is(tok::colon) ||
+        PrevToken->Type == TT_BinaryOperator ||
+        PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)
+      return TT_UnaryOperator;
+
+    if (PrevToken->FormatTok.Tok.isLiteral() || PrevToken->is(tok::r_paren) ||
+        PrevToken->is(tok::r_square) || NextToken->FormatTok.Tok.isLiteral() ||
+        NextToken->is(tok::plus) || NextToken->is(tok::minus) ||
+        NextToken->is(tok::plusplus) || NextToken->is(tok::minusminus) ||
+        NextToken->is(tok::tilde) || NextToken->is(tok::exclaim) ||
+        NextToken->is(tok::l_paren) || NextToken->is(tok::l_square) ||
+        NextToken->is(tok::kw_alignof) || NextToken->is(tok::kw_sizeof))
+      return TT_BinaryOperator;
+
+    if (NextToken->is(tok::comma) || NextToken->is(tok::r_paren) ||
+        NextToken->is(tok::greater))
+      return TT_PointerOrReference;
+
+    // It is very unlikely that we are going to find a pointer or reference type
+    // definition on the RHS of an assignment.
+    if (IsExpression)
+      return TT_BinaryOperator;
+
+    return TT_PointerOrReference;
+  }
+
+  TokenType determinePlusMinusCaretUsage(const AnnotatedToken &Tok) {
+    const AnnotatedToken *PrevToken = getPreviousToken(Tok);
+    if (PrevToken == NULL)
+      return TT_UnaryOperator;
+
+    // Use heuristics to recognize unary operators.
+    if (PrevToken->is(tok::equal) || PrevToken->is(tok::l_paren) ||
+        PrevToken->is(tok::comma) || PrevToken->is(tok::l_square) ||
+        PrevToken->is(tok::question) || PrevToken->is(tok::colon) ||
+        PrevToken->is(tok::kw_return) || PrevToken->is(tok::kw_case) ||
+        PrevToken->is(tok::at) || PrevToken->is(tok::l_brace))
+      return TT_UnaryOperator;
+
+    // There can't be to consecutive binary operators.
+    if (PrevToken->Type == TT_BinaryOperator)
+      return TT_UnaryOperator;
+
+    // Fall back to marking the token as binary operator.
+    return TT_BinaryOperator;
+  }
+
+  /// \brief Determine whether ++/-- are pre- or post-increments/-decrements.
+  TokenType determineIncrementUsage(const AnnotatedToken &Tok) {
+    const AnnotatedToken *PrevToken = getPreviousToken(Tok);
+    if (PrevToken == NULL)
+      return TT_UnaryOperator;
+    if (PrevToken->is(tok::r_paren) || PrevToken->is(tok::r_square) ||
+        PrevToken->is(tok::identifier))
+      return TT_TrailingUnaryOperator;
+
+    return TT_UnaryOperator;
+  }
 };
 
 void TokenAnnotator::annotate() {
-  AnnotatingParser Parser(Line.First);
+  AnnotatingParser Parser(SourceMgr, Lex, Line);
   Line.Type = Parser.parseLine();
   if (Line.Type == LT_Invalid)
     return;
-
-  bool LookForFunctionName = Line.MustBeDeclaration;
-  determineTokenTypes(Line.First, /*IsExpression=*/ false, LookForFunctionName);
 
   if (Line.First.Type == TT_ObjCMethodSpecifier)
     Line.Type = LT_ObjCMethodDecl;
@@ -446,10 +654,10 @@ void TokenAnnotator::annotate() {
 
   Line.First.TotalLength = Line.First.FormatTok.TokenLength;
   if (!Line.First.Children.empty())
-    calculateExtraInformation(Line.First.Children[0]);
+    calculateFormattingInformation(Line.First.Children[0]);
 }
 
-void TokenAnnotator::calculateExtraInformation(AnnotatedToken &Current) {
+void TokenAnnotator::calculateFormattingInformation(AnnotatedToken &Current) {
   Current.SpaceRequiredBefore = spaceRequiredBefore(Current);
 
   if (Current.FormatTok.MustBreakBefore) {
@@ -475,9 +683,10 @@ void TokenAnnotator::calculateExtraInformation(AnnotatedToken &Current) {
         (Current.SpaceRequiredBefore ? 1 : 0);
   // FIXME: Only calculate this if CanBreakBefore is true once static
   // initializers etc. are sorted out.
-  Current.SplitPenalty = splitPenalty(Current);
+  // FIXME: Move magic numbers to a better place.
+  Current.SplitPenalty = 20 * Current.BindingStrength + splitPenalty(Current);
   if (!Current.Children.empty())
-    calculateExtraInformation(Current.Children[0]);
+    calculateFormattingInformation(Current.Children[0]);
 }
 
 unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
@@ -515,14 +724,12 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
   if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
     return 20;
 
-  if (Left.is(tok::l_paren))
+  if (Left.is(tok::l_paren) || Left.is(tok::l_square) ||
+      Left.Type == TT_TemplateOpener)
     return 20;
-  // FIXME: The penalty for a trailing "<" or "[" being higher than the
-  // penalty for a trainling "(" is a temporary workaround until we can
-  // properly avoid breaking in array subscripts or template parameters.
-  if (Left.is(tok::l_square) || Left.Type == TT_TemplateOpener)
-    return 50;
 
+  if (Right.is(tok::lessless))
+    return prec::Shift;
   if (Left.Type == TT_ConditionalExpr)
     return prec::Assignment;
   prec::Level Level = getPrecedence(Left);
@@ -531,162 +738,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
     return Level;
 
   return 3;
-}
-
-void TokenAnnotator::determineTokenTypes(
-    AnnotatedToken &Current, bool IsExpression, bool LookForFunctionName) {
-  if (getPrecedence(Current) == prec::Assignment) {
-    IsExpression = true;
-    AnnotatedToken *Previous = Current.Parent;
-    while (Previous != NULL) {
-      if (Previous->Type == TT_BinaryOperator &&
-          (Previous->is(tok::star) || Previous->is(tok::amp))) {
-        Previous->Type = TT_PointerOrReference;
-      }
-      Previous = Previous->Parent;
-    }
-  }
-  if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
-      (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
-       (Current.Parent == NULL || Current.Parent->isNot(tok::kw_for))))
-    IsExpression = true;
-
-  if (Current.Type == TT_Unknown) {
-    if (LookForFunctionName && Current.is(tok::l_paren)) {
-      findFunctionName(&Current);
-      LookForFunctionName = false;
-    } else if (Current.is(tok::star) || Current.is(tok::amp)) {
-      Current.Type = determineStarAmpUsage(Current, IsExpression);
-    } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
-               Current.is(tok::caret)) {
-      Current.Type = determinePlusMinusCaretUsage(Current);
-    } else if (Current.is(tok::minusminus) || Current.is(tok::plusplus)) {
-      Current.Type = determineIncrementUsage(Current);
-    } else if (Current.is(tok::exclaim)) {
-      Current.Type = TT_UnaryOperator;
-    } else if (isBinaryOperator(Current)) {
-      Current.Type = TT_BinaryOperator;
-    } else if (Current.is(tok::comment)) {
-      std::string Data(Lexer::getSpelling(Current.FormatTok.Tok, SourceMgr,
-                                          Lex.getLangOpts()));
-      if (StringRef(Data).startswith("//"))
-        Current.Type = TT_LineComment;
-      else
-        Current.Type = TT_BlockComment;
-    } else if (Current.is(tok::r_paren) &&
-               (Current.Parent->Type == TT_PointerOrReference ||
-                Current.Parent->Type == TT_TemplateCloser) &&
-               (Current.Children.empty() ||
-                (Current.Children[0].isNot(tok::equal) &&
-                 Current.Children[0].isNot(tok::semi) &&
-                 Current.Children[0].isNot(tok::l_brace)))) {
-      // FIXME: We need to get smarter and understand more cases of casts.
-      Current.Type = TT_CastRParen;
-    } else if (Current.is(tok::at) && Current.Children.size()) {
-      switch (Current.Children[0].FormatTok.Tok.getObjCKeywordID()) {
-      case tok::objc_interface:
-      case tok::objc_implementation:
-      case tok::objc_protocol:
-        Current.Type = TT_ObjCDecl;
-        break;
-      case tok::objc_property:
-        Current.Type = TT_ObjCProperty;
-        break;
-      default:
-        break;
-      }
-    }
-  }
-
-  if (!Current.Children.empty())
-    determineTokenTypes(Current.Children[0], IsExpression, LookForFunctionName);
-}
-
-void TokenAnnotator::findFunctionName(AnnotatedToken *Current) {
-  AnnotatedToken *Parent = Current->Parent;
-  while (Parent != NULL && Parent->Parent != NULL) {
-    if (Parent->is(tok::identifier) &&
-        (Parent->Parent->is(tok::identifier) || Parent->Parent->Type ==
-         TT_PointerOrReference || Parent->Parent->Type == TT_TemplateCloser)) {
-      Parent->Type = TT_StartOfName;
-      break;
-    }
-    Parent = Parent->Parent;
-  }
-}
-
-TokenType TokenAnnotator::determineStarAmpUsage(const AnnotatedToken &Tok,
-                                                bool IsExpression) {
-  const AnnotatedToken *PrevToken = getPreviousToken(Tok);
-  if (PrevToken == NULL)
-    return TT_UnaryOperator;
-
-  const AnnotatedToken *NextToken = getNextToken(Tok);
-  if (NextToken == NULL)
-    return TT_Unknown;
-
-  if (NextToken->is(tok::l_square) && NextToken->Type != TT_ObjCMethodExpr)
-    return TT_PointerOrReference;
-
-  if (PrevToken->is(tok::l_paren) || PrevToken->is(tok::l_square) ||
-      PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
-      PrevToken->is(tok::kw_return) || PrevToken->is(tok::colon) ||
-      PrevToken->Type == TT_BinaryOperator ||
-      PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)
-    return TT_UnaryOperator;
-
-  if (PrevToken->FormatTok.Tok.isLiteral() || PrevToken->is(tok::r_paren) ||
-      PrevToken->is(tok::r_square) || NextToken->FormatTok.Tok.isLiteral() ||
-      NextToken->is(tok::plus) || NextToken->is(tok::minus) ||
-      NextToken->is(tok::plusplus) || NextToken->is(tok::minusminus) ||
-      NextToken->is(tok::tilde) || NextToken->is(tok::exclaim) ||
-      NextToken->is(tok::l_paren) || NextToken->is(tok::l_square) ||
-      NextToken->is(tok::kw_alignof) || NextToken->is(tok::kw_sizeof))
-    return TT_BinaryOperator;
-
-  if (NextToken->is(tok::comma) || NextToken->is(tok::r_paren) ||
-      NextToken->is(tok::greater))
-    return TT_PointerOrReference;
-
-  // It is very unlikely that we are going to find a pointer or reference type
-  // definition on the RHS of an assignment.
-  if (IsExpression)
-    return TT_BinaryOperator;
-
-  return TT_PointerOrReference;
-}
-
-TokenType
-TokenAnnotator::determinePlusMinusCaretUsage(const AnnotatedToken &Tok) {
-  const AnnotatedToken *PrevToken = getPreviousToken(Tok);
-  if (PrevToken == NULL)
-    return TT_UnaryOperator;
-
-  // Use heuristics to recognize unary operators.
-  if (PrevToken->is(tok::equal) || PrevToken->is(tok::l_paren) ||
-      PrevToken->is(tok::comma) || PrevToken->is(tok::l_square) ||
-      PrevToken->is(tok::question) || PrevToken->is(tok::colon) ||
-      PrevToken->is(tok::kw_return) || PrevToken->is(tok::kw_case) ||
-      PrevToken->is(tok::at) || PrevToken->is(tok::l_brace))
-    return TT_UnaryOperator;
-
-  // There can't be to consecutive binary operators.
-  if (PrevToken->Type == TT_BinaryOperator)
-    return TT_UnaryOperator;
-
-  // Fall back to marking the token as binary operator.
-  return TT_BinaryOperator;
-}
-
-TokenType TokenAnnotator::determineIncrementUsage(const AnnotatedToken &Tok) {
-  const AnnotatedToken *PrevToken = getPreviousToken(Tok);
-  if (PrevToken == NULL)
-    return TT_UnaryOperator;
-  if (PrevToken->is(tok::r_paren) || PrevToken->is(tok::r_square) ||
-      PrevToken->is(tok::identifier))
-    return TT_TrailingUnaryOperator;
-
-  return TT_UnaryOperator;
 }
 
 bool TokenAnnotator::spaceRequiredBetween(const AnnotatedToken &Left,

@@ -69,7 +69,7 @@ public:
       : FormatTok(FormatTok), Type(TT_Unknown), SpaceRequiredBefore(false),
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
-        ParameterCount(1), Parent(NULL) {
+        ParameterCount(1), BindingStrength(0), SplitPenalty(0), Parent(NULL) {
   }
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
@@ -100,6 +100,11 @@ public:
 
   /// \brief The total length of the line up to and including this token.
   unsigned TotalLength;
+
+  // FIXME: Come up with a 'cleaner' concept.
+  /// \brief The binding strength of a token. This is a combined value of
+  /// operator precedence, parenthesis nesting, etc.
+  unsigned BindingStrength;
 
   /// \brief Penalty for inserting a line break before this token.
   unsigned SplitPenalty;
@@ -166,47 +171,11 @@ public:
   }
 
   void annotate();
-  void calculateExtraInformation(AnnotatedToken &Current);
+  void calculateFormattingInformation(AnnotatedToken &Current);
 
 private:
   /// \brief Calculate the penalty for splitting before \c Tok.
   unsigned splitPenalty(const AnnotatedToken &Tok);
-
-  void determineTokenTypes(AnnotatedToken &Current, bool IsExpression,
-                           bool LookForFunctionName);
-
-  /// \brief Starting from \p Current, this searches backwards for an
-  /// identifier which could be the start of a function name and marks it.
-  void findFunctionName(AnnotatedToken *Current);
-
-  /// \brief Returns the previous token ignoring comments.
-  const AnnotatedToken *getPreviousToken(const AnnotatedToken &Tok) {
-    const AnnotatedToken *PrevToken = Tok.Parent;
-    while (PrevToken != NULL && PrevToken->is(tok::comment))
-      PrevToken = PrevToken->Parent;
-    return PrevToken;
-  }
-
-  /// \brief Returns the next token ignoring comments.
-  const AnnotatedToken *getNextToken(const AnnotatedToken &Tok) {
-    if (Tok.Children.empty())
-      return NULL;
-    const AnnotatedToken *NextToken = &Tok.Children[0];
-    while (NextToken->is(tok::comment)) {
-      if (NextToken->Children.empty())
-        return NULL;
-      NextToken = &NextToken->Children[0];
-    }
-    return NextToken;
-  }
-
-  /// \brief Return the type of the given token assuming it is * or &.
-  TokenType determineStarAmpUsage(const AnnotatedToken &Tok, bool IsExpression);
-
-  TokenType determinePlusMinusCaretUsage(const AnnotatedToken &Tok);
-
-  /// \brief Determine whether ++/-- are pre- or post-increments/-decrements.
-  TokenType determineIncrementUsage(const AnnotatedToken &Tok);
 
   bool spaceRequiredBetween(const AnnotatedToken &Left,
                             const AnnotatedToken &Right);
@@ -220,7 +189,6 @@ private:
   Lexer &Lex;
   AnnotatedLine &Line;
 };
-
 
 } // end namespace format
 } // end namespace clang
