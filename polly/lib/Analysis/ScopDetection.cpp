@@ -277,10 +277,38 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // references which seem to alias, if -basicaa is not available. They actually
   // do not, but as we can not proof this without -basicaa we would fail. We
   // disable this check to not cause irrelevant verification failures.
-  if (!AS.isMustAlias() && !IgnoreAliasing)
-    INVALID_NOVERIFY(Alias,
-                     "Possible aliasing for value: " << BaseValue->getName()
-                     << "\n");
+  if (!AS.isMustAlias() && !IgnoreAliasing) {
+    std::string Message;
+    raw_string_ostream OS(Message);
+
+    OS << "Possible aliasing: ";
+
+    std::vector<Value*> Pointers;
+
+    for (AliasSet::iterator AI = AS.begin(), AE = AS.end(); AI != AE; ++AI)
+      Pointers.push_back(AI.getPointer());
+
+    std::sort(Pointers.begin(), Pointers.end());
+
+    for (std::vector<Value*>::iterator PI = Pointers.begin(),
+         PE = Pointers.end();;) {
+      Value *V = *PI;
+
+      if (V->getName().size() == 0)
+        OS << "\"" << *V << "\"";
+      else
+        OS << "\"" << V->getName() << "\"";
+
+      ++PI;
+
+      if (PI != PE)
+        OS << ", ";
+      else
+        break;
+    }
+
+    INVALID_NOVERIFY(Alias, OS.str())
+  }
 
   return true;
 }
