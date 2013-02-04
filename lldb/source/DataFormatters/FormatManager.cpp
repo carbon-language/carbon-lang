@@ -561,6 +561,13 @@ FormatManager::LoadLibStdcppFormatters()
     gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::list<.+>(( )?&)?$")),
                                                      TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
                                                                                                "size=${svar%#}")));
+    
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::vector<std::allocator<bool> >"),
+                                                   TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
+    
+    gnu_category_sp->GetSyntheticNavigator()->Add(ConstString("std::vector<std::allocator<bool> >"),
+                                                     SyntheticChildrenSP(new CXXSyntheticChildren(stl_synth_flags,"libc++ std::vector<bool> synthetic children",lldb_private::formatters::LibstdcppVectorBoolSyntheticFrontEndCreator)));
+
 #endif
 }
 
@@ -633,7 +640,10 @@ FormatManager::LoadLibcxxFormatters()
     
     // this summary prevails on the regex std::vector<> because we do exact matches before regex ones
     libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::vector<std::__1::allocator<bool> >"),
-                                                   TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${var.__size_}")));
+                                                   TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
+    
+    libcxx_category_sp->GetSyntheticNavigator()->Add(ConstString("std::__1::vector<std::__1::allocator<bool> >"),
+                                                     SyntheticChildrenSP(new CXXSyntheticChildren(stl_synth_flags,"libc++ std::vector<bool> synthetic children",lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator)));
 
 #endif
 }

@@ -15,6 +15,7 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/DataFormatters/FormatClasses.h"
+#include "lldb/Target/Target.h"
 
 #include "clang/AST/ASTContext.h"
 
@@ -347,6 +348,69 @@ namespace lldb_private {
         };
         
         SyntheticChildrenFrontEnd* NSDictionarySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibcxxVectorBoolSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibcxxVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibcxxVectorBoolSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint64_t m_count;
+            lldb::addr_t m_base_data_address;
+            EvaluateExpressionOptions m_options;
+        };
+        
+        SyntheticChildrenFrontEnd* LibcxxVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibstdcppVectorBoolSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibstdcppVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibstdcppVectorBoolSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            uint64_t m_count;
+            lldb::addr_t m_base_data_address;
+            EvaluateExpressionOptions m_options;
+        };
+        
+        SyntheticChildrenFrontEnd* LibstdcppVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+
         
     }
 }
