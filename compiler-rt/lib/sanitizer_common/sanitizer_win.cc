@@ -249,10 +249,8 @@ int internal_sched_yield() {
 }
 
 // ---------------------- BlockingMutex ---------------- {{{1
-enum LockState {
-  LOCK_UNINITIALIZED = 0,
-  LOCK_READY = -1,
-};
+const uptr LOCK_UNINITIALIZED = 0;
+const uptr LOCK_READY = (uptr)-1;
 
 BlockingMutex::BlockingMutex(LinkerInitialized li) {
   // FIXME: see comments in BlockingMutex::Lock() for the details.
