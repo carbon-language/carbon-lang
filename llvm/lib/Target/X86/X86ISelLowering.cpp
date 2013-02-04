@@ -11467,7 +11467,6 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
-  LLVMContext *Context = DAG.getContext();
 
   if (!Subtarget->hasSSE2())
     return SDValue();
@@ -11587,14 +11586,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     Op = DAG.getNode(X86ISD::VSHLI, dl, VT, Op.getOperand(1),
                      DAG.getConstant(23, MVT::i32));
 
-    const uint32_t CV[] = { 0x3f800000U, 0x3f800000U, 0x3f800000U, 0x3f800000U};
-    Constant *C = ConstantDataVector::get(*Context, CV);
-    SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
-    SDValue Addend = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                                 MachinePointerInfo::getConstantPool(),
-                                 false, false, false, 16);
-
-    Op = DAG.getNode(ISD::ADD, dl, VT, Op, Addend);
+    Op = DAG.getNode(ISD::ADD, dl, VT, Op, DAG.getConstant(0x3f800000U, VT));
     Op = DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, Op);
     Op = DAG.getNode(ISD::FP_TO_SINT, dl, VT, Op);
     return DAG.getNode(ISD::MUL, dl, VT, Op, R);
@@ -15369,13 +15361,9 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       if (CC == ISD::SETUGT && Other->getOpcode() == ISD::ADD &&
           isSplatVector(CondRHS.getNode()) && isSplatVector(OpRHS.getNode())) {
         APInt A = cast<ConstantSDNode>(OpRHS.getOperand(0))->getAPIntValue();
-        if (CondRHS.getConstantOperandVal(0) == -A-1) {
-          SmallVector<SDValue, 32> V(VT.getVectorNumElements(),
-                                     DAG.getConstant(-A, VT.getScalarType()));
+        if (CondRHS.getConstantOperandVal(0) == -A-1)
           return DAG.getNode(X86ISD::SUBUS, DL, VT, OpLHS,
-                             DAG.getNode(ISD::BUILD_VECTOR, DL, VT,
-                                         V.data(), V.size()));
-        }
+                             DAG.getConstant(-A, VT));
       }
 
       // Another special case: If C was a sign bit, the sub has been
@@ -16582,10 +16570,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
       // Build the arithmetic shift.
       unsigned Amt = RegVT.getVectorElementType().getSizeInBits() -
                      MemVT.getVectorElementType().getSizeInBits();
-      SmallVector<SDValue, 8> C(NumElems,
-                                DAG.getConstant(Amt, RegVT.getScalarType()));
-      SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, RegVT, &C[0], C.size());
-      Shuff = DAG.getNode(ISD::SRA, dl, RegVT, Shuff, BV);
+      Shuff = DAG.getNode(ISD::SRA, dl, RegVT, Shuff,
+                          DAG.getConstant(Amt, RegVT));
 
       return DCI.CombineTo(N, Shuff, TF, true);
     }
