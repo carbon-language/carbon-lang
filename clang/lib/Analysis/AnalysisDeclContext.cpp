@@ -87,6 +87,7 @@ static BodyFarm &getBodyFarm(ASTContext &C) {
 }
 
 Stmt *AnalysisDeclContext::getBody(bool &IsAutosynthesized) const {
+  IsAutosynthesized = false;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     Stmt *Body = FD->getBody();
     if (!Body && Manager && Manager->synthesizeBodies()) {
