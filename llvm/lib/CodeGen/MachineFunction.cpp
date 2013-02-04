@@ -479,11 +479,11 @@ static inline unsigned clampStackAlignment(bool ShouldClamp, unsigned PrefAlign,
   if (!ShouldClamp || PrefAlign <= StackAlign)
     return PrefAlign;
   if (Alloca && MinAlign > StackAlign)
-    Alloca->getParent()->getContext().emitError(Alloca,
-        "Requested Minimal Alignment exceeds the Stack Alignment!");
+    Alloca->getParent()->getContext().emitWarning(Alloca,
+        "Requested alignment exceeds the stack alignment!");
   else
     assert(MinAlign <= StackAlign &&
-           "Requested Minimal Alignment exceeds the Stack Alignment!");
+           "Requested alignment exceeds the stack alignment!");
   return StackAlign;
 }
 

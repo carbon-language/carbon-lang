@@ -6,10 +6,10 @@
 ; If alignment for alloc is smaller than or equal to stack alignment, but the 
 ; preferred type alignment is bigger, the alignment will be clamped.
 ; If alignment for alloca is bigger than stack alignment, the compiler
-; will emit an error.
+; will emit a warning.
 define void @test(<16 x float>* noalias sret %agg.result) nounwind ssp {
 entry:
-; CHECK: Requested Minimal Alignment exceeds the Stack Alignment!
+; CHECK: warning: Requested alignment exceeds the stack alignment!
  %retval = alloca <16 x float>, align 16
  %0 = load <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
