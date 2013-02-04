@@ -1450,6 +1450,29 @@ forEachDescendant(
     DescendantT>(DescendantMatcher);
 }
 
+/// \brief Matches if the node or any descendant matches.
+///
+/// Generates results for each match.
+///
+/// For example, in:
+/// \code
+///   class A { class B {}; class C {}; };
+/// \endcode
+/// The matcher:
+/// \code
+///   recordDecl(hasName("::A"), findAll(recordDecl(isDefinition()).bind("m")))
+/// \endcode
+/// will generate results for \c A, \c B and \c C.
+///
+/// Usable as: Any Matcher
+template <typename T>
+internal::PolymorphicMatcherWithParam2<
+    internal::EachOfMatcher, internal::Matcher<T>,
+    internal::ArgumentAdaptingMatcher<internal::ForEachDescendantMatcher, T> >
+findAll(const internal::Matcher<T> &Matcher) {
+  return eachOf(Matcher, forEachDescendant(Matcher));
+}
+
 /// \brief Matches AST nodes that have a parent that matches the provided
 /// matcher.
 ///

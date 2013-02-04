@@ -1675,6 +1675,40 @@ match expressions.</p>
 <tr style="text-align:left"><th>Return type</th><th>Name</th><th>Parameters</th></tr>
 <!-- START_TRAVERSAL_MATCHERS -->
 
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('eachOf0')"><a name="eachOf0Anchor">eachOf</a></td><td>Matcher&lt;*&gt;  P1, Matcher&lt;*&gt;  P2</td></tr>
+<tr><td colspan="4" class="doc" id="eachOf0"><pre>Matches if any of the given matchers matches.
+
+Unlike anyOf, eachOf will generate a match result for each
+matching submatcher.
+
+For example, in:
+  class A { int a; int b; };
+The matcher:
+  recordDecl(eachOf(has(fieldDecl(hasName("a")).bind("v")),
+                    has(fieldDecl(hasName("b")).bind("v"))))
+will generate two results binding "v", the first of which binds
+the field declaration of a, the second the field declaration of
+b.
+
+Usable as: Any Matcher
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('findAll0')"><a name="findAll0Anchor">findAll</a></td><td>Matcher&lt;T&gt;  Matcher</td></tr>
+<tr><td colspan="4" class="doc" id="findAll0"><pre>Matches if the node or any descendant matches.
+
+Generates results for each match.
+
+For example, in:
+  class A { class B {}; class C {}; };
+The matcher:
+  recordDecl(hasName("::A"), findAll(recordDecl(isDefinition()).bind("m")))
+will generate results for A, B and C.
+
+Usable as: Any Matcher
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('forEach0')"><a name="forEach0Anchor">forEach</a></td><td>Matcher&lt;ChildT&gt;  ChildMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="forEach0"><pre>Matches AST nodes that have child AST nodes that match the
 provided matcher.
