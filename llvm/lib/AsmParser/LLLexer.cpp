@@ -436,9 +436,11 @@ lltok::Kind LLLexer::LexIdentifier() {
   CurPtr = KeywordEnd;
   --StartChar;
   unsigned Len = CurPtr-StartChar;
-#define KEYWORD(STR) \
-  if (Len == strlen(#STR) && !memcmp(StartChar, #STR, strlen(#STR))) \
-    return lltok::kw_##STR;
+#define KEYWORD(STR)                                                    \
+  do {                                                                  \
+    if (Len == strlen(#STR) && !memcmp(StartChar, #STR, strlen(#STR)))  \
+      return lltok::kw_##STR;                                           \
+  } while (0)
 
   KEYWORD(true);    KEYWORD(false);
   KEYWORD(declare); KEYWORD(define);
@@ -490,11 +492,11 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(seq_cst);
   KEYWORD(singlethread);
 
-  KEYWORD(nnan)
-  KEYWORD(ninf)
-  KEYWORD(nsz)
-  KEYWORD(arcp)
-  KEYWORD(fast)
+  KEYWORD(nnan);
+  KEYWORD(ninf);
+  KEYWORD(nsz);
+  KEYWORD(arcp);
+  KEYWORD(fast);
   KEYWORD(nuw);
   KEYWORD(nsw);
   KEYWORD(exact);
