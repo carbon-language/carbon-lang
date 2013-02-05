@@ -281,14 +281,14 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
     OS << "Possible aliasing: ";
 
-    std::vector<Value*> Pointers;
+    std::vector<Value *> Pointers;
 
     for (AliasSet::iterator AI = AS.begin(), AE = AS.end(); AI != AE; ++AI)
       Pointers.push_back(AI.getPointer());
 
     std::sort(Pointers.begin(), Pointers.end());
 
-    for (std::vector<Value*>::iterator PI = Pointers.begin(),
+    for (std::vector<Value *>::iterator PI = Pointers.begin(),
                                         PE = Pointers.end();
          ;) {
       Value *V = *PI;
@@ -475,7 +475,7 @@ void ScopDetection::findScops(Region &R) {
   // regions that form a Scop are not found. Therefore, those non canonical
   // regions are checked by expanding the canonical ones.
 
-  std::vector<Region*> ToExpand;
+  std::vector<Region *> ToExpand;
 
   for (Region::iterator I = R.begin(), E = R.end(); I != E; ++I)
     ToExpand.push_back(*I);
@@ -633,7 +633,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
 
 void polly::ScopDetection::verifyRegion(const Region &R) const {
   assert(isMaxRegionInScop(R) && "Expect R is a valid region.");
-  DetectionContext Context(const_cast<Region&>(R), *AA, true /*verifying*/);
+  DetectionContext Context(const_cast<Region &>(R), *AA, true /*verifying*/);
   isValidRegion(Context);
 }
 
