@@ -6,7 +6,8 @@ include "AArch64InstrFormats.td"
 
 def SDT_A64ret : SDTypeProfile<0, 0, []>;
 def A64ret : SDNode<"AArch64ISD::Ret", SDT_A64ret, [SDNPHasChain,
-                                                    SDNPOptInGlue]>;
+                                                    SDNPOptInGlue,
+                                                    SDNPVariadic]>;
 
 // (ins NZCV, Condition, Dest)
 def SDT_A64br_cc : SDTypeProfile<0, 3, [SDTCisVT<0, i32>]>;

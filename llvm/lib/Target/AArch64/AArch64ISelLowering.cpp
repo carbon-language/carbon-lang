@@ -1035,15 +1035,8 @@ AArch64TargetLowering::LowerReturn(SDValue Chain,
   // Analyze outgoing return values.
   CCInfo.AnalyzeReturn(Outs, CCAssignFnForNode(CallConv));
 
-  // If this is the first return lowered for this function, add
-  // the regs to the liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
-
   SDValue Flag;
+  SmallVector<SDValue, 4> RetOps(1, Chain);
 
   for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
     // PCS: "If the type, T, of the result of a function is such that
@@ -1087,13 +1080,17 @@ AArch64TargetLowering::LowerReturn(SDValue Chain,
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Arg, Flag);
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
-  if (Flag.getNode()) {
-    return DAG.getNode(AArch64ISD::Ret, dl, MVT::Other, Chain, Flag);
-  } else {
-    return DAG.getNode(AArch64ISD::Ret, dl, MVT::Other, Chain);
-  }
+  RetOps[0] = Chain;  // Update chain.
+
+  // Add the flag if we have it.
+  if (Flag.getNode())
+    RetOps.push_back(Flag);
+
+  return DAG.getNode(AArch64ISD::Ret, dl, MVT::Other,
+                     &RetOps[0], RetOps.size());
 }
 
 SDValue
