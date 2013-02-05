@@ -4040,143 +4040,111 @@ let isReturn = 1, isTerminator = 1,
             Requires<[HasV4T]>;
 }
 
-
 // Load/Store with absolute addressing mode
 // memw(#u6)=Rt
 
-multiclass ST_abs<string OpcStr> {
-  let isPredicable = 1 in
-  def _abs_V4 : STInst2<(outs),
-            (ins globaladdress:$absaddr, IntRegs:$src),
-            !strconcat(OpcStr, "(##$absaddr) = $src"),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if ($src1)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if (!$src1)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if ($src1.new)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if (!$src1.new)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2")),
-            []>,
-            Requires<[HasV4T]>;
-
-  def _abs_nv_V4 : STInst2<(outs),
-            (ins globaladdress:$absaddr, IntRegs:$src),
-            !strconcat(OpcStr, "(##$absaddr) = $src.new"),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cPt_nv_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if ($src1)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2.new")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cNotPt_nv_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if (!$src1)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2.new")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cdnPt_nv_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if ($src1.new)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2.new")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cdnNotPt_nv_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, globaladdress:$absaddr, IntRegs:$src2),
-            !strconcat("if (!$src1.new)",
-            !strconcat(OpcStr, "(##$absaddr) = $src2.new")),
+multiclass ST_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
+                           bit isPredNew> {
+  let PNewValue = !if(isPredNew, "new", "") in
+  def NAME#_V4 : STInst2<(outs),
+            (ins PredRegs:$src1, globaladdressExt:$absaddr, RC: $src2),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#mnemonic#"(##$absaddr) = $src2",
             []>,
             Requires<[HasV4T]>;
 }
 
-let AddedComplexity = 30, isPredicable = 1 in
-def STrid_abs_V4 : STInst<(outs),
-          (ins globaladdress:$absaddr, DoubleRegs:$src),
-           "memd(##$absaddr) = $src",
-          [(store (i64 DoubleRegs:$src),
-                  (HexagonCONST32 tglobaladdr:$absaddr))]>,
-          Requires<[HasV4T]>;
+multiclass ST_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
+  let PredSense = !if(PredNot, "false", "true") in {
+    defm _c#NAME : ST_Abs_Predbase<mnemonic, RC, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME : ST_Abs_Predbase<mnemonic, RC, PredNot, 1>;
+  }
+}
 
-let AddedComplexity = 30, isPredicated = 1 in
-def STrid_abs_cPt_V4 : STInst2<(outs),
-          (ins PredRegs:$src1, globaladdress:$absaddr, DoubleRegs:$src2),
-          "if ($src1) memd(##$absaddr) = $src2",
-          []>,
-          Requires<[HasV4T]>;
+let isNVStorable = 1, isExtended = 1, neverHasSideEffects = 1 in
+multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
+    let opExtendable = 0, isPredicable = 1 in
+    def NAME#_V4 : STInst2<(outs),
+            (ins globaladdressExt:$absaddr, RC:$src),
+            mnemonic#"(##$absaddr) = $src",
+            []>,
+            Requires<[HasV4T]>;
 
-let AddedComplexity = 30, isPredicated = 1 in
-def STrid_abs_cNotPt_V4 : STInst2<(outs),
-          (ins PredRegs:$src1, globaladdress:$absaddr, DoubleRegs:$src2),
-          "if (!$src1) memd(##$absaddr) = $src2",
-          []>,
-          Requires<[HasV4T]>;
+    let opExtendable = 1, isPredicated = 1 in {
+      defm Pt : ST_Abs_Pred<mnemonic, RC, 0>;
+      defm NotPt : ST_Abs_Pred<mnemonic, RC, 1>;
+    }
+  }
+}
 
-let AddedComplexity = 30, isPredicated = 1 in
-def STrid_abs_cdnPt_V4 : STInst2<(outs),
-          (ins PredRegs:$src1, globaladdress:$absaddr, DoubleRegs:$src2),
-          "if ($src1.new) memd(##$absaddr) = $src2",
-          []>,
-          Requires<[HasV4T]>;
+multiclass ST_Abs_Predbase_nv<string mnemonic, RegisterClass RC, bit isNot,
+                           bit isPredNew> {
+  let PNewValue = !if(isPredNew, "new", "") in
+  def NAME#_nv_V4 : NVInst_V4<(outs),
+            (ins PredRegs:$src1, globaladdressExt:$absaddr, RC: $src2),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#mnemonic#"(##$absaddr) = $src2.new",
+            []>,
+            Requires<[HasV4T]>;
+}
 
-let AddedComplexity = 30, isPredicated = 1 in
-def STrid_abs_cdnNotPt_V4 : STInst2<(outs),
-          (ins PredRegs:$src1, globaladdress:$absaddr, DoubleRegs:$src2),
-          "if (!$src1.new) memd(##$absaddr) = $src2",
-          []>,
-          Requires<[HasV4T]>;
+multiclass ST_Abs_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
+  let PredSense = !if(PredNot, "false", "true") in {
+    defm _c#NAME : ST_Abs_Predbase_nv<mnemonic, RC, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME : ST_Abs_Predbase_nv<mnemonic, RC, PredNot, 1>;
+  }
+}
 
-defm STrib : ST_abs<"memb">;
-defm STrih : ST_abs<"memh">;
-defm STriw : ST_abs<"memw">;
+let mayStore = 1, isNVStore = 1, isExtended = 1, neverHasSideEffects = 1 in
+multiclass ST_Abs_nv<string mnemonic, string CextOp, RegisterClass RC> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
+    let opExtendable = 0, isPredicable = 1 in
+    def NAME#_nv_V4 : NVInst_V4<(outs),
+            (ins globaladdressExt:$absaddr, RC:$src),
+            mnemonic#"(##$absaddr) = $src.new",
+            []>,
+            Requires<[HasV4T]>;
 
-let Predicates = [HasV4T], AddedComplexity  = 30 in
+    let opExtendable = 1, isPredicated = 1 in {
+      defm Pt : ST_Abs_Pred_nv<mnemonic, RC, 0>;
+      defm NotPt : ST_Abs_Pred_nv<mnemonic, RC, 1>;
+    }
+  }
+}
+
+let addrMode = Absolute in {
+    defm STrib_abs : ST_Abs<"memb", "STrib", IntRegs>,
+                     ST_Abs_nv<"memb", "STrib", IntRegs>, AddrModeRel;
+
+    defm STrih_abs : ST_Abs<"memh", "STrih", IntRegs>,
+                     ST_Abs_nv<"memh", "STrih", IntRegs>, AddrModeRel;
+
+    defm STriw_abs : ST_Abs<"memw", "STriw", IntRegs>,
+                     ST_Abs_nv<"memw", "STriw", IntRegs>, AddrModeRel;
+
+  let isNVStorable = 0 in
+    defm STrid_abs : ST_Abs<"memd", "STrid", DoubleRegs>, AddrModeRel;
+}
+
+let Predicates = [HasV4T], AddedComplexity = 30 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1),
                         (HexagonCONST32 tglobaladdr:$absaddr)),
           (STrib_abs_V4 tglobaladdr: $absaddr, IntRegs: $src1)>;
 
-let Predicates = [HasV4T], AddedComplexity  = 30 in
 def : Pat<(truncstorei16 (i32 IntRegs:$src1),
                           (HexagonCONST32 tglobaladdr:$absaddr)),
           (STrih_abs_V4 tglobaladdr: $absaddr, IntRegs: $src1)>;
 
-let Predicates = [HasV4T], AddedComplexity  = 30 in
 def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32 tglobaladdr:$absaddr)),
           (STriw_abs_V4 tglobaladdr: $absaddr, IntRegs: $src1)>;
 
+def : Pat<(store (i64 DoubleRegs:$src1),
+                 (HexagonCONST32 tglobaladdr:$absaddr)),
+          (STrid_abs_V4 tglobaladdr: $absaddr, DoubleRegs: $src1)>;
+}
 
 multiclass LD_abs<string OpcStr> {
   let isPredicable = 1 in
