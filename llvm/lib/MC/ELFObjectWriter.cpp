@@ -1332,6 +1332,24 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
     break;
   }
 
+  if (TargetObjectWriter->getEMachine() == ELF::EM_ARM &&
+      Section.getType() == ELF::SHT_ARM_EXIDX) {
+    StringRef SecName(Section.getSectionName());
+    if (SecName == ".ARM.exidx") {
+      sh_link = SectionIndexMap.lookup(
+        Asm.getContext().getELFSection(".text",
+                                       ELF::SHT_PROGBITS,
+                                       ELF::SHF_EXECINSTR | ELF::SHF_ALLOC,
+                                       SectionKind::getText()));
+    } else if (SecName.startswith(".ARM.exidx")) {
+      sh_link = SectionIndexMap.lookup(
+        Asm.getContext().getELFSection(SecName.substr(sizeof(".ARM.exidx") - 1),
+                                       ELF::SHT_PROGBITS,
+                                       ELF::SHF_EXECINSTR | ELF::SHF_ALLOC,
+                                       SectionKind::getText()));
+    }
+  }
+
   WriteSecHdrEntry(SectionStringTableIndex[&Section], Section.getType(),
                    Section.getFlags(), 0, Offset, Size, sh_link, sh_info,
                    Alignment, Section.getEntrySize());
