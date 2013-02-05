@@ -1590,14 +1590,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
                  RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Outs, RetCC_X86);
 
-  // Add the regs to the liveout set for the function.
-  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
-  for (unsigned i = 0; i != RVLocs.size(); ++i)
-    if (RVLocs[i].isRegLoc() && !MRI.isLiveOut(RVLocs[i].getLocReg()))
-      MRI.addLiveOut(RVLocs[i].getLocReg());
-
   SDValue Flag;
-
   SmallVector<SDValue, 6> RetOps;
   RetOps.push_back(Chain); // Operand #0 = Chain (updated below)
   // Operand #1 = Bytes To Pop
@@ -1666,6 +1659,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
   // The x86-64 ABIs require that for returning structs by value we copy
@@ -1686,7 +1680,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     Flag = Chain.getValue(1);
 
     // RAX/EAX now acts like a return value.
-    MRI.addLiveOut(RetValReg);
+    RetOps.push_back(DAG.getRegister(RetValReg, MVT::i64));
   }
 
   RetOps[0] = Chain;  // Update chain.

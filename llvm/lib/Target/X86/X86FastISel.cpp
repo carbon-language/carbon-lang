@@ -738,6 +738,9 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
   if (F.isVarArg())
     return false;
 
+  // Build a list of return value registers.
+  SmallVector<unsigned, 4> RetRegs;
+
   if (Ret->getNumOperands() > 0) {
     SmallVector<ISD::OutputArg, 4> Outs;
     GetReturnInfo(F.getReturnType(), F.getAttributes(), Outs, TLI);
@@ -805,8 +808,8 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
             DstReg).addReg(SrcReg);
 
-    // Mark the register as live out of the function.
-    MRI.addLiveOut(VA.getLocReg());
+    // Add register to return instruction.
+    RetRegs.push_back(VA.getLocReg());
   }
 
   // The x86-64 ABI for returning structs by value requires that we copy
@@ -819,11 +822,14 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
            "SRetReturnReg should have been set in LowerFormalArguments()!");
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
             X86::RAX).addReg(Reg);
-    MRI.addLiveOut(X86::RAX);
+    RetRegs.push_back(X86::RAX);
   }
 
   // Now emit the RET.
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::RET));
+  MachineInstrBuilder MIB =
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::RET));
+  for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
+    MIB.addReg(RetRegs[i], RegState::Implicit);
   return true;
 }
 
