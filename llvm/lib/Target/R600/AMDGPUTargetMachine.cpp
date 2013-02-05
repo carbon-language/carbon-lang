@@ -136,8 +136,8 @@ bool AMDGPUPassConfig::addPreEmitPass() {
     addPass(createAMDGPUCFGPreparationPass(*TM));
     addPass(createAMDGPUCFGStructurizerPass(*TM));
     addPass(createR600ExpandSpecialInstrsPass(*TM));
-    addPass(createR600LowerConstCopy(*TM));
     addPass(&FinalizeMachineBundlesID);
+    addPass(createR600LowerConstCopy(*TM));
   } else {
     addPass(createSILowerLiteralConstantsPass(*TM));
     addPass(createSILowerControlFlowPass(*TM));
