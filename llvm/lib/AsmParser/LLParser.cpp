@@ -632,9 +632,11 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
 /// ParseGlobal
 ///   ::= GlobalVar '=' OptionalLinkage OptionalVisibility OptionalThreadLocal
-///       OptionalAddrSpace OptionalUnNammedAddr GlobalType Type Const
+///       OptionalAddrSpace OptionalUnNammedAddr
+///       OptionalExternallyInitialized GlobalType Type Const
 ///   ::= OptionalLinkage OptionalVisibility OptionalThreadLocal
-///       OptionalAddrSpace OptionalUnNammedAddr GlobalType Type Const
+///       OptionalAddrSpace OptionalUnNammedAddr
+///       OptionalExternallyInitialized GlobalType Type Const
 ///
 /// Everything through visibility has been parsed already.
 ///
@@ -642,9 +644,10 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
                            unsigned Visibility) {
   unsigned AddrSpace;
-  bool IsConstant, UnnamedAddr;
+  bool IsConstant, UnnamedAddr, IsExternallyInitialized;
   GlobalVariable::ThreadLocalMode TLM;
   LocTy UnnamedAddrLoc;
+  LocTy IsExternallyInitializedLoc;
   LocTy TyLoc;
 
   Type *Ty = 0;
@@ -652,6 +655,9 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
       ParseOptionalAddrSpace(AddrSpace) ||
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
                          &UnnamedAddrLoc) ||
+      ParseOptionalToken(lltok::kw_externally_initialized,
+                         IsExternallyInitialized,
+                         &IsExternallyInitializedLoc) ||
       ParseGlobalType(IsConstant) ||
       ParseType(Ty, TyLoc))
     return true;
@@ -709,6 +715,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   GV->setConstant(IsConstant);
   GV->setLinkage((GlobalValue::LinkageTypes)Linkage);
   GV->setVisibility((GlobalValue::VisibilityTypes)Visibility);
+  GV->setExternallyInitialized(IsExternallyInitialized);
   GV->setThreadLocalMode(TLM);
   GV->setUnnamedAddr(UnnamedAddr);
 

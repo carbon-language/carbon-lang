@@ -1443,6 +1443,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (unsigned AddressSpace = GV->getType()->getAddressSpace())
     Out << "addrspace(" << AddressSpace << ") ";
   if (GV->hasUnnamedAddr()) Out << "unnamed_addr ";
+  if (GV->isExternallyInitialized()) Out << "externally_initialized ";
   Out << (GV->isConstant() ? "constant " : "global ");
   TypePrinter.print(GV->getType()->getElementType(), Out);
 

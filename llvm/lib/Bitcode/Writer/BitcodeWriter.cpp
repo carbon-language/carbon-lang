@@ -514,10 +514,11 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(GV->hasSection() ? SectionMap[GV->getSection()] : 0);
     if (GV->isThreadLocal() ||
         GV->getVisibility() != GlobalValue::DefaultVisibility ||
-        GV->hasUnnamedAddr()) {
+        GV->hasUnnamedAddr() || GV->isExternallyInitialized()) {
       Vals.push_back(getEncodedVisibility(GV));
       Vals.push_back(getEncodedThreadLocalMode(GV));
       Vals.push_back(GV->hasUnnamedAddr());
+      Vals.push_back(GV->isExternallyInitialized());
     } else {
       AbbrevToUse = SimpleGVarAbbrev;
     }

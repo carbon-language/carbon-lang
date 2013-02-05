@@ -1596,9 +1596,13 @@ bool BitcodeReader::ParseModule(bool Resume) {
       if (Record.size() > 8)
         UnnamedAddr = Record[8];
 
+      bool ExternallyInitialized = false;
+      if (Record.size() > 9)
+        ExternallyInitialized = Record[9];
+
       GlobalVariable *NewGV =
         new GlobalVariable(*TheModule, Ty, isConstant, Linkage, 0, "", 0,
-                           TLM, AddressSpace);
+                           TLM, AddressSpace, ExternallyInitialized);
       NewGV->setAlignment(Alignment);
       if (!Section.empty())
         NewGV->setSection(Section);
