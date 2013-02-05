@@ -198,20 +198,7 @@ class HeaderFileInfoTrait {
   const char *FrameworkStrings;
   const char *SearchPath;
   struct stat SearchPathStatBuf;
-  llvm::Optional<int> SearchPathStatResult;
-  
-  int StatSimpleCache(const char *Path, struct stat *StatBuf) {
-    if (Path == SearchPath) {
-      if (!SearchPathStatResult)
-        SearchPathStatResult = stat(Path, &SearchPathStatBuf);
-      
-      *StatBuf = SearchPathStatBuf;
-      return *SearchPathStatResult;
-    }
-    
-    return stat(Path, StatBuf);
-  }
-  
+
 public:
   typedef const char *external_key_type;
   typedef const char *internal_key_type;
