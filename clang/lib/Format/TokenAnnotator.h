@@ -40,6 +40,7 @@ enum TokenType {
   TT_ObjCMethodSpecifier,
   TT_ObjCMethodExpr,
   TT_ObjCProperty,
+  TT_ObjCSelectorName,
   TT_OverloadedOperator,
   TT_PointerOrReference,
   TT_PureVirtualSpecifier,
@@ -69,7 +70,8 @@ public:
       : FormatTok(FormatTok), Type(TT_Unknown), SpaceRequiredBefore(false),
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
-        ParameterCount(1), BindingStrength(0), SplitPenalty(0), Parent(NULL) {
+        ParameterCount(1), BindingStrength(0), SplitPenalty(0),
+        LongestObjCSelectorName(0), Parent(NULL) {
   }
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
@@ -108,6 +110,10 @@ public:
 
   /// \brief Penalty for inserting a line break before this token.
   unsigned SplitPenalty;
+
+  /// \brief If this is the first ObjC selector name in an ObjC method
+  /// definition or call, this contains the length of the longest name.
+  unsigned LongestObjCSelectorName;
 
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;

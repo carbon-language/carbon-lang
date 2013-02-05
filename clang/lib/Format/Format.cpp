@@ -268,7 +268,7 @@ private:
         : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
           FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakAfterComma(false),
-          HasMultiParameterLine(HasMultiParameterLine) {
+          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0) {
     }
 
     /// \brief The position to which a specific parenthesis level needs to be
@@ -312,6 +312,9 @@ private:
     /// \brief This context already has a line with more than one parameter.
     bool HasMultiParameterLine;
 
+    /// \brief The position of the colon in an ObjC method declaration/call.
+    unsigned ColonPos;
+
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
         return Indent < Other.Indent;
@@ -331,6 +334,8 @@ private:
         return BreakAfterComma;
       if (HasMultiParameterLine != Other.HasMultiParameterLine)
         return HasMultiParameterLine;
+      if (ColonPos != Other.ColonPos)
+        return ColonPos < Other.ColonPos;
       return false;
     }
   };
@@ -427,6 +432,17 @@ private:
       } else if (Previous.Type == TT_BinaryOperator &&
                  State.Stack.back().AssignmentColumn != 0) {
         State.Column = State.Stack.back().AssignmentColumn;
+      } else if (Current.Type == TT_ObjCSelectorName) {
+        if (State.Stack.back().ColonPos > Current.FormatTok.TokenLength) {
+          State.Column =
+              State.Stack.back().ColonPos - Current.FormatTok.TokenLength;
+        } else {
+          State.Column = State.Stack.back().Indent;
+          State.Stack.back().ColonPos =
+              State.Column + Current.FormatTok.TokenLength;
+        }
+      } else if (Previous.Type == TT_ObjCMethodExpr) {
+        State.Column = State.Stack.back().Indent + 4;
       } else {
         State.Column = State.Stack[ParenLevel].Indent;
       }
@@ -460,6 +476,17 @@ private:
 
       if (!DryRun)
         Whitespaces.replaceWhitespace(Current, 0, Spaces, State.Column, Style);
+
+      if (Current.Type == TT_ObjCSelectorName &&
+          State.Stack.back().ColonPos == 0) {
+        if (State.Stack.back().Indent + Current.LongestObjCSelectorName >
+            State.Column + Spaces + Current.FormatTok.TokenLength)
+          State.Stack.back().ColonPos =
+              State.Stack.back().Indent + Current.LongestObjCSelectorName;
+        else
+          State.Stack.back().ColonPos =
+              State.Column + Spaces + Current.LongestObjCSelectorName;
+      }
 
       // FIXME: Do we need to do this for assignments nested in other
       // expressions?
@@ -698,6 +725,9 @@ private:
     if (State.NextToken->Parent->is(tok::comma) &&
         State.Stack.back().BreakAfterComma &&
         !isTrailingComment(*State.NextToken))
+      return true;
+    if (State.NextToken->Type == TT_ObjCSelectorName &&
+        State.Stack.back().ColonPos != 0)
       return true;
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&

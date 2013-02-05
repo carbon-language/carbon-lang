@@ -20,15 +20,6 @@
 namespace clang {
 namespace format {
 
-/// \brief Returns if a token is an Objective-C selector name.
-///
-/// For example, "bar" is a selector name in [foo bar:(4 + 5)].
-static bool isObjCSelectorName(const AnnotatedToken &Tok) {
-  return Tok.is(tok::identifier) && !Tok.Children.empty() &&
-         Tok.Children[0].is(tok::colon) &&
-         Tok.Children[0].Type == TT_ObjCMethodExpr;
-}
-
 static bool isBinaryOperator(const AnnotatedToken &Tok) {
   // Comma is a binary operator, but does not behave as such wrt. formatting.
   return getPrecedence(Tok) > prec::Comma;
@@ -65,6 +56,7 @@ public:
   AnnotatingParser(SourceManager &SourceMgr, Lexer &Lex, AnnotatedLine &Line)
       : SourceMgr(SourceMgr), Lex(Lex), Line(Line), CurrentToken(&Line.First),
         KeywordVirtualFound(false), ColonIsObjCMethodExpr(false),
+        LongestObjCSelectorName(0), FirstObjCSelectorName(NULL),
         ColonIsForRangeExpr(false), IsExpression(false),
         LookForFunctionName(Line.MustBeDeclaration), BindingStrength(1) {
   }
@@ -82,6 +74,8 @@ public:
 
     void markStart(AnnotatedToken &Left) {
       P.ColonIsObjCMethodExpr = true;
+      P.LongestObjCSelectorName = 0;
+      P.FirstObjCSelectorName = NULL;
       Left.Type = TT_ObjCMethodExpr;
     }
 
@@ -168,8 +162,13 @@ public:
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
 
-        if (StartsObjCMethodExpr)
+        if (StartsObjCMethodExpr) {
           objCSelector.markEnd(*CurrentToken);
+          if (FirstObjCSelectorName != NULL) {
+            FirstObjCSelectorName->LongestObjCSelectorName =
+                LongestObjCSelectorName;
+          }
+        }
 
         next();
         return true;
@@ -221,6 +220,9 @@ public:
         }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
+        if (FirstObjCSelectorName != NULL)
+          FirstObjCSelectorName->LongestObjCSelectorName =
+              LongestObjCSelectorName;
         next();
         return true;
       }
@@ -295,12 +297,19 @@ public:
       break;
     case tok::colon:
       // Colons from ?: are handled in parseConditional().
-      if (Tok->Parent->is(tok::r_paren))
+      if (Tok->Parent->is(tok::r_paren)) {
         Tok->Type = TT_CtorInitializerColon;
-      else if (ColonIsObjCMethodExpr)
+      } else if (ColonIsObjCMethodExpr ||
+                 Line.First.Type == TT_ObjCMethodSpecifier) {
         Tok->Type = TT_ObjCMethodExpr;
-      else if (ColonIsForRangeExpr)
+        Tok->Parent->Type = TT_ObjCSelectorName;
+        if (Tok->Parent->FormatTok.TokenLength > LongestObjCSelectorName)
+          LongestObjCSelectorName = Tok->Parent->FormatTok.TokenLength;
+        if (FirstObjCSelectorName == NULL)
+          FirstObjCSelectorName = Tok->Parent;
+      } else if (ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
+      }
       break;
     case tok::kw_if:
     case tok::kw_while:
@@ -452,6 +461,13 @@ public:
     if (PeriodsAndArrows >= 2 && CanBeBuilderTypeStmt)
       return LT_BuilderTypeCall;
 
+    if (Line.First.Type == TT_ObjCMethodSpecifier) {
+      if (FirstObjCSelectorName != NULL)
+        FirstObjCSelectorName->LongestObjCSelectorName =
+            LongestObjCSelectorName;
+      return LT_ObjCMethodDecl;
+    }
+
     return LT_Other;
   }
 
@@ -474,6 +490,8 @@ private:
   AnnotatedToken *CurrentToken;
   bool KeywordVirtualFound;
   bool ColonIsObjCMethodExpr;
+  unsigned LongestObjCSelectorName;
+  AnnotatedToken *FirstObjCSelectorName;
   bool ColonIsForRangeExpr;
   bool IsExpression;
   bool LookForFunctionName;
@@ -725,9 +743,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
 
   // In Objective-C method expressions, prefer breaking before "param:" over
   // breaking after it.
-  if (isObjCSelectorName(Right))
+  if (Right.Type == TT_ObjCSelectorName)
     return 0;
-  if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
+  if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
     return 20;
 
   if (Left.is(tok::l_paren) || Left.is(tok::l_square) ||
@@ -885,7 +903,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedToken &Right) {
     return false;
   if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
     return true;
-  if (isObjCSelectorName(Right))
+  if (Right.Type == TT_ObjCSelectorName)
     return true;
   if (Left.ClosesTemplateDeclaration)
     return true;
