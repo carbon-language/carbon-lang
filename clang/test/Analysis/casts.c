@@ -74,3 +74,14 @@ char ttt(int intSeconds) {
     return 0;
   return 0;
 }
+
+int foo (int* p) {
+  int y = 0;
+  if (p == 0) {
+    if ((*((void**)&p)) == (void*)0) // Test that the cast to void preserves the symbolic region.
+      return 0;
+    else
+      return 5/y; // This code should be unreachable: no-warning.
+  }
+  return 0;
+}

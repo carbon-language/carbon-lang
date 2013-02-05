@@ -284,14 +284,14 @@ DefinedOrUnknownSVal SValBuilder::evalEQ(ProgramStateRef state,
 }
 
 /// Recursively check if the pointer types are equal modulo const, volatile,
-/// and restrict qualifiers. Assumes the input types are canonical.
-/// TODO: This is based off of code in SemaCast; can we reuse it.
-static bool haveSimilarTypes(ASTContext &Context, QualType T1,
-                                                  QualType T2) {
-  while (Context.UnwrapSimilarPointerTypes(T1, T2)) {
+/// and restrict qualifiers. Also, assume that all types are similar to 'void'.
+/// Assumes the input types are canonical.
+static bool shouldBeModeledWithNoOp(ASTContext &Context, QualType ToTy,
+                                                         QualType FromTy) {
+  while (Context.UnwrapSimilarPointerTypes(ToTy, FromTy)) {
     Qualifiers Quals1, Quals2;
-    T1 = Context.getUnqualifiedArrayType(T1, Quals1);
-    T2 = Context.getUnqualifiedArrayType(T2, Quals2);
+    ToTy = Context.getUnqualifiedArrayType(ToTy, Quals1);
+    FromTy = Context.getUnqualifiedArrayType(FromTy, Quals2);
 
     // Make sure that non cvr-qualifiers the other qualifiers (e.g., address
     // spaces) are identical.
@@ -301,7 +301,12 @@ static bool haveSimilarTypes(ASTContext &Context, QualType T1,
       return false;
   }
 
-  if (T1 != T2)
+  // If we are casting to void, the 'From' value can be used to represent the
+  // 'To' value.
+  if (ToTy->isVoidType())
+    return true;
+
+  if (ToTy != FromTy)
     return false;
 
   return true;
@@ -314,10 +319,10 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   if (val.isUnknownOrUndef() || castTy == originalTy)
     return val;
 
-  // For const casts, just propagate the value.
+  // For const casts, casts to void, just propagate the value.
   if (!castTy->isVariableArrayType() && !originalTy->isVariableArrayType())
-    if (haveSimilarTypes(Context, Context.getPointerType(castTy),
-                                  Context.getPointerType(originalTy)))
+    if (shouldBeModeledWithNoOp(Context, Context.getPointerType(castTy),
+                                         Context.getPointerType(originalTy)))
       return val;
   
   // Check for casts from pointers to integers.
