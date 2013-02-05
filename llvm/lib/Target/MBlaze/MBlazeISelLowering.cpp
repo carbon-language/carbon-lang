@@ -1028,15 +1028,17 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
   // Analize return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_MBlaze);
 
-  // If this is the first return lowered for this function, add
-  // the regs to the liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
-
   SDValue Flag;
+  SmallVector<SDValue, 4> RetOps(1, Chain);
+
+  // If this function is using the interrupt_handler calling convention
+  // then use "rtid r14, 0" otherwise use "rtsd r15, 8"
+  unsigned Ret = (CallConv == CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet
+                                                        : MBlazeISD::Ret;
+  unsigned Reg = (CallConv == CallingConv::MBLAZE_INTR) ? MBlaze::R14
+                                                        : MBlaze::R15;
+  RetOps.push_back(DAG.getRegister(Reg, MVT::i32));
+
 
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
@@ -1049,20 +1051,16 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
-  // If this function is using the interrupt_handler calling convention
-  // then use "rtid r14, 0" otherwise use "rtsd r15, 8"
-  unsigned Ret = (CallConv == CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet
-                                                        : MBlazeISD::Ret;
-  unsigned Reg = (CallConv == CallingConv::MBLAZE_INTR) ? MBlaze::R14
-                                                        : MBlaze::R15;
-  SDValue DReg = DAG.getRegister(Reg, MVT::i32);
+  RetOps[0] = Chain;  // Update chain.
 
+  // Add the flag if we have it.
   if (Flag.getNode())
-    return DAG.getNode(Ret, dl, MVT::Other, Chain, DReg, Flag);
+    RetOps.push_back(Flag);
 
-  return DAG.getNode(Ret, dl, MVT::Other, Chain, DReg);
+  return DAG.getNode(Ret, dl, MVT::Other, &RetOps[0], RetOps.size());
 }
 
 //===----------------------------------------------------------------------===//

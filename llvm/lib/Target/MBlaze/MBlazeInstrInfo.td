@@ -28,9 +28,9 @@ def SDT_MBCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 //===----------------------------------------------------------------------===//
 
 def MBlazeRet     : SDNode<"MBlazeISD::Ret", SDT_MBlazeRet,
-                           [SDNPHasChain, SDNPOptInGlue]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def MBlazeIRet    : SDNode<"MBlazeISD::IRet", SDT_MBlazeIRet,
-                           [SDNPHasChain, SDNPOptInGlue]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 def MBlazeJmpLink : SDNode<"MBlazeISD::JmpLink",SDT_MBlazeJmpLink,
                            [SDNPHasChain,SDNPOptInGlue,SDNPOutGlue,
