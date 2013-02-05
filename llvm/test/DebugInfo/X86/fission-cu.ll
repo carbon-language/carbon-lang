@@ -20,6 +20,7 @@
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.dwo")
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
 ; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
 ; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
@@ -39,6 +40,7 @@
 ; CHECK: DW_AT_low_pc    DW_FORM_GNU_addr_index
 ; CHECK: DW_AT_stmt_list DW_FORM_data4
 ; CHECK: DW_AT_comp_dir  DW_FORM_GNU_str_index
+; CHECK: DW_AT_GNU_dwo_id        DW_FORM_data8
 
 ; CHECK: [2] DW_TAG_base_type    DW_CHILDREN_no
 ; CHECK: DW_AT_name      DW_FORM_GNU_str_index
@@ -60,11 +62,12 @@
 ; CHECK: DW_AT_language [DW_FORM_data2]        (0x000c)
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]    ( indexed (00000001) string = "baz.c")
 ; CHECK: DW_AT_low_pc [DW_FORM_GNU_addr_index]     ( indexed (00000000) address = 0x0000000000000000)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
 ; CHECK: DW_TAG_base_type
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000004) string = "int")
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "a")
-; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x0016 => {0x00000016})
+; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x001e => {0x0000001e})
 ; CHECK: DW_AT_external [DW_FORM_flag_present]   (true)
 ; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
 ; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)

@@ -685,6 +685,11 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   if (!FirstCU)
     FirstCU = NewCU;
+
+  // This should be a unique identifier when we want to build .dwp files.
+  if (useSplitDwarf())
+    NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
+
   if (useSplitDwarf() && !SkeletonCU)
     SkeletonCU = constructSkeletonCU(N);
 
@@ -2450,7 +2455,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   StringRef FN = sys::path::filename(T);
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
 
-  // FIXME: We also need DW_AT_dwo_id.
+  // This should be a unique identifier when we want to build .dwp files.
+  NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
 
   // FIXME: The addr base should be relative for each compile unit, however,
   // this one is going to be 0 anyhow.
