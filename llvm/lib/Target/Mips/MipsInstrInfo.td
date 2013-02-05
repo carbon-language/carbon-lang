@@ -72,7 +72,8 @@ def MipsTprelLo    : SDNode<"MipsISD::TprelLo", SDTIntUnaryOp>;
 def MipsThreadPointer: SDNode<"MipsISD::ThreadPointer", SDT_MipsThreadPointer>;
 
 // Return
-def MipsRet : SDNode<"MipsISD::Ret", SDTNone, [SDNPHasChain, SDNPOptInGlue]>;
+def MipsRet : SDNode<"MipsISD::Ret", SDTNone,
+                     [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,

@@ -3454,15 +3454,8 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   // Analize return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_Mips);
 
-  // If this is the first return lowered for this function, add
-  // the regs to the liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
-
   SDValue Flag;
+  SmallVector<SDValue, 4> RetOps(1, Chain);
 
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
@@ -3471,9 +3464,9 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), OutVals[i], Flag);
 
-    // guarantee that all emitted copies are
-    // stuck together, avoiding something bad
+    // Guarantee that all emitted copies are stuck together with flags.
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
   // The mips ABIs for returning structs by value requires that we copy
@@ -3492,15 +3485,17 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
 
     Chain = DAG.getCopyToReg(Chain, dl, V0, Val, Flag);
     Flag = Chain.getValue(1);
-    MF.getRegInfo().addLiveOut(V0);
+    RetOps.push_back(DAG.getRegister(V0, getPointerTy()));
   }
 
-  // Return on Mips is always a "jr $ra"
-  if (Flag.getNode())
-    return DAG.getNode(MipsISD::Ret, dl, MVT::Other, Chain, Flag);
+  RetOps[0] = Chain;  // Update chain.
 
-  // Return Void
-  return DAG.getNode(MipsISD::Ret, dl, MVT::Other, Chain);
+  // Add the flag if we have it.
+  if (Flag.getNode())
+    RetOps.push_back(Flag);
+
+  // Return on Mips is always a "jr $ra"
+  return DAG.getNode(MipsISD::Ret, dl, MVT::Other, &RetOps[0], RetOps.size());
 }
 
 //===----------------------------------------------------------------------===//
