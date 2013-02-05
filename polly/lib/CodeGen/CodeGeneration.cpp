@@ -61,25 +61,22 @@ struct isl_set;
 
 namespace polly {
 static cl::opt<bool>
-OpenMP("enable-polly-openmp",
-       cl::desc("Generate OpenMP parallel code"), cl::Hidden,
-       cl::value_desc("OpenMP code generation enabled if true"),
+OpenMP("enable-polly-openmp", cl::desc("Generate OpenMP parallel code"),
+       cl::Hidden, cl::value_desc("OpenMP code generation enabled if true"),
        cl::init(false), cl::ZeroOrMore);
 
 #ifdef GPU_CODEGEN
 static cl::opt<bool>
-GPGPU("enable-polly-gpgpu",
-       cl::desc("Generate GPU parallel code"), cl::Hidden,
-       cl::value_desc("GPGPU code generation enabled if true"),
-       cl::init(false), cl::ZeroOrMore);
+GPGPU("enable-polly-gpgpu", cl::desc("Generate GPU parallel code"), cl::Hidden,
+      cl::value_desc("GPGPU code generation enabled if true"), cl::init(false),
+      cl::ZeroOrMore);
 
-static cl::opt<std::string>
-GPUTriple("polly-gpgpu-triple",
-       cl::desc("Target triple for GPU code generation"),
-       cl::Hidden, cl::init(""));
+static cl::opt<std::string> GPUTriple(
+    "polly-gpgpu-triple", cl::desc("Target triple for GPU code generation"),
+    cl::Hidden, cl::init(""));
 #endif /* GPU_CODEGEN */
 
-typedef DenseMap<const char*, Value*> CharMapT;
+typedef DenseMap<const char *, Value *> CharMapT;
 
 /// Class to generate LLVM-IR that calculates the value of a clast_expr.
 class ClastExpCodeGen {
@@ -140,58 +137,52 @@ Value *ClastExpCodeGen::codegen(const clast_binary *e, Type *Ty) {
   switch (e->type) {
   case clast_bin_mod:
     return Builder.CreateSRem(LHS, RHS);
-  case clast_bin_fdiv:
-    {
-      // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
-      Value *One = ConstantInt::get(Ty, 1);
-      Value *Zero = ConstantInt::get(Ty, 0);
-      Value *Sum1 = Builder.CreateSub(LHS, RHS);
-      Value *Sum2 = Builder.CreateAdd(Sum1, One);
-      Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
-      Value *Dividend = Builder.CreateSelect(isNegative, Sum2, LHS);
-      return Builder.CreateSDiv(Dividend, RHS);
-    }
-  case clast_bin_cdiv:
-    {
-      // ceild(n,d) ((n < 0) ? n : (n + d - 1)) / d
-      Value *One = ConstantInt::get(Ty, 1);
-      Value *Zero = ConstantInt::get(Ty, 0);
-      Value *Sum1 = Builder.CreateAdd(LHS, RHS);
-      Value *Sum2 = Builder.CreateSub(Sum1, One);
-      Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
-      Value *Dividend = Builder.CreateSelect(isNegative, LHS, Sum2);
-      return Builder.CreateSDiv(Dividend, RHS);
-    }
+  case clast_bin_fdiv: {
+    // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
+    Value *One = ConstantInt::get(Ty, 1);
+    Value *Zero = ConstantInt::get(Ty, 0);
+    Value *Sum1 = Builder.CreateSub(LHS, RHS);
+    Value *Sum2 = Builder.CreateAdd(Sum1, One);
+    Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
+    Value *Dividend = Builder.CreateSelect(isNegative, Sum2, LHS);
+    return Builder.CreateSDiv(Dividend, RHS);
+  }
+  case clast_bin_cdiv: {
+    // ceild(n,d) ((n < 0) ? n : (n + d - 1)) / d
+    Value *One = ConstantInt::get(Ty, 1);
+    Value *Zero = ConstantInt::get(Ty, 0);
+    Value *Sum1 = Builder.CreateAdd(LHS, RHS);
+    Value *Sum2 = Builder.CreateSub(Sum1, One);
+    Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
+    Value *Dividend = Builder.CreateSelect(isNegative, LHS, Sum2);
+    return Builder.CreateSDiv(Dividend, RHS);
+  }
   case clast_bin_div:
     return Builder.CreateSDiv(LHS, RHS);
-  };
+  }
 
   llvm_unreachable("Unknown clast binary expression type");
 }
 
 Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
-  assert((   r->type == clast_red_min
-             || r->type == clast_red_max
-             || r->type == clast_red_sum)
-         && "Clast reduction type not supported");
+  assert((r->type == clast_red_min || r->type == clast_red_max ||
+          r->type == clast_red_sum) && "Clast reduction type not supported");
   Value *old = codegen(r->elts[0], Ty);
 
   for (int i = 1; i < r->n; ++i) {
     Value *exprValue = codegen(r->elts[i], Ty);
 
     switch (r->type) {
-    case clast_red_min:
-      {
-        Value *cmp = Builder.CreateICmpSLT(old, exprValue);
-        old = Builder.CreateSelect(cmp, old, exprValue);
-        break;
-      }
-    case clast_red_max:
-      {
-        Value *cmp = Builder.CreateICmpSGT(old, exprValue);
-        old = Builder.CreateSelect(cmp, old, exprValue);
-        break;
-      }
+    case clast_red_min: {
+      Value *cmp = Builder.CreateICmpSLT(old, exprValue);
+      old = Builder.CreateSelect(cmp, old, exprValue);
+      break;
+    }
+    case clast_red_max: {
+      Value *cmp = Builder.CreateICmpSGT(old, exprValue);
+      old = Builder.CreateSelect(cmp, old, exprValue);
+      break;
+    }
     case clast_red_sum:
       old = Builder.CreateAdd(old, exprValue);
       break;
@@ -205,7 +196,7 @@ ClastExpCodeGen::ClastExpCodeGen(IRBuilder<> &B, CharMapT &IVMap)
   : Builder(B), IVS(IVMap) {}
 
 Value *ClastExpCodeGen::codegen(const clast_expr *e, Type *Ty) {
-  switch(e->type) {
+  switch (e->type) {
   case clast_expr_name:
     return codegen((const clast_name *)e, Ty);
   case clast_expr_term:
@@ -260,11 +251,11 @@ private:
                unsigned Dimension, int vectorDim,
                std::vector<ValueMapT> *VectorVMap = 0);
 
-  void codegenSubstitutions(const clast_stmt *Assignment,
-                            ScopStmt *Statement, int vectorDim = 0,
+  void codegenSubstitutions(const clast_stmt *Assignment, ScopStmt *Statement,
+                            int vectorDim = 0,
                             std::vector<ValueMapT> *VectorVMap = 0);
 
-  void codegen(const clast_user_stmt *u, std::vector<Value*> *IVS = NULL,
+  void codegen(const clast_user_stmt *u, std::vector<Value *> *IVS = NULL,
                const char *iterator = NULL, isl_set *scatteringDomain = 0);
 
   void codegen(const clast_block *b);
@@ -276,7 +267,7 @@ private:
   ///
   /// Create a list of values that has to be stored into the OpenMP subfuncition
   /// structure.
-  SetVector<Value*> getOMPValues(const clast_stmt *Body);
+  SetVector<Value *> getOMPValues(const clast_stmt *Body);
 
   /// @brief Update ClastVars and ValueMap according to a value map.
   ///
@@ -295,7 +286,7 @@ private:
   /// Create a list of values that will be set to be parameters of the GPGPU
   /// subfunction. These parameters represent device memory base addresses
   /// and the size in bytes.
-  SetVector<Value*> getGPUValues(unsigned &OutputBytes);
+  SetVector<Value *> getGPUValues(unsigned &OutputBytes);
 
   /// @brief Create a GPU parallel for loop.
   ///
@@ -304,10 +295,9 @@ private:
   void codegenForGPGPU(const clast_for *F);
 
   /// @brief Get innermost for loop.
-  const clast_stmt *getScheduleInfo(const clast_for *F,
-                                    std::vector<int> &NumIters,
-                                    unsigned &LoopDepth,
-                                    unsigned &NonPLoopDepth);
+  const clast_stmt *
+  getScheduleInfo(const clast_for *F, std::vector<int> &NumIters,
+                  unsigned &LoopDepth, unsigned &NonPLoopDepth);
 #endif /* GPU_CODEGEN */
 
   /// @brief Check if a loop is parallel
@@ -379,15 +369,15 @@ void ClastStmtCodeGen::codegen(const clast_assignment *A, ScopStmt *Stmt,
   ValueMap[PN] = RHS;
 }
 
-void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
-                                             ScopStmt *Statement, int vectorDim,
-  std::vector<ValueMapT> *VectorVMap) {
+void ClastStmtCodeGen::codegenSubstitutions(
+    const clast_stmt *Assignment, ScopStmt *Statement, int vectorDim,
+    std::vector<ValueMapT> *VectorVMap) {
   int Dimension = 0;
 
   while (Assignment) {
     assert(CLAST_STMT_IS_A(Assignment, stmt_ass) &&
            "Substitions are expected to be assignments");
-    codegen((const clast_assignment *) Assignment, Statement, Dimension,
+    codegen((const clast_assignment *)Assignment, Statement, Dimension,
             vectorDim, VectorVMap);
     Assignment = Assignment->next;
     Dimension++;
@@ -397,18 +387,19 @@ void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
 // Takes the cloog specific domain and translates it into a map Statement ->
 // PartialSchedule, where the PartialSchedule contains all the dimensions that
 // have been code generated up to this point.
-static __isl_give isl_map *extractPartialSchedule(ScopStmt *Statement,
-                                                  isl_set *Domain) {
+static __isl_give isl_map *
+extractPartialSchedule(ScopStmt *Statement, isl_set *Domain) {
   isl_map *Schedule = Statement->getScattering();
   int ScheduledDimensions = isl_set_dim(Domain, isl_dim_set);
-  int UnscheduledDimensions = isl_map_dim(Schedule, isl_dim_out) - ScheduledDimensions;
+  int UnscheduledDimensions =
+      isl_map_dim(Schedule, isl_dim_out) - ScheduledDimensions;
 
   return isl_map_project_out(Schedule, isl_dim_out, ScheduledDimensions,
                              UnscheduledDimensions);
 }
 
 void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
-                               std::vector<Value*> *IVS , const char *iterator,
+                               std::vector<Value *> *IVS, const char *iterator,
                                isl_set *Domain) {
   ScopStmt *Statement = (ScopStmt *)u->statement->usr;
 
@@ -427,7 +418,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   if (IVS) {
     assert(u->substitutions && "Substitutions expected!");
     int i = 0;
-    for (std::vector<Value*>::iterator II = IVS->begin(), IE = IVS->end();
+    for (std::vector<Value *>::iterator II = IVS->begin(), IE = IVS->end();
          II != IE; ++II) {
       ClastVars[iterator] = *II;
       codegenSubstitutions(u->substitutions, Statement, i, &VectorMap);
@@ -473,7 +464,7 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
 class ParameterVisitor : public ClastVisitor {
   std::set<Value *> Values;
 public:
-  ParameterVisitor() : ClastVisitor(), Values() { }
+  ParameterVisitor() : ClastVisitor(), Values() {}
 
   void visitUser(const clast_user_stmt *Stmt) {
     const ScopStmt *S = static_cast<const ScopStmt *>(Stmt->statement->usr);
@@ -484,7 +475,8 @@ public:
          ++BI) {
       const Instruction &Inst = *BI;
       for (Instruction::const_op_iterator II = Inst.op_begin(),
-           IE = Inst.op_end(); II != IE; ++II) {
+                                          IE = Inst.op_end();
+           II != IE; ++II) {
         Value *SrcVal = *II;
 
         if (Instruction *OpInst = dyn_cast<Instruction>(SrcVal))
@@ -500,15 +492,15 @@ public:
   // Iterator to iterate over the values found.
   typedef std::set<Value *>::const_iterator const_iterator;
   inline const_iterator begin() const { return Values.begin(); }
-  inline const_iterator end()   const { return Values.end();   }
+  inline const_iterator end() const { return Values.end(); }
 };
 
-SetVector<Value*> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
-  SetVector<Value*> Values;
+SetVector<Value *> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
+  SetVector<Value *> Values;
 
   // The clast variables
-  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
-       I != E; I++)
+  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end(); I != E;
+       I++)
     Values.insert(I->second);
 
   // Find the temporaries that are referenced in the clast statements'
@@ -529,17 +521,18 @@ SetVector<Value*> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
 }
 
 void ClastStmtCodeGen::updateWithValueMap(
-  OMPGenerator::ValueToValueMapTy &VMap) {
-  std::set<Value*> Inserted;
+    OMPGenerator::ValueToValueMapTy &VMap) {
+  std::set<Value *> Inserted;
 
-  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end();
-       I != E; I++) {
+  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end(); I != E;
+       I++) {
     ClastVars[I->first] = VMap[I->second];
     Inserted.insert(I->second);
   }
 
   for (OMPGenerator::ValueToValueMapTy::iterator I = VMap.begin(),
-       E = VMap.end(); I != E; ++I) {
+                                                 E = VMap.end();
+       I != E; ++I) {
     if (Inserted.count(I->first))
       continue;
 
@@ -549,11 +542,11 @@ void ClastStmtCodeGen::updateWithValueMap(
 
 static void clearDomtree(Function *F, DominatorTree &DT) {
   DomTreeNode *N = DT.getNode(&F->getEntryBlock());
-  std::vector<BasicBlock*> Nodes;
-  for (po_iterator<DomTreeNode*> I = po_begin(N), E = po_end(N); I != E; ++I)
+  std::vector<BasicBlock *> Nodes;
+  for (po_iterator<DomTreeNode *> I = po_begin(N), E = po_end(N); I != E; ++I)
     Nodes.push_back(I->getBlock());
 
-  for (std::vector<BasicBlock*>::iterator I = Nodes.begin(), E = Nodes.end();
+  for (std::vector<BasicBlock *>::iterator I = Nodes.begin(), E = Nodes.end();
        I != E; ++I)
     DT.eraseNode(*I);
 }
@@ -562,7 +555,7 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   Value *Stride, *LB, *UB, *IV;
   BasicBlock::iterator LoopBody;
   IntegerType *IntPtrTy = getIntPtrTy();
-  SetVector<Value*> Values;
+  SetVector<Value *> Values;
   OMPGenerator::ValueToValueMapTy VMap;
   OMPGenerator OMPGen(Builder, P);
 
@@ -608,16 +601,17 @@ static unsigned getArraySizeInBytes(const ArrayType *AT) {
   return Bytes;
 }
 
-SetVector<Value*> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
-  SetVector<Value*> Values;
+SetVector<Value *> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
+  SetVector<Value *> Values;
   OutputBytes = 0;
 
   // Record the memory reference base addresses.
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
-    for (SmallVector<MemoryAccess*, 8>::iterator I = Stmt->memacc_begin(),
-         E = Stmt->memacc_end(); I != E; ++I) {
-      Value *BaseAddr = const_cast<Value*>((*I)->getBaseAddr());
+    for (SmallVector<MemoryAccess *, 8>::iterator I = Stmt->memacc_begin(),
+                                                  E = Stmt->memacc_end();
+         I != E; ++I) {
+      Value *BaseAddr = const_cast<Value *>((*I)->getBaseAddr());
       Values.insert((BaseAddr));
 
       // FIXME: we assume that there is one and only one array to be written
@@ -627,8 +621,8 @@ SetVector<Value*> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
         ++NumWrites;
         assert(NumWrites <= 1 &&
                "We support at most one array to be written in a SCoP.");
-        if (const PointerType * PT =
-            dyn_cast<PointerType>(BaseAddr->getType())) {
+        if (const PointerType *PT =
+                dyn_cast<PointerType>(BaseAddr->getType())) {
           Type *T = PT->getArrayElementType();
           const ArrayType *ATy = dyn_cast<ArrayType>(T);
           OutputBytes = getArraySizeInBytes(ATy);
@@ -640,10 +634,9 @@ SetVector<Value*> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
   return Values;
 }
 
-const clast_stmt *ClastStmtCodeGen::getScheduleInfo(const clast_for *F,
-                                                    std::vector<int> &NumIters,
-                                                    unsigned &LoopDepth,
-                                                    unsigned &NonPLoopDepth) {
+const clast_stmt *ClastStmtCodeGen::getScheduleInfo(
+    const clast_for *F, std::vector<int> &NumIters, unsigned &LoopDepth,
+    unsigned &NonPLoopDepth) {
   clast_stmt *Stmt = (clast_stmt *)F;
   const clast_for *Result;
   bool NonParaFlag = false;
@@ -652,7 +645,7 @@ const clast_stmt *ClastStmtCodeGen::getScheduleInfo(const clast_for *F,
 
   while (Stmt) {
     if (CLAST_STMT_IS_A(Stmt, stmt_for)) {
-      const clast_for *T = (clast_for *) Stmt;
+      const clast_for *T = (clast_for *)Stmt;
       if (isParallelFor(T)) {
         if (!NonParaFlag) {
           NumIters.push_back(getNumberOfIterations(T));
@@ -672,8 +665,8 @@ const clast_stmt *ClastStmtCodeGen::getScheduleInfo(const clast_for *F,
          "The loops should be tiled into 4-depth parallel loops and an "
          "innermost non-parallel one (if exist).");
   NonPLoopDepth = LoopDepth - NumIters.size();
-  assert(NonPLoopDepth <= 1
-         && "We support only one innermost non-parallel loop currently.");
+  assert(NonPLoopDepth <= 1 &&
+         "We support only one innermost non-parallel loop currently.");
   return (const clast_stmt *)Result->body;
 }
 
@@ -690,8 +683,8 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
 
   // Get original IVS and ScopStmt
   unsigned TiledLoopDepth, NonPLoopDepth;
-  const clast_stmt *InnerStmt = getScheduleInfo(F, NumIterations,
-                                                TiledLoopDepth, NonPLoopDepth);
+  const clast_stmt *InnerStmt =
+      getScheduleInfo(F, NumIterations, TiledLoopDepth, NonPLoopDepth);
   const clast_stmt *TmpStmt;
   const clast_user_stmt *U;
   const clast_for *InnerFor;
@@ -700,8 +693,8 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
     TmpStmt = InnerFor->body;
   } else
     TmpStmt = InnerStmt;
-  U = (const clast_user_stmt *) TmpStmt;
-  ScopStmt *Statement = (ScopStmt *) U->statement->usr;
+  U = (const clast_user_stmt *)TmpStmt;
+  ScopStmt *Statement = (ScopStmt *)U->statement->usr;
   for (unsigned i = 0; i < Statement->getNumIterators() - NonPLoopDepth; i++) {
     const Value *IV = Statement->getInductionVariableForDimension(i);
     IVS.insert(const_cast<Value *>(IV));
@@ -726,7 +719,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
                     CmpInst::ICMP_SLE);
     const Value *OldIV_ = Statement->getInductionVariableForDimension(2);
     Value *OldIV = const_cast<Value *>(OldIV_);
-    VMap.insert(std::make_pair<Value*, Value*>(OldIV, IV));
+    VMap.insert(std::make_pair<Value *, Value *>(OldIV, IV));
   }
 
   updateWithValueMap(VMap);
@@ -787,11 +780,11 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   Stride = Stride.zext(LoopIVType->getBitWidth());
   Value *StrideValue = ConstantInt::get(LoopIVType, Stride);
 
-  std::vector<Value*> IVS(VectorWidth);
+  std::vector<Value *> IVS(VectorWidth);
   IVS[0] = LB;
 
   for (int i = 1; i < VectorWidth; i++)
-    IVS[i] = Builder.CreateAdd(IVS[i-1], StrideValue, "p_vector_iv");
+    IVS[i] = Builder.CreateAdd(IVS[i - 1], StrideValue, "p_vector_iv");
 
   isl_set *Domain = isl_set_from_cloog_domain(F->domain);
 
@@ -872,8 +865,8 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
-  BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
-                                      Builder.GetInsertPoint(), P);
+  BasicBlock *CondBB =
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), P);
   CondBB->setName("polly.cond");
   BasicBlock *MergeBB = SplitBlock(CondBB, CondBB->begin(), P);
   MergeBB->setName("polly.merge");
@@ -905,7 +898,7 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
 }
 
 void ClastStmtCodeGen::codegen(const clast_stmt *stmt) {
-  if	    (CLAST_STMT_IS_A(stmt, stmt_root))
+  if (CLAST_STMT_IS_A(stmt, stmt_root))
     assert(false && "No second root statement expected");
   else if (CLAST_STMT_IS_A(stmt, stmt_ass))
     codegen((const clast_assignment *)stmt);
@@ -946,7 +939,7 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
 
   parallelCodeGeneration = false;
 
-  const clast_stmt *stmt = (const clast_stmt*) r;
+  const clast_stmt *stmt = (const clast_stmt *)r;
   if (stmt->next)
     codegen(stmt->next);
 }
@@ -963,7 +956,6 @@ public:
   static char ID;
 
   CodeGeneration() : ScopPass(ID) {}
-
 
   bool runOnScop(Scop &S) {
     ParallelLoops.clear();
@@ -986,7 +978,8 @@ public:
 
   virtual void printScop(raw_ostream &OS) const {
     for (std::vector<std::string>::const_iterator PI = ParallelLoops.begin(),
-         PE = ParallelLoops.end(); PI != PE; ++PI)
+                                                  PE = ParallelLoops.end();
+         PI != PE; ++PI)
       OS << "Parallel loop with iterator '" << *PI << "' generated\n";
   }
 

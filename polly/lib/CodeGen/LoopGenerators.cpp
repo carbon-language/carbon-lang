@@ -73,12 +73,9 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   return IV;
 }
 
-void OMPGenerator::createCallParallelLoopStart(Value *SubFunction,
-                                               Value *SubfunctionParam,
-                                               Value *NumberOfThreads,
-                                               Value *LowerBound,
-                                               Value *UpperBound,
-                                               Value *Stride) {
+void OMPGenerator::createCallParallelLoopStart(
+    Value *SubFunction, Value *SubfunctionParam, Value *NumberOfThreads,
+    Value *LowerBound, Value *UpperBound, Value *Stride) {
   Module *M = getModule();
   const char *Name = "GOMP_parallel_loop_runtime_start";
   Function *F = M->getFunction(Name);
@@ -88,35 +85,23 @@ void OMPGenerator::createCallParallelLoopStart(Value *SubFunction,
     Type *LongTy = getIntPtrTy();
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
 
-    Type *Params[] = {
-      PointerType::getUnqual(FunctionType::get(Builder.getVoidTy(),
-                                               Builder.getInt8PtrTy(),
-                                               false)),
-      Builder.getInt8PtrTy(),
-      Builder.getInt32Ty(),
-      LongTy,
-      LongTy,
-      LongTy,
-    };
+    Type *Params[] = { PointerType::getUnqual(FunctionType::get(
+                           Builder.getVoidTy(), Builder.getInt8PtrTy(), false)),
+                       Builder.getInt8PtrTy(), Builder.getInt32Ty(), LongTy,
+                       LongTy, LongTy, };
 
     FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Params, false);
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Value *Args[] = {
-    SubFunction,
-    SubfunctionParam,
-    NumberOfThreads,
-    LowerBound,
-    UpperBound,
-    Stride,
-  };
+  Value *Args[] = { SubFunction, SubfunctionParam, NumberOfThreads, LowerBound,
+                    UpperBound, Stride, };
 
   Builder.CreateCall(F, Args);
 }
 
-Value *OMPGenerator::createCallLoopNext(Value *LowerBoundPtr,
-                                        Value *UpperBoundPtr) {
+Value *
+OMPGenerator::createCallLoopNext(Value *LowerBoundPtr, Value *UpperBoundPtr) {
   Module *M = getModule();
   const char *Name = "GOMP_loop_runtime_next";
   Function *F = M->getFunction(Name);
@@ -126,23 +111,17 @@ Value *OMPGenerator::createCallLoopNext(Value *LowerBoundPtr,
     Type *LongPtrTy = PointerType::getUnqual(getIntPtrTy());
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
 
-    Type *Params[] = {
-      LongPtrTy,
-      LongPtrTy,
-    };
+    Type *Params[] = { LongPtrTy, LongPtrTy, };
 
     FunctionType *Ty = FunctionType::get(Builder.getInt8Ty(), Params, false);
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Value *Args[] = {
-    LowerBoundPtr,
-    UpperBoundPtr,
-  };
+  Value *Args[] = { LowerBoundPtr, UpperBoundPtr, };
 
   Value *Return = Builder.CreateCall(F, Args);
-  Return = Builder.CreateICmpNE(Return, Builder.CreateZExt(Builder.getFalse(),
-                                                           Return->getType()));
+  Return = Builder.CreateICmpNE(
+      Return, Builder.CreateZExt(Builder.getFalse(), Return->getType()));
   return Return;
 }
 
@@ -189,7 +168,7 @@ Module *OMPGenerator::getModule() {
 Function *OMPGenerator::createSubfunctionDefinition() {
   Module *M = getModule();
   Function *F = Builder.GetInsertBlock()->getParent();
-  std::vector<Type*> Arguments(1, Builder.getInt8PtrTy());
+  std::vector<Type *> Arguments(1, Builder.getInt8PtrTy());
   FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
   Function *FN = Function::Create(FT, Function::InternalLinkage,
                                   F->getName() + ".omp_subfn", M);
@@ -202,8 +181,8 @@ Function *OMPGenerator::createSubfunctionDefinition() {
   return FN;
 }
 
-Value *OMPGenerator::loadValuesIntoStruct(SetVector<Value*> &Values) {
-  std::vector<Type*> Members;
+Value *OMPGenerator::loadValuesIntoStruct(SetVector<Value *> &Values) {
+  std::vector<Type *> Members;
 
   for (unsigned i = 0; i < Values.size(); i++)
     Members.push_back(Values[i]->getType());
@@ -219,26 +198,24 @@ Value *OMPGenerator::loadValuesIntoStruct(SetVector<Value*> &Values) {
   return Struct;
 }
 
-void OMPGenerator::extractValuesFromStruct(SetVector<Value*> OldValues,
-                                           Value *Struct,
-                                           ValueToValueMapTy &Map) {
+void OMPGenerator::extractValuesFromStruct(
+    SetVector<Value *> OldValues, Value *Struct, ValueToValueMapTy &Map) {
   for (unsigned i = 0; i < OldValues.size(); i++) {
     Value *Address = Builder.CreateStructGEP(Struct, i);
     Value *NewValue = Builder.CreateLoad(Address);
-    Map.insert(std::make_pair<Value*, Value*>(OldValues[i], NewValue));
+    Map.insert(std::make_pair<Value *, Value *>(OldValues[i], NewValue));
   }
 }
 
-Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
-                                       SetVector<Value*> Data,
-                                       ValueToValueMapTy &Map,
-                                       Function **SubFunction) {
+Value *OMPGenerator::createSubfunction(
+    Value *Stride, Value *StructData, SetVector<Value *> Data,
+    ValueToValueMapTy &Map, Function **SubFunction) {
   Function *FN = createSubfunctionDefinition();
 
   BasicBlock *PrevBB, *HeaderBB, *ExitBB, *CheckNextBB, *LoadIVBoundsBB,
-             *AfterBB;
+      *AfterBB;
   Value *LowerBoundPtr, *UpperBoundPtr, *UserContext, *Ret1, *HasNextSchedule,
-        *LowerBound, *UpperBound, *IV;
+      *LowerBound, *UpperBound, *IV;
   Type *IntPtrTy = getIntPtrTy();
   LLVMContext &Context = FN->getContext();
 
@@ -303,11 +280,10 @@ Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
   return IV;
 }
 
-Value *OMPGenerator::createParallelLoop(Value *LowerBound, Value *UpperBound,
-                                        Value *Stride,
-                                        SetVector<Value*> &Values,
-                                        ValueToValueMapTy &Map,
-                                        BasicBlock::iterator *LoopBody) {
+Value *OMPGenerator::createParallelLoop(
+    Value *LowerBound, Value *UpperBound, Value *Stride,
+    SetVector<Value *> &Values, ValueToValueMapTy &Map,
+    BasicBlock::iterator *LoopBody) {
   Value *Struct, *IV, *SubfunctionParam, *NumberOfThreads;
   Function *SubFunction;
 
@@ -319,15 +295,15 @@ Value *OMPGenerator::createParallelLoop(Value *LowerBound, Value *UpperBound,
   Builder.SetInsertPoint(PrevInsertPoint);
 
   // Create call for GOMP_parallel_loop_runtime_start.
-  SubfunctionParam = Builder.CreateBitCast(Struct, Builder.getInt8PtrTy(),
-                                           "omp_data");
+  SubfunctionParam =
+      Builder.CreateBitCast(Struct, Builder.getInt8PtrTy(), "omp_data");
 
   NumberOfThreads = Builder.getInt32(0);
 
   // Add one as the upper bound provided by openmp is a < comparison
   // whereas the codegenForSequential function creates a <= comparison.
-  UpperBound = Builder.CreateAdd(UpperBound,
-                                 ConstantInt::get(getIntPtrTy(), 1));
+  UpperBound =
+      Builder.CreateAdd(UpperBound, ConstantInt::get(getIntPtrTy(), 1));
 
   createCallParallelLoopStart(SubFunction, SubfunctionParam, NumberOfThreads,
                               LowerBound, UpperBound, Stride);

@@ -34,9 +34,9 @@ using namespace llvm;
 using namespace polly;
 
 PTXGenerator::PTXGenerator(IRBuilder<> &Builder, Pass *P,
-                           const std::string &Triple):
-  Builder(Builder), P(P), GPUTriple(Triple), GridWidth(1), GridHeight(1),
-  BlockWidth(1), BlockHeight(1), OutputBytes(0) {
+                           const std::string &Triple)
+    : Builder(Builder), P(P), GPUTriple(Triple), GridWidth(1), GridHeight(1),
+      BlockWidth(1), BlockHeight(1), OutputBytes(0) {
 
   InitializeGPUDataTypes();
 }
@@ -50,12 +50,12 @@ Function *PTXGenerator::createSubfunctionDefinition(int NumArgs) {
 
   Module *M = getModule();
   Function *F = Builder.GetInsertBlock()->getParent();
-  std::vector<Type*> Arguments;
+  std::vector<Type *> Arguments;
   for (int i = 0; i < NumArgs; i++)
     Arguments.push_back(Builder.getInt8PtrTy());
   FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
   Function *FN = Function::Create(FT, Function::InternalLinkage,
-      F->getName() + "_ptx_subfn", M);
+                                  F->getName() + "_ptx_subfn", M);
   FN->setCallingConv(CallingConv::PTX_Kernel);
 
   // Do not run any optimization pass on the new function.
@@ -67,10 +67,9 @@ Function *PTXGenerator::createSubfunctionDefinition(int NumArgs) {
   return FN;
 }
 
-void PTXGenerator::createSubfunction(SetVector<Value*> &UsedValues,
-                                     SetVector<Value*> &OriginalIVS,
-                                     PTXGenerator::ValueToValueMapTy &VMap,
-                                     Function **SubFunction) {
+void PTXGenerator::createSubfunction(
+    SetVector<Value *> &UsedValues, SetVector<Value *> &OriginalIVS,
+    PTXGenerator::ValueToValueMapTy &VMap, Function **SubFunction) {
   Function *FN = createSubfunctionDefinition(UsedValues.size());
   Module *M = getModule();
   LLVMContext &Context = FN->getContext();
@@ -98,20 +97,20 @@ void PTXGenerator::createSubfunction(SetVector<Value*> &UsedValues,
     Value *BaseAddr = UsedValues[j];
     Type *ArrayTy = BaseAddr->getType();
     Value *Param = Builder.CreateBitCast(AI, ArrayTy);
-    VMap.insert(std::make_pair<Value*, Value*>(BaseAddr, Param));
+    VMap.insert(std::make_pair<Value *, Value *>(BaseAddr, Param));
     AI++;
   }
 
   // FIXME: These intrinsics should be inserted on-demand. However, we insert
   // them all currently for simplicity.
   Function *GetNctaidX =
-    Intrinsic::getDeclaration(M, Intrinsic::ptx_read_nctaid_x);
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_nctaid_x);
   Function *GetNctaidY =
-    Intrinsic::getDeclaration(M, Intrinsic::ptx_read_nctaid_y);
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_nctaid_y);
   Function *GetCtaidX =
-    Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_x);
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_x);
   Function *GetCtaidY =
-    Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_y);
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_y);
   Function *GetNtidX = Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ntid_x);
   Function *GetNtidY = Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ntid_y);
   Function *GetTidX = Intrinsic::getDeclaration(M, Intrinsic::ptx_read_tid_x);
@@ -142,8 +141,8 @@ void PTXGenerator::createSubfunction(SetVector<Value*> &UsedValues,
   Value *BlockID, *ThreadID;
   switch (NumDims) {
   case 1: {
-    Value *BlockSize = Builder.CreateMul(BlockWidth, BlockHeight,
-                                         "p_gpu_blocksize");
+    Value *BlockSize =
+        Builder.CreateMul(BlockWidth, BlockHeight, "p_gpu_blocksize");
     BlockID = Builder.CreateMul(BIDy, GridWidth, "p_gpu_index_i");
     BlockID = Builder.CreateAdd(BlockID, BIDx);
     BlockID = Builder.CreateMul(BlockID, BlockSize);
@@ -183,11 +182,11 @@ void PTXGenerator::createSubfunction(SetVector<Value*> &UsedValues,
     return;
   }
 
-  assert(OriginalIVS.size() == Substitutions.size()
-         && "The size of IVS should be equal to the size of substitutions.");
+  assert(OriginalIVS.size() == Substitutions.size() &&
+         "The size of IVS should be equal to the size of substitutions.");
   for (unsigned i = 0; i < OriginalIVS.size(); ++i) {
-    VMap.insert(std::make_pair<Value*, Value*>(OriginalIVS[i],
-                                               Substitutions[i]));
+    VMap.insert(
+        std::make_pair<Value *, Value *>(OriginalIVS[i], Substitutions[i]));
   }
 
   Builder.CreateBr(ExitBB);
@@ -202,10 +201,9 @@ void PTXGenerator::createSubfunction(SetVector<Value*> &UsedValues,
   *SubFunction = FN;
 }
 
-void PTXGenerator::startGeneration(SetVector<Value*> &UsedValues,
-                                   SetVector<Value*> &OriginalIVS,
-                                   ValueToValueMapTy &VMap,
-                                   BasicBlock::iterator *LoopBody) {
+void PTXGenerator::startGeneration(
+    SetVector<Value *> &UsedValues, SetVector<Value *> &OriginalIVS,
+    ValueToValueMapTy &VMap, BasicBlock::iterator *LoopBody) {
   Function *SubFunction;
   BasicBlock::iterator PrevInsertPoint = Builder.GetInsertPoint();
   createSubfunction(UsedValues, OriginalIVS, VMap, &SubFunction);
@@ -213,9 +211,7 @@ void PTXGenerator::startGeneration(SetVector<Value*> &UsedValues,
   Builder.SetInsertPoint(PrevInsertPoint);
 }
 
-IntegerType *PTXGenerator::getInt64Type() {
-  return Builder.getInt64Ty();
-}
+IntegerType *PTXGenerator::getInt64Type() { return Builder.getInt64Ty(); }
 
 PointerType *PTXGenerator::getI8PtrType() {
   return PointerType::getUnqual(Builder.getInt8Ty());
@@ -260,7 +256,7 @@ void PTXGenerator::InitializeGPUDataTypes() {
   ModuleTy = StructType::create(Context, "struct.PollyGPUModuleT");
   KernelTy = StructType::create(Context, "struct.PollyGPUFunctionT");
   DeviceTy = StructType::create(Context, "struct.PollyGPUDeviceT");
-  DevDataTy = StructType::create(Context,"struct.PollyGPUDevicePtrT");
+  DevDataTy = StructType::create(Context, "struct.PollyGPUDevicePtrT");
   EventTy = StructType::create(Context, "struct.PollyGPUEventT");
 }
 
@@ -272,7 +268,7 @@ void PTXGenerator::createCallInitDevice(Value *Context, Value *Device) {
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(PointerType::getUnqual(getGPUContextPtrType()));
     Args.push_back(PointerType::getUnqual(getGPUDevicePtrType()));
     FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Args, false);
@@ -290,7 +286,7 @@ void PTXGenerator::createCallGetPTXModule(Value *Buffer, Value *Module) {
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getI8PtrType());
     Args.push_back(PointerType::getUnqual(getGPUModulePtrType()));
     FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Args, false);
@@ -309,7 +305,7 @@ void PTXGenerator::createCallGetPTXKernelEntry(Value *Entry, Value *Module,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getI8PtrType());
     Args.push_back(getGPUModulePtrType());
     Args.push_back(PointerType::getUnqual(getGPUFunctionPtrType()));
@@ -320,9 +316,8 @@ void PTXGenerator::createCallGetPTXKernelEntry(Value *Entry, Value *Module,
   Builder.CreateCall3(F, Entry, Module, Kernel);
 }
 
-void PTXGenerator::createCallAllocateMemoryForHostAndDevice(Value *HostData,
-                                                            Value *DeviceData,
-                                                            Value *Size) {
+void PTXGenerator::createCallAllocateMemoryForHostAndDevice(
+    Value *HostData, Value *DeviceData, Value *Size) {
   const char *Name = "polly_allocateMemoryForHostAndDevice";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -330,7 +325,7 @@ void PTXGenerator::createCallAllocateMemoryForHostAndDevice(Value *HostData,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getPtrI8PtrType());
     Args.push_back(PointerType::getUnqual(getPtrGPUDevicePtrType()));
     Args.push_back(getInt64Type());
@@ -341,9 +336,8 @@ void PTXGenerator::createCallAllocateMemoryForHostAndDevice(Value *HostData,
   Builder.CreateCall3(F, HostData, DeviceData, Size);
 }
 
-void PTXGenerator::createCallCopyFromHostToDevice(Value *DeviceData,
-                                                  Value *HostData,
-                                                  Value *Size) {
+void PTXGenerator::createCallCopyFromHostToDevice(
+    Value *DeviceData, Value *HostData, Value *Size) {
   const char *Name = "polly_copyFromHostToDevice";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -351,7 +345,7 @@ void PTXGenerator::createCallCopyFromHostToDevice(Value *DeviceData,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getPtrGPUDevicePtrType());
     Args.push_back(getI8PtrType());
     Args.push_back(getInt64Type());
@@ -362,9 +356,8 @@ void PTXGenerator::createCallCopyFromHostToDevice(Value *DeviceData,
   Builder.CreateCall3(F, DeviceData, HostData, Size);
 }
 
-void PTXGenerator::createCallCopyFromDeviceToHost(Value *HostData,
-                                                  Value *DeviceData,
-                                                  Value *Size) {
+void PTXGenerator::createCallCopyFromDeviceToHost(
+    Value *HostData, Value *DeviceData, Value *Size) {
   const char *Name = "polly_copyFromDeviceToHost";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -372,7 +365,7 @@ void PTXGenerator::createCallCopyFromDeviceToHost(Value *HostData,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getI8PtrType());
     Args.push_back(getPtrGPUDevicePtrType());
     Args.push_back(getInt64Type());
@@ -383,10 +376,8 @@ void PTXGenerator::createCallCopyFromDeviceToHost(Value *HostData,
   Builder.CreateCall3(F, HostData, DeviceData, Size);
 }
 
-void PTXGenerator::createCallSetKernelParameters(Value *Kernel,
-                                                 Value *BlockWidth,
-                                                 Value *BlockHeight,
-                                                 Value *DeviceData) {
+void PTXGenerator::createCallSetKernelParameters(
+    Value *Kernel, Value *BlockWidth, Value *BlockHeight, Value *DeviceData) {
   const char *Name = "polly_setKernelParameters";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -394,7 +385,7 @@ void PTXGenerator::createCallSetKernelParameters(Value *Kernel,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getGPUFunctionPtrType());
     Args.push_back(getInt64Type());
     Args.push_back(getInt64Type());
@@ -415,7 +406,7 @@ void PTXGenerator::createCallLaunchKernel(Value *Kernel, Value *GridWidth,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getGPUFunctionPtrType());
     Args.push_back(getInt64Type());
     Args.push_back(getInt64Type());
@@ -435,7 +426,7 @@ void PTXGenerator::createCallStartTimerByCudaEvent(Value *StartEvent,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(PointerType::getUnqual(getGPUEventPtrType()));
     Args.push_back(PointerType::getUnqual(getGPUEventPtrType()));
     FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Args, false);
@@ -445,9 +436,8 @@ void PTXGenerator::createCallStartTimerByCudaEvent(Value *StartEvent,
   Builder.CreateCall2(F, StartEvent, StopEvent);
 }
 
-void PTXGenerator::createCallStopTimerByCudaEvent(Value *StartEvent,
-                                                  Value *StopEvent,
-                                                  Value *Timer) {
+void PTXGenerator::createCallStopTimerByCudaEvent(
+    Value *StartEvent, Value *StopEvent, Value *Timer) {
   const char *Name = "polly_stopTimerByCudaEvent";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -455,7 +445,7 @@ void PTXGenerator::createCallStopTimerByCudaEvent(Value *StartEvent,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getGPUEventPtrType());
     Args.push_back(getGPUEventPtrType());
     Args.push_back(getFloatPtrType());
@@ -466,11 +456,9 @@ void PTXGenerator::createCallStopTimerByCudaEvent(Value *StartEvent,
   Builder.CreateCall3(F, StartEvent, StopEvent, Timer);
 }
 
-void PTXGenerator::createCallCleanupGPGPUResources(Value *HostData,
-                                                   Value *DeviceData,
-                                                   Value *Module,
-                                                   Value *Context,
-                                                   Value *Kernel) {
+void PTXGenerator::createCallCleanupGPGPUResources(
+    Value *HostData, Value *DeviceData, Value *Module, Value *Context,
+    Value *Kernel) {
   const char *Name = "polly_cleanupGPGPUResources";
   llvm::Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -478,7 +466,7 @@ void PTXGenerator::createCallCleanupGPGPUResources(Value *HostData,
   // If F is not available, declare it.
   if (!F) {
     GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    std::vector<Type*> Args;
+    std::vector<Type *> Args;
     Args.push_back(getI8PtrType());
     Args.push_back(getPtrGPUDevicePtrType());
     Args.push_back(getGPUModulePtrType());
@@ -516,11 +504,11 @@ Value *PTXGenerator::createPTXKernelFunction(Function *SubFunction) {
   std::string LLVMKernelStr;
   raw_string_ostream NameROS(LLVMKernelStr);
   formatted_raw_ostream FOS(NameROS);
-  FOS << "target triple = \"" << GPUTriple <<"\"\n";
+  FOS << "target triple = \"" << GPUTriple << "\"\n";
   SubFunction->print(FOS);
 
   // Insert ptx intrinsics into the kernel string.
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ) {
+  for (Module::iterator I = M->begin(), E = M->end(); I != E;) {
     Function *F = I++;
     // Function must be a prototype and unused.
     if (F->isDeclaration() && F->isIntrinsic()) {
@@ -541,13 +529,12 @@ Value *PTXGenerator::createPTXKernelFunction(Function *SubFunction) {
     }
   }
 
-  Value *LLVMKernel = Builder.CreateGlobalStringPtr(LLVMKernelStr,
-                                                    "llvm_kernel");
+  Value *LLVMKernel =
+      Builder.CreateGlobalStringPtr(LLVMKernelStr, "llvm_kernel");
   Value *MCPU = Builder.CreateGlobalStringPtr("sm_10", "mcpu");
   Value *Features = Builder.CreateGlobalStringPtr("", "cpu_features");
 
-  Function *GetDeviceKernel = Intrinsic::getDeclaration(M,
-                                                        Intrinsic::codegen);
+  Function *GetDeviceKernel = Intrinsic::getDeclaration(M, Intrinsic::codegen);
 
   return Builder.CreateCall3(GetDeviceKernel, LLVMKernel, MCPU, Features);
 }
@@ -596,22 +583,22 @@ void PTXGenerator::eraseUnusedFunctions(Function *SubFunction) {
 
 void PTXGenerator::finishGeneration(Function *F) {
   // Define data used by the GPURuntime library.
-  AllocaInst *PtrCUContext = Builder.CreateAlloca(getGPUContextPtrType(), 0,
-                                                  "phcontext");
-  AllocaInst *PtrCUDevice = Builder.CreateAlloca(getGPUDevicePtrType(), 0,
-                                                 "phdevice");
-  AllocaInst *PtrCUModule = Builder.CreateAlloca(getGPUModulePtrType(), 0,
-                                                 "phmodule");
-  AllocaInst *PtrCUKernel = Builder.CreateAlloca(getGPUFunctionPtrType(), 0,
-                                                 "phkernel");
-  AllocaInst *PtrCUStartEvent = Builder.CreateAlloca(getGPUEventPtrType(), 0,
-                                                     "pstart_timer");
-  AllocaInst *PtrCUStopEvent = Builder.CreateAlloca(getGPUEventPtrType(), 0,
-                                                    "pstop_timer");
-  AllocaInst *PtrDevData = Builder.CreateAlloca(getPtrGPUDevicePtrType(), 0,
-                                                "pdevice_data");
-  AllocaInst *PtrHostData = Builder.CreateAlloca(getI8PtrType(), 0,
-                                                 "phost_data");
+  AllocaInst *PtrCUContext =
+      Builder.CreateAlloca(getGPUContextPtrType(), 0, "phcontext");
+  AllocaInst *PtrCUDevice =
+      Builder.CreateAlloca(getGPUDevicePtrType(), 0, "phdevice");
+  AllocaInst *PtrCUModule =
+      Builder.CreateAlloca(getGPUModulePtrType(), 0, "phmodule");
+  AllocaInst *PtrCUKernel =
+      Builder.CreateAlloca(getGPUFunctionPtrType(), 0, "phkernel");
+  AllocaInst *PtrCUStartEvent =
+      Builder.CreateAlloca(getGPUEventPtrType(), 0, "pstart_timer");
+  AllocaInst *PtrCUStopEvent =
+      Builder.CreateAlloca(getGPUEventPtrType(), 0, "pstop_timer");
+  AllocaInst *PtrDevData =
+      Builder.CreateAlloca(getPtrGPUDevicePtrType(), 0, "pdevice_data");
+  AllocaInst *PtrHostData =
+      Builder.CreateAlloca(getI8PtrType(), 0, "phost_data");
   Type *FloatTy = llvm::Type::getFloatTy(getModule()->getContext());
   AllocaInst *PtrElapsedTimes = Builder.CreateAlloca(FloatTy, 0, "ptimer");
 
@@ -648,13 +635,11 @@ void PTXGenerator::finishGeneration(Function *F) {
   // Record the end time.
   LoadInst *CUStartEvent = Builder.CreateLoad(PtrCUStartEvent, "start_timer");
   LoadInst *CUStopEvent = Builder.CreateLoad(PtrCUStopEvent, "stop_timer");
-  createCallStopTimerByCudaEvent(CUStartEvent, CUStopEvent,
-                                 PtrElapsedTimes);
+  createCallStopTimerByCudaEvent(CUStartEvent, CUStopEvent, PtrElapsedTimes);
 
   // Cleanup all the resources used.
   LoadInst *CUContext = Builder.CreateLoad(PtrCUContext, "cucontext");
-  createCallCleanupGPGPUResources(HData, DData, CUModule, CUContext,
-                                  CUKernel);
+  createCallCleanupGPGPUResources(HData, DData, CUModule, CUContext, CUKernel);
 
   // Erase the ptx kernel and device subfunctions and ptx intrinsics from
   // current module.

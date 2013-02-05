@@ -78,10 +78,9 @@ struct AstBuildUserInfo {
 };
 
 // Print a loop annotated with OpenMP or vector pragmas.
-static __isl_give isl_printer *
-printParallelFor(__isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
-                 __isl_take isl_ast_print_options *PrintOptions,
-                 IslAstUser *Info) {
+static __isl_give isl_printer *printParallelFor(
+    __isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
+    __isl_take isl_ast_print_options *PrintOptions, IslAstUser *Info) {
   if (Info) {
     if (Info->IsInnermostParallel) {
       Printer = isl_printer_start_line(Printer);
@@ -106,7 +105,7 @@ printFor(__isl_take isl_printer *Printer,
   if (!Id)
     return isl_ast_node_for_print(Node, Printer, PrintOptions);
 
-  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Id);
+  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Id);
   Printer = printParallelFor(Node, Printer, PrintOptions, Info);
   isl_id_free(Id);
   return Printer;
@@ -115,7 +114,7 @@ printFor(__isl_take isl_printer *Printer,
 // Allocate an AstNodeInfo structure and initialize it with default values.
 static struct IslAstUser *allocateIslAstUser() {
   struct IslAstUser *NodeInfo;
-  NodeInfo = (struct IslAstUser *) malloc(sizeof(struct IslAstUser));
+  NodeInfo = (struct IslAstUser *)malloc(sizeof(struct IslAstUser));
   NodeInfo->PMA = 0;
   NodeInfo->Context = 0;
   NodeInfo->IsOutermostParallel = 0;
@@ -125,7 +124,7 @@ static struct IslAstUser *allocateIslAstUser() {
 
 // Free the AstNodeInfo structure.
 static void freeIslAstUser(void *Ptr) {
-  struct IslAstUser *UserStruct = (struct IslAstUser *) Ptr;
+  struct IslAstUser *UserStruct = (struct IslAstUser *)Ptr;
   isl_ast_build_free(UserStruct->Context);
   isl_pw_multi_aff_free(UserStruct->PMA);
   free(UserStruct);
@@ -202,9 +201,9 @@ static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
 //
 // - Detection of openmp parallel loops
 //
-static __isl_give isl_id *astBuildBeforeFor(__isl_keep isl_ast_build *Build,
-                                            void *User) {
-  struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *) User;
+static __isl_give isl_id *
+astBuildBeforeFor(__isl_keep isl_ast_build *Build, void *User) {
+  struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *)User;
   struct IslAstUser *NodeInfo = allocateIslAstUser();
   isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
   Id = isl_id_set_free_user(Id, freeIslAstUser);
@@ -262,13 +261,13 @@ static bool containsLoops(__isl_take isl_ast_node *Node) {
 //   that is marked as openmp parallel.
 //
 static __isl_give isl_ast_node *
-astBuildAfterFor(__isl_take isl_ast_node *Node,
-                 __isl_keep isl_ast_build *Build, void *User) {
+astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
+                 void *User) {
   isl_id *Id = isl_ast_node_get_annotation(Node);
   if (!Id)
     return Node;
-  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Id);
-  struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *) User;
+  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Id);
+  struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *)User;
 
   if (Info) {
     if (Info->IsOutermostParallel)
@@ -285,14 +284,13 @@ astBuildAfterFor(__isl_take isl_ast_node *Node,
 }
 
 static __isl_give isl_ast_node *
-AtEachDomain(__isl_take isl_ast_node *Node,
-             __isl_keep isl_ast_build *Context, void *User)
-{
+AtEachDomain(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Context,
+             void *User) {
   struct IslAstUser *Info = NULL;
   isl_id *Id = isl_ast_node_get_annotation(Node);
 
   if (Id)
-    Info = (struct IslAstUser *) isl_id_get_user(Id);
+    Info = (struct IslAstUser *)isl_id_get_user(Id);
 
   if (!Info) {
     // Allocate annotations once: parallel for detection might have already
@@ -360,16 +358,14 @@ __isl_give isl_union_map *IslAst::getSchedule() {
     isl_map *StmtSchedule = Stmt->getScattering();
 
     StmtSchedule = isl_map_intersect_domain(StmtSchedule, Stmt->getDomain());
-    Schedule = isl_union_map_union(Schedule,
-                                   isl_union_map_from_map(StmtSchedule));
+    Schedule =
+        isl_union_map_union(Schedule, isl_union_map_from_map(StmtSchedule));
   }
 
   return Schedule;
 }
 
-IslAst::~IslAst() {
-  isl_ast_node_free(Root);
-}
+IslAst::~IslAst() { isl_ast_node_free(Root); }
 
 /// Print a C like representation of the program.
 void IslAst::pprint(llvm::raw_ostream &OS) {
@@ -390,13 +386,9 @@ void IslAst::pprint(llvm::raw_ostream &OS) {
 }
 
 /// Create the isl_ast from this program.
-__isl_give isl_ast_node *IslAst::getAst() {
-  return isl_ast_node_copy(Root);
-}
+__isl_give isl_ast_node *IslAst::getAst() { return isl_ast_node_copy(Root); }
 
-void IslAstInfo::pprint(llvm::raw_ostream &OS) {
-  Ast->pprint(OS);
-}
+void IslAstInfo::pprint(llvm::raw_ostream &OS) { Ast->pprint(OS); }
 
 void IslAstInfo::releaseMemory() {
   if (Ast) {
@@ -418,9 +410,7 @@ bool IslAstInfo::runOnScop(Scop &Scop) {
   return false;
 }
 
-__isl_give isl_ast_node *IslAstInfo::getAst() {
-  return Ast->getAst();
-}
+__isl_give isl_ast_node *IslAstInfo::getAst() { return Ast->getAst(); }
 
 void IslAstInfo::printScop(raw_ostream &OS) const {
   Function *F = S->getRegion().getEntry()->getParent();
