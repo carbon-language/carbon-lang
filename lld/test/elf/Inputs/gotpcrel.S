@@ -4,6 +4,7 @@
         .type   main,@function
 main:                                   # @main
         movq  blah@GOTPCREL(%rip), %rax
+        movq  main@GOTPCREL(%rip), %rax
         ret
 
         .weak blah

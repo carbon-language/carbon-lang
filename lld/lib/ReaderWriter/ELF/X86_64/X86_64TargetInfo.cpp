@@ -152,11 +152,8 @@ class GOTPLTPass LLVM_FINAL : public Pass {
       if (da)
         handleGOTTPOFF(ref, *da);
       break;
-    case R_X86_64_GOTPCREL: // GOTPCREL to an undefined weak symbol.
-      // Always convert it to a non-got reference.
-      const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
-      if (isa<const UndefinedAtom>(ref.target()))
-        handleUndefGOTPCREL(ref);
+    case R_X86_64_GOTPCREL:
+      handleGOTPCREL(ref);
       break;
     }
   }
@@ -225,10 +222,29 @@ class GOTPLTPass LLVM_FINAL : public Pass {
     return _null;
   }
 
+  const GOTAtom *getGOT(const DefinedAtom &da) {
+    auto got = _gotMap.find(&da);
+    if (got == _gotMap.end()) {
+      auto g = new (_file._alloc) GOTAtom(_file, ".got");
+      g->addReference(R_X86_64_64, 0, &da, 0);
+#ifndef NDEBUG
+      g->_name = "__got_";
+      g->_name += da.name();
+#endif
+      _gotMap[&da] = g;
+      return g;
+    }
+    return got->second;
+  }
+
   /// \brief Handle a GOTPCREL relocation to an undefined weak atom by using a
   /// null GOT entry.
-  void handleUndefGOTPCREL(const Reference &ref) {
-    const_cast<Reference &>(ref).setTarget(getNullGOT());
+  void handleGOTPCREL(const Reference &ref) {
+    const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+    if (isa<UndefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getNullGOT());
+    else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getGOT(*da));
   }
 
 public:
