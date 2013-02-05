@@ -3793,7 +3793,7 @@ MipsTargetLowering::MipsCC::MipsCC(CallingConv::ID CallConv, bool IsVarArg,
     IntArgRegs = Mips64IntRegs;
     ShadowRegs = Mips64DPRegs;
     FixedFn = CC_MipsN;
-    VarFn = CC_MipsN_VarArg;
+    VarFn = IsVarArg ? CC_MipsN_VarArg : CC_MipsN;
   }
 
   if (CallConv == CallingConv::Fast) {
