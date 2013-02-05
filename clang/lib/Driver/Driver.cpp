@@ -25,6 +25,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -1036,6 +1037,7 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
 
   // Construct the actions to perform.
   ActionList LinkerInputs;
+  ActionList SplitInputs;
   unsigned NumSteps = 0;
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
     types::ID InputType = Inputs[i].first;
@@ -1105,11 +1107,27 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
       Current.reset(ConstructPhaseAction(Args, Phase, Current.take()));
       if (Current->getType() == types::TY_Nothing)
         break;
+      else if (Current->getType() == types::TY_Object &&
+               Args.hasArg(options::OPT_gsplit_dwarf)) {
+        ActionList Input;
+        Input.push_back(Current.take());
+        Current.reset(new SplitDebugJobAction(Input, types::TY_Object));
+      }
     }
 
     // If we ended with something, add to the output list.
     if (Current)
       Actions.push_back(Current.take());
+  }
+
+  if (!SplitInputs.empty()) {
+    for (ActionList::iterator i = SplitInputs.begin(), e = SplitInputs.end();
+         i != e; ++i) {
+      Action *Act = *i;
+      ActionList Inputs;
+      Inputs.push_back(Act);
+      Actions.push_back(new SplitDebugJobAction(Inputs, types::TY_Object));
+    }
   }
 
   // Add a link action if necessary.
@@ -1396,12 +1414,13 @@ void Driver::BuildJobsForAction(Compilation &C,
     BaseInput = InputInfos[0].getFilename();
 
   // Determine the place to write output to, if any.
-  if (JA->getType() == types::TY_Nothing) {
+  if (JA->getType() == types::TY_Nothing)
     Result = InputInfo(A->getType(), BaseInput);
-  } else {
+  else if (isa<SplitDebugJobAction>(A))
+    Result = InputInfos[0];
+  else
     Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel),
                        A->getType(), BaseInput);
-  }
 
   if (CCCPrintBindings && !CCGenDiagnostics) {
     llvm::errs() << "# \"" << T.getToolChain().getTripleString() << '"'
