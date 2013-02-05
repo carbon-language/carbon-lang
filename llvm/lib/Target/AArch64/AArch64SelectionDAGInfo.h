@@ -1,4 +1,4 @@
-//===-- AArch64SelectionDAGInfo.h - AArch64 SelectionDAG Info -----*- C++ -*-===//
+//===-- AArch64SelectionDAGInfo.h - AArch64 SelectionDAG Info ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

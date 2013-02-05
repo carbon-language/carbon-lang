@@ -725,7 +725,8 @@ bool A64Imms::isLogicalImm(unsigned RegWidth, uint64_t Imm, uint32_t &Bits) {
 }
 
 
-bool A64Imms::isLogicalImmBits(unsigned RegWidth, uint32_t Bits, uint64_t &Imm) {
+bool A64Imms::isLogicalImmBits(unsigned RegWidth, uint32_t Bits,
+                               uint64_t &Imm) {
   uint32_t N = Bits >> 12;
   uint32_t ImmR = (Bits >> 6) & 0x3f;
   uint32_t ImmS = Bits & 0x3f;

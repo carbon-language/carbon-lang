@@ -29,7 +29,7 @@ private:
   struct LoadStoreMethod {
     const TargetRegisterClass *RegClass; // E.g. GPR64RegClass
 
-    // The preferred instruction. 
+    // The preferred instruction.
     unsigned PairOpcode; // E.g. LSPair64_STR
 
     // Sometimes only a single register can be handled at once.

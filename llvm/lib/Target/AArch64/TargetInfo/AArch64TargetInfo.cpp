@@ -1,4 +1,4 @@
-//===-- AArch64TargetInfo.cpp - AArch64 Target Implementation ---------------===//
+//===-- AArch64TargetInfo.cpp - AArch64 Target Implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

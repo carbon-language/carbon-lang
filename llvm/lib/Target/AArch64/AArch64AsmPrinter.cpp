@@ -34,7 +34,8 @@ AArch64AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
   // expected to be created.
   assert(MI->getNumOperands() == 4 && MI->getOperand(0).isReg()
          && MI->getOperand(1).isImm() && "unexpected custom DBG_VALUE");
-  return MachineLocation(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
+  return MachineLocation(MI->getOperand(0).getReg(),
+                         MI->getOperand(1).getImm());
 }
 
 /// Try to print a floating-point register as if it belonged to a specified
@@ -90,7 +91,8 @@ bool AArch64AsmPrinter::printSymbolicAddress(const MachineOperand &MO,
   StringRef Name;
   StringRef Modifier;
   switch (MO.getType()) {
-  default: llvm_unreachable("Unexpected operand for symbolic address constraint");
+  default:
+    llvm_unreachable("Unexpected operand for symbolic address constraint");
   case MachineOperand::MO_GlobalAddress:
     Name = Mang->getSymbol(MO.getGlobal())->getName();
 

@@ -16,8 +16,7 @@
 // architecture.
 class A64Inst<dag outs, dag ins, string asmstr, list<dag> patterns,
               InstrItinClass itin>
-    : Instruction
-{
+    : Instruction {
   // All A64 instructions are 32-bit. This field will be filled in
   // graually going down the hierarchy.
   field bits<32> Inst;
@@ -40,8 +39,7 @@ class A64Inst<dag outs, dag ins, string asmstr, list<dag> patterns,
   let Itinerary = itin;
 }
 
-class PseudoInst<dag outs, dag ins, list<dag> patterns> : Instruction
-{
+class PseudoInst<dag outs, dag ins, list<dag> patterns> : Instruction {
   let Namespace = "AArch64";
 
   let OutOperandList = outs;
@@ -54,8 +52,7 @@ class PseudoInst<dag outs, dag ins, list<dag> patterns> : Instruction
 // Represents a pseudo-instruction that represents a single A64 instruction for
 // whatever reason, the eventual result will be a 32-bit real instruction.
 class A64PseudoInst<dag outs, dag ins, list<dag> patterns>
-  : PseudoInst<outs, ins, patterns>
-{
+  : PseudoInst<outs, ins, patterns> {
   let Size = 4;
 }
 
@@ -70,8 +67,7 @@ class A64PseudoExpand<dag outs, dag ins, list<dag> patterns, dag Result>
 
 class A64InstRd<dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<5> Rd;
 
   let Inst{4-0} = Rd;
@@ -79,8 +75,7 @@ class A64InstRd<dag outs, dag ins, string asmstr,
 
 class A64InstRt<dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<5> Rt;
 
   let Inst{4-0} = Rt;
@@ -89,8 +84,7 @@ class A64InstRt<dag outs, dag ins, string asmstr,
 
 class A64InstRdn<dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-    : A64InstRd<outs, ins, asmstr, patterns, itin>
-{
+    : A64InstRd<outs, ins, asmstr, patterns, itin> {
   // Inherit rdt
   bits<5> Rn;
 
@@ -99,8 +93,7 @@ class A64InstRdn<dag outs, dag ins, string asmstr,
 
 class A64InstRtn<dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-    : A64InstRt<outs, ins, asmstr, patterns, itin>
-{
+    : A64InstRt<outs, ins, asmstr, patterns, itin> {
   // Inherit rdt
   bits<5> Rn;
 
@@ -110,8 +103,7 @@ class A64InstRtn<dag outs, dag ins, string asmstr,
 // Instructions taking Rt,Rt2,Rn
 class A64InstRtt2n<dag outs, dag ins, string asmstr,
                    list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<5> Rt2;
 
   let Inst{14-10} = Rt2;
@@ -119,8 +111,7 @@ class A64InstRtt2n<dag outs, dag ins, string asmstr,
 
 class A64InstRdnm<dag outs, dag ins, string asmstr,
                   list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bits<5> Rm;
 
   let Inst{20-16} = Rm;
@@ -135,8 +126,7 @@ class A64InstRdnm<dag outs, dag ins, string asmstr,
 class A64I_addsubext<bit sf, bit op, bit S, bits<2> opt, bits<3> option,
                      dag outs, dag ins, string asmstr, list<dag> patterns,
                      InstrItinClass itin>
-    : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+    : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
     bits<3> Imm3;
 
     let Inst{31} = sf;
@@ -156,8 +146,7 @@ class A64I_addsubext<bit sf, bit op, bit S, bits<2> opt, bits<3> option,
 class A64I_addsubimm<bit sf, bit op, bit S, bits<2> shift,
                      dag outs, dag ins, string asmstr,
                      list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bits<12> Imm12;
 
   let Inst{31} = sf;
@@ -172,8 +161,7 @@ class A64I_addsubimm<bit sf, bit op, bit S, bits<2> shift,
 class A64I_addsubshift<bit sf, bit op, bit S, bits<2> shift,
                        dag outs, dag ins, string asmstr, list<dag> patterns,
                        InstrItinClass itin>
-    : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+    : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
     bits<6> Imm6;
 
     let Inst{31} = sf;
@@ -192,8 +180,7 @@ class A64I_addsubshift<bit sf, bit op, bit S, bits<2> shift,
 class A64I_addsubcarry<bit sf, bit op, bit S, bits<6> opcode2,
                        dag outs, dag ins, string asmstr, list<dag> patterns,
                        InstrItinClass itin>
-    : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+    : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
     let Inst{31} = sf;
     let Inst{30} = op;
     let Inst{29} = S;
@@ -209,8 +196,7 @@ class A64I_addsubcarry<bit sf, bit op, bit S, bits<6> opcode2,
 class A64I_bitfield<bit sf, bits<2> opc, bit n,
                     dag outs, dag ins, string asmstr,
                     list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bits<6> ImmR;
   bits<6> ImmS;
 
@@ -228,8 +214,7 @@ class A64I_bitfield<bit sf, bits<2> opc, bit n,
 class A64I_cmpbr<bit sf, bit op,
                   dag outs, dag ins, string asmstr,
                   list<dag> patterns, InstrItinClass itin>
-  : A64InstRt<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRt<outs, ins, asmstr, patterns, itin> {
   bits<19> Label;
 
   let Inst{31} = sf;
@@ -243,8 +228,7 @@ class A64I_cmpbr<bit sf, bit op,
 class A64I_condbr<bit o1, bit o0,
                   dag outs, dag ins, string asmstr,
                   list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<19> Label;
   bits<4> Cond;
 
@@ -259,8 +243,7 @@ class A64I_condbr<bit o1, bit o0,
 class A64I_condcmpimm<bit sf, bit op, bit o2, bit o3, bit s,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<5> Rn;
   bits<5> UImm5;
   bits<4> NZCVImm;
@@ -283,8 +266,7 @@ class A64I_condcmpimm<bit sf, bit op, bit o2, bit o3, bit s,
 class A64I_condcmpreg<bit sf, bit op, bit o2, bit o3, bit s,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<5> Rn;
   bits<5> Rm;
   bits<4> NZCVImm;
@@ -308,8 +290,7 @@ class A64I_condcmpreg<bit sf, bit op, bit o2, bit o3, bit s,
 class A64I_condsel<bit sf, bit op, bit s, bits<2> op2,
                    dag outs, dag ins, string asmstr,
                    list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   bits<4> Cond;
 
   let Inst{31} = sf;
@@ -327,8 +308,7 @@ class A64I_condsel<bit sf, bit op, bit s, bits<2> op2,
 class A64I_dp_1src<bit sf, bit S, bits<5> opcode2, bits<6> opcode,
                 string asmstr, dag outs, dag ins,
                 list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   let Inst{31} = sf;
   let Inst{30} = 0b1;
   let Inst{29} = S;
@@ -341,8 +321,7 @@ class A64I_dp_1src<bit sf, bit S, bits<5> opcode2, bits<6> opcode,
 class A64I_dp_2src<bit sf, bits<6> opcode, bit S,
                 string asmstr, dag outs, dag ins,
                 list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   let Inst{31} = sf;
   let Inst{30} = 0b0;
   let Inst{29} = S;
@@ -355,8 +334,7 @@ class A64I_dp_2src<bit sf, bits<6> opcode, bit S,
 class A64I_dp3<bit sf, bits<6> opcode,
                dag outs, dag ins, string asmstr,
                list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   bits<5> Ra;
 
   let Inst{31} = sf;
@@ -374,8 +352,7 @@ class A64I_dp3<bit sf, bits<6> opcode,
 class A64I_exception<bits<3> opc, bits<3> op2, bits<2> ll,
                      dag outs, dag ins, string asmstr,
                      list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<16> UImm16;
 
   let Inst{31-24} = 0b11010100;
@@ -389,8 +366,7 @@ class A64I_exception<bits<3> opc, bits<3> op2, bits<2> ll,
 class A64I_extract<bit sf, bits<3> op, bit n,
                    dag outs, dag ins, string asmstr,
                    list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   bits<6> LSB;
 
   let Inst{31} = sf;
@@ -408,8 +384,7 @@ class A64I_extract<bit sf, bits<3> op, bit n,
 class A64I_fpcmp<bit m, bit s, bits<2> type, bits<2> op, bits<5> opcode2,
                 dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<5> Rn;
   bits<5> Rm;
 
@@ -430,8 +405,7 @@ class A64I_fpcmp<bit m, bit s, bits<2> type, bits<2> op, bits<5> opcode2,
 class A64I_fpccmp<bit m, bit s, bits<2> type, bit op,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bits<5> Rn;
   bits<5> Rm;
   bits<4> NZCVImm;
@@ -455,8 +429,7 @@ class A64I_fpccmp<bit m, bit s, bits<2> type, bit op,
 class A64I_fpcondsel<bit m, bit s, bits<2> type,
                      dag outs, dag ins, string asmstr,
                      list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   bits<4> Cond;
 
   let Inst{31} = m;
@@ -477,8 +450,7 @@ class A64I_fpcondsel<bit m, bit s, bits<2> type,
 class A64I_fpdp1<bit m, bit s, bits<2> type, bits<6> opcode,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   let Inst{31} = m;
   let Inst{30} = 0b0;
   let Inst{29} = s;
@@ -495,8 +467,7 @@ class A64I_fpdp1<bit m, bit s, bits<2> type, bits<6> opcode,
 class A64I_fpdp2<bit m, bit s, bits<2> type, bits<4> opcode,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   let Inst{31} = m;
   let Inst{30} = 0b0;
   let Inst{29} = s;
@@ -514,8 +485,7 @@ class A64I_fpdp2<bit m, bit s, bits<2> type, bits<4> opcode,
 class A64I_fpdp3<bit m, bit s, bits<2> type, bit o1, bit o0,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   bits<5> Ra;
 
   let Inst{31} = m;
@@ -535,8 +505,7 @@ class A64I_fpdp3<bit m, bit s, bits<2> type, bit o1, bit o0,
 class A64I_fpfixed<bit sf, bit s, bits<2> type, bits<2> mode, bits<3> opcode,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bits<6> Scale;
 
   let Inst{31} = sf;
@@ -556,8 +525,7 @@ class A64I_fpfixed<bit sf, bit s, bits<2> type, bits<2> mode, bits<3> opcode,
 class A64I_fpint<bit sf, bit s, bits<2> type, bits<2> rmode, bits<3> opcode,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   let Inst{31} = sf;
   let Inst{30} = 0b0;
   let Inst{29} = s;
@@ -576,8 +544,7 @@ class A64I_fpint<bit sf, bit s, bits<2> type, bits<2> rmode, bits<3> opcode,
 class A64I_fpimm<bit m, bit s, bits<2> type, bits<5> imm5,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRd<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRd<outs, ins, asmstr, patterns, itin> {
   bits<8> Imm8;
 
   let Inst{31} = m;
@@ -596,8 +563,7 @@ class A64I_fpimm<bit m, bit s, bits<2> type, bits<5> imm5,
 class A64I_LDRlit<bits<2> opc, bit v,
                   dag outs, dag ins, string asmstr,
                   list<dag> patterns, InstrItinClass itin>
-  : A64InstRt<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRt<outs, ins, asmstr, patterns, itin> {
   bits<19> Imm19;
 
   let Inst{31-30} = opc;
@@ -612,8 +578,7 @@ class A64I_LDRlit<bits<2> opc, bit v,
 class A64I_LDSTex_tn<bits<2> size, bit o2, bit L, bit o1, bit o0,
                  dag outs, dag ins, string asmstr,
                  list <dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   let Inst{31-30} = size;
   let Inst{29-24} = 0b001000;
   let Inst{23} = o2;
@@ -650,8 +615,7 @@ class A64I_LDSTex_stt2n<bits<2> size, bit o2, bit L, bit o1, bit o0,
 class A64I_LSpostind<bits<2> size, bit v, bits<2> opc,
                      dag outs, dag ins, string asmstr,
                      list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<9> SImm9;
 
   let Inst{31-30} = size;
@@ -670,8 +634,7 @@ class A64I_LSpostind<bits<2> size, bit v, bits<2> opc,
 class A64I_LSpreind<bits<2> size, bit v, bits<2> opc,
                     dag outs, dag ins, string asmstr,
                     list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<9> SImm9;
 
 
@@ -691,8 +654,7 @@ class A64I_LSpreind<bits<2> size, bit v, bits<2> opc,
 class A64I_LSunpriv<bits<2> size, bit v, bits<2> opc,
                     dag outs, dag ins, string asmstr,
                     list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<9> SImm9;
 
 
@@ -712,8 +674,7 @@ class A64I_LSunpriv<bits<2> size, bit v, bits<2> opc,
 class A64I_LSunalimm<bits<2> size, bit v, bits<2> opc,
                      dag outs, dag ins, string asmstr,
                      list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<9> SImm9;
 
   let Inst{31-30} = size;
@@ -733,8 +694,7 @@ class A64I_LSunalimm<bits<2> size, bit v, bits<2> opc,
 class A64I_LSunsigimm<bits<2> size, bit v, bits<2> opc,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<12> UImm12;
 
   let Inst{31-30} = size;
@@ -749,8 +709,7 @@ class A64I_LSunsigimm<bits<2> size, bit v, bits<2> opc,
 class A64I_LSregoff<bits<2> size, bit v, bits<2> opc, bit optionlo,
                     dag outs, dag ins, string asmstr,
                     list<dag> patterns, InstrItinClass itin>
-  : A64InstRtn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtn<outs, ins, asmstr, patterns, itin> {
   bits<5> Rm;
 
   // Complex operand selection needed for these instructions, so they
@@ -780,8 +739,7 @@ class A64I_LSregoff<bits<2> size, bit v, bits<2> opc, bit optionlo,
 class A64I_LSPoffset<bits<2> opc, bit v, bit l,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64InstRtt2n<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtt2n<outs, ins, asmstr, patterns, itin> {
   bits<7> SImm7;
 
   let Inst{31-30} = opc;
@@ -799,8 +757,7 @@ class A64I_LSPoffset<bits<2> opc, bit v, bit l,
 class A64I_LSPpostind<bits<2> opc, bit v, bit l,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64InstRtt2n<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtt2n<outs, ins, asmstr, patterns, itin> {
   bits<7> SImm7;
 
   let Inst{31-30} = opc;
@@ -818,8 +775,7 @@ class A64I_LSPpostind<bits<2> opc, bit v, bit l,
 class A64I_LSPpreind<bits<2> opc, bit v, bit l,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64InstRtt2n<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtt2n<outs, ins, asmstr, patterns, itin> {
   bits<7> SImm7;
 
   let Inst{31-30} = opc;
@@ -837,8 +793,7 @@ class A64I_LSPpreind<bits<2> opc, bit v, bit l,
 class A64I_LSPnontemp<bits<2> opc, bit v, bit l,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64InstRtt2n<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRtt2n<outs, ins, asmstr, patterns, itin> {
   bits<7> SImm7;
 
   let Inst{31-30} = opc;
@@ -856,8 +811,7 @@ class A64I_LSPnontemp<bits<2> opc, bit v, bit l,
 class A64I_logicalimm<bit sf, bits<2> opc,
                       dag outs, dag ins, string asmstr,
                       list<dag> patterns, InstrItinClass itin>
-  : A64InstRdn<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdn<outs, ins, asmstr, patterns, itin> {
   bit N;
   bits<6> ImmR;
   bits<6> ImmS;
@@ -883,8 +837,7 @@ class A64I_logicalimm<bit sf, bits<2> opc,
 class A64I_logicalshift<bit sf, bits<2> opc, bits<2> shift, bit N,
                         dag outs, dag ins, string asmstr,
                         list<dag> patterns, InstrItinClass itin>
-  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
   bits<6> Imm6;
 
   let Inst{31} = sf;
@@ -902,8 +855,7 @@ class A64I_logicalshift<bit sf, bits<2> opc, bits<2> shift, bit N,
 class A64I_movw<bit sf, bits<2> opc,
                 dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64InstRd<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRd<outs, ins, asmstr, patterns, itin> {
   bits<16> UImm16;
   bits<2> Shift; // Called "hw" officially
 
@@ -919,8 +871,7 @@ class A64I_movw<bit sf, bits<2> opc,
 class A64I_PCADR<bit op,
                  dag outs, dag ins, string asmstr,
                  list<dag> patterns, InstrItinClass itin>
-  : A64InstRd<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRd<outs, ins, asmstr, patterns, itin> {
   bits<21> Label;
 
   let Inst{31} = op;
@@ -933,8 +884,7 @@ class A64I_PCADR<bit op,
 class A64I_system<bit l,
                   dag outs, dag ins, string asmstr,
                   list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   bits<2> Op0;
   bits<3> Op1;
   bits<4> CRn;
@@ -959,8 +909,7 @@ class A64I_system<bit l,
 class A64I_Bimm<bit op,
                 dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   // Doubly special in not even sharing register fields with other
   // instructions, so we create our own Rn here.
   bits<26> Label;
@@ -974,8 +923,7 @@ class A64I_Bimm<bit op,
 class A64I_TBimm<bit op,
                 dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64InstRt<outs, ins, asmstr, patterns, itin>
-{
+  : A64InstRt<outs, ins, asmstr, patterns, itin> {
   // Doubly special in not even sharing register fields with other
   // instructions, so we create our own Rn here.
   bits<6> Imm;
@@ -995,8 +943,7 @@ class A64I_TBimm<bit op,
 class A64I_Breg<bits<4> opc, bits<5> op2, bits<6> op3, bits<5> op4,
                 dag outs, dag ins, string asmstr,
                 list<dag> patterns, InstrItinClass itin>
-  : A64Inst<outs, ins, asmstr, patterns, itin>
-{
+  : A64Inst<outs, ins, asmstr, patterns, itin> {
   // Doubly special in not even sharing register fields with other
   // instructions, so we create our own Rn here.
   bits<5> Rn;

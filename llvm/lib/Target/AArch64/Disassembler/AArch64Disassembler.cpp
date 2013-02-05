@@ -77,10 +77,12 @@ static DecodeStatus DecodeFPR32RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                          uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeFPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                          uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeFPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                         uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeVPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                              uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeFPR128RegisterClass(llvm::MCInst &Inst,
+                                              unsigned RegNo, uint64_t Address,
+                                              const void *Decoder);
+static DecodeStatus DecodeVPR128RegisterClass(llvm::MCInst &Inst,
+                                              unsigned RegNo, uint64_t Address,
+                                              const void *Decoder);
 
 static DecodeStatus DecodeAddrRegExtendOperand(llvm::MCInst &Inst,
                                                unsigned OptionHiS,
@@ -143,11 +145,10 @@ static DecodeStatus DecodeNamedImmOperand(llvm::MCInst &Inst,
                                           uint64_t Address,
                                           const void *Decoder);
 
-static DecodeStatus DecodeSysRegOperand(const A64SysReg::SysRegMapper &InstMapper,
-                                        llvm::MCInst &Inst,
-                                        unsigned Val,
-                                        uint64_t Address,
-                                        const void *Decoder);
+static DecodeStatus
+DecodeSysRegOperand(const A64SysReg::SysRegMapper &InstMapper,
+                    llvm::MCInst &Inst, unsigned Val,
+                    uint64_t Address, const void *Decoder);
 
 static DecodeStatus DecodeMRSOperand(llvm::MCInst &Inst,
                                      unsigned Val,
@@ -247,7 +248,8 @@ DecodeGPR64xspRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
 }
 
 static DecodeStatus DecodeGPR32RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                             uint64_t Address, const void *Decoder) {
+                                             uint64_t Address,
+                                             const void *Decoder) {
   if (RegNo > 31)
     return MCDisassembler::Fail;
 
@@ -460,8 +462,10 @@ static DecodeStatus DecodeBitfieldInstruction(llvm::MCInst &Inst, unsigned Insn,
   }
 
   // ASR and LSR have more specific patterns so they won't get here:
-  assert(!(ImmS == 31 && !SF && Opc != BFM) && "shift should have used auto decode");
-  assert(!(ImmS == 63 && SF && Opc != BFM) && "shift should have used auto decode");
+  assert(!(ImmS == 31 && !SF && Opc != BFM)
+         && "shift should have used auto decode");
+  assert(!(ImmS == 63 && SF && Opc != BFM)
+         && "shift should have used auto decode");
 
   // Extension instructions similarly:
   if (Opc == SBFM && ImmR == 0) {

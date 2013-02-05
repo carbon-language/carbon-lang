@@ -180,7 +180,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
            E = CSI.end(); I != E; ++I) {
-      MachineLocation Dst(MachineLocation::VirtualFP, MFI->getObjectOffset(I->getFrameIdx()));
+      MachineLocation Dst(MachineLocation::VirtualFP,
+                          MFI->getObjectOffset(I->getFrameIdx()));
       MachineLocation Src(I->getReg());
       Moves.push_back(MachineMove(CSLabel, Dst, Src));
     }
@@ -537,7 +538,8 @@ AArch64FrameLowering::emitFrameMemOps(bool isPrologue, MachineBasicBlock &MBB,
         State = RegState::Define;
       }
 
-      NewMI = BuildMI(MBB, MBBI, DL, TII.get(PossClasses[ClassIdx].SingleOpcode))
+      NewMI = BuildMI(MBB, MBBI, DL,
+                      TII.get(PossClasses[ClassIdx].SingleOpcode))
                 .addReg(CSI[i].getReg(), State);
     }
 
@@ -549,9 +551,9 @@ AArch64FrameLowering::emitFrameMemOps(bool isPrologue, MachineBasicBlock &MBB,
     Flags = isPrologue ? MachineMemOperand::MOStore : MachineMemOperand::MOLoad;
     MachineMemOperand *MMO =
       MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIdx),
-                              Flags,
-                              Pair ? TheClass.getSize() * 2 : TheClass.getSize(),
-                              MFI.getObjectAlignment(FrameIdx));
+                             Flags,
+                             Pair ? TheClass.getSize() * 2 : TheClass.getSize(),
+                             MFI.getObjectAlignment(FrameIdx));
 
     NewMI.addFrameIndex(FrameIdx)
       .addImm(0)                  // address-register offset

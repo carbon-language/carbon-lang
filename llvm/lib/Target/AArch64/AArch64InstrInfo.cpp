@@ -613,7 +613,8 @@ bool llvm::rewriteA64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   llvm_unreachable("Unimplemented rewriteFrameIndex");
 }
 
-void llvm::emitRegUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+void llvm::emitRegUpdate(MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator MBBI,
                          DebugLoc dl, const TargetInstrInfo &TII,
                          unsigned DstReg, unsigned SrcReg, unsigned ScratchReg,
                          int64_t NumBytes, MachineInstr::MIFlag MIFlags) {
@@ -695,7 +696,8 @@ namespace {
     LDTLSCleanup() : MachineFunctionPass(ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
-      AArch64MachineFunctionInfo* MFI = MF.getInfo<AArch64MachineFunctionInfo>();
+      AArch64MachineFunctionInfo* MFI
+        = MF.getInfo<AArch64MachineFunctionInfo>();
       if (MFI->getNumLocalDynamicTLSAccesses() < 2) {
         // No point folding accesses if there isn't at least two.
         return false;

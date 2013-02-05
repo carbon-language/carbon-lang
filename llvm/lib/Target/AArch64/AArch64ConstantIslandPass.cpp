@@ -46,7 +46,8 @@ STATISTIC(NumCBrFixed,   "Number of cond branches fixed");
 // FIXME: This option should be removed once it has received sufficient testing.
 static cl::opt<bool>
 AlignConstantIslands("aarch64-align-constant-islands", cl::Hidden,
-                     cl::init(true), cl::desc("Align constant islands in code"));
+                     cl::init(true),
+                     cl::desc("Align constant islands in code"));
 
 /// Return the worst case padding that could result from unknown offset bits.
 /// This does not include alignment padding caused by known offset bits.
@@ -828,7 +829,8 @@ bool AArch64ConstantIslands::isWaterInRange(unsigned UserOffset,
 bool AArch64ConstantIslands::isCPEntryInRange(MachineInstr *MI,
                                               unsigned UserOffset,
                                               MachineInstr *CPEMI,
-                                              unsigned OffsetBits, bool DoDump) {
+                                              unsigned OffsetBits,
+                                              bool DoDump) {
   unsigned CPEOffset  = getOffsetOf(CPEMI);
 
   if (DoDump) {
@@ -930,7 +932,8 @@ int AArch64ConstantIslands::findInRangeCPEntry(CPUser& U, unsigned UserOffset)
     // Removing CPEs can leave empty entries, skip
     if (CPEs[i].CPEMI == NULL)
       continue;
-    if (isCPEntryInRange(UserMI, UserOffset, CPEs[i].CPEMI, U.getOffsetBits())) {
+    if (isCPEntryInRange(UserMI, UserOffset, CPEs[i].CPEMI,
+                         U.getOffsetBits())) {
       DEBUG(dbgs() << "Replacing CPE#" << CPI << " with CPE#"
                    << CPEs[i].CPI << "\n");
       // Point the CPUser node to the replacement

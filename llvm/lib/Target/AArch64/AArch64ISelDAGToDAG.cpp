@@ -72,7 +72,8 @@ public:
 
   bool SelectFPZeroOperand(SDValue N, SDValue &Dummy);
 
-  bool SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos, unsigned RegWidth);
+  bool SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos,
+                                unsigned RegWidth);
 
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                     char ConstraintCode,
@@ -130,8 +131,8 @@ AArch64DAGToDAGISel::SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos,
 
 bool
 AArch64DAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                                  char ConstraintCode,
-                                                  std::vector<SDValue> &OutOps) {
+                                                 char ConstraintCode,
+                                                 std::vector<SDValue> &OutOps) {
   switch (ConstraintCode) {
   default: llvm_unreachable("Unrecognised AArch64 memory constraint");
   case 'm':
@@ -152,7 +153,7 @@ AArch64DAGToDAGISel::SelectFPZeroOperand(SDValue N, SDValue &Dummy) {
   ConstantFPSDNode *Imm = dyn_cast<ConstantFPSDNode>(N);
   if (!Imm || !Imm->getValueAPF().isPosZero())
     return false;
-  
+
   // Doesn't actually carry any information, but keeps TableGen quiet.
   Dummy = CurDAG->getTargetConstant(0, MVT::i32);
   return true;

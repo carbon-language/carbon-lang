@@ -121,7 +121,9 @@ public:
   void setBytesInStackArgArea (unsigned bytes) { BytesInStackArgArea = bytes;}
 
   unsigned getArgumentStackToRestore() const { return ArgumentStackToRestore; }
-  void setArgumentStackToRestore(unsigned bytes) { ArgumentStackToRestore = bytes; }
+  void setArgumentStackToRestore(unsigned bytes) {
+    ArgumentStackToRestore = bytes;
+  }
 
   unsigned getInitialStackAdjust() const { return InitialStackAdjust; }
   void setInitialStackAdjust(unsigned bytes) { InitialStackAdjust = bytes; }

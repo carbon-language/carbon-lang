@@ -1,4 +1,4 @@
-//===- AArch64.td - Describe the AArch64 Target Machine ---------*- tblgen -*-==//
+//===- AArch64.td - Describe the AArch64 Target Machine -------*- tblgen -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //

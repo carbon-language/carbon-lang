@@ -193,13 +193,11 @@ def VPR128 : RegisterClass<"AArch64",
                            (sequence "V%u", 0, 31)>;
 
 // Flags register
-def NZCV : Register<"nzcv">
-{
+def NZCV : Register<"nzcv"> {
   let Namespace = "AArch64";
 }
 
-def FlagClass : RegisterClass<"AArch64", [i32], 32, (add NZCV)>
-{
+def FlagClass : RegisterClass<"AArch64", [i32], 32, (add NZCV)> {
   let CopyCost = -1;
   let isAllocatable = 0;
 }

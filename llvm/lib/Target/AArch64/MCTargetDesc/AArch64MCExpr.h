@@ -83,7 +83,8 @@ public:
     return Create(VK_AARCH64_GOT, Expr, Ctx);
   }
 
-  static const AArch64MCExpr *CreateGOTLo12(const MCExpr *Expr, MCContext &Ctx) {
+  static const AArch64MCExpr *CreateGOTLo12(const MCExpr *Expr,
+                                            MCContext &Ctx) {
     return Create(VK_AARCH64_GOT_LO12, Expr, Ctx);
   }
 

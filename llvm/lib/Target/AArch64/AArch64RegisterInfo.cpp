@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the AArch64 implementation of the TargetRegisterInfo class.
+// This file contains the AArch64 implementation of the TargetRegisterInfo
+// class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -87,7 +88,7 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const AArch64FrameLowering *TFI =
-    static_cast<const AArch64FrameLowering *>(MF.getTarget().getFrameLowering());
+   static_cast<const AArch64FrameLowering *>(MF.getTarget().getFrameLowering());
 
   // In order to work out the base and offset for addressing, the FrameLowering
   // code needs to know (sometimes) whether the instruction is storing/loading a
@@ -202,6 +203,7 @@ AArch64RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 bool
 AArch64RegisterInfo::useFPForScavengingIndex(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-  const AArch64FrameLowering *AFI = static_cast<const AArch64FrameLowering*>(TFI);
+  const AArch64FrameLowering *AFI
+    = static_cast<const AArch64FrameLowering*>(TFI);
   return AFI->useFPForAddressing(MF);
 }

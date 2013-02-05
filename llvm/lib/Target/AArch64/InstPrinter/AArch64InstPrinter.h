@@ -114,7 +114,7 @@ public:
   }
 
   void printShiftOperand(const char *name, const MCInst *MI,
-                         unsigned OpIdx, raw_ostream &O);  
+                         unsigned OpIdx, raw_ostream &O);
 
   void printLSLOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 

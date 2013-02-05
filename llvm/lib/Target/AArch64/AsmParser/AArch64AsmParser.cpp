@@ -53,7 +53,7 @@ public:
 
   // These are the public interface of the MCTargetAsmParser
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
-  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name, 
+  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
@@ -116,7 +116,7 @@ public:
   ParseSysRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   bool validateInstruction(MCInst &Inst,
-                           const SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+                          const SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   /// Scan the next token (which had better be an identifier) and determine
   /// whether it represents a general-purpose or vector register. It returns
@@ -1674,7 +1674,8 @@ AArch64AsmParser::ParseShiftExtend(
     if (Parser.getTok().is(AsmToken::Comma) ||
         Parser.getTok().is(AsmToken::EndOfStatement) ||
         Parser.getTok().is(AsmToken::RBrac)) {
-      Operands.push_back(AArch64Operand::CreateShiftExtend(Spec, 0, true, S, E));
+      Operands.push_back(AArch64Operand::CreateShiftExtend(Spec, 0, true,
+                                                           S, E));
       return MatchOperand_Success;
     }
   }
@@ -1697,7 +1698,8 @@ AArch64AsmParser::ParseShiftExtend(
   Parser.Lex();
   E = Parser.getTok().getLoc();
 
-  Operands.push_back(AArch64Operand::CreateShiftExtend(Spec, Amount, false, S, E));
+  Operands.push_back(AArch64Operand::CreateShiftExtend(Spec, Amount, false,
+                                                       S, E));
 
   return MatchOperand_Success;
 }
@@ -1942,7 +1944,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                  bool MatchingInlineAsm) {
   MCInst Inst;
   unsigned MatchResult;
-  MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo, 
+  MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                      MatchingInlineAsm);
   switch (MatchResult) {
   default: break;

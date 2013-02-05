@@ -113,7 +113,8 @@ def AArch64tcret : SDNode<"AArch64ISD::TC_RETURN", SDT_AArch64Call,
 def SDTTLSDescCall : SDTypeProfile<0, -2, [SDTCisPtrTy<0>, SDTCisPtrTy<1>]>;
 
 def A64tlsdesc_blr : SDNode<"AArch64ISD::TLSDESCCALL", SDTTLSDescCall,
-                            [SDNPInGlue, SDNPOutGlue, SDNPHasChain, SDNPVariadic]>;
+                            [SDNPInGlue, SDNPOutGlue, SDNPHasChain,
+                             SDNPVariadic]>;
 
 
 def SDT_AArch64CallSeqStart : SDCallSeqStart<[ SDTCisPtrTy<0> ]>;
@@ -132,8 +133,7 @@ def AArch64callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_AArch64CallSeqEnd,
 // arguments passed on the stack. Here we select those markers to
 // pseudo-instructions which explicitly set the stack, and finally in the
 // RegisterInfo we convert them to a true stack adjustment.
-let Defs = [XSP], Uses = [XSP] in
-{
+let Defs = [XSP], Uses = [XSP] in {
   def ADJCALLSTACKDOWN : PseudoInst<(outs), (ins i64imm:$amt),
                                     [(AArch64callseq_start timm:$amt)]>;
 
@@ -146,16 +146,15 @@ let Defs = [XSP], Uses = [XSP] in
 //===----------------------------------------------------------------------===//
 
 let usesCustomInserter = 1, Defs = [NZCV] in {
-multiclass AtomicSizes<string opname>
-{
+multiclass AtomicSizes<string opname> {
   def _I8 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
     [(set GPR32:$dst, (!cast<SDNode>(opname # "_8") GPR64:$ptr, GPR32:$incr))]>;
   def _I16 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
-    [(set GPR32:$dst, (!cast<SDNode>(opname # "_16") GPR64:$ptr, GPR32:$incr))]>;
+   [(set GPR32:$dst, (!cast<SDNode>(opname # "_16") GPR64:$ptr, GPR32:$incr))]>;
   def _I32 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
-    [(set GPR32:$dst, (!cast<SDNode>(opname # "_32") GPR64:$ptr, GPR32:$incr))]>;
+   [(set GPR32:$dst, (!cast<SDNode>(opname # "_32") GPR64:$ptr, GPR32:$incr))]>;
   def _I64 : PseudoInst<(outs GPR64:$dst), (ins GPR64:$ptr, GPR64:$incr),
-    [(set GPR64:$dst, (!cast<SDNode>(opname # "_64") GPR64:$ptr, GPR64:$incr))]>;
+   [(set GPR64:$dst, (!cast<SDNode>(opname # "_64") GPR64:$ptr, GPR64:$incr))]>;
 }
 }
 
@@ -205,17 +204,15 @@ def ATOMIC_CMP_SWAP_I64
 // is not optional in that case (but can explicitly be 0), and the
 // entire suffix can be skipped (e.g. "add sp, x3, x2").
 
-multiclass extend_operands<string PREFIX>
-{
-     def _asmoperand : AsmOperandClass
-     {
+multiclass extend_operands<string PREFIX> {
+     def _asmoperand : AsmOperandClass {
          let Name = PREFIX;
          let RenderMethod = "addRegExtendOperands";
          let PredicateMethod = "isRegExtend<A64SE::" # PREFIX # ">";
      }
 
-     def _operand : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 4; }]>
-     {
+     def _operand : Operand<i64>,
+                    ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 4; }]> {
          let PrintMethod = "printRegExtendOperand<A64SE::" # PREFIX # ">";
          let DecoderMethod = "DecodeRegExtendOperand";
          let ParserMatchClass = !cast<AsmOperandClass>(PREFIX # "_asmoperand");
@@ -231,14 +228,12 @@ defm SXTH : extend_operands<"SXTH">;
 defm SXTW : extend_operands<"SXTW">;
 defm SXTX : extend_operands<"SXTX">;
 
-def LSL_extasmoperand : AsmOperandClass
-{
+def LSL_extasmoperand : AsmOperandClass {
     let Name = "RegExtendLSL";
     let RenderMethod = "addRegExtendOperands";
 }
 
-def LSL_extoperand : Operand<i64>
-{
+def LSL_extoperand : Operand<i64> {
     let ParserMatchClass = LSL_extasmoperand;
 }
 
@@ -247,14 +242,12 @@ def LSL_extoperand : Operand<i64>
 // non-uniform because everything has already been promoted to the
 // legal i64 and i32 types. We'll wrap the various variants up in a
 // class for use later.
-class extend_types
-{
+class extend_types {
     dag uxtb; dag uxth; dag uxtw; dag uxtx;
     dag sxtb; dag sxth; dag sxtw; dag sxtx;
 }
 
-def extends_to_i64 : extend_types
-{
+def extends_to_i64 : extend_types {
     let uxtb = (and (anyext GPR32:$Rm), 255);
     let uxth = (and (anyext GPR32:$Rm), 65535);
     let uxtw = (zext GPR32:$Rm);
@@ -267,8 +260,7 @@ def extends_to_i64 : extend_types
 }
 
 
-def extends_to_i32 : extend_types
-{
+def extends_to_i32 : extend_types {
     let uxtb = (and GPR32:$Rm, 255);
     let uxth = (and GPR32:$Rm, 65535);
     let uxtw = (i32 GPR32:$Rm);
@@ -290,9 +282,9 @@ def extends_to_i32 : extend_types
 //     + Patterns are very different as well.
 //     + Passing different registers would be ugly (more fields in extend_types
 //       would probably be the best option).
-multiclass addsub_exts<bit sf, bit op, bit S, string asmop, SDPatternOperator opfrag,
-                       dag outs, extend_types exts, RegisterClass GPRsp>
-{
+multiclass addsub_exts<bit sf, bit op, bit S, string asmop,
+                       SDPatternOperator opfrag,
+                       dag outs, extend_types exts, RegisterClass GPRsp> {
     def w_uxtb : A64I_addsubext<sf, op, S, 0b00, 0b000,
                       outs,
                       (ins GPRsp:$Rn, GPR32:$Rm, UXTB_operand:$Imm3),
@@ -334,8 +326,8 @@ multiclass addsub_exts<bit sf, bit op, bit S, string asmop, SDPatternOperator op
 
 // These two could be merge in with the above, but their patterns aren't really
 // necessary and the naming-scheme would necessarily break:
-multiclass addsub_xxtx<bit op, bit S, string asmop, SDPatternOperator opfrag, dag outs>
-{
+multiclass addsub_xxtx<bit op, bit S, string asmop, SDPatternOperator opfrag,
+                       dag outs> {
     def x_uxtx : A64I_addsubext<0b1, op, S, 0b00, 0b011,
                    outs,
                    (ins GPR64xsp:$Rn, GPR64:$Rm, UXTX_operand:$Imm3),
@@ -351,8 +343,7 @@ multiclass addsub_xxtx<bit op, bit S, string asmop, SDPatternOperator opfrag, da
                    NoItinerary>;
 }
 
-multiclass addsub_wxtx<bit op, bit S, string asmop, dag outs>
-{
+multiclass addsub_wxtx<bit op, bit S, string asmop, dag outs> {
     def w_uxtx : A64I_addsubext<0b0, op, S, 0b00, 0b011,
                               outs,
                               (ins GPR32wsp:$Rn, GPR32:$Rm, UXTX_operand:$Imm3),
@@ -429,8 +420,7 @@ defm CMPw : addsub_exts<0b0, 0b1, 0b1, "cmp\t", SetNZCV<A64cmp>,
 // created for uxtx/sxtx since they're non-uniform and it's expected that
 // add/sub (shifted register) will handle those cases anyway.
 multiclass addsubext_noshift_patterns<string prefix, SDPatternOperator nodeop,
-                                      RegisterClass GPRsp, extend_types exts>
-{
+                                      RegisterClass GPRsp, extend_types exts> {
     def : Pat<(nodeop GPRsp:$Rn, exts.uxtb),
               (!cast<Instruction>(prefix # "w_uxtb") GPRsp:$Rn, GPR32:$Rm, 0)>;
     def : Pat<(nodeop GPRsp:$Rn, exts.uxth),
@@ -461,8 +451,7 @@ defm : addsubext_noshift_patterns<"CMPw", A64cmp, GPR32wsp, extends_to_i32>;
 // operation. Also permitted in this case is complete omission of the argument,
 // which implies "lsl #0".
 multiclass lsl_aliases<string asmop, Instruction inst, RegisterClass GPR_Rd,
-                       RegisterClass GPR_Rn, RegisterClass GPR_Rm>
-{
+                       RegisterClass GPR_Rn, RegisterClass GPR_Rm> {
     def : InstAlias<!strconcat(asmop, " $Rd, $Rn, $Rm"),
                     (inst GPR_Rd:$Rd, GPR_Rn:$Rn, GPR_Rm:$Rm, 0)>;
 
@@ -490,8 +479,7 @@ defm : lsl_aliases<"subs", SUBSwww_uxtw, GPR32, Rwsp, GPR32>;
 // CMP unfortunately has to be different because the instruction doesn't have a
 // dest register.
 multiclass cmp_lsl_aliases<string asmop, Instruction inst,
-                       RegisterClass GPR_Rn, RegisterClass GPR_Rm>
-{
+                       RegisterClass GPR_Rn, RegisterClass GPR_Rm> {
     def : InstAlias<!strconcat(asmop, " $Rn, $Rm"),
                     (inst GPR_Rn:$Rn, GPR_Rm:$Rm, 0)>;
 
@@ -547,16 +535,13 @@ defm : cmp_lsl_aliases<"cmn", CMNww_uxtw, Rwsp, GPR32>;
 // should be parsed: there was no way to accommodate an "lsl #12".
 
 let ParserMethod = "ParseImmWithLSLOperand",
-    RenderMethod = "addImmWithLSLOperands" in
-{
+    RenderMethod = "addImmWithLSLOperands" in {
   // Derived PredicateMethod fields are different for each
-  def addsubimm_lsl0_asmoperand : AsmOperandClass
-  {
+  def addsubimm_lsl0_asmoperand : AsmOperandClass {
     let Name = "AddSubImmLSL0";
   }
 
-  def addsubimm_lsl12_asmoperand : AsmOperandClass
-  {
+  def addsubimm_lsl12_asmoperand : AsmOperandClass {
     let Name = "AddSubImmLSL12";
   }
 }
@@ -574,12 +559,10 @@ def neg_XFORM : SDNodeXForm<imm, [{
 }]>;
 
 
-multiclass addsub_imm_operands<ValueType ty>
-{
+multiclass addsub_imm_operands<ValueType ty> {
  let PrintMethod = "printAddSubImmLSL0Operand",
       EncoderMethod = "getAddSubImmOpValue",
-      ParserMatchClass = addsubimm_lsl0_asmoperand in
-  {
+      ParserMatchClass = addsubimm_lsl0_asmoperand in {
     def _posimm_lsl0 : Operand<ty>,
         ImmLeaf<ty, [{ return Imm >= 0 && (Imm & ~0xfff) == 0; }]>;
     def _negimm_lsl0 : Operand<ty>,
@@ -589,8 +572,7 @@ multiclass addsub_imm_operands<ValueType ty>
 
   let PrintMethod = "printAddSubImmLSL12Operand",
       EncoderMethod = "getAddSubImmOpValue",
-      ParserMatchClass = addsubimm_lsl12_asmoperand in
-  {
+      ParserMatchClass = addsubimm_lsl12_asmoperand in {
     def _posimm_lsl12 : Operand<ty>,
         ImmLeaf<ty, [{ return Imm >= 0 && (Imm & ~0xfff000) == 0; }],
                 shr_12_XFORM>;
@@ -609,8 +591,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                                string asmop, string cmpasmop,
                                Operand imm_operand, Operand cmp_imm_operand,
                                RegisterClass GPR, RegisterClass GPRsp,
-                               AArch64Reg ZR>
-{
+                               AArch64Reg ZR> {
     // All registers for non-S variants allow SP
   def _s : A64I_addsubimm<sf, op, 0b0, shift,
                          (outs GPRsp:$Rd),
@@ -639,8 +620,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                             !strconcat(cmpasmop, " $Rn, $Imm12"),
                             [(set NZCV,
                               (A64cmp GPRsp:$Rn, cmp_imm_operand:$Imm12))],
-                            NoItinerary>
-  {
+                            NoItinerary> {
     let Rd = 0b11111;
     let Defs = [NZCV];
     let isCompare = 1;
@@ -650,8 +630,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
 
 multiclass addsubimm_shifts<string prefix, bit sf, bit op,
            string asmop, string cmpasmop, string operand, string cmpoperand,
-           RegisterClass GPR, RegisterClass GPRsp, AArch64Reg ZR>
-{
+           RegisterClass GPR, RegisterClass GPRsp, AArch64Reg ZR> {
   defm _lsl0 : addsubimm_varieties<prefix # "_lsl0", sf, op, 0b00,
                                    asmop, cmpasmop,
                                    !cast<Operand>(operand # "_lsl0"),
@@ -682,8 +661,7 @@ defm SUBxxi : addsubimm_shifts<"SUBxi", 0b1, 0b1, "sub", "cmp",
                               "addsubimm_operand_i64_posimm",
                               GPR64, GPR64xsp, XZR>;
 
-multiclass MOVsp<RegisterClass GPRsp, RegisterClass SP, Instruction addop>
-{
+multiclass MOVsp<RegisterClass GPRsp, RegisterClass SP, Instruction addop> {
   def _fromsp : InstAlias<"mov $Rd, $Rn",
                           (addop GPRsp:$Rd, SP:$Rn, 0),
                           0b1>;
@@ -706,10 +684,8 @@ defm MOVww : MOVsp<GPR32wsp, Rwsp, ADDwwi_lsl0_s>;
 // 1. The "shifed register" operands. Shared with logical insts.
 //===-------------------------------
 
-multiclass shift_operands<string prefix, string form>
-{
-  def _asmoperand_i32 : AsmOperandClass
-  {
+multiclass shift_operands<string prefix, string form> {
+  def _asmoperand_i32 : AsmOperandClass {
     let Name = "Shift" # form # "i32";
     let RenderMethod = "addShiftOperands";
     let PredicateMethod
@@ -718,24 +694,21 @@ multiclass shift_operands<string prefix, string form>
 
   // Note that the operand type is intentionally i64 because the DAGCombiner
   // puts these into a canonical form.
-  def _i32 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31; }]>
-  {
+  def _i32 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31; }]> {
     let ParserMatchClass
           = !cast<AsmOperandClass>(prefix # "_asmoperand_i32");
     let PrintMethod = "printShiftOperand<A64SE::" # form # ">";
     let DecoderMethod = "Decode32BitShiftOperand";
   }
 
-  def _asmoperand_i64 : AsmOperandClass
-  {
+  def _asmoperand_i64 : AsmOperandClass {
       let Name = "Shift" # form # "i64";
       let RenderMethod = "addShiftOperands";
       let PredicateMethod
             = "isShift<A64SE::" # form # ", true>";
   }
 
-  def _i64 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]>
-  {
+  def _i64 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]> {
     let ParserMatchClass
           = !cast<AsmOperandClass>(prefix # "_asmoperand_i64");
     let PrintMethod = "printShiftOperand<A64SE::" # form # ">";
@@ -758,8 +731,7 @@ defm ror_operand : shift_operands<"ror_operand", "ROR">;
 // when the revolution comes.
 multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
                          string asmop, SDPatternOperator opfrag, string sty,
-                         RegisterClass GPR, list<Register> defs>
-{
+                         RegisterClass GPR, list<Register> defs> {
   let isCommutable = commutable, Defs = defs in {
   def _lsl : A64I_addsubshift<sf, op, s, 0b00,
                        (outs GPR:$Rd),
@@ -803,8 +775,7 @@ multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
 
 multiclass addsub_sizes<string prefix, bit op, bit s, bit commutable,
                          string asmop, SDPatternOperator opfrag,
-                         list<Register> defs>
-{
+                         list<Register> defs> {
   defm xxx : addsub_shifts<prefix # "xxx", 0b1, op, s,
                            commutable, asmop, opfrag, "i64", GPR64, defs>;
   defm www : addsub_shifts<prefix # "www", 0b0, op, s,
@@ -823,8 +794,7 @@ defm SUBS : addsub_sizes<"SUBS", 0b1, 0b1, 0b0, "subs", subc, [NZCV]>;
 //===-------------------------------
 
 multiclass neg_alias<Instruction INST, RegisterClass GPR,
-                     Register ZR, Operand shift_operand, SDNode shiftop>
-{
+                     Register ZR, Operand shift_operand, SDNode shiftop> {
    def : InstAlias<"neg $Rd, $Rm, $Imm6",
                    (INST GPR:$Rd, ZR, GPR:$Rm, shift_operand:$Imm6)>;
 
@@ -867,8 +837,7 @@ def : InstAlias<"negs $Rd, $Rm", (SUBSxxx_lsl GPR64:$Rd, XZR, GPR64:$Rm, 0)>;
 
 multiclass cmp_shifts<string prefix, bit sf, bit op, bit commutable,
                       string asmop, SDPatternOperator opfrag, string sty,
-                      RegisterClass GPR>
-{
+                      RegisterClass GPR> {
   let isCommutable = commutable, Rd = 0b11111, Defs = [NZCV] in {
   def _lsl : A64I_addsubshift<sf, op, 0b1, 0b00,
                        (outs),
@@ -920,10 +889,8 @@ defm CMNxx : cmp_shifts<"CMNxx", 0b1, 0b0, 0b1, "cmn", A64cmn, "i64", GPR64>;
 //===----------------------------------------------------------------------===//
 // Contains: ADC, ADCS, SBC, SBCS + aliases NGC, NGCS
 
-multiclass A64I_addsubcarrySizes<bit op, bit s, string asmop>
-{
-  let Uses = [NZCV] in
-  {
+multiclass A64I_addsubcarrySizes<bit op, bit s, string asmop> {
+  let Uses = [NZCV] in {
     def www : A64I_addsubcarry<0b0, op, s, 0b000000,
                                (outs GPR32:$Rd), (ins GPR32:$Rn, GPR32:$Rm),
                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
@@ -936,17 +903,14 @@ multiclass A64I_addsubcarrySizes<bit op, bit s, string asmop>
   }
 }
 
-let isCommutable = 1 in
-{
+let isCommutable = 1 in {
   defm ADC : A64I_addsubcarrySizes<0b0, 0b0, "adc">;
 }
 
 defm SBC : A64I_addsubcarrySizes<0b1, 0b0, "sbc">;
 
-let Defs = [NZCV] in
-{
-  let isCommutable = 1 in
-  {
+let Defs = [NZCV] in {
+  let isCommutable = 1 in {
     defm ADCS : A64I_addsubcarrySizes<0b0, 0b1, "adcs">;
   }
 
@@ -988,23 +952,20 @@ def : Pat<(sube GPR64:$Rn, GPR64:$Rm), (SBCSxxx GPR64:$Rn, GPR64:$Rm)>;
 // 1. The architectural BFM instructions
 //===-------------------------------
 
-def uimm5_asmoperand : AsmOperandClass
-{
+def uimm5_asmoperand : AsmOperandClass {
   let Name = "UImm5";
   let PredicateMethod = "isUImm<5>";
   let RenderMethod = "addImmOperands";
 }
 
-def uimm6_asmoperand : AsmOperandClass
-{
+def uimm6_asmoperand : AsmOperandClass {
   let Name = "UImm6";
   let PredicateMethod = "isUImm<6>";
   let RenderMethod = "addImmOperands";
 }
 
 def bitfield32_imm : Operand<i64>,
-                     ImmLeaf<i64, [{ return Imm >= 0 && Imm < 32; }]>
-{
+                     ImmLeaf<i64, [{ return Imm >= 0 && Imm < 32; }]> {
   let ParserMatchClass = uimm5_asmoperand;
 
   let DecoderMethod = "DecodeBitfield32ImmOperand";
@@ -1012,28 +973,24 @@ def bitfield32_imm : Operand<i64>,
 
 
 def bitfield64_imm : Operand<i64>,
-                     ImmLeaf<i64, [{ return Imm >= 0 && Imm < 64; }]>
-{
+                     ImmLeaf<i64, [{ return Imm >= 0 && Imm < 64; }]> {
   let ParserMatchClass = uimm6_asmoperand;
 
   // Default decoder works in 64-bit case: the 6-bit field can take any value.
 }
 
-multiclass A64I_bitfieldSizes<bits<2> opc, string asmop>
-{
+multiclass A64I_bitfieldSizes<bits<2> opc, string asmop> {
   def wwii : A64I_bitfield<0b0, opc, 0b0, (outs GPR32:$Rd),
                     (ins GPR32:$Rn, bitfield32_imm:$ImmR, bitfield32_imm:$ImmS),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                    [], NoItinerary>
-  {
+                    [], NoItinerary> {
     let DecoderMethod = "DecodeBitfieldInstruction";
   }
 
   def xxii : A64I_bitfield<0b1, opc, 0b1, (outs GPR64:$Rd),
                     (ins GPR64:$Rn, bitfield64_imm:$ImmR, bitfield64_imm:$ImmS),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                    [], NoItinerary>
-  {
+                    [], NoItinerary> {
     let DecoderMethod = "DecodeBitfieldInstruction";
   }
 }
@@ -1046,8 +1003,7 @@ defm UBFM : A64I_bitfieldSizes<0b10, "ubfm">;
 def BFMwwii :
   A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
         (ins GPR32:$src, GPR32:$Rn, bitfield32_imm:$ImmR, bitfield32_imm:$ImmS),
-        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>
-{
+        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   let DecoderMethod = "DecodeBitfieldInstruction";
   let Constraints = "$src = $Rd";
 }
@@ -1055,8 +1011,7 @@ def BFMwwii :
 def BFMxxii :
   A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
         (ins GPR64:$src, GPR64:$Rn, bitfield64_imm:$ImmR, bitfield64_imm:$ImmS),
-        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>
-{
+        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   let DecoderMethod = "DecodeBitfieldInstruction";
   let Constraints = "$src = $Rd";
 }
@@ -1078,8 +1033,7 @@ class A64I_bf_ext<bit sf, bits<2> opc, RegisterClass GPRDest, string asmop,
   : A64I_bitfield<sf, opc, sf,
                   (outs GPRDest:$Rd), (ins GPR32:$Rn),
                   !strconcat(asmop, "\t$Rd, $Rn"),
-                  [(set GPRDest:$Rd, pattern)], NoItinerary>
-{
+                  [(set GPRDest:$Rd, pattern)], NoItinerary> {
   let ImmR = 0b000000;
   let ImmS = imms;
 }
@@ -1103,8 +1057,7 @@ def UXTHww : A64I_bf_ext<0b0, 0b10, GPR32, "uxth", 15,
 
 // The 64-bit unsigned variants are not strictly architectural but recommended
 // for consistency.
-let isAsmParserOnly = 1 in
-{
+let isAsmParserOnly = 1 in {
   def UXTBxw : A64I_bf_ext<0b0, 0b10, GPR64, "uxtb", 7,
                            (and (anyext GPR32:$Rn), 255)>;
   def UXTHxw : A64I_bf_ext<0b0, 0b10, GPR64, "uxth", 15,
@@ -1129,14 +1082,12 @@ def : Pat<(sext_inreg GPR64:$Rn, i32),
 
 // These also handle their own decoding because ImmS being set makes
 // them take precedence over BFM.
-multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode>
-{
+multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode> {
   def wwi : A64I_bitfield<0b0, opc, 0b0,
                     (outs GPR32:$Rd), (ins GPR32:$Rn, bitfield32_imm:$ImmR),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR"),
                     [(set GPR32:$Rd, (opnode GPR32:$Rn, bitfield32_imm:$ImmR))],
-                    NoItinerary>
-  {
+                    NoItinerary> {
     let ImmS = 31;
   }
 
@@ -1144,8 +1095,7 @@ multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode>
                     (outs GPR64:$Rd), (ins GPR64:$Rn, bitfield64_imm:$ImmR),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR"),
                     [(set GPR64:$Rd, (opnode GPR64:$Rn, bitfield64_imm:$ImmR))],
-                    NoItinerary>
-  {
+                    NoItinerary> {
     let ImmS = 63;
   }
 
@@ -1170,15 +1120,13 @@ defm LSR : A64I_shift<0b10, "lsr", srl>;
 // outweighed the benefits in this case (custom asmparser, printer and selection
 // vs custom encoder).
 def bitfield32_lsl_imm : Operand<i64>,
-                         ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31; }]>
-{
+                         ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31; }]> {
   let ParserMatchClass = uimm5_asmoperand;
   let EncoderMethod = "getBitfield32LSLOpValue";
 }
 
 def bitfield64_lsl_imm : Operand<i64>,
-                         ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]>
-{
+                         ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]> {
   let ParserMatchClass = uimm6_asmoperand;
   let EncoderMethod = "getBitfield64LSLOpValue";
 }
@@ -1187,8 +1135,7 @@ class A64I_bitfield_lsl<bit sf, RegisterClass GPR, Operand operand>
   : A64I_bitfield<sf, 0b10, sf, (outs GPR:$Rd), (ins GPR:$Rn, operand:$FullImm),
                   "lsl\t$Rd, $Rn, $FullImm",
                   [(set GPR:$Rd, (shl GPR:$Rn, operand:$FullImm))],
-                  NoItinerary>
-{
+                  NoItinerary> {
   bits<12> FullImm;
   let ImmR = FullImm{5-0};
   let ImmS = FullImm{11-6};
@@ -1205,41 +1152,35 @@ def LSLxxi : A64I_bitfield_lsl<0b1, GPR64, bitfield64_lsl_imm>;
 // 5. Aliases for bitfield extract instructions
 //===-------------------------------
 
-def bfx32_width_asmoperand : AsmOperandClass
-{
+def bfx32_width_asmoperand : AsmOperandClass {
   let Name = "BFX32Width";
   let PredicateMethod = "isBitfieldWidth<32>";
   let RenderMethod = "addBFXWidthOperands";
 }
 
-def bfx32_width : Operand<i64>, ImmLeaf<i64, [{ return true; }]>
-{
+def bfx32_width : Operand<i64>, ImmLeaf<i64, [{ return true; }]> {
   let PrintMethod = "printBFXWidthOperand";
   let ParserMatchClass = bfx32_width_asmoperand;
 }
 
-def bfx64_width_asmoperand : AsmOperandClass
-{
+def bfx64_width_asmoperand : AsmOperandClass {
   let Name = "BFX64Width";
   let PredicateMethod = "isBitfieldWidth<64>";
   let RenderMethod = "addBFXWidthOperands";
 }
 
-def bfx64_width : Operand<i64>
-{
+def bfx64_width : Operand<i64> {
   let PrintMethod = "printBFXWidthOperand";
   let ParserMatchClass = bfx64_width_asmoperand;
 }
 
 
-multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op>
-{
+multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op> {
   def wwii : A64I_bitfield<0b0, opc, 0b0, (outs GPR32:$Rd),
                        (ins GPR32:$Rn, bitfield32_imm:$ImmR, bfx32_width:$ImmS),
                        !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
                        [(set GPR32:$Rd, (op GPR32:$Rn, imm:$ImmR, imm:$ImmS))],
-                       NoItinerary>
-  {
+                       NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1248,8 +1189,7 @@ multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op>
                        (ins GPR64:$Rn, bitfield64_imm:$ImmR, bfx64_width:$ImmS),
                        !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
                        [(set GPR64:$Rd, (op GPR64:$Rn, imm:$ImmR, imm:$ImmS))],
-                       NoItinerary>
-  {
+                       NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1261,8 +1201,7 @@ defm UBFX :  A64I_bitfield_extract<0b10, "ubfx", A64Ubfx>;
 // Again, variants based on BFM modify Rd so need it as an input too.
 def BFXILwwii : A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
            (ins GPR32:$src, GPR32:$Rn, bitfield32_imm:$ImmR, bfx32_width:$ImmS),
-           "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>
-{
+           "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
@@ -1270,8 +1209,7 @@ def BFXILwwii : A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
 
 def BFXILxxii : A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
            (ins GPR64:$src, GPR64:$Rn, bitfield64_imm:$ImmR, bfx64_width:$ImmS),
-           "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>
-{
+           "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
@@ -1285,34 +1223,33 @@ def : Pat<(i64 (sext_inreg (anyext GPR32:$Rn), i1)),
 
 // UBFX makes sense as an implementation of a 64-bit zero-extension too. Could
 // use either 64-bit or 32-bit variant, but 32-bit might be more efficient.
-def : Pat<(zext GPR32:$Rn), (SUBREG_TO_REG (i64 0), (UBFXwwii GPR32:$Rn, 0, 31), sub_32)>;
+def : Pat<(zext GPR32:$Rn), (SUBREG_TO_REG (i64 0), (UBFXwwii GPR32:$Rn, 0, 31),
+                                           sub_32)>;
 
 //===-------------------------------
 // 6. Aliases for bitfield insert instructions
 //===-------------------------------
 
-def bfi32_lsb_asmoperand : AsmOperandClass
-{
+def bfi32_lsb_asmoperand : AsmOperandClass {
   let Name = "BFI32LSB";
   let PredicateMethod = "isUImm<5>";
   let RenderMethod = "addBFILSBOperands<32>";
 }
 
-def bfi32_lsb : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31; }]>
-{
+def bfi32_lsb : Operand<i64>,
+                ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31; }]> {
   let PrintMethod = "printBFILSBOperand<32>";
   let ParserMatchClass = bfi32_lsb_asmoperand;
 }
 
-def bfi64_lsb_asmoperand : AsmOperandClass
-{
+def bfi64_lsb_asmoperand : AsmOperandClass {
   let Name = "BFI64LSB";
   let PredicateMethod = "isUImm<6>";
   let RenderMethod = "addBFILSBOperands<64>";
 }
 
-def bfi64_lsb : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]>
-{
+def bfi64_lsb : Operand<i64>,
+                ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]> {
   let PrintMethod = "printBFILSBOperand<64>";
   let ParserMatchClass = bfi64_lsb_asmoperand;
 }
@@ -1320,41 +1257,35 @@ def bfi64_lsb : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]>
 // Width verification is performed during conversion so width operand can be
 // shared between 32/64-bit cases. Still needed for the print method though
 // because ImmR encodes "width - 1".
-def bfi32_width_asmoperand : AsmOperandClass
-{
+def bfi32_width_asmoperand : AsmOperandClass {
   let Name = "BFI32Width";
   let PredicateMethod = "isBitfieldWidth<32>";
   let RenderMethod = "addBFIWidthOperands";
 }
 
 def bfi32_width : Operand<i64>,
-                  ImmLeaf<i64, [{ return Imm >= 1 && Imm <= 32; }]>
-{
+                  ImmLeaf<i64, [{ return Imm >= 1 && Imm <= 32; }]> {
   let PrintMethod = "printBFIWidthOperand";
   let ParserMatchClass = bfi32_width_asmoperand;
 }
 
-def bfi64_width_asmoperand : AsmOperandClass
-{
+def bfi64_width_asmoperand : AsmOperandClass {
   let Name = "BFI64Width";
   let PredicateMethod = "isBitfieldWidth<64>";
   let RenderMethod = "addBFIWidthOperands";
 }
 
 def bfi64_width : Operand<i64>,
-                  ImmLeaf<i64, [{ return Imm >= 1 && Imm <= 64; }]>
-{
+                  ImmLeaf<i64, [{ return Imm >= 1 && Imm <= 64; }]> {
   let PrintMethod = "printBFIWidthOperand";
   let ParserMatchClass = bfi64_width_asmoperand;
 }
 
-multiclass A64I_bitfield_insert<bits<2> opc, string asmop>
-{
+multiclass A64I_bitfield_insert<bits<2> opc, string asmop> {
   def wwii : A64I_bitfield<0b0, opc, 0b0, (outs GPR32:$Rd),
                            (ins GPR32:$Rn, bfi32_lsb:$ImmR, bfi32_width:$ImmS),
                            !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                           [], NoItinerary>
-  {
+                           [], NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1362,12 +1293,10 @@ multiclass A64I_bitfield_insert<bits<2> opc, string asmop>
   def xxii : A64I_bitfield<0b1, opc, 0b1, (outs GPR64:$Rd),
                            (ins GPR64:$Rn, bfi64_lsb:$ImmR, bfi64_width:$ImmS),
                            !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                           [], NoItinerary>
-  {
+                           [], NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
-
 }
 
 defm SBFIZ :  A64I_bitfield_insert<0b00, "sbfiz">;
@@ -1375,18 +1304,16 @@ defm UBFIZ :  A64I_bitfield_insert<0b10, "ubfiz">;
 
 
 def BFIwwii : A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
-                  (ins GPR32:$src, GPR32:$Rn, bfi32_lsb:$ImmR, bfi32_width:$ImmS),
-                  "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>
-{
+                (ins GPR32:$src, GPR32:$Rn, bfi32_lsb:$ImmR, bfi32_width:$ImmS),
+                "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
 }
 
 def BFIxxii : A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
-                  (ins GPR64:$src, GPR64:$Rn, bfi64_lsb:$ImmR, bfi64_width:$ImmS),
-                  "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>
-{
+                (ins GPR64:$src, GPR64:$Rn, bfi64_lsb:$ImmR, bfi64_width:$ImmS),
+                "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
@@ -1397,8 +1324,7 @@ def BFIxxii : A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
 //===----------------------------------------------------------------------===//
 // Contains: CBZ, CBNZ
 
-class label_asmoperand<int width, int scale> : AsmOperandClass
-{
+class label_asmoperand<int width, int scale> : AsmOperandClass {
   let Name = "Label" # width # "_" # scale;
   let PredicateMethod = "isLabel<" # width # "," # scale # ">";
   let RenderMethod = "addLabelOperands<" # width # ", " # scale # ">";
@@ -1408,8 +1334,7 @@ def label_wid19_scal4_asmoperand : label_asmoperand<19, 4>;
 
 // All conditional immediate branches are the same really: 19 signed bits scaled
 // by the instruction-size (4).
-def bcc_target : Operand<OtherVT>
-{
+def bcc_target : Operand<OtherVT> {
   // This label is a 19-bit offset from PC, scaled by the instruction-width: 4.
   let ParserMatchClass = label_wid19_scal4_asmoperand;
   let PrintMethod = "printLabelOperand<19, 4>";
@@ -1417,8 +1342,7 @@ def bcc_target : Operand<OtherVT>
   let OperandType = "OPERAND_PCREL";
 }
 
-multiclass cmpbr_sizes<bit op, string asmop, ImmLeaf SETOP>
-{
+multiclass cmpbr_sizes<bit op, string asmop, ImmLeaf SETOP> {
   let isBranch = 1, isTerminator = 1 in {
   def x : A64I_cmpbr<0b1, op,
                      (outs),
@@ -1448,15 +1372,13 @@ defm CBNZ : cmpbr_sizes<0b1, "cbnz", ImmLeaf<i32, [{
 //===----------------------------------------------------------------------===//
 // Contains: B.cc
 
-def cond_code_asmoperand : AsmOperandClass
-{
+def cond_code_asmoperand : AsmOperandClass {
   let Name = "CondCode";
 }
 
 def cond_code : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm <= 15;
-}]>
-{
+}]> {
   let PrintMethod = "printCondCodeOperand";
   let ParserMatchClass = cond_code_asmoperand;
 }
@@ -1464,8 +1386,7 @@ def cond_code : Operand<i32>, ImmLeaf<i32, [{
 def Bcc : A64I_condbr<0b0, 0b0, (outs),
                 (ins cond_code:$Cond, bcc_target:$Label),
                 "b.$Cond $Label", [(A64br_cc NZCV, (i32 imm:$Cond), bb:$Label)],
-                NoItinerary>
-{
+                NoItinerary> {
   let Uses = [NZCV];
   let isBranch = 1;
   let isTerminator = 1;
@@ -1476,36 +1397,31 @@ def Bcc : A64I_condbr<0b0, 0b0, (outs),
 //===----------------------------------------------------------------------===//
 // Contains: CCMN, CCMP
 
-def uimm4_asmoperand : AsmOperandClass
-{
+def uimm4_asmoperand : AsmOperandClass {
   let Name = "UImm4";
   let PredicateMethod = "isUImm<4>";
   let RenderMethod = "addImmOperands";
 }
 
-def uimm4 : Operand<i32>
-{
+def uimm4 : Operand<i32> {
   let ParserMatchClass = uimm4_asmoperand;
 }
 
-def uimm5 : Operand<i32>
-{
+def uimm5 : Operand<i32> {
   let ParserMatchClass = uimm5_asmoperand;
 }
 
 // The only difference between this operand and the one for instructions like
 // B.cc is that it's parsed manually. The other get parsed implicitly as part of
 // the mnemonic handling.
-def cond_code_op_asmoperand : AsmOperandClass
-{
+def cond_code_op_asmoperand : AsmOperandClass {
   let Name = "CondCodeOp";
   let RenderMethod = "addCondCodeOperands";
   let PredicateMethod = "isCondCode";
   let ParserMethod = "ParseCondCodeOperand";
 }
 
-def cond_code_op : Operand<i32>
-{
+def cond_code_op : Operand<i32> {
   let PrintMethod = "printCondCodeOperand";
   let ParserMatchClass = cond_code_op_asmoperand;
 }
@@ -1514,8 +1430,7 @@ class A64I_condcmpimmImpl<bit sf, bit op, RegisterClass GPR, string asmop>
   : A64I_condcmpimm<sf, op, 0b0, 0b0, 0b1, (outs),
                 (ins GPR:$Rn, uimm5:$UImm5, uimm4:$NZCVImm, cond_code_op:$Cond),
                 !strconcat(asmop, "\t$Rn, $UImm5, $NZCVImm, $Cond"),
-                [], NoItinerary>
-{
+                [], NoItinerary> {
   let Defs = [NZCV];
 }
 
@@ -1534,8 +1449,7 @@ class A64I_condcmpregImpl<bit sf, bit op, RegisterClass GPR, string asmop>
                     (outs),
                     (ins GPR:$Rn, GPR:$Rm, uimm4:$NZCVImm, cond_code_op:$Cond),
                     !strconcat(asmop, "\t$Rn, $Rm, $NZCVImm, $Cond"),
-                    [], NoItinerary>
-{
+                    [], NoItinerary> {
   let Defs = [NZCV];
 }
 
@@ -1551,16 +1465,14 @@ def CCMPxx : A64I_condcmpregImpl<0b1, 0b1, GPR64, "ccmp">;
 
 // Condition code which is encoded as the inversion (semantically rather than
 // bitwise) in the instruction.
-def inv_cond_code_op_asmoperand : AsmOperandClass
-{
+def inv_cond_code_op_asmoperand : AsmOperandClass {
   let Name = "InvCondCodeOp";
   let RenderMethod = "addInvCondCodeOperands";
   let PredicateMethod = "isCondCode";
   let ParserMethod = "ParseCondCodeOperand";
 }
 
-def inv_cond_code_op : Operand<i32>
-{
+def inv_cond_code_op : Operand<i32> {
   let ParserMatchClass = inv_cond_code_op_asmoperand;
 }
 
@@ -1576,10 +1488,8 @@ def inv_cond_code
 
 
 multiclass A64I_condselSizes<bit op, bits<2> op2, string asmop,
-                             SDPatternOperator select>
-{
-  let Uses = [NZCV] in
-  {
+                             SDPatternOperator select> {
+  let Uses = [NZCV] in {
     def wwwc : A64I_condsel<0b0, op, 0b0, op2,
                             (outs GPR32:$Rd),
                             (ins GPR32:$Rn, GPR32:$Rm, cond_code_op:$Cond),
@@ -1667,9 +1577,11 @@ def : Pat<(A64select_cc NZCV, -1, 0, inv_cond_code:$Cond),
 // No commutable pattern for CSEL since the commuted version is isomorphic.
 
 // CSINC
-def :Pat<(A64select_cc NZCV, (add GPR32:$Rm, 1), GPR32:$Rn, inv_cond_code:$Cond),
+def :Pat<(A64select_cc NZCV, (add GPR32:$Rm, 1), GPR32:$Rn,
+         inv_cond_code:$Cond),
          (CSINCwwwc GPR32:$Rn, GPR32:$Rm, inv_cond_code:$Cond)>;
-def :Pat<(A64select_cc NZCV, (add GPR64:$Rm, 1), GPR64:$Rn, inv_cond_code:$Cond),
+def :Pat<(A64select_cc NZCV, (add GPR64:$Rm, 1), GPR64:$Rn,
+         inv_cond_code:$Cond),
          (CSINCxxxc GPR64:$Rn, GPR64:$Rm, inv_cond_code:$Cond)>;
 
 // CSINV
@@ -1763,7 +1675,8 @@ multiclass dp_2src_zext <bits<6> opcode, string asmop, SDPatternOperator op> {
    def www : dp_2src_impl<0b0,
                          opcode,
                          asmop,
-                         [(set GPR32:$Rd, (op GPR32:$Rn, (i64 (zext GPR32:$Rm))))],
+                         [(set GPR32:$Rd,
+                               (op GPR32:$Rn, (i64 (zext GPR32:$Rm))))],
                          GPR32,
                          NoItinerary>;
    def xxx : dp_2src_impl<0b1,
@@ -1829,8 +1742,7 @@ class A64I_dp3_4operand<bit sf, bits<6> opcode, RegisterClass AccReg,
   : A64I_dp3<sf, opcode,
              (outs AccReg:$Rd), (ins SrcReg:$Rn, SrcReg:$Rm, AccReg:$Ra),
              !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Ra"),
-             [(set AccReg:$Rd, pattern)], NoItinerary>
-{
+             [(set AccReg:$Rd, pattern)], NoItinerary> {
   RegisterClass AccGPR = AccReg;
   RegisterClass SrcGPR = SrcReg;
 }
@@ -1855,8 +1767,7 @@ def UMADDLxwwx : A64I_dp3_4operand<0b1, 0b001010, GPR64, GPR32, "umaddl",
 def UMSUBLxwwx : A64I_dp3_4operand<0b1, 0b001011, GPR64, GPR32, "umsubl",
                (sub GPR64:$Ra, (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm)))>;
 
-let isCommutable = 1, PostEncoderMethod = "fixMulHigh" in
-{
+let isCommutable = 1, PostEncoderMethod = "fixMulHigh" in {
   def UMULHxxx : A64I_dp3<0b1, 0b001100, (outs GPR64:$Rd),
                           (ins GPR64:$Rn, GPR64:$Rm),
                           "umulh\t$Rd, $Rn, $Rm",
@@ -1871,8 +1782,7 @@ let isCommutable = 1, PostEncoderMethod = "fixMulHigh" in
 }
 
 multiclass A64I_dp3_3operand<string asmop, A64I_dp3_4operand INST,
-                             Register ZR, dag pattern>
-{
+                             Register ZR, dag pattern> {
   def : InstAlias<asmop # " $Rd, $Rn, $Rm",
                   (INST INST.AccGPR:$Rd, INST.SrcGPR:$Rn, INST.SrcGPR:$Rm, ZR)>;
 
@@ -1890,12 +1800,12 @@ defm : A64I_dp3_3operand<"mneg", MSUBxxxx, XZR,
 defm : A64I_dp3_3operand<"smull", SMADDLxwwx, XZR,
                          (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm))>;
 defm : A64I_dp3_3operand<"smnegl", SMSUBLxwwx, XZR,
-                        (sub 0, (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm)))>;
+                       (sub 0, (mul (i64 (sext GPR32:$Rn)), (sext GPR32:$Rm)))>;
 
 defm : A64I_dp3_3operand<"umull", UMADDLxwwx, XZR,
                          (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm))>;
 defm : A64I_dp3_3operand<"umnegl", UMSUBLxwwx, XZR,
-                        (sub 0, (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm)))>;
+                       (sub 0, (mul (i64 (zext GPR32:$Rn)), (zext GPR32:$Rm)))>;
 
 
 //===----------------------------------------------------------------------===//
@@ -1903,22 +1813,19 @@ defm : A64I_dp3_3operand<"umnegl", UMSUBLxwwx, XZR,
 //===----------------------------------------------------------------------===//
 // Contains: SVC, HVC, SMC, BRK, HLT, DCPS1, DCPS2, DCPS3
 
-def uimm16_asmoperand : AsmOperandClass
-{
+def uimm16_asmoperand : AsmOperandClass {
   let Name = "UImm16";
   let PredicateMethod = "isUImm<16>";
   let RenderMethod = "addImmOperands";
 }
 
-def uimm16 : Operand<i32>
-{
+def uimm16 : Operand<i32> {
   let ParserMatchClass = uimm16_asmoperand;
 }
 
 class A64I_exceptImpl<bits<3> opc, bits<2> ll, string asmop>
   : A64I_exception<opc, 0b000, ll, (outs), (ins uimm16:$UImm16),
-                   !strconcat(asmop, "\t$UImm16"), [], NoItinerary>
-{
+                   !strconcat(asmop, "\t$UImm16"), [], NoItinerary> {
   let isBranch = 1;
   let isTerminator = 1;
 }
@@ -1973,38 +1880,34 @@ def : Pat<(rotr GPR64:$Rn, bitfield64_imm:$LSB),
 //===----------------------------------------------------------------------===//
 // Contains: FCMP, FCMPE
 
-def fpzero_asmoperand : AsmOperandClass
-{
+def fpzero_asmoperand : AsmOperandClass {
   let Name = "FPZero";
   let ParserMethod = "ParseFPImmOperand";
 }
 
-def fpz32 : Operand<f32>, ComplexPattern<f32, 1, "SelectFPZeroOperand", [fpimm]>
-{
+def fpz32 : Operand<f32>,
+            ComplexPattern<f32, 1, "SelectFPZeroOperand", [fpimm]> {
   let ParserMatchClass = fpzero_asmoperand;
   let PrintMethod = "printFPZeroOperand";
 }
 
-def fpz64 : Operand<f64>, ComplexPattern<f64, 1, "SelectFPZeroOperand", [fpimm]>
-{
+def fpz64 : Operand<f64>,
+            ComplexPattern<f64, 1, "SelectFPZeroOperand", [fpimm]> {
   let ParserMatchClass = fpzero_asmoperand;
   let PrintMethod = "printFPZeroOperand";
 }
 
 multiclass A64I_fpcmpSignal<bits<2> type, bit imm, dag ins, string asmop2,
-                            dag pattern>
-{
+                            dag pattern> {
   def _quiet : A64I_fpcmp<0b0, 0b0, type, 0b00, {0b0, imm, 0b0, 0b0, 0b0},
                           (outs), ins, !strconcat("fcmp\t$Rn, ", asmop2),
-                          [pattern], NoItinerary>
-  {
+                          [pattern], NoItinerary> {
     let Defs = [NZCV];
   }
 
   def _sig : A64I_fpcmp<0b0, 0b0, type, 0b00, {0b1, imm, 0b0, 0b0, 0b0},
                         (outs), ins, !strconcat("fcmpe\t$Rn, ", asmop2),
-                        [], NoItinerary>
-  {
+                        [], NoItinerary> {
     let Defs = [NZCV];
   }
 }
@@ -2016,8 +1919,7 @@ defm FCMPdd : A64I_fpcmpSignal<0b01, 0b0, (ins FPR64:$Rn, FPR64:$Rm), "$Rm",
 
 // What would be Rm should be written as 0, but anything is valid for
 // disassembly so we can't set the bits
-let PostEncoderMethod = "fixFCMPImm" in
-{
+let PostEncoderMethod = "fixFCMPImm" in {
   defm FCMPsi : A64I_fpcmpSignal<0b00, 0b1, (ins FPR32:$Rn, fpz32:$Imm), "$Imm",
                               (set NZCV, (A64cmp (f32 FPR32:$Rn), fpz32:$Imm))>;
 
@@ -2036,8 +1938,7 @@ class A64I_fpccmpImpl<bits<2> type, bit op, RegisterClass FPR, string asmop>
                 (outs),
                 (ins FPR:$Rn, FPR:$Rm, uimm4:$NZCVImm, cond_code_op:$Cond),
                 !strconcat(asmop, "\t$Rn, $Rm, $NZCVImm, $Cond"),
-                [], NoItinerary>
-{
+                [], NoItinerary> {
   let Defs = [NZCV];
 }
 
@@ -2051,8 +1952,7 @@ def FCCMPEdd : A64I_fpccmpImpl<0b01, 0b1, FPR64, "fccmpe">;
 //===----------------------------------------------------------------------===//
 // Contains: FCSEL
 
-let Uses = [NZCV] in
-{
+let Uses = [NZCV] in {
   def FCSELsssc : A64I_fpcondsel<0b0, 0b0, 0b00, (outs FPR32:$Rd),
                                  (ins FPR32:$Rn, FPR32:$Rm, cond_code_op:$Cond),
                                  "fcsel\t$Rd, $Rn, $Rm, $Cond",
@@ -2082,8 +1982,7 @@ def FPNoUnop : PatFrag<(ops node:$val), (fneg node:$val),
 // First we do the fairly trivial bunch with uniform "OP s, s" and "OP d, d"
 // syntax. Default to no pattern because most are odd enough not to have one.
 multiclass A64I_fpdp1sizes<bits<6> opcode, string asmstr,
-                           SDPatternOperator opnode = FPNoUnop>
-{
+                           SDPatternOperator opnode = FPNoUnop> {
   def ss : A64I_fpdp1<0b0, 0b0, 0b00, opcode, (outs FPR32:$Rd), (ins FPR32:$Rn),
                      !strconcat(asmstr, "\t$Rd, $Rn"),
                      [(set (f32 FPR32:$Rd), (opnode FPR32:$Rn))],
@@ -2111,8 +2010,7 @@ defm FRINTI : A64I_fpdp1sizes<0b001111, "frinti", fnearbyint>;
 // The FCVT instrucitons have different source and destination register-types,
 // but the fields are uniform everywhere a D-register (say) crops up. Package
 // this information in a Record.
-class FCVTRegType<RegisterClass rc, bits<2> fld, ValueType vt>
-{
+class FCVTRegType<RegisterClass rc, bits<2> fld, ValueType vt> {
     RegisterClass Class = rc;
     ValueType VT = vt;
     bit t1 = fld{1};
@@ -2148,8 +2046,7 @@ def FPNoBinop : PatFrag<(ops node:$lhs, node:$rhs), (fadd node:$lhs, node:$rhs),
                       [{ (void)N; return false; }]>;
 
 multiclass A64I_fpdp2sizes<bits<4> opcode, string asmstr,
-                           SDPatternOperator opnode>
-{
+                           SDPatternOperator opnode> {
   def sss : A64I_fpdp2<0b0, 0b0, 0b00, opcode,
                       (outs FPR32:$Rd),
                       (ins FPR32:$Rn, FPR32:$Rm),
@@ -2219,16 +2116,14 @@ def FNMSUBdddd : A64I_fpdp3Impl<"fnmsub", FPR64, f64, 0b01, 0b1, 0b1, fnmsub>;
 // Contains: FCVTZS, FCVTZU, SCVTF, UCVTF
 
 // #1-#32 allowed, encoded as "64 - <specified imm>
-def fixedpos_asmoperand_i32 : AsmOperandClass
-{
+def fixedpos_asmoperand_i32 : AsmOperandClass {
   let Name = "CVTFixedPos32";
   let RenderMethod = "addCVTFixedPosOperands";
   let PredicateMethod = "isCVTFixedPos<32>";
 }
 
 // Also encoded as "64 - <specified imm>" but #1-#64 allowed.
-def fixedpos_asmoperand_i64 : AsmOperandClass
-{
+def fixedpos_asmoperand_i64 : AsmOperandClass {
   let Name = "CVTFixedPos64";
   let RenderMethod = "addCVTFixedPosOperands";
   let PredicateMethod = "isCVTFixedPos<64>";
@@ -2240,8 +2135,7 @@ def fixedpos_asmoperand_i64 : AsmOperandClass
 //   + Assembly parsing and decoding depend on integer width
 class cvtfix_i32_op<ValueType FloatVT>
   : Operand<FloatVT>,
-    ComplexPattern<FloatVT, 1, "SelectCVTFixedPosOperand<32>", [fpimm]>
-{
+    ComplexPattern<FloatVT, 1, "SelectCVTFixedPosOperand<32>", [fpimm]> {
   let ParserMatchClass = fixedpos_asmoperand_i32;
   let DecoderMethod = "DecodeCVT32FixedPosOperand";
   let PrintMethod = "printCVTFixedPosOperand";
@@ -2249,8 +2143,7 @@ class cvtfix_i32_op<ValueType FloatVT>
 
 class cvtfix_i64_op<ValueType FloatVT>
   : Operand<FloatVT>,
-    ComplexPattern<FloatVT, 1, "SelectCVTFixedPosOperand<64>", [fpimm]>
-{
+    ComplexPattern<FloatVT, 1, "SelectCVTFixedPosOperand<64>", [fpimm]> {
   let ParserMatchClass = fixedpos_asmoperand_i64;
   let PrintMethod = "printCVTFixedPosOperand";
 }
@@ -2322,17 +2215,24 @@ class A64I_fpintI<bit sf, bits<2> type, bits<2> rmode, bits<3> opcode,
   : A64I_fpint<sf, 0b0, type, rmode, opcode, (outs DestPR:$Rd), (ins SrcPR:$Rn),
                !strconcat(asmop, "\t$Rd, $Rn"), [], NoItinerary>;
 
-multiclass A64I_fptointRM<bits<2> rmode, bit o2, string asmop>
-{
-  def Sws : A64I_fpintI<0b0, 0b00, rmode, {o2, 0, 0}, GPR32, FPR32, asmop # "s">;
-  def Sxs : A64I_fpintI<0b1, 0b00, rmode, {o2, 0, 0}, GPR64, FPR32, asmop # "s">;
-  def Uws : A64I_fpintI<0b0, 0b00, rmode, {o2, 0, 1}, GPR32, FPR32, asmop # "u">;
-  def Uxs : A64I_fpintI<0b1, 0b00, rmode, {o2, 0, 1}, GPR64, FPR32, asmop # "u">;
+multiclass A64I_fptointRM<bits<2> rmode, bit o2, string asmop> {
+  def Sws : A64I_fpintI<0b0, 0b00, rmode, {o2, 0, 0},
+                        GPR32, FPR32, asmop # "s">;
+  def Sxs : A64I_fpintI<0b1, 0b00, rmode, {o2, 0, 0},
+                        GPR64, FPR32, asmop # "s">;
+  def Uws : A64I_fpintI<0b0, 0b00, rmode, {o2, 0, 1},
+                        GPR32, FPR32, asmop # "u">;
+  def Uxs : A64I_fpintI<0b1, 0b00, rmode, {o2, 0, 1},
+                        GPR64, FPR32, asmop # "u">;
 
-  def Swd : A64I_fpintI<0b0, 0b01, rmode, {o2, 0, 0}, GPR32, FPR64, asmop # "s">;
-  def Sxd : A64I_fpintI<0b1, 0b01, rmode, {o2, 0, 0}, GPR64, FPR64, asmop # "s">;
-  def Uwd : A64I_fpintI<0b0, 0b01, rmode, {o2, 0, 1}, GPR32, FPR64, asmop # "u">;
-  def Uxd : A64I_fpintI<0b1, 0b01, rmode, {o2, 0, 1}, GPR64, FPR64, asmop # "u">;
+  def Swd : A64I_fpintI<0b0, 0b01, rmode, {o2, 0, 0},
+                        GPR32, FPR64, asmop # "s">;
+  def Sxd : A64I_fpintI<0b1, 0b01, rmode, {o2, 0, 0},
+                        GPR64, FPR64, asmop # "s">;
+  def Uwd : A64I_fpintI<0b0, 0b01, rmode, {o2, 0, 1},
+                        GPR32, FPR64, asmop # "u">;
+  def Uxd : A64I_fpintI<0b1, 0b01, rmode, {o2, 0, 1},
+                        GPR64, FPR64, asmop # "u">;
 }
 
 defm FCVTN : A64I_fptointRM<0b00, 0b0, "fcvtn">;
@@ -2350,8 +2250,7 @@ def : Pat<(i64 (fp_to_sint (f64 FPR64:$Rn))), (FCVTZSxd FPR64:$Rn)>;
 def : Pat<(i32 (fp_to_uint (f64 FPR64:$Rn))), (FCVTZUwd FPR64:$Rn)>;
 def : Pat<(i64 (fp_to_uint (f64 FPR64:$Rn))), (FCVTZUxd FPR64:$Rn)>;
 
-multiclass A64I_inttofp<bit o0, string asmop>
-{
+multiclass A64I_inttofp<bit o0, string asmop> {
   def CVTFsw : A64I_fpintI<0b0, 0b00, 0b00, {0, 1, o0}, FPR32, GPR32, asmop>;
   def CVTFsx : A64I_fpintI<0b1, 0b00, 0b00, {0, 1, o0}, FPR32, GPR64, asmop>;
   def CVTFdw : A64I_fpintI<0b0, 0b01, 0b00, {0, 1, o0}, FPR64, GPR32, asmop>;
@@ -2380,20 +2279,17 @@ def : Pat<(f32 (bitconvert (i32 GPR32:$Rn))), (FMOVsw GPR32:$Rn)>;
 def : Pat<(i64 (bitconvert (f64 FPR64:$Rn))), (FMOVxd FPR64:$Rn)>;
 def : Pat<(f64 (bitconvert (i64 GPR64:$Rn))), (FMOVdx GPR64:$Rn)>;
 
-def lane1_asmoperand : AsmOperandClass
-{
+def lane1_asmoperand : AsmOperandClass {
   let Name = "Lane1";
   let RenderMethod = "addImmOperands";
 }
 
-def lane1 : Operand<i32>
-{
+def lane1 : Operand<i32> {
   let ParserMatchClass = lane1_asmoperand;
   let PrintMethod = "printBareImmOperand";
 }
 
-let DecoderMethod =  "DecodeFMOVLaneInstruction" in
-{
+let DecoderMethod =  "DecodeFMOVLaneInstruction" in {
   def FMOVxv : A64I_fpint<0b1, 0b0, 0b10, 0b01, 0b110,
                           (outs GPR64:$Rd), (ins VPR128:$Rn, lane1:$Lane),
                           "fmov\t$Rd, $Rn.d[$Lane]", [], NoItinerary>;
@@ -2414,8 +2310,7 @@ def : InstAlias<"fmov $Rd.2d[$Lane], $Rn",
 //===----------------------------------------------------------------------===//
 // Contains: FMOV
 
-def fpimm_asmoperand : AsmOperandClass
-{
+def fpimm_asmoperand : AsmOperandClass {
   let Name = "FMOVImm";
   let ParserMethod = "ParseFPImmOperand";
 }
@@ -2430,8 +2325,7 @@ def SDXF_fpimm : SDNodeXForm<fpimm, [{
 class fmov_operand<ValueType FT>
   : Operand<i32>,
     PatLeaf<(FT fpimm), [{ return A64Imms::isFPImm(N->getValueAPF()); }],
-            SDXF_fpimm>
-{
+            SDXF_fpimm> {
   let PrintMethod = "printFPImmOperand";
   let ParserMatchClass = fpimm_asmoperand;
 }
@@ -2456,14 +2350,12 @@ def FMOVdi : A64I_fpimm_impl<0b01, FPR64, f64, fmov64_operand>;
 //===----------------------------------------------------------------------===//
 // Contains: LDR, LDRSW, PRFM
 
-def ldrlit_label_asmoperand : AsmOperandClass
-{
+def ldrlit_label_asmoperand : AsmOperandClass {
   let Name = "LoadLitLabel";
   let RenderMethod = "addLabelOperands<19, 4>";
 }
 
-def ldrlit_label : Operand<i64>
-{
+def ldrlit_label : Operand<i64> {
   let EncoderMethod = "getLoadLitLabelOpValue";
 
   // This label is a 19-bit offset from PC, scaled by the instruction-width: 4.
@@ -2475,18 +2367,15 @@ def ldrlit_label : Operand<i64>
 // Various instructions take an immediate value (which can always be used),
 // where some numbers have a symbolic name to make things easier. These operands
 // and the associated functions abstract away the differences.
-multiclass namedimm<string prefix, string mapper>
-{
-  def _asmoperand : AsmOperandClass
-  {
+multiclass namedimm<string prefix, string mapper> {
+  def _asmoperand : AsmOperandClass {
     let Name = "NamedImm" # prefix;
     let PredicateMethod = "isUImm";
     let RenderMethod = "addImmOperands";
     let ParserMethod = "ParseNamedImmOperand<" # mapper # ">";
   }
 
-  def _op : Operand<i32>
-  {
+  def _op : Operand<i32> {
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "_asmoperand");
     let PrintMethod = "printNamedImmOperand<" # mapper # ">";
     let DecoderMethod = "DecodeNamedImmOperand<" # mapper # ">";
@@ -2500,8 +2389,7 @@ class A64I_LDRlitSimple<bits<2> opc, bit v, RegisterClass OutReg,
    : A64I_LDRlit<opc, v, (outs OutReg:$Rt), (ins ldrlit_label:$Imm19),
                  "ldr\t$Rt, $Imm19", patterns, NoItinerary>;
 
-let mayLoad = 1 in
-{
+let mayLoad = 1 in {
   def LDRw_lit : A64I_LDRlitSimple<0b00, 0b0, GPR32>;
   def LDRx_lit : A64I_LDRlitSimple<0b01, 0b0, GPR64>;
 }
@@ -2511,8 +2399,7 @@ def LDRs_lit  : A64I_LDRlitSimple<0b00, 0b1, FPR32,
 def LDRd_lit  : A64I_LDRlitSimple<0b01, 0b1, FPR64,
                               [(set (f64 FPR64:$Rt), (load constpool:$Imm19))]>;
 
-let mayLoad = 1 in
-{
+let mayLoad = 1 in {
   def LDRq_lit : A64I_LDRlitSimple<0b10, 0b1, FPR128>;
 
 
@@ -2548,16 +2435,14 @@ let mayLoad = 1 in
 
 // This operand parses a GPR64xsp register, followed by an optional immediate
 // #0.
-def GPR64xsp0_asmoperand : AsmOperandClass
-{
+def GPR64xsp0_asmoperand : AsmOperandClass {
   let Name = "GPR64xsp0";
   let PredicateMethod = "isWrappedReg";
   let RenderMethod = "addRegOperands";
   let ParserMethod = "ParseLSXAddressOperand";
 }
 
-def GPR64xsp0 : RegisterOperand<GPR64xsp>
-{
+def GPR64xsp0 : RegisterOperand<GPR64xsp> {
   let ParserMatchClass = GPR64xsp0_asmoperand;
 }
 
@@ -2568,7 +2453,7 @@ def GPR64xsp0 : RegisterOperand<GPR64xsp>
 class A64I_SRexs_impl<bits<2> size, bits<3> opcode, string asm, dag outs,
                         dag ins, list<dag> pat,
                         InstrItinClass itin> :
-	    A64I_LDSTex_stn <size,
+       A64I_LDSTex_stn <size,
                         opcode{2}, 0, opcode{1}, opcode{0},
                         outs, ins,
                         !strconcat(asm, "\t$Rs, $Rt, [$Rn]"),
@@ -2605,7 +2490,7 @@ defm STLXR : A64I_SRex<"stlxr", 0b001, "STLXR">;
 class A64I_LRexs_impl<bits<2> size, bits<3> opcode, string asm, dag outs,
                         dag ins, list<dag> pat,
                         InstrItinClass itin> :
-	    A64I_LDSTex_tn <size,
+        A64I_LDSTex_tn <size,
                         opcode{2}, 1, opcode{1}, opcode{0},
                         outs, ins,
                         !strconcat(asm, "\t$Rt, [$Rn]"),
@@ -2658,7 +2543,7 @@ def : Pat<(atomic_load_acquire_64 GPR64xsp:$Rn), (LDAR_dword GPR64xsp0:$Rn)>;
 class A64I_SLexs_impl<bits<2> size, bits<3> opcode, string asm, dag outs,
                         dag ins, list<dag> pat,
                         InstrItinClass itin> :
-	    A64I_LDSTex_tn <size,
+        A64I_LDSTex_tn <size,
                         opcode{2}, 0, opcode{1}, opcode{0},
                         outs, ins,
                         !strconcat(asm, "\t$Rt, [$Rn]"),
@@ -2708,12 +2593,11 @@ defm STLR  : A64I_SLex<"stlr", 0b101, "STLR">;
 class A64I_SPexs_impl<bits<2> size, bits<3> opcode, string asm, dag outs,
                         dag ins, list<dag> pat,
                         InstrItinClass itin> :
-	    A64I_LDSTex_stt2n <size,
+     A64I_LDSTex_stt2n <size,
                         opcode{2}, 0, opcode{1}, opcode{0},
                         outs, ins,
                         !strconcat(asm, "\t$Rs, $Rt, $Rt2, [$Rn]"),
-                        pat, itin>
-{
+                        pat, itin> {
   let mayStore = 1;
 }
 
@@ -2740,7 +2624,7 @@ defm STLXP : A64I_SPex<"stlxp", 0b011>;
 class A64I_LPexs_impl<bits<2> size, bits<3> opcode, string asm, dag outs,
                         dag ins, list<dag> pat,
                         InstrItinClass itin> :
-	    A64I_LDSTex_tt2n <size,
+      A64I_LDSTex_tt2n <size,
                         opcode{2}, 1, opcode{1}, opcode{0},
                         outs, ins,
                         !strconcat(asm, "\t$Rt, $Rt2, [$Rn]"),
@@ -2828,10 +2712,8 @@ defm LDAXP : A64I_LPex<"ldaxp", 0b011>;
 // 1.1 Unsigned 12-bit immediate operands
 //===-------------------------------
 
-multiclass offsets_uimm12<int MemSize, string prefix>
-{
-  def uimm12_asmoperand : AsmOperandClass
-  {
+multiclass offsets_uimm12<int MemSize, string prefix> {
+  def uimm12_asmoperand : AsmOperandClass {
     let Name = "OffsetUImm12_" # MemSize;
     let PredicateMethod = "isOffsetUImm12<" # MemSize # ">";
     let RenderMethod = "addOffsetUImm12Operands<" # MemSize # ">";
@@ -2840,8 +2722,7 @@ multiclass offsets_uimm12<int MemSize, string prefix>
   // Pattern is really no more than an ImmLeaf, but predicated on MemSize which
   // complicates things beyond TableGen's ken.
   def uimm12 : Operand<i64>,
-               ComplexPattern<i64, 1, "SelectOffsetUImm12<" # MemSize # ">">
-  {
+               ComplexPattern<i64, 1, "SelectOffsetUImm12<" # MemSize # ">"> {
     let ParserMatchClass
       = !cast<AsmOperandClass>(prefix # uimm12_asmoperand);
 
@@ -2866,8 +2747,7 @@ def SDXF_simm9 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue() & 0x1ff, MVT::i32);
 }]>;
 
-def simm9_asmoperand : AsmOperandClass
-{
+def simm9_asmoperand : AsmOperandClass {
   let Name = "SImm9";
   let PredicateMethod = "isSImm<9>";
   let RenderMethod = "addSImmOperands<9>";
@@ -2875,8 +2755,7 @@ def simm9_asmoperand : AsmOperandClass
 
 def simm9 : Operand<i64>,
             ImmLeaf<i64, [{ return Imm >= -0x100 && Imm <= 0xff; }],
-            SDXF_simm9>
-{
+            SDXF_simm9> {
   let PrintMethod = "printOffsetSImm9Operand";
   let ParserMatchClass = simm9_asmoperand;
 }
@@ -2899,17 +2778,14 @@ def simm9 : Operand<i64>,
 // which will need separate instructions for LLVM type-consistency. We'll also
 // need separate operands, of course.
 multiclass regexts<int MemSize, int RmSize, RegisterClass GPR,
-                   string Rm, string prefix>
-{
-  def regext_asmoperand : AsmOperandClass
-  {
+                   string Rm, string prefix> {
+  def regext_asmoperand : AsmOperandClass {
     let Name = "AddrRegExtend_" # MemSize # "_" #  Rm;
     let PredicateMethod = "isAddrRegExtend<" # MemSize # "," # RmSize # ">";
     let RenderMethod = "addAddrRegExtendOperands<" # MemSize # ">";
   }
 
-  def regext : Operand<i64>
-  {
+  def regext : Operand<i64> {
     let PrintMethod
       = "printAddrRegExtendOperand<" # MemSize # ", " # RmSize # ">";
 
@@ -2919,8 +2795,7 @@ multiclass regexts<int MemSize, int RmSize, RegisterClass GPR,
   }
 }
 
-multiclass regexts_wx<int MemSize, string prefix>
-{
+multiclass regexts_wx<int MemSize, string prefix> {
   // Rm is an X-register if LSL or SXTX are specified as the shift.
   defm Xm_ : regexts<MemSize, 64, GPR64, "Xm", prefix # "Xm_">;
 
@@ -2959,8 +2834,7 @@ defm qword_ : regexts_wx<16, "qword_">;
 // This class covers the basic unsigned or irrelevantly-signed loads and stores,
 // to general-purpose and floating-point registers.
 
-class AddrParams<string prefix>
-{
+class AddrParams<string prefix> {
   Operand uimm12 = !cast<Operand>(prefix # "_uimm12");
 
   Operand regextWm = !cast<Operand>(prefix # "_Wm_regext");
@@ -2975,14 +2849,12 @@ def qword_addrparams : AddrParams<"qword">;
 
 multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                 bit high_opc, string asmsuffix,
-                                RegisterClass GPR, AddrParams params>
-{
+                                RegisterClass GPR, AddrParams params> {
   // Unsigned immediate
   def _STR : A64I_LSunsigimm<size, v, {high_opc, 0b0},
                      (outs), (ins GPR:$Rt, GPR64xsp:$Rn, params.uimm12:$UImm12),
                      "str" # asmsuffix # "\t$Rt, [$Rn, $UImm12]",
-                     [], NoItinerary>
-  {
+                     [], NoItinerary> {
     let mayStore = 1;
   }
   def : InstAlias<"str" # asmsuffix # " $Rt, [$Rn]",
@@ -2991,16 +2863,14 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
   def _LDR : A64I_LSunsigimm<size, v, {high_opc, 0b1},
                       (outs GPR:$Rt), (ins GPR64xsp:$Rn, params.uimm12:$UImm12),
                       "ldr" #  asmsuffix # "\t$Rt, [$Rn, $UImm12]",
-                      [], NoItinerary>
-  {
+                      [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldr" # asmsuffix # " $Rt, [$Rn]",
                 (!cast<Instruction>(prefix # "_LDR") GPR:$Rt, GPR64xsp:$Rn, 0)>;
 
   // Register offset (four of these: load/store and Wm/Xm).
-  let mayLoad = 1 in
-  {
+  let mayLoad = 1 in {
     def _Wm_RegOffset_LDR : A64I_LSregoff<size, v, {high_opc, 0b1}, 0b0,
                             (outs GPR:$Rt),
                             (ins GPR64xsp:$Rn, GPR32:$Rm, params.regextWm:$Ext),
@@ -3017,8 +2887,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
         (!cast<Instruction>(prefix # "_Xm_RegOffset_LDR") GPR:$Rt, GPR64xsp:$Rn,
                                                           GPR64:$Rm, 2)>;
 
-  let mayStore = 1 in
-  {
+  let mayStore = 1 in {
     def _Wm_RegOffset_STR : A64I_LSregoff<size, v, {high_opc, 0b0}, 0b0,
                                   (outs), (ins GPR:$Rt, GPR64xsp:$Rn, GPR32:$Rm,
                                                params.regextWm:$Ext),
@@ -3039,8 +2908,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
   def _STUR : A64I_LSunalimm<size, v, {high_opc, 0b0},
                              (outs), (ins GPR:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                              "stur" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                             [], NoItinerary>
-  {
+                             [], NoItinerary> {
     let mayStore = 1;
   }
   def : InstAlias<"stur" # asmsuffix # " $Rt, [$Rn]",
@@ -3049,8 +2917,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
   def _LDUR : A64I_LSunalimm<size, v, {high_opc, 0b1},
                              (outs GPR:$Rt), (ins GPR64xsp:$Rn, simm9:$SImm9),
                              "ldur" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                             [], NoItinerary>
-  {
+                             [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldur" # asmsuffix # " $Rt, [$Rn]",
@@ -3061,8 +2928,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                (outs GPR64xsp:$Rn_wb),
                                (ins GPR:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                                "str" # asmsuffix # "\t$Rt, [$Rn], $SImm9",
-                               [], NoItinerary>
-  {
+                               [], NoItinerary> {
     let Constraints = "$Rn = $Rn_wb";
     let mayStore = 1;
 
@@ -3074,8 +2940,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                     (outs GPR:$Rt, GPR64xsp:$Rn_wb),
                                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                                     "ldr" # asmsuffix # "\t$Rt, [$Rn], $SImm9",
-                                    [], NoItinerary>
-  {
+                                    [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3086,8 +2951,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                (outs GPR64xsp:$Rn_wb),
                                (ins GPR:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                                "str" # asmsuffix # "\t$Rt, [$Rn, $SImm9]!",
-                               [], NoItinerary>
-  {
+                               [], NoItinerary> {
     let Constraints = "$Rn = $Rn_wb";
     let mayStore = 1;
 
@@ -3099,8 +2963,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                     (outs GPR:$Rt, GPR64xsp:$Rn_wb),
                                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                                     "ldr" # asmsuffix # "\t$Rt, [$Rn, $SImm9]!",
-                                    [], NoItinerary>
-  {
+                                    [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3141,7 +3004,8 @@ defm LSFP64
   : A64I_LDRSTR_unsigned<"LSFP64", 0b11, 0b1, 0b0, "", FPR64, dword_addrparams>;
 // STR/LDR to/from a Q register
 defm LSFP128
-  : A64I_LDRSTR_unsigned<"LSFP128", 0b00, 0b1, 0b1, "", FPR128, qword_addrparams>;
+  : A64I_LDRSTR_unsigned<"LSFP128", 0b00, 0b1, 0b1, "", FPR128,
+                         qword_addrparams>;
 
 //===------------------------------
 // 2.3 Signed loads
@@ -3151,15 +3015,13 @@ defm LSFP128
 // so it's worth factoring out. Signed word loads don't fit because there is no
 // W version.
 multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
-                           string prefix>
-{
+                           string prefix> {
   // Unsigned offset
   def w : A64I_LSunsigimm<size, 0b0, 0b11,
                           (outs GPR32:$Rt),
                           (ins GPR64xsp:$Rn, params.uimm12:$UImm12),
                           "ldrs" # asmopcode # "\t$Rt, [$Rn, $UImm12]",
-                          [], NoItinerary>
-  {
+                          [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldrs" # asmopcode # " $Rt, [$Rn]",
@@ -3169,16 +3031,14 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                           (outs GPR64:$Rt),
                           (ins GPR64xsp:$Rn, params.uimm12:$UImm12),
                           "ldrs" # asmopcode # "\t$Rt, [$Rn, $UImm12]",
-                          [], NoItinerary>
-  {
+                          [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldrs" # asmopcode # " $Rt, [$Rn]",
                   (!cast<Instruction>(prefix # x) GPR64:$Rt, GPR64xsp:$Rn, 0)>;
 
   // Register offset
-  let mayLoad = 1 in
-  {
+  let mayLoad = 1 in {
     def w_Wm_RegOffset : A64I_LSregoff<size, 0b0, 0b11, 0b0,
                             (outs GPR32:$Rt),
                             (ins GPR64xsp:$Rn, GPR32:$Rm, params.regextWm:$Ext),
@@ -3212,8 +3072,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                                        GPR64:$Rm, 2)>;
 
 
-  let mayLoad = 1 in
-  {
+  let mayLoad = 1 in {
     // Unaligned offset
     def w_U : A64I_LSunalimm<size, 0b0, 0b11,
                              (outs GPR32:$Rt),
@@ -3233,8 +3092,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                  (outs GPR32:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrs" # asmopcode # "\t$Rt, [$Rn], $SImm9",
-                                 [], NoItinerary>
-    {
+                                 [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3243,8 +3101,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                    (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                                    (ins GPR64xsp:$Rn, simm9:$SImm9),
                                    "ldrs" # asmopcode # "\t$Rt, [$Rn], $SImm9",
-                                   [], NoItinerary>
-    {
+                                   [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3254,8 +3111,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                  (outs GPR32:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrs" # asmopcode # "\t$Rt, [$Rn, $SImm9]!",
-                                 [], NoItinerary>
-    {
+                                 [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3264,8 +3120,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                  (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrs" # asmopcode # "\t$Rt, [$Rn, $SImm9]!",
-                                 [], NoItinerary>
-    {
+                                 [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3283,14 +3138,12 @@ def LDRSWx
                     (outs GPR64:$Rt),
                     (ins GPR64xsp:$Rn, word_uimm12:$UImm12),
                     "ldrsw\t$Rt, [$Rn, $UImm12]",
-                    [], NoItinerary>
-{
+                    [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"ldrsw $Rt, [$Rn]", (LDRSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
 
-let mayLoad = 1 in
-{
+let mayLoad = 1 in {
   def LDRSWx_Wm_RegOffset : A64I_LSregoff<0b10, 0b0, 0b10, 0b0,
                              (outs GPR64:$Rt),
                              (ins GPR64xsp:$Rn, GPR32:$Rm, word_Wm_regext:$Ext),
@@ -3312,8 +3165,7 @@ def LDURSWx
                     (outs GPR64:$Rt),
                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                     "ldursw\t$Rt, [$Rn, $SImm9]",
-                    [], NoItinerary>
-{
+                    [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"ldursw $Rt, [$Rn]", (LDURSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
@@ -3323,8 +3175,7 @@ def LDRSWx_PostInd
                     (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                     "ldrsw\t$Rt, [$Rn], $SImm9",
-                    [], NoItinerary>
-{
+                    [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3334,8 +3185,7 @@ def LDRSWx_PreInd : A64I_LSpreind<0b10, 0b0, 0b10,
                                  (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrsw\t$Rt, [$Rn, $SImm9]!",
-                                 [], NoItinerary>
-{
+                                 [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3348,15 +3198,13 @@ def LDRSWx_PreInd : A64I_LSpreind<0b10, 0b0, 0b10,
 def PRFM : A64I_LSunsigimm<0b11, 0b0, 0b10, (outs),
                  (ins prefetch_op:$Rt, GPR64xsp:$Rn, dword_uimm12:$UImm12),
                  "prfm\t$Rt, [$Rn, $UImm12]",
-                 [], NoItinerary>
-{
+                 [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"prfm $Rt, [$Rn]",
                 (PRFM prefetch_op:$Rt, GPR64xsp:$Rn, 0)>;
 
-let mayLoad = 1 in
-{
+let mayLoad = 1 in {
   def PRFM_Wm_RegOffset : A64I_LSregoff<0b11, 0b0, 0b10, 0b0, (outs),
                                         (ins prefetch_op:$Rt, GPR64xsp:$Rn,
                                              GPR32:$Rm, dword_Wm_regext:$Ext),
@@ -3377,8 +3225,7 @@ def : InstAlias<"prfm $Rt, [$Rn, $Rm]",
 def PRFUM : A64I_LSunalimm<0b11, 0b0, 0b10, (outs),
                          (ins prefetch_op:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                          "prfum\t$Rt, [$Rn, $SImm9]",
-                         [], NoItinerary>
-{
+                         [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"prfum $Rt, [$Rn]",
@@ -3394,13 +3241,11 @@ def : InstAlias<"prfum $Rt, [$Rn]",
 // section to avoid instantiation of "ldtr d0, [sp]" etc.
 
 multiclass A64I_LDTRSTTR<bits<2> size, string asmsuffix, RegisterClass GPR,
-                         string prefix>
-{
+                         string prefix> {
   def _UnPriv_STR : A64I_LSunpriv<size, 0b0, 0b00,
                               (outs), (ins GPR:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                               "sttr" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                              [], NoItinerary>
-  {
+                              [], NoItinerary> {
     let mayStore = 1;
   }
 
@@ -3410,8 +3255,7 @@ multiclass A64I_LDTRSTTR<bits<2> size, string asmsuffix, RegisterClass GPR,
   def _UnPriv_LDR : A64I_LSunpriv<size, 0b0, 0b01,
                                (outs GPR:$Rt), (ins GPR64xsp:$Rn, simm9:$SImm9),
                                "ldtr" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                               [], NoItinerary>
-  {
+                               [], NoItinerary> {
     let mayLoad = 1;
   }
 
@@ -3434,10 +3278,8 @@ defm LS64 : A64I_LDTRSTTR<0b11, "", GPR64, "LS64">;
 
 // Now a class for the signed instructions that can go to either 32 or 64
 // bits...
-multiclass A64I_LDTR_signed<bits<2> size, string asmopcode, string prefix>
-{
-  let mayLoad = 1 in
-  {
+multiclass A64I_LDTR_signed<bits<2> size, string asmopcode, string prefix> {
+  let mayLoad = 1 in {
     def w : A64I_LSunpriv<size, 0b0, 0b11,
                           (outs GPR32:$Rt),
                           (ins GPR64xsp:$Rn, simm9:$SImm9),
@@ -3469,8 +3311,7 @@ def LDTRSWx : A64I_LSunpriv<0b10, 0b0, 0b10,
                             (outs GPR64:$Rt),
                             (ins GPR64xsp:$Rn, simm9:$SImm9),
                             "ldtrsw\t$Rt, [$Rn, $SImm9]",
-                            [], NoItinerary>
-{
+                            [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"ldtrsw $Rt, [$Rn]", (LDTRSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
@@ -3507,20 +3348,17 @@ def : InstAlias<"ldtrsw $Rt, [$Rn]", (LDTRSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
 // Operands for each access size. This multiclass takes care of instantiating
 // the correct template functions in the rest of the backend.
 
-multiclass offsets_simm7<string MemSize, string prefix>
-{
+multiclass offsets_simm7<string MemSize, string prefix> {
   // The bare signed 7-bit immediate is used in post-indexed instructions, but
   // because of the scaling performed a generic "simm7" operand isn't
   // appropriate here either.
-  def simm7_asmoperand : AsmOperandClass
-  {
+  def simm7_asmoperand : AsmOperandClass {
     let Name = "SImm7_Scaled" # MemSize;
     let PredicateMethod = "isSImm7Scaled<" # MemSize # ">";
     let RenderMethod = "addSImm7ScaledOperands<" # MemSize # ">";
   }
 
-  def simm7 : Operand<i64>
-  {
+  def simm7 : Operand<i64> {
     let PrintMethod = "printSImm7ScaledOperand<" # MemSize # ">";
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "simm7_asmoperand");
   }
@@ -3531,12 +3369,10 @@ defm dword_ : offsets_simm7<"8", "dword_">;
 defm qword_ : offsets_simm7<"16", "qword_">;
 
 multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
-                          Operand simm7, string prefix>
-{
+                          Operand simm7, string prefix> {
   def _STR : A64I_LSPoffset<opc, v, 0b0, (outs),
                     (ins SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn, simm7:$SImm7),
-                    "stp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>
-  {
+                    "stp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayStore = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3547,8 +3383,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
   def _LDR : A64I_LSPoffset<opc, v, 0b1,
                             (outs SomeReg:$Rt, SomeReg:$Rt2),
                             (ins GPR64xsp:$Rn, simm7:$SImm7),
-                            "ldp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>
-  {
+                            "ldp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayLoad = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3562,8 +3397,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
                                     GPR64xsp:$Rn,
                                     simm7:$SImm7),
                                "stp\t$Rt, $Rt2, [$Rn], $SImm7",
-                               [], NoItinerary>
-  {
+                               [], NoItinerary> {
     let mayStore = 1;
     let Constraints = "$Rn = $Rn_wb";
 
@@ -3575,8 +3409,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
                         (outs SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn_wb),
                         (ins GPR64xsp:$Rn, simm7:$SImm7),
                         "ldp\t$Rt, $Rt2, [$Rn], $SImm7",
-                        [], NoItinerary>
-  {
+                        [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3585,8 +3418,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
   def _PreInd_STR : A64I_LSPpreind<opc, v, 0b0, (outs GPR64xsp:$Rn_wb),
                     (ins SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn, simm7:$SImm7),
                     "stp\t$Rt, $Rt2, [$Rn, $SImm7]!",
-                    [], NoItinerary>
-  {
+                    [], NoItinerary> {
     let mayStore = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3596,8 +3428,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
                               (outs SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn_wb),
                               (ins GPR64xsp:$Rn, simm7:$SImm7),
                               "ldp\t$Rt, $Rt2, [$Rn, $SImm7]!",
-                              [], NoItinerary>
-  {
+                              [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3605,8 +3436,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
 
   def _NonTemp_STR : A64I_LSPnontemp<opc, v, 0b0, (outs),
                     (ins SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn, simm7:$SImm7),
-                    "stnp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>
-  {
+                    "stnp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayStore = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3617,8 +3447,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
   def _NonTemp_LDR : A64I_LSPnontemp<opc, v, 0b1,
                             (outs SomeReg:$Rt, SomeReg:$Rt2),
                             (ins GPR64xsp:$Rn, simm7:$SImm7),
-                            "ldnp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>
-  {
+                            "ldnp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayLoad = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3633,14 +3462,14 @@ defm LSPair32 : A64I_LSPsimple<0b00, 0b0, GPR32, word_simm7, "LSPair32">;
 defm LSPair64 : A64I_LSPsimple<0b10, 0b0, GPR64, dword_simm7, "LSPair64">;
 defm LSFPPair32 : A64I_LSPsimple<0b00, 0b1, FPR32, word_simm7, "LSFPPair32">;
 defm LSFPPair64 : A64I_LSPsimple<0b01, 0b1, FPR64,  dword_simm7, "LSFPPair64">;
-defm LSFPPair128 : A64I_LSPsimple<0b10, 0b1, FPR128, qword_simm7, "LSFPPair128">;
+defm LSFPPair128 : A64I_LSPsimple<0b10, 0b1, FPR128, qword_simm7,
+                                  "LSFPPair128">;
 
 
 def LDPSWx : A64I_LSPoffset<0b01, 0b0, 0b1,
                            (outs GPR64:$Rt, GPR64:$Rt2),
                            (ins GPR64xsp:$Rn, word_simm7:$SImm7),
-                           "ldpsw\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>
-{
+                           "ldpsw\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
   let mayLoad = 1;
   let DecoderMethod = "DecodeLDSTPairInstruction";
 }
@@ -3651,8 +3480,7 @@ def LDPSWx_PostInd : A64I_LSPpostind<0b01, 0b0, 0b1,
                                   (outs GPR64:$Rt, GPR64:$Rt2, GPR64:$Rn_wb),
                                   (ins GPR64xsp:$Rn, word_simm7:$SImm7),
                                   "ldpsw\t$Rt, $Rt2, [$Rn], $SImm7",
-                                  [], NoItinerary>
-{
+                                  [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3662,8 +3490,7 @@ def LDPSWx_PreInd : A64I_LSPpreind<0b01, 0b0, 0b1,
                                    (outs GPR64:$Rt, GPR64:$Rt2, GPR64:$Rn_wb),
                                    (ins GPR64xsp:$Rn, word_simm7:$SImm7),
                                    "ldpsw\t$Rt, $Rt2, [$Rn, $SImm7]!",
-                                   [], NoItinerary>
-{
+                                   [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3675,18 +3502,15 @@ def LDPSWx_PreInd : A64I_LSPpreind<0b01, 0b0, 0b1,
 // Contains: AND, ORR, EOR, ANDS, + aliases TST, MOV
 
 multiclass logical_imm_operands<string prefix, string note,
-                                int size, ValueType VT>
-{
-  def _asmoperand : AsmOperandClass
-  {
+                                int size, ValueType VT> {
+  def _asmoperand : AsmOperandClass {
     let Name = "LogicalImm" # note # size;
     let PredicateMethod = "isLogicalImm" # note # "<" # size # ">";
     let RenderMethod = "addLogicalImmOperands<" # size # ">";
   }
 
   def _operand
-        : Operand<VT>, ComplexPattern<VT, 1, "SelectLogicalImm", [imm]>
-  {
+        : Operand<VT>, ComplexPattern<VT, 1, "SelectLogicalImm", [imm]> {
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "_asmoperand");
     let PrintMethod = "printLogicalImmOperand<" # size # ">";
     let DecoderMethod = "DecodeLogicalImmOperand<" # size # ">";
@@ -3704,8 +3528,7 @@ defm logical_imm64_mov
   : logical_imm_operands<"logical_imm64_mov", "MOV", 64, i64>;
 
 
-multiclass A64I_logimmSizes<bits<2> opc, string asmop, SDNode opnode>
-{
+multiclass A64I_logimmSizes<bits<2> opc, string asmop, SDNode opnode> {
   def wwi : A64I_logicalimm<0b0, opc, (outs GPR32wsp:$Rd),
                          (ins GPR32:$Rn, logical_imm32_operand:$Imm),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
@@ -3725,8 +3548,7 @@ defm AND : A64I_logimmSizes<0b00, "and", and>;
 defm ORR : A64I_logimmSizes<0b01, "orr", or>;
 defm EOR : A64I_logimmSizes<0b10, "eor", xor>;
 
-let Defs = [NZCV] in
-{
+let Defs = [NZCV] in {
   def ANDSwwi : A64I_logicalimm<0b0, 0b11, (outs GPR32:$Rd),
                                 (ins GPR32:$Rn, logical_imm32_operand:$Imm),
                                 "ands\t$Rd, $Rn, $Imm",
@@ -3770,8 +3592,7 @@ def signed_cond : PatLeaf<(cond), [{
 multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                           bit N, bit commutable,
                           string asmop, SDPatternOperator opfrag, string sty,
-                          RegisterClass GPR, list<Register> defs>
-{
+                          RegisterClass GPR, list<Register> defs> {
   let isCommutable = commutable, Defs = defs in {
   def _lsl : A64I_logicalshift<sf, opc, 0b00, N,
                        (outs GPR:$Rd),
@@ -3825,8 +3646,7 @@ multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
 
 multiclass logical_sizes<string prefix, bits<2> opc, bit N, bit commutable,
                          string asmop, SDPatternOperator opfrag,
-                         list<Register> defs>
-{
+                         list<Register> defs> {
   defm xxx : logical_shifts<prefix # "xxx", 0b1, opc, N,
                             commutable, asmop, opfrag, "i64", GPR64, defs>;
   defm www : logical_shifts<prefix # "www", 0b0, opc, N,
@@ -3857,8 +3677,7 @@ defm BICS : logical_sizes<"BICS", 0b11, 0b1, 0b0, "bics",
                                   [{ (void)N; return false; }]>,
                           [NZCV]>;
 
-multiclass tst_shifts<string prefix, bit sf, string sty, RegisterClass GPR>
-{
+multiclass tst_shifts<string prefix, bit sf, string sty, RegisterClass GPR> {
   let isCommutable = 1, Rd = 0b11111, Defs = [NZCV] in {
   def _lsl : A64I_logicalshift<sf, 0b11, 0b00, 0b0,
                        (outs),
@@ -3913,8 +3732,7 @@ defm TSTxx : tst_shifts<"TSTxx", 0b1, "i64", GPR64>;
 defm TSTww : tst_shifts<"TSTww", 0b0, "i32", GPR32>;
 
 
-multiclass mvn_shifts<string prefix, bit sf, string sty, RegisterClass GPR>
-{
+multiclass mvn_shifts<string prefix, bit sf, string sty, RegisterClass GPR> {
   let isCommutable = 0, Rn = 0b11111 in {
   def _lsl : A64I_logicalshift<sf, 0b01, 0b00, 0b1,
                        (outs GPR:$Rd),
@@ -3975,10 +3793,8 @@ def MOVww :InstAlias<"mov $Rd, $Rm", (ORRwww_lsl GPR32:$Rd, WZR, GPR32:$Rm, 0)>;
 // A wide variety of different relocations are needed for variants of these
 // instructions, so it turns out that we need a different operand for all of
 // them.
-multiclass movw_operands<string prefix, string instname, int width>
-{
-  def _imm_asmoperand : AsmOperandClass
-  {
+multiclass movw_operands<string prefix, string instname, int width> {
+  def _imm_asmoperand : AsmOperandClass {
     let Name = instname # width # "Shifted" # shift;
     let PredicateMethod = "is" # instname # width # "Imm";
     let RenderMethod = "addMoveWideImmOperands";
@@ -3986,8 +3802,7 @@ multiclass movw_operands<string prefix, string instname, int width>
     let ParserMethod = "ParseImmWithLSLOperand";
   }
 
-  def _imm : Operand<i32>
-  {
+  def _imm : Operand<i32> {
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "_imm_asmoperand");
     let PrintMethod = "printMoveWideImmOperand";
     let EncoderMethod = "getMoveWideImmOpValue";
@@ -4004,13 +3819,12 @@ defm movz64 : movw_operands<"movz64", "MOVZ", 64>;
 defm movk32 : movw_operands<"movk32", "MOVK", 32>;
 defm movk64 : movw_operands<"movk64", "MOVK", 64>;
 
-multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit, dag ins64bit>
-{
+multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit,
+                          dag ins64bit> {
 
   def wii : A64I_movw<0b0, opc, (outs GPR32:$Rd), ins32bit,
                       !strconcat(asmop, "\t$Rd, $FullImm"),
-                      [], NoItinerary>
-  {
+                      [], NoItinerary> {
     bits<18> FullImm;
     let UImm16 = FullImm{15-0};
     let Shift = FullImm{17-16};
@@ -4018,8 +3832,7 @@ multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit, dag ins64bit>
 
   def xii : A64I_movw<0b1, opc, (outs GPR64:$Rd), ins64bit,
                       !strconcat(asmop, "\t$Rd, $FullImm"),
-                      [], NoItinerary>
-  {
+                      [], NoItinerary> {
     bits<18> FullImm;
     let UImm16 = FullImm{15-0};
     let Shift = FullImm{17-16};
@@ -4027,8 +3840,7 @@ multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit, dag ins64bit>
 }
 
 let isMoveImm = 1, isReMaterializable = 1,
-    isAsCheapAsAMove = 1, neverHasSideEffects = 1 in
-{
+    isAsCheapAsAMove = 1, neverHasSideEffects = 1 in {
   defm MOVN : A64I_movwSizes<0b00, "movn",
                              (ins movn32_imm:$FullImm),
                              (ins movn64_imm:$FullImm)>;
@@ -4051,10 +3863,8 @@ defm MOVK : A64I_movwSizes<0b11, "movk",
 // And now the "MOV" aliases. These also need their own operands because what
 // they accept is completely different to what the base instructions accept.
 multiclass movalias_operand<string prefix, string basename,
-                            string immpredicate, int width>
-{
-  def _asmoperand : AsmOperandClass
-  {
+                            string immpredicate, int width> {
+  def _asmoperand : AsmOperandClass {
     let Name = basename # width # "MovAlias";
     let PredicateMethod
           = "isMoveWideMovAlias<" # width # ", A64Imms::" # immpredicate # ">";
@@ -4063,8 +3873,7 @@ multiclass movalias_operand<string prefix, string basename,
                                        # "A64Imms::" # immpredicate # ">";
   }
 
-  def _movimm : Operand<i32>
-  {
+  def _movimm : Operand<i32> {
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "_asmoperand");
 
     let MIOperandInfo = (ops uimm16:$UImm16, imm:$Shift);
@@ -4102,14 +3911,12 @@ def adr_label : Operand<i64> {
   let OperandType = "OPERAND_PCREL";
 }
 
-def adrp_label_asmoperand : AsmOperandClass
-{
+def adrp_label_asmoperand : AsmOperandClass {
   let Name = "AdrpLabel";
   let RenderMethod = "addLabelOperands<21, 4096>";
 }
 
-def adrp_label : Operand<i64>
-{
+def adrp_label : Operand<i64> {
   let EncoderMethod = "getAdrpLabelOpValue";
 
   // This label is a 21-bit offset from PC, scaled by the page-size: 4096.
@@ -4118,8 +3925,7 @@ def adrp_label : Operand<i64>
   let OperandType = "OPERAND_PCREL";
 }
 
-let neverHasSideEffects = 1 in
-{
+let neverHasSideEffects = 1 in {
   def ADRxi : A64I_PCADR<0b0, (outs GPR64:$Rd), (ins adr_label:$Label),
                          "adr\t$Rd, $Label", [], NoItinerary>;
 
@@ -4134,28 +3940,24 @@ let neverHasSideEffects = 1 in
 //    + aliases IC, DC, AT, TLBI, NOP, YIELD, WFE, WFI, SEV, SEVL
 
 // Op1 and Op2 fields are sometimes simple 3-bit unsigned immediate values.
-def uimm3_asmoperand : AsmOperandClass
-{
+def uimm3_asmoperand : AsmOperandClass {
   let Name = "UImm3";
   let PredicateMethod = "isUImm<3>";
   let RenderMethod = "addImmOperands";
 }
 
-def uimm3 : Operand<i32>
-{
+def uimm3 : Operand<i32> {
   let ParserMatchClass = uimm3_asmoperand;
 }
 
 // The HINT alias can accept a simple unsigned 7-bit immediate.
-def uimm7_asmoperand : AsmOperandClass
-{
+def uimm7_asmoperand : AsmOperandClass {
   let Name = "UImm7";
   let PredicateMethod = "isUImm<7>";
   let RenderMethod = "addImmOperands";
 }
 
-def uimm7 : Operand<i32>
-{
+def uimm7 : Operand<i32> {
   let ParserMatchClass = uimm7_asmoperand;
 }
 
@@ -4174,8 +3976,8 @@ defm tlbi : namedimm<"tlbi", "A64TLBI::TLBIMapper">;
 //   * There are ~1000 generic names S3_<op1>_<CRn>_<CRm>_<Op2> which have an
 //     implementation-defined effect
 //   * Most registers are shared, but some are read-only or write-only.
-//   * There is a variant of MSR which accepts the same register name (SPSel), but
-//     which would have a different encoding.
+//   * There is a variant of MSR which accepts the same register name (SPSel),
+//     but which would have a different encoding.
 
 // In principle these could be resolved in with more complicated subclasses of
 // NamedImmMapper, however that imposes an overhead on other "named
@@ -4185,21 +3987,18 @@ defm tlbi : namedimm<"tlbi", "A64TLBI::TLBIMapper">;
 // The solution adopted here is to take the MRS/MSR Mappers out of the usual
 // hierarchy (they're not derived from NamedImmMapper) and to add logic for
 // their special situation.
-def mrs_asmoperand : AsmOperandClass
-{
+def mrs_asmoperand : AsmOperandClass {
   let Name = "MRS";
   let ParserMethod = "ParseSysRegOperand";
 }
 
-def mrs_op : Operand<i32>
-{
+def mrs_op : Operand<i32> {
   let ParserMatchClass = mrs_asmoperand;
   let PrintMethod = "printMRSOperand";
   let DecoderMethod = "DecodeMRSOperand";
 }
 
-def msr_asmoperand : AsmOperandClass
-{
+def msr_asmoperand : AsmOperandClass {
   let Name = "MSRWithReg";
 
   // Note that SPSel is valid for both this and the pstate operands, but with
@@ -4209,22 +4008,19 @@ def msr_asmoperand : AsmOperandClass
   let ParserMethod = "ParseSysRegOperand";
 }
 
-def msr_op : Operand<i32>
-{
+def msr_op : Operand<i32> {
   let ParserMatchClass = msr_asmoperand;
   let PrintMethod = "printMSROperand";
   let DecoderMethod = "DecodeMSROperand";
 }
 
-def pstate_asmoperand : AsmOperandClass
-{
+def pstate_asmoperand : AsmOperandClass {
   let Name = "MSRPState";
   // See comment above about parser.
   let ParserMethod = "ParseSysRegOperand";
 }
 
-def pstate_op : Operand<i32>
-{
+def pstate_op : Operand<i32> {
   let ParserMatchClass = pstate_asmoperand;
   let PrintMethod = "printNamedImmOperand<A64PState::PStateMapper>";
   let DecoderMethod = "DecodeNamedImmOperand<A64PState::PStateMapper>";
@@ -4232,16 +4028,14 @@ def pstate_op : Operand<i32>
 
 // When <CRn> is specified, an assembler should accept something like "C4", not
 // the usual "#4" immediate.
-def CRx_asmoperand : AsmOperandClass
-{
+def CRx_asmoperand : AsmOperandClass {
   let Name = "CRx";
   let PredicateMethod = "isUImm<4>";
   let RenderMethod = "addImmOperands";
   let ParserMethod = "ParseCRxOperand";
 }
 
-def CRx : Operand<i32>
-{
+def CRx : Operand<i32> {
   let ParserMatchClass = CRx_asmoperand;
   let PrintMethod = "printCRxOperand";
 }
@@ -4251,8 +4045,7 @@ def CRx : Operand<i32>
 
 // HINT is straightforward, with a few aliases.
 def HINTi : A64I_system<0b0, (outs), (ins uimm7:$UImm7), "hint\t$UImm7",
-                        [], NoItinerary>
-{
+                        [], NoItinerary> {
   bits<7> UImm7;
   let CRm = UImm7{6-3};
   let Op2 = UImm7{2-0};
@@ -4275,8 +4068,7 @@ def : InstAlias<"sevl", (HINTi 5)>;
 class simple_sys<bits<2> op0, bits<3> op1, bits<4> crn, bits<3> op2,
                  Operand operand, string asmop>
   : A64I_system<0b0, (outs), (ins operand:$CRm), !strconcat(asmop, "\t$CRm"),
-                [], NoItinerary>
-{
+                [], NoItinerary> {
   let Op0 = op0;
   let Op1 = op1;
   let CRn = crn;
@@ -4303,8 +4095,7 @@ def SYSiccix : A64I_system<0b0, (outs),
                            (ins uimm3:$Op1, CRx:$CRn, CRx:$CRm,
                                 uimm3:$Op2, GPR64:$Rt),
                            "sys\t$Op1, $CRn, $CRm, $Op2, $Rt",
-                           [], NoItinerary>
-{
+                           [], NoItinerary> {
   let Op0 = 0b01;
 }
 
@@ -4316,8 +4107,7 @@ def : InstAlias<"sys $Op1, $CRn, $CRm, $Op2",
 
 // But many have aliases, which obviously don't fit into
 class SYSalias<dag ins, string asmstring>
-  : A64I_system<0b0, (outs), ins, asmstring, [], NoItinerary>
-{
+  : A64I_system<0b0, (outs), ins, asmstring, [], NoItinerary> {
   let isAsmParserOnly = 1;
 
   bits<14> SysOp;
@@ -4330,8 +4120,7 @@ class SYSalias<dag ins, string asmstring>
 
 def ICix : SYSalias<(ins ic_op:$SysOp, GPR64:$Rt), "ic\t$SysOp, $Rt">;
 
-def ICi : SYSalias<(ins ic_op:$SysOp), "ic\t$SysOp">
-{
+def ICi : SYSalias<(ins ic_op:$SysOp), "ic\t$SysOp"> {
   let Rt = 0b11111;
 }
 
@@ -4340,8 +4129,7 @@ def ATix : SYSalias<(ins at_op:$SysOp, GPR64:$Rt), "at\t$SysOp, $Rt">;
 
 def TLBIix : SYSalias<(ins tlbi_op:$SysOp, GPR64:$Rt), "tlbi\t$SysOp, $Rt">;
 
-def TLBIi : SYSalias<(ins tlbi_op:$SysOp), "tlbi\t$SysOp">
-{
+def TLBIi : SYSalias<(ins tlbi_op:$SysOp), "tlbi\t$SysOp"> {
   let Rt = 0b11111;
 }
 
@@ -4349,15 +4137,13 @@ def TLBIi : SYSalias<(ins tlbi_op:$SysOp), "tlbi\t$SysOp">
 def SYSLxicci : A64I_system<0b1, (outs GPR64:$Rt),
                             (ins uimm3:$Op1, CRx:$CRn, CRx:$CRm, uimm3:$Op2),
                             "sysl\t$Rt, $Op1, $CRn, $CRm, $Op2",
-                            [], NoItinerary>
-{
+                            [], NoItinerary> {
   let Op0 = 0b01;
 }
 
 // The instructions themselves are rather simple for MSR and MRS.
 def MSRix : A64I_system<0b0, (outs), (ins msr_op:$SysReg, GPR64:$Rt),
-                        "msr\t$SysReg, $Rt", [], NoItinerary>
-{
+                        "msr\t$SysReg, $Rt", [], NoItinerary> {
   bits<16> SysReg;
   let Op0 = SysReg{15-14};
   let Op1 = SysReg{13-11};
@@ -4367,8 +4153,7 @@ def MSRix : A64I_system<0b0, (outs), (ins msr_op:$SysReg, GPR64:$Rt),
 }
 
 def MRSxi : A64I_system<0b1, (outs GPR64:$Rt), (ins mrs_op:$SysReg),
-                        "mrs\t$Rt, $SysReg", [], NoItinerary>
-{
+                        "mrs\t$Rt, $SysReg", [], NoItinerary> {
   bits<16> SysReg;
   let Op0 = SysReg{15-14};
   let Op1 = SysReg{13-11};
@@ -4378,8 +4163,7 @@ def MRSxi : A64I_system<0b1, (outs GPR64:$Rt), (ins mrs_op:$SysReg),
 }
 
 def MSRii : A64I_system<0b0, (outs), (ins pstate_op:$PState, uimm4:$CRm),
-                        "msr\t$PState, $CRm", [], NoItinerary>
-{
+                        "msr\t$PState, $CRm", [], NoItinerary> {
   bits<6> PState;
 
   let Op0 = 0b00;
@@ -4396,15 +4180,13 @@ def MSRii : A64I_system<0b0, (outs), (ins pstate_op:$PState, uimm4:$CRm),
 
 // The bit to test is a simple unsigned 6-bit immediate in the X-register
 // versions.
-def uimm6 : Operand<i64>
-{
+def uimm6 : Operand<i64> {
   let ParserMatchClass = uimm6_asmoperand;
 }
 
 def label_wid14_scal4_asmoperand : label_asmoperand<14, 4>;
 
-def tbimm_target : Operand<OtherVT>
-{
+def tbimm_target : Operand<OtherVT> {
   let EncoderMethod = "getLabelOpValue<AArch64::fixup_a64_tstbr>";
 
   // This label is a 14-bit offset from PC, scaled by the instruction-width: 4.
@@ -4422,8 +4204,7 @@ def A64ne : ImmLeaf<i32, [{ return Imm == A64CC::NE; }]>;
 def tstb64_pat : ComplexPattern<i64, 1, "SelectTSTBOperand<64>">;
 def tstb32_pat : ComplexPattern<i32, 1, "SelectTSTBOperand<32>">;
 
-let isBranch = 1, isTerminator = 1 in
-{
+let isBranch = 1, isTerminator = 1 in {
   def TBZxii : A64I_TBimm<0b0, (outs),
                         (ins GPR64:$Rt, uimm6:$Imm, tbimm_target:$Label),
                         "tbz\t$Rt, $Imm, $Label",
@@ -4448,8 +4229,7 @@ let isBranch = 1, isTerminator = 1 in
                         "tbz\t$Rt, $Imm, $Label",
                         [(A64br_cc (A64cmp (and GPR32:$Rt, tstb32_pat:$Imm), 0),
                                    A64eq, bb:$Label)],
-                        NoItinerary>
-  {
+                        NoItinerary> {
     let Imm{5} = 0b0;
   }
 
@@ -4458,8 +4238,7 @@ let isBranch = 1, isTerminator = 1 in
                         "tbnz\t$Rt, $Imm, $Label",
                         [(A64br_cc (A64cmp (and GPR32:$Rt, tstb32_pat:$Imm), 0),
                                    A64ne, bb:$Label)],
-                        NoItinerary>
-  {
+                        NoItinerary> {
     let Imm{5} = 0b0;
   }
 }
@@ -4471,8 +4250,7 @@ let isBranch = 1, isTerminator = 1 in
 
 def label_wid26_scal4_asmoperand : label_asmoperand<26, 4>;
 
-def bimm_target : Operand<OtherVT>
-{
+def bimm_target : Operand<OtherVT> {
   let EncoderMethod = "getLabelOpValue<AArch64::fixup_a64_uncondbr>";
 
   // This label is a 26-bit offset from PC, scaled by the instruction-width: 4.
@@ -4482,8 +4260,7 @@ def bimm_target : Operand<OtherVT>
   let OperandType = "OPERAND_PCREL";
 }
 
-def blimm_target : Operand<i64>
-{
+def blimm_target : Operand<i64> {
   let EncoderMethod = "getLabelOpValue<AArch64::fixup_a64_call>";
 
   // This label is a 26-bit offset from PC, scaled by the instruction-width: 4.
@@ -4499,15 +4276,13 @@ class A64I_BimmImpl<bit op, string asmop, list<dag> patterns, Operand lbl_type>
               NoItinerary>;
 
 let isBranch = 1 in {
-  def Bimm : A64I_BimmImpl<0b0, "b", [(br bb:$Label)], bimm_target>
-  {
+  def Bimm : A64I_BimmImpl<0b0, "b", [(br bb:$Label)], bimm_target> {
     let isTerminator = 1;
     let isBarrier = 1;
   }
 
   def BLimm : A64I_BimmImpl<0b1, "bl",
-                            [(AArch64Call tglobaladdr:$Label)], blimm_target>
-  {
+                            [(AArch64Call tglobaladdr:$Label)], blimm_target> {
     let isCall = 1;
     let Defs = [X30];
   }
@@ -4526,8 +4301,7 @@ class A64I_BregImpl<bits<4> opc,
                     dag outs, dag ins, string asmstr, list<dag> patterns,
                     InstrItinClass itin = NoItinerary>
   : A64I_Breg<opc, 0b11111, 0b000000, 0b00000,
-              outs, ins, asmstr, patterns, itin>
-{
+              outs, ins, asmstr, patterns, itin> {
   let isBranch         = 1;
   let isIndirectBranch = 1;
 }
@@ -4538,23 +4312,20 @@ class A64I_BregImpl<bits<4> opc,
 
 let isBranch = 1 in {
   def BRx : A64I_BregImpl<0b0000,(outs), (ins GPR64:$Rn),
-                          "br\t$Rn", [(brind GPR64:$Rn)]>
-  {
+                          "br\t$Rn", [(brind GPR64:$Rn)]> {
     let isBarrier = 1;
     let isTerminator = 1;
   }
 
   def BLRx : A64I_BregImpl<0b0001, (outs), (ins GPR64:$Rn),
-                           "blr\t$Rn", [(AArch64Call GPR64:$Rn)]>
-  {
+                           "blr\t$Rn", [(AArch64Call GPR64:$Rn)]> {
     let isBarrier = 0;
     let isCall = 1;
     let Defs = [X30];
   }
 
   def RETx : A64I_BregImpl<0b0010, (outs), (ins GPR64:$Rn),
-                           "ret\t$Rn", []>
-  {
+                           "ret\t$Rn", []> {
     let isBarrier = 1;
     let isTerminator = 1;
     let isReturn = 1;
@@ -4563,23 +4334,20 @@ let isBranch = 1 in {
   // Create a separate pseudo-instruction for codegen to use so that we don't
   // flag x30 as used in every function. It'll be restored before the RET by the
   // epilogue if it's legitimately used.
-  def RET : A64PseudoExpand<(outs), (ins), [(A64ret)], (RETx (ops X30))>
-  {
+  def RET : A64PseudoExpand<(outs), (ins), [(A64ret)], (RETx (ops X30))> {
     let isTerminator = 1;
     let isBarrier = 1;
     let isReturn = 1;
   }
 
-  def ERET : A64I_BregImpl<0b0100, (outs), (ins), "eret", []>
-  {
+  def ERET : A64I_BregImpl<0b0100, (outs), (ins), "eret", []> {
     let Rn = 0b11111;
     let isBarrier = 1;
     let isTerminator = 1;
     let isReturn = 1;
   }
 
-  def DRPS : A64I_BregImpl<0b0101, (outs), (ins), "drps", []>
-  {
+  def DRPS : A64I_BregImpl<0b0101, (outs), (ins), "drps", []> {
     let Rn = 0b11111;
     let isBarrier = 1;
   }
@@ -4632,8 +4400,7 @@ def : GOTLoadSmall<tglobaltlsaddr>;
 // Tail call handling
 //===----------------------------------------------------------------------===//
 
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [XSP] in
-{
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [XSP] in {
   def TC_RETURNdi
     : PseudoInst<(outs), (ins i64imm:$dst, i32imm:$FPDiff),
                  [(AArch64tcret tglobaladdr:$dst, (i32 timm:$FPDiff))]>;
@@ -4644,8 +4411,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [XSP] in
 }
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
-    Uses = [XSP] in
-{
+    Uses = [XSP] in {
   def TAIL_Bimm : A64PseudoExpand<(outs), (ins bimm_target:$Label), [],
                                   (Bimm bimm_target:$Label)>;
 
@@ -4668,14 +4434,12 @@ def : Pat<(AArch64tcret texternalsym:$dst, (i32 timm:$FPDiff)),
 
 def : Pat<(A64threadpointer), (MRSxi 0xde82)>;
 
-def TLSDESCCALL : PseudoInst<(outs), (ins i64imm:$Lbl), []>
-{
+def TLSDESCCALL : PseudoInst<(outs), (ins i64imm:$Lbl), []> {
   let hasSideEffects = 1;
 }
 
 def TLSDESC_BLRx : PseudoInst<(outs), (ins GPR64:$Rn, i64imm:$Var),
-                              [(A64tlsdesc_blr GPR64:$Rn, tglobaltlsaddr:$Var)]>
-{
+                            [(A64tlsdesc_blr GPR64:$Rn, tglobaltlsaddr:$Var)]> {
   let isCall = 1;
   let Defs = [X30];
 }
@@ -4737,8 +4501,7 @@ def cpinst_operand : Operand<i32>;
 
 def CONSTPOOL_ENTRY : PseudoInst<(outs), (ins cpinst_operand:$instid,
                                               cpinst_operand:$cpidx,
-                                              i32imm:$size), []>
-{
+                                              i32imm:$size), []> {
   let neverHasSideEffects = 1;
   let isNotDuplicable = 1;
 }
@@ -4761,8 +4524,7 @@ def : Pat<(i64 (anyext (i32 GPR32:$val))),
 def F128CSEL : PseudoInst<(outs FPR128:$Rd),
                           (ins FPR128:$Rn, FPR128:$Rm, cond_code_op:$Cond),
                           [(set FPR128:$Rd, (simple_select (f128 FPR128:$Rn),
-                                                           FPR128:$Rm))]>
-{
+                                                           FPR128:$Rm))]> {
   let Uses = [NZCV];
   let usesCustomInserter = 1;
 }
@@ -4798,8 +4560,7 @@ def F128CSEL : PseudoInst<(outs FPR128:$Rd),
 //===------------------------------
 
 // First, some simple classes for !foreach and !subst to use:
-class Decls
-{
+class Decls {
   dag pattern;
 }
 
@@ -4876,8 +4637,7 @@ def atomic_store_simple_i64 : simple_store<atomic_store_64>;
 // quick multiclass here allows reuse.
 multiclass ls_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
                           dag Offset, dag address, RegisterClass TPR,
-                          ValueType sty>
-{
+                          ValueType sty> {
   def : Pat<(!cast<PatFrag>("atomic_load_simple_" # sty) address),
             (LOAD Base, Offset)>;
 
@@ -4894,8 +4654,7 @@ multiclass ls_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
 multiclass ls_small_pats<Instruction LOAD, Instruction STORE,
                          dag Base, dag Offset,
                          dag address, ValueType sty>
-  : ls_atomic_pats<LOAD, STORE, Base, Offset, address, GPR32, sty>
-{
+  : ls_atomic_pats<LOAD, STORE, Base, Offset, address, GPR32, sty> {
   def : Pat<(!cast<SDNode>(zextload # sty) address), (LOAD Base, Offset)>;
 
   def : Pat<(!cast<SDNode>(extload # sty) address), (LOAD Base, Offset)>;
@@ -4919,8 +4678,7 @@ multiclass ls_small_pats<Instruction LOAD, Instruction STORE,
 
 // Next come patterns for sign-extending loads.
 multiclass load_signed_pats<string T, string U, dag Base, dag Offset,
-                            dag address, ValueType sty>
-{
+                            dag address, ValueType sty> {
   def : Pat<(i32 (!cast<SDNode>("sextload" # sty) address)),
             (!cast<Instruction>("LDRS" # T # "w" # U) Base, Offset)>;
 
@@ -4932,8 +4690,7 @@ multiclass load_signed_pats<string T, string U, dag Base, dag Offset,
 // and finally "natural-width" loads and stores come next.
 multiclass ls_neutral_pats<Instruction LOAD, Instruction STORE, dag Base,
                            dag Offset, dag address, RegisterClass TPR,
-                           ValueType sty>
-{
+                           ValueType sty> {
   def : Pat<(sty (load address)), (LOAD Base, Offset)>;
   def : Pat<(store (sty TPR:$Rt), address), (STORE TPR:$Rt, Base, Offset)>;
 }
@@ -4949,8 +4706,7 @@ multiclass ls_int_neutral_pats<Instruction LOAD, Instruction STORE, dag Base,
 // 2.2. Addressing-mode instantiations
 //===------------------------------
 
-multiclass uimm12_pats<dag address, dag Base, dag Offset>
-{
+multiclass uimm12_pats<dag address, dag Base, dag Offset> {
   defm : ls_small_pats<LS8_LDR, LS8_STR, Base,
                        !foreach(decls.pattern, Offset,
                                 !subst(OFFSET, byte_uimm12, decls.pattern)),
@@ -5041,7 +4797,7 @@ multiclass uimm12_pats<dag address, dag Base, dag Offset>
                                   !subst(OFFSET, word_uimm12,
                                   !subst(ALIGN, min_align4, decls.pattern)))),
             (LDRSWx Base, !foreach(decls.pattern, Offset,
-                                   !subst(OFFSET, word_uimm12, decls.pattern)))>;
+                                  !subst(OFFSET, word_uimm12, decls.pattern)))>;
 }
 
 // Straightforward patterns of last resort: a pointer with or without an
@@ -5059,11 +4815,13 @@ defm : uimm12_pats<(add_like_or GPR64xsp:$Rn, OFFSET:$UImm12),
 defm : uimm12_pats<(A64WrapperSmall tglobaladdr:$Hi, tglobaladdr:$Lo12, ALIGN),
                    (ADRPxi tglobaladdr:$Hi), (i64 tglobaladdr:$Lo12)>;
 
-defm : uimm12_pats<(A64WrapperSmall tglobaltlsaddr:$Hi, tglobaltlsaddr:$Lo12, ALIGN),
+defm : uimm12_pats<(A64WrapperSmall tglobaltlsaddr:$Hi, tglobaltlsaddr:$Lo12,
+                                    ALIGN),
                    (ADRPxi tglobaltlsaddr:$Hi), (i64 tglobaltlsaddr:$Lo12)>;
 
 // External symbols that make it this far should also get standard relocations.
-defm : uimm12_pats<(A64WrapperSmall texternalsym:$Hi, texternalsym:$Lo12, ALIGN),
+defm : uimm12_pats<(A64WrapperSmall texternalsym:$Hi, texternalsym:$Lo12,
+                                    ALIGN),
                    (ADRPxi texternalsym:$Hi), (i64 texternalsym:$Lo12)>;
 
 
@@ -5078,8 +4836,7 @@ defm : uimm12_pats<(i64 frameindex:$Rn),
 
 // These can be much simpler than uimm12 because we don't to change the operand
 // type (e.g. LDURB and LDURH take the same operands).
-multiclass simm9_pats<dag address, dag Base, dag Offset>
-{
+multiclass simm9_pats<dag address, dag Base, dag Offset> {
   defm : ls_small_pats<LS8_LDUR, LS8_STUR, Base, Offset, address, i8>;
   defm : ls_small_pats<LS16_LDUR, LS16_STUR, Base, Offset, address, i16>;
 
@@ -5123,8 +4880,7 @@ defm : simm9_pats<(add_like_or GPR64xsp:$Rn, simm9:$SImm9),
 // quick multiclass here allows reuse.
 multiclass ro_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
                           dag Offset, dag Extend, dag address,
-                          RegisterClass TPR, ValueType sty>
-{
+                          RegisterClass TPR, ValueType sty> {
   def : Pat<(!cast<PatFrag>("atomic_load_simple_" # sty) address),
             (LOAD Base, Offset, Extend)>;
 
@@ -5140,8 +4896,7 @@ multiclass ro_atomic_pats<Instruction LOAD, Instruction STORE, dag Base,
 multiclass ro_small_pats<Instruction LOAD, Instruction STORE,
                          dag Base, dag Offset, dag Extend,
                          dag address, ValueType sty>
-  : ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, GPR32, sty>
-{
+  : ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, GPR32, sty> {
   def : Pat<(!cast<SDNode>(zextload # sty) address),
             (LOAD Base, Offset, Extend)>;
 
@@ -5168,8 +4923,7 @@ multiclass ro_small_pats<Instruction LOAD, Instruction STORE,
 
 // Next come patterns for sign-extending loads.
 multiclass ro_signed_pats<string T, string Rm, dag Base, dag Offset, dag Extend,
-                          dag address, ValueType sty>
-{
+                          dag address, ValueType sty> {
   def : Pat<(i32 (!cast<SDNode>("sextload" # sty) address)),
             (!cast<Instruction>("LDRS" # T # "w_" # Rm # "_RegOffset")
               Base, Offset, Extend)>;
@@ -5182,21 +4936,20 @@ multiclass ro_signed_pats<string T, string Rm, dag Base, dag Offset, dag Extend,
 // and finally "natural-width" loads and stores come next.
 multiclass ro_neutral_pats<Instruction LOAD, Instruction STORE,
                            dag Base, dag Offset, dag Extend, dag address,
-                           RegisterClass TPR, ValueType sty>
-{
+                           RegisterClass TPR, ValueType sty> {
   def : Pat<(sty (load address)), (LOAD Base, Offset, Extend)>;
   def : Pat<(store (sty TPR:$Rt), address),
             (STORE TPR:$Rt, Base, Offset, Extend)>;
 }
 
 multiclass ro_int_neutral_pats<Instruction LOAD, Instruction STORE,
-                           dag Base, dag Offset, dag Extend, dag address,
-                           RegisterClass TPR, ValueType sty>
+                               dag Base, dag Offset, dag Extend, dag address,
+                               RegisterClass TPR, ValueType sty>
   : ro_neutral_pats<LOAD, STORE, Base, Offset, Extend, address, TPR, sty>,
     ro_atomic_pats<LOAD, STORE, Base, Offset, Extend, address, TPR, sty>;
 
-multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset, dag Extend>
-{
+multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset,
+                       dag Extend> {
   defm : ro_small_pats<!cast<Instruction>("LS8_" # Rm # "_RegOffset_LDR"),
                        !cast<Instruction>("LS8_" # Rm # "_RegOffset_STR"),
                        Base, Offset, Extend,
@@ -5216,19 +4969,21 @@ multiclass regoff_pats<string Rm, dag address, dag Base, dag Offset, dag Extend>
                                 !subst(SHIFT, imm_eq2, decls.pattern)),
                        i32>;
 
-  defm : ro_int_neutral_pats<!cast<Instruction>("LS32_" # Rm # "_RegOffset_LDR"),
-                         !cast<Instruction>("LS32_" # Rm # "_RegOffset_STR"),
-                         Base, Offset, Extend,
-                         !foreach(decls.pattern, address,
-                                  !subst(SHIFT, imm_eq2, decls.pattern)),
-                         GPR32, i32>;
+  defm : ro_int_neutral_pats<
+                            !cast<Instruction>("LS32_" # Rm # "_RegOffset_LDR"),
+                            !cast<Instruction>("LS32_" # Rm # "_RegOffset_STR"),
+                            Base, Offset, Extend,
+                            !foreach(decls.pattern, address,
+                                     !subst(SHIFT, imm_eq2, decls.pattern)),
+                            GPR32, i32>;
 
-  defm : ro_int_neutral_pats<!cast<Instruction>("LS64_" # Rm # "_RegOffset_LDR"),
-                         !cast<Instruction>("LS64_" # Rm # "_RegOffset_STR"),
-                         Base, Offset, Extend,
-                         !foreach(decls.pattern, address,
-                                  !subst(SHIFT, imm_eq3, decls.pattern)),
-                         GPR64, i64>;
+  defm : ro_int_neutral_pats<
+                            !cast<Instruction>("LS64_" # Rm # "_RegOffset_LDR"),
+                            !cast<Instruction>("LS64_" # Rm # "_RegOffset_STR"),
+                            Base, Offset, Extend,
+                            !foreach(decls.pattern, address,
+                                     !subst(SHIFT, imm_eq3, decls.pattern)),
+                            GPR64, i64>;
 
   defm : ro_neutral_pats<!cast<Instruction>("LSFP16_" # Rm # "_RegOffset_LDR"),
                          !cast<Instruction>("LSFP16_" # Rm # "_RegOffset_STR"),

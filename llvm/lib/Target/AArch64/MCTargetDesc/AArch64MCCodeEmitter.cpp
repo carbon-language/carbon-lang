@@ -364,7 +364,7 @@ AArch64MCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
 unsigned
 AArch64MCCodeEmitter::getMoveWideImmOpValue(const MCInst &MI, unsigned OpIdx,
-                                            SmallVectorImpl<MCFixup> &Fixups) const {
+                                       SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand &UImm16MO = MI.getOperand(OpIdx);
   const MCOperand &ShiftMO = MI.getOperand(OpIdx + 1);
 
