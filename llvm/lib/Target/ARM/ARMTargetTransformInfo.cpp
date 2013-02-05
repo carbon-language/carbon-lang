@@ -177,24 +177,125 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 
   // Some arithmetic, load and store operations have specific instructions
-  // to cast up/down their types automatically at no extra cost
-  // TODO: Get these tables to know at least what the related operations are
-  static const TypeConversionCostTblEntry<MVT> NEONConversionTbl[] = {
+  // to cast up/down their types automatically at no extra cost.
+  // TODO: Get these tables to know at least what the related operations are.
+  static const TypeConversionCostTblEntry<MVT> NEONVectorConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::ZERO_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::SIGN_EXTEND, MVT::v2i64, MVT::v2i32, 1 },
     { ISD::ZERO_EXTEND, MVT::v2i64, MVT::v2i32, 1 },
     { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64, 0 },
     { ISD::TRUNCATE,    MVT::v4i16, MVT::v4i32, 1 },
+
+    // Vector float <-> i32 conversions.
+    { ISD::SINT_TO_FP,  MVT::v4f32, MVT::v4i32, 1 },
+    { ISD::UINT_TO_FP,  MVT::v4f32, MVT::v4i32, 1 },
+    { ISD::FP_TO_SINT,  MVT::v4i32, MVT::v4f32, 1 },
+    { ISD::FP_TO_UINT,  MVT::v4i32, MVT::v4f32, 1 },
+
+    // Vector double <-> i32 conversions.
+    { ISD::SINT_TO_FP,  MVT::v2f64, MVT::v2i32, 2 },
+    { ISD::UINT_TO_FP,  MVT::v2f64, MVT::v2i32, 2 },
+    { ISD::FP_TO_SINT,  MVT::v2i32, MVT::v2f64, 2 },
+    { ISD::FP_TO_UINT,  MVT::v2i32, MVT::v2f64, 2 }
   };
 
-  if (ST->hasNEON()) {
-    int Idx = ConvertCostTableLookup<MVT>(NEONConversionTbl,
-                                array_lengthof(NEONConversionTbl),
+  if (SrcTy.isVector() && ST->hasNEON()) {
+    int Idx = ConvertCostTableLookup<MVT>(NEONVectorConversionTbl,
+                                array_lengthof(NEONVectorConversionTbl),
                                 ISD, DstTy.getSimpleVT(), SrcTy.getSimpleVT());
     if (Idx != -1)
-      return NEONConversionTbl[Idx].Cost;
+      return NEONVectorConversionTbl[Idx].Cost;
   }
+
+  // Scalar float to integer conversions.
+  static const TypeConversionCostTblEntry<MVT> NEONFloatConversionTbl[] = {
+    { ISD::FP_TO_SINT,  MVT::i1, MVT::f32, 2 },
+    { ISD::FP_TO_UINT,  MVT::i1, MVT::f32, 2 },
+    { ISD::FP_TO_SINT,  MVT::i1, MVT::f64, 2 },
+    { ISD::FP_TO_UINT,  MVT::i1, MVT::f64, 2 },
+    { ISD::FP_TO_SINT,  MVT::i8, MVT::f32, 2 },
+    { ISD::FP_TO_UINT,  MVT::i8, MVT::f32, 2 },
+    { ISD::FP_TO_SINT,  MVT::i8, MVT::f64, 2 },
+    { ISD::FP_TO_UINT,  MVT::i8, MVT::f64, 2 },
+    { ISD::FP_TO_SINT,  MVT::i16, MVT::f32, 2 },
+    { ISD::FP_TO_UINT,  MVT::i16, MVT::f32, 2 },
+    { ISD::FP_TO_SINT,  MVT::i16, MVT::f64, 2 },
+    { ISD::FP_TO_UINT,  MVT::i16, MVT::f64, 2 },
+    { ISD::FP_TO_SINT,  MVT::i32, MVT::f32, 2 },
+    { ISD::FP_TO_UINT,  MVT::i32, MVT::f32, 2 },
+    { ISD::FP_TO_SINT,  MVT::i32, MVT::f64, 2 },
+    { ISD::FP_TO_UINT,  MVT::i32, MVT::f64, 2 },
+    { ISD::FP_TO_SINT,  MVT::i64, MVT::f32, 10 },
+    { ISD::FP_TO_UINT,  MVT::i64, MVT::f32, 10 },
+    { ISD::FP_TO_SINT,  MVT::i64, MVT::f64, 10 },
+    { ISD::FP_TO_UINT,  MVT::i64, MVT::f64, 10 }
+  };
+  if (SrcTy.isFloatingPoint() && ST->hasNEON()) {
+    int Idx = ConvertCostTableLookup<MVT>(NEONFloatConversionTbl,
+                                        array_lengthof(NEONFloatConversionTbl),
+                                        ISD, DstTy.getSimpleVT(),
+                                        SrcTy.getSimpleVT());
+    if (Idx != -1)
+        return NEONFloatConversionTbl[Idx].Cost;
+  }
+
+
+  // Scalar integer to float conversions.
+  static const TypeConversionCostTblEntry<MVT> NEONIntegerConversionTbl[] = {
+    { ISD::SINT_TO_FP,  MVT::f32, MVT::i1, 2 },
+    { ISD::UINT_TO_FP,  MVT::f32, MVT::i1, 2 },
+    { ISD::SINT_TO_FP,  MVT::f64, MVT::i1, 2 },
+    { ISD::UINT_TO_FP,  MVT::f64, MVT::i1, 2 },
+    { ISD::SINT_TO_FP,  MVT::f32, MVT::i8, 2 },
+    { ISD::UINT_TO_FP,  MVT::f32, MVT::i8, 2 },
+    { ISD::SINT_TO_FP,  MVT::f64, MVT::i8, 2 },
+    { ISD::UINT_TO_FP,  MVT::f64, MVT::i8, 2 },
+    { ISD::SINT_TO_FP,  MVT::f32, MVT::i16, 2 },
+    { ISD::UINT_TO_FP,  MVT::f32, MVT::i16, 2 },
+    { ISD::SINT_TO_FP,  MVT::f64, MVT::i16, 2 },
+    { ISD::UINT_TO_FP,  MVT::f64, MVT::i16, 2 },
+    { ISD::SINT_TO_FP,  MVT::f32, MVT::i32, 2 },
+    { ISD::UINT_TO_FP,  MVT::f32, MVT::i32, 2 },
+    { ISD::SINT_TO_FP,  MVT::f64, MVT::i32, 2 },
+    { ISD::UINT_TO_FP,  MVT::f64, MVT::i32, 2 },
+    { ISD::SINT_TO_FP,  MVT::f32, MVT::i64, 10 },
+    { ISD::UINT_TO_FP,  MVT::f32, MVT::i64, 10 },
+    { ISD::SINT_TO_FP,  MVT::f64, MVT::i64, 10 },
+    { ISD::UINT_TO_FP,  MVT::f64, MVT::i64, 10 }
+  };
+
+  if (SrcTy.isInteger() && ST->hasNEON()) {
+    int Idx = ConvertCostTableLookup<MVT>(NEONIntegerConversionTbl,
+                                       array_lengthof(NEONIntegerConversionTbl),
+                                       ISD, DstTy.getSimpleVT(),
+                                       SrcTy.getSimpleVT());
+    if (Idx != -1)
+      return NEONIntegerConversionTbl[Idx].Cost;
+  }
+
+  // Scalar integer conversion costs.
+  static const TypeConversionCostTblEntry<MVT> ARMIntegerConversionTbl[] = {
+    // i16 -> i64 requires two dependent operations.
+    { ISD::SIGN_EXTEND, MVT::i64, MVT::i16, 2 },
+
+    // Truncates on i64 are assumed to be free.
+    { ISD::TRUNCATE,    MVT::i32, MVT::i64, 0 },
+    { ISD::TRUNCATE,    MVT::i16, MVT::i64, 0 },
+    { ISD::TRUNCATE,    MVT::i8,  MVT::i64, 0 },
+    { ISD::TRUNCATE,    MVT::i1,  MVT::i64, 0 }
+  };
+
+  if (SrcTy.isInteger()) {
+    int Idx =
+      ConvertCostTableLookup<MVT>(ARMIntegerConversionTbl,
+                                  array_lengthof(ARMIntegerConversionTbl),
+                                  ISD, DstTy.getSimpleVT(),
+                                  SrcTy.getSimpleVT());
+    if (Idx != -1)
+      return ARMIntegerConversionTbl[Idx].Cost;
+  }
+
 
   return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 }
