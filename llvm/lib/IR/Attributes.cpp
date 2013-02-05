@@ -46,7 +46,7 @@ Attribute Attribute::get(LLVMContext &Context, Constant *Kind, Constant *Val) {
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
-  // Return the AttributesList that we found or created.
+  // Return the Attribute that we found or created.
   return Attribute(PA);
 }
 
@@ -826,6 +826,11 @@ AttrBuilder &AttrBuilder::addAttribute(Attribute Attr) {
   return *this;
 }
 
+AttrBuilder &AttrBuilder::addAttribute(StringRef A, StringRef V) {
+  TargetDepAttrs[A] = V;
+  return *this;
+}
+
 AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
   Attrs.erase(Val);
 
@@ -858,6 +863,13 @@ AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
       StackAlignment = 0;
   }
 
+  return *this;
+}
+
+AttrBuilder &AttrBuilder::removeAttribute(StringRef A) {
+  std::map<std::string, std::string>::iterator I = TargetDepAttrs.find(A);
+  if (I != TargetDepAttrs.end())
+    TargetDepAttrs.erase(I);
   return *this;
 }
 

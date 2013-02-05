@@ -20,6 +20,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <cassert>
+#include <map>
 #include <string>
 
 namespace llvm {
@@ -341,6 +342,7 @@ template<> struct DenseMapInfo<Attribute::AttrKind> {
 /// equality, presence of attributes, etc.
 class AttrBuilder {
   DenseSet<Attribute::AttrKind> Attrs;
+  std::map<std::string, std::string> TargetDepAttrs;
   uint64_t Alignment;
   uint64_t StackAlignment;
 public:
@@ -361,11 +363,17 @@ public:
   /// \brief Add the Attribute object to the builder.
   AttrBuilder &addAttribute(Attribute A);
 
+  /// \brief Add the target-dependent attribute to the builder.
+  AttrBuilder &addAttribute(StringRef A, StringRef V);
+
   /// \brief Remove an attribute from the builder.
   AttrBuilder &removeAttribute(Attribute::AttrKind Val);
 
   /// \brief Remove the attributes from the builder.
   AttrBuilder &removeAttributes(AttributeSet A, uint64_t Index);
+
+  /// \brief Remove the target-dependent attribute to the builder.
+  AttrBuilder &removeAttribute(StringRef A);
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;
