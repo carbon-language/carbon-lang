@@ -19,11 +19,6 @@
 
 namespace __asan {
 
-#if !MAC_INTERPOSE_FUNCTIONS
-# error \
-  Dynamic interposing library should be built with -DMAC_INTERPOSE_FUNCTIONS
-#endif
-
 #define INTERPOSE_FUNCTION(function) \
     { reinterpret_cast<const uptr>(WRAP(function)), \
       reinterpret_cast<const uptr>(function) }

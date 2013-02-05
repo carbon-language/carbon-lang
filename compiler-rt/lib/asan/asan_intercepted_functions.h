@@ -19,6 +19,7 @@
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 
 #include <stdarg.h>
+#include <stddef.h>
 
 using __sanitizer::uptr;
 
@@ -68,7 +69,7 @@ using __sanitizer::uptr;
 
 // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
 // there.
-#if !defined(_WIN32) && (!defined(__APPLE__) || MAC_INTERPOSE_FUNCTIONS)
+#if !defined(_WIN32) && !defined(__APPLE__)
 # define ASAN_INTERCEPT_SIGLONGJMP 1
 #else
 # define ASAN_INTERCEPT_SIGLONGJMP 0
@@ -234,7 +235,7 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async_f,
                              dispatch_group_t group, dispatch_queue_t dq,
                              void *ctxt, dispatch_function_t func);
 
-#  if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
+#  if !defined(MISSING_BLOCKS_SUPPORT)
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async,
                              dispatch_group_t dg,
                              dispatch_queue_t dq, void (^work)(void));
@@ -246,7 +247,7 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_event_handler,
                              dispatch_source_t ds, void (^work)(void));
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_cancel_handler,
                              dispatch_source_t ds, void (^work)(void));
-#  endif  // MAC_INTERPOSE_FUNCTIONS
+#  endif  // MISSING_BLOCKS_SUPPORT
 
 typedef void malloc_zone_t;
 typedef size_t vm_size_t;

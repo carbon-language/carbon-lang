@@ -46,10 +46,6 @@ else()
     ASAN_NEEDS_SEGV=1)
 endif()
 
-set(ASAN_DYLIB_DEFINITIONS
-  ${ASAN_COMMON_DEFINITIONS}
-  MAC_INTERPOSE_FUNCTIONS=1)
-
 # Architectures supported by ASan.
 filter_available_targets(ASAN_SUPPORTED_ARCH
   x86_64 i386 powerpc64 powerpc)
@@ -57,22 +53,13 @@ filter_available_targets(ASAN_SUPPORTED_ARCH
 set(ASAN_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
-  add_compiler_rt_osx_static_runtime(clang_rt.asan_osx
-    ARCH ${ASAN_SUPPORTED_ARCH}
-    SOURCES ${ASAN_SOURCES}
-            $<TARGET_OBJECTS:RTInterception.osx>
-            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-    CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_COMMON_DEFINITIONS})
-  list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx)
-
   add_compiler_rt_osx_dynamic_runtime(clang_rt.asan_osx_dynamic
     ARCH ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_DYLIB_SOURCES}
             $<TARGET_OBJECTS:RTInterception.osx>
             $<TARGET_OBJECTS:RTSanitizerCommon.osx>
     CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_DYLIB_DEFINITIONS}
+    DEFS ${ASAN_COMMON_DEFINITIONS}
     # Dynamic lookup is needed because shadow scale and offset are
     # provided by the instrumented modules.
     LINKFLAGS "-framework Foundation"

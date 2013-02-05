@@ -30,18 +30,6 @@ typedef __sanitizer::s64  INTMAX_T;
 typedef __sanitizer::u64  OFF_T;
 typedef __sanitizer::u64  OFF64_T;
 
-// How to use this library:
-//      1) Include this header to define your own interceptors
-//         (see details below).
-//      2) Build all *.cc files and link against them.
-// On Mac you will also need to:
-//      3) Provide your own implementation for the following functions:
-//           mach_error_t __interception::allocate_island(void **ptr,
-//                                                      size_t size,
-//                                                      void *hint);
-//           mach_error_t __interception::deallocate_island(void *ptr);
-//         See "interception_mac.h" for more details.
-
 // How to add an interceptor:
 // Suppose you need to wrap/replace system function (generally, from libc):
 //      int foo(const char *bar, double baz);
@@ -82,20 +70,12 @@ typedef __sanitizer::u64  OFF64_T;
 // This is not so on Mac OS, where the two-level namespace makes
 // our replacement functions invisible to other libraries. This may be overcomed
 // using the DYLD_FORCE_FLAT_NAMESPACE, but some errors loading the shared
-// libraries in Chromium were noticed when doing so. Instead we use
-// mach_override, a handy framework for patching functions at runtime.
-// To avoid possible name clashes, our replacement functions have
-// the "wrap_" prefix on Mac.
-// An alternative to function patching is to create a dylib containing a
-// __DATA,__interpose section that associates library functions with their
-// wrappers. When this dylib is preloaded before an executable using
-// DYLD_INSERT_LIBRARIES, it routes all the calls to interposed functions done
-// through stubs to the wrapper functions. Such a library is built with
-// -DMAC_INTERPOSE_FUNCTIONS=1.
-
-#if !defined(MAC_INTERPOSE_FUNCTIONS) || !defined(__APPLE__)
-# define MAC_INTERPOSE_FUNCTIONS 0
-#endif
+// libraries in Chromium were noticed when doing so.
+// Instead we create a dylib containing a __DATA,__interpose section that
+// associates library functions with their wrappers. When this dylib is
+// preloaded before an executable using DYLD_INSERT_LIBRARIES, it routes all
+// the calls to interposed functions done through stubs to the wrapper
+// functions.
 
 #if defined(__APPLE__)
 # define WRAP(x) wrap_##x
@@ -122,7 +102,7 @@ typedef __sanitizer::u64  OFF64_T;
     __attribute__((weak, alias("__interceptor_" #func), visibility("default")));
 #endif
 
-#if !MAC_INTERPOSE_FUNCTIONS
+#if !defined(__APPLE__)
 # define PTR_TO_REAL(x) real_##x
 # define REAL(x) __interception::PTR_TO_REAL(x)
 # define FUNC_TYPE(x) x##_f
@@ -132,11 +112,11 @@ typedef __sanitizer::u64  OFF64_T;
     namespace __interception { \
       extern FUNC_TYPE(func) PTR_TO_REAL(func); \
     }
-#else  // MAC_INTERPOSE_FUNCTIONS
+#else  // __APPLE__
 # define REAL(x) x
 # define DECLARE_REAL(ret_type, func, ...) \
     extern "C" ret_type func(__VA_ARGS__);
-#endif  // MAC_INTERPOSE_FUNCTIONS
+#endif  // __APPLE__
 
 #define DECLARE_REAL_AND_INTERCEPTOR(ret_type, func, ...) \
   DECLARE_REAL(ret_type, func, __VA_ARGS__) \
@@ -146,7 +126,7 @@ typedef __sanitizer::u64  OFF64_T;
 // macros does its job. In exceptional cases you may need to call REAL(foo)
 // without defining INTERCEPTOR(..., foo, ...). For example, if you override
 // foo with an interceptor for other function.
-#if !MAC_INTERPOSE_FUNCTIONS
+#if !defined(__APPLE__)
 # define DEFINE_REAL(ret_type, func, ...) \
     typedef ret_type (*FUNC_TYPE(func))(__VA_ARGS__); \
     namespace __interception { \

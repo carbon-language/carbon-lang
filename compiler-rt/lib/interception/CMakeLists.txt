@@ -6,19 +6,7 @@ set(INTERCEPTION_SOURCES
   interception_win.cc
   )
 
-set(MACH_OVERRIDE_SOURCES
-  mach_override/mach_override.c
-  )
-
 include_directories(..)
-
-# Only add this C file if we're building on a Mac. Other source files can be
-# harmlessly compiled on any platform, but the C file is complained about due
-# to pedantic rules about empty translation units.
-if (APPLE)
-  list(APPEND INTERCEPTION_SOURCES ${MACH_OVERRIDE_SOURCES})
-  set_source_files_properties(${MACH_OVERRIDE_SOURCES} PROPERTIES COMPILE_FLAGS "-std=c99 ${INTERCEPTION_CFLAGS}")
-endif ()
 
 set(INTERCEPTION_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 

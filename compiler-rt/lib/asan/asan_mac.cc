@@ -91,10 +91,9 @@ static const char kDyldInsertLibraries[] = "DYLD_INSERT_LIBRARIES";
 
 void MaybeReexec() {
   if (!flags()->allow_reexec) return;
-#if MAC_INTERPOSE_FUNCTIONS
-  // If the program is linked with the dynamic ASan runtime library, make sure
-  // the library is preloaded so that the wrappers work. If it is not, set
-  // DYLD_INSERT_LIBRARIES and re-exec ourselves.
+  // Make sure the dynamic ASan runtime library is preloaded so that the
+  // wrappers work. If it is not, set DYLD_INSERT_LIBRARIES and re-exec
+  // ourselves.
   Dl_info info;
   CHECK(dladdr((void*)((uptr)__asan_init), &info));
   const char *dyld_insert_libraries = GetEnv(kDyldInsertLibraries);
@@ -116,8 +115,6 @@ void MaybeReexec() {
     }
     execv(program_name, *_NSGetArgv());
   }
-#endif  // MAC_INTERPOSE_FUNCTIONS
-  // If we're not using the dynamic runtime, do nothing.
 }
 
 // No-op. Mac does not support static linkage anyway.
@@ -146,57 +143,6 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
 
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
-}
-
-// The range of pages to be used for escape islands.
-// TODO(glider): instead of mapping a fixed range we must find a range of
-// unmapped pages in vmmap and take them.
-// These constants were chosen empirically and may not work if the shadow
-// memory layout changes. Unfortunately they do necessarily depend on
-// kHighMemBeg or kHighMemEnd.
-static void *island_allocator_pos = 0;
-
-#if SANITIZER_WORDSIZE == 32
-# define kIslandEnd (0xffdf0000 - GetPageSizeCached())
-# define kIslandBeg (kIslandEnd - 256 * GetPageSizeCached())
-#else
-# define kIslandEnd (0x7fffffdf0000 - GetPageSizeCached())
-# define kIslandBeg (kIslandEnd - 256 * GetPageSizeCached())
-#endif
-
-extern "C"
-mach_error_t __interception_allocate_island(void **ptr,
-                                            uptr unused_size,
-                                            void *unused_hint) {
-  if (!island_allocator_pos) {
-    island_allocator_pos =
-        internal_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
-                      PROT_READ | PROT_WRITE | PROT_EXEC,
-                      MAP_PRIVATE | MAP_ANON | MAP_FIXED,
-                      -1, 0);
-    if (island_allocator_pos != (void*)kIslandBeg) {
-      return KERN_NO_SPACE;
-    }
-    if (flags()->verbosity) {
-      Report("Mapped pages %p--%p for branch islands.\n",
-             (void*)kIslandBeg, (void*)kIslandEnd);
-    }
-    // Should not be very performance-critical.
-    internal_memset(island_allocator_pos, 0xCC, kIslandEnd - kIslandBeg);
-  };
-  *ptr = island_allocator_pos;
-  island_allocator_pos = (char*)island_allocator_pos + GetPageSizeCached();
-  if (flags()->verbosity) {
-    Report("Branch island allocated at %p\n", *ptr);
-  }
-  return err_none;
-}
-
-extern "C"
-mach_error_t __interception_deallocate_island(void *ptr) {
-  // Do nothing.
-  // TODO(glider): allow to free and reuse the island memory.
-  return err_none;
 }
 
 // Support for the following functions from libdispatch on Mac OS:
@@ -352,14 +298,7 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                asan_dispatch_call_block_and_release);
 }
 
-#if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
-// dispatch_async, dispatch_group_async and others tailcall the corresponding
-// dispatch_*_f functions. When wrapping functions with mach_override, those
-// dispatch_*_f are intercepted automatically. But with dylib interposition
-// this does not work, because the calls within the same library are not
-// interposed.
-// Therefore we need to re-implement dispatch_async and friends.
-
+#if !defined(MISSING_BLOCKS_SUPPORT)
 extern "C" {
 // FIXME: consolidate these declarations with asan_intercepted_functions.h.
 void dispatch_async(dispatch_queue_t dq, void(^work)(void));
@@ -411,17 +350,5 @@ INTERCEPTOR(void, dispatch_source_set_event_handler,
   REAL(dispatch_source_set_event_handler)(ds, asan_block);
 }
 #endif
-
-namespace __asan {
-
-void InitializeMacInterceptors() {
-  CHECK(INTERCEPT_FUNCTION(dispatch_async_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_sync_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
-}
-
-}  // namespace __asan
 
 #endif  // __APPLE__
