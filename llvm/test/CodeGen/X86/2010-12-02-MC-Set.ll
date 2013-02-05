@@ -18,5 +18,5 @@ entry:
 
 ; CHECK: .subsections_via_symbols
 ; CHECK-NEXT: __debug_line
-; CHECK-NEXT: Ltmp
+; CHECK-NEXT: Lline_table_start0
 ; CHECK-NEXT: Ltmp{{[0-9]}} = (Ltmp

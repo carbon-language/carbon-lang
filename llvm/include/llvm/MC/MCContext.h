@@ -144,6 +144,10 @@ namespace llvm {
     /// We need a deterministic iteration order, so we remember the order
     /// the elements were added.
     std::vector<const MCSection *> MCLineSectionOrder;
+    /// The Compile Unit ID that we are currently processing.
+    unsigned DwarfCompileUnitID;
+    /// The line table start symbol for each Compile Unit.
+    DenseMap<unsigned, MCSymbol *> MCLineTableSymbols;
 
     void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
 
@@ -303,6 +307,25 @@ namespace llvm {
     void addMCLineSection(const MCSection *Sec, MCLineSection *Line) {
       MCLineSections[Sec] = Line;
       MCLineSectionOrder.push_back(Sec);
+    }
+    unsigned getDwarfCompileUnitID() {
+      return DwarfCompileUnitID;
+    }
+    void setDwarfCompileUnitID(unsigned CUIndex) {
+      DwarfCompileUnitID = CUIndex;
+    }
+    const DenseMap<unsigned, MCSymbol *> &getMCLineTableSymbols() const {
+      return MCLineTableSymbols;
+    }
+    MCSymbol *getMCLineTableSymbol(unsigned ID) const {
+      DenseMap<unsigned, MCSymbol *>::const_iterator CIter =
+        MCLineTableSymbols.find(ID);
+      if (CIter == MCLineTableSymbols.end())
+        return NULL;
+      return CIter->second;
+    }
+    void setMCLineTableSymbol(MCSymbol *Sym, unsigned ID) {
+      MCLineTableSymbols[ID] = Sym;
     }
 
     /// setCurrentDwarfLoc - saves the information from the currently parsed

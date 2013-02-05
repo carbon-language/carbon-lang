@@ -662,13 +662,21 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
   // into an entity. We're using 0 (or a NULL label) for this.
   NewCU->addLabelAddress(Die, dwarf::DW_AT_low_pc, NULL);
+
+  // Define start line table label for each Compile Unit.
+  MCSymbol *LineTableStartSym = Asm->GetTempSymbol("line_table_start",
+                                                   NewCU->getUniqueID());
+  Asm->OutStreamer.getContext().setMCLineTableSymbol(LineTableStartSym,
+                                                     NewCU->getUniqueID());
+
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                    Asm->GetTempSymbol("section_line"));
+                    LineTableStartSym);
   else
-    NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
+    NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
+                    LineTableStartSym, Asm->GetTempSymbol("section_line"));
 
   if (!CompilationDir.empty())
     NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
@@ -1399,6 +1407,13 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (LScopes.empty()) return;
   identifyScopeMarkers();
 
+  // Set DwarfCompileUnitID in MCContext to the Compile Unit this function
+  // belongs to.
+  LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
+  CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
+  assert(TheCU && "Unable to find compile unit!");
+  Asm->OutStreamer.getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
+
   FunctionBeginSym = Asm->GetTempSymbol("func_begin",
                                         Asm->getFunctionNumber());
   // Assumes in correct section after the entry point.
@@ -1583,6 +1598,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
                                       Asm->getFunctionNumber());
   // Assumes in correct section after the entry point.
   Asm->OutStreamer.EmitLabel(FunctionEndSym);
+  // Set DwarfCompileUnitID in MCContext to default value.
+  Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
   SmallPtrSet<const MDNode *, 16> ProcessedVars;
   collectVariableInfo(MF, ProcessedVars);

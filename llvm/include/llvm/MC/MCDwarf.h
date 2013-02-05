@@ -19,6 +19,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
 #include <vector>
 
 namespace llvm {
@@ -186,29 +187,43 @@ namespace llvm {
     MCLineSection() {}
 
     // addLineEntry - adds an entry to this MCLineSection's line entries
-    void addLineEntry(const MCLineEntry &LineEntry) {
-      MCLineEntries.push_back(LineEntry);
+    void addLineEntry(const MCLineEntry &LineEntry, unsigned CUID) {
+      MCLineDivisions[CUID].push_back(LineEntry);
     }
 
     typedef std::vector<MCLineEntry> MCLineEntryCollection;
     typedef MCLineEntryCollection::iterator iterator;
     typedef MCLineEntryCollection::const_iterator const_iterator;
+    typedef std::map<unsigned, MCLineEntryCollection> MCLineDivisionMap;
 
   private:
-    MCLineEntryCollection MCLineEntries;
+    // A collection of MCLineEntry for each Compile Unit ID.
+    MCLineDivisionMap MCLineDivisions;
 
   public:
-    const MCLineEntryCollection *getMCLineEntries() const {
-      return &MCLineEntries;
+    // Returns whether MCLineSection contains entries for a given Compile
+    // Unit ID.
+    bool containEntriesForID(unsigned CUID) const {
+      return MCLineDivisions.count(CUID);
+    }
+    // Returns the collection of MCLineEntry for a given Compile Unit ID.
+    const MCLineEntryCollection &getMCLineEntries(unsigned CUID) const {
+      MCLineDivisionMap::const_iterator CIter = MCLineDivisions.find(CUID);
+      assert(CIter != MCLineDivisions.end());
+      return CIter->second;
     }
   };
 
   class MCDwarfFileTable {
   public:
     //
-    // This emits the Dwarf file and the line tables.
+    // This emits the Dwarf file and the line tables for all Compile Units.
     //
     static const MCSymbol *Emit(MCStreamer *MCOS);
+    //
+    // This emits the Dwarf file and the line tables for a given Compile Unit.
+    //
+    static const MCSymbol *EmitCU(MCStreamer *MCOS, unsigned ID);
   };
 
   class MCDwarfLineAddr {

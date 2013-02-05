@@ -40,7 +40,7 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
   CompilationDir(llvm::sys::Path::GetCurrentDirectory().str()),
   CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0), 
   DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
-  AllowTemporaryLabels(true), AutoReset(DoAutoReset) {
+  AllowTemporaryLabels(true), DwarfCompileUnitID(0), AutoReset(DoAutoReset) {
 
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;

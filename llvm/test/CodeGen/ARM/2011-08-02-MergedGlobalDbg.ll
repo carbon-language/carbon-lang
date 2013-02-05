@@ -8,7 +8,7 @@
 ; DW_OP_constu
 ; offset
 
-;CHECK: .long Lset33
+;CHECK: .long Lset34
 ;CHECK-NEXT:        @ DW_AT_type
 ;CHECK-NEXT:        @ DW_AT_decl_file
 ;CHECK-NEXT:        @ DW_AT_decl_line
