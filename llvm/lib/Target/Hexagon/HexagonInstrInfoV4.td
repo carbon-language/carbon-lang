@@ -251,6 +251,54 @@ def TFR_FI_immext_V4 : ALU32_ri<(outs IntRegs:$dst),
             []>,
             Requires<[HasV4T]>;
 
+// Rd=cmp.eq(Rs,#s8)
+let validSubTargets = HasV4SubT, isExtendable = 1, opExtendable = 2,
+isExtentSigned = 1, opExtentBits = 8 in
+def V4_A4_rcmpeqi : ALU32_ri<(outs IntRegs:$Rd),
+                    (ins IntRegs:$Rs, s8Ext:$s8),
+                    "$Rd = cmp.eq($Rs, #$s8)",
+                    [(set (i32 IntRegs:$Rd),
+                          (i32 (zext (i1 (seteq (i32 IntRegs:$Rs),
+                                                s8ExtPred:$s8)))))]>,
+                    Requires<[HasV4T]>;
+
+// Preserve the TSTBIT generation
+def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
+                                           (i32 IntRegs:$src1))), 0)))),
+      (i32 (MUX_ii (i1 (TSTBIT_rr (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
+                   1, 0))>;
+
+// Interfered with tstbit generation, above pattern preserves, see : tstbit.ll
+// Rd=cmp.ne(Rs,#s8)
+let validSubTargets = HasV4SubT, isExtendable = 1, opExtendable = 2,
+isExtentSigned = 1, opExtentBits = 8 in
+def V4_A4_rcmpneqi : ALU32_ri<(outs IntRegs:$Rd),
+                     (ins IntRegs:$Rs, s8Ext:$s8),
+                     "$Rd = !cmp.eq($Rs, #$s8)",
+                     [(set (i32 IntRegs:$Rd),
+                           (i32 (zext (i1 (setne (i32 IntRegs:$Rs),
+                                                 s8ExtPred:$s8)))))]>,
+                     Requires<[HasV4T]>;
+
+// Rd=cmp.eq(Rs,Rt)
+let validSubTargets = HasV4SubT in
+def V4_A4_rcmpeq : ALU32_ri<(outs IntRegs:$Rd),
+                   (ins IntRegs:$Rs, IntRegs:$Rt),
+                   "$Rd = cmp.eq($Rs, $Rt)",
+                   [(set (i32 IntRegs:$Rd),
+                         (i32 (zext (i1 (seteq (i32 IntRegs:$Rs),
+                                               IntRegs:$Rt)))))]>,
+                   Requires<[HasV4T]>;
+
+// Rd=cmp.ne(Rs,Rt)
+let validSubTargets = HasV4SubT in
+def V4_A4_rcmpneq : ALU32_ri<(outs IntRegs:$Rd),
+                    (ins IntRegs:$Rs, IntRegs:$Rt),
+                    "$Rd = !cmp.eq($Rs, $Rt)",
+                    [(set (i32 IntRegs:$Rd),
+                          (i32 (zext (i1 (setne (i32 IntRegs:$Rs),
+                                               IntRegs:$Rt)))))]>,
+                    Requires<[HasV4T]>;
 
 //===----------------------------------------------------------------------===//
 // ALU32 -
@@ -3656,13 +3704,73 @@ def MEMb_ORr_MEM_V4 : MEMInst_V4<(outs),
 // incorrect code for negative numbers.
 // Pd=cmpb.eq(Rs,#u8)
 
-let isCompare = 1 in
+// p=!cmp.eq(r1,r2)
+let isCompare = 1, validSubTargets = HasV4SubT in
+def CMPnotEQ_rr : ALU32_rr<(outs PredRegs:$dst),
+                           (ins IntRegs:$src1, IntRegs:$src2),
+      "$dst = !cmp.eq($src1, $src2)",
+      [(set (i1 PredRegs:$dst),
+            (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2)))]>,
+      Requires<[HasV4T]>;
+
+// p=!cmp.eq(r1,#s10)
+let isCompare = 1, validSubTargets = HasV4SubT in
+def CMPnotEQ_ri : ALU32_ri<(outs PredRegs:$dst),
+                           (ins IntRegs:$src1, s10Ext:$src2),
+      "$dst = !cmp.eq($src1, #$src2)",
+      [(set (i1 PredRegs:$dst),
+            (setne (i32 IntRegs:$src1), s10ImmPred:$src2))]>,
+      Requires<[HasV4T]>;
+
+// p=!cmp.gt(r1,r2)
+let isCompare = 1, validSubTargets = HasV4SubT in
+def CMPnotGT_rr : ALU32_rr<(outs PredRegs:$dst),
+                           (ins IntRegs:$src1, IntRegs:$src2),
+      "$dst = !cmp.gt($src1, $src2)",
+      [(set (i1 PredRegs:$dst),
+            (not (setgt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>,
+      Requires<[HasV4T]>;
+
+// p=!cmp.gt(r1,#s10)
+let isCompare = 1, validSubTargets = HasV4SubT in
+def CMPnotGT_ri : ALU32_ri<(outs PredRegs:$dst),
+                           (ins IntRegs:$src1, s10Ext:$src2),
+      "$dst = !cmp.gt($src1, #$src2)",
+      [(set (i1 PredRegs:$dst),
+            (not (setgt (i32 IntRegs:$src1), s10ImmPred:$src2)))]>,
+      Requires<[HasV4T]>;
+
+// p=!cmp.gtu(r1,r2)
+let isCompare = 1, validSubTargets = HasV4SubT in
+def CMPnotGTU_rr : ALU32_rr<(outs PredRegs:$dst),
+                            (ins IntRegs:$src1, IntRegs:$src2),
+      "$dst = !cmp.gtu($src1, $src2)",
+      [(set (i1 PredRegs:$dst),
+            (not (setugt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>,
+      Requires<[HasV4T]>;
+
+// p=!cmp.gtu(r1,#u9)
+let isCompare = 1, validSubTargets = HasV4SubT in
+def CMPnotGTU_ri : ALU32_ri<(outs PredRegs:$dst),
+                            (ins IntRegs:$src1, u9Ext:$src2),
+      "$dst = !cmp.gtu($src1, #$src2)",
+      [(set (i1 PredRegs:$dst),
+            (not (setugt (i32 IntRegs:$src1), u9ImmPred:$src2)))]>,
+      Requires<[HasV4T]>;
+
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPbEQri_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, u8Imm:$src2),
             "$dst = cmpb.eq($src1, #$src2)",
             [(set (i1 PredRegs:$dst),
                   (seteq (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2))]>,
             Requires<[HasV4T]>;
+
+def : Pat <(brcond (i1 (setne (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2)),
+                       bb:$offset),
+      (JMP_cNot (CMPbEQri_V4 (i32 IntRegs:$src1), u8ImmPred:$src2),
+                bb:$offset)>,
+      Requires<[HasV4T]>;
 
 // Pd=cmpb.eq(Rs,Rt)
 let isCompare = 1, validSubTargets = HasV4SubT in
@@ -3705,20 +3813,21 @@ def CMPbGTUri_V4 : MInst<(outs PredRegs:$dst),
             Requires<[HasV4T]>, ImmRegRel;
 
 // Pd=cmpb.gtu(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPbGTU",
+InputType = "reg" in
 def CMPbGTUrr_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmpb.gtu($src1, $src2)",
             [(set (i1 PredRegs:$dst), (setugt (and (i32 IntRegs:$src1), 255),
                                              (and (i32 IntRegs:$src2), 255)))]>,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Following instruction is not being extended as it results into the incorrect
 // code for negative numbers.
 
 // Signed half compare(.eq) ri.
 // Pd=cmph.eq(Rs,#s8)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPhEQri_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, s8Imm:$src2),
             "$dst = cmph.eq($src1, #$src2)",
@@ -3732,7 +3841,7 @@ def CMPhEQri_V4 : MInst<(outs PredRegs:$dst),
 //   r0=and(r0,#0xffff)
 //   p0=cmp.eq(r0,#0)
 // Pd=cmph.eq(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPhEQrr_xor_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmph.eq($src1, $src2)",
@@ -3747,7 +3856,7 @@ def CMPhEQrr_xor_V4 : MInst<(outs PredRegs:$dst),
 //   r1=asl(r1,16)
 //   p0=cmp.eq(r0,r1)
 // Pd=cmph.eq(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPhEQrr_shl_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmph.eq($src1, $src2)",
@@ -3761,19 +3870,20 @@ used in the cmph.gt instruction.
 // Signed half compare(.gt) ri.
 // Pd=cmph.gt(Rs,#s8)
 
-let isCompare = 1 in
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8,
+isCompare = 1, validSubTargets = HasV4SubT in
 def CMPhGTri_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, s8Imm:$src2),
+            (ins IntRegs:$src1, s8Ext:$src2),
             "$dst = cmph.gt($src1, #$src2)",
             [(set (i1 PredRegs:$dst),
                   (setgt (shl (i32 IntRegs:$src1), (i32 16)),
-                         s8ImmPred:$src2))]>,
+                         s8ExtPred:$src2))]>,
             Requires<[HasV4T]>;
 */
 
 // Signed half compare(.gt) rr.
 // Pd=cmph.gt(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT in
 def CMPhGTrr_shl_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmph.gt($src1, $src2)",
@@ -3784,24 +3894,41 @@ def CMPhGTrr_shl_V4 : MInst<(outs PredRegs:$dst),
 
 // Unsigned half compare rr (.gtu).
 // Pd=cmph.gtu(Rs,Rt)
-let isCompare = 1 in
+let isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPhGTU",
+InputType = "reg" in
 def CMPhGTUrr_V4 : MInst<(outs PredRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = cmph.gtu($src1, $src2)",
             [(set (i1 PredRegs:$dst),
                   (setugt (and (i32 IntRegs:$src1), 65535),
                           (and (i32 IntRegs:$src2), 65535)))]>,
-            Requires<[HasV4T]>;
+            Requires<[HasV4T]>, ImmRegRel;
 
 // Unsigned half compare ri (.gtu).
 // Pd=cmph.gtu(Rs,#u7)
-let isCompare = 1 in
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 7,
+isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPhGTU",
+InputType = "imm" in
 def CMPhGTUri_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, u7Imm:$src2),
+            (ins IntRegs:$src1, u7Ext:$src2),
             "$dst = cmph.gtu($src1, #$src2)",
             [(set (i1 PredRegs:$dst), (setugt (and (i32 IntRegs:$src1), 65535),
-                                              u7ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
+                                              u7ExtPred:$src2))]>,
+            Requires<[HasV4T]>, ImmRegRel;
+
+let validSubTargets = HasV4SubT in
+def NTSTBIT_rr : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
+    "$dst = !tstbit($src1, $src2)",
+    [(set (i1 PredRegs:$dst),
+          (seteq (and (shl 1, (i32 IntRegs:$src2)), (i32 IntRegs:$src1)), 0))]>,
+    Requires<[HasV4T]>;
+
+let validSubTargets = HasV4SubT in
+def NTSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+    "$dst = !tstbit($src1, $src2)",
+    [(set (i1 PredRegs:$dst),
+          (seteq (and (shl 1, u5ImmPred:$src2), (i32 IntRegs:$src1)), 0))]>,
+    Requires<[HasV4T]>;
 
 //===----------------------------------------------------------------------===//
 // XTYPE/PRED -
