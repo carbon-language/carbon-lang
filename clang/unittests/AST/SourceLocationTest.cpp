@@ -122,5 +122,38 @@ TEST(CXXConstructorDecl, NoRetFunTypeLocRange) {
   EXPECT_TRUE(Verifier.match("class C { C(); };", functionDecl()));
 }
 
+TEST(CompoundLiteralExpr, CompoundVectorLiteralRange) {
+  RangeVerifier<CompoundLiteralExpr> Verifier;
+  Verifier.expectRange(2, 11, 2, 22);
+  EXPECT_TRUE(Verifier.match(
+                  "typedef int int2 __attribute__((ext_vector_type(2)));\n"
+                  "int2 i2 = (int2){1, 2};", compoundLiteralExpr()));
+}
+
+TEST(CompoundLiteralExpr, ParensCompoundVectorLiteralRange) {
+  RangeVerifier<CompoundLiteralExpr> Verifier;
+  Verifier.expectRange(2, 11, 2, 22);
+  EXPECT_TRUE(Verifier.match(
+                  "typedef int int2 __attribute__((ext_vector_type(2)));\n"
+                  "int2 i2 = (int2)(1, 2);", 
+                  compoundLiteralExpr(), Lang_OpenCL));
+}
+
+TEST(InitListExpr, VectorLiteralListBraceRange) {
+  RangeVerifier<InitListExpr> Verifier;
+  Verifier.expectRange(2, 17, 2, 22);
+  EXPECT_TRUE(Verifier.match(
+                  "typedef int int2 __attribute__((ext_vector_type(2)));\n"
+                  "int2 i2 = (int2){1, 2};", initListExpr()));
+}
+
+TEST(InitListExpr, VectorLiteralInitListParens) {
+  RangeVerifier<InitListExpr> Verifier;
+  Verifier.expectRange(2, 17, 2, 22);
+  EXPECT_TRUE(Verifier.match(
+                  "typedef int int2 __attribute__((ext_vector_type(2)));\n"
+                  "int2 i2 = (int2)(1, 2);", initListExpr(), Lang_OpenCL));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang

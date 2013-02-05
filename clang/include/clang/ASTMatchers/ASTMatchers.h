@@ -922,6 +922,16 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   UserDefinedLiteral> userDefinedLiteral;
 
+/// \brief Matches compound (i.e. non-scalar) literals
+///
+/// Example match: {1}, (1, 2)
+/// \code
+///   int array[4] = {1}; vector int myvec = (vector int)(1, 2);
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  CompoundLiteralExpr> compoundLiteralExpr;
+
 /// \brief Matches nullptr literal.
 const internal::VariadicDynCastAllOfMatcher<
   Stmt,

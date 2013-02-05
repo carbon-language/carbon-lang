@@ -4627,10 +4627,15 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
   Expr **exprs;
   unsigned numExprs;
   Expr *subExpr;
+  SourceLocation LiteralLParenLoc, LiteralRParenLoc;
   if (ParenListExpr *PE = dyn_cast<ParenListExpr>(E)) {
+    LiteralLParenLoc = PE->getLParenLoc();
+    LiteralRParenLoc = PE->getRParenLoc();
     exprs = PE->getExprs();
     numExprs = PE->getNumExprs();
-  } else {
+  } else { // isa<ParenExpr> by assertion at function entrance
+    LiteralLParenLoc = cast<ParenExpr>(E)->getLParen();
+    LiteralRParenLoc = cast<ParenExpr>(E)->getRParen();
     subExpr = cast<ParenExpr>(E)->getSubExpr();
     exprs = &subExpr;
     numExprs = 1;
@@ -4687,8 +4692,8 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
   }
   // FIXME: This means that pretty-printing the final AST will produce curly
   // braces instead of the original commas.
-  InitListExpr *initE = new (Context) InitListExpr(Context, LParenLoc,
-                                                   initExprs, RParenLoc);
+  InitListExpr *initE = new (Context) InitListExpr(Context, LiteralLParenLoc,
+                                                   initExprs, LiteralRParenLoc);
   initE->setType(Ty);
   return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, initE);
 }
