@@ -11,6 +11,9 @@
 // dumps out a plethora of information about an object file depending on the
 // flags.
 //
+// The flags and output of this program should be near identical to those of
+// binutils objdump.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"

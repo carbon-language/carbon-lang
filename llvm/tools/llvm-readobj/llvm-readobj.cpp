@@ -7,12 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This program is a utility that works like traditional Unix "readelf",
-// except that it can handle any type of object file recognized by lib/Object.
+// This is a tool similar to readelf, except it works on multiple object file
+// formats. The main purpose of this tool is to provide detailed output suitable
+// for FileCheck.
 //
-// It makes use of the generic ObjectFile interface.
+// Flags should be similar to readelf where supported, but the output format
+// does not need to be identical. The point is to not make users learn yet
+// another set of flags.
 //
-// Caution: This utility is new, experimental, unsupported, and incomplete.
+// Output should be specialized for each format where appropriate.
 //
 //===----------------------------------------------------------------------===//
 
