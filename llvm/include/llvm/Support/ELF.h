@@ -747,7 +747,8 @@ enum {
   EF_MIPS_ARCH_64   = 0x60000000, // MIPS64 instruction set per linux not elf.h
   EF_MIPS_ARCH_32R2 = 0x70000000, // mips32r2
   EF_MIPS_ARCH_64R2 = 0x80000000, // mips64r2
-  EF_MIPS_ARCH      = 0xf0000000  // Mask for applying EF_MIPS_ARCH_ variant
+  EF_MIPS_ARCH      = 0xf0000000, // Mask for applying EF_MIPS_ARCH_ variant
+  EF_MIPS_MICROMIPS = 0x02000000  // microMIPS
 };
 
 // ELF Relocation types for Mips

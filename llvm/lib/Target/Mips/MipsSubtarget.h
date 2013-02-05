@@ -89,6 +89,9 @@ protected:
   // InMips16 -- can process Mips16 instructions
   bool InMips16Mode;
 
+  // InMicroMips -- can process MicroMips instructions
+  bool InMicroMipsMode;
+
   // HasDSP, HasDSPR2 -- supports DSP ASE.
   bool HasDSP, HasDSPR2;
 
@@ -138,6 +141,7 @@ public:
   bool isNotSingleFloat() const { return !IsSingleFloat; }
   bool hasVFPU() const { return HasVFPU; }
   bool inMips16Mode() const { return InMips16Mode; }
+  bool inMicroMipsMode() const { return InMicroMipsMode; }
   bool hasDSP() const { return HasDSP; }
   bool hasDSPR2() const { return HasDSPR2; }
   bool isAndroid() const { return IsAndroid; }

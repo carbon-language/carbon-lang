@@ -17,6 +17,8 @@
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32 %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE32_PIC %s
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32r2 -relocation-model=static %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE32R2 %s
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32r2 %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE32R2_PIC %s
+; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+micromips -relocation-model=static %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE32R2-MICROMIPS %s
+; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+micromips %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE32R2-MICROMIPS_PIC %s
 
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips64 -relocation-model=static %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE64 %s
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips64 %s -o - | elf-dump --dump-section-data  | FileCheck -check-prefix=CHECK-BE64_PIC %s
@@ -35,6 +37,12 @@
 ;
 ; 32R2 bit with NO_REORDER and PIC
 ; CHECK-BE32R2_PIC: ('e_flags', 0x70000003)
+;
+; 32R2 bit MICROMIPS with NO_REORDER and static
+; CHECK-BE32R2-MICROMIPS: ('e_flags', 0x72000001)
+;
+; 32R2 bit MICROMIPS with NO_REORDER and PIC
+;CHECK-BE32R2-MICROMIPS_PIC:  ('e_flags', 0x72000003)
 ;
 ; 64(R1) bit with NO_REORDER and static
 ; CHECK-BE64: ('e_flags', 0x60000001)
