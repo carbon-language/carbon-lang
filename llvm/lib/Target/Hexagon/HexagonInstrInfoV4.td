@@ -3812,6 +3812,212 @@ def CMPbGTUri_V4 : MInst<(outs PredRegs:$dst),
                                               u7ExtPred:$src2))]>,
             Requires<[HasV4T]>, ImmRegRel;
 
+// SDNode for converting immediate C to C-1.
+def DEC_CONST_BYTE : SDNodeXForm<imm, [{
+   // Return the byte immediate const-1 as an SDNode.
+   int32_t imm = N->getSExtValue();
+   return XformU7ToU7M1Imm(imm);
+}]>;
+
+// For the sequence
+//   zext( seteq ( and(Rs, 255), u8))
+// Generate
+//   Pd=cmpb.eq(Rs, #u8)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+def : Pat <(i32 (zext (i1 (seteq (i32 (and (i32 IntRegs:$Rs), 255)),
+                                           u8ExtPred:$u8)))),
+           (i32 (TFR_condset_ii (i1 (CMPbEQri_V4 (i32 IntRegs:$Rs),
+                                                 (u8ExtPred:$u8))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setne ( and(Rs, 255), u8))
+// Generate
+//   Pd=cmpb.eq(Rs, #u8)
+//   if (Pd.new) Rd=#0
+//   if (!Pd.new) Rd=#1
+def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 IntRegs:$Rs), 255)),
+                                           u8ExtPred:$u8)))),
+           (i32 (TFR_condset_ii (i1 (CMPbEQri_V4 (i32 IntRegs:$Rs),
+                                                 (u8ExtPred:$u8))),
+                                0, 1))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( seteq (Rs, and(Rt, 255)))
+// Generate
+//   Pd=cmpb.eq(Rs, Rt)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+def : Pat <(i32 (zext (i1 (seteq (i32 IntRegs:$Rt),
+                                 (i32 (and (i32 IntRegs:$Rs), 255)))))),
+           (i32 (TFR_condset_ii (i1 (CMPbEQrr_ubub_V4 (i32 IntRegs:$Rs),
+                                                      (i32 IntRegs:$Rt))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setne (Rs, and(Rt, 255)))
+// Generate
+//   Pd=cmpb.eq(Rs, Rt)
+//   if (Pd.new) Rd=#0
+//   if (!Pd.new) Rd=#1
+def : Pat <(i32 (zext (i1 (setne (i32 IntRegs:$Rt),
+                                 (i32 (and (i32 IntRegs:$Rs), 255)))))),
+           (i32 (TFR_condset_ii (i1 (CMPbEQrr_ubub_V4 (i32 IntRegs:$Rs),
+                                                      (i32 IntRegs:$Rt))),
+                                0, 1))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setugt ( and(Rs, 255), u8))
+// Generate
+//   Pd=cmpb.gtu(Rs, #u8)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 255)),
+                                            u8ExtPred:$u8)))),
+           (i32 (TFR_condset_ii (i1 (CMPbGTUri_V4 (i32 IntRegs:$Rs),
+                                                  (u8ExtPred:$u8))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setugt ( and(Rs, 254), u8))
+// Generate
+//   Pd=cmpb.gtu(Rs, #u8)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 254)),
+                                            u8ExtPred:$u8)))),
+           (i32 (TFR_condset_ii (i1 (CMPbGTUri_V4 (i32 IntRegs:$Rs),
+                                                  (u8ExtPred:$u8))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setult ( Rs, Rt))
+// Generate
+//   Pd=cmp.ltu(Rs, Rt)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+// cmp.ltu(Rs, Rt) -> cmp.gtu(Rt, Rs)
+def : Pat <(i32 (zext (i1 (setult (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rt),
+                                              (i32 IntRegs:$Rs))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setlt ( Rs, Rt))
+// Generate
+//   Pd=cmp.lt(Rs, Rt)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+// cmp.lt(Rs, Rt) -> cmp.gt(Rt, Rs)
+def : Pat <(i32 (zext (i1 (setlt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTrr (i32 IntRegs:$Rt),
+                                             (i32 IntRegs:$Rs))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setugt ( Rs, Rt))
+// Generate
+//   Pd=cmp.gtu(Rs, Rt)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+def : Pat <(i32 (zext (i1 (setugt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rs),
+                                              (i32 IntRegs:$Rt))),
+                                1, 0))>,
+           Requires<[HasV4T]>;
+
+// This pattern interefers with coremark performance, not implementing at this
+// time.
+// For the sequence
+//   zext( setgt ( Rs, Rt))
+// Generate
+//   Pd=cmp.gt(Rs, Rt)
+//   if (Pd.new) Rd=#1
+//   if (!Pd.new) Rd=#0
+
+// For the sequence
+//   zext( setuge ( Rs, Rt))
+// Generate
+//   Pd=cmp.ltu(Rs, Rt)
+//   if (Pd.new) Rd=#0
+//   if (!Pd.new) Rd=#1
+// cmp.ltu(Rs, Rt) -> cmp.gtu(Rt, Rs)
+def : Pat <(i32 (zext (i1 (setuge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rt),
+                                              (i32 IntRegs:$Rs))),
+                                0, 1))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setge ( Rs, Rt))
+// Generate
+//   Pd=cmp.lt(Rs, Rt)
+//   if (Pd.new) Rd=#0
+//   if (!Pd.new) Rd=#1
+// cmp.lt(Rs, Rt) -> cmp.gt(Rt, Rs)
+def : Pat <(i32 (zext (i1 (setge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTrr (i32 IntRegs:$Rt),
+                                             (i32 IntRegs:$Rs))),
+                                0, 1))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setule ( Rs, Rt))
+// Generate
+//   Pd=cmp.gtu(Rs, Rt)
+//   if (Pd.new) Rd=#0
+//   if (!Pd.new) Rd=#1
+def : Pat <(i32 (zext (i1 (setule (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTUrr (i32 IntRegs:$Rs),
+                                              (i32 IntRegs:$Rt))),
+                                0, 1))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setle ( Rs, Rt))
+// Generate
+//   Pd=cmp.gt(Rs, Rt)
+//   if (Pd.new) Rd=#0
+//   if (!Pd.new) Rd=#1
+def : Pat <(i32 (zext (i1 (setle (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
+           (i32 (TFR_condset_ii (i1 (CMPGTrr (i32 IntRegs:$Rs),
+                                             (i32 IntRegs:$Rt))),
+                                0, 1))>,
+           Requires<[HasV4T]>;
+
+// For the sequence
+//   zext( setult ( and(Rs, 255), u8))
+// Use the isdigit transformation below
+
+// Generate code of the form 'mux_ii(cmpbgtu(Rdd, C-1),0,1)'
+// for C code of the form r = ((c>='0') & (c<='9')) ? 1 : 0;.
+// The isdigit transformation relies on two 'clever' aspects:
+// 1) The data type is unsigned which allows us to eliminate a zero test after
+//    biasing the expression by 48. We are depending on the representation of
+//    the unsigned types, and semantics.
+// 2) The front end has converted <= 9 into < 10 on entry to LLVM
+//
+// For the C code:
+//   retval = ((c>='0') & (c<='9')) ? 1 : 0;
+// The code is transformed upstream of llvm into
+//   retval = (c-48) < 10 ? 1 : 0;
+let AddedComplexity = 139 in
+def : Pat <(i32 (zext (i1 (setult (i32 (and (i32 IntRegs:$src1), 255)),
+                                  u7StrictPosImmPred:$src2)))),
+  (i32 (MUX_ii (i1 (CMPbGTUri_V4 (i32 IntRegs:$src1),
+                                 (DEC_CONST_BYTE u7StrictPosImmPred:$src2))),
+                   0, 1))>,
+                   Requires<[HasV4T]>;
+
 // Pd=cmpb.gtu(Rs,Rt)
 let isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPbGTU",
 InputType = "reg" in
