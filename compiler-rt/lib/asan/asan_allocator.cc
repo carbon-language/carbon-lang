@@ -389,7 +389,7 @@ class MallocInfo {
     CHECK(m->chunk_state == CHUNK_ALLOCATED ||
           m->chunk_state == CHUNK_AVAILABLE ||
           m->chunk_state == CHUNK_QUARANTINE);
-    lptr offset = 0;
+    sptr offset = 0;
     AsanChunkView m_view(m);
     if (m_view.AddrIsInside(addr, 1, &offset))
       return m;
