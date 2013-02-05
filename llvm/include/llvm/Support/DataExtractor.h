@@ -18,22 +18,24 @@ namespace llvm {
 class DataExtractor {
   StringRef Data;
   uint8_t IsLittleEndian;
-  uint8_t PointerSize;
+  uint8_t AddressSize;
 public:
   /// Construct with a buffer that is owned by the caller.
   ///
   /// This constructor allows us to use data that is owned by the
   /// caller. The data must stay around as long as this object is
   /// valid.
-  DataExtractor(StringRef Data, bool IsLittleEndian, uint8_t PointerSize)
-    : Data(Data), IsLittleEndian(IsLittleEndian), PointerSize(PointerSize) {}
+  DataExtractor(StringRef Data, bool IsLittleEndian, uint8_t AddressSize)
+    : Data(Data), IsLittleEndian(IsLittleEndian), AddressSize(AddressSize) {}
 
-  /// getData - Get the data pointed to by this extractor.
+  /// \brief Get the data pointed to by this extractor.
   StringRef getData() const { return Data; }
-  /// isLittleEndian - Get the endianess for this extractor.
+  /// \brief Get the endianess for this extractor.
   bool isLittleEndian() const { return IsLittleEndian; }
-  /// getAddressSize - Get the address size for this extractor.
-  uint8_t getAddressSize() const { return PointerSize; }
+  /// \brief Get the address size for this extractor.
+  uint8_t getAddressSize() const { return AddressSize; }
+  /// \brief Set the address size for this extractor.
+  void setAddressSize(uint8_t Size) { AddressSize = Size; }
 
   /// Extract a C string from \a *offset_ptr.
   ///
@@ -113,7 +115,7 @@ public:
   ///
   /// Extract a single pointer from the data and update the offset
   /// pointed to by \a offset_ptr. The size of the extracted pointer
-  /// comes from the \a m_addr_size member variable and should be
+  /// is \a getAddressSize(), so the address size has to be
   /// set correctly prior to extracting any pointer values.
   ///
   /// @param[in,out] offset_ptr
@@ -126,7 +128,7 @@ public:
   /// @return
   ///     The extracted pointer value as a 64 integer.
   uint64_t getAddress(uint32_t *offset_ptr) const {
-    return getUnsigned(offset_ptr, PointerSize);
+    return getUnsigned(offset_ptr, AddressSize);
   }
 
   /// Extract a uint8_t value from \a *offset_ptr.
