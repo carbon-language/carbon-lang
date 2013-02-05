@@ -583,16 +583,24 @@ ifeq ($(HOST_OS),Darwin)
 
   LoadableModuleOptions := -Wl,-flat_namespace -Wl,-undefined,suppress
   SharedLinkOptions := -dynamiclib
-  ifneq ($(ARCH),ARM)
-    SharedLinkOptions += -mmacosx-version-min=$(DARWIN_VERSION)
+  ifdef DEPLOYMENT_TARGET
+    SharedLinkOptions += $(DEPLOYMENT_TARGET)
+  else
+    ifneq ($(ARCH),ARM)
+      SharedLinkOptions += -mmacosx-version-min=$(DARWIN_VERSION)
+    endif
   endif
 else
   SharedLinkOptions=-shared
 endif
 
 ifeq ($(TARGET_OS),Darwin)
-  ifneq ($(ARCH),ARM)
-    TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
+  ifdef DEPLOYMENT_TARGET
+    TargetCommonOpts += $(DEPLOYMENT_TARGET)
+  else
+    ifneq ($(ARCH),ARM)
+      TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
+    endif
   endif
 endif
 
