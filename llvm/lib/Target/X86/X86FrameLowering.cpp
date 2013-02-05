@@ -55,8 +55,8 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
           MMI.callsUnwindInit() || MMI.callsEHReturn());
 }
 
-static unsigned getSUBriOpcode(unsigned is64Bit, int64_t Imm) {
-  if (is64Bit) {
+static unsigned getSUBriOpcode(unsigned isLP64, int64_t Imm) {
+  if (isLP64) {
     if (isInt<8>(Imm))
       return X86::SUB64ri8;
     return X86::SUB64ri32;
@@ -67,8 +67,8 @@ static unsigned getSUBriOpcode(unsigned is64Bit, int64_t Imm) {
   }
 }
 
-static unsigned getADDriOpcode(unsigned is64Bit, int64_t Imm) {
-  if (is64Bit) {
+static unsigned getADDriOpcode(unsigned isLP64, int64_t Imm) {
+  if (isLP64) {
     if (isInt<8>(Imm))
       return X86::ADD64ri8;
     return X86::ADD64ri32;
@@ -145,7 +145,7 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
 static
 void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                   unsigned StackPtr, int64_t NumBytes,
-                  bool Is64Bit, bool UseLEA,
+                  bool Is64Bit, bool IsLP64, bool UseLEA,
                   const TargetInstrInfo &TII, const TargetRegisterInfo &TRI) {
   bool isSub = NumBytes < 0;
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
@@ -154,8 +154,8 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
     Opc = getLEArOpcode(Is64Bit);
   else
     Opc = isSub
-      ? getSUBriOpcode(Is64Bit, Offset)
-      : getADDriOpcode(Is64Bit, Offset);
+      ? getSUBriOpcode(IsLP64, Offset)
+      : getADDriOpcode(IsLP64, Offset);
 
   uint64_t Chunk = (1LL << 31) - 1;
   DebugLoc DL = MBB.findDebugLoc(MBBI);
@@ -660,6 +660,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
   bool HasFP = hasFP(MF);
   bool Is64Bit = STI.is64Bit();
+  bool IsLP64 = STI.isTarget64BitLP64();
   bool IsWin64 = STI.isTargetWin64();
   bool UseLEA = STI.useLeaForSP();
   unsigned StackAlign = getStackAlignment();
@@ -711,7 +712,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (TailCallReturnAddrDelta < 0) {
     MachineInstr *MI =
       BuildMI(MBB, MBBI, DL,
-              TII.get(getSUBriOpcode(Is64Bit, -TailCallReturnAddrDelta)),
+              TII.get(getSUBriOpcode(IsLP64, -TailCallReturnAddrDelta)),
               StackPtr)
         .addReg(StackPtr)
         .addImm(-TailCallReturnAddrDelta)
@@ -927,7 +928,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     // MSVC x64's __chkstk needs to adjust %rsp.
     // FIXME: %rax preserves the offset and should be available.
     if (isSPUpdateNeeded)
-      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
+      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, IsLP64,
                    UseLEA, TII, *RegInfo);
 
     if (isEAXAlive) {
@@ -939,7 +940,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         MBB.insert(MBBI, MI);
     }
   } else if (NumBytes)
-    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
+    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, IsLP64,
                  UseLEA, TII, *RegInfo);
 
   // If we need a base pointer, set it up here. It's whatever the value
@@ -996,6 +997,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
   bool Is64Bit = STI.is64Bit();
+  bool IsLP64 = STI.isTarget64BitLP64();
   bool UseLEA = STI.useLeaForSP();
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
@@ -1091,7 +1093,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
-    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, UseLEA, TII, *RegInfo);
+    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, IsLP64, UseLEA,
+                 TII, *RegInfo);
   }
 
   // We're returning from function via eh_return.
@@ -1126,7 +1129,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (Offset) {
       // Check for possible merge with preceding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, UseLEA, TII, *RegInfo);
+      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, IsLP64,
+                   UseLEA, TII, *RegInfo);
     }
 
     // Jump to label or value in register.
@@ -1169,7 +1173,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Check for possible merge with preceding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, UseLEA, TII, *RegInfo);
+    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, IsLP64, UseLEA, TII,
+                 *RegInfo);
   }
 }
 
