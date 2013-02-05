@@ -57,6 +57,7 @@ namespace llvm {
       SK_ARMELFStreamer,
       SK_MachOStreamer,
       SK_PureStreamer,
+      SK_MipsELFStreamer,
       SK_WinCOFFStreamer
     };
 

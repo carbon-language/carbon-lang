@@ -19,12 +19,16 @@ public:
   MipsELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter,
                   bool RelaxAll, bool NoExecStack)
-    : MCELFStreamer(Context, TAB, OS, Emitter) {
+    : MCELFStreamer(SK_MipsELFStreamer, Context, TAB, OS, Emitter) {
   }
 
   ~MipsELFStreamer() {}
   void emitELFHeaderFlagsCG(const MipsSubtarget &Subtarget);
 //  void emitELFHeaderFlagCG(unsigned Val);
+
+  static bool classof(const MCStreamer *S) {
+    return S->getKind() == SK_MipsELFStreamer;
+  }
 };
 
   MCELFStreamer* createMipsELFStreamer(MCContext &Context, MCAsmBackend &TAB,
