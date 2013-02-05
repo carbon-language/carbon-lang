@@ -1326,6 +1326,16 @@ def : Pat<
 >;
 
 def : Pat <
+  (fcos AllReg_32:$src0),
+  (V_COS_F32_e32 (V_MUL_F32_e32 AllReg_32:$src0, (V_MOV_IMM_I32 CONST.TWO_PI_INV)))
+>;
+
+def : Pat <
+  (fsin AllReg_32:$src0),
+  (V_SIN_F32_e32 (V_MUL_F32_e32 AllReg_32:$src0, (V_MOV_IMM_I32 CONST.TWO_PI_INV)))
+>;
+
+def : Pat <
   (int_AMDGPU_cube VReg_128:$src),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
     (V_CUBETC_F32 (EXTRACT_SUBREG VReg_128:$src, sel_x),
