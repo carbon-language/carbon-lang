@@ -808,7 +808,7 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
 // JR +
 //===----------------------------------------------------------------------===//
 def retflag : SDNode<"HexagonISD::RET_FLAG", SDTNone,
-                               [SDNPHasChain, SDNPOptInGlue]>;
+                               [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 // Jump to address from register.
 let isPredicable =1, isReturn = 1, isTerminator = 1, isBarrier = 1,
