@@ -390,30 +390,44 @@ SymbolFileDWARFDebugMap::InitOSO()
 
             for (uint32_t i=0; i<oso_index_count; ++i)
             {
-                const Symbol *so_symbol = symtab->SymbolAtIndex(oso_indexes[i] - 1);
-                const Symbol *oso_symbol = symtab->SymbolAtIndex(oso_indexes[i]);
-                assert (so_symbol);
-                assert (oso_symbol);
-                assert (so_symbol->GetType() == eSymbolTypeSourceFile);
-                assert (oso_symbol->GetType() == eSymbolTypeObjectFile);
-                m_compile_unit_infos[i].so_file.SetFile(so_symbol->GetName().AsCString(), true);
-                m_compile_unit_infos[i].oso_file.SetFile(oso_symbol->GetName().AsCString(), true);
-                uint32_t sibling_idx = so_symbol->GetSiblingIndex();
-                // The sibling index can't be less that or equal to the current index "i"
-                if (sibling_idx <= i)
+                const uint32_t oso_idx = oso_indexes[i];
+                const Symbol *so_symbol = symtab->SymbolAtIndex(oso_idx - 1);
+                const Symbol *oso_symbol = symtab->SymbolAtIndex(oso_idx);
+                if (so_symbol &&
+                    oso_symbol &&
+                    so_symbol->GetType() == eSymbolTypeSourceFile &&
+                    oso_symbol->GetType() == eSymbolTypeObjectFile)
                 {
-                    m_obj_file->GetModule()->ReportError ("N_SO in symbol with UID %u has invalid sibling in debug map, please file a bug and attach the binary listed in this error", so_symbol->GetID());
+                    m_compile_unit_infos[i].so_file.SetFile(so_symbol->GetName().AsCString(), true);
+                    m_compile_unit_infos[i].oso_file.SetFile(oso_symbol->GetName().AsCString(), true);
+                    uint32_t sibling_idx = so_symbol->GetSiblingIndex();
+                    // The sibling index can't be less that or equal to the current index "i"
+                    if (sibling_idx <= i)
+                    {
+                        m_obj_file->GetModule()->ReportError ("N_SO in symbol with UID %u has invalid sibling in debug map, please file a bug and attach the binary listed in this error", so_symbol->GetID());
+                    }
+                    else
+                    {
+                        const Symbol* last_symbol = symtab->SymbolAtIndex (sibling_idx - 1);
+                        m_compile_unit_infos[i].first_symbol_index = symtab->GetIndexForSymbol(so_symbol);
+                        m_compile_unit_infos[i].last_symbol_index = symtab->GetIndexForSymbol(last_symbol);
+                        m_compile_unit_infos[i].first_symbol_id = so_symbol->GetID();
+                        m_compile_unit_infos[i].last_symbol_id = last_symbol->GetID();
+                        
+                        if (log)
+                            log->Printf("Initialized OSO 0x%8.8x: file=%s", i, oso_symbol->GetName().GetCString());
+                    }
                 }
                 else
                 {
-                    const Symbol* last_symbol = symtab->SymbolAtIndex (sibling_idx - 1);
-                    m_compile_unit_infos[i].first_symbol_index = symtab->GetIndexForSymbol(so_symbol);
-                    m_compile_unit_infos[i].last_symbol_index = symtab->GetIndexForSymbol(last_symbol);
-                    m_compile_unit_infos[i].first_symbol_id = so_symbol->GetID();
-                    m_compile_unit_infos[i].last_symbol_id = last_symbol->GetID();
-                    
-                    if (log)
-                        log->Printf("Initialized OSO 0x%8.8x: file=%s", i, oso_symbol->GetName().GetCString());
+                    if (oso_symbol == NULL)
+                        m_obj_file->GetModule()->ReportError ("N_OSO symbol[%u] can't be found, please file a bug and attach the binary listed in this error", oso_idx);
+                    else if (so_symbol == NULL)
+                        m_obj_file->GetModule()->ReportError ("N_SO not found for N_OSO symbol[%u], please file a bug and attach the binary listed in this error", oso_idx);
+                    else if (so_symbol->GetType() != eSymbolTypeSourceFile)
+                        m_obj_file->GetModule()->ReportError ("N_SO has incorrect symbol type (%u) for N_OSO symbol[%u], please file a bug and attach the binary listed in this error", so_symbol->GetType(), oso_idx);
+                    else if (oso_symbol->GetType() != eSymbolTypeSourceFile)
+                        m_obj_file->GetModule()->ReportError ("N_OSO has incorrect symbol type (%u) for N_OSO symbol[%u], please file a bug and attach the binary listed in this error", oso_symbol->GetType(), oso_idx);
                 }
             }
         }
