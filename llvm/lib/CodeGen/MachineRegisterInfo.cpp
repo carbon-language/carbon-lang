@@ -283,13 +283,6 @@ bool MachineRegisterInfo::isLiveIn(unsigned Reg) const {
   return false;
 }
 
-bool MachineRegisterInfo::isLiveOut(unsigned Reg) const {
-  for (liveout_iterator I = liveout_begin(), E = liveout_end(); I != E; ++I)
-    if (*I == Reg)
-      return true;
-  return false;
-}
-
 /// getLiveInPhysReg - If VReg is a live-in virtual register, return the
 /// corresponding live-in physical register.
 unsigned MachineRegisterInfo::getLiveInPhysReg(unsigned VReg) const {

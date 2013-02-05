@@ -346,13 +346,6 @@ void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     }
     OS << '\n';
   }
-  if (RegInfo && !RegInfo->liveout_empty()) {
-    OS << "Function Live Outs:";
-    for (MachineRegisterInfo::liveout_iterator
-         I = RegInfo->liveout_begin(), E = RegInfo->liveout_end(); I != E; ++I)
-      OS << ' ' << PrintReg(*I, TRI);
-    OS << '\n';
-  }
 
   for (const_iterator BB = begin(), E = end(); BB != E; ++BB) {
     OS << '\n';

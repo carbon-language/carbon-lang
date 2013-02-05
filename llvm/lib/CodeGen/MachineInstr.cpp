@@ -1515,12 +1515,12 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         const MachineRegisterInfo &MRI = MF->getRegInfo();
-        if (MRI.use_empty(Reg) && !MRI.isLiveOut(Reg)) {
+        if (MRI.use_empty(Reg)) {
           bool HasAliasLive = false;
           for (MCRegAliasIterator AI(Reg, TM->getRegisterInfo(), true);
                AI.isValid(); ++AI) {
             unsigned AliasReg = *AI;
-            if (!MRI.use_empty(AliasReg) || MRI.isLiveOut(AliasReg)) {
+            if (!MRI.use_empty(AliasReg)) {
               HasAliasLive = true;
               break;
             }

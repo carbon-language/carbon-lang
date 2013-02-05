@@ -99,13 +99,11 @@ class MachineRegisterInfo {
   /// started.
   BitVector ReservedRegs;
 
-  /// LiveIns/LiveOuts - Keep track of the physical registers that are
-  /// livein/liveout of the function.  Live in values are typically arguments in
-  /// registers, live out values are typically return values in registers.
-  /// LiveIn values are allowed to have virtual registers associated with them,
-  /// stored in the second element.
+  /// Keep track of the physical registers that are live in to the function.
+  /// Live in values are typically arguments in registers, live out values are
+  /// typically return values in registers. LiveIn values are allowed to have
+  /// virtual registers associated with them, stored in the second element.
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
-  std::vector<unsigned> LiveOuts;
 
   MachineRegisterInfo(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
   void operator=(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
@@ -468,7 +466,6 @@ public:
   void addLiveIn(unsigned Reg, unsigned vreg = 0) {
     LiveIns.push_back(std::make_pair(Reg, vreg));
   }
-  void addLiveOut(unsigned Reg) { LiveOuts.push_back(Reg); }
 
   // Iteration support for live in/out sets.  These sets are kept in sorted
   // order by their register number.
@@ -478,12 +475,8 @@ public:
   livein_iterator livein_begin() const { return LiveIns.begin(); }
   livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
-  liveout_iterator liveout_begin() const { return LiveOuts.begin(); }
-  liveout_iterator liveout_end()   const { return LiveOuts.end(); }
-  bool             liveout_empty() const { return LiveOuts.empty(); }
 
   bool isLiveIn(unsigned Reg) const;
-  bool isLiveOut(unsigned Reg) const;
 
   /// getLiveInPhysReg - If VReg is a live-in virtual register, return the
   /// corresponding live-in physical register.
