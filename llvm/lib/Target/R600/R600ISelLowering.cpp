@@ -266,6 +266,15 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
             .addImm(EOP);
     break;
   }
+  case AMDGPU::RETURN: {
+    // RETURN instructions must have the live-out registers as implicit uses,
+    // otherwise they appear dead.
+    R600MachineFunctionInfo *MFI = MF->getInfo<R600MachineFunctionInfo>();
+    MachineInstrBuilder MIB(*MF, MI);
+    for (unsigned i = 0, e = MFI->LiveOuts.size(); i != e; ++i)
+      MIB.addReg(MFI->LiveOuts[i], RegState::Implicit);
+    return BB;
+  }
   }
 
   MI->eraseFromParent();
@@ -348,12 +357,10 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     switch (IntrinsicID) {
     case AMDGPUIntrinsic::AMDGPU_store_output: {
       MachineFunction &MF = DAG.getMachineFunction();
-      MachineRegisterInfo &MRI = MF.getRegInfo();
+      R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
       int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
       unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
-      if (!MRI.isLiveOut(Reg)) {
-        MRI.addLiveOut(Reg);
-      }
+      MFI->LiveOuts.push_back(Reg);
       return DAG.getCopyToReg(Chain, Op.getDebugLoc(), Reg, Op.getOperand(2));
     }
     case AMDGPUIntrinsic::R600_store_pixel_color: {

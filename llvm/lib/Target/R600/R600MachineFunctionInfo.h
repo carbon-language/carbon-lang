@@ -23,6 +23,7 @@ class R600MachineFunctionInfo : public MachineFunctionInfo {
 
 public:
   R600MachineFunctionInfo(const MachineFunction &MF);
+  SmallVector<unsigned, 4> LiveOuts;
   SDNode *Outputs[16];
 };
 

@@ -1580,7 +1580,8 @@ def FNEG_R600 : FNEG<R600_Reg32>;
 //===---------------------------------------------------------------------===//
 // Return instruction
 //===---------------------------------------------------------------------===//
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in {
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1,
+    usesCustomInserter = 1 in {
   def RETURN          : ILFormat<(outs), (ins variable_ops),
       "RETURN", [(IL_retflag)]>;
 }
