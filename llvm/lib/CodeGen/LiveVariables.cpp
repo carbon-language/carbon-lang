@@ -619,29 +619,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
                                 MBB);
     }
 
-    // Finally, if the last instruction in the block is a return, make sure to
-    // mark it as using all of the live-out values in the function.
-    // Things marked both call and return are tail calls; do not do this for
-    // them.  The tail callee need not take the same registers as input
-    // that it produces as output, and there are dependencies for its input
-    // registers elsewhere.
-    if (!MBB->empty() && MBB->back().isReturn()
-        && !MBB->back().isCall()) {
-      MachineInstr *Ret = &MBB->back();
-
-      for (MachineRegisterInfo::liveout_iterator
-           I = MF->getRegInfo().liveout_begin(),
-           E = MF->getRegInfo().liveout_end(); I != E; ++I) {
-        assert(TargetRegisterInfo::isPhysicalRegister(*I) &&
-               "Cannot have a live-out virtual register!");
-        HandlePhysRegUse(*I, Ret);
-
-        // Add live-out registers as implicit uses.
-        if (!Ret->readsRegister(*I))
-          Ret->addOperand(MachineOperand::CreateReg(*I, false, true));
-      }
-    }
-
     // MachineCSE may CSE instructions which write to non-allocatable physical
     // registers across MBBs. Remember if any reserved register is liveout.
     SmallSet<unsigned, 4> LiveOuts;

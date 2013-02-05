@@ -418,30 +418,16 @@ void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
   // Start with no live registers.
   LiveRegs.reset();
 
-  // Determine the live-out physregs for this block.
-  if (!BB->empty() && BB->back().isReturn()) {
-    // In a return block, examine the function live-out regs.
-    for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
-           E = MRI.liveout_end(); I != E; ++I) {
+  // Examine the live-in regs of all successors.
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+       SE = BB->succ_end(); SI != SE; ++SI) {
+    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
+         E = (*SI)->livein_end(); I != E; ++I) {
       unsigned Reg = *I;
       LiveRegs.set(Reg);
       // Repeat, for all subregs.
       for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
         LiveRegs.set(*SubRegs);
-    }
-  }
-  else {
-    // In a non-return block, examine the live-in regs of all successors.
-    for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-           SE = BB->succ_end(); SI != SE; ++SI) {
-      for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-             E = (*SI)->livein_end(); I != E; ++I) {
-        unsigned Reg = *I;
-        LiveRegs.set(Reg);
-        // Repeat, for all subregs.
-        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
-          LiveRegs.set(*SubRegs);
-      }
     }
   }
 }

@@ -57,23 +57,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
 
   bool IsReturnBlock = (BBSize != 0 && BB->back().isReturn());
 
-  // Determine the live-out physregs for this block.
-  if (IsReturnBlock) {
-    // In a return block, examine the function live-out regs.
-    for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
-         E = MRI.liveout_end(); I != E; ++I) {
-      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
-        unsigned Reg = *AI;
-        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[Reg] = BBSize;
-        DefIndices[Reg] = ~0u;
-      }
-    }
-  }
-
-  // In a non-return block, examine the live-in regs of all successors.
-  // Note a return block can have successors if the return instruction is
-  // predicated.
+  // Examine the live-in regs of all successors.
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
          SE = BB->succ_end(); SI != SE; ++SI)
     for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
