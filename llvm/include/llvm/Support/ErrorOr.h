@@ -162,6 +162,7 @@ public:
 /// T cannot be a rvalue reference.
 template<class T>
 class ErrorOr {
+  template <class OtherT> friend class ErrorOr;
   static const bool isRef = is_reference<T>::value;
   typedef ReferenceStorage<typename remove_reference<T>::type> wrap;
 
@@ -198,7 +199,8 @@ public:
     new (get()) storage_type(moveIfMoveConstructible<storage_type>(Val));
   }
 
-  ErrorOr(const ErrorOr &Other) : IsValid(false) {
+  template <class OtherT>
+  ErrorOr(ErrorOr<OtherT> &Other) : IsValid(false) {
     // Construct an invalid ErrorOr if other is invalid.
     if (!Other.IsValid)
       return;
@@ -227,7 +229,8 @@ public:
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-  ErrorOr(ErrorOr &&Other) : IsValid(false) {
+  template <class OtherT>
+  ErrorOr(ErrorOr<OtherT> &&Other) : IsValid(false) {
     // Construct an invalid ErrorOr if other is invalid.
     if (!Other.IsValid)
       return;
@@ -311,7 +314,6 @@ private:
     return &Val->get();
   }
 
-protected:
   storage_type *get() {
     assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     assert(!HasError && "Cannot get value when an error exists!");
