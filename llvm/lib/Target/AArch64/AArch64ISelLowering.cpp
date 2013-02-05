@@ -2389,8 +2389,10 @@ static SDValue PerformATOMIC_FENCECombine(SDNode *FenceNode,
   if (!AtomicNode)
     return SDValue();
 
-  uint64_t FenceOrder = FenceNode->getConstantOperandVal(1);
-  uint64_t FenceScope = FenceNode->getConstantOperandVal(2);
+  AtomicOrdering FenceOrder
+    = static_cast<AtomicOrdering>(FenceNode->getConstantOperandVal(1));
+  SynchronizationScope FenceScope
+    = static_cast<SynchronizationScope>(FenceNode->getConstantOperandVal(2));
 
   if (FenceOrder != Acquire || FenceScope != AtomicNode->getSynchScope())
     return SDValue();
@@ -2409,7 +2411,7 @@ static SDValue PerformATOMIC_FENCECombine(SDNode *FenceNode,
                              Chain,                  // Chain
                              AtomicOp.getOperand(1), // Pointer
                              AtomicNode->getMemOperand(), Acquire,
-                             static_cast<SynchronizationScope>(FenceScope));
+                             FenceScope);
 
   if (AtomicNode->getOpcode() == ISD::ATOMIC_LOAD)
     DAG.ReplaceAllUsesWith(AtomicNode, Op.getNode());
@@ -2428,10 +2430,10 @@ static SDValue PerformATOMIC_STORECombine(SDNode *N,
   if (FenceOp.getOpcode() != ISD::ATOMIC_FENCE)
     return SDValue();
 
-  uint64_t FenceOrder
-    = cast<ConstantSDNode>(FenceOp.getOperand(1))->getZExtValue();
-  uint64_t FenceScope
-    = cast<ConstantSDNode>(FenceOp.getOperand(2))->getZExtValue();
+  AtomicOrdering FenceOrder
+    = static_cast<AtomicOrdering>(FenceOp->getConstantOperandVal(1));
+  SynchronizationScope FenceScope
+    = static_cast<SynchronizationScope>(FenceOp->getConstantOperandVal(2));
 
   if (FenceOrder != Release || FenceScope != AtomicNode->getSynchScope())
     return SDValue();
@@ -2442,7 +2444,7 @@ static SDValue PerformATOMIC_STORECombine(SDNode *N,
                        AtomicNode->getOperand(1),       // Pointer
                        AtomicNode->getOperand(2),       // Value
                        AtomicNode->getMemOperand(), Release,
-                       static_cast<SynchronizationScope>(FenceScope));
+                       FenceScope);
 }
 
 /// For a true bitfield insert, the bits getting into that contiguous mask
