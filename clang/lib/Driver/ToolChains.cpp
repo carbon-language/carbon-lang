@@ -1153,7 +1153,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
 
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
-    LibDirs.append(AArch64LibDirs, AArch64LibDirs 
+    LibDirs.append(AArch64LibDirs, AArch64LibDirs
                    + llvm::array_lengthof(AArch64LibDirs));
     TripleAliases.append(
       AArch64Triples, AArch64Triples + llvm::array_lengthof(AArch64Triples));
@@ -2157,11 +2157,11 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
              Data.find("release 6") != StringRef::npos)
       return RHEL6;
     else if ((Data.startswith("Red Hat Enterprise Linux") ||
-	      Data.startswith("CentOS")) &&
+              Data.startswith("CentOS")) &&
              Data.find("release 5") != StringRef::npos)
       return RHEL5;
     else if ((Data.startswith("Red Hat Enterprise Linux") ||
-	      Data.startswith("CentOS")) &&
+              Data.startswith("CentOS")) &&
              Data.find("release 4") != StringRef::npos)
       return RHEL4;
     return UnknownDistro;
