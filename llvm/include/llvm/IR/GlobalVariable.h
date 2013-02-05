@@ -110,7 +110,10 @@ public:
     return hasInitializer() &&
       // The initializer of a global variable with weak linkage may change at
       // link time.
-      !mayBeOverridden();
+      !mayBeOverridden() &&
+      // The initializer of a global variable with the externally_initialized
+      // marker may change at runtime before cxx initializers are evaluated.
+      !isExternallyInitialized();
   }
 
   /// hasUniqueInitializer - Whether the global variable has an initializer, and
@@ -123,7 +126,11 @@ public:
       // instead. It is wrong to modify the initializer of a global variable
       // with *_odr linkage because then different instances of the global may
       // have different initializers, breaking the One Definition Rule.
-      !isWeakForLinker();
+      !isWeakForLinker() &&
+      // It is not safe to modify initializers of global variables with the
+      // external_initializer marker since the value may be changed at runtime
+      // before cxx initializers are evaluated.
+      !isExternallyInitialized();
   }
 
   /// getInitializer - Return the initializer for this global variable.  It is
