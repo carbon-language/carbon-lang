@@ -7,6 +7,6 @@ entry:
   %0 = call i8* @llvm.frameaddress(i32 0)
   ret i8* %0
 
-; CHECK:   addu    $fp, $sp, $zero
-; CHECK:   or      $2, $fp, $zero
+; CHECK:   move    $fp, $sp
+; CHECK:   or    $2, $fp, $zero
 }

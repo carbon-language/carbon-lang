@@ -89,6 +89,8 @@ public:
   virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
   void printCPURegs(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
+  bool printAliasInstr(const MCInst *MI, raw_ostream &OS);
+
 private:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printUnsignedImm(const MCInst *MI, int opNum, raw_ostream &O);

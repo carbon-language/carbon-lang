@@ -31,7 +31,7 @@
 # CHECK:  xori    $9, $6, 17767  # encoding: [0x67,0x45,0xc9,0x38]
 # CHECK:  xori   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x38]
 # CHECK:  wsbh   $6, $7          # encoding: [0xa0,0x30,0x07,0x7c]
-# CHECK:  nor    $7, $8, $zero   # encoding: [0x27,0x38,0x00,0x01]
+# CHECK:  not    $7, $8          # encoding: [0x27,0x38,0x00,0x01]
      and    $9,  $6, $7
      and    $9,  $6, 17767
      andi   $9,  $6, 17767
@@ -76,11 +76,11 @@
 # CHECK:  msubu  $6, $7          # encoding: [0x05,0x00,0xc7,0x70]
 # CHECK:  mult   $3, $5          # encoding: [0x18,0x00,0x65,0x00]
 # CHECK:  multu  $3, $5          # encoding: [0x19,0x00,0x65,0x00]
-# CHECK:  dsubu   $4, $3, $5      # encoding: [0x2f,0x20,0x65,0x00]
-# CHECK:  daddu    $7, $8, $zero  # encoding: [0x2d,0x38,0x00,0x01]
-# CHECK:  .set    push                                            
-# CHECK:  .set    mips32r2                                        
-# CHECK:  rdhwr   $5, $29                                         
+# CHECK:  dsubu   $4, $3, $5     # encoding: [0x2f,0x20,0x65,0x00]
+# CHECK:  move    $7, $8         # encoding: [0x2d,0x38,0x00,0x01]
+# CHECK:  .set    push
+# CHECK:  .set    mips32r2
+# CHECK:  rdhwr   $5, $29
 # CHECK:  .set    pop            # encoding: [0x3b,0xe8,0x05,0x7c]
 
     dadd    $9,$6,$7

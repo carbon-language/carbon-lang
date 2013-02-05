@@ -957,33 +957,41 @@ def MTC2_3OP : MFC3OP<(outs CPURegsOpnd:$rd, uimm16:$sel),
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//
-def : InstAlias<"move $dst,$src", (ADDu CPURegsOpnd:$dst,
-                  CPURegsOpnd:$src,ZERO)>, Requires<[NotMips64]>;
-def : InstAlias<"bal $offset", (BGEZAL RA, brtarget:$offset)>;
+def : InstAlias<"move $dst, $src",
+                (ADDu CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 1>,
+      Requires<[NotMips64]>;
+def : InstAlias<"move $dst, $src",
+                (OR CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 0>,
+      Requires<[NotMips64]>;
+def : InstAlias<"bal $offset", (BGEZAL RA, brtarget:$offset), 1>;
 def : InstAlias<"addu $rs, $rt, $imm",
-                (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm)>;
+                (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"add $rs, $rt, $imm",
-                (ADDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm)>;
+                (ADDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"and $rs, $rt, $imm",
-                (ANDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm)>;
-def : InstAlias<"j $rs", (JR CPURegs:$rs)>, Requires<[NotMips64]>;
-def : InstAlias<"not $rt, $rs", (NOR CPURegsOpnd:$rt, CPURegsOpnd:$rs, ZERO)>;
-def : InstAlias<"neg $rt, $rs", (SUB CPURegsOpnd:$rt, ZERO, CPURegsOpnd:$rs)>;
-def : InstAlias<"negu $rt, $rs", (SUBu CPURegsOpnd:$rt, ZERO,
-                                  CPURegsOpnd:$rs)>;
+                (ANDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
+def : InstAlias<"j $rs", (JR CPURegs:$rs), 0>,
+      Requires<[NotMips64]>;
+def : InstAlias<"not $rt, $rs",
+                (NOR CPURegsOpnd:$rt, CPURegsOpnd:$rs, ZERO), 1>;
+def : InstAlias<"neg $rt, $rs",
+                (SUB CPURegsOpnd:$rt, ZERO, CPURegsOpnd:$rs), 1>;
+def : InstAlias<"negu $rt, $rs",
+                (SUBu CPURegsOpnd:$rt, ZERO, CPURegsOpnd:$rs), 1>;
 def : InstAlias<"slt $rs, $rt, $imm",
-                (SLTi CPURegsOpnd:$rs, CPURegs:$rt, simm16:$imm)>;
+                (SLTi CPURegsOpnd:$rs, CPURegs:$rt, simm16:$imm), 0>;
 def : InstAlias<"xor $rs, $rt, $imm",
-                (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm)>,
-                Requires<[NotMips64]>;
-def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegsOpnd:$rt,
-                                  CPURegsOpnd:$rd, 0)>;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegsOpnd:$rd, 0,
-                                  CPURegsOpnd:$rt)>;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegsOpnd:$rt,
-                                  CPURegsOpnd:$rd, 0)>;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegsOpnd:$rd, 0,
-                                  CPURegsOpnd:$rt)>;
+                (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>,
+      Requires<[NotMips64]>;
+def : InstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
+def : InstAlias<"mfc0 $rt, $rd",
+                (MFC0_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0), 0>;
+def : InstAlias<"mtc0 $rt, $rd",
+                (MTC0_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt), 0>;
+def : InstAlias<"mfc2 $rt, $rd",
+                (MFC2_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0), 0>;
+def : InstAlias<"mtc2 $rt, $rd",
+                (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt), 0>;
 
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions

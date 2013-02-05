@@ -308,26 +308,33 @@ def : MipsPat<(bswap CPU64Regs:$rt), (DSHD (DSBH CPU64Regs:$rt))>;
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//
-def : InstAlias<"move $dst, $src", (DADDu CPU64RegsOpnd:$dst,
-                                   CPU64RegsOpnd:$src,ZERO_64)>,
+def : InstAlias<"move $dst, $src",
+                (DADDu CPU64RegsOpnd:$dst,  CPU64RegsOpnd:$src, ZERO_64), 1>,
+      Requires<[HasMips64]>;
+def : InstAlias<"move $dst, $src",
+                (OR64 CPU64RegsOpnd:$dst, CPU64RegsOpnd:$src, ZERO_64), 0>,
       Requires<[HasMips64]>;
 def : InstAlias<"and $rs, $rt, $imm",
-                (DANDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm)>,
+                (DANDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
+                1>,
       Requires<[HasMips64]>;
 def : InstAlias<"slt $rs, $rt, $imm",
-                (SLTi64 CPURegsOpnd:$rs, CPU64Regs:$rt, simm16_64:$imm)>,
+                (SLTi64 CPURegsOpnd:$rs, CPU64Regs:$rt, simm16_64:$imm), 1>,
       Requires<[HasMips64]>;
 def : InstAlias<"xor $rs, $rt, $imm",
-                (XORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm)>,
+                (XORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
+                1>,
       Requires<[HasMips64]>;
 def : InstAlias<"not $rt, $rs",
-                (NOR64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rs, ZERO_64)>,
+                (NOR64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rs, ZERO_64), 1>,
       Requires<[HasMips64]>;
-def : InstAlias<"j $rs", (JR64 CPU64Regs:$rs)>, Requires<[HasMips64]>;
+def : InstAlias<"j $rs", (JR64 CPU64Regs:$rs), 0>, Requires<[HasMips64]>;
 def : InstAlias<"daddu $rs, $rt, $imm",
-                (DADDiu CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm)>;
+                (DADDiu CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
+                1>;
 def : InstAlias<"dadd $rs, $rt, $imm",
-                (DADDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm)>;
+                (DADDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
+                1>;
 
 /// Move between CPU and coprocessor registers
 
@@ -348,11 +355,11 @@ def DMTC2_3OP64 : MFC3OP<(outs CPU64RegsOpnd:$rd, uimm16:$sel),
 
 // Two operand (implicit 0 selector) versions:
 def : InstAlias<"dmfc0 $rt, $rd",
-                (DMFC0_3OP64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rd, 0)>;
+                (DMFC0_3OP64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rd, 0), 0>;
 def : InstAlias<"dmtc0 $rt, $rd",
-                (DMTC0_3OP64 CPU64RegsOpnd:$rd, 0, CPU64RegsOpnd:$rt)>;
+                (DMTC0_3OP64 CPU64RegsOpnd:$rd, 0, CPU64RegsOpnd:$rt), 0>;
 def : InstAlias<"dmfc2 $rt, $rd",
-                (DMFC2_3OP64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rd, 0)>;
+                (DMFC2_3OP64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rd, 0), 0>;
 def : InstAlias<"dmtc2 $rt, $rd",
-                (DMTC2_3OP64 CPU64RegsOpnd:$rd, 0, CPU64RegsOpnd:$rt)>;
+                (DMTC2_3OP64 CPU64RegsOpnd:$rd, 0, CPU64RegsOpnd:$rt), 0>;
 

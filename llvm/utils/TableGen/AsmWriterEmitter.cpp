@@ -842,8 +842,11 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
             if (!IAP->isOpMapped(ROName)) {
               IAP->addOperand(ROName, i);
+              Record *R = CGA->ResultOperands[i].getRecord();
+              if (R->isSubClassOf("RegisterOperand"))
+                R = R->getValueAsDef("RegClass");
               Cond = std::string("MRI.getRegClass(") + Target.getName() + "::" +
-                CGA->ResultOperands[i].getRecord()->getName() + "RegClassID)"
+                R->getName() + "RegClassID)"
                 ".contains(MI->getOperand(" + llvm::utostr(i) + ").getReg())";
               IAP->addCond(Cond);
             } else {
