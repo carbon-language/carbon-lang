@@ -112,7 +112,7 @@ public:
       // link time.
       !mayBeOverridden() &&
       // The initializer of a global variable with the externally_initialized
-      // marker may change at runtime before cxx initializers are evaluated.
+      // marker may change at runtime before C++ initializers are evaluated.
       !isExternallyInitialized();
   }
 
@@ -129,7 +129,7 @@ public:
       !isWeakForLinker() &&
       // It is not safe to modify initializers of global variables with the
       // external_initializer marker since the value may be changed at runtime
-      // before cxx initializers are evaluated.
+      // before C++ initializers are evaluated.
       !isExternallyInitialized();
   }
 
