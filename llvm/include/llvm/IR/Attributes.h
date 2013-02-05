@@ -114,8 +114,9 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// \brief Return a uniquified Attribute object.
-  static Attribute get(LLVMContext &Context, AttrKind Kind, Constant *Val = 0);
-  static Attribute get(LLVMContext &Context, Constant *Kind, Constant *Val = 0);
+  static Attribute get(LLVMContext &Context, AttrKind Kind, uint64_t Val = 0);
+  static Attribute get(LLVMContext &Context, StringRef Kind,
+                       StringRef Val = StringRef());
 
   /// \brief Return a uniquified Attribute object that has the specific
   /// alignment set.
@@ -126,16 +127,34 @@ public:
   // Attribute Accessors
   //===--------------------------------------------------------------------===//
 
+  /// \brief Return true if the attribute is an Attribute::AttrKind type.
+  bool isEnumAttribute() const;
+
+  /// \brief Return true if the attribute is an alignment attribute.
+  bool isAlignAttribute() const;
+
+  /// \brief Return true if the attribute is a string (target-dependent)
+  /// attribute.
+  bool isStringAttribute() const;
+
   /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
 
-  /// \brief Return the kind of this attribute: enum or string.
-  Constant *getAttributeKind() const;
+  /// \brief Return the attribute's kind as an enum (Attribute::AttrKind). This
+  /// requires the attribute to be an enum or alignment attribute.
+  Attribute::AttrKind getKindAsEnum() const;
 
-  /// \brief Return the values (if present) of the attribute. This may be a
-  /// ConstantVector to represent a list of values associated with the
-  /// attribute.
-  Constant *getAttributeValues() const;
+  /// \brief Return the attribute's value as an integer. This requires that the
+  /// attribute be an alignment attribute.
+  uint64_t getValueAsInt() const;
+
+  /// \brief Return the attribute's kind as a string. This requires the
+  /// attribute to be a string attribute.
+  StringRef getKindAsString() const;
+
+  /// \brief Return the attribute's value as a string. This requires the
+  /// attribute to be a string attribute.
+  StringRef getValueAsString() const;
 
   /// \brief Returns the alignment field of an attribute as a byte alignment
   /// value.
@@ -149,10 +168,7 @@ public:
   /// is, presumably, for writing out the mnemonics for the assembly writer.
   std::string getAsString() const;
 
-  /// \brief Equality and non-equality query methods.
-  bool operator==(AttrKind K) const;
-  bool operator!=(AttrKind K) const;
-
+  /// \brief Equality and non-equality operators.
   bool operator==(Attribute A) const { return pImpl == A.pImpl; }
   bool operator!=(Attribute A) const { return pImpl != A.pImpl; }
 

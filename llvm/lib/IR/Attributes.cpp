@@ -30,11 +30,34 @@ using namespace llvm;
 // Attribute Construction Methods
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, Constant *Kind, Constant *Val) {
+Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
+                         uint64_t Val) {
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  ID.AddPointer(Kind);
-  if (Val) ID.AddPointer(Val);
+  ID.AddInteger(Kind);
+  if (Val) ID.AddInteger(Val);
+
+  void *InsertPoint;
+  AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (!PA) {
+    // If we didn't find any existing attributes of the same shape then create a
+    // new one and insert it.
+    PA = !Val ?
+      new AttributeImpl(Context, Kind) :
+      new AttributeImpl(Context, Kind, Val);
+    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
+  }
+
+  // Return the Attribute that we found or created.
+  return Attribute(PA);
+}
+
+Attribute Attribute::get(LLVMContext &Context, StringRef Kind, StringRef Val) {
+  LLVMContextImpl *pImpl = Context.pImpl;
+  FoldingSetNodeID ID;
+  ID.AddString(Kind);
+  if (!Val.empty()) ID.AddString(Val);
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -50,47 +73,68 @@ Attribute Attribute::get(LLVMContext &Context, Constant *Kind, Constant *Val) {
   return Attribute(PA);
 }
 
-Attribute Attribute::get(LLVMContext &Context, AttrKind Kind, Constant *Val) {
-  ConstantInt *KindVal = ConstantInt::get(Type::getInt64Ty(Context), Kind);
-  return get(Context, KindVal, Val);
-}
-
 Attribute Attribute::getWithAlignment(LLVMContext &Context, uint64_t Align) {
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x40000000 && "Alignment too large.");
-  return get(Context, Alignment,
-             ConstantInt::get(Type::getInt64Ty(Context), Align));
+  return get(Context, Alignment, Align);
 }
 
 Attribute Attribute::getWithStackAlignment(LLVMContext &Context,
                                            uint64_t Align) {
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x100 && "Alignment too large.");
-  return get(Context, StackAlignment,
-             ConstantInt::get(Type::getInt64Ty(Context), Align));
+  return get(Context, StackAlignment, Align);
 }
 
 //===----------------------------------------------------------------------===//
 // Attribute Accessor Methods
 //===----------------------------------------------------------------------===//
 
+bool Attribute::isEnumAttribute() const {
+  return pImpl && pImpl->isEnumAttribute();
+}
+
+bool Attribute::isAlignAttribute() const {
+  return pImpl && pImpl->isAlignAttribute();
+}
+
+bool Attribute::isStringAttribute() const {
+  return pImpl && pImpl->isStringAttribute();
+}
+
+Attribute::AttrKind Attribute::getKindAsEnum() const {
+  assert((isEnumAttribute() || isAlignAttribute()) &&
+         "Invalid attribute type to get the kind as an enum!");
+  return pImpl ? pImpl->getKindAsEnum() : None;
+}
+
+uint64_t Attribute::getValueAsInt() const {
+  assert(isAlignAttribute() &&
+         "Expected the attribute to be an alignment attribute!");
+  return pImpl ? pImpl->getValueAsInt() : 0;
+}
+
+StringRef Attribute::getKindAsString() const {
+  assert(isStringAttribute() &&
+         "Invalid attribute type to get the kind as a string!");
+  return pImpl ? pImpl->getKindAsString() : StringRef();
+}
+
+StringRef Attribute::getValueAsString() const {
+  assert(isStringAttribute() &&
+         "Invalid attribute type to get the value as a string!");
+  return pImpl ? pImpl->getValueAsString() : StringRef();
+}
+
 bool Attribute::hasAttribute(AttrKind Val) const {
-  return pImpl && pImpl->hasAttribute(Val);
-}
-
-Constant *Attribute::getAttributeKind() const {
-  return pImpl ? pImpl->getAttributeKind() : 0;
-}
-
-Constant *Attribute::getAttributeValues() const {
-  return pImpl ? pImpl->getAttributeValues() : 0;
+  return (pImpl && pImpl->hasAttribute(Val)) || (!pImpl && Val == None);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attribute::getAlignment() const {
   assert(hasAttribute(Attribute::Alignment) &&
          "Trying to get alignment from non-alignment attribute!");
-  return pImpl->getAlignment();
+  return pImpl->getValueAsInt();
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
@@ -98,7 +142,7 @@ unsigned Attribute::getAlignment() const {
 unsigned Attribute::getStackAlignment() const {
   assert(hasAttribute(Attribute::StackAlignment) &&
          "Trying to get alignment from non-alignment attribute!");
-  return pImpl->getStackAlignment();
+  return pImpl->getValueAsInt();
 }
 
 std::string Attribute::getAsString() const {
@@ -166,17 +210,17 @@ std::string Attribute::getAsString() const {
   //   align=4
   //   alignstack=8
   //
-  if (hasAttribute(Attribute::StackAlignment)) {
-    std::string Result;
-    Result += "alignstack(";
-    Result += utostr(getStackAlignment());
-    Result += ")";
-    return Result;
-  }
   if (hasAttribute(Attribute::Alignment)) {
     std::string Result;
     Result += "align ";
-    Result += utostr(getAlignment());
+    Result += utostr(getValueAsInt());
+    return Result;
+  }
+  if (hasAttribute(Attribute::StackAlignment)) {
+    std::string Result;
+    Result += "alignstack(";
+    Result += utostr(getValueAsInt());
+    Result += ")";
     return Result;
   }
 
@@ -186,31 +230,19 @@ std::string Attribute::getAsString() const {
   //   "kind" = "value"
   //   "kind" = ( "value1" "value2" "value3" )
   //
-  if (ConstantDataArray *CDA =
-      dyn_cast<ConstantDataArray>(pImpl->getAttributeKind())) {
+  if (isStringAttribute()) {
     std::string Result;
-    Result += '\"' + CDA->getAsString().str() + '"';
+    Result += '\"' + getKindAsString().str() + '"';
 
-    Constant *Vals = pImpl->getAttributeValues();
-    if (!Vals) return Result;
-
-    // FIXME: This should support more than just ConstantDataArrays. Also,
-    // support a vector of attribute values.
+    StringRef Val = pImpl->getValueAsString();
+    if (Val.empty()) return Result;
 
     Result += " = ";
-    Result += '\"' + cast<ConstantDataArray>(Vals)->getAsString().str() + '"';
-
+    Result += '\"' + Val.str() + '"';
     return Result;
   }
 
   llvm_unreachable("Unknown attribute");
-}
-
-bool Attribute::operator==(AttrKind K) const {
-  return (pImpl && *pImpl == K) || (!pImpl && K == None);
-}
-bool Attribute::operator!=(AttrKind K) const {
-  return !(*this == K);
 }
 
 bool Attribute::operator<(Attribute A) const {
@@ -224,68 +256,86 @@ bool Attribute::operator<(Attribute A) const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind Kind)
+  : Context(C), Entry(new EnumAttributeEntry(Kind)) {}
+
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind Kind,
+                             unsigned Align)
+  : Context(C) {
+  assert((Kind == Attribute::Alignment || Kind == Attribute::StackAlignment) &&
+         "Wrong kind for alignment attribute!");
+  Entry = new AlignAttributeEntry(Kind, Align);
+}
+
+AttributeImpl::AttributeImpl(LLVMContext &C, StringRef Kind, StringRef Val)
+  : Context(C), Entry(new StringAttributeEntry(Kind, Val)) {}
+
+AttributeImpl::~AttributeImpl() {
+  delete Entry;
+}
+
+bool AttributeImpl::isEnumAttribute() const {
+  return isa<EnumAttributeEntry>(Entry);
+}
+
+bool AttributeImpl::isAlignAttribute() const {
+  return isa<AlignAttributeEntry>(Entry);
+}
+
+bool AttributeImpl::isStringAttribute() const {
+  return isa<StringAttributeEntry>(Entry);
+}
+
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Kind))
-    return CI->getZExtValue() == A;
-  return false;
+  if (isStringAttribute()) return false;
+  return getKindAsEnum() == A;
 }
 
-uint64_t AttributeImpl::getAlignment() const {
-  assert(hasAttribute(Attribute::Alignment) &&
-         "Trying to retrieve the alignment from a non-alignment attr!");
-  return cast<ConstantInt>(Values)->getZExtValue();
+bool AttributeImpl::hasAttribute(StringRef Kind) const {
+  if (!isStringAttribute()) return false;
+  return getKindAsString() == Kind;
 }
 
-uint64_t AttributeImpl::getStackAlignment() const {
-  assert(hasAttribute(Attribute::StackAlignment) &&
-         "Trying to retrieve the stack alignment from a non-alignment attr!");
-  return cast<ConstantInt>(Values)->getZExtValue();
+Attribute::AttrKind AttributeImpl::getKindAsEnum() const {
+  if (EnumAttributeEntry *E = dyn_cast<EnumAttributeEntry>(Entry))
+    return E->getEnumKind();
+  return cast<AlignAttributeEntry>(Entry)->getEnumKind();
 }
 
-bool AttributeImpl::operator==(Attribute::AttrKind kind) const {
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Kind))
-    return CI->getZExtValue() == kind;
-  return false;
-}
-bool AttributeImpl::operator!=(Attribute::AttrKind kind) const {
-  return !(*this == kind);
+uint64_t AttributeImpl::getValueAsInt() const {
+  return cast<AlignAttributeEntry>(Entry)->getAlignment();
 }
 
-bool AttributeImpl::operator==(StringRef kind) const {
-  if (ConstantDataArray *CDA = dyn_cast<ConstantDataArray>(Kind))
-    if (CDA->isString())
-      return CDA->getAsString() == kind;
-  return false;
+StringRef AttributeImpl::getKindAsString() const {
+  return cast<StringAttributeEntry>(Entry)->getStringKind();
 }
 
-bool AttributeImpl::operator!=(StringRef kind) const {
-  return !(*this == kind);
+StringRef AttributeImpl::getValueAsString() const {
+  return cast<StringAttributeEntry>(Entry)->getStringValue();
 }
 
 bool AttributeImpl::operator<(const AttributeImpl &AI) const {
   // This sorts the attributes with Attribute::AttrKinds coming first (sorted
   // relative to their enum value) and then strings.
+  if (isEnumAttribute())
+    if (AI.isAlignAttribute() || AI.isEnumAttribute())
+      return getKindAsEnum() < AI.getKindAsEnum();
 
-  if (!Kind && !AI.Kind) return false;
-  if (!Kind && AI.Kind) return true;
-  if (Kind && !AI.Kind) return false;
+  if (isAlignAttribute()) {
+    if (!AI.isStringAttribute() && getKindAsEnum() < AI.getKindAsEnum())
+      return true;
+    if (AI.isAlignAttribute())
+      return getValueAsInt() < AI.getValueAsInt();
+  }
 
-  ConstantInt *ThisCI = dyn_cast<ConstantInt>(Kind);
-  ConstantInt *ThatCI = dyn_cast<ConstantInt>(AI.Kind);
+  if (isStringAttribute()) {
+    if (!AI.isStringAttribute()) return false;
+    if (getKindAsString() < AI.getKindAsString()) return true;
+    if (getKindAsString() == AI.getKindAsString())
+      return getValueAsString() < AI.getValueAsString();
+  }
 
-  ConstantDataArray *ThisCDA = dyn_cast<ConstantDataArray>(Kind);
-  ConstantDataArray *ThatCDA = dyn_cast<ConstantDataArray>(AI.Kind);
-
-  if (ThisCI && ThatCI)
-    return ThisCI->getZExtValue() < ThatCI->getZExtValue();
-
-  if (ThisCI && ThatCDA)
-    return true;
-
-  if (ThisCDA && ThatCI)
-    return false;
-
-  return ThisCDA->getAsString() < ThatCDA->getAsString();
+  return false;
 }
 
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
@@ -413,15 +463,14 @@ uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
     for (AttributeSetNode::const_iterator II = ASN->begin(),
            IE = ASN->end(); II != IE; ++II) {
       Attribute Attr = *II;
-      ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
-      Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
+      Attribute::AttrKind Kind = Attr.getKindAsEnum();
 
-      if (KindVal == Attribute::Alignment)
+      if (Kind == Attribute::Alignment)
         Mask |= (Log2_32(ASN->getAlignment()) + 1) << 16;
-      else if (KindVal == Attribute::StackAlignment)
+      else if (Kind == Attribute::StackAlignment)
         Mask |= (Log2_32(ASN->getStackAlignment()) + 1) << 26;
       else
-        Mask |= AttributeImpl::getAttrMask(KindVal);
+        Mask |= AttributeImpl::getAttrMask(Kind);
     }
 
     return Mask;
@@ -465,7 +514,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     assert((!i || Attrs[i-1].first <= Attrs[i].first) &&
            "Misordered Attributes list!");
-    assert(Attrs[i].second != Attribute::None &&
+    assert(!Attrs[i].second.hasAttribute(Attribute::None) &&
            "Pointless attribute!");
   }
 #endif
@@ -815,13 +864,13 @@ AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::addAttribute(Attribute Attr) {
-  ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
-  Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
-  Attrs.insert(KindVal);
+  // FIXME: Handle string attributes.
+  Attribute::AttrKind Kind = Attr.getKindAsEnum();
+  Attrs.insert(Kind);
 
-  if (KindVal == Attribute::Alignment)
+  if (Kind == Attribute::Alignment)
     Alignment = Attr.getAlignment();
-  else if (KindVal == Attribute::StackAlignment)
+  else if (Kind == Attribute::StackAlignment)
     StackAlignment = Attr.getStackAlignment();
   return *this;
 }
@@ -853,8 +902,8 @@ AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
   assert(Idx != ~0U && "Couldn't find index in AttributeSet!");
 
   for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx); I != E; ++I) {
-    ConstantInt *CI = cast<ConstantInt>(I->getAttributeKind());
-    Attribute::AttrKind Kind = Attribute::AttrKind(CI->getZExtValue());
+    // FIXME: Support string attributes.
+    Attribute::AttrKind Kind = I->getKindAsEnum();
     Attrs.erase(Kind);
 
     if (Kind == Attribute::Alignment)
@@ -915,15 +964,10 @@ bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
   assert(Idx != ~0U && "Couldn't find the index!");
 
   for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx);
-       I != E; ++I) {
-    Attribute Attr = *I;
-    // FIXME: Support StringRefs.
-    ConstantInt *Kind = cast<ConstantInt>(Attr.getAttributeKind());
-    Attribute::AttrKind KindVal = Attribute::AttrKind(Kind->getZExtValue());
-
-    if (Attrs.count(KindVal))
+       I != E; ++I)
+    // FIXME: Support string attributes.
+    if (Attrs.count(I->getKindAsEnum()))
       return true;
-  }
 
   return false;
 }
