@@ -3341,17 +3341,6 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
 
   // Emit tail call.
   if (isTailCall) {
-    // If this is the first return lowered for this function, add the regs
-    // to the liveout set for the function.
-    if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-      SmallVector<CCValAssign, 16> RVLocs;
-      CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                     getTargetMachine(), RVLocs, *DAG.getContext());
-      CCInfo.AnalyzeCallResult(Ins, RetCC_PPC);
-      for (unsigned i = 0; i != RVLocs.size(); ++i)
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-    }
-
     assert(((Callee.getOpcode() == ISD::Register &&
              cast<RegisterSDNode>(Callee)->getReg() == PPC::CTR) ||
             Callee.getOpcode() == ISD::TargetExternalSymbol ||
@@ -4417,14 +4406,8 @@ PPCTargetLowering::LowerReturn(SDValue Chain,
                  getTargetMachine(), RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Outs, RetCC_PPC);
 
-  // If this is the first return lowered for this function, add the regs to the
-  // liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
-
   SDValue Flag;
+  SmallVector<SDValue, 4> RetOps(1, Chain);
 
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
@@ -4449,12 +4432,17 @@ PPCTargetLowering::LowerReturn(SDValue Chain,
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Arg, Flag);
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
+  RetOps[0] = Chain;  // Update chain.
+
+  // Add the flag if we have it.
   if (Flag.getNode())
-    return DAG.getNode(PPCISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
-  else
-    return DAG.getNode(PPCISD::RET_FLAG, dl, MVT::Other, Chain);
+    RetOps.push_back(Flag);
+
+  return DAG.getNode(PPCISD::RET_FLAG, dl, MVT::Other,
+                     &RetOps[0], RetOps.size());
 }
 
 SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
