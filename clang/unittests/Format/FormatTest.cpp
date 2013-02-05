@@ -1093,6 +1093,13 @@ TEST_F(FormatTest, BreaksDesireably) {
 }
 
 TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
+  verifyGoogleFormat("f(aaaaaaaaaaaaaaaaaaaa,\n"
+                     "  aaaaaaaaaaaaaaaaaaaa,\n"
+                     "  aaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaa);");
+  verifyGoogleFormat(
+      "aaaaaaa(aaaaaaaaaaaaa,\n"
+      "        aaaaaaaaaaaaa,\n"
+      "        aaaaaaaaaaaaa(aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaa));");
   verifyGoogleFormat(
       "aaaaaaaa(aaaaaaaaaaaaa,\n"
       "         aaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"

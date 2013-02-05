@@ -229,8 +229,9 @@ public:
     LineState State;
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent,
-                                     !Style.BinPackParameters));
+    State.Stack.push_back(
+        ParenState(FirstIndent + 4, FirstIndent, !Style.BinPackParameters,
+                   /*HasMultiParameterLine=*/ false));
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
 
@@ -262,11 +263,12 @@ private:
   }
 
   struct ParenState {
-    ParenState(unsigned Indent, unsigned LastSpace, bool AvoidBinPacking)
+    ParenState(unsigned Indent, unsigned LastSpace, bool AvoidBinPacking,
+               bool HasMultiParameterLine)
         : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
           FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakAfterComma(false),
-          HasMultiParameterLine(false) {
+          HasMultiParameterLine(HasMultiParameterLine) {
     }
 
     /// \brief The position to which a specific parenthesis level needs to be
@@ -554,8 +556,9 @@ private:
         NewIndent = 4 + State.Stack.back().LastSpace;
         AvoidBinPacking = !Style.BinPackParameters;
       }
-      State.Stack.push_back(ParenState(NewIndent, State.Stack.back().LastSpace,
-                                       AvoidBinPacking));
+      State.Stack.push_back(
+          ParenState(NewIndent, State.Stack.back().LastSpace, AvoidBinPacking,
+                     State.Stack.back().HasMultiParameterLine));
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -676,8 +679,7 @@ private:
       return false;
     // Trying to insert a parameter on a new line if there are already more than
     // one parameter on the current line is bin packing.
-    if (State.NextToken->Parent->is(tok::comma) &&
-        State.Stack.back().HasMultiParameterLine &&
+    if (State.Stack.back().HasMultiParameterLine &&
         State.Stack.back().AvoidBinPacking)
       return false;
     return true;
