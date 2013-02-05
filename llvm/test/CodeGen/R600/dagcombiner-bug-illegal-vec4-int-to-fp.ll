@@ -1,12 +1,14 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: INT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-
 ; This test is for a bug in
 ; DAGCombiner::reduceBuildVecConvertToConvertBuildVec() where
 ; the wrong type was being passed to
 ; TargetLowering::getOperationAction() when checking the legality of
 ; ISD::UINT_TO_FP and ISD::SINT_TO_FP opcodes.
+
+
+; CHECK: @sint
+; CHECK: INT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @sint(<4 x float> addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
@@ -19,6 +21,7 @@ entry:
   ret void
 }
 
+;CHECK: @uint
 ;CHECK: UINT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @uint(<4 x float> addrspace(1)* %out, i32 addrspace(1)* %in) {

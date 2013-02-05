@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
+; CHECK: @fp_to_sint
 ; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -12,6 +13,7 @@ define void @fp_to_sint(<4 x i32> addrspace(1)* %out, <4 x float> addrspace(1)* 
   ret void
 }
 
+; CHECK: @fp_to_uint
 ; CHECK: FLT_TO_UINT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: FLT_TO_UINT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: FLT_TO_UINT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -24,6 +26,7 @@ define void @fp_to_uint(<4 x i32> addrspace(1)* %out, <4 x float> addrspace(1)* 
   ret void
 }
 
+; CHECK: @sint_to_fp
 ; CHECK: INT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: INT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: INT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -36,6 +39,7 @@ define void @sint_to_fp(<4 x float> addrspace(1)* %out, <4 x i32> addrspace(1)* 
   ret void
 }
 
+; CHECK: @uint_to_fp
 ; CHECK: UINT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: UINT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: UINT_TO_FLT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}

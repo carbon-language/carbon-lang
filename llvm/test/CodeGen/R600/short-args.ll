@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
+; CHECK: @i8_arg
 ; CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 
 define void @i8_arg(i32 addrspace(1)* nocapture %out, i8 %in) nounwind {
@@ -9,6 +10,7 @@ entry:
   ret void
 }
 
+; CHECK: @i8_zext_arg
 ; CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 
 define void @i8_zext_arg(i32 addrspace(1)* nocapture %out, i8 zeroext %in) nounwind {
@@ -18,6 +20,7 @@ entry:
   ret void
 }
 
+; CHECK: @i16_arg
 ; CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
 
 define void @i16_arg(i32 addrspace(1)* nocapture %out, i16 %in) nounwind {
@@ -27,6 +30,7 @@ entry:
   ret void
 }
 
+; CHECK: @i16_zext_arg
 ; CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
 
 define void @i16_zext_arg(i32 addrspace(1)* nocapture %out, i16 zeroext %in) nounwind {

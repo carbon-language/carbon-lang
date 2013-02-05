@@ -6,6 +6,7 @@
 ; or
 ; ADD_INT literal.x REG, 5
 
+; CHECK; @i32_literal
 ; CHECK: ADD_INT {{[A-Z0-9,. ]*}}literal.x,{{[A-Z0-9,. ]*}} 5
 define void @i32_literal(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -20,6 +21,7 @@ entry:
 ; or
 ; ADD literal.x REG, 5.0
 
+; CHECK: @float_literal
 ; CHECK: ADD {{[A-Z0-9,. ]*}}literal.x,{{[A-Z0-9,. ]*}} {{[0-9]+}}(5.0
 define void @float_literal(float addrspace(1)* %out, float %in) {
 entry:

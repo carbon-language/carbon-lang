@@ -47,6 +47,9 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 #endif
   }
   SetupMachineFunction(MF);
+  if (OutStreamer.hasRawTextSupport()) {
+    OutStreamer.EmitRawText("@" + MF.getName() + ":");
+  }
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   if (STM.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
     EmitProgramInfo(MF);
