@@ -451,31 +451,31 @@ namespace {
     PtrState() : KnownPositiveRefCount(false), Partial(false),
                  Seq(S_None) {}
 
-    inline void SetKnownPositiveRefCount() {
+    void SetKnownPositiveRefCount() {
       KnownPositiveRefCount = true;
     }
 
-    inline void ClearRefCount() {
+    void ClearRefCount() {
       KnownPositiveRefCount = false;
     }
 
-    inline bool IsKnownIncremented() const {
+    bool IsKnownIncremented() const {
       return KnownPositiveRefCount;
     }
 
-    inline void SetSeq(Sequence NewSeq) {
+    void SetSeq(Sequence NewSeq) {
       Seq = NewSeq;
     }
 
-    inline Sequence GetSeq() const {
+    Sequence GetSeq() const {
       return Seq;
     }
 
-    inline void ClearSequenceProgress() {
+    void ClearSequenceProgress() {
       ResetSequenceProgress(S_None);
     }
 
-    inline void ResetSequenceProgress(Sequence NewSeq) {
+    void ResetSequenceProgress(Sequence NewSeq) {
       Seq = NewSeq;
       Partial = false;
       RRI.clear();
