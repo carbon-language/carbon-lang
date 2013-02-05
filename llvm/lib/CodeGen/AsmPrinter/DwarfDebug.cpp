@@ -686,12 +686,12 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   if (!FirstCU)
     FirstCU = NewCU;
 
-  // This should be a unique identifier when we want to build .dwp files.
-  if (useSplitDwarf())
+  if (useSplitDwarf()) {
+    // This should be a unique identifier when we want to build .dwp files.
     NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
-
-  if (useSplitDwarf() && !SkeletonCU)
-    SkeletonCU = constructSkeletonCU(N);
+    // Now construct the skeleton CU associated.
+    constructSkeletonCU(N);
+  }
 
   InfoHolder.addUnit(NewCU);
 
@@ -2476,6 +2476,9 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
 
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+
+  if (!SkeletonCU)
+    SkeletonCU = NewCU;
 
   SkeletonHolder.addUnit(NewCU);
 
