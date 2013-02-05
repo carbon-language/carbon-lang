@@ -124,7 +124,7 @@ template<class CodeEmitter>
 } // end anonymous namespace.
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
-/// to the specified templated MachineCodeEmitter object.
+/// to the specified JITCodeEmitter object.
 FunctionPass *llvm::createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                                 JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
