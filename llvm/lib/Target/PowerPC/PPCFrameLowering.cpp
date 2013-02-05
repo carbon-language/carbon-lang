@@ -119,12 +119,21 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
     if (VRRegNo[RegNo] == I->first)        // If this really is a vector reg.
       UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
   }
-  for (MachineRegisterInfo::liveout_iterator
-       I = MF->getRegInfo().liveout_begin(),
-       E = MF->getRegInfo().liveout_end(); I != E; ++I) {
-    unsigned RegNo = getPPCRegisterNumbering(*I);
-    if (VRRegNo[RegNo] == *I)              // If this really is a vector reg.
-      UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
+
+  // Live out registers appear as use operands on return instructions.
+  for (MachineFunction::const_iterator BI = MF->begin(), BE = MF->end();
+       UsedRegMask != 0 && BI != BE; ++BI) {
+    const MachineBasicBlock &MBB = *BI;
+    if (MBB.empty() || !MBB.back().isReturn())
+      continue;
+    const MachineInstr &Ret = MBB.back();
+    for (unsigned I = 0, E = Ret.getNumOperands(); I != E; ++I) {
+      const MachineOperand &MO = Ret.getOperand(I);
+      if (!MO.isReg() || !PPC::VRRCRegClass.contains(MO.getReg()))
+        continue;
+      unsigned RegNo = getPPCRegisterNumbering(MO.getReg());
+      UsedRegMask &= ~(1 << (31-RegNo));
+    }
   }
 
   // If no registers are used, turn this into a copy.
