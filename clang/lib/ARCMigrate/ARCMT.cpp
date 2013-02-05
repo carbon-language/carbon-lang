@@ -18,6 +18,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/MemoryBuffer.h"
 using namespace clang;
@@ -174,8 +175,24 @@ static CompilerInvocation *
 createInvocationForMigration(CompilerInvocation &origCI) {
   OwningPtr<CompilerInvocation> CInvok;
   CInvok.reset(new CompilerInvocation(origCI));
-  CInvok->getPreprocessorOpts().ImplicitPCHInclude = std::string();
-  CInvok->getPreprocessorOpts().ImplicitPTHInclude = std::string();
+  PreprocessorOptions &PPOpts = CInvok->getPreprocessorOpts();
+  if (!PPOpts.ImplicitPCHInclude.empty()) {
+    // We can't use a PCH because it was likely built in non-ARC mode and we
+    // want to parse in ARC. Include the original header.
+    FileManager FileMgr(origCI.getFileSystemOpts());
+    IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+    IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+        new DiagnosticsEngine(DiagID, &origCI.getDiagnosticOpts(),
+                              new IgnoringDiagConsumer()));
+    std::string OriginalFile =
+        ASTReader::getOriginalSourceFile(PPOpts.ImplicitPCHInclude,
+                                         FileMgr, *Diags);
+    if (!OriginalFile.empty())
+      PPOpts.Includes.insert(PPOpts.Includes.begin(), OriginalFile);
+    PPOpts.ImplicitPCHInclude.clear();
+  }
+  // FIXME: Get the original header of a PTH as well.
+  CInvok->getPreprocessorOpts().ImplicitPTHInclude.clear();
   std::string define = getARCMTMacroName();
   define += '=';
   CInvok->getPreprocessorOpts().addMacroDef(define);
