@@ -38,6 +38,9 @@ static cl::opt<std::string> Style(
 static cl::opt<bool> Inplace("i",
                              cl::desc("Inplace edit <file>, if specified."));
 
+static cl::opt<bool> OutputReplacements(
+    "output-replacements", cl::desc("Output replacements as JSON."));
+
 // FIXME: Remove this when styles are configurable through files.
 static cl::opt<bool> InvertPointerBinding(
     "invert-pointer-binding", cl::desc("Inverts the side to which */& bind"),
@@ -104,23 +107,41 @@ static void format() {
     Ranges.push_back(CharSourceRange::getCharRange(Start, End));
   }
   tooling::Replacements Replaces = reformat(getStyle(), Lex, Sources, Ranges);
-  Rewriter Rewrite(Sources, LangOptions());
-  tooling::applyAllReplacements(Replaces, Rewrite);
-  if (Inplace) {
-    if (Replaces.size() == 0)
-      return; // Nothing changed, don't touch the file.
-
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream FileStream(FileName.c_str(), ErrorInfo,
-                                    llvm::raw_fd_ostream::F_Binary);
-    if (!ErrorInfo.empty()) {
-      llvm::errs() << "Error while writing file: " << ErrorInfo << "\n";
-      return;
+  if (OutputReplacements) {
+    llvm::outs() << "[\n";
+    for (tooling::Replacements::const_iterator I = Replaces.begin(),
+                                               E = Replaces.end();
+         I != E; ++I) {
+      if (I != Replaces.begin()) {
+        llvm::outs() << ",\n";
+      }
+      llvm::outs() << "  {\n"
+                   << "    \"offset\": " << I->getOffset() << ",\n"
+                   << "    \"length\": " << I->getLength() << ",\n"
+                   << "    \"replacement_text\": \"" << I->getReplacementText()
+                   << "\"\n"
+                   << "  }";
     }
-    Rewrite.getEditBuffer(ID).write(FileStream);
-    FileStream.flush();
+    llvm::outs() << "\n]\n";
   } else {
-    Rewrite.getEditBuffer(ID).write(outs());
+    Rewriter Rewrite(Sources, LangOptions());
+    tooling::applyAllReplacements(Replaces, Rewrite);
+    if (Inplace) {
+      if (Replaces.size() == 0)
+        return; // Nothing changed, don't touch the file.
+
+      std::string ErrorInfo;
+      llvm::raw_fd_ostream FileStream(FileName.c_str(), ErrorInfo,
+                                      llvm::raw_fd_ostream::F_Binary);
+      if (!ErrorInfo.empty()) {
+        llvm::errs() << "Error while writing file: " << ErrorInfo << "\n";
+        return;
+      }
+      Rewrite.getEditBuffer(ID).write(FileStream);
+      FileStream.flush();
+    } else {
+      Rewrite.getEditBuffer(ID).write(outs());
+    }
   }
 }
 
