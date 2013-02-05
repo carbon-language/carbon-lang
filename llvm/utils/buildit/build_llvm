@@ -234,6 +234,16 @@ RC_ProjectSourceSubversion=`printf "%d" $LLVM_MINOR_VERSION`
 echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 
+# Run unifdef to preprocess the installed headers to reflect whether this
+# was a debug or release build.
+for file in `find $DEST_DIR$DEST_ROOT/include -type f -print`; do
+  if [ "$LLVM_ASSERTIONS" = yes ]; then
+    unifdef -UNDEBUG -D_DEBUG -o $file $file
+  else
+    unifdef -DNDEBUG -U_DEBUG -ULLVM_ENABLE_DUMP -o $file $file
+  fi
+done
+
 # Find the right version of strip to use.
 STRIP=strip
 if [ -n "$SDKROOT" ]; then
