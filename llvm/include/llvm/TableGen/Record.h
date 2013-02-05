@@ -175,8 +175,7 @@ public:
 };
 
 
-// BitsRecTy - 'bits<n>' - Represent a fixed number of bits
-/// BitsRecTy - 'bits&lt;n&gt;' - Represent a fixed number of bits
+/// BitsRecTy - 'bits<n>' - Represent a fixed number of bits
 ///
 class BitsRecTy : public RecTy {
   unsigned Size;
@@ -288,10 +287,8 @@ public:
   }
 };
 
-// ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
-// the specified type.
-/// ListRecTy - 'list&lt;Ty&gt;' - Represent a list of values, all of which must
-/// be of the specified type.
+/// ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
+/// the specified type.
 ///
 class ListRecTy : public RecTy {
   RecTy *Ty;
