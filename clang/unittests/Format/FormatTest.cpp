@@ -479,6 +479,8 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
 
   verifyFormat("someFunction(anotherFunction( // Force break.\n"
                "    parameter));");
+
+  verifyGoogleFormat("#endif  // HEADER_GUARD");
 }
 
 TEST_F(FormatTest, UnderstandsMultiLineComments) {

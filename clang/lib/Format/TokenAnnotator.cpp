@@ -423,6 +423,8 @@ public:
     default:
       break;
     }
+    while (CurrentToken != NULL)
+      next();
   }
 
   LineType parseLine() {
