@@ -1345,8 +1345,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   Opts.MacroIncludes = Args.getAllArgValues(OPT_imacros);
 
   // Add the ordered list of -includes.
-  for (arg_iterator it = Args.filtered_begin(OPT_include, OPT_include_pch,
-                                             OPT_include_pth),
+  for (arg_iterator it = Args.filtered_begin(OPT_include),
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
     Opts.Includes.push_back(A->getValue());

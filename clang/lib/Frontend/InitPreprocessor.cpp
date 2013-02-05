@@ -784,15 +784,16 @@ void clang::InitializePreprocessor(Preprocessor &PP,
     AddImplicitIncludeMacros(Builder, InitOpts.MacroIncludes[i],
                              PP.getFileManager());
 
+  // Process -include-pch/-include-pth directives.
+  if (!InitOpts.ImplicitPCHInclude.empty())
+    AddImplicitIncludePCH(Builder, PP, InitOpts.ImplicitPCHInclude);
+  if (!InitOpts.ImplicitPTHInclude.empty())
+    AddImplicitIncludePTH(Builder, PP, InitOpts.ImplicitPTHInclude);
+
   // Process -include directives.
   for (unsigned i = 0, e = InitOpts.Includes.size(); i != e; ++i) {
     const std::string &Path = InitOpts.Includes[i];
-    if (Path == InitOpts.ImplicitPTHInclude)
-      AddImplicitIncludePTH(Builder, PP, Path);
-    else if (Path == InitOpts.ImplicitPCHInclude)
-      AddImplicitIncludePCH(Builder, PP, Path);
-    else
-      AddImplicitInclude(Builder, Path, PP.getFileManager());
+    AddImplicitInclude(Builder, Path, PP.getFileManager());
   }
 
   // Exit the command line and go back to <built-in> (2 is LC_LEAVE).

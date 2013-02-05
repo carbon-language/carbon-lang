@@ -247,16 +247,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                            CI.getLangOpts(),
                                            CI.getTargetOpts(),
                                            CI.getPreprocessorOpts())) {
-          for (unsigned I = 0, N = PPOpts.Includes.size(); I != N; ++I) {
-            if (PPOpts.Includes[I] == PPOpts.ImplicitPCHInclude) {
-              PPOpts.Includes[I] = Dir->path();
-              PPOpts.ImplicitPCHInclude = Dir->path();
-              Found = true;
-              break;
-            }
-          }
-
-          assert(Found && "Implicit PCH include not in includes list?");
+          PPOpts.ImplicitPCHInclude = Dir->path();
+          Found = true;
           break;
         }
       }
