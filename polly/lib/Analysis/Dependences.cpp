@@ -38,20 +38,17 @@
 using namespace polly;
 using namespace llvm;
 
-static cl::opt<bool>
-  LegalityCheckDisabled("disable-polly-legality",
-       cl::desc("Disable polly legality check"), cl::Hidden,
-       cl::init(false));
+static cl::opt<bool> LegalityCheckDisabled(
+    "disable-polly-legality", cl::desc("Disable polly legality check"),
+    cl::Hidden, cl::init(false));
 
 static cl::opt<bool>
-  ValueDependences("polly-value-dependences",
-       cl::desc("Use value instead of memory based dependences"), cl::Hidden,
-       cl::init(true));
+ValueDependences("polly-value-dependences",
+                 cl::desc("Use value instead of memory based dependences"),
+                 cl::Hidden, cl::init(true));
 
 //===----------------------------------------------------------------------===//
-Dependences::Dependences() : ScopPass(ID) {
-  RAW = WAR = WAW = NULL;
-}
+Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = NULL; }
 
 void Dependences::collectInfo(Scop &S, isl_union_map **Read,
                               isl_union_map **Write, isl_union_map **MayWrite,
@@ -66,7 +63,8 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
     ScopStmt *Stmt = *SI;
 
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
-          ME = Stmt->memacc_end(); MI != ME; ++MI) {
+                                   ME = Stmt->memacc_end();
+         MI != ME; ++MI) {
       isl_set *domcp = Stmt->getDomain();
       isl_map *accdom = (*MI)->getAccessRelation();
 
@@ -87,40 +85,35 @@ void Dependences::calculateDependences(Scop &S) {
   collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
 
   if (ValueDependences) {
-    isl_union_map_compute_flow(isl_union_map_copy(Read),
-                               isl_union_map_copy(Write),
-                               isl_union_map_copy(MayWrite),
-                               isl_union_map_copy(Schedule),
-                               &RAW, NULL, NULL, NULL);
+    isl_union_map_compute_flow(
+        isl_union_map_copy(Read), isl_union_map_copy(Write),
+        isl_union_map_copy(MayWrite), isl_union_map_copy(Schedule), &RAW, NULL,
+        NULL, NULL);
 
-    isl_union_map_compute_flow(isl_union_map_copy(Write),
-                               isl_union_map_copy(Write),
-                               isl_union_map_copy(Read),
-                               isl_union_map_copy(Schedule),
-                               &WAW, &WAR, NULL, NULL);
+    isl_union_map_compute_flow(
+        isl_union_map_copy(Write), isl_union_map_copy(Write),
+        isl_union_map_copy(Read), isl_union_map_copy(Schedule), &WAW, &WAR,
+        NULL, NULL);
   } else {
     isl_union_map *Empty;
 
     Empty = isl_union_map_empty(isl_union_map_get_space(Write));
     Write = isl_union_map_union(Write, isl_union_map_copy(MayWrite));
 
-    isl_union_map_compute_flow(isl_union_map_copy(Read),
-                               isl_union_map_copy(Empty),
-                               isl_union_map_copy(Write),
-                               isl_union_map_copy(Schedule),
-                               NULL, &RAW, NULL, NULL);
+    isl_union_map_compute_flow(
+        isl_union_map_copy(Read), isl_union_map_copy(Empty),
+        isl_union_map_copy(Write), isl_union_map_copy(Schedule), NULL, &RAW,
+        NULL, NULL);
 
-    isl_union_map_compute_flow(isl_union_map_copy(Write),
-                               isl_union_map_copy(Empty),
-                               isl_union_map_copy(Read),
-                               isl_union_map_copy(Schedule),
-                               NULL, &WAR, NULL, NULL);
+    isl_union_map_compute_flow(
+        isl_union_map_copy(Write), isl_union_map_copy(Empty),
+        isl_union_map_copy(Read), isl_union_map_copy(Schedule), NULL, &WAR,
+        NULL, NULL);
 
-    isl_union_map_compute_flow(isl_union_map_copy(Write),
-                               isl_union_map_copy(Empty),
-                               isl_union_map_copy(Write),
-                               isl_union_map_copy(Schedule),
-                               NULL, &WAW, NULL, NULL);
+    isl_union_map_compute_flow(
+        isl_union_map_copy(Write), isl_union_map_copy(Empty),
+        isl_union_map_copy(Write), isl_union_map_copy(Schedule), NULL, &WAW,
+        NULL, NULL);
     isl_union_map_free(Empty);
   }
 
@@ -169,8 +162,8 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
     Scattering = isl_union_map_add_map(Scattering, StmtScat);
   }
 
-  Dependences = isl_union_map_apply_domain(Dependences,
-                                           isl_union_map_copy(Scattering));
+  Dependences =
+      isl_union_map_apply_domain(Dependences, isl_union_map_copy(Scattering));
   Dependences = isl_union_map_apply_range(Dependences, Scattering);
 
   isl_set *Zero = isl_set_universe(isl_space_copy(ScatteringSpace));
@@ -195,9 +188,8 @@ isl_union_map *getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
   for (Scop::iterator SI = scop->begin(), SE = scop->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
     unsigned remainingDimensions = Stmt->getNumScattering() - dimLevel;
-    isl_map *Scattering = isl_map_project_out(Stmt->getScattering(),
-                                              isl_dim_out, dimLevel,
-                                              remainingDimensions);
+    isl_map *Scattering = isl_map_project_out(
+        Stmt->getScattering(), isl_dim_out, dimLevel, remainingDimensions);
     schedule = isl_union_map_add_map(schedule, Scattering);
   }
 
@@ -229,8 +221,8 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
   Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
   Deps = isl_union_map_apply_domain(Deps, Schedule);
   ScheduleDeps = isl_map_from_union_map(Deps);
-  ScheduleDeps = isl_map_intersect_domain(ScheduleDeps,
-                                          isl_set_copy(ScheduleSubset));
+  ScheduleDeps =
+      isl_map_intersect_domain(ScheduleDeps, isl_set_copy(ScheduleSubset));
   ScheduleDeps = isl_map_intersect_range(ScheduleDeps, ScheduleSubset);
 
   isl_set *Distances = isl_map_deltas(ScheduleDeps);
