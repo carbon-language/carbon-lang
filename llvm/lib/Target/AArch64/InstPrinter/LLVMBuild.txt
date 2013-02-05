@@ -19,6 +19,6 @@
 type = Library
 name = AArch64AsmPrinter
 parent = AArch64
-required_libraries = MC Support
+required_libraries = AArch64Utils MC Support
 add_to_library_groups = AArch64
 

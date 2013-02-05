@@ -14,8 +14,8 @@
 
 #include "AArch64AsmPrinter.h"
 #include "AArch64TargetMachine.h"
-#include "MCTargetDesc/AArch64BaseInfo.h"
 #include "MCTargetDesc/AArch64MCExpr.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"

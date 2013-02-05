@@ -12,7 +12,7 @@
 #include "AArch64.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64Subtarget.h"
-#include "MCTargetDesc/AArch64BaseInfo.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCExpr.h"

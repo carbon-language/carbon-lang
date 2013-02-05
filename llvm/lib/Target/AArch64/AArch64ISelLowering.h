@@ -15,7 +15,7 @@
 #ifndef LLVM_TARGET_AARCH64_ISELLOWERING_H
 #define LLVM_TARGET_AARCH64_ISELLOWERING_H
 
-#include "MCTargetDesc/AArch64BaseInfo.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"

@@ -13,8 +13,8 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "AArch64InstPrinter.h"
-#include "MCTargetDesc/AArch64BaseInfo.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCRegisterInfo.h"

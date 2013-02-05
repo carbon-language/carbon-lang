@@ -18,7 +18,7 @@
 #include "AArch64MachineFunctionInfo.h"
 #include "AArch64TargetMachine.h"
 #include "AArch64TargetObjectFile.h"
-#include "MCTargetDesc/AArch64BaseInfo.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"

@@ -16,7 +16,7 @@
 #include "AArch64InstrInfo.h"
 #include "AArch64Subtarget.h"
 #include "AArch64TargetMachine.h"
-#include "MCTargetDesc/AArch64BaseInfo.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/GlobalValue.h"

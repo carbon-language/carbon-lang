@@ -17,7 +17,6 @@
 #ifndef LLVM_AARCH64_BASEINFO_H
 #define LLVM_AARCH64_BASEINFO_H
 
-#include "AArch64MCTargetDesc.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"

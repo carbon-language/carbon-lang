@@ -23,7 +23,7 @@ BUILT_SOURCES = AArch64GenAsmMatcher.inc \
    AArch64GenRegisterInfo.inc \
    AArch64GenSubtargetInfo.inc
 
-DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc
+DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc Utils
 
 include $(LEVEL)/Makefile.common
 

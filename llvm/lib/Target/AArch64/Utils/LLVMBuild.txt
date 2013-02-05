@@ -1,4 +1,4 @@
-;===- ./lib/Target/AArch64/MCTargetDesc/LLVMBuild.txt ----------*- Conf -*--===;
+;===- ./lib/Target/AArch646/Utils/LLVMBuild.txt ----------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,8 +17,7 @@
 
 [component_0]
 type = Library
-name = AArch64Desc
+name = AArch64Utils
 parent = AArch64
-required_libraries = AArch64AsmPrinter AArch64Info MC Support
+required_libraries = Core Support
 add_to_library_groups = AArch64
-

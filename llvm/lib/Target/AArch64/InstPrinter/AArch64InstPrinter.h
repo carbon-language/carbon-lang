@@ -14,7 +14,8 @@
 #ifndef LLVM_AARCH64INSTPRINTER_H
 #define LLVM_AARCH64INSTPRINTER_H
 
-#include "MCTargetDesc/AArch64BaseInfo.h"
+#include "MCTargetDesc/AArch64MCTargetDesc.h"
+#include "Utils/AArch64BaseInfo.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 
