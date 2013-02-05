@@ -117,7 +117,7 @@ def ARMcall_nolink   : SDNode<"ARMISD::CALL_NOLINK", SDT_ARMcall,
                                SDNPVariadic]>;
 
 def ARMretflag       : SDNode<"ARMISD::RET_FLAG", SDTNone,
-                              [SDNPHasChain, SDNPOptInGlue]>;
+                              [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 def ARMcmov          : SDNode<"ARMISD::CMOV", SDT_ARMCMov,
                               [SDNPInGlue]>;

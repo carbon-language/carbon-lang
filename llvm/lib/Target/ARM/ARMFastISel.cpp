@@ -2099,6 +2099,9 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
   if (!FuncInfo.CanLowerReturn)
     return false;
 
+  // Build a list of return value registers.
+  SmallVector<unsigned, 4> RetRegs;
+
   CallingConv::ID CC = F.getCallingConv();
   if (Ret->getNumOperands() > 0) {
     SmallVector<ISD::OutputArg, 4> Outs;
@@ -2157,13 +2160,16 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
             DstReg).addReg(SrcReg);
 
-    // Mark the register as live out of the function.
-    MRI.addLiveOut(VA.getLocReg());
+    // Add register to return instruction.
+    RetRegs.push_back(VA.getLocReg());
   }
 
   unsigned RetOpc = isThumb2 ? ARM::tBX_RET : ARM::BX_RET;
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(RetOpc)));
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                    TII.get(RetOpc));
+  AddOptionalDefs(MIB);
+  for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
+    MIB.addReg(RetRegs[i], RegState::Implicit);
   return true;
 }
 

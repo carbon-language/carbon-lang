@@ -1928,15 +1928,9 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   CCInfo.AnalyzeReturn(Outs, CCAssignFnForNode(CallConv, /* Return */ true,
                                                isVarArg));
 
-  // If this is the first return lowered for this function, add
-  // the regs to the liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
-
   SDValue Flag;
+  SmallVector<SDValue, 4> RetOps;
+  RetOps.push_back(Chain); // Operand #0 = Chain (updated below)
 
   // Copy the result values into the output registers.
   for (unsigned i = 0, realRVLocIdx = 0;
@@ -1965,10 +1959,12 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
 
         Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), HalfGPRs, Flag);
         Flag = Chain.getValue(1);
+        RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
         VA = RVLocs[++i]; // skip ahead to next loc
         Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
                                  HalfGPRs.getValue(1), Flag);
         Flag = Chain.getValue(1);
+        RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
         VA = RVLocs[++i]; // skip ahead to next loc
 
         // Extract the 2nd half and fall through to handle it as an f64 value.
@@ -1981,6 +1977,7 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
                                   DAG.getVTList(MVT::i32, MVT::i32), &Arg, 1);
       Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd, Flag);
       Flag = Chain.getValue(1);
+      RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
       VA = RVLocs[++i]; // skip ahead to next loc
       Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd.getValue(1),
                                Flag);
@@ -1990,15 +1987,16 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
     // Guarantee that all emitted copies are
     // stuck together, avoiding something bad.
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
-  SDValue result;
+  // Update chain and glue.
+  RetOps[0] = Chain;
   if (Flag.getNode())
-    result = DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
-  else // Return Void
-    result = DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain);
+    RetOps.push_back(Flag);
 
-  return result;
+  return DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other,
+                     RetOps.data(), RetOps.size());
 }
 
 bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
