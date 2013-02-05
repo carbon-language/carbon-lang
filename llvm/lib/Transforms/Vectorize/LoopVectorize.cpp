@@ -518,8 +518,9 @@ class LoopVectorizationCostModel {
 public:
   LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
                              LoopVectorizationLegality *Legal,
-                             const TargetTransformInfo &TTI)
-      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI) {}
+                             const TargetTransformInfo &TTI,
+                             DataLayout *DL)
+      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL) {}
 
   /// Information about vectorization costs
   struct VectorizationFactor {
@@ -575,6 +576,10 @@ private:
   /// the scalar type.
   static Type* ToVectorTy(Type *Scalar, unsigned VF);
 
+  /// Returns whether the instruction is a load or store and will be a emitted
+  /// as a vector operation.
+  bool isConsecutiveLoadOrStore(Instruction *I);
+
   /// The loop that we evaluate.
   Loop *TheLoop;
   /// Scev analysis.
@@ -585,6 +590,8 @@ private:
   LoopVectorizationLegality *Legal;
   /// Vector target information.
   const TargetTransformInfo &TTI;
+  /// Target data layout information.
+  DataLayout *DL;
 };
 
 /// The LoopVectorize Pass.
@@ -624,7 +631,7 @@ struct LoopVectorize : public LoopPass {
     }
 
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL);
 
     // Check the function attribues to find out if this function should be
     // optimized for size.
@@ -2786,14 +2793,17 @@ unsigned LoopVectorizationCostModel::getWidestType() {
           continue;
 
       // Examine the stored values.
-      if (StoreInst *ST = dyn_cast<StoreInst>(it))
+      StoreInst *ST = 0;
+      if ((ST = dyn_cast<StoreInst>(it)))
         T = ST->getValueOperand()->getType();
 
-      // Ignore stored/loaded pointer types.
-      if (T->isPointerTy())
-        continue;
-
-      MaxWidth = std::max(MaxWidth, T->getScalarSizeInBits());
+      // Ignore loaded pointer types and stored pointer types that are not
+      // consecutive. However, we do want to take consecutive stores/loads of
+      // pointer vectors into account.
+      if (T->isPointerTy() && isConsecutiveLoadOrStore(it))
+        MaxWidth = std::max(MaxWidth, DL->getPointerSizeInBits());
+      else
+        MaxWidth = std::max(MaxWidth, T->getScalarSizeInBits());
     }
   }
 
@@ -3241,4 +3251,16 @@ namespace llvm {
   }
 }
 
+bool LoopVectorizationCostModel::isConsecutiveLoadOrStore(Instruction *Inst) {
+  // Check for a store.
+  StoreInst *ST = dyn_cast<StoreInst>(Inst);
+  if (ST)
+    return Legal->isConsecutivePtr(ST->getPointerOperand()) != 0;
 
+  // Check for a load.
+  LoadInst *LI = dyn_cast<LoadInst>(Inst);
+  if (LI)
+    return Legal->isConsecutivePtr(LI->getPointerOperand()) != 0;
+
+  return false;
+}
