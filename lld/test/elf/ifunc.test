@@ -1,23 +1,28 @@
-RUN: lld -core -target x86_64-linux -emit-yaml -output=- %p/Inputs/ifunc.x86-64 \
-RUN: | FileCheck %s
+RUN: lld -core -target x86_64-linux -emit-yaml -output=- \
+RUN:   %p/Inputs/ifunc.x86-64 -noinhibit-exec | FileCheck %s
 
-RUN: lld -core -target x86_64-linux -emit-yaml -output=- %p/Inputs/ifunc.x86-64 \
-RUN: %p/Inputs/ifunc.cpp.x86-64 | FileCheck %s --check-prefix=PLT
+RUN: lld -core -target x86_64-linux -emit-yaml -output=- \
+RUN:   %p/Inputs/ifunc.x86-64 -noinhibit-exec %p/Inputs/ifunc.cpp.x86-64 \
+RUN: | FileCheck %s --check-prefix=PLT
 
-RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/ifunc.x86-64 \
-RUN: -noinhibit-exec %p/Inputs/ifunc.cpp.x86-64 && llvm-objdump -d -s %t| FileCheck %s \
+RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/ifunc.x86-64 -entry=main \
+RUN:   %p/Inputs/ifunc.cpp.x86-64 && llvm-objdump -d -s %t| FileCheck %s \
 RUN:   --check-prefix=BIN
 
 CHECK: name: hey
 CHECK: scope: global
 CHECK: type: resolver
 
-// Get the target that main references.
+PLT: name: plt
+PLT: scope: global
+PLT: kind: R_X86_64_PC32
+PLT: target: [[PLTNAME:[-a-zA-Z0-9_]+]]
+
 PLT: name: main
 PLT: scope: global
 PLT: references
 PLT: kind: R_X86_64_PC32
-PLT: target: [[PLTNAME:[-a-zA-Z0-9_]+]]
+PLT: target: [[PLTNAME]]
 
 // Make sure there's a got entry with a IRELATIVE relocation.
 PLT: type: got
@@ -33,6 +38,6 @@ PLT: kind: R_X86_64_PC32
 
 // This is a horribly brittle test. We need a way to do arithmetic on captured
 // variables.
-BIN: 40011c: ff 25 de 0e 00 00 jmpq *3806(%rip)
+BIN: 40012c: ff 25 ce 0e 00 00 jmpq *3790(%rip)
 BIN: .got.plt:
 BIN-NEXT: 401000 00000000 00000000

@@ -12,3 +12,10 @@ hey:
 __hey_1:
   movq $42, %rax
   ret
+
+  .text
+  .type plt, @function;
+  .globl plt;
+plt:
+  call hey@PLT
+  ret
