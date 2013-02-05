@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Function.h"
@@ -78,12 +79,21 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
     InsertPt = &I;
     ++InsertPt;
   } else {
-    // We cannot demote invoke instructions to the stack if their normal edge
-    // is critical.
     InvokeInst &II = cast<InvokeInst>(I);
-    assert(II.getNormalDest()->getSinglePredecessor() &&
-           "Cannot demote invoke with a critical successor!");
-    InsertPt = II.getNormalDest()->begin();
+    if (II.getNormalDest()->getSinglePredecessor())
+      InsertPt = II.getNormalDest()->getFirstInsertionPt();
+    else {
+      // We cannot demote invoke instructions to the stack if their normal edge
+      // is critical.  Therefore, split the critical edge and insert the store
+      // in the newly created basic block.
+      unsigned SuccNum = GetSuccessorNumber(I.getParent(), II.getNormalDest());
+      TerminatorInst *TI = &cast<TerminatorInst>(I);
+      assert (isCriticalEdge(TI, SuccNum) &&
+              "Expected a critical edge!");
+      BasicBlock *BB = SplitCriticalEdge(TI, SuccNum);
+      assert (BB && "Unable to split critical edge.");
+      InsertPt = BB->getFirstInsertionPt();
+    }
   }
 
   for (; isa<PHINode>(InsertPt) || isa<LandingPadInst>(InsertPt); ++InsertPt)
