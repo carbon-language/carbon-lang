@@ -16,6 +16,9 @@
 #ifndef LLVM_SUPPORT_DWARF_H
 #define LLVM_SUPPORT_DWARF_H
 
+#include "llvm/Support/DataTypes.h"
+
+
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
@@ -53,9 +56,15 @@ enum llvm_dwarf_constants {
 
   DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
 
-  DW_CIE_VERSION = 1,                   // Common frame information version.
-  DW_CIE_ID       = 0xffffffff          // Common frame information mark.
+  DW_CIE_VERSION = 1                    // Common frame information version.
 };
+
+
+// Special ID values that distinguish a CIE from a FDE in DWARF CFI.
+// Not inside an enum because a 64-bit value is needed.
+const uint32_t DW_CIE_ID = UINT32_MAX;
+const uint64_t DW64_CIE_ID = UINT64_MAX;
+
 
 enum dwarf_constants {
   DWARF_VERSION = 2,

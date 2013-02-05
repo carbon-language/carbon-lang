@@ -12,6 +12,7 @@
 
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAranges.h"
+#include "DWARFDebugFrame.h"
 #include "DWARFDebugLine.h"
 #include "DWARFDebugRangeList.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -29,6 +30,7 @@ class DWARFContext : public DIContext {
   OwningPtr<DWARFDebugAbbrev> Abbrev;
   OwningPtr<DWARFDebugAranges> Aranges;
   OwningPtr<DWARFDebugLine> Line;
+  OwningPtr<DWARFDebugFrame> DebugFrame;
 
   SmallVector<DWARFCompileUnit, 1> DWOCUs;
   OwningPtr<DWARFDebugAbbrev> AbbrevDWO;
@@ -84,6 +86,9 @@ public:
   /// Get a pointer to the parsed DebugAranges object.
   const DWARFDebugAranges *getDebugAranges();
 
+  /// Get a pointer to the parsed frame information object.
+  const DWARFDebugFrame *getDebugFrame();
+
   /// Get a pointer to a parsed line table corresponding to a compile unit.
   const DWARFDebugLine::LineTable *
   getLineTableForCompileUnit(DWARFCompileUnit *cu);
@@ -96,11 +101,13 @@ public:
       DILineInfoSpecifier Specifier = DILineInfoSpecifier());
 
   virtual bool isLittleEndian() const = 0;
+  virtual uint8_t getAddressSize() const = 0;
   virtual const RelocAddrMap &infoRelocMap() const = 0;
   virtual const RelocAddrMap &lineRelocMap() const = 0;
   virtual StringRef getInfoSection() = 0;
   virtual StringRef getAbbrevSection() = 0;
   virtual StringRef getARangeSection() = 0;
+  virtual StringRef getDebugFrameSection() = 0;
   virtual StringRef getLineSection() = 0;
   virtual StringRef getStringSection() = 0;
   virtual StringRef getRangeSection() = 0;
@@ -132,11 +139,13 @@ private:
 class DWARFContextInMemory : public DWARFContext {
   virtual void anchor();
   bool IsLittleEndian;
+  uint8_t AddressSize;
   RelocAddrMap InfoRelocMap;
   RelocAddrMap LineRelocMap;
   StringRef InfoSection;
   StringRef AbbrevSection;
   StringRef ARangeSection;
+  StringRef DebugFrameSection;
   StringRef LineSection;
   StringRef StringSection;
   StringRef RangeSection;
@@ -153,11 +162,13 @@ class DWARFContextInMemory : public DWARFContext {
 public:
   DWARFContextInMemory(object::ObjectFile *);
   virtual bool isLittleEndian() const { return IsLittleEndian; }
+  virtual uint8_t getAddressSize() const { return AddressSize; }
   virtual const RelocAddrMap &infoRelocMap() const { return InfoRelocMap; }
   virtual const RelocAddrMap &lineRelocMap() const { return LineRelocMap; }
   virtual StringRef getInfoSection() { return InfoSection; }
   virtual StringRef getAbbrevSection() { return AbbrevSection; }
   virtual StringRef getARangeSection() { return ARangeSection; }
+  virtual StringRef getDebugFrameSection() { return DebugFrameSection; }
   virtual StringRef getLineSection() { return LineSection; }
   virtual StringRef getStringSection() { return StringSection; }
   virtual StringRef getRangeSection() { return RangeSection; }

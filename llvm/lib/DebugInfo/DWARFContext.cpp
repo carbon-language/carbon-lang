@@ -31,6 +31,11 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       getCompileUnitAtIndex(i)->dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_Frames) {
+    OS << "\n.debug_frame contents:\n";
+    getDebugFrame()->dump(OS);
+  }
+
   uint32_t offset = 0;
   if (DumpType == DIDT_All || DumpType == DIDT_Aranges) {
     OS << "\n.debug_aranges contents:\n";
@@ -150,6 +155,26 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
   // manually build aranges for the rest of them.
   Aranges->generate(this);
   return Aranges.get();
+}
+
+const DWARFDebugFrame *DWARFContext::getDebugFrame() {
+  if (DebugFrame)
+    return DebugFrame.get();
+
+  // There's a "bug" in the DWARFv3 standard with respect to the target address
+  // size within debug frame sections. While DWARF is supposed to be independent
+  // of its container, FDEs have fields with size being "target address size",
+  // which isn't specified in DWARF in general. It's only specified for CUs, but
+  // .eh_frame can appear without a .debug_info section. Follow the example of
+  // other tools (libdwarf) and extract this from the container (ObjectFile
+  // provides this information). This problem is fixed in DWARFv4
+  // See this dwarf-discuss discussion for more details:
+  // http://lists.dwarfstd.org/htdig.cgi/dwarf-discuss-dwarfstd.org/2011-December/001173.html
+  DataExtractor debugFrameData(getDebugFrameSection(), isLittleEndian(),
+                               getAddressSize());
+  DebugFrame.reset(new DWARFDebugFrame());
+  DebugFrame->parse(debugFrameData);
+  return DebugFrame.get();
 }
 
 const DWARFLineTable *
@@ -440,7 +465,8 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
 }
 
 DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
-  IsLittleEndian(Obj->isLittleEndian()) {
+  IsLittleEndian(Obj->isLittleEndian()),
+  AddressSize(Obj->getBytesInAddress()) {
   error_code ec;
   for (object::section_iterator i = Obj->begin_sections(),
          e = Obj->end_sections();
@@ -459,6 +485,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       LineSection = data;
     else if (name == "debug_aranges")
       ARangeSection = data;
+    else if (name == "debug_frame")
+      DebugFrameSection = data;
     else if (name == "debug_str")
       StringSection = data;
     else if (name == "debug_ranges") {
