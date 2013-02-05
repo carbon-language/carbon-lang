@@ -1322,19 +1322,14 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // If the source integer type is not the intptr_t type for this target, do a
   // trunc or zext to the intptr_t type, then inttoptr of it.  This allows the
   // cast to be exposed to other transforms.
-  if (TD) {
-    if (CI.getOperand(0)->getType()->getScalarSizeInBits() >
-        TD->getPointerSizeInBits()) {
-      Value *P = Builder->CreateTrunc(CI.getOperand(0),
-                                      TD->getIntPtrType(CI.getContext()));
-      return new IntToPtrInst(P, CI.getType());
-    }
-    if (CI.getOperand(0)->getType()->getScalarSizeInBits() <
-        TD->getPointerSizeInBits()) {
-      Value *P = Builder->CreateZExt(CI.getOperand(0),
-                                     TD->getIntPtrType(CI.getContext()));
-      return new IntToPtrInst(P, CI.getType());
-    }
+  if (TD && CI.getOperand(0)->getType()->getScalarSizeInBits() !=
+      TD->getPointerSizeInBits()) {
+    Type *Ty = TD->getIntPtrType(CI.getContext());
+    if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
+      Ty = VectorType::get(Ty, CI.getType()->getVectorNumElements());
+
+    Value *P = Builder->CreateZExtOrTrunc(CI.getOperand(0), Ty);
+    return new IntToPtrInst(P, CI.getType());
   }
 
   if (Instruction *I = commonCastTransforms(CI))
