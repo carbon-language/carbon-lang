@@ -23,7 +23,7 @@
 // RUN: grep '@"\\01L_OBJC_PROTOCOL_CLASS_METHODS_P" = internal global .*section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_PROTOCOL_INSTANCE_METHODS_P" = internal global .*section "__OBJC,__cat_inst_meth,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_PROTOCOL_P" = internal global .*section "__OBJC,__protocol,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_[0-9]*" = internal global .*section "__OBJC,__message_refs,literal_pointers,no_dead_strip", align 4' %t
+// RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_[0-9]*" = internal externally_initialized global .*section "__OBJC,__message_refs,literal_pointers,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_SYMBOLS" = internal global .*section "__OBJC,__symbols,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01l_OBJC_$_PROP_LIST_A" = internal global .*section "__OBJC,__property,regular,no_dead_strip", align 4' %t
 // RUN: grep "\.lazy_reference \.objc_class_name_J0" %t

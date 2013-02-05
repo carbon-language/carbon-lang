@@ -54,17 +54,17 @@ typedef signed char BOOL;
 @end
 
 // CHECK: [[WithIntMeth:@".*"]] = internal global [15 x i8] c"numberWithInt:\00"
-// CHECK: [[WithIntSEL:@".*"]] = internal global i8* getelementptr inbounds ([15 x i8]* [[WithIntMeth]]
+// CHECK: [[WithIntSEL:@".*"]] = internal externally_initialized global i8* getelementptr inbounds ([15 x i8]* [[WithIntMeth]]
 // CHECK: [[WithCharMeth:@".*"]] = internal global [16 x i8] c"numberWithChar:\00"
-// CHECK: [[WithCharSEL:@".*"]] = internal global i8* getelementptr inbounds ([16 x i8]* [[WithCharMeth]]
+// CHECK: [[WithCharSEL:@".*"]] = internal externally_initialized global i8* getelementptr inbounds ([16 x i8]* [[WithCharMeth]]
 // CHECK: [[WithBoolMeth:@".*"]] = internal global [16 x i8] c"numberWithBool:\00"
-// CHECK: [[WithBoolSEL:@".*"]] = internal global i8* getelementptr inbounds ([16 x i8]* [[WithBoolMeth]]
+// CHECK: [[WithBoolSEL:@".*"]] = internal externally_initialized global i8* getelementptr inbounds ([16 x i8]* [[WithBoolMeth]]
 // CHECK: [[WithIntegerMeth:@".*"]] = internal global [19 x i8] c"numberWithInteger:\00"
-// CHECK: [[WithIntegerSEL:@".*"]] = internal global i8* getelementptr inbounds ([19 x i8]* [[WithIntegerMeth]]
+// CHECK: [[WithIntegerSEL:@".*"]] = internal externally_initialized global i8* getelementptr inbounds ([19 x i8]* [[WithIntegerMeth]]
 // CHECK: [[WithUnsignedIntegerMeth:@".*"]] = internal global [27 x i8] c"numberWithUnsignedInteger:\00"
-// CHECK: [[WithUnsignedIntegerSEL:@".*"]] = internal global i8* getelementptr inbounds ([27 x i8]* [[WithUnsignedIntegerMeth]]
+// CHECK: [[WithUnsignedIntegerSEL:@".*"]] = internal externally_initialized global i8* getelementptr inbounds ([27 x i8]* [[WithUnsignedIntegerMeth]]
 // CHECK: [[stringWithUTF8StringMeth:@".*"]] = internal global [22 x i8] c"stringWithUTF8String:\00"
-// CHECK: [[stringWithUTF8StringSEL:@".*"]] = internal global i8* getelementptr inbounds ([22 x i8]* [[stringWithUTF8StringMeth]]
+// CHECK: [[stringWithUTF8StringSEL:@".*"]] = internal externally_initialized global i8* getelementptr inbounds ([22 x i8]* [[stringWithUTF8StringMeth]]
 
 int main() {
   // CHECK: load i8** [[WithIntSEL]]
