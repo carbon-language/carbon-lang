@@ -1290,6 +1290,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         DataExtractor nlist_data (NULL, 0, byte_order, addr_byte_size);
         DataExtractor strtab_data (NULL, 0, byte_order, addr_byte_size);
         DataExtractor function_starts_data (NULL, 0, byte_order, addr_byte_size);
+        DataExtractor indirect_symbol_index_data (NULL, 0, byte_order, addr_byte_size);
         
         const addr_t nlist_data_byte_size = symtab_load_command.nsyms * nlist_byte_size;
         const addr_t strtab_data_byte_size = symtab_load_command.strsize;
@@ -1349,6 +1350,13 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     //DataBufferSP strtab_data_sp (ReadMemory (process_sp, strtab_addr, strtab_data_byte_size));
                     //if (strtab_data_sp)
                     //    strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
+                    if (m_dysymtab.nindirectsyms != 0)
+                    {
+                        const addr_t indirect_syms_addr = linkedit_load_addr + m_dysymtab.indirectsymoff - linkedit_file_offset;
+                        DataBufferSP indirect_syms_data_sp (ReadMemory (process_sp, indirect_syms_addr, m_dysymtab.nindirectsyms * 4));
+                        if (indirect_syms_data_sp)
+                            indirect_symbol_index_data.SetData (indirect_syms_data_sp, 0, indirect_syms_data_sp->GetByteSize());
+                    }
                     if (function_starts_load_command.cmd)
                     {
                         const addr_t func_start_addr = linkedit_load_addr + function_starts_load_command.dataoff - linkedit_file_offset;
@@ -1367,6 +1375,12 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             strtab_data.SetData (m_data,
                                  symtab_load_command.stroff, 
                                  strtab_data_byte_size);
+            if (m_dysymtab.nindirectsyms != 0)
+            {
+                indirect_symbol_index_data.SetData (m_data, 
+                                                    m_dysymtab.indirectsymoff, 
+                                                    m_dysymtab.nindirectsyms * 4);
+            }
             if (function_starts_load_command.cmd)
             {
                 function_starts_data.SetData (m_data,
@@ -3168,8 +3182,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         // Now synthesize indirect symbols
         if (m_dysymtab.nindirectsyms != 0)
         {
-            DataExtractor indirect_symbol_index_data (m_data, m_dysymtab.indirectsymoff, m_dysymtab.nindirectsyms * 4);
-
             if (indirect_symbol_index_data.GetByteSize())
             {
                 NListIndexToSymbolIndexMap::const_iterator end_index_pos = m_nlist_idx_to_sym_idx.end();
