@@ -545,14 +545,18 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   // constant.  This happens frequently when iterating over a global array.
   if (Opc == Instruction::Sub && TD) {
     GlobalValue *GV1, *GV2;
-    APInt Offs1(TD->getPointerSizeInBits(), 0),
-          Offs2(TD->getPointerSizeInBits(), 0);
+    unsigned PtrSize = TD->getPointerSizeInBits();
+    unsigned OpSize = TD->getTypeSizeInBits(Op0->getType());
+    APInt Offs1(PtrSize, 0), Offs2(PtrSize, 0);
 
     if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *TD))
       if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *TD) &&
           GV1 == GV2) {
         // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
-        return ConstantInt::get(Op0->getType(), Offs1-Offs2);
+        // PtrToInt may change the bitwidth so we have convert to the right size
+        // first.
+        return ConstantInt::get(Op0->getType(), Offs1.zextOrTrunc(OpSize) -
+                                                Offs2.zextOrTrunc(OpSize));
       }
   }
 
