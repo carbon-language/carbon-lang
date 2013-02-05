@@ -20,6 +20,22 @@
 namespace clang {
 namespace format {
 
+static bool isUnaryOperator(const AnnotatedToken &Tok) {
+  switch (Tok.FormatTok.Tok.getKind()) {
+  case tok::plus:
+  case tok::plusplus:
+  case tok::minus:
+  case tok::minusminus:
+  case tok::exclaim:
+  case tok::tilde:
+  case tok::kw_sizeof:
+  case tok::kw_alignof:
+    return true;
+  default:
+    return false;
+  }
+}
+
 static bool isBinaryOperator(const AnnotatedToken &Tok) {
   // Comma is a binary operator, but does not behave as such wrt. formatting.
   return getPrecedence(Tok) > prec::Comma;
@@ -196,6 +212,7 @@ public:
         !Left->Parent || Left->Parent->is(tok::colon) ||
         Left->Parent->is(tok::l_square) || Left->Parent->is(tok::l_paren) ||
         Left->Parent->is(tok::kw_return) || Left->Parent->is(tok::kw_throw) ||
+        isUnaryOperator(*Left->Parent) ||
         getBinOpPrecedence(Left->Parent->FormatTok.Tok.getKind(), true, true) >
         prec::Unknown;
 
@@ -602,11 +619,8 @@ private:
 
     if (PrevToken->FormatTok.Tok.isLiteral() || PrevToken->is(tok::r_paren) ||
         PrevToken->is(tok::r_square) || NextToken->FormatTok.Tok.isLiteral() ||
-        NextToken->is(tok::plus) || NextToken->is(tok::minus) ||
-        NextToken->is(tok::plusplus) || NextToken->is(tok::minusminus) ||
-        NextToken->is(tok::tilde) || NextToken->is(tok::exclaim) ||
-        NextToken->is(tok::l_paren) || NextToken->is(tok::l_square) ||
-        NextToken->is(tok::kw_alignof) || NextToken->is(tok::kw_sizeof))
+        isUnaryOperator(*NextToken) || NextToken->is(tok::l_paren) ||
+        NextToken->is(tok::l_square))
       return TT_BinaryOperator;
 
     if (NextToken->is(tok::comma) || NextToken->is(tok::r_paren) ||
@@ -634,7 +648,7 @@ private:
         PrevToken->is(tok::at) || PrevToken->is(tok::l_brace))
       return TT_UnaryOperator;
 
-    // There can't be to consecutive binary operators.
+    // There can't be two consecutive binary operators.
     if (PrevToken->Type == TT_BinaryOperator)
       return TT_UnaryOperator;
 

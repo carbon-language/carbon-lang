@@ -2236,6 +2236,22 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("f(2, a ? b : c);");
   verifyFormat("[[self initWithInt:4] bar:[baz quux:arrrr]];");
 
+  // Unary operators.
+  verifyFormat("int a = +[foo bar:baz];");
+  verifyFormat("int a = -[foo bar:baz];");
+  verifyFormat("int a = ![foo bar:baz];");
+  verifyFormat("int a = ~[foo bar:baz];");
+  verifyFormat("int a = ++[foo bar:baz];");
+  verifyFormat("int a = --[foo bar:baz];");
+  verifyFormat("int a = sizeof [foo bar:baz];");
+  verifyFormat("int a = alignof [foo bar:baz];");
+  // FIXME: no space after & and *.
+  verifyFormat("int a = & [foo bar:baz];");
+  verifyFormat("int a = * [foo bar:baz];");
+  // FIXME: Make casts work, without breaking f()[4].
+  //verifyFormat("int a = (int) [foo bar:baz];");
+
+  // Binary operators.
   verifyFormat("[foo bar:baz], [foo bar:baz];");
   verifyFormat("[foo bar:baz] = [foo bar:baz];");
   verifyFormat("[foo bar:baz] *= [foo bar:baz];");
