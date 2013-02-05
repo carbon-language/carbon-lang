@@ -247,6 +247,13 @@ public:
     return _relocationTable;
   }
 
+  uint64_t getTLSSize() const {
+    for (const auto &phdr : *_programHeader)
+      if (phdr->p_type == llvm::ELF::PT_TLS)
+        return phdr->p_memsz;
+    return 0;
+  }
+
 private:
   SectionMapT _sectionMap;
   MergedSectionMapT _mergedSectionMap;
@@ -316,6 +323,10 @@ StringRef DefaultLayout<ELFT>::getSectionName(
     return ".text";
   if (name.startswith(".rodata"))
     return ".rodata";
+  if (name.startswith(".tdata"))
+    return ".tdata";
+  if (name.startswith(".tbss"))
+    return ".tbss";
   return name;
 }
 
