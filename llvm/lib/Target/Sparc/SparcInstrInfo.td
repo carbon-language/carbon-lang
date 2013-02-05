@@ -126,7 +126,7 @@ def call          : SDNode<"SPISD::CALL", SDT_SPCall,
 
 def SDT_SPRet     : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 def retflag       : SDNode<"SPISD::RET_FLAG", SDT_SPRet,
-                           [SDNPHasChain, SDNPOptInGlue]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 def flushw        : SDNode<"SPISD::FLUSHW", SDTNone,
                            [SDNPHasChain, SDNPSideEffect, SDNPMayStore]>;
