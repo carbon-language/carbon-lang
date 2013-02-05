@@ -181,7 +181,8 @@ static bool getObjectEndianness(const ObjectFile *Obj,
 
 static ObjectFile *getObjectFile(const std::string &Path) {
   OwningPtr<MemoryBuffer> Buff;
-  MemoryBuffer::getFile(Path, Buff);
+  if (error_code ec = MemoryBuffer::getFile(Path, Buff))
+    error(ec);
   return ObjectFile::createObjectFile(Buff.take());
 }
 
