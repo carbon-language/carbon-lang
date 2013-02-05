@@ -137,8 +137,12 @@ class GOTPLTPass LLVM_FINAL : public Pass {
     const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target());
     switch (ref.kind()) {
     case R_X86_64_PLT32:
-      // Static code doesn't need PLTs.
-      const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+      // __tls_get_addr is handled elsewhere.
+      if (ref.target() && ref.target()->name() == "__tls_get_addr")
+        const_cast<Reference &>(ref).setKind(R_X86_64_NONE);
+      else
+        // Static code doesn't need PLTs.
+        const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
       break;
     case R_X86_64_PC32: // IFUNC
       if (da && da->contentType() == DefinedAtom::typeResolver)

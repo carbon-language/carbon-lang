@@ -61,6 +61,8 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
   switch (ref.kind()) {
+  case R_X86_64_NONE:
+    break;
   case R_X86_64_64:
     reloc64(location, relocVAddress, targetVAddress, ref.addend());
     break;
@@ -74,6 +76,7 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
     reloc32S(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_X86_64_TPOFF64:
+  case R_X86_64_DTPOFF32:
   case R_X86_64_TPOFF32: {
     // Get the start and end of the TLS segment.
     if (_tlsSize == 0) {
@@ -88,13 +91,20 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
       if (tbss)
         _tlsSize += tbss->memSize();
     }
-    if (ref.kind() == R_X86_64_TPOFF32) {
+    if (ref.kind() == R_X86_64_TPOFF32 || ref.kind() == R_X86_64_DTPOFF32) {
       int32_t result = (int32_t)(targetVAddress - _tlsSize);
       *reinterpret_cast<llvm::support::little32_t *>(location) = result;
     } else {
       int64_t result = (int64_t)(targetVAddress - _tlsSize);
       *reinterpret_cast<llvm::support::little64_t *>(location) = result;
     }
+    break;
+  case R_X86_64_TLSLD:
+    // Rewrite to move %fs:0 into %rax. Technically we should verify that the
+    // next relocation is a PC32 to __tls_get_addr...
+    static uint8_t instr[] = { 0x66, 0x66, 0x66, 0x64, 0x48, 0x8b, 0x04, 0x25,
+                               0x00, 0x00, 0x00, 0x00 };
+    std::memcpy(location - 3, instr, sizeof(instr));
     break;
   }
   // Runtime only relocations. Ignore here.
@@ -143,9 +153,35 @@ public:
     return ArrayRef<uint8_t>();
   }
 };
+
+class TLSGETADDRAtom : public SimpleDefinedAtom {
+public:
+  TLSGETADDRAtom(const File &f) : SimpleDefinedAtom(f) {}
+
+  virtual StringRef name() const { return "__tls_get_addr"; }
+
+  virtual Scope scope() const { return scopeGlobal; }
+
+  virtual Merge merge() const { return mergeAsWeak; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return ".text"; }
+
+  virtual ContentType contentType() const { return typeCode; }
+
+  virtual uint64_t size() const { return 0; }
+
+  virtual ContentPermissions permissions() const { return permR_X; }
+
+  virtual Alignment alignment() const { return Alignment(0); }
+
+  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+};
 } // end anon namespace
 
 void X86_64TargetHandler::addFiles(InputFiles &f) {
   _gotFile.addAtom(*new (_gotFile._alloc) GLOBAL_OFFSET_TABLEAtom(_gotFile));
+  _gotFile.addAtom(*new (_gotFile._alloc) TLSGETADDRAtom(_gotFile));
   f.appendFile(_gotFile);
 }

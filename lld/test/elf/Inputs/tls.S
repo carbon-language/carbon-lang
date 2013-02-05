@@ -17,6 +17,15 @@ GOTTPOFF:
         movl %fs:0(%rax), %eax
         ret
 
+        .text
+        .globl TLSLD
+        .type  TLSLD,@function
+TLSLD:
+        leaq tls0@tlsld(%rip), %rdi
+        call __tls_get_addr@plt
+        leaq tls0@dtpoff(%rax), %rax
+        ret
+
         .type   tls0,@object            # @tls0
         .section        .tbss,"awT",@nobits
         .globl  tls0

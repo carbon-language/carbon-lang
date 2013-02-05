@@ -26,8 +26,14 @@ YAML: type: got
 YAML: kind: R_X86_64_TPOFF64
 YAML: target: tls2
 
+// main
 CHECK: addl %fs:-4
 CHECK: addl %fs:-8
 CHECK: addl %fs:-12
 
+// GOTTPOFF
 CHECK: movq {{[0-9]+}}(%rip)
+
+// TLSLD
+CHECK: movq %fs:0, %rax
+CHECK: leaq -8(%rax), %rax
