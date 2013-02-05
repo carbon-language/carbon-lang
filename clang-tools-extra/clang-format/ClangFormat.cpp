@@ -27,12 +27,10 @@ using namespace llvm;
 
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
-static cl::opt<int> Offset(
-    "offset", cl::desc("Format a range starting at this file offset."),
-    cl::init(0));
-static cl::opt<int> Length(
-    "length", cl::desc("Format a range of this length, -1 for end of file."),
-    cl::init(-1));
+static cl::list<int> Offsets(
+    "offset", cl::desc("Format a range starting at this file offset."));
+static cl::list<int> Lengths(
+    "length", cl::desc("Format a range of this length, -1 for end of file."));
 static cl::opt<std::string> Style(
     "style",
     cl::desc("Coding style, currently supports: LLVM, Google, Chromium."),
@@ -86,13 +84,25 @@ static void format() {
   }
   FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources, getFormattingLangOpts());
-  SourceLocation Start =
-      Sources.getLocForStartOfFile(ID).getLocWithOffset(Offset);
-  SourceLocation End = Sources.getLocForEndOfFile(ID);
-  if (Length != -1)
-    End = Start.getLocWithOffset(Length);
-  std::vector<CharSourceRange> Ranges(
-      1, CharSourceRange::getCharRange(Start, End));
+  if (Offsets.empty())
+    Offsets.push_back(0);
+  if (Offsets.size() != Lengths.size() &&
+      !(Offsets.size() == 1 && Lengths.empty())) {
+    llvm::errs() << "Number of -offset and -length arguments must match.\n";
+    return;
+  }
+  std::vector<CharSourceRange> Ranges;
+  for (cl::list<int>::size_type i = 0, e = Offsets.size(); i != e; ++i) {
+    SourceLocation Start =
+        Sources.getLocForStartOfFile(ID).getLocWithOffset(Offsets[i]);
+    SourceLocation End;
+    if (i < Lengths.size()) {
+      End = Start.getLocWithOffset(Lengths[i]);
+    } else {
+      End = Sources.getLocForEndOfFile(ID);
+    }
+    Ranges.push_back(CharSourceRange::getCharRange(Start, End));
+  }
   tooling::Replacements Replaces = reformat(getStyle(), Lex, Sources, Ranges);
   Rewriter Rewrite(Sources, LangOptions());
   tooling::applyAllReplacements(Replaces, Rewrite);
