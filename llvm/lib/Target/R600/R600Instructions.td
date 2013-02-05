@@ -480,13 +480,17 @@ def isR600toCayman : Predicate<
 // R600 SDNodes
 //===----------------------------------------------------------------------===//
 
-def INTERP: SDNode<"AMDGPUISD::INTERP",
-  SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisInt<1>, SDTCisInt<2>]>
-  >;
+def INTERP_PAIR_XY :  AMDGPUShaderInst <
+  (outs R600_TReg32_X:$dst0, R600_TReg32_Y:$dst1),
+  (ins i32imm:$src0, R600_Reg32:$src1, R600_Reg32:$src2),
+  "INTERP_PAIR_XY $src0 $src1 $src2 : $dst0 dst1",
+  []>;
 
-def INTERP_P0: SDNode<"AMDGPUISD::INTERP_P0",
-  SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisInt<1>]>
-  >;
+def INTERP_PAIR_ZW :  AMDGPUShaderInst <
+  (outs R600_TReg32_Z:$dst0, R600_TReg32_W:$dst1),
+  (ins i32imm:$src0, R600_Reg32:$src1, R600_Reg32:$src2),
+  "INTERP_PAIR_ZW $src0 $src1 $src2 : $dst0 dst1",
+  []>;
 
 def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
   SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>,
@@ -497,21 +501,11 @@ def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
 // Interpolation Instructions
 //===----------------------------------------------------------------------===//
 
-let usesCustomInserter = 1 in {
-def input_perspective :  AMDGPUShaderInst <
+def INTERP_VEC_LOAD :  AMDGPUShaderInst <
   (outs R600_Reg128:$dst),
-  (ins i32imm:$src0, i32imm:$src1),
-  "input_perspective $src0 $src1 : dst",
-  [(set R600_Reg128:$dst, (INTERP (i32 imm:$src0), (i32 imm:$src1)))]>;
-}  // End usesCustomInserter = 1
-
-def input_constant :  AMDGPUShaderInst <
-  (outs R600_Reg128:$dst),
-  (ins i32imm:$src),
-  "input_perspective $src : dst",
-  [(set R600_Reg128:$dst, (INTERP_P0 (i32 imm:$src)))]>;
-
-
+  (ins i32imm:$src0),
+  "INTERP_LOAD $src0 : $dst",
+  []>;
 
 def INTERP_XY : R600_2OP <0xD6, "INTERP_XY", []> {
   let bank_swizzle = 5;
@@ -1562,12 +1556,6 @@ def MASK_WRITE : AMDGPUShaderInst <
 } // End mayLoad = 0, mayStore = 0, hasSideEffects = 1
 
 
-def RESERVE_REG : AMDGPUShaderInst <
-  (outs),
-  (ins i32imm:$src),
-  "RESERVE_REG $src",
-  [(int_AMDGPU_reserve_reg imm:$src)]
->;
 def TXD: AMDGPUShaderInst <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),

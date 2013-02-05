@@ -28,7 +28,6 @@ R600RegisterInfo::R600RegisterInfo(AMDGPUTargetMachine &tm,
 
 BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  const R600MachineFunctionInfo * MFI = MF.getInfo<R600MachineFunctionInfo>();
 
   Reserved.set(AMDGPU::ZERO);
   Reserved.set(AMDGPU::HALF);
@@ -43,11 +42,6 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(AMDGPU::PRED_SEL_OFF);
   Reserved.set(AMDGPU::PRED_SEL_ZERO);
   Reserved.set(AMDGPU::PRED_SEL_ONE);
-
-  for (std::vector<unsigned>::const_iterator I = MFI->ReservedRegs.begin(),
-                                    E = MFI->ReservedRegs.end(); I != E; ++I) {
-    Reserved.set(*I);
-  }
 
   return Reserved;
 }

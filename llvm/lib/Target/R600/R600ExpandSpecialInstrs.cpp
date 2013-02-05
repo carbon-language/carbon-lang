@@ -55,118 +55,6 @@ FunctionPass *llvm::createR600ExpandSpecialInstrsPass(TargetMachine &TM) {
   return new R600ExpandSpecialInstrsPass(TM);
 }
 
-bool R600ExpandSpecialInstrsPass::ExpandInputPerspective(MachineInstr &MI) {
-  const R600RegisterInfo &TRI = TII->getRegisterInfo();
-  if (MI.getOpcode() != AMDGPU::input_perspective)
-    return false;
-
-  MachineBasicBlock::iterator I = &MI;
-  unsigned DstReg = MI.getOperand(0).getReg();
-  R600MachineFunctionInfo *MFI = MI.getParent()->getParent()
-      ->getInfo<R600MachineFunctionInfo>();
-  unsigned IJIndexBase;
-
-  // In Evergreen ISA doc section 8.3.2 :
-  // We need to interpolate XY and ZW in two different instruction groups.
-  // An INTERP_* must occupy all 4 slots of an instruction group.
-  // Output of INTERP_XY is written in X,Y slots
-  // Output of INTERP_ZW is written in Z,W slots
-  //
-  // Thus interpolation requires the following sequences :
-  //
-  // AnyGPR.x = INTERP_ZW; (Write Masked Out)
-  // AnyGPR.y = INTERP_ZW; (Write Masked Out)
-  // DstGPR.z = INTERP_ZW;
-  // DstGPR.w = INTERP_ZW; (End of first IG)
-  // DstGPR.x = INTERP_XY;
-  // DstGPR.y = INTERP_XY;
-  // AnyGPR.z = INTERP_XY; (Write Masked Out)
-  // AnyGPR.w = INTERP_XY; (Write Masked Out) (End of second IG)
-  //
-  switch (MI.getOperand(1).getImm()) {
-  case 0:
-    IJIndexBase = MFI->GetIJPerspectiveIndex();
-    break;
-  case 1:
-    IJIndexBase = MFI->GetIJLinearIndex();
-    break;
-  default:
-    assert(0 && "Unknow ij index");
-  }
-
-  for (unsigned i = 0; i < 8; i++) {
-    unsigned IJIndex = AMDGPU::R600_TReg32RegClass.getRegister(
-        2 * IJIndexBase + ((i + 1) % 2));
-    unsigned ReadReg = AMDGPU::R600_ArrayBaseRegClass.getRegister(
-        MI.getOperand(2).getImm());
-
-
-    unsigned Sel = AMDGPU::sel_x;
-    switch (i % 4) {
-    case 0:Sel = AMDGPU::sel_x;break;
-    case 1:Sel = AMDGPU::sel_y;break;
-    case 2:Sel = AMDGPU::sel_z;break;
-    case 3:Sel = AMDGPU::sel_w;break;
-    default:break;
-    }
-
-    unsigned Res = TRI.getSubReg(DstReg, Sel);
-
-    unsigned Opcode = (i < 4)?AMDGPU::INTERP_ZW:AMDGPU::INTERP_XY;
-
-    MachineBasicBlock &MBB = *(MI.getParent());
-    MachineInstr *NewMI =
-        TII->buildDefaultInstruction(MBB, I, Opcode, Res, IJIndex, ReadReg);
-
-    if (!(i> 1 && i < 6)) {
-      TII->addFlag(NewMI, 0, MO_FLAG_MASK);
-    }
-
-    if (i % 4 !=  3)
-      TII->addFlag(NewMI, 0, MO_FLAG_NOT_LAST);
-  }
-
-  MI.eraseFromParent();
-
-  return true;
-}
-
-bool R600ExpandSpecialInstrsPass::ExpandInputConstant(MachineInstr &MI) {
-  const R600RegisterInfo &TRI = TII->getRegisterInfo();
-  if (MI.getOpcode() != AMDGPU::input_constant)
-    return false;
-
-  MachineBasicBlock::iterator I = &MI;
-  unsigned DstReg = MI.getOperand(0).getReg();
-
-  for (unsigned i = 0; i < 4; i++) {
-    unsigned ReadReg = AMDGPU::R600_ArrayBaseRegClass.getRegister(
-        MI.getOperand(1).getImm());
-
-    unsigned Sel = AMDGPU::sel_x;
-    switch (i % 4) {
-    case 0:Sel = AMDGPU::sel_x;break;
-    case 1:Sel = AMDGPU::sel_y;break;
-    case 2:Sel = AMDGPU::sel_z;break;
-    case 3:Sel = AMDGPU::sel_w;break;
-    default:break;
-    }
-
-    unsigned Res = TRI.getSubReg(DstReg, Sel);
-
-    MachineBasicBlock &MBB = *(MI.getParent());
-    MachineInstr *NewMI = TII->buildDefaultInstruction(
-        MBB, I, AMDGPU::INTERP_LOAD_P0, Res, ReadReg);
-
-    if (i % 4 !=  3)
-      TII->addFlag(NewMI, 0, MO_FLAG_NOT_LAST);
-  }
-
-  MI.eraseFromParent();
-
-  return true;
-}
-
 bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
 
   const R600RegisterInfo &TRI = TII->getRegisterInfo();
@@ -200,7 +88,7 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         MI.eraseFromParent();
         continue;
         }
-      case AMDGPU::BREAK:
+      case AMDGPU::BREAK: {
         MachineInstr *PredSet = TII->buildDefaultInstruction(MBB, I,
                                           AMDGPU::PRED_SETE_INT,
                                           AMDGPU::PREDICATE_BIT,
@@ -214,12 +102,87 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
                 .addReg(AMDGPU::PREDICATE_BIT);
         MI.eraseFromParent();
         continue;
-    }
+        }
 
-    if (ExpandInputPerspective(MI))
-      continue;
-    if (ExpandInputConstant(MI))
-      continue;
+      case AMDGPU::INTERP_PAIR_XY: {
+        MachineInstr *BMI;
+        unsigned PReg = AMDGPU::R600_ArrayBaseRegClass.getRegister(
+                MI.getOperand(2).getImm());
+
+        for (unsigned Chan = 0; Chan < 4; ++Chan) {
+          unsigned DstReg;
+
+          if (Chan < 2)
+            DstReg = MI.getOperand(Chan).getReg();
+          else
+            DstReg = Chan == 2 ? AMDGPU::T0_Z : AMDGPU::T0_W;
+
+          BMI = TII->buildDefaultInstruction(MBB, I, AMDGPU::INTERP_XY,
+              DstReg, MI.getOperand(3 + (Chan % 2)).getReg(), PReg);
+
+          if (Chan > 0) {
+            BMI->bundleWithPred();
+          }
+          if (Chan >= 2)
+            TII->addFlag(BMI, 0, MO_FLAG_MASK);
+          if (Chan != 3)
+            TII->addFlag(BMI, 0, MO_FLAG_NOT_LAST);
+        }
+
+        MI.eraseFromParent();
+        continue;
+        }
+
+      case AMDGPU::INTERP_PAIR_ZW: {
+        MachineInstr *BMI;
+        unsigned PReg = AMDGPU::R600_ArrayBaseRegClass.getRegister(
+                MI.getOperand(2).getImm());
+
+        for (unsigned Chan = 0; Chan < 4; ++Chan) {
+          unsigned DstReg;
+
+          if (Chan < 2)
+            DstReg = Chan == 0 ? AMDGPU::T0_X : AMDGPU::T0_Y;
+          else
+            DstReg = MI.getOperand(Chan-2).getReg();
+
+          BMI = TII->buildDefaultInstruction(MBB, I, AMDGPU::INTERP_ZW,
+              DstReg, MI.getOperand(3 + (Chan % 2)).getReg(), PReg);
+
+          if (Chan > 0) {
+            BMI->bundleWithPred();
+          }
+          if (Chan < 2)
+            TII->addFlag(BMI, 0, MO_FLAG_MASK);
+          if (Chan != 3)
+            TII->addFlag(BMI, 0, MO_FLAG_NOT_LAST);
+        }
+
+        MI.eraseFromParent();
+        continue;
+        }
+
+      case AMDGPU::INTERP_VEC_LOAD: {
+        const R600RegisterInfo &TRI = TII->getRegisterInfo();
+        MachineInstr *BMI;
+        unsigned PReg = AMDGPU::R600_ArrayBaseRegClass.getRegister(
+                MI.getOperand(1).getImm());
+        unsigned DstReg = MI.getOperand(0).getReg();
+
+        for (unsigned Chan = 0; Chan < 4; ++Chan) {
+          BMI = TII->buildDefaultInstruction(MBB, I, AMDGPU::INTERP_LOAD_P0,
+              TRI.getSubReg(DstReg, TRI.getSubRegFromChannel(Chan)), PReg);
+          if (Chan > 0) {
+            BMI->bundleWithPred();
+          }
+          if (Chan != 3)
+            TII->addFlag(BMI, 0, MO_FLAG_NOT_LAST);
+        }
+
+        MI.eraseFromParent();
+        continue;
+        }
+      }
 
       bool IsReduction = TII->isReductionOp(MI.getOpcode());
       bool IsVector = TII->isVector(MI);

@@ -148,18 +148,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     break;
   }
 
-  case AMDGPU::RESERVE_REG: {
-    R600MachineFunctionInfo * MFI = MF->getInfo<R600MachineFunctionInfo>();
-    int64_t ReservedIndex = MI->getOperand(0).getImm();
-    unsigned ReservedReg =
-                         AMDGPU::R600_TReg32RegClass.getRegister(ReservedIndex);
-    MFI->ReservedRegs.push_back(ReservedReg);
-    unsigned SuperReg =
-          AMDGPU::R600_Reg128RegClass.getRegister(ReservedIndex / 4);
-    MFI->ReservedRegs.push_back(SuperReg);
-    break;
-  }
-
   case AMDGPU::TXD: {
     unsigned T0 = MRI.createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
     unsigned T1 = MRI.createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
@@ -242,29 +230,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
            .addOperand(MI->getOperand(0))
             .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
     break;
-  }
-
-  case AMDGPU::input_perspective: {
-    R600MachineFunctionInfo *MFI = MF->getInfo<R600MachineFunctionInfo>();
-
-    // XXX Be more fine about register reservation
-    for (unsigned i = 0; i < 4; i ++) {
-      unsigned ReservedReg = AMDGPU::R600_TReg32RegClass.getRegister(i);
-      MFI->ReservedRegs.push_back(ReservedReg);
-    }
-
-    switch (MI->getOperand(1).getImm()) {
-    case 0:// Perspective
-      MFI->HasPerspectiveInterpolation = true;
-      break;
-    case 1:// Linear
-      MFI->HasLinearInterpolation = true;
-      break;
-    default:
-      assert(0 && "Unknow ij index");
-    }
-
-    return BB;
   }
 
   case AMDGPU::EG_ExportSwz:
@@ -421,38 +386,35 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass, Reg, VT);
     }
-    case AMDGPUIntrinsic::R600_load_input_perspective: {
+
+    case AMDGPUIntrinsic::R600_interp_input: {
       int slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-      if (slot < 0)
-        return DAG.getUNDEF(MVT::f32);
-      SDValue FullVector = DAG.getNode(
-          AMDGPUISD::INTERP,
-          DL, MVT::v4f32,
-          DAG.getConstant(0, MVT::i32), DAG.getConstant(slot / 4 , MVT::i32));
-      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
-        DL, VT, FullVector, DAG.getConstant(slot % 4, MVT::i32));
-    }
-    case AMDGPUIntrinsic::R600_load_input_linear: {
-      int slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-      if (slot < 0)
-        return DAG.getUNDEF(MVT::f32);
-      SDValue FullVector = DAG.getNode(
-        AMDGPUISD::INTERP,
-        DL, MVT::v4f32,
-        DAG.getConstant(1, MVT::i32), DAG.getConstant(slot / 4 , MVT::i32));
-      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
-        DL, VT, FullVector, DAG.getConstant(slot % 4, MVT::i32));
-    }
-    case AMDGPUIntrinsic::R600_load_input_constant: {
-      int slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-      if (slot < 0)
-        return DAG.getUNDEF(MVT::f32);
-      SDValue FullVector = DAG.getNode(
-        AMDGPUISD::INTERP_P0,
-        DL, MVT::v4f32,
-        DAG.getConstant(slot / 4 , MVT::i32));
-      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
-          DL, VT, FullVector, DAG.getConstant(slot % 4, MVT::i32));
+      int ijb = cast<ConstantSDNode>(Op.getOperand(2))->getSExtValue();
+      MachineSDNode *interp;
+      if (ijb < 0) {
+        interp = DAG.getMachineNode(AMDGPU::INTERP_VEC_LOAD, DL,
+            MVT::v4f32, DAG.getTargetConstant(slot / 4 , MVT::i32));
+        return DAG.getTargetExtractSubreg(
+            TII->getRegisterInfo().getSubRegFromChannel(slot % 4),
+            DL, MVT::f32, SDValue(interp, 0));
+      }
+
+      if (slot % 4 < 2)
+        interp = DAG.getMachineNode(AMDGPU::INTERP_PAIR_XY, DL,
+            MVT::f32, MVT::f32, DAG.getTargetConstant(slot / 4 , MVT::i32),
+            CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                AMDGPU::R600_TReg32RegClass.getRegister(2 * ijb + 1), MVT::f32),
+            CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                AMDGPU::R600_TReg32RegClass.getRegister(2 * ijb), MVT::f32));
+      else
+        interp = DAG.getMachineNode(AMDGPU::INTERP_PAIR_ZW, DL,
+            MVT::f32, MVT::f32, DAG.getTargetConstant(slot / 4 , MVT::i32),
+            CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                AMDGPU::R600_TReg32RegClass.getRegister(2 * ijb + 1), MVT::f32),
+            CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                AMDGPU::R600_TReg32RegClass.getRegister(2 * ijb), MVT::f32));
+
+      return SDValue(interp, slot % 2);
     }
 
     case r600_read_ngroups_x:

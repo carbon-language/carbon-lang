@@ -13,21 +13,6 @@
 using namespace llvm;
 
 R600MachineFunctionInfo::R600MachineFunctionInfo(const MachineFunction &MF)
-  : MachineFunctionInfo(),
-    HasLinearInterpolation(false),
-    HasPerspectiveInterpolation(false) {
+  : MachineFunctionInfo() {
     memset(Outputs, 0, sizeof(Outputs));
   }
-
-unsigned R600MachineFunctionInfo::GetIJPerspectiveIndex() const {
-  assert(HasPerspectiveInterpolation);
-  return 0;
-}
-
-unsigned R600MachineFunctionInfo::GetIJLinearIndex() const {
-  assert(HasLinearInterpolation);
-  if (HasPerspectiveInterpolation)
-    return 1;
-  else
-    return 0;
-}

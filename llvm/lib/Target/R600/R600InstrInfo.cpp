@@ -104,7 +104,6 @@ bool R600InstrInfo::isPlaceHolderOpcode(unsigned Opcode) const {
   switch (Opcode) {
   default: return false;
   case AMDGPU::RETURN:
-  case AMDGPU::RESERVE_REG:
     return true;
   }
 }
