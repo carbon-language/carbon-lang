@@ -56,9 +56,9 @@ entry:
   %div = sdiv i16 %x, 10
   ret i16 %div
 ; CHECK: test6:
-; CHECK: imull	$26215, %eax, %eax
-; CHECK: shrl	$31, %ecx
-; CHECK: sarl	$18, %eax
+; CHECK: imull $26215, %eax, %ecx
+; CHECK: sarl $18, %ecx
+; CHECK: shrl $15, %eax
 }
 
 define i32 @test7(i32 %x) nounwind {
