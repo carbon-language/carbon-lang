@@ -60,9 +60,10 @@ public:
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
 
-  /// \brief Invalidate the fragments after F because it has been resized.
-  /// The fragment's size should have already been updated.
-  void invalidateFragmentsAfter(MCFragment *F);
+  /// \brief Invalidate the fragments starting with F because it has been
+  /// resized. The fragment's size should have already been updated, but
+  /// its bundle padding will be recomputed.
+  void invalidateFragmentsFrom(MCFragment *F);
 
   /// \brief Perform layout for a single fragment, assuming that the previous
   /// fragment has already been laid out correctly, and the parent section has

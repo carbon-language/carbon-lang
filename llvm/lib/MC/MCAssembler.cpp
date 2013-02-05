@@ -82,14 +82,15 @@ bool MCAsmLayout::isFragmentValid(const MCFragment *F) const {
   return F->getLayoutOrder() <= LastValid->getLayoutOrder();
 }
 
-void MCAsmLayout::invalidateFragmentsAfter(MCFragment *F) {
+void MCAsmLayout::invalidateFragmentsFrom(MCFragment *F) {
   // If this fragment wasn't already valid, we don't need to do anything.
   if (!isFragmentValid(F))
     return;
 
-  // Otherwise, reset the last valid fragment to this fragment.
+  // Otherwise, reset the last valid fragment to the previous fragment
+  // (if this is the first fragment, it will be NULL).
   const MCSectionData &SD = *F->getParent();
-  LastValidFragment[&SD] = F;
+  LastValidFragment[&SD] = F->getPrevNode();
 }
 
 void MCAsmLayout::ensureValid(const MCFragment *F) const {
@@ -165,14 +166,14 @@ uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
 uint64_t MCAsmLayout::computeBundlePadding(const MCFragment *F,
                                            uint64_t FOffset, uint64_t FSize) {
   uint64_t BundleSize = Assembler.getBundleAlignSize();
-  assert(BundleSize > 0 && 
+  assert(BundleSize > 0 &&
          "computeBundlePadding should only be called if bundling is enabled");
   uint64_t BundleMask = BundleSize - 1;
   uint64_t OffsetInBundle = FOffset & BundleMask;
   uint64_t EndOfFragment = OffsetInBundle + FSize;
 
   // There are two kinds of bundling restrictions:
-  // 
+  //
   // 1) For alignToBundleEnd(), add padding to ensure that the fragment will
   //    *end* on a bundle boundary.
   // 2) Otherwise, check if the fragment would cross a bundle boundary. If it
@@ -939,7 +940,7 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
       FirstRelaxedFragment = I;
   }
   if (FirstRelaxedFragment) {
-    Layout.invalidateFragmentsAfter(FirstRelaxedFragment);
+    Layout.invalidateFragmentsFrom(FirstRelaxedFragment);
     return true;
   }
   return false;
@@ -999,7 +1000,7 @@ void MCFragment::dump() {
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
      << " Offset:" << Offset
      << " HasInstructions:" << hasInstructions() 
-     << " BundlePadding:" << getBundlePadding() << ">";
+     << " BundlePadding:" << static_cast<unsigned>(getBundlePadding()) << ">";
 
   switch (getKind()) {
   case MCFragment::FT_Align: {
