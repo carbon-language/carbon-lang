@@ -1302,3 +1302,13 @@ BlockDataRegion::referenced_vars_end() const {
   return BlockDataRegion::referenced_vars_iterator(Vec->end(),
                                                    VecOriginal->end());
 }
+
+const VarRegion *BlockDataRegion::getOriginalRegion(const VarRegion *R) const {
+  for (referenced_vars_iterator I = referenced_vars_begin(),
+                                E = referenced_vars_end();
+       I != E; ++I) {
+    if (I.getCapturedRegion() == R)
+      return I.getOriginalRegion();
+  }
+  return 0;
+}

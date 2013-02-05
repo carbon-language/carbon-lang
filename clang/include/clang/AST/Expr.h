@@ -2207,6 +2207,15 @@ public:
     return SubExprs+PREARGS_START+getNumPreArgs()+getNumArgs();
   }
 
+  /// This method provides fast access to all the subexpressions of
+  /// a CallExpr without going through the slower virtual child_iterator
+  /// interface.  This provides efficient reverse iteration of the
+  /// subexpressions.  This is currently used for CFG construction.
+  ArrayRef<Stmt*> getRawSubExprs() {
+    return ArrayRef<Stmt*>(SubExprs,
+                           getNumPreArgs() + PREARGS_START + getNumArgs());
+  }
+
   /// getNumCommas - Return the number of commas that must have been present in
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }

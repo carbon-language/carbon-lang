@@ -662,6 +662,10 @@ public:
       return *this;
     }
   };
+
+  /// Return the original region for a captured region, if
+  /// one exists.
+  const VarRegion *getOriginalRegion(const VarRegion *VR) const;
       
   referenced_vars_iterator referenced_vars_begin() const;
   referenced_vars_iterator referenced_vars_end() const;  

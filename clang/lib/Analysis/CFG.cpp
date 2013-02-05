@@ -233,6 +233,43 @@ public:
   }
 };
 
+class reverse_children {
+  llvm::SmallVector<Stmt *, 12> childrenBuf;
+  ArrayRef<Stmt*> children;
+public:
+  reverse_children(Stmt *S);
+
+  typedef ArrayRef<Stmt*>::reverse_iterator iterator;
+  iterator begin() const { return children.rbegin(); }
+  iterator end() const { return children.rend(); }
+};
+
+
+reverse_children::reverse_children(Stmt *S) {
+  if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+    children = CE->getRawSubExprs();
+    return;
+  }
+  switch (S->getStmtClass()) {
+    case Stmt::InitListExprClass: {
+      InitListExpr *IE = cast<InitListExpr>(S);
+      children = llvm::makeArrayRef(reinterpret_cast<Stmt**>(IE->getInits()),
+                                    IE->getNumInits());
+      return;
+    }
+    default:
+      break;
+  }
+
+  // Default case for all other statements.
+  for (Stmt::child_range I = S->children(); I; ++I) {
+    childrenBuf.push_back(*I);
+  }
+
+  // This needs to be done *after* childrenBuf has been populated.
+  children = childrenBuf;
+}
+
 /// CFGBuilder - This class implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
 ///   construct a single CFG.
@@ -1166,14 +1203,19 @@ CFGBlock *CFGBuilder::VisitStmt(Stmt *S, AddStmtChoice asc) {
 }
 
 /// VisitChildren - Visit the children of a Stmt.
-CFGBlock *CFGBuilder::VisitChildren(Stmt *Terminator) {
-  CFGBlock *lastBlock = Block;
-  for (Stmt::child_range I = Terminator->children(); I; ++I)
-    if (Stmt *child = *I)
-      if (CFGBlock *b = Visit(child))
-        lastBlock = b;
+CFGBlock *CFGBuilder::VisitChildren(Stmt *S) {
+  CFGBlock *B = Block;
 
-  return lastBlock;
+  // Visit the children in their reverse order so that they appear in
+  // left-to-right (natural) order in the CFG.
+  reverse_children RChildren(S);
+  for (reverse_children::iterator I = RChildren.begin(), E = RChildren.end();
+       I != E; ++I) {
+    if (Stmt *Child = *I)
+      if (CFGBlock *R = Visit(Child))
+        B = R;
+  }
+  return B;
 }
 
 CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A,
@@ -3093,19 +3135,14 @@ tryAgain:
 
 CFGBlock *CFGBuilder::VisitChildrenForTemporaryDtors(Stmt *E) {
   // When visiting children for destructors we want to visit them in reverse
-  // order. Because there's no reverse iterator for children must to reverse
-  // them in helper vector.
-  typedef SmallVector<Stmt *, 4> ChildrenVect;
-  ChildrenVect ChildrenRev;
-  for (Stmt::child_range I = E->children(); I; ++I) {
-    if (*I) ChildrenRev.push_back(*I);
-  }
-
+  // order that they will appear in the CFG.  Because the CFG is built
+  // bottom-up, this means we visit them in their natural order, which
+  // reverses them in the CFG.
   CFGBlock *B = Block;
-  for (ChildrenVect::reverse_iterator I = ChildrenRev.rbegin(),
-      L = ChildrenRev.rend(); I != L; ++I) {
-    if (CFGBlock *R = VisitForTemporaryDtors(*I))
-      B = R;
+  for (Stmt::child_range I = E->children(); I; ++I) {
+    if (Stmt *Child = *I)
+      if (CFGBlock *R = VisitForTemporaryDtors(Child))
+        B = R;
   }
   return B;
 }

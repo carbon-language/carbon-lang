@@ -433,42 +433,65 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   llvm::raw_svector_ostream os(sbuf);
 
   if (const PostStmt *PS = StoreSite->getLocationAs<PostStmt>()) {
-    if (const DeclStmt *DS = PS->getStmtAs<DeclStmt>()) {
+    const Stmt *S = PS->getStmt();
+    const char *action = 0;
+    const DeclStmt *DS = dyn_cast<DeclStmt>(S);
+    const VarRegion *VR = dyn_cast<VarRegion>(R);
 
-      if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
-        os << "Variable '" << *VR->getDecl() << "' ";
+    if (DS) {
+      action = "initialized to ";
+    } else if (isa<BlockExpr>(S)) {
+      action = "captured by block as ";
+      if (VR) {
+        // See if we can get the BlockVarRegion.
+        ProgramStateRef State = StoreSite->getState();
+        SVal V = State->getSVal(S, PS->getLocationContext());
+        if (const BlockDataRegion *BDR =
+              dyn_cast_or_null<BlockDataRegion>(V.getAsRegion())) {
+          if (const VarRegion *OriginalR = BDR->getOriginalRegion(VR)) {
+            V = State->getSVal(OriginalR);
+            BR.addVisitor(new FindLastStoreBRVisitor(V, OriginalR));
+          }
+        }
       }
-      else
-        return NULL;
+    }
+
+    if (action) {
+      if (!R)
+        return 0;
+
+      os << "Variable '" << *VR->getDecl() << "' ";
 
       if (isa<loc::ConcreteInt>(V)) {
         bool b = false;
         if (R->isBoundable()) {
           if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R)) {
             if (TR->getValueType()->isObjCObjectPointerType()) {
-              os << "initialized to nil";
+              os << action << "nil";
               b = true;
             }
           }
         }
 
         if (!b)
-          os << "initialized to a null pointer value";
+          os << action << "a null pointer value";
       }
       else if (isa<nonloc::ConcreteInt>(V)) {
-        os << "initialized to " << cast<nonloc::ConcreteInt>(V).getValue();
+        os << action << cast<nonloc::ConcreteInt>(V).getValue();
       }
-      else if (V.isUndef()) {
-        if (isa<VarRegion>(R)) {
-          const VarDecl *VD = cast<VarDecl>(DS->getSingleDecl());
-          if (VD->getInit())
-            os << "initialized to a garbage value";
-          else
-            os << "declared without an initial value";
+      else if (DS) {
+        if (V.isUndef()) {
+          if (isa<VarRegion>(R)) {
+            const VarDecl *VD = cast<VarDecl>(DS->getSingleDecl());
+            if (VD->getInit())
+              os << "initialized to a garbage value";
+            else
+              os << "declared without an initial value";
+          }
         }
-      }
-      else {
-        os << "initialized here";
+        else {
+          os << "initialized here";
+        }
       }
     }
   } else if (isa<CallEnter>(StoreSite->getLocation())) {
