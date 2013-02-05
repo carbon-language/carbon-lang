@@ -1442,8 +1442,8 @@ AArch64AsmParser::IdentifyRegister(unsigned &RegNum, SMLoc &RegEndLoc,
     // gives us a permanent string to use in the token (a pointer into LowerReg
     // would go out of scope when we return).
     LayoutLoc = SMLoc::getFromPointer(S.getPointer() + DotPos + 1);
-    Layout = LowerReg.substr(DotPos, StringRef::npos);
-    Layout = StringSwitch<const char *>(Layout)
+    std::string LayoutText = LowerReg.substr(DotPos, StringRef::npos);
+    Layout = StringSwitch<const char *>(LayoutText)
       .Case(".d", ".d").Case(".1d", ".1d").Case(".2d", ".2d")
       .Case(".s", ".s").Case(".2s", ".2s").Case(".4s", ".4s")
       .Case(".h", ".h").Case(".4h", ".4h").Case(".8h", ".8h")
