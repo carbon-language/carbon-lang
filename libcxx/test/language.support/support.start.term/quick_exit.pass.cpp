@@ -6,6 +6,8 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// XFAIL: apple-darwin
 
 // test quick_exit and at_quick_exit
 
