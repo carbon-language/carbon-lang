@@ -7199,15 +7199,12 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   // Try to infer better alignment information than the load already has.
   if (OptLevel != CodeGenOpt::None && LD->isUnindexed()) {
     if (unsigned Align = DAG.InferPtrAlignment(Ptr)) {
-      if (Align > LD->getAlignment()) {
-        SDValue NewLoad =
-               DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
+      if (Align > LD->getAlignment())
+        return DAG.getExtLoad(LD->getExtensionType(), N->getDebugLoc(),
                               LD->getValueType(0),
                               Chain, Ptr, LD->getPointerInfo(),
                               LD->getMemoryVT(),
                               LD->isVolatile(), LD->isNonTemporal(), Align);
-        return CombineTo(N, NewLoad, SDValue(NewLoad.getNode(), 1), true);
-      }
     }
   }
 

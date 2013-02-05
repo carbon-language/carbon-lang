@@ -178,8 +178,7 @@ define void @check_i128_stackalign(i32 %val0, i32 %val1, i32 %val2, i32 %val3,
     ; Nothing local on stack in current codegen, so first stack is 16 away
 ; CHECK: ldr {{x[0-9]+}}, [sp, #16]
     ; Important point is that we address sp+24 for second dword
-; CHECK: add     [[REG:x[0-9]+]], sp, #16
-; CHECK: ldr     {{x[0-9]+}}, {{\[}}[[REG]], #8]
+; CHECK: ldr {{x[0-9]+}}, [sp, #24]
     ret void
 }
 
