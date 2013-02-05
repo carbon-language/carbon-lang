@@ -204,18 +204,17 @@ public:
     // Construct an invalid ErrorOr if other is invalid.
     if (!Other.IsValid)
       return;
+    IsValid = true;
     if (!Other.HasError) {
       // Get the other value.
-      new (get()) storage_type(*Other.get());
       HasError = false;
+      new (get()) storage_type(*Other.get());
     } else {
       // Get other's error.
       Error = Other.Error;
       HasError = true;
       Error->aquire();
     }
-
-    IsValid = true;
   }
 
   ErrorOr &operator =(const ErrorOr &Other) {
@@ -234,11 +233,11 @@ public:
     // Construct an invalid ErrorOr if other is invalid.
     if (!Other.IsValid)
       return;
+    IsValid = true;
     if (!Other.HasError) {
       // Get the other value.
-      IsValid = true;
-      new (get()) storage_type(std::move(*Other.get()));
       HasError = false;
+      new (get()) storage_type(std::move(*Other.get()));
       // Tell other not to do any destruction.
       Other.IsValid = false;
     } else {
@@ -248,8 +247,6 @@ public:
       // Tell other not to do any destruction.
       Other.IsValid = false;
     }
-
-    IsValid = true;
   }
 
   ErrorOr &operator =(ErrorOr &&Other) {
