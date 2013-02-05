@@ -1098,7 +1098,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   
   // Arbitrarily stop showing snippets when the line is too long.
-  static const unsigned MaxLineLengthToPrint = 4096;
+  static const ptrdiff_t MaxLineLengthToPrint = 4096;
   if (ColNo > MaxLineLengthToPrint)
     return;
 
