@@ -126,8 +126,13 @@ StringRef Attribute::getValueAsString() const {
   return pImpl ? pImpl->getValueAsString() : StringRef();
 }
 
-bool Attribute::hasAttribute(AttrKind Val) const {
-  return (pImpl && pImpl->hasAttribute(Val)) || (!pImpl && Val == None);
+bool Attribute::hasAttribute(AttrKind Kind) const {
+  return (pImpl && pImpl->hasAttribute(Kind)) || (!pImpl && Kind == None);
+}
+
+bool Attribute::hasAttribute(StringRef Kind) const {
+  if (!isStringAttribute()) return false;
+  return pImpl && pImpl->hasAttribute(Kind);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
@@ -552,6 +557,7 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
   if (!B.hasAttributes())
     return AttributeSet();
 
+  // Add target-independent attributes.
   SmallVector<std::pair<unsigned, Attribute>, 8> Attrs;
   for (AttrBuilder::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     Attribute::AttrKind Kind = *I;
@@ -564,6 +570,11 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
     else
       Attrs.push_back(std::make_pair(Idx, Attribute::get(C, Kind)));
   }
+
+  // Add target-dependent (string) attributes.
+  for (AttrBuilder::td_iterator I = B.td_begin(), E = B.td_end();
+       I != E; ++I)
+    Attrs.push_back(std::make_pair(Idx, Attribute::get(C, I->first,I->second)));
 
   return get(C, Attrs);
 }

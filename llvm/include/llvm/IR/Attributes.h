@@ -140,6 +140,9 @@ public:
   /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
 
+  /// \brief Return true if the target-dependent attribute is present.
+  bool hasAttribute(StringRef Val) const;
+
   /// \brief Return the attribute's kind as an enum (Attribute::AttrKind). This
   /// requires the attribute to be an enum or alignment attribute.
   Attribute::AttrKind getKindAsEnum() const;
@@ -418,6 +421,7 @@ public:
   /// the form used internally in Attribute.
   AttrBuilder &addStackAlignmentAttr(unsigned Align);
 
+  // Iterators for target-independent attributes.
   typedef DenseSet<Attribute::AttrKind>::iterator       iterator;
   typedef DenseSet<Attribute::AttrKind>::const_iterator const_iterator;
 
@@ -426,6 +430,17 @@ public:
 
   const_iterator begin() const { return Attrs.begin(); }
   const_iterator end() const   { return Attrs.end(); }
+
+  // Iterators for target-dependent attributes.
+  typedef std::pair<std::string, std::string>                td_type;
+  typedef std::map<std::string, std::string>::iterator       td_iterator;
+  typedef std::map<std::string, std::string>::const_iterator td_const_iterator;
+
+  td_iterator td_begin()             { return TargetDepAttrs.begin(); }
+  td_iterator td_end()               { return TargetDepAttrs.end(); }
+
+  td_const_iterator td_begin() const { return TargetDepAttrs.begin(); }
+  td_const_iterator td_end() const   { return TargetDepAttrs.end(); }
 
   /// \brief Remove attributes that are used on functions only.
   void removeFunctionOnlyAttrs() {
