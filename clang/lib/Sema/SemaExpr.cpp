@@ -3720,7 +3720,8 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                   Expr **Args, unsigned NumArgs,
                                   SmallVector<Expr *, 8> &AllArgs,
                                   VariadicCallType CallType,
-                                  bool AllowExplicit) {
+                                  bool AllowExplicit,
+                                  bool IsListInitialization) {
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;
   bool Invalid = false;
@@ -3760,7 +3761,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
       ExprResult ArgE = PerformCopyInitialization(Entity,
                                                   SourceLocation(),
                                                   Owned(Arg),
-                                                  /*TopLevelOfInitList=*/false,
+                                                  IsListInitialization,
                                                   AllowExplicit);
       if (ArgE.isInvalid())
         return true;

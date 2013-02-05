@@ -21,7 +21,7 @@ namespace std {
   };
 }
 
-namespace bullet2 {
+namespace bullet1 {
   double ad[] = { 1, 2.0 };
   int ai[] = { 1, 2.0 };  // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
 
@@ -62,12 +62,16 @@ namespace bullet4_example3 {
   };
 
   S s1 = { 1, 2, 3.0 };
-  // FIXME: This is an ill-formed narrowing initialization.
-  S s2 { 1.0, 2, 3 };
+  S s2 { 1.0, 2, 3 }; // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
   S s3 {};
 }
 
 namespace bullet5 {
+  int x1 {2};
+  int x2 {2.0};  // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
+}
+
+namespace bullet6 {
   struct S {
     S(std::initializer_list<double>) {}
     S(const std::string &) {}
@@ -75,15 +79,10 @@ namespace bullet5 {
 
   const S& r1 = { 1, 2, 3.0 };
   const S& r2 = { "Spinach" };
-  S& r3 = { 1, 2, 3 };  // expected-error {{non-const lvalue reference to type 'bullet5::S' cannot bind to an initializer list temporary}}
+  S& r3 = { 1, 2, 3 };  // expected-error {{non-const lvalue reference to type 'bullet6::S' cannot bind to an initializer list temporary}}
   const int& i1 = { 1 };
   const int& i2 = { 1.1 };  // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}} expected-warning {{implicit conversion}}
   const int (&iar)[2] = { 1, 2 };
-}
-
-namespace bullet6 {
-  int x1 {2};
-  int x2 {2.0};  // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
 }
 
 namespace bullet7 {
@@ -99,14 +98,14 @@ namespace bullet8 {
     B(std::initializer_list<int> i) {}
   };
   B b1 { 1, 2 };
-  B b2 { 1, 2.0 };
+  B b2 { 1, 2.0 }; // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}}
 
   struct C {
     C(int i, double j) {}
   };
   C c1 = { 1, 2.2 };
-  // FIXME: This is an ill-formed narrowing initialization.
-  C c2 = { 1.1, 2 };  // expected-warning {{implicit conversion}}
+  // FIXME: Suppress the narrowing warning in the cases where we issue a narrowing error.
+  C c2 = { 1.1, 2 }; // expected-error {{type 'double' cannot be narrowed to 'int' in initializer list}} expected-note {{override}} expected-warning {{implicit conversion}}
 
   int j { 1 };
   int k { };
