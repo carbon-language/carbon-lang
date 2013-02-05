@@ -48,7 +48,7 @@ void PoisonRedZones(const Global &g)  {
   }
 }
 
-bool DescribeAddressIfGlobal(uptr addr) {
+bool DescribeAddressIfGlobal(uptr addr, uptr size) {
   if (!flags()->report_globals) return false;
   BlockingMutexLock lock(&mu_for_globals);
   bool res = false;
@@ -57,7 +57,7 @@ bool DescribeAddressIfGlobal(uptr addr) {
     if (flags()->report_globals >= 2)
       Report("Search Global: beg=%p size=%zu name=%s\n",
              (void*)g.beg, g.size, (char*)g.name);
-    res |= DescribeAddressRelativeToGlobal(addr, g);
+    res |= DescribeAddressRelativeToGlobal(addr, size, g);
   }
   return res;
 }

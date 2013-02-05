@@ -369,7 +369,7 @@ class MallocInfo {
         left_chunk->chunk_state != CHUNK_AVAILABLE)
       return left_chunk;
     // Choose based on offset.
-    uptr l_offset = 0, r_offset = 0;
+    sptr l_offset = 0, r_offset = 0;
     CHECK(AsanChunkView(left_chunk).AddrIsAtRight(addr, 1, &l_offset));
     CHECK(AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset));
     if (l_offset < r_offset)
@@ -389,7 +389,7 @@ class MallocInfo {
     CHECK(m->chunk_state == CHUNK_ALLOCATED ||
           m->chunk_state == CHUNK_AVAILABLE ||
           m->chunk_state == CHUNK_QUARANTINE);
-    uptr offset = 0;
+    lptr offset = 0;
     AsanChunkView m_view(m);
     if (m_view.AddrIsInside(addr, 1, &offset))
       return m;

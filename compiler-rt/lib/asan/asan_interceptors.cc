@@ -31,12 +31,14 @@ namespace __asan {
 // that no extra frames are created, and stack trace contains
 // relevant information only.
 // We check all shadow bytes.
-#define ACCESS_MEMORY_RANGE(offset, size, isWrite) do {                  \
-  if (uptr __ptr = __asan_region_is_poisoned((uptr)(offset), size)) {    \
-    GET_CURRENT_PC_BP_SP;                                                \
-    __asan_report_error(pc, bp, sp, __ptr, isWrite, /* access_size */1); \
-  }                                                                      \
-} while (0)
+#define ACCESS_MEMORY_RANGE(offset, size, isWrite) do {                 \
+    uptr __offset = (uptr)(offset);                                     \
+    uptr __size = (uptr)(size);                                         \
+    if (__asan_region_is_poisoned(__offset, __size)) {                  \
+      GET_CURRENT_PC_BP_SP;                                             \
+      __asan_report_error(pc, bp, sp, __offset, isWrite, __size);       \
+    }                                                                   \
+  } while (0)
 
 #define ASAN_READ_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, false)
 #define ASAN_WRITE_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, true);

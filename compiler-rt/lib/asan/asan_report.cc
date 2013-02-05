@@ -190,19 +190,23 @@ static void PrintGlobalNameIfASCII(const __asan_global &g) {
   Printf("  '%s' is ascii string '%s'\n", g.name, (char*)g.beg);
 }
 
-bool DescribeAddressRelativeToGlobal(uptr addr, const __asan_global &g) {
+bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
+                                     const __asan_global &g) {
   static const uptr kMinimalDistanceFromAnotherGlobal = 64;
   if (addr <= g.beg - kMinimalDistanceFromAnotherGlobal) return false;
   if (addr >= g.beg + g.size_with_redzone) return false;
   Decorator d;
   Printf("%s", d.Location());
-  Printf("%p is located ", (void*)addr);
   if (addr < g.beg) {
-    Printf("%zd bytes to the left", g.beg - addr);
-  } else if (addr >= g.beg + g.size) {
-    Printf("%zd bytes to the right", addr - (g.beg + g.size));
+    Printf("%p is located %zd bytes to the left", (void*)addr, g.beg - addr);
+  } else if (addr + size > g.beg + g.size) {
+    if (addr < g.beg + g.size)
+      addr = g.beg + g.size;
+    Printf("%p is located %zd bytes to the right", (void*)addr,
+           addr - (g.beg + g.size));
   } else {
-    Printf("%zd bytes inside", addr - g.beg);  // Can it happen?
+    // Can it happen?
+    Printf("%p is located %zd bytes inside", (void*)addr, addr - g.beg);
   }
   Printf(" of global variable '%s' (0x%zx) of size %zu\n",
              g.name, g.beg, g.size);
@@ -288,18 +292,22 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
 
 static void DescribeAccessToHeapChunk(AsanChunkView chunk, uptr addr,
                                       uptr access_size) {
-  uptr offset;
+  sptr offset;
   Decorator d;
   Printf("%s", d.Location());
-  Printf("%p is located ", (void*)addr);
-  if (chunk.AddrIsInside(addr, access_size, &offset)) {
-    Printf("%zu bytes inside of", offset);
-  } else if (chunk.AddrIsAtLeft(addr, access_size, &offset)) {
-    Printf("%zu bytes to the left of", offset);
+  if (chunk.AddrIsAtLeft(addr, access_size, &offset)) {
+    Printf("%p is located %zd bytes to the left of", (void*)addr, offset);
   } else if (chunk.AddrIsAtRight(addr, access_size, &offset)) {
-    Printf("%zu bytes to the right of", offset);
+    if (offset < 0) {
+      addr -= offset;
+      offset = 0;
+    }
+    Printf("%p is located %zd bytes to the right of", (void*)addr, offset);
+  } else if (chunk.AddrIsInside(addr, access_size, &offset)) {
+    Printf("%p is located %zd bytes inside of", (void*)addr, offset);
   } else {
-    Printf(" somewhere around (this is AddressSanitizer bug!)");
+    Printf("%p is located somewhere around (this is AddressSanitizer bug!)",
+           (void*)addr);
   }
   Printf(" %zu-byte region [%p,%p)\n", chunk.UsedSize(),
          (void*)(chunk.Beg()), (void*)(chunk.End()));
@@ -372,7 +380,7 @@ void DescribeAddress(uptr addr, uptr access_size) {
   if (DescribeAddressIfShadow(addr))
     return;
   CHECK(AddrIsInMem(addr));
-  if (DescribeAddressIfGlobal(addr))
+  if (DescribeAddressIfGlobal(addr, access_size))
     return;
   if (DescribeAddressIfStack(addr, access_size))
     return;

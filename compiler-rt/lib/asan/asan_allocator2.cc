@@ -547,7 +547,7 @@ AsanChunk *ChooseChunk(uptr addr,
       return right_chunk;
   }
   // Same chunk_state: choose based on offset.
-  uptr l_offset = 0, r_offset = 0;
+  sptr l_offset = 0, r_offset = 0;
   CHECK(AsanChunkView(left_chunk).AddrIsAtRight(addr, 1, &l_offset));
   CHECK(AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset));
   if (l_offset < r_offset)
@@ -558,7 +558,7 @@ AsanChunk *ChooseChunk(uptr addr,
 AsanChunkView FindHeapChunkByAddress(uptr addr) {
   AsanChunk *m1 = GetAsanChunkByAddr(addr);
   if (!m1) return AsanChunkView(m1);
-  uptr offset = 0;
+  sptr offset = 0;
   if (AsanChunkView(m1).AddrIsAtLeft(addr, 1, &offset)) {
     // The address is in the chunk's left redzone, so maybe it is actually
     // a right buffer overflow from the other chunk to the left.

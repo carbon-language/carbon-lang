@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   strcpy(hello, "hello");
   char *short_buffer = (char*)malloc(9);
   strncpy(short_buffer, hello, 10);  // BOOM
-  // CHECK: {{WRITE of size 1 at 0x.* thread T0}}
+  // CHECK: {{WRITE of size 10 at 0x.* thread T0}}
   // CHECK-Linux: {{    #0 0x.* in .*strncpy}}
   // CHECK-Darwin: {{    #0 0x.* in _?wrap_strncpy}}
   // CHECK: {{    #1 0x.* in _?main .*strncpy-overflow.cc:}}[[@LINE-4]]
