@@ -1249,15 +1249,11 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
   // Analyze return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_XCore);
 
-  // If this is the first return lowered for this function, add
-  // the regs to the liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
-
   SDValue Flag;
+  SmallVector<SDValue, 4> RetOps(1, Chain);
+
+  // Return on XCore is always a "retsp 0"
+  RetOps.push_back(DAG.getConstant(0, MVT::i32));
 
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
@@ -1270,15 +1266,17 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad
     Flag = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
-  // Return on XCore is always a "retsp 0"
+  RetOps[0] = Chain;  // Update chain.
+
+  // Add the flag if we have it.
   if (Flag.getNode())
-    return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other,
-                       Chain, DAG.getConstant(0, MVT::i32), Flag);
-  else // Return Void
-    return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other,
-                       Chain, DAG.getConstant(0, MVT::i32));
+    RetOps.push_back(Flag);
+
+  return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other,
+                     &RetOps[0], RetOps.size());
 }
 
 //===----------------------------------------------------------------------===//
