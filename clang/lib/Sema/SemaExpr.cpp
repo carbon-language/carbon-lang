@@ -11192,7 +11192,7 @@ void Sema::MarkDeclRefReferenced(DeclRefExpr *E) {
   // if it's a qualified reference.
   bool OdrUse = true;
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(E->getDecl()))
-    if (Method->isPure())
+    if (Method->isVirtual())
       OdrUse = false;
   MarkExprReferenced(*this, E->getLocation(), E->getDecl(), E, OdrUse);
 }
