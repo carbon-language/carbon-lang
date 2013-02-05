@@ -1395,17 +1395,13 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   // If the destination integer type is not the intptr_t type for this target,
   // do a ptrtoint to intptr_t then do a trunc or zext.  This allows the cast
   // to be exposed to other transforms.
-  if (TD) {
-    if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
-      Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                         TD->getIntPtrType(CI.getContext()));
-      return new TruncInst(P, CI.getType());
-    }
-    if (CI.getType()->getScalarSizeInBits() > TD->getPointerSizeInBits()) {
-      Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                         TD->getIntPtrType(CI.getContext()));
-      return new ZExtInst(P, CI.getType());
-    }
+  if (TD && CI.getType()->getScalarSizeInBits() != TD->getPointerSizeInBits()) {
+    Type *Ty = TD->getIntPtrType(CI.getContext());
+    if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
+      Ty = VectorType::get(Ty, CI.getType()->getVectorNumElements());
+
+    Value *P = Builder->CreatePtrToInt(CI.getOperand(0), Ty);
+    return CastInst::CreateIntegerCast(P, CI.getType(), /*isSigned=*/false);
   }
 
   return commonPointerCastTransforms(CI);

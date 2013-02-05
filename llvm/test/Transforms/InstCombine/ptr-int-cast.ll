@@ -27,3 +27,18 @@ define i64 @f0(i32 %a0) nounwind {
        ret i64 %t1
 }
 
+define <4 x i32> @test4(<4 x i8*> %arg) nounwind {
+; CHECK: @test4
+; CHECK: ptrtoint <4 x i8*> %arg to <4 x i64>
+; CHECK: trunc <4 x i64> %1 to <4 x i32>
+  %p1 = ptrtoint <4 x i8*> %arg to <4 x i32>
+  ret <4 x i32> %p1
+}
+
+define <4 x i128> @test5(<4 x i8*> %arg) nounwind {
+; CHECK: @test5
+; CHECK: ptrtoint <4 x i8*> %arg to <4 x i64>
+; CHECK: zext <4 x i64> %1 to <4 x i128>
+  %p1 = ptrtoint <4 x i8*> %arg to <4 x i128>
+  ret <4 x i128> %p1
+}
