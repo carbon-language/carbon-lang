@@ -268,7 +268,11 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
   if (D->param_size() != 3)
     return 0;
   
-  // Body for:
+  // Signature:
+  // _Bool OSAtomicCompareAndSwapPtr(void *__oldValue,
+  //                                 void *__newValue,
+  //                                 void * volatile *__theValue)
+  // Generate body:
   //   if (oldValue == *theValue) {
   //    *theValue = newValue;
   //    return YES;
