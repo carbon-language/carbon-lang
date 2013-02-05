@@ -251,6 +251,7 @@ reverse_children::reverse_children(Stmt *S) {
     return;
   }
   switch (S->getStmtClass()) {
+    // Note: Fill in this switch with more cases we want to optimize.
     case Stmt::InitListExprClass: {
       InitListExpr *IE = cast<InitListExpr>(S);
       children = llvm::makeArrayRef(reinterpret_cast<Stmt**>(IE->getInits()),
