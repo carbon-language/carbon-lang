@@ -81,6 +81,7 @@ namespace llvm {
     lltok::Kind LexPercent();
     lltok::Kind LexQuote();
     lltok::Kind Lex0x();
+    lltok::Kind LexHash();
 
     uint64_t atoull(const char *Buffer, const char *End);
     uint64_t HexIntToVal(const char *Buffer, const char *End);

@@ -174,7 +174,8 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
     case lltok::exclaim:    if (ParseStandaloneMetadata()) return true; break;
-    case lltok::MetadataVar: if (ParseNamedMetadata()) return true; break;
+    case lltok::MetadataVar:if (ParseNamedMetadata()) return true; break;
+    case lltok::AttrGrpID:  if (ParseUnnamedAttrGrp()) return true; break;
 
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
@@ -740,6 +741,102 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   return false;
 }
 
+/// ParseUnnamedAttrGrp
+///   ::= AttrGrpID '=' '{' AttrValPair+ '}'
+bool LLParser::ParseUnnamedAttrGrp() {
+  assert(Lex.getKind() == lltok::AttrGrpID);
+  LocTy AttrGrpLoc = Lex.getLoc();
+  unsigned VarID = Lex.getUIntVal();
+  Lex.Lex();
+
+  if (ParseToken(lltok::equal, "expected '=' here") ||
+      ParseToken(lltok::kw_attributes, "expected 'attributes' keyword here") ||
+      ParseToken(lltok::lbrace, "expected '{' here") ||
+      ParseAttributeValuePairs(ForwardRefAttrBuilder[VarID]) ||
+      ParseToken(lltok::rbrace, "expected end of attribute group"))
+    return true;
+
+  if (!ForwardRefAttrBuilder[VarID].hasAttributes())
+    return Error(AttrGrpLoc, "attribute group has no attributes");
+
+  return false;
+}
+
+/// ParseAttributeValuePairs
+///   ::= <attr> | <attr> '=' <value>
+bool LLParser::ParseAttributeValuePairs(AttrBuilder &B) {
+  while (true) {
+    lltok::Kind Token = Lex.getKind();
+    switch (Token) {
+    default:
+      return Error(Lex.getLoc(), "unterminated attribute group");
+    case lltok::rbrace:
+      // Finished.
+      return false;
+
+    // Target-dependent attributes:
+    case lltok::StringConstant: {
+      std::string Attr = Lex.getStrVal();
+      Lex.Lex();
+      std::string Val;
+      if (EatIfPresent(lltok::equal) &&
+          ParseStringConstant(Val))
+        return true;
+
+      B.addAttribute(Attr, Val);
+      break;
+    }
+
+    // Target-independent attributes:
+    case lltok::kw_align: {
+      unsigned Alignment;
+      if (ParseToken(lltok::equal, "expected '=' here") ||
+          ParseUInt32(Alignment))
+        return true;
+      B.addAlignmentAttr(Alignment);
+      break;
+    }
+    case lltok::kw_alignstack: {
+      unsigned Alignment;
+      if (ParseToken(lltok::equal, "expected '=' here") ||
+          ParseUInt32(Alignment))
+        return true;
+      B.addStackAlignmentAttr(Alignment);
+      break;
+    }
+    case lltok::kw_address_safety:  B.addAttribute(Attribute::AddressSafety); break;
+    case lltok::kw_alwaysinline:    B.addAttribute(Attribute::AlwaysInline); break;
+    case lltok::kw_byval:           B.addAttribute(Attribute::ByVal); break;
+    case lltok::kw_inlinehint:      B.addAttribute(Attribute::InlineHint); break;
+    case lltok::kw_inreg:           B.addAttribute(Attribute::InReg); break;
+    case lltok::kw_minsize:         B.addAttribute(Attribute::MinSize); break;
+    case lltok::kw_naked:           B.addAttribute(Attribute::Naked); break;
+    case lltok::kw_nest:            B.addAttribute(Attribute::Nest); break;
+    case lltok::kw_noalias:         B.addAttribute(Attribute::NoAlias); break;
+    case lltok::kw_nocapture:       B.addAttribute(Attribute::NoCapture); break;
+    case lltok::kw_noduplicate:     B.addAttribute(Attribute::NoDuplicate); break;
+    case lltok::kw_noimplicitfloat: B.addAttribute(Attribute::NoImplicitFloat); break;
+    case lltok::kw_noinline:        B.addAttribute(Attribute::NoInline); break;
+    case lltok::kw_nonlazybind:     B.addAttribute(Attribute::NonLazyBind); break;
+    case lltok::kw_noredzone:       B.addAttribute(Attribute::NoRedZone); break;
+    case lltok::kw_noreturn:        B.addAttribute(Attribute::NoReturn); break;
+    case lltok::kw_nounwind:        B.addAttribute(Attribute::NoUnwind); break;
+    case lltok::kw_optsize:         B.addAttribute(Attribute::OptimizeForSize); break;
+    case lltok::kw_readnone:        B.addAttribute(Attribute::ReadNone); break;
+    case lltok::kw_readonly:        B.addAttribute(Attribute::ReadOnly); break;
+    case lltok::kw_returns_twice:   B.addAttribute(Attribute::ReturnsTwice); break;
+    case lltok::kw_signext:         B.addAttribute(Attribute::SExt); break;
+    case lltok::kw_sret:            B.addAttribute(Attribute::StructRet); break;
+    case lltok::kw_ssp:             B.addAttribute(Attribute::StackProtect); break;
+    case lltok::kw_sspreq:          B.addAttribute(Attribute::StackProtectReq); break;
+    case lltok::kw_sspstrong:       B.addAttribute(Attribute::StackProtectStrong); break;
+    case lltok::kw_uwtable:         B.addAttribute(Attribute::UWTable); break;
+    case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
+    }
+
+    Lex.Lex();
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // GlobalValue Reference/Resolution Routines.

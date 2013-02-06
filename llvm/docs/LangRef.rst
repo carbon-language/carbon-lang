@@ -737,6 +737,36 @@ The compiler declares the supported values of *name*. Specifying a
 collector which will cause the compiler to alter its output in order to
 support the named garbage collection algorithm.
 
+.. _attrgrp:
+
+Attribute Groups
+----------------
+
+Attribute groups are groups of attributes that are referenced by objects within
+the IR. They are important for keeping ``.ll`` files readable, because a lot of
+functions will use the same set of attributes. In the degenerative case of a
+``.ll`` file that corresponds to a single ``.c`` file, the single attribute
+group will capture the important command line flags used to build that file.
+
+An attribute group is a module-level object. To use an attribute group, an
+object references the attribute group's ID (e.g. ``#37``). An object may refer
+to more than one attribute group. In that situation, the attributes from the
+different groups are merged.
+
+Here is an example of attribute groups for a function that should always be
+inlined, has a stack alignment of 4, and which shouldn't use SSE instructions:
+
+.. code-block:: llvm
+
+   ; Target-independent attributes:
+   #0 = attributes { alwaysinline alignstack=4 }
+
+   ; Target-dependent attributes:
+   #1 = attributes { "no-sse" }
+
+   ; Function @f has attributes: alwaysinline, alignstack=4, and "no-sse".
+   define void @f() #0 #1 { ... }
+
 .. _fnattrs:
 
 Function Attributes
