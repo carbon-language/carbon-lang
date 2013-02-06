@@ -6,6 +6,11 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This test uses new symbols that were not defined in the libc++ shipped on
+// darwin11 and darwin12:
+// XFAIL: with_system_lib=x86_64-apple-darwin11
+// XFAIL: with_system_lib=x86_64-apple-darwin12
 
 // <chrono>
 
