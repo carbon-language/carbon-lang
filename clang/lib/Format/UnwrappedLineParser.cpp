@@ -505,6 +505,10 @@ void UnwrappedLineParser::parseNamespace() {
     nextToken();
   if (FormatTok.Tok.is(tok::l_brace)) {
     parseBlock(/*MustBeDeclaration=*/ true, 0);
+    // Munch the semicolon after a namespace. This is more common than one would
+    // think. Puttin the semicolon into its own line is very ugly.
+    if (FormatTok.Tok.is(tok::semi))
+      nextToken();
     addUnwrappedLine();
   }
   // FIXME: Add error handling.

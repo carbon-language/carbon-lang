@@ -617,6 +617,15 @@ TEST_F(FormatTest, FormatsNamespaces) {
   verifyFormat("using namespace some_namespace;\n"
                "class A {\n};\n"
                "void f() { f(); }");
+
+  // This code is more common than we thought; if we
+  // layout this correctly the semicolon will go into
+  // its own line, which is undesireable.
+  verifyFormat("namespace {\n};");
+  verifyFormat("namespace {\n"
+               "class A {\n"
+               "};\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsExternC) {
