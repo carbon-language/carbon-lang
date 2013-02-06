@@ -797,6 +797,8 @@ def setupSysPath():
             lldbExec = which('lldb')
             if lldbHere and not lldbExec:
                 lldbExec = lldbHere
+            if lldbExec and not lldbHere:
+                lldbHere = lldbExec
     
     if lldbHere:
         os.environ["LLDB_HERE"] = lldbHere
@@ -1458,4 +1460,4 @@ if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
     subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
 
 # Exiting.
-sys.exit(not result.wasSuccessful)
+sys.exit(not result.wasSuccessful())
