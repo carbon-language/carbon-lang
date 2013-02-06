@@ -159,7 +159,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     PrevLabel(NULL), GlobalCUIndexCount(0),
     InfoHolder(A, &AbbreviationsSet, &Abbreviations, "info_string",
                DIEValueAllocator),
-    SkeletonCU(0),
     SkeletonAbbrevSet(InitAbbreviationsSetSize),
     SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs, "skel_string",
                    DIEValueAllocator) {
@@ -1040,11 +1039,12 @@ void DwarfDebug::endModule() {
          E = CUMap.end(); I != E; ++I)
     delete I->second;
 
-  delete SkeletonCU;
+  for (SmallVector<CompileUnit *, 1>::iterator I = SkeletonCUs.begin(),
+         E = SkeletonCUs.end(); I != E; ++I)
+    delete *I;
 
   // Reset these for the next Module if we have one.
   FirstCU = NULL;
-  SkeletonCU = NULL;
 }
 
 // Find abstract variable, if any, associated with Var.
@@ -2496,10 +2496,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-  if (!SkeletonCU)
-    SkeletonCU = NewCU;
-
   SkeletonHolder.addUnit(NewCU);
+  SkeletonCUs.push_back(NewCU);
 
   return NewCU;
 }

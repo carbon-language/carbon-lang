@@ -415,8 +415,8 @@ class DwarfDebug {
   // original object file, rather than things that are meant
   // to be in the .dwo sections.
 
-  // The CU left in the original object file for separated debug info.
-  CompileUnit *SkeletonCU;
+  // The CUs left in the original object file for separated debug info.
+  SmallVector<CompileUnit *, 1> SkeletonCUs;
 
   // Used to uniquely define abbreviations for the skeleton emission.
   FoldingSet<DIEAbbrev> SkeletonAbbrevSet;
