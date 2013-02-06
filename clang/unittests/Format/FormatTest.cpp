@@ -2381,6 +2381,12 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "                  selector:@selector(willEnterFullscreen)\n"
                "                      name:kWillEnterFullscreenNotification\n"
                "                    object:nil];");
+  verifyFormat("[image_rep drawInRect:drawRect\n"
+               "             fromRect:NSZeroRect\n"
+               "            operation:NSCompositeCopy\n"
+               "             fraction:1.0\n"
+               "       respectFlipped:NO\n"
+               "                hints:nil];");
 }
 
 TEST_F(FormatTest, ObjCAt) {

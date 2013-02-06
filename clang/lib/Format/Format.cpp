@@ -488,7 +488,7 @@ private:
               State.Stack.back().Indent + Current.LongestObjCSelectorName;
         else
           State.Stack.back().ColonPos =
-              State.Column + Spaces + Current.LongestObjCSelectorName;
+              State.Column + Spaces + Current.FormatTok.TokenLength;
       }
 
       // FIXME: Do we need to do this for assignments nested in other
