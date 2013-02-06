@@ -496,6 +496,12 @@ bool IsFiredSuppression(Context *ctx,
   return false;
 }
 
+bool FrameIsInternal(const ReportStack *frame) {
+  return frame != 0 && frame->file != 0
+      && (internal_strstr(frame->file, "tsan_interceptors.cc") ||
+          internal_strstr(frame->file, "sanitizer_common_interceptors.inc"));
+}
+
 // On programs that use Java we see weird reports like:
 // WARNING: ThreadSanitizer: data race (pid=22512)
 //   Read of size 8 at 0x7d2b00084318 by thread 100:
@@ -513,9 +519,7 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
           && frame->module == 0)) {
       return true;
     }
-    if (frame != 0 && frame->file != 0
-        && (internal_strstr(frame->file, "tsan_interceptors.cc") ||
-           internal_strstr(frame->file, "sanitizer_common_interceptors.inc"))) {
+    if (FrameIsInternal(frame)) {
       frame = frame->next;
       if (frame == 0
           || (frame->func == 0 && frame->file == 0 && frame->line == 0

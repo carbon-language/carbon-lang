@@ -196,7 +196,7 @@ void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function) {
   const int kMaxSize = 1024;  // We don't want a summary too long.
   InternalScopedBuffer<char> buff(kMaxSize);
-  internal_snprintf(buff.data(), kMaxSize, "%s %s %s:%d %s",
+  internal_snprintf(buff.data(), kMaxSize, "%s: %s %s:%d %s",
                     SanitizerToolName, error_type,
                     file, line, function);
   __sanitizer_report_error_summary(buff.data());

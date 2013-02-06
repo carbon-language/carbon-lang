@@ -10,7 +10,7 @@
 pthread_t mainth;
 volatile int done;
 
-static void handler(int, siginfo_t *s, void *c) {
+static void MyHandler(int, siginfo_t *s, void *c) {
   errno = 1;
   done = 1;
 }
@@ -23,7 +23,7 @@ static void* sendsignal(void *p) {
 int main() {
   mainth = pthread_self();
   struct sigaction act = {};
-  act.sa_sigaction = &handler;
+  act.sa_sigaction = &MyHandler;
   sigaction(SIGPROF, &act, 0);
   pthread_t th;
   pthread_create(&th, 0, sendsignal, 0);
@@ -38,5 +38,6 @@ int main() {
 }
 
 // CHECK: WARNING: ThreadSanitizer: signal handler spoils errno
-// CHECK:     #0 handler(int, siginfo{{(_t)?}}*, void*) {{.*}}signal_errno.cc
+// CHECK:     #0 MyHandler(int, siginfo{{(_t)?}}*, void*) {{.*}}signal_errno.cc
+// CHECK: SUMMARY: ThreadSanitizer: signal handler spoils errno{{.*}}MyHandler
 

@@ -559,6 +559,7 @@ bool IsFiredSuppression(Context *ctx,
                         const ScopedReport &srep,
                         const StackTrace &trace);
 bool IsExpectedReport(uptr addr, uptr size);
+bool FrameIsInternal(const ReportStack *frame);
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 1
 # define DPrintf Printf

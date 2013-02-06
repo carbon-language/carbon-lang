@@ -43,23 +43,20 @@ const char *thread_name(char *buf, int tid) {
   return buf;
 }
 
-static void PrintHeader(ReportType typ) {
-  Printf("WARNING: ThreadSanitizer: ");
-
+static const char *ReportTypeString(ReportType typ) {
   if (typ == ReportTypeRace)
-    Printf("data race");
-  else if (typ == ReportTypeUseAfterFree)
-    Printf("heap-use-after-free");
-  else if (typ == ReportTypeThreadLeak)
-    Printf("thread leak");
-  else if (typ == ReportTypeMutexDestroyLocked)
-    Printf("destroy of a locked mutex");
-  else if (typ == ReportTypeSignalUnsafe)
-    Printf("signal-unsafe call inside of a signal");
-  else if (typ == ReportTypeErrnoInSignal)
-    Printf("signal handler spoils errno");
-
-  Printf(" (pid=%d)\n", GetPid());
+    return "data race";
+  if (typ == ReportTypeUseAfterFree)
+    return "heap-use-after-free";
+  if (typ == ReportTypeThreadLeak)
+    return "thread leak";
+  if (typ == ReportTypeMutexDestroyLocked)
+    return "destroy of a locked mutex";
+  if (typ == ReportTypeSignalUnsafe)
+    return "signal-unsafe call inside of a signal";
+  if (typ == ReportTypeErrnoInSignal)
+    return "signal handler spoils errno";
+  return "";
 }
 
 void PrintStack(const ReportStack *ent) {
@@ -158,9 +155,28 @@ static void PrintSleep(const ReportStack *s) {
   PrintStack(s);
 }
 
+static ReportStack *ChooseSummaryStack(const ReportDesc *rep) {
+  if (rep->mops.Size())
+    return rep->mops[0]->stack;
+  if (rep->stacks.Size())
+    return rep->stacks[0];
+  if (rep->mutexes.Size())
+    return rep->mutexes[0]->stack;
+  if (rep->threads.Size())
+    return rep->threads[0]->stack;
+  return 0;
+}
+
+static ReportStack *SkipTsanInternalFrame(ReportStack *ent) {
+  if (FrameIsInternal(ent) && ent->next)
+    return ent->next;
+  return ent;
+}
+
 void PrintReport(const ReportDesc *rep) {
   Printf("==================\n");
-  PrintHeader(rep->typ);
+  const char *rep_typ_str = ReportTypeString(rep->typ);
+  Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str, GetPid());
 
   for (uptr i = 0; i < rep->stacks.Size(); i++) {
     if (i)
@@ -182,6 +198,9 @@ void PrintReport(const ReportDesc *rep) {
 
   for (uptr i = 0; i < rep->threads.Size(); i++)
     PrintThread(rep->threads[i]);
+
+  if (ReportStack *ent = SkipTsanInternalFrame(ChooseSummaryStack(rep)))
+    ReportErrorSummary(rep_typ_str, ent->file, ent->line, ent->func);
 
   Printf("==================\n");
 }
