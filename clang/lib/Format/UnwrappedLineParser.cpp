@@ -784,7 +784,7 @@ void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
            I = CommentsBeforeNextToken.begin(),
            E = CommentsBeforeNextToken.end();
        I != E; ++I) {
-    if (I->HasUnescapedNewline && JustComments) {
+    if (I->NewlinesBefore && JustComments) {
       addUnwrappedLine();
     }
     pushToken(*I);
@@ -798,7 +798,7 @@ void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
 void UnwrappedLineParser::nextToken() {
   if (eof())
     return;
-  flushComments(FormatTok.HasUnescapedNewline);
+  flushComments(FormatTok.NewlinesBefore > 0);
   pushToken(FormatTok);
   readToken();
 }
@@ -819,7 +819,7 @@ void UnwrappedLineParser::readToken() {
     }
     if (!FormatTok.Tok.is(tok::comment))
       return;
-    if (FormatTok.HasUnescapedNewline || FormatTok.IsFirst) {
+    if (FormatTok.NewlinesBefore > 0 || FormatTok.IsFirst) {
       CommentsInCurrentLine = false;
     }
     if (CommentsInCurrentLine) {

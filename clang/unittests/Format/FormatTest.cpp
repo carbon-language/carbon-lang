@@ -1987,6 +1987,32 @@ TEST_F(FormatTest, BlockComments) {
           "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa   || aaaaaaaaaaaaaaaaaaaaaaaaaa;"));
 }
 
+TEST_F(FormatTest, BlockCommentsInMacros) {
+  EXPECT_EQ("#define A          \\\n"
+            "  {                \\\n"
+            "    /* one line */ \\\n"
+            "    someCall();",
+            format("#define A {        \\\n"
+                   "  /* one line */   \\\n"
+                   "  someCall();", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("#define A          \\\n"
+            "  {                \\\n"
+            "    /* previous */ \\\n"
+            "    /* one line */ \\\n"
+            "    someCall();",
+            format("#define A {        \\\n"
+                   "  /* previous */   \\\n"
+                   "  /* one line */   \\\n"
+                   "  someCall();", getLLVMStyleWithColumns(20)));
+}
+
+TEST_F(FormatTest, IndentLineCommentsInStartOfBlockAtEndOfFile) {
+  // FIXME: This is not what we want...
+  verifyFormat("{\n"
+               "// a"
+               "// b");
+}
+
 TEST_F(FormatTest, FormatStarDependingOnContext) {
   verifyFormat("void f(int *a);");
   verifyFormat("void f() { f(fint * b); }");
