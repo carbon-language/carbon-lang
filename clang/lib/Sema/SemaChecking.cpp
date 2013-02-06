@@ -5777,10 +5777,11 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
       TInfo = TDL->getTypeSourceInfo();
       continue;
     }
-    ConstantArrayTypeLoc CTL = cast<ConstantArrayTypeLoc>(TL);
-    const Expr *SizeExpr = dyn_cast<IntegerLiteral>(CTL.getSizeExpr());
-    if (!SizeExpr || SizeExpr->getExprLoc().isMacroID())
-      return false;
+    if (const ConstantArrayTypeLoc *CTL = dyn_cast<ConstantArrayTypeLoc>(&TL)) {
+      const Expr *SizeExpr = dyn_cast<IntegerLiteral>(CTL->getSizeExpr());
+      if (!SizeExpr || SizeExpr->getExprLoc().isMacroID())
+        return false;
+    }
     break;
   }
 
