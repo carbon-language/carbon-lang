@@ -67,8 +67,8 @@ static unsigned getSUBriOpcode(unsigned isLP64, int64_t Imm) {
   }
 }
 
-static unsigned getADDriOpcode(unsigned isLP64, int64_t Imm) {
-  if (isLP64) {
+static unsigned getADDriOpcode(unsigned IsLP64, int64_t Imm) {
+  if (IsLP64) {
     if (isInt<8>(Imm))
       return X86::ADD64ri8;
     return X86::ADD64ri32;
@@ -79,8 +79,8 @@ static unsigned getADDriOpcode(unsigned isLP64, int64_t Imm) {
   }
 }
 
-static unsigned getLEArOpcode(unsigned is64Bit) {
-  return is64Bit ? X86::LEA64r : X86::LEA32r;
+static unsigned getLEArOpcode(unsigned IsLP64) {
+  return IsLP64 ? X86::LEA64r : X86::LEA32r;
 }
 
 /// findDeadCallerSavedReg - Return a caller-saved register that isn't live
@@ -151,7 +151,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
   unsigned Opc;
   if (UseLEA)
-    Opc = getLEArOpcode(Is64Bit);
+    Opc = getLEArOpcode(IsLP64);
   else
     Opc = isSub
       ? getSUBriOpcode(IsLP64, Offset)
@@ -1083,7 +1083,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (RegInfo->needsStackRealignment(MF))
       MBBI = FirstCSPop;
     if (CSSize != 0) {
-      unsigned Opc = getLEArOpcode(Is64Bit);
+      unsigned Opc = getLEArOpcode(IsLP64);
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr),
                    FramePtr, false, -CSSize);
     } else {
