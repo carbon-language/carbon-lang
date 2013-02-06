@@ -485,6 +485,13 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "    parameter));");
 
   verifyGoogleFormat("#endif  // HEADER_GUARD");
+
+  verifyFormat("const char *test[] = {\n"
+               "  // A\n"
+               "  \"aaaa\",\n"
+               "  // B\n"
+               "  \"aaaaa\",\n"
+               "};");
 }
 
 TEST_F(FormatTest, UnderstandsMultiLineComments) {

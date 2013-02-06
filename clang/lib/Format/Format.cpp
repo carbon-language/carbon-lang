@@ -111,7 +111,10 @@ public:
         Comments.back().Tok = Tok.FormatTok;
         Comments.back().Spaces = Spaces;
         Comments.back().NewLines = NewLines;
-        Comments.back().MinColumn = WhitespaceStartColumn + Spaces;
+        if (NewLines == 0)
+          Comments.back().MinColumn = WhitespaceStartColumn + Spaces;
+        else
+          Comments.back().MinColumn = Spaces;
         Comments.back().MaxColumn =
             Style.ColumnLimit - Spaces - Tok.FormatTok.TokenLength;
         return;
