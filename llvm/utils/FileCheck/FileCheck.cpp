@@ -587,9 +587,13 @@ struct CheckString {
     : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
 };
 
-/// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
-/// memory buffer, free it, and return a new one.
-static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
+/// Canonicalize whitespaces in the input file. Line endings are replaced
+/// with UNIX-style '\n'.
+///
+/// \param PreserveHorizontal Don't squash consecutive horizontal whitespace
+/// characters to a single space.
+static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB,
+                                           bool PreserveHorizontal) {
   SmallString<128> NewFile;
   NewFile.reserve(MB->getBufferSize());
 
@@ -600,8 +604,9 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
       continue;
     }
 
-    // If current char is not a horizontal whitespace, dump it to output as is.
-    if (*Ptr != ' ' && *Ptr != '\t') {
+    // If current char is not a horizontal whitespace or if horizontal 
+    // whitespace canonicalization is disabled, dump it to output as is.
+    if (PreserveHorizontal || (*Ptr != ' ' && *Ptr != '\t')) {
       NewFile.push_back(*Ptr);
       continue;
     }
@@ -637,9 +642,8 @@ static bool ReadCheckFile(SourceMgr &SM,
   MemoryBuffer *F = File.take();
 
   // If we want to canonicalize whitespace, strip excess whitespace from the
-  // buffer containing the CHECK lines.
-  if (!NoCanonicalizeWhiteSpace)
-    F = CanonicalizeInputFile(F);
+  // buffer containing the CHECK lines. Remove DOS style line endings.
+  F = CanonicalizeInputFile(F, NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
@@ -807,8 +811,8 @@ int main(int argc, char **argv) {
   }
   
   // Remove duplicate spaces in the input file if requested.
-  if (!NoCanonicalizeWhiteSpace)
-    F = CanonicalizeInputFile(F);
+  // Remove DOS style line endings.
+  F = CanonicalizeInputFile(F, NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
