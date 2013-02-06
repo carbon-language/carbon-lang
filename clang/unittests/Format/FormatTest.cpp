@@ -1985,6 +1985,13 @@ TEST_F(FormatTest, BlockComments) {
           "bool       aaaaaaaaaaaaa =       /* trailing comment */\n"
           "    aaaaaaaaaaaaaaaaaaaaaaaaaaa||aaaaaaaaaaaaaaaaaaaaaaaaa    ||\n"
           "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa   || aaaaaaaaaaaaaaaaaaaaaaaaaa;"));
+  EXPECT_EQ(
+      "int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; /* comment */\n"
+      "int bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;   /* comment */\n"
+      "int cccccccccccccccccccccccccccccc;       /* comment */\n",
+      format("int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; /* comment */\n"
+             "int      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb; /* comment */\n"
+             "int    cccccccccccccccccccccccccccccc;  /* comment */\n"));
 }
 
 TEST_F(FormatTest, BlockCommentsInMacros) {

@@ -80,6 +80,11 @@ FormatStyle getChromiumStyle() {
   return ChromiumStyle;
 }
 
+static bool isTrailingComment(const AnnotatedToken &Tok) {
+  return Tok.is(tok::comment) &&
+         (Tok.Children.empty() || Tok.Children[0].MustBreakBefore);
+}
+
 /// \brief Manages the whitespaces around tokens and their replacements.
 ///
 /// This includes special handling for certain constructs, e.g. the alignment of
@@ -99,8 +104,7 @@ public:
 
     // Align line comments if they are trailing or if they continue other
     // trailing comments.
-    if (Tok.Type == TT_LineComment &&
-        (Tok.Parent != NULL || !Comments.empty())) {
+    if (isTrailingComment(Tok) && (Tok.Parent != NULL || !Comments.empty())) {
       if (Style.ColumnLimit >=
           Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength) {
         Comments.push_back(StoredComment());
@@ -115,7 +119,7 @@ public:
     }
 
     // If this line does not have a trailing comment, align the stored comments.
-    if (Tok.Children.empty() && Tok.Type != TT_LineComment)
+    if (Tok.Children.empty() && !isTrailingComment(Tok))
       alignComments();
     storeReplacement(Tok.FormatTok,
                      std::string(NewLines, '\n') + std::string(Spaces, ' '));
@@ -206,11 +210,6 @@ private:
   SourceManager &SourceMgr;
   tooling::Replacements Replaces;
 };
-
-static bool isTrailingComment(const AnnotatedToken &Tok) {
-  return Tok.is(tok::comment) &&
-         (Tok.Children.empty() || Tok.Children[0].MustBreakBefore);
-}
 
 class UnwrappedLineFormatter {
 public:
