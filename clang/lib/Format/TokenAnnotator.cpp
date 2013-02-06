@@ -71,50 +71,17 @@ class AnnotatingParser {
 public:
   AnnotatingParser(SourceManager &SourceMgr, Lexer &Lex, AnnotatedLine &Line)
       : SourceMgr(SourceMgr), Lex(Lex), Line(Line), CurrentToken(&Line.First),
-        KeywordVirtualFound(false), ColonIsObjCMethodExpr(false),
-        LongestObjCSelectorName(0), FirstObjCSelectorName(NULL),
-        ColonIsForRangeExpr(false), IsExpression(false),
-        LookForFunctionName(Line.MustBeDeclaration), BindingStrength(1) {
+        KeywordVirtualFound(false) {
+    Contexts.push_back(Context(1, /*IsExpression=*/ false));
+    Contexts.back().LookForFunctionName = Line.MustBeDeclaration;
   }
-
-  /// \brief A helper class to manage AnnotatingParser::ColonIsObjCMethodExpr.
-  struct ObjCSelectorRAII {
-    AnnotatingParser &P;
-    bool ColonWasObjCMethodExpr;
-
-    ObjCSelectorRAII(AnnotatingParser &P)
-        : P(P), ColonWasObjCMethodExpr(P.ColonIsObjCMethodExpr) {
-    }
-
-    ~ObjCSelectorRAII() { P.ColonIsObjCMethodExpr = ColonWasObjCMethodExpr; }
-
-    void markStart(AnnotatedToken &Left) {
-      P.ColonIsObjCMethodExpr = true;
-      P.LongestObjCSelectorName = 0;
-      P.FirstObjCSelectorName = NULL;
-      Left.Type = TT_ObjCMethodExpr;
-    }
-
-    void markEnd(AnnotatedToken &Right) { Right.Type = TT_ObjCMethodExpr; }
-  };
-
-  struct ScopedBindingStrengthIncrease {
-    AnnotatingParser &P;
-    unsigned Increase;
-
-    ScopedBindingStrengthIncrease(AnnotatingParser &P, unsigned Increase)
-        : P(P), Increase(Increase) {
-      P.BindingStrength += Increase;
-    }
-
-    ~ScopedBindingStrengthIncrease() { P.BindingStrength -= Increase; }
-  };
 
   bool parseAngle() {
     if (CurrentToken == NULL)
       return false;
-    ScopedBindingStrengthIncrease Increase(*this, 10);
+    ScopedContextCreator ContextCreator(*this, 10);
     AnnotatedToken *Left = CurrentToken->Parent;
+    Contexts.back().IsExpression = false;
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::greater)) {
         Left->MatchingParen = CurrentToken;
@@ -140,7 +107,12 @@ public:
   bool parseParens(bool LookForDecls = false) {
     if (CurrentToken == NULL)
       return false;
-    ScopedBindingStrengthIncrease Increase(*this, 1);
+    ScopedContextCreator ContextCreator(*this, 1);
+
+    // FIXME: This is a bit of a hack. Do better.
+    Contexts.back().ColonIsForRangeExpr =
+        Contexts.size() == 2 && Contexts[0].ColonIsForRangeExpr;
+
     bool StartsObjCMethodExpr = false;
     AnnotatedToken *Left = CurrentToken->Parent;
     if (CurrentToken->is(tok::caret)) {
@@ -154,9 +126,10 @@ public:
       }
     }
 
-    ObjCSelectorRAII objCSelector(*this);
-    if (StartsObjCMethodExpr)
-      objCSelector.markStart(*Left);
+    if (StartsObjCMethodExpr) {
+      Contexts.back().ColonIsObjCMethodExpr = true;
+      Left->Type = TT_ObjCMethodExpr;
+    }
 
     while (CurrentToken != NULL) {
       // LookForDecls is set when "if (" has been seen. Check for
@@ -179,10 +152,10 @@ public:
         CurrentToken->MatchingParen = Left;
 
         if (StartsObjCMethodExpr) {
-          objCSelector.markEnd(*CurrentToken);
-          if (FirstObjCSelectorName != NULL) {
-            FirstObjCSelectorName->LongestObjCSelectorName =
-                LongestObjCSelectorName;
+          CurrentToken->Type = TT_ObjCMethodExpr;
+          if (Contexts.back().FirstObjCSelectorName != NULL) {
+            Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName =
+                Contexts.back().LongestObjCSelectorName;
           }
         }
 
@@ -202,7 +175,7 @@ public:
   bool parseSquare() {
     if (!CurrentToken)
       return false;
-    ScopedBindingStrengthIncrease Increase(*this, 10);
+    ScopedContextCreator ContextCreator(*this, 10);
 
     // A '[' could be an index subscript (after an indentifier or after
     // ')' or ']'), or it could be the start of an Objective-C method
@@ -216,9 +189,10 @@ public:
         getBinOpPrecedence(Left->Parent->FormatTok.Tok.getKind(), true, true) >
         prec::Unknown;
 
-    ObjCSelectorRAII objCSelector(*this);
-    if (StartsObjCMethodExpr)
-      objCSelector.markStart(*Left);
+    if (StartsObjCMethodExpr) {
+      Contexts.back().ColonIsObjCMethodExpr = true;
+      Left->Type = TT_ObjCMethodExpr;
+    }
 
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::r_square)) {
@@ -230,7 +204,7 @@ public:
           Left->Type = TT_Unknown;
         }
         if (StartsObjCMethodExpr) {
-          objCSelector.markEnd(*CurrentToken);
+          CurrentToken->Type = TT_ObjCMethodExpr;
           // determineStarAmpUsage() thinks that '*' '[' is allocating an
           // array of pointers, but if '[' starts a selector then '*' is a
           // binary operator.
@@ -241,9 +215,9 @@ public:
         }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
-        if (FirstObjCSelectorName != NULL)
-          FirstObjCSelectorName->LongestObjCSelectorName =
-              LongestObjCSelectorName;
+        if (Contexts.back().FirstObjCSelectorName != NULL)
+          Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName =
+              Contexts.back().LongestObjCSelectorName;
         next();
         return true;
       }
@@ -261,7 +235,7 @@ public:
     // Lines are fine to end with '{'.
     if (CurrentToken == NULL)
       return true;
-    ScopedBindingStrengthIncrease Increase(*this, 1);
+    ScopedContextCreator ContextCreator(*this, 1);
     AnnotatedToken *Left = CurrentToken->Parent;
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::r_brace)) {
@@ -320,15 +294,17 @@ public:
       // Colons from ?: are handled in parseConditional().
       if (Tok->Parent->is(tok::r_paren)) {
         Tok->Type = TT_CtorInitializerColon;
-      } else if (ColonIsObjCMethodExpr ||
+      } else if (Contexts.back().ColonIsObjCMethodExpr ||
                  Line.First.Type == TT_ObjCMethodSpecifier) {
         Tok->Type = TT_ObjCMethodExpr;
         Tok->Parent->Type = TT_ObjCSelectorName;
-        if (Tok->Parent->FormatTok.TokenLength > LongestObjCSelectorName)
-          LongestObjCSelectorName = Tok->Parent->FormatTok.TokenLength;
-        if (FirstObjCSelectorName == NULL)
-          FirstObjCSelectorName = Tok->Parent;
-      } else if (ColonIsForRangeExpr) {
+        if (Tok->Parent->FormatTok.TokenLength >
+            Contexts.back().LongestObjCSelectorName)
+          Contexts.back().LongestObjCSelectorName =
+              Tok->Parent->FormatTok.TokenLength;
+        if (Contexts.back().FirstObjCSelectorName == NULL)
+          Contexts.back().FirstObjCSelectorName = Tok->Parent;
+      } else if (Contexts.back().ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
       }
       break;
@@ -341,7 +317,7 @@ public:
       }
       break;
     case tok::kw_for:
-      ColonIsForRangeExpr = true;
+      Contexts.back().ColonIsForRangeExpr = true;
       next();
       if (!parseParens())
         return false;
@@ -483,9 +459,9 @@ public:
       return LT_BuilderTypeCall;
 
     if (Line.First.Type == TT_ObjCMethodSpecifier) {
-      if (FirstObjCSelectorName != NULL)
-        FirstObjCSelectorName->LongestObjCSelectorName =
-            LongestObjCSelectorName;
+      if (Contexts.back().FirstObjCSelectorName != NULL)
+        Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName =
+            Contexts.back().LongestObjCSelectorName;
       return LT_ObjCMethodDecl;
     }
 
@@ -495,7 +471,7 @@ public:
   void next() {
     if (CurrentToken != NULL) {
       determineTokenType(*CurrentToken);
-      CurrentToken->BindingStrength = BindingStrength;
+      CurrentToken->BindingStrength = Contexts.back().BindingStrength;
     }
 
     if (CurrentToken != NULL && !CurrentToken->Children.empty())
@@ -505,23 +481,43 @@ public:
   }
 
 private:
-  SourceManager &SourceMgr;
-  Lexer &Lex;
-  AnnotatedLine &Line;
-  AnnotatedToken *CurrentToken;
-  bool KeywordVirtualFound;
-  bool ColonIsObjCMethodExpr;
-  unsigned LongestObjCSelectorName;
-  AnnotatedToken *FirstObjCSelectorName;
-  bool ColonIsForRangeExpr;
-  bool IsExpression;
-  bool LookForFunctionName;
+  /// \brief A struct to hold information valid in a specific context, e.g.
+  /// a pair of parenthesis.
+  struct Context {
+    Context(unsigned BindingStrength, bool IsExpression)
+        : BindingStrength(BindingStrength), LongestObjCSelectorName(0),
+          ColonIsForRangeExpr(false), ColonIsObjCMethodExpr(false),
+          FirstObjCSelectorName(NULL), IsExpression(IsExpression),
+          LookForFunctionName(false) {
+    }
 
-  unsigned BindingStrength;
+    unsigned BindingStrength;
+    unsigned LongestObjCSelectorName;
+    bool ColonIsForRangeExpr;
+    bool ColonIsObjCMethodExpr;
+    AnnotatedToken *FirstObjCSelectorName;
+    bool IsExpression;
+    bool LookForFunctionName;
+  };
+
+  /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
+  /// of each instance.
+  struct ScopedContextCreator {
+    AnnotatingParser &P;
+
+    ScopedContextCreator(AnnotatingParser &P, unsigned Increase)
+        : P(P) {
+      P.Contexts.push_back(Context(
+          P.Contexts.back().BindingStrength + Increase,
+          P.Contexts.back().IsExpression));
+    }
+
+    ~ScopedContextCreator() { P.Contexts.pop_back(); }
+  };
 
   void determineTokenType(AnnotatedToken &Current) {
     if (getPrecedence(Current) == prec::Assignment) {
-      IsExpression = true;
+      Contexts.back().IsExpression = true;
       AnnotatedToken *Previous = Current.Parent;
       while (Previous != NULL) {
         if (Previous->Type == TT_BinaryOperator &&
@@ -534,14 +530,15 @@ private:
     if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
         (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
          (Current.Parent == NULL || Current.Parent->isNot(tok::kw_for))))
-      IsExpression = true;
+      Contexts.back().IsExpression = true;
 
     if (Current.Type == TT_Unknown) {
-      if (LookForFunctionName && Current.is(tok::l_paren)) {
+      if (Contexts.back().LookForFunctionName && Current.is(tok::l_paren)) {
         findFunctionName(&Current);
-        LookForFunctionName = false;
+        Contexts.back().LookForFunctionName = false;
       } else if (Current.is(tok::star) || Current.is(tok::amp)) {
-        Current.Type = determineStarAmpUsage(Current, IsExpression);
+        Current.Type =
+            determineStarAmpUsage(Current, Contexts.back().IsExpression);
       } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
                  Current.is(tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
@@ -671,6 +668,14 @@ private:
 
     return TT_UnaryOperator;
   }
+
+  SmallVector<Context, 8> Contexts;
+
+  SourceManager &SourceMgr;
+  Lexer &Lex;
+  AnnotatedLine &Line;
+  AnnotatedToken *CurrentToken;
+  bool KeywordVirtualFound;
 };
 
 void TokenAnnotator::annotate() {

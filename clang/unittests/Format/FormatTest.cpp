@@ -1546,6 +1546,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("A<int *> a;");
   verifyIndependentOfContext("A<int **> a;");
   verifyIndependentOfContext("A<int *, int *> a;");
+  verifyIndependentOfContext(
+      "const char *const p = reinterpret_cast<const char *const>(q);");
   verifyIndependentOfContext("A<int **, int **> a;");
 
   verifyFormat(
@@ -1564,6 +1566,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("*++*x;");
   verifyGoogleFormat("Type* t = const_cast<T*>(&*x);");
   verifyGoogleFormat("Type* t = x++ * y;");
+  verifyGoogleFormat(
+      "const char* const p = reinterpret_cast<const char* const>(q);");
 
   verifyIndependentOfContext("a = *(x + y);");
   verifyIndependentOfContext("a = &(x + y);");
@@ -2305,8 +2309,9 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "                                 backing:NSBackingStoreBuffered\n"
       "                                   defer:YES]))");
 
-  verifyFormat("[foo checkThatBreakingAfterColonWorksOk:\n"
-               "        [bar ifItDoes:reduceOverallLineLengthLikeInThisCase]];");
+  verifyFormat(
+      "[foo checkThatBreakingAfterColonWorksOk:\n"
+      "        [bar ifItDoes:reduceOverallLineLengthLikeInThisCase]];");
 
   verifyFormat("[myObj short:arg1 // Force line break\n"
                "          longKeyword:arg2\n"
@@ -2321,6 +2326,23 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "                  backing:NSBackingStoreBuffered\n"
       "                    defer:NO]);\n"
       "}");
+  verifyFormat("[contentsContainer replaceSubview:[subviews objectAtIndex:0]\n"
+               "                             with:contentsNativeView];");
+
+  verifyFormat(
+      "[pboard addTypes:[NSArray arrayWithObject:kBookmarkButtonDragType]\n"
+      "           owner:nillllll];");
+
+  // FIXME: No line break necessary for the first nested call.
+  verifyFormat(
+      "[pboard setData:[NSData dataWithBytes:&button\n"
+      "                               length:sizeof(button)]\n"
+      "        forType:kBookmarkButtonDragType];");
+
+  verifyFormat("[defaultCenter addObserver:self\n"
+               "                  selector:@selector(willEnterFullscreen)\n"
+               "                      name:kWillEnterFullscreenNotification\n"
+               "                    object:nil];");
 }
 
 TEST_F(FormatTest, ObjCAt) {
