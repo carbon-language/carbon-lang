@@ -4855,10 +4855,11 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
     if (cu == NULL || die == NULL || !type_name)
         return type_sp;
 
+    std::string qualified_name;
+
     LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_TYPE_COMPLETION|DWARF_LOG_LOOKUPS));
     if (log)
     {
-        std::string qualified_name;
         die->GetQualifiedName(this, cu, qualified_name);
         GetObjectFile()->GetModule()->LogMessage (log.get(),
                                                   "SymbolFileDWARF::FindDefinitionTypeForDIE(die=0x%8.8x (%s), name='%s')",
@@ -4873,8 +4874,22 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
     {
         if (m_apple_types_ap.get())
         {
-            if (m_apple_types_ap->GetHeader().header_data.atoms.size() > 1)
+            const bool has_tag = m_apple_types_ap->GetHeader().header_data.ContainsAtom (DWARFMappedHash::eAtomTypeTag);
+            const bool has_qualified_name_hash = m_apple_types_ap->GetHeader().header_data.ContainsAtom (DWARFMappedHash::eAtomTypeQualNameHash);
+            if (has_tag && has_qualified_name_hash)
             {
+                if (qualified_name.empty())
+                    die->GetQualifiedName(this, cu, qualified_name);
+
+                const uint32_t qualified_name_hash = MappedHash::HashStringUsingDJB (qualified_name.c_str());
+                if (log)
+                    GetObjectFile()->GetModule()->LogMessage (log.get(),"FindByNameAndTagAndQualifiedNameHash()");
+                m_apple_types_ap->FindByNameAndTagAndQualifiedNameHash (type_name.GetCString(), die->Tag(), qualified_name_hash, die_offsets);
+            }
+            else if (has_tag > 1)
+            {
+                if (log)
+                    GetObjectFile()->GetModule()->LogMessage (log.get(),"FindByNameAndTag()");
                 m_apple_types_ap->FindByNameAndTag (type_name.GetCString(), die->Tag(), die_offsets);
             }
             else
@@ -5033,8 +5048,20 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
             {
                 if (m_apple_types_ap.get())
                 {
-                    if (m_apple_types_ap->GetHeader().header_data.atoms.size() > 1)
+                    const bool has_tag = m_apple_types_ap->GetHeader().header_data.ContainsAtom (DWARFMappedHash::eAtomTypeTag);
+                    const bool has_qualified_name_hash = m_apple_types_ap->GetHeader().header_data.ContainsAtom (DWARFMappedHash::eAtomTypeQualNameHash);
+                    if (has_tag && has_qualified_name_hash)
                     {
+                        const char *qualified_name = dwarf_decl_ctx.GetQualifiedName();
+                        const uint32_t qualified_name_hash = MappedHash::HashStringUsingDJB (qualified_name);
+                        if (log)
+                            GetObjectFile()->GetModule()->LogMessage (log.get(),"FindByNameAndTagAndQualifiedNameHash()");
+                        m_apple_types_ap->FindByNameAndTagAndQualifiedNameHash (type_name.GetCString(), tag, qualified_name_hash, die_offsets);
+                    }
+                    else if (has_tag)
+                    {
+                        if (log)
+                            GetObjectFile()->GetModule()->LogMessage (log.get(),"FindByNameAndTag()");
                         m_apple_types_ap->FindByNameAndTag (type_name.GetCString(), tag, die_offsets);
                     }
                     else

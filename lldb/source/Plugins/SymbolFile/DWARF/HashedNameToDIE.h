@@ -32,18 +32,21 @@ struct DWARFMappedHash
         dw_offset_t offset;  // The DIE offset
         dw_tag_t tag;
         uint32_t type_flags; // Any flags for this DIEInfo
+        uint32_t qualified_name_hash; // A 32 bit hash of the fully qualified name
 
         DIEInfo () :
             offset (DW_INVALID_OFFSET),
             tag (0),
-            type_flags (0)
+            type_flags (0),
+            qualified_name_hash (0)
         {
         }
 
-        DIEInfo (dw_offset_t o, dw_tag_t t, uint32_t f) :
+        DIEInfo (dw_offset_t o, dw_tag_t t, uint32_t f, uint32_t h) :
             offset(o),
             tag (t),
-            type_flags (f)
+            type_flags (f),
+            qualified_name_hash (h)
         {
         }
         
@@ -53,6 +56,7 @@ struct DWARFMappedHash
             offset = DW_INVALID_OFFSET;
             tag = 0;
             type_flags = 0;
+            qualified_name_hash = 0;
         }            
     };
     
@@ -96,6 +100,37 @@ struct DWARFMappedHash
             }
         }
     }
+
+    static void
+    ExtractDIEArray (const DIEInfoArray &die_info_array,
+                     const dw_tag_t tag,
+                     const uint32_t qualified_name_hash,
+                     DIEArray &die_offsets)
+    {
+        if (tag == 0)
+        {
+            ExtractDIEArray (die_info_array, die_offsets);
+        }
+        else
+        {
+            const size_t count = die_info_array.size();
+            for (size_t i=0; i<count; ++i)
+            {
+                if (qualified_name_hash != die_info_array[i].qualified_name_hash)
+                    continue;
+                const dw_tag_t die_tag = die_info_array[i].tag;
+                bool tag_matches = die_tag == 0 || tag == die_tag;
+                if (!tag_matches)
+                {
+                    if (die_tag == DW_TAG_class_type || die_tag == DW_TAG_structure_type)
+                        tag_matches = tag == DW_TAG_structure_type || tag == DW_TAG_class_type;
+                }
+                if (tag_matches)
+                    die_offsets.push_back (die_info_array[i].offset);
+            }
+        }
+    }
+
     enum AtomType
     {
         eAtomTypeNULL       = 0u,
@@ -103,7 +138,11 @@ struct DWARFMappedHash
         eAtomTypeCUOffset   = 2u,   // DIE offset of the compiler unit header that contains the item in question
         eAtomTypeTag        = 3u,   // DW_TAG_xxx value, should be encoded as DW_FORM_data1 (if no tags exceed 255) or DW_FORM_data2
         eAtomTypeNameFlags  = 4u,   // Flags from enum NameFlags
-        eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
+        eAtomTypeTypeFlags  = 5u,   // Flags from enum TypeFlags,
+        eAtomTypeQualNameHash = 6u  // A 32 bit hash of the full qualified name (since all hash entries are basename only)
+                                    // For example a type like "std::vector<int>::iterator" would have a name of "iterator"
+                                    // and a 32 bit hash for "std::vector<int>::iterator" to allow us to not have to pull
+                                    // in debug info for a type when we know the fully qualified name.
     };
     
     // Bit definitions for the eAtomTypeTypeFlags flags
@@ -196,6 +235,7 @@ struct DWARFMappedHash
             case eAtomTypeTag:          return "die-tag";
             case eAtomTypeNameFlags:    return "name-flags";
             case eAtomTypeTypeFlags:    return "type-flags";
+            case eAtomTypeQualNameHash: return "qualified-name-hash";
         }
         return "<invalid>";
     }
@@ -419,8 +459,13 @@ struct DWARFMappedHash
                     case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
                         hash_data.type_flags = (uint32_t)form_value.Unsigned ();
                         break;
+
+                    case eAtomTypeQualNameHash:    // Flags from enum TypeFlags
+                        hash_data.qualified_name_hash = form_value.Unsigned ();
+                        break;
+
                     default:
-                        return false;
+                        // We can always skip atomes we don't know about
                         break;
                 }
             }
@@ -463,7 +508,11 @@ struct DWARFMappedHash
                             strm.PutCString (" )");
                         }
                         break;
-                        
+
+                    case eAtomTypeQualNameHash:    // Flags from enum TypeFlags
+                        strm.Printf ("0x%8.8x", hash_data.qualified_name_hash);
+                        break;
+
                     default:
                         strm.Printf ("AtomType(0x%x)", header_data.atoms[i].type);
                         break;
@@ -793,6 +842,18 @@ struct DWARFMappedHash
             DIEInfoArray die_info_array;
             if (FindByName(name, die_info_array))
                 DWARFMappedHash::ExtractDIEArray (die_info_array, tag, die_offsets);
+            return die_info_array.size();
+        }
+
+        size_t
+        FindByNameAndTagAndQualifiedNameHash (const char *name,
+                                              const dw_tag_t tag,
+                                              const uint32_t qualified_name_hash,
+                                              DIEArray &die_offsets)
+        {
+            DIEInfoArray die_info_array;
+            if (FindByName(name, die_info_array))
+                DWARFMappedHash::ExtractDIEArray (die_info_array, tag, qualified_name_hash, die_offsets);
             return die_info_array.size();
         }
 
