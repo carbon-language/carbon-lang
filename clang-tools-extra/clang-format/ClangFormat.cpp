@@ -108,7 +108,7 @@ static void format() {
   }
   tooling::Replacements Replaces = reformat(getStyle(), Lex, Sources, Ranges);
   if (OutputXML) {
-    llvm::outs() << "<?xml version='1.0'?>\n<replacements>\n";
+    llvm::outs() << "<?xml version='1.0'?>\n<replacements xml:space='preserve'>\n";
     for (tooling::Replacements::const_iterator I = Replaces.begin(),
                                                E = Replaces.end();
          I != E; ++I) {
