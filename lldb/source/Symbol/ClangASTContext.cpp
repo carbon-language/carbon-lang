@@ -2722,6 +2722,9 @@ ClangASTContext::AddMethodToObjCObjectType
     ObjCMethodDecl::ImplementationControl imp_control = ObjCMethodDecl::None;
 
     const unsigned num_args = method_function_prototype->getNumArgs();
+    
+    if (num_args != num_selectors_with_args)
+        return NULL; // some debug information is corrupt.  We are not going to deal with it.
 
     ObjCMethodDecl *objc_method_decl = ObjCMethodDecl::Create (*ast,
                                                                SourceLocation(), // beginLoc,

@@ -6309,6 +6309,13 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(objc_method_decl), die);
                                         GetClangASTContext().SetMetadataAsUserID ((uintptr_t)objc_method_decl, MakeUserID(die->GetOffset()));
                                     }
+                                    else
+                                    {
+                                        GetObjectFile()->GetModule()->ReportError ("{0x%8.8x}: invaliad Objective-C method 0x%4.4x (%s), please file a bug and attach the file at the start of this error message",
+                                                                                   die->GetOffset(),
+                                                                                   tag,
+                                                                                   DW_TAG_value_to_name(tag));
+                                    }
                                 }
                             }
                             else if (is_cxx_method)
