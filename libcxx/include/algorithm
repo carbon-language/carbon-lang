@@ -1528,10 +1528,10 @@ copy(_InputIterator __first, _InputIterator __last, _OutputIterator __result)
 
 // copy_backward
 
-template <class _InputIterator, class _OutputIterator>
+template <class _BidirectionalIterator, class _OutputIterator>
 inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
-__copy_backward(_InputIterator __first, _InputIterator __last, _OutputIterator __result)
+__copy_backward(_BidirectionalIterator __first, _BidirectionalIterator __last, _OutputIterator __result)
 {
     while (__first != __last)
         *--__result = *--__last;
