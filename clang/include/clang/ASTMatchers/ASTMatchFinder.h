@@ -172,6 +172,7 @@ private:
 /// Multiple results occur when using matchers like \c forEachDescendant,
 /// which generate a result for each sub-match.
 ///
+/// \see selectFirst
 /// @{
 template <typename MatcherT, typename NodeT>
 SmallVector<BoundNodes, 1>
@@ -182,6 +183,28 @@ SmallVector<BoundNodes, 1>
 match(MatcherT Matcher, const ast_type_traits::DynTypedNode &Node,
       ASTContext &Context);
 /// @}
+
+/// \brief Returns the first result of type \c NodeT bound to \p BoundTo.
+///
+/// Returns \c NULL if there is no match, or if the matching node cannot be
+/// casted to \c NodeT.
+///
+/// This is useful in combanation with \c match():
+/// \code
+///   Decl *D = selectFirst<Decl>("id", match(Matcher.bind("id"),
+///                                           Node, Context));
+/// \endcode
+template <typename NodeT>
+NodeT *
+selectFirst(StringRef BoundTo, const SmallVectorImpl<BoundNodes> &Results) {
+  for (SmallVectorImpl<BoundNodes>::const_iterator I = Results.begin(),
+                                                   E = Results.end();
+       I != E; ++I) {
+    if (NodeT *Node = I->getNodeAs<NodeT>(BoundTo))
+      return Node;
+  }
+  return NULL;
+}
 
 namespace internal {
 class CollectMatchesCallback : public MatchFinder::MatchCallback {
