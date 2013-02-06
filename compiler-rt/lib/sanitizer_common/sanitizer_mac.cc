@@ -13,6 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #ifdef __APPLE__
+// Use 64-bit inodes in file operations. ASan does not support OS X 10.5, so
+// the clients will most certainly use 64-bit ones as well.
+#ifndef _DARWIN_USE_64_BIT_INODE
+#define _DARWIN_USE_64_BIT_INODE 1
+#endif
+#include <stdio.h>
 
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
