@@ -376,6 +376,10 @@ def ferror_limit_EQ : Joined<["-"], "ferror-limit=">, Group<f_Group>;
 def fexceptions : Flag<["-"], "fexceptions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable support for exception handling">;
 def fextdirs_EQ : Joined<["-"], "fextdirs=">, Group<f_Group>;
+def fextended_identifiers : Flag<["-"], "fextended-identifiers">,
+    Group<clang_ignored_f_Group>;
+def fno_extended_identifiers : Flag<["-"], "fno-extended-identifiers">,
+    Group<f_Group>, Flags<[Unsupported]>;
 def fhosted : Flag<["-"], "fhosted">, Group<f_Group>;
 def ffast_math : Flag<["-"], "ffast-math">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the *frontend*'s 'fast-math' mode. This has no effect on "
