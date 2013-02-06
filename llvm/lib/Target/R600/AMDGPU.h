@@ -36,6 +36,7 @@ FunctionPass *createSIInsertWaits(TargetMachine &tm);
 // Passes common to R600 and SI
 Pass *createAMDGPUStructurizeCFGPass();
 FunctionPass *createAMDGPUConvertToISAPass(TargetMachine &tm);
+FunctionPass* createAMDGPUIndirectAddressingPass(TargetMachine &tm);
 
 } // End namespace llvm
 

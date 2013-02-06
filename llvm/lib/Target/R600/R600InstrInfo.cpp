@@ -16,8 +16,11 @@
 #include "AMDGPUSubtarget.h"
 #include "AMDGPUTargetMachine.h"
 #include "R600Defines.h"
+#include "R600MachineFunctionInfo.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 #define GET_INSTRINFO_CTOR
 #include "AMDGPUGenDFAPacketizer.inc"
@@ -464,6 +467,124 @@ unsigned int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
     *PredCost = 2;
   return 2;
 }
+
+int R600InstrInfo::getIndirectIndexBegin(const MachineFunction &MF) const {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  int Offset = 0;
+
+  if (MFI->getNumObjects() == 0) {
+    return -1;
+  }
+
+  if (MRI.livein_empty()) {
+    return 0;
+  }
+
+  for (MachineRegisterInfo::livein_iterator LI = MRI.livein_begin(),
+                                            LE = MRI.livein_end();
+                                            LI != LE; ++LI) {
+    Offset = std::max(Offset,
+                      GET_REG_INDEX(RI.getEncodingValue(LI->first)));
+  }
+
+  return Offset + 1;
+}
+
+int R600InstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
+  int Offset = 0;
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  // Variable sized objects are not supported
+  assert(!MFI->hasVarSizedObjects());
+
+  if (MFI->getNumObjects() == 0) {
+    return -1;
+  }
+
+  Offset = TM.getFrameLowering()->getFrameIndexOffset(MF, -1);
+
+  return getIndirectIndexBegin(MF) + Offset;
+}
+
+std::vector<unsigned> R600InstrInfo::getIndirectReservedRegs(
+                                             const MachineFunction &MF) const {
+  const AMDGPUFrameLowering *TFL =
+                 static_cast<const AMDGPUFrameLowering*>(TM.getFrameLowering());
+  std::vector<unsigned> Regs;
+
+  unsigned StackWidth = TFL->getStackWidth(MF);
+  int End = getIndirectIndexEnd(MF);
+
+  if (End == -1) {
+    return Regs;
+  }
+
+  for (int Index = getIndirectIndexBegin(MF); Index <= End; ++Index) {
+    unsigned SuperReg = AMDGPU::R600_Reg128RegClass.getRegister(Index);
+    Regs.push_back(SuperReg);
+    for (unsigned Chan = 0; Chan < StackWidth; ++Chan) {
+      unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister((4 * Index) + Chan);
+      Regs.push_back(Reg);
+    }
+  }
+  return Regs;
+}
+
+unsigned R600InstrInfo::calculateIndirectAddress(unsigned RegIndex,
+                                                 unsigned Channel) const {
+  // XXX: Remove when we support a stack width > 2
+  assert(Channel == 0);
+  return RegIndex;
+}
+
+const TargetRegisterClass * R600InstrInfo::getIndirectAddrStoreRegClass(
+                                                     unsigned SourceReg) const {
+  return &AMDGPU::R600_TReg32RegClass;
+}
+
+const TargetRegisterClass *R600InstrInfo::getIndirectAddrLoadRegClass() const {
+  return &AMDGPU::TRegMemRegClass;
+}
+
+MachineInstrBuilder R600InstrInfo::buildIndirectWrite(MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator I,
+                                       unsigned ValueReg, unsigned Address,
+                                       unsigned OffsetReg) const {
+  unsigned AddrReg = AMDGPU::R600_AddrRegClass.getRegister(Address);
+  MachineInstr *MOVA = buildDefaultInstruction(*MBB, I, AMDGPU::MOVA_INT_eg,
+                                               AMDGPU::AR_X, OffsetReg);
+  setImmOperand(MOVA, R600Operands::WRITE, 0);
+
+  MachineInstrBuilder Mov = buildDefaultInstruction(*MBB, I, AMDGPU::MOV,
+                                      AddrReg, ValueReg)
+                                      .addReg(AMDGPU::AR_X, RegState::Implicit);
+  setImmOperand(Mov, R600Operands::DST_REL, 1);
+  return Mov;
+}
+
+MachineInstrBuilder R600InstrInfo::buildIndirectRead(MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator I,
+                                       unsigned ValueReg, unsigned Address,
+                                       unsigned OffsetReg) const {
+  unsigned AddrReg = AMDGPU::R600_AddrRegClass.getRegister(Address);
+  MachineInstr *MOVA = buildDefaultInstruction(*MBB, I, AMDGPU::MOVA_INT_eg,
+                                                       AMDGPU::AR_X,
+                                                       OffsetReg);
+  setImmOperand(MOVA, R600Operands::WRITE, 0);
+  MachineInstrBuilder Mov = buildDefaultInstruction(*MBB, I, AMDGPU::MOV,
+                                      ValueReg,
+                                      AddrReg)
+                                      .addReg(AMDGPU::AR_X, RegState::Implicit);
+  setImmOperand(Mov, R600Operands::SRC0_REL, 1);
+
+  return Mov;
+}
+
+const TargetRegisterClass *R600InstrInfo::getSuperIndirectRegClass() const {
+  return &AMDGPU::IndirectRegRegClass;
+}
+
 
 MachineInstrBuilder R600InstrInfo::buildDefaultInstruction(MachineBasicBlock &MBB,
                                                   MachineBasicBlock::iterator I,

@@ -113,6 +113,38 @@ namespace llvm {
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const { return 1;}
 
+  /// \returns a list of all the registers that may be accesed using indirect
+  /// addressing.
+  std::vector<unsigned> getIndirectReservedRegs(const MachineFunction &MF) const;
+
+  virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
+
+  virtual int getIndirectIndexEnd(const MachineFunction &MF) const;
+
+
+  virtual unsigned calculateIndirectAddress(unsigned RegIndex,
+                                            unsigned Channel) const;
+
+  virtual const TargetRegisterClass *getIndirectAddrStoreRegClass(
+                                                      unsigned SourceReg) const;
+
+  virtual const TargetRegisterClass *getIndirectAddrLoadRegClass() const;
+
+  virtual MachineInstrBuilder buildIndirectWrite(MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator I,
+                                  unsigned ValueReg, unsigned Address,
+                                  unsigned OffsetReg) const;
+
+  virtual MachineInstrBuilder buildIndirectRead(MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator I,
+                                  unsigned ValueReg, unsigned Address,
+                                  unsigned OffsetReg) const;
+
+  virtual const TargetRegisterClass *getSuperIndirectRegClass() const;
+
+
+  ///buildDefaultInstruction - This function returns a MachineInstr with
+  /// all the instruction modifiers initialized to their default values.
   /// You can use this function to avoid manually specifying each instruction
   /// modifier operand when building a new instruction.
   ///

@@ -64,7 +64,12 @@ private:
   SDValue LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPOW(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
-  
+  SDValue LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const;
+
+  SDValue stackPtrToRegIndex(SDValue Ptr, unsigned StackWidth,
+                                          SelectionDAG &DAG) const;
+  void getStackAddress(unsigned StackWidth, unsigned ElemIdx,
+                       unsigned &Channel, unsigned &PtrIncr) const;
   bool isZero(SDValue Op) const;
 };
 

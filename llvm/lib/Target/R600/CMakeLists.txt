@@ -17,7 +17,6 @@ add_llvm_target(R600CodeGen
   AMDILDevice.cpp
   AMDILDeviceInfo.cpp
   AMDILEvergreenDevice.cpp
-  AMDILFrameLowering.cpp
   AMDILIntrinsicInfo.cpp
   AMDILISelDAGToDAG.cpp
   AMDILISelLowering.cpp
@@ -25,6 +24,8 @@ add_llvm_target(R600CodeGen
   AMDILPeepholeOptimizer.cpp
   AMDILSIDevice.cpp
   AMDGPUAsmPrinter.cpp
+  AMDGPUFrameLowering.cpp
+  AMDGPUIndirectAddressing.cpp
   AMDGPUMCInstLower.cpp
   AMDGPUSubtarget.cpp
   AMDGPUStructurizeCFG.cpp

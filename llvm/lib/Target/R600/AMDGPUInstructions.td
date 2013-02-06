@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 class AMDGPUInst <dag outs, dag ins, string asm, list<dag> pattern> : Instruction {
-  field bits<16> AMDILOp = 0;
-  field bits<3> Gen = 0;
+  field bit isRegisterLoad = 0;
+  field bit isRegisterStore = 0;
 
   let Namespace = "AMDGPU";
   let OutOperandList = outs;
@@ -22,8 +22,9 @@ class AMDGPUInst <dag outs, dag ins, string asm, list<dag> pattern> : Instructio
   let AsmString = asm;
   let Pattern = pattern;
   let Itinerary = NullALU;
-  let TSFlags{42-40} = Gen;
-  let TSFlags{63-48} = AMDILOp;
+
+  let TSFlags{63} = isRegisterLoad;
+  let TSFlags{62} = isRegisterStore;
 }
 
 class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
@@ -101,7 +102,9 @@ def FP_ONE : PatLeaf <
   [{return N->isExactlyValue(1.0);}]
 >;
 
-let isCodeGenOnly = 1, isPseudo = 1, usesCustomInserter = 1  in {
+let isCodeGenOnly = 1, isPseudo = 1 in {
+
+let usesCustomInserter = 1  in {
 
 class CLAMP <RegisterClass rc> : AMDGPUShaderInst <
   (outs rc:$dst),
@@ -131,7 +134,31 @@ def SHADER_TYPE : AMDGPUShaderInst <
   [(int_AMDGPU_shader_type imm:$type)]
 >;
 
-} // End isCodeGenOnly = 1, isPseudo = 1, hasCustomInserter = 1
+} // usesCustomInserter = 1
+
+multiclass RegisterLoadStore <RegisterClass dstClass, Operand addrClass,
+                    ComplexPattern addrPat> {
+  def RegisterLoad : AMDGPUShaderInst <
+    (outs dstClass:$dst),
+    (ins addrClass:$addr, i32imm:$chan),
+    "RegisterLoad $dst, $addr",
+    [(set (i32 dstClass:$dst), (AMDGPUregister_load addrPat:$addr,
+                                                    (i32 timm:$chan)))]
+  > {
+    let isRegisterLoad = 1;
+  }
+
+  def RegisterStore : AMDGPUShaderInst <
+    (outs),
+    (ins dstClass:$val, addrClass:$addr, i32imm:$chan),
+    "RegisterStore $val, $addr",
+    [(AMDGPUregister_store (i32 dstClass:$val), addrPat:$addr, (i32 timm:$chan))]
+  > {
+    let isRegisterStore = 1;
+  }
+}
+
+} // End isCodeGenOnly = 1, isPseudo = 1
 
 /* Generic helper patterns for intrinsics */
 /* -------------------------------------- */

@@ -16,6 +16,7 @@
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -71,11 +72,23 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT, MVT::i32, Custom);
   setOperationAction(ISD::SELECT, MVT::f32, Custom);
 
+  // Legalize loads and stores to the private address space.
+  setOperationAction(ISD::LOAD, MVT::i32, Custom);
+  setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
+  setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
+  setLoadExtAction(ISD::EXTLOAD, MVT::v4i8, Custom);
+  setLoadExtAction(ISD::EXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i8, Custom);
+  setOperationAction(ISD::STORE, MVT::i8, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
+  setOperationAction(ISD::STORE, MVT::v2i32, Custom);
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
 
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
+  setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
+
   setTargetDAGCombine(ISD::FP_ROUND);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
 
@@ -350,6 +363,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::LOAD: return LowerLOAD(Op, DAG);
   case ISD::FPOW: return LowerFPOW(Op, DAG);
+  case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
   case ISD::INTRINSIC_VOID: {
     SDValue Chain = Op.getOperand(0);
     unsigned IntrinsicID =
@@ -485,6 +499,10 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
     DAG.ReplaceAllUsesOfValueWith(SDValue(N,1), SDValue(Node, 1));
     return;
   }
+  case ISD::STORE:
+    SDNode *Node = LowerSTORE(SDValue(N, 0), DAG).getNode();
+    Results.push_back(SDValue(Node, 0));
+    return;
   }
 }
 
@@ -550,6 +568,20 @@ SDValue R600TargetLowering::LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
                      DAG.getConstant(ByteOffset, MVT::i32), // PTR
                      MachinePointerInfo(ConstantPointerNull::get(PtrType)),
                      false, false, false, 0);
+}
+
+SDValue R600TargetLowering::LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const {
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  const AMDGPUFrameLowering *TFL =
+   static_cast<const AMDGPUFrameLowering*>(getTargetMachine().getFrameLowering());
+
+  FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op);
+  assert(FIN);
+
+  unsigned FrameIndex = FIN->getIndex();
+  unsigned Offset = TFL->getFrameIndexOffset(MF, FrameIndex);
+  return DAG.getConstant(Offset * 4 * TFL->getStackWidth(MF), MVT::i32);
 }
 
 SDValue R600TargetLowering::LowerROTL(SDValue Op, SelectionDAG &DAG) const {
@@ -766,6 +798,61 @@ SDValue R600TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   return Cond;
 }
 
+/// LLVM generates byte-addresed pointers.  For indirect addressing, we need to
+/// convert these pointers to a register index.  Each register holds
+/// 16 bytes, (4 x 32bit sub-register), but we need to take into account the
+/// \p StackWidth, which tells us how many of the 4 sub-registrers will be used
+/// for indirect addressing.
+SDValue R600TargetLowering::stackPtrToRegIndex(SDValue Ptr,
+                                               unsigned StackWidth,
+                                               SelectionDAG &DAG) const {
+  unsigned SRLPad;
+  switch(StackWidth) {
+  case 1:
+    SRLPad = 2;
+    break;
+  case 2:
+    SRLPad = 3;
+    break;
+  case 4:
+    SRLPad = 4;
+    break;
+  default: llvm_unreachable("Invalid stack width");
+  }
+
+  return DAG.getNode(ISD::SRL, Ptr.getDebugLoc(), Ptr.getValueType(), Ptr,
+                     DAG.getConstant(SRLPad, MVT::i32));
+}
+
+void R600TargetLowering::getStackAddress(unsigned StackWidth,
+                                         unsigned ElemIdx,
+                                         unsigned &Channel,
+                                         unsigned &PtrIncr) const {
+  switch (StackWidth) {
+  default:
+  case 1:
+    Channel = 0;
+    if (ElemIdx > 0) {
+      PtrIncr = 1;
+    } else {
+      PtrIncr = 0;
+    }
+    break;
+  case 2:
+    Channel = ElemIdx % 2;
+    if (ElemIdx == 2) {
+      PtrIncr = 1;
+    } else {
+      PtrIncr = 0;
+    }
+    break;
+  case 4:
+    Channel = ElemIdx;
+    PtrIncr = 0;
+    break;
+  }
+}
+
 SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc DL = Op.getDebugLoc();
   StoreSDNode *StoreNode = cast<StoreSDNode>(Op);
@@ -787,7 +874,52 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     }
     return Chain;
   }
-  return SDValue();
+
+  EVT ValueVT = Value.getValueType();
+
+  if (StoreNode->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
+    return SDValue();
+  }
+
+  // Lowering for indirect addressing
+
+  const MachineFunction &MF = DAG.getMachineFunction();
+  const AMDGPUFrameLowering *TFL = static_cast<const AMDGPUFrameLowering*>(
+                                         getTargetMachine().getFrameLowering());
+  unsigned StackWidth = TFL->getStackWidth(MF);
+
+  Ptr = stackPtrToRegIndex(Ptr, StackWidth, DAG);
+
+  if (ValueVT.isVector()) {
+    unsigned NumElemVT = ValueVT.getVectorNumElements();
+    EVT ElemVT = ValueVT.getVectorElementType();
+    SDValue Stores[4];
+
+    assert(NumElemVT >= StackWidth && "Stack width cannot be greater than "
+                                      "vector width in load");
+
+    for (unsigned i = 0; i < NumElemVT; ++i) {
+      unsigned Channel, PtrIncr;
+      getStackAddress(StackWidth, i, Channel, PtrIncr);
+      Ptr = DAG.getNode(ISD::ADD, DL, MVT::i32, Ptr,
+                        DAG.getConstant(PtrIncr, MVT::i32));
+      SDValue Elem = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ElemVT,
+                                 Value, DAG.getConstant(i, MVT::i32));
+
+      Stores[i] = DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other,
+                              Chain, Elem, Ptr,
+                              DAG.getTargetConstant(Channel, MVT::i32));
+    }
+     Chain =  DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Stores, NumElemVT);
+   } else {
+    if (ValueVT == MVT::i8) {
+      Value = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, Value);
+    }
+    Chain = DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other, Chain, Value, Ptr,
+    DAG.getTargetConstant(0, MVT::i32)); // Channel 
+  }
+
+  return Chain;
 }
 
 // return (512 + (kc_bank << 12)
@@ -876,7 +1008,53 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     return DAG.getMergeValues(MergedValues, 2, DL);
   }
 
-  return SDValue();
+  if (LoadNode->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
+    return SDValue();
+  }
+
+  // Lowering for indirect addressing
+  const MachineFunction &MF = DAG.getMachineFunction();
+  const AMDGPUFrameLowering *TFL = static_cast<const AMDGPUFrameLowering*>(
+                                         getTargetMachine().getFrameLowering());
+  unsigned StackWidth = TFL->getStackWidth(MF);
+
+  Ptr = stackPtrToRegIndex(Ptr, StackWidth, DAG);
+
+  if (VT.isVector()) {
+    unsigned NumElemVT = VT.getVectorNumElements();
+    EVT ElemVT = VT.getVectorElementType();
+    SDValue Loads[4];
+
+    assert(NumElemVT >= StackWidth && "Stack width cannot be greater than "
+                                      "vector width in load");
+
+    for (unsigned i = 0; i < NumElemVT; ++i) {
+      unsigned Channel, PtrIncr;
+      getStackAddress(StackWidth, i, Channel, PtrIncr);
+      Ptr = DAG.getNode(ISD::ADD, DL, MVT::i32, Ptr,
+                        DAG.getConstant(PtrIncr, MVT::i32));
+      Loads[i] = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, ElemVT,
+                             Chain, Ptr,
+                             DAG.getTargetConstant(Channel, MVT::i32),
+                             Op.getOperand(2));
+    }
+    for (unsigned i = NumElemVT; i < 4; ++i) {
+      Loads[i] = DAG.getUNDEF(ElemVT);
+    }
+    EVT TargetVT = EVT::getVectorVT(*DAG.getContext(), ElemVT, 4);
+    LoweredLoad = DAG.getNode(ISD::BUILD_VECTOR, DL, TargetVT, Loads, 4);
+  } else {
+    LoweredLoad = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, VT,
+                              Chain, Ptr,
+                              DAG.getTargetConstant(0, MVT::i32), // Channel
+                              Op.getOperand(2));
+  }
+
+  SDValue Ops[2];
+  Ops[0] = LoweredLoad;
+  Ops[1] = Chain;
+
+  return DAG.getMergeValues(Ops, 2, DL);
 }
 
 SDValue R600TargetLowering::LowerFPOW(SDValue Op,

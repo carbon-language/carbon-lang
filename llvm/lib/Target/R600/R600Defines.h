@@ -49,6 +49,9 @@ namespace R600_InstFlag {
 #define HW_REG_MASK 0x1ff
 #define HW_CHAN_SHIFT 9
 
+#define GET_REG_CHAN(reg) ((reg) >> HW_CHAN_SHIFT)
+#define GET_REG_INDEX(reg) ((reg) & HW_REG_MASK)
+
 namespace R600Operands {
   enum Ops {
     DST,

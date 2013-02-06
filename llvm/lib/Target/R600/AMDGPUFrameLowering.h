@@ -1,4 +1,4 @@
-//===--------------------- AMDILFrameLowering.h -----------------*- C++ -*-===//
+//===--------------------- AMDGPUFrameLowering.h ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -30,6 +30,10 @@ public:
   AMDGPUFrameLowering(StackDirection D, unsigned StackAl, int LAO,
                       unsigned TransAl = 1);
   virtual ~AMDGPUFrameLowering();
+
+  /// \returns The number of 32-bit sub-registers that are used when storing
+  /// values to the stack.
+  virtual unsigned getStackWidth(const MachineFunction &MF) const;
   virtual int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
   virtual const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries) const;
   virtual void emitPrologue(MachineFunction &MF) const;

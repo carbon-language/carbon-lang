@@ -91,11 +91,16 @@ def UP : InstFlag <"printUpdatePred">;
 // default to 0.
 def LAST : InstFlag<"printLast", 1>;
 
+def FRAMEri : Operand<iPTR> {
+  let MIOperandInfo = (ops R600_Reg32:$ptr, i32imm:$index);
+}
+
 def ADDRParam : ComplexPattern<i32, 2, "SelectADDRParam", [], []>;
 def ADDRDWord : ComplexPattern<i32, 1, "SelectADDRDWord", [], []>;
 def ADDRVTX_READ : ComplexPattern<i32, 2, "SelectADDRVTX_READ", [], []>;
 def ADDRGA_CONST_OFFSET : ComplexPattern<i32, 1, "SelectGlobalValueConstantOffset", [], []>;
 def ADDRGA_VAR_OFFSET : ComplexPattern<i32, 2, "SelectGlobalValueVariableOffset", [], []>;
+def ADDRIndirect : ComplexPattern<iPTR, 2, "SelectADDRIndirect", [], []>;
 
 class R600ALU_Word0 {
   field bits<32> Word0;
@@ -1220,6 +1225,10 @@ let Predicates = [isEGorCayman] in {
   defm DOT4_eg : DOT4_Common<0xBE>;
   defm CUBE_eg : CUBE_Common<0xC0>;
 
+let hasSideEffects = 1 in {
+  def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", []>;
+}
+
   def TGSI_LIT_Z_eg : TGSI_LIT_Z_Common<MUL_LIT_eg, LOG_CLAMPED_eg, EXP_IEEE_eg>;
 
   def FLT_TO_INT_eg : FLT_TO_INT_Common<0x50> {
@@ -1469,6 +1478,12 @@ def CONSTANT_LOAD_eg : VTX_READ_32_eg <1,
 >;
 
 }
+
+//===----------------------------------------------------------------------===//
+// Regist loads and stores - for indirect addressing
+//===----------------------------------------------------------------------===//
+
+defm R600_ : RegisterLoadStore <R600_Reg32, FRAMEri, ADDRIndirect>;
 
 let Predicates = [isCayman] in {
 

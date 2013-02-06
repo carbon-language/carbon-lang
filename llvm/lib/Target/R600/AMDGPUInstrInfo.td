@@ -72,3 +72,11 @@ def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
 def AMDGPUurecip : SDNode<"AMDGPUISD::URECIP", SDTIntUnaryOp>;
 
 def fpow : SDNode<"ISD::FPOW", SDTFPBinOp>;
+
+def AMDGPUregister_load : SDNode<"AMDGPUISD::REGISTER_LOAD",
+                          SDTypeProfile<1, 2, [SDTCisPtrTy<1>, SDTCisInt<2>]>,
+                          [SDNPHasChain, SDNPMayLoad]>;
+
+def AMDGPUregister_store : SDNode<"AMDGPUISD::REGISTER_STORE",
+                           SDTypeProfile<0, 3, [SDTCisPtrTy<1>, SDTCisInt<2>]>,
+                           [SDNPHasChain, SDNPMayStore]>;

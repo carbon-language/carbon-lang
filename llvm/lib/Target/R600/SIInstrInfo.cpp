@@ -87,3 +87,51 @@ bool
 SIInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   return RC != &AMDGPU::EXECRegRegClass;
 }
+
+//===----------------------------------------------------------------------===//
+// Indirect addressing callbacks
+//===----------------------------------------------------------------------===//
+
+unsigned SIInstrInfo::calculateIndirectAddress(unsigned RegIndex,
+                                                 unsigned Channel) const {
+  assert(Channel == 0);
+  return RegIndex;
+}
+
+
+int SIInstrInfo::getIndirectIndexBegin(const MachineFunction &MF) const {
+  llvm_unreachable("Unimplemented");
+}
+
+int SIInstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
+  llvm_unreachable("Unimplemented");
+}
+
+const TargetRegisterClass *SIInstrInfo::getIndirectAddrStoreRegClass(
+                                                     unsigned SourceReg) const {
+  llvm_unreachable("Unimplemented");
+}
+
+const TargetRegisterClass *SIInstrInfo::getIndirectAddrLoadRegClass() const {
+  llvm_unreachable("Unimplemented");
+}
+
+MachineInstrBuilder SIInstrInfo::buildIndirectWrite(
+                                   MachineBasicBlock *MBB,
+                                   MachineBasicBlock::iterator I,
+                                   unsigned ValueReg,
+                                   unsigned Address, unsigned OffsetReg) const {
+  llvm_unreachable("Unimplemented");
+}
+
+MachineInstrBuilder SIInstrInfo::buildIndirectRead(
+                                   MachineBasicBlock *MBB,
+                                   MachineBasicBlock::iterator I,
+                                   unsigned ValueReg,
+                                   unsigned Address, unsigned OffsetReg) const {
+  llvm_unreachable("Unimplemented");
+}
+
+const TargetRegisterClass *SIInstrInfo::getSuperIndirectRegClass() const {
+  llvm_unreachable("Unimplemented");
+}
