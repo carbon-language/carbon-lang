@@ -918,8 +918,7 @@ def CLO : CountLeading1<"clo", CPURegsOpnd>, CLO_FM<0x21>;
 def WSBH : SubwordSwap<"wsbh", CPURegsOpnd>, SEB_FM<2, 0x20>;
 
 /// No operation.
-/// FIXME: NOP should be an alias of "sll $0, $0, 0".
-def NOP : InstSE<(outs), (ins), "nop", [], IIAlu, FrmJ>, NOP_FM;
+def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 
 // FrameIndexes are legalized when they are operands from load/store
 // instructions. The same not happens for stack address copies, so an

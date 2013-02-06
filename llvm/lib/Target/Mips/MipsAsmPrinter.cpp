@@ -66,19 +66,18 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  // Do any auto-generated pseudo lowerings.
-  if (emitPseudoExpansionLowering(OutStreamer, MI))
-    return;
-
   MachineBasicBlock::const_instr_iterator I = MI;
   MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
 
   do {
-    MCInst TmpInst0;
-    MCInstLowering.Lower(I++, TmpInst0);
+    // Do any auto-generated pseudo lowerings.
+    if (emitPseudoExpansionLowering(OutStreamer, &*I))
+      continue;
 
+    MCInst TmpInst0;
+    MCInstLowering.Lower(I, TmpInst0);
     OutStreamer.EmitInstruction(TmpInst0);
-  } while ((I != E) && I->isInsideBundle()); // Delay slot check
+  } while ((++I != E) && I->isInsideBundle()); // Delay slot check
 }
 
 //===----------------------------------------------------------------------===//
