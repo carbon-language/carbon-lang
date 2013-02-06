@@ -2878,6 +2878,15 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "(MatchClassKind)it->Classes[i]);\n";
   OS << "      if (Diag == Match_Success)\n";
   OS << "        continue;\n";
+  OS << "      // If the generic handler indicates an invalid operand\n";
+  OS << "      // failure, check for a special case.\n";
+  OS << "      if (Diag == Match_InvalidOperand) {\n";
+  OS << "        Diag = validateTargetOperandClass(Operands[i+1],\n";
+  OS.indent(43);
+  OS << "(MatchClassKind)it->Classes[i]);\n";
+  OS << "        if (Diag == Match_Success)\n";
+  OS << "          continue;\n";
+  OS << "      }\n";
   OS << "      // If this operand is broken for all of the instances of this\n";
   OS << "      // mnemonic, keep track of it so we can report loc info.\n";
   OS << "      // If we already had a match that only failed due to a\n";
