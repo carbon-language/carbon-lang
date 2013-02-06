@@ -55,7 +55,8 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp, const FileSpec* file, a
 
                 FileSpec archive_file;
                 ConstString archive_object;
-                if (ObjectFile::SplitArchivePathWithObject (path_with_object, archive_file, archive_object))
+                const bool must_exist = true;
+                if (ObjectFile::SplitArchivePathWithObject (path_with_object, archive_file, archive_object, must_exist))
                 {
                     file_size = archive_file.GetByteSize();
                     if (file_size > 0)
@@ -449,7 +450,7 @@ ObjectFile::MemoryMapSectionData (const Section *section, DataExtractor& section
 
 
 bool
-ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &archive_file, ConstString &archive_object)
+ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &archive_file, ConstString &archive_object, bool must_exist)
 {
     RegularExpression g_object_regex("(.*)\\(([^\\)]+)\\)$");
     if (g_object_regex.Execute (path_with_object, 2))
@@ -461,6 +462,8 @@ ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &
         {
             archive_file.SetFile (path.c_str(), false);
             archive_object.SetCString(obj.c_str());
+            if (must_exist && !archive_file.Exists())
+                return false;
             return true;
         }
     }

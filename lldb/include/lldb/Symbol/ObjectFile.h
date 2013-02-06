@@ -204,7 +204,8 @@ public:
     static bool
     SplitArchivePathWithObject (const char *path_with_object,
                                 lldb_private::FileSpec &archive_file,
-                                lldb_private::ConstString &archive_object);
+                                lldb_private::ConstString &archive_object,
+                                bool must_exist);
 
     //------------------------------------------------------------------
     /// Gets the address size in bytes for the current object file.

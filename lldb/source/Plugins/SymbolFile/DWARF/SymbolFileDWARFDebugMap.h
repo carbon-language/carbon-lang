@@ -129,41 +129,43 @@ protected:
 
     friend class SymbolFileDWARF;
     friend class DebugMapModule;
+    struct OSOInfo
+    {
+        lldb::ModuleSP module_sp;
+        bool symbol_file_supported;
+        
+        OSOInfo() :
+            module_sp (),
+            symbol_file_supported (true)
+        {
+        }
+    };
+    
+    typedef STD_SHARED_PTR(OSOInfo) OSOInfoSP;
+
     //------------------------------------------------------------------
     // Class specific types
     //------------------------------------------------------------------
     struct CompileUnitInfo
     {
         lldb_private::FileSpec so_file;
-        lldb_private::FileSpec oso_file;
-        lldb_private::ConstString oso_object; // for archives this will be the .o file in the "oso_file"
-//        lldb_private::Symbol *so_symbol;
-//        lldb_private::Symbol *oso_symbol;
-//        lldb_private::Symbol *last_symbol;
+        lldb_private::ConstString oso_path;
+        OSOInfoSP oso_sp;
+        lldb::CompUnitSP compile_unit_sp;
         uint32_t first_symbol_index;
         uint32_t last_symbol_index;
         uint32_t first_symbol_id;
         uint32_t last_symbol_id;
-        lldb::ModuleSP oso_module_sp;
-        lldb::CompUnitSP oso_compile_unit_sp;
-//        SymbolFileDWARF *oso_symfile;
-        bool symbol_file_supported;
 
         CompileUnitInfo() :
             so_file (),
-            oso_file (),
-            oso_object (),
-//            so_symbol (NULL),
-//            oso_symbol (NULL),
-//            last_symbol (NULL),
+            oso_path (),
+            oso_sp (),
+            compile_unit_sp (),
             first_symbol_index (UINT32_MAX),
             last_symbol_index (UINT32_MAX),
             first_symbol_id (UINT32_MAX),
-            last_symbol_id (UINT32_MAX),
-            oso_module_sp (),
-            oso_compile_unit_sp (),
-//            oso_symfile (NULL),
-            symbol_file_supported (true)
+            last_symbol_id (UINT32_MAX)
         {
         }
     };
@@ -185,8 +187,9 @@ protected:
     CompileUnitInfo *
     GetCompUnitInfo (const lldb_private::SymbolContext& sc);
 
-    CompileUnitInfo *
-    GetCompUnitInfo (const lldb_private::Module *oso_module);
+    size_t
+    GetCompUnitInfosForModule (const lldb_private::Module *oso_module,
+                               std::vector<CompileUnitInfo *>& cu_infos);
     
     lldb_private::Module *
     GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_info);
@@ -262,6 +265,7 @@ protected:
     std::vector<CompileUnitInfo> m_compile_unit_infos;
     std::vector<uint32_t> m_func_indexes;   // Sorted by address
     std::vector<uint32_t> m_glob_indexes;
+    std::map<lldb_private::ConstString, OSOInfoSP> m_oso_map;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
     lldb_private::LazyBool m_supports_DW_AT_APPLE_objc_complete_type;
 };
