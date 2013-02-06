@@ -34,7 +34,7 @@ void f()
     time_point t1 = Clock::now();
     assert(lk.owns_lock() == true);
     ns d = t1 - t0 - ms(250);
-    assert(d < ns(2500000));  // within 2.5ms
+    assert(d < ms(25));  // within 25ms
     try
     {
         lk.lock();

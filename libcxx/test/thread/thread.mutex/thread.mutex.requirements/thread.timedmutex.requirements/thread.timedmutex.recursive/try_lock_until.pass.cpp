@@ -36,7 +36,7 @@ void f1()
     m.unlock();
     m.unlock();
     ns d = t1 - t0 - ms(250);
-    assert(d < ns(5000000));  // within 5ms
+    assert(d < ms(50));  // within 50ms
 }
 
 void f2()
@@ -45,7 +45,7 @@ void f2()
     assert(m.try_lock_until(Clock::now() + ms(250)) == false);
     time_point t1 = Clock::now();
     ns d = t1 - t0 - ms(250);
-    assert(d < ns(5000000));  // within 5ms
+    assert(d < ms(50));  // within 50ms
 }
 
 int main()
