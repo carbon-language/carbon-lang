@@ -23,6 +23,9 @@ public:
   FrameEntry(FrameKind K, DataExtractor D, uint64_t Offset, uint64_t Length)
     : Kind(K), Data(D), Offset(Offset), Length(Length) {}
 
+  virtual ~FrameEntry() {
+  }
+
   FrameKind getKind() const { return Kind; }
 
   virtual void dumpHeader(raw_ostream &OS) const = 0;
@@ -53,6 +56,9 @@ public:
      Augmentation(Augmentation), CodeAlignmentFactor(CodeAlignmentFactor),
      DataAlignmentFactor(DataAlignmentFactor),
      ReturnAddressRegister(ReturnAddressRegister) {}
+
+  ~CIE() {
+  }
 
   void dumpHeader(raw_ostream &OS) const {
     OS << format("%08x %08x %08x CIE", Offset, Length, DW_CIE_ID) << "\n";
@@ -88,6 +94,9 @@ public:
    : FrameEntry(FK_FDE, D, Offset, Length), LinkedCIEOffset(LinkedCIEOffset),
      InitialLocation(InitialLocation), AddressRange(AddressRange),
      LinkedCIE(NULL) {}
+
+  ~FDE() {
+  }
 
   void dumpHeader(raw_ostream &OS) const {
     OS << format("%08x %08x %08x FDE ", Offset, Length, LinkedCIEOffset);
