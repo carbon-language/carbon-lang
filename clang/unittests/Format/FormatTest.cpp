@@ -2245,9 +2245,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("int a = --[foo bar:baz];");
   verifyFormat("int a = sizeof [foo bar:baz];");
   verifyFormat("int a = alignof [foo bar:baz];");
-  // FIXME: no space after & and *.
-  verifyFormat("int a = & [foo bar:baz];");
-  verifyFormat("int a = * [foo bar:baz];");
+  verifyFormat("int a = &[foo bar:baz];");
+  verifyFormat("int a = *[foo bar:baz];");
   // FIXME: Make casts work, without breaking f()[4].
   //verifyFormat("int a = (int) [foo bar:baz];");
 

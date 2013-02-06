@@ -224,15 +224,19 @@ public:
       if (CurrentToken->is(tok::r_square)) {
         if (!CurrentToken->Children.empty() &&
             CurrentToken->Children[0].is(tok::l_paren)) {
-          // An ObjC method call can't be followed by an open parenthesis.
+          // An ObjC method call is rarely followed by an open parenthesis.
           // FIXME: Do we incorrectly label ":" with this?
           StartsObjCMethodExpr = false;
           Left->Type = TT_Unknown;
         }
         if (StartsObjCMethodExpr) {
           objCSelector.markEnd(*CurrentToken);
+          // determineStarAmpUsage() thinks that '*' '[' is allocating an
+          // array of pointers, but if '[' starts a selector then '*' is a
+          // binary operator.
           if (Left->Parent != NULL &&
-              (Left->Parent->is(tok::star) || Left->Parent->is(tok::amp)))
+              (Left->Parent->is(tok::star) || Left->Parent->is(tok::amp)) &&
+              Left->Parent->Type == TT_PointerOrReference)
             Left->Parent->Type = TT_BinaryOperator;
         }
         Left->MatchingParen = CurrentToken;
@@ -607,15 +611,15 @@ private:
     if (NextToken == NULL)
       return TT_Unknown;
 
-    if (NextToken->is(tok::l_square))
-      return TT_PointerOrReference;
-
     if (PrevToken->is(tok::l_paren) || PrevToken->is(tok::l_square) ||
         PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
         PrevToken->is(tok::kw_return) || PrevToken->is(tok::colon) ||
-        PrevToken->Type == TT_BinaryOperator ||
+        PrevToken->is(tok::equal) || PrevToken->Type == TT_BinaryOperator ||
         PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)
       return TT_UnaryOperator;
+
+    if (NextToken->is(tok::l_square))
+      return TT_PointerOrReference;
 
     if (PrevToken->FormatTok.Tok.isLiteral() || PrevToken->is(tok::r_paren) ||
         PrevToken->is(tok::r_square) || NextToken->FormatTok.Tok.isLiteral() ||
