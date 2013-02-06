@@ -3408,7 +3408,18 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         Error("too many submodules");
         return true;
       }
-      
+
+      if (const FileEntry *CurFile = CurrentModule->getASTFile()) {
+        if (CurFile != F.File) {
+          if (!Diags.isDiagnosticInFlight()) {
+            Diag(diag::err_module_file_conflict)
+              << CurrentModule->getTopLevelModuleName()
+              << CurFile->getName()
+              << F.File->getName();
+          }
+          return true;
+        }
+      }
       CurrentModule->setASTFile(F.File);
       CurrentModule->IsFromModuleFile = true;
       CurrentModule->IsSystem = IsSystem || CurrentModule->IsSystem;

@@ -159,3 +159,7 @@ module autolink {
 module weird_objc {
   header "weird_objc.h"
 }
+
+module ignored_macros {
+  header "ignored_macros.h"
+}

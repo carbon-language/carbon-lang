@@ -118,4 +118,8 @@ def err_unable_to_rename_temp : Error<
   "unable to rename temporary '%0' to output file '%1': '%2'">;
 def err_unable_to_make_temp : Error<
   "unable to make temporary file: %0">;
+  
+// Modules
+def err_module_file_conflict : Error<"module '%0' found in both '%1' and '%2'">;
+
 }
