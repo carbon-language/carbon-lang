@@ -494,6 +494,7 @@ private:
       // FIXME: Do we need to do this for assignments nested in other
       // expressions?
       if (RootToken.isNot(tok::kw_for) && ParenLevel == 0 &&
+          !isTrailingComment(Current) &&
           (getPrecedence(Previous) == prec::Assignment ||
            Previous.is(tok::kw_return)))
         State.Stack.back().AssignmentColumn = State.Column + Spaces;

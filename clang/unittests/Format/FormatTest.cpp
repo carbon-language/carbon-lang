@@ -456,6 +456,10 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
                "    // Comment inside a statement.\n"
                "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;");
+  verifyFormat(
+      "bool aaaaaaaaaaaaa = // comment\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
   EXPECT_EQ("void f() { // This does something ..\n"
             "}\n"
@@ -1960,6 +1964,17 @@ TEST_F(FormatTest, BlockComments) {
                    "                2, /* comment 2 */  \n"
                    "               3,   /* comment 3 */\n"
                    "aaaa, bbbb );", getGoogleStyle()));
+  verifyFormat(
+      "bool aaaaaaaaaaaaa = /* comment: */ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+      "                     aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+  EXPECT_EQ(
+      "bool aaaaaaaaaaaaa = /* trailing comment */\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaa;",
+      format(
+          "bool       aaaaaaaaaaaaa =       /* trailing comment */\n"
+          "    aaaaaaaaaaaaaaaaaaaaaaaaaaa||aaaaaaaaaaaaaaaaaaaaaaaaa    ||\n"
+          "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa   || aaaaaaaaaaaaaaaaaaaaaaaaaa;"));
 }
 
 TEST_F(FormatTest, FormatStarDependingOnContext) {
