@@ -536,7 +536,8 @@ namespace {
 bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   // Open the module file.
   OwningPtr<llvm::MemoryBuffer> Buffer;
-  Buffer.reset(FileMgr.getBufferForFile(File));
+  std::string ErrorStr;
+  Buffer.reset(FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true));
   if (!Buffer) {
     return true;
   }
