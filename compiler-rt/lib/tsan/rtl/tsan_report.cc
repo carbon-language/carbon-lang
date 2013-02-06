@@ -167,9 +167,9 @@ static ReportStack *ChooseSummaryStack(const ReportDesc *rep) {
   return 0;
 }
 
-static ReportStack *SkipTsanInternalFrame(ReportStack *ent) {
-  if (FrameIsInternal(ent) && ent->next)
-    return ent->next;
+ReportStack *SkipTsanInternalFrames(ReportStack *ent) {
+  while (FrameIsInternal(ent) && ent->next)
+    ent = ent->next;
   return ent;
 }
 
@@ -199,7 +199,7 @@ void PrintReport(const ReportDesc *rep) {
   for (uptr i = 0; i < rep->threads.Size(); i++)
     PrintThread(rep->threads[i]);
 
-  if (ReportStack *ent = SkipTsanInternalFrame(ChooseSummaryStack(rep)))
+  if (ReportStack *ent = SkipTsanInternalFrames(ChooseSummaryStack(rep)))
     ReportErrorSummary(rep_typ_str, ent->file, ent->line, ent->func);
 
   Printf("==================\n");

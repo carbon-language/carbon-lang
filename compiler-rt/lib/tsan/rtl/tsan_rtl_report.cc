@@ -520,17 +520,14 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
           && frame->module == 0)) {
       return true;
     }
-    if (FrameIsInternal(frame)) {
-      frame = frame->next;
-      if (frame == 0
-          || (frame->func == 0 && frame->file == 0 && frame->line == 0
-            && frame->module == 0)) {
-        if (frame) {
-          FiredSuppression supp = {rep->typ, frame->pc};
-          CTX()->fired_suppressions.PushBack(supp);
-        }
-        return true;
-      }
+    frame = SkipTsanInternalFrames(frame);
+    if (frame->next == 0
+        || (frame->func == 0 && frame->file == 0 && frame->line == 0
+          && frame->module == 0)) {
+      CHECK(frame);
+      FiredSuppression supp = {rep->typ, frame->pc};
+      CTX()->fired_suppressions.PushBack(supp);
+      return true;
     }
   }
   return false;
