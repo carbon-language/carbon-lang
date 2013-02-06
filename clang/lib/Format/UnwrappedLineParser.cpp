@@ -650,9 +650,11 @@ void UnwrappedLineParser::parseRecord() {
     if (FormatTok.Tok.is(tok::l_paren)) {
       parseParens();
     }
-    // The actual identifier can be a nested name specifier.
+    // The actual identifier can be a nested name specifier, and in macros
+    // it is often token-pasted.
     while (FormatTok.Tok.is(tok::identifier) ||
-           FormatTok.Tok.is(tok::coloncolon))
+           FormatTok.Tok.is(tok::coloncolon) ||
+           FormatTok.Tok.is(tok::hashhash))
       nextToken();
 
     // Note that parsing away template declarations here leads to incorrectly
