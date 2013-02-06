@@ -105,7 +105,7 @@ class SourceManagerTestCase(TestBase):
             substrs = [os.getcwd(), os.path.join(os.getcwd(), "hidden")])
 
         # Display main() and verify that the source mapping has been kicked in.
-        self.expect("list -n main", SOURCE_DISPLAYED_CORRECTLY,
+        self.expect("source list -n main", SOURCE_DISPLAYED_CORRECTLY,
             substrs = ['Hello world'])
 
     def modify_source_file_while_debugging(self):
@@ -124,14 +124,14 @@ class SourceManagerTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # Display some source code.
-        self.expect("list -f main.c -l %d" % self.line, SOURCE_DISPLAYED_CORRECTLY,
+        self.expect("source list -f main.c -l %d" % self.line, SOURCE_DISPLAYED_CORRECTLY,
             substrs = ['Hello world'])
 
         # The '-b' option shows the line table locations from the debug information
         # that indicates valid places to set source level breakpoints.
 
         # The file to display is implicit in this case.
-        self.runCmd("list -l %d -c 3 -b" % self.line)
+        self.runCmd("source list -l %d -c 3 -b" % self.line)
         output = self.res.GetOutput().splitlines()[0]
 
         # If the breakpoint set command succeeded, we should expect a positive number
@@ -178,7 +178,7 @@ class SourceManagerTestCase(TestBase):
             self.addTearDownHook(restore_file)
 
         # Display the source code again.  We should see the updated line.
-        self.expect("list -f main.c -l %d" % self.line, SOURCE_DISPLAYED_CORRECTLY,
+        self.expect("source list -f main.c -l %d" % self.line, SOURCE_DISPLAYED_CORRECTLY,
             substrs = ['Hello lldb'])
 
 
