@@ -977,8 +977,12 @@ bool AttrBuilder::contains(Attribute::AttrKind A) const {
   return Attrs.count(A);
 }
 
+bool AttrBuilder::contains(StringRef A) const {
+  return TargetDepAttrs.find(A) != TargetDepAttrs.end();
+}
+
 bool AttrBuilder::hasAttributes() const {
-  return !Attrs.empty();
+  return !Attrs.empty() || !TargetDepAttrs.empty();
 }
 
 bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
@@ -1005,9 +1009,17 @@ bool AttrBuilder::hasAlignmentAttr() const {
 }
 
 bool AttrBuilder::operator==(const AttrBuilder &B) {
-  SmallVector<Attribute::AttrKind, 8> This(Attrs.begin(), Attrs.end());
-  SmallVector<Attribute::AttrKind, 8> That(B.Attrs.begin(), B.Attrs.end());
-  return This == That;
+  for (DenseSet<Attribute::AttrKind>::iterator I = Attrs.begin(),
+         E = Attrs.end(); I != E; ++I)
+    if (!B.Attrs.count(*I))
+      return false;
+
+  for (td_const_iterator I = TargetDepAttrs.begin(),
+         E = TargetDepAttrs.end(); I != E; ++I)
+    if (B.TargetDepAttrs.find(I->first) == B.TargetDepAttrs.end())
+      return false;
+
+  return Alignment == B.Alignment && StackAlignment == B.StackAlignment;
 }
 
 AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {

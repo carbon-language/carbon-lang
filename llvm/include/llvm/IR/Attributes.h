@@ -404,6 +404,10 @@ public:
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;
 
+  /// \brief Return true if the builder has the specified target-dependent
+  /// attribute.
+  bool contains(StringRef A) const;
+
   /// \brief Return true if the builder has IR-level attributes.
   bool hasAttributes() const;
 
