@@ -104,6 +104,9 @@ public:
                  LinkedCIEOffset, InitialLocation,
                  InitialLocation + AddressRange);
     OS << "\n";
+    if (LinkedCIE) {
+      OS << format("%p\n", LinkedCIE);
+    }
   }
 
   static bool classof(const FrameEntry *FE) {
