@@ -42,11 +42,14 @@ static bool isBinaryOperator(const AnnotatedToken &Tok) {
 }
 
 // Returns the previous token ignoring comments.
-static const AnnotatedToken *getPreviousToken(const AnnotatedToken &Tok) {
-  const AnnotatedToken *PrevToken = Tok.Parent;
+static AnnotatedToken *getPreviousToken(AnnotatedToken &Tok) {
+  AnnotatedToken *PrevToken = Tok.Parent;
   while (PrevToken != NULL && PrevToken->is(tok::comment))
     PrevToken = PrevToken->Parent;
   return PrevToken;
+}
+static const AnnotatedToken *getPreviousToken(const AnnotatedToken &Tok) {
+  return getPreviousToken(const_cast<AnnotatedToken &>(Tok));
 }
 
 // Returns the next token ignoring comments.
@@ -181,12 +184,12 @@ public:
     // ')' or ']'), or it could be the start of an Objective-C method
     // expression.
     AnnotatedToken *Left = CurrentToken->Parent;
+    AnnotatedToken *Parent = getPreviousToken(*Left);
     bool StartsObjCMethodExpr =
-        !Left->Parent || Left->Parent->is(tok::colon) ||
-        Left->Parent->is(tok::l_square) || Left->Parent->is(tok::l_paren) ||
-        Left->Parent->is(tok::kw_return) || Left->Parent->is(tok::kw_throw) ||
-        isUnaryOperator(*Left->Parent) ||
-        getBinOpPrecedence(Left->Parent->FormatTok.Tok.getKind(), true, true) >
+        !Parent || Parent->is(tok::colon) || Parent->is(tok::l_square) ||
+        Parent->is(tok::l_paren) || Parent->is(tok::kw_return) ||
+        Parent->is(tok::kw_throw) || isUnaryOperator(*Parent) ||
+        getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
         prec::Unknown;
 
     if (StartsObjCMethodExpr) {
@@ -208,10 +211,10 @@ public:
           // determineStarAmpUsage() thinks that '*' '[' is allocating an
           // array of pointers, but if '[' starts a selector then '*' is a
           // binary operator.
-          if (Left->Parent != NULL &&
-              (Left->Parent->is(tok::star) || Left->Parent->is(tok::amp)) &&
-              Left->Parent->Type == TT_PointerOrReference)
-            Left->Parent->Type = TT_BinaryOperator;
+          if (Parent != NULL &&
+              (Parent->is(tok::star) || Parent->is(tok::amp)) &&
+              Parent->Type == TT_PointerOrReference)
+            Parent->Type = TT_BinaryOperator;
         }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;

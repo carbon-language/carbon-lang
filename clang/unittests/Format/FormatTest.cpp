@@ -2422,6 +2422,12 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "             fraction:1.0\n"
                "       respectFlipped:NO\n"
                "                hints:nil];");
+
+  verifyFormat(
+      "scoped_nsobject<NSTextField> message(\n"
+      "    // The frame will be fixed up when |-setMessageText:| is called.\n"
+      "    [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)]);");
+  
 }
 
 TEST_F(FormatTest, ObjCAt) {
