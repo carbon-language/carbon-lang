@@ -171,29 +171,29 @@ inline prec::Level getPrecedence(const AnnotatedToken &Tok) {
 /// \c UnwrappedLine.
 class TokenAnnotator {
 public:
-  TokenAnnotator(const FormatStyle &Style, SourceManager &SourceMgr, Lexer &Lex,
-                 AnnotatedLine &Line)
-      : Style(Style), SourceMgr(SourceMgr), Lex(Lex), Line(Line) {
+  TokenAnnotator(const FormatStyle &Style, SourceManager &SourceMgr, Lexer &Lex)
+      : Style(Style), SourceMgr(SourceMgr), Lex(Lex) {
   }
 
-  void annotate();
-  void calculateFormattingInformation(AnnotatedToken &Current);
+  void annotate(AnnotatedLine &Line);
+  void calculateFormattingInformation(AnnotatedLine &Line);
 
 private:
   /// \brief Calculate the penalty for splitting before \c Tok.
-  unsigned splitPenalty(const AnnotatedToken &Tok);
+  unsigned splitPenalty(const AnnotatedLine &Line, const AnnotatedToken &Tok);
 
-  bool spaceRequiredBetween(const AnnotatedToken &Left,
+  bool spaceRequiredBetween(const AnnotatedLine &Line,
+                            const AnnotatedToken &Left,
                             const AnnotatedToken &Right);
 
-  bool spaceRequiredBefore(const AnnotatedToken &Tok);
+  bool spaceRequiredBefore(const AnnotatedLine &Line,
+                           const AnnotatedToken &Tok);
 
-  bool canBreakBefore(const AnnotatedToken &Right);
+  bool canBreakBefore(const AnnotatedLine &Line, const AnnotatedToken &Right);
 
-  FormatStyle Style;
+  const FormatStyle &Style;
   SourceManager &SourceMgr;
   Lexer &Lex;
-  AnnotatedLine &Line;
 };
 
 } // end namespace format

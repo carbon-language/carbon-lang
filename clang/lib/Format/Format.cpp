@@ -36,9 +36,10 @@ FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
   LLVMStyle.ColumnLimit = 80;
   LLVMStyle.MaxEmptyLinesToKeep = 1;
-  LLVMStyle.PointerAndReferenceBindToType = false;
+  LLVMStyle.PointerBindsToType = false;
+  LLVMStyle.DerivePointerBinding = false;
   LLVMStyle.AccessModifierOffset = -2;
-  LLVMStyle.SplitTemplateClosingGreater = true;
+  LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.BinPackParameters = true;
@@ -55,9 +56,10 @@ FormatStyle getGoogleStyle() {
   FormatStyle GoogleStyle;
   GoogleStyle.ColumnLimit = 80;
   GoogleStyle.MaxEmptyLinesToKeep = 1;
-  GoogleStyle.PointerAndReferenceBindToType = true;
+  GoogleStyle.PointerBindsToType = true;
+  GoogleStyle.DerivePointerBinding = true;
   GoogleStyle.AccessModifierOffset = -1;
-  GoogleStyle.SplitTemplateClosingGreater = false;
+  GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.BinPackParameters = false;
@@ -73,7 +75,8 @@ FormatStyle getGoogleStyle() {
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
-  ChromiumStyle.SplitTemplateClosingGreater = true;
+  ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
+  ChromiumStyle.DerivePointerBinding = false;
   return ChromiumStyle;
 }
 
@@ -838,14 +841,54 @@ public:
 
   virtual ~Formatter() {}
 
+  void deriveLocalStyle() {
+    unsigned CountBoundToVariable = 0;
+    unsigned CountBoundToType = 0;
+    bool HasCpp03IncompatibleFormat = false;
+    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
+      if (AnnotatedLines[i].First.Children.empty())
+        continue;
+      AnnotatedToken *Tok = &AnnotatedLines[i].First.Children[0];
+      while (!Tok->Children.empty()) {
+        if (Tok->Type == TT_PointerOrReference) {
+          bool SpacesBefore = Tok->FormatTok.WhiteSpaceLength > 0;
+          bool SpacesAfter = Tok->Children[0].FormatTok.WhiteSpaceLength > 0;
+          if (SpacesBefore && !SpacesAfter)
+            ++CountBoundToVariable;
+          else if (!SpacesBefore && SpacesAfter)
+            ++CountBoundToType;
+        }
+
+        if (Tok->Type == TT_TemplateCloser && Tok->Parent->Type ==
+            TT_TemplateCloser && Tok->FormatTok.WhiteSpaceLength == 0)
+          HasCpp03IncompatibleFormat = true;
+        Tok = &Tok->Children[0];
+      }
+    }
+    if (Style.DerivePointerBinding) {
+      if (CountBoundToType > CountBoundToVariable)
+        Style.PointerBindsToType = true;
+      else if (CountBoundToType < CountBoundToVariable)
+        Style.PointerBindsToType = false;
+    }
+    if (Style.Standard == FormatStyle::LS_Auto) {
+      Style.Standard = HasCpp03IncompatibleFormat ? FormatStyle::LS_Cpp11
+                                                  : FormatStyle::LS_Cpp03;
+    }
+  }
+
   tooling::Replacements format() {
     LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
     UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
     StructuralError = Parser.parse();
     unsigned PreviousEndOfLineColumn = 0;
+    TokenAnnotator Annotator(Style, SourceMgr, Lex);
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
-      TokenAnnotator Annotator(Style, SourceMgr, Lex, AnnotatedLines[i]);
-      Annotator.annotate();
+      Annotator.annotate(AnnotatedLines[i]);
+    }
+    deriveLocalStyle();
+    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
+      Annotator.calculateFormattingInformation(AnnotatedLines[i]);
     }
     for (std::vector<AnnotatedLine>::iterator I = AnnotatedLines.begin(),
                                               E = AnnotatedLines.end();

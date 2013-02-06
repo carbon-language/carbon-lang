@@ -678,7 +678,7 @@ private:
   bool KeywordVirtualFound;
 };
 
-void TokenAnnotator::annotate() {
+void TokenAnnotator::annotate(AnnotatedLine &Line) {
   AnnotatingParser Parser(SourceMgr, Lex, Line);
   Line.Type = Parser.parseLine();
   if (Line.Type == LT_Invalid)
@@ -696,45 +696,51 @@ void TokenAnnotator::annotate() {
   Line.First.CanBreakBefore = Line.First.MustBreakBefore;
 
   Line.First.TotalLength = Line.First.FormatTok.TokenLength;
-  if (!Line.First.Children.empty())
-    calculateFormattingInformation(Line.First.Children[0]);
 }
 
-void TokenAnnotator::calculateFormattingInformation(AnnotatedToken &Current) {
-  Current.SpaceRequiredBefore = spaceRequiredBefore(Current);
+void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
+  if (Line.First.Children.empty())
+    return;
+  AnnotatedToken *Current = &Line.First.Children[0];
+  while (Current != NULL) {
+    Current->SpaceRequiredBefore = spaceRequiredBefore(Line, *Current);
 
-  if (Current.FormatTok.MustBreakBefore) {
-    Current.MustBreakBefore = true;
-  } else if (Current.Type == TT_LineComment) {
-    Current.MustBreakBefore = Current.FormatTok.NewlinesBefore > 0;
-  } else if ((Current.Parent->is(tok::comment) &&
-              Current.FormatTok.NewlinesBefore > 0) ||
-             (Current.is(tok::string_literal) &&
-              Current.Parent->is(tok::string_literal))) {
-    Current.MustBreakBefore = true;
-  } else if (Current.is(tok::lessless) && !Current.Children.empty() &&
-             Current.Parent->is(tok::string_literal) &&
-             Current.Children[0].is(tok::string_literal)) {
-    Current.MustBreakBefore = true;
-  } else {
-    Current.MustBreakBefore = false;
+    if (Current->FormatTok.MustBreakBefore) {
+      Current->MustBreakBefore = true;
+    } else if (Current->Type == TT_LineComment) {
+      Current->MustBreakBefore = Current->FormatTok.NewlinesBefore > 0;
+    } else if ((Current->Parent->is(tok::comment) &&
+                Current->FormatTok.NewlinesBefore > 0) ||
+               (Current->is(tok::string_literal) &&
+                Current->Parent->is(tok::string_literal))) {
+      Current->MustBreakBefore = true;
+    } else if (Current->is(tok::lessless) && !Current->Children.empty() &&
+               Current->Parent->is(tok::string_literal) &&
+               Current->Children[0].is(tok::string_literal)) {
+      Current->MustBreakBefore = true;
+    } else {
+      Current->MustBreakBefore = false;
+    }
+    Current->CanBreakBefore =
+        Current->MustBreakBefore || canBreakBefore(Line, *Current);
+    if (Current->MustBreakBefore)
+      Current->TotalLength = Current->Parent->TotalLength + Style.ColumnLimit;
+    else
+      Current->TotalLength =
+          Current->Parent->TotalLength + Current->FormatTok.TokenLength +
+          (Current->SpaceRequiredBefore ? 1 : 0);
+    // FIXME: Only calculate this if CanBreakBefore is true once static
+    // initializers etc. are sorted out.
+    // FIXME: Move magic numbers to a better place.
+    Current->SplitPenalty =
+        20 * Current->BindingStrength + splitPenalty(Line, *Current);
+
+    Current = Current->Children.empty() ? NULL : &Current->Children[0];
   }
-  Current.CanBreakBefore = Current.MustBreakBefore || canBreakBefore(Current);
-  if (Current.MustBreakBefore)
-    Current.TotalLength = Current.Parent->TotalLength + Style.ColumnLimit;
-  else
-    Current.TotalLength =
-        Current.Parent->TotalLength + Current.FormatTok.TokenLength +
-        (Current.SpaceRequiredBefore ? 1 : 0);
-  // FIXME: Only calculate this if CanBreakBefore is true once static
-  // initializers etc. are sorted out.
-  // FIXME: Move magic numbers to a better place.
-  Current.SplitPenalty = 20 * Current.BindingStrength + splitPenalty(Current);
-  if (!Current.Children.empty())
-    calculateFormattingInformation(Current.Children[0]);
 }
 
-unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
+unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
+                                      const AnnotatedToken &Tok) {
   const AnnotatedToken &Left = *Tok.Parent;
   const AnnotatedToken &Right = Tok;
 
@@ -787,7 +793,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedToken &Tok) {
   return 3;
 }
 
-bool TokenAnnotator::spaceRequiredBetween(const AnnotatedToken &Left,
+bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
+                                          const AnnotatedToken &Left,
                                           const AnnotatedToken &Right) {
   if (Right.is(tok::hashhash))
     return Left.is(tok::hash);
@@ -818,10 +825,10 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedToken &Left,
   if (Right.is(tok::amp) || Right.is(tok::star))
     return Left.FormatTok.Tok.isLiteral() ||
            (Left.isNot(tok::star) && Left.isNot(tok::amp) &&
-            !Style.PointerAndReferenceBindToType);
+            !Style.PointerBindsToType);
   if (Left.is(tok::amp) || Left.is(tok::star))
     return Right.FormatTok.Tok.isLiteral() ||
-           Style.PointerAndReferenceBindToType;
+           Style.PointerBindsToType;
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
   if (Left.is(tok::l_square) || Right.is(tok::r_square))
@@ -851,7 +858,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedToken &Left,
   return true;
 }
 
-bool TokenAnnotator::spaceRequiredBefore(const AnnotatedToken &Tok) {
+bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
+                                         const AnnotatedToken &Tok) {
   if (Line.Type == LT_ObjCMethodDecl) {
     if (Tok.is(tok::identifier) && !Tok.Children.empty() &&
         Tok.Children[0].is(tok::colon) && Tok.Parent->is(tok::identifier))
@@ -892,7 +900,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedToken &Tok) {
             Tok.Parent->Type != TT_ObjCMethodExpr);
   if (Tok.Parent->is(tok::greater) && Tok.is(tok::greater)) {
     return Tok.Type == TT_TemplateCloser && Tok.Parent->Type ==
-           TT_TemplateCloser && Style.SplitTemplateClosingGreater;
+           TT_TemplateCloser && Style.Standard != FormatStyle::LS_Cpp11;
   }
   if (Tok.Type == TT_BinaryOperator || Tok.Parent->Type == TT_BinaryOperator)
     return true;
@@ -902,10 +910,11 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedToken &Tok) {
     return true;
   if (Tok.Type == TT_TrailingUnaryOperator)
     return false;
-  return spaceRequiredBetween(*Tok.Parent, Tok);
+  return spaceRequiredBetween(Line, *Tok.Parent, Tok);
 }
 
-bool TokenAnnotator::canBreakBefore(const AnnotatedToken &Right) {
+bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
+                                    const AnnotatedToken &Right) {
   const AnnotatedToken &Left = *Right.Parent;
   if (Line.Type == LT_ObjCMethodDecl) {
     if (Right.is(tok::identifier) && !Right.Children.empty() &&

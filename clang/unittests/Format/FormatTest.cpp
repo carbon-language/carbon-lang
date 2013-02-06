@@ -1437,6 +1437,11 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
   verifyGoogleFormat("A<A<int>> a;");
   verifyGoogleFormat("A<A<A<int>>> a;");
   verifyGoogleFormat("A<A<A<A<int>>>> a;");
+  verifyGoogleFormat("A<A<int> > a;");
+  verifyGoogleFormat("A<A<A<int> > > a;");
+  verifyGoogleFormat("A<A<A<A<int> > > > a;");
+  EXPECT_EQ("A<A<A<A>>> a;", format("A<A<A<A> >> a;", getGoogleStyle()));
+  EXPECT_EQ("A<A<A<A>>> a;", format("A<A<A<A>> > a;", getGoogleStyle()));
 
   verifyFormat("test >> a >> b;");
   verifyFormat("test << a >> b;");
@@ -1597,6 +1602,22 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 
   verifyIndependentOfContext("A = new SomeType *[Length]();");
   verifyGoogleFormat("A = new SomeType* [Length]();");
+
+  EXPECT_EQ("int *a;\n"
+            "int *a;\n"
+            "int *a;", format("int *a;\n"
+                              "int* a;\n"
+                              "int *a;", getGoogleStyle()));
+  EXPECT_EQ("int* a;\n"
+            "int* a;\n"
+            "int* a;", format("int* a;\n"
+                              "int* a;\n"
+                              "int *a;", getGoogleStyle()));
+  EXPECT_EQ("int *a;\n"
+            "int *a;\n"
+            "int *a;", format("int *a;\n"
+                              "int * a;\n"
+                              "int *  a;", getGoogleStyle()));
 }
 
 TEST_F(FormatTest, FormatsBinaryOperatorsPrecedingEquals) {

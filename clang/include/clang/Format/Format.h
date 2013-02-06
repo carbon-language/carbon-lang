@@ -39,14 +39,26 @@ struct FormatStyle {
   unsigned MaxEmptyLinesToKeep;
 
   /// \brief Set whether & and * bind to the type as opposed to the variable.
-  bool PointerAndReferenceBindToType;
+  bool PointerBindsToType;
+
+  /// \brief If \c true, analyze the formatted file for the most common binding.
+  bool DerivePointerBinding;
 
   /// \brief The extra indent or outdent of access modifiers (e.g.: public:).
   int AccessModifierOffset;
 
-  /// \brief Split two consecutive closing '>' by a space, i.e. use
-  /// A<A<int> > instead of A<A<int>>.
-  bool SplitTemplateClosingGreater;
+  enum LanguageStandard {
+    LS_Cpp03,
+    LS_Cpp11,
+    LS_Auto
+  };
+
+  /// \brief Format compatible with this standard, e.g. use \c A<A<int> >
+  /// instead of \c A<A<int>> for LS_Cpp03.
+  LanguageStandard Standard;
+
+  /// \brief If \c true, analyze the formatted file for C++03 compatibility.
+  bool DeriveBackwardsCompatibility;
 
   /// \brief Indent case labels one level from the switch statement.
   ///
