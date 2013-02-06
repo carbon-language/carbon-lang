@@ -8,10 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "ObjectContainerUniversalMachO.h"
-#include "lldb/Core/Stream.h"
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Target.h"
 
@@ -52,25 +53,29 @@ ObjectContainerUniversalMachO::CreateInstance
 (
     const lldb::ModuleSP &module_sp,
     DataBufferSP& data_sp,
+    lldb::offset_t data_offset,
     const FileSpec *file,
-    addr_t offset,
-    addr_t length
+    lldb::offset_t file_offset,
+    lldb::offset_t length
 )
 {
-    DataExtractor data;
-    data.SetData (data_sp, offset, length);
-    if (ObjectContainerUniversalMachO::MagicBytesMatch(data))
+    // We get data when we aren't trying to look for cached container information,
+    // so only try and look for an architecture slice if we get data
+    if (data_sp)
     {
-        std::auto_ptr<ObjectContainerUniversalMachO> container_ap(new ObjectContainerUniversalMachO (module_sp, data_sp, file, offset, length));
-        if (container_ap->ParseHeader())
+        DataExtractor data;
+        data.SetData (data_sp, data_offset, length);
+        if (ObjectContainerUniversalMachO::MagicBytesMatch(data))
         {
-            return container_ap.release();
+            std::auto_ptr<ObjectContainerUniversalMachO> container_ap(new ObjectContainerUniversalMachO (module_sp, data_sp, data_offset, file, file_offset, length));
+            if (container_ap->ParseHeader())
+            {
+                return container_ap.release();
+            }
         }
     }
     return NULL;
 }
-
-
 
 bool
 ObjectContainerUniversalMachO::MagicBytesMatch (const DataExtractor &data)
@@ -83,12 +88,13 @@ ObjectContainerUniversalMachO::MagicBytesMatch (const DataExtractor &data)
 ObjectContainerUniversalMachO::ObjectContainerUniversalMachO
 (
     const lldb::ModuleSP &module_sp,
-    DataBufferSP& dataSP,
+    DataBufferSP& data_sp,
+    lldb::offset_t data_offset,
     const FileSpec *file,
-    addr_t offset,
-    addr_t length
+    lldb::offset_t file_offset,
+    lldb::offset_t length
 ) :
-    ObjectContainer (module_sp, file, offset, length, dataSP),
+    ObjectContainer (module_sp, file, file_offset, length, data_sp, data_offset),
     m_header(),
     m_fat_archs()
 {
@@ -103,6 +109,7 @@ ObjectContainerUniversalMachO::~ObjectContainerUniversalMachO()
 bool
 ObjectContainerUniversalMachO::ParseHeader ()
 {
+    bool success = false;
     // Store the file offset for this universal file as we could have a universal .o file
     // in a BSD archive, or be contained in another kind of object.
     lldb::offset_t offset = 0;
@@ -130,14 +137,17 @@ ObjectContainerUniversalMachO::ParseHeader ()
                 }
             }
         }
-        return true;
+        success = true;
     }
     else
     {
         memset(&m_header, 0, sizeof(m_header));
     }
 
-    return false;
+    // We no longer need any data, we parsed all we needed to parse
+    // and cached it in m_header and m_fat_archs
+    m_data.Clear();
+    return success;
 }
 
 void
@@ -206,35 +216,31 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
         // First, try to find an exact match for the Arch of the Target.
         for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
         {
-            if (GetArchitectureAtIndex (arch_idx, curr_arch))
-            {
-                if (arch.IsExactMatch(curr_arch))
-                {
-                    return ObjectFile::FindPlugin (module_sp, 
-                                                   file, 
-                                                   m_offset + m_fat_archs[arch_idx].offset, 
-                                                   m_fat_archs[arch_idx].size,
-                                                   m_data.GetSharedDataBuffer());
-                }
-            }
+            if (GetArchitectureAtIndex (arch_idx, curr_arch) && arch.IsExactMatch(curr_arch))
+                break;
         }
 
         // Failing an exact match, try to find a compatible Arch of the Target.
-        for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
+        if (arch_idx >= m_header.nfat_arch)
         {
-            if (GetArchitectureAtIndex (arch_idx, curr_arch))
+            for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
             {
-                if (arch.IsCompatibleMatch(curr_arch))
-                {
-                    return ObjectFile::FindPlugin (module_sp, 
-                                                   file, 
-                                                   m_offset + m_fat_archs[arch_idx].offset, 
-                                                   m_fat_archs[arch_idx].size,
-                                                   m_data.GetSharedDataBuffer());
-                }
+                if (GetArchitectureAtIndex (arch_idx, curr_arch) && arch.IsCompatibleMatch(curr_arch))
+                    break;
             }
         }
 
+        if (arch_idx < m_header.nfat_arch)
+        {
+            DataBufferSP data_sp;
+            lldb::offset_t data_offset = 0;
+            return ObjectFile::FindPlugin (module_sp,
+                                           file,
+                                           m_offset + m_fat_archs[arch_idx].offset,
+                                           m_fat_archs[arch_idx].size,
+                                           data_sp,
+                                           data_offset);
+        }
     }
     return ObjectFileSP();
 }

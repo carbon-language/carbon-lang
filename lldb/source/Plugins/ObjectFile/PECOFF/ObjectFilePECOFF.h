@@ -36,10 +36,11 @@ public:
     
     static ObjectFile *
     CreateInstance (const lldb::ModuleSP &module_sp,
-                    lldb::DataBufferSP& dataSP,
+                    lldb::DataBufferSP& data_sp,
+                    lldb::offset_t data_offset,
                     const lldb_private::FileSpec* file,
-                    lldb::addr_t offset,
-                    lldb::addr_t length);
+                    lldb::offset_t offset,
+                    lldb::offset_t length);
     
     static lldb_private::ObjectFile *
     CreateMemoryInstance (const lldb::ModuleSP &module_sp, 
@@ -47,14 +48,15 @@ public:
                           const lldb::ProcessSP &process_sp, 
                           lldb::addr_t header_addr);
     static bool
-    MagicBytesMatch (lldb::DataBufferSP& dataSP);
+    MagicBytesMatch (lldb::DataBufferSP& data_sp);
     
     
     ObjectFilePECOFF (const lldb::ModuleSP &module_sp,
-                      lldb::DataBufferSP& dataSP,
+                      lldb::DataBufferSP& data_sp,
+                      lldb::offset_t data_offset,
                       const lldb_private::FileSpec* file,
-                      lldb::addr_t offset,
-                      lldb::addr_t length);
+                      lldb::offset_t file_offset,
+                      lldb::offset_t length);
     
 	virtual 
     ~ObjectFilePECOFF();

@@ -849,7 +849,7 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
                         ModuleSP commpage_image_module_sp(target_images.FindFirstModule (module_spec));
                         if (!commpage_image_module_sp)
                         {
-                            module_spec.SetObjectOffset (objfile->GetOffset() + commpage_section->GetFileOffset());
+                            module_spec.SetObjectOffset (objfile->GetFileOffset() + commpage_section->GetFileOffset());
                             commpage_image_module_sp  = target.GetSharedModule (module_spec);
                             if (!commpage_image_module_sp || commpage_image_module_sp->GetObjectFile() == NULL)
                             {

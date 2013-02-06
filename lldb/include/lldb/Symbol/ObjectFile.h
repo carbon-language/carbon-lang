@@ -88,14 +88,15 @@ public:
     //------------------------------------------------------------------
     ObjectFile (const lldb::ModuleSP &module_sp, 
                 const FileSpec *file_spec_ptr, 
-                lldb::addr_t offset, 
-                lldb::addr_t length, 
-                lldb::DataBufferSP& headerDataSP);
+                lldb::offset_t file_offset,
+                lldb::offset_t length,
+                lldb::DataBufferSP& data_sp,
+                lldb::offset_t data_offset);
 
     ObjectFile (const lldb::ModuleSP &module_sp, 
                 const lldb::ProcessSP &process_sp,
                 lldb::addr_t header_addr, 
-                lldb::DataBufferSP& headerDataSP);
+                lldb::DataBufferSP& data_sp);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -148,9 +149,10 @@ public:
     static lldb::ObjectFileSP
     FindPlugin (const lldb::ModuleSP &module_sp,
                 const FileSpec* file_spec,
-                lldb::addr_t file_offset,
-                lldb::addr_t file_size,
-                lldb::DataBufferSP &data_sp);
+                lldb::offset_t file_offset,
+                lldb::offset_t file_size,
+                lldb::DataBufferSP &data_sp,
+                lldb::offset_t &data_offset);
 
     //------------------------------------------------------------------
     /// Find a ObjectFile plug-in that can parse a file in memory.
@@ -279,8 +281,8 @@ public:
     ///     simple object files that a represented by an entire file.
     //------------------------------------------------------------------
     virtual lldb::addr_t
-    GetOffset () const
-    { return m_offset; }
+    GetFileOffset () const
+    { return m_file_offset; }
 
     virtual lldb::addr_t
     GetByteSize () const
@@ -440,13 +442,13 @@ public:
     /// file is that describes the content of the file. If the header
     /// doesn't appear in a section that is defined in the object file,
     /// an address with no section is returned that has the file offset
-    /// set in the m_offset member of the lldb_private::Address object.
+    /// set in the m_file_offset member of the lldb_private::Address object.
     ///
     /// @return
     ///     Returns the entry address for this module.
     //------------------------------------------------------------------
     virtual lldb_private::Address
-    GetHeaderAddress () { return Address();}
+    GetHeaderAddress () { return Address(m_memory_addr);}
 
     
     virtual uint32_t
@@ -602,7 +604,7 @@ protected:
     FileSpec m_file;
     Type m_type;
     Strata m_strata;
-    lldb::addr_t m_offset; ///< The offset in bytes into the file, or the address in memory
+    lldb::addr_t m_file_offset; ///< The offset in bytes into the file, or the address in memory
     lldb::addr_t m_length; ///< The length of this object file if it is known (can be zero if length is unknown or can't be determined).
     DataExtractor m_data; ///< The data for this object file so things can be parsed lazily.
     lldb_private::UnwindTable m_unwind_table; /// < Table of FuncUnwinders objects created for this ObjectFile's functions

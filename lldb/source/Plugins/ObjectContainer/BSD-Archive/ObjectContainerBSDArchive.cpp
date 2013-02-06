@@ -104,11 +104,13 @@ ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, lldb::off
 ObjectContainerBSDArchive::Archive::Archive
 (
     const lldb_private::ArchSpec &arch,
-    const lldb_private::TimeValue &time
+    const lldb_private::TimeValue &time,
+    lldb_private::DataExtractor &data
 ) :
     m_arch (arch),
     m_time (time),
-    m_objects()
+    m_objects(),
+    m_data (data)
 {
 }
 
@@ -117,8 +119,9 @@ ObjectContainerBSDArchive::Archive::~Archive ()
 }
 
 size_t
-ObjectContainerBSDArchive::Archive::ParseObjects (DataExtractor &data)
+ObjectContainerBSDArchive::Archive::ParseObjects ()
 {
+    DataExtractor &data = m_data;
     std::string str;
     lldb::offset_t offset = 0;
     str.assign((const char *)data.GetData(&offset, SARMAG), SARMAG);
@@ -200,10 +203,10 @@ ObjectContainerBSDArchive::Archive::ParseAndCacheArchiveForFile
     DataExtractor &data
 )
 {
-    shared_ptr archive_sp(new Archive (arch, time));
+    shared_ptr archive_sp(new Archive (arch, time, data));
     if (archive_sp)
     {
-        if (archive_sp->ParseObjects (data) > 0)
+        if (archive_sp->ParseObjects () > 0)
         {
             Mutex::Locker locker(Archive::GetArchiveCacheMutex ());
             Archive::GetArchiveCache().insert(std::make_pair(file, archive_sp));
@@ -264,34 +267,70 @@ ObjectContainerBSDArchive::CreateInstance
 (
     const lldb::ModuleSP &module_sp,
     DataBufferSP& data_sp,
+    lldb::offset_t data_offset,
     const FileSpec *file,
-    addr_t offset,
-    addr_t length)
+    lldb::offset_t file_offset,
+    lldb::offset_t length)
 {
-    DataExtractor data;
-    data.SetData (data_sp, offset, length);
-    if (file && data_sp && ObjectContainerBSDArchive::MagicBytesMatch(data))
+    ConstString object_name (module_sp->GetObjectName());
+    if (object_name)
     {
-        Timer scoped_timer (__PRETTY_FUNCTION__,
-                            "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%8.8" PRIx64 ", file_size = 0x%8.8" PRIx64 ")",
-                            module_sp->GetFileSpec().GetDirectory().AsCString(),
-                            module_sp->GetFileSpec().GetFilename().AsCString(),
-                            file, (uint64_t) offset, (uint64_t) length);
-
-        Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
-
-        std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp, data_sp, file, offset, length));
-
-        if (container_ap.get())
+        if (data_sp)
         {
+            // We have data, which means this is the first 512 bytes of the file
+            // Check to see if the magic bytes match and if they do, read the entire
+            // table of contents for the archive and cache it
+            DataExtractor data;
+            data.SetData (data_sp, data_offset, length);
+            if (file && data_sp && ObjectContainerBSDArchive::MagicBytesMatch(data))
+            {
+                Timer scoped_timer (__PRETTY_FUNCTION__,
+                                    "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%8.8" PRIx64 ", file_size = 0x%8.8" PRIx64 ")",
+                                    module_sp->GetFileSpec().GetDirectory().AsCString(),
+                                    module_sp->GetFileSpec().GetFilename().AsCString(),
+                                    file, (uint64_t) file_offset, (uint64_t) length);
+
+                // Map the entire .a file to be sure that we don't lose any data if the file
+                // gets updated by a new build while this .a file is being used for debugging
+                DataBufferSP archive_data_sp (file->MemoryMapFileContents(file_offset, length));
+                lldb::offset_t archive_data_offset = 0;
+
+                Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
+                std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp,
+                                                                                                     archive_data_sp,
+                                                                                                     archive_data_offset,
+                                                                                                     file,
+                                                                                                     file_offset,
+                                                                                                     length));
+
+                if (container_ap.get())
+                {
+                    if (archive_sp)
+                    {
+                        // We already have this archive in our cache, use it
+                        container_ap->SetArchive (archive_sp);
+                        return container_ap.release();
+                    }
+                    else if (container_ap->ParseHeader())
+                        return container_ap.release();
+                }
+            }
+        }
+        else
+        {
+            // No data, just check for a cached archive
+            Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
             if (archive_sp)
             {
-                // We already have this archive in our cache, use it
-                container_ap->SetArchive (archive_sp);
-                return container_ap.release();
+                std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp, data_sp, data_offset, file, file_offset, length));
+                
+                if (container_ap.get())
+                {
+                    // We already have this archive in our cache, use it
+                    container_ap->SetArchive (archive_sp);
+                    return container_ap.release();
+                }
             }
-            else if (container_ap->ParseHeader())
-                return container_ap.release();
         }
     }
     return NULL;
@@ -316,19 +355,20 @@ ObjectContainerBSDArchive::MagicBytesMatch (const DataExtractor &data)
 ObjectContainerBSDArchive::ObjectContainerBSDArchive
 (
     const lldb::ModuleSP &module_sp,
-    DataBufferSP& dataSP,
+    DataBufferSP& data_sp,
+    lldb::offset_t data_offset,
     const lldb_private::FileSpec *file,
-    lldb::addr_t offset,
-    lldb::addr_t size
+    lldb::offset_t file_offset,
+    lldb::offset_t size
 ) :
-    ObjectContainer (module_sp, file, offset, size, dataSP),
+    ObjectContainer (module_sp, file, file_offset, size, data_sp, data_offset),
     m_archive_sp ()
 {
 }
 void
 ObjectContainerBSDArchive::SetArchive (Archive::shared_ptr &archive_sp)
 {
-    m_archive_sp  = archive_sp;
+    m_archive_sp = archive_sp;
 }
 
 
@@ -352,6 +392,9 @@ ObjectContainerBSDArchive::ParseHeader ()
                                                                      module_sp->GetModificationTime(),
                                                                      m_data);
             }
+            // Clear the m_data that contains the entire archive
+            // data and let our m_archive_sp hold onto the data.
+            m_data.Clear();
         }
     }
     return m_archive_sp.get() != NULL;
@@ -393,11 +436,15 @@ ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
         {
             Object *object = m_archive_sp->FindObject (module_sp->GetObjectName());
             if (object)
-                return ObjectFile::FindPlugin (module_sp, 
+            {
+                lldb::offset_t data_offset = m_offset + object->ar_file_offset;
+                return ObjectFile::FindPlugin (module_sp,
                                                file, 
                                                m_offset + object->ar_file_offset,
-                                               object->ar_file_size, 
-                                               m_data.GetSharedDataBuffer());
+                                               object->ar_file_size,
+                                               m_archive_sp->GetData().GetSharedDataBuffer(),
+                                               data_offset);
+            }
         }
     }
     return ObjectFileSP();

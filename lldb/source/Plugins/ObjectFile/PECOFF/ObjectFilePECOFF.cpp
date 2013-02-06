@@ -145,11 +145,25 @@ ObjectFilePECOFF::GetPluginDescriptionStatic()
 
 
 ObjectFile *
-ObjectFilePECOFF::CreateInstance (const lldb::ModuleSP &module_sp, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length)
+ObjectFilePECOFF::CreateInstance (const lldb::ModuleSP &module_sp,
+                                  DataBufferSP& data_sp,
+                                  lldb::offset_t data_offset,
+                                  const lldb_private::FileSpec* file,
+                                  lldb::offset_t file_offset,
+                                  lldb::offset_t length)
 {
-    if (ObjectFilePECOFF::MagicBytesMatch(dataSP))
+    if (!data_sp)
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFilePECOFF (module_sp, dataSP, file, offset, length));
+        data_sp = file->MemoryMapFileContents(file_offset, length);
+        data_offset = 0;
+    }
+
+    if (ObjectFilePECOFF::MagicBytesMatch(data_sp))
+    {
+        // Update the data to contain the entire file if it doesn't already
+        if (data_sp->GetByteSize() < length)
+            data_sp = file->MemoryMapFileContents(file_offset, length);
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFilePECOFF (module_sp, data_sp, data_offset, file, file_offset, length));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -166,9 +180,9 @@ ObjectFilePECOFF::CreateMemoryInstance (const lldb::ModuleSP &module_sp,
 }
 
 bool
-ObjectFilePECOFF::MagicBytesMatch (DataBufferSP& dataSP)
+ObjectFilePECOFF::MagicBytesMatch (DataBufferSP& data_sp)
 {
-    DataExtractor data(dataSP, eByteOrderLittle, 4);
+    DataExtractor data(data_sp, eByteOrderLittle, 4);
     lldb::offset_t offset = 0;
     uint16_t magic = data.GetU16 (&offset);
     return magic == IMAGE_DOS_SIGNATURE;
@@ -176,11 +190,12 @@ ObjectFilePECOFF::MagicBytesMatch (DataBufferSP& dataSP)
 
 
 ObjectFilePECOFF::ObjectFilePECOFF (const lldb::ModuleSP &module_sp, 
-                                    DataBufferSP& dataSP, 
+                                    DataBufferSP& data_sp,
+                                    lldb::offset_t data_offset,
                                     const FileSpec* file, 
-                                    addr_t offset, 
-                                    addr_t length) :
-    ObjectFile (module_sp, file, offset, length, dataSP),
+                                    lldb::offset_t file_offset,
+                                    lldb::offset_t length) :
+    ObjectFile (module_sp, file, file_offset, length, data_sp, data_offset),
     m_dos_header (),
     m_coff_header (),
     m_coff_header_opt (),

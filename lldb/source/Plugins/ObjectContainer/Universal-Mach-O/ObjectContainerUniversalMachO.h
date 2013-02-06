@@ -36,10 +36,11 @@ public:
 
     static lldb_private::ObjectContainer *
     CreateInstance (const lldb::ModuleSP &module_sp,
-                    lldb::DataBufferSP& dataSP,
+                    lldb::DataBufferSP& data_sp,
+                    lldb::offset_t data_offset,
                     const lldb_private::FileSpec *file,
-                    lldb::addr_t offset,
-                    lldb::addr_t length);
+                    lldb::offset_t offset,
+                    lldb::offset_t length);
 
     static bool
     MagicBytesMatch (const lldb_private::DataExtractor &data);
@@ -48,10 +49,11 @@ public:
     // Member Functions
     //------------------------------------------------------------------
     ObjectContainerUniversalMachO (const lldb::ModuleSP &module_sp,
-                                   lldb::DataBufferSP& dataSP,
+                                   lldb::DataBufferSP& data_sp,
+                                   lldb::offset_t data_offset,
                                    const lldb_private::FileSpec *file,
-                                   lldb::addr_t offset,
-                                   lldb::addr_t length);
+                                   lldb::offset_t offset,
+                                   lldb::offset_t length);
 
     virtual
     ~ObjectContainerUniversalMachO();

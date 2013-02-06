@@ -173,19 +173,30 @@ ObjectFileELF::GetPluginDescriptionStatic()
 ObjectFile *
 ObjectFileELF::CreateInstance (const lldb::ModuleSP &module_sp,
                                DataBufferSP &data_sp,
-                               const FileSpec *file, 
-                               addr_t offset,
-                               addr_t length)
+                               lldb::offset_t data_offset,
+                               const lldb_private::FileSpec* file,
+                               lldb::offset_t file_offset,
+                               lldb::offset_t length)
 {
-    if (data_sp && data_sp->GetByteSize() > (llvm::ELF::EI_NIDENT + offset))
+    if (!data_sp)
     {
-        const uint8_t *magic = data_sp->GetBytes() + offset;
+        data_sp = file->MemoryMapFileContents(file_offset, length);
+        data_offset = 0;
+    }
+
+    if (data_sp && data_sp->GetByteSize() > (llvm::ELF::EI_NIDENT + data_offset))
+    {
+        const uint8_t *magic = data_sp->GetBytes() + data_offset;
         if (ELFHeader::MagicBytesMatch(magic))
         {
+            // Update the data to contain the entire file
+            // Update the data to contain the entire file if it doesn't already
+            if (data_sp->GetByteSize() < length)
+                data_sp = file->MemoryMapFileContents(file_offset, length);
             unsigned address_size = ELFHeader::AddressSizeInBytes(magic);
             if (address_size == 4 || address_size == 8)
             {
-                std::auto_ptr<ObjectFileELF> objfile_ap(new ObjectFileELF(module_sp, data_sp, file, offset, length));
+                std::auto_ptr<ObjectFileELF> objfile_ap(new ObjectFileELF(module_sp, data_sp, data_offset, file, file_offset, length));
                 ArchSpec spec;
                 if (objfile_ap->GetArchitecture(spec) &&
                     objfile_ap->SetModulesArchitecture(spec))
@@ -232,11 +243,12 @@ ObjectFileELF::GetPluginVersion()
 //------------------------------------------------------------------
 
 ObjectFileELF::ObjectFileELF (const lldb::ModuleSP &module_sp, 
-                              DataBufferSP& dataSP,
+                              DataBufferSP& data_sp,
+                              lldb::offset_t data_offset,
                               const FileSpec* file, 
-                              addr_t offset,
-                              addr_t length) : 
-    ObjectFile(module_sp, file, offset, length, dataSP),
+                              lldb::offset_t file_offset,
+                              lldb::offset_t length) : 
+    ObjectFile(module_sp, file, file_offset, length, data_sp, data_offset),
     m_header(),
     m_program_headers(),
     m_section_headers(),
@@ -291,7 +303,7 @@ ObjectFileELF::SectionIndex(const SectionHeaderCollConstIter &I) const
 bool
 ObjectFileELF::ParseHeader()
 {
-    lldb::offset_t offset = GetOffset();
+    lldb::offset_t offset = GetFileOffset();
     return m_header.Parse(m_data, &offset);
 }
 

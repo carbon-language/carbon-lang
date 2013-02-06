@@ -137,6 +137,7 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits &= ~LIBLLDB_LOG_TYPES;
                 else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits &= ~LIBLLDB_LOG_SYMBOLS;
                 else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits &= ~LIBLLDB_LOG_MODULES;
+                else if (0 == ::strncasecmp(arg, "mmap", 4))    flag_bits &= ~LIBLLDB_LOG_MMAP;
                 else
                 {
                     feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
@@ -205,6 +206,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits |= LIBLLDB_LOG_TYPES;
             else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits |= LIBLLDB_LOG_SYMBOLS;
             else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits |= LIBLLDB_LOG_MODULES;
+            else if (0 == ::strncasecmp(arg, "mmap", 4))    flag_bits |= LIBLLDB_LOG_MMAP;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);

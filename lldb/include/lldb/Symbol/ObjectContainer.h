@@ -49,19 +49,20 @@ public:
     //------------------------------------------------------------------
     ObjectContainer (const lldb::ModuleSP &module_sp,
                      const FileSpec *file,
-                     lldb::addr_t file_offset,
-                     lldb::addr_t file_size,
-                     lldb::DataBufferSP& file_data_sp) :
+                     lldb::offset_t file_offset,
+                     lldb::offset_t length,
+                     lldb::DataBufferSP& data_sp,
+                     lldb::offset_t data_offset) :
         ModuleChild (module_sp),
         m_file (),  // This file can be different than the module's file spec
         m_offset (file_offset),
-        m_length (file_size),
+        m_length (length),
         m_data ()
     {
         if (file)
             m_file = *file;
-        if (file_data_sp)
-            m_data.SetData (file_data_sp, file_offset, file_size);
+        if (data_sp)
+            m_data.SetData (data_sp, data_offset, length);
     }
 
     //------------------------------------------------------------------

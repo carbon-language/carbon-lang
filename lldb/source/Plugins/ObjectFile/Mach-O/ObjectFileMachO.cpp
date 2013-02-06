@@ -378,13 +378,29 @@ ObjectFileMachO::GetPluginDescriptionStatic()
     return "Mach-o object file reader (32 and 64 bit)";
 }
 
-
 ObjectFile *
-ObjectFileMachO::CreateInstance (const lldb::ModuleSP &module_sp, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length)
+ObjectFileMachO::CreateInstance (const lldb::ModuleSP &module_sp,
+                                 DataBufferSP& data_sp,
+                                 lldb::offset_t data_offset,
+                                 const FileSpec* file,
+                                 lldb::offset_t file_offset,
+                                 lldb::offset_t length)
 {
-    if (ObjectFileMachO::MagicBytesMatch(data_sp, offset, length))
+    if (!data_sp)
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, file, offset, length));
+        data_sp = file->MemoryMapFileContents(file_offset, length);
+        data_offset = 0;
+    }
+
+    if (ObjectFileMachO::MagicBytesMatch(data_sp, data_offset, length))
+    {
+        // Update the data to contain the entire file if it doesn't already
+        if (data_sp->GetByteSize() < length)
+        {
+            data_sp = file->MemoryMapFileContents(file_offset, length);
+            data_offset = 0;
+        }
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, data_offset, file, file_offset, length));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -478,8 +494,13 @@ ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp,
 }
 
 
-ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length) :
-    ObjectFile(module_sp, file, offset, length, data_sp),
+ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp,
+                                 DataBufferSP& data_sp,
+                                 lldb::offset_t data_offset,
+                                 const FileSpec* file,
+                                 lldb::offset_t file_offset,
+                                 lldb::offset_t length) :
+    ObjectFile(module_sp, file, file_offset, length, data_sp, data_offset),
     m_sections_ap(),
     m_symtab_ap(),
     m_mach_segments(),
@@ -576,12 +597,12 @@ ObjectFileMachO::ParseHeader ()
                     ProcessSP process_sp (m_process_wp.lock());
                     if (process_sp)
                     {
-                        data_sp = ReadMemory (process_sp, m_offset, header_and_lc_size);
+                        data_sp = ReadMemory (process_sp, m_memory_addr, header_and_lc_size);
                     }
                     else
                     {
                         // Read in all only the load command data from the file on disk
-                        data_sp = m_file.ReadFileContents(m_offset, header_and_lc_size);
+                        data_sp = m_file.ReadFileContents(m_file_offset, header_and_lc_size);
                         if (data_sp->GetByteSize() != header_and_lc_size)
                             return false;
                     }

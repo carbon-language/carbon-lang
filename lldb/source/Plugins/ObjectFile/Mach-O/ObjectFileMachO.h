@@ -43,10 +43,11 @@ public:
 
     static lldb_private::ObjectFile *
     CreateInstance (const lldb::ModuleSP &module_sp,
-                    lldb::DataBufferSP& dataSP,
+                    lldb::DataBufferSP& data_sp,
+                    lldb::offset_t data_offset,
                     const lldb_private::FileSpec* file,
-                    lldb::addr_t offset,
-                    lldb::addr_t length);
+                    lldb::offset_t file_offset,
+                    lldb::offset_t length);
 
     static lldb_private::ObjectFile *
     CreateMemoryInstance (const lldb::ModuleSP &module_sp, 
@@ -55,7 +56,7 @@ public:
                           lldb::addr_t header_addr);
 
     static bool
-    MagicBytesMatch (lldb::DataBufferSP& dataSP, 
+    MagicBytesMatch (lldb::DataBufferSP& data_sp,
                      lldb::addr_t offset, 
                      lldb::addr_t length);
 
@@ -63,13 +64,14 @@ public:
     // Member Functions
     //------------------------------------------------------------------
     ObjectFileMachO (const lldb::ModuleSP &module_sp,
-                     lldb::DataBufferSP& dataSP,
+                     lldb::DataBufferSP& data_sp,
+                     lldb::offset_t data_offset,
                      const lldb_private::FileSpec* file,
-                     lldb::addr_t offset,
-                     lldb::addr_t length);
+                     lldb::offset_t offset,
+                     lldb::offset_t length);
 
     ObjectFileMachO (const lldb::ModuleSP &module_sp,
-                     lldb::DataBufferSP& dataSP,
+                     lldb::DataBufferSP& data_sp,
                      const lldb::ProcessSP &process_sp,
                      lldb::addr_t header_addr);
 

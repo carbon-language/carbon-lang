@@ -200,7 +200,8 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
             if (dsym_fspec)
             {
                 DataBufferSP dsym_file_data_sp;
-                dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp);
+                lldb::offset_t dsym_file_data_offset = 0;
+                dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp, dsym_file_data_offset);
                 if (UUIDsMatch(module_sp.get(), dsym_objfile_sp.get(), feedback_strm))
                 {
                     char dsym_path[PATH_MAX];

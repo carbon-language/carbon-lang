@@ -19,9 +19,9 @@ namespace lldb_private
     typedef lldb::ABISP (*ABICreateInstance) (const ArchSpec &arch);
     typedef Disassembler* (*DisassemblerCreateInstance) (const ArchSpec &arch);
     typedef DynamicLoader* (*DynamicLoaderCreateInstance) (Process* process, bool force);
-    typedef ObjectContainer* (*ObjectContainerCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
-    typedef ObjectFile* (*ObjectFileCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
-    typedef ObjectFile* (*ObjectFileCreateMemoryInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& dataSP, const lldb::ProcessSP &process_sp, lldb::addr_t offset);
+    typedef ObjectContainer* (*ObjectContainerCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, const FileSpec *file, lldb::offset_t offset, lldb::offset_t length);
+    typedef ObjectFile* (*ObjectFileCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, const FileSpec* file, lldb::offset_t file_offset, lldb::offset_t length);
+    typedef ObjectFile* (*ObjectFileCreateMemoryInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, const lldb::ProcessSP &process_sp, lldb::addr_t offset);
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);

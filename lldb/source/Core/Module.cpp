@@ -1004,12 +1004,14 @@ Module::GetObjectFile()
         m_did_load_objfile = true;
         Timer scoped_timer(__PRETTY_FUNCTION__,
                            "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
-        DataBufferSP file_data_sp;
-        m_objfile_sp = ObjectFile::FindPlugin (shared_from_this(), 
+        DataBufferSP data_sp;
+        lldb::offset_t data_offset = 0;
+        m_objfile_sp = ObjectFile::FindPlugin (shared_from_this(),
                                                &m_file, 
                                                m_object_offset, 
                                                m_file.GetByteSize(), 
-                                               file_data_sp);
+                                               data_sp,
+                                               data_offset);
         if (m_objfile_sp)
         {
 			// Once we get the object file, update our module with the object file's 
