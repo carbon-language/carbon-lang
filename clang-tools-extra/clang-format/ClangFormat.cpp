@@ -38,8 +38,8 @@ static cl::opt<std::string> Style(
 static cl::opt<bool> Inplace("i",
                              cl::desc("Inplace edit <file>, if specified."));
 
-static cl::opt<bool> OutputReplacements(
-    "output-replacements", cl::desc("Output replacements as JSON."));
+static cl::opt<bool> OutputXML(
+    "output-replacements-xml", cl::desc("Output replacements as XML."));
 
 // FIXME: Remove this when styles are configurable through files.
 static cl::opt<bool> InvertPointerBinding(
@@ -107,22 +107,17 @@ static void format() {
     Ranges.push_back(CharSourceRange::getCharRange(Start, End));
   }
   tooling::Replacements Replaces = reformat(getStyle(), Lex, Sources, Ranges);
-  if (OutputReplacements) {
-    llvm::outs() << "[\n";
+  if (OutputXML) {
+    llvm::outs() << "<?xml version='1.0'?>\n<replacements>\n";
     for (tooling::Replacements::const_iterator I = Replaces.begin(),
                                                E = Replaces.end();
          I != E; ++I) {
-      if (I != Replaces.begin()) {
-        llvm::outs() << ",\n";
-      }
-      llvm::outs() << "  {\n"
-                   << "    \"offset\": " << I->getOffset() << ",\n"
-                   << "    \"length\": " << I->getLength() << ",\n"
-                   << "    \"replacement_text\": \"" << I->getReplacementText()
-                   << "\"\n"
-                   << "  }";
+      llvm::outs() << "<replacement "
+                   << "offset='" << I->getOffset() << "' "
+                   << "length='" << I->getLength() << "'>"
+                   << I->getReplacementText() << "</replacement>\n";
     }
-    llvm::outs() << "\n]\n";
+    llvm::outs() << "</replacements>\n";
   } else {
     Rewriter Rewrite(Sources, LangOptions());
     tooling::applyAllReplacements(Replaces, Rewrite);
