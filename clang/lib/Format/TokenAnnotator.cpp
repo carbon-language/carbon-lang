@@ -784,8 +784,16 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       Left.Type == TT_TemplateOpener)
     return 20;
 
-  if (Right.is(tok::lessless))
+  if (Right.is(tok::lessless)) {
+    if (Left.is(tok::string_literal)) {
+      char LastChar =
+          StringRef(Left.FormatTok.Tok.getLiteralData(),
+                    Left.FormatTok.TokenLength).drop_back(1).rtrim().back();
+      if (LastChar == ':' || LastChar == '=')
+        return 100;
+    }
     return prec::Shift;
+  }
   if (Left.Type == TT_ConditionalExpr)
     return prec::Assignment;
   prec::Level Level = getPrecedence(Left);

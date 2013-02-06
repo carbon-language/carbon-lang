@@ -1318,6 +1318,13 @@ TEST_F(FormatTest, AlignsPipes) {
                "           << \"  cccccc = \" << pkt.cccccc << \"\\n\"\n"
                "           << \"  ddd = [\" << pkt.ddd << \"]\\n\"\n"
                "           << \"}\";");
+
+  verifyFormat(
+      "llvm::outs() << \"aaaaaaaaaaaaaaaaa = \" << aaaaaaaaaaaaaaaaa\n"
+      "             << \"bbbbbbbbbbbbbbbbb = \" << bbbbbbbbbbbbbbbbb\n"
+      "             << \"ccccccccccccccccc = \" << ccccccccccccccccc\n"
+      "             << \"ddddddddddddddddd = \" << ddddddddddddddddd\n"
+      "             << \"eeeeeeeeeeeeeeeee = \" << eeeeeeeeeeeeeeeee;");
 }
 
 TEST_F(FormatTest, UnderstandsEquals) {
