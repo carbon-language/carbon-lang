@@ -18,8 +18,10 @@
 #include "cxa_exception.hpp"
 #include "private_typeinfo.h"
 
+static const char* cause = "uncaught";
+
 __attribute__((noreturn))
-static void default_handler(const char* cause)
+static void default_terminate_handler()
 {
     // If there might be an uncaught exception
     using namespace __cxxabiv1;
@@ -74,17 +76,11 @@ static void default_handler(const char* cause)
     abort_message("terminating");
 }
 
-
-__attribute__((noreturn))
-static void default_terminate_handler() 
-{
-	default_handler("uncaught");
-}
-
 __attribute__((noreturn))
 static void default_unexpected_handler() 
 {
-	default_handler("unexpected");
+    cause = "unexpected";
+    std::terminate();
 }
 
 
