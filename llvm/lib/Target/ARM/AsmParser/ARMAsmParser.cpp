@@ -269,6 +269,7 @@ public:
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool ParseDirective(AsmToken DirectiveID);
 
+  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op, unsigned Kind);
   unsigned checkTargetMatchPredicate(MCInst &Inst);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
@@ -5158,53 +5159,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     delete Op;
   }
 
-  // The vector-compare-to-zero instructions have a literal token "#0" at
-  // the end that comes to here as an immediate operand. Convert it to a
-  // token to play nicely with the matcher.
-  if ((Mnemonic == "vceq" || Mnemonic == "vcge" || Mnemonic == "vcgt" ||
-      Mnemonic == "vcle" || Mnemonic == "vclt") && Operands.size() == 6 &&
-      static_cast<ARMOperand*>(Operands[5])->isImm()) {
-    ARMOperand *Op = static_cast<ARMOperand*>(Operands[5]);
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
-    if (CE && CE->getValue() == 0) {
-      Operands.erase(Operands.begin() + 5);
-      Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
-      delete Op;
-    }
-  }
-  // VCMP{E} does the same thing, but with a different operand count.
-  if ((Mnemonic == "vcmp" || Mnemonic == "vcmpe") && Operands.size() == 5 &&
-      static_cast<ARMOperand*>(Operands[4])->isImm()) {
-    ARMOperand *Op = static_cast<ARMOperand*>(Operands[4]);
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
-    if (CE && CE->getValue() == 0) {
-      Operands.erase(Operands.begin() + 4);
-      Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
-      delete Op;
-    }
-  }
-  // Similarly, the Thumb1 "RSB" instruction has a literal "#0" on the
-  // end. Convert it to a token here. Take care not to convert those
-  // that should hit the Thumb2 encoding.
-  if (Mnemonic == "rsb" && isThumb() && Operands.size() == 6 &&
-      static_cast<ARMOperand*>(Operands[3])->isReg() &&
-      static_cast<ARMOperand*>(Operands[4])->isReg() &&
-      static_cast<ARMOperand*>(Operands[5])->isImm()) {
-    ARMOperand *Op = static_cast<ARMOperand*>(Operands[5]);
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
-    if (CE && CE->getValue() == 0 &&
-        (isThumbOne() ||
-         // The cc_out operand matches the IT block.
-         ((inITBlock() != CarrySetting) &&
-         // Neither register operand is a high register.
-         (isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) &&
-          isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()))))){
-      Operands.erase(Operands.begin() + 5);
-      Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
-      delete Op;
-    }
-  }
-
   // Adjust operands of ldrexd/strexd to MCK_GPRPair.
   // ldrexd/strexd require even/odd GPR pair. To enforce this constraint,
   // a single GPRPair reg operand is used in the .td file to replace the two
@@ -7857,3 +7811,21 @@ extern "C" void LLVMInitializeARMAsmParser() {
 #define GET_SUBTARGET_FEATURE_NAME
 #define GET_MATCHER_IMPLEMENTATION
 #include "ARMGenAsmMatcher.inc"
+
+// Define this matcher function after the auto-generated include so we
+// have the match class enum definitions.
+unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
+                                                  unsigned Kind) {
+  ARMOperand *Op = static_cast<ARMOperand*>(AsmOp);
+  // If the kind is a token for a literal immediate, check if our asm
+  // operand matches. This is for InstAliases which have a fixed-value
+  // immediate in the syntax.
+  if (Kind == MCK__35_0 && Op->isImm()) {
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
+    if (!CE)
+      return Match_InvalidOperand;
+    if (CE->getValue() == 0)
+      return Match_Success;
+  }
+  return Match_InvalidOperand;
+}
