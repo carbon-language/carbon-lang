@@ -26,17 +26,21 @@ m_summary_sp(),
 m_synthetic_sp()
 {}
 
-FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp) : FormatCache::Entry()
+FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp) :
+m_synthetic_cached(false),
+m_synthetic_sp()
 {
     SetSummary (summary_sp);
 }
 
-FormatCache::Entry::Entry (lldb::SyntheticChildrenSP synthetic_sp) : FormatCache::Entry()
+FormatCache::Entry::Entry (lldb::SyntheticChildrenSP synthetic_sp) :
+m_summary_cached(false),
+m_summary_sp()
 {
     SetSynthetic (synthetic_sp);
 }
 
-FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp,lldb::SyntheticChildrenSP synthetic_sp) : FormatCache::Entry()
+FormatCache::Entry::Entry (lldb::TypeSummaryImplSP summary_sp,lldb::SyntheticChildrenSP synthetic_sp)
 {
     SetSummary (summary_sp);
     SetSynthetic (synthetic_sp);
