@@ -28,11 +28,11 @@
 
 #ifndef _PTRDIFF_T
 #define _PTRDIFF_T
-typedef __typeof__(((int*)0)-((int*)0)) ptrdiff_t;
+typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #endif
 #ifndef _SIZE_T
 #define _SIZE_T
-typedef __typeof__(sizeof(int)) size_t;
+typedef __SIZE_TYPE__ size_t;
 #endif
 #ifndef __cplusplus
 #ifndef _WCHAR_T
