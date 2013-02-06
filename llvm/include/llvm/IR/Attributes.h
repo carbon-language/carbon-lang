@@ -373,6 +373,10 @@ public:
     addAttribute(A);
   }
   AttrBuilder(AttributeSet AS, unsigned Idx);
+  AttrBuilder(const AttrBuilder &B)
+    : Attrs(B.Attrs),
+      TargetDepAttrs(B.TargetDepAttrs.begin(), B.TargetDepAttrs.end()),
+      Alignment(B.Alignment), StackAlignment(B.StackAlignment) {}
 
   void clear();
 
@@ -393,6 +397,9 @@ public:
 
   /// \brief Remove the target-dependent attribute to the builder.
   AttrBuilder &removeAttribute(StringRef A);
+
+  /// \brief Add the attributes from the builder.
+  AttrBuilder &merge(const AttrBuilder &B);
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;

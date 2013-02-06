@@ -956,6 +956,23 @@ AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align) {
   return *this;
 }
 
+AttrBuilder &AttrBuilder::merge(const AttrBuilder &B) {
+  // FIXME: What if both have alignments, but they don't match?!
+  if (!Alignment)
+    Alignment = B.Alignment;
+
+  if (!StackAlignment)
+    StackAlignment = B.StackAlignment;
+
+  Attrs.insert(B.Attrs.begin(), B.Attrs.end());
+
+  for (td_const_iterator I = B.TargetDepAttrs.begin(),
+         E = B.TargetDepAttrs.end(); I != E; ++I)
+    TargetDepAttrs[I->first] = I->second;
+
+  return *this;
+}
+
 bool AttrBuilder::contains(Attribute::AttrKind A) const {
   return Attrs.count(A);
 }
