@@ -2409,8 +2409,10 @@ class A64I_LDRlitSimple<bits<2> opc, bit v, RegisterClass OutReg,
                  "ldr\t$Rt, $Imm19", patterns, NoItinerary>;
 
 let mayLoad = 1 in {
-  def LDRw_lit : A64I_LDRlitSimple<0b00, 0b0, GPR32>;
-  def LDRx_lit : A64I_LDRlitSimple<0b01, 0b0, GPR64>;
+  def LDRw_lit : A64I_LDRlitSimple<0b00, 0b0, GPR32,
+                              [(set (i32 GPR32:$Rt), (load constpool:$Imm19))]>;
+  def LDRx_lit : A64I_LDRlitSimple<0b01, 0b0, GPR64,
+                              [(set (i64 GPR64:$Rt), (load constpool:$Imm19))]>;
 }
 
 def LDRs_lit  : A64I_LDRlitSimple<0b00, 0b1, FPR32,
