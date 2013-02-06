@@ -19,6 +19,7 @@
 #include "sanitizer_internal_defs.h"
 
 namespace __sanitizer {
+struct StackTrace;
 
 // Constants.
 const uptr kWordSize = SANITIZER_WORDSIZE / 8;
@@ -156,6 +157,12 @@ void SetDieCallback(void (*callback)(void));
 typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);
 void SetCheckFailedCallback(CheckFailedCallbackType callback);
+
+// Construct a one-line string like
+//  SanitizerToolName: error_type file:line function
+// and call __sanitizer_report_error_summary on it.
+void ReportErrorSummary(const char *error_type, const char *file,
+                        int line, const char *function);
 
 // Math
 INLINE bool IsPowerOfTwo(uptr x) {

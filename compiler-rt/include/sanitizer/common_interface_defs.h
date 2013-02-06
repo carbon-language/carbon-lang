@@ -31,6 +31,11 @@ extern "C" {
   // that the tools may call to bypass the sandbox.
   void __sanitizer_sandbox_on_notify(void *reserved);
 
+  // This function is called by the tool when it has just finished reporting
+  // an error. 'error_summary' is a one-line string that summarizes
+  // the error message. This function can be overridden by the client.
+  void __sanitizer_report_error_summary(const char *error_summary);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

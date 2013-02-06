@@ -57,6 +57,10 @@ struct StackTrace {
                               u32 *compressed, uptr size);
 };
 
+
+const char *StripPathPrefix(const char *filepath,
+                            const char *strip_file_prefix);
+
 }  // namespace __sanitizer
 
 // Use this macro if you want to print stack trace with the caller

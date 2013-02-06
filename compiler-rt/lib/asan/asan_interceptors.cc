@@ -740,7 +740,7 @@ void InitializeAsanInterceptors() {
   if (flags()->verbosity > 0) {
     Report("AddressSanitizer: libc interceptors initialized\n");
   }
-#endif // __APPLE__
+#endif  // __APPLE__
 }
 
 }  // namespace __asan
