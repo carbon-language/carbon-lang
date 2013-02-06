@@ -1549,6 +1549,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext(
       "const char *const p = reinterpret_cast<const char *const>(q);");
   verifyIndependentOfContext("A<int **, int **> a;");
+  verifyIndependentOfContext("void f(int *a = d * e, int *b = c * d);");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"

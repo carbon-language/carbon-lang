@@ -519,7 +519,7 @@ private:
     if (getPrecedence(Current) == prec::Assignment) {
       Contexts.back().IsExpression = true;
       AnnotatedToken *Previous = Current.Parent;
-      while (Previous != NULL) {
+      while (Previous != NULL && Previous->isNot(tok::comma)) {
         if (Previous->Type == TT_BinaryOperator &&
             (Previous->is(tok::star) || Previous->is(tok::amp))) {
           Previous->Type = TT_PointerOrReference;
