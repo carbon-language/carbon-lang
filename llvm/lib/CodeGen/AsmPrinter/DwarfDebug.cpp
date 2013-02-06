@@ -2504,37 +2504,6 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   return NewCU;
 }
 
-void DwarfDebug::emitSkeletonCU(const MCSection *Section) {
-  Asm->OutStreamer.SwitchSection(Section);
-  DIE *Die = SkeletonCU->getCUDie();
-
-  // Emit the compile units header.
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelBeginName(),
-                                                SkeletonCU->getUniqueID()));
-
-  // Emit size of content not including length itself
-  unsigned ContentSize = Die->getSize() +
-    sizeof(int16_t) + // DWARF version number
-    sizeof(int32_t) + // Offset Into Abbrev. Section
-    sizeof(int8_t);   // Pointer Size (in bytes)
-
-  Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
-  Asm->EmitInt32(ContentSize);
-  Asm->OutStreamer.AddComment("DWARF version number");
-  Asm->EmitInt16(dwarf::DWARF_VERSION);
-  Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-
-  const MCSection *ASec = Asm->getObjFileLowering().getDwarfAbbrevSection();
-  Asm->EmitSectionOffset(Asm->GetTempSymbol(ASec->getLabelBeginName()),
-                         DwarfAbbrevSectionSym);
-  Asm->OutStreamer.AddComment("Address Size (in bytes)");
-  Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
-
-  emitDIE(Die, &SkeletonAbbrevs);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelEndName(),
-                                                SkeletonCU->getUniqueID()));
-}
-
 void DwarfDebug::emitSkeletonAbbrevs(const MCSection *Section) {
   assert(useSplitDwarf() && "No split dwarf debug info?");
   emitAbbrevs(Section, &SkeletonAbbrevs);
