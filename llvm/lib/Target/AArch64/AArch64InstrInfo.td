@@ -1658,7 +1658,9 @@ def REV16xx : A64I_dp_1src_impl<0b1, 0b000001, "rev16", [], GPR64, NoItinerary>;
 //===----------------------------------------------------------------------===//
 // Data Processing (2 sources) instructions
 //===----------------------------------------------------------------------===//
-// Contains: UDIV, SDIV, LSLV, LSRV, ASRV, RORV + aliases LSL, LSR, ASR, ROR
+// Contains: CRC32C?[BHWX], UDIV, SDIV, LSLV, LSRV, ASRV, RORV + aliases LSL,
+//           LSR, ASR, ROR
+
 
 class dp_2src_impl<bit sf, bits<6> opcode, string asmop, list<dag> patterns,
                    RegisterClass GPRsp,
@@ -1671,6 +1673,19 @@ class dp_2src_impl<bit sf, bits<6> opcode, string asmop, list<dag> patterns,
                    (ins GPRsp:$Rn, GPRsp:$Rm),
                    patterns,
                    itin>;
+
+multiclass dp_2src_crc<bit c, string asmop> {
+  def B_www : dp_2src_impl<0b0, {0, 1, 0, c, 0, 0},
+                           !strconcat(asmop, "b"), [], GPR32, NoItinerary>;
+  def H_www : dp_2src_impl<0b0, {0, 1, 0, c, 0, 1},
+                           !strconcat(asmop, "h"), [], GPR32, NoItinerary>;
+  def W_www : dp_2src_impl<0b0, {0, 1, 0, c, 1, 0},
+                           !strconcat(asmop, "w"), [], GPR32, NoItinerary>;
+  def X_wwx : A64I_dp_2src<0b1, {0, 1, 0, c, 1, 1}, 0b0,
+                           !strconcat(asmop, "x\t$Rd, $Rn, $Rm"),
+                           (outs GPR32:$Rd), (ins GPR32:$Rn, GPR64:$Rm), [],
+                           NoItinerary>;
+}
 
 multiclass dp_2src_zext <bits<6> opcode, string asmop, SDPatternOperator op> {
    def www : dp_2src_impl<0b0,
@@ -1705,6 +1720,9 @@ multiclass dp_2src <bits<6> opcode, string asmop, SDPatternOperator op> {
 }
 
 // Here we define the data processing 2 source instructions.
+defm CRC32  : dp_2src_crc<0b0, "crc32">;
+defm CRC32C : dp_2src_crc<0b1, "crc32c">;
+
 defm UDIV : dp_2src<0b000010, "udiv", udiv>;
 defm SDIV : dp_2src<0b000011, "sdiv", sdiv>;
 
