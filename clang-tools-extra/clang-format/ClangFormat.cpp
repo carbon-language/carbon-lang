@@ -41,11 +41,6 @@ static cl::opt<bool> Inplace("i",
 static cl::opt<bool> OutputXML(
     "output-replacements-xml", cl::desc("Output replacements as XML."));
 
-// FIXME: Remove this when styles are configurable through files.
-static cl::opt<bool> InvertPointerBinding(
-    "invert-pointer-binding", cl::desc("Inverts the side to which */& bind"),
-    cl::init(false));
-
 static cl::opt<std::string> FileName(cl::Positional, cl::desc("[<file>]"),
                                      cl::init("-"));
 
@@ -67,10 +62,6 @@ static FormatStyle getStyle() {
     TheStyle = getLLVMStyle();
   if (Style == "Chromium")
     TheStyle = getChromiumStyle();
-  if (InvertPointerBinding) {
-    TheStyle.PointerAndReferenceBindToType =
-        !TheStyle.PointerAndReferenceBindToType;
-  }
   return TheStyle;
 }
 
