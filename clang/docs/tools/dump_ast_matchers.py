@@ -175,13 +175,14 @@ def act_on_decl(declaration, comment, allowed_types):
                       comment)
       return
 
-    m = re.match(r"""^\s*AST_(POLYMORPHIC_)?MATCHER(_P)?(.?)\(
+    m = re.match(r"""^\s*AST_(POLYMORPHIC_)?MATCHER(_P)?(.?)(?:_OVERLOAD)?\(
                        (?:\s*([^\s,]+)\s*,)?
                           \s*([^\s,]+)\s*
                        (?:,\s*([^\s,]+)\s*
                           ,\s*([^\s,]+)\s*)?
                        (?:,\s*([^\s,]+)\s*
                           ,\s*([^\s,]+)\s*)?
+                       (?:,\s*\d+\s*)?
                       \)\s*{\s*$""", declaration, flags=re.X)
     if m:
       p, n, result, name = m.groups()[1:5]

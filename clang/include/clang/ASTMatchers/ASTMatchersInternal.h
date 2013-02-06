@@ -1028,69 +1028,6 @@ private:
   const ValueT ExpectedValue;
 };
 
-template <typename T>
-class IsDefinitionMatcher : public SingleNodeMatcherInterface<T> {
-  TOOLING_COMPILE_ASSERT(
-    (llvm::is_base_of<TagDecl, T>::value) ||
-    (llvm::is_base_of<VarDecl, T>::value) ||
-    (llvm::is_base_of<FunctionDecl, T>::value),
-    is_definition_requires_isThisDeclarationADefinition_method);
-public:
-  virtual bool matchesNode(const T &Node) const {
-    return Node.isThisDeclarationADefinition();
-  }
-};
-
-/// \brief Matches on template instantiations for FunctionDecl, VarDecl or
-/// CXXRecordDecl nodes.
-template <typename T>
-class IsTemplateInstantiationMatcher : public MatcherInterface<T> {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<FunctionDecl, T>::value) ||
-                         (llvm::is_base_of<VarDecl, T>::value) ||
-                         (llvm::is_base_of<CXXRecordDecl, T>::value),
-                         requires_getTemplateSpecializationKind_method);
- public:
-  virtual bool matches(const T& Node,
-                       ASTMatchFinder* Finder,
-                       BoundNodesTreeBuilder* Builder) const {
-    return (Node.getTemplateSpecializationKind() ==
-                TSK_ImplicitInstantiation ||
-            Node.getTemplateSpecializationKind() ==
-                TSK_ExplicitInstantiationDefinition);
-  }
-};
-
-/// \brief Matches on explicit template specializations for FunctionDecl,
-/// VarDecl or CXXRecordDecl nodes.
-template <typename T>
-class IsExplicitTemplateSpecializationMatcher : public MatcherInterface<T> {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<FunctionDecl, T>::value) ||
-                         (llvm::is_base_of<VarDecl, T>::value) ||
-                         (llvm::is_base_of<CXXRecordDecl, T>::value),
-                         requires_getTemplateSpecializationKind_method);
- public:
-  virtual bool matches(const T& Node,
-                       ASTMatchFinder* Finder,
-                       BoundNodesTreeBuilder* Builder) const {
-    return (Node.getTemplateSpecializationKind() == TSK_ExplicitSpecialization);
-  }
-};
-
-class IsArrowMatcher : public SingleNodeMatcherInterface<MemberExpr> {
-public:
-  virtual bool matchesNode(const MemberExpr &Node) const {
-    return Node.isArrow();
-  }
-};
-
-class IsConstQualifiedMatcher
-    : public SingleNodeMatcherInterface<QualType> {
- public:
-  virtual bool matchesNode(const QualType& Node) const {
-    return Node.isConstQualified();
-  }
-};
-
 /// \brief A VariadicDynCastAllOfMatcher<SourceT, TargetT> object is a
 /// variadic functor that takes a number of Matcher<TargetT> and returns a
 /// Matcher<SourceT> that matches TargetT nodes that are matched by all of the
@@ -1152,50 +1089,6 @@ private:
   }
 
   const Matcher<T> InnerMatcher;
-};
-
-/// \brief Matches \c NestedNameSpecifiers with a prefix matching another
-/// \c Matcher<NestedNameSpecifier>.
-class NestedNameSpecifierPrefixMatcher
-  : public MatcherInterface<NestedNameSpecifier> {
-public:
-  explicit NestedNameSpecifierPrefixMatcher(
-    const Matcher<NestedNameSpecifier> &InnerMatcher)
-    : InnerMatcher(InnerMatcher) {}
-
-  virtual bool matches(const NestedNameSpecifier &Node,
-                       ASTMatchFinder *Finder,
-                       BoundNodesTreeBuilder *Builder) const {
-    NestedNameSpecifier *NextNode = Node.getPrefix();
-    if (NextNode == NULL)
-      return false;
-    return InnerMatcher.matches(*NextNode, Finder, Builder);
-  }
-
-private:
-  const Matcher<NestedNameSpecifier> InnerMatcher;
-};
-
-/// \brief Matches \c NestedNameSpecifierLocs with a prefix matching another
-/// \c Matcher<NestedNameSpecifierLoc>.
-class NestedNameSpecifierLocPrefixMatcher
-  : public MatcherInterface<NestedNameSpecifierLoc> {
-public:
-  explicit NestedNameSpecifierLocPrefixMatcher(
-    const Matcher<NestedNameSpecifierLoc> &InnerMatcher)
-    : InnerMatcher(InnerMatcher) {}
-
-  virtual bool matches(const NestedNameSpecifierLoc &Node,
-                       ASTMatchFinder *Finder,
-                       BoundNodesTreeBuilder *Builder) const {
-    NestedNameSpecifierLoc NextNode = Node.getPrefix();
-    if (!NextNode)
-      return false;
-    return InnerMatcher.matches(NextNode, Finder, Builder);
-  }
-
-private:
-  const Matcher<NestedNameSpecifierLoc> InnerMatcher;
 };
 
 /// \brief Matches \c TypeLocs based on an inner matcher matching a certain
