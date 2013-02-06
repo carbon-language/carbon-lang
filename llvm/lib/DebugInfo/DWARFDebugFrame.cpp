@@ -17,6 +17,8 @@ using namespace llvm;
 using namespace dwarf;
 
 
+/// \brief Abstract frame entry defining the common interface concrete
+/// entries implement.
 class llvm::FrameEntry {
 public:
   enum FrameKind {FK_CIE, FK_FDE};
@@ -45,6 +47,7 @@ protected:
 };
 
 
+/// \brief DWARF Common Information Entry (CIE)
 class CIE : public FrameEntry {
 public:
   // CIEs (and FDEs) are simply container classes, so the only sensible way to
@@ -84,6 +87,7 @@ private:
 };
 
 
+/// \brief DWARF Frame Description Entry (FDE)
 class FDE : public FrameEntry {
 public:
   // Each FDE has a CIE it's "linked to". Our FDE contains is constructed with
