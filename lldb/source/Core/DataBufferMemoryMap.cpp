@@ -120,8 +120,6 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
                         length,
                         writeable);
         }
-        if (length > 0x20000000)
-            puts("remove this line");
         char path[PATH_MAX];
         if (filespec->GetPath(path, sizeof(path)))
         {
