@@ -499,7 +499,8 @@ bool IsFiredSuppression(Context *ctx,
 bool FrameIsInternal(const ReportStack *frame) {
   return frame != 0 && frame->file != 0
       && (internal_strstr(frame->file, "tsan_interceptors.cc") ||
-          internal_strstr(frame->file, "sanitizer_common_interceptors.inc"));
+          internal_strstr(frame->file, "sanitizer_common_interceptors.inc") ||
+          internal_strstr(frame->file, "tsan_interface_"));
 }
 
 // On programs that use Java we see weird reports like:
