@@ -674,6 +674,8 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
                     LineTableStartSym);
+  else if (NewCU->getUniqueID() == 0)
+    NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
   else
     NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
                     LineTableStartSym, Asm->GetTempSymbol("section_line"));

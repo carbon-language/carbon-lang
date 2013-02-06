@@ -17,7 +17,7 @@ target triple = "thumbv7-apple-darwin10"
 ; DW_OP_constu
 ; offset
 
-;CHECK: .long Lset7
+;CHECK: .long Lset6
 ;CHECK-NEXT:        @ DW_AT_type
 ;CHECK-NEXT:        @ DW_AT_decl_file
 ;CHECK-NEXT:        @ DW_AT_decl_line

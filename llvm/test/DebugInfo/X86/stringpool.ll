@@ -23,8 +23,8 @@
 ; LINUX-NEXT: .quad   yyyy
 
 ; Verify that we refer to 'yyyy' without a relocation.
-; DARWIN: Lset6 = Linfo_string3-Linfo_string          ## DW_AT_name
-; DARWIN-NEXT:        .long   Lset6
+; DARWIN: Lset5 = Linfo_string3-Linfo_string          ## DW_AT_name
+; DARWIN-NEXT:        .long   Lset5
 ; DARWIN-NEXT:        .long   39                      ## DW_AT_type
 ; DARWIN-NEXT:        .byte   1                       ## DW_AT_external
 ; DARWIN-NEXT:        .byte   1                       ## DW_AT_decl_file
