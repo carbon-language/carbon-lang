@@ -60,3 +60,10 @@ namespace PR13751 {
   }
 }
 
+struct X { void *a; };
+
+struct X get() {
+  struct X result;
+  result.a = malloc(4);
+  return result; // no-warning
+}

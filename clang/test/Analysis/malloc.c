@@ -530,12 +530,6 @@ int *testMalloc3() {
   return y; // no-warning
 }
 
-void testStructLeak() {
-  StructWithPtr St;
-  St.memP = malloc(12);
-  return; // expected-warning {{Memory is never released; potential leak of memory pointed to by 'St.memP'}}
-}
-
 void testElemRegion1() {
   char *x = (void*)malloc(2);
   int *ix = (int*)x;
@@ -934,18 +928,6 @@ int cmpHeapAllocationToUnknown() {
   return 0;
 }
 
-void localArrayTest() {
-  char *p = (char*)malloc(12);
-  char *ArrayL[12];
-  ArrayL[0] = p;
-} // expected-warning {{leak}}
-
-void localStructTest() {
-  StructWithPtr St;
-  StructWithPtr *pSt = &St;
-  pSt->memP = malloc(12);
-} // expected-warning{{Memory is never released; potential leak}}
-
 #ifdef __INTPTR_TYPE__
 // Test double assignment through integers.
 typedef __INTPTR_TYPE__ intptr_t;
@@ -1053,3 +1035,25 @@ void testMallocWithParam(int **p) {
 void testMallocWithParam_2(int **p) {
   *p = (int*) malloc(sizeof(int));
 }
+
+// Pending on removal of the escaping on assignment to struct fields.
+void testStructLeak() {
+  StructWithPtr St;
+  St.memP = malloc(12);
+  return; // missing warning
+}
+
+void localArrayTest() {
+  char *p = (char*)malloc(12);
+  char *ArrayL[12];
+  ArrayL[0] = p;
+} // missing warning
+
+void localStructTest() {
+  StructWithPtr St;
+  StructWithPtr *pSt = &St;
+  pSt->memP = malloc(12);
+} // missing warning
+
+
+
