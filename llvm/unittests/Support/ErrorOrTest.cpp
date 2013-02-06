@@ -53,6 +53,19 @@ TEST(ErrorOr, Types) {
   EXPECT_EQ(3, **t3());
 #endif
 }
+
+struct B {};
+struct D : B {};
+
+TEST(ErrorOr, Covariant) {
+  ErrorOr<B*> b(ErrorOr<D*>(0));
+  b = ErrorOr<D*>(0);
+
+#if LLVM_HAS_CXX11_STDLIB
+  ErrorOr<std::unique_ptr<B> > b1(ErrorOr<std::unique_ptr<D> >(0));
+  b1 = ErrorOr<std::unique_ptr<D> >(0);
+#endif
+}
 } // end anon namespace
 
 struct InvalidArgError {

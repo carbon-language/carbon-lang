@@ -162,6 +162,7 @@ public:
 /// T cannot be a rvalue reference.
 template<class T>
 class ErrorOr {
+  template <class OtherT> friend class ErrorOr;
   static const bool isRef = is_reference<T>::value;
   typedef ReferenceStorage<typename remove_reference<T>::type> wrap;
 
@@ -199,60 +200,43 @@ public:
   }
 
   ErrorOr(const ErrorOr &Other) : IsValid(false) {
-    // Construct an invalid ErrorOr if other is invalid.
-    if (!Other.IsValid)
-      return;
-    IsValid = true;
-    if (!Other.HasError) {
-      // Get the other value.
-      HasError = false;
-      new (get()) storage_type(*Other.get());
-    } else {
-      // Get other's error.
-      Error = Other.Error;
-      HasError = true;
-      Error->aquire();
-    }
+    copyConstruct(Other);
+  }
+
+  template <class OtherT>
+  ErrorOr(const ErrorOr<OtherT> &Other) : IsValid(false) {
+    copyConstruct(Other);
   }
 
   ErrorOr &operator =(const ErrorOr &Other) {
-    if (this == &Other)
-      return *this;
+    copyAssign(Other);
+    return *this;
+  }
 
-    this->~ErrorOr();
-    new (this) ErrorOr(Other);
-
+  template <class OtherT>
+  ErrorOr &operator =(const ErrorOr<OtherT> &Other) {
+    copyAssign(Other);
     return *this;
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
   ErrorOr(ErrorOr &&Other) : IsValid(false) {
-    // Construct an invalid ErrorOr if other is invalid.
-    if (!Other.IsValid)
-      return;
-    IsValid = true;
-    if (!Other.HasError) {
-      // Get the other value.
-      HasError = false;
-      new (get()) storage_type(std::move(*Other.get()));
-      // Tell other not to do any destruction.
-      Other.IsValid = false;
-    } else {
-      // Get other's error.
-      Error = Other.Error;
-      HasError = true;
-      // Tell other not to do any destruction.
-      Other.IsValid = false;
-    }
+    moveConstruct(std::move(Other));
+  }
+
+  template <class OtherT>
+  ErrorOr(ErrorOr<OtherT> &&Other) : IsValid(false) {
+    moveConstruct(std::move(Other));
   }
 
   ErrorOr &operator =(ErrorOr &&Other) {
-    if (this == &Other)
-      return *this;
+    moveAssign(std::move(Other));
+    return *this;
+  }
 
-    this->~ErrorOr();
-    new (this) ErrorOr(std::move(Other));
-
+  template <class OtherT>
+  ErrorOr &operator =(ErrorOr<OtherT> &&Other) {
+    moveAssign(std::move(Other));
     return *this;
   }
 #endif
@@ -300,6 +284,75 @@ public:
   }
 
 private:
+  template <class OtherT>
+  void copyConstruct(const ErrorOr<OtherT> &Other) {
+    // Construct an invalid ErrorOr if other is invalid.
+    if (!Other.IsValid)
+      return;
+    IsValid = true;
+    if (!Other.HasError) {
+      // Get the other value.
+      HasError = false;
+      new (get()) storage_type(*Other.get());
+    } else {
+      // Get other's error.
+      Error = Other.Error;
+      HasError = true;
+      Error->aquire();
+    }
+  }
+
+  template <class T1>
+  static bool compareThisIfSameType(const T1 &a, const T1 &b) {
+    return &a == &b;
+  }
+
+  template <class T1, class T2>
+  static bool compareThisIfSameType(const T1 &a, const T2 &b) {
+    return false;
+  }
+
+  template <class OtherT>
+  void copyAssign(const ErrorOr<OtherT> &Other) {
+    if (compareThisIfSameType(*this, Other))
+      return;
+
+    this->~ErrorOr();
+    new (this) ErrorOr(Other);
+  }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+  template <class OtherT>
+  void moveConstruct(ErrorOr<OtherT> &&Other) {
+    // Construct an invalid ErrorOr if other is invalid.
+    if (!Other.IsValid)
+      return;
+    IsValid = true;
+    if (!Other.HasError) {
+      // Get the other value.
+      HasError = false;
+      new (get()) storage_type(std::move(*Other.get()));
+      // Tell other not to do any destruction.
+      Other.IsValid = false;
+    } else {
+      // Get other's error.
+      Error = Other.Error;
+      HasError = true;
+      // Tell other not to do any destruction.
+      Other.IsValid = false;
+    }
+  }
+
+  template <class OtherT>
+  void moveAssign(ErrorOr<OtherT> &&Other) {
+    if (compareThisIfSameType(*this, Other))
+      return;
+
+    this->~ErrorOr();
+    new (this) ErrorOr(std::move(Other));
+  }
+#endif
+
   pointer toPointer(pointer Val) {
     return Val;
   }
@@ -308,7 +361,6 @@ private:
     return &Val->get();
   }
 
-protected:
   storage_type *get() {
     assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
     assert(!HasError && "Cannot get value when an error exists!");
