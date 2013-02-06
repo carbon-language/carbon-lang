@@ -101,7 +101,6 @@ public:
 /// could be a single enum, a tuple, or a string.
 class AttributeImpl : public FoldingSetNode {
   LLVMContext &Context;  ///< Global context for uniquing objects
-  Constant *Kind;        ///< Kind of attribute: enum or string
 
   AttributeEntry *Entry; ///< Holds the kind and value of the attribute
 
