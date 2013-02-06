@@ -10304,47 +10304,49 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
     // Do not complain about the form of friend template types during
     // template instantiation; we will already have complained when the
     // template was declared.
-  } else if (!T->isElaboratedTypeSpecifier()) {
-    // If we evaluated the type to a record type, suggest putting
-    // a tag in front.
-    if (const RecordType *RT = T->getAs<RecordType>()) {
-      RecordDecl *RD = RT->getDecl();
+  } else {
+    if (!T->isElaboratedTypeSpecifier()) {
+      // If we evaluated the type to a record type, suggest putting
+      // a tag in front.
+      if (const RecordType *RT = T->getAs<RecordType>()) {
+        RecordDecl *RD = RT->getDecl();
       
-      std::string InsertionText = std::string(" ") + RD->getKindName();
+        std::string InsertionText = std::string(" ") + RD->getKindName();
       
-      Diag(TypeRange.getBegin(),
-           getLangOpts().CPlusPlus11 ?
-             diag::warn_cxx98_compat_unelaborated_friend_type :
-             diag::ext_unelaborated_friend_type)
-        << (unsigned) RD->getTagKind()
-        << T
-        << FixItHint::CreateInsertion(PP.getLocForEndOfToken(FriendLoc),
-                                      InsertionText);
-    } else {
+        Diag(TypeRange.getBegin(),
+             getLangOpts().CPlusPlus11 ?
+               diag::warn_cxx98_compat_unelaborated_friend_type :
+               diag::ext_unelaborated_friend_type)
+          << (unsigned) RD->getTagKind()
+          << T
+          << FixItHint::CreateInsertion(PP.getLocForEndOfToken(FriendLoc),
+                                        InsertionText);
+      } else {
+        Diag(FriendLoc,
+             getLangOpts().CPlusPlus11 ?
+               diag::warn_cxx98_compat_nonclass_type_friend :
+               diag::ext_nonclass_type_friend)
+          << T
+          << TypeRange;
+      }
+    } else if (T->getAs<EnumType>()) {
       Diag(FriendLoc,
            getLangOpts().CPlusPlus11 ?
-             diag::warn_cxx98_compat_nonclass_type_friend :
-             diag::ext_nonclass_type_friend)
+             diag::warn_cxx98_compat_enum_friend :
+             diag::ext_enum_friend)
         << T
         << TypeRange;
     }
-  } else if (T->getAs<EnumType>()) {
-    Diag(FriendLoc,
-         getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_enum_friend :
-           diag::ext_enum_friend)
-      << T
-      << TypeRange;
-  }
   
-  // C++11 [class.friend]p3:
-  //   A friend declaration that does not declare a function shall have one
-  //   of the following forms:
-  //     friend elaborated-type-specifier ;
-  //     friend simple-type-specifier ;
-  //     friend typename-specifier ;
-  if (getLangOpts().CPlusPlus11 && LocStart != FriendLoc)
-    Diag(FriendLoc, diag::err_friend_not_first_in_declaration) << T;
+    // C++11 [class.friend]p3:
+    //   A friend declaration that does not declare a function shall have one
+    //   of the following forms:
+    //     friend elaborated-type-specifier ;
+    //     friend simple-type-specifier ;
+    //     friend typename-specifier ;
+    if (getLangOpts().CPlusPlus11 && LocStart != FriendLoc)
+      Diag(FriendLoc, diag::err_friend_not_first_in_declaration) << T;
+  }
 
   //   If the type specifier in a friend declaration designates a (possibly
   //   cv-qualified) class type, that class is declared as a friend; otherwise,

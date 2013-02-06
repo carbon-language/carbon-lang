@@ -28,13 +28,18 @@ X1<Y2> x1a;
 X1<Y3> x1b;
 X1<Y1> x1c; // expected-note{{in instantiation of template class 'X1<Y1>' requested here}}
 
+template<typename T> class B;
+
 template<typename T>
 class A {
   T x;
 public:
   class foo {};
   static int y;
+  template <typename S> friend class B<S>::ty;
 };
+
+template <typename T> class B { typedef int ty; };
 
 struct {
   // Ill-formed
@@ -53,3 +58,5 @@ struct {
   float;
   template<typename T> friend class A<T>::foo;
 } a;
+
+void testA() { (void)sizeof(A<int>); }
