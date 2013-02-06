@@ -185,8 +185,12 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
-/// \brief This class manages the ref count for the opaque AttributeSetImpl
-/// object and provides accessors for it.
+/// \brief This class holds the attributes for a function, its return value, and
+/// its parameters. You access the attributes for each of them via an index into
+/// the AttributeSet object. The function attributes are at index
+/// `AttributeSet::FunctionIndex', the return value is at index
+/// `AttributeSet::ReturnIndex', and the attributes for the parameters start at
+/// index `1'.
 class AttributeSet {
 public:
   enum AttrIndex {
