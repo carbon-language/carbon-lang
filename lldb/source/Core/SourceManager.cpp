@@ -569,11 +569,14 @@ SourceManager::File::CalculateLineOffsets (uint32_t line)
                     register char curr_ch = *s;
                     if (is_newline_char (curr_ch))
                     {
-                        register char next_ch = s[1];
-                        if (is_newline_char (next_ch))
+                        if (s + 1 < end)
                         {
-                            if (curr_ch != next_ch)
-                                ++s;
+                            register char next_ch = s[1];
+                            if (is_newline_char (next_ch))
+                            {
+                                if (curr_ch != next_ch)
+                                    ++s;
+                            }
                         }
                         m_offsets.push_back(s + 1 - start);
                     }
