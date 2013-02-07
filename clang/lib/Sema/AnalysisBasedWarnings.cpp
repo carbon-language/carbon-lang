@@ -708,6 +708,17 @@ namespace {
 
       ReachableBlocks.insert(&Cfg->getEntry());
       BlockQueue.push_back(&Cfg->getEntry());
+      // Mark all case blocks reachable to avoid problems with switching on
+      // constants, covered enums, etc.
+      // These blocks can contain fall-through annotations, and we don't want to
+      // issue a warn_fallthrough_attr_unreachable for them.
+      for (CFG::iterator I = Cfg->begin(), E = Cfg->end(); I != E; ++I) {
+        const CFGBlock *B = *I;
+        const Stmt *L = B->getLabel();
+        if (L && isa<SwitchCase>(L) && ReachableBlocks.insert(B))
+          BlockQueue.push_back(B);
+      }
+
       while (!BlockQueue.empty()) {
         const CFGBlock *P = BlockQueue.front();
         BlockQueue.pop_front();
@@ -747,14 +758,16 @@ namespace {
           continue; // Case label is preceded with a normal label, good.
 
         if (!ReachableBlocks.count(P)) {
-          for (CFGBlock::const_iterator ElIt = P->begin(), ElEnd = P->end();
-               ElIt != ElEnd; ++ElIt) {
-            if (const CFGStmt *CS = ElIt->getAs<CFGStmt>()){
+          for (CFGBlock::const_reverse_iterator ElemIt = P->rbegin(),
+                                                ElemEnd = P->rend();
+               ElemIt != ElemEnd; ++ElemIt) {
+            if (const CFGStmt *CS = ElemIt->getAs<CFGStmt>()) {
               if (const AttributedStmt *AS = asFallThroughAttr(CS->getStmt())) {
                 S.Diag(AS->getLocStart(),
                        diag::warn_fallthrough_attr_unreachable);
                 markFallthroughVisited(AS);
                 ++AnnotatedCnt;
+                break;
               }
               // Don't care about other unreachable statements.
             }

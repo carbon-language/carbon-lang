@@ -179,35 +179,53 @@ void fallthrough_cfgblock_with_null_successor(int x) {
 
 int fallthrough_position(int n) {
   switch (n) {
+      [[clang::fallthrough]];  // expected-warning{{fallthrough annotation does not directly precede switch label}}
+      n += 300;
       [[clang::fallthrough]];  // expected-warning{{fallthrough annotation in unreachable code}}
     case 221:
-      [[clang::fallthrough]]; // expected-warning{{fallthrough annotation does not directly precede switch label}}
+      [[clang::fallthrough]];  // expected-warning{{fallthrough annotation does not directly precede switch label}}
       return 1;
       [[clang::fallthrough]];  // expected-warning{{fallthrough annotation in unreachable code}}
     case 222:
-      [[clang::fallthrough]]; // expected-warning{{fallthrough annotation does not directly precede switch label}}
+      [[clang::fallthrough]];  // expected-warning{{fallthrough annotation does not directly precede switch label}}
       n += 400;
     case 223:          // expected-warning{{unannotated fall-through between switch labels}} expected-note{{insert '[[clang::fallthrough]];' to silence this warning}} expected-note{{insert 'break;' to avoid fall-through}}
       [[clang::fallthrough]]; // expected-warning{{fallthrough annotation does not directly precede switch label}}
   }
 
-  // TODO: uncomment this test after CFG gets more options to deal with
-  // unreachable code:
-  // http://lists.cs.uiuc.edu/pipermail/cfe-commits/Week-of-Mon-20120507/057370.html
-#if 0
   long p = static_cast<long>(n) * n;
   switch (sizeof(p)) {
-    case 9:                    // this test will not work on compilers with 72-bit long
+    case 9:
       n += static_cast<int>(p >> 32);
       [[clang::fallthrough]];  // no warning here
-    case 5:                    // it is not intended to work on compilers with 40-bit long as well
+    case 5:
       n += static_cast<int>(p);
-      break;
+      [[clang::fallthrough]];  // no warning here
     default:
-     break;
+      n += 1;
+      break;
   }
-#endif
 
+  return n;
+}
+
+enum Enum {
+  Value1, Value2
+};
+
+int fallthrough_covered_enums(Enum e) {
+  int n = 0;
+  switch (e) {
+    default:
+      n += 17;
+      [[clang::fallthrough]];  // no warning here, this shouldn't be treated as unreachable code
+    case Value1:
+      n += 19;
+      break;
+    case Value2:
+      n += 21;
+      break;
+  }
   return n;
 }
 
