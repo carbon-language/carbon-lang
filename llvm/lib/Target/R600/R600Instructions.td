@@ -771,7 +771,7 @@ def SETE_INT : R600_2OP <
 >;
 
 def SETGT_INT : R600_2OP <
-  0x3B, "SGT_INT",
+  0x3B, "SETGT_INT",
   [(set (i32 R600_Reg32:$dst),
    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETGT))]
 >;
