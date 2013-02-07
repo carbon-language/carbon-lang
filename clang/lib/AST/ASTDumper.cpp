@@ -511,6 +511,27 @@ void ASTDumper::dumpAttr(const Attr *A) {
 #include "clang/AST/AttrDump.inc"
 }
 
+static Decl *getPreviousDeclImpl(...) {
+  return 0;
+}
+
+template<typename T>
+static const Decl *getPreviousDeclImpl(const Redeclarable<T> *D) {
+  return D->getPreviousDecl();
+}
+
+/// Get the previous declaration in the redeclaration chain for a declaration.
+static const Decl *getPreviousDecl(const Decl *D) {
+  switch (D->getKind()) {
+#define DECL(DERIVED, BASE) \
+  case Decl::DERIVED: \
+    return getPreviousDeclImpl(cast<DERIVED##Decl>(D));
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
+  }
+  llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
+}
+
 //===----------------------------------------------------------------------===//
 //  C++ Utilities
 //===----------------------------------------------------------------------===//
@@ -639,6 +660,10 @@ void ASTDumper::dumpDecl(const Decl *D) {
     OS << D->getDeclKindName() << "Decl";
   }
   dumpPointer(D);
+  if (D->getLexicalDeclContext() != D->getDeclContext())
+    OS << " parent " << cast<Decl>(D->getDeclContext());
+  if (const Decl *Prev = getPreviousDecl(D))
+    OS << " prev " << Prev;
   dumpSourceRange(D->getSourceRange());
 
   bool HasAttrs = D->attr_begin() != D->attr_end();
@@ -664,7 +689,7 @@ void ASTDumper::dumpDecl(const Decl *D) {
 
   setMoreChildren(false);
   if (HasDeclContext)
-    dumpDeclContext(dyn_cast<DeclContext>(D));
+    dumpDeclContext(cast<DeclContext>(D));
 }
 
 void ASTDumper::VisitLabelDecl(const LabelDecl *D) {
@@ -1049,6 +1074,7 @@ void ASTDumper::VisitAccessSpecDecl(const AccessSpecDecl *D) {
 }
 
 void ASTDumper::VisitFriendDecl(const FriendDecl *D) {
+  lastChild();
   if (TypeSourceInfo *T = D->getFriendType())
     dumpType(T->getType());
   else

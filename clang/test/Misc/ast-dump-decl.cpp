@@ -403,3 +403,16 @@ namespace TestFileScopeAsmDecl {
 // CHECK:      NamespaceDecl{{.*}} TestFileScopeAsmDecl{{$}}
 // CHECK:        FileScopeAsmDecl{{.*>$}}
 // CHECK-NEXT:     StringLiteral
+
+namespace TestFriendDecl2 {
+  void f();
+  struct S {
+    friend void f();
+  };
+}
+// CHECK: NamespaceDecl [[TestFriendDecl2:0x.*]] <{{.*}}> TestFriendDecl2
+// CHECK: |-FunctionDecl [[TestFriendDecl2_f:0x.*]] <{{.*}}> f 'void (void)'
+// CHECK: `-CXXRecordDecl {{.*}} struct S
+// CHECK:   |-CXXRecordDecl {{.*}} struct S
+// CHECK:   `-FriendDecl
+// CHECK:     `-FunctionDecl {{.*}} parent [[TestFriendDecl2]] prev [[TestFriendDecl2_f]] <{{.*}}> f 'void (void)'
