@@ -2478,19 +2478,6 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@throw");
   verifyFormat("@try");
 
-  verifyFormat("@\"String\"");
-  verifyFormat("@1");
-  verifyFormat("@+4.8");
-  verifyFormat("@-4");
-  verifyFormat("@1LL");
-  verifyFormat("@.5");
-  verifyFormat("@'c'");
-  verifyFormat("@true");
-  verifyFormat("NSNumber *smallestInt = @(-INT_MAX - 1);");
-  // FIXME: Array and dictionary literals need more work.
-  verifyFormat("@[");
-  verifyFormat("@{");
-
   EXPECT_EQ("@interface", format("@ interface"));
 
   // The precise formatting of this doesn't matter, nobody writes code like
@@ -2521,6 +2508,27 @@ TEST_F(FormatTest, ObjCSnippets) {
   verifyFormat("@property(assign, nonatomic) CGFloat hoverAlpha;");
   verifyFormat("@property(assign, getter=isEditable) BOOL editable;");
   verifyGoogleFormat("@property(assign, getter=isEditable) BOOL editable;");
+}
+
+TEST_F(FormatTest, ObjCLiterals) {
+  verifyFormat("@\"String\"");
+  verifyFormat("@1");
+  verifyFormat("@+4.8");
+  verifyFormat("@-4");
+  verifyFormat("@1LL");
+  verifyFormat("@.5");
+  verifyFormat("@'c'");
+  verifyFormat("@true");
+
+  verifyFormat("NSNumber *smallestInt = @(-INT_MAX - 1);");
+  verifyFormat("NSNumber *piOverTwo = @(M_PI / 2);");
+  verifyFormat("NSNumber *favoriteColor = @(Green);");
+  verifyFormat("NSString *path = @(getenv(\"PATH\"));");
+
+  // FIXME: Array and dictionary literals need more work.
+  verifyFormat("@[");
+  verifyFormat("@{");
+
 }
 
 } // end namespace tooling
