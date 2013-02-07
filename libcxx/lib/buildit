@@ -57,7 +57,6 @@ case $TRIPLE in
             -Wl,-unexported_symbols_list,libc++unexp.exp  \
             /usr/lib/libSystem.B.dylib"
     else
-        RE_EXPORT_LINE="/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,libc++abi.exp"
         if [ -n "$SDKROOT" ]
         then
             EXTRA_FLAGS+="-isysroot ${SDKROOT}"
@@ -69,6 +68,15 @@ case $TRIPLE in
             fi
             CXX=`xcrun -sdk "${SDKROOT}"  -find clang++`
             CC=`xcrun -sdk "${SDKROOT}"  -find clang`
+        else
+            # Check if we have _LIBCPPABI_VERSION, to determine the reexport list to use.
+            if (echo "#include <cxxabi.h>" | $CXX -E -dM -x c++ - | \
+                grep _LIBCPPABI_VERSION > /dev/null)
+            then
+                RE_EXPORT_LINE="/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,libc++abi2.exp"
+            else
+                RE_EXPORT_LINE="/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,libc++abi.exp"
+            fi
         fi
         LDSHARED_FLAGS="-o libc++.1.dylib \
             -dynamiclib -nodefaultlibs  \
