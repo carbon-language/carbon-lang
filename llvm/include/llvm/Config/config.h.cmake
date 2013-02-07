@@ -146,6 +146,24 @@
 /* Define to 1 if you have the `floorf' function. */
 #cmakedefine HAVE_FLOORF ${HAVE_FLOORF}
 
+/* Define to 1 if you have the `log' function. */
+#cmakedefine HAVE_LOG ${HAVE_LOG}
+
+/* Define to 1 if you have the `log2' function. */
+#cmakedefine HAVE_LOG2 ${HAVE_LOG2}
+
+/* Define to 1 if you have the `log10' function. */
+#cmakedefine HAVE_LOG10 ${HAVE_LOG10}
+
+/* Define to 1 if you have the `exp' function. */
+#cmakedefine HAVE_EXP ${HAVE_LOG}
+
+/* Define to 1 if you have the `exp2' function. */
+#cmakedefine HAVE_EXP2 ${HAVE_LOG2}
+
+/* Define to 1 if you have the `exp10' function. */
+#cmakedefine HAVE_EXP10 ${HAVE_LOG10}
+
 /* Define to 1 if you have the `fmodf' function. */
 #cmakedefine HAVE_FMODF ${HAVE_FMODF}
 

@@ -1,4 +1,5 @@
 ; RUN: opt -constprop -S < %s | FileCheck %s
+; XFAIL: win32, freebsd
 
 ; CHECK: fabs_call
 define half @fabs_call() {
