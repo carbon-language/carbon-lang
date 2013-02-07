@@ -165,7 +165,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
-  DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
+  DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
 
@@ -677,7 +677,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
     NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
   else
     NewCU->addDelta(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                    LineTableStartSym, Asm->GetTempSymbol("section_line"));
+                    LineTableStartSym, DwarfLineSectionSym);
 
   if (!CompilationDir.empty())
     NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
@@ -782,6 +782,9 @@ bool DwarfDebug::collectLegacyDebugInfo(const Module *M) {
   }
   if (!HasDebugInfo) return false;
 
+  // Emit initial sections so we can refer to them later.
+  emitSectionLabels();
+
   // Create all the compile unit DIEs.
   for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
          E = DbgFinder.compile_unit_end(); I != E; ++I)
@@ -819,6 +822,9 @@ void DwarfDebug::beginModule() {
   // module using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
+    // Emit initial sections so we can reference labels later.
+    emitSectionLabels();
+
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CUNode(CU_Nodes->getOperand(i));
       CompileUnit *CU = constructCompileUnit(CUNode);
@@ -950,9 +956,6 @@ void DwarfDebug::endModule() {
 
   // Finalize the debug info for the module.
   finalizeModuleInfo();
-
-  // Emit initial sections.
-  emitSectionLabels();
 
   if (!useSplitDwarf()) {
     // Emit all the DIEs into a debug info section.
@@ -1775,7 +1778,8 @@ void DwarfDebug::emitSectionLabels() {
   if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
     emitSectionSym(Asm, MacroInfo);
 
-  emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
+  DwarfLineSectionSym =
+    emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
   emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
@@ -2489,7 +2493,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   // compile unit in debug_line section.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset,
-                    Asm->GetTempSymbol("section_line"));
+                    DwarfLineSectionSym);
   else
     NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset, 0);
 
