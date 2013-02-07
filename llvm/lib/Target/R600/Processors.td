@@ -13,6 +13,7 @@
 
 class Proc<string Name, ProcessorItineraries itin, list<SubtargetFeature> Features>
 : Processor<Name, itin, Features>;
+def : Proc<"",           R600_EG_Itin, [FeatureR600ALUInst]>;
 def : Proc<"r600",       R600_EG_Itin, [FeatureR600ALUInst]>;
 def : Proc<"rv710",      R600_EG_Itin, []>;
 def : Proc<"rv730",      R600_EG_Itin, []>;
