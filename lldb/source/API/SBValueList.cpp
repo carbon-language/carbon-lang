@@ -14,8 +14,77 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ValueObjectList.h"
 
+#include <vector>
+
 using namespace lldb;
 using namespace lldb_private;
+
+namespace {
+    class ValueListImpl
+    {
+    public:
+        ValueListImpl () :
+        m_values()
+        {
+        }
+        
+        ValueListImpl (const ValueListImpl& rhs) :
+        m_values(rhs.m_values)
+        {
+        }
+        
+        ValueListImpl&
+        operator = (const ValueListImpl& rhs)
+        {
+            if (this == &rhs)
+                return *this;
+            m_values = rhs.m_values;
+            return *this;
+        };
+        
+        uint32_t
+        GetSize ()
+        {
+            return m_values.size();
+        }
+        
+        void
+        Append (const lldb::SBValue& sb_value)
+        {
+            m_values.push_back(sb_value);
+        }
+        
+        void
+        Append (const ValueListImpl& list)
+        {
+            for (auto val : list.m_values)
+                Append (val);
+        }
+        
+        lldb::SBValue
+        GetValueAtIndex (uint32_t index)
+        {
+            if (index >= GetSize())
+                return lldb::SBValue();
+            return m_values[index];
+        }
+        
+        lldb::SBValue
+        FindValueByUID (lldb::user_id_t uid)
+        {
+            for (auto val : m_values)
+            {
+                if (val.IsValid() && val.GetID() == uid)
+                    return val;
+            }
+            return lldb::SBValue();
+        }
+
+    private:
+        std::vector<lldb::SBValue> m_values;
+    };
+}
+
 
 SBValueList::SBValueList () :
     m_opaque_ap ()
@@ -28,7 +97,7 @@ SBValueList::SBValueList (const SBValueList &rhs) :
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (rhs.IsValid())
-        m_opaque_ap.reset (new ValueObjectList (*rhs));
+        m_opaque_ap.reset (new ValueListImpl (*rhs));
 
     if (log)
     {
@@ -38,13 +107,13 @@ SBValueList::SBValueList (const SBValueList &rhs) :
     }
 }
 
-SBValueList::SBValueList (const ValueObjectList *lldb_object_ptr) :
+SBValueList::SBValueList (const ValueListImpl *lldb_object_ptr) :
     m_opaque_ap ()
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (lldb_object_ptr)
-        m_opaque_ap.reset (new ValueObjectList (*lldb_object_ptr));
+        m_opaque_ap.reset (new ValueListImpl (*lldb_object_ptr));
 
     if (log)
     {
@@ -76,32 +145,32 @@ SBValueList::operator = (const SBValueList &rhs)
     if (this != &rhs)
     {
         if (rhs.IsValid())
-            m_opaque_ap.reset (new ValueObjectList (*rhs));
+            m_opaque_ap.reset (new ValueListImpl (*rhs));
         else
             m_opaque_ap.reset ();
     }
     return *this;
 }
 
-ValueObjectList *
+ValueListImpl *
 SBValueList::operator->()
 {
     return m_opaque_ap.get();
 }
 
-ValueObjectList &
+ValueListImpl &
 SBValueList::operator*()
 {
     return *m_opaque_ap;
 }
 
-const ValueObjectList *
+const ValueListImpl *
 SBValueList::operator->() const
 {
     return m_opaque_ap.get();
 }
 
-const ValueObjectList &
+const ValueListImpl &
 SBValueList::operator*() const
 {
     return *m_opaque_ap;
@@ -110,12 +179,8 @@ SBValueList::operator*() const
 void
 SBValueList::Append (const SBValue &val_obj)
 {
-    ValueObjectSP value_sp (val_obj.GetSP());
-    if (value_sp)
-    {
-        CreateIfNeeded ();
-        m_opaque_ap->Append (value_sp);
-    }
+    CreateIfNeeded ();
+    m_opaque_ap->Append (val_obj);
 }
 
 void
@@ -124,7 +189,7 @@ SBValueList::Append (lldb::ValueObjectSP& val_obj_sp)
     if (val_obj_sp)
     {
         CreateIfNeeded ();
-        m_opaque_ap->Append (val_obj_sp);
+        m_opaque_ap->Append (SBValue(val_obj_sp));
     }
 }
 
@@ -148,19 +213,15 @@ SBValueList::GetValueAtIndex (uint32_t idx) const
     //    log->Printf ("SBValueList::GetValueAtIndex (uint32_t idx) idx = %d", idx);
 
     SBValue sb_value;
-    ValueObjectSP value_sp;
     if (m_opaque_ap.get())
-    {
-        value_sp = m_opaque_ap->GetValueObjectAtIndex (idx);
-        sb_value.SetSP (value_sp);
-    }
+        sb_value = m_opaque_ap->GetValueAtIndex (idx);
 
     if (log)
     {
         SBStream sstr;
         sb_value.GetDescription (sstr);
         log->Printf ("SBValueList::GetValueAtIndex (this.ap=%p, idx=%d) => SBValue (this.sp = %p, '%s')", 
-                     m_opaque_ap.get(), idx, value_sp.get(), sstr.GetData());
+                     m_opaque_ap.get(), idx, sb_value.GetSP().get(), sstr.GetData());
     }
 
     return sb_value;
@@ -188,7 +249,7 @@ void
 SBValueList::CreateIfNeeded ()
 {
     if (m_opaque_ap.get() == NULL)
-        m_opaque_ap.reset (new ValueObjectList());
+        m_opaque_ap.reset (new ValueListImpl());
 }
 
 
@@ -197,17 +258,17 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
 {
     SBValue sb_value;
     if (m_opaque_ap.get())
-        sb_value.SetSP (m_opaque_ap->FindValueObjectByUID (uid));
+        sb_value = m_opaque_ap->FindValueByUID(uid);
     return sb_value;
 }
 
-ValueObjectList *
+ValueListImpl *
 SBValueList::get ()
 {
     return m_opaque_ap.get();
 }
 
-ValueObjectList &
+ValueListImpl &
 SBValueList::ref ()
 {
     CreateIfNeeded();

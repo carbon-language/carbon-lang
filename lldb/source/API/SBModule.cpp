@@ -467,14 +467,13 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
 
         if (match_count > 0)
         {
-            ValueObjectList &value_object_list = sb_value_list.ref();
             for (uint32_t i=0; i<match_count; ++i)
             {
                 lldb::ValueObjectSP valobj_sp;
                 TargetSP target_sp (target.GetSP());
                 valobj_sp = ValueObjectVariable::Create (target_sp.get(), variable_list.GetVariableAtIndex(i));
                 if (valobj_sp)
-                    value_object_list.Append(valobj_sp);
+                    sb_value_list.Append(SBValue(valobj_sp));
             }
         }
     }

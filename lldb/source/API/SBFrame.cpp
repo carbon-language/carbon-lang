@@ -1159,8 +1159,7 @@ SBFrame::GetVariables (bool arguments,
 
     if (log)
     {
-        log->Printf ("SBFrame(%p)::GetVariables (...) => SBValueList(%p)", frame,
-                     value_list.get());
+        log->Printf ("SBFrame(%p)::GetVariables (...) => SBValueList", frame);
     }
 
     return value_list;
@@ -1210,7 +1209,7 @@ SBFrame::GetRegisters ()
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::GetRegisters () => SBValueList(%p)", frame, value_list.get());
+        log->Printf ("SBFrame(%p)::GetRegisters () => SBValueList", frame);
 
     return value_list;
 }

@@ -12,6 +12,10 @@
 
 #include "lldb/API/SBDefines.h"
 
+namespace {
+    class ValueListImpl;
+}
+
 namespace lldb {
 
 class SBValueList
@@ -48,28 +52,8 @@ public:
     const lldb::SBValueList &
     operator = (const lldb::SBValueList &rhs);
 
-    lldb_private::ValueObjectList *
-    operator -> ();
-
-    lldb_private::ValueObjectList &
-    operator* ();
-
-    const lldb_private::ValueObjectList *
-    operator -> () const;
-
-    const lldb_private::ValueObjectList &
-    operator* () const;
-    
-    lldb_private::ValueObjectList *
-    get ();
-
-    lldb_private::ValueObjectList &
-    ref ();
-
 private:
-    friend class SBFrame;
-
-    SBValueList (const lldb_private::ValueObjectList *lldb_object_ptr);
+    SBValueList (const ValueListImpl *lldb_object_ptr);
 
     void
     Append (lldb::ValueObjectSP& val_obj_sp);
@@ -77,7 +61,25 @@ private:
     void
     CreateIfNeeded ();
 
-    std::auto_ptr<lldb_private::ValueObjectList> m_opaque_ap;
+    ValueListImpl *
+    operator -> ();
+    
+    ValueListImpl &
+    operator* ();
+    
+    const ValueListImpl *
+    operator -> () const;
+    
+    const ValueListImpl &
+    operator* () const;
+    
+    ValueListImpl *
+    get ();
+    
+    ValueListImpl &
+    ref ();
+    
+    std::auto_ptr<ValueListImpl> m_opaque_ap;
 };
 
 
