@@ -106,6 +106,8 @@ enum GE_RESULT __gedf2(fp_t a, fp_t b) {
     }
 }
 
+ARM_EABI_FNALIAS(dcmpun, unorddf2)
+
 int __unorddf2(fp_t a, fp_t b) {
     const rep_t aAbs = toRep(a) & absMask;
     const rep_t bAbs = toRep(b) & absMask;
