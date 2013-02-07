@@ -2925,6 +2925,37 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                            RecursionLimit);
 }
 
+static bool IsIdempotent(Intrinsic::ID ID) {
+  switch (ID) {
+  default: return false;
+
+  // Unary idempotent: f(f(x)) = f(x)
+  case Intrinsic::fabs:
+  case Intrinsic::floor:
+  case Intrinsic::ceil:
+  case Intrinsic::trunc:
+  case Intrinsic::rint:
+  case Intrinsic::nearbyint:
+    return true;
+  }
+}
+
+template <typename IterTy>
+static Value *SimplifyIntrinsic(Intrinsic::ID IID, IterTy ArgBegin, IterTy ArgEnd,
+                                const Query &Q, unsigned MaxRecurse) {
+  // Perform idempotent optimizations
+  if (!IsIdempotent(IID))
+    return 0;
+
+  // Unary Ops
+  if (std::distance(ArgBegin, ArgEnd) == 1)
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(*ArgBegin))
+      if (II->getIntrinsicID() == IID)
+        return II;
+
+  return 0;
+}
+
 template <typename IterTy>
 static Value *SimplifyCall(Value *V, IterTy ArgBegin, IterTy ArgEnd,
                            const Query &Q, unsigned MaxRecurse) {
@@ -2940,6 +2971,11 @@ static Value *SimplifyCall(Value *V, IterTy ArgBegin, IterTy ArgEnd,
   Function *F = dyn_cast<Function>(V);
   if (!F)
     return 0;
+
+  if (unsigned IID = F->getIntrinsicID())
+    if (Value *Ret =
+        SimplifyIntrinsic((Intrinsic::ID) IID, ArgBegin, ArgEnd, Q, MaxRecurse))
+      return Ret;
 
   if (!canConstantFoldCallTo(F))
     return 0;

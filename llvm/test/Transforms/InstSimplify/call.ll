@@ -50,3 +50,54 @@ define float @test_fabs_libcall() {
   ret float %x
 ; CHECK-NEXT: ret float 4.2{{0+}}e+01
 }
+
+
+declare float @llvm.fabs.f32(float) nounwind readnone
+declare float @llvm.floor.f32(float) nounwind readnone
+declare float @llvm.ceil.f32(float) nounwind readnone
+declare float @llvm.trunc.f32(float) nounwind readnone
+declare float @llvm.rint.f32(float) nounwind readnone
+declare float @llvm.nearbyint.f32(float) nounwind readnone
+
+; Test idempotent intrinsics
+define float @test_idempotence(float %a) {
+; CHECK: @test_idempotence
+
+; CHECK: fabs
+; CHECK-NOT: fabs
+  %a0 = call float @llvm.fabs.f32(float %a)
+  %a1 = call float @llvm.fabs.f32(float %a0)
+
+; CHECK: floor
+; CHECK-NOT: floor
+  %b0 = call float @llvm.floor.f32(float %a)
+  %b1 = call float @llvm.floor.f32(float %b0)
+
+; CHECK: ceil
+; CHECK-NOT: ceil
+  %c0 = call float @llvm.ceil.f32(float %a)
+  %c1 = call float @llvm.ceil.f32(float %c0)
+
+; CHECK: trunc
+; CHECK-NOT: trunc
+  %d0 = call float @llvm.trunc.f32(float %a)
+  %d1 = call float @llvm.trunc.f32(float %d0)
+
+; CHECK: rint
+; CHECK-NOT: rint
+  %e0 = call float @llvm.rint.f32(float %a)
+  %e1 = call float @llvm.rint.f32(float %e0)
+
+; CHECK: nearbyint
+; CHECK-NOT: nearbyint
+  %f0 = call float @llvm.nearbyint.f32(float %a)
+  %f1 = call float @llvm.nearbyint.f32(float %f0)
+
+  %r0 = fadd float %a1, %b1
+  %r1 = fadd float %r0, %c1
+  %r2 = fadd float %r1, %d1
+  %r3 = fadd float %r2, %e1
+  %r4 = fadd float %r3, %f1
+
+  ret float %r4
+}
