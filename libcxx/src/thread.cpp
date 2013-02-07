@@ -69,7 +69,9 @@ thread::hardware_concurrency() _NOEXCEPT
     long result = sysconf(_SC_NPROCESSORS_ONLN);
     // sysconf returns -1 if the name is invalid, the option does not exist or
     // does not have a definite limit.
-    if (result == -1)
+    // if sysconf returns some other negative number, we have no idea
+    // what is going on. Default to something safe.
+    if (result < 0)
         return 0;
     return static_cast<unsigned>(result);
 #else  // defined(CTL_HW) && defined(HW_NCPU)
