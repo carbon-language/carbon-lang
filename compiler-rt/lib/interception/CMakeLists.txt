@@ -4,6 +4,7 @@ set(INTERCEPTION_SOURCES
   interception_linux.cc
   interception_mac.cc
   interception_win.cc
+  interception_type_test.cc
   )
 
 include_directories(..)

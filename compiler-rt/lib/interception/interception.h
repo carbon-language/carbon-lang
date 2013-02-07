@@ -27,7 +27,10 @@ typedef __sanitizer::uptr SIZE_T;
 typedef __sanitizer::sptr SSIZE_T;
 typedef __sanitizer::sptr PTRDIFF_T;
 typedef __sanitizer::s64  INTMAX_T;
-typedef __sanitizer::u64  OFF_T;
+// WARNING: OFF_T may be different from OS type off_t, depending on the value of
+// _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
+// like pread and mmap, as opposed to pread64 and mmap64.
+typedef __sanitizer::uptr OFF_T;
 typedef __sanitizer::u64  OFF64_T;
 
 // How to add an interceptor:
