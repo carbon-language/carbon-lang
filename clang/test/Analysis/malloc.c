@@ -1090,4 +1090,104 @@ void testPassToSystemHeaderFunctionIndirectlyStruct() {
   fakeSystemHeaderCall(&ss);
 } // missing leak
 
+int *testOffsetAllocate(size_t size) {
+  int *memoryBlock = (int *)malloc(size + sizeof(int));
+  return &memoryBlock[1]; // no-warning
+}
+
+void testOffsetDeallocate(int *memoryBlock) {
+  free(&memoryBlock[-1]);  // no-warning
+}
+
+void testOffsetOfRegionFreed() {
+  __int64_t * array = malloc(sizeof(__int64_t)*2);
+  array += 1;
+  free(&array[0]); // expected-warning{{Argument to free() is offset by 8 bytes from the start of memory allocated by malloc()}}
+}
+
+void testOffsetOfRegionFreed2() {
+  __int64_t *p = malloc(sizeof(__int64_t)*2);
+  p += 1;
+  free(p); // expected-warning{{Argument to free() is offset by 8 bytes from the start of memory allocated by malloc()}}
+}
+
+void testOffsetOfRegionFreed3() {
+  char *r = malloc(sizeof(char));
+  r = r - 10;
+  free(r); // expected-warning {{Argument to free() is offset by -10 bytes from the start of memory allocated by malloc()}}
+}
+
+void testOffsetOfRegionFreedAfterFunctionCall() {
+  int *p = malloc(sizeof(int)*2);
+  p += 1;
+  myfoo(p);
+  free(p); // no-warning
+}
+
+void testFixManipulatedPointerBeforeFree() {
+  int * array = malloc(sizeof(int)*2);
+  array += 1;
+  free(&array[-1]); // no-warning
+}
+
+void testFixManipulatedPointerBeforeFree2() {
+  char *r = malloc(sizeof(char));
+  r = r + 10;
+  free(r-10); // no-warning
+}
+
+void freeOffsetPointerPassedToFunction() {
+  __int64_t *p = malloc(sizeof(__int64_t)*2);
+  p[1] = 0;
+  p += 1;
+  myfooint(*p); // not passing the pointer, only a value pointed by pointer
+  free(p); // expected-warning {{Argument to free() is offset by 8 bytes from the start of memory allocated by malloc()}}
+}
+
+int arbitraryInt();
+void freeUnknownOffsetPointer() {
+  char *r = malloc(sizeof(char));
+  r = r + arbitraryInt(); // unable to reason about what the offset might be
+  free(r); // no-warning
+}
+
+void testFreeNonMallocPointerWithNoOffset() {
+  char c;
+  char *r = &c;
+  r = r + 10;
+  free(r-10); // expected-warning {{Argument to free() is the address of the local variable 'c', which is not memory allocated by malloc()}}
+}
+
+void testFreeNonMallocPointerWithOffset() {
+  char c;
+  char *r = &c;
+  free(r+1); // expected-warning {{Argument to free() is the address of the local variable 'c', which is not memory allocated by malloc()}}
+}
+
+void testOffsetZeroDoubleFree() {
+  int *array = malloc(sizeof(int)*2);
+  int *p = &array[0];
+  free(p);
+  free(&array[0]); // expected-warning{{Attempt to free released memory}}
+}
+
+void testOffsetPassedToStrlen() {
+  char * string = malloc(sizeof(char)*10);
+  string += 1;
+  int length = strlen(string); // expected-warning {{Memory is never released; potential leak of memory pointed to by 'string'}}
+}
+
+void testOffsetPassedToStrlenThenFree() {
+  char * string = malloc(sizeof(char)*10);
+  string += 1;
+  int length = strlen(string);
+  free(string); // expected-warning {{Argument to free() is offset by 1 byte from the start of memory allocated by malloc()}}
+}
+
+void testOffsetPassedAsConst() {
+  char * string = malloc(sizeof(char)*10);
+  string += 1;
+  passConstPtr(string);
+  free(string); // expected-warning {{Argument to free() is offset by 1 byte from the start of memory allocated by malloc()}}
+}
 
