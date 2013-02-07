@@ -519,7 +519,7 @@ class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
   op,
   (outs VReg_128:$vdata),
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
-       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, VReg_128:$vaddr,
+       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, VReg_32:$vaddr,
        GPR4Align<SReg_256>:$srsrc, GPR4Align<SReg_128>:$ssamp),
   asm,
   []> {

@@ -22,11 +22,11 @@ let TargetPrefix = "SI", isTarget = 1 in {
   def int_SI_vs_load_input : Intrinsic <[llvm_v4f32_ty], [llvm_v4i32_ty, llvm_i16_ty, llvm_i32_ty], [IntrReadMem]> ;
   def int_SI_wqm : Intrinsic <[], [], []>;
 
-  class Sample : Intrinsic <[llvm_v4f32_ty], [llvm_i32_ty, llvm_v4f32_ty, llvm_v8i32_ty, llvm_v4i32_ty, llvm_i32_ty], [IntrReadMem]>;
+  class Sample : Intrinsic <[llvm_v4f32_ty], [llvm_i32_ty, llvm_anyvector_ty, llvm_v8i32_ty, llvm_v4i32_ty, llvm_i32_ty], [IntrReadMem]>;
 
   def int_SI_sample : Sample;
-  def int_SI_sample_bias : Sample;
-  def int_SI_sample_lod : Sample;
+  def int_SI_sampleb : Sample;
+  def int_SI_samplel : Sample;
 
   /* Interpolation Intrinsics */
 

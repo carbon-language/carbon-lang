@@ -1186,32 +1186,48 @@ def : Pat <
        VReg_32:$src0, VReg_32:$src1, VReg_32:$src2, VReg_32:$src3)
 >;
 
-/* int_SI_sample */
+
+/* int_SI_sample for simple 1D texture lookup */
 def : Pat <
-  (int_SI_sample imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler, imm),
-  (IMAGE_SAMPLE imm:$writemask, 0, 0, 0, 0, 0, 0, 0, VReg_128:$coord,
+  (int_SI_sample imm:$writemask, (v1i32 VReg_32:$addr),
+                 SReg_256:$rsrc, SReg_128:$sampler, imm),
+  (IMAGE_SAMPLE imm:$writemask, 0, 0, 0, 0, 0, 0, 0,
+                (i32 (COPY_TO_REGCLASS VReg_32:$addr, VReg_32)),
                 SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
-def : Pat <
-  (int_SI_sample imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler, TEX_RECT),
-  (IMAGE_SAMPLE imm:$writemask, 1, 0, 0, 0, 0, 0, 0, VReg_128:$coord,
-                SReg_256:$rsrc, SReg_128:$sampler)
+class SamplePattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
+                    ValueType addr_type> : Pat <
+    (name imm:$writemask, (addr_type addr_class:$addr),
+          SReg_256:$rsrc, SReg_128:$sampler, imm),
+    (opcode imm:$writemask, 0, 0, 0, 0, 0, 0, 0,
+          (EXTRACT_SUBREG addr_class:$addr, sub0),
+          SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
-/* int_SI_sample_lod */
-def : Pat <
-  (int_SI_sample_lod imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler, imm),
-  (IMAGE_SAMPLE_L imm:$writemask, 0, 0, 0, 0, 0, 0, 0, VReg_128:$coord,
-                  SReg_256:$rsrc, SReg_128:$sampler)
+class SampleRectPattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
+                        ValueType addr_type> : Pat <
+    (name imm:$writemask, (addr_type addr_class:$addr),
+          SReg_256:$rsrc, SReg_128:$sampler, TEX_RECT),
+    (opcode imm:$writemask, 1, 0, 0, 0, 0, 0, 0,
+          (EXTRACT_SUBREG addr_class:$addr, sub0),
+          SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
-/* int_SI_sample_bias */
-def : Pat <
-  (int_SI_sample_bias imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler, imm),
-  (IMAGE_SAMPLE_B imm:$writemask, 0, 0, 0, 0, 0, 0, 0, VReg_128:$coord,
-                  SReg_256:$rsrc, SReg_128:$sampler)
->;
+/* int_SI_sample* for texture lookups consuming more address parameters */
+multiclass SamplePatterns<RegisterClass addr_class, ValueType addr_type> {
+  def : SamplePattern <int_SI_sample, IMAGE_SAMPLE, addr_class, addr_type>;
+  def : SampleRectPattern <int_SI_sample, IMAGE_SAMPLE, addr_class, addr_type>;
+
+  def : SamplePattern <int_SI_samplel, IMAGE_SAMPLE_L, addr_class, addr_type>;
+
+  def : SamplePattern <int_SI_sampleb, IMAGE_SAMPLE_B, addr_class, addr_type>;
+}
+
+defm : SamplePatterns<VReg_64, v2i32>;
+defm : SamplePatterns<VReg_128, v4i32>;
+defm : SamplePatterns<VReg_256, v8i32>;
+defm : SamplePatterns<VReg_512, v16i32>;
 
 def CLAMP_SI : CLAMP<VReg_32>;
 def FABS_SI : FABS<VReg_32>;
