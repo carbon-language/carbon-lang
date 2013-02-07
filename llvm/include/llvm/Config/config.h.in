@@ -122,6 +122,12 @@
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
 
+/* Define to 1 if you have the `exp' function. */
+#undef HAVE_EXP
+
+/* Define to 1 if you have the `exp2' function. */
+#undef HAVE_EXP2
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -224,6 +230,15 @@
 /* Define if you can use -Wl,-R. to pass -R. to the linker, in order to add
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
+
+/* Define to 1 if you have the `log' function. */
+#undef HAVE_LOG
+
+/* Define to 1 if you have the `log10' function. */
+#undef HAVE_LOG10
+
+/* Define to 1 if you have the `log2' function. */
+#undef HAVE_LOG2
 
 /* Define to 1 if you have the `longjmp' function. */
 #undef HAVE_LONGJMP
