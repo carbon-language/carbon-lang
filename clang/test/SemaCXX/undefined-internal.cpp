@@ -231,3 +231,41 @@ namespace test10 {
     };
   }
 }
+
+namespace test11 {
+  namespace {
+    struct A {
+      virtual bool operator()() const = 0;
+      virtual void operator!() const = 0;
+      virtual bool operator+(const A&) const = 0;
+      virtual int operator[](int) const = 0;
+      virtual const A* operator->() const = 0;
+      int member;
+    };
+
+    struct B {
+      bool operator()() const;  // expected-warning {{function 'test11::<anonymous namespace>::B::operator()' has internal linkage but is not defined}}
+      void operator!() const;  // expected-warning {{function 'test11::<anonymous namespace>::B::operator!' has internal linkage but is not defined}}
+      bool operator+(const B&) const;  // expected-warning {{function 'test11::<anonymous namespace>::B::operator+' has internal linkage but is not defined}}
+      int operator[](int) const;  // expected-warning {{function 'test11::<anonymous namespace>::B::operator[]' has internal linkage but is not defined}}
+      const B* operator->() const;  // expected-warning {{function 'test11::<anonymous namespace>::B::operator->' has internal linkage but is not defined}}
+      int member;
+    };
+  }
+
+  void test1(A &a1, A &a2) {
+    a1();
+    !a1;
+    a1 + a2;
+    a1[0];
+    (void)a1->member;
+  }
+
+  void test2(B &b1, B &b2) {
+    b1();  // expected-note {{used here}}
+    !b1;  // expected-note {{used here}}
+    b1 + b2;  // expected-note {{used here}}
+    b1[0];  // expected-note {{used here}}
+    (void)b1->member;  // expected-note {{used here}}
+  }
+}
