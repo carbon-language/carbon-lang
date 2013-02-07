@@ -25,9 +25,9 @@ namespace __sanitizer {
 
 // SizeClassMap maps allocation sizes into size classes and back.
 // Class 0 corresponds to size 0.
-// Classes 1 - 16 correspond to sizes 8 - 128 (size = class_id * 8).
-// Next 8 classes: 128 + i * 16 (i = 1 to 8).
+// Classes 1 - 16 correspond to sizes 16 to 256 (size = class_id * 16).
 // Next 8 classes: 256 + i * 32 (i = 1 to 8).
+// Next 8 classes: 512 + i * 64 (i = 1 to 8).
 // ...
 // Next 8 classes: 2^k + i * 2^(k-3) (i = 1 to 8).
 // Last class corresponds to kMaxSize = 1 << kMaxSizeLog.
@@ -42,33 +42,48 @@ namespace __sanitizer {
 //  - (1 << kMaxBytesCachedLog) is the maximal number of bytes per size class.
 //
 // Part of output of SizeClassMap::Print():
-//    c00 => s: 0 diff: +0 00% l 0 cached: 0 0; id 0
-//    c01 => s: 8 diff: +8 00% l 3 cached: 256 2048; id 1
-//    c02 => s: 16 diff: +8 100% l 4 cached: 256 4096; id 2
-//    ...
-//    c07 => s: 56 diff: +8 16% l 5 cached: 256 14336; id 7
+// c00 => s: 0 diff: +0 00% l 0 cached: 0 0; id 0
+// c01 => s: 16 diff: +16 00% l 4 cached: 256 4096; id 1
+// c02 => s: 32 diff: +16 100% l 5 cached: 256 8192; id 2
+// c03 => s: 48 diff: +16 50% l 5 cached: 256 12288; id 3
+// c04 => s: 64 diff: +16 33% l 6 cached: 256 16384; id 4
+// c05 => s: 80 diff: +16 25% l 6 cached: 256 20480; id 5
+// c06 => s: 96 diff: +16 20% l 6 cached: 256 24576; id 6
+// c07 => s: 112 diff: +16 16% l 6 cached: 256 28672; id 7
 //
-//    c08 => s: 64 diff: +8 14% l 6 cached: 256 16384; id 8
-//    ...
-//    c15 => s: 120 diff: +8 07% l 6 cached: 256 30720; id 15
+// c08 => s: 128 diff: +16 14% l 7 cached: 256 32768; id 8
+// c09 => s: 144 diff: +16 12% l 7 cached: 256 36864; id 9
+// c10 => s: 160 diff: +16 11% l 7 cached: 256 40960; id 10
+// c11 => s: 176 diff: +16 10% l 7 cached: 256 45056; id 11
+// c12 => s: 192 diff: +16 09% l 7 cached: 256 49152; id 12
+// c13 => s: 208 diff: +16 08% l 7 cached: 256 53248; id 13
+// c14 => s: 224 diff: +16 07% l 7 cached: 256 57344; id 14
+// c15 => s: 240 diff: +16 07% l 7 cached: 256 61440; id 15
 //
-//    c16 => s: 128 diff: +8 06% l 7 cached: 256 32768; id 16
-//    c17 => s: 144 diff: +16 12% l 7 cached: 227 32688; id 17
-//    ...
-//    c23 => s: 240 diff: +16 07% l 7 cached: 136 32640; id 23
+// c16 => s: 256 diff: +16 06% l 8 cached: 256 65536; id 16
+// c17 => s: 288 diff: +32 12% l 8 cached: 227 65376; id 17
+// c18 => s: 320 diff: +32 11% l 8 cached: 204 65280; id 18
+// c19 => s: 352 diff: +32 10% l 8 cached: 186 65472; id 19
+// c20 => s: 384 diff: +32 09% l 8 cached: 170 65280; id 20
+// c21 => s: 416 diff: +32 08% l 8 cached: 157 65312; id 21
+// c22 => s: 448 diff: +32 07% l 8 cached: 146 65408; id 22
+// c23 => s: 480 diff: +32 07% l 8 cached: 136 65280; id 23
 //
-//    c24 => s: 256 diff: +16 06% l 8 cached: 128 32768; id 24
-//    c25 => s: 288 diff: +32 12% l 8 cached: 113 32544; id 25
-//    ...
-//    c31 => s: 480 diff: +32 07% l 8 cached: 68 32640; id 31
+// c24 => s: 512 diff: +32 06% l 9 cached: 128 65536; id 24
+// c25 => s: 576 diff: +64 12% l 9 cached: 113 65088; id 25
+// c26 => s: 640 diff: +64 11% l 9 cached: 102 65280; id 26
+// c27 => s: 704 diff: +64 10% l 9 cached: 93 65472; id 27
+// c28 => s: 768 diff: +64 09% l 9 cached: 85 65280; id 28
+// c29 => s: 832 diff: +64 08% l 9 cached: 78 64896; id 29
+// c30 => s: 896 diff: +64 07% l 9 cached: 73 65408; id 30
+// c31 => s: 960 diff: +64 07% l 9 cached: 68 65280; id 31
 //
-//    c32 => s: 512 diff: +32 06% l 9 cached: 64 32768; id 32
-
+// c32 => s: 1024 diff: +64 06% l 10 cached: 64 65536; id 32
 
 template <uptr kMaxSizeLog, uptr kMaxNumCachedT, uptr kMaxBytesCachedLog,
           uptr kMinBatchClassT>
 class SizeClassMap {
-  static const uptr kMinSizeLog = 3;
+  static const uptr kMinSizeLog = 4;
   static const uptr kMidSizeLog = kMinSizeLog + 4;
   static const uptr kMinSize = 1 << kMinSizeLog;
   static const uptr kMidSize = 1 << kMidSizeLog;
@@ -174,9 +189,9 @@ class SizeClassMap {
   }
 };
 
-typedef SizeClassMap<17, 256, 16, FIRST_32_SECOND_64(33, 36)>
+typedef SizeClassMap<17, 256, 16, FIRST_32_SECOND_64(25, 28)>
     DefaultSizeClassMap;
-typedef SizeClassMap<17, 64, 14, FIRST_32_SECOND_64(25, 28)>
+typedef SizeClassMap<17, 64, 14, FIRST_32_SECOND_64(17, 20)>
     CompactSizeClassMap;
 template<class SizeClassAllocator> struct SizeClassAllocatorLocalCache;
 
