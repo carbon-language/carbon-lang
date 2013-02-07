@@ -22,6 +22,8 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace lld;
@@ -146,12 +148,38 @@ public:
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_noinhibit_exec))
       newArgs->AddFlagArg(A, _core.getOption(core::OPT_noinhibit_exec));
 
-    // Copy input args.
-    for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_INPUT),
+    // Copy search paths.
+    for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_L),
                                  ie = _inputArgs->filtered_end();
-                                 it != ie; ++it) {
+         it != ie; ++it) {
+      newArgs->AddPositionalArg(
+          *it, _core.getOption(core::OPT_input_search_path), (*it)->getValue());
+      _inputSearchPaths.push_back((*it)->getValue());
+    }
+      
+    // Copy input args.
+    for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_INPUT,
+                                 ld::OPT_l),
+                                 ie = _inputArgs->filtered_end();
+         it != ie; ++it) {
+      StringRef inputPath;
+      if ((*it)->getOption().getID() == ld::OPT_l) {
+        StringRef libName = (*it)->getValue();
+        SmallString<128> p;
+        for (const auto &path : _inputSearchPaths) {
+          p = path;
+          llvm::sys::path::append(p, Twine("lib") + libName + ".a");
+          if (llvm::sys::fs::exists(p.str())) {
+            inputPath = newArgs->MakeArgString(p);
+            break;
+          }
+        }
+        if (inputPath.empty())
+          llvm_unreachable("Failed to lookup library!");
+      } else
+        inputPath = (*it)->getValue();
       newArgs->AddPositionalArg(*it, _core.getOption(core::OPT_INPUT),
-                                (*it)->getValue());
+                                inputPath);
     }
 
     // Copy mllvm
@@ -169,6 +197,8 @@ private:
   std::unique_ptr<llvm::opt::InputArgList> _inputArgs;
   core::CoreOptTable _core;
   ld::LDOptTable _opt;
+  // Local cache of search paths so we can do lookups on -l.
+  std::vector<std::string> _inputSearchPaths;
 };
 
 std::unique_ptr<Driver> Driver::create( Driver::Flavor flavor
@@ -221,6 +251,7 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
     ret._input.push_back(LinkerInput((*it)->getValue()));
   }
 
+  ret._inputSearchPaths = args.getAllArgValues(core::OPT_input_search_path);
   ret._llvmArgs = args.getAllArgValues(core::OPT_mllvm);
   ret._target = llvm::Triple::normalize(args.getLastArgValue(core::OPT_target));
   ret._outputPath = args.getLastArgValue(core::OPT_output);

@@ -19,10 +19,16 @@ def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;
 def emit_yaml : Flag<["-"], "emit-yaml">;
 
 def m : Separate<["-"], "m">;
+def z : Separate<["-"], "z">;
 
 def static : Flag<["-"], "static">;
+def start_group : Flag<["--"], "start-group">;
+def end_group : Flag<["--"], "end-group">;
+def build_id : Flag<["--"], "build-id">;
 
 def L : Joined<["-"], "L">;
+def l : Joined<["-"], "l">;
+def hash_style : Joined <["--"], "hash-style=">;
 
 def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
     HelpText<"Retain the executable output file whenever it is still usable">;

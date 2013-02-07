@@ -111,33 +111,32 @@ struct LinkerOptions {
     , _relocatable(false) {}
 
   // This exists because MSVC doesn't support = default :(
-  LinkerOptions(LinkerOptions &&other)
-    : _input(std::move(other._input))
-    , _llvmArgs(std::move(other._llvmArgs))
-    , _deadStripRoots(std::move(other._deadStripRoots))
-    , _target(std::move(other._target))
-    , _outputPath(std::move(other._outputPath))
-    , _entrySymbol(std::move(other._entrySymbol))
-    , _baseAddress(other._baseAddress)
-    , _outputKind(other._outputKind)
-    , _outputCommands(other._outputCommands)
-    , _outputYAML(other._outputYAML)
-    , _noInhibitExec(other._noInhibitExec)
-    , _deadStrip(other._deadStrip)
-    , _globalsAreDeadStripRoots(other._globalsAreDeadStripRoots)
-    , _searchArchivesToOverrideTentativeDefinitions(
-          other._searchArchivesToOverrideTentativeDefinitions)
-    , _searchSharedLibrariesToOverrideTentativeDefinitions(
-          other._searchSharedLibrariesToOverrideTentativeDefinitions)
-    , _warnIfCoalesableAtomsHaveDifferentCanBeNull(
-          other._warnIfCoalesableAtomsHaveDifferentCanBeNull)
-    , _warnIfCoalesableAtomsHaveDifferentLoadName(
-          other._warnIfCoalesableAtomsHaveDifferentLoadName)
-    , _forceLoadArchives(other._forceLoadArchives)
-    , _textRelocations(other._textRelocations)
-    , _relocatable(other._relocatable) {}
+  LinkerOptions(LinkerOptions && other)
+      : _input(std::move(other._input)),
+        _inputSearchPaths(std::move(other._inputSearchPaths)),
+        _llvmArgs(std::move(other._llvmArgs)),
+        _deadStripRoots(std::move(other._deadStripRoots)),
+        _target(std::move(other._target)),
+        _outputPath(std::move(other._outputPath)),
+        _entrySymbol(std::move(other._entrySymbol)),
+        _baseAddress(other._baseAddress), _outputKind(other._outputKind),
+        _outputCommands(other._outputCommands), _outputYAML(other._outputYAML),
+        _noInhibitExec(other._noInhibitExec), _deadStrip(other._deadStrip),
+        _globalsAreDeadStripRoots(other._globalsAreDeadStripRoots),
+        _searchArchivesToOverrideTentativeDefinitions(
+            other._searchArchivesToOverrideTentativeDefinitions),
+        _searchSharedLibrariesToOverrideTentativeDefinitions(
+            other._searchSharedLibrariesToOverrideTentativeDefinitions),
+        _warnIfCoalesableAtomsHaveDifferentCanBeNull(
+            other._warnIfCoalesableAtomsHaveDifferentCanBeNull),
+        _warnIfCoalesableAtomsHaveDifferentLoadName(
+            other._warnIfCoalesableAtomsHaveDifferentLoadName),
+        _forceLoadArchives(other._forceLoadArchives),
+        _textRelocations(other._textRelocations),
+        _relocatable(other._relocatable) {}
 
   std::vector<LinkerInput> _input;
+  std::vector<std::string> _inputSearchPaths;
   std::vector<std::string> _llvmArgs;
   std::vector<std::string> _deadStripRoots;
   std::string _target;
