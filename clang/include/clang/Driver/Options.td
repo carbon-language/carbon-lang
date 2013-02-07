@@ -501,6 +501,8 @@ def fmodules_autolink : Flag <["-"], "fmodules-autolink">, Group<f_Group>, Flags
   HelpText<"Enable autolinking of the libraries for imported modules">;
 def fno_modules_autolink : Flag <["-"], "fno-modules-autolink">, Group<f_Group>,
   HelpText<"Disable autolinking of the libraries for imported modules">;
+def fmodules_ignore_macro : Joined<["-"], "fmodules-ignore-macro=">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Ignore the definition of the given macro when building and loading modules">;
 def fretain_comments_from_system_headers : Flag<["-"], "fretain-comments-from-system-headers">, Group<f_Group>, Flags<[CC1Option]>;
 
 def fmudflapth : Flag<["-"], "fmudflapth">, Group<f_Group>;

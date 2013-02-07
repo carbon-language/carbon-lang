@@ -428,6 +428,9 @@ void Clang::AddPreprocessingOptions(Compilation &C,
     CmdArgs.push_back("-fmodule-cache-path");
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
+
+  // Pass through all -fmodules-ignore-macro arguments.
+  Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
   
   // Parse additional include paths from environment variables.
   // FIXME: We should probably sink the logic for handling these from the

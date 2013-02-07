@@ -813,7 +813,13 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
   Opts.ModuleCachePath = Args.getLastArgValue(OPT_fmodule_cache_path);
   Opts.DisableModuleHash = Args.hasArg(OPT_fdisable_module_hash);
-  
+
+  for (arg_iterator it = Args.filtered_begin(OPT_fmodules_ignore_macro),
+       ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    Opts.ModulesIgnoreMacros.insert(A->getValue());
+  }
+
   // Add -I..., -F..., and -index-header-map options in order.
   bool IsIndexHeaderMap = false;
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F, 
@@ -1600,6 +1606,7 @@ std::string CompilerInvocation::getModuleHash() const {
 
   // Extend the signature with preprocessor options.
   const PreprocessorOptions &ppOpts = getPreprocessorOpts();
+  const HeaderSearchOptions &hsOpts = getHeaderSearchOpts();
   code = hash_combine(code, ppOpts.UsePredefines, ppOpts.DetailedRecord);
 
   std::vector<StringRef> MacroDefs;
@@ -1607,11 +1614,24 @@ std::string CompilerInvocation::getModuleHash() const {
             I = getPreprocessorOpts().Macros.begin(),
          IEnd = getPreprocessorOpts().Macros.end();
        I != IEnd; ++I) {
+    // If we're supposed to ignore this macro for the purposes of modules,
+    // don't put it into the hash.
+    if (!hsOpts.ModulesIgnoreMacros.empty()) {
+      // Dig out the macro name.
+      StringRef MacroName = I->first;
+      StringRef::size_type EqPos = MacroName.find('=');
+      if (EqPos != StringRef::npos)
+        MacroName = MacroName.substr(0, EqPos);
+
+      // Check whether we're ignoring this macro.
+      if (hsOpts.ModulesIgnoreMacros.count(MacroName))
+        continue;
+    }
+
     code = hash_combine(code, I->first, I->second);
   }
 
   // Extend the signature with the sysroot.
-  const HeaderSearchOptions &hsOpts = getHeaderSearchOpts();
   code = hash_combine(code, hsOpts.Sysroot, hsOpts.UseBuiltinIncludes,
                       hsOpts.UseStandardSystemIncludes,
                       hsOpts.UseStandardCXXIncludes,

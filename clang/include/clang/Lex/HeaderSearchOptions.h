@@ -12,7 +12,9 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringRef.h"
+#include <string>
 #include <vector>
 
 namespace clang {
@@ -86,13 +88,17 @@ public:
 
   /// \brief The directory used for the module cache.
   std::string ModuleCachePath;
-  
+
   /// \brief Whether we should disable the use of the hash string within the
   /// module cache.
   ///
   /// Note: Only used for testing!
   unsigned DisableModuleHash : 1;
-  
+
+  /// \brief The set of macro names that should be ignored for the purposes
+  /// of computing the module hash.
+  llvm::SetVector<std::string> ModulesIgnoreMacros;
+
   /// Include the compiler builtin includes.
   unsigned UseBuiltinIncludes : 1;
 
