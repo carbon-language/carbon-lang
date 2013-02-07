@@ -30,7 +30,12 @@ typedef __sanitizer::s64  INTMAX_T;
 // WARNING: OFF_T may be different from OS type off_t, depending on the value of
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
 // like pread and mmap, as opposed to pread64 and mmap64.
+// Mac is special.
+#ifdef __APPLE__
+typedef __sanitizer::u64 OFF_T;
+#else
 typedef __sanitizer::uptr OFF_T;
+#endif
 typedef __sanitizer::u64  OFF64_T;
 
 // How to add an interceptor:
