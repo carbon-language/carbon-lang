@@ -102,8 +102,11 @@ EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
 
 /// We don't vectorize loops with a known constant trip count below this number.
 static cl::opt<unsigned>
-TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16), cl::Hidden,
-                             cl::desc("The minimum trip count in the loops to vectorize."));
+TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16),
+                             cl::Hidden,
+                             cl::desc("Don't vectorize loops with a constant "
+                                      "trip count that is smaller than this "
+                                      "value."));
 
 /// We don't unroll loops with a known constant trip count below this number.
 static const unsigned TinyTripCountUnrollThreshold = 128;
@@ -531,7 +534,8 @@ public:
   /// This method checks every power of two up to VF. If UserVF is not ZERO
   /// then this vectorization factor will be selected if vectorization is
   /// possible.
-  VectorizationFactor selectVectorizationFactor(bool OptForSize, unsigned UserVF);
+  VectorizationFactor selectVectorizationFactor(bool OptForSize,
+                                                unsigned UserVF);
 
   /// \return The size (in bits) of the widest type in the code that
   /// needs to be vectorized. We ignore values that remain scalar such as
