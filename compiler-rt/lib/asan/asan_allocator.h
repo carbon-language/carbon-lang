@@ -24,7 +24,7 @@
 // will co-exist in the source base for a while. The actual allocator is chosen
 // at build time by redefining this macro.
 #ifndef ASAN_ALLOCATOR_VERSION
-# if ASAN_LINUX && !ASAN_ANDROID
+# if (ASAN_LINUX && !ASAN_ANDROID) || ASAN_MAC
 #  define ASAN_ALLOCATOR_VERSION 2
 # else
 #  define ASAN_ALLOCATOR_VERSION 1

@@ -651,16 +651,17 @@ uptr asan_malloc_usable_size(void *ptr, StackTrace *stack) {
 }
 
 uptr asan_mz_size(const void *ptr) {
-  UNIMPLEMENTED();
-  return 0;
+  return AllocationSize(reinterpret_cast<uptr>(ptr));
 }
 
 void asan_mz_force_lock() {
-  UNIMPLEMENTED();
+  allocator.ForceLock();
+  fallback_mutex.Lock();
 }
 
 void asan_mz_force_unlock() {
-  UNIMPLEMENTED();
+  fallback_mutex.Unlock();
+  allocator.ForceUnlock();
 }
 
 }  // namespace __asan

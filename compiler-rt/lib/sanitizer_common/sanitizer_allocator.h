@@ -403,6 +403,20 @@ class SizeClassAllocator64 {
     }
   }
 
+  // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
+  // introspection API.
+  void ForceLock() {
+    for (uptr i = 0; i < kNumClasses; i++) {
+      GetRegionInfo(i)->mutex.Lock();
+    } 
+  }
+
+  void ForceUnlock() {
+    for (int i = (int)kNumClasses - 1; i >= 0; i--) {
+      GetRegionInfo(i)->mutex.Unlock();
+    } 
+  }
+
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;
   static const uptr kNumClassesRounded = SizeClassMap::kNumClassesRounded;
@@ -633,6 +647,20 @@ class SizeClassAllocator32 {
       if (state_->possible_regions[i])
         UnmapWithCallback((i * kRegionSize), kRegionSize);
     UnmapWithCallback(reinterpret_cast<uptr>(state_), sizeof(State));
+  }
+
+  // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
+  // introspection API.
+  void ForceLock() {
+    for (int i = 0; i < kNumClasses; i++) {
+      GetSizeClassInfo(i)->mutex.Lock();
+    } 
+  }
+
+  void ForceUnlock() {
+    for (int i = kNumClasses - 1; i >= 0; i--) {
+      GetSizeClassInfo(i)->mutex.Unlock();
+    } 
   }
 
   void PrintStats() {
@@ -941,6 +969,16 @@ class LargeMmapAllocator {
     Printf("\n");
   }
 
+  // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
+  // introspection API.
+  void ForceLock() {
+    mutex_.Lock();
+  }
+
+  void ForceUnlock() {
+    mutex_.Unlock();
+  }
+
  private:
   static const int kMaxNumChunks = 1 << FIRST_32_SECOND_64(15, 18);
   struct Header {
@@ -1090,6 +1128,18 @@ class CombinedAllocator {
   void PrintStats() {
     primary_.PrintStats();
     secondary_.PrintStats();
+  }
+
+  // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
+  // introspection API.
+  void ForceLock() {
+    primary_.ForceLock();
+    secondary_.ForceLock();
+  }
+
+  void ForceUnlock() {
+    secondary_.ForceUnlock();
+    primary_.ForceUnlock();
   }
 
  private:
