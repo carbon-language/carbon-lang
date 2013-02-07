@@ -2246,7 +2246,8 @@ template<class ELFT>
 typename ELFObjectFile<ELFT>::dyn_iterator
 ELFObjectFile<ELFT>::begin_dynamic_table() const {
   if (dot_dynamic_sec)
-    return dyn_iterator(dot_dynamic_sec->sh_entsize, (const char *)base() + dot_dynamic_sec->sh_offset);
+    return dyn_iterator(dot_dynamic_sec->sh_entsize,
+                        (const char *)base() + dot_dynamic_sec->sh_offset);
   return dyn_iterator(0, 0);
 }
 
@@ -2254,7 +2255,8 @@ template<class ELFT>
 typename ELFObjectFile<ELFT>::dyn_iterator
 ELFObjectFile<ELFT>::end_dynamic_table() const {
   if (dot_dynamic_sec)
-    return dyn_iterator(dot_dynamic_sec->sh_entsize, (const char *)base() + dot_dynamic_sec->sh_offset + dot_dynamic_sec->sh_size);
+    return dyn_iterator(dot_dynamic_sec->sh_entsize, (const char *)base() +
+                        dot_dynamic_sec->sh_offset + dot_dynamic_sec->sh_size);
   return dyn_iterator(0, 0);
 }
 
@@ -2298,14 +2300,16 @@ template<class ELFT>
 error_code ELFObjectFile<ELFT>::getLibraryNext(DataRefImpl Data,
                                                LibraryRef &Result) const {
   // Use the same DataRefImpl format as DynRef.
-  dyn_iterator i = dyn_iterator(dot_dynamic_sec->sh_entsize, reinterpret_cast<const char *>(Data.p));
+  dyn_iterator i = dyn_iterator(dot_dynamic_sec->sh_entsize,
+                                reinterpret_cast<const char *>(Data.p));
   dyn_iterator e = end_dynamic_table();
 
   // Skip the current dynamic table entry.
   ++i;
 
   // Find the next DT_NEEDED entry.
-  for (; i != e && i->getTag() != ELF::DT_NEEDED; ++i);
+  for (; i != e && i->getTag() != ELF::DT_NEEDED; ++i)
+    ;
 
   DataRefImpl DRI;
   DRI.p = reinterpret_cast<uintptr_t>(&*i);
@@ -2316,7 +2320,8 @@ error_code ELFObjectFile<ELFT>::getLibraryNext(DataRefImpl Data,
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getLibraryPath(DataRefImpl Data,
                                                StringRef &Res) const {
-  dyn_iterator i = dyn_iterator(dot_dynamic_sec->sh_entsize, reinterpret_cast<const char *>(Data.p));
+  dyn_iterator i = dyn_iterator(dot_dynamic_sec->sh_entsize,
+                                reinterpret_cast<const char *>(Data.p));
   if (i == end_dynamic_table())
     report_fatal_error("getLibraryPath() called on iterator end");
 
