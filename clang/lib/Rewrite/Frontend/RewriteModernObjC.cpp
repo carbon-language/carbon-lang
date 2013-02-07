@@ -133,6 +133,7 @@ namespace {
     
     SmallVector<DeclRefExpr *, 32> BlockDeclRefs;
 
+    
     // Block related declarations.
     SmallVector<ValueDecl *, 8> BlockByCopyDecls;
     llvm::SmallPtrSet<ValueDecl *, 8> BlockByCopyDeclsPtrSet;
@@ -145,6 +146,13 @@ namespace {
     llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
     llvm::DenseMap<ObjCInterfaceDecl *, 
                     llvm::SmallPtrSet<ObjCIvarDecl *, 8> > ReferencedIvars;
+    
+    // ivar bitfield grouping containers
+    llvm::DenseSet<const ObjCInterfaceDecl *> ObjCInterefaceHasBitfieldGroups;
+    llvm::DenseMap<const ObjCIvarDecl* , unsigned> IvarGroupNumber;
+    // This container maps an <class, group number for ivar> tuple to the type
+    // of the struct where the bitfield belongs.
+    llvm::DenseMap<std::pair<const ObjCInterfaceDecl*, unsigned>, QualType> GroupRecordType;
     
     // This maps an original source AST to it's rewritten form. This allows
     // us to avoid rewriting the same node twice (which is very uncommon).
@@ -339,6 +347,20 @@ namespace {
     void RewriteCastExpr(CStyleCastExpr *CE);
     void RewriteImplicitCastObjCExpr(CastExpr *IE);
     void RewriteLinkageSpec(LinkageSpecDecl *LSD);
+    
+    // Computes ivar bitfield group no.
+    unsigned ObjCIvarBitfieldGroupNo(ObjCIvarDecl *IV);
+    // Names field decl. for ivar bitfield group.
+    void ObjCIvarBitfieldGroupDecl(ObjCIvarDecl *IV, std::string &Result);
+    // Names struct type for ivar bitfield group.
+    void ObjCIvarBitfieldGroupType(ObjCIvarDecl *IV, std::string &Result);
+    // Names symbol for ivar bitfield group field offset.
+    void ObjCIvarBitfieldGroupOffset(ObjCIvarDecl *IV, std::string &Result);
+    // Given an ivar bitfield, it builds (or finds) its group record type.
+    QualType GetGroupRecordTypeForObjCIvarBitfield(ObjCIvarDecl *IV);
+    QualType SynthesizeBitfieldGroupStructType(
+                                    ObjCIvarDecl *IV,
+                                    SmallVectorImpl<ObjCIvarDecl *> &IVars);
     
     // Block rewriting.
     void RewriteBlocksInFunctionProtoType(QualType funcType, NamedDecl *D);
@@ -800,11 +822,16 @@ RewriteModernObjC::getIvarAccessString(ObjCIvarDecl *D) {
   
   // Build name of symbol holding ivar offset.
   std::string IvarOffsetName;
-  WriteInternalIvarName(ClassDecl, D, IvarOffsetName);
+  if (D->isBitField())
+    ObjCIvarBitfieldGroupOffset(D, IvarOffsetName);
+  else
+    WriteInternalIvarName(ClassDecl, D, IvarOffsetName);
   
   
   std::string S = "(*(";
   QualType IvarT = D->getType();
+  if (D->isBitField())
+    IvarT = GetGroupRecordTypeForObjCIvarBitfield(D);
   
   if (!isa<TypedefType>(IvarT) && IvarT->isRecordType()) {
     RecordDecl *RD = IvarT->getAs<RecordType>()->getDecl();
@@ -852,6 +879,10 @@ RewriteModernObjC::getIvarAccessString(ObjCIvarDecl *D) {
   S += "((char *)self + ";
   S += IvarOffsetName;
   S += "))";
+  if (D->isBitField()) {
+    S += ".";
+    S += D->getNameAsString();
+  }
   ReferencedIvars[const_cast<ObjCInterfaceDecl *>(ClassDecl)].insert(D);
   return S;
 }
@@ -3882,6 +3913,126 @@ void RewriteModernObjC::RewriteLocallyDefinedNamedAggregates(FieldDecl *fieldDec
     
 }
 
+unsigned RewriteModernObjC::ObjCIvarBitfieldGroupNo(ObjCIvarDecl *IV) {
+  const ObjCInterfaceDecl *CDecl = IV->getContainingInterface();
+  if (ObjCInterefaceHasBitfieldGroups.count(CDecl)) {
+    return IvarGroupNumber[IV];
+  }
+  unsigned GroupNo = 0;
+  SmallVector<const ObjCIvarDecl *, 8> IVars;
+  for (const ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
+       IVD; IVD = IVD->getNextIvar())
+    IVars.push_back(IVD);
+  
+  for (unsigned i = 0, e = IVars.size(); i < e; i++)
+    if (IVars[i]->isBitField()) {
+      IvarGroupNumber[IVars[i++]] = ++GroupNo;
+      while (i < e && IVars[i]->isBitField())
+        IvarGroupNumber[IVars[i++]] = GroupNo;
+      if (i < e)
+        --i;
+    }
+
+  ObjCInterefaceHasBitfieldGroups.insert(CDecl);
+  return IvarGroupNumber[IV];
+}
+
+QualType RewriteModernObjC::SynthesizeBitfieldGroupStructType(
+                              ObjCIvarDecl *IV,
+                              SmallVectorImpl<ObjCIvarDecl *> &IVars) {
+  std::string StructTagName;
+  ObjCIvarBitfieldGroupType(IV, StructTagName);
+  RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct,
+                                      Context->getTranslationUnitDecl(),
+                                      SourceLocation(), SourceLocation(),
+                                      &Context->Idents.get(StructTagName));
+  for (unsigned i=0, e = IVars.size(); i < e; i++) {
+    ObjCIvarDecl *Ivar = IVars[i];
+    RD->addDecl(FieldDecl::Create(*Context, RD, SourceLocation(), SourceLocation(),
+                                  &Context->Idents.get(Ivar->getName()),
+                                  Ivar->getType(),
+                                  0, /*Expr *BW */Ivar->getBitWidth(), false,
+                                  ICIS_NoInit));
+  }
+  RD->completeDefinition();
+  return Context->getTagDeclType(RD);
+}
+
+QualType RewriteModernObjC::GetGroupRecordTypeForObjCIvarBitfield(ObjCIvarDecl *IV) {
+  const ObjCInterfaceDecl *CDecl = IV->getContainingInterface();
+  unsigned GroupNo = ObjCIvarBitfieldGroupNo(IV);
+  std::pair<const ObjCInterfaceDecl*, unsigned> tuple = std::make_pair(CDecl, GroupNo);
+  if (GroupRecordType.count(tuple))
+    return GroupRecordType[tuple];
+  
+  SmallVector<ObjCIvarDecl *, 8> IVars;
+  for (const ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
+       IVD; IVD = IVD->getNextIvar()) {
+    if (IVD->isBitField())
+      IVars.push_back(const_cast<ObjCIvarDecl *>(IVD));
+    else {
+      if (!IVars.empty()) {
+        unsigned GroupNo = ObjCIvarBitfieldGroupNo(IVars[0]);
+        // Generate the struct type for this group of bitfield ivars.
+        GroupRecordType[std::make_pair(CDecl, GroupNo)] =
+          SynthesizeBitfieldGroupStructType(IVars[0], IVars);
+        IVars.clear();
+      }
+    }
+  }
+  if (!IVars.empty()) {
+    // Do the last one.
+    unsigned GroupNo = ObjCIvarBitfieldGroupNo(IVars[0]);
+    GroupRecordType[std::make_pair(CDecl, GroupNo)] =
+      SynthesizeBitfieldGroupStructType(IVars[0], IVars);
+  }
+  QualType RetQT = GroupRecordType[tuple];
+  assert(!RetQT.isNull() && "GetGroupRecordTypeForObjCIvarBitfield struct type is NULL");
+  
+  return RetQT;
+}
+
+/// ObjCIvarBitfieldGroupDecl - Names field decl. for ivar bitfield group.
+/// Name would be: classname__GRBF_n where n is the group number for this ivar.
+void RewriteModernObjC::ObjCIvarBitfieldGroupDecl(ObjCIvarDecl *IV,
+                                                  std::string &Result) {
+  const ObjCInterfaceDecl *CDecl = IV->getContainingInterface();
+  Result += CDecl->getName();
+  Result += "__GRBF_";
+  unsigned GroupNo = ObjCIvarBitfieldGroupNo(IV);
+  Result += utostr(GroupNo);
+  return;
+}
+
+/// ObjCIvarBitfieldGroupType - Names struct type for ivar bitfield group.
+/// Name of the struct would be: classname__T_n where n is the group number for
+/// this ivar.
+void RewriteModernObjC::ObjCIvarBitfieldGroupType(ObjCIvarDecl *IV,
+                                                  std::string &Result) {
+  const ObjCInterfaceDecl *CDecl = IV->getContainingInterface();
+  Result += CDecl->getName();
+  Result += "__T_";
+  unsigned GroupNo = ObjCIvarBitfieldGroupNo(IV);
+  Result += utostr(GroupNo);
+  return;
+}
+
+/// ObjCIvarBitfieldGroupOffset - Names symbol for ivar bitfield group field offset.
+/// Name would be: OBJC_IVAR_$_classname__GRBF_n where n is the group number for
+/// this ivar.
+void RewriteModernObjC::ObjCIvarBitfieldGroupOffset(ObjCIvarDecl *IV,
+                                                    std::string &Result) {
+  Result += "OBJC_IVAR_$_";
+  ObjCIvarBitfieldGroupDecl(IV, Result);
+}
+
+#define SKIP_BITFIELDS(IX, ENDIX, VEC) { \
+      while ((IX < ENDIX) && VEC[IX]->isBitField()) \
+        ++IX; \
+      if (IX < ENDIX) \
+        --IX; \
+}
+
 /// RewriteObjCInternalStruct - Rewrite one internal struct corresponding to
 /// an objective-c class with ivars.
 void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
@@ -3915,7 +4066,19 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   // struct/unions in objective-c classes.
   for (unsigned i = 0, e = IVars.size(); i < e; i++)
     RewriteLocallyDefinedNamedAggregates(IVars[i], Result);
-
+  
+  // Insert named structs which are syntheized to group ivar bitfields
+  // to outer scope as well.
+  for (unsigned i = 0, e = IVars.size(); i < e; i++)
+    if (IVars[i]->isBitField()) {
+      ObjCIvarDecl *IV = IVars[i];
+      QualType QT = GetGroupRecordTypeForObjCIvarBitfield(IV);
+      RewriteObjCFieldDeclType(QT, Result);
+      Result += ";";
+      // skip over ivar bitfields in this group.
+      SKIP_BITFIELDS(i , e, IVars);
+    }
+    
   Result += "\nstruct ";
   Result += CDecl->getNameAsString();
   Result += "_IMPL {\n";
@@ -3926,8 +4089,18 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     Result += "_IVARS;\n";
   }
   
-  for (unsigned i = 0, e = IVars.size(); i < e; i++)
-    RewriteObjCFieldDecl(IVars[i], Result);
+  for (unsigned i = 0, e = IVars.size(); i < e; i++) {
+    if (IVars[i]->isBitField()) {
+      ObjCIvarDecl *IV = IVars[i];
+      Result += "\tstruct ";
+      ObjCIvarBitfieldGroupType(IV, Result); Result += " ";
+      ObjCIvarBitfieldGroupDecl(IV, Result); Result += ";\n";
+      // skip over ivar bitfields in this group.
+      SKIP_BITFIELDS(i , e, IVars);
+    }
+    else
+      RewriteObjCFieldDecl(IVars[i], Result);
+  }
 
   Result += "};\n";
   endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
@@ -3946,9 +4119,18 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
   llvm::SmallPtrSet<ObjCIvarDecl *, 8> Ivars = ReferencedIvars[CDecl];
   if (Ivars.empty())
     return;
+  
+  llvm::DenseSet<std::pair<const ObjCInterfaceDecl*, unsigned> > GroupSymbolOutput;
   for (llvm::SmallPtrSet<ObjCIvarDecl *, 8>::iterator i = Ivars.begin(),
        e = Ivars.end(); i != e; i++) {
     ObjCIvarDecl *IvarDecl = (*i);
+    const ObjCInterfaceDecl *IDecl = IvarDecl->getContainingInterface();
+    unsigned GroupNo = 0;
+    if (IvarDecl->isBitField()) {
+      GroupNo = ObjCIvarBitfieldGroupNo(IvarDecl);
+      if (GroupSymbolOutput.count(std::make_pair(IDecl, GroupNo)))
+        continue;
+    }
     Result += "\n";
     if (LangOpts.MicrosoftExt)
       Result += "__declspec(allocate(\".objc_ivar$B\")) ";
@@ -3959,7 +4141,12 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
         Result += "__declspec(dllimport) ";
 
     Result += "unsigned long ";
-    WriteInternalIvarName(CDecl, IvarDecl, Result);
+    if (IvarDecl->isBitField()) {
+      ObjCIvarBitfieldGroupOffset(IvarDecl, Result);
+      GroupSymbolOutput.insert(std::make_pair(IDecl, GroupNo));
+    }
+    else
+      WriteInternalIvarName(CDecl, IvarDecl, Result);
     Result += ";";
   }
 }
@@ -6052,19 +6239,16 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
 /// ivar offset.
 void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
                                                          std::string &Result) {
-  if (ivar->isBitField()) {
-    // FIXME: The hack below doesn't work for bitfields. For now, we simply
-    // place all bitfields at offset 0.
-    Result += "0";
-  } else {
-    Result += "__OFFSETOFIVAR__(struct ";
-    Result += ivar->getContainingInterface()->getNameAsString();
-    if (LangOpts.MicrosoftExt)
-      Result += "_IMPL";
-    Result += ", ";
+  Result += "__OFFSETOFIVAR__(struct ";
+  Result += ivar->getContainingInterface()->getNameAsString();
+  if (LangOpts.MicrosoftExt)
+    Result += "_IMPL";
+  Result += ", ";
+  if (ivar->isBitField())
+    ObjCIvarBitfieldGroupDecl(ivar, Result);
+  else
     Result += ivar->getNameAsString();
-    Result += ")";
-  }
+  Result += ")";
 }
 
 /// WriteModernMetadataDeclarations - Writes out metadata declarations for modern ABI.
@@ -6741,21 +6925,41 @@ static void Write_IvarOffsetVar(RewriteModernObjC &RewriteObj,
       Result += "extern \"C\" unsigned long int "; 
     else
       Result += "extern \"C\" __declspec(dllexport) unsigned long int ";
-    WriteInternalIvarName(CDecl, IvarDecl, Result);
+    if (Ivars[i]->isBitField())
+      RewriteObj.ObjCIvarBitfieldGroupOffset(IvarDecl, Result);
+    else
+      WriteInternalIvarName(CDecl, IvarDecl, Result);
     Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
     Result += " = ";
     RewriteObj.RewriteIvarOffsetComputation(IvarDecl, Result);
     Result += ";\n";
+    if (Ivars[i]->isBitField()) {
+      // skip over rest of the ivar bitfields.
+      SKIP_BITFIELDS(i , e, Ivars);
+    }
   }
 }
 
 static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
                                            ASTContext *Context, std::string &Result,
-                                           ArrayRef<ObjCIvarDecl *> Ivars,
+                                           ArrayRef<ObjCIvarDecl *> OriginalIvars,
                                            StringRef VarName,
                                            ObjCInterfaceDecl *CDecl) {
-  if (Ivars.size() > 0) {
-    Write_IvarOffsetVar(RewriteObj, Context, Result, Ivars, CDecl);
+  if (OriginalIvars.size() > 0) {
+    Write_IvarOffsetVar(RewriteObj, Context, Result, OriginalIvars, CDecl);
+    SmallVector<ObjCIvarDecl *, 8> Ivars;
+    // strip off all but the first ivar bitfield from each group of ivars.
+    // Such ivars in the ivar list table will be replaced by their grouping struct
+    // 'ivar'.
+    for (unsigned i = 0, e = OriginalIvars.size(); i < e; i++) {
+      if (OriginalIvars[i]->isBitField()) {
+        Ivars.push_back(OriginalIvars[i]);
+        // skip over rest of the ivar bitfields.
+        SKIP_BITFIELDS(i , e, OriginalIvars);
+      }
+      else
+        Ivars.push_back(OriginalIvars[i]);
+    }
     
     Result += "\nstatic ";
     Write__ivar_list_t_TypeDecl(Result, Ivars.size());
@@ -6771,22 +6975,35 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
       else
         Result += "\t {";
       Result += "(unsigned long int *)&";
-      WriteInternalIvarName(CDecl, IvarDecl, Result);
+      if (Ivars[i]->isBitField())
+        RewriteObj.ObjCIvarBitfieldGroupOffset(IvarDecl, Result);
+      else
+        WriteInternalIvarName(CDecl, IvarDecl, Result);
       Result += ", ";
       
-      Result += "\""; Result += IvarDecl->getName(); Result += "\", ";
+      Result += "\"";
+      if (Ivars[i]->isBitField())
+        RewriteObj.ObjCIvarBitfieldGroupDecl(Ivars[i], Result);
+      else
+        Result += IvarDecl->getName();
+      Result += "\", ";
+      
+      QualType IVQT = IvarDecl->getType();
+      if (IvarDecl->isBitField())
+        IVQT = RewriteObj.GetGroupRecordTypeForObjCIvarBitfield(IvarDecl);
+      
       std::string IvarTypeString, QuoteIvarTypeString;
-      Context->getObjCEncodingForType(IvarDecl->getType(), IvarTypeString,
+      Context->getObjCEncodingForType(IVQT, IvarTypeString,
                                       IvarDecl);
       RewriteObj.QuoteDoublequotes(IvarTypeString, QuoteIvarTypeString);
       Result += "\""; Result += QuoteIvarTypeString; Result += "\", ";
       
       // FIXME. this alignment represents the host alignment and need be changed to
       // represent the target alignment.
-      unsigned Align = Context->getTypeAlign(IvarDecl->getType())/8;
+      unsigned Align = Context->getTypeAlign(IVQT)/8;
       Align = llvm::Log2_32(Align);
       Result += llvm::utostr(Align); Result += ", ";
-      CharUnits Size = Context->getTypeSizeInChars(IvarDecl->getType());
+      CharUnits Size = Context->getTypeSizeInChars(IVQT);
       Result += llvm::utostr(Size.getQuantity());
       if (i  == e-1)
         Result += "}}\n";
@@ -7511,7 +7728,10 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       
       // Build name of symbol holding ivar offset.
       std::string IvarOffsetName;
-      WriteInternalIvarName(clsDeclared, D, IvarOffsetName);
+      if (D->isBitField())
+        ObjCIvarBitfieldGroupOffset(D, IvarOffsetName);
+      else
+        WriteInternalIvarName(clsDeclared, D, IvarOffsetName);
       
       ReferencedIvars[clsDeclared].insert(D);
       
@@ -7535,6 +7755,8 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                               SourceLocation(),
                                               addExpr);
       QualType IvarT = D->getType();
+      if (D->isBitField())
+        IvarT = GetGroupRecordTypeForObjCIvarBitfield(D);
 
       if (!isa<TypedefType>(IvarT) && IvarT->isRecordType()) {
         RecordDecl *RD = IvarT->getAs<RecordType>()->getDecl();
@@ -7587,8 +7809,23 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       PE = new (Context) ParenExpr(OldRange.getBegin(),
                                    OldRange.getEnd(),
                                    Exp);
+      
+      if (D->isBitField()) {
+        FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                                          SourceLocation(),
+                                          &Context->Idents.get(D->getNameAsString()),
+                                          D->getType(), 0,
+                                          /*BitWidth=*/D->getBitWidth(),
+                                          /*Mutable=*/true,
+                                          ICIS_NoInit);
+        MemberExpr *ME = new (Context) MemberExpr(PE, /*isArrow*/false, FD, SourceLocation(),
+                                                  FD->getType(), VK_LValue,
+                                                  OK_Ordinary);
+        Replacement = ME;
 
-      Replacement = PE;
+      }
+      else
+        Replacement = PE;
     }
   
     ReplaceStmtWithRange(IV, Replacement, OldRange);
