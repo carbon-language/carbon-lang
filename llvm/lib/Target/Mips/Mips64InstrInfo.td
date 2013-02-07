@@ -170,6 +170,7 @@ def BLTZ64 : CBranchZero<"bltz", setlt, CPU64Regs>, BGEZ_FM<1, 0>;
 }
 let DecoderNamespace = "Mips64" in
 def JALR64 : JumpLinkReg<"jalr", CPU64Regs>, JALR_FM;
+def JALR64Pseudo : JumpLinkRegPseudo<CPU64Regs, JALR64, RA_64>;
 def TAILCALL64_R : JumpFR<CPU64Regs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
 let DecoderNamespace = "Mips64" in {
@@ -329,6 +330,8 @@ def : InstAlias<"not $rt, $rs",
                 (NOR64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rs, ZERO_64), 1>,
       Requires<[HasMips64]>;
 def : InstAlias<"j $rs", (JR64 CPU64Regs:$rs), 0>, Requires<[HasMips64]>;
+def : InstAlias<"jalr $rs", (JALR64 RA_64, CPU64Regs:$rs)>,
+      Requires<[HasMips64]>;
 def : InstAlias<"daddu $rs, $rt, $imm",
                 (DADDiu CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
                 1>;

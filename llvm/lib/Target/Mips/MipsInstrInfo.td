@@ -565,9 +565,14 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
     let DecoderMethod = "DecodeJumpTarget";
   }
 
+  class JumpLinkRegPseudo<RegisterClass RC, Instruction JALRInst,
+                          Register RetReg>:
+    PseudoSE<(outs), (ins RC:$rs), [(MipsJmpLink RC:$rs)], IIBranch>,
+    PseudoInstExpansion<(JALRInst RetReg, RC:$rs)>;
+
   class JumpLinkReg<string opstr, RegisterClass RC>:
-    InstSE<(outs), (ins RC:$rs), !strconcat(opstr, "\t$rs"),
-           [(MipsJmpLink RC:$rs)], IIBranch, FrmR>;
+    InstSE<(outs RC:$rd), (ins RC:$rs), !strconcat(opstr, "\t$rd, $rs"),
+           [], IIBranch, FrmR>;
 
   class BGEZAL_FT<string opstr, RegisterOperand RO> :
     InstSE<(outs), (ins RO:$rs, brtarget:$offset),
@@ -865,6 +870,7 @@ def BAL_BR: BAL_FT, BAL_FM;
 
 def JAL  : JumpLink<"jal">, FJ<3>;
 def JALR : JumpLinkReg<"jalr", CPURegs>, JALR_FM;
+def JALRPseudo : JumpLinkRegPseudo<CPURegs, JALR, RA>;
 def BGEZAL : BGEZAL_FT<"bgezal", CPURegsOpnd>, BGEZAL_FM<0x11>;
 def BLTZAL : BGEZAL_FT<"bltzal", CPURegsOpnd>, BGEZAL_FM<0x10>;
 def TAILCALL : JumpFJ<calltarget, "j", MipsTailCall, imm>, FJ<2>, IsTailCall;
@@ -972,6 +978,7 @@ def : InstAlias<"and $rs, $rt, $imm",
                 (ANDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"j $rs", (JR CPURegs:$rs), 0>,
       Requires<[NotMips64]>;
+def : InstAlias<"jalr $rs", (JALR RA, CPURegs:$rs)>, Requires<[NotMips64]>;
 def : InstAlias<"not $rt, $rs",
                 (NOR CPURegsOpnd:$rt, CPURegsOpnd:$rs, ZERO), 1>;
 def : InstAlias<"neg $rt, $rs",

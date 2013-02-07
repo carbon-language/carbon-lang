@@ -56,6 +56,10 @@ end_of_code:
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   jalr $6              # encoding: [0x09,0xf8,0xc0,0x00]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK:   jalr $25             # encoding: [0x09,0xf8,0x20,0x03]
+# CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK:   jalr $10, $11        # encoding: [0x09,0x50,0x60,0x01]
+# CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
@@ -66,6 +70,10 @@ end_of_code:
    jal 1328
    nop
    jalr $6
+   nop
+   jalr $31, $25
+   nop
+   jalr $10, $11
    nop
    jr $7
    nop
