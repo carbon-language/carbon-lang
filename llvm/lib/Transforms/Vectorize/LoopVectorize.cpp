@@ -560,11 +560,6 @@ public:
   /// \return  information about the register usage of the loop.
   RegisterUsage calculateRegisterUsage();
 
-  /// A helper function for converting Scalar types to vector types.
-  /// If the incoming type is void, we return void. If the VF is 1, we return
-  /// the scalar type.
-  static Type* ToVectorTy(Type *Scalar, unsigned VF);
-
 private:
   /// Returns the expected execution cost. The unit of the cost does
   /// not matter because we use the 'cost' units to compare different
@@ -575,6 +570,11 @@ private:
   /// Returns the execution time cost of an instruction for a given vector
   /// width. Vector width of one means scalar.
   unsigned getInstructionCost(Instruction *I, unsigned VF);
+
+  /// A helper function for converting Scalar types to vector types.
+  /// If the incoming type is void, we return void. If the VF is 1, we return
+  /// the scalar type.
+  static Type* ToVectorTy(Type *Scalar, unsigned VF);
 
   /// Returns whether the instruction is a load or store and will be a emitted
   /// as a vector operation.
@@ -592,177 +592,6 @@ private:
   const TargetTransformInfo &TTI;
   /// Target data layout information.
   DataLayout *DL;
-};
-
-/// A helper class to compute the cost of a memory operation (load or store).
-class MemoryCostComputation {
-public:
-  /// \brief This function computes the cost of a memory instruction, either of
-  /// a load or of a store.
-  /// \param Inst a pointer to a LoadInst or a StoreInst.
-  /// \param VF the vector factor to use.
-  /// \param TTI the target transform information used to obtain costs.
-  /// \param Legality the legality class used by this function to obtain the
-  ///                 access strid of the memory operation.
-  /// \returns the estimated cost of the memory instruction.
-  static unsigned computeCost(Value *Inst, unsigned VF,
-                              const TargetTransformInfo &TTI,
-                              LoopVectorizationLegality *Legality) {
-    if (StoreInst *Store = dyn_cast<StoreInst>(Inst))
-      return StoreCost(Store, VF, TTI, Legality).cost();
-
-    return LoadCost(cast<LoadInst>(Inst), VF, TTI, Legality).cost();
-  }
-
-private:
-  /// An helper class to compute the cost of vectorize memory instruction. It is
-  /// subclassed by load and store cost computation classes who fill the fields
-  /// with values that require knowing about the concrete Load/StoreInst class.
-  class MemoryOpCost {
-  public:
-    /// \return the cost of vectorizing the memory access instruction.
-    unsigned cost() {
-      if (VectorFactor == 1)
-        return TTI.getMemoryOpCost(Opcode, VectorTy, Alignment, AddressSpace);
-
-      if ((Stride = Legality->isConsecutivePtr(PointerOperand)))
-        return costOfWideMemInst();
-
-      return costOfScalarizedMemInst();
-    }
-
-  protected:
-    /// The pointer operand of the memory instruction.
-    Value *PointerOperand;
-    /// The scalar type of the memory access.
-    Type *ScalarTy;
-    /// The vector type of the memory access.
-    Type *VectorTy;
-    /// The vector factor by which we vectorize.
-    unsigned VectorFactor;
-    /// The stride of the memory access.
-    int Stride;
-    /// The alignment of the memory operation.
-    unsigned Alignment;
-    /// The address space of the memory operation.
-    unsigned AddressSpace;
-    /// The opcode of the memory instruction.
-    unsigned Opcode;
-    /// Are we looking at a load or store instruction.
-    bool IsLoadInst;
-    const TargetTransformInfo &TTI;
-    LoopVectorizationLegality *Legality;
-
-    /// Constructs a helper class to compute the cost of a memory instruction.
-    /// \param VF the vector factor (the length of the vector).
-    /// \param TI the target transform information used by this class to obtain
-    ///           costs.
-    /// \param L the legality class used by this class to obtain the access
-    ///          stride of the memory operation.
-    MemoryOpCost(unsigned VF, const TargetTransformInfo &TI,
-                 LoopVectorizationLegality *L) :
-      VectorFactor(VF), TTI(TI), Legality(L) {
-    }
-
-  private:
-    /// \return the cost if the memory instruction is scalarized.
-    unsigned costOfScalarizedMemInst() {
-      unsigned Cost = 0;
-      Cost += costOfExtractFromPointerVector();
-      Cost += costOfExtractFromValueVector();
-      Cost += VectorFactor * TTI.getMemoryOpCost(Opcode, ScalarTy, Alignment,
-                                                 AddressSpace);
-      Cost += costOfInsertIntoValueVector();
-      return Cost;
-    }
-
-    /// \return the cost of extracting the pointers out of the pointer vector.
-    unsigned costOfExtractFromPointerVector() {
-      Type *PtrTy = getVectorizedPointerOperandType();
-      return costOfVectorInstForAllElems(Instruction::ExtractElement, PtrTy);
-    }
-
-    /// \return the cost for extracting values out of the value vector if the
-    /// memory instruction is a store and zero otherwise.
-    unsigned costOfExtractFromValueVector() {
-      if (IsLoadInst)
-        return 0;
-
-      return costOfVectorInstForAllElems(Instruction::ExtractElement, VectorTy);
-    }
-
-    /// \return the cost of insert values into the value vector if the memory
-    /// instruction was a load and zero otherwise.
-    unsigned costOfInsertIntoValueVector() {
-      if (!IsLoadInst)
-        return 0;
-
-      return costOfVectorInstForAllElems(Instruction::InsertElement, VectorTy);
-    }
-
-    /// \return the cost of a vector memory instruction.
-    unsigned costOfWideMemInst() {
-      unsigned Cost = TTI.getMemoryOpCost(Opcode, VectorTy, Alignment,
-                                          AddressSpace);
-      // Reverse stride.
-      if (Stride < 0)
-        Cost += TTI.getShuffleCost(TargetTransformInfo::SK_Reverse, VectorTy,
-                                   0);
-      return Cost;
-    }
-
-    /// Helper function to compute the cost of one insert- or extractelement
-    /// instruction per vector element.
-    /// \param VecOpcode the vector instruction opcode (Can be either
-    ///                  InsertElement or an ExtractElement).
-    /// \param Ty the vector type the vector instruction operates on.
-    /// \return the cost of an vector instruction applied to each vector
-    ///         element.
-    unsigned costOfVectorInstForAllElems(unsigned VecOpcode, Type *Ty) {
-      unsigned Cost = 0;
-      for (unsigned i = 0; i < VectorFactor; ++i)
-        Cost += TTI.getVectorInstrCost(VecOpcode, Ty, i);
-      return Cost;
-    }
-
-    /// \return a vectorized type for the pointer operand.
-    Type * getVectorizedPointerOperandType() {
-      Type *PointerOpTy = PointerOperand->getType();
-      return LoopVectorizationCostModel::ToVectorTy(PointerOpTy, VectorFactor);
-    }
-  };
-
-  /// Implementation of the abstract memory cost base class. Sets field of base
-  /// class whose value depends on the LoadInst.
-  class LoadCost : public MemoryOpCost {
-  public:
-    LoadCost(LoadInst *Load, unsigned VF, const TargetTransformInfo &TI,
-             LoopVectorizationLegality *L) : MemoryOpCost(VF, TI, L) {
-      PointerOperand = Load->getPointerOperand();
-      ScalarTy = Load->getType();
-      VectorTy = LoopVectorizationCostModel::ToVectorTy(ScalarTy, VF);
-      Alignment = Load->getAlignment();
-      AddressSpace = Load->getPointerAddressSpace();
-      Opcode = Load->getOpcode();
-      IsLoadInst = true;
-    }
-  };
-
-  /// Implementation of the abstract memory cost base class. Sets field of base
-  /// class whose value depends on the StoreInst.
-  class StoreCost : public MemoryOpCost {
-  public:
-    StoreCost(StoreInst *Store, unsigned VF, const TargetTransformInfo &TI,
-              LoopVectorizationLegality *L) : MemoryOpCost(VF, TI, L) {
-      PointerOperand = Store->getPointerOperand();
-      ScalarTy = Store->getValueOperand()->getType();
-      VectorTy = LoopVectorizationCostModel::ToVectorTy(ScalarTy, VF);
-      Alignment = Store->getAlignment();
-      AddressSpace = Store->getPointerAddressSpace();
-      Opcode = Store->getOpcode();
-      IsLoadInst = false;
-    }
-  };
 };
 
 /// The LoopVectorize Pass.
@@ -3268,11 +3097,54 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     VectorTy = ToVectorTy(ValTy, VF);
     return TTI.getCmpSelInstrCost(I->getOpcode(), VectorTy);
   }
-  case Instruction::Load:
-  case Instruction::Store: {
-    return MemoryCostComputation::computeCost(I, VF, TTI, Legal);
-  }
+  case Instruction::Store:
+  case Instruction::Load: {
+    StoreInst *SI = dyn_cast<StoreInst>(I);
+    LoadInst *LI = dyn_cast<LoadInst>(I);
+    Type *ValTy = (SI ? SI->getValueOperand()->getType() :
+                   LI->getType());
+    VectorTy = ToVectorTy(ValTy, VF);
 
+    unsigned Alignment = SI ? SI->getAlignment() : LI->getAlignment();
+    unsigned AS = SI ? SI->getPointerAddressSpace() :
+      LI->getPointerAddressSpace();
+    Value *Ptr = SI ? SI->getPointerOperand() : LI->getPointerOperand();
+
+    if (VF == 1)
+      return TTI.getMemoryOpCost(I->getOpcode(), VectorTy, Alignment, AS);
+
+    // Scalarized loads/stores.
+    int Stride = Legal->isConsecutivePtr(Ptr);
+    bool Reverse = Stride < 0;
+    if (0 == Stride) {
+      unsigned Cost = 0;
+      // The cost of extracting from the value vector and pointer vector.
+      Type *PtrTy = ToVectorTy(Ptr->getType(), VF);
+      for (unsigned i = 0; i < VF; ++i) {
+        //  The cost of extracting the pointer operand.
+        Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, PtrTy, i);
+        // In case of STORE, the cost of ExtractElement from the vector.
+        // In case of LOAD, the cost of InsertElement into the returned
+        // vector.
+        Cost += TTI.getVectorInstrCost(SI ? Instruction::ExtractElement :
+                                            Instruction::InsertElement,
+                                            VectorTy, i);
+      }
+
+      // The cost of the scalar stores.
+      Cost += VF * TTI.getMemoryOpCost(I->getOpcode(), ValTy->getScalarType(),
+                                       Alignment, AS);
+      return Cost;
+    }
+
+    // Wide load/stores.
+    unsigned Cost = TTI.getMemoryOpCost(I->getOpcode(), VectorTy,
+                                        Alignment, AS);
+    if (Reverse)
+      Cost += TTI.getShuffleCost(TargetTransformInfo::SK_Reverse,
+                                  VectorTy, 0);
+    return Cost;
+  }
   case Instruction::ZExt:
   case Instruction::SExt:
   case Instruction::FPToUI:
