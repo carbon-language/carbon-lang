@@ -37,6 +37,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 
 
 #ifdef UDP_CODE_COMPLETION_LOGGER
@@ -240,6 +241,11 @@ namespace {
 
 /// \brief The CXCodeCompleteResults structure we allocate internally;
 /// the client only sees the initial CXCodeCompleteResults structure.
+///
+/// Normally, clients of CXString shouldn't care whether or not a CXString is
+/// managed by a pool or by explicitly malloc'ed memory.  But
+/// AllocatedCXCodeCompleteResults outlives the CXTranslationUnit, so we can
+/// not rely on the StringPool in the TU.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   AllocatedCXCodeCompleteResults(const FileSystemOptions& FileSystemOpts);
   ~AllocatedCXCodeCompleteResults();
@@ -288,8 +294,10 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief The kind of the container for the current context for completions.
   enum CXCursorKind ContainerKind;
+
   /// \brief The USR of the container for the current context for completions.
-  CXString ContainerUSR;
+  std::string ContainerUSR;
+
   /// \brief a boolean value indicating whether there is complete information
   /// about the container
   unsigned ContainerIsIncomplete;
@@ -320,7 +328,6 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
     CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
     Contexts(CXCompletionContext_Unknown),
     ContainerKind(CXCursor_InvalidCode),
-    ContainerUSR(cxstring::createEmpty()),
     ContainerIsIncomplete(1)
 { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
@@ -331,9 +338,7 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   delete [] Results;
-  
-  clang_disposeString(ContainerUSR);
-  
+
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
     TemporaryFiles[I].eraseFromDisk();
   for (unsigned I = 0, N = TemporaryBuffers.size(); I != N; ++I)
@@ -590,23 +595,13 @@ namespace {
       
       if (D != NULL) {
         CXCursor cursor = cxcursor::MakeCXCursor(D, *TU);
-        
-        CXCursorKind cursorKind = clang_getCursorKind(cursor);
-        CXString cursorUSR = clang_getCursorUSR(cursor);
-        
-        // Normally, clients of CXString shouldn't care whether or not
-        // a CXString is managed by a pool or by explicitly malloc'ed memory.
-        // However, there are cases when AllocatedResults outlives the
-        // CXTranslationUnit.  This is a workaround that failure mode.
-        if (cxstring::isManagedByPool(cursorUSR)) {
-          CXString heapStr = cxstring::createDup(clang_getCString(cursorUSR));
-          clang_disposeString(cursorUSR);
-          cursorUSR = heapStr;
-        }
-        
-        AllocatedResults.ContainerKind = cursorKind;
-        AllocatedResults.ContainerUSR = cursorUSR;
-        
+
+        AllocatedResults.ContainerKind = clang_getCursorKind(cursor);
+
+        CXString CursorUSR = clang_getCursorUSR(cursor);
+        AllocatedResults.ContainerUSR = clang_getCString(CursorUSR);
+        clang_disposeString(CursorUSR);
+
         const Type *type = baseType.getTypePtrOrNull();
         if (type != NULL) {
           AllocatedResults.ContainerIsIncomplete = type->isIncompleteType();
@@ -617,7 +612,7 @@ namespace {
       }
       else {
         AllocatedResults.ContainerKind = CXCursor_InvalidCode;
-        AllocatedResults.ContainerUSR = cxstring::createEmpty();
+        AllocatedResults.ContainerUSR.clear();
         AllocatedResults.ContainerIsIncomplete = 1;
       }
     }
@@ -911,8 +906,8 @@ CXString clang_codeCompleteGetContainerUSR(CXCodeCompleteResults *ResultsIn) {
     static_cast<AllocatedCXCodeCompleteResults *>(ResultsIn);
   if (!Results)
     return cxstring::createEmpty();
-  
-  return cxstring::createRef(clang_getCString(Results->ContainerUSR));
+
+  return cxstring::createRef(Results->ContainerUSR.c_str());
 }
 
   
