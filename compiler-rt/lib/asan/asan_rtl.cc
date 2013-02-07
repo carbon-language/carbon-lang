@@ -147,9 +147,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->fast_unwind_on_fatal = false;
   f->fast_unwind_on_malloc = true;
   f->poison_heap = true;
-  // Turn off alloc/dealloc mismatch checker on Mac for now.
-  // TODO(glider): Fix known issues and enable this back.
-  f->alloc_dealloc_mismatch = (ASAN_MAC == 0);
+  f->alloc_dealloc_mismatch = true;
   f->use_stack_depot = true;  // Only affects allocator2.
 
   // Override from user-specified string.

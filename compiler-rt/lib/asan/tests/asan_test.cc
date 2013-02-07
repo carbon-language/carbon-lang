@@ -1110,9 +1110,8 @@ TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
   Ident(NoAddressSafety)();
 }
 
-// TODO(glider): Enable this test on Mac.
 // It doesn't work on Android, as calls to new/delete go through malloc/free.
-#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
+#if !defined(ANDROID) && !defined(__ANDROID__)
 static string MismatchStr(const string &str) {
   return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
 }
