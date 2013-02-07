@@ -192,7 +192,8 @@ ObjectFileELF::CreateInstance (const lldb::ModuleSP &module_sp,
             // Update the data to contain the entire file if it doesn't already
             if (data_sp->GetByteSize() < length) {
                 data_sp = file->MemoryMapFileContents(file_offset, length);
-                magic = data_sp->GetBytes() + data_offset;
+                data_offset = 0;
+                magic = data_sp->GetBytes();
             }
             unsigned address_size = ELFHeader::AddressSizeInBytes(magic);
             if (address_size == 4 || address_size == 8)
