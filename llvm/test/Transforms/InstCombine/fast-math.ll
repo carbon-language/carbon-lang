@@ -97,10 +97,10 @@ define float @fold9(float %f1, float %f2) {
 }
 
 ; Let C3 = C1 + C2. (f1 + C1) + (f2 + C2) => (f1 + f2) + C3 instead of
-; "(f1 + C3) + f2" or "(f2 + C3) + f1". Placing constant-addend at the 
+; "(f1 + C3) + f2" or "(f2 + C3) + f1". Placing constant-addend at the
 ; top of resulting simplified expression tree may potentially reveal some
 ; optimization opportunities in the super-expression trees.
-; 
+;
 define float @fold10(float %f1, float %f2) {
   %t1 = fadd fast float 2.000000e+00, %f1
   %t2 = fsub fast float %f2, 3.000000e+00
@@ -141,7 +141,7 @@ define float @fmul_distribute1(float %f1) {
   %t1 = fmul float %f1, 6.0e+3
   %t2 = fadd float %t1, 2.0e+3
   %t3 = fmul fast float %t2, 5.0e+3
-  ret float %t3 
+  ret float %t3
 ; CHECK: @fmul_distribute1
 ; CHECK: %1 = fmul fast float %f1, 3.000000e+07
 ; CHECK: %t3 = fadd fast float %1, 1.000000e+07
@@ -174,9 +174,9 @@ define double @fmul_distribute3(double %f1) {
 
 ; C1/X * C2 => (C1*C2) / X
 define float @fmul2(float %f1) {
-  %t1 = fdiv float 2.0e+3, %f1 
+  %t1 = fdiv float 2.0e+3, %f1
   %t3 = fmul fast float %t1, 6.0e+3
-  ret float %t3 
+  ret float %t3
 ; CHECK: @fmul2
 ; CHECK: fdiv fast float 1.200000e+07, %f1
 }
@@ -185,7 +185,7 @@ define float @fmul2(float %f1) {
 define float @fmul3(float %f1, float %f2) {
   %t1 = fdiv float %f1, 2.0e+3
   %t3 = fmul fast float %t1, 6.0e+3
-  ret float %t3 
+  ret float %t3
 ; CHECK: @fmul3
 ; CHECK: fmul fast float %f1, 3.000000e+00
 }
@@ -196,18 +196,18 @@ define float @fmul3(float %f1, float %f2) {
 define float @fmul4(float %f1, float %f2) {
   %t1 = fdiv float %f1, 2.0e+3
   %t3 = fmul fast float %t1, 0x3810000000000000
-  ret float %t3 
+  ret float %t3
 ; CHECK: @fmul4
 ; CHECK: fmul fast float %t1, 0x3810000000000000
 }
 
-; X / C1 * C2 => X / (C2/C1) if  C1/C2 is either a special value of a denormal, 
+; X / C1 * C2 => X / (C2/C1) if  C1/C2 is either a special value of a denormal,
 ;  and C2/C1 is a normal value.
-; 
+;
 define float @fmul5(float %f1, float %f2) {
   %t1 = fdiv float %f1, 3.0e+0
   %t3 = fmul fast float %t1, 0x3810000000000000
-  ret float %t3 
+  ret float %t3
 ; CHECK: @fmul5
 ; CHECK: fdiv fast float %f1, 0x47E8000000000000
 }
@@ -218,7 +218,7 @@ define float @fmul6(float %f1, float %f2) {
   %mul1 = fmul fast float %mul, %f1
   ret float %mul1
 ; CHECK: @fmul6
-; CHECK: fmul fast float %f1, %f1 
+; CHECK: fmul fast float %f1, %f1
 }
 
 ; "(X*Y) * X => (X*X) * Y" is disabled if "X*Y" has multiple uses
@@ -277,7 +277,7 @@ define float @fdiv2(float %x) {
 }
 
 ; "X/C1 / C2 => X * (1/(C2*C1))" is disabled (for now) is C2/C1 is a denormal
-; 
+;
 define float @fdiv3(float %x) {
   %div = fdiv float %x, 0x47EFFFFFE0000000
   %div1 = fdiv fast float %div, 0x4002666660000000
