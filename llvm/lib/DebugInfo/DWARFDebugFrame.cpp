@@ -64,7 +64,9 @@ public:
   }
 
   void dumpHeader(raw_ostream &OS) const {
-    OS << format("%08x %08x %08x CIE", Offset, Length, DW_CIE_ID) << "\n";
+    OS << format("%08x %08x %08x CIE",
+                 (uint32_t)Offset, (uint32_t)Length, DW_CIE_ID)
+       << "\n";
     OS << format("  Version:               %d\n", Version);
     OS << "  Augmentation:          \"" << Augmentation << "\"\n";
     OS << format("  Code alignment factor: %u\n", CodeAlignmentFactor);
@@ -103,9 +105,10 @@ public:
   }
 
   void dumpHeader(raw_ostream &OS) const {
-    OS << format("%08x %08x %08x FDE ", Offset, Length, LinkedCIEOffset);
+    OS << format("%08x %08x %08x FDE ",
+                 (uint32_t)Offset, (uint32_t)Length, LinkedCIEOffset);
     OS << format("cie=%08x pc=%08x...%08x\n",
-                 LinkedCIEOffset, InitialLocation,
+                 (uint32_t)LinkedCIEOffset, (uint32_t)InitialLocation,
                  InitialLocation + AddressRange);
     OS << "\n";
     if (LinkedCIE) {
