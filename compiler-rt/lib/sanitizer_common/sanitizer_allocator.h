@@ -408,13 +408,13 @@ class SizeClassAllocator64 {
   void ForceLock() {
     for (uptr i = 0; i < kNumClasses; i++) {
       GetRegionInfo(i)->mutex.Lock();
-    } 
+    }
   }
 
   void ForceUnlock() {
     for (int i = (int)kNumClasses - 1; i >= 0; i--) {
       GetRegionInfo(i)->mutex.Unlock();
-    } 
+    }
   }
 
   typedef SizeClassMap SizeClassMapT;
@@ -654,13 +654,13 @@ class SizeClassAllocator32 {
   void ForceLock() {
     for (uptr i = 0; i < kNumClasses; i++) {
       GetSizeClassInfo(i)->mutex.Lock();
-    } 
+    }
   }
 
   void ForceUnlock() {
     for (int i = kNumClasses - 1; i >= 0; i--) {
       GetSizeClassInfo(i)->mutex.Unlock();
-    } 
+    }
   }
 
   void PrintStats() {
