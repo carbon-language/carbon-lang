@@ -533,6 +533,9 @@ public:
         
         DataEncoderSP region_encoder = m_memory.GetEncoder(region);
         
+        if (buf.GetByteSize() > region_encoder->GetByteSize())
+            return false; // TODO figure out why this happens; try "expr int i = 12; i"
+            
         memcpy(region_encoder->GetDataStart(), buf.GetBytes(), buf.GetByteSize());
         
         return true;
