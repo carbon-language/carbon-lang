@@ -17,6 +17,7 @@
 #include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 
 using namespace __sanitizer;
 
@@ -63,8 +64,17 @@ static void DescribeOrigin(u32 origin) {
     const uptr *trace = StackDepotGet(origin, &size);
     Printf("  %sUninitialised value was created by a heap allocation%s\n",
            d.Origin(), d.End());
-    StackTrace::PrintStack(trace, size, true, "", 0);
+    StackTrace::PrintStack(trace, size, true, flags()->strip_path_prefix, 0);
   }
+}
+
+static void ReportSummary(const char *error_type, StackTrace *stack) {
+  if (!stack->size || !IsSymbolizerAvailable()) return;
+  AddressInfo ai;
+  SymbolizeCode(stack->trace[0], &ai, 1);
+  ReportErrorSummary(error_type,
+                     StripPathPrefix(ai.file, flags()->strip_path_prefix),
+                     ai.line, ai.function);
 }
 
 void ReportUMR(StackTrace *stack, u32 origin) {
@@ -76,17 +86,20 @@ void ReportUMR(StackTrace *stack, u32 origin) {
   Printf("%s", d.Warning());
   Report(" WARNING: Use of uninitialized value\n");
   Printf("%s", d.End());
-  StackTrace::PrintStack(stack->trace, stack->size, true, "", 0);
+  StackTrace::PrintStack(stack->trace, stack->size, true,
+                         flags()->strip_path_prefix, 0);
   if (origin) {
     DescribeOrigin(origin);
   }
+  ReportSummary("use-of-uninitialized-value", stack);
 }
 
 void ReportExpectedUMRNotFound(StackTrace *stack) {
   GenericScopedLock<StaticSpinMutex> lock(&report_mu);
 
   Printf(" WARNING: Expected use of uninitialized value not found\n");
-  StackTrace::PrintStack(stack->trace, stack->size, true, "", 0);
+  StackTrace::PrintStack(stack->trace, stack->size, true,
+                         flags()->strip_path_prefix, 0);
 }
 
 void ReportAtExitStatistics() {

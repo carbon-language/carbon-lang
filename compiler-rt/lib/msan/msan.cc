@@ -111,6 +111,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->num_callers, "num_callers");
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->verbosity, "verbosity");
+  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -123,6 +124,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->num_callers = 20;
   f->report_umrs = true;
   f->verbosity = 0;
+  f->strip_path_prefix = "";
 
   ParseFlagsFromString(f, options);
 }

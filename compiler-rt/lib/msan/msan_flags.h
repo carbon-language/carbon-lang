@@ -25,6 +25,7 @@ struct Flags {
   bool poison_stack_with_zeroes;  // default: false
   bool poison_in_malloc;  // default: true
   bool report_umrs;
+  const char *strip_path_prefix;
 };
 
 Flags *flags();

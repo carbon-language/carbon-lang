@@ -198,7 +198,7 @@ void ReportErrorSummary(const char *error_type, const char *file,
   InternalScopedBuffer<char> buff(kMaxSize);
   internal_snprintf(buff.data(), kMaxSize, "%s: %s %s:%d %s",
                     SanitizerToolName, error_type,
-                    file, line, function);
+                    file ? file : "??", line, function ? function : "??");
   __sanitizer_report_error_summary(buff.data());
 }
 
