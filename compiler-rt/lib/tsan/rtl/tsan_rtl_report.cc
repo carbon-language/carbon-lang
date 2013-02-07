@@ -512,6 +512,7 @@ bool FrameIsInternal(const ReportStack *frame) {
 //     #0 strncpy tsan_interceptors.cc:501 (foo+0x00000d8e0919)
 //     #1 <null> <null>:0 (0x7f7ad9b42707)
 static bool IsJavaNonsense(const ReportDesc *rep) {
+#ifndef TSAN_GO
   for (uptr i = 0; i < rep->mops.Size(); i++) {
     ReportMop *mop = rep->mops[i];
     ReportStack *frame = mop->stack;
@@ -530,6 +531,7 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
       return true;
     }
   }
+#endif
   return false;
 }
 
