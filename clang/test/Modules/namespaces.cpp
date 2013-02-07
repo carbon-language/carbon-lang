@@ -1,15 +1,21 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fmodule-cache-path %t -I %S/Inputs %s -verify
 
-// Importing modules which add declarations to a pre-existing non-imported
-// overload set does not currently work.
-// XFAIL: *
+int &global(int);
+int &global2(int);
 
 namespace N6 {
   char &f(char);
 }
 
 namespace N8 { }
+
+namespace LookupBeforeImport {
+  int &f(int);
+}
+void testEarly() {
+  int &r = LookupBeforeImport::f(1);
+}
 
 @import namespaces_left;
 @import namespaces_right;
@@ -18,10 +24,18 @@ void test() {
   int &ir1 = N1::f(1);
   int &ir2 = N2::f(1);
   int &ir3 = N3::f(1);
+  int &ir4 = global(1);
+  int &ir5 = ::global2(1);
   float &fr1 = N1::f(1.0f);
   float &fr2 = N2::f(1.0f);
+  float &fr3 = global(1.0f);
+  float &fr4 = ::global2(1.0f);
+  float &fr5 = LookupBeforeImport::f(1.0f);
   double &dr1 = N2::f(1.0);
   double &dr2 = N3::f(1.0);
+  double &dr3 = global(1.0);
+  double &dr4 = ::global2(1.0);
+  double &dr5 = LookupBeforeImport::f(1.0);
 }
 
 // Test namespaces merged without a common first declaration.
@@ -54,11 +68,10 @@ void testMergedMerged() {
 
 // Test merging when using anonymous namespaces, which does not
 // actually perform any merging.
-// other file: expected-note{{passing argument to parameter here}}
 void testAnonymousNotMerged() {
   N11::consumeFoo(N11::getFoo()); // expected-error{{cannot initialize a parameter of type 'N11::<anonymous>::Foo *' with an rvalue of type 'N11::<anonymous>::Foo *'}}
   N12::consumeFoo(N12::getFoo()); // expected-error{{cannot initialize a parameter of type 'N12::<anonymous>::Foo *' with an rvalue of type 'N12::<anonymous>::Foo *'}}  
 }
 
-
-// other file: expected-note{{passing argument to parameter here}}
+// namespaces-right.h: expected-note@60 {{passing argument to parameter here}}
+// namespaces-right.h: expected-note@67 {{passing argument to parameter here}}

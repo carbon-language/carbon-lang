@@ -1,5 +1,12 @@
 @import namespaces_top;
 
+double &global(double);
+double &global2(double);
+
+namespace LookupBeforeImport {
+  double &f(double);
+}
+
 namespace N2 { }
 
 namespace N2 { }

@@ -913,6 +913,24 @@ DeclContext::BuildDeclChain(ArrayRef<Decl*> Decls,
   return std::make_pair(FirstNewDecl, PrevDecl);
 }
 
+/// \brief We have just acquired external visible storage, and we already have
+/// built a lookup map. For every name in the map, pull in the new names from
+/// the external storage.
+void DeclContext::reconcileExternalVisibleStorage() {
+  assert(NeedToReconcileExternalVisibleStorage);
+  if (!LookupPtr.getPointer())
+    return;
+
+  NeedToReconcileExternalVisibleStorage = false;
+
+  StoredDeclsMap &Map = *LookupPtr.getPointer();
+  ExternalASTSource *Source = getParentASTContext().getExternalSource();
+  for (StoredDeclsMap::iterator I = Map.begin(); I != Map.end(); ++I) {
+    I->second.removeExternalDecls();
+    Source->FindExternalVisibleDeclsByName(this, I->first);
+  }
+}
+
 /// \brief Load the declarations within this lexical storage from an
 /// external source.
 void
@@ -963,9 +981,8 @@ ExternalASTSource::SetNoExternalVisibleDeclsForName(const DeclContext *DC,
   if (!(Map = DC->LookupPtr.getPointer()))
     Map = DC->CreateStoredDeclsMap(Context);
 
-  StoredDeclsList &List = (*Map)[Name];
-  assert(List.isNull());
-  (void) List;
+  // Add an entry to the map for this name, if it's not already present.
+  (*Map)[Name];
 
   return DeclContext::lookup_result();
 }
@@ -975,7 +992,6 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
                                                   DeclarationName Name,
                                                   ArrayRef<NamedDecl*> Decls) {
   ASTContext &Context = DC->getParentASTContext();
-
   StoredDeclsMap *Map;
   if (!(Map = DC->LookupPtr.getPointer()))
     Map = DC->CreateStoredDeclsMap(Context);
@@ -986,6 +1002,7 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
     if (List.isNull())
       List.setOnlyValue(*I);
     else
+      // FIXME: Need declarationReplaces handling for redeclarations in modules.
       List.AddSubsequentDecl(*I);
   }
 
@@ -1145,6 +1162,10 @@ StoredDeclsMap *DeclContext::buildLookup() {
 /// DeclContext, a DeclContext linked to it, or a transparent context
 /// nested within it.
 void DeclContext::buildLookupImpl(DeclContext *DCtx) {
+  // FIXME: If buildLookup is supposed to return a complete map, we should not
+  // bail out in buildLookup if hasExternalVisibleStorage. If it is not required
+  // to include names from PCH and modules, we should use the noload_ iterators
+  // here.
   for (decl_iterator I = DCtx->decls_begin(), E = DCtx->decls_end();
        I != E; ++I) {
     Decl *D = *I;
@@ -1175,11 +1196,17 @@ DeclContext::lookup(DeclarationName Name) {
     return PrimaryContext->lookup(Name);
 
   if (hasExternalVisibleStorage()) {
-    // If a PCH has a result for this name, and we have a local declaration, we
-    // will have imported the PCH result when adding the local declaration.
-    // FIXME: For modules, we could have had more declarations added by module
-    // imoprts since we saw the declaration of the local name.
-    if (StoredDeclsMap *Map = LookupPtr.getPointer()) {
+    if (NeedToReconcileExternalVisibleStorage)
+      reconcileExternalVisibleStorage();
+
+    StoredDeclsMap *Map = LookupPtr.getPointer();
+    if (LookupPtr.getInt())
+      Map = buildLookup();
+
+    // If a PCH/module has a result for this name, and we have a local
+    // declaration, we will have imported the PCH/module result when adding the
+    // local declaration or when reconciling the module.
+    if (Map) {
       StoredDeclsMap::iterator I = Map->find(Name);
       if (I != Map->end())
         return I->second.getLookupResult();
@@ -1224,7 +1251,7 @@ void DeclContext::localUncachedLookup(DeclarationName Name,
   }
 
   // If we have a lookup table, check there first. Maybe we'll get lucky.
-  if (Name) {
+  if (Name && !LookupPtr.getInt()) {
     if (StoredDeclsMap *Map = LookupPtr.getPointer()) {
       StoredDeclsMap::iterator Pos = Map->find(Name);
       if (Pos != Map->end()) {
