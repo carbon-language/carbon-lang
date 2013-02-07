@@ -38,6 +38,11 @@ def SIvcc_bitcast : SDNode<"SIISD::VCC_BITCAST",
   SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>]>
 >;
 
+// SMRD takes a 64bit memory address and can only add an 32bit offset
+def SIadd64bit32bit : SDNode<"ISD::ADD",
+  SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisVT<0, i64>, SDTCisVT<2, i32>]>
+>;
+
 // Transformation function, extract the lower 32bit of a 64bit immediate
 def LO32 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue() & 0xffffffff, MVT::i32);
@@ -47,6 +52,20 @@ def LO32 : SDNodeXForm<imm, [{
 def HI32 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue() >> 32, MVT::i32);
 }]>;
+
+def IMM8bitDWORD : ImmLeaf <
+  i32, [{
+    return (Imm & ~0x3FC) == 0;
+  }], SDNodeXForm<imm, [{
+    return CurDAG->getTargetConstant(
+      N->getZExtValue() >> 2, MVT::i32);
+  }]>
+>;
+
+def IMM12bit : ImmLeaf <
+  i16,
+  [{return isUInt<12>(Imm);}]
+>;
 
 class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
     AMDGPUInst<outs, ins, asm, pattern> {
@@ -79,48 +98,15 @@ class SIOperand <ValueType vt, dag opInfo>: Operand <vt> {
   let MIOperandInfo = opInfo;
 }
 
-def IMM16bit : ImmLeaf <
-  i16,
-  [{return isInt<16>(Imm);}]
->;
-
-def IMM8bit : ImmLeaf <
-  i32,
-  [{return (int32_t)Imm >= 0 && (int32_t)Imm <= 0xff;}]
->;
-
-def IMM12bit : ImmLeaf <
-  i16,
-  [{return (int16_t)Imm >= 0 && (int16_t)Imm <= 0xfff;}]
->;
-
-def IMM32bitIn64bit : ImmLeaf <
-  i64,
-  [{return isInt<32>(Imm);}]
->;
-
 class GPR4Align <RegisterClass rc> : Operand <vAny> {
   let EncoderMethod = "GPR4AlignEncode";
   let MIOperandInfo = (ops rc:$reg); 
 }
 
-class GPR2Align <RegisterClass rc, ValueType vt> : Operand <vt> {
+class GPR2Align <RegisterClass rc> : Operand <iPTR> {
   let EncoderMethod = "GPR2AlignEncode";
   let MIOperandInfo = (ops rc:$reg);
 }
-
-def SMRDmemrr : Operand<iPTR> {
-  let MIOperandInfo = (ops SReg_64, SReg_32);
-  let EncoderMethod = "GPR2AlignEncode";
-}
-
-def SMRDmemri : Operand<iPTR> {
-  let MIOperandInfo = (ops SReg_64, i32imm);
-  let EncoderMethod = "SMRDmemriEncode";
-}
-
-def ADDR_Reg     : ComplexPattern<i64, 2, "SelectADDRReg", [], []>;
-def ADDR_Offset8 : ComplexPattern<i64, 2, "SelectADDR8BitOffset", [], []>;
 
 let Uses = [EXEC] in {
 
@@ -272,17 +258,15 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
 } // End Uses = [EXEC]
 
-class SMRD <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
-    Enc32<outs, ins, asm, pattern> {
+class SMRD <bits<5> op, bits<1> imm, dag outs, dag ins, string asm,
+            list<dag> pattern> : Enc32<outs, ins, asm, pattern> {
 
   bits<7> SDST;
-  bits<15> PTR;
-  bits<8> OFFSET = PTR{7-0};
-  bits<1> IMM    = PTR{8};
-  bits<6> SBASE  = PTR{14-9};
+  bits<6> SBASE;
+  bits<8> OFFSET;
   
   let Inst{7-0} = OFFSET;
-  let Inst{8} = IMM;
+  let Inst{8} = imm;
   let Inst{14-9} = SBASE;
   let Inst{21-15} = SDST;
   let Inst{26-22} = op;
@@ -573,28 +557,22 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
   let mayLoad = 0;
 }
 
-multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
-                        ValueType vt> {
+multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
   def _IMM : SMRD <
-              op,
-              (outs dstClass:$dst),
-              (ins SMRDmemri:$src0),
-              asm,
-              [(set (vt dstClass:$dst), (constant_load ADDR_Offset8:$src0))]
+             op, 1,
+             (outs dstClass:$dst),
+             (ins GPR2Align<SReg_64>:$sbase, i32imm:$offset),
+             asm,
+             []
   >;
 
   def _SGPR : SMRD <
-              op,
+              op, 0,
               (outs dstClass:$dst),
-              (ins SMRDmemrr:$src0),
+              (ins GPR2Align<SReg_64>:$sbase, SReg_32:$soff),
               asm,
-              [(set (vt dstClass:$dst), (constant_load ADDR_Reg:$src0))]
+              []
   >;
-}
-
-multiclass SMRD_32 <bits<5> op, string asm, RegisterClass dstClass> {
-  defm _F32 : SMRD_Helper <op, asm, dstClass, f32>;
-  defm _I32 : SMRD_Helper <op, asm, dstClass, i32>;
 }
 
 include "SIInstrFormats.td"

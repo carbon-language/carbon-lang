@@ -92,10 +92,6 @@ public:
   virtual unsigned GPR4AlignEncode(const MCInst &MI, unsigned OpNo,
                                    SmallVectorImpl<MCFixup> &Fixup) const;
 
-  /// \brief Encoding for SMRD indexed loads
-  virtual uint32_t SMRDmemriEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixup) const;
-
   /// \brief Post-Encoder method for VOP instructions
   virtual uint64_t VOPPostEncode(const MCInst &MI, uint64_t Value) const;
 
@@ -181,36 +177,6 @@ unsigned SIMCCodeEmitter::GPR4AlignEncode(const MCInst &MI,
                                           unsigned OpNo,
                                         SmallVectorImpl<MCFixup> &Fixup) const {
   return GPRAlign(MI, OpNo, 2);
-}
-
-#define SMRD_OFFSET_MASK 0xff
-#define SMRD_IMM_SHIFT 8
-#define SMRD_SBASE_MASK 0x3f
-#define SMRD_SBASE_SHIFT 9
-/// This function is responsibe for encoding the offset
-/// and the base ptr for SMRD instructions it should return a bit string in
-/// this format:
-///
-/// OFFSET = bits{7-0}
-/// IMM    = bits{8}
-/// SBASE  = bits{14-9}
-///
-uint32_t SIMCCodeEmitter::SMRDmemriEncode(const MCInst &MI, unsigned OpNo,
-                                        SmallVectorImpl<MCFixup> &Fixup) const {
-  uint32_t Encoding;
-
-  const MCOperand &OffsetOp = MI.getOperand(OpNo + 1);
-
-  //XXX: Use this function for SMRD loads with register offsets
-  assert(OffsetOp.isImm());
-
-  Encoding =
-      (getMachineOpValue(MI, OffsetOp, Fixup) & SMRD_OFFSET_MASK)
-    | (1 << SMRD_IMM_SHIFT) //XXX If the Offset is a register we shouldn't set this bit
-    | ((GPR2AlignEncode(MI, OpNo, Fixup) & SMRD_SBASE_MASK) << SMRD_SBASE_SHIFT)
-    ;
-
-  return Encoding;
 }
 
 //===----------------------------------------------------------------------===//

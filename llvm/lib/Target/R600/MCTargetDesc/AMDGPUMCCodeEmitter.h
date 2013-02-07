@@ -49,10 +49,6 @@ public:
                                    SmallVectorImpl<MCFixup> &Fixups) const {
     return 0;
   }
-  virtual uint32_t SMRDmemriEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixups) const {
-    return 0;
-  }
 };
 
 } // End namespace llvm

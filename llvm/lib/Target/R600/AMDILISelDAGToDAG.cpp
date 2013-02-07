@@ -72,8 +72,6 @@ private:
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
   bool SelectGlobalValueVariableOffset(SDValue Addr,
       SDValue &BaseReg, SDValue& Offset);
-  bool SelectADDR8BitOffset(SDValue Addr, SDValue& Base, SDValue& Offset);
-  bool SelectADDRReg(SDValue Addr, SDValue& Base, SDValue& Offset);
   bool SelectADDRVTX_READ(SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectADDRIndirect(SDValue Addr, SDValue &Base, SDValue &Offset);
 
@@ -527,43 +525,6 @@ bool AMDGPUDAGToDAGISel::SelectGlobalValueVariableOffset(SDValue Addr,
   return false;
 }
 
-bool AMDGPUDAGToDAGISel::SelectADDR8BitOffset(SDValue Addr, SDValue& Base,
-                                             SDValue& Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress) {
-    return false;
-  }
-
-
-  if (Addr.getOpcode() == ISD::ADD) {
-    bool Match = false;
-
-    // Find the base ptr and the offset
-    for (unsigned i = 0; i < Addr.getNumOperands(); i++) {
-      SDValue Arg = Addr.getOperand(i);
-      ConstantSDNode * OffsetNode = dyn_cast<ConstantSDNode>(Arg);
-      // This arg isn't a constant so it must be the base PTR.
-      if (!OffsetNode) {
-        Base = Addr.getOperand(i);
-        continue;
-      }
-      // Check if the constant argument fits in 8-bits.  The offset is in bytes
-      // so we need to convert it to dwords.
-      if (isUInt<8>(OffsetNode->getZExtValue() >> 2)) {
-        Match = true;
-        Offset = CurDAG->getTargetConstant(OffsetNode->getZExtValue() >> 2,
-                                           MVT::i32);
-      }
-    }
-    return Match;
-  }
-
-  // Default case, no offset
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return true;
-}
-
 bool AMDGPUDAGToDAGISel::SelectADDRVTX_READ(SDValue Addr, SDValue &Base,
                                            SDValue &Offset) {
   ConstantSDNode * IMMOffset;
@@ -588,20 +549,6 @@ bool AMDGPUDAGToDAGISel::SelectADDRVTX_READ(SDValue Addr, SDValue &Base,
   // Default case, no offset
   Base = Addr;
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return true;
-}
-
-bool AMDGPUDAGToDAGISel::SelectADDRReg(SDValue Addr, SDValue& Base,
-                                      SDValue& Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress  ||
-      Addr.getOpcode() != ISD::ADD) {
-    return false;
-  }
-
-  Base = Addr.getOperand(0);
-  Offset = Addr.getOperand(1);
-
   return true;
 }
 

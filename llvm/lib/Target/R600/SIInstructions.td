@@ -461,17 +461,21 @@ def TBUFFER_LOAD_FORMAT_XYZW : MTBUF_Load_Helper <0x00000003, "TBUFFER_LOAD_FORM
 //def TBUFFER_STORE_FORMAT_XYZ : MTBUF_ <0x00000006, "TBUFFER_STORE_FORMAT_XYZ", []>;
 //def TBUFFER_STORE_FORMAT_XYZW : MTBUF_ <0x00000007, "TBUFFER_STORE_FORMAT_XYZW", []>;
 
-defm S_LOAD_DWORD : SMRD_32 <0x00000000, "S_LOAD_DWORD", SReg_32>;
+let mayLoad = 1 in {
+
+defm S_LOAD_DWORD : SMRD_Helper <0x00000000, "S_LOAD_DWORD", SReg_32>;
 
 //def S_LOAD_DWORDX2 : SMRD_DWORDX2 <0x00000001, "S_LOAD_DWORDX2", []>;
-defm S_LOAD_DWORDX4 : SMRD_Helper <0x00000002, "S_LOAD_DWORDX4", SReg_128, v4i32>;
-defm S_LOAD_DWORDX8 : SMRD_Helper <0x00000003, "S_LOAD_DWORDX8", SReg_256, v8i32>;
+defm S_LOAD_DWORDX4 : SMRD_Helper <0x00000002, "S_LOAD_DWORDX4", SReg_128>;
+defm S_LOAD_DWORDX8 : SMRD_Helper <0x00000003, "S_LOAD_DWORDX8", SReg_256>;
 //def S_LOAD_DWORDX16 : SMRD_DWORDX16 <0x00000004, "S_LOAD_DWORDX16", []>;
 //def S_BUFFER_LOAD_DWORD : SMRD_ <0x00000008, "S_BUFFER_LOAD_DWORD", []>;
 //def S_BUFFER_LOAD_DWORDX2 : SMRD_DWORDX2 <0x00000009, "S_BUFFER_LOAD_DWORDX2", []>;
 //def S_BUFFER_LOAD_DWORDX4 : SMRD_DWORDX4 <0x0000000a, "S_BUFFER_LOAD_DWORDX4", []>;
 //def S_BUFFER_LOAD_DWORDX8 : SMRD_DWORDX8 <0x0000000b, "S_BUFFER_LOAD_DWORDX8", []>;
 //def S_BUFFER_LOAD_DWORDX16 : SMRD_DWORDX16 <0x0000000c, "S_BUFFER_LOAD_DWORDX16", []>;
+
+} // mayLoad = 1
 
 //def S_MEMTIME : SMRD_ <0x0000001e, "S_MEMTIME", []>;
 //def S_DCACHE_INV : SMRD_ <0x0000001f, "S_DCACHE_INV", []>;
@@ -1418,5 +1422,34 @@ def : Pat <
 def : Pat <(f32 (IL_mad AllReg_32:$src0, VReg_32:$src1, VReg_32:$src2)),
            (V_MAD_LEGACY_F32 AllReg_32:$src0, VReg_32:$src1, VReg_32:$src2,
             0, 0, 0, 0)>;
+
+/********** ================== **********/
+/**********   SMRD Patterns    **********/
+/********** ================== **********/
+
+multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
+  // 1. Offset as 8bit DWORD immediate
+  def : Pat <
+    (constant_load (SIadd64bit32bit SReg_64:$sbase, IMM8bitDWORD:$offset)),
+    (vt (Instr_IMM SReg_64:$sbase, IMM8bitDWORD:$offset))
+  >;
+
+  // 2. Offset loaded in an 32bit SGPR
+  def : Pat <
+    (constant_load (SIadd64bit32bit SReg_64:$sbase, imm:$offset)),
+    (vt (Instr_SGPR SReg_64:$sbase, (S_MOV_IMM_I32 imm:$offset)))
+  >;
+
+  // 3. No offset at all
+  def : Pat <
+    (constant_load SReg_64:$sbase),
+    (vt (Instr_IMM SReg_64:$sbase, 0))
+  >;
+}
+
+defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
+defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
+defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v4i32>;
+defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v8i32>;
 
 } // End isSI predicate

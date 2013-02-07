@@ -38,10 +38,6 @@ public:
                                     unsigned OpNo) const {
     return 0;
   }
-  virtual uint32_t SMRDmemriEncode(const MachineInstr &MI, unsigned OpNo)
-                                                                   const {
-    return 0;
-  }
 };
 
 } // End namespace llvm
