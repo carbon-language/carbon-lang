@@ -153,6 +153,7 @@ namespace {
     // This container maps an <class, group number for ivar> tuple to the type
     // of the struct where the bitfield belongs.
     llvm::DenseMap<std::pair<const ObjCInterfaceDecl*, unsigned>, QualType> GroupRecordType;
+    SmallVector<FunctionDecl*, 32> FunctionDefinitionsSeen;
     
     // This maps an original source AST to it's rewritten form. This allows
     // us to avoid rewriting the same node twice (which is very uncommon).
@@ -203,6 +204,18 @@ namespace {
           }
         }
 
+        if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(*I)) {
+          // Under modern abi, we cannot translate body of the function
+          // yet until all class extensions and its implementation is seen.
+          // This is because they may introduce new bitfields which must go
+          // into their grouping struct.
+          if (FDecl->isThisDeclarationADefinition() &&
+              // Not c functions defined inside an objc container.
+              !FDecl->isTopLevelDeclInObjCContainer()) {
+            FunctionDefinitionsSeen.push_back(FDecl);
+            break;
+          }
+        }
         HandleTopLevelSingleDecl(*I);
       }
       return true;
@@ -5268,7 +5281,7 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND, bool firstDecl,
       flag |= BLOCK_FIELD_IS_OBJECT;
     std::string HF = SynthesizeByrefCopyDestroyHelper(ND, flag);
     if (!HF.empty())
-      InsertText(FunLocStart, HF);
+      Preamble += HF;
   }
   
   // struct __Block_byref_ND ND = 
@@ -6023,6 +6036,14 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
 
   RewriteInclude();
 
+  for (unsigned i = 0, e = FunctionDefinitionsSeen.size(); i < e; i++) {
+    // translation of function bodies were postponed untill all class and
+    // their extensions and implementations are seen. This is because, we
+    // cannot build grouping structs for bitfields untill they are all seen.
+    FunctionDecl *FDecl = FunctionDefinitionsSeen[i];
+    HandleTopLevelSingleDecl(FDecl);
+  }
+
   // Here's a great place to add any extra declarations that may be needed.
   // Write out meta data for each @protocol(<expr>).
   for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
@@ -6044,7 +6065,7 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
     // private ivars.
     RewriteInterfaceDecl(CDecl);
   }
-
+  
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
   if (const RewriteBuffer *RewriteBuf =
