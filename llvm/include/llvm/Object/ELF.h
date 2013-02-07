@@ -698,8 +698,8 @@ public:
   virtual library_iterator begin_libraries_needed() const;
   virtual library_iterator end_libraries_needed() const;
 
-  virtual dyn_iterator begin_dynamic_table() const;
-  virtual dyn_iterator end_dynamic_table() const;
+  dyn_iterator begin_dynamic_table() const;
+  dyn_iterator end_dynamic_table() const;
 
   typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
   typedef ELFEntityIterator<const Elf_Rel> Elf_Rel_Iter;
