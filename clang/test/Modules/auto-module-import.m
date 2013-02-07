@@ -1,7 +1,7 @@
 // other file: expected-note{{'no_umbrella_A_private' declared here}}
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -Wauto-import -fmodule-cache-path %t -fmodules -F %S/Inputs %s -verify
+// RUN: %clang_cc1 -Wauto-import -fmodules-cache-path=%t -fmodules -F %S/Inputs %s -verify
 
 #include <DependsOnModule/DependsOnModule.h> // expected-warning{{treating #include as an import of module 'DependsOnModule'}}
 

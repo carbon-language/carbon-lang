@@ -414,24 +414,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
       CmdArgs.push_back(C.getArgs().MakeArgString(sysroot));
     }
   }
-  
-  // If a module path was provided, pass it along. Otherwise, use a temporary
-  // directory.
-  if (Arg *A = Args.getLastArg(options::OPT_fmodule_cache_path)) {
-    A->claim();
-    A->render(Args, CmdArgs);
-  } else {
-    SmallString<128> DefaultModuleCache;
-    llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false, 
-                                           DefaultModuleCache);
-    llvm::sys::path::append(DefaultModuleCache, "clang-module-cache");
-    CmdArgs.push_back("-fmodule-cache-path");
-    CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
-  }
 
-  // Pass through all -fmodules-ignore-macro arguments.
-  Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
-  
   // Parse additional include paths from environment variables.
   // FIXME: We should probably sink the logic for handling these from the
   // frontend into the driver. It will allow deleting 4 otherwise unused flags.
@@ -2718,6 +2701,25 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       HaveModules = true;
     }
   }
+
+  // If a module path was provided, pass it along. Otherwise, use a temporary
+  // directory.
+  if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path)) {
+    A->claim();
+    if (HaveModules) {
+      A->render(Args, CmdArgs);
+    }
+  } else if (HaveModules) {
+    SmallString<128> DefaultModuleCache;
+    llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false,
+                                           DefaultModuleCache);
+    llvm::sys::path::append(DefaultModuleCache, "clang-module-cache");
+    CmdArgs.push_back("-fmodules-cache-path");
+    CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
+  }
+
+  // Pass through all -fmodules-ignore-macro arguments.
+  Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
 
   // -fmodules-autolink (on by default when modules is enabled) automatically
   // links against libraries for imported modules.

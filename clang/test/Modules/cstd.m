@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang -fsyntax-only -isystem %S/Inputs/System/usr/include -fmodules -fmodule-cache-path %t -D__need_wint_t -Werror=implicit-function-declaration %s
+// RUN: %clang -fsyntax-only -isystem %S/Inputs/System/usr/include -fmodules -fmodules-cache-path=%t -D__need_wint_t -Werror=implicit-function-declaration %s
 
 // Supplied by compiler, but referenced from the "/usr/include" module map.
 @import cstd.float_constants;

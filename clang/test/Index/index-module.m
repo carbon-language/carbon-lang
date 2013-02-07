@@ -4,7 +4,7 @@
 int glob;
 
 // RUN: rm -rf %t.cache
-// RUN: c-index-test -index-file %s -fmodule-cache-path %t.cache -fmodules -F %S/../Modules/Inputs \
+// RUN: c-index-test -index-file %s -fmodules-cache-path=%t.cache -fmodules -F %S/../Modules/Inputs \
 // RUN:      -Xclang -fdisable-module-hash | FileCheck %s
 
 // CHECK-NOT: [indexDeclaration]

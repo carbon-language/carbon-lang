@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodule-cache-path %t -fmodule-name=module_private_left -emit-module %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodule-cache-path %t -fmodule-name=module_private_right -emit-module %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodule-cache-path %t %s -verify
+// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodules-cache-path=%t -fmodule-name=module_private_left -emit-module %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodules-cache-path=%t -fmodule-name=module_private_right -emit-module %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodules-cache-path=%t %s -verify
 // FIXME: When we have a syntax for modules in C++, use that.
 
 @import module_private_left;

@@ -12,8 +12,8 @@ int glob;
 #endif
 
 // RUN: rm -rf %t.cache
-// RUN: c-index-test -write-pch %t.h.pch %s -fmodule-cache-path %t.cache -fmodules -F %S/../Modules/Inputs -Xclang -fdisable-module-hash
-// RUN: c-index-test -index-file %s -include %t.h -fmodule-cache-path %t.cache -fmodules -F %S/../Modules/Inputs \
+// RUN: c-index-test -write-pch %t.h.pch %s -fmodules-cache-path=%t.cache -fmodules -F %S/../Modules/Inputs -Xclang -fdisable-module-hash
+// RUN: c-index-test -index-file %s -include %t.h -fmodules-cache-path=%t.cache -fmodules -F %S/../Modules/Inputs \
 // RUN:      -Xclang -fdisable-module-hash | FileCheck %s
 
 // CHECK-NOT: [indexDeclaration]
