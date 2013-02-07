@@ -212,7 +212,7 @@ public:
 
     switch (Opts->AnalysisConstraintsOpt) {
     default:
-      llvm_unreachable("Unknown store manager.");
+      llvm_unreachable("Unknown constraint manager.");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
       case NAME##Model: CreateConstraintMgr = CREATEFN; break;
 #include "clang/StaticAnalyzer/Core/Analyses.def"
