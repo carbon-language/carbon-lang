@@ -2714,7 +2714,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false,
                                            DefaultModuleCache);
     llvm::sys::path::append(DefaultModuleCache, "clang-module-cache");
-    CmdArgs.push_back("-fmodules-cache-path");
+    const char Arg[] = "-fmodules-cache-path=";
+    DefaultModuleCache.insert(DefaultModuleCache.begin(),
+                              Arg, Arg + strlen(Arg));
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
 

@@ -111,7 +111,7 @@ static bool skipArg(const char *Flag, bool &SkipNextArg) {
   bool Res = llvm::StringSwitch<bool>(Flag)
     .Cases("-I", "-MF", "-MT", "-MQ", true)
     .Cases("-o", "-coverage-file", "-dependency-file", true)
-    .Cases("-fdebug-compilation-dir", "-fmodule-cache-path", "-idirafter", true)
+    .Cases("-fdebug-compilation-dir", "-idirafter", true)
     .Cases("-include", "-include-pch", "-internal-isystem", true)
     .Cases("-internal-externc-isystem", "-iprefix", "-iwithprefix", true)
     .Cases("-iwithprefixbefore", "-isysroot", "-isystem", "-iquote", true)
