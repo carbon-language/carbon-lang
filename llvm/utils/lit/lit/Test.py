@@ -7,6 +7,10 @@ class TestResult:
         self.name = name
         self.isFailure = isFailure
 
+    def __repr__(self):
+        return '%s%r' % (self.__class__.__name__,
+                         (self.name, self.isFailure))
+
 PASS        = TestResult('PASS', False)
 XFAIL       = TestResult('XFAIL', False)
 FAIL        = TestResult('FAIL', True)
