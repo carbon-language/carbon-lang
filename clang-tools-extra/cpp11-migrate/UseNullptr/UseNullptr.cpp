@@ -53,7 +53,7 @@ int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
     return result;
   }
 
-  RewriterContainer Rewrite(UseNullptrTool.getFiles());
+  RewriterContainer Rewrite(UseNullptrTool.getFiles(), InputStates);
 
   // FIXME: Do something if some replacements didn't get applied?
   UseNullptrTool.applyAllReplacements(Rewrite.getRewriter());

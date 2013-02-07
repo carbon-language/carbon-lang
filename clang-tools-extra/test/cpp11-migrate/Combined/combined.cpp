@@ -4,7 +4,6 @@
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: cpp11-migrate -loop-convert -use-nullptr -risk=risky %t_risky.cpp --
 // RUN: FileCheck -check-prefix=RISKY -input-file=%t_risky.cpp %s
-// XFAIL: *
 
 #define NULL 0
 

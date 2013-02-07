@@ -69,7 +69,7 @@ int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
     return result;
   }
 
-  RewriterContainer Rewrite(LoopTool.getFiles());
+  RewriterContainer Rewrite(LoopTool.getFiles(), InputStates);
 
   // FIXME: Do something if some replacements didn't get applied?
   LoopTool.applyAllReplacements(Rewrite.getRewriter());
