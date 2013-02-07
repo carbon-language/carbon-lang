@@ -2764,7 +2764,7 @@ class __rs_default
 
     __rs_default();
 public:
-    typedef unsigned result_type;
+    typedef uint_fast32_t result_type;
 
     static const result_type _Min = 0;
     static const result_type _Max = 0xFFFFFFFF;
