@@ -13,6 +13,7 @@
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Resolver.h"
+#include "lld/Passes/LayoutPass.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/MachOTargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -60,25 +61,21 @@ cmdLineOutputFilePath("o",
               llvm::cl::desc("Specify output filename"), 
               llvm::cl::value_desc("filename"));
 
-llvm::cl::opt<bool> 
-cmdLineDoStubsPass("stubs-pass", 
-          llvm::cl::desc("Run pass to create stub atoms"));
+llvm::cl::opt<bool> cmdLineDoStubsPass(
+    "stubs-pass", llvm::cl::desc("Run pass to create stub atoms"));
 
-llvm::cl::opt<bool> 
-cmdLineDoGotPass("got-pass", 
-          llvm::cl::desc("Run pass to create GOT atoms"));
+llvm::cl::opt<bool>
+cmdLineDoGotPass("got-pass", llvm::cl::desc("Run pass to create GOT atoms"));
 
-llvm::cl::opt<bool> 
-cmdLineDoOrderPass("order-pass", 
-          llvm::cl::desc("Run pass to sort atoms"));
+llvm::cl::opt<bool>
+cmdLineDoLayoutPass("layout-pass", llvm::cl::desc("Run pass to layout atoms"));
 
-llvm::cl::opt<bool> 
-cmdLineUndefinesIsError("undefines-are-errors", 
-          llvm::cl::desc("Any undefined symbols at end is an error"));
+llvm::cl::opt<bool> cmdLineUndefinesIsError(
+    "undefines-are-errors",
+    llvm::cl::desc("Any undefined symbols at end is an error"));
 
-llvm::cl::opt<bool> 
-cmdLineForceLoad("force-load", 
-          llvm::cl::desc("force load all members of the archive"));
+llvm::cl::opt<bool> cmdLineForceLoad(
+    "force-load", llvm::cl::desc("force load all members of the archive"));
 
 llvm::cl::opt<bool> 
 cmdLineCommonsSearchArchives("commons-search-archives", 
@@ -152,20 +149,17 @@ archSelected("arch",
 enum endianChoice {
   little, big
 };
-llvm::cl::opt<endianChoice>
-endianSelected("endian",
-  llvm::cl::desc("Select endianness of ELF output"),
-  llvm::cl::values(
-    clEnumValN(big, "big", 
-               "output big endian format"),
-    clEnumValN(little, "little", 
-               "output little endian format"),
-    clEnumValEnd));
-    
+llvm::cl::opt<endianChoice> endianSelected(
+    "endian", llvm::cl::desc("Select endianness of ELF output"),
+    llvm::cl::values(clEnumValN(big, "big", "output big endian format"),
+                     clEnumValN(little, "little",
+                                "output little endian format"), clEnumValEnd));
+
 class TestingTargetInfo : public TargetInfo {
 public:
-  TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got, bool order)
-      : TargetInfo(lo), _doStubs(stubs), _doGOT(got), _doOrder(order) {}
+  TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got, bool layout)
+      : TargetInfo(lo), _doStubs(stubs), _doGOT(got), _doLayout(layout) {
+  }
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 
@@ -174,8 +168,8 @@ public:
       pm.add(std::unique_ptr<Pass>(new TestingStubsPass(*this)));
     if (_doGOT)
       pm.add(std::unique_ptr<Pass>(new TestingGOTPass(*this)));
-    if (_doOrder)
-      pm.add(std::unique_ptr<Pass>(new OrderPass));
+    if (_doLayout)
+      pm.add(std::unique_ptr<Pass>(new LayoutPass()));
   }
 
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {
@@ -205,9 +199,9 @@ public:
   }
 
 private:
-  bool              _doStubs;
-  bool              _doGOT;
-  bool              _doOrder;
+  bool _doStubs;
+  bool _doGOT;
+  bool _doLayout;
 };
 
 int main(int argc, char *argv[]) {
@@ -252,8 +246,8 @@ int main(int argc, char *argv[]) {
     break;
   }
 
-  TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass, 
-                                                          cmdLineDoOrderPass);
+  TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass,
+                        cmdLineDoLayoutPass);
 
   std::unique_ptr<ELFTargetInfo> eti = ELFTargetInfo::create(lo);
   std::unique_ptr<MachOTargetInfo> mti = MachOTargetInfo::create(lo);

@@ -11,6 +11,8 @@
 #define LLD_READER_WRITER_ELF_TARGET_INFO_H
 
 #include "lld/Core/LinkerOptions.h"
+#include "lld/Core/PassManager.h"
+#include "lld/Core/Pass.h"
 #include "lld/Core/TargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -58,6 +60,8 @@ public:
     assert(_targetHandler && "Got null TargetHandler!");
     return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
   }
+
+  virtual void addPasses(PassManager &pm) const;
 
 protected:
   std::unique_ptr<TargetHandlerBase> _targetHandler;

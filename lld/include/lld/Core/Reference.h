@@ -11,6 +11,7 @@
 #define LLD_CORE_REFERENCES_H_
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/StringSwitch.h"
 
 namespace lld {
 
@@ -33,6 +34,13 @@ public:
   /// Negative kind values are architecture independent.
   typedef int32_t Kind;
 
+  enum {
+    kindInGroup = -3,
+    kindLayoutAfter = -2,
+    kindLayoutBefore = -1,
+    kindTargetLow = 0
+  };
+
   // A value to be added to the value of a target
   typedef int64_t Addend;
 
@@ -42,6 +50,30 @@ public:
   /// During linking, some optimizations may change the code gen and
   /// hence the reference kind.
   virtual void setKind(Kind) = 0;
+
+  virtual StringRef kindToString() const {
+    switch (kind()) {
+    case kindLayoutBefore:
+      return "layout-before";
+    case kindLayoutAfter:
+      return "layout-after";
+    case kindInGroup:
+      return "in-group";
+    default:
+      return "unknown";
+    }
+  }
+
+  virtual int32_t stringToKind(StringRef kindString) const {
+    if (kindString == "in-group")
+      return kindInGroup;
+    else if (kindString == "layout-before")
+      return kindLayoutBefore;
+    else if (kindString == "layout-after")
+      return kindLayoutAfter;
+    assert(0 && "unknown relocation kind");
+    return -1;
+  }
 
   /// If the reference is a fixup in the Atom, then this returns the
   /// byte offset into the Atom's content to do the fix up.
@@ -71,7 +103,6 @@ protected:
   /// an array of References, so they cannot be individually deleted by anyone.
   virtual ~Reference() {}
 };
-
 
 } // namespace lld
 

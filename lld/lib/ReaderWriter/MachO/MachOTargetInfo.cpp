@@ -13,6 +13,7 @@
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/Core/PassManager.h"
+#include "lld/Passes/LayoutPass.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/MachO.h"
@@ -78,7 +79,7 @@ public:
   virtual void addPasses(PassManager &pm) const {
     pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
     pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
-    pm.add(std::unique_ptr<Pass>(new OrderPass()));
+    pm.add(std::unique_ptr<Pass>(new LayoutPass()));
   }
 };
 

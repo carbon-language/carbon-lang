@@ -32,26 +32,24 @@ template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
 public:
 
   ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target)
-    : _target(target)
-    , _targetSymbolIndex(rela->getSymbol())
-    , _offsetInAtom(offset)
-    , _addend(rela->r_addend)
-    , _kind(rela->getType()) {}
+      : _target(target), _targetSymbolIndex(rela->getSymbol()),
+        _offsetInAtom(offset), _addend(rela->r_addend),
+        _kind((Kind) rela->getType()) {
+  }
 
   ELFReference(const Elf_Rel *rel, uint64_t offset, const Atom *target)
-    : _target(target)
-    , _targetSymbolIndex(rel->getSymbol())
-    , _offsetInAtom(offset)
-    , _addend(0)
-    , _kind(rel->getType()) {}
-
-  virtual uint64_t offsetInAtom() const {
-    return _offsetInAtom;
+      : _target(target), _targetSymbolIndex(rel->getSymbol()),
+        _offsetInAtom(offset), _addend(0), _kind((Kind) rel->getType()) {
   }
 
-  virtual Kind kind() const {
-    return _kind;
+  ELFReference(Kind kind)
+      : _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0),
+        _kind(kind) {
   }
+
+  virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
+
+  virtual Kind kind() const { return _kind; }
 
   virtual void setKind(Kind kind) {
     _kind = kind;
@@ -74,15 +72,14 @@ public:
     _addend = A;
   }
 
-  virtual void setTarget(const Atom *newAtom) {
-    _target = newAtom;
-  }
+  virtual void setTarget(const Atom *newAtom) { _target = newAtom; }
+
 private:
-  const Atom  *_target;
-  uint64_t     _targetSymbolIndex;
-  uint64_t     _offsetInAtom;
-  Addend       _addend;
-  Kind         _kind;
+  const Atom *_target;
+  uint64_t _targetSymbolIndex;
+  uint64_t _offsetInAtom;
+  Addend _addend;
+  Kind _kind;
 };
 
 /// \brief These atoms store symbols that are fixed to a particular address.
@@ -416,10 +413,15 @@ public:
     return ((_referenceList)[index]);
   }
 
-  void incrementIterator(const void*& It) const {
+  void incrementIterator(const void *&It) const {
     uintptr_t index = reinterpret_cast<uintptr_t>(It);
     ++index;
-    It = reinterpret_cast<const void*>(index);
+    It = reinterpret_cast<const void *>(index);
+  }
+
+  void addReference(ELFReference<ELFT> *reference) {
+    _referenceList.push_back(reference);
+    _referenceEndIndex = _referenceList.size();
   }
 
 private:

@@ -99,7 +99,13 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   // Runtime only relocations. Ignore here.
   case R_X86_64_IRELATIVE:
     break;
-  default: {
+
+  case lld::Reference::kindLayoutAfter:
+  case lld::Reference::kindLayoutBefore:
+  case lld::Reference::kindInGroup:
+    break;
+
+  default : {
     std::string str;
     llvm::raw_string_ostream s(str);
     auto name = _targetInfo.stringFromRelocKind(ref.kind());

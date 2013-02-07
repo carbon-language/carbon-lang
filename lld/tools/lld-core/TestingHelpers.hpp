@@ -270,12 +270,15 @@ struct TestingKindMapping {
 // Table of fixup kinds in YAML documents used for testing
 //
 const TestingKindMapping sKinds[] = {
-    {"call32",      2, true,  false, false},
-    {"pcrel32",     3, false, false, false},
-    {"gotLoad32",   7, false, true,  true},
-    {"gotUse32",    9, false, false, true},
-    {"lea32wasGot", 8, false, false, false},
-    {nullptr,       0, false, false, false}
+    {"in-group",      -3, false,  false, false},
+    {"layout-after",  -2, false,  false, false},
+    {"layout-before", -1, false,  false, false},
+    {"call32",         2, true,  false, false},
+    {"pcrel32",        3, false, false, false},
+    {"gotLoad32",      7, false, true,  true},
+    {"gotUse32",       9, false, false, true},
+    {"lea32wasGot",    8, false, false, false},
+    {nullptr,          0, false, false, false}
   };
 
 class TestingStubsPass : public StubsPass {

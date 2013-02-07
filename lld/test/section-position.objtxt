@@ -1,5 +1,5 @@
-# RUN: lld-core -order-pass=true %s | FileCheck %s -check-prefix=CHKORDER
-# RUN: lld-core -order-pass=false %s | FileCheck %s -check-prefix=CHKUNORD
+# RUN: lld-core -layout-pass=true %s | FileCheck %s -check-prefix=CHKORDER
+# RUN: lld-core -layout-pass=false %s | FileCheck %s -check-prefix=CHKUNORD
 
 #
 # Test that atoms with section position requirements are sorted properly.

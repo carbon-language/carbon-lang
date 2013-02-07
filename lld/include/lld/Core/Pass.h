@@ -11,6 +11,8 @@
 #define LLD_CORE_PASS_H_
 
 #include "lld/Core/Atom.h"
+#include "lld/Core/File.h"
+#include "lld/Core/range.h"
 #include "lld/Core/Reference.h"
 
 #include <vector>
@@ -110,16 +112,6 @@ public:
   /// the specified atom.
   virtual const DefinedAtom *makeGOTEntry(const Atom &target) = 0;
 };
-
-/// Pass for sorting atoms.
-class OrderPass : public Pass {
-public:
-  OrderPass() : Pass() {}
-  
-  /// Sorts atoms in mergedFile by content type then by command line order.
-  virtual void perform(MutableFile &mergedFile);
-};
-
 
 } // namespace lld
 

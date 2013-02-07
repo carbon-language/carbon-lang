@@ -48,7 +48,11 @@ ErrorOr<void> X86TargetRelocationHandler::applyRelocation(
   case R_386_PC32:
     relocPC32(location, relocVAddress, targetVAddress, ref.addend());
     break;
-  default: {
+  case lld::Reference::kindLayoutAfter:
+  case lld::Reference::kindLayoutBefore:
+  case lld::Reference::kindInGroup:
+    break;
+  default : {
     std::string str;
     llvm::raw_string_ostream s(str);
     auto name = _targetInfo.stringFromRelocKind(ref.kind());

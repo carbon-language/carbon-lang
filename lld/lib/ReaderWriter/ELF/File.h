@@ -232,6 +232,8 @@ public:
                                  content, 0, 0, _references));
       }
 
+      ELFDefinedAtom<ELFT> *previous_atom = nullptr;
+
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
         StringRef symbolName;
@@ -283,8 +285,37 @@ public:
         ArrayRef<uint8_t> symbolData = ArrayRef<uint8_t>(
             (uint8_t *)sectionContents.data() + (*si)->st_value, contentSize);
 
+        // Check to see if we need to add the FollowOn Reference
+        // We dont want to do for symbols that are
+        // a) common symbols
+        // b) the atoms have the merge attribute set
+        // so, lets add a follow-on reference from the previous atom to the 
+        // current atom as well as lets add a preceded-by reference from the 
+        // current atom to the previous atom, so that the previous atom 
+        // is not removed in any case
+        ELFReference<ELFT> *followOn = nullptr;
+        if (!isCommon && previous_atom &&
+            previous_atom->merge() == DefinedAtom::mergeNo) {
+          followOn = new (_readerStorage)
+              ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
+          previous_atom->addReference(followOn);
+        }
+
         auto newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, sectionName, *si, i.first, symbolData);
+
+        // If we are inserting a followOn reference, lets add a precededBy 
+        // reference too
+        if (followOn) {
+          ELFReference<ELFT> *precededBy = nullptr;
+          followOn->setTarget(newAtom);
+          precededBy = new (_readerStorage)
+              ELFReference<ELFT>(lld::Reference::kindLayoutBefore);
+          precededBy->setTarget(previous_atom);
+          newAtom->addReference(precededBy);
+        }
+
+        previous_atom = newAtom;
 
         _definedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair((*si), newAtom));
@@ -296,8 +327,10 @@ public:
     // All the Atoms and References are created.  Now update each Reference's
     // target with the Atom pointer it refers to.
     for (auto &ri : _references) {
-      const Elf_Sym *Symbol = _objFile->getElfSymbol(ri->targetSymbolIndex());
-      ri->setTarget(findAtom(Symbol));
+      if (ri->kind() >= lld::Reference::kindTargetLow) {
+        const Elf_Sym *Symbol = _objFile->getElfSymbol(ri->targetSymbolIndex());
+        ri->setTarget(findAtom(Symbol));
+      }
     }
   }
 

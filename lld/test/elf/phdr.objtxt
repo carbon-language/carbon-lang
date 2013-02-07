@@ -30,7 +30,7 @@ ED:   ('p_offset', 0x00004000)
 ED:   ('p_vaddr', 0x00004000)
 ED:   ('p_paddr', 0x00004000)
 ED:   ('p_filesz', 0x00000004)
-ED:   ('p_memsz', 0x00004005)
+ED:   ('p_memsz', 0x00004008)
 ED:   ('p_align', 0x00001000)
 ED:  ),
 ED:  # Program Header 3

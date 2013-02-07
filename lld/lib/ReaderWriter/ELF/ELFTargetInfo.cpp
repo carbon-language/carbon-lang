@@ -13,6 +13,7 @@
 #include "Targets.h"
 
 #include "lld/Core/LinkerOptions.h"
+#include "lld/Passes/LayoutPass.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
@@ -37,6 +38,10 @@ uint16_t ELFTargetInfo::getOutputType() const {
     break;
   }
   llvm_unreachable("Unhandled OutputKind");
+}
+
+void ELFTargetInfo::addPasses(PassManager &pm) const {
+  pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
 uint16_t ELFTargetInfo::getOutputMachine() const {

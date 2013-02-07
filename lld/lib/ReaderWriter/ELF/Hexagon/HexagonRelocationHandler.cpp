@@ -93,7 +93,11 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
   case R_HEX_32:
     reloc32(location, relocVAddress, targetVAddress, ref.addend());
     break;
-  default: {
+  case lld::Reference::kindLayoutAfter:
+  case lld::Reference::kindLayoutBefore:
+  case lld::Reference::kindInGroup:
+    break;
+  default : {
     std::string str;
     llvm::raw_string_ostream s(str);
     auto name = _targetInfo.stringFromRelocKind(ref.kind());
