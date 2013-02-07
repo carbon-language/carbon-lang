@@ -578,13 +578,13 @@ class ExportBufWord1 {
 multiclass ExportPattern<Instruction ExportInst, bits<8> cf_inst> {
   def : Pat<(int_R600_store_pixel_depth R600_Reg32:$reg),
     (ExportInst
-        (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), R600_Reg32:$reg, sel_x),
+        (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), R600_Reg32:$reg, sub0),
         0, 61, 0, 7, 7, 7, cf_inst, 0)
   >;
 
   def : Pat<(int_R600_store_pixel_stencil R600_Reg32:$reg),
     (ExportInst
-        (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), R600_Reg32:$reg, sel_x),
+        (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), R600_Reg32:$reg, sub0),
         0, 61, 7, 0, 7, 7, cf_inst, 0)
   >;
 
@@ -1868,25 +1868,25 @@ def : Pat <
   (SETNE_DX10 R600_Reg32:$src0, R600_Reg32:$src1)
 >;
 
-def : Extract_Element <f32, v4f32, R600_Reg128, 0, sel_x>;
-def : Extract_Element <f32, v4f32, R600_Reg128, 1, sel_y>;
-def : Extract_Element <f32, v4f32, R600_Reg128, 2, sel_z>;
-def : Extract_Element <f32, v4f32, R600_Reg128, 3, sel_w>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 0, sub0>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 1, sub1>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 2, sub2>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 3, sub3>;
 
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 0, sel_x>;
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 1, sel_y>;
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 2, sel_z>;
-def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 3, sel_w>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 0, sub0>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 1, sub1>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 2, sub2>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 3, sub3>;
 
-def : Extract_Element <i32, v4i32, R600_Reg128, 0, sel_x>;
-def : Extract_Element <i32, v4i32, R600_Reg128, 1, sel_y>;
-def : Extract_Element <i32, v4i32, R600_Reg128, 2, sel_z>;
-def : Extract_Element <i32, v4i32, R600_Reg128, 3, sel_w>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 0, sub0>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 1, sub1>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 2, sub2>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 3, sub3>;
 
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 0, sel_x>;
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 1, sel_y>;
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 2, sel_z>;
-def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 3, sel_w>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 0, sub0>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 1, sub1>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 2, sub2>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 3, sub3>;
 
 def : Vector_Build <v4f32, R600_Reg128, f32, R600_Reg32>;
 def : Vector_Build <v4i32, R600_Reg128, i32, R600_Reg32>;

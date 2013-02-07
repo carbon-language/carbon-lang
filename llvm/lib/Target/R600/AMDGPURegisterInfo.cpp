@@ -51,22 +51,22 @@ unsigned AMDGPURegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 unsigned AMDGPURegisterInfo::getIndirectSubReg(unsigned IndirectIndex) const {
 
   switch(IndirectIndex) {
-  case 0: return AMDGPU::indirect_0;
-  case 1: return AMDGPU::indirect_1;
-  case 2: return AMDGPU::indirect_2;
-  case 3: return AMDGPU::indirect_3;
-  case 4: return AMDGPU::indirect_4;
-  case 5: return AMDGPU::indirect_5;
-  case 6: return AMDGPU::indirect_6;
-  case 7: return AMDGPU::indirect_7;
-  case 8: return AMDGPU::indirect_8;
-  case 9: return AMDGPU::indirect_9;
-  case 10: return AMDGPU::indirect_10;
-  case 11: return AMDGPU::indirect_11;
-  case 12: return AMDGPU::indirect_12;
-  case 13: return AMDGPU::indirect_13;
-  case 14: return AMDGPU::indirect_14;
-  case 15: return AMDGPU::indirect_15;
+  case 0: return AMDGPU::sub0;
+  case 1: return AMDGPU::sub1;
+  case 2: return AMDGPU::sub2;
+  case 3: return AMDGPU::sub3;
+  case 4: return AMDGPU::sub4;
+  case 5: return AMDGPU::sub5;
+  case 6: return AMDGPU::sub6;
+  case 7: return AMDGPU::sub7;
+  case 8: return AMDGPU::sub8;
+  case 9: return AMDGPU::sub9;
+  case 10: return AMDGPU::sub10;
+  case 11: return AMDGPU::sub11;
+  case 12: return AMDGPU::sub12;
+  case 13: return AMDGPU::sub13;
+  case 14: return AMDGPU::sub14;
+  case 15: return AMDGPU::sub15;
   default: llvm_unreachable("indirect index out of range");
   }
 }

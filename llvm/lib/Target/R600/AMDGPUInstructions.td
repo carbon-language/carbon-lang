@@ -196,8 +196,8 @@ class Vector_Build <ValueType vecType, RegisterClass vectorClass,
   (vecType (build_vector (elemType elemClass:$x), (elemType elemClass:$y),
                          (elemType elemClass:$z), (elemType elemClass:$w))),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-  (vecType (IMPLICIT_DEF)), elemClass:$x, sel_x), elemClass:$y, sel_y),
-                            elemClass:$z, sel_z), elemClass:$w, sel_w)
+  (vecType (IMPLICIT_DEF)), elemClass:$x, sub0), elemClass:$y, sub1),
+                            elemClass:$z, sub2), elemClass:$w, sub3)
 >;
 
 // bitconvert pattern

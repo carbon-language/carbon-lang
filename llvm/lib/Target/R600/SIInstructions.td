@@ -1215,15 +1215,15 @@ def CLAMP_SI : CLAMP<VReg_32>;
 def FABS_SI : FABS<VReg_32>;
 def FNEG_SI : FNEG<VReg_32>;
 
-def : Extract_Element <f32, v4f32, VReg_128, 0, sel_x>;
-def : Extract_Element <f32, v4f32, VReg_128, 1, sel_y>;
-def : Extract_Element <f32, v4f32, VReg_128, 2, sel_z>;
-def : Extract_Element <f32, v4f32, VReg_128, 3, sel_w>;
+def : Extract_Element <f32, v4f32, VReg_128, 0, sub0>;
+def : Extract_Element <f32, v4f32, VReg_128, 1, sub1>;
+def : Extract_Element <f32, v4f32, VReg_128, 2, sub2>;
+def : Extract_Element <f32, v4f32, VReg_128, 3, sub3>;
 
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 4, sel_x>;
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 5, sel_y>;
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 6, sel_z>;
-def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 7, sel_w>;
+def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 4, sub0>;
+def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 5, sub1>;
+def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 6, sub2>;
+def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 7, sub3>;
 
 def : Vector_Build <v4f32, VReg_128, f32, VReg_32>;
 def : Vector_Build <v4i32, SReg_128, i32, SReg_32>;
@@ -1338,22 +1338,22 @@ def : Pat <
 def : Pat <
   (int_AMDGPU_cube VReg_128:$src),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-    (V_CUBETC_F32 (EXTRACT_SUBREG VReg_128:$src, sel_x),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_y),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_z),
-                  0, 0, 0, 0), sel_x),
-    (V_CUBESC_F32 (EXTRACT_SUBREG VReg_128:$src, sel_x),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_y),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_z),
-                  0, 0, 0, 0), sel_y),
-    (V_CUBEMA_F32 (EXTRACT_SUBREG VReg_128:$src, sel_x),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_y),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_z),
-                  0, 0, 0, 0), sel_z),
-    (V_CUBEID_F32 (EXTRACT_SUBREG VReg_128:$src, sel_x),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_y),
-                  (EXTRACT_SUBREG VReg_128:$src, sel_z),
-                  0, 0, 0, 0), sel_w)
+    (V_CUBETC_F32 (EXTRACT_SUBREG VReg_128:$src, sub0),
+                  (EXTRACT_SUBREG VReg_128:$src, sub1),
+                  (EXTRACT_SUBREG VReg_128:$src, sub2),
+                  0, 0, 0, 0), sub0),
+    (V_CUBESC_F32 (EXTRACT_SUBREG VReg_128:$src, sub0),
+                  (EXTRACT_SUBREG VReg_128:$src, sub1),
+                  (EXTRACT_SUBREG VReg_128:$src, sub2),
+                  0, 0, 0, 0), sub1),
+    (V_CUBEMA_F32 (EXTRACT_SUBREG VReg_128:$src, sub0),
+                  (EXTRACT_SUBREG VReg_128:$src, sub1),
+                  (EXTRACT_SUBREG VReg_128:$src, sub2),
+                  0, 0, 0, 0), sub2),
+    (V_CUBEID_F32 (EXTRACT_SUBREG VReg_128:$src, sub0),
+                  (EXTRACT_SUBREG VReg_128:$src, sub1),
+                  (EXTRACT_SUBREG VReg_128:$src, sub2),
+                  0, 0, 0, 0), sub3)
 >;
 
 /********** ================== **********/

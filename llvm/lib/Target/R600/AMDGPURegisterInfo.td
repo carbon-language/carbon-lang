@@ -12,14 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 let Namespace = "AMDGPU" in {
-  def sel_x : SubRegIndex;
-  def sel_y : SubRegIndex;
-  def sel_z : SubRegIndex;
-  def sel_w : SubRegIndex;
-
 
 foreach Index = 0-15 in {
-  def indirect_#Index : SubRegIndex;
+  def sub#Index : SubRegIndex;
 }
 
 def INDIRECT_BASE_ADDR : Register <"INDIRECT_BASE_ADDR">;

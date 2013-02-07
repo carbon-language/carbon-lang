@@ -19,7 +19,7 @@ class R600RegWithChan <string name, bits<9> sel, string chan> :
 class R600Reg_128<string n, list<Register> subregs, bits<16> encoding> :
     RegisterWithSubRegs<n, subregs> {
   let Namespace = "AMDGPU";
-  let SubRegIndices = [sel_x, sel_y, sel_z, sel_w];
+  let SubRegIndices = [sub0, sub1, sub2, sub3];
   let HWEncoding = encoding;
 }
 
@@ -126,9 +126,8 @@ class IndirectSuper<string n, list<Register> subregs> :
     RegisterWithSubRegs<n, subregs> {
   let Namespace = "AMDGPU";
   let SubRegIndices =
- [indirect_0,indirect_1,indirect_2,indirect_3,indirect_4,indirect_5,indirect_6,
- indirect_7,indirect_8,indirect_9,indirect_10,indirect_11,indirect_12,
- indirect_13,indirect_14,indirect_15];
+ [sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7,
+  sub8, sub9, sub10, sub11, sub12, sub13, sub14, sub15];
 }
 
 def IndirectSuperReg : IndirectSuper<"Indirect",

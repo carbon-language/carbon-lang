@@ -1,18 +1,4 @@
 
-let Namespace = "AMDGPU" in {
-  def low : SubRegIndex;
-  def high : SubRegIndex;
-
-  def sub0 : SubRegIndex;
-  def sub1 : SubRegIndex;
-  def sub2 : SubRegIndex;
-  def sub3 : SubRegIndex;
-  def sub4 : SubRegIndex;
-  def sub5 : SubRegIndex;
-  def sub6 : SubRegIndex;
-  def sub7 : SubRegIndex;
-}
-
 class SIReg <string n, bits<16> encoding = 0> : Register<n> {
   let Namespace = "AMDGPU";
   let HWEncoding = encoding;
@@ -20,7 +6,7 @@ class SIReg <string n, bits<16> encoding = 0> : Register<n> {
 
 class SI_64 <string n, list<Register> subregs, bits<16> encoding> : RegisterWithSubRegs<n, subregs> {
   let Namespace = "AMDGPU";
-  let SubRegIndices = [low, high];
+  let SubRegIndices = [sub0, sub1];
   let HWEncoding = encoding;
 }
 
@@ -73,12 +59,12 @@ def SGPR_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
                             (add (sequence "SGPR%u", 0, 101))>;
 
 // SGPR 64-bit registers
-def SGPR_64 : RegisterTuples<[low, high],
+def SGPR_64 : RegisterTuples<[sub0, sub1],
                              [(add (decimate SGPR_32, 2)),
                               (add(decimate (rotl SGPR_32, 1), 2))]>;
 
 // SGPR 128-bit registers
-def SGPR_128 : RegisterTuples<[sel_x, sel_y, sel_z, sel_w],
+def SGPR_128 : RegisterTuples<[sub0, sub1, sub2, sub3],
                               [(add (decimate SGPR_32, 4)),
                                (add (decimate (rotl SGPR_32, 1), 4)),
                                (add (decimate (rotl SGPR_32, 2), 4)),
@@ -104,12 +90,12 @@ def VGPR_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
                             (add (sequence "VGPR%u", 0, 255))>;
 
 // VGPR 64-bit registers
-def VGPR_64 : RegisterTuples<[low, high],
+def VGPR_64 : RegisterTuples<[sub0, sub1],
                              [(add VGPR_32),
                               (add (rotl VGPR_32, 1))]>;
 
 // VGPR 128-bit registers
-def VGPR_128 : RegisterTuples<[sel_x, sel_y, sel_z, sel_w],
+def VGPR_128 : RegisterTuples<[sub0, sub1, sub2, sub3],
                               [(add VGPR_32),
                                (add (rotl VGPR_32, 1)),
                                (add (rotl VGPR_32, 2)),
