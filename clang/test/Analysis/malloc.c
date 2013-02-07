@@ -13,6 +13,7 @@ void *reallocf(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
 char *strdup(const char *s);
 char *strndup(const char *s, size_t n);
+int memcmp(const void *s1, const void *s2, size_t n);
 
 void myfoo(int *p);
 void myfooint(int p);
@@ -1023,6 +1024,27 @@ char *testLeakWithinReturn(char *str) {
   return strdup(strdup(str)); // expected-warning{{leak}}
 }
 
+void passConstPtr(const char * ptr);
+
+void testPassConstPointer() {
+  char * string = malloc(sizeof(char)*10);
+  passConstPtr(string);
+  return; // expected-warning {{leak}}
+}
+
+void testPassConstPointerIndirectly() {
+  char *p = malloc(1);
+  p++;
+  memcmp(p, p, sizeof(&p));
+  return; // expected-warning {{leak}}
+}
+
+void testPassToSystemHeaderFunctionIndirectly() {
+  int *p = malloc(4);
+  p++;
+  fakeSystemHeaderCallInt(p);
+} // expected-warning {{leak}}
+
 // ----------------------------------------------------------------------------
 // False negatives.
 
@@ -1055,5 +1077,17 @@ void localStructTest() {
   pSt->memP = malloc(12);
 } // missing warning
 
+void testPassConstPointerIndirectlyStruct() {
+  struct HasPtr hp;
+  hp.p = malloc(10);
+  memcmp(&hp, &hp, sizeof(hp));
+  return; // missing leak
+}
+
+void testPassToSystemHeaderFunctionIndirectlyStruct() {
+  SomeStruct ss;
+  ss.p = malloc(1);
+  fakeSystemHeaderCall(&ss);
+} // missing leak
 
 

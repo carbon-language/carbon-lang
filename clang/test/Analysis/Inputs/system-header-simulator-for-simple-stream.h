@@ -13,3 +13,9 @@ int fputc(int, FILE *);
 int fputs(const char * restrict, FILE * restrict) __asm("_" "fputs" );
 int fclose(FILE *);
 void exit(int);
+
+// The following is a fake system header function
+typedef struct __FileStruct {
+  FILE * p;
+} FileStruct;
+void fakeSystemHeaderCall(FileStruct *);

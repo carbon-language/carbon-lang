@@ -158,7 +158,8 @@ public:
 
   ProgramStateRef checkPointerEscape(ProgramStateRef State,
                                     const InvalidatedSymbols &Escaped,
-                                    const CallEvent *Call) const;
+                                    const CallEvent *Call,
+                                    PointerEscapeKind Kind) const;
 
   void printState(raw_ostream &Out, ProgramStateRef State,
                   const char *NL, const char *Sep) const;
@@ -1450,11 +1451,15 @@ bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
 
 ProgramStateRef MallocChecker::checkPointerEscape(ProgramStateRef State,
                                              const InvalidatedSymbols &Escaped,
-                                             const CallEvent *Call) const {
+                                             const CallEvent *Call,
+                                             PointerEscapeKind Kind) const {
   // If we know that the call does not free memory, keep tracking the top
   // level arguments.       
-  if (Call && doesNotFreeMemory(Call, State))
+  if ((Kind == PSK_DirectEscapeOnCall ||
+       Kind == PSK_IndirectEscapeOnCall) &&
+      doesNotFreeMemory(Call, State)) {
     return State;
+  }
 
   for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
                                           E = Escaped.end();

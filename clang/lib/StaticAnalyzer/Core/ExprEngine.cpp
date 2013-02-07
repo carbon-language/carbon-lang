@@ -1648,7 +1648,8 @@ ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
   const InvalidatedSymbols &EscapedSymbols = Scanner.getSymbols();
   State = getCheckerManager().runCheckersForPointerEscape(State,
                                                           EscapedSymbols,
-                                                          /*CallEvent*/ 0);
+                                                          /*CallEvent*/ 0,
+                                                          PSK_EscapeOnBind);
 
   return State;
 }
@@ -1665,7 +1666,9 @@ ExprEngine::processPointerEscapedOnInvalidateRegions(ProgramStateRef State,
 
   if (!Call)
     return getCheckerManager().runCheckersForPointerEscape(State,
-                                                           *Invalidated, 0);
+                                                           *Invalidated,
+                                                           0,
+                                                           PSK_EscapeOther);
     
   // If the symbols were invalidated by a call, we want to find out which ones 
   // were invalidated directly due to being arguments to the call.
@@ -1687,12 +1690,12 @@ ExprEngine::processPointerEscapedOnInvalidateRegions(ProgramStateRef State,
 
   if (!SymbolsDirectlyInvalidated.empty())
     State = getCheckerManager().runCheckersForPointerEscape(State,
-        SymbolsDirectlyInvalidated, Call);
+        SymbolsDirectlyInvalidated, Call, PSK_DirectEscapeOnCall);
 
   // Notify about the symbols that get indirectly invalidated by the call.
   if (!SymbolsIndirectlyInvalidated.empty())
     State = getCheckerManager().runCheckersForPointerEscape(State,
-        SymbolsIndirectlyInvalidated, /*CallEvent*/ 0);
+        SymbolsIndirectlyInvalidated, Call, PSK_IndirectEscapeOnCall);
 
   return State;
 }

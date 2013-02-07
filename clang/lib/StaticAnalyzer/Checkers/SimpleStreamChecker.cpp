@@ -82,7 +82,8 @@ public:
   /// Stop tracking addresses which escape.
   ProgramStateRef checkPointerEscape(ProgramStateRef State,
                                     const InvalidatedSymbols &Escaped,
-                                    const CallEvent *Call) const;
+                                    const CallEvent *Call,
+                                    PointerEscapeKind Kind) const;
 };
 
 } // end anonymous namespace
@@ -255,10 +256,14 @@ bool SimpleStreamChecker::guaranteedNotToCloseFile(const CallEvent &Call) const{
 ProgramStateRef
 SimpleStreamChecker::checkPointerEscape(ProgramStateRef State,
                                         const InvalidatedSymbols &Escaped,
-                                        const CallEvent *Call) const {
+                                        const CallEvent *Call,
+                                        PointerEscapeKind Kind) const {
   // If we know that the call cannot close a file, there is nothing to do.
-  if (Call && guaranteedNotToCloseFile(*Call))
+  if ((Kind == PSK_DirectEscapeOnCall ||
+       Kind == PSK_IndirectEscapeOnCall) &&
+      guaranteedNotToCloseFile(*Call)) {
     return State;
+  }
 
   for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
                                           E = Escaped.end();

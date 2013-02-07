@@ -76,3 +76,16 @@ void SymbolDoesNotEscapeThoughStringAPIs(char *Data) {
   fputc(*Data, F);
   return; // expected-warning {{Opened file is never closed; potential resource leak}}
 }
+
+void passConstPointer(const FILE * F);
+void testPassConstPointer() {
+  FILE *F = fopen("myfile.txt", "w");
+  passConstPointer(F);
+  return; // expected-warning {{Opened file is never closed; potential resource leak}}
+}
+
+void testPassToSystemHeaderFunctionIndirectly() {
+  FileStruct fs;
+  fs.p = fopen("myfile.txt", "w");
+  fakeSystemHeaderCall(&fs);
+} // expected leak warning

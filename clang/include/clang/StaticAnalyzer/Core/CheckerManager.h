@@ -112,6 +112,26 @@ public:
   RET operator()() const { return Fn(Checker); } 
 };
 
+/// \brief Describes the different reasons a pointer escapes
+/// during analysis.
+enum PointerEscapeKind {
+  /// A pointer escapes due to binding its value to a location
+  /// that the analyzer cannot track.
+  PSK_EscapeOnBind,
+
+  /// The pointer has been passed to a function call directly.
+  PSK_DirectEscapeOnCall,
+
+  /// The pointer has been passed to a function indirectly.
+  /// For example, the pointer is accessible through an
+  /// argument to a function.
+  PSK_IndirectEscapeOnCall,
+
+  /// The reason for pointer escape is unknown. For example, 
+  /// a region containing this pointer is invalidated.
+  PSK_EscapeOther
+};
+
 class CheckerManager {
   const LangOptions LangOpts;
 
@@ -330,7 +350,8 @@ public:
   ProgramStateRef 
   runCheckersForPointerEscape(ProgramStateRef State,
                               const InvalidatedSymbols &Escaped,
-                              const CallEvent *Call);
+                              const CallEvent *Call,
+                              PointerEscapeKind Kind);
 
   /// \brief Run checkers for handling assumptions on symbolic values.
   ProgramStateRef runCheckersForEvalAssume(ProgramStateRef state,
@@ -420,7 +441,8 @@ public:
 
   typedef CheckerFn<ProgramStateRef (ProgramStateRef,
                                      const InvalidatedSymbols &Escaped,
-                                     const CallEvent *Call)>
+                                     const CallEvent *Call,
+                                     PointerEscapeKind Kind)>
       CheckPointerEscapeFunc;
   
   typedef CheckerFn<ProgramStateRef (ProgramStateRef,

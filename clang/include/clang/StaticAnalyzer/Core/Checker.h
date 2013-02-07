@@ -323,10 +323,12 @@ class PointerEscape {
   _checkPointerEscape(void *checker,
                      ProgramStateRef State,
                      const InvalidatedSymbols &Escaped,
-                     const CallEvent *Call) {
+                     const CallEvent *Call,
+                     PointerEscapeKind Kind) {
     return ((const CHECKER *)checker)->checkPointerEscape(State, 
                                                           Escaped, 
-                                                          Call);
+                                                          Call,
+                                                          Kind);
   }
 
 public:
