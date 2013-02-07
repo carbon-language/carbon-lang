@@ -106,9 +106,9 @@ public:
 
   void dumpHeader(raw_ostream &OS) const {
     OS << format("%08x %08x %08x FDE ",
-                 (uint32_t)Offset, (uint32_t)Length, LinkedCIEOffset);
+                 (uint32_t)Offset, (uint32_t)Length, (int32_t)LinkedCIEOffset);
     OS << format("cie=%08x pc=%08x...%08x\n",
-                 (uint32_t)LinkedCIEOffset,
+                 (int32_t)LinkedCIEOffset,
                  (uint32_t)InitialLocation,
                  (uint32_t)InitialLocation + (uint32_t)AddressRange);
     OS << "\n";
