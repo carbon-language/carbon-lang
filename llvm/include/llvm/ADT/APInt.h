@@ -1191,7 +1191,8 @@ public:
   /// APInt. This is used in conjunction with getActiveData to extract the raw
   /// value of the APInt.
   unsigned getActiveWords() const {
-    return whichWord(getActiveBits()-1) + 1;
+    unsigned numActiveBits = getActiveBits();
+    return numActiveBits ? whichWord(numActiveBits - 1) + 1 : 1;
   }
 
   /// Computes the minimum bit width for this APInt while considering it to be
