@@ -890,7 +890,8 @@ ctype<char>::do_toupper(char_type c) const
     return isascii(c) ?
       static_cast<char>(_DefaultRuneLocale.__mapupper[static_cast<ptrdiff_t>(c)]) : c;
 #elif defined(__GLIBC__)
-    return isascii(c) ? __classic_upper_table()[static_cast<size_t>(c)] : c;
+    return isascii(c) ? 
+      static_cast<char>(__classic_upper_table()[static_cast<size_t>(c)]) : c;
 #else
     return (isascii(c) && islower_l(c, __cloc())) ? c-'a'+'A' : c;
 #endif
@@ -904,7 +905,8 @@ ctype<char>::do_toupper(char_type* low, const char_type* high) const
         *low = isascii(*low) ?
           static_cast<char>(_DefaultRuneLocale.__mapupper[static_cast<ptrdiff_t>(*low)]) : *low;
 #elif defined(__GLIBC__)
-        *low = isascii(*low) ? __classic_upper_table()[static_cast<size_t>(*low)] : *low;
+        *low = isascii(*low) ?
+          static_cast<char>(__classic_upper_table()[static_cast<size_t>(*low)]) : *low;
 #else
         *low = (isascii(*low) && islower_l(*low, __cloc())) ? *low-'a'+'A' : *low;
 #endif
@@ -918,7 +920,8 @@ ctype<char>::do_tolower(char_type c) const
     return isascii(c) ?
       static_cast<char>(_DefaultRuneLocale.__maplower[static_cast<ptrdiff_t>(c)]) : c;
 #elif defined(__GLIBC__)
-    return isascii(c) ? __classic_lower_table()[static_cast<size_t>(c)] : c;
+    return isascii(c) ?
+      static_cast<char>(__classic_lower_table()[static_cast<size_t>(c)]) : c;
 #else
     return (isascii(c) && isupper_l(c, __cloc())) ? c-'A'+'a' : c;
 #endif
@@ -931,7 +934,7 @@ ctype<char>::do_tolower(char_type* low, const char_type* high) const
 #ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
         *low = isascii(*low) ? static_cast<char>(_DefaultRuneLocale.__maplower[static_cast<ptrdiff_t>(*low)]) : *low;
 #elif defined(__GLIBC__)
-        *low = isascii(*low) ? __classic_lower_table()[static_cast<size_t>(*low)] : *low;
+        *low = isascii(*low) ? static_cast<char>(__classic_lower_table()[static_cast<size_t>(*low)]) : *low;
 #else
         *low = (isascii(*low) && isupper_l(*low, __cloc())) ? *low-'A'+'a' : *low;
 #endif
@@ -1100,16 +1103,17 @@ ctype_byname<wchar_t>::do_is(mask m, char_type c) const
     return static_cast<bool>(iswctype_l(c, m, __l));
 #else
     bool result = false;
-    if (m & space) result |= (iswspace_l(c, __l) != 0);
-    if (m & print) result |= (iswprint_l(c, __l) != 0);
-    if (m & cntrl) result |= (iswcntrl_l(c, __l) != 0);
-    if (m & upper) result |= (iswupper_l(c, __l) != 0);
-    if (m & lower) result |= (iswlower_l(c, __l) != 0);
-    if (m & alpha) result |= (iswalpha_l(c, __l) != 0);
-    if (m & digit) result |= (iswdigit_l(c, __l) != 0);
-    if (m & punct) result |= (iswpunct_l(c, __l) != 0);
-    if (m & xdigit) result |= (iswxdigit_l(c, __l) != 0);
-    if (m & blank) result |= (iswblank_l(c, __l) != 0);
+    wint_t ch = static_cast<wint_t>(c);
+    if (m & space) result |= (iswspace_l(ch, __l) != 0);
+    if (m & print) result |= (iswprint_l(ch, __l) != 0);
+    if (m & cntrl) result |= (iswcntrl_l(ch, __l) != 0);
+    if (m & upper) result |= (iswupper_l(ch, __l) != 0);
+    if (m & lower) result |= (iswlower_l(ch, __l) != 0);
+    if (m & alpha) result |= (iswalpha_l(ch, __l) != 0);
+    if (m & digit) result |= (iswdigit_l(ch, __l) != 0);
+    if (m & punct) result |= (iswpunct_l(ch, __l) != 0);
+    if (m & xdigit) result |= (iswxdigit_l(ch, __l) != 0);
+    if (m & blank) result |= (iswblank_l(ch, __l) != 0);
     return result;
 #endif
 }
@@ -1124,23 +1128,24 @@ ctype_byname<wchar_t>::do_is(const char_type* low, const char_type* high, mask* 
         else
         {
             *vec = 0;
-            if (iswspace_l(*low, __l))
+            wint_t ch = static_cast<wint_t>(*low);
+            if (iswspace_l(ch, __l))
                 *vec |= space;
-            if (iswprint_l(*low, __l))
+            if (iswprint_l(ch, __l))
                 *vec |= print;
-            if (iswcntrl_l(*low, __l))
+            if (iswcntrl_l(ch, __l))
                 *vec |= cntrl;
-            if (iswupper_l(*low, __l))
+            if (iswupper_l(ch, __l))
                 *vec |= upper;
-            if (iswlower_l(*low, __l))
+            if (iswlower_l(ch, __l))
                 *vec |= lower;
-            if (iswalpha_l(*low, __l))
+            if (iswalpha_l(ch, __l))
                 *vec |= alpha;
-            if (iswdigit_l(*low, __l))
+            if (iswdigit_l(ch, __l))
                 *vec |= digit;
-            if (iswpunct_l(*low, __l))
+            if (iswpunct_l(ch, __l))
                 *vec |= punct;
-            if (iswxdigit_l(*low, __l))
+            if (iswxdigit_l(ch, __l))
                 *vec |= xdigit;
         }
     }
@@ -1156,16 +1161,17 @@ ctype_byname<wchar_t>::do_scan_is(mask m, const char_type* low, const char_type*
         if (iswctype_l(*low, m, __l))
             break;
 #else
-        if (m & space && iswspace_l(*low, __l)) break;
-        if (m & print && iswprint_l(*low, __l)) break;
-        if (m & cntrl && iswcntrl_l(*low, __l)) break;
-        if (m & upper && iswupper_l(*low, __l)) break;
-        if (m & lower && iswlower_l(*low, __l)) break;
-        if (m & alpha && iswalpha_l(*low, __l)) break;
-        if (m & digit && iswdigit_l(*low, __l)) break;
-        if (m & punct && iswpunct_l(*low, __l)) break;
-        if (m & xdigit && iswxdigit_l(*low, __l)) break;
-        if (m & blank && iswblank_l(*low, __l)) break;
+        wint_t ch = static_cast<wint_t>(*low);
+        if (m & space && iswspace_l(ch, __l)) break;
+        if (m & print && iswprint_l(ch, __l)) break;
+        if (m & cntrl && iswcntrl_l(ch, __l)) break;
+        if (m & upper && iswupper_l(ch, __l)) break;
+        if (m & lower && iswlower_l(ch, __l)) break;
+        if (m & alpha && iswalpha_l(ch, __l)) break;
+        if (m & digit && iswdigit_l(ch, __l)) break;
+        if (m & punct && iswpunct_l(ch, __l)) break;
+        if (m & xdigit && iswxdigit_l(ch, __l)) break;
+        if (m & blank && iswblank_l(ch, __l)) break;
 #endif
     }
     return low;
@@ -1180,16 +1186,17 @@ ctype_byname<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type
         if (!iswctype_l(*low, m, __l))
             break;
 #else
-        if (m & space && iswspace_l(*low, __l)) continue;
-        if (m & print && iswprint_l(*low, __l)) continue;
-        if (m & cntrl && iswcntrl_l(*low, __l)) continue;
-        if (m & upper && iswupper_l(*low, __l)) continue;
-        if (m & lower && iswlower_l(*low, __l)) continue;
-        if (m & alpha && iswalpha_l(*low, __l)) continue;
-        if (m & digit && iswdigit_l(*low, __l)) continue;
-        if (m & punct && iswpunct_l(*low, __l)) continue;
-        if (m & xdigit && iswxdigit_l(*low, __l)) continue;
-        if (m & blank && iswblank_l(*low, __l)) continue;
+        wint_t ch = static_cast<wint_t>(*low);
+        if (m & space && iswspace_l(ch, __l)) continue;
+        if (m & print && iswprint_l(ch, __l)) continue;
+        if (m & cntrl && iswcntrl_l(ch, __l)) continue;
+        if (m & upper && iswupper_l(ch, __l)) continue;
+        if (m & lower && iswlower_l(ch, __l)) continue;
+        if (m & alpha && iswalpha_l(ch, __l)) continue;
+        if (m & digit && iswdigit_l(ch, __l)) continue;
+        if (m & punct && iswpunct_l(ch, __l)) continue;
+        if (m & xdigit && iswxdigit_l(ch, __l)) continue;
+        if (m & blank && iswblank_l(ch, __l)) continue;
         break;
 #endif
     }
