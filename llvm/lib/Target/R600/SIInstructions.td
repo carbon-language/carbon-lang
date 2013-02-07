@@ -511,12 +511,12 @@ def IMAGE_SAMPLE_L : MIMG_Load_Helper <0x00000024, "IMAGE_SAMPLE_L">;
 def IMAGE_SAMPLE_B : MIMG_Load_Helper <0x00000025, "IMAGE_SAMPLE_B">;
 //def IMAGE_SAMPLE_B_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_B_CL", 0x00000026>;
 //def IMAGE_SAMPLE_LZ : MIMG_NoPattern_ <"IMAGE_SAMPLE_LZ", 0x00000027>;
-//def IMAGE_SAMPLE_C : MIMG_NoPattern_ <"IMAGE_SAMPLE_C", 0x00000028>;
+def IMAGE_SAMPLE_C : MIMG_Load_Helper <0x00000028, "IMAGE_SAMPLE_C">;
 //def IMAGE_SAMPLE_C_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CL", 0x00000029>;
 //def IMAGE_SAMPLE_C_D : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_D", 0x0000002a>;
 //def IMAGE_SAMPLE_C_D_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_D_CL", 0x0000002b>;
-//def IMAGE_SAMPLE_C_L : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_L", 0x0000002c>;
-//def IMAGE_SAMPLE_C_B : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B", 0x0000002d>;
+def IMAGE_SAMPLE_C_L : MIMG_Load_Helper <0x0000002c, "IMAGE_SAMPLE_C_L">;
+def IMAGE_SAMPLE_C_B : MIMG_Load_Helper <0x0000002d, "IMAGE_SAMPLE_C_B">;
 //def IMAGE_SAMPLE_C_B_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_CL", 0x0000002e>;
 //def IMAGE_SAMPLE_C_LZ : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_LZ", 0x0000002f>;
 //def IMAGE_SAMPLE_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_O", 0x00000030>;
@@ -1214,14 +1214,50 @@ class SampleRectPattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
           SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
+class SampleArrayPattern<Intrinsic name, MIMG opcode, RegisterClass addr_class,
+                         ValueType addr_type> : Pat <
+    (name imm:$writemask, (addr_type addr_class:$addr),
+          SReg_256:$rsrc, SReg_128:$sampler, TEX_ARRAY),
+    (opcode imm:$writemask, 0, 0, 1, 0, 0, 0, 0,
+          (EXTRACT_SUBREG addr_class:$addr, sub0),
+          SReg_256:$rsrc, SReg_128:$sampler)
+>;
+
+class SampleShadowPattern<Intrinsic name, MIMG opcode,
+                          RegisterClass addr_class, ValueType addr_type> : Pat <
+    (name imm:$writemask, (addr_type addr_class:$addr),
+          SReg_256:$rsrc, SReg_128:$sampler, TEX_SHADOW),
+    (opcode imm:$writemask, 0, 0, 0, 0, 0, 0, 0,
+          (EXTRACT_SUBREG addr_class:$addr, sub0),
+          SReg_256:$rsrc, SReg_128:$sampler)
+>;
+
+class SampleShadowArrayPattern<Intrinsic name, MIMG opcode,
+                               RegisterClass addr_class, ValueType addr_type> : Pat <
+    (name imm:$writemask, (addr_type addr_class:$addr),
+          SReg_256:$rsrc, SReg_128:$sampler, TEX_SHADOW_ARRAY),
+    (opcode imm:$writemask, 0, 0, 1, 0, 0, 0, 0,
+          (EXTRACT_SUBREG addr_class:$addr, sub0),
+          SReg_256:$rsrc, SReg_128:$sampler)
+>;
+
 /* int_SI_sample* for texture lookups consuming more address parameters */
 multiclass SamplePatterns<RegisterClass addr_class, ValueType addr_type> {
   def : SamplePattern <int_SI_sample, IMAGE_SAMPLE, addr_class, addr_type>;
   def : SampleRectPattern <int_SI_sample, IMAGE_SAMPLE, addr_class, addr_type>;
+  def : SampleArrayPattern <int_SI_sample, IMAGE_SAMPLE, addr_class, addr_type>;
+  def : SampleShadowPattern <int_SI_sample, IMAGE_SAMPLE_C, addr_class, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_sample, IMAGE_SAMPLE_C, addr_class, addr_type>;
 
   def : SamplePattern <int_SI_samplel, IMAGE_SAMPLE_L, addr_class, addr_type>;
+  def : SampleArrayPattern <int_SI_samplel, IMAGE_SAMPLE_L, addr_class, addr_type>;
+  def : SampleShadowPattern <int_SI_samplel, IMAGE_SAMPLE_C_L, addr_class, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_samplel, IMAGE_SAMPLE_C_L, addr_class, addr_type>;
 
   def : SamplePattern <int_SI_sampleb, IMAGE_SAMPLE_B, addr_class, addr_type>;
+  def : SampleArrayPattern <int_SI_sampleb, IMAGE_SAMPLE_B, addr_class, addr_type>;
+  def : SampleShadowPattern <int_SI_sampleb, IMAGE_SAMPLE_C_B, addr_class, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_sampleb, IMAGE_SAMPLE_C_B, addr_class, addr_type>;
 }
 
 defm : SamplePatterns<VReg_64, v2i32>;

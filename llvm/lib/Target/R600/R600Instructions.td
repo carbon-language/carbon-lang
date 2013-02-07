@@ -399,7 +399,7 @@ class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
 def TEX_SHADOW : PatLeaf<
   (imm),
   [{uint32_t TType = (uint32_t)N->getZExtValue();
-    return (TType >= 6 && TType <= 8) || (TType >= 11 && TType <= 13);
+    return (TType >= 6 && TType <= 8) || TType == 13;
   }]
 >;
 
@@ -407,6 +407,20 @@ def TEX_RECT : PatLeaf<
   (imm),
   [{uint32_t TType = (uint32_t)N->getZExtValue();
     return TType == 5;
+  }]
+>;
+
+def TEX_ARRAY : PatLeaf<
+  (imm),
+  [{uint32_t TType = (uint32_t)N->getZExtValue();
+    return TType == 9 || TType == 10 || TType == 15 || TType == 16;
+  }]
+>;
+
+def TEX_SHADOW_ARRAY : PatLeaf<
+  (imm),
+  [{uint32_t TType = (uint32_t)N->getZExtValue();
+    return TType == 11 || TType == 12 || TType == 17;
   }]
 >;
 
