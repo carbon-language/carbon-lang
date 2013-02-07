@@ -1094,6 +1094,9 @@ class UncondBranch16_pat<SDNode OpNode, Instruction I>:
 def : Mips16Pat<(MipsJmpLink (i32 tglobaladdr:$dst)),
                 (Jal16 tglobaladdr:$dst)>;
 
+def : Mips16Pat<(MipsJmpLink (i32 texternalsym:$dst)),
+                (Jal16 texternalsym:$dst)>;
+
 // Indirect branch
 def: Mips16Pat<
   (brind CPU16Regs:$rs),
