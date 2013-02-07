@@ -615,7 +615,9 @@ defm V_EXP_F32 : VOP1_32 <0x00000025, "V_EXP_F32",
   [(set VReg_32:$dst, (fexp2 AllReg_32:$src0))]
 >;
 defm V_LOG_CLAMP_F32 : VOP1_32 <0x00000026, "V_LOG_CLAMP_F32", []>;
-defm V_LOG_F32 : VOP1_32 <0x00000027, "V_LOG_F32", []>;
+defm V_LOG_F32 : VOP1_32 <0x00000027, "V_LOG_F32",
+  [(set VReg_32:$dst, (flog2 AllReg_32:$src0))]
+>;
 defm V_RCP_CLAMP_F32 : VOP1_32 <0x00000028, "V_RCP_CLAMP_F32", []>;
 defm V_RCP_LEGACY_F32 : VOP1_32 <0x00000029, "V_RCP_LEGACY_F32", []>;
 defm V_RCP_F32 : VOP1_32 <0x0000002a, "V_RCP_F32",
