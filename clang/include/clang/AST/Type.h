@@ -1584,6 +1584,7 @@ public:
 
   bool isImageType() const;                     // Any OpenCL image type
 
+  bool isSamplerT() const;                      // OpenCL sampler_t
   bool isEventT() const;                        // OpenCL event_t
 
   bool isOpenCLSpecificType() const;            // Any OpenCL specific type
@@ -4918,6 +4919,11 @@ inline bool Type::isImage2dArrayT() const {
 inline bool Type::isImage3dT() const {
   return isSpecificBuiltinType(BuiltinType::OCLImage3d);
 }
+
+inline bool Type::isSamplerT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLSampler);
+}
+
 inline bool Type::isEventT() const {
   return isSpecificBuiltinType(BuiltinType::OCLEvent);
 }
@@ -4929,7 +4935,7 @@ inline bool Type::isImageType() const {
 }
 
 inline bool Type::isOpenCLSpecificType() const {
-  return isImageType() || isEventT();
+  return isSamplerT() || isEventT() || isImageType();
 }
 
 inline bool Type::isTemplateTypeParmType() const {

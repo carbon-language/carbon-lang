@@ -625,6 +625,8 @@ public:
     SK_ProduceObjCObject,
     /// \brief Construct a std::initializer_list from an initializer list.
     SK_StdInitializerList,
+    /// \brief Initialize an OpenCL sampler from an integer.
+    SK_OCLSamplerInit,
     /// \brief Passing zero to a function where OpenCL event_t is expected.
     SK_OCLZeroEvent
   };
@@ -954,6 +956,10 @@ public:
   /// \brief Add a step to construct a std::initializer_list object from an
   /// initializer list.
   void AddStdInitializerListConstructionStep(QualType T);
+
+  /// \brief Add a step to initialize an OpenCL sampler from an integer
+  /// constant.
+  void AddOCLSamplerInitStep(QualType T);
 
   /// \brief Add a step to initialize an OpenCL event_t from a NULL
   /// constant.

@@ -952,6 +952,10 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     Result = Context.OCLImage3dTy;
     break;
 
+  case DeclSpec::TST_sampler_t:
+    Result = Context.OCLSamplerTy;
+    break;
+
   case DeclSpec::TST_event_t:
     Result = Context.OCLEventTy;
     break;

@@ -17,6 +17,10 @@ void foo5(img2darr_t img);
 
 void foo6(img3d_t img);
 
+void foo7(smp_t smp) {
+  smp_t loc_smp;
+}
+
 void foo8(evt_t evt) {
   evt_t loc_evt;
 }

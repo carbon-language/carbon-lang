@@ -906,6 +906,7 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
     InitBuiltinType(OCLImage2dArrayTy, BuiltinType::OCLImage2dArray);
     InitBuiltinType(OCLImage3dTy, BuiltinType::OCLImage3d);
 
+    InitBuiltinType(OCLSamplerTy, BuiltinType::OCLSampler);
     InitBuiltinType(OCLEventTy, BuiltinType::OCLEvent);
   }
   
@@ -1447,6 +1448,11 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
     case BuiltinType::ObjCSel:
       Width = Target->getPointerWidth(0); 
       Align = Target->getPointerAlign(0);
+      break;
+    case BuiltinType::OCLSampler:
+      // Samplers are modeled as integers.
+      Width = Target->getIntWidth();
+      Align = Target->getIntAlign();
       break;
     case BuiltinType::OCLEvent:
     case BuiltinType::OCLImage1d:
@@ -4923,6 +4929,7 @@ static char getObjCEncodingForPrimitiveKind(const ASTContext *C,
     case BuiltinType::OCLImage2dArray:
     case BuiltinType::OCLImage3d:
     case BuiltinType::OCLEvent:
+    case BuiltinType::OCLSampler:
     case BuiltinType::Dependent:
 #define BUILTIN_TYPE(KIND, ID)
 #define PLACEHOLDER_TYPE(KIND, ID) \

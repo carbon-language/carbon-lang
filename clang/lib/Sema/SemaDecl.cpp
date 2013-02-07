@@ -4483,6 +4483,14 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       SCAsWritten = SC_OpenCLWorkGroupLocal;
     }
 
+    // OpenCL v1.2 s6.9.b p4:
+    // The sampler type cannot be used with the __local and __global address
+    // space qualifiers.
+    if (R->isSamplerT() && (R.getAddressSpace() == LangAS::opencl_local ||
+      R.getAddressSpace() == LangAS::opencl_global)) {
+      Diag(D.getIdentifierLoc(), diag::err_wrong_sampler_addressspace);
+    }
+
     // OpenCL 1.2 spec, p6.9 r:
     // The event type cannot be used to declare a program scope variable.
     // The event type cannot be used with the __local, __constant and __global

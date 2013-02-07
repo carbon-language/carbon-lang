@@ -162,6 +162,9 @@ BUILTIN_TYPE(OCLImage2d, OCLImage2dTy)
 BUILTIN_TYPE(OCLImage2dArray, OCLImage2dArrayTy)
 BUILTIN_TYPE(OCLImage3d, OCLImage3dTy)
 
+// OpenCL sampler_t.
+BUILTIN_TYPE(OCLSampler, OCLSamplerTy)
+
 // OpenCL event_t.
 BUILTIN_TYPE(OCLEvent, OCLEventTy)
 

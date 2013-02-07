@@ -6139,6 +6139,10 @@ def err_event_t_addr_space_qual : Error<
   "the event_t type can only be used with __private address space qualifier">;
 def err_expected_kernel_void_return_type : Error<
   "kernel must have void return type">;
+def err_sampler_argument_required : Error<
+  "sampler_t variable required - got %0">;
+def err_wrong_sampler_addressspace: Error<
+  "sampler type cannot be used with the __local and __global address space qualifiers">;
 
 } // end of sema category
 
