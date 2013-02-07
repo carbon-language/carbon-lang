@@ -31,6 +31,8 @@ void LangOptions::resetNonModularOptions() {
   Name = Default;
 #include "clang/Basic/LangOptions.def"
 
+  // FIXME: This should not be reset; modules can be different with different
+  // sanitizer options (this affects __has_feature(address_sanitizer) etc).
   Sanitize = SanitizerOptions::Disabled;
 
   CurrentModule.clear();
