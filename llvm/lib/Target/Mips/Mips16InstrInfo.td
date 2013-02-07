@@ -1088,7 +1088,7 @@ def: StoreM16_pat<store, SwRxRyOffMemX16>;
 // Unconditional branch
 class UncondBranch16_pat<SDNode OpNode, Instruction I>:
   Mips16Pat<(OpNode bb:$imm16), (I bb:$imm16)> {
-    let Predicates = [RelocPIC, InMips16Mode];
+    let Predicates = [InMips16Mode];
   }
 
 def : Mips16Pat<(MipsJmpLink (i32 tglobaladdr:$dst)),
