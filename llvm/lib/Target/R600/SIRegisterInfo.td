@@ -12,7 +12,9 @@ class SI_64 <string n, list<Register> subregs, bits<16> encoding> : RegisterWith
 
 class SGPR_32 <bits<16> num, string name> : SIReg<name, num>;
 
-class VGPR_32 <bits<16> num, string name> : SIReg<name, num>;
+class VGPR_32 <bits<16> num, string name> : SIReg<name, num> {
+  let HWEncoding{8} = 1;
+}
 
 // Special Registers
 def VCC : SIReg<"VCC", 106>;

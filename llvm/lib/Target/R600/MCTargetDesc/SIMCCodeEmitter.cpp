@@ -24,35 +24,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
-#define VGPR_BIT(src_idx) (1ULL << (9 * src_idx - 1))
-#define SI_INSTR_FLAGS_ENCODING_MASK 0xf
-
-// These must be kept in sync with SIInstructions.td and also the
-// InstrEncodingInfo array in SIInstrInfo.cpp.
-//
-// NOTE: This enum is only used to identify the encoding type within LLVM,
-// the actual encoding type that is part of the instruction format is different
-namespace SIInstrEncodingType {
-  enum Encoding {
-    EXP = 0,
-    LDS = 1,
-    MIMG = 2,
-    MTBUF = 3,
-    MUBUF = 4,
-    SMRD = 5,
-    SOP1 = 6,
-    SOP2 = 7,
-    SOPC = 8,
-    SOPK = 9,
-    SOPP = 10,
-    VINTRP = 11,
-    VOP1 = 12,
-    VOP2 = 13,
-    VOP3 = 14,
-    VOPC = 15
-  };
-}
-
 using namespace llvm;
 
 namespace {
@@ -91,25 +62,6 @@ public:
   /// \brief Encoding for when 4 consectuive registers are used
   virtual unsigned GPR4AlignEncode(const MCInst &MI, unsigned OpNo,
                                    SmallVectorImpl<MCFixup> &Fixup) const;
-
-  /// \brief Post-Encoder method for VOP instructions
-  virtual uint64_t VOPPostEncode(const MCInst &MI, uint64_t Value) const;
-
-private:
-
-  /// \returns this SIInstrEncodingType for this instruction.
-  unsigned getEncodingType(const MCInst &MI) const;
-
-  /// \brief Get then size in bytes of this instructions encoding.
-  unsigned getEncodingBytes(const MCInst &MI) const;
-
-  /// \returns the hardware encoding for a register
-  unsigned getRegBinaryCode(unsigned reg) const;
-
-  /// \brief Generated function that returns the hardware encoding for
-  /// a register
-  unsigned getHWRegNum(unsigned reg) const;
-
 };
 
 } // End anonymous namespace
@@ -124,7 +76,7 @@ MCCodeEmitter *llvm::createSIMCCodeEmitter(const MCInstrInfo &MCII,
 void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
   uint64_t Encoding = getBinaryCodeForInstr(MI, Fixups);
-  unsigned bytes = getEncodingBytes(MI);
+  unsigned bytes = MCII.get(MI.getOpcode()).getSize();
   for (unsigned i = 0; i < bytes; i++) {
     OS.write((uint8_t) ((Encoding >> (8 * i)) & 0xff));
   }
@@ -134,7 +86,7 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                             const MCOperand &MO,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg()) {
-    return getRegBinaryCode(MO.getReg());
+    return MRI.getEncodingValue(MO.getReg());
   } else if (MO.isImm()) {
     return MO.getImm();
   } else if (MO.isFPImm()) {
@@ -163,9 +115,8 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
 unsigned SIMCCodeEmitter::GPRAlign(const MCInst &MI, unsigned OpNo,
                                    unsigned shift) const {
-  unsigned regCode = getRegBinaryCode(MI.getOperand(OpNo).getReg());
-  return regCode >> shift;
-  return 0;
+  unsigned regCode = MRI.getEncodingValue(MI.getOperand(OpNo).getReg());
+  return (regCode & 0xff) >> shift;
 }
 unsigned SIMCCodeEmitter::GPR2AlignEncode(const MCInst &MI,
                                           unsigned OpNo ,
@@ -178,87 +129,3 @@ unsigned SIMCCodeEmitter::GPR4AlignEncode(const MCInst &MI,
                                         SmallVectorImpl<MCFixup> &Fixup) const {
   return GPRAlign(MI, OpNo, 2);
 }
-
-//===----------------------------------------------------------------------===//
-// Post Encoder Callbacks
-//===----------------------------------------------------------------------===//
-
-uint64_t SIMCCodeEmitter::VOPPostEncode(const MCInst &MI, uint64_t Value) const{
-  unsigned encodingType = getEncodingType(MI);
-  unsigned numSrcOps;
-  unsigned vgprBitOffset;
-
-  if (encodingType == SIInstrEncodingType::VOP3) {
-    numSrcOps = 3;
-    vgprBitOffset = 32;
-  } else {
-    numSrcOps = 1;
-    vgprBitOffset = 0;
-  }
-
-  // Add one to skip over the destination reg operand.
-  for (unsigned opIdx = 1; opIdx < numSrcOps + 1; opIdx++) {
-    const MCOperand &MO = MI.getOperand(opIdx);
-    if (MO.isReg()) {
-      unsigned reg = MI.getOperand(opIdx).getReg();
-      if (AMDGPUMCRegisterClasses[AMDGPU::VReg_32RegClassID].contains(reg) ||
-          AMDGPUMCRegisterClasses[AMDGPU::VReg_64RegClassID].contains(reg)) {
-        Value |= (VGPR_BIT(opIdx)) << vgprBitOffset;
-      }
-    } else if (MO.isFPImm()) {
-      union {
-        float f;
-        uint32_t i;
-      } Imm;
-      // XXX: Not all instructions can use inline literals
-      // XXX: We should make sure this is a 32-bit constant
-      Imm.f = MO.getFPImm();
-      Value |= ((uint64_t)Imm.i) << 32;
-    }
-  }
-  return Value;
-}
-
-//===----------------------------------------------------------------------===//
-// Encoding helper functions
-//===----------------------------------------------------------------------===//
-
-unsigned SIMCCodeEmitter::getEncodingType(const MCInst &MI) const {
-  return MCII.get(MI.getOpcode()).TSFlags & SI_INSTR_FLAGS_ENCODING_MASK;
-}
-
-unsigned SIMCCodeEmitter::getEncodingBytes(const MCInst &MI) const {
-
-  // These instructions aren't real instructions with an encoding type, so
-  // we need to manually specify their size.
-  switch (MI.getOpcode()) {
-  default: break;
-  case AMDGPU::SI_LOAD_LITERAL_I32:
-  case AMDGPU::SI_LOAD_LITERAL_F32:
-    return 4;
-  }
-
-  unsigned encoding_type = getEncodingType(MI);
-  switch (encoding_type) {
-    case SIInstrEncodingType::EXP:
-    case SIInstrEncodingType::LDS:
-    case SIInstrEncodingType::MUBUF:
-    case SIInstrEncodingType::MTBUF:
-    case SIInstrEncodingType::MIMG:
-    case SIInstrEncodingType::VOP3:
-      return 8;
-    default:
-      return 4;
-  }
-}
-
-
-unsigned SIMCCodeEmitter::getRegBinaryCode(unsigned reg) const {
-  switch (reg) {
-    case AMDGPU::M0: return 124;
-    case AMDGPU::SREG_LIT_0: return 128;
-    case AMDGPU::SI_LITERAL_CONSTANT: return 255;
-    default: return MRI.getEncodingValue(reg);
-  }
-}
-
