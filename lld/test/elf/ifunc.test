@@ -38,6 +38,6 @@ PLT: kind: R_X86_64_PC32
 
 // This is a horribly brittle test. We need a way to do arithmetic on captured
 // variables.
-BIN: 40012c: ff 25 ce 0e 00 00 jmpq *3790(%rip)
+BIN: 40012c: ff 25 ce 1e 00 00 jmpq *7886(%rip)
 BIN: .got.plt:
-BIN-NEXT: 401000 00000000 00000000
+BIN-NEXT: 402000 00000000 00000000

@@ -111,6 +111,16 @@ public:
   Segment(const ELFTargetInfo &ti, StringRef name,
           const Layout::SegmentType type);
 
+  enum SegmentOrder {
+    permUnknown,
+    permRWX,
+    permRX,
+    permR,
+    permRWL,
+    permRW,
+    permNonAccess
+  };
+
   /// append a section to a segment
   void append(Section<ELFT> *section);
 
@@ -166,11 +176,36 @@ public:
 
   inline int pageSize() const { return this->_targetInfo.getPageSize(); }
 
-  inline int64_t atomflags() const { return _atomflags; }
+  inline int rawflags() const { return _atomflags; }
 
-  inline int64_t numSlices() const {
-    return _segmentSlices.size();
+  inline int64_t atomflags() const {
+    switch (_atomflags) {
+
+    case DefinedAtom::permUnknown:
+      return permUnknown;
+
+    case DefinedAtom::permRWX:
+      return permRWX;
+
+    case DefinedAtom::permR_X:
+      return permRX;
+
+    case DefinedAtom::permR__:
+      return permR;
+
+    case DefinedAtom::permRW_L:
+      return permRWL;
+
+    case DefinedAtom::permRW_:
+      return permRW;
+
+    case DefinedAtom::perm___:
+    default:
+      return permNonAccess;
+    }
   }
+
+  inline int64_t numSlices() const { return _segmentSlices.size(); }
 
   inline range<SliceIter> slices() { return _segmentSlices; }
 
@@ -215,17 +250,12 @@ Segment<ELFT>::append(Section<ELFT> *section) {
     this->_align2 = section->align2();
 }
 
-template<class ELFT>
-bool 
-Segment<ELFT>::compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
-  if (sega->atomflags() < segb->atomflags())
-    return false;
-  return true;
+template <class ELFT>
+bool Segment<ELFT>::compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
+  return (sega->atomflags() < segb->atomflags());
 }
 
-template<class ELFT>
-void 
-Segment<ELFT>::assignOffsets(uint64_t startOffset) {
+template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
   int startSection = 0;
   int currSection = 0;
   SectionIter startSectionIter, endSectionIter;

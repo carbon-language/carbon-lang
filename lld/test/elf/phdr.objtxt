@@ -3,7 +3,7 @@ RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/phdr.i386 | elf-dump %t1 
 RUN: lld -core -target x86_64-linux -output=%t1 %p/Inputs/relocs.x86-64 \
 RUN: && llvm-objdump -p %t1 | FileCheck %s -check-prefix=X86_64
 
-ED:  # Program Header 0
+
 ED:  (('p_type', 0x00000001)
 ED:   ('p_flags', 0x00000005)
 ED:   ('p_offset', 0x00000000)
@@ -15,15 +15,25 @@ ED:   ('p_align', 0x00001000)
 ED:  ),
 ED:  # Program Header 1
 ED:  (('p_type', 0x00000001)
-ED:   ('p_flags', 0x00000006)
+ED:   ('p_flags', 0x00000004)
 ED:   ('p_offset', 0x00001000)
 ED:   ('p_vaddr', 0x00001000)
 ED:   ('p_paddr', 0x00001000)
+ED:   ('p_filesz', 0x0000008c)
+ED:   ('p_memsz', 0x0000008c)
+ED:   ('p_align', 0x00001000)
+ED:  ),
+ED:  # Program Header 2
+ED:  (('p_type', 0x00000001)
+ED:   ('p_flags', 0x00000006)
+ED:   ('p_offset', 0x00002000)
+ED:   ('p_vaddr', 0x00002000)
+ED:   ('p_paddr', 0x00002000)
 ED:   ('p_filesz', 0x00000104)
 ED:   ('p_memsz', 0x00000004)
 ED:   ('p_align', 0x00001000)
 ED:  ),
-ED:  # Program Header 2
+ED:  # Program Header 3
 ED:  (('p_type', 0x00000001)
 ED:   ('p_flags', 0x00000006)
 ED:   ('p_offset', 0x00004000)
@@ -31,16 +41,6 @@ ED:   ('p_vaddr', 0x00004000)
 ED:   ('p_paddr', 0x00004000)
 ED:   ('p_filesz', 0x00000004)
 ED:   ('p_memsz', 0x00004008)
-ED:   ('p_align', 0x00001000)
-ED:  ),
-ED:  # Program Header 3
-ED:  (('p_type', 0x00000001)
-ED:   ('p_flags', 0x00000004)
-ED:   ('p_offset', 0x00005000)
-ED:   ('p_vaddr', 0x00009000)
-ED:   ('p_paddr', 0x00009000)
-ED:   ('p_filesz', 0x0000008c)
-ED:   ('p_memsz', 0x0000008c)
 ED:   ('p_align', 0x00001000)
 ED:  ),
 
