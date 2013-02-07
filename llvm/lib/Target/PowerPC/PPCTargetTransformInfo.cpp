@@ -194,6 +194,25 @@ unsigned PPCTTI::getVectorInstrCost(unsigned Opcode, Type *Val,
                                     unsigned Index) const {
   assert(Val->isVectorTy() && "This must be a vector type");
 
+  const unsigned Awful = 1000;
+
+  // Vector element insert/extract with Altivec is very expensive.
+  // Until VSX is available, avoid vectorizing loops that require
+  // these operations.
+  if (Opcode == ISD::EXTRACT_VECTOR_ELT ||
+      Opcode == ISD::INSERT_VECTOR_ELT)
+    return Awful;
+
+  // We don't vectorize SREM/UREM so well.  Constrain the vectorizer
+  // for those as well.
+  if (Opcode == ISD::SREM || Opcode == ISD::UREM)
+    return Awful;
+
+  // VSELECT is not yet implemented, leading to use of insert/extract
+  // and ISEL, hence not a good idea.
+  if (Opcode == ISD::VSELECT)
+    return Awful;
+
   return TargetTransformInfo::getVectorInstrCost(Opcode, Val, Index);
 }
 
