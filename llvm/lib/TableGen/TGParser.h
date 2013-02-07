@@ -96,7 +96,7 @@ public:
   bool TokError(const Twine &Msg) const {
     return Error(Lex.getLoc(), Msg);
   }
-  const std::vector<std::string> &getDependencies() const {
+  const TGLexer::DependenciesMapTy &getDependencies() const {
     return Lex.getDependencies();
   }
 
