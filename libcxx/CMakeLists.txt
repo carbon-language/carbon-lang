@@ -114,6 +114,89 @@ if ("${LIBCXX_CXX_ABI}" STREQUAL "libsupc++")
     FILES_MATCHING
     PATTERN "*"
     )
+elseif ("${LIBCXX_CXX_ABI}" STREQUAL "libcxxabi")
+  set(LIBCXX_LIBCXXABI_INCLUDE_PATHS "${LIBCXX_LIBCXXABI_INCLUDE_PATHS}"
+      CACHE STRINGS
+      "Paths to libc++abi include directories separate by ';'.")
+  set(LIBCXX_CXX_ABI_LIBRARIES c++abi)
+  set(LIBCXX_LIBCXXABI_FILES
+      cxxabi.h
+      cxa_demangle.h
+      )
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
+  set(LIBCXX_LIBCXXABI_FILE_PATHS)
+  foreach(path ${LIBCXX_LIBCXXABI_FILES})
+    set(found FALSE)
+    foreach(incpath ${LIBCXX_LIBCXXABI_INCLUDE_PATHS})
+      if (EXISTS "${incpath}/${path}")
+        set(found TRUE)
+        get_filename_component(file ${path} NAME)
+        add_custom_command(
+          OUTPUT "${CMAKE_BINARY_DIR}/include/${file}"
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${incpath}/${path}"
+                    "${CMAKE_BINARY_DIR}/include"
+          MAIN_DEPENDENCY "${incpath}/${path}"
+          )
+        list(APPEND LIBCXX_CXX_ABI_DEPS
+                    "${CMAKE_BINARY_DIR}/include/${file}")
+      endif()
+    endforeach()
+    if (NOT found)
+      message(FATAL_ERROR "Failed to find ${path}")
+    endif()
+  endforeach()
+  add_custom_target(cxxabi_headers DEPENDS ${LIBCXX_CXX_ABI_DEPS})
+  set(LIBCXX_CXX_ABI_DEPS cxxabi_headers)
+  include_directories("${CMAKE_BINARY_DIR}/include")
+  install(DIRECTORY "${CMAKE_BINARY_DIR}/include/"
+    DESTINATION include/c++/v1
+    FILES_MATCHING
+    PATTERN "*"
+    )
+elseif ("${LIBCXX_CXX_ABI}" STREQUAL "libcxxrt")
+  set(LIBCXX_LIBCXXRT_INCLUDE_PATHS "${LIBCXX_LIBCXXRT_INCLUDE_PATHS}"
+      CACHE STRINGS
+      "Paths to libcxxrt include directories separate by ';'.")
+  set(LIBCXX_CXX_ABI_LIBRARIES cxxrt)
+  set(LIBCXX_LIBCXXRT_FILES
+      cxxabi.h
+      unwind.h
+      unwind-arm.h
+      unwind-itanium.h
+      )
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
+  set(LIBCXX_LIBCXXRT_FILE_PATHS)
+  foreach(path ${LIBCXX_LIBCXXRT_FILES})
+    set(found FALSE)
+    foreach(incpath ${LIBCXX_LIBCXXRT_INCLUDE_PATHS})
+      if (EXISTS "${incpath}/${path}")
+        set(found TRUE)
+        get_filename_component(file ${path} NAME)
+        add_custom_command(
+          OUTPUT "${CMAKE_BINARY_DIR}/include/${file}"
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${incpath}/${path}"
+                    "${CMAKE_BINARY_DIR}/include"
+          MAIN_DEPENDENCY "${incpath}/${path}"
+          )
+        list(APPEND LIBCXX_CXX_ABI_DEPS
+                    "${CMAKE_BINARY_DIR}/include/${file}")
+      endif()
+    endforeach()
+    if (NOT found)
+      message(FATAL_ERROR "Failed to find ${path}")
+    endif()
+  endforeach()
+  add_custom_target(cxxrt_headers DEPENDS ${LIBCXX_CXX_ABI_DEPS})
+  set(LIBCXX_CXX_ABI_DEPS cxxrt_headers)
+  include_directories("${CMAKE_BINARY_DIR}/include")
+  install(DIRECTORY "${CMAKE_BINARY_DIR}/include/"
+    DESTINATION include/c++/v1
+    FILES_MATCHING
+    PATTERN "*"
+    )
+  list(APPEND LIBCXX_CXX_FEATURE_FLAGS -DLIBCXXRT)
 elseif (NOT "${LIBCXX_CXX_ABI}" STREQUAL "none")
   message(FATAL_ERROR
           "Currently only none and libsupc++ are supported for c++ abi.")

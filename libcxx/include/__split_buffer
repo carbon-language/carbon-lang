@@ -290,7 +290,7 @@ void
 __split_buffer<_Tp, _Allocator>::__destruct_at_begin(pointer __new_begin, false_type)
 {
     while (__begin_ != __new_begin)
-        __alloc_traits::destroy(__alloc(), __begin_++);
+        __alloc_traits::destroy(__alloc(), _VSTD::__to_raw_pointer(__begin_++));
 }
 
 template <class _Tp, class _Allocator>
@@ -307,7 +307,7 @@ void
 __split_buffer<_Tp, _Allocator>::__destruct_at_end(pointer __new_last, false_type) _NOEXCEPT
 {
     while (__new_last != __end_)
-        __alloc_traits::destroy(__alloc(), --__end_);
+        __alloc_traits::destroy(__alloc(), _VSTD::__to_raw_pointer(--__end_));
 }
 
 template <class _Tp, class _Allocator>

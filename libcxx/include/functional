@@ -465,6 +465,10 @@ POLICY:  For non-variadic implementations, the number of arguments is limited
 #include <memory>
 #include <tuple>
 
+#if __OBJC__
+#  include <Foundation/NSObject.h>
+#endif
+
 #include <__functional_base>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -2019,6 +2023,26 @@ struct _LIBCPP_VISIBLE hash<long double>
 #endif
     }
 };
+
+#if __OBJC__
+
+template <>
+struct _LIBCPP_VISIBLE hash<id>
+    : public unary_function<id, size_t>
+{
+    _LIBCPP_INLINE_VISIBILITY
+    size_t operator()(id __v) const _NOEXCEPT {return [__v hash];}
+};
+
+template <>
+struct _LIBCPP_VISIBLE equal_to<id>
+    : public binary_function<id, id, bool>
+{
+    _LIBCPP_INLINE_VISIBILITY bool operator()(id __x, id __y) const
+        {return __x == __y || [__x isEqual: __y];}
+};
+
+#endif  //  __OBJC__
 
 // struct hash<T*> in <memory>
 

@@ -440,7 +440,7 @@ void
 __vector_base<_Tp, _Allocator>::__destruct_at_end(const_pointer __new_last, false_type) _NOEXCEPT
 {
     while (__new_last != __end_)
-        __alloc_traits::destroy(__alloc(), const_cast<pointer>(--__end_));
+        __alloc_traits::destroy(__alloc(), _VSTD::__to_raw_pointer(--__end_));
 }
 
 template <class _Tp, class _Allocator>
@@ -448,7 +448,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 void
 __vector_base<_Tp, _Allocator>::__destruct_at_end(const_pointer __new_last, true_type) _NOEXCEPT
 {
-    __end_ = const_cast<pointer>(__new_last);
+    __end_ = static_cast<pointer>(__new_last);
 }
 
 template <class _Tp, class _Allocator>
@@ -1550,7 +1550,7 @@ vector<_Tp, _Allocator>::erase(const_iterator __position)
         "vector::erase(iterator) called with an iterator not"
         " referring to this vector");
 #endif
-    pointer __p = const_cast<pointer>(&*__position);
+    pointer __p = this->__begin_ + (__position - cbegin());
     iterator __r = __make_iter(__p);
     this->__destruct_at_end(_VSTD::move(__p + 1, this->__end_, __p));
     return __r;
