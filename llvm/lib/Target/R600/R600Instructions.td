@@ -711,6 +711,34 @@ def SNE : R600_2OP <
     COND_NE))]
 >;
 
+def SETE_DX10 : R600_2OP <
+  0xC, "SETE_DX10",
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
+    COND_EQ))]
+>;
+
+def SETGT_DX10 : R600_2OP <
+  0xD, "SETGT_DX10",
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
+    COND_GT))]
+>;
+
+def SETGE_DX10 : R600_2OP <
+  0xE, "SETGE_DX10",
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
+    COND_GE))]
+>;
+
+def SETNE_DX10 : R600_2OP <
+  0xF, "SETNE_DX10",
+  [(set R600_Reg32:$dst,
+    (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, (i32 -1), (i32 0),
+     COND_NE))]
+>;
+
 def FRACT : R600_1OP_Helper <0x10, "FRACT", AMDGPUfract>;
 def TRUNC : R600_1OP_Helper <0x11, "TRUNC", int_AMDGPU_trunc>;
 def CEIL : R600_1OP_Helper <0x12, "CEIL", fceil>;
@@ -1772,6 +1800,18 @@ def : Pat <
   (SGE R600_Reg32:$src1, R600_Reg32:$src0) 
 >;
 
+// SETGT_DX10 reverse args
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, COND_LT),
+  (SETGT_DX10 R600_Reg32:$src1, R600_Reg32:$src0)
+>;
+
+// SETGE_DX10 reverse args
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, COND_LE),
+  (SETGE_DX10 R600_Reg32:$src1, R600_Reg32:$src0)
+>;
+
 // SETGT_INT reverse args
 def : Pat <
   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETLT),
@@ -1810,10 +1850,22 @@ def : Pat <
   (SETE R600_Reg32:$src0, R600_Reg32:$src1)
 >;
 
+//SETE_DX10 - 'true if ordered'
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETO),
+  (SETE_DX10 R600_Reg32:$src0, R600_Reg32:$src1)
+>;
+
 //SNE - 'true if unordered'
 def : Pat <
   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, SETUO),
   (SNE R600_Reg32:$src0, R600_Reg32:$src1)
+>;
+
+//SETNE_DX10 - 'true if ordered'
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUO),
+  (SETNE_DX10 R600_Reg32:$src0, R600_Reg32:$src1)
 >;
 
 def : Extract_Element <f32, v4f32, R600_Reg128, 0, sel_x>;

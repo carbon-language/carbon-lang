@@ -24,21 +24,21 @@ entry:
 
 ; CHECK: @ult_float
 ; CHECK: SETGT T{{[0-9]+\.[XYZW]}}, literal.x, {{T[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
-define void @ult_float(i32 addrspace(1)* %out, float %in) {
+define void @ult_float(float addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ult float %in, 5.0
-  %1 = select i1 %0, i32 -1, i32 0
-  store i32 %1, i32 addrspace(1)* %out
+  %1 = select i1 %0, float 1.0, float 0.0
+  store float %1, float addrspace(1)* %out
   ret void
 }
 
 ; CHECK: @olt
 ; CHECK: SETGT T{{[0-9]+\.[XYZW]}}, literal.x, {{T[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
-define void @olt(i32 addrspace(1)* %out, float %in) {
+define void @olt(float addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp olt float %in, 5.0
-  %1 = select i1 %0, i32 -1, i32 0
-  store i32 %1, i32 addrspace(1)* %out
+  %1 = select i1 %0, float 1.0, float 0.0
+  store float %1, float addrspace(1)* %out
   ret void
 }
 
@@ -64,20 +64,20 @@ entry:
 
 ; CHECK: @ule_float
 ; CHECK: SETGE T{{[0-9]+\.[XYZW]}}, literal.x, {{T[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
-define void @ule_float(i32 addrspace(1)* %out, float %in) {
+define void @ule_float(float addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ule float %in, 5.0
-  %1 = select i1 %0, i32 -1, i32 0
-  store i32 %1, i32 addrspace(1)* %out
+  %1 = select i1 %0, float 1.0, float 0.0
+  store float %1, float addrspace(1)* %out
   ret void
 }
 
 ; CHECK: @ole
 ; CHECK: SETGE T{{[0-9]+\.[XYZW]}}, literal.x, {{T[0-9]+\.[XYZW]}}, 1084227584(5.000000e+00)
-define void @ole(i32 addrspace(1)* %out, float %in) {
+define void @ole(float addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp ole float %in, 5.0
-  %1 = select i1 %0, i32 -1, i32 0
-  store i32 %1, i32 addrspace(1)* %out
+  %1 = select i1 %0, float 1.0, float 0.0
+  store float %1, float addrspace(1)* %out
   ret void
 }

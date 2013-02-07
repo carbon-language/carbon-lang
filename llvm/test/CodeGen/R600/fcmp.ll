@@ -1,8 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: SETE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK: MOV T{{[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
-;CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: SETE_DX10 T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @test(i32 addrspace(1)* %out, float addrspace(1)* %in) {
 entry:
