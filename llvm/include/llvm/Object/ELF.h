@@ -702,6 +702,10 @@ public:
   virtual library_iterator begin_libraries_needed() const;
   virtual library_iterator end_libraries_needed() const;
 
+  const Elf_Shdr *getDynamicSymbolTableSectionHeader() const {
+    return SymbolTableSections[0];
+  }
+
   Elf_Dyn_iterator begin_dynamic_table() const;
   Elf_Dyn_iterator end_dynamic_table() const;
 
