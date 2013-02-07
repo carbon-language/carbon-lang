@@ -32,6 +32,10 @@
 #endif // _!WIN32
 #include <stdlib.h>
 
+// On Linux, wint_t and wchar_t have different signed-ness, and this causes
+// lots of noise in the build log, but no bugs that I know of. 
+#pragma clang diagnostic ignored "-Wsign-conversion"
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 #ifdef __cloc_defined
@@ -1596,9 +1600,9 @@ int
 codecvt<wchar_t, char, mbstate_t>::do_max_length() const  _NOEXCEPT
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    return __l == 0 ? 1 : MB_CUR_MAX_L(__l);
+    return __l == 0 ? 1 : static_cast<int>(  MB_CUR_MAX_L(__l));
 #else
-    return __l == 0 ? 1 : __mb_cur_max_l(__l);
+    return __l == 0 ? 1 : static_cast<int>(__mb_cur_max_l(__l));
 #endif
 }
 
