@@ -513,6 +513,8 @@ public:
       return Tmp;
     }
 
+    const char *get() const { return Current; }
+
   private:
     const uint64_t EntitySize;
     const char *Current;
@@ -2292,7 +2294,7 @@ library_iterator ELFObjectFile<ELFT>::begin_libraries_needed() const {
   }
 
   DataRefImpl DRI;
-  DRI.p = reinterpret_cast<uintptr_t>(&*i);
+  DRI.p = reinterpret_cast<uintptr_t>(i.get());
   return library_iterator(LibraryRef(DRI, this));
 }
 
@@ -2312,7 +2314,7 @@ error_code ELFObjectFile<ELFT>::getLibraryNext(DataRefImpl Data,
     ;
 
   DataRefImpl DRI;
-  DRI.p = reinterpret_cast<uintptr_t>(&*i);
+  DRI.p = reinterpret_cast<uintptr_t>(i.get());
   Result = LibraryRef(DRI, this);
   return object_error::success;
 }
@@ -2343,7 +2345,7 @@ template<class ELFT>
 library_iterator ELFObjectFile<ELFT>::end_libraries_needed() const {
   dyn_iterator e = end_dynamic_table();
   DataRefImpl DRI;
-  DRI.p = reinterpret_cast<uintptr_t>(&*e);
+  DRI.p = reinterpret_cast<uintptr_t>(e.get());
   return library_iterator(LibraryRef(DRI, this));
 }
 
