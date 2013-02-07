@@ -262,7 +262,7 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
     return sb_value;
 }
 
-ValueListImpl *
+void *
 SBValueList::get ()
 {
     return m_opaque_ap.get();

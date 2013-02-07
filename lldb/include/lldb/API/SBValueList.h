@@ -52,7 +52,14 @@ public:
     const lldb::SBValueList &
     operator = (const lldb::SBValueList &rhs);
 
+protected:
+    
+    void *
+    get ();
+
 private:
+    friend class SBFrame;
+    
     SBValueList (const ValueListImpl *lldb_object_ptr);
 
     void
@@ -73,8 +80,6 @@ private:
     const ValueListImpl &
     operator* () const;
     
-    ValueListImpl *
-    get ();
     
     ValueListImpl &
     ref ();
