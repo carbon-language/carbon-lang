@@ -2045,6 +2045,10 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
                   left->getResultType(), right->getResultType()))
     return false;
 
+  // If either is hidden, it is not considered to match.
+  if (left->isHidden() || right->isHidden())
+    return false;
+
   if (getLangOpts().ObjCAutoRefCount &&
       (left->hasAttr<NSReturnsRetainedAttr>()
          != right->hasAttr<NSReturnsRetainedAttr>() ||

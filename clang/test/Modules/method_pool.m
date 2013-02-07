@@ -19,6 +19,10 @@ void testMethod2(id object) {
   [object method2:1];
 } 
 
+void testMethod4(id object) {
+  [object method4]; // expected-warning{{instance method '-method4' not found (return type defaults to 'id')}}
+} 
+
 @import MethodPoolB;
 
 void testMethod1Again(id object) {
@@ -46,3 +50,7 @@ void testMethod3AgainAgain(id object) {
   // expected-note@2{{using}}
   // expected-note@2{{also found}}
 }
+
+void testMethod4Again(id object) {
+  [object method4];
+} 

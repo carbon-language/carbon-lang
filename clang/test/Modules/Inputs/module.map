@@ -116,6 +116,10 @@ module templates_right {
 module MethodPoolA {
   header "MethodPoolA.h"
 
+  explicit module Sub2 {
+    header "MethodPoolASub2.h"
+  }
+
   explicit module Sub {
     header "MethodPoolASub.h"
   }
