@@ -26,6 +26,13 @@
 // RUN: %clang_cc1 -fmodule-cache-path %t.modules -DIGNORED=1 -fmodules-ignore-macro=IGNORED -fmodules -I %S/Inputs -emit-pch -o %t.pch -x objective-c-header %s -verify
 // RUN: %clang_cc1 -fmodule-cache-path %t.modules -DIGNORED=1 -fmodules -I %S/Inputs -include-pch %t.pch -fmodules-ignore-macro=IGNORED -DNO_IGNORED_ANYWHERE -fmodules-ignore-macro=NO_IGNORED_ANYWHERE %s -verify
 
+// Fifth trial: pass -DIGNORED=1 and -fmodules-ignore-macro=IGNORED=1
+// to both invocations, so modules will be built without the IGNORED
+// macro.
+// RUN: rm -rf %t.modules
+// RUN: %clang_cc1 -fmodule-cache-path %t.modules -DIGNORED=1 -fmodules-ignore-macro=IGNORED=1 -fmodules -I %S/Inputs -emit-pch -o %t.pch -x objective-c-header %s -verify
+// RUN: %clang_cc1 -fmodule-cache-path %t.modules -DIGNORED=1 -fmodules -I %S/Inputs -include-pch %t.pch -fmodules-ignore-macro=IGNORED=1 -DNO_IGNORED_ANYWHERE -fmodules-ignore-macro=NO_IGNORED_ANYWHERE %s -verify
+
 // expected-no-diagnostics
 
 #ifndef HEADER

@@ -754,13 +754,8 @@ namespace {
       : HSOpts(HSOpts) { }
 
     bool operator()(const std::pair<std::string, bool> &def) const {
-      // Dig out the macro name.
-      StringRef MacroName = def.first;
-      StringRef::size_type EqPos = MacroName.find('=');
-      if (EqPos != StringRef::npos)
-        MacroName = MacroName.substr(0, EqPos);
-
-      return HSOpts.ModulesIgnoreMacros.count(MacroName) > 0;
+      StringRef MacroDef = def.first;
+      return HSOpts.ModulesIgnoreMacros.count(MacroDef.split('=').first) > 0;
     }
   };
 }
