@@ -431,10 +431,9 @@ REGISTER_TRAIT_WITH_PROGRAMSTATE(InitializedGlobalsSet,
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                ExplodedNodeSet &Dst) {
   // Assumption: The CFG has one DeclStmt per Decl.
-  const Decl *D = *DS->decl_begin();
-  const VarDecl *VD = dyn_cast_or_null<VarDecl>(D);
+  const VarDecl *VD = dyn_cast_or_null<VarDecl>(*DS->decl_begin());
 
-  if (!D || !VD) {
+  if (!VD) {
     //TODO:AZ: remove explicit insertion after refactoring is done.
     Dst.insert(Pred);
     return;
