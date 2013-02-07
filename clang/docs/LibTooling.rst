@@ -168,6 +168,9 @@ arguments:
   $ export BD=/path/to/build/llvm
   $ $BD/bin/clang-check -p $BD tools/clang/tools/clang-check/ClangCheck.cpp
 
+
+.. _libtooling_builtin_includes:
+
 Builtin includes
 ^^^^^^^^^^^^^^^^
 
