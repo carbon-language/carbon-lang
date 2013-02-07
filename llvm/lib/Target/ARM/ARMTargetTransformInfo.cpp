@@ -117,6 +117,8 @@ public:
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                       Type *Src) const;
 
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) const;
+
   unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const;
   /// @}
 };
@@ -310,4 +312,17 @@ unsigned ARMTTI::getVectorInstrCost(unsigned Opcode, Type *ValTy,
     return 2;
 
   return TargetTransformInfo::getVectorInstrCost(Opcode, ValTy, Index);
+}
+
+unsigned ARMTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                    Type *CondTy) const {
+
+  int ISD = TLI->InstructionOpcodeToISD(Opcode);
+  // On NEON a a vector select gets lowered to vbsl.
+  if (ST->hasNEON() && ValTy->isVectorTy() && ISD == ISD::SELECT) {
+    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(ValTy);
+    return LT.first;
+  }
+
+  return TargetTransformInfo::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
