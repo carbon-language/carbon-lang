@@ -8,8 +8,6 @@ add_lld_library(lldDriver
   Driver.cpp
   Drivers.cpp
   LinkerInvocation.cpp
-  Target.cpp
-  Targets.cpp
   )
 
 add_dependencies(lldDriver DriverOptionsTableGen)

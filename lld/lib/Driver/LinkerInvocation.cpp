@@ -12,7 +12,7 @@
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Driver/Target.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -20,6 +20,12 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace lld;
+
+namespace {
+std::unique_ptr<TargetInfo> createTargetInfo(const LinkerOptions &lo) {
+  return ELFTargetInfo::create(lo);
+}
+}
 
 void LinkerInvocation::operator()() {
   // Honor -mllvm
@@ -34,9 +40,9 @@ void LinkerInvocation::operator()() {
   }
 
   // Create target.
-  std::unique_ptr<Target> target(Target::create(_options));
+  std::unique_ptr<TargetInfo> targetInfo(createTargetInfo(_options));
 
-  if (!target) {
+  if (!targetInfo) {
     llvm::errs() << "Failed to create target for " << _options._target
                   << "\n";
     return;
@@ -45,7 +51,7 @@ void LinkerInvocation::operator()() {
   // Read inputs
   InputFiles inputs;
   for (const auto &input : _options._input) {
-    auto reader = target->getReader(input);
+    auto reader = targetInfo->getReader(input);
     if (error_code ec = reader) {
       llvm::errs() << "Failed to get reader for: " << input.getPath() << ": "
                     << ec.message() << "\n";
@@ -69,17 +75,17 @@ void LinkerInvocation::operator()() {
     inputs.appendFiles(files);
   }
 
-  auto writer = target->getWriter();
+  auto writer = targetInfo->getWriter();
 
   // Give writer a chance to add files
   writer->addFiles(inputs);
 
-  Resolver resolver(target->getTargetInfo(), inputs);
+  Resolver resolver(*targetInfo, inputs);
   resolver.resolve();
   MutableFile &merged = resolver.resultFile();
 
   PassManager pm;
-  target->getTargetInfo().addPasses(pm);
+  targetInfo->addPasses(pm);
   pm.runOnFile(merged);
 
   if (error_code ec = writer) {

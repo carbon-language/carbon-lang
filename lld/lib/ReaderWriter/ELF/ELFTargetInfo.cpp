@@ -18,6 +18,8 @@
 #include "llvm/Support/ELF.h"
 
 namespace lld {
+ELFTargetInfo::ELFTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
+
 uint16_t ELFTargetInfo::getOutputType() const {
   switch (_options._outputKind) {
   case OutputKind::Executable:
@@ -50,6 +52,23 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
   default:
     llvm_unreachable("Unhandled arch");
   }
+}
+
+ErrorOr<Reader &> ELFTargetInfo::getReader(const LinkerInput &input) const {
+  if (!_reader)
+    _reader = createReaderELF(*this, std::bind(&ELFTargetInfo::getReader, this,
+                                               std::placeholders::_1));
+  return *_reader;
+}
+
+ErrorOr<Writer &> ELFTargetInfo::getWriter() const {
+  if (!_writer) {
+    if (_options._outputYAML)
+      _writer = createWriterYAML(*this);
+    else
+      _writer = createWriterELF(*this);
+  }
+  return *_writer;
 }
 
 std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(const LinkerOptions &lo) {

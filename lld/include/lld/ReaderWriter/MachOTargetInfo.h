@@ -12,6 +12,8 @@
 
 #include "lld/Core/TargetInfo.h"
 
+#include "llvm/Support/ErrorHandling.h"
+
 #include <memory>
 
 namespace lld {
@@ -27,6 +29,14 @@ public:
   bool addUnixThreadLoadCommand() const;
 
   virtual uint64_t getPageZeroSize() const = 0;
+
+  virtual ErrorOr<Reader &> getReader(const LinkerInput &input) const {
+    llvm_unreachable("Unimplemented!");
+  }
+
+  virtual ErrorOr<Writer &> getWriter() const {
+    llvm_unreachable("Unimplemented!");
+  }
 
   static std::unique_ptr<MachOTargetInfo> create(const LinkerOptions &lo);
 };

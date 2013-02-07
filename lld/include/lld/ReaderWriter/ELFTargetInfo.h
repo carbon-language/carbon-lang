@@ -12,6 +12,9 @@
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/Core/TargetInfo.h"
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Writer.h"
+
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
@@ -30,7 +33,7 @@ public:
 
 class ELFTargetInfo : public TargetInfo {
 protected:
-  ELFTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
+  ELFTargetInfo(const LinkerOptions &lo);
 
 public:
   uint16_t getOutputType() const;
@@ -44,6 +47,10 @@ public:
     return false;
   }
 
+  virtual ErrorOr<Reader &> getReader(const LinkerInput &input) const;
+
+  virtual ErrorOr<Writer &> getWriter() const;
+
   static std::unique_ptr<ELFTargetInfo> create(const LinkerOptions &lo);
 
   template <typename ELFT>
@@ -54,6 +61,8 @@ public:
 
 protected:
   std::unique_ptr<TargetHandlerBase> _targetHandler;
+  mutable std::unique_ptr<Reader> _reader;
+  mutable std::unique_ptr<Writer> _writer;
 };
 } // end namespace lld
 

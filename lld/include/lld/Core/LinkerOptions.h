@@ -29,38 +29,31 @@
 #include <vector>
 
 namespace lld {
-enum class InputKind {
-  Unknown,
-  YAML,
-  Native,
-  Object,
-  LLVM,
-  Script
-};
-
+/// \brief An input to the linker.
+///
+/// This class represents an input to the linker. It create the MemoryBuffer
+/// lazily when needed based on the file path. It can also take a MemoryBuffer
+/// directly.
+///
+/// The intent is that we only open each file once. And have strong ownership
+/// semantics.
 class LinkerInput {
   LinkerInput(const LinkerInput &) LLVM_DELETED_FUNCTION;
 
 public:
-  LinkerInput(StringRef file, InputKind kind = InputKind::Unknown)
-    : _file(file)
-    , _kind(kind) {}
+  LinkerInput(StringRef file) : _file(file) {}
 
-  LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer,
-              InputKind kind = InputKind::Unknown)
-    : _buffer(std::move(buffer))
-    , _file(_buffer->getBufferIdentifier())
-    , _kind(kind) {}
+  LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer)
+      : _buffer(std::move(buffer)), _file(_buffer->getBufferIdentifier()) {
+  }
 
-  LinkerInput(LinkerInput &&other)
-    : _buffer(std::move(other._buffer))
-    , _file(std::move(other._file))
-    , _kind(other._kind) {}
+  LinkerInput(LinkerInput && other)
+      : _buffer(std::move(other._buffer)), _file(std::move(other._file)) {
+  }
 
   LinkerInput &operator=(LinkerInput &&rhs) {
     _buffer = std::move(rhs._buffer);
     _file = std::move(rhs._file);
-    _kind = rhs._kind;
     return *this;
   }
 
@@ -75,33 +68,6 @@ public:
     return *_buffer;
   }
 
-  ErrorOr<InputKind> getKind() const {
-    if (_kind == InputKind::Unknown) {
-      _kind = llvm::StringSwitch<InputKind>(getPath())
-        .EndsWith(".objtxt", InputKind::YAML)
-        .EndsWith(".yaml", InputKind::YAML)
-        .Default(InputKind::Unknown);
-
-      if (_kind != InputKind::Unknown)
-        return _kind;
-
-      auto buf = getBuffer();
-      if (!buf)
-        return error_code(buf);
-
-      llvm::sys::fs::file_magic magic =
-        llvm::sys::fs::identify_magic(buf->getBuffer());
-
-      switch (magic) {
-      case llvm::sys::fs::file_magic::elf_relocatable:
-        _kind = InputKind::Object;
-        break;
-      }
-    }
-
-    return _kind;
-  }
-
   StringRef getPath() const {
     return _file;
   }
@@ -114,7 +80,6 @@ public:
 private:
   mutable std::unique_ptr<llvm::MemoryBuffer> _buffer;
   std::string _file;
-  mutable InputKind _kind;
 };
 
 enum OutputKind {

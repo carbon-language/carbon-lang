@@ -31,8 +31,11 @@ namespace llvm {
 }
 
 namespace lld {
+class LinkerInput;
 struct LinkerOptions;
 class PassManager;
+class Reader;
+class Writer;
 
 class TargetInfo {
 protected:
@@ -52,6 +55,14 @@ public:
   virtual StringRef getEntry() const;
 
   virtual void addPasses(PassManager &pm) const {}
+
+  /// \brief Get a reference to a Reader for the given input.
+  ///
+  /// Will always return the same object for the same input.
+  virtual ErrorOr<Reader &> getReader(const LinkerInput &input) const = 0;
+
+  /// \brief Get the writer.
+  virtual ErrorOr<Writer &> getWriter() const = 0;
 
   // TODO: Split out to TargetRelocationInfo.
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {

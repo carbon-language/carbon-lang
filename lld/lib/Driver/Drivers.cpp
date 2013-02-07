@@ -218,7 +218,7 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
   for (llvm::opt::arg_iterator it = args.filtered_begin(ld::OPT_INPUT),
                                ie = args.filtered_end();
                                it != ie; ++it) {
-    ret._input.push_back(LinkerInput((*it)->getValue(), InputKind::Object));
+    ret._input.push_back(LinkerInput((*it)->getValue()));
   }
 
   ret._llvmArgs = args.getAllArgValues(core::OPT_mllvm);

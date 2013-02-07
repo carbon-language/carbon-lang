@@ -195,6 +195,15 @@ public:
     }
     return llvm::make_error_code(llvm::errc::invalid_argument);
   }
+
+  virtual ErrorOr<Reader &> getReader(const LinkerInput &input) const {
+    llvm_unreachable("Unimplemented!");
+  }
+
+  virtual ErrorOr<Writer &> getWriter() const {
+    llvm_unreachable("Unimplemented!");
+  }
+
 private:
   bool              _doStubs;
   bool              _doGOT;
