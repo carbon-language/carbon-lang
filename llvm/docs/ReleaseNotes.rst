@@ -52,6 +52,21 @@ Non-comprehensive list of changes in this release
   easy-to-write reStructuredText. See `llvm/docs/README.txt` for more
   information.
 
+ Loop Vectorizer
+ ---------------
+ We've continued the work on the loop vectorizer. The loop vectorizer now has the following features:
+  # Loops with unknown trip count.
+  # Runtime checks of pointers
+  # Reductions, Inductions
+  # If Conversion
+  # Pointer induction variables
+  # Reverse iterators
+  # Vectorization of mixed types
+  # Vectorization of function calls
+  # Partial unrolling during vectorization
+
+  We've also improved the X86 and ARM cost model.
+
 * ... next change ...
 
 .. NOTE
