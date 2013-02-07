@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm < %s -o %t
 // RUN: grep volatile %t | count 28
-// RUN: grep memcpy %t | count 7
+// RUN: grep "memcpy.*, i1 true" %t | count 6
 
 // The number 28 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
