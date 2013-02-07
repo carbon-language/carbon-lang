@@ -1186,7 +1186,15 @@ DeclContext::lookup(DeclarationName Name) {
     }
 
     ExternalASTSource *Source = getParentASTContext().getExternalSource();
-    return Source->FindExternalVisibleDeclsByName(this, Name);
+    if (Source->FindExternalVisibleDeclsByName(this, Name)) {
+      if (StoredDeclsMap *Map = LookupPtr.getPointer()) {
+        StoredDeclsMap::iterator I = Map->find(Name);
+        if (I != Map->end())
+          return I->second.getLookupResult();
+      }
+    }
+
+    return lookup_result(lookup_iterator(0), lookup_iterator(0));
   }
 
   StoredDeclsMap *Map = LookupPtr.getPointer();

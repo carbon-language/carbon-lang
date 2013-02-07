@@ -5424,14 +5424,13 @@ static ModuleFile *getDefinitiveModuleFileFor(const DeclContext *DC,
   return 0;
 }
 
-DeclContext::lookup_result
+bool
 ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                           DeclarationName Name) {
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
   if (!Name)
-    return DeclContext::lookup_result(DeclContext::lookup_iterator(0),
-                                      DeclContext::lookup_iterator(0));
+    return false;
 
   SmallVector<NamedDecl *, 64> Decls;
   
@@ -5464,7 +5463,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   }
   ++NumVisibleDeclContextsRead;
   SetExternalVisibleDeclsForName(DC, Name, Decls);
-  return const_cast<DeclContext*>(DC)->lookup(Name);
+  return !Decls.empty();
 }
 
 namespace {

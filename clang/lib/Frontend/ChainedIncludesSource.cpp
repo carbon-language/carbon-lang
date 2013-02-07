@@ -191,7 +191,7 @@ CXXBaseSpecifier *
 ChainedIncludesSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   return getFinalReader().GetExternalCXXBaseSpecifiers(Offset);
 }
-DeclContextLookupResult
+bool
 ChainedIncludesSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                                       DeclarationName Name) {
   return getFinalReader().FindExternalVisibleDeclsByName(DC, Name);

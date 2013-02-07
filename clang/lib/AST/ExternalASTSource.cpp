@@ -43,10 +43,10 @@ ExternalASTSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   return 0;
 }
 
-DeclContextLookupResult 
+bool
 ExternalASTSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                                   DeclarationName Name) {
-  return DeclContext::lookup_result();
+  return false;
 }
 
 void ExternalASTSource::completeVisibleDeclsMap(const DeclContext *DC) {

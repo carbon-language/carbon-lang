@@ -44,8 +44,8 @@ protected:
   virtual uint32_t GetNumExternalSelectors();
   virtual Stmt *GetExternalDeclStmt(uint64_t Offset);
   virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
-  virtual DeclContextLookupResult
-  FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name);
+  virtual bool FindExternalVisibleDeclsByName(const DeclContext *DC,
+                                              DeclarationName Name);
   virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
                                         SmallVectorImpl<Decl*> &Result);

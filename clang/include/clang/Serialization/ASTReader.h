@@ -1437,7 +1437,7 @@ public:
   /// \brief Finds all the visible declarations with a given name.
   /// The current implementation of this method just loads the entire
   /// lookup table as unmaterialized references.
-  virtual DeclContext::lookup_result
+  virtual bool
   FindExternalVisibleDeclsByName(const DeclContext *DC,
                                  DeclarationName Name);
 
