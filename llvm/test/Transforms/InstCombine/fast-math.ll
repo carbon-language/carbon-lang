@@ -7,7 +7,7 @@ define float @fold(float %a) {
   %mul1 = fmul fast float %mul, 0x4002666660000000
   ret float %mul1
 ; CHECK: @fold
-; CHECK: fmul float %a, 0x4006147AE0000000
+; CHECK: fmul fast float %a, 0x4006147AE0000000
 }
 
 ; Same testing-case as the one used in fold() except that the operators have
@@ -22,7 +22,7 @@ define float @notfold(float %a) {
 
 define float @fold2(float %a) {
 ; CHECK: @fold2
-; CHECK: fmul float %a, 0x4006147AE0000000
+; CHECK: fmul fast float %a, 0x4006147AE0000000
   %mul = fmul float %a, 0x3FF3333340000000
   %mul1 = fmul fast float %mul, 0x4002666660000000
   ret float %mul1
@@ -54,7 +54,7 @@ define float @fold5(float %f1, float %f2) {
   %add1 = fadd fast float %add, 5.000000e+00
   ret float %add1
 ; CHECK: @fold5
-; CHECK: fadd float %f1, 9.000000e+00
+; CHECK: fadd fast float %f1, 9.000000e+00
 }
 
 ; (X + X) + X => 3.0 * X
@@ -107,7 +107,7 @@ define float @fold10(float %f1, float %f2) {
   %t3 = fadd fast float %t1, %t2
   ret float %t3
 ; CHECK: @fold10
-; CHECK: %t3 = fadd float %t2, -1.000000e+00
+; CHECK: %t3 = fadd fast float %t2, -1.000000e+00
 ; CHECK: ret float %t3
 }
 

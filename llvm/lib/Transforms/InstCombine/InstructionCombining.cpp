@@ -162,6 +162,21 @@ static bool MaintainNoSignedWrap(BinaryOperator &I, Value *B, Value *C) {
   return !Overflow;
 }
 
+/// Conservatively clears subclassOptionalData after a reassociation or
+/// commutation. We preserve fast-math flags when applicable as they can be
+/// preserved.
+static void ClearSubclassDataAfterReassociation(BinaryOperator &I) {
+  FPMathOperator *FPMO = dyn_cast<FPMathOperator>(&I);
+  if (!FPMO) {
+    I.clearSubclassOptionalData();
+    return;
+  }
+
+  FastMathFlags FMF = I.getFastMathFlags();
+  I.clearSubclassOptionalData();
+  I.setFastMathFlags(FMF);
+}
+
 /// SimplifyAssociativeOrCommutative - This performs a few simplifications for
 /// operators which are associative or commutative:
 //
@@ -219,7 +234,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
             I.clearSubclassOptionalData();
             I.setHasNoSignedWrap(true);
           } else {
-            I.clearSubclassOptionalData();
+            ClearSubclassDataAfterReassociation(I);
           }
 
           Changed = true;
@@ -241,7 +256,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(1, C);
           // Conservatively clear the optional flags, since they may not be
           // preserved by the reassociation.
-          I.clearSubclassOptionalData();
+          ClearSubclassDataAfterReassociation(I);
           Changed = true;
           ++NumReassoc;
           continue;
@@ -263,7 +278,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(1, B);
           // Conservatively clear the optional flags, since they may not be
           // preserved by the reassociation.
-          I.clearSubclassOptionalData();
+          ClearSubclassDataAfterReassociation(I);
           Changed = true;
           ++NumReassoc;
           continue;
@@ -283,7 +298,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(1, V);
           // Conservatively clear the optional flags, since they may not be
           // preserved by the reassociation.
-          I.clearSubclassOptionalData();
+          ClearSubclassDataAfterReassociation(I);
           Changed = true;
           ++NumReassoc;
           continue;
@@ -310,7 +325,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         I.setOperand(1, Folded);
         // Conservatively clear the optional flags, since they may not be
         // preserved by the reassociation.
-        I.clearSubclassOptionalData();
+        ClearSubclassDataAfterReassociation(I);
 
         Changed = true;
         continue;
