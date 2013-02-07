@@ -4,6 +4,6 @@
 extern "C" char memmove();
 
 int main() {
-  // CHECK: call signext i8 @memmove()
+  // CHECK: call {{signext i8|i8}} @memmove()
   return memmove();
 }
