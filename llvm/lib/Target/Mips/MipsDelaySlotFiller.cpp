@@ -45,15 +45,8 @@ static cl::opt<bool> SkipDelaySlotFiller(
   cl::Hidden);
 
 namespace {
-  struct Filler : public MachineFunctionPass {
-    typedef MachineBasicBlock::instr_iterator InstrIter;
-    typedef MachineBasicBlock::reverse_instr_iterator ReverseInstrIter;
-
-    TargetMachine &TM;
-    const TargetInstrInfo *TII;
-    InstrIter LastFiller;
-
-    static char ID;
+  class Filler : public MachineFunctionPass {
+  public:
     Filler(TargetMachine &tm)
       : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
 
@@ -61,7 +54,6 @@ namespace {
       return "Mips Delay Slot Filler";
     }
 
-    bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     bool runOnMachineFunction(MachineFunction &F) {
       if (SkipDelaySlotFiller)
         return false;
@@ -72,6 +64,12 @@ namespace {
         Changed |= runOnMachineBasicBlock(*FI);
       return Changed;
     }
+
+  private:
+    typedef MachineBasicBlock::instr_iterator InstrIter;
+    typedef MachineBasicBlock::reverse_instr_iterator ReverseInstrIter;
+
+    bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
 
     bool isDelayFiller(MachineBasicBlock &MBB,
                        InstrIter candidate);
@@ -96,7 +94,11 @@ namespace {
     findDelayInstr(MachineBasicBlock &MBB, InstrIter slot,
                    InstrIter &Filler);
 
+    TargetMachine &TM;
+    const TargetInstrInfo *TII;
+    InstrIter LastFiller;
 
+    static char ID;
   };
   char Filler::ID = 0;
 } // end of anonymous namespace
@@ -108,31 +110,33 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   LastFiller = MBB.instr_end();
 
-  for (InstrIter I = MBB.instr_begin(); I != MBB.instr_end(); ++I)
-    if (I->hasDelaySlot()) {
-      ++FilledSlots;
-      Changed = true;
-      InstrIter InstrWithSlot = I;
-      InstrIter D;
+  for (InstrIter I = MBB.instr_begin(); I != MBB.instr_end(); ++I) {
+    if (!I->hasDelaySlot())
+      continue;
 
-      // Delay slot filling is disabled at -O0.
-      if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None) &&
-          findDelayInstr(MBB, I, D)) {
-        MBB.splice(llvm::next(I), &MBB, D);
-        ++UsefulSlots;
-      } else
-        BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
+    ++FilledSlots;
+    Changed = true;
+    InstrIter InstrWithSlot = I;
+    InstrIter D;
 
-      // Record the filler instruction that filled the delay slot.
-      // The instruction after it will be visited in the next iteration.
-      LastFiller = ++I;
+    // Delay slot filling is disabled at -O0.
+    if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None) &&
+        findDelayInstr(MBB, I, D)) {
+      MBB.splice(llvm::next(I), &MBB, D);
+      ++UsefulSlots;
+    } else
+      BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
 
-      // Bundle the delay slot filler to InstrWithSlot so that the machine
-      // verifier doesn't expect this instruction to be a terminator.
-      MIBundleBuilder(MBB, InstrWithSlot, llvm::next(LastFiller));
-     }
+    // Record the filler instruction that filled the delay slot.
+    // The instruction after it will be visited in the next iteration.
+    LastFiller = ++I;
+
+    // Bundle the delay slot filler to InstrWithSlot so that the machine
+    // verifier doesn't expect this instruction to be a terminator.
+    MIBundleBuilder(MBB, InstrWithSlot, llvm::next(LastFiller));
+  }
+
   return Changed;
-
 }
 
 /// createMipsDelaySlotFillerPass - Returns a pass that fills in delay
