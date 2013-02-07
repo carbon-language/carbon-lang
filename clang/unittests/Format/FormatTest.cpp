@@ -147,8 +147,9 @@ TEST_F(FormatTest, FormatsNestedCall) {
   verifyFormat("Method(f1(f2, (f3())));");
 }
 
-TEST_F(FormatTest, ImportantSpaces) {
+TEST_F(FormatTest, NestedNameSpecifiers) {
   verifyFormat("vector< ::Type> v;");
+  verifyFormat("::ns::SomeFunction(::ns::SomeOtherFunction())");
 }
 
 TEST_F(FormatTest, OnlyGeneratesNecessaryReplacements) {

@@ -830,7 +830,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::coloncolon))
     return false;
   if (Right.is(tok::coloncolon))
-    return Left.isNot(tok::identifier) && Left.isNot(tok::greater);
+    return Left.isNot(tok::identifier) && Left.isNot(tok::greater) &&
+           Left.isNot(tok::l_paren);
   if (Left.is(tok::less) || Right.is(tok::greater) || Right.is(tok::less))
     return false;
   if (Right.is(tok::amp) || Right.is(tok::star))
