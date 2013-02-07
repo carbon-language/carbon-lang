@@ -3546,6 +3546,37 @@ TEST(MatchFinder, CanMatchSingleNodesRecursively) {
           "X", recordDecl(has(recordDecl(hasName("X::Z")).bind("Z"))), "Z")));
 }
 
+template <typename T>
+class VerifyAncestorHasChildIsEqual : public BoundNodesCallback {
+public:
+  virtual bool run(const BoundNodes *Nodes) { return false; }
+
+  virtual bool run(const BoundNodes *Nodes, ASTContext *Context) {
+    const T *Node = Nodes->getNodeAs<T>("");
+    return verify(*Nodes, *Context, Node);
+  }
+
+  bool verify(const BoundNodes &Nodes, ASTContext &Context, const Stmt *Node) {
+    return selectFirst<const T>(
+        "", match(stmt(hasParent(stmt(has(stmt(equalsNode(Node)))).bind(""))),
+                  *Node, Context)) != NULL;
+  }
+  bool verify(const BoundNodes &Nodes, ASTContext &Context, const Decl *Node) {
+    return selectFirst<const T>(
+        "", match(decl(hasParent(decl(has(decl(equalsNode(Node)))).bind(""))),
+                  *Node, Context)) != NULL;
+  }
+};
+
+TEST(IsEqualTo, MatchesNodesByIdentity) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X { class Y {}; };", recordDecl(hasName("::X::Y")).bind(""),
+      new VerifyAncestorHasChildIsEqual<Decl>()));
+  EXPECT_TRUE(
+      matchAndVerifyResultTrue("void f() { if(true) {} }", ifStmt().bind(""),
+                               new VerifyAncestorHasChildIsEqual<Stmt>()));
+}
+
 class VerifyStartOfTranslationUnit : public MatchFinder::MatchCallback {
 public:
   VerifyStartOfTranslationUnit() : Called(false) {}

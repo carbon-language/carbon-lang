@@ -2945,6 +2945,26 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesNamespace,
   return InnerMatcher.matches(*Node.getAsNamespace(), Finder, Builder);
 }
 
+/// \brief Overloads for the \c equalsNode matcher.
+/// FIXME: Implement for other node types.
+/// @{
+
+/// \brief Matches if a node equals another node.
+///
+/// \c Decl has pointer identity in the AST.
+AST_MATCHER_P_OVERLOAD(Decl, equalsNode, Decl*, Other, 0) {
+  return &Node == Other;
+}
+/// \brief Matches if a node equals another node.
+///
+/// \c Stmt has pointer identity in the AST.
+///
+AST_MATCHER_P_OVERLOAD(Stmt, equalsNode, Stmt*, Other, 1) {
+  return &Node == Other;
+}
+
+/// @}
+
 } // end namespace ast_matchers
 } // end namespace clang
 
