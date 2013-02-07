@@ -1023,6 +1023,7 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
 
   // now parse the list of expressions
   while (Tok.isNot(tok::r_paren)) {
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     ExprResult ArgExpr(ParseAssignmentExpression());
     if (ArgExpr.isInvalid()) {
       ArgExprsOk = false;

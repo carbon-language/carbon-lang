@@ -3902,3 +3902,16 @@ class Foo {
 }  // end namespace TestThrowExpr
 
 
+namespace UnevaluatedContextTest {
+
+// parse attribute expressions in an unevaluated context.
+
+static inline Mutex* getMutex1();
+static inline Mutex* getMutex2();
+
+void bar() EXCLUSIVE_LOCKS_REQUIRED(getMutex1());
+
+void bar2() EXCLUSIVE_LOCKS_REQUIRED(getMutex1(), getMutex2());
+
+}  // end namespace UnevaluatedContextTest
+
