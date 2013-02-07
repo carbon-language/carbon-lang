@@ -1633,6 +1633,11 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // tryAtomicConversion has updated the standard conversion sequence
     // appropriately.
     return true;
+  } else if (ToType->isEventT() && 
+             From->isIntegerConstantExpr(S.getASTContext()) &&
+             (From->EvaluateKnownConstInt(S.getASTContext()) == 0)) {
+    SCS.Second = ICK_Zero_Event_Conversion;
+    FromType = ToType;
   } else {
     // No second conversion required.
     SCS.Second = ICK_Identity;
@@ -4871,6 +4876,7 @@ static bool CheckConvertedConstantConversions(Sema &S,
   case ICK_Identity:
   case ICK_Integral_Promotion:
   case ICK_Integral_Conversion:
+  case ICK_Zero_Event_Conversion:
     return true;
 
   case ICK_Boolean_Conversion:
