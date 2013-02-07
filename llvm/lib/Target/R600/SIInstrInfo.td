@@ -38,6 +38,16 @@ def SIvcc_bitcast : SDNode<"SIISD::VCC_BITCAST",
   SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>]>
 >;
 
+// Transformation function, extract the lower 32bit of a 64bit immediate
+def LO32 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue() & 0xffffffff, MVT::i32);
+}]>;
+
+// Transformation function, extract the upper 32bit of a 64bit immediate
+def HI32 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue() >> 32, MVT::i32);
+}]>;
+
 class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
     AMDGPUInst<outs, ins, asm, pattern> {
 

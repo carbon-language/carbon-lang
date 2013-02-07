@@ -73,7 +73,6 @@ bool SILowerLiteralConstantsPass::runOnMachineFunction(MachineFunction &MF) {
       switch (MI.getOpcode()) {
       default: break;
       case AMDGPU::S_MOV_IMM_I32:
-      case AMDGPU::S_MOV_IMM_I64:
       case AMDGPU::V_MOV_IMM_F32:
       case AMDGPU::V_MOV_IMM_I32: {
           unsigned MovOpcode;

@@ -1019,18 +1019,15 @@ def S_MOV_IMM_I32 : InstSI <
   [(set SReg_32:$dst, (imm:$src0))]
 >;
 
-// i64 immediates aren't really supported in hardware, but LLVM will use the i64
-// type for indices on load and store instructions.  The pattern for
-// S_MOV_IMM_I64 will only match i64 immediates that can fit into 32-bits,
-// which the hardware can handle.
-def S_MOV_IMM_I64 : InstSI <
-  (outs SReg_64:$dst),
-  (ins i64imm:$src0),
-  "S_MOV_IMM_I64 $dst, $src0",
-  [(set SReg_64:$dst, (IMM32bitIn64bit:$src0))]
->;
-
 } // End isCodeGenOnly, isPseudo = 1
+
+// i64 immediates aren't supported in hardware, split it into two 32bit values
+def : Pat <
+  (i64 imm:$imm),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (S_MOV_IMM_I32 (LO32 imm:$imm)), sub0),
+    (S_MOV_IMM_I32 (HI32 imm:$imm)), sub1)
+>;
 
 class SI_LOAD_LITERAL<Operand ImmType> :
     Enc32 <(outs), (ins ImmType:$imm), "LOAD_LITERAL $imm", []> {
