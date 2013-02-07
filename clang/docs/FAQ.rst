@@ -51,10 +51,10 @@ driver and add the option you need.  Alternatively, you can run
 ``clang -Xclang <option> ...`` to force the driver pass ``<option>`` to
 ``clang -cc1``.
 
-I get errors about some headers being missing (``stddef.h``, ``stdard.h``)
+I get errors about some headers being missing (``stddef.h``, ``stdarg.h``)
 --------------------------------------------------------------------------
 
-Some header files (``stddef.h``, ``stdard.h``, and others) are shipped with
+Some header files (``stddef.h``, ``stdarg.h``, and others) are shipped with
 Clang --- these are called builtin includes.  Clang searches for them in a
 directory relative to the location of the ``clang`` binary.  If you moved the
 ``clang`` binary, you need to move the builtin headers, too.
