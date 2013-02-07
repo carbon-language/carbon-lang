@@ -16,6 +16,7 @@
 
 #include "interception.h"
 #include <sys/types.h>
+#include <stddef.h>
 #include <stdint.h>
 
 COMPILER_CHECK(sizeof(SIZE_T) == sizeof(size_t));
