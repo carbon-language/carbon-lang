@@ -13,11 +13,7 @@
 ///
 /// The optimizations performed include elimination of redundant, partially
 /// redundant, and inconsequential reference count operations, elimination of
-/// redundant weak pointer operations, pattern-matching and replacement of
-/// low-level operations into higher-level operations, and numerous minor
-/// simplifications.
-///
-/// This file also defines a simple ARC-aware AliasAnalysis.
+/// redundant weak pointer operations, and numerous minor simplifications.
 ///
 /// WARNING: This file knows about certain library functions. It recognizes them
 /// by name, and hardwires knowledge of their semantics.

@@ -11,6 +11,9 @@
 /// Reference Counting and is a system for managing reference counts for objects
 /// in Objective C.
 ///
+/// This specific file mainly deals with ``contracting'' multiple lower level
+/// operations into singular higher level operations through pattern matching.
+///
 /// WARNING: This file knows about certain library functions. It recognizes them
 /// by name, and hardwires knowledge of their semantics.
 ///
