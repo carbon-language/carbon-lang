@@ -118,6 +118,12 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
         } else if (AMDGPU::SReg_256RegClass.contains(reg)) {
           isSGPR = true;
           width = 8;
+        } else if (AMDGPU::VReg_256RegClass.contains(reg)) {
+          isSGPR = false;
+          width = 8;
+        } else if (AMDGPU::VReg_512RegClass.contains(reg)) {
+          isSGPR = false;
+          width = 16;
         } else {
           assert(!"Unknown register class");
         }

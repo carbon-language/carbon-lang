@@ -584,7 +584,7 @@ defm V_CVT_F32_I32 : VOP1_32 <0x00000005, "V_CVT_F32_I32",
 //defm V_CVT_F32_U32 : VOP1_32 <0x00000006, "V_CVT_F32_U32", []>;
 //defm V_CVT_U32_F32 : VOP1_32 <0x00000007, "V_CVT_U32_F32", []>;
 defm V_CVT_I32_F32 : VOP1_32 <0x00000008, "V_CVT_I32_F32",
-  [(set VReg_32:$dst, (fp_to_sint AllReg_32:$src0))]
+  [(set (i32 VReg_32:$dst), (fp_to_sint AllReg_32:$src0))]
 >;
 defm V_MOV_FED_B32 : VOP1_32 <0x00000009, "V_MOV_FED_B32", []>;
 ////def V_CVT_F16_F32 : VOP1_F16 <0x0000000a, "V_CVT_F16_F32", []>;
@@ -1000,17 +1000,17 @@ def S_BFE_I64 : SOP2_64 <0x0000002a, "S_BFE_I64", []>;
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "S_CBRANCH_G_FORK", []>;
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "S_ABSDIFF_I32", []>;
 
-class V_MOV_IMM <Operand immType, SDNode immNode> : InstSI <
+class V_MOV_IMM <ValueType type, Operand immType, SDNode immNode> : InstSI <
   (outs VReg_32:$dst),
   (ins immType:$src0),
   "V_MOV_IMM",
-   [(set VReg_32:$dst, (immNode:$src0))]
+   [(set VReg_32:$dst, (type immNode:$src0))]
 >;
 
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
-def V_MOV_IMM_I32 : V_MOV_IMM<i32imm, imm>;
-def V_MOV_IMM_F32 : V_MOV_IMM<f32imm, fpimm>;
+def V_MOV_IMM_I32 : V_MOV_IMM<i32, i32imm, imm>;
+def V_MOV_IMM_F32 : V_MOV_IMM<f32, f32imm, fpimm>;
 
 def S_MOV_IMM_I32 : InstSI <
   (outs SReg_32:$dst),
@@ -1227,8 +1227,12 @@ def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 5, sub1>;
 def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 6, sub2>;
 def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 7, sub3>;
 
+def : Vector1_Build <v1i32, VReg_32, i32, VReg_32>;
+def : Vector2_Build <v2i32, VReg_64, i32, VReg_32>;
 def : Vector_Build <v4f32, VReg_128, f32, VReg_32>;
-def : Vector_Build <v4i32, SReg_128, i32, SReg_32>;
+def : Vector_Build <v4i32, VReg_128, i32, VReg_32>;
+def : Vector8_Build <v8i32, VReg_256, i32, VReg_32>;
+def : Vector16_Build <v16i32, VReg_512, i32, VReg_32>;
 
 def : BitConvert <i32, f32, SReg_32>;
 def : BitConvert <i32, f32, VReg_32>;

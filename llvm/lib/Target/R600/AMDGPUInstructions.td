@@ -191,6 +191,19 @@ class Insert_Element <ValueType elem_type, ValueType vec_type,
 >;
 
 // Vector Build pattern
+class Vector1_Build <ValueType vecType, RegisterClass vectorClass,
+                     ValueType elemType, RegisterClass elemClass> : Pat <
+  (vecType (build_vector (elemType elemClass:$src))),
+  (vecType elemClass:$src)
+>;
+
+class Vector2_Build <ValueType vecType, RegisterClass vectorClass,
+                     ValueType elemType, RegisterClass elemClass> : Pat <
+  (vecType (build_vector (elemType elemClass:$sub0), (elemType elemClass:$sub1))),
+  (INSERT_SUBREG (INSERT_SUBREG
+  (vecType (IMPLICIT_DEF)), elemClass:$sub0, sub0), elemClass:$sub1, sub1)
+>;
+
 class Vector_Build <ValueType vecType, RegisterClass vectorClass,
                     ValueType elemType, RegisterClass elemClass> : Pat <
   (vecType (build_vector (elemType elemClass:$x), (elemType elemClass:$y),
@@ -198,6 +211,44 @@ class Vector_Build <ValueType vecType, RegisterClass vectorClass,
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
   (vecType (IMPLICIT_DEF)), elemClass:$x, sub0), elemClass:$y, sub1),
                             elemClass:$z, sub2), elemClass:$w, sub3)
+>;
+
+class Vector8_Build <ValueType vecType, RegisterClass vectorClass,
+                     ValueType elemType, RegisterClass elemClass> : Pat <
+  (vecType (build_vector (elemType elemClass:$sub0), (elemType elemClass:$sub1),
+                         (elemType elemClass:$sub2), (elemType elemClass:$sub3),
+                         (elemType elemClass:$sub4), (elemType elemClass:$sub5),
+                         (elemType elemClass:$sub6), (elemType elemClass:$sub7))),
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (vecType (IMPLICIT_DEF)), elemClass:$sub0, sub0), elemClass:$sub1, sub1),
+                            elemClass:$sub2, sub2), elemClass:$sub3, sub3),
+                            elemClass:$sub4, sub4), elemClass:$sub5, sub5),
+                            elemClass:$sub6, sub6), elemClass:$sub7, sub7)
+>;
+
+class Vector16_Build <ValueType vecType, RegisterClass vectorClass,
+                      ValueType elemType, RegisterClass elemClass> : Pat <
+  (vecType (build_vector (elemType elemClass:$sub0), (elemType elemClass:$sub1),
+                         (elemType elemClass:$sub2), (elemType elemClass:$sub3),
+                         (elemType elemClass:$sub4), (elemType elemClass:$sub5),
+                         (elemType elemClass:$sub6), (elemType elemClass:$sub7),
+                         (elemType elemClass:$sub8), (elemType elemClass:$sub9),
+                         (elemType elemClass:$sub10), (elemType elemClass:$sub11),
+                         (elemType elemClass:$sub12), (elemType elemClass:$sub13),
+                         (elemType elemClass:$sub14), (elemType elemClass:$sub15))),
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (vecType (IMPLICIT_DEF)), elemClass:$sub0, sub0), elemClass:$sub1, sub1),
+                            elemClass:$sub2, sub2), elemClass:$sub3, sub3),
+                            elemClass:$sub4, sub4), elemClass:$sub5, sub5),
+                            elemClass:$sub6, sub6), elemClass:$sub7, sub7),
+                            elemClass:$sub8, sub8), elemClass:$sub9, sub9),
+                            elemClass:$sub10, sub10), elemClass:$sub11, sub11),
+                            elemClass:$sub12, sub12), elemClass:$sub13, sub13),
+                            elemClass:$sub14, sub14), elemClass:$sub15, sub15)
 >;
 
 // bitconvert pattern
