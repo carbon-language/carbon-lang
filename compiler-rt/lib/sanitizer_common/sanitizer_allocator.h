@@ -652,7 +652,7 @@ class SizeClassAllocator32 {
   // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
   // introspection API.
   void ForceLock() {
-    for (int i = 0; i < kNumClasses; i++) {
+    for (uptr i = 0; i < kNumClasses; i++) {
       GetSizeClassInfo(i)->mutex.Lock();
     } 
   }
