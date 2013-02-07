@@ -46,15 +46,9 @@ system linker tool.
 Current Status
 --------------
 
-lld is in its very early stages of development.
+lld is in its early stages of development.
 
-On Linux it can currently statically link `Lua`_ against `diet libc`_ +
-`OpenLibm`_, `musl`_ and glibc on x86-64.
-
-.. _Lua: http://www.lua.org/
-.. _diet libc: http://www.fefe.de/dietlibc/
-.. _OpenLibm: https://github.com/JuliaLang/openlibm#readme
-.. _musl: http://www.musl-libc.org/
+It can currently self host on Linux x86-64 with -static.
 
 Source
 ------
