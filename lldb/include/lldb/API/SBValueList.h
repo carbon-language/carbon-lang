@@ -54,8 +54,10 @@ public:
 
 protected:
     
+    // only useful for visualizing the pointer or comparing two SBValueLists
+    // to see if they are backed by the same underlying Impl.
     void *
-    get ();
+    opaque_ptr ();
 
 private:
     friend class SBFrame;

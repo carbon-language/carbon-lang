@@ -263,7 +263,7 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
 }
 
 void *
-SBValueList::get ()
+SBValueList::opaque_ptr ()
 {
     return m_opaque_ap.get();
 }
