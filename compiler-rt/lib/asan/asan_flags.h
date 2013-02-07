@@ -52,8 +52,6 @@ struct Flags {
   bool replace_str;
   // If set, uses custom wrappers for memset/memcpy/memmove intinsics.
   bool replace_intrin;
-  // Used on Mac only. See comments in asan_mac.cc and asan_malloc_mac.cc.
-  bool replace_cfallocator;
   // Used on Mac only.
   bool mac_ignore_invalid_free;
   // ASan allocator flag. See asan_allocator.cc.

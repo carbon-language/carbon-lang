@@ -84,7 +84,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
   ParseFlag(str, &f->replace_str, "replace_str");
   ParseFlag(str, &f->replace_intrin, "replace_intrin");
-  ParseFlag(str, &f->replace_cfallocator, "replace_cfallocator");
   ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free");
   ParseFlag(str, &f->use_fake_stack, "use_fake_stack");
   ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size");
@@ -124,7 +123,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->malloc_context_size = kDeafultMallocContextSize;
   f->replace_str = true;
   f->replace_intrin = true;
-  f->replace_cfallocator = true;
   f->mac_ignore_invalid_free = false;
   f->use_fake_stack = true;
   f->max_malloc_fill_size = 0;
