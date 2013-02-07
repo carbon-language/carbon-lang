@@ -67,6 +67,13 @@ Non-comprehensive list of changes in this release
 
   We've also improved the X86 and ARM cost model.
 
+  TargetTransformInfo
+  -------------------
+  TargetTransformInto (TTI) is a new interface that can be used by IR-level passes
+  to obtain target-specific information, such as the costs of instructions. Only "Lowering"
+  passes such as LSR and the vectorizer are allowed to use the TTI infrastructure.
+
+
 * ... next change ...
 
 .. NOTE
