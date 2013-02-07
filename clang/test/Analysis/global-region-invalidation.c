@@ -84,3 +84,27 @@ void testAnalyzerEvalIsPure() {
   }
 }
 
+// Test that static variables with initializers do not get reinitialized on
+// recursive calls.
+void Function2(void);
+int *getPtr();
+void Function1(void) {
+  static unsigned flag;
+  static int *p = 0;
+  if (!flag) {
+    flag = 1;
+    p = getPtr();
+  }
+  int m = *p; // no-warning: p is never null.
+  m++;
+  Function2();
+}
+void Function2(void) {
+    Function1();
+}
+
+void SetToNonZero(void) {
+  static int g = 5;
+  clang_analyzer_eval(g == 5); // expected-warning{{TRUE}}
+}
+

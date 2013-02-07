@@ -423,37 +423,53 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
     B.generateNode(CL, Pred, state->BindExpr(CL, LC, ILV));
 }
 
+/// The GDM component containing the set of global variables which have been
+/// previously initialized with explicit initializers.
+REGISTER_TRAIT_WITH_PROGRAMSTATE(InitializedGlobalsSet,
+                                 llvm::ImmutableSet<const VarDecl *> )
+
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                ExplodedNodeSet &Dst) {
-  
-  // FIXME: static variables may have an initializer, but the second
-  //  time a function is called those values may not be current.
-  //  This may need to be reflected in the CFG.
-  
   // Assumption: The CFG has one DeclStmt per Decl.
   const Decl *D = *DS->decl_begin();
-  
-  if (!D || !isa<VarDecl>(D)) {
+  const VarDecl *VD = dyn_cast_or_null<VarDecl>(D);
+
+  if (!D || !VD) {
     //TODO:AZ: remove explicit insertion after refactoring is done.
     Dst.insert(Pred);
     return;
   }
+
+  // Check if a value has been previously initialized. There will be an entry in
+  // the set for variables with global storage which have been previously
+  // initialized.
+  if (VD->hasGlobalStorage())
+    if (Pred->getState()->contains<InitializedGlobalsSet>(VD)) {
+      Dst.insert(Pred);
+      return;
+    }
   
   // FIXME: all pre/post visits should eventually be handled by ::Visit().
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, DS, *this);
   
   StmtNodeBuilder B(dstPreVisit, Dst, *currBldrCtx);
-  const VarDecl *VD = dyn_cast<VarDecl>(D);
   for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
        I!=E; ++I) {
     ExplodedNode *N = *I;
     ProgramStateRef state = N->getState();
-    
-    // Decls without InitExpr are not initialized explicitly.
     const LocationContext *LC = N->getLocationContext();
-    
+
+    // Decls without InitExpr are not initialized explicitly.
     if (const Expr *InitEx = VD->getInit()) {
+
+      // Note in the state that the initialization has occurred.
+      ExplodedNode *UpdatedN = N;
+      if (VD->hasGlobalStorage()) {
+        state = state->add<InitializedGlobalsSet>(VD);
+        UpdatedN = B.generateNode(DS, N, state);
+      }
+
       SVal InitVal = state->getSVal(InitEx, LC);
 
       if (InitVal == state->getLValue(VD, LC) ||
@@ -461,7 +477,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
            isa<CXXConstructExpr>(InitEx->IgnoreImplicit()))) {
         // We constructed the object directly in the variable.
         // No need to bind anything.
-        B.generateNode(DS, N, state);
+        B.generateNode(DS, UpdatedN, state);
       } else {
         // We bound the temp obj region to the CXXConstructExpr. Now recover
         // the lazy compound value when the variable is not a reference.
@@ -482,9 +498,11 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
           InitVal = svalBuilder.conjureSymbolVal(0, InitEx, LC, Ty,
                                                  currBldrCtx->blockCount());
         }
-        B.takeNodes(N);
+
+
+        B.takeNodes(UpdatedN);
         ExplodedNodeSet Dst2;
-        evalBind(Dst2, DS, N, state->getLValue(VD, LC), InitVal, true);
+        evalBind(Dst2, DS, UpdatedN, state->getLValue(VD, LC), InitVal, true);
         B.addNodes(Dst2);
       }
     }
