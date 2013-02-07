@@ -1357,6 +1357,18 @@ TSAN_INTERCEPTOR(int, __close, int fd) {
   return REAL(__close)(fd);
 }
 
+// glibc guts
+TSAN_INTERCEPTOR(void, __res_iclose, void *state, bool free_addr) {
+  SCOPED_TSAN_INTERCEPTOR(__res_iclose, state, free_addr);
+  int fds[64];
+  int cnt = ExtractResolvFDs(state, fds, ARRAY_SIZE(fds));
+  for (int i = 0; i < cnt; i++) {
+    if (fds[i] > 0)
+      FdClose(thr, pc, fds[i]);
+  }
+  REAL(__res_iclose)(state, free_addr);
+}
+
 TSAN_INTERCEPTOR(int, pipe, int *pipefd) {
   SCOPED_TSAN_INTERCEPTOR(pipe, pipefd);
   int res = REAL(pipe)(pipefd);
@@ -1932,6 +1944,8 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(epoll_create);
   TSAN_INTERCEPT(epoll_create1);
   TSAN_INTERCEPT(close);
+  TSAN_INTERCEPT(__close);
+  TSAN_INTERCEPT(__res_iclose);
   TSAN_INTERCEPT(pipe);
   TSAN_INTERCEPT(pipe2);
 

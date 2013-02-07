@@ -215,6 +215,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_epoll_create1]            = "  epoll_create1                   ";
   name[StatInt_close]                    = "  close                           ";
   name[StatInt___close]                  = "  __close                         ";
+  name[StatInt___res_iclose]             = "  __res_iclose                    ";
   name[StatInt_pipe]                     = "  pipe                            ";
   name[StatInt_pipe2]                    = "  pipe2                           ";
   name[StatInt_read]                     = "  read                            ";

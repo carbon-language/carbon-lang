@@ -210,6 +210,7 @@ enum StatType {
   StatInt_epoll_create1,
   StatInt_close,
   StatInt___close,
+  StatInt___res_iclose,
   StatInt_pipe,
   StatInt_pipe2,
   StatInt_read,
