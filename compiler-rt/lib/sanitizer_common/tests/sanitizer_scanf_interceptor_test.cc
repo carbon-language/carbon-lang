@@ -31,14 +31,17 @@ static void testScanf2(void *ctx, const char *format, ...) {
   va_end(ap);
 }
 
+static const char scanf_buf[] = "Test string.";
+static size_t scanf_buf_size = sizeof(scanf_buf);
+
 static void testScanf(const char *format, unsigned n, ...) {
   std::vector<unsigned> scanf_sizes;
   // 16 args should be enough.
   testScanf2((void *)&scanf_sizes, format,
-      (void*)0, (void*)0, (void*)0, (void*)0,
-      (void*)0, (void*)0, (void*)0, (void*)0,
-      (void*)0, (void*)0, (void*)0, (void*)0,
-      (void*)0, (void*)0, (void*)0, (void*)0);
+      scanf_buf, scanf_buf, scanf_buf, scanf_buf,
+      scanf_buf, scanf_buf, scanf_buf, scanf_buf,
+      scanf_buf, scanf_buf, scanf_buf, scanf_buf,
+      scanf_buf, scanf_buf, scanf_buf, scanf_buf);
   ASSERT_EQ(n, scanf_sizes.size()) <<
     "Unexpected number of format arguments: '" << format << "'";
   va_list ap;
@@ -86,11 +89,24 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%*d", 0);
 
   testScanf("%4d%8f%c", 3, I, F, C);
-  testScanf("%s%d", 2, 1, I);
-  testScanf("%[abc]", 1, 1);
+  testScanf("%s%d", 2, scanf_buf_size, I);
+  testScanf("%[abc]", 1, scanf_buf_size);
   testScanf("%4[bcdef]", 1, 5);
-  testScanf("%[]]", 1, 1);
+  testScanf("%[]]", 1, scanf_buf_size);
   testScanf("%8[^]%d0-9-]%c", 2, 9, C);
 
   testScanf("%*[^:]%n:%d:%1[ ]%n", 4, I, I, 2, I);
+
+  testScanf("%*d%u", 1, I);
+
+  // Unsupported stuff.
+  testScanf("%a[", 0);
+  testScanf("%as", 0);
+  testScanf("%aS", 0);
+  testScanf("%a13S", 0);
+  testScanf("%alS", 0);
+
+  testScanf("%5$d", 0);
+  testScanf("%md", 0);
+  testScanf("%m10s", 0);
 }
