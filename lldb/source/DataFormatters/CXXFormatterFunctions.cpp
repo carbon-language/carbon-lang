@@ -1051,6 +1051,96 @@ lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject
 }
 
 bool
+lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    ObjCLanguageRuntime* runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    
+    if (!runtime)
+        return false;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(valobj));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return false;
+    
+    uint32_t ptr_size = process_sp->GetAddressByteSize();
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return false;
+    
+    if (strcmp(class_name, "NSURL") == 0)
+    {
+        uint64_t offset_text = ptr_size + ptr_size + 8; // ISA + pointer + 8 bytes of data (even on 32bit)
+        uint64_t offset_base = offset_text + ptr_size;
+        ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
+        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset_text, type, true));
+        ValueObjectSP base(valobj.GetSyntheticChildAtOffset(offset_base, type, true));
+        if (!text || !base)
+            return false;
+        if (text->GetValueAsUnsigned(0) == 0)
+            return false;
+        StreamString summary;
+        if (!NSStringSummaryProvider(*text, summary))
+            return false;
+        if (base->GetValueAsUnsigned(0))
+        {
+            if (summary.GetSize() > 0)
+                summary.GetString().resize(summary.GetSize()-1);
+            summary.Printf(" -- ");
+            StreamString base_summary;
+            if (NSStringSummaryProvider(*base, base_summary) && base_summary.GetSize() > 0)
+                summary.Printf("%s",base_summary.GetSize() > 2 ? base_summary.GetData() + 2 : base_summary.GetData());
+        }
+        if (summary.GetSize())
+        {
+            stream.Printf("%s",summary.GetData());
+            return true;
+        }
+    }
+    else
+    {
+        // similar to ExtractValueFromObjCExpression but uses summary instead of value
+        StreamString expr_path_stream;
+        valobj.GetExpressionPath(expr_path_stream, false);
+        StreamString expr;
+        expr.Printf("(NSString*)[%s description]",expr_path_stream.GetData());
+        ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+        lldb::ValueObjectSP result_sp;
+        Target* target = exe_ctx.GetTargetPtr();
+        StackFrame* stack_frame = exe_ctx.GetFramePtr();
+        if (!target || !stack_frame)
+            return false;
+        
+        EvaluateExpressionOptions options;
+        options.SetCoerceToId(false)
+        .SetUnwindOnError(true)
+        .SetKeepInMemory(true)
+        .SetUseDynamic(lldb::eDynamicCanRunTarget);
+        
+        target->EvaluateExpression(expr.GetData(),
+                                   stack_frame,
+                                   result_sp,
+                                   options);
+        if (!result_sp)
+            return false;
+        stream.Printf("%s",result_sp->GetSummaryAsCString());
+        return true;
+    }
+    return false;
+}
+
+bool
 lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     const uint32_t type_info = ClangASTContext::GetTypeInfo(valobj.GetClangType(),

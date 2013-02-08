@@ -943,8 +943,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("__NSSetM"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSSet.NSSet_SummaryProvider", ConstString("NSCountedSet"), appkit_flags);
 
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSURL.NSURL_SummaryProvider", ConstString("NSURL"), appkit_flags);
-    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("NSURL"), appkit_flags);
+    AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSURLSummaryProvider, "NSURL summary provider", ConstString("CFURLRef"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSDate.NSDate_SummaryProvider", ConstString("__NSDate"), appkit_flags);
