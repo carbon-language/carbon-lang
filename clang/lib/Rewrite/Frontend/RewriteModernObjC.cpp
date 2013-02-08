@@ -5660,6 +5660,8 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   } else if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S)) {
     return RewriteObjCIvarRefExpr(IvarRefExpr);
   }
+  else if (isa<OpaqueValueExpr>(S))
+    S = cast<OpaqueValueExpr>(S)->getSourceExpr();
 
   SourceRange OrigStmtRange = S->getSourceRange();
 
