@@ -157,7 +157,7 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
         if (sourceSize == 0)
         {
             const int origin_encoding = 8*sizeof(SourceDataType);
-            sourceSize = bufferSPSize/(origin_encoding >> 2);
+            sourceSize = bufferSPSize/(origin_encoding / 4);
         }
         
         SourceDataType *data_ptr = (SourceDataType*)data.GetDataStart();
@@ -173,7 +173,6 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             data_ptr++;
         }
         
-        *data_ptr = 0;
         data_ptr = (SourceDataType*)data.GetDataStart();
         
         lldb::DataBufferSP utf8_data_buffer_sp;
