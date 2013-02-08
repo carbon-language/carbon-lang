@@ -3259,8 +3259,7 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.
-  FuncInfo.MF->getFrameInfo()->CreateVariableSizedObject(Align ? Align : 1,
-                                 I.getAlignment(), &I);
+  FuncInfo.MF->getFrameInfo()->CreateVariableSizedObject(Align ? Align : 1);
 }
 
 void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
