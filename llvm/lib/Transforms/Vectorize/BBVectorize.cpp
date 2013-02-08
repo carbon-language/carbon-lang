@@ -972,6 +972,11 @@ namespace {
           unsigned VCost = TTI->getMemoryOpCost(I->getOpcode(), VType,
                                                 BottomAlignment,
                                                 IAddressSpace);
+
+          ICost += TTI->getAddressComputationCost(aTypeI);
+          JCost += TTI->getAddressComputationCost(aTypeJ);
+          VCost += TTI->getAddressComputationCost(VType);
+
           if (VCost > ICost + JCost)
             return false;
 
