@@ -87,6 +87,14 @@ has the following features:
 - Vectorization of function calls
 - Partial unrolling during vectorization
 
+R600 Backend
+------------
+
+The R600 backend was added in this release, it supports AMD GPUs
+(HD2XXX - HD7XXX).  This backend is used in AMD's Open Source
+graphics / compute drivers which are developed as part of the `Mesa3D
+<http://www.mesa3d.org>`_ project.
+
 
 
 Additional Information
