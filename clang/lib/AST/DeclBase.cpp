@@ -1203,14 +1203,16 @@ DeclContext::lookup(DeclarationName Name) {
     if (LookupPtr.getInt())
       Map = buildLookup();
 
+    if (!Map)
+      Map = CreateStoredDeclsMap(getParentASTContext());
+
     // If a PCH/module has a result for this name, and we have a local
     // declaration, we will have imported the PCH/module result when adding the
     // local declaration or when reconciling the module.
-    if (Map) {
-      StoredDeclsMap::iterator I = Map->find(Name);
-      if (I != Map->end())
-        return I->second.getLookupResult();
-    }
+    std::pair<StoredDeclsMap::iterator, bool> R =
+        Map->insert(std::make_pair(Name, StoredDeclsList()));
+    if (!R.second)
+      return R.first->second.getLookupResult();
 
     ExternalASTSource *Source = getParentASTContext().getExternalSource();
     if (Source->FindExternalVisibleDeclsByName(this, Name)) {

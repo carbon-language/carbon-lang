@@ -167,3 +167,7 @@ module weird_objc {
 module ignored_macros {
   header "ignored_macros.h"
 }
+
+module cxx_many_overloads {
+  header "cxx-many-overloads.h"
+}
