@@ -43,19 +43,15 @@ PowerPC
 IBM - Official manuals and docs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* `PowerPC Architecture Book <http://www.ibm.com/developerworks/systems/library/es-archguide-v2.html>`_
+* `Power Instruction Set Architecture, Versions 2.03 through 2.06 (authentication required, free sign-up) <https://www.power.org/technology-introduction/standards-specifications>`_
 
-  * Book I: `PowerPC User Instruction Set Architecture <http://download.boulder.ibm.com/ibmdl/pub/software/dw/library/es-ppcbook1.zip>`_
+* `PowerPC Compiler Writer's Guide <http://www.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF7785256996007558C6>`_
 
-  * Book II: `PowerPC Virtual Environment Architecture <http://download.boulder.ibm.com/ibmdl/pub/software/dw/library/es-ppcbook2.zip>`_
-
-  * Book III: `PowerPC Operating Environment Architecture <http://download.boulder.ibm.com/ibmdl/pub/software/dw/library/es-ppcbook3.zip>`_
-
-* `PowerPC Compiler Writer's Guide <https://www-01.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF7785256996007558C6>`_
-
-* `PowerPC Processor Manuals <https://www-01.ibm.com/chips/techlib/techlib.nsf/products/PowerPC>`_
+* `PowerPC Processor Manuals (embedded) <http://www.ibm.com/chips/techlib/techlib.nsf/products/PowerPC>`_
 
 * `Intro to PowerPC Architecture <http://www.ibm.com/developerworks/linux/library/l-powarch/>`_
+
+* `Various IBM specifications and white papers <https://www.power.org/documentation/?document_company=105&document_category=all&publish_year=all&grid_order=DESC&grid_sort=title>`_
 
 * `IBM AIX/5L for POWER Assembly Reference <http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixassem/alangref/alangreftfrm.htm>`_
 
