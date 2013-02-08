@@ -101,12 +101,6 @@ public:
   void emitError(const Instruction *I, const Twine &ErrorStr);
   void emitError(const Twine &ErrorStr);
 
-  /// emitWarning - This is similar to emitError but it emits a warning instead
-  /// of an error.
-  void emitWarning(unsigned LocCookie, const Twine &ErrorStr);
-  void emitWarning(const Instruction *I, const Twine &ErrorStr);
-  void emitWarning(const Twine &ErrorStr);
-
 private:
   LLVMContext(LLVMContext&) LLVM_DELETED_FUNCTION;
   void operator=(LLVMContext&) LLVM_DELETED_FUNCTION;
