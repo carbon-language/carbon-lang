@@ -1668,7 +1668,8 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
     // where <address-space-number> is a source name consisting of 'AS' 
     // followed by the address space <number>.
     SmallString<64> ASString;
-    ASString = "AS" + llvm::utostr_32(Quals.getAddressSpace());
+    ASString = "AS" + llvm::utostr_32(
+        Context.getASTContext().getTargetAddressSpace(Quals.getAddressSpace()));
     Out << 'U' << ASString.size() << ASString;
   }
   

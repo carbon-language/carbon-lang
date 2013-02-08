@@ -872,3 +872,6 @@ namespace test37 {
     func(foo().d);
   }
 }
+
+// CHECK: define void @_Z6ASfuncPU3AS3i
+void ASfunc(__attribute__((address_space(3))) int* x) {}
