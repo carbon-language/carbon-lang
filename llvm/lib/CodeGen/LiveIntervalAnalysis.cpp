@@ -40,10 +40,10 @@
 #include <limits>
 using namespace llvm;
 
-// Switch to the new experimental algorithm for computing live intervals.
+// Switch to the new algorithm for computing live intervals.
 static cl::opt<bool>
-NewLiveIntervals("new-live-intervals", cl::Hidden,
-                 cl::desc("Use new algorithm forcomputing live intervals"));
+NewLiveIntervals("new-live-intervals", cl::Hidden, cl::init(true),
+                 cl::desc("Use new algorithm for computing live intervals"));
 
 char LiveIntervals::ID = 0;
 char &llvm::LiveIntervalsID = LiveIntervals::ID;
