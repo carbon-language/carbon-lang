@@ -152,8 +152,8 @@ entry:
   ret void
 ; CHECK: @powi
 ; CHECK: %A = fdiv double 1.0{{.*}}, %V
-; CHECK: store volatile double %A,
-; CHECK: store volatile double 1.0
+; CHECK: store volatile double %A, 
+; CHECK: store volatile double 1.0 
 ; CHECK: store volatile double %V
 }
 
@@ -255,16 +255,4 @@ define i32 @cttz_select(i32 %Value) nounwind {
 
 ; CHECK: @cttz_select
 ; CHECK: select i1 %tobool, i32 %cttz, i32 32
-}
-
-; Test that SimplifyCall is getting invoked by InstCombine
-declare float @llvm.fabs.f32(float) nounwind readnone
-define float @simplify_idempotent(float %a) {
-; CHECK: @simplify_idempotent
-; CHECK: fabs
-; CHECK-NOT: fabs
-  %a0 = call float @llvm.fabs.f32(float %a)
-  %a1 = call float @llvm.fabs.f32(float %a0)
-
-  ret float %a1
 }

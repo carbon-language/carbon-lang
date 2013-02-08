@@ -13,7 +13,6 @@
 
 #include "InstCombine.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Support/CallSite.h"
@@ -210,11 +209,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     CI.setDoesNotThrow();
     return &CI;
   }
-
-  CallSite CS(&CI);
-  if (Value *V = SimplifyCall(CS.getCalledValue(), CS.arg_begin(), CS.arg_end(),
-                              TD))
-    return ReplaceInstUsesWith(CI, V);
 
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(&CI);
   if (!II) return visitCallSite(&CI);
