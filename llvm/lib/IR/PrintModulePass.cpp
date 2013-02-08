@@ -73,6 +73,31 @@ namespace {
       AU.setPreservesAll();
     }
   };
+  
+  class PrintBasicBlockPass : public BasicBlockPass {
+    std::string Banner;
+    raw_ostream *Out;       // raw_ostream to print on
+    bool DeleteStream;      // Delete the ostream in our dtor?
+  public:
+    static char ID;
+    PrintBasicBlockPass() : BasicBlockPass(ID), Out(&dbgs()), 
+      DeleteStream(false) {}
+    PrintBasicBlockPass(const std::string &B, raw_ostream *o, bool DS)
+        : BasicBlockPass(ID), Banner(B), Out(o), DeleteStream(DS) {}
+    
+    ~PrintBasicBlockPass() {
+      if (DeleteStream) delete Out;
+    }
+    
+    bool runOnBasicBlock(BasicBlock &BB) {
+      (*Out) << Banner << BB;
+      return false;
+    }
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
 }
 
 char PrintModulePass::ID = 0;
@@ -81,6 +106,9 @@ INITIALIZE_PASS(PrintModulePass, "print-module",
 char PrintFunctionPass::ID = 0;
 INITIALIZE_PASS(PrintFunctionPass, "print-function",
                 "Print function to stderr", false, false)
+char PrintBasicBlockPass::ID = 0;
+INITIALIZE_PASS(PrintBasicBlockPass, "print-bb",
+                "Print BB to stderr", false, false)
 
 /// createPrintModulePass - Create and return a pass that writes the
 /// module to the specified raw_ostream.
@@ -96,5 +124,13 @@ FunctionPass *llvm::createPrintFunctionPass(const std::string &Banner,
                                             llvm::raw_ostream *OS, 
                                             bool DeleteStream) {
   return new PrintFunctionPass(Banner, OS, DeleteStream);
+}
+
+/// createPrintBasicBlockPass - Create and return a pass that writes the
+/// BB to the specified raw_ostream.
+BasicBlockPass *llvm::createPrintBasicBlockPass(llvm::raw_ostream *OS,
+                                        bool DeleteStream,
+                                        const std::string &Banner) {
+  return new PrintBasicBlockPass(Banner, OS, DeleteStream);
 }
 

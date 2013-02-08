@@ -143,8 +143,7 @@ PassManagerType FunctionPass::getPotentialPassManagerType() const {
 
 Pass *BasicBlockPass::createPrinterPass(raw_ostream &O,
                                         const std::string &Banner) const {
-
-  llvm_unreachable("BasicBlockPass printing unsupported.");
+  return createPrintBasicBlockPass(&O, false, Banner);
 }
 
 bool BasicBlockPass::doInitialization(Function &) {

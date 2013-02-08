@@ -217,6 +217,7 @@ void initializePreVerifierPass(PassRegistry&);
 void initializePrintDbgInfoPass(PassRegistry&);
 void initializePrintFunctionPassPass(PassRegistry&);
 void initializePrintModulePassPass(PassRegistry&);
+void initializePrintBasicBlockPassPass(PassRegistry&);
 void initializeProcessImplicitDefsPass(PassRegistry&);
 void initializeProfileEstimatorPassPass(PassRegistry&);
 void initializeProfileInfoAnalysisGroup(PassRegistry&);

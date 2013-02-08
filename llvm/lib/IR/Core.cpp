@@ -39,6 +39,7 @@ void llvm::initializeCore(PassRegistry &Registry) {
   initializeDominatorTreePass(Registry);
   initializePrintModulePassPass(Registry);
   initializePrintFunctionPassPass(Registry);
+  initializePrintBasicBlockPassPass(Registry);
   initializeVerifierPass(Registry);
   initializePreVerifierPass(Registry);
 }

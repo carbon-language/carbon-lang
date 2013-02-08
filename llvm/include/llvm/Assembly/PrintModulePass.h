@@ -23,6 +23,7 @@
 namespace llvm {
   class FunctionPass;
   class ModulePass;
+  class BasicBlockPass;
   class raw_ostream;
   
   /// createPrintModulePass - Create and return a pass that writes the
@@ -37,6 +38,11 @@ namespace llvm {
                                         raw_ostream *OS, 
                                         bool DeleteStream=false);  
 
+  /// createPrintBasicBlockPass - Create and return a pass that writes the
+  /// BB to the specified raw_ostream.
+  BasicBlockPass *createPrintBasicBlockPass(raw_ostream *OS,
+                                            bool DeleteStream=false,
+                                            const std::string &Banner = "");
 } // End llvm namespace
 
 #endif
