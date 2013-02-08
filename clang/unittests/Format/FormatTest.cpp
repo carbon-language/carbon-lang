@@ -2428,10 +2428,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "[pboard addTypes:[NSArray arrayWithObject:kBookmarkButtonDragType]\n"
       "           owner:nillllll];");
 
-  // FIXME: No line break necessary for the first nested call.
   verifyFormat(
-      "[pboard setData:[NSData dataWithBytes:&button\n"
-      "                               length:sizeof(button)]\n"
+      "[pboard setData:[NSData dataWithBytes:&button length:sizeof(button)]\n"
       "        forType:kBookmarkButtonDragType];");
 
   verifyFormat("[defaultCenter addObserver:self\n"
@@ -2449,7 +2447,6 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "scoped_nsobject<NSTextField> message(\n"
       "    // The frame will be fixed up when |-setMessageText:| is called.\n"
       "    [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)]);");
-  
 }
 
 TEST_F(FormatTest, ObjCAt) {

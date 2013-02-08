@@ -85,6 +85,18 @@ static bool isTrailingComment(const AnnotatedToken &Tok) {
          (Tok.Children.empty() || Tok.Children[0].MustBreakBefore);
 }
 
+// Returns the length of everything up to the first possible line break after
+// the ), ], } or > matching \c Tok.
+static unsigned getLengthToMatchingParen(const AnnotatedToken &Tok) {
+  if (Tok.MatchingParen == NULL)
+    return 0;
+  AnnotatedToken *End = Tok.MatchingParen;
+  while (!End->Children.empty() && !End->Children[0].CanBreakBefore) {
+    End = &End->Children[0];
+  }
+  return End->TotalLength - Tok.TotalLength + 1;
+}
+
 /// \brief Manages the whitespaces around tokens and their replacements.
 ///
 /// This includes special handling for certain constructs, e.g. the alignment of
@@ -255,6 +267,11 @@ public:
       return State.Column;
     }
 
+    // If the ObjC method declaration does not fit on a line, we should format
+    // it with one arg per line.
+    if (Line.Type == LT_ObjCMethodDecl)
+      State.Stack.back().BreakBeforeParameter = true;
+
     // Find best solution in solution space.
     return analyzeSolutionSpace(State);
   }
@@ -272,7 +289,7 @@ private:
                bool HasMultiParameterLine)
         : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
           FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
-          AvoidBinPacking(AvoidBinPacking), BreakAfterComma(false),
+          AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
           HasMultiParameterLine(HasMultiParameterLine), ColonPos(0) {
     }
 
@@ -312,7 +329,7 @@ private:
 
     /// \brief Break after the next comma (or all the commas in this context if
     /// \c AvoidBinPacking is \c true).
-    bool BreakAfterComma;
+    bool BreakBeforeParameter;
 
     /// \brief This context already has a line with more than one parameter.
     bool HasMultiParameterLine;
@@ -335,8 +352,8 @@ private:
         return QuestionColumn < Other.QuestionColumn;
       if (AvoidBinPacking != Other.AvoidBinPacking)
         return AvoidBinPacking;
-      if (BreakAfterComma != Other.BreakAfterComma)
-        return BreakAfterComma;
+      if (BreakBeforeParameter != Other.BreakBeforeParameter)
+        return BreakBeforeParameter;
       if (HasMultiParameterLine != Other.HasMultiParameterLine)
         return HasMultiParameterLine;
       if (ColonPos != Other.ColonPos)
@@ -453,7 +470,7 @@ private:
       }
 
       if (Previous.is(tok::comma) && !State.Stack.back().AvoidBinPacking)
-        State.Stack.back().BreakAfterComma = false;
+        State.Stack.back().BreakBeforeParameter = false;
 
       if (RootToken.is(tok::kw_for))
         State.LineContainsContinuedForLoopSection = Previous.isNot(tok::semi);
@@ -541,13 +558,13 @@ private:
            Previous.Type != TT_TemplateOpener) ||
           (!Style.AllowAllParametersOfDeclarationOnNextLine &&
            Line.MustBeDeclaration))
-        State.Stack.back().BreakAfterComma = true;
+        State.Stack.back().BreakBeforeParameter = true;
 
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
         if (Line.First.isNot(tok::kw_for) || i != 1)
-          State.Stack[i].BreakAfterComma = true;
+          State.Stack[i].BreakBeforeParameter = true;
       }
     }
 
@@ -566,13 +583,8 @@ private:
       State.Stack.back().QuestionColumn = State.Column;
     if (Current.is(tok::l_brace) && Current.MatchingParen != NULL &&
         !Current.MatchingParen->MustBreakBefore) {
-      AnnotatedToken *End = Current.MatchingParen;
-      while (!End->Children.empty() && !End->Children[0].CanBreakBefore) {
-        End = &End->Children[0];
-      }
-      unsigned Length = End->TotalLength - Current.TotalLength + 1;
-      if (Length + State.Column > getColumnLimit())
-        State.Stack.back().BreakAfterComma = true;
+      if (getLengthToMatchingParen(Current) + State.Column > getColumnLimit())
+        State.Stack.back().BreakBeforeParameter = true;
     }
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
@@ -592,6 +604,14 @@ private:
       State.Stack.push_back(
           ParenState(NewIndent, State.Stack.back().LastSpace, AvoidBinPacking,
                      State.Stack.back().HasMultiParameterLine));
+    }
+
+    // If this '[' opens an ObjC call, determine whether all parameters fit into
+    // one line and put one per line if they don't.
+    if (Current.is(tok::l_square) && Current.Type == TT_ObjCMethodExpr &&
+        Current.MatchingParen != NULL) {
+      if (getLengthToMatchingParen(Current) + State.Column > getColumnLimit())
+        State.Stack.back().BreakBeforeParameter = true;
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -729,11 +749,14 @@ private:
         State.LineContainsContinuedForLoopSection)
       return true;
     if (State.NextToken->Parent->is(tok::comma) &&
-        State.Stack.back().BreakAfterComma &&
+        State.Stack.back().BreakBeforeParameter &&
         !isTrailingComment(*State.NextToken))
       return true;
+    // FIXME: Comparing LongestObjCSelectorName to 0 is a hacky way of finding
+    // out whether it is the first parameter. Clean this up.
     if (State.NextToken->Type == TT_ObjCSelectorName &&
-        State.Stack.back().ColonPos != 0)
+        State.NextToken->LongestObjCSelectorName == 0 &&
+        State.Stack.back().BreakBeforeParameter)
       return true;
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&
