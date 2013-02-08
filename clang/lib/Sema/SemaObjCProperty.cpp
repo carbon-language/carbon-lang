@@ -839,22 +839,40 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         return 0;
       }
     }
-    
     if (Synthesize&&
         (PIkind & ObjCPropertyDecl::OBJC_PR_readonly) &&
         property->hasAttr<IBOutletAttr>() &&
         !AtLoc.isValid()) {
-      Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
-      Diag(property->getLocation(), diag::note_property_declare);
-      SourceLocation readonlyLoc;
-      if (LocPropertyAttribute(Context, "readonly", 
-                               property->getLParenLoc(), readonlyLoc)) {
-        SourceLocation endLoc = 
-          readonlyLoc.getLocWithOffset(strlen("readonly")-1);
-        SourceRange ReadonlySourceRange(readonlyLoc, endLoc);
-        Diag(property->getLocation(), 
-             diag::note_auto_readonly_iboutlet_fixup_suggest) <<
-        FixItHint::CreateReplacement(ReadonlySourceRange, "readwrite");
+      bool ReadWriteProperty = false;
+      // Search into the class extensions and see if 'readonly property is
+      // redeclared 'readwrite', then no warning is to be issued.
+      for (ObjCInterfaceDecl::known_extensions_iterator
+            Ext = IDecl->known_extensions_begin(),
+            ExtEnd = IDecl->known_extensions_end(); Ext != ExtEnd; ++Ext) {
+        DeclContext::lookup_result R = Ext->lookup(property->getDeclName());
+        if (!R.empty())
+          if (ObjCPropertyDecl *ExtProp = dyn_cast<ObjCPropertyDecl>(R[0])) {
+            PIkind = ExtProp->getPropertyAttributesAsWritten();
+            if (PIkind & ObjCPropertyDecl::OBJC_PR_readwrite) {
+              ReadWriteProperty = true;
+              break;
+            }
+          }
+      }
+      
+      if (!ReadWriteProperty) {
+        Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
+        Diag(property->getLocation(), diag::note_property_declare);
+        SourceLocation readonlyLoc;
+        if (LocPropertyAttribute(Context, "readonly", 
+                                 property->getLParenLoc(), readonlyLoc)) {
+          SourceLocation endLoc = 
+            readonlyLoc.getLocWithOffset(strlen("readonly")-1);
+          SourceRange ReadonlySourceRange(readonlyLoc, endLoc);
+          Diag(property->getLocation(), 
+               diag::note_auto_readonly_iboutlet_fixup_suggest) <<
+          FixItHint::CreateReplacement(ReadonlySourceRange, "readwrite");
+        }
       }
     }
     

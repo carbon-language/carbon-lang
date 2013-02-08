@@ -21,3 +21,24 @@
 
 @implementation I // expected-warning 3 {{readonly IBOutlet property when auto-synthesized may not work correctly with 'nib' loader}}
 @end
+
+
+// rdar://13123861
+@class UILabel;
+
+@interface NSObject @end
+
+@interface RKTFHView : NSObject
+@property( readonly ) __attribute__((iboutlet)) UILabel *autoReadOnlyReadOnly; // expected-note {{property declared here}} expected-note {{readonly IBOutlet property should be changed to be readwrite}}
+@property( readonly ) __attribute__((iboutlet)) UILabel *autoReadOnlyReadWrite;
+@property( readonly ) __attribute__((iboutlet)) UILabel *synthReadOnlyReadWrite;
+@end
+
+@interface RKTFHView()
+@property( readwrite ) __attribute__((iboutlet)) UILabel *autoReadOnlyReadWrite;
+@property( readwrite ) __attribute__((iboutlet)) UILabel *synthReadOnlyReadWrite;
+@end
+
+@implementation RKTFHView // expected-warning {{readonly IBOutlet property when auto-synthesized may not work correctly with 'nib' loader}}
+@synthesize synthReadOnlyReadWrite=_synthReadOnlyReadWrite;
+@end
