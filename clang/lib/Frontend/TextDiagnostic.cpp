@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/TextDiagnostic.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -20,7 +21,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <cctype>
 
 using namespace clang;
 
@@ -348,11 +348,11 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
   // correctly.
   unsigned CaretStart = 0, CaretEnd = CaretLine.size();
   for (; CaretStart != CaretEnd; ++CaretStart)
-    if (!isspace(static_cast<unsigned char>(CaretLine[CaretStart])))
+    if (!isWhitespace(CaretLine[CaretStart]))
       break;
 
   for (; CaretEnd != CaretStart; --CaretEnd)
-    if (!isspace(static_cast<unsigned char>(CaretLine[CaretEnd - 1])))
+    if (!isWhitespace(CaretLine[CaretEnd - 1]))
       break;
 
   // caret has already been inserted into CaretLine so the above whitespace
@@ -363,11 +363,11 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
   if (!FixItInsertionLine.empty()) {
     unsigned FixItStart = 0, FixItEnd = FixItInsertionLine.size();
     for (; FixItStart != FixItEnd; ++FixItStart)
-      if (!isspace(static_cast<unsigned char>(FixItInsertionLine[FixItStart])))
+      if (!isWhitespace(FixItInsertionLine[FixItStart]))
         break;
 
     for (; FixItEnd != FixItStart; --FixItEnd)
-      if (!isspace(static_cast<unsigned char>(FixItInsertionLine[FixItEnd - 1])))
+      if (!isWhitespace(FixItInsertionLine[FixItEnd - 1]))
         break;
 
     CaretStart = std::min(FixItStart, CaretStart);
@@ -423,14 +423,13 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
       // FIXME: Detect non-ASCII whitespace characters too.
-      while (NewStart &&
-             isspace(static_cast<unsigned char>(SourceLine[NewStart])))
+      while (NewStart && isWhitespace(SourceLine[NewStart]))
         NewStart = map.startOfPreviousColumn(NewStart);
 
       // Skip over this bit of "interesting" text.
       while (NewStart) {
         unsigned Prev = map.startOfPreviousColumn(NewStart);
-        if (isspace(static_cast<unsigned char>(SourceLine[Prev])))
+        if (isWhitespace(SourceLine[Prev]))
           break;
         NewStart = Prev;
       }
@@ -450,13 +449,11 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
       // FIXME: Detect non-ASCII whitespace characters too.
-      while (NewEnd < SourceLine.size() &&
-             isspace(static_cast<unsigned char>(SourceLine[NewEnd])))
+      while (NewEnd < SourceLine.size() && isWhitespace(SourceLine[NewEnd]))
         NewEnd = map.startOfNextColumn(NewEnd);
 
       // Skip over this bit of "interesting" text.
-      while (NewEnd < SourceLine.size() &&
-             !isspace(static_cast<unsigned char>(SourceLine[NewEnd])))
+      while (NewEnd < SourceLine.size() && isWhitespace(SourceLine[NewEnd]))
         NewEnd = map.startOfNextColumn(NewEnd);
 
       assert(map.byteToColumn(NewEnd) != -1);
@@ -517,7 +514,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
 /// greater than or equal to Idx or, if no such character exists,
 /// returns the end of the string.
 static unsigned skipWhitespace(unsigned Idx, StringRef Str, unsigned Length) {
-  while (Idx < Length && isspace(Str[Idx]))
+  while (Idx < Length && isWhitespace(Str[Idx]))
     ++Idx;
   return Idx;
 }
@@ -562,7 +559,7 @@ static unsigned findEndOfWord(unsigned Start, StringRef Str,
   char EndPunct = findMatchingPunctuation(Str[Start]);
   if (!EndPunct) {
     // This is a normal word. Just find the first space character.
-    while (End < Length && !isspace(Str[End]))
+    while (End < Length && !isWhitespace(Str[End]))
       ++End;
     return End;
   }
@@ -581,7 +578,7 @@ static unsigned findEndOfWord(unsigned Start, StringRef Str,
   }
 
   // Find the first space character after the punctuation ended.
-  while (End < Length && !isspace(Str[End]))
+  while (End < Length && !isWhitespace(Str[End]))
     ++End;
 
   unsigned PunctWordLength = End - Start;

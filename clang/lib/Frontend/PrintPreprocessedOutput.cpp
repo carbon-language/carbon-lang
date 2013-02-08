@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/Utils.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
@@ -26,7 +27,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cctype>
 #include <cstdio>
 using namespace clang;
 
@@ -350,7 +350,7 @@ void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
 
     for (unsigned i = 0, e = Str.size(); i != e; ++i) {
       unsigned char Char = Str[i];
-      if (isprint(Char) && Char != '\\' && Char != '"')
+      if (isPrintable(Char) && Char != '\\' && Char != '"')
         OS << (char)Char;
       else  // Output anything hard as an octal escape.
         OS << '\\'
@@ -375,7 +375,7 @@ void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
 
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
     unsigned char Char = Str[i];
-    if (isprint(Char) && Char != '\\' && Char != '"')
+    if (isPrintable(Char) && Char != '\\' && Char != '"')
       OS << (char)Char;
     else  // Output anything hard as an octal escape.
       OS << '\\'

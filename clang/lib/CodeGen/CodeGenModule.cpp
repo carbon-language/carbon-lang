@@ -30,6 +30,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/Module.h"
 #include "clang/Basic/SourceManager.h"
@@ -2936,7 +2937,7 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
   const char *Uuidstr = Uuid.data();
   for (int i = 0; i < 36; ++i) {
     if (i == 8 || i == 13 || i == 18 || i == 23) assert(Uuidstr[i] == '-');
-    else                                         assert(isxdigit(Uuidstr[i]));
+    else                                         assert(isHexDigit(Uuidstr[i]));
   }
   
   llvm::APInt Field0(32, StringRef(Uuidstr     , 8), 16);

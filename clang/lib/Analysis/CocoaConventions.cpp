@@ -15,9 +15,9 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <cctype>
 
 using namespace clang;
 using namespace ento;
@@ -106,7 +106,7 @@ bool coreFoundation::followsCreateRule(const FunctionDecl *fn) {
       char ch = *it;
       if (ch == 'C' || ch == 'c') {
         // Make sure this isn't something like 'recreate' or 'Scopy'.
-        if (ch == 'c' && it != start && isalpha(*(it - 1)))
+        if (ch == 'c' && it != start && isLetter(*(it - 1)))
           continue;
 
         ++it;
@@ -131,7 +131,7 @@ bool coreFoundation::followsCreateRule(const FunctionDecl *fn) {
       continue;
     }
     
-    if (it == endI || !islower(*it))
+    if (it == endI || !isLowercase(*it))
       return true;
   
     // If we matched a lowercase character, it isn't the end of the

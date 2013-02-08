@@ -23,6 +23,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Lexer.h"
@@ -844,7 +845,7 @@ void StringLiteral::outputString(raw_ostream &OS) const {
       assert(Char <= 0xff &&
              "Characters above 0xff should already have been handled.");
 
-      if (isprint(Char))
+      if (isPrintable(Char))
         OS << (char)Char;
       else  // Output anything hard as an octal escape.
         OS << '\\'

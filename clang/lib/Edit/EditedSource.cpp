@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Edit/EditedSource.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Edit/Commit.h"
 #include "clang/Edit/EditsReceiver.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
-#include <cctype>
 
 using namespace clang;
 using namespace edit;
@@ -240,16 +240,12 @@ bool EditedSource::commit(const Commit &commit) {
   return true;
 }
 
-static inline bool isIdentifierChar(char c, const LangOptions &LangOpts) {
-  return std::isalnum(c) || c == '_' || (c == '$' && LangOpts.DollarIdents);
-}
-
 // \brief Returns true if it is ok to make the two given characters adjacent.
 static bool canBeJoined(char left, char right, const LangOptions &LangOpts) {
-  // FIXME: Should use the Lexer to make sure we don't allow stuff like
+  // FIXME: Should use TokenConcatenation to make sure we don't allow stuff like
   // making two '<' adjacent.
-  return !(isIdentifierChar(left, LangOpts) &&
-           isIdentifierChar(right, LangOpts));
+  return !(Lexer::isIdentifierBodyChar(left, LangOpts) &&
+           Lexer::isIdentifierBodyChar(right, LangOpts));
 }
 
 /// \brief Returns true if it is ok to eliminate the trailing whitespace between
@@ -258,7 +254,7 @@ static bool canRemoveWhitespace(char left, char beforeWSpace, char right,
                                 const LangOptions &LangOpts) {
   if (!canBeJoined(left, right, LangOpts))
     return false;
-  if (std::isspace(left) || std::isspace(right))
+  if (isWhitespace(left) || isWhitespace(right))
     return true;
   if (canBeJoined(beforeWSpace, right, LangOpts))
     return false; // the whitespace was intentional, keep it.

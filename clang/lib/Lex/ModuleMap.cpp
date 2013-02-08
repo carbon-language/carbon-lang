@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Lex/ModuleMap.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
@@ -107,26 +108,15 @@ static StringRef sanitizeFilenameAsIdentifier(StringRef Name,
   if (Name.empty())
     return Name;
 
-  // Check whether the filename is already an identifier; this is the common
-  // case.
-  bool isIdentifier = true;
-  for (unsigned I = 0, N = Name.size(); I != N; ++I) {
-    if (isalpha(Name[I]) || Name[I] == '_' || (isdigit(Name[I]) && I > 0))
-      continue;
-
-    isIdentifier = false;
-    break;
-  }
-
-  if (!isIdentifier) {
+  if (!isValidIdentifier(Name)) {
     // If we don't already have something with the form of an identifier,
     // create a buffer with the sanitized name.
     Buffer.clear();
-    if (isdigit(Name[0]))
+    if (isDigit(Name[0]))
       Buffer.push_back('_');
     Buffer.reserve(Buffer.size() + Name.size());
     for (unsigned I = 0, N = Name.size(); I != N; ++I) {
-      if (isalnum(Name[I]) || isspace(Name[I]))
+      if (isIdentifierBody(Name[I]))
         Buffer.push_back(Name[I]);
       else
         Buffer.push_back('_');

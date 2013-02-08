@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/VerifyDiagnosticConsumer.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
@@ -20,7 +21,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cctype>
 
 using namespace clang;
 typedef VerifyDiagnosticConsumer::Directive Directive;
@@ -234,7 +234,7 @@ public:
         break;
       if (!EnsureStartOfWord
             // Check if string literal starts a new word.
-            || P == Begin || isspace(P[-1])
+            || P == Begin || isWhitespace(P[-1])
             // Or it could be preceeded by the start of a comment.
             || (P > (Begin + 1) && (P[-1] == '/' || P[-1] == '*')
                                 &&  P[-2] == '/'))
@@ -253,7 +253,7 @@ public:
 
   // Skip zero or more whitespace.
   void SkipWhitespace() {
-    for (; C < End && isspace(*C); ++C)
+    for (; C < End && isWhitespace(*C); ++C)
       ;
   }
 

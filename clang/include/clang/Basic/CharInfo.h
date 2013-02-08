@@ -10,6 +10,8 @@
 #ifndef CLANG_BASIC_CHARINFO_H
 #define CLANG_BASIC_CHARINFO_H
 
+#include "clang/Basic/LLVM.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -155,6 +157,41 @@ LLVM_READONLY static inline bool isRawStringDelimBody(unsigned char c) {
   using namespace charinfo;
   return (InfoTable[c] & (CHAR_UPPER|CHAR_LOWER|CHAR_PERIOD|
                           CHAR_DIGIT|CHAR_UNDER|CHAR_RAWDEL)) != 0;
+}
+
+
+/// Converts the given ASCII character to its lowercase equivalent.
+///
+/// If the character is not an uppercase character, it is returned as is.
+LLVM_READONLY static inline char toLowercase(char c) {
+  if (isUppercase(c))
+    return c + 'a' - 'A';
+  return c;
+}
+
+/// Converts the given ASCII character to its uppercase equivalent.
+///
+/// If the character is not a lowercase character, it is returned as is.
+LLVM_READONLY static inline char toUppercase(char c) {
+  if (isLowercase(c))
+    return c + 'A' - 'a';
+  return c;
+}
+
+
+/// Return true if this is a valid ASCII identifier.
+///
+/// Note that this is a very simple check; it does not accept '$' or UCNs as
+/// valid identifier characters.
+LLVM_READONLY static inline bool isValidIdentifier(StringRef S) {
+  if (S.empty() || !isIdentifierHead(S[0]))
+    return false;
+
+  for (StringRef::iterator I = S.begin(), E = S.end(); I != E; ++I)
+    if (!isIdentifierBody(*I))
+      return false;
+
+  return true;
 }
 
 } // end namespace clang

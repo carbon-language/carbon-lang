@@ -13,13 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cctype>
 #include <cstdio>
 
 using namespace clang;
@@ -404,9 +404,8 @@ std::string Selector::getAsString() const {
 /// given "word", which is assumed to end in a lowercase letter.
 static bool startsWithWord(StringRef name, StringRef word) {
   if (name.size() < word.size()) return false;
-  return ((name.size() == word.size() ||
-           !islower(name[word.size()]))
-          && name.startswith(word));
+  return ((name.size() == word.size() || !isLowercase(name[word.size()])) &&
+          name.startswith(word));
 }
 
 ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {

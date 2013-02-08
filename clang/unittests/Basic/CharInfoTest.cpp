@@ -374,4 +374,126 @@ TEST(CharInfoTest, isRawStringDelimBody) {
   EXPECT_TRUE(isRawStringDelimBody('/'));
   EXPECT_FALSE(isRawStringDelimBody('('));
   EXPECT_FALSE(isRawStringDelimBody('\0'));
+
+  EXPECT_FALSE(isRawStringDelimBody('\x80'));
+  EXPECT_FALSE(isRawStringDelimBody('\xc2'));
+  EXPECT_FALSE(isRawStringDelimBody('\xff'));
+}
+
+TEST(CharInfoTest, toLowercase) {
+  EXPECT_EQ('0', toLowercase('0'));
+  EXPECT_EQ('9', toLowercase('9'));
+
+  EXPECT_EQ('a', toLowercase('a'));
+  EXPECT_EQ('a', toLowercase('A'));
+
+  EXPECT_EQ('z', toLowercase('z'));
+  EXPECT_EQ('z', toLowercase('Z'));
+
+  EXPECT_EQ('.', toLowercase('.'));
+  EXPECT_EQ('_', toLowercase('_'));
+
+  EXPECT_EQ('/', toLowercase('/'));
+  EXPECT_EQ('\0', toLowercase('\0'));
+}
+
+TEST(CharInfoTest, toUppercase) {
+  EXPECT_EQ('0', toUppercase('0'));
+  EXPECT_EQ('9', toUppercase('9'));
+
+  EXPECT_EQ('A', toUppercase('a'));
+  EXPECT_EQ('A', toUppercase('A'));
+
+  EXPECT_EQ('Z', toUppercase('z'));
+  EXPECT_EQ('Z', toUppercase('Z'));
+
+  EXPECT_EQ('.', toUppercase('.'));
+  EXPECT_EQ('_', toUppercase('_'));
+
+  EXPECT_EQ('/', toUppercase('/'));
+  EXPECT_EQ('\0', toUppercase('\0'));
+}
+
+TEST(CharInfoTest, isValidIdentifier) {
+  EXPECT_FALSE(isValidIdentifier(""));
+
+  // 1 character
+  EXPECT_FALSE(isValidIdentifier("."));
+  EXPECT_FALSE(isValidIdentifier("\n"));
+  EXPECT_FALSE(isValidIdentifier(" "));
+  EXPECT_FALSE(isValidIdentifier("\x80"));
+  EXPECT_FALSE(isValidIdentifier("\xc2"));
+  EXPECT_FALSE(isValidIdentifier("\xff"));
+  EXPECT_FALSE(isValidIdentifier("$"));
+  EXPECT_FALSE(isValidIdentifier("1"));
+
+  EXPECT_TRUE(isValidIdentifier("_"));
+  EXPECT_TRUE(isValidIdentifier("a"));
+  EXPECT_TRUE(isValidIdentifier("z"));
+  EXPECT_TRUE(isValidIdentifier("A"));
+  EXPECT_TRUE(isValidIdentifier("Z"));
+
+  // 2 characters, '_' suffix
+  EXPECT_FALSE(isValidIdentifier("._"));
+  EXPECT_FALSE(isValidIdentifier("\n_"));
+  EXPECT_FALSE(isValidIdentifier(" _"));
+  EXPECT_FALSE(isValidIdentifier("\x80_"));
+  EXPECT_FALSE(isValidIdentifier("\xc2_"));
+  EXPECT_FALSE(isValidIdentifier("\xff_"));
+  EXPECT_FALSE(isValidIdentifier("$_"));
+  EXPECT_FALSE(isValidIdentifier("1_"));
+
+  EXPECT_TRUE(isValidIdentifier("__"));
+  EXPECT_TRUE(isValidIdentifier("a_"));
+  EXPECT_TRUE(isValidIdentifier("z_"));
+  EXPECT_TRUE(isValidIdentifier("A_"));
+  EXPECT_TRUE(isValidIdentifier("Z_"));
+
+  // 2 characters, '_' prefix
+  EXPECT_FALSE(isValidIdentifier("_."));
+  EXPECT_FALSE(isValidIdentifier("_\n"));
+  EXPECT_FALSE(isValidIdentifier("_ "));
+  EXPECT_FALSE(isValidIdentifier("_\x80"));
+  EXPECT_FALSE(isValidIdentifier("_\xc2"));
+  EXPECT_FALSE(isValidIdentifier("_\xff"));
+  EXPECT_FALSE(isValidIdentifier("_$"));
+  EXPECT_TRUE(isValidIdentifier("_1"));
+
+  EXPECT_TRUE(isValidIdentifier("__"));
+  EXPECT_TRUE(isValidIdentifier("_a"));
+  EXPECT_TRUE(isValidIdentifier("_z"));
+  EXPECT_TRUE(isValidIdentifier("_A"));
+  EXPECT_TRUE(isValidIdentifier("_Z"));
+
+  // 3 characters, '__' prefix
+  EXPECT_FALSE(isValidIdentifier("__."));
+  EXPECT_FALSE(isValidIdentifier("__\n"));
+  EXPECT_FALSE(isValidIdentifier("__ "));
+  EXPECT_FALSE(isValidIdentifier("__\x80"));
+  EXPECT_FALSE(isValidIdentifier("__\xc2"));
+  EXPECT_FALSE(isValidIdentifier("__\xff"));
+  EXPECT_FALSE(isValidIdentifier("__$"));
+  EXPECT_TRUE(isValidIdentifier("__1"));
+
+  EXPECT_TRUE(isValidIdentifier("___"));
+  EXPECT_TRUE(isValidIdentifier("__a"));
+  EXPECT_TRUE(isValidIdentifier("__z"));
+  EXPECT_TRUE(isValidIdentifier("__A"));
+  EXPECT_TRUE(isValidIdentifier("__Z"));
+
+  // 3 characters, '_' prefix and suffix
+  EXPECT_FALSE(isValidIdentifier("_._"));
+  EXPECT_FALSE(isValidIdentifier("_\n_"));
+  EXPECT_FALSE(isValidIdentifier("_ _"));
+  EXPECT_FALSE(isValidIdentifier("_\x80_"));
+  EXPECT_FALSE(isValidIdentifier("_\xc2_"));
+  EXPECT_FALSE(isValidIdentifier("_\xff_"));
+  EXPECT_FALSE(isValidIdentifier("_$_"));
+  EXPECT_TRUE(isValidIdentifier("_1_"));
+
+  EXPECT_TRUE(isValidIdentifier("___"));
+  EXPECT_TRUE(isValidIdentifier("_a_"));
+  EXPECT_TRUE(isValidIdentifier("_z_"));
+  EXPECT_TRUE(isValidIdentifier("_A_"));
+  EXPECT_TRUE(isValidIdentifier("_Z_"));
 }

@@ -19,6 +19,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/StringExtras.h"
@@ -539,7 +540,7 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
 
     // Handle %x4 and %x[foo] by capturing x as the modifier character.
     char Modifier = '\0';
-    if (isalpha(EscapedChar)) {
+    if (isLetter(EscapedChar)) {
       if (CurPtr == StrEnd) { // Premature end.
         DiagOffs = CurPtr-StrStart-1;
         return diag::err_asm_invalid_escape;
@@ -548,12 +549,12 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
       EscapedChar = *CurPtr++;
     }
 
-    if (isdigit(EscapedChar)) {
+    if (isDigit(EscapedChar)) {
       // %n - Assembler operand n
       unsigned N = 0;
 
       --CurPtr;
-      while (CurPtr != StrEnd && isdigit(*CurPtr))
+      while (CurPtr != StrEnd && isDigit(*CurPtr))
         N = N*10 + ((*CurPtr++)-'0');
 
       unsigned NumOperands =

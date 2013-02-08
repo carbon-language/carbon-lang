@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ToolChains.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Version.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
@@ -158,12 +159,12 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
       for (index = 0; RegEnumKeyEx(hTopKey, index, keyName, &size, NULL,
           NULL, NULL, NULL) == ERROR_SUCCESS; index++) {
         const char *sp = keyName;
-        while (*sp && !isdigit(*sp))
+        while (*sp && !isDigit(*sp))
           sp++;
         if (!*sp)
           continue;
         const char *ep = sp + 1;
-        while (*ep && (isdigit(*ep) || (*ep == '.')))
+        while (*ep && (isDigit(*ep) || (*ep == '.')))
           ep++;
         char numBuf[32];
         strncpy(numBuf, sp, sizeof(numBuf) - 1);
