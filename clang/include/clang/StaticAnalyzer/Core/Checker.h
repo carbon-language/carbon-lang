@@ -471,6 +471,14 @@ struct ImplicitNullDerefEvent {
   BugReporter *BR;
 };
 
+/// \brief A helper class which wraps a boolean value set to false by default.
+struct DefaultBool {
+  bool val;
+  DefaultBool() : val(false) {}
+  operator bool() const { return val; }
+  DefaultBool &operator=(bool b) { val = b; return *this; }
+};
+
 } // end ento namespace
 
 } // end clang namespace

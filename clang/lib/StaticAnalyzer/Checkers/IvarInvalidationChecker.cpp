@@ -43,13 +43,6 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-// TODO: move this somewhere?
-struct DefaultBool {
-  bool val;
-  DefaultBool() : val(false) {}
-  operator bool() const { return val; }
-  DefaultBool &operator=(bool b) { val = b; return *this; }
-};
 
 struct ChecksFilter {
   /// Check for missing invalidation method declarations.

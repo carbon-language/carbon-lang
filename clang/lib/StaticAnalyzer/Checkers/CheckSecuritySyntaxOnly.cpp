@@ -36,13 +36,6 @@ static bool isArc4RandomAvailable(const ASTContext &Ctx) {
 }
 
 namespace {
-struct DefaultBool {
-  bool val;
-  DefaultBool() : val(false) {}
-  operator bool() const { return val; }
-  DefaultBool &operator=(bool b) { val = b; return *this; }
-};
-  
 struct ChecksFilter {
   DefaultBool check_gets;
   DefaultBool check_getpw;

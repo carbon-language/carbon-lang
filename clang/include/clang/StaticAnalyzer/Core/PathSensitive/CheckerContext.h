@@ -303,14 +303,6 @@ private:
   }
 };
 
-/// \brief A helper class which wraps a boolean value set to false by default.
-struct DefaultBool {
-  bool Val;
-  DefaultBool() : Val(false) {}
-  operator bool() const { return Val; }
-  DefaultBool &operator=(bool b) { Val = b; return *this; }
-};
-
 } // end GR namespace
 
 } // end clang namespace
