@@ -77,12 +77,14 @@ public:
   void adjustStackPtr(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
                       MachineBasicBlock::iterator I) const;
 
-  /// Emit a series of instructions to load an immediate. If NewImm is a
-  /// non-NULL parameter, the last instruction is not emitted, but instead
-  /// its immediate operand is returned in NewImm.
-  unsigned loadImmediate(int64_t Imm, MachineBasicBlock &MBB,
+  /// Emit a series of instructions to load an immediate.
+  // This is to adjust some FrameReg. We return the new register to be used
+  // in place of FrameReg and the adjusted immediate field (&NewImm)
+  //
+  unsigned loadImmediate(unsigned FrameReg,
+                         int64_t Imm, MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator II, DebugLoc DL,
-                         unsigned *NewImm) const;
+                         unsigned &NewImm) const;
 
 private:
   virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const;

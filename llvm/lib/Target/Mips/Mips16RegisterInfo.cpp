@@ -1,3 +1,4 @@
+
 //===-- Mips16RegisterInfo.cpp - MIPS16 Register Information -== ----------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -12,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips16RegisterInfo.h"
+#include "Mips16InstrInfo.h"
 #include "Mips.h"
 #include "Mips16InstrInfo.h"
 #include "MipsAnalyzeImmediate.h"
@@ -23,6 +25,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/Constants.h"
@@ -140,6 +143,7 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
   //   by adding the size of the stack:
   //   incoming argument, callee-saved register location or local variable.
   int64_t Offset;
+  bool IsKill = false;
   Offset = SPOffset + (int64_t)StackSize;
   Offset += MI.getOperand(OpNo + 1).getImm();
 
@@ -148,9 +152,14 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
 
   if (!MI.isDebugValue() && ( ((FrameReg != Mips::SP) && !isInt<16>(Offset)) ||
       ((FrameReg == Mips::SP) && !isInt<15>(Offset)) )) {
-    llvm_unreachable("frame offset does not fit in instruction");
+    MachineBasicBlock &MBB = *MI.getParent();
+    DebugLoc DL = II->getDebugLoc();
+    unsigned NewImm;
+    FrameReg = TII.loadImmediate(FrameReg, Offset, MBB, II, DL, NewImm);
+    Offset = SignExtend64<16>(NewImm);
+    IsKill = true;
   }
-  MI.getOperand(OpNo).ChangeToRegister(FrameReg, false);
+  MI.getOperand(OpNo).ChangeToRegister(FrameReg, false, false, IsKill);
   MI.getOperand(OpNo + 1).ChangeToImmediate(Offset);
 
 
