@@ -115,7 +115,7 @@ static u32 RZSize2Log(u32 rz_size) {
   CHECK_GE(rz_size, 16);
   CHECK_LE(rz_size, 2048);
   CHECK(IsPowerOfTwo(rz_size));
-  u32 res = __builtin_ctz(rz_size) - 4;
+  u32 res = Log2(rz_size) - 4;
   CHECK_EQ(rz_size, RZLog2Size(res));
   return res;
 }

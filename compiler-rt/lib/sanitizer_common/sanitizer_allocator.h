@@ -121,7 +121,7 @@ class SizeClassMap {
     if (size <= kMidSize)
       return (size + kMinSize - 1) >> kMinSizeLog;
     if (size > kMaxSize) return 0;
-    uptr l = SANITIZER_WORDSIZE - 1 - __builtin_clzl(size);
+    uptr l = MostSignificantSetBitIndex(size);
     uptr hbits = (size >> (l - S)) & M;
     uptr lbits = size & ((1 << (l - S)) - 1);
     uptr l1 = l - kMidSizeLog;
@@ -143,7 +143,7 @@ class SizeClassMap {
         Printf("\n");
       uptr d = s - prev_s;
       uptr p = prev_s ? (d * 100 / prev_s) : 0;
-      uptr l = SANITIZER_WORDSIZE - 1 - __builtin_clzl(s);
+      uptr l = MostSignificantSetBitIndex(s);
       uptr cached = MaxCached(i) * s;
       Printf("c%02zd => s: %zd diff: +%zd %02zd%% l %zd "
              "cached: %zd %zd; id %zd\n",
@@ -886,7 +886,7 @@ class LargeMmapAllocator {
     h->size = size;
     h->map_beg = map_beg;
     h->map_size = map_size;
-    uptr size_log = SANITIZER_WORDSIZE - __builtin_clzl(map_size) - 1;
+    uptr size_log = MostSignificantSetBitIndex(map_size);
     CHECK_LT(size_log, ARRAY_SIZE(stats.by_size_log));
     {
       SpinMutexLock l(&mutex_);

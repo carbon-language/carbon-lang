@@ -97,6 +97,11 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                       MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
 }
 
+void FlushUnneededShadowMemory(uptr addr, uptr size) {
+  // This is almost useless on 32-bits.
+  // FIXME: add madvice-analog when we move to 64-bits.
+}
+
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
   // FIXME: shall we do anything here on Windows?
   return true;

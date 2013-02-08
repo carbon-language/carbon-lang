@@ -159,7 +159,7 @@ class QuarantineCache {
     atomic_store(&size_, Size() + add, memory_order_relaxed);
   }
 
-  QuarantineBatch *NOINLINE AllocBatch(Callback cb) {
+  NOINLINE QuarantineBatch* AllocBatch(Callback cb) {
     QuarantineBatch *b = (QuarantineBatch *)cb.Allocate(sizeof(*b));
     b->count = 0;
     b->size = 0;
