@@ -260,6 +260,81 @@ End of search list.
   </p>
 
   <!--=====================================================================-->
+  <h2>Build on Linux using CMake and libc++abi.</h2>
+  <!--=====================================================================-->
+
+  <p>
+     You will need to keep the source tree of <a href="http://libcxxabi.llvm.org">libc++abi</a>
+     available on your build machine and your copy of the libc++abi shared library must
+     be placed where your linker will find it.
+  </p>
+  
+  <p>
+     We can now run CMake:
+     <ul>
+       <li><code>CC=clang CXX=clang++ cmake -G "Unix Makefiles"
+                -DLIBCXX_CXX_ABI=libcxxabi
+                -DLIBCXX_LIBCXXABI_INCLUDE_PATHS="&lt;libc++abi-source-dir&gt;/include"
+                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_INSTALL_PREFIX=/usr
+                &lt;libc++-source-dir&gt;</code></li>
+       <li><code>make</code></li>
+       <li><code>sudo make install</code></li>
+     </ul>
+     <p>
+        Unfortunately you can't simply run clang with "-stdlib=libc++" at this point, as
+        clang is set up to link for libc++ linked to libsupc++.  To get around this
+        you'll have to set up your linker yourself (or patch clang).  For example,
+        <ul>
+          <li><code>clang++ -stdlib=libc++ helloworld.cpp -nodefaultlibs -lc++ -lc++abi -lm -lc -lgcc_s -lgcc</code></li>
+        </ul>
+        Alternately, you could just add libc++abi to your libraries list, which in most
+        situations will give the same result:
+        <ul>
+          <li><code>clang++ -stdlib=libc++ helloworld.cpp -lc++abi</code></li>
+        </ul>
+     </p>
+  </p>
+
+  <!--=====================================================================-->
+  <h2>Build on Linux using CMake and libcxxrt.</h2>
+  <!--=====================================================================-->
+
+  <p>
+     You will need to keep the source tree of
+     <a href="https://github.com/pathscale/libcxxrt/">libcxxrt</a> available
+     on your build machine and your copy of the libcxxrt shared library must
+     be placed where your linker will find it.
+  </p>
+ 
+  <p>
+     We can now run CMake:
+     <ul>
+       <li><code>CC=clang CXX=clang++ cmake -G "Unix Makefiles"
+                -DLIBCXX_CXX_ABI=libcxxrt
+                -DLIBCXX_LIBCXXABI_INCLUDE_PATHS="&lt;libcxxrt-source-dir&gt;/src"
+                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_INSTALL_PREFIX=/usr
+                &lt;libc++-source-dir&gt;</code></li>
+       <li><code>make</code></li>
+       <li><code>sudo make install</code></li>
+     </ul>
+     <p>
+        Unfortunately you can't simply run clang with "-stdlib=libc++" at this point, as
+        clang is set up to link for libc++ linked to libsupc++.  To get around this
+        you'll have to set up your linker yourself (or patch clang).  For example,
+        <ul>
+          <li><code>clang++ -stdlib=libc++ helloworld.cpp -nodefaultlibs -lc++ -lcxxrt -lm -lc -lgcc_s -lgcc</code></li>
+        </ul>
+        Alternately, you could just add libcxxrt to your libraries list, which in most
+        situations will give the same result:
+        <ul>
+          <li><code>clang++ -stdlib=libc++ helloworld.cpp -lcxxrt</code></li>
+        </ul>
+     </p>
+  </p>
+
+  <!--=====================================================================-->
   <h2>Design Documents</h2>
   <!--=====================================================================-->
 
