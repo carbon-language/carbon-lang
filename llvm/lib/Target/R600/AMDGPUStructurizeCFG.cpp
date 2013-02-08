@@ -41,6 +41,7 @@ typedef DenseMap<BasicBlock *, PhiMap> BBPhiMap;
 typedef DenseMap<BasicBlock *, Value *> BBPredicates;
 typedef DenseMap<BasicBlock *, BBPredicates> PredMap;
 typedef DenseMap<BasicBlock *, unsigned> VisitedMap;
+typedef DenseMap<BasicBlock *, BBVector> BB2BBVecMap;
 
 // The name for newly created blocks.
 
@@ -109,6 +110,7 @@ class AMDGPUStructurizeCFG : public RegionPass {
   VisitedMap Visited;
   PredMap Predicates;
   BBPhiMap DeletedPhis;
+  BB2BBVecMap AddedPhis;
   BBVector FlowsInserted;
 
   BasicBlock *LoopStart;
@@ -126,15 +128,17 @@ class AMDGPUStructurizeCFG : public RegionPass {
 
   void collectInfos();
 
+  void delPhiValues(BasicBlock *From, BasicBlock *To);
+
+  void addPhiValues(BasicBlock *From, BasicBlock *To);
+
+  void setPhiValues();
+
   bool dominatesPredicates(BasicBlock *A, BasicBlock *B);
 
   void killTerminator(BasicBlock *BB);
 
   RegionNode *skipChained(RegionNode *Node);
-
-  void delPhiValues(BasicBlock *From, BasicBlock *To);
-
-  void addPhiValues(BasicBlock *From, BasicBlock *To);
 
   BasicBlock *getNextFlow(BasicBlock *Prev);
 
@@ -309,6 +313,76 @@ void AMDGPUStructurizeCFG::collectInfos() {
   }
 }
 
+/// \brief Remove all PHI values coming from "From" into "To" and remember
+/// them in DeletedPhis
+void AMDGPUStructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
+  PhiMap &Map = DeletedPhis[To];
+  for (BasicBlock::iterator I = To->begin(), E = To->end();
+       I != E && isa<PHINode>(*I);) {
+
+    PHINode &Phi = cast<PHINode>(*I++);
+    while (Phi.getBasicBlockIndex(From) != -1) {
+      Value *Deleted = Phi.removeIncomingValue(From, false);
+      Map[&Phi].push_back(std::make_pair(From, Deleted));
+    }
+  }
+}
+
+/// \brief Add a dummy PHI value as soon as we knew the new predecessor
+void AMDGPUStructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
+  for (BasicBlock::iterator I = To->begin(), E = To->end();
+       I != E && isa<PHINode>(*I);) {
+
+    PHINode &Phi = cast<PHINode>(*I++);
+    Value *Undef = UndefValue::get(Phi.getType());
+    Phi.addIncoming(Undef, From);
+  }
+  AddedPhis[To].push_back(From);
+}
+
+/// \brief Add the real PHI value as soon as everything is set up
+void AMDGPUStructurizeCFG::setPhiValues() {
+
+  SSAUpdater Updater;
+  for (BB2BBVecMap::iterator AI = AddedPhis.begin(), AE = AddedPhis.end();
+       AI != AE; ++AI) {
+
+    BasicBlock *To = AI->first;
+    BBVector &From = AI->second;
+
+    if (!DeletedPhis.count(To))
+      continue;
+
+    PhiMap &Map = DeletedPhis[To];
+    for (PhiMap::iterator PI = Map.begin(), PE = Map.end();
+         PI != PE; ++PI) {
+
+      PHINode *Phi = PI->first;
+      Value *Undef = UndefValue::get(Phi->getType());
+      Updater.Initialize(Phi->getType(), "");
+      Updater.AddAvailableValue(&Func->getEntryBlock(), Undef);
+      Updater.AddAvailableValue(To, Undef);
+
+      for (BBValueVector::iterator VI = PI->second.begin(),
+           VE = PI->second.end(); VI != VE; ++VI) {
+
+        Updater.AddAvailableValue(VI->first, VI->second);
+      }
+
+      for (BBVector::iterator FI = From.begin(), FE = From.end();
+           FI != FE; ++FI) {
+
+        int Idx = Phi->getBasicBlockIndex(*FI);
+        assert(Idx != -1);
+        Phi->setIncomingValue(Idx, Updater.GetValueAtEndOfBlock(*FI));
+      }
+    }
+
+    DeletedPhis.erase(To);
+  }
+  assert(DeletedPhis.empty());
+}
+
 /// \brief Does A dominate all the predicates of B ?
 bool AMDGPUStructurizeCFG::dominatesPredicates(BasicBlock *A, BasicBlock *B) {
   BBPredicates &Preds = Predicates[B];
@@ -404,57 +478,6 @@ RegionNode *AMDGPUStructurizeCFG::skipChained(RegionNode *Node) {
   Visited.erase(Succ);
   Order.erase(I);
   return ParentRegion->getNode(wireFlowBlock(BB, Next));
-}
-
-/// \brief Remove all PHI values coming from "From" into "To" and remember
-/// them in DeletedPhis
-void AMDGPUStructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
-  PhiMap &Map = DeletedPhis[To];
-  for (BasicBlock::iterator I = To->begin(), E = To->end();
-       I != E && isa<PHINode>(*I);) {
-
-    PHINode &Phi = cast<PHINode>(*I++);
-    while (Phi.getBasicBlockIndex(From) != -1) {
-      Value *Deleted = Phi.removeIncomingValue(From, false);
-      Map[&Phi].push_back(std::make_pair(From, Deleted));
-    }
-  }
-}
-
-/// \brief Add the PHI values back once we knew the new predecessor
-void AMDGPUStructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
-  if (!DeletedPhis.count(To))
-    return;
-
-  PhiMap &Map = DeletedPhis[To];
-  SSAUpdater Updater;
-
-  for (PhiMap::iterator I = Map.begin(), E = Map.end(); I != E; ++I) {
-
-    PHINode *Phi = I->first;
-    Updater.Initialize(Phi->getType(), "");
-    BasicBlock *Fallback = To;
-    bool HaveFallback = false;
-
-    for (BBValueVector::iterator VI = I->second.begin(), VE = I->second.end();
-         VI != VE; ++VI) {
-
-      Updater.AddAvailableValue(VI->first, VI->second);
-      BasicBlock *Dom = DT->findNearestCommonDominator(Fallback, VI->first);
-      if (Dom == VI->first)
-        HaveFallback = true;
-      else if (Dom != Fallback)
-        HaveFallback = false;
-      Fallback = Dom;
-    }
-    if (!HaveFallback) {
-      Value *Undef = UndefValue::get(Phi->getType());
-      Updater.AddAvailableValue(Fallback, Undef);
-    }
-
-    Phi->addIncoming(Updater.GetValueAtEndOfBlock(From), From);
-  }
-  DeletedPhis.erase(To);
 }
 
 /// \brief Create a new flow node and update dominator tree and region info
@@ -554,6 +577,7 @@ BasicBlock *AMDGPUStructurizeCFG::wireFlowBlock(BasicBlock *Prev,
 /// branches only have undefined conditions.
 void AMDGPUStructurizeCFG::createFlow() {
   DeletedPhis.clear();
+  AddedPhis.clear();
 
   BasicBlock *Prev = Order.pop_back_val()->getEntry();
   assert(Prev == ParentRegion->getEntry() && "Incorrect node order!");
@@ -601,18 +625,8 @@ void AMDGPUStructurizeCFG::createFlow() {
   if (DT->dominates(ParentRegion->getEntry(), Exit))
     DT->changeImmediateDominator(Exit, Prev);
 
-  if (LoopStart && LoopEnd) {
-    BBVector::iterator FI = std::find(FlowsInserted.begin(),
-                                      FlowsInserted.end(),
-                                      LoopStart);
-    for (; *FI != LoopEnd; ++FI) {
-      addPhiValues(*FI, (*FI)->getTerminator()->getSuccessor(0));
-    }
-  }
-
   assert(Order.empty());
   assert(Visited.empty());
-  assert(DeletedPhis.empty());
 }
 
 /// \brief Insert the missing branch conditions
@@ -697,12 +711,14 @@ bool AMDGPUStructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
   collectInfos();
   createFlow();
   insertConditions();
+  setPhiValues();
   rebuildSSA();
 
   Order.clear();
   Visited.clear();
   Predicates.clear();
   DeletedPhis.clear();
+  AddedPhis.clear();
   FlowsInserted.clear();
 
   return true;
