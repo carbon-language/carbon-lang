@@ -81,6 +81,11 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
   SomeInvalidationImplementingObject *_Prop5; // property with @synthesize, invalidate via getter method
   SomeInvalidationImplementingObject *_Prop8;
   
+  // Ivars invalidated by the partial invalidator. 
+  SomeInvalidationImplementingObject *Ivar9;
+  SomeInvalidationImplementingObject *_Prop10;
+  SomeInvalidationImplementingObject *Ivar11;
+
   // No warnings on these as they are not invalidatable.
   NSObject *NIvar1;
   NSObject *NObj2;
@@ -108,10 +113,15 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 
 -(void)invalidate;
 
+// Partial invalidators invalidate only some ivars. They are guaranteed to be 
+// called before the invalidation methods.
+-(void)partialInvalidator1 __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+-(void)partialInvalidator2 __attribute__((annotate("objc_instance_variable_invalidator_partial")));
 @end
 
 @interface SomeSubclassInvalidatableObject()
 @property (assign) SomeInvalidationImplementingObject* Prop8;
+@property (assign) SomeInvalidationImplementingObject* Prop10;
 @end
 
 @implementation SomeSubclassInvalidatableObject{
@@ -125,6 +135,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 @synthesize Prop5 = _Prop5;
 @synthesize Prop4 = _Prop4;
 @synthesize Prop8 = _Prop8;
+@synthesize Prop10 = _Prop10;
 
 
 - (void) setProp1: (SomeInvalidationImplementingObject*) InObj {
@@ -161,13 +172,24 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
    [super invalidate];
 }
 // expected-warning@-1 {{Instance variable Ivar1 needs to be invalidated}}
- // expected-warning@-2 {{Instance variable MultipleProtocols needs to be invalidated}}
- // expected-warning@-3 {{Instance variable MultInheritance needs to be invalidated}}
- // expected-warning@-4 {{Property SynthIvarProp needs to be invalidated or set to nil}}
- // expected-warning@-5 {{Instance variable _Ivar3 needs to be invalidated}}
- // expected-warning@-6 {{Instance variable _Ivar4 needs to be invalidated}}
- // expected-warning@-7 {{Instance variable Ivar5 needs to be invalidated or set to nil}}
+// expected-warning@-2 {{Instance variable MultipleProtocols needs to be invalidated}}
+// expected-warning@-3 {{Instance variable MultInheritance needs to be invalidated}}
+// expected-warning@-4 {{Property SynthIvarProp needs to be invalidated or set to nil}}
+// expected-warning@-5 {{Instance variable _Ivar3 needs to be invalidated}}
+// expected-warning@-6 {{Instance variable _Ivar4 needs to be invalidated}}
+// expected-warning@-7 {{Instance variable Ivar5 needs to be invalidated or set to nil}}
 // expected-warning@-8 {{Instance variable Ivar13 needs to be invalidated or set to nil}}
+
+
+-(void)partialInvalidator1 {
+  [Ivar9 invalidate];
+  [_Prop10 invalidate];
+}
+
+-(void)partialInvalidator2 {
+  [Ivar11 invalidate];
+}
+
 @end
 
 // Example, where the same property is inherited through 
@@ -252,3 +274,47 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 @end
 @implementation MissingInvalidationMethodDecl2
 @end
+
+@interface InvalidatedInPartial : SomeInvalidationImplementingObject {
+  SomeInvalidationImplementingObject *Ivar1; 
+  SomeInvalidationImplementingObject *Ivar2; 
+}
+-(void)partialInvalidator __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+@end
+@implementation InvalidatedInPartial
+-(void)partialInvalidator {
+  [Ivar1 invalidate];
+  Ivar2 = 0;
+}
+@end
+
+@interface NotInvalidatedInPartial : SomeInvalidationImplementingObject {
+  SomeInvalidationImplementingObject *Ivar1; 
+}
+-(void)partialInvalidator __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+-(void)partialInvalidatorCallsPartial __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+@end
+@implementation NotInvalidatedInPartial
+-(void)partialInvalidator {
+}
+-(void)partialInvalidatorCallsPartial {
+  [self partialInvalidator];
+}
+
+-(void)invalidate {
+} // expected-warning {{Instance variable Ivar1 needs to be invalidated or set to nil}}
+
+@end
+
+// False negative.
+@interface PartialCallsFull : SomeInvalidationImplementingObject {
+  SomeInvalidationImplementingObject *Ivar1;
+}
+-(void)partialInvalidator __attribute__((annotate("objc_instance_variable_invalidator_partial")));
+@end
+@implementation PartialCallsFull
+-(void)partialInvalidator {
+ [self invalidate];
+} // TODO: It would be nice to check that the full invalidation method actually invalidates the ivar. 
+@end
+
