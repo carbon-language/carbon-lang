@@ -1043,7 +1043,7 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 
 static void RewriteOneForwardClassDecl(ObjCInterfaceDecl *ForwardDecl,
                                        std::string &typedefString) {
-  typedefString += "#ifndef _REWRITER_typedef_";
+  typedefString += "\n#ifndef _REWRITER_typedef_";
   typedefString += ForwardDecl->getNameAsString();
   typedefString += "\n";
   typedefString += "#define _REWRITER_typedef_";
@@ -1076,7 +1076,7 @@ void RewriteModernObjC::RewriteForwardClassDecl(DeclGroupRef D) {
       // as a comment.
       typedefString += "// @class ";
       typedefString += ForwardDecl->getNameAsString();
-      typedefString += ";\n";
+      typedefString += ";";
     }
     RewriteOneForwardClassDecl(ForwardDecl, typedefString);
   }
@@ -1092,7 +1092,7 @@ void RewriteModernObjC::RewriteForwardClassDecl(
     if (i == 0) {
       typedefString += "// @class ";
       typedefString += ForwardDecl->getNameAsString();
-      typedefString += ";\n";
+      typedefString += ";";
     }
     RewriteOneForwardClassDecl(ForwardDecl, typedefString);
   }

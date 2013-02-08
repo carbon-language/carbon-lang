@@ -98,3 +98,23 @@ int f2(A* a) {
 int f3(A *a) {  
   return a->ivar_d + a->ivar_ext2_a + a->ivar_ext_a + a->ivar_a;
 }
+
+__attribute__((objc_root_class)) @interface Base
+{
+    struct objc_class *isa;
+    int full;
+    int full2: 32;
+    int _refs: 8;
+    int field2: 3;
+    unsigned f3: 8;
+    short cc;
+    unsigned g: 16;
+    int r2: 8;
+    int r3: 8;
+    int r4: 2;
+    int r5: 8;
+    char c;
+}
+@end
+
+@implementation Base @end
