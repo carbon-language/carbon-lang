@@ -99,6 +99,9 @@ TEST(SanitizerCommonInterceptors, Scanf) {
 
   testScanf("%*d%u", 1, I);
 
+  testScanf("%c%d", 2, C, I);
+  testScanf("%A%lf", 2, F, D);
+
   // Unsupported stuff.
   testScanf("%a[", 0);
   testScanf("%as", 0);
