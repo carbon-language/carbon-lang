@@ -2593,7 +2593,12 @@ TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
                         "           b;\n"
                         "}\n"
                         "}", 22, 2, getLLVMStyle()));
-} 
+  EXPECT_EQ("  {\n"
+            "    a;\n"
+            "  }", format("  {\n"
+                          "a;\n"
+                          "  }", 4, 2, getLLVMStyle()));
+}
 
 } // end namespace tooling
 } // end namespace clang

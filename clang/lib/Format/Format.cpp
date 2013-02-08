@@ -977,10 +977,10 @@ private:
   /// that level is unknown.
   unsigned GetIndent(const std::vector<int> IndentForLevel,
                      unsigned Level) {
-    if (Level == 0)
-      return 0;
     if (IndentForLevel[Level] != -1)
       return IndentForLevel[Level];
+    if (Level == 0)
+      return 0;
     return GetIndent(IndentForLevel, Level - 1) + 2;
   }
 
