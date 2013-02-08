@@ -101,6 +101,10 @@ else()
   set(COMPILER_RT_CAN_EXECUTE_TESTS FALSE)
 endif()
     
+# Check if compiler-rt is built with libc++.
+find_flag_in_string("${CMAKE_CXX_FLAGS}" "-stdlib=libc++"
+                    COMPILER_RT_USES_LIBCXX)
+
 function(filter_available_targets out_var)
   set(archs)
   foreach(arch ${ARGN})
@@ -140,8 +144,16 @@ check_cxx_compiler_flag(-Wno-c99-extensions SUPPORTS_NO_C99_EXTENSIONS_FLAG)
 if(SUPPORTS_NO_C99_EXTENSIONS_FLAG)
   list(APPEND SANITIZER_COMMON_CFLAGS -Wno-c99-extensions)
 endif()
+
+# Setup min Mac OS X version.
 if(APPLE)
-  list(APPEND SANITIZER_COMMON_CFLAGS -mmacosx-version-min=10.5)
+  if(COMPILER_RT_USES_LIBCXX)
+    set(SANITIZER_MIN_OSX_VERSION 10.7)
+  else()
+    set(SANITIZER_MIN_OSX_VERSION 10.5)
+  endif()
+  list(APPEND SANITIZER_COMMON_CFLAGS
+    -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
 endif()
 
 # Architectures supported by Sanitizer runtimes. Specific sanitizers may
