@@ -363,7 +363,8 @@ public:
       StringRef Filename,
       const FileEntry *RelativeFileEnt,
       SmallVectorImpl<char> *SearchPath,
-      SmallVectorImpl<char> *RelativePath);
+      SmallVectorImpl<char> *RelativePath,
+      Module **SuggestedModule);
 
   /// \brief Look up the specified framework name in our framework cache.
   /// \returns The DirectoryEntry it is in if we know, null otherwise.

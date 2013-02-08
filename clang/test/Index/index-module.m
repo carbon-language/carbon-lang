@@ -26,6 +26,7 @@ int glob;
 // CHECK-DMOD-NEXT: [ppIncludedFile]: [[DMOD_PRIVATE_H:.*/Modules/Inputs/DependsOnModule.framework[/\\]PrivateHeaders[/\\]DependsOnModulePrivate.h]] | {{.*}} | hash loc: <invalid>
 // CHECK-DMOD-NEXT: [importedASTFile]: {{.*}}.cache{{[/\\]}}Module.pcm | loc: [[DMOD_MODULE_H]]:1:2 | name: "Module" | isImplicit: 1
 // CHECK-DMOD-NEXT: [indexDeclaration]: kind: variable | name: depends_on_module_other | {{.*}} | loc: [[DMOD_OTHER_H]]:1:5
+// CHECK-DMOD-NEXT: [importedASTFile]: {{.*}}.cache/DependsOnModule.pcm | loc: {{.*}}SubFramework.h:1:2 | name: "DependsOnModule.SubFramework.Other" | isImplicit: 1
 // CHECK-DMOD-NEXT: [indexDeclaration]: kind: variable | name: sub_framework | {{.*}} | loc: [[DMOD_SUB_H]]:2:8
 // CHECK-DMOD-NEXT: [indexDeclaration]: kind: variable | name: sub_framework_other | {{.*}} | loc: [[DMOD_SUB_OTHER_H]]:1:9
 // CHECK-DMOD-NEXT: [indexDeclaration]: kind: variable | name: depends_on_module_private | {{.*}} | loc: [[DMOD_PRIVATE_H]]:1:5

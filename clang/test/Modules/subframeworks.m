@@ -20,3 +20,10 @@ void testSubFrameworkAgain() {
 
 CXXOnly cxxonly;
 #endif
+
+@import HasSubModules;
+
+// expected-warning@1{{treating #include as an import of module 'HasSubModules.Sub.Types'}}
+#import <HasSubModules/HasSubModulesPriv.h>
+
+struct FrameworkSubStruct ss;

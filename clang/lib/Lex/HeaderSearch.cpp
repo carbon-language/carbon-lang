@@ -665,7 +665,8 @@ const FileEntry *HeaderSearch::
 LookupSubframeworkHeader(StringRef Filename,
                          const FileEntry *ContextFileEnt,
                          SmallVectorImpl<char> *SearchPath,
-                         SmallVectorImpl<char> *RelativePath) {
+                         SmallVectorImpl<char> *RelativePath,
+                         Module **SuggestedModule) {
   assert(ContextFileEnt && "No context file?");
 
   // Framework names must have a '/' in the filename.  Find it.
@@ -754,6 +755,26 @@ LookupSubframeworkHeader(StringRef Filename,
   // of evaluation.
   unsigned DirInfo = getFileInfo(ContextFileEnt).DirInfo;
   getFileInfo(FE).DirInfo = DirInfo;
+
+  // If we're supposed to suggest a module, look for one now.
+  if (SuggestedModule) {
+    // Find the top-level framework based on this framework.
+    FrameworkName.pop_back(); // remove the trailing '/'
+    SmallVector<std::string, 4> SubmodulePath;
+    const DirectoryEntry *TopFrameworkDir
+      = ::getTopFrameworkDir(FileMgr, FrameworkName, SubmodulePath);
+    
+    // Determine the name of the top-level framework.
+    StringRef ModuleName = llvm::sys::path::stem(TopFrameworkDir->getName());
+
+    // Load this framework module. If that succeeds, find the suggested module
+    // for this header, if any.
+    bool IsSystem = false;
+    if (loadFrameworkModule(ModuleName, TopFrameworkDir, IsSystem)) {
+      *SuggestedModule = findModuleForHeader(FE);
+    }
+  }
+
   return FE;
 }
 
