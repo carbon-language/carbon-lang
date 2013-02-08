@@ -758,7 +758,7 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup
                     
                     CFCReleaser<CFDictionaryRef> plist((CFDictionaryRef)::CFPropertyListCreateFromXMLData (NULL, data.get(), kCFPropertyListImmutable, NULL));
                     
-                    if (CFGetTypeID (plist.get()) == CFDictionaryGetTypeID ())
+                    if (plist.get() && CFGetTypeID (plist.get()) == CFDictionaryGetTypeID ())
                     {
                         if (uuid_cstr)
                         {
