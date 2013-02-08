@@ -279,17 +279,12 @@ add_subdirectory(examples)
 # TODO: docs.
 add_subdirectory(test)
 
-option(CLANG_BUILD_TESTS
-       "Build Clang unit tests. If OFF, just generate build targets." 
-       LLVM_BUILD_TESTS)
 option(CLANG_INCLUDE_TESTS
        "Generate build targets for the Clang unit tests."
-       LLVM_INCLUDE_TESTS)
+       ${LLVM_INCLUDE_TESTS})
 
 if( CLANG_INCLUDE_TESTS )
   add_subdirectory(unittests)
-elseif( CLANG_BUILD_TESTS )
-  message(FATAL_ERROR "CLANG_BUILD_TESTS requires CLANG_INCLUDE_TESTS")
 endif()
 
 # Workaround for MSVS10 to avoid the Dialog Hell

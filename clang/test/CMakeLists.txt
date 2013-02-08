@@ -26,24 +26,27 @@ if(CLANG_TEST_USE_VG)
   set(CLANG_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
 endif ()
 
-if( NOT CLANG_BUILT_STANDALONE )
+set(CLANG_TEST_DEPS
+  clang clang-headers
+  c-index-test diagtool arcmt-test c-arcmt-test
+  clang-check
+  )
+set(CLANG_TEST_PARAMS
+  clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+  )
 
-  set(CLANG_TEST_DEPS
-    clang clang-headers
-    c-index-test diagtool arcmt-test c-arcmt-test
-    clang-check
+if(CLANG_INCLUDE_TESTS)  
+  list(APPEND CLANG_TEST_DEPS ClangUnitTests)
+  list(APPEND CLANG_TEST_PARAMS
+    clang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+    )
+endif()
+
+if( NOT CLANG_BUILT_STANDALONE )
+  list(APPEND CLANG_TEST_DEPS
     llc opt FileCheck count not
     )
-  set(CLANG_TEST_PARAMS
-    clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-    )
 
-  if(LLVM_INCLUDE_TESTS)
-    list(APPEND CLANG_TEST_DEPS ClangUnitTests)
-    list(APPEND CLANG_TEST_PARAMS
-      clang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
-      )
-  endif()
   add_lit_testsuite(check-clang "Running the Clang regression tests"
     ${CMAKE_CURRENT_BINARY_DIR}
     PARAMS ${CLANG_TEST_PARAMS}
@@ -68,18 +71,21 @@ else()
 
     set(LIT_ARGS "${CLANG_TEST_EXTRA_ARGS} ${LLVM_LIT_ARGS}")
     separate_arguments(LIT_ARGS)
+    
+    list(APPEND CLANG_TEST_PARAMS build_mode=${CMAKE_CFG_INTDIR})
+
+    foreach(param ${CLANG_TEST_PARAMS})
+      list(APPEND LIT_ARGS --param ${param})
+    endforeach()
 
     add_custom_target(check-clang
       COMMAND ${PYTHON_EXECUTABLE}
               ${LIT}
-              --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-              --param build_mode=${CMAKE_CFG_INTDIR}
               ${LIT_ARGS}
               ${CMAKE_CURRENT_BINARY_DIR}
+              ${CLANG_TEST_EXTRA_ARGS}
       COMMENT "Running Clang regression tests"
-      DEPENDS clang clang-headers
-              c-index-test diagtool arcmt-test c-arcmt-test
-              clang-check
+      DEPENDS ${CLANG_TEST_DEPS}
       )
     set_target_properties(check-clang PROPERTIES FOLDER "Clang tests")
   endif()
