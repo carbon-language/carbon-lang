@@ -69,9 +69,9 @@ public:
        << "\n";
     OS << format("  Version:               %d\n", Version);
     OS << "  Augmentation:          \"" << Augmentation << "\"\n";
-    OS << format("  Code alignment factor: %u\n", CodeAlignmentFactor);
-    OS << format("  Data alignment factor: %d\n", DataAlignmentFactor);
-    OS << format("  Return address column: %d\n", ReturnAddressRegister);
+    OS << format("  Code alignment factor: %u\n", (uint32_t)CodeAlignmentFactor);
+    OS << format("  Data alignment factor: %d\n", (int32_t)DataAlignmentFactor);
+    OS << format("  Return address column: %d\n", (int32_t)ReturnAddressRegister);
     OS << "\n";
   }
 
