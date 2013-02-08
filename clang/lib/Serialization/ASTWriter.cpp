@@ -2799,7 +2799,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
       assert(ID->first && "NULL identifier in identifier table");
       if (!Chain || !ID->first->isFromAST() || 
           ID->first->hasChangedSinceDeserialization())
-        Generator.insert(const_cast<IdentifierInfo *>(ID->first), ID->second, 
+        Generator.insert(const_cast<IdentifierInfo *>(ID->first), ID->second,
                          Trait);
     }
 
@@ -2836,6 +2836,11 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned IdentifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
 
+#ifndef NDEBUG
+  for (unsigned I = 0, N = IdentifierOffsets.size(); I != N; ++I)
+    assert(IdentifierOffsets[I] && "Missing identifier offset?");
+#endif
+  
   RecordData Record;
   Record.push_back(IDENTIFIER_OFFSET);
   Record.push_back(IdentifierOffsets.size());
@@ -3962,14 +3967,16 @@ SelectorID ASTWriter::getSelectorRef(Selector Sel) {
     return 0;
   }
 
-  SelectorID &SID = SelectorIDs[Sel];
+  SelectorID SID = SelectorIDs[Sel];
   if (SID == 0 && Chain) {
     // This might trigger a ReadSelector callback, which will set the ID for
     // this selector.
     Chain->LoadSelector(Sel);
+    SID = SelectorIDs[Sel];
   }
   if (SID == 0) {
     SID = NextSelectorID++;
+    SelectorIDs[Sel] = SID;
   }
   return SID;
 }
@@ -4684,11 +4691,17 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
 }
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
-  IdentifierIDs[II] = ID;
+  // Always keep the highest ID. See \p TypeRead() for more information.
+  IdentID &StoredID = IdentifierIDs[II];
+  if (ID > StoredID)
+    StoredID = ID;
 }
 
 void ASTWriter::MacroRead(serialization::MacroID ID, MacroInfo *MI) {
-  MacroIDs[MI] = ID;
+  // Always keep the highest ID. See \p TypeRead() for more information.
+  MacroID &StoredID = MacroIDs[MI];
+  if (ID > StoredID)
+    StoredID = ID;
 }
 
 void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
@@ -4703,7 +4716,10 @@ void ASTWriter::TypeRead(TypeIdx Idx, QualType T) {
 }
 
 void ASTWriter::SelectorRead(SelectorID ID, Selector S) {
-  SelectorIDs[S] = ID;
+  // Always keep the highest ID. See \p TypeRead() for more information.
+  SelectorID &StoredID = SelectorIDs[S];
+  if (ID > StoredID)
+    StoredID = ID;
 }
 
 void ASTWriter::MacroDefinitionRead(serialization::PreprocessedEntityID ID,
