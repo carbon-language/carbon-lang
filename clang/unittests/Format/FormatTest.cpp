@@ -1271,6 +1271,11 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
                "           : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                "                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
                "       aaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "unsigned Indent = formatFirstToken(\n"
+      "    TheLine.First, IndentForLevel[TheLine.Level] >= 0\n"
+      "                       ? IndentForLevel[TheLine.Level] : TheLine * 2,\n"
+      "    TheLine.InPPDirective, PreviousEndOfLineColumn);");
 }
 
 TEST_F(FormatTest, DeclarationsOfMultipleVariables) {

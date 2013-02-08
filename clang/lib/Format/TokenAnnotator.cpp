@@ -722,7 +722,7 @@ public:
         if (OperatorFound) {
           ++Start->FakeLParens;
           if (Current != NULL)
-            ++Current->FakeRParens;
+            ++Current->Parent->FakeRParens;
         }
         return;
       }

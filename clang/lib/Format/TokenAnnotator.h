@@ -121,7 +121,7 @@ public:
 
   /// \brief Insert this many fake ( before this token for correct indentation.
   unsigned FakeLParens;
-  /// \brief Insert this many fake ) before this token for correct indentation.
+  /// \brief Insert this many fake ) after this token for correct indentation.
   unsigned FakeRParens;
 
   const AnnotatedToken *getPreviousNoneComment() const {
