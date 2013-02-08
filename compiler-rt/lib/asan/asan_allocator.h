@@ -71,7 +71,7 @@ class AsanChunkView {
     return false;
   }
   bool AddrIsAtRight(uptr addr, uptr access_size, sptr *offset) {
-    if (addr + access_size >= End()) {
+    if (addr + access_size > End()) {
       *offset = addr - End();
       return true;
     }
