@@ -240,7 +240,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  ObjectFile *obj = ObjectFile::createObjectFile(File.take());
+  OwningPtr<ObjectFile> o(ObjectFile::createObjectFile(File.take()));
+  ObjectFile *obj = o.get();
   if (!obj) {
     errs() << InputFilename << ": Object type not recognized\n";
   }
