@@ -37,7 +37,7 @@ void f()
     m.unlock();
     m.unlock();
     ns d = t1 - t0 - ms(250);
-    assert(d < ms(10));  // within 10ms
+    assert(d < ms(200));  // within 200ms
 }
 
 int main()
