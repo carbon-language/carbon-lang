@@ -21,14 +21,16 @@ CPPLINT=${SCRIPT_DIR}/cpplint/cpplint.py
 
 # Filters
 # TODO: remove some of these filters
-ASAN_RTL_LINT_FILTER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright,-build/namespaces
-ASAN_TEST_LINT_FILTER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf,-build/header_guard
+COMMON_LINT_FILTER=-build/include,-build/header_guard,-legal/copyright,-whitespace/comments,-readability/casting,\
+-build/namespaces
+ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-readability/check
+ASAN_TEST_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/sizeof,-runtime/int,-runtime/printf
 ASAN_LIT_TEST_LINT_FILTER=${ASAN_TEST_LINT_FILTER},-whitespace/line_length
-TSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
+TSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/int
 TSAN_LIT_TEST_LINT_FILTER=${TSAN_TEST_LINT_FILTER},-whitespace/line_length
-MSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
-TSAN_RTL_INC_LINT_FILTER=${TSAN_TEST_LINT_FILTER},-runtime/sizeof
+MSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
+COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof
 
 cd ${LLVM_CHECKOUT}
 
@@ -79,6 +81,6 @@ for FILE in $FILES; do
     TMPFILE=$(mktemp -u ${FILE}.XXXXX).cc
     echo "Checking $FILE"
     cp -f $FILE $TMPFILE && \
-        ${CPPLINT} --filter=${TSAN_RTL_INC_LINT_FILTER} $TMPFILE
+        ${CPPLINT} --filter=${COMMON_RTL_INC_LINT_FILTER} $TMPFILE
     rm $TMPFILE
 done
