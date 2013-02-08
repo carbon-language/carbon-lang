@@ -65,6 +65,64 @@ bool LLParser::ValidateEndOfModule() {
     ForwardRefInstMetadata.clear();
   }
 
+  // Handle any function attribute group forward references.
+  for (std::map<Value*, std::vector<unsigned> >::iterator
+         I = ForwardRefAttrGroups.begin(), E = ForwardRefAttrGroups.end();
+         I != E; ++I) {
+    Value *V = I->first;
+    std::vector<unsigned> &Vec = I->second;
+    AttrBuilder B;
+
+    for (std::vector<unsigned>::iterator VI = Vec.begin(), VE = Vec.end();
+         VI != VE; ++VI)
+      B.merge(NumberedAttrBuilders[*VI]);
+
+    if (Function *Fn = dyn_cast<Function>(V)) {
+      AttributeSet AS = Fn->getAttributes();
+      AttrBuilder FnAttrs(AS.getFnAttributes(), AttributeSet::FunctionIndex);
+      AS = AS.removeAttributes(Context, AttributeSet::FunctionIndex,
+                               AS.getFnAttributes());
+
+      FnAttrs.merge(B);
+
+      // If the alignment was parsed as an attribute, move to the alignment
+      // field.
+      if (FnAttrs.hasAlignmentAttr()) {
+        Fn->setAlignment(FnAttrs.getAlignment());
+        FnAttrs.removeAttribute(Attribute::Alignment);
+      }
+
+      AS = AS.addAttributes(Context, AttributeSet::FunctionIndex,
+                            AttributeSet::get(Context,
+                                              AttributeSet::FunctionIndex,
+                                              FnAttrs));
+      Fn->setAttributes(AS);
+    } else if (CallInst *CI = dyn_cast<CallInst>(V)) {
+      AttributeSet AS = CI->getAttributes();
+      AttrBuilder FnAttrs(AS.getFnAttributes(), AttributeSet::FunctionIndex);
+      AS = AS.removeAttributes(Context, AttributeSet::FunctionIndex,
+                               AS.getFnAttributes());
+
+      AS = AS.addAttributes(Context, AttributeSet::FunctionIndex,
+                            AttributeSet::get(Context,
+                                              AttributeSet::FunctionIndex,
+                                              FnAttrs));
+      CI->setAttributes(AS);
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(V)) {
+      AttributeSet AS = II->getAttributes();
+      AttrBuilder FnAttrs(AS.getFnAttributes(), AttributeSet::FunctionIndex);
+      AS = AS.removeAttributes(Context, AttributeSet::FunctionIndex,
+                               AS.getFnAttributes());
+
+      AS = AS.addAttributes(Context, AttributeSet::FunctionIndex,
+                            AttributeSet::get(Context,
+                                              AttributeSet::FunctionIndex,
+                                              FnAttrs));
+      II->setAttributes(AS);
+    } else {
+      llvm_unreachable("invalid object with forward attribute group reference");
+    }
+  }
 
   // If there are entries in ForwardRefBlockAddresses at this point, they are
   // references after the function was defined.  Resolve those now.
@@ -747,16 +805,17 @@ bool LLParser::ParseUnnamedAttrGrp() {
   assert(Lex.getKind() == lltok::AttrGrpID);
   LocTy AttrGrpLoc = Lex.getLoc();
   unsigned VarID = Lex.getUIntVal();
+  std::vector<unsigned> unused;
   Lex.Lex();
 
   if (ParseToken(lltok::equal, "expected '=' here") ||
       ParseToken(lltok::kw_attributes, "expected 'attributes' keyword here") ||
       ParseToken(lltok::lbrace, "expected '{' here") ||
-      ParseFnAttributeValuePairs(ForwardRefAttrBuilder[VarID], true) ||
+      ParseFnAttributeValuePairs(NumberedAttrBuilders[VarID], unused, true) ||
       ParseToken(lltok::rbrace, "expected end of attribute group"))
     return true;
 
-  if (!ForwardRefAttrBuilder[VarID].hasAttributes())
+  if (!NumberedAttrBuilders[VarID].hasAttributes())
     return Error(AttrGrpLoc, "attribute group has no attributes");
 
   return false;
@@ -764,7 +823,9 @@ bool LLParser::ParseUnnamedAttrGrp() {
 
 /// ParseFnAttributeValuePairs
 ///   ::= <attr> | <attr> '=' <value>
-bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B, bool inAttrGrp) {
+bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
+                                          std::vector<unsigned> &FwdRefAttrGrps,
+                                          bool inAttrGrp) {
   bool HaveError = false;
 
   B.clear();
@@ -779,6 +840,22 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B, bool inAttrGrp) {
       // Finished.
       return false;
 
+    case lltok::AttrGrpID: {
+      // Allow a function to reference an attribute group:
+      //
+      //   define void @foo() #1 { ... }
+      if (inAttrGrp)
+        HaveError |=
+          Error(Lex.getLoc(),
+              "cannot have an attribute group reference in an attribute group");
+
+      unsigned AttrGrpNum = Lex.getUIntVal();
+      if (inAttrGrp) break;
+
+      // Save the reference to the attribute group. We'll fill it in later.
+      FwdRefAttrGrps.push_back(AttrGrpNum);
+      break;
+    }
     // Target-dependent attributes:
     case lltok::StringConstant: {
       std::string Attr = Lex.getStrVal();
@@ -2856,6 +2933,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   SmallVector<ArgInfo, 8> ArgList;
   bool isVarArg;
   AttrBuilder FuncAttrs;
+  std::vector<unsigned> FwdRefAttrGrps;
   std::string Section;
   unsigned Alignment;
   std::string GC;
@@ -2865,7 +2943,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   if (ParseArgumentList(ArgList, isVarArg) ||
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
                          &UnnamedAddrLoc) ||
-      ParseFnAttributeValuePairs(FuncAttrs, false) ||
+      ParseFnAttributeValuePairs(FuncAttrs, FwdRefAttrGrps, false) ||
       (EatIfPresent(lltok::kw_section) &&
        ParseStringConstant(Section)) ||
       ParseOptionalAlignment(Alignment) ||
@@ -2965,6 +3043,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   Fn->setAlignment(Alignment);
   Fn->setSection(Section);
   if (!GC.empty()) Fn->setGC(GC.c_str());
+  ForwardRefAttrGroups[Fn] = FwdRefAttrGrps;
 
   // Add all of the arguments we parsed to the function.
   Function::arg_iterator ArgIt = Fn->arg_begin();
@@ -3384,6 +3463,7 @@ bool LLParser::ParseIndirectBr(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy CallLoc = Lex.getLoc();
   AttrBuilder RetAttrs, FnAttrs;
+  std::vector<unsigned> FwdRefAttrGrps;
   CallingConv::ID CC;
   Type *RetType = 0;
   LocTy RetTypeLoc;
@@ -3396,7 +3476,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
-      ParseFnAttributeValuePairs(FnAttrs, false) ||
+      ParseFnAttributeValuePairs(FnAttrs, FwdRefAttrGrps, false) ||
       ParseToken(lltok::kw_to, "expected 'to' in invoke") ||
       ParseTypeAndBasicBlock(NormalBB, PFS) ||
       ParseToken(lltok::kw_unwind, "expected 'unwind' in invoke") ||
@@ -3471,6 +3551,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB, Args);
   II->setCallingConv(CC);
   II->setAttributes(PAL);
+  ForwardRefAttrGroups[II] = FwdRefAttrGrps;
   Inst = II;
   return false;
 }
@@ -3789,6 +3870,7 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
                          bool isTail) {
   AttrBuilder RetAttrs, FnAttrs;
+  std::vector<unsigned> FwdRefAttrGrps;
   CallingConv::ID CC;
   Type *RetType = 0;
   LocTy RetTypeLoc;
@@ -3802,7 +3884,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
-      ParseFnAttributeValuePairs(FnAttrs, false))
+      ParseFnAttributeValuePairs(FnAttrs, FwdRefAttrGrps, false))
     return true;
 
   // If RetType is a non-function pointer type, then this is the short syntax
@@ -3874,6 +3956,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   CI->setTailCall(isTail);
   CI->setCallingConv(CC);
   CI->setAttributes(PAL);
+  ForwardRefAttrGroups[CI] = FwdRefAttrGrps;
   Inst = CI;
   return false;
 }

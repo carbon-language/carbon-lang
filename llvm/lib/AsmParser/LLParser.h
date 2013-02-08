@@ -126,7 +126,8 @@ namespace llvm {
       ForwardRefBlockAddresses;
 
     // Attribute builder reference information.
-    std::map<unsigned, AttrBuilder> ForwardRefAttrBuilder;
+    std::map<Value*, std::vector<unsigned> > ForwardRefAttrGroups;
+    std::map<unsigned, AttrBuilder> NumberedAttrBuilders;
 
   public:
     LLParser(MemoryBuffer *F, SourceMgr &SM, SMDiagnostic &Err, Module *m) :
@@ -239,7 +240,9 @@ namespace llvm {
     bool ParseMDNodeID(MDNode *&Result);
     bool ParseMDNodeID(MDNode *&Result, unsigned &SlotNo);
     bool ParseUnnamedAttrGrp();
-    bool ParseFnAttributeValuePairs(AttrBuilder &B, bool inAttrGrp);
+    bool ParseFnAttributeValuePairs(AttrBuilder &B,
+                                    std::vector<unsigned> &FwdRefAttrGrps,
+                                    bool inAttrGrp);
 
     // Type Parsing.
     bool ParseType(Type *&Result, bool AllowVoid = false);
