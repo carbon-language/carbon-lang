@@ -71,7 +71,8 @@ public:
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(1), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), Parent(NULL) {
+        LongestObjCSelectorName(0), Parent(NULL), FakeLParens(0),
+        FakeRParens(0) {
   }
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
@@ -117,6 +118,11 @@ public:
 
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;
+
+  /// \brief Insert this many fake ( before this token for correct indentation.
+  unsigned FakeLParens;
+  /// \brief Insert this many fake ) before this token for correct indentation.
+  unsigned FakeRParens;
 
   const AnnotatedToken *getPreviousNoneComment() const {
     AnnotatedToken *Tok = Parent;

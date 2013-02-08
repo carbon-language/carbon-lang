@@ -205,7 +205,7 @@ private:
     while (I != E) {
       unsigned Spaces = I->Spaces + Column - I->MinColumn;
       storeReplacement(I->Tok, std::string(I->NewLines, '\n') +
-                       std::string(Spaces, ' '));
+                               std::string(Spaces, ' '));
       ++I;
     }
   }
@@ -251,6 +251,7 @@ public:
                    /*HasMultiParameterLine=*/ false));
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
+    State.ParenLevel = 0;
 
     DEBUG({
       DebugTokenState(*State.NextToken);
@@ -287,8 +288,8 @@ private:
   struct ParenState {
     ParenState(unsigned Indent, unsigned LastSpace, bool AvoidBinPacking,
                bool HasMultiParameterLine)
-        : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
-          FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
+        : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
+          BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
           HasMultiParameterLine(HasMultiParameterLine), ColonPos(0) {
     }
@@ -303,9 +304,6 @@ private:
     /// functionCall(Parameter, otherCall(
     ///                             OtherParameter));
     unsigned LastSpace;
-
-    /// \brief This is the column of the first token after an assignment.
-    unsigned AssignmentColumn;
 
     /// \brief The position the first "<<" operator encountered on each level.
     ///
@@ -342,8 +340,6 @@ private:
         return Indent < Other.Indent;
       if (LastSpace != Other.LastSpace)
         return LastSpace < Other.LastSpace;
-      if (AssignmentColumn != Other.AssignmentColumn)
-        return AssignmentColumn < Other.AssignmentColumn;
       if (FirstLessLess != Other.FirstLessLess)
         return FirstLessLess < Other.FirstLessLess;
       if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
@@ -380,6 +376,9 @@ private:
     /// \brief \c true if this line contains a continued for-loop section.
     bool LineContainsContinuedForLoopSection;
 
+    /// \brief The level of nesting inside (), [], <> and {}.
+    unsigned ParenLevel;
+
     /// \brief A stack keeping track of properties applying to parenthesis
     /// levels.
     std::vector<ParenState> Stack;
@@ -395,6 +394,8 @@ private:
       if (Other.LineContainsContinuedForLoopSection !=
           LineContainsContinuedForLoopSection)
         return LineContainsContinuedForLoopSection;
+      if (Other.ParenLevel != ParenLevel)
+        return Other.ParenLevel < ParenLevel;
       return Other.Stack < Stack;
     }
   };
@@ -411,7 +412,6 @@ private:
     const AnnotatedToken &Current = *State.NextToken;
     const AnnotatedToken &Previous = *State.NextToken->Parent;
     assert(State.Stack.size());
-    unsigned ParenLevel = State.Stack.size() - 1;
 
     if (Current.Type == TT_ImplicitStringLiteral) {
       State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
@@ -431,9 +431,9 @@ private:
                  Previous.is(tok::string_literal)) {
         State.Column = State.Column - Previous.FormatTok.TokenLength;
       } else if (Current.is(tok::lessless) &&
-                 State.Stack[ParenLevel].FirstLessLess != 0) {
-        State.Column = State.Stack[ParenLevel].FirstLessLess;
-      } else if (ParenLevel != 0 &&
+                 State.Stack.back().FirstLessLess != 0) {
+        State.Column = State.Stack.back().FirstLessLess;
+      } else if (State.ParenLevel != 0 &&
                  (Previous.is(tok::equal) || Previous.is(tok::coloncolon) ||
                   Current.is(tok::period) || Current.is(tok::arrow) ||
                   Current.is(tok::question))) {
@@ -445,15 +445,12 @@ private:
       } else if (Current.Type == TT_ConditionalExpr) {
         State.Column = State.Stack.back().QuestionColumn;
       } else if (Previous.is(tok::comma) && State.VariablePos != 0 &&
-                 ((RootToken.is(tok::kw_for) && ParenLevel == 1) ||
-                  ParenLevel == 0)) {
+                 ((RootToken.is(tok::kw_for) && State.ParenLevel == 1) ||
+                  State.ParenLevel == 0)) {
         State.Column = State.VariablePos;
       } else if (State.NextToken->Parent->ClosesTemplateDeclaration ||
                  Current.Type == TT_StartOfName) {
-        State.Column = State.Stack[ParenLevel].Indent - 4;
-      } else if (Previous.Type == TT_BinaryOperator &&
-                 State.Stack.back().AssignmentColumn != 0) {
-        State.Column = State.Stack.back().AssignmentColumn;
+        State.Column = State.Stack.back().Indent - 4;
       } else if (Current.Type == TT_ObjCSelectorName) {
         if (State.Stack.back().ColonPos > Current.FormatTok.TokenLength) {
           State.Column =
@@ -466,7 +463,7 @@ private:
       } else if (Previous.Type == TT_ObjCMethodExpr) {
         State.Column = State.Stack.back().Indent + 4;
       } else {
-        State.Column = State.Stack[ParenLevel].Indent;
+        State.Column = State.Stack.back().Indent;
       }
 
       if (Previous.is(tok::comma) && !State.Stack.back().AvoidBinPacking)
@@ -484,12 +481,12 @@ private:
                                           WhitespaceStartColumn, Style);
       }
 
-      State.Stack[ParenLevel].LastSpace = State.Column;
+      State.Stack.back().LastSpace = State.Column;
       if (Current.is(tok::colon) && Current.Type != TT_ConditionalExpr)
-        State.Stack[ParenLevel].Indent += 2;
+        State.Stack.back().Indent += 2;
     } else {
       if (Current.is(tok::equal) &&
-          (RootToken.is(tok::kw_for) || ParenLevel == 0))
+          (RootToken.is(tok::kw_for) || State.ParenLevel == 0))
         State.VariablePos = State.Column - Previous.FormatTok.TokenLength;
 
       unsigned Spaces = State.NextToken->SpaceRequiredBefore ? 1 : 0;
@@ -510,26 +507,19 @@ private:
               State.Column + Spaces + Current.FormatTok.TokenLength;
       }
 
-      // FIXME: Do we need to do this for assignments nested in other
-      // expressions?
-      if (RootToken.isNot(tok::kw_for) && ParenLevel == 0 &&
-          !isTrailingComment(Current) &&
-          (getPrecedence(Previous) == prec::Assignment ||
-           Previous.is(tok::kw_return)))
-        State.Stack.back().AssignmentColumn = State.Column + Spaces;
       if (Current.Type != TT_LineComment &&
           (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
            State.NextToken->Parent->Type == TT_TemplateOpener))
-        State.Stack[ParenLevel].Indent = State.Column + Spaces;
+        State.Stack.back().Indent = State.Column + Spaces;
       if (Previous.is(tok::comma) && !isTrailingComment(Current))
-        State.Stack[ParenLevel].HasMultiParameterLine = true;
+        State.Stack.back().HasMultiParameterLine = true;
 
       State.Column += Spaces;
       if (Current.is(tok::l_paren) && Previous.is(tok::kw_if))
         // Treat the condition inside an if as if it was a second function
         // parameter, i.e. let nested calls have an indent of 4.
         State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
-      else if (Previous.is(tok::comma) && ParenLevel != 0)
+      else if (Previous.is(tok::comma) && State.ParenLevel != 0)
         // Top-level spaces are exempt as that mostly leads to better results.
         State.Stack.back().LastSpace = State.Column;
       else if ((Previous.Type == TT_BinaryOperator ||
@@ -551,7 +541,7 @@ private:
       State.Stack.back().BreakBeforeClosingBrace = true;
 
     if (State.Stack.back().AvoidBinPacking && Newline &&
-        (Line.First.isNot(tok::kw_for) || ParenLevel != 1)) {
+        (Line.First.isNot(tok::kw_for) || State.ParenLevel != 1)) {
       // If we are breaking after '(', '{', '<', this is not bin packing unless
       // AllowAllParametersOfDeclarationOnNextLine is false.
       if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
@@ -587,6 +577,13 @@ private:
         State.Stack.back().BreakBeforeParameter = true;
     }
 
+    // Insert scopes created by fake parenthesis.
+    for (unsigned i = 0, e = Current.FakeLParens; i != e; ++i) {
+      ParenState NewParenState = State.Stack.back();
+      NewParenState.Indent = std::max(State.Column, State.Stack.back().Indent);
+      State.Stack.push_back(NewParenState);
+    }
+
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
     if (Current.is(tok::l_paren) || Current.is(tok::l_square) ||
@@ -604,6 +601,7 @@ private:
       State.Stack.push_back(
           ParenState(NewIndent, State.Stack.back().LastSpace, AvoidBinPacking,
                      State.Stack.back().HasMultiParameterLine));
+      ++State.ParenLevel;
     }
 
     // If this '[' opens an ObjC call, determine whether all parameters fit into
@@ -619,6 +617,12 @@ private:
     if (Current.is(tok::r_paren) || Current.is(tok::r_square) ||
         (Current.is(tok::r_brace) && State.NextToken != &RootToken) ||
         State.NextToken->Type == TT_TemplateCloser) {
+      State.Stack.pop_back();
+      --State.ParenLevel;
+    }
+
+    // Remove scopes created by fake parenthesis.
+    for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
       State.Stack.pop_back();
     }
 
@@ -760,7 +764,7 @@ private:
       return true;
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&
-          State.Stack.size() == 1)))
+          State.ParenLevel == 0)))
       return true;
     return false;
   }
@@ -885,8 +889,9 @@ public:
             ++CountBoundToType;
         }
 
-        if (Tok->Type == TT_TemplateCloser && Tok->Parent->Type ==
-            TT_TemplateCloser && Tok->FormatTok.WhiteSpaceLength == 0)
+        if (Tok->Type == TT_TemplateCloser &&
+            Tok->Parent->Type == TT_TemplateCloser &&
+            Tok->FormatTok.WhiteSpaceLength == 0)
           HasCpp03IncompatibleFormat = true;
         Tok = &Tok->Children[0];
       }

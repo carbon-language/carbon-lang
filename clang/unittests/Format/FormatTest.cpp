@@ -1192,6 +1192,13 @@ TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
   verifyFormat(
       "if ((aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb) &&\n"
       "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat("return aaaa & AAAAAAAAAAAAAAAAAAAAAAAAAAAAA ||\n"
+               "       bbbb & BBBBBBBBBBBBBBBBBBBBBBBBBBBBB ||\n"
+               "       cccc & CCCCCCCCCCCCCCCCCCCCCCCCCC ||\n"
+               "       dddd & DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD;");
+  verifyFormat("if ((aaaaaaaaaa != aaaaaaaaaaaaaaa ||\n"
+               "     aaaaaaaaaaaaaaaaaaaaaaaa() >= aaaaaaaaaaaaaaaaaaaa) &&\n"
+               "    aaaaaaaaaaaaaaa != aa) {\n}");
 }
 
 TEST_F(FormatTest, BreaksAfterAssignments) {
@@ -1275,7 +1282,7 @@ TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
   verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaa =\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa),\n"
                "     bbbbbbbbbbbbbbbbbbbbbbbbb =\n"
-               "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(bbbbbbbbbbbbbbbb);");
+               "     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(bbbbbbbbbbbbbbbb);");
 
   // FIXME: This is bad as we hide "d".
   verifyFormat(
@@ -1389,6 +1396,9 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
 TEST_F(FormatTest, WrapsTemplateDeclarations) {
   verifyFormat("template <typename T>\n"
                "virtual void loooooooooooongFunction(int Param1, int Param2);");
+  verifyFormat(
+      "template <typename T>\n"
+      "using comment_to_xml_conversion = comment_to_xml_conversion<T, int>;");
   verifyFormat(
       "template <typename T>\n"
       "void f(int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram1,\n"
