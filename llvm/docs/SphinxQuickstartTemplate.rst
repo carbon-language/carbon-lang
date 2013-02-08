@@ -63,7 +63,7 @@ Your text can be *emphasized*, **bold**, or ``monospace``.
 
 Use blank lines to separate paragraphs.
 
-Headings (like ``Example Section`` just above) give your document
+Headings (like ``Example Section`` just above) give your document its
 structure. Use the same kind of adornments (e.g. ``======`` vs. ``------``)
 as are used in this document. The adornment must be the same length as the
 text above it. For Vim users, variations of ``yypVr=`` might be handy.
@@ -84,7 +84,7 @@ Lists can be made like this:
 
 #. This is a second list element.
 
-   #. They nest too.
+   #. Use indentation to create nested lists.
 
 You can also use unordered lists.
 
@@ -102,7 +102,7 @@ You can make blocks of code like this:
 .. code-block:: c++
 
    int main() {
-     return 0
+     return 0;
    }
 
 For a shell session, use a ``console`` code block (some existing docs use
