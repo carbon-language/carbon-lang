@@ -43,19 +43,19 @@ PowerPC
 IBM - Official manuals and docs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* `PowerPC Architecture Book <http://www-106.ibm.com/developerworks/eserver/articles/archguide.html>`_
+* `PowerPC Architecture Book <http://www.ibm.com/developerworks/systems/library/es-archguide-v2.html>`_
 
-  * Book I: `PowerPC User Instruction Set Architecture <http://www-106.ibm.com/developerworks/eserver/pdfs/archpub1.pdf>`_
+  * Book I: `PowerPC User Instruction Set Architecture <http://download.boulder.ibm.com/ibmdl/pub/software/dw/library/es-ppcbook1.zip>`_
 
-  * Book II: `PowerPC Virtual Environment Architecture <http://www-106.ibm.com/developerworks/eserver/pdfs/archpub2.pdf>`_
+  * Book II: `PowerPC Virtual Environment Architecture <http://download.boulder.ibm.com/ibmdl/pub/software/dw/library/es-ppcbook2.zip>`_
 
-  * Book III: `PowerPC Operating Environment Architecture <http://www-106.ibm.com/developerworks/eserver/pdfs/archpub3.pdf>`_
+  * Book III: `PowerPC Operating Environment Architecture <http://download.boulder.ibm.com/ibmdl/pub/software/dw/library/es-ppcbook3.zip>`_
 
-* `PowerPC Compiler Writer's Guide <http://www-3.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF7785256996007558C6>`_
+* `PowerPC Compiler Writer's Guide <https://www-01.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF7785256996007558C6>`_
 
-* `PowerPC Processor Manuals <http://www-3.ibm.com/chips/techlib/techlib.nsf/products/PowerPC>`_
+* `PowerPC Processor Manuals <https://www-01.ibm.com/chips/techlib/techlib.nsf/products/PowerPC>`_
 
-* `Intro to PowerPC Architecture <http://www-106.ibm.com/developerworks/linux/library/l-powarch/>`_
+* `Intro to PowerPC Architecture <http://www.ibm.com/developerworks/linux/library/l-powarch/>`_
 
 * `IBM AIX/5L for POWER Assembly Reference <http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixassem/alangref/alangreftfrm.htm>`_
 
