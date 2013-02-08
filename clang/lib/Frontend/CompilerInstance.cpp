@@ -996,7 +996,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
       BuildingModule = true;
       compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
-      ModuleFile = FileMgr->getFile(ModuleFileName);
+      ModuleFile = FileMgr->getFile(ModuleFileName, /*OpenFile=*/false,
+                                    /*CacheFailure=*/false);
 
       if (!ModuleFile && getPreprocessorOpts().FailedModules)
         getPreprocessorOpts().FailedModules->addFailed(ModuleName);
@@ -1079,14 +1080,14 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
           << ModuleName
           << SourceRange(ImportLoc, ModuleNameLoc);
         ModuleBuildFailed = true;
-
         return ModuleLoadResult();
       }
 
       compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
 
       // Try loading the module again.
-      ModuleFile = FileMgr->getFile(ModuleFileName);
+      ModuleFile = FileMgr->getFile(ModuleFileName, /*OpenFile=*/false,
+                                    /*CacheFailure=*/false);
       if (!ModuleFile ||
           ModuleManager->ReadAST(ModuleFileName,
                                  serialization::MK_Module, ImportLoc,

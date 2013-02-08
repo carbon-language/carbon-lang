@@ -25,12 +25,14 @@ using namespace clang;
 using namespace serialization;
 
 ModuleFile *ModuleManager::lookup(StringRef Name) {
-  const FileEntry *Entry = FileMgr.getFile(Name);
+  const FileEntry *Entry = FileMgr.getFile(Name, /*openFile=*/false,
+                                           /*cacheFailure=*/false);
   return Modules[Entry];
 }
 
 llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
-  const FileEntry *Entry = FileMgr.getFile(Name);
+  const FileEntry *Entry = FileMgr.getFile(Name, /*openFile=*/false,
+                                           /*cacheFailure=*/false);
   return InMemoryBuffers[Entry];
 }
 
@@ -38,7 +40,8 @@ std::pair<ModuleFile *, bool>
 ModuleManager::addModule(StringRef FileName, ModuleKind Type,
                          SourceLocation ImportLoc, ModuleFile *ImportedBy,
                          unsigned Generation, std::string &ErrorStr) {
-  const FileEntry *Entry = FileMgr.getFile(FileName);
+  const FileEntry *Entry = FileMgr.getFile(FileName, /*openFile=*/false,
+                                           /*cacheFailure=*/false);
   if (!Entry && FileName != "-") {
     ErrorStr = "file not found";
     return std::make_pair(static_cast<ModuleFile*>(0), false);

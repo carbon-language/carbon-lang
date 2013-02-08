@@ -203,7 +203,8 @@ GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
         Dependencies(Record.begin() + Idx, Record.begin() + Idx + NumDeps);
 
       // Find the file. If we can't find it, ignore it.
-      const FileEntry *File = FileMgr.getFile(FileName);
+      const FileEntry *File = FileMgr.getFile(FileName, /*openFile=*/false,
+                                              /*cacheFailure=*/false);
       if (!File) {
         AnyOutOfDate = true;
         break;
@@ -635,7 +636,9 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
         Idx += Length;
 
         // Find the imported module file.
-        const FileEntry *DependsOnFile = FileMgr.getFile(ImportedFile);
+        const FileEntry *DependsOnFile
+          = FileMgr.getFile(ImportedFile, /*openFile=*/false,
+                            /*cacheFailure=*/false);
         if (!DependsOnFile)
           return true;
 
