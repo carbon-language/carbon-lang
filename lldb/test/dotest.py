@@ -206,9 +206,6 @@ sdir_has_content = False
 # svn_info stores the output from 'svn info lldb.base.dir'.
 svn_info = ''
 
-# The environment variables to unset before running the test cases.
-unsets = []
-
 # Default verbosity is 0.
 verbose = 0
 
@@ -346,7 +343,6 @@ def parseOptionsAndInitTestdirs():
     global regexp
     global rdir
     global sdir_name
-    global unsets
     global verbose
     global testdirs
 
@@ -406,7 +402,7 @@ def parseOptionsAndInitTestdirs():
     X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
     X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
     X('-t', 'Turn on tracing of lldb command and other detailed test executions')
-    group.add_argument('-u', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
+    group.add_argument('-u', dest='unset_env_varnames', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
     X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
     X('-w', 'Insert some wait time (currently 0.5 sec) between consecutive test cases')
 
@@ -419,6 +415,14 @@ def parseOptionsAndInitTestdirs():
 
     platform_system = platform.system()
     platform_machine = platform.machine()
+    
+    if args.unset_env_varnames:
+        for env_var in args.unset_env_varnames:
+            if env_var in os.environ:
+                # From Python Doc: When unsetenv() is supported, deletion of items in os.environ
+                # is automatically translated into a corresponding call to unsetenv().
+                del os.environ[env_var]
+                #os.unsetenv(env_var)
     
     # only print the args if being verbose
     if args.v:
@@ -567,9 +571,6 @@ def parseOptionsAndInitTestdirs():
 
     if args.t:
         os.environ['LLDB_COMMAND_TRACE'] = 'YES'
-
-    if args.u:
-        unsets.extend(args.u)
 
     if args.v:
         verbose = 2
@@ -1161,16 +1162,6 @@ with open(fname, "w") as f:
     print >> f, "Test started at: %s\n" % timestamp_started
     print >> f, svn_info
     print >> f, "Command invoked: %s\n" % getMyCommandLine()
-
-#
-# If we have environment variables to unset, do it here before we invoke the test runner.
-#
-for env_var in unsets :
-    if env_var in os.environ:
-        # From Python Doc: When unsetenv() is supported, deletion of items in os.environ
-        # is automatically translated into a corresponding call to unsetenv().
-        del os.environ[env_var]
-        #os.unsetenv(env_var)
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
