@@ -25,6 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Lexer.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/LexDiagnostic.h"
@@ -37,8 +38,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
 using namespace clang;
-
-static void InitCharacterInfo();
 
 //===----------------------------------------------------------------------===//
 // Token Class Implementation
@@ -66,8 +65,6 @@ void Lexer::anchor() { }
 
 void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
                       const char *BufEnd) {
-  InitCharacterInfo();
-
   BufferStart = BufStart;
   BufferPtr = BufPtr;
   BufferEnd = BufEnd;
@@ -407,9 +404,6 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
   return getSpellingSlow(Tok, TokStart, LangOpts, const_cast<char*>(Buffer));
 }
 
-
-
-static bool isWhitespace(unsigned char c);
 
 /// MeasureTokenLength - Relex the token at the specified location and return
 /// its length in bytes in the input file.  If the token needs cleaning (e.g.
@@ -1008,163 +1002,8 @@ StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
   return ExpansionBuffer.substr(ExpansionInfo.second, MacroTokenLength);
 }
 
-//===----------------------------------------------------------------------===//
-// Character information.
-//===----------------------------------------------------------------------===//
-
-enum {
-  CHAR_HORZ_WS  = 0x01,  // ' ', '\t', '\f', '\v'.  Note, no '\0'
-  CHAR_VERT_WS  = 0x02,  // '\r', '\n'
-  CHAR_LETTER   = 0x04,  // a-z,A-Z
-  CHAR_NUMBER   = 0x08,  // 0-9
-  CHAR_UNDER    = 0x10,  // _
-  CHAR_PERIOD   = 0x20,  // .
-  CHAR_RAWDEL   = 0x40   // {}[]#<>%:;?*+-/^&|~!=,"'
-};
-
-// Statically initialize CharInfo table based on ASCII character set
-// Reference: FreeBSD 7.2 /usr/share/misc/ascii
-static const unsigned char CharInfo[256] =
-{
-// 0 NUL         1 SOH         2 STX         3 ETX
-// 4 EOT         5 ENQ         6 ACK         7 BEL
-   0           , 0           , 0           , 0           ,
-   0           , 0           , 0           , 0           ,
-// 8 BS          9 HT         10 NL         11 VT
-//12 NP         13 CR         14 SO         15 SI
-   0           , CHAR_HORZ_WS, CHAR_VERT_WS, CHAR_HORZ_WS,
-   CHAR_HORZ_WS, CHAR_VERT_WS, 0           , 0           ,
-//16 DLE        17 DC1        18 DC2        19 DC3
-//20 DC4        21 NAK        22 SYN        23 ETB
-   0           , 0           , 0           , 0           ,
-   0           , 0           , 0           , 0           ,
-//24 CAN        25 EM         26 SUB        27 ESC
-//28 FS         29 GS         30 RS         31 US
-   0           , 0           , 0           , 0           ,
-   0           , 0           , 0           , 0           ,
-//32 SP         33  !         34  "         35  #
-//36  $         37  %         38  &         39  '
-   CHAR_HORZ_WS, CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL ,
-   0           , CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL ,
-//40  (         41  )         42  *         43  +
-//44  ,         45  -         46  .         47  /
-   0           , 0           , CHAR_RAWDEL , CHAR_RAWDEL ,
-   CHAR_RAWDEL , CHAR_RAWDEL , CHAR_PERIOD , CHAR_RAWDEL ,
-//48  0         49  1         50  2         51  3
-//52  4         53  5         54  6         55  7
-   CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER ,
-   CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER ,
-//56  8         57  9         58  :         59  ;
-//60  <         61  =         62  >         63  ?
-   CHAR_NUMBER , CHAR_NUMBER , CHAR_RAWDEL , CHAR_RAWDEL ,
-   CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL ,
-//64  @         65  A         66  B         67  C
-//68  D         69  E         70  F         71  G
-   0           , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-//72  H         73  I         74  J         75  K
-//76  L         77  M         78  N         79  O
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-//80  P         81  Q         82  R         83  S
-//84  T         85  U         86  V         87  W
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-//88  X         89  Y         90  Z         91  [
-//92  \         93  ]         94  ^         95  _
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_RAWDEL ,
-   0           , CHAR_RAWDEL , CHAR_RAWDEL , CHAR_UNDER  ,
-//96  `         97  a         98  b         99  c
-//100  d       101  e        102  f        103  g
-   0           , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-//104  h       105  i        106  j        107  k
-//108  l       109  m        110  n        111  o
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-//112  p       113  q        114  r        115  s
-//116  t       117  u        118  v        119  w
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
-//120  x       121  y        122  z        123  {
-//124  |       125  }        126  ~        127 DEL
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_RAWDEL ,
-   CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL , 0
-};
-
-static void InitCharacterInfo() {
-  static bool isInited = false;
-  if (isInited) return;
-  // check the statically-initialized CharInfo table
-  assert(CHAR_HORZ_WS == CharInfo[(int)' ']);
-  assert(CHAR_HORZ_WS == CharInfo[(int)'\t']);
-  assert(CHAR_HORZ_WS == CharInfo[(int)'\f']);
-  assert(CHAR_HORZ_WS == CharInfo[(int)'\v']);
-  assert(CHAR_VERT_WS == CharInfo[(int)'\n']);
-  assert(CHAR_VERT_WS == CharInfo[(int)'\r']);
-  assert(CHAR_UNDER   == CharInfo[(int)'_']);
-  assert(CHAR_PERIOD  == CharInfo[(int)'.']);
-  for (unsigned i = 'a'; i <= 'z'; ++i) {
-    assert(CHAR_LETTER == CharInfo[i]);
-    assert(CHAR_LETTER == CharInfo[i+'A'-'a']);
-  }
-  for (unsigned i = '0'; i <= '9'; ++i)
-    assert(CHAR_NUMBER == CharInfo[i]);
-    
-  isInited = true;
-}
-
-
-/// isIdentifierHead - Return true if this is the first character of an
-/// identifier, which is [a-zA-Z_].
-static inline bool isIdentifierHead(unsigned char c) {
-  return (CharInfo[c] & (CHAR_LETTER|CHAR_UNDER)) ? true : false;
-}
-
-/// isIdentifierBody - Return true if this is the body character of an
-/// identifier, which is [a-zA-Z0-9_].
-static inline bool isIdentifierBody(unsigned char c) {
-  return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER)) ? true : false;
-}
-
-/// isHorizontalWhitespace - Return true if this character is horizontal
-/// whitespace: ' ', '\\t', '\\f', '\\v'.  Note that this returns false for
-/// '\\0'.
-static inline bool isHorizontalWhitespace(unsigned char c) {
-  return (CharInfo[c] & CHAR_HORZ_WS) ? true : false;
-}
-
-/// isVerticalWhitespace - Return true if this character is vertical
-/// whitespace: '\\n', '\\r'.  Note that this returns false for '\\0'.
-static inline bool isVerticalWhitespace(unsigned char c) {
-  return (CharInfo[c] & CHAR_VERT_WS) ? true : false;
-}
-
-/// isWhitespace - Return true if this character is horizontal or vertical
-/// whitespace: ' ', '\\t', '\\f', '\\v', '\\n', '\\r'.  Note that this returns
-/// false for '\\0'.
-static inline bool isWhitespace(unsigned char c) {
-  return (CharInfo[c] & (CHAR_HORZ_WS|CHAR_VERT_WS)) ? true : false;
-}
-
-/// isNumberBody - Return true if this is the body character of an
-/// preprocessing number, which is [a-zA-Z0-9_.].
-static inline bool isNumberBody(unsigned char c) {
-  return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD)) ?
-    true : false;
-}
-
-/// isRawStringDelimBody - Return true if this is the body character of a
-/// raw string delimiter.
-static inline bool isRawStringDelimBody(unsigned char c) {
-  return (CharInfo[c] &
-          (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD|CHAR_RAWDEL)) ?
-    true : false;
-}
-
-// Allow external clients to make use of CharInfo.
 bool Lexer::isIdentifierBodyChar(char c, const LangOptions &LangOpts) {
-  return isIdentifierBody(c) || (c == '$' && LangOpts.DollarIdents);
+  return isIdentifierBody(c, LangOpts.DollarIdents);
 }
 
 
@@ -1578,10 +1417,6 @@ static bool isAllowedInitiallyIDChar(uint32_t c) {
          !(0xFE20 <= c && c <= 0xFE2F);
 }
 
-static inline bool isASCII(char C) {
-  return static_cast<signed char>(C) >= 0;
-}
-
 
 void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
@@ -1595,8 +1430,8 @@ void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Fast path, no $,\,? in identifier found.  '\' might be an escaped newline
   // or UCN, and ? might be a trigraph for '\', an escaped newline or UCN.
   //
-  // TODO: Could merge these checks into a CharInfo flag to make the comparison
-  // cheaper
+  // TODO: Could merge these checks into an InfoTable flag to make the
+  // comparison cheaper
   if (isASCII(C) && C != '\\' && C != '?' &&
       (C != '$' || !LangOpts.DollarIdents)) {
 FinishIdentifier:
@@ -1700,7 +1535,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   char PrevCh = 0;
-  while (isNumberBody(C)) { // FIXME: UCNs in ud-suffix.
+  while (isPreprocessingNumberBody(C)) { // FIXME: UCNs in ud-suffix.
     CurPtr = ConsumeChar(CurPtr, Size, Result);
     PrevCh = C;
     C = getCharAndSize(CurPtr, Size);

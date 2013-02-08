@@ -2,6 +2,7 @@ set(LLVM_LINK_COMPONENTS mc)
 
 add_clang_library(clangBasic
   Builtins.cpp
+  CharInfo.cpp
   Diagnostic.cpp
   DiagnosticIDs.cpp
   FileManager.cpp
