@@ -4958,6 +4958,7 @@ class AnnotateTokensWorker {
   struct PostChildrenInfo {
     CXCursor Cursor;
     SourceRange CursorRange;
+    unsigned BeforeReachingCursorIdx;
     unsigned BeforeChildrenTokenIdx;
   };
   SmallVector<PostChildrenInfo, 8> PostChildrenInfos;
@@ -4976,7 +4977,7 @@ class AnnotateTokensWorker {
   }
 
   void annotateAndAdvanceTokens(CXCursor, RangeComparisonResult, SourceRange);
-  void annotateAndAdvanceFunctionMacroTokens(CXCursor, RangeComparisonResult,
+  bool annotateAndAdvanceFunctionMacroTokens(CXCursor, RangeComparisonResult,
                                              SourceRange);
 
 public:
@@ -5019,7 +5020,7 @@ void AnnotateTokensWorker::AnnotateTokens() {
 
 static inline void updateCursorAnnotation(CXCursor &Cursor,
                                           const CXCursor &updateC) {
-  if (clang_isInvalid(updateC.kind) || clang_isPreprocessing(Cursor.kind))
+  if (clang_isInvalid(updateC.kind) || !clang_isInvalid(Cursor.kind))
     return;
   Cursor = updateC;
 }
@@ -5036,7 +5037,8 @@ void AnnotateTokensWorker::annotateAndAdvanceTokens(CXCursor updateC,
   while (MoreTokens()) {
     const unsigned I = NextToken();
     if (isFunctionMacroToken(I))
-      return annotateAndAdvanceFunctionMacroTokens(updateC, compResult, range);
+      if (!annotateAndAdvanceFunctionMacroTokens(updateC, compResult, range))
+        return;
 
     SourceLocation TokLoc = GetTokenLoc(I);
     if (LocationCompare(SrcMgr, TokLoc, range) == compResult) {
@@ -5049,7 +5051,8 @@ void AnnotateTokensWorker::annotateAndAdvanceTokens(CXCursor updateC,
 }
 
 /// \brief Special annotation handling for macro argument tokens.
-void AnnotateTokensWorker::annotateAndAdvanceFunctionMacroTokens(
+/// \returns true if it advanced beyond all macro tokens, false otherwise.
+bool AnnotateTokensWorker::annotateAndAdvanceFunctionMacroTokens(
                                                CXCursor updateC,
                                                RangeComparisonResult compResult,
                                                SourceRange range) {
@@ -5079,8 +5082,11 @@ void AnnotateTokensWorker::annotateAndAdvanceFunctionMacroTokens(
       atLeastOneCompFail = true;
   }
 
-  if (!atLeastOneCompFail)
-    TokIdx = I; // All of the tokens were handled, advance beyond all of them.
+  if (atLeastOneCompFail)
+    return false;
+
+  TokIdx = I; // All of the tokens were handled, advance beyond all of them.
+  return true;
 }
 
 enum CXChildVisitResult
@@ -5188,11 +5194,14 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
 
   if (cursorRange.isInvalid())
     return CXChildVisit_Continue;
-  
+
+  unsigned BeforeReachingCursorIdx = NextToken();
   const enum CXCursorKind cursorK = clang_getCursorKind(cursor);
   const enum CXCursorKind K = clang_getCursorKind(parent);
   const CXCursor updateC =
-    (clang_isInvalid(K) || K == CXCursor_TranslationUnit)
+    (clang_isInvalid(K) || K == CXCursor_TranslationUnit ||
+     // Attributes are annotated out-of-order, skip tokens until we reach it.
+     clang_isAttribute(cursor.kind))
      ? clang_getNullCursor() : parent;
 
   annotateAndAdvanceTokens(updateC, RangeBefore, cursorRange);
@@ -5224,6 +5233,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   PostChildrenInfo Info;
   Info.Cursor = cursor;
   Info.CursorRange = cursorRange;
+  Info.BeforeReachingCursorIdx = BeforeReachingCursorIdx;
   Info.BeforeChildrenTokenIdx = NextToken();
   PostChildrenInfos.push_back(Info);
 
@@ -5253,6 +5263,11 @@ bool AnnotateTokensWorker::postVisitChildren(CXCursor cursor) {
 
     Cursors[I] = cursor;
   }
+
+  // Attributes are annotated out-of-order, rewind TokIdx to when we first
+  // encountered the attribute cursor.
+  if (clang_isAttribute(cursor.kind))
+    TokIdx = Info.BeforeReachingCursorIdx;
 
   PostChildrenInfos.pop_back();
   return false;

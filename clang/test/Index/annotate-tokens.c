@@ -33,7 +33,9 @@ enum Color g(int i, ...) {
   }
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:34:1 %s | FileCheck %s
+__attribute__((unavailable)) Int __attribute__((unavailable)) test() __attribute__((unavailable));
+
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:37:1 %s | FileCheck %s
 // CHECK: Identifier: "T" [4:3 - 4:4] TypeRef=T:1:13
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
 // CHECK: Identifier: "t_ptr" [4:6 - 4:11] VarDecl=t_ptr:4:6 (Definition)
@@ -131,6 +133,30 @@ enum Color g(int i, ...) {
 // CHECK: Keyword: "return" [32:5 - 32:11] ReturnStmt=
 // CHECK: Identifier: "Red" [32:12 - 32:15] DeclRefExpr=Red:11:14
 // CHECK: Punctuation: ";" [32:15 - 32:16] CompoundStmt=
+
+// CHECK: Keyword: "__attribute__" [36:1 - 36:14] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:14 - 36:15] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:15 - 36:16] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Identifier: "unavailable" [36:16 - 36:27] UnexposedAttr=
+// CHECK: Punctuation: ")" [36:27 - 36:28] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: ")" [36:28 - 36:29] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Identifier: "Int" [36:30 - 36:33] TypeRef=Int:12:13
+// CHECK: Keyword: "__attribute__" [36:34 - 36:47] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:47 - 36:48] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:48 - 36:49] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Identifier: "unavailable" [36:49 - 36:60] UnexposedAttr=
+// CHECK: Punctuation: ")" [36:60 - 36:61] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: ")" [36:61 - 36:62] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Identifier: "test" [36:63 - 36:67] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:67 - 36:68] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: ")" [36:68 - 36:69] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Keyword: "__attribute__" [36:70 - 36:83] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:83 - 36:84] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: "(" [36:84 - 36:85] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Identifier: "unavailable" [36:85 - 36:96] UnexposedAttr=
+// CHECK: Punctuation: ")" [36:96 - 36:97] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: ")" [36:97 - 36:98] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
+// CHECK: Punctuation: ";" [36:98 - 36:99]
 
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 %s | FileCheck %s
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 %s | FileCheck %s
