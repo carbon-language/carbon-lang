@@ -21,7 +21,9 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Format.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -710,15 +712,14 @@ void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
     OS << "'\\v'";
     break;
   default:
-    if (value < 256 && isprint(value)) {
+    if (value < 256 && isPrintable((unsigned char)value))
       OS << "'" << (char)value << "'";
-    } else if (value < 256) {
-      OS << "'\\x";
-      OS.write_hex(value) << "'";
-    } else {
-      // FIXME what to really do here?
-      OS << value;
-    }
+    else if (value < 256)
+      OS << "'\\x" << llvm::format("%02x", value) << "'";
+    else if (value <= 0xFFFF)
+      OS << "'\\u" << llvm::format("%04x", value) << "'";
+    else
+      OS << "'\\U" << llvm::format("%08x", value) << "'";
   }
 }
 
