@@ -35,7 +35,8 @@ ASTConsumer *CreateModernObjCRewriter(const std::string &InFile,
                                 raw_ostream *OS,
                                 DiagnosticsEngine &Diags,
                                 const LangOptions &LOpts,
-                                bool SilenceRewriteMacroWarning);
+                                bool SilenceRewriteMacroWarning,
+                                bool LineInfo);
 
 /// CreateHTMLPrinter - Create an AST consumer which rewrites source code to
 /// HTML with syntax highlighting suitable for viewing in a web-browser.

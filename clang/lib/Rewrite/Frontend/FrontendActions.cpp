@@ -158,7 +158,9 @@ ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
     if (CI.getLangOpts().ObjCRuntime.isNonFragile())
       return CreateModernObjCRewriter(InFile, OS,
                                 CI.getDiagnostics(), CI.getLangOpts(),
-                                CI.getDiagnosticOpts().NoRewriteMacros);
+                                CI.getDiagnosticOpts().NoRewriteMacros,
+                                (CI.getCodeGenOpts().getDebugInfo() !=
+                                 CodeGenOptions::NoDebugInfo));
     return CreateObjCRewriter(InFile, OS,
                               CI.getDiagnostics(), CI.getLangOpts(),
                               CI.getDiagnosticOpts().NoRewriteMacros);
