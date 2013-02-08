@@ -301,6 +301,10 @@ def HI16 : SDNodeXForm<imm, [{
 
 // Node immediate fits as 16-bit sign extended on target immediate.
 // e.g. addi, andi
+def immSExt8  : PatLeaf<(imm), [{ return isInt<8>(N->getSExtValue()); }]>;
+
+// Node immediate fits as 16-bit sign extended on target immediate.
+// e.g. addi, andi
 def immSExt16  : PatLeaf<(imm), [{ return isInt<16>(N->getSExtValue()); }]>;
 
 // Node immediate fits as 15-bit sign extended on target immediate.

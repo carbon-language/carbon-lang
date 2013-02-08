@@ -32,6 +32,18 @@ def mem16_ea : Operand<i32> {
 }
 
 //
+// RI instruction format
+//
+
+
+class F2RI16_ins<bits<5> _op, string asmstr,
+                     InstrItinClass itin>:
+  FRI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
+        !strconcat(asmstr, "\t$rx, $imm\t# 16 bit inst"), [], itin> {
+  let Constraints = "$rx_ = $rx";
+}
+
+//
 // Compare a register and immediate and place result in CC
 // Implicit use of T8
 //
@@ -416,6 +428,10 @@ class MayStore {
 //
 def AddiuRxImmX16: FEXT_RI16_ins<0b01001, "addiu", IIAlu>;
 
+def AddiuRxRxImm16: F2RI16_ins<0b01001, "addiu", IIAlu>,
+  ArithLogic16Defs<0> {
+  let AddedComplexity = 5;
+}
 def AddiuRxRxImmX16: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>,
   ArithLogic16Defs<0>;
 
@@ -1055,6 +1071,7 @@ class ArithLogicI16_pat<SDNode OpNode, PatFrag imm_type, Instruction I> :
   Mips16Pat<(OpNode CPU16Regs:$in, imm_type:$imm),
             (I CPU16Regs:$in, imm_type:$imm)>;
 
+def: ArithLogicI16_pat<add, immSExt8, AddiuRxRxImm16>;
 def: ArithLogicI16_pat<add, immSExt16, AddiuRxRxImmX16>;
 def: ArithLogicI16_pat<shl, immZExt5, SllX16>;
 def: ArithLogicI16_pat<srl, immZExt5, SrlX16>;
