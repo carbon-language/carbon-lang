@@ -1923,7 +1923,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
     Out << ' ';
-    TypePrinter.print(AI->getType()->getElementType(), Out);
+    TypePrinter.print(AI->getAllocatedType(), Out);
     if (!AI->getArraySize() || AI->isArrayAllocation()) {
       Out << ", ";
       writeOperand(AI->getArraySize(), true);
