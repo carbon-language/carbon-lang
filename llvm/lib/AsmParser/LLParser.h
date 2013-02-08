@@ -194,7 +194,6 @@ namespace llvm {
     bool ParseTLSModel(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalThreadLocal(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalAddrSpace(unsigned &AddrSpace);
-    bool ParseOptionalFuncAttrs(AttrBuilder &B);
     bool ParseOptionalParamAttrs(AttrBuilder &B);
     bool ParseOptionalReturnAttrs(AttrBuilder &B);
     bool ParseOptionalLinkage(unsigned &Linkage, bool &HasLinkage);
@@ -240,7 +239,7 @@ namespace llvm {
     bool ParseMDNodeID(MDNode *&Result);
     bool ParseMDNodeID(MDNode *&Result, unsigned &SlotNo);
     bool ParseUnnamedAttrGrp();
-    bool ParseAttributeValuePairs(AttrBuilder &B);
+    bool ParseFnAttributeValuePairs(AttrBuilder &B, bool inAttrGrp);
 
     // Type Parsing.
     bool ParseType(Type *&Result, bool AllowVoid = false);

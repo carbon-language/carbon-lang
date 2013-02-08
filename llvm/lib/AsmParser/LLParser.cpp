@@ -752,7 +752,7 @@ bool LLParser::ParseUnnamedAttrGrp() {
   if (ParseToken(lltok::equal, "expected '=' here") ||
       ParseToken(lltok::kw_attributes, "expected 'attributes' keyword here") ||
       ParseToken(lltok::lbrace, "expected '{' here") ||
-      ParseAttributeValuePairs(ForwardRefAttrBuilder[VarID]) ||
+      ParseFnAttributeValuePairs(ForwardRefAttrBuilder[VarID], true) ||
       ParseToken(lltok::rbrace, "expected end of attribute group"))
     return true;
 
@@ -762,13 +762,18 @@ bool LLParser::ParseUnnamedAttrGrp() {
   return false;
 }
 
-/// ParseAttributeValuePairs
+/// ParseFnAttributeValuePairs
 ///   ::= <attr> | <attr> '=' <value>
-bool LLParser::ParseAttributeValuePairs(AttrBuilder &B) {
+bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B, bool inAttrGrp) {
+  bool HaveError = false;
+
+  B.clear();
+
   while (true) {
     lltok::Kind Token = Lex.getKind();
     switch (Token) {
     default:
+      if (!inAttrGrp) return HaveError;
       return Error(Lex.getLoc(), "unterminated attribute group");
     case lltok::rbrace:
       // Finished.
@@ -789,31 +794,38 @@ bool LLParser::ParseAttributeValuePairs(AttrBuilder &B) {
 
     // Target-independent attributes:
     case lltok::kw_align: {
+      // As a hack, we allow "align 2" on functions as a synonym for "alignstack
+      // 2".
       unsigned Alignment;
-      if (ParseToken(lltok::equal, "expected '=' here") ||
-          ParseUInt32(Alignment))
-        return true;
+      if (inAttrGrp) {
+        if (ParseToken(lltok::equal, "expected '=' here") ||
+            ParseUInt32(Alignment))
+          return true;
+      } else {
+        if (ParseOptionalAlignment(Alignment))
+          return true;
+      }
       B.addAlignmentAttr(Alignment);
-      break;
+      continue;
     }
     case lltok::kw_alignstack: {
       unsigned Alignment;
-      if (ParseToken(lltok::equal, "expected '=' here") ||
-          ParseUInt32(Alignment))
-        return true;
+      if (inAttrGrp) {
+        if (ParseToken(lltok::equal, "expected '=' here") ||
+            ParseUInt32(Alignment))
+          return true;
+      } else {
+        if (ParseOptionalStackAlignment(Alignment))
+          return true;
+      }
       B.addStackAlignmentAttr(Alignment);
-      break;
+      continue;
     }
     case lltok::kw_address_safety:  B.addAttribute(Attribute::AddressSafety); break;
     case lltok::kw_alwaysinline:    B.addAttribute(Attribute::AlwaysInline); break;
-    case lltok::kw_byval:           B.addAttribute(Attribute::ByVal); break;
     case lltok::kw_inlinehint:      B.addAttribute(Attribute::InlineHint); break;
-    case lltok::kw_inreg:           B.addAttribute(Attribute::InReg); break;
     case lltok::kw_minsize:         B.addAttribute(Attribute::MinSize); break;
     case lltok::kw_naked:           B.addAttribute(Attribute::Naked); break;
-    case lltok::kw_nest:            B.addAttribute(Attribute::Nest); break;
-    case lltok::kw_noalias:         B.addAttribute(Attribute::NoAlias); break;
-    case lltok::kw_nocapture:       B.addAttribute(Attribute::NoCapture); break;
     case lltok::kw_noduplicate:     B.addAttribute(Attribute::NoDuplicate); break;
     case lltok::kw_noimplicitfloat: B.addAttribute(Attribute::NoImplicitFloat); break;
     case lltok::kw_noinline:        B.addAttribute(Attribute::NoInline); break;
@@ -825,13 +837,28 @@ bool LLParser::ParseAttributeValuePairs(AttrBuilder &B) {
     case lltok::kw_readnone:        B.addAttribute(Attribute::ReadNone); break;
     case lltok::kw_readonly:        B.addAttribute(Attribute::ReadOnly); break;
     case lltok::kw_returns_twice:   B.addAttribute(Attribute::ReturnsTwice); break;
-    case lltok::kw_signext:         B.addAttribute(Attribute::SExt); break;
-    case lltok::kw_sret:            B.addAttribute(Attribute::StructRet); break;
     case lltok::kw_ssp:             B.addAttribute(Attribute::StackProtect); break;
     case lltok::kw_sspreq:          B.addAttribute(Attribute::StackProtectReq); break;
     case lltok::kw_sspstrong:       B.addAttribute(Attribute::StackProtectStrong); break;
     case lltok::kw_uwtable:         B.addAttribute(Attribute::UWTable); break;
-    case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
+
+    // Error handling.
+    case lltok::kw_inreg:
+    case lltok::kw_signext:
+    case lltok::kw_zeroext:
+      HaveError |=
+        Error(Lex.getLoc(),
+              "invalid use of attribute on a function");
+      break;
+    case lltok::kw_byval:
+    case lltok::kw_nest:
+    case lltok::kw_noalias:
+    case lltok::kw_nocapture:
+    case lltok::kw_sret:
+      HaveError |=
+        Error(Lex.getLoc(),
+              "invalid use of parameter-only attribute on a function");
+      break;
     }
 
     Lex.Lex();
@@ -1014,72 +1041,6 @@ bool LLParser::ParseOptionalAddrSpace(unsigned &AddrSpace) {
   return ParseToken(lltok::lparen, "expected '(' in address space") ||
          ParseUInt32(AddrSpace) ||
          ParseToken(lltok::rparen, "expected ')' in address space");
-}
-
-/// ParseOptionalFuncAttrs - Parse a potentially empty list of function attributes.
-bool LLParser::ParseOptionalFuncAttrs(AttrBuilder &B) {
-  bool HaveError = false;
-
-  B.clear();
-
-  while (1) {
-    lltok::Kind Token = Lex.getKind();
-    switch (Token) {
-    default:  // End of attributes.
-      return HaveError;
-    case lltok::kw_alignstack: {
-      unsigned Alignment;
-      if (ParseOptionalStackAlignment(Alignment))
-        return true;
-      B.addStackAlignmentAttr(Alignment);
-      continue;
-    }
-    case lltok::kw_align: {
-      // As a hack, we allow "align 2" on functions as a synonym for "alignstack
-      // 2".
-      unsigned Alignment;
-      if (ParseOptionalAlignment(Alignment))
-        return true;
-      B.addAlignmentAttr(Alignment);
-      continue;
-    }
-    case lltok::kw_address_safety:  B.addAttribute(Attribute::AddressSafety); break;
-    case lltok::kw_alwaysinline:    B.addAttribute(Attribute::AlwaysInline); break;
-    case lltok::kw_inlinehint:      B.addAttribute(Attribute::InlineHint); break;
-    case lltok::kw_minsize:         B.addAttribute(Attribute::MinSize); break;
-    case lltok::kw_naked:           B.addAttribute(Attribute::Naked); break;
-    case lltok::kw_noinline:        B.addAttribute(Attribute::NoInline); break;
-    case lltok::kw_nonlazybind:     B.addAttribute(Attribute::NonLazyBind); break;
-    case lltok::kw_noredzone:       B.addAttribute(Attribute::NoRedZone); break;
-    case lltok::kw_noimplicitfloat: B.addAttribute(Attribute::NoImplicitFloat); break;
-    case lltok::kw_noreturn:        B.addAttribute(Attribute::NoReturn); break;
-    case lltok::kw_nounwind:        B.addAttribute(Attribute::NoUnwind); break;
-    case lltok::kw_optsize:         B.addAttribute(Attribute::OptimizeForSize); break;
-    case lltok::kw_readnone:        B.addAttribute(Attribute::ReadNone); break;
-    case lltok::kw_readonly:        B.addAttribute(Attribute::ReadOnly); break;
-    case lltok::kw_returns_twice:   B.addAttribute(Attribute::ReturnsTwice); break;
-    case lltok::kw_ssp:             B.addAttribute(Attribute::StackProtect); break;
-    case lltok::kw_sspreq:          B.addAttribute(Attribute::StackProtectReq); break;
-    case lltok::kw_sspstrong:       B.addAttribute(Attribute::StackProtectStrong); break;
-    case lltok::kw_uwtable:         B.addAttribute(Attribute::UWTable); break;
-    case lltok::kw_noduplicate:     B.addAttribute(Attribute::NoDuplicate); break;
-
-    // Error handling.
-    case lltok::kw_zeroext:
-    case lltok::kw_signext:
-    case lltok::kw_inreg:
-      HaveError |= Error(Lex.getLoc(), "invalid use of attribute on a function");
-      break;
-    case lltok::kw_sret:      case lltok::kw_noalias:
-    case lltok::kw_nocapture: case lltok::kw_byval:
-    case lltok::kw_nest:
-      HaveError |=
-        Error(Lex.getLoc(), "invalid use of parameter-only attribute on a function");
-      break;
-    }
-
-    Lex.Lex();
-  }
 }
 
 /// ParseOptionalParamAttrs - Parse a potentially empty list of parameter attributes.
@@ -2904,7 +2865,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   if (ParseArgumentList(ArgList, isVarArg) ||
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
                          &UnnamedAddrLoc) ||
-      ParseOptionalFuncAttrs(FuncAttrs) ||
+      ParseFnAttributeValuePairs(FuncAttrs, false) ||
       (EatIfPresent(lltok::kw_section) &&
        ParseStringConstant(Section)) ||
       ParseOptionalAlignment(Alignment) ||
@@ -3435,7 +3396,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
-      ParseOptionalFuncAttrs(FnAttrs) ||
+      ParseFnAttributeValuePairs(FnAttrs, false) ||
       ParseToken(lltok::kw_to, "expected 'to' in invoke") ||
       ParseTypeAndBasicBlock(NormalBB, PFS) ||
       ParseToken(lltok::kw_unwind, "expected 'unwind' in invoke") ||
@@ -3841,7 +3802,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
-      ParseOptionalFuncAttrs(FnAttrs))
+      ParseFnAttributeValuePairs(FnAttrs, false))
     return true;
 
   // If RetType is a non-function pointer type, then this is the short syntax
