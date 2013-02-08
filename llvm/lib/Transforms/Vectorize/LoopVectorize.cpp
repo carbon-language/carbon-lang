@@ -9,10 +9,10 @@
 //
 // This is the LLVM loop vectorizer. This pass modifies 'vectorizable' loops
 // and generates target-independent LLVM-IR. Legalization of the IR is done
-// in the codegen. However, the vectorizes uses (will use) the codegen
+// in the codegen. However, the vectorizer uses (will use) the codegen
 // interfaces to generate IR that is likely to result in an optimal binary.
 //
-// The loop vectorizer combines consecutive loop iteration into a single
+// The loop vectorizer combines consecutive loop iterations into a single
 // 'wide' iteration. After this transformation the index is incremented
 // by the SIMD vector width, and not by one.
 //
@@ -637,7 +637,7 @@ struct LoopVectorize : public LoopPass {
     // Use the cost model.
     LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL);
 
-    // Check the function attribues to find out if this function should be
+    // Check the function attributes to find out if this function should be
     // optimized for size.
     Function *F = L->getHeader()->getParent();
     Attribute::AttrKind SzAttr = Attribute::OptimizeForSize;
@@ -668,7 +668,7 @@ struct LoopVectorize : public LoopPass {
           F->getParent()->getModuleIdentifier()<<"\n");
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << "\n");
 
-    // If we decided that it is *legal* to vectorizer the loop then do it.
+    // If we decided that it is *legal* to vectorize the loop then do it.
     InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF.Width, UF);
     LB.vectorize(&LVL);
 
