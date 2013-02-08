@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/TokenConcatenation.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <cctype>
 using namespace clang;
 
 
@@ -240,13 +240,12 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     return IsIdentifierStringPrefix(PrevTok);
 
   case tok::numeric_constant:
-    return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
-           FirstChar == '+' || FirstChar == '-' || FirstChar == '.' ||
-           (PP.getLangOpts().CPlusPlus11 && FirstChar == '_');
+    return isPreprocessingNumberBody(FirstChar) ||
+           FirstChar == '+' || FirstChar == '-';
   case tok::period:          // ..., .*, .1234
     return (FirstChar == '.' && PrevPrevTok.is(tok::period)) ||
-    isdigit(FirstChar) ||
-    (PP.getLangOpts().CPlusPlus && FirstChar == '*');
+           isDigit(FirstChar) ||
+           (PP.getLangOpts().CPlusPlus && FirstChar == '*');
   case tok::amp:             // &&
     return FirstChar == '&';
   case tok::plus:            // ++
