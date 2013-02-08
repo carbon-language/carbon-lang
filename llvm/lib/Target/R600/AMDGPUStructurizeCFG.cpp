@@ -30,11 +30,13 @@ namespace {
 // Definition of the complex types used in this pass.
 
 typedef std::pair<BasicBlock *, Value *> BBValuePair;
-typedef ArrayRef<BasicBlock*> BBVecRef;
 
 typedef SmallVector<RegionNode*, 8> RNVector;
 typedef SmallVector<BasicBlock*, 8> BBVector;
+typedef SmallVector<BranchInst*, 8> BranchVector;
 typedef SmallVector<BBValuePair, 2> BBValueVector;
+
+typedef SmallPtrSet<BasicBlock *, 8> BBSet;
 
 typedef DenseMap<PHINode *, BBValueVector> PhiMap;
 typedef DenseMap<BasicBlock *, PhiMap> BBPhiMap;
@@ -111,22 +113,26 @@ class AMDGPUStructurizeCFG : public RegionPass {
   PredMap Predicates;
   BBPhiMap DeletedPhis;
   BB2BBVecMap AddedPhis;
-  BBVector FlowsInserted;
+  BranchVector Conditions;
 
   BasicBlock *LoopStart;
   BasicBlock *LoopEnd;
+  BBSet LoopTargets;
   BBPredicates LoopPred;
 
   void orderNodes();
 
-  void buildPredicate(BranchInst *Term, unsigned Idx,
-                      BBPredicates &Pred, bool Invert);
+  Value *buildCondition(BranchInst *Term, unsigned Idx, bool Invert);
 
-  void analyzeBlock(BasicBlock *BB);
+  bool analyzeLoopStart(BasicBlock *From, BasicBlock *To, Value *Condition);
 
-  void analyzeLoop(BasicBlock *BB, unsigned &LoopIdx);
+  void analyzeNode(RegionNode *N);
+
+  void analyzeLoopEnd(RegionNode *N);
 
   void collectInfos();
+
+  void insertConditions();
 
   void delPhiValues(BasicBlock *From, BasicBlock *To);
 
@@ -147,8 +153,6 @@ class AMDGPUStructurizeCFG : public RegionPass {
   BasicBlock *wireFlowBlock(BasicBlock *Prev, RegionNode *Node);
 
   void createFlow();
-
-  void insertConditions();
 
   void rebuildSSA();
 
@@ -202,114 +206,209 @@ void AMDGPUStructurizeCFG::orderNodes() {
   }
 }
 
-/// \brief Build blocks and loop predicates
-void AMDGPUStructurizeCFG::buildPredicate(BranchInst *Term, unsigned Idx,
-                                          BBPredicates &Pred, bool Invert) {
-  Value *True = Invert ? BoolFalse : BoolTrue;
-  Value *False = Invert ? BoolTrue : BoolFalse;
+/// \brief Build the condition for one edge
+Value *AMDGPUStructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
+                                            bool Invert) {
+  Value *Cond = Invert ? BoolFalse : BoolTrue;
+  if (Term->isConditional()) {
+    Cond = Term->getCondition();
 
+    if (Idx != Invert)
+      Cond = BinaryOperator::CreateNot(Cond, "", Term);
+  }
+  return Cond;
+}
+
+/// \brief Analyze the start of a loop and insert predicates as necessary
+bool AMDGPUStructurizeCFG::analyzeLoopStart(BasicBlock *From, BasicBlock *To,
+                                            Value *Condition) {
+  LoopPred[From] = Condition;
+  LoopTargets.insert(To);
+  if (!LoopStart) {
+    LoopStart = To;
+    return true;
+
+  } else if (LoopStart == To)
+    return true;
+
+  // We need to handle the case of intersecting loops, e. g.
+  //
+  //    /----<-----
+  //    |         |
+  // -> A -> B -> C -> D
+  //         |         |
+  //         -----<----/
+
+  RNVector::reverse_iterator OI = Order.rbegin(), OE = Order.rend();
+
+  for (;OI != OE; ++OI)
+    if ((*OI)->getEntry() == LoopStart)
+      break;
+
+  for (;OI != OE && (*OI)->getEntry() != To; ++OI) {
+    BBPredicates &Pred = Predicates[(*OI)->getEntry()];
+    if (!Pred.count(From))
+      Pred[From] = Condition;
+  }
+  return false;
+}
+
+/// \brief Analyze the predecessors of each block and build up predicates
+void AMDGPUStructurizeCFG::analyzeNode(RegionNode *N) {
   RegionInfo *RI = ParentRegion->getRegionInfo();
-  BasicBlock *BB = Term->getParent();
+  BasicBlock *BB = N->getEntry();
+  BBPredicates &Pred = Predicates[BB];
 
-  // Handle the case where multiple regions start at the same block
-  Region *R = BB != ParentRegion->getEntry() ?
-              RI->getRegionFor(BB) : ParentRegion;
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+       PI != PE; ++PI) {
 
-  if (R == ParentRegion) {
-    // It's a top level block in our region
-    Value *Cond = True;
-    if (Term->isConditional()) {
-      BasicBlock *Other = Term->getSuccessor(!Idx);
-
-      if (Visited.count(Other)) {
-        if (!Pred.count(Other))
-          Pred[Other] = False;
-
-        if (!Pred.count(BB))
-          Pred[BB] = True;
-        return;
-      }
-      Cond = Term->getCondition();
-
-      if (Idx != Invert)
-        Cond = BinaryOperator::CreateNot(Cond, "", Term);
+    if (!ParentRegion->contains(*PI)) {
+      // It's a branch from outside into our region entry
+      Pred[*PI] = BoolTrue;
+      continue;
     }
 
-    Pred[BB] = Cond;
+    Region *R = RI->getRegionFor(*PI);
+    if (R == ParentRegion) {
 
-  } else if (ParentRegion->contains(R)) {
-    // It's a block in a sub region
-    while(R->getParent() != ParentRegion)
-      R = R->getParent();
+      // It's a top level block in our region
+      BranchInst *Term = cast<BranchInst>((*PI)->getTerminator());
+      for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
+        BasicBlock *Succ = Term->getSuccessor(i);
+        if (Succ != BB)
+          continue;
 
-    Pred[R->getEntry()] = True;
+        if (Visited.count(*PI)) {
+          // Normal forward edge
+          if (Term->isConditional()) {
+            // Try to treat it like an ELSE block
+            BasicBlock *Other = Term->getSuccessor(!i);
+            if (Visited.count(Other) && !LoopTargets.count(Other) &&
+                !Pred.count(Other) && !Pred.count(*PI)) {
 
-  } else {
-    // It's a branch from outside into our parent region
-    Pred[BB] = True;
+              Pred[Other] = BoolFalse;
+              Pred[*PI] = BoolTrue;
+              continue;
+            }
+          }
+
+        } else {
+          // Back edge
+          if (analyzeLoopStart(*PI, BB, buildCondition(Term, i, true)))
+            continue;
+        }
+        Pred[*PI] = buildCondition(Term, i, false);
+      }
+
+    } else {
+
+      // It's an exit from a sub region
+      while(R->getParent() != ParentRegion)
+        R = R->getParent();
+
+      // Edge from inside a subregion to its entry, ignore it
+      if (R == N)
+        continue;
+
+      BasicBlock *Entry = R->getEntry();
+      if (!Visited.count(Entry))
+        if (analyzeLoopStart(Entry, BB, BoolFalse))
+          continue;
+
+      Pred[Entry] = BoolTrue;
+    }
   }
 }
 
-/// \brief Analyze the successors of each block and build up predicates
-void AMDGPUStructurizeCFG::analyzeBlock(BasicBlock *BB) {
-  pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
-  BBPredicates &Pred = Predicates[BB];
+/// \brief Determine the end of the loop
+void AMDGPUStructurizeCFG::analyzeLoopEnd(RegionNode *N) {
 
-  for (; PI != PE; ++PI) {
-    BranchInst *Term = cast<BranchInst>((*PI)->getTerminator());
+  if (N->isSubRegion()) {
+    // Test for exit as back edge
+    BasicBlock *Exit = N->getNodeAs<Region>()->getExit();
+    if (Visited.count(Exit))
+      LoopEnd = N->getEntry();
+
+  } else {
+    // Test for sucessors as back edge
+    BasicBlock *BB = N->getNodeAs<BasicBlock>();
+    BranchInst *Term = cast<BranchInst>(BB->getTerminator());
 
     for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
       BasicBlock *Succ = Term->getSuccessor(i);
-      if (Succ != BB)
-        continue;
-      buildPredicate(Term, i, Pred, false);
-    }
-  }
-}
 
-/// \brief Analyze the conditions leading to loop to a previous block
-void AMDGPUStructurizeCFG::analyzeLoop(BasicBlock *BB, unsigned &LoopIdx) {
-  BranchInst *Term = cast<BranchInst>(BB->getTerminator());
-
-  for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
-    BasicBlock *Succ = Term->getSuccessor(i);
-
-    // Ignore it if it's not a back edge
-    if (!Visited.count(Succ))
-      continue;
-
-    buildPredicate(Term, i, LoopPred, true);
-
-    LoopEnd = BB;
-    if (Visited[Succ] < LoopIdx) {
-      LoopIdx = Visited[Succ];
-      LoopStart = Succ;
+      if (Visited.count(Succ))
+        LoopEnd = BB;
     }
   }
 }
 
 /// \brief Collect various loop and predicate infos
 void AMDGPUStructurizeCFG::collectInfos() {
-  unsigned Number = 0, LoopIdx = ~0;
+  unsigned Number = 0;
 
   // Reset predicate
   Predicates.clear();
 
   // and loop infos
   LoopStart = LoopEnd = 0;
+  LoopTargets.clear();
   LoopPred.clear();
 
-  RNVector::reverse_iterator OI = Order.rbegin(), OE = Order.rend();
-  for (Visited.clear(); OI != OE; Visited[(*OI++)->getEntry()] = ++Number) {
+  // Reset the visited nodes
+  Visited.clear();
+
+  for (RNVector::reverse_iterator OI = Order.rbegin(), OE = Order.rend();
+       OI != OE; ++OI) {
 
     // Analyze all the conditions leading to a node
-    analyzeBlock((*OI)->getEntry());
+    analyzeNode(*OI);
 
-    if ((*OI)->isSubRegion())
-      continue;
+    // Remember that we've seen this node
+    Visited[(*OI)->getEntry()] = ++Number;
 
-    // Find the first/last loop nodes and loop predicates
-    analyzeLoop((*OI)->getNodeAs<BasicBlock>(), LoopIdx);
+    // Find the last back edge
+    analyzeLoopEnd(*OI);
+  }
+
+  // Both or neither must be set
+  assert(!LoopStart == !LoopEnd);
+}
+
+/// \brief Insert the missing branch conditions
+void AMDGPUStructurizeCFG::insertConditions() {
+  SSAUpdater PhiInserter;
+
+  for (BranchVector::iterator I = Conditions.begin(),
+       E = Conditions.end(); I != E; ++I) {
+
+    BranchInst *Term = *I;
+    BasicBlock *Parent = Term->getParent();
+
+    assert(Term->isConditional());
+
+    PhiInserter.Initialize(Boolean, "");
+    if (Parent == LoopEnd) {
+      PhiInserter.AddAvailableValue(LoopStart, BoolTrue);
+    } else {
+      PhiInserter.AddAvailableValue(&Func->getEntryBlock(), BoolFalse);
+      PhiInserter.AddAvailableValue(Parent, BoolFalse);
+    }
+
+    bool ParentHasValue = false;
+    BasicBlock *Succ = Term->getSuccessor(0);
+    BBPredicates &Preds = (Parent == LoopEnd) ? LoopPred : Predicates[Succ];
+    for (BBPredicates::iterator PI = Preds.begin(), PE = Preds.end();
+         PI != PE; ++PI) {
+
+      PhiInserter.AddAvailableValue(PI->first, PI->second);
+      ParentHasValue |= PI->first == Parent;
+    }
+
+    if (ParentHasValue)
+      Term->setCondition(PhiInserter.GetValueAtEndOfBlock(Parent));
+    else
+      Term->setCondition(PhiInserter.GetValueInMiddleOfBlock(Parent));
   }
 }
 
@@ -474,7 +573,6 @@ RegionNode *AMDGPUStructurizeCFG::skipChained(RegionNode *Node) {
   assert(I != E);
 
   killTerminator(BB);
-  FlowsInserted.push_back(BB);
   Visited.erase(Succ);
   Order.erase(I);
   return ParentRegion->getNode(wireFlowBlock(BB, Next));
@@ -489,7 +587,6 @@ BasicBlock *AMDGPUStructurizeCFG::getNextFlow(BasicBlock *Prev) {
                                         Func, Insert);
   DT->addNewBlock(Flow, Prev);
   ParentRegion->getRegionInfo()->setRegionFor(Flow, ParentRegion);
-  FlowsInserted.push_back(Flow);
   return Flow;
 }
 
@@ -517,10 +614,8 @@ BasicBlock *AMDGPUStructurizeCFG::wireFlowBlock(BasicBlock *Prev,
                                                 RegionNode *Node) {
   BasicBlock *Entry = Node->getEntry();
 
-  if (LoopStart == Entry) {
+  if (LoopStart == Entry)
     LoopStart = Prev;
-    LoopPred[Prev] = BoolTrue;
-  }
 
   // Wire it up temporary, skipChained may recurse into us
   BranchInst::Create(Entry, Prev);
@@ -533,7 +628,7 @@ BasicBlock *AMDGPUStructurizeCFG::wireFlowBlock(BasicBlock *Prev,
   if (!isPredictableTrue(Prev, Entry)) {
     // Let Prev point to entry and next block
     Prev->getTerminator()->eraseFromParent();
-    BranchInst::Create(Entry, Next, BoolUndef, Prev);
+    Conditions.push_back(BranchInst::Create(Entry, Next, BoolUndef, Prev));
   } else {
     DT->changeImmediateDominator(Next, Entry);
   }
@@ -591,7 +686,6 @@ void AMDGPUStructurizeCFG::createFlow() {
     ParentRegion->getRegionInfo()->setRegionFor(Split, ParentRegion);
     Predicates[Split] = Predicates[Prev];
     Order.push_back(ParentRegion->getBBNode(Split));
-    LoopPred[Prev] = BoolTrue;
 
   } else if (LoopStart == Order.back()->getEntry()) {
     // Loop starts behind entry, split entry so that we can jump to it
@@ -603,8 +697,6 @@ void AMDGPUStructurizeCFG::createFlow() {
   }
 
   killTerminator(Prev);
-  FlowsInserted.clear();
-  FlowsInserted.push_back(Prev);
 
   while (!Order.empty()) {
     RegionNode *Node = Order.pop_back_val();
@@ -614,7 +706,8 @@ void AMDGPUStructurizeCFG::createFlow() {
       // Create an extra loop end node
       LoopEnd = Prev;
       Prev = getNextFlow(LoopEnd);
-      BranchInst::Create(Prev, LoopStart, BoolUndef, LoopEnd);
+      Conditions.push_back(BranchInst::Create(Prev, LoopStart,
+                                              BoolUndef, LoopEnd));
       addPhiValues(LoopEnd, LoopStart);
     }
   }
@@ -627,32 +720,6 @@ void AMDGPUStructurizeCFG::createFlow() {
 
   assert(Order.empty());
   assert(Visited.empty());
-}
-
-/// \brief Insert the missing branch conditions
-void AMDGPUStructurizeCFG::insertConditions() {
-  SSAUpdater PhiInserter;
-
-  for (BBVector::iterator FI = FlowsInserted.begin(), FE = FlowsInserted.end();
-       FI != FE; ++FI) {
-
-    BranchInst *Term = cast<BranchInst>((*FI)->getTerminator());
-    if (Term->isUnconditional())
-      continue;
-
-    PhiInserter.Initialize(Boolean, "");
-    PhiInserter.AddAvailableValue(&Func->getEntryBlock(), BoolFalse);
-
-    BasicBlock *Succ = Term->getSuccessor(0);
-    BBPredicates &Preds = (*FI == LoopEnd) ? LoopPred : Predicates[Succ];
-    for (BBPredicates::iterator PI = Preds.begin(), PE = Preds.end();
-         PI != PE; ++PI) {
-
-      PhiInserter.AddAvailableValue(PI->first, PI->second);
-    }
-
-    Term->setCondition(PhiInserter.GetValueAtEndOfBlock(*FI));
-  }
 }
 
 /// Handle a rare case where the disintegrated nodes instructions
@@ -714,12 +781,15 @@ bool AMDGPUStructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
   setPhiValues();
   rebuildSSA();
 
+  // Cleanup
   Order.clear();
   Visited.clear();
   Predicates.clear();
   DeletedPhis.clear();
   AddedPhis.clear();
-  FlowsInserted.clear();
+  Conditions.clear();
+  LoopTargets.clear();
+  LoopPred.clear();
 
   return true;
 }
