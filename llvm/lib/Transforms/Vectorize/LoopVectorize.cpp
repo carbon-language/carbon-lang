@@ -32,7 +32,7 @@
 //  D. Nuzman and R. Henderson. Multi-platform Auto-vectorization.
 //
 // Variable uniformity checks are inspired by:
-// Karrenberg, R. and Hack, S. Whole Function Vectorization.
+//  Karrenberg, R. and Hack, S. Whole Function Vectorization.
 //
 // Other ideas/concepts are from:
 //  A. Zaks and D. Nuzman. Autovectorization in GCC-two years later.
