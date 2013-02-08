@@ -412,8 +412,12 @@ def ObjCDeallocChecker : Checker<"Dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,
   DescFile<"CheckObjCDealloc.cpp">;
 
-def IvarInvalidationChecker : Checker<"InstanceVariableInvalidation">,
+def InstanceVariableInvalidation : Checker<"InstanceVariableInvalidation">,
   HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
+  DescFile<"IvarInvalidationChecker.cpp">;
+
+def MissingInvalidationMethod : Checker<"MissingInvalidationMethod">,
+  HelpText<"Check that the invalidation methods are present in classes that contain invalidatable instance variables">,
   DescFile<"IvarInvalidationChecker.cpp">;
 
 def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
