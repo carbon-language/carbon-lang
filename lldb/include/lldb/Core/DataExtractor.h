@@ -434,7 +434,13 @@ public:
     ///     and length are valid, or NULL otherwise.
     //------------------------------------------------------------------
     const void*
-    GetData (lldb::offset_t *offset_ptr, lldb::offset_t length) const;
+    GetData (lldb::offset_t *offset_ptr, lldb::offset_t length) const
+    {
+        const uint8_t *ptr = PeekData (*offset_ptr, length);
+        if (ptr)
+            *offset_ptr += length;
+        return ptr;
+    }
     
     //------------------------------------------------------------------
     /// Copy \a dst_len bytes from \a *offset_ptr and ensure the copied
@@ -1066,7 +1072,12 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     const uint8_t*
-    PeekData (lldb::offset_t offset, lldb::offset_t length) const;
+    PeekData (lldb::offset_t offset, lldb::offset_t length) const
+    {
+        if (length > 0 && ValidOffsetForDataOfSize(offset, length))
+            return m_start + offset;
+        return NULL;
+    }
 
     //------------------------------------------------------------------
     /// Set the address byte size.
@@ -1221,7 +1232,11 @@ public:
     ///     length bytes available at that offset, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    ValidOffsetForDataOfSize (lldb::offset_t offset, lldb::offset_t length) const;
+    ValidOffsetForDataOfSize (lldb::offset_t offset, lldb::offset_t length) const
+    {
+        lldb::offset_t bytes_left = BytesLeft (offset);
+        return length <= bytes_left;
+    }
 
     size_t
     Copy (DataExtractor& dest_data) const;
@@ -1233,6 +1248,16 @@ public:
     Append (void* bytes, lldb::offset_t length);
     
 protected:
+    
+    lldb::offset_t
+    BytesLeft (lldb::offset_t offset) const
+    {
+        const lldb::offset_t size = GetByteSize();
+        if (offset >= size)
+            return 0;
+        return offset - size;
+    }
+    
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------

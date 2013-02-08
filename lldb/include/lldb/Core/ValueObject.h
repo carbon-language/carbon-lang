@@ -620,6 +620,9 @@ public:
     virtual lldb::LanguageType
     GetObjectRuntimeLanguage();
 
+    virtual uint32_t
+    GetTypeInfo (lldb::clang_type_t *pointee_or_element_clang_type = NULL);
+
     virtual bool
     IsPointerType ();
     

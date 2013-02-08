@@ -1201,6 +1201,12 @@ ClangASTType::DumpSummary
 }
 
 uint32_t
+ClangASTType::GetClangTypeByteSize ()
+{
+    return (GetClangTypeBitWidth (m_ast, m_type) + 7) / 8;
+}
+
+uint32_t
 ClangASTType::GetClangTypeBitWidth ()
 {
     return GetClangTypeBitWidth (m_ast, m_type);

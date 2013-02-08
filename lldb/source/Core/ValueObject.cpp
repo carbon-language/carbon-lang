@@ -674,12 +674,9 @@ bool
 ValueObject::MightHaveChildren()
 {
     bool has_children = false;
-    clang_type_t clang_type = GetClangType();
-    if (clang_type)
+    const uint32_t type_info = GetTypeInfo();
+    if (type_info)
     {
-        const uint32_t type_info = ClangASTContext::GetTypeInfo (clang_type,
-                                                                 GetClangAST(),
-                                                                 NULL);
         if (type_info & (ClangASTContext::eTypeHasChildren |
                          ClangASTContext::eTypeIsPointer |
                          ClangASTContext::eTypeIsReference))
@@ -877,11 +874,9 @@ bool
 ValueObject::IsCStringContainer(bool check_pointer)
 {
     clang_type_t elem_or_pointee_clang_type;
-    const Flags type_flags (ClangASTContext::GetTypeInfo (GetClangType(), 
-                                                          GetClangAST(), 
-                                                          &elem_or_pointee_clang_type));
+    const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
     bool is_char_arr_ptr (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
-            ClangASTContext::IsCharType (elem_or_pointee_clang_type));
+                          ClangASTContext::IsCharType (elem_or_pointee_clang_type));
     if (!is_char_arr_ptr)
         return false;
     if (!check_pointer)
@@ -899,19 +894,20 @@ ValueObject::GetPointeeData (DataExtractor& data,
                              uint32_t item_idx,
                              uint32_t item_count)
 {
-    if (!IsPointerType() && !IsArrayType())
+    clang_type_t pointee_or_element_clang_type;
+    const uint32_t type_info = GetTypeInfo (&pointee_or_element_clang_type);
+    const bool is_pointer_type = type_info & ClangASTContext::eTypeIsPointer;
+    const bool is_array_type = type_info & ClangASTContext::eTypeIsArray;
+    if (!(is_pointer_type || is_array_type))
         return 0;
     
     if (item_count == 0)
         return 0;
     
-    uint32_t stride = 0;
+    clang::ASTContext *ast = GetClangAST();
+    ClangASTType pointee_or_element_type(ast, pointee_or_element_clang_type);
     
-    ClangASTType type(GetClangAST(),
-                      GetClangType());
-    
-    const uint64_t item_type_size = (IsPointerType() ? ClangASTType::GetTypeByteSize(GetClangAST(), type.GetPointeeType()) :
-                                     ClangASTType::GetTypeByteSize(GetClangAST(), type.GetArrayElementType(stride)));
+    const uint64_t item_type_size = pointee_or_element_type.GetClangTypeByteSize();
     
     const uint64_t bytes = item_count * item_type_size;
     
@@ -919,7 +915,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
     
     if (item_idx == 0 && item_count == 1) // simply a deref
     {
-        if (IsPointerType())
+        if (is_pointer_type)
         {
             Error error;
             ValueObjectSP pointee_sp = Dereference(error);
@@ -943,7 +939,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
         lldb::DataBufferSP data_sp(heap_buf_ptr = new lldb_private::DataBufferHeap());
         
         AddressType addr_type;
-        lldb::addr_t addr = IsPointerType() ? GetPointerValue(&addr_type) : GetAddressOf(true, &addr_type);
+        lldb::addr_t addr = is_pointer_type ? GetPointerValue(&addr_type) : GetAddressOf(true, &addr_type);
         
         switch (addr_type)
         {
@@ -988,9 +984,15 @@ ValueObject::GetPointeeData (DataExtractor& data,
                 break;
             case eAddressTypeHost:
                 {
-                    heap_buf_ptr->CopyData((uint8_t*)(addr + offset), bytes);
-                    data.SetData(data_sp);
-                    return bytes;
+                    ClangASTType valobj_type(ast, GetClangType());
+                    uint64_t max_bytes = valobj_type.GetClangTypeByteSize();
+                    if (max_bytes > offset)
+                    {
+                        size_t bytes_read = std::min<uint64_t>(max_bytes - offset, bytes);
+                        heap_buf_ptr->CopyData((uint8_t*)(addr + offset), bytes_read);
+                        data.SetData(data_sp);
+                        return bytes_read;
+                    }
                 }
                 break;
             case eAddressTypeInvalid:
@@ -1031,7 +1033,7 @@ strlen_or_inf (const char* str,
         while(*str)
         {
             len++;str++;
-            if (len > maxlen)
+            if (len >= maxlen)
                 return maxlen_value;
         }
     }
@@ -1053,9 +1055,7 @@ ValueObject::ReadPointedString (Stream& s,
     
     clang_type_t clang_type = GetClangType();
     clang_type_t elem_or_pointee_clang_type;
-    const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, 
-                                                          GetClangAST(), 
-                                                          &elem_or_pointee_clang_type));
+    const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
     if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
         ClangASTContext::IsCharType (elem_or_pointee_clang_type))
     {
@@ -1383,7 +1383,7 @@ ValueObject::HasSpecialPrintableRepresentation(ValueObjectRepresentationStyle va
                                                Format custom_format)
 {
     clang_type_t elem_or_pointee_type;
-    Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
+    Flags flags(GetTypeInfo(&elem_or_pointee_type));
     
     if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
         && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue)
@@ -1427,7 +1427,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
 {
 
     clang_type_t elem_or_pointee_type;
-    Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
+    Flags flags(GetTypeInfo(&elem_or_pointee_type));
     
     bool allow_special = ((special & ePrintableRepresentationSpecialCasesAllow) == ePrintableRepresentationSpecialCasesAllow);
     bool only_special = ((special & ePrintableRepresentationSpecialCasesOnly) == ePrintableRepresentationSpecialCasesOnly);
@@ -1843,6 +1843,12 @@ ValueObject::GetSyntheticChild (const ConstString &key) const
     return synthetic_child_sp;
 }
 
+uint32_t
+ValueObject::GetTypeInfo (clang_type_t *pointee_or_element_clang_type)
+{
+    return ClangASTContext::GetTypeInfo (GetClangType(), GetClangAST(), pointee_or_element_clang_type);
+}
+
 bool
 ValueObject::IsPointerType ()
 {
@@ -1896,10 +1902,11 @@ ValueObject::IsObjCNil ()
 ValueObjectSP
 ValueObject::GetSyntheticArrayMember (size_t index, bool can_create)
 {
-    if (IsArrayType())
+    const uint32_t type_info = GetTypeInfo ();
+    if (type_info & ClangASTContext::eTypeIsArray)
         return GetSyntheticArrayMemberFromArray(index, can_create);
 
-    if (IsPointerType())
+    if (type_info & ClangASTContext::eTypeIsPointer)
         return GetSyntheticArrayMemberFromPointer(index, can_create);
     
     return ValueObjectSP();

@@ -108,6 +108,9 @@ public:
                                   lldb::clang_type_t opaque_qual_type);
 
     uint32_t
+    GetClangTypeByteSize ();
+
+    uint32_t
     GetClangTypeBitWidth ();
 
     static uint32_t
