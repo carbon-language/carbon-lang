@@ -3,6 +3,7 @@
 import sys
 import time
 import unittest
+import progress
 
 from unittest2 import result
 
@@ -45,6 +46,7 @@ class TextTestResult(result.TestResult):
         self.showAll = verbosity > 1
         self.dots = verbosity == 1
         self.descriptions = descriptions
+        self.progressbar = None
 
     def getDescription(self, test):
         doc_first_line = test.shortDescription()
@@ -64,6 +66,9 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addSuccess(test)
         if self.showAll:
             self.stream.writeln("ok")
+        elif self.progressbar:
+            self.progressbar.__add__(1)
+            self.progressbar.show_progress()
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
@@ -72,6 +77,9 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addError(test, err)
         if self.showAll:
             self.stream.writeln("ERROR")
+        elif self.progressbar:
+            self.progressbar.__add__(1)
+            self.progressbar.show_progress()
         elif self.dots:
             self.stream.write('E')
             self.stream.flush()
@@ -80,6 +88,9 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addFailure(test, err)
         if self.showAll:
             self.stream.writeln("FAIL")
+        elif self.progressbar:
+            self.progressbar.__add__(1)
+            self.progressbar.show_progress()
         elif self.dots:
             self.stream.write('F')
             self.stream.flush()
@@ -88,6 +99,9 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addSkip(test, reason)
         if self.showAll:
             self.stream.writeln("skipped %r" % (reason,))
+        elif self.progressbar:
+            self.progressbar.__add__(1)
+            self.progressbar.show_progress()
         elif self.dots:
             self.stream.write("s")
             self.stream.flush()
@@ -96,6 +110,9 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addExpectedFailure(test, err)
         if self.showAll:
             self.stream.writeln("expected failure")
+        elif self.progressbar:
+            self.progressbar.__add__(1)
+            self.progressbar.show_progress()
         elif self.dots:
             self.stream.write("x")
             self.stream.flush()
@@ -104,11 +121,17 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addUnexpectedSuccess(test)
         if self.showAll:
             self.stream.writeln("unexpected success")
+        elif self.progressbar:
+            self.progressbar.__add__(1)
+            self.progressbar.show_progress()
         elif self.dots:
             self.stream.write("u")
             self.stream.flush()
 
     def printErrors(self):
+        if self.progressbar:
+            self.progressbar.complete()
+            self.progressbar.show_progress()
         if self.dots or self.showAll:
             self.stream.writeln()
         self.printErrorList('ERROR', self.errors)
