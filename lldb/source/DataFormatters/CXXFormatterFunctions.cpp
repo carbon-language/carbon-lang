@@ -1013,6 +1013,37 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
 }
 
 bool
+lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    TargetSP target_sp(valobj.GetTargetSP());
+    if (!target_sp)
+        return false;
+    uint32_t addr_size = target_sp->GetArchitecture().GetAddressByteSize();
+    uint64_t pointee = valobj.GetValueAsUnsigned(0);
+    if (!pointee)
+        return false;
+    pointee += addr_size;
+    ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
+    ExecutionContext exe_ctx(target_sp,false);
+    ValueObjectSP child_ptr_sp(valobj.CreateValueObjectFromAddress("string_ptr", pointee, exe_ctx, type));
+    if (!child_ptr_sp)
+        return false;
+    DataExtractor data;
+    child_ptr_sp->GetData(data);
+    ValueObjectSP child_sp(child_ptr_sp->CreateValueObjectFromData("string_data", data, exe_ctx, type));
+    child_sp->GetValueAsUnsigned(0);
+    if (child_sp)
+        return NSStringSummaryProvider(*child_sp, stream);
+    return false;
+}
+
+bool
+lldb_private::formatters::NSMutableAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    return NSAttributedStringSummaryProvider(valobj, stream);
+}
+
+bool
 lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     stream.Printf("%s",valobj.GetObjectDescription());

@@ -82,6 +82,12 @@ namespace lldb_private {
         NSStringSummaryProvider (ValueObject& valobj, Stream& stream);
         
         bool
+        NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
+        NSMutableAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        bool
         ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream);
         
         template <bool is_sel_ptr>
