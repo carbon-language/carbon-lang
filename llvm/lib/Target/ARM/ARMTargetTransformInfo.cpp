@@ -120,6 +120,8 @@ public:
   unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) const;
 
   unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const;
+
+  unsigned getAddressComputationCost(Type *Val) const;
   /// @}
 };
 
@@ -304,12 +306,13 @@ unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
 
 unsigned ARMTTI::getVectorInstrCost(unsigned Opcode, Type *ValTy,
                                     unsigned Index) const {
-  // Penalize inserting into an D-subregister.
+  // Penalize inserting into an D-subregister. We end up with a three times
+  // lower estimated throughput on swift.
   if (ST->isSwift() &&
       Opcode == Instruction::InsertElement &&
       ValTy->isVectorTy() &&
       ValTy->getScalarSizeInBits() <= 32)
-    return 2;
+    return 3;
 
   return TargetTransformInfo::getVectorInstrCost(Opcode, ValTy, Index);
 }
@@ -325,4 +328,10 @@ unsigned ARMTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   }
 
   return TargetTransformInfo::getCmpSelInstrCost(Opcode, ValTy, CondTy);
+}
+
+unsigned ARMTTI::getAddressComputationCost(Type *Ty) const {
+  // In many cases the address computation is not merged into the instruction
+  // addressing mode.
+  return 1;
 }

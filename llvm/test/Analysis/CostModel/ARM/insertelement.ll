@@ -12,7 +12,7 @@ define void @insertelement_i8(%T_i8* %saddr,
                            %T_i8v* %vaddr) {
   %v0 = load %T_i8v* %vaddr
   %v1 = load %T_i8* %saddr
-;CHECK: estimated cost of 2 for {{.*}} insertelement <8 x i8>
+;CHECK: estimated cost of 3 for {{.*}} insertelement <8 x i8>
   %v2 = insertelement %T_i8v %v0, %T_i8 %v1, i32 1
   store %T_i8v %v2, %T_i8v* %vaddr
   ret void
@@ -26,7 +26,7 @@ define void @insertelement_i16(%T_i16* %saddr,
                            %T_i16v* %vaddr) {
   %v0 = load %T_i16v* %vaddr
   %v1 = load %T_i16* %saddr
-;CHECK: estimated cost of 2 for {{.*}} insertelement <4 x i16>
+;CHECK: estimated cost of 3 for {{.*}} insertelement <4 x i16>
   %v2 = insertelement %T_i16v %v0, %T_i16 %v1, i32 1
   store %T_i16v %v2, %T_i16v* %vaddr
   ret void
@@ -39,7 +39,7 @@ define void @insertelement_i32(%T_i32* %saddr,
                            %T_i32v* %vaddr) {
   %v0 = load %T_i32v* %vaddr
   %v1 = load %T_i32* %saddr
-;CHECK: estimated cost of 2 for {{.*}} insertelement <2 x i32>
+;CHECK: estimated cost of 3 for {{.*}} insertelement <2 x i32>
   %v2 = insertelement %T_i32v %v0, %T_i32 %v1, i32 1
   store %T_i32v %v2, %T_i32v* %vaddr
   ret void

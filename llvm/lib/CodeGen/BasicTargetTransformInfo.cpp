@@ -101,6 +101,7 @@ public:
   virtual unsigned getIntrinsicInstrCost(Intrinsic::ID, Type *RetTy,
                                          ArrayRef<Type*> Tys) const;
   virtual unsigned getNumberOfParts(Type *Tp) const;
+  virtual unsigned getAddressComputationCost(Type *Ty) const;
 
   /// @}
 };
@@ -399,4 +400,8 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID, Type *RetTy,
 unsigned BasicTTI::getNumberOfParts(Type *Tp) const {
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);
   return LT.first;
+}
+
+unsigned BasicTTI::getAddressComputationCost(Type *Ty) const {
+  return 0;
 }

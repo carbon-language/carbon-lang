@@ -314,6 +314,12 @@ public:
   /// split during legalization. Zero is returned when the answer is unknown.
   virtual unsigned getNumberOfParts(Type *Tp) const;
 
+  /// \returns The cost of the address computation. For most targets this can be
+  /// merged into the instruction indexing mode. Some targets might want to
+  /// distinguish between address computation for memory operations on vector
+  /// types and scalar types. Such targets should override this function.
+  virtual unsigned getAddressComputationCost(Type *Ty) const;
+
   /// @}
 
   /// Analysis group identification.

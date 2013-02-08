@@ -3056,9 +3056,10 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   // TODO: We need to estimate the cost of intrinsic calls.
   switch (I->getOpcode()) {
   case Instruction::GetElementPtr:
-    // We mark this instruction as zero-cost because scalar GEPs are usually
-    // lowered to the intruction addressing mode. At the moment we don't
-    // generate vector geps.
+    // We mark this instruction as zero-cost because the cost of GEPs in
+    // vectorized code depends on whether the corresponding memory instruction
+    // is scalarized or not. Therefore, we handle GEPs with the memory
+    // instruction cost.
     return 0;
   case Instruction::Br: {
     return TTI.getCFInstrCost(I->getOpcode());
@@ -3113,9 +3114,12 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     unsigned AS = SI ? SI->getPointerAddressSpace() :
       LI->getPointerAddressSpace();
     Value *Ptr = SI ? SI->getPointerOperand() : LI->getPointerOperand();
-
+    // We add the cost of address computation here instead of with the gep
+    // instruction because only here we know whether the operation is
+    // scalarized.
     if (VF == 1)
-      return TTI.getMemoryOpCost(I->getOpcode(), VectorTy, Alignment, AS);
+      return TTI.getAddressComputationCost(VectorTy) +
+        TTI.getMemoryOpCost(I->getOpcode(), VectorTy, Alignment, AS);
 
     // Scalarized loads/stores.
     int Stride = Legal->isConsecutivePtr(Ptr);
@@ -3135,15 +3139,17 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
                                             VectorTy, i);
       }
 
-      // The cost of the scalar stores.
+      // The cost of the scalar loads/stores.
+      Cost += VF * TTI.getAddressComputationCost(ValTy->getScalarType());
       Cost += VF * TTI.getMemoryOpCost(I->getOpcode(), ValTy->getScalarType(),
                                        Alignment, AS);
       return Cost;
     }
 
     // Wide load/stores.
-    unsigned Cost = TTI.getMemoryOpCost(I->getOpcode(), VectorTy,
-                                        Alignment, AS);
+    unsigned Cost = TTI.getAddressComputationCost(VectorTy);
+    Cost += TTI.getMemoryOpCost(I->getOpcode(), VectorTy, Alignment, AS);
+
     if (Reverse)
       Cost += TTI.getShuffleCost(TargetTransformInfo::SK_Reverse,
                                   VectorTy, 0);
