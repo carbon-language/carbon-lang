@@ -921,34 +921,90 @@ public:
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.calculateFormattingInformation(AnnotatedLines[i]);
     }
+    std::vector<int> IndentForLevel;
     for (std::vector<AnnotatedLine>::iterator I = AnnotatedLines.begin(),
                                               E = AnnotatedLines.end();
          I != E; ++I) {
       const AnnotatedLine &TheLine = *I;
+      int Offset = GetIndentOffset(TheLine.First);
+      while (IndentForLevel.size() <= TheLine.Level)
+        IndentForLevel.push_back(-1);
+      IndentForLevel.resize(TheLine.Level + 1);
       if (touchesRanges(TheLine) && TheLine.Type != LT_Invalid) {
-        unsigned Indent =
-            formatFirstToken(TheLine.First, TheLine.Level,
-                             TheLine.InPPDirective, PreviousEndOfLineColumn);
+        unsigned LevelIndent = GetIndent(IndentForLevel, TheLine.Level);
+        unsigned Indent = LevelIndent;
+        if (static_cast<int>(Indent) + Offset >= 0)
+          Indent += Offset;
+        if (!TheLine.First.FormatTok.WhiteSpaceStart.isValid() ||
+            StructuralError) {
+          Indent = LevelIndent = SourceMgr.getSpellingColumnNumber(
+              TheLine.First.FormatTok.Tok.getLocation()) - 1;
+        } else {
+          formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
+                           PreviousEndOfLineColumn);
+        }
         tryFitMultipleLinesInOne(Indent, I, E);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
                                          TheLine.First, Whitespaces,
                                          StructuralError);
         PreviousEndOfLineColumn = Formatter.format();
+        IndentForLevel[TheLine.Level] = LevelIndent;
       } else {
         // If we did not reformat this unwrapped line, the column at the end of
         // the last token is unchanged - thus, we can calculate the end of the
-        // last token, and return the result.
+        // last token.
         PreviousEndOfLineColumn =
             SourceMgr.getSpellingColumnNumber(
                 TheLine.Last->FormatTok.Tok.getLocation()) +
             Lex.MeasureTokenLength(TheLine.Last->FormatTok.Tok.getLocation(),
                                    SourceMgr, Lex.getLangOpts()) - 1;
+        unsigned Indent = SourceMgr.getSpellingColumnNumber(
+            TheLine.First.FormatTok.Tok.getLocation()) - 1;
+        unsigned LevelIndent = Indent;
+        if (static_cast<int>(LevelIndent) - Offset >= 0)
+          LevelIndent -= Offset;
+        IndentForLevel[TheLine.Level] = LevelIndent;
       }
     }
     return Whitespaces.generateReplacements();
   }
 
 private:
+  /// \brief Get the indent of \p Level from \p IndentForLevel.
+  ///
+  /// \p IndentForLevel must contain the indent for the level \c l
+  /// at \p IndentForLevel[l], or a value < 0 if the indent for
+  /// that level is unknown.
+  unsigned GetIndent(const std::vector<int> IndentForLevel,
+                     unsigned Level) {
+    if (Level == 0)
+      return 0;
+    if (IndentForLevel[Level] != -1)
+      return IndentForLevel[Level];
+    return GetIndent(IndentForLevel, Level - 1) + 2;
+  }
+
+  /// \brief Get the offset of the line relatively to the level.
+  ///
+  /// For example, 'public:' labels in classes are offset by 1 or 2
+  /// characters to the left from their level.
+  int GetIndentOffset(const AnnotatedToken &RootToken) {
+    bool IsAccessModifier = false;
+    if (RootToken.is(tok::kw_public) || RootToken.is(tok::kw_protected) ||
+        RootToken.is(tok::kw_private))
+      IsAccessModifier = true;
+    else if (RootToken.is(tok::at) && !RootToken.Children.empty() &&
+             (RootToken.Children[0].isObjCAtKeyword(tok::objc_public) ||
+              RootToken.Children[0].isObjCAtKeyword(tok::objc_protected) ||
+              RootToken.Children[0].isObjCAtKeyword(tok::objc_package) ||
+              RootToken.Children[0].isObjCAtKeyword(tok::objc_private)))
+      IsAccessModifier = true;
+
+    if (IsAccessModifier)
+      return Style.AccessModifierOffset;
+    return 0;
+  }
+
   /// \brief Tries to merge lines into one.
   ///
   /// This will change \c Line and \c AnnotatedLine to contain the merged line,
@@ -1109,40 +1165,21 @@ private:
   /// \brief Add a new line and the required indent before the first Token
   /// of the \c UnwrappedLine if there was no structural parsing error.
   /// Returns the indent level of the \c UnwrappedLine.
-  unsigned formatFirstToken(const AnnotatedToken &RootToken, unsigned Level,
-                            bool InPPDirective,
-                            unsigned PreviousEndOfLineColumn) {
+  void formatFirstToken(const AnnotatedToken &RootToken, unsigned Indent,
+                        bool InPPDirective, unsigned PreviousEndOfLineColumn) {
     const FormatToken &Tok = RootToken.FormatTok;
-    if (!Tok.WhiteSpaceStart.isValid() || StructuralError)
-      return SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1;
 
     unsigned Newlines =
         std::min(Tok.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
     if (Newlines == 0 && !Tok.IsFirst)
       Newlines = 1;
-    unsigned Indent = Level * 2;
 
-    bool IsAccessModifier = false;
-    if (RootToken.is(tok::kw_public) || RootToken.is(tok::kw_protected) ||
-        RootToken.is(tok::kw_private))
-      IsAccessModifier = true;
-    else if (RootToken.is(tok::at) && !RootToken.Children.empty() &&
-             (RootToken.Children[0].isObjCAtKeyword(tok::objc_public) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_protected) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_package) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_private)))
-      IsAccessModifier = true;
-
-    if (IsAccessModifier &&
-        static_cast<int>(Indent) + Style.AccessModifierOffset >= 0)
-      Indent += Style.AccessModifierOffset;
     if (!InPPDirective || Tok.HasUnescapedNewline) {
       Whitespaces.replaceWhitespace(RootToken, Newlines, Indent, 0, Style);
     } else {
       Whitespaces.replacePPWhitespace(RootToken, Newlines, Indent,
                                       PreviousEndOfLineColumn, Style);
     }
-    return Indent;
   }
 
   DiagnosticsEngine &Diag;

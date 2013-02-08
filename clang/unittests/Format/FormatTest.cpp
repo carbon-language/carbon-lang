@@ -2544,5 +2544,56 @@ TEST_F(FormatTest, ObjCLiterals) {
 
 }
 
+TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
+  EXPECT_EQ("{\n"
+            "{\n"
+            "a;\n"
+            "b;\n"
+            "}\n"
+            "}", format("{\n"
+                        "{\n"
+                        "a;\n"
+                        "     b;\n"
+                        "}\n"
+                        "}", 13, 2, getLLVMStyle()));
+  EXPECT_EQ("{\n"
+            "{\n"
+            "  a;\n"
+            "b;\n"
+            "}\n"
+            "}", format("{\n"
+                        "{\n"
+                        "     a;\n"
+                        "b;\n"
+                        "}\n"
+                        "}", 9, 2, getLLVMStyle()));
+  EXPECT_EQ("{\n"
+            "{\n"
+            "public:\n"
+            "  b;\n"
+            "}\n"
+            "}", format("{\n"
+                        "{\n"
+                        "public:\n"
+                        "     b;\n"
+                        "}\n"
+                        "}", 17, 2, getLLVMStyle()));
+  EXPECT_EQ("{\n"
+            "{\n"
+            "a;\n"
+            "}\n"
+            "{\n"
+            "  b;\n"
+            "}\n"
+            "}", format("{\n"
+                        "{\n"
+                        "a;\n"
+                        "}\n"
+                        "{\n"
+                        "           b;\n"
+                        "}\n"
+                        "}", 22, 2, getLLVMStyle()));
+} 
+
 } // end namespace tooling
 } // end namespace clang
