@@ -53,6 +53,11 @@ public:
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
                               const SmallVectorImpl<SDValue> &OutVals,
                               DebugLoc DL, SelectionDAG &DAG) const;
+  virtual SDValue LowerCall(CallLoweringInfo &CLI,
+                            SmallVectorImpl<SDValue> &InVals) const {
+    CLI.Callee.dump();
+    llvm_unreachable("Undefined function");
+  }
 
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerIntrinsicIABS(SDValue Op, SelectionDAG &DAG) const;
