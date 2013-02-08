@@ -35,7 +35,7 @@ void f()
     t1 = Clock::now();
     }
     ns d = t1 - t0 - ms(250);
-    assert(d < ns(2500000));  // within 2.5ms
+    assert(d < ms(50));  // within 50ms
 }
 
 int main()
