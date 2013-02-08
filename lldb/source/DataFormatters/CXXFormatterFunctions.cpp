@@ -1085,20 +1085,20 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
         ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset_text, type, true));
         ValueObjectSP base(valobj.GetSyntheticChildAtOffset(offset_base, type, true));
-        if (!text || !base)
+        if (!text)
             return false;
         if (text->GetValueAsUnsigned(0) == 0)
             return false;
         StreamString summary;
         if (!NSStringSummaryProvider(*text, summary))
             return false;
-        if (base->GetValueAsUnsigned(0))
+        if (base && base->GetValueAsUnsigned(0))
         {
             if (summary.GetSize() > 0)
                 summary.GetString().resize(summary.GetSize()-1);
             summary.Printf(" -- ");
             StreamString base_summary;
-            if (NSStringSummaryProvider(*base, base_summary) && base_summary.GetSize() > 0)
+            if (NSURLSummaryProvider(*base, base_summary) && base_summary.GetSize() > 0)
                 summary.Printf("%s",base_summary.GetSize() > 2 ? base_summary.GetData() + 2 : base_summary.GetData());
         }
         if (summary.GetSize())
