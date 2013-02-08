@@ -395,10 +395,11 @@ CommandInterpreter::LoadCommandDictionary ()
 
     const char *break_regexes[][2] = {{"^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2"},
                                       {"^([[:digit:]]+)[[:space:]]*$", "breakpoint set --line %1"},
-                                      {"^(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1"},
+                                      {"^\\*?(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1"},
                                       {"^[\"']?([-+]?\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'"},
                                       {"^(-.*)$", "breakpoint set %1"},
                                       {"^(.*[^[:space:]])`(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%2' --shlib '%1'"},
+                                      {"^\\&(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1' --skip-prologue=0"},
                                       {"^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"}};
     
     size_t num_regexes = sizeof break_regexes/sizeof(char *[2]);
