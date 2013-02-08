@@ -50,6 +50,10 @@ public:
   virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B)
     =0;
 
+  /// ignoreCallingConv - Returns false if this transformation could possibly
+  /// change the calling convention.
+  virtual bool ignoreCallingConv() { return false; }
+
   Value *optimizeCall(CallInst *CI, const DataLayout *TD,
                       const TargetLibraryInfo *TLI,
                       const LibCallSimplifier *LCS, IRBuilder<> &B) {
@@ -61,7 +65,7 @@ public:
       Context = &CI->getCalledFunction()->getContext();
 
     // We never change the calling convention.
-    if (CI->getCallingConv() != llvm::CallingConv::C)
+    if (!ignoreCallingConv() && CI->getCallingConv() != llvm::CallingConv::C)
       return NULL;
 
     return callOptimizer(CI->getCalledFunction(), CI, B);
@@ -724,6 +728,7 @@ struct StrNCpyOpt : public LibCallOptimization {
 };
 
 struct StrLenOpt : public LibCallOptimization {
+  virtual bool ignoreCallingConv() { return true; }
   virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 ||
@@ -1260,6 +1265,7 @@ struct FFSOpt : public LibCallOptimization {
 };
 
 struct AbsOpt : public LibCallOptimization {
+  virtual bool ignoreCallingConv() { return true; }
   virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     FunctionType *FT = Callee->getFunctionType();
     // We require integer(integer) where the types agree.
