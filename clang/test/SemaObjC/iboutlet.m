@@ -9,17 +9,15 @@
 #define IBOutlet __attribute__((iboutlet))
 
 @interface I
-@property (getter = MyGetter, readonly, assign) IBOutlet NSView *myView; // expected-note {{property declared here}} \
-							// expected-note {{readonly IBOutlet property should be changed to be readwrite}}
+@property (getter = MyGetter, readonly, assign) IBOutlet NSView *myView; // expected-warning {{readonly IBOutlet property 'myView' when auto-synthesized may not work correctly with 'nib' loader}} expected-note {{property should be changed to be readwrite}}
 
-@property (readonly) IBOutlet NSView *myView1; // expected-note {{readonly IBOutlet property should be changed to be readwrite}} \
-                                               // expected-note {{property declared here}}
+@property (readonly) IBOutlet NSView *myView1; // expected-warning {{readonly IBOutlet property 'myView1' when auto-synthesized may not work correctly with 'nib' loader}} expected-note {{property should be changed to be readwrite}}
 
-@property (getter = MyGetter, READONLY) IBOutlet NSView *myView2;  // expected-note {{property declared here}}
+@property (getter = MyGetter, READONLY) IBOutlet NSView *myView2; // expected-warning {{readonly IBOutlet property 'myView2' when auto-synthesized may not work correctly with 'nib' loader}}
 
 @end
 
-@implementation I // expected-warning 3 {{readonly IBOutlet property when auto-synthesized may not work correctly with 'nib' loader}}
+@implementation I
 @end
 
 
@@ -29,7 +27,7 @@
 @interface NSObject @end
 
 @interface RKTFHView : NSObject
-@property( readonly ) __attribute__((iboutlet)) UILabel *autoReadOnlyReadOnly; // expected-note {{property declared here}} expected-note {{readonly IBOutlet property should be changed to be readwrite}}
+@property( readonly ) __attribute__((iboutlet)) UILabel *autoReadOnlyReadOnly; // expected-warning {{readonly IBOutlet property 'autoReadOnlyReadOnly' when auto-synthesized may not work correctly with 'nib' loader}} expected-note {{property should be changed to be readwrite}}
 @property( readonly ) __attribute__((iboutlet)) UILabel *autoReadOnlyReadWrite;
 @property( readonly ) __attribute__((iboutlet)) UILabel *synthReadOnlyReadWrite;
 @end
@@ -39,6 +37,6 @@
 @property( readwrite ) __attribute__((iboutlet)) UILabel *synthReadOnlyReadWrite;
 @end
 
-@implementation RKTFHView // expected-warning {{readonly IBOutlet property when auto-synthesized may not work correctly with 'nib' loader}}
+@implementation RKTFHView
 @synthesize synthReadOnlyReadWrite=_synthReadOnlyReadWrite;
 @end

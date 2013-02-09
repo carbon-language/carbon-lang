@@ -861,8 +861,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       }
       
       if (!ReadWriteProperty) {
-        Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
-        Diag(property->getLocation(), diag::note_property_declare);
+        Diag(property->getLocation(), diag::warn_auto_readonly_iboutlet_property)
+            << property->getName();
         SourceLocation readonlyLoc;
         if (LocPropertyAttribute(Context, "readonly", 
                                  property->getLParenLoc(), readonlyLoc)) {
