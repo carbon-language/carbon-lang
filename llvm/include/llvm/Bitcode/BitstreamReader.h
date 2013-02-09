@@ -343,8 +343,8 @@ public:
 
 
   uint32_t Read(unsigned NumBits) {
-    assert(NumBits <= 32 && "Cannot return more than 32 bits!");
-    if (NumBits == 0) return 0;
+    assert(NumBits && NumBits <= 32 &&
+           "Cannot return zero or more than 32 bits!");
     
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {

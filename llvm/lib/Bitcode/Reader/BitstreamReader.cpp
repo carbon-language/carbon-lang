@@ -288,9 +288,20 @@ void BitstreamCursor::ReadAbbrevRecord() {
     }
 
     BitCodeAbbrevOp::Encoding E = (BitCodeAbbrevOp::Encoding)Read(3);
-    if (BitCodeAbbrevOp::hasEncodingData(E))
-      Abbv->Add(BitCodeAbbrevOp(E, ReadVBR64(5)));
-    else
+    if (BitCodeAbbrevOp::hasEncodingData(E)) {
+      unsigned Data = ReadVBR64(5);
+
+      // As a special case, handle fixed(0) (i.e., a fixed field with zero bits)
+      // and vbr(0) as a literal zero.  This is decoded the same way, and avoids
+      // a slow path in Read() to have to handle reading zero bits.
+      if ((E == BitCodeAbbrevOp::Fixed || E == BitCodeAbbrevOp::VBR) &&
+          Data == 0) {
+        Abbv->Add(BitCodeAbbrevOp(0));
+        continue;
+      }
+      
+      Abbv->Add(BitCodeAbbrevOp(E, Data));
+    } else
       Abbv->Add(BitCodeAbbrevOp(E));
   }
   CurAbbrevs.push_back(Abbv);
