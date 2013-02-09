@@ -121,6 +121,18 @@ def err_ucn_escape_basic_scs : Error<
 def err_ucn_control_character : Error<
   "universal character name refers to a control character">;
 def err_ucn_escape_invalid : Error<"invalid universal character">;
+def warn_ucn_escape_surrogate : Warning<
+  "universal character name refers to a surrogate character">,
+  InGroup<Unicode>;
+
+def warn_c99_compat_unicode_id : Warning<
+  "%select{using this character in an identifier|starting an identifier with "
+  "this character}0 is incompatible with C99">,
+  InGroup<C99Compat>, DefaultIgnore;
+def warn_cxx98_compat_unicode_id : Warning<
+  "using this character in an identifier is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
+
 def warn_cxx98_compat_literal_ucn_escape_basic_scs : Warning<
   "specifying character '%0' with a universal character name "
   "is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;

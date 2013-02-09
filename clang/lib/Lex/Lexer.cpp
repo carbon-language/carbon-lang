@@ -36,6 +36,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "UnicodeCharSets.h"
 #include <cstring>
 using namespace clang;
 
@@ -1351,72 +1352,61 @@ void Lexer::SkipBytes(unsigned Bytes, bool StartOfLine) {
   IsAtStartOfLine = StartOfLine;
 }
 
-namespace {
-  struct UCNCharRange {
-    uint32_t Lower;
-    uint32_t Upper;
-  };
-  
-  // C11 D.1, C++11 [charname.allowed]
-  // FIXME: C99 and C++03 each have a different set of allowed UCNs.
-  const UCNCharRange UCNAllowedCharRanges[] = {
-    // 1
-    { 0x00A8, 0x00A8 }, { 0x00AA, 0x00AA }, { 0x00AD, 0x00AD },
-    { 0x00AF, 0x00AF }, { 0x00B2, 0x00B5 }, { 0x00B7, 0x00BA },
-    { 0x00BC, 0x00BE }, { 0x00C0, 0x00D6 }, { 0x00D8, 0x00F6 },
-    { 0x00F8, 0x00FF },
-    // 2
-    { 0x0100, 0x167F }, { 0x1681, 0x180D }, { 0x180F, 0x1FFF },
-    // 3
-    { 0x200B, 0x200D }, { 0x202A, 0x202E }, { 0x203F, 0x2040 },
-    { 0x2054, 0x2054 }, { 0x2060, 0x206F },
-    // 4
-    { 0x2070, 0x218F }, { 0x2460, 0x24FF }, { 0x2776, 0x2793 },
-    { 0x2C00, 0x2DFF }, { 0x2E80, 0x2FFF },
-    // 5
-    { 0x3004, 0x3007 }, { 0x3021, 0x302F }, { 0x3031, 0x303F },
-    // 6
-    { 0x3040, 0xD7FF },
-    // 7
-    { 0xF900, 0xFD3D }, { 0xFD40, 0xFDCF }, { 0xFDF0, 0xFE44 },
-    { 0xFE47, 0xFFFD },
-    // 8
-    { 0x10000, 0x1FFFD }, { 0x20000, 0x2FFFD }, { 0x30000, 0x3FFFD },
-    { 0x40000, 0x4FFFD }, { 0x50000, 0x5FFFD }, { 0x60000, 0x6FFFD },
-    { 0x70000, 0x7FFFD }, { 0x80000, 0x8FFFD }, { 0x90000, 0x9FFFD },
-    { 0xA0000, 0xAFFFD }, { 0xB0000, 0xBFFFD }, { 0xC0000, 0xCFFFD },
-    { 0xD0000, 0xDFFFD }, { 0xE0000, 0xEFFFD }
-  };
+static bool isAllowedIDChar(uint32_t C, const LangOptions &LangOpts) {
+  if (LangOpts.CPlusPlus11 || LangOpts.C11)
+    return isCharInSet(C, C11AllowedIDChars);
+  else if (LangOpts.CPlusPlus)
+    return isCharInSet(C, CXX03AllowedIDChars);
+  else
+    return isCharInSet(C, C99AllowedIDChars);
 }
 
-static bool isAllowedIDChar(uint32_t c) {
-  unsigned LowPoint = 0;
-  unsigned HighPoint = llvm::array_lengthof(UCNAllowedCharRanges);
+static bool isAllowedInitiallyIDChar(uint32_t C, const LangOptions &LangOpts) {
+  assert(isAllowedIDChar(C, LangOpts));
+  if (LangOpts.CPlusPlus11 || LangOpts.C11)
+    return !isCharInSet(C, C11DisallowedInitialIDChars);
+  else if (LangOpts.CPlusPlus)
+    return true;
+  else
+    return !isCharInSet(C, C99DisallowedInitialIDChars);
+}
 
-  // Binary search the UCNAllowedCharRanges set.
-  while (HighPoint != LowPoint) {
-    unsigned MidPoint = (HighPoint + LowPoint) / 2;
-    if (c < UCNAllowedCharRanges[MidPoint].Lower)
-      HighPoint = MidPoint;
-    else if (c > UCNAllowedCharRanges[MidPoint].Upper)
-      LowPoint = MidPoint + 1;
-    else
-      return true;
+static inline CharSourceRange makeCharRange(Lexer &L, const char *Begin,
+                                            const char *End) {
+  return CharSourceRange::getCharRange(L.getSourceLocation(Begin),
+                                       L.getSourceLocation(End));
+}
+
+static void maybeDiagnoseIDCharCompat(DiagnosticsEngine &Diags, uint32_t C,
+                                      CharSourceRange Range, bool IsFirst) {
+  // Check C99 compatibility.
+  if (Diags.getDiagnosticLevel(diag::warn_c99_compat_unicode_id,
+                               Range.getBegin()) > DiagnosticsEngine::Ignored) {
+    enum {
+      CannotAppearInIdentifier = 0,
+      CannotStartIdentifier
+    };
+
+    if (!isCharInSet(C, C99AllowedIDChars)) {
+      Diags.Report(Range.getBegin(), diag::warn_c99_compat_unicode_id)
+        << Range
+        << CannotAppearInIdentifier;
+    } else if (IsFirst && isCharInSet(C, C99DisallowedInitialIDChars)) {
+      Diags.Report(Range.getBegin(), diag::warn_c99_compat_unicode_id)
+        << Range
+        << CannotStartIdentifier;
+    }
   }
 
-  return false;
-}
-
-static bool isAllowedInitiallyIDChar(uint32_t c) {
-  // C11 D.2, C++11 [charname.disallowed]
-  // FIXME: C99 only forbids "digits", presumably as described in C99 Annex D.
-  // FIXME: C++03 does not forbid any initial characters.
-  return !(0x0300 <= c && c <= 0x036F) &&
-         !(0x1DC0 <= c && c <= 0x1DFF) &&
-         !(0x20D0 <= c && c <= 0x20FF) &&
-         !(0xFE20 <= c && c <= 0xFE2F);
-}
-
+  // Check C++98 compatibility.
+  if (Diags.getDiagnosticLevel(diag::warn_cxx98_compat_unicode_id,
+                               Range.getBegin()) > DiagnosticsEngine::Ignored) {
+    if (!isCharInSet(C, CXX03AllowedIDChars)) {
+      Diags.Report(Range.getBegin(), diag::warn_cxx98_compat_unicode_id)
+        << Range;
+    }
+  }
+ }
 
 void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
@@ -1474,8 +1464,14 @@ FinishIdentifier:
     } else if (C == '\\') {
       const char *UCNPtr = CurPtr + Size;
       uint32_t CodePoint = tryReadUCN(UCNPtr, CurPtr, /*Token=*/0);
-      if (CodePoint == 0 || !isAllowedIDChar(CodePoint))
+      if (CodePoint == 0 || !isAllowedIDChar(CodePoint, LangOpts))
         goto FinishIdentifier;
+
+      if (!isLexingRawMode()) {
+        maybeDiagnoseIDCharCompat(PP->getDiagnostics(), CodePoint,
+                                  makeCharRange(*this, CurPtr, UCNPtr),
+                                  /*IsFirst=*/false);
+      }
 
       Result.setFlag(Token::HasUCN);
       if ((UCNPtr - CurPtr ==  6 && CurPtr[1] == 'u') ||
@@ -1496,8 +1492,14 @@ FinishIdentifier:
                                     &CodePoint,
                                     strictConversion);
       if (Result != conversionOK ||
-          !isAllowedIDChar(static_cast<uint32_t>(CodePoint)))
+          !isAllowedIDChar(static_cast<uint32_t>(CodePoint), LangOpts))
         goto FinishIdentifier;
+
+      if (!isLexingRawMode()) {
+        maybeDiagnoseIDCharCompat(PP->getDiagnostics(), CodePoint,
+                                  makeCharRange(*this, CurPtr, UnicodePtr),
+                                  /*IsFirst=*/false);
+      }
 
       CurPtr = UnicodePtr;
       C = getCharAndSize(CurPtr, Size);
@@ -2569,9 +2571,7 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
 
           // If the user wrote \U1234, suggest a fixit to \u.
           if (i == 4 && NumHexDigits == 8) {
-            CharSourceRange URange =
-              CharSourceRange::getCharRange(getSourceLocation(KindLoc),
-                                            getSourceLocation(KindLoc + 1));
+            CharSourceRange URange = makeCharRange(*this, KindLoc, KindLoc + 1);
             Diag(KindLoc, diag::note_ucn_four_not_eight)
               << FixItHint::CreateReplacement(URange, "u");
           }
@@ -2625,35 +2625,28 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
     }
 
     return 0;
-    
-  } else if ((!LangOpts.CPlusPlus || LangOpts.CPlusPlus11) &&
-             (CodePoint >= 0xD800 && CodePoint <= 0xDFFF)) {
+
+  } else if (CodePoint >= 0xD800 && CodePoint <= 0xDFFF) {
     // C++03 allows UCNs representing surrogate characters. C99 and C++11 don't.
-    // We don't use isLexingRawMode() here because we need to warn about bad
+    // We don't use isLexingRawMode() here because we need to diagnose bad
     // UCNs even when skipping preprocessing tokens in a #if block.
-    if (Result && PP)
-      Diag(BufferPtr, diag::err_ucn_escape_invalid);
+    if (Result && PP) {
+      if (LangOpts.CPlusPlus && !LangOpts.CPlusPlus11)
+        Diag(BufferPtr, diag::warn_ucn_escape_surrogate);
+      else
+        Diag(BufferPtr, diag::err_ucn_escape_invalid);
+    }
     return 0;
   }
 
   return CodePoint;
 }
 
-static bool isUnicodeWhitespace(uint32_t C) {
-  return (C == 0x0085 || C == 0x00A0 || C == 0x1680 ||
-          C == 0x180E || (C >= 0x2000 && C <= 0x200A) ||
-          C == 0x2028 || C == 0x2029 || C == 0x202F ||
-          C == 0x205F || C == 0x3000);
-}
-
 void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
   if (!isLexingRawMode() && !PP->isPreprocessedOutput() &&
-      isUnicodeWhitespace(C)) {
-    CharSourceRange CharRange =
-      CharSourceRange::getCharRange(getSourceLocation(),
-                                    getSourceLocation(CurPtr));
+      isCharInSet(C, UnicodeWhitespaceChars)) {
     Diag(BufferPtr, diag::ext_unicode_whitespace)
-      << CharRange;
+      << makeCharRange(*this, BufferPtr, CurPtr);
 
     Result.setFlag(Token::LeadingSpace);
     if (SkipWhitespace(Result, CurPtr))
@@ -2662,14 +2655,21 @@ void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
     return LexTokenInternal(Result);
   }
 
-  if (isAllowedIDChar(C) && isAllowedInitiallyIDChar(C)) {
+  if (isAllowedIDChar(C, LangOpts) && isAllowedInitiallyIDChar(C, LangOpts)) {
+    if (!isLexingRawMode() && !ParsingPreprocessorDirective &&
+        !PP->isPreprocessedOutput()) {
+      maybeDiagnoseIDCharCompat(PP->getDiagnostics(), C,
+                                makeCharRange(*this, BufferPtr, CurPtr),
+                                /*IsFirst=*/true);
+    }
+
     MIOpt.ReadToken();
     return LexIdentifier(Result, CurPtr);
   }
 
   if (!isLexingRawMode() && !ParsingPreprocessorDirective &&
       !PP->isPreprocessedOutput() &&
-      !isASCII(*BufferPtr) && !isAllowedIDChar(C)) {
+      !isASCII(*BufferPtr) && !isAllowedIDChar(C, LangOpts)) {
     // Non-ASCII characters tend to creep into source code unintentionally.
     // Instead of letting the parser complain about the unknown token,
     // just drop the character.
@@ -2679,11 +2679,8 @@ void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
     // loophole in the mapping of Unicode characters to basic character set
     // characters that allows us to map these particular characters to, say,
     // whitespace.
-    CharSourceRange CharRange =
-      CharSourceRange::getCharRange(getSourceLocation(),
-                                    getSourceLocation(CurPtr));
     Diag(BufferPtr, diag::err_non_ascii)
-      << FixItHint::CreateRemoval(CharRange);
+      << FixItHint::CreateRemoval(makeCharRange(*this, BufferPtr, CurPtr));
 
     BufferPtr = CurPtr;
     return LexTokenInternal(Result);

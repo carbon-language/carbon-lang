@@ -40,6 +40,7 @@ def ImplicitConversionFloatingPointToBool :
   DiagGroup<"implicit-conversion-floating-point-to-bool">;
 def BadArrayNewLength : DiagGroup<"bad-array-new-length">;
 def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
+def C99Compat : DiagGroup<"c99-compat">;
 def CXXCompat: DiagGroup<"c++-compat">;
 def CastAlign : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
