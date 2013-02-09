@@ -334,7 +334,7 @@ public:
 
     // Skip over any bits that are already consumed.
     if (WordBitNo) {
-      if (sizeof(word_t) > 4)
+      if (sizeof(word_t) >= 4)
         Read64(WordBitNo);
       else
         Read(WordBitNo);
