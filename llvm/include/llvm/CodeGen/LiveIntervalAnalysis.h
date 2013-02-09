@@ -53,7 +53,6 @@ namespace llvm {
     const TargetRegisterInfo* TRI;
     const TargetInstrInfo* TII;
     AliasAnalysis *AA;
-    LiveVariables* LV;
     SlotIndexes* Indexes;
     MachineDominatorTree *DomTree;
     LiveRangeCalc *LRCalc;
@@ -352,35 +351,11 @@ namespace llvm {
     }
 
   private:
-    /// computeIntervals - Compute live intervals.
-    void computeIntervals();
-
     /// Compute live intervals for all virtual registers.
     void computeVirtRegs();
 
     /// Compute RegMaskSlots and RegMaskBits.
     void computeRegMasks();
-
-    /// handleRegisterDef - update intervals for a register def
-    /// (calls handleVirtualRegisterDef)
-    void handleRegisterDef(MachineBasicBlock *MBB,
-                           MachineBasicBlock::iterator MI,
-                           SlotIndex MIIdx,
-                           MachineOperand& MO, unsigned MOIdx);
-
-    /// isPartialRedef - Return true if the specified def at the specific index
-    /// is partially re-defining the specified live interval. A common case of
-    /// this is a definition of the sub-register.
-    bool isPartialRedef(SlotIndex MIIdx, MachineOperand &MO,
-                        LiveInterval &interval);
-
-    /// handleVirtualRegisterDef - update intervals for a virtual
-    /// register def
-    void handleVirtualRegisterDef(MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator MI,
-                                  SlotIndex MIIdx, MachineOperand& MO,
-                                  unsigned MOIdx,
-                                  LiveInterval& interval);
 
     static LiveInterval* createInterval(unsigned Reg);
 
