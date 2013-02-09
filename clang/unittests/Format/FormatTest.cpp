@@ -1687,6 +1687,8 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(SmallVector<int>) {}");
   verifyFormat("void f(SmallVector<int>);");
   verifyFormat("void f(SmallVector<int>) = 0;");
+  verifyFormat("void f(int i = (kValue) * kMask) {}");
+  verifyFormat("void f(int i = (kA * kB) & kMask) {}");
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
