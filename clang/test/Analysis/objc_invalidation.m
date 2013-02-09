@@ -250,7 +250,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 
 @interface MissingInvalidationMethod : Foo <FooBar_Protocol>
 @property (assign) MissingInvalidationMethod *foobar15_warn;
-#if RUN_MISSING_INVALIDATION_METHOD
+#if RUN_IVAR_INVALIDATION
 // expected-warning@-2 {{Property foobar15_warn needs to be invalidated; no invalidation method is defined in the @implementation for MissingInvalidationMethod}}
 #endif
 @end
@@ -259,7 +259,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 
 @interface MissingInvalidationMethod2 : Foo <FooBar_Protocol> {
   Foo *Ivar1;
-#if RUN_MISSING_INVALIDATION_METHOD
+#if RUN_IVAR_INVALIDATION
 // expected-warning@-2 {{Instance variable Ivar1 needs to be invalidated; no invalidation method is defined in the @implementation for MissingInvalidationMethod2}}
 #endif
 }

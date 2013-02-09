@@ -51,8 +51,7 @@ struct ChecksFilter {
   DefaultBool check_InstanceVariableInvalidation;
 };
 
-class IvarInvalidationCheckerImpl :
-  public Checker<check::ASTDecl<ObjCImplementationDecl> > {
+class IvarInvalidationCheckerImpl {
 
   typedef llvm::SmallSetVector<const ObjCMethodDecl*, 2> MethodSet;
   typedef llvm::DenseMap<const ObjCMethodDecl*,
@@ -471,11 +470,19 @@ visit(const ObjCImplementationDecl *ImplD) const {
   containsInvalidationMethod(InterfaceD, Info, /*LookForPartial*/ false);
 
   // Report an error in case none of the invalidation methods are declared.
-  if (!Info.needsInvalidation() && Filter.check_MissingInvalidationMethod) {
-    reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
-                               /*MissingDeclaration*/ true);
+  if (!Info.needsInvalidation()) {
+    if (Filter.check_MissingInvalidationMethod)
+      reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
+                                 /*MissingDeclaration*/ true);
+    // If there are no invalidation methods, there is no ivar validation work
+    // to be done.
     return;
   }
+
+  // Only check if Ivars are invalidated when InstanceVariableInvalidation
+  // has been requested.
+  if (!Filter.check_InstanceVariableInvalidation)
+    return;
 
   // Check that all ivars are invalidated by the invalidation methods.
   bool AtImplementationContainsAtLeastOneInvalidationMethod = false;
@@ -488,11 +495,6 @@ visit(const ObjCImplementationDecl *ImplD) const {
                                                InterfD->isInstanceMethod());
     if (D && D->hasBody()) {
       AtImplementationContainsAtLeastOneInvalidationMethod = true;
-
-      // Only check if Ivars are invalidated when InstanceVariableInvalidation
-      // has been requested.
-      if (!Filter.check_InstanceVariableInvalidation)
-        break;
 
       // Get a copy of ivars needing invalidation.
       IvarSet IvarsI = Ivars;
@@ -517,8 +519,7 @@ visit(const ObjCImplementationDecl *ImplD) const {
   }
 
   // Report an error in case none of the invalidation methods are implemented.
-  if (!AtImplementationContainsAtLeastOneInvalidationMethod &&
-      Filter.check_MissingInvalidationMethod)
+  if (!AtImplementationContainsAtLeastOneInvalidationMethod)
     reportNoInvalidationMethod(FirstIvarDecl, IvarToPopertyMap, InterfaceD,
                                /*MissingDeclaration*/ false);
 }
