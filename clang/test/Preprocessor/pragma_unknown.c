@@ -1,9 +1,10 @@
-// RUN: %clang_cc1 -E %s | grep '#pragma foo bar'
 // RUN: %clang_cc1 -fsyntax-only -Wunknown-pragmas -verify %s
+// RUN: %clang_cc1 -E %s | FileCheck --strict-whitespace %s
 
 // GCC doesn't expand macro args for unrecognized pragmas.
 #define bar xX
 #pragma foo bar   // expected-warning {{unknown pragma ignored}}
+// CHECK: {{^}}#pragma foo bar{{$}}
 
 #pragma STDC FP_CONTRACT ON
 #pragma STDC FP_CONTRACT OFF
