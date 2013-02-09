@@ -2537,6 +2537,7 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
     // Add this IV user to the end of the chain.
     IVChainVec[ChainIdx].add(IVInc(UserInst, IVOper, LastIncExpr));
   }
+  IVChain &Chain = IVChainVec[ChainIdx];
 
   SmallPtrSet<Instruction*,4> &NearUsers = ChainUsersVec[ChainIdx].NearUsers;
   // This chain's NearUsers become FarUsers.
@@ -2554,8 +2555,19 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
   for (Value::use_iterator UseIter = IVOper->use_begin(),
          UseEnd = IVOper->use_end(); UseIter != UseEnd; ++UseIter) {
     Instruction *OtherUse = dyn_cast<Instruction>(*UseIter);
-    if (!OtherUse || OtherUse == UserInst)
+    if (!OtherUse)
       continue;
+    // Uses in the chain will no longer be uses if the chain is formed.
+    // Include the head of the chain in this iteration (not Chain.begin()).
+    IVChain::const_iterator IncIter = Chain.Incs.begin();
+    IVChain::const_iterator IncEnd = Chain.Incs.end();
+    for( ; IncIter != IncEnd; ++IncIter) {
+      if (IncIter->UserInst == OtherUse)
+        break;
+    }
+    if (IncIter != IncEnd)
+      continue;
+
     if (SE.isSCEVable(OtherUse->getType())
         && !isa<SCEVUnknown>(SE.getSCEV(OtherUse))
         && IU.isIVUserOrOperand(OtherUse)) {

@@ -205,18 +205,18 @@ for.end:                                          ; preds = %for.body
 ; post-increment addressing, no add's or add.w's beyond the three
 ; mentioned. Most importantly, there should be no spills or reloads!
 ;
-; CHECK: testNeon:
-; CHECK: %.lr.ph
-; CHECK-NOT: lsl.w
-; CHECK-NOT: {{ldr|str|adds|add r}}
-; CHECK: add.w r
-; CHECK-NOT: {{ldr|str|adds|add r}}
-; CHECK: add.w r
-; CHECK-NOT: {{ldr|str|adds|add r}}
-; CHECK: add.w r
-; CHECK-NOT: {{ldr|str|adds|add r}}
-; CHECK-NOT: add.w r
-; CHECK: bne
+; A9: testNeon:
+; A9: %.lr.ph
+; A9-NOT: lsl.w
+; A9-NOT: {{ldr|str|adds|add r}}
+; A9: add.w r
+; A9-NOT: {{ldr|str|adds|add r}}
+; A9: add.w r
+; A9-NOT: {{ldr|str|adds|add r}}
+; A9: add.w r
+; A9-NOT: {{ldr|str|adds|add r}}
+; A9-NOT: add.w r
+; A9: bne
 define hidden void @testNeon(i8* %ref_data, i32 %ref_stride, i32 %limit, <16 x i8>* nocapture %data) nounwind optsize {
   %1 = icmp sgt i32 %limit, 0
   br i1 %1, label %.lr.ph, label %45
@@ -290,3 +290,80 @@ define hidden void @testNeon(i8* %ref_data, i32 %ref_stride, i32 %limit, <16 x i
 }
 
 declare <1 x i64> @llvm.arm.neon.vld1.v1i64(i8*, i32) nounwind readonly
+
+; Handle chains in which the same offset is used for both loads and
+; stores to the same array.
+; rdar://11410078.
+;
+; A9: @testReuse
+; A9: %for.body
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE:[r[0-9]+]]], [[INC:r[0-9]]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vld1.8 {d{{[0-9]+}}}, [[BASE]], {{r[0-9]}}
+; A9: vst1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vst1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vst1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vst1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vst1.8 {d{{[0-9]+}}}, [[BASE]], [[INC]]
+; A9: vst1.8 {d{{[0-9]+}}}, [[BASE]]
+; A9: bne
+define void @testReuse(i8* %src, i32 %stride) nounwind ssp {
+entry:
+  %mul = shl nsw i32 %stride, 2
+  %idx.neg = sub i32 0, %mul
+  %mul1 = mul nsw i32 %stride, 3
+  %idx.neg2 = sub i32 0, %mul1
+  %mul5 = shl nsw i32 %stride, 1
+  %idx.neg6 = sub i32 0, %mul5
+  %idx.neg10 = sub i32 0, %stride
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.0110 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %src.addr = phi i8* [ %src, %entry ], [ %add.ptr45, %for.body ]
+  %add.ptr = getelementptr inbounds i8* %src.addr, i32 %idx.neg
+  %vld1 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr, i32 1)
+  %add.ptr3 = getelementptr inbounds i8* %src.addr, i32 %idx.neg2
+  %vld2 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr3, i32 1)
+  %add.ptr7 = getelementptr inbounds i8* %src.addr, i32 %idx.neg6
+  %vld3 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr7, i32 1)
+  %add.ptr11 = getelementptr inbounds i8* %src.addr, i32 %idx.neg10
+  %vld4 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr11, i32 1)
+  %vld5 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %src.addr, i32 1)
+  %add.ptr17 = getelementptr inbounds i8* %src.addr, i32 %stride
+  %vld6 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr17, i32 1)
+  %add.ptr20 = getelementptr inbounds i8* %src.addr, i32 %mul5
+  %vld7 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr20, i32 1)
+  %add.ptr23 = getelementptr inbounds i8* %src.addr, i32 %mul1
+  %vld8 = tail call <8 x i8> @llvm.arm.neon.vld1.v8i8(i8* %add.ptr23, i32 1)
+  %vadd1 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld1, <8 x i8> %vld2) nounwind
+  %vadd2 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld2, <8 x i8> %vld3) nounwind
+  %vadd3 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld3, <8 x i8> %vld4) nounwind
+  %vadd4 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld4, <8 x i8> %vld5) nounwind
+  %vadd5 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld5, <8 x i8> %vld6) nounwind
+  %vadd6 = tail call <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8> %vld6, <8 x i8> %vld7) nounwind
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr3, <8 x i8> %vadd1, i32 1)
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr7, <8 x i8> %vadd2, i32 1)
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr11, <8 x i8> %vadd3, i32 1)
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* %src.addr, <8 x i8> %vadd4, i32 1)
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr17, <8 x i8> %vadd5, i32 1)
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* %add.ptr20, <8 x i8> %vadd6, i32 1)
+  %inc = add nsw i32 %i.0110, 1
+  %add.ptr45 = getelementptr inbounds i8* %src.addr, i32 8
+  %exitcond = icmp eq i32 %inc, 4
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+declare <8 x i8> @llvm.arm.neon.vld1.v8i8(i8*, i32) nounwind readonly
+
+declare void @llvm.arm.neon.vst1.v8i8(i8*, <8 x i8>, i32) nounwind
+
+declare <8 x i8> @llvm.arm.neon.vhaddu.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
