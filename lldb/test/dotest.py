@@ -1343,7 +1343,7 @@ for ia in range(len(archs) if iterArchs else 1):
                 self.counter = 0
                 (width, height) = LLDBTestResult.getTerminalSize()
                 if width > 10:
-                    self.progressbar = progress.AnimatedProgressBar(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
+                    self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
 
             def _exc_info_to_string(self, err, test):
                 """Overrides superclass TestResult's method in order to append

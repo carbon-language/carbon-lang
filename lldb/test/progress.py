@@ -96,6 +96,46 @@ class AnimatedProgressBar(ProgressBar):
         self.stdout.write(str(self))
         self.stdout.flush()
 
+class ProgressWithEvents(AnimatedProgressBar):
+    """Extends AnimatedProgressBar to allow you to track a set of events that
+       cause the progress to move. For instance, in a deletion progress bar, you
+       can track files that were nuked and files that the user doesn't have access to
+    """
+    def __init__(self, 
+                 start=0, 
+                 end=10, 
+                 width=12, 
+                 fill=unichr(0x25C9).encode("utf-8"), 
+                 blank=unichr(0x25CC).encode("utf-8"), 
+                 marker=unichr(0x25CE).encode("utf-8"), 
+                 format='[%(fill)s%(marker)s%(blank)s] %(progress)s%%', 
+                 incremental=True,
+                 stdout=sys.stdout):
+        super(ProgressWithEvents, self).__init__(start,end,width,fill,blank,marker,format,incremental,stdout)
+        self.events = {}
+
+    def add_event(self,event):
+        if event in self.events:
+            self.events[event] += 1
+        else:
+            self.events[event] = 1
+
+    def show_progress(self):
+        isatty = hasattr(self.stdout, 'isatty') and self.stdout.isatty()
+        if isatty:
+            self.stdout.write('\r')
+        else:
+            self.stdout.write('\n')
+        self.stdout.write(str(self))
+        if len(self.events) == 0:
+            return
+        self.stdout.write('\n')
+        for key in self.events.keys():
+            self.stdout.write(str(key) + ' = ' + str(self.events[key]) + ' ')
+        if isatty:
+            self.stdout.write('\033[1A')
+        self.stdout.flush()
+
 
 if __name__ == '__main__':
     p = AnimatedProgressBar(end=200, width=200)
