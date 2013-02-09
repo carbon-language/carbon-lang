@@ -334,7 +334,7 @@ public:
 
     // Skip over any bits that are already consumed.
     if (WordBitNo) {
-      if (sizeof(word_t) >= 4)
+      if (sizeof(word_t) > 4)
         Read64(WordBitNo);
       else
         Read(WordBitNo);
@@ -440,7 +440,7 @@ private:
     // If word_t is 64-bits and if we've read less than 32 bits, just dump
     // the bits we have up to the next 32-bit boundary.
     if (sizeof(word_t) > 4 &&
-        BitsInCurWord > 32) {
+        BitsInCurWord >= 32) {
       CurWord >>= BitsInCurWord-32;
       BitsInCurWord = 32;
       return;
