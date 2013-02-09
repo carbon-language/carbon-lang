@@ -185,6 +185,26 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
+/// \brief Provide DenseMapInfo for Attribute::AttrKinds. This is used by
+/// AttrBuilder.
+template<> struct DenseMapInfo<Attribute::AttrKind> {
+  static inline Attribute::AttrKind getEmptyKey() {
+    return Attribute::AttrKindEmptyKey;
+  }
+  static inline Attribute::AttrKind getTombstoneKey() {
+    return Attribute::AttrKindTombstoneKey;
+  }
+  static unsigned getHashValue(const Attribute::AttrKind &Val) {
+    return Val * 37U;
+  }
+  static bool isEqual(const Attribute::AttrKind &LHS,
+                      const Attribute::AttrKind &RHS) {
+    return LHS == RHS;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
 /// \brief This class holds the attributes for a function, its return value, and
 /// its parameters. You access the attributes for each of them via an index into
 /// the AttributeSet object. The function attributes are at index
@@ -200,6 +220,7 @@ public:
 private:
   friend class AttrBuilder;
   friend class AttributeSetImpl;
+  template <typename Ty> friend struct DenseMapInfo;
 
   /// \brief The attributes that we are managing. This can be null to represent
   /// the empty attributes list.
@@ -339,22 +360,23 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
-/// \brief Provide DenseMapInfo for Attribute::AttrKinds. This is used by
-/// AttrBuilder.
-template<> struct DenseMapInfo<Attribute::AttrKind> {
-  static inline Attribute::AttrKind getEmptyKey() {
-    return Attribute::AttrKindEmptyKey;
+/// \brief Provide DenseMapInfo for AttributeSet.
+template<> struct DenseMapInfo<AttributeSet> {
+  static inline AttributeSet getEmptyKey() {
+    uintptr_t Val = static_cast<uintptr_t>(-1);
+    Val <<= PointerLikeTypeTraits<void*>::NumLowBitsAvailable;
+    return AttributeSet(reinterpret_cast<AttributeSetImpl*>(Val));
   }
-  static inline Attribute::AttrKind getTombstoneKey() {
-    return Attribute::AttrKindTombstoneKey;
+  static inline AttributeSet getTombstoneKey() {
+    uintptr_t Val = static_cast<uintptr_t>(-2);
+    Val <<= PointerLikeTypeTraits<void*>::NumLowBitsAvailable;
+    return AttributeSet(reinterpret_cast<AttributeSetImpl*>(Val));
   }
-  static unsigned getHashValue(const Attribute::AttrKind &Val) {
-    return Val * 37U;
+  static unsigned getHashValue(AttributeSet AS) {
+    return (unsigned((uintptr_t)AS.pImpl) >> 4) ^
+           (unsigned((uintptr_t)AS.pImpl) >> 9);
   }
-  static bool isEqual(const Attribute::AttrKind &LHS,
-                      const Attribute::AttrKind &RHS) {
-    return LHS == RHS;
-  }
+  static bool isEqual(AttributeSet LHS, AttributeSet RHS) { return LHS == RHS; }
 };
 
 //===----------------------------------------------------------------------===//
