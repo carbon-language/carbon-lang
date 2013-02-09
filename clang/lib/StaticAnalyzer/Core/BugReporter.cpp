@@ -1324,7 +1324,8 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
   // Record the last "looping back" diagnostic.  This is used
   // for determining if we should emit a diagnostic for skipped loops.
-  std::pair<const Stmt *, PathDiagnosticEventPiece *> LastLoopDiagnostic(0, 0);
+  std::pair<const Stmt *, PathDiagnosticEventPiece *>
+    LastLoopDiagnostic((Stmt*)0, (PathDiagnosticEventPiece*)0);
 
   const ExplodedNode *NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
   while (NextNode) {
