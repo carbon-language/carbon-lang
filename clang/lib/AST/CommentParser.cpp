@@ -11,6 +11,7 @@
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/CommentDiagnostic.h"
 #include "clang/AST/CommentSema.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -107,11 +108,6 @@ class TextTokenRetokenizer {
     if (Toks.size() == 1)
       setupBuffer();
     return true;
-  }
-
-  static bool isWhitespace(char C) {
-    return C == ' ' || C == '\n' || C == '\r' ||
-           C == '\t' || C == '\f' || C == '\v';
   }
 
   void consumeWhitespace() {

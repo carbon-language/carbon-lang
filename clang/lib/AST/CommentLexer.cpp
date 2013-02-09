@@ -1,5 +1,6 @@
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -16,18 +17,15 @@ void Token::dump(const Lexer &L, const SourceManager &SM) const {
 
 namespace {
 bool isHTMLNamedCharacterReferenceCharacter(char C) {
-  return (C >= 'a' && C <= 'z') ||
-         (C >= 'A' && C <= 'Z');
+  return isLetter(C);
 }
 
 bool isHTMLDecimalCharacterReferenceCharacter(char C) {
-  return C >= '0' && C <= '9';
+  return isDigit(C);
 }
 
 bool isHTMLHexCharacterReferenceCharacter(char C) {
-  return (C >= '0' && C <= '9') ||
-         (C >= 'a' && C <= 'f') ||
-         (C >= 'A' && C <= 'F');
+  return isHexDigit(C);
 }
 
 StringRef convertCodePointToUTF8(llvm::BumpPtrAllocator &Allocator,
@@ -96,7 +94,7 @@ void Lexer::skipLineStartingDecorations() {
       return;
 
     char C = *NewBufferPtr;
-    while (C == ' ' || C == '\t' || C == '\f' || C == '\v') {
+    while (isHorizontalWhitespace(C)) {
       NewBufferPtr++;
       if (NewBufferPtr == CommentEnd)
         return;
@@ -116,8 +114,7 @@ namespace {
 /// Returns pointer to the first newline character in the string.
 const char *findNewline(const char *BufferPtr, const char *BufferEnd) {
   for ( ; BufferPtr != BufferEnd; ++BufferPtr) {
-    const char C = *BufferPtr;
-    if (C == '\n' || C == '\r')
+    if (isVerticalWhitespace(*BufferPtr))
       return BufferPtr;
   }
   return BufferEnd;
@@ -166,14 +163,11 @@ const char *skipHexCharacterReference(const char *BufferPtr,
 }
 
 bool isHTMLIdentifierStartingCharacter(char C) {
-  return (C >= 'a' && C <= 'z') ||
-         (C >= 'A' && C <= 'Z');
+  return isLetter(C);
 }
 
 bool isHTMLIdentifierCharacter(char C) {
-  return (C >= 'a' && C <= 'z') ||
-         (C >= 'A' && C <= 'Z') ||
-         (C >= '0' && C <= '9');
+  return isAlphanumeric(C);
 }
 
 const char *skipHTMLIdentifier(const char *BufferPtr, const char *BufferEnd) {
@@ -202,15 +196,6 @@ const char *skipHTMLQuotedString(const char *BufferPtr, const char *BufferEnd)
   return BufferEnd;
 }
 
-bool isHorizontalWhitespace(char C) {
-  return C == ' ' || C == '\t' || C == '\f' || C == '\v';
-}
-
-bool isWhitespace(char C) {
-  return C == ' ' || C == '\n' || C == '\r' ||
-         C == '\t' || C == '\f' || C == '\v';
-}
-
 const char *skipWhitespace(const char *BufferPtr, const char *BufferEnd) {
   for ( ; BufferPtr != BufferEnd; ++BufferPtr) {
     if (!isWhitespace(*BufferPtr))
@@ -224,14 +209,11 @@ bool isWhitespace(const char *BufferPtr, const char *BufferEnd) {
 }
 
 bool isCommandNameStartCharacter(char C) {
-  return (C >= 'a' && C <= 'z') ||
-         (C >= 'A' && C <= 'Z');
+  return isLetter(C);
 }
 
 bool isCommandNameCharacter(char C) {
-  return (C >= 'a' && C <= 'z') ||
-         (C >= 'A' && C <= 'Z') ||
-         (C >= '0' && C <= '9');
+  return isAlphanumeric(C);
 }
 
 const char *skipCommandName(const char *BufferPtr, const char *BufferEnd) {
@@ -247,12 +229,10 @@ const char *skipCommandName(const char *BufferPtr, const char *BufferEnd) {
 const char *findBCPLCommentEnd(const char *BufferPtr, const char *BufferEnd) {
   const char *CurPtr = BufferPtr;
   while (CurPtr != BufferEnd) {
-    char C = *CurPtr;
-    while (C != '\n' && C != '\r') {
+    while (!isVerticalWhitespace(*CurPtr)) {
       CurPtr++;
       if (CurPtr == BufferEnd)
         return BufferEnd;
-      C = *CurPtr;
     }
     // We found a newline, check if it is escaped.
     const char *EscapePtr = CurPtr - 1;
@@ -440,13 +420,11 @@ void Lexer::setupAndLexVerbatimBlock(Token &T,
   // If there is a newline following the verbatim opening command, skip the
   // newline so that we don't create an tok::verbatim_block_line with empty
   // text content.
-  if (BufferPtr != CommentEnd) {
-    const char C = *BufferPtr;
-    if (C == '\n' || C == '\r') {
-      BufferPtr = skipNewline(BufferPtr, CommentEnd);
-      State = LS_VerbatimBlockBody;
-      return;
-    }
+  if (BufferPtr != CommentEnd &&
+      isVerticalWhitespace(*BufferPtr)) {
+    BufferPtr = skipNewline(BufferPtr, CommentEnd);
+    State = LS_VerbatimBlockBody;
+    return;
   }
 
   State = LS_VerbatimBlockFirstLine;
