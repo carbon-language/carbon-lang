@@ -124,7 +124,6 @@ LLVM_READONLY static inline bool isAlphanumeric(unsigned char c) {
 LLVM_READONLY static inline bool isHexDigit(unsigned char c) {
   using namespace charinfo;
   return (InfoTable[c] & (CHAR_DIGIT|CHAR_XLETTER)) != 0;
-    return true;
 }
 
 /// Return true if this character is an ASCII punctuation character.
