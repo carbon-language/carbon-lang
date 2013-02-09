@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/HeaderMap.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
@@ -61,7 +62,7 @@ static inline unsigned HashHMapKey(StringRef Str) {
   const char *S = Str.begin(), *End = Str.end();
 
   for (; S != End; S++)
-    Result += tolower(*S) * 13;
+    Result += toLowercase(*S) * 13;
   return Result;
 }
 

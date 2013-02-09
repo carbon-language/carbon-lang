@@ -14,6 +14,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
@@ -6258,7 +6259,7 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
   // The uppercased name of the property name.
   std::string UpperKey = PropName->getName();
   if (!UpperKey.empty())
-    UpperKey[0] = toupper(UpperKey[0]);      
+    UpperKey[0] = toUppercase(UpperKey[0]);
   
   bool ReturnTypeMatchesProperty = ReturnType.isNull() ||
     Context.hasSameUnqualifiedType(ReturnType.getNonReferenceType(), 

@@ -14,6 +14,7 @@
 
 #include "ClangSACheckers.h"
 #include "InterCheckerAPI.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
@@ -305,7 +306,7 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
 
       SmallString<80> buf;
       llvm::raw_svector_ostream os(buf);
-      os << (char)toupper(CurrentFunctionDescription[0])
+      os << toUppercase(CurrentFunctionDescription[0])
          << &CurrentFunctionDescription[1]
          << " accesses out-of-bound array element";
       report = new BugReport(*BT, os.str(), N);      

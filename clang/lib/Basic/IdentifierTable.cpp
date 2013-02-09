@@ -471,7 +471,7 @@ SelectorTable::constructSetterName(IdentifierTable &Idents,
   SmallString<100> SelectorName;
   SelectorName = "set";
   SelectorName += Name->getName();
-  SelectorName[3] = toupper(SelectorName[3]);
+  SelectorName[3] = toUppercase(SelectorName[3]);
   IdentifierInfo *SetterName = &Idents.get(SelectorName);
   return SelTable.getUnarySelector(SetterName);
 }
