@@ -233,7 +233,6 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
     case lltok::exclaim:    if (ParseStandaloneMetadata()) return true; break;
     case lltok::MetadataVar:if (ParseNamedMetadata()) return true; break;
-    case lltok::AttrGrpID:  if (ParseUnnamedAttrGrp()) return true; break;
 
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
@@ -279,6 +278,8 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_global:        // GlobalType
       if (ParseGlobal("", SMLoc(), 0, false, 0)) return true;
       break;
+
+    case lltok::kw_attributes: if (ParseUnnamedAttrGrp()) return true; break;
     }
   }
 }
@@ -800,16 +801,18 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
 }
 
 /// ParseUnnamedAttrGrp
-///   ::= AttrGrpID '=' '{' AttrValPair+ '}'
+///   ::= 'attributes' AttrGrpID '=' '{' AttrValPair+ '}'
 bool LLParser::ParseUnnamedAttrGrp() {
-  assert(Lex.getKind() == lltok::AttrGrpID);
+  assert(Lex.getKind() == lltok::kw_attributes);
   LocTy AttrGrpLoc = Lex.getLoc();
+  Lex.Lex();
+
+  assert(Lex.getKind() == lltok::AttrGrpID);
   unsigned VarID = Lex.getUIntVal();
   std::vector<unsigned> unused;
   Lex.Lex();
 
   if (ParseToken(lltok::equal, "expected '=' here") ||
-      ParseToken(lltok::kw_attributes, "expected 'attributes' keyword here") ||
       ParseToken(lltok::lbrace, "expected '{' here") ||
       ParseFnAttributeValuePairs(NumberedAttrBuilders[VarID], unused, true) ||
       ParseToken(lltok::rbrace, "expected end of attribute group"))
