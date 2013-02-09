@@ -15,11 +15,11 @@
 #define LLVM_CODEGEN_MACHINEFUNCTIONANALYSIS_H
 
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
 class MachineFunction;
+class TargetMachine;
 
 /// MachineFunctionAnalysis - This class is a Pass that manages a
 /// MachineFunction object.
