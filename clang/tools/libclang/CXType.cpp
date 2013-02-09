@@ -638,9 +638,8 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return cxstring::createEmpty();
 
-  const Decl *D = static_cast<const Decl*>(C.data[0]);
-  ASTUnit *AU = cxcursor::getCursorASTUnit(C);
-  ASTContext &Ctx = AU->getASTContext();
+  const Decl *D = cxcursor::getCursorDecl(C);
+  ASTContext &Ctx = cxcursor::getCursorContext(C);
   std::string encoding;
 
   if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))  {
