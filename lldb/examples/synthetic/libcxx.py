@@ -561,8 +561,12 @@ class stdmap_SynthProvider:
 				else:
 					# FIXME we need to have accessed item 0 before accessing any other item!
 					if self.skip_size == None:
-						logger >> "You asked for item > 0 before asking for item == 0, too bad - I have no clue"
-						return None
+						logger >> "You asked for item > 0 before asking for item == 0, I will fetch 0 now then retry"
+						if self.get_child_at_index(0):
+							return self.get_child_at_index(index)
+						else:
+							logger >> "item == 0 could not be found. sorry, nothing can be done here."
+							return None
 					return current.CreateChildAtOffset('[' + str(index) + ']',self.skip_size,self.data_type)
 			else:
 				logger >> "Unable to infer data-type - returning None (should mark tree as garbage here?)"

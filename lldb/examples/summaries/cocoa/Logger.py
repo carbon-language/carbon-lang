@@ -58,10 +58,10 @@ class FileLogger:
 			self.file = None
 
 # to enable logging:
-# define Logger._lldb_formatters_debug_level to any number greater than 0
+# define lldb.formatters.Logger._lldb_formatters_debug_level to any number greater than 0
 # if you define it to any value greater than 1, the log will be automatically flushed after each write (slower but should make sure most of the stuff makes it to the log even if we crash)
 # if you define it to any value greater than 2, the calling function's details will automatically be logged (even slower, but provides additional details)
-# if you need the log to go to a file instead of on screen, define Logger._lldb_formatters_debug_filename to a valid filename
+# if you need the log to go to a file instead of on screen, define lldb.formatters.Logger._lldb_formatters_debug_filename to a valid filename
 class Logger:
 	def __init__(self,autoflush=False,logcaller=False):
 		global _lldb_formatters_debug_level
