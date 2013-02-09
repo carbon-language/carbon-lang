@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_LOOPINFOIMPL_H
 
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
 
 namespace llvm {
