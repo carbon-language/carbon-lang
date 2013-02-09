@@ -670,9 +670,12 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
+  // The line table entries are not always emitted in assembly, so it
+  // is not okay to use line_table_start here.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                    LineTableStartSym);
+                    NewCU->getUniqueID() == 0 ?
+                    Asm->GetTempSymbol("section_line") : LineTableStartSym);
   else if (NewCU->getUniqueID() == 0)
     NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
   else
