@@ -909,6 +909,18 @@ SBProcess::GetRestartedFromEvent (const SBEvent &event)
     return Process::ProcessEventData::GetRestartedFromEvent (event.get());
 }
 
+size_t
+SBProcess::GetNumRestartedReasonsFromEvent (const lldb::SBEvent &event)
+{
+    return Process::ProcessEventData::GetNumRestartedReasons(event.get());
+}
+
+const char *
+SBProcess::GetRestartedReasonAtIndexFromEvent (const lldb::SBEvent &event, size_t idx)
+{
+    return Process::ProcessEventData::GetRestartedReasonAtIndex(event.get(), idx);
+}
+
 SBProcess
 SBProcess::GetProcessFromEvent (const SBEvent &event)
 {

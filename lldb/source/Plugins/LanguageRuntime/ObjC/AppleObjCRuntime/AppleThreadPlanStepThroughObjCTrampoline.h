@@ -46,7 +46,7 @@ public:
     ValidatePlan (Stream *error);
 
     virtual bool
-    PlanExplainsStop ();
+    PlanExplainsStop (Event *event_ptr);
 
 
     virtual lldb::StateType

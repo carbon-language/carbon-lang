@@ -351,7 +351,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
 }
 
 bool
-ThreadPlanStepInRange::PlanExplainsStop ()
+ThreadPlanStepInRange::PlanExplainsStop (Event *event_ptr)
 {
     // We always explain a stop.  Either we've just done a single step, in which
     // case we'll do our ordinary processing, or we stopped for some

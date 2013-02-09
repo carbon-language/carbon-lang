@@ -32,6 +32,7 @@ def stop_if_called_from_a():
             should_stop = False
 
     dbg.SetAsync(old_async)
+    print >> sys.stdout, "stop_if_called_from_a returning: ", should_stop
     return should_stop
 
 

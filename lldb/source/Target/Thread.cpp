@@ -646,7 +646,7 @@ Thread::ShouldStop (Event* event_ptr)
     
     bool done_processing_current_plan = false;
     
-    if (!current_plan->PlanExplainsStop())
+    if (!current_plan->PlanExplainsStop(event_ptr))
     {
         if (current_plan->TracerExplainsStop())
         {
@@ -660,7 +660,7 @@ Thread::ShouldStop (Event* event_ptr)
             ThreadPlan *plan_ptr = current_plan;
             while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
             {
-                if (plan_ptr->PlanExplainsStop())
+                if (plan_ptr->PlanExplainsStop(event_ptr))
                 {
                     should_stop = plan_ptr->ShouldStop (event_ptr);
                     
@@ -831,9 +831,24 @@ Thread::ShouldReportStop (Event* event_ptr)
     }
     else
     {
+        Vote thread_vote = eVoteNoOpinion;
+        ThreadPlan *plan_ptr = GetCurrentPlan();
+        while (1)
+        {
+            if (plan_ptr->PlanExplainsStop(event_ptr))
+            {
+                thread_vote = plan_ptr->ShouldReportStop(event_ptr);
+                break;
+            }
+            if (PlanIsBasePlan(plan_ptr))
+                break;
+            else
+                plan_ptr = GetPreviousPlan(plan_ptr);
+        }
         if (log)
-            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote  for current plan\n", GetID());
-        return GetCurrentPlan()->ShouldReportStop (event_ptr);
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4" PRIx64 ": returning vote %i for current plan\n", GetID(), thread_vote);
+
+        return thread_vote;
     }
 }
 

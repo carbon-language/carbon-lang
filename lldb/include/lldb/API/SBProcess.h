@@ -234,6 +234,12 @@ public:
 
     static bool
     GetRestartedFromEvent (const lldb::SBEvent &event);
+    
+    static size_t
+    GetNumRestartedReasonsFromEvent (const lldb::SBEvent &event);
+    
+    static const char *
+    GetRestartedReasonAtIndexFromEvent (const lldb::SBEvent &event, size_t idx);
 
     static lldb::SBProcess
     GetProcessFromEvent (const lldb::SBEvent &event);

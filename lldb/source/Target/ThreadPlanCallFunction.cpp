@@ -231,7 +231,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
 ThreadPlanCallFunction::~ThreadPlanCallFunction ()
 {
-    DoTakedown(true);
+    DoTakedown(PlanSucceeded());
 }
 
 void
@@ -309,7 +309,7 @@ ThreadPlanCallFunction::DoTakedown (bool success)
 void
 ThreadPlanCallFunction::WillPop ()
 {
-    DoTakedown(true);
+    DoTakedown(PlanSucceeded());
 }
 
 void
@@ -335,14 +335,25 @@ ThreadPlanCallFunction::ValidatePlan (Stream *error)
     return true;
 }
 
+
+Vote
+ThreadPlanCallFunction::ShouldReportStop(Event *event_ptr)
+{
+    if (m_takedown_done || IsPlanComplete())
+        return eVoteYes;
+    else
+        return ThreadPlan::ShouldReportStop(event_ptr);
+}
+
 bool
-ThreadPlanCallFunction::PlanExplainsStop ()
+ThreadPlanCallFunction::PlanExplainsStop (Event *event_ptr)
 {    
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP|LIBLLDB_LOG_PROCESS));
     m_real_stop_info_sp = GetPrivateStopReason();
     
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
     // we answer yes.
-    if (m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
+    if (m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop(event_ptr))
     {
         SetPlanComplete();
         return true;
@@ -355,16 +366,15 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         stop_reason = eStopReasonNone;
     else
         stop_reason = m_real_stop_info_sp->GetStopReason();
+    if (log)
+        log->Printf ("ThreadPlanCallFunction::PlanExplainsStop: Got stop reason - %s.", Thread::StopReasonAsCString(stop_reason));
 
     if (stop_reason == eStopReasonBreakpoint && BreakpointsExplainStop())
         return true;
     
-    // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
-    if (!m_unwind_on_error)
-        return false;
-            
-    // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
-    // If it is not an internal breakpoint, consult OkayToDiscard.
+    // We control breakpoints separately from other "stop reasons."  So first,
+    // check the case where we stopped for an internal breakpoint, in that case, continue on.
+    // If it is not an internal breakpoint, consult m_ignore_breakpoints.
     
     
     if (stop_reason == eStopReasonBreakpoint)
@@ -381,6 +391,8 @@ ThreadPlanCallFunction::PlanExplainsStop ()
             for (uint32_t i = 0; i < num_owners; i++)
             {
                 Breakpoint &bp = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint();
+                if (log)
+                    log->Printf ("ThreadPlanCallFunction::PlanExplainsStop: hit breakpoint %d while calling function", bp.GetID());
                 
                 if (!bp.IsInternal())
                 {
@@ -389,16 +401,32 @@ ThreadPlanCallFunction::PlanExplainsStop ()
                 }
             }
             if (is_internal)
+            {
+                if (log)
+                    log->Printf ("ThreadPlanCallFunction::PlanExplainsStop hit an internal breakpoint, not stopping.");
                 return false;
+            }
         }
-        
+
         if (m_ignore_breakpoints)
         {
-            DoTakedown(false);
+            if (log)
+                log->Printf("ThreadPlanCallFunction::PlanExplainsStop: we are ignoring breakpoints, overriding breakpoint stop info ShouldStop, returning true");
+            m_real_stop_info_sp->OverrideShouldStop(false);
             return true;
         }
         else
+        {
+            if (log)
+                log->Printf("ThreadPlanCallFunction::PlanExplainsStop: we are not ignoring breakpoints, overriding breakpoint stop info ShouldStop, returning true");
+            m_real_stop_info_sp->OverrideShouldStop(true);
             return false;
+        }
+    }
+    else if (!m_unwind_on_error)
+    {
+        // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
+        return false;
     }
     else
     {
@@ -406,19 +434,25 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         // If we want to discard the plan, then we say we explain the stop
         // but if we are going to be discarded, let whoever is above us
         // explain the stop.
-        SetPlanComplete(false);
-        if (m_subplan_sp)
+        // But don't discard the plan if the stop would restart itself (for instance if it is a
+        // signal that is set not to stop.  Check that here first.  We just say we explain the stop
+        // but aren't done and everything will continue on from there.
+        
+        if (m_real_stop_info_sp->ShouldStopSynchronous(event_ptr))
         {
-            if (m_unwind_on_error)
+            SetPlanComplete(false);
+            if (m_subplan_sp)
             {
-                DoTakedown(false);
-                return true;
+                if (m_unwind_on_error)
+                    return true;
+                else
+                    return false;
             }
             else
                 return false;
         }
         else
-            return false;
+            return true;
     }
 }
 
@@ -427,14 +461,11 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
     // We do some computation in PlanExplainsStop that may or may not set the plan as complete.
     // We need to do that here to make sure our state is correct.
-    PlanExplainsStop();
+    PlanExplainsStop(event_ptr);
     
     if (IsPlanComplete())
     {
         ReportRegisterState ("Function completed.  Register state was:");
-        
-        DoTakedown(true);
-        
         return true;
     }
     else
@@ -494,12 +525,6 @@ bool
 ThreadPlanCallFunction::MischiefManaged ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    
-    if (PlanExplainsStop() && !IsPlanComplete())
-    {
-        if (log)
-            log->Printf ("ThreadPlanCallFunction: Got into MischiefManaged, explained stop but was not complete.");
-    }
     
     if (IsPlanComplete())
     {

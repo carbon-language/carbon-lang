@@ -703,7 +703,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         }
         
         const bool stop_others = true;
-        const bool try_all_threads = true;
+        const bool try_all_threads = run_others;
         
         Address wrapper_address (m_jit_start_addr);
         lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(), 

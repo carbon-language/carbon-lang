@@ -174,7 +174,7 @@ ThreadPlanStepOut::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanStepOut::PlanExplainsStop ()
+ThreadPlanStepOut::PlanExplainsStop (Event *event_ptr)
 {
     // If one of our child plans just finished, then we do explain the stop.
     if (m_step_out_plan_sp)

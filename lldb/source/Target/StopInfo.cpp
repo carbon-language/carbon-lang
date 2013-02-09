@@ -38,7 +38,9 @@ StopInfo::StopInfo (Thread &thread, uint64_t value) :
     m_thread (thread),
     m_stop_id (thread.GetProcess()->GetStopID()),
     m_resume_id (thread.GetProcess()->GetResumeID()),
-    m_value (value)
+    m_value (value),
+    m_override_set(false),
+    m_override_value(true)
 {
 }
 
@@ -773,6 +775,12 @@ public:
     }
 
     virtual bool
+    ShouldStopSynchronous (Event *event_ptr)
+    {
+        return m_thread.GetProcess()->GetUnixSignals().GetShouldStop (m_value);
+    }
+
+    virtual bool
     ShouldStop (Event *event_ptr)
     {
         return m_thread.GetProcess()->GetUnixSignals().GetShouldStop (m_value);
@@ -783,7 +791,16 @@ public:
     virtual bool
     ShouldNotify (Event *event_ptr)
     {
-        return m_thread.GetProcess()->GetUnixSignals().GetShouldNotify (m_value);
+        bool should_notify = m_thread.GetProcess()->GetUnixSignals().GetShouldNotify (m_value);
+        if (should_notify)
+        {
+            StreamString strm;
+            strm.Printf ("thread %d received signal: %s",
+                         m_thread.GetIndexID(),
+                         m_thread.GetProcess()->GetUnixSignals().GetSignalAsCString (m_value));
+            Process::ProcessEventData::AddRestartedReason(event_ptr, strm.GetData());
+        }
+        return should_notify;
     }
 
     
@@ -924,6 +941,16 @@ public:
     {
         return m_return_valobj_sp;
     }
+    
+protected:
+    virtual bool
+    ShouldStop (Event *event_ptr)
+    {
+        if (m_plan_sp)
+            return m_plan_sp->ShouldStop(event_ptr);
+        else
+            return StopInfo::ShouldStop(event_ptr);
+    }
 
 private:
     ThreadPlanSP m_plan_sp;
@@ -956,7 +983,6 @@ public:
     {
         return "exec";
     }
-protected:
 protected:
     
     virtual void

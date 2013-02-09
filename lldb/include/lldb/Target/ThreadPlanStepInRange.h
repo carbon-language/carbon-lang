@@ -61,7 +61,7 @@ public:
     SetDefaultFlagValue (uint32_t new_value);
 
     virtual bool
-    PlanExplainsStop ();
+    PlanExplainsStop (Event *event_ptr);
 
     virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
     

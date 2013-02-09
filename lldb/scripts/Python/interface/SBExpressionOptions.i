@@ -39,7 +39,7 @@ public:
     %feature("docstring", "Sets whether to unwind the expression stack on error.") SetUnwindOnError;
     
     void
-    SetUnwindOnError (bool unwind = false);
+    SetUnwindOnError (bool unwind = true);
     
     bool
     GetIgnoreBreakpoints () const;
@@ -47,7 +47,7 @@ public:
     %feature("docstring", "Sets whether to ignore breakpoint hits while running expressions.") SetUnwindOnError;
     
     void
-    SetIgnoreBreakpoints (bool ignore = false);
+    SetIgnoreBreakpoints (bool ignore = true);
     
     lldb::DynamicValueType
     GetFetchDynamicValue () const;

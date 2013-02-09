@@ -58,7 +58,7 @@ ThreadPlanStepOverBreakpoint::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanStepOverBreakpoint::PlanExplainsStop ()
+ThreadPlanStepOverBreakpoint::PlanExplainsStop (Event *event_ptr)
 {
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)

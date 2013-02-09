@@ -199,6 +199,11 @@ protected:
         if (environment.GetArgumentCount() > 0)
             m_options.launch_info.GetEnvironmentEntries ().AppendArguments (environment);
 
+        // Get the value of synchronous execution here.  If you wait till after you have started to
+        // run, then you could have hit a breakpoint, whose command might switch the value, and
+        // then you'll pick up that incorrect value.
+        bool synchronous_execution = m_interpreter.GetSynchronous ();
+
         // Finalize the file actions, and if none were given, default to opening
         // up a pseudo terminal
         const bool default_to_use_pty = true;
@@ -258,7 +263,6 @@ protected:
                     error = process->Resume();
                     if (error.Success())
                     {
-                        bool synchronous_execution = m_interpreter.GetSynchronous ();
                         if (synchronous_execution)
                         {
                             state = process->WaitForProcessToStop (NULL);

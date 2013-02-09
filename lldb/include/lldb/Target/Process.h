@@ -1446,6 +1446,22 @@ public:
             {
                 return m_restarted;
             }
+        
+            size_t
+            GetNumRestartedReasons ()
+            {
+                return m_restarted_reasons.size();
+            }
+        
+            const char *
+            GetRestartedReasonAtIndex(size_t idx)
+            {
+                if (idx > m_restarted_reasons.size())
+                    return NULL;
+                else
+                    return m_restarted_reasons[idx].c_str();
+            }
+        
             bool
             GetInterrupted () const
             {
@@ -1469,6 +1485,15 @@ public:
 
             static bool
             GetRestartedFromEvent (const Event *event_ptr);
+        
+            static size_t
+            GetNumRestartedReasons(const Event *event_ptr);
+        
+            static const char *
+            GetRestartedReasonAtIndex(const Event *event_ptr, size_t idx);
+        
+            static void
+            AddRestartedReason (Event *event_ptr, const char *reason);
 
             static void
             SetRestartedInEvent (Event *event_ptr, bool new_value);
@@ -1499,9 +1524,15 @@ public:
             {
                 m_interrupted = new_value;
             }
+            void
+            AddRestartedReason (const char *reason)
+            {
+                m_restarted_reasons.push_back(reason);
+            }
 
             lldb::ProcessSP m_process_sp;
             lldb::StateType m_state;
+            std::vector<std::string> m_restarted_reasons;
             bool m_restarted;  // For "eStateStopped" events, this is true if the target was automatically restarted.
             int m_update_state;
             bool m_interrupted;
@@ -3543,7 +3574,8 @@ protected:
     ReadWriteLock               m_run_lock;
     Predicate<bool>             m_currently_handling_event;
     bool                        m_finalize_called;
-
+    lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.
+    
     enum {
         eCanJITDontKnow= 0,
         eCanJITYes,
@@ -3637,7 +3669,7 @@ private:
     // For Process only
     //------------------------------------------------------------------
     void ControlPrivateStateThread (uint32_t signal);
-
+    
     DISALLOW_COPY_AND_ASSIGN (Process);
 
 };

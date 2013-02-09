@@ -290,7 +290,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
 }
 
 bool
-ThreadPlanStepOverRange::PlanExplainsStop ()
+ThreadPlanStepOverRange::PlanExplainsStop (Event *event_ptr)
 {
     // For crashes, breakpoint hits, signals, etc, let the base plan (or some plan above us)
     // handle the stop.  That way the user can see the stop, step around, and then when they

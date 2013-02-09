@@ -332,7 +332,7 @@ public:
     ValidatePlan (Stream *error) = 0;
 
     virtual bool
-    PlanExplainsStop () = 0;
+    PlanExplainsStop (Event *event_ptr) = 0;
     
     bool
     TracerExplainsStop ()

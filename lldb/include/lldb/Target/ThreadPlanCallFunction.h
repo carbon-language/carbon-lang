@@ -59,10 +59,13 @@ public:
     ValidatePlan (Stream *error);
 
     virtual bool
-    PlanExplainsStop ();
+    PlanExplainsStop (Event *event_ptr);
 
     virtual bool
     ShouldStop (Event *event_ptr);
+    
+    virtual Vote
+    ShouldReportStop(Event *event_ptr);
 
     virtual bool
     StopOthers ();

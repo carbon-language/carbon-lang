@@ -139,7 +139,7 @@ ThreadPlanStepThrough::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanStepThrough::PlanExplainsStop ()
+ThreadPlanStepThrough::PlanExplainsStop (Event *event_ptr)
 {
     // If we have a sub-plan, it will have been asked first if we explain the stop, and
     // we won't get asked.  The only time we would be the one directly asked this question

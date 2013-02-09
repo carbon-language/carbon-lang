@@ -973,11 +973,32 @@ Driver::HandleProcessEvent (const SBEvent &event)
             // Make sure the program hasn't been auto-restarted:
             if (SBProcess::GetRestartedFromEvent (event))
             {
+                size_t num_reasons = SBProcess::GetNumRestartedReasonsFromEvent(event);
+                if (num_reasons > 0)
+                {
                 // FIXME: Do we want to report this, or would that just be annoyingly chatty?
-                char message[1024];
-                int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " stopped and was programmatically restarted.\n",
+                    if (num_reasons == 1)
+                    {
+                        char message[1024];
+                        const char *reason = SBProcess::GetRestartedReasonAtIndexFromEvent (event, 0);
+                        int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " stopped and restarted: %s\n",
+                                              process.GetProcessID(), reason ? reason : "<UNKNOWN REASON>");
+                        m_io_channel_ap->OutWrite(message, message_len, ASYNC);
+                    }
+                    else
+                    {
+                        char message[1024];
+                        int message_len = ::snprintf (message, sizeof(message), "Process %" PRIu64 " stopped and restarted, reasons:\n",
                                               process.GetProcessID());
-                m_io_channel_ap->OutWrite(message, message_len, ASYNC);
+                        m_io_channel_ap->OutWrite(message, message_len, ASYNC);
+                        for (size_t i = 0; i < num_reasons; i++)
+                        {
+                            const char *reason = SBProcess::GetRestartedReasonAtIndexFromEvent (event, i);
+                            int message_len = ::snprintf(message, sizeof(message), "\t%s\n", reason ? reason : "<UNKNOWN REASON>");
+                            m_io_channel_ap->OutWrite(message, message_len, ASYNC);
+                        }
+                    }
+                }
             }
             else
             {

@@ -68,7 +68,7 @@ ThreadPlanBase::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanBase::PlanExplainsStop ()
+ThreadPlanBase::PlanExplainsStop (Event *event_ptr)
 {
     // The base plan should defer to its tracer, since by default it
     // always handles the stop.

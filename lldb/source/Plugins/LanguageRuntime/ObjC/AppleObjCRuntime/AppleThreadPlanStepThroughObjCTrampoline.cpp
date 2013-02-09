@@ -126,7 +126,7 @@ AppleThreadPlanStepThroughObjCTrampoline::ValidatePlan (Stream *error)
 }
 
 bool
-AppleThreadPlanStepThroughObjCTrampoline::PlanExplainsStop ()
+AppleThreadPlanStepThroughObjCTrampoline::PlanExplainsStop (Event *event_ptr)
 {
     // If we get asked to explain the stop it will be because something went
     // wrong (like the implementation for selector function crashed...  We're going

@@ -305,7 +305,7 @@ ThreadPlanStepUntil::AnalyzeStop()
 }
 
 bool
-ThreadPlanStepUntil::PlanExplainsStop ()
+ThreadPlanStepUntil::PlanExplainsStop (Event *event_ptr)
 {
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
