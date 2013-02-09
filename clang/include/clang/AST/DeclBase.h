@@ -337,7 +337,10 @@ protected:
   static void *AllocateDeserializedDecl(const ASTContext &Context,
                                         unsigned ID,
                                         unsigned Size);
-  
+
+  /// \brief Update a potentially out-of-date declaration.
+  void updateOutOfDate(IdentifierInfo &II) const;
+
 public:
 
   /// \brief Source range that this declaration covers.

@@ -728,6 +728,8 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context, TagKind TK,
                                                    SpecializedTemplate,
                                                    Args, NumArgs,
                                                    PrevDecl);
+  Result->MayHaveOutOfDateDef = false;
+
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }
@@ -737,7 +739,10 @@ ClassTemplateSpecializationDecl::CreateDeserialized(ASTContext &C,
                                                     unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, 
                                        sizeof(ClassTemplateSpecializationDecl));
-  return new (Mem) ClassTemplateSpecializationDecl(ClassTemplateSpecialization);
+  ClassTemplateSpecializationDecl *Result =
+    new (Mem) ClassTemplateSpecializationDecl(ClassTemplateSpecialization);
+  Result->MayHaveOutOfDateDef = false;
+  return Result;
 }
 
 void
@@ -857,6 +862,7 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC,
                                                           PrevDecl,
                                                           SequenceNumber);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
+  Result->MayHaveOutOfDateDef = false;
 
   Context.getInjectedClassNameType(Result, CanonInjectedType);
   return Result;
@@ -867,7 +873,10 @@ ClassTemplatePartialSpecializationDecl::CreateDeserialized(ASTContext &C,
                                                            unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, 
                 sizeof(ClassTemplatePartialSpecializationDecl));
-  return new (Mem) ClassTemplatePartialSpecializationDecl();
+  ClassTemplatePartialSpecializationDecl *Result
+    = new (Mem) ClassTemplatePartialSpecializationDecl();
+  Result->MayHaveOutOfDateDef = false;
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//

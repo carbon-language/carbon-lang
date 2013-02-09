@@ -301,8 +301,8 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
 
 void ObjCInterfaceDecl::allocateDefinitionData() {
   assert(!hasDefinition() && "ObjC class already has a definition");
-  Data = new (getASTContext()) DefinitionData();
-  Data->Definition = this;
+  Data.setPointer(new (getASTContext()) DefinitionData());
+  Data.getPointer()->Definition = this;
 
   // Make the type point at the definition, now that we have one.
   if (TypeForDecl)
@@ -1011,6 +1011,7 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(const ASTContext &C,
                                              bool isInternal){
   ObjCInterfaceDecl *Result = new (C) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, 
                                                         PrevDecl, isInternal);
+  Result->Data.setInt(!C.getLangOpts().Modules);
   C.getObjCInterfaceType(Result, PrevDecl);
   return Result;
 }
@@ -1018,8 +1019,11 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(const ASTContext &C,
 ObjCInterfaceDecl *ObjCInterfaceDecl::CreateDeserialized(ASTContext &C, 
                                                          unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCInterfaceDecl));
-  return new (Mem) ObjCInterfaceDecl(0, SourceLocation(), 0, SourceLocation(),
-                                     0, false);
+  ObjCInterfaceDecl *Result = new (Mem) ObjCInterfaceDecl(0, SourceLocation(),
+                                                          0, SourceLocation(),
+                                                          0, false);
+  Result->Data.setInt(!C.getLangOpts().Modules);
+  return Result;
 }
 
 ObjCInterfaceDecl::
@@ -1334,15 +1338,17 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            ObjCProtocolDecl *PrevDecl) {
   ObjCProtocolDecl *Result 
     = new (C) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, PrevDecl);
-  
+  Result->Data.setInt(!C.getLangOpts().Modules);
   return Result;
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::CreateDeserialized(ASTContext &C, 
                                                        unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCProtocolDecl));
-  return new (Mem) ObjCProtocolDecl(0, 0, SourceLocation(), SourceLocation(),
-                                    0);
+  ObjCProtocolDecl *Result = new (Mem) ObjCProtocolDecl(0, 0, SourceLocation(),
+                                                        SourceLocation(), 0);
+  Result->Data.setInt(!C.getLangOpts().Modules);
+  return Result;
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
@@ -1380,9 +1386,9 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
 }
 
 void ObjCProtocolDecl::allocateDefinitionData() {
-  assert(!Data && "Protocol already has a definition!");
-  Data = new (getASTContext()) DefinitionData;
-  Data->Definition = this;
+  assert(!Data.getPointer() && "Protocol already has a definition!");
+  Data.setPointer(new (getASTContext()) DefinitionData);
+  Data.getPointer()->Definition = this;
 }
 
 void ObjCProtocolDecl::startDefinition() {

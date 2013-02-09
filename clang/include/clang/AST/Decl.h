@@ -2496,6 +2496,12 @@ protected:
   /// possible in C++11 or Microsoft extensions mode.
   bool IsFixed : 1;
 
+  /// \brief Indicates whether it is possible for declarations of this kind
+  /// to have an out-of-date definition.
+  ///
+  /// This option is only enabled when modules are enabled.
+  bool MayHaveOutOfDateDef : 1;
+
 private:
   SourceLocation RBraceLoc;
 

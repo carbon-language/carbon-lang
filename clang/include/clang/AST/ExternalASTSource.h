@@ -118,6 +118,9 @@ public:
   /// The default implementation of this method is a no-op.
   virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
 
+  /// \brief Update an out-of-date identifier.
+  virtual void updateOutOfDateIdentifier(IdentifierInfo &II) { }
+
   /// \brief Find all declarations with the given name in the given context,
   /// and add them to the context by calling SetExternalVisibleDeclsForName
   /// or SetNoExternalVisibleDeclsForName.

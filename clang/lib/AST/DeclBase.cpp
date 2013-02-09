@@ -40,6 +40,10 @@ using namespace clang;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
 
+void Decl::updateOutOfDate(IdentifierInfo &II) const {
+  getASTContext().getExternalSource()->updateOutOfDateIdentifier(II);
+}
+
 void *Decl::AllocateDeserializedDecl(const ASTContext &Context, 
                                      unsigned ID,
                                      unsigned Size) {

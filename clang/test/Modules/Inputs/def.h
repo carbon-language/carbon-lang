@@ -8,4 +8,13 @@
 }
 @end
 
+@interface Def
+- defMethod;
+@end
 
+#ifdef __cplusplus
+class Def2 {
+public:
+  void func();
+};
+#endif
