@@ -56,6 +56,15 @@ about them. The improvements since the 3.2 release include:
 
 -  ...
 
+Extended Identifiers: Unicode Support and Universal Character Names
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Clang 3.3 includes support for *extended identifiers* in C99 and C++.
+This feature allows identifiers to contain certain Unicode characters, as
+specified by the active language standard; these characters can be written
+directly in the source file using the UTF-8 encoding, or referred to using
+*universal character names* (``\u00E0``, ``\U000000E0``).
+
 New Compiler Flags
 ------------------
 
