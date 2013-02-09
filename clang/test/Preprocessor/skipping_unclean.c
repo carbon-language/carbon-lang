@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -E %s | grep bark
+// RUN: %clang_cc1 -E %s | FileCheck --strict-whitespace %s
 
 #if 0
 blah
@@ -6,4 +6,5 @@ blah
 else
 bark
 #endif
+// CHECK: {{^}}bark{{$}}
 
