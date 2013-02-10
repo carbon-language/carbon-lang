@@ -83,7 +83,6 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
         (*it)->getOption().matches(Id1)) {
       Res = *it;
       Res->claim();
-
     }
   }
 
