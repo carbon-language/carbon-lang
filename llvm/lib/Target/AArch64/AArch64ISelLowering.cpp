@@ -2691,7 +2691,7 @@ static bool findEXTRHalf(SDValue N, SDValue &Src, uint32_t &ShiftAmount,
   return true;
 }
 
-/// EXTR instruciton extracts a contiguous chunk of bits from two existing
+/// EXTR instruction extracts a contiguous chunk of bits from two existing
 /// registers viewed as a high/low pair. This function looks for the pattern:
 /// (or (shl VAL1, #N), (srl VAL2, #RegWidth-N)) and replaces it with an
 /// EXTR. Can't quite be done in TableGen because the two immediates aren't
