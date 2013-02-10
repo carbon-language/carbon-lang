@@ -869,7 +869,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
         return true;
 
       B.addAttribute(Attr, Val);
-      break;
+      continue;
     }
 
     // Target-independent attributes:
