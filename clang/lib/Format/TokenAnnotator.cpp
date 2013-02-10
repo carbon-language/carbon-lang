@@ -963,18 +963,10 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
 bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
                                          const AnnotatedToken &Tok) {
   if (Line.Type == LT_ObjCMethodDecl) {
-    if (Tok.is(tok::identifier) && !Tok.Children.empty() &&
-        Tok.Children[0].is(tok::colon) && Tok.Parent->is(tok::identifier))
-      return true;
-    if (Tok.is(tok::colon))
-      return false;
     if (Tok.Parent->Type == TT_ObjCMethodSpecifier)
       return true;
     if (Tok.Parent->is(tok::r_paren) && Tok.is(tok::identifier))
       // Don't space between ')' and <id>
-      return false;
-    if (Tok.Parent->is(tok::colon) && Tok.is(tok::l_paren))
-      // Don't space between ':' and '('
       return false;
   }
   if (Line.Type == LT_ObjCProperty &&
@@ -1019,19 +1011,6 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
 bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                     const AnnotatedToken &Right) {
   const AnnotatedToken &Left = *Right.Parent;
-  if (Line.Type == LT_ObjCMethodDecl) {
-    if (Right.is(tok::identifier) && !Right.Children.empty() &&
-        Right.Children[0].is(tok::colon) && Left.is(tok::identifier))
-      return true;
-    if (Right.is(tok::identifier) && Left.is(tok::l_paren) &&
-        Left.Parent->is(tok::colon))
-      // Don't break this identifier as ':' or identifier
-      // before it will break.
-      return false;
-    if (Right.is(tok::colon) && Left.is(tok::identifier) && Left.CanBreakBefore)
-      // Don't break at ':' if identifier before it can beak.
-      return false;
-  }
   if (Right.Type == TT_StartOfName && Style.AllowReturnTypeOnItsOwnLine)
     return true;
   if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
