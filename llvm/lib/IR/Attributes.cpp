@@ -468,6 +468,10 @@ uint64_t AttributeSetImpl::Raw(uint64_t Index) const {
     for (AttributeSetNode::const_iterator II = ASN->begin(),
            IE = ASN->end(); II != IE; ++II) {
       Attribute Attr = *II;
+
+      // This cannot handle string attributes.
+      if (Attr.isStringAttribute()) continue;
+
       Attribute::AttrKind Kind = Attr.getKindAsEnum();
 
       if (Kind == Attribute::Alignment)
