@@ -29,13 +29,12 @@ namespace bitc {
 
     // Module sub-block id's.
     PARAMATTR_BLOCK_ID,
-
-    UNUSED_ID1,
+    PARAMATTR_GROUP_BLOCK_ID,
 
     CONSTANTS_BLOCK_ID,
     FUNCTION_BLOCK_ID,
 
-    UNUSED_ID2,
+    UNUSED_ID1,
 
     VALUE_SYMTAB_BLOCK_ID,
     METADATA_BLOCK_ID,
@@ -69,7 +68,7 @@ namespace bitc {
     // ALIAS: [alias type, aliasee val#, linkage, visibility]
     MODULE_CODE_ALIAS       = 9,
 
-    /// MODULE_CODE_PURGEVALS: [numvals]
+    // MODULE_CODE_PURGEVALS: [numvals]
     MODULE_CODE_PURGEVALS   = 10,
 
     MODULE_CODE_GCNAME      = 11   // GCNAME: [strchr x N]
@@ -78,10 +77,11 @@ namespace bitc {
   /// PARAMATTR blocks have code for defining a parameter attribute set.
   enum AttributeCodes {
     // FIXME: Remove `PARAMATTR_CODE_ENTRY_OLD' in 4.0
-    PARAMATTR_CODE_ENTRY_OLD = 1, // ENTRY: [paramidx0, attr0,
-                                  //         paramidx1, attr1...]
-    PARAMATTR_CODE_ENTRY = 2      // ENTRY: [paramidx0, attrgrp0,
-                                  //         paramidx1, attrgrp1...]
+    PARAMATTR_CODE_ENTRY_OLD  = 1, // ENTRY: [paramidx0, attr0,
+                                   //         paramidx1, attr1...]
+    PARAMATTR_CODE_ENTRY      = 2, // ENTRY: [paramidx0, attrgrp0,
+                                   //         paramidx1, attrgrp1, ...]
+    PARAMATTR_GRP_CODE_ENTRY  = 3  // ENTRY: [id, attr0, att1, ...]
   };
 
   /// TYPE blocks have codes for each type primitive they use.
