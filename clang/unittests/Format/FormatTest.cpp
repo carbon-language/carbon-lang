@@ -2563,6 +2563,9 @@ TEST_F(FormatTest, ObjCLiterals) {
       "NSDictionary *settings = @{ AVEncoderKey : @(AVAudioQualityMax) };");
   
   // FIXME: Nested and multi-line array and dictionary literals need more work.
+  verifyFormat(
+      "NSDictionary *d = @{ @\"nam\" : NSUserNam(), @\"dte\" : [NSDate date],\n"
+      "                     @\"processInfo\" : [NSProcessInfo processInfo] };");
 }
 
 TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
