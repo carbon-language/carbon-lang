@@ -58,8 +58,8 @@ namespace {
     /// in predecessor basic blocks.
     ///
     bool EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB);
-    void LowerAtomicPHINode(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator AfterPHIsIt);
+    void LowerPHINode(MachineBasicBlock &MBB,
+                      MachineBasicBlock::iterator AfterPHIsIt);
 
     /// analyzePHINodes - Gather information about the PHI nodes in
     /// here. In particular, we want to map the number of uses of a virtual
@@ -88,7 +88,7 @@ namespace {
   };
 }
 
-STATISTIC(NumAtomic, "Number of atomic phis lowered");
+STATISTIC(NumLowered, "Number of phis lowered");
 STATISTIC(NumCriticalEdgesSplit, "Number of critical edges split");
 STATISTIC(NumReused, "Number of reused lowered phis");
 
@@ -166,7 +166,7 @@ bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
   MachineBasicBlock::iterator AfterPHIsIt = MBB.SkipPHIsAndLabels(MBB.begin());
 
   while (MBB.front().isPHI())
-    LowerAtomicPHINode(MBB, AfterPHIsIt);
+    LowerPHINode(MBB, AfterPHIsIt);
 
   return true;
 }
@@ -193,15 +193,11 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
 }
 
 
-/// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
-/// under the assumption that it needs to be lowered in a way that supports
-/// atomic execution of PHIs.  This lowering method is always correct all of the
-/// time.
+/// LowerPHINode - Lower the PHI node at the top of the specified block,
 ///
-void PHIElimination::LowerAtomicPHINode(
-                                      MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator AfterPHIsIt) {
-  ++NumAtomic;
+void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator AfterPHIsIt) {
+  ++NumLowered;
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
   MachineInstr *MPhi = MBB.remove(MBB.begin());
 
