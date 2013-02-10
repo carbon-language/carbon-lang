@@ -369,7 +369,7 @@ public:
     
     typedef support::detail::packed_endian_specific_integral
        <word_t, support::little, support::unaligned> Endian_T;
-    CurWord = *reinterpret_cast<Endian_T*>(buf);
+    CurWord = *(Endian_T*)(void*)buf;
 
     NextChar += sizeof(word_t);
 
