@@ -447,17 +447,16 @@ void UnwrappedLineParser::parseParens() {
     case tok::r_paren:
       nextToken();
       return;
-    case tok::l_brace:
-      {
-        nextToken();
-        ScopedLineState LineState(*this);
-        ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
-                                                /*MustBeDeclaration=*/ false);
-        Line->Level += 1;
-        parseLevel(/*HasOpeningBrace=*/ true);
-        Line->Level -= 1;
-      }
+    case tok::l_brace: {
+      nextToken();
+      ScopedLineState LineState(*this);
+      ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
+                                              /*MustBeDeclaration=*/ false);
+      Line->Level += 1;
+      parseLevel(/*HasOpeningBrace=*/ true);
+      Line->Level -= 1;
       break;
+    }
     default:
       nextToken();
       break;
