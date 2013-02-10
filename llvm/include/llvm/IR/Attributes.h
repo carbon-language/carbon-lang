@@ -286,6 +286,9 @@ public:
   // AttributeSet Accessors
   //===--------------------------------------------------------------------===//
 
+  /// \brief Retrieve the LLVM context.
+  LLVMContext &getContext() const;
+
   /// \brief The attributes for the specified index are returned.
   AttributeSet getParamAttributes(unsigned Idx) const;
 

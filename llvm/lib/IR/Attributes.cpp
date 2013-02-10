@@ -709,6 +709,10 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
 // AttributeSet Accessor Methods
 //===----------------------------------------------------------------------===//
 
+LLVMContext &AttributeSet::getContext() const {
+  return pImpl->getContext();
+}
+
 AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
   return pImpl && hasAttributes(Idx) ?
     AttributeSet::get(pImpl->getContext(),
