@@ -42,6 +42,7 @@ DisableEdgeSplitting("disable-phi-elim-edge-splitting", cl::init(false),
 namespace {
   class PHIElimination : public MachineFunctionPass {
     MachineRegisterInfo *MRI; // Machine register information
+    LiveVariables *LV;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -70,7 +71,7 @@ namespace {
 
     /// Split critical edges where necessary for good coalescer performance.
     bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
-                       LiveVariables &LV, MachineLoopInfo *MLI);
+                       MachineLoopInfo *MLI);
 
     typedef std::pair<unsigned, unsigned> BBVRegPair;
     typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
@@ -110,6 +111,7 @@ void PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
+  LV = getAnalysisIfAvailable<LiveVariables>();
 
   bool Changed = false;
 
@@ -117,12 +119,10 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   MRI->leaveSSA();
 
   // Split critical edges to help the coalescer
-  if (!DisableEdgeSplitting) {
-    if (LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>()) {
-      MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
-      for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-        Changed |= SplitPHIEdges(MF, *I, *LV, MLI);
-    }
+  if (!DisableEdgeSplitting && LV) {
+    MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
+    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+      Changed |= SplitPHIEdges(MF, *I, MLI);
   }
 
   // Populate VRegPHIUseCount
@@ -244,7 +244,6 @@ void PHIElimination::LowerAtomicPHINode(
   }
 
   // Update live variable information if there is any.
-  LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
   if (LV) {
     MachineInstr *PHICopy = prior(AfterPHIsIt);
 
@@ -418,7 +417,6 @@ void PHIElimination::analyzePHINodes(const MachineFunction& MF) {
 
 bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
                                    MachineBasicBlock &MBB,
-                                   LiveVariables &LV,
                                    MachineLoopInfo *MLI) {
   if (MBB.empty() || !MBB.front().isPHI() || MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
@@ -450,7 +448,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // there is a risk it may not be coalesced away.
       //
       // If the copy would be a kill, there is no need to split the edge.
-      if (!LV.isLiveOut(Reg, *PreMBB))
+      if (!LV->isLiveOut(Reg, *PreMBB))
         continue;
 
       DEBUG(dbgs() << PrintReg(Reg) << " live-out before critical edge BB#"
@@ -465,7 +463,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // is likely to be left after coalescing. If we are looking at a loop
       // exiting edge, split it so we won't insert code in the loop, otherwise
       // don't bother.
-      bool ShouldSplit = !LV.isLiveIn(Reg, MBB);
+      bool ShouldSplit = !LV->isLiveIn(Reg, MBB);
 
       // Check for a loop exiting edge.
       if (!ShouldSplit && CurLoop != PreLoop) {
