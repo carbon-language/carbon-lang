@@ -2559,6 +2559,8 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("NSLog(@\"%@\", @{ @1 : @2, @2 : @3 }[@1]);");
   verifyFormat(
       "NSDictionary *masses = @{ @\"H\" : @1.0078, @\"He\" : @4.0026 };");
+  verifyFormat(
+      "NSDictionary *settings = @{ AVEncoderKey : @(AVAudioQualityMax) };");
   
   // FIXME: Nested and multi-line array and dictionary literals need more work.
 }
