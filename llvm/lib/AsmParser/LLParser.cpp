@@ -878,6 +878,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
       // 2".
       unsigned Alignment;
       if (inAttrGrp) {
+        Lex.Lex();
         if (ParseToken(lltok::equal, "expected '=' here") ||
             ParseUInt32(Alignment))
           return true;
@@ -891,6 +892,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_alignstack: {
       unsigned Alignment;
       if (inAttrGrp) {
+        Lex.Lex();
         if (ParseToken(lltok::equal, "expected '=' here") ||
             ParseUInt32(Alignment))
           return true;
