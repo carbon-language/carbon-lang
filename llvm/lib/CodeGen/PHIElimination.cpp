@@ -75,6 +75,11 @@ namespace {
     bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
                        MachineLoopInfo *MLI);
 
+    // These functions are temporary abstractions around LiveVariables and
+    // LiveIntervals, so they can go away when LiveVariables does.
+    bool isLiveIn(unsigned Reg, MachineBasicBlock *MBB);
+    bool isLiveOutPastPHIs(unsigned Reg, MachineBasicBlock *MBB);
+
     typedef std::pair<unsigned, unsigned> BBVRegPair;
     typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
 
@@ -557,7 +562,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // there is a risk it may not be coalesced away.
       //
       // If the copy would be a kill, there is no need to split the edge.
-      if (!LV->isLiveOut(Reg, *PreMBB))
+      if (!isLiveOutPastPHIs(Reg, PreMBB))
         continue;
 
       DEBUG(dbgs() << PrintReg(Reg) << " live-out before critical edge BB#"
@@ -572,7 +577,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // is likely to be left after coalescing. If we are looking at a loop
       // exiting edge, split it so we won't insert code in the loop, otherwise
       // don't bother.
-      bool ShouldSplit = !LV->isLiveIn(Reg, MBB);
+      bool ShouldSplit = !isLiveIn(Reg, &MBB);
 
       // Check for a loop exiting edge.
       if (!ShouldSplit && CurLoop != PreLoop) {
@@ -598,4 +603,34 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
     }
   }
   return Changed;
+}
+
+bool PHIElimination::isLiveIn(unsigned Reg, MachineBasicBlock *MBB) {
+  assert((LV || LIS) &&
+         "isLiveIn() requires either LiveVariables or LiveIntervals");
+  if (LIS)
+    return LIS->isLiveInToMBB(LIS->getInterval(Reg), MBB);
+  else
+    return LV->isLiveIn(Reg, *MBB);
+}
+
+bool PHIElimination::isLiveOutPastPHIs(unsigned Reg, MachineBasicBlock *MBB) {
+  assert((LV || LIS) &&
+         "isLiveOutPastPHIs() requires either LiveVariables or LiveIntervals");
+  // LiveVariables considers uses in PHIs to be in the predecessor basic block,
+  // so that a register used only in a PHI is not live out of the block. In
+  // contrast, LiveIntervals considers uses in PHIs to be on the edge rather than
+  // in the predecessor basic block, so that a register used only in a PHI is live
+  // out of the block.
+  if (LIS) {
+    const LiveInterval &LI = LIS->getInterval(Reg);
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI) {
+      if (LI.liveAt(LIS->getMBBStartIdx(*SI)))
+        return true;
+    }
+    return false;
+  } else {
+    return LV->isLiveOut(Reg, *MBB);
+  }
 }
