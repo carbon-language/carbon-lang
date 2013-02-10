@@ -148,6 +148,9 @@ class BitcodeReader : public GVMaterializer {
   /// are off by one.
   std::vector<AttributeSet> MAttributes;
 
+  /// \brief The set of attribute groups.
+  std::vector<AttributeSet> MAttributeGroups;
+
   /// FunctionBBs - While parsing a function body, this is a list of the basic
   /// blocks for the function.
   std::vector<BasicBlock*> FunctionBBs;
@@ -320,6 +323,7 @@ private:
 
   bool ParseModule(bool Resume);
   bool ParseAttributeBlock();
+  bool ParseAttributeGroupBlock();
   bool ParseTypeTable();
   bool ParseTypeTableBody();
 

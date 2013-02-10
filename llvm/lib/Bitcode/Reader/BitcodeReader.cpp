@@ -498,6 +498,80 @@ bool BitcodeReader::ParseAttributeBlock() {
   }
 }
 
+bool BitcodeReader::ParseAttributeGroupBlock() {
+  if (Stream.EnterSubBlock(bitc::PARAMATTR_GROUP_BLOCK_ID))
+    return Error("Malformed block record");
+
+  if (!MAttributeGroups.empty())
+    return Error("Multiple PARAMATTR_GROUP blocks found!");
+
+  SmallVector<uint64_t, 64> Record;
+
+  // Read all the records.
+  while (1) {
+    BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::SubBlock: // Handled for us already.
+    case BitstreamEntry::Error:
+      return Error("Error at end of PARAMATTR_GROUP block");
+    case BitstreamEntry::EndBlock:
+      return false;
+    case BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Read a record.
+    Record.clear();
+    switch (Stream.readRecord(Entry.ID, Record)) {
+    default:  // Default behavior: ignore.
+      break;
+    case bitc::PARAMATTR_GRP_CODE_ENTRY: { // ENTRY: [grpid, idx, a0, a1, ...]
+      if (Record.size() < 3)
+        return Error("Invalid ENTRY record");
+
+      // FIXME: Record[0] is the 'group ID'. What should we do with it here?
+
+      uint64_t Idx = Record[1]; // Index of the object this attribute refers to.
+
+      AttrBuilder B;
+      for (unsigned i = 2, e = Record.size(); i != e; ++i) {
+        if (Record[i] == 0) {        // Enum attribute
+          B.addAttribute(Attribute::AttrKind(Record[++i]));
+        } else if (Record[i] == 1) { // Align attribute
+          if (Attribute::AttrKind(Record[++i]) == Attribute::Alignment)
+            B.addAlignmentAttr(Record[++i]);
+          else
+            B.addStackAlignmentAttr(Record[++i]);
+        } else {                     // String attribute
+          bool HasValue = (Record[i++] == 4);
+          SmallString<64> KindStr;
+          SmallString<64> ValStr;
+
+          while (Record[i] != 0 && i != e)
+            KindStr += Record[i++];
+          assert(Record[i] == 0 && "Kind string not terminated with 0");
+
+          if (HasValue) {
+            // Has a value associated with it.
+            ++i; // Skip the '0' that terminates the kind string.
+            while (Record[i] != 0 && i != e)
+              ValStr += Record[i++];
+            assert(Record[i] == 0 && "Value string not terminated with 0");
+          }
+
+          B.addAttribute(KindStr.str(), ValStr.str());
+        }
+      }
+
+      MAttributeGroups.push_back(AttributeSet::get(Context, Idx, B));
+      break;
+    }
+    }
+  }
+}
+
 bool BitcodeReader::ParseTypeTable() {
   if (Stream.EnterSubBlock(bitc::TYPE_BLOCK_ID_NEW))
     return Error("Malformed block record");
@@ -1445,6 +1519,10 @@ bool BitcodeReader::ParseModule(bool Resume) {
         break;
       case bitc::PARAMATTR_BLOCK_ID:
         if (ParseAttributeBlock())
+          return true;
+        break;
+      case bitc::PARAMATTR_GROUP_BLOCK_ID:
+        if (ParseAttributeGroupBlock())
           return true;
         break;
       case bitc::TYPE_BLOCK_ID_NEW:
