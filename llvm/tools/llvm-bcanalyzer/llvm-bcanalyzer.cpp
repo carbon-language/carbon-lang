@@ -98,16 +98,17 @@ static const char *GetBlockName(unsigned BlockID,
   if (CurStreamType != LLVMIRBitstream) return 0;
 
   switch (BlockID) {
-  default:                           return 0;
-  case bitc::MODULE_BLOCK_ID:        return "MODULE_BLOCK";
-  case bitc::PARAMATTR_BLOCK_ID:     return "PARAMATTR_BLOCK";
-  case bitc::TYPE_BLOCK_ID_NEW:      return "TYPE_BLOCK_ID";
-  case bitc::CONSTANTS_BLOCK_ID:     return "CONSTANTS_BLOCK";
-  case bitc::FUNCTION_BLOCK_ID:      return "FUNCTION_BLOCK";
-  case bitc::VALUE_SYMTAB_BLOCK_ID:  return "VALUE_SYMTAB";
-  case bitc::METADATA_BLOCK_ID:      return "METADATA_BLOCK";
-  case bitc::METADATA_ATTACHMENT_ID: return "METADATA_ATTACHMENT_BLOCK";
-  case bitc::USELIST_BLOCK_ID:       return "USELIST_BLOCK_ID";
+  default:                             return 0;
+  case bitc::MODULE_BLOCK_ID:          return "MODULE_BLOCK";
+  case bitc::PARAMATTR_BLOCK_ID:       return "PARAMATTR_BLOCK";
+  case bitc::PARAMATTR_GROUP_BLOCK_ID: return "PARAMATTR_GROUP_BLOCK_ID";
+  case bitc::TYPE_BLOCK_ID_NEW:        return "TYPE_BLOCK_ID";
+  case bitc::CONSTANTS_BLOCK_ID:       return "CONSTANTS_BLOCK";
+  case bitc::FUNCTION_BLOCK_ID:        return "FUNCTION_BLOCK";
+  case bitc::VALUE_SYMTAB_BLOCK_ID:    return "VALUE_SYMTAB";
+  case bitc::METADATA_BLOCK_ID:        return "METADATA_BLOCK";
+  case bitc::METADATA_ATTACHMENT_ID:   return "METADATA_ATTACHMENT_BLOCK";
+  case bitc::USELIST_BLOCK_ID:         return "USELIST_BLOCK_ID";
   }
 }
 
@@ -159,7 +160,9 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   case bitc::PARAMATTR_BLOCK_ID:
     switch (CodeID) {
     default: return 0;
-    case bitc::PARAMATTR_CODE_ENTRY: return "ENTRY";
+    case bitc::PARAMATTR_CODE_ENTRY_OLD: return "ENTRY";
+    case bitc::PARAMATTR_CODE_ENTRY:     return "ENTRY";
+    case bitc::PARAMATTR_GRP_CODE_ENTRY: return "ENTRY";
     }
   case bitc::TYPE_BLOCK_ID_NEW:
     switch (CodeID) {
