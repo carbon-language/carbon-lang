@@ -70,7 +70,7 @@ class InstFlag<string PM = "printOperand", int Default = 0>
   let PrintMethod = PM;
 }
 
-// src_sel for ALU src operands, see also ALU_CONST, ALU_PARAM registers 
+// src_sel for ALU src operands, see also ALU_CONST, ALU_PARAM registers
 def SEL : OperandWithDefaultOps <i32, (ops (i32 -1))> {
   let PrintMethod = "printSel";
 }
@@ -681,7 +681,7 @@ class ExportBufInst : InstR600ISA<(
   let Inst{63-32} = Word1;
 }
 
-let Predicates = [isR600toCayman] in { 
+let Predicates = [isR600toCayman] in {
 
 //===----------------------------------------------------------------------===//
 // Common Instructions R600, R700, Evergreen, Cayman
@@ -1199,7 +1199,7 @@ let Predicates = [isR700] in {
 //===----------------------------------------------------------------------===//
 
 let Predicates = [isEG] in {
-  
+
 def RECIP_IEEE_eg : RECIP_IEEE_Common<0x86>;
 defm DIV_eg : DIV_Common<RECIP_IEEE_eg>;
 
@@ -1450,7 +1450,7 @@ class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
 
   // This is not really necessary, but there were some GPU hangs that appeared
   // to be caused by ALU instructions in the next instruction group that wrote
-  // to the $ptr registers of the VTX_READ.  
+  // to the $ptr registers of the VTX_READ.
   // e.g.
   // %T3_X<def> = VTX_READ_PARAM_32_eg %T2_X<kill>, 24
   // %T2_X<def> = MOV %ZERO
@@ -1529,7 +1529,7 @@ defm R600_ : RegisterLoadStore <R600_Reg32, FRAMEri, ADDRIndirect>;
 
 let Predicates = [isCayman] in {
 
-let isVector = 1 in { 
+let isVector = 1 in {
 
 def RECIP_IEEE_cm : RECIP_IEEE_Common<0x86>;
 
@@ -1811,7 +1811,7 @@ def : Pat <
 // SGE Reverse args
 def : Pat <
   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, COND_LE),
-  (SGE R600_Reg32:$src1, R600_Reg32:$src0) 
+  (SGE R600_Reg32:$src1, R600_Reg32:$src0)
 >;
 
 // SETGT_DX10 reverse args
