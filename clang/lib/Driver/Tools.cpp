@@ -1202,7 +1202,8 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
 
   if (Args.hasFlag(options::OPT_msoft_float,
                    options::OPT_mno_soft_float,
-                   false))
+                   false) ||
+      Args.hasArg(options::OPT_mno_implicit_float))
     CmdArgs.push_back("-no-implicit-float");
 
   if (const char *CPUName = getX86TargetCPU(Args, getToolChain().getTriple())) {
