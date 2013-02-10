@@ -16,7 +16,7 @@
 @end
 
 @interface I (Cat2) <P1>
-@property (retain) id ID; // expected-warning {{property 'ID' 'copy' attribute does not match the property inherited from 'P1'}}
+@property (retain) id ID; // expected-warning {{'copy' attribute on property 'ID' does not match the property inherited from 'P1'}}
 @end
 
 

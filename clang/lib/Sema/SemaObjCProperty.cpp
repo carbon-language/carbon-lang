@@ -368,6 +368,10 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
+  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
+  if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_atomic);
   // Set setter/getter selector name. Needed later.
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
@@ -1292,15 +1296,21 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   }
 
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
-      != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic))
+      != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
     Diag(Property->getLocation(), diag::warn_property_attribute)
       << Property->getDeclName() << "atomic" << inheritedName;
-  if (Property->getSetterName() != SuperProperty->getSetterName())
+    Diag(SuperProperty->getLocation(), diag::note_property_declare);
+  }
+  if (Property->getSetterName() != SuperProperty->getSetterName()) {
     Diag(Property->getLocation(), diag::warn_property_attribute)
       << Property->getDeclName() << "setter" << inheritedName;
-  if (Property->getGetterName() != SuperProperty->getGetterName())
+    Diag(SuperProperty->getLocation(), diag::note_property_declare);
+  }
+  if (Property->getGetterName() != SuperProperty->getGetterName()) {
     Diag(Property->getLocation(), diag::warn_property_attribute)
       << Property->getDeclName() << "getter" << inheritedName;
+    Diag(SuperProperty->getLocation(), diag::note_property_declare);
+  }
 
   QualType LHSType =
     Context.getCanonicalType(SuperProperty->getType());
