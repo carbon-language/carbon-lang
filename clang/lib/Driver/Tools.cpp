@@ -1200,10 +1200,18 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
       Args.hasArg(options::OPT_fapple_kext))
     CmdArgs.push_back("-disable-red-zone");
 
-  if (Args.hasFlag(options::OPT_msoft_float,
-                   options::OPT_mno_soft_float,
-                   false) ||
-      Args.hasArg(options::OPT_mno_implicit_float))
+  // Default to avoid implicit floating-point for kernel/kext code, but allow
+  // that to be overridden with -mno-soft-float.
+  bool NoImplicitFloat = (Args.hasArg(options::OPT_mkernel) ||
+                          Args.hasArg(options::OPT_fapple_kext));
+  if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
+                               options::OPT_mno_soft_float,
+                               options::OPT_mno_implicit_float)) {
+    const Option &O = A->getOption();
+    NoImplicitFloat = (O.matches(options::OPT_mno_implicit_float) ||
+                       O.matches(options::OPT_msoft_float));
+  }
+  if (NoImplicitFloat)
     CmdArgs.push_back("-no-implicit-float");
 
   if (const char *CPUName = getX86TargetCPU(Args, getToolChain().getTriple())) {
