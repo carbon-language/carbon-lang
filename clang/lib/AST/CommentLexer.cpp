@@ -15,21 +15,21 @@ void Token::dump(const Lexer &L, const SourceManager &SM) const {
   llvm::errs() << " " << Length << " \"" << L.getSpelling(*this, SM) << "\"\n";
 }
 
-namespace {
-bool isHTMLNamedCharacterReferenceCharacter(char C) {
+static inline bool isHTMLNamedCharacterReferenceCharacter(char C) {
   return isLetter(C);
 }
 
-bool isHTMLDecimalCharacterReferenceCharacter(char C) {
+static inline bool isHTMLDecimalCharacterReferenceCharacter(char C) {
   return isDigit(C);
 }
 
-bool isHTMLHexCharacterReferenceCharacter(char C) {
+static inline bool isHTMLHexCharacterReferenceCharacter(char C) {
   return isHexDigit(C);
 }
 
-StringRef convertCodePointToUTF8(llvm::BumpPtrAllocator &Allocator,
-                                 unsigned CodePoint) {
+static inline StringRef convertCodePointToUTF8(
+                                      llvm::BumpPtrAllocator &Allocator,
+                                      unsigned CodePoint) {
   char *Resolved = Allocator.Allocate<char>(UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
   char *ResolvedPtr = Resolved;
   if (llvm::ConvertCodePointToUTF8(CodePoint, ResolvedPtr))
@@ -37,6 +37,8 @@ StringRef convertCodePointToUTF8(llvm::BumpPtrAllocator &Allocator,
   else
     return StringRef();
 }
+
+namespace {
 
 #include "clang/AST/CommentHTMLTags.inc"
 #include "clang/AST/CommentHTMLNamedCharacterReferences.inc"
