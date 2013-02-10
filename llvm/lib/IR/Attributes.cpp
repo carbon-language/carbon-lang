@@ -879,7 +879,11 @@ AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::addAttribute(Attribute Attr) {
-  // FIXME: Handle string attributes.
+  if (Attr.isStringAttribute()) {
+    addAttribute(Attr.getKindAsString(), Attr.getValueAsString());
+    return *this;
+  }
+
   Attribute::AttrKind Kind = Attr.getKindAsEnum();
   Attrs.insert(Kind);
 
