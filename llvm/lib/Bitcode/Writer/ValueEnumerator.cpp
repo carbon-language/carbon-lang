@@ -427,6 +427,16 @@ void ValueEnumerator::EnumerateAttributes(const AttributeSet &PAL) {
     Attribute.push_back(PAL);
     Entry = Attribute.size();
   }
+
+  // Do lookups for all attribute groups.
+  for (unsigned i = 0, e = PAL.getNumSlots(); i != e; ++i) {
+    AttributeSet AS = PAL.getSlotAttributes(i);
+    unsigned &Entry = AttributeSetMap[AS];
+    if (Entry == 0) {
+      AttributeSets.push_back(AS);
+      Entry = AttributeSets.size();
+    }
+  }
 }
 
 void ValueEnumerator::incorporateFunction(const Function &F) {

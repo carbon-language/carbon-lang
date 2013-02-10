@@ -52,6 +52,10 @@ private:
   SmallVector<const MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
 
+  typedef DenseMap<AttributeSet, unsigned> AttributeSetMapType;
+  AttributeSetMapType AttributeSetMap;
+  std::vector<AttributeSet> AttributeSets;
+
   typedef DenseMap<void*, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
   std::vector<AttributeSet> Attribute;
@@ -105,6 +109,13 @@ public:
     return I->second;
   }
 
+  unsigned getAttributeSetID(const AttributeSet &PAL) const {
+    if (PAL.isEmpty()) return 0;  // Null maps to zero.
+    AttributeSetMapType::const_iterator I = AttributeSetMap.find(PAL);
+    assert(I != AttributeSetMap.end() && "Attribute not in ValueEnumerator!");
+    return I->second;
+  }
+
   /// getFunctionConstantRange - Return the range of values that corresponds to
   /// function-local constants.
   void getFunctionConstantRange(unsigned &Start, unsigned &End) const {
@@ -123,6 +134,9 @@ public:
   }
   const std::vector<AttributeSet> &getAttributes() const {
     return Attribute;
+  }
+  const std::vector<AttributeSet> &getAttributeSets() const {
+    return AttributeSets;
   }
 
   /// getGlobalBasicBlockID - This returns the function-specific ID for the
