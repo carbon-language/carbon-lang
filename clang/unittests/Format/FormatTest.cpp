@@ -2540,8 +2540,13 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("NSNumber *favoriteColor = @(Green);");
   verifyFormat("NSString *path = @(getenv(\"PATH\"));");
 
-  // FIXME: Array and dictionary literals need more work.
   verifyFormat("@[");
+  verifyFormat("@[]");
+  verifyFormat(
+      "NSArray *array = @[ @\" Hey \", NSApp, [NSNumber numberWithInt:42] ];");
+  verifyFormat("return @[ @3, @[], @[ @4, @5 ] ];");
+
+  // FIXME: Array and dictionary literals need more work.
   verifyFormat("@{");
 
 }

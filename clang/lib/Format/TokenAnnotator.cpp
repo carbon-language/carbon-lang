@@ -187,8 +187,8 @@ public:
     ScopedContextCreator ContextCreator(*this, 10);
 
     // A '[' could be an index subscript (after an indentifier or after
-    // ')' or ']'), or it could be the start of an Objective-C method
-    // expression.
+    // ')' or ']'), it could be the start of an Objective-C method
+    // expression, or it could the the start of an Objective-C array literal.
     AnnotatedToken *Left = CurrentToken->Parent;
     AnnotatedToken *Parent = getPreviousToken(*Left);
     bool StartsObjCMethodExpr =
@@ -197,10 +197,13 @@ public:
         Parent->is(tok::kw_throw) || isUnaryOperator(*Parent) ||
         getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
         prec::Unknown;
+    bool StartsObjCArrayLiteral = Parent && Parent->is(tok::at);
 
     if (StartsObjCMethodExpr) {
       Contexts.back().ColonIsObjCMethodExpr = true;
       Left->Type = TT_ObjCMethodExpr;
+    } else if (StartsObjCArrayLiteral) {
+      Left->Type = TT_ObjCArrayLiteral;
     }
 
     while (CurrentToken != NULL) {
@@ -221,6 +224,8 @@ public:
               (Parent->is(tok::star) || Parent->is(tok::amp)) &&
               Parent->Type == TT_PointerOrReference)
             Parent->Type = TT_BinaryOperator;
+        } else if (StartsObjCArrayLiteral) {
+          CurrentToken->Type = TT_ObjCArrayLiteral;
         }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
@@ -926,8 +931,10 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Right.FormatTok.Tok.isLiteral() || Style.PointerBindsToType;
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
-  if (Left.is(tok::l_square) || Right.is(tok::r_square))
-    return false;
+  if (Left.is(tok::l_square))
+    return Left.Type == TT_ObjCArrayLiteral && Right.isNot(tok::r_square);
+  if (Right.is(tok::r_square))
+    return Right.Type == TT_ObjCArrayLiteral;
   if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
     return false;
   if (Left.is(tok::period) || Right.is(tok::period))
