@@ -602,21 +602,21 @@ namespace llvm {
     void insertMBBInMaps(MachineBasicBlock *mbb) {
       MachineFunction::iterator nextMBB =
         llvm::next(MachineFunction::iterator(mbb));
+
+      IndexListEntry *nextEntry = 0;
+      if (nextMBB == mbb->getParent()->end())
+        nextEntry = &indexList.back();
+      else
+        nextEntry = getMBBStartIdx(nextMBB).listEntry();
+
       IndexListEntry *startEntry = createEntry(0, 0);
       IndexListEntry *stopEntry = createEntry(0, 0);
-      IndexListEntry *nextEntry = 0;
 
-      if (nextMBB == mbb->getParent()->end()) {
-        nextEntry = indexList.end();
-      } else {
-        nextEntry = getMBBStartIdx(nextMBB).listEntry();
-      }
-
-      indexList.insert(nextEntry, startEntry);
-      indexList.insert(nextEntry, stopEntry);
+      indexList.insertAfter(nextEntry, startEntry);
+      indexList.insertAfter(startEntry, stopEntry);
 
       SlotIndex startIdx(startEntry, SlotIndex::Slot_Block);
-      SlotIndex endIdx(nextEntry, SlotIndex::Slot_Block);
+      SlotIndex endIdx(stopEntry, SlotIndex::Slot_Block);
 
       assert(unsigned(mbb->getNumber()) == MBBRanges.size() &&
              "Blocks must be added in order");
@@ -624,6 +624,8 @@ namespace llvm {
 
       idx2MBBMap.push_back(IdxMBBPair(startIdx, mbb));
 
+      // FIXME: Renumber locally instead of renumbering the whole function every
+      // time a new block is inserted.
       renumberIndexes();
       std::sort(idx2MBBMap.begin(), idx2MBBMap.end(), Idx2MBBCompare());
     }

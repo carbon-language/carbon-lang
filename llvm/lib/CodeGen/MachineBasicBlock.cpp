@@ -662,6 +662,9 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         " BB#" << getNumber()
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << Succ->getNumber() << '\n');
+  SlotIndexes *Indexes = P->getAnalysisIfAvailable<SlotIndexes>();
+  if (Indexes)
+    Indexes->insertMBBInMaps(NMBB);
 
   // On some targets like Mips, branches may kill virtual registers. Make sure
   // that LiveVariables is properly updated after updateTerminator replaces the
@@ -697,6 +700,17 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   if (!NMBB->isLayoutSuccessor(Succ)) {
     Cond.clear();
     MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, Succ, NULL, Cond, dl);
+
+    if (Indexes) {
+      for (instr_iterator I = NMBB->instr_begin(), E = NMBB->instr_end();
+           I != E; ++I) {
+        // Some instructions may have been moved to NMBB by updateTerminator(),
+        // so we first remove any instruction that already has an index.
+        if (Indexes->hasIndex(I))
+          Indexes->removeMachineInstrFromMaps(I);
+        Indexes->insertMachineInstrInMaps(I);
+      }
+    }
   }
 
   // Fix PHI nodes in Succ so they refer to NMBB instead of this
