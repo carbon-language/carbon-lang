@@ -2546,9 +2546,21 @@ TEST_F(FormatTest, ObjCLiterals) {
       "NSArray *array = @[ @\" Hey \", NSApp, [NSNumber numberWithInt:42] ];");
   verifyFormat("return @[ @3, @[], @[ @4, @5 ] ];");
 
-  // FIXME: Array and dictionary literals need more work.
   verifyFormat("@{");
-
+  verifyFormat("@{}");
+  verifyFormat("@{ @\"one\" : @1 }");
+  verifyFormat("return @{ @\"one\" : @1 };");
+  verifyFormat("@{ @\"one\" : @1, }");
+  verifyFormat("@{ @\"one\" : @{ @2 : @1 } }");
+  verifyFormat("@{ @\"one\" : @{ @2 : @1 }, }");
+  verifyFormat("@{ 1 > 2 ? @\"one\" : @\"two\" : 1 > 2 ? @1 : @2 }");
+  verifyFormat("[self setDict:@{}");
+  verifyFormat("[self setDict:@{ @1 : @2 }");
+  verifyFormat("NSLog(@\"%@\", @{ @1 : @2, @2 : @3 }[@1]);");
+  verifyFormat(
+      "NSDictionary *masses = @{ @\"H\" : @1.0078, @\"He\" : @4.0026 };");
+  
+  // FIXME: Nested and multi-line array and dictionary literals need more work.
 }
 
 TEST_F(FormatTest, ReformatRegionAdjustsIndent) {

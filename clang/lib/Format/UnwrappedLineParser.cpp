@@ -188,7 +188,8 @@ bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
   return Error;
 }
 
-bool UnwrappedLineParser::parseBlock(bool MustBeDeclaration, unsigned AddLevels) {
+bool UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
+                                     unsigned AddLevels) {
   assert(FormatTok.Tok.is(tok::l_brace) && "'{' expected");
   nextToken();
 
@@ -265,6 +266,10 @@ void UnwrappedLineParser::parseStructuralElement() {
   switch (FormatTok.Tok.getKind()) {
   case tok::at:
     nextToken();
+    if (FormatTok.Tok.is(tok::l_brace)) {
+      parseBracedList();
+      break;
+    }
     switch (FormatTok.Tok.getObjCKeywordID()) {
     case tok::objc_public:
     case tok::objc_protected:
@@ -344,6 +349,11 @@ void UnwrappedLineParser::parseStructuralElement() {
   do {
     ++TokenNumber;
     switch (FormatTok.Tok.getKind()) {
+    case tok::at:
+      nextToken();
+      if (FormatTok.Tok.is(tok::l_brace))
+        parseBracedList();
+      break;
     case tok::kw_enum:
       parseEnum();
       break;
@@ -457,6 +467,11 @@ void UnwrappedLineParser::parseParens() {
       Line->Level -= 1;
       break;
     }
+    case tok::at:
+      nextToken();
+      if (FormatTok.Tok.is(tok::l_brace))
+        parseBracedList();
+      break;
     default:
       nextToken();
       break;
