@@ -471,6 +471,8 @@ public:
   const_iterator begin() const { return Attrs.begin(); }
   const_iterator end() const   { return Attrs.end(); }
 
+  bool empty() const           { return Attrs.empty(); }
+
   // Iterators for target-dependent attributes.
   typedef std::pair<std::string, std::string>                td_type;
   typedef std::map<std::string, std::string>::iterator       td_iterator;
@@ -481,6 +483,8 @@ public:
 
   td_const_iterator td_begin() const { return TargetDepAttrs.begin(); }
   td_const_iterator td_end() const   { return TargetDepAttrs.end(); }
+
+  bool td_empty() const              { return TargetDepAttrs.empty(); }
 
   /// \brief Remove attributes that are used on functions only.
   void removeFunctionOnlyAttrs() {

@@ -744,7 +744,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
 
   AttrBuilder NotFn(Attrs, AttributeSet::FunctionIndex);
   NotFn.removeFunctionOnlyAttrs();
-  Assert1(!NotFn.hasAttributes(), "Attribute '" +
+  Assert1(NotFn.empty(), "Attributes '" +
           AttributeSet::get(V->getContext(),
                             AttributeSet::FunctionIndex,
                             NotFn).getAsString(AttributeSet::FunctionIndex) +
