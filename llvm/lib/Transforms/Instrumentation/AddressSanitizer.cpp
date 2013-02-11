@@ -53,6 +53,7 @@ using namespace llvm;
 static const uint64_t kDefaultShadowScale = 3;
 static const uint64_t kDefaultShadowOffset32 = 1ULL << 29;
 static const uint64_t kDefaultShadowOffset64 = 1ULL << 44;
+static const uint64_t kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const uint64_t kPPC64_ShadowOffset64 = 1ULL << 41;
 
 static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
@@ -133,6 +134,9 @@ static cl::opt<int> ClMappingScale("asan-mapping-scale",
        cl::desc("scale of asan shadow mapping"), cl::Hidden, cl::init(0));
 static cl::opt<int> ClMappingOffsetLog("asan-mapping-offset-log",
        cl::desc("offset of asan shadow mapping"), cl::Hidden, cl::init(-1));
+static cl::opt<bool> ClShort64BitOffset("asan-short-64bit-mapping-offset",
+       cl::desc("Use short immediate constant as the mapping offset for 64bit"),
+       cl::Hidden, cl::init(false));
 
 // Optimization flags. Not user visible, used mostly for testing
 // and benchmarking the tool.
@@ -205,12 +209,14 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   // OR-ing shadow offset if more efficient (at least on x86),
   // but on ppc64 we have to use add since the shadow offset is not neccesary
   // 1/8-th of the address space.
-  Mapping.OrShadowOffset = !IsPPC64;
+  Mapping.OrShadowOffset = !IsPPC64 && !ClShort64BitOffset;
 
   Mapping.Offset = (IsAndroid || ZeroBaseShadow) ? 0 :
       (LongSize == 32 ? kDefaultShadowOffset32 :
        IsPPC64 ? kPPC64_ShadowOffset64 : kDefaultShadowOffset64);
-  if (ClMappingOffsetLog >= 0) {
+  if (!ZeroBaseShadow && ClShort64BitOffset && LongSize == 64) {
+    Mapping.Offset = kDefaultShort64bitShadowOffset;
+  } if (!ZeroBaseShadow && ClMappingOffsetLog >= 0) {
     // Zero offset log is the special case.
     Mapping.Offset = (ClMappingOffsetLog == 0) ? 0 : 1ULL << ClMappingOffsetLog;
   }
