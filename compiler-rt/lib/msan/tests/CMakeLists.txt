@@ -151,16 +151,4 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND EXISTS ${MSAN_LIBCXX_PATH}/)
   if(CAN_TARGET_x86_64)
     add_msan_tests_for_arch(x86_64)
   endif()
-
-  # Run unittests as a part of lit testsuite.
-  configure_lit_site_cfg(
-    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
-    ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-    )
-
-  add_lit_testsuite(check-msan "Running MemorySanitizer unittests"
-    ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS MsanUnitTests
-    )
-  set_target_properties(check-msan PROPERTIES FOLDER "MemorySanitizer unittests")
 endif()

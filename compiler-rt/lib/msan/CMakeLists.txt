@@ -31,3 +31,5 @@ endif()
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
+
+add_subdirectory(lit_tests)

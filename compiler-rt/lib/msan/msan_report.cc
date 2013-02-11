@@ -54,7 +54,7 @@ static void DescribeOrigin(u32 origin) {
     CHECK(sep);
     *sep = '\0';
     Printf("%s", d.Origin());
-    Printf("  %sUninitialised value was created by an allocation of '%s%s%s'"
+    Printf("  %sUninitialized value was created by an allocation of '%s%s%s'"
            " in the stack frame of function '%s%s%s'%s\n",
            d.Origin(), d.Name(), s, d.Origin(), d.Name(), sep + 1,
            d.Origin(), d.End());
@@ -62,7 +62,7 @@ static void DescribeOrigin(u32 origin) {
   } else {
     uptr size = 0;
     const uptr *trace = StackDepotGet(origin, &size);
-    Printf("  %sUninitialised value was created by a heap allocation%s\n",
+    Printf("  %sUninitialized value was created by a heap allocation%s\n",
            d.Origin(), d.End());
     StackTrace::PrintStack(trace, size, true, flags()->strip_path_prefix, 0);
   }
