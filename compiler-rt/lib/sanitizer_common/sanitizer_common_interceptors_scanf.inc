@@ -20,11 +20,12 @@
 
 struct ScanfDirective {
   int argIdx;      // argument index, or -1 of not specified ("%n$")
-  bool suppressed; // suppress assignment ("*")
   int fieldWidth;
+  bool suppressed; // suppress assignment ("*")
   bool allocate; // allocate space ("m")
   char lengthModifier[2];
   char convSpecifier;
+  bool maybeGnuMalloc;
 };
 
 static const char *parse_number(const char *p, int *out) {
@@ -121,6 +122,31 @@ static const char *scanf_parse_next(const char *p, ScanfDirective *dir) {
                   // Consume the closing ']'.
       ++p;
     }
+    // This is unfortunately ambiguous between old GNU extension
+    // of %as, %aS and %a[...] and newer POSIX %a followed by
+    // letters s, S or [.
+    if (dir->convSpecifier == 'a' && !dir->lengthModifier[0]) {
+      if (*p == 's' || *p == 'S') {
+        dir->maybeGnuMalloc = true;
+        ++p;
+      } else if (*p == '[') {
+        // Watch for %a[h-j%d], if % appears in the
+        // [...] range, then we need to give up, we don't know
+        // if scanf will parse it as POSIX %a [h-j %d ] or
+        // GNU allocation of string with range dh-j plus %.
+        const char *q = p + 1;
+        if (*q == '^')
+          ++q;
+        if (*q == ']')
+          ++q;
+        while (*q && *q != ']' && *q != '%')
+          ++q;
+        if (*q == 0 || *q == '%')
+          return 0;
+        p = q + 1; // Consume the closing ']'.
+        dir->maybeGnuMalloc = true;
+      }
+    }
     break;
   }
   return p;
@@ -133,9 +159,7 @@ static bool scanf_is_integer_conv(char c) {
 
 // Returns true if the character is an floating point conversion specifier.
 static bool scanf_is_float_conv(char c) {
-  return char_is_one_of(c, "AeEfFgG");
-  // NOTE: c == 'a' is ambiguous between POSIX and GNU and, therefore,
-  // unsupported.
+  return char_is_one_of(c, "aAeEfFgG");
 }
 
 // Returns string output character size for string-like conversions,
@@ -170,6 +194,21 @@ enum ScanfStoreSize {
 // Returns the store size of a scanf directive (if >0), or a value of
 // ScanfStoreSize.
 static int scanf_get_store_size(ScanfDirective *dir) {
+  if (dir->allocate) {
+    if (!char_is_one_of(dir->convSpecifier, "cCsS["))
+      return SSS_INVALID;
+    return sizeof(char *);
+  }
+
+  if (dir->maybeGnuMalloc) {
+    if (dir->convSpecifier != 'a' || dir->lengthModifier[0])
+      return SSS_INVALID;
+    // This is ambiguous, so check the smaller size of char * (if it is
+    // a GNU extension of %as, %aS or %a[...]) and float (if it is
+    // POSIX %a followed by s, S or [ letters).
+    return sizeof(char *) < sizeof(float) ? sizeof(char *) : sizeof(float);
+  }
+
   if (scanf_is_integer_conv(dir->convSpecifier)) {
     switch (dir->lengthModifier[0]) {
     case 'h':
@@ -258,11 +297,6 @@ static void scanf_common(void *ctx, const char *format, va_list ap_const) {
     }
     if (dir.suppressed)
       continue;
-    if (dir.allocate) {
-      // Unsupported;
-      continue;
-    }
-
     int size = scanf_get_store_size(&dir);
     if (size == SSS_INVALID)
       break;

@@ -60,7 +60,9 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   const unsigned S = sizeof(short);  // NOLINT
   const unsigned C = sizeof(char);  // NOLINT
   const unsigned D = sizeof(double);  // NOLINT
+  const unsigned LD = sizeof(long double);  // NOLINT
   const unsigned F = sizeof(float);  // NOLINT
+  const unsigned P = sizeof(char*);  // NOLINT
 
   testScanf("%d", 1, I);
   testScanf("%d%d%d", 3, I, I, I);
@@ -102,12 +104,25 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%c%d", 2, C, I);
   testScanf("%A%lf", 2, F, D);
 
-  // Unsupported stuff.
+  testScanf("%ms %Lf", 2, P, LD);
+  testScanf("s%Las", 1, LD);
+  testScanf("%ar", 1, F);
+
+  // In the cases with std::min below the format spec can be interpreted as
+  // either floating-something, or (GNU extension) callee-allocated string.
+  // Our conservative implementation reports one of the two possibilities with
+  // the least store range.
   testScanf("%a[", 0);
-  testScanf("%as", 0);
-  testScanf("%aS", 0);
-  testScanf("%a13S", 0);
-  testScanf("%alS", 0);
+  testScanf("%a[]", 0);
+  testScanf("%a[]]", 1, std::min(F, P));
+  testScanf("%a[abc]", 1, std::min(F, P));
+  testScanf("%a[^abc]", 1, std::min(F, P));
+  testScanf("%a[ab%c] %d", 0);
+  testScanf("%a[^ab%c] %d", 0);
+  testScanf("%as", 1, std::min(F, P));
+  testScanf("%aS", 1, std::min(F, P));
+  testScanf("%a13S", 1, std::min(F, P));
+  testScanf("%alS", 1, std::min(F, P));
 
   testScanf("%5$d", 0);
   testScanf("%md", 0);
