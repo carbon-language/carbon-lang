@@ -281,6 +281,7 @@ namespace {
 
     void computePairsConnectedTo(
                       std::multimap<Value *, Value *> &CandidatePairs,
+                      DenseSet<ValuePair> &CandidatePairsSet,
                       std::vector<Value *> &PairableInsts,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
                       DenseMap<VPPair, unsigned> &PairConnectionTypes,
@@ -664,19 +665,6 @@ namespace {
       case Intrinsic::fmuladd:
         return Config.VectorizeFMA;
       }
-    }
-
-    // Returns true if J is the second element in some pair referenced by
-    // some multimap pair iterator pair.
-    template <typename V>
-    bool isSecondInIteratorPair(V J, std::pair<
-           typename std::multimap<V, V>::iterator,
-           typename std::multimap<V, V>::iterator> PairRange) {
-      for (typename std::multimap<V, V>::iterator K = PairRange.first;
-           K != PairRange.second; ++K)
-        if (K->second == J) return true;
-
-      return false;
     }
 
     bool isPureIEChain(InsertElementInst *IE) {
@@ -1253,6 +1241,7 @@ namespace {
   // output of PI or PJ.
   void BBVectorize::computePairsConnectedTo(
                       std::multimap<Value *, Value *> &CandidatePairs,
+                      DenseSet<ValuePair> &CandidatePairsSet,
                       std::vector<Value *> &PairableInsts,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
                       DenseMap<VPPair, unsigned> &PairConnectionTypes,
@@ -1274,8 +1263,6 @@ namespace {
         continue;
       }
 
-      VPIteratorPair IPairRange = CandidatePairs.equal_range(*I);
-
       // For each use of the first variable, look for uses of the second
       // variable...
       for (Value::use_iterator J = P.second->use_begin(),
@@ -1284,17 +1271,15 @@ namespace {
             P.second == SJ->getPointerOperand())
           continue;
 
-        VPIteratorPair JPairRange = CandidatePairs.equal_range(*J);
-
         // Look for <I, J>:
-        if (isSecondInIteratorPair<Value*>(*J, IPairRange)) {
+        if (CandidatePairsSet.count(ValuePair(*I, *J))) {
           VPPair VP(P, ValuePair(*I, *J));
           ConnectedPairs.insert(VP);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionDirect));
         }
 
         // Look for <J, I>:
-        if (isSecondInIteratorPair<Value*>(*I, JPairRange)) {
+        if (CandidatePairsSet.count(ValuePair(*J, *I))) {
           VPPair VP(P, ValuePair(*J, *I));
           ConnectedPairs.insert(VP);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionSwap));
@@ -1309,7 +1294,7 @@ namespace {
             P.first == SJ->getPointerOperand())
           continue;
 
-        if (isSecondInIteratorPair<Value*>(*J, IPairRange)) {
+        if (CandidatePairsSet.count(ValuePair(*I, *J))) {
           VPPair VP(P, ValuePair(*I, *J));
           ConnectedPairs.insert(VP);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionSplat));
@@ -1328,14 +1313,12 @@ namespace {
                P.second == SI->getPointerOperand())
         continue;
 
-      VPIteratorPair IPairRange = CandidatePairs.equal_range(*I);
-
       for (Value::use_iterator J = P.second->use_begin(); J != E; ++J) {
         if ((SJ = dyn_cast<StoreInst>(*J)) &&
             P.second == SJ->getPointerOperand())
           continue;
 
-        if (isSecondInIteratorPair<Value*>(*J, IPairRange)) {
+        if (CandidatePairsSet.count(ValuePair(*I, *J))) {
           VPPair VP(P, ValuePair(*I, *J));
           ConnectedPairs.insert(VP);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionSplat));
@@ -1352,6 +1335,10 @@ namespace {
                       std::vector<Value *> &PairableInsts,
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
                       DenseMap<VPPair, unsigned> &PairConnectionTypes) {
+    DenseSet<ValuePair> CandidatePairsSet;
+    for (std::multimap<Value *, Value *>::iterator I = CandidatePairs.begin(),
+         E = CandidatePairs.end(); I != E; ++I)
+      CandidatePairsSet.insert(*I);
 
     for (std::vector<Value *>::iterator PI = PairableInsts.begin(),
          PE = PairableInsts.end(); PI != PE; ++PI) {
@@ -1359,7 +1346,7 @@ namespace {
 
       for (std::multimap<Value *, Value *>::iterator P = choiceRange.first;
            P != choiceRange.second; ++P)
-        computePairsConnectedTo(CandidatePairs, PairableInsts,
+        computePairsConnectedTo(CandidatePairs, CandidatePairsSet, PairableInsts,
                                 ConnectedPairs, PairConnectionTypes, *P);
     }
 
