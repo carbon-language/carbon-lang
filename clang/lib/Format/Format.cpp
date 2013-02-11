@@ -26,9 +26,6 @@
 #include "llvm/Support/Debug.h"
 #include <string>
 
-// Uncomment to get debug output from tests:
-// #define DEBUG_WITH_TYPE(T, X) do { X; } while(0)
-
 namespace clang {
 namespace format {
 
