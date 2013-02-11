@@ -1,4 +1,5 @@
-// RUN: not llvm-mc -triple=aarch64 < %s 2>&1 | FileCheck --check-prefix=CHECK-ERROR %s
+// RUN: not llvm-mc -triple=aarch64 < %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ERROR < %t %s
 
 //------------------------------------------------------------------------------
 // Add/sub (extended register)
