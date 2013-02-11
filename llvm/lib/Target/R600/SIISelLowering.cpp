@@ -74,13 +74,11 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
   case AMDGPU::CLAMP_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_ADD_F32_e64))
            .addOperand(MI->getOperand(0))
            .addOperand(MI->getOperand(1))
-           // VSRC1-2 are unused, but we still need to fill all the
-           // operand slots, so we just reuse the VSRC0 operand
-           .addOperand(MI->getOperand(1))
-           .addOperand(MI->getOperand(1))
+           .addReg(AMDGPU::SREG_LIT_0)
+           .addReg(AMDGPU::SREG_LIT_0)
            .addImm(0) // ABS
            .addImm(1) // CLAMP
            .addImm(0) // OMOD
@@ -89,13 +87,11 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     break;
 
   case AMDGPU::FABS_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_ADD_F32_e64))
                  .addOperand(MI->getOperand(0))
                  .addOperand(MI->getOperand(1))
-                 // VSRC1-2 are unused, but we still need to fill all the
-                 // operand slots, so we just reuse the VSRC0 operand
-                 .addOperand(MI->getOperand(1))
-                 .addOperand(MI->getOperand(1))
+                 .addReg(AMDGPU::SREG_LIT_0)
+                 .addReg(AMDGPU::SREG_LIT_0)
                  .addImm(1) // ABS
                  .addImm(0) // CLAMP
                  .addImm(0) // OMOD
@@ -104,13 +100,11 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     break;
 
   case AMDGPU::FNEG_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_ADD_F32_e64))
                  .addOperand(MI->getOperand(0))
                  .addOperand(MI->getOperand(1))
-                 // VSRC1-2 are unused, but we still need to fill all the
-                 // operand slots, so we just reuse the VSRC0 operand
-                 .addOperand(MI->getOperand(1))
-                 .addOperand(MI->getOperand(1))
+                 .addReg(AMDGPU::SREG_LIT_0)
+                 .addReg(AMDGPU::SREG_LIT_0)
                  .addImm(0) // ABS
                  .addImm(0) // CLAMP
                  .addImm(0) // OMOD
