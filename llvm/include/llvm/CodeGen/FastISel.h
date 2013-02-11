@@ -90,6 +90,11 @@ public:
 
   /// getCurDebugLoc() - Return current debug location information.
   DebugLoc getCurDebugLoc() const { return DL; }
+  
+  /// LowerArguments - Do "fast" instruction selection for function arguments
+  /// and append machine instructions to the current block. Return true if
+  /// it is successful.
+  bool LowerArguments();
 
   /// SelectInstruction - Do "fast" instruction selection for the given
   /// LLVM IR instruction, and append generated machine instructions to
@@ -160,6 +165,11 @@ protected:
   ///
   virtual bool
   TargetSelectInstruction(const Instruction *I) = 0;
+  
+  /// FastLowerArguments - This method is called by target-independent code to
+  /// do target specific argument lowering. It returns true if it was
+  /// successful.
+  virtual bool FastLowerArguments();
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode
