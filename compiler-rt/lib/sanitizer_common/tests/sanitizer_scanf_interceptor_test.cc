@@ -19,7 +19,7 @@
 
 using namespace __sanitizer;
 
-#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                         \
   ((std::vector<unsigned> *)ctx)->push_back(size)
 
 #include "sanitizer_common/sanitizer_common_interceptors_scanf.inc"
@@ -35,20 +35,20 @@ static void testScanf3(void *ctx, int result, const char *format, ...) {
   va_end(ap);
 }
 
-static void testScanf2(const char *format, int scanf_result, unsigned n, va_list expected_sizes) {
+static void testScanf2(const char *format, int scanf_result, unsigned n,
+                       va_list expected_sizes) {
   std::vector<unsigned> scanf_sizes;
   // 16 args should be enough.
-  testScanf3((void *)&scanf_sizes, scanf_result, format,
-      scanf_buf, scanf_buf, scanf_buf, scanf_buf,
-      scanf_buf, scanf_buf, scanf_buf, scanf_buf,
-      scanf_buf, scanf_buf, scanf_buf, scanf_buf,
-      scanf_buf, scanf_buf, scanf_buf, scanf_buf);
-  ASSERT_EQ(n, scanf_sizes.size()) <<
-    "Unexpected number of format arguments: '" << format << "'";
+  testScanf3((void *)&scanf_sizes, scanf_result, format, scanf_buf, scanf_buf,
+             scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf,
+             scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf,
+             scanf_buf, scanf_buf);
+  ASSERT_EQ(n, scanf_sizes.size()) << "Unexpected number of format arguments: '"
+                                   << format << "'";
   for (unsigned i = 0; i < n; ++i)
-    EXPECT_EQ(va_arg(expected_sizes, unsigned), scanf_sizes[i]) <<
-      "Unexpect write size for argument " << i << ", format string '" <<
-      format << "'";
+    EXPECT_EQ(va_arg(expected_sizes, unsigned), scanf_sizes[i])
+        << "Unexpect write size for argument " << i << ", format string '"
+        << format << "'";
 }
 
 static void testScanf(const char *format, unsigned n, ...) {
@@ -58,7 +58,8 @@ static void testScanf(const char *format, unsigned n, ...) {
   va_end(ap);
 }
 
-static void testScanfPartial(const char *format, int scanf_result, unsigned n, ...) {
+static void testScanfPartial(const char *format, int scanf_result, unsigned n,
+                             ...) {
   va_list ap;
   va_start(ap, n);
   testScanf2(format, scanf_result, n, ap);
@@ -66,15 +67,15 @@ static void testScanfPartial(const char *format, int scanf_result, unsigned n, .
 }
 
 TEST(SanitizerCommonInterceptors, Scanf) {
-  const unsigned I = sizeof(int);  // NOLINT
-  const unsigned L = sizeof(long);  // NOLINT
-  const unsigned LL = sizeof(long long);  // NOLINT
-  const unsigned S = sizeof(short);  // NOLINT
-  const unsigned C = sizeof(char);  // NOLINT
-  const unsigned D = sizeof(double);  // NOLINT
-  const unsigned LD = sizeof(long double);  // NOLINT
-  const unsigned F = sizeof(float);  // NOLINT
-  const unsigned P = sizeof(char*);  // NOLINT
+  const unsigned I = sizeof(int);          // NOLINT
+  const unsigned L = sizeof(long);         // NOLINT
+  const unsigned LL = sizeof(long long);   // NOLINT
+  const unsigned S = sizeof(short);        // NOLINT
+  const unsigned C = sizeof(char);         // NOLINT
+  const unsigned D = sizeof(double);       // NOLINT
+  const unsigned LD = sizeof(long double); // NOLINT
+  const unsigned F = sizeof(float);        // NOLINT
+  const unsigned P = sizeof(char *);       // NOLINT
 
   testScanf("%d", 1, I);
   testScanf("%d%d%d", 3, I, I, I);
@@ -149,5 +150,6 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanfPartial("%d%n%n%d //2\n", 2, 4, I, I, I, I);
 
   testScanfPartial("%d%n%n%d %s %s", 3, 5, I, I, I, I, scanf_buf_size);
-  testScanfPartial("%d%n%n%d %s %s", 4, 6, I, I, I, I, scanf_buf_size, scanf_buf_size);
+  testScanfPartial("%d%n%n%d %s %s", 4, 6, I, I, I, I, scanf_buf_size,
+                   scanf_buf_size);
 }
