@@ -1725,12 +1725,7 @@ validateInstruction(MCInst &Inst,
     int64_t ImmR = Inst.getOperand(ImmOps).getImm();
     int64_t ImmS = Inst.getOperand(ImmOps+1).getImm();
 
-    if (ImmR == 0) {
-      // Bitfield inserts are preferred disassembly if ImmS < ImmR. However,
-      // there is this one case where insert is valid syntax but the bfx
-      // disassembly should be used: e.g. "sbfiz w0, w0, #0, #1".
-      return false;
-    } else if (ImmS >= ImmR) {
+    if (ImmR != 0 && ImmS >= ImmR) {
       return Error(Operands[4]->getStartLoc(),
                    "requested insert overflows register");
     }
