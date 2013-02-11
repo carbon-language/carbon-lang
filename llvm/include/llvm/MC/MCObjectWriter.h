@@ -176,7 +176,7 @@ public:
     OS << StringRef(Zeros, N % 16);
   }
 
-  void WriteBytes(SmallVectorImpl<char> &ByteVec, unsigned ZeroFillSize = 0) {
+  void WriteBytes(const SmallVectorImpl<char> &ByteVec, unsigned ZeroFillSize = 0) {
     WriteBytes(StringRef(ByteVec.data(), ByteVec.size()), ZeroFillSize);
   }
 

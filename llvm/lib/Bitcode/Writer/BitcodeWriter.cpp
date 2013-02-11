@@ -1249,7 +1249,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Br:
     {
       Code = bitc::FUNC_CODE_INST_BR;
-      BranchInst &II = cast<BranchInst>(I);
+      const BranchInst &II = cast<BranchInst>(I);
       Vals.push_back(VE.getValueID(II.getSuccessor(0)));
       if (II.isConditional()) {
         Vals.push_back(VE.getValueID(II.getSuccessor(1)));
@@ -1264,7 +1264,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       SmallVector<uint64_t, 128> Vals64;
 
       Code = bitc::FUNC_CODE_INST_SWITCH;
-      SwitchInst &SI = cast<SwitchInst>(I);
+      const SwitchInst &SI = cast<SwitchInst>(I);
 
       uint32_t SwitchRecordHeader = SI.hash() | (SWITCH_INST_MAGIC << 16);
       Vals64.push_back(SwitchRecordHeader);
@@ -1273,9 +1273,9 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       pushValue64(SI.getCondition(), InstID, Vals64, VE);
       Vals64.push_back(VE.getValueID(SI.getDefaultDest()));
       Vals64.push_back(SI.getNumCases());
-      for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
+      for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
-        IntegersSubset& CaseRanges = i.getCaseValueEx();
+        const IntegersSubset& CaseRanges = i.getCaseValueEx();
         unsigned Code, Abbrev; // will unused.
 
         if (CaseRanges.isSingleNumber()) {

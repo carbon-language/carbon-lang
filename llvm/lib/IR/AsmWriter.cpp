@@ -1758,7 +1758,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   // Special case conditional branches to swizzle the condition out to the front
   if (isa<BranchInst>(I) && cast<BranchInst>(I).isConditional()) {
-    BranchInst &BI(cast<BranchInst>(I));
+    const BranchInst &BI(cast<BranchInst>(I));
     Out << ' ';
     writeOperand(BI.getCondition(), true);
     Out << ", ";
@@ -1767,14 +1767,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     writeOperand(BI.getSuccessor(1), true);
 
   } else if (isa<SwitchInst>(I)) {
-    SwitchInst& SI(cast<SwitchInst>(I));
+    const SwitchInst& SI(cast<SwitchInst>(I));
     // Special case switch instruction to get formatting nice and correct.
     Out << ' ';
     writeOperand(SI.getCondition(), true);
     Out << ", ";
     writeOperand(SI.getDefaultDest(), true);
     Out << " [";
-    for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
+    for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
          i != e; ++i) {
       Out << "\n    ";
       writeOperand(i.getCaseValue(), true);

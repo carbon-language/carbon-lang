@@ -421,7 +421,7 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
   }
 
   case MCFragment::FT_Org: {
-    MCOrgFragment &OF = cast<MCOrgFragment>(F);
+    const MCOrgFragment &OF = cast<MCOrgFragment>(F);
     int64_t TargetLocation;
     if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, Layout))
       report_fatal_error("expected assembly-time absolute expression");
@@ -498,7 +498,7 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
 /// \brief Write the contents of a fragment to the given object writer. Expects
 ///        a MCEncodedFragment.
 static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
-  MCEncodedFragment &EF = cast<MCEncodedFragment>(F);
+  const MCEncodedFragment &EF = cast<MCEncodedFragment>(F);
   OW->WriteBytes(EF.getContents());
 }
 
@@ -549,7 +549,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
     ++stats::EmittedAlignFragments;
-    MCAlignFragment &AF = cast<MCAlignFragment>(F);
+    const MCAlignFragment &AF = cast<MCAlignFragment>(F);
     uint64_t Count = FragmentSize / AF.getValueSize();
 
     assert(AF.getValueSize() && "Invalid virtual align in concrete fragment!");
@@ -604,7 +604,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_Fill: {
     ++stats::EmittedFillFragments;
-    MCFillFragment &FF = cast<MCFillFragment>(F);
+    const MCFillFragment &FF = cast<MCFillFragment>(F);
 
     assert(FF.getValueSize() && "Invalid virtual align in concrete fragment!");
 
@@ -621,14 +621,14 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   }
 
   case MCFragment::FT_LEB: {
-    MCLEBFragment &LF = cast<MCLEBFragment>(F);
+    const MCLEBFragment &LF = cast<MCLEBFragment>(F);
     OW->WriteBytes(LF.getContents().str());
     break;
   }
 
   case MCFragment::FT_Org: {
     ++stats::EmittedOrgFragments;
-    MCOrgFragment &OF = cast<MCOrgFragment>(F);
+    const MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
     for (uint64_t i = 0, e = FragmentSize; i != e; ++i)
       OW->Write8(uint8_t(OF.getValue()));
@@ -667,7 +667,7 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
         // Check that we aren't trying to write a non-zero contents (or fixups)
         // into a virtual section. This is to support clients which use standard
         // directives to fill the contents of virtual sections.
-        MCDataFragment &DF = cast<MCDataFragment>(*it);
+        const MCDataFragment &DF = cast<MCDataFragment>(*it);
         assert(DF.fixup_begin() == DF.fixup_end() &&
                "Cannot have fixups in virtual section!");
         for (unsigned i = 0, e = DF.getContents().size(); i != e; ++i)
