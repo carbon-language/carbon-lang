@@ -693,7 +693,31 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     }
 
   ReplaceUsesOfBlockWith(Succ, NMBB);
+
+  // If updateTerminator() removes instructions, we need to remove them from
+  // SlotIndexes.
+  SmallVector<MachineInstr*, 4> Terminators;
+  if (Indexes) {
+    for (instr_iterator I = getFirstInstrTerminator(), E = instr_end();
+         I != E; ++I)
+      Terminators.push_back(I);
+  }
+
   updateTerminator();
+
+  if (Indexes) {
+    SmallVector<MachineInstr*, 4> NewTerminators;
+    for (instr_iterator I = getFirstInstrTerminator(), E = instr_end();
+         I != E; ++I)
+      NewTerminators.push_back(I);
+
+    for (SmallVectorImpl<MachineInstr*>::iterator I = Terminators.begin(),
+        E = Terminators.end(); I != E; ++I) {
+      if (std::find(NewTerminators.begin(), NewTerminators.end(), *I) ==
+          NewTerminators.end())
+       Indexes->removeMachineInstrFromMaps(*I);
+    }
+  }
 
   // Insert unconditional "jump Succ" instruction in NMBB if necessary.
   NMBB->addSuccessor(Succ);
