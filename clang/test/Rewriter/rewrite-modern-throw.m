@@ -65,3 +65,29 @@ int main()
   }
 }
 @end
+
+// rdar://13186010
+@class NSDictionary, NSException;
+@class NSMutableDictionary;
+
+@interface NSString
++ (id)stringWithFormat:(NSString *)format, ... ;
+@end
+
+@interface  NSException
++ (NSException *)exceptionWithName:(NSString *)name reason:(NSString *)reason userInfo:(NSDictionary *)userInfo;
+@end
+id *_imp__NSInvalidArgumentException;
+
+@interface NSSetExpression @end
+
+@implementation NSSetExpression
+-(id)expressionValueWithObject:(id)object context:(NSMutableDictionary*)bindings {
+    id leftSet;
+    id rightSet;
+    @throw [NSException exceptionWithName: *_imp__NSInvalidArgumentException reason: [NSString stringWithFormat: @"Can't evaluate set expression; left subexpression not a set (lhs = %@ rhs = %@)", leftSet, rightSet] userInfo: 0];
+
+    return leftSet ;
+}
+@end
+

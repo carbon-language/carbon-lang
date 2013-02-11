@@ -2093,7 +2093,9 @@ Stmt *RewriteModernObjC::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
   assert((*wBuf == 'w') && "@throw: can't find 'w'");
   ReplaceText(startLoc, wBuf-startBuf+1, buf);
 
-  const char *semiBuf = strchr(startBuf, ';');
+  SourceLocation endLoc = S->getLocEnd();
+  const char *endBuf = SM->getCharacterData(endLoc);
+  const char *semiBuf = strchr(endBuf, ';');
   assert((*semiBuf == ';') && "@throw: can't find ';'");
   SourceLocation semiLoc = startLoc.getLocWithOffset(semiBuf-startBuf);
   if (S->getThrowExpr())
