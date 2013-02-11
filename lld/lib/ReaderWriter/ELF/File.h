@@ -38,16 +38,6 @@
 #include <map>
 #include <unordered_map>
 
-namespace std {
-template <> struct hash<llvm::StringRef> {
-public:
-  size_t operator()(const llvm::StringRef &s) const {
-    using llvm::hash_value;
-    return hash_value(s);
-  }
-};
-}
-
 namespace lld {
 namespace elf {
 /// \brief Read a binary, find out based on the symbol table contents what kind

@@ -41,15 +41,10 @@ public:
   /// If so, return a SharedLibraryAtom which represents that exported
   /// symbol.  Otherwise return nullptr.
   virtual const SharedLibraryAtom *exports(StringRef name,
-                                           bool dataSymbolOnly) const;
+                                           bool dataSymbolOnly) const = 0;
 protected:
   /// only subclasses of SharedLibraryFile can be instantiated 
-  SharedLibraryFile(const TargetInfo &ti, StringRef path)
-      : File(path), _targetInfo(ti) {
-  }
-
-private:
-  const TargetInfo &_targetInfo;
+  SharedLibraryFile(StringRef path) : File(path) {}
 };
 
 } // namespace lld

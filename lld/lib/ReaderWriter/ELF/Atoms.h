@@ -21,6 +21,7 @@
 
 namespace lld {
 namespace elf {
+template <class ELFT> class DynamicFile;
 template <typename ELFT> class ELFFile;
 template <typename ELFT> class TargetAtomHandler;
 
@@ -95,7 +96,7 @@ public:
       : _owningFile(file), _name(name), _symbol(symbol), _value(value) {
   }
 
-  virtual const class ELFFile<ELFT> &file() const {
+  virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
   } virtual Scope scope() const {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
@@ -132,7 +133,7 @@ public:
                    const Elf_Sym *symbol)
       : _owningFile(file), _name(name), _symbol(symbol) {}
 
-  virtual const class ELFFile<ELFT> &file() const {
+  virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
   }
 
@@ -187,7 +188,7 @@ public:
     _ordinal = ++orderNumber;
   }
 
-  virtual const class ELFFile<ELFT> &file() const {
+  virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
   }
 
@@ -439,6 +440,49 @@ private:
   unsigned int _referenceEndIndex;
   std::vector<ELFReference<ELFT>*> &
     _referenceList;
+};
+
+/// \brief An atom from a shared library.
+template <class ELFT>
+class ELFDynamicAtom LLVM_FINAL : public SharedLibraryAtom {
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+
+public:
+  ELFDynamicAtom(const DynamicFile<ELFT> &file, StringRef symbolName,
+                 StringRef loadName, const Elf_Sym *symbol)
+      : _owningFile(file), _symbolName(symbolName), _loadName(loadName),
+        _symbol(symbol) {
+  }
+
+  virtual const DynamicFile<ELFT> &file() const {
+    return _owningFile;
+  }
+
+  virtual StringRef name() const {
+    return _symbolName;
+  }
+
+  virtual Scope scope() const {
+    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+      return scopeLinkageUnit;
+    else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
+      return scopeGlobal;
+    else
+      return scopeTranslationUnit;
+  }
+
+  virtual StringRef loadName() const { return _loadName; }
+
+  virtual bool canBeNullAtRuntime() const {
+    return _symbol->getBinding() == llvm::ELF::STB_WEAK;
+  }
+
+private:
+
+  const DynamicFile<ELFT> &_owningFile;
+  StringRef _symbolName;
+  StringRef _loadName;
+  const Elf_Sym *_symbol;
 };
 } // end namespace elf
 } // end namespace lld

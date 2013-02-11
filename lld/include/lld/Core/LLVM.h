@@ -17,7 +17,10 @@
 
 // This should be the only #include, force #includes of all the others on
 // clients.
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/Casting.h"
+
+#include <utility>
 
 namespace llvm {
   // ADT's.
@@ -76,5 +79,14 @@ namespace lld {
   using llvm::error_code;
   using llvm::raw_ostream;
 } // end namespace clang.
+
+namespace std {
+template <> struct hash<llvm::StringRef> {
+public:
+  size_t operator()(const llvm::StringRef &s) const {
+    return llvm::hash_value(s);
+  }
+};
+}
 
 #endif

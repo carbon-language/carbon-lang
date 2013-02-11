@@ -165,22 +165,26 @@ protected:
   class atom_collection_vector : public atom_collection<T> {
   public:
     virtual atom_iterator<T> begin() const {
-      return atom_iterator<T>(*this, reinterpret_cast<const void*>
-                                                              (_atoms.data()));
+      return atom_iterator<T>(*this,
+          _atoms.empty() ? 0 : reinterpret_cast<const void *>(_atoms.data()));
     }
+
     virtual atom_iterator<T> end() const{
-      return atom_iterator<T>(*this, reinterpret_cast<const void*>
-                                              (_atoms.data() + _atoms.size()));
+      return atom_iterator<T>(*this, _atoms.empty() ? 0 :
+          reinterpret_cast<const void *>(_atoms.data() + _atoms.size()));
     }
+
     virtual const T *deref(const void *it) const {
       return *reinterpret_cast<const T* const*>(it);
     }
+
     virtual void next(const void *&it) const {
       const T *const *p = reinterpret_cast<const T *const*>(it);
       ++p;
       it = reinterpret_cast<const void*>(p);
     }
-    std::vector<const T*> _atoms;
+
+    std::vector<const T *> _atoms;
   };
 
   /// \brief This is a convenience class for File subclasses which need to

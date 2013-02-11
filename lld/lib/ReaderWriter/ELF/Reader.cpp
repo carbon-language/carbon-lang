@@ -16,6 +16,8 @@
 #include "lld/ReaderWriter/Reader.h"
 
 #include "Atoms.h"
+#include "CreateELF.h"
+#include "DynamicFile.h"
 #include "File.h"
 
 #include "lld/Core/Reference.h"
@@ -46,6 +48,30 @@
 using llvm::support::endianness;
 using namespace llvm::object;
 
+namespace {
+struct DynamicFileCreateELFTraits {
+  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
+
+  template <class ELFT>
+  static result_type create(const lld::ELFTargetInfo &ti,
+                            std::unique_ptr<llvm::MemoryBuffer> mb) {
+    return lld::elf::DynamicFile<ELFT>::create(ti, std::move(mb));
+  }
+};
+
+struct ELFFileCreateELFTraits {
+  typedef std::unique_ptr<lld::File> result_type;
+
+  template <class ELFT>
+  static result_type create(const lld::ELFTargetInfo &ti,
+                            std::unique_ptr<llvm::MemoryBuffer> mb,
+                            lld::error_code &ec) {
+    return std::unique_ptr<lld::File>(
+        new lld::elf::ELFFile<ELFT>(ti, std::move(mb), ec));
+  }
+};
+}
+
 namespace lld {
 namespace elf {
 /// \brief A reader object that will instantiate correct File by examining the
@@ -69,66 +95,20 @@ public:
     llvm::error_code ec;
     switch (fileType) {
     case llvm::sys::ELF_Relocatable_FileType: {
-      std::pair<unsigned char, unsigned char> Ident = getElfArchType(&*mb);
-      std::unique_ptr<File> f;
-      // Instantiate the correct File template instance based on the Ident
-      // pair. Once the File is created we push the file to the vector of files
-      // already created during parser's life.
-      if (Ident.first == llvm::ELF::ELFCLASS32 &&
-          Ident.second == llvm::ELF::ELFDATA2LSB) {
-#if !LLVM_IS_UNALIGNED_ACCESS_FAST
-        if (MaxAlignment >= 4)
-          f.reset(new ELFFile<ELFType<llvm::support::little, 4, false> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-#endif
-        if (MaxAlignment >= 2)
-          f.reset(new ELFFile<ELFType<llvm::support::little, 2, false> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-          llvm_unreachable("Invalid alignment for ELF file!");
-      } else if (Ident.first == llvm::ELF::ELFCLASS32 &&
-                 Ident.second == llvm::ELF::ELFDATA2MSB) {
-#if !LLVM_IS_UNALIGNED_ACCESS_FAST
-        if (MaxAlignment >= 4)
-          f.reset(new ELFFile<ELFType<llvm::support::big, 4, false> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-#endif
-        if (MaxAlignment >= 2)
-          f.reset(new ELFFile<ELFType<llvm::support::big, 2, false> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-          llvm_unreachable("Invalid alignment for ELF file!");
-      } else if (Ident.first == llvm::ELF::ELFCLASS64 &&
-                 Ident.second == llvm::ELF::ELFDATA2MSB) {
-#if !LLVM_IS_UNALIGNED_ACCESS_FAST
-        if (MaxAlignment >= 8)
-          f.reset(new ELFFile<ELFType<llvm::support::big, 8, true> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-#endif
-        if (MaxAlignment >= 2)
-          f.reset(new ELFFile<ELFType<llvm::support::big, 2, true> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-          llvm_unreachable("Invalid alignment for ELF file!");
-      } else if (Ident.first == llvm::ELF::ELFCLASS64 &&
-                 Ident.second == llvm::ELF::ELFDATA2LSB) {
-#if !LLVM_IS_UNALIGNED_ACCESS_FAST
-        if (MaxAlignment >= 8)
-          f.reset(new ELFFile<ELFType<llvm::support::little, 8, true> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-#endif
-        if (MaxAlignment >= 2)
-          f.reset(new ELFFile<ELFType<llvm::support::little, 2, true> >(
-                          _elfTargetInfo, std::move(mb), ec));
-        else
-          llvm_unreachable("Invalid alignment for ELF file!");
-      }
-      if (!ec)
-        result.push_back(std::move(f));
+      std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
+          getElfArchType(&*mb), MaxAlignment, _elfTargetInfo, std::move(mb),
+          ec));
+      if (ec)
+        return ec;
+      result.push_back(std::move(f));
+      break;
+    }
+    case llvm::sys::ELF_SharedObject_FileType: {
+      auto f = createELF<DynamicFileCreateELFTraits>(
+          getElfArchType(&*mb), MaxAlignment, _elfTargetInfo, std::move(mb));
+      if (!f)
+        return f;
+      result.push_back(std::move(*f));
       break;
     }
     case llvm::sys::Archive_FileType:

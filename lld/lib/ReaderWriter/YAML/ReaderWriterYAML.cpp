@@ -220,13 +220,15 @@ private:
 template <typename T>
 class AtomList : public lld::File::atom_collection<T> {
 public:
-  virtual lld::File::atom_iterator<T> begin() const { 
-    return lld::File::atom_iterator<T>(*this, reinterpret_cast<const void*>
-                                                            (_atoms.data()));
+  virtual lld::File::atom_iterator<T> begin() const {
+    return lld::File::atom_iterator<
+        T>(*this,
+           _atoms.empty() ? 0 : reinterpret_cast<const void *>(_atoms.data()));
   }
-  virtual lld::File::atom_iterator<T> end() const{ 
-    return lld::File::atom_iterator<T>(*this, reinterpret_cast<const void*>
-                                            (_atoms.data() + _atoms.size()));
+  virtual lld::File::atom_iterator<T> end() const{
+    return lld::File::atom_iterator<
+        T>(*this, _atoms.empty() ? 0 :
+               reinterpret_cast<const void *>(_atoms.data() + _atoms.size()));
   }
   virtual const T *deref(const void *it) const {
     return *reinterpret_cast<const T *const*>(it);
