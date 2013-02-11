@@ -137,4 +137,10 @@ define i32 @All111(i32 %in) {
 ; CHECK: ret i32 0
 }
 
-
+define <2 x i16> @BitcastInsert(i32 %a) {
+  %v = insertelement <1 x i32> undef, i32 %a, i32 0
+  %r = bitcast <1 x i32> %v to <2 x i16>
+  ret <2 x i16> %r
+; CHECK: @BitcastInsert
+; CHECK: bitcast i32 %a to <2 x i16>
+}
