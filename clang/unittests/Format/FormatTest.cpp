@@ -2427,6 +2427,10 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("[foo bar:baz] % [foo bar:baz];");
   // Whew!
 
+  verifyFormat("return in[42];");
+  verifyFormat("for (id foo in [self getStuffFor:bla]) {\n"
+               "}");
+
   verifyFormat("[self stuffWithInt:(4 + 2) float:4.5];");
   verifyFormat("[self stuffWithInt:a ? b : c float:4.5];");
   verifyFormat("[self stuffWithInt:a ? [self foo:bar] : c];");

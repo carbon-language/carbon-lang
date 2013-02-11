@@ -842,6 +842,8 @@ public:
     return FormatTok;
   }
 
+  IdentifierTable &getIdentTable() { return IdentTable; }
+
 private:
   FormatToken FormatTok;
   bool GreaterStashed;
@@ -909,7 +911,8 @@ public:
     UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
     StructuralError = Parser.parse();
     unsigned PreviousEndOfLineColumn = 0;
-    TokenAnnotator Annotator(Style, SourceMgr, Lex);
+    TokenAnnotator Annotator(Style, SourceMgr, Lex,
+                             Tokens.getIdentTable().get("in"));
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.annotate(AnnotatedLines[i]);
     }

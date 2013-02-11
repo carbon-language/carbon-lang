@@ -78,9 +78,10 @@ static const AnnotatedToken *getNextToken(const AnnotatedToken &Tok) {
 /// into template parameter lists.
 class AnnotatingParser {
 public:
-  AnnotatingParser(SourceManager &SourceMgr, Lexer &Lex, AnnotatedLine &Line)
+  AnnotatingParser(SourceManager &SourceMgr, Lexer &Lex, AnnotatedLine &Line,
+                   IdentifierInfo &Ident_in)
       : SourceMgr(SourceMgr), Lex(Lex), Line(Line), CurrentToken(&Line.First),
-        KeywordVirtualFound(false) {
+        KeywordVirtualFound(false), Ident_in(Ident_in) {
     Contexts.push_back(Context(1, /*IsExpression=*/ false));
     Contexts.back().LookForFunctionName = Line.MustBeDeclaration;
   }
@@ -195,6 +196,7 @@ public:
         !Parent || Parent->is(tok::colon) || Parent->is(tok::l_square) ||
         Parent->is(tok::l_paren) || Parent->is(tok::kw_return) ||
         Parent->is(tok::kw_throw) || isUnaryOperator(*Parent) ||
+        Parent->Type == TT_ObjCForIn ||
         getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
         prec::Unknown;
     bool StartsObjCArrayLiteral = Parent && Parent->is(tok::at);
@@ -382,6 +384,11 @@ public:
       break;
     case tok::kw_template:
       parseTemplateDeclaration();
+      break;
+    case tok::identifier:
+      if (Line.First.is(tok::kw_for) &&
+          Tok->FormatTok.Tok.getIdentifierInfo() == &Ident_in)
+        Tok->Type = TT_ObjCForIn;
       break;
     default:
       break;
@@ -684,6 +691,7 @@ private:
   AnnotatedLine &Line;
   AnnotatedToken *CurrentToken;
   bool KeywordVirtualFound;
+  IdentifierInfo &Ident_in;
 };
 
 /// \brief Parses binary expressions by inserting fake parenthesis based on
@@ -763,7 +771,7 @@ private:
 };
 
 void TokenAnnotator::annotate(AnnotatedLine &Line) {
-  AnnotatingParser Parser(SourceMgr, Lex, Line);
+  AnnotatingParser Parser(SourceMgr, Lex, Line, Ident_in);
   Line.Type = Parser.parseLine();
   if (Line.Type == LT_Invalid)
     return;

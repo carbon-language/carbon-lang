@@ -38,6 +38,7 @@ enum TokenType {
   TT_ObjCArrayLiteral,
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
+  TT_ObjCForIn,
   TT_ObjCMethodExpr,
   TT_ObjCMethodSpecifier,
   TT_ObjCProperty,
@@ -178,8 +179,9 @@ inline prec::Level getPrecedence(const AnnotatedToken &Tok) {
 /// \c UnwrappedLine.
 class TokenAnnotator {
 public:
-  TokenAnnotator(const FormatStyle &Style, SourceManager &SourceMgr, Lexer &Lex)
-      : Style(Style), SourceMgr(SourceMgr), Lex(Lex) {
+  TokenAnnotator(const FormatStyle &Style, SourceManager &SourceMgr, Lexer &Lex,
+                 IdentifierInfo &Ident_in)
+      : Style(Style), SourceMgr(SourceMgr), Lex(Lex), Ident_in(Ident_in) {
   }
 
   void annotate(AnnotatedLine &Line);
@@ -201,6 +203,9 @@ private:
   const FormatStyle &Style;
   SourceManager &SourceMgr;
   Lexer &Lex;
+
+  // Contextual keywords:
+  IdentifierInfo &Ident_in;
 };
 
 } // end namespace format
