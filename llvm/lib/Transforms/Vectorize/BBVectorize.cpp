@@ -1380,20 +1380,28 @@ namespace {
     // Iterate through the basic block, recording all users of each
     // pairable instruction.
 
-    BasicBlock::iterator E = BB.end();
+    BasicBlock::iterator E = BB.end(), EL =
+      BasicBlock::iterator(cast<Instruction>(PairableInsts.back()));
     for (BasicBlock::iterator I = BB.getFirstInsertionPt(); I != E; ++I) {
       if (IsInPair.find(I) == IsInPair.end()) continue;
 
       DenseSet<Value *> Users;
       AliasSetTracker WriteSet(*AA);
-      for (BasicBlock::iterator J = llvm::next(I); J != E; ++J)
+      for (BasicBlock::iterator J = llvm::next(I); J != E; ++J) {
         (void) trackUsesOfI(Users, WriteSet, I, J);
+
+        if (J == EL)
+          break;
+      }
 
       for (DenseSet<Value *>::iterator U = Users.begin(), E = Users.end();
            U != E; ++U) {
         if (IsInPair.find(*U) == IsInPair.end()) continue;
         PairableInstUsers.insert(ValuePair(I, *U));
       }
+
+      if (I == EL)
+        break;
     }
   }
 
