@@ -71,6 +71,16 @@
 #define LLVM_HAS_CXX11_STDLIB 0
 #endif
 
+/// \macro LLVM_HAS_VARIADIC_TEMPLATES
+/// \brief Does this compiler support variadic templates.
+///
+/// Implies LLVM_HAS_RVALUE_REFERENCES and the existence of std::forward.
+#if __has_feature(cxx_variadic_templates)
+# define LLVM_HAS_VARIADIC_TEMPLATES 1
+#else
+# define LLVM_HAS_VARIADIC_TEMPLATES 0
+#endif
+
 /// llvm_move - Expands to ::std::move if the compiler supports
 /// r-value references; otherwise, expands to the argument.
 #if LLVM_HAS_RVALUE_REFERENCES
