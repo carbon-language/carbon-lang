@@ -174,7 +174,7 @@ public:
 
   unsigned getAlignment() const;
   unsigned getStackAlignment() const;
-  std::string getAsString() const;
+  std::string getAsString(bool InAttrGrp) const;
 
   typedef SmallVectorImpl<Attribute>::iterator       iterator;
   typedef SmallVectorImpl<Attribute>::const_iterator const_iterator;

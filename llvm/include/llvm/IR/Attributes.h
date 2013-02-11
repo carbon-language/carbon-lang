@@ -171,7 +171,7 @@ public:
 
   /// \brief The Attribute is converted to a string of equivalent mnemonic. This
   /// is, presumably, for writing out the mnemonics for the assembly writer.
-  std::string getAsString() const;
+  std::string getAsString(bool InAttrGrp = false) const;
 
   /// \brief Equality and non-equality operators.
   bool operator==(Attribute A) const { return pImpl == A.pImpl; }
@@ -317,7 +317,7 @@ public:
   unsigned getStackAlignment(unsigned Index) const;
 
   /// \brief Return the attributes at the index as a string.
-  std::string getAsString(unsigned Index) const;
+  std::string getAsString(unsigned Index, bool InAttrGrp = false) const;
 
   typedef ArrayRef<Attribute>::iterator iterator;
 

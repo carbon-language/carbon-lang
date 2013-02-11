@@ -150,7 +150,7 @@ unsigned Attribute::getStackAlignment() const {
   return pImpl->getValueAsInt();
 }
 
-std::string Attribute::getAsString() const {
+std::string Attribute::getAsString(bool InAttrGrp) const {
   if (!pImpl) return "";
 
   if (hasAttribute(Attribute::AddressSafety))
@@ -221,15 +221,23 @@ std::string Attribute::getAsString() const {
   //
   if (hasAttribute(Attribute::Alignment)) {
     std::string Result;
-    Result += "align ";
+    Result += "align";
+    Result += (InAttrGrp) ? "=" : " ";
     Result += utostr(getValueAsInt());
     return Result;
   }
+
   if (hasAttribute(Attribute::StackAlignment)) {
     std::string Result;
-    Result += "alignstack(";
-    Result += utostr(getValueAsInt());
-    Result += ")";
+    Result += "alignstack";
+    if (InAttrGrp) {
+      Result += "=";
+      Result += utostr(getValueAsInt());
+    } else {
+      Result += "(";
+      Result += utostr(getValueAsInt());
+      Result += ")";
+    }
     return Result;
   }
 
@@ -237,7 +245,6 @@ std::string Attribute::getAsString() const {
   //
   //   "kind"
   //   "kind" = "value"
-  //   "kind" = ( "value1" "value2" "value3" )
   //
   if (isStringAttribute()) {
     std::string Result;
@@ -246,8 +253,7 @@ std::string Attribute::getAsString() const {
     StringRef Val = pImpl->getValueAsString();
     if (Val.empty()) return Result;
 
-    Result += " = ";
-    Result += '\"' + Val.str() + '"';
+    Result += "=\"" + Val.str() + '"';
     return Result;
   }
 
@@ -451,11 +457,11 @@ unsigned AttributeSetNode::getStackAlignment() const {
   return 0;
 }
 
-std::string AttributeSetNode::getAsString() const {
+std::string AttributeSetNode::getAsString(bool InAttrGrp) const {
   std::string Str = "";
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ) {
-    Str += I->getAsString();
+    Str += I->getAsString(InAttrGrp);
     if (++I != E) Str += " ";
   }
   return Str;
@@ -783,9 +789,10 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
   return ASN ? ASN->getStackAlignment() : 0;
 }
 
-std::string AttributeSet::getAsString(unsigned Index) const {
+std::string AttributeSet::getAsString(unsigned Index,
+                                      bool InAttrGrp) const {
   AttributeSetNode *ASN = getAttributes(Index);
-  return ASN ? ASN->getAsString() : std::string("");
+  return ASN ? ASN->getAsString(InAttrGrp) : std::string("");
 }
 
 /// \brief The attributes for the specified index are returned.

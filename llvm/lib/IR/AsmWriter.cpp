@@ -347,6 +347,10 @@ private:
   /// mdnMap - Map for MDNodes.
   DenseMap<const MDNode*, unsigned> mdnMap;
   unsigned mdnNext;
+
+  /// asMap - The slot map for attribute sets.
+  DenseMap<AttributeSet, unsigned> asMap;
+  unsigned asNext;
 public:
   /// Construct from a module
   explicit SlotTracker(const Module *M);
@@ -358,6 +362,7 @@ public:
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
   int getMetadataSlot(const MDNode *N);
+  int getAttributeGroupSlot(AttributeSet AS);
 
   /// If you'd like to deal with a function instead of just a module, use
   /// this method to get its data into the SlotTracker.
@@ -378,6 +383,13 @@ public:
   unsigned mdn_size() const { return mdnMap.size(); }
   bool mdn_empty() const { return mdnMap.empty(); }
 
+  /// AttributeSet map iterators.
+  typedef DenseMap<AttributeSet, unsigned>::iterator as_iterator;
+  as_iterator as_begin()   { return asMap.begin(); }
+  as_iterator as_end()     { return asMap.end(); }
+  unsigned as_size() const { return asMap.size(); }
+  bool as_empty() const    { return asMap.empty(); }
+
   /// This function does the actual initialization.
   inline void initialize();
 
@@ -391,6 +403,9 @@ private:
 
   /// CreateFunctionSlot - Insert the specified Value* into the slot table.
   void CreateFunctionSlot(const Value *V);
+
+  /// \brief Insert the specified AttributeSet into the slot table.
+  void CreateAttributeSetSlot(AttributeSet AS);
 
   /// Add all of the module level global variables (and their initializers)
   /// and function declarations, but not the contents of those functions.
@@ -446,14 +461,14 @@ static SlotTracker *createSlotTracker(const Value *V) {
 // to be added to the slot table.
 SlotTracker::SlotTracker(const Module *M)
   : TheModule(M), TheFunction(0), FunctionProcessed(false),
-    mNext(0), fNext(0),  mdnNext(0) {
+    mNext(0), fNext(0),  mdnNext(0), asNext(0) {
 }
 
 // Function level constructor. Causes the contents of the Module and the one
 // function provided to be added to the slot table.
 SlotTracker::SlotTracker(const Function *F)
   : TheModule(F ? F->getParent() : 0), TheFunction(F), FunctionProcessed(false),
-    mNext(0), fNext(0), mdnNext(0) {
+    mNext(0), fNext(0), mdnNext(0), asNext(0) {
 }
 
 inline void SlotTracker::initialize() {
@@ -487,11 +502,17 @@ void SlotTracker::processModule() {
       CreateMetadataSlot(NMD->getOperand(i));
   }
 
-  // Add all the unnamed functions to the table.
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
-       I != E; ++I)
+       I != E; ++I) {
     if (!I->hasName())
+      // Add all the unnamed functions to the table.
       CreateModuleSlot(I);
+
+    // Add all the function attributes to the table.
+    AttributeSet FnAttrs = I->getAttributes().getFnAttributes();
+    if (FnAttrs.hasAttributes(AttributeSet::FunctionIndex))
+      CreateAttributeSetSlot(FnAttrs);
+  }
 
   ST_DEBUG("end processModule!\n");
 }
@@ -589,6 +610,14 @@ int SlotTracker::getLocalSlot(const Value *V) {
   return FI == fMap.end() ? -1 : (int)FI->second;
 }
 
+int SlotTracker::getAttributeGroupSlot(AttributeSet AS) {
+  // Check for uninitialized state and do lazy initialization.
+  initialize();
+
+  // Find the AttributeSet in the module map.
+  as_iterator AI = asMap.find(AS);
+  return AI == asMap.end() ? -1 : (int)AI->second;
+}
 
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
@@ -638,6 +667,18 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (const MDNode *Op = dyn_cast_or_null<MDNode>(N->getOperand(i)))
       CreateMetadataSlot(Op);
+}
+
+void SlotTracker::CreateAttributeSetSlot(AttributeSet AS) {
+  assert(AS.hasAttributes(AttributeSet::FunctionIndex) &&
+         "Doesn't need a slot!");
+
+  as_iterator I = asMap.find(AS);
+  if (I != asMap.end())
+    return;
+
+  unsigned DestSlot = asNext++;
+  asMap[AS] = DestSlot;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1201,6 +1242,7 @@ public:
   void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
   void writeAllMDNodes();
+  void writeAllAttributeGroups();
 
   void printTypeIdentities();
   void printGlobal(const GlobalVariable *GV);
@@ -1268,6 +1310,8 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
 }
 
 void AssemblyWriter::printModule(const Module *M) {
+  Machine.initialize();
+
   if (!M->getModuleIdentifier().empty() &&
       // Don't print the ID if it will start a new line (which would
       // require a comment char before it).
@@ -1321,6 +1365,12 @@ void AssemblyWriter::printModule(const Module *M) {
   // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
+
+  // Output all attribute groups.
+  if (!Machine.as_empty()) {
+    Out << '\n';
+    writeAllAttributeGroups();
+  }
 
   // Output named metadata.
   if (!M->named_metadata_empty()) Out << '\n';
@@ -2061,6 +2111,20 @@ void AssemblyWriter::printMDNodeBody(const MDNode *Node) {
   WriteMDNodeBodyInternal(Out, Node, &TypePrinter, &Machine, TheModule);
   WriteMDNodeComment(Node, Out);
   Out << "\n";
+}
+
+void AssemblyWriter::writeAllAttributeGroups() {
+  std::vector<std::pair<AttributeSet, unsigned> > asVec;
+  asVec.resize(Machine.as_size());
+
+  for (SlotTracker::as_iterator I = Machine.as_begin(), E = Machine.as_end();
+       I != E; ++I)
+    asVec[I->second] = *I;
+
+  for (std::vector<std::pair<AttributeSet, unsigned> >::iterator
+         I = asVec.begin(), E = asVec.end(); I != E; ++I)
+    Out << "attributes #" << I->second << " = { "
+        << I->first.getAsString(AttributeSet::FunctionIndex, true) << " }\n";
 }
 
 //===----------------------------------------------------------------------===//
