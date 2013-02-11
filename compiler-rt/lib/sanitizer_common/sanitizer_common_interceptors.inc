@@ -157,7 +157,8 @@ INTERCEPTOR(int, vscanf, const char *format, va_list ap) {  // NOLINT
   va_list aq;
   va_copy(aq, ap);
   int res = REAL(vscanf)(format, ap);  // NOLINT
-  scanf_common(ctx, format, aq);
+  if (res > 0)
+    scanf_common(ctx, res, format, aq);
   va_end(aq);
   return res;
 }
@@ -169,7 +170,8 @@ INTERCEPTOR(int, vsscanf, const char *str, const char *format,  // NOLINT
   va_list aq;
   va_copy(aq, ap);
   int res = REAL(vsscanf)(str, format, ap);  // NOLINT
-  scanf_common(ctx, format, aq);
+  if (res > 0)
+    scanf_common(ctx, res, format, aq);
   va_end(aq);
   // FIXME: read of str
   return res;
@@ -182,7 +184,8 @@ INTERCEPTOR(int, vfscanf, void *stream, const char *format,  // NOLINT
   va_list aq;
   va_copy(aq, ap);
   int res = REAL(vfscanf)(stream, format, ap);  // NOLINT
-  scanf_common(ctx, format, aq);
+  if (res > 0)
+    scanf_common(ctx, res, format, aq);
   va_end(aq);
   return res;
 }

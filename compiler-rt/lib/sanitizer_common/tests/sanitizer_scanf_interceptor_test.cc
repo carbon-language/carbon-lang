@@ -24,32 +24,44 @@ using namespace __sanitizer;
 
 #include "sanitizer_common/sanitizer_common_interceptors_scanf.inc"
 
-static void testScanf2(void *ctx, const char *format, ...) {
+static const char scanf_buf[] = "Test string.";
+static size_t scanf_buf_size = sizeof(scanf_buf);
+static const unsigned SCANF_ARGS_MAX = 16;
+
+static void testScanf3(void *ctx, int result, const char *format, ...) {
   va_list ap;
   va_start(ap, format);
-  scanf_common(ctx, format, ap);
+  scanf_common(ctx, result, format, ap);
   va_end(ap);
 }
 
-static const char scanf_buf[] = "Test string.";
-static size_t scanf_buf_size = sizeof(scanf_buf);
-
-static void testScanf(const char *format, unsigned n, ...) {
+static void testScanf2(const char *format, int scanf_result, unsigned n, va_list expected_sizes) {
   std::vector<unsigned> scanf_sizes;
   // 16 args should be enough.
-  testScanf2((void *)&scanf_sizes, format,
+  testScanf3((void *)&scanf_sizes, scanf_result, format,
       scanf_buf, scanf_buf, scanf_buf, scanf_buf,
       scanf_buf, scanf_buf, scanf_buf, scanf_buf,
       scanf_buf, scanf_buf, scanf_buf, scanf_buf,
       scanf_buf, scanf_buf, scanf_buf, scanf_buf);
   ASSERT_EQ(n, scanf_sizes.size()) <<
     "Unexpected number of format arguments: '" << format << "'";
-  va_list ap;
-  va_start(ap, n);
   for (unsigned i = 0; i < n; ++i)
-    EXPECT_EQ(va_arg(ap, unsigned), scanf_sizes[i]) <<
+    EXPECT_EQ(va_arg(expected_sizes, unsigned), scanf_sizes[i]) <<
       "Unexpect write size for argument " << i << ", format string '" <<
       format << "'";
+}
+
+static void testScanf(const char *format, unsigned n, ...) {
+  va_list ap;
+  va_start(ap, n);
+  testScanf2(format, SCANF_ARGS_MAX, n, ap);
+  va_end(ap);
+}
+
+static void testScanfPartial(const char *format, int scanf_result, unsigned n, ...) {
+  va_list ap;
+  va_start(ap, n);
+  testScanf2(format, scanf_result, n, ap);
   va_end(ap);
 }
 
@@ -127,4 +139,15 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%5$d", 0);
   testScanf("%md", 0);
   testScanf("%m10s", 0);
+
+  testScanfPartial("%d%d%d%d //1\n", 1, 1, I);
+  testScanfPartial("%d%d%d%d //2\n", 2, 2, I, I);
+  testScanfPartial("%d%d%d%d //3\n", 3, 3, I, I, I);
+  testScanfPartial("%d%d%d%d //4\n", 4, 4, I, I, I, I);
+
+  testScanfPartial("%d%n%n%d //1\n", 1, 1, I);
+  testScanfPartial("%d%n%n%d //2\n", 2, 4, I, I, I, I);
+
+  testScanfPartial("%d%n%n%d %s %s", 3, 5, I, I, I, I, scanf_buf_size);
+  testScanfPartial("%d%n%n%d %s %s", 4, 6, I, I, I, I, scanf_buf_size, scanf_buf_size);
 }

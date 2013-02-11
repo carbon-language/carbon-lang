@@ -15,10 +15,10 @@
 #include <stdarg.h>
 
 struct ScanfDirective {
-  int argIdx;      // argument index, or -1 of not specified ("%n$")
+  int argIdx; // argument index, or -1 of not specified ("%n$")
   int fieldWidth;
   bool suppressed; // suppress assignment ("*")
-  bool allocate; // allocate space ("m")
+  bool allocate;   // allocate space ("m")
   char lengthModifier[2];
   char convSpecifier;
   bool maybeGnuMalloc;
@@ -270,10 +270,13 @@ static int scanf_get_store_size(ScanfDirective *dir) {
 
 // Common part of *scanf interceptors.
 // Process format string and va_list, and report all store ranges.
-static void scanf_common(void *ctx, const char *format, va_list aq) {
+// Stops when "consuming" n_inputs input items.
+static void scanf_common(void *ctx, int n_inputs, const char *format,
+                         va_list aq) {
+  CHECK_GT(n_inputs, 0);
   const char *p = format;
 
-  while (p) {
+  while (*p && n_inputs) {
     ScanfDirective dir;
     p = scanf_parse_next(p, &dir);
     if (!p)
@@ -293,10 +296,12 @@ static void scanf_common(void *ctx, const char *format, va_list aq) {
     int size = scanf_get_store_size(&dir);
     if (size == SSS_INVALID)
       break;
-    void *p = va_arg(aq, void *);
+    void *argp = va_arg(aq, void *);
+    if (dir.convSpecifier != 'n')
+      --n_inputs;
     if (size == SSS_STRLEN) {
-      size = internal_strlen((const char *)p) + 1;
+      size = internal_strlen((const char *)argp) + 1;
     }
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, size);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, argp, size);
   }
 }
