@@ -369,19 +369,13 @@ public:
       Tok->Type = TT_BinaryOperator;
       break;
     case tok::kw_operator:
-      if (CurrentToken != NULL && CurrentToken->is(tok::l_paren)) {
-        CurrentToken->Type = TT_OverloadedOperator;
-        next();
-        if (CurrentToken != NULL && CurrentToken->is(tok::r_paren)) {
-          CurrentToken->Type = TT_OverloadedOperator;
-          next();
-        }
-      } else {
-        while (CurrentToken != NULL && CurrentToken->isNot(tok::l_paren)) {
-          CurrentToken->Type = TT_OverloadedOperator;
-          next();
-        }
+      while (CurrentToken && CurrentToken->isNot(tok::l_paren)) {
+        if (CurrentToken->is(tok::star) || CurrentToken->is(tok::amp))
+          CurrentToken->Type = TT_PointerOrReference;
+        consumeToken();
       }
+      if (CurrentToken)
+        CurrentToken->Type = TT_OverloadedOperatorLParen;
       break;
     case tok::question:
       parseConditional();
@@ -962,6 +956,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
 
 bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
                                          const AnnotatedToken &Tok) {
+  if (Tok.FormatTok.Tok.getIdentifierInfo() &&
+      Tok.Parent->FormatTok.Tok.getIdentifierInfo())
+    return true; // Never ever merge two identifiers.
   if (Line.Type == LT_ObjCMethodDecl) {
     if (Tok.Parent->Type == TT_ObjCMethodSpecifier)
       return true;
@@ -977,10 +974,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return true;
   if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
     return true;
-  if (Tok.Type == TT_OverloadedOperator)
-    return Tok.is(tok::identifier) || Tok.is(tok::kw_new) ||
-           Tok.is(tok::kw_delete) || Tok.is(tok::kw_bool);
-  if (Tok.Parent->Type == TT_OverloadedOperator)
+  if (Tok.Parent->FormatTok.Tok.is(tok::kw_operator))
+    return false;
+  if (Tok.Type == TT_OverloadedOperatorLParen)
     return false;
   if (Tok.is(tok::colon))
     return Line.First.isNot(tok::kw_case) && !Tok.Children.empty() &&

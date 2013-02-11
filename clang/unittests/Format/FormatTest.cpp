@@ -1541,11 +1541,18 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
   verifyFormat("bool operator()();");
   verifyFormat("bool operator[]();");
   verifyFormat("operator bool();");
+  verifyFormat("operator int();");
+  verifyFormat("operator void *();");
   verifyFormat("operator SomeType<int>();");
+  verifyFormat("operator SomeType<int, int>();");
+  verifyFormat("operator SomeType<SomeType<int> >();");
   verifyFormat("void *operator new(std::size_t size);");
   verifyFormat("void *operator new[](std::size_t size);");
   verifyFormat("void operator delete(void *ptr);");
   verifyFormat("void operator delete[](void *ptr);");
+
+  verifyGoogleFormat("operator void*();");
+  verifyGoogleFormat("operator SomeType<SomeType<int>>();");
 }
 
 TEST_F(FormatTest, UnderstandsNewAndDelete) {

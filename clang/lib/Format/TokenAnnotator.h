@@ -42,7 +42,7 @@ enum TokenType {
   TT_ObjCMethodSpecifier,
   TT_ObjCProperty,
   TT_ObjCSelectorName,
-  TT_OverloadedOperator,
+  TT_OverloadedOperatorLParen,
   TT_PointerOrReference,
   TT_PureVirtualSpecifier,
   TT_RangeBasedForLoopColon,
