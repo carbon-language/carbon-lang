@@ -1,5 +1,4 @@
-// RUN: not llvm-mc -triple=aarch64 < %s 2> %t
-// RUN: FileCheck --check-prefix=CHECK-ERROR < %t %s
+// RUN: not llvm-mc -triple=aarch64 < %s 2>&1 | FileCheck --check-prefix=CHECK-ERROR %s
 
 //------------------------------------------------------------------------------
 // Add/sub (extended register)
@@ -9,13 +8,13 @@
         add x2, x3, x5, sxtb
         add x2, x4, w2, uxtx
         add w5, w7, x9, sxtx
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR:         add x2, x3, x5, sxtb
 // CHECK-ERROR:                         ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected '[su]xt[bhw]' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR:         add x2, x4, w2, uxtx
 // CHECK-ERROR:                         ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR:         add w5, w7, x9, sxtx
 // CHECK-ERROR:                     ^
 
@@ -26,10 +25,10 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR:         add x9, x10, w11, uxtb #-1
 // CHECK-ERROR:                                 ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected '[su]xt[bhw]' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR:         add x3, x5, w7, uxtb #5
 // CHECK-ERROR:                         ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR:         sub x9, x15, x2, uxth #5
 // CHECK-ERROR:                          ^
 
@@ -37,13 +36,13 @@
         add xzr, x3, x5, uxtx
         sub x3, xzr, w9, sxth #1
         add x1, x2, sp, uxtx
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR:         add xzr, x3, x5, uxtx
-// CHECK-ERROR:             ^
+// CHECK-ERROR:                          ^
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:         sub x3, xzr, w9, sxth #1
 // CHECK-ERROR:                 ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR:         add x1, x2, sp, uxtx
 // CHECK-ERROR:                     ^
 
@@ -55,13 +54,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:         adds sp, x3, w2, uxtb
 // CHECK-ERROR:              ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR:         adds x3, xzr, x9, uxtx
-// CHECK-ERROR:                  ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR:         subs x2, x1, sp, uxtx
 // CHECK-ERROR:                      ^
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR:         adds x2, x1, sp, uxtb #2
 // CHECK-ERROR:                      ^
 
@@ -80,16 +79,16 @@
         add w5, w6, #0x1000
         add w4, w5, #-1, lsl #12
         add w5, w6, #0x1000, lsl #12
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w4, w5, #-1
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w5, w6, #0x1000
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w4, w5, #-1, lsl #12
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w5, w6, #0x1000, lsl #12
 // CHECK-ERROR-NEXT:                     ^
 
@@ -98,13 +97,13 @@
         add w5, w17, #0xfff, lsl #13
         add w17, w20, #0x1000, lsl #12
         sub xsp, x34, #0x100, lsl #-1
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w2, w3, #0x1, lsl #1
 // CHECK-ERROR-NEXT:                                ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w5, w17, #0xfff, lsl #13
 // CHECK-ERROR-NEXT:                                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add w17, w20, #0x1000, lsl #12
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: only 'lsl #+N' valid after immediate
@@ -141,7 +140,7 @@
 
 // Out of range immediate
         adds w0, w5, #0x10000
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         adds w0, w5, #0x10000
 // CHECK-ERROR-NEXT:                      ^
 
@@ -163,7 +162,7 @@
         // MOV alias should not accept any fiddling
         mov x2, xsp, #123
         mov wsp, w27, #0xfff, lsl #12
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         mov x2, xsp, #123
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -172,7 +171,7 @@
 
         // A relocation should be provided for symbols
         add x3, x9, #variable
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register, symbol or integer in range [0, 4095]
 // CHECK-ERROR-NEXT:         add x3, x9, #variable
 // CHECK-ERROR-NEXT:                      ^
 
@@ -184,13 +183,13 @@
         add wsp, w1, w2, lsr #3
         add x4, sp, x9, asr #5
         add x9, x10, x5, ror #3
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add wsp, w1, w2, lsr #3
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add x4, sp, x9, asr #5
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add x9, x10, x5, ror #3
 // CHECK-ERROR-NEXT:                          ^
 
@@ -209,37 +208,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         add w1, w2, w3, lsl #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add w1, w2, w3, lsl #32
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         add w1, w2, w3, lsr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add w1, w2, w3, lsr #32
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         add w1, w2, w3, asr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add w1, w2, w3, asr #32
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         add x1, x2, x3, lsl #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add x1, x2, x3, lsl #64
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         add x1, x2, x3, lsr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add x1, x2, x3, lsr #64
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         add x1, x2, x3, asr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         add x1, x2, x3, asr #64
 // CHECK-ERROR-NEXT:                         ^
 
@@ -258,37 +257,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         adds w1, w2, w3, lsl #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         adds w1, w2, w3, lsl #32
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         adds w1, w2, w3, lsr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         adds w1, w2, w3, lsr #32
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         adds w1, w2, w3, asr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         adds w1, w2, w3, asr #32
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         adds x1, x2, x3, lsl #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         adds x1, x2, x3, lsl #64
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         adds x1, x2, x3, lsr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         adds x1, x2, x3, lsr #64
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         adds x1, x2, x3, asr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         adds x1, x2, x3, asr #64
 // CHECK-ERROR-NEXT:                          ^
 
@@ -307,37 +306,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         sub w1, w2, w3, lsl #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         sub w1, w2, w3, lsl #32
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         sub w1, w2, w3, lsr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         sub w1, w2, w3, lsr #32
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         sub w1, w2, w3, asr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         sub w1, w2, w3, asr #32
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         sub x1, x2, x3, lsl #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         sub x1, x2, x3, lsl #64
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         sub x1, x2, x3, lsr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         sub x1, x2, x3, lsr #64
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         sub x1, x2, x3, asr #-1
 // CHECK-ERROR-NEXT:                              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         sub x1, x2, x3, asr #64
 // CHECK-ERROR-NEXT:                         ^
 
@@ -356,37 +355,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         subs w1, w2, w3, lsl #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         subs w1, w2, w3, lsl #32
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         subs w1, w2, w3, lsr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         subs w1, w2, w3, lsr #32
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         subs w1, w2, w3, asr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         subs w1, w2, w3, asr #32
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         subs x1, x2, x3, lsl #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         subs x1, x2, x3, lsl #64
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         subs x1, x2, x3, lsr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         subs x1, x2, x3, lsr #64
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         subs x1, x2, x3, asr #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         subs x1, x2, x3, asr #64
 // CHECK-ERROR-NEXT:                          ^
 
@@ -405,37 +404,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn w9, w10, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmn w9, w10, lsl #32
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn w11, w12, lsr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmn w11, w12, lsr #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn w19, wzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         cmn wzr, wzr, asr #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn x9, x10, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmn x9, x10, lsl #64
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn x11, x12, lsr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmn x11, x12, lsr #64
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmn x19, xzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         cmn xzr, xzr, asr #64
 // CHECK-ERROR-NEXT:                       ^
 
@@ -454,37 +453,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmp w9, w10, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmp w9, w10, lsl #32
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmp w11, w12, lsr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmp w11, w12, lsr #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmp w19, wzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         cmp wzr, wzr, asr #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmp x9, x10, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmp x9, x10, lsl #64
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmp x11, x12, lsr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 // CHECK-ERROR-NEXT:         cmp x11, x12, lsr #64
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         cmp x19, xzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         cmp xzr, xzr, asr #64
 // CHECK-ERROR-NEXT:                       ^
 
@@ -503,37 +502,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         neg w9, w10, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         neg w9, w10, lsl #32
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         neg w11, w12, lsr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         neg w11, w12, lsr #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         neg w19, wzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         neg wzr, wzr, asr #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         neg x9, x10, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         neg x9, x10, lsl #64
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         neg x11, x12, lsr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         neg x11, x12, lsr #64
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         neg x19, xzr, asr #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         neg xzr, xzr, asr #64
 // CHECK-ERROR-NEXT:                       ^
 
@@ -552,37 +551,37 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         negs w9, w10, lsl #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         negs w9, w10, lsl #32
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         negs w11, w12, lsr #-1
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         negs w11, w12, lsr #32
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         negs w19, wzr, asr #-1
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         negs wzr, wzr, asr #32
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         negs x9, x10, lsl #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         negs x9, x10, lsl #64
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         negs x11, x12, lsr #-1
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         negs x11, x12, lsr #64
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         negs x19, xzr, asr #-1
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         negs xzr, xzr, asr #64
 // CHECK-ERROR-NEXT:                        ^
 
@@ -750,10 +749,10 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sbfm w3, wsp, #1, #9
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x9, x5, #-1, #0
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x9, x5, #0, #-1
 // CHECK-ERROR-NEXT:                          ^
 
@@ -761,16 +760,16 @@
         sbfm w7, w11, #19, #32
         sbfm x29, x30, #64, #0
         sbfm x10, x20, #63, #64
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfm w3, w5, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfm w7, w11, #19, #32
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x29, x30, #64, #0
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         sbfm x10, x20, #63, #64
 // CHECK-ERROR-NEXT:                             ^
 
@@ -778,16 +777,16 @@
         ubfm w7, w11, #19, #32
         ubfm x29, x30, #64, #0
         ubfm x10, x20, #63, #64
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfm w3, w5, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfm w7, w11, #19, #32
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         ubfm x29, x30, #64, #0
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         ubfm x10, x20, #63, #64
 // CHECK-ERROR-NEXT:                             ^
 
@@ -795,16 +794,16 @@
         bfm w7, w11, #19, #32
         bfm x29, x30, #64, #0
         bfm x10, x20, #63, #64
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfm w3, w5, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfm w7, w11, #19, #32
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         bfm x29, x30, #64, #0
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         bfm x10, x20, #63, #64
 // CHECK-ERROR-NEXT:                             ^
 
@@ -853,13 +852,13 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         asr sp, x2, #1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         asr x25, x26, #-1
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         asr x25, x26, #64
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         asr w9, w8, #32
 // CHECK-ERROR-NEXT:                     ^
 
@@ -871,16 +870,16 @@
         sbfiz x3, x5, #12, #53
         sbfiz sp, x3, #5, #6
         sbfiz w3, wsp, #7, #8
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
 // CHECK-ERROR-NEXT:         sbfiz w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sbfiz wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfiz w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfiz w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: requested insert overflows register
@@ -904,16 +903,16 @@
         sbfx x3, x5, #12, #53
         sbfx sp, x3, #5, #6
         sbfx w3, wsp, #7, #8
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
 // CHECK-ERROR-NEXT:         sbfx w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sbfx wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfx w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         sbfx w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: requested extract overflows register
@@ -937,16 +936,16 @@
         bfi x3, x5, #12, #53
         bfi sp, x3, #5, #6
         bfi w3, wsp, #7, #8
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
 // CHECK-ERROR-NEXT:         bfi w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         bfi wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfi w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfi w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: requested insert overflows register
@@ -970,16 +969,16 @@
         bfxil x3, x5, #12, #53
         bfxil sp, x3, #5, #6
         bfxil w3, wsp, #7, #8
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
 // CHECK-ERROR-NEXT:         bfxil w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         bfxil wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfxil w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         bfxil w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: requested extract overflows register
@@ -1003,16 +1002,16 @@
         ubfiz x3, x5, #12, #53
         ubfiz sp, x3, #5, #6
         ubfiz w3, wsp, #7, #8
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
 // CHECK-ERROR-NEXT:         ubfiz w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                           ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ubfiz wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfiz w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfiz w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: requested insert overflows register
@@ -1036,16 +1035,16 @@
         ubfx x3, x5, #12, #53
         ubfx sp, x3, #5, #6
         ubfx w3, wsp, #7, #8
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [<lsb>, 31]
 // CHECK-ERROR-NEXT:         ubfx w1, w2, #0, #0
 // CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ubfx wsp, w9, #0, #1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfx w9, w10, #32, #1
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ubfx w11, w12, #32, #0
 // CHECK-ERROR-NEXT:                        ^
 // CHECK-ERROR-NEXT: error: requested extract overflows register
@@ -1074,20 +1073,20 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:           cbz sp, lbl
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           cbz x3, x5
 // CHECK-ERROR-NEXT:                   ^
 
         cbz w20, #1048576
         cbnz xzr, #-1048580
         cbz x29, #1
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           cbz w20, #1048576
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           cbnz xzr, #-1048580
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           cbz x29, #1
 // CHECK-ERROR-NEXT:                    ^
 
@@ -1103,13 +1102,13 @@
         b.eq #1048576
         b.ge #-1048580
         b.cc #1
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           b.eq #1048576
 // CHECK-ERROR-NEXT:                ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           b.ge #-1048580
 // CHECK-ERROR-NEXT:                ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:           b.cc #1
 // CHECK-ERROR-NEXT:                ^
 
@@ -1125,16 +1124,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp wsp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp w25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp w3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1146,16 +1145,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp sp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp x25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp x3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1167,16 +1166,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn wsp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn w25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn w3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1188,16 +1187,16 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn sp, #4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn x25, #-1, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn x3, #32, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x19, #5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x20, #7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1212,13 +1211,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp wsp, w4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp w3, wsp, #0, ge
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w19, w5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp w20, w7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1229,13 +1228,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmp sp, x4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmp x25, sp, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x19, x5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmp x20, x7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1246,13 +1245,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn wsp, w4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn w25, wsp, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w19, w5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn w20, w7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1263,13 +1262,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        ccmn sp, x4, #2, ne
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        ccmn x25, sp, #15, hs
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x19, x5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        ccmn x20, x7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1294,7 +1293,7 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        csel w10, w11, wsp, ge
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected AArch64 condition code
 // CHECK-ERROR-NEXT:        csel w1, w2, w3, #3
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1306,7 +1305,7 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:        csel x10, x11, sp, ge
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected AArch64 condition code
 // CHECK-ERROR-NEXT:        csel x1, x2, x3, #3
 // CHECK-ERROR-NEXT:                         ^
 
@@ -1418,10 +1417,10 @@
         hlt #65536
         dcps4 #43
         dcps4
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         svc #-1
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         hlt #65536
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: invalid instruction
@@ -1437,28 +1436,28 @@
 
         extr w2, w20, w30, #-1
         extr w9, w19, w20, #32
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         extr w2, w20, w30, #-1
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         extr w9, w19, w20, #32
 // CHECK-ERROR-NEXT:                            ^
 
         extr x10, x15, x20, #-1
         extr x20, x25, x30, #64
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         extr x10, x15, x20, #-1
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         extr x20, x25, x30, #64
 // CHECK-ERROR-NEXT:                             ^
 
         ror w9, w10, #32
         ror x10, x11, #64
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:         ror w9, w10, #32
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:         ror x10, x11, #64
 // CHECK-ERROR-NEXT:                       ^
 
@@ -1467,7 +1466,7 @@
 //------------------------------------------------------------------------------
 
         fcmp s3, d2
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected floating-point constant #0.0
 // CHECK-ERROR-NEXT:         fcmp s3, d2
 // CHECK-ERROR-NEXT:                  ^
 
@@ -1475,16 +1474,16 @@
         fcmp d3, #-0.0
         fcmp s1, #1.0
         fcmpe s30, #-0.0
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected floating-point constant #0.0
 // CHECK-ERROR-NEXT:         fcmp s9, #-0.0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected floating-point constant #0.0
 // CHECK-ERROR-NEXT:         fcmp d3, #-0.0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected floating-point constant #0.0
 // CHECK-ERROR-NEXT:         fcmp s1, #1.0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected floating-point constant #0.0
 // CHECK-ERROR-NEXT:         fcmpe s30, #-0.0
 // CHECK-ERROR-NEXT:                    ^
 
@@ -1494,37 +1493,37 @@
 
         fccmp s19, s5, #-1, lt
         fccmp s20, s7, #16, hs
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp s19, s5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp s20, s7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
         fccmp d19, d5, #-1, lt
         fccmp d20, d7, #16, hs
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp d19, d5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmp d20, d7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
         fccmpe s19, s5, #-1, lt
         fccmpe s20, s7, #16, hs
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe s19, s5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe s20, s7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
         fccmpe d19, d5, #-1, lt
         fccmpe d20, d7, #16, hs
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe d19, d5, #-1, lt
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:        fccmpe d20, d7, #16, hs
 // CHECK-ERROR-NEXT:                      ^
 
@@ -1551,12 +1550,12 @@
 
         fmov d0, s3
         fcvt d0, d1
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov d0, s3
-// CHECK-ERROR-NEXT: ^
+// CHECK-ERROR-NEXT:                    ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:           fcvt d0, d1
-// CHECK-ERROR-NEXT: ^
+// CHECK-ERROR-NEXT:                    ^
 
 
 //------------------------------------------------------------------------------
@@ -1604,10 +1603,10 @@
         fcvtzs w13, s31, #0
         fcvtzs w19, s20, #33
         fcvtzs wsp, s19, #14
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzs w13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzs w19, s20, #33
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1617,10 +1616,10 @@
         fcvtzs x13, s31, #0
         fcvtzs x19, s20, #65
         fcvtzs sp, s19, #14
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzs x13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzs x19, s20, #65
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1630,10 +1629,10 @@
         fcvtzu w13, s31, #0
         fcvtzu w19, s20, #33
         fcvtzu wsp, s19, #14
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzu w13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
 // CHECK-ERROR-NEXT:        fcvtzu w19, s20, #33
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1643,10 +1642,10 @@
         fcvtzu x13, s31, #0
         fcvtzu x19, s20, #65
         fcvtzu sp, s19, #14
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzu x13, s31, #0
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 64]
 // CHECK-ERROR-NEXT:        fcvtzu x19, s20, #65
 // CHECK-ERROR-NEXT:                         ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1711,26 +1710,26 @@
         ;; Exponent too large
         fmov d3, #0.0625
         fmov s2, #32.0
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov d3, #0.0625
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov s2, #32.0
 // CHECK-ERROR-NEXT:                    ^
 
         ;; Fraction too precise
         fmov s9, #1.03125
         fmov s28, #1.96875
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov s9, #1.03125
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov s28, #1.96875
 // CHECK-ERROR-NEXT:                     ^
 
         ;; No particular reason, but a striking omission
         fmov d0, #0.0
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov d0, #0.0
 // CHECK-ERROR-NEXT:                    ^
 
@@ -1743,9 +1742,9 @@
         fmov x7, v0.d[2]
         fcvtns sp, s5
         scvtf s6, wsp
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected lane specifier '[1]'
 // CHECK-ERROR-NEXT:         fmov x3, v0.d[0]
-// CHECK-ERROR-NEXT:                ^
+// CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: lane number incompatible with layout
 // CHECK-ERROR-NEXT: fmov v29.1d[1], x2
 // CHECK-ERROR-NEXT:             ^
@@ -1775,13 +1774,13 @@
         ldrsw x2, #1048576
         ldr q0, #-1048580
         ldr x0, #2
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         ldrsw x2, #1048576
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         ldr q0, #-1048580
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         ldr x0, #2
 // CHECK-ERROR-NEXT:                 ^
 
@@ -1831,16 +1830,16 @@
         sturh w17, [x1, #256]
         ldursw x20, [x1, #256]
         ldur x12, [sp, #256]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:        ldurb w2, [sp, #256]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         sturh w17, [x1, #256]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldursw x20, [x1, #256]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldur x12, [sp, #256]
 // CHECK-ERROR-NEXT:                   ^
 
@@ -1849,19 +1848,19 @@
         ldursb x9, [sp, #-257]
         ldur w2, [x30, #-257]
         stur q9, [x20, #-257]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         stur h2, [x2, #-257]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         stur b2, [x2, #-257]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldursb x9, [sp, #-257]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldur w2, [x30, #-257]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         stur q9, [x20, #-257]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -1875,7 +1874,7 @@
 //------------------------------------------------------------------------------
         ldr x3, [x4, #25], #0
         ldr x4, [x9, #0], #4
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected symbolic reference or integer in range [0, 32760]
 // CHECK-ERROR-NEXT:         ldr x3, [x4, #25], #0
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -1888,22 +1887,22 @@
         strh w9, [sp], #-257
         str w1, [x19], #256
         str w9, [sp], #-257
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w1, [x19], #256
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w9, [sp], #-257
 // CHECK-ERROR-NEXT:                       ^
 
@@ -1913,22 +1912,22 @@
         ldrh w9, [sp], #-257
         ldr w1, [x19], #256
         ldr w9, [sp], #-257
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w1, [x19], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w9, [sp], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w1, [x19], #256
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w9, [sp], #-257
 // CHECK-ERROR-NEXT:                       ^
 
@@ -1938,22 +1937,22 @@
         ldrsh x22, [x13], #-257
         ldrsw x2, [x3], #256
         ldrsw x22, [x13], #-257
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsw x2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsw x22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
 
@@ -1961,16 +1960,16 @@
         ldrsb w22, [x13], #-257
         ldrsh w2, [x3], #256
         ldrsh w22, [x13], #-257
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh w2, [x3], #256
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh w22, [x13], #-257
 // CHECK-ERROR-NEXT:                           ^
 
@@ -1984,34 +1983,34 @@
         str d3, [x13], #-257
         str q3, [x3], #256
         str q3, [x13], #-257
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str d3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str d3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str q3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str q3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
 
@@ -2025,34 +2024,34 @@
         ldr d3, [x13], #-257
         ldr q3, [x3], #256
         ldr q3, [x13], #-257
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr d3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr d3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr q3, [x3], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr q3, [x13], #-257
 // CHECK-ERROR-NEXT:                        ^
 
@@ -2074,19 +2073,19 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         strb w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strb w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         strh w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         strh w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2099,19 +2098,19 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrb w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrh w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr w1, [x19, #256]!
 // CHECK-ERROR-NEXT:                            ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w9, [sp, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2124,19 +2123,19 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsb x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsh x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsw x2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsw x22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 
@@ -2147,13 +2146,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsb w2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsb w22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldrsh w2, [x3, #256]!
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrsh w22, [x13, #-257]!
 // CHECK-ERROR-NEXT:                    ^
 
@@ -2168,25 +2167,25 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str b3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str b3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str h3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str h3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str s3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str s3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         str d3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str d3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2201,25 +2200,25 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr b3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr b3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr h3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr h3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr s3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr s3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldr d3, [x3, #256]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr d3, [x13, #-257]!
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2231,16 +2230,16 @@
         sttrh w17, [x1, #256]
         ldtrsw x20, [x1, #256]
         ldtr x12, [sp, #256]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:        ldtrb w2, [sp, #256]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         sttrh w17, [x1, #256]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtrsw x20, [x1, #256]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtr x12, [sp, #256]
 // CHECK-ERROR-NEXT:                   ^
 
@@ -2251,14 +2250,14 @@
         sttr q9, [x20, #-257]
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sttr h2, [x2, #-257]
-// CHECK-ERROR-NEXT:                  ^
+// CHECK-ERROR-NEXT:              ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         sttr b2, [x2, #-257]
-// CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:              ^
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtrsb x9, [sp, #-257]
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldtr w2, [x30, #-257]
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2276,19 +2275,19 @@
         ldr w0, [x4, #16384]
         ldrh w2, [x21, #8192]
         ldrb w3, [x12, #4096]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr q0, [x11, #65536]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr x0, [sp, #32768]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldr w0, [x4, #16384]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrh w2, [x21, #8192]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         ldrb w3, [x12, #4096]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2330,7 +2329,7 @@
 // CHECK-ERROR-NEXT: error: too few operands for instruction
 // CHECK-ERROR-NEXT:         str x5, [x22, #12]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [-256, 255]
 // CHECK-ERROR-NEXT:         str w7, [x12, #16384]
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2368,16 +2367,16 @@
 // CHECK-ERROR-NEXT: error: expected #imm after shift specifier
 // CHECK-ERROR-NEXT:         ldr w4, [x0, x4, lsl]
 // CHECK-ERROR-NEXT:                             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldr w9, [x5, x5, uxtw]
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldr w10, [x6, x9, sxtw #2]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldr w11, [x7, w2, lsl #2]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldr w12, [x8, w1, sxtx]
 // CHECK-ERROR-NEXT:                           ^
 
@@ -2386,7 +2385,7 @@
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         ldrsb w9, [x4, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0
 // CHECK-ERROR-NEXT:         strb w9, [x4, x2, lsl #1]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2395,9 +2394,9 @@
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         ldrsh w9, [x4, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #1
 // CHECK-ERROR-NEXT:         ldr h13, [x4, w2, uxtw #2]
-// CHECK-ERROR-NEXT:                  ^
+// CHECK-ERROR-NEXT:                           ^
 
         str w9, [x5, w9, sxtw #-1]
         str s3, [sp, w9, uxtw #1]
@@ -2405,12 +2404,12 @@
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         str w9, [x5, w9, sxtw #-1]
 // CHECK-ERROR-NEXT:                                ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         str s3, [sp, w9, uxtw #1]
-// CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                          ^
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #2
 // CHECK-ERROR-NEXT:         ldrsw x9, [x15, x4, sxtx #3]
-// CHECK-ERROR-NEXT:                   ^
+// CHECK-ERROR-NEXT:                             ^
 
         str xzr, [x5, x9, sxtx #-1]
         prfm pldl3keep, [sp, x20, lsl #2]
@@ -2418,10 +2417,10 @@
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         str xzr, [x5, x9, sxtx #-1]
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtx' with optional shift of #0 or #3
 // CHECK-ERROR-NEXT:         prfm pldl3keep, [sp, x20, lsl #2]
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'uxtw' or 'sxtw' with optional shift of #0 or #3
 // CHECK-ERROR-NEXT:         ldr d3, [x20, wzr, uxtw #4]
 // CHECK-ERROR-NEXT:                 ^
 
@@ -2431,10 +2430,10 @@
 // CHECK-ERROR-NEXT: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         ldr q5, [sp, x2, lsl #-1]
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
 // CHECK-ERROR-NEXT:         ldr q10, [x20, w4, uxtw #2]
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl' or 'sxtw' with optional shift of #0 or #4
 // CHECK-ERROR-NEXT:         str q21, [x20, w4, uxtw #5]
 // CHECK-ERROR-NEXT:                  ^
 
@@ -2446,16 +2445,16 @@
         stp w9, w10, [x5, #256]
         ldp w11, w12, [x9, #-260]
         stp wsp, w9, [sp]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w3, w2, [x4, #1]
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                          ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w1, w2, [x3, #253]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w9, w10, [x5, #256]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w11, w12, [x9, #-260]
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2465,26 +2464,26 @@
         ldpsw x9, x2, [sp, #2]
         ldpsw x1, x2, [x10, #256]
         ldpsw x3, x4, [x11, #-260]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x9, x2, [sp, #2]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x1, x2, [x10, #256]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x3, x4, [x11, #-260]
 // CHECK-ERROR-NEXT:                       ^
 
         ldp x2, x5, [sp, #4]
         ldp x5, x6, [x9, #512]
         stp x7, x8, [x10, #-520]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp, #4]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2500,13 +2499,13 @@
         stp s3, s5, [sp, #-2]
         ldp s6, s26, [x4, #-260]
         stp s13, s19, [x5, #256]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s3, s5, [sp, #-2]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp s6, s26, [x4, #-260]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s13, s19, [x5, #256]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2516,10 +2515,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2530,13 +2529,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp, #8]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5, #1024]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23, #-1040]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2549,16 +2548,16 @@
         stp w9, w10, [x5], #256
         ldp w11, w12, [x9], #-260
         stp wsp, w9, [sp], #0
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w3, w2, [x4], #1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w1, w2, [x3], #253
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w9, w10, [x5], #256
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w11, w12, [x9], #-260
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2568,28 +2567,28 @@
         ldpsw x9, x2, [sp], #2
         ldpsw x1, x2, [x10], #256
         ldpsw x3, x4, [x11], #-260
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x9, x2, [sp], #2
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x1, x2, [x10], #256
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x3, x4, [x11], #-260
 // CHECK-ERROR-NEXT:                       ^
 
         ldp x2, x5, [sp], #4
         ldp x5, x6, [x9], #512
         stp x7, x8, [x10], #-520
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp], #4
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9], #512
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10], #-520
-// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT:                            ^
 
         ldp sp, x3, [x10], #0
         stp x3, sp, [x9], #0
@@ -2603,13 +2602,13 @@
         stp s3, s5, [sp], #-2
         ldp s6, s26, [x4], #-260
         stp s13, s19, [x5], #256
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s3, s5, [sp], #-2
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp s6, s26, [x4], #-260
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s13, s19, [x5], #256
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2619,10 +2618,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr], #0
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0], #512
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0], #-520
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2633,13 +2632,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp], #0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp], #8
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5], #1024
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23], #-1040
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2652,16 +2651,16 @@
         stp w9, w10, [x5, #256]!
         ldp w11, w12, [x9, #-260]!
         stp wsp, w9, [sp, #0]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w3, w2, [x4, #1]!
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w1, w2, [x3, #253]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp w9, w10, [x5, #256]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp w11, w12, [x9, #-260]!
 // CHECK-ERROR-NEXT:                       ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -2671,26 +2670,26 @@
         ldpsw x9, x2, [sp, #2]!
         ldpsw x1, x2, [x10, #256]!
         ldpsw x3, x4, [x11, #-260]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x9, x2, [sp, #2]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x1, x2, [x10, #256]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldpsw x3, x4, [x11, #-260]!
 // CHECK-ERROR-NEXT:                       ^
 
         ldp x2, x5, [sp, #4]!
         ldp x5, x6, [x9, #512]!
         stp x7, x8, [x10, #-520]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp, #4]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9, #512]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10, #-520]!
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2706,13 +2705,13 @@
         stp s3, s5, [sp, #-2]!
         ldp s6, s26, [x4, #-260]!
         stp s13, s19, [x5, #256]!
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s3, s5, [sp, #-2]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldp s6, s26, [x4, #-260]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stp s13, s19, [x5, #256]!
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2722,10 +2721,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr, #0]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0, #512]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0, #-520]!
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2736,13 +2735,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp, #0]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp, #8]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5, #1024]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23, #-1040]!
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2754,34 +2753,34 @@
         stnp w9, w10, [x5, #256]
         ldnp w11, w12, [x9, #-260]
         stnp wsp, w9, [sp]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldnp w3, w2, [x4, #1]
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp w1, w2, [x3, #253]
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp w9, w10, [x5, #256]
-// CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                            ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldnp w11, w12, [x9, #-260]
-// CHECK-ERROR-NEXT:                       ^
+// CHECK-ERROR-NEXT:                             ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         stnp wsp, w9, [sp]
-// CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT:              ^
 
         ldnp x2, x5, [sp, #4]
         ldnp x5, x6, [x9, #512]
         stnp x7, x8, [x10, #-520]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldnp x2, x5, [sp, #4]
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldnp x5, x6, [x9, #512]
-// CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:                           ^
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stnp x7, x8, [x10, #-520]
-// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT:                            ^
 
         ldnp sp, x3, [x10]
         stnp x3, sp, [x9]
@@ -2795,13 +2794,13 @@
         stnp s3, s5, [sp, #-2]
         ldnp s6, s26, [x4, #-260]
         stnp s13, s19, [x5, #256]
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp s3, s5, [sp, #-2]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         ldnp s6, s26, [x4, #-260]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 4 in range [-256, 252]
 // CHECK-ERROR-NEXT:         stnp s13, s19, [x5, #256]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2811,10 +2810,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldnp d3, d4, [xzr]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         ldnp d5, d6, [x0, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
 // CHECK-ERROR-NEXT:         stnp d7, d8, [x0, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2825,13 +2824,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldnp d3, q2, [sp]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldnp q3, q5, [sp, #8]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         stnp q20, q25, [x5, #1024]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
 // CHECK-ERROR-NEXT:         ldnp q30, q15, [x23, #-1040]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2840,28 +2839,28 @@
 //------------------------------------------------------------------------------
         orr w0, w1, #0xffffffff
         and x3, x5, #0xffffffffffffffff
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         orr w0, w1, #0xffffffff
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         and x3, x5, #0xffffffffffffffff
 // CHECK-ERROR-NEXT:                     ^
 
         ands w3, w9, #0x0
         eor x2, x0, #0x0
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         ands w3, w9, #0x0
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         eor x2, x0, #0x0
 // CHECK-ERROR-NEXT:                     ^
 
         eor w3, w5, #0x83
         eor x9, x20, #0x1234
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         eor w3, w5, #0x83
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         eor x9, x20, #0x1234
 // CHECK-ERROR-NEXT:                      ^
 
@@ -2914,10 +2913,10 @@
 // CHECK-ERROR: error: expected integer shift amount
 // CHECK-ERROR-NEXT:         and w2, w24, w6, lsl #-1
 // CHECK-ERROR-NEXT:                               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 // CHECK-ERROR-NEXT:         and w4, w6, w12, lsl #32
 // CHECK-ERROR-NEXT:                          ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]
 // CHECK-ERROR-NEXT:         and x4, x6, x12, lsl #64
 // CHECK-ERROR-NEXT:                          ^
 // CHECK-ERROR-NEXT: error: expected #imm after shift specifier
@@ -2949,10 +2948,10 @@
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ands w1, x12, w2
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         and x4, x5, w6, lsl #12
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         orr w2, w5, x7, asr #0
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2974,28 +2973,28 @@
         movz x3, #-1
         movk w3, #1, lsl #32
         movn x2, #12, lsl #64
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w3, #65536, lsl #0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w4, #65536
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn w1, #2, lsl #1
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: only 'lsl #+N' valid after immediate
 // CHECK-ERROR-NEXT:         movk w3, #0, lsl #-1
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn w2, #-1, lsl #0
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x3, #-1
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #1, lsl #32
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x2, #12, lsl #64
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3005,22 +3004,22 @@
         movk w3, #:abs_g0:sym
         movz x3, #:abs_g0_nc:sym
         movn x4, #:abs_g0_nc:sym
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x12, #:abs_g0:sym, lsl #16
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x12, #:abs_g0:sym, lsl #0
 // CHECK-ERROR-NEXT:                                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x2, #:abs_g0:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #:abs_g0:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x3, #:abs_g0_nc:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x4, #:abs_g0_nc:sym
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3028,16 +3027,16 @@
         movk w3, #:abs_g1:sym
         movz x3, #:abs_g1_nc:sym
         movn x4, #:abs_g1_nc:sym
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x2, #:abs_g1:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #:abs_g1:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x3, #:abs_g1_nc:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x4, #:abs_g1_nc:sym
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3047,53 +3046,53 @@
         movk w3, #:abs_g2_nc:sym
         movz x13, #:abs_g2_nc:sym
         movn x24, #:abs_g2_nc:sym
-// CHECK-ERROR:         error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w12, #:abs_g2:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x12, #:abs_g2:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x13, #:abs_g2:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w3, #:abs_g2_nc:sym
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz x13, #:abs_g2_nc:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x24, #:abs_g2_nc:sym
 // CHECK-ERROR-NEXT:                   ^
 
         movn x19, #:abs_g3:sym
         movz w20, #:abs_g3:sym
         movk w21, #:abs_g3:sym
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn x19, #:abs_g3:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w20, #:abs_g3:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w21, #:abs_g3:sym
 // CHECK-ERROR-NEXT:                   ^
 
         movk x19, #:abs_g0_s:sym
         movk w23, #:abs_g0_s:sym
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x19, #:abs_g0_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w23, #:abs_g0_s:sym
 // CHECK-ERROR-NEXT:                   ^
 
         movk x19, #:abs_g1_s:sym
         movk w23, #:abs_g1_s:sym
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x19, #:abs_g1_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w23, #:abs_g1_s:sym
 // CHECK-ERROR-NEXT:                   ^
 
@@ -3101,16 +3100,16 @@
         movn w29, #:abs_g2_s:sym
         movk x19, #:abs_g2_s:sym
         movk w23, #:abs_g2_s:sym
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movz w2, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                    ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movn w29, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk x19, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected relocated symbol or integer in range [0, 65535]
 // CHECK-ERROR-NEXT:         movk w23, #:abs_g2_s:sym
 // CHECK-ERROR-NEXT:                   ^
 
@@ -3124,7 +3123,7 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         adr sp, loc
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         adrp x3, #20
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
@@ -3135,16 +3134,16 @@
         adr x2, #-1048577
         adrp x9, #4294967296
         adrp x20, #-4294971392
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         adr x9, #1048576
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         adr x2, #-1048577
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         adrp x9, #4294967296
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         adrp x20, #-4294971392
 // CHECK-ERROR-NEXT:                   ^
 
@@ -3154,19 +3153,19 @@
 
         hint #-1
         hint #128
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [0, 127]
 // CHECK-ERROR-NEXT:         hint #-1
 // CHECK-ERROR-NEXT:              ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 127]
 // CHECK-ERROR-NEXT:         hint #128
 // CHECK-ERROR-NEXT:              ^
 
         clrex #-1
         clrex #16
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:         clrex #-1
 // CHECK-ERROR-NEXT:               ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:         clrex #16
 // CHECK-ERROR-NEXT:               ^
 
@@ -3197,15 +3196,19 @@
 // CHECK-ERROR-NEXT:             ^
 
         msr daifset, x4
+        msr spsel, #-1
         msr spsel #-1
         msr daifclr, #16
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:         msr daifset, x4
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error:
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
+// CHECK-ERROR-NEXT:         msr spsel, #-1
+// CHECK-ERROR-NEXT:                    ^
+// CHECK-ERROR-NEXT: error: expected comma before next operand
 // CHECK-ERROR-NEXT:         msr spsel #-1
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 15]
 // CHECK-ERROR-NEXT:         msr daifclr, #16
 // CHECK-ERROR-NEXT:                      ^
 
@@ -3217,7 +3220,7 @@
         sysl x13, #3, c16, c2, #3
         sysl x9, #2, c11, c16, #5
         sysl x4, #4, c9, c8, #8
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error:  expected integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sys #8, c1, c2, #7, x9
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
@@ -3226,10 +3229,10 @@
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
 // CHECK-ERROR-NEXT:         sys #2, c11, c16, #5
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sys #4, c9, c8, #8, xzr
 // CHECK-ERROR-NEXT:                         ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sysl x11, #8, c1, c2, #7
 // CHECK-ERROR-NEXT:                   ^
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
@@ -3238,7 +3241,7 @@
 // CHECK-ERROR-NEXT: error: Expected cN operand where 0 <= N <= 15
 // CHECK-ERROR-NEXT:         sysl x9, #2, c11, c16, #5
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 7]
 // CHECK-ERROR-NEXT:         sysl x4, #4, c9, c8, #8
 // CHECK-ERROR-NEXT:                              ^
 
@@ -3436,154 +3439,154 @@
         msr CNTVCT_EL0, x12
         msr PMEVCNTR31_EL0, x12
         msr PMEVTYPER31_EL0, x12
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MDCCSR_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr DBGDTRRX_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MDRAR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr OSLSR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr DBGAUTHSTATUS_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MIDR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr CCSIDR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr CLIDR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr CTR_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MPIDR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr REVIDR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr AIDR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr DCZID_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_PFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_PFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_DFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_MMFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_MMFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_MMFR2_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_MMFR3_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR2_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR3_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR4_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR5_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MVFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MVFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr MVFR2_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64PFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64PFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64DFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64DFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64AFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64AFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64ISAR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64ISAR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64MMFR0_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_AA64MMFR1_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr PMCEID0_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr PMCEID1_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr RVBAR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr RVBAR_EL2, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr RVBAR_EL3, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ISR_EL1, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr CNTPCT_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr CNTVCT_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr PMEVCNTR31_EL0, x12
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr PMEVTYPER31_EL0, x12
 // CHECK-ERROR-NEXT:             ^
 
@@ -3592,19 +3595,19 @@
         mrs x9, PMSWINC_EL0
         mrs x9, PMEVCNTR31_EL0
         mrs x9, PMEVTYPER31_EL0
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x9, DBGDTRTX_EL0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x9, OSLAR_EL1
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x9, PMSWINC_EL0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x9, PMEVCNTR31_EL0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x9, PMEVTYPER31_EL0
 // CHECK-ERROR-NEXT:                 ^
 
@@ -3614,19 +3617,19 @@
         mrs x13, s3_3_c12_c13_2
         mrs x19, s3_2_c15_c16_2
         mrs x30, s3_2_c15_c1_8
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs xzr, s2_5_c11_c13_2
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x12, s3_8_c11_c13_2
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x13, s3_3_c12_c13_2
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x19, s3_2_c15_c16_2
 // CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x30, s3_2_c15_c1_8
 // CHECK-ERROR-NEXT:                  ^
 
@@ -3638,16 +3641,16 @@
         tbz w3, #32, nowhere
         tbz x9, #-1, there
         tbz x20, #64, dont
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:     tbz w3, #-1, addr
 // CHECK-ERROR-NEXT:             ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        tbz w3, #32, nowhere
 // CHECK-ERROR-NEXT:                ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbz x9, #-1, there
 // CHECK-ERROR-NEXT:                ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbz x20, #64, dont
 // CHECK-ERROR-NEXT:                 ^
 
@@ -3655,16 +3658,16 @@
         tbnz w3, #32, nowhere
         tbnz x9, #-1, there
         tbnz x20, #64, dont
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        tbnz w3, #-1, addr
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 31]
 // CHECK-ERROR-NEXT:        tbnz w3, #32, nowhere
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbnz x9, #-1, there
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected integer in range [0, 63]
 // CHECK-ERROR-NEXT:        tbnz x20, #64, dont
 
 //------------------------------------------------------------------------------
@@ -3674,13 +3677,13 @@
         b #134217728
         b #-134217732
         b #1
-// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         b #134217728
 // CHECK-ERROR-NEXT:           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         b #-134217732
 // CHECK-ERROR-NEXT:           ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected label or encodable integer pc offset
 // CHECK-ERROR-NEXT:         b #1
 // CHECK-ERROR-NEXT:           ^
 

@@ -43,6 +43,12 @@ class AArch64AsmParser : public MCTargetAsmParser {
 #include "AArch64GenAsmMatcher.inc"
 
 public:
+  enum AArch64MatchResultTy {
+    Match_FirstAArch64 = FIRST_TARGET_MATCH_RESULT_TY,
+#define GET_OPERAND_DIAGNOSTIC_TYPES
+#include "AArch64GenAsmMatcher.inc"
+  };
+
   AArch64AsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
     : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
@@ -1871,7 +1877,7 @@ bool AArch64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
     Parser.EatToEndOfStatement();
-    return Error(Loc, "");
+    return Error(Loc, "expected comma before next operand");
   }
 
   // Eat the EndOfStatement
@@ -1946,6 +1952,10 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   unsigned MatchResult;
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                      MatchingInlineAsm);
+
+  if (ErrorInfo != ~0U && ErrorInfo >= Operands.size())
+    return Error(IDLoc, "too few operands for instruction");
+
   switch (MatchResult) {
   default: break;
   case Match_Success:
@@ -1960,9 +1970,6 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidOperand: {
     SMLoc ErrorLoc = IDLoc;
     if (ErrorInfo != ~0U) {
-      if (ErrorInfo >= Operands.size())
-        return Error(IDLoc, "too few operands for instruction");
-
       ErrorLoc = ((AArch64Operand*)Operands[ErrorInfo])->getStartLoc();
       if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
     }
@@ -1971,6 +1978,159 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   }
   case Match_MnemonicFail:
     return Error(IDLoc, "invalid instruction");
+
+  case Match_AddSubRegExtendSmall:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+      "expected '[su]xt[bhw]' or 'lsl' with optional integer in range [0, 4]");
+  case Match_AddSubRegExtendLarge:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+      "expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]");
+  case Match_AddSubRegShift32:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+       "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]");
+  case Match_AddSubRegShift64:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+       "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]");
+  case Match_AddSubSecondSource:
+      return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+          "expected compatible register, symbol or integer in range [0, 4095]");
+  case Match_CVTFixedPos32:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [1, 32]");
+  case Match_CVTFixedPos64:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [1, 64]");
+  case Match_CondCode:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected AArch64 condition code");
+  case Match_FPImm:
+    // Any situation which allows a nontrivial floating-point constant also
+    // allows a register.
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected compatible register or floating-point constant");
+  case Match_FPZero:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected floating-point constant #0.0");
+  case Match_Label:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected label or encodable integer pc offset");
+  case Match_Lane1:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected lane specifier '[1]'");
+  case Match_LoadStoreExtend32_1:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0");
+  case Match_LoadStoreExtend32_2:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #1");
+  case Match_LoadStoreExtend32_4:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #2");
+  case Match_LoadStoreExtend32_8:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'uxtw' or 'sxtw' with optional shift of #0 or #3");
+  case Match_LoadStoreExtend32_16:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'lsl' or 'sxtw' with optional shift of #0 or #4");
+  case Match_LoadStoreExtend64_1:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'lsl' or 'sxtx' with optional shift of #0");
+  case Match_LoadStoreExtend64_2:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #1");
+  case Match_LoadStoreExtend64_4:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #2");
+  case Match_LoadStoreExtend64_8:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #3");
+  case Match_LoadStoreExtend64_16:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'lsl' or 'sxtx' with optional shift of #0 or #4");
+  case Match_LoadStoreSImm7_4:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer multiple of 4 in range [-256, 252]");
+  case Match_LoadStoreSImm7_8:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer multiple of 8 in range [-512, 508]");
+  case Match_LoadStoreSImm7_16:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer multiple of 16 in range [-1024, 1016]");
+  case Match_LoadStoreSImm9:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [-256, 255]");
+  case Match_LoadStoreUImm12_1:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected symbolic reference or integer in range [0, 4095]");
+  case Match_LoadStoreUImm12_2:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected symbolic reference or integer in range [0, 8190]");
+  case Match_LoadStoreUImm12_4:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected symbolic reference or integer in range [0, 16380]");
+  case Match_LoadStoreUImm12_8:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected symbolic reference or integer in range [0, 32760]");
+  case Match_LoadStoreUImm12_16:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected symbolic reference or integer in range [0, 65520]");
+  case Match_LogicalSecondSource:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected compatible register or logical immediate");
+  case Match_MOVWUImm16:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected relocated symbol or integer in range [0, 65535]");
+  case Match_MRS:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected readable system register");
+  case Match_MSR:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected writable system register or pstate");
+  case Match_NamedImm_at:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                "expected symbolic 'at' operand: s1e[0-3][rw] or s12e[01][rw]");
+  case Match_NamedImm_dbarrier:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+             "expected integer in range [0, 15] or symbolic barrier operand");
+  case Match_NamedImm_dc:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected symbolic 'dc' operand");
+  case Match_NamedImm_ic:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected 'ic' operand: 'ialluis', 'iallu' or 'ivau'");
+  case Match_NamedImm_isb:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 15] or 'sy'");
+  case Match_NamedImm_prefetch:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected prefetch hint: p(ld|st|i)l[123](strm|keep)");
+  case Match_NamedImm_tlbi:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected translation buffer invalidation operand");
+  case Match_UImm16:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 65535]");
+  case Match_UImm3:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 7]");
+  case Match_UImm4:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 15]");
+  case Match_UImm5:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 31]");
+  case Match_UImm6:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 63]");
+  case Match_UImm7:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [0, 127]");
+  case Match_Width32:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [<lsb>, 31]");
+  case Match_Width64:
+    return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
+                 "expected integer in range [<lsb>, 63]");
   }
 
   llvm_unreachable("Implement any new match types added!");

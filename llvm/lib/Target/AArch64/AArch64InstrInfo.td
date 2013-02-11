@@ -205,11 +205,12 @@ def ATOMIC_CMP_SWAP_I64
 // is not optional in that case (but can explicitly be 0), and the
 // entire suffix can be skipped (e.g. "add sp, x3, x2").
 
-multiclass extend_operands<string PREFIX> {
+multiclass extend_operands<string PREFIX, string Diag> {
      def _asmoperand : AsmOperandClass {
          let Name = PREFIX;
          let RenderMethod = "addRegExtendOperands";
          let PredicateMethod = "isRegExtend<A64SE::" # PREFIX # ">";
+         let DiagnosticType = "AddSubRegExtend" # Diag;
      }
 
      def _operand : Operand<i64>,
@@ -220,18 +221,19 @@ multiclass extend_operands<string PREFIX> {
      }
 }
 
-defm UXTB : extend_operands<"UXTB">;
-defm UXTH : extend_operands<"UXTH">;
-defm UXTW : extend_operands<"UXTW">;
-defm UXTX : extend_operands<"UXTX">;
-defm SXTB : extend_operands<"SXTB">;
-defm SXTH : extend_operands<"SXTH">;
-defm SXTW : extend_operands<"SXTW">;
-defm SXTX : extend_operands<"SXTX">;
+defm UXTB : extend_operands<"UXTB", "Small">;
+defm UXTH : extend_operands<"UXTH", "Small">;
+defm UXTW : extend_operands<"UXTW", "Small">;
+defm UXTX : extend_operands<"UXTX", "Large">;
+defm SXTB : extend_operands<"SXTB", "Small">;
+defm SXTH : extend_operands<"SXTH", "Small">;
+defm SXTW : extend_operands<"SXTW", "Small">;
+defm SXTX : extend_operands<"SXTX", "Large">;
 
 def LSL_extasmoperand : AsmOperandClass {
     let Name = "RegExtendLSL";
     let RenderMethod = "addRegExtendOperands";
+    let DiagnosticType = "AddSubRegExtendLarge";
 }
 
 def LSL_extoperand : Operand<i64> {
@@ -540,10 +542,14 @@ let ParserMethod = "ParseImmWithLSLOperand",
   // Derived PredicateMethod fields are different for each
   def addsubimm_lsl0_asmoperand : AsmOperandClass {
     let Name = "AddSubImmLSL0";
+    // If an error is reported against this operand, instruction could also be a
+    // register variant.
+    let DiagnosticType = "AddSubSecondSource";
   }
 
   def addsubimm_lsl12_asmoperand : AsmOperandClass {
     let Name = "AddSubImmLSL12";
+    let DiagnosticType = "AddSubSecondSource";
   }
 }
 
@@ -689,8 +695,8 @@ multiclass shift_operands<string prefix, string form> {
   def _asmoperand_i32 : AsmOperandClass {
     let Name = "Shift" # form # "i32";
     let RenderMethod = "addShiftOperands";
-    let PredicateMethod
-          = "isShift<A64SE::" # form # ", false>";
+    let PredicateMethod = "isShift<A64SE::" # form # ", false>";
+    let DiagnosticType = "AddSubRegShift32";
   }
 
   // Note that the operand type is intentionally i64 because the DAGCombiner
@@ -705,8 +711,8 @@ multiclass shift_operands<string prefix, string form> {
   def _asmoperand_i64 : AsmOperandClass {
       let Name = "Shift" # form # "i64";
       let RenderMethod = "addShiftOperands";
-      let PredicateMethod
-            = "isShift<A64SE::" # form # ", true>";
+      let PredicateMethod = "isShift<A64SE::" # form # ", true>";
+      let DiagnosticType = "AddSubRegShift64";
   }
 
   def _i64 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63; }]> {
@@ -957,12 +963,14 @@ def uimm5_asmoperand : AsmOperandClass {
   let Name = "UImm5";
   let PredicateMethod = "isUImm<5>";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "UImm5";
 }
 
 def uimm6_asmoperand : AsmOperandClass {
   let Name = "UImm6";
   let PredicateMethod = "isUImm<6>";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "UImm6";
 }
 
 def bitfield32_imm : Operand<i64>,
@@ -1157,6 +1165,7 @@ def bfx32_width_asmoperand : AsmOperandClass {
   let Name = "BFX32Width";
   let PredicateMethod = "isBitfieldWidth<32>";
   let RenderMethod = "addBFXWidthOperands";
+  let DiagnosticType = "Width32";
 }
 
 def bfx32_width : Operand<i64>, ImmLeaf<i64, [{ return true; }]> {
@@ -1168,6 +1177,7 @@ def bfx64_width_asmoperand : AsmOperandClass {
   let Name = "BFX64Width";
   let PredicateMethod = "isBitfieldWidth<64>";
   let RenderMethod = "addBFXWidthOperands";
+  let DiagnosticType = "Width64";
 }
 
 def bfx64_width : Operand<i64> {
@@ -1235,6 +1245,7 @@ def bfi32_lsb_asmoperand : AsmOperandClass {
   let Name = "BFI32LSB";
   let PredicateMethod = "isUImm<5>";
   let RenderMethod = "addBFILSBOperands<32>";
+  let DiagnosticType = "UImm5";
 }
 
 def bfi32_lsb : Operand<i64>,
@@ -1247,6 +1258,7 @@ def bfi64_lsb_asmoperand : AsmOperandClass {
   let Name = "BFI64LSB";
   let PredicateMethod = "isUImm<6>";
   let RenderMethod = "addBFILSBOperands<64>";
+  let DiagnosticType = "UImm6";
 }
 
 def bfi64_lsb : Operand<i64>,
@@ -1262,6 +1274,7 @@ def bfi32_width_asmoperand : AsmOperandClass {
   let Name = "BFI32Width";
   let PredicateMethod = "isBitfieldWidth<32>";
   let RenderMethod = "addBFIWidthOperands";
+  let DiagnosticType = "Width32";
 }
 
 def bfi32_width : Operand<i64>,
@@ -1274,6 +1287,7 @@ def bfi64_width_asmoperand : AsmOperandClass {
   let Name = "BFI64Width";
   let PredicateMethod = "isBitfieldWidth<64>";
   let RenderMethod = "addBFIWidthOperands";
+  let DiagnosticType = "Width64";
 }
 
 def bfi64_width : Operand<i64>,
@@ -1329,6 +1343,7 @@ class label_asmoperand<int width, int scale> : AsmOperandClass {
   let Name = "Label" # width # "_" # scale;
   let PredicateMethod = "isLabel<" # width # "," # scale # ">";
   let RenderMethod = "addLabelOperands<" # width # ", " # scale # ">";
+  let DiagnosticType = "Label";
 }
 
 def label_wid19_scal4_asmoperand : label_asmoperand<19, 4>;
@@ -1375,6 +1390,7 @@ defm CBNZ : cmpbr_sizes<0b1, "cbnz", ImmLeaf<i32, [{
 
 def cond_code_asmoperand : AsmOperandClass {
   let Name = "CondCode";
+  let DiagnosticType = "CondCode";
 }
 
 def cond_code : Operand<i32>, ImmLeaf<i32, [{
@@ -1402,6 +1418,7 @@ def uimm4_asmoperand : AsmOperandClass {
   let Name = "UImm4";
   let PredicateMethod = "isUImm<4>";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "UImm4";
 }
 
 def uimm4 : Operand<i32> {
@@ -1420,6 +1437,7 @@ def cond_code_op_asmoperand : AsmOperandClass {
   let RenderMethod = "addCondCodeOperands";
   let PredicateMethod = "isCondCode";
   let ParserMethod = "ParseCondCodeOperand";
+  let DiagnosticType = "CondCode";
 }
 
 def cond_code_op : Operand<i32> {
@@ -1471,6 +1489,7 @@ def inv_cond_code_op_asmoperand : AsmOperandClass {
   let RenderMethod = "addInvCondCodeOperands";
   let PredicateMethod = "isCondCode";
   let ParserMethod = "ParseCondCodeOperand";
+  let DiagnosticType = "CondCode";
 }
 
 def inv_cond_code_op : Operand<i32> {
@@ -1836,6 +1855,7 @@ def uimm16_asmoperand : AsmOperandClass {
   let Name = "UImm16";
   let PredicateMethod = "isUImm<16>";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "UImm16";
 }
 
 def uimm16 : Operand<i32> {
@@ -1902,6 +1922,7 @@ def : Pat<(rotr GPR64:$Rn, bitfield64_imm:$LSB),
 def fpzero_asmoperand : AsmOperandClass {
   let Name = "FPZero";
   let ParserMethod = "ParseFPImmOperand";
+  let DiagnosticType = "FPZero";
 }
 
 def fpz32 : Operand<f32>,
@@ -2139,6 +2160,7 @@ def fixedpos_asmoperand_i32 : AsmOperandClass {
   let Name = "CVTFixedPos32";
   let RenderMethod = "addCVTFixedPosOperands";
   let PredicateMethod = "isCVTFixedPos<32>";
+  let DiagnosticType = "CVTFixedPos32";
 }
 
 // Also encoded as "64 - <specified imm>" but #1-#64 allowed.
@@ -2146,6 +2168,7 @@ def fixedpos_asmoperand_i64 : AsmOperandClass {
   let Name = "CVTFixedPos64";
   let RenderMethod = "addCVTFixedPosOperands";
   let PredicateMethod = "isCVTFixedPos<64>";
+  let DiagnosticType = "CVTFixedPos64";
 }
 
 // We need the cartesian product of f32/f64 i32/i64 operands for
@@ -2301,6 +2324,7 @@ def : Pat<(f64 (bitconvert (i64 GPR64:$Rn))), (FMOVdx GPR64:$Rn)>;
 def lane1_asmoperand : AsmOperandClass {
   let Name = "Lane1";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "Lane1";
 }
 
 def lane1 : Operand<i32> {
@@ -2332,6 +2356,7 @@ def : InstAlias<"fmov $Rd.2d[$Lane], $Rn",
 def fpimm_asmoperand : AsmOperandClass {
   let Name = "FMOVImm";
   let ParserMethod = "ParseFPImmOperand";
+  let DiagnosticType = "FPImm";
 }
 
 // The MCOperand for these instructions are the encoded 8-bit values.
@@ -2372,6 +2397,7 @@ def FMOVdi : A64I_fpimm_impl<0b01, FPR64, f64, fmov64_operand>;
 def ldrlit_label_asmoperand : AsmOperandClass {
   let Name = "LoadLitLabel";
   let RenderMethod = "addLabelOperands<19, 4>";
+  let DiagnosticType = "Label";
 }
 
 def ldrlit_label : Operand<i64> {
@@ -2392,6 +2418,7 @@ multiclass namedimm<string prefix, string mapper> {
     let PredicateMethod = "isUImm";
     let RenderMethod = "addImmOperands";
     let ParserMethod = "ParseNamedImmOperand<" # mapper # ">";
+    let DiagnosticType = "NamedImm_" # prefix;
   }
 
   def _op : Operand<i32> {
@@ -2461,6 +2488,7 @@ def GPR64xsp0_asmoperand : AsmOperandClass {
   let PredicateMethod = "isWrappedReg";
   let RenderMethod = "addRegOperands";
   let ParserMethod = "ParseLSXAddressOperand";
+  // Diagnostics are provided by ParserMethod
 }
 
 def GPR64xsp0 : RegisterOperand<GPR64xsp> {
@@ -2738,6 +2766,7 @@ multiclass offsets_uimm12<int MemSize, string prefix> {
     let Name = "OffsetUImm12_" # MemSize;
     let PredicateMethod = "isOffsetUImm12<" # MemSize # ">";
     let RenderMethod = "addOffsetUImm12Operands<" # MemSize # ">";
+    let DiagnosticType = "LoadStoreUImm12_" # MemSize;
   }
 
   // Pattern is really no more than an ImmLeaf, but predicated on MemSize which
@@ -2772,6 +2801,7 @@ def simm9_asmoperand : AsmOperandClass {
   let Name = "SImm9";
   let PredicateMethod = "isSImm<9>";
   let RenderMethod = "addSImmOperands<9>";
+  let DiagnosticType = "LoadStoreSImm9";
 }
 
 def simm9 : Operand<i64>,
@@ -2804,6 +2834,7 @@ multiclass regexts<int MemSize, int RmSize, RegisterClass GPR,
     let Name = "AddrRegExtend_" # MemSize # "_" #  Rm;
     let PredicateMethod = "isAddrRegExtend<" # MemSize # "," # RmSize # ">";
     let RenderMethod = "addAddrRegExtendOperands<" # MemSize # ">";
+    let DiagnosticType = "LoadStoreExtend" # RmSize # "_" # MemSize;
   }
 
   def regext : Operand<i64> {
@@ -3377,6 +3408,7 @@ multiclass offsets_simm7<string MemSize, string prefix> {
     let Name = "SImm7_Scaled" # MemSize;
     let PredicateMethod = "isSImm7Scaled<" # MemSize # ">";
     let RenderMethod = "addSImm7ScaledOperands<" # MemSize # ">";
+    let DiagnosticType = "LoadStoreSImm7_" # MemSize;
   }
 
   def simm7 : Operand<i64> {
@@ -3528,6 +3560,7 @@ multiclass logical_imm_operands<string prefix, string note,
     let Name = "LogicalImm" # note # size;
     let PredicateMethod = "isLogicalImm" # note # "<" # size # ">";
     let RenderMethod = "addLogicalImmOperands<" # size # ">";
+    let DiagnosticType = "LogicalSecondSource";
   }
 
   def _operand
@@ -3819,8 +3852,8 @@ multiclass movw_operands<string prefix, string instname, int width> {
     let Name = instname # width # "Shifted" # shift;
     let PredicateMethod = "is" # instname # width # "Imm";
     let RenderMethod = "addMoveWideImmOperands";
-
     let ParserMethod = "ParseImmWithLSLOperand";
+    let DiagnosticType = "MOVWUImm16";
   }
 
   def _imm : Operand<i32> {
@@ -3935,6 +3968,7 @@ def adr_label : Operand<i64> {
 def adrp_label_asmoperand : AsmOperandClass {
   let Name = "AdrpLabel";
   let RenderMethod = "addLabelOperands<21, 4096>";
+  let DiagnosticType = "Label";
 }
 
 def adrp_label : Operand<i64> {
@@ -3965,6 +3999,7 @@ def uimm3_asmoperand : AsmOperandClass {
   let Name = "UImm3";
   let PredicateMethod = "isUImm<3>";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "UImm3";
 }
 
 def uimm3 : Operand<i32> {
@@ -3976,6 +4011,7 @@ def uimm7_asmoperand : AsmOperandClass {
   let Name = "UImm7";
   let PredicateMethod = "isUImm<7>";
   let RenderMethod = "addImmOperands";
+  let DiagnosticType = "UImm7";
 }
 
 def uimm7 : Operand<i32> {
@@ -4011,6 +4047,7 @@ defm tlbi : namedimm<"tlbi", "A64TLBI::TLBIMapper">;
 def mrs_asmoperand : AsmOperandClass {
   let Name = "MRS";
   let ParserMethod = "ParseSysRegOperand";
+  let DiagnosticType = "MRS";
 }
 
 def mrs_op : Operand<i32> {
@@ -4027,6 +4064,7 @@ def msr_asmoperand : AsmOperandClass {
   // AArch64Operand rather than an immediate. The overlap is small enough that
   // it could be resolved with hackery now, but who can say in future?
   let ParserMethod = "ParseSysRegOperand";
+  let DiagnosticType = "MSR";
 }
 
 def msr_op : Operand<i32> {
@@ -4039,6 +4077,7 @@ def pstate_asmoperand : AsmOperandClass {
   let Name = "MSRPState";
   // See comment above about parser.
   let ParserMethod = "ParseSysRegOperand";
+  let DiagnosticType = "MSR";
 }
 
 def pstate_op : Operand<i32> {
@@ -4054,6 +4093,7 @@ def CRx_asmoperand : AsmOperandClass {
   let PredicateMethod = "isUImm<4>";
   let RenderMethod = "addImmOperands";
   let ParserMethod = "ParseCRxOperand";
+  // Diagnostics are handled in all cases by ParseCRxOperand.
 }
 
 def CRx : Operand<i32> {
