@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Passes.h"
@@ -80,7 +81,8 @@ public:
   /// machine instructions.
   uint64_t getBinaryCodeForInstr(const MachineInstr &MI) const;
 
-  void emitInstruction(const MachineInstr &MI);
+  void emitInstruction(MachineBasicBlock::instr_iterator MI,
+                       MachineBasicBlock &MBB);
 
 private:
 
@@ -112,6 +114,10 @@ private:
 
   void emitGlobalAddressUnaligned(const GlobalValue *GV, unsigned Reloc,
                                   int Offset) const;
+
+  /// \brief Expand pseudo instruction. Return true if MI was expanded.
+  bool expandPseudos(MachineBasicBlock::instr_iterator &MI,
+                     MachineBasicBlock &MBB) const;
 };
 }
 
@@ -140,8 +146,8 @@ bool MipsCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
         MBB != E; ++MBB){
       MCE.StartMachineBasicBlock(MBB);
       for (MachineBasicBlock::instr_iterator I = MBB->instr_begin(),
-           E = MBB->instr_end(); I != E; ++I)
-        emitInstruction(*I);
+           E = MBB->instr_end(); I != E;)
+        emitInstruction(*I++, *MBB);
     }
   } while (MCE.finishFunction(MF));
 
@@ -266,19 +272,21 @@ void MipsCodeEmitter::emitMachineBasicBlock(MachineBasicBlock *BB,
                                              Reloc, BB));
 }
 
-void MipsCodeEmitter::emitInstruction(const MachineInstr &MI) {
-  DEBUG(errs() << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI);
+void MipsCodeEmitter::emitInstruction(MachineBasicBlock::instr_iterator MI,
+                                      MachineBasicBlock &MBB) {
+  DEBUG(errs() << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << *MI);
 
-  MCE.processDebugLoc(MI.getDebugLoc(), true);
-
-  // Skip pseudo instructions.
-  if ((MI.getDesc().TSFlags & MipsII::FormMask) == MipsII::Pseudo)
+  // Expand pseudo instruction. Skip if MI was not expanded.
+  if (((MI->getDesc().TSFlags & MipsII::FormMask) == MipsII::Pseudo) &&
+      !expandPseudos(MI, MBB))
     return;
 
-  emitWord(getBinaryCodeForInstr(MI));
+  MCE.processDebugLoc(MI->getDebugLoc(), true);
+
+  emitWord(getBinaryCodeForInstr(*MI));
   ++NumEmitted;  // Keep track of the # of mi's emitted
 
-  MCE.processDebugLoc(MI.getDebugLoc(), false);
+  MCE.processDebugLoc(MI->getDebugLoc(), false);
 }
 
 void MipsCodeEmitter::emitWord(unsigned Word) {
@@ -288,6 +296,25 @@ void MipsCodeEmitter::emitWord(unsigned Word) {
     MCE.emitWordLE(Word);
   else
     MCE.emitWordBE(Word);
+}
+
+bool MipsCodeEmitter::expandPseudos(MachineBasicBlock::instr_iterator &MI,
+                                    MachineBasicBlock &MBB) const {
+  switch (MI->getOpcode()) {
+  case Mips::NOP:
+    BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::SLL), Mips::ZERO)
+      .addReg(Mips::ZERO).addImm(0);
+    break;
+  case Mips::JALRPseudo:
+    BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::JALR), Mips::RA)
+      .addReg(MI->getOperand(0).getReg());
+    break;
+  default:
+    return false;
+  }
+
+  (MI--)->eraseFromBundle();
+  return true;
 }
 
 /// createMipsJITCodeEmitterPass - Return a pass that emits the collected Mips
