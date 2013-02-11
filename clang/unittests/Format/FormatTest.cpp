@@ -858,6 +858,26 @@ TEST_F(FormatTest, RespectWhitespaceInMacroDefinitions) {
   verifyFormat("#define A (1)");
 }
 
+TEST_F(FormatTest, EmptyLinesInMacroDefinitions) {
+  EXPECT_EQ("#define A b;", format("#define A \\\n"
+                                   "          \\\n"
+                                   "  b;", getLLVMStyleWithColumns(25)));
+  EXPECT_EQ("#define A \\\n"
+            "          \\\n"
+            "  a;      \\\n"
+            "  b;", format("#define A \\\n"
+                           "          \\\n"
+                           "  a;      \\\n"
+                           "  b;", getLLVMStyleWithColumns(11)));
+  EXPECT_EQ("#define A \\\n"
+            "  a;      \\\n"
+            "          \\\n"
+            "  b;", format("#define A \\\n"
+                           "  a;      \\\n"
+                           "          \\\n"
+                           "  b;", getLLVMStyleWithColumns(11)));
+}
+
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
   EXPECT_EQ("{\n  {\n#define A\n  }\n}", format("{{\n#define A\n}}"));
 }

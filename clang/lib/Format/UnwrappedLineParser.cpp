@@ -766,7 +766,8 @@ void UnwrappedLineParser::addUnwrappedLine() {
   if (Line->Tokens.empty())
     return;
   DEBUG({
-    llvm::dbgs() << "Line(" << Line->Level << "): ";
+    llvm::dbgs() << "Line(" << Line->Level << ")"
+                 << (Line->InPPDirective ? " MACRO" : "") << ": ";
     for (std::list<FormatToken>::iterator I = Line->Tokens.begin(),
                                           E = Line->Tokens.end();
          I != E; ++I) {

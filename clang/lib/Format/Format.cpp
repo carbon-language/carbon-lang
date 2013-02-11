@@ -804,9 +804,10 @@ public:
 
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {
-      FormatTok.NewlinesBefore += Text.count('\n');
-      FormatTok.HasUnescapedNewline =
-          Text.count("\\\n") != FormatTok.NewlinesBefore;
+      unsigned Newlines = Text.count('\n');
+      unsigned EscapedNewlines = Text.count("\\\n");
+      FormatTok.NewlinesBefore += Newlines;
+      FormatTok.HasUnescapedNewline |= EscapedNewlines != Newlines;
       FormatTok.WhiteSpaceLength += FormatTok.Tok.getLength();
 
       if (FormatTok.Tok.is(tok::eof))
