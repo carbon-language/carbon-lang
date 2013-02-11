@@ -18,3 +18,8 @@ struct S3;
 
 void refers_to_C4(C4*);
 
+@interface UnrelatedToDeclaredThenLoaded
+- declaredThenLoadedMethod;
+@end
+
+@class DeclaredThenLoaded;

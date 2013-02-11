@@ -86,6 +86,10 @@ module redecl_merge_right {
   export *
 }
 module redecl_merge_bottom { 
+  explicit module prefix {
+    header "redecl-merge-bottom-prefix.h"
+  }
+
   header "redecl-merge-bottom.h" 
   export *
 }

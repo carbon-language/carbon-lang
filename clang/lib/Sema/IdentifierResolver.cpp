@@ -302,6 +302,14 @@ static DeclMatchKind compareDeclarations(NamedDecl *Existing, NamedDecl *New) {
 
   // If the declarations are redeclarations of each other, keep the newest one.
   if (Existing->getCanonicalDecl() == New->getCanonicalDecl()) {
+    // If either of these is the most recent declaration, use it.
+    Decl *MostRecent = Existing->getMostRecentDecl();
+    if (Existing == MostRecent)
+      return DMK_Ignore;
+
+    if (New == MostRecent)
+      return DMK_Replace;
+
     // If the existing declaration is somewhere in the previous declaration
     // chain of the new declaration, then prefer the new declaration.
     for (Decl::redecl_iterator RD = New->redecls_begin(), 
