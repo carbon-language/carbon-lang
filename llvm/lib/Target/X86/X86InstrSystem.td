@@ -352,11 +352,11 @@ def VERWm : I<0x00, MRM5m, (outs), (ins i16mem:$seg),
 // Descriptor-table support instructions
 
 def SGDT16m : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
-              "sgdtw\t$dst", [], IIC_SGDT>, TB, OpSize, Requires<[In32BitMode]>;
+              "sgdt{w}\t$dst", [], IIC_SGDT>, TB, OpSize, Requires<[In32BitMode]>;
 def SGDTm : I<0x01, MRM0m, (outs opaque48mem:$dst), (ins),
               "sgdt\t$dst", [], IIC_SGDT>, TB;
 def SIDT16m : I<0x01, MRM1m, (outs opaque48mem:$dst), (ins),
-              "sidtw\t$dst", [], IIC_SIDT>, TB, OpSize, Requires<[In32BitMode]>;
+              "sidt{w}\t$dst", [], IIC_SIDT>, TB, OpSize, Requires<[In32BitMode]>;
 def SIDTm : I<0x01, MRM1m, (outs opaque48mem:$dst), (ins),
               "sidt\t$dst", []>, TB;
 def SLDT16r : I<0x00, MRM0r, (outs GR16:$dst), (ins),
@@ -374,11 +374,11 @@ def SLDT64m : RI<0x00, MRM0m, (outs i16mem:$dst), (ins),
                  "sldt{q}\t$dst", [], IIC_SLDT>, TB;
 
 def LGDT16m : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
-              "lgdtw\t$src", [], IIC_LGDT>, TB, OpSize, Requires<[In32BitMode]>;
+              "lgdt{w}\t$src", [], IIC_LGDT>, TB, OpSize, Requires<[In32BitMode]>;
 def LGDTm : I<0x01, MRM2m, (outs), (ins opaque48mem:$src),
               "lgdt\t$src", [], IIC_LGDT>, TB;
 def LIDT16m : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
-              "lidtw\t$src", [], IIC_LIDT>, TB, OpSize, Requires<[In32BitMode]>;
+              "lidt{w}\t$src", [], IIC_LIDT>, TB, OpSize, Requires<[In32BitMode]>;
 def LIDTm : I<0x01, MRM3m, (outs), (ins opaque48mem:$src),
               "lidt\t$src", [], IIC_LIDT>, TB;
 def LLDT16r : I<0x00, MRM2r, (outs), (ins GR16:$src),
