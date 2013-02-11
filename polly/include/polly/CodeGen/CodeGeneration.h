@@ -34,13 +34,15 @@ namespace polly {
     // and output dimension not related.
     //  [i0, i1, i2, i3] -> [i0, i1, i2, o0]
     isl_space *Space = isl_set_get_space(Domain);
-    Space = isl_space_drop_outputs(Space, Dim - 2, 1);
+    Space = isl_space_drop_outputs(Space, Dim - 1, 1);
     Space = isl_space_map_from_set(Space);
     isl_map *Identity = isl_map_identity(Space);
     Identity = isl_map_add_dims(Identity, isl_dim_in, 1);
     Identity = isl_map_add_dims(Identity, isl_dim_out, 1);
 
-    isl_map *Map = isl_map_from_domain_and_range(isl_set_copy(Domain), Domain);
+    isl_map *Map = isl_map_from_domain_and_range(isl_set_copy(Domain),
+                                                 isl_set_copy(Domain));
+    isl_set_free(Domain);
     Map = isl_map_intersect(Map, Identity);
 
     isl_map *LexMax = isl_map_lexmax(isl_map_copy(Map));
