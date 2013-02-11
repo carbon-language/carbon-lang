@@ -15,10 +15,12 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
@@ -767,6 +769,72 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     }
     // Update relevant live-through information.
     LV->addNewBlock(NMBB, this, Succ);
+  }
+
+  if (LiveIntervals *LIS = P->getAnalysisIfAvailable<LiveIntervals>()) {
+    // After splitting the edge and updating SlotIndexes, live intervals may be
+    // in one of two situations, depending on whether this block was the last in
+    // the function. If the original block was the last in the function, all live
+    // intervals will end prior to the beginning of the new split block. If the
+    // original block was not at the end of the function, all live intervals will
+    // extend to the end of the new split block.
+
+    bool isLastMBB =
+      llvm::next(MachineFunction::iterator(NMBB)) == getParent()->end();
+
+    SlotIndex StartIndex = Indexes->getMBBEndIdx(this);
+    SlotIndex PrevIndex = StartIndex.getPrevSlot();
+    SlotIndex EndIndex = Indexes->getMBBEndIdx(NMBB);
+
+    // Find the registers used from NMBB in PHIs in Succ.
+    SmallSet<unsigned, 8> PHISrcRegs;
+    for (MachineBasicBlock::instr_iterator
+         I = Succ->instr_begin(), E = Succ->instr_end();
+         I != E && I->isPHI(); ++I) {
+      for (unsigned ni = 1, ne = I->getNumOperands(); ni != ne; ni += 2) {
+        if (I->getOperand(ni+1).getMBB() == NMBB) {
+          MachineOperand &MO = I->getOperand(ni);
+          unsigned Reg = MO.getReg();
+          PHISrcRegs.insert(Reg);
+          if (MO.isUndef() || !isLastMBB)
+            break;
+
+          LiveInterval &LI = LIS->getInterval(Reg);
+          VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
+          assert(VNI && "PHI sources should be live out of their predecessors.");
+          LI.addRange(LiveRange(StartIndex, EndIndex, VNI));
+        }
+      }
+    }
+
+    MachineRegisterInfo *MRI = &getParent()->getRegInfo();
+    for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+      unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+      if (PHISrcRegs.count(Reg) || !LIS->hasInterval(Reg))
+        continue;
+
+      LiveInterval &LI = LIS->getInterval(Reg);
+      if (!LI.liveAt(PrevIndex))
+        continue;
+
+      bool isLiveOut = false;
+      for (MachineBasicBlock::succ_iterator SI = succ_begin(),
+           SE = succ_end(); SI != SE; ++SI) {
+        MachineBasicBlock *SuccMBB = *SI == NMBB ? Succ : *SI;
+        if (LI.liveAt(LIS->getMBBStartIdx(SuccMBB))) {
+          isLiveOut = true;
+          break;
+        }
+      }
+
+      if (isLiveOut && isLastMBB) {
+        VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
+        assert(VNI && "LiveInterval should have VNInfo where it is live.");
+        LI.addRange(LiveRange(StartIndex, EndIndex, VNI));
+      } else if (!isLiveOut && !isLastMBB) {
+        LI.removeRange(StartIndex, EndIndex);
+      }
+    }
   }
 
   if (MachineDominatorTree *MDT =

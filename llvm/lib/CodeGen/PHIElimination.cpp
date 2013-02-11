@@ -129,7 +129,7 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
 
   // Split critical edges to help the coalescer. This does not yet support
   // updating LiveIntervals, so we disable it.
-  if (!DisableEdgeSplitting && LV && !LIS) {
+  if (!DisableEdgeSplitting && (LV || LIS)) {
     MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       Changed |= SplitPHIEdges(MF, *I, MLI);
