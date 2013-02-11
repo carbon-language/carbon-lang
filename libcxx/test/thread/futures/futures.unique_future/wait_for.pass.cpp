@@ -58,7 +58,7 @@ int main()
         f.wait();
         Clock::time_point t1 = Clock::now();
         assert(f.valid());
-        assert(t1-t0 < ms(5));
+        assert(t1-t0 < ms(50));
     }
     {
         typedef int& T;
@@ -74,7 +74,7 @@ int main()
         f.wait();
         Clock::time_point t1 = Clock::now();
         assert(f.valid());
-        assert(t1-t0 < ms(5));
+        assert(t1-t0 < ms(50));
     }
     {
         typedef void T;
@@ -90,6 +90,6 @@ int main()
         f.wait();
         Clock::time_point t1 = Clock::now();
         assert(f.valid());
-        assert(t1-t0 < ms(5));
+        assert(t1-t0 < ms(50));
     }
 }

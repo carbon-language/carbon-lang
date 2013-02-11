@@ -26,7 +26,7 @@ int main()
     std::this_thread::sleep_until(t0 + ms);
     time_point t1 = Clock::now();
     std::chrono::nanoseconds ns = (t1 - t0) - ms;
-    std::chrono::nanoseconds err = ms / 100;
-    // The time slept is within 1% of 500ms
+    std::chrono::nanoseconds err = 5 * ms / 100;
+    // The time slept is within 5% of 500ms
     assert(std::abs(ns.count()) < err.count());
 }
