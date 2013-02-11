@@ -489,9 +489,7 @@ private:
           (RootToken.is(tok::kw_for) || State.ParenLevel == 0))
         State.VariablePos = State.Column - Previous.FormatTok.TokenLength;
 
-      unsigned Spaces = State.NextToken->SpaceRequiredBefore ? 1 : 0;
-      if (State.NextToken->Type == TT_LineComment)
-        Spaces = Style.SpacesBeforeTrailingComments;
+      unsigned Spaces = State.NextToken->SpacesRequiredBefore;
 
       if (!DryRun)
         Whitespaces.replaceWhitespace(Current, 0, Spaces, State.Column, Style);
@@ -1099,7 +1097,7 @@ private:
     AnnotatedToken *Tok = &(I + 1)->First;
     if (Tok->Children.empty() && Tok->is(tok::r_brace) &&
         !Tok->MustBreakBefore && Tok->TotalLength <= Limit) {
-      Tok->SpaceRequiredBefore = false;
+      Tok->SpacesRequiredBefore = 0;
       join(Line, *(I + 1));
       I += 1;
     } else {

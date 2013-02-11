@@ -493,6 +493,9 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "  // B\n"
                "  \"aaaaa\",\n"
                "};");
+  verifyGoogleFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaa);  // 81 cols with this comment");
 }
 
 TEST_F(FormatTest, UnderstandsMultiLineComments) {

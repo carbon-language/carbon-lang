@@ -778,7 +778,7 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
   else if (Line.First.Type == TT_ObjCProperty)
     Line.Type = LT_ObjCProperty;
 
-  Line.First.SpaceRequiredBefore = true;
+  Line.First.SpacesRequiredBefore = 1;
   Line.First.MustBreakBefore = Line.First.FormatTok.MustBreakBefore;
   Line.First.CanBreakBefore = Line.First.MustBreakBefore;
 
@@ -790,7 +790,11 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     return;
   AnnotatedToken *Current = &Line.First.Children[0];
   while (Current != NULL) {
-    Current->SpaceRequiredBefore = spaceRequiredBefore(Line, *Current);
+    if (Current->Type == TT_LineComment)
+      Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
+    else
+      Current->SpacesRequiredBefore =
+          spaceRequiredBefore(Line, *Current) ? 1 : 0;
 
     if (Current->FormatTok.MustBreakBefore) {
       Current->MustBreakBefore = true;
@@ -814,7 +818,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     else
       Current->TotalLength =
           Current->Parent->TotalLength + Current->FormatTok.TokenLength +
-          (Current->SpaceRequiredBefore ? 1 : 0);
+          Current->SpacesRequiredBefore;
     // FIXME: Only calculate this if CanBreakBefore is true once static
     // initializers etc. are sorted out.
     // FIXME: Move magic numbers to a better place.

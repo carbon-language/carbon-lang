@@ -68,7 +68,7 @@ enum LineType {
 class AnnotatedToken {
 public:
   explicit AnnotatedToken(const FormatToken &FormatTok)
-      : FormatTok(FormatTok), Type(TT_Unknown), SpaceRequiredBefore(false),
+      : FormatTok(FormatTok), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(1), BindingStrength(0), SplitPenalty(0),
@@ -87,7 +87,7 @@ public:
 
   TokenType Type;
 
-  bool SpaceRequiredBefore;
+  unsigned SpacesRequiredBefore;
   bool CanBreakBefore;
   bool MustBreakBefore;
 
