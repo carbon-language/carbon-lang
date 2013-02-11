@@ -466,18 +466,18 @@ namespace {
 
     static inline void getInstructionTypes(Instruction *I,
                                            Type *&T1, Type *&T2) {
-      if (isa<StoreInst>(I)) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // For stores, it is the value type, not the pointer type that matters
         // because the value is what will come from a vector register.
   
-        Value *IVal = cast<StoreInst>(I)->getValueOperand();
+        Value *IVal = SI->getValueOperand();
         T1 = IVal->getType();
       } else {
         T1 = I->getType();
       }
   
-      if (I->isCast())
-        T2 = cast<CastInst>(I)->getSrcTy();
+      if (CastInst *CI = dyn_cast<CastInst>(I))
+        T2 = CI->getSrcTy();
       else
         T2 = T1;
 
