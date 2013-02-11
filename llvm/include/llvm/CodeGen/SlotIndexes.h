@@ -603,25 +603,30 @@ namespace llvm {
       MachineFunction::iterator nextMBB =
         llvm::next(MachineFunction::iterator(mbb));
 
-      IndexListEntry *nextEntry = 0;
-      if (nextMBB == mbb->getParent()->end())
-        nextEntry = &indexList.back();
-      else
-        nextEntry = getMBBStartIdx(nextMBB).listEntry();
-
-      IndexListEntry *startEntry = createEntry(0, 0);
-      IndexListEntry *stopEntry = createEntry(0, 0);
-
-      indexList.insertAfter(nextEntry, startEntry);
-      indexList.insertAfter(startEntry, stopEntry);
+      IndexListEntry *startEntry = 0;
+      IndexListEntry *endEntry = 0;
+      if (nextMBB == mbb->getParent()->end()) {
+        startEntry = &indexList.back();
+        endEntry = createEntry(0, 0);
+        indexList.insertAfter(startEntry, endEntry);
+      } else {
+        startEntry = createEntry(0, 0);
+        endEntry = getMBBStartIdx(nextMBB).listEntry();
+        indexList.insert(endEntry, startEntry);
+      }
 
       SlotIndex startIdx(startEntry, SlotIndex::Slot_Block);
-      SlotIndex endIdx(stopEntry, SlotIndex::Slot_Block);
+      SlotIndex endIdx(endEntry, SlotIndex::Slot_Block);
+
+      MachineFunction::iterator prevMBB(mbb);
+      assert(prevMBB != mbb->getParent()->end() &&
+             "Can't insert a new block at the beginning of a function.");
+      --prevMBB;
+      MBBRanges[prevMBB->getNumber()].second = startIdx;
 
       assert(unsigned(mbb->getNumber()) == MBBRanges.size() &&
              "Blocks must be added in order");
       MBBRanges.push_back(std::make_pair(startIdx, endIdx));
-
       idx2MBBMap.push_back(IdxMBBPair(startIdx, mbb));
 
       // FIXME: Renumber locally instead of renumbering the whole function every
