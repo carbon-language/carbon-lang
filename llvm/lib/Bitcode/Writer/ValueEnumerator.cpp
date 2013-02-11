@@ -431,10 +431,10 @@ void ValueEnumerator::EnumerateAttributes(const AttributeSet &PAL) {
   // Do lookups for all attribute groups.
   for (unsigned i = 0, e = PAL.getNumSlots(); i != e; ++i) {
     AttributeSet AS = PAL.getSlotAttributes(i);
-    unsigned &Entry = AttributeSetMap[AS];
+    unsigned &Entry = AttributeGroupMap[AS];
     if (Entry == 0) {
-      AttributeSets.push_back(AS);
-      Entry = AttributeSets.size();
+      AttributeGroups.push_back(AS);
+      Entry = AttributeGroups.size();
     }
   }
 }

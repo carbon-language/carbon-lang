@@ -52,9 +52,9 @@ private:
   SmallVector<const MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
 
-  typedef DenseMap<AttributeSet, unsigned> AttributeSetMapType;
-  AttributeSetMapType AttributeSetMap;
-  std::vector<AttributeSet> AttributeSets;
+  typedef DenseMap<AttributeSet, unsigned> AttributeGroupMapType;
+  AttributeGroupMapType AttributeGroupMap;
+  std::vector<AttributeSet> AttributeGroups;
 
   typedef DenseMap<void*, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
@@ -102,17 +102,17 @@ public:
   unsigned getInstructionID(const Instruction *I) const;
   void setInstructionID(const Instruction *I);
 
-  unsigned getAttributeID(const AttributeSet &PAL) const {
+  unsigned getAttributeID(AttributeSet PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
     AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());
     assert(I != AttributeMap.end() && "Attribute not in ValueEnumerator!");
     return I->second;
   }
 
-  unsigned getAttributeSetID(const AttributeSet &PAL) const {
+  unsigned getAttributeGroupID(AttributeSet PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
-    AttributeSetMapType::const_iterator I = AttributeSetMap.find(PAL);
-    assert(I != AttributeSetMap.end() && "Attribute not in ValueEnumerator!");
+    AttributeGroupMapType::const_iterator I = AttributeGroupMap.find(PAL);
+    assert(I != AttributeGroupMap.end() && "Attribute not in ValueEnumerator!");
     return I->second;
   }
 
@@ -135,8 +135,8 @@ public:
   const std::vector<AttributeSet> &getAttributes() const {
     return Attribute;
   }
-  const std::vector<AttributeSet> &getAttributeSets() const {
-    return AttributeSets;
+  const std::vector<AttributeSet> &getAttributeGroups() const {
+    return AttributeGroups;
   }
 
   /// getGlobalBasicBlockID - This returns the function-specific ID for the

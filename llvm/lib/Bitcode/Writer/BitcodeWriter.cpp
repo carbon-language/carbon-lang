@@ -161,44 +161,20 @@ static void WriteStringRecord(unsigned Code, StringRef Str,
   Stream.EmitRecord(Code, Vals, AbbrevToUse);
 }
 
-/// \brief This returns an integer containing an encoding of all the LLVM
-/// attributes found in the given attribute bitset.  Any change to this encoding
-/// is a breaking change to bitcode compatibility.
-/// N.B. This should be used only by the bitcode writer!
-static uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs,
-                                               unsigned Index) {
-  // FIXME: Remove in 4.0!
-
-  // FIXME: It doesn't make sense to store the alignment information as an
-  // expanded out value, we should store it as a log2 value.  However, we can't
-  // just change that here without breaking bitcode compatibility.  If this ever
-  // becomes a problem in practice, we should introduce new tag numbers in the
-  // bitcode file and have those tags use a more efficiently encoded alignment
-  // field.
-
-  // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
-  // log2 encoded value. Shift the bits above the alignment up by 11 bits.
-  uint64_t EncodedAttrs = Attrs.Raw(Index) & 0xffff;
-  if (Attrs.hasAttribute(Index, Attribute::Alignment))
-    EncodedAttrs |= Attrs.getParamAlignment(Index) << 16;
-  EncodedAttrs |= (Attrs.Raw(Index) & (0xfffffULL << 21)) << 11;
-  return EncodedAttrs;
-}
-
 static void WriteAttributeGroupTable(const ValueEnumerator &VE,
                                      BitstreamWriter &Stream) {
-  const std::vector<AttributeSet> &Attrs = VE.getAttributeSets();
-  if (Attrs.empty()) return;
+  const std::vector<AttributeSet> &AttrGrps = VE.getAttributeGroups();
+  if (AttrGrps.empty()) return;
 
   Stream.EnterSubblock(bitc::PARAMATTR_GROUP_BLOCK_ID, 3);
 
   SmallVector<uint64_t, 64> Record;
-  for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
-    AttributeSet AS = Attrs[i];
+  for (unsigned i = 0, e = AttrGrps.size(); i != e; ++i) {
+    AttributeSet AS = AttrGrps[i];
     for (unsigned i = 0, e = AS.getNumSlots(); i != e; ++i) {
       AttributeSet A = AS.getSlotAttributes(i);
 
-      Record.push_back(VE.getAttributeSetID(A));
+      Record.push_back(VE.getAttributeGroupID(A));
       Record.push_back(AS.getSlotIndex(i));
 
       for (AttributeSet::iterator I = AS.begin(0), E = AS.end(0);
@@ -231,6 +207,30 @@ static void WriteAttributeGroupTable(const ValueEnumerator &VE,
   }
 
   Stream.ExitBlock();
+}
+
+/// \brief This returns an integer containing an encoding of all the LLVM
+/// attributes found in the given attribute bitset.  Any change to this encoding
+/// is a breaking change to bitcode compatibility.
+/// N.B. This should be used only by the bitcode writer!
+static uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs,
+                                               unsigned Index) {
+  // FIXME: Remove in 4.0!
+
+  // FIXME: It doesn't make sense to store the alignment information as an
+  // expanded out value, we should store it as a log2 value.  However, we can't
+  // just change that here without breaking bitcode compatibility.  If this ever
+  // becomes a problem in practice, we should introduce new tag numbers in the
+  // bitcode file and have those tags use a more efficiently encoded alignment
+  // field.
+
+  // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
+  // log2 encoded value. Shift the bits above the alignment up by 11 bits.
+  uint64_t EncodedAttrs = Attrs.Raw(Index) & 0xffff;
+  if (Attrs.hasAttribute(Index, Attribute::Alignment))
+    EncodedAttrs |= Attrs.getParamAlignment(Index) << 16;
+  EncodedAttrs |= (Attrs.Raw(Index) & (0xfffffULL << 21)) << 11;
+  return EncodedAttrs;
 }
 
 static void WriteAttributeTable(const ValueEnumerator &VE,
