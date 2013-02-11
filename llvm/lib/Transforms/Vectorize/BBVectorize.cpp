@@ -288,7 +288,8 @@ namespace {
 
     bool pairsConflict(ValuePair P, ValuePair Q,
                  DenseSet<ValuePair> &PairableInstUsers,
-                 std::multimap<ValuePair, ValuePair> *PairableInstUserMap = 0);
+                 std::multimap<ValuePair, ValuePair> *PairableInstUserMap = 0,
+                 DenseSet<VPPair> *PairableInstUserPairSet = 0);
 
     bool pairWillFormCycle(ValuePair P,
                        std::multimap<ValuePair, ValuePair> &PairableInstUsers,
@@ -300,6 +301,7 @@ namespace {
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
                       DenseSet<ValuePair> &PairableInstUsers,
                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
+                      DenseSet<VPPair> &PairableInstUserPairSet,
                       DenseMap<Value *, Value *> &ChosenPairs,
                       DenseMap<ValuePair, size_t> &Tree,
                       DenseSet<ValuePair> &PrunedTree, ValuePair J,
@@ -323,6 +325,7 @@ namespace {
                       std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
                       DenseSet<ValuePair> &PairableInstUsers,
                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
+                      DenseSet<VPPair> &PairableInstUserPairSet,
                       DenseMap<Value *, Value *> &ChosenPairs,
                       DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
                       int &BestEffSize, VPIteratorPair ChoiceRange,
@@ -1401,7 +1404,8 @@ namespace {
   // two pairs cannot be simultaneously fused.
   bool BBVectorize::pairsConflict(ValuePair P, ValuePair Q,
                      DenseSet<ValuePair> &PairableInstUsers,
-                     std::multimap<ValuePair, ValuePair> *PairableInstUserMap) {
+                     std::multimap<ValuePair, ValuePair> *PairableInstUserMap,
+                     DenseSet<VPPair> *PairableInstUserPairSet) {
     // Two pairs are in conflict if they are mutual Users of eachother.
     bool QUsesP = PairableInstUsers.count(ValuePair(P.first,  Q.first))  ||
                   PairableInstUsers.count(ValuePair(P.first,  Q.second)) ||
@@ -1417,13 +1421,11 @@ namespace {
       // profiling and probably a different data structure (same is true of
       // most uses of std::multimap).
       if (PUsesQ) {
-        VPPIteratorPair QPairRange = PairableInstUserMap->equal_range(Q);
-        if (!isSecondInIteratorPair(P, QPairRange))
+        if (PairableInstUserPairSet->insert(VPPair(Q, P)).second)
           PairableInstUserMap->insert(VPPair(Q, P));
       }
       if (QUsesP) {
-        VPPIteratorPair PPairRange = PairableInstUserMap->equal_range(P);
-        if (!isSecondInIteratorPair(Q, PPairRange))
+        if (PairableInstUserPairSet->insert(VPPair(P, Q)).second)
           PairableInstUserMap->insert(VPPair(P, Q));
       }
     }
@@ -1534,6 +1536,7 @@ namespace {
                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
                       DenseSet<ValuePair> &PairableInstUsers,
                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
+                      DenseSet<VPPair> &PairableInstUserPairSet,
                       DenseMap<Value *, Value *> &ChosenPairs,
                       DenseMap<ValuePair, size_t> &Tree,
                       DenseSet<ValuePair> &PrunedTree, ValuePair J,
@@ -1586,7 +1589,8 @@ namespace {
               C2->first.second == C->first.first ||
               C2->first.second == C->first.second ||
               pairsConflict(C2->first, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : 0,
+                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
             if (C2->second >= C->second) {
               CanAdd = false;
               break;
@@ -1606,7 +1610,8 @@ namespace {
               T->second == C->first.first ||
               T->second == C->first.second ||
               pairsConflict(*T, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : 0,
+                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
             CanAdd = false;
             break;
           }
@@ -1623,7 +1628,8 @@ namespace {
               C2->first.second == C->first.first ||
               C2->first.second == C->first.second ||
               pairsConflict(C2->first, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : 0,
+                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
             CanAdd = false;
             break;
           }
@@ -1638,7 +1644,8 @@ namespace {
               ChosenPairs.begin(), E2 = ChosenPairs.end();
              C2 != E2; ++C2) {
           if (pairsConflict(*C2, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : 0,
+                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
             CanAdd = false;
             break;
           }
@@ -1699,6 +1706,7 @@ namespace {
                       std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
                       DenseSet<ValuePair> &PairableInstUsers,
                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
+                      DenseSet<VPPair> &PairableInstUserPairSet,
                       DenseMap<Value *, Value *> &ChosenPairs,
                       DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
                       int &BestEffSize, VPIteratorPair ChoiceRange,
@@ -1714,7 +1722,8 @@ namespace {
       for (DenseMap<Value *, Value *>::iterator C = ChosenPairs.begin(),
            E = ChosenPairs.end(); C != E; ++C) {
         if (pairsConflict(*C, *J, PairableInstUsers,
-                          UseCycleCheck ? &PairableInstUserMap : 0)) {
+                          UseCycleCheck ? &PairableInstUserMap : 0,
+                          UseCycleCheck ? &PairableInstUserPairSet : 0)) {
           DoesConflict = true;
           break;
         }
@@ -1748,8 +1757,8 @@ namespace {
 
       DenseSet<ValuePair> PrunedTree;
       pruneTreeFor(CandidatePairs, PairableInsts, ConnectedPairs,
-                   PairableInstUsers, PairableInstUserMap, ChosenPairs, Tree,
-                   PrunedTree, *J, UseCycleCheck);
+                   PairableInstUsers, PairableInstUserMap, PairableInstUserPairSet,
+                   ChosenPairs, Tree, PrunedTree, *J, UseCycleCheck);
 
       int EffSize = 0;
       if (TTI) {
@@ -2075,6 +2084,7 @@ namespace {
     bool UseCycleCheck =
      CandidatePairs.size() <= Config.MaxCandPairsForCycleCheck;
     std::multimap<ValuePair, ValuePair> PairableInstUserMap;
+    DenseSet<VPPair> PairableInstUserPairSet;
     for (std::vector<Value *>::iterator I = PairableInsts.begin(),
          E = PairableInsts.end(); I != E; ++I) {
       // The number of possible pairings for this variable:
@@ -2090,7 +2100,8 @@ namespace {
       findBestTreeFor(CandidatePairs, CandidatePairCostSavings,
                       PairableInsts, FixedOrderPairs, PairConnectionTypes,
                       ConnectedPairs, ConnectedPairDeps,
-                      PairableInstUsers, PairableInstUserMap, ChosenPairs,
+                      PairableInstUsers, PairableInstUserMap,
+                      PairableInstUserPairSet, ChosenPairs,
                       BestTree, BestMaxDepth, BestEffSize, ChoiceRange,
                       UseCycleCheck);
 
