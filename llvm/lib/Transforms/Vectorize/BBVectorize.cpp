@@ -1390,8 +1390,10 @@ namespace {
         (void) trackUsesOfI(Users, WriteSet, I, J);
 
       for (DenseSet<Value *>::iterator U = Users.begin(), E = Users.end();
-           U != E; ++U)
+           U != E; ++U) {
+        if (IsInPair.find(*U) == IsInPair.end()) continue;
         PairableInstUsers.insert(ValuePair(I, *U));
+      }
     }
   }
 
