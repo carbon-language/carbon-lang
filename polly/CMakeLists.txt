@@ -79,9 +79,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 # Add path for custom modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${POLLY_SOURCE_DIR}/cmake")
 
-FIND_PACKAGE(Cloog REQUIRED)
 FIND_PACKAGE(Isl REQUIRED)
 FIND_PACKAGE(Gmp REQUIRED)
+FIND_PACKAGE(Cloog)
 FIND_PACKAGE(Pluto)
 
 option(POLLY_ENABLE_GPGPU_CODEGEN "Enable GPGPU code generation feature" OFF)
