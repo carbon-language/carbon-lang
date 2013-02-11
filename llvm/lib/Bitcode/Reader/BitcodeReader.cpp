@@ -444,7 +444,7 @@ static void decodeLLVMAttributesForBitcode(AttrBuilder &B,
 
   if (Alignment)
     B.addAlignmentAttr(Alignment);
-  B.addRawValue(((EncodedAttrs & (0xffffULL << 32)) >> 11) |
+  B.addRawValue(((EncodedAttrs & (0xfffffULL << 32)) >> 11) |
                 (EncodedAttrs & 0xffff));
 }
 

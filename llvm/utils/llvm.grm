@@ -175,6 +175,8 @@ FuncAttr      ::= noreturn
  | returns_twice
  | nonlazybind
  | address_safety
+ | thread_safety
+ | uninitialized_checks
  ;
 
 OptFuncAttrs  ::= + _ | OptFuncAttrs FuncAttr ;

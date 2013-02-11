@@ -162,3 +162,13 @@ define void @f27() address_safety
 {
         ret void;
 }
+define void @f28() thread_safety
+; CHECK: define void @f28() thread_safety
+{
+        ret void;
+}
+define void @f29() uninitialized_checks
+; CHECK: define void @f29() uninitialized_checks
+{
+        ret void;
+}

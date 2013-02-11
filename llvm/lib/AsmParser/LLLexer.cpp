@@ -578,6 +578,8 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(ssp);
   KEYWORD(sspreq);
   KEYWORD(sspstrong);
+  KEYWORD(thread_safety);
+  KEYWORD(uninitialized_checks);
   KEYWORD(uwtable);
   KEYWORD(zeroext);
 

@@ -922,6 +922,8 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_ssp:             B.addAttribute(Attribute::StackProtect); break;
     case lltok::kw_sspreq:          B.addAttribute(Attribute::StackProtectReq); break;
     case lltok::kw_sspstrong:       B.addAttribute(Attribute::StackProtectStrong); break;
+    case lltok::kw_thread_safety:   B.addAttribute(Attribute::ThreadSafety); break;
+    case lltok::kw_uninitialized_checks: B.addAttribute(Attribute::UninitializedChecks); break;
     case lltok::kw_uwtable:         B.addAttribute(Attribute::UWTable); break;
 
     // Error handling.
@@ -1161,7 +1163,8 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_noredzone:      case lltok::kw_noimplicitfloat:
     case lltok::kw_naked:          case lltok::kw_nonlazybind:
     case lltok::kw_address_safety: case lltok::kw_minsize:
-    case lltok::kw_alignstack:
+    case lltok::kw_alignstack:     case lltok::kw_thread_safety:
+    case lltok::kw_uninitialized_checks:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }
@@ -1203,6 +1206,7 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_nonlazybind:    case lltok::kw_address_safety:
     case lltok::kw_minsize:        case lltok::kw_alignstack:
     case lltok::kw_align:          case lltok::kw_noduplicate:
+    case lltok::kw_thread_safety:  case lltok::kw_uninitialized_checks:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }

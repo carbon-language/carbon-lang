@@ -119,6 +119,8 @@ namespace lltok {
     kw_sspreq,
     kw_sspstrong,
     kw_sret,
+    kw_thread_safety,
+    kw_uninitialized_checks,
     kw_uwtable,
     kw_zeroext,
 

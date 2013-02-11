@@ -95,6 +95,8 @@ public:
     StackProtectReq,       ///< Stack protection required.
     StackProtectStrong,    ///< Strong Stack protection.
     StructRet,             ///< Hidden pointer to structure to return
+    ThreadSafety,          ///< Thread safety checking is on.
+    UninitializedChecks,   ///< Checking for uses of uninitialized memory is on.
     UWTable,               ///< Function must be in a unwind table
     ZExt,                  ///< Zero extended before/after call
 
@@ -507,6 +509,8 @@ public:
       .removeAttribute(Attribute::NonLazyBind)
       .removeAttribute(Attribute::ReturnsTwice)
       .removeAttribute(Attribute::AddressSafety)
+      .removeAttribute(Attribute::ThreadSafety)
+      .removeAttribute(Attribute::UninitializedChecks)
       .removeAttribute(Attribute::MinSize)
       .removeAttribute(Attribute::NoDuplicate);
   }

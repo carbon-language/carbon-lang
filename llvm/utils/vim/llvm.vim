@@ -55,6 +55,7 @@ syn keyword llvmKeyword singlethread spir_func spir_kernel sret ssp sspreq
 syn keyword llvmKeyword sspstrong tail target thread_local to triple
 syn keyword llvmKeyword unnamed_addr unordered uwtable volatile weak weak_odr
 syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc zeroext
+syn keyword llvmKeyword thread_safety uninitialized_checks
 
 " Obsolete keywords.
 syn keyword llvmError  getresult begin end

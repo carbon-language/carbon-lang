@@ -651,6 +651,8 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, uint64_t Idx, Type *Ty,
           !Attrs.hasAttribute(Idx, Attribute::NonLazyBind) &&
           !Attrs.hasAttribute(Idx, Attribute::ReturnsTwice) &&
           !Attrs.hasAttribute(Idx, Attribute::AddressSafety) &&
+          !Attrs.hasAttribute(Idx, Attribute::ThreadSafety) &&
+          !Attrs.hasAttribute(Idx, Attribute::UninitializedChecks) &&
           !Attrs.hasAttribute(Idx, Attribute::MinSize),
           "Some attributes in '" + Attrs.getAsString(Idx) +
           "' only apply to functions!", V);

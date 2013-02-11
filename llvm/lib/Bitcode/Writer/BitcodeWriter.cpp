@@ -181,7 +181,7 @@ static uint64_t encodeLLVMAttributesForBitcode(AttributeSet Attrs,
   uint64_t EncodedAttrs = Attrs.Raw(Index) & 0xffff;
   if (Attrs.hasAttribute(Index, Attribute::Alignment))
     EncodedAttrs |= Attrs.getParamAlignment(Index) << 16;
-  EncodedAttrs |= (Attrs.Raw(Index) & (0xffffULL << 21)) << 11;
+  EncodedAttrs |= (Attrs.Raw(Index) & (0xfffffULL << 21)) << 11;
   return EncodedAttrs;
 }
 

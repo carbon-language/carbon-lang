@@ -205,6 +205,10 @@ std::string Attribute::getAsString() const {
     return "sspstrong";
   if (hasAttribute(Attribute::StructRet))
     return "sret";
+  if (hasAttribute(Attribute::ThreadSafety))
+    return "thread_safety";
+  if (hasAttribute(Attribute::UninitializedChecks))
+    return "uninitialized_checks";
   if (hasAttribute(Attribute::UWTable))
     return "uwtable";
   if (hasAttribute(Attribute::ZExt))
@@ -382,6 +386,8 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::MinSize:         return 1ULL << 33;
   case Attribute::NoDuplicate:     return 1ULL << 34;
   case Attribute::StackProtectStrong: return 1ULL << 35;
+  case Attribute::ThreadSafety:    return 1ULL << 36;
+  case Attribute::UninitializedChecks: return 1ULL << 37;
   }
   llvm_unreachable("Unsupported attribute type");
 }

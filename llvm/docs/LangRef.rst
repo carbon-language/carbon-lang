@@ -909,6 +909,12 @@ example:
     If a function that has an ``sspstrong`` attribute is inlined into a
     function that doesn't have an ``sspstrong`` attribute, then the
     resulting function will have an ``sspstrong`` attribute.
+``thread_safety``
+    This attribute indicates that the thread safety analysis is enabled
+    for this function.
+``uninitialized_checks``
+    This attribute indicates that the checks for uses of uninitialized
+    memory are enabled.
 ``uwtable``
     This attribute indicates that the ABI being targeted requires that
     an unwind table entry be produce for this function even if we can
