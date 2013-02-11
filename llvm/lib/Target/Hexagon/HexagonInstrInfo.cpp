@@ -305,6 +305,88 @@ unsigned HexagonInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 }
 
 
+/// \brief For a comparison instruction, return the source registers in
+/// \p SrcReg and \p SrcReg2 if having two register operands, and the value it
+/// compares against in CmpValue. Return true if the comparison instruction
+/// can be analyzed.
+bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
+                                      unsigned &SrcReg, unsigned &SrcReg2,
+                                      int &Mask, int &Value) const {
+  unsigned Opc = MI->getOpcode();
+
+  // Set mask and the first source register.
+  switch (Opc) {
+    case Hexagon::CMPEHexagon4rr:
+    case Hexagon::CMPEQri:
+    case Hexagon::CMPEQrr:
+    case Hexagon::CMPGT64rr:
+    case Hexagon::CMPGTU64rr:
+    case Hexagon::CMPGTUri:
+    case Hexagon::CMPGTUrr:
+    case Hexagon::CMPGTri:
+    case Hexagon::CMPGTrr:
+    case Hexagon::CMPLTUrr:
+    case Hexagon::CMPLTrr:
+      SrcReg = MI->getOperand(1).getReg();
+      Mask = ~0;
+      break;
+    case Hexagon::CMPbEQri_V4:
+    case Hexagon::CMPbEQrr_sbsb_V4:
+    case Hexagon::CMPbEQrr_ubub_V4:
+    case Hexagon::CMPbGTUri_V4:
+    case Hexagon::CMPbGTUrr_V4:
+    case Hexagon::CMPbGTrr_V4:
+      SrcReg = MI->getOperand(1).getReg();
+      Mask = 0xFF;
+      break;
+    case Hexagon::CMPhEQri_V4:
+    case Hexagon::CMPhEQrr_shl_V4:
+    case Hexagon::CMPhEQrr_xor_V4:
+    case Hexagon::CMPhGTUri_V4:
+    case Hexagon::CMPhGTUrr_V4:
+    case Hexagon::CMPhGTrr_shl_V4:
+      SrcReg = MI->getOperand(1).getReg();
+      Mask = 0xFFFF;
+      break;
+  }
+
+  // Set the value/second source register.
+  switch (Opc) {
+    case Hexagon::CMPEHexagon4rr:
+    case Hexagon::CMPEQrr:
+    case Hexagon::CMPGT64rr:
+    case Hexagon::CMPGTU64rr:
+    case Hexagon::CMPGTUrr:
+    case Hexagon::CMPGTrr:
+    case Hexagon::CMPbEQrr_sbsb_V4:
+    case Hexagon::CMPbEQrr_ubub_V4:
+    case Hexagon::CMPbGTUrr_V4:
+    case Hexagon::CMPbGTrr_V4:
+    case Hexagon::CMPhEQrr_shl_V4:
+    case Hexagon::CMPhEQrr_xor_V4:
+    case Hexagon::CMPhGTUrr_V4:
+    case Hexagon::CMPhGTrr_shl_V4:
+    case Hexagon::CMPLTUrr:
+    case Hexagon::CMPLTrr:
+      SrcReg2 = MI->getOperand(2).getReg();
+      return true;
+
+    case Hexagon::CMPEQri:
+    case Hexagon::CMPGTUri:
+    case Hexagon::CMPGTri:
+    case Hexagon::CMPbEQri_V4:
+    case Hexagon::CMPbGTUri_V4:
+    case Hexagon::CMPhEQri_V4:
+    case Hexagon::CMPhGTUri_V4:
+      SrcReg2 = 0;
+      Value = MI->getOperand(2).getImm();
+      return true;
+  }
+
+  return false;
+}
+
+
 void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I, DebugLoc DL,
                                  unsigned DestReg, unsigned SrcReg,

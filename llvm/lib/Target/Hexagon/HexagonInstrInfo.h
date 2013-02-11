@@ -66,6 +66,10 @@ public:
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const;
 
+  virtual bool analyzeCompare(const MachineInstr *MI,
+                              unsigned &SrcReg, unsigned &SrcReg2,
+                              int &Mask, int &Value) const;
+
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator I, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
