@@ -165,8 +165,8 @@ AArch64RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
   if (!TFI->hasReservedCallFrame(MF)) {
     unsigned Align = TFI->getStackAlignment();
 
-    uint64_t Amount = MI->getOperand(0).getImm();
-    Amount = (Amount + Align - 1)/Align * Align;
+    int64_t Amount = MI->getOperand(0).getImm();
+    Amount = RoundUpToAlignment(Amount, Align);
     if (!IsDestroy) Amount = -Amount;
 
     // N.b. if CalleePopAmount is valid but zero (i.e. callee would pop, but it
@@ -177,7 +177,7 @@ AArch64RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
       // because there's no guaranteed temporary register available. Mostly call
       // frames will be allocated at the start of a function so this is OK, but
       // it is a limitation that needs dealing with.
-      assert(abs(Amount) < 0xfff && "call frame too large");
+      assert(Amount > -0xfff && Amount < 0xfff && "call frame too large");
       emitSPUpdate(MBB, MI, dl, TII, AArch64::NoRegister, Amount);
     }
   } else if (CalleePopAmount != 0) {
