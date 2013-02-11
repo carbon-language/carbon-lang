@@ -921,10 +921,7 @@ DeclContext::BuildDeclChain(ArrayRef<Decl*> Decls,
 /// built a lookup map. For every name in the map, pull in the new names from
 /// the external storage.
 void DeclContext::reconcileExternalVisibleStorage() {
-  assert(NeedToReconcileExternalVisibleStorage);
-  if (!LookupPtr.getPointer())
-    return;
-
+  assert(NeedToReconcileExternalVisibleStorage && LookupPtr.getPointer());
   NeedToReconcileExternalVisibleStorage = false;
 
   StoredDeclsMap &Map = *LookupPtr.getPointer();
@@ -1148,6 +1145,7 @@ static bool shouldBeHidden(NamedDecl *D) {
 StoredDeclsMap *DeclContext::buildLookup() {
   assert(this == getPrimaryContext() && "buildLookup called on non-primary DC");
 
+  // FIXME: Should we keep going if hasExternalVisibleStorage?
   if (!LookupPtr.getInt())
     return LookupPtr.getPointer();
 
@@ -1158,6 +1156,7 @@ StoredDeclsMap *DeclContext::buildLookup() {
 
   // We no longer have any lazy decls.
   LookupPtr.setInt(false);
+  NeedToReconcileExternalVisibleStorage = false;
   return LookupPtr.getPointer();
 }
 
@@ -1166,10 +1165,6 @@ StoredDeclsMap *DeclContext::buildLookup() {
 /// DeclContext, a DeclContext linked to it, or a transparent context
 /// nested within it.
 void DeclContext::buildLookupImpl(DeclContext *DCtx) {
-  // FIXME: If buildLookup is supposed to return a complete map, we should not
-  // bail out in buildLookup if hasExternalVisibleStorage. If it is not required
-  // to include names from PCH and modules, we should use the noload_ iterators
-  // here.
   for (decl_iterator I = DCtx->decls_begin(), E = DCtx->decls_end();
        I != E; ++I) {
     Decl *D = *I;
@@ -1200,12 +1195,11 @@ DeclContext::lookup(DeclarationName Name) {
     return PrimaryContext->lookup(Name);
 
   if (hasExternalVisibleStorage()) {
-    if (NeedToReconcileExternalVisibleStorage)
-      reconcileExternalVisibleStorage();
-
     StoredDeclsMap *Map = LookupPtr.getPointer();
     if (LookupPtr.getInt())
       Map = buildLookup();
+    else if (NeedToReconcileExternalVisibleStorage)
+      reconcileExternalVisibleStorage();
 
     if (!Map)
       Map = CreateStoredDeclsMap(getParentASTContext());

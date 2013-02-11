@@ -1508,7 +1508,7 @@ public:
   /// declarations visible in this context.
   void setHasExternalVisibleStorage(bool ES = true) {
     ExternalVisibleStorage = ES;
-    if (ES)
+    if (ES && LookupPtr.getPointer())
       NeedToReconcileExternalVisibleStorage = true;
   }
 
