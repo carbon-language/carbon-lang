@@ -14,10 +14,6 @@
 //===----------------------------------------------------------------------===//
 #include <stdarg.h>
 
-#ifdef _WIN32
-#define va_copy(dst, src) ((dst) = (src))
-#endif // _WIN32
-
 struct ScanfDirective {
   int argIdx;      // argument index, or -1 of not specified ("%n$")
   int fieldWidth;
@@ -274,10 +270,7 @@ static int scanf_get_store_size(ScanfDirective *dir) {
 
 // Common part of *scanf interceptors.
 // Process format string and va_list, and report all store ranges.
-static void scanf_common(void *ctx, const char *format, va_list ap_const) {
-  va_list aq;
-  va_copy(aq, ap_const);
-
+static void scanf_common(void *ctx, const char *format, va_list aq) {
   const char *p = format;
 
   while (p) {

@@ -24,6 +24,10 @@
 
 #include <stdarg.h>
 
+#ifdef _WIN32
+#define va_copy(dst, src) ((dst) = (src))
+#endif // _WIN32
+
 #if SANITIZER_INTERCEPT_READ
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   void* ctx;
