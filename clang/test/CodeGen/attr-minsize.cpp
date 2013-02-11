@@ -65,11 +65,11 @@ void test5<int>(int arg);
 // Oz: define{{.*}}void @{{.*}}test5
 // Oz: minsize
 // OTHER: define{{.*}}void @{{.*}}test5
-// OTHER-NOT: minsize
+// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}minsize
 
 template
 void test5<float>(float arg);
 // Oz: define{{.*}}void @{{.*}}test5
 // Oz: minsize
 // OTHER: define{{.*}}void @{{.*}}test5
-// OTHER-NOT: minsize
+// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}minsize
