@@ -277,7 +277,7 @@ namespace {
     bool trackUsesOfI(DenseSet<Value *> &Users,
                       AliasSetTracker &WriteSet, Instruction *I,
                       Instruction *J, bool UpdateUsers = true,
-                      std::multimap<Value *, Value *> *LoadMoveSet = 0);
+                      DenseSet<ValuePair> *LoadMoveSetPairs = 0);
 
     void computePairsConnectedTo(
                       std::multimap<Value *, Value *> &CandidatePairs,
@@ -362,19 +362,21 @@ namespace {
     void collectPairLoadMoveSet(BasicBlock &BB,
                      DenseMap<Value *, Value *> &ChosenPairs,
                      std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *I);
 
     void collectLoadMoveSet(BasicBlock &BB,
                      std::vector<Value *> &PairableInsts,
                      DenseMap<Value *, Value *> &ChosenPairs,
-                     std::multimap<Value *, Value *> &LoadMoveSet);
+                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs);
 
     bool canMoveUsesOfIAfterJ(BasicBlock &BB,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *I, Instruction *J);
 
     void moveUsesOfIAfterJ(BasicBlock &BB,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *&InsertionPt,
                      Instruction *I, Instruction *J);
 
@@ -1114,7 +1116,7 @@ namespace {
   bool BBVectorize::trackUsesOfI(DenseSet<Value *> &Users,
                        AliasSetTracker &WriteSet, Instruction *I,
                        Instruction *J, bool UpdateUsers,
-                       std::multimap<Value *, Value *> *LoadMoveSet) {
+                       DenseSet<ValuePair> *LoadMoveSetPairs) {
     bool UsesI = false;
 
     // This instruction may already be marked as a user due, for example, to
@@ -1132,9 +1134,8 @@ namespace {
         }
       }
     if (!UsesI && J->mayReadFromMemory()) {
-      if (LoadMoveSet) {
-        VPIteratorPair JPairRange = LoadMoveSet->equal_range(J);
-        UsesI = isSecondInIteratorPair<Value*>(I, JPairRange);
+      if (LoadMoveSetPairs) {
+        UsesI = LoadMoveSetPairs->count(ValuePair(J, I));
       } else {
         for (AliasSetTracker::iterator W = WriteSet.begin(),
              WE = WriteSet.end(); W != WE; ++W) {
@@ -2737,7 +2738,7 @@ namespace {
 
   // Move all uses of the function I (including pairing-induced uses) after J.
   bool BBVectorize::canMoveUsesOfIAfterJ(BasicBlock &BB,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *I, Instruction *J) {
     // Skip to the first instruction past I.
     BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
@@ -2745,18 +2746,18 @@ namespace {
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
     for (; cast<Instruction>(L) != J; ++L)
-      (void) trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSet);
+      (void) trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSetPairs);
 
     assert(cast<Instruction>(L) == J &&
       "Tracking has not proceeded far enough to check for dependencies");
     // If J is now in the use set of I, then trackUsesOfI will return true
     // and we have a dependency cycle (and the fusing operation must abort).
-    return !trackUsesOfI(Users, WriteSet, I, J, true, &LoadMoveSet);
+    return !trackUsesOfI(Users, WriteSet, I, J, true, &LoadMoveSetPairs);
   }
 
   // Move all uses of the function I (including pairing-induced uses) after J.
   void BBVectorize::moveUsesOfIAfterJ(BasicBlock &BB,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *&InsertionPt,
                      Instruction *I, Instruction *J) {
     // Skip to the first instruction past I.
@@ -2765,7 +2766,7 @@ namespace {
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
     for (; cast<Instruction>(L) != J;) {
-      if (trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSet)) {
+      if (trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSetPairs)) {
         // Move this instruction
         Instruction *InstToMove = L; ++L;
 
@@ -2786,6 +2787,7 @@ namespace {
   void BBVectorize::collectPairLoadMoveSet(BasicBlock &BB,
                      DenseMap<Value *, Value *> &ChosenPairs,
                      std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *I) {
     // Skip to the first instruction past I.
     BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
@@ -2798,8 +2800,10 @@ namespace {
     // could be before I if this is an inverted input.
     for (BasicBlock::iterator E = BB.end(); cast<Instruction>(L) != E; ++L) {
       if (trackUsesOfI(Users, WriteSet, I, L)) {
-        if (L->mayReadFromMemory())
+        if (L->mayReadFromMemory()) {
           LoadMoveSet.insert(ValuePair(L, I));
+          LoadMoveSetPairs.insert(ValuePair(L, I));
+        }
       }
     }
   }
@@ -2814,14 +2818,16 @@ namespace {
   void BBVectorize::collectLoadMoveSet(BasicBlock &BB,
                      std::vector<Value *> &PairableInsts,
                      DenseMap<Value *, Value *> &ChosenPairs,
-                     std::multimap<Value *, Value *> &LoadMoveSet) {
+                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseSet<ValuePair> &LoadMoveSetPairs) {
     for (std::vector<Value *>::iterator PI = PairableInsts.begin(),
          PIE = PairableInsts.end(); PI != PIE; ++PI) {
       DenseMap<Value *, Value *>::iterator P = ChosenPairs.find(*PI);
       if (P == ChosenPairs.end()) continue;
 
       Instruction *I = cast<Instruction>(P->first);
-      collectPairLoadMoveSet(BB, ChosenPairs, LoadMoveSet, I);
+      collectPairLoadMoveSet(BB, ChosenPairs, LoadMoveSet,
+                             LoadMoveSetPairs, I);
     }
   }
 
@@ -2877,7 +2883,9 @@ namespace {
       ChosenPairs.insert(*P);
 
     std::multimap<Value *, Value *> LoadMoveSet;
-    collectLoadMoveSet(BB, PairableInsts, ChosenPairs, LoadMoveSet);
+    DenseSet<ValuePair> LoadMoveSetPairs;
+    collectLoadMoveSet(BB, PairableInsts, ChosenPairs,
+                       LoadMoveSet, LoadMoveSetPairs);
 
     DEBUG(dbgs() << "BBV: initial: \n" << BB << "\n");
 
@@ -2909,7 +2917,7 @@ namespace {
       ChosenPairs.erase(FP);
       ChosenPairs.erase(P);
 
-      if (!canMoveUsesOfIAfterJ(BB, LoadMoveSet, I, J)) {
+      if (!canMoveUsesOfIAfterJ(BB, LoadMoveSetPairs, I, J)) {
         DEBUG(dbgs() << "BBV: fusion of: " << *I <<
                " <-> " << *J <<
                " aborted because of non-trivial dependency cycle\n");
@@ -3010,7 +3018,7 @@ namespace {
       // first instruction is disjoint from the input tree of the second
       // (by definition), and so commutes with it.
 
-      moveUsesOfIAfterJ(BB, LoadMoveSet, InsertionPt, I, J);
+      moveUsesOfIAfterJ(BB, LoadMoveSetPairs, InsertionPt, I, J);
 
       if (!isa<StoreInst>(I)) {
         L->replaceAllUsesWith(K1);
@@ -3036,8 +3044,10 @@ namespace {
              N != JPairRange.second; ++N)
           NewSetMembers.push_back(ValuePair(K, N->second));
         for (std::vector<ValuePair>::iterator A = NewSetMembers.begin(),
-             AE = NewSetMembers.end(); A != AE; ++A)
+             AE = NewSetMembers.end(); A != AE; ++A) {
           LoadMoveSet.insert(*A);
+          LoadMoveSetPairs.insert(*A);
+        }
       }
 
       // Before removing I, set the iterator to the next instruction.
