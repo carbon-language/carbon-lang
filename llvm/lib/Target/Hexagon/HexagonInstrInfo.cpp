@@ -2461,6 +2461,9 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::LDriw_pred:
     return true;
 
+  case Hexagon::LOOP0_i:
+    return isUInt<10>(Offset);
+
   // INLINEASM is very special.
   case Hexagon::INLINEASM:
     return true;
