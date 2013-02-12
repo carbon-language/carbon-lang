@@ -71,7 +71,8 @@ static void DescribeOrigin(u32 origin) {
 static void ReportSummary(const char *error_type, StackTrace *stack) {
   if (!stack->size || !IsSymbolizerAvailable()) return;
   AddressInfo ai;
-  SymbolizeCode(stack->trace[0], &ai, 1);
+  uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
+  SymbolizeCode(pc, &ai, 1);
   ReportErrorSummary(error_type,
                      StripPathPrefix(ai.file, flags()->strip_path_prefix),
                      ai.line, ai.function);
