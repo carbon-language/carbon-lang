@@ -123,7 +123,6 @@ bool NVPTXPassConfig::addInstSelector() {
   addPass(createSplitBBatBarPass());
   addPass(createAllocaHoisting());
   addPass(createNVPTXISelDag(getNVPTXTargetMachine(), getOptLevel()));
-  addPass(createVectorElementizePass(getNVPTXTargetMachine()));
   return false;
 }
 

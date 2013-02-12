@@ -58,7 +58,16 @@ enum NodeType {
   RETURN,
   CallSeqBegin,
   CallSeqEnd,
-  Dummy
+  Dummy,
+
+  LoadV2 = ISD::FIRST_TARGET_MEMORY_OPCODE,
+  LoadV4,
+  LDGV2, // LDG.v2
+  LDGV4, // LDG.v4
+  LDUV2, // LDU.v2
+  LDUV4, // LDU.v4
+  StoreV2,
+  StoreV4
 };
 }
 
@@ -143,8 +152,16 @@ private:
 
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
 
-  SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerLOADi1(SDValue Op, SelectionDAG &DAG) const;
+
+  SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSTOREi1(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const;
+
+  virtual void ReplaceNodeResults(SDNode *N,
+                                  SmallVectorImpl<SDValue> &Results,
+                                  SelectionDAG &DAG) const;
 };
 } // namespace llvm
 

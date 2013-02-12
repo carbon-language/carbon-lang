@@ -57,6 +57,7 @@ public:
   bool hasF32FTZ() const { return SmVersion >= 20; }
   bool hasFMAF32() const { return SmVersion >= 20; }
   bool hasFMAF64() const { return SmVersion >= 13; }
+  bool hasLDG() const { return SmVersion >= 32; }
   bool hasLDU() const { return SmVersion >= 20; }
   bool hasGenericLdSt() const { return SmVersion >= 20; }
   inline bool hasHWROT32() const { return false; }

@@ -37,9 +37,6 @@ foreach i = 0-395 in {
   def RL#i : NVPTXReg<"%rl"#i>; // 64-bit
   def F#i  : NVPTXReg<"%f"#i>;  // 32-bit float
   def FL#i : NVPTXReg<"%fl"#i>; // 64-bit float
-  // Vectors
-  foreach s = [ "2b8", "2b16", "2b32", "2b64", "4b8", "4b16", "4b32" ] in
-    def v#s#_#i : NVPTXReg<"%v"#s#"_"#i>;
 
   // Arguments
   def ia#i : NVPTXReg<"%ia"#i>;
@@ -65,44 +62,3 @@ def Float64ArgRegs : NVPTXRegClass<[f64], 64, (add (sequence "da%u", 0, 395))>;
 
 // Read NVPTXRegisterInfo.cpp to see how VRFrame and VRDepot are used.
 def SpecialRegs : NVPTXRegClass<[i32], 32, (add VRFrame, VRDepot)>;
-
-class NVPTXVecRegClass<list<ValueType> regTypes, int alignment, dag regList,
-                       NVPTXRegClass sClass,
-                       int e,
-                       string n>
-  : NVPTXRegClass<regTypes, alignment, regList>
-{
-  NVPTXRegClass scalarClass=sClass;
-  int elems=e;
-  string name=n;
-}
-def V2F32Regs
-  : NVPTXVecRegClass<[v2f32], 64, (add (sequence "v2b32_%u", 0, 395)),
-    Float32Regs, 2, ".v2.f32">;
-def V4F32Regs
-  : NVPTXVecRegClass<[v4f32], 128, (add (sequence "v4b32_%u", 0, 395)),
-    Float32Regs, 4, ".v4.f32">;
-def V2I32Regs
-  : NVPTXVecRegClass<[v2i32], 64, (add (sequence "v2b32_%u", 0, 395)),
-    Int32Regs, 2, ".v2.u32">;
-def V4I32Regs
-  : NVPTXVecRegClass<[v4i32], 128, (add (sequence "v4b32_%u", 0, 395)),
-    Int32Regs, 4, ".v4.u32">;
-def V2F64Regs
-  : NVPTXVecRegClass<[v2f64], 128, (add (sequence "v2b64_%u", 0, 395)),
-    Float64Regs, 2, ".v2.f64">;
-def V2I64Regs
-  : NVPTXVecRegClass<[v2i64], 128, (add (sequence "v2b64_%u", 0, 395)),
-    Int64Regs, 2, ".v2.u64">;
-def V2I16Regs
-  : NVPTXVecRegClass<[v2i16], 32, (add (sequence "v2b16_%u", 0, 395)),
-    Int16Regs, 2, ".v2.u16">;
-def V4I16Regs
-  : NVPTXVecRegClass<[v4i16], 64, (add (sequence "v4b16_%u", 0, 395)),
-    Int16Regs, 4, ".v4.u16">;
-def V2I8Regs
-  : NVPTXVecRegClass<[v2i8], 16, (add (sequence "v2b8_%u", 0, 395)),
-    Int8Regs, 2, ".v2.u8">;
-def V4I8Regs
-  : NVPTXVecRegClass<[v4i8], 32, (add (sequence "v4b8_%u", 0, 395)),
-    Int8Regs, 4, ".v4.u8">;

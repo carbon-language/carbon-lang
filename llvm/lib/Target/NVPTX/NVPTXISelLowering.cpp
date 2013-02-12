@@ -45,14 +45,26 @@ using namespace llvm;
 static unsigned int uniqueCallSite = 0;
 
 static cl::opt<bool>
-RetainVectorOperands("nvptx-codegen-vectors",
-     cl::desc("NVPTX Specific: Retain LLVM's vectors and generate PTX vectors"),
-                     cl::init(true));
-
-static cl::opt<bool>
 sched4reg("nvptx-sched4reg",
           cl::desc("NVPTX Specific: schedule for register pressue"),
           cl::init(false));
+
+static bool IsPTXVectorType(MVT VT) {
+  switch (VT.SimpleTy) {
+  default: return false;
+  case MVT::v2i8:
+  case MVT::v4i8:
+  case MVT::v2i16:
+  case MVT::v4i16:
+  case MVT::v2i32:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v2f32:
+  case MVT::v4f32:
+  case MVT::v2f64:
+  return true;
+  }
+}
 
 // NVPTXTargetLowering Constructor.
 NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
@@ -86,41 +98,6 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   addRegisterClass(MVT::i64, &NVPTX::Int64RegsRegClass);
   addRegisterClass(MVT::f32, &NVPTX::Float32RegsRegClass);
   addRegisterClass(MVT::f64, &NVPTX::Float64RegsRegClass);
-
-  if (RetainVectorOperands) {
-    addRegisterClass(MVT::v2f32, &NVPTX::V2F32RegsRegClass);
-    addRegisterClass(MVT::v4f32, &NVPTX::V4F32RegsRegClass);
-    addRegisterClass(MVT::v2i32, &NVPTX::V2I32RegsRegClass);
-    addRegisterClass(MVT::v4i32, &NVPTX::V4I32RegsRegClass);
-    addRegisterClass(MVT::v2f64, &NVPTX::V2F64RegsRegClass);
-    addRegisterClass(MVT::v2i64, &NVPTX::V2I64RegsRegClass);
-    addRegisterClass(MVT::v2i16, &NVPTX::V2I16RegsRegClass);
-    addRegisterClass(MVT::v4i16, &NVPTX::V4I16RegsRegClass);
-    addRegisterClass(MVT::v2i8, &NVPTX::V2I8RegsRegClass);
-    addRegisterClass(MVT::v4i8, &NVPTX::V4I8RegsRegClass);
-
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i16  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i8   , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i32  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2f32  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i16  , Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i8   , Custom);
-
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i32  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4f32  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i16  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i8   , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i64  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f64  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f32  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i16  , Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i8   , Custom);
-  }
 
   // Operations not directly supported by NVPTX.
   setOperationAction(ISD::SELECT_CC,         MVT::Other, Expand);
@@ -191,42 +168,16 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   // TRAP can be lowered to PTX trap
   setOperationAction(ISD::TRAP,               MVT::Other, Legal);
 
-  // By default, CONCAT_VECTORS is implemented via store/load
-  // through stack. It is slow and uses local memory. We need
-  // to custom-lowering them.
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4f32  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i16  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i8   , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i64  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v2f64  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i32  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v2f32  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i16  , Custom);
-  setOperationAction(ISD::CONCAT_VECTORS, MVT::v2i8   , Custom);
-
-  // Expand vector int to float and float to int conversions
-  // - For SINT_TO_FP and UINT_TO_FP, the src type
-  //   (Node->getOperand(0).getValueType())
-  //   is used to determine the action, while for FP_TO_UINT and FP_TO_SINT,
-  //   the dest type (Node->getValueType(0)) is used.
-  //
-  //   See VectorLegalizer::LegalizeOp() (LegalizeVectorOps.cpp) for the vector
-  //   case, and
-  //   SelectionDAGLegalize::LegalizeOp() (LegalizeDAG.cpp) for the scalar case.
-  //
-  //   That is why v4i32 or v2i32 are used here.
-  //
-  //   The expansion for vectors happens in VectorLegalizer::LegalizeOp()
-  //   (LegalizeVectorOps.cpp).
-  setOperationAction(ISD::SINT_TO_FP, MVT::v4i32, Expand);
-  setOperationAction(ISD::SINT_TO_FP, MVT::v2i32, Expand);
-  setOperationAction(ISD::UINT_TO_FP, MVT::v4i32, Expand);
-  setOperationAction(ISD::UINT_TO_FP, MVT::v2i32, Expand);
-  setOperationAction(ISD::FP_TO_SINT, MVT::v2i32, Expand);
-  setOperationAction(ISD::FP_TO_SINT, MVT::v4i32, Expand);
-  setOperationAction(ISD::FP_TO_UINT, MVT::v2i32, Expand);
-  setOperationAction(ISD::FP_TO_UINT, MVT::v4i32, Expand);
+  // Register custom handling for vector loads/stores
+  for (int i = MVT::FIRST_VECTOR_VALUETYPE;
+       i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
+    MVT VT = (MVT::SimpleValueType)i;
+    if (IsPTXVectorType(VT)) {
+      setOperationAction(ISD::LOAD, VT, Custom);
+      setOperationAction(ISD::STORE, VT, Custom);
+      setOperationAction(ISD::INTRINSIC_W_CHAIN, VT, Custom);
+    }
+  }
 
   // Now deduce the information based on the above mentioned
   // actions
@@ -268,6 +219,14 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case NVPTXISD::RETURN:          return "NVPTXISD::RETURN";
   case NVPTXISD::CallSeqBegin:    return "NVPTXISD::CallSeqBegin";
   case NVPTXISD::CallSeqEnd:      return "NVPTXISD::CallSeqEnd";
+  case NVPTXISD::LoadV2:          return "NVPTXISD::LoadV2";
+  case NVPTXISD::LoadV4:          return "NVPTXISD::LoadV4";
+  case NVPTXISD::LDGV2:           return "NVPTXISD::LDGV2";
+  case NVPTXISD::LDGV4:           return "NVPTXISD::LDGV4";
+  case NVPTXISD::LDUV2:           return "NVPTXISD::LDUV2";
+  case NVPTXISD::LDUV4:           return "NVPTXISD::LDUV4";
+  case NVPTXISD::StoreV2:         return "NVPTXISD::StoreV2";
+  case NVPTXISD::StoreV4:         return "NVPTXISD::StoreV4";
   }
 }
 
@@ -868,12 +827,19 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 }
 
 
+SDValue NVPTXTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+  if (Op.getValueType() == MVT::i1)
+    return LowerLOADi1(Op, DAG);
+  else
+    return SDValue();
+}
+
 // v = ld i1* addr
 //   =>
 // v1 = ld i8* addr
 // v = trunc v1 to i1
 SDValue NVPTXTargetLowering::
-LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+LowerLOADi1(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   LoadSDNode *LD = cast<LoadSDNode>(Node);
   DebugLoc dl = Node->getDebugLoc();
@@ -893,12 +859,109 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getMergeValues(Ops, 2, dl);
 }
 
+SDValue NVPTXTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  EVT ValVT = Op.getOperand(1).getValueType();
+  if (ValVT == MVT::i1)
+    return LowerSTOREi1(Op, DAG);
+  else if (ValVT.isVector())
+    return LowerSTOREVector(Op, DAG);
+  else
+    return SDValue();
+}
+
+SDValue
+NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
+  SDNode *N = Op.getNode();
+  SDValue Val = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+  EVT ValVT = Val.getValueType();
+
+  if (ValVT.isVector()) {
+    // We only handle "native" vector sizes for now, e.g. <4 x double> is not
+    // legal.  We can (and should) split that into 2 stores of <2 x double> here
+    // but I'm leaving that as a TODO for now.
+    if (!ValVT.isSimple())
+      return SDValue();
+    switch (ValVT.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v2i8:
+    case MVT::v2i16:
+    case MVT::v2i32:
+    case MVT::v2i64:
+    case MVT::v2f32:
+    case MVT::v2f64:
+    case MVT::v4i8:
+    case MVT::v4i16:
+    case MVT::v4i32:
+    case MVT::v4f32:
+      // This is a "native" vector type
+      break;
+    }
+
+    unsigned Opcode = 0;
+    EVT EltVT = ValVT.getVectorElementType();
+    unsigned NumElts = ValVT.getVectorNumElements();
+
+    // Since StoreV2 is a target node, we cannot rely on DAG type legalization.
+    // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
+    // stored type to i16 and propogate the "real" type as the memory type.
+    bool NeedExt = false;
+    if (EltVT.getSizeInBits() < 16)
+      NeedExt = true;
+
+    switch (NumElts) {
+    default:  return SDValue();
+    case 2:
+      Opcode = NVPTXISD::StoreV2;
+      break;
+    case 4: {
+      Opcode = NVPTXISD::StoreV4;
+      break;
+    }
+    }
+
+    SmallVector<SDValue, 8> Ops;
+
+    // First is the chain
+    Ops.push_back(N->getOperand(0));
+
+    // Then the split values
+    for (unsigned i = 0; i < NumElts; ++i) {
+      SDValue ExtVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, Val,
+                                   DAG.getIntPtrConstant(i));
+      if (NeedExt)
+        // ANY_EXTEND is correct here since the store will only look at the
+        // lower-order bits anyway.
+        ExtVal = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i16, ExtVal);
+      Ops.push_back(ExtVal);
+    }
+
+    // Then any remaining arguments
+    for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
+      Ops.push_back(N->getOperand(i));
+    }
+
+    MemSDNode *MemSD = cast<MemSDNode>(N);
+
+    SDValue NewSt = DAG.getMemIntrinsicNode(Opcode, DL,
+                                            DAG.getVTList(MVT::Other), &Ops[0],
+                                            Ops.size(), MemSD->getMemoryVT(),
+                                            MemSD->getMemOperand());
+
+
+    //return DCI.CombineTo(N, NewSt, true);
+    return NewSt;
+  }
+
+  return SDValue();
+}
+
 // st i1 v, addr
 //    =>
 // v1 = zxt v to i8
 // st i8, addr
 SDValue NVPTXTargetLowering::
-LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+LowerSTOREi1(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
   StoreSDNode *ST = cast<StoreSDNode>(Node);
@@ -1347,4 +1410,243 @@ NVPTXTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned NVPTXTargetLowering::getFunctionAlignment(const Function *) const {
   return 4;
+}
+
+/// ReplaceVectorLoad - Convert vector loads into multi-output scalar loads.
+static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
+                              SmallVectorImpl<SDValue>& Results) {
+  EVT ResVT = N->getValueType(0);
+  DebugLoc DL = N->getDebugLoc();
+
+  assert(ResVT.isVector() && "Vector load must have vector type");
+
+  // We only handle "native" vector sizes for now, e.g. <4 x double> is not
+  // legal.  We can (and should) split that into 2 loads of <2 x double> here
+  // but I'm leaving that as a TODO for now.
+  assert(ResVT.isSimple() && "Can only handle simple types");
+  switch (ResVT.getSimpleVT().SimpleTy) {
+  default: return;
+  case MVT::v2i8:
+  case MVT::v2i16:
+  case MVT::v2i32:
+  case MVT::v2i64:
+  case MVT::v2f32:
+  case MVT::v2f64:
+  case MVT::v4i8:
+  case MVT::v4i16:
+  case MVT::v4i32:
+  case MVT::v4f32:
+    // This is a "native" vector type
+    break;
+  }
+
+  EVT EltVT = ResVT.getVectorElementType();
+  unsigned NumElts = ResVT.getVectorNumElements();
+
+  // Since LoadV2 is a target node, we cannot rely on DAG type legalization.
+  // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
+  // loaded type to i16 and propogate the "real" type as the memory type.
+  bool NeedTrunc = false;
+  if (EltVT.getSizeInBits() < 16) {
+    EltVT = MVT::i16;
+    NeedTrunc = true;
+  }
+
+  unsigned Opcode = 0;
+  SDVTList LdResVTs;
+
+  switch (NumElts) {
+  default:  return;
+  case 2:
+    Opcode = NVPTXISD::LoadV2;
+    LdResVTs = DAG.getVTList(EltVT, EltVT, MVT::Other);
+    break;
+  case 4: {
+    Opcode = NVPTXISD::LoadV4;
+    EVT ListVTs[] = { EltVT, EltVT, EltVT, EltVT, MVT::Other };
+    LdResVTs = DAG.getVTList(ListVTs, 5);
+    break;
+  }
+  }
+
+  SmallVector<SDValue, 8> OtherOps;
+
+  // Copy regular operands
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    OtherOps.push_back(N->getOperand(i));
+
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+
+  // The select routine does not have access to the LoadSDNode instance, so
+  // pass along the extension information
+  OtherOps.push_back(DAG.getIntPtrConstant(LD->getExtensionType()));
+
+  SDValue NewLD = DAG.getMemIntrinsicNode(Opcode, DL, LdResVTs, &OtherOps[0],
+                                          OtherOps.size(), LD->getMemoryVT(),
+                                          LD->getMemOperand());
+
+  SmallVector<SDValue, 4> ScalarRes;
+
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDValue Res = NewLD.getValue(i);
+    if (NeedTrunc)
+      Res = DAG.getNode(ISD::TRUNCATE, DL, ResVT.getVectorElementType(), Res);
+    ScalarRes.push_back(Res);
+  }
+
+  SDValue LoadChain = NewLD.getValue(NumElts);
+
+  SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, DL, ResVT, &ScalarRes[0], NumElts);
+
+  Results.push_back(BuildVec);
+  Results.push_back(LoadChain);
+}
+
+static void ReplaceINTRINSIC_W_CHAIN(SDNode *N,
+                                     SelectionDAG &DAG,
+                                     SmallVectorImpl<SDValue> &Results) {
+  SDValue Chain = N->getOperand(0);
+  SDValue Intrin = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+
+  // Get the intrinsic ID
+  unsigned IntrinNo = cast<ConstantSDNode>(Intrin.getNode())->getZExtValue();
+  switch(IntrinNo) {
+  default: return;
+  case Intrinsic::nvvm_ldg_global_i:
+  case Intrinsic::nvvm_ldg_global_f:
+  case Intrinsic::nvvm_ldg_global_p:
+  case Intrinsic::nvvm_ldu_global_i:
+  case Intrinsic::nvvm_ldu_global_f:
+  case Intrinsic::nvvm_ldu_global_p: {
+    EVT ResVT = N->getValueType(0);
+
+    if (ResVT.isVector()) {
+      // Vector LDG/LDU
+
+      unsigned NumElts = ResVT.getVectorNumElements();
+      EVT EltVT = ResVT.getVectorElementType();
+
+      // Since LDU/LDG are target nodes, we cannot rely on DAG type legalization.
+      // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
+      // loaded type to i16 and propogate the "real" type as the memory type.
+      bool NeedTrunc = false;
+      if (EltVT.getSizeInBits() < 16) {
+        EltVT = MVT::i16;
+        NeedTrunc = true;
+      }
+
+      unsigned Opcode = 0;
+      SDVTList LdResVTs;
+
+      switch (NumElts) {
+      default:  return;
+      case 2:
+        switch(IntrinNo) {
+        default: return;
+        case Intrinsic::nvvm_ldg_global_i:
+        case Intrinsic::nvvm_ldg_global_f:
+        case Intrinsic::nvvm_ldg_global_p:
+          Opcode = NVPTXISD::LDGV2;
+          break;
+        case Intrinsic::nvvm_ldu_global_i:
+        case Intrinsic::nvvm_ldu_global_f:
+        case Intrinsic::nvvm_ldu_global_p:
+          Opcode = NVPTXISD::LDUV2;
+          break;
+        }
+        LdResVTs = DAG.getVTList(EltVT, EltVT, MVT::Other);
+        break;
+      case 4: {
+        switch(IntrinNo) {
+        default: return;
+        case Intrinsic::nvvm_ldg_global_i:
+        case Intrinsic::nvvm_ldg_global_f:
+        case Intrinsic::nvvm_ldg_global_p:
+          Opcode = NVPTXISD::LDGV4;
+          break;
+        case Intrinsic::nvvm_ldu_global_i:
+        case Intrinsic::nvvm_ldu_global_f:
+        case Intrinsic::nvvm_ldu_global_p:
+          Opcode = NVPTXISD::LDUV4;
+          break;
+        }
+        EVT ListVTs[] = { EltVT, EltVT, EltVT, EltVT, MVT::Other };
+        LdResVTs = DAG.getVTList(ListVTs, 5);
+        break;
+      }
+      }
+
+      SmallVector<SDValue, 8> OtherOps;
+
+      // Copy regular operands
+
+      OtherOps.push_back(Chain); // Chain
+      // Skip operand 1 (intrinsic ID)
+      // Others
+      for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i)
+        OtherOps.push_back(N->getOperand(i));
+
+      MemIntrinsicSDNode *MemSD = cast<MemIntrinsicSDNode>(N);
+
+      SDValue NewLD = DAG.getMemIntrinsicNode(Opcode, DL, LdResVTs, &OtherOps[0],
+                                              OtherOps.size(), MemSD->getMemoryVT(),
+                                              MemSD->getMemOperand());
+
+      SmallVector<SDValue, 4> ScalarRes;
+
+      for (unsigned i = 0; i < NumElts; ++i) {
+        SDValue Res = NewLD.getValue(i);
+        if (NeedTrunc)
+          Res = DAG.getNode(ISD::TRUNCATE, DL, ResVT.getVectorElementType(), Res);
+        ScalarRes.push_back(Res);
+      }
+
+      SDValue LoadChain = NewLD.getValue(NumElts);
+
+      SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, DL, ResVT, &ScalarRes[0], NumElts);
+
+      Results.push_back(BuildVec);
+      Results.push_back(LoadChain);
+    } else {
+      // i8 LDG/LDU
+      assert(ResVT.isSimple() && ResVT.getSimpleVT().SimpleTy == MVT::i8 &&
+             "Custom handling of non-i8 ldu/ldg?");
+
+      // Just copy all operands as-is
+      SmallVector<SDValue, 4> Ops;
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+        Ops.push_back(N->getOperand(i));
+
+      // Force output to i16
+      SDVTList LdResVTs = DAG.getVTList(MVT::i16, MVT::Other);
+
+      MemIntrinsicSDNode *MemSD = cast<MemIntrinsicSDNode>(N);
+
+      // We make sure the memory type is i8, which will be used during isel
+      // to select the proper instruction.
+      SDValue NewLD = DAG.getMemIntrinsicNode(ISD::INTRINSIC_W_CHAIN, DL,
+                                              LdResVTs, &Ops[0],
+                                              Ops.size(), MVT::i8,
+                                              MemSD->getMemOperand());
+
+      Results.push_back(NewLD.getValue(0));
+      Results.push_back(NewLD.getValue(1));
+    }
+  }
+  }
+}
+
+void NVPTXTargetLowering::ReplaceNodeResults(SDNode *N,
+                                             SmallVectorImpl<SDValue> &Results,
+                                             SelectionDAG &DAG) const {
+  switch (N->getOpcode()) {
+  default: report_fatal_error("Unhandled custom legalization");
+  case ISD::LOAD:
+    ReplaceLoadVector(N, DAG, Results);
+    return;
+  case ISD::INTRINSIC_W_CHAIN:
+    ReplaceINTRINSIC_W_CHAIN(N, DAG, Results);
+    return;
+  }
 }

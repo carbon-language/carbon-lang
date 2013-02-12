@@ -54,36 +54,6 @@ std::string getNVPTXRegClassName (TargetRegisterClass const *RC) {
   else if (RC == &NVPTX::SpecialRegsRegClass) {
     return "!Special!";
   }
-  else if (RC == &NVPTX::V2F32RegsRegClass) {
-    return ".v2.f32";
-  }
-  else if (RC == &NVPTX::V4F32RegsRegClass) {
-    return ".v4.f32";
-  }
-  else if (RC == &NVPTX::V2I32RegsRegClass) {
-    return ".v2.s32";
-  }
-  else if (RC == &NVPTX::V4I32RegsRegClass) {
-    return ".v4.s32";
-  }
-  else if (RC == &NVPTX::V2F64RegsRegClass) {
-    return ".v2.f64";
-  }
-  else if (RC == &NVPTX::V2I64RegsRegClass) {
-    return ".v2.s64";
-  }
-  else if (RC == &NVPTX::V2I16RegsRegClass) {
-    return ".v2.s16";
-  }
-  else if (RC == &NVPTX::V4I16RegsRegClass) {
-    return ".v4.s16";
-  }
-  else if (RC == &NVPTX::V2I8RegsRegClass) {
-    return ".v2.s16";
-  }
-  else if (RC == &NVPTX::V4I8RegsRegClass) {
-    return ".v4.s16";
-  }
   else {
     return "INTERNAL";
   }
@@ -115,136 +85,10 @@ std::string getNVPTXRegClassStr (TargetRegisterClass const *RC) {
   else if (RC == &NVPTX::SpecialRegsRegClass) {
     return "!Special!";
   }
-  else if (RC == &NVPTX::V2F32RegsRegClass) {
-    return "%v2f";
-  }
-  else if (RC == &NVPTX::V4F32RegsRegClass) {
-    return "%v4f";
-  }
-  else if (RC == &NVPTX::V2I32RegsRegClass) {
-    return "%v2r";
-  }
-  else if (RC == &NVPTX::V4I32RegsRegClass) {
-    return "%v4r";
-  }
-  else if (RC == &NVPTX::V2F64RegsRegClass) {
-    return "%v2fd";
-  }
-  else if (RC == &NVPTX::V2I64RegsRegClass) {
-    return "%v2rd";
-  }
-  else if (RC == &NVPTX::V2I16RegsRegClass) {
-    return "%v2s";
-  }
-  else if (RC == &NVPTX::V4I16RegsRegClass) {
-    return "%v4rs";
-  }
-  else if (RC == &NVPTX::V2I8RegsRegClass) {
-    return "%v2rc";
-  }
-  else if (RC == &NVPTX::V4I8RegsRegClass) {
-    return "%v4rc";
-  }
   else {
     return "INTERNAL";
   }
   return "";
-}
-
-bool isNVPTXVectorRegClass(TargetRegisterClass const *RC) {
-  if (RC->getID() == NVPTX::V2F32RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V2F64RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V2I16RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V2I32RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V2I64RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V2I8RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V4F32RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V4I16RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V4I32RegsRegClassID)
-    return true;
-  if (RC->getID() == NVPTX::V4I8RegsRegClassID)
-    return true;
-  return false;
-}
-
-std::string getNVPTXElemClassName(TargetRegisterClass const *RC) {
-  if (RC->getID() == NVPTX::V2F32RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Float32RegsRegClass);
-  if (RC->getID() == NVPTX::V2F64RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Float64RegsRegClass);
-  if (RC->getID() == NVPTX::V2I16RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int16RegsRegClass);
-  if (RC->getID() == NVPTX::V2I32RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int32RegsRegClass);
-  if (RC->getID() == NVPTX::V2I64RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int64RegsRegClass);
-  if (RC->getID() == NVPTX::V2I8RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int8RegsRegClass);
-  if (RC->getID() == NVPTX::V4F32RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Float32RegsRegClass);
-  if (RC->getID() == NVPTX::V4I16RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int16RegsRegClass);
-  if (RC->getID() == NVPTX::V4I32RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int32RegsRegClass);
-  if (RC->getID() == NVPTX::V4I8RegsRegClassID)
-    return getNVPTXRegClassName(&NVPTX::Int8RegsRegClass);
-  llvm_unreachable("Not a vector register class");
-}
-
-const TargetRegisterClass *getNVPTXElemClass(TargetRegisterClass const *RC) {
-  if (RC->getID() == NVPTX::V2F32RegsRegClassID)
-    return (&NVPTX::Float32RegsRegClass);
-  if (RC->getID() == NVPTX::V2F64RegsRegClassID)
-    return (&NVPTX::Float64RegsRegClass);
-  if (RC->getID() == NVPTX::V2I16RegsRegClassID)
-    return (&NVPTX::Int16RegsRegClass);
-  if (RC->getID() == NVPTX::V2I32RegsRegClassID)
-    return (&NVPTX::Int32RegsRegClass);
-  if (RC->getID() == NVPTX::V2I64RegsRegClassID)
-    return (&NVPTX::Int64RegsRegClass);
-  if (RC->getID() == NVPTX::V2I8RegsRegClassID)
-    return (&NVPTX::Int8RegsRegClass);
-  if (RC->getID() == NVPTX::V4F32RegsRegClassID)
-    return (&NVPTX::Float32RegsRegClass);
-  if (RC->getID() == NVPTX::V4I16RegsRegClassID)
-    return (&NVPTX::Int16RegsRegClass);
-  if (RC->getID() == NVPTX::V4I32RegsRegClassID)
-    return (&NVPTX::Int32RegsRegClass);
-  if (RC->getID() == NVPTX::V4I8RegsRegClassID)
-    return (&NVPTX::Int8RegsRegClass);
-  llvm_unreachable("Not a vector register class");
-}
-
-int getNVPTXVectorSize(TargetRegisterClass const *RC) {
-  if (RC->getID() == NVPTX::V2F32RegsRegClassID)
-    return 2;
-  if (RC->getID() == NVPTX::V2F64RegsRegClassID)
-    return 2;
-  if (RC->getID() == NVPTX::V2I16RegsRegClassID)
-    return 2;
-  if (RC->getID() == NVPTX::V2I32RegsRegClassID)
-    return 2;
-  if (RC->getID() == NVPTX::V2I64RegsRegClassID)
-    return 2;
-  if (RC->getID() == NVPTX::V2I8RegsRegClassID)
-    return 2;
-  if (RC->getID() == NVPTX::V4F32RegsRegClassID)
-    return 4;
-  if (RC->getID() == NVPTX::V4I16RegsRegClassID)
-    return 4;
-  if (RC->getID() == NVPTX::V4I32RegsRegClassID)
-    return 4;
-  if (RC->getID() == NVPTX::V4I8RegsRegClassID)
-    return 4;
-  llvm_unreachable("Not a vector register class");
 }
 }
 

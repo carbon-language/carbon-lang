@@ -65,46 +65,6 @@ void NVPTXInstrInfo::copyPhysReg (MachineBasicBlock &MBB,
       NVPTX::Float64RegsRegClass.contains(SrcReg))
     BuildMI(MBB, I, DL, get(NVPTX::FMOV64rr), DestReg)
     .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V4F32RegsRegClass.contains(DestReg) &&
-      NVPTX::V4F32RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V4f32Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V4I32RegsRegClass.contains(DestReg) &&
-      NVPTX::V4I32RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V4i32Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V2F32RegsRegClass.contains(DestReg) &&
-      NVPTX::V2F32RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V2f32Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V2I32RegsRegClass.contains(DestReg) &&
-      NVPTX::V2I32RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V2i32Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V4I8RegsRegClass.contains(DestReg) &&
-      NVPTX::V4I8RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V4i8Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V2I8RegsRegClass.contains(DestReg) &&
-      NVPTX::V2I8RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V2i8Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V4I16RegsRegClass.contains(DestReg) &&
-      NVPTX::V4I16RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V4i16Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V2I16RegsRegClass.contains(DestReg) &&
-      NVPTX::V2I16RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V2i16Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V2I64RegsRegClass.contains(DestReg) &&
-      NVPTX::V2I64RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V2i64Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::V2F64RegsRegClass.contains(DestReg) &&
-      NVPTX::V2F64RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::V2f64Mov), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
   else {
     llvm_unreachable("Don't know how to copy a register");
   }

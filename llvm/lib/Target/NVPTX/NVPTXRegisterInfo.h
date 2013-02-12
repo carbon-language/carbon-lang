@@ -81,10 +81,6 @@ public:
 
 std::string getNVPTXRegClassName (const TargetRegisterClass *RC);
 std::string getNVPTXRegClassStr (const TargetRegisterClass *RC);
-bool isNVPTXVectorRegClass (const TargetRegisterClass *RC);
-std::string getNVPTXElemClassName (const TargetRegisterClass *RC);
-int getNVPTXVectorSize (const TargetRegisterClass *RC);
-const TargetRegisterClass *getNVPTXElemClass(const TargetRegisterClass *RC);
 
 } // end namespace llvm
 

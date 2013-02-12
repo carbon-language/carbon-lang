@@ -72,8 +72,11 @@ private:
 #include "NVPTXGenDAGISel.inc"
 
   SDNode *Select(SDNode *N);
-  SDNode* SelectLoad(SDNode *N);
-  SDNode* SelectStore(SDNode *N);
+  SDNode *SelectLoad(SDNode *N);
+  SDNode *SelectLoadVector(SDNode *N);
+  SDNode *SelectLDGLDUVector(SDNode *N);
+  SDNode *SelectStore(SDNode *N);
+  SDNode *SelectStoreVector(SDNode *N);
 
   inline SDValue getI32Imm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);
