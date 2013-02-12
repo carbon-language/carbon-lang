@@ -938,14 +938,22 @@ AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
   assert(Idx != ~0U && "Couldn't find index in AttributeSet!");
 
   for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx); I != E; ++I) {
-    // FIXME: Support string attributes.
-    Attribute::AttrKind Kind = I->getKindAsEnum();
-    Attrs.erase(Kind);
+    Attribute Attr = *I;
+    if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
+      Attribute::AttrKind Kind = I->getKindAsEnum();
+      Attrs.erase(Kind);
 
-    if (Kind == Attribute::Alignment)
-      Alignment = 0;
-    else if (Kind == Attribute::StackAlignment)
-      StackAlignment = 0;
+      if (Kind == Attribute::Alignment)
+        Alignment = 0;
+      else if (Kind == Attribute::StackAlignment)
+        StackAlignment = 0;
+    } else {
+      assert(Attr.isStringAttribute() && "Invalid attribute type!");
+      std::map<std::string, std::string>::iterator
+        Iter = TargetDepAttrs.find(Attr.getKindAsString());
+      if (Iter != TargetDepAttrs.end())
+        TargetDepAttrs.erase(Iter);
+    }
   }
 
   return *this;
@@ -1021,10 +1029,16 @@ bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
   assert(Idx != ~0U && "Couldn't find the index!");
 
   for (AttributeSet::iterator I = A.begin(Idx), E = A.end(Idx);
-       I != E; ++I)
-    // FIXME: Support string attributes.
-    if (Attrs.count(I->getKindAsEnum()))
-      return true;
+       I != E; ++I) {
+    Attribute Attr = *I;
+    if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
+      if (Attrs.count(I->getKindAsEnum()))
+        return true;
+    } else {
+      assert(Attr.isStringAttribute() && "Invalid attribute kind!");
+      return TargetDepAttrs.find(Attr.getKindAsString())!=TargetDepAttrs.end();
+    }
+  }
 
   return false;
 }
