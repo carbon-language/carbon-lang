@@ -114,6 +114,9 @@ public:
     return 1;
   }
 
+  unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
+                          int Index, Type *SubTp) const;
+
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                       Type *Src) const;
 
@@ -334,4 +337,34 @@ unsigned ARMTTI::getAddressComputationCost(Type *Ty) const {
   // In many cases the address computation is not merged into the instruction
   // addressing mode.
   return 1;
+}
+
+unsigned ARMTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
+                                Type *SubTp) const {
+  // We only handle costs of reverse shuffles for now.
+  if (Kind != SK_Reverse)
+    return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
+
+  static const CostTblEntry<MVT> NEONShuffleTbl[] = {
+    // Reverse shuffle cost one instruction if we are shuffling within a double
+    // word (vrev) or two if we shuffle a quad word (vrev, vext).
+    { ISD::VECTOR_SHUFFLE, MVT::v2i32, 1 },
+    { ISD::VECTOR_SHUFFLE, MVT::v2f32, 1 },
+    { ISD::VECTOR_SHUFFLE, MVT::v2i64, 1 },
+    { ISD::VECTOR_SHUFFLE, MVT::v2f64, 1 },
+
+    { ISD::VECTOR_SHUFFLE, MVT::v4i32, 2 },
+    { ISD::VECTOR_SHUFFLE, MVT::v4f32, 2 },
+    { ISD::VECTOR_SHUFFLE, MVT::v8i16, 2 },
+    { ISD::VECTOR_SHUFFLE, MVT::v16i8, 2 }
+  };
+
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);
+
+  int Idx = CostTableLookup<MVT>(NEONShuffleTbl, array_lengthof(NEONShuffleTbl),
+                                 ISD::VECTOR_SHUFFLE, LT.second);
+  if (Idx == -1)
+    return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
+
+  return LT.first * NEONShuffleTbl[Idx].Cost;
 }
