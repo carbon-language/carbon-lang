@@ -86,6 +86,7 @@ public:
     Contexts.back().LookForFunctionName = Line.MustBeDeclaration;
   }
 
+private:
   bool parseAngle() {
     if (CurrentToken == NULL)
       return false;
@@ -448,6 +449,7 @@ public:
       next();
   }
 
+public:
   LineType parseLine() {
     int PeriodsAndArrows = 0;
     bool CanBeBuilderTypeStmt = true;
@@ -483,6 +485,7 @@ public:
     return LT_Other;
   }
 
+private:
   void next() {
     if (CurrentToken != NULL) {
       determineTokenType(*CurrentToken);
@@ -495,7 +498,6 @@ public:
       CurrentToken = NULL;
   }
 
-private:
   /// \brief A struct to hold information valid in a specific context, e.g.
   /// a pair of parenthesis.
   struct Context {
@@ -533,19 +535,25 @@ private:
   void determineTokenType(AnnotatedToken &Current) {
     if (getPrecedence(Current) == prec::Assignment) {
       Contexts.back().IsExpression = true;
-      AnnotatedToken *Previous = Current.Parent;
-      while (Previous != NULL && Previous->isNot(tok::comma)) {
+      for (AnnotatedToken *Previous = Current.Parent;
+           Previous && Previous->isNot(tok::comma);
+           Previous = Previous->Parent) {
         if (Previous->Type == TT_BinaryOperator &&
             (Previous->is(tok::star) || Previous->is(tok::amp))) {
           Previous->Type = TT_PointerOrReference;
         }
-        Previous = Previous->Parent;
       }
-    }
-    if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
-        (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
-         (Current.Parent == NULL || Current.Parent->isNot(tok::kw_for))))
+    } else if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
+               (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
+                (!Current.Parent || Current.Parent->isNot(tok::kw_for)))) {
       Contexts.back().IsExpression = true;
+    } else if (Current.is(tok::r_paren) || Current.is(tok::greater) ||
+               Current.is(tok::comma)) {
+      for (AnnotatedToken *Previous = Current.Parent;
+           Previous && (Previous->is(tok::star) || Previous->is(tok::amp));
+           Previous = Previous->Parent)
+        Previous->Type = TT_PointerOrReference;
+    }
 
     if (Current.Type == TT_Unknown) {
       if (Contexts.back().LookForFunctionName && Current.is(tok::l_paren)) {
@@ -638,10 +646,6 @@ private:
         isUnaryOperator(*NextToken) || NextToken->is(tok::l_paren) ||
         NextToken->is(tok::l_square))
       return TT_BinaryOperator;
-
-    if (NextToken->is(tok::comma) || NextToken->is(tok::r_paren) ||
-        NextToken->is(tok::greater))
-      return TT_PointerOrReference;
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
@@ -932,9 +936,11 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Right.is(tok::amp) || Right.is(tok::star))
     return Left.FormatTok.Tok.isLiteral() ||
            (Left.isNot(tok::star) && Left.isNot(tok::amp) &&
-            !Style.PointerBindsToType);
+            Left.isNot(tok::l_paren) && !Style.PointerBindsToType);
   if (Left.is(tok::amp) || Left.is(tok::star))
-    return Right.FormatTok.Tok.isLiteral() || Style.PointerBindsToType;
+    return Right.FormatTok.Tok.isLiteral() ||
+           (Right.isNot(tok::star) && Right.isNot(tok::amp) &&
+            Style.PointerBindsToType);
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
   if (Left.is(tok::l_square))
