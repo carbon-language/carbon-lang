@@ -1526,10 +1526,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   BasicBlock *LoadBB = LI->getParent();
   BasicBlock *TmpBB = LoadBB;
 
-  bool isSinglePred = false;
   bool allSingleSucc = true;
   while (TmpBB->getSinglePredecessor()) {
-    isSinglePred = true;
     TmpBB = TmpBB->getSinglePredecessor();
     if (TmpBB == LoadBB) // Infinite (unreachable) loop.
       return false;
@@ -1547,28 +1545,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
 
   assert(TmpBB);
   LoadBB = TmpBB;
-
-  // FIXME: It is extremely unclear what this loop is doing, other than
-  // artificially restricting loadpre.
-  if (isSinglePred) {
-    bool isHot = false;
-    for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
-      const AvailableValueInBlock &AV = ValuesPerBlock[i];
-      if (AV.isSimpleValue())
-        // "Hot" Instruction is in some loop (because it dominates its dep.
-        // instruction).
-        if (Instruction *I = dyn_cast<Instruction>(AV.getSimpleValue()))
-          if (DT->dominates(LI, I)) {
-            isHot = true;
-            break;
-          }
-    }
-
-    // We are interested only in "hot" instructions. We don't want to do any
-    // mis-optimizations here.
-    if (!isHot)
-      return false;
-  }
 
   // Check to see how many predecessors have the loaded value fully
   // available.
