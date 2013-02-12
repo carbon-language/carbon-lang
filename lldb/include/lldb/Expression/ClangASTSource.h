@@ -98,7 +98,7 @@ public:
     /// @return
     ///     Whatever SetExternalVisibleDeclsForName returns.
     //------------------------------------------------------------------
-    clang::DeclContextLookupResult 
+    bool
     FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
                                     clang::DeclarationName Name);
     
@@ -248,7 +248,7 @@ public:
         {
         }
         
-        clang::DeclContextLookupResult 
+        bool
         FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
                                         clang::DeclarationName Name)
         {

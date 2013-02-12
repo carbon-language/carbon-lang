@@ -30,7 +30,7 @@ public:
     {
     }
     
-    clang::DeclContextLookupResult
+    bool
     FindExternalVisibleDeclsByName (const clang::DeclContext *decl_ctx,
                                     clang::DeclarationName name)
     {
@@ -60,12 +60,15 @@ public:
 
             if (!m_type_vendor.FinishDecl(non_const_interface_decl))
                 break;
-                        
-            return non_const_interface_decl->lookup(name);
+            
+            clang::DeclContext::lookup_const_result result = non_const_interface_decl->lookup(name);
+            
+            return (result.size() != 0);
         }
         while(0);
         
-        return clang::DeclContextLookupResult();
+        SetNoExternalVisibleDeclsForName(decl_ctx, name);
+        return false;
     }
     
     clang::ExternalLoadResult

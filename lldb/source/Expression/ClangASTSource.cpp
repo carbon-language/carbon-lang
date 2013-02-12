@@ -56,7 +56,7 @@ ClangASTSource::StartTranslationUnit(ASTConsumer *Consumer)
 }
 
 // The core lookup interface.
-DeclContext::lookup_result 
+bool
 ClangASTSource::FindExternalVisibleDeclsByName
 (
     const DeclContext *decl_ctx, 
@@ -64,11 +64,17 @@ ClangASTSource::FindExternalVisibleDeclsByName
 ) 
 {
     if (!m_ast_context)
-        return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+    {
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
+    }
     
     if (GetImportInProgress())
-        return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
-        
+    {
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
+    }
+    
     std::string decl_name (clang_decl_name.getAsString());
 
 //    if (m_decl_map.DoingASTImport ())
@@ -83,7 +89,8 @@ ClangASTSource::FindExternalVisibleDeclsByName
             if (!identifier_info ||
                 identifier_info->getBuiltinID() != 0)
             {
-                return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+                SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+                return false;
             }
         }
         break;
@@ -91,12 +98,14 @@ ClangASTSource::FindExternalVisibleDeclsByName
     // Operator names.  Not important for now.
     case DeclarationName::CXXOperatorName:
     case DeclarationName::CXXLiteralOperatorName:
-      return DeclContext::lookup_result();
+      SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+      return false;
             
     // Using directives found in this context.
     // Tell Sema we didn't find any or we'll end up getting asked a *lot*.
     case DeclarationName::CXXUsingDirective:
-      return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+      SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+      return false;
             
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
@@ -108,13 +117,15 @@ ClangASTSource::FindExternalVisibleDeclsByName
      
       FindObjCMethodDecls(method_search_context);
 
-      return SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, method_decls);
+      SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, method_decls);
+      return (method_decls.size() > 0);
     }
     // These aren't possible in the global context.
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
     case DeclarationName::CXXConversionFunctionName:
-      return DeclContext::lookup_result();
+      SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+      return false;
     }
 
 
@@ -128,7 +139,8 @@ ClangASTSource::FindExternalVisibleDeclsByName
         }
         else
         {               
-            return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+            SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+            return false;
         }
     }
 
@@ -138,7 +150,8 @@ ClangASTSource::FindExternalVisibleDeclsByName
     if (m_active_lookups.find (uniqued_const_decl_name) != m_active_lookups.end())
     {
         // We are currently looking up this name...
-        return DeclContext::lookup_result();
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
     }
     m_active_lookups.insert(uniqued_const_decl_name);
 //  static uint32_t g_depth = 0;
@@ -147,10 +160,10 @@ ClangASTSource::FindExternalVisibleDeclsByName
     llvm::SmallVector<NamedDecl*, 4> name_decls;    
     NameSearchContext name_search_context(*this, name_decls, clang_decl_name, decl_ctx);
     FindExternalVisibleDecls(name_search_context);
-    DeclContext::lookup_result result (SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls));
+    SetExternalVisibleDeclsForName (decl_ctx, clang_decl_name, name_decls);
 //  --g_depth;
     m_active_lookups.erase (uniqued_const_decl_name);
-    return result;
+    return (name_decls.size() != 0);
 }
 
 void
@@ -1646,8 +1659,13 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
     
     if (!copied_decl)
         return NULL;
-    
+        
     NamespaceDecl *copied_namespace_decl = dyn_cast<NamespaceDecl>(copied_decl);
+    
+    if (!copied_namespace_decl)
+        return NULL;
+    
+    context.m_decls.push_back(copied_namespace_decl);
     
     m_ast_importer->RegisterNamespaceMap(copied_namespace_decl, namespace_decls);
     

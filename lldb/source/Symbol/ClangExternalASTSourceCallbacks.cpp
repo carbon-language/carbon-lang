@@ -45,7 +45,7 @@
 using namespace clang;
 using namespace lldb_private;
 
-clang::DeclContextLookupResult 
+bool
 ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName 
 (
     const clang::DeclContext *decl_ctx,
@@ -58,9 +58,9 @@ ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName
         
         m_callback_find_by_name (m_callback_baton, decl_ctx, clang_decl_name, &results);
         
-        DeclContextLookupResult lookup_result (SetExternalVisibleDeclsForName(decl_ctx, clang_decl_name, results));
+        SetExternalVisibleDeclsForName(decl_ctx, clang_decl_name, results);
         
-        return lookup_result;
+        return (results.size() != 0);
     }
         
     std::string decl_name (clang_decl_name.getAsString());
@@ -70,55 +70,61 @@ ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName
     case clang::DeclarationName::Identifier:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"Identifier\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
         if (clang_decl_name.getAsIdentifierInfo()->getBuiltinID() != 0)
-            return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        {
+            SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+            return false;
+        }
         break;
 
     case clang::DeclarationName::ObjCZeroArgSelector:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"ObjCZeroArgSelector\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::ObjCOneArgSelector:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"ObjCOneArgSelector\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::ObjCMultiArgSelector:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"ObjCMultiArgSelector\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::CXXConstructorName:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"CXXConstructorName\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
+
 
     case clang::DeclarationName::CXXDestructorName:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"CXXDestructorName\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::CXXConversionFunctionName:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"CXXConversionFunctionName\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::CXXOperatorName:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"CXXOperatorName\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::CXXLiteralOperatorName:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"CXXLiteralOperatorName\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return DeclContext::lookup_result();
-        break;
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
 
     case clang::DeclarationName::CXXUsingDirective:
         //printf ("ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName(decl_ctx = %p, decl_name = { kind = \"CXXUsingDirective\", name = \"%s\")\n", decl_ctx, decl_name.c_str());
-        return SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+        return false;
     }
 
-    return DeclContext::lookup_result();
+    SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
+    return false;
 }
 
 void
