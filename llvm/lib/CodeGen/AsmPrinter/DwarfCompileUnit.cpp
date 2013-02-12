@@ -1311,8 +1311,10 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     addType(VariableDIE, GTy);
 
     // Add scoping info.
-    if (!GV.isLocalToUnit())
+    if (!GV.isLocalToUnit()) {
       addFlag(VariableDIE, dwarf::DW_AT_external);
+      addGlobalName(GV.getName(), VariableDIE);
+    }
 
     // Add line number info.
     addSourceLine(VariableDIE, GV);

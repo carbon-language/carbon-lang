@@ -54,6 +54,10 @@ static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::desc("Make an absence of debug location information explicit."),
      cl::init(false));
 
+static cl::opt<bool> GenerateDwarfPubNamesSection("generate-dwarf-pubnames",
+     cl::Hidden, cl::ZeroOrMore, cl::init(false),
+     cl::desc("Generate DWARF pubnames section"));
+
 namespace {
   enum DefaultOnOff {
     Default, Enable, Disable
@@ -733,7 +737,9 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   // Add to context owner.
   TheCU->addToContextOwner(SubprogramDie, SP.getContext());
 
-  return;
+  // Expose as global, if requested.
+  if (GenerateDwarfPubNamesSection)
+    TheCU->addGlobalName(SP.getName(), SubprogramDie);
 }
 
 // Collect debug info from named mdnodes such as llvm.dbg.enum and llvm.dbg.ty.
@@ -1027,6 +1033,10 @@ void DwarfDebug::endModule() {
     emitAccelNamespaces();
     emitAccelTypes();
   }
+
+  // Emit info into a debug pubnames section, if requested.
+  if (GenerateDwarfPubNamesSection)
+    emitDebugPubnames();
 
   // Emit info into a debug pubtypes section.
   // TODO: When we don't need the option anymore we can
@@ -1784,6 +1794,8 @@ void DwarfDebug::emitSectionLabels() {
   DwarfLineSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
+  if (GenerateDwarfPubNamesSection)
+    emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
   emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
@@ -2117,6 +2129,61 @@ void DwarfDebug::emitAccelTypes() {
 
   // Emit the full data.
   AT.Emit(Asm, SectionBegin, &InfoHolder);
+}
+
+/// emitDebugPubnames - Emit visible names into a debug pubnames section.
+///
+void DwarfDebug::emitDebugPubnames() {
+  const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
+
+  typedef DenseMap<const MDNode*, CompileUnit*> CUMapType;
+  for (CUMapType::iterator I = CUMap.begin(), E = CUMap.end(); I != E; ++I) {
+    CompileUnit *TheCU = I->second;
+    unsigned ID = TheCU->getUniqueID();
+
+    if (TheCU->getGlobalNames().empty())
+      continue;
+
+    // Start the dwarf pubnames section.
+    Asm->OutStreamer.SwitchSection(
+      Asm->getObjFileLowering().getDwarfPubNamesSection());
+
+    Asm->OutStreamer.AddComment("Length of Public Names Info");
+    Asm->EmitLabelDifference(Asm->GetTempSymbol("pubnames_end", ID),
+                             Asm->GetTempSymbol("pubnames_begin", ID), 4);
+
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin", ID));
+
+    Asm->OutStreamer.AddComment("DWARF Version");
+    Asm->EmitInt16(dwarf::DWARF_VERSION);
+
+    Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
+    Asm->EmitSectionOffset(Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
+                           DwarfInfoSectionSym);
+
+    Asm->OutStreamer.AddComment("Compilation Unit Length");
+    Asm->EmitLabelDifference(Asm->GetTempSymbol(ISec->getLabelEndName(), ID),
+                             Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
+                             4);
+
+    const StringMap<DIE*> &Globals = TheCU->getGlobalNames();
+    for (StringMap<DIE*>::const_iterator
+           GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
+      const char *Name = GI->getKeyData();
+      const DIE *Entity = GI->second;
+
+      Asm->OutStreamer.AddComment("DIE offset");
+      Asm->EmitInt32(Entity->getOffset());
+
+      if (Asm->isVerbose())
+        Asm->OutStreamer.AddComment("External Name");
+      Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
+    }
+
+    Asm->OutStreamer.AddComment("End Mark");
+    Asm->EmitInt32(0);
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_end", ID));
+  }
 }
 
 void DwarfDebug::emitDebugPubTypes() {
