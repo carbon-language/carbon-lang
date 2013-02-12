@@ -494,6 +494,14 @@ bool BitcodeReader::ParseAttributeBlock() {
       Attrs.clear();
       break;
     }
+    case bitc::PARAMATTR_CODE_ENTRY: { // ENTRY: [attrgrp0, attrgrp1, ...]
+      for (unsigned i = 0, e = Record.size(); i != e; ++i)
+        Attrs.push_back(MAttributeGroups[Record[i]]);
+
+      MAttributes.push_back(AttributeSet::get(Context, Attrs));
+      Attrs.clear();
+      break;
+    }
     }
   }
 }
