@@ -2455,7 +2455,9 @@ bool GVN::performPRE(Function &F) {
           PREPred = P;
           ++NumWithout;
         } else if (predV == CurInst) {
+          /* CurInst dominates this predecessor. */
           NumWithout = 2;
+          break;
         } else {
           predMap[P] = predV;
           ++NumWith;
