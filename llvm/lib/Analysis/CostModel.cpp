@@ -80,6 +80,13 @@ CostModelAnalysis::runOnFunction(Function &F) {
  return false;
 }
 
+static bool isReverseVectorMask(SmallVector<int, 16> &Mask) {
+  for (unsigned i = 0, MaskSize = Mask.size(); i < MaskSize; ++i)
+    if (Mask[i] > 0 && Mask[i] != (int)(MaskSize - 1 - i))
+      return false;
+  return true;
+}
+
 unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   if (!TTI)
     return -1;
@@ -171,6 +178,17 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
       return TTI->getVectorInstrCost(I->getOpcode(),
                                      IE->getType(), Idx);
     }
+  case Instruction::ShuffleVector: {
+    const ShuffleVectorInst *Shuffle = cast<ShuffleVectorInst>(I);
+    Type *VecTypOp0 = Shuffle->getOperand(0)->getType();
+    unsigned NumVecElems = VecTypOp0->getVectorNumElements();
+    SmallVector<int, 16> Mask = Shuffle->getShuffleMask();
+
+    if (NumVecElems == Mask.size() && isReverseVectorMask(Mask))
+      return TTI->getShuffleCost(TargetTransformInfo::SK_Reverse, VecTypOp0, 0,
+                                 0);
+    return -1;
+  }
   default:
     // We don't have any information on this instruction.
     return -1;
