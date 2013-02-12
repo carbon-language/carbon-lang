@@ -40,6 +40,11 @@ DisableEdgeSplitting("disable-phi-elim-edge-splitting", cl::init(false),
                      cl::Hidden, cl::desc("Disable critical edge splitting "
                                           "during PHI elimination"));
 
+static cl::opt<bool>
+SplitAllCriticalEdges("phi-elim-split-all-critical-edges", cl::init(false),
+                      cl::Hidden, cl::desc("Split all critical edges during "
+                                           "PHI elimination"));
+
 namespace {
   class PHIElimination : public MachineFunctionPass {
     MachineRegisterInfo *MRI; // Machine register information
@@ -550,10 +555,10 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
 
       // Avoid splitting backedges of loops. It would introduce small
       // out-of-line blocks into the loop which is very bad for code placement.
-      if (PreMBB == &MBB)
+      if (PreMBB == &MBB && !SplitAllCriticalEdges)
         continue;
       const MachineLoop *PreLoop = MLI ? MLI->getLoopFor(PreMBB) : 0;
-      if (IsLoopHeader && PreLoop == CurLoop)
+      if (IsLoopHeader && PreLoop == CurLoop && !SplitAllCriticalEdges)
         continue;
 
       // LV doesn't consider a phi use live-out, so isLiveOut only returns true
@@ -562,7 +567,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // there is a risk it may not be coalesced away.
       //
       // If the copy would be a kill, there is no need to split the edge.
-      if (!isLiveOutPastPHIs(Reg, PreMBB))
+      if (!isLiveOutPastPHIs(Reg, PreMBB) && !SplitAllCriticalEdges)
         continue;
 
       DEBUG(dbgs() << PrintReg(Reg) << " live-out before critical edge BB#"
@@ -577,7 +582,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // is likely to be left after coalescing. If we are looking at a loop
       // exiting edge, split it so we won't insert code in the loop, otherwise
       // don't bother.
-      bool ShouldSplit = !isLiveIn(Reg, &MBB);
+      bool ShouldSplit = !isLiveIn(Reg, &MBB) || SplitAllCriticalEdges;
 
       // Check for a loop exiting edge.
       if (!ShouldSplit && CurLoop != PreLoop) {
