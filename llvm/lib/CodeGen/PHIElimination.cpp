@@ -162,8 +162,8 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   // Clean up the lowered PHI instructions.
   for (LoweredPHIMap::iterator I = LoweredPHIs.begin(), E = LoweredPHIs.end();
        I != E; ++I) {
-   if (LIS)
-     LIS->RemoveMachineInstrFromMaps(I->first);
+    if (LIS)
+      LIS->RemoveMachineInstrFromMaps(I->first);
     MF.DeleteMachineInstr(I->first);
   }
 
