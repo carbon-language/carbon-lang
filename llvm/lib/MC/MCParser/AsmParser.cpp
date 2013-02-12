@@ -1446,8 +1446,8 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
     return Error(IDLoc, "unknown directive");
   }
 
-  // _emit
-  if (ParsingInlineAsm && IDVal == "_emit")
+  // _emit or __emit
+  if (ParsingInlineAsm && (IDVal == "_emit" || IDVal == "__emit"))
     return ParseDirectiveEmit(IDLoc, Info);
 
   CheckForValidSection();
