@@ -351,7 +351,9 @@ TEST(ClassTemplate, DoesNotMatchClassTemplatePartialSpecialization) {
 
 TEST(AllOf, AllOverloadsWork) {
   const char Program[] =
-      "struct T { }; int f(int, T*); void g(int x) { T t; f(x, &t); }";
+      "struct T { };"
+      "int f(int, T*, int, int);"
+      "void g(int x) { T t; f(x, &t, 3, 4); }";
   EXPECT_TRUE(matches(Program,
       callExpr(allOf(callee(functionDecl(hasName("f"))),
                      hasArgument(0, declRefExpr(to(varDecl())))))));
@@ -360,6 +362,19 @@ TEST(AllOf, AllOverloadsWork) {
                      hasArgument(0, declRefExpr(to(varDecl()))),
                      hasArgument(1, hasType(pointsTo(
                                         recordDecl(hasName("T")))))))));
+  EXPECT_TRUE(matches(Program,
+      callExpr(allOf(callee(functionDecl(hasName("f"))),
+                     hasArgument(0, declRefExpr(to(varDecl()))),
+                     hasArgument(1, hasType(pointsTo(
+                                        recordDecl(hasName("T"))))),
+                     hasArgument(2, integerLiteral(equals(3)))))));
+  EXPECT_TRUE(matches(Program,
+      callExpr(allOf(callee(functionDecl(hasName("f"))),
+                     hasArgument(0, declRefExpr(to(varDecl()))),
+                     hasArgument(1, hasType(pointsTo(
+                                        recordDecl(hasName("T"))))),
+                     hasArgument(2, integerLiteral(equals(3))),
+                     hasArgument(3, integerLiteral(equals(4)))))));
 }
 
 TEST(DeclarationMatcher, MatchAnyOf) {

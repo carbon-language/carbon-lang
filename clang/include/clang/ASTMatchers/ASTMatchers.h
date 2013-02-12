@@ -1175,17 +1175,39 @@ anyOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4, const M5 &P5) {
 /// \brief Matches if all given matchers match.
 ///
 /// Usable as: Any Matcher
-template<typename M1, typename M2>
+template <typename M1, typename M2>
 internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M1, M2>
 allOf(const M1 &P1, const M2 &P2) {
-  return internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher,
-                                                M1, M2>(P1, P2);
+  return internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M1, M2>(
+      P1, P2);
 }
-template<typename M1, typename M2, typename M3>
-internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M1,
+template <typename M1, typename M2, typename M3>
+internal::PolymorphicMatcherWithParam2<
+    internal::AllOfMatcher, M1,
     internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M2, M3> >
 allOf(const M1 &P1, const M2 &P2, const M3 &P3) {
   return allOf(P1, allOf(P2, P3));
+}
+template <typename M1, typename M2, typename M3, typename M4>
+internal::PolymorphicMatcherWithParam2<
+    internal::AllOfMatcher, M1,
+    internal::PolymorphicMatcherWithParam2<
+        internal::AllOfMatcher, M2, internal::PolymorphicMatcherWithParam2<
+                                        internal::AllOfMatcher, M3, M4> > >
+allOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4) {
+  return allOf(P1, allOf(P2, P3, P4));
+}
+template <typename M1, typename M2, typename M3, typename M4, typename M5>
+internal::PolymorphicMatcherWithParam2<
+    internal::AllOfMatcher, M1,
+    internal::PolymorphicMatcherWithParam2<
+        internal::AllOfMatcher, M2,
+        internal::PolymorphicMatcherWithParam2<
+            internal::AllOfMatcher, M3,
+            internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, M4,
+                                                   M5> > > >
+allOf(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4, const M5 &P5) {
+  return allOf(P1, allOf(P2, P3, P4, P5));
 }
 
 /// @}
