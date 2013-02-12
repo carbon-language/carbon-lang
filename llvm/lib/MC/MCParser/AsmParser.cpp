@@ -444,7 +444,8 @@ private:
   bool ParseDirectiveEndr(SMLoc DirectiveLoc); // ".endr"
 
   // "_emit"
-  bool ParseDirectiveEmit(SMLoc DirectiveLoc, ParseStatementInfo &Info);
+  bool ParseDirectiveEmit(SMLoc DirectiveLoc, ParseStatementInfo &Info,
+                          size_t len);
 
   void initializeDirectiveKindMap();
 };
@@ -1448,7 +1449,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
 
   // _emit or __emit
   if (ParsingInlineAsm && (IDVal == "_emit" || IDVal == "__emit"))
-    return ParseDirectiveEmit(IDLoc, Info);
+    return ParseDirectiveEmit(IDLoc, Info, IDVal.size());
 
   CheckForValidSection();
 
@@ -3985,7 +3986,7 @@ bool AsmParser::ParseDirectiveEndr(SMLoc DirectiveLoc) {
   return false;
 }
 
-bool AsmParser::ParseDirectiveEmit(SMLoc IDLoc, ParseStatementInfo &Info) {
+bool AsmParser::ParseDirectiveEmit(SMLoc IDLoc, ParseStatementInfo &Info, size_t len) {
   const MCExpr *Value;
   SMLoc ExprLoc = getLexer().getLoc();
   if (ParseExpression(Value))
@@ -3997,7 +3998,7 @@ bool AsmParser::ParseDirectiveEmit(SMLoc IDLoc, ParseStatementInfo &Info) {
   if (!isUIntN(8, IntValue) && !isIntN(8, IntValue))
     return Error(ExprLoc, "literal value out of range for directive");
 
-  Info.AsmRewrites->push_back(AsmRewrite(AOK_Emit, IDLoc, 5));
+  Info.AsmRewrites->push_back(AsmRewrite(AOK_Emit, IDLoc, len));
   return false;
 }
 
