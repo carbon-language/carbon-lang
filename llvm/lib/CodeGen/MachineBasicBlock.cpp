@@ -796,8 +796,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
           MachineOperand &MO = I->getOperand(ni);
           unsigned Reg = MO.getReg();
           PHISrcRegs.insert(Reg);
-          if (MO.isUndef() || !isLastMBB)
-            break;
+          if (MO.isUndef())
+            continue;
 
           LiveInterval &LI = LIS->getInterval(Reg);
           VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
@@ -817,16 +817,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
       if (!LI.liveAt(PrevIndex))
         continue;
 
-      bool isLiveOut = false;
-      for (MachineBasicBlock::succ_iterator SI = succ_begin(),
-           SE = succ_end(); SI != SE; ++SI) {
-        MachineBasicBlock *SuccMBB = *SI == NMBB ? Succ : *SI;
-        if (LI.liveAt(LIS->getMBBStartIdx(SuccMBB))) {
-          isLiveOut = true;
-          break;
-        }
-      }
-
+      bool isLiveOut = LI.liveAt(LIS->getMBBStartIdx(Succ));
       if (isLiveOut && isLastMBB) {
         VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
         assert(VNI && "LiveInterval should have VNInfo where it is live.");
