@@ -1,15 +1,15 @@
 // RUN: llvm-mc -triple i386-apple-darwin9 %s -filetype=obj -o - | macho-dump --dump-section-data | FileCheck %s
 
 direction_labels:
-10:     nop
-        jmp 10b
-        nop
+8:  nop
+    jmp 8b
+    nop
 	jne 0f
 0:	nop
 	jne 0b
-        jmp 11f
-11:     nop
-        ret
+    jmp 9f
+9:  nop
+    ret
 
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
