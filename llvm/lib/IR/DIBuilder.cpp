@@ -162,9 +162,9 @@ DIType DIBuilder::createNullPtrType(StringRef Name) {
 
 /// createBasicType - Create debugging information entry for a basic
 /// type, e.g 'char'.
-DIType DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
-                                  uint64_t AlignInBits,
-                                  unsigned Encoding) {
+DIBasicType
+DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
+                           uint64_t AlignInBits, unsigned Encoding) {
   assert(!Name.empty() && "Unable to create type without name");
   // Basic types are encoded in DIBasicType format. Line number, filename,
   // offset and flags are always empty here.
@@ -180,7 +180,7 @@ DIType DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags;
     ConstantInt::get(Type::getInt32Ty(VMContext), Encoding)
   };
-  return DIType(MDNode::get(VMContext, Elts));
+  return DIBasicType(MDNode::get(VMContext, Elts));
 }
 
 /// createQualifiedType - Create debugging information entry for a qualified

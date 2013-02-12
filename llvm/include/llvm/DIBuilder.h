@@ -28,6 +28,7 @@ namespace llvm {
   class LLVMContext;
   class MDNode;
   class StringRef;
+  class DIBasicType;
   class DIDescriptor;
   class DIFile;
   class DIEnumerator;
@@ -108,8 +109,8 @@ namespace llvm {
     /// @param SizeInBits  Size of the type.
     /// @param AlignInBits Type alignment.
     /// @param Encoding    DWARF encoding code, e.g. dwarf::DW_ATE_float.
-    DIType createBasicType(StringRef Name, uint64_t SizeInBits, 
-                           uint64_t AlignInBits, unsigned Encoding);
+    DIBasicType createBasicType(StringRef Name, uint64_t SizeInBits,
+                                uint64_t AlignInBits, unsigned Encoding);
 
     /// createQualifiedType - Create debugging information entry for a qualified
     /// type, e.g. 'const int'.
