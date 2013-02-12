@@ -247,6 +247,7 @@ For API clients and LLVM developers.
    GarbageCollection
    WritingAnLLVMPass
    TableGen/LangRef
+   HowToUseAttributes
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -312,6 +313,8 @@ For API clients and LLVM developers.
 :doc:`MarkedUpDisassembly`
    This document describes the optional rich disassembly output syntax.
 
+:doc:`HowToUseAttributes`
+  Answers some questions about the new Attributes infrastructure.
 
 Development Process Documentation
 =================================
