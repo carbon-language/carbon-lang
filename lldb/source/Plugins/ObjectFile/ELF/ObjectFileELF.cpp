@@ -750,37 +750,41 @@ ParseSymbols(Symtab *symtab,
             break;
         }
 
-        switch (symbol.getType())
+        // If a symbol is undefined do not process it further even if it has a STT type
+        if (symbol_type != eSymbolTypeUndefined)
         {
-        default:
-        case STT_NOTYPE:
-            // The symbol's type is not specified.
-            break;
+            switch (symbol.getType())
+            {
+            default:
+            case STT_NOTYPE:
+                // The symbol's type is not specified.
+                break;
 
-        case STT_OBJECT:
-            // The symbol is associated with a data object, such as a variable,
-            // an array, etc.
-            symbol_type = eSymbolTypeData;
-            break;
+            case STT_OBJECT:
+                // The symbol is associated with a data object, such as a variable,
+                // an array, etc.
+                symbol_type = eSymbolTypeData;
+                break;
 
-        case STT_FUNC:
-            // The symbol is associated with a function or other executable code.
-            symbol_type = eSymbolTypeCode;
-            break;
+            case STT_FUNC:
+                // The symbol is associated with a function or other executable code.
+                symbol_type = eSymbolTypeCode;
+                break;
 
-        case STT_SECTION:
-            // The symbol is associated with a section. Symbol table entries of
-            // this type exist primarily for relocation and normally have
-            // STB_LOCAL binding.
-            break;
+            case STT_SECTION:
+                // The symbol is associated with a section. Symbol table entries of
+                // this type exist primarily for relocation and normally have
+                // STB_LOCAL binding.
+                break;
 
-        case STT_FILE:
-            // Conventionally, the symbol's name gives the name of the source
-            // file associated with the object file. A file symbol has STB_LOCAL
-            // binding, its section index is SHN_ABS, and it precedes the other
-            // STB_LOCAL symbols for the file, if it is present.
-            symbol_type = eSymbolTypeObjectFile;
-            break;
+            case STT_FILE:
+                // Conventionally, the symbol's name gives the name of the source
+                // file associated with the object file. A file symbol has STB_LOCAL
+                // binding, its section index is SHN_ABS, and it precedes the other
+                // STB_LOCAL symbols for the file, if it is present.
+                symbol_type = eSymbolTypeObjectFile;
+                break;
+            }
         }
 
         if (symbol_type == eSymbolTypeInvalid)
