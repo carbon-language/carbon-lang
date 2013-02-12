@@ -285,9 +285,11 @@ AsmToken AsmLexer::LexDigit() {
   // Either octal or hexidecimal.
   long long Value;
   unsigned Radix = doLookAhead(CurPtr, 8);
+  bool isHex = Radix == 16;
   StringRef Result(TokStart, CurPtr - TokStart);
   if (Result.getAsInteger(Radix, Value))
-    return ReturnError(TokStart, "invalid octal number");
+    return ReturnError(TokStart, !isHex ? "invalid octal number" :
+                       "invalid hexdecimal number");
 
   // Consume the [hH].
   if (Radix == 16)
