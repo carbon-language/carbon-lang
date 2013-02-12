@@ -399,7 +399,7 @@ class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
 def TEX_SHADOW : PatLeaf<
   (imm),
   [{uint32_t TType = (uint32_t)N->getZExtValue();
-    return (TType >= 6 && TType <= 8) || TType == 13;
+    return (TType >= 6 && TType <= 8) || (TType >= 11 && TType <= 13);
   }]
 >;
 
