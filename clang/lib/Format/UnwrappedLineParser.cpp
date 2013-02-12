@@ -565,8 +565,8 @@ void UnwrappedLineParser::parseDoWhile() {
 }
 
 void UnwrappedLineParser::parseLabel() {
-  // FIXME: remove all asserts.
-  assert(FormatTok.Tok.is(tok::colon) && "':' expected");
+  if (FormatTok.Tok.isNot(tok::colon))
+    return;
   nextToken();
   unsigned OldLineLevel = Line->Level;
   if (Line->Level > 0)

@@ -353,6 +353,12 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "}");
   verifyFormat("switch (test)\n"
                "  ;");
+  
+  // FIXME: Improve formatting of case labels in macros.
+  verifyFormat("#define SOMECASES  \\\n"
+               "case 1:            \\\n"
+               "  case 2\n", getLLVMStyleWithColumns(20));
+
   verifyGoogleFormat("switch (x) {\n"
                      "  case 1:\n"
                      "    f();\n"
