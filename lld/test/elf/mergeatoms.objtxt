@@ -1,0 +1,5 @@
+RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/foo.o.x86-64 \
+RUN: %p/Inputs/bar.o.x86-64
+RUN: llvm-objdump -s %t1 |  FileCheck -check-prefix=mergeAtoms %s
+
+mergeAtoms:  1000 62617200 666f6f00                    bar.foo.

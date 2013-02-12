@@ -1,0 +1,16 @@
+RUN: lld-core -reader ELF %p/Inputs/constants-merge.x86-64 | FileCheck -check-prefix=mergeAtoms %s
+
+mergeAtoms:  - name:            foo
+mergeAtoms:    scope:           global
+mergeAtoms:    type:            data
+mergeAtoms:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+mergeAtoms:    alignment:       2^3
+mergeAtoms:    section-choice:  custom-required
+mergeAtoms:    section-name:    .data
+mergeAtoms:    references:      
+mergeAtoms:      - kind:            <unknown>
+mergeAtoms:        offset:          3
+mergeAtoms:        target:          L001
+mergeAtoms:      - kind:            layout-before
+mergeAtoms:        offset:          0
+mergeAtoms:        target:          bar

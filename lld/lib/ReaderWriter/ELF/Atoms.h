@@ -69,9 +69,9 @@ public:
     return _addend;
   }
 
-  virtual void setAddend(Addend A) {
-    _addend = A;
-  }
+  virtual void setOffset(uint64_t off) { _offsetInAtom = off; }
+
+  virtual void setAddend(Addend A) { _addend = A; }
 
   virtual void setTarget(const Atom *newAtom) { _target = newAtom; }
 
@@ -438,8 +438,88 @@ private:
   uint64_t _ordinal;
   unsigned int _referenceStartIndex;
   unsigned int _referenceEndIndex;
-  std::vector<ELFReference<ELFT>*> &
-    _referenceList;
+  std::vector<ELFReference<ELFT> *> &_referenceList;
+};
+
+/// \brief This atom stores mergeable Strings
+template <class ELFT> class ELFMergeAtom LLVM_FINAL : public DefinedAtom {
+  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
+
+public:
+  ELFMergeAtom(const ELFFile<ELFT> &file, StringRef sectionName,
+               const Elf_Shdr *section, llvm::ArrayRef<uint8_t> contentData,
+               uint64_t offset)
+      : _owningFile(file), _sectionName(sectionName), _section(section),
+        _contentData(contentData), _offset(offset) {
+    static uint64_t orderNumber = 0;
+    _ordinal = ++orderNumber;
+  }
+
+  virtual const class ELFFile<ELFT> &file() const {
+    return _owningFile;
+  } virtual StringRef name() const {
+    return "";
+  }
+
+  virtual uint64_t offset() const { return _offset; }
+
+  virtual uint64_t ordinal() const { return _ordinal; }
+
+  virtual uint64_t size() const { return _contentData.size(); }
+
+  virtual Scope scope() const { return scopeTranslationUnit; }
+
+  virtual Interposable interposable() const { return interposeNo; }
+
+  virtual Merge merge() const { return mergeByContent; }
+
+  virtual ContentType contentType() const { return typeConstant; }
+
+  virtual Alignment alignment() const {
+    return Alignment(llvm::Log2_64(_section->sh_addralign));
+  }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return _sectionName; }
+
+  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
+
+  virtual DeadStripKind deadStrip() const { return deadStripNormal; }
+
+  virtual ContentPermissions permissions() const { return permR__; }
+
+  virtual bool isThumb() const { return false; }
+
+  virtual bool isAlias() const { return false; }
+
+  virtual llvm::ArrayRef<uint8_t> rawContent() const { return _contentData; }
+
+  DefinedAtom::reference_iterator begin() const {
+    uintptr_t index = 0;
+    const void *it = reinterpret_cast<const void *>(index);
+    return reference_iterator(*this, it);
+  }
+
+  DefinedAtom::reference_iterator end() const {
+    uintptr_t index = 0;
+    const void *it = reinterpret_cast<const void *>(index);
+    return reference_iterator(*this, it);
+  }
+
+  const Reference *derefIterator(const void *It) const { return nullptr; }
+
+  void incrementIterator(const void *&It) const {}
+
+private:
+
+  const ELFFile<ELFT> &_owningFile;
+  StringRef _sectionName;
+  const Elf_Shdr *_section;
+  /// \brief Holds the bits that make up the atom.
+  llvm::ArrayRef<uint8_t> _contentData;
+  uint64_t _ordinal;
+  uint64_t _offset;
 };
 
 /// \brief An atom from a shared library.
