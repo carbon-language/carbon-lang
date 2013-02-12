@@ -2371,8 +2371,8 @@ bool GVN::processBlock(BasicBlock *BB) {
          E = InstrsToErase.end(); I != E; ++I) {
       DEBUG(dbgs() << "GVN removed: " << **I << '\n');
       if (MD) MD->removeInstruction(*I);
-      (*I)->eraseFromParent();
       DEBUG(verifyRemoved(*I));
+      (*I)->eraseFromParent();
     }
     InstrsToErase.clear();
 
@@ -2504,8 +2504,8 @@ bool GVN::performPRE(Function &F) {
       // the PRE predecessor.  This is typically because of loads which
       // are not value numbered precisely.
       if (!success) {
-        delete PREInstr;
         DEBUG(verifyRemoved(PREInstr));
+        delete PREInstr;
         continue;
       }
 
@@ -2551,8 +2551,8 @@ bool GVN::performPRE(Function &F) {
 
       DEBUG(dbgs() << "GVN PRE removed: " << *CurInst << '\n');
       if (MD) MD->removeInstruction(CurInst);
-      CurInst->eraseFromParent();
       DEBUG(verifyRemoved(CurInst));
+      CurInst->eraseFromParent();
       Changed = true;
     }
   }
