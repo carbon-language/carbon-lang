@@ -195,6 +195,8 @@ DECLARE_FUNCTION_AND_WRAPPER(int, pthread_create,
                              void *(*start_routine)(void*), void *arg);
 # endif
 
+// stdio.h
+# if SANITIZER_INTERCEPT_SCANF
 DECLARE_FUNCTION_AND_WRAPPER(int, vscanf, const char *format, va_list ap);
 DECLARE_FUNCTION_AND_WRAPPER(int, vsscanf, const char *str, const char *format,
                              va_list ap);
@@ -205,6 +207,18 @@ DECLARE_FUNCTION_AND_WRAPPER(int, fscanf,
                              void* stream, const char *format, ...);
 DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,  // NOLINT
                              const char *str, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_vscanf, const char *format,
+                             va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_vsscanf, const char *str,
+                             const char *format, va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_vfscanf, void *stream,
+                             const char *format, va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_scanf, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_fscanf,
+                             void* stream, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_sscanf,  // NOLINT
+                             const char *str, const char *format, ...);
+# endif
 
 # if defined(__APPLE__)
 typedef void* pthread_workqueue_t;
