@@ -4294,6 +4294,21 @@ static bool isVZIP_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult){
   return true;
 }
 
+/// \return true if this is a reverse operation on an vector.
+static bool isReverseMask(ArrayRef<int> M, EVT VT) {
+  unsigned NumElts = VT.getVectorNumElements();
+  // Make sure the mask has the right size.
+  if (NumElts != M.size())
+      return false;
+
+  // Look for <15, ..., 3, -1, 1, 0>.
+  for (unsigned i = 0; i != NumElts; ++i)
+    if (M[i] >= 0 && M[i] != (int) (NumElts - 1 - i))
+      return false;
+
+  return true;
+}
+
 // If N is an integer constant that can be moved into a register in one
 // instruction, return an SDValue of such a constant (will become a MOV
 // instruction).  Otherwise return null.
@@ -4689,7 +4704,8 @@ ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isVZIPMask(M, VT, WhichResult) ||
           isVTRN_v_undef_Mask(M, VT, WhichResult) ||
           isVUZP_v_undef_Mask(M, VT, WhichResult) ||
-          isVZIP_v_undef_Mask(M, VT, WhichResult));
+          isVZIP_v_undef_Mask(M, VT, WhichResult) ||
+          ((VT == MVT::v8i16 || VT == MVT::v16i8) && isReverseMask(M, VT)));
 }
 
 /// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
@@ -4791,6 +4807,23 @@ static SDValue LowerVECTOR_SHUFFLEv8i8(SDValue Op,
   return DAG.getNode(ARMISD::VTBL2, DL, MVT::v8i8, V1, V2,
                      DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i8,
                                  &VTBLMask[0], 8));
+}
+
+static SDValue LowerReverse_VECTOR_SHUFFLEv16i8_v8i16(SDValue Op,
+                                                      SelectionDAG &DAG) {
+  DebugLoc DL = Op.getDebugLoc();
+  SDValue OpLHS = Op.getOperand(0);
+  EVT VT = OpLHS.getValueType();
+
+  assert((VT == MVT::v8i16 || VT == MVT::v16i8) &&
+         "Expect an v8i16/v16i8 type");
+  OpLHS = DAG.getNode(ARMISD::VREV64, DL, VT, OpLHS);
+  // For a v16i8 type: After the VREV, we have got <8, ...15, 8, ..., 0>. Now,
+  // extract the first 8 bytes into the top double word and the last 8 bytes
+  // into the bottom double word. The v8i16 case is similar.
+  unsigned ExtractNum = (VT == MVT::v16i8) ? 8 : 4;
+  return DAG.getNode(ARMISD::VEXT, DL, VT, OpLHS, OpLHS,
+                     DAG.getConstant(ExtractNum, MVT::i32));
 }
 
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
@@ -4929,6 +4962,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
     SDValue Val = DAG.getNode(ARMISD::BUILD_VECTOR, dl, VecVT, &Ops[0],NumElts);
     return DAG.getNode(ISD::BITCAST, dl, VT, Val);
   }
+
+  if ((VT == MVT::v8i16 || VT == MVT::v16i8) && isReverseMask(ShuffleMask, VT))
+    return LowerReverse_VECTOR_SHUFFLEv16i8_v8i16(Op, DAG);
 
   if (VT == MVT::v8i8) {
     SDValue NewOp = LowerVECTOR_SHUFFLEv8i8(Op, ShuffleMask, DAG);

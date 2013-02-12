@@ -133,3 +133,30 @@ define i16 @foldBuildVectors() {
   %3 = extractelement <8 x i16> %2, i32 0
   ret i16 %3
 }
+
+; Test that we are generating vrev and vext for reverse shuffles of v8i16
+; shuffles.
+; CHECK: reverse_v8i16
+define void @reverse_v8i16(<8 x i16>* %loadaddr, <8 x i16>* %storeaddr) {
+  %v0 = load <8 x i16>* %loadaddr
+  ; CHECK: vrev64.16
+  ; CHECK: vext.16
+  %v1 = shufflevector <8 x i16> %v0, <8 x i16> undef,
+              <8 x i32> <i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
+  store <8 x i16> %v1, <8 x i16>* %storeaddr
+  ret void
+}
+
+; Test that we are generating vrev and vext for reverse shuffles of v16i8
+; shuffles.
+; CHECK: reverse_v16i8
+define void @reverse_v16i8(<16 x i8>* %loadaddr, <16 x i8>* %storeaddr) {
+  %v0 = load <16 x i8>* %loadaddr
+  ; CHECK: vrev64.8
+  ; CHECK: vext.8
+  %v1 = shufflevector <16 x i8> %v0, <16 x i8> undef,
+       <16 x i32> <i32 15, i32 14, i32 13, i32 12, i32 11, i32 10, i32 9, i32 8,
+                   i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
+  store <16 x i8> %v1, <16 x i8>* %storeaddr
+  ret void
+}
