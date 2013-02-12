@@ -214,6 +214,13 @@ namespace llvm {
       return Indexes->getMBBFromIndex(index);
     }
 
+    void insertMBBInMaps(MachineBasicBlock *MBB) {
+      Indexes->insertMBBInMaps(MBB);
+      assert(unsigned(MBB->getNumber()) == RegMaskBlocks.size() &&
+             "Blocks must be added in order.");
+      RegMaskBlocks.push_back(std::make_pair(MBB->getNumber(), 0));
+    }
+
     SlotIndex InsertMachineInstrInMaps(MachineInstr *MI) {
       return Indexes->insertMachineInstrInMaps(MI);
     }

@@ -664,8 +664,12 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         " BB#" << getNumber()
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << Succ->getNumber() << '\n');
+
+  LiveIntervals *LIS = P->getAnalysisIfAvailable<LiveIntervals>();
   SlotIndexes *Indexes = P->getAnalysisIfAvailable<SlotIndexes>();
-  if (Indexes)
+  if (LIS)
+    LIS->insertMBBInMaps(NMBB);
+  else if (Indexes)
     Indexes->insertMBBInMaps(NMBB);
 
   // On some targets like Mips, branches may kill virtual registers. Make sure
@@ -771,7 +775,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     LV->addNewBlock(NMBB, this, Succ);
   }
 
-  if (LiveIntervals *LIS = P->getAnalysisIfAvailable<LiveIntervals>()) {
+  if (LIS) {
     // After splitting the edge and updating SlotIndexes, live intervals may be
     // in one of two situations, depending on whether this block was the last in
     // the function. If the original block was the last in the function, all live
