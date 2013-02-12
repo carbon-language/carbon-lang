@@ -543,7 +543,7 @@ INTERCEPTOR(char *, getcwd, char *buf, SIZE_T size) {
   ENSURE_MSAN_INITED();
   char *res = REAL(getcwd)(buf, size);
   if (res)
-    __msan_unpoison(buf, REAL(strlen)(buf) + 1);
+    __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
 

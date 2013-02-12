@@ -605,6 +605,13 @@ TEST(MemorySanitizer, getcwd) {
   EXPECT_NOT_POISONED(path[0]);
 }
 
+TEST(MemorySanitizer, getcwd_gnu) {
+  char* res = getcwd(NULL, 0);
+  assert(res);
+  EXPECT_NOT_POISONED(res[0]);
+  free(res);
+}
+
 TEST(MemorySanitizer, realpath) {
   const char* relpath = ".";
   char path[PATH_MAX + 1];
