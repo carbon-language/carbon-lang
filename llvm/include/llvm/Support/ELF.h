@@ -828,14 +828,14 @@ enum {
 };
 
 // Hexagon specific Section indexes for common small data
-// Release 5 ABI 
+// Release 5 ABI
 enum {
   SHN_HEXAGON_SCOMMON     = 0xff00,       // Other access sizes
   SHN_HEXAGON_SCOMMON_1   = 0xff01,       // Byte-sized access
   SHN_HEXAGON_SCOMMON_2   = 0xff02,       // Half-word-sized access
   SHN_HEXAGON_SCOMMON_4   = 0xff03,       // Word-sized access
   SHN_HEXAGON_SCOMMON_8   = 0xff04        // Double-word-size access
-};   
+};
 
 // ELF Relocation types for Hexagon
 // Release 5 ABI
@@ -996,7 +996,7 @@ enum {
   SHT_GNU_verneed   = 0x6ffffffe, // GNU version references.
   SHT_GNU_versym    = 0x6fffffff, // GNU symbol versions table.
   SHT_HIOS          = 0x6fffffff, // Highest operating system-specific type.
-  SHT_LOPROC        = 0x70000000, // Lowest processor architecture-specific type.
+  SHT_LOPROC        = 0x70000000, // Lowest processor arch-specific type.
   // Fixme: All this is duplicated in MCSectionELF. Why??
   // Exception Index table
   SHT_ARM_EXIDX           = 0x70000001U,
@@ -1006,14 +1006,14 @@ enum {
   SHT_ARM_ATTRIBUTES      = 0x70000003U,
   SHT_ARM_DEBUGOVERLAY    = 0x70000004U,
   SHT_ARM_OVERLAYSECTION  = 0x70000005U,
-  SHT_HEX_ORDERED         = 0x70000000, // Link editor is to sort the entries in 
+  SHT_HEX_ORDERED         = 0x70000000, // Link editor is to sort the entries in
                                         // this section based on their sizes
   SHT_X86_64_UNWIND       = 0x70000001, // Unwind information
 
   SHT_MIPS_REGINFO        = 0x70000006, // Register usage information
   SHT_MIPS_OPTIONS        = 0x7000000d, // General options
 
-  SHT_HIPROC        = 0x7fffffff, // Highest processor architecture-specific type.
+  SHT_HIPROC        = 0x7fffffff, // Highest processor arch-specific type.
   SHT_LOUSER        = 0x80000000, // Lowest type reserved for applications.
   SHT_HIUSER        = 0xffffffff  // Highest type reserved for applications.
 };
@@ -1077,7 +1077,7 @@ enum {
   // section that does not set this flag.
   SHF_X86_64_LARGE = 0x10000000,
 
-  // All sections with the GPREL flag are grouped into a global data area 
+  // All sections with the GPREL flag are grouped into a global data area
   // for faster accesses
   SHF_HEX_GPREL = 0x10000000,
 
@@ -1117,7 +1117,7 @@ struct Elf64_Sym {
   Elf64_Word      st_name;  // Symbol name (index into string table)
   unsigned char   st_info;  // Symbol's type and binding attributes
   unsigned char   st_other; // Must be zero; reserved
-  Elf64_Half      st_shndx; // Which section (header table index) it's defined in
+  Elf64_Half      st_shndx; // Which section (header tbl index) it's defined in
   Elf64_Addr      st_value; // Value or address associated with the symbol
   Elf64_Xword     st_size;  // Size of the symbol
 
@@ -1260,7 +1260,7 @@ struct Elf64_Phdr {
   Elf64_Word   p_flags;  // Segment flags
   Elf64_Off    p_offset; // File offset where segment is located, in bytes
   Elf64_Addr   p_vaddr;  // Virtual address of beginning of segment
-  Elf64_Addr   p_paddr;  // Physical address of beginning of segment (OS-specific)
+  Elf64_Addr   p_paddr;  // Physical addr of beginning of segment (OS-specific)
   Elf64_Xword  p_filesz; // Num. of bytes in file image of segment (may be zero)
   Elf64_Xword  p_memsz;  // Num. of bytes in mem image of segment (may be zero)
   Elf64_Xword  p_align;  // Segment alignment constraint
@@ -1291,7 +1291,7 @@ enum {
   PT_GNU_RELRO  = 0x6474e552, // Read-only after relocation.
 
   // ARM program header types.
-  PT_ARM_ARCHEXT = 0x70000000, // Platform architecture compatibility information
+  PT_ARM_ARCHEXT = 0x70000000, // Platform architecture compatibility info
   // These all contain stack unwind tables.
   PT_ARM_EXIDX   = 0x70000001,
   PT_ARM_UNWIND  = 0x70000001

@@ -135,7 +135,8 @@ class ELFObjectWriter : public MCObjectWriter {
     const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
                                             const MCFixup &Fixup,
                                             bool IsPCRel) const {
-      return TargetObjectWriter->undefinedExplicitRelSym(Target, Fixup, IsPCRel);
+      return TargetObjectWriter->undefinedExplicitRelSym(Target, Fixup,
+                                                         IsPCRel);
     }
 
     bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
