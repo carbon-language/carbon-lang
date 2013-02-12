@@ -605,14 +605,15 @@ namespace llvm {
 
       IndexListEntry *startEntry = 0;
       IndexListEntry *endEntry = 0;
+      IndexList::iterator newItr;
       if (nextMBB == mbb->getParent()->end()) {
         startEntry = &indexList.back();
         endEntry = createEntry(0, 0);
-        indexList.insertAfter(startEntry, endEntry);
+        newItr = indexList.insertAfter(startEntry, endEntry);
       } else {
         startEntry = createEntry(0, 0);
         endEntry = getMBBStartIdx(nextMBB).listEntry();
-        indexList.insert(endEntry, startEntry);
+        newItr = indexList.insert(endEntry, startEntry);
       }
 
       SlotIndex startIdx(startEntry, SlotIndex::Slot_Block);
@@ -629,9 +630,7 @@ namespace llvm {
       MBBRanges.push_back(std::make_pair(startIdx, endIdx));
       idx2MBBMap.push_back(IdxMBBPair(startIdx, mbb));
 
-      // FIXME: Renumber locally instead of renumbering the whole function every
-      // time a new block is inserted.
-      renumberIndexes();
+      renumberIndexes(newItr);
       std::sort(idx2MBBMap.begin(), idx2MBBMap.end(), Idx2MBBCompare());
     }
 
