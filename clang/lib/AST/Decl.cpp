@@ -610,11 +610,8 @@ void NamedDecl::ClearLinkageCache() {
 }
 
 Linkage NamedDecl::getLinkage() const {
-  if (HasCachedLinkage) {
-    assert(Linkage(CachedLinkage) ==
-           getLVForDecl(this, true).linkage());
+  if (HasCachedLinkage)
     return Linkage(CachedLinkage);
-  }
 
   CachedLinkage = getLVForDecl(this, true).linkage();
   HasCachedLinkage = 1;
