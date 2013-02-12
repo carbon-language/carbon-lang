@@ -227,6 +227,12 @@ CommandInterpreter::Initialize ()
         AddAlias ("list", cmd_obj_sp);
     }
 
+    cmd_obj_sp = GetCommandSPExact ("_regexp-env", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("env", cmd_obj_sp);
+    }
+
     cmd_obj_sp = GetCommandSPExact ("memory read", false);
     if (cmd_obj_sp)
         AddAlias ("x", cmd_obj_sp);
@@ -597,6 +603,21 @@ CommandInterpreter::LoadCommandDictionary ()
         {
             CommandObjectSP list_regex_cmd_sp(list_regex_cmd_ap.release());
             m_command_dict[list_regex_cmd_sp->GetCommandName ()] = list_regex_cmd_sp;
+        }
+    }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    env_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                     "_regexp-env",
+                                                     "Implements a shortcut to viewing and setting environment variables.",
+                                                     "_regexp-env\n_regexp-env FOO=BAR", 2));
+    if (env_regex_cmd_ap.get())
+    {
+        if (env_regex_cmd_ap->AddRegexCommand("^$", "settings show target.env-vars") &&
+            env_regex_cmd_ap->AddRegexCommand("^([A-Za-z_][A-Za-z_0-9]*=.*)$", "settings set target.env-vars %1"))
+        {
+            CommandObjectSP env_regex_cmd_sp(env_regex_cmd_ap.release());
+            m_command_dict[env_regex_cmd_sp->GetCommandName ()] = env_regex_cmd_sp;
         }
     }
 
