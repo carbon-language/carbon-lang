@@ -1173,6 +1173,12 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
                                  TypeSourceInfo **Types,
                                  Expr **Exprs,
                                  unsigned NumAssocs) {
+  if (ControllingExpr->getType()->isPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(ControllingExpr);
+    if (result.isInvalid()) return ExprError();
+    ControllingExpr = result.take();
+  }
+
   bool TypeErrorFound = false,
        IsResultDependent = ControllingExpr->isTypeDependent(),
        ContainsUnexpandedParameterPack
