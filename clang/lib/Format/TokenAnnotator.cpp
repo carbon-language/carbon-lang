@@ -729,7 +729,7 @@ public:
       // found, insert fake parenthesis and return.
       if (Current == NULL || Current->is(tok::semi) || closesScope(*Current) ||
           ((Current->Type == TT_BinaryOperator || Current->is(tok::comma)) &&
-           getPrecedence(*Current) < Precedence)) {
+           getPrecedence(*Current) < static_cast<prec::Level>(Precedence))) {
         if (OperatorFound) {
           ++Start->FakeLParens;
           if (Current != NULL)
