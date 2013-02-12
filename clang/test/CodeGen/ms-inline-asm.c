@@ -298,8 +298,8 @@ void t26() {
 // CHECK: t26
 // CHECK: call void asm sideeffect inteldialect "pushad", "~{dirflag},~{fpsr},~{flags}"() nounwind
 // CHECK: call void asm sideeffect inteldialect "mov eax, $$0", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
-// CHECK: call void asm sideeffect inteldialect "__emit 0fh", "~{dirflag},~{fpsr},~{flags}"() nounwind
-// CHECK: call void asm sideeffect inteldialect "__emit 0a2h", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect ".byte 0fh", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect ".byte 0a2h", "~{dirflag},~{fpsr},~{flags}"() nounwind
 // CHECK: call void asm sideeffect inteldialect "popad", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }
 
