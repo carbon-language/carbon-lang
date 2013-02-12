@@ -1477,9 +1477,9 @@ public:
   // Low-level accessors
     
   /// \brief Mark the lookup table as needing to be built.  This should be
-  /// used only if setHasExternalLexicalStorage() has been called.
+  /// used only if setHasExternalLexicalStorage() has been called on any
+  /// decl context for which this is the primary context.
   void setMustBuildLookupTable() {
-    assert(ExternalLexicalStorage && "Requires external lexical storage");
     LookupPtr.setInt(true);
   }
 

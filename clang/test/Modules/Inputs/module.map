@@ -175,3 +175,7 @@ module ignored_macros {
 module cxx_many_overloads {
   header "cxx-many-overloads.h"
 }
+
+module cxx_inline_namespace {
+  header "cxx-inline-namespace.h"
+}
