@@ -5163,8 +5163,15 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     EVT ShImmTy = getShiftAmountTy(Result.getValueType());
     if (!isUIntN(ShImmTy.getSizeInBits(), ShLeftAmt))
       ShImmTy = VT;
-    Result = DAG.getNode(ISD::SHL, N0.getDebugLoc(), VT,
-                         Result, DAG.getConstant(ShLeftAmt, ShImmTy));
+    // If the shift amount is as large as the result size (but, presumably,
+    // no larger than the source) then the useful bits of the result are
+    // zero; we can't simply return the shortened shift, because the result
+    // of that operation is undefined.
+    if (ShLeftAmt >= VT.getSizeInBits())
+      Result = DAG.getConstant(0, VT);
+    else
+      Result = DAG.getNode(ISD::SHL, N0.getDebugLoc(), VT,
+                          Result, DAG.getConstant(ShLeftAmt, ShImmTy));
   }
 
   // Return the new loaded value.
