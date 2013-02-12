@@ -87,6 +87,7 @@ table.checkers td {
   border-bottom: 1px #cccccc dotted;
 }
 
+table.checkers td.aligned { text-align: center; vertical-align: middle; }
 table.checkers col.namedescr { width: 45% }
 table.checkers col.example { width: 55% }
 table.checkers col.progress { width: 84px }
