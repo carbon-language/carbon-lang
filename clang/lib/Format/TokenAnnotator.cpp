@@ -705,7 +705,7 @@ public:
   ExpressionParser(AnnotatedLine &Line) : Current(&Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
-  void parse(unsigned Precedence = prec::Unknown) {
+  void parse(signed Precedence = prec::Unknown) {
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
@@ -729,7 +729,7 @@ public:
       // found, insert fake parenthesis and return.
       if (Current == NULL || Current->is(tok::semi) || closesScope(*Current) ||
           ((Current->Type == TT_BinaryOperator || Current->is(tok::comma)) &&
-           getPrecedence(*Current) < static_cast<prec::Level>(Precedence))) {
+           getPrecedence(*Current) < Precedence)) {
         if (OperatorFound) {
           ++Start->FakeLParens;
           if (Current != NULL)
