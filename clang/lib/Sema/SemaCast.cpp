@@ -2111,12 +2111,6 @@ void CastOperation::CheckCStyleCast() {
       SrcExpr = ExprError();
       return;
     }
-    if (SrcExpr.get()->getType()->isHalfType()) {
-      Self.Diag(SrcExpr.get()->getLocStart(), diag::err_opencl_cast_from_half)
-        << SrcType << SrcExpr.get()->getSourceRange();
-      SrcExpr = ExprError();
-      return;
-    }
   }
 
   // ARC imposes extra restrictions on casts.

@@ -2642,6 +2642,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                 S.Diag(Param->getLocation(),
                   diag::err_opencl_half_argument) << ArgTy;
                 D.setInvalidType();
+                Param->setInvalidDecl();
               }
             } else {
               S.Diag(Param->getLocation(),

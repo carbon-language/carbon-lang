@@ -420,12 +420,9 @@ def err_object_cannot_be_passed_returned_by_value : Error<
   "; did you forget * in %1?">;
 def err_parameters_retval_cannot_have_fp16_type : Error<
   "%select{parameters|function return value}0 cannot have __fp16 type; did you forget * ?">;
-def err_opencl_half_dereferencing : Error<
-  "dereferencing pointer of type %0 is not allowed">;
-def err_opencl_half_subscript : Error<
-  "subscript to array of type %0 is not allowed">;
+def err_opencl_half_load_store : Error<
+  "%select{loading directly from|assigning directly to}0 pointer to type %1 is not allowed">;
 def err_opencl_cast_to_half : Error<"casting to type %0 is not allowed">;
-def err_opencl_cast_from_half : Error<"casting from type %0 is not allowed">;
 def err_opencl_half_declaration : Error<
   "declaring variable of type %0 is not allowed">;
 def err_opencl_half_argument : Error<

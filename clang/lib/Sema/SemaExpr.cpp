@@ -482,6 +482,14 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   if (T->isVoidType())
     return Owned(E);
 
+  // OpenCL usually rejects direct accesses to values of 'half' type.
+  if (getLangOpts().OpenCL && !getOpenCLOptions().cl_khr_fp16 &&
+      T->isHalfType()) {
+    Diag(E->getExprLoc(), diag::err_opencl_half_load_store)
+      << 0 << T;
+    return ExprError();
+  }
+
   CheckForNullPointerDereference(*this, E);
 
   // C++ [conv.lval]p1:
@@ -3487,13 +3495,6 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
                           diag::err_subscript_incomplete_type, BaseExpr))
     return ExprError();
 
-  if (ResultType->isHalfType() && getLangOpts().OpenCL &&
-      !getOpenCLOptions().cl_khr_fp16) {
-    Diag(BaseExpr->getLocStart(), diag::err_opencl_half_subscript) << ResultType
-      << BaseExpr->getType() << BaseExpr->getSourceRange();
-    return ExprError();
-  }
-
   assert(VK == VK_RValue || LangOpts.CPlusPlus ||
          !ResultType.isCForbiddenLValueType());
 
@@ -5662,7 +5663,6 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
   // them.
   LHSType = Context.getCanonicalType(LHSType).getUnqualifiedType();
   RHSType = Context.getCanonicalType(RHSType).getUnqualifiedType();
-
 
   // Common case: no conversion required.
   if (LHSType == RHSType) {
@@ -8238,13 +8238,6 @@ static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
 
   if (Result.isNull()) {
     S.Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
-      << OpTy << Op->getSourceRange();
-    return QualType();
-  }
-
-  if (Result->isHalfType() && S.getLangOpts().OpenCL &&
-      !S.getOpenCLOptions().cl_khr_fp16) {
-    S.Diag(OpLoc, diag::err_opencl_half_dereferencing)
       << OpTy << Op->getSourceRange();
     return QualType();
   }
