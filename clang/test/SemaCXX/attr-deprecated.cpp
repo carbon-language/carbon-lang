@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fexceptions
 class A {
   void f() __attribute__((deprecated)); // expected-note 2 {{declared here}}
   void g(A* a);
@@ -231,5 +231,16 @@ namespace test6 {
     D<int>::Enum x;
     x = D<int>::d0;
     x = D<int>::d1; // expected-warning {{'d1' is deprecated}}
+  }
+}
+
+namespace test7 {
+  struct X {
+    void* operator new(unsigned long) __attribute__((deprecated));  // expected-note{{'operator new' declared here}}
+    void operator delete(void *) __attribute__((deprecated));  // expected-note{{'operator delete' declared here}}
+  };
+
+  void test() {
+    X *x = new X;  // expected-warning{{'operator new' is deprecated}} expected-warning{{'operator delete' is deprecated}}
   }
 }

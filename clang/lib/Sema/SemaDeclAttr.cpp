@@ -2849,6 +2849,7 @@ static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
              CleanupAttr(Attr.getRange(), S.Context, FD,
                          Attr.getAttributeSpellingListIndex()));
   S.MarkFunctionReferenced(Attr.getParameterLoc(), FD);
+  S.DiagnoseUseOfDecl(FD, Attr.getParameterLoc());
 }
 
 /// Handle __attribute__((format_arg((idx)))) attribute based on

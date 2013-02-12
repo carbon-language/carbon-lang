@@ -269,3 +269,40 @@ namespace test11 {
     (void)b1->member;  // expected-note {{used here}}
   }
 }
+
+namespace test12 {
+  class T1 {}; class T2 {}; class T3 {}; class T4 {}; class T5 {}; class T6 {};
+  class T7 {};
+
+  namespace {
+    struct Cls {
+      virtual void f(int) = 0;
+      virtual void f(int, double) = 0;
+      void g(int);  // expected-warning {{function 'test12::<anonymous namespace>::Cls::g' has internal linkage but is not defined}}
+      void g(int, double);
+      virtual operator T1() = 0;
+      virtual operator T2() = 0;
+      virtual operator T3&() = 0;
+      operator T4();  // expected-warning {{function 'test12::<anonymous namespace>::Cls::operator T4' has internal linkage but is not defined}}
+      operator T5();  // expected-warning {{function 'test12::<anonymous namespace>::Cls::operator T5' has internal linkage but is not defined}}
+      operator T6&();  // expected-warning {{function 'test12::<anonymous namespace>::Cls::operator class test12::T6 &' has internal linkage but is not defined}}
+    };
+
+    struct Cls2 {
+      Cls2(T7);  // expected-warning {{function 'test12::<anonymous namespace>::Cls2::Cls2' has internal linkage but is not defined}}
+    };
+  }
+
+  void test(Cls &c) {
+    c.f(7);
+    c.g(7);  // expected-note {{used here}}
+    (void)static_cast<T1>(c);
+    T2 t2 = c;
+    T3 &t3 = c;
+    (void)static_cast<T4>(c); // expected-note {{used here}}
+    T5 t5 = c;  // expected-note {{used here}}
+    T6 &t6 = c;  // expected-note {{used here}}
+
+    Cls2 obj1((T7()));  // expected-note {{used here}}
+  }
+}

@@ -11210,7 +11210,9 @@ void Sema::MarkMemberReferenced(MemberExpr *E) {
       if (Method->isPure())
         OdrUse = false;
   }
-  MarkExprReferenced(*this, E->getMemberLoc(), E->getMemberDecl(), E, OdrUse);
+  SourceLocation Loc = E->getMemberLoc().isValid() ?
+                            E->getMemberLoc() : E->getLocStart();
+  MarkExprReferenced(*this, Loc, E->getMemberDecl(), E, OdrUse);
 }
 
 /// \brief Perform marking for a reference to an arbitrary declaration.  It

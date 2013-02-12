@@ -9916,7 +9916,6 @@ static ExprResult FinishOverloadedCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   switch (OverloadResult) {
   case OR_Success: {
     FunctionDecl *FDecl = (*Best)->Function;
-    SemaRef.MarkFunctionReferenced(Fn->getExprLoc(), FDecl);
     SemaRef.CheckUnresolvedLookupAccess(ULE, (*Best)->FoundDecl);
     SemaRef.DiagnoseUseOfDecl(FDecl, ULE->getNameLoc());
     Fn = SemaRef.FixOverloadedFunctionReference(Fn, (*Best)->FoundDecl, FDecl);
@@ -10799,7 +10798,6 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                             Best)) {
     case OR_Success:
       Method = cast<CXXMethodDecl>(Best->Function);
-      MarkFunctionReferenced(UnresExpr->getMemberLoc(), Method);
       FoundDecl = Best->FoundDecl;
       CheckUnresolvedMemberAccess(UnresExpr, Best->FoundDecl);
       DiagnoseUseOfDecl(Best->FoundDecl, UnresExpr->getNameLoc());
