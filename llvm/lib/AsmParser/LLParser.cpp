@@ -102,7 +102,7 @@ bool LLParser::ValidateEndOfModule() {
       AttrBuilder FnAttrs(AS.getFnAttributes(), AttributeSet::FunctionIndex);
       AS = AS.removeAttributes(Context, AttributeSet::FunctionIndex,
                                AS.getFnAttributes());
-
+      FnAttrs.merge(B);
       AS = AS.addAttributes(Context, AttributeSet::FunctionIndex,
                             AttributeSet::get(Context,
                                               AttributeSet::FunctionIndex,
@@ -113,7 +113,7 @@ bool LLParser::ValidateEndOfModule() {
       AttrBuilder FnAttrs(AS.getFnAttributes(), AttributeSet::FunctionIndex);
       AS = AS.removeAttributes(Context, AttributeSet::FunctionIndex,
                                AS.getFnAttributes());
-
+      FnAttrs.merge(B);
       AS = AS.addAttributes(Context, AttributeSet::FunctionIndex,
                             AttributeSet::get(Context,
                                               AttributeSet::FunctionIndex,
