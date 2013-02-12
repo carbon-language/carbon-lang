@@ -28,21 +28,23 @@ static const char scanf_buf[] = "Test string.";
 static size_t scanf_buf_size = sizeof(scanf_buf);
 static const unsigned SCANF_ARGS_MAX = 16;
 
-static void testScanf3(void *ctx, int result, const char *format, ...) {
+static void testScanf3(void *ctx, int result, bool allowGnuMalloc,
+                       const char *format, ...) {
   va_list ap;
   va_start(ap, format);
-  scanf_common(ctx, result, format, ap);
+  scanf_common(ctx, result, allowGnuMalloc, format, ap);
   va_end(ap);
 }
 
-static void testScanf2(const char *format, int scanf_result, unsigned n,
+static void testScanf2(const char *format, int scanf_result,
+                       bool allowGnuMalloc, unsigned n,
                        va_list expected_sizes) {
   std::vector<unsigned> scanf_sizes;
   // 16 args should be enough.
-  testScanf3((void *)&scanf_sizes, scanf_result, format, scanf_buf, scanf_buf,
+  testScanf3((void *)&scanf_sizes, scanf_result, allowGnuMalloc, format,
              scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf,
              scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf, scanf_buf,
-             scanf_buf, scanf_buf);
+             scanf_buf, scanf_buf, scanf_buf, scanf_buf);
   ASSERT_EQ(n, scanf_sizes.size()) << "Unexpected number of format arguments: '"
                                    << format << "'";
   for (unsigned i = 0; i < n; ++i)
@@ -54,7 +56,7 @@ static void testScanf2(const char *format, int scanf_result, unsigned n,
 static void testScanf(const char *format, unsigned n, ...) {
   va_list ap;
   va_start(ap, n);
-  testScanf2(format, SCANF_ARGS_MAX, n, ap);
+  testScanf2(format, SCANF_ARGS_MAX, /* allowGnuMalloc */ true, n, ap);
   va_end(ap);
 }
 
@@ -62,7 +64,14 @@ static void testScanfPartial(const char *format, int scanf_result, unsigned n,
                              ...) {
   va_list ap;
   va_start(ap, n);
-  testScanf2(format, scanf_result, n, ap);
+  testScanf2(format, scanf_result, /* allowGnuMalloc */ true,  n, ap);
+  va_end(ap);
+}
+
+static void testScanfNoGnuMalloc(const char *format, unsigned n, ...) {
+  va_list ap;
+  va_start(ap, n);
+  testScanf2(format, SCANF_ARGS_MAX, /* allowGnuMalloc */ false, n, ap);
   va_end(ap);
 }
 
@@ -136,6 +145,20 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%aS", 1, std::min(F, P));
   testScanf("%a13S", 1, std::min(F, P));
   testScanf("%alS", 1, std::min(F, P));
+
+  testScanfNoGnuMalloc("s%Las", 1, LD);
+  testScanfNoGnuMalloc("%ar", 1, F);
+  testScanfNoGnuMalloc("%a[", 1, F);
+  testScanfNoGnuMalloc("%a[]", 1, F);
+  testScanfNoGnuMalloc("%a[]]", 1, F);
+  testScanfNoGnuMalloc("%a[abc]", 1, F);
+  testScanfNoGnuMalloc("%a[^abc]", 1, F);
+  testScanfNoGnuMalloc("%a[ab%c] %d", 3, F, C, I);
+  testScanfNoGnuMalloc("%a[^ab%c] %d", 3, F, C, I);
+  testScanfNoGnuMalloc("%as", 1, F);
+  testScanfNoGnuMalloc("%aS", 1, F);
+  testScanfNoGnuMalloc("%a13S", 1, F);
+  testScanfNoGnuMalloc("%alS", 1, F);
 
   testScanf("%5$d", 0);
   testScanf("%md", 0);
