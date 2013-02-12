@@ -236,7 +236,7 @@ namespace test6 {
 
 namespace test7 {
   struct X {
-    void* operator new(unsigned long) __attribute__((deprecated));  // expected-note{{'operator new' declared here}}
+    void* operator new(typeof(sizeof(void*))) __attribute__((deprecated));  // expected-note{{'operator new' declared here}}
     void operator delete(void *) __attribute__((deprecated));  // expected-note{{'operator delete' declared here}}
   };
 
