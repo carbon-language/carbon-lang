@@ -257,6 +257,12 @@ void StatOutput(u64 *stat) {
   name[StatInt_scanf]                    = "  scanf                           ";
   name[StatInt_sscanf]                   = "  sscanf                          ";
   name[StatInt_fscanf]                   = "  fscanf                          ";
+  name[StatInt___isoc99_vscanf]          = "  vscanf                          ";
+  name[StatInt___isoc99_vsscanf]         = "  vsscanf                         ";
+  name[StatInt___isoc99_vfscanf]         = "  vfscanf                         ";
+  name[StatInt___isoc99_scanf]           = "  scanf                           ";
+  name[StatInt___isoc99_sscanf]          = "  sscanf                          ";
+  name[StatInt___isoc99_fscanf]          = "  fscanf                          ";
   name[StatInt_on_exit]                  = "  on_exit                         ";
   name[StatInt___cxa_atexit]             = "  __cxa_atexit                    ";
 

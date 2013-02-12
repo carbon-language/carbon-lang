@@ -256,6 +256,12 @@ enum StatType {
   StatInt_scanf,
   StatInt_sscanf,
   StatInt_fscanf,
+  StatInt___isoc99_vscanf,
+  StatInt___isoc99_vsscanf,
+  StatInt___isoc99_vfscanf,
+  StatInt___isoc99_scanf,
+  StatInt___isoc99_sscanf,
+  StatInt___isoc99_fscanf,
   StatInt_on_exit,
   StatInt___cxa_atexit,
 
