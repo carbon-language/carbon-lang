@@ -274,3 +274,37 @@ void t24() {
 // CHECK: t24
 // CHECK: call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(void ()* @t24_helper) nounwind
 }
+
+void t25() {
+  __asm mov eax, 0ffffffffh
+  __asm mov eax, 0fh
+  __asm mov eax, 0a2h
+  __asm mov eax, 0xa2h
+  __asm mov eax, 0xa2
+// CHECK: t25
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$0ffffffffh", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$0fh", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$0a2h", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$0xa2h", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$0xa2", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+}
+
+void t26() {
+  __asm pushad
+  __asm mov eax, 0
+  __asm __emit 0fh
+  __asm __emit 0a2h
+  __asm popad
+// CHECK: t26
+// CHECK: call void asm sideeffect inteldialect "pushad", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$0", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "__emit 0fh", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "__emit 0a2h", "~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "popad", "~{dirflag},~{fpsr},~{flags}"() nounwind
+}
+
+void t27() {
+  __asm mov eax, fs:[0h]
+// CHECK: t27
+// CHECL: call void asm sideeffect inteldialect "mov eax, fs:[0h]", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+}
