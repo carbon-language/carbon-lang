@@ -10,7 +10,7 @@ define i32 @test_load(i32* %a) address_safety {
 ; CHECK-NOT: load
 ; CHECK:   %[[LOAD_ADDR:[^ ]*]] = ptrtoint i32* %a to i64
 ; CHECK:   lshr i64 %[[LOAD_ADDR]], 3
-; CHECK:   or i64
+; CHECK:   {{or|add}}
 ; CHECK:   %[[LOAD_SHADOW_PTR:[^ ]*]] = inttoptr
 ; CHECK:   %[[LOAD_SHADOW:[^ ]*]] = load i8* %[[LOAD_SHADOW_PTR]]
 ; CHECK:   icmp ne i8
@@ -43,7 +43,7 @@ define void @test_store(i32* %a) address_safety {
 ; CHECK-NOT: store
 ; CHECK:   %[[STORE_ADDR:[^ ]*]] = ptrtoint i32* %a to i64
 ; CHECK:   lshr i64 %[[STORE_ADDR]], 3
-; CHECK:   or i64
+; CHECK:   {{or|add}}
 ; CHECK:   %[[STORE_SHADOW_PTR:[^ ]*]] = inttoptr
 ; CHECK:   %[[STORE_SHADOW:[^ ]*]] = load i8* %[[STORE_SHADOW_PTR]]
 ; CHECK:   icmp ne i8
