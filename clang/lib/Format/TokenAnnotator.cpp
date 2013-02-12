@@ -705,7 +705,7 @@ public:
   ExpressionParser(AnnotatedLine &Line) : Current(&Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
-  void parse(signed Precedence = prec::Unknown) {
+  void parse(int Precedence = prec::Unknown) {
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
