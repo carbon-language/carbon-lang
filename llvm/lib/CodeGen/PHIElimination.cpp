@@ -467,7 +467,11 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
         bool isLiveOut = false;
         for (MachineBasicBlock::succ_iterator SI = opBlock.succ_begin(),
              SE = opBlock.succ_end(); SI != SE; ++SI) {
-          if (SrcLI.liveAt(LIS->getMBBStartIdx(*SI))) {
+          SlotIndex startIdx = LIS->getMBBStartIdx(*SI);
+          VNInfo *VNI = SrcLI.getVNInfoAt(startIdx);
+
+          // Definitions by other PHIs are not truly live-in for our purposes.
+          if (VNI && VNI->def != startIdx) {
             isLiveOut = true;
             break;
           }
