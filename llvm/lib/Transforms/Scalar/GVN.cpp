@@ -2445,7 +2445,7 @@ bool GVN::performPRE(Function &F) {
         if (P == CurrentBlock) {
           NumWithout = 2;
           break;
-        } else if (!DT->dominates(&F.getEntryBlock(), P))  {
+        } else if (!DT->isReachableFromEntry(P))  {
           NumWithout = 2;
           break;
         }
