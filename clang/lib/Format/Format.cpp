@@ -957,12 +957,15 @@ public:
                 TheLine.Last->FormatTok.Tok.getLocation()) +
             Lex.MeasureTokenLength(TheLine.Last->FormatTok.Tok.getLocation(),
                                    SourceMgr, Lex.getLangOpts()) - 1;
-        unsigned Indent = SourceMgr.getSpellingColumnNumber(
-            TheLine.First.FormatTok.Tok.getLocation()) - 1;
-        unsigned LevelIndent = Indent;
-        if (static_cast<int>(LevelIndent) - Offset >= 0)
-          LevelIndent -= Offset;
-        IndentForLevel[TheLine.Level] = LevelIndent;
+        if (TheLine.First.FormatTok.NewlinesBefore > 0 ||
+            TheLine.First.FormatTok.IsFirst) {
+          unsigned Indent = SourceMgr.getSpellingColumnNumber(
+              TheLine.First.FormatTok.Tok.getLocation()) - 1;
+          unsigned LevelIndent = Indent;
+          if (static_cast<int>(LevelIndent) - Offset >= 0)
+            LevelIndent -= Offset;
+          IndentForLevel[TheLine.Level] = LevelIndent;
+        }
       }
     }
     return Whitespaces.generateReplacements();

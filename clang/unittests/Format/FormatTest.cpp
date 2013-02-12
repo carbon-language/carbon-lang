@@ -2660,6 +2660,9 @@ TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
             "  }", format("  {\n"
                           "a;\n"
                           "  }", 4, 2, getLLVMStyle()));
+  EXPECT_EQ("void f() {}\n"
+            "void g() {}", format("void f() {}\n"
+                                  "void g() {}", 13, 0, getLLVMStyle()));
 }
 
 } // end namespace tooling
