@@ -72,7 +72,7 @@ bool ProvenanceAnalysis::relatedPHI(const PHINode *A,
 
 /// Test if the value of P, or any value covered by its provenance, is ever
 /// stored within the function (not counting callees).
-static bool isStoredObjCPointer(const Value *P) {
+static bool IsStoredObjCPointer(const Value *P) {
   SmallPtrSet<const Value *, 8> Visited;
   SmallVector<const Value *, 8> Worklist;
   Worklist.push_back(P);
@@ -132,18 +132,18 @@ bool ProvenanceAnalysis::relatedCheck(const Value *A,
   if (AIsIdentified) {
     // Check for an obvious escape.
     if (isa<LoadInst>(B))
-      return isStoredObjCPointer(A);
+      return IsStoredObjCPointer(A);
     if (BIsIdentified) {
       // Check for an obvious escape.
       if (isa<LoadInst>(A))
-        return isStoredObjCPointer(B);
+        return IsStoredObjCPointer(B);
       // Both pointers are identified and escapes aren't an evident problem.
       return false;
     }
   } else if (BIsIdentified) {
     // Check for an obvious escape.
     if (isa<LoadInst>(A))
-      return isStoredObjCPointer(B);
+      return IsStoredObjCPointer(B);
   }
 
    // Special handling for PHI and Select.
