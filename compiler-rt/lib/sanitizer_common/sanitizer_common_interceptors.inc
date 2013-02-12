@@ -150,82 +150,80 @@ INTERCEPTOR(int, prctl, int option, unsigned long arg2,
 
 #include "sanitizer_common_interceptors_scanf.inc"
 
-INTERCEPTOR(int, vscanf, const char *format, va_list ap) { // NOLINT
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, vscanf, format, ap);
-  va_list aq;
-  va_copy(aq, ap);
-  int res = REAL(vscanf)(format, ap); // NOLINT
-  if (res > 0)
-    scanf_common(ctx, res, format, aq);
-  va_end(aq);
-  return res;
-}
+#define VSCANF_INTERCEPTOR_IMPL(vname, ...)                                    \
+  {                                                                            \
+    void *ctx;                                                                 \
+    COMMON_INTERCEPTOR_ENTER(ctx, vname, __VA_ARGS__);                         \
+    va_list aq;                                                                \
+    va_copy(aq, ap);                                                           \
+    int res = REAL(vname)(__VA_ARGS__);                                        \
+    if (res > 0)                                                               \
+      scanf_common(ctx, res, format, aq);                                      \
+    va_end(aq);                                                                \
+    return res;                                                                \
+  }
 
-INTERCEPTOR(int, vsscanf, const char *str, const char *format, // NOLINT
-            va_list ap) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, vsscanf, str, format, ap);
-  va_list aq;
-  va_copy(aq, ap);
-  int res = REAL(vsscanf)(str, format, ap); // NOLINT
-  if (res > 0)
-    scanf_common(ctx, res, format, aq);
-  va_end(aq);
-  // FIXME: read of str
-  return res;
-}
+INTERCEPTOR(int, vscanf, const char *format, va_list ap)
+VSCANF_INTERCEPTOR_IMPL(vscanf, format, ap)
 
-INTERCEPTOR(int, vfscanf, void *stream, const char *format, // NOLINT
-            va_list ap) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, vfscanf, stream, format, ap);
-  va_list aq;
-  va_copy(aq, ap);
-  int res = REAL(vfscanf)(stream, format, ap); // NOLINT
-  if (res > 0)
-    scanf_common(ctx, res, format, aq);
-  va_end(aq);
-  return res;
-}
+INTERCEPTOR(int, vsscanf, const char *str, const char *format, va_list ap)
+VSCANF_INTERCEPTOR_IMPL(vsscanf, str, format, ap)
 
-INTERCEPTOR(int, scanf, const char *format, ...) { // NOLINT
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, scanf, format);
-  va_list ap;
-  va_start(ap, format);
-  int res = vscanf(format, ap); // NOLINT
-  va_end(ap);
-  return res;
-}
+INTERCEPTOR(int, vfscanf, void *stream, const char *format, va_list ap)
+VSCANF_INTERCEPTOR_IMPL(vfscanf, stream, format, ap)
 
-INTERCEPTOR(int, fscanf, void *stream, const char *format, ...) { // NOLINT
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, fscanf, stream, format);
-  va_list ap;
-  va_start(ap, format);
-  int res = vfscanf(stream, format, ap); // NOLINT
-  va_end(ap);
-  return res;
-}
+INTERCEPTOR(int, __isoc99_vscanf, const char *format, va_list ap)
+VSCANF_INTERCEPTOR_IMPL(__isoc99_vscanf, format, ap)
 
-INTERCEPTOR(int, sscanf, const char *str, const char *format, ...) { // NOLINT
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, sscanf, str, format); // NOLINT
-  va_list ap;
-  va_start(ap, format);
-  int res = vsscanf(str, format, ap); // NOLINT
-  va_end(ap);
-  return res;
-}
+INTERCEPTOR(int, __isoc99_vsscanf, const char *str, const char *format,
+            va_list ap)
+VSCANF_INTERCEPTOR_IMPL(__isoc99_vsscanf, str, format, ap)
+
+INTERCEPTOR(int, __isoc99_vfscanf, void *stream, const char *format, va_list ap)
+VSCANF_INTERCEPTOR_IMPL(__isoc99_vfscanf, stream, format, ap)
+
+#define SCANF_INTERCEPTOR_IMPL(name, vname, ...)                               \
+  {                                                                            \
+    void *ctx;                                                                 \
+    COMMON_INTERCEPTOR_ENTER(ctx, name, __VA_ARGS__);                          \
+    va_list ap;                                                                \
+    va_start(ap, format);                                                      \
+    int res = vname(__VA_ARGS__, ap);                                          \
+    va_end(ap);                                                                \
+    return res;                                                                \
+  }
+
+INTERCEPTOR(int, scanf, const char *format, ...)
+SCANF_INTERCEPTOR_IMPL(scanf, vscanf, format)
+
+INTERCEPTOR(int, fscanf, void *stream, const char *format, ...)
+SCANF_INTERCEPTOR_IMPL(fscanf, vfscanf, stream, format)
+
+INTERCEPTOR(int, sscanf, const char *str, const char *format, ...)
+SCANF_INTERCEPTOR_IMPL(sscanf, vsscanf, str, format)
+
+INTERCEPTOR(int, __isoc99_scanf, const char *format, ...)
+SCANF_INTERCEPTOR_IMPL(__isoc99_scanf, __isoc99_vscanf, format)
+
+INTERCEPTOR(int, __isoc99_fscanf, void *stream, const char *format, ...)
+SCANF_INTERCEPTOR_IMPL(__isoc99_fscanf, __isoc99_vfscanf, stream, format)
+
+INTERCEPTOR(int, __isoc99_sscanf, const char *str, const char *format, ...)
+SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 
 #define INIT_SCANF                                                             \
   INTERCEPT_FUNCTION(scanf);                                                   \
-  INTERCEPT_FUNCTION(sscanf); /* NOLINT */                                     \
+  INTERCEPT_FUNCTION(sscanf);                                                  \
   INTERCEPT_FUNCTION(fscanf);                                                  \
   INTERCEPT_FUNCTION(vscanf);                                                  \
   INTERCEPT_FUNCTION(vsscanf);                                                 \
-  INTERCEPT_FUNCTION(vfscanf)
+  INTERCEPT_FUNCTION(vfscanf);                                                 \
+  INTERCEPT_FUNCTION(__isoc99_scanf);                                          \
+  INTERCEPT_FUNCTION(__isoc99_sscanf);                                         \
+  INTERCEPT_FUNCTION(__isoc99_fscanf);                                         \
+  INTERCEPT_FUNCTION(__isoc99_vscanf);                                         \
+  INTERCEPT_FUNCTION(__isoc99_vsscanf);                                        \
+  INTERCEPT_FUNCTION(__isoc99_vfscanf);
 
 #else
 #define INIT_SCANF
