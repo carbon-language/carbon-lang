@@ -591,6 +591,7 @@ CommandInterpreter::LoadCommandDictionary ()
         if (list_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "source list --line %1") &&
             list_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "source list --file '%1' --line %2") &&
             list_regex_cmd_ap->AddRegexCommand("^\\*?(0x[[:xdigit:]]+)[[:space:]]*$", "source list --address %1") &&
+            list_regex_cmd_ap->AddRegexCommand("^-[[:space:]]*$", "source list --reverse") &&
             list_regex_cmd_ap->AddRegexCommand("^(.+)$", "source list --name \"%1\"") &&
             list_regex_cmd_ap->AddRegexCommand("^$", "source list"))
         {
