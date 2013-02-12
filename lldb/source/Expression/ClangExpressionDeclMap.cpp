@@ -2332,9 +2332,13 @@ ClangExpressionDeclMap::FindVariableInScope
     VariableSP var_sp;
     Error err;
     
-    valobj = frame.GetValueForVariableExpressionPath(name.GetCString(), 
+    valobj = frame.GetValueForVariableExpressionPath(name.GetCString(),
                                                      eNoDynamicValues, 
-                                                     StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                     StackFrame::eExpressionPathOptionCheckPtrVsMember ||
+                                                     StackFrame::eExpressionPathOptionsAllowDirectIVarAccess ||
+                                                     StackFrame::eExpressionPathOptionsNoFragileObjcIvar ||
+                                                     StackFrame::eExpressionPathOptionsNoSyntheticChildren ||
+                                                     StackFrame::eExpressionPathOptionsNoSyntheticArrayRange,
                                                      var_sp,
                                                      err);
         
@@ -2948,8 +2952,11 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         {
             valobj = frame->GetValueForVariableExpressionPath(name_unique_cstr, 
                                                               eNoDynamicValues, 
-                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember
-                                                              | StackFrame::eExpressionPathOptionsAllowDirectIVarAccess,
+                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember ||
+                                                              StackFrame::eExpressionPathOptionsAllowDirectIVarAccess ||
+                                                              StackFrame::eExpressionPathOptionsNoFragileObjcIvar ||
+                                                              StackFrame::eExpressionPathOptionsNoSyntheticChildren ||
+                                                              StackFrame::eExpressionPathOptionsNoSyntheticArrayRange,
                                                               var,
                                                               err);
             
