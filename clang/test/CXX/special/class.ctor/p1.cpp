@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// expected-no-diagnostics
+
 struct X0 {
   struct type { };
 
@@ -41,3 +41,7 @@ template<typename T> X1<T>::X1() { }
 template<typename T> (X1<T>::X1)(double) { }
 template<typename T> X1<T> X1<T>::f1(int) { return 0; }
 template<typename T> X1<T> (X1<T>::f1)(type) { return 0; }
+
+class A {
+  A::A(); // expected-error{{extra qualification on member 'A'}}
+};
