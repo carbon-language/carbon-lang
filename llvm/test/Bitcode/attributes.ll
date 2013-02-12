@@ -172,3 +172,31 @@ define void @f29() uninitialized_checks
 {
         ret void;
 }
+
+define void @f30() "cpu"="cortex-a8"
+; CHECK: define void @f30() "cpu"="cortex-a8"
+{
+        ret void;
+}
+
+; CHECK: attributes #0 = { noreturn }
+; CHECK: attributes #1 = { nounwind }
+; CHECK: attributes #2 = { readnone }
+; CHECK: attributes #3 = { readonly }
+; CHECK: attributes #4 = { noinline }
+; CHECK: attributes #5 = { alwaysinline }
+; CHECK: attributes #6 = { optsize }
+; CHECK: attributes #7 = { ssp }
+; CHECK: attributes #8 = { sspreq }
+; CHECK: attributes #9 = { noredzone }
+; CHECK: attributes #10 = { noimplicitfloat }
+; CHECK: attributes #11 = { naked }
+; CHECK: attributes #12 = { inlinehint }
+; CHECK: attributes #13 = { alignstack=4 }
+; CHECK: attributes #14 = { returns_twice }
+; CHECK: attributes #15 = { uwtable }
+; CHECK: attributes #16 = { nonlazybind }
+; CHECK: attributes #17 = { address_safety }
+; CHECK: attributes #18 = { thread_safety }
+; CHECK: attributes #19 = { uninitialized_checks }
+; CHECK: attributes #20 = { "cpu"="cortex-a8" }
