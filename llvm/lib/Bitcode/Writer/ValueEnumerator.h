@@ -56,7 +56,7 @@ private:
   AttributeGroupMapType AttributeGroupMap;
   std::vector<AttributeSet> AttributeGroups;
 
-  typedef DenseMap<void*, unsigned> AttributeMapType;
+  typedef DenseMap<AttributeSet, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
   std::vector<AttributeSet> Attribute;
 
@@ -104,7 +104,7 @@ public:
 
   unsigned getAttributeID(AttributeSet PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
-    AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());
+    AttributeMapType::const_iterator I = AttributeMap.find(PAL);
     assert(I != AttributeMap.end() && "Attribute not in ValueEnumerator!");
     return I->second;
   }
@@ -160,7 +160,7 @@ private:
   void EnumerateValue(const Value *V);
   void EnumerateType(Type *T);
   void EnumerateOperandType(const Value *V);
-  void EnumerateAttributes(const AttributeSet &PAL);
+  void EnumerateAttributes(AttributeSet PAL);
 
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
   void EnumerateNamedMetadata(const Module *M);
