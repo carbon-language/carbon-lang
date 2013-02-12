@@ -418,7 +418,7 @@ public:
   AttrBuilder &addAttribute(Attribute A);
 
   /// \brief Add the target-dependent attribute to the builder.
-  AttrBuilder &addAttribute(StringRef A, StringRef V);
+  AttrBuilder &addAttribute(StringRef A, StringRef V = StringRef());
 
   /// \brief Remove an attribute from the builder.
   AttrBuilder &removeAttribute(Attribute::AttrKind Val);
