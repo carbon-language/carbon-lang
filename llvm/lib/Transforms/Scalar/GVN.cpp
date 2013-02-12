@@ -2389,7 +2389,7 @@ bool GVN::processBlock(BasicBlock *BB) {
 /// control flow patterns and attempts to perform simple PRE at the join point.
 bool GVN::performPRE(Function &F) {
   bool Changed = false;
-  DenseMap<BasicBlock*, Value*> predMap;
+  SmallVector<std::pair<Value*, BasicBlock*>, 8> predMap;
   for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
        DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
     BasicBlock *CurrentBlock = *DI;
@@ -2452,6 +2452,7 @@ bool GVN::performPRE(Function &F) {
 
         Value* predV = findLeader(P, ValNo);
         if (predV == 0) {
+          predMap.push_back(std::make_pair(static_cast<Value *>(0), P));
           PREPred = P;
           ++NumWithout;
         } else if (predV == CurInst) {
@@ -2459,7 +2460,7 @@ bool GVN::performPRE(Function &F) {
           NumWithout = 2;
           break;
         } else {
-          predMap[P] = predV;
+          predMap.push_back(std::make_pair(predV, P));
           ++NumWith;
         }
       }
@@ -2514,7 +2515,6 @@ bool GVN::performPRE(Function &F) {
       PREInstr->insertBefore(PREPred->getTerminator());
       PREInstr->setName(CurInst->getName() + ".pre");
       PREInstr->setDebugLoc(CurInst->getDebugLoc());
-      predMap[PREPred] = PREInstr;
       VN.add(PREInstr, ValNo);
       ++NumGVNPRE;
 
@@ -2522,13 +2522,14 @@ bool GVN::performPRE(Function &F) {
       addToLeaderTable(ValNo, PREInstr, PREPred);
 
       // Create a PHI to make the value available in this block.
-      pred_iterator PB = pred_begin(CurrentBlock), PE = pred_end(CurrentBlock);
-      PHINode* Phi = PHINode::Create(CurInst->getType(), std::distance(PB, PE),
+      PHINode* Phi = PHINode::Create(CurInst->getType(), predMap.size(),
                                      CurInst->getName() + ".pre-phi",
                                      CurrentBlock->begin());
-      for (pred_iterator PI = PB; PI != PE; ++PI) {
-        BasicBlock *P = *PI;
-        Phi->addIncoming(predMap[P], P);
+      for (unsigned i = 0, e = predMap.size(); i != e; ++i) {
+        if (Value *V = predMap[i].first)
+          Phi->addIncoming(V, predMap[i].second);
+        else
+          Phi->addIncoming(PREInstr, PREPred);
       }
 
       VN.add(Phi, ValNo);
