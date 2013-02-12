@@ -1516,6 +1516,65 @@ void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
   CGF.PopCleanupBlock();
 }
 
+/// In a terminate landing pad, should we use __clang__call_terminate
+/// or just a naked call to std::terminate?
+///
+/// __clang_call_terminate calls __cxa_begin_catch, which then allows
+/// std::terminate to usefully report something about the
+/// violating exception.
+static bool useClangCallTerminate(CodeGenModule &CGM) {
+  // Only do this for Itanium-family ABIs in C++ mode.
+  return (CGM.getLangOpts().CPlusPlus &&
+          CGM.getTarget().getCXXABI().isItaniumFamily());
+}
+
+/// Get or define the following function:
+///   void @__clang_call_terminate(i8* %exn) nounwind noreturn
+/// This code is used only in C++.
+static llvm::Constant *getClangCallTerminateFn(CodeGenModule &CGM) {
+  llvm::FunctionType *fnTy =
+    llvm::FunctionType::get(CGM.VoidTy, CGM.Int8PtrTy, /*IsVarArgs=*/false);
+  llvm::Constant *fnRef =
+    CGM.CreateRuntimeFunction(fnTy, "__clang_call_terminate");
+
+  llvm::Function *fn = dyn_cast<llvm::Function>(fnRef);
+  if (fn && fn->empty()) {
+    fn->setDoesNotThrow();
+    fn->setDoesNotReturn();
+
+    // What we really want is to massively penalize inlining without
+    // forbidding it completely.  The difference between that and
+    // 'noinline' is negligible.
+    fn->addFnAttr(llvm::Attribute::NoInline);
+
+    // Allow this function to be shared across translation units, but
+    // we don't want it to turn into an exported symbol.
+    fn->setLinkage(llvm::Function::LinkOnceODRLinkage);
+    fn->setVisibility(llvm::Function::HiddenVisibility);
+
+    // Set up the function.
+    llvm::BasicBlock *entry =
+      llvm::BasicBlock::Create(CGM.getLLVMContext(), "", fn);
+    CGBuilderTy builder(entry);
+
+    // Pull the exception pointer out of the parameter list.
+    llvm::Value *exn = &*fn->arg_begin();
+
+    // Call __cxa_begin_catch(exn).
+    builder.CreateCall(getBeginCatchFn(CGM), exn)->setDoesNotThrow();
+
+    // Call std::terminate().
+    llvm::CallInst *termCall = builder.CreateCall(getTerminateFn(CGM));
+    termCall->setDoesNotThrow();
+    termCall->setDoesNotReturn();
+
+    // std::terminate cannot return.
+    builder.CreateUnreachable();
+  }
+
+  return fnRef;
+}
+
 llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   if (TerminateLandingPad)
     return TerminateLandingPad;
@@ -1533,9 +1592,16 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
                              getOpaquePersonalityFn(CGM, Personality), 0);
   LPadInst->addClause(getCatchAllValue(*this));
 
-  llvm::CallInst *TerminateCall = Builder.CreateCall(getTerminateFn(CGM));
-  TerminateCall->setDoesNotReturn();
-  TerminateCall->setDoesNotThrow();
+  llvm::CallInst *terminateCall;
+  if (useClangCallTerminate(CGM)) {
+    // Extract out the exception pointer.
+    llvm::Value *exn = Builder.CreateExtractValue(LPadInst, 0);
+    terminateCall = Builder.CreateCall(getClangCallTerminateFn(CGM), exn);
+  } else {
+    terminateCall = Builder.CreateCall(getTerminateFn(CGM));
+  }
+  terminateCall->setDoesNotReturn();
+  terminateCall->setDoesNotThrow();
   Builder.CreateUnreachable();
 
   // Restore the saved insertion state.

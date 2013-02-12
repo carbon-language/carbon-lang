@@ -29,12 +29,12 @@ delegator::delegator(bool)
 // CHECK: define {{.*}} @_ZN9delegatorC1Ec
 // CHECK: {{.*}} @_ZN9delegatorC1Eb
 // CHECK: void @__cxa_throw
-// CHECK: void @_ZSt9terminatev
+// CHECK: void @__clang_call_terminate
 // CHECK: {{.*}} @_ZN9delegatorD1Ev
 // CHECK: define {{.*}} @_ZN9delegatorC2Ec
 // CHECK: {{.*}} @_ZN9delegatorC2Eb
 // CHECK: void @__cxa_throw
-// CHECK: void @_ZSt9terminatev
+// CHECK: void @__clang_call_terminate
 // CHECK: {{.*}} @_ZN9delegatorD2Ev
 delegator::delegator(char)
   : delegator(true) {

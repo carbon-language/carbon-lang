@@ -69,6 +69,13 @@ namespace test1 {
     return new A(B().x);
   }
 
+  //   rdar://11904428
+  //   Terminate landing pads should call __cxa_begin_catch first.
+  // CHECK:      define linkonce_odr hidden void @__clang_call_terminate(i8*) noinline noreturn nounwind
+  // CHECK-NEXT:   [[T0:%.*]] = call i8* @__cxa_begin_catch(i8* %0) nounwind
+  // CHECK-NEXT:   call void @_ZSt9terminatev() noreturn nounwind
+  // CHECK-NEXT:   unreachable
+
   A *d() {
     // CHECK:    define [[A:%.*]]* @_ZN5test11dEv()
     // CHECK:      [[ACTIVE:%.*]] = alloca i1
@@ -157,7 +164,7 @@ namespace test2 {
     // CHECK-NEXT: invoke void @_ZN5test21AC1Ei([[A]]* [[CAST]], i32 5)
     // CHECK:      ret [[A]]* [[CAST]]
     // CHECK:      invoke void @_ZN5test21AdlEPvm(i8* [[NEW]], i64 8)
-    // CHECK:      call void @_ZSt9terminatev()
+    // CHECK:      call void @__clang_call_terminate(i8* {{%.*}}) noreturn nounwind
     return new A(5);
   }
 }
@@ -183,7 +190,7 @@ namespace test3 {
     // CHECK-NEXT: invoke void @_ZN5test31AC1Ei([[A]]* [[CAST]], i32 5)
     // CHECK:      ret [[A]]* [[CAST]]
     // CHECK:      invoke void @_ZN5test31AdlEPvS1_d(i8* [[NEW]], i8* [[FOO]], double [[BAR]])
-    // CHECK:      call void @_ZSt9terminatev()
+    // CHECK:      call void @__clang_call_terminate(i8* {{%.*}}) noreturn nounwind
     return new(foo(),bar()) A(5);
   }
 

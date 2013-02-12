@@ -100,9 +100,10 @@ X test2(bool B) {
   // CHECK-EH:      resume { i8*, i32 }
 
   // %terminate.lpad: terminate landing pad.
-  // CHECK-EH:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH:      [[T0:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK-EH-NEXT:   catch i8* null
-  // CHECK-EH-NEXT: call void @_ZSt9terminatev()
+  // CHECK-EH-NEXT: [[T1:%.*]] = extractvalue { i8*, i32 } [[T0]], 0
+  // CHECK-EH-NEXT: call void @__clang_call_terminate(i8* [[T1]]) noreturn nounwind
   // CHECK-EH-NEXT: unreachable
 
 }
