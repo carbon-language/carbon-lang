@@ -202,6 +202,7 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
                                       bool ZeroBaseShadow) {
   llvm::Triple TargetTriple(M.getTargetTriple());
   bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
+  bool IsMacOSX = TargetTriple.getOS() == llvm::Triple::MacOSX;
   bool IsPPC64 = TargetTriple.getArch() == llvm::Triple::ppc64;
   bool IsX86_64 = TargetTriple.getArch() == llvm::Triple::x86_64;
 
@@ -215,7 +216,7 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   Mapping.Offset = (IsAndroid || ZeroBaseShadow) ? 0 :
       (LongSize == 32 ? kDefaultShadowOffset32 :
        IsPPC64 ? kPPC64_ShadowOffset64 : kDefaultShadowOffset64);
-  if (!ZeroBaseShadow && ClShort64BitOffset && IsX86_64) {
+  if (!ZeroBaseShadow && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
     assert(LongSize == 64);
     Mapping.Offset = kDefaultShort64bitShadowOffset;
   } if (!ZeroBaseShadow && ClMappingOffsetLog >= 0) {
