@@ -606,7 +606,8 @@ void ModuleLinker::computeTypeMapping() {
     // Check to see if there is a dot in the name followed by a digit.
     size_t DotPos = ST->getName().rfind('.');
     if (DotPos == 0 || DotPos == StringRef::npos ||
-        ST->getName().back() == '.' || !isdigit(ST->getName()[DotPos+1]))
+        ST->getName().back() == '.' ||
+        !isdigit(static_cast<unsigned char>(ST->getName()[DotPos+1])))
       continue;
     
     // Check to see if the destination module has a struct with the prefix name.

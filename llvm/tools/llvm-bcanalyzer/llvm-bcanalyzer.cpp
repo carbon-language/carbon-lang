@@ -450,7 +450,7 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned BlockID,
         outs() << " blob data = ";
         bool BlobIsPrintable = true;
         for (unsigned i = 0, e = Blob.size(); i != e; ++i)
-          if (!isprint(Blob[i])) {
+          if (!isprint(static_cast<unsigned char>(Blob[i]))) {
             BlobIsPrintable = false;
             break;
           }

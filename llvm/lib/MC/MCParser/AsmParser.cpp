@@ -1622,7 +1622,8 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
 // we can't do that. AsmLexer.cpp should probably be changed to handle
 // '@' as a special case when needed.
 static bool isIdentifierChar(char c) {
-  return isalnum(c) || c == '_' || c == '$' || c == '.';
+  return isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '$' ||
+         c == '.';
 }
 
 bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
@@ -1646,7 +1647,8 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
           continue;
 
         char Next = Body[Pos + 1];
-        if (Next == '$' || Next == 'n' || isdigit(Next))
+        if (Next == '$' || Next == 'n' ||
+            isdigit(static_cast<unsigned char>(Next)))
           break;
       } else {
         // This macro has parameters, look for \foo, \bar, etc.
@@ -3094,7 +3096,8 @@ void AsmParser::CheckForBadMacro(SMLoc DirectiveLoc, StringRef Name,
       if (Body[Pos] != '$' || Pos + 1 == End)
         continue;
       char Next = Body[Pos + 1];
-      if (Next == '$' || Next == 'n' || isdigit(Next))
+      if (Next == '$' || Next == 'n' ||
+          isdigit(static_cast<unsigned char>(Next)))
         break;
     }
 

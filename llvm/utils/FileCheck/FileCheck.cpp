@@ -242,7 +242,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM,
       }
 
       // Name can't start with a digit.
-      if (isdigit(Name[0])) {
+      if (isdigit(static_cast<unsigned char>(Name[0]))) {
         SM.PrintMessage(SMLoc::getFromPointer(Name.data()), SourceMgr::DK_Error,
                         "invalid name in named regex");
         return true;

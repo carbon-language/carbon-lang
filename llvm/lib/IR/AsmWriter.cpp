@@ -117,7 +117,7 @@ static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
   }
 
   // Scan the name to see if it needs quotes first.
-  bool NeedsQuotes = isdigit(Name[0]);
+  bool NeedsQuotes = isdigit(static_cast<unsigned char>(Name[0]));
   if (!NeedsQuotes) {
     for (unsigned i = 0, e = Name.size(); i != e; ++i) {
       // By making this unsigned, the value passed in to isalnum will always be
@@ -125,7 +125,8 @@ static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
       // its implementation will assert.  This situation can arise when dealing
       // with UTF-8 multibyte characters.
       unsigned char C = Name[i];
-      if (!isalnum(C) && C != '-' && C != '.' && C != '_') {
+      if (!isalnum(static_cast<unsigned char>(C)) && C != '-' && C != '.' &&
+          C != '_') {
         NeedsQuotes = true;
         break;
       }
@@ -1392,14 +1393,16 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   if (Name.empty()) {
     Out << "<empty name> ";
   } else {
-    if (isalpha(Name[0]) || Name[0] == '-' || Name[0] == '$' ||
+    if (isalpha(static_cast<unsigned char>(Name[0])) ||
+        Name[0] == '-' || Name[0] == '$' ||
         Name[0] == '.' || Name[0] == '_')
       Out << Name[0];
     else
       Out << '\\' << hexdigit(Name[0] >> 4) << hexdigit(Name[0] & 0x0F);
     for (unsigned i = 1, e = Name.size(); i != e; ++i) {
       unsigned char C = Name[i];
-      if (isalnum(C) || C == '-' || C == '$' || C == '.' || C == '_')
+      if (isalnum(static_cast<unsigned char>(C)) || C == '-' || C == '$' ||
+          C == '.' || C == '_')
         Out << C;
       else
         Out << '\\' << hexdigit(C >> 4) << hexdigit(C & 0x0F);

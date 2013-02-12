@@ -87,9 +87,9 @@ static bool CompareNumbers(const char *&F1P, const char *&F2P,
 
   // If one of the positions is at a space and the other isn't, chomp up 'til
   // the end of the space.
-  while (isspace(*F1P) && F1P != F1End)
+  while (isspace(static_cast<unsigned char>(*F1P)) && F1P != F1End)
     ++F1P;
-  while (isspace(*F2P) && F2P != F2End)
+  while (isspace(static_cast<unsigned char>(*F2P)) && F2P != F2End)
     ++F2P;
 
   // If we stop on numbers, compare their difference.

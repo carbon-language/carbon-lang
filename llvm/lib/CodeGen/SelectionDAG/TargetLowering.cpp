@@ -2038,7 +2038,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 /// a matching constraint like "4".
 bool TargetLowering::AsmOperandInfo::isMatchingInputConstraint() const {
   assert(!ConstraintCode.empty() && "No known constraint!");
-  return isdigit(ConstraintCode[0]);
+  return isdigit(static_cast<unsigned char>(ConstraintCode[0]));
 }
 
 /// getMatchedOperand - If this is an input matching constraint, this method

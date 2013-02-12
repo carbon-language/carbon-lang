@@ -80,7 +80,7 @@ unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
     if (*Str == '\n' || strncmp(Str, MAI.getSeparatorString(),
                                 strlen(MAI.getSeparatorString())) == 0)
       atInsnStart = true;
-    if (atInsnStart && !std::isspace(*Str)) {
+    if (atInsnStart && !std::isspace(static_cast<unsigned char>(*Str))) {
       Length += MAI.getMaxInstLength();
       atInsnStart = false;
     }

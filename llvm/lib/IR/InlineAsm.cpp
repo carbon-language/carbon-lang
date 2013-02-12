@@ -151,10 +151,10 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       if (ConstraintEnd == E) return true;  // "{foo"
       pCodes->push_back(std::string(I, ConstraintEnd+1));
       I = ConstraintEnd+1;
-    } else if (isdigit(*I)) {     // Matching Constraint
+    } else if (isdigit(static_cast<unsigned char>(*I))) { // Matching Constraint
       // Maximal munch numbers.
       StringRef::iterator NumStart = I;
-      while (I != E && isdigit(*I))
+      while (I != E && isdigit(static_cast<unsigned char>(*I)))
         ++I;
       pCodes->push_back(std::string(NumStart, I));
       unsigned N = atoi(pCodes->back().c_str());

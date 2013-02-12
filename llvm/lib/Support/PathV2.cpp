@@ -44,7 +44,8 @@ namespace {
 
 #ifdef LLVM_ON_WIN32
     // C:
-    if (path.size() >= 2 && std::isalpha(path[0]) && path[1] == ':')
+    if (path.size() >= 2 && std::isalpha(static_cast<unsigned char>(path[0])) &&
+        path[1] == ':')
       return path.substr(0, 2);
 #endif
 

@@ -267,7 +267,7 @@ error_code COFFObjectFile::getSymbolNMTypeChar(DataRefImpl Symb,
   }
 
   if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL)
-    ret = ::toupper(ret);
+    ret = ::toupper(static_cast<unsigned char>(ret));
 
   Result = ret;
   return object_error::success;

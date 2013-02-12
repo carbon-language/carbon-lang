@@ -273,7 +273,7 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
   }
 
   if (Flags & (macho::STF_External | macho::STF_PrivateExtern))
-    Char = toupper(Char);
+    Char = toupper(static_cast<unsigned char>(Char));
   Result = Char;
   return object_error::success;
 }

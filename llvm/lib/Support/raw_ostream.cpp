@@ -241,7 +241,8 @@ raw_ostream &raw_ostream::operator<<(double N) {
       if (cs == '+' || cs == '-') {
         int c1 = buf[len - 2];
         int c0 = buf[len - 1];
-        if (isdigit(c1) && isdigit(c0)) {
+        if (isdigit(static_cast<unsigned char>(c1)) &&
+            isdigit(static_cast<unsigned char>(c0))) {
           // Trim leading '0': "...e+012" -> "...e+12\0"
           buf[len - 3] = c1;
           buf[len - 2] = c0;
