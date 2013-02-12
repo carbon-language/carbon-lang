@@ -374,32 +374,6 @@ class VimPane(object):
     return {}
 
 
-class BreakpointsPane(VimPane):
-  MSG_NO_BREAKPOINTS = "No breakpoints set."
-
-  def __init__(self, owner, name = 'breakpoints'):
-    VimPane.__init__(self, owner, name, open_below = True)
-
-  def format_breakpoint_location(self, bploc):
-    return "breakpoint %s\n" % get_description(bploc, lldb.eDescriptionLevelFull).strip()
-
-  def get_content(self, target, controller):
-    """ Update breakpoint locations for the specified target. """
-    if target is None or not target.IsValid():
-      return VimPane.MSG_NO_TARGET
-    elif target.GetNumBreakpoints() == 0:
-      return BreakpointsPane.MSG_NO_BREAKPOINTS
-
-    bpdesc = ""
-    for i in range(target.GetNumBreakpoints()):
-      bp = target.GetBreakpointAtIndex(i)
-      if bp.IsValid and bp.IsEnabled():
-        for j in range(bp.GetNumLocations()):
-          loc = bp.GetLocationAtIndex(j)
-          bpdesc += self.format_breakpoint_location(loc)
-
-    return bpdesc
-
 class FrameKeyValuePane(VimPane):
   def __init__(self, owner, name, open_below):
     """ Initialize parent, define member variables, choose which highlight
@@ -524,8 +498,9 @@ class RegistersPane(FrameKeyValuePane):
 
 class CommandPane(VimPane):
   """ Pane that displays the output of an LLDB command """
-  def __init__(self, owner, name, open_below):
+  def __init__(self, owner, name, open_below, process_required=True):
     VimPane.__init__(self, owner, name, open_below)
+    self.process_required = process_required
 
   def setCommand(self, command, args = ""):
     self.command = command
@@ -533,7 +508,9 @@ class CommandPane(VimPane):
 
   def get_content(self, target, controller):
     output = ""
-    if not target or not target.GetProcess():
+    if not target:
+      output = VimPane.MSG_NO_TARGET
+    elif self.process_required and not target.GetProcess():
       output = VimPane.MSG_NO_PROCESS
     else:
       (success, output) = controller.getCommandOutput(self.command, self.args)
@@ -634,3 +611,8 @@ class BacktracePane(StoppedCommandPane):
       return None
     else:
       return frame.GetFrameID() + 2
+
+class BreakpointsPane(CommandPane):
+  def __init__(self, owner, name = 'breakpoints'):
+    super(BreakpointsPane, self).__init__(owner, name, open_below=False, process_required=False)
+    self.setCommand("breakpoint", "list")
