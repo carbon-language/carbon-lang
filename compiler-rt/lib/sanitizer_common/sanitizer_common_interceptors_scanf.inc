@@ -39,7 +39,8 @@ static bool char_is_one_of(char c, const char *s) {
 // returned in dir. This function returns the pointer to the first
 // unprocessed character, or 0 in case of error.
 // In case of the end-of-string, a pointer to the closing \0 is returned.
-static const char *scanf_parse_next(const char *p, ScanfDirective *dir) {
+static const char *scanf_parse_next(const char *p, bool allowGnuMalloc,
+                                    ScanfDirective *dir) {
   internal_memset(dir, 0, sizeof(*dir));
   dir->argIdx = -1;
 
@@ -121,7 +122,8 @@ static const char *scanf_parse_next(const char *p, ScanfDirective *dir) {
     // This is unfortunately ambiguous between old GNU extension
     // of %as, %aS and %a[...] and newer POSIX %a followed by
     // letters s, S or [.
-    if (dir->convSpecifier == 'a' && !dir->lengthModifier[0]) {
+    if (allowGnuMalloc && dir->convSpecifier == 'a' &&
+        !dir->lengthModifier[0]) {
       if (*p == 's' || *p == 'S') {
         dir->maybeGnuMalloc = true;
         ++p;
@@ -271,14 +273,14 @@ static int scanf_get_store_size(ScanfDirective *dir) {
 // Common part of *scanf interceptors.
 // Process format string and va_list, and report all store ranges.
 // Stops when "consuming" n_inputs input items.
-static void scanf_common(void *ctx, int n_inputs, const char *format,
-                         va_list aq) {
+static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
+                         const char *format, va_list aq) {
   CHECK_GT(n_inputs, 0);
   const char *p = format;
 
   while (*p && n_inputs) {
     ScanfDirective dir;
-    p = scanf_parse_next(p, &dir);
+    p = scanf_parse_next(p, allowGnuMalloc, &dir);
     if (!p)
       break;
     if (dir.convSpecifier == 0) {
