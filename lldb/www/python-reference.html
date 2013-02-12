@@ -517,6 +517,11 @@ $2 = 0x000000010010aba0 Let's Be Friendsfoobar</tt></pre></code>
 <code><pre><tt><font color=green>#!/usr/bin/python</font>
 
 import lldb
+import os
+
+def disassemble_instructions(insts):
+    for i in insts:
+        print i
 
 <font color=green># Set the path to the executable to debug</font>
 exe = "./a.out"
@@ -550,30 +555,30 @@ if target:
         state = process.GetState ()
         print process
         if state == lldb.eStateStopped:
-        <font color=green># Get the first thread</font>
-        thread = process.GetThreadAtIndex (0)
-        if thread:
-            <font color=green># Print some simple thread info</font>
-            print thread
-            <font color=green># Get the first frame</font>
-            frame = thread.GetFrameAtIndex (0)
-            if frame:
-                <font color=green># Print some simple frame info</font>
-                print frame
-                function = frame.GetFunction()
-                <font color=green># See if we have debug info (a function)</font>
-                if function:
-                    <font color=green># We do have a function, print some info for the function</font>
-                    print function
-                    <font color=green># Now get all instructions for this function and print them</font>
-                    insts = function.GetInstructions(target)
-                    disassemble_instructions (insts)
-                else:
-                    <font color=green># See if we have a symbol in the symbol table for where we stopped</font>
-                    symbol = frame.GetSymbol();
-                    if symbol:
-                        <font color=green># We do have a symbol, print some info for the symbol</font>
-                        print symbol
+            <font color=green># Get the first thread</font>
+            thread = process.GetThreadAtIndex (0)
+            if thread:
+                <font color=green># Print some simple thread info</font>
+                print thread
+                <font color=green># Get the first frame</font>
+                frame = thread.GetFrameAtIndex (0)
+                if frame:
+                    <font color=green># Print some simple frame info</font>
+                    print frame
+                    function = frame.GetFunction()
+                    <font color=green># See if we have debug info (a function)</font>
+                    if function:
+                        <font color=green># We do have a function, print some info for the function</font>
+                        print function
+                        <font color=green># Now get all instructions for this function and print them</font>
+                        insts = function.GetInstructions(target)
+                        disassemble_instructions (insts)
+                    else:
+                        <font color=green># See if we have a symbol in the symbol table for where we stopped</font>
+                        symbol = frame.GetSymbol();
+                        if symbol:
+                            <font color=green># We do have a symbol, print some info for the symbol</font>
+                            print symbol
 </tt></pre></code>
         				</div>
         				<div class="postfooter"></div>

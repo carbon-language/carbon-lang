@@ -61,7 +61,7 @@ rm -f ~/Desktop/lldb_codesign.cer
   "login", but the one in "System"), and select "Delete" to delete it from
   the "System" keychain.
 - Reboot
-- Clean by removing all previously creating code signed binarires and rebuild
+- Clean by removing all previously creating code signed binaries and rebuild
   lldb and you should be able to debug.
 
 That should do it.

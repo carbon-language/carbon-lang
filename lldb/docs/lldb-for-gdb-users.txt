@@ -204,7 +204,7 @@ Enter your debugger command(s).  Type 'DONE' to end.
 > DONE
 
 The "-c" option specifies that the breakpoint command is a set of lldb
-commmand interpreter commands.  Use "-s" if you want to implement your
+command interpreter commands.  Use "-s" if you want to implement your
 breakpoint command using the Python interface instead.
 
 
@@ -434,7 +434,7 @@ $4 = (SKTGraphicView *) 0x0000000100135430
 
 f) Customization:
 
-You can use the embedded Python interprter to add the following 'pwd' and 'cd' commands
+You can use the embedded Python interpreter to add the following 'pwd' and 'cd' commands
 for your lldb session:
 
 (lldb) script import os
