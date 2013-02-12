@@ -156,7 +156,7 @@ static Range *upperBound(MemoryLocation Loc, Range *Ranges,
 }
 
 /// Render a snippet of the address space near a location.
-static void renderMemorySnippet(MemoryLocation Loc,
+static void renderMemorySnippet(bool UseAnsiColor, MemoryLocation Loc,
                                 Range *Ranges, unsigned NumRanges,
                                 const Diag::Arg *Args) {
   const unsigned BytesToShow = 32;
@@ -183,6 +183,8 @@ static void renderMemorySnippet(MemoryLocation Loc,
   RawWrite("\n");
 
   // Emit highlights.
+  if (UseAnsiColor)
+    RawWrite("\033[1;32m");
   Range *InRange = upperBound(Min, Ranges, NumRanges);
   for (uptr P = Min; P != Max; ++P) {
     char Pad = ' ', Byte = ' ';
@@ -197,6 +199,8 @@ static void renderMemorySnippet(MemoryLocation Loc,
     char Buffer[] = { Pad, Pad, P == Loc ? '^' : Byte, Byte, 0 };
     RawWrite((P % 8 == 0) ? Buffer : &Buffer[1]);
   }
+  if (UseAnsiColor)
+    RawWrite("\033[0m");
   RawWrite("\n");
 
   // Go over the line again, and print names for the ranges.
@@ -267,5 +271,6 @@ Diag::~Diag() {
   RawWrite("\n");
 
   if (Loc.isMemoryLocation())
-    renderMemorySnippet(Loc.getMemoryLocation(), Ranges, NumRanges, Args);
+    renderMemorySnippet(UseAnsiColor, Loc.getMemoryLocation(), Ranges,
+                        NumRanges, Args);
 }
