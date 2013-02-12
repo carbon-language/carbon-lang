@@ -93,3 +93,42 @@ void test1(int cond) {
   // CHECK:      call void @objc_destroyWeak(i8** [[WEAK]])
   // CHECK:      ret void
 }
+
+// rdar://13113981
+// Test that, when emitting an expression at +1 that we can't peephole,
+// we emit the retain inside the full-expression.  If we ever peephole
+// +1s of conditional expressions (which we probably ought to), we'll
+// need to find another example of something we need to do this for.
+void test2(int cond) {
+  extern id test2_producer(void);
+  for (id obj in cond ? test2_producer() : (void*) 0) {
+  }
+
+  // CHECK:    define void @test2(
+  // CHECK:      [[COND:%.*]] = alloca i32,
+  // CHECK:      alloca i8*
+  // CHECK:      [[CLEANUP_SAVE:%.*]] = alloca i8*
+  // CHECK:      [[RUN_CLEANUP:%.*]] = alloca i1
+  //   Evaluate condition; cleanup disabled by default.
+  // CHECK:      [[T0:%.*]] = load i32* [[COND]],
+  // CHECK-NEXT: icmp ne i32 [[T0]], 0
+  // CHECK-NEXT: store i1 false, i1* [[RUN_CLEANUP]]
+  // CHECK-NEXT: br i1
+  //   Within true branch, cleanup enabled.
+  // CHECK:      [[T0:%.*]] = call i8* @test2_producer()
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+  // CHECK-NEXT: store i8* [[T1]], i8** [[CLEANUP_SAVE]]
+  // CHECK-NEXT: store i1 true, i1* [[RUN_CLEANUP]]
+  // CHECK-NEXT: br label
+  //   Join point for conditional operator; retain immediately.
+  // CHECK:      [[T0:%.*]] = phi i8* [ [[T1]], {{%.*}} ], [ null, {{%.*}} ]
+  // CHECK-NEXT: [[RESULT:%.*]] = call i8* @objc_retain(i8* [[T0]])
+  //   Leaving full-expression; run conditional cleanup.
+  // CHECK-NEXT: [[T0:%.*]] = load i1* [[RUN_CLEANUP]]
+  // CHECK-NEXT: br i1 [[T0]]
+  // CHECK:      [[T0:%.*]] = load i8** [[CLEANUP_SAVE]]
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]])
+  // CHECK-NEXT: br label
+  //   And way down at the end of the loop:
+  // CHECK:      call void @objc_release(i8* [[RESULT]])
+}
