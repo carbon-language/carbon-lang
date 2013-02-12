@@ -9400,7 +9400,9 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
         // src value info, don't do the transformation if the memory
         // locations are not in the default address space.
         LLD->getPointerInfo().getAddrSpace() != 0 ||
-        RLD->getPointerInfo().getAddrSpace() != 0)
+        RLD->getPointerInfo().getAddrSpace() != 0 ||
+        !TLI.isOperationLegalOrCustom(TheSelect->getOpcode(),
+                                      LLD->getBasePtr().getValueType()))
       return false;
 
     // Check that the select condition doesn't reach either load.  If so,
