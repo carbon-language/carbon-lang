@@ -9,8 +9,7 @@ double _Complex foo(CNumber *x) {
   return [x sum];
 }
 
-// CHECK: [[T4:%.*]] = phi double [ 0.000000e+00, [[NULLINIT:%.*]] ], [ [[R1:%.*]], [[MSGCALL:%.*]] ]
-// CHECK: [[T5:%.*]] = phi double [ 0.000000e+00, [[NULLINIT:%.*]] ], [ [[I1:%.*]], [[MSGCALL:%.*]] ]
-
-// CHECK: store double [[T4]]
-// CHECK: store double [[T5]]
+// CHECK:      [[R:%.*]] = phi double [ [[R1:%.*]], [[MSGCALL:%.*]] ], [ 0.000000e+00, [[NULLINIT:%.*]] ]
+// CHECK-NEXT: [[I:%.*]] = phi double [ [[I1:%.*]], [[MSGCALL]] ], [ 0.000000e+00, [[NULLINIT]] ]
+// CHECK: store double [[R]]
+// CHECK: store double [[I]]

@@ -1547,16 +1547,18 @@ public:
 /// value.
 struct NullReturnState {
   llvm::BasicBlock *NullBB;
-  llvm::BasicBlock *callBB;
-  NullReturnState() : NullBB(0), callBB(0) {}
+  NullReturnState() : NullBB(0) {}
 
+  /// Perform a null-check of the given receiver.
   void init(CodeGenFunction &CGF, llvm::Value *receiver) {
-    // Make blocks for the null-init and call edges.
-    NullBB = CGF.createBasicBlock("msgSend.nullinit");
-    callBB = CGF.createBasicBlock("msgSend.call");
+    // Make blocks for the null-receiver and call edges.
+    NullBB = CGF.createBasicBlock("msgSend.null-receiver");
+    llvm::BasicBlock *callBB = CGF.createBasicBlock("msgSend.call");
 
     // Check for a null receiver and, if there is one, jump to the
-    // null-init test.
+    // null-receiver block.  There's no point in trying to avoid it:
+    // we're always going to put *something* there, because otherwise
+    // we shouldn't have done this null-check in the first place.
     llvm::Value *isNull = CGF.Builder.CreateIsNull(receiver);
     CGF.Builder.CreateCondBr(isNull, NullBB, callBB);
 
@@ -1564,25 +1566,29 @@ struct NullReturnState {
     CGF.EmitBlock(callBB);
   }
 
+  /// Complete the null-return operation.  It is valid to call this
+  /// regardless of whether 'init' has been called.
   RValue complete(CodeGenFunction &CGF, RValue result, QualType resultType,
                   const CallArgList &CallArgs,
                   const ObjCMethodDecl *Method) {
+    // If we never had to do a null-check, just use the raw result.
     if (!NullBB) return result;
+
+    // The continuation block.  This will be left null if we don't have an
+    // IP, which can happen if the method we're calling is marked noreturn.
+    llvm::BasicBlock *contBB = 0;
     
-    llvm::Value *NullInitPtr = 0;
-    if (result.isScalar() && !resultType->isVoidType()) {
-      NullInitPtr = CGF.CreateTempAlloca(result.getScalarVal()->getType());
-      CGF.Builder.CreateStore(result.getScalarVal(), NullInitPtr);
+    // Finish the call path.
+    llvm::BasicBlock *callBB = CGF.Builder.GetInsertBlock();
+    if (callBB) {
+      contBB = CGF.createBasicBlock("msgSend.cont");
+      CGF.Builder.CreateBr(contBB);
     }
 
-    // Finish the call path.
-    llvm::BasicBlock *contBB = CGF.createBasicBlock("msgSend.cont");
-    if (CGF.HaveInsertPoint()) CGF.Builder.CreateBr(contBB);
-
-    // Emit the null-init block and perform the null-initialization there.
+    // Okay, start emitting the null-receiver block.
     CGF.EmitBlock(NullBB);
     
-    // Release consumed arguments along the null-receiver path.
+    // Release any consumed arguments we've got.
     if (Method) {
       CallArgList::const_iterator I = CallArgs.begin();
       for (ObjCMethodDecl::param_const_iterator i = Method->param_begin(),
@@ -1596,39 +1602,60 @@ struct NullReturnState {
         }
       }
     }
-    
-    if (result.isScalar()) {
-      if (NullInitPtr)
-        CGF.EmitNullInitialization(NullInitPtr, resultType);
-      // Jump to the continuation block.
-      CGF.EmitBlock(contBB);
-      return NullInitPtr ? RValue::get(CGF.Builder.CreateLoad(NullInitPtr)) 
-      : result;
-    }
-    
-    if (!resultType->isAnyComplexType()) {
-      assert(result.isAggregate() && "null init of non-aggregate result?");
-      CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
-      // Jump to the continuation block.
-      CGF.EmitBlock(contBB);
+
+    // The phi code below assumes that we haven't needed any control flow yet.
+    assert(CGF.Builder.GetInsertBlock() == NullBB);
+
+    // If we've got a void return, just jump to the continuation block.
+    if (result.isScalar() && resultType->isVoidType()) {
+      // No jumps required if the message-send was noreturn.
+      if (contBB) CGF.EmitBlock(contBB);
       return result;
     }
 
-    // _Complex type
-    // FIXME. Now easy to handle any other scalar type whose result is returned
-    // in memory due to ABI limitations.
+    // If we've got a scalar return, build a phi.
+    if (result.isScalar()) {
+      // Derive the null-initialization value.
+      llvm::Constant *null = CGF.CGM.EmitNullConstant(resultType);
+
+      // If no join is necessary, just flow out.
+      if (!contBB) return RValue::get(null);
+
+      // Otherwise, build a phi.
+      CGF.EmitBlock(contBB);
+      llvm::PHINode *phi = CGF.Builder.CreatePHI(null->getType(), 2);
+      phi->addIncoming(result.getScalarVal(), callBB);
+      phi->addIncoming(null, NullBB);
+      return RValue::get(phi);
+    }
+
+    // If we've got an aggregate return, null the buffer out.
+    // FIXME: maybe we should be doing things differently for all the
+    // cases where the ABI has us returning (1) non-agg values in
+    // memory or (2) agg values in registers.
+    if (result.isAggregate()) {
+      assert(result.isAggregate() && "null init of non-aggregate result?");
+      CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
+      if (contBB) CGF.EmitBlock(contBB);
+      return result;
+    }
+
+    // Complex types.
     CGF.EmitBlock(contBB);
-    CodeGenFunction::ComplexPairTy CallCV = result.getComplexVal();
-    llvm::Type *MemberType = CallCV.first->getType();
-    llvm::Constant *ZeroCV = llvm::Constant::getNullValue(MemberType);
-    // Create phi instruction for scalar complex value.
-    llvm::PHINode *PHIReal = CGF.Builder.CreatePHI(MemberType, 2);
-    PHIReal->addIncoming(ZeroCV, NullBB);
-    PHIReal->addIncoming(CallCV.first, callBB);
-    llvm::PHINode *PHIImag = CGF.Builder.CreatePHI(MemberType, 2);
-    PHIImag->addIncoming(ZeroCV, NullBB);
-    PHIImag->addIncoming(CallCV.second, callBB);
-    return RValue::getComplex(PHIReal, PHIImag);
+    CodeGenFunction::ComplexPairTy callResult = result.getComplexVal();
+
+    // Find the scalar type and its zero value.
+    llvm::Type *scalarTy = callResult.first->getType();
+    llvm::Constant *scalarZero = llvm::Constant::getNullValue(scalarTy);
+
+    // Build phis for both coordinates.
+    llvm::PHINode *real = CGF.Builder.CreatePHI(scalarTy, 2);
+    real->addIncoming(callResult.first, callBB);
+    real->addIncoming(scalarZero, NullBB);
+    llvm::PHINode *imag = CGF.Builder.CreatePHI(scalarTy, 2);
+    imag->addIncoming(callResult.second, callBB);
+    imag->addIncoming(scalarZero, NullBB);
+    return RValue::getComplex(real, imag);
   }
 };
 
