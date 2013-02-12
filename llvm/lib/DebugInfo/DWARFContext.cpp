@@ -88,6 +88,24 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       rangeList.dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_Pubnames) {
+    OS << "\n.debug_pubnames contents:\n";
+    DataExtractor pubNames(getPubNamesSection(), isLittleEndian(), 0);
+    offset = 0;
+    OS << "Length:                " << pubNames.getU32(&offset) << "\n";
+    OS << "Version:               " << pubNames.getU16(&offset) << "\n";
+    OS << "Offset in .debug_info: " << pubNames.getU32(&offset) << "\n";
+    OS << "Size:                  " << pubNames.getU32(&offset) << "\n";
+    OS << "\n  Offset    Name\n";
+    while (offset < getPubNamesSection().size()) {
+      uint32_t n = pubNames.getU32(&offset);
+      if (n == 0)
+        break;
+      OS << format("%8x    ", n);
+      OS << pubNames.getCStr(&offset) << "\n";
+    }
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_AbbrevDwo) {
     OS << "\n.debug_abbrev.dwo contents:\n";
     getDebugAbbrevDWO()->dump(OS);
@@ -494,6 +512,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       RangeDWOSection = data;
       RangeSection = data;
     }
+    else if (name == "debug_pubnames")
+      PubNamesSection = data;
     else if (name == "debug_info.dwo")
       InfoDWOSection = data;
     else if (name == "debug_abbrev.dwo")

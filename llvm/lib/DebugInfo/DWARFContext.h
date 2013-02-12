@@ -111,6 +111,7 @@ public:
   virtual StringRef getLineSection() = 0;
   virtual StringRef getStringSection() = 0;
   virtual StringRef getRangeSection() = 0;
+  virtual StringRef getPubNamesSection() = 0;
 
   // Sections for DWARF5 split dwarf proposal.
   virtual StringRef getInfoDWOSection() = 0;
@@ -149,6 +150,7 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef LineSection;
   StringRef StringSection;
   StringRef RangeSection;
+  StringRef PubNamesSection;
 
   // Sections for DWARF5 split dwarf proposal.
   RelocAddrMap InfoDWORelocMap;
@@ -172,6 +174,7 @@ public:
   virtual StringRef getLineSection() { return LineSection; }
   virtual StringRef getStringSection() { return StringSection; }
   virtual StringRef getRangeSection() { return RangeSection; }
+  virtual StringRef getPubNamesSection() { return PubNamesSection; }
 
   // Sections for DWARF5 split dwarf proposal.
   virtual StringRef getInfoDWOSection() { return InfoDWOSection; }
