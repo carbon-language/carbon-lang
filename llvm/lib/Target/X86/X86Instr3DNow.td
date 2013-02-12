@@ -87,12 +87,10 @@ defm PMULHRW  : I3DNow_binop_rm_int<0xB7, "pmulhrw">;
 def FEMMS : I3DNow<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]>;
 
 def PREFETCH  : I3DNow<0x0D, MRM0m, (outs), (ins i32mem:$addr),
-                       "prefetch $addr", []>;
+                       "prefetch\t$addr", []>;
 
-// FIXME: Diassembler gets a bogus decode conflict.
-let isAsmParserOnly = 1 in
 def PREFETCHW : I3DNow<0x0D, MRM1m, (outs), (ins i16mem:$addr),
-                       "prefetchw $addr", []>;
+                       "prefetchw\t$addr", []>;
 
 // "3DNowA" instructions
 defm PF2IW    : I3DNow_conv_rm_int<0x1C, "pf2iw", "a">;

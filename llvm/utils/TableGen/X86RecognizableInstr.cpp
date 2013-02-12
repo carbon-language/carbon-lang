@@ -119,6 +119,7 @@ namespace X86Local {
 #define TWO_BYTE_EXTENSION_TABLES \
   EXTENSION_TABLE(00)             \
   EXTENSION_TABLE(01)             \
+  EXTENSION_TABLE(0d)             \
   EXTENSION_TABLE(18)             \
   EXTENSION_TABLE(71)             \
   EXTENSION_TABLE(72)             \
