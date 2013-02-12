@@ -6,7 +6,7 @@ class A {
   ~A() { }
 };
 
-void no_contstructor_destructor_infinite_recursion() {
+void no_constructor_destructor_infinite_recursion() {
   A a;
 
 // CHECK:      define linkonce_odr x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"(%class.A* %this)
