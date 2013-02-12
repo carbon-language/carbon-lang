@@ -42,6 +42,14 @@ template<typename T> (X1<T>::X1)(double) { }
 template<typename T> X1<T> X1<T>::f1(int) { return 0; }
 template<typename T> X1<T> (X1<T>::f1)(type) { return 0; }
 
-class A {
-  A::A(); // expected-error{{extra qualification on member 'A'}}
+class X2 {
+  X2::X2(); // expected-error {{extra qualification on member 'X2'}}
 };
+
+// We used to parse 'X3::X3' as a member function declaration.
+// DR 1435 and DR 1310 made this invalid.
+typedef int T1;
+struct X3 {
+  X3::X3(T1()); // expected-error {{extra qualification on member 'X3'}}
+};
+
