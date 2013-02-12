@@ -746,7 +746,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       assert(RPTracker->getPos() == prior(MII) && "RPTracker can't find MI");
     }
 
-    assert((!MI->isTerminator() || CanHandleTerminators) && !MI->isLabel() &&
+    assert((CanHandleTerminators || (!MI->isTerminator() && !MI->isLabel())) &&
            "Cannot schedule terminators or labels!");
 
     SUnit *SU = MISUnitMap[MI];
