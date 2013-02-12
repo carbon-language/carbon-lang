@@ -306,5 +306,5 @@ void t26() {
 void t27() {
   __asm mov eax, fs:[0h]
 // CHECK: t27
-// CHECL: call void asm sideeffect inteldialect "mov eax, fs:[0h]", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
+// CHECK: call void asm sideeffect inteldialect "mov eax, fs:[0h]", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
 }
