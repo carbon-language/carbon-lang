@@ -426,6 +426,18 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(Hexagon::TFCR), DestReg).addReg(SrcReg);
     return;
   }
+  if (Hexagon::PredRegsRegClass.contains(SrcReg) &&
+      Hexagon::IntRegsRegClass.contains(DestReg)) {
+    BuildMI(MBB, I, DL, get(Hexagon::TFR_RsPd), DestReg).
+      addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+  if (Hexagon::IntRegsRegClass.contains(SrcReg) &&
+      Hexagon::PredRegsRegClass.contains(DestReg)) {
+    BuildMI(MBB, I, DL, get(Hexagon::TFR_PdRs), DestReg).
+      addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
 
   llvm_unreachable("Unimplemented");
 }
