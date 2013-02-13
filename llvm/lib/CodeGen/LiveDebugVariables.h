@@ -31,6 +31,10 @@ class VirtRegMap;
 
 class LiveDebugVariables : public MachineFunctionPass {
   void *pImpl;
+  /// Whether emitDebugValues is called.
+  bool EmitDone;
+  /// Whether the machine function is modified during the pass.
+  bool ModifiedMF;
 public:
   static char ID; // Pass identification, replacement for typeid
 

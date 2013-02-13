@@ -15,7 +15,6 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "RegisterCoalescer.h"
-#include "LiveDebugVariables.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -84,7 +83,6 @@ namespace {
     const TargetRegisterInfo* TRI;
     const TargetInstrInfo* TII;
     LiveIntervals *LIS;
-    LiveDebugVariables *LDV;
     const MachineLoopInfo* Loops;
     AliasAnalysis *AA;
     RegisterClassInfo RegClassInfo;
@@ -208,7 +206,6 @@ char &llvm::RegisterCoalescerID = RegisterCoalescer::ID;
 INITIALIZE_PASS_BEGIN(RegisterCoalescer, "simple-register-coalescing",
                       "Simple Register Coalescing", false, false)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
-INITIALIZE_PASS_DEPENDENCY(LiveDebugVariables)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
@@ -394,8 +391,6 @@ void RegisterCoalescer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   AU.addRequired<LiveIntervals>();
   AU.addPreserved<LiveIntervals>();
-  AU.addRequired<LiveDebugVariables>();
-  AU.addPreserved<LiveDebugVariables>();
   AU.addPreserved<SlotIndexes>();
   AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineLoopInfo>();
@@ -882,9 +877,6 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
                                           unsigned SubIdx) {
   bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
   LiveInterval *DstInt = DstIsPhys ? 0 : &LIS->getInterval(DstReg);
-
-  // Update LiveDebugVariables.
-  LDV->renameRegister(SrcReg, DstReg, SubIdx);
 
   SmallPtrSet<MachineInstr*, 8> Visited;
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(SrcReg);
@@ -2136,7 +2128,6 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   TRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
   LIS = &getAnalysis<LiveIntervals>();
-  LDV = &getAnalysis<LiveDebugVariables>();
   AA = &getAnalysis<AliasAnalysis>();
   Loops = &getAnalysis<MachineLoopInfo>();
 
@@ -2182,7 +2173,6 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   }
 
   DEBUG(dump());
-  DEBUG(LDV->dump());
   if (VerifyCoalescing)
     MF->verify(this, "After register coalescing");
   return true;
