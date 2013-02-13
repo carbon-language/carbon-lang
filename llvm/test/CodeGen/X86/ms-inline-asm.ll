@@ -92,7 +92,7 @@ entry:
 ; CHECK: t30:
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
-; CHECK: lea edi, dword ptr [_results]
+; CHECK: lea edi, dword ptr [{{_?}}results]
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 ; CHECK: {{## InlineAsm Start|#APP}}
