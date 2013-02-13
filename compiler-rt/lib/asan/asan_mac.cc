@@ -106,7 +106,23 @@ void MaybeReexec() {
     _NSGetExecutablePath(program_name, &buf_size);
     // Ok to use setenv() since the wrappers don't depend on the value of
     // asan_inited.
-    setenv(kDyldInsertLibraries, info.dli_fname, /*overwrite*/0);
+    if (dyld_insert_libraries) {
+      // Append the runtime dylib name to the existing value of
+      // DYLD_INSERT_LIBRARIES.
+      uptr old_env_len = internal_strlen(dyld_insert_libraries);
+      uptr fname_len = internal_strlen(info.dli_fname);
+      LowLevelAllocator allocator_for_env;
+      char *new_env =
+          (char*)allocator_for_env.Allocate(old_env_len + fname_len + 2);
+      internal_strncpy(new_env, dyld_insert_libraries, old_env_len);
+      new_env[old_env_len] = ':';
+      // Copy fname_len and add a trailing zero.
+      internal_strncpy(new_env + old_env_len + 1, info.dli_fname, fname_len + 1);
+      setenv(kDyldInsertLibraries, new_env, /*overwrite*/1);
+    } else {
+      // Set DYLD_INSERT_LIBRARIES equal to the runtime dylib name.
+      setenv(kDyldInsertLibraries, info.dli_fname, /*overwrite*/0);
+    }
     if (flags()->verbosity >= 1) {
       Report("exec()-ing the program with\n");
       Report("%s=%s\n", kDyldInsertLibraries, info.dli_fname);
