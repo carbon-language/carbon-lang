@@ -54,6 +54,10 @@ using namespace llvm;
 
 STATISTIC(NumCTRLoops, "Number of loops converted to CTR loops");
 
+namespace llvm {
+  void initializePPCCTRLoopsPass(PassRegistry&);
+}
+
 namespace {
   class CountValue;
   struct PPCCTRLoops : public MachineFunctionPass {
@@ -64,7 +68,9 @@ namespace {
   public:
     static char ID;   // Pass identification, replacement for typeid
 
-    PPCCTRLoops() : MachineFunctionPass(ID) {}
+    PPCCTRLoops() : MachineFunctionPass(ID) {
+      initializePPCCTRLoopsPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -174,6 +180,12 @@ namespace {
   };
 } // end anonymous namespace
 
+INITIALIZE_PASS_BEGIN(PPCCTRLoops, "ppc-ctr-loops", "PowerPC CTR Loops",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_END(PPCCTRLoops, "ppc-ctr-loops", "PowerPC CTR Loops",
+                    false, false)
 
 /// isCompareEquals - Returns true if the instruction is a compare equals
 /// instruction with an immediate operand.

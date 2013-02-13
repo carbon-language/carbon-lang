@@ -34,6 +34,10 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+namespace llvm {
+  void initializePPCDAGToDAGISelPass(PassRegistry&);
+}
+
 namespace {
   //===--------------------------------------------------------------------===//
   /// PPCDAGToDAGISel - PPC specific code to select PPC machine
@@ -48,7 +52,9 @@ namespace {
     explicit PPCDAGToDAGISel(PPCTargetMachine &tm)
       : SelectionDAGISel(tm), TM(tm),
         PPCLowering(*TM.getTargetLowering()),
-        PPCSubTarget(*TM.getSubtargetImpl()) {}
+        PPCSubTarget(*TM.getSubtargetImpl()) {
+      initializePPCDAGToDAGISelPass(*PassRegistry::getPassRegistry());
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -1328,5 +1334,16 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
 ///
 FunctionPass *llvm::createPPCISelDag(PPCTargetMachine &TM) {
   return new PPCDAGToDAGISel(TM);
+}
+
+static void initializePassOnce(PassRegistry &Registry) {
+  const char *Name = "PowerPC DAG->DAG Pattern Instruction Selection";
+  PassInfo *PI = new PassInfo(Name, "ppc-codegen", &SelectionDAGISel::ID, 0,
+                              false, false);
+  Registry.registerPass(*PI, true);
+}
+
+void llvm::initializePPCDAGToDAGISelPass(PassRegistry &Registry) {
+  CALL_ONCE_INITIALIZATION(initializePassOnce);
 }
 

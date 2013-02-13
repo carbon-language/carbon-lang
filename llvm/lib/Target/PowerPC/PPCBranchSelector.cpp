@@ -28,10 +28,16 @@ using namespace llvm;
 
 STATISTIC(NumExpanded, "Number of branches expanded to long format");
 
+namespace llvm {
+  void initializePPCBSelPass(PassRegistry&);
+}
+
 namespace {
   struct PPCBSel : public MachineFunctionPass {
     static char ID;
-    PPCBSel() : MachineFunctionPass(ID) {}
+    PPCBSel() : MachineFunctionPass(ID) {
+      initializePPCBSelPass(*PassRegistry::getPassRegistry());
+    }
 
     /// BlockSizes - The sizes of the basic blocks in the function.
     std::vector<unsigned> BlockSizes;
@@ -44,6 +50,9 @@ namespace {
   };
   char PPCBSel::ID = 0;
 }
+
+INITIALIZE_PASS(PPCBSel, "ppc-branch-select", "PowerPC Branch Selector",
+                false, false)
 
 /// createPPCBranchSelectionPass - returns an instance of the Branch Selection
 /// Pass
