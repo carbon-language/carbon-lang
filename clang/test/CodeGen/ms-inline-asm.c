@@ -324,3 +324,15 @@ void t28() {
 // CHECK: call void asm sideeffect inteldialect ".align 7", "~{dirflag},~{fpsr},~{flags}"() nounwind
 // CHECK: call void asm sideeffect inteldialect ".align 8", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }
+
+void t29() {
+  int arr[2] = {0, 0};
+  int olen = 0, osize = 0, otype = 0;
+  __asm mov olen, LENGTH arr
+  __asm mov osize, SIZE arr
+  __asm mov otype, TYPE arr
+// CHECK: t29
+// CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, $$2", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
+// CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, $$8", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
+// CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, $$4", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
+}
