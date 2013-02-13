@@ -88,6 +88,12 @@ diffs between different versions of the patch as it was reviewed in the
 *Revision Update History*. Most features are self descriptive - explore, and
 if you have a question, drop by on #llvm in IRC to get help.
 
+Note that as e-mail is the system of reference for code reviews, and some
+people prefer it over a web interface, we do not generate automated mail
+when a review changes state, for example by clicking "Accept Revision" in
+the web interface. Thus, please type LGTM into the comment box to accept
+a change from Phabricator.
+
 Status
 ------
 
