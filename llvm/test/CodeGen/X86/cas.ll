@@ -36,7 +36,38 @@ entry:
   ret i1 %tobool
 }
 
+; CHECK: @cas
 ; Make sure we're emitting a move from eax.
 ; CHECK: #APP
 ; CHECK-NEXT: lock;{{.*}}mov %eax,{{.*}}
+; CHECK-NEXT: #NO_APP
+
+define zeroext i1 @cas2(i8* %p, i8* %expected, i1 zeroext %desired) nounwind {
+entry:
+  %p.addr = alloca i8*, align 8
+  %expected.addr = alloca i8*, align 8
+  %desired.addr = alloca i8, align 1
+  %success = alloca i8, align 1
+  store i8* %p, i8** %p.addr, align 8
+  store i8* %expected, i8** %expected.addr, align 8
+  %frombool = zext i1 %desired to i8
+  store i8 %frombool, i8* %desired.addr, align 1
+  %0 = load i8** %expected.addr, align 8
+  %1 = load i8** %expected.addr, align 8
+  %2 = load i8* %1, align 1
+  %tobool = trunc i8 %2 to i1
+  %3 = load i8* %desired.addr, align 1
+  %tobool1 = trunc i8 %3 to i1
+  %4 = load i8** %p.addr, align 8
+  %5 = call i8 asm sideeffect "lock; cmpxchg $3, $4; mov $2, $1; sete $0", "={ax},=*rm,{ax},q,*m,~{memory},~{cc},~{dirflag},~{fpsr},~{flags}"(i8* %0, i1 %tobool, i1 %tobool1, i8* %4) nounwind
+  store i8 %5, i8* %success, align 1
+  %6 = load i8* %success, align 1
+  %tobool2 = trunc i8 %6 to i1
+  ret i1 %tobool2
+}
+
+; CHECK: @cas2
+; Make sure we're emitting a move from %al here.
+; CHECK: #APP
+; CHECK-NEXT: lock;{{.*}}mov %al,{{.*}}
 ; CHECK-NEXT: #NO_APP
