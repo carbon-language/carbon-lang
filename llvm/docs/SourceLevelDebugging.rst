@@ -298,7 +298,6 @@ Subprogram descriptors
     metadata, ;; Reference to type descriptor
     i1,       ;; True if the global is local to compile unit (static)
     i1,       ;; True if the global is defined in the compile unit (not extern)
-    i32,      ;; Line number where the scope of the subprogram begins
     i32,      ;; Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
     i32,      ;; Index into a virtual function
     metadata, ;; indicates which base type contains the vtable pointer for the
@@ -309,6 +308,7 @@ Subprogram descriptors
     metadata, ;; Lists function template parameters
     metadata, ;; Function declaration descriptor
     metadata  ;; List of function variables
+    i32,      ;; Line number where the scope of the subprogram begins
   }
 
 These descriptors provide debug information about functions, methods and
