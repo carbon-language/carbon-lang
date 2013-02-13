@@ -690,30 +690,6 @@ bool HexagonInstrInfo::isExtended(const MachineInstr *MI) const {
     case Hexagon::STriw_abs_setimm_V4:
 
     // V4 global address load.
-    case Hexagon::LDrid_GP_cPt_V4 :
-    case Hexagon::LDrid_GP_cNotPt_V4 :
-    case Hexagon::LDrid_GP_cdnPt_V4 :
-    case Hexagon::LDrid_GP_cdnNotPt_V4 :
-    case Hexagon::LDrib_GP_cPt_V4 :
-    case Hexagon::LDrib_GP_cNotPt_V4 :
-    case Hexagon::LDrib_GP_cdnPt_V4 :
-    case Hexagon::LDrib_GP_cdnNotPt_V4 :
-    case Hexagon::LDriub_GP_cPt_V4 :
-    case Hexagon::LDriub_GP_cNotPt_V4 :
-    case Hexagon::LDriub_GP_cdnPt_V4 :
-    case Hexagon::LDriub_GP_cdnNotPt_V4 :
-    case Hexagon::LDrih_GP_cPt_V4 :
-    case Hexagon::LDrih_GP_cNotPt_V4 :
-    case Hexagon::LDrih_GP_cdnPt_V4 :
-    case Hexagon::LDrih_GP_cdnNotPt_V4 :
-    case Hexagon::LDriuh_GP_cPt_V4 :
-    case Hexagon::LDriuh_GP_cNotPt_V4 :
-    case Hexagon::LDriuh_GP_cdnPt_V4 :
-    case Hexagon::LDriuh_GP_cdnNotPt_V4 :
-    case Hexagon::LDriw_GP_cPt_V4 :
-    case Hexagon::LDriw_GP_cNotPt_V4 :
-    case Hexagon::LDriw_GP_cdnPt_V4 :
-    case Hexagon::LDriw_GP_cdnNotPt_V4 :
     case Hexagon::LDd_GP_cPt_V4 :
     case Hexagon::LDd_GP_cNotPt_V4 :
     case Hexagon::LDd_GP_cdnPt_V4 :
@@ -740,22 +716,6 @@ bool HexagonInstrInfo::isExtended(const MachineInstr *MI) const {
     case Hexagon::LDw_GP_cdnNotPt_V4 :
 
     // V4 global address store.
-    case Hexagon::STrid_GP_cPt_V4 :
-    case Hexagon::STrid_GP_cNotPt_V4 :
-    case Hexagon::STrid_GP_cdnPt_V4 :
-    case Hexagon::STrid_GP_cdnNotPt_V4 :
-    case Hexagon::STrib_GP_cPt_V4 :
-    case Hexagon::STrib_GP_cNotPt_V4 :
-    case Hexagon::STrib_GP_cdnPt_V4 :
-    case Hexagon::STrib_GP_cdnNotPt_V4 :
-    case Hexagon::STrih_GP_cPt_V4 :
-    case Hexagon::STrih_GP_cNotPt_V4 :
-    case Hexagon::STrih_GP_cdnPt_V4 :
-    case Hexagon::STrih_GP_cdnNotPt_V4 :
-    case Hexagon::STriw_GP_cPt_V4 :
-    case Hexagon::STriw_GP_cNotPt_V4 :
-    case Hexagon::STriw_GP_cdnPt_V4 :
-    case Hexagon::STriw_GP_cdnNotPt_V4 :
     case Hexagon::STd_GP_cPt_V4 :
     case Hexagon::STd_GP_cNotPt_V4 :
     case Hexagon::STd_GP_cdnPt_V4 :
@@ -774,18 +734,6 @@ bool HexagonInstrInfo::isExtended(const MachineInstr *MI) const {
     case Hexagon::STw_GP_cdnNotPt_V4 :
 
     // V4 predicated global address new value store.
-    case Hexagon::STrib_GP_cPt_nv_V4 :
-    case Hexagon::STrib_GP_cNotPt_nv_V4 :
-    case Hexagon::STrib_GP_cdnPt_nv_V4 :
-    case Hexagon::STrib_GP_cdnNotPt_nv_V4 :
-    case Hexagon::STrih_GP_cPt_nv_V4 :
-    case Hexagon::STrih_GP_cNotPt_nv_V4 :
-    case Hexagon::STrih_GP_cdnPt_nv_V4 :
-    case Hexagon::STrih_GP_cdnNotPt_nv_V4 :
-    case Hexagon::STriw_GP_cPt_nv_V4 :
-    case Hexagon::STriw_GP_cNotPt_nv_V4 :
-    case Hexagon::STriw_GP_cdnPt_nv_V4 :
-    case Hexagon::STriw_GP_cdnNotPt_nv_V4 :
     case Hexagon::STb_GP_cPt_nv_V4 :
     case Hexagon::STb_GP_cNotPt_nv_V4 :
     case Hexagon::STb_GP_cdnPt_nv_V4 :
@@ -1177,7 +1125,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STrib_indexed_nv_V4:
     case Hexagon::STrib_indexed_shl_nv_V4:
     case Hexagon::STrib_shl_nv_V4:
-    case Hexagon::STrib_GP_nv_V4:
     case Hexagon::STb_GP_nv_V4:
     case Hexagon::POST_STbri_nv_V4:
     case Hexagon::STrib_cPt_nv_V4:
@@ -1200,10 +1147,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STb_GP_cNotPt_nv_V4:
     case Hexagon::STb_GP_cdnPt_nv_V4:
     case Hexagon::STb_GP_cdnNotPt_nv_V4:
-    case Hexagon::STrib_GP_cPt_nv_V4:
-    case Hexagon::STrib_GP_cNotPt_nv_V4:
-    case Hexagon::STrib_GP_cdnPt_nv_V4:
-    case Hexagon::STrib_GP_cdnNotPt_nv_V4:
     case Hexagon::STrib_abs_nv_V4:
     case Hexagon::STrib_abs_cPt_nv_V4:
     case Hexagon::STrib_abs_cdnPt_nv_V4:
@@ -1220,7 +1163,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STrih_indexed_nv_V4:
     case Hexagon::STrih_indexed_shl_nv_V4:
     case Hexagon::STrih_shl_nv_V4:
-    case Hexagon::STrih_GP_nv_V4:
     case Hexagon::STh_GP_nv_V4:
     case Hexagon::POST_SThri_nv_V4:
     case Hexagon::STrih_cPt_nv_V4:
@@ -1243,10 +1185,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STh_GP_cNotPt_nv_V4:
     case Hexagon::STh_GP_cdnPt_nv_V4:
     case Hexagon::STh_GP_cdnNotPt_nv_V4:
-    case Hexagon::STrih_GP_cPt_nv_V4:
-    case Hexagon::STrih_GP_cNotPt_nv_V4:
-    case Hexagon::STrih_GP_cdnPt_nv_V4:
-    case Hexagon::STrih_GP_cdnNotPt_nv_V4:
     case Hexagon::STrih_abs_nv_V4:
     case Hexagon::STrih_abs_cPt_nv_V4:
     case Hexagon::STrih_abs_cdnPt_nv_V4:
@@ -1263,7 +1201,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STriw_indexed_nv_V4:
     case Hexagon::STriw_indexed_shl_nv_V4:
     case Hexagon::STriw_shl_nv_V4:
-    case Hexagon::STriw_GP_nv_V4:
     case Hexagon::STw_GP_nv_V4:
     case Hexagon::POST_STwri_nv_V4:
     case Hexagon::STriw_cPt_nv_V4:
@@ -1286,10 +1223,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
     case Hexagon::STw_GP_cNotPt_nv_V4:
     case Hexagon::STw_GP_cdnPt_nv_V4:
     case Hexagon::STw_GP_cdnNotPt_nv_V4:
-    case Hexagon::STriw_GP_cPt_nv_V4:
-    case Hexagon::STriw_GP_cNotPt_nv_V4:
-    case Hexagon::STriw_GP_cdnPt_nv_V4:
-    case Hexagon::STriw_GP_cdnNotPt_nv_V4:
     case Hexagon::STriw_abs_nv_V4:
     case Hexagon::STriw_abs_cPt_nv_V4:
     case Hexagon::STriw_abs_cdnPt_nv_V4:
@@ -1732,26 +1665,6 @@ unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
     case Hexagon::STw_GP_cNotPt_V4:
       return Hexagon::STw_GP_cPt_V4;
 
-    case Hexagon::STrid_GP_cPt_V4:
-      return Hexagon::STrid_GP_cNotPt_V4;
-    case Hexagon::STrid_GP_cNotPt_V4:
-      return Hexagon::STrid_GP_cPt_V4;
-
-    case Hexagon::STrib_GP_cPt_V4:
-      return Hexagon::STrib_GP_cNotPt_V4;
-    case Hexagon::STrib_GP_cNotPt_V4:
-      return Hexagon::STrib_GP_cPt_V4;
-
-    case Hexagon::STrih_GP_cPt_V4:
-      return Hexagon::STrih_GP_cNotPt_V4;
-    case Hexagon::STrih_GP_cNotPt_V4:
-      return Hexagon::STrih_GP_cPt_V4;
-
-    case Hexagon::STriw_GP_cPt_V4:
-      return Hexagon::STriw_GP_cNotPt_V4;
-    case Hexagon::STriw_GP_cNotPt_V4:
-      return Hexagon::STriw_GP_cPt_V4;
-
   // Load.
     case Hexagon::LDrid_cPt:
       return Hexagon::LDrid_cNotPt;
@@ -2037,25 +1950,6 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
                               Hexagon::LDriw_indexed_shl_cNotPt_V4;
 
   // V4 Load from global address
-  case Hexagon::LDrid_GP_V4:
-    return !invertPredicate ? Hexagon::LDrid_GP_cPt_V4 :
-                              Hexagon::LDrid_GP_cNotPt_V4;
-  case Hexagon::LDrib_GP_V4:
-    return !invertPredicate ? Hexagon::LDrib_GP_cPt_V4 :
-                              Hexagon::LDrib_GP_cNotPt_V4;
-  case Hexagon::LDriub_GP_V4:
-    return !invertPredicate ? Hexagon::LDriub_GP_cPt_V4 :
-                              Hexagon::LDriub_GP_cNotPt_V4;
-  case Hexagon::LDrih_GP_V4:
-    return !invertPredicate ? Hexagon::LDrih_GP_cPt_V4 :
-                              Hexagon::LDrih_GP_cNotPt_V4;
-  case Hexagon::LDriuh_GP_V4:
-    return !invertPredicate ? Hexagon::LDriuh_GP_cPt_V4 :
-                              Hexagon::LDriuh_GP_cNotPt_V4;
-  case Hexagon::LDriw_GP_V4:
-    return !invertPredicate ? Hexagon::LDriw_GP_cPt_V4 :
-                              Hexagon::LDriw_GP_cNotPt_V4;
-
   case Hexagon::LDd_GP_V4:
     return !invertPredicate ? Hexagon::LDd_GP_cPt_V4 :
                               Hexagon::LDd_GP_cNotPt_V4;
@@ -2138,19 +2032,6 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
                               Hexagon::STrid_indexed_shl_cNotPt_V4;
 
   // V4 Store to global address
-  case Hexagon::STrid_GP_V4:
-    return !invertPredicate ? Hexagon::STrid_GP_cPt_V4 :
-                              Hexagon::STrid_GP_cNotPt_V4;
-  case Hexagon::STrib_GP_V4:
-    return !invertPredicate ? Hexagon::STrib_GP_cPt_V4 :
-                              Hexagon::STrib_GP_cNotPt_V4;
-  case Hexagon::STrih_GP_V4:
-    return !invertPredicate ? Hexagon::STrih_GP_cPt_V4 :
-                              Hexagon::STrih_GP_cNotPt_V4;
-  case Hexagon::STriw_GP_V4:
-    return !invertPredicate ? Hexagon::STriw_GP_cPt_V4 :
-                              Hexagon::STriw_GP_cNotPt_V4;
-
   case Hexagon::STd_GP_V4:
     return !invertPredicate ? Hexagon::STd_GP_cPt_V4 :
                               Hexagon::STd_GP_cNotPt_V4;
@@ -2867,14 +2748,6 @@ isConditionalStore (const MachineInstr* MI) const {
       return QRI.Subtarget.hasV4TOps();
 
     // V4 global address store before promoting to dot new.
-    case Hexagon::STrid_GP_cPt_V4 :
-    case Hexagon::STrid_GP_cNotPt_V4 :
-    case Hexagon::STrib_GP_cPt_V4 :
-    case Hexagon::STrib_GP_cNotPt_V4 :
-    case Hexagon::STrih_GP_cPt_V4 :
-    case Hexagon::STrih_GP_cNotPt_V4 :
-    case Hexagon::STriw_GP_cPt_V4 :
-    case Hexagon::STriw_GP_cNotPt_V4 :
     case Hexagon::STd_GP_cPt_V4 :
     case Hexagon::STd_GP_cNotPt_V4 :
     case Hexagon::STb_GP_cPt_V4 :

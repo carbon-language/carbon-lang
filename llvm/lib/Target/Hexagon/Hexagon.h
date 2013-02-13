@@ -28,7 +28,8 @@ namespace llvm {
   class HexagonTargetMachine;
   class raw_ostream;
 
-  FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM);
+  FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
+                                     CodeGenOpt::Level OptLevel);
   FunctionPass *createHexagonDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createHexagonFPMoverPass(TargetMachine &TM);
   FunctionPass *createHexagonRemoveExtendOps(HexagonTargetMachine &TM);

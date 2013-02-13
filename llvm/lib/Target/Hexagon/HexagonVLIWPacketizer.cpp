@@ -376,7 +376,6 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::STrib_indexed:
     case Hexagon::STrib_indexed_shl_V4:
     case Hexagon::STrib_shl_V4:
-    case Hexagon::STrib_GP_V4:
     case Hexagon::STb_GP_V4:
     case Hexagon::POST_STbri:
     case Hexagon::STrib_cPt:
@@ -399,17 +398,12 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::STb_GP_cNotPt_V4:
     case Hexagon::STb_GP_cdnPt_V4:
     case Hexagon::STb_GP_cdnNotPt_V4:
-    case Hexagon::STrib_GP_cPt_V4:
-    case Hexagon::STrib_GP_cNotPt_V4:
-    case Hexagon::STrib_GP_cdnPt_V4:
-    case Hexagon::STrib_GP_cdnNotPt_V4:
 
     // store halfword
     case Hexagon::STrih:
     case Hexagon::STrih_indexed:
     case Hexagon::STrih_indexed_shl_V4:
     case Hexagon::STrih_shl_V4:
-    case Hexagon::STrih_GP_V4:
     case Hexagon::STh_GP_V4:
     case Hexagon::POST_SThri:
     case Hexagon::STrih_cPt:
@@ -432,17 +426,12 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::STh_GP_cNotPt_V4:
     case Hexagon::STh_GP_cdnPt_V4:
     case Hexagon::STh_GP_cdnNotPt_V4:
-    case Hexagon::STrih_GP_cPt_V4:
-    case Hexagon::STrih_GP_cNotPt_V4:
-    case Hexagon::STrih_GP_cdnPt_V4:
-    case Hexagon::STrih_GP_cdnNotPt_V4:
 
     // store word
     case Hexagon::STriw:
     case Hexagon::STriw_indexed:
     case Hexagon::STriw_indexed_shl_V4:
     case Hexagon::STriw_shl_V4:
-    case Hexagon::STriw_GP_V4:
     case Hexagon::STw_GP_V4:
     case Hexagon::POST_STwri:
     case Hexagon::STriw_cPt:
@@ -465,10 +454,6 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::STw_GP_cNotPt_V4:
     case Hexagon::STw_GP_cdnPt_V4:
     case Hexagon::STw_GP_cdnNotPt_V4:
-    case Hexagon::STriw_GP_cPt_V4:
-    case Hexagon::STriw_GP_cNotPt_V4:
-    case Hexagon::STriw_GP_cdnPt_V4:
-    case Hexagon::STriw_GP_cdnNotPt_V4:
         return QRI->Subtarget.hasV4TOps();
   }
   return false;
@@ -507,9 +492,6 @@ static int GetDotNewOp(const int opc) {
 
   case Hexagon::STrib_shl_V4:
     return Hexagon::STrib_shl_nv_V4;
-
-  case Hexagon::STrib_GP_V4:
-    return Hexagon::STrib_GP_nv_V4;
 
   case Hexagon::STb_GP_V4:
     return Hexagon::STb_GP_nv_V4;
@@ -577,18 +559,6 @@ static int GetDotNewOp(const int opc) {
   case Hexagon::STb_GP_cdnNotPt_V4:
     return Hexagon::STb_GP_cdnNotPt_nv_V4;
 
-  case Hexagon::STrib_GP_cPt_V4:
-    return Hexagon::STrib_GP_cPt_nv_V4;
-
-  case Hexagon::STrib_GP_cNotPt_V4:
-    return Hexagon::STrib_GP_cNotPt_nv_V4;
-
-  case Hexagon::STrib_GP_cdnPt_V4:
-    return Hexagon::STrib_GP_cdnPt_nv_V4;
-
-  case Hexagon::STrib_GP_cdnNotPt_V4:
-    return Hexagon::STrib_GP_cdnNotPt_nv_V4;
-
   // store new value halfword
   case Hexagon::STrih:
     return Hexagon::STrih_nv_V4;
@@ -601,9 +571,6 @@ static int GetDotNewOp(const int opc) {
 
   case Hexagon::STrih_shl_V4:
     return Hexagon::STrih_shl_nv_V4;
-
-  case Hexagon::STrih_GP_V4:
-    return Hexagon::STrih_GP_nv_V4;
 
   case Hexagon::STh_GP_V4:
     return Hexagon::STh_GP_nv_V4;
@@ -671,18 +638,6 @@ static int GetDotNewOp(const int opc) {
   case Hexagon::STh_GP_cdnNotPt_V4:
     return Hexagon::STh_GP_cdnNotPt_nv_V4;
 
-  case Hexagon::STrih_GP_cPt_V4:
-    return Hexagon::STrih_GP_cPt_nv_V4;
-
-  case Hexagon::STrih_GP_cNotPt_V4:
-    return Hexagon::STrih_GP_cNotPt_nv_V4;
-
-  case Hexagon::STrih_GP_cdnPt_V4:
-    return Hexagon::STrih_GP_cdnPt_nv_V4;
-
-  case Hexagon::STrih_GP_cdnNotPt_V4:
-    return Hexagon::STrih_GP_cdnNotPt_nv_V4;
-
   // store new value word
   case Hexagon::STriw:
     return Hexagon::STriw_nv_V4;
@@ -695,9 +650,6 @@ static int GetDotNewOp(const int opc) {
 
   case Hexagon::STriw_shl_V4:
     return Hexagon::STriw_shl_nv_V4;
-
-  case Hexagon::STriw_GP_V4:
-    return Hexagon::STriw_GP_nv_V4;
 
   case Hexagon::STw_GP_V4:
     return Hexagon::STw_GP_nv_V4;
@@ -765,17 +717,6 @@ static int GetDotNewOp(const int opc) {
   case Hexagon::STw_GP_cdnNotPt_V4:
     return Hexagon::STw_GP_cdnNotPt_nv_V4;
 
-  case Hexagon::STriw_GP_cPt_V4:
-    return Hexagon::STriw_GP_cPt_nv_V4;
-
-  case Hexagon::STriw_GP_cNotPt_V4:
-    return Hexagon::STriw_GP_cNotPt_nv_V4;
-
-  case Hexagon::STriw_GP_cdnPt_V4:
-    return Hexagon::STriw_GP_cdnPt_nv_V4;
-
-  case Hexagon::STriw_GP_cdnNotPt_V4:
-    return Hexagon::STriw_GP_cdnNotPt_nv_V4;
   }
 }
 
@@ -821,12 +762,6 @@ static int GetDotNewPredOp(const int opc) {
   case Hexagon::STb_GP_cNotPt_V4 :
     return Hexagon::STb_GP_cdnNotPt_V4;
 
-  case Hexagon::STrib_GP_cPt_V4 :
-    return Hexagon::STrib_GP_cdnPt_V4;
-
-  case Hexagon::STrib_GP_cNotPt_V4 :
-    return Hexagon::STrib_GP_cdnNotPt_V4;
-
   // Store doubleword conditionally
   case Hexagon::STrid_cPt :
     return Hexagon::STrid_cdnPt_V4;
@@ -857,12 +792,6 @@ static int GetDotNewPredOp(const int opc) {
 
   case Hexagon::STd_GP_cNotPt_V4 :
     return Hexagon::STd_GP_cdnNotPt_V4;
-
-  case Hexagon::STrid_GP_cPt_V4 :
-    return Hexagon::STrid_GP_cdnPt_V4;
-
-  case Hexagon::STrid_GP_cNotPt_V4 :
-    return Hexagon::STrid_GP_cdnNotPt_V4;
 
   // Store halfword conditionally
   case Hexagon::STrih_cPt :
@@ -901,12 +830,6 @@ static int GetDotNewPredOp(const int opc) {
   case Hexagon::STh_GP_cNotPt_V4 :
     return Hexagon::STh_GP_cdnNotPt_V4;
 
-  case Hexagon::STrih_GP_cPt_V4 :
-    return Hexagon::STrih_GP_cdnPt_V4;
-
-  case Hexagon::STrih_GP_cNotPt_V4 :
-    return Hexagon::STrih_GP_cdnNotPt_V4;
-
   // Store word conditionally
   case Hexagon::STriw_cPt :
     return Hexagon::STriw_cdnPt_V4;
@@ -943,12 +866,6 @@ static int GetDotNewPredOp(const int opc) {
 
   case Hexagon::STw_GP_cNotPt_V4 :
     return Hexagon::STw_GP_cdnNotPt_V4;
-
-  case Hexagon::STriw_GP_cPt_V4 :
-    return Hexagon::STriw_GP_cdnPt_V4;
-
-  case Hexagon::STriw_GP_cNotPt_V4 :
-    return Hexagon::STriw_GP_cdnNotPt_V4;
 
   // Condtional Jumps
   case Hexagon::JMP_c:
@@ -1166,42 +1083,6 @@ static int GetDotNewPredOp(const int opc) {
   case Hexagon::LDw_GP_cNotPt_V4:
     return Hexagon::LDw_GP_cdnNotPt_V4;
 
-  case Hexagon::LDrid_GP_cPt_V4:
-    return Hexagon::LDrid_GP_cdnPt_V4;
-
-  case Hexagon::LDrid_GP_cNotPt_V4:
-    return Hexagon::LDrid_GP_cdnNotPt_V4;
-
-  case Hexagon::LDrib_GP_cPt_V4:
-    return Hexagon::LDrib_GP_cdnPt_V4;
-
-  case Hexagon::LDrib_GP_cNotPt_V4:
-    return Hexagon::LDrib_GP_cdnNotPt_V4;
-
-  case Hexagon::LDriub_GP_cPt_V4:
-    return Hexagon::LDriub_GP_cdnPt_V4;
-
-  case Hexagon::LDriub_GP_cNotPt_V4:
-    return Hexagon::LDriub_GP_cdnNotPt_V4;
-
-  case Hexagon::LDrih_GP_cPt_V4:
-    return Hexagon::LDrih_GP_cdnPt_V4;
-
-  case Hexagon::LDrih_GP_cNotPt_V4:
-    return Hexagon::LDrih_GP_cdnNotPt_V4;
-
-  case Hexagon::LDriuh_GP_cPt_V4:
-    return Hexagon::LDriuh_GP_cdnPt_V4;
-
-  case Hexagon::LDriuh_GP_cNotPt_V4:
-    return Hexagon::LDriuh_GP_cdnNotPt_V4;
-
-  case Hexagon::LDriw_GP_cPt_V4:
-    return Hexagon::LDriw_GP_cdnPt_V4;
-
-  case Hexagon::LDriw_GP_cNotPt_V4:
-    return Hexagon::LDriw_GP_cdnNotPt_V4;
-
   // Conditional store new-value byte
   case Hexagon::STrib_cPt_nv_V4 :
     return Hexagon::STrib_cdnPt_nv_V4;
@@ -1228,12 +1109,6 @@ static int GetDotNewPredOp(const int opc) {
 
   case Hexagon::STb_GP_cNotPt_nv_V4 :
     return Hexagon::STb_GP_cdnNotPt_nv_V4;
-
-  case Hexagon::STrib_GP_cPt_nv_V4 :
-    return Hexagon::STrib_GP_cdnPt_nv_V4;
-
-  case Hexagon::STrib_GP_cNotPt_nv_V4 :
-    return Hexagon::STrib_GP_cdnNotPt_nv_V4;
 
   // Conditional store new-value halfword
   case Hexagon::STrih_cPt_nv_V4 :
@@ -1262,12 +1137,6 @@ static int GetDotNewPredOp(const int opc) {
   case Hexagon::STh_GP_cNotPt_nv_V4 :
     return Hexagon::STh_GP_cdnNotPt_nv_V4;
 
-  case Hexagon::STrih_GP_cPt_nv_V4 :
-    return Hexagon::STrih_GP_cdnPt_nv_V4;
-
-  case Hexagon::STrih_GP_cNotPt_nv_V4 :
-    return Hexagon::STrih_GP_cdnNotPt_nv_V4;
-
   // Conditional store new-value word
   case Hexagon::STriw_cPt_nv_V4 :
     return  Hexagon::STriw_cdnPt_nv_V4;
@@ -1294,12 +1163,6 @@ static int GetDotNewPredOp(const int opc) {
 
   case Hexagon::STw_GP_cNotPt_nv_V4 :
     return Hexagon::STw_GP_cdnNotPt_nv_V4;
-
-  case Hexagon::STriw_GP_cPt_nv_V4 :
-    return Hexagon::STriw_GP_cdnPt_nv_V4;
-
-  case Hexagon::STriw_GP_cNotPt_nv_V4 :
-    return Hexagon::STriw_GP_cdnNotPt_nv_V4;
 
   // Conditional add
   case Hexagon::ADD_ri_cPt :
@@ -1661,42 +1524,6 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::LDw_GP_cdnNotPt_V4:
     return Hexagon::LDw_GP_cNotPt_V4;
 
-  case Hexagon::LDrid_GP_cdnPt_V4:
-    return Hexagon::LDrid_GP_cPt_V4;
-
-  case Hexagon::LDrid_GP_cdnNotPt_V4:
-    return Hexagon::LDrid_GP_cNotPt_V4;
-
-  case Hexagon::LDrib_GP_cdnPt_V4:
-    return Hexagon::LDrib_GP_cPt_V4;
-
-  case Hexagon::LDrib_GP_cdnNotPt_V4:
-    return Hexagon::LDrib_GP_cNotPt_V4;
-
-  case Hexagon::LDriub_GP_cdnPt_V4:
-    return Hexagon::LDriub_GP_cPt_V4;
-
-  case Hexagon::LDriub_GP_cdnNotPt_V4:
-    return Hexagon::LDriub_GP_cNotPt_V4;
-
-  case Hexagon::LDrih_GP_cdnPt_V4:
-    return Hexagon::LDrih_GP_cPt_V4;
-
-  case Hexagon::LDrih_GP_cdnNotPt_V4:
-    return Hexagon::LDrih_GP_cNotPt_V4;
-
-  case Hexagon::LDriuh_GP_cdnPt_V4:
-    return Hexagon::LDriuh_GP_cPt_V4;
-
-  case Hexagon::LDriuh_GP_cdnNotPt_V4:
-    return Hexagon::LDriuh_GP_cNotPt_V4;
-
-  case Hexagon::LDriw_GP_cdnPt_V4:
-    return Hexagon::LDriw_GP_cPt_V4;
-
-  case Hexagon::LDriw_GP_cdnNotPt_V4:
-    return Hexagon::LDriw_GP_cNotPt_V4;
-
   // Conditional add
 
   case Hexagon::ADD_ri_cdnPt :
@@ -1830,16 +1657,6 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::STb_GP_cNotPt_nv_V4:
     return Hexagon::STb_GP_cNotPt_V4;
 
-  case Hexagon::STrib_GP_cdnPt_nv_V4:
-  case Hexagon::STrib_GP_cdnPt_V4:
-  case Hexagon::STrib_GP_cPt_nv_V4:
-    return Hexagon::STrib_GP_cPt_V4;
-
-  case Hexagon::STrib_GP_cdnNotPt_nv_V4:
-  case Hexagon::STrib_GP_cdnNotPt_V4:
-  case Hexagon::STrib_GP_cNotPt_nv_V4:
-    return Hexagon::STrib_GP_cNotPt_V4;
-
   // Store new-value byte - unconditional
   case Hexagon::STrib_nv_V4:
     return Hexagon::STrib;
@@ -1852,9 +1669,6 @@ static int GetDotOldOp(const int opc) {
 
   case Hexagon::STrib_shl_nv_V4:
     return Hexagon::STrib_shl_V4;
-
-  case Hexagon::STrib_GP_nv_V4:
-    return Hexagon::STrib_GP_V4;
 
   case Hexagon::STb_GP_nv_V4:
     return Hexagon::STb_GP_V4;
@@ -1919,16 +1733,6 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::STh_GP_cNotPt_nv_V4:
     return Hexagon::STh_GP_cNotPt_V4;
 
-  case Hexagon::STrih_GP_cdnPt_nv_V4:
-  case Hexagon::STrih_GP_cdnPt_V4:
-  case Hexagon::STrih_GP_cPt_nv_V4:
-    return Hexagon::STrih_GP_cPt_V4;
-
-  case Hexagon::STrih_GP_cdnNotPt_nv_V4:
-  case Hexagon::STrih_GP_cdnNotPt_V4:
-  case Hexagon::STrih_GP_cNotPt_nv_V4:
-    return Hexagon::STrih_GP_cNotPt_V4;
-
   // Store new-value halfword - unconditional
 
   case Hexagon::STrih_nv_V4:
@@ -1942,9 +1746,6 @@ static int GetDotOldOp(const int opc) {
 
   case Hexagon::STrih_shl_nv_V4:
     return Hexagon::STrih_shl_V4;
-
-  case Hexagon::STrih_GP_nv_V4:
-    return Hexagon::STrih_GP_V4;
 
   case Hexagon::STh_GP_nv_V4:
     return Hexagon::STh_GP_V4;
@@ -2010,16 +1811,6 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::STw_GP_cNotPt_nv_V4:
     return Hexagon::STw_GP_cNotPt_V4;
 
-  case Hexagon::STriw_GP_cdnPt_nv_V4:
-  case Hexagon::STriw_GP_cdnPt_V4:
-  case Hexagon::STriw_GP_cPt_nv_V4:
-    return Hexagon::STriw_GP_cPt_V4;
-
-  case Hexagon::STriw_GP_cdnNotPt_nv_V4:
-  case Hexagon::STriw_GP_cdnNotPt_V4:
-  case Hexagon::STriw_GP_cNotPt_nv_V4:
-    return Hexagon::STriw_GP_cNotPt_V4;
-
   // Store new-value word - unconditional
 
   case Hexagon::STriw_nv_V4:
@@ -2033,9 +1824,6 @@ static int GetDotOldOp(const int opc) {
 
   case Hexagon::STriw_shl_nv_V4:
     return Hexagon::STriw_shl_V4;
-
-  case Hexagon::STriw_GP_nv_V4:
-    return Hexagon::STriw_GP_V4;
 
   case Hexagon::STw_GP_nv_V4:
     return Hexagon::STw_GP_V4;
@@ -2075,11 +1863,6 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::STd_GP_cdnNotPt_V4 :
     return Hexagon::STd_GP_cNotPt_V4;
 
-  case Hexagon::STrid_GP_cdnPt_V4 :
-    return Hexagon::STrid_GP_cPt_V4;
-
-  case Hexagon::STrid_GP_cdnNotPt_V4 :
-    return Hexagon::STrid_GP_cNotPt_V4;
   }
 }
 
@@ -2215,42 +1998,22 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::ZXTB_cdnPt_V4 :
   case Hexagon::ZXTH_cPt_V4 :
   case Hexagon::ZXTH_cdnPt_V4 :
-  case Hexagon::LDrid_GP_cPt_V4 :
-  case Hexagon::LDrib_GP_cPt_V4 :
-  case Hexagon::LDriub_GP_cPt_V4 :
-  case Hexagon::LDrih_GP_cPt_V4 :
-  case Hexagon::LDriuh_GP_cPt_V4 :
-  case Hexagon::LDriw_GP_cPt_V4 :
   case Hexagon::LDd_GP_cPt_V4 :
   case Hexagon::LDb_GP_cPt_V4 :
   case Hexagon::LDub_GP_cPt_V4 :
   case Hexagon::LDh_GP_cPt_V4 :
   case Hexagon::LDuh_GP_cPt_V4 :
   case Hexagon::LDw_GP_cPt_V4 :
-  case Hexagon::STrid_GP_cPt_V4 :
-  case Hexagon::STrib_GP_cPt_V4 :
-  case Hexagon::STrih_GP_cPt_V4 :
-  case Hexagon::STriw_GP_cPt_V4 :
   case Hexagon::STd_GP_cPt_V4 :
   case Hexagon::STb_GP_cPt_V4 :
   case Hexagon::STh_GP_cPt_V4 :
   case Hexagon::STw_GP_cPt_V4 :
-  case Hexagon::LDrid_GP_cdnPt_V4 :
-  case Hexagon::LDrib_GP_cdnPt_V4 :
-  case Hexagon::LDriub_GP_cdnPt_V4 :
-  case Hexagon::LDrih_GP_cdnPt_V4 :
-  case Hexagon::LDriuh_GP_cdnPt_V4 :
-  case Hexagon::LDriw_GP_cdnPt_V4 :
   case Hexagon::LDd_GP_cdnPt_V4 :
   case Hexagon::LDb_GP_cdnPt_V4 :
   case Hexagon::LDub_GP_cdnPt_V4 :
   case Hexagon::LDh_GP_cdnPt_V4 :
   case Hexagon::LDuh_GP_cdnPt_V4 :
   case Hexagon::LDw_GP_cdnPt_V4 :
-  case Hexagon::STrid_GP_cdnPt_V4 :
-  case Hexagon::STrib_GP_cdnPt_V4 :
-  case Hexagon::STrih_GP_cdnPt_V4 :
-  case Hexagon::STriw_GP_cdnPt_V4 :
   case Hexagon::STd_GP_cdnPt_V4 :
   case Hexagon::STb_GP_cdnPt_V4 :
   case Hexagon::STh_GP_cdnPt_V4 :
@@ -2375,42 +2138,22 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::ZXTH_cNotPt_V4 :
   case Hexagon::ZXTH_cdnNotPt_V4 :
 
-  case Hexagon::LDrid_GP_cNotPt_V4 :
-  case Hexagon::LDrib_GP_cNotPt_V4 :
-  case Hexagon::LDriub_GP_cNotPt_V4 :
-  case Hexagon::LDrih_GP_cNotPt_V4 :
-  case Hexagon::LDriuh_GP_cNotPt_V4 :
-  case Hexagon::LDriw_GP_cNotPt_V4 :
   case Hexagon::LDd_GP_cNotPt_V4 :
   case Hexagon::LDb_GP_cNotPt_V4 :
   case Hexagon::LDub_GP_cNotPt_V4 :
   case Hexagon::LDh_GP_cNotPt_V4 :
   case Hexagon::LDuh_GP_cNotPt_V4 :
   case Hexagon::LDw_GP_cNotPt_V4 :
-  case Hexagon::STrid_GP_cNotPt_V4 :
-  case Hexagon::STrib_GP_cNotPt_V4 :
-  case Hexagon::STrih_GP_cNotPt_V4 :
-  case Hexagon::STriw_GP_cNotPt_V4 :
   case Hexagon::STd_GP_cNotPt_V4 :
   case Hexagon::STb_GP_cNotPt_V4 :
   case Hexagon::STh_GP_cNotPt_V4 :
   case Hexagon::STw_GP_cNotPt_V4 :
-  case Hexagon::LDrid_GP_cdnNotPt_V4 :
-  case Hexagon::LDrib_GP_cdnNotPt_V4 :
-  case Hexagon::LDriub_GP_cdnNotPt_V4 :
-  case Hexagon::LDrih_GP_cdnNotPt_V4 :
-  case Hexagon::LDriuh_GP_cdnNotPt_V4 :
-  case Hexagon::LDriw_GP_cdnNotPt_V4 :
   case Hexagon::LDd_GP_cdnNotPt_V4 :
   case Hexagon::LDb_GP_cdnNotPt_V4 :
   case Hexagon::LDub_GP_cdnNotPt_V4 :
   case Hexagon::LDh_GP_cdnNotPt_V4 :
   case Hexagon::LDuh_GP_cdnNotPt_V4 :
   case Hexagon::LDw_GP_cdnNotPt_V4 :
-  case Hexagon::STrid_GP_cdnNotPt_V4 :
-  case Hexagon::STrib_GP_cdnNotPt_V4 :
-  case Hexagon::STrih_GP_cdnNotPt_V4 :
-  case Hexagon::STriw_GP_cdnNotPt_V4 :
   case Hexagon::STd_GP_cdnNotPt_V4 :
   case Hexagon::STb_GP_cdnNotPt_V4 :
   case Hexagon::STh_GP_cdnNotPt_V4 :
@@ -2572,27 +2315,7 @@ bool HexagonPacketizerList::isDotNewInst(MachineInstr* MI) {
   case Hexagon::LDuh_GP_cdnNotPt_V4:
   case Hexagon::LDw_GP_cdnPt_V4:
   case Hexagon::LDw_GP_cdnNotPt_V4:
-  case Hexagon::LDrid_GP_cdnPt_V4:
-  case Hexagon::LDrid_GP_cdnNotPt_V4:
-  case Hexagon::LDrib_GP_cdnPt_V4:
-  case Hexagon::LDrib_GP_cdnNotPt_V4:
-  case Hexagon::LDriub_GP_cdnPt_V4:
-  case Hexagon::LDriub_GP_cdnNotPt_V4:
-  case Hexagon::LDrih_GP_cdnPt_V4:
-  case Hexagon::LDrih_GP_cdnNotPt_V4:
-  case Hexagon::LDriuh_GP_cdnPt_V4:
-  case Hexagon::LDriuh_GP_cdnNotPt_V4:
-  case Hexagon::LDriw_GP_cdnPt_V4:
-  case Hexagon::LDriw_GP_cdnNotPt_V4:
 
-  case Hexagon::STrid_GP_cdnPt_V4:
-  case Hexagon::STrid_GP_cdnNotPt_V4:
-  case Hexagon::STrib_GP_cdnPt_V4:
-  case Hexagon::STrib_GP_cdnNotPt_V4:
-  case Hexagon::STrih_GP_cdnPt_V4:
-  case Hexagon::STrih_GP_cdnNotPt_V4:
-  case Hexagon::STriw_GP_cdnPt_V4:
-  case Hexagon::STriw_GP_cdnNotPt_V4:
   case Hexagon::STd_GP_cdnPt_V4:
   case Hexagon::STd_GP_cdnNotPt_V4:
   case Hexagon::STb_GP_cdnPt_V4:

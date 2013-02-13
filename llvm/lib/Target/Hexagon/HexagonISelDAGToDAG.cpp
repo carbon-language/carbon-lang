@@ -15,17 +15,28 @@
 #include "Hexagon.h"
 #include "HexagonISelLowering.h"
 #include "HexagonTargetMachine.h"
-#include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-
 using namespace llvm;
 
+static
+cl::opt<unsigned>
+MaxNumOfUsesForConstExtenders("ga-max-num-uses-for-constant-extenders",
+  cl::Hidden, cl::init(2),
+  cl::desc("Maximum number of uses of a global address such that we still us a"
+           "constant extended instruction"));
 
 //===----------------------------------------------------------------------===//
 // Instruction Selector Implementation
 //===----------------------------------------------------------------------===//
+
+namespace llvm {
+  void initializeHexagonDAGToDAGISelPass(PassRegistry&);
+}
 
 //===--------------------------------------------------------------------===//
 /// HexagonDAGToDAGISel - Hexagon specific code to select Hexagon machine
@@ -40,19 +51,24 @@ class HexagonDAGToDAGISel : public SelectionDAGISel {
   // Keep a reference to HexagonTargetMachine.
   HexagonTargetMachine& TM;
   const HexagonInstrInfo *TII;
-
+  DenseMap<const GlobalValue *, unsigned> GlobalAddressUseCountMap;
 public:
-  explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine)
-    : SelectionDAGISel(targetmachine),
+  explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine,
+                               CodeGenOpt::Level OptLevel)
+    : SelectionDAGISel(targetmachine, OptLevel),
       Subtarget(targetmachine.getSubtarget<HexagonSubtarget>()),
       TM(targetmachine),
       TII(static_cast<const HexagonInstrInfo*>(TM.getInstrInfo())) {
-
+    initializeHexagonDAGToDAGISelPass(*PassRegistry::getPassRegistry());
   }
+  bool hasNumUsesBelowThresGA(SDNode *N) const;
 
   SDNode *Select(SDNode *N);
 
   // Complex Pattern Selectors.
+  inline bool foldGlobalAddress(SDValue &N, SDValue &R);
+  inline bool foldGlobalAddressGP(SDValue &N, SDValue &R);
+  bool foldGlobalAddressImpl(SDValue &N, SDValue &R, bool ShouldLookForGP);
   bool SelectADDRri(SDValue& N, SDValue &R1, SDValue &R2);
   bool SelectADDRriS11_0(SDValue& N, SDValue &R1, SDValue &R2);
   bool SelectADDRriS11_1(SDValue& N, SDValue &R1, SDValue &R2);
@@ -113,9 +129,22 @@ inline SDValue XformU7ToU7M1Imm(signed Imm) {
 /// createHexagonISelDag - This pass converts a legalized DAG into a
 /// Hexagon-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createHexagonISelDag(HexagonTargetMachine &TM) {
-  return new HexagonDAGToDAGISel(TM);
+FunctionPass *llvm::createHexagonISelDag(HexagonTargetMachine &TM,
+                                         CodeGenOpt::Level OptLevel) {
+  return new HexagonDAGToDAGISel(TM, OptLevel);
 }
+
+static void initializePassOnce(PassRegistry &Registry) {
+  const char *Name = "Hexagon DAG->DAG Pattern Instruction Selection";
+  PassInfo *PI = new PassInfo(Name, "hexagon-isel",
+                              &SelectionDAGISel::ID, 0, false, false);
+  Registry.registerPass(*PI, true);
+}
+
+void llvm::initializeHexagonDAGToDAGISelPass(PassRegistry &Registry) {
+  CALL_ONCE_INITIALIZATION(initializePassOnce)
+}
+
 
 static bool IsS11_0_Offset(SDNode * S) {
     ConstantSDNode *N = cast<ConstantSDNode>(S);
@@ -1525,4 +1554,70 @@ bool HexagonDAGToDAGISel::isConstExtProfitable(SDNode *N) const {
 
   return (UseCount <= 1);
 
+}
+
+//===--------------------------------------------------------------------===//
+// Return 'true' if use count of the global address is below threshold.
+//===--------------------------------------------------------------------===//
+bool HexagonDAGToDAGISel::hasNumUsesBelowThresGA(SDNode *N) const {
+  assert(N->getOpcode() == ISD::TargetGlobalAddress &&
+         "Expecting a target global address");
+
+  // Always try to fold the address.
+  if (TM.getOptLevel() == CodeGenOpt::Aggressive)
+    return true;
+
+  GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
+  DenseMap<const GlobalValue *, unsigned>::const_iterator GI =
+    GlobalAddressUseCountMap.find(GA->getGlobal());
+
+  if (GI == GlobalAddressUseCountMap.end())
+    return false;
+
+  return GI->second <= MaxNumOfUsesForConstExtenders;
+}
+
+//===--------------------------------------------------------------------===//
+// Return true if the non GP-relative global address can be folded.
+//===--------------------------------------------------------------------===//
+inline bool HexagonDAGToDAGISel::foldGlobalAddress(SDValue &N, SDValue &R) {
+  return foldGlobalAddressImpl(N, R, false);
+}
+
+//===--------------------------------------------------------------------===//
+// Return true if the GP-relative global address can be folded.
+//===--------------------------------------------------------------------===//
+inline bool HexagonDAGToDAGISel::foldGlobalAddressGP(SDValue &N, SDValue &R) {
+  return foldGlobalAddressImpl(N, R, true);
+}
+
+//===--------------------------------------------------------------------===//
+// Fold offset of the global address if number of uses are below threshold.
+//===--------------------------------------------------------------------===//
+bool HexagonDAGToDAGISel::foldGlobalAddressImpl(SDValue &N, SDValue &R,
+                                                bool ShouldLookForGP) {
+  if (N.getOpcode() == ISD::ADD) {
+    SDValue N0 = N.getOperand(0);
+    SDValue N1 = N.getOperand(1);
+    if ((ShouldLookForGP && (N0.getOpcode() == HexagonISD::CONST32_GP)) ||
+        (!ShouldLookForGP && (N0.getOpcode() == HexagonISD::CONST32))) {
+      ConstantSDNode *Const = dyn_cast<ConstantSDNode>(N1);
+      GlobalAddressSDNode *GA =
+        dyn_cast<GlobalAddressSDNode>(N0.getOperand(0));
+
+      if (Const && GA &&
+          (GA->getOpcode() == ISD::TargetGlobalAddress)) {
+        if ((N0.getOpcode() == HexagonISD::CONST32) &&
+                !hasNumUsesBelowThresGA(GA))
+            return false;
+        R = CurDAG->getTargetGlobalAddress(GA->getGlobal(),
+                                          Const->getDebugLoc(),
+                                          N.getValueType(),
+                                          GA->getOffset() +
+                                          (uint64_t)Const->getSExtValue());
+        return true;
+      }
+    }
+  }
+  return false;
 }

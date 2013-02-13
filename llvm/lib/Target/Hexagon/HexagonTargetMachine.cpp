@@ -122,7 +122,7 @@ TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool HexagonPassConfig::addInstSelector() {
   addPass(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
-  addPass(createHexagonISelDag(getHexagonTargetMachine()));
+  addPass(createHexagonISelDag(getHexagonTargetMachine(), getOptLevel()));
   addPass(createHexagonPeephole());
   return false;
 }
