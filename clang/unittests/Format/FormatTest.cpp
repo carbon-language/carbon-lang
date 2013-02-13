@@ -1723,7 +1723,13 @@ TEST_F(FormatTest, FormatsCasts) {
 
   // These are not casts.
   verifyFormat("void f(int *) {}");
-  verifyFormat("f(foo)[4];");
+  verifyFormat("f(foo)->b;");
+  verifyFormat("f(foo).b;");
+  verifyFormat("f(foo)(b);");
+  verifyFormat("f(foo)[b];");
+  verifyFormat("[](foo) { return 4; }(bar)];");
+  verifyFormat("(*funptr)(foo)[4];");
+  verifyFormat("funptrs[4](foo)[4];");
   verifyFormat("void f(int *);");
   verifyFormat("void f(int *) = 0;");
   verifyFormat("void f(SmallVector<int>) {}");
@@ -1731,6 +1737,8 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(SmallVector<int>) = 0;");
   verifyFormat("void f(int i = (kValue) * kMask) {}");
   verifyFormat("void f(int i = (kA * kB) & kMask) {}");
+  verifyFormat("int a = sizeof(int) * b;");
+  verifyFormat("int a = alignof(int) * b;");
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
