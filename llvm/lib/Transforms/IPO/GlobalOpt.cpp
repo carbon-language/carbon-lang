@@ -1846,10 +1846,10 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       bool StoringOther = SI->getOperand(0) == OtherVal;
       // Only do this if we weren't storing a loaded value.
       Value *StoreVal;
-      if (StoringOther || SI->getOperand(0) == InitVal)
+      if (StoringOther || SI->getOperand(0) == InitVal) {
         StoreVal = ConstantInt::get(Type::getInt1Ty(GV->getContext()),
                                     StoringOther);
-      else {
+      } else {
         // Otherwise, we are storing a previously loaded copy.  To do this,
         // change the copy from copying the original value to just copying the
         // bool.
@@ -1888,6 +1888,9 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
     UI->eraseFromParent();
   }
 
+  // Retain the name of the old global variable. People who are debugging their
+  // programs may expect these variables to be named the same.
+  NewGV->takeName(GV);
   GV->eraseFromParent();
   return true;
 }
