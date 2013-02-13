@@ -609,6 +609,11 @@ public:
         return false;
     }
     
+    ValueList
+    GetArgumentValues () const
+    {
+        return m_arg_values;
+    }
 private:
 	//------------------------------------------------------------------
 	// For ClangFunction only

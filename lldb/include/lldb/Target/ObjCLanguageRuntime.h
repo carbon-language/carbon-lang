@@ -351,7 +351,7 @@ public:
     IsValidISA(ObjCISA isa)
     {
         UpdateISAToDescriptorMap();
-        return m_isa_to_descriptor_cache.count(isa) > 0;
+        return m_isa_to_descriptor.count(isa) > 0;
     }
 
     virtual void
@@ -360,7 +360,7 @@ public:
     void
     UpdateISAToDescriptorMap()
     {
-        if (m_process && m_process->GetStopID() != m_isa_to_descriptor_cache_stop_id)
+        if (m_process && m_process->GetStopID() != m_isa_to_descriptor_stop_id)
         {
             UpdateISAToDescriptorMapIfNeeded ();
         }
@@ -508,6 +508,40 @@ protected:
     {
         return false;
     }
+    
+    
+    bool
+    ISAIsCached (ObjCISA isa) const
+    {
+        return m_isa_to_descriptor.find(isa) != m_isa_to_descriptor.end();
+    }
+
+    bool
+    AddClass (ObjCISA isa, const ClassDescriptorSP &descriptor_sp)
+    {
+        if (isa != 0)
+        {
+            m_isa_to_descriptor[isa] = descriptor_sp;
+            return true;
+        }
+        return false;
+    }
+
+    bool
+    AddClass (ObjCISA isa, const ClassDescriptorSP &descriptor_sp, const char *class_name);
+
+    bool
+    AddClass (ObjCISA isa, const ClassDescriptorSP &descriptor_sp, uint32_t class_name_hash)
+    {
+        if (isa != 0)
+        {
+            m_isa_to_descriptor[isa] = descriptor_sp;
+            m_hash_to_isa_map.insert(std::make_pair(class_name_hash, isa));
+            return true;
+        }
+        return false;
+    }
+
 private:
     // We keep a map of <Class,Selector>->Implementation so we don't have to call the resolver
     // function over and over.
@@ -556,16 +590,24 @@ private:
     };
 
     typedef std::map<ClassAndSel,lldb::addr_t> MsgImplMap;
-    MsgImplMap m_impl_cache;
-    
-    LazyBool m_has_new_literals_and_indexing;
-protected:
     typedef std::map<ObjCISA, ClassDescriptorSP> ISAToDescriptorMap;
+    typedef std::multimap<uint32_t, ObjCISA> HashToISAMap;
     typedef ISAToDescriptorMap::iterator ISAToDescriptorIterator;
-    ISAToDescriptorMap m_isa_to_descriptor_cache;
-    uint32_t m_isa_to_descriptor_cache_stop_id;
+    typedef HashToISAMap::iterator HashToISAIterator;
+
+    MsgImplMap m_impl_cache;
+    LazyBool m_has_new_literals_and_indexing;
+    ISAToDescriptorMap m_isa_to_descriptor;
+    HashToISAMap m_hash_to_isa_map;
+
+protected:
+    uint32_t m_isa_to_descriptor_stop_id;
     typedef std::map<ConstString, lldb::TypeWP> CompleteClassMap;
     CompleteClassMap m_complete_class_cache;
+
+    
+    ISAToDescriptorIterator
+    GetDescriptorIterator (const ConstString &name);
 
     DISALLOW_COPY_AND_ASSIGN (ObjCLanguageRuntime);
 };

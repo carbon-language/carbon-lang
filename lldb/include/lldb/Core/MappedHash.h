@@ -271,7 +271,7 @@ public:
                 const uint32_t hash = m_entries[i].hash;
                 const uint32_t bucket_idx = hash % header.bucket_count;
                 const uint32_t strp_offset = m_entries[i].str_offset;
-                const dw_offset_t die_offset = m_entries[i].die_offset;
+                const uint32_t die_offset = m_entries[i].die_offset;
                 hash_buckets[bucket_idx][hash][strp_offset].push_back(die_offset);
             }
             

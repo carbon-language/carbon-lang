@@ -9,6 +9,7 @@
 #include "clang/AST/Type.h"
 
 #include "lldb/Core/Log.h"
+#include "lldb/Core/MappedHash.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Timer.h"
@@ -34,10 +35,23 @@ ObjCLanguageRuntime::~ObjCLanguageRuntime()
 ObjCLanguageRuntime::ObjCLanguageRuntime (Process *process) :
     LanguageRuntime (process),
     m_has_new_literals_and_indexing (eLazyBoolCalculate),
-    m_isa_to_descriptor_cache(),
-    m_isa_to_descriptor_cache_stop_id (UINT32_MAX)
+    m_isa_to_descriptor(),
+    m_isa_to_descriptor_stop_id (UINT32_MAX)
 {
 
+}
+
+bool
+ObjCLanguageRuntime::AddClass (ObjCISA isa, const ClassDescriptorSP &descriptor_sp, const char *class_name)
+{
+    if (isa != 0)
+    {
+        m_isa_to_descriptor[isa] = descriptor_sp;
+        // class_name is assumed to be valid
+        m_hash_to_isa_map.insert(std::make_pair(MappedHash::HashStringUsingDJB(class_name), isa));
+        return true;
+    }
+    return false;
 }
 
 void
@@ -431,12 +445,49 @@ ObjCLanguageRuntime::ClassDescriptor::IsPointerValid (lldb::addr_t value,
 ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetISA(const ConstString &name)
 {
-    UpdateISAToDescriptorMap();
-    for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
-        if (val.second && val.second->GetClassName() == name)
-            return val.first;
+    ISAToDescriptorIterator pos = GetDescriptorIterator (name);
+    if (pos != m_isa_to_descriptor.end())
+        return pos->first;
     return 0;
 }
+
+ObjCLanguageRuntime::ISAToDescriptorIterator
+ObjCLanguageRuntime::GetDescriptorIterator (const ConstString &name)
+{
+    ISAToDescriptorIterator end = m_isa_to_descriptor.end();
+
+    if (name)
+    {
+        UpdateISAToDescriptorMap();
+        if (m_hash_to_isa_map.empty())
+        {
+            // No name hashes were provided, we need to just linearly power through the
+            // names and find a match
+            for (ISAToDescriptorIterator pos = m_isa_to_descriptor.begin(); pos != end; ++pos)
+            {
+                if (pos->second->GetClassName() == name)
+                    return pos;
+            }
+        }
+        else
+        {
+            // Name hashes were provided, so use them to efficiently lookup name to isa/descriptor
+            const uint32_t name_hash = MappedHash::HashStringUsingDJB (name.GetCString());
+            std::pair <HashToISAIterator, HashToISAIterator> range = m_hash_to_isa_map.equal_range(name_hash);
+            for (HashToISAIterator range_pos = range.first; range_pos != range.second; ++range_pos)
+            {
+                ISAToDescriptorIterator pos = m_isa_to_descriptor.find (range_pos->second);
+                if (pos != m_isa_to_descriptor.end())
+                {
+                    if (pos->second->GetClassName() == name)
+                        return pos;
+                }
+            }
+        }
+    }
+    return end;
+}
+
 
 ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
@@ -463,10 +514,9 @@ ObjCLanguageRuntime::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 ObjCLanguageRuntime::ClassDescriptorSP
 ObjCLanguageRuntime::GetClassDescriptor (const ConstString &class_name)
 {
-    UpdateISAToDescriptorMap();
-    for (const ISAToDescriptorMap::value_type &val : m_isa_to_descriptor_cache)
-        if (val.second && val.second->GetClassName() == class_name)
-            return val.second;
+    ISAToDescriptorIterator pos = GetDescriptorIterator (class_name);
+    if (pos != m_isa_to_descriptor.end())
+        return pos->second;
     return ClassDescriptorSP();
 
 }
@@ -521,8 +571,8 @@ ObjCLanguageRuntime::GetClassDescriptor (ObjCISA isa)
     if (isa)
     {
         UpdateISAToDescriptorMap();
-        ObjCLanguageRuntime::ISAToDescriptorIterator pos = m_isa_to_descriptor_cache.find(isa);    
-        if (pos != m_isa_to_descriptor_cache.end())
+        ObjCLanguageRuntime::ISAToDescriptorIterator pos = m_isa_to_descriptor.find(isa);    
+        if (pos != m_isa_to_descriptor.end())
             return pos->second;
     }
     return ClassDescriptorSP();

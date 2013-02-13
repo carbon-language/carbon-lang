@@ -364,9 +364,8 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
     {
         // Update the process stop ID that indicates the last time we updated the
         // map, wether it was successful or not.
-        m_isa_to_descriptor_cache_stop_id = process->GetStopID();
+        m_isa_to_descriptor_stop_id = process->GetStopID();
         
-
         lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
         
         ProcessSP process_sp = process->shared_from_this();
@@ -431,14 +430,14 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
                                 isa = bucket_data;
                                 if (isa)
                                 {
-                                    if (m_isa_to_descriptor_cache.count(isa) == 0)
+                                    if (!ISAIsCached(isa))
                                     {
                                         ClassDescriptorSP descriptor_sp (new ClassDescriptorV1(isa, process_sp));
                                         
                                         if (log && log->GetVerbose())
                                             log->Printf("AppleObjCRuntimeV1 added (ObjCISA)0x%" PRIx64 " from _objc_debug_class_hash to isa->descriptor cache", isa);
                                         
-                                        m_isa_to_descriptor_cache[isa] = descriptor_sp;
+                                        AddClass (isa, descriptor_sp);
                                     }
                                 }
                             }
@@ -453,14 +452,14 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
 
                                     if (isa && isa != LLDB_INVALID_ADDRESS)
                                     {
-                                        if (m_isa_to_descriptor_cache.count(isa) == 0)
+                                        if (!ISAIsCached(isa))
                                         {
                                             ClassDescriptorSP descriptor_sp (new ClassDescriptorV1(isa, process_sp));
                                             
                                             if (log && log->GetVerbose())
                                                 log->Printf("AppleObjCRuntimeV1 added (ObjCISA)0x%" PRIx64 " from _objc_debug_class_hash to isa->descriptor cache", isa);
                                             
-                                            m_isa_to_descriptor_cache[isa] = descriptor_sp;
+                                            AddClass (isa, descriptor_sp);
                                         }
                                     }
                                 }
@@ -473,7 +472,7 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
     }
     else
     {
-        m_isa_to_descriptor_cache_stop_id = UINT32_MAX;
+        m_isa_to_descriptor_stop_id = UINT32_MAX;
     }
 }
 
