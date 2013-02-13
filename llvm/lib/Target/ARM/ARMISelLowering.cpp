@@ -2576,7 +2576,7 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
 }
 
 // The remaining GPRs hold either the beginning of variable-argument
-// data, or the beginning of an aggregate passed by value (usuall
+// data, or the beginning of an aggregate passed by value (usually
 // byval).  Either way, we allocate stack slots adjacent to the data
 // provided by our caller, and store the unallocated registers there.
 // If this is a variadic function, the va_list pointer will begin with
