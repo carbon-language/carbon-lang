@@ -4029,6 +4029,10 @@ bool AsmParser::ParseDirectiveMSAlign(SMLoc IDLoc, ParseStatementInfo &Info) {
   return false;
 }
 
+bool AsmStringSort (AsmRewrite A, AsmRewrite B) {
+  return A.Loc.getPointer() < B.Loc.getPointer();
+}
+
 bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                  unsigned &NumOutputs, unsigned &NumInputs,
                                  SmallVectorImpl<std::pair<void *, bool> > &OpDecls,
@@ -4153,6 +4157,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   AsmRewriteKind PrevKind = AOK_Imm;
   raw_string_ostream OS(AsmStringIR);
   const char *Start = SrcMgr.getMemoryBuffer(0)->getBufferStart();
+  std::sort (AsmStrRewrites.begin(), AsmStrRewrites.end(), AsmStringSort);
   for (SmallVectorImpl<struct AsmRewrite>::iterator
          I = AsmStrRewrites.begin(), E = AsmStrRewrites.end(); I != E; ++I) {
     const char *Loc = (*I).Loc.getPointer();
