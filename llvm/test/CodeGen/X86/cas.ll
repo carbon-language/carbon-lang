@@ -36,7 +36,7 @@ entry:
   ret i1 %tobool
 }
 
-; Make sure we're emitting a move from 
+; Make sure we're emitting a move from eax.
 ; CHECK: #APP
 ; CHECK-NEXT: lock;{{.*}}mov %eax,{{.*}}
 ; CHECK-NEXT: #NO_APP
