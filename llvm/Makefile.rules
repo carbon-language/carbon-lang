@@ -656,7 +656,7 @@ else
   ifneq ($(DARWIN_MAJVERS),4)
     LD.Flags += $(RPATH) -Wl,@executable_path/../lib
   endif
-  ifeq ($(RC_BUILDIT),YES)
+  ifeq ($(RC_XBS),YES)
     TempFile := $(shell mkdir -p ${OBJROOT}/dSYMs ; mktemp ${OBJROOT}/dSYMs/llvm-lto.XXXXXX)
     LD.Flags += -Wl,-object_path_lto -Wl,$(TempFile)
   endif
