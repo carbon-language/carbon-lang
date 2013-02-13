@@ -592,6 +592,8 @@ void MemoryAccessImpl(ThreadState *thr, uptr addr,
     u64 *shadow_mem, Shadow cur);
 void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
     uptr size, bool is_write);
+void MemoryAccessRangeStep(ThreadState *thr, uptr pc, uptr addr,
+    uptr size, uptr step, bool is_write);
 
 const int kSizeLog1 = 0;
 const int kSizeLog2 = 1;

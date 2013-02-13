@@ -116,14 +116,12 @@ void __tsan_write(ThreadState *thr, void *addr, void *pc) {
 
 void __tsan_read_range(ThreadState *thr, void *addr, uptr size, uptr step,
                        void *pc) {
-  for (uptr i = 0; i < size; i += step)
-	  MemoryRead(thr, (uptr)pc, (uptr)addr + i, kSizeLog1);
+  MemoryAccessRangeStep(thr, (uptr)pc, (uptr)addr, size, step, false);
 }
 
 void __tsan_write_range(ThreadState *thr, void *addr, uptr size, uptr step,
                         void *pc) {
-  for (uptr i = 0; i < size; i += step)
-	  MemoryWrite(thr, (uptr)pc, (uptr)addr + i, kSizeLog1);
+  MemoryAccessRangeStep(thr, (uptr)pc, (uptr)addr, size, step, true);
 }
 
 void __tsan_func_enter(ThreadState *thr, void *pc) {
@@ -138,7 +136,7 @@ void __tsan_malloc(ThreadState *thr, void *p, uptr sz, void *pc) {
   if (thr == 0)  // probably before __tsan_init()
     return;
   thr->in_rtl++;
-  MemoryRangeImitateWrite(thr, (uptr)pc, (uptr)p, sz);
+  MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
   thr->in_rtl--;
 }
 
