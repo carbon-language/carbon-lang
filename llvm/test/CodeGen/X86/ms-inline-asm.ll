@@ -79,3 +79,26 @@ entry:
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 }
+
+@results = global [2 x i32] [i32 3, i32 2], align 4
+
+define i32* @t30() nounwind ssp {
+entry:
+  %res = alloca i32*, align 4
+  call void asm sideeffect inteldialect "lea edi, dword ptr $0", "*m,~{edi},~{dirflag},~{fpsr},~{flags}"([2 x i32]* @results) nounwind
+  call void asm sideeffect inteldialect "mov dword ptr $0, edi", "=*m,~{dirflag},~{fpsr},~{flags}"(i32** %res) nounwind
+  %0 = load i32** %res, align 4
+  ret i32* %0
+; CHECK: t30:
+; CHECK: {{## InlineAsm Start|#APP}}
+; CHECK: .intel_syntax
+; CHECK: lea edi, dword ptr [_results]
+; CHECK: .att_syntax
+; CHECK: {{## InlineAsm End|#NO_APP}}
+; CHECK: {{## InlineAsm Start|#APP}}
+; CHECK: .intel_syntax
+; CHECK: mov dword ptr [esp], edi
+; CHECK: .att_syntax
+; CHECK: {{## InlineAsm End|#NO_APP}}
+; CHECK: movl (%esp), %eax
+}

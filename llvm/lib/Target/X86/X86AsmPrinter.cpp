@@ -252,14 +252,15 @@ void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
 
   case MachineOperand::MO_Immediate:
-    O << '$' << MO.getImm();
+    if (AsmVariant == 0) O << '$';
+    O << MO.getImm();
     return;
 
   case MachineOperand::MO_JumpTableIndex:
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol: {
-    O << '$';
+    if (AsmVariant == 0) O << '$';
     printSymbolOperand(MO, O);
     break;
   }
@@ -355,19 +356,23 @@ void X86AsmPrinter::printIntelMemReference(const MachineInstr *MI, unsigned Op,
     NeedPlus = true;
   }
 
-  assert (DispSpec.isImm() && "Displacement is not an immediate!");
-  int64_t DispVal = DispSpec.getImm();
-  if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg())) {
-    if (NeedPlus) {
-      if (DispVal > 0)
-        O << " + ";
-      else {
-        O << " - ";
-        DispVal = -DispVal;
+  if (!DispSpec.isImm()) {
+    if (NeedPlus) O << " + ";
+    printOperand(MI, Op+3, O, Modifier, AsmVariant);
+  } else {
+    int64_t DispVal = DispSpec.getImm();
+    if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg())) {
+      if (NeedPlus) {
+        if (DispVal > 0)
+          O << " + ";
+        else {
+          O << " - ";
+          DispVal = -DispVal;
+        }
       }
+      O << DispVal;
     }
-    O << DispVal;
-  }  
+  }
   O << ']';
 }
 
