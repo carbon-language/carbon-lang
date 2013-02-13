@@ -336,3 +336,15 @@ void t29() {
 // CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, $$8", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
 // CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, $$4", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
 }
+
+int results[2] = {13, 37};
+int *t30()
+{
+  int *res;
+  __asm lea edi, results
+  __asm mov res, edi
+  return res;
+// CHECK: t30
+// CHECK: call void asm sideeffect inteldialect "lea edi, dword ptr $0", "*m,~{edi},~{dirflag},~{fpsr},~{flags}"([2 x i32]* @{{.*}}) nounwind
+// CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, edi", "=*m,~{dirflag},~{fpsr},~{flags}"(i32** %{{.*}}) nounwind
+}
