@@ -1,5 +1,6 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK_O1
-// ---RUN: %clangxx_tsan -O2 %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK_O2
+// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O2 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O3 %s -o %t && %t 2>&1 | FileCheck %s
 //
 // Check that load widening is not tsan-hostile.
 #include <pthread.h>
@@ -33,8 +34,5 @@ int main() {
   printf("PASS\n");
 }
 
-// FIXME: currently, this test fails at -O2 (reports false positive).
-// CHECK_O2: WARNING: ThreadSanitizer: data race
-
-// CHECK_O1: PASS
-// CHECK_O1-NOT: WARNING: ThreadSanitizer: data race
+// CHECK-NOT: WARNING: ThreadSanitizer: data race
+// CHECK: PASS

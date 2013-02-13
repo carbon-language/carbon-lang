@@ -23,7 +23,7 @@ extern "C" {
   // This function should be called at the very beginning of the process,
   // before any instrumented code is executed and before any call to malloc.
   // Everytime the asan ABI changes we also change the version number in this
-  // name. Objects build with incompatible asan ABI version 
+  // name. Objects build with incompatible asan ABI version
   // will not link with run-time.
   void __asan_init_v1() SANITIZER_INTERFACE_ATTRIBUTE;
   #define __asan_init __asan_init_v1
