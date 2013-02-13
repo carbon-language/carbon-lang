@@ -1074,6 +1074,20 @@ void ObjCInterfaceDecl::setImplementation(ObjCImplementationDecl *ImplD) {
   getASTContext().setObjCImplementation(getDefinition(), ImplD);
 }
 
+namespace {
+  struct SynthesizeIvarChunk {
+    uint64_t Size;
+    ObjCIvarDecl *Ivar;
+    SynthesizeIvarChunk(uint64_t size, ObjCIvarDecl *ivar)
+      : Size(size), Ivar(ivar) {}
+  };
+
+  bool operator<(const SynthesizeIvarChunk & LHS,
+                 const SynthesizeIvarChunk &RHS) {
+      return LHS.Size < RHS.Size;
+  }
+}
+
 /// all_declared_ivar_begin - return first ivar declared in this class,
 /// its extensions and its implementation. Lazily build the list on first
 /// access.
@@ -1110,14 +1124,33 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
   
   if (ObjCImplementationDecl *ImplDecl = getImplementation()) {
     if (!ImplDecl->ivar_empty()) {
-      ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
-                                            E = ImplDecl->ivar_end();
-      if (!data().IvarList) {
-        data().IvarList = *I; ++I;
-        curIvar = data().IvarList;
+      SmallVector<SynthesizeIvarChunk, 16> layout;
+      for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
+           E = ImplDecl->ivar_end(); I != E; ++I) {
+        ObjCIvarDecl *IV = *I;
+        if (IV->getSynthesize() && !IV->isInvalidDecl()) {
+          layout.push_back(SynthesizeIvarChunk(
+                             IV->getASTContext().getTypeSize(IV->getType()), IV));
+          continue;
+        }
+        if (!data().IvarList)
+          data().IvarList = *I;
+        else
+          curIvar->setNextIvar(*I);
+        curIvar = *I;
       }
-      for ( ;I != E; curIvar = *I, ++I)
-        curIvar->setNextIvar(*I);
+      
+      if (!layout.empty()) {
+        // Order synthesized ivars by their size.
+        std::stable_sort(layout.begin(), layout.end());
+        unsigned Ix = 0, EIx = layout.size();
+        if (!data().IvarList) {
+          data().IvarList = layout[0].Ivar; Ix++;
+          curIvar = data().IvarList;
+        }
+        for ( ; Ix != EIx; curIvar = layout[Ix].Ivar, Ix++)
+          curIvar->setNextIvar(layout[Ix].Ivar);
+      }
     }
   }
   return data().IvarList;
