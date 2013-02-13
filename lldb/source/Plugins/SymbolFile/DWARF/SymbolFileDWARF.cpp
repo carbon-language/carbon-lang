@@ -6996,6 +6996,7 @@ SymbolFileDWARF::ParseVariableDIE
             bool is_external = false;
             bool is_artificial = false;
             bool location_is_const_value_data = false;
+            bool has_explicit_location = false;
             //AccessType accessibility = eAccessNone;
 
             for (i=0; i<num_attributes; ++i)
@@ -7015,10 +7016,51 @@ SymbolFileDWARF::ParseVariableDIE
                     case DW_AT_type:        type_uid = form_value.Reference(dwarf_cu); break;
                     case DW_AT_external:    is_external = form_value.Unsigned() != 0; break;
                     case DW_AT_const_value:
-                        location_is_const_value_data = true;
-                        // Fall through...
+                        // If we have already found a DW_AT_location attribute, ignore this attribute.
+                        if (!has_explicit_location)
+                        {
+                            location_is_const_value_data = true;
+                            // The constant value will be either a block, a data value or a string.
+                            const DataExtractor& debug_info_data = get_debug_info_data();
+                            if (DWARFFormValue::IsBlockForm(form_value.Form()))
+                            {
+                                // Retrieve the value as a block expression.
+                                uint32_t block_offset = form_value.BlockData() - debug_info_data.GetDataStart();
+                                uint32_t block_length = form_value.Unsigned();
+                                location.CopyOpcodeData(debug_info_data, block_offset, block_length);
+                            }
+                            else if (DWARFFormValue::IsDataForm(form_value.Form()))
+                            {
+                                // Retrieve the value as a data expression.
+                                const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+                                uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
+                                uint32_t data_length = fixed_form_sizes[form_value.Form()];
+                                location.CopyOpcodeData(debug_info_data, data_offset, data_length);
+                            }
+                            else
+                            {
+                                // Retrieve the value as a string expression.
+                                if (form_value.Form() == DW_FORM_strp)
+                                {
+                                    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+                                    uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
+                                    uint32_t data_length = fixed_form_sizes[form_value.Form()];
+                                    location.CopyOpcodeData(debug_info_data, data_offset, data_length);
+                                }
+                                else
+                                {
+                                    const char *str = form_value.AsCString(&debug_info_data);
+                                    uint32_t string_offset = str - (const char *)debug_info_data.GetDataStart();
+                                    uint32_t string_length = strlen(str) + 1;
+                                    location.CopyOpcodeData(debug_info_data, string_offset, string_length);
+                                }
+                            }
+                        }
+                        break;
                     case DW_AT_location:
                         {
+                            location_is_const_value_data = false;
+                            has_explicit_location = true;
                             if (form_value.BlockData())
                             {
                                 const DataExtractor& debug_info_data = get_debug_info_data();
