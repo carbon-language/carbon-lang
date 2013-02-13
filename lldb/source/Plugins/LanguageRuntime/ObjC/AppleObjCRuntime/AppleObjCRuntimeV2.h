@@ -139,16 +139,10 @@ private:
     UpdateISAToDescriptorMapFromMemory (RemoteNXMapTable &hash_table);
     
     bool
-    UpdateISAToDescriptorMapFromDYLDSharedCache ();
-
-    bool
     UpdateISAToDescriptorMapUsingUtilityFunction_objc_getClassList();
 
     bool
     UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table);
-    
-    bool
-    UpdateISAToDescriptorMapDynamic2(RemoteNXMapTable &hash_table);
     
     void
     ParseISAHashArray (const lldb_private::DataExtractor &data,
@@ -156,9 +150,6 @@ private:
     
     bool
     UpdateISAToDescriptorMapSharedCache ();
-    
-    bool
-    UpdateISAToDescriptorMapSharedCache2 ();
 
     lldb::addr_t
     GetSharedCacheReadOnlyAddress();

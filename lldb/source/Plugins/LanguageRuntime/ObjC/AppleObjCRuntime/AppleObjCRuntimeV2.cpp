@@ -197,101 +197,6 @@ typedef struct BucketInfo
     Class isa;
 } BucketInfo;
 
-typedef struct ClassInfo
-{
-    Class isa;
-    const char *name_ptr;
-    char name[32];
-} ClassInfo;
-
-uint32_t
-__lldb_apple_objc_v2_get_dynamic_class_info (void *gdb_objc_realized_classes_ptr,
-                                             void *class_infos_ptr,
-                                             uint32_t class_infos_byte_size)
-{
-    DEBUG_PRINTF ("gdb_objc_realized_classes_ptr = %p\n", gdb_objc_realized_classes_ptr);
-    DEBUG_PRINTF ("class_infos_ptr = %p\n", class_infos_ptr);
-    DEBUG_PRINTF ("class_infos_byte_size = %u\n", class_infos_byte_size);
-    const NXMapTable *grc = (const NXMapTable *)gdb_objc_realized_classes_ptr;
-    if (grc)
-    {
-        const unsigned num_classes = grc->num_classes;
-        if (class_infos_ptr)
-        {
-            const size_t max_class_infos = class_infos_byte_size/sizeof(ClassInfo);
-            ClassInfo *class_infos = (ClassInfo *)class_infos_ptr;
-            BucketInfo *buckets = (BucketInfo *)grc->buckets;
-            
-            uint32_t class_info_idx = 0;
-            for (unsigned i=0; i<=grc->num_buckets_minus_one; ++i)
-            {
-                if (buckets[i].name_ptr != NX_MAPNOTAKEY)
-                {
-                    if (class_info_idx < max_class_infos)
-                    {
-                        if (strlen(buckets[i].name_ptr) < sizeof(class_infos[class_info_idx].name))
-                        {
-                            strncpy(class_infos[class_info_idx].name, buckets[i].name_ptr, sizeof(class_infos[class_info_idx].name));
-                            class_infos[class_info_idx].name_ptr = 0;
-                        }
-                        else
-                        {
-                            class_infos[class_info_idx].name[0] = '\0';
-                            class_infos[class_info_idx].name_ptr = buckets[i].name_ptr;
-                        }
-                        class_infos[class_info_idx].isa = buckets[i].isa;
-                    }
-                    ++class_info_idx;
-                }
-            }
-            if (class_info_idx < max_class_infos)
-            {
-                class_infos[class_info_idx].isa = NULL;
-                class_infos[class_info_idx].name_ptr = NULL;
-                class_infos[class_info_idx].name[0] = '\0';
-            }
-        }
-        return num_classes;
-    }
-    return 0;    
-}
-
-)";
-
-
-static const char *g_get_dynamic_class_info2_name = "__lldb_apple_objc_v2_get_dynamic_class_info2";
-// Testing using the new C++11 raw string literals. If this breaks GCC then we will
-// need to revert to the code above...
-static const char *g_get_dynamic_class_info2_body = R"(
-
-extern "C"
-{
-    size_t strlen(const char *);
-    char *strncpy (char * s1, const char * s2, size_t n);
-    int printf(const char * format, ...);
-}
-//#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
-#ifdef ENABLE_DEBUG_PRINTF
-#define DEBUG_PRINTF(fmt, ...) printf(fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_PRINTF(fmt, ...)
-#endif
-
-typedef struct _NXMapTable {
-    void *prototype;
-    unsigned num_classes;
-    unsigned num_buckets_minus_one;
-    void *buckets;
-} NXMapTable;
-
-#define NX_MAPNOTAKEY   ((void *)(-1))
-
-typedef struct BucketInfo
-{
-    const char *name_ptr;
-    Class isa;
-} BucketInfo;
-
 struct ClassInfo
 {
     Class isa;
@@ -299,9 +204,9 @@ struct ClassInfo
 } __attribute__((__packed__));
 
 uint32_t
-__lldb_apple_objc_v2_get_dynamic_class_info2 (void *gdb_objc_realized_classes_ptr,
-                                              void *class_infos_ptr,
-                                              uint32_t class_infos_byte_size)
+__lldb_apple_objc_v2_get_dynamic_class_info (void *gdb_objc_realized_classes_ptr,
+                                             void *class_infos_ptr,
+                                             uint32_t class_infos_byte_size)
 {
     DEBUG_PRINTF ("gdb_objc_realized_classes_ptr = %p\n", gdb_objc_realized_classes_ptr);
     DEBUG_PRINTF ("class_infos_ptr = %p\n", class_infos_ptr);
@@ -346,166 +251,10 @@ __lldb_apple_objc_v2_get_dynamic_class_info2 (void *gdb_objc_realized_classes_pt
 
 )";
 
-
 static const char *g_get_shared_cache_class_info_name = "__lldb_apple_objc_v2_get_shared_cache_class_info";
 // Testing using the new C++11 raw string literals. If this breaks GCC then we will
 // need to revert to the code above...
 static const char *g_get_shared_cache_class_info_body = R"(
-
-extern "C"
-{
-    const char *class_getName(void *objc_class);
-    size_t strlen(const char *);
-    char *strncpy (char * s1, const char * s2, size_t n);
-    int printf(const char * format, ...);
-}
-
-//#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
-#ifdef ENABLE_DEBUG_PRINTF
-#define DEBUG_PRINTF(fmt, ...) printf(fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_PRINTF(fmt, ...)
-#endif
-
-
-struct objc_classheader_t {
-    int32_t clsOffset;
-    int32_t hiOffset;
-};
-
-struct objc_clsopt_t {
-    uint32_t capacity;
-    uint32_t occupied;
-    uint32_t shift;
-    uint32_t mask;
-    uint32_t zero;
-    uint32_t unused;
-    uint64_t salt;
-    uint32_t scramble[256];
-    uint8_t tab[0]; // tab[mask+1]
-//  uint8_t checkbytes[capacity];
-//  int32_t offset[capacity];
-//  objc_classheader_t clsOffsets[capacity];
-//  uint32_t duplicateCount;
-//  objc_classheader_t duplicateOffsets[duplicateCount];
-};
-
-struct objc_opt_t {
-    uint32_t version;
-    int32_t selopt_offset;
-    int32_t headeropt_offset;
-    int32_t clsopt_offset;
-};
-
-struct ClassInfo
-{
-    Class isa;
-    const char *name_ptr;
-    char name[32];
-};
-
-uint32_t
-__lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
-                                                  void *class_infos_ptr,
-                                                  uint32_t class_infos_byte_size)
-{
-    uint32_t idx = 0;
-    DEBUG_PRINTF ("objc_opt_ro_ptr = %p\n", objc_opt_ro_ptr);
-    DEBUG_PRINTF ("class_infos_ptr = %p\n", class_infos_ptr);
-    DEBUG_PRINTF ("class_infos_byte_size = %u (%zu class infos)\n", class_infos_byte_size, (size_t)(class_infos_byte_size/sizeof(ClassInfo)));
-    if (objc_opt_ro_ptr)
-    {
-        const objc_opt_t *objc_opt = (objc_opt_t *)objc_opt_ro_ptr;
-        DEBUG_PRINTF ("objc_opt->version = %u\n", objc_opt->version);
-        DEBUG_PRINTF ("objc_opt->selopt_offset = %d\n", objc_opt->selopt_offset);
-        DEBUG_PRINTF ("objc_opt->headeropt_offset = %d\n", objc_opt->headeropt_offset);
-        DEBUG_PRINTF ("objc_opt->clsopt_offset = %d\n", objc_opt->clsopt_offset);
-        if (objc_opt->version == 12)
-        {
-            const objc_clsopt_t* clsopt = (const objc_clsopt_t*)((uint8_t *)objc_opt + objc_opt->clsopt_offset);
-            const size_t max_class_infos = class_infos_byte_size/sizeof(ClassInfo);
-            ClassInfo *class_infos = (ClassInfo *)class_infos_ptr;
-            int32_t zeroOffset = 16;
-            const uint8_t *checkbytes = &clsopt->tab[clsopt->mask+1];
-            const int32_t *offsets = (const int32_t *)(checkbytes + clsopt->capacity);
-            const objc_classheader_t *classOffsets = (const objc_classheader_t *)(offsets + clsopt->capacity);
-            DEBUG_PRINTF ("clsopt->capacity = %u\n", clsopt->capacity);
-            DEBUG_PRINTF ("clsopt->mask = 0x%8.8x\n", clsopt->mask);
-            DEBUG_PRINTF ("classOffsets = %p\n", classOffsets);
-            for (uint32_t i=0; i<clsopt->capacity; ++i)
-            {
-                const int32_t clsOffset = classOffsets[i].clsOffset;
-                if (clsOffset & 1)
-                    continue; // duplicate
-                else if (clsOffset == zeroOffset)
-                    continue; // zero offset
-                
-                if (class_infos && idx < max_class_infos)
-                {
-                    class_infos[idx].isa = (Class)((uint8_t *)clsopt + clsOffset);
-                    const char *name = class_getName (class_infos[idx].isa);
-                    DEBUG_PRINTF ("[%u] isa = %8p %s\n", idx, class_infos[idx].isa, name);
-                    if (strlen(name) < sizeof(class_infos[idx].name))
-                    {
-                        strncpy(class_infos[idx].name, name, sizeof(class_infos[idx].name));
-                        class_infos[idx].name_ptr = 0;
-                    }
-                    else
-                    {
-                        class_infos[idx].name[0] = '\0';
-                        class_infos[idx].name_ptr = name;
-                    }
-                }
-                ++idx;
-            }
-            
-            const uint32_t *duplicate_count_ptr = (uint32_t *)&classOffsets[clsopt->capacity];
-            const uint32_t duplicate_count = *duplicate_count_ptr;
-            const objc_classheader_t *duplicateClassOffsets = (const objc_classheader_t *)(&duplicate_count_ptr[1]);
-            DEBUG_PRINTF ("duplicate_count = %u\n", duplicate_count);
-            DEBUG_PRINTF ("duplicateClassOffsets = %p\n", duplicateClassOffsets);
-            for (uint32_t i=0; i<duplicate_count; ++i)
-            {
-                const int32_t clsOffset = duplicateClassOffsets[i].clsOffset;
-                if (clsOffset & 1)
-                    continue; // duplicate
-                else if (clsOffset == zeroOffset)
-                    continue; // zero offset
-                
-                if (class_infos && idx < max_class_infos)
-                {
-                    class_infos[idx].isa = (Class)((uint8_t *)clsopt + clsOffset);
-                    const char *name = class_getName (class_infos[idx].isa);
-                    DEBUG_PRINTF ("[%u] isa = %8p %s\n", idx, class_infos[idx].isa, name);
-                    if (strlen(name) < sizeof(class_infos[idx].name))
-                    {
-                        strncpy(class_infos[idx].name, name, sizeof(class_infos[idx].name));
-                        class_infos[idx].name_ptr = 0;
-                    }
-                    else
-                    {
-                        class_infos[idx].name[0] = '\0';
-                        class_infos[idx].name_ptr = name;
-                    }
-                }
-                ++idx;
-            }
-        }
-        DEBUG_PRINTF ("%u class_infos\n", idx);
-        DEBUG_PRINTF ("done\n");
-    }
-    return idx;
-}
-
-    
-)";
-
-
-
-static const char *g_get_shared_cache_class_info2_name = "__lldb_apple_objc_v2_get_shared_cache_class_info2";
-// Testing using the new C++11 raw string literals. If this breaks GCC then we will
-// need to revert to the code above...
-static const char *g_get_shared_cache_class_info2_body = R"(
 
 extern "C"
 {
@@ -559,9 +308,9 @@ struct ClassInfo
 }  __attribute__((__packed__));
 
 uint32_t
-__lldb_apple_objc_v2_get_shared_cache_class_info2 (void *objc_opt_ro_ptr,
-                                                   void *class_infos_ptr,
-                                                   uint32_t class_infos_byte_size)
+__lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
+                                                  void *class_infos_ptr,
+                                                  uint32_t class_infos_byte_size)
 {
     uint32_t idx = 0;
     DEBUG_PRINTF ("objc_opt_ro_ptr = %p\n", objc_opt_ro_ptr);
@@ -1291,236 +1040,6 @@ AppleObjCRuntimeV2::HashTableSignature::NeedsUpdate (Process *process, AppleObjC
     // Hash table data has changed, we need to update
     return true;
 }
-
-class RemoteObjCOpt
-{
-public:
-    RemoteObjCOpt (Process* process,
-                   lldb::addr_t load_addr) :
-        m_process(process),
-        m_end_iterator(*this, -1ll),
-        m_load_addr(load_addr),
-        m_classheader_size(sizeof(int32_t) * 2)
-    {
-        lldb::addr_t cursor = load_addr;
-        
-        Error err;
-        
-        // uint32_t version;
-        m_version = m_process->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
-        cursor += sizeof(uint32_t);
-        
-        if (!IsValid())
-            return;
-        
-        // int32_t selopt_offset;
-        cursor += sizeof(int32_t);
-        
-        // int32_t headeropt_offset;
-        cursor += sizeof(int32_t);
-        
-        // int32_t clsopt_offset;
-        {
-            Scalar clsopt_offset;
-            m_process->ReadScalarIntegerFromMemory(cursor, sizeof(int32_t), /*is_signed*/ true, clsopt_offset, err);
-            m_clsopt_offset = clsopt_offset.SInt();
-            cursor += sizeof(int32_t);
-        }
-        
-        m_clsopt_ptr = load_addr + m_clsopt_offset;
-        
-        cursor = m_clsopt_ptr;
-        
-        // uint32_t capacity;
-        m_capacity = m_process->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
-        cursor += sizeof(uint32_t);
-        
-        // uint32_t occupied;
-        cursor += sizeof(uint32_t);
-        
-        // uint32_t shift;
-        cursor += sizeof(uint32_t);
-        
-        // uint32_t mask;
-        m_mask = m_process->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
-        cursor += sizeof(uint32_t);
-
-        // uint32_t zero;
-        m_zero_offset = cursor - m_clsopt_ptr;
-        cursor += sizeof(uint32_t);
-        
-        // uint32_t unused;
-        cursor += sizeof(uint32_t);
-        
-        // uint64_t salt;
-        cursor += sizeof(uint64_t);
-        
-        // uint32_t scramble[256];
-        cursor += sizeof(uint32_t) * 256;
-        
-        // uint8_t tab[mask+1];
-        cursor += sizeof(uint8_t) * (m_mask + 1);
-        
-        // uint8_t checkbytes[capacity];
-        cursor += sizeof(uint8_t) * m_capacity;
-        
-        // int32_t offset[capacity];
-        cursor += sizeof(int32_t) * m_capacity;
-        
-        // objc_classheader_t clsOffsets[capacity];
-        m_clsOffsets_ptr = cursor;
-        cursor += (m_classheader_size * m_capacity);
-        
-        // uint32_t duplicateCount;
-        m_duplicateCount = m_process->ReadUnsignedIntegerFromMemory(cursor, sizeof(uint32_t), 0, err);
-        cursor += sizeof(uint32_t);
-        
-        // objc_classheader_t duplicateOffsets[duplicateCount];
-        m_duplicateOffsets_ptr = cursor;
-    }
-    
-    friend class const_iterator;
-    class const_iterator
-    {
-    public:
-        const_iterator (RemoteObjCOpt &parent, int64_t index) : m_parent(parent), m_index(index)
-        {
-            AdvanceToValidIndex();
-        }
-        
-        const_iterator (const const_iterator &rhs) : m_parent(rhs.m_parent), m_index(rhs.m_index)
-        {
-            // AdvanceToValidIndex() has been called by rhs already
-        }
-        
-        const_iterator &operator=(const const_iterator &rhs)
-        {
-            assert (&m_parent == &rhs.m_parent);
-            m_index = rhs.m_index;
-            return *this;
-        }
-        
-        bool operator==(const const_iterator &rhs) const
-        {
-            if (&m_parent != &rhs.m_parent)
-                return false;
-            if (m_index != rhs.m_index)
-                return false;
-            return true;
-        }
-        
-        bool operator!=(const const_iterator &rhs) const
-        {
-            return !(operator==(rhs));
-        }
-        
-        const_iterator &operator++()
-        {
-            AdvanceToValidIndex();
-            return *this;
-        }
-        
-        ObjCLanguageRuntime::ObjCISA operator*() const
-        {
-            if (m_index == -1)
-                return 0;
-            
-            Error err;
-            return isaForIndex(err);
-        }
-    private:
-        ObjCLanguageRuntime::ObjCISA isaForIndex(Error &err) const
-        {
-            if (m_index >= m_parent.m_capacity + m_parent.m_duplicateCount)
-                return 0; // index out of range
-            
-            lldb::addr_t classheader_ptr;
-            
-            if (m_index >= m_parent.m_capacity)
-            {
-                // index in the duplicate offsets
-                uint32_t index = (uint32_t)((uint64_t)m_index - (uint64_t)m_parent.m_capacity);
-                classheader_ptr = m_parent.m_duplicateOffsets_ptr + (index * m_parent.m_classheader_size);
-            }
-            else
-            {
-                // index in the offsets
-                uint32_t index = (uint32_t)m_index;
-                classheader_ptr = m_parent.m_clsOffsets_ptr + (index * m_parent.m_classheader_size);
-            }
-            
-            Scalar clsOffset;
-            m_parent.m_process->ReadScalarIntegerFromMemory(classheader_ptr, sizeof(int32_t), /*is_signed*/ true, clsOffset, err);
-            if (!err.Success())
-                return 0;
-            
-            int32_t clsOffset_int = clsOffset.SInt();
-            if (clsOffset_int & 0x1)
-                return 0; // not even
-
-            if (clsOffset_int == m_parent.m_zero_offset)
-                return 0; // == offsetof(objc_clsopt_t, zero)
-            
-            return m_parent.m_clsopt_ptr + (int64_t)clsOffset_int;
-        }
-        
-        void AdvanceToValidIndex ()
-        {
-            if (m_index == -1)
-                return;
-            
-            Error err;
-            
-            m_index--;
-            
-            while (m_index >= 0)
-            {
-                ObjCLanguageRuntime::ObjCISA objc_isa = isaForIndex(err);
-                if (objc_isa)
-                    return;
-                m_index--;
-            }
-        }
-        RemoteObjCOpt  &m_parent;
-        int64_t         m_index;
-    };
-    
-    const_iterator begin ()
-    {
-        if (!IsValid())
-            return m_end_iterator;
-        else
-            return const_iterator(*this, (int64_t)m_capacity + (int64_t)m_duplicateCount);
-    }
-    
-    const_iterator end ()
-    {
-        return m_end_iterator;
-    }
-    
-private:
-    bool IsValid()
-    {
-        return (m_version == 12);
-    }
-    
-    // contents of objc_opt struct
-    uint32_t m_version;
-    int32_t m_clsopt_offset;
-    lldb::addr_t m_clsopt_ptr;
-    
-    // contents of objc_clsopt struct
-    uint32_t m_capacity;
-    uint32_t m_mask;
-    uint32_t m_duplicateCount;
-    lldb::addr_t m_clsOffsets_ptr;
-    lldb::addr_t m_duplicateOffsets_ptr;
-    int32_t m_zero_offset;    
-    lldb_private::Process *m_process;
-    const_iterator m_end_iterator;
-    lldb::addr_t m_load_addr;
-    const size_t m_classheader_size;
-};
 
 class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor
 {
@@ -2411,6 +1930,14 @@ AppleObjCRuntimeV2::GetISAHashTablePointer ()
 }
 
 
+// This code should NOT be used as it uses the objc_getClassList() function which
+// takes the ObjC runtime lock and can cause bad things to happen in your program.
+// For example one thread has the ObjC runtime lock and then we try to run this on
+// another. We are going to get a new version of the objc_getClassList() function at
+// some point in the future that doesn't take locks and that doesn't allocate memory,
+// so leave this code around so we can adapt it to that function when and if we get
+// it.
+
 bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapUsingUtilityFunction_objc_getClassList()
 {
@@ -2692,6 +2219,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapUsingUtilityFunction_objc_getClassLi
 }
 
 
+
+
 bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table)
 {
@@ -2699,7 +2228,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     
     if (process == NULL)
         return false;
-
+    
     lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     
     ExecutionContext exe_ctx;
@@ -2718,9 +2247,9 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     Address function_address;
     
     StreamString errors;
-
+    
     const uint32_t addr_size = process->GetAddressByteSize();
-
+    
     Error err;
     
     // Read the total number of classes from the hash table
@@ -2740,260 +2269,6 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     {
         m_get_class_info_code.reset (new ClangUtilityFunction (g_get_dynamic_class_info_body,
                                                                g_get_dynamic_class_info_name));
-        
-        errors.Clear();
-        
-        if (!m_get_class_info_code->Install(errors, exe_ctx))
-        {
-            if (log)
-                log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
-            m_get_class_info_code.reset();
-        }
-    }
-    
-    if (m_get_class_info_code.get())
-        function_address.SetOffset(m_get_class_info_code->StartAddress());
-    else
-        return false;
-
-    ValueList arguments;
-    
-    // Next make the runner function for our implementation utility function.
-    if (!m_get_class_info_function.get())
-    {
-        Value value;
-        value.SetValueType (Value::eValueTypeScalar);
-        value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-        arguments.PushValue (value);
-        
-        value.SetValueType (Value::eValueTypeScalar);
-        value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-        arguments.PushValue (value);
-        
-        value.SetValueType (Value::eValueTypeScalar);
-        value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        arguments.PushValue (value);
-
-        m_get_class_info_function.reset(new ClangFunction (*m_process,
-                                                           ast,
-                                                           clang_uint32_t_type,
-                                                           function_address,
-                                                           arguments));
-        
-        if (m_get_class_info_function.get() == NULL)
-            return false;
-
-        errors.Clear();
-        
-        unsigned num_errors = m_get_class_info_function->CompileFunction(errors);
-        if (num_errors)
-        {
-            if (log)
-                log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return false;
-        }
-        
-        errors.Clear();
-        
-        if (!m_get_class_info_function->WriteFunctionWrapper(exe_ctx, errors))
-        {
-            if (log)
-                log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-            return false;
-        }
-    }
-    else
-    {
-        arguments = m_get_class_info_function->GetArgumentValues ();
-    }
-    
-    const uint32_t class_info_byte_size = 32 + 2 * addr_size;
-    const uint32_t class_infos_byte_size = num_classes * class_info_byte_size;
-    lldb::addr_t class_infos_addr = process->AllocateMemory(class_infos_byte_size,
-                                                           ePermissionsReadable | ePermissionsWritable,
-                                                           err);
-    
-    if (class_infos_addr == LLDB_INVALID_ADDRESS)
-        return false;
-
-    Mutex::Locker locker(m_get_class_info_args_mutex);
-
-    // Fill in our function argument values
-    arguments.GetValueAtIndex(0)->GetScalar() = hash_table.GetTableLoadAddress();
-    arguments.GetValueAtIndex(1)->GetScalar() = class_infos_addr;
-    arguments.GetValueAtIndex(2)->GetScalar() = class_infos_byte_size;
-    
-    bool success = false;
-    
-    errors.Clear();
-    
-    // Write our function arguments into the process so we can run our function
-    if (m_get_class_info_function->WriteFunctionArguments (exe_ctx,
-                                                           m_get_class_info_args,
-                                                           function_address,
-                                                           arguments,
-                                                           errors))
-    {
-        bool stop_others = true;
-        bool try_all_threads = false;
-        bool unwind_on_error = true;
-        bool ignore_breakpoints = true;
-        
-        Value return_value;
-        return_value.SetValueType (Value::eValueTypeScalar);
-        return_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        return_value.GetScalar() = 0;
-        
-        errors.Clear();
-        
-        // Run the function
-        ExecutionResults results = m_get_class_info_function->ExecuteFunction (exe_ctx,
-                                                                               &m_get_class_info_args,
-                                                                               errors,
-                                                                               stop_others,
-                                                                               UTILITY_FUNCTION_TIMEOUT_USEC,
-                                                                               try_all_threads,
-                                                                               unwind_on_error,
-                                                                               ignore_breakpoints,
-                                                                               return_value);
-        
-        if (results == eExecutionCompleted)
-        {
-            // The result is the number of ClassInfo structures that were filled in
-            uint32_t num_class_infos = return_value.GetScalar().ULong();
-            if (num_class_infos > 0)
-            {
-                // Read the ClassInfo structures
-                DataBufferHeap buffer (num_class_infos * class_info_byte_size, 0);
-                if (process->ReadMemory(class_infos_addr, buffer.GetBytes(), buffer.GetByteSize(), err) == buffer.GetByteSize())
-                {
-                    std::string class_name_str;
-                    lldb::offset_t offset = 0;
-                    DataExtractor class_infos_data (buffer.GetBytes(), buffer.GetByteSize(), process->GetByteOrder(), addr_size);
-
-                    // Iterate through all ClassInfo structures
-                    for (uint32_t i=0; i<num_class_infos; ++i)
-                    {
-                        ObjCISA isa = class_infos_data.GetPointer(&offset);
-                        
-                        if (isa == 0)
-                        {
-                            if (log)
-                                log->Printf("AppleObjCRuntimeV2 found NULL isa, ignoring this class info");
-                            continue;
-                        }
-                        // Check if we already know about this ISA, if we do, the info will
-                        // never change, so we can just skip it.
-                        if (ISAIsCached(isa))
-                        {
-                            // This ISA is already in our map, skip the name_ptr and name string
-                            // and continue
-                            offset += addr_size + 32;
-                        }
-                        else
-                        {
-                            // Read the name_ptr. "name_ptr" will be NULL if the C string was able to
-                            // fit in the 32 character buffer in the ClassInfo structure that is read below
-                            addr_t name_ptr = class_infos_data.GetPointer(&offset);
-                            // Read the class name from the 32 character array. 
-                            const char *class_name = class_infos_data.PeekCStr(offset);
-                            offset += 32;
-                            if (name_ptr)
-                            {
-                                // The name was longer that 32 characers, we need to read the class name
-                                // from memory ourselves.
-                                if (process->ReadCStringFromMemory(name_ptr, class_name_str, err) == 0)
-                                    class_name_str.clear();
-                                class_name = class_name_str.c_str();
-                            }
-                            
-                            if (class_name && class_name[0])
-                            {
-                                //ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, class_name));
-                                ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, class_name));
-                                AddClass (isa, descriptor_sp, class_name);
-                                
-                                if (log && log->GetVerbose())
-                                    log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from dynamic table to isa->descriptor cache", isa, class_name);
-                            }
-                            else
-                            {
-                                if (log)
-                                    log->Printf("AppleObjCRuntimeV2 failed to read class name for (ObjCISA)0x%" PRIx64, isa);
-                            }
-                        }
-                    }
-                }
-            }
-            success = true;
-        }
-        else
-        {
-            if (log)
-                log->Printf("Error evaluating our find class name function: %s.\n", errors.GetData());
-        }            
-    }
-    else
-    {
-        if (log)
-            log->Printf ("Error writing function arguments: \"%s\".", errors.GetData());
-    }
-
-    // Deallocate the memory we allocated for the ClassInfo array
-    process->DeallocateMemory(class_infos_addr);
-    
-    return success;
-}
-
-
-bool
-AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic2(RemoteNXMapTable &hash_table)
-{
-    Process *process = GetProcess();
-    
-    if (process == NULL)
-        return false;
-    
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-    
-    ExecutionContext exe_ctx;
-    
-    ThreadSP thread_sp = process->GetThreadList().GetSelectedThread();
-    
-    if (!thread_sp)
-        return false;
-    
-    thread_sp->CalculateExecutionContext(exe_ctx);
-    ClangASTContext *ast = process->GetTarget().GetScratchClangASTContext();
-    
-    if (!ast)
-        return false;
-    
-    Address function_address;
-    
-    StreamString errors;
-    
-    const uint32_t addr_size = process->GetAddressByteSize();
-    
-    Error err;
-    
-    // Read the total number of classes from the hash table
-    const uint32_t num_classes = hash_table.GetCount();
-    if (num_classes == 0)
-    {
-        if (log)
-            log->Printf ("No dynamic classes found in gdb_objc_realized_classes.");
-        return false;
-    }
-    
-    // Make some types for our arguments
-    clang_type_t clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
-    clang_type_t clang_void_pointer_type = ast->CreatePointerType(ast->GetBuiltInType_void());
-    
-    if (!m_get_class_info_code.get())
-    {
-        m_get_class_info_code.reset (new ClangUtilityFunction (g_get_dynamic_class_info2_body,
-                                                               g_get_dynamic_class_info2_name));
         
         errors.Clear();
         
@@ -3149,6 +2424,41 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic2(RemoteNXMapTable &hash_tabl
 }
 
 
+void
+AppleObjCRuntimeV2::ParseISAHashArray (const DataExtractor &data, uint32_t num_class_infos)
+{
+    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+    // Iterate through all ClassInfo structures
+    lldb::offset_t offset = 0;
+    for (uint32_t i=0; i<num_class_infos; ++i)
+    {
+        ObjCISA isa = data.GetPointer(&offset);
+        
+        if (isa == 0)
+        {
+            if (log)
+                log->Printf("AppleObjCRuntimeV2 found NULL isa, ignoring this class info");
+            continue;
+        }
+        // Check if we already know about this ISA, if we do, the info will
+        // never change, so we can just skip it.
+        if (ISAIsCached(isa))
+        {
+            offset += 4;
+        }
+        else
+        {
+            // Read the 32 bit hash for the class name
+            const uint32_t name_hash = data.GetU32(&offset);
+            ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, NULL));
+            AddClass (isa, descriptor_sp, name_hash);
+            if (log && log->GetVerbose())
+                log->Printf("AppleObjCRuntimeV2 added isa=0x%" PRIx64 ", hash=0x%8.8x", isa, name_hash);
+        }
+    }
+}
+
 bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
 {
@@ -3202,298 +2512,6 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     {
         m_get_shared_cache_class_info_code.reset (new ClangUtilityFunction (g_get_shared_cache_class_info_body,
                                                                             g_get_shared_cache_class_info_name));
-        
-        errors.Clear();
-        
-        if (!m_get_shared_cache_class_info_code->Install(errors, exe_ctx))
-        {
-            if (log)
-                log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
-            m_get_shared_cache_class_info_code.reset();
-        }
-    }
-    
-    if (m_get_shared_cache_class_info_code.get())
-        function_address.SetOffset(m_get_shared_cache_class_info_code->StartAddress());
-    else
-        return false;
-    
-    ValueList arguments;
-    
-    // Next make the runner function for our implementation utility function.
-    if (!m_get_shared_cache_class_info_function.get())
-    {
-        Value value;
-        value.SetValueType (Value::eValueTypeScalar);
-        value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-        arguments.PushValue (value);
-        
-        value.SetValueType (Value::eValueTypeScalar);
-        value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-        arguments.PushValue (value);
-        
-        value.SetValueType (Value::eValueTypeScalar);
-        value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        arguments.PushValue (value);
-        
-        m_get_shared_cache_class_info_function.reset(new ClangFunction (*m_process,
-                                                                        ast,
-                                                                        clang_uint32_t_type,
-                                                                        function_address,
-                                                                        arguments));
-        
-        if (m_get_shared_cache_class_info_function.get() == NULL)
-            return false;
-        
-        errors.Clear();
-        
-        unsigned num_errors = m_get_shared_cache_class_info_function->CompileFunction(errors);
-        if (num_errors)
-        {
-            if (log)
-                log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return false;
-        }
-        
-        errors.Clear();
-        
-        if (!m_get_shared_cache_class_info_function->WriteFunctionWrapper(exe_ctx, errors))
-        {
-            if (log)
-                log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-            return false;
-        }
-    }
-    else
-    {
-        arguments = m_get_shared_cache_class_info_function->GetArgumentValues ();
-    }
-    
-    const uint32_t class_info_byte_size = 32 + 2 * addr_size;
-    const uint32_t class_infos_byte_size = num_classes * class_info_byte_size;
-    lldb::addr_t class_infos_addr = process->AllocateMemory (class_infos_byte_size,
-                                                             ePermissionsReadable | ePermissionsWritable,
-                                                             err);
-    
-    if (class_infos_addr == LLDB_INVALID_ADDRESS)
-        return false;
-    
-    Mutex::Locker locker(m_get_shared_cache_class_info_args_mutex);
-    
-    // Fill in our function argument values
-    arguments.GetValueAtIndex(0)->GetScalar() = objc_opt_ptr;
-    arguments.GetValueAtIndex(1)->GetScalar() = class_infos_addr;
-    arguments.GetValueAtIndex(2)->GetScalar() = class_infos_byte_size;
-    
-    bool success = false;
-    
-    errors.Clear();
-    
-    // Write our function arguments into the process so we can run our function
-    if (m_get_shared_cache_class_info_function->WriteFunctionArguments (exe_ctx,
-                                                                        m_get_shared_cache_class_info_args,
-                                                                        function_address,
-                                                                        arguments,
-                                                                        errors))
-    {
-        bool stop_others = true;
-        bool try_all_threads = false;
-        bool unwind_on_error = true;
-        bool ignore_breakpoints = true;
-        
-        Value return_value;
-        return_value.SetValueType (Value::eValueTypeScalar);
-        return_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        return_value.GetScalar() = 0;
-        
-        errors.Clear();
-        
-        // Run the function
-        ExecutionResults results = m_get_shared_cache_class_info_function->ExecuteFunction (exe_ctx,
-                                                                                            &m_get_shared_cache_class_info_args,
-                                                                                            errors,
-                                                                                            stop_others,
-                                                                                            UTILITY_FUNCTION_TIMEOUT_USEC,
-                                                                                            try_all_threads,
-                                                                                            unwind_on_error,
-                                                                                            ignore_breakpoints,
-                                                                                            return_value);
-        
-        if (results == eExecutionCompleted)
-        {
-            // The result is the number of ClassInfo structures that were filled in
-            uint32_t num_class_infos = return_value.GetScalar().ULong();
-            if (num_class_infos > 0)
-            {
-                // Read the ClassInfo structures
-                DataBufferHeap buffer (num_class_infos * class_info_byte_size, 0);
-                if (process->ReadMemory(class_infos_addr, buffer.GetBytes(), buffer.GetByteSize(), err) == buffer.GetByteSize())
-                {
-                    std::string class_name_str;
-                    lldb::offset_t offset = 0;
-                    DataExtractor class_infos_data (buffer.GetBytes(), buffer.GetByteSize(), process->GetByteOrder(), addr_size);
-                    
-                    // Iterate through all ClassInfo structures
-                    for (uint32_t i=0; i<num_class_infos; ++i)
-                    {
-                        ObjCISA isa = class_infos_data.GetPointer(&offset);
-                        
-                        if (isa == 0)
-                        {
-                            if (log)
-                                log->Printf("AppleObjCRuntimeV2 found NULL isa, ignoring this class info");
-                            continue;
-                        }
-                        // Check if we already know about this ISA, if we do, the info will
-                        // never change, so we can just skip it.
-                        if (ISAIsCached(isa))
-                        {
-                            // This ISA is already in our map, skip the name_ptr and name string
-                            // and continue
-                            offset += addr_size + 32;
-                        }
-                        else
-                        {
-                            // Read the name_ptr. "name_ptr" will be NULL if the C string was able to
-                            // fit in the 32 character buffer in the ClassInfo structure that is read below
-                            addr_t name_ptr = class_infos_data.GetPointer(&offset);
-                            // Read the class name from the 32 character array.
-                            const char *class_name = class_infos_data.PeekCStr(offset);
-                            offset += 32;
-                            if (name_ptr)
-                            {
-                                // The name was longer that 32 characers, we need to read the class name
-                                // from memory ourselves.
-                                if (process->ReadCStringFromMemory(name_ptr, class_name_str, err) == 0)
-                                    class_name_str.clear();
-                                class_name = class_name_str.c_str();
-                            }
-                            
-                            if (class_name && class_name[0])
-                            {
-                                ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, class_name));
-                                AddClass (isa, descriptor_sp, class_name);
-                                
-                                if (log && log->GetVerbose())
-                                    log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from shared cache table to isa->descriptor cache", isa, class_name);
-                            }
-                            else
-                            {
-                                if (log)
-                                    log->Printf("AppleObjCRuntimeV2 failed to read class name for (ObjCISA)0x%" PRIx64, isa);
-                            }
-                        }
-                    }
-                }
-            }
-            success = true;
-        }
-        else
-        {
-            if (log)
-                log->Printf("Error evaluating our find class name function: %s.\n", errors.GetData());
-        }
-    }
-    else
-    {
-        if (log)
-            log->Printf ("Error writing function arguments: \"%s\".", errors.GetData());
-    }
-    
-    // Deallocate the memory we allocated for the ClassInfo array
-    process->DeallocateMemory(class_infos_addr);
-    
-    return success;
-}
-
-void
-AppleObjCRuntimeV2::ParseISAHashArray (const DataExtractor &data, uint32_t num_class_infos)
-{
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-
-    // Iterate through all ClassInfo structures
-    lldb::offset_t offset = 0;
-    for (uint32_t i=0; i<num_class_infos; ++i)
-    {
-        ObjCISA isa = data.GetPointer(&offset);
-        
-        if (isa == 0)
-        {
-            if (log)
-                log->Printf("AppleObjCRuntimeV2 found NULL isa, ignoring this class info");
-            continue;
-        }
-        // Check if we already know about this ISA, if we do, the info will
-        // never change, so we can just skip it.
-        if (ISAIsCached(isa))
-        {
-            offset += 4;
-        }
-        else
-        {
-            // Read the 32 bit hash for the class name
-            const uint32_t name_hash = data.GetU32(&offset);
-            ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, NULL));
-            AddClass (isa, descriptor_sp, name_hash);
-            if (log && log->GetVerbose())
-                log->Printf("AppleObjCRuntimeV2 added isa=0x%" PRIx64 ", hash=0x%8.8x", isa, name_hash);
-        }
-    }
-}
-
-bool
-AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache2()
-{
-    Process *process = GetProcess();
-    
-    if (process == NULL)
-        return false;
-    
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-    
-    ExecutionContext exe_ctx;
-    
-    ThreadSP thread_sp = process->GetThreadList().GetSelectedThread();
-    
-    if (!thread_sp)
-        return false;
-    
-    thread_sp->CalculateExecutionContext(exe_ctx);
-    ClangASTContext *ast = process->GetTarget().GetScratchClangASTContext();
-    
-    if (!ast)
-        return false;
-    
-    Address function_address;
-    
-    StreamString errors;
-    
-    const uint32_t addr_size = process->GetAddressByteSize();
-    
-    Error err;
-    
-    const lldb::addr_t objc_opt_ptr = GetSharedCacheReadOnlyAddress();
-    
-    if (objc_opt_ptr == LLDB_INVALID_ADDRESS)
-        return false;
-    
-    // Read the total number of classes from the hash table
-    const uint32_t num_classes = 16*1024;
-    if (num_classes == 0)
-    {
-        if (log)
-            log->Printf ("No dynamic classes found in gdb_objc_realized_classes_addr.");
-        return false;
-    }
-    
-    // Make some types for our arguments
-    clang_type_t clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
-    clang_type_t clang_void_pointer_type = ast->CreatePointerType(ast->GetBuiltInType_void());
-    
-    if (!m_get_shared_cache_class_info_code.get())
-    {
-        m_get_shared_cache_class_info_code.reset (new ClangUtilityFunction (g_get_shared_cache_class_info2_body,
-                                                                            g_get_shared_cache_class_info2_name));
         
         errors.Clear();
         
@@ -3724,36 +2742,6 @@ AppleObjCRuntimeV2::GetSharedCacheReadOnlyAddress()
     }
     return LLDB_INVALID_ADDRESS;
 }
-bool
-AppleObjCRuntimeV2::UpdateISAToDescriptorMapFromDYLDSharedCache ()
-{
-    if (m_loaded_objc_opt)
-        return true;
-
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-    
-    uint32_t num_objc_opt_ro_isas = 0;
-    const lldb::addr_t objc_opt_ptr = GetSharedCacheReadOnlyAddress();
-    
-    if (objc_opt_ptr != LLDB_INVALID_ADDRESS)
-    {
-        RemoteObjCOpt objc_opt(GetProcess(), objc_opt_ptr);
-        
-        for (ObjCLanguageRuntime::ObjCISA isa : objc_opt)
-        {
-            ++num_objc_opt_ro_isas;
-            if (ISAIsCached(isa))
-                continue;
-            
-            ClassDescriptorSP descriptor_sp(new ClassDescriptorV2(*this, isa, NULL));
-            if (log && log->GetVerbose())
-                log->Printf("AppleObjCRuntimeV2 added (ObjCISA)0x%" PRIx64 " (%s) from static table to isa->descriptor cache", isa, descriptor_sp->GetClassName().AsCString());
-            
-            AddClass (isa, descriptor_sp);
-        }
-    }
-    return num_objc_opt_ro_isas > 0;
-}
 
 void
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
@@ -3777,12 +2765,13 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
         m_hash_signature.UpdateSignature (hash_table);
 
         // Grab the dynamicly loaded objc classes from the hash table in memory
-        UpdateISAToDescriptorMapDynamic2(hash_table);
+        UpdateISAToDescriptorMapDynamic(hash_table);
 
         // Now get the objc classes that are baked into the Objective C runtime
-        // in the shared cache.
+        // in the shared cache, but only once per process as this data never
+        // changes
         if (!m_loaded_objc_opt)
-            UpdateISAToDescriptorMapSharedCache2();
+            UpdateISAToDescriptorMapSharedCache();
     }
     else
     {
