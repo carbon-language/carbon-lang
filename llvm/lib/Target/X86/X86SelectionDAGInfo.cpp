@@ -202,6 +202,14 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
       SrcPtrInfo.getAddrSpace() >= 256)
     return SDValue();
 
+  // ESI might be used as a base pointer, in that case we can't simply overwrite
+  // the register.  Fall back to generic code.
+  const X86RegisterInfo *TRI =
+      static_cast<const X86RegisterInfo *>(DAG.getTarget().getRegisterInfo());
+  if (TRI->hasBasePointer(DAG.getMachineFunction()) &&
+      TRI->getBaseRegister() == X86::ESI)
+    return SDValue();
+
   MVT AVT;
   if (Align & 1)
     AVT = MVT::i8;
