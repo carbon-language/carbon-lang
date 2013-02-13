@@ -30,16 +30,22 @@ struct B {
   virtual ~B() {
 // Complete destructor first:
 // DTORS: define {{.*}} x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %this)
-//
+
 // Then, the scalar deleting destructor (used in the vtable):
 // DTORS:      define {{.*}} x86_thiscallcc void @"\01??_GB@@UAEPAXI@Z"(%struct.B* %this, i1 zeroext %should_call_delete)
-// DTORS:        %0 = icmp eq i8 %should_call_delete{{.*}}, 0
-// DTORS-NEXT:   br i1 %0, label %dtor.continue, label %dtor.call_delete
-// DTORS:      dtor.call_delete:
-// DTORS-NEXT:   %1 = bitcast %struct.B* %this1 to i8*
-// DTORS-NEXT:   call void @"\01??3@YAXPAX@Z"(i8* %1) nounwind
-// DTORS-NEXT:   br label %dtor.continue
-// DTORS:      dtor.continue:
+// DTORS:        %[[FROMBOOL:[0-9a-z]+]] = zext i1 %should_call_delete to i8
+// DTORS-NEXT:   store i8 %[[FROMBOOL]], i8* %[[SHOULD_DELETE_VAR:[0-9a-z]+]], align 1
+// DTORS:        %[[SHOULD_DELETE_VALUE:[0-9a-z]+]] = load i8* %[[SHOULD_DELETE_VAR]]
+// DTORS:        call x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %[[THIS:[0-9a-z]+]])
+// DTORS-NEXT:   %[[CONDITION:[0-9]+]] = icmp eq i8 %[[SHOULD_DELETE_VALUE]], 0
+// DTORS-NEXT:   br i1 %[[CONDITION]], label %[[CONTINUE_LABEL:[0-9a-z._]+]], label %[[CALL_DELETE_LABEL:[0-9a-z._]+]]
+//
+// DTORS:      [[CALL_DELETE_LABEL]]
+// DTORS-NEXT:   %[[THIS_AS_VOID:[0-9a-z]+]] = bitcast %struct.B* %[[THIS]] to i8*
+// DTORS-NEXT:   call void @"\01??3@YAXPAX@Z"(i8* %[[THIS_AS_VOID]]) nounwind
+// DTORS-NEXT:   br label %[[CONTINUE_LABEL]]
+//
+// DTORS:      [[CONTINUE_LABEL]]
 // DTORS-NEXT:   ret void
   }
   virtual void foo();
