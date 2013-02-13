@@ -1066,6 +1066,11 @@ public:
     inline bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
     inline bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
     inline value_type *operator->() const { return &(operator*()); }
+
+    typedef ImmutableSet<ValT,ValInfo>::value_type value_type;
+    typedef value_type *pointer;
+    typedef value_type &reference;
+    typedef std::bidirectional_iterator_tag iterator_category;
   };
 
   iterator begin() const { return iterator(Root); }

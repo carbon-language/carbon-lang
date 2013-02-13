@@ -224,6 +224,11 @@ public:
     iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
     bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
     bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
+    
+    typedef ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
+    typedef value_type *pointer;
+    typedef value_type &reference;
+    typedef std::bidirectional_iterator_tag iterator_category;
   };
 
   iterator begin() const { return iterator(Root); }
