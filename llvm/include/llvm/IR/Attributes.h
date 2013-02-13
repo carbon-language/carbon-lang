@@ -303,12 +303,21 @@ public:
   /// \brief Return true if the attribute exists at the given index.
   bool hasAttribute(unsigned Index, Attribute::AttrKind Kind) const;
 
+  /// \brief Return true if the attribute exists at the given index.
+  bool hasAttribute(unsigned Index, StringRef Kind) const;
+
   /// \brief Return true if attribute exists at the given index.
   bool hasAttributes(unsigned Index) const;
 
   /// \brief Return true if the specified attribute is set for at least one
   /// parameter or for the return value.
   bool hasAttrSomewhere(Attribute::AttrKind Attr) const;
+
+  /// \brief Return the attribute object that exists at the given index.
+  Attribute getAttribute(unsigned Index, Attribute::AttrKind Kind) const;
+
+  /// \brief Return the attribute object that exists at the given index.
+  Attribute getAttribute(unsigned Index, StringRef Kind) const;
 
   /// \brief Return the alignment for the specified function parameter.
   unsigned getParamAlignment(unsigned Idx) const;

@@ -441,6 +441,30 @@ bool AttributeSetNode::hasAttribute(Attribute::AttrKind Kind) const {
   return false;
 }
 
+bool AttributeSetNode::hasAttribute(StringRef Kind) const {
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I)
+    if (I->hasAttribute(Kind))
+      return true;
+  return false;
+}
+
+Attribute AttributeSetNode::getAttribute(Attribute::AttrKind Kind) const {
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I)
+    if (I->hasAttribute(Kind))
+      return *I;
+  return Attribute();
+}
+
+Attribute AttributeSetNode::getAttribute(StringRef Kind) const {
+  for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
+         E = AttrList.end(); I != E; ++I)
+    if (I->hasAttribute(Kind))
+      return *I;
+  return Attribute();
+}
+
 unsigned AttributeSetNode::getAlignment() const {
   for (SmallVectorImpl<Attribute>::const_iterator I = AttrList.begin(),
          E = AttrList.end(); I != E; ++I)
@@ -760,6 +784,11 @@ bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
   return ASN ? ASN->hasAttribute(Kind) : false;
 }
 
+bool AttributeSet::hasAttribute(unsigned Index, StringRef Kind) const {
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->hasAttribute(Kind) : false;
+}
+
 bool AttributeSet::hasAttributes(unsigned Index) const {
   AttributeSetNode *ASN = getAttributes(Index);
   return ASN ? ASN->hasAttributes() : false;
@@ -777,6 +806,18 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
         return true;
 
   return false;
+}
+
+Attribute AttributeSet::getAttribute(unsigned Index,
+                                     Attribute::AttrKind Kind) const {
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getAttribute(Kind) : Attribute();
+}
+
+Attribute AttributeSet::getAttribute(unsigned Index,
+                                     StringRef Kind) const {
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getAttribute(Kind) : Attribute();
 }
 
 unsigned AttributeSet::getParamAlignment(unsigned Index) const {
