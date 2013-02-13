@@ -33,7 +33,7 @@
 @PtrGlb = common global %struct.Record* null, align 8
 @PtrGlbNext = common global %struct.Record* null, align 8
 
-define void @Proc8(i32* nocapture %Array1Par, [51 x i32]* nocapture %Array2Par, i32 %IntParI1, i32 %IntParI2) nounwind optsize ssp uwtable {
+define void @Proc8(i32* nocapture %Array1Par, [51 x i32]* nocapture %Array2Par, i32 %IntParI1, i32 %IntParI2) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata !{i32* %Array1Par}, i64 0, metadata !23), !dbg !64
   tail call void @llvm.dbg.value(metadata !{[51 x i32]* %Array2Par}, i64 0, metadata !24), !dbg !65
