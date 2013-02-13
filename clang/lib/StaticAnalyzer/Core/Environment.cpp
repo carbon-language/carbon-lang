@@ -37,9 +37,6 @@ static const Expr *ignoreTransparentExprs(const Expr *E) {
   case Stmt::SubstNonTypeTemplateParmExprClass:
     E = cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement();
     break;
-  case Stmt::CXXDefaultArgExprClass:
-    E = cast<CXXDefaultArgExpr>(E)->getExpr();
-    break;
   default:
     // This is the base case: we can't look through more than we already have.
     return E;
@@ -75,7 +72,6 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
 
   switch (S->getStmtClass()) {
   case Stmt::CXXBindTemporaryExprClass:
-  case Stmt::CXXDefaultArgExprClass:
   case Stmt::ExprWithCleanupsClass:
   case Stmt::GenericSelectionExprClass:
   case Stmt::OpaqueValueExprClass:

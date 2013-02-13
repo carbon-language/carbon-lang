@@ -1524,11 +1524,14 @@ SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
     QualType CT = Ctx.getCanonicalType(T);
     if (CT.isConstQualified()) {
       if (const Expr *Init = VD->getInit()) {
-        if (const IntegerLiteral *IL =
-            dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
-          const nonloc::ConcreteInt &V = svalBuilder.makeIntVal(IL);
-          return svalBuilder.evalCast(V, Init->getType(), IL->getType());
-        }
+        llvm::APSInt Result;
+        if (Init->EvaluateAsInt(Result, Ctx))
+          return svalBuilder.makeIntVal(Result);
+
+        if (Init->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
+          return svalBuilder.makeNull();
+
+        // FIXME: Handle other possible constant expressions.
       }
     }
 

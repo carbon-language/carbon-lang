@@ -67,13 +67,27 @@ int constIntGlob() {
   return 3 / *m; // expected-warning {{Division by zero}}
 }
 
-extern const int x;
+extern const int y;
 int constIntGlobExtern() {
-  if (x == 0) {
+  if (y == 0) {
     foo();
-    return 5 / x; // expected-warning {{Division by zero}}
+    return 5 / y; // expected-warning {{Division by zero}}
   }
   return 0;
+}
+
+static void * const ptr = 0;
+void constPtrGlob() {
+  clang_analyzer_eval(ptr == 0); // expected-warning{{TRUE}}
+  foo();
+  clang_analyzer_eval(ptr == 0); // expected-warning{{TRUE}}
+}
+
+static const int x2 = x;
+void constIntGlob2() {
+  clang_analyzer_eval(x2 == 0); // expected-warning{{TRUE}}
+  foo();
+  clang_analyzer_eval(x2 == 0); // expected-warning{{TRUE}}
 }
 
 void testAnalyzerEvalIsPure() {
