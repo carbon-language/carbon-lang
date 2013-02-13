@@ -232,7 +232,7 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
   QualType DerivedTy =
     getContext().getCanonicalType(getContext().getTagDeclType(Derived));
   llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
-  
+
   llvm::Value *NonVirtualOffset =
     CGM.GetNonVirtualBaseClassOffset(Derived, PathBegin, PathEnd);
   

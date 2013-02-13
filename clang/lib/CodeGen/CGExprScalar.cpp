@@ -1220,7 +1220,15 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     const CXXRecordDecl *DerivedClassDecl = DestTy->getPointeeCXXRecordDecl();
     assert(DerivedClassDecl && "BaseToDerived arg isn't a C++ object pointer!");
 
-    return CGF.GetAddressOfDerivedClass(Visit(E), DerivedClassDecl,
+    llvm::Value *V = Visit(E);
+
+    // C++11 [expr.static.cast]p11: Behavior is undefined if a downcast is
+    // performed and the object is not of the derived type.
+    if (CGF.SanitizePerformTypeCheck)
+      CGF.EmitTypeCheck(CodeGenFunction::TCK_DowncastPointer, CE->getExprLoc(),
+                        V, DestTy->getPointeeType());
+
+    return CGF.GetAddressOfDerivedClass(V, DerivedClassDecl,
                                         CE->path_begin(), CE->path_end(),
                                         ShouldNullCheckClassCastValue(CE));
   }

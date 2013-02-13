@@ -6,6 +6,8 @@ struct S {
   virtual int f();
 };
 
+struct T : S {};
+
 // CHECK: @_Z17reference_binding
 void reference_binding(int *p, S *q) {
   // C++ core issue 453: If an lvalue to which a reference is directly bound
@@ -172,4 +174,48 @@ int bad_enum_value() {
   // CHECK: call void @__ubsan_handle_load_invalid_value(
   int c = e3;
   return a + b + c;
+}
+
+// CHECK: @_Z20bad_downcast_pointer
+void bad_downcast_pointer(S *p) {
+  // CHECK: %[[NONNULL:.*]] = icmp ne {{.*}}, null
+  // CHECK: br i1 %[[NONNULL]],
+
+  // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(
+  // CHECK: %[[E1:.*]] = icmp uge i64 %[[SIZE]], 24
+  // CHECK: %[[MISALIGN:.*]] = and i64 %{{.*}}, 7
+  // CHECK: %[[E2:.*]] = icmp eq i64 %[[MISALIGN]], 0
+  // CHECK: %[[E12:.*]] = and i1 %[[E1]], %[[E2]]
+  // CHECK: br i1 %[[E12]],
+
+  // CHECK: call void @__ubsan_handle_type_mismatch
+  // CHECK: br label
+
+  // CHECK: br i1 %{{.*}},
+
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss
+  // CHECK: br label
+  (void) static_cast<T*>(p);
+}
+
+// CHECK: @_Z22bad_downcast_reference
+void bad_downcast_reference(S &p) {
+  // CHECK: %[[E1:.*]] = icmp ne {{.*}}, null
+  // CHECK-NOT: br i1
+  // CHECK: %[[SIZE:.*]] = call i64 @llvm.objectsize.i64(
+  // CHECK: %[[E2:.*]] = icmp uge i64 %[[SIZE]], 24
+  // CHECK: %[[E12:.*]] = and i1 %[[E1]], %[[E2]]
+  // CHECK: %[[MISALIGN:.*]] = and i64 %{{.*}}, 7
+  // CHECK: %[[E3:.*]] = icmp eq i64 %[[MISALIGN]], 0
+  // CHECK: %[[E123:.*]] = and i1 %[[E12]], %[[E3]]
+  // CHECK: br i1 %[[E123]],
+
+  // CHECK: call void @__ubsan_handle_type_mismatch
+  // CHECK: br label
+
+  // CHECK: br i1 %{{.*}},
+
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss
+  // CHECK: br label
+  (void) static_cast<T&>(p);
 }

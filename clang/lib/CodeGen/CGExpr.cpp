@@ -501,11 +501,22 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     return;
 
   llvm::Value *Cond = 0;
+  llvm::BasicBlock *Done = 0;
 
   if (SanOpts->Null) {
     // The glvalue must not be an empty glvalue.
     Cond = Builder.CreateICmpNE(
         Address, llvm::Constant::getNullValue(Address->getType()));
+
+    if (TCK == TCK_DowncastPointer) {
+      // When performing a pointer downcast, it's OK if the value is null.
+      // Skip the remaining checks in that case.
+      Done = createBasicBlock("null");
+      llvm::BasicBlock *Rest = createBasicBlock("not.null");
+      Builder.CreateCondBr(Cond, Rest, Done);
+      EmitBlock(Rest);
+      Cond = 0;
+    }
   }
 
   if (SanOpts->ObjectSize && !Ty->isIncompleteType()) {
@@ -561,7 +572,8 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   //       or call a non-static member function
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
   if (SanOpts->Vptr &&
-      (TCK == TCK_MemberAccess || TCK == TCK_MemberCall) &&
+      (TCK == TCK_MemberAccess || TCK == TCK_MemberCall ||
+       TCK == TCK_DowncastPointer || TCK == TCK_DowncastReference) &&
       RD && RD->hasDefinition() && RD->isDynamicClass()) {
     // Compute a hash of the mangled name of the type.
     //
@@ -610,6 +622,11 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     EmitCheck(Builder.CreateICmpEQ(CacheVal, Hash),
               "dynamic_type_cache_miss", StaticData, DynamicData,
               CRK_AlwaysRecoverable);
+  }
+
+  if (Done) {
+    Builder.CreateBr(Done);
+    EmitBlock(Done);
   }
 }
 
@@ -2638,7 +2655,13 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
     
     LValue LV = EmitLValue(E->getSubExpr());
-    
+
+    // C++11 [expr.static.cast]p2: Behavior is undefined if a downcast is
+    // performed and the object is not of the derived type.
+    if (SanitizePerformTypeCheck)
+      EmitTypeCheck(TCK_DowncastReference, E->getExprLoc(),
+                    LV.getAddress(), E->getType());
+
     // Perform the base-to-derived conversion
     llvm::Value *Derived = 
       GetAddressOfDerivedClass(LV.getAddress(), DerivedClassDecl, 

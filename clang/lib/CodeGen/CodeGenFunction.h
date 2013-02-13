@@ -1895,7 +1895,13 @@ public:
     /// Must be an object within its lifetime.
     TCK_MemberCall,
     /// Checking the 'this' pointer for a constructor call.
-    TCK_ConstructorCall
+    TCK_ConstructorCall,
+    /// Checking the operand of a static_cast to a derived pointer type. Must be
+    /// null or an object within its lifetime.
+    TCK_DowncastPointer,
+    /// Checking the operand of a static_cast to a derived reference type. Must
+    /// be an object within its lifetime.
+    TCK_DowncastReference
   };
 
   /// \brief Emit a check that \p V is the address of storage of the
