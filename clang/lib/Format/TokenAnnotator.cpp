@@ -197,7 +197,7 @@ private:
         !Parent || Parent->is(tok::colon) || Parent->is(tok::l_square) ||
         Parent->is(tok::l_paren) || Parent->is(tok::kw_return) ||
         Parent->is(tok::kw_throw) || isUnaryOperator(*Parent) ||
-        Parent->Type == TT_ObjCForIn ||
+        Parent->Type == TT_ObjCForIn || Parent->Type == TT_CastRParen ||
         getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
         prec::Unknown;
     bool StartsObjCArrayLiteral = Parent && Parent->is(tok::at);

@@ -2405,7 +2405,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("int a = &[foo bar:baz];");
   verifyFormat("int a = *[foo bar:baz];");
   // FIXME: Make casts work, without breaking f()[4].
-  //verifyFormat("int a = (int) [foo bar:baz];");
+  //verifyFormat("int a = (int)[foo bar:baz];");
+  verifyFormat("return (MyType *)[self.tableView cellForRowAtIndexPath:cell];");
 
   // Binary operators.
   verifyFormat("[foo bar:baz], [foo bar:baz];");
