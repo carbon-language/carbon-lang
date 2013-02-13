@@ -461,6 +461,8 @@ public:
     return "";
   }
 
+  virtual uint64_t section() const { return _section->sh_name; }
+
   virtual uint64_t offset() const { return _offset; }
 
   virtual uint64_t ordinal() const { return _ordinal; }

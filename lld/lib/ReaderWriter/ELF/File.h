@@ -93,18 +93,22 @@ template <class ELFT> class ELFFile : public File {
 
   /// \brief find a mergeAtom given a start offset
   struct FindByOffset {
+    const Elf_Shdr *_shdr;
     uint64_t _offset;
-    FindByOffset(uint64_t offset) : _offset(offset) {}
+    FindByOffset(const Elf_Shdr *shdr, uint64_t offset)
+        : _shdr(shdr), _offset(offset) {
+    }
     bool operator()(const ELFMergeAtom<ELFT> *a) {
       uint64_t off = a->offset();
-      return ((_offset >= off) && (_offset <= off + a->size()));
+      return (_shdr->sh_name == a->section()) &&
+             ((_offset >= off) && (_offset <= off + a->size()));
     }
   };
 
   /// \brief find a merge atom given a offset
-  MergeAtomsIter findMergeAtom(uint64_t offset) {
+  MergeAtomsIter findMergeAtom(const Elf_Shdr *shdr, uint64_t offset) {
     return std::find_if(_mergeAtoms.begin(), _mergeAtoms.end(),
-                        FindByOffset(offset));
+                        FindByOffset(shdr, offset));
   }
 
   typedef std::unordered_map<MergeSectionKey, DefinedAtom *, MergeSectionEq,
@@ -466,9 +470,12 @@ public:
             (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
           const MergeSectionKey ms(shdr, ri->addend());
           if (_mergedSectionMap.find(ms) == _mergedSectionMap.end()) {
-            MergeAtomsIter mai = findMergeAtom(ri->addend());
+            uint64_t addend = ri->addend();
+            if (Symbol->getType() != llvm::ELF::STT_SECTION)
+              addend = Symbol->st_value + ri->addend();
+            MergeAtomsIter mai = findMergeAtom(shdr, addend);
             if (mai != _mergeAtoms.end()) {
-              ri->setOffset(ri->addend() - ((*mai)->offset()));
+              ri->setOffset(addend - ((*mai)->offset()));
               ri->setAddend(0);
               ri->setTarget(*mai);
             } // check
