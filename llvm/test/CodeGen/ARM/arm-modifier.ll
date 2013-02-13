@@ -61,8 +61,7 @@ ret void
 define i64 @f4(i64* %val) nounwind {
 entry:
   ;CHECK: f4
-  ;CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], {{r[0-9]?[13579]}}, [r0]
-  ;CHECK: mov r0, [[REG1]]
+  ;CHECK: ldrexd [[REG1:(r[0-9]?[02468])]], {{r[0-9]?[13579]}}, [r{{[0-9]+}}]
   %0 = tail call i64 asm sideeffect "ldrexd $0, ${0:H}, [$1]", "=&r,r,*Qo"(i64* %val, i64* %val) nounwind
   ret i64 %0
 }

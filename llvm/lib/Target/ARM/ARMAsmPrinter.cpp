@@ -342,6 +342,11 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     unsigned Reg = MO.getReg();
     assert(TargetRegisterInfo::isPhysicalRegister(Reg));
     assert(!MO.getSubReg() && "Subregs should be eliminated!");
+    if(ARM::GPRPairRegClass.contains(Reg)) {
+      const MachineFunction &MF = *MI->getParent()->getParent();
+      const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+      Reg = TRI->getSubReg(Reg, ARM::gsub_0);
+    }
     O << ARMInstPrinter::getRegisterName(Reg);
     break;
   }
@@ -530,14 +535,12 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       const MachineOperand &MO = MI->getOperand(OpNum);
       if (!MO.isReg())
         return true;
-      const TargetRegisterClass &RC = ARM::GPRRegClass;
       const MachineFunction &MF = *MI->getParent()->getParent();
       const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
-
-      unsigned RegIdx = TRI->getEncodingValue(MO.getReg());
-      RegIdx |= 1; //The odd register is also the higher-numbered one of a pair.
-
-      unsigned Reg = RC.getRegister(RegIdx);
+      unsigned Reg = MO.getReg();
+      if(!ARM::GPRPairRegClass.contains(Reg))
+        return false;
+      Reg = TRI->getSubReg(Reg, ARM::gsub_1);
       O << ARMInstPrinter::getRegisterName(Reg);
       return false;
     }
