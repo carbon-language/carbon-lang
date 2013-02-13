@@ -41,6 +41,7 @@ using namespace __msan;
 #define CHECK_UNPOISONED(x, n) \
   do { \
     sptr offset = __msan_test_shadow(x, n);                 \
+    if (__msan::IsInSymbolizer()) break;                    \
     if (offset >= 0 && flags()->report_umrs) {              \
       GET_CALLER_PC_BP_SP;                                  \
       (void)sp;                                             \

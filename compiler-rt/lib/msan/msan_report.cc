@@ -44,6 +44,16 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
   const char *End()    { return Default(); }
 };
 
+struct SymbolizerScope {
+  SymbolizerScope() { EnterSymbolizer(); }
+  ~SymbolizerScope() { ExitSymbolizer(); }
+};
+
+static void PrintStack(const uptr *trace, uptr size) {
+  SymbolizerScope sym_scope;
+  StackTrace::PrintStack(trace, size, true, flags()->strip_path_prefix, 0);
+}
+
 static void DescribeOrigin(u32 origin) {
   Decorator d;
   if (flags()->verbosity)
@@ -64,7 +74,7 @@ static void DescribeOrigin(u32 origin) {
     const uptr *trace = StackDepotGet(origin, &size);
     Printf("  %sUninitialized value was created by a heap allocation%s\n",
            d.Origin(), d.End());
-    StackTrace::PrintStack(trace, size, true, flags()->strip_path_prefix, 0);
+    PrintStack(trace, size);
   }
 }
 
@@ -72,7 +82,10 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
   if (!stack->size || !IsSymbolizerAvailable()) return;
   AddressInfo ai;
   uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-  SymbolizeCode(pc, &ai, 1);
+  {
+    SymbolizerScope sym_scope;
+    SymbolizeCode(pc, &ai, 1);
+  }
   ReportErrorSummary(error_type,
                      StripPathPrefix(ai.file, flags()->strip_path_prefix),
                      ai.line, ai.function);
@@ -87,8 +100,7 @@ void ReportUMR(StackTrace *stack, u32 origin) {
   Printf("%s", d.Warning());
   Report(" WARNING: Use of uninitialized value\n");
   Printf("%s", d.End());
-  StackTrace::PrintStack(stack->trace, stack->size, true,
-                         flags()->strip_path_prefix, 0);
+  PrintStack(stack->trace, stack->size);
   if (origin) {
     DescribeOrigin(origin);
   }
@@ -99,8 +111,7 @@ void ReportExpectedUMRNotFound(StackTrace *stack) {
   GenericScopedLock<StaticSpinMutex> lock(&report_mu);
 
   Printf(" WARNING: Expected use of uninitialized value not found\n");
-  StackTrace::PrintStack(stack->trace, stack->size, true,
-                         flags()->strip_path_prefix, 0);
+  PrintStack(stack->trace, stack->size);
 }
 
 void ReportAtExitStatistics() {

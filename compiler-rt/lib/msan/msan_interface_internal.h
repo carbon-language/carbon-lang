@@ -85,6 +85,9 @@ void __msan_set_exit_code(int exit_code);
 SANITIZER_INTERFACE_ATTRIBUTE
 int __msan_set_poison_in_malloc(int do_poison);
 
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+/* OPTIONAL */ const char* __msan_default_options();
+
 // For testing.
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_expect_umr(int expect_umr);

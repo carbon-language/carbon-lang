@@ -58,6 +58,8 @@ static THREADLOCAL struct {
   uptr stack_top, stack_bottom;
 } __msan_stack_bounds;
 
+static THREADLOCAL bool is_in_symbolizer;
+
 extern "C" const int __msan_track_origins;
 int __msan_get_track_origins() {
   return __msan_track_origins;
@@ -80,6 +82,10 @@ static bool IsRunningUnderDr() {
   UnmapOrDie(filename, kBufSize);
   return result;
 }
+
+void EnterSymbolizer() { is_in_symbolizer = true; }
+void ExitSymbolizer()  { is_in_symbolizer = false; }
+bool IsInSymbolizer() { return is_in_symbolizer; }
 
 static Flags msan_flags;
 
@@ -126,6 +132,9 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->verbosity = 0;
   f->strip_path_prefix = "";
 
+  // Override from user-specified string.
+  if (__msan_default_options)
+    ParseFlagsFromString(f, __msan_default_options());
   ParseFlagsFromString(f, options);
 }
 
@@ -417,3 +426,11 @@ u32 __msan_get_origin(void *a) {
 u32 __msan_get_umr_origin() {
   return __msan_origin_tls;
 }
+
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
+extern "C" {
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+const char* __msan_default_options() { return ""; }
+}  // extern "C"
+#endif
+
