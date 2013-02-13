@@ -572,6 +572,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::OCLImage2d:
         case clang::BuiltinType::OCLImage2dArray:
         case clang::BuiltinType::OCLImage3d:
+        case clang::BuiltinType::OCLSampler:
             return lldb::eFormatHex;
         }
         break;

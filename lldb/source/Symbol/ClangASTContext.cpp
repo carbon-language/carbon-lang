@@ -3723,6 +3723,7 @@ ClangASTContext::GetLLDBBasicTypeEnumeration (clang_type_t clang_type)
             case clang::BuiltinType::OCLImage2d:
             case clang::BuiltinType::OCLImage2dArray:
             case clang::BuiltinType::OCLImage3d:
+            case clang::BuiltinType::OCLSampler:
                 return eBasicTypeOther;
             }
         }
@@ -3761,6 +3762,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::OCLImage2d:
         case clang::BuiltinType::OCLImage2dArray:
         case clang::BuiltinType::OCLImage3d:
+        case clang::BuiltinType::OCLSampler:
             return 0;
         case clang::BuiltinType::Bool:
         case clang::BuiltinType::Char_U:
@@ -5716,6 +5718,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                         case clang::BuiltinType::OCLImage2d:
                         case clang::BuiltinType::OCLImage2dArray:
                         case clang::BuiltinType::OCLImage3d:
+                        case clang::BuiltinType::OCLSampler:
                             break;
                     }
                     break;
