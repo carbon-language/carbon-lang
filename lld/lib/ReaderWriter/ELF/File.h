@@ -143,6 +143,8 @@ public:
     // Sections that have merge string property
     std::vector<const Elf_Shdr *> mergeStringSections;
 
+    bool doStringsMerge = _elfTargetInfo.getLinkerOptions()._mergeCommonStrings;
+
     // Handle: SHT_REL and SHT_RELA sections:
     // Increment over the sections, when REL/RELA section types are found add
     // the contents to the RelocationReferences map.
@@ -163,16 +165,18 @@ public:
       if (section->sh_size == 0)
         continue;
 
-      int64_t sectionFlags = section->sh_flags;
-      sectionFlags &= ~llvm::ELF::SHF_ALLOC;
+      if (doStringsMerge) {
+        int64_t sectionFlags = section->sh_flags;
+        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
 
-      // If the section have mergeable strings, the linker would 
-      // need to split the section into multiple atoms and mark them
-      // mergeByContent
-      if ((section->sh_entsize < 2) &&
-          (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
-        mergeStringSections.push_back(section);
-        continue;
+        // If the section have mergeable strings, the linker would 
+        // need to split the section into multiple atoms and mark them
+        // mergeByContent
+        if ((section->sh_entsize < 2) &&
+           (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
+          mergeStringSections.push_back(section);
+          continue;
+        }
       }
 
       // Create a sectionSymbols entry for every progbits section.
@@ -268,11 +272,13 @@ public:
 
       // If its a merge section, the atoms have already 
       // been created, lets not create the atoms again
-      int64_t sectionFlags = section->sh_flags;
-      sectionFlags &= ~llvm::ELF::SHF_ALLOC;
-      if ((section->sh_entsize < 2) &&
-          (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
-        continue;
+      if (doStringsMerge) {
+        int64_t sectionFlags = section->sh_flags;
+        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
+        if ((section->sh_entsize < 2) &&
+            (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
+          continue;
+        }
       }
 
       StringRef symbolName;
@@ -456,7 +462,7 @@ public:
 
         // If the section has mergeable strings, then make the relocation
         // refer to the MergeAtom to allow deduping
-        if (shdr && (shdr->sh_entsize < 2) &&
+        if (doStringsMerge && shdr && (shdr->sh_entsize < 2) &&
             (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
           const MergeSectionKey ms(shdr, ri->addend());
           if (_mergedSectionMap.find(ms) == _mergedSectionMap.end()) {

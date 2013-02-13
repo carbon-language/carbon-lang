@@ -70,6 +70,11 @@ cmdLineDoGotPass("got-pass", llvm::cl::desc("Run pass to create GOT atoms"));
 llvm::cl::opt<bool>
 cmdLineDoLayoutPass("layout-pass", llvm::cl::desc("Run pass to layout atoms"));
 
+llvm::cl::opt<bool>
+cmdLineDoMergeStrings(
+  "merge-strings", 
+  llvm::cl::desc("make common strings merge possible"));
+
 llvm::cl::opt<bool> cmdLineUndefinesIsError(
     "undefines-are-errors",
     llvm::cl::desc("Any undefined symbols at end is an error"));
@@ -230,6 +235,7 @@ int main(int argc, char *argv[]) {
   lo._forceLoadArchives = cmdLineForceLoad;
   lo._outputKind = OutputKind::Executable;
   lo._entrySymbol = cmdLineEntryPoint;
+  lo._mergeCommonStrings = cmdLineDoMergeStrings;
 
   switch (archSelected) {
   case i386:

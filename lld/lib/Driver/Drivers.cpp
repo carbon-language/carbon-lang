@@ -148,6 +148,9 @@ public:
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_noinhibit_exec))
       newArgs->AddFlagArg(A, _core.getOption(core::OPT_noinhibit_exec));
 
+    if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_merge_strings))
+      newArgs->AddFlagArg(A, _core.getOption(core::OPT_merge_strings));
+
     // Copy search paths.
     for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_L),
                                  ie = _inputArgs->filtered_end();
@@ -261,6 +264,7 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
   ret._outputCommands = args.hasArg(core::OPT_OCTOTHORPE_OCTOTHORPE_OCTOTHORPE);
   ret._outputYAML = args.hasArg(core::OPT_emit_yaml);
   ret._noInhibitExec = args.hasArg(core::OPT_noinhibit_exec);
+  ret._mergeCommonStrings = args.hasArg(core::OPT_merge_strings);
 
   return std::move(ret);
 }

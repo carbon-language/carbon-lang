@@ -1,4 +1,4 @@
-RUN: lld-core -reader ELF %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
+RUN: lld-core -merge-strings=true -reader ELF %p/Inputs/reloc-test.elf-i386 | FileCheck %s -check-prefix ELF-i386
 
 ELF-i386: defined-atoms:   
 ELF-i386:   - ref-name:        L000

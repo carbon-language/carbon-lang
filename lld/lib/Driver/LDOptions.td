@@ -32,3 +32,6 @@ def hash_style : Joined <["--"], "hash-style=">;
 
 def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
     HelpText<"Retain the executable output file whenever it is still usable">;
+
+def merge_strings : Flag<["-"], "merge-strings">,
+    HelpText<"Merge common strings across mergeable sections">;

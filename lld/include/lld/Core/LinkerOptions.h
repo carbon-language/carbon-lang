@@ -157,6 +157,7 @@ struct LinkerOptions {
   unsigned _forceLoadArchives : 1;
   unsigned _textRelocations : 1;
   unsigned _relocatable : 1;
+  unsigned _mergeCommonStrings: 1;
 
 private:
   LinkerOptions(const LinkerOptions&) LLVM_DELETED_FUNCTION;
