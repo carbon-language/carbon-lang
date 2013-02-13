@@ -578,15 +578,16 @@ private:
           Current.Type = TT_LineComment;
         else
           Current.Type = TT_BlockComment;
-      } else if (Current.is(tok::r_paren) &&
-                 (Current.Parent->Type == TT_PointerOrReference ||
-                  Current.Parent->Type == TT_TemplateCloser) &&
-                 (Current.Children.empty() ||
-                  (Current.Children[0].isNot(tok::equal) &&
-                   Current.Children[0].isNot(tok::semi) &&
-                   Current.Children[0].isNot(tok::l_brace)))) {
-        // FIXME: We need to get smarter and understand more cases of casts.
-        Current.Type = TT_CastRParen;
+      } else if (Current.is(tok::r_paren)) {
+        bool ParensNotExpr = Current.Parent->Type == TT_PointerOrReference ||
+                             Current.Parent->Type == TT_TemplateCloser;
+        bool ParensCouldEndDecl =
+            !Current.Children.empty() && (Current.Children[0].is(tok::equal) ||
+                                          Current.Children[0].is(tok::semi) ||
+                                          Current.Children[0].is(tok::l_brace));
+        if (ParensNotExpr && !ParensCouldEndDecl)
+          // FIXME: We need to get smarter and understand more cases of casts.
+          Current.Type = TT_CastRParen;
       } else if (Current.is(tok::at) && Current.Children.size()) {
         switch (Current.Children[0].FormatTok.Tok.getObjCKeywordID()) {
         case tok::objc_interface:

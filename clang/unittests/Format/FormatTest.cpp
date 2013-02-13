@@ -1723,6 +1723,7 @@ TEST_F(FormatTest, FormatsCasts) {
 
   // These are not casts.
   verifyFormat("void f(int *) {}");
+  verifyFormat("f(foo)[4];");
   verifyFormat("void f(int *);");
   verifyFormat("void f(int *) = 0;");
   verifyFormat("void f(SmallVector<int>) {}");
