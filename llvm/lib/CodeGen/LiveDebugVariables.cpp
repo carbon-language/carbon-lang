@@ -260,7 +260,7 @@ public:
   /// provided virtual register map.
   void rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI);
 
-  /// emitDebugVariables - Recreate DBG_VALUE instruction from data structures.
+  /// emitDebugValues - Recreate DBG_VALUE instruction from data structures.
   void emitDebugValues(VirtRegMap *VRM,
                        LiveIntervals &LIS, const TargetInstrInfo &TRI);
 
@@ -341,7 +341,7 @@ public:
   /// splitRegister -  Replace all references to OldReg with NewRegs.
   void splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs);
 
-  /// emitDebugVariables - Recreate DBG_VALUE instruction from data structures.
+  /// emitDebugValues - Recreate DBG_VALUE instruction from data structures.
   void emitDebugValues(VirtRegMap *VRM);
 
   void print(raw_ostream&);
