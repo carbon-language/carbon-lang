@@ -1160,6 +1160,8 @@ void VTableBuilder::ComputeThisAdjustments() {
       break;
     case VTableComponent::CK_DeletingDtorPointer:
       // We've already added the thunk when we saw the complete dtor pointer.
+      // FIXME: check how this works in the Microsoft ABI
+      // while working on the multiple inheritance patch.
       continue;
     }
 
@@ -1302,11 +1304,8 @@ VTableBuilder::AddMethod(const CXXMethodDecl *MD,
       Components.push_back(VTableComponent::MakeCompleteDtor(DD));
       Components.push_back(VTableComponent::MakeDeletingDtor(DD));
     } else {
-      // Add only one destructor in MS mode.
-      // FIXME: The virtual destructors are handled differently in MS ABI,
-      // we should add such a support later. For now, put the complete
-      // destructor into the vftable just to make its layout right.
-      Components.push_back(VTableComponent::MakeCompleteDtor(DD));
+      // Add the scalar deleting destructor.
+      Components.push_back(VTableComponent::MakeDeletingDtor(DD));
     }
   } else {
     // Add the return adjustment if necessary.
@@ -1951,6 +1950,8 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
       Out << DD->getQualifiedNameAsString();
       if (IsComplete)
         Out << "() [complete]";
+      else if (isMicrosoftABI())
+        Out << "() [scalar deleting]";
       else
         Out << "() [deleting]";
 
@@ -2142,8 +2143,8 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
         IndicesMap[VTables.getMethodVTableIndex(GlobalDecl(DD, Dtor_Deleting))]
           = MethodName + " [deleting]";
       } else {
-        IndicesMap[VTables.getMethodVTableIndex(GlobalDecl(DD, Dtor_Complete))]
-          = MethodName;
+        IndicesMap[VTables.getMethodVTableIndex(GlobalDecl(DD, Dtor_Deleting))]
+          = MethodName + " [scalar deleting]";
       }
     } else {
       IndicesMap[VTables.getMethodVTableIndex(MD)] = MethodName;
@@ -2275,8 +2276,9 @@ void VTableContext::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
             MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] =
               getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
           } else {
-            MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] =
-              getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
+            // Add the scalar deleting destructor.
+            MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] =
+              getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
           }
         } else {
           MethodVTableIndices[MD] = getMethodVTableIndex(OverriddenMD);
@@ -2302,11 +2304,8 @@ void VTableContext::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
         // Add the deleting dtor.
         MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
       } else {
-        // Add only the deleting dtor.
-        // FIXME: The virtual destructors are handled differently in MS ABI,
-        // we should add such a support later. For now, put the complete
-        // destructor into the vftable indices.
-        MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] = CurrentIndex++;
+        // Add the scalar deleting dtor.
+        MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
       }
     } else {
       // Add the entry.

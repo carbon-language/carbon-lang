@@ -45,10 +45,7 @@ public:
   void BuildDestructorSignature(const CXXDestructorDecl *Ctor,
                                 CXXDtorType Type,
                                 CanQualType &ResTy,
-                                SmallVectorImpl<CanQualType> &ArgTys) {
-    // 'this' is already in place
-    // TODO: 'for base' flag
-  }
+                                SmallVectorImpl<CanQualType> &ArgTys);
 
   void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                    QualType &ResTy,
@@ -121,6 +118,27 @@ void MicrosoftCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
   ResTy = ArgTys[0];
 }
 
+void MicrosoftCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                               CXXDtorType Type,
+                                               CanQualType &ResTy,
+                                        SmallVectorImpl<CanQualType> &ArgTys) {
+  // 'this' is already in place
+  // TODO: 'for base' flag
+
+  if (Type == Dtor_Deleting) {
+    // The scalar deleting destructor takes an implicit bool parameter.
+    ArgTys.push_back(CGM.getContext().BoolTy);
+  }
+}
+
+static bool IsDeletingDtor(GlobalDecl GD) {
+  const CXXMethodDecl* MD = cast<CXXMethodDecl>(GD.getDecl());
+  if (isa<CXXDestructorDecl>(MD)) {
+    return GD.getDtorType() == Dtor_Deleting;
+  }
+  return false;
+}
+
 void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                                   QualType &ResTy,
                                                   FunctionArgList &Params) {
@@ -128,12 +146,31 @@ void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
   if (needThisReturn(CGF.CurGD)) {
     ResTy = Params[0]->getType();
   }
+  if (IsDeletingDtor(CGF.CurGD)) {
+    ASTContext &Context = getContext();
+
+    ImplicitParamDecl *ShouldDelete
+      = ImplicitParamDecl::Create(Context, 0,
+                                  CGF.CurGD.getDecl()->getLocation(),
+                                  &Context.Idents.get("should_call_delete"),
+                                  Context.BoolTy);
+    Params.push_back(ShouldDelete);
+    getStructorImplicitParamDecl(CGF) = ShouldDelete;
+  }
 }
 
 void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   EmitThisParam(CGF);
   if (needThisReturn(CGF.CurGD)) {
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
+  }
+  if (IsDeletingDtor(CGF.CurGD)) {
+    assert(getStructorImplicitParamDecl(CGF) &&
+           "no implicit parameter for a deleting destructor?");
+    getStructorImplicitParamValue(CGF)
+      = CGF.Builder.CreateLoad(
+          CGF.GetAddrOfLocalVar(getStructorImplicitParamDecl(CGF)),
+          "should_call_delete");
   }
 }
 

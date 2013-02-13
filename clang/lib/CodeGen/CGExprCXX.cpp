@@ -28,7 +28,8 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
                                           llvm::Value *Callee,
                                           ReturnValueSlot ReturnValue,
                                           llvm::Value *This,
-                                          llvm::Value *VTT,
+                                          llvm::Value *ImplicitParam,
+                                          QualType ImplicitParamTy,
                                           CallExpr::const_arg_iterator ArgBeg,
                                           CallExpr::const_arg_iterator ArgEnd) {
   assert(MD->isInstance() &&
@@ -46,10 +47,9 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   // Push the this ptr.
   Args.add(RValue::get(This), MD->getThisType(getContext()));
 
-  // If there is a VTT parameter, emit it.
-  if (VTT) {
-    QualType T = getContext().getPointerType(getContext().VoidPtrTy);
-    Args.add(RValue::get(VTT), T);
+  // If there is an implicit parameter (e.g. VTT), emit it.
+  if (ImplicitParam) {
+    Args.add(RValue::get(ImplicitParam), ImplicitParamTy);
   }
 
   const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
@@ -316,7 +316,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   }
 
   return EmitCXXMemberCall(MD, CE->getExprLoc(), Callee, ReturnValue, This,
-                           /*VTT=*/0, CE->arg_begin(), CE->arg_end());
+                           /*ImplicitParam=*/0, QualType(),
+                           CE->arg_begin(), CE->arg_end());
 }
 
 RValue
@@ -388,7 +389,8 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
 
   llvm::Value *Callee = EmitCXXOperatorMemberCallee(E, MD, This);
   return EmitCXXMemberCall(MD, E->getExprLoc(), Callee, ReturnValue, This,
-                           /*VTT=*/0, E->arg_begin() + 1, E->arg_end());
+                           /*ImplicitParam=*/0, QualType(),
+                           E->arg_begin() + 1, E->arg_end());
 }
 
 RValue CodeGenFunction::EmitCUDAKernelCallExpr(const CUDAKernelCallExpr *E,
@@ -1408,7 +1410,7 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
                                  Ptr, Ty);
         // FIXME: Provide a source location here.
         CGF.EmitCXXMemberCall(Dtor, SourceLocation(), Callee, ReturnValueSlot(),
-                              Ptr, /*VTT=*/0, 0, 0);
+                              Ptr, /*ImplicitParam=*/0, QualType(), 0, 0);
 
         if (UseGlobalDelete) {
           CGF.PopCleanupBlock();

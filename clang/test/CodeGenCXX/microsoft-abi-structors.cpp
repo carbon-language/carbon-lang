@@ -1,4 +1,8 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 -fno-rtti > %t 2>&1
+// RUN: FileCheck %s < %t
+// Using a different check prefix as the inline destructors might be placed
+// anywhere in the output.
+// RUN: FileCheck --check-prefix=DTORS %s < %t
 
 class A {
  public:
@@ -23,9 +27,26 @@ void no_constructor_destructor_infinite_recursion() {
 }
 
 struct B {
-  virtual ~B();
+  virtual ~B() {
+// Complete destructor first:
+// DTORS: define {{.*}} x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %this)
+//
+// Then, the scalar deleting destructor (used in the vtable):
+// DTORS:      define {{.*}} x86_thiscallcc void @"\01??_GB@@UAEPAXI@Z"(%struct.B* %this, i1 zeroext %should_call_delete)
+// DTORS:        %0 = icmp eq i8 %should_call_delete{{.*}}, 0
+// DTORS-NEXT:   br i1 %0, label %dtor.continue, label %dtor.call_delete
+// DTORS:      dtor.call_delete:
+// DTORS-NEXT:   %1 = bitcast %struct.B* %this1 to i8*
+// DTORS-NEXT:   call void @"\01??3@YAXPAX@Z"(i8* %1) nounwind
+// DTORS-NEXT:   br label %dtor.continue
+// DTORS:      dtor.continue:
+// DTORS-NEXT:   ret void
+  }
   virtual void foo();
 };
+
+// Emits the vftable in the output.
+void B::foo() {}
 
 void check_vftable_offset() {
   B b;
@@ -33,3 +54,33 @@ void check_vftable_offset() {
 // CHECK: [[THIS_PTR:%[0-9]+]] = bitcast %struct.B* {{.*}} to i8***
 // CHECK: store i8** getelementptr inbounds ([2 x i8*]* @"\01??_7B@@6B@", i64 0, i64 0), i8*** [[THIS_PTR]]
 }
+
+// FIXME: Enable the following block and add expectations when calls
+// to virtual complete dtor are supported.
+#if 0
+void call_complete_dtor(B *obj_ptr) {
+  obj_ptr->~B();
+}
+#endif
+
+void call_deleting_dtor(B *obj_ptr) {
+// FIXME: Add CHECKs when calls to virtual deleting dtor are generated properly.
+  delete obj_ptr;
+}
+
+struct C {
+  static int foo();
+
+  C() {
+    static int ctor_static = foo();
+    // CHECK that the static in the ctor gets mangled correctly:
+    // CHECK: @"\01?ctor_static@?1???0C@@QAE@XZ@4HA"
+  }
+  ~C() {
+    static int dtor_static = foo();
+    // CHECK that the static in the dtor gets mangled correctly:
+    // CHECK: @"\01?dtor_static@?1???1C@@QAE@XZ@4HA"
+  }
+};
+
+void use_C() { C c; }

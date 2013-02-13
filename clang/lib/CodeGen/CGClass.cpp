@@ -953,6 +953,32 @@ namespace {
     }
   };
 
+  struct CallDtorDeleteConditional : EHScopeStack::Cleanup {
+    llvm::Value *ShouldDeleteCondition;
+  public:
+    CallDtorDeleteConditional(llvm::Value *ShouldDeleteCondition)
+      : ShouldDeleteCondition(ShouldDeleteCondition) {
+      assert(ShouldDeleteCondition != NULL);
+    }
+
+    void Emit(CodeGenFunction &CGF, Flags flags) {
+      llvm::BasicBlock *callDeleteBB = CGF.createBasicBlock("dtor.call_delete");
+      llvm::BasicBlock *continueBB = CGF.createBasicBlock("dtor.continue");
+      llvm::Value *ShouldCallDelete
+        = CGF.Builder.CreateIsNull(ShouldDeleteCondition);
+      CGF.Builder.CreateCondBr(ShouldCallDelete, continueBB, callDeleteBB);
+
+      CGF.EmitBlock(callDeleteBB);
+      const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CGF.CurCodeDecl);
+      const CXXRecordDecl *ClassDecl = Dtor->getParent();
+      CGF.EmitDeleteCall(Dtor->getOperatorDelete(), CGF.LoadCXXThis(),
+                         CGF.getContext().getTagDeclType(ClassDecl));
+      CGF.Builder.CreateBr(continueBB);
+
+      CGF.EmitBlock(continueBB);
+    }
+  };
+
   class DestroyField  : public EHScopeStack::Cleanup {
     const FieldDecl *field;
     CodeGenFunction::Destroyer *destroyer;
@@ -991,7 +1017,14 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   if (DtorType == Dtor_Deleting) {
     assert(DD->getOperatorDelete() && 
            "operator delete missing - EmitDtorEpilogue");
-    EHStack.pushCleanup<CallDtorDelete>(NormalAndEHCleanup);
+    if (CXXStructorImplicitParamValue) {
+      // If there is an implicit param to the deleting dtor, it's a boolean
+      // telling whether we should call delete at the end of the dtor.
+      EHStack.pushCleanup<CallDtorDeleteConditional>(
+          NormalAndEHCleanup, CXXStructorImplicitParamValue);
+    } else {
+      EHStack.pushCleanup<CallDtorDelete>(NormalAndEHCleanup);
+    }
     return;
   }
 
@@ -1243,7 +1276,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 
   // FIXME: Provide a source location here.
   EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
-                    VTT, ArgBeg, ArgEnd);
+                    VTT, getContext().getPointerType(getContext().VoidPtrTy),
+                    ArgBeg, ArgEnd);
 }
 
 void
@@ -1399,7 +1433,8 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   
   // FIXME: Provide a source location here.
   EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
-                    VTT, 0, 0);
+                    VTT, getContext().getPointerType(getContext().VoidPtrTy),
+                    0, 0);
 }
 
 namespace {

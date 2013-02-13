@@ -54,11 +54,20 @@ protected:
     return CGF.CXXABIThisValue;
   }
 
+  // FIXME: Every place that calls getVTT{Decl,Value} is something
+  // that needs to be abstracted properly.
   ImplicitParamDecl *&getVTTDecl(CodeGenFunction &CGF) {
-    return CGF.CXXVTTDecl;
+    return CGF.CXXStructorImplicitParamDecl;
   }
   llvm::Value *&getVTTValue(CodeGenFunction &CGF) {
-    return CGF.CXXVTTValue;
+    return CGF.CXXStructorImplicitParamValue;
+  }
+
+  ImplicitParamDecl *&getStructorImplicitParamDecl(CodeGenFunction &CGF) {
+    return CGF.CXXStructorImplicitParamDecl;
+  }
+  llvm::Value *&getStructorImplicitParamValue(CodeGenFunction &CGF) {
+    return CGF.CXXStructorImplicitParamValue;
   }
 
   /// Build a parameter variable suitable for 'this'.

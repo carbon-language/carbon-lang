@@ -1179,11 +1179,10 @@ private:
   llvm::Value *CXXABIThisValue;
   llvm::Value *CXXThisValue;
 
-  /// CXXVTTDecl - When generating code for a base object constructor or
-  /// base object destructor with virtual bases, this will hold the implicit
-  /// VTT parameter.
-  ImplicitParamDecl *CXXVTTDecl;
-  llvm::Value *CXXVTTValue;
+  /// CXXStructorImplicitParamDecl - When generating code for a constructor or
+  /// destructor, this will hold the implicit argument (e.g. VTT).
+  ImplicitParamDecl *CXXStructorImplicitParamDecl;
+  llvm::Value *CXXStructorImplicitParamValue;
 
   /// OutermostConditional - Points to the outermost active
   /// conditional control.  This is used so that we know if a
@@ -1777,9 +1776,19 @@ public:
 
   /// LoadCXXVTT - Load the VTT parameter to base constructors/destructors have
   /// virtual bases.
+  // FIXME: Every place that calls LoadCXXVTT is something
+  // that needs to be abstracted properly.
   llvm::Value *LoadCXXVTT() {
-    assert(CXXVTTValue && "no VTT value for this function");
-    return CXXVTTValue;
+    assert(CXXStructorImplicitParamValue && "no VTT value for this function");
+    return CXXStructorImplicitParamValue;
+  }
+
+  /// LoadCXXStructorImplicitParam - Load the implicit parameter
+  /// for a constructor/destructor.
+  llvm::Value *LoadCXXStructorImplicitParam() {
+    assert(CXXStructorImplicitParamValue &&
+           "no implicit argument value for this function");
+    return CXXStructorImplicitParamValue;
   }
 
   /// GetAddressOfBaseOfCompleteClass - Convert the given pointer to a
@@ -2294,7 +2303,8 @@ public:
                            llvm::Value *Callee,
                            ReturnValueSlot ReturnValue,
                            llvm::Value *This,
-                           llvm::Value *VTT,
+                           llvm::Value *ImplicitParam,
+                           QualType ImplicitParamTy,
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E,
