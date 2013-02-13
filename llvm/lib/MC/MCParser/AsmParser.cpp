@@ -4030,6 +4030,8 @@ bool AsmParser::ParseDirectiveMSAlign(SMLoc IDLoc, ParseStatementInfo &Info) {
   return false;
 }
 
+// We are comparing pointers, but the pointers are relative to a single string.
+// Thus, this should always be deterministic.
 static int RewritesSort (const void *A, const void *B) {
   const AsmRewrite *AsmRewriteA = static_cast<const AsmRewrite*>(A);
   const AsmRewrite *AsmRewriteB = static_cast<const AsmRewrite*>(B);
