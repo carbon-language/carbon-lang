@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -4029,8 +4030,14 @@ bool AsmParser::ParseDirectiveMSAlign(SMLoc IDLoc, ParseStatementInfo &Info) {
   return false;
 }
 
-bool AsmStringSort (AsmRewrite A, AsmRewrite B) {
-  return A.Loc.getPointer() < B.Loc.getPointer();
+static int RewritesSort (const void *A, const void *B) {
+  const AsmRewrite *AsmRewriteA = static_cast<const AsmRewrite*>(A);
+  const AsmRewrite *AsmRewriteB = static_cast<const AsmRewrite*>(B);
+  if (AsmRewriteA->Loc.getPointer() < AsmRewriteB->Loc.getPointer())
+    return -1;
+  if (AsmRewriteB->Loc.getPointer() < AsmRewriteA->Loc.getPointer())
+    return 1;
+  return 0;
 }
 
 bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
@@ -4157,7 +4164,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   AsmRewriteKind PrevKind = AOK_Imm;
   raw_string_ostream OS(AsmStringIR);
   const char *Start = SrcMgr.getMemoryBuffer(0)->getBufferStart();
-  std::sort (AsmStrRewrites.begin(), AsmStrRewrites.end(), AsmStringSort);
+  array_pod_sort (AsmStrRewrites.begin(), AsmStrRewrites.end(), RewritesSort);
   for (SmallVectorImpl<struct AsmRewrite>::iterator
          I = AsmStrRewrites.begin(), E = AsmStrRewrites.end(); I != E; ++I) {
     const char *Loc = (*I).Loc.getPointer();
