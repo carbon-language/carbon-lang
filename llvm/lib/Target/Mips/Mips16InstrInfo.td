@@ -1607,6 +1607,8 @@ def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
 
 def : Mips16Pat<(MipsHi tglobaladdr:$in), 
                 (SllX16 (LiRxImmX16 tglobaladdr:$in), 16)>;
+def : Mips16Pat<(MipsHi tjumptable:$in),
+                (SllX16 (LiRxImmX16 tjumptable:$in), 16)>;
 def : Mips16Pat<(MipsHi tglobaltlsaddr:$in),
                 (SllX16 (LiRxImmX16 tglobaltlsaddr:$in), 16)>;
 
