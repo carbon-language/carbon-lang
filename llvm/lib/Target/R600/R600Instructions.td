@@ -1491,6 +1491,10 @@ def VTX_READ_PARAM_32_eg : VTX_READ_32_eg <0,
   [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
 >;
 
+def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
+  [(set (v4i32 R600_Reg128:$dst), (load_param ADDRVTX_READ:$ptr))]
+>;
+
 //===----------------------------------------------------------------------===//
 // VTX Read from global memory space
 //===----------------------------------------------------------------------===//
