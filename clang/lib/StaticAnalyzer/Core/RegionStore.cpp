@@ -1514,33 +1514,29 @@ SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
     return svalBuilder.getRegionValueSymbolVal(R);
 
   if (isa<GlobalsSpaceRegion>(MS)) {
-    if (isa<NonStaticGlobalSpaceRegion>(MS)) {
-      // Is 'VD' declared constant?  If so, retrieve the constant value.
-      QualType CT = Ctx.getCanonicalType(T);
-      if (CT.isConstQualified()) {
-        const Expr *Init = VD->getInit();
-        // Do the null check first, as we want to call 'IgnoreParenCasts'.
-        if (Init)
-          if (const IntegerLiteral *IL =
-              dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
-            const nonloc::ConcreteInt &V = svalBuilder.makeIntVal(IL);
-            return svalBuilder.evalCast(V, Init->getType(), IL->getType());
-          }
+    // Function-scoped static variables are default-initialized to 0; if they
+    // have an initializer, it would have been processed by now.
+    if (isa<StaticGlobalSpaceRegion>(MS))
+      return svalBuilder.makeZeroVal(T);
+
+    // Other globals 
+    // Is 'VD' declared constant?  If so, retrieve the constant value.
+    QualType CT = Ctx.getCanonicalType(T);
+    if (CT.isConstQualified()) {
+      if (const Expr *Init = VD->getInit()) {
+        if (const IntegerLiteral *IL =
+            dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
+          const nonloc::ConcreteInt &V = svalBuilder.makeIntVal(IL);
+          return svalBuilder.evalCast(V, Init->getType(), IL->getType());
+        }
       }
-
-      if (const Optional<SVal> &V
-            = getBindingForDerivedDefaultValue(B, MS, R, CT))
-        return V.getValue();
-
-      return svalBuilder.getRegionValueSymbolVal(R);
     }
 
-    if (T->isIntegerType())
-      return svalBuilder.makeIntVal(0, T);
-    if (T->isPointerType())
-      return svalBuilder.makeNull();
+    if (const Optional<SVal> &V
+          = getBindingForDerivedDefaultValue(B, MS, R, CT))
+      return V.getValue();
 
-    return UnknownVal();
+    return svalBuilder.getRegionValueSymbolVal(R);
   }
 
   return UndefinedVal();
