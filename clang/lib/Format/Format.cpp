@@ -43,11 +43,11 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.BinPackParameters = true;
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
-  LLVMStyle.AllowReturnTypeOnItsOwnLine = true;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.PenaltyExcessCharacter = 1000000;
+  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 5;
   return LLVMStyle;
 }
 
@@ -63,11 +63,11 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.BinPackParameters = false;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
-  GoogleStyle.AllowReturnTypeOnItsOwnLine = false;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PenaltyExcessCharacter = 1000000;
+  GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 100;
   return GoogleStyle;
 }
 
@@ -717,9 +717,10 @@ private:
     reconstructPath(State, Current->Previous);
     DEBUG({
       if (Current->NewLine) {
-        llvm::errs() << "Penalty for splitting before "
-                     << Current->State.NextToken->FormatTok.Tok.getName()
-                     << ": " << Current->State.NextToken->SplitPenalty << "\n";
+        llvm::errs()
+            << "Penalty for splitting before "
+            << Current->Previous->State.NextToken->FormatTok.Tok.getName()
+            << ": " << Current->Previous->State.NextToken->SplitPenalty << "\n";
       }
     });
     addTokenToState(Current->NewLine, false, State);

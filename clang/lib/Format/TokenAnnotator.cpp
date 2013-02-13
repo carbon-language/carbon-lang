@@ -847,6 +847,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   const AnnotatedToken &Left = *Tok.Parent;
   const AnnotatedToken &Right = Tok;
 
+  if (Right.Type == TT_StartOfName)
+    return Style.PenaltyReturnTypeOnItsOwnLine;
   if (Left.is(tok::l_brace) && Right.isNot(tok::l_brace))
     return 50;
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
@@ -1026,7 +1028,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
 bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                     const AnnotatedToken &Right) {
   const AnnotatedToken &Left = *Right.Parent;
-  if (Right.Type == TT_StartOfName && Style.AllowReturnTypeOnItsOwnLine)
+  if (Right.Type == TT_StartOfName)
     return true;
   if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
     return false;

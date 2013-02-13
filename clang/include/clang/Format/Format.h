@@ -77,8 +77,9 @@ struct FormatStyle {
   /// the next line even if \c BinPackParameters is \c false.
   bool AllowAllParametersOfDeclarationOnNextLine;
 
-  /// \brief Allow putting the return type of a function onto its own line.
-  bool AllowReturnTypeOnItsOwnLine;
+  /// \brief Penalty for putting the return type of a function onto its own
+  /// line.
+  unsigned PenaltyReturnTypeOnItsOwnLine;
 
   /// \brief If the constructor initializers don't fit on a line, put each
   /// initializer on its own line.

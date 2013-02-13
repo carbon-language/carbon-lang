@@ -1763,6 +1763,14 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
   verifyGoogleFormat(
       "TypeSpecDecl* TypeSpecDecl::Create(\n"
       "    ASTContext& C, DeclContext* DC, SourceLocation L) {\n}");
+  verifyGoogleFormat(
+      "some_namespace::LongReturnType\n"
+      "long_namespace::SomeVeryLongClass::SomeVeryLongFunction(\n"
+      "    int first_long_parameter, int second_parameter) {\n}");
+
+  verifyGoogleFormat("template <typename T>\n"
+                     "aaaaaaaa::aaaaa::aaaaaa<T, aaaaaaaaaaaaaaaaaaaaaaaaa>\n"
+                     "aaaaaaaaaaaaaaaaaaaaaaaa<T>::aaaaaaa() {\n}");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
