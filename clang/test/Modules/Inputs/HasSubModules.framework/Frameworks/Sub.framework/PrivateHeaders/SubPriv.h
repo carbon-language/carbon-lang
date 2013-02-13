@@ -1,2 +1,3 @@
 #include <Sub/Types.h>
-// Private
+// This comment ensures that this file is not identical to
+// HasSubModules.framework/Frameworks/Sub.framework/Headers/Sub.h
