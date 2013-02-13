@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86-64 | grep -v IMPLICIT_DEF
+; RUN: llc < %s -march=x86-64 | FileCheck %s
+; CHECK-NOT: IMPLICIT_DEF
 
 define void @foo(<2 x float>* %p) {
   %t = insertelement <2 x float> undef, float 0.0, i32 0
