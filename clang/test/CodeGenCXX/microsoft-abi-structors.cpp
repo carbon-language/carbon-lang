@@ -34,8 +34,8 @@ struct B {
 // Then, the scalar deleting destructor (used in the vtable):
 // DTORS:      define {{.*}} x86_thiscallcc void @"\01??_GB@@UAEPAXI@Z"(%struct.B* %this, i1 zeroext %should_call_delete)
 // DTORS:        %[[FROMBOOL:[0-9a-z]+]] = zext i1 %should_call_delete to i8
-// DTORS-NEXT:   store i8 %[[FROMBOOL]], i8* %[[SHOULD_DELETE_VAR:[0-9a-z]+]], align 1
-// DTORS:        %[[SHOULD_DELETE_VALUE:[0-9a-z]+]] = load i8* %[[SHOULD_DELETE_VAR]]
+// DTORS-NEXT:   store i8 %[[FROMBOOL]], i8* %[[SHOULD_DELETE_VAR:[0-9a-z._]+]], align 1
+// DTORS:        %[[SHOULD_DELETE_VALUE:[0-9a-z._]+]] = load i8* %[[SHOULD_DELETE_VAR]]
 // DTORS:        call x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %[[THIS:[0-9a-z]+]])
 // DTORS-NEXT:   %[[CONDITION:[0-9]+]] = icmp eq i8 %[[SHOULD_DELETE_VALUE]], 0
 // DTORS-NEXT:   br i1 %[[CONDITION]], label %[[CONTINUE_LABEL:[0-9a-z._]+]], label %[[CALL_DELETE_LABEL:[0-9a-z._]+]]
