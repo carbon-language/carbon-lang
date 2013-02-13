@@ -493,7 +493,6 @@ private:
       if (KeyInfoT::isEqual(ThisBucket->first, EmptyKey)) {
         // If we've already seen a tombstone while probing, fill it in instead
         // of the empty bucket we eventually probed to.
-        if (FoundTombstone) ThisBucket = FoundTombstone;
         FoundBucket = FoundTombstone ? FoundTombstone : ThisBucket;
         return false;
       }
