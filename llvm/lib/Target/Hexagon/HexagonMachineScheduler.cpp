@@ -192,6 +192,7 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
   DAG = static_cast<VLIWMachineScheduler*>(dag);
   SchedModel = DAG->getSchedModel();
   TRI = DAG->TRI;
+
   Top.init(DAG, SchedModel);
   Bot.init(DAG, SchedModel);
 
@@ -199,6 +200,8 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
   // are disabled, then these HazardRecs will be disabled.
   const InstrItineraryData *Itin = DAG->getSchedModel()->getInstrItineraries();
   const TargetMachine &TM = DAG->MF.getTarget();
+  delete Top.HazardRec;
+  delete Bot.HazardRec;
   Top.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
   Bot.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
 
@@ -683,4 +686,3 @@ void ConvergingVLIWScheduler::schedNode(SUnit *SU, bool IsTopNode) {
     Bot.bumpNode(SU);
   }
 }
-
