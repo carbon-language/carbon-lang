@@ -283,6 +283,12 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
                                 const DataLayout &TD) {
   // We can only extend simple integer loads.
   if (!isa<IntegerType>(LI->getType()) || !LI->isSimple()) return 0;
+
+  // Load widening is hostile to ThreadSanitizer: it may cause false positives
+  // or make the reports more cryptic (access sizes are wrong).
+  if (LI->getParent()->getParent()->getAttributes().
+      hasAttribute(AttributeSet::FunctionIndex, Attribute::ThreadSafety))
+    return 0;
   
   // Get the base of this load.
   int64_t LIOffs = 0;
