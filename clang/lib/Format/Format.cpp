@@ -23,7 +23,9 @@
 #include "clang/Format/Format.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
+#include <queue>
 #include <string>
 
 namespace clang {
@@ -633,13 +635,31 @@ private:
     return Style.ColumnLimit - (Line.InPPDirective ? 1 : 0);
   }
 
-  /// \brief An edge in the solution space starting from the \c LineState and
-  /// inserting a newline dependent on the \c bool.
-  typedef std::pair<bool, const LineState *> Edge;
+  /// \brief An edge in the solution space from \c Previous->State to \c State,
+  /// inserting a newline dependent on the \c NewLine.
+  struct StateNode {
+    StateNode(const LineState &State, bool NewLine, StateNode *Previous)
+        : State(State), NewLine(NewLine), Previous(Previous) {
+    }
+    LineState State;
+    bool NewLine;
+    StateNode *Previous;
+  };
 
-  /// \brief An item in the prioritized BFS search queue. The \c LineState was
-  /// reached using the \c Edge.
-  typedef std::pair<LineState, Edge> QueueItem;
+  /// \brief A pair of <penalty, count> that is used to prioritize the BFS on.
+  ///
+  /// In case of equal penalties, we want to prefer states that were inserted
+  /// first. During state generation we make sure that we insert states first
+  /// that break the line as late as possible.
+  typedef std::pair<unsigned, unsigned> OrderedPenalty;
+
+  /// \brief An item in the prioritized BFS search queue. The \c StateNode's
+  /// \c State has the given \c OrderedPenalty.
+  typedef std::pair<OrderedPenalty, StateNode *> QueueItem;
+
+  /// \brief The BFS queue type.
+  typedef std::priority_queue<QueueItem, std::vector<QueueItem>,
+                              std::greater<QueueItem> > QueueType;
 
   /// \brief Analyze the entire solution space starting from \p InitialState.
   ///
@@ -647,32 +667,40 @@ private:
   /// the solution space (\c LineStates are the nodes). The algorithm tries to
   /// find the shortest path (the one with lowest penalty) from \p InitialState
   /// to a state where all tokens are placed.
-  unsigned analyzeSolutionSpace(const LineState &InitialState) {
+  unsigned analyzeSolutionSpace(LineState &InitialState) {
+    llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
+
+    // Increasing count of \c StateNode items we have created. This is used
+    // to create a deterministic order independent of the container.
+    unsigned Count = 0;
+    QueueType Queue;
+
+    std::set<LineState> Seen;
+
     // Insert start element into queue.
-    std::multimap<unsigned, QueueItem> Queue;
-    Queue.insert(std::pair<unsigned, QueueItem>(
-        0, QueueItem(InitialState, Edge(false, (const LineState *)0))));
-    std::map<LineState, Edge> Seen;
+    StateNode *Node=
+        new (Allocator.Allocate()) StateNode(InitialState, false, NULL);
+    Queue.push(QueueItem(OrderedPenalty(0, Count), Node));
+    ++Count;
 
     // While not empty, take first element and follow edges.
     while (!Queue.empty()) {
-      unsigned Penalty = Queue.begin()->first;
-      QueueItem Item = Queue.begin()->second;
-      if (Item.first.NextToken == NULL) {
+      unsigned Penalty = Queue.top().first.first;
+      StateNode *Node= Queue.top().second;
+      if (Node->State.NextToken == NULL) {
         DEBUG(llvm::errs() << "\n---\nPenalty for line: " << Penalty << "\n");
         break;
       }
-      Queue.erase(Queue.begin());
+      Queue.pop();
 
-      if (Seen.find(Item.first) != Seen.end())
-        continue; // State already examined with lower penalty.
+      if (!Seen.insert(Node->State).second)
+        // State already examined with lower penalty.
+        continue;
 
-      const LineState &SavedState = Seen.insert(std::pair<LineState, Edge>(
-          Item.first,
-          Edge(Item.second.first, Item.second.second))).first->first;
-
-      addNextStateToQueue(SavedState, Penalty, /*NewLine=*/ false, Queue);
-      addNextStateToQueue(SavedState, Penalty, /*NewLine=*/ true, Queue);
+      addNextStateToQueue(Allocator, Queue, Count, Penalty, Node,
+                          /*NewLine=*/ false);
+      addNextStateToQueue(Allocator, Queue, Count, Penalty, Node,
+                          /*NewLine=*/ true);
     }
 
     if (Queue.empty())
@@ -681,46 +709,55 @@ private:
       return 0;
 
     // Reconstruct the solution.
-    // FIXME: Add debugging output.
-    Edge *CurrentEdge = &Queue.begin()->second.second;
-    while (CurrentEdge->second != NULL) {
-      LineState CurrentState = *CurrentEdge->second;
-      if (CurrentEdge->first) {
-        DEBUG(llvm::errs() << "Penalty for splitting before "
-                           << CurrentState.NextToken->FormatTok.Tok.getName()
-                           << ": " << CurrentState.NextToken->SplitPenalty
-                           << "\n");
-      }
-      addTokenToState(CurrentEdge->first, false, CurrentState);
-      CurrentEdge = &Seen[*CurrentEdge->second];
-    }
+    reconstructPath(InitialState, Queue.top().second);
     DEBUG(llvm::errs() << "---\n");
 
     // Return the column after the last token of the solution.
-    return Queue.begin()->second.first.Column;
+    return Queue.top().second->State.Column;
+  }
+
+  void reconstructPath(LineState &State, StateNode *Current) {
+    // FIXME: This recursive implementation limits the possible number
+    // of tokens per line if compiled into a binary with small stack space.
+    // To become more independent of stack frame limitations we would need
+    // to also change the TokenAnnotator.
+    if (Current->Previous == NULL)
+      return;
+    reconstructPath(State, Current->Previous);
+    DEBUG({
+      if (Current->NewLine) {
+        llvm::errs() << "Penalty for splitting before "
+                     << Current->State.NextToken->FormatTok.Tok.getName()
+                     << ": " << Current->State.NextToken->SplitPenalty << "\n";
+      }
+    });
+    addTokenToState(Current->NewLine, false, State);
   }
 
   /// \brief Add the following state to the analysis queue \p Queue.
   ///
   /// Assume the current state is \p OldState and has been reached with a
   /// penalty of \p Penalty. Insert a line break if \p NewLine is \c true.
-  void addNextStateToQueue(const LineState &OldState, unsigned Penalty,
-                           bool NewLine,
-                           std::multimap<unsigned, QueueItem> &Queue) {
-    if (NewLine && !canBreak(OldState))
+  void addNextStateToQueue(llvm::SpecificBumpPtrAllocator<StateNode> &Allocator,
+                           QueueType &Queue, unsigned &Count, unsigned Penalty,
+                           StateNode *PreviousNode, bool NewLine) {
+    if (NewLine && !canBreak(PreviousNode->State))
       return;
-    if (!NewLine && mustBreak(OldState))
+    if (!NewLine && mustBreak(PreviousNode->State))
       return;
-    LineState State(OldState);
     if (NewLine)
-      Penalty += State.NextToken->SplitPenalty;
-    addTokenToState(NewLine, true, State);
-    if (State.Column > getColumnLimit()) {
-      unsigned ExcessCharacters = State.Column - getColumnLimit();
+      Penalty += PreviousNode->State.NextToken->SplitPenalty;
+
+    StateNode *Node = new (Allocator.Allocate())
+        StateNode(PreviousNode->State, NewLine, PreviousNode);
+    addTokenToState(NewLine, true, Node->State);
+    if (Node->State.Column > getColumnLimit()) {
+      unsigned ExcessCharacters = Node->State.Column - getColumnLimit();
       Penalty += Style.PenaltyExcessCharacter * ExcessCharacters;
     }
-    Queue.insert(std::pair<unsigned, QueueItem>(
-        Penalty, QueueItem(State, Edge(NewLine, &OldState))));
+
+    Queue.push(QueueItem(OrderedPenalty(Penalty, Count), Node));
+    ++Count;
   }
 
   /// \brief Returns \c true, if a line break after \p State is allowed.
