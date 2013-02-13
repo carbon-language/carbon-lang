@@ -184,7 +184,7 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
       int64_t Remainder = FrameSize - Base;
       BuildMI(MBB, I, DL, get(Mips::SaveRaF16)). addImm(Base);
       if (isInt<16>(-Remainder))
-        BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(-Remainder);
+        BuildAddiuSpImm(MBB, I, DL, -Remainder);
       else
         adjustStackPtrBig(SP, -Remainder, MBB, I, Mips::V0, Mips::V1);
     }
@@ -225,7 +225,7 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
                        // returns largest possible n bit unsigned integer
       int64_t Remainder = FrameSize - Base;
       if (isInt<16>(Remainder))
-        BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(Remainder);
+        BuildAddiuSpImm(MBB, I, DL, Remainder);
       else
         adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
       BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)). addImm(Base);
@@ -299,7 +299,7 @@ void Mips16InstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
                                      MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (isInt<16>(Amount))  // need to change to addiu sp, ....and isInt<16>
-    BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(Amount);
+    BuildAddiuSpImm(MBB, I, DL, Amount);
   else
     adjustStackPtrBigUnrestricted(SP, Amount, MBB, I);
 }
@@ -398,6 +398,15 @@ void Mips16InstrInfo::ExpandRetRA16(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned Opc) const {
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc));
+}
+
+void Mips16InstrInfo::BuildAddiuSpImm(
+  MachineBasicBlock &MBB,
+  MachineBasicBlock::iterator II, DebugLoc DL, int64_t Imm) const {
+  if (validSpImm8(Imm))
+    BuildMI(MBB, II, DL, get(Mips::AddiuSpImm16)).addImm(Imm);
+  else
+    BuildMI(MBB, II, DL, get(Mips::AddiuSpImmX16)).addImm(Imm);
 }
 
 const MipsInstrInfo *llvm::createMips16InstrInfo(MipsTargetMachine &TM) {

@@ -86,6 +86,18 @@ public:
                          MachineBasicBlock::iterator II, DebugLoc DL,
                          unsigned &NewImm) const;
 
+  static bool validSpImm8(int offset) {
+    return ((offset & 7) == 0) && isInt<11>(offset);
+  }
+
+  //
+  // build the proper one based on the Imm field
+  //
+  void BuildAddiuSpImm(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator II, DebugLoc DL,
+                           int64_t Imm) const;
+
+
 private:
   virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const;
 

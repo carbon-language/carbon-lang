@@ -32,6 +32,21 @@ def mem16_ea : Operand<i32> {
 }
 
 //
+//
+// I8 instruction format
+//
+
+class FI816_ins_base<bits<3> _func, string asmstr,
+                     string asmstr2, InstrItinClass itin>:
+  FI816<_func, (outs), (ins simm16:$imm), !strconcat(asmstr, asmstr2),
+        [], itin>;
+
+
+class FI816_SP_ins<bits<3> _func, string asmstr,
+                   InstrItinClass itin>:
+  FI816_ins_base<_func, asmstr, "\t$$sp, $imm # 16 bit inst", itin>;
+
+//
 // RI instruction format
 //
 
@@ -451,6 +466,13 @@ def AddiuRxPcImmX16: FEXT_RI16_PC_ins<0b00001, "addiu", IIAlu>;
 // Purpose: Add Immediate Unsigned Word (2-Operand, SP-Relative, Extended)
 // To add a constant to the stack pointer.
 //
+def AddiuSpImm16
+  : FI816_SP_ins<0b011, "addiu", IIAlu> {
+  let Defs = [SP];
+  let Uses = [SP];
+  let AddedComplexity = 5;
+}
+
 def AddiuSpImmX16
   : FEXT_I816_SP_ins<0b011, "addiu", IIAlu> {
   let Defs = [SP];
