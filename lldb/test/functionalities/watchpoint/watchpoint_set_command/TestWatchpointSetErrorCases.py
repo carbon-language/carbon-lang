@@ -12,6 +12,7 @@ class WatchpointSetErrorTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "watchpoint", "watchpoint_set_command")
 
+    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
     def test_error_cases_with_watchpoint_set(self):
         """Test error cases with the 'watchpoint set' command."""
         self.buildDwarf(dictionary=self.d)

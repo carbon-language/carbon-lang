@@ -21,7 +21,8 @@ class HelloWatchLocationTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_watchlocation()
 
-    @expectedFailureLinux # bugzilla 14416
+    #@expectedFailureLinux # bugzilla 14416
+    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
     @dwarf_test
     def test_hello_watchlocation_with_dwarf(self):
         """Test watching a location with '-x size' option."""

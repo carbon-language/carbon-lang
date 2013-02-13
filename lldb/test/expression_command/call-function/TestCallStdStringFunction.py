@@ -25,7 +25,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.buildDsym()
         self.call_function()
 
-    @expectedFailureLinux # bugzilla 14437
+    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""
