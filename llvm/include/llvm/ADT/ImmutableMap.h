@@ -211,24 +211,24 @@ public:
     friend class ImmutableMap;
 
   public:
-    value_type_ref operator*() const { return itr->getValue(); }
-    value_type*    operator->() const { return &itr->getValue(); }
+    typedef ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
+    typedef ImmutableMap<KeyT,ValT,ValInfo>::value_type_ref reference;
+    typedef iterator::value_type *pointer;
+    typedef std::bidirectional_iterator_tag iterator_category;
+
+    iterator::reference operator*() const { return itr->getValue(); }
+    iterator::pointer   operator->() const { return &itr->getValue(); }
 
     key_type_ref getKey() const { return itr->getValue().first; }
     data_type_ref getData() const { return itr->getValue().second; }
-
 
     iterator& operator++() { ++itr; return *this; }
     iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
     iterator& operator--() { --itr; return *this; }
     iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
+
     bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
     bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
-    
-    typedef ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
-    typedef value_type *pointer;
-    typedef value_type &reference;
-    typedef std::bidirectional_iterator_tag iterator_category;
   };
 
   iterator begin() const { return iterator(Root); }
