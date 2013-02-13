@@ -412,7 +412,7 @@ AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
   FoldingSetNodeID ID;
 
   SmallVector<Attribute, 8> SortedAttrs(Attrs.begin(), Attrs.end());
-  std::sort(SortedAttrs.begin(), SortedAttrs.end());
+  array_pod_sort(SortedAttrs.begin(), SortedAttrs.end());
 
   for (SmallVectorImpl<Attribute>::iterator I = SortedAttrs.begin(),
          E = SortedAttrs.end(); I != E; ++I)
