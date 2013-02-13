@@ -18,20 +18,16 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Symbol/ClangASTType.h"
 
-#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
-#include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/MappedHash.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -59,110 +55,6 @@ static const char *pluginShort = "language.apple.objc.v2";
 
 // 2 second timeout when running utility functions
 #define UTILITY_FUNCTION_TIMEOUT_USEC 2*1000*1000
-
-static const char *g_find_class_name_function_name = "__lldb_apple_objc_v2_find_class_name";
-static const char *g_find_class_name_function_body = "                                            \n\
-extern \"C\"                                                                                      \n\
-{                                                                                                 \n\
-    extern void *gdb_class_getClass (void *objc_class);                                           \n\
-    extern void *class_getName(void *objc_class);                                                 \n\
-    extern int printf(const char *format, ...);                                                   \n\
-    extern unsigned char class_isMetaClass (void *objc_class);                                    \n\
-}                                                                                                 \n\
-                                                                                                  \n\
-struct __lldb_objc_object {                                                                       \n\
-    void *isa;                                                                                    \n\
-};                                                                                                \n\
-                                                                                                  \n\
-extern \"C\" void *__lldb_apple_objc_v2_find_class_name (__lldb_objc_object *object_ptr,          \n\
-                                                         int debug)                               \n\
-{                                                                                                 \n\
-    void *name = 0;                                                                               \n\
-    if (debug)                                                                                    \n\
-        printf (\"\\n*** Called in v2_find_class_name with object: 0x%p\\n\", object_ptr);        \n\
-    // Call gdb_class_getClass so we can tell if the class is good.                               \n\
-    void *objc_class = gdb_class_getClass (object_ptr->isa);                                      \n\
-    if (objc_class)                                                                               \n\
-    {                                                                                             \n\
-        void *actual_class = (void *) [(id) object_ptr class];                                    \n\
-        if (actual_class != 0)                                                                    \n\
-        {                                                                                         \n\
-            if (class_isMetaClass(actual_class) == 1)                                             \n\
-            {                                                                                     \n\
-                if (debug)                                                                        \n\
-                    printf (\"\\n*** Found metaclass.\\n\");                                      \n\
-            }                                                                                     \n\
-            else                                                                                  \n\
-            {                                                                                     \n\
-                name = class_getName((void *) actual_class);                                      \n\
-            }                                                                                     \n\
-        }                                                                                         \n\
-        if (debug)                                                                                \n\
-            printf (\"\\n*** Found name: %s\\n\", name ? name : \"<NOT FOUND>\");                 \n\
-    }                                                                                             \n\
-    else if (debug)                                                                               \n\
-        printf (\"\\n*** gdb_class_getClass returned NULL\\n\");                                  \n\
-    return name;                                                                                  \n\
-}                                                                                                 \n\
-";
-
-static const char *g_summarize_classes_function_name = "__lldb_apple_objc_v2_summarize_classes";
-static const char *g_summarize_classes_function_body = "                                            \n\
-                                                                                                    \n\
-#define NULL (0)                                                                                    \n\
-                                                                                                    \n\
-extern \"C\"                                                                                        \n\
-{                                                                                                   \n\
-    extern void *memset (void *b, int c, size_t len);                                               \n\
-    extern char *strncpy (char * s1, const char * s2, size_t n);                                    \n\
-                                                                                                    \n\
-    int objc_getClassList(void **buffer, int bufferLen);                                            \n\
-    const char *class_getName(void *cls);                                                           \n\
-    int printf(const char * format, ...);                                                           \n\
-}                                                                                                   \n\
-                                                                                                    \n\
-// This must be kept in sync with the caller in UpdateISAToDescriptorMapIfNeeded()!                 \n\
-// To get the number of classes, set num_isas_assumed to 0.                                         \n\
-                                                                                                    \n\
-// #define DEBUG                                                                                    \n\
-                                                                                                    \n\
-extern \"C\" uint32_t __lldb_apple_objc_v2_summarize_classes (                                      \n\
-    void              **isas,                                                                       \n\
-    char               *names,                                                                      \n\
-    uint32_t            num_isas_assumed,                                                           \n\
-    uint32_t            name_size)                                                                  \n\
-{                                                                                                   \n\
-#ifdef DEBUG                                                                                        \n\
-    printf(\"__lldb_apple_objc_v2_summarize_classes(%p, %p, 0x%lx, 0x%lx)\\n\",                     \n\
-           isas, names, num_isas_assumed, name_size);                                               \n\
-#endif                                                                                              \n\
-                                                                                                    \n\
-    if (num_isas_assumed == 0)                                                                      \n\
-        return objc_getClassList (NULL, 0);                                                         \n\
-                                                                                                    \n\
-    memset (isas, 0, num_isas_assumed * sizeof(void*));                                             \n\
-    memset (names, 0, num_isas_assumed * name_size);                                                \n\
-                                                                                                    \n\
-    int num_isas = objc_getClassList (isas, num_isas_assumed);                                      \n\
-                                                                                                    \n\
-    if (num_isas_assumed > num_isas)                                                                \n\
-        num_isas_assumed = num_isas;                                                                \n\
-                                                                                                    \n\
-    int isa_index;                                                                                  \n\
-                                                                                                    \n\
-    for (isa_index = 0; isa_index < num_isas_assumed; ++isa_index)                                  \n\
-    {                                                                                               \n\
-        const char *isa_name = class_getName (isas[isa_index]);                                     \n\
-#ifdef DEBUG                                                                                        \n\
-        printf(\"%p -- %s\\n\", isas[isa_index], isa_name);                                         \n\
-#endif                                                                                              \n\
-        if (isa_name)                                                                               \n\
-            strncpy (names + (name_size * isa_index), isa_name, name_size);                         \n\
-    }                                                                                               \n\
-                                                                                                    \n\
-    return num_isas;                                                                                \n\
-}                                                                                                   \n\
-";
 
 static const char *g_get_dynamic_class_info_name = "__lldb_apple_objc_v2_get_dynamic_class_info";
 // Testing using the new C++11 raw string literals. If this breaks GCC then we will
@@ -399,14 +291,6 @@ __lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
 AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
                                         const ModuleSP &objc_module_sp) :
     AppleObjCRuntime (process),
-    m_get_class_name_function (),
-    m_get_class_name_code (),
-    m_get_class_name_args (LLDB_INVALID_ADDRESS),
-    m_get_class_name_args_mutex (Mutex::eMutexTypeNormal),
-    m_isas_allocation (LLDB_INVALID_ADDRESS),
-    m_names_allocation (LLDB_INVALID_ADDRESS),
-    m_summarize_classes_args (LLDB_INVALID_ADDRESS),
-    m_summarize_classes_args_mutex (Mutex::eMutexTypeNormal),
     m_get_class_info_function(),
     m_get_class_info_code(),
     m_get_class_info_args (LLDB_INVALID_ADDRESS),
@@ -423,139 +307,6 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
-}
-
-bool
-AppleObjCRuntimeV2::RunFunctionToFindClassName(addr_t object_addr, Thread *thread, char *name_dst, size_t max_name_len)
-{
-    // Since we are going to run code we have to make sure only one thread at a time gets to try this.
-    Mutex::Locker locker(m_get_class_name_args_mutex);
-    
-    StreamString errors;
-    
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));  // FIXME - a more appropriate log channel?
-    
-    int32_t debug;
-    if (log && log->GetVerbose())
-        debug = 1;
-    else
-        debug = 0;
-
-    ValueList dispatch_values;
-    
-    Value void_ptr_value;
-    ClangASTContext *clang_ast_context = m_process->GetTarget().GetScratchClangASTContext();
-    
-    clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
-    void_ptr_value.SetValueType (Value::eValueTypeScalar);
-    void_ptr_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
-    void_ptr_value.GetScalar() = object_addr;
-        
-    dispatch_values.PushValue (void_ptr_value);
-    
-    Value int_value;
-    clang_type_t clang_int_type = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingSint, 32);
-    int_value.SetValueType (Value::eValueTypeScalar);
-    int_value.SetContext (Value::eContextTypeClangType, clang_int_type);
-    int_value.GetScalar() = debug;
-    
-    dispatch_values.PushValue (int_value);
-    
-    ExecutionContext exe_ctx;
-    thread->CalculateExecutionContext(exe_ctx);
-    
-    Address find_class_name_address;
-    
-    if (!m_get_class_name_code.get())
-    {
-        m_get_class_name_code.reset (new ClangUtilityFunction (g_find_class_name_function_body,
-                                                               g_find_class_name_function_name));
-                                                               
-        if (!m_get_class_name_code->Install(errors, exe_ctx))
-        {
-            if (log)
-                log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
-            m_get_class_name_code.reset();
-            return false;
-        }
-        find_class_name_address.Clear();
-        find_class_name_address.SetOffset(m_get_class_name_code->StartAddress());
-    }
-    else
-    {
-        find_class_name_address.Clear();
-        find_class_name_address.SetOffset(m_get_class_name_code->StartAddress());
-    }
-
-    // Next make the runner function for our implementation utility function.
-    if (!m_get_class_name_function.get())
-    {
-         m_get_class_name_function.reset(new ClangFunction (*m_process,
-                                                  clang_ast_context, 
-                                                  clang_void_ptr_type, 
-                                                  find_class_name_address, 
-                                                  dispatch_values));
-        
-        errors.Clear();        
-        unsigned num_errors = m_get_class_name_function->CompileFunction(errors);
-        if (num_errors)
-        {
-            if (log)
-                log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return false;
-        }
-        
-        errors.Clear();
-        if (!m_get_class_name_function->WriteFunctionWrapper(exe_ctx, errors))
-        {
-            if (log)
-                log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-            return false;
-        }
-    }
-
-    if (m_get_class_name_code.get() == NULL || m_get_class_name_function.get() == NULL)
-        return false;
-
-    // Finally, write down the arguments, and call the function.  Note that we will re-use the same space in the target
-    // for the args.  We're locking this to ensure that only one thread at a time gets to call this function, so we don't
-    // have to worry about overwriting the arguments.
-    
-    if (!m_get_class_name_function->WriteFunctionArguments (exe_ctx, m_get_class_name_args, find_class_name_address, dispatch_values, errors))
-        return false;
-    
-    const bool stop_others = true;
-    const bool try_all_threads = true;
-    const bool unwind_on_error = true;
-    const bool ignore_breakpoints = true;
-    
-    ExecutionResults results = m_get_class_name_function->ExecuteFunction (exe_ctx, 
-                                                     &m_get_class_name_args, 
-                                                     errors, 
-                                                     stop_others, 
-                                                     100000, 
-                                                     try_all_threads, 
-                                                     unwind_on_error,
-                                                     ignore_breakpoints,
-                                                     void_ptr_value);
-                                                     
-    if (results != eExecutionCompleted)
-    {
-        if (log)
-            log->Printf("Error evaluating our find class name function: %d.\n", results);
-        return false;
-    }
-    
-    addr_t result_ptr = void_ptr_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-    Error error;
-    size_t chars_read = m_process->ReadCStringFromMemory (result_ptr, name_dst, max_name_len, error);
-    
-    // If we exhausted our buffer before finding a NULL we're probably off in the weeds somewhere...
-    if (error.Fail() || chars_read == max_name_len)
-        return false;
-    else
-        return true;
-       
 }
 
 bool
@@ -1929,298 +1680,6 @@ AppleObjCRuntimeV2::GetISAHashTablePointer ()
     return m_isa_hash_table_ptr;
 }
 
-
-// This code should NOT be used as it uses the objc_getClassList() function which
-// takes the ObjC runtime lock and can cause bad things to happen in your program.
-// For example one thread has the ObjC runtime lock and then we try to run this on
-// another. We are going to get a new version of the objc_getClassList() function at
-// some point in the future that doesn't take locks and that doesn't allocate memory,
-// so leave this code around so we can adapt it to that function when and if we get
-// it.
-
-bool
-AppleObjCRuntimeV2::UpdateISAToDescriptorMapUsingUtilityFunction_objc_getClassList()
-{
-    Process *process = GetProcess();
-    
-    if (process == NULL)
-        return false;
-    
-    lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-    
-    ExecutionContext exe_ctx;
-    
-    ThreadSP thread_sp = process->GetThreadList().GetSelectedThread();
-    
-    if (!thread_sp)
-        return false;
-    
-    thread_sp->CalculateExecutionContext(exe_ctx);
-    ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-    
-    if (!clang_ast_context)
-        return false;
-    
-    Address summarize_classes_address;
-    
-    StreamString errors;
-    
-    if (!m_summarize_classes_code.get())
-    {
-        m_summarize_classes_code.reset (new ClangUtilityFunction (g_summarize_classes_function_body,
-                                                                  g_summarize_classes_function_name));
-        
-        errors.Clear();
-        
-        if (!m_summarize_classes_code->Install(errors, exe_ctx))
-        {
-            if (log)
-                log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
-            m_summarize_classes_code.reset();
-            return false;
-        }
-        summarize_classes_address.Clear();
-        summarize_classes_address.SetOffset(m_summarize_classes_code->StartAddress());
-    }
-    else
-    {
-        summarize_classes_address.Clear();
-        summarize_classes_address.SetOffset(m_summarize_classes_code->StartAddress());
-    }
-    
-    const uint32_t name_size = 32;
-    
-    Error err;
-    
-    if (m_isas_allocation != LLDB_INVALID_ADDRESS)
-        process->DeallocateMemory(m_isas_allocation);
-    
-    if (m_names_allocation != LLDB_INVALID_ADDRESS)
-        process->DeallocateMemory(m_names_allocation);
-    
-    // This must be kept in sync with the definition in g_summarize_classes_function_body!
-    
-    clang_type_t clang_uint32_t_type = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
-    clang_type_t clang_void_pointer_type = clang_ast_context->CreatePointerType(clang_ast_context->GetBuiltInType_void());
-    
-    Value isas_value;
-    isas_value.SetValueType (Value::eValueTypeScalar);
-    isas_value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-    isas_value.GetScalar() = 0;
-    
-    Value names_value;
-    names_value.SetValueType (Value::eValueTypeScalar);
-    names_value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-    names_value.GetScalar() = 0;
-    
-    Value num_isas_assumed_value;
-    num_isas_assumed_value.SetValueType (Value::eValueTypeScalar);
-    num_isas_assumed_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-    num_isas_assumed_value.GetScalar() = 0;
-    
-    Value name_size_value;
-    name_size_value.SetValueType (Value::eValueTypeScalar);
-    name_size_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-    name_size_value.GetScalar() = 0;
-    
-    ValueList dispatch_values;
-    dispatch_values.PushValue (isas_value);
-    dispatch_values.PushValue (names_value);
-    dispatch_values.PushValue (num_isas_assumed_value);
-    dispatch_values.PushValue (name_size_value);
-    
-    // Next make the runner function for our implementation utility function.
-    if (!m_summarize_classes_function.get())
-    {
-        m_summarize_classes_function.reset(new ClangFunction (*m_process,
-                                                              clang_ast_context,
-                                                              clang_uint32_t_type,
-                                                              summarize_classes_address,
-                                                              dispatch_values));
-        
-        errors.Clear();
-        
-        unsigned num_errors = m_summarize_classes_function->CompileFunction(errors);
-        if (num_errors)
-        {
-            if (log)
-                log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return false;
-        }
-        
-        errors.Clear();
-        
-        if (!m_summarize_classes_function->WriteFunctionWrapper(exe_ctx, errors))
-        {
-            if (log)
-                log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-            return false;
-        }
-    }
-    
-    if (m_summarize_classes_code.get() == NULL || m_summarize_classes_function.get() == NULL)
-        return false;
-    
-    // Write the initial arguments: (NULL, NULL, 0, 0).  The return value will be the
-    // new value of num_isas.
-    
-    Mutex::Locker locker(m_summarize_classes_args_mutex);
-    
-    errors.Clear();
-    
-    if (!m_summarize_classes_function->WriteFunctionArguments (exe_ctx,
-                                                               m_summarize_classes_args,
-                                                               summarize_classes_address,
-                                                               dispatch_values,
-                                                               errors))
-    {
-        if (log)
-            log->Printf ("Error writing function arguments: \"%s\".", errors.GetData());
-        return false;
-    }
-    
-    bool stop_others = true;
-    bool try_all_threads = false;
-    bool unwind_on_error = true;
-    bool ignore_breakpoints = true;
-    
-    Value num_isas_value;
-    num_isas_value.SetValueType (Value::eValueTypeScalar);
-    num_isas_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-    num_isas_value.GetScalar() = 0;
-    
-    errors.Clear();
-    
-    ExecutionResults results = m_summarize_classes_function->ExecuteFunction (exe_ctx,
-                                                                              &m_summarize_classes_args,
-                                                                              errors,
-                                                                              stop_others,
-                                                                              UTILITY_FUNCTION_TIMEOUT_USEC,
-                                                                              try_all_threads,
-                                                                              unwind_on_error,
-                                                                              ignore_breakpoints,
-                                                                              num_isas_value);
-    
-    if (results != eExecutionCompleted)
-    {
-        if (log)
-            log->Printf("Error evaluating our find class name function: %s.\n", errors.GetData());
-        return false;
-    }
-    
-    // With the result from that, allocate real buffers.
-    
-    uint32_t num_isas = num_isas_value.GetScalar().ULong();
-    
-    if (log)
-        log->Printf("Fast class summary mode reports %u isas\n", num_isas);
-    
-    const uint32_t addr_size = process->GetAddressByteSize();
-    uint32_t isas_allocation_size = num_isas * addr_size;
-    uint32_t names_allocation_size = num_isas * name_size;
-    
-    if (m_isas_allocation == LLDB_INVALID_ADDRESS)
-    {
-        m_isas_allocation = process->AllocateMemory(isas_allocation_size,
-                                                    ePermissionsReadable | ePermissionsWritable,
-                                                    err);
-        
-        if (m_isas_allocation == LLDB_INVALID_ADDRESS)
-            return false;
-    }
-    
-    if (m_names_allocation == LLDB_INVALID_ADDRESS)
-    {
-        m_names_allocation = process->AllocateMemory(names_allocation_size,
-                                                     ePermissionsReadable | ePermissionsWritable,
-                                                     err);
-        
-        if (m_names_allocation == LLDB_INVALID_ADDRESS)
-            return false;
-    }
-    
-    // Write the final arguments.
-    
-    dispatch_values.Clear();
-    
-    isas_value.GetScalar() = m_isas_allocation;
-    names_value.GetScalar() = m_names_allocation;
-    num_isas_assumed_value.GetScalar() = num_isas;
-    name_size_value.GetScalar() = name_size;
-    
-    dispatch_values.PushValue (isas_value);
-    dispatch_values.PushValue (names_value);
-    dispatch_values.PushValue (num_isas_assumed_value);
-    dispatch_values.PushValue (name_size_value);
-    
-    errors.Clear();
-    
-    if (!m_summarize_classes_function->WriteFunctionArguments (exe_ctx, m_summarize_classes_args, summarize_classes_address, dispatch_values, errors))
-    {
-        if (log)
-            log->Printf ("Error writing function arguments: \"%s\".", errors.GetData());
-        return false;
-        
-    }
-    
-    errors.Clear();
-    
-    results = m_summarize_classes_function->ExecuteFunction (exe_ctx,
-                                                             &m_summarize_classes_args,
-                                                             errors,
-                                                             stop_others,
-                                                             UTILITY_FUNCTION_TIMEOUT_USEC,
-                                                             try_all_threads,
-                                                             unwind_on_error,
-                                                             ignore_breakpoints,
-                                                             num_isas_value);
-    
-    if (results != eExecutionCompleted)
-    {
-        if (log)
-            log->Printf("Error evaluating our find class name function: %s.\n", errors.GetData());
-        return false;
-    }
-    
-    DataBufferHeap isas_buffer(isas_allocation_size, 0);
-    DataBufferHeap names_buffer(names_allocation_size, 0);
-    
-    if (process->ReadMemory(m_isas_allocation, isas_buffer.GetBytes(), isas_allocation_size, err) != isas_allocation_size)
-        return false;
-    
-    if (process->ReadMemory(m_names_allocation, names_buffer.GetBytes(), names_allocation_size, err) != names_allocation_size)
-        return false;
-    
-    DataExtractor isa_extractor(isas_buffer.GetBytes(), isas_allocation_size, process->GetByteOrder(), addr_size);
-    
-    lldb::offset_t offset = 0;
-    
-    for (size_t index = 0; index < num_isas; ++index)
-    {
-        uint64_t isa = isa_extractor.GetPointer(&offset);
-        
-        const char *name = (const char*)(names_buffer.GetBytes() + (name_size * index));
-        
-        if (log && log->GetVerbose())
-            log->Printf("Fast class summary mode found isa 0x%llx (%s)", isa, name);
-        
-        // The name can only be relied upon if it is NULL-terminated.
-        // Otherwise it ran off its allocation and has been partially overwritten by the next name.
-        
-        ClassDescriptorSP descriptor_sp;
-        
-        if (name[name_size - 1] == '\0')
-            AddClass (isa, ClassDescriptorSP(new ClassDescriptorV2(*this, isa, name)), name);
-        else
-            AddClass (isa, ClassDescriptorSP(new ClassDescriptorV2(*this, isa, NULL)));
-    }
-    
-    return true;
-}
-
-
-
-
 bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table)
 {
@@ -2400,7 +1859,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
                                                     buffer.GetByteSize(),
                                                     process->GetByteOrder(),
                                                     addr_size);
-                    ParseISAHashArray (class_infos_data, num_class_infos);
+                    ParseClassInfoArray (class_infos_data, num_class_infos);
                 }
             }
             success = true;
@@ -2423,10 +1882,17 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     return success;
 }
 
-
 void
-AppleObjCRuntimeV2::ParseISAHashArray (const DataExtractor &data, uint32_t num_class_infos)
+AppleObjCRuntimeV2::ParseClassInfoArray (const DataExtractor &data, uint32_t num_class_infos)
 {
+    // Parses an array of "num_class_infos" packed ClassInfo structures:
+    //
+    //    struct ClassInfo
+    //    {
+    //        Class isa;
+    //        uint32_t hash;
+    //    } __attribute__((__packed__));
+
     lldb::LogSP log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     // Iterate through all ClassInfo structures
@@ -2647,7 +2113,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                                                     process->GetByteOrder(),
                                                     addr_size);
                     
-                    ParseISAHashArray (class_infos_data, num_class_infos);
+                    ParseClassInfoArray (class_infos_data, num_class_infos);
                 }
             }
             success = true;

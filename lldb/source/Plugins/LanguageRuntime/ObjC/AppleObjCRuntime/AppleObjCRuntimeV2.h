@@ -83,7 +83,6 @@ public:
     // we report an actual type - otherwise, we just say tagged
     // there is no connection between the values here and the tagged pointers map
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA = 1;
-
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSAtom = 2;
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSNumber = 3;
     static const ObjCLanguageRuntime::ObjCISA g_objc_Tagged_ISA_NSDateTS = 4;
@@ -139,39 +138,18 @@ private:
     UpdateISAToDescriptorMapFromMemory (RemoteNXMapTable &hash_table);
     
     bool
-    UpdateISAToDescriptorMapUsingUtilityFunction_objc_getClassList();
-
-    bool
     UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table);
     
     void
-    ParseISAHashArray (const lldb_private::DataExtractor &data,
-                       uint32_t num_class_infos);
+    ParseClassInfoArray (const lldb_private::DataExtractor &data,
+                         uint32_t num_class_infos);
     
     bool
     UpdateISAToDescriptorMapSharedCache ();
 
     lldb::addr_t
     GetSharedCacheReadOnlyAddress();
-
-    bool
-    RunFunctionToFindClassName (lldb::addr_t class_addr, Thread *thread, char *name_dst, size_t max_name_len);
     
-    std::auto_ptr<ClangFunction>        m_get_class_name_function;
-    std::auto_ptr<ClangUtilityFunction> m_get_class_name_code;
-    
-    lldb::addr_t                        m_get_class_name_args;
-    Mutex                               m_get_class_name_args_mutex;
-    
-    std::auto_ptr<ClangFunction>        m_summarize_classes_function;
-    std::auto_ptr<ClangUtilityFunction> m_summarize_classes_code;
-    
-    
-    lldb::addr_t                        m_isas_allocation;
-    lldb::addr_t                        m_names_allocation;
-    lldb::addr_t                        m_summarize_classes_args;
-    Mutex                               m_summarize_classes_args_mutex;
-
     std::auto_ptr<ClangFunction>        m_get_class_info_function;
     std::auto_ptr<ClangUtilityFunction> m_get_class_info_code;
     lldb::addr_t                        m_get_class_info_args;
