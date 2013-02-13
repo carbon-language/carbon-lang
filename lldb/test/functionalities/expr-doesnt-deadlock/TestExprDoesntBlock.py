@@ -20,7 +20,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
         self.expr_doesnt_deadlock()
 
     @dwarf_test
-    @expectedFailureLinux # due to bugzilla 14437
+    @skipOnLinux # PR-15258: disabled due to assertion failure in ProcessMonitor::GetCrashReasonForSIGSEGV:
     def test_with_dwarf_and_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks."""
         self.buildDwarf()
@@ -62,7 +62,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
         var = frame0.EvaluateExpression ("call_me_to_get_lock()")
         self.assertTrue (var.IsValid())
         self.assertTrue (var.GetValueAsSigned (0) == 567)
-        
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
