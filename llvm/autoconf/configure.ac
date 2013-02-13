@@ -1272,39 +1272,21 @@ CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
 CXX_FLAG_CHECK(NO_MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
 CXX_FLAG_CHECK(NO_NESTED_ANON_TYPES, [-Wno-nested-anon-types])
 CXX_FLAG_CHECK(COVERED_SWITCH_DEFAULT, [-Wcovered-switch-default])
+
 dnl GCC's potential uninitialized use analysis is weak and presents lots of
 dnl false positives, so disable it.
+NO_UNINITIALIZED=
+NO_MAYBE_UNINITIALIZED=
 if test "$GXX" = "yes"
 then
   CXX_FLAG_CHECK(NO_MAYBE_UNINITIALIZED, [-Wno-maybe-uninitialized])
   dnl gcc 4.7 introduced -Wmaybe-uninitialized to distinguish cases which are
-  dnl known to be uninitialized from cases which might be uninitialized.  We 
+  dnl known to be uninitialized from cases which might be uninitialized.  We
   dnl still want to catch the first kind of errors.
-  if test "$NO_MAYBE_UNINITIALIZED" != "-Wno-maybe-uninitialized"
+  if test -z "$NO_MAYBE_UNINITIALIZED"
   then
     CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
-  else
-    dnl Some versions of gcc accept unsupported -W flags if there is
-    dnl no warning but stop with an error when a warning is
-    dnl encountered.  If this gcc is earlier than 4.7, just use
-    dnl -Wno-uninitialized.
-    gxx_version=`$CXX -dumpversion`
-    gxx_version_major=`echo $gxx_version | cut -d'.' -f1`
-    gxx_version_minor=`echo $gxx_version | cut -d'.' -f2`
-    gxx_version_patch=`echo $gxx_version | cut -d'.' -f3`
-
-    if    test "$gxx_version_major" -ge "4" \
-       && test "$gxx_version_minor" -ge "7"; then
-      dnl AC_SUBST doesn't work with empty strings.
-      NO_UNINITIALIZED=
-    else
-      NO_MAYBE_UNINITIALIZED=
-      CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
-    fi
   fi
-else
-  NO_UNINITIALIZED=
-  NO_MAYBE_UNINITIALIZED=
 fi
 AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $NO_NESTED_ANON_TYPES $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED])
 

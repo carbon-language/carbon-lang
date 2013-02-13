@@ -8719,7 +8719,9 @@ if test "${enable_ltdl_install+set}" = set; then
 fi
 
 
- if test x"${enable_ltdl_install-no}" != xno; then
+
+
+if test x"${enable_ltdl_install-no}" != xno; then
   INSTALL_LTDL_TRUE=
   INSTALL_LTDL_FALSE='#'
 else
@@ -8727,7 +8729,9 @@ else
   INSTALL_LTDL_FALSE=
 fi
 
- if test x"${enable_ltdl_convenience-no}" != xno; then
+
+
+if test x"${enable_ltdl_convenience-no}" != xno; then
   CONVENIENCE_LTDL_TRUE=
   CONVENIENCE_LTDL_FALSE='#'
 else
@@ -10494,7 +10498,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10497 "configure"
+#line 10501 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12265,32 +12269,18 @@ NO_NESTED_ANON_TYPES=`$CXX -Werror -Wnested-anon-types -fsyntax-only -xc /dev/nu
 
 COVERED_SWITCH_DEFAULT=`$CXX -Werror -Wcovered-switch-default -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wcovered-switch-default`
 
+
+NO_UNINITIALIZED=
+NO_MAYBE_UNINITIALIZED=
 if test "$GXX" = "yes"
 then
   NO_MAYBE_UNINITIALIZED=`$CXX -Werror -Wmaybe-uninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-maybe-uninitialized`
 
-        if test "$NO_MAYBE_UNINITIALIZED" != "-Wno-maybe-uninitialized"
+        if test -z "$NO_MAYBE_UNINITIALIZED"
   then
     NO_UNINITIALIZED=`$CXX -Werror -Wuninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-uninitialized`
 
-  else
-                    gxx_version=`$CXX -dumpversion`
-    gxx_version_major=`echo $gxx_version | cut -d'.' -f1`
-    gxx_version_minor=`echo $gxx_version | cut -d'.' -f2`
-    gxx_version_patch=`echo $gxx_version | cut -d'.' -f3`
-
-    if    test "$gxx_version_major" -ge "4" \
-       && test "$gxx_version_minor" -ge "7"; then
-            NO_UNINITIALIZED=
-    else
-      NO_MAYBE_UNINITIALIZED=
-      NO_UNINITIALIZED=`$CXX -Werror -Wuninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-uninitialized`
-
-    fi
   fi
-else
-  NO_UNINITIALIZED=
-  NO_MAYBE_UNINITIALIZED=
 fi
 { echo "$as_me:$LINENO: result: $NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $NO_NESTED_ANON_TYPES $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED" >&5
 echo "${ECHO_T}$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $NO_NESTED_ANON_TYPES $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED" >&6; }
