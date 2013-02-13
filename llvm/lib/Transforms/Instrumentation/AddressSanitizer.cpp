@@ -219,7 +219,8 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   if (!ZeroBaseShadow && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
     assert(LongSize == 64);
     Mapping.Offset = kDefaultShort64bitShadowOffset;
-  } if (!ZeroBaseShadow && ClMappingOffsetLog >= 0) {
+  }
+  if (!ZeroBaseShadow && ClMappingOffsetLog >= 0) {
     // Zero offset log is the special case.
     Mapping.Offset = (ClMappingOffsetLog == 0) ? 0 : 1ULL << ClMappingOffsetLog;
   }
