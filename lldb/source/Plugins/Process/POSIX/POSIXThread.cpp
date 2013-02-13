@@ -185,6 +185,10 @@ POSIXThread::Resume()
         SetState(resume_state);
         status = monitor.SingleStep(GetID(), GetResumeSignal());
         break;
+    case lldb::eStateStopped:
+    case lldb::eStateSuspended:
+        status = true;
+        break;
     }
 
     return status;
