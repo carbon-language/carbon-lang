@@ -36,7 +36,11 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 #   if defined(__powerpc64__)
 #    define SHADOW_OFFSET (1ULL << 41)
 #   else
-#    define SHADOW_OFFSET 0x7fff8000ULL
+#    if ASAN_MAC
+#     define SHADOW_OFFSET (1ULL << 44)
+#    else
+#     define SHADOW_OFFSET 0x7fff8000ULL
+#    endif
 #   endif
 #  endif
 # endif
