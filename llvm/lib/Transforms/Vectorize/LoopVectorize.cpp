@@ -2805,17 +2805,17 @@ unsigned LoopVectorizationCostModel::getWidestType() {
           continue;
 
       // Examine the stored values.
-      StoreInst *ST = 0;
-      if ((ST = dyn_cast<StoreInst>(it)))
+      if (StoreInst *ST = dyn_cast<StoreInst>(it))
         T = ST->getValueOperand()->getType();
 
       // Ignore loaded pointer types and stored pointer types that are not
       // consecutive. However, we do want to take consecutive stores/loads of
       // pointer vectors into account.
-      if (T->isPointerTy() && isConsecutiveLoadOrStore(it))
-        MaxWidth = std::max(MaxWidth, DL->getPointerSizeInBits());
-      else
-        MaxWidth = std::max(MaxWidth, T->getScalarSizeInBits());
+      if (T->isPointerTy() && !isConsecutiveLoadOrStore(it))
+        continue;
+
+      MaxWidth = std::max(MaxWidth,
+                          (unsigned)DL->getTypeSizeInBits(T->getScalarType()));
     }
   }
 
@@ -3242,13 +3242,11 @@ namespace llvm {
 
 bool LoopVectorizationCostModel::isConsecutiveLoadOrStore(Instruction *Inst) {
   // Check for a store.
-  StoreInst *ST = dyn_cast<StoreInst>(Inst);
-  if (ST)
+  if (StoreInst *ST = dyn_cast<StoreInst>(Inst))
     return Legal->isConsecutivePtr(ST->getPointerOperand()) != 0;
 
   // Check for a load.
-  LoadInst *LI = dyn_cast<LoadInst>(Inst);
-  if (LI)
+  if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
     return Legal->isConsecutivePtr(LI->getPointerOperand()) != 0;
 
   return false;
