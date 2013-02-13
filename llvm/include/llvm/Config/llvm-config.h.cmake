@@ -125,6 +125,6 @@
 #cmakedefine LLVM_VERSION_MINOR ${LLVM_VERSION_MINOR}
 
 /* Define to 1 if you have the <sanitizer/msan_interface.h> header file. */
-#cmakedefine LLVM_HAVE_MSAN_ANNOTATIONS ${HAVE_SANITIZER_MSAN_INTERFACE_H}
+#cmakedefine HAVE_SANITIZER_MSAN_INTERFACE_H ${HAVE_SANITIZER_MSAN_INTERFACE_H}
 
 #endif
