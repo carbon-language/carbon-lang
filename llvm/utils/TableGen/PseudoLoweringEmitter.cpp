@@ -252,6 +252,7 @@ void PseudoLoweringEmitter::emitLoweringEmitter(raw_ostream &o) {
       MIOpNo += Dest.Operands[OpNo].MINumOperands;
     }
     if (Dest.Operands.isVariadic) {
+      MIOpNo = Source.Operands.size() + 1;
       o << "      // variable_ops\n";
       o << "      for (unsigned i = " << MIOpNo
         << ", e = MI->getNumOperands(); i != e; ++i)\n"
