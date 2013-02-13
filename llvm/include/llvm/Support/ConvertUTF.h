@@ -219,7 +219,7 @@ static inline ConversionResult convertUTF8Sequence(const UTF8 **source,
     return sourceExhausted;
   return ConvertUTF8toUTF32(source, *source + size, &target, target + 1, flags);
 }
-} // end namespace llvm
+} /* end namespace llvm */
 
 #endif
 
