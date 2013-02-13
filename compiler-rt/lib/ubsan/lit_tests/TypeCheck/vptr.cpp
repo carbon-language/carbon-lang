@@ -1,11 +1,13 @@
 // RUN: %clang -ccc-cxx -fsanitize=vptr %s -O3 -o %t
-// RUN: %t rT && %t mT && %t fT
-// RUN: %t rU && %t mU && %t fU
+// RUN: %t rT && %t mT && %t fT && %t cT
+// RUN: %t rU && %t mU && %t fU && %t cU
 // RUN: %t rS && %t rV && %t oV
 // RUN: %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
 // RUN: %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
 // RUN: %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
 // RUN: %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
 // RUN: %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
 // RUN: %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
 
@@ -102,5 +104,14 @@ int main(int, char **argv) {
     // CHECK-OFFSET-NEXT: {{^              \^                        (                         ~~~~~~~~~~~~)~~~~~~~~~~~ *$}}
     // CHECK-OFFSET-NEXT: {{^                                       (                         )?vptr for}} 'T' base class of [[DYN_TYPE]]
     return reinterpret_cast<U*>(p)->v() - 2;
+
+  case 'c':
+    // CHECK-DOWNCAST: vptr.cpp:[[@LINE+5]]:5: runtime error: downcast of address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
+    // CHECK-DOWNCAST-NEXT: [[PTR]]: note: object is of type [[DYN_TYPE:'S'|'U']]
+    // CHECK-DOWNCAST-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
+    // CHECK-DOWNCAST-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
+    // CHECK-DOWNCAST-NEXT: {{^              vptr for}} [[DYN_TYPE]]
+    static_cast<T*>(reinterpret_cast<S*>(p));
+    return 0;
   }
 }

@@ -42,7 +42,6 @@ static void HandleDynamicTypeCacheMiss(
     << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer << Data->Type;
 
   // If possible, say what type it actually points to.
-  // FIXME: Demangle the type names.
   DynamicTypeInfo DTI = getDynamicTypeInfo((void*)Pointer);
   if (!DTI.isValid())
     Diag(Pointer, DL_Note, "object has invalid vptr")

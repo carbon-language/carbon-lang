@@ -22,7 +22,7 @@ using namespace __ubsan;
 namespace __ubsan {
   const char *TypeCheckKinds[] = {
     "load of", "store to", "reference binding to", "member access within",
-    "member call on", "constructor call on"
+    "member call on", "constructor call on", "downcast of", "downcast of"
   };
 }
 
