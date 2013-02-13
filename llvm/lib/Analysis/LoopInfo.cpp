@@ -24,6 +24,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -232,6 +233,55 @@ bool Loop::isSafeToClone() const {
   }
   return true;
 }
+
+bool Loop::isAnnotatedParallel() const {
+
+  BasicBlock *latch = getLoopLatch();
+  if (latch == NULL)
+    return false;
+
+  MDNode *desiredLoopIdMetadata =
+    latch->getTerminator()->getMetadata("llvm.loop.parallel");
+
+  if (!desiredLoopIdMetadata)
+      return false;
+
+  // The loop branch contains the parallel loop metadata. In order to ensure
+  // that any parallel-loop-unaware optimization pass hasn't added loop-carried
+  // dependencies (thus converted the loop back to a sequential loop), check
+  // that all the memory instructions in the loop contain parallelism metadata
+  // that point to the same unique "loop id metadata" the loop branch does.
+  for (block_iterator BB = block_begin(), BE = block_end(); BB != BE; ++BB) {
+    for (BasicBlock::iterator II = (*BB)->begin(), EE = (*BB)->end();
+         II != EE; II++) {
+
+      if (!II->mayReadOrWriteMemory())
+        continue;
+
+      if (!II->getMetadata("llvm.mem.parallel_loop_access"))
+        return false;
+
+      // The memory instruction can refer to the loop identifier metadata
+      // directly or indirectly through another list metadata (in case of
+      // nested parallel loops). The loop identifier metadata refers to
+      // itself so we can check both cases with the same routine.
+      MDNode *loopIdMD =
+          dyn_cast<MDNode>(II->getMetadata("llvm.mem.parallel_loop_access"));
+      bool loopIdMDFound = false;
+      for (unsigned i = 0, e = loopIdMD->getNumOperands(); i < e; ++i) {
+        if (loopIdMD->getOperand(i) == desiredLoopIdMetadata) {
+          loopIdMDFound = true;
+          break;
+        }
+      }
+
+      if (!loopIdMDFound)
+        return false;
+    }
+  }
+  return true;
+}
+
 
 /// hasDedicatedExits - Return true if no exit block for the loop
 /// has a predecessor that is outside the loop.
