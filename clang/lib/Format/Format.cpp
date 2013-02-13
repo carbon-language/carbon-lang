@@ -127,7 +127,7 @@ public:
         else
           Comments.back().MinColumn = Spaces;
         Comments.back().MaxColumn =
-            Style.ColumnLimit - Spaces - Tok.FormatTok.TokenLength;
+            Style.ColumnLimit - Tok.FormatTok.TokenLength;
         return;
       }
     }

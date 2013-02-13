@@ -465,6 +465,9 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
+  verifyFormat("int aaaa; // aaaaa\n"
+               "int aa;   // aaaaaaa", getLLVMStyleWithColumns(20));
+
   EXPECT_EQ("void f() { // This does something ..\n"
             "}\n"
             "int a; // This is unrelated",
