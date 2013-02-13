@@ -233,7 +233,7 @@ public:
                          WhitespaceManager &Whitespaces, bool StructuralError)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
         FirstIndent(FirstIndent), RootToken(RootToken),
-        Whitespaces(Whitespaces) {
+        Whitespaces(Whitespaces), Count(0) {
   }
 
   /// \brief Formats an \c UnwrappedLine.
@@ -668,13 +668,6 @@ private:
   /// find the shortest path (the one with lowest penalty) from \p InitialState
   /// to a state where all tokens are placed.
   unsigned analyzeSolutionSpace(LineState &InitialState) {
-    llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
-
-    // Increasing count of \c StateNode items we have created. This is used
-    // to create a deterministic order independent of the container.
-    unsigned Count = 0;
-    QueueType Queue;
-
     std::set<LineState> Seen;
 
     // Insert start element into queue.
@@ -697,10 +690,8 @@ private:
         // State already examined with lower penalty.
         continue;
 
-      addNextStateToQueue(Allocator, Queue, Count, Penalty, Node,
-                          /*NewLine=*/ false);
-      addNextStateToQueue(Allocator, Queue, Count, Penalty, Node,
-                          /*NewLine=*/ true);
+      addNextStateToQueue(Penalty, Node, /*NewLine=*/ false);
+      addNextStateToQueue(Penalty, Node, /*NewLine=*/ true);
     }
 
     if (Queue.empty())
@@ -734,13 +725,12 @@ private:
     addTokenToState(Current->NewLine, false, State);
   }
 
-  /// \brief Add the following state to the analysis queue \p Queue.
+  /// \brief Add the following state to the analysis queue \c Queue.
   ///
-  /// Assume the current state is \p OldState and has been reached with a
+  /// Assume the current state is \p PreviousNode and has been reached with a
   /// penalty of \p Penalty. Insert a line break if \p NewLine is \c true.
-  void addNextStateToQueue(llvm::SpecificBumpPtrAllocator<StateNode> &Allocator,
-                           QueueType &Queue, unsigned &Count, unsigned Penalty,
-                           StateNode *PreviousNode, bool NewLine) {
+  void addNextStateToQueue(unsigned Penalty, StateNode *PreviousNode,
+                           bool NewLine) {
     if (NewLine && !canBreak(PreviousNode->State))
       return;
     if (!NewLine && mustBreak(PreviousNode->State))
@@ -807,6 +797,12 @@ private:
   const unsigned FirstIndent;
   const AnnotatedToken &RootToken;
   WhitespaceManager &Whitespaces;
+
+  llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
+  QueueType Queue;
+  // Increasing count of \c StateNode items we have created. This is used
+  // to create a deterministic order independent of the container.
+  unsigned Count;
 };
 
 class LexerBasedFormatTokenSource : public FormatTokenSource {
