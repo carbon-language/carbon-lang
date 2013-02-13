@@ -1041,8 +1041,8 @@ static bool CanEvaluateSExtd(Value *V, Type *Ty) {
 }
 
 Instruction *InstCombiner::visitSExt(SExtInst &CI) {
-  // If this sign extend is only used by a truncate, let the truncate by
-  // eliminated before we try to optimize this zext.
+  // If this sign extend is only used by a truncate, let the truncate be
+  // eliminated before we try to optimize this sext.
   if (CI.hasOneUse() && isa<TruncInst>(CI.use_back()))
     return 0;
 
