@@ -20,6 +20,8 @@ namespace lldb_private
 class ExpressionSourceCode
 {
 public:
+    static const char * g_expression_prefix;
+
     static ExpressionSourceCode *CreateWrapped (const char *prefix,
                                                 const char *body)
     {

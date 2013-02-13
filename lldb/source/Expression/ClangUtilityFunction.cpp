@@ -22,38 +22,12 @@
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Expression/ExpressionSourceCode.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb_private;
-
-static const char *g_global_defines =
-"#undef NULL                       \n"
-"#undef Nil                        \n"
-"#undef nil                        \n"
-"#undef YES                        \n"
-"#undef NO                         \n"
-"#define NULL ((int)0)             \n"
-"#define Nil ((Class)0)            \n"
-"#define nil ((id)0)               \n"
-"#define YES ((BOOL)1)             \n"
-"#define NO ((BOOL)0)              \n"
-"typedef signed char BOOL;         \n"
-"typedef signed __INT8_TYPE__ int8_t;\n"
-"typedef unsigned __INT8_TYPE__ uint8_t;\n"
-"typedef signed __INT16_TYPE__ int16_t;\n"
-"typedef unsigned __INT16_TYPE__ uint16_t;\n"
-"typedef signed __INT32_TYPE__ int32_t;\n"
-"typedef unsigned __INT32_TYPE__ uint32_t;\n"
-"typedef signed __INT64_TYPE__ int64_t;\n"
-"typedef unsigned __INT64_TYPE__ uint64_t;\n"
-"typedef signed __INTPTR_TYPE__ intptr_t;\n"
-"typedef unsigned __INTPTR_TYPE__ uintptr_t;\n"
-"typedef __SIZE_TYPE__ size_t; \n"
-"typedef __PTRDIFF_TYPE__ ptrdiff_t;\n"
-"typedef unsigned short unichar;\n";
-
 
 //------------------------------------------------------------------
 /// Constructor
@@ -67,7 +41,7 @@ static const char *g_global_defines =
 ClangUtilityFunction::ClangUtilityFunction (const char *text, 
                                             const char *name) :
     ClangExpression (),
-    m_function_text (g_global_defines),
+    m_function_text (ExpressionSourceCode::g_expression_prefix),
     m_function_name (name)
 {
     if (text && text[0])
