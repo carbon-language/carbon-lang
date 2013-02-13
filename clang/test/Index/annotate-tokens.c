@@ -35,6 +35,28 @@ enum Color g(int i, ...) {
 
 __attribute__((unavailable)) Int __attribute__((unavailable)) test() __attribute__((unavailable));
 
+#define HEADER() \
+    int x; \
+    int y; \
+    int z
+
+#define TYPE_INST(name, ...) \
+    static const struct { \
+        HEADER(); \
+    } name = { \
+        __VA_ARGS__ \
+    }
+
+void func1(void);
+
+TYPE_INST(Foo,
+    .x = 0,
+    .y = 1,
+    .z = 2,
+);
+
+void func2(void);
+
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:37:1 %s | FileCheck %s
 // CHECK: Identifier: "T" [4:3 - 4:4] TypeRef=T:1:13
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
@@ -160,3 +182,45 @@ __attribute__((unavailable)) Int __attribute__((unavailable)) test() __attribute
 
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 %s | FileCheck %s
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 %s | FileCheck %s
+
+// RUN: c-index-test -test-annotate-tokens=%s:50:1:55:1 %s | FileCheck %s -check-prefix=CHECK-RANGE1
+// CHECK-RANGE1: Keyword: "void" [50:1 - 50:5] FunctionDecl=func1:50:6
+// CHECK-RANGE1: Identifier: "func1" [50:6 - 50:11] FunctionDecl=func1:50:6
+// CHECK-RANGE1: Punctuation: "(" [50:11 - 50:12] FunctionDecl=func1:50:6
+// CHECK-RANGE1: Keyword: "void" [50:12 - 50:16] FunctionDecl=func1:50:6
+// CHECK-RANGE1: Punctuation: ")" [50:16 - 50:17] FunctionDecl=func1:50:6
+// CHECK-RANGE1: Punctuation: ";" [50:17 - 50:18]
+// CHECK-RANGE1: Identifier: "TYPE_INST" [52:1 - 52:10] macro expansion=TYPE_INST:43:9
+// CHECK-RANGE1: Punctuation: "(" [52:10 - 52:11]
+// CHECK-RANGE1: Identifier: "Foo" [52:11 - 52:14] VarDecl=Foo:52:11 (Definition)
+// CHECK-RANGE1: Punctuation: "," [52:14 - 52:15]
+// CHECK-RANGE1: Punctuation: "." [53:5 - 53:6] UnexposedExpr=
+// CHECK-RANGE1: Identifier: "x" [53:6 - 53:7] MemberRef=x:52:1
+// CHECK-RANGE1: Punctuation: "=" [53:8 - 53:9] UnexposedExpr=
+// CHECK-RANGE1: Literal: "0" [53:10 - 53:11] IntegerLiteral=
+// CHECK-RANGE1: Punctuation: "," [53:11 - 53:12] InitListExpr=
+// CHECK-RANGE1: Punctuation: "." [54:5 - 54:6] UnexposedExpr=
+// CHECK-RANGE1: Identifier: "y" [54:6 - 54:7] MemberRef=y:52:1
+// CHECK-RANGE1: Punctuation: "=" [54:8 - 54:9] UnexposedExpr=
+// CHECK-RANGE1: Literal: "1" [54:10 - 54:11] IntegerLiteral=
+// CHECK-RANGE1: Punctuation: "," [54:11 - 54:12] InitListExpr=
+
+// RUN: c-index-test -test-annotate-tokens=%s:54:1:59:1 %s | FileCheck %s -check-prefix=CHECK-RANGE2
+// CHECK-RANGE2: Punctuation: "." [54:5 - 54:6] UnexposedExpr=
+// CHECK-RANGE2: Identifier: "y" [54:6 - 54:7] MemberRef=y:52:1
+// CHECK-RANGE2: Punctuation: "=" [54:8 - 54:9] UnexposedExpr=
+// CHECK-RANGE2: Literal: "1" [54:10 - 54:11] IntegerLiteral=
+// CHECK-RANGE2: Punctuation: "," [54:11 - 54:12] InitListExpr=
+// CHECK-RANGE2: Punctuation: "." [55:5 - 55:6] UnexposedExpr=
+// CHECK-RANGE2: Identifier: "z" [55:6 - 55:7] MemberRef=z:52:1
+// CHECK-RANGE2: Punctuation: "=" [55:8 - 55:9] UnexposedExpr=
+// CHECK-RANGE2: Literal: "2" [55:10 - 55:11] IntegerLiteral=
+// CHECK-RANGE2: Punctuation: "," [55:11 - 55:12] InitListExpr=
+// CHECK-RANGE2: Punctuation: ")" [56:1 - 56:2]
+// CHECK-RANGE2: Punctuation: ";" [56:2 - 56:3]
+// CHECK-RANGE2: Keyword: "void" [58:1 - 58:5] FunctionDecl=func2:58:6
+// CHECK-RANGE2: Identifier: "func2" [58:6 - 58:11] FunctionDecl=func2:58:6
+// CHECK-RANGE2: Punctuation: "(" [58:11 - 58:12] FunctionDecl=func2:58:6
+// CHECK-RANGE2: Keyword: "void" [58:12 - 58:16] FunctionDecl=func2:58:6
+// CHECK-RANGE2: Punctuation: ")" [58:16 - 58:17] FunctionDecl=func2:58:6
+// CHECK-RANGE2: Punctuation: ";" [58:17 - 58:18]

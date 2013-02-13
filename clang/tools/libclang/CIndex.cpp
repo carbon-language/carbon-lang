@@ -4827,9 +4827,9 @@ static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
                       SmallVectorImpl<CXToken> &CXTokens) {
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
   std::pair<FileID, unsigned> BeginLocInfo
-    = SourceMgr.getDecomposedLoc(Range.getBegin());
+    = SourceMgr.getDecomposedSpellingLoc(Range.getBegin());
   std::pair<FileID, unsigned> EndLocInfo
-    = SourceMgr.getDecomposedLoc(Range.getEnd());
+    = SourceMgr.getDecomposedSpellingLoc(Range.getEnd());
 
   // Cannot tokenize across files.
   if (BeginLocInfo.first != EndLocInfo.first)
@@ -5172,14 +5172,18 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       case RangeAfter:
         break;
       case RangeOverlap:
+        // For macro expansions, just note where the beginning of the macro
+        // expansion occurs.
+        if (cursor.kind == CXCursor_MacroExpansion) {
+          if (TokLoc == cursorRange.getBegin())
+            Cursors[I] = cursor;
+          AdvanceToken();
+          break;
+        }
         // We may have already annotated macro names inside macro definitions.
         if (Cursors[I].kind != CXCursor_MacroExpansion)
           Cursors[I] = cursor;
         AdvanceToken();
-        // For macro expansions, just note where the beginning of the macro
-        // expansion occurs.
-        if (cursor.kind == CXCursor_MacroExpansion)
-          break;
         continue;
       }
       break;
@@ -5388,9 +5392,9 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
   Preprocessor &PP = CXXUnit->getPreprocessor();
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
   std::pair<FileID, unsigned> BeginLocInfo
-    = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
+    = SourceMgr.getDecomposedSpellingLoc(RegionOfInterest.getBegin());
   std::pair<FileID, unsigned> EndLocInfo
-    = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
+    = SourceMgr.getDecomposedSpellingLoc(RegionOfInterest.getEnd());
 
   if (BeginLocInfo.first != EndLocInfo.first)
     return;
@@ -5504,7 +5508,17 @@ static void clang_annotateTokensImpl(void *UserData) {
   // Relex the tokens within the source range to look for preprocessing
   // directives.
   annotatePreprocessorTokens(TU, RegionOfInterest, Cursors, Tokens, NumTokens);
-  
+
+  // If begin location points inside a macro argument, set it to the expansion
+  // location so we can have the full context when annotating semantically.
+  {
+    SourceManager &SM = CXXUnit->getSourceManager();
+    SourceLocation Loc =
+        SM.getMacroArgExpandedLocation(RegionOfInterest.getBegin());
+    if (Loc.isMacroID())
+      RegionOfInterest.setBegin(SM.getExpansionLoc(Loc));
+  }
+
   if (CXXUnit->getPreprocessor().getPreprocessingRecord()) {
     // Search and mark tokens that are macro argument expansions.
     MarkMacroArgTokensVisitor Visitor(CXXUnit->getSourceManager(),
