@@ -48,7 +48,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
-#include <map>
 using namespace llvm;
 
 static cl::opt<bool>
@@ -207,11 +206,6 @@ namespace {
     typedef std::pair<ValuePair, size_t> ValuePairWithDepth;
     typedef std::pair<ValuePair, ValuePair> VPPair; // A ValuePair pair
     typedef std::pair<VPPair, unsigned> VPPairWithType;
-    typedef std::pair<std::multimap<Value *, Value *>::iterator,
-              std::multimap<Value *, Value *>::iterator> VPIteratorPair;
-    typedef std::pair<std::multimap<ValuePair, ValuePair>::iterator,
-              std::multimap<ValuePair, ValuePair>::iterator>
-                VPPIteratorPair;
 
     AliasAnalysis *AA;
     DominatorTree *DT;
@@ -239,35 +233,36 @@ namespace {
       PairConnectionSplat
     };
 
-    void computeConnectedPairs(DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                       DenseSet<ValuePair> &CandidatePairsSet,
-                       std::vector<Value *> &PairableInsts,
-                       std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                       DenseMap<VPPair, unsigned> &PairConnectionTypes);
+    void computeConnectedPairs(
+             DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+             DenseSet<ValuePair> &CandidatePairsSet,
+             std::vector<Value *> &PairableInsts,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseMap<VPPair, unsigned> &PairConnectionTypes);
 
     void buildDepMap(BasicBlock &BB,
-                       DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                       std::vector<Value *> &PairableInsts,
-                       DenseSet<ValuePair> &PairableInstUsers);
+             DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+             std::vector<Value *> &PairableInsts,
+             DenseSet<ValuePair> &PairableInstUsers);
 
     void choosePairs(DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                        DenseSet<ValuePair> &CandidatePairsSet,
-                        DenseMap<ValuePair, int> &CandidatePairCostSavings,
-                        std::vector<Value *> &PairableInsts,
-                        DenseSet<ValuePair> &FixedOrderPairs,
-                        DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                        std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                        std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
-                        DenseSet<ValuePair> &PairableInstUsers,
-                        DenseMap<Value *, Value *>& ChosenPairs);
+             DenseSet<ValuePair> &CandidatePairsSet,
+             DenseMap<ValuePair, int> &CandidatePairCostSavings,
+             std::vector<Value *> &PairableInsts,
+             DenseSet<ValuePair> &FixedOrderPairs,
+             DenseMap<VPPair, unsigned> &PairConnectionTypes,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairDeps,
+             DenseSet<ValuePair> &PairableInstUsers,
+             DenseMap<Value *, Value *>& ChosenPairs);
 
     void fuseChosenPairs(BasicBlock &BB,
-                     std::vector<Value *> &PairableInsts,
-                     DenseMap<Value *, Value *>& ChosenPairs,
-                     DenseSet<ValuePair> &FixedOrderPairs,
-                     DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                     std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                     std::multimap<ValuePair, ValuePair> &ConnectedPairDeps);
+             std::vector<Value *> &PairableInsts,
+             DenseMap<Value *, Value *>& ChosenPairs,
+             DenseSet<ValuePair> &FixedOrderPairs,
+             DenseMap<VPPair, unsigned> &PairConnectionTypes,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairDeps);
 
 
     bool isInstVectorizable(Instruction *I, bool &IsSimpleLoadStore);
@@ -281,60 +276,61 @@ namespace {
                       Instruction *J, bool UpdateUsers = true,
                       DenseSet<ValuePair> *LoadMoveSetPairs = 0);
 
-    void computePairsConnectedTo(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                      ValuePair P);
+  void computePairsConnectedTo(
+             DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+             DenseSet<ValuePair> &CandidatePairsSet,
+             std::vector<Value *> &PairableInsts,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseMap<VPPair, unsigned> &PairConnectionTypes,
+             ValuePair P);
 
     bool pairsConflict(ValuePair P, ValuePair Q,
-                 DenseSet<ValuePair> &PairableInstUsers,
-                 std::multimap<ValuePair, ValuePair> *PairableInstUserMap = 0,
-                 DenseSet<VPPair> *PairableInstUserPairSet = 0);
+             DenseSet<ValuePair> &PairableInstUsers,
+             DenseMap<ValuePair, std::vector<ValuePair> >
+               *PairableInstUserMap = 0,
+             DenseSet<VPPair> *PairableInstUserPairSet = 0);
 
     bool pairWillFormCycle(ValuePair P,
-                       std::multimap<ValuePair, ValuePair> &PairableInstUsers,
-                       DenseSet<ValuePair> &CurrentPairs);
+             DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUsers,
+             DenseSet<ValuePair> &CurrentPairs);
 
     void pruneTreeFor(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
-                      DenseSet<VPPair> &PairableInstUserPairSet,
-                      DenseMap<Value *, Value *> &ChosenPairs,
-                      DenseMap<ValuePair, size_t> &Tree,
-                      DenseSet<ValuePair> &PrunedTree, ValuePair J,
-                      bool UseCycleCheck);
+             DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+             std::vector<Value *> &PairableInsts,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseSet<ValuePair> &PairableInstUsers,
+             DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
+             DenseSet<VPPair> &PairableInstUserPairSet,
+             DenseMap<Value *, Value *> &ChosenPairs,
+             DenseMap<ValuePair, size_t> &Tree,
+             DenseSet<ValuePair> &PrunedTree, ValuePair J,
+             bool UseCycleCheck);
 
     void buildInitialTreeFor(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      DenseMap<Value *, Value *> &ChosenPairs,
-                      DenseMap<ValuePair, size_t> &Tree, ValuePair J);
+             DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+             DenseSet<ValuePair> &CandidatePairsSet,
+             std::vector<Value *> &PairableInsts,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseSet<ValuePair> &PairableInstUsers,
+             DenseMap<Value *, Value *> &ChosenPairs,
+             DenseMap<ValuePair, size_t> &Tree, ValuePair J);
 
     void findBestTreeFor(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      DenseMap<ValuePair, int> &CandidatePairCostSavings,
-                      std::vector<Value *> &PairableInsts,
-                      DenseSet<ValuePair> &FixedOrderPairs,
-                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
-                      DenseSet<VPPair> &PairableInstUserPairSet,
-                      DenseMap<Value *, Value *> &ChosenPairs,
-                      DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
-                      int &BestEffSize, Value *II, std::vector<Value *>&JJ,
-                      bool UseCycleCheck);
+             DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+             DenseSet<ValuePair> &CandidatePairsSet,
+             DenseMap<ValuePair, int> &CandidatePairCostSavings,
+             std::vector<Value *> &PairableInsts,
+             DenseSet<ValuePair> &FixedOrderPairs,
+             DenseMap<VPPair, unsigned> &PairConnectionTypes,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairDeps,
+             DenseSet<ValuePair> &PairableInstUsers,
+             DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
+             DenseSet<VPPair> &PairableInstUserPairSet,
+             DenseMap<Value *, Value *> &ChosenPairs,
+             DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
+             int &BestEffSize, Value *II, std::vector<Value *>&JJ,
+             bool UseCycleCheck);
 
     Value *getReplacementPointerInput(LLVMContext& Context, Instruction *I,
                      Instruction *J, unsigned o);
@@ -366,14 +362,14 @@ namespace {
 
     void collectPairLoadMoveSet(BasicBlock &BB,
                      DenseMap<Value *, Value *> &ChosenPairs,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseMap<Value *, std::vector<Value *> > &LoadMoveSet,
                      DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *I);
 
     void collectLoadMoveSet(BasicBlock &BB,
                      std::vector<Value *> &PairableInsts,
                      DenseMap<Value *, Value *> &ChosenPairs,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseMap<Value *, std::vector<Value *> > &LoadMoveSet,
                      DenseSet<ValuePair> &LoadMoveSetPairs);
 
     bool canMoveUsesOfIAfterJ(BasicBlock &BB,
@@ -695,7 +691,8 @@ namespace {
     DenseMap<Value *, Value *> AllChosenPairs;
     DenseSet<ValuePair> AllFixedOrderPairs;
     DenseMap<VPPair, unsigned> AllPairConnectionTypes;
-    std::multimap<ValuePair, ValuePair> AllConnectedPairs, AllConnectedPairDeps;
+    DenseMap<ValuePair, std::vector<ValuePair> > AllConnectedPairs,
+                                                 AllConnectedPairDeps;
 
     do {
       std::vector<Value *> PairableInsts;
@@ -725,17 +722,19 @@ namespace {
       // Note that it only matters that both members of the second pair use some
       // element of the first pair (to allow for splatting).
 
-      std::multimap<ValuePair, ValuePair> ConnectedPairs, ConnectedPairDeps;
+      DenseMap<ValuePair, std::vector<ValuePair> > ConnectedPairs,
+                                                   ConnectedPairDeps;
       DenseMap<VPPair, unsigned> PairConnectionTypes;
       computeConnectedPairs(CandidatePairs, CandidatePairsSet,
                             PairableInsts, ConnectedPairs, PairConnectionTypes);
       if (ConnectedPairs.empty()) continue;
 
-      for (std::multimap<ValuePair, ValuePair>::iterator
+      for (DenseMap<ValuePair, std::vector<ValuePair> >::iterator
            I = ConnectedPairs.begin(), IE = ConnectedPairs.end();
-           I != IE; ++I) {
-        ConnectedPairDeps.insert(VPPair(I->second, I->first));
-      }
+           I != IE; ++I)
+        for (std::vector<ValuePair>::iterator J = I->second.begin(),
+             JE = I->second.end(); J != JE; ++J)
+          ConnectedPairDeps[*J].push_back(I->first);
 
       // Build the pairable-instruction dependency map
       DenseSet<ValuePair> PairableInstUsers;
@@ -783,14 +782,15 @@ namespace {
         }
       }
 
-      for (std::multimap<ValuePair, ValuePair>::iterator
+      for (DenseMap<ValuePair, std::vector<ValuePair> >::iterator
            I = ConnectedPairs.begin(), IE = ConnectedPairs.end();
-           I != IE; ++I) {
-        if (AllPairConnectionTypes.count(*I)) {
-          AllConnectedPairs.insert(*I);
-          AllConnectedPairDeps.insert(VPPair(I->second, I->first));
-        }
-      }
+           I != IE; ++I)
+        for (std::vector<ValuePair>::iterator J = I->second.begin(),
+          JE = I->second.end(); J != JE; ++J)
+          if (AllPairConnectionTypes.count(VPPair(I->first, *J))) {
+            AllConnectedPairs[I->first].push_back(*J);
+            AllConnectedPairDeps[*J].push_back(I->first);
+          }
     } while (ShouldContinue);
 
     if (AllChosenPairs.empty()) return false;
@@ -1107,7 +1107,7 @@ namespace {
   // to contain any memory locations to which J writes. The function returns
   // true if J uses I. By default, alias analysis is used to determine
   // whether J reads from memory that overlaps with a location in WriteSet.
-  // If LoadMoveSet is not null, then it is a previously-computed multimap
+  // If LoadMoveSet is not null, then it is a previously-computed map
   // where the key is the memory-based user instruction and the value is
   // the instruction to be compared with I. So, if LoadMoveSet is provided,
   // then the alias analysis is not used. This is necessary because this
@@ -1253,12 +1253,12 @@ namespace {
   // it looks for pairs such that both members have an input which is an
   // output of PI or PJ.
   void BBVectorize::computePairsConnectedTo(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                      ValuePair P) {
+                  DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+                  DenseSet<ValuePair> &CandidatePairsSet,
+                  std::vector<Value *> &PairableInsts,
+                  DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+                  DenseMap<VPPair, unsigned> &PairConnectionTypes,
+                  ValuePair P) {
     StoreInst *SI, *SJ;
 
     // For each possible pairing for this variable, look at the uses of
@@ -1287,14 +1287,14 @@ namespace {
         // Look for <I, J>:
         if (CandidatePairsSet.count(ValuePair(*I, *J))) {
           VPPair VP(P, ValuePair(*I, *J));
-          ConnectedPairs.insert(VP);
+          ConnectedPairs[VP.first].push_back(VP.second);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionDirect));
         }
 
         // Look for <J, I>:
         if (CandidatePairsSet.count(ValuePair(*J, *I))) {
           VPPair VP(P, ValuePair(*J, *I));
-          ConnectedPairs.insert(VP);
+          ConnectedPairs[VP.first].push_back(VP.second);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionSwap));
         }
       }
@@ -1309,7 +1309,7 @@ namespace {
 
         if (CandidatePairsSet.count(ValuePair(*I, *J))) {
           VPPair VP(P, ValuePair(*I, *J));
-          ConnectedPairs.insert(VP);
+          ConnectedPairs[VP.first].push_back(VP.second);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionSplat));
         }
       }
@@ -1333,7 +1333,7 @@ namespace {
 
         if (CandidatePairsSet.count(ValuePair(*I, *J))) {
           VPPair VP(P, ValuePair(*I, *J));
-          ConnectedPairs.insert(VP);
+          ConnectedPairs[VP.first].push_back(VP.second);
           PairConnectionTypes.insert(VPPairWithType(VP, PairConnectionSplat));
         }
       }
@@ -1344,11 +1344,11 @@ namespace {
   // connected if some output of the first pair forms an input to both members
   // of the second pair.
   void BBVectorize::computeConnectedPairs(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseMap<VPPair, unsigned> &PairConnectionTypes) {
+                  DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+                  DenseSet<ValuePair> &CandidatePairsSet,
+                  std::vector<Value *> &PairableInsts,
+                  DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+                  DenseMap<VPPair, unsigned> &PairConnectionTypes) {
     for (std::vector<Value *>::iterator PI = PairableInsts.begin(),
          PE = PairableInsts.end(); PI != PE; ++PI) {
       DenseMap<Value *, std::vector<Value *> >::iterator PP =
@@ -1363,7 +1363,11 @@ namespace {
                                 PairConnectionTypes, ValuePair(*PI, *P));
     }
 
-    DEBUG(dbgs() << "BBV: found " << ConnectedPairs.size()
+    DEBUG(size_t TotalPairs = 0;
+          for (DenseMap<ValuePair, std::vector<ValuePair> >::iterator I =
+               ConnectedPairs.begin(), IE = ConnectedPairs.end(); I != IE; ++I)
+            TotalPairs += I->second.size();
+          dbgs() << "BBV: found " << TotalPairs
                  << " pair connections.\n");
   }
 
@@ -1414,9 +1418,9 @@ namespace {
   // input of pair Q is an output of pair P. If this is the case, then these
   // two pairs cannot be simultaneously fused.
   bool BBVectorize::pairsConflict(ValuePair P, ValuePair Q,
-                     DenseSet<ValuePair> &PairableInstUsers,
-                     std::multimap<ValuePair, ValuePair> *PairableInstUserMap,
-                     DenseSet<VPPair> *PairableInstUserPairSet) {
+             DenseSet<ValuePair> &PairableInstUsers,
+             DenseMap<ValuePair, std::vector<ValuePair> > *PairableInstUserMap,
+             DenseSet<VPPair> *PairableInstUserPairSet) {
     // Two pairs are in conflict if they are mutual Users of eachother.
     bool QUsesP = PairableInstUsers.count(ValuePair(P.first,  Q.first))  ||
                   PairableInstUsers.count(ValuePair(P.first,  Q.second)) ||
@@ -1429,15 +1433,14 @@ namespace {
     if (PairableInstUserMap) {
       // FIXME: The expensive part of the cycle check is not so much the cycle
       // check itself but this edge insertion procedure. This needs some
-      // profiling and probably a different data structure (same is true of
-      // most uses of std::multimap).
+      // profiling and probably a different data structure.
       if (PUsesQ) {
         if (PairableInstUserPairSet->insert(VPPair(Q, P)).second)
-          PairableInstUserMap->insert(VPPair(Q, P));
+          (*PairableInstUserMap)[Q].push_back(P);
       }
       if (QUsesP) {
         if (PairableInstUserPairSet->insert(VPPair(P, Q)).second)
-          PairableInstUserMap->insert(VPPair(P, Q));
+          (*PairableInstUserMap)[P].push_back(Q);
       }
     }
 
@@ -1447,8 +1450,8 @@ namespace {
   // This function walks the use graph of current pairs to see if, starting
   // from P, the walk returns to P.
   bool BBVectorize::pairWillFormCycle(ValuePair P,
-                       std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
-                       DenseSet<ValuePair> &CurrentPairs) {
+             DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
+             DenseSet<ValuePair> &CurrentPairs) {
     DEBUG(if (DebugCycleCheck)
             dbgs() << "BBV: starting cycle check for : " << *P.first << " <-> "
                    << *P.second << "\n");
@@ -1465,18 +1468,22 @@ namespace {
       DEBUG(if (DebugCycleCheck)
               dbgs() << "BBV: cycle check visiting: " << *QTop.first << " <-> "
                      << *QTop.second << "\n");
-      VPPIteratorPair QPairRange = PairableInstUserMap.equal_range(QTop);
-      for (std::multimap<ValuePair, ValuePair>::iterator C = QPairRange.first;
-           C != QPairRange.second; ++C) {
-        if (C->second == P) {
+      DenseMap<ValuePair, std::vector<ValuePair> >::iterator QQ =
+        PairableInstUserMap.find(QTop);
+      if (QQ == PairableInstUserMap.end())
+        continue;
+
+      for (std::vector<ValuePair>::iterator C = QQ->second.begin(),
+           CE = QQ->second.end(); C != CE; ++C) {
+        if (*C == P) {
           DEBUG(dbgs()
                  << "BBV: rejected to prevent non-trivial cycle formation: "
-                 << *C->first.first << " <-> " << *C->first.second << "\n");
+                 << QTop.first << " <-> " << C->second << "\n");
           return true;
         }
 
-        if (CurrentPairs.count(C->second) && !Visited.count(C->second))
-          Q.push_back(C->second);
+        if (CurrentPairs.count(*C) && !Visited.count(*C))
+          Q.push_back(*C);
       }
     } while (!Q.empty());
 
@@ -1486,13 +1493,13 @@ namespace {
   // This function builds the initial tree of connected pairs with the
   // pair J at the root.
   void BBVectorize::buildInitialTreeFor(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      DenseMap<Value *, Value *> &ChosenPairs,
-                      DenseMap<ValuePair, size_t> &Tree, ValuePair J) {
+                  DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+                  DenseSet<ValuePair> &CandidatePairsSet,
+                  std::vector<Value *> &PairableInsts,
+                  DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+                  DenseSet<ValuePair> &PairableInstUsers,
+                  DenseMap<Value *, Value *> &ChosenPairs,
+                  DenseMap<ValuePair, size_t> &Tree, ValuePair J) {
     // Each of these pairs is viewed as the root node of a Tree. The Tree
     // is then walked (depth-first). As this happens, we keep track of
     // the pairs that compose the Tree and the maximum depth of the Tree.
@@ -1505,21 +1512,23 @@ namespace {
       // Push each child onto the queue:
       bool MoreChildren = false;
       size_t MaxChildDepth = QTop.second;
-      VPPIteratorPair qtRange = ConnectedPairs.equal_range(QTop.first);
-      for (std::multimap<ValuePair, ValuePair>::iterator k = qtRange.first;
-           k != qtRange.second; ++k) {
-        // Make sure that this child pair is still a candidate:
-        if (CandidatePairsSet.count(ValuePair(k->second))) {
-          DenseMap<ValuePair, size_t>::iterator C = Tree.find(k->second);
-          if (C == Tree.end()) {
-            size_t d = getDepthFactor(k->second.first);
-            Q.push_back(ValuePairWithDepth(k->second, QTop.second+d));
-            MoreChildren = true;
-          } else {
-            MaxChildDepth = std::max(MaxChildDepth, C->second);
+      DenseMap<ValuePair, std::vector<ValuePair> >::iterator QQ =
+        ConnectedPairs.find(QTop.first);
+      if (QQ != ConnectedPairs.end())
+        for (std::vector<ValuePair>::iterator k = QQ->second.begin(),
+             ke = QQ->second.end(); k != ke; ++k) {
+          // Make sure that this child pair is still a candidate:
+          if (CandidatePairsSet.count(*k)) {
+            DenseMap<ValuePair, size_t>::iterator C = Tree.find(*k);
+            if (C == Tree.end()) {
+              size_t d = getDepthFactor(k->first);
+              Q.push_back(ValuePairWithDepth(*k, QTop.second+d));
+              MoreChildren = true;
+            } else {
+              MaxChildDepth = std::max(MaxChildDepth, C->second);
+            }
           }
         }
-      }
 
       if (!MoreChildren) {
         // Record the current pair as part of the Tree:
@@ -1532,16 +1541,16 @@ namespace {
   // Given some initial tree, prune it by removing conflicting pairs (pairs
   // that cannot be simultaneously chosen for vectorization).
   void BBVectorize::pruneTreeFor(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      std::vector<Value *> &PairableInsts,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
-                      DenseSet<VPPair> &PairableInstUserPairSet,
-                      DenseMap<Value *, Value *> &ChosenPairs,
-                      DenseMap<ValuePair, size_t> &Tree,
-                      DenseSet<ValuePair> &PrunedTree, ValuePair J,
-                      bool UseCycleCheck) {
+              DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+              std::vector<Value *> &PairableInsts,
+              DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+              DenseSet<ValuePair> &PairableInstUsers,
+              DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
+              DenseSet<VPPair> &PairableInstUserPairSet,
+              DenseMap<Value *, Value *> &ChosenPairs,
+              DenseMap<ValuePair, size_t> &Tree,
+              DenseSet<ValuePair> &PrunedTree, ValuePair J,
+              bool UseCycleCheck) {
     SmallVector<ValuePairWithDepth, 32> Q;
     // General depth-first post-order traversal:
     Q.push_back(ValuePairWithDepth(J, getDepthFactor(J.first)));
@@ -1551,10 +1560,14 @@ namespace {
 
       // Visit each child, pruning as necessary...
       SmallVector<ValuePairWithDepth, 8> BestChildren;
-      VPPIteratorPair QTopRange = ConnectedPairs.equal_range(QTop.first);
-      for (std::multimap<ValuePair, ValuePair>::iterator K = QTopRange.first;
-           K != QTopRange.second; ++K) {
-        DenseMap<ValuePair, size_t>::iterator C = Tree.find(K->second);
+      DenseMap<ValuePair, std::vector<ValuePair> >::iterator QQ =
+        ConnectedPairs.find(QTop.first);
+      if (QQ == ConnectedPairs.end())
+        continue;
+
+      for (std::vector<ValuePair>::iterator K = QQ->second.begin(),
+           KE = QQ->second.end(); K != KE; ++K) {
+        DenseMap<ValuePair, size_t>::iterator C = Tree.find(*K);
         if (C == Tree.end()) continue;
 
         // This child is in the Tree, now we need to make sure it is the
@@ -1698,21 +1711,21 @@ namespace {
   // This function finds the best tree of mututally-compatible connected
   // pairs, given the choice of root pairs as an iterator range.
   void BBVectorize::findBestTreeFor(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      DenseMap<ValuePair, int> &CandidatePairCostSavings,
-                      std::vector<Value *> &PairableInsts,
-                      DenseSet<ValuePair> &FixedOrderPairs,
-                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      std::multimap<ValuePair, ValuePair> &PairableInstUserMap,
-                      DenseSet<VPPair> &PairableInstUserPairSet,
-                      DenseMap<Value *, Value *> &ChosenPairs,
-                      DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
-                      int &BestEffSize, Value *II, std::vector<Value *>&JJ,
-                      bool UseCycleCheck) {
+              DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+              DenseSet<ValuePair> &CandidatePairsSet,
+              DenseMap<ValuePair, int> &CandidatePairCostSavings,
+              std::vector<Value *> &PairableInsts,
+              DenseSet<ValuePair> &FixedOrderPairs,
+              DenseMap<VPPair, unsigned> &PairConnectionTypes,
+              DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+              DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairDeps,
+              DenseSet<ValuePair> &PairableInstUsers,
+              DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
+              DenseSet<VPPair> &PairableInstUserPairSet,
+              DenseMap<Value *, Value *> &ChosenPairs,
+              DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
+              int &BestEffSize, Value *II, std::vector<Value *>&JJ,
+              bool UseCycleCheck) {
     for (std::vector<Value *>::iterator J = JJ.begin(), JE = JJ.end();
          J != JE; ++J) {
       ValuePair IJ(II, *J);
@@ -1805,15 +1818,17 @@ namespace {
 
           // The edge weights contribute in a negative sense: they represent
           // the cost of shuffles.
-          VPPIteratorPair IP = ConnectedPairDeps.equal_range(*S);
-          if (IP.first != ConnectedPairDeps.end()) {
+          DenseMap<ValuePair, std::vector<ValuePair> >::iterator SS =
+            ConnectedPairDeps.find(*S);
+          if (SS != ConnectedPairDeps.end()) {
             unsigned NumDepsDirect = 0, NumDepsSwap = 0;
-            for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
-                 Q != IP.second; ++Q) {
-              if (!PrunedTree.count(Q->second))
+            for (std::vector<ValuePair>::iterator T = SS->second.begin(),
+                 TE = SS->second.end(); T != TE; ++T) {
+              VPPair Q(*S, *T);
+              if (!PrunedTree.count(Q.second))
                 continue;
               DenseMap<VPPair, unsigned>::iterator R =
-                PairConnectionTypes.find(VPPair(Q->second, Q->first));
+                PairConnectionTypes.find(VPPair(Q.second, Q.first));
               assert(R != PairConnectionTypes.end() &&
                      "Cannot find pair connection type");
               if (R->second == PairConnectionDirect)
@@ -1829,16 +1844,17 @@ namespace {
               ((NumDepsSwap > NumDepsDirect) ||
                 FixedOrderPairs.count(ValuePair(S->second, S->first)));
 
-            for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
-                 Q != IP.second; ++Q) {
-              if (!PrunedTree.count(Q->second))
+            for (std::vector<ValuePair>::iterator T = SS->second.begin(),
+                 TE = SS->second.end(); T != TE; ++T) {
+              VPPair Q(*S, *T);
+              if (!PrunedTree.count(Q.second))
                 continue;
               DenseMap<VPPair, unsigned>::iterator R =
-                PairConnectionTypes.find(VPPair(Q->second, Q->first));
+                PairConnectionTypes.find(VPPair(Q.second, Q.first));
               assert(R != PairConnectionTypes.end() &&
                      "Cannot find pair connection type");
-              Type *Ty1 = Q->second.first->getType(),
-                   *Ty2 = Q->second.second->getType();
+              Type *Ty1 = Q.second.first->getType(),
+                   *Ty2 = Q.second.second->getType();
               Type *VTy = getVecTypeForPair(Ty1, Ty2);
               if ((R->second == PairConnectionDirect && FlipOrder) ||
                   (R->second == PairConnectionSwap && !FlipOrder)  ||
@@ -1856,7 +1872,7 @@ namespace {
                 }
 
                 DEBUG(if (DebugPairSelection) dbgs() << "\tcost {" <<
-                  *Q->second.first << " <-> " << *Q->second.second <<
+                  *Q.second.first << " <-> " << *Q.second.second <<
                     "} -> {" <<
                   *S->first << " <-> " << *S->second << "} = " <<
                    ESContrib << "\n");
@@ -2079,16 +2095,16 @@ namespace {
   // Given the list of candidate pairs, this function selects those
   // that will be fused into vector instructions.
   void BBVectorize::choosePairs(
-                      DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
-                      DenseSet<ValuePair> &CandidatePairsSet,
-                      DenseMap<ValuePair, int> &CandidatePairCostSavings,
-                      std::vector<Value *> &PairableInsts,
-                      DenseSet<ValuePair> &FixedOrderPairs,
-                      DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                      std::multimap<ValuePair, ValuePair> &ConnectedPairDeps,
-                      DenseSet<ValuePair> &PairableInstUsers,
-                      DenseMap<Value *, Value *>& ChosenPairs) {
+                DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
+                DenseSet<ValuePair> &CandidatePairsSet,
+                DenseMap<ValuePair, int> &CandidatePairCostSavings,
+                std::vector<Value *> &PairableInsts,
+                DenseSet<ValuePair> &FixedOrderPairs,
+                DenseMap<VPPair, unsigned> &PairConnectionTypes,
+                DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+                DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairDeps,
+                DenseSet<ValuePair> &PairableInstUsers,
+                DenseMap<Value *, Value *>& ChosenPairs) {
     bool UseCycleCheck =
      CandidatePairsSet.size() <= Config.MaxCandPairsForCycleCheck;
 
@@ -2100,7 +2116,7 @@ namespace {
       JJ.push_back(I->first);
     }
 
-    std::multimap<ValuePair, ValuePair> PairableInstUserMap;
+    DenseMap<ValuePair, std::vector<ValuePair> > PairableInstUserMap;
     DenseSet<VPPair> PairableInstUserPairSet;
     for (std::vector<Value *>::iterator I = PairableInsts.begin(),
          E = PairableInsts.end(); I != E; ++I) {
@@ -2819,7 +2835,7 @@ namespace {
   // to be moved after J (the second instruction) when the pair is fused.
   void BBVectorize::collectPairLoadMoveSet(BasicBlock &BB,
                      DenseMap<Value *, Value *> &ChosenPairs,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseMap<Value *, std::vector<Value *> > &LoadMoveSet,
                      DenseSet<ValuePair> &LoadMoveSetPairs,
                      Instruction *I) {
     // Skip to the first instruction past I.
@@ -2834,7 +2850,7 @@ namespace {
     for (BasicBlock::iterator E = BB.end(); cast<Instruction>(L) != E; ++L) {
       if (trackUsesOfI(Users, WriteSet, I, L)) {
         if (L->mayReadFromMemory()) {
-          LoadMoveSet.insert(ValuePair(L, I));
+          LoadMoveSet[L].push_back(I);
           LoadMoveSetPairs.insert(ValuePair(L, I));
         }
       }
@@ -2851,7 +2867,7 @@ namespace {
   void BBVectorize::collectLoadMoveSet(BasicBlock &BB,
                      std::vector<Value *> &PairableInsts,
                      DenseMap<Value *, Value *> &ChosenPairs,
-                     std::multimap<Value *, Value *> &LoadMoveSet,
+                     DenseMap<Value *, std::vector<Value *> > &LoadMoveSet,
                      DenseSet<ValuePair> &LoadMoveSetPairs) {
     for (std::vector<Value *>::iterator PI = PairableInsts.begin(),
          PIE = PairableInsts.end(); PI != PIE; ++PI) {
@@ -2896,12 +2912,12 @@ namespace {
   // because the vector instruction is inserted in the location of the pair's
   // second member).
   void BBVectorize::fuseChosenPairs(BasicBlock &BB,
-                     std::vector<Value *> &PairableInsts,
-                     DenseMap<Value *, Value *> &ChosenPairs,
-                     DenseSet<ValuePair> &FixedOrderPairs,
-                     DenseMap<VPPair, unsigned> &PairConnectionTypes,
-                     std::multimap<ValuePair, ValuePair> &ConnectedPairs,
-                     std::multimap<ValuePair, ValuePair> &ConnectedPairDeps) {
+             std::vector<Value *> &PairableInsts,
+             DenseMap<Value *, Value *> &ChosenPairs,
+             DenseSet<ValuePair> &FixedOrderPairs,
+             DenseMap<VPPair, unsigned> &PairConnectionTypes,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
+             DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairDeps) {
     LLVMContext& Context = BB.getContext();
 
     // During the vectorization process, the order of the pairs to be fused
@@ -2915,7 +2931,7 @@ namespace {
          E = FlippedPairs.end(); P != E; ++P)
       ChosenPairs.insert(*P);
 
-    std::multimap<Value *, Value *> LoadMoveSet;
+    DenseMap<Value *, std::vector<Value *> > LoadMoveSet;
     DenseSet<ValuePair> LoadMoveSetPairs;
     collectLoadMoveSet(BB, PairableInsts, ChosenPairs,
                        LoadMoveSet, LoadMoveSetPairs);
@@ -2967,18 +2983,20 @@ namespace {
         // of dependencies connected via swaps, and those directly connected,
         // and flip the order if the number of swaps is greater.
         bool OrigOrder = true;
-        VPPIteratorPair IP = ConnectedPairDeps.equal_range(ValuePair(I, J));
-        if (IP.first == ConnectedPairDeps.end()) {
-          IP = ConnectedPairDeps.equal_range(ValuePair(J, I));
+        DenseMap<ValuePair, std::vector<ValuePair> >::iterator IJ =
+          ConnectedPairDeps.find(ValuePair(I, J));
+        if (IJ == ConnectedPairDeps.end()) {
+          IJ = ConnectedPairDeps.find(ValuePair(J, I));
           OrigOrder = false;
         }
 
-        if (IP.first != ConnectedPairDeps.end()) {
+        if (IJ != ConnectedPairDeps.end()) {
           unsigned NumDepsDirect = 0, NumDepsSwap = 0;
-          for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
-               Q != IP.second; ++Q) {
+          for (std::vector<ValuePair>::iterator T = IJ->second.begin(),
+               TE = IJ->second.end(); T != TE; ++T) {
+            VPPair Q(IJ->first, *T);
             DenseMap<VPPair, unsigned>::iterator R =
-              PairConnectionTypes.find(VPPair(Q->second, Q->first));
+              PairConnectionTypes.find(VPPair(Q.second, Q.first));
             assert(R != PairConnectionTypes.end() &&
                    "Cannot find pair connection type");
             if (R->second == PairConnectionDirect)
@@ -3004,17 +3022,20 @@ namespace {
 
       // If the pair being fused uses the opposite order from that in the pair
       // connection map, then we need to flip the types.
-      VPPIteratorPair IP = ConnectedPairs.equal_range(ValuePair(H, L));
-      for (std::multimap<ValuePair, ValuePair>::iterator Q = IP.first;
-           Q != IP.second; ++Q) {
-        DenseMap<VPPair, unsigned>::iterator R = PairConnectionTypes.find(*Q);
-        assert(R != PairConnectionTypes.end() &&
-               "Cannot find pair connection type");
-        if (R->second == PairConnectionDirect)
-          R->second = PairConnectionSwap;
-        else if (R->second == PairConnectionSwap)
-          R->second = PairConnectionDirect;
-      }
+      DenseMap<ValuePair, std::vector<ValuePair> >::iterator HL =
+        ConnectedPairs.find(ValuePair(H, L));
+      if (HL != ConnectedPairs.end())
+        for (std::vector<ValuePair>::iterator T = HL->second.begin(),
+             TE = HL->second.end(); T != TE; ++T) {
+          VPPair Q(HL->first, *T);
+          DenseMap<VPPair, unsigned>::iterator R = PairConnectionTypes.find(Q);
+          assert(R != PairConnectionTypes.end() &&
+                 "Cannot find pair connection type");
+          if (R->second == PairConnectionDirect)
+            R->second = PairConnectionSwap;
+          else if (R->second == PairConnectionSwap)
+            R->second = PairConnectionDirect;
+        }
 
       bool LBeforeH = !FlipPairOrder;
       unsigned NumOperands = I->getNumOperands();
@@ -3068,17 +3089,21 @@ namespace {
       // yet-to-be-fused pair. The loads in question are the keys of the map.
       if (I->mayReadFromMemory()) {
         std::vector<ValuePair> NewSetMembers;
-        VPIteratorPair IPairRange = LoadMoveSet.equal_range(I);
-        VPIteratorPair JPairRange = LoadMoveSet.equal_range(J);
-        for (std::multimap<Value *, Value *>::iterator N = IPairRange.first;
-             N != IPairRange.second; ++N)
-          NewSetMembers.push_back(ValuePair(K, N->second));
-        for (std::multimap<Value *, Value *>::iterator N = JPairRange.first;
-             N != JPairRange.second; ++N)
-          NewSetMembers.push_back(ValuePair(K, N->second));
+        DenseMap<Value *, std::vector<Value *> >::iterator II =
+          LoadMoveSet.find(I);
+        if (II != LoadMoveSet.end())
+          for (std::vector<Value *>::iterator N = II->second.begin(),
+               NE = II->second.end(); N != NE; ++N)
+            NewSetMembers.push_back(ValuePair(K, *N));
+        DenseMap<Value *, std::vector<Value *> >::iterator JJ =
+          LoadMoveSet.find(J);
+        if (JJ != LoadMoveSet.end())
+          for (std::vector<Value *>::iterator N = JJ->second.begin(),
+               NE = JJ->second.end(); N != NE; ++N)
+            NewSetMembers.push_back(ValuePair(K, *N));
         for (std::vector<ValuePair>::iterator A = NewSetMembers.begin(),
              AE = NewSetMembers.end(); A != AE; ++A) {
-          LoadMoveSet.insert(*A);
+          LoadMoveSet[A->first].push_back(A->second);
           LoadMoveSetPairs.insert(*A);
         }
       }
