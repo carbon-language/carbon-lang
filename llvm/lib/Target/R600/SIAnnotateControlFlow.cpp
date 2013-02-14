@@ -147,7 +147,7 @@ bool SIAnnotateControlFlow::doInitialization(Module &M) {
 
 /// \brief Is BB the last block saved on the stack ?
 bool SIAnnotateControlFlow::isTopOfStack(BasicBlock *BB) {
-  return Stack.back().first == BB;
+  return !Stack.empty() && Stack.back().first == BB;
 }
 
 /// \brief Pop the last saved value from the control flow stack
