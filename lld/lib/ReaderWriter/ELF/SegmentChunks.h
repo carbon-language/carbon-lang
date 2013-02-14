@@ -224,7 +224,7 @@ protected:
   std::vector<Chunk<ELFT> *> _sections;
   std::vector<SegmentSlice<ELFT> *> _segmentSlices;
   Layout::SegmentType _segmentType;
-  int64_t _flags;
+  uint64_t _flags;
   int64_t _atomflags;
   llvm::BumpPtrAllocator _segmentAllocate;
 };
@@ -238,21 +238,36 @@ Segment<ELFT>::Segment(const ELFTargetInfo &ti, StringRef name,
   this->_fsize = 0;
 }
 
-template<class ELFT>
-void 
-Segment<ELFT>::append(Section<ELFT> *section) {
+// This function actually is used, but not in all instantiations of Segment.
+LLVM_ATTRIBUTE_UNUSED
+static DefinedAtom::ContentPermissions toAtomPerms(uint64_t flags) {
+  switch (flags & (SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR)) {
+  case SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR:
+    return DefinedAtom::permRWX;
+  case SHF_ALLOC | SHF_EXECINSTR:
+    return DefinedAtom::permR_X;
+  case SHF_ALLOC:
+    return DefinedAtom::permR__;
+  case SHF_ALLOC | SHF_WRITE:
+    return DefinedAtom::permRW_;
+  default:
+    return DefinedAtom::permUnknown;
+  }
+}
+
+template <class ELFT> void Segment<ELFT>::append(Section<ELFT> *section) {
   _sections.push_back(section);
-  if (_flags < section->flags())
-    _flags = section->flags();
-  if (_atomflags < section->atomflags())
-    _atomflags = section->atomflags();
+  if (_flags < section->getFlags())
+    _flags = section->getFlags();
+  if (_atomflags < toAtomPerms(_flags))
+    _atomflags = toAtomPerms(_flags);
   if (this->_align2 < section->align2())
     this->_align2 = section->align2();
 }
 
 template <class ELFT>
 bool Segment<ELFT>::compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
-  return (sega->atomflags() < segb->atomflags());
+  return sega->atomflags() < segb->atomflags();
 }
 
 template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {

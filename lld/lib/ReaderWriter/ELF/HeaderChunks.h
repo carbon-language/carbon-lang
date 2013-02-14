@@ -302,15 +302,15 @@ template<class ELFT>
 void 
 SectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
   Elf_Shdr *shdr = _sectionInfo[section->ordinal()];
-  shdr->sh_type   = section->type();
-  shdr->sh_flags  = section->flags();
+  shdr->sh_type = section->getType();
+  shdr->sh_flags = section->getFlags();
   shdr->sh_offset = section->fileOffset();
   shdr->sh_addr   = section->virtualAddr();
   shdr->sh_size   = section->fileSize();
-  shdr->sh_link   = section->link();
-  shdr->sh_info   = section->shinfo();
+  shdr->sh_link = section->getLink();
+  shdr->sh_info = section->getInfo();
   shdr->sh_addralign = section->align2();
-  shdr->sh_entsize = section->entsize();
+  shdr->sh_entsize = section->getEntSize();
 }
 
 template <class ELFT>

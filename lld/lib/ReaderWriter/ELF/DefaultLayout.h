@@ -129,7 +129,7 @@ public:
     }
   };
 
-  typedef std::unordered_map<SectionKey, Section<ELFT> *, SectionKeyHash,
+  typedef std::unordered_map<SectionKey, AtomSection<ELFT> *, SectionKeyHash,
                              SectionKeyEq> SectionMapT;
   typedef std::unordered_map<SegmentKey, Segment<ELFT> *,
                              SegmentHashKey> SegmentMapT;
@@ -155,10 +155,10 @@ public:
   virtual StringRef getSectionName(StringRef name, const int32_t contentType,
                                    const int32_t contentPermissions);
 
-  /// \brief Returns the section to be created
-  virtual Section<ELFT> *getSection(StringRef name, const int32_t contentType,
-                                    const int32_t contentPermissions,
-                                    const int32_t sectionOrder);
+  /// \brief Gets or creates a section.
+  AtomSection<ELFT> *getSection(
+      StringRef name, int32_t contentType,
+      DefinedAtom::ContentPermissions contentPermissions);
 
   /// \brief Gets the segment for a output section
   virtual Layout::SegmentType getSegmentType(Section<ELFT> *section) const;
@@ -253,6 +253,13 @@ public:
         return phdr->p_memsz;
     return 0;
   }
+
+protected:
+  /// \brief Allocate a new section.
+  virtual AtomSection<ELFT> *createSection(
+      StringRef name, int32_t contentType,
+      DefinedAtom::ContentPermissions contentPermissions,
+      SectionOrder sectionOrder);
 
 private:
   SectionMapT _sectionMap;
@@ -381,9 +388,6 @@ Layout::SegmentType DefaultLayout<ELFT>::getSegmentType(
 
 template <class ELFT>
 bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
-  if (section->sectionKind() == Section<ELFT>::K_Target)
-    return section->hasOutputSegment();
-
   switch (section->order()) {
   case ORDER_INTERP:
   case ORDER_HASH:
@@ -410,18 +414,35 @@ bool DefaultLayout<ELFT>::hasOutputSegment(Section<ELFT> *section) {
   case ORDER_FINI_ARRAY:
   case ORDER_BSS:
     return true;
-  
   default:
-    return false;
+    return section->hasOutputSegment();
   }
 }
 
 template <class ELFT>
-Section<ELFT> *DefaultLayout<ELFT>::getSection(
-    StringRef sectionName, int32_t contentType, int32_t permissions,
-    int32_t sectionOrder) {
-  return new (_allocator) Section<ELFT>(_targetInfo, sectionName, contentType,
-                                        permissions, sectionOrder);
+AtomSection<ELFT> *DefaultLayout<ELFT>::createSection(
+    StringRef sectionName, int32_t contentType,
+    DefinedAtom::ContentPermissions permissions, SectionOrder sectionOrder) {
+  return new (_allocator) AtomSection<ELFT>(
+      _targetInfo, sectionName, contentType, permissions, sectionOrder);
+}
+
+template <class ELFT>
+AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
+    StringRef sectionName, int32_t contentType,
+    DefinedAtom::ContentPermissions permissions) {
+  const SectionKey sectionKey(sectionName, permissions);
+  auto sec = _sectionMap.find(sectionKey);
+  if (sec != _sectionMap.end())
+    return sec->second;
+  SectionOrder sectionOrder =
+      getSectionOrder(sectionName, contentType, permissions);
+  AtomSection<ELFT> *newSec =
+      createSection(sectionName, contentType, permissions, sectionOrder);
+  newSec->setOrder(sectionOrder);
+  _sections.push_back(newSec);
+  _sectionMap.insert(std::make_pair(sectionKey, newSec));
+  return newSec;
 }
 
 template <class ELFT>
@@ -438,21 +459,8 @@ ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
     const DefinedAtom::ContentType contentType = definedAtom->contentType();
 
     sectionName = getSectionName(sectionName, contentType, permissions);
-
-    const SectionKey sectionKey(sectionName, permissions);
-    Section<ELFT> *section;
-
-    if (_sectionMap.find(sectionKey) == _sectionMap.end()) {
-      SectionOrder section_order =
-          getSectionOrder(sectionName, contentType, permissions);
-      section =
-          getSection(sectionName, contentType, permissions, section_order);
-      section->setOrder(section_order);
-      _sections.push_back(section);
-      _sectionMap.insert(std::make_pair(sectionKey, section));
-    } else {
-      section = _sectionMap[sectionKey];
-    }
+    AtomSection<ELFT> *section =
+        getSection(sectionName, contentType, permissions);
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom)
       if (_targetInfo.isRuntimeRelocation(*definedAtom, *reloc))

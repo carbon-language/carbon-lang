@@ -46,17 +46,14 @@ public:
 
 public:
   /// Return the order the section would appear in the output file
-  virtual SectionOrder getSectionOrder
-                        (const StringRef name,
-                         int32_t contentType,
-                         int32_t contentPerm) = 0;
+  virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
+                                       int32_t contentPerm) = 0;
   /// \brief Append the Atom to the layout and create appropriate sections.
   /// \returns A reference to the atom layout or an error. The atom layout will
   /// be updated as linking progresses.
   virtual ErrorOr<const AtomLayout &> addAtom(const Atom *atom) = 0;
   /// find the Atom Address in the current layout
-  virtual bool findAtomAddrByName(const StringRef name, 
-                                  uint64_t &addr) = 0;
+  virtual bool findAtomAddrByName(StringRef name, uint64_t &addr) = 0;
   /// associates a section to a segment
   virtual void assignSectionsToSegments() = 0;
   /// associates a virtual address to the segment, section, and the atom

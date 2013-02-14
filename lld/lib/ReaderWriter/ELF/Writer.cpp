@@ -92,7 +92,7 @@ void ExecutableWriter<ELFT>::buildChunks(const File &file) {
 template<class ELFT>
 void ExecutableWriter<ELFT>::buildSymbolTable () {
   for (auto sec : _layout->sections())
-    if (auto section = dyn_cast<Section<ELFT>>(sec))
+    if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms())
         _symtab->addSymbol(atom->_atom, section->ordinal(), atom->_virtualAddr);
 }
@@ -111,7 +111,7 @@ ExecutableWriter<ELFT>::addAbsoluteUndefinedSymbols(const File &file) {
 template<class ELFT>
 void ExecutableWriter<ELFT>::buildAtomToAddressMap () {
   for (auto sec : _layout->sections())
-    if (auto section = dyn_cast<Section<ELFT>>(sec))
+    if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms())
         _atomToAddressMap[atom->_atom] = atom->_virtualAddr;
   // build the atomToAddressMap that contains absolute symbols too
@@ -122,7 +122,8 @@ void ExecutableWriter<ELFT>::buildAtomToAddressMap () {
 template<class ELFT>
 void ExecutableWriter<ELFT>::buildSectionHeaderTable() {
   for (auto mergedSec : _layout->mergedSections()) {
-    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection)
+    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection &&
+        mergedSec->kind() != Chunk<ELFT>::K_AtomSection)
       continue;
     if (mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);
@@ -132,7 +133,8 @@ void ExecutableWriter<ELFT>::buildSectionHeaderTable() {
 template<class ELFT>
 void ExecutableWriter<ELFT>::assignSectionsWithNoSegments() {
   for (auto mergedSec : _layout->mergedSections()) {
-    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection)
+    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection &&
+        mergedSec->kind() != Chunk<ELFT>::K_AtomSection)
       continue;
     if (!mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);

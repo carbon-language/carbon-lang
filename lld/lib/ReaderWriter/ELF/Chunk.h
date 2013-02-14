@@ -38,6 +38,7 @@ public:
     K_ProgramHeader, // Program Header
     K_ELFSegment, // Segment
     K_ELFSection, // Section
+    K_AtomSection, //< A section containing atoms.
     K_SectionHeader // Section header
   };
   Chunk(StringRef name, Kind kind, const ELFTargetInfo &ti)
@@ -80,7 +81,7 @@ protected:
   uint64_t _fsize;
   uint64_t _msize;
   uint64_t _align2;
-  uint32_t  _order;
+  uint32_t _order;
   uint64_t _ordinal;
   uint64_t _start;
   uint64_t _fileoffset;
