@@ -62,8 +62,8 @@ class UniqueTypesTestCase(TestBase):
         self.runCmd("frame variable --show-types longs")
         output = self.res.GetOutput()
         for x in [line.strip() for line in output.split(os.linesep)]:
-            # Skip empty line or closing brace.
-            if not x or x == '}':
+            # Skip empty line, closing brace, and messages about more variables than can be displayed.
+            if not x or x == '}' or x == '...' or "Some of your variables have more members than the debugger will show by default" in x:
                 continue
             self.expect(x, "Expect type 'long'", exe=False,
                 substrs = ['long'])
@@ -72,8 +72,8 @@ class UniqueTypesTestCase(TestBase):
         self.runCmd("frame variable --show-types shorts")
         output = self.res.GetOutput()
         for x in [line.strip() for line in output.split(os.linesep)]:
-            # Skip empty line or closing brace.
-            if not x or x == '}':
+            # Skip empty line, closing brace, and messages about more variables than can be displayed.
+            if not x or x == '}' or x == '...' or "Some of your variables have more members than the debugger will show by default" in x:
                 continue
             self.expect(x, "Expect type 'short'", exe=False,
                 substrs = ['short'])
