@@ -1957,7 +1957,7 @@ Clang implements two kinds of checks with this attribute.
 
    Another example:
 
-   .. code-block: c
+   .. code-block:: c
 
      __attribute__((__format__ (__printf__, 1, 3)))
      void foo(const char* s, char *buf, ...) {
