@@ -376,6 +376,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
 
+if( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
+  # On FreeBSD, /usr/local/* is not used by default. In order to build LLVM
+  # with libxml2, iconv.h, etc., we must add /usr/local paths.
+  include_directories("/usr/local/include")
+  link_directories("/usr/local/lib")
+endif( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
+
 if( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include llvm/Support/Solaris.h")
 endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
