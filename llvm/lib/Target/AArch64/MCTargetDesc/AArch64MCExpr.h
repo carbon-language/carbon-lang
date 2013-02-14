@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file describes AArch64-specific MCExprs, used for modifiers like
+// ":lo12:" or ":gottprel_g1:".
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_AARCH64MCEXPR_H
 #define LLVM_AARCH64MCEXPR_H

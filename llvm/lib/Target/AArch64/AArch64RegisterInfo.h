@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the AArch64 implementation of the MRegisterInfo class.
+// This file contains the AArch64 implementation of the MCRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file deals with any AArch64 specific requirements on object files.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGET_AARCH64_TARGETOBJECTFILE_H
 #define LLVM_TARGET_AARCH64_TARGETOBJECTFILE_H

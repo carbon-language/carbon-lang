@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the (GNU-style) assembly parser for the AArch64
+// architecture.
+//
+//===----------------------------------------------------------------------===//
 
 
 #include "MCTargetDesc/AArch64MCTargetDesc.h"

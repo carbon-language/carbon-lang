@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the implementation of the assembly expression modifiers
+// accepted by the AArch64 architecture (e.g. ":lo12:", ":gottprel_g1:", ...).
+//
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "aarch64mcexpr"
 #include "AArch64MCExpr.h"

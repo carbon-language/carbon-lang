@@ -6,7 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+//
+// This file just contains the anchor for the AArch64MachineFunctionInfo to
+// force vtable emission.
+//
+//===----------------------------------------------------------------------===//
 #include "AArch64MachineFunctionInfo.h"
 
 using namespace llvm;

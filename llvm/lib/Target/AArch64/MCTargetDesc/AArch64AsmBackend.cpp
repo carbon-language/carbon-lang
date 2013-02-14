@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the AArch64 implementation of the MCAsmBackend class,
+// which is principally concerned with relaxation of the various fixup kinds.
+//
+//===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/AArch64FixupKinds.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"

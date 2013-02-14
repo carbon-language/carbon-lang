@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the key registration step for the architecture.
+//
+//===----------------------------------------------------------------------===//
 
 #include "AArch64.h"
 #include "llvm/IR/Module.h"

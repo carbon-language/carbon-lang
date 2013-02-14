@@ -1,3 +1,16 @@
+//===----- AArch64InstrInfo.td - AArch64 Instruction Info ----*- tablegen -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file describes the AArch64 scalar instructions in TableGen format.
+//
+//===----------------------------------------------------------------------===//
+
 include "AArch64InstrFormats.td"
 
 //===----------------------------------------------------------------------===//

@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This file contains the implementation of the AArch64TargetMachine
+// methods. Principally just setting up the passes needed to generate correct
+// code on this architecture.
 //
 //===----------------------------------------------------------------------===//
 

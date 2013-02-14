@@ -1,9 +1,15 @@
-//===- AArch64Disassembler.cpp - Disassembler for AArch64/Thumb ISA -------===//
+//===- AArch64Disassembler.cpp - Disassembler for AArch64 ISA -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the functions necessary to decode AArch64 instruction
+// bitpatterns into MCInsts (with the help of TableGenerated information from
+// the instruction definitions).
 //
 //===----------------------------------------------------------------------===//
 

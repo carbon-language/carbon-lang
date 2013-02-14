@@ -1,4 +1,4 @@
-//===- ARMRegisterInfo.td - ARM Register defs --------------*- tablegen -*-===//
+//===- AArch64RegisterInfo.td - ARM Register defs ----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,9 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//  Declarations that describe the ARM register file
+//
+//  This file contains declarations that describe the AArch64 register file
+//
 //===----------------------------------------------------------------------===//
 
 let Namespace = "AArch64" in {

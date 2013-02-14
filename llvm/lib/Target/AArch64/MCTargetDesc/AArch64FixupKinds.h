@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file describes the LLVM fixups applied to MCInsts in the AArch64
+// backend.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_AARCH64_AARCH64FIXUPKINDS_H
 #define LLVM_AARCH64_AARCH64FIXUPKINDS_H

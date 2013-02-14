@@ -6,11 +6,14 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+// This file describes AArch64 instruction formats, down to the level of the
+// instruction's overall class.
+// ===----------------------------------------------------------------------===//
+
 
 //===----------------------------------------------------------------------===//
-//
 // A64 Instruction Format Definitions.
-//
+//===----------------------------------------------------------------------===//
 
 // A64 is currently the only instruction set supported by the AArch64
 // architecture.
