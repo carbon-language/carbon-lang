@@ -208,7 +208,7 @@ bool Filler::delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
 
   // Loads or stores cannot be moved past a store to the delay slot
   // and stores cannot be moved past a load.
-  if (Candidate.mayStore()) {
+  if (Candidate.mayStore() || Candidate.hasOrderedMemoryRef()) {
     HasHazard |= SawStore | SawLoad;
     SawStore = true;
   } else if (Candidate.mayLoad()) {
