@@ -35,6 +35,7 @@
 #include "clang/Basic/Module.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/Triple.h"
@@ -69,10 +70,11 @@ static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
-                             llvm::Module &M, const llvm::DataLayout &TD,
+                             const TargetOptions &TO, llvm::Module &M,
+                             const llvm::DataLayout &TD,
                              DiagnosticsEngine &diags)
-  : Context(C), LangOpts(C.getLangOpts()), CodeGenOpts(CGO), TheModule(M),
-    TheDataLayout(TD), TheTargetCodeGenInfo(0), Diags(diags),
+  : Context(C), LangOpts(C.getLangOpts()), CodeGenOpts(CGO), TargetOpts(TO),
+    TheModule(M), TheDataLayout(TD), TheTargetCodeGenInfo(0), Diags(diags),
     ABI(createCXXABI(*this)), 
     Types(*this),
     TBAA(0),

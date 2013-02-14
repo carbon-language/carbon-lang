@@ -31,13 +31,16 @@ namespace {
     OwningPtr<const llvm::DataLayout> TD;
     ASTContext *Ctx;
     const CodeGenOptions CodeGenOpts;  // Intentionally copied in.
+    const TargetOptions TargetOpts;    // Intentionally copied in.
   protected:
     OwningPtr<llvm::Module> M;
     OwningPtr<CodeGen::CodeGenModule> Builder;
   public:
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
-                      const CodeGenOptions &CGO, llvm::LLVMContext& C)
-      : Diags(diags), CodeGenOpts(CGO), M(new llvm::Module(ModuleName, C)) {}
+                      const CodeGenOptions &CGO, const TargetOptions &TO,
+                      llvm::LLVMContext& C)
+      : Diags(diags), CodeGenOpts(CGO), TargetOpts(TO),
+        M(new llvm::Module(ModuleName, C)) {}
 
     virtual ~CodeGeneratorImpl() {}
 
@@ -55,7 +58,7 @@ namespace {
       M->setTargetTriple(Ctx->getTargetInfo().getTriple().getTriple());
       M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
       TD.reset(new llvm::DataLayout(Ctx->getTargetInfo().getTargetDescription()));
-      Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts,
+      Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts, TargetOpts,
                                                *M, *TD, Diags));
     }
 
@@ -122,6 +125,7 @@ void CodeGenerator::anchor() { }
 CodeGenerator *clang::CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                         const std::string& ModuleName,
                                         const CodeGenOptions &CGO,
+                                        const TargetOptions &TO,
                                         llvm::LLVMContext& C) {
-  return new CodeGeneratorImpl(Diags, ModuleName, CGO, C);
+  return new CodeGeneratorImpl(Diags, ModuleName, CGO, TO, C);
 }

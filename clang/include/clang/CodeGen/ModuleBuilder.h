@@ -26,6 +26,7 @@ namespace clang {
   class DiagnosticsEngine;
   class LangOptions;
   class CodeGenOptions;
+  class TargetOptions;
 
   class CodeGenerator : public ASTConsumer {
     virtual void anchor();
@@ -40,6 +41,7 @@ namespace clang {
   CodeGenerator *CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                    const std::string &ModuleName,
                                    const CodeGenOptions &CGO,
+                                   const TargetOptions &TO,
                                    llvm::LLVMContext& C);
 }
 
