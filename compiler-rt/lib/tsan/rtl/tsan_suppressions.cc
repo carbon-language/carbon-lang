@@ -140,7 +140,7 @@ void InitializeSuppressions() {
   g_suppressions = SuppressionParse(0, supp);
 #ifndef TSAN_GO
   supp = __tsan_default_suppressions();
-  g_suppressions = SuppressionParse(0, supp);
+  g_suppressions = SuppressionParse(g_suppressions, supp);
 #endif
 }
 
