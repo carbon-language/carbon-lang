@@ -1037,9 +1037,6 @@ TEST_F(FormatTest, PreventConfusingIndents) {
                "                           ddd);");
 }
 
-TEST_F(FormatTest, Inheritance) {
-}
-
 TEST_F(FormatTest, ConstructorInitializers) {
   verifyFormat("Constructor() : Initializer(FitsOnTheLine) {}");
   verifyFormat("Constructor() : Inttializer(FitsOnTheLine) {}",
