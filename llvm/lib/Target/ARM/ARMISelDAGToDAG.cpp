@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/CallingConv.h"
@@ -256,6 +257,8 @@ private:
 
   // Select special operations if node forms integer ABS pattern
   SDNode *SelectABSOp(SDNode *N);
+
+  SDNode *SelectInlineAsm(SDNode *N);
 
   SDNode *SelectConcatVector(SDNode *N);
 
@@ -2552,6 +2555,12 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   switch (N->getOpcode()) {
   default: break;
+  case ISD::INLINEASM: {
+    SDNode *ResNode = SelectInlineAsm(N);
+    if (ResNode)
+      return ResNode;
+    break;
+  }
   case ISD::XOR: {
     // Select special operations if XOR node forms integer ABS pattern
     SDNode *ResNode = SelectABSOp(N);
@@ -3445,6 +3454,138 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   return SelectCode(N);
 }
+
+SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
+  std::vector<SDValue> AsmNodeOperands;
+  unsigned Flag, Kind;
+  bool Changed = false;
+  unsigned NumOps = N->getNumOperands();
+
+  ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(
+      N->getOperand(InlineAsm::Op_AsmString));
+  StringRef AsmString = StringRef(S->getSymbol());
+
+  // Normally, i64 data is bounded to two arbitrary GRPs for "%r" constraint.
+  // However, some instrstions (e.g. ldrexd/strexd in ARM mode) require
+  // (even/even+1) GPRs and use %n and %Hn to refer to the individual regs
+  // respectively. Since there is no constraint to explicitly specify a
+  // reg pair, we search %H operand inside the asm string. If it is found, the
+  // transformation below enforces a GPRPair reg class for "%r" for 64-bit data.
+  if (AsmString.find(":H}") == StringRef::npos)
+    return NULL;
+
+  DebugLoc dl = N->getDebugLoc();
+  SDValue Glue = N->getOperand(NumOps-1);
+
+  // Glue node will be appended late.
+  for(unsigned i = 0; i < NumOps -1; ++i) {
+    SDValue op = N->getOperand(i);
+    AsmNodeOperands.push_back(op);
+
+    if (i < InlineAsm::Op_FirstOperand)
+      continue;
+
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(i))) {
+      Flag = C->getZExtValue();
+      Kind = InlineAsm::getKind(Flag);
+    }
+    else
+      continue;
+
+    if (Kind != InlineAsm::Kind_RegUse && Kind != InlineAsm::Kind_RegDef
+        && Kind != InlineAsm::Kind_RegDefEarlyClobber)
+      continue;
+
+    unsigned RegNum = InlineAsm::getNumOperandRegisters(Flag);
+    unsigned RC;
+    bool HasRC = InlineAsm::hasRegClassConstraint(Flag, RC);
+    if (!HasRC || RC != ARM::GPRRegClassID || RegNum != 2)
+      continue;
+
+    assert((i+2 < NumOps-1) && "Invalid number of operands in inline asm");
+    SDValue V0 = N->getOperand(i+1);
+    SDValue V1 = N->getOperand(i+2);
+    unsigned Reg0 = cast<RegisterSDNode>(V0)->getReg();
+    unsigned Reg1 = cast<RegisterSDNode>(V1)->getReg();
+    SDValue PairedReg;
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+
+    if (Kind == InlineAsm::Kind_RegDef ||
+        Kind == InlineAsm::Kind_RegDefEarlyClobber) {
+      // Replace the two GPRs with 1 GPRPair and copy values from GPRPair to
+      // the original GPRs.
+
+      unsigned GPVR = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
+      PairedReg = CurDAG->getRegister(GPVR, MVT::Untyped);
+      SDValue Chain = SDValue(N,0);
+
+      SDNode *GU = N->getGluedUser();
+      SDValue RegCopy = CurDAG->getCopyFromReg(Chain, dl, GPVR, MVT::Untyped,
+                                               Chain.getValue(1));
+
+      // Extract values from a GPRPair reg and copy to the original GPR reg.
+      SDValue Sub0 = CurDAG->getTargetExtractSubreg(ARM::gsub_0, dl, MVT::i32,
+                                                    RegCopy);
+      SDValue Sub1 = CurDAG->getTargetExtractSubreg(ARM::gsub_1, dl, MVT::i32,
+                                                    RegCopy);
+      SDValue T0 = CurDAG->getCopyToReg(Sub0, dl, Reg0, Sub0,
+                                        RegCopy.getValue(1));
+      SDValue T1 = CurDAG->getCopyToReg(Sub1, dl, Reg1, Sub1, T0.getValue(1));
+
+      // Update the original glue user.
+      std::vector<SDValue> Ops(GU->op_begin(), GU->op_end()-1);
+      Ops.push_back(T1.getValue(1));
+      CurDAG->UpdateNodeOperands(GU, &Ops[0], Ops.size());
+      GU = T1.getNode();
+    }
+    else {
+      // For Kind  == InlineAsm::Kind_RegUse, we first copy two GPRs into a
+      // GPRPair and then pass the GPRPair to the inline asm.
+      SDValue Chain = AsmNodeOperands[InlineAsm::Op_InputChain];
+
+      // As REG_SEQ doesn't take RegisterSDNode, we copy them first.
+      SDValue T0 = CurDAG->getCopyFromReg(Chain, dl, Reg0, MVT::i32,
+                                          Chain.getValue(1));
+      SDValue T1 = CurDAG->getCopyFromReg(Chain, dl, Reg1, MVT::i32,
+                                          T0.getValue(1));
+      SDValue Pair = SDValue(createGPRPairNode(MVT::Untyped, T0, T1), 0);
+
+      // Copy REG_SEQ into a GPRPair-typed VR and replace the original two
+      // i32 VRs of inline asm with it.
+      unsigned GPVR = MRI.createVirtualRegister(&ARM::GPRPairRegClass);
+      PairedReg = CurDAG->getRegister(GPVR, MVT::Untyped);
+      Chain = CurDAG->getCopyToReg(T1, dl, GPVR, Pair, T1.getValue(1));
+
+      AsmNodeOperands[InlineAsm::Op_InputChain] = Chain;
+      Glue = Chain.getValue(1);
+    }
+
+    Changed = true;
+
+    if(PairedReg.getNode()) {
+      Flag = InlineAsm::getFlagWord(Kind, 1 /* RegNum*/);
+      Flag = InlineAsm::getFlagWordForRegClass(Flag, ARM::GPRPairRegClassID);
+      // Replace the current flag.
+      AsmNodeOperands[AsmNodeOperands.size() -1] = CurDAG->getTargetConstant(
+          Flag, MVT::i32);
+      // Add the new register node and skip the original two GPRs.
+      AsmNodeOperands.push_back(PairedReg);
+      // Skip the next two GPRs.
+      i += 2;
+    }
+  }
+
+  AsmNodeOperands.push_back(Glue);
+  if (!Changed)
+    return NULL;
+
+  SDValue New = CurDAG->getNode(ISD::INLINEASM, N->getDebugLoc(),
+      CurDAG->getVTList(MVT::Other, MVT::Glue), &AsmNodeOperands[0],
+                        AsmNodeOperands.size());
+  New->setNodeId(-1);
+  return New.getNode();
+}
+
 
 bool ARMDAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
