@@ -1651,7 +1651,7 @@ class A64I_dp_1src_impl<bit sf, bits<6> opcode, string asmop,
                    itin>;
 
 multiclass A64I_dp_1src <bits<6> opcode, string asmop> {
-  let neverHasSideEffects = 1 in {
+  let hasSideEffects = 0 in {
     def ww : A64I_dp_1src_impl<0b0, opcode, asmop, [], GPR32, NoItinerary>;
     def xx : A64I_dp_1src_impl<0b1, opcode, asmop, [], GPR64, NoItinerary>;
   }
@@ -3907,7 +3907,7 @@ multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit,
 }
 
 let isMoveImm = 1, isReMaterializable = 1,
-    isAsCheapAsAMove = 1, neverHasSideEffects = 1 in {
+    isAsCheapAsAMove = 1, hasSideEffects = 0 in {
   defm MOVN : A64I_movwSizes<0b00, "movn",
                              (ins movn32_imm:$FullImm),
                              (ins movn64_imm:$FullImm)>;
@@ -3993,7 +3993,7 @@ def adrp_label : Operand<i64> {
   let OperandType = "OPERAND_PCREL";
 }
 
-let neverHasSideEffects = 1 in {
+let hasSideEffects = 0 in {
   def ADRxi : A64I_PCADR<0b0, (outs GPR64:$Rd), (ins adr_label:$Label),
                          "adr\t$Rd, $Label", [], NoItinerary>;
 
@@ -4576,7 +4576,7 @@ def cpinst_operand : Operand<i32>;
 def CONSTPOOL_ENTRY : PseudoInst<(outs), (ins cpinst_operand:$instid,
                                               cpinst_operand:$cpidx,
                                               i32imm:$size), []> {
-  let neverHasSideEffects = 1;
+  let hasSideEffects = 0;
   let isNotDuplicable = 1;
 }
 
