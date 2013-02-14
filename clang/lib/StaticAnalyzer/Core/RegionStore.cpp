@@ -1497,6 +1497,26 @@ SVal RegionStoreManager::getBindingForObjCIvar(RegionBindingsConstRef B,
   return getBindingForLazySymbol(R);
 }
 
+static Optional<SVal> getConstValue(SValBuilder &SVB, const VarDecl *VD) {
+  ASTContext &Ctx = SVB.getContext();
+  if (!VD->getType().isConstQualified())
+    return Optional<SVal>();
+
+  const Expr *Init = VD->getInit();
+  if (!Init)
+    return Optional<SVal>();
+
+  llvm::APSInt Result;
+  if (Init->EvaluateAsInt(Result, Ctx))
+    return SVB.makeIntVal(Result);
+
+  if (Init->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
+    return SVB.makeNull();
+
+  // FIXME: Handle other possible constant expressions.
+  return Optional<SVal>();
+}
+
 SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
                                           const VarRegion *R) {
 
@@ -1506,37 +1526,30 @@ SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
 
   // Lazily derive a value for the VarRegion.
   const VarDecl *VD = R->getDecl();
-  QualType T = VD->getType();
   const MemSpaceRegion *MS = R->getMemorySpace();
 
-  if (isa<UnknownSpaceRegion>(MS) ||
-      isa<StackArgumentsSpaceRegion>(MS))
+  // Arguments are always symbolic.
+  if (isa<StackArgumentsSpaceRegion>(MS))
+    return svalBuilder.getRegionValueSymbolVal(R);
+
+  // Is 'VD' declared constant?  If so, retrieve the constant value.
+  if (Optional<SVal> V = getConstValue(svalBuilder, VD))
+    return *V;
+
+  // This must come after the check for constants because closure-captured
+  // constant variables may appear in UnknownSpaceRegion.
+  if (isa<UnknownSpaceRegion>(MS))
     return svalBuilder.getRegionValueSymbolVal(R);
 
   if (isa<GlobalsSpaceRegion>(MS)) {
+    QualType T = VD->getType();
+
     // Function-scoped static variables are default-initialized to 0; if they
     // have an initializer, it would have been processed by now.
     if (isa<StaticGlobalSpaceRegion>(MS))
       return svalBuilder.makeZeroVal(T);
 
-    // Other globals 
-    // Is 'VD' declared constant?  If so, retrieve the constant value.
-    QualType CT = Ctx.getCanonicalType(T);
-    if (CT.isConstQualified()) {
-      if (const Expr *Init = VD->getInit()) {
-        llvm::APSInt Result;
-        if (Init->EvaluateAsInt(Result, Ctx))
-          return svalBuilder.makeIntVal(Result);
-
-        if (Init->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))
-          return svalBuilder.makeNull();
-
-        // FIXME: Handle other possible constant expressions.
-      }
-    }
-
-    if (const Optional<SVal> &V
-          = getBindingForDerivedDefaultValue(B, MS, R, CT))
+    if (Optional<SVal> V = getBindingForDerivedDefaultValue(B, MS, R, T))
       return V.getValue();
 
     return svalBuilder.getRegionValueSymbolVal(R);
