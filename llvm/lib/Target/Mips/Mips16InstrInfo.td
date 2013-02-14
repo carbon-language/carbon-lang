@@ -335,8 +335,7 @@ class FRRR16_ins<bits<2> _f, string asmstr,  InstrItinClass itin> :
 class Sel<bits<5> f1, string op, InstrItinClass itin>:
   MipsInst16_32<(outs CPU16Regs:$rd_), (ins CPU16Regs:$rd, CPU16Regs:$rs,
                 CPU16Regs:$rt),
-                !strconcat(op, "\t$rt, .+4\n\t\n\tmove $rd, $rs"), [], itin,
-                Pseudo16> {
+                !strconcat(op, "\t$rt, .+4\n\t\n\tmove $rd, $rs"), [], itin> {
   let isCodeGenOnly=1;
   let Constraints = "$rd = $rd_";
 }
@@ -362,8 +361,7 @@ class SeliT<bits<5> f1, string op1, bits<5> f2, string op2,
                                         CPU16Regs:$rl, simm16:$imm),
                  !strconcat(op2,
                  !strconcat("\t$rl, $imm\n\t",
-                 !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), [], itin,
-                 Pseudo16> {
+                 !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), [], itin> {
   let isCodeGenOnly=1;
   let Constraints = "$rd = $rd_";
 }
@@ -386,8 +384,7 @@ class SelT<bits<5> f1, string op1, bits<5> f2, string op2,
                 CPU16Regs:$rl, CPU16Regs:$rr),
                 !strconcat(op2,
                 !strconcat("\t$rl, $rr\n\t",
-                !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), [], itin,
-                Pseudo16> {
+                !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), [], itin> {
   let isCodeGenOnly=1;
   let Constraints = "$rd = $rd_";
 }
@@ -448,7 +445,9 @@ def AddiuRxRxImm16: F2RI16_ins<0b01001, "addiu", IIAlu>,
   let AddedComplexity = 5;
 }
 def AddiuRxRxImmX16: FEXT_2RI16_ins<0b01001, "addiu", IIAlu>,
-  ArithLogic16Defs<0>;
+  ArithLogic16Defs<0> {
+  let isCodeGenOnly = 1;
+}
 
 def AddiuRxRyOffMemX16:
   FEXT_RRI_A16_mem_ins<0, "addiu", mem16_ea, IIAlu>;
@@ -602,7 +601,7 @@ def JrRa16: FRR16_JALRC_RA_only_ins<0, 0, "jr", IIAlu> {
   let isBarrier=1;
 }
 
-def JrcRa16: FRR16_JALRC_RA_only_ins<0, 0, "jrc", IIAlu> {
+def JrcRa16: FRR16_JALRC_RA_only_ins<1, 1, "jrc", IIAlu> {
   let isBranch = 1;
   let isIndirectBranch = 1;
   let isTerminator=1;
@@ -620,7 +619,9 @@ def JrcRx16: FRR16_JALRC_ins<1, 1, 0, "jrc", IIAlu> {
 // Purpose: Load Byte (Extended)
 // To load a byte from memory as a signed value.
 //
-def LbRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lb", mem16, IILoad>, MayLoad;
+def LbRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lb", mem16, IILoad>, MayLoad{
+  let isCodeGenOnly = 1;
+}
 
 //
 // Format: LBU ry, offset(rx) MIPS16e
@@ -628,14 +629,18 @@ def LbRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lb", mem16, IILoad>, MayLoad;
 // To load a byte from memory as a unsigned value.
 //
 def LbuRxRyOffMemX16:
-  FEXT_RRI16_mem_ins<0b10100, "lbu", mem16, IILoad>, MayLoad;
+  FEXT_RRI16_mem_ins<0b10100, "lbu", mem16, IILoad>, MayLoad {
+  let isCodeGenOnly = 1;
+}
 
 //
 // Format: LH ry, offset(rx) MIPS16e
 // Purpose: Load Halfword signed (Extended)
 // To load a halfword from memory as a signed value.
 //
-def LhRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lh", mem16, IILoad>, MayLoad;
+def LhRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lh", mem16, IILoad>, MayLoad{
+  let isCodeGenOnly = 1;
+}
 
 //
 // Format: LHU ry, offset(rx) MIPS16e
@@ -643,7 +648,9 @@ def LhRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10100, "lh", mem16, IILoad>, MayLoad;
 // To load a halfword from memory as an unsigned value.
 //
 def LhuRxRyOffMemX16:
-  FEXT_RRI16_mem_ins<0b10100, "lhu", mem16, IILoad>, MayLoad;
+  FEXT_RRI16_mem_ins<0b10100, "lhu", mem16, IILoad>, MayLoad {
+  let isCodeGenOnly = 1;
+}
 
 //
 // Format: LI rx, immediate MIPS16e
@@ -657,7 +664,9 @@ def LiRxImmX16: FEXT_RI16_ins<0b01101, "li", IIAlu>;
 // Purpose: Load Word (Extended)
 // To load a word from memory as a signed value.
 //
-def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IILoad>, MayLoad;
+def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IILoad>, MayLoad{
+  let isCodeGenOnly = 1;
+}
 
 // Format: LW rx, offset(sp) MIPS16e
 // Purpose: Load Word (SP-Relative, Extended)

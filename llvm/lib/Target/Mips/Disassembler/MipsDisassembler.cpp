@@ -93,6 +93,11 @@ static DecodeStatus DecodeCPU64RegsRegisterClass(MCInst &Inst,
                                                  uint64_t Address,
                                                  const void *Decoder);
 
+static DecodeStatus DecodeCPU16RegsRegisterClass(MCInst &Inst,
+                                                 unsigned RegNo,
+                                                 uint64_t Address,
+                                                 const void *Decoder);
+
 static DecodeStatus DecodeCPURegsRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
                                                uint64_t Address,
@@ -320,6 +325,15 @@ Mips64Disassembler::getInstruction(MCInst &instr,
 static unsigned getReg(const void *D, unsigned RC, unsigned RegNo) {
   const MipsDisassemblerBase *Dis = static_cast<const MipsDisassemblerBase*>(D);
   return *(Dis->getRegInfo()->getRegClass(RC).begin() + RegNo);
+}
+
+static DecodeStatus DecodeCPU16RegsRegisterClass(MCInst &Inst,
+                                                 unsigned RegNo,
+                                                 uint64_t Address,
+                                                 const void *Decoder) {
+
+  return MCDisassembler::Fail;
+
 }
 
 static DecodeStatus DecodeCPU64RegsRegisterClass(MCInst &Inst,
