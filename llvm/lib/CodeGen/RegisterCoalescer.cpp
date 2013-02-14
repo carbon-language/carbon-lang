@@ -167,8 +167,7 @@ namespace {
 
     /// reMaterializeTrivialDef - If the source of a copy is defined by a
     /// trivial computation, replace the copy by rematerialize the definition.
-    bool reMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
-                                 MachineInstr *CopyMI);
+    bool reMaterializeTrivialDef(CoalescerPair &CP, MachineInstr *CopyMI);
 
     /// canJoinPhys - Return true if a physreg copy should be joined.
     bool canJoinPhys(const CoalescerPair &CP);
@@ -732,9 +731,14 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
 
 /// reMaterializeTrivialDef - If the source of a copy is defined by a trivial
 /// computation, replace the copy by rematerialize the definition.
-bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
-                                                unsigned DstReg,
+bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
                                                 MachineInstr *CopyMI) {
+  unsigned SrcReg = CP.isFlipped() ? CP.getDstReg() : CP.getSrcReg();
+  unsigned DstReg = CP.isFlipped() ? CP.getSrcReg() : CP.getDstReg();
+  if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
+    return false;
+
+  LiveInterval &SrcInt = LIS->getInterval(SrcReg);
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot(true);
   LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
   assert(SrcLR != SrcInt.end() && "Live range not found!");
@@ -1012,9 +1016,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     if (!canJoinPhys(CP)) {
       // Before giving up coalescing, if definition of source is defined by
       // trivial computation, try rematerializing it.
-      if (!CP.isFlipped() &&
-          reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()),
-                                  CP.getDstReg(), CopyMI))
+      if (reMaterializeTrivialDef(CP, CopyMI))
         return true;
       return false;
     }
@@ -1047,9 +1049,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 
     // If definition of source is defined by trivial computation, try
     // rematerializing it.
-    if (!CP.isFlipped() &&
-        reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()),
-                                CP.getDstReg(), CopyMI))
+    if (reMaterializeTrivialDef(CP, CopyMI))
       return true;
 
     // If we can eliminate the copy without merging the live ranges, do so now.
