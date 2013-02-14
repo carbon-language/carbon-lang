@@ -7702,6 +7702,8 @@ struct ConsecutiveMemoryChainSorter {
 bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   EVT MemVT = St->getMemoryVT();
   int64_t ElementSizeBytes = MemVT.getSizeInBits()/8;
+  bool NoVectors = DAG.getMachineFunction().getFunction()->getAttributes().
+    hasAttribute(AttributeSet::FunctionIndex, Attribute::NoImplicitFloat);
 
   // Don't merge vectors into wider inputs.
   if (MemVT.isVector() || !MemVT.isSimple())
@@ -7877,16 +7879,14 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
     // We only use vectors if the constant is known to be zero and the
     // function is not marked with the noimplicitfloat attribute.
-    if (NonZero || (DAG.getMachineFunction().getFunction()->getAttributes().
-                    hasAttribute(AttributeSet::FunctionIndex,
-                                 Attribute::NoImplicitFloat)))
+    if (NonZero || NoVectors)
       LastLegalVectorType = 0;
 
     // Check if we found a legal integer type to store.
     if (LastLegalType == 0 && LastLegalVectorType == 0)
       return false;
 
-    bool UseVector = LastLegalVectorType > LastLegalType;
+    bool UseVector = (LastLegalVectorType > LastLegalType) && !NoVectors;
     unsigned NumElem = UseVector ? LastLegalVectorType : LastLegalType;
 
     // Make sure we have something to merge.
@@ -8039,7 +8039,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     // All loads much share the same chain.
     if (LoadNodes[i].MemNode->getChain() != FirstChain)
       break;
-    
+
     int64_t CurrAddress = LoadNodes[i].OffsetFromBase;
     if (CurrAddress - StartAddress != (ElementSizeBytes * i))
       break;
@@ -8059,7 +8059,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
   // Only use vector types if the vector type is larger than the integer type.
   // If they are the same, use integers.
-  bool UseVectorTy = LastLegalVectorType > LastLegalIntegerType;
+  bool UseVectorTy = LastLegalVectorType > LastLegalIntegerType && !NoVectors;
   unsigned LastLegalType = std::max(LastLegalVectorType, LastLegalIntegerType);
 
   // We add +1 here because the LastXXX variables refer to location while
