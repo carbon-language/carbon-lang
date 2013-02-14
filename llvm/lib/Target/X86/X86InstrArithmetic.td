@@ -1256,3 +1256,49 @@ let Predicates = [HasBMI2] in {
   let Uses = [RDX] in
     defm MULX64 : bmi_mulx<"mulx{q}", GR64, i64mem>, VEX_W;
 }
+
+//===----------------------------------------------------------------------===//
+// ADCX Instruction
+//
+let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
+  def ADCX32rr : I<0xF6, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
+             "adcx{l}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_NONMEM>, T8, OpSize;
+
+  def ADCX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+             "adcx{q}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_NONMEM>, T8, OpSize, REX_W, Requires<[In64BitMode]>;
+
+  let mayLoad = 1 in {
+  def ADCX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+             "adcx{l}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_MEM>, T8, OpSize;
+ 
+  def ADCX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+             "adcx{q}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_MEM>, T8, OpSize, REX_W, Requires<[In64BitMode]>;
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// ADOX Instruction
+//
+let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
+  def ADOX32rr : I<0xF6, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
+             "adox{l}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_NONMEM>, T8XS;
+
+  def ADOX64rr : I<0xF6, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
+             "adox{q}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_NONMEM>, T8XS, REX_W, Requires<[In64BitMode]>;
+
+  let mayLoad = 1 in {
+  def ADOX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+             "adox{l}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_MEM>, T8XS;
+ 
+  def ADOX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+             "adox{q}\t{$src, $dst|$dst, $src}",
+             [], IIC_BIN_MEM>, T8XS, REX_W, Requires<[In64BitMode]>;
+  }
+}

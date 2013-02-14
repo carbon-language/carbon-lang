@@ -121,6 +121,9 @@ protected:
   /// HasRTM - Processor has RTM instructions.
   bool HasRTM;
 
+  /// HasADX - Processor has ADX instructions.
+  bool HasADX;
+
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
@@ -242,6 +245,7 @@ public:
   bool hasBMI() const { return HasBMI; }
   bool hasBMI2() const { return HasBMI2; }
   bool hasRTM() const { return HasRTM; }
+  bool hasADX() const { return HasADX; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
