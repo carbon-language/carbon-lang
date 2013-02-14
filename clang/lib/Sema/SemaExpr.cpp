@@ -2042,7 +2042,8 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       MarkAnyDeclReferenced(Loc, IV, true);
       
       ObjCMethodFamily MF = CurMethod->getMethodFamily();
-      if (MF != OMF_init && MF != OMF_dealloc && MF != OMF_finalize)
+      if (MF != OMF_init && MF != OMF_dealloc && MF != OMF_finalize &&
+          !IvarBacksCurrentMethodAccessor(IFace, CurMethod, IV))
         Diag(Loc, diag::warn_direct_ivar_access) << IV->getDeclName();
 
       ObjCIvarRefExpr *Result = new (Context) ObjCIvarRefExpr(IV, IV->getType(),

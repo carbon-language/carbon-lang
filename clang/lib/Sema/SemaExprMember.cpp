@@ -1259,7 +1259,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       if (ObjCMethodDecl *MD = getCurMethodDecl()) {
         ObjCMethodFamily MF = MD->getMethodFamily();
         warn = (MF != OMF_init && MF != OMF_dealloc && 
-                MF != OMF_finalize);
+                MF != OMF_finalize &&
+                !IvarBacksCurrentMethodAccessor(IDecl, MD, IV));
       }
       if (warn)
         Diag(MemberLoc, diag::warn_direct_ivar_access) << IV->getDeclName();

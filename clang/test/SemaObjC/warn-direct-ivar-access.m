@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak  -Wdirect-ivar-access -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1  -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak  -fobjc-default-synthesize-properties -Wdirect-ivar-access -verify -Wno-objc-root-class %s
 // rdar://6505197
 
 __attribute__((objc_root_class)) @interface MyObject {
@@ -53,4 +53,26 @@ id Test32(__weak ITest32 *x) {
   return y ? y->ivar     // expected-error {{dereferencing a __weak pointer is not allowed}}
            : (*x).ivar;  // expected-error {{dereferencing a __weak pointer is not allowed}}
 }
+
+// rdar://13142820
+@protocol PROTOCOL
+@property (copy, nonatomic) id property_in_protocol;
+@end
+
+__attribute__((objc_root_class)) @interface INTF <PROTOCOL>
+@property (copy, nonatomic) id foo;
+- (id) foo;
+@end
+
+@interface INTF()
+@property (copy, nonatomic) id foo1;
+- (id) foo1;
+@end
+
+@implementation INTF
+- (id) foo { return _foo; }
+- (id) property_in_protocol { return _property_in_protocol; } // expected-warning {{instance variable '_property_in_protocol' is being directly accessed}}
+- (id) foo1 { return _foo1; }
+@synthesize property_in_protocol = _property_in_protocol;
+@end
 

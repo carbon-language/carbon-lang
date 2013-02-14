@@ -1541,6 +1541,33 @@ static void CollectSuperClassPropertyImplementations(ObjCInterfaceDecl *CDecl,
   }
 }
 
+/// IvarBacksCurrentMethodAccessor - This routine returns 'true' if 'IV' is
+/// an ivar synthesized for 'Method' and 'Method' is a property accessor
+/// declared in class 'IFace'.
+bool
+Sema::IvarBacksCurrentMethodAccessor(ObjCInterfaceDecl *IFace,
+                                     ObjCMethodDecl *Method, ObjCIvarDecl *IV) {
+  if (!IV->getSynthesize())
+    return false;
+  ObjCMethodDecl *IMD = IFace->lookupMethod(Method->getSelector(),
+                                            Method->isInstanceMethod());
+  if (!IMD || !IMD->isPropertyAccessor())
+    return false;
+  
+  // look up a property declaration whose one of its accessors is implemented
+  // by this method.
+  for (ObjCContainerDecl::prop_iterator P = IFace->prop_begin(),
+       E = IFace->prop_end(); P != E; ++P) {
+    ObjCPropertyDecl *property = *P;
+    if ((property->getGetterName() == IMD->getSelector() ||
+         property->getSetterName() == IMD->getSelector()) &&
+        (property->getPropertyIvarDecl() == IV))
+      return true;
+  }
+  return false;
+}
+
+
 /// \brief Default synthesizes all properties which must be synthesized
 /// in class's \@implementation.
 void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
