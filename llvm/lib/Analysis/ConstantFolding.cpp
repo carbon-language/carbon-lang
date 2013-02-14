@@ -536,10 +536,10 @@ static Constant *ConstantFoldLoadInst(const LoadInst *LI, const DataLayout *TD){
 
 /// SymbolicallyEvaluateBinop - One of Op0/Op1 is a constant expression.
 /// Attempt to symbolically evaluate the result of a binary operator merging
-/// these together.  If target data info is available, it is provided as TD,
-/// otherwise TD is null.
+/// these together.  If target data info is available, it is provided as DL,
+/// otherwise DL is null.
 static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
-                                           Constant *Op1, const DataLayout *TD){
+                                           Constant *Op1, const DataLayout *DL){
   // SROA
 
   // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
@@ -547,16 +547,38 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   // bits.
 
 
+  if (Opc == Instruction::And && DL) {
+    unsigned BitWidth = DL->getTypeSizeInBits(Op0->getType());
+    APInt KnownZero0(BitWidth, 0), KnownOne0(BitWidth, 0);
+    APInt KnownZero1(BitWidth, 0), KnownOne1(BitWidth, 0);
+    ComputeMaskedBits(Op0, KnownZero0, KnownOne0, DL);
+    ComputeMaskedBits(Op1, KnownZero1, KnownOne1, DL);
+    if ((KnownOne1 | KnownZero0).isAllOnesValue()) {
+      // All the bits of Op0 that the 'and' could be masking are already zero.
+      return Op0;
+    }
+    if ((KnownOne0 | KnownZero1).isAllOnesValue()) {
+      // All the bits of Op1 that the 'and' could be masking are already zero.
+      return Op1;
+    }
+
+    APInt KnownZero = KnownZero0 | KnownZero1;
+    APInt KnownOne = KnownOne0 & KnownOne1;
+    if ((KnownZero | KnownOne).isAllOnesValue()) {
+      return ConstantInt::get(Op0->getType(), KnownOne);
+    }
+  }
+
   // If the constant expr is something like &A[123] - &A[4].f, fold this into a
   // constant.  This happens frequently when iterating over a global array.
-  if (Opc == Instruction::Sub && TD) {
+  if (Opc == Instruction::Sub && DL) {
     GlobalValue *GV1, *GV2;
-    unsigned PtrSize = TD->getPointerSizeInBits();
-    unsigned OpSize = TD->getTypeSizeInBits(Op0->getType());
+    unsigned PtrSize = DL->getPointerSizeInBits();
+    unsigned OpSize = DL->getTypeSizeInBits(Op0->getType());
     APInt Offs1(PtrSize, 0), Offs2(PtrSize, 0);
 
-    if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *TD))
-      if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *TD) &&
+    if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *DL))
+      if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *DL) &&
           GV1 == GV2) {
         // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
         // PtrToInt may change the bitwidth so we have convert to the right size
