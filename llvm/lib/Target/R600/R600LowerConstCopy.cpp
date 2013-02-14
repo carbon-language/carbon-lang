@@ -180,7 +180,7 @@ bool R600LowerConstCopy::runOnMachineFunction(MachineFunction &MF) {
             int ConstMovSel =
                 TII->getOperandIdx(CstMov->getOpcode(), R600Operands::SRC0_SEL);
             unsigned ConstIndex = CstMov->getOperand(ConstMovSel).getImm();
-            if (canFoldInBundle(CP, ConstIndex)) {
+            if (MI->isInsideBundle() && canFoldInBundle(CP, ConstIndex)) {
               TII->setImmOperand(MI, OpTable[SrcOp][1], ConstIndex);
               MI->getOperand(SrcIdx).setReg(AMDGPU::ALU_CONST);
             } else {

@@ -334,6 +334,8 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
     SDValue Operand = Ops[OperandIdx[i] - 1];
     switch (Operand.getOpcode()) {
     case AMDGPUISD::CONST_ADDRESS: {
+      if (i == 2)
+        break;
       SDValue CstOffset;
       if (!Operand.getValueType().isVector() &&
           SelectGlobalValueConstantOffset(Operand.getOperand(0), CstOffset)) {
