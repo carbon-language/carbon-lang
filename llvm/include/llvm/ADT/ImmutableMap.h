@@ -211,13 +211,13 @@ public:
     friend class ImmutableMap;
 
   public:
-    typedef ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
-    typedef ImmutableMap<KeyT,ValT,ValInfo>::value_type_ref reference;
-    typedef iterator::value_type *pointer;
+    typedef typename ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
+    typedef typename ImmutableMap<KeyT,ValT,ValInfo>::value_type_ref reference;
+    typedef typename iterator::value_type *pointer;
     typedef std::bidirectional_iterator_tag iterator_category;
 
-    iterator::reference operator*() const { return itr->getValue(); }
-    iterator::pointer   operator->() const { return &itr->getValue(); }
+    typename iterator::reference operator*() const { return itr->getValue(); }
+    typename iterator::pointer   operator->() const { return &itr->getValue(); }
 
     key_type_ref getKey() const { return itr->getValue().first; }
     data_type_ref getData() const { return itr->getValue().second; }

@@ -1060,13 +1060,13 @@ public:
     friend class ImmutableSet<ValT,ValInfo>;
 
   public:
-    typedef ImmutableSet<ValT,ValInfo>::value_type value_type;
-    typedef ImmutableSet<ValT,ValInfo>::value_type_ref reference;
-    typedef iterator::value_type *pointer;
+    typedef typename ImmutableSet<ValT,ValInfo>::value_type value_type;
+    typedef typename ImmutableSet<ValT,ValInfo>::value_type_ref reference;
+    typedef typename iterator::value_type *pointer;
     typedef std::bidirectional_iterator_tag iterator_category;
 
-    iterator::reference operator*() const { return itr->getValue(); }
-    iterator::pointer   operator->() const { return &(operator*()); }
+    typename iterator::reference operator*() const { return itr->getValue(); }
+    typename iterator::pointer   operator->() const { return &(operator*()); }
 
     iterator& operator++() { ++itr; return *this; }
     iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
