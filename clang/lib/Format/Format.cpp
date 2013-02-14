@@ -675,7 +675,7 @@ private:
     std::set<LineState> Seen;
 
     // Insert start element into queue.
-    StateNode *Node=
+    StateNode *Node =
         new (Allocator.Allocate()) StateNode(InitialState, false, NULL);
     Queue.push(QueueItem(OrderedPenalty(0, Count), Node));
     ++Count;
@@ -683,7 +683,7 @@ private:
     // While not empty, take first element and follow edges.
     while (!Queue.empty()) {
       unsigned Penalty = Queue.top().first.first;
-      StateNode *Node= Queue.top().second;
+      StateNode *Node = Queue.top().second;
       if (Node->State.NextToken == NULL) {
         DEBUG(llvm::errs() << "\n---\nPenalty for line: " << Penalty << "\n");
         break;
@@ -1024,8 +1024,7 @@ private:
   /// \p IndentForLevel must contain the indent for the level \c l
   /// at \p IndentForLevel[l], or a value < 0 if the indent for
   /// that level is unknown.
-  unsigned getIndent(const std::vector<int> IndentForLevel,
-                     unsigned Level) {
+  unsigned getIndent(const std::vector<int> IndentForLevel, unsigned Level) {
     if (IndentForLevel[Level] != -1)
       return IndentForLevel[Level];
     if (Level == 0)

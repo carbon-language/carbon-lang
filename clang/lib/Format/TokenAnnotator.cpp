@@ -524,11 +524,9 @@ private:
   struct ScopedContextCreator {
     AnnotatingParser &P;
 
-    ScopedContextCreator(AnnotatingParser &P, unsigned Increase)
-        : P(P) {
-      P.Contexts.push_back(Context(
-          P.Contexts.back().BindingStrength + Increase,
-          P.Contexts.back().IsExpression));
+    ScopedContextCreator(AnnotatingParser &P, unsigned Increase) : P(P) {
+      P.Contexts.push_back(Context(P.Contexts.back().BindingStrength + Increase,
+                                   P.Contexts.back().IsExpression));
     }
 
     ~ScopedContextCreator() { P.Contexts.pop_back(); }
@@ -865,6 +863,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Right.is(tok::arrow) || Right.is(tok::period)) {
     if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
       return 5; // Should be smaller than breaking at a nested comma.
+    if ((Left.is(tok::r_paren) || Left.is(tok::r_square)) &&
+        Left.MatchingParen && Left.MatchingParen->ParameterCount > 0)
+      return 10;
     return 150;
   }
 

@@ -1180,8 +1180,8 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
       "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
   verifyGoogleFormat(
-      "aaaaaaaaaaaaaaa(\n"
-      "    aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();");
+      "aaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa)\n"
+      "    .aaaaaaaaaaaaaaaaaa();");
   verifyGoogleFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                      "    aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaaa);");
   
@@ -1208,11 +1208,11 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
                "                aaaaaaaaa,\n"
                "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
                Style);
-  verifyFormat("void f() {\n"
-               "  aaaaaaaaaaaaaaaaaaaaaaaa(\n"
-               "      aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa).aaaaaaa();\n"
-               "}",
-               Style);
+  verifyFormat(
+      "void f() {\n"
+      "  aaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa)\n"
+      "      .aaaaaaa();\n"
+      "}", Style);
 }
 
 TEST_F(FormatTest, FormatsBuilderPattern) {
@@ -1440,6 +1440,11 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat(
       "function(LoooooooooooooooooooooooooooooooooooongObject\n"
       "             ->loooooooooooooooooooooooooooooooooooooooongFunction());");
+
+  verifyFormat("EXPECT_CALL(SomeObject, SomeFunction(Parameter))\n"
+               "    .WillRepeatedly(Return(SomeValue));");
+  verifyFormat("SomeMap[std::pair(aaaaaaaaaaaa, bbbbbbbbbbbbbbb)]\n"
+               "    .insert(ccccccccccccccccccccccc);");
 
   // Here, it is not necessary to wrap at "." or "->".
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaa) ||\n"
