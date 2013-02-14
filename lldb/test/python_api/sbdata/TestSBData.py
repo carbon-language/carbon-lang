@@ -33,6 +33,19 @@ class SBDataAPICase(TestBase):
         # Find the line number to break on inside main.cpp.
         self.line = line_number('main.cpp', '// set breakpoint here')
 
+    def assert_data(self, func, arg, expected):
+        """ Asserts func(SBError error, arg) == expected. """
+        error = lldb.SBError()
+        result = func(error, arg)
+        if not error.Success():
+            stream = lldb.SBStream()
+            error.GetDescription(stream)
+            self.assertTrue(error.Success(),
+                            "%s(error, %s) did not succeed: %s" % (func.__name__,
+                                                                   arg,
+                                                                   stream.GetData()))
+        self.assertTrue(expected == result, "%s(error, %s) == %s != %s" % (func.__name__, arg, result, expected))
+          
     def data_api(self):
         """Test the SBData APIs."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
@@ -68,35 +81,40 @@ class SBDataAPICase(TestBase):
         offset = 0
         error = lldb.SBError()
 
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 1, 'foo[0].a == 1')
+        self.assert_data(data.GetUnsignedInt32, offset, 1)
         offset += 4
         low = data.GetSignedInt16(error, offset)
+        self.assertTrue(error.Success())
         offset += 2
         high = data.GetSignedInt16(error, offset)
+        self.assertTrue(error.Success())
         offset += 2
         self.assertTrue ((low == 9 and high == 0) or (low == 0 and high == 9), 'foo[0].b == 9')
         self.assertTrue( fabs(data.GetFloat(error, offset) - 3.14) < 1, 'foo[0].c == 3.14')
+        self.assertTrue(error.Success())
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 8, 'foo[1].a == 8')
+        self.assert_data(data.GetUnsignedInt32, offset, 8)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 5, 'foo[1].b == 5')
+        self.assert_data(data.GetUnsignedInt32, offset, 5)
         offset += 4
 
         self.runCmd("n")
 
         offset = 16
 
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 5, 'saved foo[1].b == 5')
+        self.assert_data(data.GetUnsignedInt32, offset, 5)
 
         data = foobar.GetPointeeData(1, 1)
 
         offset = 0
 
-        self.assertTrue(data.GetSignedInt32(error, offset) == 8, 'new foo[1].a == 8')
+        self.assert_data(data.GetSignedInt32, offset, 8)
         offset += 4
-        self.assertTrue(data.GetSignedInt32(error, offset) == 7, 'new foo[1].a == 7')
+        self.assert_data(data.GetSignedInt32, offset, 7)
         offset += 8
         self.assertTrue(data.GetUnsignedInt32(error, offset) == 0, 'do not read beyond end')
+        self.assertTrue(not error.Success())
+        error.Clear() # clear the error for the next test
 
         star_foobar = foobar.Dereference()
         self.assertTrue(star_foobar.IsValid())
@@ -107,9 +125,9 @@ class SBDataAPICase(TestBase):
             print data
         
         offset = 0
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 1, 'foo[0].a == 1')
+        self.assert_data(data.GetUnsignedInt32, offset, 1)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 9, 'foo[0].b == 9')
+        self.assert_data(data.GetUnsignedInt32, offset, 9)
 
         foobar_addr = star_foobar.GetLoadAddress()
         foobar_addr += 12
@@ -136,11 +154,12 @@ class SBDataAPICase(TestBase):
         self.runCmd("n")
 
         offset = 0
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 8, 'then foo[1].a == 8')
+        self.assert_data(data.GetUnsignedInt32, offset, 8)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 7, 'then foo[1].b == 7')
+        self.assert_data(data.GetUnsignedInt32, offset, 7)
         offset += 4
         self.assertTrue(fabs(data.GetFloat(error, offset) - 3.14) < 1, 'foo[1].c == 3.14')
+        self.assertTrue(error.Success())
 
         data = new_foobar.GetData()
 
@@ -148,11 +167,12 @@ class SBDataAPICase(TestBase):
             print data
 
         offset = 0
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 8, 'finally foo[1].a == 8')
+        self.assert_data(data.GetUnsignedInt32, offset, 8)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 7, 'finally foo[1].b == 7')
+        self.assert_data(data.GetUnsignedInt32, offset, 7)
         offset += 4
         self.assertTrue(fabs(data.GetFloat(error, offset) - 6.28) < 1, 'foo[1].c == 6.28')
+        self.assertTrue(error.Success())
 
         self.runCmd("n")
 
@@ -167,17 +187,19 @@ class SBDataAPICase(TestBase):
             print data
 
         offset = 0
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 1, 'barfoo[0].a = 1')
+        self.assert_data(data.GetUnsignedInt32, offset, 1)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 2, 'barfoo[0].b == 2')
+        self.assert_data(data.GetUnsignedInt32, offset, 2)
         offset += 4
         self.assertTrue(fabs(data.GetFloat(error, offset) - 3) < 1, 'barfoo[0].c == 3')
+        self.assertTrue(error.Success())
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 4, 'barfoo[1].a = 4')
+        self.assert_data(data.GetUnsignedInt32, offset, 4)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 5, 'barfoo[1].b == 5')
+        self.assert_data(data.GetUnsignedInt32, offset, 5)
         offset += 4
         self.assertTrue(fabs(data.GetFloat(error, offset) - 6) < 1, 'barfoo[1].c == 6')
+        self.assertTrue(error.Success())
 
         new_object = barfoo.CreateValueFromData("new_object",data,barfoo.GetType().GetBasicType(lldb.eBasicTypeInt))
 
@@ -191,9 +213,11 @@ class SBDataAPICase(TestBase):
         self.assertTrue(new_object.GetValue() == "1", 'new_object == 1')
 
         data.SetData(error, 'A\0\0\0', data.GetByteOrder(), data.GetAddressByteSize())
+        self.assertTrue(error.Success())
         
         data2 = lldb.SBData()
         data2.SetData(error, 'BCD', data.GetByteOrder(), data.GetAddressByteSize())
+        self.assertTrue(error.Success())
 
         data.Append(data2)
         
@@ -202,33 +226,34 @@ class SBDataAPICase(TestBase):
 
         # this breaks on EBCDIC
         offset = 0
-        self.assertTrue(data.GetUnsignedInt32(error, offset) == 65, 'made-up data == 65')
+        self.assert_data(data.GetUnsignedInt32, offset, 65)
         offset += 4
-        self.assertTrue(data.GetUnsignedInt8(error, offset) == 66, 'made-up data == 66')
+        self.assert_data(data.GetUnsignedInt8, offset, 66)
         offset += 1
-        self.assertTrue(data.GetUnsignedInt8(error, offset) == 67, 'made-up data == 67')
+        self.assert_data(data.GetUnsignedInt8, offset, 67)
         offset += 1
-        self.assertTrue(data.GetUnsignedInt8(error, offset) == 68, 'made-up data == 68')
+        self.assert_data(data.GetUnsignedInt8, offset, 68)
         offset += 1
 
         # check the new API calls introduced per LLVM bugzilla enhancement request
         # 11619 (Allow creating SBData values from arrays or primitives in Python)
 
-        data2 = lldb.SBData.CreateDataFromCString(process.GetByteOrder(),process.GetAddressByteSize(),'hello!')
+        hello_str = "hello!"
+        data2 = lldb.SBData.CreateDataFromCString(process.GetByteOrder(),process.GetAddressByteSize(),hello_str)
+        self.assertTrue(len(data2.uint8) == len(hello_str))
         self.assertTrue(data2.uint8[0] == 104, 'h == 104')
         self.assertTrue(data2.uint8[1] == 101, 'e == 101')
         self.assertTrue(data2.uint8[2] == 108, 'l == 108')
-        self.assertTrue(data2.GetUnsignedInt8(error,3) == 108, 'l == 108')
+        self.assert_data(data2.GetUnsignedInt8, 3, 108) # l
         self.assertTrue(data2.uint8[4] == 111, 'o == 111')
-        self.assertTrue(data2.GetUnsignedInt8(error,5) == 33, '! == 33')
-        self.assertTrue(data2.uint8[6] == 0, 'binary 0 terminator')
+        self.assert_data(data2.GetUnsignedInt8, 5, 33) # !
         
         data2 = lldb.SBData.CreateDataFromUInt64Array(process.GetByteOrder(),process.GetAddressByteSize(),[1,2,3,4,5])
-        self.assertTrue(data2.GetUnsignedInt64(error,0) == 1, 'data2[0] = 1')
-        self.assertTrue(data2.GetUnsignedInt64(error,8) == 2, 'data2[1] = 2')
-        self.assertTrue(data2.GetUnsignedInt64(error,16) == 3, 'data2[2] = 3')
-        self.assertTrue(data2.GetUnsignedInt64(error,24) == 4, 'data2[3] = 4')
-        self.assertTrue(data2.GetUnsignedInt64(error,32) == 5, 'data2[4] = 5')
+        self.assert_data(data2.GetUnsignedInt64, 0, 1)
+        self.assert_data(data2.GetUnsignedInt64, 8, 2)
+        self.assert_data(data2.GetUnsignedInt64, 16, 3)
+        self.assert_data(data2.GetUnsignedInt64, 24, 4)
+        self.assert_data(data2.GetUnsignedInt64, 32, 5)
         
         self.assertTrue(data2.uint64s == [1,2,3,4,5], 'read_data_helper failure: data2 == [1,2,3,4,5]')
 
@@ -236,39 +261,42 @@ class SBDataAPICase(TestBase):
         self.assertTrue(data2.sint32[0:2] == [2,-2], 'signed32 data2 = [2,-2]')
         
         data2.Append(lldb.SBData.CreateDataFromSInt64Array(process.GetByteOrder(),process.GetAddressByteSize(),[2, -2]))
-        self.assertTrue(data2.GetSignedInt32(error,0) == 2, 'signed32 data2[0] = 2')
-        self.assertTrue(data2.GetSignedInt32(error,4) == -2, 'signed32 data2[1] = -2')
+        self.assert_data(data2.GetSignedInt32, 0, 2)
+        self.assert_data(data2.GetSignedInt32, 4, -2)
         self.assertTrue(data2.sint64[1:3] == [2,-2], 'signed64 data2 = [2,-2]')
         
         data2 = lldb.SBData.CreateDataFromUInt32Array(process.GetByteOrder(),process.GetAddressByteSize(),[1,2,3,4,5])
-        self.assertTrue(data2.GetUnsignedInt32(error,0) == 1, '32-bit data2[0] = 1')
-        self.assertTrue(data2.GetUnsignedInt32(error,4) == 2, '32-bit data2[1] = 2')
-        self.assertTrue(data2.GetUnsignedInt32(error,8) == 3, '32-bit data2[2] = 3')
-        self.assertTrue(data2.GetUnsignedInt32(error,12) == 4, '32-bit data2[3] = 4')
-        self.assertTrue(data2.GetUnsignedInt32(error,16) == 5, '32-bit data2[4] = 5')
+        self.assert_data(data2.GetUnsignedInt32,0, 1)
+        self.assert_data(data2.GetUnsignedInt32,4, 2)
+        self.assert_data(data2.GetUnsignedInt32,8, 3)
+        self.assert_data(data2.GetUnsignedInt32,12, 4)
+        self.assert_data(data2.GetUnsignedInt32,16, 5)
         
         data2 = lldb.SBData.CreateDataFromDoubleArray(process.GetByteOrder(),process.GetAddressByteSize(),[3.14,6.28,2.71])
         self.assertTrue( fabs(data2.GetDouble(error,0) - 3.14) < 0.5, 'double data2[0] = 3.14')
+        self.assertTrue(error.Success())
         self.assertTrue( fabs(data2.GetDouble(error,8) - 6.28) < 0.5, 'double data2[1] = 6.28')
+        self.assertTrue(error.Success())
         self.assertTrue( fabs(data2.GetDouble(error,16) - 2.71) < 0.5, 'double data2[2] = 2.71')
+        self.assertTrue(error.Success())
 
         data2 = lldb.SBData()
 
-        data2.SetDataFromCString('hello!')
-        self.assertTrue(data2.GetUnsignedInt8(error,0) == 104, 'set h == 104')
-        self.assertTrue(data2.GetUnsignedInt8(error,1) == 101, 'set e == 101')
-        self.assertTrue(data2.GetUnsignedInt8(error,2) == 108, 'set l == 108')
-        self.assertTrue(data2.GetUnsignedInt8(error,3) == 108, 'set l == 108')
-        self.assertTrue(data2.GetUnsignedInt8(error,4) == 111, 'set o == 111')
-        self.assertTrue(data2.GetUnsignedInt8(error,5) == 33, 'set ! == 33')
-        self.assertTrue(data2.GetUnsignedInt8(error,6) == 0, 'set binary 0 terminator')
+        data2.SetDataFromCString(hello_str)
+        self.assertTrue(len(data2.uint8) == len(hello_str))
+        self.assert_data(data2.GetUnsignedInt8, 0, 104)
+        self.assert_data(data2.GetUnsignedInt8, 1, 101)
+        self.assert_data(data2.GetUnsignedInt8, 2, 108)
+        self.assert_data(data2.GetUnsignedInt8, 3, 108)
+        self.assert_data(data2.GetUnsignedInt8, 4, 111)
+        self.assert_data(data2.GetUnsignedInt8, 5, 33)
 
         data2.SetDataFromUInt64Array([1,2,3,4,5])
-        self.assertTrue(data2.GetUnsignedInt64(error,0) == 1, 'set data2[0] = 1')
-        self.assertTrue(data2.GetUnsignedInt64(error,8) == 2, 'set data2[1] = 2')
-        self.assertTrue(data2.GetUnsignedInt64(error,16) == 3, 'set data2[2] = 3')
-        self.assertTrue(data2.GetUnsignedInt64(error,24) == 4, 'set data2[3] = 4')
-        self.assertTrue(data2.GetUnsignedInt64(error,32) == 5, 'set data2[4] = 5')
+        self.assert_data(data2.GetUnsignedInt64, 0, 1)
+        self.assert_data(data2.GetUnsignedInt64, 8,  2)
+        self.assert_data(data2.GetUnsignedInt64, 16, 3)
+        self.assert_data(data2.GetUnsignedInt64, 24, 4)
+        self.assert_data(data2.GetUnsignedInt64, 32, 5)
 
         self.assertTrue(data2.uint64[0] == 1, 'read_data_helper failure: set data2[0] = 1')
         self.assertTrue(data2.uint64[1] == 2, 'read_data_helper failure: set data2[1] = 2')
@@ -279,19 +307,19 @@ class SBDataAPICase(TestBase):
         self.assertTrue(data2.uint64[0:2] == [1,2], 'read_data_helper failure: set data2[0:2] = [1,2]')
 
         data2.SetDataFromSInt32Array([2, -2])
-        self.assertTrue(data2.GetSignedInt32(error,0) == 2, 'set signed32 data2[0] = 2')
-        self.assertTrue(data2.GetSignedInt32(error,4) == -2, 'set signed32 data2[1] = -2')
+        self.assert_data(data2.GetSignedInt32, 0, 2)
+        self.assert_data(data2.GetSignedInt32, 4, -2)
         
         data2.SetDataFromSInt64Array([2, -2])
-        self.assertTrue(data2.GetSignedInt32(error,0) == 2, 'set signed64 data2[0] = 2')
-        self.assertTrue(data2.GetSignedInt32(error,8) == -2, 'set signed64 data2[1] = -2')
+        self.assert_data(data2.GetSignedInt32, 0, 2)
+        self.assert_data(data2.GetSignedInt32, 8, -2)
         
         data2.SetDataFromUInt32Array([1,2,3,4,5])
-        self.assertTrue(data2.GetUnsignedInt32(error,0) == 1, 'set 32-bit data2[0] = 1')
-        self.assertTrue(data2.GetUnsignedInt32(error,4) == 2, 'set 32-bit data2[1] = 2')
-        self.assertTrue(data2.GetUnsignedInt32(error,8) == 3, 'set 32-bit data2[2] = 3')
-        self.assertTrue(data2.GetUnsignedInt32(error,12) == 4, 'set 32-bit data2[3] = 4')
-        self.assertTrue(data2.GetUnsignedInt32(error,16) == 5, 'set 32-bit data2[4] = 5')
+        self.assert_data(data2.GetUnsignedInt32, 0, 1)
+        self.assert_data(data2.GetUnsignedInt32, 4, 2)
+        self.assert_data(data2.GetUnsignedInt32, 8, 3)
+        self.assert_data(data2.GetUnsignedInt32, 12, 4)
+        self.assert_data(data2.GetUnsignedInt32, 16, 5)
         
         self.assertTrue(data2.uint32[0] == 1, 'read_data_helper failure: set 32-bit data2[0] = 1')
         self.assertTrue(data2.uint32[1] == 2, 'read_data_helper failure: set 32-bit data2[1] = 2')
