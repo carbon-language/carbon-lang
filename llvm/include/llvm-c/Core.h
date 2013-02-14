@@ -2551,7 +2551,7 @@ LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
 LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(const char *InputData,
                                                           size_t InputDataLength,
                                                           const char *BufferName,
-                                                          bool RequiresNullTerminator);
+                                                          LLVMBool RequiresNullTerminator);
 LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(const char *InputData,
                                                               size_t InputDataLength,
                                                               const char *BufferName);
