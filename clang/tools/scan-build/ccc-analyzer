@@ -495,6 +495,11 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     push @CompileOpts,$Arg;
     next;
   }
+  # Handle the case where there isn't a space after -iquote
+  if ($Arg =~ /-iquote.*/) {
+    push @CompileOpts,$Arg;
+    next;
+  }
 
   # Options with possible arguments that should pass through to linker.
   if (defined $LinkerOptionMap{$ArgKey}) {
