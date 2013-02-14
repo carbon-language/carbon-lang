@@ -430,7 +430,7 @@ private:
           if (arg == E || arg->IgnoreParenImpCasts() == E)
             break;
         }
-        if (i < callE->getNumArgs()) {
+        if (i < callE->getNumArgs() && i < FD->getNumParams()) {
           ParmVarDecl *PD = FD->getParamDecl(i);
           if (PD->getAttr<CFConsumedAttr>()) {
             isConsumed = true;
