@@ -631,7 +631,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_FILE, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
         "Specifies the source file in which to set this breakpoint.  "
         "Note, by default lldb only looks for files that are #included if they use the standard include file extensions.  "
-        "To set breakpoints on .c/.cpp/.m/.mm files that are #included, set target.inline-breakpoint-strategy always "
+        "To set breakpoints on .c/.cpp/.m/.mm files that are #included, set target.inline-breakpoint-strategy"
         " to \"always\"."},
 
     { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, eArgTypeLineNum,
