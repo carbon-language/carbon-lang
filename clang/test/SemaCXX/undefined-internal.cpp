@@ -306,3 +306,20 @@ namespace test12 {
     Cls2 obj1((T7()));  // expected-note {{used here}}
   }
 }
+
+namespace test13 {
+  namespace {
+    struct X {
+      virtual void f() { }
+    };
+
+    struct Y : public X {
+      virtual void f() = 0;
+
+      virtual void g() {
+        X::f();
+      }
+    };
+  }
+}
+

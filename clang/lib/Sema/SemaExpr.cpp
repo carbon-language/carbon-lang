@@ -11179,7 +11179,7 @@ static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
   if (!MostDerivedClassDecl)
     return;
   CXXMethodDecl *DM = MD->getCorrespondingMethodInClass(MostDerivedClassDecl);
-  if (!DM)
+  if (!DM || DM->isPure())
     return;
   SemaRef.MarkAnyDeclReferenced(Loc, DM, OdrUse);
 } 
