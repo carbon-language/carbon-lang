@@ -22,3 +22,10 @@ extern "C" {
     test2_f();
   }
 }
+
+extern "C" {
+  struct test3_s {
+  };
+  bool operator==(const int& a, const test3_s& b)  {
+  }
+}

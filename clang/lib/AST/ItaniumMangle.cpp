@@ -373,14 +373,18 @@ bool ItaniumMangleContext::shouldMangleDeclName(const NamedDecl *D) {
     if (FD->hasAttr<OverloadableAttr>())
       return true;
 
-    // C functions and "main" are not mangled.
-    if (FD->isMain() || L == CLanguageLinkage)
+    // "main" is not mangled.
+    if (FD->isMain())
       return false;
 
     // C++ functions and those whose names are not a simple identifier need
     // mangling.
     if (!FD->getDeclName().isIdentifier() || L == CXXLanguageLinkage)
       return true;
+
+    // C functions are not mangled.
+    if (L == CLanguageLinkage)
+      return false;
 
     // FIXME: Users assume they know the mangling of static functions
     // declared in extern "C" contexts, so we cannot always mangle them.
