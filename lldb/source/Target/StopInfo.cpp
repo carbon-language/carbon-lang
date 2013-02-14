@@ -233,10 +233,29 @@ public:
                 StreamString strm;
                 if (m_break_id != LLDB_INVALID_BREAK_ID)
                 {
-                    if (m_was_one_shot)
-                        strm.Printf ("one-shot breakpoint %d", m_break_id);
+                    BreakpointSP break_sp = m_thread.GetProcess()->GetTarget().GetBreakpointByID(m_break_id);
+                    if (break_sp)
+                    {
+                        if (break_sp->IsInternal())
+                        {
+                            const char *kind = break_sp->GetBreakpointKind();
+                            if (kind)
+                                strm.Printf ("internal %s breakpoint(%d).", kind, m_break_id);
+                            else
+                                strm.Printf ("internal breakpoint(%d).", m_break_id);
+                        }
+                        else
+                        {
+                            strm.Printf ("breakpoint %d.", m_break_id);
+                        }
+                    } 
                     else
-                        strm.Printf ("breakpoint %d which has been deleted.", m_break_id);
+                    {
+                        if (m_was_one_shot)
+                            strm.Printf ("one-shot breakpoint %d", m_break_id);
+                        else
+                            strm.Printf ("breakpoint %d which has been deleted.", m_break_id);
+                    }
                 }
                 else if (m_address == LLDB_INVALID_ADDRESS)
                     strm.Printf("breakpoint site %" PRIi64 " which has been deleted - unknown address", m_value);

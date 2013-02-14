@@ -579,12 +579,6 @@ ThreadPlanCallFunction::BreakpointsExplainStop()
         return true;
     }
     
-    // Finally, if the process is set to ignore breakpoints in function calls,
-    // then we explain all breakpoint stops.
-    
-    if (m_ignore_breakpoints)
-        return true;
-    
     return false;
 }
 
