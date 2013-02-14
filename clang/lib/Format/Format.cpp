@@ -781,7 +781,8 @@ private:
       return true;
     if (State.NextToken->Parent->is(tok::comma) &&
         State.Stack.back().BreakBeforeParameter &&
-        !isTrailingComment(*State.NextToken))
+        !isTrailingComment(*State.NextToken) &&
+        State.NextToken->isNot(tok::r_paren))
       return true;
     // FIXME: Comparing LongestObjCSelectorName to 0 is a hacky way of finding
     // out whether it is the first parameter. Clean this up.

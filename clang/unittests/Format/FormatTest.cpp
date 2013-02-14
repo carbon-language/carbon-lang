@@ -1817,6 +1817,17 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 // Error recovery tests.
 //===----------------------------------------------------------------------===//
 
+TEST_F(FormatTest, IncompleteParameterLists) {
+  verifyGoogleFormat("void aaaaaaaaaaaaaaaaaa(int level,\n"
+                     "                        double *min_x,\n"
+                     "                        double *max_x,\n"
+                     "                        double *min_y,\n"
+                     "                        double *max_y,\n"
+                     "                        double *min_z,\n"
+                     "                        double *max_z, ) {\n"
+                     "}");
+}
+
 TEST_F(FormatTest, IncorrectCodeTrailingStuff) {
   verifyFormat("void f() { return; }\n42");
   verifyFormat("void f() {\n"
