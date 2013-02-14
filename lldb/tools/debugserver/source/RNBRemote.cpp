@@ -154,7 +154,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (remove_read_watch_bp,          &RNBRemote::HandlePacket_z,             NULL, "z3", "Remove read watchpoint"));
     t.push_back (Packet (insert_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "Z4", "Insert access watchpoint"));
     t.push_back (Packet (remove_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "z4", "Remove access watchpoint"));
-    t.push_back (Packet (query_monitor,                 &RNBRemote::HandlePacket_qCmd,          NULL, "qCmd", "Monitor command"));
+    t.push_back (Packet (query_monitor,                 &RNBRemote::HandlePacket_qRcmd,          NULL, "qRcmd", "Monitor command"));
     t.push_back (Packet (query_current_thread_id,       &RNBRemote::HandlePacket_qC,            NULL, "qC", "Query current thread ID"));
     t.push_back (Packet (query_get_pid,                 &RNBRemote::HandlePacket_qGetPid,       NULL, "qGetPid", "Query process id"));
     t.push_back (Packet (query_thread_ids_first,        &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qfThreadInfo", "Get list of active threads (first req)"));
@@ -1503,9 +1503,9 @@ extern void FileLogCallback(void *baton, uint32_t flags, const char *format, va_
 extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
 
 rnb_err_t
-RNBRemote::HandlePacket_qCmd (const char *p)
+RNBRemote::HandlePacket_qRcmd (const char *p)
 {
-    const char *c = p + strlen("qCmd,");
+    const char *c = p + strlen("qRcmd,");
     std::string line;
     while (c[0] && c[1])
     {
@@ -1513,7 +1513,7 @@ RNBRemote::HandlePacket_qCmd (const char *p)
         errno = 0;
         int ch = strtoul (smallbuf, NULL, 16);
         if (errno != 0 && ch == 0)
-            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in payload of qCmd packet");
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in payload of qRcmd packet");
         line.push_back(ch);
         c += 2;
     }

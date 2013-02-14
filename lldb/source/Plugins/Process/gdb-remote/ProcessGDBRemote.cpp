@@ -3157,8 +3157,8 @@ public:
     CommandObjectProcessGDBRemotePacketMonitor(CommandInterpreter &interpreter) :
         CommandObjectRaw (interpreter,
                          "process plugin packet monitor",
-                         "Send a qCmd packet through the GDB remote protocol and print the response."
-                         "The argument passed to this command will be hex encoded into a valid 'qCmd' packet, sent and the response will be printed.",
+                         "Send a qRcmd packet through the GDB remote protocol and print the response."
+                         "The argument passed to this command will be hex encoded into a valid 'qRcmd' packet, sent and the response will be printed.",
                          NULL)
     {
     }
@@ -3181,7 +3181,7 @@ public:
         if (process)
         {
             StreamString packet;
-            packet.PutCString("qCmd,");
+            packet.PutCString("qRcmd,");
             packet.PutBytesAsRawHex8(command, strlen(command));
             const char *packet_cstr = packet.GetString().c_str();
             
