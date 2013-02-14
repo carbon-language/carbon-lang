@@ -17430,7 +17430,8 @@ static SDValue performVZEXTCombine(SDNode *N, SelectionDAG &DAG,
   if (In.getOpcode() != X86ISD::VZEXT)
     return SDValue();
 
-  return DAG.getNode(X86ISD::VZEXT, N->getDebugLoc(), N->getValueType(0), In.getOperand(0));
+  return DAG.getNode(X86ISD::VZEXT, N->getDebugLoc(), N->getValueType(0),
+                     In.getOperand(0));
 }
 
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
