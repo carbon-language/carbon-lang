@@ -162,4 +162,4 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/polly/Config/config.h.cmake
 file( GLOB_RECURSE files *.h *.cpp)
 add_custom_command( OUTPUT formatting COMMAND
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/check_format.sh ${files})
-add_custom_target(polly-check-format ALL DEPENDS formatting)
+add_custom_target(polly-check-format DEPENDS formatting)
