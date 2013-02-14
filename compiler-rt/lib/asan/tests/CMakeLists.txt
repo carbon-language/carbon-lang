@@ -32,6 +32,7 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/asan
+  -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common/tests
   -Wall
   -Wno-format
   -Werror

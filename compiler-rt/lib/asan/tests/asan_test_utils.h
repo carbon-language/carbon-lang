@@ -20,7 +20,7 @@
 # undef INCLUDED_FROM_ASAN_TEST_UTILS_H
 #endif
 
-#include "sanitizer_common/tests/sanitizer_test_utils.h"
+#include "sanitizer_test_utils.h"
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
