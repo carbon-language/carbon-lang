@@ -15,7 +15,7 @@
 
 #include "Mips.h"
 #include "MipsTargetMachine.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -70,14 +70,26 @@ namespace {
 
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
 
-    void insertDefsUses(const MachineInstr &MI, SmallSet<unsigned, 32> &RegDefs,
-                        SmallSet<unsigned, 32> &RegUses) const;
+    /// Initialize RegDefs and RegUses.
+    void initRegDefsUses(const MachineInstr &MI, BitVector &RegDefs,
+                         BitVector &RegUses) const;
 
-    bool isRegInSet(const SmallSet<unsigned, 32> &RegSet, unsigned Reg) const;
+    bool isRegInSet(const BitVector &RegSet, unsigned Reg) const;
 
+    bool checkRegDefsUses(const BitVector &RegDefs, const BitVector &RegUses,
+                          BitVector &NewDefs, BitVector &NewUses,
+                          unsigned Reg, bool IsDef) const;
+
+    bool checkRegDefsUses(BitVector &RegDefs, BitVector &RegUses,
+                          const MachineInstr &MI, unsigned Begin,
+                          unsigned End) const;
+
+    /// This function checks if it is valid to move Candidate to the delay slot
+    /// and returns true if it isn't. It also updates load and store flags and
+    /// register defs and uses.
     bool delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
-                        bool &SawStore, const SmallSet<unsigned, 32> &RegDefs,
-                        const SmallSet<unsigned, 32> &RegUses) const;
+                        bool &SawStore, BitVector &RegDefs,
+                        BitVector &RegUses) const;
 
     bool findDelayInstr(MachineBasicBlock &MBB, Iter slot, Iter &Filler) const;
 
@@ -127,10 +139,10 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 
 bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
                             Iter &Filler) const {
-  SmallSet<unsigned, 32> RegDefs;
-  SmallSet<unsigned, 32> RegUses;
+  unsigned NumRegs = TM.getRegisterInfo()->getNumRegs();
+  BitVector RegDefs(NumRegs), RegUses(NumRegs);
 
-  insertDefsUses(*Slot, RegDefs, RegUses);
+  initRegDefsUses(*Slot, RegDefs, RegUses);
 
   bool SawLoad = false;
   bool SawStore = false;
@@ -143,10 +155,8 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
     if (terminateSearch(*I))
       break;
 
-    if (delayHasHazard(*I, SawLoad, SawStore, RegDefs, RegUses)) {
-      insertDefsUses(*I, RegDefs, RegUses);
+    if (delayHasHazard(*I, SawLoad, SawStore, RegDefs, RegUses))
       continue;
-    }
 
     Filler = llvm::next(I).base();
     return true;
@@ -155,104 +165,91 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
   return false;
 }
 
+bool Filler::checkRegDefsUses(const BitVector &RegDefs,
+                              const BitVector &RegUses,
+                              BitVector &NewDefs, BitVector &NewUses,
+                              unsigned Reg, bool IsDef) const {
+  if (IsDef) {
+    NewDefs.set(Reg);
+    // check whether Reg has already been defined or used.
+    return (isRegInSet(RegDefs, Reg) || isRegInSet(RegUses, Reg));
+  }
+
+  NewUses.set(Reg);
+  // check whether Reg has already been defined.
+  return isRegInSet(RegDefs, Reg);
+}
+
+bool Filler::checkRegDefsUses(BitVector &RegDefs, BitVector &RegUses,
+                              const MachineInstr &MI, unsigned Begin,
+                              unsigned End) const {
+  unsigned NumRegs = TM.getRegisterInfo()->getNumRegs();
+  BitVector NewDefs(NumRegs), NewUses(NumRegs);
+  bool HasHazard = false;
+
+  for (unsigned I = Begin; I != End; ++I) {
+    const MachineOperand &MO = MI.getOperand(I);
+
+    if (MO.isReg() && MO.getReg())
+      HasHazard |= checkRegDefsUses(RegDefs, RegUses, NewDefs, NewUses,
+                                    MO.getReg(), MO.isDef());
+  }
+
+  RegDefs |= NewDefs;
+  RegUses |= NewUses;
+
+  return HasHazard;
+}
+
 bool Filler::delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
-                            bool &SawStore,
-                            const SmallSet<unsigned, 32> &RegDefs,
-                            const SmallSet<unsigned, 32> &RegUses) const {
-  if (Candidate.isImplicitDef() || Candidate.isKill())
-    return true;
+                            bool &SawStore, BitVector &RegDefs,
+                            BitVector &RegUses) const {
+  bool HasHazard = (Candidate.isImplicitDef() || Candidate.isKill());
 
   // Loads or stores cannot be moved past a store to the delay slot
   // and stores cannot be moved past a load.
-  if (Candidate.mayLoad()) {
-    if (SawStore)
-      return true;
-    SawLoad = true;
-  }
-
   if (Candidate.mayStore()) {
-    if (SawStore)
-      return true;
+    HasHazard |= SawStore | SawLoad;
     SawStore = true;
-    if (SawLoad)
-      return true;
+  } else if (Candidate.mayLoad()) {
+    HasHazard |= SawStore;
+    SawLoad = true;
   }
 
   assert((!Candidate.isCall() && !Candidate.isReturn()) &&
          "Cannot put calls or returns in delay slot.");
 
-  for (unsigned I = 0, E = Candidate.getNumOperands(); I != E; ++I) {
-    const MachineOperand &MO = Candidate.getOperand(I);
-    unsigned Reg;
+  HasHazard |= checkRegDefsUses(RegDefs, RegUses, Candidate, 0,
+                                Candidate.getNumOperands());
 
-    if (!MO.isReg() || !(Reg = MO.getReg()))
-      continue; // skip
-
-    if (MO.isDef()) {
-      // check whether Reg is defined or used before delay slot.
-      if (isRegInSet(RegDefs, Reg) || isRegInSet(RegUses, Reg))
-        return true;
-    }
-    if (MO.isUse()) {
-      // check whether Reg is defined before delay slot.
-      if (isRegInSet(RegDefs, Reg))
-        return true;
-    }
-  }
-  return false;
+  return HasHazard;
 }
 
-// Helper function for getting a MachineOperand's register number and adding it
-// to RegDefs or RegUses.
-static void insertDefUse(const MachineOperand &MO,
-                         SmallSet<unsigned, 32> &RegDefs,
-                         SmallSet<unsigned, 32> &RegUses,
-                         unsigned ExcludedReg = 0) {
-  unsigned Reg;
-
-  if (!MO.isReg() || !(Reg = MO.getReg()) || (Reg == ExcludedReg))
-    return;
-
-  if (MO.isDef())
-    RegDefs.insert(Reg);
-  else if (MO.isUse())
-    RegUses.insert(Reg);
-}
-
-// Insert Defs and Uses of MI into the sets RegDefs and RegUses.
-void Filler::insertDefsUses(const MachineInstr &MI,
-                            SmallSet<unsigned, 32> &RegDefs,
-                            SmallSet<unsigned, 32> &RegUses) const {
-  unsigned I, E = MI.getDesc().getNumOperands();
-
-  for (I = 0; I != E; ++I)
-    insertDefUse(MI.getOperand(I), RegDefs, RegUses);
+void Filler::initRegDefsUses(const MachineInstr &MI, BitVector &RegDefs,
+                             BitVector &RegUses) const {
+  // Add all register operands which are explicit and non-variadic.
+  checkRegDefsUses(RegDefs, RegUses, MI, 0, MI.getDesc().getNumOperands());
 
   // If MI is a call, add RA to RegDefs to prevent users of RA from going into
   // delay slot.
-  if (MI.isCall()) {
-    RegDefs.insert(Mips::RA);
-    return;
+  if (MI.isCall())
+    RegDefs.set(Mips::RA);
+
+  // Add all implicit register operands of branch instructions except
+  // register AT.
+  if (MI.isBranch()) {
+    checkRegDefsUses(RegDefs, RegUses, MI, MI.getDesc().getNumOperands(),
+                     MI.getNumOperands());
+    RegDefs.reset(Mips::AT);
   }
-
-  // Return if MI is a return.
-  if (MI.isReturn())
-    return;
-
-  // Examine the implicit operands. Exclude register AT which is in the list of
-  // clobbered registers of branch instructions.
-  E = MI.getNumOperands();
-  for (; I != E; ++I)
-    insertDefUse(MI.getOperand(I), RegDefs, RegUses, Mips::AT);
 }
 
 //returns true if the Reg or its alias is in the RegSet.
-bool Filler::isRegInSet(const SmallSet<unsigned, 32> &RegSet,
-                        unsigned Reg) const {
+bool Filler::isRegInSet(const BitVector &RegSet, unsigned Reg) const {
   // Check Reg and all aliased Registers.
   for (MCRegAliasIterator AI(Reg, TM.getRegisterInfo(), true);
        AI.isValid(); ++AI)
-    if (RegSet.count(*AI))
+    if (RegSet.test(*AI))
       return true;
   return false;
 }
