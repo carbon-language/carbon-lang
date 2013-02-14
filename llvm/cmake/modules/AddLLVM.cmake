@@ -246,8 +246,8 @@ function(configure_lit_site_cfg input output)
     set(ENABLE_ASSERTIONS "0")
   endif()
 
-  set(HOST_OS ${CMAKE_HOST_SYSTEM_NAME})
-  set(HOST_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+  set(HOST_OS ${CMAKE_SYSTEM_NAME})
+  set(HOST_ARCH ${CMAKE_SYSTEM_PROCESSOR})
 
   configure_file(${input} ${output} @ONLY)
 endfunction()
