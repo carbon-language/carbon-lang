@@ -21,6 +21,12 @@
 namespace llvm {
 namespace symbolize {
 
+static bool error(error_code ec) {
+  if (!ec) return false;
+  errs() << "LLVMSymbolizer: error reading file: " << ec.message() << ".\n";
+  return true;
+}
+
 static uint32_t getDILineInfoSpecifierFlags(
     const LLVMSymbolizer::Options &Opts) {
   uint32_t Flags = llvm::DILineInfoSpecifier::FileLineInfo |
@@ -35,6 +41,58 @@ static void patchFunctionNameInDILineInfo(const std::string &NewFunctionName,
   std::string FileName = LineInfo.getFileName();
   LineInfo = DILineInfo(StringRef(FileName), StringRef(NewFunctionName),
                         LineInfo.getLine(), LineInfo.getColumn());
+}
+
+ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
+    : Module(Obj)
+    , DebugInfoContext(DICtx) {
+  error_code ec;
+  for (symbol_iterator si = Module->begin_symbols(),
+                       se = Module->end_symbols();
+                       si != se; si.increment(ec)) {
+    if (error(ec))
+      return;
+    SymbolRef::Type SymbolType;
+    if (error(si->getType(SymbolType)))
+      continue;
+    if (SymbolType != SymbolRef::ST_Function
+        && SymbolType != SymbolRef::ST_Data)
+      continue;
+    uint64_t SymbolAddress;
+    if (error(si->getAddress(SymbolAddress))
+        || SymbolAddress == UnknownAddressOrSize)
+      continue;
+    uint64_t SymbolSize;
+    if (error(si->getSize(SymbolSize))
+        || SymbolSize == UnknownAddressOrSize)
+      continue;
+    StringRef SymbolName;
+    if (error(si->getName(SymbolName)))
+      continue;
+    // FIXME: If a function has alias, there are two entries in symbol table
+    // with same address size. Make sure we choose the correct one.
+    SymbolMapTy &M = SymbolType == SymbolRef::ST_Function ?
+        Functions : Objects;
+    SymbolDesc SD = {SymbolAddress, SymbolAddress + SymbolSize};
+    M.insert(std::make_pair(SD, SymbolName));
+  }
+}
+
+bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
+                                        std::string &Name, uint64_t &Addr,
+                                        uint64_t &Size) const {
+  const SymbolMapTy& M = Type == SymbolRef::ST_Function ?
+      Functions : Objects;
+  SymbolDesc SD = {Address, Address + 1};
+  SymbolMapTy::const_iterator it = M.find(SD);
+  if (it == M.end())
+    return false;
+  if (Address < it->first.Addr || Address >= it->first.AddrEnd)
+    return false;
+  Name = it->second.str();
+  Addr = it->first.Addr;
+  Size = it->first.AddrEnd - it->first.Addr;
+  return true;
 }
 
 DILineInfo ModuleInfo::symbolizeCode(uint64_t ModuleOffset,
@@ -92,44 +150,6 @@ bool ModuleInfo::symbolizeData(uint64_t ModuleOffset, std::string &Name,
                                uint64_t &Start, uint64_t &Size) const {
   return getNameFromSymbolTable(SymbolRef::ST_Data,
                                 ModuleOffset, Name, Start, Size);
-}
-
-static bool error(error_code ec) {
-  if (!ec) return false;
-  errs() << "LLVMSymbolizer: error reading file: " << ec.message() << ".\n";
-  return true;
-}
-
-bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
-                                        std::string &Name, uint64_t &Addr,
-                                        uint64_t &Size) const {
-  assert(Module);
-  error_code ec;
-  for (symbol_iterator si = Module->begin_symbols(),
-                       se = Module->end_symbols();
-                       si != se; si.increment(ec)) {
-    if (error(ec)) return false;
-    uint64_t SymbolAddress;
-    uint64_t SymbolSize;
-    SymbolRef::Type SymbolType;
-    if (error(si->getAddress(SymbolAddress)) ||
-        SymbolAddress == UnknownAddressOrSize) continue;
-    if (error(si->getSize(SymbolSize)) ||
-        SymbolSize == UnknownAddressOrSize) continue;
-    if (error(si->getType(SymbolType))) continue;
-    // FIXME: If a function has alias, there are two entries in symbol table
-    // with same address size. Make sure we choose the correct one.
-    if (SymbolAddress <= Address && Address < SymbolAddress + SymbolSize &&
-        SymbolType == Type) {
-      StringRef SymbolName;
-      if (error(si->getName(SymbolName))) continue;
-      Name = SymbolName.str();
-      Addr = SymbolAddress;
-      Size = SymbolSize;
-      return true;
-    }
-  }
-  return false;
 }
 
 const char LLVMSymbolizer::kBadString[] = "??";
@@ -202,7 +222,6 @@ ModuleInfo *LLVMSymbolizer::getOrCreateModuleInfo(
     return I->second;
 
   ObjectFile *Obj = getObjectFile(ModuleName);
-  ObjectFile *DbgObj = Obj;
   if (Obj == 0) {
     // Module name doesn't point to a valid object file.
     Modules.insert(make_pair(ModuleName, (ModuleInfo*)0));
@@ -214,6 +233,7 @@ ModuleInfo *LLVMSymbolizer::getOrCreateModuleInfo(
   if (getObjectEndianness(Obj, IsLittleEndian)) {
     // On Darwin we may find DWARF in separate object file in
     // resource directory.
+    ObjectFile *DbgObj = Obj;
     if (isa<MachOObjectFile>(Obj)) {
       const std::string &ResourceName = getDarwinDWARFResourceForModule(
           ModuleName);

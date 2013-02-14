@@ -63,11 +63,8 @@ private:
 };
 
 class ModuleInfo {
-  OwningPtr<ObjectFile> Module;
-  OwningPtr<DIContext> DebugInfoContext;
  public:
-  ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
-      : Module(Obj), DebugInfoContext(DICtx) {}
+  ModuleInfo(ObjectFile *Obj, DIContext *DICtx);
 
   DILineInfo symbolizeCode(
       uint64_t ModuleOffset, const LLVMSymbolizer::Options& Opts) const;
@@ -80,6 +77,19 @@ class ModuleInfo {
   bool getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
                               std::string &Name, uint64_t &Addr,
                               uint64_t &Size) const;
+  OwningPtr<ObjectFile> Module;
+  OwningPtr<DIContext> DebugInfoContext;
+
+  struct SymbolDesc {
+    uint64_t Addr;
+    uint64_t AddrEnd;
+    friend bool operator<(const SymbolDesc& s1, const SymbolDesc& s2) {
+      return s1.AddrEnd <= s2.Addr;
+    }
+  };
+  typedef std::map<SymbolDesc, StringRef> SymbolMapTy;
+  SymbolMapTy Functions;
+  SymbolMapTy Objects;
 };
 
 }  // namespace symbolize
