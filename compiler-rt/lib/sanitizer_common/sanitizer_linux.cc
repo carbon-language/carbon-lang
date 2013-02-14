@@ -254,7 +254,7 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
 }
 
 void ReExec() {
-  static const int kMaxArgv = 100, kMaxEnvp = 1000;
+  static const int kMaxArgv = 2000, kMaxEnvp = 2000;
   char **argv, **envp;
   ReadNullSepFileToArray("/proc/self/cmdline", &argv, kMaxArgv);
   ReadNullSepFileToArray("/proc/self/environ", &envp, kMaxEnvp);
