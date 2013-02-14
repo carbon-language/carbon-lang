@@ -2373,7 +2373,7 @@ LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(
     const char *InputData,
     size_t InputDataLength,
     const char *BufferName,
-    bool RequiresNullTerminator) {
+    LLVMBool RequiresNullTerminator) {
 
   return wrap(MemoryBuffer::getMemBuffer(
       StringRef(InputData, InputDataLength),
