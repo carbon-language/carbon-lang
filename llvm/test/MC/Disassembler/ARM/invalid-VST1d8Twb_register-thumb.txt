@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------------------------------
 #
 # A8.6.391 VST1 (multiple single elements)
-# This encoding looks like: vst1.8 {d0,d1,d2}, [r0, :128]
+# This encoding looks like: vst1.8 {d0,d1,d2}, [r0:128]
 # But bits 5-4 for the alignment of 128 encoded as align = 0b10, is available only if <list>
 # contains two or four registers.  rdar://11220250
 0x00 0xf9 0x2f 0x06

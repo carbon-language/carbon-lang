@@ -30,7 +30,7 @@ entry:
 
 define hidden void @conv4_8_E() nounwind {
 entry:
-%asmtmp31 = call %0 asm "vld1.u8  {$0}, [$1, :128]!\0A", "=w,=r,1"(<16 x i8>* undef) nounwind
+%asmtmp31 = call %0 asm "vld1.u8  {$0}, [$1:128]!\0A", "=w,=r,1"(<16 x i8>* undef) nounwind
 unreachable
 }
 

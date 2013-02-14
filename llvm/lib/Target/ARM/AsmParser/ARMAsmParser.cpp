@@ -4237,9 +4237,10 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   if (BaseRegNum == -1)
     return Error(BaseRegTok.getLoc(), "register expected");
 
-  // The next token must either be a comma or a closing bracket.
+  // The next token must either be a comma, a colon or a closing bracket.
   const AsmToken &Tok = Parser.getTok();
-  if (!Tok.is(AsmToken::Comma) && !Tok.is(AsmToken::RBrac))
+  if (!Tok.is(AsmToken::Colon) && !Tok.is(AsmToken::Comma) &&
+      !Tok.is(AsmToken::RBrac))
     return Error(Tok.getLoc(), "malformed memory operand");
 
   if (Tok.is(AsmToken::RBrac)) {
@@ -4259,8 +4260,11 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return false;
   }
 
-  assert(Tok.is(AsmToken::Comma) && "Lost comma in memory operand?!");
-  Parser.Lex(); // Eat the comma.
+  assert((Tok.is(AsmToken::Colon) || Tok.is(AsmToken::Comma)) &&
+         "Lost colon or comma in memory operand?!");
+  if (Tok.is(AsmToken::Comma)) {
+    Parser.Lex(); // Eat the comma.
+  }
 
   // If we have a ':', it's an alignment specifier.
   if (Parser.getTok().is(AsmToken::Colon)) {
