@@ -162,6 +162,10 @@ TEST_F(FormatTest, OnlyGeneratesNecessaryReplacements) {
   EXPECT_EQ(0, ReplacementCount);
 }
 
+TEST_F(FormatTest, RemovesTrailingWhitespaceOfFormattedLine) {
+  EXPECT_EQ("int a;\nint b;", format("int a; \nint b;", 0, 0, getLLVMStyle()));
+}
+
 //===----------------------------------------------------------------------===//
 // Tests for control statements.
 //===----------------------------------------------------------------------===//
