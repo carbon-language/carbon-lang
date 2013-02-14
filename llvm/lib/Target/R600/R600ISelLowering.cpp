@@ -303,57 +303,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 using namespace llvm::Intrinsic;
 using namespace llvm::AMDGPUIntrinsic;
 
-static SDValue
-InsertScalarToRegisterExport(SelectionDAG &DAG, DebugLoc DL, SDNode **ExportMap,
-    unsigned Slot, unsigned Channel, unsigned Inst, unsigned Type,
-    SDValue Scalar, SDValue Chain) {
-  if (!ExportMap[Slot]) {
-    SDValue Vector = DAG.getNode(ISD::INSERT_VECTOR_ELT,
-      DL, MVT::v4f32,
-      DAG.getUNDEF(MVT::v4f32),
-      Scalar,
-      DAG.getConstant(Channel, MVT::i32));
-
-    unsigned Mask = 1 << Channel;
-
-    const SDValue Ops[] = {Chain, Vector, DAG.getConstant(Inst, MVT::i32),
-        DAG.getConstant(Type, MVT::i32), DAG.getConstant(Slot, MVT::i32),
-        DAG.getConstant(Mask, MVT::i32)};
-
-    SDValue Res =  DAG.getNode(
-        AMDGPUISD::EXPORT,
-        DL,
-        MVT::Other,
-        Ops, 6);
-     ExportMap[Slot] = Res.getNode();
-     return Res;
-  }
-
-  SDNode *ExportInstruction = (SDNode *) ExportMap[Slot] ;
-  SDValue PreviousVector = ExportInstruction->getOperand(1);
-  SDValue Vector = DAG.getNode(ISD::INSERT_VECTOR_ELT,
-      DL, MVT::v4f32,
-      PreviousVector,
-      Scalar,
-      DAG.getConstant(Channel, MVT::i32));
-
-  unsigned Mask = dyn_cast<ConstantSDNode>(ExportInstruction->getOperand(5))
-      ->getZExtValue();
-  Mask |= (1 << Channel);
-
-  const SDValue Ops[] = {ExportInstruction->getOperand(0), Vector,
-      DAG.getConstant(Inst, MVT::i32),
-      DAG.getConstant(Type, MVT::i32),
-      DAG.getConstant(Slot, MVT::i32),
-      DAG.getConstant(Mask, MVT::i32)};
-
-  DAG.UpdateNodeOperands(ExportInstruction,
-      Ops, 6);
-
-  return Chain;
-
-}
-
 SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
@@ -379,16 +328,19 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       MFI->LiveOuts.push_back(Reg);
       return DAG.getCopyToReg(Chain, Op.getDebugLoc(), Reg, Op.getOperand(2));
     }
-    case AMDGPUIntrinsic::R600_store_pixel_color: {
-      MachineFunction &MF = DAG.getMachineFunction();
-      R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
-      int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-
-      SDNode **OutputsMap = MFI->Outputs;
-      return InsertScalarToRegisterExport(DAG, Op.getDebugLoc(), OutputsMap,
-          RegIndex / 4, RegIndex % 4, 0, 0, Op.getOperand(2),
-          Chain);
-
+    case AMDGPUIntrinsic::R600_store_swizzle: {
+      const SDValue Args[8] = {
+        Chain,
+        Op.getOperand(2), // Export Value
+        Op.getOperand(3), // ArrayBase
+        Op.getOperand(4), // Type
+        DAG.getConstant(0, MVT::i32), // SWZ_X
+        DAG.getConstant(1, MVT::i32), // SWZ_Y
+        DAG.getConstant(2, MVT::i32), // SWZ_Z
+        DAG.getConstant(3, MVT::i32) // SWZ_W
+      };
+      return DAG.getNode(AMDGPUISD::EXPORT, Op.getDebugLoc(), Op.getValueType(),
+          Args, 8);
     }
 
     // default for switch(IntrinsicID)
@@ -1195,7 +1147,43 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
                            LHS.getOperand(2),
                            LHS.getOperand(3),
                            CCOpcode);
-
+    }
+  case AMDGPUISD::EXPORT: {
+    SDValue Arg = N->getOperand(1);
+    if (Arg.getOpcode() != ISD::BUILD_VECTOR)
+      break;
+    SDValue NewBldVec[4] = {
+        DAG.getUNDEF(MVT::f32),
+        DAG.getUNDEF(MVT::f32),
+        DAG.getUNDEF(MVT::f32),
+        DAG.getUNDEF(MVT::f32)
+      };
+    SDValue NewArgs[8] = {
+      N->getOperand(0), // Chain
+      SDValue(),
+      N->getOperand(2), // ArrayBase
+      N->getOperand(3), // Type
+      N->getOperand(4), // SWZ_X
+      N->getOperand(5), // SWZ_Y
+      N->getOperand(6), // SWZ_Z
+      N->getOperand(7) // SWZ_W
+    };
+    for (unsigned i = 0; i < Arg.getNumOperands(); i++) {
+      if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Arg.getOperand(i))) {
+        if (C->isZero()) {
+          NewArgs[4 + i] = DAG.getConstant(4, MVT::i32); // SEL_0
+        } else if (C->isExactlyValue(1.0)) {
+          NewArgs[4 + i] = DAG.getConstant(5, MVT::i32); // SEL_0
+        } else {
+          NewBldVec[i] = Arg.getOperand(i);
+        }
+      } else {
+        NewBldVec[i] = Arg.getOperand(i);
+      }
+    }
+    DebugLoc DL = N->getDebugLoc();
+    NewArgs[1] = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v4f32, NewBldVec, 4);
+    return DAG.getNode(AMDGPUISD::EXPORT, DL, N->getVTList(), NewArgs, 8);
   }
   }
   return SDValue();
