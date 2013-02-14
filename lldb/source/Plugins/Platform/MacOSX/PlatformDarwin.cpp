@@ -315,33 +315,52 @@ PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
             FileSpec bundle_directory;
             if (Host::GetBundleDirectory (platform_file, bundle_directory))
             {
-                char platform_path[PATH_MAX];
-                char bundle_dir[PATH_MAX];
-                platform_file.GetPath (platform_path, sizeof(platform_path));
-                const size_t bundle_directory_len = bundle_directory.GetPath (bundle_dir, sizeof(bundle_dir));
-                char new_path[PATH_MAX];
-                size_t num_module_search_paths = module_search_paths_ptr->GetSize();
-                for (size_t i=0; i<num_module_search_paths; ++i)
+                if (platform_file == bundle_directory)
                 {
-                    const size_t search_path_len = module_search_paths_ptr->GetFileSpecAtIndex(i).GetPath(new_path, sizeof(new_path));
-                    if (search_path_len < sizeof(new_path))
+                    ModuleSpec new_module_spec (module_spec);
+                    new_module_spec.GetFileSpec() = bundle_directory;
+                    if (Host::ResolveExecutableInBundle (new_module_spec.GetFileSpec()))
                     {
-                        snprintf (new_path + search_path_len, sizeof(new_path) - search_path_len, "/%s", platform_path + bundle_directory_len);
-                        FileSpec new_file_spec (new_path, false);
-                        if (new_file_spec.Exists())
+                        Error new_error (Platform::GetSharedModule (new_module_spec,
+                                                                    module_sp,
+                                                                    NULL,
+                                                                    old_module_sp_ptr,
+                                                                    did_create_ptr));
+                        
+                        if (module_sp)
+                            return new_error;
+                    }
+                }
+                else
+                {
+                    char platform_path[PATH_MAX];
+                    char bundle_dir[PATH_MAX];
+                    platform_file.GetPath (platform_path, sizeof(platform_path));
+                    const size_t bundle_directory_len = bundle_directory.GetPath (bundle_dir, sizeof(bundle_dir));
+                    char new_path[PATH_MAX];
+                    size_t num_module_search_paths = module_search_paths_ptr->GetSize();
+                    for (size_t i=0; i<num_module_search_paths; ++i)
+                    {
+                        const size_t search_path_len = module_search_paths_ptr->GetFileSpecAtIndex(i).GetPath(new_path, sizeof(new_path));
+                        if (search_path_len < sizeof(new_path))
                         {
-                            ModuleSpec new_module_spec (module_spec);
-                            new_module_spec.GetFileSpec() = new_file_spec;
-                            Error new_error (Platform::GetSharedModule (new_module_spec,
-                                                                        module_sp,
-                                                                        NULL,
-                                                                        old_module_sp_ptr,
-                                                                        did_create_ptr));
-                            
-                            if (module_sp)
+                            snprintf (new_path + search_path_len, sizeof(new_path) - search_path_len, "/%s", platform_path + bundle_directory_len);
+                            FileSpec new_file_spec (new_path, false);
+                            if (new_file_spec.Exists())
                             {
-                                module_sp->SetPlatformFileSpec(new_file_spec);
-                                return new_error;
+                                ModuleSpec new_module_spec (module_spec);
+                                new_module_spec.GetFileSpec() = new_file_spec;
+                                Error new_error (Platform::GetSharedModule (new_module_spec,
+                                                                            module_sp,
+                                                                            NULL,
+                                                                            old_module_sp_ptr,
+                                                                            did_create_ptr));
+                                
+                                if (module_sp)
+                                {
+                                    module_sp->SetPlatformFileSpec(new_file_spec);
+                                    return new_error;
+                                }
                             }
                         }
                     }
