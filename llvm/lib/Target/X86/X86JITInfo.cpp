@@ -342,6 +342,12 @@ extern "C" {
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
 extern "C" {
+#if !(defined (X86_64_JIT) && defined(_MSC_VER))
+ // the following function is called only from this translation unit,
+ // unless we are under 64bit Windows with MSC, where there is
+ // no support for inline assembly
+static
+#endif
 void LLVM_ATTRIBUTE_USED
 X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];

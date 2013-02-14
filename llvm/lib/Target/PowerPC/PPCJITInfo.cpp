@@ -292,7 +292,7 @@ void PPC64CompilationCallback() {
 #endif
 
 extern "C" {
-void* LLVM_ATTRIBUTE_USED PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
+static void* LLVM_ATTRIBUTE_USED PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
                                                          unsigned *OrigCallAddrPlus4,
                                                          bool is64Bit) {
   // Adjust the pointer to the address of the call instruction in the stub
