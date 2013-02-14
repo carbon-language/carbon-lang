@@ -549,11 +549,14 @@ public:
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
   typedef llvm::DenseMap<IdentifierInfo*, ObjCPropertyDecl*> PropertyMap;
-
+  
+  typedef llvm::SmallVector<ObjCPropertyDecl*, 8> PropertyDeclOrder;
+  
   /// This routine collects list of properties to be implemented in the class.
   /// This includes, class's and its conforming protocols' properties.
   /// Note, the superclass's properties are not included in the list.
-  virtual void collectPropertiesToImplement(PropertyMap &PM) const {}
+  virtual void collectPropertiesToImplement(PropertyMap &PM,
+                                            PropertyDeclOrder &PO) const {}
 
   SourceLocation getAtStartLoc() const { return AtStart; }
   void setAtStartLoc(SourceLocation Loc) { AtStart = Loc; }
@@ -1090,7 +1093,8 @@ public:
   ObjCPropertyDecl
     *FindPropertyVisibleInPrimaryClass(IdentifierInfo *PropertyId) const;
 
-  virtual void collectPropertiesToImplement(PropertyMap &PM) const;
+  virtual void collectPropertiesToImplement(PropertyMap &PM,
+                                            PropertyDeclOrder &PO) const;
 
   /// isSuperClassOf - Return true if this class is the specified class or is a
   /// super class of the specified interface class.
@@ -1489,7 +1493,8 @@ public:
     return getFirstDeclaration();
   }
 
-  virtual void collectPropertiesToImplement(PropertyMap &PM) const;
+  virtual void collectPropertiesToImplement(PropertyMap &PM,
+                                            PropertyDeclOrder &PO) const;
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == ObjCProtocol; }

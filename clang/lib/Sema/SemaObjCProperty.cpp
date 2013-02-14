@@ -1534,8 +1534,9 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
 static void CollectSuperClassPropertyImplementations(ObjCInterfaceDecl *CDecl,
                                     ObjCInterfaceDecl::PropertyMap &PropMap) {
   if (ObjCInterfaceDecl *SDecl = CDecl->getSuperClass()) {
+    ObjCInterfaceDecl::PropertyDeclOrder PO;
     while (SDecl) {
-      SDecl->collectPropertiesToImplement(PropMap);
+      SDecl->collectPropertiesToImplement(PropMap, PO);
       SDecl = SDecl->getSuperClass();
     }
   }
@@ -1574,15 +1575,15 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                        ObjCInterfaceDecl *IDecl) {
   
   ObjCInterfaceDecl::PropertyMap PropMap;
-  IDecl->collectPropertiesToImplement(PropMap);
+  ObjCInterfaceDecl::PropertyDeclOrder PropertyOrder;
+  IDecl->collectPropertiesToImplement(PropMap, PropertyOrder);
   if (PropMap.empty())
     return;
   ObjCInterfaceDecl::PropertyMap SuperPropMap;
   CollectSuperClassPropertyImplementations(IDecl, SuperPropMap);
   
-  for (ObjCInterfaceDecl::PropertyMap::iterator
-       P = PropMap.begin(), E = PropMap.end(); P != E; ++P) {
-    ObjCPropertyDecl *Prop = P->second;
+  for (unsigned i = 0, e = PropertyOrder.size(); i != e; i++) {
+    ObjCPropertyDecl *Prop = PropertyOrder[i];
     // If property to be implemented in the super class, ignore.
     if (SuperPropMap[Prop->getIdentifier()])
       continue;
@@ -1648,8 +1649,10 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
       // For categories, no need to implement properties declared in
       // its primary class (and its super classes) if property is
       // declared in one of those containers.
-      if ((IDecl = C->getClassInterface()))
-        IDecl->collectPropertiesToImplement(NoNeedToImplPropMap);
+      if ((IDecl = C->getClassInterface())) {
+        ObjCInterfaceDecl::PropertyDeclOrder PO;
+        IDecl->collectPropertiesToImplement(NoNeedToImplPropMap, PO);
+      }
     }
   if (IDecl)
     CollectSuperClassPropertyImplementations(IDecl, NoNeedToImplPropMap);

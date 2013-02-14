@@ -217,16 +217,18 @@ ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
   return 0;
 }
 
-void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM) const {
+void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM,
+                                                     PropertyDeclOrder &PO) const {
   for (ObjCContainerDecl::prop_iterator P = prop_begin(),
       E = prop_end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = *P;
     PM[Prop->getIdentifier()] = Prop;
+    PO.push_back(Prop);
   }
   for (ObjCInterfaceDecl::all_protocol_iterator
       PI = all_referenced_protocol_begin(),
       E = all_referenced_protocol_end(); PI != E; ++PI)
-    (*PI)->collectPropertiesToImplement(PM);
+    (*PI)->collectPropertiesToImplement(PM, PO);
   // Note, the properties declared only in class extensions are still copied
   // into the main @interface's property list, and therefore we don't
   // explicitly, have to search class extension properties.
@@ -1433,7 +1435,8 @@ void ObjCProtocolDecl::startDefinition() {
     RD->Data = this->Data;
 }
 
-void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM) const {
+void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM,
+                                                    PropertyDeclOrder &PO) const {
   
   if (const ObjCProtocolDecl *PDecl = getDefinition()) {
     for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
@@ -1441,11 +1444,12 @@ void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM) const {
       ObjCPropertyDecl *Prop = *P;
       // Insert into PM if not there already.
       PM.insert(std::make_pair(Prop->getIdentifier(), Prop));
+      PO.push_back(Prop);
     }
     // Scan through protocol's protocols.
     for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
          E = PDecl->protocol_end(); PI != E; ++PI)
-      (*PI)->collectPropertiesToImplement(PM);
+      (*PI)->collectPropertiesToImplement(PM, PO);
   }
 }
 
