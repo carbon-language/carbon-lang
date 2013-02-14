@@ -323,6 +323,8 @@ private:
           Contexts.back().FirstObjCSelectorName = Tok->Parent;
       } else if (Contexts.back().ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
+      } else if (Contexts.size() == 1) {
+        Tok->Type = TT_InheritanceColon;
       }
       break;
     case tok::kw_if:
@@ -856,7 +858,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(tok::coloncolon))
     return 500;
 
-  if (Left.Type == TT_RangeBasedForLoopColon)
+  if (Left.Type == TT_RangeBasedForLoopColon ||
+      Left.Type == TT_InheritanceColon)
     return 5;
 
   if (Right.is(tok::arrow) || Right.is(tok::period)) {
@@ -1040,7 +1043,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
     return true;
-  if (Left.Type == TT_RangeBasedForLoopColon)
+  if (Right.Type == TT_RangeBasedForLoopColon ||
+      Right.Type == TT_InheritanceColon)
+    return false;
+  if (Left.Type == TT_RangeBasedForLoopColon ||
+      Left.Type == TT_InheritanceColon)
     return true;
   if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
       Left.Type == TT_UnaryOperator || Left.Type == TT_ConditionalExpr ||

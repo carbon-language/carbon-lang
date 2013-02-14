@@ -34,6 +34,7 @@ enum TokenType {
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
   TT_ImplicitStringLiteral,
+  TT_InheritanceColon,
   TT_LineComment,
   TT_ObjCArrayLiteral,
   TT_ObjCBlockLParen,

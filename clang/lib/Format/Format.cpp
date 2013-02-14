@@ -524,6 +524,8 @@ private:
                 Previous.Type == TT_CtorInitializerColon) &&
                getPrecedence(Previous) != prec::Assignment)
         State.Stack.back().LastSpace = State.Column;
+      else if (Previous.Type == TT_InheritanceColon)
+        State.Stack.back().Indent = State.Column;
       else if (Previous.ParameterCount > 1 &&
                (Previous.is(tok::l_paren) || Previous.is(tok::l_square) ||
                 Previous.is(tok::l_brace) ||
@@ -564,6 +566,8 @@ private:
     const AnnotatedToken &Current = *State.NextToken;
     assert(State.Stack.size());
 
+    if (Current.Type == TT_InheritanceColon)
+      State.Stack.back().AvoidBinPacking = true;
     if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0)
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))

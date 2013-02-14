@@ -584,6 +584,25 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
 TEST_F(FormatTest, FormatsDerivedClass) {
   verifyFormat("class A : public B {\n};");
   verifyFormat("class A : public ::B {\n};");
+
+  verifyFormat(
+      "class AAAAAAAAAAAAAAAAAAAA : public BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB,\n"
+      "                             public CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC {\n"
+      "};\n");
+  verifyFormat("class AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA :\n"
+               "    public BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB,\n"
+               "    public CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC {\n"
+               "};\n");
+  verifyFormat(
+      "class A : public B, public C, public D, public E, public F, public G {\n"
+      "};");
+  verifyFormat("class AAAAAAAAAAAA : public B,\n"
+               "                     public C,\n"
+               "                     public D,\n"
+               "                     public E,\n"
+               "                     public F,\n"
+               "                     public G {\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {
@@ -1016,6 +1035,9 @@ TEST_F(FormatTest, PreventConfusingIndents) {
   verifyFormat("int a = bbbb && ccc && fffff(\n"
                "#define A Just forcing a new line\n"
                "                           ddd);");
+}
+
+TEST_F(FormatTest, Inheritance) {
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {
