@@ -2369,6 +2369,29 @@ LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
   return 1;
 }
 
+LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(
+    const char *InputData,
+    size_t InputDataLength,
+    const char *BufferName,
+    bool RequiresNullTerminator) {
+
+  return wrap(MemoryBuffer::getMemBuffer(
+      StringRef(InputData, InputDataLength),
+      StringRef(BufferName),
+      RequiresNullTerminator));
+}
+
+LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(
+    const char *InputData,
+    size_t InputDataLength,
+    const char *BufferName) {
+
+  return wrap(MemoryBuffer::getMemBufferCopy(
+      StringRef(InputData, InputDataLength),
+      StringRef(BufferName)));
+}
+
+
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {
   delete unwrap(MemBuf);
 }

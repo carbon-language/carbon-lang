@@ -2548,6 +2548,13 @@ LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(const char *Path,
                                                   char **OutMessage);
 LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                          char **OutMessage);
+LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(const char *InputData,
+                                                          size_t InputDataLength,
+                                                          const char *BufferName,
+                                                          bool RequiresNullTerminator);
+LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(const char *InputData,
+                                                              size_t InputDataLength,
+                                                              const char *BufferName);
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
 
 /**
