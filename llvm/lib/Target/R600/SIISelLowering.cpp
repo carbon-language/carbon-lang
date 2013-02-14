@@ -120,9 +120,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::SI_INTERP:
     LowerSI_INTERP(MI, *BB, I, MRI);
     break;
-  case AMDGPU::SI_INTERP_CONST:
-    LowerSI_INTERP_CONST(MI, *BB, I, MRI);
-    break;
   case AMDGPU::SI_WQM:
     LowerSI_WQM(MI, *BB, I, MRI);
     break;
@@ -165,27 +162,6 @@ void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
           .addOperand(dst)
           .addReg(tmp)
           .addOperand(jReg)
-          .addOperand(attr_chan)
-          .addOperand(attr)
-          .addReg(M0);
-
-  MI->eraseFromParent();
-}
-
-void SITargetLowering::LowerSI_INTERP_CONST(MachineInstr *MI,
-    MachineBasicBlock &BB, MachineBasicBlock::iterator I,
-    MachineRegisterInfo &MRI) const {
-  MachineOperand dst = MI->getOperand(0);
-  MachineOperand attr_chan = MI->getOperand(1);
-  MachineOperand attr = MI->getOperand(2);
-  MachineOperand params = MI->getOperand(3);
-  unsigned M0 = MRI.createVirtualRegister(&AMDGPU::M0RegRegClass);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32), M0)
-          .addOperand(params);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_MOV_F32))
-          .addOperand(dst)
           .addOperand(attr_chan)
           .addOperand(attr)
           .addReg(M0);

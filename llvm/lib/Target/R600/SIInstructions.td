@@ -11,6 +11,17 @@
 // that are not yet supported remain commented out.
 //===----------------------------------------------------------------------===//
 
+class InterpSlots {
+int P0 = 2;
+int P10 = 0;
+int P20 = 1;
+}
+def INTERP : InterpSlots;
+
+def InterpSlot : Operand<i32> {
+  let PrintMethod = "printInterpSlot";
+}
+
 def isSI : Predicate<"Subtarget.device()"
                             "->getGeneration() == AMDGPUDeviceInfo::HD7XXX">;
 
@@ -681,10 +692,9 @@ def V_INTERP_P2_F32 : VINTRP <
 def V_INTERP_MOV_F32 : VINTRP <
   0x00000002,
   (outs VReg_32:$dst),
-  (ins i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "V_INTERP_MOV_F32",
+  (ins InterpSlot:$src0, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
+  "V_INTERP_MOV_F32 $dst, $src0, $attr_chan, $attr",
   []> {
-  let VSRC = 0;
   let DisableEncoding = "$m0";
 }
 
@@ -1079,14 +1089,6 @@ def SI_INTERP : InstSI <
   []
 >;
 
-def SI_INTERP_CONST : InstSI <
-  (outs VReg_32:$dst),
-  (ins i32imm:$attr_chan, i32imm:$attr, SReg_32:$params),
-  "SI_INTERP_CONST $dst, $attr_chan, $attr, $params",
-  [(set VReg_32:$dst, (int_SI_fs_interp_constant imm:$attr_chan,
-                                                 imm:$attr, SReg_32:$params))]
->;
-
 def SI_WQM : InstSI <
   (outs),
   (ins),
@@ -1320,6 +1322,11 @@ def : Pat <
 /********** ===================== **********/
 /********** Interpolation Paterns **********/
 /********** ===================== **********/
+
+def : Pat <
+  (int_SI_fs_interp_constant imm:$attr_chan, imm:$attr, SReg_32:$params),
+  (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr, SReg_32:$params)
+>;
 
 def : Pat <
   (int_SI_fs_interp_linear_center imm:$attr_chan, imm:$attr, SReg_32:$params),

@@ -33,6 +33,7 @@ public:
 
 private:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printInterpSlot(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printIfSet(const MCInst *MI, unsigned OpNo, raw_ostream &O, StringRef Asm);
   void printAbs(const MCInst *MI, unsigned OpNo, raw_ostream &O);

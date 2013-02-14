@@ -40,6 +40,21 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
+void AMDGPUInstPrinter::printInterpSlot(const MCInst *MI, unsigned OpNum,
+                                        raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+
+  if (Imm == 2) {
+    O << "P0";
+  } else if (Imm == 1) {
+    O << "P20";
+  } else if (Imm == 0) {
+    O << "P10";
+  } else {
+    assert(!"Invalid interpolation parameter slot");
+  }
+}
+
 void AMDGPUInstPrinter::printMemOperand(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   printOperand(MI, OpNo, O);
