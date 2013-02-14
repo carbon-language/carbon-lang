@@ -315,7 +315,7 @@ namespace {
     void ExitScope();
     
     /// \brief Ignore this declaration, if it is seen again.
-    void Ignore(Decl *D) { AllDeclsFound.insert(D->getCanonicalDecl()); }
+    void Ignore(const Decl *D) { AllDeclsFound.insert(D->getCanonicalDecl()); }
 
     /// \name Name lookup predicates
     ///
@@ -3094,7 +3094,7 @@ static void MaybeAddOverrideCalls(Sema &S, DeclContext *InContext,
        M != MEnd; ++M) {
     CodeCompletionBuilder Builder(Results.getAllocator(),
                                   Results.getCodeCompletionTUInfo());
-    CXXMethodDecl *Overridden = const_cast<CXXMethodDecl *>(*M);
+    const CXXMethodDecl *Overridden = *M;
     if (Overridden->getCanonicalDecl() == Method->getCanonicalDecl())
       continue;
         
