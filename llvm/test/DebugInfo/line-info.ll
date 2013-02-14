@@ -1,4 +1,4 @@
-; RUN: llc -filetype=obj -O0 < %s > %t
+; RUN: llc -mtriple=x86_64-apple-darwin -filetype=obj -O0 < %s > %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; CHECK: 2      0      1   0  is_stmt
