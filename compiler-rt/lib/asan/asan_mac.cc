@@ -117,7 +117,8 @@ void MaybeReexec() {
       internal_strncpy(new_env, dyld_insert_libraries, old_env_len);
       new_env[old_env_len] = ':';
       // Copy fname_len and add a trailing zero.
-      internal_strncpy(new_env + old_env_len + 1, info.dli_fname, fname_len + 1);
+      internal_strncpy(new_env + old_env_len + 1, info.dli_fname,
+                       fname_len + 1);
       setenv(kDyldInsertLibraries, new_env, /*overwrite*/1);
     } else {
       // Set DYLD_INSERT_LIBRARIES equal to the runtime dylib name.
