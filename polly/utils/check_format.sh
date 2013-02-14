@@ -4,7 +4,7 @@ OK=0
 
 for ARG in "$@"
   do
-    clang-format $1 | diff $1 -
+    clang-format $1 | diff -u $1 -
 
     if [[ $? -eq 1 ]]; then
       OK=1
