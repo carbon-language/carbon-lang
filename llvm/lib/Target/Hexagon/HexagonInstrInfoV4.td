@@ -3726,89 +3726,50 @@ def : Pat<(store (i64 DoubleRegs:$src1),
           (STrid_abs_V4 tglobaladdr: $absaddr, DoubleRegs: $src1)>;
 }
 
-multiclass LD_abs<string OpcStr> {
-  let isPredicable = 1 in
-  def _abs_V4 : LDInst2<(outs IntRegs:$dst),
-            (ins globaladdress:$absaddr),
-            !strconcat("$dst = ", !strconcat(OpcStr, "(##$absaddr)")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cPt_V4 : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, globaladdress:$absaddr),
-            !strconcat("if ($src1) $dst = ",
-            !strconcat(OpcStr, "(##$absaddr)")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, globaladdress:$absaddr),
-            !strconcat("if (!$src1) $dst = ",
-            !strconcat(OpcStr, "(##$absaddr)")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cdnPt_V4 : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, globaladdress:$absaddr),
-            !strconcat("if ($src1.new) $dst = ",
-            !strconcat(OpcStr, "(##$absaddr)")),
-            []>,
-            Requires<[HasV4T]>;
-
-  let isPredicated = 1 in
-  def _abs_cdnNotPt_V4 : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, globaladdress:$absaddr),
-            !strconcat("if (!$src1.new) $dst = ",
-            !strconcat(OpcStr, "(##$absaddr)")),
+multiclass LD_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
+                           bit isPredNew> {
+  let PNewValue = !if(isPredNew, "new", "") in
+  def NAME : LDInst2<(outs RC:$dst),
+            (ins PredRegs:$src1, globaladdressExt:$absaddr),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#"$dst = "#mnemonic#"(##$absaddr)",
             []>,
             Requires<[HasV4T]>;
 }
 
-let AddedComplexity = 30 in
-def LDrid_abs_V4 : LDInst<(outs DoubleRegs:$dst),
-          (ins globaladdress:$absaddr),
-          "$dst = memd(##$absaddr)",
-          [(set (i64 DoubleRegs:$dst),
-                (load (HexagonCONST32 tglobaladdr:$absaddr)))]>,
-          Requires<[HasV4T]>;
+multiclass LD_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
+  let PredSense = !if(PredNot, "false", "true") in {
+    defm _c#NAME : LD_Abs_Predbase<mnemonic, RC, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME : LD_Abs_Predbase<mnemonic, RC, PredNot, 1>;
+  }
+}
 
-let AddedComplexity = 30, isPredicated = 1 in
-def LDrid_abs_cPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-          (ins PredRegs:$src1, globaladdress:$absaddr),
-          "if ($src1) $dst = memd(##$absaddr)",
-          []>,
-          Requires<[HasV4T]>;
+let isExtended = 1, neverHasSideEffects = 1 in
+multiclass LD_Abs<string mnemonic, string CextOp, RegisterClass RC> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
+    let  opExtendable = 1, isPredicable = 1 in
+    def NAME#_V4 : LDInst2<(outs RC:$dst),
+            (ins globaladdressExt:$absaddr),
+            "$dst = "#mnemonic#"(##$absaddr)",
+            []>,
+            Requires<[HasV4T]>;
 
-let AddedComplexity = 30, isPredicated = 1 in
-def LDrid_abs_cNotPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-          (ins PredRegs:$src1, globaladdress:$absaddr),
-          "if (!$src1) $dst = memd(##$absaddr)",
-          []>,
-          Requires<[HasV4T]>;
+    let opExtendable = 2, isPredicated = 1 in {
+      defm Pt_V4 : LD_Abs_Pred<mnemonic, RC, 0>;
+      defm NotPt_V4 : LD_Abs_Pred<mnemonic, RC, 1>;
+    }
+  }
+}
 
-let AddedComplexity = 30, isPredicated = 1 in
-def LDrid_abs_cdnPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-          (ins PredRegs:$src1, globaladdress:$absaddr),
-          "if ($src1.new) $dst = memd(##$absaddr)",
-          []>,
-          Requires<[HasV4T]>;
-
-let AddedComplexity = 30, isPredicated = 1 in
-def LDrid_abs_cdnNotPt_V4 : LDInst2<(outs DoubleRegs:$dst),
-          (ins PredRegs:$src1, globaladdress:$absaddr),
-          "if (!$src1.new) $dst = memd(##$absaddr)",
-          []>,
-          Requires<[HasV4T]>;
-
-defm LDrib : LD_abs<"memb">;
-defm LDriub : LD_abs<"memub">;
-defm LDrih : LD_abs<"memh">;
-defm LDriuh : LD_abs<"memuh">;
-defm LDriw : LD_abs<"memw">;
-
+let addrMode = Absolute in {
+    defm LDrib_abs  : LD_Abs<"memb", "LDrib", IntRegs>, AddrModeRel;
+    defm LDriub_abs : LD_Abs<"memub", "LDriub", IntRegs>, AddrModeRel;
+    defm LDrih_abs  : LD_Abs<"memh", "LDrih", IntRegs>, AddrModeRel;
+    defm LDriuh_abs : LD_Abs<"memuh", "LDriuh", IntRegs>, AddrModeRel;
+    defm LDriw_abs  : LD_Abs<"memw", "LDriw", IntRegs>, AddrModeRel;
+    defm LDrid_abs : LD_Abs<"memd",  "LDrid", DoubleRegs>, AddrModeRel;
+}
 
 let Predicates = [HasV4T], AddedComplexity  = 30 in
 def : Pat<(i32 (load (HexagonCONST32 tglobaladdr:$absaddr))),
