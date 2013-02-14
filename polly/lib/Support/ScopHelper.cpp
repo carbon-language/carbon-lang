@@ -41,13 +41,14 @@ Loop *polly::castToLoop(const Region &R, LoopInfo &LI) {
   BasicBlock *exit = L->getExitBlock();
 
   // Is the loop with multiple exits?
-  if (!exit) return 0;
+  if (!exit)
+    return 0;
 
   if (exit != R.getExit()) {
     // SubRegion/ParentRegion with the same entry.
-    assert((R.getNode(R.getEntry())->isSubRegion()
-            || R.getParent()->getEntry() == entry)
-           && "Expect the loop is the smaller or bigger region");
+    assert((R.getNode(R.getEntry())->isSubRegion() ||
+            R.getParent()->getEntry() == entry) &&
+           "Expect the loop is the smaller or bigger region");
     return 0;
   }
 
@@ -67,14 +68,15 @@ Value *polly::getPointerOperand(Instruction &Inst) {
 
 //===----------------------------------------------------------------------===//
 // Helper functions
-bool polly::isIndVar(const SCEV *Var, Region &RefRegion,
-                     LoopInfo &LI, ScalarEvolution &SE) {
+bool polly::isIndVar(const SCEV *Var, Region &RefRegion, LoopInfo &LI,
+                     ScalarEvolution &SE) {
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Var);
 
   // AddRecExprs are no induction variables.
-  if (!AddRec) return false;
+  if (!AddRec)
+    return false;
 
-  Loop *L = const_cast<Loop*>(AddRec->getLoop());
+  Loop *L = const_cast<Loop *>(AddRec->getLoop());
 
   // Is the addrec an induction variable of a loop contained in the current
   // region.
@@ -82,7 +84,7 @@ bool polly::isIndVar(const SCEV *Var, Region &RefRegion,
     return false;
 
   DEBUG(dbgs() << "Find AddRec: " << *AddRec
-        << " at region: " << RefRegion.getNameStr() << " as indvar\n");
+               << " at region: " << RefRegion.getNameStr() << " as indvar\n");
   return true;
 }
 
@@ -104,7 +106,7 @@ bool polly::hasInvokeEdge(const PHINode *PN) {
 BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
   BasicBlock *BB = R->getExit();
 
-  SmallVector<BasicBlock*, 4> Preds;
+  SmallVector<BasicBlock *, 4> Preds;
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
     if (R->contains(*PI))
       Preds.push_back(*PI);
@@ -116,7 +118,8 @@ void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
   // Find first non-alloca instruction. Every basic block has a non-alloc
   // instruction, as every well formed basic block has a terminator.
   BasicBlock::iterator I = EntryBlock->begin();
-  while (isa<AllocaInst>(I)) ++I;
+  while (isa<AllocaInst>(I))
+    ++I;
 
   // SplitBlock updates DT, DF and LI.
   BasicBlock *NewEntry = SplitBlock(EntryBlock, I, P);
