@@ -69,23 +69,6 @@ static inline void StripLeadingSpaces(llvm::StringRef &Str)
     while (!Str.empty() && isspace(Str[0]))
         Str = Str.substr(1);
 }
-static inline llvm::StringRef StripOptionTerminator(llvm::StringRef &Str, bool with_dash_w, bool with_dash_x)
-{
-    llvm::StringRef ExprStr = Str;
-
-    // Get rid of the leading spaces first.
-    StripLeadingSpaces(ExprStr);
-
-    // If there's no '-w' and no '-x', we can just return.
-    if (!with_dash_w && !with_dash_x)
-        return ExprStr;
-
-    // Otherwise, split on the "--" option terminator string, and return the rest of the string.
-    ExprStr = ExprStr.split("--").second;
-    StripLeadingSpaces(ExprStr);
-    return ExprStr;
-}
-
 
 // Equivalent class: {"-", "to", "To", "TO"} of range specifier array.
 static const char* RSA[4] = { "-", "to", "To", "TO" };
@@ -1193,13 +1176,50 @@ protected:
         StackFrame *frame = m_exe_ctx.GetFramePtr();
 
         Args command(raw_command);
+        const char *expr = NULL;
+        if (raw_command[0] == '-')
+        {
+            // We have some options and these options MUST end with --.
+            const char *end_options = NULL;
+            const char *s = raw_command;
+            while (s && s[0])
+            {
+                end_options = ::strstr (s, "--");
+                if (end_options)
+                {
+                    end_options += 2; // Get past the "--"
+                    if (::isspace (end_options[0]))
+                    {
+                        expr = end_options;
+                        while (::isspace (*expr))
+                            ++expr;
+                        break;
+                    }
+                }
+                s = end_options;
+            }
+            
+            if (end_options)
+            {
+                Args args (raw_command, end_options - raw_command);
+                if (!ParseOptions (args, result))
+                    return false;
+                
+                Error error (m_option_group.NotifyOptionParsingFinished());
+                if (error.Fail())
+                {
+                    result.AppendError (error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+        }
 
-        // Process possible options.
-        if (!ParseOptions (command, result))
-            return false;
+        if (expr == NULL)
+            expr = raw_command;
 
         // If no argument is present, issue an error message.  There's no way to set a watchpoint.
-        if (command.GetArgumentCount() <= 0)
+        if (command.GetArgumentCount() == 0)
         {
             result.GetErrorStream().Printf("error: required argument missing; specify an expression to evaulate into the addres to watch for\n");
             result.SetStatus(eReturnStatusFailed);
@@ -1220,21 +1240,7 @@ protected:
         lldb::addr_t addr = 0;
         size_t size = 0;
 
-        VariableSP var_sp;
         ValueObjectSP valobj_sp;
-        Stream &output_stream = result.GetOutputStream();
-
-        // We will process the raw command string to rid of the '-w', '-x', or '--'
-        llvm::StringRef raw_expr_str(raw_command);
-        std::string expr_str = StripOptionTerminator(raw_expr_str, with_dash_w, with_dash_x).str();
-
-        // Sanity check for when the user forgets to terminate the option strings with a '--'.
-        if ((with_dash_w || with_dash_w) && expr_str.empty())
-        {
-            result.GetErrorStream().Printf("error: did you forget to enter the option terminator string \"--\"?\n");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
 
         // Use expression evaluation to arrive at the address to watch.
         EvaluateExpressionOptions options;
@@ -1244,14 +1250,14 @@ protected:
         .SetRunOthers(true)
         .SetTimeoutUsec(0);
         
-        ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
+        ExecutionResults expr_result = target->EvaluateExpression (expr, 
                                                                    frame, 
                                                                    valobj_sp,
                                                                    options);
         if (expr_result != eExecutionCompleted)
         {
             result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
-            result.GetErrorStream().Printf("expression evaluated: %s\n", expr_str.c_str());
+            result.GetErrorStream().Printf("expression evaluated: %s\n", expr);
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -1281,13 +1287,7 @@ protected:
         Watchpoint *wp = target->CreateWatchpoint(addr, size, &type, watch_type, error).get();
         if (wp)
         {
-            if (var_sp && var_sp->GetDeclaration().GetFile())
-            {
-                StreamString ss;
-                // True to show fullpath for declaration file.
-                var_sp->GetDeclaration().DumpStopContext(&ss, true);
-                wp->SetDeclInfo(ss.GetString());
-            }
+            Stream &output_stream = result.GetOutputStream();
             output_stream.Printf("Watchpoint created: ");
             wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
             output_stream.EOL();
