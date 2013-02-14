@@ -107,8 +107,7 @@ private:
       if (CurrentToken->is(tok::pipepipe) || CurrentToken->is(tok::ampamp) ||
           CurrentToken->is(tok::question) || CurrentToken->is(tok::colon))
         return false;
-      if (CurrentToken->is(tok::comma))
-        ++Left->ParameterCount;
+      updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
     }
@@ -175,8 +174,7 @@ private:
       }
       if (CurrentToken->is(tok::r_square) || CurrentToken->is(tok::r_brace))
         return false;
-      if (CurrentToken->is(tok::comma))
-        ++Left->ParameterCount;
+      updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
     }
@@ -240,8 +238,7 @@ private:
       }
       if (CurrentToken->is(tok::r_paren) || CurrentToken->is(tok::r_brace))
         return false;
-      if (CurrentToken->is(tok::comma))
-        ++Left->ParameterCount;
+      updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
     }
@@ -263,12 +260,18 @@ private:
       }
       if (CurrentToken->is(tok::r_paren) || CurrentToken->is(tok::r_square))
         return false;
-      if (CurrentToken->is(tok::comma))
-        ++Left->ParameterCount;
+      updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
     }
     return true;
+  }
+  
+  void updateParameterCount(AnnotatedToken *Left, AnnotatedToken *Current) {
+    if (Current->is(tok::comma))
+      ++Left->ParameterCount;
+    else if (Left->ParameterCount == 0 && Current->isNot(tok::comment))
+      Left->ParameterCount = 1;
   }
 
   bool parseConditional() {

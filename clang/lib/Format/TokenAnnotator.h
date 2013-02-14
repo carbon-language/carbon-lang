@@ -73,7 +73,7 @@ public:
       : FormatTok(FormatTok), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
-        ParameterCount(1), BindingStrength(0), SplitPenalty(0),
+        ParameterCount(0), BindingStrength(0), SplitPenalty(0),
         LongestObjCSelectorName(0), Parent(NULL), FakeLParens(0),
         FakeRParens(0) {
   }

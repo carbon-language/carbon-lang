@@ -1453,6 +1453,10 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
       "aaaaaaaaaaa->aaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "    aaaaaaaaaaaaaaaaaa->aaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaa));\n");
+
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa().aaaaaaaaaaaaaaaaa());");
 }
 
 TEST_F(FormatTest, WrapsTemplateDeclarations) {
