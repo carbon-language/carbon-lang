@@ -304,7 +304,7 @@ ClassTemplateDecl *ClassTemplateDecl::CreateDeserialized(ASTContext &C,
   return new (Mem) ClassTemplateDecl(EmptyShell());
 }
 
-void ClassTemplateDecl::LoadLazySpecializations() {
+void ClassTemplateDecl::LoadLazySpecializations() const {
   Common *CommonPtr = getCommonPtr();
   if (CommonPtr->LazySpecializations) {
     ASTContext &Context = getASTContext();
@@ -316,7 +316,7 @@ void ClassTemplateDecl::LoadLazySpecializations() {
 }
 
 llvm::FoldingSetVector<ClassTemplateSpecializationDecl> &
-ClassTemplateDecl::getSpecializations() {
+ClassTemplateDecl::getSpecializations() const {
   LoadLazySpecializations();
   return getCommonPtr()->Specializations;
 }  

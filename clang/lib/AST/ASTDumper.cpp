@@ -935,9 +935,9 @@ void ASTDumper::VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
   dumpName(D);
   dumpTemplateParameters(D->getTemplateParameters());
   dumpDecl(D->getTemplatedDecl());
-  for (FunctionTemplateDecl::spec_iterator
-       I = const_cast<FunctionTemplateDecl*>(D)->spec_begin(),
-       E = const_cast<FunctionTemplateDecl*>(D)->spec_end(); I != E; ++I) {
+  for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(),
+                                           E = D->spec_end();
+       I != E; ++I) {
     FunctionTemplateDecl::spec_iterator Next = I;
     ++Next;
     if (Next == E)
@@ -960,10 +960,8 @@ void ASTDumper::VisitClassTemplateDecl(const ClassTemplateDecl *D) {
   dumpName(D);
   dumpTemplateParameters(D->getTemplateParameters());
 
-  ClassTemplateDecl::spec_iterator I =
-      const_cast<ClassTemplateDecl*>(D)->spec_begin();
-  ClassTemplateDecl::spec_iterator E =
-      const_cast<ClassTemplateDecl*>(D)->spec_end();
+  ClassTemplateDecl::spec_iterator I = D->spec_begin();
+  ClassTemplateDecl::spec_iterator E = D->spec_end();
   if (I == E)
     lastChild();
   dumpDecl(D->getTemplatedDecl());

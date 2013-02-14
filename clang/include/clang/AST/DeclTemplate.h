@@ -552,7 +552,7 @@ protected:
   };
 
   template <typename EntryType>
-  SpecIterator<EntryType>
+  static SpecIterator<EntryType>
   makeSpecIterator(llvm::FoldingSetVector<EntryType> &Specs, bool isEnd) {
     return SpecIterator<EntryType>(isEnd ? Specs.end() : Specs.begin());
   }
@@ -731,7 +731,7 @@ protected:
 
   CommonBase *newCommon(ASTContext &C) const;
 
-  Common *getCommonPtr() {
+  Common *getCommonPtr() const {
     return static_cast<Common *>(RedeclarableTemplateDecl::getCommonPtr());
   }
 
@@ -740,7 +740,7 @@ protected:
   /// \brief Retrieve the set of function template specializations of this
   /// function template.
   llvm::FoldingSetVector<FunctionTemplateSpecializationInfo> &
-  getSpecializations() {
+  getSpecializations() const {
     return getCommonPtr()->Specializations;
   }
 
@@ -798,11 +798,11 @@ public:
 
   typedef SpecIterator<FunctionTemplateSpecializationInfo> spec_iterator;
 
-  spec_iterator spec_begin() {
+  spec_iterator spec_begin() const {
     return makeSpecIterator(getSpecializations(), false);
   }
 
-  spec_iterator spec_end() {
+  spec_iterator spec_end() const {
     return makeSpecIterator(getSpecializations(), true);
   }
 
@@ -1778,10 +1778,11 @@ protected:
   };
 
   /// \brief Load any lazily-loaded specializations from the external source.
-  void LoadLazySpecializations();
+  void LoadLazySpecializations() const;
 
   /// \brief Retrieve the set of specializations of this class template.
-  llvm::FoldingSetVector<ClassTemplateSpecializationDecl> &getSpecializations();
+  llvm::FoldingSetVector<ClassTemplateSpecializationDecl> &
+  getSpecializations() const;
 
   /// \brief Retrieve the set of partial specializations of this class
   /// template.
@@ -1798,7 +1799,7 @@ protected:
 
   CommonBase *newCommon(ASTContext &C) const;
 
-  Common *getCommonPtr() {
+  Common *getCommonPtr() const {
     return static_cast<Common *>(RedeclarableTemplateDecl::getCommonPtr());
   }
 
@@ -1923,11 +1924,11 @@ public:
 
   typedef SpecIterator<ClassTemplateSpecializationDecl> spec_iterator;
 
-  spec_iterator spec_begin() {
+  spec_iterator spec_begin() const {
     return makeSpecIterator(getSpecializations(), false);
   }
 
-  spec_iterator spec_end() {
+  spec_iterator spec_end() const {
     return makeSpecIterator(getSpecializations(), true);
   }
 
