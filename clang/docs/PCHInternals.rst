@@ -92,9 +92,7 @@ the actual precompiled header is required:
 
 .. code-block:: none
 
-  *** PCH Statistics:
-    933 stat cache hits
-    4 stat cache misses
+  *** AST File Statistics:
     895/39981 source location entries read (2.238563%)
     19/15315 types read (0.124061%)
     20/82685 declarations read (0.024188%)
@@ -214,10 +212,7 @@ The source manager block also contains information about all of the headers
 that were included when building the AST file.  This includes information about
 the controlling macro for the header (e.g., when the preprocessor identified
 that the contents of the header dependent on a macro like
-``LLVM_CLANG_SOURCEMANAGER_H``) along with a cached version of the results of
-the ``stat()`` system calls performed when building the AST file.  The latter
-is particularly useful in reducing system time when searching for include
-files.
+``LLVM_CLANG_SOURCEMANAGER_H``).
 
 .. _pchinternals-preprocessor:
 
@@ -424,10 +419,6 @@ the two modules.  The ``ASTReader`` class, which handles the loading of an AST
 file, inherits from all of these abstract classes to provide lazy
 deserialization of Clang's data structures.  ``ASTReader`` implements the
 following abstract classes:
-
-``StatSysCallCache``
-  This abstract interface is associated with the ``FileManager`` class, and is
-  used whenever the file manager is going to perform a ``stat()`` system call.
 
 ``ExternalSLocEntrySource``
   This abstract interface is associated with the ``SourceManager`` class, and

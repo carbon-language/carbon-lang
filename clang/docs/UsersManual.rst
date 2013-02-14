@@ -820,12 +820,7 @@ example, :option:`-isysroot /Developer/SDKs/MacOSX10.4u.sdk` will look for
 Relocatable precompiled headers are intended to be used in a limited
 number of cases where the compilation environment is tightly controlled
 and the precompiled header cannot be generated after headers have been
-installed. Relocatable precompiled headers also have some performance
-impact, because the difference in location between the header locations
-at PCH build time vs. at the time of PCH use requires one of the PCH
-optimizations, ``stat()`` caching, to be disabled. However, this change
-is only likely to affect PCH files that reference a large number of
-headers.
+installed.
 
 Controlling Code Generation
 ---------------------------
