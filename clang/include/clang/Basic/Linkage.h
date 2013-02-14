@@ -42,6 +42,14 @@ enum Linkage {
   ExternalLinkage
 };
 
+/// \brief Describes the different kinds of language linkage
+/// (C++ [dcl.link]) that an entity may have.
+enum LanguageLinkage {
+  CLanguageLinkage,
+  CXXLanguageLinkage,
+  NoLanguageLinkage
+};
+
 /// \brief A more specific kind of linkage than enum Linkage.
 ///
 /// This is relevant to CodeGen and AST file reading.

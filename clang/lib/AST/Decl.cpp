@@ -196,6 +196,12 @@ static bool useInlineVisibilityHidden(const NamedDecl *D) {
     FD->hasBody(Def) && Def->isInlined() && !Def->hasAttr<GNUInlineAttr>();
 }
 
+template<typename T>
+bool isInExternCContext(T *D) {
+  const T *First = D->getFirstDeclaration();
+  return First->getDeclContext()->isExternCContext();
+}
+
 static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
                                               bool OnlyTemplate) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
@@ -262,8 +268,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   if (D->isInAnonymousNamespace()) {
     const VarDecl *Var = dyn_cast<VarDecl>(D);
     const FunctionDecl *Func = dyn_cast<FunctionDecl>(D);
-    if ((!Var || !Var->hasCLanguageLinkage()) &&
-        (!Func || !Func->hasCLanguageLinkage()))
+    if ((!Var || !isInExternCContext(Var)) &&
+        (!Func || !isInExternCContext(Func)))
       return LinkageInfo::uniqueExternal();
   }
 
@@ -1210,29 +1216,36 @@ SourceRange VarDecl::getSourceRange() const {
 }
 
 template<typename T>
-static bool hasCLanguageLinkageTemplate(const T &D) {
+static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
   // Language linkage is a C++ concept, but saying that everything in C has
   // C language linkage fits the implementation nicely.
   ASTContext &Context = D.getASTContext();
   if (!Context.getLangOpts().CPlusPlus)
-    return true;
+    return CLanguageLinkage;
+
+  // dcl.link 1: All function types, function names with external linkage, and
+  // variable names with external linkage have a language linkage.
+  if (!isExternalLinkage(D.getLinkage()))
+    return NoLanguageLinkage;
 
   // dcl.link 4: A C language linkage is ignored in determining the language
   // linkage of the names of class members and the function type of class member
   // functions.
   const DeclContext *DC = D.getDeclContext();
   if (DC->isRecord())
-    return false;
+    return CXXLanguageLinkage;
 
   // If the first decl is in an extern "C" context, any other redeclaration
   // will have C language linkage. If the first one is not in an extern "C"
   // context, we would have reported an error for any other decl being in one.
   const T *First = D.getFirstDeclaration();
-  return First->getDeclContext()->isExternCContext();
+  if (First->getDeclContext()->isExternCContext())
+    return CLanguageLinkage;
+  return CXXLanguageLinkage;
 }
 
-bool VarDecl::hasCLanguageLinkage() const {
-  return hasCLanguageLinkageTemplate(*this);
+LanguageLinkage VarDecl::getLanguageLinkage() const {
+  return getLanguageLinkageTemplate(*this);
 }
 
 bool VarDecl::isExternC() const {
@@ -1757,14 +1770,14 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
   return (proto->getArgType(1).getCanonicalType() == Context.VoidPtrTy);
 }
 
-bool FunctionDecl::hasCLanguageLinkage() const {
+LanguageLinkage FunctionDecl::getLanguageLinkage() const {
   // Users expect to be able to write
   // extern "C" void *__builtin_alloca (size_t);
   // so consider builtins as having C language linkage.
   if (getBuiltinID())
-    return true;
+    return CLanguageLinkage;
 
-  return hasCLanguageLinkageTemplate(*this);
+  return getLanguageLinkageTemplate(*this);
 }
 
 bool FunctionDecl::isExternC() const {

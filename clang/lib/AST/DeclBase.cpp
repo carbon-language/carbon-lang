@@ -806,6 +806,17 @@ bool DeclContext::isExternCContext() const {
   return false;
 }
 
+bool DeclContext::isExternCXXContext() const {
+  const DeclContext *DC = this;
+  while (DC->DeclKind != Decl::TranslationUnit) {
+    if (DC->DeclKind == Decl::LinkageSpec)
+      return cast<LinkageSpecDecl>(DC)->getLanguage()
+        == LinkageSpecDecl::lang_cxx;
+    DC = DC->getParent();
+  }
+  return false;
+}
+
 bool DeclContext::Encloses(const DeclContext *DC) const {
   if (getPrimaryContext() != this)
     return getPrimaryContext()->Encloses(DC);

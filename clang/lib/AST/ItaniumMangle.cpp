@@ -356,17 +356,6 @@ private:
 
 }
 
-static bool isInCLinkageSpecification(const Decl *D) {
-  D = D->getCanonicalDecl();
-  for (const DeclContext *DC = getEffectiveDeclContext(D);
-       !DC->isTranslationUnit(); DC = getEffectiveParentContext(DC)) {
-    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))
-      return Linkage->getLanguage() == LinkageSpecDecl::lang_c;
-  }
-
-  return false;
-}
-
 bool ItaniumMangleContext::shouldMangleDeclName(const NamedDecl *D) {
   // In C, functions with no attributes never need to be mangled. Fastpath them.
   if (!getASTContext().getLangOpts().CPlusPlus && !D->hasAttrs())
@@ -405,8 +394,12 @@ bool ItaniumMangleContext::shouldMangleDeclName(const NamedDecl *D) {
     return true;
 
   // C functions and "main" are not mangled.
-  if ((FD && FD->isMain()) || isInCLinkageSpecification(D))
-    return false;
+  if (FD)
+    return !FD->isMain() && !FD->hasCLanguageLinkage();
+
+  // C variables are not mangled.
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    return !VD->hasCLanguageLinkage();
 
   return true;
 }

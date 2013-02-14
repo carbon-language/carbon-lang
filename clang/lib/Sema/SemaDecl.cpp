@@ -2065,6 +2065,22 @@ static bool isABIDefaultCC(Sema &S, CallingConv CC, FunctionDecl *D) {
   return ABIDefaultCC == CC;
 }
 
+template<typename T>
+bool haveIncompatibleLanguageLinkages(const T *Old, const T *New) {
+  const DeclContext *DC = Old->getDeclContext();
+  if (DC->isRecord())
+    return false;
+
+  LanguageLinkage OldLinkage = Old->getLanguageLinkage();
+  if (OldLinkage == CXXLanguageLinkage &&
+      New->getDeclContext()->isExternCContext())
+    return true;
+  if (OldLinkage == CLanguageLinkage &&
+      New->getDeclContext()->isExternCXXContext())
+    return true;
+  return false;
+}
+
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -2366,7 +2382,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
       assert(OldQTypeForComparison.isCanonical());
     }
 
-    if (!Old->hasCLanguageLinkage() && New->hasCLanguageLinkage()) {
+    if (haveIncompatibleLanguageLinkages(Old, New)) {
       Diag(New->getLocation(), diag::err_different_language_linkage) << New;
       Diag(Old->getLocation(), PrevDiag);
       return true;
@@ -2756,7 +2772,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return;
   }
 
-  if (!Old->hasCLanguageLinkage() && New->hasCLanguageLinkage()) {
+  if (haveIncompatibleLanguageLinkages(Old, New)) {
     Diag(New->getLocation(), diag::err_different_language_linkage) << New;
     Diag(Old->getLocation(), diag::note_previous_definition);
     New->setInvalidDecl();

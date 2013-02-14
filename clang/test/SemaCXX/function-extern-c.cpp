@@ -51,3 +51,13 @@ namespace test2 {
   };
   A f(void);  // expected-warning {{'f' has C-linkage specified, but returns user-defined type 'test2::A' which is incompatible with C}}
 }
+
+namespace test3 {
+  struct A {
+    A(const A&);
+  };
+  extern "C" {
+    // Don't warn for static functions.
+    static A f(void);
+  }
+}
