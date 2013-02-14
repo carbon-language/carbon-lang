@@ -234,6 +234,21 @@ const char *GetEnv(const char *name) {
   return 0;  // Not found.
 }
 
+#ifdef __GLIBC__
+
+extern "C" {
+  extern void *__libc_stack_end;
+}
+
+static void GetArgsAndEnv(char ***argv, char ***envp) {
+  uptr *stack_end = (uptr *)__libc_stack_end;
+  int argc = *stack_end;
+  *argv = (char**)(stack_end + 1);
+  *envp = (char**)(stack_end + argc + 2);
+}
+
+#else  // __GLIBC__
+
 static void ReadNullSepFileToArray(const char *path, char ***arr,
                                    int arr_size) {
   char *buff;
@@ -253,11 +268,17 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
   (*arr)[count] = 0;
 }
 
-void ReExec() {
+static void GetArgsAndEnv(char ***argv, char ***envp) {
   static const int kMaxArgv = 2000, kMaxEnvp = 2000;
+  ReadNullSepFileToArray("/proc/self/cmdline", argv, kMaxArgv);
+  ReadNullSepFileToArray("/proc/self/environ", envp, kMaxEnvp);
+}
+
+#endif  // __GLIBC__
+
+void ReExec() {
   char **argv, **envp;
-  ReadNullSepFileToArray("/proc/self/cmdline", &argv, kMaxArgv);
-  ReadNullSepFileToArray("/proc/self/environ", &envp, kMaxEnvp);
+  GetArgsAndEnv(&argv, &envp);
   execve(argv[0], argv, envp);
 }
 
