@@ -296,9 +296,8 @@ bool edit::rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
   if (!Method)
     return false;
 
-  const ObjCInterfaceDecl *
-    IFace = NS.getASTContext().getObjContainingInterface(
-                                          const_cast<ObjCMethodDecl *>(Method));
+  const ObjCInterfaceDecl *IFace =
+      NS.getASTContext().getObjContainingInterface(Method);
   if (!IFace)
     return false;
   Selector Sel = Msg->getSelector();
