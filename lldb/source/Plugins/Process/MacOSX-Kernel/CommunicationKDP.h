@@ -315,7 +315,6 @@ protected:
     
     bool
     SendRequestAndGetReply (const CommandType command,
-                            const uint8_t request_sequence_id,
                             const PacketStreamType &request_packet, 
                             lldb_private::DataExtractor &reply_packet);
     //------------------------------------------------------------------
