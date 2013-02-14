@@ -1885,7 +1885,7 @@ def SDHexagonBARRIER: SDTypeProfile<0, 0, []>;
 def HexagonBARRIER: SDNode<"HexagonISD::BARRIER", SDHexagonBARRIER,
                            [SDNPHasChain]>;
 
-let hasSideEffects = 1, isHexagonSolo = 1 in
+let hasSideEffects = 1, isSolo = 1 in
 def BARRIER : SYSInst<(outs), (ins),
                      "barrier",
                      [(HexagonBARRIER)]>;
@@ -1960,9 +1960,9 @@ def LOOP0_r : CRInst<(outs), (ins brtarget:$offset, IntRegs:$src2),
 
 let isBranch = 1, isTerminator = 1, neverHasSideEffects = 1,
     Defs = [PC, LC0], Uses = [SA0, LC0] in {
-def ENDLOOP0 : Marker<(outs), (ins brtarget:$offset),
-                      ":endloop0",
-                      []>;
+def ENDLOOP0 : Endloop<(outs), (ins brtarget:$offset),
+                       ":endloop0",
+                       []>;
 }
 
 // Support for generating global address.

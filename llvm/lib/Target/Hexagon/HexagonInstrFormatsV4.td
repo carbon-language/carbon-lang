@@ -17,9 +17,9 @@
 //                        *** Must match BaseInfo.h ***
 //----------------------------------------------------------------------------//
 
-def TypeMEMOP  : Type<9>;
-def TypeNV     : Type<10>;
-def TypePREFIX : Type<30>;
+def TypeMEMOP  : IType<9>;
+def TypeNV     : IType<10>;
+def TypePREFIX : IType<30>;
 
 //----------------------------------------------------------------------------//
 //                         Intruction Classes Definitions +
@@ -28,35 +28,38 @@ def TypePREFIX : Type<30>;
 //
 // NV type instructions.
 //
-class NVInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
-  : InstHexagon<outs, ins, asmstr, pattern, "", NV_V4, TypeNV> {
-  bits<5> rd;
-  bits<5> rs;
-  bits<13> imm13;
-}
+class NVInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+             string cstr = "">
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, NV_V4, TypeNV>;
+
+class NVInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+                string cstr = "">
+  : NVInst<outs, ins, asmstr, pattern, cstr>;
 
 // Definition of Post increment new value store.
-class NVInstPost_V4<dag outs, dag ins, string asmstr, list<dag> pattern,
-                    string cstr>
-  : InstHexagon<outs, ins, asmstr, pattern, cstr, NV_V4, TypeNV> {
-  bits<5> rd;
-  bits<5> rs;
-  bits<5> rt;
-  bits<13> imm13;
-}
+class NVInstPost_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+               string cstr = "">
+  : NVInst<outs, ins, asmstr, pattern, cstr>;
 
 // Post increment ST Instruction.
 let mayStore = 1 in
 class NVInstPI_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
                string cstr = "">
-  : NVInstPost_V4<outs, ins, asmstr, pattern, cstr>;
+  : NVInst<outs, ins, asmstr, pattern, cstr>;
 
-class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
-  : InstHexagon<outs, ins, asmstr, pattern, "", MEM_V4, TypeMEMOP> {
-  bits<5> rd;
-  bits<5> rs;
-  bits<6> imm6;
-}
+// New-value conditional branch.
+class NCJInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+              string cstr = "">
+  : NVInst<outs, ins, asmstr, pattern, cstr>;
+
+let mayLoad = 1, mayStore = 1 in
+class MEMInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+              string cstr = "">
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, MEM_V4, TypeMEMOP>;
+
+class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+                 string cstr = "">
+  : MEMInst<outs, ins, asmstr, pattern, cstr>;
 
 let isCodeGenOnly = 1 in
 class EXTENDERInst<dag outs, dag ins, string asmstr, list<dag> pattern = []>

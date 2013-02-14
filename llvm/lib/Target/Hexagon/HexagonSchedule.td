@@ -8,10 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 // Functional Units
-def LUNIT     : FuncUnit;
-def LSUNIT    : FuncUnit;
-def MUNIT     : FuncUnit;
-def SUNIT     : FuncUnit;
+def LSUNIT    : FuncUnit; // SLOT0
+def LUNIT     : FuncUnit; // SLOT1
+def MUNIT     : FuncUnit; // SLOT2
+def SUNIT     : FuncUnit; // SLOT3
+def LOOPUNIT  : FuncUnit;
 
 // Itinerary classes
 def ALU32     : InstrItinClass;
@@ -20,27 +21,34 @@ def CR        : InstrItinClass;
 def J         : InstrItinClass;
 def JR        : InstrItinClass;
 def LD        : InstrItinClass;
+def LD0       : InstrItinClass;
 def M         : InstrItinClass;
 def ST        : InstrItinClass;
+def ST0       : InstrItinClass;
 def S         : InstrItinClass;
 def SYS       : InstrItinClass;
-def MARKER    : InstrItinClass;
+def ENDLOOP   : InstrItinClass;
 def PSEUDO    : InstrItinClass;
+def PSEUDOM   : InstrItinClass;
 
 def HexagonItineraries :
-      ProcessorItineraries<[LUNIT, LSUNIT, MUNIT, SUNIT], [], [
+      ProcessorItineraries<[LSUNIT, LUNIT, MUNIT, SUNIT, LOOPUNIT], [], [
         InstrItinData<ALU32  , [InstrStage<1, [LUNIT, LSUNIT, MUNIT, SUNIT]>]>,
         InstrItinData<ALU64  , [InstrStage<1, [MUNIT, SUNIT]>]>,
         InstrItinData<CR     , [InstrStage<1, [SUNIT]>]>,
         InstrItinData<J      , [InstrStage<1, [SUNIT, MUNIT]>]>,
         InstrItinData<JR     , [InstrStage<1, [MUNIT]>]>,
         InstrItinData<LD     , [InstrStage<1, [LUNIT, LSUNIT]>]>,
+        InstrItinData<LD0    , [InstrStage<1, [LSUNIT]>]>,
         InstrItinData<M      , [InstrStage<1, [MUNIT, SUNIT]>]>,
         InstrItinData<ST     , [InstrStage<1, [LSUNIT]>]>,
+        InstrItinData<ST0    , [InstrStage<1, [LSUNIT]>]>,
         InstrItinData<S      , [InstrStage<1, [SUNIT, MUNIT]>]>,
         InstrItinData<SYS    , [InstrStage<1, [LSUNIT]>]>,
-        InstrItinData<MARKER , [InstrStage<1, [LUNIT, LSUNIT, MUNIT, SUNIT]>]>,
-        InstrItinData<PSEUDO , [InstrStage<1, [LUNIT, LSUNIT, MUNIT, SUNIT]>]>
+        InstrItinData<ENDLOOP, [InstrStage<1, [LOOPUNIT]>]>,
+        InstrItinData<PSEUDO , [InstrStage<1, [LUNIT, LSUNIT, MUNIT, SUNIT]>]>,
+        InstrItinData<PSEUDOM, [InstrStage<1, [MUNIT, SUNIT], 0>,
+                                InstrStage<1, [MUNIT, SUNIT]>]>
       ]>;
 
 def HexagonModel : SchedMachineModel {
