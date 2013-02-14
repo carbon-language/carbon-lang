@@ -326,12 +326,11 @@ bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, EVT DstVT,
                                     unsigned &ResultReg) {
   unsigned RR = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Opc,
                            Src, /*TODO: Kill=*/false);
-
-  if (RR != 0) {
-    ResultReg = RR;
-    return true;
-  } else
+  if (RR == 0)
     return false;
+
+  ResultReg = RR;
+  return true;
 }
 
 /// X86SelectAddress - Attempt to fill in an address from the given value.
