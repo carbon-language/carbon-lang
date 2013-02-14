@@ -755,6 +755,10 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
   const MCInstrDesc &MCID = DefMI->getDesc();
   if (MCID.getNumDefs() != 1)
     return false;
+  // Only support subregister destinations when the def is read-undef.
+  MachineOperand &DstOperand = CopyMI->getOperand(0);
+  if (DstOperand.getSubReg() && !DstOperand.isUndef())
+    return false;
   if (!DefMI->isImplicitDef()) {
     // Make sure the copy destination register class fits the instruction
     // definition register class. The mismatch can happen as a result of earlier
@@ -772,6 +776,12 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
     llvm::next(MachineBasicBlock::iterator(CopyMI));
   TII->reMaterialize(*MBB, MII, DstReg, 0, DefMI, *TRI);
   MachineInstr *NewMI = prior(MII);
+
+  // The original DefMI may have been a subregister def, but the full register
+  // class of its destination matches the destination of CopyMI, and CopyMI is
+  // either a full register def or is read-undef. Therefore we can clear the
+  // subregister index on the rematerialized instruction.
+  NewMI->getOperand(0).setSubReg(0);
 
   // NewMI may have dead implicit defs (E.g. EFLAGS for MOV<bits>r0 on X86).
   // We need to remember these so we can add intervals once we insert
