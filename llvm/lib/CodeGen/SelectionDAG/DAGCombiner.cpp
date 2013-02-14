@@ -2634,7 +2634,9 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       ISD::CondCode Result = ISD::getSetCCAndOperation(Op0, Op1, isInteger);
       if (Result != ISD::SETCC_INVALID &&
           (!LegalOperations ||
-           TLI.isCondCodeLegal(Result, LL.getSimpleValueType())))
+           (TLI.isCondCodeLegal(Result, LL.getSimpleValueType()) &&
+            TLI.isOperationLegal(ISD::SETCC,
+                            TLI.getSetCCResultType(N0.getSimpleValueType())))))
         return DAG.getSetCC(N->getDebugLoc(), N0.getValueType(),
                             LL, LR, Result);
     }
@@ -3144,7 +3146,9 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
       ISD::CondCode Result = ISD::getSetCCOrOperation(Op0, Op1, isInteger);
       if (Result != ISD::SETCC_INVALID &&
           (!LegalOperations ||
-           TLI.isCondCodeLegal(Result, LL.getSimpleValueType())))
+           (TLI.isCondCodeLegal(Result, LL.getSimpleValueType()) &&
+            TLI.isOperationLegal(ISD::SETCC,
+              TLI.getSetCCResultType(N0.getValueType())))))
         return DAG.getSetCC(N->getDebugLoc(), N0.getValueType(),
                             LL, LR, Result);
     }
