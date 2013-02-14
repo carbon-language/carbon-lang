@@ -1,4 +1,5 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s \
+@ RUN: | FileCheck %s
 
 	vand	d16, d17, d16
 	vand	q8, q8, q9
@@ -255,6 +256,42 @@
 	veor.f   q8, q2
 	veor.i64 q8, q2
 
+	vclt.s16 q5, #0
+	vclt.s16 d5, #0
+
+	vceq.s16 q5, q3
+	vceq.s16 d5, d3
+
+	vcgt.s16 q5, q3
+	vcgt.s16 d5, d3
+
+	vcge.s16 q5, q3
+	vcge.s16 d5, d3
+
+	vcgt.s16 q5, #0
+	vcgt.s16 d5, #0
+
+	vcge.s16 q5, #0
+	vcge.s16 d5, #0
+
+	vceq.s16 q5, #0
+	vceq.s16 d5, #0
+
+	vcle.s16 q5, #0
+	vcle.s16 d5, #0
+
+	vacge.f32 d5, d30
+	vacge.f32 q5, q3
+
+	vacgt.f32 d5, d30
+	vacgt.f32 q5, q3
+
+@ FIXME: We don't have an alias that reverses the operands
+@  vacle.f32 d5, d30 
+@  vacle.f32 q5, q3 
+@  vaclt.f32 d5, d30
+@  vaclt.f32 q5, q3
+
 @ CHECK: vand	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf2]
 @ CHECK: vand	q6, q6, q5              @ encoding: [0x5a,0xc1,0x0c,0xf2]
 @ CHECK: vand	q7, q7, q1              @ encoding: [0x52,0xe1,0x0e,0xf2]
@@ -272,3 +309,32 @@
 @ CHECK: veor	q7, q7, q1              @ encoding: [0x52,0xe1,0x0e,0xf3]
 @ CHECK: veor	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf3]
 @ CHECK: veor	q8, q8, q2              @ encoding: [0xd4,0x01,0x40,0xf3]
+@ CHECK: vclt.s16        q5, q5, #0      @ encoding: [0x4a,0xa2,0xb5,0xf3]
+@ CHECK: vclt.s16        d5, d5, #0      @ encoding: [0x05,0x52,0xb5,0xf3]
+
+@ CHECK: vceq.i16        q5, q5, q3      @ encoding: [0x56,0xa8,0x1a,0xf3]
+@ CHECK: vceq.i16        d5, d5, d3      @ encoding: [0x13,0x58,0x15,0xf3]
+
+@ CHECK: vcgt.s16        q5, q5, q3      @ encoding: [0x46,0xa3,0x1a,0xf2]
+@ CHECK: vcgt.s16        d5, d5, d3      @ encoding: [0x03,0x53,0x15,0xf2]
+
+@ CHECK: vcge.s16        q5, q5, q3      @ encoding: [0x56,0xa3,0x1a,0xf2]
+@ CHECK: vcge.s16        d5, d5, d3      @ encoding: [0x13,0x53,0x15,0xf2]
+
+@ CHECK: vcgt.s16        q5, q5, #0      @ encoding: [0x4a,0xa0,0xb5,0xf3]
+@ CHECK: vcgt.s16        d5, d5, #0      @ encoding: [0x05,0x50,0xb5,0xf3]
+
+@ CHECK: vcge.s16        q5, q5, #0      @ encoding: [0xca,0xa0,0xb5,0xf3]
+@ CHECK: vcge.s16        d5, d5, #0      @ encoding: [0x85,0x50,0xb5,0xf3]
+
+@ CHECK: vceq.i16        q5, q5, #0      @ encoding: [0x4a,0xa1,0xb5,0xf3]
+@ CHECK: vceq.i16        d5, d5, #0      @ encoding: [0x05,0x51,0xb5,0xf3]
+
+@ CHECK: vcle.s16        q5, q5, #0      @ encoding: [0xca,0xa1,0xb5,0xf3]
+@ CHECK: vcle.s16        d5, d5, #0      @ encoding: [0x85,0x51,0xb5,0xf3]
+
+@ CHECK: vacge.f32       d5, d5, d30     @ encoding: [0x3e,0x5e,0x05,0xf3]
+@ CHECK: vacge.f32       q5, q5, q3      @ encoding: [0x56,0xae,0x0a,0xf3]
+
+@ CHECK: vacgt.f32       d5, d5, d30     @ encoding: [0x3e,0x5e,0x25,0xf3]
+@ CHECK: vacgt.f32       q5, q5, q3      @ encoding: [0x56,0xae,0x2a,0xf3]
