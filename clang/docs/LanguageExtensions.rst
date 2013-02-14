@@ -1488,8 +1488,8 @@ C11's ``<stdatomic.h>`` header.  These builtins provide the semantics of the
 Non-standard C++11 Attributes
 =============================
 
-Clang supports one non-standard C++11 attribute.  It resides in the ``clang``
-attribute namespace.
+Clang's non-standard C++11 attributes live in the ``clang`` attribute
+namespace.
 
 The ``clang::fallthrough`` attribute
 ------------------------------------
@@ -1535,6 +1535,28 @@ Here is an example:
   case 77:  // warning: unannotated fall-through
     r();
   }
+
+``gnu::`` attributes
+--------------------
+
+Clang also supports GCC's ``gnu`` attribute namespace. All GCC attributes which
+are accepted with the ``__attribute__((foo))`` syntax are also accepted as
+``[[gnu::foo]]``. This only extends to attributes which are specified by GCC
+(see the list of `GCC function attributes
+<http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html>`_, `GCC variable
+attributes <http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html>`_, and
+`GCC type attributes
+<http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html>`_. As with the GCC
+implementation, these attributes must appertain to the *declarator-id* in a
+declaration, which means they must go either at the start of the declaration or
+immediately after the name being declared.
+
+For example, this applies the GNU ``unused`` attribute to ``a`` and ``f``, and
+also applies the GNU ``noreturn`` attribute to ``f``.
+
+.. code-block:: c++
+
+  [[gnu::unused]] int a, f [[gnu::noreturn]] ();
 
 Target-Specific Extensions
 ==========================
