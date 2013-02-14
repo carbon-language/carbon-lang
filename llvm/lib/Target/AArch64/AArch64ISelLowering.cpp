@@ -57,17 +57,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   addRegisterClass(MVT::f64, &AArch64::FPR64RegClass);
   addRegisterClass(MVT::f128, &AArch64::FPR128RegClass);
 
-  // And the vectors
-  addRegisterClass(MVT::v8i8, &AArch64::VPR64RegClass);
-  addRegisterClass(MVT::v4i16, &AArch64::VPR64RegClass);
-  addRegisterClass(MVT::v2i32, &AArch64::VPR64RegClass);
-  addRegisterClass(MVT::v2f32, &AArch64::VPR64RegClass);
-  addRegisterClass(MVT::v16i8, &AArch64::VPR128RegClass);
-  addRegisterClass(MVT::v8i16, &AArch64::VPR128RegClass);
-  addRegisterClass(MVT::v4i32, &AArch64::VPR128RegClass);
-  addRegisterClass(MVT::v4f32, &AArch64::VPR128RegClass);
-  addRegisterClass(MVT::v2f64, &AArch64::VPR128RegClass);
-
   computeRegisterProperties();
 
   // Some atomic operations can be folded into load-acquire or store-release
