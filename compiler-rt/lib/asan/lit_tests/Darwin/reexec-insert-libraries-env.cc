@@ -7,9 +7,9 @@
 // RUN: %clangxx -m64 %p/../SharedLibs/darwin-dummy-shared-lib-so.cc \
 // RUN:     -dynamiclib -o darwin-dummy-shared-lib-so.dylib
 
-// If the test hangs, kill it after 15 seconds.
+// FIXME: the following command line may hang in the case of a regression.
 // RUN: DYLD_INSERT_LIBRARIES=darwin-dummy-shared-lib-so.dylib \
-// RUN:     alarm 15 %t 2>&1 | FileCheck %s || exit 1
+// RUN:     %t 2>&1 | FileCheck %s || exit 1
 #include <stdlib.h>
 
 int main() {
