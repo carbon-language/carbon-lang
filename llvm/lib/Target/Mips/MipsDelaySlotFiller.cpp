@@ -66,37 +66,38 @@ namespace {
     }
 
   private:
-    typedef MachineBasicBlock::instr_iterator InstrIter;
-    typedef MachineBasicBlock::reverse_instr_iterator ReverseInstrIter;
+    typedef MachineBasicBlock::iterator Iter;
+    typedef MachineBasicBlock::reverse_iterator ReverseIter;
 
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
 
     bool isDelayFiller(MachineBasicBlock &MBB,
-                       InstrIter candidate);
+                       Iter candidate);
 
-    void insertCallUses(InstrIter MI,
+    void insertCallUses(Iter MI,
                         SmallSet<unsigned, 32> &RegDefs,
                         SmallSet<unsigned, 32> &RegUses);
 
-    void insertDefsUses(InstrIter MI,
+    void insertDefsUses(Iter MI,
                         SmallSet<unsigned, 32> &RegDefs,
                         SmallSet<unsigned, 32> &RegUses);
 
     bool IsRegInSet(SmallSet<unsigned, 32> &RegSet,
                     unsigned Reg);
 
-    bool delayHasHazard(InstrIter candidate,
+    bool delayHasHazard(Iter candidate,
                         bool &sawLoad, bool &sawStore,
                         SmallSet<unsigned, 32> &RegDefs,
                         SmallSet<unsigned, 32> &RegUses);
 
     bool
-    findDelayInstr(MachineBasicBlock &MBB, InstrIter slot,
-                   InstrIter &Filler);
+    findDelayInstr(MachineBasicBlock &MBB, Iter slot,
+                   Iter &Filler);
+
+    bool terminateSearch(const MachineInstr &Candidate) const;
 
     TargetMachine &TM;
     const TargetInstrInfo *TII;
-    InstrIter LastFiller;
 
     static char ID;
   };
@@ -108,16 +109,14 @@ namespace {
 bool Filler::
 runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
-  LastFiller = MBB.instr_end();
 
-  for (InstrIter I = MBB.instr_begin(); I != MBB.instr_end(); ++I) {
+  for (Iter I = MBB.begin(); I != MBB.end(); ++I) {
     if (!I->hasDelaySlot())
       continue;
 
     ++FilledSlots;
     Changed = true;
-    InstrIter InstrWithSlot = I;
-    InstrIter D;
+    Iter D;
 
     // Delay slot filling is disabled at -O0.
     if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None) &&
@@ -127,13 +126,8 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     } else
       BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
 
-    // Record the filler instruction that filled the delay slot.
-    // The instruction after it will be visited in the next iteration.
-    LastFiller = ++I;
-
-    // Bundle the delay slot filler to InstrWithSlot so that the machine
-    // verifier doesn't expect this instruction to be a terminator.
-    MIBundleBuilder(MBB, InstrWithSlot, llvm::next(LastFiller));
+    // Bundle the delay slot filler to the instruction with the delay slot.
+    MIBundleBuilder(MBB, I, llvm::next(llvm::next(I)));
   }
 
   return Changed;
@@ -146,8 +140,8 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 }
 
 bool Filler::findDelayInstr(MachineBasicBlock &MBB,
-                            InstrIter slot,
-                            InstrIter &Filler) {
+                            Iter slot,
+                            Iter &Filler) {
   SmallSet<unsigned, 32> RegDefs;
   SmallSet<unsigned, 32> RegUses;
 
@@ -156,25 +150,16 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
   bool sawLoad = false;
   bool sawStore = false;
 
-  for (ReverseInstrIter I(slot); I != MBB.instr_rend(); ++I) {
+  for (ReverseIter I(slot); I != MBB.rend(); ++I) {
     // skip debug value
     if (I->isDebugValue())
       continue;
 
-    // Convert to forward iterator.
-    InstrIter FI(llvm::next(I).base());
-
-    if (I->hasUnmodeledSideEffects()
-        || I->isInlineAsm()
-        || I->isLabel()
-        || FI == LastFiller
-        || I->isPseudo()
-        //
-        // Should not allow:
-        // ERET, DERET or WAIT, PAUSE. Need to add these to instruction
-        // list. TBD.
-        )
+    if (terminateSearch(*I))
       break;
+
+    // Convert to forward iterator.
+    Iter FI(llvm::next(I).base());
 
     if (delayHasHazard(FI, sawLoad, sawStore, RegDefs, RegUses)) {
       insertDefsUses(FI, RegDefs, RegUses);
@@ -188,7 +173,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
   return false;
 }
 
-bool Filler::delayHasHazard(InstrIter candidate,
+bool Filler::delayHasHazard(Iter candidate,
                             bool &sawLoad, bool &sawStore,
                             SmallSet<unsigned, 32> &RegDefs,
                             SmallSet<unsigned, 32> &RegUses) {
@@ -253,7 +238,7 @@ static void insertDefUse(const MachineOperand &MO,
 }
 
 // Insert Defs and Uses of MI into the sets RegDefs and RegUses.
-void Filler::insertDefsUses(InstrIter MI,
+void Filler::insertDefsUses(Iter MI,
                             SmallSet<unsigned, 32> &RegDefs,
                             SmallSet<unsigned, 32> &RegUses) {
   unsigned I, E = MI->getDesc().getNumOperands();
@@ -287,4 +272,10 @@ bool Filler::IsRegInSet(SmallSet<unsigned, 32> &RegSet, unsigned Reg) {
     if (RegSet.count(*AI))
       return true;
   return false;
+}
+
+bool Filler::terminateSearch(const MachineInstr &Candidate) const {
+  return (Candidate.isTerminator() || Candidate.isCall() ||
+          Candidate.isLabel() || Candidate.isInlineAsm() ||
+          Candidate.hasUnmodeledSideEffects());
 }
