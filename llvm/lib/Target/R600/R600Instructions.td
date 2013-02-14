@@ -644,7 +644,7 @@ multiclass SteamOutputExportPattern<Instruction ExportInst,
       4095, imm:$mask, buf3inst, 0)>;
 }
 
-let isTerminator = 1, usesCustomInserter = 1 in {
+let usesCustomInserter = 1 in {
 
 class ExportSwzInst : InstR600ISA<(
     outs),
@@ -658,7 +658,7 @@ class ExportSwzInst : InstR600ISA<(
   let Inst{63-32} = Word1;
 }
 
-} // End isTerminator = 1, usesCustomInserter = 1
+} // End usesCustomInserter = 1
 
 class ExportBufInst : InstR600ISA<(
     outs),
