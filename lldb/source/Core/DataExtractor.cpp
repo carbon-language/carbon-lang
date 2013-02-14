@@ -1339,7 +1339,8 @@ DataExtractor::Dump (Stream *s,
                 lldb_private::Address so_addr;
                 if (!target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
                 {
-                    so_addr.SetRawAddress(addr);
+                    if (target_sp->GetSectionLoadList().IsEmpty() || !target_sp->GetImages().ResolveFileAddress(addr, so_addr))
+                        so_addr.SetRawAddress(addr);
                 }
 
                 size_t bytes_consumed = disassembler_sp->DecodeInstructions (so_addr, *this, start_offset, item_count, false);
