@@ -93,6 +93,13 @@
                         <br>(lldb) breakpoint set -n foo
                     </code>
 
+                   <p>You can use the --name option multiple times to make a breakpoint on a set of functions as well.  This is convenient
+                      since it allows you to set commmon conditions or commands without having to specify them multiple times:</p>
+
+                    <code>
+                        (lldb) breakpoint set --name foo --name bar
+                    </code>
+
                    <p>Setting breakpoints by name is even more specialized in LLDB as you can specify
                        that you want to set a breakpoint at a function by method name. To set a breakpoint
                        on all C++ methods named <code>foo</code> you can enter either of:</p>
@@ -116,6 +123,8 @@
                       (lldb) breakpoint set --shlib foo.dylib --name foo
                       <br>(lldb) breakpoint set -s foo.dylib -n foo
                   </code>
+
+                   <p>The <code>--shlib</code> option can also be repeated to specify several shared libraries.</p>
 
                    <p>Suggestions on more interesting primitives of this sort are also very welcome.</p>
 

@@ -342,6 +342,18 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Ensure that breakpoints by file and line work for #included .c/.cpp/.m files.</td></tr>
+
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> b foo.c:12<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> settings set target.inline-breakpoint-strategy always<br>
+                            <b>(lldb)</b> br s -f foo.c -l 12<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Set a breakpoint by regular expression on source file contents.</td></tr>
 
                     <tr>
