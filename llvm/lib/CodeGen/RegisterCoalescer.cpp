@@ -769,7 +769,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
     // extract_subreg, insert_subreg, subreg_to_reg coalescing.
     const TargetRegisterClass *RC = TII->getRegClass(MCID, 0, TRI, *MF);
     if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-      if (MRI->getRegClass(DstReg) != RC)
+      if (!MRI->constrainRegClass(DstReg, RC))
         return false;
     } else if (!RC->contains(DstReg))
       return false;
