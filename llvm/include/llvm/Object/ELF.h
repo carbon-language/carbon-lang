@@ -867,6 +867,7 @@ void ELFObjectFile<ELFT>::LoadVersionMap() const {
 
 template<class ELFT>
 void ELFObjectFile<ELFT>::validateSymbol(DataRefImpl Symb) const {
+#ifndef NDEBUG
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
   // FIXME: We really need to do proper error handling in the case of an invalid
@@ -881,6 +882,7 @@ void ELFObjectFile<ELFT>::validateSymbol(DataRefImpl Symb) const {
                    + SymbolTableSection->sh_size)))
     // FIXME: Proper error handling.
     report_fatal_error("Symb must point to a valid symbol!");
+#endif
 }
 
 template<class ELFT>
