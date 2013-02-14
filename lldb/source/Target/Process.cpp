@@ -515,7 +515,8 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                     // We have a relative path to our executable which may not work if
                     // we just try to run "a.out" (without it being converted to "./a.out")
                     const char *working_dir = GetWorkingDirectory();
-                    std::string new_path("PATH=");
+                    // Be sure to put quotes around PATH's value in case any paths have spaces...
+                    std::string new_path("PATH=\"");
                     const size_t empty_path_len = new_path.size();
                     
                     if (working_dir && working_dir[0])
@@ -536,7 +537,7 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                             new_path += ':';
                         new_path += curr_path;
                     }
-                    new_path += ' ';
+                    new_path += "\" ";
                     shell_command.PutCString(new_path.c_str());
                 }
 
