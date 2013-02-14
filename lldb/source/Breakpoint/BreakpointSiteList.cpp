@@ -169,7 +169,7 @@ BreakpointSiteList::BreakpointSiteContainsBreakpoint (lldb::break_id_t bp_site_i
 {
     collection::const_iterator pos = GetIDConstIterator(bp_site_id);
     if (pos != m_bp_site_list.end())
-        pos->second->IsBreakpointAtThisSite (bp_id);
+        return pos->second->IsBreakpointAtThisSite (bp_id);
 
     return false;
 }
