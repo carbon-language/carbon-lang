@@ -119,8 +119,9 @@ private:
   StringRef _soname;
 
   struct SymAtomPair {
-    const typename llvm::object::ELFObjectFile<ELFT>::Elf_Sym *_symbol;
-    const SharedLibraryAtom *_atom;
+    const typename llvm::object::ELFObjectFile<ELFT>::Elf_Sym *_symbol =
+        nullptr;
+    const SharedLibraryAtom *_atom = nullptr;
   };
 
   mutable std::unordered_map<StringRef, SymAtomPair> _nameToSym;

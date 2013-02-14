@@ -254,6 +254,19 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
     ret._input.push_back(LinkerInput((*it)->getValue()));
   }
 
+  StringRef outputType = args.getLastArgValue(core::OPT_output_type);
+  ret._outputKind = llvm::StringSwitch<OutputKind>(outputType)
+      .Case("static", OutputKind::StaticExecutable)
+      .Case("dynamic", OutputKind::DynamicExecutable)
+      .Case("relocatable", OutputKind::Relocatable)
+      .Case("shared", OutputKind::Shared)
+      .Case("stubs", OutputKind::SharedStubs)
+      .Case("core", OutputKind::Core)
+      .Case("debug-symbols", OutputKind::DebugSymbols)
+      .Case("bundle", OutputKind::Bundle)
+      .Case("preload", OutputKind::Preload)
+      .Default(OutputKind::Invalid);
+
   ret._inputSearchPaths = args.getAllArgValues(core::OPT_input_search_path);
   ret._llvmArgs = args.getAllArgValues(core::OPT_mllvm);
   ret._target = llvm::Triple::normalize(args.getLastArgValue(core::OPT_target));

@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
   lo._deadStrip = cmdLineDeadStrip;
   lo._globalsAreDeadStripRoots = cmdLineGlobalsNotDeadStrip;
   lo._forceLoadArchives = cmdLineForceLoad;
-  lo._outputKind = OutputKind::Executable;
+  lo._outputKind = OutputKind::StaticExecutable;
   lo._entrySymbol = cmdLineEntryPoint;
   lo._mergeCommonStrings = cmdLineDoMergeStrings;
 

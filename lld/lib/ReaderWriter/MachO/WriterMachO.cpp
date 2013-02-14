@@ -640,7 +640,8 @@ uint32_t MachHeaderChunk::magic(uint32_t cpuType) {
 
 uint32_t MachHeaderChunk::filetype(OutputKind kind) {
   switch ( kind ) {
-  case OutputKind::Executable:
+  case OutputKind::StaticExecutable:
+  case OutputKind::DynamicExecutable:
     return MH_EXECUTE;
   case OutputKind::Relocatable:
     return MH_OBJECT;
@@ -654,6 +655,8 @@ uint32_t MachHeaderChunk::filetype(OutputKind kind) {
   case OutputKind::DebugSymbols:
   case OutputKind::Core:
     break;
+  case OutputKind::Invalid:
+    llvm_unreachable("Invalid output kind!");
   }
   llvm_unreachable("file OutputKind not supported");
   return 0;
@@ -1390,7 +1393,9 @@ void MachOWriter::buildAtomToAddressMap() {
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
                    << "assign atom addresses:\n");
   const bool lookForEntry = _targetInfo.getLinkerOptions()._outputKind ==
-                            OutputKind::Executable;
+                            OutputKind::StaticExecutable ||
+                            _targetInfo.getLinkerOptions()._outputKind ==
+                            OutputKind::DynamicExecutable;
   for (SectionChunk *chunk : _sectionChunks ) {
     for (const SectionChunk::AtomInfo &info : chunk->atoms() ) {
       _atomToAddress[info.atom] = chunk->address() + info.offsetInSection;

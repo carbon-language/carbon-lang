@@ -83,7 +83,9 @@ private:
 };
 
 enum OutputKind {
-  Executable,
+  Invalid,
+  StaticExecutable,
+  DynamicExecutable,
   Relocatable,
   Shared,
   SharedStubs,
@@ -96,7 +98,7 @@ enum OutputKind {
 struct LinkerOptions {
   LinkerOptions()
     : _baseAddress(0)
-    , _outputKind(OutputKind::Executable)
+    , _outputKind(OutputKind::Invalid)
     , _outputCommands(false)
     , _outputYAML(false)
     , _noInhibitExec(true)

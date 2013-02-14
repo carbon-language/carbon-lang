@@ -31,7 +31,8 @@ public:
     CRuntimeFile(const MachOTargetInfo &ti) 
       : SimpleFile(ti, "C runtime"), _undefMain(*this, "_main") {
       // only main executables need _main
-      if (ti.getLinkerOptions()._outputKind == OutputKind::Executable)
+      if (ti.getLinkerOptions()._outputKind == OutputKind::StaticExecutable ||
+          ti.getLinkerOptions()._outputKind == OutputKind::DynamicExecutable)
         this->addAtom(_undefMain);
    }
         

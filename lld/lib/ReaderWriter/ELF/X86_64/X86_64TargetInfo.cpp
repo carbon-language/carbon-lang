@@ -118,67 +118,46 @@ public:
 
 /// \brief Create GOT and PLT entries for relocations. Handles standard GOT/PLT
 /// along with IFUNC and TLS.
-///
-/// This currently assumes a static relocation model. Meaning GOT and PLT
-/// entries are not created for references that can be directly resolved. These
-/// are converted to a direct relocation. For entries that do require a GOT or
-/// PLT entry, that entry is statically bound.
-///
-/// TLS always assumes module 1 and attempts to remove indirection.
-class GOTPLTPass LLVM_FINAL : public Pass {
+template <class Derived> class GOTPLTPass : public Pass {
   /// \brief Handle a specific reference.
-  ///
-  /// There are multiple different types of references and just the reference
-  /// kind is not enough to know if a got entry has to be created. We have the
-  /// following non-standard cases:
-  ///   Relocation    -> target type
-  ///   R_X86_64_PC32 -> typeResover = a call to an IFUNC function. Needs PLT.
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
     const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target());
     switch (ref.kind()) {
     case R_X86_64_PLT32:
-      // __tls_get_addr is handled elsewhere.
-      if (ref.target() && ref.target()->name() == "__tls_get_addr") {
-        const_cast<Reference &>(ref).setKind(R_X86_64_NONE);
-        break;
-      }
-      else
-        // Static code doesn't need PLTs.
-        const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
-      // Fall through.
-    case R_X86_64_PC32: // IFUNC
-      if (da && da->contentType() == DefinedAtom::typeResolver)
-        handlePC32IFUNC(ref, *da);
+      static_cast<Derived *>(this)->handlePLT32(ref);
+      break;
+    case R_X86_64_PC32:
+      static_cast<Derived *>(this)->handleIFUNC(ref, da);
       break;
     case R_X86_64_GOTTPOFF: // GOT Thread Pointer Offset
-      if (da)
-        handleGOTTPOFF(ref, *da);
+      static_cast<Derived *>(this)->handleGOTTPOFF(ref, da);
       break;
     case R_X86_64_GOTPCREL:
-      handleGOTPCREL(ref);
+      static_cast<Derived *>(this)->handleGOTPCREL(ref);
       break;
     }
   }
 
+protected:
   /// \brief get the PLT entry for a given IFUNC Atom.
   ///
   /// If the entry does not exist. Both the GOT and PLT entry is created.
-  const PLTAtom *getIFUNCPLTEntry(const DefinedAtom &da) {
-    auto plt = _pltMap.find(&da);
+  const PLTAtom *getIFUNCPLTEntry(const DefinedAtom *da) {
+    auto plt = _pltMap.find(da);
     if (plt != _pltMap.end())
       return plt->second;
     auto ga = new (_file._alloc) GOTAtom(_file, ".got.plt");
-    ga->addReference(R_X86_64_IRELATIVE, 0, &da, 0);
+    ga->addReference(R_X86_64_IRELATIVE, 0, da, 0);
     auto pa = new (_file._alloc) PLTAtom(_file, ".plt");
     pa->addReference(R_X86_64_PC32, 2, ga, -4);
 #ifndef NDEBUG
     ga->_name = "__got_ifunc_";
-    ga->_name += da.name();
+    ga->_name += da->name();
     pa->_name = "__plt_ifunc_";
-    pa->_name += da.name();
+    pa->_name += da->name();
 #endif
-    _gotMap[&da] = ga;
-    _pltMap[&da] = pa;
+    _gotMap[da] = ga;
+    _pltMap[da] = pa;
     return pa;
   }
 
@@ -186,21 +165,23 @@ class GOTPLTPass LLVM_FINAL : public Pass {
   ///
   /// This create a PLT and GOT entry for the IFUNC if one does not exist. The
   /// GOT entry and a IRELATIVE relocation to the original target resolver.
-  void handlePC32IFUNC(const Reference &ref, const DefinedAtom &target) {
-    const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
+  ErrorOr<void> handleIFUNC(const Reference &ref, const DefinedAtom *target) {
+    if (target && target->contentType() == DefinedAtom::typeResolver)
+      const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
+    return error_code::success();
   }
 
   /// \brief Create a GOT entry for the TP offset of a TLS atom.
-  const GOTAtom *getGOTTPOFF(const DefinedAtom &atom) {
-    auto got = _gotMap.find(&atom);
+  const GOTAtom *getGOTTPOFF(const DefinedAtom *atom) {
+    auto got = _gotMap.find(atom);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) GOTAtom(_file, ".got");
-      g->addReference(R_X86_64_TPOFF64, 0, &atom, 0);
+      g->addReference(R_X86_64_TPOFF64, 0, atom, 0);
 #ifndef NDEBUG
       g->_name = "__got_tls_";
-      g->_name += atom.name();
+      g->_name += atom->name();
 #endif
-      _gotMap[&atom] = g;
+      _gotMap[atom] = g;
       return g;
     }
     return got->second;
@@ -208,7 +189,7 @@ class GOTPLTPass LLVM_FINAL : public Pass {
 
   /// \brief Create a TPOFF64 GOT entry and change the relocation to a PC32 to
   /// the GOT.
-  void handleGOTTPOFF(const Reference &ref, const DefinedAtom &target) {
+  void handleGOTTPOFF(const Reference &ref, const DefinedAtom *target) {
     const_cast<Reference &>(ref).setTarget(getGOTTPOFF(target));
     const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
   }
@@ -224,16 +205,16 @@ class GOTPLTPass LLVM_FINAL : public Pass {
     return _null;
   }
 
-  const GOTAtom *getGOT(const DefinedAtom &da) {
-    auto got = _gotMap.find(&da);
+  const GOTAtom *getGOT(const DefinedAtom *da) {
+    auto got = _gotMap.find(da);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) GOTAtom(_file, ".got");
-      g->addReference(R_X86_64_64, 0, &da, 0);
+      g->addReference(R_X86_64_64, 0, da, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
-      g->_name += da.name();
+      g->_name += da->name();
 #endif
-      _gotMap[&da] = g;
+      _gotMap[da] = g;
       return g;
     }
     return got->second;
@@ -246,7 +227,7 @@ class GOTPLTPass LLVM_FINAL : public Pass {
     if (isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getNullGOT());
     else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getGOT(*da));
+      const_cast<Reference &>(ref).setTarget(getGOT(da));
   }
 
 public:
@@ -275,20 +256,85 @@ public:
       mf.addAtom(*plt.second);
   }
 
-private:
+protected:
   /// \brief Owner of all the Atoms created by this pass.
   ELFPassFile _file;
   /// \brief Map Atoms to their GOT entries.
-  llvm::DenseMap<const DefinedAtom *, const GOTAtom *> _gotMap;
+  llvm::DenseMap<const Atom *, const GOTAtom *> _gotMap;
   /// \brief Map Atoms to their PLT entries.
-  llvm::DenseMap<const DefinedAtom *, const PLTAtom *> _pltMap;
+  llvm::DenseMap<const Atom *, const PLTAtom *> _pltMap;
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null;
+};
+
+/// This implements the static relocation model. Meaning GOT and PLT entries are
+/// not created for references that can be directly resolved. These are
+/// converted to a direct relocation. For entries that do require a GOT or PLT
+/// entry, that entry is statically bound.
+///
+/// TLS always assumes module 1 and attempts to remove indirection.
+class StaticGOTPLTPass LLVM_FINAL : public GOTPLTPass<StaticGOTPLTPass> {
+public:
+  StaticGOTPLTPass(const elf::X86_64TargetInfo &ti) : GOTPLTPass(ti) {}
+
+  ErrorOr<void> handlePLT32(const Reference &ref) {
+    // __tls_get_addr is handled elsewhere.
+    if (ref.target() && ref.target()->name() == "__tls_get_addr") {
+      const_cast<Reference &>(ref).setKind(R_X86_64_NONE);
+      return error_code::success();
+    } else
+      // Static code doesn't need PLTs.
+      const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+    // Handle IFUNC.
+    if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
+      if (da->contentType() == DefinedAtom::typeResolver)
+        return handleIFUNC(ref, da);
+    return error_code::success();
+  }
+};
+
+class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
+public:
+  DynamicGOTPLTPass(const elf::X86_64TargetInfo &ti) : GOTPLTPass(ti) {}
+
+  const PLTAtom *getPLTEntry(const Atom *a) {
+    auto plt = _pltMap.find(a);
+    if (plt != _pltMap.end())
+      return plt->second;
+    auto ga = new (_file._alloc) GOTAtom(_file, ".got.plt");
+    ga->addReference(R_X86_64_RELATIVE, 0, a, 0);
+    auto pa = new (_file._alloc) PLTAtom(_file, ".plt");
+    pa->addReference(R_X86_64_PC32, 2, ga, -4);
+#ifndef NDEBUG
+    ga->_name = "__got_";
+    ga->_name += a->name();
+    pa->_name = "__plt_";
+    pa->_name += a->name();
+#endif
+    _gotMap[a] = ga;
+    _pltMap[a] = pa;
+    return pa;
+  }
+
+  ErrorOr<void> handlePLT32(const Reference &ref) {
+    // Turn this into a PC32 to the PLT entry.
+    const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+    // Handle IFUNC.
+    if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
+      if (da->contentType() == DefinedAtom::typeResolver)
+        return handleIFUNC(ref, da);
+    const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
+    return error_code::success();
+  }
 };
 } // end anon namespace
 
 void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
-  pm.add(std::unique_ptr<Pass>(new GOTPLTPass(*this)));
+  if (_options._outputKind == OutputKind::StaticExecutable)
+    pm.add(std::unique_ptr<Pass>(new StaticGOTPLTPass(*this)));
+  else if (_options._outputKind == OutputKind::DynamicExecutable ||
+           _options._outputKind == OutputKind::Shared)
+    pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
 }
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)

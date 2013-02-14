@@ -47,7 +47,8 @@ uint32_t MachOTargetInfo::getCPUSubType() const {
 
 bool MachOTargetInfo::addEntryPointLoadCommand() const {
   switch (_options._outputKind) {
-  case OutputKind::Executable:
+  case OutputKind::StaticExecutable:
+  case OutputKind::DynamicExecutable:
     return true;
   default:
     return false;
@@ -56,7 +57,8 @@ bool MachOTargetInfo::addEntryPointLoadCommand() const {
 
 bool MachOTargetInfo::addUnixThreadLoadCommand() const {
   switch (_options._outputKind) {
-  case OutputKind::Executable:
+  case OutputKind::StaticExecutable:
+  case OutputKind::DynamicExecutable:
     return true;
   default:
     return false;

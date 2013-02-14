@@ -1,4 +1,5 @@
-RUN: lld -flavor ld -target x86_64-linux -o %t %p/Inputs/init_array.x86-64
+RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/init_array.x86-64 \
+RUN:   -output-type=static
 RUN: llvm-objdump -t -section-headers %t | FileCheck %s
 
 CHECK: .init_array {{[0-9]+}} [[ADDR:[0-9]+]]

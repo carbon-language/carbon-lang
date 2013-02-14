@@ -3,4 +3,4 @@ RUN:   | FileCheck %s
 
 CHECK: -input-search-path={{[^ ]+}}elf/Inputs
 CHECK: b.o
-CHECK: {{[^ ]+}}elf/Inputs/libfnarchive.a
+CHECK: {{[^ ]+}}elf/Inputs{{[\\/]}}libfnarchive.a

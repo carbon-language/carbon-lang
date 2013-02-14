@@ -1,4 +1,4 @@
-RUN: lld -core -target x86_64-linux -output=- -entry=main \
+RUN: lld -core -target x86_64-linux -output=- -entry=main -output-type=static \
 RUN:   %p/Inputs/gotpcrel.x86-64 -emit-yaml -noinhibit-exec \
 RUN: | FileCheck %s -check-prefix=YAML
 

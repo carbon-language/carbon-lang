@@ -23,7 +23,8 @@ ELFTargetInfo::ELFTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
 
 uint16_t ELFTargetInfo::getOutputType() const {
   switch (_options._outputKind) {
-  case OutputKind::Executable:
+  case OutputKind::StaticExecutable:
+  case OutputKind::DynamicExecutable:
     return llvm::ELF::ET_EXEC;
   case OutputKind::Relocatable:
     return llvm::ELF::ET_REL;
@@ -36,6 +37,8 @@ uint16_t ELFTargetInfo::getOutputType() const {
   case OutputKind::Bundle:
   case OutputKind::Preload:
     break;
+  case OutputKind::Invalid:
+    llvm_unreachable("Invalid output kind!");
   }
   llvm_unreachable("Unhandled OutputKind");
 }

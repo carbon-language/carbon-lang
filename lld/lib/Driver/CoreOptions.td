@@ -8,6 +8,7 @@ def mllvm : Separate<["-"], "mllvm">, HelpText<"Options to pass to LLVM">;
 def output : Joined<["-"], "output=">;
 def entry : Joined<["-"], "entry=">;
 def input_search_path : Joined<["-"], "input-search-path=">;
+def output_type : Joined<["-"], "output-type=">;
 def relocatable : Flag<["-"], "relocatable">;
 
 def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;

@@ -1,13 +1,13 @@
-RUN: lld -core -target x86_64-linux -emit-yaml -output=- \
+RUN: lld -core -target x86_64-linux -emit-yaml -output=- -output-type=static \
 RUN:   %p/Inputs/ifunc.x86-64 -noinhibit-exec | FileCheck %s
 
-RUN: lld -core -target x86_64-linux -emit-yaml -output=- \
+RUN: lld -core -target x86_64-linux -emit-yaml -output=- -output-type=static \
 RUN:   %p/Inputs/ifunc.x86-64 -noinhibit-exec %p/Inputs/ifunc.cpp.x86-64 \
 RUN: | FileCheck %s --check-prefix=PLT
 
-RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/ifunc.x86-64 -entry=main \
-RUN:   %p/Inputs/ifunc.cpp.x86-64 && llvm-objdump -d -s %t| FileCheck %s \
-RUN:   --check-prefix=BIN
+RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/ifunc.x86-64 \
+RUN:   -entry=main -output-type=static %p/Inputs/ifunc.cpp.x86-64 \
+RUN: && llvm-objdump -d -s %t| FileCheck %s --check-prefix=BIN
 
 CHECK: name: hey
 CHECK: scope: global

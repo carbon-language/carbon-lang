@@ -1,7 +1,8 @@
 RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/phdr.i386 | elf-dump %t1 |  FileCheck -check-prefix=ED %s
 
 RUN: lld -core -target x86_64-linux -output=%t1 %p/Inputs/relocs.x86-64 \
-RUN: && llvm-objdump -p %t1 | FileCheck %s -check-prefix=X86_64
+RUN:   -output-type=static && llvm-objdump -p %t1 \
+RUN: | FileCheck %s -check-prefix=X86_64
 
 
 ED:  (('p_type', 0x00000001)

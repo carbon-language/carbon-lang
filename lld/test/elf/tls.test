@@ -1,8 +1,10 @@
 RUN: lld -core -target x86_64-linux %p/Inputs/tls.x86-64 -output=- \
-RUN:   -noinhibit-exec -entry=main -emit-yaml | FileCheck %s -check-prefix=YAML
+RUN:   -noinhibit-exec -entry=main -emit-yaml -output-type=static \
+RUN: | FileCheck %s -check-prefix=YAML
 
 RUN: lld -core -target x86_64-linux %p/Inputs/tls.x86-64 -output=%t \
-RUN:   -noinhibit-exec -entry=main && llvm-objdump -d %t | FileCheck %s
+RUN:   -noinhibit-exec -entry=main -output-type=static && llvm-objdump -d %t \
+RUN: | FileCheck %s
 
 // Verify that the TLS accesses have the correct offsets.
 

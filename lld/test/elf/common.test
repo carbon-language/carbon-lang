@@ -1,4 +1,5 @@
-RUN: lld -flavor ld -target x86_64-linux -o %t %p/Inputs/relocs.x86-64 \
-RUN: && llvm-readobj %t | FileCheck %s
+RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/relocs.x86-64 \
+RUN:   -output-type=static
+RUN: llvm-readobj %t | FileCheck %s
 
 CHECK: i DATA
