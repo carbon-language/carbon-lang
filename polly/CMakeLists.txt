@@ -158,3 +158,8 @@ add_subdirectory(tools)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/polly/Config/config.h.cmake
                 ${POLLY_BINARY_DIR}/include/polly/Config/config.h )
 
+# Add target to check formatting of polly files
+file( GLOB_RECURSE files *.h *.cpp)
+add_custom_command( OUTPUT formatting COMMAND
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/check_format.sh ${files})
+add_custom_target(polly-check-format ALL DEPENDS formatting)
