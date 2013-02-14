@@ -1217,20 +1217,20 @@ SourceRange VarDecl::getSourceRange() const {
 
 template<typename T>
 static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
-  // Language linkage is a C++ concept, but saying that everything in C has
+  // C++ [dcl.link]p1: All function types, function names with external linkage,
+  // and variable names with external linkage have a language linkage.
+  if (!isExternalLinkage(D.getLinkage()))
+    return NoLanguageLinkage;
+
+  // Language linkage is a C++ concept, but saying that everything else in C has
   // C language linkage fits the implementation nicely.
   ASTContext &Context = D.getASTContext();
   if (!Context.getLangOpts().CPlusPlus)
     return CLanguageLinkage;
 
-  // dcl.link 1: All function types, function names with external linkage, and
-  // variable names with external linkage have a language linkage.
-  if (!isExternalLinkage(D.getLinkage()))
-    return NoLanguageLinkage;
-
-  // dcl.link 4: A C language linkage is ignored in determining the language
-  // linkage of the names of class members and the function type of class member
-  // functions.
+  // C++ [dcl.link]p4: A C language linkage is ignored in determining the
+  // language linkage of the names of class members and the function type of
+  // class member functions.
   const DeclContext *DC = D.getDeclContext();
   if (DC->isRecord())
     return CXXLanguageLinkage;
@@ -1246,20 +1246,6 @@ static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
 
 LanguageLinkage VarDecl::getLanguageLinkage() const {
   return getLanguageLinkageTemplate(*this);
-}
-
-bool VarDecl::isExternC() const {
-  if (getLinkage() != ExternalLinkage)
-    return false;
-
-  const DeclContext *DC = getDeclContext();
-  if (DC->isRecord())
-    return false;
-
-  ASTContext &Context = getASTContext();
-  if (!Context.getLangOpts().CPlusPlus)
-    return true;
-  return DC->isExternCContext();
 }
 
 VarDecl *VarDecl::getCanonicalDecl() {
@@ -1778,24 +1764,6 @@ LanguageLinkage FunctionDecl::getLanguageLinkage() const {
     return CLanguageLinkage;
 
   return getLanguageLinkageTemplate(*this);
-}
-
-bool FunctionDecl::isExternC() const {
-  if (getLinkage() != ExternalLinkage)
-    return false;
-
-  if (getAttr<OverloadableAttr>())
-    return false;
-
-  const DeclContext *DC = getDeclContext();
-  if (DC->isRecord())
-    return false;
-
-  ASTContext &Context = getASTContext();
-  if (!Context.getLangOpts().CPlusPlus)
-    return true;
-
-  return isMain() || DC->isExternCContext();
 }
 
 bool FunctionDecl::isGlobal() const {
@@ -2466,7 +2434,7 @@ unsigned FunctionDecl::getMemoryFunctionKind() const {
     return Builtin::BIstrlen;
 
   default:
-    if (hasCLanguageLinkage()) {
+    if (isExternC()) {
       if (FnInfo->isStr("memset"))
         return Builtin::BImemset;
       else if (FnInfo->isStr("memcpy"))

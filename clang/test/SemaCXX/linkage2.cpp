@@ -106,3 +106,22 @@ extern "C" {
 extern "C++" {
   extern void test8_g();
 }
+
+extern "C" {
+  void __attribute__((overloadable)) test9_f(int c); // expected-note {{previous declaration is here}}
+}
+extern "C++" {
+  void __attribute__((overloadable)) test9_f(int c); // expected-error {{declaration of 'test9_f' has a different language linkage}}
+}
+
+extern "C" {
+  void __attribute__((overloadable)) test10_f(int);
+  void __attribute__((overloadable)) test10_f(double);
+}
+
+extern "C" {
+  void test11_f() {
+    void  __attribute__((overloadable)) test11_g(int);
+    void  __attribute__((overloadable)) test11_g(double);
+  }
+}

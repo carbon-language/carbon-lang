@@ -4860,7 +4860,7 @@ void Sema::CheckShadow(Scope *S, VarDecl *D) {
 template<typename T>
 static bool mayConflictWithNonVisibleExternC(const T *ND) {
   VarDecl::StorageClass SC = ND->getStorageClass();
-  if (ND->hasCLanguageLinkage() && (SC == SC_Extern || SC == SC_PrivateExtern))
+  if (ND->isExternC() && (SC == SC_Extern || SC == SC_PrivateExtern))
     return true;
   return ND->getDeclContext()->isTranslationUnit();
 }
@@ -6581,7 +6581,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // If this function is declared as being extern "C", then check to see if 
     // the function returns a UDT (class, struct, or union type) that is not C
     // compatible, and if it does, warn the user.
-    if (NewFD->hasCLanguageLinkage()) {
+    if (NewFD->isExternC()) {
       QualType R = NewFD->getResultType();
       if (R->isIncompleteType() && !R->isVoidType())
         Diag(NewFD->getLocation(), diag::warn_return_value_udt_incomplete)

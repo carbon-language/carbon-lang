@@ -967,7 +967,7 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
 static bool canBeOverloaded(const FunctionDecl &D) {
   if (D.getAttr<OverloadableAttr>())
     return true;
-  if (D.hasCLanguageLinkage())
+  if (D.isExternC())
     return false;
 
   // Main cannot be overloaded (basic.start.main).

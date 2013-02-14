@@ -894,14 +894,12 @@ public:
   ///  as static variables declared within a function.
   bool hasGlobalStorage() const { return !hasLocalStorage(); }
 
-  /// \brief Determines whether this variable is a variable with
-  /// external, C linkage.
-  bool isExternC() const;
-
   /// Compute the language linkage.
   LanguageLinkage getLanguageLinkage() const;
 
-  bool hasCLanguageLinkage() const {
+  /// \brief Determines whether this variable is a variable with
+  /// external, C linkage.
+  bool isExternC() const {
     return getLanguageLinkage() == CLanguageLinkage;
   }
 
@@ -1787,14 +1785,12 @@ public:
   /// This function must be an allocation or deallocation function.
   bool isReservedGlobalPlacementOperator() const;
 
-  /// \brief Determines whether this function is a function with
-  /// external, C linkage.
-  bool isExternC() const;
-
   /// Compute the language linkage.
   LanguageLinkage getLanguageLinkage() const;
 
-  bool hasCLanguageLinkage() const {
+  /// \brief Determines whether this function is a function with
+  /// external, C linkage.
+  bool isExternC() const {
     return getLanguageLinkage() == CLanguageLinkage;
   }
 
