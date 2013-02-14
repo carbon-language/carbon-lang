@@ -381,6 +381,15 @@ bool ItaniumMangleContext::shouldMangleDeclName(const NamedDecl *D) {
     // mangling.
     if (!FD->getDeclName().isIdentifier() || L == CXXLanguageLinkage)
       return true;
+
+    // FIXME: Users assume they know the mangling of static functions
+    // declared in extern "C" contexts, so we cannot always mangle them.
+    // As an improvement, maybe we could mangle them only if they are actually
+    // overloaded.
+    const DeclContext *DC = FD->getDeclContext();
+    if (!DC->isRecord() &&
+        FD->getFirstDeclaration()->getDeclContext()->isExternCContext())
+      return false;
   }
 
   // Otherwise, no mangling is done outside C++ mode.
