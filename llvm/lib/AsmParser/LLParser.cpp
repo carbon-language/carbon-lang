@@ -2312,7 +2312,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     return false;
 
   case lltok::kw_asm: {
-    // ValID ::= 'asm' SideEffect? AlignStack? STRINGCONSTANT ',' STRINGCONSTANT
+    // ValID ::= 'asm' SideEffect? AlignStack? IntelDialect? STRINGCONSTANT ','
+    //             STRINGCONSTANT
     bool HasSideEffect, AlignStack, AsmDialect;
     Lex.Lex();
     if (ParseOptionalToken(lltok::kw_sideeffect, HasSideEffect) ||
