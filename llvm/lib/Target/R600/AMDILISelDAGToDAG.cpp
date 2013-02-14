@@ -218,7 +218,9 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
             continue;
           }
       } else {
-        if (!TII->isALUInstr(Use->getMachineOpcode())) {
+        if (!TII->isALUInstr(Use->getMachineOpcode()) ||
+            (TII->get(Use->getMachineOpcode()).TSFlags &
+            R600_InstFlag::VECTOR)) {
           continue;
         }
 
@@ -261,7 +263,8 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
     const R600InstrInfo *TII =
         static_cast<const R600InstrInfo*>(TM.getInstrInfo());
-    if (Result && Result->isMachineOpcode()
+    if (Result && Result->isMachineOpcode() &&
+        !(TII->get(Result->getMachineOpcode()).TSFlags & R600_InstFlag::VECTOR)
         && TII->isALUInstr(Result->getMachineOpcode())) {
       // Fold FNEG/FABS/CONST_ADDRESS
       // TODO: Isel can generate multiple MachineInst, we need to recursively
