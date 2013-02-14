@@ -1936,7 +1936,7 @@ Clang implements two kinds of checks with this attribute.
    for functions that accept a ``va_list`` argument (for example, ``vprintf``).
    GCC does not emit ``-Wformat-nonliteral`` warning for calls to such
    fuctions.  Clang does not warn if the format string comes from a function
-   parameter, where function is annotated with a compatible attribute,
+   parameter, where the function is annotated with a compatible attribute,
    otherwise it warns.  For example:
 
    .. code-block:: c
@@ -1950,14 +1950,12 @@ Clang implements two kinds of checks with this attribute.
      }
 
    In this case we warn because ``s`` contains a format string for a
-   ``scanf``-like function, but it is passed it to a ``printf``-like function.
+   ``scanf``-like function, but it is passed to a ``printf``-like function.
 
    If the attribute is removed, clang still warns, because the format string is
    not a string literal.
 
-   But in this case Clang does not warn because the format string ``s`` and
-   corresponding arguments are annotated.  If the arguments are incorrect,
-   caller of ``foo`` will get a warning.
+   Another example:
 
    .. code-block: c
 
@@ -1969,3 +1967,6 @@ Clang implements two kinds of checks with this attribute.
        vprintf(s, ap); // warning
      }
 
+   In this case Clang does not warn because the format string ``s`` and
+   the corresponding arguments are annotated.  If the arguments are
+   incorrect, the caller of ``foo`` will receive a warning.
