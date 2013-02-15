@@ -593,7 +593,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   for (unsigned i = 0, e = Nest.size(); i < e; ++i) {
     PHINode *PN = Nest[i]->getCanonicalInductionVariable();
     assert(PN && "Non canonical IV in Scop!");
-    IVS[i] = std::make_pair(PN, Nest[i]);
+    IVS[i] = PN;
     NestLoops[i] = Nest[i];
   }
 
@@ -633,7 +633,7 @@ const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }
 
 const PHINode *
 ScopStmt::getInductionVariableForDimension(unsigned Dimension) const {
-  return IVS[Dimension].first;
+  return IVS[Dimension];
 }
 
 const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
