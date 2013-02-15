@@ -141,12 +141,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
 
   const MCInstrDesc &Desc = MCII.get(TmpInst.getOpcode());
-  uint64_t TSFlags = Desc.TSFlags;
-
-  // Pseudo instructions don't get encoded and shouldn't be here
-  // in the first place!
-  if ((TSFlags & MipsII::FormMask) == MipsII::Pseudo)
-    llvm_unreachable("Pseudo opcode found in EncodeInstruction()");
 
   // Get byte count of instruction
   unsigned Size = Desc.getSize();

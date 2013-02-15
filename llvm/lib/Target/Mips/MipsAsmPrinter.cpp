@@ -74,6 +74,16 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     if (emitPseudoExpansionLowering(OutStreamer, &*I))
       continue;
 
+    // The inMips16Mode() test is not permanent.
+    // Some instructions are marked as pseudo right now which
+    // would make the test fail for the wrong reason but
+    // that will be fixed soon. We need this here because we are
+    // removing another test for this situation downstream in the
+    // callchain.
+    //
+    if (I->isPseudo() && !Subtarget->inMips16Mode())
+      llvm_unreachable("Pseudo opcode found in EmitInstruction()");
+
     MCInst TmpInst0;
     MCInstLowering.Lower(I, TmpInst0);
     OutStreamer.EmitInstruction(TmpInst0);
