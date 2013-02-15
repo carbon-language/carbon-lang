@@ -26,6 +26,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         self.buildDsym()
         self.call_function()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin due to ObjC test case")
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling std::String member function."""
