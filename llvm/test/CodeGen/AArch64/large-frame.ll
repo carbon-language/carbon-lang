@@ -11,17 +11,22 @@ define void @test_bigframe() {
   %var3 = alloca i8, i32 20000000
 ; CHECK: sub sp, sp, #496
 ; CHECK: str x30, [sp, #488]
-; CHECK: ldr [[FRAMEOFFSET:x[0-9]+]], [[FRAMEOFFSET_CPI:.LCPI0_[0-9]+]]
-; CHECK: sub sp, sp, [[FRAMEOFFSET]]
+  ; Total adjust is 39999536
+; CHECK: movz [[SUBCONST:x[0-9]+]], #22576
+; CHECK: movk [[SUBCONST]], #610, lsl #16
+; CHECK: sub sp, sp, [[SUBCONST]]
 
-; CHECK: ldr [[VAR1OFFSET:x[0-9]+]], [[VAR1LOC_CPI:.LCPI0_[0-9]+]]
+  ; Total offset is 20000024
+; CHECK: movz [[VAR1OFFSET:x[0-9]+]], #11544
+; CHECK: movk [[VAR1OFFSET]], #305, lsl #16
 ; CHECK: add {{x[0-9]+}}, sp, [[VAR1OFFSET]]
   store volatile i8* %var1, i8** @addr
 
   %var1plus2 = getelementptr i8* %var1, i32 2
   store volatile i8* %var1plus2, i8** @addr
 
-; CHECK: ldr [[VAR2OFFSET:x[0-9]+]], [[VAR2LOC_CPI:.LCPI0_[0-9]+]]
+; CHECK: movz [[VAR2OFFSET:x[0-9]+]], #11528
+; CHECK: movk [[VAR2OFFSET]], #305, lsl #16
 ; CHECK: add {{x[0-9]+}}, sp, [[VAR2OFFSET]]
   store volatile i8* %var2, i8** @addr
 
@@ -33,18 +38,10 @@ define void @test_bigframe() {
   %var3plus2 = getelementptr i8* %var3, i32 2
   store volatile i8* %var3plus2, i8** @addr
 
-; CHECK: ldr [[FRAMEOFFSET:x[0-9]+]], [[FRAMEOFFSET_CPI]]
-; CHECK: add sp, sp, [[FRAMEOFFSET]]
+; CHECK: movz [[ADDCONST:x[0-9]+]], #22576
+; CHECK: movk [[ADDCONST]], #610, lsl #16
+; CHECK: add sp, sp, [[ADDCONST]]
   ret void
-
-; CHECK: [[FRAMEOFFSET_CPI]]:
-; CHECK-NEXT: 39999536
-
-; CHECK: [[VAR1LOC_CPI]]:
-; CHECK-NEXT: 20000024
-
-; CHECK: [[VAR2LOC_CPI]]:
-; CHECK-NEXT: 20000008
 }
 
 define void @test_mediumframe() {
@@ -103,10 +100,10 @@ define void @test_tempallocation([8 x i64] %val) nounwind {
 ; CHECK-NEXT: stp x19, x20, [sp,
 
 ; Make sure we don't trash an argument register
-; CHECK-NOT: ldr {{x[0-7]}}, .LCPI1
+; CHECK-NOT: movz {{x[0-7],}}
 ; CHECK: sub sp, sp,
 
-; CHECK-NOT: ldr {{x[0-7]}}, .LCPI1
+; CHECK-NOT: movz {{x[0-7],}}
 
 ; CHECK: bl use_addr
   call void @use_addr(i8* %var)
