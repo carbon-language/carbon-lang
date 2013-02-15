@@ -639,7 +639,7 @@ void AddressSanitizer::instrumentMop(Instruction *I) {
   Type *OrigTy = cast<PointerType>(OrigPtrTy)->getElementType();
 
   assert(OrigTy->isSized());
-  uint32_t TypeSize = TD->getTypeStoreSizeInBits(OrigTy);
+  uint32_t TypeSize = TD->getTypeAllocSizeInBits(OrigTy);
 
   if (TypeSize != 8  && TypeSize != 16 &&
       TypeSize != 32 && TypeSize != 64 && TypeSize != 128) {

@@ -89,3 +89,12 @@ entry:
 ; CHECK-NOT: = alloca
 ; CHECK: ret void
 
+define void @LongDoubleTest(x86_fp80* nocapture %a) nounwind uwtable address_safety {
+entry:
+    store x86_fp80 0xK3FFF8000000000000000, x86_fp80* %a, align 16
+    ret void
+}
+
+; CHECK: LongDoubleTest
+; CHECK: __asan_report_store16
+; CHECK: ret void
