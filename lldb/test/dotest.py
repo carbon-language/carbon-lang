@@ -1342,8 +1342,12 @@ for ia in range(len(archs) if iterArchs else 1):
                 # This counts from 1 .. suite.countTestCases().
                 self.counter = 0
                 (width, height) = LLDBTestResult.getTerminalSize()
+                self.progressbar = None
                 if width > 10:
-                    self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
+                    try:
+                        self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
+                    except:
+                        self.progressbar = None
 
             def _exc_info_to_string(self, err, test):
                 """Overrides superclass TestResult's method in order to append
