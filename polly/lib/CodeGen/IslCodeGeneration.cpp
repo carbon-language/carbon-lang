@@ -584,11 +584,11 @@ private:
   void createForSequential(__isl_take isl_ast_node *For);
   void createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
                            __isl_take isl_ast_build *Context, ScopStmt *Stmt,
-                           ValueMapT &VMap);
+                           ValueMapT &VMap, LoopToScevMapT &LTS);
   void createSubstitutionsVector(
       __isl_take isl_pw_multi_aff *PMA, __isl_take isl_ast_build *Context,
-      ScopStmt *Stmt, VectorValueMapT &VMap, std::vector<Value *> &IVS,
-      __isl_take isl_id *IteratorID);
+      ScopStmt *Stmt, VectorValueMapT &VMap, std::vector<LoopToScevMapT> &VLTS,
+      std::vector<Value *> &IVS, __isl_take isl_id *IteratorID);
   void createIf(__isl_take isl_ast_node *If);
   void createUserVector(
       __isl_take isl_ast_node *User, std::vector<Value *> &IVS,
@@ -679,6 +679,7 @@ void IslNodeBuilder::createUserVector(
   isl_id *Id = isl_pw_multi_aff_get_tuple_id(Info->PMA, isl_dim_out);
   ScopStmt *Stmt = (ScopStmt *)isl_id_get_user(Id);
   VectorValueMapT VectorMap(IVS.size());
+  std::vector<LoopToScevMapT> VLTS(IVS.size());
 
   isl_union_set *Domain = isl_union_set_from_set(Stmt->getDomain());
   Schedule = isl_union_map_intersect_domain(Schedule, Domain);
@@ -686,8 +687,8 @@ void IslNodeBuilder::createUserVector(
 
   createSubstitutionsVector(isl_pw_multi_aff_copy(Info->PMA),
                             isl_ast_build_copy(Info->Context), Stmt, VectorMap,
-                            IVS, IteratorID);
-  VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, S, P);
+                            VLTS, IVS, IteratorID);
+  VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, VLTS, S, P);
 
   isl_map_free(S);
   isl_id_free(Annotation);
@@ -886,7 +887,8 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
 
 void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
                                          __isl_take isl_ast_build *Context,
-                                         ScopStmt *Stmt, ValueMapT &VMap) {
+                                         ScopStmt *Stmt, ValueMapT &VMap,
+                                         LoopToScevMapT &LTS) {
   for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out); ++i) {
     isl_pw_aff *Aff;
     isl_ast_expr *Expr;
@@ -903,6 +905,8 @@ void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
     // (because we calculate a value of the original induction variable).
     V = Builder.CreateIntCast(V, OldIV->getType(), true);
     VMap[OldIV] = V;
+    ScalarEvolution *SE = Stmt->getParent()->getSE();
+    LTS[Stmt->getLoopForDimension(i)] = SE->getUnknown(V);
   }
 
   isl_pw_multi_aff_free(PMA);
@@ -911,8 +915,8 @@ void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
 
 void IslNodeBuilder::createSubstitutionsVector(
     __isl_take isl_pw_multi_aff *PMA, __isl_take isl_ast_build *Context,
-    ScopStmt *Stmt, VectorValueMapT &VMap, std::vector<Value *> &IVS,
-    __isl_take isl_id *IteratorID) {
+    ScopStmt *Stmt, VectorValueMapT &VMap, std::vector<LoopToScevMapT> &VLTS,
+    std::vector<Value *> &IVS, __isl_take isl_id *IteratorID) {
   int i = 0;
 
   Value *OldValue = IDToValue[IteratorID];
@@ -920,7 +924,7 @@ void IslNodeBuilder::createSubstitutionsVector(
        II != IE; ++II) {
     IDToValue[IteratorID] = *II;
     createSubstitutions(isl_pw_multi_aff_copy(PMA), isl_ast_build_copy(Context),
-                        Stmt, VMap[i]);
+                        Stmt, VMap[i], VLTS[i]);
     i++;
   }
 
@@ -932,6 +936,7 @@ void IslNodeBuilder::createSubstitutionsVector(
 
 void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   ValueMapT VMap;
+  LoopToScevMapT LTS;
   struct IslAstUser *Info;
   isl_id *Annotation, *Id;
   ScopStmt *Stmt;
@@ -946,9 +951,9 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   Stmt = (ScopStmt *)isl_id_get_user(Id);
 
   createSubstitutions(isl_pw_multi_aff_copy(Info->PMA),
-                      isl_ast_build_copy(Info->Context), Stmt, VMap);
+                      isl_ast_build_copy(Info->Context), Stmt, VMap, LTS);
 
-  BlockGenerator::generate(Builder, *Stmt, VMap, P);
+  BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P);
 
   isl_ast_node_free(User);
   isl_id_free(Annotation);

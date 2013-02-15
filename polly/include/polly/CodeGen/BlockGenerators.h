@@ -18,6 +18,7 @@
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
 #include "isl/map.h"
 
@@ -50,9 +51,9 @@ public:
   /// @param P         A reference to the pass this function is called from.
   ///                  The pass is needed to update other analysis.
   static void generate(IRBuilder<> &Builder, ScopStmt &Stmt,
-                       ValueMapT &GlobalMap, Pass *P) {
+                       ValueMapT &GlobalMap, LoopToScevMapT &LTS, Pass *P) {
     BlockGenerator Generator(Builder, Stmt, P);
-    Generator.copyBB(GlobalMap);
+    Generator.copyBB(GlobalMap, LTS);
   }
 
 protected:
@@ -77,36 +78,42 @@ protected:
   /// @param GlobalMap A mapping from old values to their new values
   ///                  (for values recalculated in the new ScoP, but not
   ///                   within this basic block).
+  /// @param LTS       A mapping from loops virtual canonical induction
+  ///                  variable to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                   within this basic block).
   ///
   /// @returns  o The old value, if it is still valid.
   ///           o The new value, if available.
   ///           o NULL, if no value is found.
-  Value *getNewValue(const Value *Old, ValueMapT &BBMap, ValueMapT &GlobalMap);
+  Value *getNewValue(const Value *Old, ValueMapT &BBMap, ValueMapT &GlobalMap,
+                     LoopToScevMapT &LTS);
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
-                      ValueMapT &GlobalMap);
+                      ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   /// @brief Get the memory access offset to be added to the base address
   std::vector<Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
                                            Value *BaseAddress, ValueMapT &BBMap,
-                                           ValueMapT &GlobalMap);
+                                           ValueMapT &GlobalMap,
+                                           LoopToScevMapT &LTS);
 
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
                              Value *BaseAddress, ValueMapT &BBMap,
-                             ValueMapT &GlobalMap);
+                             ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
                                   const Value *Pointer, ValueMapT &BBMap,
-                                  ValueMapT &GlobalMap);
+                                  ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap,
-                            ValueMapT &GlobalMap);
+                            ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   Value *generateScalarStore(const StoreInst *store, ValueMapT &BBMap,
-                             ValueMapT &GlobalMap);
+                             ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   /// @brief Copy a single Instruction.
   ///
@@ -119,7 +126,7 @@ protected:
   ///                  (for values recalculated in the new ScoP, but not
   ///                  within this basic block).
   void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
-                       ValueMapT &GlobalMap);
+                       ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   /// @brief Copy the basic block.
   ///
@@ -129,7 +136,7 @@ protected:
   /// @param GlobalMap A mapping from old values to their new values
   ///                  (for values recalculated in the new ScoP, but not
   ///                  within this basic block).
-  void copyBB(ValueMapT &GlobalMap);
+  void copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 };
 
 /// @brief Generate a new vector basic block for a polyhedral statement.
@@ -159,9 +166,10 @@ public:
   ///                   The pass is needed to update other analysis.
   static void generate(IRBuilder<> &B, ScopStmt &Stmt,
                        VectorValueMapT &GlobalMaps,
+                       std::vector<LoopToScevMapT> &VLTS,
                        __isl_keep isl_map *Schedule,
                        Pass *P) {
-    VectorBlockGenerator Generator(B, GlobalMaps, Stmt, Schedule, P);
+    VectorBlockGenerator Generator(B, GlobalMaps, VLTS, Stmt, Schedule, P);
     Generator.copyBB();
   }
 
@@ -173,11 +181,30 @@ private:
   // all referenes to the old instructions with their recalculated values.
   VectorValueMapT &GlobalMaps;
 
+  // This is a vector of loop->scev maps.  The first map is used for the first
+  // vector lane, ...
+  // Each map, contains information about Instructions in the old ScoP, which
+  // are recalculated in the new SCoP. When copying the basic block, we replace
+  // all referenes to the old instructions with their recalculated values.
+  //
+  // For example, when the code generator produces this AST:
+  //
+  //   for (int c1 = 0; c1 <= 1023; c1 += 1)
+  //     for (int c2 = 0; c2 <= 1023; c2 += VF)
+  //       for (int lane = 0; lane <= VF; lane += 1)
+  //         Stmt(c2 + lane + 3, c1);
+  //
+  // VLTS[lane] contains a map:
+  //   "outer loop in the old loop nest" -> SCEV("c2 + lane + 3"),
+  //   "inner loop in the old loop nest" -> SCEV("c1").
+  std::vector<LoopToScevMapT> &VLTS;
+
   // A map from the statement to a schedule where the innermost dimension is the
   // dimension of the innermost loop containing the statemenet.
   isl_map *Schedule;
 
   VectorBlockGenerator(IRBuilder<> &B, VectorValueMapT &GlobalMaps,
+                       std::vector<LoopToScevMapT> &VLTS,
                        ScopStmt &Stmt, __isl_keep isl_map *Schedule,
                        Pass *P);
 
