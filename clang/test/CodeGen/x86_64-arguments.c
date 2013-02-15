@@ -44,7 +44,7 @@ void f7(e7 a0) {
 // Test merging/passing of upper eightbyte with X87 class.
 //
 // CHECK: define void @f8_1(%union.u8* noalias sret %agg.result)
-// CHECK: define void @f8_2(%union.u8* align 16 byval %a0)
+// CHECK: define void @f8_2(%union.u8* byval align 16 %a0)
 union u8 {
   long double a;
   int b;
@@ -70,7 +70,7 @@ void f12_1(struct s12 a0) {}
 
 // Check that sret parameter is accounted for when checking available integer
 // registers.
-// CHECK: define void @f13(%struct.s13_0* noalias sret %agg.result, i32 %a, i32 %b, i32 %c, i32 %d, {{.*}}* align 8 byval %e, i32 %f)
+// CHECK: define void @f13(%struct.s13_0* noalias sret %agg.result, i32 %a, i32 %b, i32 %c, i32 %d, {{.*}}* byval align 8 %e, i32 %f)
 
 struct s13_0 { long long f0[3]; };
 struct s13_1 { long long f0[2]; };
@@ -100,13 +100,13 @@ void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 
 // Check byval alignment.
 
-// CHECK: define void @f19(%struct.s19* align 16 byval %x)
+// CHECK: define void @f19(%struct.s19* byval align 16 %x)
 struct s19 {
   long double a;
 };
 void f19(struct s19 x) {}
 
-// CHECK: define void @f20(%struct.s20* align 32 byval %x)
+// CHECK: define void @f20(%struct.s20* byval align 32 %x)
 struct __attribute__((aligned(32))) s20 {
   int x;
   int y;
@@ -245,7 +245,7 @@ typedef unsigned long v1i64_2 __attribute__((__vector_size__(8)));
 v1i64_2 f35(v1i64_2 arg) { return arg+arg; }
 
 // rdar://9122143
-// CHECK: declare void @func(%struct._str* align 16 byval)
+// CHECK: declare void @func(%struct._str* byval align 16)
 typedef struct _str {
   union {
     long double a;
@@ -266,8 +266,8 @@ v2i32 f36(v2i32 arg) { return arg; }
 
 // AVX: declare void @f38(<8 x float>)
 // AVX: declare void @f37(<8 x float>)
-// CHECK: declare void @f38(%struct.s256* align 32 byval)
-// CHECK: declare void @f37(<8 x float>* align 32 byval)
+// CHECK: declare void @f38(%struct.s256* byval align 32)
+// CHECK: declare void @f37(<8 x float>* byval align 32)
 typedef float __m256 __attribute__ ((__vector_size__ (32)));
 typedef struct {
   __m256 m;
@@ -283,7 +283,7 @@ void f39() { f38(x38); f37(x37); }
 // The two next tests make sure that the struct below is passed
 // in the same way regardless of avx being used
 
-// CHECK: declare void @func40(%struct.t128* align 16 byval)
+// CHECK: declare void @func40(%struct.t128* byval align 16)
 typedef float __m128 __attribute__ ((__vector_size__ (16)));
 typedef struct t128 {
   __m128 m;
@@ -295,7 +295,7 @@ void func41(two128 s) {
   func40(s);
 }
 
-// CHECK: declare void @func42(%struct.t128_2* align 16 byval)
+// CHECK: declare void @func42(%struct.t128_2* byval align 16)
 typedef struct xxx {
   __m128 array[2];
 } Atwo128;
@@ -341,7 +341,7 @@ void test45() { f45(x45); }
 // Make sure we use byval to pass 64-bit vectors in memory; the LLVM call
 // lowering can't handle this case correctly because it runs after legalization.
 // CHECK: @test46
-// CHECK: call void @f46({{.*}}<2 x float>* align 8 byval {{.*}}, <2 x float>* align 8 byval {{.*}})
+// CHECK: call void @f46({{.*}}<2 x float>* byval align 8 {{.*}}, <2 x float>* byval align 8 {{.*}})
 typedef float v46 __attribute((vector_size(8)));
 void f46(v46,v46,v46,v46,v46,v46,v46,v46,v46,v46);
 void test46() { v46 x = {1,2}; f46(x,x,x,x,x,x,x,x,x,x); }

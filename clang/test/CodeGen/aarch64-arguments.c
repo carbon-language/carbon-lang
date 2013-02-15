@@ -144,12 +144,12 @@ struct s35 {};
 void f35(struct s35 a) {}
 
 // Check padding is added:
-// PCS: @f36(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s36* align 8 byval %stacked)
+// PCS: @f36(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s36* byval align 8 %stacked)
 struct s36 { long a, b; };
 void f36(int x0, int x1, int x2, int x3, int x4, int x5, int x6, struct s36 stacked) {}
 
 // But only once:
-// PCS: @f37(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s37* align 8 byval %stacked, %struct.s37* align 8 byval %stacked2)
+// PCS: @f37(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s37* byval align 8 %stacked, %struct.s37* byval align 8 %stacked2)
 struct s37 { long a, b; };
 void f37(int x0, int x1, int x2, int x3, int x4, int x5, int x6, struct s37 stacked, struct s37 stacked2) {}
 
@@ -157,7 +157,7 @@ void f37(int x0, int x1, int x2, int x3, int x4, int x5, int x6, struct s37 stac
 // way which will have holes in when lowered further by LLVM. In particular [3 x
 // float] would be unacceptable.
 
-// PCS: @f38(float %s0, double %d1, float %s2, float %s3, float %s4, float %s5, [2 x float], %struct.s38* align 4 byval %stacked)
+// PCS: @f38(float %s0, double %d1, float %s2, float %s3, float %s4, float %s5, [2 x float], %struct.s38* byval align 4 %stacked)
 struct s38 { float a, b, c; };
 void f38(float s0, double d1, float s2, float s3, float s4, float s5, struct s38 stacked) {}
 
@@ -166,24 +166,24 @@ void f38(float s0, double d1, float s2, float s3, float s4, float s5, struct s38
 struct s39_int { long a, b; };
 struct s39_float { float a, b, c, d; };
 enum s39_enum { Val1, Val2 };
-// PCS: @f39(float %s0, i32 %x0, float %s1, i32* %x1, float %s2, i32 %x2, float %s3, float %s4, i32 %x3, [3 x float], %struct.s39_float* align 4 byval %stacked, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s39_int* align 8 byval %stacked2)
+// PCS: @f39(float %s0, i32 %x0, float %s1, i32* %x1, float %s2, i32 %x2, float %s3, float %s4, i32 %x3, [3 x float], %struct.s39_float* byval align 4 %stacked, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s39_int* byval align 8 %stacked2)
 void f39(float s0, int x0, float s1, int *x1, float s2, enum s39_enum x2, float s3, float s4,
          int x3, struct s39_float stacked, int x4, int x5, int x6,
          struct s39_int stacked2) {}
 
 struct s40 { __int128 a; };
-// PCS: @f40(i32 %x0, [1 x i128] %x2_3.coerce, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s40* align 16 byval %stacked)
+// PCS: @f40(i32 %x0, [1 x i128] %x2_3.coerce, i32 %x4, i32 %x5, i32 %x6, [1 x i64], %struct.s40* byval align 16 %stacked)
 void f40(int x0, struct s40 x2_3, int x4, int x5, int x6, struct s40 stacked) {}
 
 // Checking: __int128 will get properly aligned type, with padding so big struct doesn't use x7.
 struct s41 { int arr[5]; };
-// PCS: @f41(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, [1 x i64], i128* align 16 byval, %struct.s41* %stacked2)
+// PCS: @f41(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, [1 x i64], i128* byval align 16, %struct.s41* %stacked2)
 int f41(int x0, int x1, int x2, int x3, int x4, int x5, int x6, __int128 stacked, struct s41 stacked2) {}
 
 // Checking: __int128 needing to be aligned in registers will consume correct
 // number. Previously padding was inserted before "stacked" because x6_7 was
 // "allocated" to x5 and x6 by clang.
-// PCS: @f42(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i128 %x6_7, i128* align 16 byval)
+// PCS: @f42(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i128 %x6_7, i128* byval align 16)
 void f42(int x0, int x1, int x2, int x3, int x4, __int128 x6_7, __int128 stacked) {}
 
 // Checking: __fp16 is extended to double when calling variadic functions
