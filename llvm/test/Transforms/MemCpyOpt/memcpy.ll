@@ -123,7 +123,7 @@ entry:
   %call = call i32 @g(%struct.p* align 8 byval %agg.tmp) nounwind
   ret i32 %call
 ; CHECK: @test7
-; CHECK: call i32 @g(%struct.p* align 8 byval %q) nounwind
+; CHECK: call i32 @g(%struct.p* byval align 8 %q) nounwind
 }
 
 declare i32 @g(%struct.p* align 8 byval)
