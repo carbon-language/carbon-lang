@@ -207,6 +207,14 @@ public:
   /// Emit the ABI-specific prolog for the function.
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
 
+  /// Emit the ABI-specific virtual destructor call.
+  virtual RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                           const CXXDestructorDecl *Dtor,
+                                           CXXDtorType DtorType,
+                                           SourceLocation CallLoc,
+                                           ReturnValueSlot ReturnValue,
+                                           llvm::Value *This) = 0;
+
   virtual void EmitReturnFromThunk(CodeGenFunction &CGF,
                                    RValue RV, QualType ResultType);
 

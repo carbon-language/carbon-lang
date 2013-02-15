@@ -53,6 +53,13 @@ public:
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
+  RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                   const CXXDestructorDecl *Dtor,
+                                   CXXDtorType DtorType,
+                                   SourceLocation CallLoc,
+                                   ReturnValueSlot ReturnValue,
+                                   llvm::Value *This);
+
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr,
                        bool PerformInit);
@@ -172,6 +179,30 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
           CGF.GetAddrOfLocalVar(getStructorImplicitParamDecl(CGF)),
           "should_call_delete");
   }
+}
+
+RValue MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                                  const CXXDestructorDecl *Dtor,
+                                                  CXXDtorType DtorType,
+                                                  SourceLocation CallLoc,
+                                                  ReturnValueSlot ReturnValue,
+                                                  llvm::Value *This) {
+  assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
+
+  // We have only one destructor in the vftable but can get both behaviors
+  // by passing an implicit bool parameter.
+  const CGFunctionInfo *FInfo
+      = &CGM.getTypes().arrangeCXXDestructor(Dtor, Dtor_Deleting);
+  llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
+  llvm::Value *Callee = CGF.BuildVirtualCall(Dtor, Dtor_Deleting, This, Ty);
+
+  ASTContext &Context = CGF.getContext();
+  llvm::Value *ImplicitParam
+    = llvm::ConstantInt::get(llvm::IntegerType::getInt1Ty(CGF.getLLVMContext()),
+                             DtorType == Dtor_Deleting);
+
+  return CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValue, This,
+                               ImplicitParam, Context.BoolTy, 0, 0);
 }
 
 bool MicrosoftCXXABI::requiresArrayCookie(const CXXDeleteExpr *expr,

@@ -274,11 +274,11 @@ namespace test6 {
     // CHECK-NEXT: [[V:%.*]] = load [[A]]** [[AVAR]], align 4
     // CHECK-NEXT: [[ISNULL:%.*]] = icmp eq [[A]]* [[V]], null
     // CHECK-NEXT: br i1 [[ISNULL]]
-    // CHECK:      [[T0:%.*]] = bitcast [[A]]* [[V]] to [[A]]* ([[A]]*)***
-    // CHECK-NEXT: [[T1:%.*]] = load [[A]]* ([[A]]*)*** [[T0]]
-    // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[A]]* ([[A]]*)** [[T1]], i64 1
-    // CHECK-NEXT: [[T3:%.*]] = load [[A]]* ([[A]]*)** [[T2]]
-    // CHECK-NEXT: call [[A]]* [[T3]]([[A]]* [[V]])
+    // CHECK:      [[T0:%.*]] = bitcast [[A]]* [[V]] to void ([[A]]*)***
+    // CHECK-NEXT: [[T1:%.*]] = load void ([[A]]*)*** [[T0]]
+    // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds void ([[A]]*)** [[T1]], i64 1
+    // CHECK-NEXT: [[T3:%.*]] = load void ([[A]]*)** [[T2]]
+    // CHECK-NEXT: call void [[T3]]([[A]]* [[V]])
     // CHECK-NEXT: br label
     // CHECK:      ret void
     delete a;

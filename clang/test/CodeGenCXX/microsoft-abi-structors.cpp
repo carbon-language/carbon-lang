@@ -32,7 +32,9 @@ struct B {
 // DTORS: define {{.*}} x86_thiscallcc void @"\01??1B@@UAE@XZ"(%struct.B* %this)
 
 // Then, the scalar deleting destructor (used in the vtable):
-// DTORS:      define {{.*}} x86_thiscallcc void @"\01??_GB@@UAEPAXI@Z"(%struct.B* %this, i1 zeroext %should_call_delete)
+// FIXME: add a test that verifies that the out-of-line scalar deleting
+// destructor is linkonce_odr too.
+// DTORS:      define linkonce_odr x86_thiscallcc void @"\01??_GB@@UAEPAXI@Z"(%struct.B* %this, i1 zeroext %should_call_delete)
 // DTORS:        %[[FROMBOOL:[0-9a-z]+]] = zext i1 %should_call_delete to i8
 // DTORS-NEXT:   store i8 %[[FROMBOOL]], i8* %[[SHOULD_DELETE_VAR:[0-9a-z._]+]], align 1
 // DTORS:        %[[SHOULD_DELETE_VALUE:[0-9a-z._]+]] = load i8* %[[SHOULD_DELETE_VAR]]
@@ -61,17 +63,29 @@ void check_vftable_offset() {
 // CHECK: store i8** getelementptr inbounds ([2 x i8*]* @"\01??_7B@@6B@", i64 0, i64 0), i8*** [[THIS_PTR]]
 }
 
-// FIXME: Enable the following block and add expectations when calls
-// to virtual complete dtor are supported.
-#if 0
 void call_complete_dtor(B *obj_ptr) {
+// CHECK: define void @"\01?call_complete_dtor@@YAXPAUB@@@Z"(%struct.B* %obj_ptr)
   obj_ptr->~B();
+// CHECK: %[[OBJ_PTR_VALUE:.*]] = load %struct.B** %{{.*}}, align 4
+// CHECK-NEXT: %[[PVTABLE:.*]] = bitcast %struct.B* %[[OBJ_PTR_VALUE]] to void (%struct.B*, i1)***
+// CHECK-NEXT: %[[VTABLE:.*]] = load void (%struct.B*, i1)*** %[[PVTABLE]]
+// CHECK-NEXT: %[[PVDTOR:.*]] = getelementptr inbounds void (%struct.B*, i1)** %[[VTABLE]], i64 0
+// CHECK-NEXT: %[[VDTOR:.*]] = load void (%struct.B*, i1)** %[[PVDTOR]]
+// CHECK-NEXT: call x86_thiscallcc void %[[VDTOR]](%struct.B* %[[OBJ_PTR_VALUE]], i1 zeroext false)
+// CHECK-NEXT: ret void
 }
-#endif
 
 void call_deleting_dtor(B *obj_ptr) {
-// FIXME: Add CHECKs when calls to virtual deleting dtor are generated properly.
+// CHECK: define void @"\01?call_deleting_dtor@@YAXPAUB@@@Z"(%struct.B* %obj_ptr)
   delete obj_ptr;
+// CHECK:      %[[OBJ_PTR_VALUE:.*]] = load %struct.B** %{{.*}}, align 4
+// CHECK:      {{.*}}:{{%{0,1}[0-9]*}}
+// CHECK-NEXT:   %[[PVTABLE:.*]] = bitcast %struct.B* %[[OBJ_PTR_VALUE]] to void (%struct.B*, i1)***
+// CHECK-NEXT:   %[[VTABLE:.*]] = load void (%struct.B*, i1)*** %[[PVTABLE]]
+// CHECK-NEXT:   %[[PVDTOR:.*]] = getelementptr inbounds void (%struct.B*, i1)** %[[VTABLE]], i64 0
+// CHECK-NEXT:   %[[VDTOR:.*]] = load void (%struct.B*, i1)** %[[PVDTOR]]
+// CHECK-NEXT:   call x86_thiscallcc void %[[VDTOR]](%struct.B* %[[OBJ_PTR_VALUE]], i1 zeroext true)
+// CHECK:      ret void
 }
 
 struct C {

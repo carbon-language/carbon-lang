@@ -284,7 +284,12 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
     if (UseVirtualCall) {
-      Callee = BuildVirtualCall(Dtor, Dtor_Complete, This, Ty);
+      assert(CE->arg_begin() == CE->arg_end() &&
+             "Virtual destructor shouldn't have explicit parameters");
+      return CGM.getCXXABI().EmitVirtualDestructorCall(*this, Dtor,
+                                                       Dtor_Complete,
+                                                       CE->getExprLoc(),
+                                                       ReturnValue, This);
     } else {
       if (getLangOpts().AppleKext &&
           MD->isVirtual() &&
@@ -1399,18 +1404,12 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
                                                     completePtr, OperatorDelete,
                                                     ElementType);
         }
-        
-        llvm::Type *Ty =
-          CGF.getTypes().GetFunctionType(
-                         CGF.getTypes().arrangeCXXDestructor(Dtor, Dtor_Complete));
-          
-        llvm::Value *Callee
-          = CGF.BuildVirtualCall(Dtor, 
-                                 UseGlobalDelete? Dtor_Complete : Dtor_Deleting,
-                                 Ptr, Ty);
+
         // FIXME: Provide a source location here.
-        CGF.EmitCXXMemberCall(Dtor, SourceLocation(), Callee, ReturnValueSlot(),
-                              Ptr, /*ImplicitParam=*/0, QualType(), 0, 0);
+        CXXDtorType DtorType = UseGlobalDelete ? Dtor_Complete : Dtor_Deleting;
+        CGF.CGM.getCXXABI().EmitVirtualDestructorCall(CGF, Dtor, DtorType,
+                                                      SourceLocation(),
+                                                      ReturnValueSlot(), Ptr);
 
         if (UseGlobalDelete) {
           CGF.PopCleanupBlock();
