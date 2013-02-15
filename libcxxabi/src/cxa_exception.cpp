@@ -524,7 +524,7 @@ __cxa_decrement_exception_refcount(void* thrown_object) throw()
 
 /*
     Returns a pointer to the thrown object (if any) at the top of the
-    caughtExceptions stack.  Atommically increment the exception's referenceCount.
+    caughtExceptions stack.  Atomically increment the exception's referenceCount.
     If there is no such thrown object or if the thrown object is foreign,
     returns null.
 
@@ -573,7 +573,7 @@ dependent_exception_cleanup(_Unwind_Reason_Code reason, _Unwind_Exception* unwin
 }
 
 /*
-    If thrown_object is not null, allocate, initialize and thow a dependent
+    If thrown_object is not null, allocate, initialize and throw a dependent
     exception.
 */
 void

@@ -32,7 +32,7 @@ namespace {
 //  A pair of classes to simplify exception handling and control flow.
 //  They get passed a block of memory in the constructor, and unless the
 //  'release' method is called, they deallocate the memory in the destructor.
-//  Prefered usage is to allocate some memory, attach it to one of these objects,
+//  Preferred usage is to allocate some memory, attach it to one of these objects,
 //  and then, when all the operations to set up the memory block have succeeded,
 //  call 'release'. If any of the setup operations fail, or an exception is
 //  thrown, then the block is automatically deallocated.

@@ -39,7 +39,7 @@
 +-----------------+--------+
 | lpStartEncoding | (char) |
 +---------+-------+--------+---------------+-----------------------+
-| lpStart | (encoded wtih lpStartEncoding) | defaults to funcStart |
+| lpStart | (encoded with lpStartEncoding) | defaults to funcStart |
 +---------+-----+--------+-----------------+---------------+-------+
 | ttypeEncoding | (char) | Encoding of the type_info table |
 +---------------+-+------+----+----------------------------+----------------+
@@ -187,7 +187,7 @@ readULEB128(const uint8_t** data)
 }
 
 /// Read a sleb128 encoded value and advance pointer 
-/// See Variable Length Data Applendix C in: 
+/// See Variable Length Data Appendix C in: 
 /// @link http://dwarfstd.org/Dwarf4.pdf @unlink
 /// @param data reference variable holding memory pointer to decode from
 /// @returns decoded value
@@ -344,7 +344,7 @@ get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
 }
 
 /*
-    This is checking a thrown exception type, excpType, against a posibly empty
+    This is checking a thrown exception type, excpType, against a possibly empty
     list of catchType's which make up an exception spec.
 
     An exception spec acts like a catch handler, but in reverse.  This "catch
@@ -489,7 +489,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
             return;
         }
     }
-    else // Niether _UA_SEARCH_PHASE nor _UA_CLEANUP_PHASE is set
+    else // Neither _UA_SEARCH_PHASE nor _UA_CLEANUP_PHASE is set
     {
         // One of these should be set.
         //   Client error
@@ -1038,7 +1038,7 @@ __cxa_call_unexpected(void* arg)
             {
                 // We need to __cxa_end_catch for both the old exception and the
                 //   new exception.  Technically we should do it in that order.
-                //   But it is expedent to do it in the opposite order:
+                //   But it is expedient to do it in the opposite order:
                 // Call __cxa_end_catch for new_exception_header
                 __cxa_end_catch();
                 // Throw std::bad_exception will __cxa_end_catch for

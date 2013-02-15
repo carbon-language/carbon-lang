@@ -16,13 +16,13 @@
 // When _LIBCXX_DYNAMIC_FALLBACK is defined, and only in the case where
 // there is a detected inconsistency in the type_info hierarchy during a
 // dynamic_cast, then the equality operation will fall back to using strcmp
-// on type_info names to determin type_info equality.
+// on type_info names to determine type_info equality.
 // 
 // This change happens *only* under dynamic_cast, and only when
 // dynamic_cast is faced with the choice:  abort, or possibly give back the
 // wrong answer.  If when the dynamic_cast is done with this fallback
 // algorithm and an inconsistency is still detected, dynamic_cast will call
-// abort with an approriate message.
+// abort with an appropriate message.
 // 
 // The current implementation of _LIBCXX_DYNAMIC_FALLBACK requires a
 // printf-like function called syslog:

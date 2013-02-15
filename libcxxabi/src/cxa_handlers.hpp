@@ -45,7 +45,7 @@ extern void (*__cxa_new_handler)();
     extern std::atomic<std::new_handler>        __cxa_new_handler;
 
     This change will not impact their ABI.  But it will allow for a
-    portible performance optimization.
+    portable performance optimization.
 
 */
 
