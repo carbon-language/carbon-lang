@@ -168,11 +168,13 @@ protected:
   InstrItineraryData InstrItins;
 
 private:
+  /// StackAlignOverride - Override the stack alignment.
+  unsigned StackAlignOverride;
+
   /// In64BitMode - True if compiling for 64-bit, false for 32-bit.
   bool In64BitMode;
 
 public:
-
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
@@ -196,6 +198,10 @@ public:
   /// AutoDetectSubtargetFeatures - Auto-detect CPU features using CPUID
   /// instruction.
   void AutoDetectSubtargetFeatures();
+
+  /// \brief Reset the features for the X86 target.
+  virtual void resetSubtargetFeatures(const MachineFunction *MF);
+  void resetSubtargetFeatures(StringRef CPU, StringRef FS);
 
   /// Is this x86_64? (disregarding specific ABI / programming model)
   bool is64Bit() const {

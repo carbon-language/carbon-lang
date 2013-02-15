@@ -14,6 +14,8 @@
 #define DEBUG_TYPE "subtarget"
 #include "X86Subtarget.h"
 #include "X86InstrInfo.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -324,46 +326,21 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   }
 }
 
-X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS,
-                           unsigned StackAlignOverride, bool is64Bit)
-  : X86GenSubtargetInfo(TT, CPU, FS)
-  , X86ProcFamily(Others)
-  , PICStyle(PICStyles::None)
-  , X86SSELevel(NoMMXSSE)
-  , X863DNowLevel(NoThreeDNow)
-  , HasCMov(false)
-  , HasX86_64(false)
-  , HasPOPCNT(false)
-  , HasSSE4A(false)
-  , HasAES(false)
-  , HasPCLMUL(false)
-  , HasFMA(false)
-  , HasFMA4(false)
-  , HasXOP(false)
-  , HasMOVBE(false)
-  , HasRDRAND(false)
-  , HasF16C(false)
-  , HasFSGSBase(false)
-  , HasLZCNT(false)
-  , HasBMI(false)
-  , HasBMI2(false)
-  , HasRTM(false)
-  , HasADX(false)
-  , IsBTMemSlow(false)
-  , IsUAMemFast(false)
-  , HasVectorUAMem(false)
-  , HasCmpxchg16b(false)
-  , UseLeaForSP(false)
-  , HasSlowDivide(false)
-  , PostRAScheduler(false)
-  , PadShortFunctions(false)
-  , stackAlignment(4)
-  // FIXME: this is a known good value for Yonah. How about others?
-  , MaxInlineSizeThreshold(128)
-  , TargetTriple(TT)
-  , In64BitMode(is64Bit) {
-  // Determine default and user specified characteristics
+void X86Subtarget::resetSubtargetFeatures(const MachineFunction *MF) {
+  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
+  Attribute CPUAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
+                                           "target-cpu");
+  Attribute FSAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
+                                          "target-features");
+  std::string CPU =
+    !CPUAttr.hasAttribute(Attribute::None) ?CPUAttr.getValueAsString() : "";
+  std::string FS =
+    !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
+  if (!FS.empty())
+    resetSubtargetFeatures(CPU, FS);
+}
+
+void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   std::string CPUName = CPU;
   if (!FS.empty() || !CPU.empty()) {
     if (CPUName.empty()) {
@@ -438,6 +415,49 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   else if (isTargetDarwin() || isTargetLinux() || isTargetSolaris() ||
            In64BitMode)
     stackAlignment = 16;
+}
+
+X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
+                           const std::string &FS,
+                           unsigned StackAlignOverride, bool is64Bit)
+  : X86GenSubtargetInfo(TT, CPU, FS)
+  , X86ProcFamily(Others)
+  , PICStyle(PICStyles::None)
+  , X86SSELevel(NoMMXSSE)
+  , X863DNowLevel(NoThreeDNow)
+  , HasCMov(false)
+  , HasX86_64(false)
+  , HasPOPCNT(false)
+  , HasSSE4A(false)
+  , HasAES(false)
+  , HasPCLMUL(false)
+  , HasFMA(false)
+  , HasFMA4(false)
+  , HasXOP(false)
+  , HasMOVBE(false)
+  , HasRDRAND(false)
+  , HasF16C(false)
+  , HasFSGSBase(false)
+  , HasLZCNT(false)
+  , HasBMI(false)
+  , HasBMI2(false)
+  , HasRTM(false)
+  , HasADX(false)
+  , IsBTMemSlow(false)
+  , IsUAMemFast(false)
+  , HasVectorUAMem(false)
+  , HasCmpxchg16b(false)
+  , UseLeaForSP(false)
+  , HasSlowDivide(false)
+  , PostRAScheduler(false)
+  , PadShortFunctions(false)
+  , stackAlignment(4)
+  // FIXME: this is a known good value for Yonah. How about others?
+  , MaxInlineSizeThreshold(128)
+  , TargetTriple(TT)
+  , StackAlignOverride(StackAlignOverride)
+  , In64BitMode(is64Bit) {
+  resetSubtargetFeatures(CPU, FS);
 }
 
 bool X86Subtarget::enablePostRAScheduler(

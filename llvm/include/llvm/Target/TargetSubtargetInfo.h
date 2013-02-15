@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class MachineFunction;
 class MachineInstr;
 class SDep;
 class SUnit;
@@ -73,6 +74,9 @@ public:
   // the latency of a schedule dependency.
   virtual void adjustSchedDependency(SUnit *def, SUnit *use,
                                      SDep& dep) const { }
+
+  /// \brief Reset the features for the subtarget.
+  virtual void resetSubtargetFeatures(const MachineFunction *MF) { }
 };
 
 } // End llvm namespace
