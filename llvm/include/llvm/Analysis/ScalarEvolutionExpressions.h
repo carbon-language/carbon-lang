@@ -652,6 +652,45 @@ namespace llvm {
     ValueToValueMap &Map;
   };
 
+  typedef DenseMap<const Loop*, const SCEV*> LoopToScevMapT;
+
+  /// The ScevApplyRewriter takes a scalar evolution expression and applies
+  /// the Map (Loop -> SCEV) to all AddRecExprs.
+  struct ScevApplyRewriter: public ScevRewriter {
+  public:
+    static const SCEV *rewrite(const SCEV *Scev, LoopToScevMapT &Map,
+                               ScalarEvolution &SE) {
+      ScevApplyRewriter Rewriter(SE, Map);
+      return Rewriter.visit(Scev);
+    }
+    ScevApplyRewriter(ScalarEvolution &S, LoopToScevMapT &M)
+      : ScevRewriter(S), Map(M) {}
+
+    virtual const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+      SmallVector<const SCEV *, 2> Operands;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+        Operands.push_back(visit(Expr->getOperand(i)));
+
+      const Loop *L = Expr->getLoop();
+      const SCEV *Res = SE.getAddRecExpr(Operands, L, Expr->getNoWrapFlags());
+
+      if (0 == Map.count(L))
+        return Res;
+
+      const SCEVAddRecExpr *Rec = (const SCEVAddRecExpr *) Res;
+      return Rec->evaluateAtIteration(Map[L], SE);
+    }
+
+  private:
+    LoopToScevMapT &Map;
+  };
+
+/// Applies the Map (Loop -> SCEV) to the given Scev.
+static inline const SCEV *apply(const SCEV *Scev, LoopToScevMapT &Map,
+                                ScalarEvolution &SE) {
+  return ScevApplyRewriter::rewrite(Scev, Map, SE);
+}
+
 }
 
 #endif
