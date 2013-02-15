@@ -131,7 +131,7 @@ void MaybeReexec() {
   CHECK(dladdr((void*)((uptr)__asan_init), &info));
   char *dyld_insert_libraries =
       const_cast<char*>(GetEnv(kDyldInsertLibraries));
-  sptr old_env_len = dyld_insert_libraries ?
+  uptr old_env_len = dyld_insert_libraries ?
       internal_strlen(dyld_insert_libraries) : 0;
   uptr fname_len = internal_strlen(info.dli_fname);
   if (!dyld_insert_libraries ||
@@ -171,7 +171,7 @@ void MaybeReexec() {
       // It's just the runtime library name - fine to unset the variable.
       LeakyResetEnv(kDyldInsertLibraries, NULL);
     } else {
-      sptr env_name_len = internal_strlen(kDyldInsertLibraries);
+      uptr env_name_len = internal_strlen(kDyldInsertLibraries);
       // Allocate memory to hold the previous env var name, its value, the '='
       // sign and the '\0' char.
       char *new_env = (char*)allocator_for_env.Allocate(
@@ -190,7 +190,7 @@ void MaybeReexec() {
         if (piece_start[0] == ':') piece_start++;
         piece_end =  REAL(strchr)(piece_start, ':');
         if (!piece_end) piece_end = dyld_insert_libraries + old_env_len;
-        if (piece_start - dyld_insert_libraries > old_env_len) break;
+        if ((uptr)(piece_start - dyld_insert_libraries) > old_env_len) break;
         uptr piece_len = piece_end - piece_start;
 
         // If the current piece isn't the runtime library name, append it to new_env.
