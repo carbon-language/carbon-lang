@@ -2172,7 +2172,7 @@ ProcessGDBRemote::PutSTDIN (const char *src, size_t src_len, Error &error)
 }
 
 Error
-ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
+ProcessGDBRemote::EnableBreakpointSite (BreakpointSite *bp_site)
 {
     Error error;
     assert (bp_site != NULL);
@@ -2181,12 +2181,12 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
     user_id_t site_id = bp_site->GetID();
     const addr_t addr = bp_site->GetLoadAddress();
     if (log)
-        log->Printf ("ProcessGDBRemote::EnableBreakpoint (size_id = %" PRIu64 ") address = 0x%" PRIx64, site_id, (uint64_t)addr);
+        log->Printf ("ProcessGDBRemote::EnableBreakpointSite (size_id = %" PRIu64 ") address = 0x%" PRIx64, site_id, (uint64_t)addr);
 
     if (bp_site->IsEnabled())
     {
         if (log)
-            log->Printf ("ProcessGDBRemote::EnableBreakpoint (size_id = %" PRIu64 ") address = 0x%" PRIx64 " -- SUCCESS (already enabled)", site_id, (uint64_t)addr);
+            log->Printf ("ProcessGDBRemote::EnableBreakpointSite (size_id = %" PRIu64 ") address = 0x%" PRIx64 " -- SUCCESS (already enabled)", site_id, (uint64_t)addr);
         return error;
     }
     else
@@ -2224,7 +2224,7 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
     if (log)
     {
         const char *err_string = error.AsCString();
-        log->Printf ("ProcessGDBRemote::EnableBreakpoint() error for breakpoint at 0x%8.8" PRIx64 ": %s",
+        log->Printf ("ProcessGDBRemote::EnableBreakpointSite () error for breakpoint at 0x%8.8" PRIx64 ": %s",
                      bp_site->GetLoadAddress(),
                      err_string ? err_string : "NULL");
     }
@@ -2235,7 +2235,7 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
 }
 
 Error
-ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
+ProcessGDBRemote::DisableBreakpointSite (BreakpointSite *bp_site)
 {
     Error error;
     assert (bp_site != NULL);
@@ -2243,7 +2243,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     user_id_t site_id = bp_site->GetID();
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_BREAKPOINTS));
     if (log)
-        log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %" PRIu64 ") addr = 0x%8.8" PRIx64, site_id, (uint64_t)addr);
+        log->Printf ("ProcessGDBRemote::DisableBreakpointSite (site_id = %" PRIu64 ") addr = 0x%8.8" PRIx64, site_id, (uint64_t)addr);
 
     if (bp_site->IsEnabled())
     {
@@ -2272,7 +2272,7 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     else
     {
         if (log)
-            log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %" PRIu64 ") addr = 0x%8.8" PRIx64 " -- SUCCESS (already disabled)", site_id, (uint64_t)addr);
+            log->Printf ("ProcessGDBRemote::DisableBreakpointSite (site_id = %" PRIu64 ") addr = 0x%8.8" PRIx64 " -- SUCCESS (already disabled)", site_id, (uint64_t)addr);
         return error;
     }
 

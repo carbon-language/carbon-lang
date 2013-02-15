@@ -99,7 +99,7 @@ ThreadPlanStepOverBreakpoint::WillResume (StateType resume_state, bool current_p
     {
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));
         if (bp_site_sp  && bp_site_sp->IsEnabled())
-            m_thread.GetProcess()->DisableBreakpoint (bp_site_sp.get());
+            m_thread.GetProcess()->DisableBreakpointSite (bp_site_sp.get());
     }
     return true;
 }
@@ -109,7 +109,7 @@ ThreadPlanStepOverBreakpoint::WillStop ()
 {
     BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));
     if (bp_site_sp)
-        m_thread.GetProcess()->EnableBreakpoint (bp_site_sp.get());
+        m_thread.GetProcess()->EnableBreakpointSite (bp_site_sp.get());
     return true;
 }
 
@@ -132,7 +132,7 @@ ThreadPlanStepOverBreakpoint::MischiefManaged ()
         // Otherwise, re-enable the breakpoint we were stepping over, and we're done.
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));
         if (bp_site_sp)
-            m_thread.GetProcess()->EnableBreakpoint (bp_site_sp.get());
+            m_thread.GetProcess()->EnableBreakpointSite (bp_site_sp.get());
         ThreadPlan::MischiefManaged ();
         return true;
     }

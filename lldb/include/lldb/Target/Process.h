@@ -3110,7 +3110,7 @@ public:
     GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site);
 
     virtual Error
-    EnableBreakpoint (BreakpointSite *bp_site)
+    EnableBreakpointSite (BreakpointSite *bp_site)
     {
         Error error;
         error.SetErrorStringWithFormat("error: %s does not support enabling breakpoints", GetShortPluginName());
@@ -3119,7 +3119,7 @@ public:
 
 
     virtual Error
-    DisableBreakpoint (BreakpointSite *bp_site)
+    DisableBreakpointSite (BreakpointSite *bp_site)
     {
         Error error;
         error.SetErrorStringWithFormat("error: %s does not support disabling breakpoints", GetShortPluginName());

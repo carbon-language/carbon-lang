@@ -593,7 +593,7 @@ ProcessKDP::DoDeallocateMemory (lldb::addr_t addr)
 }
 
 Error
-ProcessKDP::EnableBreakpoint (BreakpointSite *bp_site)
+ProcessKDP::EnableBreakpointSite (BreakpointSite *bp_site)
 {
     if (m_comm.LocalBreakpointsAreSupported ())
     {
@@ -616,7 +616,7 @@ ProcessKDP::EnableBreakpoint (BreakpointSite *bp_site)
 }
 
 Error
-ProcessKDP::DisableBreakpoint (BreakpointSite *bp_site)
+ProcessKDP::DisableBreakpointSite (BreakpointSite *bp_site)
 {
     if (m_comm.LocalBreakpointsAreSupported ())
     {

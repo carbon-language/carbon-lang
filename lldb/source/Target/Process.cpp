@@ -1948,7 +1948,7 @@ Process::DisableAllBreakpointSites ()
     size_t num_sites = m_breakpoint_site_list.GetSize();
     for (size_t i = 0; i < num_sites; i++)
     {
-        DisableBreakpoint (m_breakpoint_site_list.GetByIndex(i).get());
+        DisableBreakpointSite (m_breakpoint_site_list.GetByIndex(i).get());
     }
 }
 
@@ -1971,7 +1971,7 @@ Process::DisableBreakpointSiteByID (lldb::user_id_t break_id)
     if (bp_site_sp)
     {
         if (bp_site_sp->IsEnabled())
-            error = DisableBreakpoint (bp_site_sp.get());
+            error = DisableBreakpointSite (bp_site_sp.get());
     }
     else
     {
@@ -1989,7 +1989,7 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
     if (bp_site_sp)
     {
         if (!bp_site_sp->IsEnabled())
-            error = EnableBreakpoint (bp_site_sp.get());
+            error = EnableBreakpointSite (bp_site_sp.get());
     }
     else
     {
@@ -2022,7 +2022,7 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
             bp_site_sp.reset (new BreakpointSite (&m_breakpoint_site_list, owner, load_addr, use_hardware));
             if (bp_site_sp)
             {
-                if (EnableBreakpoint (bp_site_sp.get()).Success())
+                if (EnableBreakpointSite (bp_site_sp.get()).Success())
                 {
                     owner->SetBreakpointSite (bp_site_sp);
                     return m_breakpoint_site_list.Add (bp_site_sp);
@@ -2041,7 +2041,7 @@ Process::RemoveOwnerFromBreakpointSite (lldb::user_id_t owner_id, lldb::user_id_
     uint32_t num_owners = bp_site_sp->RemoveOwner (owner_id, owner_loc_id);
     if (num_owners == 0)
     {
-        DisableBreakpoint(bp_site_sp.get());
+        DisableBreakpointSite (bp_site_sp.get());
         m_breakpoint_site_list.RemoveByAddress(bp_site_sp->GetLoadAddress());
     }
 }
@@ -2175,7 +2175,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
     addr_t bp_addr = bp_site->GetLoadAddress();
     lldb::user_id_t breakID = bp_site->GetID();
     if (log)
-        log->Printf ("Process::DisableBreakpoint (breakID = %" PRIu64 ") addr = 0x%" PRIx64, breakID, (uint64_t)bp_addr);
+        log->Printf ("Process::DisableSoftwareBreakpoint (breakID = %" PRIu64 ") addr = 0x%" PRIx64, breakID, (uint64_t)bp_addr);
 
     if (bp_site->IsHardware())
     {

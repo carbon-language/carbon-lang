@@ -345,8 +345,8 @@ StopInfoMachException::CreateStopReasonWithMachException
         
         case 6: // EXC_BREAKPOINT
             {
-                bool is_software_breakpoint = false;
-                bool is_trace_if_software_breakpoint_missing = false;
+                bool is_actual_breakpoint = false;
+                bool is_trace_if_actual_breakpoint_missing = false;
                 switch (cpu)
                 {
                 case llvm::Triple::x86:
@@ -375,9 +375,9 @@ StopInfoMachException::CreateStopReasonWithMachException
                     {
                         // KDP returns EXC_I386_BPTFLT for trace breakpoints
                         if (exc_code == 3)
-                            is_trace_if_software_breakpoint_missing = true;
+                            is_trace_if_actual_breakpoint_missing = true;
 
-                        is_software_breakpoint = true;
+                        is_actual_breakpoint = true;
                         if (!pc_already_adjusted)
                             pc_decrement = 1;
                     }
@@ -385,7 +385,7 @@ StopInfoMachException::CreateStopReasonWithMachException
 
                 case llvm::Triple::ppc:
                 case llvm::Triple::ppc64:
-                    is_software_breakpoint = exc_code == 1; // EXC_PPC_BREAKPOINT
+                    is_actual_breakpoint = exc_code == 1; // EXC_PPC_BREAKPOINT
                     break;
                 
                 case llvm::Triple::arm:
@@ -410,8 +410,8 @@ StopInfoMachException::CreateStopReasonWithMachException
                     }
                     else if (exc_code == 1) // EXC_ARM_BREAKPOINT
                     {
-                        is_software_breakpoint = true;
-                        is_trace_if_software_breakpoint_missing = true;
+                        is_actual_breakpoint = true;
+                        is_trace_if_actual_breakpoint_missing = true;
                     }
                     break;
 
@@ -419,7 +419,7 @@ StopInfoMachException::CreateStopReasonWithMachException
                     break;
                 }
 
-                if (is_software_breakpoint)
+                if (is_actual_breakpoint)
                 {
                     RegisterContextSP reg_ctx_sp (thread.GetRegisterContext());
                     addr_t pc = reg_ctx_sp->GetPC() - pc_decrement;
@@ -447,7 +447,7 @@ StopInfoMachException::CreateStopReasonWithMachException
                     }
                     
                     // Don't call this a trace if we weren't single stepping this thread.
-                    if (is_trace_if_software_breakpoint_missing && thread.GetTemporaryResumeState() == eStateStepping)
+                    if (is_trace_if_actual_breakpoint_missing && thread.GetTemporaryResumeState() == eStateStepping)
                     {
                         return StopInfo::CreateStopReasonToTrace (thread);
                     }
