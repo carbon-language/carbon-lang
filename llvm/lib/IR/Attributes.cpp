@@ -332,25 +332,23 @@ StringRef AttributeImpl::getValueAsString() const {
 bool AttributeImpl::operator<(const AttributeImpl &AI) const {
   // This sorts the attributes with Attribute::AttrKinds coming first (sorted
   // relative to their enum value) and then strings.
-  if (isEnumAttribute())
-    if (AI.isAlignAttribute() || AI.isEnumAttribute())
-      return getKindAsEnum() < AI.getKindAsEnum();
+  if (isEnumAttribute()) {
+    if (AI.isEnumAttribute()) return getKindAsEnum() < AI.getKindAsEnum();
+    if (AI.isAlignAttribute()) return true;
+    if (AI.isStringAttribute()) return true;
+  }
 
   if (isAlignAttribute()) {
-    if (!AI.isStringAttribute() && getKindAsEnum() < AI.getKindAsEnum())
-      return true;
-    if (AI.isAlignAttribute())
-      return getValueAsInt() < AI.getValueAsInt();
+    if (AI.isEnumAttribute()) return false;
+    if (AI.isAlignAttribute()) return getValueAsInt() < AI.getValueAsInt();
+    if (AI.isStringAttribute()) return true;
   }
 
-  if (isStringAttribute()) {
-    if (!AI.isStringAttribute()) return false;
-    if (getKindAsString() < AI.getKindAsString()) return true;
-    if (getKindAsString() == AI.getKindAsString())
-      return getValueAsString() < AI.getValueAsString();
-  }
-
-  return false;
+  if (AI.isEnumAttribute()) return false;
+  if (AI.isAlignAttribute()) return false;
+  if (getKindAsString() == AI.getKindAsString())
+    return getValueAsString() < AI.getValueAsString();
+  return getKindAsString() < AI.getKindAsString();
 }
 
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
