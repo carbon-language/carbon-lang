@@ -2,7 +2,7 @@
 
 // CHECK: @test2 = alias i32 ()* @_Z5test1v
 
-// CHECK: define i32 @_Z3foov() nounwind align 1024
+// CHECK: define i32 @_Z3foov() nounwind {{.*}} align 1024
 int foo() __attribute__((aligned(1024)));
 int foo() { }
 
@@ -13,16 +13,16 @@ class C {
   void bar4() __attribute__((aligned(1024)));
 } c;
 
-// CHECK: define void @_ZN1C4bar1Ev(%class.C* %this) unnamed_addr nounwind align 2
+// CHECK: define void @_ZN1C4bar1Ev(%class.C* %this) unnamed_addr nounwind {{.*}} align 2
 void C::bar1() { }
 
-// CHECK: define void @_ZN1C4bar2Ev(%class.C* %this) unnamed_addr nounwind align 2
+// CHECK: define void @_ZN1C4bar2Ev(%class.C* %this) unnamed_addr nounwind {{.*}} align 2
 void C::bar2() { }
 
-// CHECK: define void @_ZN1C4bar3Ev(%class.C* %this) unnamed_addr nounwind align 1024
+// CHECK: define void @_ZN1C4bar3Ev(%class.C* %this) unnamed_addr nounwind {{.*}} align 1024
 void C::bar3() { }
 
-// CHECK: define void @_ZN1C4bar4Ev(%class.C* %this) nounwind align 1024
+// CHECK: define void @_ZN1C4bar4Ev(%class.C* %this) nounwind {{.*}} align 1024
 void C::bar4() { }
 
 // PR6635

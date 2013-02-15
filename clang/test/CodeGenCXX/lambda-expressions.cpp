@@ -91,7 +91,7 @@ void staticarrayref(){
   }();
 }
 
-// CHECK: define internal void @"_ZZ1hvEN3$_88__invokeEv"(%struct.A* noalias sret %agg.result)
+// CHECK: define internal void @"_ZZ1hvEN3$_88__invokeEv"(%struct.A* noalias sret %agg.result) {{.*}} {
 // CHECK-NOT: =
 // CHECK: call void @"_ZZ1hvENK3$_8clEv"(%struct.A* sret %agg.result,
 // CHECK-NEXT: ret void

@@ -26,6 +26,7 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace clang;
@@ -1014,6 +1015,18 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     FuncAttrs.addAttribute(llvm::Attribute::NoRedZone);
   if (CodeGenOpts.NoImplicitFloat)
     FuncAttrs.addAttribute(llvm::Attribute::NoImplicitFloat);
+
+  if (!TargetOpts.CPU.empty())
+    FuncAttrs.addAttribute("target-cpu", TargetOpts.CPU);
+
+  if (TargetOpts.Features.size()) {
+    llvm::SubtargetFeatures Features;
+    for (std::vector<std::string>::const_iterator
+           it = TargetOpts.Features.begin(),
+           ie = TargetOpts.Features.end(); it != ie; ++it)
+      Features.AddFeature(*it);
+    FuncAttrs.addAttribute("target-features", Features.getString());
+  }
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;

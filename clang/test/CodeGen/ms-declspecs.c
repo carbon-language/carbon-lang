@@ -8,14 +8,14 @@ union { struct S s; } u;
 // CHECK: @u = {{.*}}zeroinitializer, align 16
 
 
-// CHECK: define void @t3() naked noinline nounwind {
+// CHECK: define void @t3() naked noinline nounwind {{.*}} {
 __declspec(naked) void t3() {}
 
 // CHECK: define void @t22() nounwind
 void __declspec(nothrow) t22();
 void t22() {}
 
-// CHECK: define void @t2() noinline nounwind {
+// CHECK: define void @t2() noinline nounwind {{.*}} {
 __declspec(noinline) void t2() {}
 
 // CHECK: call void @f20_t()

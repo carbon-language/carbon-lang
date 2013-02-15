@@ -36,39 +36,39 @@ int t17() {
   return t15() + t16;
 }
 
-// CHECK: define void @t1() noreturn nounwind {
+// CHECK: define void @t1() noreturn nounwind {{.*}} {
 void t1() __attribute__((noreturn));
 void t1() { while (1) {} }
 
-// CHECK: define void @t2() nounwind {
+// CHECK: define void @t2() nounwind {{.*}} {
 void t2() __attribute__((nothrow));
 void t2() {}
 
-// CHECK: define weak void @t3() nounwind {
+// CHECK: define weak void @t3() nounwind {{.*}} {
 void t3() __attribute__((weak));
 void t3() {}
 
-// CHECK: define hidden void @t4() nounwind {
+// CHECK: define hidden void @t4() nounwind {{.*}} {
 void t4() __attribute__((visibility("hidden")));
 void t4() {}
 
-// CHECK: define void @t7() noreturn nounwind {
+// CHECK: define void @t7() noreturn nounwind {{.*}} {
 void t7() __attribute__((noreturn, nothrow));
 void t7() { while (1) {} }
 
-// CHECK: define void @t10() nounwind section "SECT" {
+// CHECK: define void @t10() nounwind {{.*}} section "SECT" {
 void t10(void) __attribute__((section("SECT")));
 void t10(void) {}
-// CHECK: define void @t11() nounwind section "SECT" {
+// CHECK: define void @t11() nounwind {{.*}} section "SECT" {
 void __attribute__((section("SECT"))) t11(void) {}
 
-// CHECK: define i32 @t19() nounwind {
+// CHECK: define i32 @t19() nounwind {{.*}} {
 extern int t19(void) __attribute__((weak_import));
 int t19(void) {
   return 10;
 }
 
-// CHECK:define void @t20() nounwind {
+// CHECK:define void @t20() nounwind {{.*}} {
 // CHECK: call void @abort()
 // CHECK-NEXT: unreachable
 void t20(void) {
@@ -88,4 +88,4 @@ void t21(void) {
 void __attribute__((section(".foo"))) t22(void);
 void __attribute__((section(".bar"))) t22(void) {}
 
-// CHECK: define void @t22() nounwind section ".bar"
+// CHECK: define void @t22() nounwind {{.*}} section ".bar"

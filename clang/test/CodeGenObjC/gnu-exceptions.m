@@ -6,7 +6,7 @@ void log(int i);
 
 @class C;
 
-// CHECK: define void @test0() {
+// CHECK: define void @test0() "target-features"={{.*}} {
 void test0() {
   @try {
     // CHECK: invoke void @opaque()

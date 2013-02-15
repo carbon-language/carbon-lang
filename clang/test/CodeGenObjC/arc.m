@@ -676,7 +676,7 @@ void test21(unsigned n) {
 @implementation Test29
 static id _test29_allocator = 0;
 - (id) init {
-// CHECK:    define internal i8* @"\01-[Test29 init]"([[TEST29:%.*]]* {{%.*}},
+// CHECK:    define internal i8* @"\01-[Test29 init]"([[TEST29:%[^*]*]]* {{%.*}},
 // CHECK:      [[SELF:%.*]] = alloca [[TEST29]]*, align 8
 // CHECK-NEXT: [[CMD:%.*]] = alloca i8*, align 8
 // CHECK-NEXT: [[CLEANUP:%.*]] = alloca i32
@@ -786,7 +786,7 @@ typedef struct Test30_helper Test30_helper;
 char *helper;
 }
 - (id) init {
-// CHECK:    define internal i8* @"\01-[Test30 init]"([[TEST30:%.*]]* {{%.*}},
+// CHECK:    define internal i8* @"\01-[Test30 init]"([[TEST30:%[^*]*]]* {{%.*}},
 // CHECK:      [[RET:%.*]] = alloca [[TEST30]]*
 // CHECK-NEXT: alloca i8*
 // CHECK-NEXT: alloca i32

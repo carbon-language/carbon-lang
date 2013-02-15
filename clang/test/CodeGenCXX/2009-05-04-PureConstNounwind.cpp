@@ -3,7 +3,7 @@ int c(void) __attribute__((const));
 int p(void) __attribute__((pure));
 int t(void);
 
-// CHECK: define i32 @_Z1fv() {
+// CHECK: define i32 @_Z1fv() {{.*}} {
 int f(void) {
   // CHECK: call i32 @_Z1cv() nounwind readnone
   // CHECK: call i32 @_Z1pv() nounwind readonly

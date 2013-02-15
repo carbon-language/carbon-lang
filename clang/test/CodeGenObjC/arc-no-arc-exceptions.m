@@ -9,8 +9,8 @@ void thrower(void);
 void not(void) __attribute__((nothrow));
 
 // CHECK: define void @test0(
-// CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !
-// CHECK: call void @not() nounwind, !clang.arc.no_objc_arc_exceptions !
+// CHECK: call void @thrower() "target-features"={{.*}}, !clang.arc.no_objc_arc_exceptions !
+// CHECK: call void @not() nounwind "target-features"={{.*}}, !clang.arc.no_objc_arc_exceptions !
 // NO-METADATA: define void @test0(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
@@ -20,8 +20,8 @@ void test0(void) {
 }
 
 // CHECK: define void @test1(
-// CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !
-// CHECK: call void @not() nounwind, !clang.arc.no_objc_arc_exceptions !
+// CHECK: call void @thrower() "target-features"={{.*}}, !clang.arc.no_objc_arc_exceptions !
+// CHECK: call void @not() nounwind "target-features"={{.*}}, !clang.arc.no_objc_arc_exceptions !
 // NO-METADATA: define void @test1(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }

@@ -25,13 +25,13 @@ typedef int (^fp)();
 fp global;
 void f2() { global = []{ return 3; }; }
 
-// MRC: define void @_Z2f2v() nounwind {
+// MRC: define void @_Z2f2v() nounwind "target-features"={{.*}} {
 // MRC: store i8* bitcast (i32 (i8*)* @___Z2f2v_block_invoke to i8*),
 // MRC-NOT: call
 // MRC: ret void
 // ("global" contains a dangling pointer after this function runs.)
 
-// ARC: define void @_Z2f2v() nounwind {
+// ARC: define void @_Z2f2v() nounwind "target-features"={{.*}} {
 // ARC: store i8* bitcast (i32 (i8*)* @___Z2f2v_block_invoke to i8*),
 // ARC: call i8* @objc_retainBlock
 // ARC: call void @objc_release

@@ -14,7 +14,7 @@ void f0(void) { }
 extern void f1(void);
 extern void f1(void) __attribute((alias("f0")));
 // CHECKBASIC: @f1 = alias void ()* @f0
-// CHECKBASIC: define void @f0() nounwind {
+// CHECKBASIC: define void @f0() nounwind{{.*}} {
 
 // Make sure that aliases cause referenced values to be emitted.
 // PR3200
@@ -43,4 +43,4 @@ int outer(int a) { return inner(a); }
 int outer_weak(int a) { return inner_weak_a(a); }
 // CHECKCC: define arm_aapcs_vfpcc i32 @outer_weak(i32 %a) nounwind {
 // CHECKCC: call arm_aapcs_vfpcc  i32 @inner_weak(i32 %{{.*}})
-// CHECKCC: define internal arm_aapcs_vfpcc i32 @inner_weak(i32 %a) nounwind {
+// CHECKCC: define internal arm_aapcs_vfpcc i32 @inner_weak(i32 %a) nounwind{{.*}} {
