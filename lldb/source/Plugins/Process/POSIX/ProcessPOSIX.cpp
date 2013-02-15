@@ -510,13 +510,13 @@ ProcessPOSIX::GetSoftwareBreakpointTrapOpcode(BreakpointSite* bp_site)
 }
 
 Error
-ProcessPOSIX::EnableBreakpoint(BreakpointSite *bp_site)
+ProcessPOSIX::EnableBreakpointSite(BreakpointSite *bp_site)
 {
     return EnableSoftwareBreakpoint(bp_site);
 }
 
 Error
-ProcessPOSIX::DisableBreakpoint(BreakpointSite *bp_site)
+ProcessPOSIX::DisableBreakpointSite(BreakpointSite *bp_site)
 {
     return DisableSoftwareBreakpoint(bp_site);
 }

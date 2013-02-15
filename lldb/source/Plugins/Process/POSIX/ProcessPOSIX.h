@@ -100,10 +100,10 @@ public:
     GetSoftwareBreakpointTrapOpcode(lldb_private::BreakpointSite* bp_site);
 
     virtual lldb_private::Error
-    EnableBreakpoint(lldb_private::BreakpointSite *bp_site);
+    EnableBreakpointSite(lldb_private::BreakpointSite *bp_site);
 
     virtual lldb_private::Error
-    DisableBreakpoint(lldb_private::BreakpointSite *bp_site);
+    DisableBreakpointSite(lldb_private::BreakpointSite *bp_site);
 
     virtual uint32_t
     UpdateThreadListIfNeeded();
