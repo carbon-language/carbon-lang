@@ -4945,7 +4945,7 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
   llvm_unreachable("unknown special method kind");
 }
 
-CXXConstructorDecl *findUserDeclaredCtor(CXXRecordDecl *RD) {
+static CXXConstructorDecl *findUserDeclaredCtor(CXXRecordDecl *RD) {
   for (CXXRecordDecl::ctor_iterator CI = RD->ctor_begin(), CE = RD->ctor_end();
        CI != CE; ++CI)
     if (!CI->isImplicit())

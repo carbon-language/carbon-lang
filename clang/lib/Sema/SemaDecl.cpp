@@ -2065,8 +2065,8 @@ static bool isABIDefaultCC(Sema &S, CallingConv CC, FunctionDecl *D) {
   return ABIDefaultCC == CC;
 }
 
-template<typename T>
-bool haveIncompatibleLanguageLinkages(const T *Old, const T *New) {
+template <typename T>
+static bool haveIncompatibleLanguageLinkages(const T *Old, const T *New) {
   const DeclContext *DC = Old->getDeclContext();
   if (DC->isRecord())
     return false;

@@ -196,8 +196,7 @@ static bool useInlineVisibilityHidden(const NamedDecl *D) {
     FD->hasBody(Def) && Def->isInlined() && !Def->hasAttr<GNUInlineAttr>();
 }
 
-template<typename T>
-bool isInExternCContext(T *D) {
+template <typename T> static bool isInExternCContext(T *D) {
   const T *First = D->getFirstDeclaration();
   return First->getDeclContext()->isExternCContext();
 }
