@@ -45,53 +45,49 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS)
   : ARMGenSubtargetInfo(TT, CPU, FS)
   , ARMProcFamily(Others)
+  , HasV4TOps(false)
+  , HasV5TOps(false)
+  , HasV5TEOps(false)
+  , HasV6Ops(false)
+  , HasV6T2Ops(false)
+  , HasV7Ops(false)
+  , HasVFPv2(false)
+  , HasVFPv3(false)
+  , HasVFPv4(false)
+  , HasNEON(false)
+  , UseNEONForSinglePrecisionFP(false)
+  , UseMulOps(UseFusedMulOps)
+  , SlowFPVMLx(false)
+  , HasVMLxForwarding(false)
+  , SlowFPBrcc(false)
+  , InThumbMode(false)
+  , HasThumb2(false)
+  , IsMClass(false)
+  , NoARM(false)
+  , PostRAScheduler(false)
+  , IsR9Reserved(ReserveR9)
+  , UseMovt(false)
+  , SupportsTailCall(false)
+  , HasFP16(false)
+  , HasD16(false)
+  , HasHardwareDivide(false)
+  , HasHardwareDivideInARM(false)
+  , HasT2ExtractPack(false)
+  , HasDataBarrier(false)
+  , Pref32BitThumb(false)
+  , AvoidCPSRPartialUpdate(false)
+  , AvoidMOVsShifterOperand(false)
+  , HasRAS(false)
+  , HasMPExtension(false)
+  , FPOnlySP(false)
+  , AllowsUnalignedMem(false)
+  , Thumb2DSP(false)
+  , UseNaClTrap(false)
   , stackAlignment(4)
   , CPUString(CPU)
   , TargetTriple(TT)
   , TargetABI(ARM_ABI_APCS) {
-  initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
-}
-
-void ARMSubtarget::initializeEnvironment() {
-  HasV4TOps = false;
-  HasV5TOps = false;
-  HasV5TEOps = false;
-  HasV6Ops = false;
-  HasV6T2Ops = false;
-  HasV7Ops = false;
-  HasVFPv2 = false;
-  HasVFPv3 = false;
-  HasVFPv4 = false;
-  HasNEON = false;
-  UseNEONForSinglePrecisionFP = false;
-  UseMulOps = UseFusedMulOps;
-  SlowFPVMLx = false;
-  HasVMLxForwarding = false;
-  SlowFPBrcc = false;
-  InThumbMode = false;
-  HasThumb2 = false;
-  IsMClass = false;
-  NoARM = false;
-  PostRAScheduler = false;
-  IsR9Reserved = ReserveR9;
-  UseMovt = false;
-  SupportsTailCall = false;
-  HasFP16 = false;
-  HasD16 = false;
-  HasHardwareDivide = false;
-  HasHardwareDivideInARM = false;
-  HasT2ExtractPack = false;
-  HasDataBarrier = false;
-  Pref32BitThumb = false;
-  AvoidCPSRPartialUpdate = false;
-  AvoidMOVsShifterOperand = false;
-  HasRAS = false;
-  HasMPExtension = false;
-  FPOnlySP = false;
-  AllowsUnalignedMem = false;
-  Thumb2DSP = false;
-  UseNaClTrap = false;
 }
 
 void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
@@ -104,10 +100,8 @@ void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
     !CPUAttr.hasAttribute(Attribute::None) ?CPUAttr.getValueAsString() : "";
   std::string FS =
     !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
-  if (!FS.empty()) {
-    initializeEnvironment();
+  if (!FS.empty())
     resetSubtargetFeatures(CPU, FS);
-  }
 }
 
 void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {

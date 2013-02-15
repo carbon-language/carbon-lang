@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
+; XFAIL: *
 
 ; This should not generate SSE instructions:
 ;
