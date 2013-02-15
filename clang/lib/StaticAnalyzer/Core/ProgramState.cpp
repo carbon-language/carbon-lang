@@ -512,8 +512,16 @@ bool ScanReachableSymbols::scan(SVal val) {
   if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
     return scan(X->getRegion());
 
-  if (nonloc::LazyCompoundVal *X = dyn_cast<nonloc::LazyCompoundVal>(&val))
-    return scan(X->getRegion());
+  if (nonloc::LazyCompoundVal *X = dyn_cast<nonloc::LazyCompoundVal>(&val)) {
+    StoreManager &StoreMgr = state->getStateManager().getStoreManager();
+    // FIXME: We don't really want to use getBaseRegion() here because pointer
+    // arithmetic doesn't apply, but scanReachableSymbols only accepts base
+    // regions right now.
+    if (!StoreMgr.scanReachableSymbols(X->getStore(),
+                                       X->getRegion()->getBaseRegion(),
+                                       *this))
+      return false;
+  }
 
   if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&val))
     return scan(X->getLoc());
