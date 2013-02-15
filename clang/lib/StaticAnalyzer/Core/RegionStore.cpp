@@ -323,6 +323,13 @@ public:
   RegionBindings::Factory RBFactory;
   mutable ClusterBindings::Factory CBFactory;
 
+  typedef std::vector<SVal> SValListTy;
+private:
+  typedef llvm::DenseMap<const LazyCompoundValData *,
+                         SValListTy> LazyBindingsMapTy;
+  LazyBindingsMapTy LazyBindingsMap;
+
+public:
   RegionStoreManager(ProgramStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr), Features(f),
       RBFactory(mgr.getAllocator()), CBFactory(mgr.getAllocator()) {}
@@ -494,6 +501,14 @@ public: // Part of public interface to class.
   std::pair<Store, const MemRegion*>
   getLazyBinding(RegionBindingsConstRef B, const MemRegion *R,
                  const MemRegion *originalRegion);
+
+  /// Returns the cached set of interesting SVals contained within a lazy
+  /// binding.
+  ///
+  /// The precise value of "interesting" is determined for the purposes of
+  /// RegionStore's internal analysis. It must always contain all regions and
+  /// symbols, but may omit constants and other kinds of SVal.
+  const SValListTy &getInterestingValues(nonloc::LazyCompoundVal LCV);
 
   //===------------------------------------------------------------------===//
   // State pruning.
@@ -878,23 +893,12 @@ void invalidateRegionsWorker::VisitBinding(SVal V) {
   if (const nonloc::LazyCompoundVal *LCS =
         dyn_cast<nonloc::LazyCompoundVal>(&V)) {
 
-    const MemRegion *LazyR = LCS->getRegion();
-    RegionBindingsRef B = RM.getRegionBindings(LCS->getStore());
+    const RegionStoreManager::SValListTy &Vals = RM.getInterestingValues(*LCS);
 
-    // FIXME: This should not have to walk all bindings in the old store.
-    for (RegionBindingsRef::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI){
-      const ClusterBindings &Cluster = RI.getData();
-      for (ClusterBindings::iterator CI = Cluster.begin(), CE = Cluster.end();
-           CI != CE; ++CI) {
-        BindingKey K = CI.getKey();
-        if (const SubRegion *BaseR = dyn_cast<SubRegion>(K.getRegion())) {
-          if (BaseR == LazyR)
-            VisitBinding(CI.getData());
-          else if (K.hasSymbolicOffset() && BaseR->isSubRegionOf(LazyR))
-            VisitBinding(CI.getData());
-        }
-      }
-    }
+    for (RegionStoreManager::SValListTy::const_iterator I = Vals.begin(),
+                                                        E = Vals.end();
+         I != E; ++I)
+      VisitBinding(*I);
 
     return;
   }
@@ -1595,6 +1599,49 @@ SVal RegionStoreManager::getBindingForLazySymbol(const TypedValueRegion *R) {
   return svalBuilder.getRegionValueSymbolVal(R);
 }
 
+const RegionStoreManager::SValListTy &
+RegionStoreManager::getInterestingValues(nonloc::LazyCompoundVal LCV) {
+  // First, check the cache.
+  LazyBindingsMapTy::iterator I = LazyBindingsMap.find(LCV.getCVData());
+  if (I != LazyBindingsMap.end())
+    return I->second;
+
+  // If we don't have a list of values cached, start constructing it.
+  SValListTy &List = LazyBindingsMap[LCV.getCVData()];
+
+  const SubRegion *LazyR = LCV.getRegion();
+  RegionBindingsRef B = getRegionBindings(LCV.getStore());
+
+  // If this region had /no/ bindings at the time, there are no interesting
+  // values to return.
+  const ClusterBindings *Cluster = B.lookup(LazyR->getBaseRegion());
+  if (!Cluster)
+    return List;
+
+  SmallVector<BindingKey, 32> Keys;
+  collectSubRegionKeys(Keys, svalBuilder, *Cluster, LazyR,
+                       /*IncludeAllDefaultBindings=*/true);
+  for (SmallVectorImpl<BindingKey>::const_iterator I = Keys.begin(),
+                                                   E = Keys.end();
+       I != E; ++I) {
+    SVal V = *Cluster->lookup(*I);
+    if (V.isUnknownOrUndef() || V.isConstant())
+      continue;
+
+    const nonloc::LazyCompoundVal *InnerLCV =
+      dyn_cast<nonloc::LazyCompoundVal>(&V);
+    if (InnerLCV) {
+      const SValListTy &InnerList = getInterestingValues(*InnerLCV);
+      List.insert(List.end(), InnerList.begin(), InnerList.end());
+      continue;
+    }
+    
+    List.push_back(V);
+  }
+
+  return List;
+}
+
 NonLoc RegionStoreManager::createLazyBinding(RegionBindingsConstRef B,
                                              const TypedValueRegion *R) {
   // If we already have a lazy binding, and it's for the whole structure,
@@ -1991,21 +2038,12 @@ void removeDeadBindingsWorker::VisitBinding(SVal V) {
   if (const nonloc::LazyCompoundVal *LCS =
         dyn_cast<nonloc::LazyCompoundVal>(&V)) {
 
-    const SubRegion *LazyR = LCS->getRegion();
-    RegionBindingsRef B = RM.getRegionBindings(LCS->getStore());
+    const RegionStoreManager::SValListTy &Vals = RM.getInterestingValues(*LCS);
 
-    const ClusterBindings *Cluster = B.lookup(LazyR->getBaseRegion());
-    if (!Cluster)
-      return;
-
-    SmallVector<BindingKey, 32> Keys;
-    collectSubRegionKeys(Keys, svalBuilder, *Cluster, LazyR,
-                         /*IncludeAllDefaultBindings=*/true);
-    for (SmallVectorImpl<BindingKey>::const_iterator I = Keys.begin(),
-                                                     E = Keys.end();
-         I != E; ++I) {
-      VisitBinding(*Cluster->lookup(*I));
-    }
+    for (RegionStoreManager::SValListTy::const_iterator I = Vals.begin(),
+                                                        E = Vals.end();
+         I != E; ++I)
+      VisitBinding(*I);
 
     return;
   }
