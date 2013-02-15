@@ -556,6 +556,8 @@ namespace llvm {
   public:
     SCEVRewriter(ScalarEvolution &S) : SE(S) {}
 
+    virtual ~SCEVRewriter() {}
+
     virtual const SCEV *visitConstant(const SCEVConstant *Constant) {
       return Constant;
     }
