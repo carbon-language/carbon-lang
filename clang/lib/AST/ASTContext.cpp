@@ -4994,7 +4994,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool EncodingProperty,
                                             bool StructField,
                                             bool EncodeBlockParameters,
-                                            bool EncodeClassNames) const {
+                                            bool EncodeClassNames,
+                                            bool EncodePointerToObjCTypedef) const {
   CanQualType CT = getCanonicalType(T);
   switch (CT->getTypeClass()) {
   case Type::Builtin:
@@ -5244,7 +5245,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       if (Field->isBitField())
         getObjCEncodingForTypeImpl(Field->getType(), S, false, true, Field);
       else
-        getObjCEncodingForTypeImpl(Field->getType(), S, false, true, FD);
+        getObjCEncodingForTypeImpl(Field->getType(), S, false, true, FD,
+                                   false, false, false, false, false,
+                                   EncodePointerToObjCTypedef);
     }
     S += '}';
     return;
@@ -5286,14 +5289,17 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
 
     QualType PointeeTy = OPT->getPointeeType();
     if (!EncodingProperty &&
-        isa<TypedefType>(PointeeTy.getTypePtr())) {
+        isa<TypedefType>(PointeeTy.getTypePtr()) &&
+        !EncodePointerToObjCTypedef) {
       // Another historical/compatibility reason.
       // We encode the underlying type which comes out as
       // {...};
       S += '^';
       getObjCEncodingForTypeImpl(PointeeTy, S,
                                  false, ExpandPointedToStructures,
-                                 NULL);
+                                 NULL,
+                                 false, false, false, false, false,
+                                 /*EncodePointerToObjCTypedef*/true);
       return;
     }
 
