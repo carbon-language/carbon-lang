@@ -59,7 +59,9 @@ MCFragment *MCObjectStreamer::getCurrentFragment() const {
 
 MCDataFragment *MCObjectStreamer::getOrCreateDataFragment() const {
   MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
-  if (!F)
+  // When bundling is enabled, we don't want to add data to a fragment that
+  // already has instructions (see MCELFStreamer::EmitInstToData for details)
+  if (!F || (Assembler->isBundlingEnabled() && F->hasInstructions()))
     F = new MCDataFragment(getCurrentSectionData());
   return F;
 }
