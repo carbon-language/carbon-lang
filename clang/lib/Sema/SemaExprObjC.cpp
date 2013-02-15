@@ -2485,6 +2485,13 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
                                       MultiExprArg Args) {
   if (!Receiver)
     return ExprError();
+
+  // A ParenListExpr can show up while doing error recovery with invalid code.
+  if (isa<ParenListExpr>(Receiver)) {
+    ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Receiver);
+    if (Result.isInvalid()) return ExprError();
+    Receiver = Result.take();
+  }
   
   if (RespondsToSelectorSel.isNull()) {
     IdentifierInfo *SelectorId = &Context.Idents.get("respondsToSelector");

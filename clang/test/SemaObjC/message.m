@@ -98,3 +98,11 @@ void foo4() {
   [X rect]; // expected-warning {{receiver type 'struct objc_object *' is not 'id' or interface pointer, consider casting it to 'id'}} expected-warning {{method '-rect' not found (return type defaults to 'id')}}
 }
 
+// rdar://13207886
+void foo5(id p) {
+  p
+  [(id)(p) bar]; // expected-error {{missing '['}} \
+                 // expected-error {{expected ']'}} \
+                 // expected-note {{to match this '['}} \
+                 // expected-warning {{instance method '-bar' not found}}
+}
