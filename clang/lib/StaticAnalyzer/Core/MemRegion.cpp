@@ -1080,16 +1080,37 @@ RegionOffset MemRegion::getAsOffset() const {
 
   while (1) {
     switch (R->getKind()) {
-    default:
-      return RegionOffset(R, RegionOffset::Symbolic);
+    case GenericMemSpaceRegionKind:
+    case StackLocalsSpaceRegionKind:
+    case StackArgumentsSpaceRegionKind:
+    case HeapSpaceRegionKind:
+    case UnknownSpaceRegionKind:
+    case StaticGlobalSpaceRegionKind:
+    case GlobalInternalSpaceRegionKind:
+    case GlobalSystemSpaceRegionKind:
+    case GlobalImmutableSpaceRegionKind:
+      // Stores can bind directly to a region space to set a default value.
+      assert(Offset == 0 && !SymbolicOffsetBase);
+      goto Finish;
+
+    case FunctionTextRegionKind:
+    case BlockTextRegionKind:
+    case BlockDataRegionKind:
+      // These will never have bindings, but may end up having values requested
+      // if the user does some strange casting.
+      if (Offset != 0)
+        SymbolicOffsetBase = R;
+      goto Finish;
 
     case SymbolicRegionKind:
     case AllocaRegionKind:
     case CompoundLiteralRegionKind:
     case CXXThisRegionKind:
     case StringRegionKind:
+    case ObjCStringRegionKind:
     case VarRegionKind:
     case CXXTempObjectRegionKind:
+      // Usual base regions.
       goto Finish;
 
     case ObjCIvarRegionKind:
