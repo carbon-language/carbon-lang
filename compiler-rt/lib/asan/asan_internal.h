@@ -54,7 +54,7 @@
 
 #define ASAN_POSIX (ASAN_LINUX || ASAN_MAC)
 
-#if __has_feature(address_sanitizer)
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
 # error "The AddressSanitizer run-time should not be"
         " instrumented by AddressSanitizer"
 #endif

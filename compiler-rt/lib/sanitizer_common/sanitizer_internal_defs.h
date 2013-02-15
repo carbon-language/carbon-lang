@@ -31,7 +31,7 @@
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
 #endif
 
-// __has_feature
+// GCC does not understand __has_feature
 #if !defined(__has_feature)
 # define __has_feature(x) 0
 #endif

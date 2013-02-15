@@ -18,6 +18,37 @@
 
 // The full explanation of the memory mapping could be found here:
 // http://code.google.com/p/address-sanitizer/wiki/AddressSanitizerAlgorithm
+//
+// Typical shadow mapping on Linux/x86_64 with SHADOW_OFFSET == 0x00007fff8000:
+// || `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+// || `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+// || `[0x00008fff7000, 0x02008fff6fff]` || ShadowGap  ||
+// || `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+// || `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+//
+// When SHADOW_OFFSET is zero (-pie):
+// || `[0x100000000000, 0x7fffffffffff]` || HighMem    ||
+// || `[0x020000000000, 0x0fffffffffff]` || HighShadow ||
+// || `[0x000000040000, 0x01ffffffffff]` || ShadowGap  ||
+//
+// Special case when something is already mapped between
+// 0x003000000000 and 0x004000000000 (e.g. when prelink is installed):
+// || `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+// || `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+// || `[0x004000000000, 0x02008fff6fff]` || ShadowGap3 ||
+// || `[0x003000000000, 0x003fffffffff]` || MidMem     ||
+// || `[0x00087fff8000, 0x002fffffffff]` || ShadowGap2 ||
+// || `[0x00067fff8000, 0x00087fff7fff]` || MidShadow  ||
+// || `[0x00008fff7000, 0x00067fff7fff]` || ShadowGap  ||
+// || `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+// || `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+//
+// Default Linux/i386 mapping:
+// || `[0x40000000, 0xffffffff]` || HighMem    ||
+// || `[0x28000000, 0x3fffffff]` || HighShadow ||
+// || `[0x24000000, 0x27ffffff]` || ShadowGap  ||
+// || `[0x20000000, 0x23ffffff]` || LowShadow  ||
+// || `[0x00000000, 0x1fffffff]` || LowMem     ||
 
 #if ASAN_FLEXIBLE_MAPPING_AND_OFFSET == 1
 extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_scale;
@@ -61,49 +92,105 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 #define kHighShadowBeg  MEM_TO_SHADOW(kHighMemBeg)
 #define kHighShadowEnd  MEM_TO_SHADOW(kHighMemEnd)
 
+# define kMidShadowBeg MEM_TO_SHADOW(kMidMemBeg)
+# define kMidShadowEnd MEM_TO_SHADOW(kMidMemEnd)
+
 // With the zero shadow base we can not actually map pages starting from 0.
 // This constant is somewhat arbitrary.
 #define kZeroBaseShadowStart (1 << 18)
 
 #define kShadowGapBeg   (kLowShadowEnd ? kLowShadowEnd + 1 \
                                        : kZeroBaseShadowStart)
-#define kShadowGapEnd   (kHighShadowBeg - 1)
+#define kShadowGapEnd   ((kMidMemBeg ? kMidShadowBeg : kHighShadowBeg) - 1)
+
+#define kShadowGap2Beg (kMidMemBeg ? kMidShadowEnd + 1 : 0)
+#define kShadowGap2End (kMidMemBeg ? kMidMemBeg - 1 : 0)
+
+#define kShadowGap3Beg (kMidMemBeg ? kMidMemEnd + 1 : 0)
+#define kShadowGap3End (kMidMemBeg ? kHighShadowBeg - 1 : 0)
+
+#define DO_ASAN_MAPPING_PROFILE 0  // Set to 1 to profile the functions below.
+
+#if DO_ASAN_MAPPING_PROFILE
+# define PROFILE_ASAN_MAPPING() AsanMappingProfile[__LINE__]++;
+#else
+# define PROFILE_ASAN_MAPPING()
+#endif
+
+// If 1, all shadow boundaries are constants.
+// Don't set to 1 other than for testing.
+#define ASAN_FIXED_MAPPING 0
 
 namespace __asan {
 
+extern uptr AsanMappingProfile[];
+
+#if ASAN_FIXED_MAPPING
+// Fixed mapping for 64-bit Linux. Mostly used for performance comparison
+// with non-fixed mapping. As of r175253 (Feb 2013) the performance
+// difference between fixed and non-fixed mapping is below the noise level.
+static uptr kHighMemEnd = 0x7fffffffffffULL;
+static uptr kMidMemBeg =    0x3000000000ULL;
+static uptr kMidMemEnd =    0x3fffffffffULL;
+#else
 SANITIZER_INTERFACE_ATTRIBUTE
-extern uptr kHighMemEnd;  // Initialized in __asan_init.
+extern uptr kHighMemEnd, kMidMemBeg, kMidMemEnd;  // Initialized in __asan_init.
+#endif
 
 static inline bool AddrIsInLowMem(uptr a) {
+  PROFILE_ASAN_MAPPING();
   return a < kLowMemEnd;
 }
 
 static inline bool AddrIsInLowShadow(uptr a) {
+  PROFILE_ASAN_MAPPING();
   return a >= kLowShadowBeg && a <= kLowShadowEnd;
 }
 
 static inline bool AddrIsInHighMem(uptr a) {
+  PROFILE_ASAN_MAPPING();
   return a >= kHighMemBeg && a <= kHighMemEnd;
 }
 
+static inline bool AddrIsInMidMem(uptr a) {
+  PROFILE_ASAN_MAPPING();
+  return kMidMemBeg && a >= kMidMemBeg && a <= kMidMemEnd;
+}
+
 static inline bool AddrIsInMem(uptr a) {
-  return AddrIsInLowMem(a) || AddrIsInHighMem(a);
+  PROFILE_ASAN_MAPPING();
+  return AddrIsInLowMem(a) || AddrIsInMidMem(a) || AddrIsInHighMem(a);
 }
 
 static inline uptr MemToShadow(uptr p) {
+  PROFILE_ASAN_MAPPING();
   CHECK(AddrIsInMem(p));
   return MEM_TO_SHADOW(p);
 }
 
 static inline bool AddrIsInHighShadow(uptr a) {
-  return a >= kHighShadowBeg && a <=  kHighMemEnd;
+  PROFILE_ASAN_MAPPING();
+  return a >= kHighShadowBeg && a <= kHighMemEnd;
+}
+
+static inline bool AddrIsInMidShadow(uptr a) {
+  PROFILE_ASAN_MAPPING();
+  return kMidMemBeg && a >= kMidShadowBeg && a <= kMidMemEnd;
 }
 
 static inline bool AddrIsInShadow(uptr a) {
-  return AddrIsInLowShadow(a) || AddrIsInHighShadow(a);
+  PROFILE_ASAN_MAPPING();
+  return AddrIsInLowShadow(a) || AddrIsInMidShadow(a) || AddrIsInHighShadow(a);
 }
 
 static inline bool AddrIsInShadowGap(uptr a) {
+  PROFILE_ASAN_MAPPING();
+  if (kMidMemBeg) {
+    if (a <= kShadowGapEnd)
+      return SHADOW_OFFSET == 0 || a >= kShadowGapBeg;
+    return (a >= kShadowGap2Beg && a <= kShadowGap2End) ||
+           (a >= kShadowGap3Beg && a <= kShadowGap3End);
+  }
   // In zero-based shadow mode we treat addresses near zero as addresses
   // in shadow gap as well.
   if (SHADOW_OFFSET == 0)
@@ -112,10 +199,12 @@ static inline bool AddrIsInShadowGap(uptr a) {
 }
 
 static inline bool AddrIsAlignedByGranularity(uptr a) {
+  PROFILE_ASAN_MAPPING();
   return (a & (SHADOW_GRANULARITY - 1)) == 0;
 }
 
 static inline bool AddressIsPoisoned(uptr a) {
+  PROFILE_ASAN_MAPPING();
   const uptr kAccessSize = 1;
   u8 *shadow_address = (u8*)MemToShadow(a);
   s8 shadow_value = *shadow_address;
@@ -126,6 +215,9 @@ static inline bool AddressIsPoisoned(uptr a) {
   }
   return false;
 }
+
+// Must be after all calls to PROFILE_ASAN_MAPPING().
+static const uptr kAsanMappingProfileSize = __LINE__;
 
 }  // namespace __asan
 

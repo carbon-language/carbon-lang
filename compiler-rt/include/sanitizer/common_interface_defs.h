@@ -16,6 +16,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// GCC does not understand __has_feature.
+#if !defined(__has_feature)
+# define __has_feature(x) 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
