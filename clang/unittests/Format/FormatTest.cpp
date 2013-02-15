@@ -1323,11 +1323,20 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
                "           : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                "                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
                "       aaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    ? aaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    : aaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+
+  // FIXME: The trailing third parameter here is kind of hidden. Prefer putting
+  // it on the next line.
   verifyFormat(
-      "unsigned Indent = formatFirstToken(\n"
-      "    TheLine.First, IndentForLevel[TheLine.Level] >= 0\n"
-      "                       ? IndentForLevel[TheLine.Level] : TheLine * 2,\n"
-      "    TheLine.InPPDirective, PreviousEndOfLineColumn);");
+      "unsigned Indent =\n"
+      "    format(TheLine.First, IndentForLevel[TheLine.Level] >= 0\n"
+      "                              ? IndentForLevel[TheLine.Level]\n"
+      "                              : TheLine * 2, TheLine.InPPDirective,\n"
+      "           PreviousEndOfLineColumn);", getLLVMStyleWithColumns(70));
+
 }
 
 TEST_F(FormatTest, DeclarationsOfMultipleVariables) {

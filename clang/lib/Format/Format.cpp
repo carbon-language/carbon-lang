@@ -290,7 +290,8 @@ private:
         : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
           BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0) {
+          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0),
+          BreakBeforeThirdOperand(false) {
     }
 
     /// \brief The position to which a specific parenthesis level needs to be
@@ -333,6 +334,9 @@ private:
 
     /// \brief The position of the colon in an ObjC method declaration/call.
     unsigned ColonPos;
+    
+    /// \brief Break before third operand in ternary expression.
+    bool BreakBeforeThirdOperand;
 
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
@@ -353,6 +357,8 @@ private:
         return HasMultiParameterLine;
       if (ColonPos != Other.ColonPos)
         return ColonPos < Other.ColonPos;
+      if (BreakBeforeThirdOperand != Other.BreakBeforeThirdOperand)
+        return BreakBeforeThirdOperand;
       return false;
     }
   };
@@ -465,6 +471,8 @@ private:
         State.Column = State.Stack.back().Indent;
       }
 
+      if (Current.is(tok::question))
+        State.Stack.back().BreakBeforeThirdOperand = true;
       if (Previous.is(tok::comma) && !State.Stack.back().AvoidBinPacking)
         State.Stack.back().BreakBeforeParameter = false;
 
@@ -793,6 +801,9 @@ private:
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&
           State.ParenLevel == 0)))
+      return true;
+    if (State.NextToken->is(tok::colon) &&
+        State.Stack.back().BreakBeforeThirdOperand)
       return true;
     return false;
   }
