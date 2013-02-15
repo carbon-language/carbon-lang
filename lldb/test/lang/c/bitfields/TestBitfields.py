@@ -32,7 +32,6 @@ class BitfieldsTestCase(TestBase):
         self.buildDwarf()
         self.bitfields_variable()
 
-    @expectedFailureLinux # PR-15260: lldb on Linux does not display the correct value of 1-bit fields in a struct
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):

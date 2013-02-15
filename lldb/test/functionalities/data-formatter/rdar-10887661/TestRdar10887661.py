@@ -13,7 +13,6 @@ class Rdar10887661TestCase(TestBase):
     mydir = os.path.join("functionalities", "data-formatter", "rdar-10887661")
 
     # rdar://problem/10887661
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_with_dsym_and_run_command(self):
@@ -22,7 +21,6 @@ class Rdar10887661TestCase(TestBase):
         self.capping_test_commands()
 
     # rdar://problem/10887661
-    @unittest2.expectedFailure
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Check for an issue where capping does not work because the Target pointer appears to be changing behind our backs."""

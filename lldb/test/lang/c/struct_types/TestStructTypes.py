@@ -15,7 +15,6 @@ class StructTypesTestCase(TestBase):
     mydir = os.path.join("lang", "c", "struct_types")
 
     # rdar://problem/12566646
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_with_dsym(self):
@@ -24,7 +23,6 @@ class StructTypesTestCase(TestBase):
         self.struct_types()
 
     # rdar://problem/12566646
-    @unittest2.expectedFailure
     @dwarf_test
     def test_with_dwarf(self):
         """Test that break on a struct declaration has no effect."""
