@@ -614,6 +614,9 @@ class Base(unittest2.TestCase):
         self.dicts = []
         self.doTearDownCleanups = False
 
+        # List of spawned subproces.Popen objects
+        self.subprocesses = []
+
         # Create a string buffer to record the session info, to be dumped into a
         # test case specific file if test failure is encountered.
         self.session = StringIO.StringIO()
@@ -666,6 +669,31 @@ class Base(unittest2.TestCase):
             for hook in lldb.runHooks:
                 child.sendline(hook)
                 child.expect_exact(child_prompt)
+
+    def cleanupSubprocesses(self):
+        # Ensure any subprocesses are cleaned up
+        for p in self.subprocesses:
+            if p.poll() == None:
+                p.terminate()
+            del p
+        del self.subprocesses[:]
+
+    def spawnSubprocess(self, executable, args=[]):
+        """ Creates a subprocess.Popen object with the specified executable and arguments,
+            saves it in self.subprocesses, and returns the object.
+            NOTE: if using this function, ensure you also call:
+
+              self.addTearDownHook(self.cleanupSubprocesses)
+
+            otherwise the test suite will leak processes.
+        """
+
+        # Don't display the stdout if not in TraceOn() mode.
+        proc = Popen([executable] + args,
+                     stdout = open(os.devnull) if not self.TraceOn() else None,
+                     stdin = PIPE)
+        self.subprocesses.append(proc)
+        return proc
 
     def HideStdout(self):
         """Hide output to stdout from the user.

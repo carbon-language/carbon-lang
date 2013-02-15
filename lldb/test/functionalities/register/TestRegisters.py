@@ -100,18 +100,14 @@ class RegisterCommandsTestCase(TestBase):
         """Test convenience registers after a 'process attach'."""
         exe = self.lldbHere
         
-        # Spawn a new process and don't display the stdout if not in TraceOn() mode.
-        import subprocess
-        popen = subprocess.Popen([exe, self.lldbOption],
-                                 stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
+        # Spawn a new process
+        proc = self.spawnSubprocess(exe, [self.lldbOption])
+        self.addTearDownHook(self.cleanupSubprocesses)
+
         if self.TraceOn():
-            print "pid of spawned process: %d" % popen.pid
+            print "pid of spawned process: %d" % proc.pid
 
-        self.runCmd("process attach -p %d" % popen.pid)
-
-        # Add a hook to kill the child process during teardown.
-        self.addTearDownHook(
-            lambda: popen.kill())
+        self.runCmd("process attach -p %d" % proc.pid)
 
         # Check that "register read eax" works.
         self.runCmd("register read eax")

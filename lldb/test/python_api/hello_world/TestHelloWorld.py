@@ -135,11 +135,9 @@ class HelloWorldTestCase(TestBase):
 
         target = self.dbg.CreateTarget(self.exe)
 
-        # Spawn a new process and don't display the stdout if not in TraceOn() mode.
-        import subprocess
-        popen = subprocess.Popen([self.exe, "abc", "xyz"],
-                                 stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
-        #print "pid of spawned process: %d" % popen.pid
+        # Spawn a new process
+        popen = self.spawnSubprocess(self.exe, ["abc", "xyz"])
+        self.addTearDownHook(self.cleanupSubprocesses)
 
         listener = lldb.SBListener("my.attach.listener")
         error = lldb.SBError()
@@ -159,11 +157,9 @@ class HelloWorldTestCase(TestBase):
 
         target = self.dbg.CreateTarget(self.exe)
 
-        # Spawn a new process and don't display the stdout if not in TraceOn() mode.
-        import subprocess
-        popen = subprocess.Popen([self.exe, "abc", "xyz"],
-                                 stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
-        #print "pid of spawned process: %d" % popen.pid
+        # Spawn a new process
+        popen = self.spawnSubprocess(self.exe, ["abc", "xyz"])
+        self.addTearDownHook(self.cleanupSubprocesses)
 
         listener = lldb.SBListener("my.attach.listener")
         error = lldb.SBError()
