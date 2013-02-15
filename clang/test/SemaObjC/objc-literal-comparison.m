@@ -98,3 +98,6 @@ void testNilComparison() {
   RETURN_IF_NIL(@(1+1));
 }
 
+void PR15257(Class c) {
+  return c == @""; // expected-warning{{direct comparison of a string literal has undefined behavior}}
+}
