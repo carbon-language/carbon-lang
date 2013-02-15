@@ -226,8 +226,10 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   IF->getContents().append(Code.begin(), Code.end());
 }
 
+#ifndef NDEBUG
 static const char *BundlingNotImplementedMsg =
   "Aligned bundling is not implemented for this object format";
+#endif
 
 void MCObjectStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
   llvm_unreachable(BundlingNotImplementedMsg);
