@@ -292,9 +292,10 @@ void PPC64CompilationCallback() {
 #endif
 
 extern "C" {
-void* LLVMPPCCompilationCallback(unsigned *StubCallAddrPlus4,
-                                 unsigned *OrigCallAddrPlus4,
-                                 bool is64Bit) {
+void* LLVM_LIBRARY_VISIBILITY
+LLVMPPCCompilationCallback(unsigned *StubCallAddrPlus4,
+                           unsigned *OrigCallAddrPlus4,
+                           bool is64Bit) {
   // Adjust the pointer to the address of the call instruction in the stub
   // emitted by emitFunctionStub, rather than the instruction after it.
   unsigned *StubCallAddr = StubCallAddrPlus4 - 1;
