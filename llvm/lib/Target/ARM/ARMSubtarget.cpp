@@ -14,7 +14,9 @@
 #include "ARMSubtarget.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
+#include "llvm/IR/Attributes.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
@@ -85,17 +87,35 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , CPUString(CPU)
   , TargetTriple(TT)
   , TargetABI(ARM_ABI_APCS) {
-  // Determine default and user specified characteristics
+  resetSubtargetFeatures(CPU, FS);
+}
+
+void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
+  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
+  Attribute CPUAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
+                                           "target-cpu");
+  Attribute FSAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
+                                          "target-features");
+  std::string CPU =
+    !CPUAttr.hasAttribute(Attribute::None) ?CPUAttr.getValueAsString() : "";
+  std::string FS =
+    !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
+  if (!FS.empty())
+    resetSubtargetFeatures(CPU, FS);
+}
+
+void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (CPUString.empty())
     CPUString = "generic";
 
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
   // based on the architecture version.
-  std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPUString);
+  std::string ArchFS = ARM_MC::ParseARMTriple(TargetTriple.getTriple(),
+                                              CPUString);
   if (!FS.empty()) {
     if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS;
+      ArchFS = ArchFS + "," + FS.str();
     else
       ArchFS = FS;
   }
@@ -112,7 +132,8 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  if ((TT.find("eabi") != std::string::npos) || (isTargetIOS() && isMClass()))
+  if ((TargetTriple.getTriple().find("eabi") != std::string::npos) ||
+      (isTargetIOS() && isMClass()))
     // FIXME: We might want to separate AAPCS and EABI. Some systems, e.g.
     // Darwin-EABI conforms to AACPS but not the rest of EABI.
     TargetABI = ARM_ABI_AAPCS;
