@@ -11,6 +11,7 @@
 #define liblldb_Timer_h_
 #if defined(__cplusplus)
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <memory>
 #include <string>
