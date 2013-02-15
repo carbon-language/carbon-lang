@@ -549,12 +549,12 @@ namespace llvm {
     T.visitAll(Root);
   }
 
-  /// The ScevRewriter takes a scalar evolution expression and copies all its
+  /// The SCEVRewriter takes a scalar evolution expression and copies all its
   /// components. The result after a rewrite is an identical SCEV.
-  struct ScevRewriter
-    : public SCEVVisitor<ScevRewriter, const SCEV*> {
+  struct SCEVRewriter
+    : public SCEVVisitor<SCEVRewriter, const SCEV*> {
   public:
-    ScevRewriter(ScalarEvolution &S) : SE(S) {}
+    SCEVRewriter(ScalarEvolution &S) : SE(S) {}
 
     virtual const SCEV *visitConstant(const SCEVConstant *Constant) {
       return Constant;
@@ -629,17 +629,17 @@ namespace llvm {
 
   typedef DenseMap<const Value*, Value*> ValueToValueMap;
 
-  /// The ScevParameterRewriter takes a scalar evolution expression and updates
+  /// The SCEVParameterRewriter takes a scalar evolution expression and updates
   /// the SCEVUnknown components following the Map (Value -> Value).
-  struct ScevParameterRewriter: public ScevRewriter {
+  struct SCEVParameterRewriter: public SCEVRewriter {
   public:
     static const SCEV *rewrite(const SCEV *Scev, ScalarEvolution &SE,
                                ValueToValueMap &Map) {
-      ScevParameterRewriter Rewriter(SE, Map);
+      SCEVParameterRewriter Rewriter(SE, Map);
       return Rewriter.visit(Scev);
     }
-    ScevParameterRewriter(ScalarEvolution &S, ValueToValueMap &M)
-      : ScevRewriter(S), Map(M) {}
+    SCEVParameterRewriter(ScalarEvolution &S, ValueToValueMap &M)
+      : SCEVRewriter(S), Map(M) {}
 
     virtual const SCEV *visitUnknown(const SCEVUnknown *Expr) {
       Value *V = Expr->getValue();
@@ -654,17 +654,17 @@ namespace llvm {
 
   typedef DenseMap<const Loop*, const SCEV*> LoopToScevMapT;
 
-  /// The ScevApplyRewriter takes a scalar evolution expression and applies
+  /// The SCEVApplyRewriter takes a scalar evolution expression and applies
   /// the Map (Loop -> SCEV) to all AddRecExprs.
-  struct ScevApplyRewriter: public ScevRewriter {
+  struct SCEVApplyRewriter: public SCEVRewriter {
   public:
     static const SCEV *rewrite(const SCEV *Scev, LoopToScevMapT &Map,
                                ScalarEvolution &SE) {
-      ScevApplyRewriter Rewriter(SE, Map);
+      SCEVApplyRewriter Rewriter(SE, Map);
       return Rewriter.visit(Scev);
     }
-    ScevApplyRewriter(ScalarEvolution &S, LoopToScevMapT &M)
-      : ScevRewriter(S), Map(M) {}
+    SCEVApplyRewriter(ScalarEvolution &S, LoopToScevMapT &M)
+      : SCEVRewriter(S), Map(M) {}
 
     virtual const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
@@ -688,7 +688,7 @@ namespace llvm {
 /// Applies the Map (Loop -> SCEV) to the given Scev.
 static inline const SCEV *apply(const SCEV *Scev, LoopToScevMapT &Map,
                                 ScalarEvolution &SE) {
-  return ScevApplyRewriter::rewrite(Scev, Map, SE);
+  return SCEVApplyRewriter::rewrite(Scev, Map, SE);
 }
 
 }
