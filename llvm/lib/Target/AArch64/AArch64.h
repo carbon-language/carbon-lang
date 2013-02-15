@@ -29,8 +29,6 @@ class MCInst;
 FunctionPass *createAArch64ISelDAG(AArch64TargetMachine &TM,
                                    CodeGenOpt::Level OptLevel);
 
-FunctionPass *createAArch64ConstantIslandPass();
-
 FunctionPass *createAArch64CleanupLocalDynamicTLSPass();
 
 void LowerAArch64MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,

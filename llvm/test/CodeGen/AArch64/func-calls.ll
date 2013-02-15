@@ -90,7 +90,7 @@ define void @check_stack_args() {
   call void @stacked_fpu(float -1.0, double 1.0, float 4.0, float 2.0,
                          float -2.0, float -8.0, float 16.0, float 1.0,
                          float 64.0)
-; CHECK: ldr s[[STACKEDREG:[0-9]+]], .LCPI
+; CHECK: ldr s[[STACKEDREG:[0-9]+]], [{{x[0-9]+}}, #:lo12:.LCPI
 ; CHECK: mov x0, sp
 ; CHECK: str d[[STACKEDREG]], [x0]
 ; CHECK bl stacked_fpu

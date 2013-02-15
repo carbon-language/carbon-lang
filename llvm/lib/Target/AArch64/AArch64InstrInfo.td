@@ -2449,16 +2449,12 @@ class A64I_LDRlitSimple<bits<2> opc, bit v, RegisterClass OutReg,
                  "ldr\t$Rt, $Imm19", patterns, NoItinerary>;
 
 let mayLoad = 1 in {
-  def LDRw_lit : A64I_LDRlitSimple<0b00, 0b0, GPR32,
-                              [(set (i32 GPR32:$Rt), (load constpool:$Imm19))]>;
-  def LDRx_lit : A64I_LDRlitSimple<0b01, 0b0, GPR64,
-                              [(set (i64 GPR64:$Rt), (load constpool:$Imm19))]>;
+  def LDRw_lit : A64I_LDRlitSimple<0b00, 0b0, GPR32>;
+  def LDRx_lit : A64I_LDRlitSimple<0b01, 0b0, GPR64>;
 }
 
-def LDRs_lit  : A64I_LDRlitSimple<0b00, 0b1, FPR32,
-                              [(set (f32 FPR32:$Rt), (load constpool:$Imm19))]>;
-def LDRd_lit  : A64I_LDRlitSimple<0b01, 0b1, FPR64,
-                              [(set (f64 FPR64:$Rt), (load constpool:$Imm19))]>;
+def LDRs_lit  : A64I_LDRlitSimple<0b00, 0b1, FPR32>;
+def LDRd_lit  : A64I_LDRlitSimple<0b01, 0b1, FPR64>;
 
 let mayLoad = 1 in {
   def LDRq_lit : A64I_LDRlitSimple<0b10, 0b1, FPR128>;
@@ -4565,22 +4561,6 @@ def : Pat<(and (A64Bfi GPR64:$src, GPR64:$Rn, imm:$ImmR, imm:$ImmS),
 }
 
 //===----------------------------------------------------------------------===//
-// Constant island entries
-//===----------------------------------------------------------------------===//
-
-// The constant island pass needs to create "instructions" in the middle of the
-// instruction stream to reresent its constants.
-
-def cpinst_operand : Operand<i32>;
-
-def CONSTPOOL_ENTRY : PseudoInst<(outs), (ins cpinst_operand:$instid,
-                                              cpinst_operand:$cpidx,
-                                              i32imm:$size), []> {
-  let hasSideEffects = 0;
-  let isNotDuplicable = 1;
-}
-
-//===----------------------------------------------------------------------===//
 // Miscellaneous patterns
 //===----------------------------------------------------------------------===//
 
@@ -4898,6 +4878,8 @@ defm : uimm12_pats<(A64WrapperSmall texternalsym:$Hi, texternalsym:$Lo12,
                                     ALIGN),
                    (ADRPxi texternalsym:$Hi), (i64 texternalsym:$Lo12)>;
 
+defm : uimm12_pats<(A64WrapperSmall tconstpool:$Hi, tconstpool:$Lo12, ALIGN),
+                   (ADRPxi tconstpool:$Hi), (i64 tconstpool:$Lo12)>;
 
 // We also want to use uimm12 instructions for local variables at the moment.
 def tframeindex_XFORM : SDNodeXForm<frameindex, [{

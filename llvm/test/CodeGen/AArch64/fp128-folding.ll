@@ -12,6 +12,6 @@ define fp128 @test_folding() {
   %fpval = sitofp i32 %val to fp128
   ; If the value is loaded from a constant pool into an fp128, it's been folded
   ; successfully.
-; CHECK: ldr {{q[0-9]+}}, .LCPI
+; CHECK: ldr {{q[0-9]+}}, [{{x[0-9]+}}, #:lo12:.LCPI
   ret fp128 %fpval
 }

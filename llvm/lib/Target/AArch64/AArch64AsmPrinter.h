@@ -29,7 +29,6 @@ class LLVM_LIBRARY_VISIBILITY AArch64AsmPrinter : public AsmPrinter {
   /// Subtarget - Keep a pointer to the AArch64Subtarget around so that we can
   /// make the right decision when printing asm code for different targets.
   const AArch64Subtarget *Subtarget;
-  const MachineConstantPool *MCP;
 
   // emitPseudoExpansionLowering - tblgen'erated.
   bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
@@ -73,10 +72,6 @@ class LLVM_LIBRARY_VISIBILITY AArch64AsmPrinter : public AsmPrinter {
   virtual const char *getPassName() const {
     return "AArch64 Assembly Printer";
   }
-
-  /// A no-op on AArch64 because we emit our constant pool entries inline with
-  /// the function.
-  virtual void EmitConstantPool() {}
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 };

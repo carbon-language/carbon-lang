@@ -1866,8 +1866,14 @@ AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
     // Weak symbols can't use ADRP/ADD pair since they should evaluate to
     // zero when undefined. In PIC mode the GOT can take care of this, but in
     // absolute mode we use a constant pool load.
-    return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(),
-                       DAG.getConstantPool(GV, GN->getValueType(0)),
+    SDValue PoolAddr;
+    PoolAddr = DAG.getNode(AArch64ISD::WrapperSmall, dl, PtrVT,
+                           DAG.getTargetConstantPool(GV, PtrVT, 0, 0,
+                                                     AArch64II::MO_NO_FLAG),
+                           DAG.getTargetConstantPool(GV, PtrVT, 0, 0,
+                                                     AArch64II::MO_LO12),
+                           DAG.getConstant(8, MVT::i32));
+    return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), PoolAddr,
                        MachinePointerInfo::getConstantPool(),
                        /*isVolatile=*/ false,  /*isNonTemporal=*/ true,
                        /*isInvariant=*/ true, 8);

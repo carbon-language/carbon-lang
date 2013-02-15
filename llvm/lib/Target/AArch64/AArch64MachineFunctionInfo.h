@@ -14,7 +14,6 @@
 #ifndef AARCH64MACHINEFUNCTIONINFO_H
 #define AARCH64MACHINEFUNCTIONINFO_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -48,10 +47,6 @@ class AArch64MachineFunctionInfo : public MachineFunctionInfo {
 
   /// Number of local-dynamic TLS accesses.
   unsigned NumLocalDynamics;
-
-  /// Keep track of the next label to be created within this function to
-  /// represent a cloned constant pool entry. Used by constant islands pass.
-  unsigned PICLabelUId;
 
   /// @see AArch64 Procedure Call Standard, B.3
   ///
@@ -96,7 +91,6 @@ public:
       ArgumentStackToRestore(0),
       InitialStackAdjust(0),
       NumLocalDynamics(0),
-      PICLabelUId(0),
       VariadicGPRIdx(0),
       VariadicGPRSize(0),
       VariadicFPRIdx(0),
@@ -109,7 +103,6 @@ public:
       ArgumentStackToRestore(0),
       InitialStackAdjust(0),
       NumLocalDynamics(0),
-      PICLabelUId(0),
       VariadicGPRIdx(0),
       VariadicGPRSize(0),
       VariadicFPRIdx(0),
@@ -130,10 +123,6 @@ public:
 
   unsigned getNumLocalDynamicTLSAccesses() const { return NumLocalDynamics; }
   void incNumLocalDynamicTLSAccesses() { ++NumLocalDynamics; }
-
-  void initPICLabelUId(unsigned UId) { PICLabelUId = UId; }
-  unsigned getNumPICLabels() const { return PICLabelUId; }
-  unsigned createPICLabelUId() { return PICLabelUId++; }
 
   int getVariadicGPRIdx() const { return VariadicGPRIdx; }
   void setVariadicGPRIdx(int Idx) { VariadicGPRIdx = Idx; }

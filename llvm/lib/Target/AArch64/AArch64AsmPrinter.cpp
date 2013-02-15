@@ -17,7 +17,6 @@
 #include "InstPrinter/AArch64InstPrinter.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -298,20 +297,6 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
 
   switch (MI->getOpcode()) {
-  case AArch64::CONSTPOOL_ENTRY: {
-    unsigned LabelId = (unsigned)MI->getOperand(0).getImm();
-    unsigned CPIdx = (unsigned)MI->getOperand(1).getIndex();
-
-    OutStreamer.EmitLabel(GetCPISymbol(LabelId));
-
-    const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIdx];
-    if (MCPE.isMachineConstantPoolEntry())
-      EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
-    else
-      EmitGlobalConstant(MCPE.Val.ConstVal);
-
-    return;
-  }
   case AArch64::DBG_VALUE: {
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       SmallString<128> TmpStr;
@@ -352,7 +337,6 @@ void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {
 }
 
 bool AArch64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  MCP = MF.getConstantPool();
   return AsmPrinter::runOnMachineFunction(MF);
 }
 

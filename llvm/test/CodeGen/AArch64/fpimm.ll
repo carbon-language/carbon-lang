@@ -13,7 +13,7 @@ define void @check_float() {
 
   %newval2 = fadd float %val, 128.0
   store volatile float %newval2, float* @varf32
-; CHECK: ldr {{s[0-9]+}}, .LCPI0_0
+; CHECK: ldr {{s[0-9]+}}, [{{x[0-9]+}}, #:lo12:.LCPI0_0
 
   ret void
 }
@@ -28,7 +28,7 @@ define void @check_double() {
 
   %newval2 = fadd double %val, 128.0
   store volatile double %newval2, double* @varf64
-; CHECK: ldr {{d[0-9]+}}, .LCPI1_0
+; CHECK: ldr {{d[0-9]+}}, [{{x[0-9]+}}, #:lo12:.LCPI1_0
 
   ret void
 }

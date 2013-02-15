@@ -83,7 +83,7 @@ define i32 @return_int() {
 define double @return_double() {
 ; CHECK: return_double:
     ret double 3.14
-; CHECK: ldr d0, .LCPI
+; CHECK: ldr d0, [{{x[0-9]+}}, #:lo12:.LCPI
 }
 
 ; This is the kind of IR clang will produce for returning a struct

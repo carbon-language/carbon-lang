@@ -261,6 +261,10 @@ define void @test_extend() {
 }
 
 define fp128 @test_neg(fp128 %in) {
+; CHECK: [[MINUS0:.LCPI[0-9]+_0]]:
+; Make sure the weird hex constant below *is* -0.0
+; CHECK-NEXT: fp128 -0
+
 ; CHECK: test_neg:
 
   ; Could in principle be optimized to fneg which we can't select, this makes
@@ -268,13 +272,9 @@ define fp128 @test_neg(fp128 %in) {
   %ret = fsub fp128 0xL00000000000000008000000000000000, %in
 ; CHECK: str q0, [sp, #-16]
 ; CHECK-NEXT: ldr q1, [sp], #16
-; CHECK: ldr q0, [[MINUS0:.LCPI[0-9]+_0]]
+; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:[[MINUS0]]]
 ; CHECK: bl __subtf3
 
   ret fp128 %ret
 ; CHECK: ret
-
-; CHECK: [[MINUS0]]:
-; Make sure the weird hex constant below *is* -0.0
-; CHECK-NEXT: fp128 -0
 }

@@ -89,8 +89,8 @@ public:
   bool SelectTSTBOperand(SDValue N, SDValue &FixedPos, unsigned RegWidth);
 
   SDNode *TrySelectToMoveImm(SDNode *N);
+  SDNode *LowerToFPLitPool(SDNode *Node);
   SDNode *SelectToLitPool(SDNode *N);
-  SDNode *SelectToFPLitPool(SDNode *N);
 
   SDNode* Select(SDNode*);
 private:
@@ -225,92 +225,78 @@ SDNode *AArch64DAGToDAGISel::TrySelectToMoveImm(SDNode *Node) {
 }
 
 SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
-  DebugLoc dl = Node->getDebugLoc();
+  DebugLoc DL = Node->getDebugLoc();
   uint64_t UnsignedVal = cast<ConstantSDNode>(Node)->getZExtValue();
   int64_t SignedVal = cast<ConstantSDNode>(Node)->getSExtValue();
   EVT DestType = Node->getValueType(0);
+  EVT PtrVT = TLI.getPointerTy();
 
   // Since we may end up loading a 64-bit constant from a 32-bit entry the
   // constant in the pool may have a different type to the eventual node.
-  SDValue PoolEntry;
-  EVT LoadType;
-  unsigned LoadInst;
+  ISD::LoadExtType Extension;
+  EVT MemType;
 
   assert((DestType == MVT::i64 || DestType == MVT::i32)
          && "Only expect integer constants at the moment");
 
-  if (DestType == MVT::i32 || UnsignedVal <= UINT32_MAX) {
-    // LDR w3, lbl
-    LoadInst = AArch64::LDRw_lit;
-    LoadType = MVT::i32;
-
-    PoolEntry = CurDAG->getTargetConstantPool(
-      ConstantInt::get(Type::getInt32Ty(*CurDAG->getContext()), UnsignedVal),
-      MVT::i32);
+  if (DestType == MVT::i32) {
+    Extension = ISD::NON_EXTLOAD;
+    MemType = MVT::i32;
+  } else if (UnsignedVal <= UINT32_MAX) {
+    Extension = ISD::ZEXTLOAD;
+    MemType = MVT::i32;
   } else if (SignedVal >= INT32_MIN && SignedVal <= INT32_MAX) {
-    // We can use a sign-extending 32-bit load: LDRSW x3, lbl
-    LoadInst = AArch64::LDRSWx_lit;
-    LoadType = MVT::i64;
-
-    PoolEntry = CurDAG->getTargetConstantPool(
-      ConstantInt::getSigned(Type::getInt32Ty(*CurDAG->getContext()),
-                             SignedVal),
-      MVT::i32);
+    Extension = ISD::SEXTLOAD;
+    MemType = MVT::i32;
   } else {
-    // Full 64-bit load needed: LDR x3, lbl
-    LoadInst = AArch64::LDRx_lit;
-    LoadType = MVT::i64;
-
-    PoolEntry = CurDAG->getTargetConstantPool(
-      ConstantInt::get(Type::getInt64Ty(*CurDAG->getContext()), UnsignedVal),
-      MVT::i64);
+    Extension = ISD::NON_EXTLOAD;
+    MemType = MVT::i64;
   }
 
-  SDNode *ResNode = CurDAG->getMachineNode(LoadInst, dl,
-                                           LoadType, MVT::Other,
-                                           PoolEntry, CurDAG->getEntryNode());
+  Constant *CV = ConstantInt::get(Type::getIntNTy(*CurDAG->getContext(),
+                                                  MemType.getSizeInBits()),
+                                  UnsignedVal);
+  SDValue PoolAddr;
+  unsigned Alignment = TLI.getDataLayout()->getABITypeAlignment(CV->getType());
+  PoolAddr = CurDAG->getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
+                             CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0,
+                                                         AArch64II::MO_NO_FLAG),
+                             CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0,
+                                                           AArch64II::MO_LO12),
+                             CurDAG->getConstant(Alignment, MVT::i32));
 
-  if (DestType != LoadType) {
-    // We used the implicit zero-extension of "LDR w3, lbl", tell LLVM this
-    // fact.
-    assert(DestType == MVT::i64 && LoadType == MVT::i32
-           && "Unexpected load combination");
-
-    ResNode = CurDAG->getMachineNode(TargetOpcode::SUBREG_TO_REG, dl,
-                          MVT::i64, MVT::i32, MVT::Other,
-                          CurDAG->getTargetConstant(0, MVT::i64),
-                          SDValue(ResNode, 0),
-                          CurDAG->getTargetConstant(AArch64::sub_32, MVT::i32));
-  }
-
-  return ResNode;
+  return CurDAG->getExtLoad(Extension, DL, DestType, CurDAG->getEntryNode(),
+                            PoolAddr,
+                            MachinePointerInfo::getConstantPool(), MemType,
+                            /* isVolatile = */ false,
+                            /* isNonTemporal = */ false,
+                            Alignment).getNode();
 }
 
-SDNode *AArch64DAGToDAGISel::SelectToFPLitPool(SDNode *Node) {
-  DebugLoc dl = Node->getDebugLoc();
+SDNode *AArch64DAGToDAGISel::LowerToFPLitPool(SDNode *Node) {
+  DebugLoc DL = Node->getDebugLoc();
   const ConstantFP *FV = cast<ConstantFPSDNode>(Node)->getConstantFPValue();
+  EVT PtrVT = TLI.getPointerTy();
   EVT DestType = Node->getValueType(0);
 
-  unsigned LoadInst;
-  switch (DestType.getSizeInBits()) {
-  case 32:
-      LoadInst = AArch64::LDRs_lit;
-      break;
-  case 64:
-      LoadInst = AArch64::LDRd_lit;
-      break;
-  case 128:
-      LoadInst = AArch64::LDRq_lit;
-      break;
-  default: llvm_unreachable("cannot select floating-point litpool");
-  }
+  unsigned Alignment = TLI.getDataLayout()->getABITypeAlignment(FV->getType());
+  SDValue PoolAddr;
 
-  SDValue PoolEntry = CurDAG->getTargetConstantPool(FV, DestType);
-  SDNode *ResNode = CurDAG->getMachineNode(LoadInst, dl,
-                                           DestType, MVT::Other,
-                                           PoolEntry, CurDAG->getEntryNode());
+  assert(TM.getCodeModel() == CodeModel::Small &&
+         "Only small code model supported");
+  PoolAddr = CurDAG->getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
+                             CurDAG->getTargetConstantPool(FV, PtrVT, 0, 0,
+                                                         AArch64II::MO_NO_FLAG),
+                             CurDAG->getTargetConstantPool(FV, PtrVT, 0, 0,
+                                                           AArch64II::MO_LO12),
+                             CurDAG->getConstant(Alignment, MVT::i32));
 
-  return ResNode;
+  return CurDAG->getLoad(DestType, DL, CurDAG->getEntryNode(), PoolAddr,
+                         MachinePointerInfo::getConstantPool(),
+                         /* isVolatile = */ false,
+                         /* isNonTemporal = */ false,
+                         /* isInvariant = */ true,
+                         Alignment).getNode();
 }
 
 bool
@@ -377,17 +363,19 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       ResNode = TrySelectToMoveImm(Node);
     }
 
-    // If even that fails we fall back to a lit-pool entry at the moment. Future
-    // tuning or restrictions like non-readable code-sections may mandate a
-    // sequence of MOVZ/MOVN/MOVK instructions.
-    if (!ResNode) {
-      ResNode = SelectToLitPool(Node);
-    }
+    if (ResNode)
+      return ResNode;
 
+    // If even that fails we fall back to a lit-pool entry at the moment. Future
+    // tuning may change this to a sequence of MOVZ/MOVN/MOVK instructions.
+    ResNode = SelectToLitPool(Node);
     assert(ResNode && "We need *some* way to materialise a constant");
 
+    // We want to continue selection at this point since the litpool access
+    // generated used generic nodes for simplicity.
     ReplaceUses(SDValue(Node, 0), SDValue(ResNode, 0));
-    return NULL;
+    Node = ResNode;
+    break;
   }
   case ISD::ConstantFP: {
     if (A64Imms::isFPImm(cast<ConstantFPSDNode>(Node)->getValueAPF())) {
@@ -395,9 +383,13 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       break;
     }
 
-    SDNode *ResNode = SelectToFPLitPool(Node);
+    SDNode *ResNode = LowerToFPLitPool(Node);
     ReplaceUses(SDValue(Node, 0), SDValue(ResNode, 0));
-    return NULL;
+
+    // We want to continue selection at this point since the litpool access
+    // generated used generic nodes for simplicity.
+    Node = ResNode;
+    break;
   }
   default:
     break; // Let generic code handle it
