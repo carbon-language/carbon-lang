@@ -187,6 +187,10 @@ skip_long_running_test = True
 # turn it off.
 noHeaders = False
 
+# Parsable mode silences headers, and any other output this script might generate, and instead
+# prints machine-readable output similar to what clang tests produce.
+parsable = False
+
 # The regular expression pattern to match against eligible filenames as our test cases.
 regexp = None
 
@@ -341,6 +345,7 @@ def parseOptionsAndInitTestdirs():
     global skip_build_and_cleanup
     global skip_long_running_test
     global noHeaders
+    global parsable
     global regexp
     global rdir
     global sdir_name
@@ -401,6 +406,7 @@ def parseOptionsAndInitTestdirs():
     X('-F', 'Fail fast. Stop the test suite on the first error/failure')
     X('-i', "Ignore (don't bailout) if 'lldb.py' module cannot be located in the build tree relative to this script; use PYTHONPATH to locate the module")
     X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
+    X('-q', "Don't print extra output from this script.")
     X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
     X('-t', 'Turn on tracing of lldb command and other detailed test executions')
     group.add_argument('-u', dest='unset_env_varnames', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
@@ -425,8 +431,8 @@ def parseOptionsAndInitTestdirs():
                 del os.environ[env_var]
                 #os.unsetenv(env_var)
     
-    # only print the args if being verbose
-    if args.v:
+    # only print the args if being verbose (and parsable is off)
+    if args.v and not args.q:
         print args
 
     if args.h:
@@ -544,6 +550,10 @@ def parseOptionsAndInitTestdirs():
         if args.p.startswith('-'):
             usage(parser)
         regexp = args.p
+
+    if args.q:
+        noHeaders = True
+        parsable = True
 
     if args.R:
         if args.R.startswith('-'):
@@ -1111,8 +1121,9 @@ def getsource_if_available(obj):
     except:
         return repr(obj)
 
-print "lldb.pre_flight:", getsource_if_available(lldb.pre_flight)
-print "lldb.post_flight:", getsource_if_available(lldb.post_flight)
+if not noHeaders:
+    print "lldb.pre_flight:", getsource_if_available(lldb.pre_flight)
+    print "lldb.post_flight:", getsource_if_available(lldb.post_flight)
 
 # Put all these test decorators in the lldb namespace.
 lldb.dont_do_python_api_test = dont_do_python_api_test
@@ -1200,7 +1211,8 @@ for i in range(len(compilers)):
                     compilers[i] = cmd_output.split('\n')[0]
                     print "'xcrun -find %s' returning %s" % (c, compilers[i])
 
-print "compilers=%s" % str(compilers)
+if not parsable:
+    print "compilers=%s" % str(compilers)
 
 if not compilers or len(compilers) == 0:
     print "No eligible compiler found, exiting."
@@ -1280,16 +1292,18 @@ for ia in range(len(archs) if iterArchs else 1):
                 sys.path = [x.replace(rdir, newrdir, 1) for x in old_sys_path]
 
             # Output the configuration.
-            sys.stderr.write("\nConfiguration: " + configString + "\n")
+            if not parsable:
+                sys.stderr.write("\nConfiguration: " + configString + "\n")
 
         #print "sys.stderr name is", sys.stderr.name
         #print "sys.stdout name is", sys.stdout.name
 
         # First, write out the number of collected test cases.
-        sys.stderr.write(separator + "\n")
-        sys.stderr.write("Collected %d test%s\n\n"
-                         % (suite.countTestCases(),
-                            suite.countTestCases() != 1 and "s" or ""))
+        if not parsable:
+            sys.stderr.write(separator + "\n")
+            sys.stderr.write("Collected %d test%s\n\n"
+                             % (suite.countTestCases(),
+                                suite.countTestCases() != 1 and "s" or ""))
 
         class LLDBTestResult(unittest2.TextTestResult):
             """
@@ -1343,11 +1357,16 @@ for ia in range(len(archs) if iterArchs else 1):
                 self.counter = 0
                 (width, height) = LLDBTestResult.getTerminalSize()
                 self.progressbar = None
-                if width > 10:
+                if width > 10 and not parsable and progress_bar:
                     try:
                         self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
                     except:
                         self.progressbar = None
+
+            def _config_string(self, test):
+              compiler = getattr(test, "getCompiler", None)
+              arch = getattr(test, "getArchitecture", None)
+              return "%s-%s" % (compiler() if compiler else "", arch() if arch else "")
 
             def _exc_info_to_string(self, err, test):
                 """Overrides superclass TestResult's method in order to append
@@ -1397,22 +1416,34 @@ for ia in range(len(archs) if iterArchs else 1):
                     self.stream.write(self.fmt % self.counter)
                 super(LLDBTestResult, self).startTest(test)
 
+            def addSuccess(self, test):
+                global parsable
+                super(LLDBTestResult, self).addSuccess(test)
+                if parsable:
+                    self.stream.write("PASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+
             def addError(self, test, err):
                 global sdir_has_content
+                global parsable
                 sdir_has_content = True
                 super(LLDBTestResult, self).addError(test, err)
                 method = getattr(test, "markError", None)
                 if method:
                     method()
+                if parsable:
+                    self.stream.write("ERROR: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
             def addFailure(self, test, err):
                 global sdir_has_content
                 global failuresPerCategory
+                global parsable
                 sdir_has_content = True
                 super(LLDBTestResult, self).addFailure(test, err)
                 method = getattr(test, "markFailure", None)
                 if method:
                     method()
+                if parsable:
+                    self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
                 if useCategories:
                     test_categories = self.getCategoriesForTest(test)
                     for category in test_categories:
@@ -1423,32 +1454,48 @@ for ia in range(len(archs) if iterArchs else 1):
 
             def addExpectedFailure(self, test, err):
                 global sdir_has_content
+                global parsable
                 sdir_has_content = True
                 super(LLDBTestResult, self).addExpectedFailure(test, err)
                 method = getattr(test, "markExpectedFailure", None)
                 if method:
                     method()
+                if parsable:
+                    self.stream.write("XFAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
             def addSkip(self, test, reason):
                 global sdir_has_content
+                global parsable
                 sdir_has_content = True
                 super(LLDBTestResult, self).addSkip(test, reason)
                 method = getattr(test, "markSkippedTest", None)
                 if method:
                     method()
+                if parsable:
+                    self.stream.write("UNSUPPORTED: LLDB (%s) :: %s (%s) \n" % (self._config_string(test), str(test), reason))
 
             def addUnexpectedSuccess(self, test):
                 global sdir_has_content
+                global parsable
                 sdir_has_content = True
                 super(LLDBTestResult, self).addUnexpectedSuccess(test)
                 method = getattr(test, "markUnexpectedSuccess", None)
                 if method:
                     method()
+                if parsable:
+                    self.stream.write("XPASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+
+        if parsable:
+            v = 0
+        elif progress_bar:
+            v = 1
+        else:
+            v = verbose
 
         # Invoke the test runner.
         if count == 1:
             result = unittest2.TextTestRunner(stream=sys.stderr,
-                                              verbosity=(1 if progress_bar else verbose),
+                                              verbosity=v,
                                               failfast=failfast,
                                               resultclass=LLDBTestResult).run(suite)
         else:
@@ -1457,13 +1504,14 @@ for ia in range(len(archs) if iterArchs else 1):
             # not enforced.
             LLDBTestResult.__ignore_singleton__ = True
             for i in range(count):
+               
                 result = unittest2.TextTestRunner(stream=sys.stderr,
-                                                  verbosity=(1 if progress_bar else verbose),
+                                                  verbosity=v,
                                                   failfast=failfast,
                                                   resultclass=LLDBTestResult).run(suite)
 
 
-if sdir_has_content:
+if sdir_has_content and not parsable:
     sys.stderr.write("Session logs for test failures/errors/unexpected successes"
                      " can be found in directory '%s'\n" % sdir_name)
 

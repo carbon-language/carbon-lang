@@ -12,6 +12,8 @@ template = '%s/dotest.py %s -p %s %s'
 
 def walk_and_invoke(test_root, dotest_options):
     """Look for matched file and invoke test driver on it."""
+    failed = []
+    passed = []
     for root, dirs, files in os.walk(test_root, topdown=False):
         for name in files:
             path = os.path.join(root, name)
@@ -25,8 +27,13 @@ def walk_and_invoke(test_root, dotest_options):
                 continue
 
             command = template % (test_root, dotest_options if dotest_options else "", name, root)
-            print "Running %s" % (command)
-            os.system(command)
+            if "-v" in dotest_options:
+                print "Running %s" % (command)
+            if 0 != os.system(command):
+                failed.append(name) 
+            else:
+                passed.append(name)
+    return (failed, passed)
 
 def main():
     test_root = sys.path[0]
@@ -44,8 +51,15 @@ Run lldb test suite using a separate process for each test file.
 
     print "dotest.py options:", dotest_options
 
-    walk_and_invoke(test_root, dotest_options)
-
+    (failed, passed) = walk_and_invoke(test_root, dotest_options)
+    num_tests = len(failed) + len(passed)
+    print "Ran %d tests." % num_tests
+    if len(failed) > 0:
+        print "Failing Tests (%d)" % len(failed)
+        for f in failed:
+          print "\tLLDB :: %s" % f
+        sys.exit(1)
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()
