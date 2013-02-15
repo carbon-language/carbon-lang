@@ -1175,22 +1175,33 @@ template <bool is_sel_ptr>
 bool
 lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& stream)
 {
-    lldb::addr_t data_address = LLDB_INVALID_ADDRESS;
-    
-    if (is_sel_ptr)
-        data_address = valobj.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
-    else
-        data_address = valobj.GetAddressOf();
+    lldb::ValueObjectSP valobj_sp;
 
-    if (data_address == LLDB_INVALID_ADDRESS)
+    if (!valobj.GetClangAST())
         return false;
-    
+    void* char_opaque_type = valobj.GetClangAST()->CharTy.getAsOpaquePtr();
+    if (!char_opaque_type)
+        return false;
+    ClangASTType charstar(valobj.GetClangAST(),ClangASTType::GetPointerType(valobj.GetClangAST(), char_opaque_type));
+
     ExecutionContext exe_ctx(valobj.GetExecutionContextRef());
     
-    void* char_opaque_type = valobj.GetClangAST()->CharTy.getAsOpaquePtr();
-    ClangASTType charstar(valobj.GetClangAST(),ClangASTType::GetPointerType(valobj.GetClangAST(), char_opaque_type));
+    if (is_sel_ptr)
+    {
+        lldb::addr_t data_address = valobj.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+        if (data_address == LLDB_INVALID_ADDRESS)
+            return false;
+        valobj_sp = ValueObject::CreateValueObjectFromAddress("text", data_address, exe_ctx, charstar);
+    }
+    else
+    {
+        DataExtractor data;
+        valobj.GetData(data);
+        valobj_sp = ValueObject::CreateValueObjectFromData("text", data, exe_ctx, charstar);
+    }
     
-    ValueObjectSP valobj_sp(ValueObject::CreateValueObjectFromAddress("text", data_address, exe_ctx, charstar));
+    if (!valobj_sp)
+        return false;
     
     stream.Printf("%s",valobj_sp->GetSummaryAsCString());
     return true;
