@@ -274,3 +274,15 @@ namespace test15 {
     goto x; // expected-error {{goto into protected scope}}
   }
 }
+
+namespace test16 {
+Invalid inv; // expected-error {{unknown type name}}
+// Make sure this doesn't assert.
+void fn()
+{
+    int c = 0;
+    if (inv)
+Here: ;
+    goto Here;
+}
+}

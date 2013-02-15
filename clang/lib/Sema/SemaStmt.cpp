@@ -406,6 +406,13 @@ StmtResult
 Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
                   Stmt *thenStmt, SourceLocation ElseLoc,
                   Stmt *elseStmt) {
+  // If the condition was invalid, discard the if statement.  We could recover
+  // better by replacing it with a valid expr, but don't do that yet.
+  if (!CondVal.get() && !CondVar) {
+    getCurFunction()->setHasDroppedStmt();
+    return StmtError();
+  }
+
   ExprResult CondResult(CondVal.release());
 
   VarDecl *ConditionVar = 0;

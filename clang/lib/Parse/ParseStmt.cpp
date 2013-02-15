@@ -1042,11 +1042,6 @@ StmtResult Parser::ParseIfStatement(SourceLocation *TrailingElseLoc) {
 
   IfScope.Exit();
 
-  // If the condition was invalid, discard the if statement.  We could recover
-  // better by replacing it with a valid expr, but don't do that yet.
-  if (CondExp.isInvalid() && !CondVar)
-    return StmtError();
-
   // If the then or else stmt is invalid and the other is valid (and present),
   // make turn the invalid one into a null stmt to avoid dropping the other
   // part.  If both are invalid, return error.
