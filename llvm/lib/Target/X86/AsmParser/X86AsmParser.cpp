@@ -911,7 +911,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
 
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Parser.getTok().getLoc(), "Expected ']' token!");
-      End = Parser.getTok().getEndLoc();
+      // Adjust the EndLoc due to the ']'.
+      End = SMLoc::getFromPointer(Parser.getTok().getEndLoc().getPointer()-1);
       Parser.Lex();
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
