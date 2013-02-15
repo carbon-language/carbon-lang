@@ -4,8 +4,8 @@
 ; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST1
 ; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST2
 ;
-; re-enable this when mips16's jalr is fixed.
-; DISABLED: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR
+; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR
+; RUN: llc  -march=mipsel -mcpu=mips32  -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR32
 
 
 @.str = private unnamed_addr constant [13 x i8] c"hello world\0A\00", align 1
@@ -17,7 +17,15 @@ entry:
 
 ; SR: 	.set	mips16                  # @main
 
-; SR:	save 	$ra, [[FS:[0-9]+]]
+; SR32: .set nomips16
+; SR32: .ent main
+; SR-NOT:  .set noreorder
+; SR-NOT:  .set nomacro
+; SR-NOT:  .set noat
+; SR32:  .set noreorder
+; SR32:  .set nomacro
+; SR32:  .set noat
+; SR:	save 	$ra, $s0, $s1, [[FS:[0-9]+]]
 ; PE:	li	$[[T1:[0-9]+]], %hi(_gp_disp)
 ; PE: 	addiu	$[[T2:[0-9]+]], $pc, %lo(_gp_disp)
 ; PE:	sll	$[[T3:[0-9]+]], $[[T1]], 16
@@ -27,7 +35,7 @@ entry:
 ; C2:	move	$25, ${{[0-9]+}}
 ; C1:	move 	$gp, ${{[0-9]+}}
 ; C1:	jalrc 	${{[0-9]+}}
-; SR:	restore 	$ra, [[FS]]
+; SR:	restore 	$ra, $s0, $s1, [[FS]]
 ; PE:	li	$2, 0
 ; PE:	jrc 	$ra
 
@@ -38,4 +46,12 @@ entry:
 ; ST2:  jal     printf
 }
 
+;  SR-NOT:  .set at
+;  SR-NOT:  .set macro
+;  SR-NOT:  .set reorder
+;  SR32:  .set at
+;  SR32:  .set macro
+;  SR32:  .set reorder
+; SR:   .end main
+; SR32:   .end main
 declare i32 @printf(i8*, ...)

@@ -236,10 +236,11 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
     raw_svector_ostream OS(Str);
     printSavedRegsBitmask(OS);
     OutStreamer.EmitRawText(OS.str());
-
-    OutStreamer.EmitRawText(StringRef("\t.set\tnoreorder"));
-    OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
-    OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
+    if (!Subtarget->inMips16Mode()) {
+      OutStreamer.EmitRawText(StringRef("\t.set\tnoreorder"));
+      OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
+      OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
+    }
   }
 }
 
@@ -250,9 +251,11 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
   // always be at the function end, and we can't emit and
   // break with BB logic.
   if (OutStreamer.hasRawTextSupport()) {
-    OutStreamer.EmitRawText(StringRef("\t.set\tat"));
-    OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
-    OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
+    if (!Subtarget->inMips16Mode()) {
+      OutStreamer.EmitRawText(StringRef("\t.set\tat"));
+      OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
+      OutStreamer.EmitRawText(StringRef("\t.set\treorder"));
+    }
     OutStreamer.EmitRawText("\t.end\t" + Twine(CurrentFnSym->getName()));
   }
 }
