@@ -298,7 +298,7 @@ namespace {
              DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUsers,
              DenseSet<ValuePair> &CurrentPairs);
 
-    void pruneTreeFor(
+    void pruneDAGFor(
              DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
              std::vector<Value *> &PairableInsts,
              DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
@@ -306,20 +306,20 @@ namespace {
              DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
              DenseSet<VPPair> &PairableInstUserPairSet,
              DenseMap<Value *, Value *> &ChosenPairs,
-             DenseMap<ValuePair, size_t> &Tree,
-             DenseSet<ValuePair> &PrunedTree, ValuePair J,
+             DenseMap<ValuePair, size_t> &DAG,
+             DenseSet<ValuePair> &PrunedDAG, ValuePair J,
              bool UseCycleCheck);
 
-    void buildInitialTreeFor(
+    void buildInitialDAGFor(
              DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
              DenseSet<ValuePair> &CandidatePairsSet,
              std::vector<Value *> &PairableInsts,
              DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
              DenseSet<ValuePair> &PairableInstUsers,
              DenseMap<Value *, Value *> &ChosenPairs,
-             DenseMap<ValuePair, size_t> &Tree, ValuePair J);
+             DenseMap<ValuePair, size_t> &DAG, ValuePair J);
 
-    void findBestTreeFor(
+    void findBestDAGFor(
              DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
              DenseSet<ValuePair> &CandidatePairsSet,
              DenseMap<ValuePair, int> &CandidatePairCostSavings,
@@ -332,7 +332,7 @@ namespace {
              DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
              DenseSet<VPPair> &PairableInstUserPairSet,
              DenseMap<Value *, Value *> &ChosenPairs,
-             DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
+             DenseSet<ValuePair> &BestDAG, size_t &BestMaxDepth,
              int &BestEffSize, Value *II, std::vector<Value *>&JJ,
              bool UseCycleCheck);
 
@@ -510,7 +510,7 @@ namespace {
       // InsertElement and ExtractElement have a depth factor of zero. This is
       // for two reasons: First, they cannot be usefully fused. Second, because
       // the pass generates a lot of these, they can confuse the simple metric
-      // used to compare the trees in the next iteration. Thus, giving them a
+      // used to compare the dags in the next iteration. Thus, giving them a
       // weight of zero allows the pass to essentially ignore them in
       // subsequent iterations when looking for vectorization opportunities
       // while still tracking dependency chains that flow through those
@@ -745,8 +745,8 @@ namespace {
       buildDepMap(BB, CandidatePairs, PairableInsts, PairableInstUsers);
 
       // There is now a graph of the connected pairs. For each variable, pick
-      // the pairing with the largest tree meeting the depth requirement on at
-      // least one branch. Then select all pairings that are part of that tree
+      // the pairing with the largest dag meeting the depth requirement on at
+      // least one branch. Then select all pairings that are part of that dag
       // and remove them from the list of available pairings and pairable
       // variables.
 
@@ -920,7 +920,7 @@ namespace {
   // This function returns true if the two provided instructions are compatible
   // (meaning that they can be fused into a vector instruction). This assumes
   // that I has already been determined to be vectorizable and that J is not
-  // in the use tree of I.
+  // in the use dag of I.
   bool BBVectorize::areInstsCompatible(Instruction *I, Instruction *J,
                        bool IsSimpleLoadStore, bool NonPow2Len,
                        int &CostSavings, int &FixedOrder) {
@@ -1379,7 +1379,7 @@ namespace {
   }
 
   // This function builds a set of use tuples such that <A, B> is in the set
-  // if B is in the use tree of A. If B is in the use tree of A, then B
+  // if B is in the use dag of A. If B is in the use dag of A, then B
   // depends on the output of A.
   void BBVectorize::buildDepMap(
                       BasicBlock &BB,
@@ -1497,19 +1497,19 @@ namespace {
     return false;
   }
 
-  // This function builds the initial tree of connected pairs with the
+  // This function builds the initial dag of connected pairs with the
   // pair J at the root.
-  void BBVectorize::buildInitialTreeFor(
+  void BBVectorize::buildInitialDAGFor(
                   DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
                   DenseSet<ValuePair> &CandidatePairsSet,
                   std::vector<Value *> &PairableInsts,
                   DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
                   DenseSet<ValuePair> &PairableInstUsers,
                   DenseMap<Value *, Value *> &ChosenPairs,
-                  DenseMap<ValuePair, size_t> &Tree, ValuePair J) {
-    // Each of these pairs is viewed as the root node of a Tree. The Tree
+                  DenseMap<ValuePair, size_t> &DAG, ValuePair J) {
+    // Each of these pairs is viewed as the root node of a DAG. The DAG
     // is then walked (depth-first). As this happens, we keep track of
-    // the pairs that compose the Tree and the maximum depth of the Tree.
+    // the pairs that compose the DAG and the maximum depth of the DAG.
     SmallVector<ValuePairWithDepth, 32> Q;
     // General depth-first post-order traversal:
     Q.push_back(ValuePairWithDepth(J, getDepthFactor(J.first)));
@@ -1526,8 +1526,8 @@ namespace {
              ke = QQ->second.end(); k != ke; ++k) {
           // Make sure that this child pair is still a candidate:
           if (CandidatePairsSet.count(*k)) {
-            DenseMap<ValuePair, size_t>::iterator C = Tree.find(*k);
-            if (C == Tree.end()) {
+            DenseMap<ValuePair, size_t>::iterator C = DAG.find(*k);
+            if (C == DAG.end()) {
               size_t d = getDepthFactor(k->first);
               Q.push_back(ValuePairWithDepth(*k, QTop.second+d));
               MoreChildren = true;
@@ -1538,16 +1538,16 @@ namespace {
         }
 
       if (!MoreChildren) {
-        // Record the current pair as part of the Tree:
-        Tree.insert(ValuePairWithDepth(QTop.first, MaxChildDepth));
+        // Record the current pair as part of the DAG:
+        DAG.insert(ValuePairWithDepth(QTop.first, MaxChildDepth));
         Q.pop_back();
       }
     } while (!Q.empty());
   }
 
-  // Given some initial tree, prune it by removing conflicting pairs (pairs
+  // Given some initial dag, prune it by removing conflicting pairs (pairs
   // that cannot be simultaneously chosen for vectorization).
-  void BBVectorize::pruneTreeFor(
+  void BBVectorize::pruneDAGFor(
               DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
               std::vector<Value *> &PairableInsts,
               DenseMap<ValuePair, std::vector<ValuePair> > &ConnectedPairs,
@@ -1555,15 +1555,15 @@ namespace {
               DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
               DenseSet<VPPair> &PairableInstUserPairSet,
               DenseMap<Value *, Value *> &ChosenPairs,
-              DenseMap<ValuePair, size_t> &Tree,
-              DenseSet<ValuePair> &PrunedTree, ValuePair J,
+              DenseMap<ValuePair, size_t> &DAG,
+              DenseSet<ValuePair> &PrunedDAG, ValuePair J,
               bool UseCycleCheck) {
     SmallVector<ValuePairWithDepth, 32> Q;
     // General depth-first post-order traversal:
     Q.push_back(ValuePairWithDepth(J, getDepthFactor(J.first)));
     do {
       ValuePairWithDepth QTop = Q.pop_back_val();
-      PrunedTree.insert(QTop.first);
+      PrunedDAG.insert(QTop.first);
 
       // Visit each child, pruning as necessary...
       SmallVector<ValuePairWithDepth, 8> BestChildren;
@@ -1574,10 +1574,10 @@ namespace {
 
       for (std::vector<ValuePair>::iterator K = QQ->second.begin(),
            KE = QQ->second.end(); K != KE; ++K) {
-        DenseMap<ValuePair, size_t>::iterator C = Tree.find(*K);
-        if (C == Tree.end()) continue;
+        DenseMap<ValuePair, size_t>::iterator C = DAG.find(*K);
+        if (C == DAG.end()) continue;
 
-        // This child is in the Tree, now we need to make sure it is the
+        // This child is in the DAG, now we need to make sure it is the
         // best of any conflicting children. There could be multiple
         // conflicting children, so first, determine if we're keeping
         // this child, then delete conflicting children as necessary.
@@ -1591,7 +1591,7 @@ namespace {
         // fusing (a,b) we have y .. a/b .. x where y is an input
         // to a/b and x is an output to a/b: x and y can no longer
         // be legally fused. To prevent this condition, we must
-        // make sure that a child pair added to the Tree is not
+        // make sure that a child pair added to the DAG is not
         // both an input and output of an already-selected pair.
 
         // Pairing-induced dependencies can also form from more complicated
@@ -1623,9 +1623,9 @@ namespace {
         if (!CanAdd) continue;
 
         // Even worse, this child could conflict with another node already
-        // selected for the Tree. If that is the case, ignore this child.
-        for (DenseSet<ValuePair>::iterator T = PrunedTree.begin(),
-             E2 = PrunedTree.end(); T != E2; ++T) {
+        // selected for the DAG. If that is the case, ignore this child.
+        for (DenseSet<ValuePair>::iterator T = PrunedDAG.begin(),
+             E2 = PrunedDAG.end(); T != E2; ++T) {
           if (T->first == C->first.first ||
               T->first == C->first.second ||
               T->second == C->first.first ||
@@ -1678,7 +1678,7 @@ namespace {
         // To check for non-trivial cycles formed by the addition of the
         // current pair we've formed a list of all relevant pairs, now use a
         // graph walk to check for a cycle. We start from the current pair and
-        // walk the use tree to see if we again reach the current pair. If we
+        // walk the use dag to see if we again reach the current pair. If we
         // do, then the current pair is rejected.
 
         // FIXME: It may be more efficient to use a topological-ordering
@@ -1715,9 +1715,9 @@ namespace {
     } while (!Q.empty());
   }
 
-  // This function finds the best tree of mututally-compatible connected
+  // This function finds the best dag of mututally-compatible connected
   // pairs, given the choice of root pairs as an iterator range.
-  void BBVectorize::findBestTreeFor(
+  void BBVectorize::findBestDAGFor(
               DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
               DenseSet<ValuePair> &CandidatePairsSet,
               DenseMap<ValuePair, int> &CandidatePairCostSavings,
@@ -1730,7 +1730,7 @@ namespace {
               DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUserMap,
               DenseSet<VPPair> &PairableInstUserPairSet,
               DenseMap<Value *, Value *> &ChosenPairs,
-              DenseSet<ValuePair> &BestTree, size_t &BestMaxDepth,
+              DenseSet<ValuePair> &BestDAG, size_t &BestMaxDepth,
               int &BestEffSize, Value *II, std::vector<Value *>&JJ,
               bool UseCycleCheck) {
     for (std::vector<Value *>::iterator J = JJ.begin(), JE = JJ.end();
@@ -1741,7 +1741,7 @@ namespace {
 
       // Before going any further, make sure that this pair does not
       // conflict with any already-selected pairs (see comment below
-      // near the Tree pruning for more details).
+      // near the DAG pruning for more details).
       DenseSet<ValuePair> ChosenPairSet;
       bool DoesConflict = false;
       for (DenseMap<Value *, Value *>::iterator C = ChosenPairs.begin(),
@@ -1761,39 +1761,39 @@ namespace {
           pairWillFormCycle(IJ, PairableInstUserMap, ChosenPairSet))
         continue;
 
-      DenseMap<ValuePair, size_t> Tree;
-      buildInitialTreeFor(CandidatePairs, CandidatePairsSet,
+      DenseMap<ValuePair, size_t> DAG;
+      buildInitialDAGFor(CandidatePairs, CandidatePairsSet,
                           PairableInsts, ConnectedPairs,
-                          PairableInstUsers, ChosenPairs, Tree, IJ);
+                          PairableInstUsers, ChosenPairs, DAG, IJ);
 
       // Because we'll keep the child with the largest depth, the largest
-      // depth is still the same in the unpruned Tree.
-      size_t MaxDepth = Tree.lookup(IJ);
+      // depth is still the same in the unpruned DAG.
+      size_t MaxDepth = DAG.lookup(IJ);
 
-      DEBUG(if (DebugPairSelection) dbgs() << "BBV: found Tree for pair {"
+      DEBUG(if (DebugPairSelection) dbgs() << "BBV: found DAG for pair {"
                    << IJ.first << " <-> " << IJ.second << "} of depth " <<
-                   MaxDepth << " and size " << Tree.size() << "\n");
+                   MaxDepth << " and size " << DAG.size() << "\n");
 
-      // At this point the Tree has been constructed, but, may contain
+      // At this point the DAG has been constructed, but, may contain
       // contradictory children (meaning that different children of
-      // some tree node may be attempting to fuse the same instruction).
-      // So now we walk the tree again, in the case of a conflict,
+      // some dag node may be attempting to fuse the same instruction).
+      // So now we walk the dag again, in the case of a conflict,
       // keep only the child with the largest depth. To break a tie,
       // favor the first child.
 
-      DenseSet<ValuePair> PrunedTree;
-      pruneTreeFor(CandidatePairs, PairableInsts, ConnectedPairs,
+      DenseSet<ValuePair> PrunedDAG;
+      pruneDAGFor(CandidatePairs, PairableInsts, ConnectedPairs,
                    PairableInstUsers, PairableInstUserMap,
                    PairableInstUserPairSet,
-                   ChosenPairs, Tree, PrunedTree, IJ, UseCycleCheck);
+                   ChosenPairs, DAG, PrunedDAG, IJ, UseCycleCheck);
 
       int EffSize = 0;
       if (TTI) {
-        DenseSet<Value *> PrunedTreeInstrs;
-        for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
-             E = PrunedTree.end(); S != E; ++S) {
-          PrunedTreeInstrs.insert(S->first);
-          PrunedTreeInstrs.insert(S->second);
+        DenseSet<Value *> PrunedDAGInstrs;
+        for (DenseSet<ValuePair>::iterator S = PrunedDAG.begin(),
+             E = PrunedDAG.end(); S != E; ++S) {
+          PrunedDAGInstrs.insert(S->first);
+          PrunedDAGInstrs.insert(S->second);
         }
 
         // The set of pairs that have already contributed to the total cost.
@@ -1806,8 +1806,8 @@ namespace {
 
         // The node weights represent the cost savings associated with
         // fusing the pair of instructions.
-        for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
-             E = PrunedTree.end(); S != E; ++S) {
+        for (DenseSet<ValuePair>::iterator S = PrunedDAG.begin(),
+             E = PrunedDAG.end(); S != E; ++S) {
           if (!isa<ShuffleVectorInst>(S->first) &&
               !isa<InsertElementInst>(S->first) &&
               !isa<ExtractElementInst>(S->first))
@@ -1832,7 +1832,7 @@ namespace {
             for (std::vector<ValuePair>::iterator T = SS->second.begin(),
                  TE = SS->second.end(); T != TE; ++T) {
               VPPair Q(*S, *T);
-              if (!PrunedTree.count(Q.second))
+              if (!PrunedDAG.count(Q.second))
                 continue;
               DenseMap<VPPair, unsigned>::iterator R =
                 PairConnectionTypes.find(VPPair(Q.second, Q.first));
@@ -1854,7 +1854,7 @@ namespace {
             for (std::vector<ValuePair>::iterator T = SS->second.begin(),
                  TE = SS->second.end(); T != TE; ++T) {
               VPPair Q(*S, *T);
-              if (!PrunedTree.count(Q.second))
+              if (!PrunedDAG.count(Q.second))
                 continue;
               DenseMap<VPPair, unsigned>::iterator R =
                 PairConnectionTypes.find(VPPair(Q.second, Q.first));
@@ -1906,7 +1906,7 @@ namespace {
               }
               if (isa<ExtractElementInst>(*I))
                 continue;
-              if (PrunedTreeInstrs.count(*I))
+              if (PrunedDAGInstrs.count(*I))
                 continue;
               NeedsExtraction = true;
               break;
@@ -1938,7 +1938,7 @@ namespace {
               }
               if (isa<ExtractElementInst>(*I))
                 continue;
-              if (PrunedTreeInstrs.count(*I))
+              if (PrunedDAGInstrs.count(*I))
                 continue;
               NeedsExtraction = true;
               break;
@@ -1980,7 +1980,7 @@ namespace {
               ValuePair VPR = ValuePair(O2, O1);
 
               // Internal edges are not handled here.
-              if (PrunedTree.count(VP) || PrunedTree.count(VPR))
+              if (PrunedDAG.count(VP) || PrunedDAG.count(VPR))
                 continue;
 
               Type *Ty1 = O1->getType(),
@@ -2074,27 +2074,27 @@ namespace {
 
         if (!HasNontrivialInsts) {
           DEBUG(if (DebugPairSelection) dbgs() <<
-                "\tNo non-trivial instructions in tree;"
+                "\tNo non-trivial instructions in DAG;"
                 " override to zero effective size\n");
           EffSize = 0;
         }
       } else {
-        for (DenseSet<ValuePair>::iterator S = PrunedTree.begin(),
-             E = PrunedTree.end(); S != E; ++S)
+        for (DenseSet<ValuePair>::iterator S = PrunedDAG.begin(),
+             E = PrunedDAG.end(); S != E; ++S)
           EffSize += (int) getDepthFactor(S->first);
       }
 
       DEBUG(if (DebugPairSelection)
-             dbgs() << "BBV: found pruned Tree for pair {"
+             dbgs() << "BBV: found pruned DAG for pair {"
              << IJ.first << " <-> " << IJ.second << "} of depth " <<
-             MaxDepth << " and size " << PrunedTree.size() <<
+             MaxDepth << " and size " << PrunedDAG.size() <<
             " (effective size: " << EffSize << ")\n");
       if (((TTI && !UseChainDepthWithTI) ||
             MaxDepth >= Config.ReqChainDepth) &&
           EffSize > 0 && EffSize > BestEffSize) {
         BestMaxDepth = MaxDepth;
         BestEffSize = EffSize;
-        BestTree = PrunedTree;
+        BestDAG = PrunedDAG;
       }
     }
   }
@@ -2133,37 +2133,37 @@ namespace {
 
       std::vector<Value *> &JJ = CandidatePairs[*I];
 
-      // The best pair to choose and its tree:
+      // The best pair to choose and its dag:
       size_t BestMaxDepth = 0;
       int BestEffSize = 0;
-      DenseSet<ValuePair> BestTree;
-      findBestTreeFor(CandidatePairs, CandidatePairsSet,
+      DenseSet<ValuePair> BestDAG;
+      findBestDAGFor(CandidatePairs, CandidatePairsSet,
                       CandidatePairCostSavings,
                       PairableInsts, FixedOrderPairs, PairConnectionTypes,
                       ConnectedPairs, ConnectedPairDeps,
                       PairableInstUsers, PairableInstUserMap,
                       PairableInstUserPairSet, ChosenPairs,
-                      BestTree, BestMaxDepth, BestEffSize, *I, JJ,
+                      BestDAG, BestMaxDepth, BestEffSize, *I, JJ,
                       UseCycleCheck);
 
-      if (BestTree.empty())
+      if (BestDAG.empty())
         continue;
 
-      // A tree has been chosen (or not) at this point. If no tree was
+      // A dag has been chosen (or not) at this point. If no dag was
       // chosen, then this instruction, I, cannot be paired (and is no longer
       // considered).
 
-      DEBUG(dbgs() << "BBV: selected pairs in the best tree for: "
+      DEBUG(dbgs() << "BBV: selected pairs in the best DAG for: "
                    << *cast<Instruction>(*I) << "\n");
 
-      for (DenseSet<ValuePair>::iterator S = BestTree.begin(),
-           SE2 = BestTree.end(); S != SE2; ++S) {
-        // Insert the members of this tree into the list of chosen pairs.
+      for (DenseSet<ValuePair>::iterator S = BestDAG.begin(),
+           SE2 = BestDAG.end(); S != SE2; ++S) {
+        // Insert the members of this dag into the list of chosen pairs.
         ChosenPairs.insert(ValuePair(S->first, S->second));
         DEBUG(dbgs() << "BBV: selected pair: " << *S->first << " <-> " <<
                *S->second << "\n");
 
-        // Remove all candidate pairs that have values in the chosen tree.
+        // Remove all candidate pairs that have values in the chosen dag.
         std::vector<Value *> &KK = CandidatePairs[S->first],
                              &LL = CandidatePairs2[S->second],
                              &MM = CandidatePairs[S->second],
@@ -2868,7 +2868,7 @@ namespace {
   // are chosen for vectorization, we can end up in a situation where the
   // aliasing analysis starts returning different query results as the
   // process of fusing instruction pairs continues. Because the algorithm
-  // relies on finding the same use trees here as were found earlier, we'll
+  // relies on finding the same use dags here as were found earlier, we'll
   // need to precompute the necessary aliasing information here and then
   // manually update it during the fusion process.
   void BBVectorize::collectLoadMoveSet(BasicBlock &BB,
@@ -3074,9 +3074,9 @@ namespace {
       Instruction *K1 = 0, *K2 = 0;
       replaceOutputsOfPair(Context, L, H, K, InsertionPt, K1, K2);
 
-      // The use tree of the first original instruction must be moved to after
-      // the location of the second instruction. The entire use tree of the
-      // first instruction is disjoint from the input tree of the second
+      // The use dag of the first original instruction must be moved to after
+      // the location of the second instruction. The entire use dag of the
+      // first instruction is disjoint from the input dag of the second
       // (by definition), and so commutes with it.
 
       moveUsesOfIAfterJ(BB, LoadMoveSetPairs, InsertionPt, I, J);
