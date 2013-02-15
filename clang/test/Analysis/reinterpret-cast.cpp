@@ -18,3 +18,31 @@ void test(Data data) {
   wrapper->set();
   clang_analyzer_eval(wrapper->x == 42); // expected-warning{{TRUE}}
 }
+
+namespace PR14872 {
+  class Base1 {};
+  class Derived1 : public Base1 {};
+
+  Derived1 *f1();
+
+  class Base2 {};
+  class Derived2 : public Base2 {};
+
+  void f2(Base2 *foo);
+
+  void f3(void** out)
+  {
+    Base1 *v;
+    v = f1();
+    *out = v;
+  }
+
+  void test()
+  {
+    Derived2 *p;
+    f3(reinterpret_cast<void**>(&p));
+    // Don't crash when upcasting here.
+    // In this case, 'p' actually refers to a Derived1.
+    f2(p);
+  }
+}

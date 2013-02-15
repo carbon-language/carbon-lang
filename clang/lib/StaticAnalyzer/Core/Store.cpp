@@ -223,7 +223,32 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
   llvm_unreachable("unreachable");
 }
 
+static bool regionMatchesCXXRecordType(SVal V, QualType Ty) {
+  const MemRegion *MR = V.getAsRegion();
+  if (!MR)
+    return true;
+
+  const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(MR);
+  if (!TVR)
+    return true;
+
+  const CXXRecordDecl *RD = TVR->getValueType()->getAsCXXRecordDecl();
+  if (!RD)
+    return true;
+
+  const CXXRecordDecl *Expected = Ty->getPointeeCXXRecordDecl();
+  if (!Expected)
+    Expected = Ty->getAsCXXRecordDecl();
+
+  return Expected->getCanonicalDecl() == RD->getCanonicalDecl();
+}
+
 SVal StoreManager::evalDerivedToBase(SVal Derived, const CastExpr *Cast) {
+  // Sanity check to avoid doing the wrong thing in the face of
+  // reinterpret_cast.
+  if (!regionMatchesCXXRecordType(Derived, Cast->getSubExpr()->getType()))
+    return UnknownVal();
+
   // Walk through the cast path to create nested CXXBaseRegions.
   SVal Result = Derived;
   for (CastExpr::path_const_iterator I = Cast->path_begin(),
