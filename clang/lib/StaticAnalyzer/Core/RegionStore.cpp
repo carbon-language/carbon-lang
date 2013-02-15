@@ -713,10 +713,16 @@ static bool isCompatibleWithFields(BindingKey K, const FieldVector &Fields) {
                       Fields.begin() - Delta);
 }
 
+/// Collects all keys in \p Cluster that may refer to bindings within \p Top.
+///
+/// The \p IncludeAllDefaultBindings parameter specifies whether to include
+/// default bindings that may extend beyond \p Top itself, e.g. if \p Top is
+/// an aggregate within a larger aggregate with a default binding.
 static void collectSubRegionKeys(SmallVectorImpl<BindingKey> &Keys,
                                  SValBuilder &SVB,
                                  const ClusterBindings &Cluster,
-                                 const SubRegion *Top, BindingKey TopKey) {
+                                 const SubRegion *Top, BindingKey TopKey,
+                                 bool IncludeAllDefaultBindings) {
   FieldVector FieldsInSymbolicSubregions;
   if (TopKey.hasSymbolicOffset()) {
     getSymbolicOffsetFields(TopKey, FieldsInSymbolicSubregions);
@@ -758,7 +764,7 @@ static void collectSubRegionKeys(SmallVectorImpl<BindingKey> &Keys,
         // we're invalidating.
         // FIXME: This is probably incorrect; consider invalidating an outer
         // struct whose first field is bound to a LazyCompoundVal.
-        if (NextKey.isDirect())
+        if (IncludeAllDefaultBindings || NextKey.isDirect())
           Keys.push_back(NextKey);
       }
 
@@ -768,7 +774,7 @@ static void collectSubRegionKeys(SmallVectorImpl<BindingKey> &Keys,
         // Case 3: The next key is symbolic and we just changed something within
         // its concrete region. We don't know if the binding is still valid, so
         // we'll be conservative and remove it.
-        if (NextKey.isDirect())
+        if (IncludeAllDefaultBindings || NextKey.isDirect())
           if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
             Keys.push_back(NextKey);
       } else if (const SubRegion *BaseSR = dyn_cast<SubRegion>(Base)) {
@@ -780,6 +786,16 @@ static void collectSubRegionKeys(SmallVectorImpl<BindingKey> &Keys,
       }
     }
   }
+}
+
+static void collectSubRegionKeys(SmallVectorImpl<BindingKey> &Keys,
+                                 SValBuilder &SVB,
+                                 const ClusterBindings &Cluster,
+                                 const SubRegion *Top,
+                                 bool IncludeAllDefaultBindings) {
+  collectSubRegionKeys(Keys, SVB, Cluster, Top,
+                       BindingKey::Make(Top, BindingKey::Default),
+                       IncludeAllDefaultBindings);
 }
 
 RegionBindingsRef
@@ -797,7 +813,8 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsConstRef B,
     return B;
 
   SmallVector<BindingKey, 32> Keys;
-  collectSubRegionKeys(Keys, svalBuilder, *Cluster, Top, TopKey);
+  collectSubRegionKeys(Keys, svalBuilder, *Cluster, Top, TopKey,
+                       /*IncludeAllDefaultBindings=*/false);
 
   ClusterBindingsRef Result(*Cluster, CBFactory);
   for (SmallVectorImpl<BindingKey>::const_iterator I = Keys.begin(),
@@ -1974,23 +1991,20 @@ void removeDeadBindingsWorker::VisitBinding(SVal V) {
   if (const nonloc::LazyCompoundVal *LCS =
         dyn_cast<nonloc::LazyCompoundVal>(&V)) {
 
-    const MemRegion *LazyR = LCS->getRegion();
+    const SubRegion *LazyR = LCS->getRegion();
     RegionBindingsRef B = RM.getRegionBindings(LCS->getStore());
 
-    // FIXME: This should not have to walk all bindings in the old store.
-    for (RegionBindingsRef::iterator RI = B.begin(), RE = B.end();
-         RI != RE; ++RI){
-      const ClusterBindings &Cluster = RI.getData();
-      for (ClusterBindings::iterator CI = Cluster.begin(), CE = Cluster.end();
-           CI != CE; ++CI) {
-        BindingKey K = CI.getKey();
-        if (const SubRegion *BaseR = dyn_cast<SubRegion>(K.getRegion())) {
-          if (BaseR == LazyR)
-            VisitBinding(CI.getData());
-          else if (K.hasSymbolicOffset() && BaseR->isSubRegionOf(LazyR))
-            VisitBinding(CI.getData());
-        }
-      }
+    const ClusterBindings *Cluster = B.lookup(LazyR->getBaseRegion());
+    if (!Cluster)
+      return;
+
+    SmallVector<BindingKey, 32> Keys;
+    collectSubRegionKeys(Keys, svalBuilder, *Cluster, LazyR,
+                         /*IncludeAllDefaultBindings=*/true);
+    for (SmallVectorImpl<BindingKey>::const_iterator I = Keys.begin(),
+                                                     E = Keys.end();
+         I != E; ++I) {
+      VisitBinding(*Cluster->lookup(*I));
     }
 
     return;
