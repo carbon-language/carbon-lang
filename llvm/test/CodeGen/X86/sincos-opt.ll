@@ -1,18 +1,24 @@
-; RUN: llc < %s -mtriple=x86_64-apple-macosx10.9.0 -mcpu=core2 | FileCheck %s --check-prefix=SINCOS
-; RUN: llc < %s -mtriple=x86_64-apple-macosx10.8.0 -mcpu=core2 | FileCheck %s --check-prefix=NOOPT
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.9.0 -mcpu=core2 | FileCheck %s --check-prefix=OSX_SINCOS
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.8.0 -mcpu=core2 | FileCheck %s --check-prefix=OSX_NOOPT
+; RUN: llc < %s -mtriple=x86_64-pc-linux-gnu -mcpu=core2 -enable-unsafe-fp-math | FileCheck %s --check-prefix=GNU_SINCOS
 
 ; Combine sin / cos into a single call.
 ; rdar://13087969
 
 define float @test1(float %x) nounwind {
 entry:
-; SINCOS: test1:
-; SINCOS: callq ___sincosf_stret
-; SINCOS: addss %xmm1, %xmm0
+; GNU_SINCOS: test1:
+; GNU_SINCOS: callq sincosf
+; GNU_SINCOS: movss 4(%rsp), %xmm0
+; GNU_SINCOS: addss (%rsp), %xmm0
 
-; NOOPT: test1
-; NOOPT: callq _cosf
-; NOOPT: callq _sinf
+; OSX_SINCOS: test1:
+; OSX_SINCOS: callq ___sincosf_stret
+; OSX_SINCOS: addss %xmm1, %xmm0
+
+; OSX_NOOPT: test1
+; OSX_NOOPT: callq _cosf
+; OSX_NOOPT: callq _sinf
   %call = tail call float @sinf(float %x) nounwind readnone
   %call1 = tail call float @cosf(float %x) nounwind readnone
   %add = fadd float %call, %call1
@@ -21,20 +27,40 @@ entry:
 
 define double @test2(double %x) nounwind {
 entry:
-; SINCOS: test2:
-; SINCOS: callq ___sincos_stret
-; SINCOS: addsd %xmm1, %xmm0
+; GNU_SINCOS: test2:
+; GNU_SINCOS: callq sincos
+; GNU_SINCOS: movsd 16(%rsp), %xmm0
+; GNU_SINCOS: addsd 8(%rsp), %xmm0
 
-; NOOPT: test2
-; NOOPT: callq _cos
-; NOOPT: callq _sin
+; OSX_SINCOS: test2:
+; OSX_SINCOS: callq ___sincos_stret
+; OSX_SINCOS: addsd %xmm1, %xmm0
+
+; OSX_NOOPT: test2
+; OSX_NOOPT: callq _cos
+; OSX_NOOPT: callq _sin
   %call = tail call double @sin(double %x) nounwind readnone
   %call1 = tail call double @cos(double %x) nounwind readnone
   %add = fadd double %call, %call1
   ret double %add
 }
 
+define x86_fp80 @test3(x86_fp80 %x) nounwind {
+entry:
+; GNU_SINCOS: test3:
+; GNU_SINCOS: callq sinl
+; GNU_SINCOS: callq cosl
+; GNU_SINCOS: ret
+  %call = tail call x86_fp80 @sinl(x86_fp80 %x) nounwind
+  %call1 = tail call x86_fp80 @cosl(x86_fp80 %x) nounwind
+  %add = fadd x86_fp80 %call, %call1
+  ret x86_fp80 %add
+}
+
 declare float  @sinf(float) readonly
 declare double @sin(double) readonly
 declare float @cosf(float) readonly
 declare double @cos(double) readonly
+
+declare x86_fp80 @sinl(x86_fp80)
+declare x86_fp80 @cosl(x86_fp80)
