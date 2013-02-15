@@ -586,14 +586,15 @@ ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
 }
 
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
-                   BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
+                   BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
                    SmallVectorImpl<unsigned> &Scatter)
-    : Parent(parent), BB(&bb), IVS(NestLoops.size()) {
+  : Parent(parent), BB(&bb), IVS(Nest.size()), NestLoops(Nest.size()) {
   // Setup the induction variables.
-  for (unsigned i = 0, e = NestLoops.size(); i < e; ++i) {
-    PHINode *PN = NestLoops[i]->getCanonicalInductionVariable();
+  for (unsigned i = 0, e = Nest.size(); i < e; ++i) {
+    PHINode *PN = Nest[i]->getCanonicalInductionVariable();
     assert(PN && "Non canonical IV in Scop!");
-    IVS[i] = std::make_pair(PN, NestLoops[i]);
+    IVS[i] = std::make_pair(PN, Nest[i]);
+    NestLoops[i] = Nest[i];
   }
 
   raw_string_ostream OS(BaseName);
@@ -621,7 +622,7 @@ unsigned ScopStmt::getNumIterators() const {
   if (!BB)
     return 1;
 
-  return IVS.size();
+  return NestLoops.size();
 }
 
 unsigned ScopStmt::getNumScattering() const {
@@ -636,7 +637,7 @@ ScopStmt::getInductionVariableForDimension(unsigned Dimension) const {
 }
 
 const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
-  return IVS[Dimension].second;
+  return NestLoops[Dimension];
 }
 
 isl_ctx *ScopStmt::getIslCtx() const { return Parent.getIslCtx(); }

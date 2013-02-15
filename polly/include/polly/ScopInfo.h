@@ -277,6 +277,7 @@ class ScopStmt {
   ///
   /// This information is only needed for final code generation.
   std::vector<std::pair<PHINode*, Loop*> > IVS;
+  std::vector<Loop*> NestLoops;
 
   std::string BaseName;
 
