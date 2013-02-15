@@ -98,7 +98,7 @@ entry:
   ret i32 0
   ; CHECK: @test5(
   ; CHECK: store i8 4
-  ; CHECK: call void @test5a(%struct.S* align 16 byval %y)
+  ; CHECK: call void @test5a(%struct.S* byval align 16 %y)
 }
 
 ;; Noop memcpy should be zapped.
@@ -123,7 +123,7 @@ entry:
   %call = call i32 @g(%struct.p* align 8 byval %agg.tmp) nounwind
   ret i32 %call
 ; CHECK: @test7
-; CHECK: call i32 @g(%struct.p* align 8 byval %q) nounwind
+; CHECK: call i32 @g(%struct.p* byval align 8 %q) nounwind
 }
 
 declare i32 @g(%struct.p* align 8 byval)
