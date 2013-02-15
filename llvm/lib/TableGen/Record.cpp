@@ -1525,11 +1525,9 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) const {
   return const_cast<FieldInit *>(this);
 }
 
-void ProfileDagInit(FoldingSetNodeID &ID,
-                    Init *V,
-                    const std::string &VN,
-                    ArrayRef<Init *> ArgRange,
-                    ArrayRef<std::string> NameRange) {
+static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, const std::string &VN,
+                           ArrayRef<Init *> ArgRange,
+                           ArrayRef<std::string> NameRange) {
   ID.AddPointer(V);
   ID.AddString(VN);
 

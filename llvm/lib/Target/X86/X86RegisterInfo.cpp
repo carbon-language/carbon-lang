@@ -50,7 +50,7 @@ ForceStackAlign("force-align-stack",
                            " needed for the function."),
                  cl::init(false), cl::Hidden);
 
-cl::opt<bool>
+static cl::opt<bool>
 EnableBasePointer("x86-use-base-pointer", cl::Hidden, cl::init(true),
           cl::desc("Enable use of a base pointer for complex stack frames"));
 

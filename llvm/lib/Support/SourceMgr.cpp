@@ -248,8 +248,8 @@ SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, StringRef FN,
   std::sort(FixIts.begin(), FixIts.end());
 }
 
-void buildFixItLine(std::string &CaretLine, std::string &FixItLine,
-                    ArrayRef<SMFixIt> FixIts, ArrayRef<char> SourceLine) {
+static void buildFixItLine(std::string &CaretLine, std::string &FixItLine,
+                           ArrayRef<SMFixIt> FixIts, ArrayRef<char> SourceLine){
   if (FixIts.empty())
     return;
 

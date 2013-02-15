@@ -46,7 +46,7 @@ protected:
   uint64_t Length;
 };
 
-
+namespace {
 /// \brief DWARF Common Information Entry (CIE)
 class CIE : public FrameEntry {
 public:
@@ -128,6 +128,7 @@ private:
   uint64_t AddressRange;
   CIE *LinkedCIE;
 };
+} // end anonymous namespace
 
 
 DWARFDebugFrame::DWARFDebugFrame() {
