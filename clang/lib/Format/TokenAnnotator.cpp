@@ -467,11 +467,13 @@ public:
         KeywordVirtualFound = true;
       if (CurrentToken->is(tok::period) || CurrentToken->is(tok::arrow))
         ++PeriodsAndArrows;
-      if (getPrecedence(*CurrentToken) > prec::Assignment &&
-          CurrentToken->isNot(tok::less) && CurrentToken->isNot(tok::greater))
-        CanBeBuilderTypeStmt = false;
+      AnnotatedToken *TheToken = CurrentToken;
       if (!consumeToken())
         return LT_Invalid;
+      if (getPrecedence(*TheToken) > prec::Assignment &&
+          TheToken->Type != TT_TemplateOpener &&
+          TheToken->Type != TT_TemplateCloser)
+        CanBeBuilderTypeStmt = false;
     }
     if (KeywordVirtualFound)
       return LT_VirtualFunctionDecl;
