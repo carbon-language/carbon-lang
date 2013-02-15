@@ -1605,7 +1605,7 @@ NonLoc RegionStoreManager::createLazyBinding(RegionBindingsConstRef B,
     if (LCV) {
       QualType RegionTy = R->getValueType();
       QualType SourceRegionTy = LCV->getRegion()->getValueType();
-      if (RegionTy.getCanonicalType() == SourceRegionTy.getCanonicalType())
+      if (Ctx.hasSameUnqualifiedType(RegionTy, SourceRegionTy))
         return *LCV;
     }
   }
