@@ -187,7 +187,7 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
         ValueToValueMap VTV;
         VTV.insert(BBMap.begin(), BBMap.end());
         VTV.insert(GlobalMap.begin(), GlobalMap.end());
-        NewScev = ScevParameterRewriter::rewrite(NewScev, SE, VTV);
+        NewScev = SCEVParameterRewriter::rewrite(NewScev, SE, VTV);
         SCEVExpander Expander(SE, "polly");
         Value *Expanded = Expander.expandCodeFor(NewScev, Old->getType(),
                                                  Builder.GetInsertPoint());
