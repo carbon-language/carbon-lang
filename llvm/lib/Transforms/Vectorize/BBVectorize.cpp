@@ -88,6 +88,10 @@ MaxInsts("bb-vectorize-max-instr-per-group", cl::init(500), cl::Hidden,
   cl::desc("The maximum number of pairable instructions per group"));
 
 static cl::opt<unsigned>
+MaxPairs("bb-vectorize-max-pairs-per-group", cl::init(3000), cl::Hidden,
+  cl::desc("The maximum number of candidate instruction pairs per group"));
+
+static cl::opt<unsigned>
 MaxCandPairsForCycleCheck("bb-vectorize-max-cycle-check-pairs", cl::init(200),
   cl::Hidden, cl::desc("The maximum number of candidate pairs with which to use"
                        " a full cycle check"));
@@ -1164,6 +1168,7 @@ namespace {
                        DenseSet<ValuePair> &FixedOrderPairs,
                        DenseMap<ValuePair, int> &CandidatePairCostSavings,
                        std::vector<Value *> &PairableInsts, bool NonPow2Len) {
+    size_t TotalPairs = 0;
     BasicBlock::iterator E = BB.end();
     if (Start == E) return false;
 
@@ -1210,6 +1215,7 @@ namespace {
         }
 
         CandidatePairs[I].push_back(J);
+        ++TotalPairs;
         if (TTI)
           CandidatePairCostSavings.insert(ValuePairWithCost(ValuePair(I, J),
                                                             CostSavings));
@@ -1233,7 +1239,8 @@ namespace {
         // If we have already found too many pairs, break here and this function
         // will be called again starting after the last instruction selected
         // during this invocation.
-        if (PairableInsts.size() >= Config.MaxInsts) {
+        if (PairableInsts.size() >= Config.MaxInsts ||
+            TotalPairs >= Config.MaxPairs) {
           ShouldContinue = true;
           break;
         }
@@ -3165,6 +3172,7 @@ VectorizeConfig::VectorizeConfig() {
   MaxCandPairsForCycleCheck = ::MaxCandPairsForCycleCheck;
   SplatBreaksChain = ::SplatBreaksChain;
   MaxInsts = ::MaxInsts;
+  MaxPairs = ::MaxPairs;
   MaxIter = ::MaxIter;
   Pow2LenOnly = ::Pow2LenOnly;
   NoMemOpBoost = ::NoMemOpBoost;

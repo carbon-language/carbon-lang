@@ -84,6 +84,9 @@ struct VectorizeConfig {
   /// @brief The maximum number of pairable instructions per group.
   unsigned MaxInsts;
 
+  /// @brief The maximum number of candidate instruction pairs per group.
+  unsigned MaxPairs;
+
   /// @brief The maximum number of pairing iterations.
   unsigned MaxIter;
 
