@@ -99,9 +99,9 @@ define i1 @ashr_icmp2(i64 %X) nounwind {
 ; PR9998
 ; Make sure we don't transform the ashr here into an sdiv
 ; CHECK: @pr9998
-; CHECK: = and i32 %V, 1
-; CHECK: %Z = icmp ne
-; CHECK: ret i1 %Z
+; CHECK:      [[BIT:%[A-Za-z0-9.]+]] = and i32 %V, 1
+; CHECK-NEXT: [[CMP:%[A-Za-z0-9.]+]] = icmp ne i32 [[BIT]], 0
+; CHECK-NEXT: ret i1 [[CMP]]
 define i1 @pr9998(i32 %V) nounwind {
 entry:
   %W = shl i32 %V, 31
@@ -110,6 +110,7 @@ entry:
   %Z = icmp ugt i64 %Y, 7297771788697658747
   ret i1 %Z
 }
+
 
 
 ; CHECK: @udiv_icmp1

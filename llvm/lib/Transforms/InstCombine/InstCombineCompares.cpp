@@ -1331,6 +1331,25 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       return new ICmpInst(TrueIfSigned ? ICmpInst::ICMP_NE : ICmpInst::ICMP_EQ,
                           And, Constant::getNullValue(And->getType()));
     }
+
+    // Transform (icmp pred iM (shl iM %v, N), CI)
+    // -> (icmp pred i(M-N) (trunc %v iM to i(N-N)), (trunc (CI>>N))
+    // Transform the shl to a trunc if (trunc (CI>>N)) has no loss.
+    // This enables to get rid of the shift in favor of a trunc which can be
+    // free on the target. It has the additional benefit of comparing to a
+    // smaller constant, which will be target friendly.
+    unsigned Amt = ShAmt->getLimitedValue(TypeBits-1);
+    if (Amt != 0 && RHSV.countTrailingZeros() >= Amt) {
+      Type *NTy = IntegerType::get(ICI.getContext(), TypeBits - Amt);
+      Constant *NCI = ConstantExpr::getTrunc(
+                        ConstantExpr::getAShr(RHS,
+                          ConstantInt::get(RHS->getType(), Amt)),
+                        NTy);
+      return new ICmpInst(ICI.getPredicate(),
+                          Builder->CreateTrunc(LHSI->getOperand(0), NTy),
+                          ConstantExpr::getTrunc(NCI, NTy));
+    }
+
     break;
   }
 
