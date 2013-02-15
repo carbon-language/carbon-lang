@@ -348,3 +348,9 @@ int *t30()
 // CHECK: call void asm sideeffect inteldialect "lea edi, dword ptr $0", "*m,~{edi},~{dirflag},~{fpsr},~{flags}"([2 x i32]* @{{.*}}) nounwind
 // CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, edi", "=*m,~{dirflag},~{fpsr},~{flags}"(i32** %{{.*}}) nounwind
 }
+
+void t31(int a) {
+  __asm mov eax, dword ptr [a]
+// CHECK: t31
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr [$0]", "*m,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
+}
