@@ -580,6 +580,9 @@ private:
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
+    if (Current.Type == TT_CtorInitializerColon &&
+        Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
+      State.Stack.back().AvoidBinPacking = true;
     if (Current.is(tok::l_brace) && Current.MatchingParen != NULL &&
         !Current.MatchingParen->MustBreakBefore) {
       if (getLengthToMatchingParen(Current) + State.Column > getColumnLimit())

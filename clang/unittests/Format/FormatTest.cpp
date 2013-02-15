@@ -1059,17 +1059,6 @@ TEST_F(FormatTest, ConstructorInitializers) {
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
       "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}");
-  verifyGoogleFormat(
-      "SomeClass::Constructor()\n"
-      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}");
-  verifyGoogleFormat(
-      "SomeClass::Constructor()\n"
-      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),  // Some comment\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}");
-
   verifyFormat(
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
@@ -1093,10 +1082,20 @@ TEST_F(FormatTest, ConstructorInitializers) {
       "      aaaaaaaaaaa(aaaaaaaaaaa),\n"
       "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
 
-  verifyGoogleFormat("MyClass::MyClass(int var)\n"
-                     "    : some_var_(var),             // 4 space indent\n"
-                     "      some_other_var_(var + 1) {  // lined up\n"
-                     "}");
+  FormatStyle OnePerLine = getLLVMStyle();
+  OnePerLine.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  verifyFormat("SomeClass::Constructor()\n"
+               "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}", OnePerLine);
+  verifyFormat("SomeClass::Constructor()\n"
+               "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), // Some comment\n"
+               "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}", OnePerLine);
+  verifyFormat("MyClass::MyClass(int var)\n"
+               "    : some_var_(var),            // 4 space indent\n"
+               "      some_other_var_(var + 1) { // lined up\n"
+               "}", OnePerLine);
 
   // This test takes VERY long when memoization is broken.
   std::string input = "Constructor()\n"
