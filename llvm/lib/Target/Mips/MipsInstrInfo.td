@@ -334,7 +334,13 @@ def immZExt5 : ImmLeaf<i32, [{return Imm == (Imm & 0x1f);}]>;
 // Mips Address Mode! SDNode frameindex could possibily be a match
 // since load and store instructions from stack used it.
 def addr :
-  ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], [SDNPWantParent]>;
+  ComplexPattern<iPTR, 2, "selectIntAddr", [frameindex], [SDNPWantParent]>;
+
+def addrRegImm :
+  ComplexPattern<iPTR, 2, "selectAddrRegImm", [frameindex], [SDNPWantParent]>;
+
+def addrDefault :
+  ComplexPattern<iPTR, 2, "selectAddrDefault", [frameindex], [SDNPWantParent]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format

@@ -152,14 +152,14 @@ class MTC1_FT_CCR<string opstr, RegisterOperand DstRC, RegisterClass SrcRC,
 class LW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
             Operand MemOpnd, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs RC:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RC:$rt, (OpNode addr:$addr))], Itin, FrmFI> {
+         [(set RC:$rt, (OpNode addrDefault:$addr))], Itin, FrmFI> {
   let DecoderMethod = "DecodeFMem";
 }
 
 class SW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
             Operand MemOpnd, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RC:$rt, addr:$addr)], Itin, FrmFI> {
+         [(OpNode RC:$rt, addrDefault:$addr)], Itin, FrmFI> {
   let DecoderMethod = "DecodeFMem";
 }
 
@@ -180,13 +180,17 @@ class LWXC1_FT<string opstr, RegisterClass DRC, RegisterClass PRC,
                InstrItinClass Itin, SDPatternOperator OpNode = null_frag> :
   InstSE<(outs DRC:$fd), (ins PRC:$base, PRC:$index),
          !strconcat(opstr, "\t$fd, ${index}(${base})"),
-         [(set DRC:$fd, (OpNode (add PRC:$base, PRC:$index)))], Itin, FrmFI>;
+         [(set DRC:$fd, (OpNode (add PRC:$base, PRC:$index)))], Itin, FrmFI> {
+  let AddedComplexity = 20;
+}
 
 class SWXC1_FT<string opstr, RegisterClass DRC, RegisterClass PRC,
                InstrItinClass Itin, SDPatternOperator OpNode = null_frag> :
   InstSE<(outs), (ins DRC:$fs, PRC:$base, PRC:$index),
          !strconcat(opstr, "\t$fs, ${index}(${base})"),
-         [(OpNode DRC:$fs, (add PRC:$base, PRC:$index))], Itin, FrmFI>;
+         [(OpNode DRC:$fs, (add PRC:$base, PRC:$index))], Itin, FrmFI> {
+  let AddedComplexity = 20;
+}
 
 class BC1F_FT<string opstr, InstrItinClass Itin,
               SDPatternOperator Op = null_frag>  :
@@ -497,4 +501,34 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
 
   def : MipsPat<(f32 (fround FGR64:$src)), (CVT_S_D64 FGR64:$src)>;
   def : MipsPat<(f64 (fextend FGR32:$src)), (CVT_D64_S FGR32:$src)>;
+}
+
+// Load/Store patterns.
+let AddedComplexity = 40 in {
+  let Predicates = [IsN64, HasStdEnc] in {
+    def : MipsPat<(f32 (load addrRegImm:$a)), (LWC1_P8 addrRegImm:$a)>;
+    def : MipsPat<(store FGR32:$v, addrRegImm:$a),
+                  (SWC1_P8 FGR32:$v, addrRegImm:$a)>;
+    def : MipsPat<(f64 (load addrRegImm:$a)), (LDC164_P8 addrRegImm:$a)>;
+    def : MipsPat<(store FGR64:$v, addrRegImm:$a),
+                  (SDC164_P8 FGR64:$v, addrRegImm:$a)>;
+  }
+
+  let Predicates = [NotN64, HasStdEnc] in {
+    def : MipsPat<(f32 (load addrRegImm:$a)), (LWC1 addrRegImm:$a)>;
+    def : MipsPat<(store FGR32:$v, addrRegImm:$a),
+                  (SWC1 FGR32:$v, addrRegImm:$a)>;
+  }
+
+  let Predicates = [NotN64, HasMips64, HasStdEnc] in {
+    def : MipsPat<(f64 (load addrRegImm:$a)), (LDC164 addrRegImm:$a)>;
+    def : MipsPat<(store FGR64:$v, addrRegImm:$a),
+                  (SDC164 FGR64:$v, addrRegImm:$a)>;
+  }
+
+  let Predicates = [NotN64, NotMips64, HasStdEnc] in {
+    def : MipsPat<(f64 (load addrRegImm:$a)), (LDC1 addrRegImm:$a)>;
+    def : MipsPat<(store AFGR64:$v, addrRegImm:$a),
+                  (SDC1 AFGR64:$v, addrRegImm:$a)>;
+  }
 }
