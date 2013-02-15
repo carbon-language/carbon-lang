@@ -14,6 +14,7 @@ add_public_tablegen_target(AArch64CommonTableGen)
 
 add_llvm_target(AArch64CodeGen
   AArch64AsmPrinter.cpp
+  AArch64BranchFixupPass.cpp
   AArch64FrameLowering.cpp
   AArch64ISelDAGToDAG.cpp
   AArch64ISelLowering.cpp

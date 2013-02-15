@@ -31,6 +31,8 @@ FunctionPass *createAArch64ISelDAG(AArch64TargetMachine &TM,
 
 FunctionPass *createAArch64CleanupLocalDynamicTLSPass();
 
+FunctionPass *createAArch64BranchFixupPass();
+
 void LowerAArch64MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                       AArch64AsmPrinter &AP);
 

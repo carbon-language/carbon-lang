@@ -66,6 +66,7 @@ TargetPassConfig *AArch64TargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool AArch64PassConfig::addPreEmitPass() {
   addPass(&UnpackMachineBundlesID);
+  addPass(createAArch64BranchFixupPass());
   return true;
 }
 

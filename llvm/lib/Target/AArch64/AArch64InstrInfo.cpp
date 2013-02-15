@@ -558,6 +558,48 @@ void AArch64InstrInfo::getAddressConstraints(const MachineInstr &MI,
   }
 }
 
+unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
+  const MCInstrDesc &MCID = MI.getDesc();
+  const MachineBasicBlock &MBB = *MI.getParent();
+  const MachineFunction &MF = *MBB.getParent();
+  const MCAsmInfo &MAI = *MF.getTarget().getMCAsmInfo();
+
+  if (MCID.getSize())
+    return MCID.getSize();
+
+  if (MI.getOpcode() == AArch64::INLINEASM)
+    return getInlineAsmLength(MI.getOperand(0).getSymbolName(), MAI);
+
+  if (MI.isLabel())
+    return 0;
+
+  switch (MI.getOpcode()) {
+  case TargetOpcode::BUNDLE:
+    return getInstBundleLength(MI);
+  case TargetOpcode::IMPLICIT_DEF:
+  case TargetOpcode::KILL:
+  case TargetOpcode::PROLOG_LABEL:
+  case TargetOpcode::EH_LABEL:
+  case TargetOpcode::DBG_VALUE:
+    return 0;
+  case AArch64::TLSDESCCALL:
+    return 0;
+  default:
+    llvm_unreachable("Unknown instruction class");
+  }
+}
+
+unsigned AArch64InstrInfo::getInstBundleLength(const MachineInstr &MI) const {
+  unsigned Size = 0;
+  MachineBasicBlock::const_instr_iterator I = MI;
+  MachineBasicBlock::const_instr_iterator E = MI.getParent()->instr_end();
+  while (++I != E && I->isInsideBundle()) {
+    assert(!I->isBundle() && "No nested bundle!");
+    Size += getInstSizeInBytes(*I);
+  }
+  return Size;
+}
+
 bool llvm::rewriteA64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
                                 unsigned FrameReg, int &Offset,
                                 const AArch64InstrInfo &TII) {

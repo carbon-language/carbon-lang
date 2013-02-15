@@ -83,6 +83,12 @@ public:
   ///    + imm % OffsetScale == 0
   void getAddressConstraints(const MachineInstr &MI, int &AccessScale,
                              int &MinOffset, int &MaxOffset) const;
+
+
+  unsigned getInstSizeInBytes(const MachineInstr &MI) const;
+
+  unsigned getInstBundleLength(const MachineInstr &MI) const;
+
 };
 
 bool rewriteA64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
