@@ -3007,9 +3007,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
-  MipsCC MipsCCInfo(CallConv, isVarArg, IsO32, CCInfo);
+  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
 
-  MipsCCInfo.analyzeCallOperands(Outs);
+  MipsCCInfo.analyzeCallOperands(Outs, isVarArg);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NextStackOffset = CCInfo.getNextStackOffset();
@@ -3294,7 +3294,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
-  MipsCC MipsCCInfo(CallConv, isVarArg, IsO32, CCInfo);
+  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
 
   MipsCCInfo.analyzeFormalArguments(Ins);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
@@ -3776,40 +3776,21 @@ unsigned MipsTargetLowering::getJumpTableEncoding() const {
   return TargetLowering::getJumpTableEncoding();
 }
 
-MipsTargetLowering::MipsCC::MipsCC(CallingConv::ID CallConv, bool IsVarArg,
-                                   bool IsO32, CCState &Info) : CCInfo(Info) {
-  UseRegsForByval = true;
-
-  if (IsO32) {
-    RegSize = 4;
-    NumIntArgRegs = array_lengthof(O32IntRegs);
-    ReservedArgArea = 16;
-    IntArgRegs = ShadowRegs = O32IntRegs;
-    FixedFn = VarFn = CC_MipsO32;
-  } else {
-    RegSize = 8;
-    NumIntArgRegs = array_lengthof(Mips64IntRegs);
-    ReservedArgArea = 0;
-    IntArgRegs = Mips64IntRegs;
-    ShadowRegs = Mips64DPRegs;
-    FixedFn = CC_MipsN;
-    VarFn = IsVarArg ? CC_MipsN_VarArg : CC_MipsN;
-  }
-
-  if (CallConv == CallingConv::Fast) {
-    assert(!IsVarArg);
-    UseRegsForByval = false;
-    ReservedArgArea = 0;
-    FixedFn = VarFn = CC_Mips_FastCC;
-  }
-
+MipsTargetLowering::MipsCC::MipsCC(CallingConv::ID CC, bool IsO32_,
+                                   CCState &Info)
+  : CCInfo(Info), CallConv(CC), IsO32(IsO32_) {
   // Pre-allocate reserved argument area.
-  CCInfo.AllocateStack(ReservedArgArea, 1);
+  CCInfo.AllocateStack(reservedArgArea(), 1);
 }
 
 void MipsTargetLowering::MipsCC::
-analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args) {
+analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args,
+                    bool IsVarArg) {
+  assert((CallConv != CallingConv::Fast || !IsVarArg) &&
+         "CallingConv::Fast shouldn't be used for vararg functions.");
+
   unsigned NumOpnds = Args.size();
+  llvm::CCAssignFn *FixedFn = fixedArgFn(), *VarFn = varArgFn();
 
   for (unsigned I = 0; I != NumOpnds; ++I) {
     MVT ArgVT = Args[I].VT;
@@ -3821,10 +3802,10 @@ analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args) {
       continue;
     }
 
-    if (Args[I].IsFixed)
-      R = FixedFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
-    else
+    if (IsVarArg && !Args[I].IsFixed)
       R = VarFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
+    else
+      R = FixedFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
 
     if (R) {
 #ifndef NDEBUG
@@ -3839,6 +3820,7 @@ analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args) {
 void MipsTargetLowering::MipsCC::
 analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args) {
   unsigned NumArgs = Args.size();
+  llvm::CCAssignFn *FixedFn = fixedArgFn();
 
   for (unsigned I = 0; I != NumArgs; ++I) {
     MVT ArgVT = Args[I].VT;
@@ -3868,11 +3850,12 @@ MipsTargetLowering::MipsCC::handleByValArg(unsigned ValNo, MVT ValVT,
   assert(ArgFlags.getByValSize() && "Byval argument's size shouldn't be 0.");
 
   struct ByValArgInfo ByVal;
+  unsigned RegSize = regSize();
   unsigned ByValSize = RoundUpToAlignment(ArgFlags.getByValSize(), RegSize);
   unsigned Align = std::min(std::max(ArgFlags.getByValAlign(), RegSize),
                             RegSize * 2);
 
-  if (UseRegsForByval)
+  if (useRegsForByval())
     allocateRegs(ByVal, ByValSize, Align);
 
   // Allocate space on caller's stack.
@@ -3883,9 +3866,38 @@ MipsTargetLowering::MipsCC::handleByValArg(unsigned ValNo, MVT ValVT,
   ByValArgs.push_back(ByVal);
 }
 
+unsigned MipsTargetLowering::MipsCC::numIntArgRegs() const {
+  return IsO32 ? array_lengthof(O32IntRegs) : array_lengthof(Mips64IntRegs);
+}
+
+unsigned MipsTargetLowering::MipsCC::reservedArgArea() const {
+  return (IsO32 && (CallConv != CallingConv::Fast)) ? 16 : 0;
+}
+
+const uint16_t *MipsTargetLowering::MipsCC::intArgRegs() const {
+  return IsO32 ? O32IntRegs : Mips64IntRegs;
+}
+
+llvm::CCAssignFn *MipsTargetLowering::MipsCC::fixedArgFn() const {
+  if (CallConv == CallingConv::Fast)
+    return CC_Mips_FastCC;
+
+  return IsO32 ? CC_MipsO32 : CC_MipsN;
+}
+
+llvm::CCAssignFn *MipsTargetLowering::MipsCC::varArgFn() const {
+  return IsO32 ? CC_MipsO32 : CC_MipsN_VarArg;
+}
+
+const uint16_t *MipsTargetLowering::MipsCC::shadowRegs() const {
+  return IsO32 ? O32IntRegs : Mips64DPRegs;
+}
+
 void MipsTargetLowering::MipsCC::allocateRegs(ByValArgInfo &ByVal,
                                               unsigned ByValSize,
                                               unsigned Align) {
+  unsigned RegSize = regSize(), NumIntArgRegs = numIntArgRegs();
+  const uint16_t *IntArgRegs = intArgRegs(), *ShadowRegs = shadowRegs();
   assert(!(ByValSize % RegSize) && !(Align % RegSize) &&
          "Byval argument's size and alignment should be a multiple of"
          "RegSize.");
