@@ -1347,7 +1347,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                         NTy);
       return new ICmpInst(ICI.getPredicate(),
                           Builder->CreateTrunc(LHSI->getOperand(0), NTy),
-                          ConstantExpr::getTrunc(NCI, NTy));
+                          NCI);
     }
 
     break;
