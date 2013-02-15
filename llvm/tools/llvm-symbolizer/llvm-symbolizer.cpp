@@ -32,24 +32,22 @@ using namespace symbolize;
 
 static cl::opt<bool>
 ClUseSymbolTable("use-symbol-table", cl::init(true),
-               cl::desc("Prefer names in symbol table to names "
-                        "in debug info"));
+                 cl::desc("Prefer names in symbol table to names "
+                          "in debug info"));
 
 static cl::opt<bool>
 ClPrintFunctions("functions", cl::init(true),
-               cl::desc("Print function names as well as line "
-                        "information for a given address"));
+                 cl::desc("Print function names as well as line "
+                          "information for a given address"));
 
 static cl::opt<bool>
 ClPrintInlining("inlining", cl::init(true),
-              cl::desc("Print all inlined frames for a given address"));
+                cl::desc("Print all inlined frames for a given address"));
 
 static cl::opt<bool>
-ClDemangle("demangle", cl::init(true),
-         cl::desc("Demangle function names"));
+ClDemangle("demangle", cl::init(true), cl::desc("Demangle function names"));
 
-static bool parseCommand(bool &IsData,
-                         std::string &ModuleName,
+static bool parseCommand(bool &IsData, std::string &ModuleName,
                          uint64_t &ModuleOffset) {
   const char *kDataCmd = "DATA ";
   const char *kCodeCmd = "CODE ";
@@ -75,7 +73,7 @@ static bool parseCommand(bool &IsData,
   // FIXME: Handle case when filename is given in quotes.
   if (char *FilePath = strtok(pos, kDelimiters)) {
     ModuleName = FilePath;
-    if (char *OffsetStr = strtok((char*)0, kDelimiters))
+    if (char *OffsetStr = strtok((char *)0, kDelimiters))
       ModuleOffsetStr = OffsetStr;
   }
   if (StringRef(ModuleOffsetStr).getAsInteger(0, ModuleOffset))
@@ -87,7 +85,7 @@ int main(int argc, char **argv) {
   // Print stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argc, argv, "llvm symbolizer for compiler-rt\n");
   LLVMSymbolizer::Options Opts(ClUseSymbolTable, ClPrintFunctions,

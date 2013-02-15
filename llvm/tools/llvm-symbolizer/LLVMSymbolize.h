@@ -30,50 +30,49 @@ class ModuleInfo;
 
 class LLVMSymbolizer {
 public:
- struct Options {
+  struct Options {
     bool UseSymbolTable : 1;
     bool PrintFunctions : 1;
     bool PrintInlining : 1;
     bool Demangle : 1;
     Options(bool UseSymbolTable = true, bool PrintFunctions = true,
             bool PrintInlining = true, bool Demangle = true)
-        : UseSymbolTable(UseSymbolTable),
-          PrintFunctions(PrintFunctions),
-          PrintInlining(PrintInlining),
-          Demangle(Demangle) { }
+        : UseSymbolTable(UseSymbolTable), PrintFunctions(PrintFunctions),
+          PrintInlining(PrintInlining), Demangle(Demangle) {
+    }
   };
 
-  LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) { }
+  LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}
 
   // Returns the result of symbolization for module name/offset as
   // a string (possibly containing newlines).
-  std::string symbolizeCode(const std::string &ModuleName,
-                            uint64_t ModuleOffset);
-  std::string symbolizeData(const std::string &ModuleName,
-                            uint64_t ModuleOffset);
+  std::string
+  symbolizeCode(const std::string &ModuleName, uint64_t ModuleOffset);
+  std::string
+  symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
 private:
   ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName);
   std::string printDILineInfo(DILineInfo LineInfo) const;
   void DemangleName(std::string &Name) const;
 
-  typedef std::map<std::string, ModuleInfo*> ModuleMapTy;
+  typedef std::map<std::string, ModuleInfo *> ModuleMapTy;
   ModuleMapTy Modules;
   Options Opts;
   static const char kBadString[];
 };
 
 class ModuleInfo {
- public:
+public:
   ModuleInfo(ObjectFile *Obj, DIContext *DICtx);
 
-  DILineInfo symbolizeCode(
-      uint64_t ModuleOffset, const LLVMSymbolizer::Options& Opts) const;
+  DILineInfo symbolizeCode(uint64_t ModuleOffset,
+                           const LLVMSymbolizer::Options &Opts) const;
   DIInliningInfo symbolizeInlinedCode(
-      uint64_t ModuleOffset, const LLVMSymbolizer::Options& Opts) const;
-  bool symbolizeData(uint64_t ModuleOffset, std::string &Name,
-                     uint64_t &Start, uint64_t &Size) const;
+      uint64_t ModuleOffset, const LLVMSymbolizer::Options &Opts) const;
+  bool symbolizeData(uint64_t ModuleOffset, std::string &Name, uint64_t &Start,
+                     uint64_t &Size) const;
 
- private:
+private:
   bool getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
                               std::string &Name, uint64_t &Addr,
                               uint64_t &Size) const;
@@ -83,7 +82,7 @@ class ModuleInfo {
   struct SymbolDesc {
     uint64_t Addr;
     uint64_t AddrEnd;
-    friend bool operator<(const SymbolDesc& s1, const SymbolDesc& s2) {
+    friend bool operator<(const SymbolDesc &s1, const SymbolDesc &s2) {
       return s1.AddrEnd <= s2.Addr;
     }
   };
@@ -92,7 +91,7 @@ class ModuleInfo {
   SymbolMapTy Objects;
 };
 
-}  // namespace symbolize
-}  // namespace llvm
+} // namespace symbolize
+} // namespace llvm
 
-#endif  // LLVM_SYMBOLIZE_H
+#endif // LLVM_SYMBOLIZE_H
