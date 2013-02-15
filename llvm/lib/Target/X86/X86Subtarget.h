@@ -201,8 +201,10 @@ public:
 
   /// \brief Reset the features for the X86 target.
   virtual void resetSubtargetFeatures(const MachineFunction *MF);
+private:
+  void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
-
+public:
   /// Is this x86_64? (disregarding specific ABI / programming model)
   bool is64Bit() const {
     return In64BitMode;

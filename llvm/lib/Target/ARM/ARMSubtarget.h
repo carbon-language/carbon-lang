@@ -204,8 +204,10 @@ protected:
 
   /// \brief Reset the features for the X86 target.
   virtual void resetSubtargetFeatures(const MachineFunction *MF);
+private:
+  void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
-
+public:
   void computeIssueWidth();
 
   bool hasV4TOps()  const { return HasV4TOps;  }
