@@ -4041,7 +4041,21 @@ static int RewritesSort(const void *A, const void *B) {
     return -1;
   if (AsmRewriteB->Loc.getPointer() < AsmRewriteA->Loc.getPointer())
     return 1;
-  return 0;
+
+  // It's possible to have a SizeDirective rewrite and an Input/Output rewrite
+  // to the same location.  Make sure the SizeDirective rewrite is performed
+  // first.  This also ensure the sort algorithm is stable.
+  if (AsmRewriteA->Kind == AOK_SizeDirective) {
+    assert ((AsmRewriteB->Kind == AOK_Input || AsmRewriteB->Kind == AOK_Output) &&
+            "Expected an Input/Output rewrite!");
+    return -1;
+  }
+  if (AsmRewriteB->Kind == AOK_SizeDirective) {
+    assert ((AsmRewriteA->Kind == AOK_Input || AsmRewriteA->Kind == AOK_Output) &&
+            "Expected an Input/Output rewrite!");
+    return 1;
+  }
+  llvm_unreachable ("Unstable rewrite sort.");
 }
 
 bool
@@ -4174,6 +4188,7 @@ AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                              E = AsmStrRewrites.end();
        I != E; ++I) {
     const char *Loc = (*I).Loc.getPointer();
+    assert(Loc >= Start && "Expected Loc to be after Start!");
 
     unsigned AdditionalSkip = 0;
     AsmRewriteKind Kind = (*I).Kind;
