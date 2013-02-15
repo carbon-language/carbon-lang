@@ -524,7 +524,7 @@ public:
         if (!AssignToMatchType(cast_scalar, scalar.GetRawBits64(0), value->getType()))
             return false;
         
-        lldb_private::DataBufferHeap buf(cast_scalar.GetByteSize(), 0);
+        lldb_private::DataBufferHeap buf(region.m_extent, 0);
         
         lldb_private::Error err;
         
@@ -534,8 +534,8 @@ public:
         DataEncoderSP region_encoder = m_memory.GetEncoder(region);
         
         if (buf.GetByteSize() > region_encoder->GetByteSize())
-            return false; // TODO figure out why this happens; try "expr int i = 12; i"
-            
+            return false; // This should not happen
+        
         memcpy(region_encoder->GetDataStart(), buf.GetBytes(), buf.GetByteSize());
         
         return true;
@@ -665,9 +665,10 @@ public:
                 if (name_str == "this" ||
                     name_str == "self" ||
                     name_str == "_cmd")
+                {
                     resolved_value = m_decl_map.GetSpecialValue(lldb_private::ConstString(name_str.c_str()));
-                
-                variable_is_this = true;
+                    variable_is_this = true;
+                }
             }
             
             if (resolved_value.GetScalar().GetType() != lldb_private::Scalar::e_void)
@@ -835,9 +836,7 @@ public:
         // Fall back and allocate space [allocation type Alloca]
         
         Type *type = value->getType();
-        
-        lldb::ValueSP backing_value(new lldb_private::Value);
-                
+                        
         Memory::Region data_region = m_memory.Malloc(type);
         data_region.m_allocation->m_origin.GetScalar() = (unsigned long long)data_region.m_allocation->m_data->GetBytes();
         data_region.m_allocation->m_origin.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
