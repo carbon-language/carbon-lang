@@ -28,6 +28,12 @@ namespace lldb_private {
                                         const char* selector,
                                         uint64_t &value);
         
+        bool
+        ExtractSummaryFromObjCExpression (ValueObject &valobj,
+                                          const char* target_type,
+                                          const char* selector,
+                                          Stream &stream);
+
         lldb::ValueObjectSP
         CallSelectorOnObject (ValueObject &valobj,
                               const char* return_type,
@@ -39,6 +45,9 @@ namespace lldb_private {
                               const char* return_type,
                               const char* selector,
                               const char* key);
+        
+        size_t
+        ExtractIndexFromString (const char* item_name);
         
         bool
         Char16StringSummaryProvider (ValueObject& valobj, Stream& stream); // char16_t* and unichar*
@@ -70,6 +79,10 @@ namespace lldb_private {
         
         bool
         NSArraySummaryProvider (ValueObject& valobj, Stream& stream);
+        
+        template<bool cf_style>
+        bool
+        NSSetSummaryProvider (ValueObject& valobj, Stream& stream);
         
         template<bool needs_at>
         bool

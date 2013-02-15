@@ -547,6 +547,9 @@
 		94CB257116B0A4270059775D /* TypeSummary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB256E16B0A4260059775D /* TypeSummary.cpp */; };
 		94CB257216B0A4270059775D /* TypeSynthetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB256F16B0A4270059775D /* TypeSynthetic.cpp */; };
 		94CB257416B1D3880059775D /* FormatCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB257316B1D3870059775D /* FormatCache.cpp */; };
+		94D6A0AA16CEB55F00833B6E /* NSArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A716CEB55F00833B6E /* NSArray.cpp */; };
+		94D6A0AB16CEB55F00833B6E /* NSDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */; };
+		94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A916CEB55F00833B6E /* NSSet.cpp */; };
 		94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */; };
 		94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1583,6 +1586,9 @@
 		94CB256F16B0A4270059775D /* TypeSynthetic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSynthetic.cpp; path = source/DataFormatters/TypeSynthetic.cpp; sourceTree = "<group>"; };
 		94CB257316B1D3870059775D /* FormatCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatCache.cpp; path = source/DataFormatters/FormatCache.cpp; sourceTree = "<group>"; };
 		94CB257516B1D3910059775D /* FormatCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatCache.h; path = include/lldb/DataFormatters/FormatCache.h; sourceTree = "<group>"; };
+		94D6A0A716CEB55F00833B6E /* NSArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSArray.cpp; path = source/DataFormatters/NSArray.cpp; sourceTree = "<group>"; };
+		94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSDictionary.cpp; path = source/DataFormatters/NSDictionary.cpp; sourceTree = "<group>"; };
+		94D6A0A916CEB55F00833B6E /* NSSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSSet.cpp; path = source/DataFormatters/NSSet.cpp; sourceTree = "<group>"; };
 		94E367CC140C4EC4001C7A5A /* modify-python-lldb.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "modify-python-lldb.py"; sourceTree = "<group>"; };
 		94E367CE140C4EEA001C7A5A /* python-typemaps.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-typemaps.swig"; sourceTree = "<group>"; };
 		94EA1D5A15E6C99B00D4171A /* PythonDataObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonDataObjects.h; path = include/lldb/Interpreter/PythonDataObjects.h; sourceTree = "<group>"; };
@@ -3352,6 +3358,9 @@
 				94CB256216B069800059775D /* FormatManager.h */,
 				94CB255A16B069770059775D /* FormatManager.cpp */,
 				94CB256316B069800059775D /* FormatNavigator.h */,
+				94D6A0A716CEB55F00833B6E /* NSArray.cpp */,
+				94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */,
+				94D6A0A916CEB55F00833B6E /* NSSet.cpp */,
 				94CB256816B096F90059775D /* TypeCategory.h */,
 				94CB256416B096F10059775D /* TypeCategory.cpp */,
 				94CB256916B096FA0059775D /* TypeCategoryMap.h */,
@@ -3955,6 +3964,7 @@
 				2689006B13353E0E00698AC0 /* IRForTarget.cpp in Sources */,
 				2689006D13353E0E00698AC0 /* RecordingMemoryManager.cpp in Sources */,
 				2689006E13353E1A00698AC0 /* File.cpp in Sources */,
+				94D6A0AB16CEB55F00833B6E /* NSDictionary.cpp in Sources */,
 				2689006F13353E1A00698AC0 /* FileSpec.cpp in Sources */,
 				2689007013353E1A00698AC0 /* Condition.cpp in Sources */,
 				2689007113353E1A00698AC0 /* Host.cpp in Sources */,
@@ -4089,6 +4099,7 @@
 				2689011113353E8200698AC0 /* StringExtractor.cpp in Sources */,
 				2689011213353E8200698AC0 /* StringExtractorGDBRemote.cpp in Sources */,
 				2689011313353E8200698AC0 /* PseudoTerminal.cpp in Sources */,
+				94D6A0AA16CEB55F00833B6E /* NSArray.cpp in Sources */,
 				26B1FCC21338115F002886E2 /* Host.mm in Sources */,
 				26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */,
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
@@ -4199,6 +4210,7 @@
 				26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */,
 				2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */,
 				94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */,
+				94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */,
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
 				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
