@@ -205,6 +205,7 @@ clang_getTranslationUnitCursor
 clang_getTranslationUnitSpelling
 clang_getTypeDeclaration
 clang_getTypeKindSpelling
+clang_getTypeSpelling
 clang_getTypedefDeclUnderlyingType
 clang_hashCursor
 clang_indexLoc_getCXSourceLocation

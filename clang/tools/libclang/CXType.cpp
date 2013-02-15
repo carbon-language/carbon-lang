@@ -200,6 +200,21 @@ CXType clang_getCursorType(CXCursor C) {
   return MakeCXType(QualType(), TU);
 }
 
+CXString clang_getTypeSpelling(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return cxstring::createEmpty();
+
+  CXTranslationUnit TU = GetTU(CT);
+  SmallString<64> Str;
+  llvm::raw_svector_ostream OS(Str);
+  PrintingPolicy PP(cxtu::getASTUnit(TU)->getASTContext().getLangOpts());
+
+  T.print(OS, PP);
+
+  return cxstring::createDup(OS.str());
+}
+
 CXType clang_getTypedefDeclUnderlyingType(CXCursor C) {
   using namespace cxcursor;
   CXTranslationUnit TU = cxcursor::getCursorTU(C);

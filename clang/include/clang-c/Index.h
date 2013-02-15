@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 11
+#define CINDEX_VERSION_MINOR 12
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -2693,6 +2693,14 @@ typedef struct {
  * \brief Retrieve the type of a CXCursor (if any).
  */
 CINDEX_LINKAGE CXType clang_getCursorType(CXCursor C);
+
+/**
+ * \brief Pretty-print the underlying type using the rules of the
+ * language of the translation unit from which it came.
+ *
+ * If the type is invalid, an empty string is returned.
+ */
+CINDEX_LINKAGE CXString clang_getTypeSpelling(CXType CT);
 
 /**
  * \brief Retrieve the underlying type of a typedef declaration.

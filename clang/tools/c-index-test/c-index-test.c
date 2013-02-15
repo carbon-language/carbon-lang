@@ -1083,36 +1083,42 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
 /* Typekind testing.                                                          */
 /******************************************************************************/
 
-static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
-                                             CXClientData d) {
+static void PrintTypeAndTypeKind(CXType T, const char *Format) {
+  CXString TypeSpelling, TypeKindSpelling;
+
+  TypeSpelling = clang_getTypeSpelling(T);
+  TypeKindSpelling = clang_getTypeKindSpelling(T.kind);
+  printf(Format,
+         clang_getCString(TypeSpelling),
+         clang_getCString(TypeKindSpelling));
+  clang_disposeString(TypeSpelling);
+  clang_disposeString(TypeKindSpelling);
+}
+
+static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
+                                         CXClientData d) {
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
     CXType T = clang_getCursorType(cursor);
-    CXString S = clang_getTypeKindSpelling(T.kind);
     PrintCursor(cursor, NULL);
-    printf(" typekind=%s", clang_getCString(S));
+    PrintTypeAndTypeKind(T, " [type=%s] [typekind=%s]");
     if (clang_isConstQualifiedType(T))
       printf(" const");
     if (clang_isVolatileQualifiedType(T))
       printf(" volatile");
     if (clang_isRestrictQualifiedType(T))
       printf(" restrict");
-    clang_disposeString(S);
     /* Print the canonical type if it is different. */
     {
       CXType CT = clang_getCanonicalType(T);
       if (!clang_equalTypes(T, CT)) {
-        CXString CS = clang_getTypeKindSpelling(CT.kind);
-        printf(" [canonical=%s]", clang_getCString(CS));
-        clang_disposeString(CS);
+        PrintTypeAndTypeKind(CT, " [canonicaltype=%s] [canonicaltypekind=%s]");
       }
     }
     /* Print the return type if it exists. */
     {
       CXType RT = clang_getCursorResultType(cursor);
       if (RT.kind != CXType_Invalid) {
-        CXString RS = clang_getTypeKindSpelling(RT.kind);
-        printf(" [result=%s]", clang_getCString(RS));
-        clang_disposeString(RS);
+        PrintTypeAndTypeKind(RT, " [resulttype=%s] [resulttypekind=%s]");
       }
     }
     /* Print the argument types if they exist. */
@@ -1124,9 +1130,7 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
         for (i = 0; i < numArgs; ++i) {
           CXType T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
           if (T.kind != CXType_Invalid) {
-            CXString S = clang_getTypeKindSpelling(T.kind);
-            printf(" %s", clang_getCString(S));
-            clang_disposeString(S);
+            PrintTypeAndTypeKind(T, " [%s] [%s]");
           }
         }
         printf("]");
@@ -3543,7 +3547,7 @@ static void print_usage(void) {
     "       c-index-test -test-inclusion-stack-tu <AST file>\n");
   fprintf(stderr,
     "       c-index-test -test-print-linkage-source {<args>}*\n"
-    "       c-index-test -test-print-typekind {<args>}*\n"
+    "       c-index-test -test-print-type {<args>}*\n"
     "       c-index-test -test-print-bitwidth {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
     "       c-index-test -print-usr-file <file>\n"
@@ -3625,9 +3629,9 @@ int cindextest_main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-linkage-source") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all", PrintLinkage,
                                     NULL);
-  else if (argc > 2 && strcmp(argv[1], "-test-print-typekind") == 0)
+  else if (argc > 2 && strcmp(argv[1], "-test-print-type") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
-                                    PrintTypeKind, 0);
+                                    PrintType, 0);
   else if (argc > 2 && strcmp(argv[1], "-test-print-bitwidth") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintBitWidth, 0);
