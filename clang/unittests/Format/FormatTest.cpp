@@ -1620,6 +1620,10 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
   verifyFormat("void operator delete(void *ptr);");
   verifyFormat("void operator delete[](void *ptr);");
 
+  verifyFormat(
+      "ostream &operator<<(ostream &OutputStream,\n"
+      "                    SomeReallyLongType WithSomeReallyLongValue);");
+
   verifyGoogleFormat("operator void*();");
   verifyGoogleFormat("operator SomeType<SomeType<int>>();");
 }

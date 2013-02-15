@@ -1055,7 +1055,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
       Left.Type == TT_UnaryOperator || Left.Type == TT_ConditionalExpr ||
-      Left.is(tok::question))
+      Left.is(tok::question) || Left.is(tok::kw_operator))
     return false;
   if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
     return false;
