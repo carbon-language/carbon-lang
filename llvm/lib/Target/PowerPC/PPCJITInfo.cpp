@@ -115,7 +115,7 @@ asm(
     "lwz  r2, 208(r1)\n" // stub's frame
     "lwz  r4, 8(r2)\n" // stub's lr
     "li   r5, 0\n"       // 0 == 32 bit
-    "bl _PPCCompilationCallbackC\n"
+    "bl _LLVMPPCCompilationCallback\n"
     "mtctr r3\n"
     // Restore all int arg registers
     "lwz r10, 204(r1)\n"    "lwz r9,  200(r1)\n"
@@ -178,7 +178,7 @@ asm(
     "lwz  5, 104(1)\n" // stub's frame
     "lwz  4, 4(5)\n" // stub's lr
     "li   5, 0\n"       // 0 == 32 bit
-    "bl PPCCompilationCallbackC\n"
+    "bl LLVMPPCCompilationCallback\n"
     "mtctr 3\n"
     // Restore all int arg registers
     "lwz 10, 100(1)\n"   "lwz 9,  96(1)\n"
@@ -259,10 +259,10 @@ asm(
     "ld   4, 16(5)\n"  // stub's lr
     "li   5, 1\n"      // 1 == 64 bit
 #ifdef __ELF__
-    "bl PPCCompilationCallbackC\n"
+    "bl LLVMPPCCompilationCallback\n"
     "nop\n"
 #else
-    "bl _PPCCompilationCallbackC\n"
+    "bl _LLVMPPCCompilationCallback\n"
 #endif
     "mtctr 3\n"
     // Restore all int arg registers
@@ -292,9 +292,9 @@ void PPC64CompilationCallback() {
 #endif
 
 extern "C" {
-static void* LLVM_ATTRIBUTE_USED PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
-                                                         unsigned *OrigCallAddrPlus4,
-                                                         bool is64Bit) {
+void* LLVMPPCCompilationCallback(unsigned *StubCallAddrPlus4,
+                                 unsigned *OrigCallAddrPlus4,
+                                 bool is64Bit) {
   // Adjust the pointer to the address of the call instruction in the stub
   // emitted by emitFunctionStub, rather than the instruction after it.
   unsigned *StubCallAddr = StubCallAddrPlus4 - 1;

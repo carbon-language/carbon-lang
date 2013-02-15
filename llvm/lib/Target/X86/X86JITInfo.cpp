@@ -79,7 +79,7 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 # define CFI(x)
 #endif
 
-// Provide a wrapper for X86CompilationCallback2 that saves non-traditional
+// Provide a wrapper for LLVMX86CompilationCallback2 that saves non-traditional
 // callee saved registers, for the fastcc calling convention.
 extern "C" {
 #if defined(X86_64_JIT)
@@ -131,12 +131,12 @@ extern "C" {
     "subq    $32, %rsp\n"
     "movq    %rbp, %rcx\n"    // Pass prev frame and return address
     "movq    8(%rbp), %rdx\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "LLVMX86CompilationCallback2\n"
     "addq    $32, %rsp\n"
 #else
     "movq    %rbp, %rdi\n"    // Pass prev frame and return address
     "movq    8(%rbp), %rsi\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "LLVMX86CompilationCallback2\n"
 #endif
     // Restore all XMM arg registers
     "movaps  112(%rsp), %xmm7\n"
@@ -213,7 +213,7 @@ extern "C" {
     "movl    4(%ebp), %eax\n" // Pass prev frame and return address
     "movl    %eax, 4(%esp)\n"
     "movl    %ebp, (%esp)\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "LLVMX86CompilationCallback2\n"
     "movl    %ebp, %esp\n"    // Restore ESP
     CFI(".cfi_def_cfa_register %esp\n")
     "subl    $12, %esp\n"
@@ -269,7 +269,7 @@ extern "C" {
     "movl    4(%ebp), %eax\n" // Pass prev frame and return address
     "movl    %eax, 4(%esp)\n"
     "movl    %ebp, (%esp)\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "LLVMX86CompilationCallback2\n"
     "addl    $16, %esp\n"
     "movaps  48(%esp), %xmm3\n"
     CFI(".cfi_restore %xmm3\n")
@@ -300,10 +300,7 @@ extern "C" {
     SIZE(X86CompilationCallback_SSE)
   );
 # else
-  // the following function is called only from this translation unit,
-  // unless we are under 64bit Windows with MSC, where there is
-  // no support for inline assembly
-  static void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
+  void LLVMX86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
 
   _declspec(naked) void X86CompilationCallback(void) {
     __asm {
@@ -317,7 +314,7 @@ extern "C" {
       mov   eax, dword ptr [ebp+4]
       mov   dword ptr [esp+4], eax
       mov   dword ptr [esp], ebp
-      call  X86CompilationCallback2
+      call  LLVMX86CompilationCallback2
       mov   esp, ebp
       sub   esp, 12
       pop   ecx
@@ -337,19 +334,12 @@ extern "C" {
 #endif
 }
 
-/// X86CompilationCallback2 - This is the target-specific function invoked by the
+/// This is the target-specific function invoked by the
 /// function stub when we did not know the real target of a call.  This function
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
 extern "C" {
-#if !(defined (X86_64_JIT) && defined(_MSC_VER))
- // the following function is called only from this translation unit,
- // unless we are under 64bit Windows with MSC, where there is
- // no support for inline assembly
-static
-#endif
-void LLVM_ATTRIBUTE_USED
-X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
+void LLVMX86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];
   // We are reading raw stack data here. Tell MemorySanitizer that it is
   // sufficiently initialized.
@@ -520,7 +510,7 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Target,
 
   // This used to use 0xCD, but that value is used by JITMemoryManager to
   // initialize the buffer with garbage, which means it may follow a
-  // noreturn function call, confusing X86CompilationCallback2.  PR 4929.
+  // noreturn function call, confusing LLVMX86CompilationCallback2.  PR 4929.
   JCE.emitByte(0xCE);   // Interrupt - Just a marker identifying the stub!
   return Result;
 }
