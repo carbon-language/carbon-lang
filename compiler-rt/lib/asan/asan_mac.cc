@@ -133,7 +133,7 @@ void MaybeReexec() {
       const_cast<char*>(GetEnv(kDyldInsertLibraries));
   sptr old_env_len = dyld_insert_libraries ?
       internal_strlen(dyld_insert_libraries) : 0;
-  sptr fname_len = internal_strlen(info.dli_fname);
+  uptr fname_len = internal_strlen(info.dli_fname);
   if (!dyld_insert_libraries ||
       !REAL(strstr)(dyld_insert_libraries, info.dli_fname)) {
     // DYLD_INSERT_LIBRARIES is not set or does not contain the runtime
