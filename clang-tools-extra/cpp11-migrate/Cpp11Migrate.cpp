@@ -84,12 +84,8 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  unsigned int NumFiles = OptionsParser.getSourcePathList().size();
-
   FileContentsByPath FileStates1, FileStates2,
       *InputFileStates = &FileStates1, *OutputFileStates = &FileStates2;
-  FileStates1.reserve(NumFiles);
-  FileStates2.reserve(NumFiles);
 
   // Apply transforms.
   for (Transforms::const_iterator I = TransformManager.begin(),

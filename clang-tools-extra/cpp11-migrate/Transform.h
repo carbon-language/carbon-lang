@@ -48,16 +48,18 @@ class CompilationDatabase;
 } // namespace tooling
 } // namespace clang
 
-/// \brief First item in the pair is the path of a file and the second is a
+/// \brief The key is the path of a file, which is mapped to a
 /// buffer with the possibly modified contents of that file.
-typedef std::vector<std::pair<std::string, std::string> > FileContentsByPath;
+typedef std::map<std::string, std::string> FileContentsByPath;
 
 /// \brief In \p Results place copies of the buffers resulting from applying
 /// all rewrites represented by \p Rewrite.
 ///
 /// \p Results is made up of pairs {filename, buffer contents}. Pairs are
 /// simply appended to \p Results.
-void collectResults(clang::Rewriter &Rewrite, FileContentsByPath &Results);
+void collectResults(clang::Rewriter &Rewrite,
+                    const FileContentsByPath &InputStates,
+                    FileContentsByPath &Results);
 
 /// \brief Class for containing a Rewriter instance and all of
 /// its lifetime dependencies.

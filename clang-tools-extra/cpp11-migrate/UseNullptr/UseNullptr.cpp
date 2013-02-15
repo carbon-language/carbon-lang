@@ -58,7 +58,7 @@ int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
   // FIXME: Do something if some replacements didn't get applied?
   UseNullptrTool.applyAllReplacements(Rewrite.getRewriter());
 
-  collectResults(Rewrite.getRewriter(), ResultStates);
+  collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
   if (AcceptedChanges > 0) {
     setChangesMade();
