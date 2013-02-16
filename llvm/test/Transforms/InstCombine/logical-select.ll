@@ -10,10 +10,8 @@ define i32 @foo(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
   %j = or i32 %g, %i
   ret i32 %j
 ; CHECK: %e = icmp slt i32 %a, %b
-; CHECK-NEXT: %g = select i1 %e, i32 %c, i32 0
-; CHECK-NEXT: %i = select i1 %e, i32 0, i32 %d
-; CHECK-NEXT: %j = or i32 %g, %i
-; CHECK-NEXT: ret i32 %j
+; CHECK-NEXT: [[result:%.*]] = select i1 %e, i32 %c, i32 %d
+; CHECK-NEXT: ret i32 [[result]]
 }
 define i32 @bar(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
   %e = icmp slt i32 %a, %b
@@ -24,10 +22,8 @@ define i32 @bar(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
   %j = or i32 %i, %g
   ret i32 %j
 ; CHECK: %e = icmp slt i32 %a, %b
-; CHECK-NEXT: %g = select i1 %e, i32 %c, i32 0
-; CHECK-NEXT: %i = select i1 %e, i32 0, i32 %d
-; CHECK-NEXT: %j = or i32 %i, %g
-; CHECK-NEXT: ret i32 %j
+; CHECK-NEXT: [[result:%.*]] = select i1 %e, i32 %c, i32 %d
+; CHECK-NEXT: ret i32 [[result]]
 }
 
 define i32 @goo(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
@@ -40,10 +36,8 @@ entry:
   %3 = or i32 %1, %2
   ret i32 %3
 ; CHECK: %0 = icmp slt i32 %a, %b
-; CHECK-NEXT: %1 = select i1 %0, i32 %c, i32 0
-; CHECK-NEXT: %2 = select i1 %0, i32 0, i32 %d
-; CHECK-NEXT: %3 = or i32 %1, %2
-; CHECK-NEXT: ret i32 %3
+; CHECK-NEXT: [[result:%.*]] = select i1 %0, i32 %c, i32 %d
+; CHECK-NEXT: ret i32 [[result]]
 }
 define i32 @poo(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 entry:
@@ -55,10 +49,8 @@ entry:
   %3 = or i32 %1, %2
   ret i32 %3
 ; CHECK: %0 = icmp slt i32 %a, %b
-; CHECK-NEXT: %1 = select i1 %0, i32 %c, i32 0
-; CHECK-NEXT: %2 = select i1 %0, i32 0, i32 %d
-; CHECK-NEXT: %3 = or i32 %1, %2
-; CHECK-NEXT: ret i32 %3
+; CHECK-NEXT: [[result:%.*]] = select i1 %0, i32 %c, i32 %d
+; CHECK-NEXT: ret i32 [[result]]
 }
 
 define i32 @par(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
@@ -71,8 +63,6 @@ entry:
   %3 = or i32 %1, %2
   ret i32 %3
 ; CHECK: %0 = icmp slt i32 %a, %b
-; CHECK-NEXT: %1 = select i1 %0, i32 %c, i32 0
-; CHECK-NEXT: %2 = select i1 %0, i32 0, i32 %d
-; CHECK-NEXT: %3 = or i32 %1, %2
-; CHECK-NEXT: ret i32 %3
+; CHECK-NEXT: [[result:%.*]] = select i1 %0, i32 %c, i32 %d
+; CHECK-NEXT: ret i32 [[result]]
 }

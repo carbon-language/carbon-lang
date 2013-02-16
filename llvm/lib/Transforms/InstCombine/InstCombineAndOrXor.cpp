@@ -2071,6 +2071,20 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return BinaryOperator::CreateOr(Inner, C1);
   }
 
+  // Change (or (bool?A:B),(bool?C:D)) --> (bool?(or A,C):(or B,D))
+  // Since this OR statement hasn't been optimized further yet, we hope
+  // that this transformation will allow the new ORs to be optimized.
+  {
+    Value *X = 0, *Y = 0;
+    if (Op0->hasOneUse() && Op1->hasOneUse() &&
+        match(Op0, m_Select(m_Value(X), m_Value(A), m_Value(B))) &&
+        match(Op1, m_Select(m_Value(Y), m_Value(C), m_Value(D))) && X == Y) {
+      Value *orTrue = Builder->CreateOr(A, C);
+      Value *orFalse = Builder->CreateOr(B, D);
+      return SelectInst::Create(X, orTrue, orFalse);
+    }
+  }
+
   return Changed ? &I : 0;
 }
 
