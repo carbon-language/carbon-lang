@@ -2456,6 +2456,10 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
     }
 
     Alignment = 1ULL << Alignment;
+  } else {
+    // Reject alignments that aren't a power of two, for gas compatibility.
+    if (!isPowerOf2_64(Alignment))
+      Error(AlignmentLoc, "alignment must be a power of 2");
   }
 
   // Diagnose non-sensical max bytes to align.
