@@ -686,6 +686,14 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(CGM.Int8PtrTy, VTLayout->getNumVTableComponents());
 
+  // Construction vtable symbols are not part of the Itanium ABI, so we cannot
+  // guarantee that they actually will be available externally. Instead, when
+  // emitting an available_externally VTT, we provide references to an internal
+  // linkage construction vtable. The ABI only requires complete-object vtables
+  // to be the same for all instances of a type, not construction vtables.
+  if (Linkage == llvm::GlobalVariable::AvailableExternallyLinkage)
+    Linkage = llvm::GlobalVariable::InternalLinkage;
+
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, Linkage);
@@ -750,11 +758,8 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
                  llvm::Function::InternalLinkage;
   
       case TSK_ExplicitInstantiationDeclaration:
-        // FIXME: Use available_externally linkage. However, this currently
-        // breaks LLVM's build due to undefined symbols.
-        //      return llvm::GlobalVariable::AvailableExternallyLinkage;
         return !Context.getLangOpts().AppleKext ?
-                 llvm::GlobalVariable::LinkOnceODRLinkage :
+                 llvm::GlobalVariable::AvailableExternallyLinkage :
                  llvm::Function::InternalLinkage;
     }
   }
@@ -771,10 +776,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     return llvm::GlobalVariable::LinkOnceODRLinkage;
 
   case TSK_ExplicitInstantiationDeclaration:
-    // FIXME: Use available_externally linkage. However, this currently
-    // breaks LLVM's build due to undefined symbols.
-    //   return llvm::GlobalVariable::AvailableExternallyLinkage;
-    return llvm::GlobalVariable::LinkOnceODRLinkage;
+    return llvm::GlobalVariable::AvailableExternallyLinkage;
 
   case TSK_ExplicitInstantiationDefinition:
       return llvm::GlobalVariable::WeakODRLinkage;

@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o %t
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fhidden-weak-vtables -emit-llvm -o %t.hidden
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -disable-llvm-optzns -O3 -emit-llvm -o %t.opt
 // RUN: FileCheck --check-prefix=CHECK-1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-2 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-2-HIDDEN %s < %t.hidden
@@ -12,7 +13,9 @@
 // RUN: FileCheck --check-prefix=CHECK-7 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-8 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-9 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-9-OPT %s < %t.opt
 // RUN: FileCheck --check-prefix=CHECK-10 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-10-OPT %s < %t.opt
 // RUN: FileCheck --check-prefix=CHECK-11 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-12 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-13 %s < %t
@@ -160,11 +163,13 @@ void use_F() {
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
 // CHECK-9: @_ZTV1FIiE = external unnamed_addr constant
+// CHECK-9-OPT: @_ZTV1FIiE = available_externally unnamed_addr constant
 
 // E<int> is an explicit template instantiation declaration. It has a
 // key function that is not instantiated, so we should only reference
 // its vtable, not define it.
 // CHECK-10: @_ZTV1EIiE = external unnamed_addr constant
+// CHECK-10-OPT: @_ZTV1EIiE = available_externally unnamed_addr constant
 
 // The anonymous struct for e has no linkage, so the vtable should have
 // internal linkage.
@@ -214,3 +219,24 @@ public:
 void use_H() {
   H<int> h;
 }
+
+// RUN: FileCheck --check-prefix=CHECK-I %s < %t
+// RUN: FileCheck --check-prefix=CHECK-I-OPT %s < %t.opt
+
+// I<int> has an explicit instantiation declaration and needs a VTT and
+// construction vtables. We emit the VTT available_externally, but point it at
+// internal construction vtables because there is no way to form a reference to
+// the real construction vtables.
+
+// CHECK-I: @_ZTV1IIiE = external unnamed_addr constant
+// CHECK-I: @_ZTT1IIiE = external unnamed_addr constant
+// CHECK-I-NOT: @_ZTC1IIiE
+//
+// CHECK-I-OPT: @_ZTV1IIiE = available_externally unnamed_addr constant
+// CHECK-I-OPT: @_ZTT1IIiE = available_externally unnamed_addr constant {{.*}} @_ZTC1IIiE0_6VBase2
+// CHECK-I-OPT: @_ZTC1IIiE0_6VBase2 = internal unnamed_addr constant
+struct VBase1 { virtual void f(); }; struct VBase2 : virtual VBase1 {};
+template<typename T>
+struct I : VBase2 {};
+extern template struct I<int>;
+I<int> i;
