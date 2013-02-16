@@ -596,7 +596,7 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
   // Add target-independent attributes.
   SmallVector<std::pair<unsigned, Attribute>, 8> Attrs;
   for (Attribute::AttrKind Kind = Attribute::None;
-       Kind != Attribute::EndAttrKinds; ++Kind) {
+       Kind != Attribute::EndAttrKinds; Kind = Attribute::AttrKind(Kind + 1)) {
     if (!B.contains(Kind))
       continue;
 
