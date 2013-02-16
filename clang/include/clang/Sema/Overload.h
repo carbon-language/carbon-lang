@@ -78,7 +78,7 @@ namespace clang {
     ICK_Vector_Splat,          ///< A vector splat from an arithmetic type
     ICK_Complex_Real,          ///< Complex-real conversions (C99 6.3.1.7)
     ICK_Block_Pointer_Conversion,    ///< Block Pointer conversions 
-    ICK_TransparentUnionConversion, /// Transparent Union Conversions
+    ICK_TransparentUnionConversion, ///< Transparent Union Conversions
     ICK_Writeback_Conversion,  ///< Objective-C ARC writeback conversion
     ICK_Zero_Event_Conversion, ///< Zero constant to event (OpenCL1.2 6.12.10)
     ICK_Num_Conversion_Kinds   ///< The number of conversion kinds

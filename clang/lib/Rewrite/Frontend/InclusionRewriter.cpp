@@ -39,7 +39,7 @@ class InclusionRewriter : public PPCallbacks {
   bool ShowLineMarkers; ///< Show #line markers.
   bool UseLineDirective; ///< Use of line directives or line markers.
   typedef std::map<unsigned, FileChange> FileChangeMap;
-  FileChangeMap FileChanges; /// Tracks which files were included where.
+  FileChangeMap FileChanges; ///< Tracks which files were included where.
   /// Used transitively for building up the FileChanges mapping over the
   /// various \c PPCallbacks callbacks.
   FileChangeMap::iterator LastInsertedFileChange;

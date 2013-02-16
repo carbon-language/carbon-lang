@@ -47,13 +47,14 @@ public:
   std::vector<std::string> Includes;
   std::vector<std::string> MacroIncludes;
 
-  unsigned UsePredefines : 1; /// Initialize the preprocessor with the compiler
-                              /// and target specific predefines.
+  /// \brief Initialize the preprocessor with the compiler and target specific
+  /// predefines.
+  unsigned UsePredefines : 1;
 
-  unsigned DetailedRecord : 1; /// Whether we should maintain a detailed
-                               /// record of all macro definitions and
-                               /// expansions.
-  
+  /// \brief Whether we should maintain a detailed record of all macro
+  /// definitions and expansions.
+  unsigned DetailedRecord : 1;
+
   /// The implicit PCH included at the start of the translation unit, or empty.
   std::string ImplicitPCHInclude;
 
