@@ -384,7 +384,7 @@ MachException::Message::Reply(MachProcess *process, int signal)
         if (state_pid != -1)
         {
             errno = 0;
-            if (::ptrace (PT_THUPDATE, state_pid, (caddr_t)state.thread_port, soft_signal) != 0)
+            if (::ptrace (PT_THUPDATE, state_pid, (caddr_t)((uintptr_t)state.thread_port), soft_signal) != 0)
                 err.SetError(errno, DNBError::POSIX);
             else
                 err.Clear();
