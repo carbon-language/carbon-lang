@@ -5,6 +5,7 @@ entry:
   %0 = tail call i32 asm sideeffect inteldialect "mov eax, $1\0A\09mov $0, eax", "=r,r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32 1) nounwind
   ret i32 %0
 ; CHECK: t1
+; CHECK: movl %esp, %ebp
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
 ; CHECK: mov eax, ecx
@@ -18,6 +19,7 @@ entry:
   call void asm sideeffect inteldialect "mov eax, $$1", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
   ret void
 ; CHECK: t2
+; CHECK: movl %esp, %ebp
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
 ; CHECK: mov eax, 1
@@ -32,6 +34,7 @@ entry:
   call void asm sideeffect inteldialect "mov eax, DWORD PTR [$0]", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* %V.addr) nounwind
   ret void
 ; CHECK: t3
+; CHECK: movl %esp, %ebp
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
 ; CHECK: mov eax, DWORD PTR {{[[esp]}}
@@ -53,6 +56,7 @@ entry:
   %0 = load i32* %b1, align 4
   ret i32 %0
 ; CHECK: t18
+; CHECK: movl %esp, %ebp
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
 ; CHECK: lea ebx, foo
@@ -72,6 +76,7 @@ entry:
   call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(void ()* @t19_helper) nounwind
   ret void
 ; CHECK: t19:
+; CHECK: movl %esp, %ebp
 ; CHECK: movl ${{_?}}t19_helper, %eax
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
@@ -90,6 +95,7 @@ entry:
   %0 = load i32** %res, align 4
   ret i32* %0
 ; CHECK: t30:
+; CHECK: movl %esp, %ebp
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
 ; CHECK: lea edi, dword ptr [{{_?}}results]
@@ -97,8 +103,8 @@ entry:
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
-; CHECK: mov dword ptr [esp], edi
+; CHECK: mov dword ptr [ebp - 8], edi
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
-; CHECK: movl (%esp), %eax
+; CHECK: movl -8(%ebp), %eax
 }

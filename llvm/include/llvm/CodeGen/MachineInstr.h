@@ -642,6 +642,9 @@ public:
   bool isKill() const { return getOpcode() == TargetOpcode::KILL; }
   bool isImplicitDef() const { return getOpcode()==TargetOpcode::IMPLICIT_DEF; }
   bool isInlineAsm() const { return getOpcode() == TargetOpcode::INLINEASM; }
+  bool isMSInlineAsm() const { 
+    return getOpcode() == TargetOpcode::INLINEASM && getInlineAsmDialect();
+  }
   bool isStackAligningInlineAsm() const;
   InlineAsm::AsmDialect getInlineAsmDialect() const;
   bool isInsertSubreg() const {
