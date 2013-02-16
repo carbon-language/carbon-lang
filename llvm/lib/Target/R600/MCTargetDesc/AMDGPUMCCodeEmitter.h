@@ -42,13 +42,6 @@ public:
                                    SmallVectorImpl<MCFixup> &Fixups) const {
     return 0;
   }
-  virtual uint64_t VOPPostEncode(const MCInst &MI, uint64_t Value) const {
-    return Value;
-  }
-  virtual uint64_t i32LiteralEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixups) const {
-    return 0;
-  }
 };
 
 } // End namespace llvm
