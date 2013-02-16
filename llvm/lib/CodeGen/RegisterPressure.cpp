@@ -357,15 +357,14 @@ protected:
 /// Collect physical and virtual register operands.
 static void collectOperands(const MachineInstr *MI,
                             RegisterOperands &RegOpers) {
-  for(ConstMIBundleOperands OperI(MI); OperI.isValid(); ++OperI)
+  for (ConstMIBundleOperands OperI(MI); OperI.isValid(); ++OperI)
     RegOpers.collect(*OperI);
 
   // Remove redundant physreg dead defs.
-  for (unsigned i = RegOpers.DeadDefs.size(); i > 0; --i) {
-    unsigned Reg = RegOpers.DeadDefs[i-1];
-    if (containsReg(RegOpers.Defs, Reg))
-      RegOpers.DeadDefs.erase(&RegOpers.DeadDefs[i-1]);
-  }
+  SmallVectorImpl<unsigned>::iterator I =
+    std::remove_if(RegOpers.DeadDefs.begin(), RegOpers.DeadDefs.end(),
+                   std::bind1st(std::ptr_fun(containsReg), RegOpers.Defs));
+  RegOpers.DeadDefs.erase(I, RegOpers.DeadDefs.end());
 }
 
 /// Force liveness of registers.
