@@ -1172,6 +1172,11 @@ enum {
   STV_PROTECTED = 3   // Visible in other components but not preemptable
 };
 
+// Symbol number.
+enum {
+  STN_UNDEF = 0
+};
+
 // Relocation entry, without explicit addend.
 struct Elf32_Rel {
   Elf32_Addr r_offset; // Location (file byte offset, or program virtual addr)
