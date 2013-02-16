@@ -360,7 +360,7 @@ protected:
 
   void initRegPressure();
 
-  void updateScheduledPressure(std::vector<unsigned> NewMaxPressure);
+  void updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure);
 
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
   bool checkSchedLimit();

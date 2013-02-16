@@ -487,7 +487,7 @@ void ScheduleDAGMI::initRegPressure() {
 // FIXME: When the pressure tracker deals in pressure differences then we won't
 // iterate over all RegionCriticalPSets[i].
 void ScheduleDAGMI::
-updateScheduledPressure(std::vector<unsigned> NewMaxPressure) {
+updateScheduledPressure(const std::vector<unsigned> &NewMaxPressure) {
   for (unsigned i = 0, e = RegionCriticalPSets.size(); i < e; ++i) {
     unsigned ID = RegionCriticalPSets[i].PSetID;
     int &MaxUnits = RegionCriticalPSets[i].UnitIncrease;
