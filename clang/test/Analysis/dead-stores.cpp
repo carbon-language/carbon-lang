@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -analyze -analyzer-checker=deadcode.DeadStores -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -analyze -analyzer-store=region -analyzer-constraints=range -analyzer-checker=deadcode.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++11 -analyze -analyzer-checker=deadcode.DeadStores -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -std=c++11 -analyze -analyzer-store=region -analyzer-constraints=range -analyzer-checker=deadcode.DeadStores -verify -Wno-unreachable-code %s
 
 //===----------------------------------------------------------------------===//
 // Basic dead store checking (but in C++ mode).
@@ -148,4 +148,11 @@ void test_6b() {
     } 
   }
   catch (void *) {}
+}
+
+
+void testCXX11Using() {
+  using Int = int;
+  Int value;
+  value = 1; // expected-warning {{never read}}
 }

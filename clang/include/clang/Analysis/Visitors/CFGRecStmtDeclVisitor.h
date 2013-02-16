@@ -63,6 +63,7 @@ public:
         DISPATCH_CASE(ImplicitParam)
         DISPATCH_CASE(EnumConstant)
         DISPATCH_CASE(Typedef)
+        DISPATCH_CASE(TypeAlias)
         DISPATCH_CASE(Record)    // FIXME: Refine.  VisitStructDecl?
         DISPATCH_CASE(CXXRecord)
         DISPATCH_CASE(Enum)
@@ -82,6 +83,7 @@ public:
   DEFAULT_DISPATCH(ImplicitParam)
   DEFAULT_DISPATCH(EnumConstant)
   DEFAULT_DISPATCH(Typedef)
+  DEFAULT_DISPATCH(TypeAlias)
   DEFAULT_DISPATCH(Record)
   DEFAULT_DISPATCH(Enum)
   DEFAULT_DISPATCH(Field)
