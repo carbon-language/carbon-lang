@@ -177,10 +177,14 @@ def VReg_256 : RegisterClass<"AMDGPU", [v8i32], 256, (add VGPR_256)>;
 
 def VReg_512 : RegisterClass<"AMDGPU", [v16i32], 512, (add VGPR_512)>;
 
-// AllReg_* - A set of all scalar and vector registers of a given width.
-def AllReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32, (add VReg_32, SReg_32)>;
+// [SV]Src_* operands can have either an immediate or an register
+def SSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add SReg_32)>;
 
-def AllReg_64 : RegisterClass<"AMDGPU", [f64, i64], 64, (add SReg_64, VReg_64)>;
+def SSrc_64 : RegisterClass<"AMDGPU", [i64], 64, (add SReg_64)>;
+
+def VSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add VReg_32, SReg_32)>;
+
+def VSrc_64 : RegisterClass<"AMDGPU", [i64], 64, (add SReg_64, VReg_64)>;
 
 // Special register classes for predicates and the M0 register
 def SCCReg : RegisterClass<"AMDGPU", [i1], 1, (add SCC)>;
