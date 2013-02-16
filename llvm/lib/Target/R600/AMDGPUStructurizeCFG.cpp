@@ -22,8 +22,10 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/Support/PatternMatch.h"
 
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 namespace {
 
@@ -193,6 +195,8 @@ class AMDGPUStructurizeCFG : public RegionPass {
 
   void analyzeLoops(RegionNode *N);
 
+  Value *invert(Value *Condition);
+
   Value *buildCondition(BranchInst *Term, unsigned Idx, bool Invert);
 
   void gatherPredicates(RegionNode *N);
@@ -305,6 +309,40 @@ void AMDGPUStructurizeCFG::analyzeLoops(RegionNode *N) {
   }
 }
 
+/// \brief Invert the given condition
+Value *AMDGPUStructurizeCFG::invert(Value *Condition) {
+
+  // First: Check if it's a constant
+  if (Condition == BoolTrue)
+    return BoolFalse;
+
+  if (Condition == BoolFalse)
+    return BoolTrue;
+
+  if (Condition == BoolUndef)
+    return BoolUndef;
+
+  // Second: If the condition is already inverted, return the original value
+  if (match(Condition, m_Not(m_Value(Condition))))
+    return Condition;
+
+  // Third: Check all the users for an invert
+  BasicBlock *Parent = cast<Instruction>(Condition)->getParent();
+  for (Value::use_iterator I = Condition->use_begin(),
+       E = Condition->use_end(); I != E; ++I) {
+
+    Instruction *User = dyn_cast<Instruction>(*I);
+    if (!User || User->getParent() != Parent)
+      continue;
+
+    if (match(*I, m_Not(m_Specific(Condition))))
+      return *I;
+  }
+
+  // Last option: Create a new instruction
+  return BinaryOperator::CreateNot(Condition, "", Parent->getTerminator());
+}
+
 /// \brief Build the condition for one edge
 Value *AMDGPUStructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
                                             bool Invert) {
@@ -313,7 +351,7 @@ Value *AMDGPUStructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
     Cond = Term->getCondition();
 
     if (Idx != Invert)
-      Cond = BinaryOperator::CreateNot(Cond, "", Term);
+      Cond = invert(Cond);
   }
   return Cond;
 }
