@@ -98,8 +98,8 @@ define i32 @test10(<4 x i32> %a) nounwind {
 }
 
 define <4 x float> @test11(<4 x float> %a) nounwind  {
-; check: test11
-; check: vpermilps $27
+; CHECK: test11
+; CHECK: vpshufd $27
   %tmp1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x float> %tmp1
 }
@@ -113,8 +113,8 @@ define <4 x float> @test12(<4 x float>* %a) nounwind  {
 }
 
 define <4 x i32> @test13(<4 x i32> %a) nounwind  {
-; check: test13
-; check: vpshufd $27
+; CHECK: test13
+; CHECK: vpshufd $27
   %tmp1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x i32> %tmp1
 }
