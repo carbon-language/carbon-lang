@@ -68,11 +68,13 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &F);
 
-  inline bool dominates(MachineDomTreeNode* A, MachineDomTreeNode* B) const {
+  inline bool dominates(const MachineDomTreeNode* A,
+                        const MachineDomTreeNode* B) const {
     return DT->dominates(A, B);
   }
 
-  inline bool dominates(MachineBasicBlock* A, MachineBasicBlock* B) const {
+  inline bool dominates(const MachineBasicBlock* A,
+                        const MachineBasicBlock* B) const {
     return DT->dominates(A, B);
   }
 
@@ -97,12 +99,12 @@ public:
   }
 
   inline bool properlyDominates(const MachineDomTreeNode* A,
-                                MachineDomTreeNode* B) const {
+                                const MachineDomTreeNode* B) const {
     return DT->properlyDominates(A, B);
   }
 
-  inline bool properlyDominates(MachineBasicBlock* A,
-                                MachineBasicBlock* B) const {
+  inline bool properlyDominates(const MachineBasicBlock* A,
+                                const MachineBasicBlock* B) const {
     return DT->properlyDominates(A, B);
   }
 
@@ -160,7 +162,7 @@ public:
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
-  bool isReachableFromEntry(MachineBasicBlock *A) {
+  bool isReachableFromEntry(const MachineBasicBlock *A) {
     return DT->isReachableFromEntry(A);
   }
 
