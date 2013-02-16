@@ -6986,7 +6986,7 @@ void ASTReader::ReadComments() {
 
 void ASTReader::finishPendingActions() {
   while (!PendingIdentifierInfos.empty() || !PendingDeclChains.empty() ||
-         !PendingMacroIDs.empty()) {
+         !PendingMacroIDs.empty() || !PendingDeclContextInfos.empty()) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
     while (!PendingIdentifierInfos.empty()) {
@@ -7013,6 +7013,16 @@ void ASTReader::finishPendingActions() {
       }
     }
     PendingMacroIDs.clear();
+
+    // Wire up the DeclContexts for Decls that we delayed setting until
+    // recursive loading is completed.
+    while (!PendingDeclContextInfos.empty()) {
+      PendingDeclContextInfo Info = PendingDeclContextInfos.front();
+      PendingDeclContextInfos.pop_front();
+      DeclContext *SemaDC = cast<DeclContext>(GetDecl(Info.SemaDC));
+      DeclContext *LexicalDC = cast<DeclContext>(GetDecl(Info.LexicalDC));
+      Info.D->setDeclContextsImpl(SemaDC, LexicalDC, getContext());
+    }
   }
   
   // If we deserialized any C++ or Objective-C class definitions, any

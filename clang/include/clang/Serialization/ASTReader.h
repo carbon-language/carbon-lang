@@ -833,6 +833,21 @@ private:
   /// \brief Keeps track of the elements added to PendingDeclChains.
   llvm::SmallSet<serialization::DeclID, 16> PendingDeclChainsKnown;
 
+  /// \brief The Decl IDs for the Sema/Lexical DeclContext of a Decl that has
+  /// been loaded but its DeclContext was not set yet.
+  struct PendingDeclContextInfo {
+    Decl *D;
+    serialization::GlobalDeclID SemaDC;
+    serialization::GlobalDeclID LexicalDC;
+  };
+
+  /// \brief The set of Decls that have been loaded but their DeclContexts are
+  /// not set yet.
+  ///
+  /// The DeclContexts for these Decls will be set once recursive loading has
+  /// been completed.
+  std::deque<PendingDeclContextInfo> PendingDeclContextInfos;
+
   /// \brief The set of Objective-C categories that have been deserialized
   /// since the last time the declaration chains were linked.
   llvm::SmallPtrSet<ObjCCategoryDecl *, 16> CategoriesDeserialized;
@@ -1075,6 +1090,14 @@ private:
   void PassInterestingDeclToConsumer(Decl *D);
 
   void finishPendingActions();
+
+  void addPendingDeclContextInfo(Decl *D,
+                                 serialization::GlobalDeclID SemaDC,
+                                 serialization::GlobalDeclID LexicalDC) {
+    assert(D);
+    PendingDeclContextInfo Info = { D, SemaDC, LexicalDC };
+    PendingDeclContextInfos.push_back(Info);
+  }
 
   /// \brief Produce an error diagnostic and return true.
   ///
