@@ -96,6 +96,9 @@ public:
 
   const MCInstrDesc& AddiuSpImm(int64_t Imm) const;
 
+  void BuildAddiuSpImm
+    (MachineBasicBlock &MBB, MachineBasicBlock::iterator I, int64_t Imm) const;
+
 private:
   virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const;
 
