@@ -307,8 +307,8 @@ Subprogram descriptors
     Function * , ;; Pointer to LLVM function
     metadata, ;; Lists function template parameters
     metadata, ;; Function declaration descriptor
-    metadata  ;; List of function variables
-    i32,      ;; Line number where the scope of the subprogram begins
+    metadata, ;; List of function variables
+    i32       ;; Line number where the scope of the subprogram begins
   }
 
 These descriptors provide debug information about functions, methods and
