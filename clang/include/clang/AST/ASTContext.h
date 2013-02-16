@@ -57,28 +57,12 @@ namespace clang {
   class TargetInfo;
   class CXXABI;
   // Decls
-  class DeclContext;
-  class CXXConversionDecl;
-  class CXXMethodDecl;
-  class CXXRecordDecl;
-  class Decl;
-  class FieldDecl;
   class MangleContext;
   class ObjCIvarDecl;
-  class ObjCIvarRefExpr;
   class ObjCPropertyDecl;
-  class ParmVarDecl;
-  class RecordDecl;
-  class StoredDeclsMap;
-  class TagDecl;
-  class TemplateTemplateParmDecl;
-  class TemplateTypeParmDecl;
-  class TranslationUnitDecl;
-  class TypeDecl;
-  class TypedefNameDecl;
+  class UnresolvedSetIterator;
   class UsingDecl;
   class UsingShadowDecl;
-  class UnresolvedSetIterator;
 
   namespace Builtin { class Context; }
 
