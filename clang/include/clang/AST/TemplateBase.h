@@ -317,6 +317,12 @@ public:
     return Args.NumArgs;
   }
 
+  /// \brief Return the array of arguments in this template argument pack.
+  llvm::ArrayRef<TemplateArgument> getPackAsArray() const {
+    assert(Kind == Pack);
+    return llvm::ArrayRef<TemplateArgument>(Args.Args, Args.NumArgs);
+  }
+
   /// \brief Determines whether two template arguments are superficially the
   /// same.
   bool structurallyEquals(const TemplateArgument &Other) const;

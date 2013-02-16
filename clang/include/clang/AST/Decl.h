@@ -247,63 +247,45 @@ public:
     bool visibilityExplicit() const { return explicit_; }
 
     void setLinkage(Linkage L) { linkage_ = L; }
+
     void mergeLinkage(Linkage L) {
       setLinkage(minLinkage(linkage(), L));
     }
-    void mergeLinkage(LinkageInfo Other) {
-      mergeLinkage(Other.linkage());
+    void mergeLinkage(LinkageInfo other) {
+      mergeLinkage(other.linkage());
     }
 
-    // Merge the visibility V giving preference to explicit ones.
-    // This is used, for example, when merging the visibility of a class
-    // down to one of its members. If the member has no explicit visibility,
-    // the class visibility wins.
-    void mergeVisibility(Visibility V, bool E = false) {
-      // Never increase the visibility
-      if (visibility() < V)
+    /// Merge in the visibility 'newVis'.
+    void mergeVisibility(Visibility newVis, bool newExplicit) {
+      Visibility oldVis = visibility();
+
+      // Never increase visibility.
+      if (oldVis < newVis)
         return;
 
-      // If we have an explicit visibility, keep it
-      if (visibilityExplicit())
+      // If the new visibility is the same as the old and the new
+      // visibility isn't explicit, we have nothing to add.
+      if (oldVis == newVis && !newExplicit)
         return;
 
-      setVisibility(V, E);
+      // Otherwise, we're either decreasing visibility or making our
+      // existing visibility explicit.
+      setVisibility(newVis, newExplicit);
     }
-    // Merge the visibility V, keeping the most restrictive one.
-    // This is used for cases like merging the visibility of a template
-    // argument to an instantiation. If we already have a hidden class,
-    // no argument should give it default visibility.
-    void mergeVisibilityWithMin(Visibility V, bool E = false) {
-      // Never increase the visibility
-      if (visibility() < V)
-        return;
-
-      // FIXME: this
-      // If this visibility is explicit, keep it.
-      if (visibilityExplicit() && !E)
-        return;
-
-      // should be replaced with this
-      // Don't lose the explicit bit for nothing
-      //      if (visibility() == V && visibilityExplicit())
-      //        return;
-
-      setVisibility(V, E);
-    }
-    void mergeVisibility(LinkageInfo Other) {
-      mergeVisibility(Other.visibility(), Other.visibilityExplicit());
-    }
-    void mergeVisibilityWithMin(LinkageInfo Other) {
-      mergeVisibilityWithMin(Other.visibility(), Other.visibilityExplicit());
+    void mergeVisibility(LinkageInfo other) {
+      mergeVisibility(other.visibility(), other.visibilityExplicit());
     }
 
-    void merge(LinkageInfo Other) {
-      mergeLinkage(Other);
-      mergeVisibility(Other);
+    /// Merge both linkage and visibility.
+    void merge(LinkageInfo other) {
+      mergeLinkage(other);
+      mergeVisibility(other);
     }
-    void mergeWithMin(LinkageInfo Other) {
-      mergeLinkage(Other);
-      mergeVisibilityWithMin(Other);
+
+    /// Merge linkage and conditionally merge visibility.
+    void mergeMaybeWithVisibility(LinkageInfo other, bool withVis) {
+      mergeLinkage(other);
+      if (withVis) mergeVisibility(other);
     }
   };
 

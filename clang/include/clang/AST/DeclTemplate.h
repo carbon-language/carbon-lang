@@ -84,6 +84,13 @@ public:
 
   unsigned size() const { return NumParams; }
 
+  llvm::ArrayRef<NamedDecl*> asArray() {
+    return llvm::ArrayRef<NamedDecl*>(begin(), size());
+  }
+  llvm::ArrayRef<const NamedDecl*> asArray() const {
+    return llvm::ArrayRef<const NamedDecl*>(begin(), size());
+  }
+
   NamedDecl* getParam(unsigned Idx) {
     assert(Idx < size() && "Template parameter index out-of-range");
     return begin()[Idx];
@@ -192,6 +199,11 @@ public:
 
   /// \brief Retrieve the template argument at a given index.
   const TemplateArgument &operator[](unsigned Idx) const { return get(Idx); }
+
+  /// \brief Produce this as an array ref.
+  llvm::ArrayRef<TemplateArgument> asArray() const {
+    return llvm::ArrayRef<TemplateArgument>(data(), size());
+  }
 
   /// \brief Retrieve the number of template arguments in this
   /// template argument list.
@@ -322,6 +334,23 @@ public:
 
   bool isExplicitSpecialization() const {
     return getTemplateSpecializationKind() == TSK_ExplicitSpecialization;
+  }
+
+  /// \brief True if this declaration is an explicit specialization,
+  /// explicit instantiation declaration, or explicit instantiation
+  /// definition.
+  bool isExplicitInstantiationOrSpecialization() const {
+    switch (getTemplateSpecializationKind()) {
+    case TSK_ExplicitSpecialization:
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      return true;
+
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      return false;
+    }
+    llvm_unreachable("bad template specialization kind");
   }
 
   /// \brief Set the template specialization kind.
@@ -1431,6 +1460,23 @@ public:
 
   bool isExplicitSpecialization() const {
     return getSpecializationKind() == TSK_ExplicitSpecialization;
+  }
+
+  /// \brief True if this declaration is an explicit specialization,
+  /// explicit instantiation declaration, or explicit instantiation
+  /// definition.
+  bool isExplicitInstantiationOrSpecialization() const {
+    switch (getTemplateSpecializationKind()) {
+    case TSK_ExplicitSpecialization:
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      return true;
+
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      return false;
+    }
+    llvm_unreachable("bad template specialization kind");
   }
 
   void setSpecializationKind(TemplateSpecializationKind TSK) {
