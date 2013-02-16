@@ -458,28 +458,41 @@ void AMDGPUStructurizeCFG::insertConditions() {
 
     assert(Term->isConditional());
 
-    PhiInserter.Initialize(Boolean, "");
-    if (Parent == LoopEnd) {
-      PhiInserter.AddAvailableValue(LoopStart, BoolTrue);
-    } else {
-      PhiInserter.AddAvailableValue(&Func->getEntryBlock(), BoolFalse);
-      PhiInserter.AddAvailableValue(Parent, BoolFalse);
-    }
+    Value *Default = (Parent == LoopEnd) ? BoolTrue : BoolFalse;
 
-    bool ParentHasValue = false;
+    PhiInserter.Initialize(Boolean, "");
+    PhiInserter.AddAvailableValue(&Func->getEntryBlock(), Default);
+    if (Parent == LoopEnd)
+      PhiInserter.AddAvailableValue(LoopStart, BoolTrue);
+    else
+      PhiInserter.AddAvailableValue(Parent, BoolFalse);
+
     BasicBlock *Succ = Term->getSuccessor(0);
     BBPredicates &Preds = (Parent == LoopEnd) ? LoopPred : Predicates[Succ];
+
+    NearestCommonDominator Dominator(DT);
+    Dominator.addBlock(Parent, false);
+
+    Value *ParentValue = 0;
     for (BBPredicates::iterator PI = Preds.begin(), PE = Preds.end();
          PI != PE; ++PI) {
 
+      if (PI->first == Parent) {
+        ParentValue = PI->second;
+        break;
+      }
       PhiInserter.AddAvailableValue(PI->first, PI->second);
-      ParentHasValue |= PI->first == Parent;
+      Dominator.addBlock(PI->first);
     }
 
-    if (ParentHasValue)
-      Term->setCondition(PhiInserter.GetValueAtEndOfBlock(Parent));
-    else
+    if (ParentValue) {
+      Term->setCondition(ParentValue);
+    } else {
+      if (!Dominator.wasResultExplicitMentioned())
+        PhiInserter.AddAvailableValue(Dominator.getResult(), Default);
+
       Term->setCondition(PhiInserter.GetValueInMiddleOfBlock(Parent));
+    }
   }
 }
 
