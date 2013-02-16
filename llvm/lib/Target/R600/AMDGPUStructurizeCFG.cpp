@@ -533,11 +533,17 @@ void AMDGPUStructurizeCFG::setPhiValues() {
       Updater.AddAvailableValue(&Func->getEntryBlock(), Undef);
       Updater.AddAvailableValue(To, Undef);
 
+      NearestCommonDominator Dominator(DT);
+      Dominator.addBlock(To, false);
       for (BBValueVector::iterator VI = PI->second.begin(),
            VE = PI->second.end(); VI != VE; ++VI) {
 
         Updater.AddAvailableValue(VI->first, VI->second);
+        Dominator.addBlock(VI->first);
       }
+
+      if (!Dominator.wasResultExplicitMentioned())
+        Updater.AddAvailableValue(Dominator.getResult(), Undef);
 
       for (BBVector::iterator FI = From.begin(), FE = From.end();
            FI != FE; ++FI) {
