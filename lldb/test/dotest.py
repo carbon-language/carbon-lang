@@ -20,7 +20,6 @@ Type:
 for available options.
 """
 
-import argparse
 import os
 import platform
 import signal
@@ -30,6 +29,11 @@ import textwrap
 import time
 import unittest2
 import progress
+
+if sys.version_info >= (2, 7):
+    argparse = __import__('argparse')
+else:
+    argparse = __import__('argparse_compat')
 
 def is_exe(fpath):
     """Returns true if fpath is an executable."""
@@ -133,7 +137,7 @@ post_flight = None
 
 # The 'archs' and 'compilers' can be specified via either command line or configFile,
 # with the command line overriding the configFile.  The corresponding options can be
-# specified more than once. For example, "-A x86_64 -A i386" => archs=['x86_64', 'i386'] 
+# specified more than once. For example, "-A x86_64 -A i386" => archs=['x86_64', 'i386']
 # and "-C gcc -C clang" => compilers=['gcc', 'clang'].
 archs = None        # Must be initialized after option parsing
 compilers = None    # Must be initialized after option parsing
