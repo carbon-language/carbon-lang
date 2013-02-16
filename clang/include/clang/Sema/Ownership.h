@@ -23,13 +23,10 @@
 //===----------------------------------------------------------------------===//
 
 namespace clang {
-  class Attr;
   class CXXCtorInitializer;
   class CXXBaseSpecifier;
   class Decl;
-  class DeclGroupRef;
   class Expr;
-  class NestedNameSpecifier;
   class ParsedTemplateArgument;
   class QualType;
   class Stmt;
