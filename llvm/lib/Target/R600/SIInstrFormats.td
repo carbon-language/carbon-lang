@@ -144,3 +144,69 @@ class SOPC_32 <bits<7> op, string opName, list<dag> pattern>
 class SOPC_64 <bits<7> op, string opName, list<dag> pattern>
   : SOPC <op, (outs SCCReg:$dst), (ins SReg_64:$src0, SReg_64:$src1), opName, pattern>;
 
+class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
+  op,
+  (outs VReg_128:$vdata),
+  (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
+       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, VReg_32:$vaddr,
+       GPR4Align<SReg_256>:$srsrc, GPR4Align<SReg_128>:$ssamp),
+  asm,
+  []> {
+  let mayLoad = 1;
+  let mayStore = 0;
+}
+
+class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
+  op,
+  (outs),
+  (ins regClass:$vdata, i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc,
+   i1imm:$addr64, i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr,
+   GPR4Align<SReg_128>:$srsrc, i1imm:$slc, i1imm:$tfe, SReg_32:$soffset),
+  asm,
+  []> {
+  let mayStore = 1;
+  let mayLoad = 0;
+}
+
+class MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> : MUBUF <
+  op,
+  (outs regClass:$dst),
+  (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
+       i1imm:$lds, VReg_32:$vaddr, GPR4Align<SReg_128>:$srsrc, i1imm:$slc,
+       i1imm:$tfe, SReg_32:$soffset),
+  asm,
+  []> {
+  let mayLoad = 1;
+  let mayStore = 0;
+}
+
+class MTBUF_Load_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
+  op,
+  (outs regClass:$dst),
+  (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
+       i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr, GPR4Align<SReg_128>:$srsrc,
+       i1imm:$slc, i1imm:$tfe, SReg_32:$soffset),
+  asm,
+  []> {
+  let mayLoad = 1;
+  let mayStore = 0;
+}
+
+multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
+  def _IMM : SMRD <
+             op, 1,
+             (outs dstClass:$dst),
+             (ins GPR2Align<SReg_64>:$sbase, i32imm:$offset),
+             asm,
+             []
+  >;
+
+  def _SGPR : SMRD <
+              op, 0,
+              (outs dstClass:$dst),
+              (ins GPR2Align<SReg_64>:$sbase, SReg_32:$soff),
+              asm,
+              []
+  >;
+}
+
