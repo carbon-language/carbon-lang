@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -fsyntax-only -Wconversion -verify %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -fsyntax-only -Wconversion %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -fsyntax-only -Wconversion -std=c++11 -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -fsyntax-only -Wconversion -std=c++11 %s 2>&1 | FileCheck %s
 
 #include <stddef.h>
 
@@ -130,4 +130,10 @@ namespace test5 {
   }
 
   template void func<3>();
+}
+
+namespace test6 {
+  decltype(nullptr) func() {
+    return NULL;
+  }
 }
