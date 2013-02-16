@@ -158,10 +158,10 @@ void SILowerControlFlowPass::SkipIfDead(MachineInstr &MI) {
           .addImm(0)
           .addImm(1)
           .addImm(1)
-          .addReg(AMDGPU::SREG_LIT_0)
-          .addReg(AMDGPU::SREG_LIT_0)
-          .addReg(AMDGPU::SREG_LIT_0)
-          .addReg(AMDGPU::SREG_LIT_0);
+          .addReg(AMDGPU::VGPR0)
+          .addReg(AMDGPU::VGPR0)
+          .addReg(AMDGPU::VGPR0)
+          .addReg(AMDGPU::VGPR0);
 
   // ... and terminate wavefront
   BuildMI(MBB, Insert, DL, TII->get(AMDGPU::S_ENDPGM));
@@ -296,7 +296,7 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
 
   // Clear this pixel from the exec mask if the operand is negative
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMPX_LE_F32_e32), AMDGPU::VCC)
-          .addReg(AMDGPU::SREG_LIT_0)
+          .addImm(0)
           .addOperand(MI.getOperand(0));
 
   MI.eraseFromParent();

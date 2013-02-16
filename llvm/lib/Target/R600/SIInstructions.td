@@ -1018,45 +1018,6 @@ def S_BFE_I64 : SOP2_64 <0x0000002a, "S_BFE_I64", []>;
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "S_CBRANCH_G_FORK", []>;
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "S_ABSDIFF_I32", []>;
 
-class V_MOV_IMM <ValueType type, Operand immType, SDNode immNode> : InstSI <
-  (outs VReg_32:$dst),
-  (ins immType:$src0),
-  "V_MOV_IMM",
-   [(set VReg_32:$dst, (type immNode:$src0))]
->;
-
-let isCodeGenOnly = 1, isPseudo = 1 in {
-
-def V_MOV_IMM_I32 : V_MOV_IMM<i32, i32imm, imm>;
-def V_MOV_IMM_F32 : V_MOV_IMM<f32, f32imm, fpimm>;
-
-def S_MOV_IMM_I32 : InstSI <
-  (outs SReg_32:$dst),
-  (ins i32imm:$src0),
-  "S_MOV_IMM_I32",
-  [(set SReg_32:$dst, (imm:$src0))]
->;
-
-} // End isCodeGenOnly, isPseudo = 1
-
-// i64 immediates aren't supported in hardware, split it into two 32bit values
-def : Pat <
-  (i64 imm:$imm),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (S_MOV_IMM_I32 (LO32 imm:$imm)), sub0),
-    (S_MOV_IMM_I32 (HI32 imm:$imm)), sub1)
->;
-
-class SI_LOAD_LITERAL<Operand ImmType> :
-    Enc32 <(outs), (ins ImmType:$imm), "LOAD_LITERAL $imm", []> {
-
-  bits<32> imm;
-  let Inst{31-0} = imm;
-}
-
-def SI_LOAD_LITERAL_I32 : SI_LOAD_LITERAL<i32imm>;
-def SI_LOAD_LITERAL_F32 : SI_LOAD_LITERAL<f32imm>;
-
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
 def SET_M0 : InstSI <
@@ -1173,7 +1134,7 @@ def SI_KILL : InstSI <
 
 def : Pat <
   (int_AMDGPU_kilp),
-  (SI_KILL (V_MOV_IMM_I32 0xbf800000))
+  (SI_KILL (V_MOV_B32_e32 0xbf800000))
 >;
 
 /* int_SI_vs_load_input */
@@ -1182,7 +1143,7 @@ def : Pat<
                         VReg_32:$buf_idx_vgpr),
   (BUFFER_LOAD_FORMAT_XYZW imm:$attr_offset, 0, 1, 0, 0, 0,
                            VReg_32:$buf_idx_vgpr, SReg_128:$tlst,
-                           0, 0, (i32 SREG_LIT_0))
+                           0, 0, 0)
 >;
 
 /* int_SI_export */
@@ -1319,6 +1280,38 @@ def : Pat <
   (COPY_TO_REGCLASS SReg_64:$vcc, VCCReg)
 >;
 
+/********** ================== **********/
+/********** Immediate Patterns **********/
+/********** ================== **********/
+
+def : Pat <
+  (i32 imm:$imm),
+  (V_MOV_B32_e32 imm:$imm)
+>;
+
+def : Pat <
+  (f32 fpimm:$imm),
+  (V_MOV_B32_e32 fpimm:$imm)
+>;
+
+def : Pat <
+  (i32 imm:$imm),
+  (S_MOV_B32 imm:$imm)
+>;
+
+def : Pat <
+  (f32 fpimm:$imm),
+  (S_MOV_B32 fpimm:$imm)
+>;
+
+// i64 immediates aren't supported in hardware, split it into two 32bit values
+def : Pat <
+  (i64 imm:$imm),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (S_MOV_B32 (i32 (LO32 imm:$imm))), sub0),
+    (S_MOV_B32 (i32 (HI32 imm:$imm))), sub1)
+>;
+
 /********** ===================== **********/
 /********** Interpolation Paterns **********/
 /********** ===================== **********/
@@ -1397,12 +1390,12 @@ def : Pat<
 
 def : Pat <
   (fcos VSrc_32:$src0),
-  (V_COS_F32_e32 (V_MUL_F32_e32 VSrc_32:$src0, (V_MOV_IMM_I32 CONST.TWO_PI_INV)))
+  (V_COS_F32_e32 (V_MUL_F32_e32 VSrc_32:$src0, (V_MOV_B32_e32 CONST.TWO_PI_INV)))
 >;
 
 def : Pat <
   (fsin VSrc_32:$src0),
-  (V_SIN_F32_e32 (V_MUL_F32_e32 VSrc_32:$src0, (V_MOV_IMM_I32 CONST.TWO_PI_INV)))
+  (V_SIN_F32_e32 (V_MUL_F32_e32 VSrc_32:$src0, (V_MOV_B32_e32 CONST.TWO_PI_INV)))
 >;
 
 def : Pat <
@@ -1448,7 +1441,7 @@ multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
   // 2. Offset loaded in an 32bit SGPR
   def : Pat <
     (constant_load (SIadd64bit32bit SReg_64:$sbase, imm:$offset)),
-    (vt (Instr_SGPR SReg_64:$sbase, (S_MOV_IMM_I32 imm:$offset)))
+    (vt (Instr_SGPR SReg_64:$sbase, (S_MOV_B32 imm:$offset)))
   >;
 
   // 3. No offset at all

@@ -22,8 +22,6 @@ def EXEC_LO : SIReg <"EXEC LO", 126>;
 def EXEC_HI : SIReg <"EXEC HI", 127>;
 def EXEC : SI_64<"EXEC", [EXEC_LO, EXEC_HI], 126>;
 def SCC : SIReg<"SCC", 253>;
-def SREG_LIT_0 : SIReg <"S LIT 0", 128>;
-def SI_LITERAL_CONSTANT : SIReg<"LITERAL CONSTANT", 255>;
 def M0 : SIReg <"M0", 124>;
 
 //Interpolation registers
@@ -136,7 +134,7 @@ def VGPR_512 : RegisterTuples<[sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7,
 
 // Register class for all scalar registers (SGPRs + Special Registers)
 def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
-    (add SGPR_32,  SREG_LIT_0, M0, EXEC_LO, EXEC_HI)
+    (add SGPR_32, M0, EXEC_LO, EXEC_HI)
 >;
 
 def SReg_64 : RegisterClass<"AMDGPU", [i64], 64, (add SGPR_64, VCC, EXEC)>;
