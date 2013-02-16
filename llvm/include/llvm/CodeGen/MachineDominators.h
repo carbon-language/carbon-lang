@@ -80,12 +80,12 @@ public:
 
   // dominates - Return true if A dominates B. This performs the
   // special checks necessary if A and B are in the same basic block.
-  bool dominates(MachineInstr *A, MachineInstr *B) const {
-    MachineBasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+  bool dominates(const MachineInstr *A, const MachineInstr *B) const {
+    const MachineBasicBlock *BBA = A->getParent(), *BBB = B->getParent();
     if (BBA != BBB) return DT->dominates(BBA, BBB);
 
     // Loop through the basic block until we find A or B.
-    MachineBasicBlock::iterator I = BBA->begin();
+    MachineBasicBlock::const_iterator I = BBA->begin();
     for (; &*I != A && &*I != B; ++I)
       /*empty*/ ;
 
