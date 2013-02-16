@@ -11,7 +11,7 @@
 ;;
 ;;===----------------------------------------------------------------------===
 
-extrn X86CompilationCallback2: PROC
+extrn LLVMX86CompilationCallback2: PROC
 
 .code
 X86CompilationCallback proc
@@ -42,7 +42,7 @@ X86CompilationCallback proc
     ; Pass prev frame and return address.
     mov     rcx, rbp
     mov     rdx, qword ptr [rbp+8]
-    call    X86CompilationCallback2
+    call    LLVMX86CompilationCallback2
 
     ; Restore all XMM arg registers.
     movaps  xmm3, [rsp+48+32]
