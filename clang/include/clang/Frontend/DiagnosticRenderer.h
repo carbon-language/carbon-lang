@@ -32,7 +32,8 @@ typedef llvm::PointerUnion<const Diagnostic *,
                            const StoredDiagnostic *> DiagOrStoredDiag;
   
 /// \brief Class to encapsulate the logic for formatting a diagnostic message.
-///  Actual "printing" logic is implemented by subclasses.
+///
+/// Actual "printing" logic is implemented by subclasses.
 ///
 /// This class provides an interface for building and emitting
 /// diagnostic, including all of the macro backtraces, caret diagnostics, FixIt
@@ -56,7 +57,7 @@ protected:
   
   /// \brief The location of the last include whose stack was printed if known.
   ///
-  /// Same restriction as \see LastLoc essentially, but tracking include stack
+  /// Same restriction as LastLoc essentially, but tracking include stack
   /// root locations rather than diagnostic locations.
   SourceLocation LastIncludeLoc;
   
