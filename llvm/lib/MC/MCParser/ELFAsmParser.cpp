@@ -413,7 +413,16 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
 
   unsigned Type = ELF::SHT_PROGBITS;
 
-  if (!TypeName.empty()) {
+  if (TypeName.empty()) {
+    if (SectionName.startswith(".note"))
+      Type = ELF::SHT_NOTE;
+    else if (SectionName == ".init_array")
+      Type = ELF::SHT_INIT_ARRAY;
+    else if (SectionName == ".fini_array")
+      Type = ELF::SHT_FINI_ARRAY;
+    else if (SectionName == ".preinit_array")
+      Type = ELF::SHT_PREINIT_ARRAY;
+  } else {
     if (TypeName == "init_array")
       Type = ELF::SHT_INIT_ARRAY;
     else if (TypeName == "fini_array")
