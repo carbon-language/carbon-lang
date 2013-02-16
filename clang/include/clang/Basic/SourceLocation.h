@@ -165,7 +165,7 @@ public:
     return (void*)(uintptr_t)getRawEncoding();
   }
 
-  /// getFromPtrEncoding - Turn a pointer encoding of a SourceLocation object
+  /// \brief Turn a pointer encoding of a SourceLocation object back
   /// into a real SourceLocation.
   static SourceLocation getFromPtrEncoding(const void *Encoding) {
     return getFromRawEncoding((unsigned)(uintptr_t)Encoding);
