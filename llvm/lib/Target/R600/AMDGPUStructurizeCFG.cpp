@@ -39,6 +39,7 @@ typedef SmallVector<BBValuePair, 2> BBValueVector;
 typedef SmallPtrSet<BasicBlock *, 8> BBSet;
 
 typedef DenseMap<PHINode *, BBValueVector> PhiMap;
+typedef DenseMap<DomTreeNode *, unsigned> DTN2UnsignedMap;
 typedef DenseMap<BasicBlock *, PhiMap> BBPhiMap;
 typedef DenseMap<BasicBlock *, Value *> BBPredicates;
 typedef DenseMap<BasicBlock *, BBPredicates> PredMap;
@@ -47,6 +48,71 @@ typedef DenseMap<BasicBlock *, BBVector> BB2BBVecMap;
 // The name for newly created blocks.
 
 static const char *FlowBlockName = "Flow";
+
+/// @brief Find the nearest common dominator for multiple BasicBlocks
+///
+/// Helper class for AMDGPUStructurizeCFG
+/// TODO: Maybe move into common code
+class NearestCommonDominator {
+
+  DominatorTree *DT;
+
+  DTN2UnsignedMap IndexMap;
+
+  BasicBlock *Result;
+  unsigned ResultIndex;
+  bool ExplicitMentioned;
+
+public:
+  /// \brief Start a new query
+  NearestCommonDominator(DominatorTree *DomTree) {
+    DT = DomTree;
+    Result = 0;
+  }
+
+  /// \brief Add BB to the resulting dominator
+  void addBlock(BasicBlock *BB, bool Remember = true) {
+
+    DomTreeNode *Node = DT->getNode(BB);
+
+    if (Result == 0) {
+      unsigned Numbering = 0;
+      for (;Node;Node = Node->getIDom())
+        IndexMap[Node] = ++Numbering;
+      Result = BB;
+      ResultIndex = 1;
+      ExplicitMentioned = Remember;
+      return;
+    }
+
+    for (;Node;Node = Node->getIDom())
+      if (IndexMap.count(Node))
+        break;
+      else
+        IndexMap[Node] = 0;
+
+    assert(Node && "Dominator tree invalid!");
+
+    unsigned Numbering = IndexMap[Node];
+    if (Numbering > ResultIndex) {
+      Result = Node->getBlock();
+      ResultIndex = Numbering;
+      ExplicitMentioned = Remember && (Result == BB);
+    } else if (Numbering == ResultIndex) {
+      ExplicitMentioned |= Remember;
+    }
+  }
+
+  /// \brief Is "Result" one of the BBs added with "Remember" = True?
+  bool wasResultExplicitMentioned() {
+    return ExplicitMentioned;
+  }
+
+  /// \brief Get the query result
+  BasicBlock *getResult() {
+    return Result;
+  }
+};
 
 /// @brief Transforms the control flow graph on one single entry/exit region
 /// at a time.
