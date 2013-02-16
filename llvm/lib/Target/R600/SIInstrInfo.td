@@ -40,6 +40,10 @@ def IMM12bit : ImmLeaf <
   [{return isUInt<12>(Imm);}]
 >;
 
+class InlineImm <ValueType vt> : ImmLeaf <vt, [{
+  return -16 <= Imm && Imm <= 64;
+}]>;
+
 class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
     AMDGPUInst<outs, ins, asm, pattern> {
 

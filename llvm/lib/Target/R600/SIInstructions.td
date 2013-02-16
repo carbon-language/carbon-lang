@@ -1292,6 +1292,11 @@ def : Pat <
   (S_MOV_B32 fpimm:$imm)
 >;
 
+def : Pat <
+  (i64 InlineImm<i64>:$imm),
+  (S_MOV_B64 InlineImm<i64>:$imm)
+>;
+
 // i64 immediates aren't supported in hardware, split it into two 32bit values
 def : Pat <
   (i64 imm:$imm),
