@@ -711,7 +711,7 @@ public:
   ExpressionParser(AnnotatedLine &Line) : Current(&Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
-  void parse(int Precedence = prec::Unknown) {
+  void parse(prec::Level Precedence = prec::Unknown) {
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
@@ -729,7 +729,7 @@ public:
 
     while (Current != NULL) {
       // Consume operators with higher precedence.
-      parse(Precedence + 1);
+      parse(prec::Level(Precedence + 1));
 
       // At the end of the line or when an operator with higher precedence is
       // found, insert fake parenthesis and return.
