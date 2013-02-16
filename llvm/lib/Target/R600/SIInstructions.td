@@ -781,15 +781,15 @@ def V_CNDMASK_B32_e32 : VOP2 <0x00000000, (outs VReg_32:$dst),
 }
 
 def V_CNDMASK_B32_e64 : VOP3 <0x00000100, (outs VReg_32:$dst),
-  (ins VReg_32:$src0, VReg_32:$src1, SReg_1:$src2, InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
+  (ins VReg_32:$src0, VReg_32:$src1, SReg_64:$src2, InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
   "V_CNDMASK_B32_e64",
-  [(set (i32 VReg_32:$dst), (select SReg_1:$src2, VReg_32:$src1, VReg_32:$src0))]
+  [(set (i32 VReg_32:$dst), (select (i1 SReg_64:$src2), VReg_32:$src1, VReg_32:$src0))]
 >;
 
 //f32 pattern for V_CNDMASK_B32_e64
 def : Pat <
-  (f32 (select SReg_1:$src2, VReg_32:$src1, VReg_32:$src0)),
-  (V_CNDMASK_B32_e64 VReg_32:$src0, VReg_32:$src1, SReg_1:$src2)
+  (f32 (select (i1 SReg_64:$src2), VReg_32:$src1, VReg_32:$src0)),
+  (V_CNDMASK_B32_e64 VReg_32:$src0, VReg_32:$src1, SReg_64:$src2)
 >;
 
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
@@ -983,11 +983,14 @@ def : Pat <
 def S_AND_B32 : SOP2_32 <0x0000000e, "S_AND_B32", []>;
 
 def S_AND_B64 : SOP2_64 <0x0000000f, "S_AND_B64",
-  [(set SReg_64:$dst, (and SSrc_64:$src0, SSrc_64:$src1))]
+  [(set SReg_64:$dst, (i64 (and SSrc_64:$src0, SSrc_64:$src1)))]
 >;
-def S_AND_VCC : SOP2_VCC <0x0000000f, "S_AND_B64",
-  [(set SReg_1:$vcc, (SIvcc_and SSrc_64:$src0, SSrc_64:$src1))]
+
+def : Pat <
+  (i1 (and SSrc_64:$src0, SSrc_64:$src1)),
+  (S_AND_B64 SSrc_64:$src0, SSrc_64:$src1)
 >;
+
 def S_OR_B32 : SOP2_32 <0x00000010, "S_OR_B32", []>;
 def S_OR_B64 : SOP2_64 <0x00000011, "S_OR_B64", []>;
 def S_XOR_B32 : SOP2_32 <0x00000012, "S_XOR_B32", []>;
@@ -1069,9 +1072,9 @@ let isBranch = 1, isTerminator = 1 in {
 
 def SI_IF : InstSI <
   (outs SReg_64:$dst),
-  (ins SReg_1:$vcc, brtarget:$target),
+  (ins SReg_64:$vcc, brtarget:$target),
   "SI_IF",
-  [(set SReg_64:$dst, (int_SI_if SReg_1:$vcc, bb:$target))]
+  [(set SReg_64:$dst, (int_SI_if SReg_64:$vcc, bb:$target))]
 >;
 
 def SI_ELSE : InstSI <
@@ -1101,9 +1104,9 @@ def SI_BREAK : InstSI <
 
 def SI_IF_BREAK : InstSI <
   (outs SReg_64:$dst),
-  (ins SReg_1:$vcc, SReg_64:$src),
+  (ins SReg_64:$vcc, SReg_64:$src),
   "SI_IF_BREAK",
-  [(set SReg_64:$dst, (int_SI_if_break SReg_1:$vcc, SReg_64:$src))]
+  [(set SReg_64:$dst, (int_SI_if_break SReg_64:$vcc, SReg_64:$src))]
 >;
 
 def SI_ELSE_BREAK : InstSI <
@@ -1260,29 +1263,14 @@ def : BitConvert <i32, f32, VReg_32>;
 def : BitConvert <f32, i32, SReg_32>;
 def : BitConvert <f32, i32, VReg_32>;
 
-def : Pat <
-  (i64 (SIsreg1_bitcast SReg_1:$vcc)),
-  (S_MOV_B64 (COPY_TO_REGCLASS SReg_1:$vcc, SReg_64))
->;
-
-def : Pat <
-  (i1 (SIsreg1_bitcast SReg_64:$vcc)),
-  (COPY_TO_REGCLASS SReg_64:$vcc, SReg_1)
->;
-
-def : Pat <
-  (i64 (SIvcc_bitcast VCCReg:$vcc)),
-  (S_MOV_B64 (COPY_TO_REGCLASS VCCReg:$vcc, SReg_64))
->;
-
-def : Pat <
-  (i1 (SIvcc_bitcast SReg_64:$vcc)),
-  (COPY_TO_REGCLASS SReg_64:$vcc, VCCReg)
->;
-
 /********** ================== **********/
 /********** Immediate Patterns **********/
 /********** ================== **********/
+
+def : Pat <
+  (i1 imm:$imm),
+  (S_MOV_B64 imm:$imm)
+>;
 
 def : Pat <
   (i32 imm:$imm),

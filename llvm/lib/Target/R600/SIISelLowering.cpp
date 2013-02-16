@@ -31,8 +31,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
   addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
-  addRegisterClass(MVT::i1, &AMDGPU::SCCRegRegClass);
-  addRegisterClass(MVT::i1, &AMDGPU::VCCRegRegClass);
+  addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
 
   addRegisterClass(MVT::v1i32, &AMDGPU::VReg_32RegClass);
   addRegisterClass(MVT::v2i32, &AMDGPU::VReg_64RegClass);
@@ -41,8 +40,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::v16i32, &AMDGPU::VReg_512RegClass);
 
   computeRegisterProperties();
-
-  setOperationAction(ISD::AND, MVT::i1, Custom);
 
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
@@ -202,7 +199,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: return LowerLOAD(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
-  case ISD::AND: return Loweri1ContextSwitch(Op, DAG, ISD::AND);
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IntrinsicID =
                          cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
@@ -217,30 +213,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
   }
   return SDValue();
-}
-
-/// \brief The function is for lowering i1 operations on the
-/// VCC register.
-///
-/// In the VALU context, VCC is a one bit register, but in the
-/// SALU context the VCC is a 64-bit register (1-bit per thread).  Since only
-/// the SALU can perform operations on the VCC register, we need to promote
-/// the operand types from i1 to i64 in order for tablegen to be able to match
-/// this operation to the correct SALU instruction.  We do this promotion by
-/// wrapping the operands in a CopyToReg node.
-///
-SDValue SITargetLowering::Loweri1ContextSwitch(SDValue Op,
-                                               SelectionDAG &DAG,
-                                               unsigned VCCNode) const {
-  DebugLoc DL = Op.getDebugLoc();
-
-  SDValue OpNode = DAG.getNode(VCCNode, DL, MVT::i64,
-                               DAG.getNode(SIISD::VCC_BITCAST, DL, MVT::i64,
-                                           Op.getOperand(0)),
-                               DAG.getNode(SIISD::VCC_BITCAST, DL, MVT::i64,
-                                           Op.getOperand(1)));
-
-  return DAG.getNode(SIISD::VCC_BITCAST, DL, MVT::i1, OpNode);
 }
 
 /// \brief Helper function for LowerBRCOND
@@ -445,14 +417,4 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     }
   }
   return SDValue();
-}
-
-#define NODE_NAME_CASE(node) case SIISD::node: return #node;
-
-const char* SITargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default: return AMDGPUTargetLowering::getTargetNodeName(Opcode);
-  NODE_NAME_CASE(VCC_AND)
-  NODE_NAME_CASE(VCC_BITCAST)
-  }
 }

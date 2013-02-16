@@ -135,16 +135,6 @@ enum {
 
 } // End namespace AMDGPUISD
 
-namespace SIISD {
-
-enum {
-  SI_FIRST = AMDGPUISD::LAST_AMDGPU_ISD_NUMBER,
-  VCC_AND,
-  VCC_BITCAST
-};
-
-} // End namespace SIISD
-
 } // End namespace llvm
 
 #endif // AMDGPUISELLOWERING_H

@@ -137,9 +137,7 @@ def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
     (add SGPR_32, M0, EXEC_LO, EXEC_HI)
 >;
 
-def SReg_64 : RegisterClass<"AMDGPU", [i64], 64, (add SGPR_64, VCC, EXEC)>;
-
-def SReg_1 : RegisterClass<"AMDGPU", [i1], 1, (add VCC, SGPR_64, EXEC)>;
+def SReg_64 : RegisterClass<"AMDGPU", [i1, i64], 64, (add SGPR_64, VCC, EXEC)>;
 
 def SReg_128 : RegisterClass<"AMDGPU", [v4f32, v4i32], 128, (add SGPR_128)>;
 
@@ -178,7 +176,7 @@ def VReg_512 : RegisterClass<"AMDGPU", [v16i32], 512, (add VGPR_512)>;
 // [SV]Src_* operands can have either an immediate or an register
 def SSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add SReg_32)>;
 
-def SSrc_64 : RegisterClass<"AMDGPU", [i64], 64, (add SReg_64)>;
+def SSrc_64 : RegisterClass<"AMDGPU", [i1, i64], 64, (add SReg_64)>;
 
 def VSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add VReg_32, SReg_32)>;
 

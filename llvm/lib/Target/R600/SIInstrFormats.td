@@ -39,9 +39,6 @@ class SOP2_32 <bits<7> op, string opName, list<dag> pattern>
 class SOP2_64 <bits<7> op, string opName, list<dag> pattern>
   : SOP2 <op, (outs SReg_64:$dst), (ins SSrc_64:$src0, SSrc_64:$src1), opName, pattern>;
 
-class SOP2_VCC <bits<7> op, string opName, list<dag> pattern>
-  : SOP2 <op, (outs SReg_1:$vcc), (ins SSrc_64:$src0, SSrc_64:$src1), opName, pattern>;
-
 class VOP1_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
                    string opName, list<dag> pattern> : 
   VOP1 <
@@ -101,7 +98,7 @@ multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
   def _e32 : VOPC <op, (ins arc:$src0, vrc:$src1), opName, pattern>;
   def _e64 : VOP3 <
     {0, op{7}, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-    (outs SReg_1:$dst),
+    (outs SReg_64:$dst),
     (ins arc:$src0, vrc:$src1,
          InstFlag:$abs, InstFlag:$clamp,
          InstFlag:$omod, InstFlag:$neg),
