@@ -2512,7 +2512,7 @@ static bool findMaskedBFI(SDValue N, SDValue &BFI, uint64_t &Mask,
     N = N.getOperand(0);
   } else {
     // Mask is the whole width.
-    Mask = (1ULL << N.getValueType().getSizeInBits()) - 1;
+    Mask = -1ULL >> (64 - N.getValueType().getSizeInBits());
   }
 
   if (N.getOpcode() == AArch64ISD::BFI) {
@@ -2590,7 +2590,7 @@ static SDValue tryCombineToBFI(SDNode *N,
                             DAG.getConstant(Width, MVT::i64));
 
   // Mask is trivial
-  if ((LHSMask | RHSMask) == (1ULL << VT.getSizeInBits()) - 1)
+  if ((LHSMask | RHSMask) == (-1ULL >> (64 - VT.getSizeInBits())))
     return BFI;
 
   return DAG.getNode(ISD::AND, DL, VT, BFI,
@@ -2660,7 +2660,7 @@ static SDValue tryCombineToLargerBFI(SDNode *N,
                     BFI.getOperand(2), BFI.getOperand(3));
 
   // If the masking is trivial, we don't need to create it.
-  if ((ExtraMask | ExistingMask) == (1ULL << VT.getSizeInBits()) - 1)
+  if ((ExtraMask | ExistingMask) == (-1ULL >> (64 - VT.getSizeInBits())))
     return BFI;
 
   return DAG.getNode(ISD::AND, DL, VT, BFI,
