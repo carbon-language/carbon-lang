@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -x objective-c %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -x objective-c %s -o - | FileCheck %s
 
 @interface NSObject
 + (id) new;
