@@ -358,6 +358,11 @@ typedef enum {
 
 void LLVMInitializeCore(LLVMPassRegistryRef R);
 
+/** Deallocate and destroy all ManagedStatic variables.
+    @see llvm::llvm_shutdown
+    @see ManagedStatic */
+void LLVMShutdown();
+
 
 /*===-- Error handling ----------------------------------------------------===*/
 
@@ -2621,6 +2626,34 @@ LLVMBool LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM);
     the module provider.
     @see llvm::PassManagerBase::~PassManagerBase. */
 void LLVMDisposePassManager(LLVMPassManagerRef PM);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup LLVMCCoreThreading Threading
+ *
+ * Handle the structures needed to make LLVM safe for multithreading.
+ *
+ * @{
+ */
+
+/** Allocate and initialize structures needed to make LLVM safe for
+    multithreading. The return value indicates whether multithreaded
+    initialization succeeded. Must be executed in isolation from all
+    other LLVM api calls.
+    @see llvm::llvm_start_multithreaded */
+LLVMBool LLVMStartMultithreaded();
+
+/** Deallocate structures necessary to make LLVM safe for multithreading.
+    Must be executed in isolation from all other LLVM api calls.
+    @see llvm::llvm_stop_multithreaded */
+void LLVMStopMultithreaded();
+
+/** Check whether LLVM is executing in thread-safe mode or not.
+    @see llvm::llvm_is_multithreaded */
+LLVMBool LLVMIsMultithreaded();
 
 /**
  * @}
