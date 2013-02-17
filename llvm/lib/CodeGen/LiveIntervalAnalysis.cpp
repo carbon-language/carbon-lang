@@ -1032,3 +1032,39 @@ void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI,
   HMEditor HME(*this, *MRI, *TRI, OldIndex, NewIndex, UpdateFlags);
   HME.updateAllRanges(MI);
 }
+
+void
+LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
+                                     MachineBasicBlock::reverse_iterator RBegin,
+                                     MachineBasicBlock::reverse_iterator REnd,
+                                     SmallVectorImpl<unsigned> &OrigRegs) {
+  for (unsigned i = 0, e = OrigRegs.size(); i != e; ++i) {
+    unsigned Reg = OrigRegs[i];
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
+
+    LiveInterval &LI = getInterval(Reg);
+    SlotIndex startIdx = (REnd == MBB->rend()) ? getMBBStartIdx(MBB)
+                                               : getInstructionIndex(&*REnd);
+    for (MachineBasicBlock::reverse_iterator I = RBegin; I != REnd; ++I) {
+      MachineInstr *MI = &*I;
+      SlotIndex instrIdx = getInstructionIndex(MI);
+
+      for (MachineInstr::mop_iterator OI = MI->operands_begin(),
+           OE = MI->operands_end(); OI != OE; ++OI) {
+        const MachineOperand &MO = *OI;
+        if (!MO.isReg() || MO.getReg() != Reg)
+          continue;
+
+        assert(MO.isUse() && "Register defs are not yet supported.");
+
+        if (!LI.liveAt(instrIdx)) {
+          LiveRange *LR = LI.getLiveRangeContaining(startIdx.getRegSlot());
+          assert(LR && "Used registers must be live-in.");
+          LR->end = instrIdx.getRegSlot();
+          break;
+        }
+      }
+    }
+  }
+}

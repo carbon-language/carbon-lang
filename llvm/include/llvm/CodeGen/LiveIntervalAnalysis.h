@@ -281,6 +281,21 @@ namespace llvm {
     void handleMoveIntoBundle(MachineInstr* MI, MachineInstr* BundleStart,
                               bool UpdateFlags = false);
 
+    /// repairIntervalsInRange - Update live intervals for instructions in a
+    /// small range of reverse iterators. It is intended for use after target
+    /// hooks that may insert or remove instructions, and is only efficient for
+    /// a small number of instructions.
+    ///
+    /// OrigRegs is a vector of registers that were originally used by the
+    /// instructions in the range between the two iterators.
+    ///
+    /// Currently, the only only changes that are supported are simple removal
+    /// and addition of uses.
+    void repairIntervalsInRange(MachineBasicBlock *MBB,
+                                MachineBasicBlock::reverse_iterator RBegin,
+                                MachineBasicBlock::reverse_iterator REnd,
+                                SmallVectorImpl<unsigned> &OrigRegs);
+
     // Register mask functions.
     //
     // Machine instructions may use a register mask operand to indicate that a
