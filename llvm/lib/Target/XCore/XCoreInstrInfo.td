@@ -603,6 +603,7 @@ defm BRBF: FRU6_LRU6_backwards_branch<0b011111, "bf">;
 let Defs = [SP], Uses = [SP] in {
 let neverHasSideEffects = 1 in
 defm EXTSP : FU6_LU6_np<0b0111011110, "extsp">;
+
 let mayStore = 1 in
 defm ENTSP : FU6_LU6_np<0b0111011101, "entsp">;
 
@@ -611,8 +612,12 @@ defm RETSP : FU6_LU6<0b0111011111, "retsp", XCoreRetsp>;
 }
 }
 
-// TODO extdp, kentsp, krestsp, blat
-// getsr, kalli
+let neverHasSideEffects = 1 in
+defm EXTDP : FU6_LU6_np<0b0111001110, "extdp">;
+
+let Uses = [R11], isCall=1 in
+defm BLAT : FU6_LU6_np<0b0111001101, "blat">;
+
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 def BRBU_u6 : _FU6<0b0111011100, (outs), (ins brtarget:$a), "bu -$a", []>;
 
@@ -632,6 +637,9 @@ let Defs = [R11], isReMaterializable = 1 in
 def LDAWCP_lu6: _FLU6<0b0111111101, (outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
                       [(set R11, ADDRcpii:$a)]>;
 
+let Defs = [R11] in
+defm GETSR : FU6_LU6_np<0b0111111100, "getsr r11,">;
+
 defm SETSR : FU6_LU6_int<0b0111101101, "setsr", int_xcore_setsr>;
 
 defm CLRSR : FU6_LU6_int<0b0111101100, "clrsr", int_xcore_clrsr>;
@@ -643,6 +651,14 @@ let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1,
 defm SETSR_branch : FU6_LU6_np<0b0111101101, "setsr">;
 defm CLRSR_branch : FU6_LU6_np<0b0111101100, "clrsr">;
 }
+
+defm KCALL : FU6_LU6_np<0b0111001111, "kcall">;
+
+let Uses = [SP], Defs = [SP], mayStore = 1 in
+defm KENTSP : FU6_LU6_np<0b0111101110, "kentsp">;
+
+let Uses = [SP], Defs = [SP], mayLoad = 1 in
+defm KRESTSP : FU6_LU6_np<0b0111101111, "krestsp">;
 
 // U10
 // TODO ldwcpl, blacp
