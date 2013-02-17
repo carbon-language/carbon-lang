@@ -726,7 +726,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
   // Don't handle popping bytes on return for now.
   if (X86MFInfo->getBytesToPopOnReturn() != 0)
-    return 0;
+    return false;
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
   // tail call optimization. Fastisel doesn't know how to do that.
