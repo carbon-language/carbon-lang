@@ -217,6 +217,15 @@
 # CHECK: sext r9, r1
 0x45 0x37
 
+# CHECK: tsetmr r7, r3
+0x1f 0x1f
+
+# CHECK: eef r1, res[r6]
+0x96 0x2f
+
+# CHECK: eet r11, res[r0]
+0x5c 0x27
+
 # rus instructions
 
 # CHECK: chkct res[r1], 8

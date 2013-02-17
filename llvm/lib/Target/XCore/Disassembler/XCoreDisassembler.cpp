@@ -100,6 +100,11 @@ static DecodeStatus Decode2RInstruction(MCInst &Inst,
                                         uint64_t Address,
                                         const void *Decoder);
 
+static DecodeStatus Decode2RImmInstruction(MCInst &Inst,
+                                           unsigned Insn,
+                                           uint64_t Address,
+                                           const void *Decoder);
+
 static DecodeStatus DecodeR2RInstruction(MCInst &Inst,
                                          unsigned Insn,
                                          uint64_t Address,
@@ -340,6 +345,19 @@ Decode2RInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
     return Decode2OpInstructionFail(Inst, Insn, Address, Decoder);
 
   DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+  DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
+  return S;
+}
+
+static DecodeStatus
+Decode2RImmInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                       const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op1, Op2);
+  if (S != MCDisassembler::Success)
+    return Decode2OpInstructionFail(Inst, Insn, Address, Decoder);
+
+  Inst.addOperand(MCOperand::CreateImm(Op1));
   DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
   return S;
 }

@@ -700,7 +700,6 @@ def LDWCP_lu10 : _FLU10<0b111001, (outs), (ins i32imm:$a), "ldw r11, cp[$a]",
 }
 
 // Two operand short
-// TODO eet, eef, tsetmr
 def NOT : _F2R<0b100010, (outs GRRegs:$dst), (ins GRRegs:$b),
                 "not $dst, $b", [(set GRRegs:$dst, (not GRRegs:$b))]>;
 
@@ -847,6 +846,15 @@ def PEEK_2r : _F2R<0b101110, (outs GRRegs:$dst), (ins GRRegs:$src),
 def ENDIN_2r : _F2R<0b100101, (outs GRRegs:$dst), (ins GRRegs:$src),
                      "endin $dst, res[$src]",
                      [(set GRRegs:$dst, (int_xcore_endin GRRegs:$src))]>;
+
+def EEF_2r : _F2R<0b001011, (outs), (ins GRRegs:$a, GRRegs:$b),
+                  "eef $a, res[$b]", []>;
+
+def EET_2r : _F2R<0b001001, (outs), (ins GRRegs:$a, GRRegs:$b),
+                  "eet $a, res[$b]", []>;
+
+def TSETMR_2r : _F2RImm<0b000111, (outs), (ins i32imm:$a, GRRegs:$b),
+                        "tsetmr r$a, $b", []>;
 
 // Two operand long
 def BITREV_l2r : _FL2R<0b0000011000, (outs GRRegs:$dst), (ins GRRegs:$src),
