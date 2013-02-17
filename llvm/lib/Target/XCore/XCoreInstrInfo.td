@@ -661,7 +661,6 @@ let Uses = [SP], Defs = [SP], mayLoad = 1 in
 defm KRESTSP : FU6_LU6_np<0b0111101111, "krestsp">;
 
 // U10
-// TODO ldwcpl, blacp
 
 let Defs = [R11], isReMaterializable = 1, neverHasSideEffects = 1 in
 def LDAPF_u10 : _FU10<0b110110, (outs), (ins i32imm:$a), "ldap r11, $a", []>;
@@ -677,11 +676,23 @@ def LDAPF_lu10_ba : _FLU10<0b110110, (outs), (ins i32imm:$a), "ldap r11, $a",
 let isCall=1,
 // All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR], Uses = [SP] in {
+def BLACP_u10 : _FU10<0b111000, (outs), (ins i32imm:$a), "bla cp[$a]", []>;
+
+def BLACP_lu10 : _FLU10<0b111000, (outs), (ins i32imm:$a), "bla cp[$a]", []>;
+
 def BLRF_u10 : _FU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
                      [(XCoreBranchLink immU10:$a)]>;
 
 def BLRF_lu10 : _FLU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
                        [(XCoreBranchLink immU20:$a)]>;
+}
+
+let Defs = [R11], mayLoad = 1, isReMaterializable = 1,
+    neverHasSideEffects = 1 in {
+def LDWCP_u10 : _FU10<0b111001, (outs), (ins i32imm:$a), "ldw r11, cp[$a]", []>;
+
+def LDWCP_lu10 : _FLU10<0b111001, (outs), (ins i32imm:$a), "ldw r11, cp[$a]",
+                        []>;
 }
 
 // Two operand short
