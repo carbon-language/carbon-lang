@@ -325,6 +325,9 @@
 # CHECK: sub r4, r2, r5
 0x89 0x1a
 
+# CHECK: set t[r0]:r1, r2
+0x18 0xb8
+
 # 2rus instructions
 
 # CHECK: add r10, r2, 5

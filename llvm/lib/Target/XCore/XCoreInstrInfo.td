@@ -395,7 +395,11 @@ def STW_2rus : _F2RUS<0b0000, (outs),
 
 defm SHL : F3R_2RBITP<0b00100, 0b10100, "shl", shl>;
 defm SHR : F3R_2RBITP<0b00101, 0b10101, "shr", srl>;
-// TODO tsetr
+
+// The first operand is treated as an immediate since it refers to a register
+// number in another thread.
+def TSETR_3r : _F3RImm<0b10111, (outs), (ins i32imm:$a, GRRegs:$b, GRRegs:$c),
+                       "set t[$c]:r$a, $b", []>;
 
 // Three operand long
 def LDAWF_l3r : _FL3R<0b000111100, (outs GRRegs:$dst),

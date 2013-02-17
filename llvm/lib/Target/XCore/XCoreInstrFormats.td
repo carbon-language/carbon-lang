@@ -39,6 +39,14 @@ class _F3R<bits<5> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
   let DecoderMethod = "Decode3RInstruction";
 }
 
+// 3R with first operand as an immediate. Used for TSETR where the first
+// operand is treated as an immediate since it refers to a register number in
+// another thread.
+class _F3RImm<bits<5> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : _F3R<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "Decode3RImmInstruction";
+}
+
 class _FL3R<bits<9> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
   let Inst{31-27} = opc{8-4};
