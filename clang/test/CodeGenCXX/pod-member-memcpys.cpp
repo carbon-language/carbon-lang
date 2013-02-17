@@ -179,10 +179,8 @@ CALL_CC(Basic)
 // CHECK: define linkonce_odr void @_ZN13PODLikeMemberC2ERKS_(%struct.PODLikeMember* %this, %struct.PODLikeMember*)
 // CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 32, i32 4{{.*}})
 // CHECK: invoke void @_ZN6NonPODC1ERKS_
-// CHECK: invoke.cont:
 // CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
 // CHECK: ret void
-// CHECK: lpad:
 // CHECK: landingpad
 // CHECK: invoke void @_ZN7PODLikeD1Ev
 
