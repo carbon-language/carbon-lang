@@ -1037,7 +1037,7 @@ void
 LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
                                      MachineBasicBlock::reverse_iterator RBegin,
                                      MachineBasicBlock::reverse_iterator REnd,
-                                     SmallVectorImpl<unsigned> &OrigRegs) {
+                                      ArrayRef<unsigned> OrigRegs) {
   for (unsigned i = 0, e = OrigRegs.size(); i != e; ++i) {
     unsigned Reg = OrigRegs[i];
     if (!TargetRegisterInfo::isVirtualRegister(Reg))

@@ -294,7 +294,7 @@ namespace llvm {
     void repairIntervalsInRange(MachineBasicBlock *MBB,
                                 MachineBasicBlock::reverse_iterator RBegin,
                                 MachineBasicBlock::reverse_iterator REnd,
-                                SmallVectorImpl<unsigned> &OrigRegs);
+                                ArrayRef<unsigned> OrigRegs);
 
     // Register mask functions.
     //
