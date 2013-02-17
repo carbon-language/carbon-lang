@@ -10,7 +10,7 @@
 /// \file
 /// \brief Defines the SourceManager interface.
 ///
-/// There are three different types of locations in a file: a spelling
+/// There are three different types of locations in a %file: a spelling
 /// location, an expansion location, and a presumed location.
 ///
 /// Given an example of:
@@ -79,7 +79,7 @@ namespace SrcMgr {
   };
 
   /// \brief One instance of this struct is kept for every file loaded or used.
-  ////
+  ///
   /// This object owns the MemoryBuffer object.
   class ContentCache {
     enum CCFlags {
