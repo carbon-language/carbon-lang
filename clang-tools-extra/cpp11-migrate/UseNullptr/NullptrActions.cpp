@@ -57,6 +57,10 @@ public:
       SourceLocation StartLoc = FirstCast->getLocStart();
       SourceLocation EndLoc = FirstCast->getLocEnd();
 
+      // If the start/end location is a macro, get the expansion location.
+      StartLoc = SM.getFileLoc(StartLoc);
+      EndLoc = SM.getFileLoc(EndLoc);
+
       if (SM.getFileID(StartLoc) == SM.getFileID(EndLoc) &&
           SM.isFromMainFile(StartLoc) && SM.isFromMainFile(EndLoc)) {
         CharSourceRange Range(SourceRange(StartLoc, EndLoc), true);
@@ -100,10 +104,9 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
     if (SM.getFileID(StartLoc) != SM.getFileID(EndLoc))
       return;
 
-    if (StartLoc.isMacroID())
-      StartLoc = SM.getExpansionLoc(StartLoc);
-    if (EndLoc.isMacroID())
-      EndLoc = SM.getExpansionLoc(EndLoc);
+    // If the start/end location is a macro, get the expansion location.
+    StartLoc = SM.getFileLoc(StartLoc);
+    EndLoc = SM.getFileLoc(EndLoc);
 
     if (!SM.isFromMainFile(StartLoc) || !SM.isFromMainFile(EndLoc))
       return;
