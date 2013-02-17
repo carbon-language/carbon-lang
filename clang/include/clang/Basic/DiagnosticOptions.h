@@ -24,8 +24,7 @@ enum OverloadsShown {
   Ovl_Best  ///< Show just the "best" overload candidates.
 };
 
-/// DiagnosticOptions - Options for controlling the compiler diagnostics
-/// engine.
+/// \brief Options for controlling the compiler diagnostics engine.
 class DiagnosticOptions : public RefCountedBase<DiagnosticOptions>{
 public:
   enum TextDiagnosticFormat { Clang, Msvc, Vi };
@@ -49,10 +48,10 @@ protected:
 #include "clang/Basic/DiagnosticOptions.def"
 
 public:
-  /// The file to log diagnostic output to.
+  /// \brief The file to log diagnostic output to.
   std::string DiagnosticLogFile;
   
-  /// The file to serialize diagnostics to (non-appending).
+  /// \brief The file to serialize diagnostics to (non-appending).
   std::string DiagnosticSerializationFile;
 
   /// The list of -W... options used to alter the diagnostic mappings, with the
