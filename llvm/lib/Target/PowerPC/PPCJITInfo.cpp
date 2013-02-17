@@ -292,7 +292,7 @@ void PPC64CompilationCallback() {
 #endif
 
 extern "C" {
-void* LLVM_LIBRARY_VISIBILITY
+LLVM_LIBRARY_VISIBILITY void *
 LLVMPPCCompilationCallback(unsigned *StubCallAddrPlus4,
                            unsigned *OrigCallAddrPlus4,
                            bool is64Bit) {
