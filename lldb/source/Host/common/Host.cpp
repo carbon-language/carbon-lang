@@ -9,6 +9,35 @@
 
 #include "lldb/lldb-python.h"
 
+// C includes
+#include <dlfcn.h>
+#include <errno.h>
+#include <grp.h>
+#include <limits.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#if defined (__APPLE__)
+
+#include <dispatch/dispatch.h>
+#include <libproc.h>
+#include <mach-o/dyld.h>
+#include <mach/mach_port.h>
+
+#elif defined (__linux__)
+
+#include <sys/wait.h>
+
+#elif defined (__FreeBSD__)
+
+#include <sys/wait.h>
+#include <pthread_np.h>
+
+#endif
+
 #include "lldb/Host/Host.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
@@ -28,35 +57,9 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/ADT/Twine.h"
 
-#include <dlfcn.h>
-#include <errno.h>
-#include <grp.h>
-#include <limits.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <sys/types.h>
 
 
-#if defined (__APPLE__)
 
-#include <dispatch/dispatch.h>
-#include <libproc.h>
-#include <mach-o/dyld.h>
-#include <mach/mach_port.h>
-#include <sys/sysctl.h>
-
-
-#elif defined (__linux__)
-
-#include <sys/wait.h>
-
-#elif defined (__FreeBSD__)
-
-#include <sys/wait.h>
-#include <sys/sysctl.h>
-#include <pthread_np.h>
-
-#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1430,6 +1433,52 @@ Host::RunShellCommand (const char *command,
     // it can delete "shell_info" in case we timed out and were not able to kill
     // the process...
     return error;
+}
+
+
+uint32_t
+Host::GetNumberCPUS ()
+{
+    static uint32_t g_num_cores = UINT32_MAX;
+    if (g_num_cores == UINT32_MAX)
+    {
+#if defined(__APPLE__) or defined (__linux__)
+
+        g_num_cores = ::sysconf(_SC_NPROCESSORS_ONLN);
+        
+#elif defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
+        
+        // Header file for this might need to be included at the top of this file
+        SYSTEM_INFO system_info;
+        ::GetSystemInfo (&system_info);
+        g_num_cores = system_info.dwNumberOfProcessors;
+        
+#else
+        
+        // Assume POSIX support if a host specific case has not been supplied above
+        g_num_cores = 0;
+        int num_cores = 0;
+        size_t num_cores_len = sizeof(num_cores);
+        int mib[] = { CTL_HW, HW_AVAILCPU };
+        
+        /* get the number of CPUs from the system */
+        if (sysctl(mib, sizeof(mib)/sizeof(int), &num_cores, &num_cores_len, NULL, 0) == 0 && (num_cores > 0))
+        {
+            g_num_cores = num_cores;
+        }
+        else
+        {
+            mib[1] = HW_NCPU;
+            num_cores_len = sizeof(num_cores);
+            if (sysctl(mib, sizeof(mib)/sizeof(int), &num_cores, &num_cores_len, NULL, 0) == 0 && (num_cores > 0))
+            {
+                if (num_cores > 0)
+                    g_num_cores = num_cores;
+            }
+        }
+#endif
+    }
+    return g_num_cores;
 }
 
 

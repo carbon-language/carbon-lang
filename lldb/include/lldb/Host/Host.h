@@ -98,6 +98,16 @@ public:
     static lldb::ByteOrder
     GetByteOrder ();
 
+    //------------------------------------------------------------------
+    /// Returns the number of CPUs on this current host.
+    ///
+    /// @return
+    ///     Number of CPUs on this current host, or zero if the number
+    ///     of CPUs can't be determined on this host.
+    //------------------------------------------------------------------
+    static uint32_t
+    GetNumberCPUS ();
+
     static bool
     GetOSVersion (uint32_t &major, 
                   uint32_t &minor, 
