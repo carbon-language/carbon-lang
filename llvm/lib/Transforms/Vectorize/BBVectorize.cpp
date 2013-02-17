@@ -2164,10 +2164,7 @@ namespace {
                *S->second << "\n");
 
         // Remove all candidate pairs that have values in the chosen dag.
-        std::vector<Value *> &KK = CandidatePairs[S->first],
-                             &LL = CandidatePairs2[S->second],
-                             &MM = CandidatePairs[S->second],
-                             &NN = CandidatePairs2[S->first];
+        std::vector<Value *> &KK = CandidatePairs[S->first];
         for (std::vector<Value *>::iterator K = KK.begin(), KE = KK.end();
              K != KE; ++K) {
           if (*K == S->second)
@@ -2175,6 +2172,8 @@ namespace {
 
           CandidatePairsSet.erase(ValuePair(S->first, *K));
         }
+
+        std::vector<Value *> &LL = CandidatePairs2[S->second];
         for (std::vector<Value *>::iterator L = LL.begin(), LE = LL.end();
              L != LE; ++L) {
           if (*L == S->first)
@@ -2182,11 +2181,15 @@ namespace {
 
           CandidatePairsSet.erase(ValuePair(*L, S->second));
         }
+
+        std::vector<Value *> &MM = CandidatePairs[S->second];
         for (std::vector<Value *>::iterator M = MM.begin(), ME = MM.end();
              M != ME; ++M) {
           assert(*M != S->first && "Flipped pair in candidate list?");
           CandidatePairsSet.erase(ValuePair(S->second, *M));
         }
+
+        std::vector<Value *> &NN = CandidatePairs2[S->first];
         for (std::vector<Value *>::iterator N = NN.begin(), NE = NN.end();
              N != NE; ++N) {
           assert(*N != S->second && "Flipped pair in candidate list?");
