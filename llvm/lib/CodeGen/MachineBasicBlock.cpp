@@ -852,12 +852,13 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     // Update all intervals for registers whose uses may have been modified by
     // updateTerminator().
     iterator FirstTerminator = getFirstTerminator();
-    MachineInstr *FirstTerminatorMI = FirstTerminator;
-    if (FirstTerminatorMI->isBundled())
-      FirstTerminatorMI = getBundleStart(FirstTerminatorMI);
-    reverse_iterator PreTerminators =
-      (FirstTerminator == begin()) ? rend()
-                                   : reverse_iterator(FirstTerminatorMI);
+    reverse_iterator PreTerminators;
+    if (FirstTerminator == begin())
+      PreTerminators = rend();
+    else if (FirstTerminator == end())
+      PreTerminators = rbegin();
+    else
+      PreTerminators = reverse_iterator(FirstTerminator);
     LIS->repairIntervalsInRange(this, rbegin(), PreTerminators, UsedRegs);
   }
 
