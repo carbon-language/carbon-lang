@@ -851,15 +851,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
 
     // Update all intervals for registers whose uses may have been modified by
     // updateTerminator().
-    iterator FirstTerminator = getFirstTerminator();
-    reverse_iterator PreTerminators;
-    if (FirstTerminator == begin())
-      PreTerminators = rend();
-    else if (FirstTerminator == end())
-      PreTerminators = rbegin();
-    else
-      PreTerminators = reverse_iterator(FirstTerminator);
-    LIS->repairIntervalsInRange(this, rbegin(), PreTerminators, UsedRegs);
+    LIS->repairIntervalsInRange(this, getFirstTerminator(), end(), UsedRegs);
   }
 
   if (MachineDominatorTree *MDT =

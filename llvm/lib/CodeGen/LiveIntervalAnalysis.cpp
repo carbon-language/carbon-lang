@@ -1035,19 +1035,24 @@ void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI,
 
 void
 LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
-                                     MachineBasicBlock::reverse_iterator RBegin,
-                                     MachineBasicBlock::reverse_iterator REnd,
+                                      MachineBasicBlock::iterator Begin,
+                                      MachineBasicBlock::iterator End,
                                       ArrayRef<unsigned> OrigRegs) {
+  SlotIndex startIdx;
+  if (Begin == MBB->begin())
+    startIdx = getMBBStartIdx(MBB);
+  else
+    startIdx = getInstructionIndex(prior(Begin)).getRegSlot();
+
   for (unsigned i = 0, e = OrigRegs.size(); i != e; ++i) {
     unsigned Reg = OrigRegs[i];
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
 
     LiveInterval &LI = getInterval(Reg);
-    SlotIndex startIdx = (REnd == MBB->rend()) ? getMBBStartIdx(MBB)
-                                               : getInstructionIndex(&*REnd);
-    for (MachineBasicBlock::reverse_iterator I = RBegin; I != REnd; ++I) {
-      MachineInstr *MI = &*I;
+    for (MachineBasicBlock::iterator I = End; I != Begin;) {
+      --I;
+      MachineInstr *MI = I;
       SlotIndex instrIdx = getInstructionIndex(MI);
 
       for (MachineInstr::mop_iterator OI = MI->operands_begin(),
@@ -1059,7 +1064,7 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
         assert(MO.isUse() && "Register defs are not yet supported.");
 
         if (!LI.liveAt(instrIdx)) {
-          LiveRange *LR = LI.getLiveRangeContaining(startIdx.getRegSlot());
+          LiveRange *LR = LI.getLiveRangeContaining(startIdx);
           assert(LR && "Used registers must be live-in.");
           LR->end = instrIdx.getRegSlot();
           break;
