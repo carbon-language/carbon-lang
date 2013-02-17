@@ -1432,6 +1432,25 @@ private:
   /// class implementation is "non-lazy".
   bool ImplementationIsNonLazy(const ObjCImplDecl *OD) const;
 
+  bool IsIvarOffsetKnownIdempotent(const CodeGen::CodeGenFunction &CGF,
+                                   const ObjCInterfaceDecl *ID,
+                                   const ObjCIvarDecl *IV) {
+    // Annotate the load as an invariant load iff the object type is the type,
+    // or a derived type, of the class containing the ivar within an ObjC
+    // method.  This check is needed because the ivar offset is a lazily
+    // initialised value that may depend on objc_msgSend to perform a fixup on
+    // the first message dispatch.
+    //
+    // An additional opportunity to mark the load as invariant arises when the
+    // base of the ivar access is a parameter to an Objective C method.
+    // However, because the parameters are not available in the current
+    // interface, we cannot perform this check.
+      if (dyn_cast<ObjCMethodDecl>(CGF.CurFuncDecl))
+        if (IV->getContainingInterface()->isSuperClassOf(ID))
+          return true;
+    return false;
+  }
+
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
   // FIXME. All stubs for now!
@@ -6449,10 +6468,12 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                                unsigned CVRQualifiers) {
   ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCObjectType>()->getInterface();
   llvm::Value *Offset = EmitIvarOffset(CGF, ID, Ivar);
-  if (llvm::LoadInst *LI = dyn_cast<llvm::LoadInst>(Offset))
-    LI->setMetadata(CGM.getModule().getMDKindID("invariant.load"), 
-                   llvm::MDNode::get(VMContext,
-                   ArrayRef<llvm::Value*>()));
+
+  if (IsIvarOffsetKnownIdempotent(CGF, ID, Ivar))
+    if (llvm::LoadInst *LI = cast<llvm::LoadInst>(Offset))
+      LI->setMetadata(CGM.getModule().getMDKindID("invariant.load"),
+                      llvm::MDNode::get(VMContext, ArrayRef<llvm::Value*>()));
+
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
                                   Offset);
 }
