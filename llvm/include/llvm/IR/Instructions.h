@@ -91,7 +91,7 @@ public:
   /// getType - Overload to return most specific pointer type
   ///
   PointerType *getType() const {
-    return reinterpret_cast<PointerType*>(Instruction::getType());
+    return cast<PointerType>(Instruction::getType());
   }
 
   /// getAllocatedType - Return the type that is being allocated by the
@@ -762,9 +762,9 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  // getType - Overload to return most specific pointer type...
-  PointerType *getType() const {
-    return reinterpret_cast<PointerType*>(Instruction::getType());
+  // getType - Overload to return most specific sequential type.
+  SequentialType *getType() const {
+    return cast<SequentialType>(Instruction::getType());
   }
 
   /// \brief Returns the address space of this instruction's pointer type.
@@ -1570,7 +1570,7 @@ public:
   const Value *getIndexOperand() const { return Op<1>(); }
 
   VectorType *getVectorOperandType() const {
-    return reinterpret_cast<VectorType*>(getVectorOperand()->getType());
+    return cast<VectorType>(getVectorOperand()->getType());
   }
 
 
@@ -1629,7 +1629,7 @@ public:
   /// getType - Overload to return most specific vector type.
   ///
   VectorType *getType() const {
-    return reinterpret_cast<VectorType*>(Instruction::getType());
+    return cast<VectorType>(Instruction::getType());
   }
 
   /// Transparently provide more efficient getOperand methods.
@@ -1681,14 +1681,14 @@ public:
   /// getType - Overload to return most specific vector type.
   ///
   VectorType *getType() const {
-    return reinterpret_cast<VectorType*>(Instruction::getType());
+    return cast<VectorType>(Instruction::getType());
   }
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   Constant *getMask() const {
-    return reinterpret_cast<Constant*>(getOperand(2));
+    return cast<Constant>(getOperand(2));
   }
   
   /// getMaskValue - Return the index from the shuffle mask for the specified
