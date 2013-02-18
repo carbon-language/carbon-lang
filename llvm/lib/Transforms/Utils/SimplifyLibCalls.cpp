@@ -1889,6 +1889,9 @@ LibCallSimplifier::~LibCallSimplifier() {
 }
 
 Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
+  Function *F = CI->getParent()->getParent();
+  // We don't want to "optimize" if the function doesn't want builtins.
+  if (F->hasFnAttribute("no-builtin")) return 0;
   return Impl->optimizeCall(CI);
 }
 
