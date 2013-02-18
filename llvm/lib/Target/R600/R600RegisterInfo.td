@@ -44,7 +44,7 @@ foreach Index = 0-127 in {
 }
 
 // Array Base Register holding input in FS
-foreach Index = 448-464 in {
+foreach Index = 448-480 in {
   def ArrayBase#Index :  R600Reg<"ARRAY_BASE", Index>;
 }
 
@@ -66,7 +66,7 @@ def PRED_SEL_ONE : R600Reg<"Pred_sel_one", 3>;
 def AR_X : R600Reg<"AR.x", 0>;
 
 def R600_ArrayBase : RegisterClass <"AMDGPU", [f32, i32], 32,
-                          (add (sequence "ArrayBase%u", 448, 464))>;
+                          (add (sequence "ArrayBase%u", 448, 480))>;
 // special registers for ALU src operands
 // const buffer reference, SRCx_SEL contains index
 def ALU_CONST : R600Reg<"CBuf", 0>;
