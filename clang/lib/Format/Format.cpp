@@ -441,6 +441,7 @@ private:
       } else if (Current.is(tok::string_literal) &&
                  Previous.is(tok::string_literal)) {
         State.Column = State.Column - Previous.FormatTok.TokenLength;
+        State.Stack.back().BreakBeforeParameter = true;
       } else if (Current.is(tok::lessless) &&
                  State.Stack.back().FirstLessLess != 0) {
         State.Column = State.Stack.back().FirstLessLess;
