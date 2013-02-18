@@ -1914,8 +1914,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Note that these flags are trump-cards. Regardless of the order w.r.t. the
   // PIC or PIE options above, if these show up, PIC is disabled.
   llvm::Triple Triple(TripleStr);
-  if ((Args.hasArg(options::OPT_mkernel) ||
-       Args.hasArg(options::OPT_fapple_kext)) &&
+  if (KernelOrKext &&
       (Triple.getOS() != llvm::Triple::IOS ||
        Triple.isOSVersionLT(6)))
     PIC = PIE = false;
@@ -2975,8 +2974,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fpack-struct=1");
   }
 
-  if (Args.hasArg(options::OPT_mkernel) ||
-      Args.hasArg(options::OPT_fapple_kext)) {
+  if (KernelOrKext) {
     if (!Args.hasArg(options::OPT_fcommon))
       CmdArgs.push_back("-fno-common");
     Args.ClaimAllArgs(options::OPT_fno_common);
@@ -3982,7 +3980,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (getToolChain().getTriple().getArch() != llvm::Triple::x86_64 &&
       (((Args.hasArg(options::OPT_mkernel) ||
-         Args.hasArg(options::OPT_fapple_kext)) &&
+	 Args.hasArg(options::OPT_fapple_kext)) &&
         (!getDarwinToolChain().isTargetIPhoneOS() ||
          getDarwinToolChain().isIPhoneOSVersionLT(6, 0))) ||
        Args.hasArg(options::OPT_static)))
