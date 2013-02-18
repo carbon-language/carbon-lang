@@ -111,6 +111,336 @@ lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& str
     return true;
 }
 
+SyntheticChildrenFrontEnd* lldb_private::formatters::NSSetSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    lldb::ProcessSP process_sp (valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return NULL;
+    ObjCLanguageRuntime *runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    if (!runtime)
+        return NULL;
+    
+    if (!valobj_sp->IsPointerType())
+    {
+        Error error;
+        valobj_sp = valobj_sp->AddressOf(error);
+        if (error.Fail() || !valobj_sp)
+            return NULL;
+    }
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(*valobj_sp.get()));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return NULL;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return NULL;
+    
+    if (!strcmp(class_name,"__NSSetI"))
+    {
+        return (new NSSetISyntheticFrontEnd(valobj_sp));
+    }
+    else if (!strcmp(class_name,"__NSSetM"))
+    {
+        return (new NSSetMSyntheticFrontEnd(valobj_sp));
+    }
+    else
+    {
+        return /*(new NSSetCodeRunningSyntheticFrontEnd(valobj_sp))*/ NULL;
+    }
+}
+
+lldb_private::formatters::NSSetISyntheticFrontEnd::NSSetISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_exe_ctx_ref(),
+m_ptr_size(8),
+m_data_32(NULL),
+m_data_64(NULL)
+{
+    if (valobj_sp)
+        Update();
+}
+
+lldb_private::formatters::NSSetISyntheticFrontEnd::~NSSetISyntheticFrontEnd ()
+{
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+}
+
+size_t
+lldb_private::formatters::NSSetISyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    const char* item_name = name.GetCString();
+    uint32_t idx = ExtractIndexFromString(item_name);
+    if (idx < UINT32_MAX && idx >= CalculateNumChildren())
+        return UINT32_MAX;
+    return idx;
+}
+
+size_t
+lldb_private::formatters::NSSetISyntheticFrontEnd::CalculateNumChildren ()
+{
+    if (!m_data_32 && !m_data_64)
+        return 0;
+    return (m_data_32 ? m_data_32->_used : m_data_64->_used);
+}
+
+bool
+lldb_private::formatters::NSSetISyntheticFrontEnd::Update()
+{
+    m_children.clear();
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+    m_ptr_size = 0;
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    if (!valobj_sp)
+        return false;
+    if (valobj_sp->IsDynamic())
+        valobj_sp = valobj_sp->GetStaticValue();
+    if (!valobj_sp)
+        return false;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    Error error;
+    if (valobj_sp->IsPointerType())
+    {
+        valobj_sp = valobj_sp->Dereference(error);
+        if (error.Fail() || !valobj_sp)
+            return false;
+    }
+    error.Clear();
+    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return false;
+    m_ptr_size = process_sp->GetAddressByteSize();
+    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    if (m_ptr_size == 4)
+    {
+        m_data_32 = new DataDescriptor_32();
+        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
+    }
+    else
+    {
+        m_data_64 = new DataDescriptor_64();
+        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
+    }
+    if (error.Fail())
+        return false;
+    m_data_ptr = data_location + m_ptr_size;
+    return false;
+}
+
+bool
+lldb_private::formatters::NSSetISyntheticFrontEnd::MightHaveChildren ()
+{
+    return true;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
+{
+    uint32_t num_children = CalculateNumChildren();
+    
+    if (idx >= num_children)
+        return lldb::ValueObjectSP();
+    
+    if (m_children.empty())
+    {
+        // do the scan phase
+        lldb::addr_t obj_at_idx = 0;
+        
+        uint32_t tries = 0;
+        uint32_t test_idx = 0;
+        
+        while(tries < num_children)
+        {
+            obj_at_idx = m_data_ptr + (test_idx * m_ptr_size);
+            ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
+            if (!process_sp)
+                return lldb::ValueObjectSP();
+            Error error;
+            obj_at_idx = process_sp->ReadPointerFromMemory(obj_at_idx, error);
+            if (error.Fail())
+                return lldb::ValueObjectSP();
+            
+            test_idx++;
+            
+            if (!obj_at_idx)
+                continue;
+            tries++;
+            
+            SetItemDescriptor descriptor = {obj_at_idx,lldb::ValueObjectSP()};
+            
+            m_children.push_back(descriptor);
+        }
+    }
+    
+    if (idx >= m_children.size()) // should never happen
+        return lldb::ValueObjectSP();
+    
+    SetItemDescriptor &set_item = m_children[idx];
+    if (!set_item.valobj_sp)
+    {
+        // make the new ValueObject
+        StreamString expr;
+        expr.Printf("(id)%" PRIu64,set_item.item_ptr);
+        StreamString idx_name;
+        idx_name.Printf("[%zu]",idx);
+        set_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+    }
+    return set_item.valobj_sp;
+}
+
+lldb_private::formatters::NSSetMSyntheticFrontEnd::NSSetMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_exe_ctx_ref(),
+m_ptr_size(8),
+m_data_32(NULL),
+m_data_64(NULL)
+{
+    if (valobj_sp)
+        Update ();
+}
+
+lldb_private::formatters::NSSetMSyntheticFrontEnd::~NSSetMSyntheticFrontEnd ()
+{
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+}
+
+size_t
+lldb_private::formatters::NSSetMSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    const char* item_name = name.GetCString();
+    uint32_t idx = ExtractIndexFromString(item_name);
+    if (idx < UINT32_MAX && idx >= CalculateNumChildren())
+        return UINT32_MAX;
+    return idx;
+}
+
+size_t
+lldb_private::formatters::NSSetMSyntheticFrontEnd::CalculateNumChildren ()
+{
+    if (!m_data_32 && !m_data_64)
+        return 0;
+    return (m_data_32 ? m_data_32->_used : m_data_64->_used);
+}
+
+bool
+lldb_private::formatters::NSSetMSyntheticFrontEnd::Update()
+{
+    m_children.clear();
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    m_ptr_size = 0;
+    delete m_data_32;
+    m_data_32 = NULL;
+    delete m_data_64;
+    m_data_64 = NULL;
+    if (!valobj_sp)
+        return false;
+    if (valobj_sp->IsDynamic())
+        valobj_sp = valobj_sp->GetStaticValue();
+    if (!valobj_sp)
+        return false;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    Error error;
+    if (valobj_sp->IsPointerType())
+    {
+        valobj_sp = valobj_sp->Dereference(error);
+        if (error.Fail() || !valobj_sp)
+            return false;
+    }
+    error.Clear();
+    lldb::ProcessSP process_sp(valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return false;
+    m_ptr_size = process_sp->GetAddressByteSize();
+    uint64_t data_location = valobj_sp->GetAddressOf() + m_ptr_size;
+    if (m_ptr_size == 4)
+    {
+        m_data_32 = new DataDescriptor_32();
+        process_sp->ReadMemory (data_location, m_data_32, sizeof(DataDescriptor_32), error);
+    }
+    else
+    {
+        m_data_64 = new DataDescriptor_64();
+        process_sp->ReadMemory (data_location, m_data_64, sizeof(DataDescriptor_64), error);
+    }
+    if (error.Fail())
+        return false;
+    return false;
+}
+
+bool
+lldb_private::formatters::NSSetMSyntheticFrontEnd::MightHaveChildren ()
+{
+    return true;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
+{
+    lldb::addr_t m_objs_addr = (m_data_32 ? m_data_32->_objs_addr : m_data_64->_objs_addr);
+
+    uint32_t num_children = CalculateNumChildren();
+    
+    if (idx >= num_children)
+        return lldb::ValueObjectSP();
+    
+    if (m_children.empty())
+    {
+        // do the scan phase
+        lldb::addr_t obj_at_idx = 0;
+        
+        uint32_t tries = 0;
+        uint32_t test_idx = 0;
+        
+        while(tries < num_children)
+        {
+            obj_at_idx = m_objs_addr + (test_idx * m_ptr_size);
+            ProcessSP process_sp = m_exe_ctx_ref.GetProcessSP();
+            if (!process_sp)
+                return lldb::ValueObjectSP();
+            Error error;
+            obj_at_idx = process_sp->ReadPointerFromMemory(obj_at_idx, error);
+            if (error.Fail())
+                return lldb::ValueObjectSP();
+            
+            test_idx++;
+            
+            if (!obj_at_idx)
+                continue;
+            tries++;
+            
+            SetItemDescriptor descriptor = {obj_at_idx,lldb::ValueObjectSP()};
+            
+            m_children.push_back(descriptor);
+        }
+    }
+    
+    if (idx >= m_children.size()) // should never happen
+        return lldb::ValueObjectSP();
+    
+    SetItemDescriptor &set_item = m_children[idx];
+    if (!set_item.valobj_sp)
+    {
+        // make the new ValueObject
+        StreamString expr;
+        expr.Printf("(id)%" PRIu64,set_item.item_ptr);
+        StreamString idx_name;
+        idx_name.Printf("[%zu]",idx);
+        set_item.valobj_sp = ValueObject::CreateValueObjectFromExpression(idx_name.GetData(), expr.GetData(), m_exe_ctx_ref);
+    }
+    return set_item.valobj_sp;
+}
+
 template bool
 lldb_private::formatters::NSSetSummaryProvider<true> (ValueObject& valobj, Stream& stream);
 
