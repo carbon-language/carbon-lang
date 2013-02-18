@@ -874,7 +874,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 5;
 
   if (Right.is(tok::arrow) || Right.is(tok::period)) {
-    if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
+    if (Line.Type == LT_BuilderTypeCall)
       return 5; // Should be smaller than breaking at a nested comma.
     if ((Left.is(tok::r_paren) || Left.is(tok::r_square)) &&
         Left.MatchingParen && Left.MatchingParen->ParameterCount > 0)
