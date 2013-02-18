@@ -136,6 +136,9 @@ bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   switch(MI->getDesc().getOpcode()) {
   default:
     return false;
+  case Mips::BteqzT8CmpX16:
+    ExpandFEXT_T8I816_ins(MBB, MI, Mips::BteqzX16, Mips::CmpRxRy16);
+    break;
   case Mips::BtnezT8CmpX16:
     ExpandFEXT_T8I816_ins(MBB, MI, Mips::BtnezX16, Mips::CmpRxRy16);
     break;
