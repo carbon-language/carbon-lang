@@ -1016,6 +1016,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (CodeGenOpts.NoImplicitFloat)
     FuncAttrs.addAttribute(llvm::Attribute::NoImplicitFloat);
 
+  if (!CodeGenOpts.SimplifyLibCalls)
+    FuncAttrs.addAttribute("no-builtin");
+
   if (!TargetOpts.CPU.empty())
     FuncAttrs.addAttribute("target-cpu", TargetOpts.CPU);
 
