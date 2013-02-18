@@ -1666,6 +1666,7 @@ TEST_F(FormatTest, UnderstandsNewAndDelete) {
 TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("int *f(int *a) {}");
   verifyFormat("int main(int argc, char **argv) {}");
+  verifyFormat("Test::Test(int b) : a(b * b) {}");
   verifyIndependentOfContext("f(a, *a);");
   verifyIndependentOfContext("f(*a);");
   verifyIndependentOfContext("int a = b * 10;");
@@ -1758,6 +1759,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
                "  for (const int &v : Values) {\n"
                "  }\n"
                "}");
+  verifyFormat("for (int i = a * a; i < 10; ++i) {\n}");
+  verifyFormat("for (int i = 0; i < a * a; ++i) {\n}");
 
   verifyIndependentOfContext("A = new SomeType *[Length]();");
   verifyGoogleFormat("A = new SomeType* [Length]();");

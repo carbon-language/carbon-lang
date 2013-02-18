@@ -503,6 +503,11 @@ private:
       CurrentToken = &CurrentToken->Children[0];
     else
       CurrentToken = NULL;
+
+    // Reset token type in case we have already looked at it and then recovered
+    // from an error (e.g. failure to find the matching >).
+    if (CurrentToken != NULL)
+      CurrentToken->Type = TT_Unknown;
   }
 
   /// \brief A struct to hold information valid in a specific context, e.g.
@@ -558,6 +563,9 @@ private:
            Previous && (Previous->is(tok::star) || Previous->is(tok::amp));
            Previous = Previous->Parent)
         Previous->Type = TT_PointerOrReference;
+    } else if (Current.Parent &&
+               Current.Parent->Type == TT_CtorInitializerColon) {
+      Contexts.back().IsExpression = true;
     }
 
     if (Current.Type == TT_Unknown) {
