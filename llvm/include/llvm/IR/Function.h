@@ -175,6 +175,14 @@ public:
                                              AttributeSet::FunctionIndex, N));
   }
 
+  /// \brief Return true if the function has the attribute.
+  bool hasFnAttribute(Attribute::AttrKind Kind) const {
+    return AttributeSets.hasAttribute(AttributeSet::FunctionIndex, Kind);
+  }
+  bool hasFnAttribute(StringRef Kind) const {
+    return AttributeSets.hasAttribute(AttributeSet::FunctionIndex, Kind);
+  }
+
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
   ///                             to use during code generation.
   bool hasGC() const;
