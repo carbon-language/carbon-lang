@@ -44,6 +44,10 @@ int GetPid() {
   return getpid();
 }
 
+u32 GetUid() {
+  return getuid();
+}
+
 uptr GetThreadSelf() {
   return (uptr)pthread_self();
 }

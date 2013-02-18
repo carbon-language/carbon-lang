@@ -131,6 +131,10 @@ const char *GetPwd() {
   UNIMPLEMENTED();
 }
 
+u32 GetUid() {
+  UNIMPLEMENTED();
+}
+
 void DumpProcessMap() {
   UNIMPLEMENTED();
 }

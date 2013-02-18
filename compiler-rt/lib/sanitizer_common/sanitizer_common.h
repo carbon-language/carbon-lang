@@ -126,6 +126,7 @@ void DumpProcessMap();
 bool FileExists(const char *filename);
 const char *GetEnv(const char *name);
 const char *GetPwd();
+u32 GetUid();
 void ReExec();
 bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
