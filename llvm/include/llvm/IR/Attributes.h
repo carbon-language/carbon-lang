@@ -19,6 +19,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
+#include <bitset>
 #include <cassert>
 #include <map>
 #include <string>
@@ -378,7 +379,7 @@ template<> struct DenseMapInfo<AttributeSet> {
 /// value, however, is not. So this can be used as a quick way to test for
 /// equality, presence of attributes, etc.
 class AttrBuilder {
-  uint64_t Attrs;
+  std::bitset<Attribute::EndAttrKinds> Attrs;
   std::map<std::string, std::string> TargetDepAttrs;
   uint64_t Alignment;
   uint64_t StackAlignment;
@@ -422,9 +423,8 @@ public:
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const {
-    assert((unsigned)A < 64 && A < Attribute::EndAttrKinds &&
-           "Attribute out of range!");
-    return Attrs & (1ULL << A);
+    assert((unsigned)A < Attribute::EndAttrKinds && "Attribute out of range!");
+    return Attrs[A];
   }
 
   /// \brief Return true if the builder has the specified target-dependent
@@ -457,7 +457,7 @@ public:
 
   /// \brief Return true if the builder contains no target-independent
   /// attributes.
-  bool empty() const { return Attrs == 0; }
+  bool empty() const { return Attrs.none(); }
 
   // Iterators for target-dependent attributes.
   typedef std::pair<std::string, std::string>                td_type;

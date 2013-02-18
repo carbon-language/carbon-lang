@@ -924,16 +924,15 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
 }
 
 void AttrBuilder::clear() {
-  Attrs = 0;
+  Attrs.reset();
   Alignment = StackAlignment = 0;
 }
 
 AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
-  assert((unsigned)Val < 64 && Val < Attribute::EndAttrKinds &&
-         "Attribute out of range!");
+  assert((unsigned)Val < Attribute::EndAttrKinds && "Attribute out of range!");
   assert(Val != Attribute::Alignment && Val != Attribute::StackAlignment &&
          "Adding alignment attribute without adding alignment value!");
-  Attrs |= 1ULL << Val;
+  Attrs[Val] = true;
   return *this;
 }
 
@@ -944,7 +943,7 @@ AttrBuilder &AttrBuilder::addAttribute(Attribute Attr) {
   }
 
   Attribute::AttrKind Kind = Attr.getKindAsEnum();
-  Attrs |= 1ULL << Kind;
+  Attrs[Kind] = true;
 
   if (Kind == Attribute::Alignment)
     Alignment = Attr.getAlignment();
@@ -959,9 +958,8 @@ AttrBuilder &AttrBuilder::addAttribute(StringRef A, StringRef V) {
 }
 
 AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
-  assert((unsigned)Val < 64 && Val < Attribute::EndAttrKinds &&
-         "Attribute out of range!");
-  Attrs &= ~(1ULL << Val);
+  assert((unsigned)Val < Attribute::EndAttrKinds && "Attribute out of range!");
+  Attrs[Val] = false;
 
   if (Val == Attribute::Alignment)
     Alignment = 0;
@@ -985,7 +983,7 @@ AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
     Attribute Attr = *I;
     if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
       Attribute::AttrKind Kind = I->getKindAsEnum();
-      Attrs &= ~(1ULL << Kind);
+      Attrs[Kind] = false;
 
       if (Kind == Attribute::Alignment)
         Alignment = 0;
@@ -1016,7 +1014,7 @@ AttrBuilder &AttrBuilder::addAlignmentAttr(unsigned Align) {
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x40000000 && "Alignment too large.");
 
-  Attrs |= 1ULL << Attribute::Alignment;
+  Attrs[Attribute::Alignment] = true;
   Alignment = Align;
   return *this;
 }
@@ -1028,7 +1026,7 @@ AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align) {
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x100 && "Alignment too large.");
 
-  Attrs |= 1ULL << Attribute::StackAlignment;
+  Attrs[Attribute::StackAlignment] = true;
   StackAlignment = Align;
   return *this;
 }
@@ -1055,7 +1053,7 @@ bool AttrBuilder::contains(StringRef A) const {
 }
 
 bool AttrBuilder::hasAttributes() const {
-  return Attrs != 0 || !TargetDepAttrs.empty();
+  return !Attrs.none() || !TargetDepAttrs.empty();
 }
 
 bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
@@ -1072,7 +1070,7 @@ bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
        I != E; ++I) {
     Attribute Attr = *I;
     if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
-      if (Attrs & (1ULL << I->getKindAsEnum()))
+      if (Attrs[I->getKindAsEnum()])
         return true;
     } else {
       assert(Attr.isStringAttribute() && "Invalid attribute kind!");
@@ -1106,7 +1104,7 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
     if (uint64_t A = (Val & AttributeImpl::getAttrMask(I))) {
-      Attrs |= 1ULL << I;
+      Attrs[I] = true;
  
       if (I == Attribute::Alignment)
         Alignment = 1ULL << ((A >> 16) - 1);
