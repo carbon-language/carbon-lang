@@ -890,7 +890,7 @@ CXCursor cxcursor::getTypeRefCursor(CXCursor cursor) {
 
   if (const ElaboratedType *ElabT = Ty->getAs<ElaboratedType>()) {
     Ty = ElabT->getNamedType();
-    ElaboratedTypeLoc ElabTL = cast<ElaboratedTypeLoc>(TL);
+    ElaboratedTypeLoc ElabTL = TL.castAs<ElaboratedTypeLoc>();
     Loc = ElabTL.getNamedTypeLoc().getBeginLoc();
   }
 

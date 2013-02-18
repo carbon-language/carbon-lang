@@ -63,19 +63,18 @@ public:
       return;
     TypeLoc TL = TInfo->getTypeLoc();
     while (TL) {
-      if (const QualifiedTypeLoc *QL = dyn_cast<QualifiedTypeLoc>(&TL)) {
-        TL = QL->getUnqualifiedLoc();
-      } else if (const AttributedTypeLoc *
-                   Attr = dyn_cast<AttributedTypeLoc>(&TL)) {
-        if (handleAttr(*Attr, D))
+      if (QualifiedTypeLoc QL = TL.getAs<QualifiedTypeLoc>()) {
+        TL = QL.getUnqualifiedLoc();
+      } else if (AttributedTypeLoc Attr = TL.getAs<AttributedTypeLoc>()) {
+        if (handleAttr(Attr, D))
           break;
-        TL = Attr->getModifiedLoc();
-      } else if (const ArrayTypeLoc *Arr = dyn_cast<ArrayTypeLoc>(&TL)) {
-        TL = Arr->getElementLoc();
-      } else if (const PointerTypeLoc *PT = dyn_cast<PointerTypeLoc>(&TL)) {
-        TL = PT->getPointeeLoc();
-      } else if (const ReferenceTypeLoc *RT = dyn_cast<ReferenceTypeLoc>(&TL))
-        TL = RT->getPointeeLoc();
+        TL = Attr.getModifiedLoc();
+      } else if (ArrayTypeLoc Arr = TL.getAs<ArrayTypeLoc>()) {
+        TL = Arr.getElementLoc();
+      } else if (PointerTypeLoc PT = TL.getAs<PointerTypeLoc>()) {
+        TL = PT.getPointeeLoc();
+      } else if (ReferenceTypeLoc RT = TL.getAs<ReferenceTypeLoc>())
+        TL = RT.getPointeeLoc();
       else
         break;
     }
@@ -249,8 +248,9 @@ static void checkAllAtProps(MigrationContext &MigrateCtx,
     if (!TInfo)
       return;
     TypeLoc TL = TInfo->getTypeLoc();
-    if (AttributedTypeLoc *ATL = dyn_cast<AttributedTypeLoc>(&TL)) {
-      ATLs.push_back(std::make_pair(*ATL, PD));
+    if (AttributedTypeLoc ATL =
+            TL.getAs<AttributedTypeLoc>()) {
+      ATLs.push_back(std::make_pair(ATL, PD));
       if (TInfo->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
         hasWeak = true;
       } else if (TInfo->getType().getObjCLifetime() == Qualifiers::OCL_Strong)

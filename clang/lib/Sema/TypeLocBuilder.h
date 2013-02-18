@@ -75,7 +75,7 @@ class TypeLocBuilder {
   /// previously retrieved from this builder.
   TypeSpecTypeLoc pushTypeSpec(QualType T) {
     size_t LocalSize = TypeSpecTypeLoc::LocalDataSize;
-    return cast<TypeSpecTypeLoc>(pushImpl(T, LocalSize));
+    return pushImpl(T, LocalSize).castAs<TypeSpecTypeLoc>();
   }
 
   /// Resets this builder to the newly-initialized state.
@@ -97,8 +97,8 @@ class TypeLocBuilder {
   /// Pushes space for a new TypeLoc of the given type.  Invalidates
   /// any TypeLocs previously retrieved from this builder.
   template <class TyLocType> TyLocType push(QualType T) {
-    size_t LocalSize = cast<TyLocType>(TypeLoc(T, 0)).getLocalDataSize();
-    return cast<TyLocType>(pushImpl(T, LocalSize));
+    size_t LocalSize = TypeLoc(T, 0).castAs<TyLocType>().getLocalDataSize();
+    return pushImpl(T, LocalSize).castAs<TyLocType>();
   }
 
   /// Creates a TypeSourceInfo for the given type.

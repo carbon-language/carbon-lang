@@ -237,7 +237,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
 
     // We really do want to use the non-canonical type here.
     if (T == Context.VoidPtrTy) {
-      PointerTypeLoc TL = cast<PointerTypeLoc>(TI->getTypeLoc());
+      PointerTypeLoc TL = TI->getTypeLoc().castAs<PointerTypeLoc>();
 
       Diag(Loc, diag::warn_unused_voidptr)
         << FixItHint::CreateRemoval(TL.getStarLoc());

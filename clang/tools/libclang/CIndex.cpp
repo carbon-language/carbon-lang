@@ -671,10 +671,10 @@ bool CursorVisitor::VisitClassTemplateSpecializationDecl(
   // Visit the template arguments used in the specialization.
   if (TypeSourceInfo *SpecType = D->getTypeAsWritten()) {
     TypeLoc TL = SpecType->getTypeLoc();
-    if (TemplateSpecializationTypeLoc *TSTLoc
-          = dyn_cast<TemplateSpecializationTypeLoc>(&TL)) {
-      for (unsigned I = 0, N = TSTLoc->getNumArgs(); I != N; ++I)
-        if (VisitTemplateArgumentLoc(TSTLoc->getArgLoc(I)))
+    if (TemplateSpecializationTypeLoc TSTLoc =
+            TL.getAs<TemplateSpecializationTypeLoc>()) {
+      for (unsigned I = 0, N = TSTLoc.getNumArgs(); I != N; ++I)
+        if (VisitTemplateArgumentLoc(TSTLoc.getArgLoc(I)))
           return true;
     }
   }
@@ -750,12 +750,12 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     // Visit the function declaration's syntactic components in the order
     // written. This requires a bit of work.
     TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
-    FunctionTypeLoc *FTL = dyn_cast<FunctionTypeLoc>(&TL);
+    FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>();
     
     // If we have a function declared directly (without the use of a typedef),
     // visit just the return type. Otherwise, just visit the function's type
     // now.
-    if ((FTL && !isa<CXXConversionDecl>(ND) && Visit(FTL->getResultLoc())) ||
+    if ((FTL && !isa<CXXConversionDecl>(ND) && Visit(FTL.getResultLoc())) ||
         (!FTL && Visit(TL)))
       return true;
     
@@ -771,7 +771,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     // FIXME: Visit explicitly-specified template arguments!
     
     // Visit the function parameters, if we have a function type.
-    if (FTL && VisitFunctionTypeLoc(*FTL, true))
+    if (FTL && VisitFunctionTypeLoc(FTL, true))
       return true;
     
     // FIXME: Attributes?
@@ -2360,8 +2360,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
             // Visit the whole type.
             if (Visit(TL))
               return true;
-          } else if (isa<FunctionProtoTypeLoc>(TL)) {
-            FunctionProtoTypeLoc Proto = cast<FunctionProtoTypeLoc>(TL);
+          } else if (FunctionProtoTypeLoc Proto =
+                         TL.getAs<FunctionProtoTypeLoc>()) {
             if (E->hasExplicitParameters()) {
               // Visit parameters.
               for (unsigned I = 0, N = Proto.getNumArgs(); I != N; ++I)

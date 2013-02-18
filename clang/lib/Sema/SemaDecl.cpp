@@ -4066,29 +4066,29 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
 
 static void
 FixInvalidVariablyModifiedTypeLoc(TypeLoc SrcTL, TypeLoc DstTL) {
-  if (PointerTypeLoc* SrcPTL = dyn_cast<PointerTypeLoc>(&SrcTL)) {
-    PointerTypeLoc* DstPTL = cast<PointerTypeLoc>(&DstTL);
-    FixInvalidVariablyModifiedTypeLoc(SrcPTL->getPointeeLoc(),
-                                      DstPTL->getPointeeLoc());
-    DstPTL->setStarLoc(SrcPTL->getStarLoc());
+  if (PointerTypeLoc SrcPTL = SrcTL.getAs<PointerTypeLoc>()) {
+    PointerTypeLoc DstPTL = DstTL.castAs<PointerTypeLoc>();
+    FixInvalidVariablyModifiedTypeLoc(SrcPTL.getPointeeLoc(),
+                                      DstPTL.getPointeeLoc());
+    DstPTL.setStarLoc(SrcPTL.getStarLoc());
     return;
   }
-  if (ParenTypeLoc* SrcPTL = dyn_cast<ParenTypeLoc>(&SrcTL)) {
-    ParenTypeLoc* DstPTL = cast<ParenTypeLoc>(&DstTL);
-    FixInvalidVariablyModifiedTypeLoc(SrcPTL->getInnerLoc(),
-                                      DstPTL->getInnerLoc());
-    DstPTL->setLParenLoc(SrcPTL->getLParenLoc());
-    DstPTL->setRParenLoc(SrcPTL->getRParenLoc());
+  if (ParenTypeLoc SrcPTL = SrcTL.getAs<ParenTypeLoc>()) {
+    ParenTypeLoc DstPTL = DstTL.castAs<ParenTypeLoc>();
+    FixInvalidVariablyModifiedTypeLoc(SrcPTL.getInnerLoc(),
+                                      DstPTL.getInnerLoc());
+    DstPTL.setLParenLoc(SrcPTL.getLParenLoc());
+    DstPTL.setRParenLoc(SrcPTL.getRParenLoc());
     return;
   }
-  ArrayTypeLoc* SrcATL = cast<ArrayTypeLoc>(&SrcTL);
-  ArrayTypeLoc* DstATL = cast<ArrayTypeLoc>(&DstTL);
-  TypeLoc SrcElemTL = SrcATL->getElementLoc();
-  TypeLoc DstElemTL = DstATL->getElementLoc();
+  ArrayTypeLoc SrcATL = SrcTL.castAs<ArrayTypeLoc>();
+  ArrayTypeLoc DstATL = DstTL.castAs<ArrayTypeLoc>();
+  TypeLoc SrcElemTL = SrcATL.getElementLoc();
+  TypeLoc DstElemTL = DstATL.getElementLoc();
   DstElemTL.initializeFullCopy(SrcElemTL);
-  DstATL->setLBracketLoc(SrcATL->getLBracketLoc());
-  DstATL->setSizeExpr(SrcATL->getSizeExpr());
-  DstATL->setRBracketLoc(SrcATL->getRBracketLoc());
+  DstATL.setLBracketLoc(SrcATL.getLBracketLoc());
+  DstATL.setSizeExpr(SrcATL.getSizeExpr());
+  DstATL.setRBracketLoc(SrcATL.getRBracketLoc());
 }
 
 /// Helper method to turn variable array types into constant array
@@ -6600,12 +6600,12 @@ static SourceRange getResultSourceRange(const FunctionDecl *FD) {
     return SourceRange();
 
   TypeLoc TL = TSI->getTypeLoc();
-  FunctionTypeLoc *FunctionTL = dyn_cast<FunctionTypeLoc>(&TL);
+  FunctionTypeLoc FunctionTL = TL.getAs<FunctionTypeLoc>();
   if (!FunctionTL)
     return SourceRange();
 
-  TypeLoc ResultTL = FunctionTL->getResultLoc();
-  if (isa<BuiltinTypeLoc>(ResultTL.getUnqualifiedLoc()))
+  TypeLoc ResultTL = FunctionTL.getResultLoc();
+  if (ResultTL.getUnqualifiedLoc().getAs<BuiltinTypeLoc>())
     return ResultTL.getSourceRange();
 
   return SourceRange();
@@ -8291,11 +8291,11 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
       // but that could be a zero-parameter prototype
       TypeSourceInfo* TI = PossibleZeroParamPrototype->getTypeSourceInfo();
       TypeLoc TL = TI->getTypeLoc();
-      if (FunctionNoProtoTypeLoc* FTL = dyn_cast<FunctionNoProtoTypeLoc>(&TL))
+      if (FunctionNoProtoTypeLoc FTL = TL.getAs<FunctionNoProtoTypeLoc>())
         Diag(PossibleZeroParamPrototype->getLocation(), 
              diag::note_declaration_not_a_prototype)
           << PossibleZeroParamPrototype 
-          << FixItHint::CreateInsertion(FTL->getRParenLoc(), "void");
+          << FixItHint::CreateInsertion(FTL.getRParenLoc(), "void");
     }
   }
 

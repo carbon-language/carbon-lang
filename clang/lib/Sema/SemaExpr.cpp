@@ -3836,9 +3836,9 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
 static void DiagnoseCalleeStaticArrayParam(Sema &S, ParmVarDecl *PVD) {
   TypeLoc TL = PVD->getTypeSourceInfo()->getTypeLoc();
-  if (ArrayTypeLoc *ATL = dyn_cast<ArrayTypeLoc>(&TL))
+  if (ArrayTypeLoc ATL = TL.getAs<ArrayTypeLoc>())
     S.Diag(PVD->getLocation(), diag::note_callee_static_array)
-      << ATL->getLocalSourceRange();
+      << ATL.getLocalSourceRange();
 }
 
 /// CheckStaticArrayArgument - If the given argument corresponds to a static
@@ -9437,8 +9437,7 @@ void Sema::ActOnBlockArguments(SourceLocation CaretLoc, Declarator &ParamInfo,
   FunctionProtoTypeLoc ExplicitSignature;
 
   TypeLoc tmp = Sig->getTypeLoc().IgnoreParens();
-  if (isa<FunctionProtoTypeLoc>(tmp)) {
-    ExplicitSignature = cast<FunctionProtoTypeLoc>(tmp);
+  if ((ExplicitSignature = tmp.getAs<FunctionProtoTypeLoc>())) {
 
     // Check whether that explicit signature was synthesized by
     // GetTypeForDeclarator.  If so, don't save that as part of the

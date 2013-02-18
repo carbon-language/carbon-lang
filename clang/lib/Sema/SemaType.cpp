@@ -3208,13 +3208,13 @@ namespace {
 
       TypeLoc OldTL = TInfo->getTypeLoc();
       if (TInfo->getType()->getAs<ElaboratedType>()) {
-        ElaboratedTypeLoc ElabTL = cast<ElaboratedTypeLoc>(OldTL);
-        TemplateSpecializationTypeLoc NamedTL =
-          cast<TemplateSpecializationTypeLoc>(ElabTL.getNamedTypeLoc());
+        ElaboratedTypeLoc ElabTL = OldTL.castAs<ElaboratedTypeLoc>();
+        TemplateSpecializationTypeLoc NamedTL = ElabTL.getNamedTypeLoc()
+            .castAs<TemplateSpecializationTypeLoc>();
         TL.copy(NamedTL);
       }
       else
-        TL.copy(cast<TemplateSpecializationTypeLoc>(OldTL));
+        TL.copy(OldTL.castAs<TemplateSpecializationTypeLoc>());
     }
     void VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
       assert(DS.getTypeSpecType() == DeclSpec::TST_typeofExpr);
@@ -3262,7 +3262,7 @@ namespace {
         TypeSourceInfo *TInfo = 0;
         Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
-          TL.copy(cast<ElaboratedTypeLoc>(TInfo->getTypeLoc()));
+          TL.copy(TInfo->getTypeLoc().castAs<ElaboratedTypeLoc>());
           return;
         }
       }
@@ -3278,7 +3278,7 @@ namespace {
       TypeSourceInfo *TInfo = 0;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       assert(TInfo);
-      TL.copy(cast<DependentNameTypeLoc>(TInfo->getTypeLoc()));
+      TL.copy(TInfo->getTypeLoc().castAs<DependentNameTypeLoc>());
     }
     void VisitDependentTemplateSpecializationTypeLoc(
                                  DependentTemplateSpecializationTypeLoc TL) {
@@ -3286,8 +3286,8 @@ namespace {
       TypeSourceInfo *TInfo = 0;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       assert(TInfo);
-      TL.copy(cast<DependentTemplateSpecializationTypeLoc>(
-                TInfo->getTypeLoc()));
+      TL.copy(
+          TInfo->getTypeLoc().castAs<DependentTemplateSpecializationTypeLoc>());
     }
     void VisitTagTypeLoc(TagTypeLoc TL) {
       TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
@@ -3348,7 +3348,7 @@ namespace {
       case NestedNameSpecifier::Identifier:
         assert(isa<DependentNameType>(ClsTy) && "Unexpected TypeLoc");
         {
-          DependentNameTypeLoc DNTLoc = cast<DependentNameTypeLoc>(ClsTL);
+          DependentNameTypeLoc DNTLoc = ClsTL.castAs<DependentNameTypeLoc>();
           DNTLoc.setElaboratedKeywordLoc(SourceLocation());
           DNTLoc.setQualifierLoc(NNSLoc.getPrefix());
           DNTLoc.setNameLoc(NNSLoc.getLocalBeginLoc());
@@ -3358,7 +3358,7 @@ namespace {
       case NestedNameSpecifier::TypeSpec:
       case NestedNameSpecifier::TypeSpecWithTemplate:
         if (isa<ElaboratedType>(ClsTy)) {
-          ElaboratedTypeLoc ETLoc = *cast<ElaboratedTypeLoc>(&ClsTL);
+          ElaboratedTypeLoc ETLoc = ClsTL.castAs<ElaboratedTypeLoc>();
           ETLoc.setElaboratedKeywordLoc(SourceLocation());
           ETLoc.setQualifierLoc(NNSLoc.getPrefix());
           TypeLoc NamedTL = ETLoc.getNamedTypeLoc();
@@ -3437,13 +3437,12 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
 
   // Handle parameter packs whose type is a pack expansion.
   if (isa<PackExpansionType>(T)) {
-    cast<PackExpansionTypeLoc>(CurrTL).setEllipsisLoc(D.getEllipsisLoc());
+    CurrTL.castAs<PackExpansionTypeLoc>().setEllipsisLoc(D.getEllipsisLoc());
     CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();
   }
 
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
-    while (isa<AttributedTypeLoc>(CurrTL)) {
-      AttributedTypeLoc TL = cast<AttributedTypeLoc>(CurrTL);
+    while (AttributedTypeLoc TL = CurrTL.getAs<AttributedTypeLoc>()) {
       fillAttributedTypeLoc(TL, D.getTypeObject(i).getAttrs());
       CurrTL = TL.getNextTypeLoc().getUnqualifiedLoc();
     }

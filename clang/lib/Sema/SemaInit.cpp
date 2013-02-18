@@ -4899,9 +4899,9 @@ InitializationSequence::Perform(Sema &S,
           if (DeclaratorDecl *DD = Entity.getDecl()) {
             if (TypeSourceInfo *TInfo = DD->getTypeSourceInfo()) {
               TypeLoc TL = TInfo->getTypeLoc();
-              if (IncompleteArrayTypeLoc *ArrayLoc
-                                      = dyn_cast<IncompleteArrayTypeLoc>(&TL))
-              Brackets = ArrayLoc->getBracketsRange();
+              if (IncompleteArrayTypeLoc ArrayLoc =
+                      TL.getAs<IncompleteArrayTypeLoc>())
+                Brackets = ArrayLoc.getBracketsRange();
             }
           }
 

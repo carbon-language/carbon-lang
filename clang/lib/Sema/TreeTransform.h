@@ -2817,8 +2817,8 @@ TreeTransform<Derived>::TransformNestedNameSpecifierLoc(
       }
       // If the nested-name-specifier is an invalid type def, don't emit an
       // error because a previous error should have already been emitted.
-      TypedefTypeLoc* TTL = dyn_cast<TypedefTypeLoc>(&TL);
-      if (!TTL || !TTL->getTypedefNameDecl()->isInvalidDecl()) {
+      TypedefTypeLoc TTL = TL.getAs<TypedefTypeLoc>();
+      if (!TTL || !TTL.getTypedefNameDecl()->isInvalidDecl()) {
         SemaRef.Diag(TL.getBeginLoc(), diag::err_nested_name_spec_non_tag)
           << TL.getType() << SS.getRange();
       }
@@ -3326,9 +3326,10 @@ QualType
 TreeTransform<Derived>::TransformType(TypeLocBuilder &TLB, TypeLoc T) {
   switch (T.getTypeLocClass()) {
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
-#define TYPELOC(CLASS, PARENT) \
-  case TypeLoc::CLASS: \
-    return getDerived().Transform##CLASS##Type(TLB, cast<CLASS##TypeLoc>(T));
+#define TYPELOC(CLASS, PARENT)                                                 \
+  case TypeLoc::CLASS:                                                         \
+    return getDerived().Transform##CLASS##Type(TLB,                            \
+                                               T.castAs<CLASS##TypeLoc>());
 #include "clang/AST/TypeLocNodes.def"
   }
 
@@ -3421,8 +3422,8 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
   QualType Result;
 
   if (isa<TemplateSpecializationType>(T)) {
-    TemplateSpecializationTypeLoc SpecTL
-      = cast<TemplateSpecializationTypeLoc>(TL);
+    TemplateSpecializationTypeLoc SpecTL =
+        TL.castAs<TemplateSpecializationTypeLoc>();
 
     TemplateName Template =
       getDerived().TransformTemplateName(SS,
@@ -3435,8 +3436,8 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
     Result = getDerived().TransformTemplateSpecializationType(TLB, SpecTL,
                                                               Template);
   } else if (isa<DependentTemplateSpecializationType>(T)) {
-    DependentTemplateSpecializationTypeLoc SpecTL
-      = cast<DependentTemplateSpecializationTypeLoc>(TL);
+    DependentTemplateSpecializationTypeLoc SpecTL =
+        TL.castAs<DependentTemplateSpecializationTypeLoc>();
 
     TemplateName Template
       = getDerived().RebuildTemplateName(SS,
@@ -3478,8 +3479,8 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
 
   TypeLoc TL = TSInfo->getTypeLoc();
   if (isa<TemplateSpecializationType>(T)) {
-    TemplateSpecializationTypeLoc SpecTL
-      = cast<TemplateSpecializationTypeLoc>(TL);
+    TemplateSpecializationTypeLoc SpecTL =
+        TL.castAs<TemplateSpecializationTypeLoc>();
 
     TemplateName Template
     = getDerived().TransformTemplateName(SS,
@@ -3492,8 +3493,8 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
     Result = getDerived().TransformTemplateSpecializationType(TLB, SpecTL,
                                                               Template);
   } else if (isa<DependentTemplateSpecializationType>(T)) {
-    DependentTemplateSpecializationTypeLoc SpecTL
-      = cast<DependentTemplateSpecializationTypeLoc>(TL);
+    DependentTemplateSpecializationTypeLoc SpecTL =
+        TL.castAs<DependentTemplateSpecializationTypeLoc>();
 
     TemplateName Template
       = getDerived().RebuildTemplateName(SS,
@@ -3959,7 +3960,7 @@ TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm,
     // If we're substituting into a pack expansion type and we know the
     // length we want to expand to, just substitute for the pattern.
     TypeLoc OldTL = OldDI->getTypeLoc();
-    PackExpansionTypeLoc OldExpansionTL = cast<PackExpansionTypeLoc>(OldTL);
+    PackExpansionTypeLoc OldExpansionTL = OldTL.castAs<PackExpansionTypeLoc>();
 
     TypeLocBuilder TLB;
     TypeLoc NewTL = OldDI->getTypeLoc();
@@ -4025,7 +4026,7 @@ bool TreeTransform<Derived>::
 
         // Find the parameter packs that could be expanded.
         TypeLoc TL = OldParm->getTypeSourceInfo()->getTypeLoc();
-        PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(TL);
+        PackExpansionTypeLoc ExpansionTL = TL.castAs<PackExpansionTypeLoc>();
         TypeLoc Pattern = ExpansionTL.getPatternLoc();
         SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
         assert(Unexpanded.size() > 0 && "Could not find parameter packs!");
@@ -7608,7 +7609,7 @@ TreeTransform<Derived>::TransformTypeTraitExpr(TypeTraitExpr *E) {
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
     TypeSourceInfo *From = E->getArg(I);
     TypeLoc FromTL = From->getTypeLoc();
-    if (!isa<PackExpansionTypeLoc>(FromTL)) {
+    if (!FromTL.getAs<PackExpansionTypeLoc>()) {
       TypeLocBuilder TLB;
       TLB.reserve(FromTL.getFullDataSize());
       QualType To = getDerived().TransformType(TLB, FromTL);
@@ -7627,7 +7628,7 @@ TreeTransform<Derived>::TransformTypeTraitExpr(TypeTraitExpr *E) {
     ArgChanged = true;
 
     // We have a pack expansion. Instantiate it.
-    PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(FromTL);
+    PackExpansionTypeLoc ExpansionTL = FromTL.castAs<PackExpansionTypeLoc>();
     TypeLoc PatternTL = ExpansionTL.getPatternLoc();
     SmallVector<UnexpandedParameterPack, 2> Unexpanded;
     SemaRef.collectUnexpandedParameterPacks(PatternTL, Unexpanded);

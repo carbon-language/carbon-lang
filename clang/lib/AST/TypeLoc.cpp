@@ -86,7 +86,7 @@ void TypeLoc::initializeImpl(ASTContext &Context, TypeLoc TL,
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT)        \
     case CLASS: {                     \
-      CLASS##TypeLoc TLCasted = cast<CLASS##TypeLoc>(TL); \
+      CLASS##TypeLoc TLCasted = TL.castAs<CLASS##TypeLoc>(); \
       TLCasted.initializeLocal(Context, Loc);  \
       TL = TLCasted.getNextTypeLoc(); \
       if (!TL) return;                \
@@ -106,7 +106,8 @@ SourceLocation TypeLoc::getBeginLoc() const {
       LeftMost = Cur;
       break;
     case FunctionProto:
-      if (cast<FunctionProtoTypeLoc>(&Cur)->getTypePtr()->hasTrailingReturn()) {
+      if (Cur.castAs<FunctionProtoTypeLoc>().getTypePtr()
+              ->hasTrailingReturn()) {
         LeftMost = Cur;
         break;
       }
@@ -151,7 +152,7 @@ SourceLocation TypeLoc::getEndLoc() const {
       Last = Cur;
       break;
     case FunctionProto:
-      if (cast<FunctionProtoTypeLoc>(&Cur)->getTypePtr()->hasTrailingReturn())
+      if (Cur.castAs<FunctionProtoTypeLoc>().getTypePtr()->hasTrailingReturn())
         Last = TypeLoc();
       else
         Last = Cur;
@@ -198,7 +199,7 @@ namespace {
 /// because it's a convenient base class.  Ideally we would not accept
 /// those here, but ideally we would have better implementations for
 /// them.
-bool TypeSpecTypeLoc::classof(const TypeLoc *TL) {
+bool TypeSpecTypeLoc::isType(const TypeLoc *TL) {
   if (TL->getType().hasLocalQualifiers()) return false;
   return TSTChecker().Visit(*TL);
 }
@@ -278,8 +279,8 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
 }
 
 TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
-  while (ParenTypeLoc* PTL = dyn_cast<ParenTypeLoc>(&TL))
-    TL = PTL->getInnerLoc();
+  while (ParenTypeLoc PTL = TL.getAs<ParenTypeLoc>())
+    TL = PTL.getInnerLoc();
   return TL;
 }
 

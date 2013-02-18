@@ -2147,36 +2147,35 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   
   // The argument for a block pointer parameter is a block literal with
   // the appropriate type.
-  FunctionTypeLoc *Block = 0;
-  FunctionProtoTypeLoc *BlockProto = 0;
+  FunctionTypeLoc Block;
+  FunctionProtoTypeLoc BlockProto;
   TypeLoc TL;
   if (TypeSourceInfo *TSInfo = Param->getTypeSourceInfo()) {
     TL = TSInfo->getTypeLoc().getUnqualifiedLoc();
     while (true) {
       // Look through typedefs.
       if (!SuppressBlock) {
-        if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
-          if (TypeSourceInfo *InnerTSInfo
-              = TypedefTL->getTypedefNameDecl()->getTypeSourceInfo()) {
+        if (TypedefTypeLoc TypedefTL = TL.getAs<TypedefTypeLoc>()) {
+          if (TypeSourceInfo *InnerTSInfo =
+                  TypedefTL.getTypedefNameDecl()->getTypeSourceInfo()) {
             TL = InnerTSInfo->getTypeLoc().getUnqualifiedLoc();
             continue;
           }
         }
         
         // Look through qualified types
-        if (QualifiedTypeLoc *QualifiedTL = dyn_cast<QualifiedTypeLoc>(&TL)) {
-          TL = QualifiedTL->getUnqualifiedLoc();
+        if (QualifiedTypeLoc QualifiedTL = TL.getAs<QualifiedTypeLoc>()) {
+          TL = QualifiedTL.getUnqualifiedLoc();
           continue;
         }
       }
       
       // Try to get the function prototype behind the block pointer type,
       // then we're done.
-      if (BlockPointerTypeLoc *BlockPtr
-          = dyn_cast<BlockPointerTypeLoc>(&TL)) {
-        TL = BlockPtr->getPointeeLoc().IgnoreParens();
-        Block = dyn_cast<FunctionTypeLoc>(&TL);
-        BlockProto = dyn_cast<FunctionProtoTypeLoc>(&TL);
+      if (BlockPointerTypeLoc BlockPtr = TL.getAs<BlockPointerTypeLoc>()) {
+        TL = BlockPtr.getPointeeLoc().IgnoreParens();
+        Block = TL.getAs<FunctionTypeLoc>();
+        BlockProto = TL.getAs<FunctionProtoTypeLoc>();
       }
       break;
     }
@@ -2204,27 +2203,27 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   // We have the function prototype behind the block pointer type, as it was
   // written in the source.
   std::string Result;
-  QualType ResultType = Block->getTypePtr()->getResultType();
+  QualType ResultType = Block.getTypePtr()->getResultType();
   if (!ResultType->isVoidType() || SuppressBlock)
     ResultType.getAsStringInternal(Result, Policy);
 
   // Format the parameter list.
   std::string Params;
-  if (!BlockProto || Block->getNumArgs() == 0) {
-    if (BlockProto && BlockProto->getTypePtr()->isVariadic())
+  if (!BlockProto || Block.getNumArgs() == 0) {
+    if (BlockProto && BlockProto.getTypePtr()->isVariadic())
       Params = "(...)";
     else
       Params = "(void)";
   } else {
     Params += "(";
-    for (unsigned I = 0, N = Block->getNumArgs(); I != N; ++I) {
+    for (unsigned I = 0, N = Block.getNumArgs(); I != N; ++I) {
       if (I)
         Params += ", ";
-      Params += FormatFunctionParameter(Context, Policy, Block->getArg(I),
+      Params += FormatFunctionParameter(Context, Policy, Block.getArg(I),
                                         /*SuppressName=*/false, 
                                         /*SuppressBlock=*/true);
       
-      if (I == N - 1 && BlockProto->getTypePtr()->isVariadic())
+      if (I == N - 1 && BlockProto.getTypePtr()->isVariadic())
         Params += ", ...";
     }
     Params += ")";

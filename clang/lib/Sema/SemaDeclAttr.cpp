@@ -3715,10 +3715,10 @@ static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     FunctionDecl *FD = cast<FunctionDecl>(D);
     if (!FD->getResultType()->isVoidType()) {
       TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc().IgnoreParens();
-      if (FunctionTypeLoc* FTL = dyn_cast<FunctionTypeLoc>(&TL)) {
+      if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
         S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
           << FD->getType()
-          << FixItHint::CreateReplacement(FTL->getResultLoc().getSourceRange(),
+          << FixItHint::CreateReplacement(FTL.getResultLoc().getSourceRange(),
                                           "void");
       } else {
         S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)

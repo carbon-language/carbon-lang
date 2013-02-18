@@ -294,8 +294,8 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     SourceLocation FixItLoc;
     if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
       TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
-      if (const FunctionTypeLoc *FTLoc = dyn_cast<FunctionTypeLoc>(&TL))
-        FixItLoc = PP.getLocForEndOfToken(FTLoc->getLocalRangeEnd());
+      if (FunctionTypeLoc FTLoc = TL.getAs<FunctionTypeLoc>())
+        FixItLoc = PP.getLocForEndOfToken(FTLoc.getLocalRangeEnd());
     }
 
     if (FixItLoc.isInvalid())

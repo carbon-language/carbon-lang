@@ -462,7 +462,8 @@ TypeSourceInfo *Sema::CheckPackExpansion(TypeSourceInfo *Pattern,
     return 0;
   
   TypeSourceInfo *TSResult = Context.CreateTypeSourceInfo(Result);
-  PackExpansionTypeLoc TL = cast<PackExpansionTypeLoc>(TSResult->getTypeLoc());
+  PackExpansionTypeLoc TL =
+      TSResult->getTypeLoc().castAs<PackExpansionTypeLoc>();
   TL.setEllipsisLoc(EllipsisLoc);
   
   // Copy over the source-location information from the type.

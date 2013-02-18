@@ -44,6 +44,28 @@ protected:
   void *Data;
 
 public:
+  template<typename T>
+  T castAs() const {
+    assert(T::isType(this));
+    T t;
+    TypeLoc& tl = t;
+    tl = *this;
+    return t;
+  }
+  template<typename T>
+  T getAs() const {
+    if (!T::isType(this))
+      return T();
+    T t;
+    TypeLoc& tl = t;
+    tl = *this;
+    return t;
+  }
+
+  static bool isType(const TypeLoc*) {
+    return true;
+  }
+
   /// The kinds of TypeLocs.  Equivalent to the Type::TypeClass enum,
   /// except it also defines a Qualified enum that corresponds to the
   /// QualifiedLoc class.
@@ -119,11 +141,7 @@ public:
   /// \brief Skips past any qualifiers, if this is qualified.
   UnqualTypeLoc getUnqualifiedLoc() const; // implemented in this header
 
-  TypeLoc IgnoreParens() const {
-    if (isa<ParenTypeLoc>(this))
-      return IgnoreParensImpl(*this);
-    return *this;
-  }
+  TypeLoc IgnoreParens() const;
 
   /// \brief Initializes this to state that every location in this
   /// type is the given location.
@@ -187,7 +205,9 @@ public:
     return (TypeLocClass) getTypePtr()->getTypeClass();
   }
 
-  static bool classof(const TypeLoc *TL) {
+private:
+  friend class TypeLoc;
+  static bool isType(const TypeLoc *TL) {
     return !TL->getType().hasLocalQualifiers();
   }
 };
@@ -231,15 +251,17 @@ public:
       getFullDataSizeForType(getType().getLocalUnqualifiedType());
   }
 
-  static bool classof(const TypeLoc *TL) {
+private:
+  friend class TypeLoc;
+  static bool isType(const TypeLoc *TL) {
     return TL->getType().hasLocalQualifiers();
   }
 };
 
 inline UnqualTypeLoc TypeLoc::getUnqualifiedLoc() const {
-  if (isa<QualifiedTypeLoc>(this))
-    return cast<QualifiedTypeLoc>(this)->getUnqualifiedLoc();
-  return cast<UnqualTypeLoc>(*this);
+  if (QualifiedTypeLoc Loc = getAs<QualifiedTypeLoc>())
+    return Loc.getUnqualifiedLoc();
+  return castAs<UnqualTypeLoc>();
 }
 
 /// A metaprogramming base class for TypeLoc classes which correspond
@@ -280,6 +302,15 @@ class ConcreteTypeLoc : public Base {
     return static_cast<const Derived*>(this);
   }
 
+  friend class TypeLoc;
+  static bool isType(const TypeLoc *TL) {
+    return Derived::classofType(TL->getTypePtr());
+  }
+
+  static bool classofType(const Type *Ty) {
+    return TypeClass::classof(Ty);
+  }
+
 public:
   unsigned getLocalDataSize() const {
     return sizeof(LocalData) + asDerived()->getExtraLocalDataSize();
@@ -287,17 +318,6 @@ public:
   // Give a default implementation that's useful for leaf types.
   unsigned getFullDataSize() const {
     return asDerived()->getLocalDataSize() + getInnerTypeSize();
-  }
-
-  static bool classofType(const Type *Ty) {
-    return TypeClass::classof(Ty);
-  }
-
-  static bool classof(const TypeLoc *TL) {
-    return Derived::classofType(TL->getTypePtr());
-  }
-  static bool classof(const UnqualTypeLoc *TL) {
-    return Derived::classofType(TL->getTypePtr());
   }
 
   TypeLoc getNextTypeLoc() const {
@@ -362,18 +382,19 @@ private:
 /// information.  See the note on ConcreteTypeLoc.
 template <class Base, class Derived, class TypeClass>
 class InheritingConcreteTypeLoc : public Base {
-public:
+  friend class TypeLoc;
   static bool classofType(const Type *Ty) {
     return TypeClass::classof(Ty);
   }
 
-  static bool classof(const TypeLoc *TL) {
+  static bool isType(const TypeLoc *TL) {
     return Derived::classofType(TL->getTypePtr());
   }
-  static bool classof(const UnqualTypeLoc *TL) {
+  static bool isType(const UnqualTypeLoc *TL) {
     return Derived::classofType(TL->getTypePtr());
   }
 
+public:
   const TypeClass *getTypePtr() const {
     return cast<TypeClass>(Base::getTypePtr());
   }
@@ -406,7 +427,9 @@ public:
     setNameLoc(Loc);
   }
 
-  static bool classof(const TypeLoc *TL);
+private:
+  friend class TypeLoc;
+  static bool isType(const TypeLoc *TL);
 };
 
 
@@ -899,6 +922,11 @@ public:
   }
 };
 
+inline TypeLoc TypeLoc::IgnoreParens() const {
+  if (ParenTypeLoc::isType(this))
+    return IgnoreParensImpl(*this);
+  return *this;
+}
 
 struct PointerLikeLocInfo {
   SourceLocation StarLoc;

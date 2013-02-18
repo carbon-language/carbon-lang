@@ -5772,14 +5772,13 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
   while (TInfo) {
     TypeLoc TL = TInfo->getTypeLoc();
     // Look through typedefs.
-    const TypedefTypeLoc *TTL = dyn_cast<TypedefTypeLoc>(&TL);
-    if (TTL) {
-      const TypedefNameDecl *TDL = TTL->getTypedefNameDecl();
+    if (TypedefTypeLoc TTL = TL.getAs<TypedefTypeLoc>()) {
+      const TypedefNameDecl *TDL = TTL.getTypedefNameDecl();
       TInfo = TDL->getTypeSourceInfo();
       continue;
     }
-    if (const ConstantArrayTypeLoc *CTL = dyn_cast<ConstantArrayTypeLoc>(&TL)) {
-      const Expr *SizeExpr = dyn_cast<IntegerLiteral>(CTL->getSizeExpr());
+    if (ConstantArrayTypeLoc CTL = TL.getAs<ConstantArrayTypeLoc>()) {
+      const Expr *SizeExpr = dyn_cast<IntegerLiteral>(CTL.getSizeExpr());
       if (!SizeExpr || SizeExpr->getExprLoc().isMacroID())
         return false;
     }

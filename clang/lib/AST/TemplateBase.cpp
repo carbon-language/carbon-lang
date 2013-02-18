@@ -466,8 +466,8 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
       ExpansionTSInfo = Context.getTrivialTypeSourceInfo(
                                                      getArgument().getAsType(),
                                                          Ellipsis);
-    PackExpansionTypeLoc Expansion
-      = cast<PackExpansionTypeLoc>(ExpansionTSInfo->getTypeLoc());
+    PackExpansionTypeLoc Expansion =
+        ExpansionTSInfo->getTypeLoc().castAs<PackExpansionTypeLoc>();
     Ellipsis = Expansion.getEllipsisLoc();
     
     TypeLoc Pattern = Expansion.getPatternLoc();

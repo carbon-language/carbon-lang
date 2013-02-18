@@ -1566,10 +1566,10 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
     return true;
 
   TypeLoc TL = T->getTypeLoc().IgnoreParens();
-  if (!isa<FunctionProtoTypeLoc>(TL))
+  if (!TL.getAs<FunctionProtoTypeLoc>())
     return false;
 
-  FunctionProtoTypeLoc FP = cast<FunctionProtoTypeLoc>(TL);
+  FunctionProtoTypeLoc FP = TL.castAs<FunctionProtoTypeLoc>();
   for (unsigned I = 0, E = FP.getNumArgs(); I != E; ++I) {
     ParmVarDecl *P = FP.getArg(I);
 
@@ -1613,9 +1613,9 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
   TLB.reserve(TL.getFullDataSize());
 
   QualType Result;
-  
-  if (FunctionProtoTypeLoc *Proto = dyn_cast<FunctionProtoTypeLoc>(&TL)) {
-    Result = Instantiator.TransformFunctionProtoType(TLB, *Proto, ThisContext,
+
+  if (FunctionProtoTypeLoc Proto = TL.getAs<FunctionProtoTypeLoc>()) {
+    Result = Instantiator.TransformFunctionProtoType(TLB, Proto, ThisContext,
                                                      ThisTypeQuals);
   } else {
     Result = Instantiator.TransformType(TLB, TL);
@@ -1635,9 +1635,8 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   TypeSourceInfo *NewDI = 0;
   
   TypeLoc OldTL = OldDI->getTypeLoc();
-  if (isa<PackExpansionTypeLoc>(OldTL)) {    
-    PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(OldTL);
-    
+  if (PackExpansionTypeLoc ExpansionTL = OldTL.getAs<PackExpansionTypeLoc>()) {
+
     // We have a function parameter pack. Substitute into the pattern of the 
     // expansion.
     NewDI = SubstType(ExpansionTL.getPatternLoc(), TemplateArgs, 

@@ -1706,7 +1706,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
     // The non-type template parameter pack's type is a pack expansion of types.
     // Determine whether we need to expand this parameter pack into separate
     // types.
-    PackExpansionTypeLoc Expansion = cast<PackExpansionTypeLoc>(TL);
+    PackExpansionTypeLoc Expansion = TL.castAs<PackExpansionTypeLoc>();
     TypeLoc Pattern = Expansion.getPatternLoc();
     SmallVector<UnexpandedParameterPack, 2> Unexpanded;
     SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
@@ -2335,15 +2335,14 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   if (NewTInfo != OldTInfo) {
     // Get parameters from the new type info.
     TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
-    if (FunctionProtoTypeLoc *OldProtoLoc
-                                  = dyn_cast<FunctionProtoTypeLoc>(&OldTL)) {
+    if (FunctionProtoTypeLoc OldProtoLoc =
+            OldTL.getAs<FunctionProtoTypeLoc>()) {
       TypeLoc NewTL = NewTInfo->getTypeLoc().IgnoreParens();
-      FunctionProtoTypeLoc *NewProtoLoc = cast<FunctionProtoTypeLoc>(&NewTL);
-      assert(NewProtoLoc && "Missing prototype?");
+      FunctionProtoTypeLoc NewProtoLoc = NewTL.castAs<FunctionProtoTypeLoc>();
       unsigned NewIdx = 0;
-      for (unsigned OldIdx = 0, NumOldParams = OldProtoLoc->getNumArgs();
+      for (unsigned OldIdx = 0, NumOldParams = OldProtoLoc.getNumArgs();
            OldIdx != NumOldParams; ++OldIdx) {
-        ParmVarDecl *OldParam = OldProtoLoc->getArg(OldIdx);
+        ParmVarDecl *OldParam = OldProtoLoc.getArg(OldIdx);
         LocalInstantiationScope *Scope = SemaRef.CurrentInstantiationScope;
 
         llvm::Optional<unsigned> NumArgumentsInExpansion;
@@ -2354,14 +2353,14 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
         if (!NumArgumentsInExpansion) {
           // Simple case: normal parameter, or a parameter pack that's
           // instantiated to a (still-dependent) parameter pack.
-          ParmVarDecl *NewParam = NewProtoLoc->getArg(NewIdx++);
+          ParmVarDecl *NewParam = NewProtoLoc.getArg(NewIdx++);
           Params.push_back(NewParam);
           Scope->InstantiatedLocal(OldParam, NewParam);
         } else {
           // Parameter pack expansion: make the instantiation an argument pack.
           Scope->MakeInstantiatedLocalArgPack(OldParam);
           for (unsigned I = 0; I != *NumArgumentsInExpansion; ++I) {
-            ParmVarDecl *NewParam = NewProtoLoc->getArg(NewIdx++);
+            ParmVarDecl *NewParam = NewProtoLoc.getArg(NewIdx++);
             Params.push_back(NewParam);
             Scope->InstantiatedLocalPackArg(OldParam, NewParam);
           }
@@ -2373,10 +2372,10 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
     // substitution occurred. However, we still need to instantiate
     // the function parameters themselves.
     TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
-    if (FunctionProtoTypeLoc *OldProtoLoc
-                                    = dyn_cast<FunctionProtoTypeLoc>(&OldTL)) {
-      for (unsigned i = 0, i_end = OldProtoLoc->getNumArgs(); i != i_end; ++i) {
-        ParmVarDecl *Parm = VisitParmVarDecl(OldProtoLoc->getArg(i));
+    if (FunctionProtoTypeLoc OldProtoLoc =
+            OldTL.getAs<FunctionProtoTypeLoc>()) {
+      for (unsigned i = 0, i_end = OldProtoLoc.getNumArgs(); i != i_end; ++i) {
+        ParmVarDecl *Parm = VisitParmVarDecl(OldProtoLoc.getArg(i));
         if (!Parm)
           return 0;
         Params.push_back(Parm);

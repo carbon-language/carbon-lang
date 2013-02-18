@@ -535,7 +535,7 @@ bool RecursiveASTVisitor<Derived>::TraverseTypeLoc(TypeLoc TL) {
 #define ABSTRACT_TYPELOC(CLASS, BASE)
 #define TYPELOC(CLASS, BASE) \
   case TypeLoc::CLASS: \
-    return getDerived().Traverse##CLASS##TypeLoc(*cast<CLASS##TypeLoc>(&TL));
+    return getDerived().Traverse##CLASS##TypeLoc(TL.castAs<CLASS##TypeLoc>());
 #include "clang/AST/TypeLocNodes.def"
   }
 
@@ -2027,8 +2027,7 @@ bool RecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
     if (S->hasExplicitParameters() && S->hasExplicitResultType()) {
       // Visit the whole type.
       TRY_TO(TraverseTypeLoc(TL));
-    } else if (isa<FunctionProtoTypeLoc>(TL)) {
-      FunctionProtoTypeLoc Proto = cast<FunctionProtoTypeLoc>(TL);
+    } else if (FunctionProtoTypeLoc Proto = TL.getAs<FunctionProtoTypeLoc>()) {
       if (S->hasExplicitParameters()) {
         // Visit parameters.
         for (unsigned I = 0, N = Proto.getNumArgs(); I != N; ++I) {

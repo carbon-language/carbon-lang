@@ -3757,7 +3757,7 @@ struct CheckAbstractUsage {
     switch (TL.getTypeLocClass()) {
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT) \
-    case TypeLoc::CLASS: Check(cast<CLASS##TypeLoc>(TL), Sel); break;
+    case TypeLoc::CLASS: Check(TL.castAs<CLASS##TypeLoc>(), Sel); break;
 #include "clang/AST/TypeLocNodes.def"
     }
   }
@@ -10432,15 +10432,16 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
 
     TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
     if (isa<DependentNameType>(T)) {
-      DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+      DependentNameTypeLoc TL =
+          TSI->getTypeLoc().castAs<DependentNameTypeLoc>();
       TL.setElaboratedKeywordLoc(TagLoc);
       TL.setQualifierLoc(QualifierLoc);
       TL.setNameLoc(NameLoc);
     } else {
-      ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
+      ElaboratedTypeLoc TL = TSI->getTypeLoc().castAs<ElaboratedTypeLoc>();
       TL.setElaboratedKeywordLoc(TagLoc);
       TL.setQualifierLoc(QualifierLoc);
-      cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(NameLoc);
+      TL.getNamedTypeLoc().castAs<TypeSpecTypeLoc>().setNameLoc(NameLoc);
     }
 
     FriendDecl *Friend = FriendDecl::Create(Context, CurContext, NameLoc,
@@ -10460,7 +10461,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
   ElaboratedTypeKeyword ETK = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
   QualType T = Context.getDependentNameType(ETK, SS.getScopeRep(), Name);
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
-  DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
+  DependentNameTypeLoc TL = TSI->getTypeLoc().castAs<DependentNameTypeLoc>();
   TL.setElaboratedKeywordLoc(TagLoc);
   TL.setQualifierLoc(SS.getWithLocInContext(Context));
   TL.setNameLoc(NameLoc);
@@ -11538,7 +11539,7 @@ bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
     return false;
   
   TypeLoc TL = TSInfo->getTypeLoc();
-  FunctionProtoTypeLoc *ProtoTL = dyn_cast<FunctionProtoTypeLoc>(&TL);
+  FunctionProtoTypeLoc ProtoTL = TL.getAs<FunctionProtoTypeLoc>();
   if (!ProtoTL)
     return false;
   
@@ -11549,12 +11550,12 @@ bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
   //   within a static member function as they are within a non-static member
   //   function). [ Note: this is because declaration matching does not occur
   //  until the complete declarator is known. - end note ]
-  const FunctionProtoType *Proto = ProtoTL->getTypePtr();
+  const FunctionProtoType *Proto = ProtoTL.getTypePtr();
   FindCXXThisExpr Finder(*this);
   
   // If the return type came after the cv-qualifier-seq, check it now.
   if (Proto->hasTrailingReturn() &&
-      !Finder.TraverseTypeLoc(ProtoTL->getResultLoc()))
+      !Finder.TraverseTypeLoc(ProtoTL.getResultLoc()))
     return true;
 
   // Check the exception specification.
@@ -11570,11 +11571,11 @@ bool Sema::checkThisInStaticMemberFunctionExceptionSpec(CXXMethodDecl *Method) {
     return false;
   
   TypeLoc TL = TSInfo->getTypeLoc();
-  FunctionProtoTypeLoc *ProtoTL = dyn_cast<FunctionProtoTypeLoc>(&TL);
+  FunctionProtoTypeLoc ProtoTL = TL.getAs<FunctionProtoTypeLoc>();
   if (!ProtoTL)
     return false;
   
-  const FunctionProtoType *Proto = ProtoTL->getTypePtr();
+  const FunctionProtoType *Proto = ProtoTL.getTypePtr();
   FindCXXThisExpr Finder(*this);
 
   switch (Proto->getExceptionSpecType()) {

@@ -21,7 +21,7 @@ namespace clang {
 
 #define DISPATCH(CLASSNAME) \
   return static_cast<ImplClass*>(this)-> \
-    Visit##CLASSNAME(cast<CLASSNAME>(TyLoc))
+    Visit##CLASSNAME(TyLoc.castAs<CLASSNAME>())
 
 template<typename ImplClass, typename RetTy=void>
 class TypeLocVisitor {
