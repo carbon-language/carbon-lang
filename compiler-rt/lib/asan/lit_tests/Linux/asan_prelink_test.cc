@@ -1,10 +1,11 @@
 // Test if asan works with prelink.
-// It does not actually use prelink, but relies on ld's flag -Ttext-segment.
-// This flag is not present in GNU gold, so if the link command line fails
-// we just exit 0.
+// It does not actually use prelink, but relies on ld's flag -Ttext-segment
+// or gold's flag -Ttext (we try the first flag first, if that fails we
+// try the second flag).
 //
 // RUN: %clangxx_asan -m64 -c %s -o %t.o
-// RUN: %clangxx_asan -m64 -DBUILD_SO=1 -fPIC -shared %s -o %t.so -Wl,-Ttext-segment=0x3600000000 || exit 0
+// RUN: %clangxx_asan -m64 -DBUILD_SO=1 -fPIC -shared %s -o %t.so -Wl,-Ttext-segment=0x3600000000 ||\
+// RUN: %clangxx_asan -m64 -DBUILD_SO=1 -fPIC -shared %s -o %t.so -Wl,-Ttext=0x3600000000
 // RUN: %clangxx_asan -m64 %t.o %t.so -Wl,-R. -o %t
 // RUN: ASAN_OPTIONS=verbosity=1 %t 2>&1 | FileCheck %s
 #if BUILD_SO
