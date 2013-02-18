@@ -924,7 +924,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
   MDNode *Node = MDNode::get(VMContext, Elts);
 
   // Create a named metadata so that we do not lose this mdnode.
-  AllSubprograms.push_back(Node);
+  if (isDefinition)
+    AllSubprograms.push_back(Node);
   return DISubprogram(Node);
 }
 
@@ -968,6 +969,8 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo)
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
+  if (isDefinition)
+    AllSubprograms.push_back(Node);
   return DISubprogram(Node);
 }
 
