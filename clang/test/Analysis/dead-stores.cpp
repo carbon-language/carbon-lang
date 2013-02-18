@@ -156,3 +156,21 @@ void testCXX11Using() {
   Int value;
   value = 1; // expected-warning {{never read}}
 }
+
+//===----------------------------------------------------------------------===//
+// Dead stores in template instantiations (do not warn).
+//===----------------------------------------------------------------------===//
+
+template <bool f> int radar13213575_testit(int i) {
+  int x = 5+i; // warning: Value stored to 'x' during its initialization is never read
+  int y = 7;
+  if (f)
+    return x;
+  else
+    return y;
+}
+
+int radar_13213575() {
+  return radar13213575_testit<true>(5) + radar13213575_testit<false>(3);
+}
+
