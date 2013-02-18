@@ -372,7 +372,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SDB->init(GFI, *AA, LibInfo);
 
-  MF->setHasMSInlineAsm(false); // FIXME: This affected hasFP().
+  MF->setHasMSInlineAsm(false);
   SelectAllBasicBlocks(Fn);
 
   // If the first basic block in the function has live ins that need to be
@@ -442,7 +442,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   }
 
   // Determine if there are any calls in this machine function.
-  MF->setHasMSInlineAsm(false);
   MachineFrameInfo *MFI = MF->getFrameInfo();
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
        ++I) {
