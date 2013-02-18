@@ -1,4 +1,4 @@
-; RUN: opt < %s -licm | lli %defaultjit
+; RUN: opt < %s -licm | lli -force-interpreter
 
 define i32 @main() {
 entry:
