@@ -96,5 +96,5 @@ entry:
 }
 
 ; CHECK: LongDoubleTest
-; CHECK: __asan_report_store16
+; CHECK-NOT: __asan_report_store16
 ; CHECK: ret void
