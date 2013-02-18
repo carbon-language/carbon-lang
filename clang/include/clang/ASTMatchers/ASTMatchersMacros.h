@@ -273,9 +273,9 @@
 /// \brief Creates a variadic matcher for both a specific \c Type as well as
 /// the corresponding \c TypeLoc.
 #define AST_TYPE_MATCHER(NodeType, MatcherName)                                \
-  const internal::VariadicDynCastAllOfMatcher<Type, NodeType> MatcherName;     \
-  const internal::VariadicDynCastAllOfMatcher<TypeLoc,                         \
-                                              NodeType##Loc> MatcherName##Loc
+  const internal::VariadicDynCastAllOfMatcher<Type, NodeType> MatcherName
+// FIXME: add a matcher for TypeLoc derived classes using its custom casting
+// API (no longer dyn_cast) if/when we need such matching
 
 /// \brief AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName) defines
 /// the matcher \c MatcherName that can be used to traverse from one \c Type
