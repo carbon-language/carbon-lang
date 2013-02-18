@@ -3167,6 +3167,10 @@ public:
     WCharType = UnsignedInt;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
 
+    // AArch64 backend supports 64-bit operations at the moment. In principle
+    // 128-bit is possible if register-pairs are used.
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
+
     TheCXXABI.set(TargetCXXABI::GenericAArch64);
   }
   virtual void getTargetDefines(const LangOptions &Opts,
