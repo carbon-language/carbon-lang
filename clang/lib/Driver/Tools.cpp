@@ -2821,7 +2821,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
 
-  // -fborland-extensions=0 is default.
+  // -fno-borland-extensions is default.
   if (Args.hasFlag(options::OPT_fborland_extensions,
                    options::OPT_fno_borland_extensions, false))
     CmdArgs.push_back("-fborland-extensions");
