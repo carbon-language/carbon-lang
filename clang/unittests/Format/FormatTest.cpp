@@ -1259,6 +1259,14 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "aaaaaaa->aaaaaaa\n"
       "    ->aaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "    ->aaaaaaaa(aaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaa()->aaaaaa(bbbbb)->aaaaaaaaaaaaaaaaaaa( // break\n"
+      "                                        aaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaa *aaaaaaaaa = aaaaaa->aaaaaaaaaaaa()\n"
+      "    ->aaaaaaaaaaaaaaaa(\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "    ->aaaaaaaaaaaaaaaaa();");
 }
 
 TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {

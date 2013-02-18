@@ -471,8 +471,7 @@ public:
       if (!consumeToken())
         return LT_Invalid;
       if (getPrecedence(*TheToken) > prec::Assignment &&
-          TheToken->Type != TT_TemplateOpener &&
-          TheToken->Type != TT_TemplateCloser)
+          TheToken->Type == TT_BinaryOperator)
         CanBeBuilderTypeStmt = false;
     }
     if (KeywordVirtualFound)

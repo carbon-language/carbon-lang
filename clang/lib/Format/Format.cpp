@@ -549,6 +549,9 @@ private:
         // If this function has multiple parameters, indent nested calls from
         // the start of the first parameter.
         State.Stack.back().LastSpace = State.Column;
+      else if ((Current.is(tok::period) || Current.is(tok::arrow)) &&
+               Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
+        State.Stack.back().LastSpace = State.Column;
     }
 
     // If we break after an {, we should also break before the corresponding }.
