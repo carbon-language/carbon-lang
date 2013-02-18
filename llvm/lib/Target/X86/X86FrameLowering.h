@@ -43,6 +43,8 @@ public:
 
   void adjustForSegmentedStacks(MachineFunction &MF) const;
 
+  void adjustForHiPEPrologue(MachineFunction &MF) const;
+
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;
 

@@ -120,6 +120,10 @@ public:
   /// by adding a check even before the "normal" function prologue.
   virtual void adjustForSegmentedStacks(MachineFunction &MF) const { }
 
+  /// Adjust the prologue to add Erlang Run-Time System (ERTS) specific code in
+  /// the assembly prologue to explicitly handle the stack.
+  virtual void adjustForHiPEPrologue(MachineFunction &MF) const { }
+
   /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
   /// saved registers and returns true if it isn't possible / profitable to do
   /// so by issuing a series of store instructions via

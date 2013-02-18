@@ -693,6 +693,14 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   // space in small chunks instead of one large contiguous block.
   if (Fn.getTarget().Options.EnableSegmentedStacks)
     TFI.adjustForSegmentedStacks(Fn);
+
+  // Emit additional code that is required to explicitly handle the stack in
+  // HiPE native code (if needed) when loaded in the Erlang/OTP runtime. The
+  // approach is rather similar to that of Segmented Stacks, but it uses a
+  // different conditional check and another BIF for allocating more stack
+  // space.
+  if (Fn.getFunction()->getCallingConv() == CallingConv::HiPE)
+    TFI.adjustForHiPEPrologue(Fn);
 }
 
 /// replaceFrameIndices - Replace all MO_FrameIndex operands with physical

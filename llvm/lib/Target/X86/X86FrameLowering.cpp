@@ -1387,16 +1387,25 @@ HasNestArgument(const MachineFunction *MF) {
 }
 
 
-/// GetScratchRegister - Get a register for performing work in the segmented
-/// stack prologue. Depending on platform and the properties of the function
-/// either one or two registers will be needed. Set primary to true for
-/// the first register, false for the second.
+/// GetScratchRegister - Get a temp register for performing work in the
+/// segmented stack and the Erlang/HiPE stack prologue. Depending on platform
+/// and the properties of the function either one or two registers will be
+/// needed. Set primary to true for the first register, false for the second.
 static unsigned
 GetScratchRegister(bool Is64Bit, const MachineFunction &MF, bool Primary) {
+  CallingConv::ID CallingConvention = MF.getFunction()->getCallingConv();
+
+  // Erlang stuff.
+  if (CallingConvention == CallingConv::HiPE) {
+    if (Is64Bit)
+      return Primary ? X86::R14 : X86::R13;
+    else
+      return Primary ? X86::EBX : X86::EDI;
+  }
+
   if (Is64Bit)
     return Primary ? X86::R11 : X86::R12;
 
-  CallingConv::ID CallingConvention = MF.getFunction()->getCallingConv();
   bool IsNested = HasNestArgument(&MF);
 
   if (CallingConvention == CallingConv::X86_FastCall ||
@@ -1599,6 +1608,147 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   checkMBB->addSuccessor(allocMBB);
   checkMBB->addSuccessor(&prologueMBB);
 
+#ifdef XDEBUG
+  MF.verify();
+#endif
+}
+
+// Erlang programs may need a special prologue to handle the stack size they
+// might need at runtime. That is because Erlang/OTP does not implement a C
+// stack but uses a custom implementation of hybrid stack/heap
+// architecture. (for more information see Eric Stenman's Ph.D. thesis:
+// http://publications.uu.se/uu/fulltext/nbn_se_uu_diva-2688.pdf)
+//
+//
+// CheckStack:
+//	temp0 = sp - MaxStack
+//	if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
+// OldStart:
+//	...
+// IncStack:
+//	call inc_stack   # doubles the stack space
+//	temp0 = sp - MaxStack
+//	if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
+void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
+  const X86InstrInfo &TII = *TM.getInstrInfo();
+  const X86Subtarget *ST = &MF.getTarget().getSubtarget<X86Subtarget>();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const uint64_t SlotSize = TM.getRegisterInfo()->getSlotSize();
+  const bool Is64Bit = STI.is64Bit();
+  DebugLoc DL;
+  // HiPE-specific values
+  const unsigned HipeLeafWords = 24;
+  const unsigned CCRegisteredArgs = Is64Bit ? 6 : 5;
+  const unsigned Guaranteed = HipeLeafWords * SlotSize;
+  const unsigned CallerStkArity =
+    std::max<int>(0, MF.getFunction()->arg_size() - CCRegisteredArgs);
+  unsigned MaxStack =
+    MFI->getStackSize() + CallerStkArity * SlotSize + SlotSize;
+
+  assert(ST->isTargetLinux() &&
+         "HiPE prologue is only supported on Linux operating systems.");
+
+  // Compute the largest caller's frame that is needed to fit the callees'
+  // frames. This 'MaxStack' is computed from:
+  //
+  // a) the fixed frame size, which is the space needed for all spilled temps,
+  // b) outgoing on-stack parameter areas, and
+  // c) the minimum stack space this function needs to make available for the
+  //    functions it calls (a tunable ABI property).
+  if (MFI->hasCalls()) {
+    unsigned MoreStackForCalls = 0;
+
+    for (MachineFunction::iterator MBBI = MF.begin(), MBBE = MF.end();
+         MBBI != MBBE; ++MBBI)
+      for (MachineBasicBlock::iterator MI = MBBI->begin(), ME = MBBI->end();
+           MI != ME; ++MI)
+        if (MI->isCall()) {
+          // Get callee operand.
+          const MachineOperand &MO = MI->getOperand(0);
+          const Function *F;
+
+          // Only take account of global function calls (no closures etc.).
+          if (!MO.isGlobal()) continue;
+          if (!(F = dyn_cast<Function>(MO.getGlobal()))) continue;
+
+          // Do not update 'MaxStack' for primitive and built-in functions
+          // (encoded with names either starting with "erlang."/"bif_" or not
+          // having a ".", such as a simple <Module>.<Function>.<Arity>, or an
+          // "_", such as the BIF "suspend_0") as they are executed on another
+          // stack.
+          if ((F->getName().find("erlang.") != std::string::npos) ||
+              (F->getName().find("bif_") != std::string::npos)) continue;
+          if (F->getName().find_first_of("._") == std::string::npos)
+            continue;
+
+          const uint64_t CalleeStkArity =
+            std::max<int64_t>(0, F->arg_size() - CCRegisteredArgs);
+          MoreStackForCalls = std::max<int64_t>(
+            MoreStackForCalls, (HipeLeafWords - 1 - CalleeStkArity) * SlotSize);
+        }
+    MaxStack += MoreStackForCalls;
+  }
+
+  // If the stack frame needed is larger than the guaranteed then runtime checks
+  // and calls to "inc_stack_0" BIF should be inserted in the assembly prologue.
+  if (MaxStack > Guaranteed) {
+    MachineBasicBlock &prologueMBB = MF.front();
+    MachineBasicBlock *stackCheckMBB = MF.CreateMachineBasicBlock();
+    MachineBasicBlock *incStackMBB = MF.CreateMachineBasicBlock();
+
+    for (MachineBasicBlock::livein_iterator I = prologueMBB.livein_begin(),
+           E = prologueMBB.livein_end(); I != E; I++) {
+      stackCheckMBB->addLiveIn(*I);
+      incStackMBB->addLiveIn(*I);
+    }
+
+    MF.push_front(incStackMBB);
+    MF.push_front(stackCheckMBB);
+
+    unsigned ScratchReg, SPReg, PReg, SPLimitOffset;
+    unsigned LEAop, CMPop, CALLop;
+    if (Is64Bit) {
+      SPReg = X86::RSP;
+      PReg  = X86::RBP;
+      LEAop = X86::LEA64r;
+      CMPop = X86::CMP64rm;
+      CALLop = X86::CALL64pcrel32;
+      SPLimitOffset = 0x90;
+    } else {
+      SPReg = X86::ESP;
+      PReg  = X86::EBP;
+      LEAop = X86::LEA32r;
+      CMPop = X86::CMP32rm;
+      CALLop = X86::CALLpcrel32;
+      SPLimitOffset = 0x4c;
+    }
+
+    ScratchReg = GetScratchRegister(Is64Bit, MF, true);
+    assert(!MF.getRegInfo().isLiveIn(ScratchReg) &&
+           "HiPE prologue scratch register is live-in");
+
+    // Create new MBB for StackCheck:
+    addRegOffset(BuildMI(stackCheckMBB, DL, TII.get(LEAop), ScratchReg),
+                 SPReg, false, -MaxStack);
+    // SPLimitOffset is in a fixed heap location (pointed by BP).
+    addRegOffset(BuildMI(stackCheckMBB, DL, TII.get(CMPop))
+                 .addReg(ScratchReg), PReg, false, SPLimitOffset);
+    BuildMI(stackCheckMBB, DL, TII.get(X86::JAE_4)).addMBB(&prologueMBB);
+
+    // Create new MBB for IncStack:
+    BuildMI(incStackMBB, DL, TII.get(CALLop)).
+      addExternalSymbol("inc_stack_0");
+    addRegOffset(BuildMI(incStackMBB, DL, TII.get(LEAop), ScratchReg),
+                 SPReg, false, -MaxStack);
+    addRegOffset(BuildMI(incStackMBB, DL, TII.get(CMPop))
+                 .addReg(ScratchReg), PReg, false, SPLimitOffset);
+    BuildMI(incStackMBB, DL, TII.get(X86::JLE_4)).addMBB(incStackMBB);
+
+    stackCheckMBB->addSuccessor(&prologueMBB, 99);
+    stackCheckMBB->addSuccessor(incStackMBB, 1);
+    incStackMBB->addSuccessor(&prologueMBB, 99);
+    incStackMBB->addSuccessor(incStackMBB, 1);
+  }
 #ifdef XDEBUG
   MF.verify();
 #endif
