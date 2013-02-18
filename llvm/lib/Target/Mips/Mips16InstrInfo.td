@@ -1012,6 +1012,8 @@ def SltCCRxRy16: FCCRR16_ins<"slt">;
 // Purpose: Set on Less Than Unsigned
 // To record the result of an unsigned less-than comparison.
 //
+def SltuRxRy16: FRR16_ins<0b00011, "sltu", IIAlu>;
+
 def SltuRxRyRz16: FRRTR16_ins<"sltu"> {
   let isCodeGenOnly=1;
 }

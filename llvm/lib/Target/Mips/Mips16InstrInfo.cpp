@@ -142,6 +142,11 @@ bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case Mips::BteqzT8SltX16:
     ExpandFEXT_T8I816_ins(MBB, MI, Mips::BteqzX16, Mips::SltRxRy16);
     break;
+  case Mips::BteqzT8SltuX16:
+    // TBD: figure out a way to get this or remove the instruction
+    // altogether.
+    ExpandFEXT_T8I816_ins(MBB, MI, Mips::BteqzX16, Mips::SltuRxRy16);
+    break;
   case Mips::BtnezT8CmpX16:
     ExpandFEXT_T8I816_ins(MBB, MI, Mips::BtnezX16, Mips::CmpRxRy16);
     break;
