@@ -570,6 +570,10 @@ namespace llvm {
       return getFieldAs<DIFile>(6).getDirectory();
     }
 
+    DIFile getFile() const {
+      return getFieldAs<DIFile>(6);
+    }
+
     /// getScopeLineNumber - Get the beginning of the scope of the
     /// function, not necessarily where the name of the program
     /// starts.
