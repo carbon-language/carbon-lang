@@ -85,13 +85,13 @@ locations, making it hard for a human to write such YAML correctly.
 In relational database theory there is a design step called normalization in 
 which you reorganize fields and tables.  The same considerations need to 
 go into the design of your YAML encoding.  But, you may not want to change
-your exisiting native data structures.  Therefore, when writing out YAML
+your existing native data structures.  Therefore, when writing out YAML
 there may be a normalization step, and when reading YAML there would be a
 corresponding denormalization step.  
 
 YAML I/O uses a non-invasive, traits based design.  YAML I/O defines some 
 abstract base templates.  You specialize those templates on your data types.
-For instance, if you have an eumerated type FooBar you could specialize 
+For instance, if you have an enumerated type FooBar you could specialize 
 ScalarEnumerationTraits on that type and define the enumeration() method:
 
 .. code-block:: c++
@@ -113,17 +113,17 @@ values and the YAML string representation is only in place.
 This assures that the code for writing and parsing of YAML stays in sync.
 
 To specify a YAML mappings, you define a specialization on 
-llvm::yaml::MapppingTraits.
+llvm::yaml::MappingTraits.
 If your native data structure happens to be a struct that is already normalized,
 then the specialization is simple.  For example:
 
 .. code-block:: c++
    
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
     
     template <>
-    struct MapppingTraits<Person> {
+    struct MappingTraits<Person> {
       static void mapping(IO &io, Person &info) {
         io.mapRequired("name",         info.name);
         io.mapOptional("hat-size",     info.hatSize);
@@ -131,7 +131,7 @@ then the specialization is simple.  For example:
     };
 
 
-A YAML sequence is automatically infered if you data type has begin()/end()
+A YAML sequence is automatically inferred if you data type has begin()/end()
 iterators and a push_back() method.  Therefore any of the STL containers
 (such as std::vector<>) will automatically translate to YAML sequences.
 
@@ -243,7 +243,7 @@ The following types have built-in support in YAML I/O:
 * uint16_t
 * uint8_t
 
-That is, you can use those types in fields of MapppingTraits or as element type
+That is, you can use those types in fields of MappingTraits or as element type
 in sequence.  When reading, YAML I/O will validate that the string found
 is convertible to that type and error out if not.
 
@@ -311,7 +311,7 @@ as a field type:
 .. code-block:: c++
 
     using llvm::yaml::ScalarEnumerationTraits;
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
 
     template <>
@@ -324,7 +324,7 @@ as a field type:
     };
  
     template <>
-    struct MapppingTraits<Info> {
+    struct MappingTraits<Info> {
       static void mapping(IO &io, Info &info) {
         io.mapRequired("cpu",       info.cpu);
         io.mapOptional("flags",     info.flags, 0);
@@ -361,7 +361,7 @@ on MyFlags and provide the bit values and their names.
 .. code-block:: c++
 
     using llvm::yaml::ScalarBitSetTraits;
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
 
     template <>
@@ -380,7 +380,7 @@ on MyFlags and provide the bit values and their names.
     };
     
     template <>
-    struct MapppingTraits<Info> {
+    struct MappingTraits<Info> {
       static void mapping(IO &io, Info& info) {
         io.mapRequired("name",  info.name);
         io.mapRequired("flags", info.flags);
@@ -434,18 +434,18 @@ Mappings
 ========
 
 To be translated to or from a YAML mapping for your type T you must specialize  
-llvm::yaml::MapppingTraits on T and implement the "void mapping(IO &io, T&)" 
+llvm::yaml::MappingTraits on T and implement the "void mapping(IO &io, T&)" 
 method. If your native data structures use pointers to a class everywhere,
 you can specialize on the class pointer.  Examples:
 
 .. code-block:: c++
    
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
     
     // Example of struct Foo which is used by value
     template <>
-    struct MapppingTraits<Foo> {
+    struct MappingTraits<Foo> {
       static void mapping(IO &io, Foo &foo) {
         io.mapOptional("size",      foo.size);
       ...
@@ -454,7 +454,7 @@ you can specialize on the class pointer.  Examples:
 
     // Example of struct Bar which is natively always a pointer
     template <>
-    struct MapppingTraits<Bar*> {
+    struct MappingTraits<Bar*> {
       static void mapping(IO &io, Bar *&bar) {
         io.mapOptional("size",    bar->size);
       ...
@@ -472,11 +472,11 @@ bind the struct's fields to YAML key names.  For example:
 
 .. code-block:: c++
    
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
     
     template <>
-    struct MapppingTraits<Person> {
+    struct MappingTraits<Person> {
       static void mapping(IO &io, Person &info) {
         io.mapRequired("name",         info.name);
         io.mapOptional("hat-size",     info.hatSize);
@@ -511,17 +511,17 @@ is, you want the yaml to look like:
     x:   10.3
     y:   -4.7
 
-You can support this by defining a MapppingTraits that normalizes the polar
+You can support this by defining a MappingTraits that normalizes the polar
 coordinates to x,y coordinates when writing YAML and denormalizes x,y 
-coordindates into polar when reading YAML.  
+coordinates into polar when reading YAML.  
 
 .. code-block:: c++
    
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
         
     template <>
-    struct MapppingTraits<Polar> {
+    struct MappingTraits<Polar> {
       
       class NormalizedPolar {
       public:
@@ -566,7 +566,7 @@ could be returned by the denormalize() method, except that the temporary
 normalized instance is stack allocated.  In these cases, the utility template
 MappingNormalizationHeap<> can be used instead.  It just like 
 MappingNormalization<> except that it heap allocates the normalized object
-when reading YAML.  It never destroyes the normalized object.  The denormalize()
+when reading YAML.  It never destroys the normalized object.  The denormalize()
 method can this return "this".
 
 
@@ -612,7 +612,7 @@ This works for both reading and writing. For example:
 
 .. code-block:: c++
 
-    using llvm::yaml::MapppingTraits;
+    using llvm::yaml::MappingTraits;
     using llvm::yaml::IO;
     
     struct Info {
@@ -621,7 +621,7 @@ This works for both reading and writing. For example:
     };
 
     template <>
-    struct MapppingTraits<Info> {
+    struct MappingTraits<Info> {
       static void mapping(IO &io, Info &info) {
         io.mapRequired("cpu",       info.cpu);
         // flags must come after cpu for this to work when reading yaml
@@ -676,13 +676,13 @@ add "static const bool flow = true;".  For instance:
   };
 
 With the above, if you used MyList as the data type in your native data 
-strucutures, then then when converted to YAML, a flow sequence of integers 
+structures, then then when converted to YAML, a flow sequence of integers 
 will be used (e.g. [ 10, -3, 4 ]).
 
 
 Utility Macros
 --------------
-Since a common source of sequences is std::vector<>, YAML I/O provids macros:
+Since a common source of sequences is std::vector<>, YAML I/O provides macros:
 LLVM_YAML_IS_SEQUENCE_VECTOR() and LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR() which
 can be used to easily specify SequenceTraits<> on a std::vector type.  YAML 
 I/O does not partial specialize SequenceTraits on std::vector<> because that
