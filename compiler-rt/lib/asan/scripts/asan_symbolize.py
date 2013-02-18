@@ -8,6 +8,7 @@
 #
 #===------------------------------------------------------------------------===#
 import bisect
+import getopt
 import os
 import re
 import subprocess
@@ -18,6 +19,7 @@ symbolizers = {}
 filetypes = {}
 vmaddrs = {}
 DEBUG = False
+demangle = False;
 
 
 # FIXME: merge the code that calls fix_filename().
@@ -60,7 +62,7 @@ class LLVMSymbolizer(Symbolizer):
       return None
     cmd = [self.symbolizer_path,
            '--use-symbol-table=true',
-           '--demangle=false',
+           '--demangle=%s' % demangle,
            '--functions=true',
            '--inlining=true']
     if DEBUG:
@@ -111,7 +113,10 @@ class Addr2LineSymbolizer(Symbolizer):
     self.pipe = self.open_addr2line()
 
   def open_addr2line(self):
-    cmd = ['addr2line', '-f', '-e', self.binary]
+    cmd = ['addr2line', '-f']
+    if demangle:
+      cmd += ['--demangle']
+    cmd += ['-e', self.binary]
     if DEBUG:
       print ' '.join(cmd)
     return subprocess.Popen(cmd,
@@ -352,5 +357,9 @@ class SymbolizationLoop(object):
 
 
 if __name__ == '__main__':
+  opts, args = getopt.getopt(sys.argv[1:], "d", ["demangle"])
+  for o, a in opts:
+    if o in ("-d", "--demangle"):
+      demangle = True;
   loop = SymbolizationLoop()
   loop.process_stdin()
