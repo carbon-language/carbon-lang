@@ -85,3 +85,6 @@ const int one = ONE;
 @interface ClassWithDef 
 - (void)method;
 @end
+
+void eventually_noreturn(void) __attribute__((noreturn));
+void eventually_noreturn2(void) __attribute__((noreturn));

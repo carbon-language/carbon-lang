@@ -1806,6 +1806,30 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
   
   if (DC->isTranslationUnit() && Reader.SemaObj) {
     IdentifierResolver &IdResolver = Reader.SemaObj->IdResolver;
+
+    // Temporarily consider the identifier to be up-to-date. We don't want to
+    // cause additional lookups here.
+    class UpToDateIdentifierRAII {
+      IdentifierInfo *II;
+      bool WasOutToDate;
+
+    public:
+      explicit UpToDateIdentifierRAII(IdentifierInfo *II)
+        : II(II), WasOutToDate(false)
+      {
+        if (II) {
+          WasOutToDate = II->isOutOfDate();
+          if (WasOutToDate)
+            II->setOutOfDate(false);
+        }
+      }
+
+      ~UpToDateIdentifierRAII() {
+        if (WasOutToDate)
+          II->setOutOfDate(true);
+      }
+    } UpToDate(Name.getAsIdentifierInfo());
+
     for (IdentifierResolver::iterator I = IdResolver.begin(Name), 
                                    IEnd = IdResolver.end();
          I != IEnd; ++I) {

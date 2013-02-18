@@ -90,3 +90,4 @@ typedef void funcptr_with_id(int id);
 
 @class DeclaredThenLoaded;
 
+void eventually_noreturn2(void);

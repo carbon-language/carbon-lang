@@ -792,19 +792,13 @@ private:
   /// Number of CXX base specifiers currently loaded
   unsigned NumCXXBaseSpecifiersLoaded;
 
-  /// \brief An IdentifierInfo that has been loaded but whose top-level
-  /// declarations of the same name have not (yet) been loaded.
-  struct PendingIdentifierInfo {
-    IdentifierInfo *II;
-    SmallVector<uint32_t, 4> DeclIDs;
-  };
-
   /// \brief The set of identifiers that were read while the AST reader was
   /// (recursively) loading declarations.
   ///
   /// The declarations on the identifier chain for these identifiers will be
   /// loaded once the recursive loading has completed.
-  std::deque<PendingIdentifierInfo> PendingIdentifierInfos;
+  llvm::MapVector<IdentifierInfo *, SmallVector<uint32_t, 4> >
+    PendingIdentifierInfos;
 
   /// \brief The generation number of each identifier, which keeps track of
   /// the last time we loaded information about this identifier.
@@ -1582,7 +1576,7 @@ public:
   void SetIdentifierInfo(unsigned ID, IdentifierInfo *II);
   void SetGloballyVisibleDecls(IdentifierInfo *II,
                                const SmallVectorImpl<uint32_t> &DeclIDs,
-                               bool Nonrecursive = false);
+                               SmallVectorImpl<Decl *> *Decls = 0);
 
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(unsigned DiagID);

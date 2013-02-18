@@ -5830,8 +5830,8 @@ void ASTReader::InitializeSema(Sema &S) {
   // Makes sure any declarations that were deserialized "too early"
   // still get added to the identifier's declaration chains.
   for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
-    SemaObj->pushExternalDeclIntoScope(PreloadedDecls[I], 
-                                       PreloadedDecls[I]->getDeclName());
+    NamedDecl *ND = cast<NamedDecl>(PreloadedDecls[I]->getMostRecentDecl());
+    SemaObj->pushExternalDeclIntoScope(ND, PreloadedDecls[I]->getDeclName());
   }
   PreloadedDecls.clear();
 
@@ -6208,28 +6208,32 @@ void ASTReader::SetIdentifierInfo(IdentifierID ID, IdentifierInfo *II) {
 /// \param DeclIDs the set of declaration IDs with the name @p II that are
 /// visible at global scope.
 ///
-/// \param Nonrecursive should be true to indicate that the caller knows that
-/// this call is non-recursive, and therefore the globally-visible declarations
-/// will not be placed onto the pending queue.
+/// \param Decls if non-null, this vector will be populated with the set of
+/// deserialized declarations. These declarations will not be pushed into
+/// scope.
 void
 ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
                               const SmallVectorImpl<uint32_t> &DeclIDs,
-                                   bool Nonrecursive) {
-  if (NumCurrentElementsDeserializing && !Nonrecursive) {
-    PendingIdentifierInfos.push_back(PendingIdentifierInfo());
-    PendingIdentifierInfo &PII = PendingIdentifierInfos.back();
-    PII.II = II;
-    PII.DeclIDs.append(DeclIDs.begin(), DeclIDs.end());
+                                   SmallVectorImpl<Decl *> *Decls) {
+  if (NumCurrentElementsDeserializing && !Decls) {
+    PendingIdentifierInfos[II].append(DeclIDs.begin(), DeclIDs.end());
     return;
   }
 
   for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I) {
     NamedDecl *D = cast<NamedDecl>(GetDecl(DeclIDs[I]));
     if (SemaObj) {
+      // If we're simply supposed to record the declarations, do so now.
+      if (Decls) {
+        Decls->push_back(D);
+        continue;
+      }
+
       // Introduce this declaration into the translation-unit scope
       // and add it to the declaration chain for this identifier, so
       // that (unqualified) name lookup will find it.
-      SemaObj->pushExternalDeclIntoScope(D, II);
+      NamedDecl *ND = cast<NamedDecl>(D->getMostRecentDecl());
+      SemaObj->pushExternalDeclIntoScope(ND, II);
     } else {
       // Queue this declaration so that it will be added to the
       // translation unit scope and identifier's declaration chain
@@ -6989,10 +6993,14 @@ void ASTReader::finishPendingActions() {
          !PendingMacroIDs.empty() || !PendingDeclContextInfos.empty()) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
+    llvm::DenseMap<IdentifierInfo *, SmallVector<Decl *, 2> > TopLevelDecls;
     while (!PendingIdentifierInfos.empty()) {
-      SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
-                              PendingIdentifierInfos.front().DeclIDs, true);
-      PendingIdentifierInfos.pop_front();
+      // FIXME: std::move
+      IdentifierInfo *II = PendingIdentifierInfos.back().first;
+      SmallVector<uint32_t, 4> DeclIDs = PendingIdentifierInfos.back().second;
+      PendingIdentifierInfos.erase(II);
+
+      SetGloballyVisibleDecls(II, DeclIDs, &TopLevelDecls[II]);
     }
   
     // Load pending declaration chains.
@@ -7001,6 +7009,17 @@ void ASTReader::finishPendingActions() {
       PendingDeclChainsKnown.erase(PendingDeclChains[I]);
     }
     PendingDeclChains.clear();
+
+    // Make the most recent of the top-level declarations visible.
+    for (llvm::DenseMap<IdentifierInfo *, SmallVector<Decl *, 2> >::iterator
+           TLD = TopLevelDecls.begin(), TLDEnd = TopLevelDecls.end();
+         TLD != TLDEnd; ++TLD) {
+      IdentifierInfo *II = TLD->first;
+      for (unsigned I = 0, N = TLD->second.size(); I != N; ++I) {
+        NamedDecl *ND = cast<NamedDecl>(TLD->second[I]->getMostRecentDecl());
+        SemaObj->pushExternalDeclIntoScope(ND, II);
+      }
+    }
 
     // Load any pending macro definitions.
     for (unsigned I = 0; I != PendingMacroIDs.size(); ++I) {

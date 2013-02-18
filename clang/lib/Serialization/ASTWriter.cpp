@@ -3141,20 +3141,32 @@ void ASTWriter::WriteRedeclarations() {
     LocalRedeclChains.push_back(0); // Placeholder for the size.
     
     // Collect the set of local redeclarations of this declaration.
-    for (Decl *Prev = MostRecent; Prev != First; 
+    for (Decl *Prev = MostRecent; Prev != First;
          Prev = Prev->getPreviousDecl()) { 
       if (!Prev->isFromASTFile()) {
         AddDeclRef(Prev, LocalRedeclChains);
         ++Size;
       }
     }
+
+    if (!First->isFromASTFile() && Chain) {
+      Decl *FirstFromAST = MostRecent;
+      for (Decl *Prev = MostRecent; Prev; Prev = Prev->getPreviousDecl()) {
+        if (Prev->isFromASTFile())
+          FirstFromAST = Prev;
+      }
+
+      Chain->MergedDecls[FirstFromAST].push_back(getDeclID(First));
+    }
+
     LocalRedeclChains[Offset] = Size;
     
     // Reverse the set of local redeclarations, so that we store them in
     // order (since we found them in reverse order).
     std::reverse(LocalRedeclChains.end() - Size, LocalRedeclChains.end());
     
-    // Add the mapping from the first ID to the set of local declarations.
+    // Add the mapping from the first ID from the AST to the set of local
+    // declarations.
     LocalRedeclarationsInfo Info = { getDeclID(First), Offset };
     LocalRedeclsMap.push_back(Info);
     
@@ -3807,8 +3819,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   WriteMacroUpdates();
   WriteDeclUpdatesBlocks();
   WriteDeclReplacementsBlock();
-  WriteMergedDecls();
   WriteRedeclarations();
+  WriteMergedDecls();
   WriteObjCCategories();
   
   // Some simple statistics

@@ -1,5 +1,6 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -verify -Wno-objc-root-class
+// RUN: %clang_cc1 -fmodules -Wreturn-type -fmodules-cache-path=%t -I %S/Inputs %s -verify -Wno-objc-root-class
+
 @class C2;
 @class C3;
 @class C3;
@@ -8,7 +9,27 @@ typedef struct my_struct_type *my_struct_ref;
 @protocol P4;
 @class C3;
 @class C3;
+
+int *call_eventually_noreturn(void) {
+  eventually_noreturn();
+} // expected-warning{{control reaches end of non-void function}}
+
+int *call_eventually_noreturn2(void) {
+  eventually_noreturn2();
+} // expected-warning{{control reaches end of non-void function}}
+
 @import redecl_merge_right;
+
+int *call_eventually_noreturn_again(void) {
+  eventually_noreturn();
+}
+
+int *call_eventually_noreturn2_again(void) {
+  // noreturn and non-noreturn functions have different types
+  eventually_noreturn2(); // expected-error{{call to 'eventually_noreturn2' is ambiguous}}
+  // expected-note@93{{candidate function}}
+  // expected-note@90{{candidate function}}
+}
 
 @implementation A
 - (Super*)init { return self; }
@@ -148,3 +169,5 @@ id<P3> p3;
 // Make sure we don't get conflicts with 'id'.
 funcptr_with_id fid;
 id id_global;
+
+
