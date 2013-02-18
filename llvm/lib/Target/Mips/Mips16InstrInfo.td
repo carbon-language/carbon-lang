@@ -516,7 +516,9 @@ def BnezRxImmX16: FEXT_RI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
 // Purpose: Branch on T Equal to Zero (Extended)
 // To test special register T then do a PC-relative conditional branch.
 //
-def BteqzX16: FEXT_I816_ins<0b000, "bteqz", IIAlu>, cbranch16;
+def BteqzX16: FEXT_I816_ins<0b000, "bteqz", IIAlu>, cbranch16 {
+  let Uses = [T8];
+}
 
 def BteqzT8CmpX16: FEXT_T8I816_ins<"bteqz", "cmp">, cbranch16;
 
@@ -537,7 +539,9 @@ def BteqzT8SltiuX16: FEXT_T8I8I16_ins<"bteqz", "sltiu">,
 // Purpose: Branch on T Not Equal to Zero (Extended)
 // To test special register T then do a PC-relative conditional branch.
 //
-def BtnezX16: FEXT_I816_ins<0b001, "btnez", IIAlu> ,cbranch16;
+def BtnezX16: FEXT_I816_ins<0b001, "btnez", IIAlu> ,cbranch16 {
+  let Uses = [T8];
+}
 
 def BtnezT8CmpX16: FEXT_T8I816_ins<"btnez", "cmp">, cbranch16;
 
@@ -551,6 +555,16 @@ def BtnezT8SltiX16: FEXT_T8I8I16_ins<"btnez", "slti">, cbranch16;
 
 def BtnezT8SltiuX16: FEXT_T8I8I16_ins<"btnez", "sltiu">,
   cbranch16;
+
+//
+// Format: CMP rx, ry MIPS16e
+// Purpose: Compare
+// To compare the contents of two GPRs.
+//
+def CmpRxRy16: FRR16_ins<0b01010, "cmp", IIAlu> {
+  let Defs = [T8];
+}
+
 
 //
 // Format: DIV rx, ry MIPS16e
