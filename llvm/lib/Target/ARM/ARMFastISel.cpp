@@ -2458,7 +2458,6 @@ bool ARMFastISel::ARMTryEmitSmallMemCpy(Address Dest, Address Src,
       if (Len >= 2 && Alignment == 2)
         VT = MVT::i16;
       else {
-        assert (Alignment == 1 && "Expected an alignment of 1!");
         VT = MVT::i8;
       }
     }

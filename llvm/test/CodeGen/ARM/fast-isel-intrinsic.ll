@@ -231,3 +231,10 @@ define void @t6() nounwind ssp {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 1, i1 false)
   ret void
 }
+
+rdar://13202135
+define void @t7() nounwind ssp {
+; Just make sure this doesn't assert when we have an odd length and an alignment of 2.
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 3, i32 2, i1 false)
+  ret void
+}
