@@ -82,8 +82,8 @@ public:
   Location DiagLoc;
 
   std::vector<CXSourceRange> Ranges;
-  std::vector<std::pair<CXSourceRange, CXString> > FixIts;
-  llvm::StringRef Spelling;
+  std::vector<std::pair<CXSourceRange, const char *> > FixIts;
+  const char *Spelling;
   llvm::StringRef DiagOption;
   llvm::StringRef CategoryText;
   unsigned severity;

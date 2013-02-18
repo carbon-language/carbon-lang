@@ -29,7 +29,7 @@ using namespace clang;
 // Extend CXDiagnosticSetImpl which contains strings for diagnostics.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::DenseMap<unsigned, llvm::StringRef> Strings;
+typedef llvm::DenseMap<unsigned, const char *> Strings;
 
 namespace {
 class CXLoadedDiagnosticSetImpl : public CXDiagnosticSetImpl {
@@ -45,14 +45,13 @@ public:
   FileSystemOptions FO;
   FileManager FakeFiles;
   llvm::DenseMap<unsigned, const FileEntry *> Files;
-  
-  llvm::StringRef makeString(StringRef Blob) {
+
+  /// \brief Copy the string into our own allocator.
+  const char *copyString(StringRef Blob) {
     char *mem = Alloc.Allocate<char>(Blob.size() + 1);
     memcpy(mem, Blob.data(), Blob.size());
-    // Add a null terminator for those clients accessing the buffer
-    // like a c-string.
     mem[Blob.size()] = '\0';
-    return llvm::StringRef(mem, Blob.size());
+    return mem;
   }
 };
 }
@@ -135,7 +134,7 @@ CXString CXLoadedDiagnostic::getFixIt(unsigned FixIt,
   assert(FixIt < FixIts.size());
   if (ReplacementRange)
     *ReplacementRange = FixIts[FixIt].first;
-  return FixIts[FixIt].second;
+  return cxstring::createRef(FixIts[FixIt].second);
 }
 
 void CXLoadedDiagnostic::decodeLocation(CXSourceLocation location,
@@ -220,7 +219,7 @@ class DiagLoader {
                         bool allowEmptyString = false);
 
   LoadResult readString(CXLoadedDiagnosticSetImpl &TopDiags,
-                        llvm::StringRef &RetStr,
+                        const char *&RetStr,
                         llvm::StringRef errorContext,
                         RecordData &Record,
                         StringRef Blob,
@@ -434,7 +433,7 @@ LoadResult DiagLoader::readMetaBlock(llvm::BitstreamCursor &Stream) {
 }
 
 LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
-                                  llvm::StringRef &RetStr,
+                                  const char *&RetStr,
                                   llvm::StringRef errorContext,
                                   RecordData &Record,
                                   StringRef Blob,
@@ -458,7 +457,7 @@ LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
     return Failure;
   }
   
-  RetStr = TopDiags.makeString(Blob);
+  RetStr = TopDiags.copyString(Blob);
   return Success;
 }
 
@@ -468,7 +467,7 @@ LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
                                   RecordData &Record,
                                   StringRef Blob,
                                   bool allowEmptyString) {
-  llvm::StringRef RetStr;
+  const char *RetStr;
   if (readString(TopDiags, RetStr, errorContext, Record, Blob,
                  allowEmptyString))
     return Failure;
@@ -622,11 +621,11 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         CXSourceRange SR;
         if (readRange(TopDiags, Record, 0, SR))
           return Failure;
-        llvm::StringRef RetStr;
+        const char *RetStr;
         if (readString(TopDiags, RetStr, "FIXIT", Record, Blob,
                        /* allowEmptyString */ true))
           return Failure;
-        D->FixIts.push_back(std::make_pair(SR, cxstring::createRef(RetStr)));
+        D->FixIts.push_back(std::make_pair(SR, RetStr));
         continue;
       }
         
@@ -639,7 +638,7 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         unsigned diagFlag = Record[offset++];
         D->DiagOption = diagFlag ? TopDiags.WarningFlags[diagFlag] : "";
         D->CategoryText = D->category ? TopDiags.Categories[D->category] : "";
-        D->Spelling = TopDiags.makeString(Blob);
+        D->Spelling = TopDiags.copyString(Blob);
         continue;
       }
     }
