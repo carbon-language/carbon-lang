@@ -1631,7 +1631,6 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 //	if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
 void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   const X86InstrInfo &TII = *TM.getInstrInfo();
-  const X86Subtarget *ST = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const uint64_t SlotSize = TM.getRegisterInfo()->getSlotSize();
   const bool Is64Bit = STI.is64Bit();
@@ -1645,7 +1644,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   unsigned MaxStack =
     MFI->getStackSize() + CallerStkArity * SlotSize + SlotSize;
 
-  assert(ST->isTargetLinux() &&
+  assert(getTarget().getSubtarget<X86Subtarget>()->ST->isTargetLinux() &&
          "HiPE prologue is only supported on Linux operating systems.");
 
   // Compute the largest caller's frame that is needed to fit the callees'
