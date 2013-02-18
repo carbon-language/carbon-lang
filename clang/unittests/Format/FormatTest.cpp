@@ -168,6 +168,19 @@ TEST_F(FormatTest, RemovesTrailingWhitespaceOfFormattedLine) {
   EXPECT_EQ("int a;\nint b;", format("int a; \nint b;", 0, 0, getLLVMStyle()));
 }
 
+TEST_F(FormatTest, ReformatsMovedLines) {
+  EXPECT_EQ(
+      "template <typename T> T *getFETokenInfo() const {\n"
+      "  return static_cast<T *>(FETokenInfo);\n"
+      "}\n"
+      "  int a; // <- Should not be formatted",
+      format(
+          "template<typename T>\n"
+          "T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }\n"
+          "  int a; // <- Should not be formatted",
+          9, 5, getLLVMStyle()));
+}
+
 //===----------------------------------------------------------------------===//
 // Tests for control statements.
 //===----------------------------------------------------------------------===//

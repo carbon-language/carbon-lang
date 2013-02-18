@@ -999,7 +999,9 @@ public:
       while (IndentForLevel.size() <= TheLine.Level)
         IndentForLevel.push_back(-1);
       IndentForLevel.resize(TheLine.Level + 1);
-      if (touchesRanges(TheLine) && TheLine.Type != LT_Invalid) {
+      bool WasMoved =
+          PreviousLineWasTouched && TheLine.First.FormatTok.NewlinesBefore == 0;
+      if (TheLine.Type != LT_Invalid && (WasMoved || touchesRanges(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
         unsigned Indent = LevelIndent;
         if (static_cast<int>(Indent) + Offset >= 0)
