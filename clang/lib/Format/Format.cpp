@@ -251,6 +251,7 @@ public:
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;
+    State.StartOfLineLevel = State.ParenLevel;
 
     DEBUG({
       DebugTokenState(*State.NextToken);
@@ -384,6 +385,9 @@ private:
     /// \brief The level of nesting inside (), [], <> and {}.
     unsigned ParenLevel;
 
+    /// \brief The \c ParenLevel at the start of this line.
+    unsigned StartOfLineLevel;
+
     /// \brief A stack keeping track of properties applying to parenthesis
     /// levels.
     std::vector<ParenState> Stack;
@@ -401,6 +405,8 @@ private:
         return LineContainsContinuedForLoopSection;
       if (Other.ParenLevel != ParenLevel)
         return Other.ParenLevel < ParenLevel;
+      if (Other.StartOfLineLevel < StartOfLineLevel)
+        return Other.StartOfLineLevel < StartOfLineLevel;
       return Other.Stack < Stack;
     }
   };
@@ -489,6 +495,7 @@ private:
       }
 
       State.Stack.back().LastSpace = State.Column;
+      State.StartOfLineLevel = State.ParenLevel;
       if (Current.is(tok::colon) && Current.Type != TT_ConditionalExpr)
         State.Stack.back().Indent += 2;
     } else {
@@ -771,6 +778,14 @@ private:
     if (!State.NextToken->CanBreakBefore &&
         !(State.NextToken->is(tok::r_brace) &&
           State.Stack.back().BreakBeforeClosingBrace))
+      return false;
+    // This prevents breaks like:
+    //   ...
+    //   SomeParameter, OtherParameter).DoSomething(
+    //   ...
+    // As they hide "DoSomething" and generally bad for readability.
+    if (State.NextToken->Parent->is(tok::l_paren) &&
+        State.ParenLevel <= State.StartOfLineLevel)
       return false;
     // Trying to insert a parameter on a new line if there are already more than
     // one parameter on the current line is bin packing.
