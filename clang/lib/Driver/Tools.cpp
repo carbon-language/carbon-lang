@@ -3196,6 +3196,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(Flags.str()));
   }
 
+  // Finally add the command to the compilation.
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
   if (Arg *A = Args.getLastArg(options::OPT_pg))
