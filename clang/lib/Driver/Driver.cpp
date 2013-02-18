@@ -34,8 +34,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 
-// FIXME: It would prevent to include llvm-config.h
-// if it were included before system_error.h.
+// FIXME: It would prevent us from including llvm-config.h
+// if config.h were included before system_error.h.
 #include "clang/Config/config.h"
 
 using namespace clang::driver;
