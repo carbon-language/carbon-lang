@@ -29,6 +29,8 @@ namespace llvm {
   class MDNode;
   class StringRef;
   class DIBasicType;
+  class DICompositeType;
+  class DIDerivedType;
   class DIDescriptor;
   class DIFile;
   class DIEnumerator;
@@ -116,25 +118,25 @@ namespace llvm {
     /// type, e.g. 'const int'.
     /// @param Tag         Tag identifing type, e.g. dwarf::TAG_volatile_type
     /// @param FromTy      Base Type.
-    DIType createQualifiedType(unsigned Tag, DIType FromTy);
+    DIDerivedType createQualifiedType(unsigned Tag, DIType FromTy);
 
     /// createPointerType - Create debugging information entry for a pointer.
     /// @param PointeeTy   Type pointed by this pointer.
     /// @param SizeInBits  Size.
     /// @param AlignInBits Alignment. (optional)
     /// @param Name        Pointer type name. (optional)
-    DIType createPointerType(DIType PointeeTy, uint64_t SizeInBits,
-                             uint64_t AlignInBits = 0, 
-                             StringRef Name = StringRef());
+    DIDerivedType
+    createPointerType(DIType PointeeTy, uint64_t SizeInBits,
+                      uint64_t AlignInBits = 0, StringRef Name = StringRef());
 
     /// \brief Create debugging information entry for a pointer to member.
     /// @param PointeeTy Type pointed to by this pointer.
     /// @param Class Type for which this pointer points to members of.
-    DIType createMemberPointerType(DIType PointeeTy, DIType Class);
+    DIDerivedType createMemberPointerType(DIType PointeeTy, DIType Class);
 
     /// createReferenceType - Create debugging information entry for a c++
     /// style reference or rvalue reference type.
-    DIType createReferenceType(unsigned Tag, DIType RTy);
+    DIDerivedType createReferenceType(unsigned Tag, DIType RTy);
 
     /// createTypedef - Create debugging information entry for a typedef.
     /// @param Ty          Original type.
@@ -142,8 +144,8 @@ namespace llvm {
     /// @param File        File where this type is defined.
     /// @param LineNo      Line number.
     /// @param Context     The surrounding context for the typedef.
-    DIType createTypedef(DIType Ty, StringRef Name, DIFile File, 
-                         unsigned LineNo, DIDescriptor Context);
+    DIDerivedType createTypedef(DIType Ty, StringRef Name, DIFile File,
+                                unsigned LineNo, DIDescriptor Context);
 
     /// createFriend - Create debugging information entry for a 'friend'.
     DIType createFriend(DIType Ty, DIType FriendTy);
@@ -155,8 +157,8 @@ namespace llvm {
     /// @param BaseOffset   Base offset.
     /// @param Flags        Flags to describe inheritance attribute, 
     ///                     e.g. private
-    DIType createInheritance(DIType Ty, DIType BaseTy, uint64_t BaseOffset,
-                             unsigned Flags);
+    DIDerivedType createInheritance(DIType Ty, DIType BaseTy,
+                                    uint64_t BaseOffset, unsigned Flags);
 
     /// createMemberType - Create debugging information entry for a member.
     /// @param Scope        Member scope.
@@ -168,10 +170,10 @@ namespace llvm {
     /// @param OffsetInBits Member offset.
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Ty           Parent type.
-    DIType createMemberType(DIDescriptor Scope, StringRef Name, DIFile File,
-                            unsigned LineNo, uint64_t SizeInBits, 
-                            uint64_t AlignInBits, uint64_t OffsetInBits, 
-                            unsigned Flags, DIType Ty);
+    DIDerivedType
+    createMemberType(DIDescriptor Scope, StringRef Name, DIFile File,
+                     unsigned LineNo, uint64_t SizeInBits, uint64_t AlignInBits,
+                     uint64_t OffsetInBits, unsigned Flags, DIType Ty);
 
     /// createStaticMemberType - Create debugging information entry for a
     /// C++ static data member.
@@ -292,10 +294,10 @@ namespace llvm {
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Elements     Union elements.
     /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
-    DIType createUnionType(DIDescriptor Scope, StringRef Name, DIFile File,
-                           unsigned LineNumber, uint64_t SizeInBits,
-                           uint64_t AlignInBits, unsigned Flags,
-                           DIArray Elements, unsigned RunTimeLang = 0);
+    DICompositeType createUnionType(
+        DIDescriptor Scope, StringRef Name, DIFile File, unsigned LineNumber,
+        uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
+        DIArray Elements, unsigned RunTimeLang = 0);
 
     /// createTemplateTypeParameter - Create debugging information for template
     /// type parameter.
@@ -330,8 +332,8 @@ namespace llvm {
     /// @param AlignInBits  Alignment.
     /// @param Ty           Element type.
     /// @param Subscripts   Subscripts.
-    DIType createArrayType(uint64_t Size, uint64_t AlignInBits, 
-                           DIType Ty, DIArray Subscripts);
+    DICompositeType createArrayType(uint64_t Size, uint64_t AlignInBits,
+                                    DIType Ty, DIArray Subscripts);
 
     /// createVectorType - Create debugging information entry for a vector type.
     /// @param Size         Array size.
@@ -350,16 +352,16 @@ namespace llvm {
     /// @param SizeInBits   Member size.
     /// @param AlignInBits  Member alignment.
     /// @param Elements     Enumeration elements.
-    DIType createEnumerationType(DIDescriptor Scope, StringRef Name, 
-                                 DIFile File, unsigned LineNumber, 
-                                 uint64_t SizeInBits, uint64_t AlignInBits,
-                                 DIArray Elements, DIType ClassType);
+    DICompositeType createEnumerationType(
+        DIDescriptor Scope, StringRef Name, DIFile File, unsigned LineNumber,
+        uint64_t SizeInBits, uint64_t AlignInBits, DIArray Elements,
+        DIType ClassType);
 
     /// createSubroutineType - Create subroutine type.
     /// @param File           File in which this subroutine is defined.
     /// @param ParameterTypes An array of subroutine parameter types. This
     ///                       includes return type at 0th index.
-    DIType createSubroutineType(DIFile File, DIArray ParameterTypes);
+    DICompositeType createSubroutineType(DIFile File, DIArray ParameterTypes);
 
     /// createArtificialType - Create a new DIType with "artificial" flag set.
     DIType createArtificialType(DIType Ty);
