@@ -1644,7 +1644,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   unsigned MaxStack =
     MFI->getStackSize() + CallerStkArity * SlotSize + SlotSize;
 
-  assert(getTarget().getSubtarget<X86Subtarget>()->ST->isTargetLinux() &&
+  assert(MF.getTarget().getSubtarget<X86Subtarget>().isTargetLinux() &&
          "HiPE prologue is only supported on Linux operating systems.");
 
   // Compute the largest caller's frame that is needed to fit the callees'
