@@ -94,8 +94,8 @@ class GlobalModuleIndex {
   explicit GlobalModuleIndex(FileManager &FileMgr, llvm::MemoryBuffer *Buffer,
                              llvm::BitstreamCursor Cursor);
 
-  GlobalModuleIndex(const GlobalModuleIndex &); // DO NOT IMPLEMENT
-  GlobalModuleIndex &operator=(const GlobalModuleIndex &); // DO NOT IMPLEMENT
+  GlobalModuleIndex(const GlobalModuleIndex &) LLVM_DELETED_FUNCTION;
+  GlobalModuleIndex &operator=(const GlobalModuleIndex &) LLVM_DELETED_FUNCTION;
 
 public:
   ~GlobalModuleIndex();

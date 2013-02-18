@@ -10,6 +10,8 @@
 #ifndef CLANG_DRIVER_OPTSPECIFIER_H
 #define CLANG_DRIVER_OPTSPECIFIER_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace clang {
 namespace driver {
   class Option;
@@ -19,7 +21,7 @@ namespace driver {
     unsigned ID;
 
   private:
-    explicit OptSpecifier(bool); // DO NOT IMPLEMENT
+    explicit OptSpecifier(bool) LLVM_DELETED_FUNCTION;
 
   public:
     OptSpecifier() : ID(0) {}

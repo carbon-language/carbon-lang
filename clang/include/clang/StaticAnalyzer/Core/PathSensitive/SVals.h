@@ -168,10 +168,10 @@ public:
 
 class DefinedOrUnknownSVal : public SVal {
 private:
-  // Do not implement.  We want calling these methods to be a compiler
-  // error since they are tautologically false.
-  bool isUndef() const;
-  bool isValid() const;
+  // We want calling these methods to be a compiler error since they are
+  // tautologically false.
+  bool isUndef() const LLVM_DELETED_FUNCTION;
+  bool isValid() const LLVM_DELETED_FUNCTION;
   
 protected:
   explicit DefinedOrUnknownSVal(const void *d, bool isLoc, unsigned ValKind)
@@ -198,11 +198,11 @@ public:
 
 class DefinedSVal : public DefinedOrUnknownSVal {
 private:
-  // Do not implement.  We want calling these methods to be a compiler
-  // error since they are tautologically true/false.
-  bool isUnknown() const;
-  bool isUnknownOrUndef() const;
-  bool isValid() const;  
+  // We want calling these methods to be a compiler error since they are
+  // tautologically true/false.
+  bool isUnknown() const LLVM_DELETED_FUNCTION;
+  bool isUnknownOrUndef() const LLVM_DELETED_FUNCTION;
+  bool isValid() const LLVM_DELETED_FUNCTION;
 protected:
   explicit DefinedSVal(const void *d, bool isLoc, unsigned ValKind)
     : DefinedOrUnknownSVal(d, isLoc, ValKind) {}
