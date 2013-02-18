@@ -1445,9 +1445,9 @@ private:
     // base of the ivar access is a parameter to an Objective C method.
     // However, because the parameters are not available in the current
     // interface, we cannot perform this check.
-      if (dyn_cast<ObjCMethodDecl>(CGF.CurFuncDecl))
-        if (IV->getContainingInterface()->isSuperClassOf(ID))
-          return true;
+    if (CGF.CurFuncDecl && isa<ObjCMethodDecl>(CGF.CurFuncDecl))
+      if (IV->getContainingInterface()->isSuperClassOf(ID))
+        return true;
     return false;
   }
 

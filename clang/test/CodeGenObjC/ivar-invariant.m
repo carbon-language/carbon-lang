@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -fblocks -emit-llvm -o - %s | FileCheck %s
 
 @interface NSObject
 + (id) new;
@@ -54,3 +54,15 @@ void * variant_load_1(int i) {
 // CHECK: define internal i8* @"\01-[Container invariant_load_1]"
 // CHECK: [[IVAR:%.*]] = load i64* @"OBJC_IVAR_$_Derived.member", !invariant.load
 
+@interface ForBlock
+{ 
+@public
+  id foo; 
+}
+@end
+
+// CHECK: define internal i8* @block_block_invoke
+// CHECK: load i64* @"OBJC_IVAR_$_ForBlock.foo"
+id (^block)(ForBlock*) = ^(ForBlock* a) {
+  return a->foo;
+};
