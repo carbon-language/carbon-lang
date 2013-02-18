@@ -127,9 +127,6 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return LowerIntrinsicLRP(Op, DAG);
     case AMDGPUIntrinsic::AMDIL_fraction:
       return DAG.getNode(AMDGPUISD::FRACT, DL, VT, Op.getOperand(1));
-    case AMDGPUIntrinsic::AMDIL_mad:
-      return DAG.getNode(AMDGPUISD::MAD, DL, VT, Op.getOperand(1),
-                              Op.getOperand(2), Op.getOperand(3));
     case AMDGPUIntrinsic::AMDIL_max:
       return DAG.getNode(AMDGPUISD::FMAX, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
@@ -176,9 +173,9 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
                                 Op.getOperand(1));
   SDValue OneSubAC = DAG.getNode(ISD::FMUL, DL, VT, OneSubA,
                                                     Op.getOperand(3));
-  return DAG.getNode(AMDGPUISD::MAD, DL, VT, Op.getOperand(1),
-                                               Op.getOperand(2),
-                                               OneSubAC);
+  return DAG.getNode(ISD::FADD, DL, VT,
+      DAG.getNode(ISD::FMUL, DL, VT, Op.getOperand(1), Op.getOperand(2)),
+      OneSubAC);
 }
 
 /// \brief Generate Min/Max node
@@ -393,7 +390,6 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
   // AMDIL DAG nodes
-  NODE_NAME_CASE(MAD);
   NODE_NAME_CASE(CALL);
   NODE_NAME_CASE(UMUL);
   NODE_NAME_CASE(DIV_INF);

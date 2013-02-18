@@ -451,7 +451,8 @@ AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const {
   SDValue fqneg = DAG.getNode(ISD::FNEG, DL, FLTTY, fq);
 
   // float fr = mad(fqneg, fb, fa);
-  SDValue fr = DAG.getNode(AMDGPUISD::MAD, DL, FLTTY, fqneg, fb, fa);
+  SDValue fr = DAG.getNode(ISD::FADD, DL, FLTTY,
+      DAG.getNode(ISD::MUL, DL, FLTTY, fqneg, fb), fa);
 
   // int iq = (int)fq;
   SDValue iq = DAG.getNode(ISD::FP_TO_SINT, DL, INTTY, fq);

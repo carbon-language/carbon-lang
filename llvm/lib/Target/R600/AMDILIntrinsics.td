@@ -92,12 +92,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
       TernaryIntInt;
   def int_AMDIL_bfm : GCCBuiltin<"__amdil_bfm">,
       BinaryIntInt;
-  def int_AMDIL_mad_i32 : GCCBuiltin<"__amdil_imad">,
-          TernaryIntInt;
-  def int_AMDIL_mad_u32 : GCCBuiltin<"__amdil_umad">,
-          TernaryIntInt;
-  def int_AMDIL_mad     : GCCBuiltin<"__amdil_mad">,
-          TernaryIntFloat;
   def int_AMDIL_mulhi_i32 : GCCBuiltin<"__amdil_imul_high">,
           BinaryIntInt;
   def int_AMDIL_mulhi_u32 : GCCBuiltin<"__amdil_umul_high">,
@@ -110,10 +104,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
           BinaryIntInt;
   def int_AMDIL_mulhi24_u32 : GCCBuiltin<"__amdil_umul24_high">,
           BinaryIntInt;
-  def int_AMDIL_mad24_i32 : GCCBuiltin<"__amdil_imad24">,
-          TernaryIntInt;
-  def int_AMDIL_mad24_u32 : GCCBuiltin<"__amdil_umad24">,
-          TernaryIntInt;
   def int_AMDIL_carry_i32 : GCCBuiltin<"__amdil_carry">,
           BinaryIntInt;
   def int_AMDIL_borrow_i32 : GCCBuiltin<"__amdil_borrow">,

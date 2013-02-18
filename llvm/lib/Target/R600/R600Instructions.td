@@ -949,8 +949,13 @@ class MUL_LIT_Common <bits<5> inst> : R600_3OP <
 
 class MULADD_Common <bits<5> inst> : R600_3OP <
   inst, "MULADD",
+  []
+>;
+
+class MULADD_IEEE_Common <bits<5> inst> : R600_3OP <
+  inst, "MULADD_IEEE",
   [(set (f32 R600_Reg32:$dst),
-   (IL_mad R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2))]
+   (fadd (fmul R600_Reg32:$src0, R600_Reg32:$src1), R600_Reg32:$src2))]
 >;
 
 class CNDE_Common <bits<5> inst> : R600_3OP <
@@ -1107,6 +1112,7 @@ let Predicates = [isR600] in {
 
   def MUL_LIT_r600 : MUL_LIT_Common<0x0C>;
   def MULADD_r600 : MULADD_Common<0x10>;
+  def MULADD_IEEE_r600 : MULADD_IEEE_Common<0x14>;
   def CNDE_r600 : CNDE_Common<0x18>;
   def CNDGT_r600 : CNDGT_Common<0x19>;
   def CNDGE_r600 : CNDGE_Common<0x1A>;
@@ -1246,6 +1252,7 @@ let Predicates = [isEGorCayman] in {
   >;
 
   def MULADD_eg : MULADD_Common<0x14>;
+  def MULADD_IEEE_eg : MULADD_IEEE_Common<0x18>;
   def ASHR_eg : ASHR_Common<0x15>;
   def LSHR_eg : LSHR_Common<0x16>;
   def LSHL_eg : LSHL_Common<0x17>;

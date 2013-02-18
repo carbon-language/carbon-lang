@@ -108,7 +108,6 @@ namespace AMDGPUISD {
 enum {
   // AMDIL ISD Opcodes
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
-  MAD,         // 32bit Fused Multiply Add instruction
   CALL,        // Function call based on a single integer
   UMUL,        // 32bit unsigned multiplication
   DIV_INF,      // Divide with infinity returned on zero divisor
