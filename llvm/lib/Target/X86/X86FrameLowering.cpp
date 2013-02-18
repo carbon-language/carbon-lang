@@ -1682,7 +1682,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
             continue;
 
           const uint64_t CalleeStkArity =
-            std::max<int64_t>(0, F->arg_size() - CCRegisteredArgs);
+            std::max<ssize_t>(0, F->arg_size() - CCRegisteredArgs);
           MoreStackForCalls = std::max<int64_t>(
             MoreStackForCalls, (HipeLeafWords - 1 - CalleeStkArity) * SlotSize);
         }
