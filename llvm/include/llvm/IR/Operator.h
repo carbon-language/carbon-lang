@@ -33,8 +33,8 @@ class ConstantExpr;
 ///
 class Operator : public User {
 private:
-  // Do not implement any of these. The Operator class is intended to be used
-  // as a utility, and is never itself instantiated.
+  // The Operator class is intended to be used as a utility, and is never itself
+  // instantiated.
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void *operator new(size_t s) LLVM_DELETED_FUNCTION;
   Operator() LLVM_DELETED_FUNCTION;

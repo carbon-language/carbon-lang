@@ -35,8 +35,8 @@ typedef union {
 } IntFloatUnion;
 
 class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
-  SIMCCodeEmitter(const SIMCCodeEmitter &); // DO NOT IMPLEMENT
-  void operator=(const SIMCCodeEmitter &); // DO NOT IMPLEMENT
+  SIMCCodeEmitter(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  void operator=(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
   const MCSubtargetInfo &STI;

@@ -29,8 +29,8 @@ using namespace llvm;
 
 namespace {
 class AArch64MCCodeEmitter : public MCCodeEmitter {
-  AArch64MCCodeEmitter(const AArch64MCCodeEmitter &); // DO NOT IMPLEMENT
-  void operator=(const AArch64MCCodeEmitter &); // DO NOT IMPLEMENT
+  AArch64MCCodeEmitter(const AArch64MCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  void operator=(const AArch64MCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   const MCSubtargetInfo &STI;
   MCContext &Ctx;

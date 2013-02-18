@@ -29,7 +29,6 @@ namespace llvm {
 /// a chunk at a time.
 class raw_ostream {
 private:
-  // Do not implement. raw_ostream is noncopyable.
   void operator=(const raw_ostream &) LLVM_DELETED_FUNCTION;
   raw_ostream(const raw_ostream &) LLVM_DELETED_FUNCTION;
 
