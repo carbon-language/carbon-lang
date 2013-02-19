@@ -389,8 +389,10 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
      return false;
 
    // When we need stack realignment and there are dynamic allocas, we can't
-   // reference off of the stack pointer, so we reserve a base pointer.
-   if (needsStackRealignment(MF) && MFI->hasVarSizedObjects())
+   // reference off of the stack pointer, so we reserve a base pointer.  This
+   // is also true if the function contain MS-style inline assembly.
+   if ((needsStackRealignment(MF) && MFI->hasVarSizedObjects()) ||
+       MF.hasMSInlineAsm())
      return true;
 
    return false;

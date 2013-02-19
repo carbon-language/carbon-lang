@@ -103,8 +103,8 @@ entry:
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax
-; CHECK: mov dword ptr [ebp - 8], edi
+; CHECK: mov dword ptr [esi], edi
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
-; CHECK: movl -8(%ebp), %eax
+; CHECK: movl (%esi), %eax
 }
