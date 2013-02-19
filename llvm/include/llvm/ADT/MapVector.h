@@ -119,14 +119,11 @@ public:
                             (Vector.begin() + Pos->second);
   }
 
-  /// \brief Erase entry with the given key.
-  void erase(const KeyT &key) {
-    typename MapType::iterator Pos = Map.find(key);
-    if (Pos == Map.end())
-      return;
-
-    Vector.erase(Vector.begin() + Pos->second);
+  /// \brief Remove the last element from the vector.
+  void pop_back() {
+    typename MapType::iterator Pos = Map.find(Vector.back().first);
     Map.erase(Pos);
+    Vector.pop_back();
   }
 };
 
