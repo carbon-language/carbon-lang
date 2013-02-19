@@ -409,9 +409,9 @@ static Value *foldSelectInst(SelectInst &SI) {
   // early on.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(SI.getCondition()))
     return SI.getOperand(1+CI->isZero());
-  if (SI.getOperand(1) == SI.getOperand(2)) {
+  if (SI.getOperand(1) == SI.getOperand(2))
     return SI.getOperand(1);
-  }
+
   return 0;
 }
 
@@ -1139,8 +1139,7 @@ void AllocaPartitioning::print(raw_ostream &OS, const_iterator I,
 
 void AllocaPartitioning::printUsers(raw_ostream &OS, const_iterator I,
                                     StringRef Indent) const {
-  for (const_use_iterator UI = use_begin(I), UE = use_end(I);
-       UI != UE; ++UI) {
+  for (const_use_iterator UI = use_begin(I), UE = use_end(I); UI != UE; ++UI) {
     if (!UI->U)
       continue; // Skip dead uses.
     OS << Indent << "  [" << UI->BeginOffset << "," << UI->EndOffset << ") "
@@ -1240,7 +1239,7 @@ public:
     for (SmallVector<DbgValueInst *, 4>::const_iterator I = DVIs.begin(),
            E = DVIs.end(); I != E; ++I) {
       DbgValueInst *DVI = *I;
-      Value *Arg = NULL;
+      Value *Arg = 0;
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         // If an argument is zero extended then use argument directly. The ZExt
         // may be zapped by an optimization pass in future.
@@ -1437,8 +1436,7 @@ private:
     // We can only transform this if it is safe to push the loads into the
     // predecessor blocks. The only thing to watch out for is that we can't put
     // a possibly trapping load in the predecessor if it is a critical edge.
-    for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num;
-         ++Idx) {
+    for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num; ++Idx) {
       TerminatorInst *TI = PN.getIncomingBlock(Idx)->getTerminator();
       Value *InVal = PN.getIncomingValue(Idx);
 
@@ -3146,9 +3144,8 @@ private:
     void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
       assert(Ty->isSingleValueType());
       // Load the single value and insert it using the indices.
-      Value *Load = IRB.CreateLoad(IRB.CreateInBoundsGEP(Ptr, GEPIndices,
-                                                         Name + ".gep"),
-                                   Name + ".load");
+      Value *GEP = IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep");
+      Value *Load = IRB.CreateLoad(GEP, Name + ".load");
       Agg = IRB.CreateInsertValue(Agg, Load, Indices, Name + ".insert");
       DEBUG(dbgs() << "          to: " << *Load << "\n");
     }
