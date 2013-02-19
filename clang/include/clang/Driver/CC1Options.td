@@ -415,7 +415,9 @@ def stack_protector : Separate<["-"], "stack-protector">,
 def stack_protector_buffer_size : Separate<["-"], "stack-protector-buffer-size">,
   HelpText<"Lower bound for a buffer to be considered for stack protection">;
 def fvisibility : Separate<["-"], "fvisibility">,
-  HelpText<"Default symbol visibility">;
+  HelpText<"Default type and symbol visibility">;
+def ftype_visibility : Separate<["-"], "ftype-visibility">,
+  HelpText<"Default type visibility">;
 def ftemplate_depth : Separate<["-"], "ftemplate-depth">,
   HelpText<"Maximum depth of recursive template instantiation">;
 def fconstexpr_depth : Separate<["-"], "fconstexpr-depth">,

@@ -1001,6 +1001,24 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   Opts.DollarIdents = !Opts.AsmPreprocessor;
 }
 
+/// Attempt to parse a visibility value out of the given argument.
+static Visibility parseVisibility(Arg *arg, ArgList &args,
+                                  DiagnosticsEngine &diags) {
+  StringRef value = arg->getValue();
+  if (value == "default") {
+    return DefaultVisibility;
+  } else if (value == "hidden") {
+    return HiddenVisibility;
+  } else if (value == "protected") {
+    // FIXME: diagnose if target does not support protected visibility
+    return ProtectedVisibility;
+  }
+
+  diags.Report(diag::err_drv_invalid_value)
+    << arg->getAsString(args) << value;
+  return DefaultVisibility;
+}
+
 static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                           DiagnosticsEngine &Diags) {
   // FIXME: Cleanup per-file based stuff.
@@ -1132,17 +1150,19 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fdelayed_template_parsing))
     Opts.DelayedTemplateParsing = 1;
 
-  StringRef Vis = Args.getLastArgValue(OPT_fvisibility, "default");
-  if (Vis == "default")
-    Opts.setVisibilityMode(DefaultVisibility);
-  else if (Vis == "hidden")
-    Opts.setVisibilityMode(HiddenVisibility);
-  else if (Vis == "protected")
-    // FIXME: diagnose if target does not support protected visibility
-    Opts.setVisibilityMode(ProtectedVisibility);
-  else
-    Diags.Report(diag::err_drv_invalid_value)
-      << Args.getLastArg(OPT_fvisibility)->getAsString(Args) << Vis;
+  // The value-visibility mode defaults to "default".
+  if (Arg *visOpt = Args.getLastArg(OPT_fvisibility)) {
+    Opts.setValueVisibilityMode(parseVisibility(visOpt, Args, Diags));
+  } else {
+    Opts.setValueVisibilityMode(DefaultVisibility);
+  }
+
+  // The type-visibility mode defaults to the value-visibility mode.
+  if (Arg *typeVisOpt = Args.getLastArg(OPT_ftype_visibility)) {
+    Opts.setTypeVisibilityMode(parseVisibility(typeVisOpt, Args, Diags));
+  } else {
+    Opts.setTypeVisibilityMode(Opts.getValueVisibilityMode());
+  }
 
   if (Args.hasArg(OPT_fvisibility_inlines_hidden))
     Opts.InlineVisibilityHidden = 1;

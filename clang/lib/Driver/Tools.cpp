@@ -2523,9 +2523,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(Twine(N)));
   }
 
-  if (const Arg *A = Args.getLastArg(options::OPT_fvisibility_EQ)) {
-    CmdArgs.push_back("-fvisibility");
-    CmdArgs.push_back(A->getValue());
+  // -fvisibility= and -fvisibility-ms-compat are of a piece.
+  if (const Arg *A = Args.getLastArg(options::OPT_fvisibility_EQ,
+                                     options::OPT_fvisibility_ms_compat)) {
+    if (A->getOption().matches(options::OPT_fvisibility_EQ)) {
+      CmdArgs.push_back("-fvisibility");
+      CmdArgs.push_back(A->getValue());
+    } else {
+      assert(A->getOption().matches(options::OPT_fvisibility_ms_compat));
+      CmdArgs.push_back("-fvisibility");
+      CmdArgs.push_back("hidden");
+      CmdArgs.push_back("-ftype-visibility");
+      CmdArgs.push_back("default");
+    }
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_fvisibility_inlines_hidden);

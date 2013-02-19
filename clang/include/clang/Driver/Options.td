@@ -723,10 +723,14 @@ def fuse_cxa_atexit : Flag<["-"], "fuse-cxa-atexit">, Group<f_Group>;
 def fuse_init_array : Flag<["-"], "fuse-init-array">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Use .init_array instead of .ctors">;
 def fverbose_asm : Flag<["-"], "fverbose-asm">, Group<f_Group>;
-def fvisibility_EQ : Joined<["-"], "fvisibility=">, Group<f_Group>;
+def fvisibility_EQ : Joined<["-"], "fvisibility=">, Group<f_Group>,
+  HelpText<"Set the default symbol visibility for all global declarations">;
 def fvisibility_inlines_hidden : Flag<["-"], "fvisibility-inlines-hidden">, Group<f_Group>,
   HelpText<"Give inline C++ member functions default visibility by default">,
   Flags<[CC1Option]>;
+def fvisibility_ms_compat : Flag<["-"], "fvisibility-ms-compat">, Group<f_Group>,
+  HelpText<"Give global types 'default' visibility and global functions and "
+           "variables 'hidden' visibility by default">;
 def fwrapv : Flag<["-"], "fwrapv">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Treat signed integer overflow as two's complement">;
 def fwritable_strings : Flag<["-"], "fwritable-strings">, Group<f_Group>, Flags<[CC1Option]>,

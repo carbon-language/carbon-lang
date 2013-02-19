@@ -80,7 +80,9 @@ typedef NamedDecl::LinkageInfo LinkageInfo;
 /// Is the given declaration a "type" or a "value" for the purposes of
 /// visibility computation?
 static bool usesTypeVisibility(const NamedDecl *D) {
-  return isa<TypeDecl>(D) || isa<ClassTemplateDecl>(D);
+  return isa<TypeDecl>(D) ||
+         isa<ClassTemplateDecl>(D) ||
+         isa<ObjCInterfaceDecl>(D);
 }
 
 /// Return the explicit visibility of the given declaration.
@@ -440,10 +442,15 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
 
     // Add in global settings if the above didn't give us direct visibility.
     if (!LV.visibilityExplicit()) {
-      // FIXME: type visibility
-      LV.mergeVisibility(Context.getLangOpts().getVisibilityMode(),
-                         /*explicit*/ false);
-
+      // Use global type/value visibility as appropriate.
+      Visibility globalVisibility;
+      if (computation == LVForValue) {
+        globalVisibility = Context.getLangOpts().getValueVisibilityMode();
+      } else {
+        assert(computation == LVForType);
+        globalVisibility = Context.getLangOpts().getTypeVisibilityMode();
+      }
+      LV.mergeVisibility(globalVisibility, /*explicit*/ false);
 
       // If we're paying attention to global visibility, apply
       // -finline-visibility-hidden if this is an inline method.
