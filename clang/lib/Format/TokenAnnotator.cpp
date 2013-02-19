@@ -293,7 +293,8 @@ private:
       next();
       if (!parseAngle())
         return false;
-      CurrentToken->Parent->ClosesTemplateDeclaration = true;
+      if (CurrentToken != NULL)
+        CurrentToken->Parent->ClosesTemplateDeclaration = true;
       return true;
     }
     return false;
