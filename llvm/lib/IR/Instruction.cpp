@@ -455,12 +455,16 @@ bool Instruction::mayWriteToMemory() const {
   }
 }
 
-/// mayThrow - Return true if this instruction may throw an exception.
-///
 bool Instruction::mayThrow() const {
   if (const CallInst *CI = dyn_cast<CallInst>(this))
     return !CI->doesNotThrow();
   return isa<ResumeInst>(this);
+}
+
+bool Instruction::mayReturn() const {
+  if (const CallInst *CI = dyn_cast<CallInst>(this))
+    return !CI->doesNotReturn();
+  return true;
 }
 
 /// isAssociative - Return true if the instruction is associative:

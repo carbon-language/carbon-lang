@@ -309,6 +309,12 @@ public:
   ///
   bool mayThrow() const;
 
+  /// mayReturn - Return true if this is a function that may return.
+  /// this is true for all normal instructions. The only exception
+  /// is functions that are marked with the 'noreturn' attribute.
+  ///
+  bool mayReturn() const;
+
   /// mayHaveSideEffects - Return true if the instruction may have side effects.
   ///
   /// Note that this does not consider malloc and alloca to have side
@@ -316,7 +322,7 @@ public:
   /// instructions which don't used the returned value.  For cases where this
   /// matters, isSafeToSpeculativelyExecute may be more appropriate.
   bool mayHaveSideEffects() const {
-    return mayWriteToMemory() || mayThrow();
+    return mayWriteToMemory() || mayThrow() || !mayReturn();
   }
 
   /// clone() - Create a copy of 'this' instruction that is identical in all
