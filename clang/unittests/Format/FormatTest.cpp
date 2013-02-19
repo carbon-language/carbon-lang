@@ -937,6 +937,8 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                getLLVMStyleWithColumns(20));
 
   verifyFormat("#define A template <typename T>");
+  verifyFormat("#define STR(x) #x\n"
+               "f(STR(this_is_a_string_literal{));");
 }
 
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {

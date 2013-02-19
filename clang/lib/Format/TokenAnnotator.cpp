@@ -592,7 +592,8 @@ private:
         else
           Current.Type = TT_BlockComment;
       } else if (Current.is(tok::r_paren)) {
-        bool ParensNotExpr = Current.Parent->Type == TT_PointerOrReference ||
+        bool ParensNotExpr = !Current.Parent ||
+                             Current.Parent->Type == TT_PointerOrReference ||
                              Current.Parent->Type == TT_TemplateCloser;
         bool ParensCouldEndDecl =
             !Current.Children.empty() && (Current.Children[0].is(tok::equal) ||
