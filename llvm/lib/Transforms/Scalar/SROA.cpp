@@ -1167,8 +1167,7 @@ void AllocaPartitioning::print(raw_ostream &OS) const {
   }
 
   OS << "Partitioning of alloca: " << AI << "\n";
-  unsigned Num = 0;
-  for (const_iterator I = begin(), E = end(); I != E; ++I, ++Num) {
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
     print(OS, I);
     printUsers(OS, I);
   }
