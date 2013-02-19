@@ -15,6 +15,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/Path.h"
 
 namespace clang {
 namespace driver {
@@ -188,6 +189,18 @@ class SanitizerArgs {
         return std::string("-fsanitize=") + A->getValue(I);
 
     llvm_unreachable("arg didn't provide expected value");
+  }
+
+  static bool getDefaultBlacklistForKind(const Driver &D, unsigned Kind,
+                                         std::string &BLPath) {
+    // For now, specify the default blacklist location for ASan only.
+    if (Kind & NeedsAsanRt) {
+      SmallString<64> Path(D.ResourceDir);
+      llvm::sys::path::append(Path, "asan_blacklist.txt");
+      BLPath = Path.str();
+      return true;
+    }
+    return false;
   }
 };
 

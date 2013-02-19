@@ -1543,6 +1543,14 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
       else
         D.Diag(diag::err_drv_no_such_file) << BLPath;
     }
+  } else {
+    // If no -fsanitize-blacklist option is specified, try to look up for
+    // blacklist in the resource directory.
+    std::string BLPath;
+    bool BLExists = false;
+    if (getDefaultBlacklistForKind(D, Kind, BLPath) &&
+        !llvm::sys::fs::exists(BLPath, BLExists) && BLExists)
+      BlacklistFile = BLPath;
   }
 
   // Parse -f(no-)sanitize-memory-track-origins options.
