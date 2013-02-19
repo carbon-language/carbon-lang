@@ -621,7 +621,7 @@ private:
   }
 
   // Disable SRoA for any intrinsics except for lifetime invariants.
-  // FIXME: What about debug instrinsics? This matches old behavior, but
+  // FIXME: What about debug intrinsics? This matches old behavior, but
   // doesn't make sense.
   void visitIntrinsicInst(IntrinsicInst &II) {
     if (!IsOffsetKnown)
@@ -1277,7 +1277,7 @@ namespace {
 /// 1) It takes allocations of aggregates and analyzes the ways in which they
 ///    are used to try to split them into smaller allocations, ideally of
 ///    a single scalar data type. It will split up memcpy and memset accesses
-///    as necessary and try to isolate invidual scalar accesses.
+///    as necessary and try to isolate individual scalar accesses.
 /// 2) It will transform accesses into forms which are suitable for SSA value
 ///    promotion. This can be replacing a memset with a scalar store of an
 ///    integer value, or it can involve speculating operations on a PHI or
@@ -1483,7 +1483,7 @@ private:
                                           PN.getName() + ".sroa.speculated");
 
     // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
-    // matter which one we get and if any differ, it doesn't matter.
+    // matter which one we get and if any differ.
     LoadInst *SomeLoad = cast<LoadInst>(Loads.back());
     MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
     unsigned Align = SomeLoad->getAlignment();
@@ -1816,7 +1816,7 @@ static Value *getNaturalGEPWithOffset(IRBuilder<> &IRB, const DataLayout &TD,
 /// The strategy for finding the more natural GEPs is to peel off layers of the
 /// pointer, walking back through bit casts and GEPs, searching for a base
 /// pointer from which we can compute a natural GEP with the desired
-/// properities. The algorithm tries to fold as many constant indices into
+/// properties. The algorithm tries to fold as many constant indices into
 /// a single GEP as possible, thus making each GEP more independent of the
 /// surrounding code.
 static Value *getAdjustedPtr(IRBuilder<> &IRB, const DataLayout &TD,
@@ -2062,9 +2062,9 @@ static bool isIntegerWideningViable(const DataLayout &TD,
 
   uint64_t Size = TD.getTypeStoreSize(AllocaTy);
 
-  // Check the uses to ensure the uses are (likely) promoteable integer uses.
+  // Check the uses to ensure the uses are (likely) promotable integer uses.
   // Also ensure that the alloca has a covering load or store. We don't want
-  // to widen the integer operotains only to fail to promote due to some other
+  // to widen the integer operations only to fail to promote due to some other
   // unsplittable entry (which we may make splittable later).
   bool WholeAllocaOp = false;
   for (; I != E; ++I) {
@@ -2283,7 +2283,7 @@ class AllocaPartitionRewriter : public InstVisitor<AllocaPartitionRewriter,
 
   // If we are rewriting an alloca partition which can be written as pure
   // vector operations, we stash extra information here. When VecTy is
-  // non-null, we have some strict guarantees about the rewriten alloca:
+  // non-null, we have some strict guarantees about the rewritten alloca:
   //   - The new alloca is exactly the size of the vector type here.
   //   - The accesses all either map to the entire vector or to a single
   //     element.
@@ -2636,7 +2636,7 @@ private:
   ///
   /// Note that this routine assumes an i8 is a byte. If that isn't true, don't
   /// call this routine.
-  /// FIXME: Heed the abvice above.
+  /// FIXME: Heed the advice above.
   ///
   /// \param V The i8 value to splat.
   /// \param Size The number of bytes in the output (assuming i8 is one byte)
@@ -3423,7 +3423,7 @@ bool SROA::rewriteAllocaPartition(AllocaInst &AI,
   // Check for the case where we're going to rewrite to a new alloca of the
   // exact same type as the original, and with the same access offsets. In that
   // case, re-use the existing alloca, but still run through the rewriter to
-  // performe phi and select speculation.
+  // perform phi and select speculation.
   AllocaInst *NewAI;
   if (AllocaTy == AI.getAllocatedType()) {
     assert(PI->BeginOffset == 0 &&
@@ -3590,7 +3590,7 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
 /// If there is a domtree available, we attempt to promote using the full power
 /// of mem2reg. Otherwise, we build and use the AllocaPromoter above which is
 /// based on the SSAUpdater utilities. This function returns whether any
-/// promotion occured.
+/// promotion occurred.
 bool SROA::promoteAllocas(Function &F) {
   if (PromotableAllocas.empty())
     return false;
