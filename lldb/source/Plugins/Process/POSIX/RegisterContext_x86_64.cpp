@@ -15,11 +15,14 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Host/Endian.h"
 
 #include "ProcessPOSIX.h"
 #include "ProcessMonitor.h"
+#include "RegisterContext_i386.h"
+#include "RegisterContext_x86.h"
 #include "RegisterContext_x86_64.h"
 
 using namespace lldb_private;
@@ -53,7 +56,17 @@ enum
     gpr_ss,
     gpr_ds,
     gpr_es,
-    k_last_gpr = gpr_es,
+    gpr_eax,
+    gpr_ebx,
+    gpr_ecx,
+    gpr_edx,
+    gpr_edi,
+    gpr_esi,
+    gpr_ebp,
+    gpr_esp,
+    gpr_eip,
+    gpr_eflags,
+    k_last_gpr = gpr_eflags,
 
     k_first_fpr,
     fpu_fcw = k_first_fpr,
@@ -103,7 +116,7 @@ enum
     k_num_register_sets = 2
 };
 
-enum gcc_dwarf_regnums
+enum
 {
     gcc_dwarf_gpr_rax = 0,
     gcc_dwarf_gpr_rdx,
@@ -148,7 +161,7 @@ enum gcc_dwarf_regnums
     gcc_dwarf_fpu_stmm7
 };
 
-enum gdb_regnums
+enum
 {
     gdb_gpr_rax     =   0,
     gdb_gpr_rbx     =   1,
@@ -185,9 +198,9 @@ enum gdb_regnums
     gdb_fpu_fcw     =  32,
     gdb_fpu_fsw     =  33,
     gdb_fpu_ftw     =  34,
-    gdb_fpu_cs      =  35,
+    gdb_fpu_cs_64   =  35,
     gdb_fpu_ip      =  36,
-    gdb_fpu_ds      =  37,
+    gdb_fpu_ds_64   =  37,
     gdb_fpu_dp      =  38,
     gdb_fpu_fop     =  39,
     gdb_fpu_xmm0    =  40,
@@ -235,7 +248,17 @@ uint32_t g_gpr_regnums[k_num_gpr_registers] =
     gpr_gs,
     gpr_ss,
     gpr_ds,
-    gpr_es
+    gpr_es,
+    gpr_eax,
+    gpr_ebx,
+    gpr_ecx,
+    gpr_edx,
+    gpr_edi,
+    gpr_esi,
+    gpr_ebp,
+    gpr_esp,
+    gpr_eip,
+    gpr_eflags
 };
 
 static const uint32_t
@@ -297,6 +320,9 @@ g_reg_sets[k_num_register_sets] =
 // Number of bytes needed to represent a GPR.
 #define GPR_SIZE(reg) sizeof(((GPR*)NULL)->reg)
 
+// Number of bytes needed to represent a i386 GPR
+#define GPR_i386_SIZE(reg) sizeof(((RegisterContext_i386::GPR*)NULL)->reg)
+
 // Number of bytes needed to represent a FPR.
 #define FPR_SIZE(reg) sizeof(((RegisterContext_x86_64::FPU*)NULL)->reg)
 
@@ -309,6 +335,10 @@ g_reg_sets[k_num_register_sets] =
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \
     { #reg, alt, GPR_SIZE(reg), GPR_OFFSET(reg), eEncodingUint, \
       eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg }, NULL, NULL }
+
+#define DEFINE_GPR_i386(reg_i386, reg_x86_64, alt, kind1, kind2, kind3, kind4) \
+    { #reg_i386, alt, GPR_i386_SIZE(reg_i386), GPR_OFFSET(reg_x86_64), eEncodingUint, \
+      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg_i386 }, NULL, NULL }
 
 #define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)              \
     { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint, \
@@ -356,7 +386,17 @@ g_register_infos[k_num_registers] =
     DEFINE_GPR(ss,     NULL,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       gdb_gpr_ss),
     DEFINE_GPR(ds,     NULL,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       gdb_gpr_ds),
     DEFINE_GPR(es,     NULL,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       gdb_gpr_es),
-
+    // i386 registers
+    DEFINE_GPR_i386(eax,    rax,    NULL,    gcc_eax,    dwarf_eax,    LLDB_INVALID_REGNUM,       gdb_eax),
+    DEFINE_GPR_i386(ebx,    rbx,    NULL,    gcc_ebx,    dwarf_ebx,    LLDB_INVALID_REGNUM,       gdb_ebx),
+    DEFINE_GPR_i386(ecx,    rcx,    NULL,    gcc_ecx,    dwarf_ecx,    LLDB_INVALID_REGNUM,       gdb_ecx),
+    DEFINE_GPR_i386(edx,    rdx,    NULL,    gcc_edx,    dwarf_edx,    LLDB_INVALID_REGNUM,       gdb_edx),
+    DEFINE_GPR_i386(edi,    rdi,    NULL,    gcc_edi,    dwarf_edi,    LLDB_INVALID_REGNUM,       gdb_edi),
+    DEFINE_GPR_i386(esi,    rsi,    NULL,    gcc_esi,    dwarf_esi,    LLDB_INVALID_REGNUM,       gdb_esi),
+    DEFINE_GPR_i386(ebp,    rbp,    "fp",    gcc_ebp,    dwarf_ebp,    LLDB_REGNUM_GENERIC_FP,    gdb_ebp),
+    DEFINE_GPR_i386(esp,    rsp,    "sp",    gcc_esp,    dwarf_esp,    LLDB_REGNUM_GENERIC_SP,    gdb_esp),
+    DEFINE_GPR_i386(eip,    rip,    "pc",    gcc_eip,    dwarf_eip,    LLDB_REGNUM_GENERIC_PC,    gdb_eip),
+    DEFINE_GPR_i386(eflags, rflags, "flags", gcc_eflags, dwarf_eflags, LLDB_REGNUM_GENERIC_FLAGS, gdb_eflags),
     // i387 Floating point registers.
     DEFINE_FPR(fcw,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_fcw),
     DEFINE_FPR(fsw,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_fsw),
@@ -364,10 +404,10 @@ g_register_infos[k_num_registers] =
     DEFINE_FPR(fop,       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_fop),
     DEFINE_FPR(ip,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_ip),
     // FIXME: Extract segment from ip.
-    DEFINE_FPR(ip,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_cs),
+    DEFINE_FPR(ip,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_cs_64),
     DEFINE_FPR(dp,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_dp),
     // FIXME: Extract segment from dp.
-    DEFINE_FPR(dp,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_ds),
+    DEFINE_FPR(dp,        LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_ds_64),
     DEFINE_FPR(mxcsr,     LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, gdb_fpu_mxcsr),
     DEFINE_FPR(mxcsrmask, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
 
@@ -620,138 +660,262 @@ uint32_t
 RegisterContext_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
                                                                  uint32_t num)
 {
-    if (kind == eRegisterKindGeneric)
+    const Process *process = CalculateProcess().get();
+    if (process)
     {
-        switch (num)
+        const ArchSpec arch = process->GetTarget().GetArchitecture();;
+        switch (arch.GetCore())
         {
-        case LLDB_REGNUM_GENERIC_PC:    return gpr_rip;
-        case LLDB_REGNUM_GENERIC_SP:    return gpr_rsp;
-        case LLDB_REGNUM_GENERIC_FP:    return gpr_rbp;
-        case LLDB_REGNUM_GENERIC_FLAGS: return gpr_rflags;
-        case LLDB_REGNUM_GENERIC_RA:
         default:
-            return LLDB_INVALID_REGNUM;
-        }
-    }
+            assert(false && "CPU type not supported!");
+            break;
 
-    if (kind == eRegisterKindGCC || kind == eRegisterKindDWARF)
-    {
-        switch (num)
+        case ArchSpec::eCore_x86_32_i386:
+        case ArchSpec::eCore_x86_32_i486:
+        case ArchSpec::eCore_x86_32_i486sx:
         {
-        case gcc_dwarf_gpr_rax:  return gpr_rax;
-        case gcc_dwarf_gpr_rdx:  return gpr_rdx;
-        case gcc_dwarf_gpr_rcx:  return gpr_rcx;
-        case gcc_dwarf_gpr_rbx:  return gpr_rbx;
-        case gcc_dwarf_gpr_rsi:  return gpr_rsi;
-        case gcc_dwarf_gpr_rdi:  return gpr_rdi;
-        case gcc_dwarf_gpr_rbp:  return gpr_rbp;
-        case gcc_dwarf_gpr_rsp:  return gpr_rsp;
-        case gcc_dwarf_gpr_r8:   return gpr_r8;
-        case gcc_dwarf_gpr_r9:   return gpr_r9;
-        case gcc_dwarf_gpr_r10:  return gpr_r10;
-        case gcc_dwarf_gpr_r11:  return gpr_r11;
-        case gcc_dwarf_gpr_r12:  return gpr_r12;
-        case gcc_dwarf_gpr_r13:  return gpr_r13;
-        case gcc_dwarf_gpr_r14:  return gpr_r14;
-        case gcc_dwarf_gpr_r15:  return gpr_r15;
-        case gcc_dwarf_gpr_rip:  return gpr_rip;
-        case gcc_dwarf_fpu_xmm0: return fpu_xmm0;
-        case gcc_dwarf_fpu_xmm1: return fpu_xmm1;
-        case gcc_dwarf_fpu_xmm2: return fpu_xmm2;
-        case gcc_dwarf_fpu_xmm3: return fpu_xmm3;
-        case gcc_dwarf_fpu_xmm4: return fpu_xmm4;
-        case gcc_dwarf_fpu_xmm5: return fpu_xmm5;
-        case gcc_dwarf_fpu_xmm6: return fpu_xmm6;
-        case gcc_dwarf_fpu_xmm7: return fpu_xmm7;
-        case gcc_dwarf_fpu_xmm8: return fpu_xmm8;
-        case gcc_dwarf_fpu_xmm9: return fpu_xmm9;
-        case gcc_dwarf_fpu_xmm10: return fpu_xmm10;
-        case gcc_dwarf_fpu_xmm11: return fpu_xmm11;
-        case gcc_dwarf_fpu_xmm12: return fpu_xmm12;
-        case gcc_dwarf_fpu_xmm13: return fpu_xmm13;
-        case gcc_dwarf_fpu_xmm14: return fpu_xmm14;
-        case gcc_dwarf_fpu_xmm15: return fpu_xmm15;
-        case gcc_dwarf_fpu_stmm0: return fpu_stmm0;
-        case gcc_dwarf_fpu_stmm1: return fpu_stmm1;
-        case gcc_dwarf_fpu_stmm2: return fpu_stmm2;
-        case gcc_dwarf_fpu_stmm3: return fpu_stmm3;
-        case gcc_dwarf_fpu_stmm4: return fpu_stmm4;
-        case gcc_dwarf_fpu_stmm5: return fpu_stmm5;
-        case gcc_dwarf_fpu_stmm6: return fpu_stmm6;
-        case gcc_dwarf_fpu_stmm7: return fpu_stmm7;
-        default:
-            return LLDB_INVALID_REGNUM;
-        }
-    }
+            if (kind == eRegisterKindGeneric)
+            {
+                switch (num)
+                {
+                case LLDB_REGNUM_GENERIC_PC:    return gpr_eip;
+                case LLDB_REGNUM_GENERIC_SP:    return gpr_esp;
+                case LLDB_REGNUM_GENERIC_FP:    return gpr_ebp;
+                case LLDB_REGNUM_GENERIC_FLAGS: return gpr_eflags;
+                case LLDB_REGNUM_GENERIC_RA:
+                default:
+                    return LLDB_INVALID_REGNUM;
+                }
+            }
 
-    if (kind == eRegisterKindGDB)
-    {
-        switch (num)
-        {
-        case gdb_gpr_rax     : return gpr_rax;
-        case gdb_gpr_rbx     : return gpr_rbx;
-        case gdb_gpr_rcx     : return gpr_rcx;
-        case gdb_gpr_rdx     : return gpr_rdx;
-        case gdb_gpr_rsi     : return gpr_rsi;
-        case gdb_gpr_rdi     : return gpr_rdi;
-        case gdb_gpr_rbp     : return gpr_rbp;
-        case gdb_gpr_rsp     : return gpr_rsp;
-        case gdb_gpr_r8      : return gpr_r8;
-        case gdb_gpr_r9      : return gpr_r9;
-        case gdb_gpr_r10     : return gpr_r10;
-        case gdb_gpr_r11     : return gpr_r11;
-        case gdb_gpr_r12     : return gpr_r12;
-        case gdb_gpr_r13     : return gpr_r13;
-        case gdb_gpr_r14     : return gpr_r14;
-        case gdb_gpr_r15     : return gpr_r15;
-        case gdb_gpr_rip     : return gpr_rip;
-        case gdb_gpr_rflags  : return gpr_rflags;
-        case gdb_gpr_cs      : return gpr_cs;
-        case gdb_gpr_ss      : return gpr_ss;
-        case gdb_gpr_ds      : return gpr_ds;
-        case gdb_gpr_es      : return gpr_es;
-        case gdb_gpr_fs      : return gpr_fs;
-        case gdb_gpr_gs      : return gpr_gs;
-        case gdb_fpu_stmm0   : return fpu_stmm0;
-        case gdb_fpu_stmm1   : return fpu_stmm1;
-        case gdb_fpu_stmm2   : return fpu_stmm2;
-        case gdb_fpu_stmm3   : return fpu_stmm3;
-        case gdb_fpu_stmm4   : return fpu_stmm4;
-        case gdb_fpu_stmm5   : return fpu_stmm5;
-        case gdb_fpu_stmm6   : return fpu_stmm6;
-        case gdb_fpu_stmm7   : return fpu_stmm7;
-        case gdb_fpu_fcw     : return fpu_fcw;
-        case gdb_fpu_fsw     : return fpu_fsw;
-        case gdb_fpu_ftw     : return fpu_ftw;
-        case gdb_fpu_cs      : return fpu_cs;
-        case gdb_fpu_ip      : return fpu_ip;
-        case gdb_fpu_ds      : return fpu_ds;
-        case gdb_fpu_dp      : return fpu_dp;
-        case gdb_fpu_fop     : return fpu_fop;
-        case gdb_fpu_xmm0    : return fpu_xmm0;
-        case gdb_fpu_xmm1    : return fpu_xmm1;
-        case gdb_fpu_xmm2    : return fpu_xmm2;
-        case gdb_fpu_xmm3    : return fpu_xmm3;
-        case gdb_fpu_xmm4    : return fpu_xmm4;
-        case gdb_fpu_xmm5    : return fpu_xmm5;
-        case gdb_fpu_xmm6    : return fpu_xmm6;
-        case gdb_fpu_xmm7    : return fpu_xmm7;
-        case gdb_fpu_xmm8    : return fpu_xmm8;
-        case gdb_fpu_xmm9    : return fpu_xmm9;
-        case gdb_fpu_xmm10   : return fpu_xmm10;
-        case gdb_fpu_xmm11   : return fpu_xmm11;
-        case gdb_fpu_xmm12   : return fpu_xmm12;
-        case gdb_fpu_xmm13   : return fpu_xmm13;
-        case gdb_fpu_xmm14   : return fpu_xmm14;
-        case gdb_fpu_xmm15   : return fpu_xmm15;
-        case gdb_fpu_mxcsr   : return fpu_mxcsr;
-        default:
-            return LLDB_INVALID_REGNUM;
+            if (kind == eRegisterKindGCC || kind == eRegisterKindDWARF)
+            {
+                switch (num)
+                {
+                case dwarf_eax:  return gpr_eax;
+                case dwarf_edx:  return gpr_edx;
+                case dwarf_ecx:  return gpr_ecx;
+                case dwarf_ebx:  return gpr_ebx;
+                case dwarf_esi:  return gpr_esi;
+                case dwarf_edi:  return gpr_edi;
+                case dwarf_ebp:  return gpr_ebp;
+                case dwarf_esp:  return gpr_esp;
+                case dwarf_eip:  return gpr_eip;
+                case dwarf_xmm0: return fpu_xmm0;
+                case dwarf_xmm1: return fpu_xmm1;
+                case dwarf_xmm2: return fpu_xmm2;
+                case dwarf_xmm3: return fpu_xmm3;
+                case dwarf_xmm4: return fpu_xmm4;
+                case dwarf_xmm5: return fpu_xmm5;
+                case dwarf_xmm6: return fpu_xmm6;
+                case dwarf_xmm7: return fpu_xmm7;
+                case dwarf_stmm0: return fpu_stmm0;
+                case dwarf_stmm1: return fpu_stmm1;
+                case dwarf_stmm2: return fpu_stmm2;
+                case dwarf_stmm3: return fpu_stmm3;
+                case dwarf_stmm4: return fpu_stmm4;
+                case dwarf_stmm5: return fpu_stmm5;
+                case dwarf_stmm6: return fpu_stmm6;
+                case dwarf_stmm7: return fpu_stmm7;
+                default:
+                    return LLDB_INVALID_REGNUM;
+                }
+            }
+
+            if (kind == eRegisterKindGDB)
+            {
+                switch (num)
+                {
+                case gdb_eax     : return gpr_eax;
+                case gdb_ebx     : return gpr_ebx;
+                case gdb_ecx     : return gpr_ecx;
+                case gdb_edx     : return gpr_edx;
+                case gdb_esi     : return gpr_esi;
+                case gdb_edi     : return gpr_edi;
+                case gdb_ebp     : return gpr_ebp;
+                case gdb_esp     : return gpr_esp;
+                case gdb_eip     : return gpr_eip;
+                case gdb_eflags  : return gpr_eflags;
+                case gdb_cs      : return gpr_cs;
+                case gdb_ss      : return gpr_ss;
+                case gdb_ds      : return gpr_ds;
+                case gdb_es      : return gpr_es;
+                case gdb_fs      : return gpr_fs;
+                case gdb_gs      : return gpr_gs;
+                case gdb_stmm0   : return fpu_stmm0;
+                case gdb_stmm1   : return fpu_stmm1;
+                case gdb_stmm2   : return fpu_stmm2;
+                case gdb_stmm3   : return fpu_stmm3;
+                case gdb_stmm4   : return fpu_stmm4;
+                case gdb_stmm5   : return fpu_stmm5;
+                case gdb_stmm6   : return fpu_stmm6;
+                case gdb_stmm7   : return fpu_stmm7;
+                case gdb_fcw     : return fpu_fcw;
+                case gdb_fsw     : return fpu_fsw;
+                case gdb_ftw     : return fpu_ftw;
+                case gdb_fpu_cs  : return fpu_cs;
+                case gdb_ip      : return fpu_ip;
+                case gdb_fpu_ds  : return fpu_ds; //fpu_fos
+                case gdb_dp      : return fpu_dp; //fpu_foo
+                case gdb_fop     : return fpu_fop;
+                case gdb_xmm0    : return fpu_xmm0;
+                case gdb_xmm1    : return fpu_xmm1;
+                case gdb_xmm2    : return fpu_xmm2;
+                case gdb_xmm3    : return fpu_xmm3;
+                case gdb_xmm4    : return fpu_xmm4;
+                case gdb_xmm5    : return fpu_xmm5;
+                case gdb_xmm6    : return fpu_xmm6;
+                case gdb_xmm7    : return fpu_xmm7;
+                case gdb_mxcsr   : return fpu_mxcsr;
+                default:
+                    return LLDB_INVALID_REGNUM;
+                }
+            }
+            else if (kind == eRegisterKindLLDB)
+            {
+                return num;
+            }
+
+            break;
         }
-    }
-    else if (kind == eRegisterKindLLDB)
-    {
-        return num;
+
+        case ArchSpec::eCore_x86_64_x86_64:
+        {
+            if (kind == eRegisterKindGeneric)
+            {
+                switch (num)
+                {
+                case LLDB_REGNUM_GENERIC_PC:    return gpr_rip;
+                case LLDB_REGNUM_GENERIC_SP:    return gpr_rsp;
+                case LLDB_REGNUM_GENERIC_FP:    return gpr_rbp;
+                case LLDB_REGNUM_GENERIC_FLAGS: return gpr_rflags;
+                case LLDB_REGNUM_GENERIC_RA:
+                default:
+                    return LLDB_INVALID_REGNUM;
+                }
+            }
+
+            if (kind == eRegisterKindGCC || kind == eRegisterKindDWARF)
+            {
+                switch (num)
+                {
+                case gcc_dwarf_gpr_rax:  return gpr_rax;
+                case gcc_dwarf_gpr_rdx:  return gpr_rdx;
+                case gcc_dwarf_gpr_rcx:  return gpr_rcx;
+                case gcc_dwarf_gpr_rbx:  return gpr_rbx;
+                case gcc_dwarf_gpr_rsi:  return gpr_rsi;
+                case gcc_dwarf_gpr_rdi:  return gpr_rdi;
+                case gcc_dwarf_gpr_rbp:  return gpr_rbp;
+                case gcc_dwarf_gpr_rsp:  return gpr_rsp;
+                case gcc_dwarf_gpr_r8:   return gpr_r8;
+                case gcc_dwarf_gpr_r9:   return gpr_r9;
+                case gcc_dwarf_gpr_r10:  return gpr_r10;
+                case gcc_dwarf_gpr_r11:  return gpr_r11;
+                case gcc_dwarf_gpr_r12:  return gpr_r12;
+                case gcc_dwarf_gpr_r13:  return gpr_r13;
+                case gcc_dwarf_gpr_r14:  return gpr_r14;
+                case gcc_dwarf_gpr_r15:  return gpr_r15;
+                case gcc_dwarf_gpr_rip:  return gpr_rip;
+                case gcc_dwarf_fpu_xmm0: return fpu_xmm0;
+                case gcc_dwarf_fpu_xmm1: return fpu_xmm1;
+                case gcc_dwarf_fpu_xmm2: return fpu_xmm2;
+                case gcc_dwarf_fpu_xmm3: return fpu_xmm3;
+                case gcc_dwarf_fpu_xmm4: return fpu_xmm4;
+                case gcc_dwarf_fpu_xmm5: return fpu_xmm5;
+                case gcc_dwarf_fpu_xmm6: return fpu_xmm6;
+                case gcc_dwarf_fpu_xmm7: return fpu_xmm7;
+                case gcc_dwarf_fpu_xmm8: return fpu_xmm8;
+                case gcc_dwarf_fpu_xmm9: return fpu_xmm9;
+                case gcc_dwarf_fpu_xmm10: return fpu_xmm10;
+                case gcc_dwarf_fpu_xmm11: return fpu_xmm11;
+                case gcc_dwarf_fpu_xmm12: return fpu_xmm12;
+                case gcc_dwarf_fpu_xmm13: return fpu_xmm13;
+                case gcc_dwarf_fpu_xmm14: return fpu_xmm14;
+                case gcc_dwarf_fpu_xmm15: return fpu_xmm15;
+                case gcc_dwarf_fpu_stmm0: return fpu_stmm0;
+                case gcc_dwarf_fpu_stmm1: return fpu_stmm1;
+                case gcc_dwarf_fpu_stmm2: return fpu_stmm2;
+                case gcc_dwarf_fpu_stmm3: return fpu_stmm3;
+                case gcc_dwarf_fpu_stmm4: return fpu_stmm4;
+                case gcc_dwarf_fpu_stmm5: return fpu_stmm5;
+                case gcc_dwarf_fpu_stmm6: return fpu_stmm6;
+                case gcc_dwarf_fpu_stmm7: return fpu_stmm7;
+                default:
+                    return LLDB_INVALID_REGNUM;
+                }
+            }
+
+            if (kind == eRegisterKindGDB)
+            {
+                switch (num)
+                {
+                case gdb_gpr_rax     : return gpr_rax;
+                case gdb_gpr_rbx     : return gpr_rbx;
+                case gdb_gpr_rcx     : return gpr_rcx;
+                case gdb_gpr_rdx     : return gpr_rdx;
+                case gdb_gpr_rsi     : return gpr_rsi;
+                case gdb_gpr_rdi     : return gpr_rdi;
+                case gdb_gpr_rbp     : return gpr_rbp;
+                case gdb_gpr_rsp     : return gpr_rsp;
+                case gdb_gpr_r8      : return gpr_r8;
+                case gdb_gpr_r9      : return gpr_r9;
+                case gdb_gpr_r10     : return gpr_r10;
+                case gdb_gpr_r11     : return gpr_r11;
+                case gdb_gpr_r12     : return gpr_r12;
+                case gdb_gpr_r13     : return gpr_r13;
+                case gdb_gpr_r14     : return gpr_r14;
+                case gdb_gpr_r15     : return gpr_r15;
+                case gdb_gpr_rip     : return gpr_rip;
+                case gdb_gpr_rflags  : return gpr_rflags;
+                case gdb_gpr_cs      : return gpr_cs;
+                case gdb_gpr_ss      : return gpr_ss;
+                case gdb_gpr_ds      : return gpr_ds;
+                case gdb_gpr_es      : return gpr_es;
+                case gdb_gpr_fs      : return gpr_fs;
+                case gdb_gpr_gs      : return gpr_gs;
+                case gdb_fpu_stmm0   : return fpu_stmm0;
+                case gdb_fpu_stmm1   : return fpu_stmm1;
+                case gdb_fpu_stmm2   : return fpu_stmm2;
+                case gdb_fpu_stmm3   : return fpu_stmm3;
+                case gdb_fpu_stmm4   : return fpu_stmm4;
+                case gdb_fpu_stmm5   : return fpu_stmm5;
+                case gdb_fpu_stmm6   : return fpu_stmm6;
+                case gdb_fpu_stmm7   : return fpu_stmm7;
+                case gdb_fpu_fcw     : return fpu_fcw;
+                case gdb_fpu_fsw     : return fpu_fsw;
+                case gdb_fpu_ftw     : return fpu_ftw;
+                case gdb_fpu_cs_64   : return fpu_cs;
+                case gdb_fpu_ip      : return fpu_ip;
+                case gdb_fpu_ds_64   : return fpu_ds;
+                case gdb_fpu_dp      : return fpu_dp;
+                case gdb_fpu_fop     : return fpu_fop;
+                case gdb_fpu_xmm0    : return fpu_xmm0;
+                case gdb_fpu_xmm1    : return fpu_xmm1;
+                case gdb_fpu_xmm2    : return fpu_xmm2;
+                case gdb_fpu_xmm3    : return fpu_xmm3;
+                case gdb_fpu_xmm4    : return fpu_xmm4;
+                case gdb_fpu_xmm5    : return fpu_xmm5;
+                case gdb_fpu_xmm6    : return fpu_xmm6;
+                case gdb_fpu_xmm7    : return fpu_xmm7;
+                case gdb_fpu_xmm8    : return fpu_xmm8;
+                case gdb_fpu_xmm9    : return fpu_xmm9;
+                case gdb_fpu_xmm10   : return fpu_xmm10;
+                case gdb_fpu_xmm11   : return fpu_xmm11;
+                case gdb_fpu_xmm12   : return fpu_xmm12;
+                case gdb_fpu_xmm13   : return fpu_xmm13;
+                case gdb_fpu_xmm14   : return fpu_xmm14;
+                case gdb_fpu_xmm15   : return fpu_xmm15;
+                case gdb_fpu_mxcsr   : return fpu_mxcsr;
+                default:
+                    return LLDB_INVALID_REGNUM;
+                }
+            }
+            else if (kind == eRegisterKindLLDB)
+            {
+                return num;
+            }
+        }
+        }
     }
 
     return LLDB_INVALID_REGNUM;
