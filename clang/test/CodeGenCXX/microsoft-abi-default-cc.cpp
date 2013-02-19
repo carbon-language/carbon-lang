@@ -28,8 +28,8 @@ public:
   void baz();
   void METHOD_CC qux();
 
-  void static_baz();
-  void __cdecl static_qux();
+  static void static_baz();
+  static void __cdecl static_qux();
 };
 
 void METHOD_CC A::baz() {}
