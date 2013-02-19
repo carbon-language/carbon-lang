@@ -2703,59 +2703,13 @@ void ASTReader::makeModuleVisible(Module *Mod,
     }
     
     // Push any exported modules onto the stack to be marked as visible.
-    bool AnyWildcard = false;
-    bool UnrestrictedWildcard = false;
-    SmallVector<Module *, 4> WildcardRestrictions;
-    for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
-      Module *Exported = Mod->Exports[I].getPointer();
-      if (!Mod->Exports[I].getInt()) {
-        // Export a named module directly; no wildcards involved.
-        if (Visited.insert(Exported))
-          Stack.push_back(Exported);
-        
-        continue;
-      }
-      
-      // Wildcard export: export all of the imported modules that match
-      // the given pattern.
-      AnyWildcard = true;
-      if (UnrestrictedWildcard)
-        continue;
-
-      if (Module *Restriction = Mod->Exports[I].getPointer())
-        WildcardRestrictions.push_back(Restriction);
-      else {
-        WildcardRestrictions.clear();
-        UnrestrictedWildcard = true;
-      }
-    }
-    
-    // If there were any wildcards, push any imported modules that were
-    // re-exported by the wildcard restriction.
-    if (!AnyWildcard)
-      continue;
-    
-    for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
-      Module *Imported = Mod->Imports[I];
-      if (!Visited.insert(Imported))
-        continue;
-      
-      bool Acceptable = UnrestrictedWildcard;
-      if (!Acceptable) {
-        // Check whether this module meets one of the restrictions.
-        for (unsigned R = 0, NR = WildcardRestrictions.size(); R != NR; ++R) {
-          Module *Restriction = WildcardRestrictions[R];
-          if (Imported == Restriction || Imported->isSubModuleOf(Restriction)) {
-            Acceptable = true;
-            break;
-          }
-        }
-      }
-      
-      if (!Acceptable)
-        continue;
-      
-      Stack.push_back(Imported);
+    SmallVector<Module *, 16> Exports;
+    Mod->getExportedModules(Exports);
+    for (SmallVectorImpl<Module *>::iterator
+           I = Exports.begin(), E = Exports.end(); I != E; ++I) {
+      Module *Exported = *I;
+      if (Visited.insert(Exported))
+        Stack.push_back(Exported);
     }
   }
 }

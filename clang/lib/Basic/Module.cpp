@@ -175,6 +175,59 @@ static void printModuleId(raw_ostream &OS, const ModuleId &Id) {
   }
 }
 
+void Module::getExportedModules(SmallVectorImpl<Module *> &Exported) const {
+  bool AnyWildcard = false;
+  bool UnrestrictedWildcard = false;
+  SmallVector<Module *, 4> WildcardRestrictions;
+  for (unsigned I = 0, N = Exports.size(); I != N; ++I) {
+    Module *Mod = Exports[I].getPointer();
+    if (!Exports[I].getInt()) {
+      // Export a named module directly; no wildcards involved.
+      Exported.push_back(Mod);
+
+      continue;
+    }
+
+    // Wildcard export: export all of the imported modules that match
+    // the given pattern.
+    AnyWildcard = true;
+    if (UnrestrictedWildcard)
+      continue;
+
+    if (Module *Restriction = Exports[I].getPointer())
+      WildcardRestrictions.push_back(Restriction);
+    else {
+      WildcardRestrictions.clear();
+      UnrestrictedWildcard = true;
+    }
+  }
+
+  // If there were any wildcards, push any imported modules that were
+  // re-exported by the wildcard restriction.
+  if (!AnyWildcard)
+    return;
+
+  for (unsigned I = 0, N = Imports.size(); I != N; ++I) {
+    Module *Mod = Imports[I];
+    bool Acceptable = UnrestrictedWildcard;
+    if (!Acceptable) {
+      // Check whether this module meets one of the restrictions.
+      for (unsigned R = 0, NR = WildcardRestrictions.size(); R != NR; ++R) {
+        Module *Restriction = WildcardRestrictions[R];
+        if (Mod == Restriction || Mod->isSubModuleOf(Restriction)) {
+          Acceptable = true;
+          break;
+        }
+      }
+    }
+
+    if (!Acceptable)
+      continue;
+
+    Exported.push_back(Mod);
+  }
+}
+
 void Module::print(raw_ostream &OS, unsigned Indent) const {
   OS.indent(Indent);
   if (IsFramework)

@@ -318,7 +318,10 @@ public:
   submodule_const_iterator submodule_begin() const {return SubModules.begin();}
   submodule_iterator submodule_end()   { return SubModules.end(); }
   submodule_const_iterator submodule_end() const { return SubModules.end(); }
-  
+
+  /// \brief Returns the exported modules based on the wildcard restrictions.
+  void getExportedModules(SmallVectorImpl<Module *> &Exported) const;
+
   static StringRef getModuleInputBufferName() {
     return "<module-includes>";
   }
