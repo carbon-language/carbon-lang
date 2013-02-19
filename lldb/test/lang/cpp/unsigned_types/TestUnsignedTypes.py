@@ -37,8 +37,11 @@ class UnsignedTypesTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
+        # GCC puts a breakpoint on the last line of a multi-line expression, so
+        # if GCC is the target compiler, we cannot rely on an exact line match.
+        need_exact = "gcc" not in self.getCompiler()
         # Break on line 19 in main() aftre the variables are assigned values.
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=need_exact)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

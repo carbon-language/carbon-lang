@@ -26,7 +26,8 @@ class CPPBoolTestCase(TestBase):
         TestBase.setUp(self)
     
     def set_breakpoint(self, line):
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=1, loc_exact=False)
+        locs = 4 if "gcc" in self.getCompiler() else 1
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=locs, loc_exact=False)
 
     def static_method_commands(self):
         """Test that bool types work in the expression parser"""

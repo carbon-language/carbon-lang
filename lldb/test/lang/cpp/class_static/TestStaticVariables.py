@@ -29,6 +29,7 @@ class StaticVariableTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     #rdar://problem/9980907
     @expectedFailureClang
+    @expectedFailureGcc
     @python_api_test
     @dsym_test
     def test_with_dsym_and_python_api(self):
@@ -38,6 +39,7 @@ class StaticVariableTestCase(TestBase):
 
     #rdar://problem/9980907
     @expectedFailureClang
+    @expectedFailureGcc
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):

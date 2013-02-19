@@ -21,6 +21,7 @@ class CPPThisTestCase(TestBase):
 
     #rdar://problem/11479676
     @expectedFailureClang
+    @expectedFailureGcc # GCC (4.7) does not emit correct DWARF tags for rvalue-references
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that rvalues are supported in the C++ expression parser"""

@@ -31,6 +31,7 @@ class StdVBoolDataFormatterTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
+    @expectedFailureGcc # PR-15301: lldb does not print the correct sizes of STL containers when building with GCC
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
