@@ -222,6 +222,17 @@ ASAN_REPORT_ERROR(store, true, 4)
 ASAN_REPORT_ERROR(store, true, 8)
 ASAN_REPORT_ERROR(store, true, 16)
 
+#define ASAN_REPORT_ERROR_N(type, is_write)                    \
+extern "C" NOINLINE INTERFACE_ATTRIBUTE                        \
+void __asan_report_ ## type ## _n(uptr addr, uptr size);       \
+void __asan_report_ ## type ## _n(uptr addr, uptr size) {      \
+  GET_CALLER_PC_BP_SP;                                         \
+  __asan_report_error(pc, bp, sp, addr, is_write, size);       \
+}
+
+ASAN_REPORT_ERROR_N(load, false)
+ASAN_REPORT_ERROR_N(store, true)
+
 // Force the linker to keep the symbols for various ASan interface functions.
 // We want to keep those in the executable in order to let the instrumented
 // dynamic libraries access the symbol even if it is not used by the executable

@@ -114,7 +114,7 @@ void LeakyResetEnv(const char *name, const char *name_value) {
           char **del = environ;
           do {
             del[0] = del[1];
-          } while(*del++);
+          } while (*del++);
         }
       }
     }
@@ -193,7 +193,8 @@ void MaybeReexec() {
         if ((uptr)(piece_start - dyld_insert_libraries) > old_env_len) break;
         uptr piece_len = piece_end - piece_start;
 
-        // If the current piece isn't the runtime library name, append it to new_env.
+        // If the current piece isn't the runtime library name,
+        // append it to new_env.
         if ((piece_len != fname_len) ||
             (internal_strncmp(piece_start, info.dli_fname, fname_len) != 0)) {
           if (new_env_pos != new_env + env_name_len + 1) {
@@ -202,7 +203,7 @@ void MaybeReexec() {
           }
           internal_strncpy(new_env_pos, piece_start, piece_len);
         }
-        // Move on to the next piece. 
+        // Move on to the next piece.
         new_env_pos += piece_len;
         piece_start = piece_end;
       } while (piece_start < old_env_end);

@@ -57,7 +57,8 @@ TEST(SanitizerCommon, FileOps) {
 
   u32 uid = GetUid();
   char temp_filename[128];
-  internal_snprintf(temp_filename, 128, "/tmp/sanitizer_common.tmp.%d", uid);
+  internal_snprintf(temp_filename, sizeof(temp_filename),
+                    "/tmp/sanitizer_common.tmp.%d", uid);
   fd_t fd = OpenFile(temp_filename, true);
   EXPECT_NE(fd, kInvalidFd);
   EXPECT_EQ(len1, internal_write(fd, str1, len1));

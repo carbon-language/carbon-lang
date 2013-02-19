@@ -23,6 +23,8 @@
 // RUN: echo __asan_report_store4 >> %t.interface
 // RUN: echo __asan_report_store8 >> %t.interface
 // RUN: echo __asan_report_store16 >> %t.interface
+// RUN: echo __asan_report_load_n >> %t.interface
+// RUN: echo __asan_report_store_n >> %t.interface
 // RUN: cat %t.interface | sort -u | diff %t.symbols -
 
 int main() { return 0; }
