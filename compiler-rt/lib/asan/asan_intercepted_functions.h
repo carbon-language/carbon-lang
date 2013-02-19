@@ -195,6 +195,20 @@ DECLARE_FUNCTION_AND_WRAPPER(int, pthread_create,
                              void *(*start_routine)(void*), void *arg);
 # endif
 
+# if SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
+DECLARE_FUNCTION_AND_WRAPPER(void *, localtime, unsigned long *timep);
+DECLARE_FUNCTION_AND_WRAPPER(void *, localtime_r, unsigned long *timep,
+                             void *result);
+DECLARE_FUNCTION_AND_WRAPPER(void *, gmtime, unsigned long *timep);
+DECLARE_FUNCTION_AND_WRAPPER(void *, gmtime_r, unsigned long *timep,
+                             void *result);
+DECLARE_FUNCTION_AND_WRAPPER(char *, ctime, unsigned long *timep);
+DECLARE_FUNCTION_AND_WRAPPER(char *, ctime_r, unsigned long *timep,
+                             char *result);
+DECLARE_FUNCTION_AND_WRAPPER(char *, asctime, void *tm);
+DECLARE_FUNCTION_AND_WRAPPER(char *, asctime_r, void *tm, char *result);
+# endif
+
 // stdio.h
 # if SANITIZER_INTERCEPT_SCANF
 DECLARE_FUNCTION_AND_WRAPPER(int, vscanf, const char *format, va_list ap);

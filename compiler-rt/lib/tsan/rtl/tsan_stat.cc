@@ -265,6 +265,14 @@ void StatOutput(u64 *stat) {
   name[StatInt___isoc99_fscanf]          = "  fscanf                          ";
   name[StatInt_on_exit]                  = "  on_exit                         ";
   name[StatInt___cxa_atexit]             = "  __cxa_atexit                    ";
+  name[StatInt_localtime]                = "  localtime                       ";
+  name[StatInt_localtime_r]              = "  localtime_r                     ";
+  name[StatInt_gmtime]                   = "  gmtime                          ";
+  name[StatInt_gmtime_r]                 = "  gmtime_r                        ";
+  name[StatInt_ctime]                    = "  ctime                           ";
+  name[StatInt_ctime_r]                  = "  ctime_r                         ";
+  name[StatInt_asctime]                  = "  asctime                         ";
+  name[StatInt_asctime_r]                = "  asctime_r                       ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

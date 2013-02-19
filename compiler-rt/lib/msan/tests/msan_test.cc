@@ -807,6 +807,27 @@ TEST(MemorySanitizer, gettimeofday) {
   EXPECT_NOT_POISONED(tz.tz_dsttime);
 }
 
+TEST(MemorySanitizer, localtime) {
+  time_t t = 123;
+  struct tm *time = localtime(&t);
+  assert(time != 0);
+  EXPECT_NOT_POISONED(time->tm_sec);
+  EXPECT_NOT_POISONED(time->tm_hour);
+  EXPECT_NOT_POISONED(time->tm_year);
+  EXPECT_NOT_POISONED(time->tm_isdst);
+}
+
+TEST(MemorySanitizer, localtime_r) {
+  time_t t = 123;
+  struct tm time;
+  struct tm *res = localtime_r(&t, &time);
+  assert(res != 0);
+  EXPECT_NOT_POISONED(time.tm_sec);
+  EXPECT_NOT_POISONED(time.tm_hour);
+  EXPECT_NOT_POISONED(time.tm_year);
+  EXPECT_NOT_POISONED(time.tm_isdst);
+}
+
 TEST(MemorySanitizer, mmap) {
   const int size = 4096;
   void *p1, *p2;

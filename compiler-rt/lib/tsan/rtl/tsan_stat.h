@@ -264,6 +264,14 @@ enum StatType {
   StatInt___isoc99_fscanf,
   StatInt_on_exit,
   StatInt___cxa_atexit,
+  StatInt_localtime,
+  StatInt_localtime_r,
+  StatInt_gmtime,
+  StatInt_gmtime_r,
+  StatInt_ctime,
+  StatInt_ctime_r,
+  StatInt_asctime,
+  StatInt_asctime_r,
 
   // Dynamic annotations.
   StatAnnotation,

@@ -146,6 +146,100 @@ INTERCEPTOR(int, prctl, int option, unsigned long arg2,
 #define INIT_PRCTL
 #endif // SANITIZER_INTERCEPT_PRCTL
 
+#if SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
+INTERCEPTOR(void *, localtime, unsigned long *timep) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, localtime, timep);
+  void *res = REAL(localtime)(timep);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+  }
+  return res;
+}
+INTERCEPTOR(void *, localtime_r, unsigned long *timep, void *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, localtime_r, timep, result);
+  void *res = REAL(localtime_r)(timep, result);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+  }
+  return res;
+}
+INTERCEPTOR(void *, gmtime, unsigned long *timep) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gmtime, timep);
+  void *res = REAL(gmtime)(timep);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+  }
+  return res;
+}
+INTERCEPTOR(void *, gmtime_r, unsigned long *timep, void *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gmtime_r, timep, result);
+  void *res = REAL(gmtime_r)(timep, result);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_tm_sz);
+  }
+  return res;
+}
+INTERCEPTOR(char *, ctime, unsigned long *timep) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ctime, timep);
+  char *res = REAL(ctime)(timep);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+INTERCEPTOR(char *, ctime_r, unsigned long *timep, char *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ctime_r, timep, result);
+  char *res = REAL(ctime_r)(timep, result);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timep, sizeof(*timep));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+INTERCEPTOR(char *, asctime, void *tm) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, asctime, tm);
+  char *res = REAL(asctime)(tm);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, tm, struct_tm_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+INTERCEPTOR(char *, asctime_r, void *tm, char *result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, asctime_r, tm, result);
+  char *res = REAL(asctime_r)(tm, result);
+  if (res) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, tm, struct_tm_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+#define INIT_LOCALTIME_AND_FRIENDS               \
+  INTERCEPT_FUNCTION(localtime);                 \
+  INTERCEPT_FUNCTION(localtime_r);               \
+  INTERCEPT_FUNCTION(gmtime);                    \
+  INTERCEPT_FUNCTION(gmtime_r);                  \
+  INTERCEPT_FUNCTION(ctime);                     \
+  INTERCEPT_FUNCTION(ctime_r);                   \
+  INTERCEPT_FUNCTION(asctime);                   \
+  INTERCEPT_FUNCTION(asctime_r);
+#else
+#define INIT_LOCALTIME_AND_FRIENDS
+#endif // SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
+
 #if SANITIZER_INTERCEPT_SCANF
 
 #include "sanitizer_common_interceptors_scanf.inc"
@@ -237,4 +331,5 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
   INIT_WRITE;                                                                  \
   INIT_PWRITE;                                                                 \
   INIT_PWRITE64;                                                               \
+  INIT_LOCALTIME_AND_FRIENDS;                                                  \
   INIT_SCANF;

@@ -1,4 +1,4 @@
-//===-- msan_platform_limits.h ----------------------------------*- C++ -*-===//
+//===-- sanitizer_platform_limits_posix.h ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,30 +7,34 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file is a part of MemorySanitizer.
+// This file is a part of Sanitizer common code.
 //
-// Sizes and layouts of platform-specific data structures.
+// Sizes and layouts of platform-specific POSIX data structures.
 //===----------------------------------------------------------------------===//
 
-#ifndef MSAN_PLATFORM_LIMITS_H
-#define MSAN_PLATFORM_LIMITS_H
+#ifndef SANITIZER_PLATFORM_LIMITS_POSIX_H
+#define SANITIZER_PLATFORM_LIMITS_POSIX_H
 
-namespace __msan {
+namespace __sanitizer {
   extern unsigned struct_utsname_sz;
   extern unsigned struct_stat_sz;
   extern unsigned struct_stat64_sz;
+  extern unsigned struct_rusage_sz;
+  extern unsigned struct_tm_sz;
+
+#if defined(__linux__)
   extern unsigned struct_rlimit_sz;
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_dirent_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_statfs64_sz;
   extern unsigned struct_epoll_event_sz;
-  extern unsigned struct_rusage_sz;
+#endif // __linux__
 
-  void* __msan_get_msghdr_iov_iov_base(void* msg, int idx);
-  uptr __msan_get_msghdr_iov_iov_len(void* msg, int idx);
-  uptr __msan_get_msghdr_iovlen(void* msg);
-  uptr __msan_get_socklen_t(void* socklen_ptr);
-}  // namespace __msan
+  void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx);
+  uptr __sanitizer_get_msghdr_iov_iov_len(void* msg, int idx);
+  uptr __sanitizer_get_msghdr_iovlen(void* msg);
+  uptr __sanitizer_get_socklen_t(void* socklen_ptr);
+}  // namespace __sanitizer
 
 #endif
