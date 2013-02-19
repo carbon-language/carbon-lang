@@ -115,9 +115,9 @@ ValueObjectSynthetic::GetDynamicValue (lldb::DynamicValueType valueType)
 {
     if (!m_parent)
         return lldb::ValueObjectSP();
-    if (m_parent->IsDynamic() && m_parent->GetDynamicValueType() == valueType)
-        return m_parent->GetSP();
-    return ValueObject::GetDynamicValue(valueType);
+    if (IsDynamic() && GetDynamicValueType() == valueType)
+        return GetSP();
+    return m_parent->GetDynamicValue(valueType);
 }
 
 bool

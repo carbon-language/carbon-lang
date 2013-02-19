@@ -83,7 +83,19 @@ public:
     virtual bool
     IsDynamic ()
     {
-        return false;
+        if (m_parent)
+            return m_parent->IsDynamic();
+        else
+            return false;
+    }
+    
+    virtual lldb::DynamicValueType
+    GetDynamicValueType ()
+    {
+        if (m_parent)
+            return m_parent->GetDynamicValueType();
+        else
+            return lldb::eNoDynamicValues;
     }
 
     virtual ValueObject *
