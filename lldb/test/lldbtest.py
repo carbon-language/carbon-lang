@@ -368,26 +368,39 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
-def expectedFailureClang(func):
-    """Decorate the item as a Clang only expectedFailure."""
+def expectedFailureCompiler(func, compiler):
+    """Decorate the item as an expectedFailure if the test compiler matches parameter compiler."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
         raise Exception("@expectedFailureClang can only be used to decorate a test method")
     @wraps(func)
     def wrapper(*args, **kwargs):
         from unittest2 import case
         self = args[0]
-        compiler = self.getCompiler()
+        test_compiler = self.getCompiler()
         try:
             func(*args, **kwargs)
         except Exception:
-            if "clang" in compiler:
+            if compiler in test_compiler:
                 raise case._ExpectedFailure(sys.exc_info())
             else:
                 raise
 
-        if "clang" in compiler:
+        if compiler in test_compiler:
             raise case._UnexpectedSuccess
     return wrapper
+
+
+def expectedFailureGcc(func):
+    """Decorate the item as a GCC only expectedFailure."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@expectedFailureClang can only be used to decorate a test method")
+    return expectedFailureCompiler(func, "gcc")
+
+def expectedFailureClang(func):
+    """Decorate the item as a Clang only expectedFailure."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@expectedFailureClang can only be used to decorate a test method")
+    return expectedFailureCompiler(func, "clang")
 
 def expectedFailurei386(func):
     """Decorate the item as an i386 only expectedFailure."""
@@ -669,6 +682,12 @@ class Base(unittest2.TestCase):
             for hook in lldb.runHooks:
                 child.sendline(hook)
                 child.expect_exact(child_prompt)
+
+    def setAsync(self, value):
+        """ Sets async mode to True/False and ensures it is reset after the testcase completes."""
+        old_async = self.dbg.GetAsync()
+        self.dbg.SetAsync(value)
+        self.addTearDownHook(lambda: self.dbg.SetAsync(old_async))
 
     def cleanupSubprocesses(self):
         # Ensure any subprocesses are cleaned up

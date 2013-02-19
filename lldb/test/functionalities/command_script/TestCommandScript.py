@@ -44,6 +44,9 @@ class CmdPythonTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
+        # Interact with debugger in synchronous mode
+        self.setAsync(False)
+
         # We don't want to display the stdout if not in TraceOn() mode.
         if not self.TraceOn():
             self.HideStdout()
@@ -106,7 +109,7 @@ class CmdPythonTestCase(TestBase):
         self.expect("tell_async",
                     substrs = ['running async'])
         self.expect("tell_curr",
-                    substrs = ['I am running','sync'])
+                    substrs = ['I am running sync'])
 
 
         self.runCmd("command script clear")

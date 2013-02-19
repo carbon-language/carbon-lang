@@ -40,6 +40,7 @@ class ChangeValueAPITestCase(TestBase):
         self.line = line_number('main.c', '// Stop here and set values')
         self.end_line = line_number ('main.c', '// Set a breakpoint here at the end')
 
+    @expectedFailureGcc # PR-15039: If GCC is the test compiler, stdout is not available via lldb.SBProcess.GetSTDOUT()
     def change_value_api(self, exe_name):
         """Exercise some SBValue APIs."""
         exe = os.path.join(os.getcwd(), exe_name)
