@@ -31,15 +31,10 @@ namespace {
 class AArch64MCCodeEmitter : public MCCodeEmitter {
   AArch64MCCodeEmitter(const AArch64MCCodeEmitter &) LLVM_DELETED_FUNCTION;
   void operator=(const AArch64MCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  const MCInstrInfo &MCII;
-  const MCSubtargetInfo &STI;
   MCContext &Ctx;
 
 public:
-  AArch64MCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
-                       MCContext &ctx)
-    : MCII(mcii), STI(sti), Ctx(ctx) {
-  }
+  AArch64MCCodeEmitter(MCContext &ctx) : Ctx(ctx) {}
 
   ~AArch64MCCodeEmitter() {}
 
@@ -492,7 +487,7 @@ MCCodeEmitter *llvm::createAArch64MCCodeEmitter(const MCInstrInfo &MCII,
                                                 const MCRegisterInfo &MRI,
                                                 const MCSubtargetInfo &STI,
                                                 MCContext &Ctx) {
-  return new AArch64MCCodeEmitter(MCII, STI, Ctx);
+  return new AArch64MCCodeEmitter(Ctx);
 }
 
 void AArch64MCCodeEmitter::
