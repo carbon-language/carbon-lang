@@ -322,9 +322,9 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
         return error_code(errno, posix_category());
       }
 
-      // If this is a named pipe, we can't trust the size. Create the memory
-      // buffer by copying off the stream.
-      if (S_ISFIFO(FileInfo.st_mode)) {
+      // If this is a named pipe or character device, we can't trust the size.
+      // Create the memory buffer by copying off the stream.
+      if (S_ISFIFO(FileInfo.st_mode) || S_ISCHR(FileInfo.st_mode)) {
         return getMemoryBufferForStream(FD, Filename, result);
       }
 
