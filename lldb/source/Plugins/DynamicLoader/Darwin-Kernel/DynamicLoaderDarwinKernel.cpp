@@ -811,7 +811,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
             }
             if (uuid_match_ok)
             {
-                target.GetImages().Append(m_module_sp);
+                target.GetImages().AppendIfNeeded(m_module_sp);
                 if (IsKernel() && target.GetExecutableModulePointer() != m_module_sp.get())
                 {
                     target.SetExecutableModule (m_module_sp, false);
