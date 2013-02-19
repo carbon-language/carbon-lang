@@ -394,20 +394,20 @@ private:
 
     /// \brief Comparison operator to be able to used \c LineState in \c map.
     bool operator<(const LineState &Other) const {
-      if (Other.NextToken != NextToken)
-        return Other.NextToken > NextToken;
-      if (Other.Column != Column)
-        return Other.Column > Column;
-      if (Other.VariablePos != VariablePos)
-        return Other.VariablePos < VariablePos;
-      if (Other.LineContainsContinuedForLoopSection !=
-          LineContainsContinuedForLoopSection)
+      if (NextToken != Other.NextToken)
+        return NextToken < Other.NextToken;
+      if (Column != Other.Column)
+        return Column < Other.Column;
+      if (VariablePos != Other.VariablePos)
+        return VariablePos < Other.VariablePos;
+      if (LineContainsContinuedForLoopSection !=
+          Other.LineContainsContinuedForLoopSection)
         return LineContainsContinuedForLoopSection;
-      if (Other.ParenLevel != ParenLevel)
-        return Other.ParenLevel < ParenLevel;
-      if (Other.StartOfLineLevel < StartOfLineLevel)
-        return Other.StartOfLineLevel < StartOfLineLevel;
-      return Other.Stack < Stack;
+      if (ParenLevel != Other.ParenLevel)
+        return ParenLevel < Other.ParenLevel;
+      if (StartOfLineLevel != Other.StartOfLineLevel)
+        return StartOfLineLevel < Other.StartOfLineLevel;
+      return Stack < Other.Stack;
     }
   };
 
