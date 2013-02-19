@@ -52,19 +52,20 @@ private:
 
   void createDefaultSections();
 
+  llvm::BumpPtrAllocator _alloc;
+
   const ELFTargetInfo &_targetInfo;
   TargetHandler<ELFT> &_targetHandler;
 
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
   AtomToAddress _atomToAddressMap;
-  llvm::BumpPtrAllocator _chunkAllocate;
   TargetLayout<ELFT> *_layout;
-  Header<ELFT> *_Header;
-  ProgramHeader<ELFT> *_programHeader;
-  SymbolTable<ELFT> * _symtab;
-  StringTable<ELFT> *_strtab;
-  StringTable<ELFT> *_shstrtab;
-  SectionHeader<ELFT> *_shdrtab;
+  LLD_UNIQUE_BUMP_PTR(Header<ELFT>) _Header;
+  LLD_UNIQUE_BUMP_PTR(ProgramHeader<ELFT>) _programHeader;
+  LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) _symtab;
+  LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _strtab;
+  LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _shstrtab;
+  LLD_UNIQUE_BUMP_PTR(SectionHeader<ELFT>) _shdrtab;
   CRuntimeFile<ELFT> _runtimeFile;
 };
 
@@ -282,7 +283,7 @@ ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
     _Header->e_version(1);
   } else {
     // override the contents of the ELF Header
-    _targetHandler.setHeaderInfo(_Header);
+    _targetHandler.setHeaderInfo(_Header.get());
   }
   _Header->e_phoff(_programHeader->fileOffset());
   _Header->e_shoff(_shdrtab->fileOffset());
@@ -309,25 +310,25 @@ ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
 
 template<class ELFT>
 void ExecutableWriter<ELFT>::createDefaultSections() {
-  _Header = new Header<ELFT>(_targetInfo);
-  _programHeader = new ProgramHeader<ELFT>(_targetInfo);
-  _layout->setHeader(_Header);
-  _layout->setProgramHeader(_programHeader);
+  _Header.reset(new (_alloc) Header<ELFT>(_targetInfo));
+  _programHeader.reset(new (_alloc) ProgramHeader<ELFT>(_targetInfo));
+  _layout->setHeader(_Header.get());
+  _layout->setProgramHeader(_programHeader.get());
 
-  _symtab = new SymbolTable<
-      ELFT>(_targetInfo, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE);
-  _strtab = new StringTable<
-      ELFT>(_targetInfo, ".strtab", DefaultLayout<ELFT>::ORDER_STRING_TABLE);
-  _shstrtab = new StringTable<ELFT>(
-      _targetInfo, ".shstrtab", DefaultLayout<ELFT>::ORDER_SECTION_STRINGS);
-  _shdrtab = new SectionHeader<
-      ELFT>(_targetInfo, DefaultLayout<ELFT>::ORDER_SECTION_HEADERS);
-  _layout->addSection(_symtab);
-  _layout->addSection(_strtab);
-  _layout->addSection(_shstrtab);
-  _shdrtab->setStringSection(_shstrtab);
-  _symtab->setStringSection(_strtab);
-  _layout->addSection(_shdrtab);
+  _symtab.reset(new (_alloc) SymbolTable<ELFT>(
+      _targetInfo, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
+  _strtab.reset(new (_alloc) StringTable<ELFT>(
+      _targetInfo, ".strtab", DefaultLayout<ELFT>::ORDER_STRING_TABLE));
+  _shstrtab.reset(new (_alloc) StringTable<ELFT>(
+      _targetInfo, ".shstrtab", DefaultLayout<ELFT>::ORDER_SECTION_STRINGS));
+  _shdrtab.reset(new (_alloc) SectionHeader<ELFT>(
+      _targetInfo, DefaultLayout<ELFT>::ORDER_SECTION_HEADERS));
+  _layout->addSection(_symtab.get());
+  _layout->addSection(_strtab.get());
+  _layout->addSection(_shstrtab.get());
+  _shdrtab->setStringSection(_shstrtab.get());
+  _symtab->setStringSection(_strtab.get());
+  _layout->addSection(_shdrtab.get());
 
   // give a chance for the target to add sections
   _targetHandler.createDefaultSections();

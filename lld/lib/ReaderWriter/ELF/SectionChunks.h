@@ -557,9 +557,9 @@ public:
   void setStringSection(StringTable<ELFT> *s) { _stringSection = s; }
 
 private:
+  llvm::BumpPtrAllocator _symbolAllocate;
   StringTable<ELFT> *_stringSection;
   std::vector<Elf_Sym*> _symbolTable;
-  llvm::BumpPtrAllocator _symbolAllocate;
 };
 
 /// ELF Symbol Table 

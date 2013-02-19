@@ -17,6 +17,7 @@
 #include "SegmentChunks.h"
 
 #include "lld/Core/LinkerOptions.h"
+#include "lld/Core/STDExtras.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -240,11 +241,11 @@ public:
   RelocationTable<ELFT> *getRelocationTable() {
     // Only create the relocation table if it is needed.
     if (!_relocationTable) {
-      _relocationTable = new (_allocator)
-          RelocationTable<ELFT>(_targetInfo, ".rela.plt", ORDER_REL);
-      addSection(_relocationTable);
+      _relocationTable.reset(new (_allocator)
+          RelocationTable<ELFT>(_targetInfo, ".rela.plt", ORDER_REL));
+      addSection(_relocationTable.get());
     }
-    return _relocationTable;
+    return _relocationTable.get();
   }
 
   uint64_t getTLSSize() const {
@@ -262,6 +263,7 @@ protected:
       SectionOrder sectionOrder);
 
 private:
+  llvm::BumpPtrAllocator _allocator;
   SectionMapT _sectionMap;
   MergedSectionMapT _mergedSectionMap;
   SegmentMapT _segmentMap;
@@ -270,9 +272,8 @@ private:
   std::vector<MergedSections<ELFT> *> _mergedSections;
   Header<ELFT> *_header;
   ProgramHeader<ELFT> *_programHeader;
-  RelocationTable<ELFT> *_relocationTable;
+  LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _relocationTable;
   std::vector<AtomLayout *> _absoluteAtoms;
-  llvm::BumpPtrAllocator _allocator;
   const ELFTargetInfo &_targetInfo;
 };
 
