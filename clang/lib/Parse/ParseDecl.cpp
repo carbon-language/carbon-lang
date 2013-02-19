@@ -1144,6 +1144,25 @@ bool Parser::DiagnoseProhibitedCXX11Attribute() {
   llvm_unreachable("All cases handled above.");
 }
 
+/// DiagnoseMisplacedCXX11Attribute - We have found the opening square brackets
+/// of a C++11 attribute-specifier in a location where an attribute is not
+/// permitted, but we know where the attributes ought to be written. Parse them
+/// anyway, and provide a fixit moving them to the right place.
+void Parser::DiagnoseMisplacedCXX11Attribute(ParsedAttributesWithRange &Attrs,
+                                             SourceLocation CorrectLocation) {
+  assert((Tok.is(tok::l_square) && NextToken().is(tok::l_square)) ||
+         Tok.is(tok::kw_alignas));
+
+  // Consume the attributes.
+  SourceLocation Loc = Tok.getLocation();
+  ParseCXX11Attributes(Attrs);
+  CharSourceRange AttrRange(SourceRange(Loc, Attrs.Range.getEnd()), true);
+
+  Diag(Loc, diag::err_attributes_not_allowed)
+    << FixItHint::CreateInsertionFromRange(CorrectLocation, AttrRange)
+    << FixItHint::CreateRemoval(AttrRange);
+}
+
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
   Diag(attrs.Range.getBegin(), diag::err_attributes_not_allowed)
     << attrs.Range;

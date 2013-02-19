@@ -32,11 +32,11 @@ void f(X *noreturn) {
   // An attribute is OK.
   [[]];
   [[int(), noreturn]]; // expected-warning {{unknown attribute 'int' ignored}} \
-  // expected-warning {{attribute noreturn cannot be specified on a statement}}
+  // expected-error {{'noreturn' attribute cannot be applied to a statement}}
   [[class, test(foo 'x' bar),,,]]; // expected-warning {{unknown attribute 'test' ignored}}\
   // expected-warning {{unknown attribute 'class' ignored}}
 
-  [[bitand, noreturn]]; // expected-warning {{attribute noreturn cannot be specified on a statement}} \
+  [[bitand, noreturn]]; // expected-error {{'noreturn' attribute cannot be applied to a statement}} \
   expected-warning {{unknown attribute 'bitand' ignored}} 
 
   // FIXME: Suppress vexing parse warning

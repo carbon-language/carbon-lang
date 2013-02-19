@@ -27,11 +27,11 @@ void foo(int i) {
   [[unknown_attribute]] return; // expected-warning {{unknown attribute 'unknown_attribute' ignored}}
 	 
 
-  alignas(8) ; // expected-warning {{attribute alignas cannot be specified on a statement}}
-  [[noreturn]] { } // expected-warning {{attribute noreturn cannot be specified on a statement}}
-  [[noreturn]] if (0) { } // expected-warning {{attribute noreturn cannot be specified on a statement}}
-  [[noreturn]] for (;;); // expected-warning {{attribute noreturn cannot be specified on a statement}}
-  [[noreturn]] do { // expected-warning {{attribute noreturn cannot be specified on a statement}}
+  alignas(8) ; // expected-error {{'alignas' attribute cannot be applied to a statement}}
+  [[noreturn]] { } // expected-error {{'noreturn' attribute cannot be applied to a statement}}
+  [[noreturn]] if (0) { } // expected-error {{'noreturn' attribute cannot be applied to a statement}}
+  [[noreturn]] for (;;); // expected-error {{'noreturn' attribute cannot be applied to a statement}}
+  [[noreturn]] do { // expected-error {{'noreturn' attribute cannot be applied to a statement}}
     [[unavailable]] continue; // expected-warning {{unknown attribute 'unavailable' ignored}}
   } while (0);
   [[unknown_attributqqq]] while (0); // expected-warning {{unknown attribute 'unknown_attributqqq' ignored}}
@@ -42,7 +42,7 @@ void foo(int i) {
   [[unused]] switch (i) { // expected-warning {{unknown attribute 'unused' ignored}}
     [[uuid]] case 0: // expected-warning {{unknown attribute 'uuid' ignored}}
     [[visibility]] default: // expected-warning {{unknown attribute 'visibility' ignored}}
-      [[carries_dependency]] break; // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
+      [[carries_dependency]] break; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
   }
 
   [[fastcall]] goto there; // expected-warning {{unknown attribute 'fastcall' ignored}}
@@ -54,26 +54,26 @@ void foo(int i) {
 
   [[weakref]] return; // expected-warning {{unknown attribute 'weakref' ignored}}
 
-  [[carries_dependency]] ; // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-  [[carries_dependency]] { } // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-  [[carries_dependency]] if (0) { } // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-  [[carries_dependency]] for (;;); // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-  [[carries_dependency]] do { // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-    [[carries_dependency]] continue; // expected-warning {{attribute carries_dependency cannot be specified on a statement}} ignored}}
+  [[carries_dependency]] ; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+  [[carries_dependency]] { } // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+  [[carries_dependency]] if (0) { } // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+  [[carries_dependency]] for (;;); // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+  [[carries_dependency]] do { // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+    [[carries_dependency]] continue; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}} ignored}}
   } while (0);
-  [[carries_dependency]] while (0); // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
+  [[carries_dependency]] while (0); // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
 
-  [[carries_dependency]] switch (i) { // expected-warning {{attribute carries_dependency cannot be specified on a statement}} ignored}}
-    [[carries_dependency]] case 0: // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-    [[carries_dependency]] default: // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
-      [[carries_dependency]] break; // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
+  [[carries_dependency]] switch (i) { // expected-error {{'carries_dependency' attribute cannot be applied to a statement}} ignored}}
+    [[carries_dependency]] case 0: // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+    [[carries_dependency]] default: // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
+      [[carries_dependency]] break; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
   }
 
-  [[carries_dependency]] goto here; // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
+  [[carries_dependency]] goto here; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
 
-  [[carries_dependency]] try { // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
+  [[carries_dependency]] try { // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
   } catch (...) {
   }
 
-  [[carries_dependency]] return; // expected-warning {{attribute carries_dependency cannot be specified on a statement}}
+  [[carries_dependency]] return; // expected-error {{'carries_dependency' attribute cannot be applied to a statement}}
 }

@@ -58,8 +58,8 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
   default:
     // if we're here, then we parsed a known attribute, but didn't recognize
     // it as a statement attribute => it is declaration attribute
-    S.Diag(A.getRange().getBegin(), diag::warn_attribute_invalid_on_stmt)
-        << A.getName()->getName() << St->getLocStart();
+    S.Diag(A.getRange().getBegin(), diag::err_attribute_invalid_on_stmt)
+        << A.getName() << St->getLocStart();
     return 0;
   }
 }

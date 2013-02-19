@@ -1172,6 +1172,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 /// 'public bar' and 'virtual private baz' are each base-specifiers.
 BaseResult
 Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
+                         ParsedAttributes &Attributes,
                          bool Virtual, AccessSpecifier Access,
                          ParsedType basetype, SourceLocation BaseLoc,
                          SourceLocation EllipsisLoc) {
@@ -1182,6 +1183,22 @@ Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
   CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(classdecl);
   if (!Class)
     return true;
+
+  // We do not support any C++11 attributes on base-specifiers yet.
+  // Diagnose any attributes we see.
+  if (!Attributes.empty()) {
+    for (AttributeList *Attr = Attributes.getList(); Attr;
+         Attr = Attr->getNext()) {
+      if (Attr->isInvalid() ||
+          Attr->getKind() == AttributeList::IgnoredAttribute)
+        continue;
+      Diag(Attr->getLoc(),
+           Attr->getKind() == AttributeList::UnknownAttribute
+             ? diag::warn_unknown_attribute_ignored
+             : diag::err_base_specifier_attribute)
+        << Attr->getName();
+    }
+  }
 
   TypeSourceInfo *TInfo = 0;
   GetTypeFromParser(basetype, &TInfo);

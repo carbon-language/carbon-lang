@@ -1801,9 +1801,8 @@ def warn_cxx11_gnu_attribute_on_type : Warning<
 def warn_unhandled_ms_attribute_ignored : Warning<
   "__declspec attribute %0 is not supported">, 
   InGroup<IgnoredAttributes>;
-def warn_attribute_invalid_on_stmt : Warning<
-  "attribute %0 cannot be specified on a statement">,
-  InGroup<IgnoredAttributes>;
+def err_attribute_invalid_on_stmt : Error<
+  "%0 attribute cannot be applied to a statement">;
 def warn_declspec_attribute_ignored : Warning<
   "attribute %0 is ignored, place it after "
   "\"%select{class|struct|union|interface|enum}1\" to apply attribute to "
@@ -1905,6 +1904,8 @@ def err_attribute_can_be_applied_only_to_value_decl : Error<
   "%0 attribute can only be applied to value declarations">;
 def warn_attribute_not_on_decl : Warning<
   "%0 attribute ignored when parsing type">, InGroup<IgnoredAttributes>;
+def err_base_specifier_attribute : Error<
+  "%0 attribute cannot be applied to a base specifier">;
 
 // Availability attribute
 def warn_availability_unknown_platform : Warning<
