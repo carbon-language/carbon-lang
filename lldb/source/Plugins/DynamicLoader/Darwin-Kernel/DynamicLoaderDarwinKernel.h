@@ -54,6 +54,7 @@ public:
 
     virtual
     ~DynamicLoaderDarwinKernel ();
+
     //------------------------------------------------------------------
     /// Called after attaching a process.
     ///
@@ -92,7 +93,7 @@ protected:
     void
     PrivateProcessStateChanged (lldb_private::Process *process,
                                 lldb::StateType state);
-    
+
     void
     UpdateIfNeeded();
 
@@ -112,8 +113,8 @@ protected:
                            lldb::user_id_t break_loc_id);
 
     bool
-    BreakpointHit (lldb_private::StoppointCallbackContext *context, 
-                   lldb::user_id_t break_id, 
+    BreakpointHit (lldb_private::StoppointCallbackContext *context,
+                   lldb::user_id_t break_id,
                    lldb::user_id_t break_loc_id);
     uint32_t
     GetAddrByteSize()
@@ -133,60 +134,51 @@ protected:
         // 4 byte flags
         KERNEL_MODULE_ENTRY_SIZE_VERSION_1 = 64u + 16u + 8u + 8u + 8u + 4u + 4u
     };
-    
-    struct OSKextLoadedKextSummary
-    {
-        char                     name[KERNEL_MODULE_MAX_NAME];
-        lldb::ModuleSP           module_sp;
-        uint32_t                 load_process_stop_id;
-        lldb_private::UUID       uuid;              // UUID for this dylib if it has one, else all zeros
-        lldb_private::Address    so_address;        // The section offset address for this kext in case it can be read from object files
-        uint64_t                 address;
-        uint64_t                 size;
-        uint64_t                 version;
-        uint32_t                 load_tag;
-        uint32_t                 flags;
-        uint64_t                 reference_list;
-        bool                     kernel_image;      // true if this is the kernel, false if this is a kext
 
-        OSKextLoadedKextSummary() :
-            module_sp (),
-            load_process_stop_id (UINT32_MAX),
-            uuid (),
-            so_address (),
-            address (LLDB_INVALID_ADDRESS),
-            size (0),
-            version (0),
-            load_tag (0),
-            flags (0),
-            reference_list (0),
-            kernel_image (false)
-        {
-            name[0] = '\0';
-        }
-        
-        bool
-        IsLoaded ()
-        {
-            return load_process_stop_id != UINT32_MAX;
-        }
+    // class KextImageInfo represents a single kext or kernel binary image.
+    // The class was designed to hold the information from the OSKextLoadedKextSummary
+    // structure (in libkern/libkern/OSKextLibPrivate.h from xnu).  The kernel maintains 
+    // a list of loded kexts in memory (the OSKextLoadedKextSummaryHeader structure, 
+    // which points to an array of OSKextLoadedKextSummary's).
+    //
+    // A KextImageInfos may have -
+    // 
+    // 1. The load address, name, UUID, and size of a kext/kernel binary in memory
+    //    (read straight out of the kernel's list-of-kexts loaded)
+    // 2. A ModuleSP based on a MemoryModule read out of the kernel's memory 
+    //    (very unlikely to have any symbolic information)
+    // 3. A ModuleSP for an on-disk copy of the kext binary, possibly with debug info
+    //    or a dSYM
+    //
+    // For performance reasons, the developer may prefer that lldb not load the kexts out
+    // of memory at the start of a kernel session.  But we should build up / maintain a 
+    // list of kexts that the kernel has told us about so we can relocate a kext module
+    // later if the user explicitly adds it to the target.
+
+    class KextImageInfo
+    {
+    public:
+        KextImageInfo () :
+            m_name (),
+            m_module_sp (),
+            m_memory_module_sp (),
+            m_load_process_stop_id (UINT32_MAX),
+            m_uuid (),
+            m_load_address (LLDB_INVALID_ADDRESS),
+            m_size (0),
+            m_kernel_image (false)
+        { }
 
         void
-        Clear (bool load_cmd_data_only)
+        Clear ()
         {
-            if (!load_cmd_data_only)
-            {
-                so_address.Clear();
-                address = LLDB_INVALID_ADDRESS;
-                size = 0;
-                version = 0;
-                load_tag = 0;
-                flags = 0;
-                reference_list = 0;
-                name[0] = '\0';
-            }
-            module_sp.reset();
-            load_process_stop_id = UINT32_MAX;
+            m_load_address = LLDB_INVALID_ADDRESS;
+            m_size = 0;
+            m_name.clear ();
+            m_uuid.Clear();
+            m_module_sp.reset();
+            m_memory_module_sp.reset();
+            m_load_process_stop_id = UINT32_MAX;
         }
 
         bool
@@ -194,42 +186,88 @@ protected:
 
         bool
         LoadImageUsingMemoryModule (lldb_private::Process *process);
-        
-//        bool
-//        operator == (const OSKextLoadedKextSummary& rhs) const
-//        {
-//            return  address == rhs.address
-//                    && size == rhs.size
-//            //&& module_sp.get() == rhs.module_sp.get()
-//                    && uuid == rhs.uuid
-//                    && version == rhs.version
-//                    && load_tag == rhs.load_tag
-//                    && flags == rhs.flags
-//                    && reference_list == rhs.reference_list
-//                    && strncmp (name, rhs.name, KERNEL_MODULE_MAX_NAME) == 0;
-//        }
-//
+
         bool
-        UUIDValid() const
+        IsLoaded ()
         {
-            return uuid.IsValid();
+            return m_load_process_stop_id != UINT32_MAX;
         }
 
+        void
+        SetLoadAddress (lldb::addr_t load_addr);     // Address of the Mach-O header for this binary
+
+        lldb::addr_t 
+        GetLoadAddress () const;                     // Address of the Mach-O header for this binary
+
+        lldb_private::UUID
+        GetUUID () const;
+
+        void
+        SetUUID (const lldb_private::UUID &uuid);
+
+        void
+        SetName (const char *);
+
+        std::string
+        GetName () const;
+
+        void
+        SetModule (lldb::ModuleSP module);
+
+        lldb::ModuleSP
+        GetModule ();
+
+        // try to fill in m_memory_module_sp from memory based on the m_load_address
+        bool
+        ReadMemoryModule (lldb_private::Process *process); 
+
+        bool
+        IsKernel () const;            // true if this is the mach_kernel; false if this is a kext
+
+        void
+        SetIsKernel (bool is_kernel);
+
+        uint64_t 
+        GetSize () const;
+
+        void
+        SetSize (uint64_t size);
+
         uint32_t
-        GetAddressByteSize ();
+        GetProcessStopId () const;    // the stop-id when this binary was first noticed
+
+        void
+        SetProcessStopId (uint32_t stop_id);
+
+        bool
+        operator== (const KextImageInfo &rhs);
+
+        uint32_t
+        GetAddressByteSize ();        // as determined by Mach-O header
 
         lldb::ByteOrder
-        GetByteOrder();
+        GetByteOrder();               // as determined by Mach-O header
 
         lldb_private::ArchSpec
-        GetArchitecture () const;
+        GetArchitecture () const;     // as determined by Mach-O header
 
         void
         PutToLog (lldb_private::Log *log) const;
 
-        typedef std::vector<OSKextLoadedKextSummary> collection;
+        typedef std::vector<KextImageInfo> collection;
         typedef collection::iterator iterator;
         typedef collection::const_iterator const_iterator;
+
+    private:
+        std::string              m_name;
+        lldb::ModuleSP           m_module_sp;
+        lldb::ModuleSP           m_memory_module_sp;
+        uint32_t                 m_load_process_stop_id; // the stop-id when this module was added to the Target
+        lldb_private::UUID       m_uuid;                 // UUID for this dylib if it has one, else all zeros
+        lldb::addr_t             m_load_address;
+        uint64_t                 m_size;
+        bool                     m_kernel_image;         // true if this is the kernel, false if this is a kext
+
     };
 
     struct OSKextLoadedKextSummaryHeader
@@ -257,7 +295,7 @@ protected:
                 default: break;
             }
             // Version 2 and above has version, entry_size, entry_count, and reserved
-            return 16; 
+            return 16;
         }
 
         void
@@ -290,24 +328,24 @@ protected:
 
     bool
     ReadKextSummaryHeader ();
-    
+
     bool
-    ParseKextSummaries (const lldb_private::Address &kext_summary_addr, 
+    ParseKextSummaries (const lldb_private::Address &kext_summary_addr,
                         uint32_t count);
-    
+
     bool
-    AddModulesUsingImageInfos (OSKextLoadedKextSummary::collection &image_infos);
-    
+    AddModulesUsingImageInfos (KextImageInfo::collection &image_infos);
+
     void
-    UpdateImageInfosHeaderAndLoadCommands(OSKextLoadedKextSummary::collection &image_infos, 
-                                          uint32_t infos_count, 
+    UpdateImageInfosHeaderAndLoadCommands(KextImageInfo::collection &image_infos,
+                                          uint32_t infos_count,
                                           bool update_executable);
 
     uint32_t
     ReadKextSummaries (const lldb_private::Address &kext_summary_addr,
-                       uint32_t image_infos_count, 
-                       OSKextLoadedKextSummary::collection &image_infos);
-    
+                       uint32_t image_infos_count,
+                       KextImageInfo::collection &image_infos);
+
     static lldb::addr_t
     SearchForKernelAtSameLoadAddr (lldb_private::Process *process);
 
@@ -323,14 +361,15 @@ protected:
     static lldb_private::UUID
     CheckForKernelImageAtAddress (lldb::addr_t addr, lldb_private::Process *process);
 
-    lldb::addr_t m_kernel_load_address; 
-    OSKextLoadedKextSummary m_kernel; // Info about the current kernel image being used
-    lldb_private::Address m_kext_summary_header_ptr_addr;
-    lldb_private::Address m_kext_summary_header_addr;
-    OSKextLoadedKextSummaryHeader m_kext_summary_header;
-    OSKextLoadedKextSummary::collection m_kext_summaries;
-    mutable lldb_private::Mutex m_mutex;
-    lldb::user_id_t m_break_id;
+    lldb::addr_t  m_kernel_load_address;
+    KextImageInfo m_kernel;                 // Info about the current kernel image being used
+
+    lldb_private::Address          m_kext_summary_header_ptr_addr;
+    lldb_private::Address          m_kext_summary_header_addr;
+    OSKextLoadedKextSummaryHeader  m_kext_summary_header;
+    KextImageInfo::collection      m_known_kexts;
+    mutable lldb_private::Mutex    m_mutex;
+    lldb::user_id_t                m_break_id;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoaderDarwinKernel);

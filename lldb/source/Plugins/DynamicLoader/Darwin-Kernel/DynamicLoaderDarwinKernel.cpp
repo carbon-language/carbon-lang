@@ -447,7 +447,7 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process, lldb::ad
     m_kext_summary_header_ptr_addr (),
     m_kext_summary_header_addr (),
     m_kext_summary_header (),
-    m_kext_summaries(),
+    m_known_kexts (),
     m_mutex(Mutex::eMutexTypeRecursive),
     m_break_id (LLDB_INVALID_BREAK_ID)
 {
@@ -507,128 +507,296 @@ DynamicLoaderDarwinKernel::Clear (bool clear_process)
 
     if (clear_process)
         m_process = NULL;
-    m_kernel.Clear(false);
+    m_kernel.Clear();
+    m_known_kexts.clear();
     m_kext_summary_header_ptr_addr.Clear();
     m_kext_summary_header_addr.Clear();
-    m_kext_summaries.clear();
     m_break_id = LLDB_INVALID_BREAK_ID;
 }
 
 
 bool
-DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageAtFileAddress (Process *process)
+DynamicLoaderDarwinKernel::KextImageInfo::LoadImageAtFileAddress (Process *process)
 {
     if (IsLoaded())
         return true;
 
-    if (module_sp)
+    if (m_module_sp)
     {
         bool changed = false;
-        if (module_sp->SetLoadAddress (process->GetTarget(), 0, changed))
-            load_process_stop_id = process->GetStopID();
+        if (m_module_sp->SetLoadAddress (process->GetTarget(), 0, changed))
+            m_load_process_stop_id = process->GetStopID();
     }
     return false;
 }
 
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetModule (ModuleSP module_sp)
+{
+    m_module_sp = module_sp;
+    if (module_sp.get() && module_sp->GetObjectFile())
+    {
+        if (module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeExecutable
+            && module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
+        {
+            m_kernel_image = true;
+        }
+        else
+        {
+            m_kernel_image = false;
+        }
+    }
+}
+
+ModuleSP
+DynamicLoaderDarwinKernel::KextImageInfo::GetModule ()
+{
+    return m_module_sp;
+}
+
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetLoadAddress (addr_t load_addr)
+{ 
+    m_load_address = load_addr;
+}
+
+addr_t
+DynamicLoaderDarwinKernel::KextImageInfo::GetLoadAddress () const
+{ 
+    return m_load_address;
+}
+
+uint64_t 
+DynamicLoaderDarwinKernel::KextImageInfo::GetSize () const
+{
+    return m_size;
+}
+
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetSize (uint64_t size)
+{
+    m_size = size;
+}
+
+uint32_t
+DynamicLoaderDarwinKernel::KextImageInfo::GetProcessStopId () const
+{
+    return m_load_process_stop_id;
+}
+
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetProcessStopId (uint32_t stop_id)
+{
+    m_load_process_stop_id = stop_id;
+}
+
 bool
-DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (Process *process)
+DynamicLoaderDarwinKernel::KextImageInfo::operator== (const KextImageInfo &rhs)
+{
+    if (m_uuid.IsValid() || rhs.GetUUID().IsValid())
+    {
+        if (m_uuid == rhs.GetUUID())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    if (m_name == rhs.GetName() && m_load_address == rhs.GetLoadAddress())
+        return true;
+
+    return false;
+}
+
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetName (const char *name)
+{
+    m_name = name;
+}
+
+std::string
+DynamicLoaderDarwinKernel::KextImageInfo::GetName () const
+{
+    return m_name;
+}
+
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetUUID (const UUID &uuid)
+{
+    m_uuid = uuid;
+}
+
+UUID
+DynamicLoaderDarwinKernel::KextImageInfo::GetUUID () const
+{
+    return m_uuid;
+}
+
+// Given the m_load_address from the kext summaries, and a UUID, try to create an in-memory
+// Module at that address.  Require that the MemoryModule have a matching UUID and detect
+// if this MemoryModule is a kernel or a kext.
+//
+// Returns true if m_memory_module_sp is now set to a valid Module.  
+
+bool
+DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
+{
+    if (m_memory_module_sp.get() != NULL)
+        return true;
+    if (m_load_address == LLDB_INVALID_ADDRESS)
+        return false;
+
+    FileSpec file_spec;
+    file_spec.SetFile (m_name.c_str(), false);
+
+    ModuleSP memory_module_sp = process->ReadModuleFromMemory (file_spec, m_load_address);
+
+    if (memory_module_sp.get() == NULL)
+        return false;
+
+    bool is_kernel = false;
+    if (memory_module_sp->GetObjectFile())
+    {
+        if (memory_module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeExecutable
+            && memory_module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
+        {
+            is_kernel = true;
+        }
+        else if (memory_module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeSharedLibrary)
+        {
+            is_kernel = false;
+        }
+    }
+
+    // If the kernel specified what UUID we should find at this load address,
+    // require that the memory module have a matching UUID or something has gone
+    // wrong and we should discard it.
+    if (m_uuid.IsValid())
+    {
+        if (m_uuid != memory_module_sp->GetUUID())
+        {
+            return false;
+        }
+    }
+
+    // If the in-memory Module has a UUID, let's use that.
+    if (!m_uuid.IsValid() && memory_module_sp->GetUUID().IsValid())
+    {
+        m_uuid = memory_module_sp->GetUUID();
+    }
+
+    m_memory_module_sp = memory_module_sp;
+    m_kernel_image = is_kernel;
+    if (is_kernel)
+    {
+       if (memory_module_sp->GetArchitecture().IsValid())
+        {
+            process->GetTarget().SetArchitecture(memory_module_sp->GetArchitecture());
+        }
+    }
+
+    return true;
+}
+
+bool
+DynamicLoaderDarwinKernel::KextImageInfo::IsKernel () const
+{
+    return m_kernel_image == true;
+}
+
+void
+DynamicLoaderDarwinKernel::KextImageInfo::SetIsKernel (bool is_kernel) 
+{
+    m_kernel_image = is_kernel;
+}
+
+bool
+DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *process)
 {
     if (IsLoaded())
         return true;
 
-    bool uuid_is_valid = uuid.IsValid();
-    bool memory_module_is_kernel = false;
 
     Target &target = process->GetTarget();
-    ModuleSP memory_module_sp;
 
-    // If this is a kext and the user asked us to ignore kexts, don't try to load it.
-    if (kernel_image == false && GetGlobalProperties()->GetLoadKexts() == false)
+    // If we don't have / can't create a memory module for this kext, don't try to load it - we won't
+    // have the correct segment load addresses.
+    if (!ReadMemoryModule (process))
     {
         return false;
     }
 
-    // Use the memory module as the module if we have one
-    if (address != LLDB_INVALID_ADDRESS)
+    // If this is a kext and the user asked us to ignore kexts, don't try to load it.
+    if (!IsKernel() && GetGlobalProperties()->GetLoadKexts() == false)
     {
-        FileSpec file_spec;
-        if (module_sp)
-            file_spec = module_sp->GetFileSpec();
-        else
-            file_spec.SetFile (name, false);
-        
-        memory_module_sp = process->ReadModuleFromMemory (file_spec, address);
-        if (memory_module_sp && !uuid_is_valid)
-        {
-            uuid = memory_module_sp->GetUUID();
-            uuid_is_valid = uuid.IsValid();
-        }
-        if (memory_module_sp 
-            && memory_module_sp->GetObjectFile() 
-            && memory_module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeExecutable
-            && memory_module_sp->GetObjectFile()->GetStrata() == ObjectFile::eStrataKernel)
-        {
-            memory_module_is_kernel = true;
-            if (memory_module_sp->GetArchitecture().IsValid())
-            {
-                target.SetArchitecture(memory_module_sp->GetArchitecture());
-            }
-        }
+        return false;
     }
 
-    if (!module_sp)
+    bool uuid_is_valid = m_uuid.IsValid();
+
+    if (!m_module_sp)
     {
-        if (uuid_is_valid)
+        // See if the kext has already been loaded into the target, probably by the user doing target modules add.
+        const ModuleList &target_images = target.GetImages();
+        m_module_sp = target_images.FindModule(m_uuid);
+
+        // Search for the kext on the local filesystem via the UUID
+        if (!m_module_sp && uuid_is_valid)
         {
-            const ModuleList &target_images = target.GetImages();
-            module_sp = target_images.FindModule(uuid);
+            ModuleSpec module_spec;
+            module_spec.GetUUID() = m_uuid;
+            module_spec.GetArchitecture() = target.GetArchitecture();
 
-            if (!module_sp)
+            // For the kernel, we really do need an on-disk file copy of the binary.
+            bool force_symbols_search = false;
+            if (IsKernel())
             {
-                ModuleSpec module_spec;
-                module_spec.GetUUID() = uuid;
-                module_spec.GetArchitecture() = target.GetArchitecture();
+                force_symbols_search = true;
+            }
 
-                // For the kernel, we really do need an on-disk file copy of the
-                // binary.
-                bool force_symbols_search = false;
-                if (memory_module_is_kernel)
+            if (Symbols::DownloadObjectAndSymbolFile (module_spec, force_symbols_search))
+            {
+                if (module_spec.GetFileSpec().Exists())
                 {
-                    force_symbols_search = true;
-                }
-
-                if (Symbols::DownloadObjectAndSymbolFile (module_spec, force_symbols_search))
-                {
-                    if (module_spec.GetFileSpec().Exists())
+                    m_module_sp.reset(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
+                    if (m_module_sp.get() && m_module_sp->MatchesModuleSpec (module_spec))
                     {
-                        module_sp.reset(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
-                        if (module_sp.get() && module_sp->MatchesModuleSpec (module_spec))
-                        {
-                            ModuleList loaded_module_list;
-                            loaded_module_list.Append (module_sp);
-                            target.ModulesDidLoad (loaded_module_list);
-                        }
+                        ModuleList loaded_module_list;
+                        loaded_module_list.Append (m_module_sp);
+                        target.ModulesDidLoad (loaded_module_list);
                     }
                 }
-            
-                // Ask the Target to find this file on the local system, if possible.
-                // This will search in the list of currently-loaded files, look in the 
-                // standard search paths on the system, and on a Mac it will try calling
-                // the DebugSymbols framework with the UUID to find the binary via its
-                // search methods.
-                if (!module_sp)
-                {
-                    module_sp = target.GetSharedModule (module_spec);
-                }
+            }
+        
+            // Failing that, ask the Target to find this file on the local system, if possible.
+            // This will search in the list of currently-loaded files, look in the 
+            // standard search paths on the system, and on a Mac it will try calling
+            // the DebugSymbols framework with the UUID to find the binary via its
+            // search methods.
+            if (!m_module_sp)
+            {
+                m_module_sp = target.GetSharedModule (module_spec);
+            }
+        }
 
-                // If we managed to find a module, append it to the target's list of images
-                if (module_sp && module_sp->GetUUID() == memory_module_sp->GetUUID())
+        // If we managed to find a module, append it to the target's list of images.
+        // If we also have a memory module, require that they have matching UUIDs
+        if (m_module_sp)
+        {
+            bool uuid_match_ok = true;
+            if (m_memory_module_sp)
+            {
+                if (m_module_sp->GetUUID() != m_memory_module_sp->GetUUID())
                 {
-                    target.GetImages().Append(module_sp);
-                    if (memory_module_is_kernel && target.GetExecutableModulePointer() != module_sp.get())
-                    {
-                        target.SetExecutableModule (module_sp, false);
-                    }
+                    uuid_match_ok = false;
+                }
+            }
+            if (uuid_match_ok)
+            {
+                target.GetImages().Append(m_module_sp);
+                if (IsKernel() && target.GetExecutableModulePointer() != m_module_sp.get())
+                {
+                    target.SetExecutableModule (m_module_sp, false);
                 }
             }
         }
@@ -637,18 +805,17 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
 
     static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
 
-    if (memory_module_sp && module_sp)
+    if (m_memory_module_sp && m_module_sp)
     {
-        if (module_sp->GetUUID() == memory_module_sp->GetUUID())
+        if (m_module_sp->GetUUID() == m_memory_module_sp->GetUUID())
         {
-            ObjectFile *ondisk_object_file = module_sp->GetObjectFile();
-            ObjectFile *memory_object_file = memory_module_sp->GetObjectFile();
+            ObjectFile *ondisk_object_file = m_module_sp->GetObjectFile();
+            ObjectFile *memory_object_file = m_memory_module_sp->GetObjectFile();
             
             if (memory_object_file && ondisk_object_file)
             {
-                // Kexts are classified with a type of ObjectFile::eTypeSharedLibrary and
-                // a strata of ObjectFile::eStrataKernel. Ignore __LINKEDIT for kexts
-                const bool ignore_linkedit = ondisk_object_file->GetType() == ObjectFile::eTypeSharedLibrary;
+                // The memory_module for kexts may have an invalid __LINKEDIT seg; skip it.
+                const bool ignore_linkedit = !IsKernel ();
                 
                 SectionList *ondisk_section_list = ondisk_object_file->GetSectionList ();
                 SectionList *memory_section_list = memory_object_file->GetSectionList ();
@@ -688,48 +855,39 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                         }
                     }
                     if (num_sections_loaded > 0)
-                        load_process_stop_id = process->GetStopID();
+                        m_load_process_stop_id = process->GetStopID();
                     else
-                        module_sp.reset(); // No sections were loaded
+                        m_module_sp.reset(); // No sections were loaded
                 }
                 else
-                    module_sp.reset(); // One or both section lists
+                    m_module_sp.reset(); // One or both section lists
             }
             else
-                module_sp.reset(); // One or both object files missing
+                m_module_sp.reset(); // One or both object files missing
         }
         else
-            module_sp.reset(); // UUID mismatch
+            m_module_sp.reset(); // UUID mismatch
     }
 
     bool is_loaded = IsLoaded();
     
-    if (so_address.IsValid())
-    {
-        if (is_loaded)
-            so_address.SetLoadAddress (address, &target);
-        else
-            target.GetImages().ResolveFileAddress (address, so_address);
-
-    }
-
-    if (is_loaded && module_sp && memory_module_is_kernel)
+    if (is_loaded && m_module_sp && IsKernel())
     {
         Stream *s = &target.GetDebugger().GetOutputStream();
         if (s)
         {
             char uuidbuf[64];
-            s->Printf ("Kernel UUID: %s\n", module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
-            s->Printf ("Load Address: 0x%" PRIx64 "\n", address);
-            if (module_sp->GetFileSpec().GetDirectory().IsEmpty())
+            s->Printf ("Kernel UUID: %s\n", m_module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
+            s->Printf ("Load Address: 0x%" PRIx64 "\n", m_load_address);
+            if (m_module_sp->GetFileSpec().GetDirectory().IsEmpty())
             {
-                s->Printf ("Loaded kernel file %s\n", module_sp->GetFileSpec().GetFilename().AsCString());
+                s->Printf ("Loaded kernel file %s\n", m_module_sp->GetFileSpec().GetFilename().AsCString());
             }
             else
             {
                 s->Printf ("Loaded kernel file %s/%s\n",
-                              module_sp->GetFileSpec().GetDirectory().AsCString(),
-                              module_sp->GetFileSpec().GetFilename().AsCString());
+                              m_module_sp->GetFileSpec().GetDirectory().AsCString(),
+                              m_module_sp->GetFileSpec().GetFilename().AsCString());
             }
             s->Flush ();
         }
@@ -738,26 +896,32 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
 }
 
 uint32_t
-DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::GetAddressByteSize ()
+DynamicLoaderDarwinKernel::KextImageInfo::GetAddressByteSize ()
 {
-    if (module_sp)
-        return module_sp->GetArchitecture().GetAddressByteSize();
+    if (m_memory_module_sp)
+        return m_memory_module_sp->GetArchitecture().GetAddressByteSize();
+    if (m_module_sp)
+        return m_module_sp->GetArchitecture().GetAddressByteSize();
     return 0;
 }
 
 lldb::ByteOrder
-DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::GetByteOrder()
+DynamicLoaderDarwinKernel::KextImageInfo::GetByteOrder()
 {
-    if (module_sp)
-        return module_sp->GetArchitecture().GetByteOrder();
+    if (m_memory_module_sp)
+        return m_memory_module_sp->GetArchitecture().GetByteOrder();
+    if (m_module_sp)
+        return m_module_sp->GetArchitecture().GetByteOrder();
     return lldb::endian::InlHostByteOrder();
 }
 
 lldb_private::ArchSpec
-DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::GetArchitecture () const
+DynamicLoaderDarwinKernel::KextImageInfo::GetArchitecture () const
 {
-    if (module_sp)
-        return module_sp->GetArchitecture();
+    if (m_memory_module_sp)
+        return m_memory_module_sp->GetArchitecture();
+    if (m_module_sp)
+        return m_module_sp->GetArchitecture();
     return lldb_private::ArchSpec ();
 }
 
@@ -773,53 +937,52 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
 {
     if (!m_kext_summary_header_ptr_addr.IsValid())
     {
-        m_kernel.Clear(false);
-        m_kernel.module_sp = m_process->GetTarget().GetExecutableModule();
-        m_kernel.kernel_image = true;
+        m_kernel.Clear();
+        m_kernel.SetModule (m_process->GetTarget().GetExecutableModule());
+        m_kernel.SetIsKernel(true);
 
         ConstString kernel_name("mach_kernel");
-        if (m_kernel.module_sp.get() 
-            && m_kernel.module_sp->GetObjectFile()
-            && !m_kernel.module_sp->GetObjectFile()->GetFileSpec().GetFilename().IsEmpty())
+        if (m_kernel.GetModule().get()
+            && m_kernel.GetModule()->GetObjectFile()
+            && !m_kernel.GetModule()->GetObjectFile()->GetFileSpec().GetFilename().IsEmpty())
         {
-            kernel_name = m_kernel.module_sp->GetObjectFile()->GetFileSpec().GetFilename();
+            kernel_name = m_kernel.GetModule()->GetObjectFile()->GetFileSpec().GetFilename();
         }
-        strncpy (m_kernel.name, kernel_name.AsCString(), sizeof(m_kernel.name));
-        m_kernel.name[sizeof (m_kernel.name) - 1] = '\0';
+        m_kernel.SetName (kernel_name.AsCString());
 
-        if (m_kernel.address == LLDB_INVALID_ADDRESS)
+        if (m_kernel.GetLoadAddress() == LLDB_INVALID_ADDRESS)
         {
-            m_kernel.address = m_kernel_load_address;
-            if (m_kernel.address == LLDB_INVALID_ADDRESS && m_kernel.module_sp)
+            m_kernel.SetLoadAddress(m_kernel_load_address);
+            if (m_kernel.GetLoadAddress() == LLDB_INVALID_ADDRESS && m_kernel.GetModule())
             {
                 // We didn't get a hint from the process, so we will
                 // try the kernel at the address that it exists at in
                 // the file if we have one
-                ObjectFile *kernel_object_file = m_kernel.module_sp->GetObjectFile();
+                ObjectFile *kernel_object_file = m_kernel.GetModule()->GetObjectFile();
                 if (kernel_object_file)
                 {
                     addr_t load_address = kernel_object_file->GetHeaderAddress().GetLoadAddress(&m_process->GetTarget());
                     addr_t file_address = kernel_object_file->GetHeaderAddress().GetFileAddress();
                     if (load_address != LLDB_INVALID_ADDRESS && load_address != 0)
                     {
-                        m_kernel.address = load_address;
+                        m_kernel.SetLoadAddress (load_address);
                         if (load_address != file_address)
                         {
                             // Don't accidentally relocate the kernel to the File address -- 
                             // the Load address has already been set to its actual in-memory address.  
                             // Mark it as IsLoaded.
-                            m_kernel.load_process_stop_id = m_process->GetStopID();
+                            m_kernel.SetProcessStopId (m_process->GetStopID());
                         }
                     }
                     else
                     {
-                        m_kernel.address = file_address;
+                        m_kernel.SetLoadAddress(file_address);
                     }
                 }
             }
         }
         
-        if (m_kernel.address != LLDB_INVALID_ADDRESS)
+        if (m_kernel.GetLoadAddress() != LLDB_INVALID_ADDRESS)
         {
             if (!m_kernel.LoadImageUsingMemoryModule (m_process))
             {
@@ -827,10 +990,10 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
             }
         }
 
-        if (m_kernel.IsLoaded() && m_kernel.module_sp)
+        if (m_kernel.IsLoaded() && m_kernel.GetModule())
         {
             static ConstString kext_summary_symbol ("gLoadedKextSummaries");
-            const Symbol *symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (kext_summary_symbol, eSymbolTypeData);
+            const Symbol *symbol = m_kernel.GetModule()->FindFirstSymbolWithNameAndType (kext_summary_symbol, eSymbolTypeData);
             if (symbol)
             {
                 m_kext_summary_header_ptr_addr = symbol->GetAddress();
@@ -840,7 +1003,7 @@ DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
         }
         else
         {
-            m_kernel.Clear(false);
+            m_kernel.Clear();
         }
     }
 }
@@ -885,7 +1048,6 @@ DynamicLoaderDarwinKernel::ReadKextSummaryHeader ()
 
     // the all image infos is already valid for this process stop ID
 
-    m_kext_summaries.clear();
     if (m_kext_summary_header_ptr_addr.IsValid())
     {
         const uint32_t addr_size = m_kernel.GetAddressByteSize ();
@@ -930,61 +1092,186 @@ DynamicLoaderDarwinKernel::ReadKextSummaryHeader ()
     return false;
 }
 
+// We've either (a) just attached to a new kernel, or (b) the kexts-changed breakpoint was hit
+// and we need to figure out what kexts have been added or removed.
+// Read the kext summaries from the inferior kernel memory, compare them against the
+// m_known_kexts vector and update the m_known_kexts vector as needed to keep in sync with the
+// inferior.
 
 bool
-DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr, 
-                                               uint32_t count)
+DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr, uint32_t count)
 {
-    OSKextLoadedKextSummary::collection kext_summaries;
+    KextImageInfo::collection kext_summaries;
     LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
-        log->Printf ("Adding %d modules.\n", count);
+        log->Printf ("Kexts-changed breakpoint hit, there are %d kexts currently.\n", count);
         
     Mutex::Locker locker(m_mutex);
 
     if (!ReadKextSummaries (kext_summary_addr, count, kext_summaries))
         return false;
 
+    // By default, all kexts we've loaded in the past are marked as "remove" and all of the kexts
+    // we just found out about from ReadKextSummaries are marked as "add".
+    std::vector<bool> to_be_removed(m_known_kexts.size(), true);
+    std::vector<bool> to_be_added(count, true);
+
+    int number_of_new_kexts_being_added = 0;
+    int number_of_old_kexts_being_removed = m_known_kexts.size();
+
+    const uint32_t new_kexts_size = kext_summaries.size();
+    const uint32_t old_kexts_size = m_known_kexts.size();
+
+    // The m_known_kexts vector may have entries that have been Cleared,
+    // or are a kernel.  
+    for (uint32_t old_kext = 0; old_kext < old_kexts_size; old_kext++)
+    {
+        bool ignore = false;
+        KextImageInfo &image_info = m_known_kexts[old_kext];
+        if (image_info.IsKernel())
+        {
+            ignore = true;
+        }
+        else if (image_info.GetLoadAddress() == LLDB_INVALID_ADDRESS && !image_info.GetModule())
+        {
+            ignore = true;
+        }
+
+        if (ignore)
+        {
+            number_of_old_kexts_being_removed--;
+            to_be_removed[old_kext] = false;
+        }
+    }
+
+    // Scan over the list of kexts we just read from the kernel, note those that
+    // need to be added and those already loaded.
+    for (uint32_t new_kext = 0; new_kext < new_kexts_size; new_kext++)
+    {
+        bool add_this_one = true;
+        for (uint32_t old_kext = 0; old_kext < old_kexts_size; old_kext++)
+        {
+            if (m_known_kexts[old_kext] == kext_summaries[new_kext])
+            {
+                // We already have this kext, don't re-load it.
+                to_be_added[new_kext] = false;
+                // This kext is still present, do not remove it.
+                to_be_removed[old_kext] = false;
+
+                number_of_old_kexts_being_removed--;
+                add_this_one = false;
+                break;
+            }
+        }
+        if (add_this_one)
+        {
+            number_of_new_kexts_being_added++;
+        }
+    }
+
+    if (number_of_new_kexts_being_added == 0 && number_of_old_kexts_being_removed == 0)
+        return true;
+
     Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
     if (s)
-        s->Printf ("Loading %d kext modules ", count);
-    for (uint32_t i = 0; i < count; i++)
     {
-        if (!kext_summaries[i].LoadImageUsingMemoryModule (m_process))
-            kext_summaries[i].LoadImageAtFileAddress (m_process);
-
-        if (s)
-            s->Printf (".");
-
-        if (log)
-            kext_summaries[i].PutToLog (log.get());
+        if (number_of_new_kexts_being_added > 0 && number_of_old_kexts_being_removed > 0)
+        {
+            s->Printf ("Loading %d kext modules and unloading %d kext modules ", number_of_new_kexts_being_added, number_of_old_kexts_being_removed);
+        }
+        else if (number_of_new_kexts_being_added > 0)
+        {
+            s->Printf ("Loading %d kext modules ", number_of_new_kexts_being_added);
+        }
+        else if (number_of_old_kexts_being_removed > 0)
+        {
+            s->Printf ("Unloading %d kext modules ", number_of_old_kexts_being_removed);
+        }
     }
+
+    if (log)
+        log->Printf ("DynamicLoaderDarwinKernel::ParseKextSummaries: %d kexts added, %d kexts removed", number_of_new_kexts_being_added, number_of_old_kexts_being_removed);
+
+    if (number_of_new_kexts_being_added > 0)
+    {
+        ModuleList loaded_module_list;
+
+        const uint32_t num_of_new_kexts = kext_summaries.size();
+        for (uint32_t new_kext = 0; new_kext < num_of_new_kexts; new_kext++)
+        {
+            if (to_be_added[new_kext] == true)
+            {
+                KextImageInfo &image_info = kext_summaries[new_kext];
+                if (!image_info.LoadImageUsingMemoryModule (m_process))
+                    image_info.LoadImageAtFileAddress (m_process);
+
+                m_known_kexts.push_back(image_info);
+
+                if (image_info.GetModule() && m_process->GetStopID() == image_info.GetProcessStopId())
+                    loaded_module_list.AppendIfNeeded (image_info.GetModule());
+
+                if (s)
+                    s->Printf (".");
+
+                if (log)
+                    kext_summaries[new_kext].PutToLog (log.get());
+            }
+        }
+        m_process->GetTarget().ModulesDidLoad (loaded_module_list);
+    }
+
+    if (number_of_old_kexts_being_removed > 0)
+    {
+        ModuleList loaded_module_list;
+        const uint32_t num_of_old_kexts = m_known_kexts.size();
+        for (uint32_t old_kext = 0; old_kext < num_of_old_kexts; old_kext++)
+        {
+            ModuleList unloaded_module_list;
+            if (to_be_removed[old_kext])
+            {
+                KextImageInfo &image_info = m_known_kexts[old_kext];
+                // You can't unload the kernel.
+                if (!image_info.IsKernel())
+                {
+                    if (image_info.GetModule())
+                    {
+                        unloaded_module_list.AppendIfNeeded (image_info.GetModule());
+                    }
+                    if (s)
+                        s->Printf (".");
+                    image_info.Clear();
+                    // should pull it out of the KextImageInfos vector but that would mutate the list and invalidate
+                    // the to_be_removed bool vector; leaving it in place once Cleared() is relatively harmless.
+                }
+            }
+            m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
+        }
+    }
+
     if (s)
     {
         s->Printf (" done.\n");
         s->Flush ();
     }
 
-    bool return_value = AddModulesUsingImageInfos (kext_summaries);
-    return return_value;
+    return true;
 }
 
-// Adds the modules in image_infos to m_kext_summaries.  
-// NB don't call this passing in m_kext_summaries.
+// Adds the modules in image_infos to m_known_kexts.  
 
 bool
-DynamicLoaderDarwinKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::collection &image_infos)
+DynamicLoaderDarwinKernel::AddModulesUsingImageInfos (KextImageInfo::collection &image_infos)
 {
     // Now add these images to the main list.
     ModuleList loaded_module_list;
     
     for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
     {
-        OSKextLoadedKextSummary &image_info = image_infos[idx];
-        m_kext_summaries.push_back(image_info);
+        KextImageInfo &image_info = image_infos[idx];
+        m_known_kexts.push_back(image_info);
         
-        if (image_info.module_sp && m_process->GetStopID() == image_info.load_process_stop_id)
-            loaded_module_list.AppendIfNeeded (image_infos[idx].module_sp);
+        if (image_info.GetModule() && m_process->GetStopID() == image_info.GetProcessStopId())
+            loaded_module_list.AppendIfNeeded (image_infos[idx].GetModule());
     }
     
     m_process->GetTarget().ModulesDidLoad (loaded_module_list);
@@ -995,7 +1282,7 @@ DynamicLoaderDarwinKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
 uint32_t
 DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
                                               uint32_t image_infos_count, 
-                                              OSKextLoadedKextSummary::collection &image_infos)
+                                              KextImageInfo::collection &image_infos)
 {
     const ByteOrder endian = m_kernel.GetByteOrder();
     const uint32_t addr_size = m_kernel.GetAddressByteSize();
@@ -1024,23 +1311,11 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
             const void *name_data = extractor.GetData(&offset, KERNEL_MODULE_MAX_NAME);
             if (name_data == NULL)
                 break;
-            memcpy (image_infos[i].name, name_data, KERNEL_MODULE_MAX_NAME);
-            image_infos[i].uuid.SetBytes(extractor.GetData (&offset, 16));
-            image_infos[i].address          = extractor.GetU64(&offset);
-            if (!image_infos[i].so_address.SetLoadAddress (image_infos[i].address, &m_process->GetTarget()))
-                m_process->GetTarget().GetImages().ResolveFileAddress (image_infos[i].address, image_infos[i].so_address);
-            image_infos[i].size             = extractor.GetU64(&offset);
-            image_infos[i].version          = extractor.GetU64(&offset);
-            image_infos[i].load_tag         = extractor.GetU32(&offset);
-            image_infos[i].flags            = extractor.GetU32(&offset);
-            if ((offset - kext_summary_offset) < m_kext_summary_header.entry_size)
-            {
-                image_infos[i].reference_list = extractor.GetU64(&offset);
-            }
-            else
-            {
-                image_infos[i].reference_list = 0;
-            }
+            image_infos[i].SetName ((const char *) name_data);
+            UUID uuid (extractor.GetData (&offset, 16), 16);
+            image_infos[i].SetUUID (uuid);
+            image_infos[i].SetLoadAddress (extractor.GetU64(&offset));
+            image_infos[i].SetSize (extractor.GetU64(&offset));
         }
         if (i < image_infos.size())
             image_infos.resize(i);
@@ -1067,7 +1342,7 @@ DynamicLoaderDarwinKernel::ReadAllKextSummaries ()
             summary_addr.Slide(m_kext_summary_header.GetSize());
             if (!ParseKextSummaries (summary_addr, m_kext_summary_header.entry_count))
             {
-                m_kext_summaries.clear();
+                m_known_kexts.clear();
             }
             return true;
         }
@@ -1079,13 +1354,13 @@ DynamicLoaderDarwinKernel::ReadAllKextSummaries ()
 // Dump an image info structure to the file handle provided.
 //----------------------------------------------------------------------
 void
-DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
+DynamicLoaderDarwinKernel::KextImageInfo::PutToLog (Log *log) const
 {
     if (log == NULL)
         return;
-    const uint8_t *u = (uint8_t *)uuid.GetBytes();
+    const uint8_t *u = (uint8_t *) m_uuid.GetBytes();
 
-    if (address == LLDB_INVALID_ADDRESS)
+    if (m_load_address == LLDB_INVALID_ADDRESS)
     {
         if (u)
         {
@@ -1094,26 +1369,25 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
                         u[ 4], u[ 5], u[ 6], u[ 7],
                         u[ 8], u[ 9], u[10], u[11],
                         u[12], u[13], u[14], u[15],
-                        name);
+                        m_name.c_str());
         }
         else
-            log->Printf("\tname=\"%s\" (UNLOADED)", name);
+            log->Printf("\tname=\"%s\" (UNLOADED)", m_name.c_str());
     }
     else
     {
         if (u)
         {
-            log->Printf("\taddr=0x%16.16" PRIx64 " size=0x%16.16" PRIx64 " version=0x%16.16" PRIx64 " load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name=\"%s\"",
-                        address, size, version, load_tag, flags, reference_list,
+            log->Printf("\taddr=0x%16.16" PRIx64 " size=0x%16.16" PRIx64 " uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name=\"%s\"",
+                        m_load_address, m_size, 
                         u[ 0], u[ 1], u[ 2], u[ 3], u[ 4], u[ 5], u[ 6], u[ 7],
                         u[ 8], u[ 9], u[10], u[11], u[12], u[13], u[14], u[15],
-                        name);
+                        m_name.c_str());
         }
         else
         {
-            log->Printf("\t[0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ") version=0x%16.16" PRIx64 " load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16" PRIx64 " name=\"%s\"",
-                        address, address+size, version, load_tag, flags, reference_list,
-                        name);
+            log->Printf("\t[0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ") name=\"%s\"",
+                        m_load_address, m_load_address+m_size, m_name.c_str());
         }
     }
 }
@@ -1136,12 +1410,12 @@ DynamicLoaderDarwinKernel::PutToLog(Log *log) const
                 m_kext_summary_header.entry_count);
 
     size_t i;
-    const size_t count = m_kext_summaries.size();
+    const size_t count = m_known_kexts.size();
     if (count > 0)
     {
         log->PutCString("Loaded:");
         for (i = 0; i<count; i++)
-            m_kext_summaries[i].PutToLog(log);
+            m_known_kexts[i].PutToLog(log);
     }
 }
 
@@ -1156,7 +1430,7 @@ DynamicLoaderDarwinKernel::PrivateInitialize(Process *process)
 void
 DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
 {
-    if (m_break_id == LLDB_INVALID_BREAK_ID && m_kernel.module_sp)
+    if (m_break_id == LLDB_INVALID_BREAK_ID && m_kernel.GetModule())
     {
         DEBUG_PRINTF("DynamicLoaderDarwinKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
 
@@ -1164,7 +1438,7 @@ DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
         const bool internal_bp = true;
         const LazyBool skip_prologue = eLazyBoolNo;
         FileSpecList module_spec_list;
-        module_spec_list.Append (m_kernel.module_sp->GetFileSpec());
+        module_spec_list.Append (m_kernel.GetModule()->GetFileSpec());
         Breakpoint *bp = m_process->GetTarget().CreateBreakpoint (&module_spec_list,
                                                                   NULL,
                                                                   "OSKextLoadedKextSummariesUpdated",
