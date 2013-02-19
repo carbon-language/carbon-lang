@@ -81,7 +81,7 @@ def R600_Addr : RegisterClass <"AMDGPU", [i32], 127, (add (sequence "Addr%u_X", 
 } // End isAllocatable = 0
 
 def R600_TReg32_X : RegisterClass <"AMDGPU", [f32, i32], 32,
-                                   (add (sequence "T%u_X", 0, 127))>;
+                                   (add (sequence "T%u_X", 0, 127), AR_X)>;
 
 def R600_TReg32_Y : RegisterClass <"AMDGPU", [f32, i32], 32,
                                    (add (sequence "T%u_Y", 0, 127))>;
