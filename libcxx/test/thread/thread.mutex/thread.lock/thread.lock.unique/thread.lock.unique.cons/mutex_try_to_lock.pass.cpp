@@ -48,7 +48,6 @@ void f()
             break;
     }
     time_point t1 = Clock::now();
-    m.unlock();
     ns d = t1 - t0 - ms(250);
     assert(d < ms(200));  // within 200ms
 }
