@@ -1433,7 +1433,6 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   bool Is64Bit = STI.is64Bit();
   unsigned TlsReg, TlsOffset;
   DebugLoc DL;
-  const X86Subtarget *ST = &MF.getTarget().getSubtarget<X86Subtarget>();
 
   unsigned ScratchReg = GetScratchRegister(Is64Bit, MF, true);
   assert(!MF.getRegInfo().isLiveIn(ScratchReg) &&
@@ -1441,8 +1440,8 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 
   if (MF.getFunction()->isVarArg())
     report_fatal_error("Segmented stacks do not support vararg functions.");
-  if (!ST->isTargetLinux() && !ST->isTargetDarwin() &&
-      !ST->isTargetWin32() && !ST->isTargetFreeBSD())
+  if (!STI.isTargetLinux() && !STI.isTargetDarwin() &&
+      !STI.isTargetWin32() && !STI.isTargetFreeBSD())
     report_fatal_error("Segmented stacks not supported on this platform.");
 
   MachineBasicBlock *allocMBB = MF.CreateMachineBasicBlock();
@@ -1480,13 +1479,13 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 
   // Read the limit off the current stacklet off the stack_guard location.
   if (Is64Bit) {
-    if (ST->isTargetLinux()) {
+    if (STI.isTargetLinux()) {
       TlsReg = X86::FS;
       TlsOffset = 0x70;
-    } else if (ST->isTargetDarwin()) {
+    } else if (STI.isTargetDarwin()) {
       TlsReg = X86::GS;
       TlsOffset = 0x60 + 90*8; // See pthread_machdep.h. Steal TLS slot 90.
-    } else if (ST->isTargetFreeBSD()) {
+    } else if (STI.isTargetFreeBSD()) {
       TlsReg = X86::FS;
       TlsOffset = 0x18;
     } else {
@@ -1502,16 +1501,16 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     BuildMI(checkMBB, DL, TII.get(X86::CMP64rm)).addReg(ScratchReg)
       .addReg(0).addImm(1).addReg(0).addImm(TlsOffset).addReg(TlsReg);
   } else {
-    if (ST->isTargetLinux()) {
+    if (STI.isTargetLinux()) {
       TlsReg = X86::GS;
       TlsOffset = 0x30;
-    } else if (ST->isTargetDarwin()) {
+    } else if (STI.isTargetDarwin()) {
       TlsReg = X86::GS;
       TlsOffset = 0x48 + 90*4;
-    } else if (ST->isTargetWin32()) {
+    } else if (STI.isTargetWin32()) {
       TlsReg = X86::FS;
       TlsOffset = 0x14; // pvArbitrary, reserved for application use
-    } else if (ST->isTargetFreeBSD()) {
+    } else if (STI.isTargetFreeBSD()) {
       report_fatal_error("Segmented stacks not supported on FreeBSD i386.");
     } else {
       report_fatal_error("Segmented stacks not supported on this platform.");
@@ -1523,10 +1522,10 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
       BuildMI(checkMBB, DL, TII.get(X86::LEA32r), ScratchReg).addReg(X86::ESP)
         .addImm(1).addReg(0).addImm(-StackSize).addReg(0);
 
-    if (ST->isTargetLinux() || ST->isTargetWin32()) {
+    if (STI.isTargetLinux() || STI.isTargetWin32()) {
       BuildMI(checkMBB, DL, TII.get(X86::CMP32rm)).addReg(ScratchReg)
         .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg);
-    } else if (ST->isTargetDarwin()) {
+    } else if (STI.isTargetDarwin()) {
 
       // TlsOffset doesn't fit into a mod r/m byte so we need an extra register
       unsigned ScratchReg2;
@@ -1632,19 +1631,18 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   const X86InstrInfo &TII = *TM.getInstrInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const uint64_t SlotSize = TM.getRegisterInfo()->getSlotSize();
+  const unsigned SlotSize = TM.getRegisterInfo()->getSlotSize();
   const bool Is64Bit = STI.is64Bit();
   DebugLoc DL;
   // HiPE-specific values
   const unsigned HipeLeafWords = 24;
   const unsigned CCRegisteredArgs = Is64Bit ? 6 : 5;
   const unsigned Guaranteed = HipeLeafWords * SlotSize;
-  const unsigned CallerStkArity =
-    std::max<int>(0, MF.getFunction()->arg_size() - CCRegisteredArgs);
-  unsigned MaxStack =
-    MFI->getStackSize() + CallerStkArity * SlotSize + SlotSize;
+  unsigned CallerStkArity = MF.getFunction()->arg_size() > CCRegisteredArgs ?
+                            MF.getFunction()->arg_size() - CCRegisteredArgs : 0;
+  unsigned MaxStack = MFI->getStackSize() + CallerStkArity*SlotSize + SlotSize;
 
-  assert(MF.getTarget().getSubtarget<X86Subtarget>().isTargetLinux() &&
+  assert(STI.isTargetLinux() &&
          "HiPE prologue is only supported on Linux operating systems.");
 
   // Compute the largest caller's frame that is needed to fit the callees'
@@ -1660,31 +1658,37 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
     for (MachineFunction::iterator MBBI = MF.begin(), MBBE = MF.end();
          MBBI != MBBE; ++MBBI)
       for (MachineBasicBlock::iterator MI = MBBI->begin(), ME = MBBI->end();
-           MI != ME; ++MI)
-        if (MI->isCall()) {
-          // Get callee operand.
-          const MachineOperand &MO = MI->getOperand(0);
-          const Function *F;
+           MI != ME; ++MI) {
+        if (!MI->isCall())
+          continue;
 
-          // Only take account of global function calls (no closures etc.).
-          if (!MO.isGlobal()) continue;
-          if (!(F = dyn_cast<Function>(MO.getGlobal()))) continue;
+        // Get callee operand.
+        const MachineOperand &MO = MI->getOperand(0);
 
-          // Do not update 'MaxStack' for primitive and built-in functions
-          // (encoded with names either starting with "erlang."/"bif_" or not
-          // having a ".", such as a simple <Module>.<Function>.<Arity>, or an
-          // "_", such as the BIF "suspend_0") as they are executed on another
-          // stack.
-          if ((F->getName().find("erlang.") != std::string::npos) ||
-              (F->getName().find("bif_") != std::string::npos)) continue;
-          if (F->getName().find_first_of("._") == std::string::npos)
-            continue;
+        // Only take account of global function calls (no closures etc.).
+        if (!MO.isGlobal())
+          continue;
 
-          const uint64_t CalleeStkArity =
-            std::max<ssize_t>(0, F->arg_size() - CCRegisteredArgs);
-          MoreStackForCalls = std::max<int64_t>(
-            MoreStackForCalls, (HipeLeafWords - 1 - CalleeStkArity) * SlotSize);
-        }
+        const Function *F = dyn_cast<Function>(MO.getGlobal());
+        if (!F)
+          continue;
+
+        // Do not update 'MaxStack' for primitive and built-in functions
+        // (encoded with names either starting with "erlang."/"bif_" or not
+        // having a ".", such as a simple <Module>.<Function>.<Arity>, or an
+        // "_", such as the BIF "suspend_0") as they are executed on another
+        // stack.
+        if (F->getName().find("erlang.") != StringRef::npos ||
+            F->getName().find("bif_") != StringRef::npos ||
+            F->getName().find_first_of("._") == StringRef::npos)
+          continue;
+
+        unsigned CalleeStkArity =
+          F->arg_size() > CCRegisteredArgs ? F->arg_size()-CCRegisteredArgs : 0;
+        if (HipeLeafWords - 1 > CalleeStkArity)
+          MoreStackForCalls = std::max(MoreStackForCalls,
+                               (HipeLeafWords - 1 - CalleeStkArity) * SlotSize);
+      }
     MaxStack += MoreStackForCalls;
   }
 
