@@ -846,8 +846,8 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
   else if (ArrayType *AT = dyn_cast<ArrayType>(Agg->getType()))
     NumElts = AT->getNumElements();
   else
-    NumElts = AT->getVectorNumElements();
-  
+    NumElts = Agg->getType()->getVectorNumElements();
+
   SmallVector<Constant*, 32> Result;
   for (unsigned i = 0; i != NumElts; ++i) {
     Constant *C = Agg->getAggregateElement(i);
