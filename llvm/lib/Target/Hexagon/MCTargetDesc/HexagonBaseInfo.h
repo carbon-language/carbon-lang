@@ -17,6 +17,9 @@
 #ifndef HEXAGONBASEINFO_H
 #define HEXAGONBASEINFO_H
 
+#include "HexagonMCTargetDesc.h"
+#include "llvm/Support/ErrorHandling.h"
+
 namespace llvm {
 
 /// HexagonII - This namespace holds all of the target specific flags that
@@ -28,19 +31,19 @@ namespace HexagonII {
   // Insn types.
   // *** Must match HexagonInstrFormat*.td ***
   enum Type {
-    TypePSEUDO = 0,
-    TypeALU32  = 1,
-    TypeCR     = 2,
-    TypeJR     = 3,
-    TypeJ      = 4,
-    TypeLD     = 5,
-    TypeST     = 6,
-    TypeSYSTEM = 7,
-    TypeXTYPE  = 8,
-    TypeMEMOP  = 9,
-    TypeNV     = 10,
-    TypePREFIX = 30, // Such as extenders.
-    TypeMARKER = 31  // Such as end of a HW loop.
+    TypePSEUDO  = 0,
+    TypeALU32   = 1,
+    TypeCR      = 2,
+    TypeJR      = 3,
+    TypeJ       = 4,
+    TypeLD      = 5,
+    TypeST      = 6,
+    TypeSYSTEM  = 7,
+    TypeXTYPE   = 8,
+    TypeMEMOP   = 9,
+    TypeNV      = 10,
+    TypePREFIX  = 30, // Such as extenders.
+    TypeENDLOOP = 31  // Such as end of a HW loop.
   };
 
   enum SubTarget {
@@ -65,6 +68,14 @@ namespace HexagonII {
     BaseRegOffset  = 5   // Indirect with register offset
   };
 
+  enum MemAccessSize {
+    NoMemAccess = 0,            // Not a memory acces instruction.
+    ByteAccess = 1,             // Byte access instruction (memb).
+    HalfWordAccess = 2,         // Half word access instruction (memh).
+    WordAccess = 3,             // Word access instrution (memw).
+    DoubleWordAccess = 4        // Double word access instruction (memd)
+  };
+
   // MCInstrDesc TSFlags
   // *** Must match HexagonInstrFormat*.td ***
   enum {
@@ -79,46 +90,67 @@ namespace HexagonII {
     // Predicated instructions.
     PredicatedPos  = 6,
     PredicatedMask = 0x1,
-    PredicatedNewPos  = 7,
+    PredicatedFalsePos  = 7,
+    PredicatedFalseMask = 0x1,
+    PredicatedNewPos  = 8,
     PredicatedNewMask = 0x1,
 
-    // Stores that can be newified.
-    mayNVStorePos  = 8,
+    // New-Value consumer instructions.
+    NewValuePos  = 9,
+    NewValueMask = 0x1,
+
+    // New-Value producer instructions.
+    hasNewValuePos  = 10,
+    hasNewValueMask = 0x1,
+
+    // Which operand consumes or produces a new value.
+    NewValueOpPos  = 11,
+    NewValueOpMask = 0x7,
+
+    // Which bits encode the new value.
+    NewValueBitsPos  = 14,
+    NewValueBitsMask = 0x3,
+
+    // Stores that can become new-value stores.
+    mayNVStorePos  = 16,
     mayNVStoreMask = 0x1,
 
-    // Dot new value store instructions.
-    NVStorePos  = 9,
+    // New-value store instructions.
+    NVStorePos  = 17,
     NVStoreMask = 0x1,
 
     // Extendable insns.
-    ExtendablePos  = 10,
+    ExtendablePos  = 18,
     ExtendableMask = 0x1,
 
     // Insns must be extended.
-    ExtendedPos  = 11,
+    ExtendedPos  = 19,
     ExtendedMask = 0x1,
 
     // Which operand may be extended.
-    ExtendableOpPos  = 12,
+    ExtendableOpPos  = 20,
     ExtendableOpMask = 0x7,
 
     // Signed or unsigned range.
-    ExtentSignedPos = 15,
+    ExtentSignedPos = 23,
     ExtentSignedMask = 0x1,
 
     // Number of bits of range before extending operand.
-    ExtentBitsPos  = 16,
+    ExtentBitsPos  = 24,
     ExtentBitsMask = 0x1f,
 
     // Valid subtargets
-    validSubTargetPos = 21,
+    validSubTargetPos = 29,
     validSubTargetMask = 0xf,
 
-    // Addressing mode for load/store instructions
-    AddrModePos = 25,
-    AddrModeMask = 0xf
+    // Addressing mode for load/store instructions.
+    AddrModePos = 33,
+    AddrModeMask = 0x7,
 
- };
+    // Access size of memory access instructions (load/store).
+    MemAccessSizePos = 36,
+    MemAccesSizeMask = 0x7
+  };
 
   // *** The code above must match HexagonInstrFormat*.td *** //
 
