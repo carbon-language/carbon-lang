@@ -9,6 +9,9 @@
 #include "MCTargetDesc/MipsELFStreamer.h"
 #include "MipsSubtarget.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCELF.h"
+#include "llvm/MC/MCELFSymbolFlags.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -58,7 +61,22 @@ namespace llvm {
       llvm_unreachable("Unsupported relocation model for e_flags");
 
     MCA.setELFHeaderEFlags(EFlags);
-
-
   }
-}
+
+  // For llc. Set a symbol's STO flags
+  void
+  MipsELFStreamer::emitMipsSTOCG(const MipsSubtarget &Subtarget,
+                                 MCSymbol *Sym,
+                                 unsigned Val) {
+
+    if (hasRawTextSupport())
+      return;
+
+    MCSymbolData &Data = getOrCreateSymbolData(Sym);
+    // The "other" values are stored in the last 6 bits of the second byte
+    // The traditional defines for STO values assume the full byte and thus
+    // the shift to pack it.
+    MCELF::setOther(Data, Val >> 2);
+  }
+
+} // namespace llvm

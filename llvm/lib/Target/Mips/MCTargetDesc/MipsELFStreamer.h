@@ -12,7 +12,9 @@
 #include "llvm/MC/MCELFStreamer.h"
 
 namespace llvm {
+class MipsAsmPrinter;
 class MipsSubtarget;
+class MCSymbol;
 
 class MipsELFStreamer : public MCELFStreamer {
 public:
@@ -24,7 +26,9 @@ public:
 
   ~MipsELFStreamer() {}
   void emitELFHeaderFlagsCG(const MipsSubtarget &Subtarget);
-//  void emitELFHeaderFlagCG(unsigned Val);
+  void emitMipsSTOCG(const MipsSubtarget &Subtarget,
+                     MCSymbol *Sym,
+                     unsigned Val);
 
   static bool classof(const MCStreamer *S) {
     return S->getKind() == SK_MipsELFStreamer;

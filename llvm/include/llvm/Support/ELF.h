@@ -738,6 +738,10 @@ enum {
   EF_MIPS_NOREORDER = 0x00000001, // Don't reorder instructions
   EF_MIPS_PIC       = 0x00000002, // Position independent code
   EF_MIPS_CPIC      = 0x00000004, // Call object with Position independent code
+  //ARCH_ASE
+  EF_MIPS_MICROMIPS = 0x02000000, // microMIPS
+  //ARCH
+  EF_MIPS_ARCH      = 0xf0000000, // Mask for applying EF_MIPS_ARCH_ variant
   EF_MIPS_ARCH_1    = 0x00000000, // MIPS1 instruction set
   EF_MIPS_ARCH_2    = 0x10000000, // MIPS2 instruction set
   EF_MIPS_ARCH_3    = 0x20000000, // MIPS3 instruction set
@@ -746,9 +750,7 @@ enum {
   EF_MIPS_ARCH_32   = 0x50000000, // MIPS32 instruction set per linux not elf.h
   EF_MIPS_ARCH_64   = 0x60000000, // MIPS64 instruction set per linux not elf.h
   EF_MIPS_ARCH_32R2 = 0x70000000, // mips32r2
-  EF_MIPS_ARCH_64R2 = 0x80000000, // mips64r2
-  EF_MIPS_ARCH      = 0xf0000000, // Mask for applying EF_MIPS_ARCH_ variant
-  EF_MIPS_MICROMIPS = 0x02000000  // microMIPS
+  EF_MIPS_ARCH_64R2 = 0x80000000  // mips64r2
 };
 
 // ELF Relocation types for Mips
@@ -807,6 +809,11 @@ enum {
   R_MIPS_COPY              = 126,
   R_MIPS_JUMP_SLOT         = 127,
   R_MIPS_NUM               = 218
+};
+
+// Special values for the st_other field in the symbol table entry for MIPS.
+enum {
+  STO_MIPS_MICROMIPS       = 0x80 // MIPS Specific ISA for MicroMips
 };
 
 // Hexagon Specific e_flags

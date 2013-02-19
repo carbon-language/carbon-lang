@@ -36,6 +36,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/Mangler.h"
@@ -231,6 +232,11 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
     // OutStreamer.EmitRawText(StringRef("\t.set\tnomicromips"));
     OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   }
+
+  if (Subtarget->inMicroMipsMode())
+    if (MipsELFStreamer *MES = dyn_cast<MipsELFStreamer>(&OutStreamer))
+      MES->emitMipsSTOCG(*Subtarget, CurrentFnSym,
+      (unsigned)ELF::STO_MIPS_MICROMIPS);
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
