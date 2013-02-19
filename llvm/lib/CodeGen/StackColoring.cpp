@@ -102,12 +102,13 @@ class StackColoring : public MachineFunctionPass {
   };
 
   /// Maps active slots (per bit) for each basic block.
-  DenseMap<MachineBasicBlock*, BlockLifetimeInfo> BlockLiveness;
+  typedef DenseMap<const MachineBasicBlock*, BlockLifetimeInfo> LivenessMap;
+  LivenessMap BlockLiveness;
 
   /// Maps serial numbers to basic blocks.
-  DenseMap<MachineBasicBlock*, int> BasicBlocks;
+  DenseMap<const MachineBasicBlock*, int> BasicBlocks;
   /// Maps basic blocks to a serial number.
-  SmallVector<MachineBasicBlock*, 8> BasicBlockNumbering;
+  SmallVector<const MachineBasicBlock*, 8> BasicBlockNumbering;
 
   /// Maps liveness intervals for each slot.
   SmallVector<LiveInterval*, 16> Intervals;
@@ -205,8 +206,7 @@ void StackColoring::dump() const {
     DEBUG(dbgs()<<"Inspecting block #"<<BasicBlocks.lookup(*FI)<<
           " ["<<FI->getName()<<"]\n");
 
-    DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::const_iterator BI =
-      BlockLiveness.find(*FI);
+    LivenessMap::const_iterator BI = BlockLiveness.find(*FI);
     assert(BI != BlockLiveness.end() && "Block not found");
     const BlockLifetimeInfo &BlockInfo = BI->second;
 
@@ -299,26 +299,25 @@ void StackColoring::calculateLocalLiveness() {
   // formulation, and END is equivalent to GEN.  The result of this computation
   // is a map from blocks to bitvectors where the bitvectors represent which
   // allocas are live in/out of that block.
-  SmallPtrSet<MachineBasicBlock*, 8> BBSet(BasicBlockNumbering.begin(),
-                                           BasicBlockNumbering.end());
+  SmallPtrSet<const MachineBasicBlock*, 8> BBSet(BasicBlockNumbering.begin(),
+                                                 BasicBlockNumbering.end());
   unsigned NumSSMIters = 0;
   bool changed = true;
   while (changed) {
     changed = false;
     ++NumSSMIters;
 
-    SmallPtrSet<MachineBasicBlock*, 8> NextBBSet;
+    SmallPtrSet<const MachineBasicBlock*, 8> NextBBSet;
 
-    for (SmallVector<MachineBasicBlock*, 8>::iterator
+    for (SmallVector<const MachineBasicBlock*, 8>::iterator
          PI = BasicBlockNumbering.begin(), PE = BasicBlockNumbering.end();
          PI != PE; ++PI) {
 
-      MachineBasicBlock *BB = *PI;
+      const MachineBasicBlock *BB = *PI;
       if (!BBSet.count(BB)) continue;
 
       // Use an iterator to avoid repeated lookups.
-      DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::iterator BI =
-        BlockLiveness.find(BB);
+      LivenessMap::iterator BI = BlockLiveness.find(BB);
       assert(BI != BlockLiveness.end() && "Block not found");
       BlockLifetimeInfo &BlockInfo = BI->second;
 
@@ -328,8 +327,7 @@ void StackColoring::calculateLocalLiveness() {
       // Forward propagation from begins to ends.
       for (MachineBasicBlock::const_pred_iterator PI = BB->pred_begin(),
            PE = BB->pred_end(); PI != PE; ++PI) {
-        DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::const_iterator I =
-          BlockLiveness.find(*PI);
+        LivenessMap::const_iterator I = BlockLiveness.find(*PI);
         assert(I != BlockLiveness.end() && "Predecessor not found");
         LocalLiveIn |= I->second.LiveOut;
       }
@@ -339,8 +337,7 @@ void StackColoring::calculateLocalLiveness() {
       // Reverse propagation from ends to begins.
       for (MachineBasicBlock::const_succ_iterator SI = BB->succ_begin(),
            SE = BB->succ_end(); SI != SE; ++SI) {
-        DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::const_iterator I =
-          BlockLiveness.find(*SI);
+        LivenessMap::const_iterator I = BlockLiveness.find(*SI);
         assert(I != BlockLiveness.end() && "Successor not found");
         LocalLiveOut |= I->second.LiveIn;
       }
@@ -371,7 +368,7 @@ void StackColoring::calculateLocalLiveness() {
         changed = true;
         BlockInfo.LiveIn |= LocalLiveIn;
 
-        for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
+        for (MachineBasicBlock::const_pred_iterator PI = BB->pred_begin(),
              PE = BB->pred_end(); PI != PE; ++PI)
           NextBBSet.insert(*PI);
       }
@@ -380,7 +377,7 @@ void StackColoring::calculateLocalLiveness() {
         changed = true;
         BlockInfo.LiveOut |= LocalLiveOut;
 
-        for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+        for (MachineBasicBlock::const_succ_iterator SI = BB->succ_begin(),
              SE = BB->succ_end(); SI != SE; ++SI)
           NextBBSet.insert(*SI);
       }
