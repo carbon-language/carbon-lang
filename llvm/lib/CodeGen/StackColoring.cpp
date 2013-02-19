@@ -144,7 +144,7 @@ public:
 
 private:
   /// Debug.
-  void dump();
+  void dump() const;
 
   /// Removes all of the lifetime marker instructions from the function.
   /// \returns true if any markers were removed.
@@ -199,30 +199,36 @@ void StackColoring::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-void StackColoring::dump() {
+void StackColoring::dump() const {
   for (df_iterator<MachineFunction*> FI = df_begin(MF), FE = df_end(MF);
        FI != FE; ++FI) {
-    DEBUG(dbgs()<<"Inspecting block #"<<BasicBlocks[*FI]<<
+    DEBUG(dbgs()<<"Inspecting block #"<<BasicBlocks.lookup(*FI)<<
           " ["<<FI->getName()<<"]\n");
+
+    DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::const_iterator BI =
+      BlockLiveness.find(*FI);
+    assert(BI != BlockLiveness.end() && "Block not found");
+    const BlockLifetimeInfo &BlockInfo = BI->second;
+
     DEBUG(dbgs()<<"BEGIN  : {");
-    for (unsigned i=0; i < BlockLiveness[*FI].Begin.size(); ++i)
-      DEBUG(dbgs()<<BlockLiveness[*FI].Begin.test(i)<<" ");
+    for (unsigned i=0; i < BlockInfo.Begin.size(); ++i)
+      DEBUG(dbgs()<<BlockInfo.Begin.test(i)<<" ");
     DEBUG(dbgs()<<"}\n");
 
     DEBUG(dbgs()<<"END    : {");
-    for (unsigned i=0; i < BlockLiveness[*FI].End.size(); ++i)
-      DEBUG(dbgs()<<BlockLiveness[*FI].End.test(i)<<" ");
+    for (unsigned i=0; i < BlockInfo.End.size(); ++i)
+      DEBUG(dbgs()<<BlockInfo.End.test(i)<<" ");
 
     DEBUG(dbgs()<<"}\n");
 
     DEBUG(dbgs()<<"LIVE_IN: {");
-    for (unsigned i=0; i < BlockLiveness[*FI].LiveIn.size(); ++i)
-      DEBUG(dbgs()<<BlockLiveness[*FI].LiveIn.test(i)<<" ");
+    for (unsigned i=0; i < BlockInfo.LiveIn.size(); ++i)
+      DEBUG(dbgs()<<BlockInfo.LiveIn.test(i)<<" ");
 
     DEBUG(dbgs()<<"}\n");
     DEBUG(dbgs()<<"LIVEOUT: {");
-    for (unsigned i=0; i < BlockLiveness[*FI].LiveOut.size(); ++i)
-      DEBUG(dbgs()<<BlockLiveness[*FI].LiveOut.test(i)<<" ");
+    for (unsigned i=0; i < BlockInfo.LiveOut.size(); ++i)
+      DEBUG(dbgs()<<BlockInfo.LiveOut.test(i)<<" ");
     DEBUG(dbgs()<<"}\n");
   }
 }
