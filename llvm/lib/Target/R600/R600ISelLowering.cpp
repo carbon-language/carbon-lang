@@ -1039,7 +1039,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
                                                     AMDGPUAS::PARAM_I_ADDRESS);
     SDValue Arg = DAG.getExtLoad(ISD::ZEXTLOAD, DL, VT, DAG.getRoot(),
                                 DAG.getConstant(ParamOffsetBytes, MVT::i32),
-                                       MachinePointerInfo(new Argument(PtrTy)),
+                                       MachinePointerInfo(UndefValue::get(PtrTy)),
                                        ArgVT, false, false, ArgBytes);
     InVals.push_back(Arg);
     ParamOffsetBytes += ArgBytes;
