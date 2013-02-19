@@ -316,30 +316,44 @@ void StackColoring::calculateLocalLiveness() {
       MachineBasicBlock *BB = *PI;
       if (!BBSet.count(BB)) continue;
 
+      // Use an iterator to avoid repeated lookups.
+      DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::iterator BI =
+        BlockLiveness.find(BB);
+      assert(BI != BlockLiveness.end() && "Block not found");
+      BlockLifetimeInfo &BlockInfo = BI->second;
+
       BitVector LocalLiveIn;
       BitVector LocalLiveOut;
 
       // Forward propagation from begins to ends.
-      for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
-           PE = BB->pred_end(); PI != PE; ++PI)
-        LocalLiveIn |= BlockLiveness[*PI].LiveOut;
-      LocalLiveIn |= BlockLiveness[BB].End;
-      LocalLiveIn.reset(BlockLiveness[BB].Begin);
+      for (MachineBasicBlock::const_pred_iterator PI = BB->pred_begin(),
+           PE = BB->pred_end(); PI != PE; ++PI) {
+        DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::const_iterator I =
+          BlockLiveness.find(*PI);
+        assert(I != BlockLiveness.end() && "Predecessor not found");
+        LocalLiveIn |= I->second.LiveOut;
+      }
+      LocalLiveIn |= BlockInfo.End;
+      LocalLiveIn.reset(BlockInfo.Begin);
 
       // Reverse propagation from ends to begins.
-      for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-           SE = BB->succ_end(); SI != SE; ++SI)
-        LocalLiveOut |= BlockLiveness[*SI].LiveIn;
-      LocalLiveOut |= BlockLiveness[BB].Begin;
-      LocalLiveOut.reset(BlockLiveness[BB].End);
+      for (MachineBasicBlock::const_succ_iterator SI = BB->succ_begin(),
+           SE = BB->succ_end(); SI != SE; ++SI) {
+        DenseMap<MachineBasicBlock*, BlockLifetimeInfo>::const_iterator I =
+          BlockLiveness.find(*SI);
+        assert(I != BlockLiveness.end() && "Successor not found");
+        LocalLiveOut |= I->second.LiveIn;
+      }
+      LocalLiveOut |= BlockInfo.Begin;
+      LocalLiveOut.reset(BlockInfo.End);
 
       LocalLiveIn |= LocalLiveOut;
       LocalLiveOut |= LocalLiveIn;
 
       // After adopting the live bits, we need to turn-off the bits which
       // are de-activated in this block.
-      LocalLiveOut.reset(BlockLiveness[BB].End);
-      LocalLiveIn.reset(BlockLiveness[BB].Begin);
+      LocalLiveOut.reset(BlockInfo.End);
+      LocalLiveIn.reset(BlockInfo.Begin);
 
       // If we have both BEGIN and END markers in the same basic block then
       // we know that the BEGIN marker comes after the END, because we already
@@ -348,23 +362,23 @@ void StackColoring::calculateLocalLiveness() {
       // Want to enable the LIVE_IN and LIVE_OUT of slots that have both
       // BEGIN and END because it means that the value lives before and after
       // this basic block.
-      BitVector LocalEndBegin = BlockLiveness[BB].End;
-      LocalEndBegin &= BlockLiveness[BB].Begin;
+      BitVector LocalEndBegin = BlockInfo.End;
+      LocalEndBegin &= BlockInfo.Begin;
       LocalLiveIn |= LocalEndBegin;
       LocalLiveOut |= LocalEndBegin;
 
-      if (LocalLiveIn.test(BlockLiveness[BB].LiveIn)) {
+      if (LocalLiveIn.test(BlockInfo.LiveIn)) {
         changed = true;
-        BlockLiveness[BB].LiveIn |= LocalLiveIn;
+        BlockInfo.LiveIn |= LocalLiveIn;
 
         for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
              PE = BB->pred_end(); PI != PE; ++PI)
           NextBBSet.insert(*PI);
       }
 
-      if (LocalLiveOut.test(BlockLiveness[BB].LiveOut)) {
+      if (LocalLiveOut.test(BlockInfo.LiveOut)) {
         changed = true;
-        BlockLiveness[BB].LiveOut |= LocalLiveOut;
+        BlockInfo.LiveOut |= LocalLiveOut;
 
         for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
              SE = BB->succ_end(); SI != SE; ++SI)
