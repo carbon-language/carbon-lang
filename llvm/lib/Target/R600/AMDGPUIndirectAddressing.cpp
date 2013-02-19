@@ -169,9 +169,6 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
         }
 
         if (RegisterAddressMap[Reg] == Address) {
-          if (!regHasExplicitDef(MRI, Reg)) {
-            continue;
-          }
           PhiRegisters.push_back(Reg);
         }
       }
@@ -270,7 +267,8 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
           // instruction that uses indirect addressing. 
           BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDGPU::COPY),
                    MI.getOperand(0).getReg())
-                   .addReg(AddrReg);
+                   .addReg(AddrReg)
+                   .addReg(Reg, RegState::Implicit);
         }
       } else {
         // Indirect register access
@@ -292,8 +290,7 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
           // We only need to use REG_SEQUENCE for explicit defs, since the
           // register coalescer won't do anything with the implicit defs.
           MachineInstr *DefInstr = MRI.getVRegDef(Reg);
-          if (!DefInstr->getOperand(0).isReg() ||
-              DefInstr->getOperand(0).getReg() != Reg) {
+          if (!regHasExplicitDef(MRI, Reg)) {
             continue;
           }
 
@@ -310,6 +307,7 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
 
 
         Mov.addReg(IndirectReg, RegState::Implicit | RegState::Kill);
+        Mov.addReg(LiveAddressRegisterMap[Address], RegState::Implicit);
 
       }
       MI.eraseFromParent();
@@ -321,6 +319,26 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
 bool AMDGPUIndirectAddressingPass::regHasExplicitDef(MachineRegisterInfo &MRI,
                                                   unsigned Reg) const {
   MachineInstr *DefInstr = MRI.getVRegDef(Reg);
-  return DefInstr && DefInstr->getOperand(0).isReg() &&
+
+  if (!DefInstr) {
+    return false;
+  }
+
+  if (DefInstr->getOpcode() == AMDGPU::PHI) {
+    bool Explicit = false;
+    for (MachineInstr::const_mop_iterator I = DefInstr->operands_begin(),
+                                          E = DefInstr->operands_end();
+                                          I != E; ++I) {
+      const MachineOperand &MO = *I;
+      if (!MO.isReg() || MO.isDef()) {
+        continue;
+      }
+
+      Explicit = Explicit || regHasExplicitDef(MRI, MO.getReg());
+    }
+    return Explicit;
+  }
+
+  return DefInstr->getOperand(0).isReg() &&
          DefInstr->getOperand(0).getReg() == Reg;
 }
