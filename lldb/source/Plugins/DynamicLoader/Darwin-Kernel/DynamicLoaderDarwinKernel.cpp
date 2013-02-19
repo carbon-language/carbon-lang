@@ -794,7 +794,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
                 Stream *s = &target.GetDebugger().GetOutputStream();
                 if (s)
                 {
-                    s->Printf ("WARNING: Unable to locate symbol rich version of kernel binary.\n");
+                    s->Printf ("WARNING: Unable to locate kernel binary on this system.\n");
                 }
             }
         }
@@ -822,6 +822,16 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
         }
     }
     
+    if (!m_module_sp && !IsKernel() && m_uuid.IsValid() && !m_name.empty())
+    {
+        Stream *s = &target.GetDebugger().GetOutputStream();
+        if (s)
+        {
+            char uuidbuf[64];
+            s->Printf ("warning: Can't find binary/dSYM for %s (%s)\n", 
+                       m_name.c_str(), m_uuid.GetAsCString(uuidbuf, sizeof (uuidbuf)));
+        }
+    }
 
     static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
 
