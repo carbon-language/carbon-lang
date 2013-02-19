@@ -758,28 +758,26 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
             module_spec.GetUUID() = m_uuid;
             module_spec.GetArchitecture() = target.GetArchitecture();
 
-            // For the kernel, we really do need an on-disk file copy of the binary.
-            bool force_symbols_search = false;
+            // For the kernel, we really do need an on-disk file copy of the binary to do anything useful.
+            // This will force a clal to 
             if (IsKernel())
             {
-                force_symbols_search = true;
-            }
-
-            if (Symbols::DownloadObjectAndSymbolFile (module_spec, force_symbols_search))
-            {
-                if (module_spec.GetFileSpec().Exists())
+                if (Symbols::DownloadObjectAndSymbolFile (module_spec, true))
                 {
-                    m_module_sp.reset(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
-                    if (m_module_sp.get() && m_module_sp->MatchesModuleSpec (module_spec))
+                    if (module_spec.GetFileSpec().Exists())
                     {
-                        ModuleList loaded_module_list;
-                        loaded_module_list.Append (m_module_sp);
-                        target.ModulesDidLoad (loaded_module_list);
+                        m_module_sp.reset(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
+                        if (m_module_sp.get() && m_module_sp->MatchesModuleSpec (module_spec))
+                        {
+                            ModuleList loaded_module_list;
+                            loaded_module_list.Append (m_module_sp);
+                            target.ModulesDidLoad (loaded_module_list);
+                        }
                     }
                 }
             }
-        
-            // Failing that, ask the Target to find this file on the local system, if possible.
+
+            // Ask the Target to find this file on the local system, if possible.
             // This will search in the list of currently-loaded files, look in the 
             // standard search paths on the system, and on a Mac it will try calling
             // the DebugSymbols framework with the UUID to find the binary via its
@@ -789,7 +787,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
                 m_module_sp = target.GetSharedModule (module_spec);
             }
 
-            if (force_symbols_search && !m_module_sp)
+            if (IsKernel() && !m_module_sp)
             {
                 Stream *s = &target.GetDebugger().GetOutputStream();
                 if (s)
@@ -1283,28 +1281,6 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
 
     return true;
 }
-
-// Adds the modules in image_infos to m_known_kexts.  
-
-bool
-DynamicLoaderDarwinKernel::AddModulesUsingImageInfos (KextImageInfo::collection &image_infos)
-{
-    // Now add these images to the main list.
-    ModuleList loaded_module_list;
-    
-    for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
-    {
-        KextImageInfo &image_info = image_infos[idx];
-        m_known_kexts.push_back(image_info);
-        
-        if (image_info.GetModule() && m_process->GetStopID() == image_info.GetProcessStopId())
-            loaded_module_list.AppendIfNeeded (image_infos[idx].GetModule());
-    }
-    
-    m_process->GetTarget().ModulesDidLoad (loaded_module_list);
-    return true;
-}
-
 
 uint32_t
 DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,

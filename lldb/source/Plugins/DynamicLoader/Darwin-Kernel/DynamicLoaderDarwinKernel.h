@@ -333,9 +333,6 @@ protected:
     ParseKextSummaries (const lldb_private::Address &kext_summary_addr,
                         uint32_t count);
 
-    bool
-    AddModulesUsingImageInfos (KextImageInfo::collection &image_infos);
-
     void
     UpdateImageInfosHeaderAndLoadCommands(KextImageInfo::collection &image_infos,
                                           uint32_t infos_count,
