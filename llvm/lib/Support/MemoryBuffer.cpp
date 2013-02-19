@@ -33,8 +33,13 @@
 #include <unistd.h>
 #else
 #include <io.h>
-#ifndef S_ISFIFO
-#define S_ISFIFO(x) (0)
+// Simplistic definitinos of these macros to allow files to be read with
+// MapInFilePages.
+#ifndef S_ISREG
+#define S_ISREG(x) (1)
+#endif
+#ifndef S_ISBLK
+#define S_ISBLK(x) (0)
 #endif
 #endif
 #include <fcntl.h>
