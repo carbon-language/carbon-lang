@@ -2,12 +2,28 @@
 External Projects Using Clang
 =============================
 
-Clang is more than a compiler; its library-based approach allows creation of
-different kinds of tools that can process source code.
+Introduction
+============
 
-This page contains references to Clang based tools and projects. To extend
-the list you could write email to the `development mailing list
-<http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev>`_.
+This page provides some examples of the kinds of things that people have
+done with Clang that might serve as useful guides (or starting points) from
+which to develop your own tools. They may be helpful even for something as
+banal (but necessary) as how to set up your build to integrate Clang.
+
+Clang's library-based design is deliberately aimed at facilitating use by
+external projects, and we are always interested in improving Clang to
+better serve our external users. Some typical categories of applications
+where Clang is used are:
+
+- Static analysis.
+- Documentation/cross-reference generation.
+
+If you know of (or wrote!) a tool or project using Clang, please send an
+email to Clang's `development discussion mailing list
+<http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev>`_ to have it added.
+(or if you are already a Clang contributor, feel free to directly commit
+additions). Since the primary purpose of this page is to provide examples
+that can help developers, generally they must have code available.
 
 List of projects and tools
 ==========================
@@ -46,7 +62,7 @@ List of projects and tools
     "cmonster is a Python wrapper for the Clang C++ parser."
 
 `<https://github.com/rizsotto/Constantine>`_
-    "Constantine is a toy project to learn how to write clang plugin.  
+    "Constantine is a toy project to learn how to write clang plugin.
     Implements pseudo const analysis. Generates warnings about variables,
     which were declared without const qualifier."
 
