@@ -40,12 +40,15 @@ namespace __sanitizer {
 
 #if defined(__linux__)
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
-  unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
   unsigned struct_dirent_sz = sizeof(struct dirent);
   unsigned struct_statfs_sz = sizeof(struct statfs);
-  unsigned struct_statfs64_sz = sizeof(struct statfs64);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
 #endif // __linux__
+
+#if defined(__linux__) && !defined(__ANDROID__)
+  unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
+  unsigned struct_statfs64_sz = sizeof(struct statfs64);
+#endif // __linux__ && !__ANDROID__
 
   void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx) {
     return ((struct msghdr *)msg)->msg_iov[idx].iov_base;
