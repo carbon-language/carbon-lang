@@ -959,7 +959,7 @@ StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID,
   : ID(ID), Level(Level), Loc(Loc), Message(Message) 
 {
   this->Ranges.assign(Ranges.begin(), Ranges.end());
-  this->FixIts.assign(FixIts.begin(), FixIts.end());
+  this->FixIts.assign(Fixits.begin(), Fixits.end());
 }
 
 StoredDiagnostic::~StoredDiagnostic() { }
