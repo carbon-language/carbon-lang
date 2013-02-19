@@ -54,7 +54,8 @@ void MsanDie();
 void PrintWarning(uptr pc, uptr bp);
 void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin);
 
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp);
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
+                   bool fast);
 
 void ReportUMR(StackTrace *stack, u32 origin);
 void ReportExpectedUMRNotFound(StackTrace *stack);
@@ -65,7 +66,8 @@ void ReportAtExitStatistics();
   stack.size = 0;                                                  \
   if (__msan_get_track_origins() && msan_inited)                   \
     GetStackTrace(&stack, flags()->num_callers,                    \
-      StackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
+        StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(),           \
+        /* fast */ true)
 
 }  // namespace __msan
 
