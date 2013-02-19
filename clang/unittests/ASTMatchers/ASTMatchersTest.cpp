@@ -818,6 +818,14 @@ TEST(HasDeclaration, HasDeclarationOfEnumType) {
                           qualType(hasDeclaration(enumDecl(hasName("X")))))))));
 }
 
+TEST(HasDeclaration, HasDeclarationOfTypeWithDecl) {
+  EXPECT_TRUE(matches("typedef int X; X a;",
+                      varDecl(hasName("a"),
+                              hasType(typedefType(hasDeclaration(decl()))))));
+
+  // FIXME: Add tests for other types with getDecl() (e.g. RecordType)
+}
+
 TEST(HasType, TakesQualTypeMatcherAndMatchesExpr) {
   TypeMatcher ClassX = hasDeclaration(recordDecl(hasName("X")));
   EXPECT_TRUE(
@@ -3350,10 +3358,6 @@ TEST(TypeMatching, MatchesPointersToConstTypes) {
 TEST(TypeMatching, MatchesTypedefTypes) {
   EXPECT_TRUE(matches("typedef int X; X a;", varDecl(hasName("a"),
                                                      hasType(typedefType()))));
-
-  EXPECT_TRUE(matches("typedef int X; X a;",
-                      varDecl(hasName("a"),
-                              hasType(typedefType(hasDecl(decl()))))));
 }
 
 TEST(NNS, MatchesNestedNameSpecifiers) {

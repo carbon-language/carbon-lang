@@ -1561,8 +1561,12 @@ unless(const M &InnerMatcher) {
 /// \brief Matches a type if the declaration of the type matches the given
 /// matcher.
 ///
+/// In addition to being usable as Matcher<TypedefType>, also usable as
+/// Matcher<T> for any T supporting the getDecl() member function. e.g. various
+/// subtypes of clang::Type.
+///
 /// Usable as: Matcher<QualType>, Matcher<CallExpr>, Matcher<CXXConstructExpr>,
-///   Matcher<MemberExpr>
+///   Matcher<MemberExpr>, Matcher<TypedefType>
 inline internal::PolymorphicMatcherWithParam1< internal::HasDeclarationMatcher,
                                      internal::Matcher<Decl> >
     hasDeclaration(const internal::Matcher<Decl> &InnerMatcher) {
@@ -2845,13 +2849,6 @@ AST_TYPELOC_TRAVERSE_MATCHER(pointee, getPointee);
 /// typedefType()
 ///   matches "typedef int X"
 AST_TYPE_MATCHER(TypedefType, typedefType);
-
-/// \brief Matches \c TypedefTypes referring to a specific
-/// \c TypedefNameDecl.
-AST_MATCHER_P(TypedefType, hasDecl,
-              internal::Matcher<TypedefNameDecl>, InnerMatcher) {
-  return InnerMatcher.matches(*Node.getDecl(), Finder, Builder);
-}
 
 /// \brief Matches nested name specifiers.
 ///

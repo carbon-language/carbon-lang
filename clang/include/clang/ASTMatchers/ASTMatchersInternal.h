@@ -353,6 +353,18 @@ inline Matcher<T> makeMatcher(MatcherInterface<T> *Implementation) {
   return Matcher<T>(Implementation);
 }
 
+/// \brief Metafunction to determine if type T has a member called getDecl.
+template <typename T> struct has_getDecl {
+  typedef char yes[1];
+  typedef char no[2];
+
+  template <typename TestType>
+  static yes &test(char[sizeof(&TestType::getDecl)]);
+  template <typename> static no &test(...);
+
+  static bool const value = sizeof(test<T>(0)) == sizeof(yes);
+};
+
 /// \brief Matches declarations for QualType and CallExpr.
 ///
 /// Type argument DeclMatcherT is required by PolymorphicMatcherWithParam1 but
@@ -373,6 +385,15 @@ public:
   }
 
 private:
+  /// \brief If getDecl exists as a member of U, returns whether the inner
+  /// matcher matches Node.getDecl().
+  template <typename U>
+  bool matchesSpecialized(
+      const U &Node, ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder,
+      typename llvm::enable_if<has_getDecl<U>, int>::type = 0) const {
+    return matchesDecl(Node.getDecl(), Finder, Builder);
+  }
+
   /// \brief Extracts the CXXRecordDecl or EnumDecl of a QualType and returns
   /// whether the inner matcher matches on it.
   bool matchesSpecialized(const QualType &Node, ASTMatchFinder *Finder,
