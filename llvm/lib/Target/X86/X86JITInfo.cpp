@@ -339,7 +339,7 @@ extern "C" {
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
 extern "C" {
-void LLVM_LIBRARY_VISIBILITY LLVMX86CompilationCallback2(intptr_t *StackPtr,
+LLVM_LIBRARY_VISIBILITY void LLVMX86CompilationCallback2(intptr_t *StackPtr,
                                                          intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];
   // We are reading raw stack data here. Tell MemorySanitizer that it is
