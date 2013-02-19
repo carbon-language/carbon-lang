@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCWin64EH.h"
@@ -285,6 +286,9 @@ namespace llvm {
     /// EmitThumbFunc - Note in the output that the specified @p Func is
     /// a Thumb mode function (ARM target only).
     virtual void EmitThumbFunc(MCSymbol *Func) = 0;
+
+    /// getOrCreateSymbolData - Get symbol data for given symbol.
+    virtual MCSymbolData &getOrCreateSymbolData(MCSymbol *Symbol);
 
     /// EmitAssignment - Emit an assignment of @p Value to @p Symbol.
     ///

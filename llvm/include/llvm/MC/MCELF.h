@@ -28,6 +28,8 @@ class MCELF {
   static unsigned GetType(const MCSymbolData &SD);
   static void SetVisibility(MCSymbolData &SD, unsigned Visibility);
   static unsigned GetVisibility(MCSymbolData &SD);
+  static void setOther(MCSymbolData &SD, unsigned Other);
+  static unsigned getOther(MCSymbolData &SD);
 };
 
 }

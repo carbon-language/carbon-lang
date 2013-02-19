@@ -620,3 +620,8 @@ void MCStreamer::Finish() {
 
   FinishImpl();
 }
+
+MCSymbolData &MCStreamer::getOrCreateSymbolData(MCSymbol *Symbol) {
+  report_fatal_error("Not supported!");
+  return *(static_cast<MCSymbolData*> (NULL));
+}

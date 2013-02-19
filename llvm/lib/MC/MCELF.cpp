@@ -52,6 +52,8 @@ unsigned MCELF::GetType(const MCSymbolData &SD) {
   return Type;
 }
 
+// Visibility is stored in the first two bits of st_other
+// st_other values are stored in the second byte of get/setFlags
 void MCELF::SetVisibility(MCSymbolData &SD, unsigned Visibility) {
   assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
          Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
@@ -66,6 +68,19 @@ unsigned MCELF::GetVisibility(MCSymbolData &SD) {
   assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
          Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
   return Visibility;
+}
+
+// Other is stored in the last six bits of st_other
+// st_other values are stored in the second byte of get/setFlags
+void MCELF::setOther(MCSymbolData &SD, unsigned Other) {
+  uint32_t OtherFlags = SD.getFlags() & ~(0x3f << ELF_Other_Shift);
+  SD.setFlags(OtherFlags | (Other << ELF_Other_Shift));
+}
+
+unsigned MCELF::getOther(MCSymbolData &SD) {
+  unsigned Other =
+    (SD.getFlags() & (0x3f << ELF_Other_Shift)) >> ELF_Other_Shift;
+  return Other;
 }
 
 }

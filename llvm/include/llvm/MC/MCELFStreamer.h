@@ -65,6 +65,8 @@ public:
   virtual void EmitCOFFSymbolType(int Type);
   virtual void EndCOFFSymbolDef();
 
+  virtual MCSymbolData &getOrCreateSymbolData(MCSymbol *Symbol);
+
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
 
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
