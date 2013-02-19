@@ -734,6 +734,17 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
 
     bool uuid_is_valid = m_uuid.IsValid();
 
+    if (IsKernel() && uuid_is_valid && m_memory_module_sp.get())
+    {
+        Stream *s = &target.GetDebugger().GetOutputStream();
+        if (s)
+        {
+            char uuidbuf[64];
+            s->Printf ("Kernel UUID: %s\n", m_memory_module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
+            s->Printf ("Load Address: 0x%" PRIx64 "\n", m_load_address);
+        }
+    }
+
     if (!m_module_sp)
     {
         // See if the kext has already been loaded into the target, probably by the user doing target modules add.
@@ -776,6 +787,15 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
             if (!m_module_sp)
             {
                 m_module_sp = target.GetSharedModule (module_spec);
+            }
+
+            if (force_symbols_search && !m_module_sp)
+            {
+                Stream *s = &target.GetDebugger().GetOutputStream();
+                if (s)
+                {
+                    s->Printf ("WARNING: Unable to locate symbol rich version of kernel binary.\n");
+                }
             }
         }
 
@@ -876,9 +896,6 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
         Stream *s = &target.GetDebugger().GetOutputStream();
         if (s)
         {
-            char uuidbuf[64];
-            s->Printf ("Kernel UUID: %s\n", m_module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
-            s->Printf ("Load Address: 0x%" PRIx64 "\n", m_load_address);
             if (m_module_sp->GetFileSpec().GetDirectory().IsEmpty())
             {
                 s->Printf ("Loaded kernel file %s\n", m_module_sp->GetFileSpec().GetFilename().AsCString());
