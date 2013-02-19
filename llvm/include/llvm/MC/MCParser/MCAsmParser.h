@@ -168,7 +168,7 @@ public:
   virtual bool ParseAbsoluteExpression(int64_t &Res) = 0;
 
   /// CheckForValidSection - Ensure that we have a valid section set in the
-  /// streamer. Otherwise, report and error and switch to .text.
+  /// streamer. Otherwise, report an error and switch to .text.
   virtual void CheckForValidSection() = 0;
 };
 
