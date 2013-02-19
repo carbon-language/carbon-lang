@@ -1,13 +1,9 @@
-//===-- ARMAsmPrinter.h - Print machine code to an ARM .s file --*- C++ -*-===//
+//===-- ARMAsmPrinter.h - ARM implementation of AsmPrinter ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// ARM Assembly printer class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,7 +50,7 @@ public:
     }
 
   virtual const char *getPassName() const LLVM_OVERRIDE {
-    return "ARM Assembly Printer";
+    return "ARM Assembly / Object Emitter";
   }
 
   void printOperand(const MachineInstr *MI, int OpNum, raw_ostream &O,
