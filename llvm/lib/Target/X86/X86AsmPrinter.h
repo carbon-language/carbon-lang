@@ -1,13 +1,9 @@
-//===-- X86AsmPrinter.h - Convert X86 LLVM code to assembly -----*- C++ -*-===//
+//===-- X86AsmPrinter.h - X86 implementation of AsmPrinter ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// AT&T assembly code printer class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -35,7 +31,7 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   }
 
   virtual const char *getPassName() const LLVM_OVERRIDE {
-    return "X86 AT&T-Style Assembly Printer";
+    return "X86 Assembly / Object Emitter";
   }
 
   const X86Subtarget &getSubtarget() const { return *Subtarget; }
