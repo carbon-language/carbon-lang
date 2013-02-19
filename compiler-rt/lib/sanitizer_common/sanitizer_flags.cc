@@ -38,7 +38,8 @@ static bool GetFlagValue(const char *env, const char *name,
       pos += 1;
       end = internal_strchr(pos, '\'');
     } else {
-      end = internal_strchr(pos, ' ');
+      // Read until the next space or colon.
+      end = pos + internal_strcspn(pos, " :");
     }
     if (end == 0)
       end = pos + internal_strlen(pos);

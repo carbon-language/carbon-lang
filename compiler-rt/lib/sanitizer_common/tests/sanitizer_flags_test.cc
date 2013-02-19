@@ -32,7 +32,7 @@ static void TestStrFlag(const char *start_value, const char *env,
                         const char *final_value) {
   const char *flag = start_value;
   ParseFlag(env, &flag, kFlagName);
-  EXPECT_EQ(internal_strcmp(final_value, flag), 0);
+  EXPECT_EQ(0, internal_strcmp(final_value, flag));
 }
 
 TEST(SanitizerCommon, BooleanFlags) {
@@ -63,6 +63,23 @@ TEST(SanitizerCommon, StrFlags) {
   TestStrFlag("", "--flag_name='abc zxc'", "abc zxc");
   TestStrFlag("", "--flag_name='abc zxcc'", "abc zxcc");
   TestStrFlag("", "--flag_name=\"abc qwe\" asd", "abc qwe");
+}
+
+static void TestTwoFlags(const char *env, bool expected_flag1,
+                         const char *expected_flag2) {
+  bool flag1 = !expected_flag1;
+  const char *flag2 = "";
+  ParseFlag(env, &flag1, "flag1");
+  ParseFlag(env, &flag2, "flag2");
+  EXPECT_EQ(expected_flag1, flag1);
+  EXPECT_EQ(0, internal_strcmp(flag2, expected_flag2));
+}
+
+TEST(SanitizerCommon, MultipleFlags) {
+  TestTwoFlags("flag1=1 flag2='zzz'", true, "zzz");
+  TestTwoFlags("flag2='qxx' flag1=0", false, "qxx");
+  TestTwoFlags("flag1=false:flag2='zzz'", false, "zzz");
+  TestTwoFlags("flag2=qxx:flag1=yes", true, "qxx");
 }
 
 }  // namespace __sanitizer
