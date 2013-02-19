@@ -4469,7 +4469,19 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     // Save the thread & frame from the exe_ctx for restoration after we run
     const uint32_t thread_idx_id = thread->GetIndexID();
-    StackID ctx_frame_id = thread->GetSelectedFrame()->GetStackID();
+    StackFrameSP selected_frame_sp = thread->GetSelectedFrame();
+    if (!selected_frame_sp)
+    {
+        thread->SetSelectedFrame(0);
+        selected_frame_sp = thread->GetSelectedFrame();
+        if (!selected_frame_sp)
+        {
+            errors.Printf("RunThreadPlan called without a selected frame on thread %d", thread_idx_id);
+            return eExecutionSetupError;
+        }
+    }
+    
+    StackID ctx_frame_id = selected_frame_sp->GetStackID();
 
     // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
     // so we should arrange to reset them as well.
