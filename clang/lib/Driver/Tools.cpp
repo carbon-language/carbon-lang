@@ -2570,7 +2570,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_sanitize_undefined_trap_on_error, false))
     CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
 
-  // Report and error for -faltivec on anything other than PowerPC.
+  // Report an error for -faltivec on anything other than PowerPC.
   if (const Arg *A = Args.getLastArg(options::OPT_faltivec))
     if (!(getToolChain().getTriple().getArch() == llvm::Triple::ppc ||
           getToolChain().getTriple().getArch() == llvm::Triple::ppc64))
