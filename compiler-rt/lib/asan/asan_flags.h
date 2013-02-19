@@ -17,11 +17,13 @@
 
 #include "sanitizer_common/sanitizer_internal_defs.h"
 
-// ASan flag values can be defined in three ways:
+// ASan flag values can be defined in four ways:
 // 1) initialized with default values at startup.
-// 2) overriden from string returned by user-specified function
+// 2) overriden during compilation of ASan runtime by providing
+//    compile definition ASAN_DEFAULT_OPTIONS.
+// 3) overriden from string returned by user-specified function
 //    __asan_default_options().
-// 3) overriden from env variable ASAN_OPTIONS.
+// 4) overriden from env variable ASAN_OPTIONS.
 
 namespace __asan {
 

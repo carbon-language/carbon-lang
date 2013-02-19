@@ -76,6 +76,17 @@ static const char *MaybeCallAsanDefaultOptions() {
   return (&__asan_default_options) ? __asan_default_options() : "";
 }
 
+static const char *MaybeUseAsanDefaultOptionsCompileDefiniton() {
+#ifdef ASAN_DEFAULT_OPTIONS
+// Stringize the macro value.
+# define ASAN_STRINGIZE(x) #x
+# define ASAN_STRINGIZE_OPTIONS(options) ASAN_STRINGIZE(options)
+  return ASAN_STRINGIZE_OPTIONS(ASAN_DEFAULT_OPTIONS);
+#else
+  return "";
+#endif
+}
+
 static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->quarantine_size, "quarantine_size");
   ParseFlag(str, &f->symbolize, "symbolize");
@@ -155,6 +166,9 @@ void InitializeFlags(Flags *f, const char *env) {
   f->poison_heap = true;
   f->alloc_dealloc_mismatch = true;
   f->use_stack_depot = true;  // Only affects allocator2.
+
+  // Override from compile definition.
+  ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefiniton());
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
