@@ -37,21 +37,9 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const;
     
     bool runOnFunction(Function &F);
-  };
-  
-  class Deleter : public FunctionPass {
-    static char ID;
-    
-  public:
-    Deleter();
-    
-    const char *getPassName() const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-    
-    bool runOnFunction(Function &F);
     bool doFinalization(Module &M);
   };
-  
+
 }
 
 INITIALIZE_PASS(GCModuleInfo, "collector-metadata",
@@ -182,32 +170,9 @@ bool Printer::runOnFunction(Function &F) {
   return false;
 }
 
-// -----------------------------------------------------------------------------
-
-char Deleter::ID = 0;
-
-FunctionPass *llvm::createGCInfoDeleter() {
-  return new Deleter();
-}
-
-Deleter::Deleter() : FunctionPass(ID) {}
-
-const char *Deleter::getPassName() const {
-  return "Delete Garbage Collector Information";
-}
-
-void Deleter::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-  AU.addRequired<GCModuleInfo>();
-}
-
-bool Deleter::runOnFunction(Function &MF) {
-  return false;
-}
-
-bool Deleter::doFinalization(Module &M) {
+bool Printer::doFinalization(Module &M) {
   GCModuleInfo *GMI = getAnalysisIfAvailable<GCModuleInfo>();
-  assert(GMI && "Deleter didn't require GCModuleInfo?!");
+  assert(GMI && "Printer didn't require GCModuleInfo?!");
   GMI->clear();
   return false;
 }

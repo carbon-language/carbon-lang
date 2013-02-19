@@ -226,7 +226,6 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
   PM.add(Printer);
 
-  PM.add(createGCInfoDeleter());
   return false;
 }
 
@@ -245,7 +244,6 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     return true;
 
   addCodeEmitter(PM, JCE);
-  PM.add(createGCInfoDeleter());
 
   return false; // success!
 }
