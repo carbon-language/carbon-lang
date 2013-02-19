@@ -54,6 +54,10 @@ namespace llvm {
     if (Subtarget.inMicroMipsMode())
       EFlags |= ELF::EF_MIPS_MICROMIPS;
 
+    // ABI
+    if (Subtarget.isABI_O32())
+      EFlags |= ELF::EF_MIPS_ABI_O32;
+
     // Relocation Model
     Reloc::Model RM = Subtarget.getRelocationModel();
     if (RM == Reloc::PIC_ || RM == Reloc::Default)
