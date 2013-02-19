@@ -6998,7 +6998,7 @@ void ASTReader::finishPendingActions() {
       // FIXME: std::move
       IdentifierInfo *II = PendingIdentifierInfos.back().first;
       SmallVector<uint32_t, 4> DeclIDs = PendingIdentifierInfos.back().second;
-      PendingIdentifierInfos.erase(II);
+      PendingIdentifierInfos.pop_back();
 
       SetGloballyVisibleDecls(II, DeclIDs, &TopLevelDecls[II]);
     }
