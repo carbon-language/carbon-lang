@@ -300,7 +300,7 @@ ParseLangArgs
 //    llvm::StringRef Vis = getLastArgValue(Args, OPT_fvisibility,
 //                                          "default");
 //    if (Vis == "default")
-        Opts.setVisibilityMode(DefaultVisibility);
+        Opts.setValueVisibilityMode(DefaultVisibility);
 //    else if (Vis == "hidden")
 //        Opts.setVisibilityMode(LangOptions::Hidden);
 //    else if (Vis == "protected")
