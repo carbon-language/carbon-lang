@@ -280,13 +280,13 @@ namespace {
 
     /// getTargetMachine - Return a reference to the TargetMachine, casted
     /// to the target-specific type.
-    const X86TargetMachine &getTargetMachine() {
+    const X86TargetMachine &getTargetMachine() const {
       return static_cast<const X86TargetMachine &>(TM);
     }
 
     /// getInstrInfo - Return a reference to the TargetInstrInfo, casted
     /// to the target-specific type.
-    const X86InstrInfo *getInstrInfo() {
+    const X86InstrInfo *getInstrInfo() const {
       return getTargetMachine().getInstrInfo();
     }
   };
