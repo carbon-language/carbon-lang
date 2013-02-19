@@ -262,7 +262,7 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
       Markers.push_back(BI);
 
       bool IsStart = BI->getOpcode() == TargetOpcode::LIFETIME_START;
-      MachineOperand &MI = BI->getOperand(0);
+      const MachineOperand &MI = BI->getOperand(0);
       unsigned Slot = MI.getIndex();
 
       MarkersFound++;
@@ -401,9 +401,9 @@ void StackColoring::calculateLiveIntervals(unsigned NumSlots) {
     Finishes.resize(NumSlots);
 
     // Create the interval for the basic blocks with lifetime markers in them.
-    for (SmallVector<MachineInstr*, 8>::iterator it = Markers.begin(),
+    for (SmallVectorImpl<MachineInstr*>::const_iterator it = Markers.begin(),
          e = Markers.end(); it != e; ++it) {
-      MachineInstr *MI = *it;
+      const MachineInstr *MI = *it;
       if (MI->getParent() != MBB)
         continue;
 
@@ -412,7 +412,7 @@ void StackColoring::calculateLiveIntervals(unsigned NumSlots) {
              "Invalid Lifetime marker");
 
       bool IsStart = MI->getOpcode() == TargetOpcode::LIFETIME_START;
-      MachineOperand &Mo = MI->getOperand(0);
+      const MachineOperand &Mo = MI->getOperand(0);
       int Slot = Mo.getIndex();
       assert(Slot >= 0 && "Invalid slot");
 
@@ -499,7 +499,7 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
 
   // Keep a list of *allocas* which need to be remapped.
   DenseMap<const AllocaInst*, const AllocaInst*> Allocas;
-  for (DenseMap<int, int>::iterator it = SlotRemap.begin(),
+  for (DenseMap<int, int>::const_iterator it = SlotRemap.begin(),
        e = SlotRemap.end(); it != e; ++it) {
     const AllocaInst *From = MFI->getObjectAllocation(it->first);
     const AllocaInst *To = MFI->getObjectAllocation(it->second);
@@ -594,8 +594,8 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
 }
 
 void StackColoring::removeInvalidSlotRanges() {
-  MachineFunction::iterator BB, BBE;
-  MachineBasicBlock::iterator I, IE;
+  MachineFunction::const_iterator BB, BBE;
+  MachineBasicBlock::const_iterator I, IE;
   for (BB = MF->begin(), BBE = MF->end(); BB != BBE; ++BB)
     for (I = BB->begin(), IE = BB->end(); I != IE; ++I) {
 
@@ -614,7 +614,7 @@ void StackColoring::removeInvalidSlotRanges() {
 
       // Check all of the machine operands.
       for (unsigned i = 0 ; i <  I->getNumOperands(); ++i) {
-        MachineOperand &MO = I->getOperand(i);
+        const MachineOperand &MO = I->getOperand(i);
 
         if (!MO.isFI())
           continue;
