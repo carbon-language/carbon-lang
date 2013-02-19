@@ -1,6 +1,6 @@
-=============================
-External Projects Using Clang
-=============================
+=======================
+External Clang Examples
+=======================
 
 Introduction
 ============

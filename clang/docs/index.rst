@@ -30,7 +30,7 @@ Using Clang as a Library
    :maxdepth: 1
 
    Tooling
-   ExternalProjectsUsingClang
+   ExternalClangExamples
    IntroductionToTheClangAST
    LibTooling
    LibFormat
