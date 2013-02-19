@@ -89,6 +89,15 @@ public:
             return false;
     }
     
+    virtual lldb::ValueObjectSP
+    GetStaticValue ()
+    {
+        if (m_parent)
+            return m_parent->GetStaticValue();
+        else
+            return GetSP();
+    }
+    
     virtual lldb::DynamicValueType
     GetDynamicValueType ()
     {
