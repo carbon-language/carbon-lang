@@ -57,8 +57,18 @@ TEST(SanitizerCommon, FileOps) {
 
   u32 uid = GetUid();
   char temp_filename[128];
+#ifdef __ANDROID__
+  // I don't know a way to query temp directory location on Android without
+  // going through Java interfaces. The code below is not ideal, but should
+  // work. May require "adb root", but it is needed for almost any use of ASan
+  // on Android already.
+  internal_snprintf(temp_filename, sizeof(temp_filename),
+                    "%s/sanitizer_common.tmp.%d",
+                    GetEnv("EXTERNAL_STORAGE"), uid);
+#else
   internal_snprintf(temp_filename, sizeof(temp_filename),
                     "/tmp/sanitizer_common.tmp.%d", uid);
+#endif
   fd_t fd = OpenFile(temp_filename, true);
   EXPECT_NE(fd, kInvalidFd);
   EXPECT_EQ(len1, internal_write(fd, str1, len1));
