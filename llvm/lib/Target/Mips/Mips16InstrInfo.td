@@ -1012,13 +1012,45 @@ def SllX16: FEXT_SHIFT16_ins<0b00, "sll", IIAlu>;
 //
 def SllvRxRy16 : FRxRxRy16_ins<0b00100, "sllv", IIAlu>;
 
+// Format: SLTI rx, immediate MIPS16e
+// Purpose: Set on Less Than Immediate
+// To record the result of a less-than comparison with a constant.
+//
+//
+def SltiRxImm16: FRI16_ins<0b01010, "slti", IIAlu> {
+  let Defs = [T8];
+}
+
 //
 // Format: SLTI rx, immediate MIPS16e
 // Purpose: Set on Less Than Immediate (Extended)
 // To record the result of a less-than comparison with a constant.
 //
+//
+def SltiRxImmX16: FEXT_RI16_ins<0b01010, "slti", IIAlu> {
+  let Defs = [T8];
+}
+
 def SltiCCRxImmX16: FEXT_CCRXI16_ins<"slti">;
 
+// Format: SLTIU rx, immediate MIPS16e
+// Purpose: Set on Less Than Immediate Unsigned
+// To record the result of a less-than comparison with a constant.
+//
+//
+def SltiuRxImm16: FRI16_ins<0b01011, "sltiu", IIAlu> {
+  let Defs = [T8];
+}
+
+//
+// Format: SLTI rx, immediate MIPS16e
+// Purpose: Set on Less Than Immediate Unsigned (Extended)
+// To record the result of a less-than comparison with a constant.
+//
+//
+def SltiuRxImmX16: FEXT_RI16_ins<0b01011, "sltiu", IIAlu> {
+  let Defs = [T8];
+}
 //
 // Format: SLTIU rx, immediate MIPS16e
 // Purpose: Set on Less Than Immediate Unsigned (Extended)
