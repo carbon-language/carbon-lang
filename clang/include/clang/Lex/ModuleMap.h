@@ -131,7 +131,7 @@ class ModuleMap {
   /// if the export could not be resolved.
   Module::ExportDecl 
   resolveExport(Module *Mod, const Module::UnresolvedExportDecl &Unresolved,
-                bool Complain);
+                bool Complain) const;
   
 public:
   /// \brief Construct a new module map.
@@ -172,14 +172,14 @@ public:
 
   /// \brief Determine whether the given header is part of a module
   /// marked 'unavailable'.
-  bool isHeaderInUnavailableModule(const FileEntry *Header);
+  bool isHeaderInUnavailableModule(const FileEntry *Header) const;
 
   /// \brief Retrieve a module with the given name.
   ///
   /// \param Name The name of the module to look up.
   ///
   /// \returns The named module, if known; otherwise, returns null.
-  Module *findModule(StringRef Name);
+  Module *findModule(StringRef Name) const;
 
   /// \brief Retrieve a module with the given name using lexical name lookup,
   /// starting at the given context.
@@ -190,7 +190,7 @@ public:
   /// name lookup.
   ///
   /// \returns The named module, if known; otherwise, returns null.
-  Module *lookupModuleUnqualified(StringRef Name, Module *Context);
+  Module *lookupModuleUnqualified(StringRef Name, Module *Context) const;
 
   /// \brief Retrieve a module with the given name within the given context,
   /// using direct (qualified) name lookup.
@@ -201,7 +201,7 @@ public:
   /// null, we will look for a top-level module.
   ///
   /// \returns The named submodule, if known; otherwose, returns null.
-  Module *lookupModuleQualified(StringRef Name, Module *Context);
+  Module *lookupModuleQualified(StringRef Name, Module *Context) const;
   
   /// \brief Find a new module or submodule, or create it if it does not already
   /// exist.
@@ -235,7 +235,7 @@ public:
   /// \returns true if we are allowed to infer a framework module, and false
   /// otherwise.
   bool canInferFrameworkModule(const DirectoryEntry *ParentDir,
-                               StringRef Name, bool &IsSystem);
+                               StringRef Name, bool &IsSystem) const;
 
   /// \brief Infer the contents of a framework module map from the given
   /// framework directory.
@@ -250,7 +250,7 @@ public:
   ///
   /// \returns The file entry for the module map file containing the given
   /// module, or NULL if the module definition was inferred.
-  const FileEntry *getContainingModuleMapFile(Module *Module);
+  const FileEntry *getContainingModuleMapFile(Module *Module) const;
 
   /// \brief Resolve all of the unresolved exports in the given module.
   ///
