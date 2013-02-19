@@ -14,6 +14,8 @@ def output_e : Separate<["-"], "o">, Alias<output>;
 def relocatable : Flag<["--"], "relocatable">;
 def relocatable_r : Flag<["-"], "r">, Alias<relocatable>;
 
+def dynamic_linker : Separate<["-"], "dynamic-linker">;
+
 def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;
 
 def emit_yaml : Flag<["-"], "emit-yaml">;
