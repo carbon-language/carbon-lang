@@ -51,6 +51,19 @@ CommandObjectScript::DoExecute
     CommandReturnObject &result
 )
 {
+#ifdef LLDB_DISABLE_PYTHON
+    // if we ever support languages other than Python this simple #ifdef won't work
+    result.AppendError("your copy of LLDB does not support scripting.")
+    result.SetStatus (eReturnStatusFailed);
+    return false;
+#else
+    if (m_interpreter.GetDebugger().GetScriptLanguage() == lldb::eScriptLanguageNone)
+    {
+        result.AppendError("the script-lang setting is set to none - scripting not available");
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+    
     ScriptInterpreter *script_interpreter = m_interpreter.GetScriptInterpreter ();
 
     if (script_interpreter == NULL)
@@ -76,4 +89,5 @@ CommandObjectScript::DoExecute
         result.SetStatus(eReturnStatusFailed);
 
     return result.Succeeded();
+#endif
 }
