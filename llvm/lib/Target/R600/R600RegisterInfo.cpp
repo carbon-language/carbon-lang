@@ -49,6 +49,12 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(*I);
   }
 
+  for (TargetRegisterClass::iterator I = AMDGPU::TRegMemRegClass.begin(),
+                                     E = AMDGPU::TRegMemRegClass.end();
+                                     I !=  E; ++I) {
+    Reserved.set(*I);
+  }
+
   const R600InstrInfo *RII = static_cast<const R600InstrInfo*>(&TII);
   std::vector<unsigned> IndirectRegs = RII->getIndirectReservedRegs(MF);
   for (std::vector<unsigned>::iterator I = IndirectRegs.begin(),
