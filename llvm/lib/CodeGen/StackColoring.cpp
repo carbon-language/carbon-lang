@@ -240,8 +240,11 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
     BasicBlocks[*FI] = BasicBlockNumbering.size();
     BasicBlockNumbering.push_back(*FI);
 
-    BlockLiveness[*FI].Begin.resize(NumSlot);
-    BlockLiveness[*FI].End.resize(NumSlot);
+    // Keep a reference to avoid repeated lookups.
+    BlockLifetimeInfo &BlockInfo = BlockLiveness[*FI];
+
+    BlockInfo.Begin.resize(NumSlot);
+    BlockInfo.End.resize(NumSlot);
 
     for (MachineBasicBlock::iterator BI = (*FI)->begin(), BE = (*FI)->end();
          BI != BE; ++BI) {
@@ -265,15 +268,15 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
       }
 
       if (IsStart) {
-        BlockLiveness[*FI].Begin.set(Slot);
+        BlockInfo.Begin.set(Slot);
       } else {
-        if (BlockLiveness[*FI].Begin.test(Slot)) {
+        if (BlockInfo.Begin.test(Slot)) {
           // Allocas that start and end within a single block are handled
           // specially when computing the LiveIntervals to avoid pessimizing
           // the liveness propagation.
-          BlockLiveness[*FI].Begin.reset(Slot);
+          BlockInfo.Begin.reset(Slot);
         } else {
-          BlockLiveness[*FI].End.set(Slot);
+          BlockInfo.End.set(Slot);
         }
       }
     }
