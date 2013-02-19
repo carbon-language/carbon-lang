@@ -15,3 +15,28 @@ define <2 x double> @vextend(<2 x float> %a) {
   ret <2 x double> %ve
 }
 
+; We used to generate vmovs between scalar and vfp/neon registers.
+; CHECK: vsitofp_double
+define void @vsitofp_double(<2 x i32>* %loadaddr,
+                            <2 x double>* %storeaddr) {
+  %v0 = load <2 x i32>* %loadaddr
+; CHECK:      vldr
+; CHECK-NEXT:	vcvt.f64.s32
+; CHECK-NEXT:	vcvt.f64.s32
+; CHECK-NEXT:	vst
+  %r = sitofp <2 x i32> %v0 to <2 x double>
+  store <2 x double> %r, <2 x double>* %storeaddr
+  ret void
+}
+; CHECK: vuitofp_double
+define void @vuitofp_double(<2 x i32>* %loadaddr,
+                            <2 x double>* %storeaddr) {
+  %v0 = load <2 x i32>* %loadaddr
+; CHECK:      vldr
+; CHECK-NEXT:	vcvt.f64.u32
+; CHECK-NEXT:	vcvt.f64.u32
+; CHECK-NEXT:	vst
+  %r = uitofp <2 x i32> %v0 to <2 x double>
+  store <2 x double> %r, <2 x double>* %storeaddr
+  ret void
+}

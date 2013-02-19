@@ -5745,6 +5745,12 @@ def : Pat<(v2f64 (bitconvert (v8i16 QPR:$src))), (v2f64 QPR:$src)>;
 def : Pat<(v2f64 (bitconvert (v16i8 QPR:$src))), (v2f64 QPR:$src)>;
 def : Pat<(v2f64 (bitconvert (v4f32 QPR:$src))), (v2f64 QPR:$src)>;
 
+// Fold extracting an element out of a v2i32 into a vfp register.
+def : Pat<(f32 (bitconvert (i32 (extractelt (v2i32 DPR:$src), imm:$lane)))),
+          (f32 (EXTRACT_SUBREG
+                (v2f32 (COPY_TO_REGCLASS (v2i32 DPR:$src), DPR)),
+                (SSubReg_f32_reg imm:$lane)))>;
+
 // Vector lengthening move with load, matching extending loads.
 
 // extload, zextload and sextload for a standard lengthening load. Example:
