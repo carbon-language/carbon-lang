@@ -497,8 +497,11 @@ public: // Part of public interface to class.
                                                   const TypedValueRegion *R,
                                                   QualType Ty);
 
-  /// Get the state and region whose binding this region R corresponds to.
-  std::pair<Store, const MemRegion*>
+  /// Get the state and region whose binding this region \p R corresponds to.
+  ///
+  /// If there is no lazy binding for \p R, the returned value will have a null
+  /// \c second. Note that a null pointer can represents a valid Store.
+  std::pair<Store, const MemRegion *>
   getLazyBinding(RegionBindingsConstRef B, const MemRegion *R,
                  const MemRegion *originalRegion);
 
@@ -1256,49 +1259,68 @@ std::pair<Store, const MemRegion *>
 RegionStoreManager::getLazyBinding(RegionBindingsConstRef B,
                                    const MemRegion *R,
                                    const MemRegion *originalRegion) {
+  typedef std::pair<Store, const MemRegion *> StoreRegionPair;
+
   if (originalRegion != R) {
     if (Optional<SVal> OV = B.getDefaultBinding(R)) {
       if (const nonloc::LazyCompoundVal *V =
-          dyn_cast<nonloc::LazyCompoundVal>(OV.getPointer()))
+            dyn_cast<nonloc::LazyCompoundVal>(OV.getPointer()))
         return std::make_pair(V->getStore(), V->getRegion());
     }
   }
   
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-    const std::pair<Store, const MemRegion *> &X =
-      getLazyBinding(B, ER->getSuperRegion(), originalRegion);
+    StoreRegionPair X = getLazyBinding(B, ER->getSuperRegion(), originalRegion);
 
     if (X.second)
       return std::make_pair(X.first,
                             MRMgr.getElementRegionWithSuper(ER, X.second));
   }
   else if (const FieldRegion *FR = dyn_cast<FieldRegion>(R)) {
-    const std::pair<Store, const MemRegion *> &X =
-      getLazyBinding(B, FR->getSuperRegion(), originalRegion);
+    StoreRegionPair X = getLazyBinding(B, FR->getSuperRegion(), originalRegion);
 
     if (X.second) {
       return std::make_pair(X.first,
                             MRMgr.getFieldRegionWithSuper(FR, X.second));
     }
         
-  }
-  // C++ base object region is another kind of region that we should blast
-  // through to look for lazy compound value. It is like a field region.
-  else if (const CXXBaseObjectRegion *baseReg = 
-            dyn_cast<CXXBaseObjectRegion>(R)) {
-    const std::pair<Store, const MemRegion *> &X =
-      getLazyBinding(B, baseReg->getSuperRegion(), originalRegion);
+  } else if (const CXXBaseObjectRegion *BaseReg =
+               dyn_cast<CXXBaseObjectRegion>(R)) {
+    // C++ base object region is another kind of region that we should blast
+    // through to look for lazy compound value. It is like a field region.
+    StoreRegionPair Result = getLazyBinding(B, BaseReg->getSuperRegion(),
+                                            originalRegion);
     
-    if (X.second) {
-      return std::make_pair(X.first,
-                            MRMgr.getCXXBaseObjectRegionWithSuper(baseReg,
-                                                                  X.second));
+    if (Result.second) {
+      // Make sure the types match up.
+      const CXXRecordDecl *LazyD = 0;
+      if (const TypedValueRegion *LazyR =
+            dyn_cast<TypedValueRegion>(Result.second)) {
+        LazyD = LazyR->getValueType()->getAsCXXRecordDecl();
+        if (LazyD)
+          LazyD = LazyD->getCanonicalDecl();
+      }
+
+      typedef SmallVector<const CXXBaseObjectRegion *, 4> BaseListTy;
+      BaseListTy BaseRegions;
+      do {
+        BaseRegions.push_back(BaseReg);
+        BaseReg = dyn_cast<CXXBaseObjectRegion>(BaseReg->getSuperRegion());
+      } while (BaseReg && LazyD != BaseReg->getDecl()->getCanonicalDecl());
+
+      // Layer the base regions on the result in least-to-most derived order.
+      for (BaseListTy::const_reverse_iterator I = BaseRegions.rbegin(),
+                                              E = BaseRegions.rend();
+           I != E; ++I) {
+        Result.second = MRMgr.getCXXBaseObjectRegionWithSuper(*I,
+                                                              Result.second);
+      }
     }
+
+    return Result;
   }
 
-  // The NULL MemRegion indicates an non-existent lazy binding. A NULL Store is
-  // possible for a valid lazy binding.
-  return std::make_pair((Store) 0, (const MemRegion *) 0);
+  return StoreRegionPair();
 }
 
 SVal RegionStoreManager::getBindingForElement(RegionBindingsConstRef B,

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -DCONSTRUCTORS=1 -analyzer-config c++-inlining=constructors -verify %s
 
 void clang_analyzer_eval(bool);
 
@@ -133,5 +134,173 @@ namespace DynamicMultipleInheritanceUpcast {
   void testVirtual() {
     DV d;
     clang_analyzer_eval(testCast(&d)); // expected-warning{{TRUE}}
+  }
+}
+
+namespace LazyBindings {
+  struct Base {
+    int x;
+  };
+
+  struct Derived : public Base {
+    int y;
+  };
+
+  struct DoubleDerived : public Derived {
+    int z;
+  };
+
+  int getX(const Base &obj) {
+    return obj.x;
+  }
+
+  int getY(const Derived &obj) {
+    return obj.y;
+  }
+
+  void testDerived() {
+    Derived d;
+    d.x = 1;
+    d.y = 2;
+    clang_analyzer_eval(getX(d) == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(getY(d) == 2); // expected-warning{{TRUE}}
+
+    Base b(d);
+    clang_analyzer_eval(getX(b) == 1); // expected-warning{{TRUE}}
+
+    Derived d2(d);
+    clang_analyzer_eval(getX(d2) == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(getY(d2) == 2); // expected-warning{{TRUE}}
+  }
+
+  void testDoubleDerived() {
+    DoubleDerived d;
+    d.x = 1;
+    d.y = 2;
+    clang_analyzer_eval(getX(d) == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(getY(d) == 2); // expected-warning{{TRUE}}
+
+    Base b(d);
+    clang_analyzer_eval(getX(b) == 1); // expected-warning{{TRUE}}
+
+    Derived d2(d);
+    clang_analyzer_eval(getX(d2) == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(getY(d2) == 2); // expected-warning{{TRUE}}
+
+    DoubleDerived d3(d);
+    clang_analyzer_eval(getX(d3) == 1); // expected-warning{{TRUE}}
+    clang_analyzer_eval(getY(d3) == 2); // expected-warning{{TRUE}}
+  }
+
+  namespace WithOffset {
+    struct Offset {
+      int padding;
+    };
+
+    struct OffsetDerived : private Offset, public Base {
+      int y;
+    };
+
+    struct DoubleOffsetDerived : public OffsetDerived {
+      int z;
+    };
+
+    int getY(const OffsetDerived &obj) {
+      return obj.y;
+    }
+
+    void testDerived() {
+      OffsetDerived d;
+      d.x = 1;
+      d.y = 2;
+      clang_analyzer_eval(getX(d) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d) == 2); // expected-warning{{TRUE}}
+
+      Base b(d);
+      clang_analyzer_eval(getX(b) == 1); // expected-warning{{TRUE}}
+
+      OffsetDerived d2(d);
+      clang_analyzer_eval(getX(d2) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d2) == 2); // expected-warning{{TRUE}}
+    }
+
+    void testDoubleDerived() {
+      DoubleOffsetDerived d;
+      d.x = 1;
+      d.y = 2;
+      clang_analyzer_eval(getX(d) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d) == 2); // expected-warning{{TRUE}}
+
+      Base b(d);
+      clang_analyzer_eval(getX(b) == 1); // expected-warning{{TRUE}}
+
+      OffsetDerived d2(d);
+      clang_analyzer_eval(getX(d2) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d2) == 2); // expected-warning{{TRUE}}
+
+      DoubleOffsetDerived d3(d);
+      clang_analyzer_eval(getX(d3) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d3) == 2); // expected-warning{{TRUE}}
+    }
+  }
+
+  namespace WithVTable {
+    struct DerivedVTBL : public Base {
+      int y;
+      virtual void method();
+    };
+
+    struct DoubleDerivedVTBL : public DerivedVTBL {
+      int z;
+    };
+
+    int getY(const DerivedVTBL &obj) {
+      return obj.y;
+    }
+
+    int getZ(const DoubleDerivedVTBL &obj) {
+      return obj.z;
+    }
+
+    void testDerived() {
+      DerivedVTBL d;
+      d.x = 1;
+      d.y = 2;
+      clang_analyzer_eval(getX(d) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d) == 2); // expected-warning{{TRUE}}
+
+      Base b(d);
+      clang_analyzer_eval(getX(b) == 1); // expected-warning{{TRUE}}
+
+#if CONSTRUCTORS
+      DerivedVTBL d2(d);
+      clang_analyzer_eval(getX(d2) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d2) == 2); // expected-warning{{TRUE}}
+#endif
+    }
+
+#if CONSTRUCTORS
+    void testDoubleDerived() {
+      DoubleDerivedVTBL d;
+      d.x = 1;
+      d.y = 2;
+      d.z = 3;
+      clang_analyzer_eval(getX(d) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d) == 2); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getZ(d) == 3); // expected-warning{{TRUE}}
+
+      Base b(d);
+      clang_analyzer_eval(getX(b) == 1); // expected-warning{{TRUE}}
+
+      DerivedVTBL d2(d);
+      clang_analyzer_eval(getX(d2) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d2) == 2); // expected-warning{{TRUE}}
+
+      DoubleDerivedVTBL d3(d);
+      clang_analyzer_eval(getX(d3) == 1); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getY(d3) == 2); // expected-warning{{TRUE}}
+      clang_analyzer_eval(getZ(d3) == 3); // expected-warning{{TRUE}}
+    }
+#endif
   }
 }
