@@ -7054,7 +7054,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                       ID->getIdentifier()->getName()));
   }
 
-  if (CGM.getLangOpts().getVisibilityMode() == HiddenVisibility)
+  if (ID->getVisibility() == HiddenVisibility)
     Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
   Entry->setAlignment(CGM.getDataLayout().getABITypeAlignment(
       ObjCTypes.EHTypeTy));
