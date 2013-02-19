@@ -240,7 +240,7 @@ namespace sys {
     /// Posix, correcting for the difference in Posix zero time.
     /// @brief Convert to unix time (100 nanoseconds since 12:00:00a Jan 1,1970)
     uint64_t toPosixTime() const {
-      uint64_t result = seconds_ - PosixZeroTime.seconds_;
+      uint64_t result = seconds_ - PosixZeroTimeSeconds;
       result += nanos_ / NANOSECONDS_PER_POSIX_TICK;
       return result;
     }
@@ -248,14 +248,14 @@ namespace sys {
     /// Converts the TimeValue into the corresponding number of seconds
     /// since the epoch (00:00:00 Jan 1,1970).
     uint64_t toEpochTime() const {
-      return seconds_ - PosixZeroTime.seconds_;
+      return seconds_ - PosixZeroTimeSeconds;
     }
 
     /// Converts the TimeValue into the corresponding number of "ticks" for
     /// Win32 platforms, correcting for the difference in Win32 zero time.
     /// @brief Convert to windows time (seconds since 12:00:00a Jan 1, 1601)
     uint64_t toWin32Time() const {
-      uint64_t result = seconds_ - Win32ZeroTime.seconds_;
+      uint64_t result = seconds_ - Win32ZeroTimeSeconds;
       result += nanos_ / NANOSECONDS_PER_WIN32_TICK;
       return result;
     }
@@ -264,7 +264,7 @@ namespace sys {
     /// correction for the Posix zero time.
     /// @brief Convert to timespec time (ala POSIX.1b)
     void getTimespecTime( uint64_t& seconds, uint32_t& nanos ) const {
-      seconds = seconds_ - PosixZeroTime.seconds_;
+      seconds = seconds_ - PosixZeroTimeSeconds;
       nanos = nanos_;
     }
 
@@ -331,7 +331,7 @@ namespace sys {
     /// TimeValue and assigns that value to \p this.
     /// @brief Convert seconds form PosixTime to TimeValue
     void fromEpochTime( SecondsType seconds ) {
-      seconds_ = seconds + PosixZeroTime.seconds_;
+      seconds_ = seconds + PosixZeroTimeSeconds;
       nanos_ = 0;
       this->normalize();
     }
@@ -340,7 +340,7 @@ namespace sys {
     /// corresponding TimeValue and assigns that value to \p this.
     /// @brief Convert seconds form Windows FILETIME to TimeValue
     void fromWin32Time( uint64_t win32Time ) {
-      this->seconds_ = win32Time / 10000000 + Win32ZeroTime.seconds_;
+      this->seconds_ = win32Time / 10000000 + Win32ZeroTimeSeconds;
       this->nanos_ = NanoSecondsType(win32Time  % 10000000) * 100;
     }
 
@@ -360,6 +360,9 @@ namespace sys {
     /// Store the values as a <timeval>.
     SecondsType      seconds_;///< Stores the seconds part of the TimeVal
     NanoSecondsType  nanos_;  ///< Stores the nanoseconds part of the TimeVal
+
+    static const SecondsType PosixZeroTimeSeconds;
+    static const SecondsType Win32ZeroTimeSeconds;
   /// @}
 
   };
