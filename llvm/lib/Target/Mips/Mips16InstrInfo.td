@@ -51,6 +51,15 @@ class FI816_SP_ins<bits<3> _func, string asmstr,
 //
 
 
+class FRI16_ins_base<bits<5> op, string asmstr, string asmstr2,
+                     InstrItinClass itin>:
+  FRI16<op, (outs CPU16Regs:$rx), (ins simm16:$imm),
+        !strconcat(asmstr, asmstr2), [], itin>;
+
+class FRI16_ins<bits<5> op, string asmstr,
+                InstrItinClass itin>:
+  FRI16_ins_base<op, asmstr, "\t$rx, $imm \t# 16 bit inst", itin>;
+      
 class F2RI16_ins<bits<5> _op, string asmstr,
                      InstrItinClass itin>:
   FRI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
@@ -562,6 +571,24 @@ def BtnezT8SltiuX16: FEXT_T8I8I16_ins<"btnez", "sltiu">,
 // To compare the contents of two GPRs.
 //
 def CmpRxRy16: FRR16_ins<0b01010, "cmp", IIAlu> {
+  let Defs = [T8];
+}
+
+//
+// Format: CMPI rx, immediate MIPS16e
+// Purpose: Compare Immediate
+// To compare a constant with the contents of a GPR.
+//
+def CmpiRxImm16: FRI16_ins<0b01110, "cmpi", IIAlu> {
+  let Defs = [T8];
+}
+
+//
+// Format: CMPI rx, immediate MIPS16e
+// Purpose: Compare Immediate (Extended)
+// To compare a constant with the contents of a GPR.
+//
+def CmpiRxImmX16: FEXT_RI16_ins<0b01110, "cmpi", IIAlu> {
   let Defs = [T8];
 }
 
