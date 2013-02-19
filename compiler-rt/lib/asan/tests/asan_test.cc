@@ -171,6 +171,7 @@ TEST(AddressSanitizer, UAF_char) {
 }
 
 TEST(AddressSanitizer, UAF_long_double) {
+  if (sizeof(long double) == sizeof(double)) return;
   long double *p = Ident(new long double[10]);
   EXPECT_DEATH(Ident(p)[12] = 0, "WRITE of size 10");
   EXPECT_DEATH(Ident(p)[0] = Ident(p)[12], "READ of size 10");
