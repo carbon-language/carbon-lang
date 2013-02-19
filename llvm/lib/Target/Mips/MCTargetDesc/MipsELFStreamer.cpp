@@ -36,7 +36,10 @@ namespace llvm {
     MCAssembler& MCA = getAssembler();
     unsigned EFlags = MCA.getELFHeaderEFlags();
 
-    EFlags |= ELF::EF_MIPS_NOREORDER;
+    if (Subtarget.inMips16Mode())
+      EFlags |= ELF::EF_MIPS_ARCH_ASE_M16;
+    else
+      EFlags |= ELF::EF_MIPS_NOREORDER;
 
     // Architecture
     if (Subtarget.hasMips64r2())
