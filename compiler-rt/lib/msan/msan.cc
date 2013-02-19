@@ -222,6 +222,8 @@ void __msan_init() {
   InitializeInterceptors();
 
   ReplaceOperatorsNewAndDelete();
+  const char *msan_options = GetEnv("MSAN_OPTIONS");
+  InitializeFlags(&msan_flags, msan_options);
   if (StackSizeIsUnlimited()) {
     if (flags()->verbosity)
       Printf("Unlimited stack, doing reexec\n");
@@ -230,10 +232,10 @@ void __msan_init() {
     SetStackSizeLimitInBytes(32 * 1024 * 1024);
     ReExec();
   }
-  const char *msan_options = GetEnv("MSAN_OPTIONS");
-  InitializeFlags(&msan_flags, msan_options);
+
   if (flags()->verbosity)
     Printf("MSAN_OPTIONS: %s\n", msan_options ? msan_options : "<empty>");
+
   msan_running_under_dr = IsRunningUnderDr();
   __msan_clear_on_return();
   if (__msan_track_origins && flags()->verbosity > 0)

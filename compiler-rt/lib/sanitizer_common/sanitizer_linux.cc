@@ -279,7 +279,9 @@ static void GetArgsAndEnv(char ***argv, char ***envp) {
 void ReExec() {
   char **argv, **envp;
   GetArgsAndEnv(&argv, &envp);
-  execve(argv[0], argv, envp);
+  execve("/proc/self/exe", argv, envp);
+  Printf("execve failed, errno %d\n", errno);
+  Die();
 }
 
 void PrepareForSandboxing() {
