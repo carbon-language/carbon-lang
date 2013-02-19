@@ -690,7 +690,7 @@ public:
   }
 
   void addRelocation(const DefinedAtom &da, const Reference &r) {
-    _relocs.emplace_back(da, r);
+    _relocs.emplace_back(&da, &r);
     this->_fsize = _relocs.size() * sizeof(Elf_Rela);
     this->_msize = this->_fsize;
   }
@@ -700,21 +700,21 @@ public:
     uint8_t *dest = chunkBuffer + this->fileOffset();
     for (const auto &rel : _relocs) {
       Elf_Rela *r = reinterpret_cast<Elf_Rela *>(dest);
-      r->setSymbolAndType(0, rel.second.kind());
+      r->setSymbolAndType(0, rel.second->kind());
       r->r_offset =
-          writer->addressOfAtom(&rel.first) + rel.second.offsetInAtom();
+          writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();
       r->r_addend =
-          writer->addressOfAtom(rel.second.target()) + rel.second.addend();
+          writer->addressOfAtom(rel.second->target()) + rel.second->addend();
       dest += sizeof(Elf_Rela);
       DEBUG_WITH_TYPE("ELFRelocationTable", llvm::dbgs()
-                      << "IRELATIVE relocation at " << rel.first.name() << "@"
-                      << r->r_offset << " to " << rel.second.target()->name()
+                      << "IRELATIVE relocation at " << rel.first->name() << "@"
+                      << r->r_offset << " to " << rel.second->target()->name()
                       << "@" << r->r_addend << "\n");
     }
   }
 
 private:
-  std::vector<std::pair<const DefinedAtom &, const Reference &>> _relocs;
+  std::vector<std::pair<const DefinedAtom *, const Reference *>> _relocs;
 };
 } // end namespace elf
 } // end namespace lld
