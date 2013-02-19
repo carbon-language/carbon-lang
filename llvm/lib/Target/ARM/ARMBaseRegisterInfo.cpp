@@ -205,7 +205,8 @@ ARMBaseRegisterInfo::getRegAllocationHints(unsigned VirtReg,
   }
 
   // First prefer the paired physreg.
-  if (PairedPhys)
+  if (PairedPhys &&
+      std::find(Order.begin(), Order.end(), PairedPhys) != Order.end())
     Hints.push_back(PairedPhys);
 
   // Then prefer even or odd registers.
