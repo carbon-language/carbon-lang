@@ -243,7 +243,7 @@ const char *InitializePlatform() {
   g_tls_size = (uptr)InitTlsSize();
   InitDataSeg();
 #endif
-  return getenv(kTsanOptionsEnv);
+  return GetEnv(kTsanOptionsEnv);
 }
 
 void FinalizePlatform() {
