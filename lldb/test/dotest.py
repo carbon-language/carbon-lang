@@ -216,7 +216,7 @@ sdir_has_content = False
 svn_info = ''
 
 # Default verbosity is 0.
-verbose = 0
+verbose = 1
 
 # Set to True only if verbose is 0 and LLDB trace mode is off.
 progress_bar = False
@@ -410,6 +410,7 @@ def parseOptionsAndInitTestdirs():
     X('-F', 'Fail fast. Stop the test suite on the first error/failure')
     X('-i', "Ignore (don't bailout) if 'lldb.py' module cannot be located in the build tree relative to this script; use PYTHONPATH to locate the module")
     X('-n', "Don't print the headers like build dir, lldb version, and svn info at all")
+    X('-P', "Use the graphic progress bar.")
     X('-q', "Don't print extra output from this script.")
     X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
     X('-t', 'Turn on tracing of lldb command and other detailed test executions')
@@ -559,6 +560,10 @@ def parseOptionsAndInitTestdirs():
         noHeaders = True
         parsable = True
 
+    if args.P:
+        progress_bar = True
+        verbose = 0
+
     if args.R:
         if args.R.startswith('-'):
             usage(parser)
@@ -617,10 +622,6 @@ def parseOptionsAndInitTestdirs():
     # Do not specify both '-a' and '+a' at the same time.
     if dont_do_python_api_test and just_do_python_api_test:
         usage(parser)
-
-    # The simple progress bar is turned on only if verbose == 0 and LLDB_COMMAND_TRACE is not 'YES'
-    if ("LLDB_COMMAND_TRACE" not in os.environ or os.environ["LLDB_COMMAND_TRACE"] != "YES") and verbose == 0:
-        progress_bar = True
 
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
@@ -1361,6 +1362,7 @@ for ia in range(len(archs) if iterArchs else 1):
                 self.counter = 0
                 (width, height) = LLDBTestResult.getTerminalSize()
                 self.progressbar = None
+                global progress_bar
                 if width > 10 and not parsable and progress_bar:
                     try:
                         self.progressbar = progress.ProgressWithEvents(stdout=self.stream,start=0,end=suite.countTestCases(),width=width-10)
