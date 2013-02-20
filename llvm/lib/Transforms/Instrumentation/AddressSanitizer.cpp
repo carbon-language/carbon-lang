@@ -35,6 +35,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/InstVisitor.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
@@ -1130,12 +1131,12 @@ bool AddressSanitizer::runOnFunction(Function &F) {
       } else if (isa<MemIntrinsic>(BI) && ClMemIntrin) {
         // ok, take it.
       } else {
-        if (CallInst *CI = dyn_cast<CallInst>(BI)) {
+        CallSite CS(BI);
+        if (CS) {
           // A call inside BB.
           TempsToInstrument.clear();
-          if (CI->doesNotReturn()) {
-            NoReturnCalls.push_back(CI);
-          }
+          if (CS.doesNotReturn())
+            NoReturnCalls.push_back(CS.getInstruction());
         }
         continue;
       }
