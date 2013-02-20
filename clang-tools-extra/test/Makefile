@@ -28,7 +28,7 @@ TESTDIRS := $(TESTDIRS:$(PROJ_SRC_DIR)%=$(PROJ_OBJ_DIR)%)
 TESTDIRS += $(EXTRA_TESTDIRS)
 
 # List of roots for auto-generated tests.
-TESTDIRS += $(PROJ_OBJ_DIR)/cpp11-migrate/autogen
+TESTDIRS += $(PROJ_OBJ_DIR)/cpp11-migrate/generated_tests
 
 ifndef TESTARGS
 ifdef VERBOSE

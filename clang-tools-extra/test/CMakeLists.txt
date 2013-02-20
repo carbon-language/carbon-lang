@@ -35,7 +35,7 @@ set(CLANG_TOOLS_TEST_DEPS
 
 add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}/cpp11-migrate/autogen
+  ${CMAKE_CURRENT_BINARY_DIR}/cpp11-migrate/generated_tests
   DEPENDS ${CLANG_TOOLS_TEST_DEPS}
   ARGS ${CLANG_TOOLS_TEST_EXTRA_ARGS}
   )

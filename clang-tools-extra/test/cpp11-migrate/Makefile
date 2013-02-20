@@ -9,7 +9,7 @@
 
 # This Makefile is responsible for creating a LIT testsuite for auto-generated
 # tests. The recipe that runs llvm-lit needs to provide the following path of
-# the lit.site.cfg for the generated testsuite: $(PROJ_OBJ_DIR)/autogen.
+# the lit.site.cfg for the generated testsuite: $(PROJ_OBJ_DIR)/generated_tests.
 
 CLANG_LEVEL := ../../../..
 include $(CLANG_LEVEL)/Makefile
@@ -26,24 +26,24 @@ GENERATOR_SCRIPTS := \
 # macro to be used with $(call) that generates a rule and recipe that causes a
 # file to be auto-generated from a generator script. Generator scripts must
 # follow scheme above. The resulting file is placed in:
-# $(PROJ_OBJ_DIR)/autogen/$(dir <script name>).
+# $(PROJ_OBJ_DIR)/generated_tests/$(dir <script name>).
 #
 # One argument required: the name of generator script relative to
 # $(PROJ_SRC_DIR).
 define autogenerate-file
-OUTFILE := $(addprefix autogen/$(dir $1), $(patsubst gen_%.py,%,$(notdir $1)))
+OUTFILE := $(addprefix generated_tests/$(dir $1), $(patsubst gen_%.py,%,$(notdir $1)))
 GENERATED_FILES := $$(GENERATED_FILES) $$(OUTFILE)
 $$(OUTFILE): $1
 	@echo "Autogenerating $$<"
-	@$(MKDIR) $(addprefix autogen/, $(dir $1))
+	@$(MKDIR) $(addprefix generated_tests/, $(dir $1))
 	@$(PYTHON) $$< > $$@
 endef
 $(foreach script, $(GENERATOR_SCRIPTS), $(eval $(call autogenerate-file,$(script))))
 
 FORCE:
 
-autogen/lit.site.cfg: FORCE
-	@$(MKDIR) $(PROJ_OBJ_DIR)/autogen
+generated_tests/lit.site.cfg: FORCE
+	@$(MKDIR) $(PROJ_OBJ_DIR)/generated_tests
 	@echo "Making cpp11-migrate Auto-Generated Tests' 'lit.site.cfg' file..."
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
@@ -52,15 +52,15 @@ autogen/lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@CLANG_TOOLS_SOURCE_DIR@=$(PROJ_SRC_DIR)/../..=g >> lit.tmp
 	@$(ECHOPATH) s=@CLANG_TOOLS_BINARY_DIR@=$(PROJ_OBJ_DIR)/../..=g >> lit.tmp
 	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
-	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(PROJ_OBJ_DIR)/autogen=g >> lit.tmp
+	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(PROJ_OBJ_DIR)/generated_tests=g >> lit.tmp
 	@$(ECHOPATH) s=@TEST_EXEC_ROOT@=$(PROJ_OBJ_DIR)=g >> lit.tmp
 	@$(ECHOPATH) s=@TESTSUITE_NAME@=cpp11-migrate Auto-Generated Tests=g >> lit.tmp
 	@sed -f lit.tmp $(PROJ_SRC_DIR)/../lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 
-all:: $(GENERATED_FILES) autogen/lit.site.cfg
+all:: $(GENERATED_FILES) generated_tests/lit.site.cfg
 
 clean::
-	@rm -r autogen
+	@-rm -r generated_tests
 
 .PHONY: all clean

@@ -10,20 +10,20 @@ set(generator_scripts
 
 # macro that runs a generator script to produce an auto-generated file.
 # Generator scripts must follow scheme above. The resulting file is placed in:
-# ${CMAKE_CURRENT_BINARY_DIR})/autogen/dirname(<script name>).
+# ${CMAKE_CURRENT_BINARY_DIR})/generated_tests/dirname(<script name>).
 #
 # Two arguments are required:
 # script - The generator script (relative to ${CMAKE_CURRENT_SOURCE_DIR})
 # output - Name of the variable to store the name of the generated file in.
 macro(autogenerate_file script output)
   get_filename_component(dir ${script} PATH)
-  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/autogen/${dir}")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/generated_tests/${dir}")
   string(REGEX REPLACE "gen_(.*).py" "\\1" output_name ${script})
   set(script_file
     "${CMAKE_CURRENT_SOURCE_DIR}/${script}"
     )
   set(output_file
-    "${CMAKE_CURRENT_BINARY_DIR}/autogen/${output_name}"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated_tests/${output_name}"
     )
   set(gencmd
     ${PYTHON_EXECUTABLE}
@@ -50,10 +50,10 @@ add_custom_target(cpp11-migrate-autogen
   DEPENDS ${depends}
   )
 
-set(TEST_SOURCE_ROOT ${CMAKE_CURRENT_BINARY_DIR}/autogen)
+set(TEST_SOURCE_ROOT ${CMAKE_CURRENT_BINARY_DIR}/generated_tests)
 set(TEST_EXEC_ROOT ${CMAKE_CURRENT_BINARY_DIR})
 set(TESTSUITE_NAME "cpp11-migrate Auto-Generated Tests")
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/../lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/autogen/lit.site.cfg
+  ${CMAKE_CURRENT_BINARY_DIR}/generated_tests/lit.site.cfg
   )
