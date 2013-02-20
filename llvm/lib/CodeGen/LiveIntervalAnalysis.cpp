@@ -1038,13 +1038,27 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator Begin,
                                       MachineBasicBlock::iterator End,
                                       ArrayRef<unsigned> OrigRegs) {
-  SlotIndex startIdx;
-  if (Begin == MBB->begin())
-    startIdx = getMBBStartIdx(MBB);
+  SlotIndex endIdx;
+  if (End == MBB->end())
+    endIdx = getMBBEndIdx(MBB).getPrevSlot();
   else
-    startIdx = getInstructionIndex(prior(Begin)).getRegSlot();
+    endIdx = getInstructionIndex(End);
 
   Indexes->repairIndexesInRange(MBB, Begin, End);
+
+  for (MachineBasicBlock::iterator I = End; I != Begin;) {
+    --I;
+    MachineInstr *MI = I;
+    for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
+         MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+      if (MOI->isReg() &&
+          TargetRegisterInfo::isVirtualRegister(MOI->getReg()) &&
+          !hasInterval(MOI->getReg())) {
+        LiveInterval &LI = getOrCreateInterval(MOI->getReg());
+        computeVirtRegInterval(&LI);
+      }
+    }
+  }
 
   for (unsigned i = 0, e = OrigRegs.size(); i != e; ++i) {
     unsigned Reg = OrigRegs[i];
@@ -1052,6 +1066,8 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
       continue;
 
     LiveInterval &LI = getInterval(Reg);
+    LiveInterval::iterator LII = LI.FindLiveRangeContaining(endIdx);
+
     for (MachineBasicBlock::iterator I = End; I != Begin;) {
       --I;
       MachineInstr *MI = I;
@@ -1063,13 +1079,26 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
         if (!MO.isReg() || MO.getReg() != Reg)
           continue;
 
-        assert(MO.isUse() && "Register defs are not yet supported.");
+        if (MO.isDef()) {
+          assert(LII != LI.end() &&
+                 "Dead register defs are not yet supported.");
+          if (!Indexes->getInstructionFromIndex(LII->start)) {
+            LII->start = instrIdx.getRegSlot();
+            LII->valno->def = instrIdx.getRegSlot();
+          } else if (LII->start != instrIdx.getRegSlot()) {
+            VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(), VNInfoAllocator);
+            LiveRange LR = LiveRange(instrIdx.getRegSlot(), LII->start, VNI);
+            LII = LI.addRange(LR);
+          }
+        } else if (MO.isUse()) {
+          if (LII == LI.end())
+            --LII;
 
-        if (!LI.liveAt(instrIdx)) {
-          LiveRange *LR = LI.getLiveRangeContaining(startIdx);
-          assert(LR && "Used registers must be live-in.");
-          LR->end = instrIdx.getRegSlot();
-          break;
+          assert(LII->start < instrIdx &&
+                 "Registers with multiple used live ranges are not yet supported.");
+          SlotIndex endIdx = LII->end;
+          if (!endIdx.isBlock() && !Indexes->getInstructionFromIndex(endIdx))
+            LII->end = instrIdx.getRegSlot();
         }
       }
     }

@@ -1149,7 +1149,29 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
             }
             LV->addVirtualRegisterKilled(Reg, NewMIs[1]);
           }
+
+          MachineBasicBlock::iterator Begin;
+          MachineBasicBlock::iterator End;
+          SmallVector<unsigned, 4> OrigRegs;
+          if (LIS) {
+            Begin = MachineBasicBlock::iterator(NewMIs[0]);
+            if (Begin != MBB->begin())
+              --Begin;
+            End = next(MachineBasicBlock::iterator(MI));
+
+            for (MachineInstr::const_mop_iterator MOI = MI.operands_begin(),
+                 MOE = MI.operands_end(); MOI != MOE; ++MOI) {
+              if (MOI->isReg())
+                OrigRegs.push_back(MOI->getReg());
+            }
+          }
+
           MI.eraseFromParent();
+
+          // Update LiveIntervals.
+          if (LIS)
+            LIS->repairIntervalsInRange(MBB, Begin, End, OrigRegs);
+
           mi = NewMIs[1];
           if (TransformSuccess)
             return true;
@@ -1223,6 +1245,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
   bool RemovedKillFlag = false;
   bool AllUsesCopied = true;
   unsigned LastCopiedReg = 0;
+  SlotIndex LastCopyIdx;
   unsigned RegB = 0;
   for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
     unsigned SrcIdx = TiedPairs[tpi].first;
@@ -1267,9 +1290,17 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
     DistanceMap.insert(std::make_pair(PrevMI, Dist));
     DistanceMap[MI] = ++Dist;
 
-    SlotIndex CopyIdx;
-    if (Indexes)
-      CopyIdx = Indexes->insertMachineInstrInMaps(PrevMI).getRegSlot();
+    if (LIS) {
+      LastCopyIdx = LIS->InsertMachineInstrInMaps(PrevMI).getRegSlot();
+
+      if (TargetRegisterInfo::isVirtualRegister(RegA)) {
+        LiveInterval &LI = LIS->getInterval(RegA);
+        VNInfo *VNI = LI.getNextValue(LastCopyIdx, LIS->getVNInfoAllocator());
+        SlotIndex endIdx =
+          LIS->getInstructionIndex(MI).getRegSlot(IsEarlyClobber);
+        LI.addRange(LiveRange(LastCopyIdx, endIdx, VNI));
+      }
+    }
 
     DEBUG(dbgs() << "\t\tprepend:\t" << *PrevMI);
 
@@ -1313,6 +1344,18 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
       MachineBasicBlock::iterator PrevMI = MI;
       --PrevMI;
       LV->addVirtualRegisterKilled(RegB, PrevMI);
+    }
+
+    // Update LiveIntervals.
+    if (LIS) {
+      LiveInterval &LI = LIS->getInterval(RegB);
+      SlotIndex MIIdx = LIS->getInstructionIndex(MI);
+      LiveInterval::const_iterator I = LI.find(MIIdx);
+      assert(I != LI.end() && "RegB must be live-in to use.");
+
+      SlotIndex UseIdx = MIIdx.getRegSlot(IsEarlyClobber);
+      if (I->end == UseIdx)
+        LI.removeRange(LastCopyIdx, UseIdx);
     }
 
   } else if (RemovedKillFlag) {
@@ -1469,6 +1512,13 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
     llvm_unreachable(0);
   }
 
+  SmallVector<unsigned, 4> OrigRegs;
+  if (LIS) {
+    OrigRegs.push_back(MI->getOperand(0).getReg());
+    for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2)
+      OrigRegs.push_back(MI->getOperand(i).getReg());
+  }
+
   bool DefEmitted = false;
   for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
     MachineOperand &UseMO = MI->getOperand(i);
@@ -1512,6 +1562,8 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
     DEBUG(dbgs() << "Inserted: " << *CopyMI);
   }
 
+  MachineBasicBlock::iterator EndMBBI = next(MachineBasicBlock::iterator(MI));
+
   if (!DefEmitted) {
     DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");
     MI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
@@ -1520,5 +1572,12 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
   } else {
     DEBUG(dbgs() << "Eliminated: " << *MI);
     MI->eraseFromParent();
+  }
+
+  // Udpate LiveIntervals.
+  if (LIS) {
+    if (MBBI != MBB->begin())
+      --MBBI;
+    LIS->repairIntervalsInRange(MBB, MBBI, EndMBBI, OrigRegs);
   }
 }
