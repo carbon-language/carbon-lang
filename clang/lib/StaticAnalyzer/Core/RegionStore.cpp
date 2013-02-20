@@ -1265,7 +1265,7 @@ RegionStoreManager::getLazyBinding(RegionBindingsConstRef B,
   if (originalRegion != R) {
     if (Optional<SVal> OV = B.getDefaultBinding(R)) {
       if (llvm::Optional<nonloc::LazyCompoundVal> V =
-              OV.getPointer()->getAs<nonloc::LazyCompoundVal>())
+              OV->getAs<nonloc::LazyCompoundVal>())
         return std::make_pair(V->getStore(), V->getRegion());
     }
   }
@@ -1671,7 +1671,7 @@ NonLoc RegionStoreManager::createLazyBinding(RegionBindingsConstRef B,
   // don't create a new lazy binding.
   if (Optional<SVal> V = B.getDefaultBinding(R)) {
     if (llvm::Optional<nonloc::LazyCompoundVal> LCV =
-            V.getPointer()->getAs<nonloc::LazyCompoundVal>()) {
+            V->getAs<nonloc::LazyCompoundVal>()) {
       QualType RegionTy = R->getValueType();
       QualType SourceRegionTy = LCV->getRegion()->getValueType();
       if (Ctx.hasSameUnqualifiedType(RegionTy, SourceRegionTy))
