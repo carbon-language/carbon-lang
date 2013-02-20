@@ -15,8 +15,8 @@
 #ifndef SCHEDULEDAGSDNODES_H
 #define SCHEDULEDAGSDNODES_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 
 namespace llvm {
   /// ScheduleDAGSDNodes - A ScheduleDAG for scheduling SDNode-based DAGs.
