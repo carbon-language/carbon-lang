@@ -373,8 +373,8 @@ namespace llvm {
     /// addRange - Add the specified LiveRange to this interval, merging
     /// intervals as appropriate.  This returns an iterator to the inserted live
     /// range (which may have grown since it was inserted.
-    void addRange(LiveRange LR) {
-      addRangeFrom(LR, ranges.begin());
+    iterator addRange(LiveRange LR) {
+      return addRangeFrom(LR, ranges.begin());
     }
 
     /// extendInBlock - If this interval is live before Kill in the basic block
