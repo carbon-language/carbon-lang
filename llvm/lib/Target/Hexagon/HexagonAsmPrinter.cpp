@@ -14,12 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
-#include "HexagonAsmPrinter.h"
 #include "Hexagon.h"
-#include "HexagonMCInst.h"
+#include "HexagonAsmPrinter.h"
 #include "HexagonMachineFunctionInfo.h"
-#include "HexagonSubtarget.h"
 #include "HexagonTargetMachine.h"
+#include "HexagonSubtarget.h"
+#include "MCTargetDesc/HexagonMCInst.h"
 #include "InstPrinter/HexagonInstPrinter.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -220,8 +220,8 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     assert((Size+IgnoreCount) == MI->getBundleSize() && "Corrupt Bundle!");
     for (unsigned Index = 0; Index < Size; Index++) {
       HexagonMCInst MCI;
-      MCI.setStartPacket(Index == 0);
-      MCI.setEndPacket(Index == (Size-1));
+      MCI.setPacketStart(Index == 0);
+      MCI.setPacketEnd(Index == (Size-1));
 
       HexagonLowerToMC(BundleMIs[Index], MCI, *this);
       OutStreamer.EmitInstruction(MCI);
@@ -230,8 +230,8 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   else {
     HexagonMCInst MCI;
     if (MI->getOpcode() == Hexagon::ENDLOOP0) {
-      MCI.setStartPacket(true);
-      MCI.setEndPacket(true);
+      MCI.setPacketStart(true);
+      MCI.setPacketEnd(true);
     }
     HexagonLowerToMC(MI, MCI, *this);
     OutStreamer.EmitInstruction(MCI);

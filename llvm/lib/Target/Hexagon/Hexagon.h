@@ -21,9 +21,10 @@
 
 namespace llvm {
   class FunctionPass;
+  class ModulePass;
   class TargetMachine;
   class MachineInstr;
-  class MCInst;
+  class HexagonMCInst;
   class HexagonAsmPrinter;
   class HexagonTargetMachine;
   class raw_ostream;
@@ -54,7 +55,7 @@ namespace llvm {
   TargetAsmBackend *createHexagonAsmBackend(const Target &,
                                                   const std::string &);
 */
-  void HexagonLowerToMC(const MachineInstr *MI, MCInst &MCI,
+  void HexagonLowerToMC(const MachineInstr *MI, HexagonMCInst &MCI,
                         HexagonAsmPrinter &AP);
 } // end namespace llvm;
 

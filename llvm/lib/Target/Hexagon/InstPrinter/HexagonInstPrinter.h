@@ -14,16 +14,18 @@
 #ifndef HEXAGONINSTPRINTER_H
 #define HEXAGONINSTPRINTER_H
 
-#include "HexagonMCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
+  class HexagonMCInst;
+
   class HexagonInstPrinter : public MCInstPrinter {
   public:
     explicit HexagonInstPrinter(const MCAsmInfo &MAI,
                                 const MCInstrInfo &MII,
                                 const MCRegisterInfo &MRI)
-      : MCInstPrinter(MAI, MII, MRI) {}
+      : MCInstPrinter(MAI, MII, MRI), MII(MII) {}
 
     virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
     void printInst(const HexagonMCInst *MI, raw_ostream &O, StringRef Annot);
@@ -65,10 +67,19 @@ namespace llvm {
     void printSymbolLo(const MCInst *MI, unsigned OpNo, raw_ostream &O) const
       { printSymbol(MI, OpNo, O, false); }
 
-    bool isConstExtended(const MCInst *MI) const;
+    const MCInstrInfo &getMII() const {
+      return MII;
+    }
+
   protected:
     void printSymbol(const MCInst *MI, unsigned OpNo, raw_ostream &O, bool hi)
            const;
+
+    static const char PacketPadding;
+
+  private:
+    const MCInstrInfo &MII;
+
   };
 
 } // end namespace llvm

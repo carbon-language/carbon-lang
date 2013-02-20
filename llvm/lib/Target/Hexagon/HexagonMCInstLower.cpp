@@ -15,6 +15,7 @@
 #include "Hexagon.h"
 #include "HexagonAsmPrinter.h"
 #include "HexagonMachineFunctionInfo.h"
+#include "MCTargetDesc/HexagonMCInst.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/MC/MCExpr.h"
@@ -38,9 +39,10 @@ static MCOperand GetSymbolRef(const MachineOperand& MO, const MCSymbol* Symbol,
 }
 
 // Create an MCInst from a MachineInstr
-void llvm::HexagonLowerToMC(const MachineInstr* MI, MCInst& MCI,
+void llvm::HexagonLowerToMC(const MachineInstr* MI, HexagonMCInst& MCI,
                             HexagonAsmPrinter& AP) {
   MCI.setOpcode(MI->getOpcode());
+  MCI.setDesc(MI->getDesc());
 
   for (unsigned i = 0, e = MI->getNumOperands(); i < e; i++) {
     const MachineOperand &MO = MI->getOperand(i);

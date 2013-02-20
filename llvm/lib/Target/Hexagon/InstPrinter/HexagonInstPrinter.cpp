@@ -12,14 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
-#include "HexagonInstPrinter.h"
-#include "Hexagon.h"
 #include "HexagonAsmPrinter.h"
-#include "HexagonMCInst.h"
+#include "Hexagon.h"
+#include "HexagonInstPrinter.h"
+#include "MCTargetDesc/HexagonMCInst.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 
@@ -27,6 +27,8 @@ using namespace llvm;
 
 #define GET_INSTRUCTION_NAME
 #include "HexagonGenAsmWriter.inc"
+
+const char HexagonInstPrinter::PacketPadding = '\t';
 
 StringRef HexagonInstPrinter::getOpcodeName(unsigned Opcode) const {
   return MII.getName(Opcode);
@@ -43,43 +45,42 @@ void HexagonInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
 void HexagonInstPrinter::printInst(const HexagonMCInst *MI, raw_ostream &O,
                                    StringRef Annot) {
-  const char packetPadding[] = "      ";
   const char startPacket = '{',
              endPacket = '}';
   // TODO: add outer HW loop when it's supported too.
   if (MI->getOpcode() == Hexagon::ENDLOOP0) {
     // Ending a harware loop is different from ending an regular packet.
-    assert(MI->isEndPacket() && "Loop end must also end the packet");
+    assert(MI->isPacketEnd() && "Loop-end must also end the packet");
 
-    if (MI->isStartPacket()) {
+    if (MI->isPacketStart()) {
       // There must be a packet to end a loop.
       // FIXME: when shuffling is always run, this shouldn't be needed.
       HexagonMCInst Nop;
       StringRef NoAnnot;
 
       Nop.setOpcode (Hexagon::NOP);
-      Nop.setStartPacket (MI->isStartPacket());
+      Nop.setPacketStart (MI->isPacketStart());
       printInst (&Nop, O, NoAnnot);
     }
 
     // Close the packet.
-    if (MI->isEndPacket())
-      O << packetPadding << endPacket;
+    if (MI->isPacketEnd())
+      O << PacketPadding << endPacket;
 
     printInstruction(MI, O);
   }
   else {
     // Prefix the insn opening the packet.
-    if (MI->isStartPacket())
-      O << packetPadding << startPacket << '\n';
+    if (MI->isPacketStart())
+      O << PacketPadding << startPacket << '\n';
 
     printInstruction(MI, O);
 
     // Suffix the insn closing the packet.
-    if (MI->isEndPacket())
+    if (MI->isPacketEnd())
       // Suffix the packet in a new line always, since the GNU assembler has
       // issues with a closing brace on the same line as CONST{32,64}.
-      O << '\n' << packetPadding << endPacket;
+      O << '\n' << PacketPadding << endPacket;
   }
 
   printAnnotation(O, Annot);
@@ -102,12 +103,23 @@ void HexagonInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 
 void HexagonInstPrinter::printImmOperand(const MCInst *MI, unsigned OpNo,
                                          raw_ostream &O) const {
-  O << MI->getOperand(OpNo).getImm();
+  const MCOperand& MO = MI->getOperand(OpNo);
+
+  if(MO.isExpr()) {
+    O << *MO.getExpr();
+  } else if(MO.isImm()) {
+    O << MI->getOperand(OpNo).getImm();
+  } else {
+    llvm_unreachable("Unknown operand");
+  }
 }
 
 void HexagonInstPrinter::printExtOperand(const MCInst *MI, unsigned OpNo,
                                          raw_ostream &O) const {
-  O << MI->getOperand(OpNo).getImm();
+  const HexagonMCInst *HMCI = static_cast<const HexagonMCInst*>(MI);
+  if (HMCI->isConstExtended())
+    O << "#";
+  printOperand(MI, OpNo, O);
 }
 
 void HexagonInstPrinter::printUnsignedImmOperand(const MCInst *MI,
