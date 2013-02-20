@@ -14,7 +14,7 @@ class SBDirCheckerCase(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.build_dir = os.environ["LLDB_BUILD_DIR"]
+        self.lib_dir = os.environ["LLDB_LIB_DIR"]
         self.template = 'main.cpp.template'
         self.source = 'main.cpp'
 
@@ -28,7 +28,7 @@ class SBDirCheckerCase(TestBase):
         self.generate_main_cpp()
 
         if sys.platform.startswith("darwin"):
-            d = {'FRAMEWORK_INCLUDES' : "-F%s" % self.build_dir}
+            d = {'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir}
         if sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'FRAMEWORK_INCLUDES' : "-I%s" % os.path.join(os.environ["LLDB_SRC"], "include")}
         self.buildDefault(dictionary=d)
@@ -71,10 +71,10 @@ class SBDirCheckerCase(TestBase):
 
         if sys.platform.startswith("darwin"):
             env_var = 'DYLD_FRAMEWORK_PATH'
-            env_val = self.build_dir
+            env_val = self.lib_dir
         if sys.platform.startswith("linux"):
             env_var = 'LD_LIBRARY_PATH'
-            env_val = self.build_dir
+            env_val = self.lib_dir
 
         env_cmd = "settings set target.env-vars %s=%s" %(env_var, env_val)
         if self.TraceOn():

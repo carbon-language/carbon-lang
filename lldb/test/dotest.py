@@ -820,9 +820,9 @@ def setupSysPath():
     
     if lldbHere:
         os.environ["LLDB_HERE"] = lldbHere
-        os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbHere)[0]
+        os.environ["LLDB_LIB_DIR"] = os.path.split(lldbHere)[0]
         if not noHeaders:
-            print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
+            print "LLDB library dir:", os.environ["LLDB_LIB_DIR"]
             os.system('%s -v' % lldbHere)
 
     if not lldbExec:
@@ -870,7 +870,7 @@ def setupSysPath():
             if len(lines) == 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
                 lldbPath = lines[0]
                 if "linux" in sys.platform:
-                    os.environ['LLDB_BUILD_DIR'] = os.path.join(lldbPath, 'lldb')
+                    os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPath, '..', '..')
         
         if not lldbPath: 
             dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
