@@ -1162,8 +1162,7 @@ llvm::canConstantFoldCallTo(const Function *F) {
   switch (Name[0]) {
   default: return false;
   case 'a':
-    return Name == "acos" || Name == "asin" ||
-      Name == "atan" || Name == "atan2";
+    return Name == "acos" || Name == "asin" || Name == "atan" || Name =="atan2";
   case 'c':
     return Name == "cos" || Name == "ceil" || Name == "cosf" || Name == "cosh";
   case 'e':
