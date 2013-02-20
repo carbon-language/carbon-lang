@@ -363,30 +363,135 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
   EVT SrcVT = LD->getMemoryVT();
   ISD::LoadExtType ExtType = LD->getExtensionType();
 
-  SmallVector<SDValue, 8> LoadVals;
+  SmallVector<SDValue, 8> Vals;
   SmallVector<SDValue, 8> LoadChains;
   unsigned NumElem = SrcVT.getVectorNumElements();
-  unsigned Stride = SrcVT.getScalarType().getSizeInBits()/8;
 
-  for (unsigned Idx=0; Idx<NumElem; Idx++) {
-    SDValue ScalarLoad = DAG.getExtLoad(ExtType, dl,
-              Op.getNode()->getValueType(0).getScalarType(),
-              Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
-              SrcVT.getScalarType(),
-              LD->isVolatile(), LD->isNonTemporal(),
-              LD->getAlignment());
+  EVT SrcEltVT = SrcVT.getScalarType();
+  EVT DstEltVT = Op.getNode()->getValueType(0).getScalarType();
 
-    BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
-                       DAG.getIntPtrConstant(Stride));
+  if (SrcVT.getVectorNumElements() > 1 && !SrcEltVT.isByteSized()) {
+    // When elements in a vector is not byte-addressable, we cannot directly
+    // load each element by advancing pointer, which could only address bytes.
+    // Instead, we load all significant words, mask bits off, and concatenate
+    // them to form each element. Finally, they are extended to destination
+    // scalar type to build the destination vector.
+    EVT WideVT = TLI.getPointerTy();
 
-     LoadVals.push_back(ScalarLoad.getValue(0));
-     LoadChains.push_back(ScalarLoad.getValue(1));
+    assert(WideVT.isRound() &&
+           "Could not handle the sophisticated case when the widest integer is"
+           " not power of 2.");
+    assert(WideVT.bitsGE(SrcEltVT) &&
+           "Type is not legalized?");
+
+    unsigned WideBytes = WideVT.getStoreSize();
+    unsigned Offset = 0;
+    unsigned RemainingBytes = SrcVT.getStoreSize();
+    SmallVector<SDValue, 8> LoadVals;
+
+    while (RemainingBytes > 0) {
+      SDValue ScalarLoad;
+      unsigned LoadBytes = WideBytes;
+
+      if (RemainingBytes >= LoadBytes) {
+        ScalarLoad = DAG.getLoad(WideVT, dl, Chain, BasePTR,
+                                 LD->getPointerInfo().getWithOffset(Offset),
+                                 LD->isVolatile(), LD->isNonTemporal(),
+                                 LD->isInvariant(), LD->getAlignment());
+      } else {
+        EVT LoadVT = WideVT;
+        while (RemainingBytes < LoadBytes) {
+          LoadBytes >>= 1; // Reduce the load size by half.
+          LoadVT = EVT::getIntegerVT(*DAG.getContext(), LoadBytes << 3);
+        }
+        ScalarLoad = DAG.getExtLoad(ISD::EXTLOAD, dl, WideVT, Chain, BasePTR,
+                                    LD->getPointerInfo().getWithOffset(Offset),
+                                    LoadVT, LD->isVolatile(),
+                                    LD->isNonTemporal(), LD->getAlignment());
+      }
+
+      RemainingBytes -= LoadBytes;
+      Offset += LoadBytes;
+      BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
+                            DAG.getIntPtrConstant(LoadBytes));
+
+      LoadVals.push_back(ScalarLoad.getValue(0));
+      LoadChains.push_back(ScalarLoad.getValue(1));
+    }
+
+    // Extract bits, pack and extend/trunc them into destination type.
+    unsigned SrcEltBits = SrcEltVT.getSizeInBits();
+    SDValue SrcEltBitMask = DAG.getConstant((1U << SrcEltBits) - 1, WideVT);
+
+    unsigned BitOffset = 0;
+    unsigned WideIdx = 0;
+    unsigned WideBits = WideVT.getSizeInBits();
+
+    for (unsigned Idx = 0; Idx != NumElem; ++Idx) {
+      SDValue Lo, Hi, ShAmt;
+
+      if (BitOffset < WideBits) {
+        ShAmt = DAG.getConstant(BitOffset, TLI.getShiftAmountTy(WideVT));
+        Lo = DAG.getNode(ISD::SRL, dl, WideVT, LoadVals[WideIdx], ShAmt);
+        Lo = DAG.getNode(ISD::AND, dl, WideVT, Lo, SrcEltBitMask);
+      }
+
+      BitOffset += SrcEltBits;
+      if (BitOffset >= WideBits) {
+        WideIdx++;
+        Offset -= WideBits;
+        if (Offset > 0) {
+          ShAmt = DAG.getConstant(SrcEltBits - Offset,
+                                  TLI.getShiftAmountTy(WideVT));
+          Hi = DAG.getNode(ISD::SHL, dl, WideVT, LoadVals[WideIdx], ShAmt);
+          Hi = DAG.getNode(ISD::AND, dl, WideVT, Hi, SrcEltBitMask);
+        }
+      }
+
+      if (Hi.getNode())
+        Lo = DAG.getNode(ISD::OR, dl, WideVT, Lo, Hi);
+
+      switch (ExtType) {
+      default: llvm_unreachable("Unknown extended-load op!");
+      case ISD::EXTLOAD:
+        Lo = DAG.getAnyExtOrTrunc(Lo, dl, DstEltVT);
+        break;
+      case ISD::ZEXTLOAD:
+        Lo = DAG.getZExtOrTrunc(Lo, dl, DstEltVT);
+        break;
+      case ISD::SEXTLOAD:
+        ShAmt = DAG.getConstant(WideBits - SrcEltBits,
+                                TLI.getShiftAmountTy(WideVT));
+        Lo = DAG.getNode(ISD::SHL, dl, WideVT, Lo, ShAmt);
+        Lo = DAG.getNode(ISD::SRA, dl, WideVT, Lo, ShAmt);
+        Lo = DAG.getSExtOrTrunc(Lo, dl, DstEltVT);
+        break;
+      }
+      Vals.push_back(Lo);
+    }
+  } else {
+    unsigned Stride = SrcVT.getScalarType().getSizeInBits()/8;
+
+    for (unsigned Idx=0; Idx<NumElem; Idx++) {
+      SDValue ScalarLoad = DAG.getExtLoad(ExtType, dl,
+                Op.getNode()->getValueType(0).getScalarType(),
+                Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
+                SrcVT.getScalarType(),
+                LD->isVolatile(), LD->isNonTemporal(),
+                LD->getAlignment());
+
+      BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
+                         DAG.getIntPtrConstant(Stride));
+
+      Vals.push_back(ScalarLoad.getValue(0));
+      LoadChains.push_back(ScalarLoad.getValue(1));
+    }
   }
 
   SDValue NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
             &LoadChains[0], LoadChains.size());
   SDValue Value = DAG.getNode(ISD::BUILD_VECTOR, dl,
-            Op.getNode()->getValueType(0), &LoadVals[0], LoadVals.size());
+            Op.getNode()->getValueType(0), &Vals[0], Vals.size());
 
   AddLegalizedOperand(Op.getValue(0), Value);
   AddLegalizedOperand(Op.getValue(1), NewChain);
