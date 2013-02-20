@@ -1066,13 +1066,27 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
       continue;
 
     LiveInterval &LI = getInterval(Reg);
-    LiveInterval::iterator LII = LI.FindLiveRangeContaining(endIdx);
+    // FIXME: Should we support undefs that gain defs?
+    if (!LI.hasAtLeastOneValue())
+      continue;
+
+    LiveInterval::iterator LII = LI.find(endIdx);
+    SlotIndex lastUseIdx;
+    if (LII != LI.end() && LII->start < endIdx)
+      lastUseIdx = LII->end;
+    else
+      --LII;
 
     for (MachineBasicBlock::iterator I = End; I != Begin;) {
       --I;
       MachineInstr *MI = I;
       SlotIndex instrIdx = getInstructionIndex(MI);
 
+      bool isStartValid = getInstructionFromIndex(LII->start);
+      bool isEndValid = getInstructionFromIndex(LII->end);
+
+      // FIXME: This doesn't currently handle early-clobber or multiple removed
+      // defs inside of the region to repair.
       for (MachineInstr::mop_iterator OI = MI->operands_begin(),
            OE = MI->operands_end(); OI != OE; ++OI) {
         const MachineOperand &MO = *OI;
@@ -1080,25 +1094,54 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
           continue;
 
         if (MO.isDef()) {
-          assert(LII != LI.end() &&
-                 "Dead register defs are not yet supported.");
-          if (!Indexes->getInstructionFromIndex(LII->start)) {
-            LII->start = instrIdx.getRegSlot();
-            LII->valno->def = instrIdx.getRegSlot();
+          if (!isStartValid) {
+            if (LII->end.isDead()) {
+              SlotIndex prevStart;
+              if (LII != LI.begin())
+                prevStart = llvm::prior(LII)->start;
+
+              // FIXME: This could be more efficient if there was a removeRange
+              // method that returned an iterator.
+              LI.removeRange(*LII, true);
+              if (prevStart.isValid())
+                LII = LI.find(prevStart);
+              else
+                LII = LI.begin();
+            } else {
+              LII->start = instrIdx.getRegSlot();
+              LII->valno->def = instrIdx.getRegSlot();
+              if (MO.getSubReg() && !MO.isUndef())
+                lastUseIdx = instrIdx.getRegSlot();
+              else
+                lastUseIdx = SlotIndex();
+              continue;
+            }
+          }
+
+          if (!lastUseIdx.isValid()) {
+            VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(),
+                                          VNInfoAllocator);
+            LiveRange LR(instrIdx.getRegSlot(), instrIdx.getDeadSlot(), VNI);
+            LII = LI.addRange(LR);
           } else if (LII->start != instrIdx.getRegSlot()) {
-            VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(), VNInfoAllocator);
-            LiveRange LR = LiveRange(instrIdx.getRegSlot(), LII->start, VNI);
+            VNInfo *VNI = LI.getNextValue(instrIdx.getRegSlot(),
+                                          VNInfoAllocator);
+            LiveRange LR(instrIdx.getRegSlot(), lastUseIdx, VNI);
             LII = LI.addRange(LR);
           }
-        } else if (MO.isUse()) {
-          if (LII == LI.end())
-            --LII;
 
-          assert(LII->start < instrIdx &&
-                 "Registers with multiple used live ranges are not yet supported.");
-          SlotIndex endIdx = LII->end;
-          if (!endIdx.isBlock() && !Indexes->getInstructionFromIndex(endIdx))
+          if (MO.getSubReg() && !MO.isUndef())
+            lastUseIdx = instrIdx.getRegSlot();
+          else
+            lastUseIdx = SlotIndex();
+        } else if (MO.isUse()) {
+          // FIXME: This should probably be handled outside of this branch,
+          // either as part of the def case (for defs inside of the region) or
+          // after the loop over the region.
+          if (!isEndValid && !LII->end.isBlock())
             LII->end = instrIdx.getRegSlot();
+          if (!lastUseIdx.isValid())
+            lastUseIdx = instrIdx.getRegSlot();
         }
       }
     }
