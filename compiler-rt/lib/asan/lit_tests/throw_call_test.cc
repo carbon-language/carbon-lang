@@ -38,9 +38,8 @@ void CheckStack() {
 int main(int argc, char** argv) {
   try {
     Throw();
-  } catch (int a) {
+  } catch(int a) {
     fprintf(stderr, "a = %d\n", a);
   }
   CheckStack();
 }
-

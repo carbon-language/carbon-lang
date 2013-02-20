@@ -126,8 +126,8 @@ INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count,
 #endif
 
 #if SANITIZER_INTERCEPT_PRCTL
-INTERCEPTOR(int, prctl, int option, unsigned long arg2,
-            unsigned long arg3,                       // NOLINT
+INTERCEPTOR(int, prctl, int option,
+            unsigned long arg2, unsigned long arg3,   // NOLINT
             unsigned long arg4, unsigned long arg5) { // NOLINT
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, prctl, option, arg2, arg3, arg4, arg5);
