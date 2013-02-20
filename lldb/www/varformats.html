@@ -1177,10 +1177,9 @@ def function (valobj,internal_dict):<br/>
           	on the target process, <code>no-run-target</code> is enough for this to work.
           	As a final sidenote on this, LLDB is currently able to provide a summary string for <code>NSString</code>
           	that shows the content of the string, without requiring you to run code on the target
-          	process. This features requires you to enable the AppKit category (see below for details). The
-          	Python code for this formatter is at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/summaries/cocoa/CFString.py">
-          	CFString.py</a> (the script is well commented, but intricate and might not be obvious, lacking
-            working experience with Cocoa and the LLDB API).
+          	process. This features requires you to enable the AppKit category (see below for details). 
+			The first implementation of this feature was a Python script (still available for reference at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/summaries/cocoa/CFString.py">).
+			However, this is out of sync with the current implementation of the NSString formatter (which is a C++ function compiled into the LLDB core).
 			</p>
           </div>
         </div>
