@@ -70,7 +70,7 @@ public:
 
   void reset() {
     if (hasVal) {
-      (*this)->~T();
+      (**this).~T();
       hasVal = false;
     }
   }
