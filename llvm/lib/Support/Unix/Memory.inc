@@ -51,7 +51,11 @@ int getPosixProtectionFlags(unsigned Flags) {
 	 llvm::sys::Memory::MF_EXEC:
     return PROT_READ | PROT_WRITE | PROT_EXEC;
   case llvm::sys::Memory::MF_EXEC:
+#if defined(__FreeBSD__)
+    return PROT_READ | PROT_EXEC;
+#else
     return PROT_EXEC;
+#endif
   default:
     llvm_unreachable("Illegal memory protection flag specified!");
   }
