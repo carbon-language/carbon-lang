@@ -601,10 +601,15 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     }
     llvm::Triple triple(module_ap->getTargetTriple());
     llvm::Function *function = module_ap->getFunction (function_name.c_str());
+    llvm::Reloc::Model relocModel;
+    if (triple.isOSBinFormatELF())
+        relocModel = llvm::Reloc::Static;
+    else
+        relocModel = llvm::Reloc::PIC_;
     EngineBuilder builder(module_ap.release());
     builder.setEngineKind(EngineKind::JIT)
         .setErrorStr(&error_string)
-        .setRelocationModel(llvm::Reloc::PIC_)
+        .setRelocationModel(relocModel)
         .setJITMemoryManager(jit_memory_manager)
         .setOptLevel(CodeGenOpt::Less)
         .setAllocateGVsWithCode(true)

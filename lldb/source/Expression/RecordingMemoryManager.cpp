@@ -294,6 +294,8 @@ RecordingMemoryManager::ReportAllocations (llvm::ExecutionEngine &engine)
         
         engine.mapSectionAddress((void*)ai->m_local_start, ai->m_remote_start);
     }
+    // Trigger re-application of relocations.
+    engine.finalizeObject();
 }
 
 bool
