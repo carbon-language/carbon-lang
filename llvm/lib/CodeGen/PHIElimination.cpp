@@ -306,10 +306,9 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
   // Update LiveIntervals for the new copy or implicit def.
   if (LIS) {
     MachineInstr *NewInstr = prior(AfterPHIsIt);
-    LIS->InsertMachineInstrInMaps(NewInstr);
+    SlotIndex DestCopyIndex = LIS->InsertMachineInstrInMaps(NewInstr);
 
     SlotIndex MBBStartIndex = LIS->getMBBStartIdx(&MBB);
-    SlotIndex DestCopyIndex = LIS->getInstructionIndex(NewInstr);
     if (IncomingReg) {
       // Add the region from the beginning of MBB to the copy instruction to
       // IncomingReg's live interval.
