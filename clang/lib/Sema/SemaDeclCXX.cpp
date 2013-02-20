@@ -6456,7 +6456,9 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
     Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();
   }
 
-  // FIXME: We ignore attributes for now.
+  if (UDir)
+    ProcessDeclAttributeList(S, UDir, AttrList);
+
   return UDir;
 }
 
@@ -7172,6 +7174,7 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
                                   MultiTemplateParamsArg TemplateParamLists,
                                   SourceLocation UsingLoc,
                                   UnqualifiedId &Name,
+                                  AttributeList *AttrList,
                                   TypeResult Type) {
   // Skip up to the relevant declaration scope.
   while (S->getFlags() & Scope::TemplateParamScope)
@@ -7217,6 +7220,8 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
 
   if (Invalid)
     NewTD->setInvalidDecl();
+
+  ProcessDeclAttributeList(S, NewTD, AttrList);
 
   CheckTypedefForVariablyModifiedType(S, NewTD);
   Invalid |= NewTD->isInvalidDecl();
@@ -10078,6 +10083,25 @@ Decl *Sema::ActOnFinishLinkageSpecification(Scope *S,
     PopDeclContext();
   }
   return LinkageSpec;
+}
+
+/// \brief Perform semantic checks on a C++11 attribute-declaration.
+void Sema::ActOnAttributeDeclaration(AttributeList *AttrList) {
+  // FIXME: Build an AST node for an attribute declaration and return it.
+  
+  // Since we do not support any attributes which can be used in an attribute
+  // declaration, just diagnose standard and unknown attributes appropriately.
+  for (/**/; AttrList; AttrList = AttrList->getNext()) {
+    if (AttrList->getKind() == AttributeList::IgnoredAttribute ||
+        AttrList->isInvalid())
+      continue;
+
+    Diag(AttrList->getLoc(),
+         AttrList->getKind() == AttributeList::UnknownAttribute
+           ? diag::warn_unknown_attribute_ignored
+           : diag::err_attribute_declaration)
+      << AttrList->getName();
+  }
 }
 
 /// \brief Perform semantic analysis for the variable declaration that

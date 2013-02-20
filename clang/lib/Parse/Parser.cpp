@@ -566,7 +566,6 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
 ///       external-declaration: [C99 6.9], declaration: [C++ dcl.dcl]
 ///         function-definition
 ///         declaration
-/// [C++0x] empty-declaration
 /// [GNU]   asm-definition
 /// [GNU]   __extension__ external-declaration
 /// [OBJC]  objc-class-definition
@@ -578,8 +577,10 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
 /// [C++]   linkage-specification
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
+/// [C++11] empty-declaration
+/// [C++11] attribute-declaration
 ///
-/// [C++0x] empty-declaration:
+/// [C++11] empty-declaration:
 ///           ';'
 ///
 /// [C++0x/GNU] 'extern' 'template' declaration
@@ -624,6 +625,13 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     HandlePragmaOpenCLExtension();
     return DeclGroupPtrTy();
   case tok::semi:
+    // Either a C++11 empty-declaration or attribute-declaration.
+    if (attrs.Range.isValid()) {
+      // FIXME: Add an AST representation for this.
+      Actions.ActOnAttributeDeclaration(attrs.getList());
+      return DeclGroupPtrTy();
+    }
+
     ConsumeExtraSemi(OutsideFunction);
     // TODO: Invoke action for top-level semicolon.
     return DeclGroupPtrTy();

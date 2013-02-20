@@ -1383,6 +1383,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
 
   // type-specifier-seq
   DeclSpec DS(AttrFactory);
+  DS.takeAttributesFrom(attrs);
   ParseSpecifierQualifierList(DS);
 
   // declarator

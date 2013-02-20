@@ -41,6 +41,8 @@ const [[]] int between_attr_2 = 0; // expected-error {{an attribute list cannot 
 int after_attr [[]];
 int * [[]] ptr_attr;
 int & [[]] ref_attr = after_attr;
+int & [[unknown]] ref_attr_2 = after_attr; // expected-warning {{unknown attribute 'unknown' ignored}}
+int & [[noreturn]] ref_attr_3 = after_attr; // expected-error {{'noreturn' attribute cannot be applied to types}}
 int && [[]] rref_attr = 0;
 int array_attr [1] [[]];
 alignas(8) int aligned_attr;
@@ -112,13 +114,18 @@ extern "C++" [[]] { } // expected-error {{an attribute list cannot appear here}}
 [[]] asm(""); // expected-error {{an attribute list cannot appear here}}
 
 [[]] using ns::i; // expected-error {{an attribute list cannot appear here}}
-[[]] using namespace ns;
+[[unknown]] using namespace ns; // expected-warning {{unknown attribute 'unknown' ignored}}
+[[noreturn]] using namespace ns; // expected-error {{'noreturn' attribute only applies to functions and methods}}
 
 [[]] using T = int; // expected-error {{an attribute list cannot appear here}}
 using T [[]] = int; // ok
 template<typename T> using U [[]] = T;
 using ns::i [[]]; // expected-error {{an attribute list cannot appear here}}
 using [[]] ns::i; // expected-error {{an attribute list cannot appear here}}
+using T [[unknown]] = int; // expected-warning {{unknown attribute 'unknown' ignored}}
+using T [[noreturn]] = int; // expected-error {{'noreturn' attribute only applies to functions and methods}}
+using V = int; // expected-note {{previous}}
+using V [[gnu::vector_size(16)]] = int; // expected-error {{redefinition with different types}}
 
 auto trailing() -> [[]] const int; // expected-error {{an attribute list cannot appear here}}
 auto trailing() -> const [[]] int; // expected-error {{an attribute list cannot appear here}}
@@ -220,10 +227,10 @@ void bar () {
 
 // Condition tests
 void baz () {
-  if ([[]] bool b = true) {
-    switch ([[]] int n { 42 }) {
+  if ([[unknown]] bool b = true) { // expected-warning {{unknown attribute 'unknown' ignored}}
+    switch ([[unknown]] int n { 42 }) { // expected-warning {{unknown attribute 'unknown' ignored}}
     default:
-      for ([[]] int n = 0; [[]] char b = n < 5; ++b) {
+      for ([[unknown]] int n = 0; [[unknown]] char b = n < 5; ++b) { // expected-warning 2{{unknown attribute 'unknown' ignored}}
       }
     }
   }
@@ -240,7 +247,7 @@ void baz () {
   do {
   } while ([[]] false); // expected-error {{an attribute list cannot appear here}}
 
-  for ([[]] int n : { 1, 2, 3 }) {
+  for ([[unknown]] int n : { 1, 2, 3 }) { // expected-warning {{unknown attribute 'unknown' ignored}}
   }
 }
 
@@ -251,7 +258,7 @@ enum class [[]] EvenMoreSecrets {};
 
 namespace arguments {
   void f[[gnu::format(printf, 1, 2)]](const char*, ...);
-  void g() [[unknown::foo(currently arguments of attributes from unknown namespace other than 'gnu' namespace are ignored... blah...)]]; // expected-warning {{unknown attribute 'foo' ignored}}
+  void g() [[unknown::foo(arguments of attributes from unknown namespace other than 'gnu' namespace are ignored... blah...)]]; // expected-warning {{unknown attribute 'foo' ignored}}
 }
 
 // Forbid attributes on decl specifiers.
@@ -265,3 +272,6 @@ int [[carries_dependency]] foo(int [[carries_dependency]] x); // expected-error 
 int *[[gnu::unused]] v3; // expected-warning {{attribute 'unused' ignored}}
 int v4[2][[gnu::unused]]; // expected-warning {{attribute 'unused' ignored}}
 int v5()[[gnu::unused]]; // expected-warning {{attribute 'unused' ignored}}
+
+[[attribute_declaration]]; // expected-warning {{unknown attribute 'attribute_declaration' ignored}}
+[[noreturn]]; // expected-error {{'noreturn' attribute cannot be used in an attribute declaration}}

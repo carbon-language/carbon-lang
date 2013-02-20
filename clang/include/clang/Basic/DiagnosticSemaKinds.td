@@ -1908,6 +1908,8 @@ def warn_attribute_not_on_decl : Warning<
   "%0 attribute ignored when parsing type">, InGroup<IgnoredAttributes>;
 def err_base_specifier_attribute : Error<
   "%0 attribute cannot be applied to a base specifier">;
+def err_attribute_declaration : Error<
+  "%0 attribute cannot be used in an attribute declaration">;
 
 // Availability attribute
 def warn_availability_unknown_platform : Warning<

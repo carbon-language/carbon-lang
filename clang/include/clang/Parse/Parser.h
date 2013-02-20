@@ -1800,7 +1800,8 @@ public:
                            Declarator::TheContext Context
                              = Declarator::TypeNameContext,
                            AccessSpecifier AS = AS_none,
-                           Decl **OwnedType = 0);
+                           Decl **OwnedType = 0,
+                           ParsedAttributes *Attrs = 0);
 
 private:
   void ParseBlockId(SourceLocation CaretLoc);

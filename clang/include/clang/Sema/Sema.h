@@ -1447,6 +1447,9 @@ public:
                               SourceLocation AsmLoc,
                               SourceLocation RParenLoc);
 
+  /// \brief Handle a C++11 attribute-declaration.
+  void ActOnAttributeDeclaration(AttributeList *AttrList);
+
   /// \brief The parser has processed a module import declaration.
   ///
   /// \param AtLoc The location of the '@' symbol, if any.
@@ -3429,6 +3432,7 @@ public:
                               MultiTemplateParamsArg TemplateParams,
                               SourceLocation UsingLoc,
                               UnqualifiedId &Name,
+                              AttributeList *AttrList,
                               TypeResult Type);
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
