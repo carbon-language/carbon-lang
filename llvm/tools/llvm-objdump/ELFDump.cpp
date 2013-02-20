@@ -39,6 +39,12 @@ void printProgramHeaders(
     case ELF::PT_GNU_EH_FRAME:
       outs() << "EH_FRAME ";
       break;
+    case ELF::PT_INTERP:
+      outs() << "  INTERP ";
+      break;
+    case ELF::PT_DYNAMIC:
+      outs() << " DYNAMIC ";
+      break;
     default:
       outs() << " UNKNOWN ";
     }
