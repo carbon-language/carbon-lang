@@ -860,7 +860,8 @@ let test_builder () =
   group "function attribute";
   begin
       ignore (add_function_attr fn Attribute.UWTable);
-      (* RUN: grep "X7.*uwtable" < %t.ll
+      (* RUN: grep "X7.*#0" < %t.ll
+       * RUN: grep "attributes #0 = .*uwtable.*" < %t.ll
        *)
       insist ([Attribute.UWTable] = function_attr fn);
   end;
