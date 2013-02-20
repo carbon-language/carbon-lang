@@ -131,8 +131,9 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
   CHECK(size == 0 && trace[0] == pc);
   size = 1;
   uhwptr *frame = (uhwptr *)bp;
-  uhwptr *prev_frame = frame;
-  while (frame >= prev_frame &&
+  uhwptr *prev_frame = frame - 1;
+  // Avoid infinite loop when frame == frame[0] by using frame > prev_frame.
+  while (frame > prev_frame &&
          frame < (uhwptr *)stack_top - 2 &&
          frame > (uhwptr *)stack_bottom &&
          size < max_size) {
