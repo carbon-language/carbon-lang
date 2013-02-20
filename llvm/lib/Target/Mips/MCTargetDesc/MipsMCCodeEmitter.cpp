@@ -35,13 +35,12 @@ class MipsMCCodeEmitter : public MCCodeEmitter {
   void operator=(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   MCContext &Ctx;
-  const MCSubtargetInfo &STI;
   bool IsLittleEndian;
 
 public:
   MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_,
                     const MCSubtargetInfo &sti, bool IsLittle) :
-    MCII(mcii), Ctx(Ctx_), STI (sti), IsLittleEndian(IsLittle) {}
+    MCII(mcii), Ctx(Ctx_), IsLittleEndian(IsLittle) {}
 
   ~MipsMCCodeEmitter() {}
 
