@@ -1322,6 +1322,36 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(PPC::ADDItocL, dl, MVT::i64,
                                   SDValue(Tmp, 0), GA);
   }
+  case PPCISD::VADD_SPLAT: {
+    // Convert: VADD_SPLAT elt, size
+    // Into:    tmp = VSPLTIS[BHW] elt
+    //          VADDU[BHW]M tmp, tmp
+    // Where:   [BHW] = B for size = 1, H for size = 2, W for size = 4
+    assert(isa<ConstantSDNode>(N->getOperand(0)) &&
+           isa<ConstantSDNode>(N->getOperand(1)) &&
+           "Invalid operand on VADD_SPLAT!");
+    int EltSize = N->getConstantOperandVal(1);
+    unsigned Opc1, Opc2;
+    EVT VT;
+    if (EltSize == 1) {
+      Opc1 = PPC::VSPLTISB;
+      Opc2 = PPC::VADDUBM;
+      VT = MVT::v16i8;
+    } else if (EltSize == 2) {
+      Opc1 = PPC::VSPLTISH;
+      Opc2 = PPC::VADDUHM;
+      VT = MVT::v8i16;
+    } else {
+      assert(EltSize == 4 && "Invalid element size on VADD_SPLAT!");
+      Opc1 = PPC::VSPLTISW;
+      Opc2 = PPC::VADDUWM;
+      VT = MVT::v4i32;
+    }
+    SDValue Elt = getI32Imm(N->getConstantOperandVal(0));
+    SDNode *Tmp = CurDAG->getMachineNode(Opc1, dl, VT, Elt);
+    SDValue TmpVal = SDValue(Tmp, 0);
+    return CurDAG->getMachineNode(Opc2, dl, VT, TmpVal, TmpVal);
+  }
   }
 
   return SelectCode(N);

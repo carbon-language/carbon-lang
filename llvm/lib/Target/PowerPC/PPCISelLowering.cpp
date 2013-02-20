@@ -594,6 +594,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::GET_TLSLD_ADDR:  return "PPCISD::GET_TLSLD_ADDR";
   case PPCISD::ADDIS_DTPREL_HA: return "PPCISD::ADDIS_DTPREL_HA";
   case PPCISD::ADDI_DTPREL_L:   return "PPCISD::ADDI_DTPREL_L";
+  case PPCISD::VADD_SPLAT:      return "PPCISD::VADD_SPLAT";
   }
 }
 
@@ -5020,14 +5021,13 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   // If this value is in the range [-32,30] and is even, use:
   //    tmp = VSPLTI[bhw], result = add tmp, tmp
   if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
-    // FIXME: This is currently disabled because the ADD will be folded back
-    // into an invalid BUILD_VECTOR immediately.
-    return SDValue();
-#if 0
-    SDValue Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG, dl);
-    Res = DAG.getNode(ISD::ADD, dl, Res.getValueType(), Res, Res);
-    return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), Res);
-#endif
+    // To avoid having the optimization undone by constant folding, we
+    // convert to a pseudo that will be expanded later.
+    SDValue Elt = DAG.getConstant(SextVal >> 1, MVT::i32);
+    EVT VT = Op.getValueType();
+    int Size = VT == MVT::v16i8 ? 1 : (VT == MVT::v8i16 ? 2 : 4);
+    SDValue EltSize = DAG.getConstant(Size, MVT::i32);
+    return DAG.getNode(PPCISD::VADD_SPLAT, dl, VT, Elt, EltSize);
   }
 
   // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is

@@ -237,6 +237,11 @@ namespace llvm {
       /// sym@got@dtprel@l.
       ADDI_DTPREL_L,
 
+      /// VRRC = VADD_SPLAT Elt, EltSize - Temporary node to be expanded
+      /// into an ADD of a VSPLTI with itself during instruction selection.
+      /// Necessary to avoid losing this optimization due to constant folds.
+      VADD_SPLAT,
+
       /// STD_32 - This is the STD instruction for use with "32-bit" registers.
       STD_32 = ISD::FIRST_TARGET_MEMORY_OPCODE,
 
