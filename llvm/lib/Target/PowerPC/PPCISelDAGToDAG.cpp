@@ -1323,34 +1323,75 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
                                   SDValue(Tmp, 0), GA);
   }
   case PPCISD::VADD_SPLAT: {
-    // Convert: VADD_SPLAT elt, size
-    // Into:    tmp = VSPLTIS[BHW] elt
-    //          VADDU[BHW]M tmp, tmp
-    // Where:   [BHW] = B for size = 1, H for size = 2, W for size = 4
+    // This expands into one of three sequences, depending on whether
+    // the first operand is odd or even, positive or negative.
     assert(isa<ConstantSDNode>(N->getOperand(0)) &&
            isa<ConstantSDNode>(N->getOperand(1)) &&
            "Invalid operand on VADD_SPLAT!");
+
+    int Elt     = N->getConstantOperandVal(0);
     int EltSize = N->getConstantOperandVal(1);
-    unsigned Opc1, Opc2;
+    unsigned Opc1, Opc2, Opc3;
     EVT VT;
+
     if (EltSize == 1) {
       Opc1 = PPC::VSPLTISB;
       Opc2 = PPC::VADDUBM;
+      Opc3 = PPC::VSUBUBM;
       VT = MVT::v16i8;
     } else if (EltSize == 2) {
       Opc1 = PPC::VSPLTISH;
       Opc2 = PPC::VADDUHM;
+      Opc3 = PPC::VSUBUHM;
       VT = MVT::v8i16;
     } else {
       assert(EltSize == 4 && "Invalid element size on VADD_SPLAT!");
       Opc1 = PPC::VSPLTISW;
       Opc2 = PPC::VADDUWM;
+      Opc3 = PPC::VSUBUWM;
       VT = MVT::v4i32;
     }
-    SDValue Elt = getI32Imm(N->getConstantOperandVal(0));
-    SDNode *Tmp = CurDAG->getMachineNode(Opc1, dl, VT, Elt);
-    SDValue TmpVal = SDValue(Tmp, 0);
-    return CurDAG->getMachineNode(Opc2, dl, VT, TmpVal, TmpVal);
+
+    if ((Elt & 1) == 0) {
+      // Elt is even, in the range [-32,-18] + [16,30].
+      //
+      // Convert: VADD_SPLAT elt, size
+      // Into:    tmp = VSPLTIS[BHW] elt
+      //          VADDU[BHW]M tmp, tmp
+      // Where:   [BHW] = B for size = 1, H for size = 2, W for size = 4
+      SDValue EltVal = getI32Imm(Elt >> 1);
+      SDNode *Tmp = CurDAG->getMachineNode(Opc1, dl, VT, EltVal);
+      SDValue TmpVal = SDValue(Tmp, 0);
+      return CurDAG->getMachineNode(Opc2, dl, VT, TmpVal, TmpVal);
+
+    } else if (Elt > 0) {
+      // Elt is odd and positive, in the range [17,31].
+      //
+      // Convert: VADD_SPLAT elt, size
+      // Into:    tmp1 = VSPLTIS[BHW] elt-16
+      //          tmp2 = VSPLTIS[BHW] -16
+      //          VSUBU[BHW]M tmp1, tmp2
+      SDValue EltVal = getI32Imm(Elt - 16);
+      SDNode *Tmp1 = CurDAG->getMachineNode(Opc1, dl, VT, EltVal);
+      EltVal = getI32Imm(-16);
+      SDNode *Tmp2 = CurDAG->getMachineNode(Opc1, dl, VT, EltVal);
+      return CurDAG->getMachineNode(Opc3, dl, VT, SDValue(Tmp1, 0),
+                                    SDValue(Tmp2, 0));
+
+    } else {
+      // Elt is odd and negative, in the range [-31,-17].
+      //
+      // Convert: VADD_SPLAT elt, size
+      // Into:    tmp1 = VSPLTIS[BHW] elt+16
+      //          tmp2 = VSPLTIS[BHW] -16
+      //          VADDU[BHW]M tmp1, tmp2
+      SDValue EltVal = getI32Imm(Elt + 16);
+      SDNode *Tmp1 = CurDAG->getMachineNode(Opc1, dl, VT, EltVal);
+      EltVal = getI32Imm(-16);
+      SDNode *Tmp2 = CurDAG->getMachineNode(Opc1, dl, VT, EltVal);
+      return CurDAG->getMachineNode(Opc2, dl, VT, SDValue(Tmp1, 0),
+                                    SDValue(Tmp2, 0));
+    }
   }
   }
 

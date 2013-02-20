@@ -5025,11 +5025,17 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
   // Two instruction sequences.
 
   // If this value is in the range [-32,30] and is even, use:
-  //    tmp = VSPLTI[bhw], result = add tmp, tmp
-  if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
-    // To avoid having the optimization undone by constant folding, we
-    // convert to a pseudo that will be expanded later.
-    SDValue Elt = DAG.getConstant(SextVal >> 1, MVT::i32);
+  //     VSPLTI[bhw](val/2) + VSPLTI[bhw](val/2)
+  // If this value is in the range [17,31] and is odd, use:
+  //     VSPLTI[bhw](val-16) - VSPLTI[bhw](-16)
+  // If this value is in the range [-31,-17] and is odd, use:
+  //     VSPLTI[bhw](val+16) + VSPLTI[bhw](-16)
+  // Note the last two are three-instruction sequences.
+  if (SextVal >= -32 && SextVal <= 31) {
+    // To avoid having these optimizations undone by constant folding,
+    // we convert to a pseudo that will be expanded later into one of
+    // the above forms.
+    SDValue Elt = DAG.getConstant(SextVal, MVT::i32);
     EVT VT = Op.getValueType();
     int Size = VT == MVT::v16i8 ? 1 : (VT == MVT::v8i16 ? 2 : 4);
     SDValue EltSize = DAG.getConstant(Size, MVT::i32);
@@ -5127,25 +5133,6 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
       SDValue T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG, dl);
       return BuildVSLDOI(T, T, 3, Op.getValueType(), DAG, dl);
     }
-  }
-
-  // Three instruction sequences.
-
-  // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
-  // FIXME: Disabled because the add gets constant folded.
-  if (0 && SextVal >= 0 && SextVal <= 31) {
-    SDValue LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG, dl);
-    SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
-    LHS = DAG.getNode(ISD::SUB, dl, LHS.getValueType(), LHS, RHS);
-    return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), LHS);
-  }
-  // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
-  // FIXME: Disabled because the add gets constant folded.
-  if (0 && SextVal >= -31 && SextVal <= 0) {
-    SDValue LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG, dl);
-    SDValue RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG, dl);
-    LHS = DAG.getNode(ISD::ADD, dl, LHS.getValueType(), LHS, RHS);
-    return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), LHS);
   }
 
   return SDValue();

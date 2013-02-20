@@ -238,8 +238,9 @@ namespace llvm {
       ADDI_DTPREL_L,
 
       /// VRRC = VADD_SPLAT Elt, EltSize - Temporary node to be expanded
-      /// into an ADD of a VSPLTI with itself during instruction selection.
-      /// Necessary to avoid losing this optimization due to constant folds.
+      /// during instruction selection to optimize a BUILD_VECTOR into
+      /// operations on splats.  This is necessary to avoid losing these
+      /// optimizations due to constant folding.
       VADD_SPLAT,
 
       /// STD_32 - This is the STD instruction for use with "32-bit" registers.

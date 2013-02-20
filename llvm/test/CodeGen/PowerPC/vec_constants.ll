@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=ppc32 -mcpu=g5 | FileCheck %s
-; XFAIL: *
 
 define void @test1(<4 x i32>* %P1, <4 x i32>* %P2, <4 x float>* %P3) nounwind {
 	%tmp = load <4 x i32>* %P1		; <<4 x i32>> [#uses=1]
