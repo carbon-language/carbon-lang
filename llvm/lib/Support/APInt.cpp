@@ -1876,6 +1876,17 @@ APInt APInt::udiv(const APInt& RHS) const {
   return Quotient;
 }
 
+APInt APInt::sdiv(const APInt &RHS) const {
+  if (isNegative()) {
+    if (RHS.isNegative())
+      return (-(*this)).udiv(-RHS);
+    return -((-(*this)).udiv(RHS));
+  }
+  if (RHS.isNegative())
+    return -(this->udiv(-RHS));
+  return this->udiv(RHS);
+}
+
 APInt APInt::urem(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
@@ -1911,6 +1922,17 @@ APInt APInt::urem(const APInt& RHS) const {
   APInt Remainder(1,0);
   divide(*this, lhsWords, RHS, rhsWords, 0, &Remainder);
   return Remainder;
+}
+
+APInt APInt::srem(const APInt &RHS) const {
+  if (isNegative()) {
+    if (RHS.isNegative())
+      return -((-(*this)).urem(-RHS));
+    return -((-(*this)).urem(RHS));
+  }
+  if (RHS.isNegative())
+    return this->urem(-RHS);
+  return this->urem(RHS);
 }
 
 void APInt::udivrem(const APInt &LHS, const APInt &RHS,
@@ -1951,6 +1973,24 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
 
   // Okay, lets do it the long way
   divide(LHS, lhsWords, RHS, rhsWords, &Quotient, &Remainder);
+}
+
+void APInt::sdivrem(const APInt &LHS, const APInt &RHS,
+                    APInt &Quotient, APInt &Remainder) {
+  if (LHS.isNegative()) {
+    if (RHS.isNegative())
+      APInt::udivrem(-LHS, -RHS, Quotient, Remainder);
+    else {
+      APInt::udivrem(-LHS, RHS, Quotient, Remainder);
+      Quotient = -Quotient;
+    }
+    Remainder = -Remainder;
+  } else if (RHS.isNegative()) {
+    APInt::udivrem(LHS, -RHS, Quotient, Remainder);
+    Quotient = -Quotient;
+  } else {
+    APInt::udivrem(LHS, RHS, Quotient, Remainder);
+  }
 }
 
 APInt APInt::sadd_ov(const APInt &RHS, bool &Overflow) const {
