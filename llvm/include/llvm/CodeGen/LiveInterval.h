@@ -461,9 +461,6 @@ namespace llvm {
     void extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd);
     Ranges::iterator extendIntervalStartTo(Ranges::iterator I, SlotIndex NewStr);
     void markValNoForDeletion(VNInfo *V);
-    void mergeIntervalRanges(const LiveInterval &RHS,
-                             VNInfo *LHSValNo = 0,
-                             const VNInfo *RHSValNo = 0);
 
     LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;
 

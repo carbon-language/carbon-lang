@@ -486,148 +486,14 @@ void LiveInterval::join(LiveInterval &Other,
     valnos.resize(NumNewVals);  // shrinkify
 
   // Okay, now insert the RHS live ranges into the LHS.
+  LiveRangeUpdater Updater(this);
   unsigned RangeNo = 0;
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I, ++RangeNo) {
     // Map the valno in the other live range to the current live range.
-    I->valno = NewVNInfo[OtherAssignments[RangeNo]];
-    assert(I->valno && "Adding a dead range?");
+    VNInfo *VNI = NewVNInfo[OtherAssignments[RangeNo]];
+    assert(VNI && "Adding a dead range?");
+    Updater.add(I->start, I->end, VNI);
   }
-  mergeIntervalRanges(Other);
-
-  verify();
-}
-
-/// \brief Helper function for merging in another LiveInterval's ranges.
-///
-/// This is a helper routine implementing an efficient merge of another
-/// LiveIntervals ranges into the current interval.
-///
-/// \param LHSValNo If non-NULL, set as the new value number for every range
-///                 from RHS which is merged into the LHS.
-/// \param RHSValNo If non-NULL, then only ranges in RHS whose original value
-///                 number maches this value number will be merged into LHS.
-void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
-                                       VNInfo *LHSValNo,
-                                       const VNInfo *RHSValNo) {
-  if (RHS.empty())
-    return;
-
-  // Ensure we're starting with a valid range. Note that we don't verify RHS
-  // because it may have had its value numbers adjusted in preparation for
-  // merging.
-  verify();
-
-  // The strategy for merging these efficiently is as follows:
-  //
-  // 1) Find the beginning of the impacted ranges in the LHS.
-  // 2) Create a new, merged sub-squence of ranges merging from the position in
-  //    #1 until either LHS or RHS is exhausted. Any part of LHS between RHS
-  //    entries being merged will be copied into this new range.
-  // 3) Replace the relevant section in LHS with these newly merged ranges.
-  // 4) Append any remaning ranges from RHS if LHS is exhausted in #2.
-  //
-  // We don't follow the typical in-place merge strategy for sorted ranges of
-  // appending the new ranges to the back and then using std::inplace_merge
-  // because one step of the merge can both mutate the original elements and
-  // remove elements from the original. Essentially, because the merge includes
-  // collapsing overlapping ranges, a more complex approach is required.
-
-  // We do an initial binary search to optimize for a common pattern: a large
-  // LHS, and a very small RHS.
-  const_iterator RI = RHS.begin(), RE = RHS.end();
-  iterator LE = end(), LI = std::upper_bound(begin(), LE, *RI);
-
-  // Merge into NewRanges until one of the ranges is exhausted.
-  SmallVector<LiveRange, 4> NewRanges;
-
-  // Keep track of where to begin the replacement.
-  iterator ReplaceI = LI;
-
-  // If there are preceding ranges in the LHS, put the last one into NewRanges
-  // so we can optionally extend it. Adjust the replacement point accordingly.
-  if (LI != begin()) {
-    ReplaceI = llvm::prior(LI);
-    NewRanges.push_back(*ReplaceI);
-  }
-
-  // Now loop over the mergable portions of both LHS and RHS, merging into
-  // NewRanges.
-  while (LI != LE && RI != RE) {
-    // Skip incoming ranges with the wrong value.
-    if (RHSValNo && RI->valno != RHSValNo) {
-      ++RI;
-      continue;
-    }
-
-    // Select the first range. We pick the earliest start point, and then the
-    // largest range.
-    LiveRange R = *LI;
-    if (*RI < R) {
-      R = *RI;
-      ++RI;
-      if (LHSValNo)
-        R.valno = LHSValNo;
-    } else {
-      ++LI;
-    }
-
-    if (NewRanges.empty()) {
-      NewRanges.push_back(R);
-      continue;
-    }
-
-    LiveRange &LastR = NewRanges.back();
-    if (R.valno == LastR.valno) {
-      // Try to merge this range into the last one.
-      if (R.start <= LastR.end) {
-        LastR.end = std::max(LastR.end, R.end);
-        continue;
-      }
-    } else {
-      // We can't merge ranges across a value number.
-      assert(R.start >= LastR.end &&
-             "Cannot overlap two LiveRanges with differing ValID's");
-    }
-
-    // If all else fails, just append the range.
-    NewRanges.push_back(R);
-  }
-  assert(RI == RE || LI == LE);
-
-  // Check for being able to merge into the trailing sequence of ranges on the LHS.
-  if (!NewRanges.empty())
-    for (; LI != LE && (LI->valno == NewRanges.back().valno &&
-                        LI->start <= NewRanges.back().end);
-         ++LI)
-      NewRanges.back().end = std::max(NewRanges.back().end, LI->end);
-
-  // Replace the ranges in the LHS with the newly merged ones. It would be
-  // really nice if there were a move-supporting 'replace' directly in
-  // SmallVector, but as there is not, we pay the price of copies to avoid
-  // wasted memory allocations.
-  SmallVectorImpl<LiveRange>::iterator NRI = NewRanges.begin(),
-                                       NRE = NewRanges.end();
-  for (; ReplaceI != LI && NRI != NRE; ++ReplaceI, ++NRI)
-    *ReplaceI = *NRI;
-  if (NRI == NRE)
-    ranges.erase(ReplaceI, LI);
-  else
-    ranges.insert(LI, NRI, NRE);
-
-  // And finally insert any trailing end of RHS (if we have one).
-  for (; RI != RE; ++RI) {
-    LiveRange R = *RI;
-    if (LHSValNo)
-      R.valno = LHSValNo;
-    if (!ranges.empty() &&
-        ranges.back().valno == R.valno && R.start <= ranges.back().end)
-      ranges.back().end = std::max(ranges.back().end, R.end);
-    else
-      ranges.push_back(R);
-  }
-
-  // Ensure we finished with a valid new sequence of ranges.
-  verify();
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
@@ -636,7 +502,9 @@ void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
 /// the overlapping LiveRanges have the specified value number.
 void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
                                         VNInfo *LHSValNo) {
-  mergeIntervalRanges(RHS, LHSValNo);
+  LiveRangeUpdater Updater(this);
+  for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
+    Updater.add(I->start, I->end, LHSValNo);
 }
 
 /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
@@ -647,7 +515,10 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
                                        const VNInfo *RHSValNo,
                                        VNInfo *LHSValNo) {
-  mergeIntervalRanges(RHS, LHSValNo, RHSValNo);
+  LiveRangeUpdater Updater(this);
+  for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I)
+    if (I->valno == RHSValNo)
+      Updater.add(I->start, I->end, LHSValNo);
 }
 
 /// MergeValueNumberInto - This method is called when two value nubmers
