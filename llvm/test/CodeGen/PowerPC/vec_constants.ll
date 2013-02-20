@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=ppc32 -mcpu=g5 | FileCheck %s
+; RUN: llc -O0 -mcpu=pwr7 < %s | FileCheck %s
+
+target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-v128:128:128-n32:64"
+target triple = "powerpc64-unknown-linux-gnu"
 
 define void @test1(<4 x i32>* %P1, <4 x i32>* %P2, <4 x float>* %P3) nounwind {
 	%tmp = load <4 x i32>* %P1		; <<4 x i32>> [#uses=1]
