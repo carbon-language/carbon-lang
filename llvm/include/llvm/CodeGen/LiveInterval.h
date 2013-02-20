@@ -474,6 +474,64 @@ namespace llvm {
     return OS;
   }
 
+  /// Helper class for performant LiveInterval bulk updates.
+  ///
+  /// Calling LiveInterval::addRange() repeatedly can be expensive on large
+  /// live ranges because segments after the insertion point may need to be
+  /// shifted. The LiveRangeUpdater class can defer the shifting when adding
+  /// many segments in order.
+  ///
+  /// The LiveInterval will be in an invalid state until flush() is called.
+  class LiveRangeUpdater {
+    LiveInterval *LI;
+    SlotIndex LastStart;
+    LiveInterval::iterator WriteI;
+    LiveInterval::iterator ReadI;
+    SmallVector<LiveRange, 16> Spills;
+    void mergeSpills();
+
+  public:
+    /// Create a LiveRangeUpdater for adding segments to LI.
+    /// LI will temporarily be in an invalid state until flush() is called.
+    LiveRangeUpdater(LiveInterval *li = 0) : LI(li) {}
+
+    ~LiveRangeUpdater() { flush(); }
+
+    /// Add a segment to LI and coalesce when possible, just like LI.addRange().
+    /// Segments should be added in increasing start order for best performance.
+    void add(LiveRange);
+
+    void add(SlotIndex Start, SlotIndex End, VNInfo *VNI) {
+      add(LiveRange(Start, End, VNI));
+    }
+
+    /// Return true if the LI is currently in an invalid state, and flush()
+    /// needs to be called.
+    bool isDirty() const { return LastStart.isValid(); }
+
+    /// Flush the updater state to LI so it is valid and contains all added
+    /// segments.
+    void flush();
+
+    /// Select a different destination live range.
+    void setDest(LiveInterval *li) {
+      if (LI != li && isDirty())
+        flush();
+      LI = li;
+    }
+
+    /// Get the current destination live range.
+    LiveInterval *getDest() const { return LI; }
+
+    void dump() const;
+    void print(raw_ostream&) const;
+  };
+
+  inline raw_ostream &operator<<(raw_ostream &OS, const LiveRangeUpdater &X) {
+    X.print(OS);
+    return OS;
+  }
+
   /// LiveRangeQuery - Query information about a live range around a given
   /// instruction. This class hides the implementation details of live ranges,
   /// and it should be used as the primary interface for examining live ranges

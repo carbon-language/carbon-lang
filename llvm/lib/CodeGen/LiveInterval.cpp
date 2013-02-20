@@ -785,6 +785,206 @@ void LiveRange::print(raw_ostream &os) const {
   os << *this;
 }
 
+//===----------------------------------------------------------------------===//
+//                           LiveRangeUpdater class
+//===----------------------------------------------------------------------===//
+//
+// The LiveRangeUpdater class always maintains these invariants:
+//
+// - When LastStart is invalid, Spills is empty and the iterators are invalid.
+//   This is the initial state, and the state created by flush().
+//   In this state, isDirty() returns false.
+//
+// Otherwise, segments are kept in three separate areas:
+//
+// 1. [begin; WriteI) at the front of LI.
+// 2. [ReadI; end) at the back of LI.
+// 3. Spills.
+//
+// - LI.begin() <= WriteI <= ReadI <= LI.end().
+// - Segments in all three areas are fully ordered and coalesced.
+// - Segments in area 1 precede and can't coalesce with segments in area 2.
+// - Segments in Spills precede and can't coalesce with segments in area 2.
+// - No coalescing is possible between segments in Spills and segments in area
+//   1, and there are no overlapping segments.
+//
+// The segments in Spills are not ordered with respect to the segments in area
+// 1. They need to be merged.
+//
+// When they exist, Spills.back().start <= LastStart,
+//                 and WriteI[-1].start <= LastStart.
+
+void LiveRangeUpdater::print(raw_ostream &OS) const {
+  if (!isDirty()) {
+    if (LI)
+      OS << "Clean " << PrintReg(LI->reg) << " updater: " << *LI << '\n';
+    else
+      OS << "Null updater.\n";
+    return;
+  }
+  assert(LI && "Can't have null LI in dirty updater.");
+  OS << PrintReg(LI->reg) << " updater with gap = " << (ReadI - WriteI)
+     << ", last start = " << LastStart
+     << ":\n  Area 1:";
+  for (LiveInterval::const_iterator I = LI->begin(); I != WriteI; ++I)
+    OS << ' ' << *I;
+  OS << "\n  Spills:";
+  for (unsigned I = 0, E = Spills.size(); I != E; ++I)
+    OS << ' ' << Spills[I];
+  OS << "\n  Area 2:";
+  for (LiveInterval::const_iterator I = ReadI, E = LI->end(); I != E; ++I)
+    OS << ' ' << *I;
+  OS << '\n';
+}
+
+void LiveRangeUpdater::dump() const
+{
+  print(errs());
+}
+
+// Determine if A and B should be coalesced.
+static inline bool coalescable(const LiveRange &A, const LiveRange &B) {
+  assert(A.start <= B.start && "Unordered live ranges.");
+  if (A.end == B.start)
+    return A.valno == B.valno;
+  if (A.end < B.start)
+    return false;
+  assert(A.valno == B.valno && "Cannot overlap different values");
+  return true;
+}
+
+void LiveRangeUpdater::add(LiveRange Seg) {
+  assert(LI && "Cannot add to a null destination");
+
+  // Flush the state if Start moves backwards.
+  if (!LastStart.isValid() || LastStart > Seg.start) {
+    if (isDirty())
+      flush();
+    // This brings us to an uninitialized state. Reinitialize.
+    assert(Spills.empty() && "Leftover spilled segments");
+    WriteI = ReadI = LI->begin();
+  }
+
+  // Remember start for next time.
+  LastStart = Seg.start;
+
+  // Advance ReadI until it ends after Seg.start.
+  LiveInterval::iterator E = LI->end();
+  if (ReadI != E && ReadI->end <= Seg.start) {
+    // First try to close the gap between WriteI and ReadI with spills.
+    if (ReadI != WriteI)
+      mergeSpills();
+    // Then advance ReadI.
+    if (ReadI == WriteI)
+      ReadI = WriteI = LI->find(Seg.start);
+    else
+      while (ReadI != E && ReadI->end <= Seg.start)
+        *WriteI++ = *ReadI++;
+  }
+
+  assert(ReadI == E || ReadI->end > Seg.start);
+
+  // Check if the ReadI segment begins early.
+  if (ReadI != E && ReadI->start <= Seg.start) {
+    assert(ReadI->valno == Seg.valno && "Cannot overlap different values");
+    // Bail if Seg is completely contained in ReadI.
+    if (ReadI->end >= Seg.end)
+      return;
+    // Coalesce into Seg.
+    Seg.start = ReadI->start;
+    ++ReadI;
+  }
+
+  // Coalesce as much as possible from ReadI into Seg.
+  while (ReadI != E && coalescable(Seg, *ReadI)) {
+    Seg.end = std::max(Seg.end, ReadI->end);
+    ++ReadI;
+  }
+
+  // Try coalescing Spills.back() into Seg.
+  if (!Spills.empty() && coalescable(Spills.back(), Seg)) {
+    Seg.start = Spills.back().start;
+    Seg.end = std::max(Spills.back().end, Seg.end);
+    Spills.pop_back();
+  }
+
+  // Try coalescing Seg into WriteI[-1].
+  if (WriteI != LI->begin() && coalescable(WriteI[-1], Seg)) {
+    WriteI[-1].end = std::max(WriteI[-1].end, Seg.end);
+    return;
+  }
+
+  // Seg doesn't coalesce with anything, and needs to be inserted somewhere.
+  if (WriteI != ReadI) {
+    *WriteI++ = Seg;
+    return;
+  }
+
+  // Finally, append to LI or Spills.
+  if (WriteI == E) {
+    LI->ranges.push_back(Seg);
+    WriteI = ReadI = LI->ranges.end();
+  } else
+    Spills.push_back(Seg);
+}
+
+// Merge as many spilled segments as possible into the gap between WriteI
+// and ReadI. Advance WriteI to reflect the inserted instructions.
+void LiveRangeUpdater::mergeSpills() {
+  // Perform a backwards merge of Spills and [SpillI;WriteI).
+  size_t GapSize = ReadI - WriteI;
+  size_t NumMoved = std::min(Spills.size(), GapSize);
+  LiveInterval::iterator Src = WriteI;
+  LiveInterval::iterator Dst = Src + NumMoved;
+  LiveInterval::iterator SpillSrc = Spills.end();
+  LiveInterval::iterator B = LI->begin();
+
+  // This is the new WriteI position after merging spills.
+  WriteI = Dst;
+
+  // Now merge Src and Spills backwards.
+  while (Src != Dst) {
+    if (Src != B && Src[-1].start > SpillSrc[-1].start)
+      *--Dst = *--Src;
+    else
+      *--Dst = *--SpillSrc;
+  }
+  assert(NumMoved == size_t(Spills.end() - SpillSrc));
+  Spills.erase(SpillSrc, Spills.end());
+}
+
+void LiveRangeUpdater::flush() {
+  if (!isDirty())
+    return;
+  // Clear the dirty state.
+  LastStart = SlotIndex();
+
+  assert(LI && "Cannot add to a null destination");
+
+  // Nothing to merge?
+  if (Spills.empty()) {
+    LI->ranges.erase(WriteI, ReadI);
+    LI->verify();
+    return;
+  }
+
+  // Resize the WriteI - ReadI gap to match Spills.
+  size_t GapSize = ReadI - WriteI;
+  if (GapSize < Spills.size()) {
+    // The gap is too small. Make some room.
+    size_t WritePos = WriteI - LI->begin();
+    LI->ranges.insert(ReadI, Spills.size() - GapSize, LiveRange());
+    // This also invalidated ReadI, but it is recomputed below.
+    WriteI = LI->ranges.begin() + WritePos;
+  } else {
+    // Shrink the gap if necessary.
+    LI->ranges.erase(WriteI + Spills.size(), ReadI);
+  }
+  ReadI = WriteI + Spills.size();
+  mergeSpills();
+  LI->verify();
+}
+
 unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   // Create initial equivalence classes.
   EqClass.clear();
