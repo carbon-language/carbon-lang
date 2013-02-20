@@ -34,6 +34,7 @@ template <class NodeT> class DomTreeNodeBase;
 typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 
 class LiveRangeCalc {
+  const MachineFunction *MF;
   const MachineRegisterInfo *MRI;
   SlotIndexes *Indexes;
   MachineDominatorTree *DomTree;
@@ -100,17 +101,20 @@ class LiveRangeCalc {
   /// used to add entries directly.
   SmallVector<LiveInBlock, 16> LiveIn;
 
-  /// findReachingDefs - Assuming that LI is live-in to KillMBB and killed at
-  /// Kill, search for values that can reach KillMBB.  All blocks that need LI
-  /// to be live-in are added to LiveIn.  If a unique reaching def is found,
-  /// its value is returned, if Kill is jointly dominated by multiple values,
-  /// NULL is returned.
+  /// Assuming that LI is live-in to KillMBB and killed at Kill, find the set
+  /// of defs that can reach it.
+  ///
+  /// If only one def can reach Kill, all paths from the def to kill are added
+  /// to LI, and the function returns true.
+  ///
+  /// If multiple values can reach Kill, the blocks that need LI to be live in
+  /// are added to the LiveIn array, and the function returns false.
   ///
   /// PhysReg, when set, is used to verify live-in lists on basic blocks.
-  VNInfo *findReachingDefs(LiveInterval *LI,
-                           MachineBasicBlock *KillMBB,
-                           SlotIndex Kill,
-                           unsigned PhysReg);
+  bool findReachingDefs(LiveInterval *LI,
+                        MachineBasicBlock *KillMBB,
+                        SlotIndex Kill,
+                        unsigned PhysReg);
 
   /// updateSSA - Compute the values that will be live in to all requested
   /// blocks in LiveIn.  Create PHI-def values as required to preserve SSA form.
@@ -119,12 +123,11 @@ class LiveRangeCalc {
   /// blocks.  No values are read from the live ranges.
   void updateSSA();
 
-  /// updateLiveIns - Add liveness as specified in the LiveIn vector, using VNI
-  /// as a wildcard value for LiveIn entries without a value.
-  void updateLiveIns(VNInfo *VNI);
+  /// Add liveness as specified in the LiveIn vector.
+  void updateLiveIns();
 
 public:
-  LiveRangeCalc() : MRI(0), Indexes(0), DomTree(0), Alloc(0) {}
+  LiveRangeCalc() : MF(0), MRI(0), Indexes(0), DomTree(0), Alloc(0) {}
 
   //===--------------------------------------------------------------------===//
   // High-level interface.
