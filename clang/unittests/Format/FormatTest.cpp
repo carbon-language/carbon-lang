@@ -576,6 +576,20 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
                "          d, e, f },\n"
                "        { // Group #3\n"
                "          g, h, i } };");
+
+  EXPECT_EQ("S s = {\n"
+            "  // Some comment\n"
+            "  a\n"
+            "\n"
+            "  // Comment after empty line\n"
+            "  b\n"
+            "}", format("S s =    {\n"
+                        "      // Some comment\n"
+                        "  a\n"
+                        "  \n"
+                        "     // Comment after empty line\n"
+                        "      b\n"
+                        "}"));
 }
 
 //===----------------------------------------------------------------------===//

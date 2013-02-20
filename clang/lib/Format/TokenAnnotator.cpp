@@ -266,7 +266,7 @@ private:
     }
     return true;
   }
-  
+
   void updateParameterCount(AnnotatedToken *Left, AnnotatedToken *Current) {
     if (Current->is(tok::comma))
       ++Left->ParameterCount;
@@ -834,6 +834,8 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     } else if (Current->is(tok::lessless) && !Current->Children.empty() &&
                Current->Parent->is(tok::string_literal) &&
                Current->Children[0].is(tok::string_literal)) {
+      Current->MustBreakBefore = true;
+    } else if (Current->FormatTok.NewlinesBefore > 1) {
       Current->MustBreakBefore = true;
     } else {
       Current->MustBreakBefore = false;

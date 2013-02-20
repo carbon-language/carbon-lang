@@ -278,9 +278,9 @@ public:
     LineState State;
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Stack.push_back(
-        ParenState(FirstIndent + 4, FirstIndent, !Style.BinPackParameters,
-                   /*HasMultiParameterLine=*/ false));
+    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent,
+                                     !Style.BinPackParameters,
+                                     /*HasMultiParameterLine=*/ false));
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;
@@ -368,7 +368,7 @@ private:
 
     /// \brief The position of the colon in an ObjC method declaration/call.
     unsigned ColonPos;
-    
+
     /// \brief Break before third operand in ternary expression.
     bool BreakBeforeThirdOperand;
 
@@ -520,11 +520,14 @@ private:
         State.LineContainsContinuedForLoopSection = Previous.isNot(tok::semi);
 
       if (!DryRun) {
+        unsigned NewLines =
+            std::max(1u, std::min(Current.FormatTok.NewlinesBefore,
+                                  Style.MaxEmptyLinesToKeep + 1));
         if (!Line.InPPDirective)
-          Whitespaces.replaceWhitespace(Current, 1, State.Column,
+          Whitespaces.replaceWhitespace(Current, NewLines, State.Column,
                                         WhitespaceStartColumn, Style);
         else
-          Whitespaces.replacePPWhitespace(Current, 1, State.Column,
+          Whitespaces.replacePPWhitespace(Current, NewLines, State.Column,
                                           WhitespaceStartColumn, Style);
       }
 
