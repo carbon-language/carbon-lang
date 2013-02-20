@@ -26,9 +26,11 @@ public:
   X86_64TargetRelocationHandler(const X86_64TargetInfo &ti)
       : _tlsSize(0), _targetInfo(ti) {}
 
-  virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const AtomLayout &,
-                                        const Reference &)const;
+  virtual ErrorOr<void>
+  applyRelocation(ELFWriter &, llvm::FileOutputBuffer &, const AtomLayout &,
+                  const Reference &)const;
+
+  virtual int64_t fixupAddend(const Reference &)const;
 
 private:
   // Cached size of the TLS segment.

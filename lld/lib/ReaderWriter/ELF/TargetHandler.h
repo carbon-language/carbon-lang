@@ -33,6 +33,7 @@
 namespace lld {
 namespace elf {
 template <class ELFT> class ELFDefinedAtom;
+template <class ELFT> class ELFReference;
 class ELFWriter;
 template <class ELFT> class Header;
 template <class ELFT> class Section;
@@ -54,17 +55,20 @@ public:
     return DefinedAtom::typeZeroFill;
   }
 
-  virtual DefinedAtom::ContentPermissions contentPermissions(
-      const ELFDefinedAtom<ELFT> *atom) const {
+  virtual DefinedAtom::ContentPermissions
+  contentPermissions(const ELFDefinedAtom<ELFT> *atom) const {
     return atom->permissions();
   }
+
 };
 
 template <class ELFT> class TargetRelocationHandler {
 public:
-  virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const AtomLayout &,
-                                        const Reference &)const = 0;
+  virtual ErrorOr<void>
+  applyRelocation(ELFWriter &, llvm::FileOutputBuffer &, const AtomLayout &,
+                  const Reference &)const = 0;
+
+  virtual int64_t relocAddend(const Reference &)const { return 0; }
 };
 
 /// \brief An interface to override functions that are provided by the 

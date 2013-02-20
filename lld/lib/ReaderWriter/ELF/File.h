@@ -274,17 +274,6 @@ public:
       const Elf_Shdr *section = _objFile->getElfSection(sit);
       const Elf_Sym *symbol = _objFile->getElfSymbol(it);
 
-      // If its a merge section, the atoms have already 
-      // been created, lets not create the atoms again
-      if (doStringsMerge) {
-        int64_t sectionFlags = section->sh_flags;
-        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
-        if ((section->sh_entsize < 2) &&
-            (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
-          continue;
-        }
-      }
-
       StringRef symbolName;
       if ((EC = _objFile->getSymbolName(section, symbol, symbolName)))
         return;
@@ -364,6 +353,8 @@ public:
         if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
           return;
 
+        const Elf_Shdr *section = _objFile->getSection(*si);
+
         bool isCommon = (*si)->getType() == llvm::ELF::STT_COMMON ||
                         (*si)->st_shndx == llvm::ELF::SHN_COMMON;
 
@@ -423,6 +414,25 @@ public:
           previous_atom->addReference(followOn);
         }
 
+        // If the linker finds that a section has global atoms that are in a 
+        // mergeable section, treat them as defined atoms as they shouldnt be
+        // merged away as well as these symbols have to be part of symbol
+        // resolution
+        int64_t sectionFlags = 0;
+        if (section)
+          sectionFlags = section->sh_flags;
+        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
+        if (doStringsMerge && section && (section->sh_entsize < 2) &&
+            (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
+          if ((*si)->getBinding() == llvm::ELF::STB_GLOBAL) {
+            auto definedMergeAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
+                *this, symbolName, sectionName, (*si), section, symbolData,
+                _references.size(), _references.size(), _references);
+            _definedAtoms._atoms.push_back(definedMergeAtom);
+          }
+          continue;
+        }
+
         auto newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, sectionName, *si, i.first, symbolData);
 
@@ -468,11 +478,14 @@ public:
         // refer to the MergeAtom to allow deduping
         if (doStringsMerge && shdr && (shdr->sh_entsize < 2) &&
             (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
-          const MergeSectionKey ms(shdr, ri->addend());
+          const TargetRelocationHandler<ELFT> &relHandler = _elfTargetInfo
+              .template getTargetHandler<ELFT>().getRelocationHandler();
+          int64_t relocAddend = relHandler.relocAddend(*ri);
+          uint64_t addend = ri->addend() + relocAddend;
+          const MergeSectionKey ms(shdr, addend);
           if (_mergedSectionMap.find(ms) == _mergedSectionMap.end()) {
-            uint64_t addend = ri->addend();
             if (Symbol->getType() != llvm::ELF::STT_SECTION)
-              addend = Symbol->st_value + ri->addend();
+              addend = Symbol->st_value + addend;
             MergeAtomsIter mai = findMergeAtom(shdr, addend);
             if (mai != _mergeAtoms.end()) {
               ri->setOffset(addend - ((*mai)->offset()));
