@@ -227,6 +227,7 @@ testdirs = [ sys.path[0] ]
 # Separator string.
 separator = '-' * 70
 
+failed = False
 
 def usage(parser):
     parser.print_help()
@@ -1516,6 +1517,7 @@ for ia in range(len(archs) if iterArchs else 1):
                                                   failfast=failfast,
                                                   resultclass=LLDBTestResult).run(suite)
 
+        failed = failed or not result.wasSuccessful()
 
 if sdir_has_content and not parsable:
     sys.stderr.write("Session logs for test failures/errors/unexpected successes"
@@ -1537,4 +1539,4 @@ if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
     subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
 
 # Exiting.
-sys.exit(not result.wasSuccessful())
+sys.exit(failed)
