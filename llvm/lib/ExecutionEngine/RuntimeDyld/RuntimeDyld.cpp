@@ -432,14 +432,21 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
     RelocationList &Relocs = i->second;
     SymbolTableMap::const_iterator Loc = GlobalSymbolTable.find(Name);
     if (Loc == GlobalSymbolTable.end()) {
-      // This is an external symbol, try to get it address from
-      // MemoryManager.
-      uint8_t *Addr = (uint8_t*) MemMgr->getPointerToNamedFunction(Name.data(),
+      if (Name.size() == 0) {
+        // This is an absolute symbol, use an address of zero.
+        DEBUG(dbgs() << "Resolving absolute relocations." << "\n");
+        resolveRelocationList(Relocs, 0);
+      }
+      else {
+        // This is an external symbol, try to get it address from
+        // MemoryManager.
+        uint8_t *Addr = (uint8_t*) MemMgr->getPointerToNamedFunction(Name.data(),
                                                                    true);
-      DEBUG(dbgs() << "Resolving relocations Name: " << Name
-              << "\t" << format("%p", Addr)
-              << "\n");
-      resolveRelocationList(Relocs, (uintptr_t)Addr);
+        DEBUG(dbgs() << "Resolving relocations Name: " << Name
+                << "\t" << format("%p", Addr)
+                << "\n");
+        resolveRelocationList(Relocs, (uintptr_t)Addr);
+      }
     } else {
       report_fatal_error("Expected external symbol");
     }
