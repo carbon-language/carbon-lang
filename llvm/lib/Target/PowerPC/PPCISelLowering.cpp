@@ -500,15 +500,15 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // friends. Gcc uses same threshold of 128 bytes (= 32 word stores).
   if (Subtarget->getDarwinDirective() == PPC::DIR_E500mc ||
       Subtarget->getDarwinDirective() == PPC::DIR_E5500) {
-    maxStoresPerMemset = 32;
-    maxStoresPerMemsetOptSize = 16;
-    maxStoresPerMemcpy = 32;
-    maxStoresPerMemcpyOptSize = 8;
-    maxStoresPerMemmove = 32;
-    maxStoresPerMemmoveOptSize = 8;
+    MaxStoresPerMemset = 32;
+    MaxStoresPerMemsetOptSize = 16;
+    MaxStoresPerMemcpy = 32;
+    MaxStoresPerMemcpyOptSize = 8;
+    MaxStoresPerMemmove = 32;
+    MaxStoresPerMemmoveOptSize = 8;
 
     setPrefFunctionAlignment(4);
-    benefitFromCodePlacementOpt = true;
+    BenefitFromCodePlacementOpt = true;
   }
 }
 

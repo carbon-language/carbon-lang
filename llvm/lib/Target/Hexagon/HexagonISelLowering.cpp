@@ -1052,8 +1052,8 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setPrefLoopAlignment(4);
 
     // Limits for inline expansion of memcpy/memmove
-    maxStoresPerMemcpy = 6;
-    maxStoresPerMemmove = 6;
+    MaxStoresPerMemcpy = 6;
+    MaxStoresPerMemmove = 6;
 
     //
     // Library calls for unsupported operations

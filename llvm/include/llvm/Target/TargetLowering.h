@@ -183,7 +183,7 @@ public:
   /// isPredictableSelectExpensive - Return true if selects are only cheaper
   /// than branches if the branch is unlikely to be predicted right.
   bool isPredictableSelectExpensive() const {
-    return predictableSelectIsExpensive;
+    return PredictableSelectIsExpensive;
   }
 
   /// getSetCCResultType - Return the ValueType of the result of SETCC
@@ -659,7 +659,7 @@ public:
   /// return the limit for functions that have OptSize attribute.
   /// @brief Get maximum # of store operations permitted for llvm.memset
   unsigned getMaxStoresPerMemset(bool OptSize) const {
-    return OptSize ? maxStoresPerMemsetOptSize : maxStoresPerMemset;
+    return OptSize ? MaxStoresPerMemsetOptSize : MaxStoresPerMemset;
   }
 
   /// This function returns the maximum number of store operations permitted
@@ -668,7 +668,7 @@ public:
   /// return the limit for functions that have OptSize attribute.
   /// @brief Get maximum # of store operations permitted for llvm.memcpy
   unsigned getMaxStoresPerMemcpy(bool OptSize) const {
-    return OptSize ? maxStoresPerMemcpyOptSize : maxStoresPerMemcpy;
+    return OptSize ? MaxStoresPerMemcpyOptSize : MaxStoresPerMemcpy;
   }
 
   /// This function returns the maximum number of store operations permitted
@@ -677,7 +677,7 @@ public:
   /// return the limit for functions that have OptSize attribute.
   /// @brief Get maximum # of store operations permitted for llvm.memmove
   unsigned getMaxStoresPerMemmove(bool OptSize) const {
-    return OptSize ? maxStoresPerMemmoveOptSize : maxStoresPerMemmove;
+    return OptSize ? MaxStoresPerMemmoveOptSize : MaxStoresPerMemmove;
   }
 
   /// This function returns true if the target allows unaligned memory accesses.
@@ -696,7 +696,7 @@ public:
   /// optimization.
   /// @brief Determine if the target should perform code placement optimization.
   bool shouldOptimizeCodePlacement() const {
-    return benefitFromCodePlacementOpt;
+    return BenefitFromCodePlacementOpt;
   }
 
   /// getOptimalMemOpType - Returns the target specific optimal type for load
@@ -1598,11 +1598,11 @@ protected:
   /// with 16-bit alignment would result in four 2-byte stores and one 1-byte
   /// store.  This only applies to setting a constant array of a constant size.
   /// @brief Specify maximum number of store instructions per memset call.
-  unsigned maxStoresPerMemset;
+  unsigned MaxStoresPerMemset;
 
   /// Maximum number of stores operations that may be substituted for the call
   /// to memset, used for functions with OptSize attribute.
-  unsigned maxStoresPerMemsetOptSize;
+  unsigned MaxStoresPerMemsetOptSize;
 
   /// When lowering \@llvm.memcpy this field specifies the maximum number of
   /// store operations that may be substituted for a call to memcpy. Targets
@@ -1614,11 +1614,11 @@ protected:
   /// and one 1-byte store. This only applies to copying a constant array of
   /// constant size.
   /// @brief Specify maximum bytes of store instructions per memcpy call.
-  unsigned maxStoresPerMemcpy;
+  unsigned MaxStoresPerMemcpy;
 
   /// Maximum number of store operations that may be substituted for a call
   /// to memcpy, used for functions with OptSize attribute.
-  unsigned maxStoresPerMemcpyOptSize;
+  unsigned MaxStoresPerMemcpyOptSize;
 
   /// When lowering \@llvm.memmove this field specifies the maximum number of
   /// store instructions that may be substituted for a call to memmove. Targets
@@ -1629,19 +1629,19 @@ protected:
   /// with 8-bit alignment would result in nine 1-byte stores.  This only
   /// applies to copying a constant array of constant size.
   /// @brief Specify maximum bytes of store instructions per memmove call.
-  unsigned maxStoresPerMemmove;
+  unsigned MaxStoresPerMemmove;
 
   /// Maximum number of store instructions that may be substituted for a call
   /// to memmove, used for functions with OpSize attribute.
-  unsigned maxStoresPerMemmoveOptSize;
+  unsigned MaxStoresPerMemmoveOptSize;
 
   /// This field specifies whether the target can benefit from code placement
   /// optimization.
-  bool benefitFromCodePlacementOpt;
+  bool BenefitFromCodePlacementOpt;
 
-  /// predictableSelectIsExpensive - Tells the code generator that select is
+  /// PredictableSelectIsExpensive - Tells the code generator that select is
   /// more expensive than a branch if the branch is usually predicted right.
-  bool predictableSelectIsExpensive;
+  bool PredictableSelectIsExpensive;
 
 protected:
   /// isLegalRC - Return true if the value types that can be represented by the

@@ -75,9 +75,9 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   // always lower memset, memcpy, and memmove intrinsics to load/store
   // instructions, rather
   // then generating calls to memset, mempcy or memmove.
-  maxStoresPerMemset = (unsigned)0xFFFFFFFF;
-  maxStoresPerMemcpy = (unsigned)0xFFFFFFFF;
-  maxStoresPerMemmove = (unsigned)0xFFFFFFFF;
+  MaxStoresPerMemset = (unsigned)0xFFFFFFFF;
+  MaxStoresPerMemcpy = (unsigned)0xFFFFFFFF;
+  MaxStoresPerMemmove = (unsigned)0xFFFFFFFF;
 
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
 

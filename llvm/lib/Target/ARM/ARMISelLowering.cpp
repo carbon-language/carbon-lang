@@ -835,21 +835,21 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setSchedulingPreference(Sched::Hybrid);
 
   //// temporary - rewrite interface to use type
-  maxStoresPerMemset = 8;
-  maxStoresPerMemsetOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
-  maxStoresPerMemcpy = 4; // For @llvm.memcpy -> sequence of stores
-  maxStoresPerMemcpyOptSize = Subtarget->isTargetDarwin() ? 4 : 2;
-  maxStoresPerMemmove = 4; // For @llvm.memmove -> sequence of stores
-  maxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 4 : 2;
+  MaxStoresPerMemset = 8;
+  MaxStoresPerMemsetOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
+  MaxStoresPerMemcpy = 4; // For @llvm.memcpy -> sequence of stores
+  MaxStoresPerMemcpyOptSize = Subtarget->isTargetDarwin() ? 4 : 2;
+  MaxStoresPerMemmove = 4; // For @llvm.memmove -> sequence of stores
+  MaxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 4 : 2;
 
   // On ARM arguments smaller than 4 bytes are extended, so all arguments
   // are at least 4 bytes aligned.
   setMinStackArgumentAlignment(4);
 
-  benefitFromCodePlacementOpt = true;
+  BenefitFromCodePlacementOpt = true;
 
   // Prefer likely predicted branches to selects on out-of-order cores.
-  predictableSelectIsExpensive = Subtarget->isLikeA9();
+  PredictableSelectIsExpensive = Subtarget->isLikeA9();
 
   setMinFunctionAlignment(Subtarget->isThumb() ? 1 : 2);
 }

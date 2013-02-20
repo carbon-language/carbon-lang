@@ -707,17 +707,17 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   PointerTy = MVT::getIntegerVT(8*TD->getPointerSize(0));
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
-  maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
-  maxStoresPerMemsetOptSize = maxStoresPerMemcpyOptSize
-    = maxStoresPerMemmoveOptSize = 4;
-  benefitFromCodePlacementOpt = false;
+  MaxStoresPerMemset = MaxStoresPerMemcpy = MaxStoresPerMemmove = 8;
+  MaxStoresPerMemsetOptSize = MaxStoresPerMemcpyOptSize
+    = MaxStoresPerMemmoveOptSize = 4;
+  BenefitFromCodePlacementOpt = false;
   UseUnderscoreSetJmp = false;
   UseUnderscoreLongJmp = false;
   SelectIsExpensive = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
   JumpIsExpensive = false;
-  predictableSelectIsExpensive = false;
+  PredictableSelectIsExpensive = false;
   StackPointerRegisterToSaveRestore = 0;
   ExceptionPointerRegister = 0;
   ExceptionSelectorRegister = 0;

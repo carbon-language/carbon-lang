@@ -156,9 +156,9 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  maxStoresPerMemset = maxStoresPerMemsetOptSize = 4;
-  maxStoresPerMemmove = maxStoresPerMemmoveOptSize
-    = maxStoresPerMemcpy = maxStoresPerMemcpyOptSize = 2;
+  MaxStoresPerMemset = MaxStoresPerMemsetOptSize = 4;
+  MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize
+    = MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 2;
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::STORE);

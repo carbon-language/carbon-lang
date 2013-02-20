@@ -520,7 +520,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setExceptionPointerRegister(IsN64 ? Mips::A0_64 : Mips::A0);
   setExceptionSelectorRegister(IsN64 ? Mips::A1_64 : Mips::A1);
 
-  maxStoresPerMemcpy = 16;
+  MaxStoresPerMemcpy = 16;
 }
 
 bool
