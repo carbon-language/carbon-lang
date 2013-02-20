@@ -471,9 +471,9 @@ public:
   template<class EntT>
   class ELFEntityIterator {
   public:
-    typedef void difference_type;
+    typedef ptrdiff_t difference_type;
     typedef EntT value_type;
-    typedef std::forward_iterator_tag iterator_category;
+    typedef std::random_access_iterator_tag iterator_category;
     typedef value_type &reference;
     typedef value_type *pointer;
 
@@ -513,10 +513,22 @@ public:
       return Tmp;
     }
 
+    ELFEntityIterator &operator =(const ELFEntityIterator &Other) {
+      EntitySize = Other.EntitySize;
+      Current = Other.Current;
+      return *this;
+    }
+
+    difference_type operator -(const ELFEntityIterator &Other) const {
+      assert(EntitySize == Other.EntitySize &&
+             "Subtracting iterators of different EntitiySize!");
+      return (Current - Other.Current) / EntitySize;
+    }
+
     const char *get() const { return Current; }
 
   private:
-    const uint64_t EntitySize;
+    uint64_t EntitySize;
     const char *Current;
   };
 
@@ -605,6 +617,7 @@ private:
     return getSection(Rel.w.b);
   }
 
+public:
   bool            isRelocationHasAddend(DataRefImpl Rel) const;
   template<typename T>
   const T        *getEntry(uint16_t Section, uint32_t Entry) const;
@@ -706,8 +719,14 @@ public:
     return SymbolTableSections[0];
   }
 
+  const Elf_Shdr *getDynamicStringTableSectionHeader() const {
+    return dot_dynstr_sec;
+  }
+
   Elf_Dyn_iterator begin_dynamic_table() const;
-  Elf_Dyn_iterator end_dynamic_table() const;
+  /// \param NULLEnd use one past the first DT_NULL entry as the end instead of
+  /// the section size.
+  Elf_Dyn_iterator end_dynamic_table(bool NULLEnd = false) const;
 
   Elf_Sym_iterator begin_elf_dynamic_symbols() const {
     const Elf_Shdr *DynSymtab = SymbolTableSections[0];
@@ -2276,11 +2295,23 @@ ELFObjectFile<ELFT>::begin_dynamic_table() const {
 
 template<class ELFT>
 typename ELFObjectFile<ELFT>::Elf_Dyn_iterator
-ELFObjectFile<ELFT>::end_dynamic_table() const {
-  if (dot_dynamic_sec)
-    return Elf_Dyn_iterator(dot_dynamic_sec->sh_entsize,
-                            (const char *)base() + dot_dynamic_sec->sh_offset +
-                            dot_dynamic_sec->sh_size);
+ELFObjectFile<ELFT>::end_dynamic_table(bool NULLEnd) const {
+  if (dot_dynamic_sec) {
+    Elf_Dyn_iterator Ret(dot_dynamic_sec->sh_entsize,
+                         (const char *)base() + dot_dynamic_sec->sh_offset +
+                         dot_dynamic_sec->sh_size);
+
+    if (NULLEnd) {
+      Elf_Dyn_iterator Start = begin_dynamic_table();
+      for (; Start != Ret && Start->getTag() != ELF::DT_NULL; ++Start)
+        ;
+      // Include the DT_NULL.
+      if (Start != Ret)
+        ++Start;
+      Ret = Start;
+    }
+    return Ret;
+  }
   return Elf_Dyn_iterator(0, 0);
 }
 

@@ -71,6 +71,19 @@ ELF:  .symtab                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  r
 ELF:  .strtab                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
 ELF:  Total: 14
 
+ELF:Dynamic section contains 9 entries
+ELF:  Tag        Type                 Name/Value
+ELF: 00000001 (NEEDED)             Shared library: [libc.so.6]
+ELF: 00000001 (NEEDED)             Shared library: [libm.so.6]
+ELF: 0000000e (SONAME)             Library soname: [libfoo.so]
+ELF: 00000004 (HASH)               {{[0-9a-f]+}}
+ELF: 00000005 (STRTAB)             {{[0-9a-f]+}}
+ELF: 00000006 (SYMTAB)             {{[0-9a-f]+}}
+ELF: 0000000a (STRSZ)              {{[0-9]+}} (bytes)
+ELF: 0000000b (SYMENT)             {{[0-9]+}} (bytes)
+ELF: 00000000 (NULL)               0x0
+ELF:  Total: 9
+
 ELF:Libraries needed:
 ELF:  libc.so.6
 ELF:  libm.so.6
