@@ -360,6 +360,11 @@ namespace llvm {
     /// Renumber the index list, providing space for new instructions.
     void renumberIndexes();
 
+    /// Repair indexes after adding and removing instructions.
+    void repairIndexesInRange(MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator Begin,
+                              MachineBasicBlock::iterator End);
+
     /// Returns the zero index for this analysis.
     SlotIndex getZeroIndex() {
       assert(indexList.front().getIndex() == 0 && "First index is not 0?");

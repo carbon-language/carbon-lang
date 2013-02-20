@@ -1044,6 +1044,8 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
   else
     startIdx = getInstructionIndex(prior(Begin)).getRegSlot();
 
+  Indexes->repairIndexesInRange(MBB, Begin, End);
+
   for (unsigned i = 0, e = OrigRegs.size(); i != e; ++i) {
     unsigned Reg = OrigRegs[i];
     if (!TargetRegisterInfo::isVirtualRegister(Reg))

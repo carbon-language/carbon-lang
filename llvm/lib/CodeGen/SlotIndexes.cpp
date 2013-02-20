@@ -142,6 +142,67 @@ void SlotIndexes::renumberIndexes(IndexList::iterator curItr) {
   ++NumLocalRenum;
 }
 
+// Repair indexes after adding and removing instructions.
+void SlotIndexes::repairIndexesInRange(MachineBasicBlock *MBB,
+                                       MachineBasicBlock::iterator Begin,
+                                       MachineBasicBlock::iterator End) {
+  bool includeStart = (Begin == MBB->begin());
+  SlotIndex startIdx;
+  if (includeStart)
+    startIdx = getMBBStartIdx(MBB);
+  else
+    startIdx = getInstructionIndex(Begin);
+
+  SlotIndex endIdx;
+  if (End == MBB->end())
+    endIdx = getMBBEndIdx(MBB);
+  else
+    endIdx = getInstructionIndex(End);
+
+  // FIXME: Conceptually, this code is implementing an iterator on MBB that
+  // optionally includes an additional position prior to MBB->begin(), indicated
+  // by the includeStart flag. This is done so that we can iterate MIs in a MBB
+  // in parallel with SlotIndexes, but there should be a better way to do this.
+  IndexList::iterator ListB = startIdx.listEntry();
+  IndexList::iterator ListI = endIdx.listEntry();
+  MachineBasicBlock::iterator MBBI = End;
+  bool pastStart = false;
+  while (ListI != ListB || MBBI != Begin || (includeStart && !pastStart)) {
+    assert(ListI->getIndex() >= startIdx.getIndex() &&
+           (includeStart || !pastStart) &&
+           "Decremented past the beginning of region to repair.");
+
+    MachineInstr *SlotMI = ListI->getInstr();
+    MachineInstr *MI = (MBBI != MBB->end() && !pastStart) ? MBBI : 0;
+    bool MBBIAtBegin = MBBI == Begin && (!includeStart || pastStart);
+
+    if (SlotMI == MI && !MBBIAtBegin) {
+      --ListI;
+      if (MBBI != Begin)
+        --MBBI;
+      else
+        pastStart = true;
+    } else if (MI && mi2iMap.find(MI) == mi2iMap.end()) {
+      if (MBBI != Begin)
+        --MBBI;
+      else
+        pastStart = true;
+    } else {
+      --ListI;
+      if (SlotMI)
+        removeMachineInstrFromMaps(SlotMI);
+    }
+  }
+
+  // In theory this could be combined with the previous loop, but it is tricky
+  // to update the IndexList while we are iterating it.
+  for (MachineBasicBlock::iterator I = End; I != Begin;) {
+    --I;
+    MachineInstr *MI = I;
+    if (mi2iMap.find(MI) == mi2iMap.end())
+      insertMachineInstrInMaps(MI);
+  }
+}
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void SlotIndexes::dump() const {
