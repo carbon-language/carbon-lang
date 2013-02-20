@@ -1170,3 +1170,15 @@ namespace test63 {
   // CHECK: define linkonce_odr hidden void @_ZN6test631A3fooILNS_1EE0EEEvv()
   // CHECK: define linkonce_odr hidden void @_ZN6test631A1BILNS_1EE0EE3fooEv()
 }
+
+// Don't ignore the visibility of template arguments just because we
+// explicitly instantiated something.
+namespace test64 {
+  struct HIDDEN A {};
+  template <class P> struct B {
+    static DEFAULT void foo() {}
+  };
+
+  template class B<A>;
+  // CHECK: define weak_odr hidden void @_ZN6test641BINS_1AEE3fooEv()
+}

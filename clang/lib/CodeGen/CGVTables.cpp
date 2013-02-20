@@ -116,7 +116,7 @@ static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
       Fn->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
     return;
 
-  if (MD->getExplicitVisibility())
+  if (MD->getExplicitVisibility(ValueDecl::VisibilityForValue))
     return;
 
   switch (MD->getTemplateSpecializationKind()) {

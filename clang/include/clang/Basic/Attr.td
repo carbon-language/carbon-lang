@@ -732,6 +732,14 @@ def Visibility : InheritableAttr {
                            ["Default", "Hidden", "Hidden", "Protected"]>];
 }
 
+def TypeVisibility : InheritableAttr {
+  let Clone = 0;
+  let Spellings = [GNU<"type_visibility">, CXX11<"clang", "type_visibility">];
+  let Args = [EnumArgument<"Visibility", "VisibilityType",
+                           ["default", "hidden", "internal", "protected"],
+                           ["Default", "Hidden", "Hidden", "Protected"]>];
+}
+
 def VecReturn : InheritableAttr {
   let Spellings = [GNU<"vecreturn">];
   let Subjects = [CXXRecord];

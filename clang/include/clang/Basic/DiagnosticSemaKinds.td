@@ -1849,7 +1849,8 @@ def warn_attribute_wrong_decl_type : Warning<
   "functions, methods, and parameters|classes|variables|methods|"
   "variables, functions and labels|fields and global variables|structs|"
   "variables, functions and tag types|thread-local variables|"
-  "variables and fields|variables, data members and tag types}1">,
+  "variables and fields|variables, data members and tag types|"
+  "types and namespaces}1">,
   InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
@@ -1858,7 +1859,8 @@ def err_attribute_wrong_decl_type : Error<
   "functions, methods, and parameters|classes|variables|methods|"
   "variables, functions and labels|fields and global variables|structs|"
   "variables, functions and tag types|thread-local variables|"
-  "variables and fields|variables, data members and tag types}1">;
+  "variables and fields|variables, data members and tag types|"
+  "types and namespaces}1">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">,
   InGroup<IgnoredAttributes>;

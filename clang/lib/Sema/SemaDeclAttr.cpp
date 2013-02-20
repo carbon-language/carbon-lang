@@ -50,7 +50,8 @@ enum AttributeDeclKind {
   ExpectedVariableFunctionOrTag,
   ExpectedTLSVar,
   ExpectedVariableOrField,
-  ExpectedVariableFieldOrTag
+  ExpectedVariableFieldOrTag,
+  ExpectedTypeOrNamespace
 };
 
 //===----------------------------------------------------------------------===//
@@ -2254,29 +2255,57 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
     D->addAttr(NewAttr);
 }
 
+template <class T>
+static T *mergeVisibilityAttr(Sema &S, Decl *D, SourceRange range,
+                              typename T::VisibilityType value,
+                              unsigned attrSpellingListIndex) {
+  T *existingAttr = D->getAttr<T>();
+  if (existingAttr) {
+    typename T::VisibilityType existingValue = existingAttr->getVisibility();
+    if (existingValue == value)
+      return NULL;
+    S.Diag(existingAttr->getLocation(), diag::err_mismatched_visibility);
+    S.Diag(range.getBegin(), diag::note_previous_attribute);
+    D->dropAttr<T>();
+  }
+  return ::new (S.Context) T(range, S.Context, value, attrSpellingListIndex);
+}
+
 VisibilityAttr *Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
                                           VisibilityAttr::VisibilityType Vis,
                                           unsigned AttrSpellingListIndex) {
-  if (isa<TypedefNameDecl>(D)) {
-    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "visibility";
-    return NULL;
-  }
-  VisibilityAttr *ExistingAttr = D->getAttr<VisibilityAttr>();
-  if (ExistingAttr) {
-    VisibilityAttr::VisibilityType ExistingVis = ExistingAttr->getVisibility();
-    if (ExistingVis == Vis)
-      return NULL;
-    Diag(ExistingAttr->getLocation(), diag::err_mismatched_visibility);
-    Diag(Range.getBegin(), diag::note_previous_attribute);
-    D->dropAttr<VisibilityAttr>();
-  }
-  return ::new (Context) VisibilityAttr(Range, Context, Vis,
-                                        AttrSpellingListIndex);
+  return ::mergeVisibilityAttr<VisibilityAttr>(*this, D, Range, Vis,
+                                               AttrSpellingListIndex);
 }
 
-static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+TypeVisibilityAttr *Sema::mergeTypeVisibilityAttr(Decl *D, SourceRange Range,
+                                      TypeVisibilityAttr::VisibilityType Vis,
+                                      unsigned AttrSpellingListIndex) {
+  return ::mergeVisibilityAttr<TypeVisibilityAttr>(*this, D, Range, Vis,
+                                                   AttrSpellingListIndex);
+}
+
+static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr,
+                                 bool isTypeVisibility) {
+  // Visibility attributes don't mean anything on a typedef.
+  if (isa<TypedefNameDecl>(D)) {
+    S.Diag(Attr.getRange().getBegin(), diag::warn_attribute_ignored)
+      << Attr.getName();
+    return;
+  }
+
+  // 'type_visibility' can only go on a type or namespace.
+  if (isTypeVisibility &&
+      !(isa<TagDecl>(D) ||
+        isa<ObjCInterfaceDecl>(D) ||
+        isa<NamespaceDecl>(D))) {
+    S.Diag(Attr.getRange().getBegin(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedTypeOrNamespace;
+    return;
+  }
+
   // check the attribute arguments.
-  if(!checkAttributeNumArgs(S, Attr, 1))
+  if (!checkAttributeNumArgs(S, Attr, 1))
     return;
 
   Expr *Arg = Attr.getArg(0);
@@ -2285,7 +2314,7 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   if (!Str || !Str->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "visibility" << 1;
+      << (isTypeVisibility ? "type_visibility" : "visibility") << 1;
     return;
   }
 
@@ -2313,10 +2342,16 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   unsigned Index = Attr.getAttributeSpellingListIndex();
-  VisibilityAttr *NewAttr = S.mergeVisibilityAttr(D, Attr.getRange(), type,
-                                                  Index);
-  if (NewAttr)
-    D->addAttr(NewAttr);
+  clang::Attr *newAttr;
+  if (isTypeVisibility) {
+    newAttr = S.mergeTypeVisibilityAttr(D, Attr.getRange(),
+                                    (TypeVisibilityAttr::VisibilityType) type,
+                                        Index);
+  } else {
+    newAttr = S.mergeVisibilityAttr(D, Attr.getRange(), type, Index);
+  }
+  if (newAttr)
+    D->addAttr(newAttr);
 }
 
 static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
@@ -4693,7 +4728,12 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleReturnsTwiceAttr(S, D, Attr);
     break;
   case AttributeList::AT_Used:        handleUsedAttr        (S, D, Attr); break;
-  case AttributeList::AT_Visibility:  handleVisibilityAttr  (S, D, Attr); break;
+  case AttributeList::AT_Visibility:
+    handleVisibilityAttr(S, D, Attr, false);
+    break;
+  case AttributeList::AT_TypeVisibility:
+    handleVisibilityAttr(S, D, Attr, true);
+    break;
   case AttributeList::AT_WarnUnusedResult: handleWarnUnusedResult(S, D, Attr);
     break;
   case AttributeList::AT_Weak:        handleWeakAttr        (S, D, Attr); break;

@@ -1835,6 +1835,9 @@ bool Sema::mergeDeclAttribute(NamedDecl *D, InheritableAttr *Attr,
   else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
     NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility(),
                                   AttrSpellingListIndex);
+  else if (TypeVisibilityAttr *VA = dyn_cast<TypeVisibilityAttr>(Attr))
+    NewAttr = mergeTypeVisibilityAttr(D, VA->getRange(), VA->getVisibility(),
+                                      AttrSpellingListIndex);
   else if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
     NewAttr = mergeDLLImportAttr(D, ImportA->getRange(),
                                  AttrSpellingListIndex);

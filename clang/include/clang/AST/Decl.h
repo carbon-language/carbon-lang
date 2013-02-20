@@ -300,9 +300,16 @@ public:
   /// \brief Determines the linkage and visibility of this entity.
   LinkageInfo getLinkageAndVisibility() const;
 
+  /// Kinds of explicit visibility.
+  enum ExplicitVisibilityKind {
+    VisibilityForType,
+    VisibilityForValue
+  };
+
   /// \brief If visibility was explicitly specified for this
   /// declaration, return that visibility.
-  llvm::Optional<Visibility> getExplicitVisibility() const;
+  llvm::Optional<Visibility>
+  getExplicitVisibility(ExplicitVisibilityKind kind) const;
 
   /// \brief Clear the linkage cache in response to a change
   /// to the declaration.

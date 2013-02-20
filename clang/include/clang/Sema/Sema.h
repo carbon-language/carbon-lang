@@ -1687,6 +1687,9 @@ public:
                                           StringRef Message,
                                           bool Override,
                                           unsigned AttrSpellingListIndex);
+  TypeVisibilityAttr *mergeTypeVisibilityAttr(Decl *D, SourceRange Range,
+                                       TypeVisibilityAttr::VisibilityType Vis,
+                                              unsigned AttrSpellingListIndex);
   VisibilityAttr *mergeVisibilityAttr(Decl *D, SourceRange Range,
                                       VisibilityAttr::VisibilityType Vis,
                                       unsigned AttrSpellingListIndex);
