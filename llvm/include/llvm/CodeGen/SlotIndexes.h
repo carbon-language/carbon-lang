@@ -112,7 +112,7 @@ namespace llvm {
       return lie.getPointer();
     }
 
-    int getIndex() const {
+    unsigned getIndex() const {
       return listEntry()->getIndex() | getSlot();
     }
 
