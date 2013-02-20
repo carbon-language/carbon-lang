@@ -522,4 +522,14 @@ TEST(APIntTest, Rotate) {
   EXPECT_EQ(Rot, Big.rotr(144));
 }
 
+TEST(APIntTest, Splat) {
+  APInt ValA(8, 0x01);
+  EXPECT_EQ(ValA, APInt::getSplat(8, ValA));
+  EXPECT_EQ(APInt(64, 0x0101010101010101ULL), APInt::getSplat(64, ValA));
+
+  APInt ValB(3, 5);
+  EXPECT_EQ(APInt(4, 0xD), APInt::getSplat(4, ValB));
+  EXPECT_EQ(APInt(15, 0xDB6D), APInt::getSplat(15, ValB));
+}
+
 }

@@ -505,6 +505,17 @@ public:
     return getAllOnesValue(numBits).lshr(numBits - loBitsSet);
   }
 
+  /// \brief Return a value containing V broadcasted over NewLen bits.
+  static APInt getSplat(unsigned NewLen, const APInt &V) {
+    assert(NewLen >= V.getBitWidth() && "Can't splat to smaller bit width!");
+
+    APInt Val = V.zextOrSelf(NewLen);
+    for (unsigned I = V.getBitWidth(); I < NewLen; I <<= 1)
+      Val |= Val << I;
+
+    return Val;
+  }
+
   /// \brief Determine if two APInts have the same value, after zero-extending
   /// one of them (if needed!) to ensure that the bit-widths match.
   static bool isSameValue(const APInt &I1, const APInt &I2) {
