@@ -124,14 +124,17 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
   unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
   unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
-  AFI->setFramePtrSpillOffset(MFI->getObjectOffset(FramePtrSpillFI) + NumBytes);
+  bool HasFP = hasFP(MF);
+  if (HasFP)
+    AFI->setFramePtrSpillOffset(MFI->getObjectOffset(FramePtrSpillFI) +
+                                NumBytes);
   AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
   AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
   NumBytes = DPRCSOffset;
 
   // Adjust FP so it point to the stack slot that contains the previous FP.
-  if (hasFP(MF)) {
+  if (HasFP) {
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0)
       .setMIFlags(MachineInstr::FrameSetup));
@@ -146,7 +149,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes,
                  MachineInstr::FrameSetup);
 
-  if (STI.isTargetELF() && hasFP(MF))
+  if (STI.isTargetELF() && HasFP)
     MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
                              AFI->getFramePtrSpillOffset());
 
