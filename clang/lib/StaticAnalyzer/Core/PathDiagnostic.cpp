@@ -213,9 +213,8 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
   Diags.InsertNode(OwningD.take());
 }
 
-static llvm::Optional<bool> comparePath(const PathPieces &X,
-                                        const PathPieces &Y);
-static llvm::Optional<bool>
+static Optional<bool> comparePath(const PathPieces &X, const PathPieces &Y);
+static Optional<bool>
 compareControlFlow(const PathDiagnosticControlFlowPiece &X,
                    const PathDiagnosticControlFlowPiece &Y) {
   FullSourceLoc XSL = X.getStartLocation().asLocation();
@@ -226,18 +225,16 @@ compareControlFlow(const PathDiagnosticControlFlowPiece &X,
   FullSourceLoc YEL = Y.getEndLocation().asLocation();
   if (XEL != YEL)
     return XEL.isBeforeInTranslationUnitThan(YEL);
-  return llvm::Optional<bool>();
+  return Optional<bool>();
 }
 
-static llvm::Optional<bool>
-compareMacro(const PathDiagnosticMacroPiece &X,
-             const PathDiagnosticMacroPiece &Y) {
+static Optional<bool> compareMacro(const PathDiagnosticMacroPiece &X,
+                                   const PathDiagnosticMacroPiece &Y) {
   return comparePath(X.subPieces, Y.subPieces);
 }
 
-static llvm::Optional<bool>
-compareCall(const PathDiagnosticCallPiece &X,
-            const PathDiagnosticCallPiece &Y) {
+static Optional<bool> compareCall(const PathDiagnosticCallPiece &X,
+                                  const PathDiagnosticCallPiece &Y) {
   FullSourceLoc X_CEL = X.callEnter.asLocation();
   FullSourceLoc Y_CEL = Y.callEnter.asLocation();
   if (X_CEL != Y_CEL)
@@ -253,8 +250,8 @@ compareCall(const PathDiagnosticCallPiece &X,
   return comparePath(X.path, Y.path);
 }
 
-static llvm::Optional<bool> comparePiece(const PathDiagnosticPiece &X,
-                                         const PathDiagnosticPiece &Y) {
+static Optional<bool> comparePiece(const PathDiagnosticPiece &X,
+                                   const PathDiagnosticPiece &Y) {
   if (X.getKind() != Y.getKind())
     return X.getKind() < Y.getKind();
   
@@ -286,7 +283,7 @@ static llvm::Optional<bool> comparePiece(const PathDiagnosticPiece &X,
       return compareControlFlow(cast<PathDiagnosticControlFlowPiece>(X),
                                 cast<PathDiagnosticControlFlowPiece>(Y));
     case clang::ento::PathDiagnosticPiece::Event:
-      return llvm::Optional<bool>();
+      return Optional<bool>();
     case clang::ento::PathDiagnosticPiece::Macro:
       return compareMacro(cast<PathDiagnosticMacroPiece>(X),
                           cast<PathDiagnosticMacroPiece>(Y));
@@ -297,16 +294,15 @@ static llvm::Optional<bool> comparePiece(const PathDiagnosticPiece &X,
   llvm_unreachable("all cases handled");
 }
 
-static llvm::Optional<bool> comparePath(const PathPieces &X,
-                                        const PathPieces &Y) {
+static Optional<bool> comparePath(const PathPieces &X, const PathPieces &Y) {
   if (X.size() != Y.size())
     return X.size() < Y.size();
   for (unsigned i = 0, n = X.size(); i != n; ++i) {
-    llvm::Optional<bool> b = comparePiece(*X[i], *Y[i]);
+    Optional<bool> b = comparePiece(*X[i], *Y[i]);
     if (b.hasValue())
       return b.getValue();
   }
-  return llvm::Optional<bool>();
+  return Optional<bool>();
 }
 
 static bool compare(const PathDiagnostic &X, const PathDiagnostic &Y) {
@@ -344,7 +340,7 @@ static bool compare(const PathDiagnostic &X, const PathDiagnostic &Y) {
     if (*XI != *YI)
       return (*XI) < (*YI);
   }
-  llvm::Optional<bool> b = comparePath(X.path, Y.path);
+  Optional<bool> b = comparePath(X.path, Y.path);
   assert(b.hasValue());
   return b.getValue();
 }
@@ -1029,7 +1025,7 @@ std::string StackHintGeneratorForSymbol::getMessage(const ExplodedNode *N){
     }
 
     // Check if the parameter is a pointer to the symbol.
-    if (llvm::Optional<loc::MemRegionVal> Reg = SV.getAs<loc::MemRegionVal>()) {
+    if (Optional<loc::MemRegionVal> Reg = SV.getAs<loc::MemRegionVal>()) {
       SVal PSV = State->getSVal(Reg->getRegion());
       SymbolRef AS = PSV.getAsLocSymbol();
       if (AS == Sym) {

@@ -482,7 +482,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
         // the lazy compound value when the variable is not a reference.
         if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() &&
             !VD->getType()->isReferenceType()) {
-          if (llvm::Optional<loc::MemRegionVal> M =
+          if (Optional<loc::MemRegionVal> M =
                   InitVal.getAs<loc::MemRegionVal>()) {
             InitVal = state->getSVal(M->getRegion());
             assert(InitVal.getAs<nonloc::LazyCompoundVal>());
@@ -825,7 +825,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           //  Note: technically we do "E == 0", but this is the same in the
           //    transfer functions as "0 == E".
           SVal Result;          
-          if (llvm::Optional<Loc> LV = V.getAs<Loc>()) {
+          if (Optional<Loc> LV = V.getAs<Loc>()) {
             Loc X = svalBuilder.makeNull();
             Result = evalBinOp(state, BO_EQ, *LV, X, U->getType());
           }

@@ -121,8 +121,8 @@ withExplicitVisibilityAlready(LVComputationKind oldKind) {
   return newKind;
 }
 
-static llvm::Optional<Visibility> getExplicitVisibility(const NamedDecl *D,
-                                                        LVComputationKind kind) {
+static Optional<Visibility> getExplicitVisibility(const NamedDecl *D,
+                                                  LVComputationKind kind) {
   assert(!hasExplicitVisibilityAlready(kind) &&
          "asking for explicit visibility when we shouldn't be");
   return D->getExplicitVisibility((NamedDecl::ExplicitVisibilityKind) kind);
@@ -154,7 +154,7 @@ static Visibility getVisibilityFromAttr(const T *attr) {
 }
 
 /// Return the explicit visibility of the given declaration.
-static llvm::Optional<Visibility> getVisibilityOf(const NamedDecl *D,
+static Optional<Visibility> getVisibilityOf(const NamedDecl *D,
                                     NamedDecl::ExplicitVisibilityKind kind) {
   // If we're ultimately computing the visibility of a type, look for
   // a 'type_visibility' attribute before looking for 'visibility'.
@@ -180,7 +180,7 @@ static llvm::Optional<Visibility> getVisibilityOf(const NamedDecl *D,
         return DefaultVisibility;
   }
 
-  return llvm::Optional<Visibility>();
+  return Optional<Visibility>();
 }
 
 static LinkageInfo getLVForType(QualType T) {
@@ -517,8 +517,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   LinkageInfo LV;
 
   if (!hasExplicitVisibilityAlready(computation)) {
-    if (llvm::Optional<Visibility> Vis
-          = getExplicitVisibility(D, computation)) {
+    if (Optional<Visibility> Vis = getExplicitVisibility(D, computation)) {
       LV.mergeVisibility(*Vis, true);
     } else {
       // If we're declared in a namespace with a visibility attribute,
@@ -528,8 +527,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
            DC = DC->getParent()) {
         const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
         if (!ND) continue;
-        if (llvm::Optional<Visibility> Vis
-              = getExplicitVisibility(ND, computation)) {
+        if (Optional<Visibility> Vis = getExplicitVisibility(ND, computation)) {
           LV.mergeVisibility(*Vis, true);
           break;
         }
@@ -702,8 +700,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
 
   // If we have an explicit visibility attribute, merge that in.
   if (!hasExplicitVisibilityAlready(computation)) {
-    if (llvm::Optional<Visibility> Vis
-          = getExplicitVisibility(D, computation))
+    if (Optional<Visibility> Vis = getExplicitVisibility(D, computation))
       LV.mergeVisibility(*Vis, true);
     // If we're paying attention to global visibility, apply
     // -finline-visibility-hidden if this is an inline method.
@@ -883,11 +880,11 @@ void NamedDecl::verifyLinkage() const {
   assert(!D || D->CachedLinkage == CachedLinkage);
 }
 
-llvm::Optional<Visibility>
+Optional<Visibility>
 NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
   // Use the most recent declaration of a variable.
   if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
-    if (llvm::Optional<Visibility> V = getVisibilityOf(Var, kind))
+    if (Optional<Visibility> V = getVisibilityOf(Var, kind))
       return V;
 
     if (Var->isStaticDataMember()) {
@@ -896,12 +893,12 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
         return getVisibilityOf(InstantiatedFrom, kind);
     }
 
-    return llvm::Optional<Visibility>();
+    return Optional<Visibility>();
   }
   // Use the most recent declaration of a function, and also handle
   // function template specializations.
   if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(this)) {
-    if (llvm::Optional<Visibility> V = getVisibilityOf(fn, kind))
+    if (Optional<Visibility> V = getVisibilityOf(fn, kind))
       return V;
 
     // If the function is a specialization of a template with an
@@ -917,11 +914,11 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
     if (InstantiatedFrom)
       return getVisibilityOf(InstantiatedFrom, kind);
 
-    return llvm::Optional<Visibility>();
+    return Optional<Visibility>();
   }
 
   // Otherwise, just check the declaration itself first.
-  if (llvm::Optional<Visibility> V = getVisibilityOf(this, kind))
+  if (Optional<Visibility> V = getVisibilityOf(this, kind))
     return V;
 
   // The visibility of a template is stored in the templated decl.
@@ -944,7 +941,7 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
       return getVisibilityOf(InstantiatedFrom, kind);
   }
 
-  return llvm::Optional<Visibility>();
+  return Optional<Visibility>();
 }
 
 static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
@@ -960,8 +957,8 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
 
     LinkageInfo LV;
     if (!hasExplicitVisibilityAlready(computation)) {
-      if (llvm::Optional<Visibility> Vis
-            = getExplicitVisibility(Function, computation))
+      if (Optional<Visibility> Vis =
+              getExplicitVisibility(Function, computation))
         LV.mergeVisibility(*Vis, true);
     }
 
@@ -987,8 +984,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
       if (Var->getStorageClass() == SC_PrivateExtern)
         LV.mergeVisibility(HiddenVisibility, true);
       else if (!hasExplicitVisibilityAlready(computation)) {
-        if (llvm::Optional<Visibility> Vis
-              = getExplicitVisibility(Var, computation))
+        if (Optional<Visibility> Vis = getExplicitVisibility(Var, computation))
           LV.mergeVisibility(*Vis, true);
       }
 

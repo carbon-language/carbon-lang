@@ -277,9 +277,9 @@ namespace clang {
 
     /// \brief Optionally returns true or false if the preallocated preprocessed
     /// entity with index \p Index came from file \p FID.
-    virtual llvm::Optional<bool> isPreprocessedEntityInFileID(unsigned Index,
-                                                              FileID FID) {
-      return llvm::Optional<bool>();
+    virtual Optional<bool> isPreprocessedEntityInFileID(unsigned Index,
+                                                        FileID FID) {
+      return Optional<bool>();
     }
   };
   

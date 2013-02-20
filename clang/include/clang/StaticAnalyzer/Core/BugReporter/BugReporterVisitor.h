@@ -227,7 +227,7 @@ public:
                     BugReporterContext &BRC,
                     BugReport &R,
                     const ExplodedNode *N,
-                    llvm::Optional<bool> &prunable);
+                    Optional<bool> &prunable);
 };
 
 /// \brief Suppress reports that might lead to known false positives.

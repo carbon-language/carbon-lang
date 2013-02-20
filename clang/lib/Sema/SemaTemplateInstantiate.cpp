@@ -608,9 +608,9 @@ void Sema::PrintInstantiationStack() {
   }
 }
 
-llvm::Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
+Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
   if (InNonInstantiationSFINAEContext)
-    return llvm::Optional<TemplateDeductionInfo *>(0);
+    return Optional<TemplateDeductionInfo *>(0);
 
   for (SmallVector<ActiveTemplateInstantiation, 16>::const_reverse_iterator
          Active = ActiveTemplateInstantiations.rbegin(),
@@ -628,7 +628,7 @@ llvm::Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
     case ActiveTemplateInstantiation::ExceptionSpecInstantiation:
       // This is a template instantiation, so there is no SFINAE.
-      return llvm::Optional<TemplateDeductionInfo *>();
+      return Optional<TemplateDeductionInfo *>();
 
     case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation:
     case ActiveTemplateInstantiation::PriorTemplateArgumentSubstitution:
@@ -647,7 +647,7 @@ llvm::Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
     }
   }
 
-  return llvm::Optional<TemplateDeductionInfo *>();
+  return Optional<TemplateDeductionInfo *>();
 }
 
 /// \brief Retrieve the depth and index of a parameter pack.
@@ -707,7 +707,7 @@ namespace {
                              llvm::ArrayRef<UnexpandedParameterPack> Unexpanded,
                                  bool &ShouldExpand,
                                  bool &RetainExpansion,
-                                 llvm::Optional<unsigned> &NumExpansions) {
+                                 Optional<unsigned> &NumExpansions) {
       return getSema().CheckParameterPacksForExpansion(EllipsisLoc, 
                                                        PatternRange, Unexpanded,
                                                        TemplateArgs, 
@@ -827,7 +827,7 @@ namespace {
 
     ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                             int indexAdjustment,
-                                        llvm::Optional<unsigned> NumExpansions,
+                                            Optional<unsigned> NumExpansions,
                                             bool ExpectParameterPack);
 
     /// \brief Transforms a template type parameter type by performing
@@ -1363,7 +1363,7 @@ QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
 ParmVarDecl *
 TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                                  int indexAdjustment,
-                                       llvm::Optional<unsigned> NumExpansions,
+                                               Optional<unsigned> NumExpansions,
                                                  bool ExpectParameterPack) {
   return SemaRef.SubstParmVarDecl(OldParm, TemplateArgs, indexAdjustment,
                                   NumExpansions, ExpectParameterPack);
@@ -1629,7 +1629,7 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
 ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm, 
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                                     int indexAdjustment,
-                                    llvm::Optional<unsigned> NumExpansions,
+                                    Optional<unsigned> NumExpansions,
                                     bool ExpectParameterPack) {
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
   TypeSourceInfo *NewDI = 0;
@@ -1764,7 +1764,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                                       Unexpanded);
       bool ShouldExpand = false;
       bool RetainExpansion = false;
-      llvm::Optional<unsigned> NumExpansions;
+      Optional<unsigned> NumExpansions;
       if (CheckParameterPacksForExpansion(Base->getEllipsisLoc(), 
                                           Base->getSourceRange(),
                                           Unexpanded,

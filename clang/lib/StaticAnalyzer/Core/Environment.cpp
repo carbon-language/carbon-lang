@@ -198,7 +198,7 @@ EnvironmentManager::removeDeadBindings(Environment Env,
       EBMapRef = EBMapRef.add(BlkExpr, X);
 
       // If the block expr's value is a memory region, then mark that region.
-      if (llvm::Optional<loc::MemRegionVal> R = X.getAs<loc::MemRegionVal>())
+      if (Optional<loc::MemRegionVal> R = X.getAs<loc::MemRegionVal>())
         SymReaper.markLive(R->getRegion());
 
       // Mark all symbols in the block expr's value live.

@@ -78,8 +78,7 @@ SVal SValBuilder::convertToArrayIndex(SVal val) {
     return val;
 
   // Common case: we have an appropriately sized integer.
-  if (llvm::Optional<nonloc::ConcreteInt> CI =
-          val.getAs<nonloc::ConcreteInt>()) {
+  if (Optional<nonloc::ConcreteInt> CI = val.getAs<nonloc::ConcreteInt>()) {
     const llvm::APSInt& I = CI->getValue();
     if (I.getBitWidth() == ArrayIndexWidth && I.isSigned())
       return val;
@@ -238,13 +237,11 @@ SVal SValBuilder::makeSymExprValNN(ProgramStateRef State,
     return makeNonLoc(symLHS, Op, symRHS, ResultTy);
 
   if (symLHS && symLHS->computeComplexity() < MaxComp)
-    if (llvm::Optional<nonloc::ConcreteInt> rInt =
-            RHS.getAs<nonloc::ConcreteInt>())
+    if (Optional<nonloc::ConcreteInt> rInt = RHS.getAs<nonloc::ConcreteInt>())
       return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
 
   if (symRHS && symRHS->computeComplexity() < MaxComp)
-    if (llvm::Optional<nonloc::ConcreteInt> lInt =
-            LHS.getAs<nonloc::ConcreteInt>())
+    if (Optional<nonloc::ConcreteInt> lInt = LHS.getAs<nonloc::ConcreteInt>())
       return makeNonLoc(lInt->getValue(), Op, symRHS, ResultTy);
 
   return UnknownVal();
@@ -260,14 +257,14 @@ SVal SValBuilder::evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
   if (lhs.isUnknown() || rhs.isUnknown())
     return UnknownVal();
 
-  if (llvm::Optional<Loc> LV = lhs.getAs<Loc>()) {
-    if (llvm::Optional<Loc> RV = rhs.getAs<Loc>())
+  if (Optional<Loc> LV = lhs.getAs<Loc>()) {
+    if (Optional<Loc> RV = rhs.getAs<Loc>())
       return evalBinOpLL(state, op, *LV, *RV, type);
 
     return evalBinOpLN(state, op, *LV, rhs.castAs<NonLoc>(), type);
   }
 
-  if (llvm::Optional<Loc> RV = rhs.getAs<Loc>()) {
+  if (Optional<Loc> RV = rhs.getAs<Loc>()) {
     // Support pointer arithmetic where the addend is on the left
     // and the pointer on the right.
     assert(op == BO_Add);
@@ -335,8 +332,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
 
   // Check for casts from integers to pointers.
   if (Loc::isLocType(castTy) && originalTy->isIntegerType()) {
-    if (llvm::Optional<nonloc::LocAsInteger> LV =
-            val.getAs<nonloc::LocAsInteger>()) {
+    if (Optional<nonloc::LocAsInteger> LV = val.getAs<nonloc::LocAsInteger>()) {
       if (const MemRegion *R = LV->getLoc().getAsRegion()) {
         StoreManager &storeMgr = StateMgr.getStoreManager();
         R = storeMgr.castRegion(R, castTy);

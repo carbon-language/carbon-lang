@@ -58,7 +58,7 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
     return;
 
   SVal Denom = C.getState()->getSVal(B->getRHS(), C.getLocationContext());
-  llvm::Optional<DefinedSVal> DV = Denom.getAs<DefinedSVal>();
+  Optional<DefinedSVal> DV = Denom.getAs<DefinedSVal>();
 
   // Divide-by-undefined handled in the generic checking for uses of
   // undefined values.

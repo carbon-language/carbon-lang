@@ -27,7 +27,6 @@
 
 using namespace clang;
 using namespace ento;
-using llvm::Optional;
 
 namespace {
 class UnixAPIChecker : public Checker< check::PreStmt<CallExpr> > {

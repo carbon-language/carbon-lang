@@ -270,7 +270,7 @@ SVal StoreManager::evalDerivedToBase(SVal Derived, const CXXBasePath &Path) {
 }
 
 SVal StoreManager::evalDerivedToBase(SVal Derived, QualType BaseType) {
-  llvm::Optional<loc::MemRegionVal> DerivedRegVal =
+  Optional<loc::MemRegionVal> DerivedRegVal =
       Derived.getAs<loc::MemRegionVal>();
   if (!DerivedRegVal)
     return Derived;
@@ -290,8 +290,7 @@ SVal StoreManager::evalDynamicCast(SVal Base, QualType DerivedType,
                                    bool &Failed) {
   Failed = false;
 
-  llvm::Optional<loc::MemRegionVal> BaseRegVal =
-      Base.getAs<loc::MemRegionVal>();
+  Optional<loc::MemRegionVal> BaseRegVal = Base.getAs<loc::MemRegionVal>();
   if (!BaseRegVal)
     return UnknownVal();
   const MemRegion *BaseRegion = BaseRegVal->stripCasts(/*StripBases=*/false);

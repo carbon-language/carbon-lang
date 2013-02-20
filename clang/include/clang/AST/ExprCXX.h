@@ -3346,7 +3346,7 @@ class PackExpansionExpr : public Expr {
 
 public:
   PackExpansionExpr(QualType T, Expr *Pattern, SourceLocation EllipsisLoc,
-                    llvm::Optional<unsigned> NumExpansions)
+                    Optional<unsigned> NumExpansions)
     : Expr(PackExpansionExprClass, T, Pattern->getValueKind(),
            Pattern->getObjectKind(), /*TypeDependent=*/true,
            /*ValueDependent=*/true, /*InstantiationDependent=*/true,
@@ -3369,11 +3369,11 @@ public:
 
   /// \brief Determine the number of expansions that will be produced when
   /// this pack expansion is instantiated, if already known.
-  llvm::Optional<unsigned> getNumExpansions() const {
+  Optional<unsigned> getNumExpansions() const {
     if (NumExpansions)
       return NumExpansions - 1;
 
-    return llvm::Optional<unsigned>();
+    return Optional<unsigned>();
   }
 
   SourceLocation getLocStart() const LLVM_READONLY {

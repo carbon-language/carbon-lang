@@ -25,10 +25,11 @@ namespace llvm {
   class StringRef;
   class Twine;
   template<typename T> class ArrayRef;
-  template<class T> class OwningPtr;
+  template<typename T> class OwningPtr;
   template<unsigned InternalLen> class SmallString;
   template<typename T, unsigned N> class SmallVector;
   template<typename T> class SmallVectorImpl;
+  template<typename T> class Optional;
 
   template<typename T>
   struct SaveAndRestore;
@@ -53,6 +54,7 @@ namespace clang {
   using llvm::cast_or_null;
   
   // ADT's.
+  using llvm::Optional;
   using llvm::StringRef;
   using llvm::Twine;
   using llvm::ArrayRef;

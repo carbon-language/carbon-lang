@@ -224,12 +224,12 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
   return false;
 }
 
-llvm::Optional<unsigned> TemplateArgument::getNumTemplateExpansions() const {
+Optional<unsigned> TemplateArgument::getNumTemplateExpansions() const {
   assert(Kind == TemplateExpansion);
   if (TemplateArg.NumExpansions)
     return TemplateArg.NumExpansions - 1;
   
-  return llvm::Optional<unsigned>();
+  return Optional<unsigned>();
 }
 
 void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
@@ -451,10 +451,9 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
   llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
-TemplateArgumentLoc 
-TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
-                                       llvm::Optional<unsigned> &NumExpansions,
-                                             ASTContext &Context) const {
+TemplateArgumentLoc TemplateArgumentLoc::getPackExpansionPattern(
+    SourceLocation &Ellipsis, Optional<unsigned> &NumExpansions,
+    ASTContext &Context) const {
   assert(Argument.isPackExpansion());
   
   switch (Argument.getKind()) {

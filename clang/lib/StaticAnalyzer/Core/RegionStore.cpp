@@ -30,7 +30,6 @@
 
 using namespace clang;
 using namespace ento;
-using llvm::Optional;
 
 //===----------------------------------------------------------------------===//
 // Representation of binding keys.
@@ -753,7 +752,7 @@ static void collectSubRegionKeys(SmallVectorImpl<BindingKey> &Keys,
   // be using this function anyway.
   uint64_t Length = UINT64_MAX;
   SVal Extent = Top->getExtent(SVB);
-  if (llvm::Optional<nonloc::ConcreteInt> ExtentCI =
+  if (Optional<nonloc::ConcreteInt> ExtentCI =
           Extent.getAs<nonloc::ConcreteInt>()) {
     const llvm::APSInt &ExtentInt = ExtentCI->getValue();
     assert(ExtentInt.isNonNegative() || ExtentInt.isUnsigned());
@@ -894,7 +893,7 @@ void invalidateRegionsWorker::VisitBinding(SVal V) {
   }
 
   // Is it a LazyCompoundVal?  All references get invalidated as well.
-  if (llvm::Optional<nonloc::LazyCompoundVal> LCS =
+  if (Optional<nonloc::LazyCompoundVal> LCS =
           V.getAs<nonloc::LazyCompoundVal>()) {
 
     const RegionStoreManager::SValListTy &Vals = RM.getInterestingValues(*LCS);
@@ -939,7 +938,7 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
         // a pointer value, but the thing pointed by that pointer may
         // get invalidated.
         SVal V = RM.getBinding(B, loc::MemRegionVal(VR));
-        if (llvm::Optional<Loc> L = V.getAs<Loc>()) {
+        if (Optional<Loc> L = V.getAs<Loc>()) {
           if (const MemRegion *LR = L->getAsRegion())
             AddToWorkList(LR);
         }
@@ -1264,7 +1263,7 @@ RegionStoreManager::getLazyBinding(RegionBindingsConstRef B,
 
   if (originalRegion != R) {
     if (Optional<SVal> OV = B.getDefaultBinding(R)) {
-      if (llvm::Optional<nonloc::LazyCompoundVal> V =
+      if (Optional<nonloc::LazyCompoundVal> V =
               OV->getAs<nonloc::LazyCompoundVal>())
         return std::make_pair(V->getStore(), V->getRegion());
     }
@@ -1346,8 +1345,7 @@ SVal RegionStoreManager::getBindingForElement(RegionBindingsConstRef B,
 
     const StringLiteral *Str = StrR->getStringLiteral();
     SVal Idx = R->getIndex();
-    if (llvm::Optional<nonloc::ConcreteInt> CI =
-            Idx.getAs<nonloc::ConcreteInt>()) {
+    if (Optional<nonloc::ConcreteInt> CI = Idx.getAs<nonloc::ConcreteInt>()) {
       int64_t i = CI->getValue().getSExtValue();
       // Abort on string underrun.  This can be possible by arbitrary
       // clients of getBindingForElement().
@@ -1652,7 +1650,7 @@ RegionStoreManager::getInterestingValues(nonloc::LazyCompoundVal LCV) {
     if (V.isUnknownOrUndef() || V.isConstant())
       continue;
 
-    if (llvm::Optional<nonloc::LazyCompoundVal> InnerLCV =
+    if (Optional<nonloc::LazyCompoundVal> InnerLCV =
             V.getAs<nonloc::LazyCompoundVal>()) {
       const SValListTy &InnerList = getInterestingValues(*InnerLCV);
       List.insert(List.end(), InnerList.begin(), InnerList.end());
@@ -1670,7 +1668,7 @@ NonLoc RegionStoreManager::createLazyBinding(RegionBindingsConstRef B,
   // If we already have a lazy binding, and it's for the whole structure,
   // don't create a new lazy binding.
   if (Optional<SVal> V = B.getDefaultBinding(R)) {
-    if (llvm::Optional<nonloc::LazyCompoundVal> LCV =
+    if (Optional<nonloc::LazyCompoundVal> LCV =
             V->getAs<nonloc::LazyCompoundVal>()) {
       QualType RegionTy = R->getValueType();
       QualType SourceRegionTy = LCV->getRegion()->getValueType();
@@ -1728,7 +1726,7 @@ bool RegionStoreManager::includedInBindings(Store store,
 //===----------------------------------------------------------------------===//
 
 StoreRef RegionStoreManager::killBinding(Store ST, Loc L) {
-  if (llvm::Optional<loc::MemRegionVal> LV = L.getAs<loc::MemRegionVal>())
+  if (Optional<loc::MemRegionVal> LV = L.getAs<loc::MemRegionVal>())
     if (const MemRegion* R = LV->getRegion())
       return StoreRef(getRegionBindings(ST).removeBinding(R)
                                            .asImmutableMap()
@@ -1820,7 +1818,7 @@ RegionStoreManager::bindArray(RegionBindingsConstRef B,
     Size = CAT->getSize().getZExtValue();
 
   // Check if the init expr is a string literal.
-  if (llvm::Optional<loc::MemRegionVal> MRV = Init.getAs<loc::MemRegionVal>()) {
+  if (Optional<loc::MemRegionVal> MRV = Init.getAs<loc::MemRegionVal>()) {
     const StringRegion *S = cast<StringRegion>(MRV->getRegion());
 
     // Treat the string as a lazy compound value.
@@ -2057,7 +2055,7 @@ void removeDeadBindingsWorker::VisitCluster(const MemRegion *baseR,
 
 void removeDeadBindingsWorker::VisitBinding(SVal V) {
   // Is it a LazyCompoundVal?  All referenced regions are live as well.
-  if (llvm::Optional<nonloc::LazyCompoundVal> LCS =
+  if (Optional<nonloc::LazyCompoundVal> LCS =
           V.getAs<nonloc::LazyCompoundVal>()) {
 
     const RegionStoreManager::SValListTy &Vals = RM.getInterestingValues(*LCS);

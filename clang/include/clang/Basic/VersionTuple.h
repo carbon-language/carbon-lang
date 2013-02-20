@@ -55,16 +55,16 @@ public:
   unsigned getMajor() const { return Major; }
 
   /// \brief Retrieve the minor version number, if provided.
-  llvm::Optional<unsigned> getMinor() const { 
+  Optional<unsigned> getMinor() const {
     if (!HasMinor)
-      return llvm::Optional<unsigned>();
+      return Optional<unsigned>();
     return Minor;
   }
 
   /// \brief Retrieve the subminor version number, if provided.
-  llvm::Optional<unsigned> getSubminor() const { 
+  Optional<unsigned> getSubminor() const {
     if (!HasSubminor)
-      return llvm::Optional<unsigned>();
+      return Optional<unsigned>();
     return Subminor;
   }
 

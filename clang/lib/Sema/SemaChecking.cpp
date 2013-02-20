@@ -2080,7 +2080,7 @@ void CheckFormatHandler::HandleInvalidLengthModifier(
   CharSourceRange LMRange = getSpecifierRange(LM.getStart(), LM.getLength());
 
   // See if we know how to fix this length modifier.
-  llvm::Optional<LengthModifier> FixedLM = FS.getCorrectedLengthModifier();
+  Optional<LengthModifier> FixedLM = FS.getCorrectedLengthModifier();
   if (FixedLM) {
     EmitFormatDiagnostic(S.PDiag(DiagID) << LM.toString() << CS.toString(),
                          getLocationOfByte(LM.getStart()),
@@ -2113,7 +2113,7 @@ void CheckFormatHandler::HandleNonStandardLengthModifier(
   CharSourceRange LMRange = getSpecifierRange(LM.getStart(), LM.getLength());
 
   // See if we know how to fix this length modifier.
-  llvm::Optional<LengthModifier> FixedLM = FS.getCorrectedLengthModifier();
+  Optional<LengthModifier> FixedLM = FS.getCorrectedLengthModifier();
   if (FixedLM) {
     EmitFormatDiagnostic(S.PDiag(diag::warn_format_non_standard)
                            << LM.toString() << 0,
@@ -2140,7 +2140,7 @@ void CheckFormatHandler::HandleNonStandardConversionSpecifier(
   using namespace analyze_format_string;
 
   // See if we know how to fix this conversion specifier.
-  llvm::Optional<ConversionSpecifier> FixedCS = CS.getStandardSpecifier();
+  Optional<ConversionSpecifier> FixedCS = CS.getStandardSpecifier();
   if (FixedCS) {
     EmitFormatDiagnostic(S.PDiag(diag::warn_format_non_standard)
                           << CS.toString() << /*conversion specifier*/1,

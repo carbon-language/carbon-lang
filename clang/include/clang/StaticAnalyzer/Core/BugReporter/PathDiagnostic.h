@@ -461,7 +461,7 @@ public:
 };
 
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
-  llvm::Optional<bool> IsPrunable;
+  Optional<bool> IsPrunable;
 
   /// If the event occurs in a different frame than the final diagnostic,
   /// supply a message that will be used to construct an extra hint on the

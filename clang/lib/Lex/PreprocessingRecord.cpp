@@ -103,8 +103,8 @@ bool PreprocessingRecord::isEntityInFileID(iterator PPEI, FileID FID) {
 
     // See if the external source can see if the entity is in the file without
     // deserializing it.
-    llvm::Optional<bool>
-      IsInFile = ExternalSource->isPreprocessedEntityInFileID(LoadedIndex, FID);
+    Optional<bool> IsInFile =
+        ExternalSource->isPreprocessedEntityInFileID(LoadedIndex, FID);
     if (IsInFile.hasValue())
       return IsInFile.getValue();
 

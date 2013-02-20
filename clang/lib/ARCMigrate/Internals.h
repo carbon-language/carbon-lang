@@ -148,7 +148,7 @@ public:
   TransformActions &TA;
   const CapturedDiagList &CapturedDiags;
   std::vector<SourceLocation> &ARCMTMacroLocs;
-  llvm::Optional<bool> EnableCFBridgeFns;
+  Optional<bool> EnableCFBridgeFns;
 
   MigrationPass(ASTContext &Ctx, LangOptions::GCMode OrigGCMode,
                 Sema &sema, TransformActions &TA,

@@ -268,13 +268,12 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 
   // FIXME: We really should allow ranges of valid theType values, and
   //   bifurcate the state appropriately.
-  llvm::Optional<nonloc::ConcreteInt> V =
-      TheTypeVal.getAs<nonloc::ConcreteInt>();
+  Optional<nonloc::ConcreteInt> V = TheTypeVal.getAs<nonloc::ConcreteInt>();
   if (!V)
     return;
 
   uint64_t NumberKind = V->getValue().getLimitedValue();
-  llvm::Optional<uint64_t> OptTargetSize = GetCFNumberSize(Ctx, NumberKind);
+  Optional<uint64_t> OptTargetSize = GetCFNumberSize(Ctx, NumberKind);
 
   // FIXME: In some cases we can emit an error.
   if (!OptTargetSize)
@@ -289,8 +288,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
-  llvm::Optional<loc::MemRegionVal> LV =
-      TheValueExpr.getAs<loc::MemRegionVal>();
+  Optional<loc::MemRegionVal> LV = TheValueExpr.getAs<loc::MemRegionVal>();
   if (!LV)
     return;
 
@@ -391,7 +389,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   // Get the argument's value.
   const Expr *Arg = CE->getArg(0);
   SVal ArgVal = state->getSVal(Arg, C.getLocationContext());
-  llvm::Optional<DefinedSVal> DefArgVal = ArgVal.getAs<DefinedSVal>();
+  Optional<DefinedSVal> DefArgVal = ArgVal.getAs<DefinedSVal>();
   if (!DefArgVal)
     return;
 
@@ -589,7 +587,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
     return;
 
   // Verify that all arguments have Objective-C types.
-  llvm::Optional<ExplodedNode*> errorNode;
+  Optional<ExplodedNode*> errorNode;
   ProgramStateRef state = C.getState();
   
   for (unsigned I = variadicArgsBegin; I != variadicArgsEnd; ++I) {
@@ -728,8 +726,7 @@ static ProgramStateRef assumeExprIsNonNull(const Expr *NonNullExpr,
                                            ProgramStateRef State,
                                            CheckerContext &C) {
   SVal Val = State->getSVal(NonNullExpr, C.getLocationContext());
-  if (llvm::Optional<DefinedOrUnknownSVal> DV =
-          Val.getAs<DefinedOrUnknownSVal>())
+  if (Optional<DefinedOrUnknownSVal> DV = Val.getAs<DefinedOrUnknownSVal>())
     return State->assume(*DV, true);
   return State;
 }

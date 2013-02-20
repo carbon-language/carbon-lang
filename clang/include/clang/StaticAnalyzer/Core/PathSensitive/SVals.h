@@ -79,9 +79,9 @@ public:
   }
 
   template<typename T>
-  llvm::Optional<T> getAs() const {
+  Optional<T> getAs() const {
     if (!T::isKind(*this))
-      return llvm::Optional<T>();
+      return Optional<T>();
     T t;
     SVal& sv = t;
     sv = *this;

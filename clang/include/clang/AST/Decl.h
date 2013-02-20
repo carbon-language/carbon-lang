@@ -308,7 +308,7 @@ public:
 
   /// \brief If visibility was explicitly specified for this
   /// declaration, return that visibility.
-  llvm::Optional<Visibility>
+  Optional<Visibility>
   getExplicitVisibility(ExplicitVisibilityKind kind) const;
 
   /// \brief Clear the linkage cache in response to a change

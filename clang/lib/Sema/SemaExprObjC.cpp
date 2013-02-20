@@ -170,9 +170,9 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
                                                 QualType NumberType,
                                                 bool isLiteral = false,
                                                 SourceRange R = SourceRange()) {
-  llvm::Optional<NSAPI::NSNumberLiteralMethodKind> Kind 
-    = S.NSAPIObj->getNSNumberFactoryMethodKind(NumberType);
-  
+  Optional<NSAPI::NSNumberLiteralMethodKind> Kind =
+      S.NSAPIObj->getNSNumberFactoryMethodKind(NumberType);
+
   if (!Kind) {
     if (isLiteral) {
       S.Diag(Loc, diag::err_invalid_nsnumber_type)

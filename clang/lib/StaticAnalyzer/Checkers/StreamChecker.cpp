@@ -259,7 +259,7 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
     return;
   // Check the legality of the 'whence' argument of 'fseek'.
   SVal Whence = state->getSVal(CE->getArg(2), C.getLocationContext());
-  llvm::Optional<nonloc::ConcreteInt> CI = Whence.getAs<nonloc::ConcreteInt>();
+  Optional<nonloc::ConcreteInt> CI = Whence.getAs<nonloc::ConcreteInt>();
 
   if (!CI)
     return;
@@ -337,7 +337,7 @@ void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) const {
 
 ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
                                     CheckerContext &C) const {
-  llvm::Optional<DefinedSVal> DV = SV.getAs<DefinedSVal>();
+  Optional<DefinedSVal> DV = SV.getAs<DefinedSVal>();
   if (!DV)
     return 0;
 

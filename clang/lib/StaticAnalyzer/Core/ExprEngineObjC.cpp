@@ -104,8 +104,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
     SVal FalseV = svalBuilder.makeTruthVal(0);
     ProgramStateRef noElems = state->BindExpr(S, LCtx, FalseV);
 
-    if (llvm::Optional<loc::MemRegionVal> MV =
-            elementV.getAs<loc::MemRegionVal>())
+    if (Optional<loc::MemRegionVal> MV = elementV.getAs<loc::MemRegionVal>())
       if (const TypedValueRegion *R = 
           dyn_cast<TypedValueRegion>(MV->getRegion())) {
         // FIXME: The proper thing to do is to really iterate over the

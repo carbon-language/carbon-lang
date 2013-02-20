@@ -838,7 +838,7 @@ void Sema::EmitCurrentDiagnostic(unsigned DiagID) {
   // eliminnated. If it truly cannot be (for example, there is some reentrancy
   // issue I am not seeing yet), then there should at least be a clarifying
   // comment somewhere.
-  if (llvm::Optional<TemplateDeductionInfo*> Info = isSFINAEContext()) {
+  if (Optional<TemplateDeductionInfo*> Info = isSFINAEContext()) {
     switch (DiagnosticIDs::getDiagnosticSFINAEResponse(
               Diags.getCurrentDiagID())) {
     case DiagnosticIDs::SFINAE_Report:

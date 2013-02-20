@@ -527,13 +527,13 @@ const char *ConversionSpecifier::toString() const {
   return NULL;
 }
 
-llvm::Optional<ConversionSpecifier>
+Optional<ConversionSpecifier>
 ConversionSpecifier::getStandardSpecifier() const {
   ConversionSpecifier::Kind NewKind;
   
   switch (getKind()) {
   default:
-    return llvm::Optional<ConversionSpecifier>();
+    return Optional<ConversionSpecifier>();
   case DArg:
     NewKind = dArg;
     break;
@@ -756,8 +756,7 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
   return true;
 }
 
-llvm::Optional<LengthModifier>
-FormatSpecifier::getCorrectedLengthModifier() const {
+Optional<LengthModifier> FormatSpecifier::getCorrectedLengthModifier() const {
   if (CS.isAnyIntArg() || CS.getKind() == ConversionSpecifier::nArg) {
     if (LM.getKind() == LengthModifier::AsLongDouble ||
         LM.getKind() == LengthModifier::AsQuad) {
@@ -767,7 +766,7 @@ FormatSpecifier::getCorrectedLengthModifier() const {
     }
   }
 
-  return llvm::Optional<LengthModifier>();
+  return Optional<LengthModifier>();
 }
 
 bool FormatSpecifier::namedTypeToLengthModifier(QualType QT,

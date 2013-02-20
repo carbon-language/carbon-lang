@@ -69,7 +69,7 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   // Get the value of the right-hand side.  We only care about values
   // that are defined (UnknownVals and UndefinedVals are handled by other
   // checkers).
-  llvm::Optional<DefinedSVal> DV = val.getAs<DefinedSVal>();
+  Optional<DefinedSVal> DV = val.getAs<DefinedSVal>();
   if (!DV)
     return;
     
@@ -86,7 +86,7 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
     svalBuilder.evalBinOp(state, BO_GE, *DV, zeroVal,
                           svalBuilder.getConditionType());
 
-  llvm::Optional<DefinedSVal> greaterThanEqualToZero =
+  Optional<DefinedSVal> greaterThanEqualToZero =
       greaterThanOrEqualToZeroVal.getAs<DefinedSVal>();
 
   if (!greaterThanEqualToZero) {
@@ -122,7 +122,7 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
     svalBuilder.evalBinOp(state, BO_LE, *DV, OneVal,
                           svalBuilder.getConditionType());
 
-  llvm::Optional<DefinedSVal> lessThanEqToOne =
+  Optional<DefinedSVal> lessThanEqToOne =
       lessThanEqToOneVal.getAs<DefinedSVal>();
 
   if (!lessThanEqToOne) {

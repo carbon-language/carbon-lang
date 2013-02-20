@@ -69,8 +69,7 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
 
   bool isLocType = Loc::isLocType(castTy);
 
-  if (llvm::Optional<nonloc::LocAsInteger> LI =
-          val.getAs<nonloc::LocAsInteger>()) {
+  if (Optional<nonloc::LocAsInteger> LI = val.getAs<nonloc::LocAsInteger>()) {
     if (isLocType)
       return LI->getLoc();
 
@@ -607,10 +606,10 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     }
 
     // If both operands are constants, just perform the operation.
-    if (llvm::Optional<loc::ConcreteInt> rInt = rhs.getAs<loc::ConcreteInt>()) {
+    if (Optional<loc::ConcreteInt> rInt = rhs.getAs<loc::ConcreteInt>()) {
       SVal ResultVal =
           lhs.castAs<loc::ConcreteInt>().evalBinOp(BasicVals, op, *rInt);
-      if (llvm::Optional<Loc> Result = ResultVal.getAs<Loc>())
+      if (Optional<Loc> Result = ResultVal.getAs<Loc>())
         return evalCastFromLoc(*Result, resultTy);
       else
         return UnknownVal();
@@ -641,7 +640,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     return UnknownVal();
   }
   case loc::MemRegionKind: {
-    if (llvm::Optional<loc::ConcreteInt> rInt = rhs.getAs<loc::ConcreteInt>()) {
+    if (Optional<loc::ConcreteInt> rInt = rhs.getAs<loc::ConcreteInt>()) {
       // If one of the operands is a symbol and the other is a constant,
       // build an expression for use by the constraint manager.
       if (SymbolRef lSym = lhs.getAsLocSymbol())
@@ -739,7 +738,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
         // Get the left index and cast it to the correct type.
         // If the index is unknown or undefined, bail out here.
         SVal LeftIndexVal = LeftER->getIndex();
-        llvm::Optional<NonLoc> LeftIndex = LeftIndexVal.getAs<NonLoc>();
+        Optional<NonLoc> LeftIndex = LeftIndexVal.getAs<NonLoc>();
         if (!LeftIndex)
           return UnknownVal();
         LeftIndexVal = evalCastFromNonLoc(*LeftIndex, ArrayIndexTy);
@@ -749,7 +748,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
 
         // Do the same for the right index.
         SVal RightIndexVal = RightER->getIndex();
-        llvm::Optional<NonLoc> RightIndex = RightIndexVal.getAs<NonLoc>();
+        Optional<NonLoc> RightIndex = RightIndexVal.getAs<NonLoc>();
         if (!RightIndex)
           return UnknownVal();
         RightIndexVal = evalCastFromNonLoc(*RightIndex, ArrayIndexTy);
@@ -863,7 +862,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
   // can generate comparisons that trigger this code.
   // FIXME: Are all locations guaranteed to have pointer width?
   if (BinaryOperator::isComparisonOp(op)) {
-    if (llvm::Optional<nonloc::ConcreteInt> rhsInt =
+    if (Optional<nonloc::ConcreteInt> rhsInt =
             rhs.getAs<nonloc::ConcreteInt>()) {
       const llvm::APSInt *x = &rhsInt->getValue();
       ASTContext &ctx = Context;
@@ -881,10 +880,8 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
   // We are dealing with pointer arithmetic.
 
   // Handle pointer arithmetic on constant values.
-  if (llvm::Optional<nonloc::ConcreteInt> rhsInt =
-          rhs.getAs<nonloc::ConcreteInt>()) {
-    if (llvm::Optional<loc::ConcreteInt> lhsInt =
-            lhs.getAs<loc::ConcreteInt>()) {
+  if (Optional<nonloc::ConcreteInt> rhsInt = rhs.getAs<nonloc::ConcreteInt>()) {
+    if (Optional<loc::ConcreteInt> lhsInt = lhs.getAs<loc::ConcreteInt>()) {
       const llvm::APSInt &leftI = lhsInt->getValue();
       assert(leftI.isUnsigned());
       llvm::APSInt rightI(rhsInt->getValue(), /* isUnsigned */ true);
@@ -933,7 +930,7 @@ SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
         elementType = resultTy->getPointeeType();
     }
 
-    if (llvm::Optional<NonLoc> indexV = index.getAs<NonLoc>()) {
+    if (Optional<NonLoc> indexV = index.getAs<NonLoc>()) {
       return loc::MemRegionVal(MemMgr.getElementRegion(elementType, *indexV,
                                                        superR, getContext()));
     }
@@ -946,10 +943,10 @@ const llvm::APSInt *SimpleSValBuilder::getKnownValue(ProgramStateRef state,
   if (V.isUnknownOrUndef())
     return NULL;
 
-  if (llvm::Optional<loc::ConcreteInt> X = V.getAs<loc::ConcreteInt>())
+  if (Optional<loc::ConcreteInt> X = V.getAs<loc::ConcreteInt>())
     return &X->getValue();
 
-  if (llvm::Optional<nonloc::ConcreteInt> X = V.getAs<nonloc::ConcreteInt>())
+  if (Optional<nonloc::ConcreteInt> X = V.getAs<nonloc::ConcreteInt>())
     return &X->getValue();
 
   if (SymbolRef Sym = V.getAsSymbol())

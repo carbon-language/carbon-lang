@@ -134,7 +134,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
   if (!checkUninitFields)
     return false;
 
-  if (llvm::Optional<nonloc::LazyCompoundVal> LV =
+  if (Optional<nonloc::LazyCompoundVal> LV =
           V.getAs<nonloc::LazyCompoundVal>()) {
 
     class FindUninitializedField {

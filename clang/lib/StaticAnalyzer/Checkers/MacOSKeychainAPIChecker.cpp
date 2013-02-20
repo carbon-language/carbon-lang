@@ -217,7 +217,7 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
   ProgramStateRef State = C.getState();
   SVal ArgV = State->getSVal(Expr, C.getLocationContext());
 
-  if (llvm::Optional<loc::MemRegionVal> X = ArgV.getAs<loc::MemRegionVal>()) {
+  if (Optional<loc::MemRegionVal> X = ArgV.getAs<loc::MemRegionVal>()) {
     StoreManager& SM = C.getStoreManager();
     SymbolRef sym = SM.getBinding(State->getStore(), *X).getAsLocSymbol();
     if (sym)

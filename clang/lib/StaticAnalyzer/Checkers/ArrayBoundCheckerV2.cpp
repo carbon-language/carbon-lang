@@ -110,12 +110,12 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
 
   SVal extentBegin = computeExtentBegin(svalBuilder, rawOffset.getRegion());
   
-  if (llvm::Optional<NonLoc> NV = extentBegin.getAs<NonLoc>()) {
+  if (Optional<NonLoc> NV = extentBegin.getAs<NonLoc>()) {
     SVal lowerBound =
         svalBuilder.evalBinOpNN(state, BO_LT, rawOffset.getByteOffset(), *NV,
                                 svalBuilder.getConditionType());
 
-    llvm::Optional<NonLoc> lowerBoundToCheck = lowerBound.getAs<NonLoc>();
+    Optional<NonLoc> lowerBoundToCheck = lowerBound.getAs<NonLoc>();
     if (!lowerBoundToCheck)
       return;
     
@@ -147,7 +147,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
                                 extentVal.castAs<NonLoc>(),
                                 svalBuilder.getConditionType());
   
-    llvm::Optional<NonLoc> upperboundToCheck = upperbound.getAs<NonLoc>();
+    Optional<NonLoc> upperboundToCheck = upperbound.getAs<NonLoc>();
     if (!upperboundToCheck)
       break;
   

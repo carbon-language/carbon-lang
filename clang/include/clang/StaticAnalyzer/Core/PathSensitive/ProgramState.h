@@ -635,7 +635,7 @@ ProgramState::assume(DefinedOrUnknownSVal Cond) const {
 }
 
 inline ProgramStateRef ProgramState::bindLoc(SVal LV, SVal V) const {
-  if (llvm::Optional<Loc> L = LV.getAs<Loc>())
+  if (Optional<Loc> L = LV.getAs<Loc>())
     return bindLoc(*L, V);
   return this;
 }
@@ -671,7 +671,7 @@ inline SVal ProgramState::getLValue(const IndirectFieldDecl *D,
 }
 
 inline SVal ProgramState::getLValue(QualType ElementType, SVal Idx, SVal Base) const{
-  if (llvm::Optional<NonLoc> N = Idx.getAs<NonLoc>())
+  if (Optional<NonLoc> N = Idx.getAs<NonLoc>())
     return getStateManager().StoreMgr->getLValueElement(ElementType, *N, Base);
   return UnknownVal();
 }

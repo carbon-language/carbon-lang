@@ -190,38 +190,38 @@ private:
   CXXInlineableMemberKind CXXMemberInliningMode;
   
   /// \sa includeTemporaryDtorsInCFG
-  llvm::Optional<bool> IncludeTemporaryDtorsInCFG;
+  Optional<bool> IncludeTemporaryDtorsInCFG;
   
   /// \sa mayInlineCXXStandardLibrary
-  llvm::Optional<bool> InlineCXXStandardLibrary;
+  Optional<bool> InlineCXXStandardLibrary;
   
   /// \sa mayInlineTemplateFunctions
-  llvm::Optional<bool> InlineTemplateFunctions;
+  Optional<bool> InlineTemplateFunctions;
 
   /// \sa mayInlineObjCMethod
-  llvm::Optional<bool> ObjCInliningMode;
+  Optional<bool> ObjCInliningMode;
 
   // Cache of the "ipa-always-inline-size" setting.
   // \sa getAlwaysInlineSize
-  llvm::Optional<unsigned> AlwaysInlineSize;
+  Optional<unsigned> AlwaysInlineSize;
 
   /// \sa shouldSuppressNullReturnPaths
-  llvm::Optional<bool> SuppressNullReturnPaths;
+  Optional<bool> SuppressNullReturnPaths;
 
   // \sa getMaxInlinableSize
-  llvm::Optional<unsigned> MaxInlinableSize;
+  Optional<unsigned> MaxInlinableSize;
 
   /// \sa shouldAvoidSuppressingNullArgumentPaths
-  llvm::Optional<bool> AvoidSuppressingNullArgumentPaths;
+  Optional<bool> AvoidSuppressingNullArgumentPaths;
 
   /// \sa getGraphTrimInterval
-  llvm::Optional<unsigned> GraphTrimInterval;
+  Optional<unsigned> GraphTrimInterval;
 
   /// \sa getMaxTimesInlineLarge
-  llvm::Optional<unsigned> MaxTimesInlineLarge;
+  Optional<unsigned> MaxTimesInlineLarge;
 
   /// \sa getMaxNodesPerTopLevelFunction
-  llvm::Optional<unsigned> MaxNodesPerTopLevelFunction;
+  Optional<unsigned> MaxNodesPerTopLevelFunction;
 
   /// Interprets an option's string value as a boolean.
   ///
@@ -230,9 +230,8 @@ private:
   bool getBooleanOption(StringRef Name, bool DefaultVal);
 
   /// Variant that accepts a Optional value to cache the result.
-  bool getBooleanOption(llvm::Optional<bool> &V, StringRef Name,
-                        bool DefaultVal);
-  
+  bool getBooleanOption(Optional<bool> &V, StringRef Name, bool DefaultVal);
+
   /// Interprets an option's string value as an integer value.
   int getOptionAsInteger(StringRef Name, int DefaultVal);
 

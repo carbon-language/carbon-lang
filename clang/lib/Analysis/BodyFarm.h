@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_BODYFARM_H
 #define LLVM_CLANG_ANALYSIS_BODYFARM_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 
@@ -33,7 +34,7 @@ public:
   Stmt *getBody(const FunctionDecl *D);
   
 private:
-  typedef llvm::DenseMap<const Decl *, llvm::Optional<Stmt *> > BodyMap;
+  typedef llvm::DenseMap<const Decl *, Optional<Stmt *> > BodyMap;
 
   ASTContext &C;
   BodyMap Bodies;

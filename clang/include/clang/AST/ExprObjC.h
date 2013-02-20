@@ -206,7 +206,7 @@ struct ObjCDictionaryElement {
   
   /// \brief The number of elements this pack expansion will expand to, if
   /// this is a pack expansion and is known.
-  llvm::Optional<unsigned> NumExpansions;
+  Optional<unsigned> NumExpansions;
 
   /// \brief Determines whether this dictionary element is a pack expansion.
   bool isPackExpansion() const { return EllipsisLoc.isValid(); }
@@ -301,7 +301,7 @@ public:
     assert((Index < NumElements) && "Arg access out of range!");
     const KeyValuePair &KV = getKeyValues()[Index];
     ObjCDictionaryElement Result = { KV.Key, KV.Value, SourceLocation(),
-                                     llvm::Optional<unsigned>() };
+                                     Optional<unsigned>() };
     if (HasPackExpansions) {
       const ExpansionData &Expansion = getExpansionData()[Index];
       Result.EllipsisLoc = Expansion.EllipsisLoc;

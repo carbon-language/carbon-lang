@@ -28,7 +28,7 @@ namespace ento {
 class SubEngine;
 
 class ConditionTruthVal {
-  llvm::Optional<bool> Val;
+  Optional<bool> Val;
 public:
   /// Construct a ConditionTruthVal indicating the constraint is constrained
   /// to either true or false, depending on the boolean value provided.

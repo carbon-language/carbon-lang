@@ -30,13 +30,13 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 
 bool SVal::hasConjuredSymbol() const {
-  if (llvm::Optional<nonloc::SymbolVal> SV = getAs<nonloc::SymbolVal>()) {
+  if (Optional<nonloc::SymbolVal> SV = getAs<nonloc::SymbolVal>()) {
     SymbolRef sym = SV->getSymbol();
     if (isa<SymbolConjured>(sym))
       return true;
   }
 
-  if (llvm::Optional<loc::MemRegionVal> RV = getAs<loc::MemRegionVal>()) {
+  if (Optional<loc::MemRegionVal> RV = getAs<loc::MemRegionVal>()) {
     const MemRegion *R = RV->getRegion();
     if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
       SymbolRef sym = SR->getSymbol();
@@ -49,7 +49,7 @@ bool SVal::hasConjuredSymbol() const {
 }
 
 const FunctionDecl *SVal::getAsFunctionDecl() const {
-  if (llvm::Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
+  if (Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
     const MemRegion* R = X->getRegion();
     if (const FunctionTextRegion *CTR = R->getAs<FunctionTextRegion>())
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CTR->getDecl()))
@@ -66,10 +66,10 @@ const FunctionDecl *SVal::getAsFunctionDecl() const {
 /// region. If that is the case, gets the underlining region.
 SymbolRef SVal::getAsLocSymbol() const {
   // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
-  if (llvm::Optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
+  if (Optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
     return X->getLoc().getAsLocSymbol();
 
-  if (llvm::Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
+  if (Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
     const MemRegion *R = X->stripCasts();
     if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
       return SymR->getSymbol();
@@ -79,7 +79,7 @@ SymbolRef SVal::getAsLocSymbol() const {
 
 /// Get the symbol in the SVal or its base region.
 SymbolRef SVal::getLocSymbolInBase() const {
-  llvm::Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>();
+  Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>();
 
   if (!X)
     return 0;
@@ -102,7 +102,7 @@ SymbolRef SVal::getLocSymbolInBase() const {
 ///  Otherwise return 0.
 SymbolRef SVal::getAsSymbol() const {
   // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
-  if (llvm::Optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
+  if (Optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
     return X->getSymbol();
 
   return getAsLocSymbol();
@@ -111,7 +111,7 @@ SymbolRef SVal::getAsSymbol() const {
 /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
 ///  return that expression.  Otherwise return NULL.
 const SymExpr *SVal::getAsSymbolicExpression() const {
-  if (llvm::Optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
+  if (Optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
     return X->getSymbol();
 
   return getAsSymbol();
@@ -125,10 +125,10 @@ const SymExpr* SVal::getAsSymExpr() const {
 }
 
 const MemRegion *SVal::getAsRegion() const {
-  if (llvm::Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>())
+  if (Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>())
     return X->getRegion();
 
-  if (llvm::Optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
+  if (Optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
     return X->getLoc().getAsRegion();
 
   return 0;
@@ -168,9 +168,9 @@ bool SVal::isConstant() const {
 }
 
 bool SVal::isConstant(int I) const {
-  if (llvm::Optional<loc::ConcreteInt> LV = getAs<loc::ConcreteInt>())
+  if (Optional<loc::ConcreteInt> LV = getAs<loc::ConcreteInt>())
     return LV->getValue() == I;
-  if (llvm::Optional<nonloc::ConcreteInt> NV = getAs<nonloc::ConcreteInt>())
+  if (Optional<nonloc::ConcreteInt> NV = getAs<nonloc::ConcreteInt>())
     return NV->getValue() == I;
   return false;
 }

@@ -109,8 +109,7 @@ bool AnalyzerOptions::getBooleanOption(StringRef Name, bool DefaultVal) {
       .Default(DefaultVal);
 }
 
-bool AnalyzerOptions::getBooleanOption(llvm::Optional<bool> &V,
-                                       StringRef Name,
+bool AnalyzerOptions::getBooleanOption(Optional<bool> &V, StringRef Name,
                                        bool DefaultVal) {
   if (!V.hasValue())
     V = getBooleanOption(Name, DefaultVal);

@@ -508,10 +508,10 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
 }
 
 bool ScanReachableSymbols::scan(SVal val) {
-  if (llvm::Optional<loc::MemRegionVal> X = val.getAs<loc::MemRegionVal>())
+  if (Optional<loc::MemRegionVal> X = val.getAs<loc::MemRegionVal>())
     return scan(X->getRegion());
 
-  if (llvm::Optional<nonloc::LazyCompoundVal> X =
+  if (Optional<nonloc::LazyCompoundVal> X =
           val.getAs<nonloc::LazyCompoundVal>()) {
     StoreManager &StoreMgr = state->getStateManager().getStoreManager();
     // FIXME: We don't really want to use getBaseRegion() here because pointer
@@ -523,8 +523,7 @@ bool ScanReachableSymbols::scan(SVal val) {
       return false;
   }
 
-  if (llvm::Optional<nonloc::LocAsInteger> X =
-          val.getAs<nonloc::LocAsInteger>())
+  if (Optional<nonloc::LocAsInteger> X = val.getAs<nonloc::LocAsInteger>())
     return scan(X->getLoc());
 
   if (SymbolRef Sym = val.getAsSymbol())
@@ -533,7 +532,7 @@ bool ScanReachableSymbols::scan(SVal val) {
   if (const SymExpr *Sym = val.getAsSymbolicExpression())
     return scan(Sym);
 
-  if (llvm::Optional<nonloc::CompoundVal> X = val.getAs<nonloc::CompoundVal>())
+  if (Optional<nonloc::CompoundVal> X = val.getAs<nonloc::CompoundVal>())
     return scan(*X);
 
   return true;

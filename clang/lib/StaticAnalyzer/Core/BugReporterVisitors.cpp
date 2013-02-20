@@ -475,7 +475,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
         if (!b)
           os << action << "a null pointer value";
-      } else if (llvm::Optional<nonloc::ConcreteInt> CVal =
+      } else if (Optional<nonloc::ConcreteInt> CVal =
                      V.getAs<nonloc::ConcreteInt>()) {
         os << action << CVal->getValue();
       }
@@ -506,7 +506,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
         os << "null pointer value";
     } else if (V.isUndef()) {
       os << "uninitialized value";
-    } else if (llvm::Optional<nonloc::ConcreteInt> CI =
+    } else if (Optional<nonloc::ConcreteInt> CI =
                    V.getAs<nonloc::ConcreteInt>()) {
       os << "the value " << CI->getValue();
     } else {
@@ -538,7 +538,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
     else if (V.isUndef()) {
       os << "Uninitialized value stored to ";
-    } else if (llvm::Optional<nonloc::ConcreteInt> CV =
+    } else if (Optional<nonloc::ConcreteInt> CV =
                    V.getAs<nonloc::ConcreteInt>()) {
       os << "The value " << CV->getValue() << " is assigned to ";
     }
@@ -713,7 +713,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   // assert(!V.isUnknownOrUndef());
 
   // Is it a symbolic value?
-  if (llvm::Optional<loc::MemRegionVal> L = V.getAs<loc::MemRegionVal>()) {
+  if (Optional<loc::MemRegionVal> L = V.getAs<loc::MemRegionVal>()) {
     // At this point we are dealing with the region's LValue.
     // However, if the rvalue is a symbolic region, we should track it as well.
     SVal RVal = state->getSVal(L->getRegion());
@@ -766,7 +766,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
     return 0;
   ProgramStateRef state = N->getState();
   const SVal &V = state->getSVal(Receiver, N->getLocationContext());
-  llvm::Optional<DefinedOrUnknownSVal> DV = V.getAs<DefinedOrUnknownSVal>();
+  Optional<DefinedOrUnknownSVal> DV = V.getAs<DefinedOrUnknownSVal>();
   if (!DV)
     return 0;
   state = state->assume(*DV, true);
@@ -951,7 +951,7 @@ bool ConditionBRVisitor::patternMatch(const Expr *Ex, raw_ostream &Out,
                                       BugReporterContext &BRC,
                                       BugReport &report,
                                       const ExplodedNode *N,
-                                      llvm::Optional<bool> &prunable) {
+                                      Optional<bool> &prunable) {
   const Expr *OriginalExpr = Ex;
   Ex = Ex->IgnoreParenCasts();
 
@@ -1010,7 +1010,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   const ExplodedNode *N) {
   
   bool shouldInvert = false;
-  llvm::Optional<bool> shouldPrune;
+  Optional<bool> shouldPrune;
   
   SmallString<128> LhsString, RhsString;
   {

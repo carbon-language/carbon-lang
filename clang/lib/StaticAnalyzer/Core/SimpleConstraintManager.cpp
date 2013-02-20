@@ -24,7 +24,7 @@ namespace ento {
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
-  llvm::Optional<nonloc::SymbolVal> SymVal = X.getAs<nonloc::SymbolVal>();
+  Optional<nonloc::SymbolVal> SymVal = X.getAs<nonloc::SymbolVal>();
   if (SymVal && SymVal->isExpression()) {
     const SymExpr *SE = SymVal->getSymbol();
 
@@ -58,7 +58,7 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
 ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                DefinedSVal Cond,
                                                bool Assumption) {
-  if (llvm::Optional<NonLoc> NV = Cond.getAs<NonLoc>())
+  if (Optional<NonLoc> NV = Cond.getAs<NonLoc>())
     return assume(state, *NV, Assumption);
   return assume(state, Cond.castAs<Loc>(), Assumption);
 }

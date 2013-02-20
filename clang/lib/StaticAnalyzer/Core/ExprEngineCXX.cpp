@@ -64,7 +64,7 @@ void ExprEngine::performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
   SVal V = Call.getArgSVal(0);
 
   // Make sure the value being copied is not unknown.
-  if (llvm::Optional<Loc> L = V.getAs<Loc>())
+  if (Optional<Loc> L = V.getAs<Loc>())
     V = Pred->getState()->getSVal(*L);
 
   evalBind(Dst, CtorExpr, Pred, ThisVal, V, true);
@@ -319,7 +319,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
       (void)ObjTy;
       assert(!ObjTy->isRecordType());
       SVal Location = State->getSVal(CNE, LCtx);
-      if (llvm::Optional<Loc> LV = Location.getAs<Loc>())
+      if (Optional<Loc> LV = Location.getAs<Loc>())
         State = State->bindLoc(*LV, State->getSVal(Init, LCtx));
     }
   }

@@ -51,7 +51,7 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
       continue;
 
     SVal V = Call.getArgSVal(idx);
-    llvm::Optional<DefinedSVal> DV = V.getAs<DefinedSVal>();
+    Optional<DefinedSVal> DV = V.getAs<DefinedSVal>();
 
     // If the value is unknown or undefined, we can't perform this check.
     if (!DV)
@@ -69,7 +69,7 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
       if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>())
         continue;
 
-      if (llvm::Optional<nonloc::CompoundVal> CSV =
+      if (Optional<nonloc::CompoundVal> CSV =
               DV->getAs<nonloc::CompoundVal>()) {
         nonloc::CompoundVal::iterator CSV_I = CSV->begin();
         assert(CSV_I != CSV->end());

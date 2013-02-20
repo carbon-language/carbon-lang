@@ -28,9 +28,9 @@ std::string VersionTuple::getAsString() const {
 raw_ostream& clang::operator<<(raw_ostream &Out, 
                                      const VersionTuple &V) {
   Out << V.getMajor();
-  if (llvm::Optional<unsigned> Minor = V.getMinor())
+  if (Optional<unsigned> Minor = V.getMinor())
     Out << '.' << *Minor;
-  if (llvm::Optional<unsigned> Subminor = V.getSubminor())
+  if (Optional<unsigned> Subminor = V.getSubminor())
     Out << '.' << *Subminor;
   return Out;
 }

@@ -1460,13 +1460,13 @@ unsigned SourceManager::getFileIDSize(FileID FID) const {
 ///
 /// This routine involves a system call, and therefore should only be used
 /// in non-performance-critical code.
-static llvm::Optional<ino_t> getActualFileInode(const FileEntry *File) {
+static Optional<ino_t> getActualFileInode(const FileEntry *File) {
   if (!File)
-    return llvm::Optional<ino_t>();
+    return Optional<ino_t>();
   
   struct stat StatBuf;
   if (::stat(File->getName(), &StatBuf))
-    return llvm::Optional<ino_t>();
+    return Optional<ino_t>();
     
   return StatBuf.st_ino;
 }
@@ -1497,8 +1497,8 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
 
   // First, check the main file ID, since it is common to look for a
   // location in the main file.
-  llvm::Optional<ino_t> SourceFileInode;
-  llvm::Optional<StringRef> SourceFileName;
+  Optional<ino_t> SourceFileInode;
+  Optional<StringRef> SourceFileName;
   if (!MainFileID.isInvalid()) {
     bool Invalid = false;
     const SLocEntry &MainSLoc = getSLocEntry(MainFileID, &Invalid);
@@ -1520,8 +1520,7 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
         if (*SourceFileName == llvm::sys::path::filename(MainFile->getName())) {
           SourceFileInode = getActualFileInode(SourceFile);
           if (SourceFileInode) {
-            if (llvm::Optional<ino_t> MainFileInode 
-                                               = getActualFileInode(MainFile)) {
+            if (Optional<ino_t> MainFileInode = getActualFileInode(MainFile)) {
               if (*SourceFileInode == *MainFileInode) {
                 FirstFID = MainFileID;
                 SourceFile = MainFile;
@@ -1585,7 +1584,7 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
       const FileEntry *Entry =FileContentCache? FileContentCache->OrigEntry : 0;
         if (Entry && 
             *SourceFileName == llvm::sys::path::filename(Entry->getName())) {
-          if (llvm::Optional<ino_t> EntryInode = getActualFileInode(Entry)) {
+          if (Optional<ino_t> EntryInode = getActualFileInode(Entry)) {
             if (*SourceFileInode == *EntryInode) {
               FirstFID = FileID::get(I);
               SourceFile = Entry;

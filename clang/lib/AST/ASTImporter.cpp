@@ -902,14 +902,13 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
 /// including the next assigned index (if none of them match). Returns an
 /// empty option if the context is not a record, i.e.. if the anonymous
 /// struct/union is at namespace or block scope.
-static llvm::Optional<unsigned>
-findAnonymousStructOrUnionIndex(RecordDecl *Anon) {
+static Optional<unsigned> findAnonymousStructOrUnionIndex(RecordDecl *Anon) {
   ASTContext &Context = Anon->getASTContext();
   QualType AnonTy = Context.getRecordType(Anon);
 
   RecordDecl *Owner = dyn_cast<RecordDecl>(Anon->getDeclContext());
   if (!Owner)
-    return llvm::Optional<unsigned>();
+    return Optional<unsigned>();
 
   unsigned Index = 0;
   for (DeclContext::decl_iterator D = Owner->noload_decls_begin(),
@@ -944,10 +943,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   if (D1->isAnonymousStructOrUnion() && D2->isAnonymousStructOrUnion()) {
     // If both anonymous structs/unions are in a record context, make sure
     // they occur in the same location in the context records.
-    if (llvm::Optional<unsigned> Index1
-          = findAnonymousStructOrUnionIndex(D1)) {
-      if (llvm::Optional<unsigned> Index2
-            = findAnonymousStructOrUnionIndex(D2)) {
+    if (Optional<unsigned> Index1 = findAnonymousStructOrUnionIndex(D1)) {
+      if (Optional<unsigned> Index2 = findAnonymousStructOrUnionIndex(D2)) {
         if (*Index1 != *Index2)
           return false;
       }
@@ -2459,10 +2456,10 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
             FoundRecord->isAnonymousStructOrUnion()) {
           // If both anonymous structs/unions are in a record context, make sure
           // they occur in the same location in the context records.
-          if (llvm::Optional<unsigned> Index1
+          if (Optional<unsigned> Index1
               = findAnonymousStructOrUnionIndex(D)) {
-            if (llvm::Optional<unsigned> Index2
-                = findAnonymousStructOrUnionIndex(FoundRecord)) {
+            if (Optional<unsigned> Index2 =
+                    findAnonymousStructOrUnionIndex(FoundRecord)) {
               if (*Index1 != *Index2)
                 continue;
             }
