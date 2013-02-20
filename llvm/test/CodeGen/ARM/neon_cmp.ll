@@ -1,0 +1,15 @@
+; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s
+; bug 15283
+; radar://13191881
+; CHECK: vfcmp
+define void @vfcmp(<2 x double>* %a, <2 x double>* %b) {
+  %wide.load = load <2 x double>* %a, align 4
+  %wide.load2 = load <2 x double>* %b, align 4
+; CHECK-NOT: vdup.32
+; CHECK-NOT: vmovn.i64
+  %v1 = fcmp olt <2 x double> %wide.load, %wide.load2
+  %v2 = zext <2 x i1> %v1 to <2 x i32>
+  %v3 = sitofp <2 x i32> %v2 to <2 x double>
+  store <2 x double> %v3, <2 x double>* %b, align 4
+  ret void
+}
