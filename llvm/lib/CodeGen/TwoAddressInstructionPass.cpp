@@ -1157,7 +1157,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
             Begin = MachineBasicBlock::iterator(NewMIs[0]);
             if (Begin != MBB->begin())
               --Begin;
-            End = next(MachineBasicBlock::iterator(MI));
+            End = llvm::next(MachineBasicBlock::iterator(MI));
 
             for (MachineInstr::const_mop_iterator MOI = MI.operands_begin(),
                  MOE = MI.operands_end(); MOI != MOE; ++MOI) {
@@ -1562,7 +1562,8 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
     DEBUG(dbgs() << "Inserted: " << *CopyMI);
   }
 
-  MachineBasicBlock::iterator EndMBBI = next(MachineBasicBlock::iterator(MI));
+  MachineBasicBlock::iterator EndMBBI =
+      llvm::next(MachineBasicBlock::iterator(MI));
 
   if (!DefEmitted) {
     DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");

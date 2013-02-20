@@ -440,7 +440,7 @@ void LiveInterval::join(LiveInterval &Other,
 
     iterator OutIt = begin();
     OutIt->valno = NewVNInfo[LHSValNoAssignments[OutIt->valno->id]];
-    for (iterator I = next(OutIt), E = end(); I != E; ++I) {
+    for (iterator I = llvm::next(OutIt), E = end(); I != E; ++I) {
       VNInfo* nextValNo = NewVNInfo[LHSValNoAssignments[I->valno->id]];
       assert(nextValNo != 0 && "Huh?");
 
