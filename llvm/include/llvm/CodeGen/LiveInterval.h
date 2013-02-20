@@ -86,9 +86,10 @@ namespace llvm {
     SlotIndex end;    // End point of the interval (exclusive)
     VNInfo *valno;   // identifier for the value contained in this interval.
 
+    LiveRange() : valno(0) {}
+
     LiveRange(SlotIndex S, SlotIndex E, VNInfo *V)
       : start(S), end(E), valno(V) {
-
       assert(S < E && "Cannot create empty or backwards range");
     }
 
