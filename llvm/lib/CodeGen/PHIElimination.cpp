@@ -116,6 +116,7 @@ INITIALIZE_PASS_END(PHIElimination, "phi-node-elimination",
 
 void PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
+  AU.addPreserved<SlotIndexes>();
   AU.addPreserved<LiveIntervals>();
   AU.addPreserved<MachineDominatorTree>();
   AU.addPreserved<MachineLoopInfo>();
