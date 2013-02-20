@@ -464,10 +464,12 @@ void LiveInterval::join(LiveInterval &Other,
     ranges.erase(OutIt, end());
   }
 
-  // Remember assignements because val# ids are changing.
-  SmallVector<unsigned, 16> OtherAssignments;
+  // Rewrite Other values before changing the VNInfo ids.
+  // This can leave Other in an invalid state because we're not coalescing
+  // touching segments that now have identical values. That's OK since Other is
+  // not supposed to be valid after calling join();
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
-    OtherAssignments.push_back(RHSValNoAssignments[I->valno->id]);
+    I->valno = NewVNInfo[RHSValNoAssignments[I->valno->id]];
 
   // Update val# info. Renumber them and make sure they all belong to this
   // LiveInterval now. Also remove dead val#'s.
@@ -487,13 +489,8 @@ void LiveInterval::join(LiveInterval &Other,
 
   // Okay, now insert the RHS live ranges into the LHS.
   LiveRangeUpdater Updater(this);
-  unsigned RangeNo = 0;
-  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I, ++RangeNo) {
-    // Map the valno in the other live range to the current live range.
-    VNInfo *VNI = NewVNInfo[OtherAssignments[RangeNo]];
-    assert(VNI && "Adding a dead range?");
-    Updater.add(I->start, I->end, VNI);
-  }
+  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
+    Updater.add(*I);
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
