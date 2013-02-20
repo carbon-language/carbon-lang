@@ -45,6 +45,8 @@ class ConstVariableTestCase(TestBase):
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
+        self.runCmd("next")
+
         # Try frame variable.
         self.expect("frame variable index", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(int32_t) index = 512'])
