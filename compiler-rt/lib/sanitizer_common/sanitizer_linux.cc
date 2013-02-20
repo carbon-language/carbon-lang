@@ -140,6 +140,11 @@ int internal_sched_yield() {
   return syscall(__NR_sched_yield);
 }
 
+void internal__exit(int exitcode) {
+  syscall(__NR_exit_group, exitcode);
+  Die();  // Unreachable.
+}
+
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS

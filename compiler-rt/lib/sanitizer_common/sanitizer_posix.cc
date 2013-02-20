@@ -209,10 +209,6 @@ void SleepForMillis(int millis) {
   usleep(millis * 1000);
 }
 
-void Exit(int exitcode) {
-  _exit(exitcode);
-}
-
 void Abort() {
   abort();
 }

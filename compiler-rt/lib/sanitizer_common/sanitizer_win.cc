@@ -167,10 +167,6 @@ void SleepForMillis(int millis) {
   Sleep(millis);
 }
 
-void Exit(int exitcode) {
-  _exit(exitcode);
-}
-
 void Abort() {
   abort();
   _exit(-1);  // abort is not NORETURN on Windows.
@@ -255,6 +251,10 @@ uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
 int internal_sched_yield() {
   Sleep(0);
   return 0;
+}
+
+void internal__exit(int exitcode) {
+  _exit(exitcode);
 }
 
 // ---------------------- BlockingMutex ---------------- {{{1

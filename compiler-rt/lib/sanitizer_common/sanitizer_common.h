@@ -140,7 +140,6 @@ void SortArray(uptr *array, uptr size);
 
 // Exit
 void NORETURN Abort();
-void NORETURN Exit(int exitcode);
 void NORETURN Die();
 void NORETURN SANITIZER_INTERFACE_ATTRIBUTE
 CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);

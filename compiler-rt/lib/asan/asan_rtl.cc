@@ -51,7 +51,7 @@ static void AsanDie() {
     death_callback();
   if (flags()->abort_on_error)
     Abort();
-  Exit(flags()->exitcode);
+  internal__exit(flags()->exitcode);
 }
 
 static void AsanCheckFailed(const char *file, int line, const char *cond,

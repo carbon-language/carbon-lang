@@ -106,6 +106,10 @@ int internal_sched_yield() {
   return sched_yield();
 }
 
+void internal__exit(int exitcode) {
+  _exit(exitcode);
+}
+
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
   struct stat st;

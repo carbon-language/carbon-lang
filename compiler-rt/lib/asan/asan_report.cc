@@ -435,9 +435,9 @@ class ScopedInErrorReport {
         // an error report will finish doing it.
         SleepForSeconds(Max(100, flags()->sleep_before_dying + 1));
       }
-      // If we're still not dead for some reason, use raw Exit() instead of
+      // If we're still not dead for some reason, use raw _exit() instead of
       // Die() to bypass any additional checks.
-      Exit(flags()->exitcode);
+      internal__exit(flags()->exitcode);
     }
     ASAN_ON_ERROR();
     reporting_thread_tid = asanThreadRegistry().GetCurrentTidOrInvalid();

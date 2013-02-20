@@ -45,6 +45,7 @@ char *internal_strrchr(const char *s, int c);
 char *internal_strstr(const char *haystack, const char *needle);
 // Works only for base=10 and doesn't set errno.
 s64 internal_simple_strtoll(const char *nptr, char **endptr, int base);
+int internal_snprintf(char *buffer, uptr length, const char *format, ...);
 
 // Return true if all bytes in [mem, mem+size) are zero.
 // Optimized for the case when the result is true.
@@ -70,14 +71,15 @@ fd_t internal_open(const char *filename, int flags, u32 mode);
 
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
+
+// OS
 uptr internal_filesize(fd_t fd);  // -1 on error.
 int internal_stat(const char *path, void *buf);
 int internal_lstat(const char *path, void *buf);
 int internal_fstat(fd_t fd, void *buf);
-
 int internal_dup2(int oldfd, int newfd);
 uptr internal_readlink(const char *path, char *buf, uptr bufsize);
-int internal_snprintf(char *buffer, uptr length, const char *format, ...);
+void NORETURN internal__exit(int exitcode);
 
 // Threading
 int internal_sched_yield();

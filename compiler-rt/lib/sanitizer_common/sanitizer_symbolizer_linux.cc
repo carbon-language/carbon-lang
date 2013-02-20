@@ -99,7 +99,7 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
     for (int fd = getdtablesize(); fd > 2; fd--)
       internal_close(fd);
     execl(path_to_symbolizer, path_to_symbolizer, (char*)0);
-    Exit(1);
+    internal__exit(1);
   }
 
   // Continue execution in parent process.
