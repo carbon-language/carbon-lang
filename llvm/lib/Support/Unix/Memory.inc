@@ -52,6 +52,13 @@ int getPosixProtectionFlags(unsigned Flags) {
     return PROT_READ | PROT_WRITE | PROT_EXEC;
   case llvm::sys::Memory::MF_EXEC:
 #if defined(__FreeBSD__)
+    // On PowerPC, having an executable page that has no read permission
+    // can have unintended consequences.  The function InvalidateInstruction-
+    // Cache uses instructions dcbf and icbi, both of which are treated by
+    // the processor as loads.  If the page has no read permissions,
+    // executing these instructions will result in a segmentation fault.
+    // Somehow, this problem is not present on Linux, but it does happen
+    // on FreeBSD.
     return PROT_READ | PROT_EXEC;
 #else
     return PROT_EXEC;
