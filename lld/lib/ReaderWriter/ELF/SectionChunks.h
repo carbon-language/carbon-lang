@@ -758,6 +758,31 @@ public:
 private:
   EntriesT _entries;
 };
+
+template <class ELFT> class InterpSection : public Section<ELFT> {
+public:
+  InterpSection(const ELFTargetInfo &ti, StringRef str, int32_t order,
+                StringRef interp)
+      : Section<ELFT>(ti, str),
+        _interp(interp){
+    this->setOrder(order);
+    this->_align2 = 1;
+    // + 1 for null term.
+    this->_fsize = interp.size() + 1;
+    this->_msize = this->_fsize;
+    this->_type = SHT_PROGBITS;
+    this->_flags = SHF_ALLOC;
+  }
+
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+    uint8_t *chunkBuffer = buffer.getBufferStart();
+    uint8_t *dest = chunkBuffer + this->fileOffset();
+    std::memcpy(dest, _interp.data(), _interp.size());
+  }
+
+private:
+  StringRef _interp;
+};
 } // end namespace elf
 } // end namespace lld
 

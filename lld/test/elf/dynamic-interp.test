@@ -1,0 +1,8 @@
+RUN: lld -core -target x86_64-linux %p/Inputs/use-shared.x86-64 \
+RUN:   %p/Inputs/shared.so-x86-64 -output=%t -entry=main \
+RUN:   -output-type=dynamic
+RUN: llvm-objdump -p %t | FileCheck %s
+
+CHECK: INTERP
+CHECK: flags r--
+CHECK: off

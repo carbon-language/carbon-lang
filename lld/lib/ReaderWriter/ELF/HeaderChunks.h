@@ -183,7 +183,8 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   for (auto slice : segment->slices()) {
     // If we have a TLS segment, emit a LOAD first.
     if (segment->segmentType() == llvm::ELF::PT_TLS ||
-        segment->segmentType() == llvm::ELF::PT_DYNAMIC) {
+        segment->segmentType() == llvm::ELF::PT_DYNAMIC ||
+        segment->segmentType() == llvm::ELF::PT_INTERP) {
       auto phdr = allocateProgramHeader();
       if (phdr.second)
         allocatedNew = true;

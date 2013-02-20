@@ -69,6 +69,7 @@ private:
   /// \name Dynamic sections.
   /// @{
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) _dynamicTable;
+  LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   /// @}
   CRuntimeFile<ELFT> _runtimeFile;
 };
@@ -337,7 +338,11 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
   if (_targetInfo.isDynamic()) {
     _dynamicTable.reset(new (_alloc) DynamicTable<ELFT>(
         _targetInfo, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
+    _interpSection.reset(new (_alloc) InterpSection<ELFT>(
+        _targetInfo, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
+        _targetInfo.getInterpreter()));
     _layout->addSection(_dynamicTable.get());
+    _layout->addSection(_interpSection.get());
   }
 
   // give a chance for the target to add sections

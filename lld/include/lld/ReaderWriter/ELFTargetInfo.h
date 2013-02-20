@@ -49,6 +49,10 @@ public:
     return false;
   }
 
+  virtual StringRef getInterpreter() const {
+    return "/lib64/ld-linux-x86-64.so.2";
+  }
+
   /// \brief Does the output have dynamic sections.
   bool isDynamic() const {
     return _options._outputKind == OutputKind::DynamicExecutable ||
