@@ -25,7 +25,6 @@ set(ASAN_SOURCES
 
 set(ASAN_DYLIB_SOURCES
   ${ASAN_SOURCES}
-  dynamic/asan_interceptors_dynamic.cc
   )
 
 include_directories(..)

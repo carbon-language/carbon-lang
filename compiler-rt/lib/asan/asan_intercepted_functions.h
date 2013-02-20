@@ -79,9 +79,36 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT___CXA_THROW 0
 #endif
 
+#define INTERPOSE_FUNCTION(function) \
+    { reinterpret_cast<const uptr>(WRAP(function)), \
+      reinterpret_cast<const uptr>(function) }
+
+#define INTERPOSE_FUNCTION_2(function, wrapper) \
+    { reinterpret_cast<const uptr>(wrapper), \
+      reinterpret_cast<const uptr>(function) }
+
+struct interpose_substitution {
+  const uptr replacement;
+  const uptr original;
+};
+
+#define INTERPOSER(func) __attribute__((used)) \
+const interpose_substitution substitution_##func[] \
+    __attribute__((section("__DATA, __interpose"))) = { \
+  INTERPOSE_FUNCTION(func), \
+}
+
+#define INTERPOSER_2(func, wrapper) __attribute__((used)) \
+const interpose_substitution substitution_##func[] \
+    __attribute__((section("__DATA, __interpose"))) = { \
+  INTERPOSE_FUNCTION_2(func, wrapper), \
+}
+
+
 #define DECLARE_FUNCTION_AND_WRAPPER(ret_type, func, ...) \
   ret_type func(__VA_ARGS__); \
-  ret_type WRAP(func)(__VA_ARGS__)
+  ret_type WRAP(func)(__VA_ARGS__); \
+  INTERPOSER(func)
 
 // Use extern declarations of intercepted functions on Mac and Windows
 // to avoid including system headers.
@@ -141,7 +168,8 @@ DECLARE_FUNCTION_AND_WRAPPER(char*, strdup, const char *s);
 DECLARE_FUNCTION_AND_WRAPPER(uptr, strnlen, const char *s, uptr maxlen);
 # endif
 # if ASAN_INTERCEPT_INDEX
-DECLARE_FUNCTION_AND_WRAPPER(char*, index, const char *string, int c);
+char* index(const char *string, int c);
+INTERPOSER_2(index, WRAP(strchr));
 # endif
 
 // stdlib.h
@@ -221,17 +249,6 @@ DECLARE_FUNCTION_AND_WRAPPER(int, fscanf,
                              void* stream, const char *format, ...);
 DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,  // NOLINT
                              const char *str, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_vscanf, const char *format,
-                             va_list ap);
-DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_vsscanf, const char *str,
-                             const char *format, va_list ap);
-DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_vfscanf, void *stream,
-                             const char *format, va_list ap);
-DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_scanf, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_fscanf,
-                             void* stream, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, __isoc99_sscanf,  // NOLINT
-                             const char *str, const char *format, ...);
 # endif
 
 # if defined(__APPLE__)
@@ -294,9 +311,11 @@ DECLARE_FUNCTION_AND_WRAPPER(void *, valloc, size_t size);
 DECLARE_FUNCTION_AND_WRAPPER(size_t, malloc_good_size, size_t size);
 DECLARE_FUNCTION_AND_WRAPPER(int, posix_memalign,
                              void **memptr, size_t alignment, size_t size);
+#if 0
 DECLARE_FUNCTION_AND_WRAPPER(void, _malloc_fork_prepare, void);
 DECLARE_FUNCTION_AND_WRAPPER(void, _malloc_fork_parent, void);
 DECLARE_FUNCTION_AND_WRAPPER(void, _malloc_fork_child, void);
+#endif
 
 
 

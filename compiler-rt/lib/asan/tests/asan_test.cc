@@ -1133,11 +1133,15 @@ TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
 
 // It doesn't work on Android, as calls to new/delete go through malloc/free.
 #if !defined(ANDROID) && !defined(__ANDROID__)
+#if 0
 static string MismatchStr(const string &str) {
   return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
 }
+#endif
 
 TEST(AddressSanitizer, AllocDeallocMismatch) {
+  free(Ident(new int));
+#if 0
   EXPECT_DEATH(free(Ident(new int)),
                MismatchStr("operator new vs free"));
   EXPECT_DEATH(free(Ident(new int[2])),
@@ -1150,6 +1154,7 @@ TEST(AddressSanitizer, AllocDeallocMismatch) {
                MismatchStr("operator new vs operator delete \\[\\]"));
   EXPECT_DEATH(delete [] (Ident((int*)malloc(2 * sizeof(int)))),
                MismatchStr("malloc vs operator delete \\[\\]"));
+#endif
 }
 #endif
 
