@@ -52,7 +52,7 @@ void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 }
 } // end anon namespace
 
-int64_t X86_64TargetRelocationHandler::fixupAddend(const Reference &ref) const {
+int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
   switch (ref.kind()) {
   case R_X86_64_PC32:
     return 4;

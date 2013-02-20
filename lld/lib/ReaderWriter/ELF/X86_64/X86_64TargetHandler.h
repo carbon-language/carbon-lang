@@ -30,7 +30,7 @@ public:
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &, const AtomLayout &,
                   const Reference &)const;
 
-  virtual int64_t fixupAddend(const Reference &)const;
+  virtual int64_t relocAddend(const Reference &)const;
 
 private:
   // Cached size of the TLS segment.
