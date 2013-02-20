@@ -196,28 +196,6 @@ enum CFNumberType {
   kCFNumberCGFloatType = 16
 };
 
-namespace {
-  template<typename T>
-  class Optional {
-    bool IsKnown;
-    T Val;
-  public:
-    Optional() : IsKnown(false), Val(0) {}
-    Optional(const T& val) : IsKnown(true), Val(val) {}
-
-    bool isKnown() const { return IsKnown; }
-
-    const T& getValue() const {
-      assert (isKnown());
-      return Val;
-    }
-
-    operator const T&() const {
-      return getValue();
-    }
-  };
-}
-
 static Optional<uint64_t> GetCFNumberSize(ASTContext &Ctx, uint64_t i) {
   static const unsigned char FixedSize[] = { 8, 16, 32, 64, 32, 64 };
 
@@ -296,11 +274,13 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
     return;
 
   uint64_t NumberKind = V->getValue().getLimitedValue();
-  Optional<uint64_t> TargetSize = GetCFNumberSize(Ctx, NumberKind);
+  llvm::Optional<uint64_t> OptTargetSize = GetCFNumberSize(Ctx, NumberKind);
 
   // FIXME: In some cases we can emit an error.
-  if (!TargetSize.isKnown())
+  if (!OptTargetSize)
     return;
+
+  uint64_t TargetSize = *OptTargetSize;
 
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
