@@ -4,7 +4,7 @@
 ; Indvars and loop deletion should be able to eliminate all looping
 ; in this testcase.
 
-; CHECK:      define i32 @pmat(i32 %m, i32 %n, double* %y) nounwind {
+; CHECK:      define i32 @pmat(i32 %m, i32 %n, double* %y) #0 {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   ret i32 0
 ; CHECK-NEXT: }
@@ -63,3 +63,5 @@ w.e:
 w.e12:
   ret i32 0
 }
+
+; CHECK: attributes #0 = { nounwind }

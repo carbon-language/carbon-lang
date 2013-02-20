@@ -14,7 +14,7 @@ define void @f2(i8 signext)
 }
 
 define void @f3() noreturn
-; CHECK: define void @f3() noreturn
+; CHECK: define void @f3() #0
 {
         ret void;
 }
@@ -32,7 +32,7 @@ define void @f5(i8* sret)
 }
 
 define void @f6() nounwind
-; CHECK: define void @f6() nounwind
+; CHECK: define void @f6() #1
 {
         ret void;
 }
@@ -56,43 +56,43 @@ define void @f9(i8* nest)
 }
 
 define void @f10() readnone
-; CHECK: define void @f10() readnone
+; CHECK: define void @f10() #2
 {
         ret void;
 }
 
 define void @f11() readonly
-; CHECK: define void @f11() readonly
+; CHECK: define void @f11() #3
 {
         ret void;
 }
 
 define void @f12() noinline
-; CHECK: define void @f12() noinline
+; CHECK: define void @f12() #4
 {
         ret void;
 }
 
 define void @f13() alwaysinline
-; CHECK: define void @f13() alwaysinline
+; CHECK: define void @f13() #5
 {
         ret void;
 }
 
 define void @f14() optsize
-; CHECK: define void @f14() optsize
+; CHECK: define void @f14() #6
 {
         ret void;
 }
 
 define void @f15() ssp
-; CHECK: define void @f15() ssp
+; CHECK: define void @f15() #7
 {
         ret void;
 }
 
 define void @f16() sspreq
-; CHECK: define void @f16() sspreq
+; CHECK: define void @f16() #8
 {
         ret void;
 }
@@ -110,71 +110,71 @@ define void @f18(i8* nocapture)
 }
 
 define void @f19() noredzone
-; CHECK: define void @f19() noredzone
+; CHECK: define void @f19() #9
 {
         ret void;
 }
 
 define void @f20() noimplicitfloat
-; CHECK: define void @f20() noimplicitfloat
+; CHECK: define void @f20() #10
 {
         ret void;
 }
 
 define void @f21() naked
-; CHECK: define void @f21() naked
+; CHECK: define void @f21() #11
 {
         ret void;
 }
 
 define void @f22() inlinehint
-; CHECK: define void @f22() inlinehint
+; CHECK: define void @f22() #12
 {
         ret void;
 }
 
 define void @f23() alignstack(4)
-; CHECK: define void @f23() alignstack(4)
+; CHECK: define void @f23() #13
 {
         ret void;
 }
 
 define void @f24() returns_twice
-; CHECK: define void @f24() returns_twice
+; CHECK: define void @f24() #14
 {
         ret void;
 }
 
 define void @f25() uwtable
-; CHECK: define void @f25() uwtable
+; CHECK: define void @f25() #15
 {
         ret void;
 }
 
 define void @f26() nonlazybind
-; CHECK: define void @f26() nonlazybind
+; CHECK: define void @f26() #16
 {
         ret void;
 }
 
 define void @f27() address_safety
-; CHECK: define void @f27() address_safety
+; CHECK: define void @f27() #17
 {
         ret void;
 }
 define void @f28() thread_safety
-; CHECK: define void @f28() thread_safety
+; CHECK: define void @f28() #18
 {
         ret void;
 }
 define void @f29() uninitialized_checks
-; CHECK: define void @f29() uninitialized_checks
+; CHECK: define void @f29() #19
 {
         ret void;
 }
 
 define void @f30() "cpu"="cortex-a8"
-; CHECK: define void @f30() "cpu"="cortex-a8"
+; CHECK: define void @f30() #20
 {
         ret void;
 }

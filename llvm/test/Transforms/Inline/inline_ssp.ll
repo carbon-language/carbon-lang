@@ -39,35 +39,35 @@ entry:
 
 define void @inline_req_req() nounwind sspreq uwtable {
 entry:
-; CHECK: @inline_req_req() nounwind sspreq uwtable 
+; CHECK: @inline_req_req() #0
   call void @fun_sspreq()
   ret void
 }
 
 define void @inline_req_strong() nounwind sspstrong uwtable {
 entry:
-; CHECK: @inline_req_strong() nounwind sspreq uwtable 
+; CHECK: @inline_req_strong() #0
   call void @fun_sspreq()
   ret void
 }
 
 define void @inline_req_ssp() nounwind ssp uwtable {
 entry:
-; CHECK: @inline_req_ssp() nounwind sspreq uwtable 
+; CHECK: @inline_req_ssp() #0
   call void @fun_sspreq()
   ret void
 }
 
 define void @inline_req_nossp() nounwind uwtable {
 entry:
-; CHECK: @inline_req_nossp() nounwind sspreq uwtable 
+; CHECK: @inline_req_nossp() #0
   call void @fun_sspreq()
   ret void
 }
 
 define void @inline_strong_req() nounwind sspreq uwtable {
 entry:
-; CHECK: @inline_strong_req() nounwind sspreq uwtable 
+; CHECK: @inline_strong_req() #0
   call void @fun_sspstrong()
   ret void
 }
@@ -75,28 +75,28 @@ entry:
 
 define void @inline_strong_strong() nounwind sspstrong uwtable {
 entry:
-; CHECK: @inline_strong_strong() nounwind sspstrong uwtable
+; CHECK: @inline_strong_strong() #1
   call void @fun_sspstrong()
   ret void
 }
 
 define void @inline_strong_ssp() nounwind ssp uwtable {
 entry:
-; CHECK: @inline_strong_ssp() nounwind sspstrong uwtable
+; CHECK: @inline_strong_ssp() #1
   call void @fun_sspstrong()
   ret void
 }
 
 define void @inline_strong_nossp() nounwind uwtable {
 entry:
-; CHECK: @inline_strong_nossp() nounwind sspstrong uwtable
+; CHECK: @inline_strong_nossp() #1
   call void @fun_sspstrong()
   ret void
 }
 
 define void @inline_ssp_req() nounwind sspreq uwtable {
 entry:
-; CHECK: @inline_ssp_req() nounwind sspreq uwtable
+; CHECK: @inline_ssp_req() #0
   call void @fun_ssp()
   ret void
 }
@@ -104,28 +104,28 @@ entry:
 
 define void @inline_ssp_strong() nounwind sspstrong uwtable {
 entry:
-; CHECK: @inline_ssp_strong() nounwind sspstrong uwtable
+; CHECK: @inline_ssp_strong() #1
   call void @fun_ssp()
   ret void
 }
 
 define void @inline_ssp_ssp() nounwind ssp uwtable {
 entry:
-; CHECK: @inline_ssp_ssp() nounwind ssp uwtable
+; CHECK: @inline_ssp_ssp() #2
   call void @fun_ssp()
   ret void
 }
 
 define void @inline_ssp_nossp() nounwind uwtable {
 entry:
-; CHECK: @inline_ssp_nossp() nounwind ssp uwtable
+; CHECK: @inline_ssp_nossp() #2
   call void @fun_ssp()
   ret void
 }
 
 define void @inline_nossp_req() nounwind uwtable sspreq {
 entry:
-; CHECK: @inline_nossp_req() nounwind sspreq uwtable
+; CHECK: @inline_nossp_req() #0
   call void @fun_nossp()
   ret void
 }
@@ -133,23 +133,28 @@ entry:
 
 define void @inline_nossp_strong() nounwind sspstrong uwtable {
 entry:
-; CHECK: @inline_nossp_strong() nounwind sspstrong uwtable
+; CHECK: @inline_nossp_strong() #1
   call void @fun_nossp()
   ret void
 }
 
 define void @inline_nossp_ssp() nounwind ssp uwtable {
 entry:
-; CHECK: @inline_nossp_ssp() nounwind ssp uwtable
+; CHECK: @inline_nossp_ssp() #2
   call void @fun_nossp()
   ret void
 }
 
 define void @inline_nossp_nossp() nounwind uwtable {
 entry:
-; CHECK: @inline_nossp_nossp() nounwind uwtable
+; CHECK: @inline_nossp_nossp() #3
   call void @fun_nossp()
   ret void
 }
 
 declare i32 @printf(i8*, ...)
+
+; CHECK: attributes #0 = { nounwind sspreq uwtable }
+; CHECK: attributes #1 = { nounwind sspstrong uwtable }
+; CHECK: attributes #2 = { nounwind ssp uwtable }
+; CHECK: attributes #3 = { nounwind uwtable }

@@ -49,3 +49,6 @@ declare i32 @TestConst(i32) readnone
 declare i32 @TestPure(i32) readonly
 
 declare i32 @TestNone(i32)
+
+; CHECK: attributes #0 = { readnone }
+; CHECK: attributes #1 = { readonly }

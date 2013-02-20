@@ -39,7 +39,7 @@ entry:
 
 ; Eliminate unnecessary weak pointer copies in a block initialization.
 
-; CHECK:      define void @qux(i8* %me) nounwind {
+; CHECK:      define void @qux(i8* %me) #0 {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %block = alloca %1, align 8
 ; CHECK-NOT:    alloca
@@ -83,5 +83,7 @@ declare i8* @objc_initWeak(i8**, i8*)
 declare i8* @objc_loadWeak(i8**)
 declare void @use(i8*) nounwind
 declare void @objc_destroyWeak(i8**)
+
+; CHECK: attributes #0 = { nounwind }
 
 !0 = metadata !{}

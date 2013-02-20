@@ -4,7 +4,7 @@
 ; IPSCCP should propagate the 0 argument, eliminate the switch, and propagate
 ; the result.
 
-; CHECK: define i32 @main() noreturn nounwind {
+; CHECK: define i32 @main() #0 {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: %call2 = tail call i32 @wwrite(i64 0) nounwind
 ; CHECK-NEXT: ret i32 123
@@ -28,3 +28,6 @@ sw.default:
 return:
   ret i32 0
 }
+
+; CHECK: attributes #0 = { noreturn nounwind }
+; CHECK: attributes #1 = { nounwind readnone }

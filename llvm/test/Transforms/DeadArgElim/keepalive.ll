@@ -1,6 +1,4 @@
-; RUN: opt < %s -deadargelim -S > %t
-; RUN: grep "define internal zeroext i32 @test1() nounwind" %t
-; RUN: grep "define internal <{ i32, i32 }> @test2" %t
+; RUN: opt < %s -deadargelim -S | FileCheck %s
 
 %Ty = type <{ i32, i32 }>
 
@@ -9,11 +7,13 @@
 ; the function and then changing too much.
 
 ; This checks if the return value attributes are not removed
+; CHECK: define internal zeroext i32 @test1() #0
 define internal zeroext i32 @test1(i32 %DEADARG1) nounwind {
         ret i32 1
 }
 
 ; This checks if the struct doesn't get non-packed
+; CHECK: define internal <{ i32, i32 }> @test2
 define internal <{ i32, i32 }> @test2(i32 %DEADARG1) {
         ret <{ i32, i32 }> <{ i32 1, i32 2 }>
 }
@@ -28,3 +28,4 @@ define void @caller() {
         ret void
 }
 
+; CHECK: attributes #0 = { nounwind }

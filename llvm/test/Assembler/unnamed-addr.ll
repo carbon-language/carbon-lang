@@ -15,4 +15,6 @@ declare i32 @zed(%struct.foobar*, %struct.foobar*)
 
 ; CHECK: @bar.d = internal unnamed_addr constant %struct.foobar zeroinitializer, align 4
 ; CHECK: @foo.d = internal constant %struct.foobar zeroinitializer, align 4
-; CHECK: define i32 @main() unnamed_addr nounwind ssp {
+; CHECK: define i32 @main() unnamed_addr #0 {
+
+; CHECK: attributes #0 = { nounwind ssp }

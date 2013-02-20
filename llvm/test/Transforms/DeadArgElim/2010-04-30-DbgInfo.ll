@@ -15,7 +15,7 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-define internal fastcc i8* @add_name_internal(i8* %name, i32 %len, i32 %hash, i8 zeroext %extra, i32 %flags) nounwind noinline ssp {
+define internal fastcc i8* @add_name_internal(i8* %name, i32 %len, i32 %hash, i8 zeroext %extra, i32 %flags) noinline nounwind ssp {
 entry:
   call void @llvm.dbg.value(metadata !{i8* %name}, i64 0, metadata !15)
   call void @llvm.dbg.value(metadata !{i32 %len}, i64 0, metadata !20)
@@ -37,6 +37,10 @@ bb2:                                              ; preds = %bb1, %bb
 }
 
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+
+; CHECK: attributes #0 = { nounwind ssp }
+; CHECK: attributes #1 = { nounwind readnone }
+; CHECK: attributes #2 = { noinline nounwind ssp }
 
 !0 = metadata !{i32 524545, metadata !1, metadata !"name", metadata !2, i32 8, metadata !6} ; [ DW_TAG_arg_variable ]
 !1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"vfs_addname", metadata !"vfs_addname", metadata !"vfs_addname", metadata !2, i32 12, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false} ; [ DW_TAG_subprogram ]

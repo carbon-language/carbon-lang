@@ -1,6 +1,6 @@
 ; RUN: opt < %s -argpromotion -S | FileCheck %s
 
-; CHECK: define internal i32 @deref(i32 %x.val) nounwind {
+; CHECK: define internal i32 @deref(i32 %x.val) #0 {
 define internal i32 @deref(i32* %x) nounwind {
 entry:
   %tmp2 = load i32* %x, align 4
@@ -15,3 +15,5 @@ entry:
   %tmp1 = call i32 @deref( i32* %x_addr ) nounwind
   ret i32 %tmp1
 }
+
+; CHECK: attributes #0 = { nounwind }

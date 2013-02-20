@@ -22,6 +22,9 @@ entry:
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*, i32) nounwind readonly
 declare void @llvm.arm.neon.vst1.v8i16(i8*, <8 x i16>, i32) nounwind
 
+; CHECK: attributes #0 = { nounwind readonly }
+; CHECK: attributes #1 = { nounwind }
+
 !0 = metadata !{metadata !"tbaa root", null}
 !1 = metadata !{metadata !"A", metadata !0}
 !2 = metadata !{metadata !"B", metadata !0}
