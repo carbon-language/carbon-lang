@@ -147,6 +147,8 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   int matchRegisterName(StringRef Symbol, bool is64BitReg);
 
+  int matchCPURegisterName(StringRef Symbol);
+
   int matchRegisterByNumber(unsigned RegNum, unsigned RegClass);
 
   void setFpFormat(FpFormatTy Format) {
@@ -163,7 +165,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   unsigned getReg(int RC,int RegNo);
 
-  unsigned getATReg();
+  int getATReg();
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
     : MCTargetAsmParser(), STI(sti), Parser(parser) {
@@ -192,7 +194,7 @@ public:
     Kind_HW64Regs,
     Kind_FGR32Regs,
     Kind_FGR64Regs,
-    Kind_AFGR32Regs,
+    Kind_AFGR64Regs,
     Kind_CCRRegs
   };
 
@@ -574,84 +576,72 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   return true;
 }
 
+int MipsAsmParser::matchCPURegisterName(StringRef Name) {
+   int CC;
+
+  if (Name == "at")
+    return getATReg();
+
+    CC = StringSwitch<unsigned>(Name)
+    .Case("zero", 0)
+    .Case("a0",   4)
+    .Case("a1",   5)
+    .Case("a2",   6)
+    .Case("a3",   7)
+    .Case("v0",   2)
+    .Case("v1",   3)
+    .Case("s0",  16)
+    .Case("s1",  17)
+    .Case("s2",  18)
+    .Case("s3",  19)
+    .Case("s4",  20)
+    .Case("s5",  21)
+    .Case("s6",  22)
+    .Case("s7",  23)
+    .Case("k0",  26)
+    .Case("k1",  27)
+    .Case("sp",  29)
+    .Case("fp",  30)
+    .Case("gp",  28)
+    .Case("ra",  31)
+    .Case("t0",   8)
+    .Case("t1",   9)
+    .Case("t2",  10)
+    .Case("t3",  11)
+    .Case("t4",  12)
+    .Case("t5",  13)
+    .Case("t6",  14)
+    .Case("t7",  15)
+    .Case("t8",  24)
+    .Case("t9",  25)
+    .Default(-1);
+
+  // Although SGI documentation just cut out t0-t3 for n32/n64,
+  // GNU pushes the values of t0-t3 to override the o32/o64 values for t4-t7
+  // We are supporting both cases, so for t0-t3 we'll just push them to t4-t7.
+  if (isMips64() && 8 <= CC  && CC <= 11)
+    CC += 4;
+
+  if (CC == -1 && isMips64())
+    CC = StringSwitch<unsigned>(Name)
+      .Case("a4",   8)
+      .Case("a5",   9)
+      .Case("a6",  10)
+      .Case("a7",  11)
+      .Case("kt0", 26)
+      .Case("kt1", 27)
+      .Case("s8",  30)
+      .Default(-1);
+
+  return CC;
+}
 int MipsAsmParser::matchRegisterName(StringRef Name, bool is64BitReg) {
 
-   int CC;
-   if (!is64BitReg)
-    CC = StringSwitch<unsigned>(Name)
-      .Case("zero",  Mips::ZERO)
-      .Case("a0",  Mips::A0)
-      .Case("a1",  Mips::A1)
-      .Case("a2",  Mips::A2)
-      .Case("a3",  Mips::A3)
-      .Case("v0",  Mips::V0)
-      .Case("v1",  Mips::V1)
-      .Case("s0",  Mips::S0)
-      .Case("s1",  Mips::S1)
-      .Case("s2",  Mips::S2)
-      .Case("s3",  Mips::S3)
-      .Case("s4",  Mips::S4)
-      .Case("s5",  Mips::S5)
-      .Case("s6",  Mips::S6)
-      .Case("s7",  Mips::S7)
-      .Case("k0",  Mips::K0)
-      .Case("k1",  Mips::K1)
-      .Case("sp",  Mips::SP)
-      .Case("fp",  Mips::FP)
-      .Case("gp",  Mips::GP)
-      .Case("ra",  Mips::RA)
-      .Case("t0",  Mips::T0)
-      .Case("t1",  Mips::T1)
-      .Case("t2",  Mips::T2)
-      .Case("t3",  Mips::T3)
-      .Case("t4",  Mips::T4)
-      .Case("t5",  Mips::T5)
-      .Case("t6",  Mips::T6)
-      .Case("t7",  Mips::T7)
-      .Case("t8",  Mips::T8)
-      .Case("t9",  Mips::T9)
-      .Case("at",  Mips::AT)
-      .Case("fcc0",  Mips::FCC0)
-      .Default(-1);
-   else
-    CC = StringSwitch<unsigned>(Name)
-      .Case("zero", Mips::ZERO_64)
-      .Case("at", Mips::AT_64)
-      .Case("v0", Mips::V0_64)
-      .Case("v1", Mips::V1_64)
-      .Case("a0", Mips::A0_64)
-      .Case("a1", Mips::A1_64)
-      .Case("a2", Mips::A2_64)
-      .Case("a3", Mips::A3_64)
-      .Case("a4", Mips::T0_64)
-      .Case("a5", Mips::T1_64)
-      .Case("a6", Mips::T2_64)
-      .Case("a7", Mips::T3_64)
-      .Case("t4", Mips::T4_64)
-      .Case("t5", Mips::T5_64)
-      .Case("t6", Mips::T6_64)
-      .Case("t7", Mips::T7_64)
-      .Case("s0", Mips::S0_64)
-      .Case("s1", Mips::S1_64)
-      .Case("s2", Mips::S2_64)
-      .Case("s3", Mips::S3_64)
-      .Case("s4", Mips::S4_64)
-      .Case("s5", Mips::S5_64)
-      .Case("s6", Mips::S6_64)
-      .Case("s7", Mips::S7_64)
-      .Case("t8", Mips::T8_64)
-      .Case("t9", Mips::T9_64)
-      .Case("kt0", Mips::K0_64)
-      .Case("kt1", Mips::K1_64)
-      .Case("gp", Mips::GP_64)
-      .Case("sp", Mips::SP_64)
-      .Case("fp", Mips::FP_64)
-      .Case("s8", Mips::FP_64)
-      .Case("ra", Mips::RA_64)
-      .Default(-1);
-
+  int CC;
+  CC = matchCPURegisterName(Name);
   if (CC != -1)
-    return CC;
+    return matchRegisterByNumber(CC,is64BitReg?Mips::CPU64RegsRegClassID:
+                               Mips::CPURegsRegClassID);
 
   if (Name[0] == 'f') {
     StringRef NumString = Name.substr(1);
@@ -715,12 +705,8 @@ bool MipsAssemblerOptions::setATReg(unsigned Reg) {
   return true;
 }
 
-unsigned MipsAsmParser::getATReg() {
-  unsigned Reg = Options.getATRegNum();
-  if (isMips64())
-    return getReg(Mips::CPU64RegsRegClassID,Reg);
-
-  return getReg(Mips::CPURegsRegClassID,Reg);
+int MipsAsmParser::getATReg() {
+  return Options.getATRegNum();
 }
 
 unsigned MipsAsmParser::getReg(int RC,int RegNo) {
@@ -1239,16 +1225,18 @@ parseMathOperation(StringRef Name, SMLoc NameLoc,
 bool MipsAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  StringRef Mnemonic;
   // floating point instructions: should register be treated as double?
   if (requestsDoubleOperand(Name)) {
     setFpFormat(FP_FORMAT_D);
   Operands.push_back(MipsOperand::CreateToken(Name, NameLoc));
+  Mnemonic = Name;
   }
   else {
     setDefaultFpFormat();
     // Create the leading tokens for the mnemonic, split by '.' characters.
     size_t Start = 0, Next = Name.find('.');
-    StringRef Mnemonic = Name.slice(Start, Next);
+    Mnemonic = Name.slice(Start, Next);
 
     Operands.push_back(MipsOperand::CreateToken(Mnemonic, NameLoc));
 
@@ -1288,7 +1276,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ParseOperand(Operands, Name)) {
+    if (ParseOperand(Operands, Mnemonic)) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
@@ -1341,6 +1329,7 @@ bool MipsAsmParser::parseSetAtDirective() {
   // line can be
   //  .set at - defaults to $1
   // or .set at=$reg
+  int AtRegNo;
   getParser().Lex();
   if (getLexer().is(AsmToken::EndOfStatement)) {
     Options.setATReg(1);
@@ -1353,12 +1342,22 @@ bool MipsAsmParser::parseSetAtDirective() {
       return false;
     }
     Parser.Lex(); // eat '$'
-    if (getLexer().isNot(AsmToken::Integer)) {
+    const AsmToken &Reg = Parser.getTok();
+    if (Reg.is(AsmToken::Identifier)) {
+      AtRegNo = matchCPURegisterName(Reg.getIdentifier());
+    } else if (Reg.is(AsmToken::Integer)) {
+      AtRegNo = Reg.getIntVal();
+    } else {
       reportParseError("unexpected token in statement");
       return false;
     }
-    const AsmToken &Reg = Parser.getTok();
-    if (!Options.setATReg(Reg.getIntVal())) {
+
+    if ( AtRegNo < 1 || AtRegNo > 31) {
+      reportParseError("unexpected token in statement");
+      return false;
+    }
+
+    if (!Options.setATReg(AtRegNo)) {
       reportParseError("unexpected token in statement");
       return false;
     }
