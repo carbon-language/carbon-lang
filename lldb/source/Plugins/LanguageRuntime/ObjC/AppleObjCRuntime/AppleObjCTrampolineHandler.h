@@ -67,6 +67,8 @@ public:
 private:
     static const char *g_lookup_implementation_function_name;
     static const char *g_lookup_implementation_function_code;
+    static const char *g_lookup_implementation_with_stret_function_code;
+    static const char *g_lookup_implementation_no_stret_function_code;
 
     class AppleObjCVTables
     {
