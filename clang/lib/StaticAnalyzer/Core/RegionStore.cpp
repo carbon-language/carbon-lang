@@ -1629,7 +1629,7 @@ RegionStoreManager::getInterestingValues(nonloc::LazyCompoundVal LCV) {
     return I->second;
 
   // If we don't have a list of values cached, start constructing it.
-  SValListTy &List = LazyBindingsMap[LCV.getCVData()];
+  SValListTy List;
 
   const SubRegion *LazyR = LCV.getRegion();
   RegionBindingsRef B = getRegionBindings(LCV.getStore());
@@ -1638,7 +1638,7 @@ RegionStoreManager::getInterestingValues(nonloc::LazyCompoundVal LCV) {
   // values to return.
   const ClusterBindings *Cluster = B.lookup(LazyR->getBaseRegion());
   if (!Cluster)
-    return List;
+    return (LazyBindingsMap[LCV.getCVData()] = llvm_move(List));
 
   SmallVector<BindingKey, 32> Keys;
   collectSubRegionKeys(Keys, svalBuilder, *Cluster, LazyR,
@@ -1661,7 +1661,7 @@ RegionStoreManager::getInterestingValues(nonloc::LazyCompoundVal LCV) {
     List.push_back(V);
   }
 
-  return List;
+  return (LazyBindingsMap[LCV.getCVData()] = llvm_move(List));
 }
 
 NonLoc RegionStoreManager::createLazyBinding(RegionBindingsConstRef B,
