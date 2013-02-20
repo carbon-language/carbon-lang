@@ -2568,7 +2568,7 @@ int ARMAsmParser::tryParseShiftRegister(
       Parser.Lex(); // Eat hash.
       SMLoc ImmLoc = Parser.getTok().getLoc();
       const MCExpr *ShiftExpr = 0;
-      if (getParser().ParseExpression(ShiftExpr, EndLoc)) {
+      if (getParser().parseExpression(ShiftExpr, EndLoc)) {
         Error(ImmLoc, "invalid immediate shift value");
         return -1;
       }
@@ -2651,7 +2651,7 @@ tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex(); // Eat left bracket token.
 
     const MCExpr *ImmVal;
-    if (getParser().ParseExpression(ImmVal))
+    if (getParser().parseExpression(ImmVal))
       return true;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
     if (!MCE)
@@ -2796,7 +2796,7 @@ parseCoprocOptionOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   const MCExpr *Expr;
   SMLoc Loc = Parser.getTok().getLoc();
-  if (getParser().ParseExpression(Expr)) {
+  if (getParser().parseExpression(Expr)) {
     Error(Loc, "illegal expression");
     return MatchOperand_ParseFail;
   }
@@ -3009,7 +3009,7 @@ parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index, SMLoc &EndLoc) {
 
     const MCExpr *LaneIndex;
     SMLoc Loc = Parser.getTok().getLoc();
-    if (getParser().ParseExpression(LaneIndex)) {
+    if (getParser().parseExpression(LaneIndex)) {
       Error(Loc, "illegal expression");
       return MatchOperand_ParseFail;
     }
@@ -3327,7 +3327,7 @@ parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     SMLoc Loc = Parser.getTok().getLoc();
 
     const MCExpr *MemBarrierID;
-    if (getParser().ParseExpression(MemBarrierID)) {
+    if (getParser().parseExpression(MemBarrierID)) {
       Error(Loc, "illegal expression");
       return MatchOperand_ParseFail;
     }
@@ -3543,7 +3543,7 @@ parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands, StringRef Op,
   const MCExpr *ShiftAmount;
   SMLoc Loc = Parser.getTok().getLoc();
   SMLoc EndLoc;
-  if (getParser().ParseExpression(ShiftAmount, EndLoc)) {
+  if (getParser().parseExpression(ShiftAmount, EndLoc)) {
     Error(Loc, "illegal expression");
     return MatchOperand_ParseFail;
   }
@@ -3623,7 +3623,7 @@ parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   const MCExpr *ShiftAmount;
   SMLoc EndLoc;
-  if (getParser().ParseExpression(ShiftAmount, EndLoc)) {
+  if (getParser().parseExpression(ShiftAmount, EndLoc)) {
     Error(ExLoc, "malformed shift expression");
     return MatchOperand_ParseFail;
   }
@@ -3684,7 +3684,7 @@ parseRotImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   const MCExpr *ShiftAmount;
   SMLoc EndLoc;
-  if (getParser().ParseExpression(ShiftAmount, EndLoc)) {
+  if (getParser().parseExpression(ShiftAmount, EndLoc)) {
     Error(ExLoc, "malformed rotate expression");
     return MatchOperand_ParseFail;
   }
@@ -3721,7 +3721,7 @@ parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   const MCExpr *LSBExpr;
   SMLoc E = Parser.getTok().getLoc();
-  if (getParser().ParseExpression(LSBExpr)) {
+  if (getParser().parseExpression(LSBExpr)) {
     Error(E, "malformed immediate expression");
     return MatchOperand_ParseFail;
   }
@@ -3754,7 +3754,7 @@ parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   const MCExpr *WidthExpr;
   SMLoc EndLoc;
-  if (getParser().ParseExpression(WidthExpr, EndLoc)) {
+  if (getParser().parseExpression(WidthExpr, EndLoc)) {
     Error(E, "malformed immediate expression");
     return MatchOperand_ParseFail;
   }
@@ -3850,7 +3850,7 @@ parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     bool isNegative = Parser.getTok().is(AsmToken::Minus);
     const MCExpr *Offset;
     SMLoc E;
-    if (getParser().ParseExpression(Offset, E))
+    if (getParser().parseExpression(Offset, E))
       return MatchOperand_ParseFail;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Offset);
     if (!CE) {
@@ -4272,7 +4272,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     E = Parser.getTok().getLoc();
 
     const MCExpr *Expr;
-    if (getParser().ParseExpression(Expr))
+    if (getParser().parseExpression(Expr))
      return true;
 
     // The expression has to be a constant. Memory references with relocations
@@ -4328,7 +4328,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
     bool isNegative = getParser().getTok().is(AsmToken::Minus);
     const MCExpr *Offset;
-    if (getParser().ParseExpression(Offset))
+    if (getParser().parseExpression(Offset))
      return true;
 
     // The expression has to be a constant. Memory references with relocations
@@ -4447,7 +4447,7 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
     Parser.Lex(); // Eat hash token.
 
     const MCExpr *Expr;
-    if (getParser().ParseExpression(Expr))
+    if (getParser().parseExpression(Expr))
       return true;
     // Range check the immediate.
     // lsl, ror: 0 <= imm <= 31
@@ -4476,7 +4476,7 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Anything that can accept a floating point constant as an operand
-  // needs to go through here, as the regular ParseExpression is
+  // needs to go through here, as the regular parseExpression is
   // integer only.
   //
   // This routine still creates a generic Immediate operand, containing
@@ -4596,7 +4596,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     // identifier (like labels) as expressions and create them as immediates.
     const MCExpr *IdVal;
     S = Parser.getTok().getLoc();
-    if (getParser().ParseExpression(IdVal))
+    if (getParser().parseExpression(IdVal))
       return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(IdVal, S, E));
@@ -4615,7 +4615,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     if (Parser.getTok().isNot(AsmToken::Colon)) {
       bool isNegative = Parser.getTok().is(AsmToken::Minus);
       const MCExpr *ImmVal;
-      if (getParser().ParseExpression(ImmVal))
+      if (getParser().parseExpression(ImmVal))
         return true;
       const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ImmVal);
       if (CE) {
@@ -4639,7 +4639,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       return true;
 
     const MCExpr *SubExprVal;
-    if (getParser().ParseExpression(SubExprVal))
+    if (getParser().parseExpression(SubExprVal))
       return true;
 
     const MCExpr *ExprVal = ARMMCExpr::Create(RefKind, SubExprVal,
@@ -5012,7 +5012,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   // In Thumb1, only the branch (B) instruction can be predicated.
   if (isThumbOne() && PredicationCode != ARMCC::AL && Mnemonic != "b") {
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(NameLoc, "conditional execution not supported in Thumb1");
   }
 
@@ -5026,14 +5026,14 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   if (Mnemonic == "it") {
     SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + 2);
     if (ITMask.size() > 3) {
-      Parser.EatToEndOfStatement();
+      Parser.eatToEndOfStatement();
       return Error(Loc, "too many conditions on IT instruction");
     }
     unsigned Mask = 8;
     for (unsigned i = ITMask.size(); i != 0; --i) {
       char pos = ITMask[i - 1];
       if (pos != 't' && pos != 'e') {
-        Parser.EatToEndOfStatement();
+        Parser.eatToEndOfStatement();
         return Error(Loc, "illegal IT block condition mask '" + ITMask + "'");
       }
       Mask >>= 1;
@@ -5059,14 +5059,14 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // If we had a carry-set on an instruction that can't do that, issue an
   // error.
   if (!CanAcceptCarrySet && CarrySetting) {
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(NameLoc, "instruction '" + Mnemonic +
                  "' can not set flags, but 's' suffix specified");
   }
   // If we had a predication code on an instruction that can't do that, issue an
   // error.
   if (!CanAcceptPredicationCode && PredicationCode != ARMCC::AL) {
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(NameLoc, "instruction '" + Mnemonic +
                  "' is not predicable, but condition code specified");
   }
@@ -5115,7 +5115,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
     if (parseOperand(Operands, Mnemonic)) {
-      Parser.EatToEndOfStatement();
+      Parser.eatToEndOfStatement();
       return true;
     }
 
@@ -5124,7 +5124,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
       // Parse and remember the operand.
       if (parseOperand(Operands, Mnemonic)) {
-        Parser.EatToEndOfStatement();
+        Parser.eatToEndOfStatement();
         return true;
       }
     }
@@ -5132,7 +5132,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(Loc, "unexpected token in argument list");
   }
 
@@ -7614,7 +7614,7 @@ bool ARMAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
-      if (getParser().ParseExpression(Value))
+      if (getParser().parseExpression(Value))
         return true;
 
       getParser().getStreamer().EmitValue(Value, Size);
@@ -7761,13 +7761,13 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
   unsigned Reg;
   SMLoc SRegLoc, ERegLoc;
   if (ParseRegister(Reg, SRegLoc, ERegLoc)) {
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(SRegLoc, "register name expected");
   }
 
   // Shouldn't be anything else.
   if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(Parser.getTok().getLoc(),
                  "unexpected input in .req directive.");
   }
@@ -7785,7 +7785,7 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
 ///  ::= .unreq registername
 bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
   if (Parser.getTok().isNot(AsmToken::Identifier)) {
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(L, "unexpected input in .unreq directive.");
   }
   RegisterReqs.erase(Parser.getTok().getIdentifier());

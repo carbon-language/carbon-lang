@@ -451,7 +451,7 @@ MBlazeOperand *MBlazeAsmParser::ParseImmediate() {
   case AsmToken::Minus:
   case AsmToken::Integer:
   case AsmToken::Identifier:
-    if (getParser().ParseExpression(EVal))
+    if (getParser().parseExpression(EVal))
       return 0;
 
     return MBlazeOperand::CreateImm(EVal, S, E);
@@ -537,7 +537,7 @@ bool MBlazeAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
-      if (getParser().ParseExpression(Value))
+      if (getParser().parseExpression(Value))
         return true;
 
       getParser().getStreamer().EmitValue(Value, Size);

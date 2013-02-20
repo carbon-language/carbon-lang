@@ -811,7 +811,7 @@ bool MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*>&Operands,
     }
     // maybe it is a symbol reference
     StringRef Identifier;
-    if (Parser.ParseIdentifier(Identifier))
+    if (Parser.parseIdentifier(Identifier))
       return true;
 
     SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
@@ -834,7 +834,7 @@ bool MipsAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*>&Operands,
      // quoted label names
     const MCExpr *IdVal;
     SMLoc S = Parser.getTok().getLoc();
-    if (getParser().ParseExpression(IdVal))
+    if (getParser().parseExpression(IdVal))
       return true;
     SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(MipsOperand::CreateImm(IdVal, S, E));
@@ -886,7 +886,7 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
       } else
         break;
     }
-    if (getParser().ParseParenExpression(IdVal,EndLoc))
+    if (getParser().parseParenExpression(IdVal,EndLoc))
       return true;
 
     while (getLexer().getKind() == AsmToken::RParen)
@@ -937,7 +937,7 @@ bool MipsAsmParser::parseMemOffset(const MCExpr *&Res) {
   case AsmToken::Integer:
   case AsmToken::Minus:
   case AsmToken::Plus:
-    return (getParser().ParseExpression(Res));
+    return (getParser().parseExpression(Res));
   case AsmToken::Percent:
     return parseRelocOperand(Res);
   case AsmToken::LParen:
@@ -1203,13 +1203,13 @@ parseMathOperation(StringRef Name, SMLoc NameLoc,
     // Read the first operand.
     if (ParseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
-      Parser.EatToEndOfStatement();
+      Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
     }
 
     if (getLexer().isNot(AsmToken::Comma)) {
       SMLoc Loc = getLexer().getLoc();
-      Parser.EatToEndOfStatement();
+      Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
 
     }
@@ -1221,14 +1221,14 @@ parseMathOperation(StringRef Name, SMLoc NameLoc,
     // Parse and remember the operand.
     if (ParseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
-      Parser.EatToEndOfStatement();
+      Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
     }
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(Loc, "unexpected token in argument list");
   }
 
@@ -1290,7 +1290,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     // Read the first operand.
     if (ParseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
-      Parser.EatToEndOfStatement();
+      Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
     }
 
@@ -1300,7 +1300,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       // Parse and remember the operand.
       if (ParseOperand(Operands, Name)) {
         SMLoc Loc = getLexer().getLoc();
-        Parser.EatToEndOfStatement();
+        Parser.eatToEndOfStatement();
         return Error(Loc, "unexpected token in argument list");
       }
     }
@@ -1308,7 +1308,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return Error(Loc, "unexpected token in argument list");
   }
 
@@ -1318,7 +1318,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
 
 bool MipsAsmParser::reportParseError(StringRef ErrorMsg) {
    SMLoc Loc = getLexer().getLoc();
-   Parser.EatToEndOfStatement();
+   Parser.eatToEndOfStatement();
    return Error(Loc, ErrorMsg);
 }
 
@@ -1446,11 +1446,11 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetNoMacroDirective();
   } else if (Tok.getString() == "nomips16") {
     // ignore this directive for now
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return false;
   } else if (Tok.getString() == "nomicromips") {
     // ignore this directive for now
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -1463,7 +1463,7 @@ bool MipsAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
-      if (getParser().ParseExpression(Value))
+      if (getParser().parseExpression(Value))
         return true;
 
       getParser().getStreamer().EmitValue(Value, Size);
@@ -1500,7 +1500,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
   if (IDVal == ".frame") {
     // ignore this directive for now
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return false;
   }
 
@@ -1510,19 +1510,19 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
   if (IDVal == ".fmask") {
     // ignore this directive for now
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return false;
   }
 
   if (IDVal == ".mask") {
     // ignore this directive for now
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return false;
   }
 
   if (IDVal == ".gpword") {
     // ignore this directive for now
-    Parser.EatToEndOfStatement();
+    Parser.eatToEndOfStatement();
     return false;
   }
 

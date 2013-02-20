@@ -38,9 +38,9 @@ bool MCAsmParser::TokError(const Twine &Msg, ArrayRef<SMRange> Ranges) {
   return true;
 }
 
-bool MCAsmParser::ParseExpression(const MCExpr *&Res) {
+bool MCAsmParser::parseExpression(const MCExpr *&Res) {
   SMLoc L;
-  return ParseExpression(Res, L);
+  return parseExpression(Res, L);
 }
 
 void MCParsedAsmOperand::dump() const {

@@ -23,11 +23,11 @@ namespace {
 
 class ELFAsmParser : public MCAsmParserExtension {
   template<bool (ELFAsmParser::*HandlerMethod)(StringRef, SMLoc)>
-  void AddDirectiveHandler(StringRef Directive) {
+  void addDirectiveHandler(StringRef Directive) {
     MCAsmParser::ExtensionDirectiveHandler Handler = std::make_pair(
         this, HandleDirective<ELFAsmParser, HandlerMethod>);
 
-    getParser().AddDirectiveHandler(Directive, Handler);
+    getParser().addDirectiveHandler(Directive, Handler);
   }
 
   bool ParseSectionSwitch(StringRef Section, unsigned Type,
@@ -43,38 +43,38 @@ public:
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveData>(".data");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveText>(".text");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveBSS>(".bss");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveRoData>(".rodata");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveTData>(".tdata");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveTBSS>(".tbss");
-    AddDirectiveHandler<
+    addDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveData>(".data");
+    addDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveText>(".text");
+    addDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveBSS>(".bss");
+    addDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveRoData>(".rodata");
+    addDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveTData>(".tdata");
+    addDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveTBSS>(".tbss");
+    addDirectiveHandler<
       &ELFAsmParser::ParseSectionDirectiveDataRel>(".data.rel");
-    AddDirectiveHandler<
+    addDirectiveHandler<
       &ELFAsmParser::ParseSectionDirectiveDataRelRo>(".data.rel.ro");
-    AddDirectiveHandler<
+    addDirectiveHandler<
       &ELFAsmParser::ParseSectionDirectiveDataRelRoLocal>(".data.rel.ro.local");
-    AddDirectiveHandler<
+    addDirectiveHandler<
       &ELFAsmParser::ParseSectionDirectiveEhFrame>(".eh_frame");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
-    AddDirectiveHandler<
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
+    addDirectiveHandler<
       &ELFAsmParser::ParseDirectivePushSection>(".pushsection");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectivePopSection>(".popsection");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveIdent>(".ident");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymver>(".symver");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveVersion>(".version");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveWeakref>(".weakref");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".weak");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".local");
-    AddDirectiveHandler<
+    addDirectiveHandler<&ELFAsmParser::ParseDirectivePopSection>(".popsection");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveIdent>(".ident");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveSymver>(".symver");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveVersion>(".version");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveWeakref>(".weakref");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".weak");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".local");
+    addDirectiveHandler<
       &ELFAsmParser::ParseDirectiveSymbolAttribute>(".protected");
-    AddDirectiveHandler<
+    addDirectiveHandler<
       &ELFAsmParser::ParseDirectiveSymbolAttribute>(".internal");
-    AddDirectiveHandler<
+    addDirectiveHandler<
       &ELFAsmParser::ParseDirectiveSymbolAttribute>(".hidden");
   }
 
@@ -169,7 +169,7 @@ bool ELFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
     for (;;) {
       StringRef Name;
 
-      if (getParser().ParseIdentifier(Name))
+      if (getParser().parseIdentifier(Name))
         return TokError("expected identifier in directive");
 
       MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
@@ -203,7 +203,7 @@ bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,
 
 bool ELFAsmParser::ParseDirectiveSize(StringRef, SMLoc) {
   StringRef Name;
-  if (getParser().ParseIdentifier(Name))
+  if (getParser().parseIdentifier(Name))
     return TokError("expected identifier in directive");
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
@@ -212,7 +212,7 @@ bool ELFAsmParser::ParseDirectiveSize(StringRef, SMLoc) {
   Lex();
 
   const MCExpr *Expr;
-  if (getParser().ParseExpression(Expr))
+  if (getParser().parseExpression(Expr))
     return true;
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
@@ -224,7 +224,7 @@ bool ELFAsmParser::ParseDirectiveSize(StringRef, SMLoc) {
 
 bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
   // A section name can contain -, so we cannot just use
-  // ParseIdentifier.
+  // parseIdentifier.
   SMLoc FirstLoc = getLexer().getLoc();
   unsigned Size = 0;
 
@@ -377,14 +377,14 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
         return TokError("expected '@' or '%' before type");
 
       Lex();
-      if (getParser().ParseIdentifier(TypeName))
+      if (getParser().parseIdentifier(TypeName))
         return TokError("expected identifier in directive");
 
       if (Mergeable) {
         if (getLexer().isNot(AsmToken::Comma))
           return TokError("expected the entry size");
         Lex();
-        if (getParser().ParseAbsoluteExpression(Size))
+        if (getParser().parseAbsoluteExpression(Size))
           return true;
         if (Size <= 0)
           return TokError("entry size must be positive");
@@ -394,12 +394,12 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
         if (getLexer().isNot(AsmToken::Comma))
           return TokError("expected group name");
         Lex();
-        if (getParser().ParseIdentifier(GroupName))
+        if (getParser().parseIdentifier(GroupName))
           return true;
         if (getLexer().is(AsmToken::Comma)) {
           Lex();
           StringRef Linkage;
-          if (getParser().ParseIdentifier(Linkage))
+          if (getParser().parseIdentifier(Linkage))
             return true;
           if (Linkage != "comdat")
             return TokError("Linkage must be 'comdat'");
@@ -461,7 +461,7 @@ bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
 ///  ::= .type identifier , @attribute
 bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
   StringRef Name;
-  if (getParser().ParseIdentifier(Name))
+  if (getParser().parseIdentifier(Name))
     return TokError("expected identifier in directive");
 
   // Handle the identifier as the key symbol.
@@ -479,7 +479,7 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
   SMLoc TypeLoc;
 
   TypeLoc = getLexer().getLoc();
-  if (getParser().ParseIdentifier(Type))
+  if (getParser().parseIdentifier(Type))
     return TokError("expected symbol type in directive");
 
   MCSymbolAttr Attr = StringSwitch<MCSymbolAttr>(Type)
@@ -538,7 +538,7 @@ bool ELFAsmParser::ParseDirectiveIdent(StringRef, SMLoc) {
 ///  ::= .symver foo, bar2@zed
 bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   StringRef Name;
-  if (getParser().ParseIdentifier(Name))
+  if (getParser().parseIdentifier(Name))
     return TokError("expected identifier in directive");
 
   if (getLexer().isNot(AsmToken::Comma))
@@ -547,7 +547,7 @@ bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   Lex();
 
   StringRef AliasName;
-  if (getParser().ParseIdentifier(AliasName))
+  if (getParser().parseIdentifier(AliasName))
     return TokError("expected identifier in directive");
 
   if (AliasName.find('@') == StringRef::npos)
@@ -593,7 +593,7 @@ bool ELFAsmParser::ParseDirectiveWeakref(StringRef, SMLoc) {
   // FIXME: Share code with the other alias building directives.
 
   StringRef AliasName;
-  if (getParser().ParseIdentifier(AliasName))
+  if (getParser().parseIdentifier(AliasName))
     return TokError("expected identifier in directive");
 
   if (getLexer().isNot(AsmToken::Comma))
@@ -602,7 +602,7 @@ bool ELFAsmParser::ParseDirectiveWeakref(StringRef, SMLoc) {
   Lex();
 
   StringRef Name;
-  if (getParser().ParseIdentifier(Name))
+  if (getParser().parseIdentifier(Name))
     return TokError("expected identifier in directive");
 
   MCSymbol *Alias = getContext().GetOrCreateSymbol(AliasName);

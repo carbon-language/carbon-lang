@@ -65,7 +65,7 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCAsmParser();
 
-  virtual void AddDirectiveHandler(StringRef Directive,
+  virtual void addDirectiveHandler(StringRef Directive,
                                    ExtensionDirectiveHandler Handler) = 0;
 
   virtual SourceMgr &getSourceManager() = 0;
@@ -92,8 +92,8 @@ public:
   virtual void setParsingInlineAsm(bool V) = 0;
   virtual bool isParsingInlineAsm() = 0;
 
-  /// ParseMSInlineAsm - Parse ms-style inline assembly.
-  virtual bool ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
+  /// parseMSInlineAsm - Parse ms-style inline assembly.
+  virtual bool parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                 unsigned &NumOutputs, unsigned &NumInputs,
                                 SmallVectorImpl<std::pair<void *, bool> > &OpDecls,
                                 SmallVectorImpl<std::string> &Constraints,
@@ -126,50 +126,50 @@ public:
   bool TokError(const Twine &Msg,
                 ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
 
-  /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
+  /// parseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \p Res to the identifier contents.
-  virtual bool ParseIdentifier(StringRef &Res) = 0;
+  virtual bool parseIdentifier(StringRef &Res) = 0;
 
   /// \brief Parse up to the end of statement and return the contents from the
   /// current token until the end of the statement; the current token on exit
   /// will be either the EndOfStatement or EOF.
-  virtual StringRef ParseStringToEndOfStatement() = 0;
+  virtual StringRef parseStringToEndOfStatement() = 0;
 
-  /// ParseEscapedString - Parse the current token as a string which may include
+  /// parseEscapedString - Parse the current token as a string which may include
   /// escaped characters and return the string contents.
-  virtual bool ParseEscapedString(std::string &Data) = 0;
+  virtual bool parseEscapedString(std::string &Data) = 0;
 
-  /// EatToEndOfStatement - Skip to the end of the current statement, for error
+  /// eatToEndOfStatement - Skip to the end of the current statement, for error
   /// recovery.
-  virtual void EatToEndOfStatement() = 0;
+  virtual void eatToEndOfStatement() = 0;
 
-  /// ParseExpression - Parse an arbitrary expression.
+  /// parseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined
   /// on error.
   /// @result - False on success.
-  virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
-  bool ParseExpression(const MCExpr *&Res);
+  virtual bool parseExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
+  bool parseExpression(const MCExpr *&Res);
 
-  /// ParseParenExpression - Parse an arbitrary expression, assuming that an
+  /// parseParenExpression - Parse an arbitrary expression, assuming that an
   /// initial '(' has already been consumed.
   ///
   /// @param Res - The value of the expression. The result is undefined
   /// on error.
   /// @result - False on success.
-  virtual bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
+  virtual bool parseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
 
-  /// ParseAbsoluteExpression - Parse an expression which must evaluate to an
+  /// parseAbsoluteExpression - Parse an expression which must evaluate to an
   /// absolute value.
   ///
   /// @param Res - The value of the absolute expression. The result is undefined
   /// on error.
   /// @result - False on success.
-  virtual bool ParseAbsoluteExpression(int64_t &Res) = 0;
+  virtual bool parseAbsoluteExpression(int64_t &Res) = 0;
 
-  /// CheckForValidSection - Ensure that we have a valid section set in the
+  /// checkForValidSection - Ensure that we have a valid section set in the
   /// streamer. Otherwise, report an error and switch to .text.
-  virtual void CheckForValidSection() = 0;
+  virtual void checkForValidSection() = 0;
 };
 
 /// \brief Create an MCAsmParser instance.
