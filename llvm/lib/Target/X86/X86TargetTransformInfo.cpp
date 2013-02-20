@@ -232,6 +232,9 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
     { ISD::FP_TO_SINT,  MVT::v4i8,  MVT::v4f32, 1 },
     { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i1,  6 },
     { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i1,  9 },
+    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i1,  8 },
+    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i8,  8 },
+    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i16, 8 },
     { ISD::TRUNCATE,    MVT::v8i32, MVT::v8i64, 3 },
   };
 
