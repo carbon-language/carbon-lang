@@ -49,7 +49,7 @@ static std::vector<std::pair<void(*)(void*), void*> > CallBacksToRun;
 
 // IntSigs - Signals that may interrupt the program at any time.
 static const int IntSigs[] = {
-  SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
+  SIGHUP, SIGINT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
 static const int *const IntSigsEnd =
   IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
@@ -57,7 +57,7 @@ static const int *const IntSigsEnd =
 // KillSigs - Signals that are synchronous with the program that will cause it
 // to die.
 static const int KillSigs[] = {
-  SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV
+  SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV, SIGQUIT
 #ifdef SIGSYS
   , SIGSYS
 #endif
