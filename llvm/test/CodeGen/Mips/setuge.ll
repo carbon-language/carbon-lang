@@ -16,7 +16,7 @@ entry:
   %conv = zext i1 %cmp to i32
   store i32 %conv, i32* @r1, align 4
 ; 16:	sltu	${{[0-9]+}}, ${{[0-9]+}}
-; 16:	move    $[[REGISTER:[0-9]+]], $t8
+; 16:	move    $[[REGISTER:[0-9]+]], $24
 ; 16:	xor	$[[REGISTER]], ${{[0-9]+}}
   %2 = load i32* @m, align 4
   %cmp1 = icmp uge i32 %0, %2

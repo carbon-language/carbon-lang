@@ -15,6 +15,6 @@ entry:
   %conv = zext i1 %cmp to i32
   store i32 %conv, i32* @r1, align 4
 ; 16:	slti	$[[REGISTER:[0-9]+]], 10
-; 16:	move	$[[REGISTER]], $t8
+; 16:	move	$[[REGISTER]], $24
   ret void
 }

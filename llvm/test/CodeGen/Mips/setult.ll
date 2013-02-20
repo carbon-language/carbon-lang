@@ -16,6 +16,6 @@ entry:
   %conv = zext i1 %cmp to i32
   store i32 %conv, i32* @r1, align 4
 ; 16:	sltu	${{[0-9]+}}, ${{[0-9]+}}
-; 16:	move	${{[0-9]+}}, $t8
+; 16:	move	${{[0-9]+}}, $24
   ret void
 }

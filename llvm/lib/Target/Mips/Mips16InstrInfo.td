@@ -59,7 +59,16 @@ class FRI16_ins_base<bits<5> op, string asmstr, string asmstr2,
 class FRI16_ins<bits<5> op, string asmstr,
                 InstrItinClass itin>:
   FRI16_ins_base<op, asmstr, "\t$rx, $imm \t# 16 bit inst", itin>;
-      
+
+class FRI16R_ins_base<bits<5> op, string asmstr, string asmstr2,
+                     InstrItinClass itin>:
+  FRI16<op, (outs), (ins CPU16Regs:$rx, simm16:$imm),
+        !strconcat(asmstr, asmstr2), [], itin>;
+
+class FRI16R_ins<bits<5> op, string asmstr,
+                InstrItinClass itin>:
+  FRI16R_ins_base<op, asmstr, "\t$rx, $imm \t# 16 bit inst", itin>;
+
 class F2RI16_ins<bits<5> _op, string asmstr,
                      InstrItinClass itin>:
   FRI16<_op, (outs CPU16Regs:$rx), (ins CPU16Regs:$rx_, simm16:$imm),
@@ -139,6 +148,15 @@ class FEXT_RI16_ins_base<bits<5> _op, string asmstr, string asmstr2,
 class FEXT_RI16_ins<bits<5> _op, string asmstr,
                     InstrItinClass itin>:
   FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $imm", itin>;
+
+class FEXT_RI16R_ins_base<bits<5> _op, string asmstr, string asmstr2,
+                         InstrItinClass itin>:
+  FEXT_RI16<_op, (outs ), (ins CPU16Regs:$rx, simm16:$imm),
+                  !strconcat(asmstr, asmstr2), [], itin>;
+
+class FEXT_RI16R_ins<bits<5> _op, string asmstr,
+                    InstrItinClass itin>:
+  FEXT_RI16R_ins_base<_op, asmstr, "\t$rx, $imm", itin>;
 
 class FEXT_RI16_PC_ins<bits<5> _op, string asmstr, InstrItinClass itin>:
   FEXT_RI16_ins_base<_op, asmstr, "\t$rx, $$pc, $imm", itin>;
@@ -384,7 +402,7 @@ class SeliT<string op1, string op2>:
 //
 //
 class SelT<string op1, string op2>:
-  MipsPseudo16<(outs CPU16Regs:$rd_), 
+  MipsPseudo16<(outs CPU16Regs:$rd_),
                (ins CPU16Regs:$rd, CPU16Regs:$rs,
                 CPU16Regs:$rl, CPU16Regs:$rr),
                !strconcat(op2,
@@ -689,6 +707,13 @@ def LhuRxRyOffMemX16:
   FEXT_RRI16_mem_ins<0b10100, "lhu", mem16, IILoad>, MayLoad {
   let isCodeGenOnly = 1;
 }
+
+//
+// Format: LI rx, immediate MIPS16e
+// Purpose: Load Immediate
+// To load a constant into a GPR.
+//
+def LiRxImm16: FRI16_ins<0b01101, "li", IIAlu>;
 
 //
 // Format: LI rx, immediate MIPS16e
@@ -1017,7 +1042,7 @@ def SllvRxRy16 : FRxRxRy16_ins<0b00100, "sllv", IIAlu>;
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiRxImm16: FRI16_ins<0b01010, "slti", IIAlu> {
+def SltiRxImm16: FRI16R_ins<0b01010, "slti", IIAlu> {
   let Defs = [T8];
 }
 
@@ -1027,7 +1052,7 @@ def SltiRxImm16: FRI16_ins<0b01010, "slti", IIAlu> {
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiRxImmX16: FEXT_RI16_ins<0b01010, "slti", IIAlu> {
+def SltiRxImmX16: FEXT_RI16R_ins<0b01010, "slti", IIAlu> {
   let Defs = [T8];
 }
 
@@ -1038,7 +1063,7 @@ def SltiCCRxImmX16: FEXT_CCRXI16_ins<"slti">;
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiuRxImm16: FRI16_ins<0b01011, "sltiu", IIAlu> {
+def SltiuRxImm16: FRI16R_ins<0b01011, "sltiu", IIAlu> {
   let Defs = [T8];
 }
 
@@ -1048,7 +1073,7 @@ def SltiuRxImm16: FRI16_ins<0b01011, "sltiu", IIAlu> {
 // To record the result of a less-than comparison with a constant.
 //
 //
-def SltiuRxImmX16: FEXT_RI16_ins<0b01011, "sltiu", IIAlu> {
+def SltiuRxImmX16: FEXT_RI16R_ins<0b01011, "sltiu", IIAlu> {
   let Defs = [T8];
 }
 //
@@ -1063,7 +1088,9 @@ def SltiuCCRxImmX16: FEXT_CCRXI16_ins<"sltiu">;
 // Purpose: Set on Less Than
 // To record the result of a less-than comparison.
 //
-def SltRxRy16: FRR16_ins<0b00010, "slt", IIAlu>;
+def SltRxRy16: FRR16_ins<0b00010, "slt", IIAlu>{
+  let Defs = [T8];
+}
 
 def SltCCRxRy16: FCCRR16_ins<"slt">;
 
@@ -1071,10 +1098,13 @@ def SltCCRxRy16: FCCRR16_ins<"slt">;
 // Purpose: Set on Less Than Unsigned
 // To record the result of an unsigned less-than comparison.
 //
-def SltuRxRy16: FRR16_ins<0b00011, "sltu", IIAlu>;
+def SltuRxRy16: FRR16_ins<0b00011, "sltu", IIAlu>{
+  let Defs = [T8];
+}
 
 def SltuRxRyRz16: FRRTR16_ins<"sltu"> {
   let isCodeGenOnly=1;
+  let Defs = [T8];
 }
 
 
@@ -1648,7 +1678,7 @@ def: Mips16Pat
 //
 def: Mips16Pat
   <(setle CPU16Regs:$lhs, CPU16Regs:$rhs),
-   (XorRxRxRy16 (SltCCRxRy16 CPU16Regs:$rhs, CPU16Regs:$lhs), (LiRxImmX16 1))>;
+   (XorRxRxRy16 (SltCCRxRy16 CPU16Regs:$rhs, CPU16Regs:$lhs), (LiRxImm16 1))>;
 
 //
 // setlt
@@ -1708,7 +1738,7 @@ def: Mips16Pat<(add CPU16Regs:$hi, (MipsLo tglobaladdr:$lo)),
 
 // hi/lo relocs
 
-def : Mips16Pat<(MipsHi tglobaladdr:$in), 
+def : Mips16Pat<(MipsHi tglobaladdr:$in),
                 (SllX16 (LiRxImmX16 tglobaladdr:$in), 16)>;
 def : Mips16Pat<(MipsHi tjumptable:$in),
                 (SllX16 (LiRxImmX16 tjumptable:$in), 16)>;
