@@ -17,14 +17,8 @@ void test1(const char *msg) {
   printf("%s\n", a);
 }
 
-// NOSSP: attributes #0 = { nounwind "target-features"={{.*}} }
-// NOSSP: attributes #1 = { "target-features"={{.*}} }
-// NOSSP: attributes #2 = { nounwind }
+// NOSSP: attributes #{{.*}} = { nounwind{{.*}} }
 
-// WITHSSP: attributes #0 = { nounwind ssp "target-features"={{.*}} }
-// WITHSSP: attributes #1 = { "target-features"={{.*}} }
-// WITHSSP: attributes #2 = { nounwind }
+// WITHSSP: attributes #{{.*}} = { nounwind ssp{{.*}} }
 
-// SSPREQ: attributes #0 = { nounwind sspreq "target-features"={{.*}} }
-// SSPREQ: attributes #1 = { "target-features"={{.*}} }
-// SSPREQ: attributes #2 = { nounwind }
+// SSPREQ: attributes #{{.*}} = { nounwind sspreq{{.*}} }

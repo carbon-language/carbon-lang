@@ -7,29 +7,29 @@
 // Check that we set the minsize attribute on each function
 // when Oz optimization level is set.
 
+__attribute__((minsize))
 int test1() {
   return 42;
-// Oz: @{{.*}}test1{{.*}}#0
-// Oz: ret
-// OTHER: @{{.*}}test1
-// OTHER-NOT: #1
-// OTHER: ret
+// Oz: @{{.*}}test1{{.*}}[[MINSIZE:#[0-9]+]]
+// OTHER: @{{.*}}test1{{.*}}[[MS:#[0-9]+]]
 }
 
 int test2() {
   return 42;
-// Oz: @{{.*}}test2{{.*}}#0
+// Oz: @{{.*}}test2{{.*}}[[MINSIZE]]
 // Oz: ret
 // OTHER: @{{.*}}test2
-// OTHER-NOT: #1
+// OTHER-NOT: [[MS]]
 // OTHER: ret
 }
 
-__attribute__((minsize))
 int test3() {
   return 42;
-// Oz: @{{.*}}test3{{.*}}#0
-// OTHER: @{{.*}}test3{{.*}}#1
+// Oz: @{{.*}}test3{{.*}}[[MINSIZE]]
+// Oz: ret
+// OTHER: @{{.*}}test3
+// OTHER-NOT: [[MS]]
+// OTHER: ret
 }
 
 // Check that the minsize attribute is well propagated through
@@ -44,16 +44,16 @@ void test4(T arg) {
 template
 void test4<int>(int arg);
 // Oz: define{{.*}}void @{{.*}}test4
-// Oz: #0
+// Oz: [[MINSIZE]]
 // OTHER: define{{.*}}void @{{.*}}test4
-// OTHER: #1
+// OTHER: [[MS]]
 
 template
 void test4<float>(float arg);
 // Oz: define{{.*}}void @{{.*}}test4
-// Oz: #0
+// Oz: [[MINSIZE]]
 // OTHER: define{{.*}}void @{{.*}}test4
-// OTHER: #1
+// OTHER: [[MS]]
 
 template<typename T>
 void test5(T arg) {
@@ -63,18 +63,17 @@ void test5(T arg) {
 template
 void test5<int>(int arg);
 // Oz: define{{.*}}void @{{.*}}test5
-// Oz: #0
+// Oz: [[MINSIZE]]
 // OTHER: define{{.*}}void @{{.*}}test5
-// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}#1
+// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}[[MS]]
 
 template
 void test5<float>(float arg);
 // Oz: define{{.*}}void @{{.*}}test5
-// Oz: #0
+// Oz: [[MINSIZE]]
 // OTHER: define{{.*}}void @{{.*}}test5
-// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}#1
+// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}[[MS]]
 
-// Oz: attributes #0 = { minsize nounwind optsize readnone "target-features"={{.*}} }
+// Oz: attributes [[MINSIZE]] = { minsize{{.*}} }
 
-// OTHER: attributes #0 = { nounwind {{.*}}"target-features"={{.*}} }
-// OTHER: attributes #1 = { minsize nounwind {{.*}}"target-features"={{.*}} }
+// OTHER: attributes [[MS]] = { minsize nounwind{{.*}} }

@@ -164,11 +164,11 @@ void tsw() {
   Sw<int> swi;
   Sw<B> swb;
 }
-// CHECK-NOT: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}} #2
+// CHECK-NOT: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}} #
 // CHECK: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}}
 // CHECK: _ZTIi
 // CHECK: __cxa_call_unexpected
-// CHECK: define linkonce_odr {{.*}} @_ZN2SwIiED1Ev({{.*}} #2
+// CHECK: define linkonce_odr {{.*}} @_ZN2SwIiED1Ev({{.*}} [[ATTRGRP:#[0-9]+]]
 
 template <typename T>
 struct TVC : VX
@@ -176,7 +176,4 @@ struct TVC : VX
 template <typename T>
 TVC<T>::~TVC() {}
 
-// CHECK: attributes #0 = { "target-features"={{.*}} }
-// CHECK: attributes #1 = { noinline noreturn nounwind }
-// CHECK: attributes #2 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #3 = { inlinehint nounwind "target-features"={{.*}} }
+// CHECK: attributes [[ATTRGRP]] = { nounwind "target-features"={{.*}} }
