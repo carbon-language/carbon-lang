@@ -3,7 +3,7 @@
 // This was a problem in Sema, but only shows up as noinline missing
 // in CodeGen.
 
-// CHECK: define linkonce_odr void @_ZN6VectorIiE13growStorageByEv(%struct.Vector* %this) noinline nounwind
+// CHECK: define linkonce_odr void @_ZN6VectorIiE13growStorageByEv(%struct.Vector* %this) #1
 
 template <class Ty> struct Vector  {
   void growStorageBy();
@@ -14,3 +14,6 @@ void foo() {
  Vector<int> strs;
  strs.growStorageBy();
 }
+
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { noinline nounwind "target-features"={{.*}} }

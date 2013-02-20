@@ -9,27 +9,27 @@
 
 int test1() {
   return 42;
-// Oz: @{{.*}}test1{{.*}}minsize
+// Oz: @{{.*}}test1{{.*}}#0
 // Oz: ret
 // OTHER: @{{.*}}test1
-// OTHER-NOT: minsize
+// OTHER-NOT: #1
 // OTHER: ret
 }
 
 int test2() {
   return 42;
-// Oz: @{{.*}}test2{{.*}}minsize
+// Oz: @{{.*}}test2{{.*}}#0
 // Oz: ret
 // OTHER: @{{.*}}test2
-// OTHER-NOT: minsize
+// OTHER-NOT: #1
 // OTHER: ret
 }
 
 __attribute__((minsize))
 int test3() {
   return 42;
-// Oz: @{{.*}}test3{{.*}}minsize
-// OTHER: @{{.*}}test3{{.*}}minsize
+// Oz: @{{.*}}test3{{.*}}#0
+// OTHER: @{{.*}}test3{{.*}}#1
 }
 
 // Check that the minsize attribute is well propagated through
@@ -44,16 +44,16 @@ void test4(T arg) {
 template
 void test4<int>(int arg);
 // Oz: define{{.*}}void @{{.*}}test4
-// Oz: minsize
+// Oz: #0
 // OTHER: define{{.*}}void @{{.*}}test4
-// OTHER: minsize
+// OTHER: #1
 
 template
 void test4<float>(float arg);
 // Oz: define{{.*}}void @{{.*}}test4
-// Oz: minsize
+// Oz: #0
 // OTHER: define{{.*}}void @{{.*}}test4
-// OTHER: minsize
+// OTHER: #1
 
 template<typename T>
 void test5(T arg) {
@@ -63,13 +63,18 @@ void test5(T arg) {
 template
 void test5<int>(int arg);
 // Oz: define{{.*}}void @{{.*}}test5
-// Oz: minsize
+// Oz: #0
 // OTHER: define{{.*}}void @{{.*}}test5
-// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}minsize
+// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}#1
 
 template
 void test5<float>(float arg);
 // Oz: define{{.*}}void @{{.*}}test5
-// Oz: minsize
+// Oz: #0
 // OTHER: define{{.*}}void @{{.*}}test5
-// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}minsize
+// OTHER-NOT: define{{.*}}void @{{.*}}test5{{.*}}#1
+
+// Oz: attributes #0 = { minsize nounwind optsize readnone "target-features"={{.*}} }
+
+// OTHER: attributes #0 = { nounwind {{.*}}"target-features"={{.*}} }
+// OTHER: attributes #1 = { minsize nounwind {{.*}}"target-features"={{.*}} }

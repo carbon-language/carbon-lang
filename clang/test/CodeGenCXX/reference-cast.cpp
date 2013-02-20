@@ -3,7 +3,7 @@
 // PR6024
 extern int i;
 
-// CHECK: define i32* @_Z16lvalue_noop_castv() nounwind
+// CHECK: define i32* @_Z16lvalue_noop_castv() #0
 const int &lvalue_noop_cast() {
   if (i == 0)
     // CHECK: store i32 17, i32*
@@ -192,3 +192,6 @@ namespace PR10650 {
   // CHECK: define i64 @_ZN7PR106504testEPNS_6HelperE
   // CHECK: store i64
 }
+
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { "target-features"={{.*}} }

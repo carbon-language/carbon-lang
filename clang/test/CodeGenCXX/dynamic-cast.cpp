@@ -17,4 +17,8 @@ const B& f(A *a) {
   return fail;
 }
 
-// CHECK: declare i8* @__dynamic_cast(i8*, i8*, i8*, i64) nounwind readonly
+// CHECK: declare i8* @__dynamic_cast(i8*, i8*, i8*, i64) #2
+
+// CHECK: attributes #0 = { inlinehint nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes #2 = { nounwind readonly }

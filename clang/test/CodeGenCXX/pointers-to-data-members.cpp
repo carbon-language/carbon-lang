@@ -151,13 +151,13 @@ struct A {
   A() : a() {}
 };
 
-// CHECK-O3: define zeroext i1 @_ZN6PR71395checkEv() nounwind readnone
+// CHECK-O3: define zeroext i1 @_ZN6PR71395checkEv() #0
 bool check() {
   // CHECK-O3: ret i1 true
   return A().a.data == 0;
 }
 
-// CHECK-O3: define zeroext i1 @_ZN6PR71396check2Ev() nounwind readnone
+// CHECK-O3: define zeroext i1 @_ZN6PR71396check2Ev() #0
 bool check2() {
   // CHECK-O3: ret i1 true
   return ptr_to_member_type() == 0;
@@ -254,3 +254,8 @@ namespace PR13097 {
   // CHECK-NOT: memcpy
   // CHECK: call void @_ZN7PR130971XC1ERKS0_
 }
+
+// CHECK-O3: attributes #0 = { nounwind readnone "target-features"={{.*}} }
+// CHECK-O3: attributes #1 = { nounwind "target-features"={{.*}} }
+// CHECK-O3: attributes #2 = { "target-features"={{.*}} }
+// CHECK-O3: attributes #3 = { nounwind }

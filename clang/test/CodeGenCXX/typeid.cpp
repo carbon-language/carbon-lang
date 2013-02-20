@@ -42,3 +42,6 @@ const char *f() {
 }
 
 }
+
+// CHECK: attributes #0 = { "target-features"={{.*}} }
+// CHECK: attributes #1 = { nounwind "target-features"={{.*}} }

@@ -3,22 +3,28 @@
 
 int opaque();
 
-// CHECK:       define [[INT:i.*]] @test0() "target-features"={{.*}} {
-// CHECK-NOEXC: define [[INT:i.*]] @test0() nounwind{{.*}} {
+// CHECK:       define [[INT:i.*]] @test0() #0 {
+// CHECK-NOEXC: define [[INT:i.*]] @test0() #0 {
 int test0(void) {
   return opaque();
 }
 
 // <rdar://problem/8087431>: locally infer nounwind at -O0
-// CHECK:       define [[INT:i.*]] @test1() nounwind{{.*}} {
-// CHECK-NOEXC: define [[INT:i.*]] @test1() nounwind{{.*}} {
+// CHECK:       define [[INT:i.*]] @test1() #1 {
+// CHECK-NOEXC: define [[INT:i.*]] @test1() #0 {
 int test1(void) {
   return 0;
 }
 
 // <rdar://problem/8283071>: not for weak functions
-// CHECK:       define weak [[INT:i.*]] @test2() "target-features"={{.*}} {
-// CHECK-NOEXC: define weak [[INT:i.*]] @test2() nounwind{{.*}} {
+// CHECK:       define weak [[INT:i.*]] @test2() #0 {
+// CHECK-NOEXC: define weak [[INT:i.*]] @test2() #0 {
 __attribute__((weak)) int test2(void) {
   return 0;
 }
+
+// CHECK: attributes #0 = { "target-features"={{.*}} }
+// CHECK: attributes #1 = { nounwind "target-features"={{.*}} }
+
+// CHECK-NOEXC: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK-NOEXC: attributes #1 = { "target-features"={{.*}} }

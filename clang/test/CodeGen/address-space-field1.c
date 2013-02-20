@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin10 < %s -o - | FileCheck %s
 // CHECK:%struct.S = type { i32, i32 }
-// CHECK:define void @test_addrspace(%struct.S addrspace(1)* %p1, %struct.S addrspace(2)* %p2) nounwind
+// CHECK:define void @test_addrspace(%struct.S addrspace(1)* %p1, %struct.S addrspace(2)* %p2) #0
 // CHECK:  [[p1addr:%.*]] = alloca %struct.S addrspace(1)*
 // CHECK:  [[p2addr:%.*]] = alloca %struct.S addrspace(2)*
 // CHECK:  store %struct.S addrspace(1)* %p1, %struct.S addrspace(1)** [[p1addr]]
@@ -36,3 +36,5 @@ void test_addrspace(__addr1 S* p1, __addr2 S*p2) {
   p1->a = p2->b;
   p1->b = p2->a;
 }
+
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }

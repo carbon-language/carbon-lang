@@ -136,7 +136,7 @@ void __both3(void) {}
 void __a1(void) __attribute((noinline));
 #pragma weak a1 = __a1
 void __a1(void) {}
-// CHECK: define void @__a1() noinline
+// CHECK: define void @__a1() #1
 
 // attributes introduced BEFORE a combination of #pragma weak and alias()
 // hold...
@@ -144,11 +144,11 @@ void __a3(void) __attribute((noinline));
 #pragma weak a3 = __a3
 void a3(void) __attribute((alias("__a3")));
 void __a3(void) {}
-// CHECK: define void @__a3() noinline
+// CHECK: define void @__a3() #1
 
 #pragma weak xxx = __xxx
 __attribute((pure,noinline,const,fastcall)) void __xxx(void) { }
-// CHECK: void @__xxx() noinline
+// CHECK: void @__xxx() #2
 
 ///////////// PR10878: Make sure we can call a weak alias
 void SHA512Pad(void *context) {}
@@ -179,3 +179,8 @@ void zzz(void){}
 // CHECK: define void @yyy()
 
 int correct_linkage;
+
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { noinline nounwind "target-features"={{.*}} }
+// CHECK: attributes #2 = { noinline nounwind readnone "target-features"={{.*}} }
+// CHECK: attributes #3 = { "target-features"={{.*}} }

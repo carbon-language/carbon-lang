@@ -2,7 +2,11 @@
 
 int g();
 
-// CHECK: _Z1fv(){{.*}} noreturn
+// CHECK: _Z1fv(){{.*}} #0
 [[noreturn]] int f() {
   while (g()) {}
 }
+
+// CHECK: attributes #0 = { noreturn nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes #2 = { noreturn nounwind }

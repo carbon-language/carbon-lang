@@ -5,12 +5,12 @@
 
 // CHECK:      call void @_ZN1AC1Ev([[A:%.*]]* @a)
 // CHECK-NEXT: call i32 @atexit(void ()* @__dtor_a)
-// CHECK:      define internal void @__dtor_a() nounwind
+// CHECK:      define internal void @__dtor_a() #0
 // CHECK:      call void @_ZN1AD1Ev([[A]]* @a)
 
 // CHECK:      call void @_ZN1AC1Ev([[A]]* @b)
 // CHECK-NEXT: call i32 @atexit(void ()* @__dtor_b)
-// CHECK:      define internal void @__dtor_b() nounwind
+// CHECK:      define internal void @__dtor_b() #0
 // CHECK:      call void @_ZN1AD1Ev([[A]]* @b)
 
 class A {
@@ -33,12 +33,16 @@ A a, b;
 // CHECK-NEXT: call i32 @atexit(void ()* @__dtor__ZZ4funcvE2a2)
 // CHECK-NEXT: call void @__cxa_guard_release(i64* @_ZGVZ4funcvE2a2)
 
-// CHECK:      define internal void @__dtor__ZZ4funcvE2a1() nounwind
+// CHECK:      define internal void @__dtor__ZZ4funcvE2a1() #0
 // CHECK:      call void @_ZN1AD1Ev([[A]]* @_ZZ4funcvE2a1)
 
-// CHECK:      define internal void @__dtor__ZZ4funcvE2a2() nounwind
+// CHECK:      define internal void @__dtor__ZZ4funcvE2a2() #0
 // CHECK:      call void @_ZN1AD1Ev([[A]]* @_ZZ4funcvE2a2)
 
 void func() {
   static A a1, a2;
 }
+
+// CHECK: attributes #0 = { nounwind }
+// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes #2 = { nounwind "target-features"={{.*}} }

@@ -14,9 +14,12 @@
 // CHECK-PRINT: oldObject = dictionary[key];
 // CHECK-PRINT: dictionary[key] = newObject;
 
-// CHECK-IR: define void @all() nounwind 
+// CHECK-IR: define void @all() #0
 // CHECK-IR: {{call.*objc_msgSend}}
 // CHECK-IR: {{call.*objc_msgSend}}
 // CHECK-IR: {{call.*objc_msgSend}}
 // CHECK-IR: {{call.*objc_msgSend}}
 // CHECK-IR: ret void
+
+// CHECK: attributes #0 = { nounwind {{.*}} }
+// CHECK: attributes #1 = { nonlazybind }

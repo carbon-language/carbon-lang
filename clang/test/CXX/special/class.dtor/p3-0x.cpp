@@ -164,14 +164,19 @@ void tsw() {
   Sw<int> swi;
   Sw<B> swb;
 }
-// CHECK-NOT: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}} nounwind
+// CHECK-NOT: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}} #2
 // CHECK: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}}
 // CHECK: _ZTIi
 // CHECK: __cxa_call_unexpected
-// CHECK: define linkonce_odr {{.*}} @_ZN2SwIiED1Ev({{.*}} nounwind
+// CHECK: define linkonce_odr {{.*}} @_ZN2SwIiED1Ev({{.*}} #2
 
 template <typename T>
 struct TVC : VX
 { virtual ~TVC(); };
 template <typename T>
 TVC<T>::~TVC() {}
+
+// CHECK: attributes #0 = { "target-features"="-sse4a,-avx2,-xop,-fma4,-bmi2,-3dnow,-3dnowa,-pclmul,+sse,-avx,-sse41,-ssse3,+mmx,-rtm,-sse42,-lzcnt,-f16c,-popcnt,-bmi,-aes,-fma,-rdrand,+sse2,-sse3" }
+// CHECK: attributes #1 = { noinline noreturn nounwind }
+// CHECK: attributes #2 = { nounwind "target-features"="-sse4a,-avx2,-xop,-fma4,-bmi2,-3dnow,-3dnowa,-pclmul,+sse,-avx,-sse41,-ssse3,+mmx,-rtm,-sse42,-lzcnt,-f16c,-popcnt,-bmi,-aes,-fma,-rdrand,+sse2,-sse3" }
+// CHECK: attributes #3 = { inlinehint nounwind "target-features"="-sse4a,-avx2,-xop,-fma4,-bmi2,-3dnow,-3dnowa,-pclmul,+sse,-avx,-sse41,-ssse3,+mmx,-rtm,-sse42,-lzcnt,-f16c,-popcnt,-bmi,-aes,-fma,-rdrand,+sse2,-sse3" }

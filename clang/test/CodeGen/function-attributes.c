@@ -1,12 +1,12 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -Os -o - %s | FileCheck %s
-// CHECK: define signext i8 @f0(i32 %x) nounwind
-// CHECK: define zeroext i8 @f1(i32 %x) nounwind
-// CHECK: define void @f2(i8 signext %x) nounwind
-// CHECK: define void @f3(i8 zeroext %x) nounwind
-// CHECK: define signext i16 @f4(i32 %x) nounwind
-// CHECK: define zeroext i16 @f5(i32 %x) nounwind
-// CHECK: define void @f6(i16 signext %x) nounwind
-// CHECK: define void @f7(i16 zeroext %x) nounwind
+// CHECK: define signext i8 @f0(i32 %x) #0
+// CHECK: define zeroext i8 @f1(i32 %x) #0
+// CHECK: define void @f2(i8 signext %x) #0
+// CHECK: define void @f3(i8 zeroext %x) #0
+// CHECK: define signext i16 @f4(i32 %x) #0
+// CHECK: define zeroext i16 @f5(i32 %x) #0
+// CHECK: define void @f6(i16 signext %x) #0
+// CHECK: define void @f7(i16 zeroext %x) #0
 
 signed char f0(int x) { return x; }
 
@@ -25,8 +25,7 @@ void f6(signed short x) { }
 void f7(unsigned short x) { }
 
 // CHECK: define void @f8()
-// CHECK: alwaysinline
-// CHECK: nounwind
+// CHECK: #1
 // CHECK: {
 void __attribute__((always_inline)) f8(void) { }
 
@@ -56,7 +55,7 @@ int f12(int arg) {
   return arg ? 0 : f10_t();
 }
 
-// CHECK: define void @f13() nounwind optsize readnone
+// CHECK: define void @f13() #0
 void f13(void) __attribute__((pure)) __attribute__((const));
 void f13(void){}
 
@@ -83,21 +82,21 @@ void f14(int a) {
 
 // <rdar://problem/7102668> [irgen] clang isn't setting the optsize bit on functions
 // CHECK: define void @f15
-// CHECK: optsize
+// CHECK: #0
 // CHECK: {
 void f15(void) {
 }
 
 // PR5254
 // CHECK: define void @f16
-// CHECK: alignstack(16)
+// CHECK: #6
 // CHECK: {
 void __attribute__((force_align_arg_pointer)) f16(void) {
 }
 
 // PR11038
 // CHECK: define void @f18()
-// CHECK: returns_twice
+// CHECK: #7
 // CHECK: {
 // CHECK: call void @f17()
 // CHECK: returns_twice
@@ -117,3 +116,13 @@ int setjmp(jmp_buf);
 void f19(void) {
   setjmp(0);
 }
+
+// CHECK: attributes #0 = { nounwind optsize readnone "target-features"={{.*}} }
+// CHECK: attributes #1 = { alwaysinline nounwind optsize readnone "target-features"={{.*}} }
+// CHECK: attributes #2 = { noreturn nounwind optsize "target-features"={{.*}} }
+// CHECK: attributes #3 = { noreturn optsize "target-features"={{.*}} }
+// CHECK: attributes #4 = { nounwind optsize "target-features"={{.*}} }
+// CHECK: attributes #5 = { optsize "target-features"={{.*}} }
+// CHECK: attributes #6 = { nounwind optsize readnone alignstack=16 "target-features"={{.*}} }
+// CHECK: attributes #7 = { nounwind optsize returns_twice "target-features"={{.*}} }
+// CHECK: attributes #8 = { optsize returns_twice "target-features"={{.*}}

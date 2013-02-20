@@ -24,7 +24,7 @@ struct M : Q, P {
   Q q_arr[2][3];
 };
   
-// CHECK: define i32 @_Z1fv() nounwind
+// CHECK: define i32 @_Z1fv() #0
 int f() {
   {
     count = 1;
@@ -34,3 +34,5 @@ int f() {
   // CHECK: ret i32 1
   return count;
 }
+
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }

@@ -12,7 +12,7 @@ struct B : A {
   int i;
 };
 
-// CHECK: define i32 @_Z1fv() nounwind
+// CHECK: define i32 @_Z1fv() #0
 int f() {
   B b;
   
@@ -21,7 +21,7 @@ int f() {
 }
 
 // Test that we don't try to fold the default value of j when initializing i.
-// CHECK: define i32 @_Z9test_foldv() nounwind
+// CHECK: define i32 @_Z9test_foldv() #0
 int test_fold() {
   struct A {
     A(const int j = 1) : i(j) { } 
@@ -32,3 +32,4 @@ int test_fold() {
   return A(2).i;
 }
 
+// CHECK: attributes #0 = { nounwind readnone "target-features"={{.*}} }

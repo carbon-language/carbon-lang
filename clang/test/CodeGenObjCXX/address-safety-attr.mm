@@ -7,14 +7,15 @@
 
 @implementation MyClass
 
-// CHECK-NOT:  +[MyClass load]{{.*}} address_safety
-// CHECK:  +[MyClass load]{{.*}}
-// ASAN: +[MyClass load]{{.*}} address_safety
+// CHECK:  +[MyClass load]{{.*}}#0
+// ASAN: +[MyClass load]{{.*}}#0
 +(void) load { }
 
-// CHECK-NOT:  +[MyClass addressSafety:]{{.*}} address_safety
-// CHECK:  +[MyClass addressSafety:]{{.*}}
-// ASAN:  +[MyClass addressSafety:]{{.*}} address_safety
+// CHECK:  +[MyClass addressSafety:]{{.*}}#0
+// ASAN:  +[MyClass addressSafety:]{{.*}}#0
 + (int) addressSafety:(int*)a { return *a; }
 
 @end
+
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// ASAN: attributes #0 = { address_safety nounwind "target-features"={{.*}} }
