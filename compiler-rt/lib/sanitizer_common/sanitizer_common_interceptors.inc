@@ -266,6 +266,7 @@ VSCANF_INTERCEPTOR_IMPL(vsscanf, true, str, format, ap)
 INTERCEPTOR(int, vfscanf, void *stream, const char *format, va_list ap)
 VSCANF_INTERCEPTOR_IMPL(vfscanf, true, stream, format, ap)
 
+#if SANITIZER_INTERCEPT_ISOC99_SCANF
 INTERCEPTOR(int, __isoc99_vscanf, const char *format, va_list ap)
 VSCANF_INTERCEPTOR_IMPL(__isoc99_vscanf, false, format, ap)
 
@@ -275,6 +276,7 @@ VSCANF_INTERCEPTOR_IMPL(__isoc99_vsscanf, false, str, format, ap)
 
 INTERCEPTOR(int, __isoc99_vfscanf, void *stream, const char *format, va_list ap)
 VSCANF_INTERCEPTOR_IMPL(__isoc99_vfscanf, false, stream, format, ap)
+#endif  // SANITIZER_INTERCEPT_ISOC99_SCANF
 
 #define SCANF_INTERCEPTOR_IMPL(name, vname, ...)                               \
   {                                                                            \
@@ -296,6 +298,7 @@ SCANF_INTERCEPTOR_IMPL(fscanf, vfscanf, stream, format)
 INTERCEPTOR(int, sscanf, const char *str, const char *format, ...)
 SCANF_INTERCEPTOR_IMPL(sscanf, vsscanf, str, format)
 
+#if SANITIZER_INTERCEPT_ISOC99_SCANF
 INTERCEPTOR(int, __isoc99_scanf, const char *format, ...)
 SCANF_INTERCEPTOR_IMPL(__isoc99_scanf, __isoc99_vscanf, format)
 
@@ -304,6 +307,7 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_fscanf, __isoc99_vfscanf, stream, format)
 
 INTERCEPTOR(int, __isoc99_sscanf, const char *str, const char *format, ...)
 SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
+#endif
 
 #define INIT_SCANF                                                             \
   INTERCEPT_FUNCTION(scanf);                                                   \
