@@ -66,6 +66,10 @@ private:
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _strtab;
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _shstrtab;
   LLD_UNIQUE_BUMP_PTR(SectionHeader<ELFT>) _shdrtab;
+  /// \name Dynamic sections.
+  /// @{
+  LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) _dynamicTable;
+  /// @}
   CRuntimeFile<ELFT> _runtimeFile;
 };
 
@@ -329,6 +333,12 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
   _shdrtab->setStringSection(_shstrtab.get());
   _symtab->setStringSection(_strtab.get());
   _layout->addSection(_shdrtab.get());
+
+  if (_targetInfo.isDynamic()) {
+    _dynamicTable.reset(new (_alloc) DynamicTable<ELFT>(
+        _targetInfo, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
+    _layout->addSection(_dynamicTable.get());
+  }
 
   // give a chance for the target to add sections
   _targetHandler.createDefaultSections();

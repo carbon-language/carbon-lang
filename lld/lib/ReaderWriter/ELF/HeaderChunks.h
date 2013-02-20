@@ -182,7 +182,8 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   bool allocatedNew = false;
   for (auto slice : segment->slices()) {
     // If we have a TLS segment, emit a LOAD first.
-    if (segment->segmentType() == llvm::ELF::PT_TLS) {
+    if (segment->segmentType() == llvm::ELF::PT_TLS ||
+        segment->segmentType() == llvm::ELF::PT_DYNAMIC) {
       auto phdr = allocateProgramHeader();
       if (phdr.second)
         allocatedNew = true;
@@ -193,7 +194,7 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
       phdr.first->p_filesz = slice->fileSize();
       phdr.first->p_memsz = slice->memSize();
       phdr.first->p_flags = segment->flags();
-      phdr.first->p_align = slice->align2();
+      phdr.first->p_align = segment->pageSize();
     }
     auto phdr = allocateProgramHeader();
     if (phdr.second)

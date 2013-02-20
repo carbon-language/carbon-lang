@@ -716,6 +716,48 @@ public:
 private:
   std::vector<std::pair<const DefinedAtom *, const Reference *>> _relocs;
 };
+
+template <class ELFT> class DynamicTable : public Section<ELFT> {
+  typedef llvm::object::Elf_Dyn_Impl<ELFT> Elf_Dyn;
+  typedef std::vector<Elf_Dyn> EntriesT;
+
+public:
+  DynamicTable(const ELFTargetInfo &ti, StringRef str, int32_t order)
+      : Section<ELFT>(ti, str) {
+    this->setOrder(order);
+    this->_entSize = sizeof(Elf_Dyn);
+    this->_align2 = llvm::alignOf<Elf_Dyn>();
+    // Reserve space for the DT_NULL entry.
+    this->_fsize = sizeof(Elf_Dyn);
+    this->_msize = sizeof(Elf_Dyn);
+    this->_type = SHT_DYNAMIC;
+    this->_flags = SHF_ALLOC;
+  }
+
+  range<typename EntriesT::iterator> entries() { return _entries; }
+
+  /// \returns the index of the entry. 
+  std::size_t addEntry(Elf_Dyn e) {
+    _entries.push_back(e);
+    this->_fsize = (_entries.size() * sizeof(Elf_Dyn)) + sizeof(Elf_Dyn);
+    this->_msize = this->_fsize;
+    return _entries.size() - 1;
+  }
+
+  void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+    uint8_t *chunkBuffer = buffer.getBufferStart();
+    uint8_t *dest = chunkBuffer + this->fileOffset();
+    // Add the null entry.
+    Elf_Dyn d;
+    d.d_tag = 0;
+    d.d_un.d_val = 0;
+    _entries.push_back(d);
+    std::memcpy(dest, _entries.data(), this->_fsize);
+  }
+
+private:
+  EntriesT _entries;
+};
 } // end namespace elf
 } // end namespace lld
 

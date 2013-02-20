@@ -107,6 +107,7 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
     break;
   }
   // Runtime only relocations. Ignore here.
+  case R_X86_64_RELATIVE:
   case R_X86_64_IRELATIVE:
     break;
 

@@ -49,6 +49,12 @@ public:
     return false;
   }
 
+  /// \brief Does the output have dynamic sections.
+  bool isDynamic() const {
+    return _options._outputKind == OutputKind::DynamicExecutable ||
+           _options._outputKind == OutputKind::Shared;
+  }
+
   virtual ErrorOr<Reader &> getReader(const LinkerInput &input) const;
 
   virtual ErrorOr<Writer &> getWriter() const;
