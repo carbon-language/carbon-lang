@@ -47,15 +47,17 @@ static void (*InterruptFunction)() = 0;
 static std::vector<std::string> FilesToRemove;
 static std::vector<std::pair<void(*)(void*), void*> > CallBacksToRun;
 
-// IntSigs - Signals that may interrupt the program at any time.
+// IntSigs - Signals that represent requested termination. There's no bug
+// or failure, or if there is, it's not our direct responsibility. For whatever
+// reason, our continued execution is no longer desirable.
 static const int IntSigs[] = {
   SIGHUP, SIGINT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
 static const int *const IntSigsEnd =
   IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
 
-// KillSigs - Signals that are synchronous with the program that will cause it
-// to die.
+// KillSigs - Signals that represent that we have a bug, and our prompt
+// termination has been ordered.
 static const int KillSigs[] = {
   SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV, SIGQUIT
 #ifdef SIGSYS
