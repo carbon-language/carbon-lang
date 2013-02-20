@@ -83,6 +83,8 @@ void MCContext::reset() {
   DwarfDebugFlags = StringRef();
   MCLineSections.clear();
   MCLineSectionOrder.clear();
+  DwarfCompileUnitID = 0;
+  MCLineTableSymbols.clear();
   CurrentDwarfLoc = MCDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0);
 
   // If we have the MachO uniquing map, free it.
