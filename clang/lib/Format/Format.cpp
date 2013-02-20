@@ -135,8 +135,7 @@ public:
     // If this line does not have a trailing comment, align the stored comments.
     if (Tok.Children.empty() && !isTrailingComment(Tok))
       alignComments();
-    storeReplacement(Tok.FormatTok,
-                     std::string(NewLines, '\n') + std::string(Spaces, ' '));
+    storeReplacement(Tok.FormatTok, getNewLineText(NewLines, Spaces));
   }
 
   /// \brief Like \c replaceWhitespace, but additionally adds right-aligned
@@ -147,6 +146,47 @@ public:
   void replacePPWhitespace(const AnnotatedToken &Tok, unsigned NewLines,
                            unsigned Spaces, unsigned WhitespaceStartColumn,
                            const FormatStyle &Style) {
+    storeReplacement(
+        Tok.FormatTok,
+        getNewLineText(NewLines, Spaces, WhitespaceStartColumn, Style));
+  }
+
+  /// \brief Inserts a line break into the middle of a token.
+  ///
+  /// Will break at \p Offset inside \p Tok, putting \p Prefix before the line
+  /// break and \p Postfix before the rest of the token starts in the next line.
+  ///
+  /// \p InPPDirective, \p Spaces, \p WhitespaceStartColumn and \p Style are
+  /// used to generate the correct line break.
+  void breakToken(const AnnotatedToken &Tok, unsigned Offset, StringRef Prefix,
+                  StringRef Postfix, bool InPPDirective, unsigned Spaces,
+                  unsigned WhitespaceStartColumn, const FormatStyle &Style) {
+    std::string NewLineText;
+    if (!InPPDirective)
+      NewLineText = getNewLineText(1, Spaces);
+    else
+      NewLineText = getNewLineText(1, Spaces, WhitespaceStartColumn, Style);
+    std::string ReplacementText = (Prefix + NewLineText + Postfix).str();
+    SourceLocation InsertAt = Tok.FormatTok.WhiteSpaceStart
+        .getLocWithOffset(Tok.FormatTok.WhiteSpaceLength + Offset);
+    Replaces.insert(
+        tooling::Replacement(SourceMgr, InsertAt, 0, ReplacementText));
+  }
+
+  /// \brief Returns all the \c Replacements created during formatting.
+  const tooling::Replacements &generateReplacements() {
+    alignComments();
+    return Replaces;
+  }
+
+private:
+  std::string getNewLineText(unsigned NewLines, unsigned Spaces) {
+    return std::string(NewLines, '\n') + std::string(Spaces, ' ');
+  }
+
+  std::string
+  getNewLineText(unsigned NewLines, unsigned Spaces,
+                 unsigned WhitespaceStartColumn, const FormatStyle &Style) {
     std::string NewLineText;
     if (NewLines > 0) {
       unsigned Offset =
@@ -157,16 +197,9 @@ public:
         Offset = 0;
       }
     }
-    storeReplacement(Tok.FormatTok, NewLineText + std::string(Spaces, ' '));
+    return NewLineText + std::string(Spaces, ' ');
   }
 
-  /// \brief Returns all the \c Replacements created during formatting.
-  const tooling::Replacements &generateReplacements() {
-    alignComments();
-    return Replaces;
-  }
-
-private:
   /// \brief Structure to store a comment for later layout and alignment.
   struct StoredComment {
     FormatToken Tok;
@@ -258,7 +291,7 @@ public:
     });
 
     // The first token has already been indented and thus consumed.
-    moveStateToNextToken(State);
+    moveStateToNextToken(State, /*DryRun=*/ false);
 
     // If everything fits on a single line, just put it there.
     if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
@@ -419,7 +452,7 @@ private:
   ///
   /// If \p DryRun is \c false, also creates and stores the required
   /// \c Replacement.
-  void addTokenToState(bool Newline, bool DryRun, LineState &State) {
+  unsigned addTokenToState(bool Newline, bool DryRun, LineState &State) {
     const AnnotatedToken &Current = *State.NextToken;
     const AnnotatedToken &Previous = *State.NextToken->Parent;
     assert(State.Stack.size());
@@ -431,7 +464,7 @@ private:
         State.NextToken = NULL;
       else
         State.NextToken = &State.NextToken->Children[0];
-      return;
+      return 0;
     }
 
     if (Newline) {
@@ -576,12 +609,12 @@ private:
       }
     }
 
-    moveStateToNextToken(State);
+    return moveStateToNextToken(State, DryRun);
   }
 
   /// \brief Mark the next token as consumed in \p State and modify its stacks
   /// accordingly.
-  void moveStateToNextToken(LineState &State) {
+  unsigned moveStateToNextToken(LineState &State, bool DryRun) {
     const AnnotatedToken &Current = *State.NextToken;
     assert(State.Stack.size());
 
@@ -649,12 +682,59 @@ private:
       State.Stack.pop_back();
     }
 
+    State.Column += Current.FormatTok.TokenLength;
+
     if (State.NextToken->Children.empty())
       State.NextToken = NULL;
     else
       State.NextToken = &State.NextToken->Children[0];
 
-    State.Column += Current.FormatTok.TokenLength;
+    return breakProtrudingToken(Current, State, DryRun);
+  }
+
+  /// \brief If the current token sticks out over the end of the line, break
+  /// it if possible.
+  unsigned breakProtrudingToken(const AnnotatedToken &Current, LineState &State,
+                                bool DryRun) {
+    if (Current.isNot(tok::string_literal))
+      return 0;
+
+    unsigned Penalty = 0;
+    unsigned TailOffset = 0;
+    unsigned TailLength = Current.FormatTok.TokenLength;
+    unsigned StartColumn = State.Column - Current.FormatTok.TokenLength;
+    unsigned OffsetFromStart = 0;
+    while (StartColumn + TailLength > getColumnLimit()) {
+      StringRef Text = StringRef(Current.FormatTok.Tok.getLiteralData() +
+                                 TailOffset, TailLength);
+      StringRef::size_type SplitPoint =
+          getSplitPoint(Text, getColumnLimit() - StartColumn - 1);
+      if (SplitPoint == StringRef::npos)
+        break;
+      assert(SplitPoint != 0);
+      // +2, because 'Text' starts after the opening quotes, and does not
+      // include the closing quote we need to insert.
+      unsigned WhitespaceStartColumn =
+          StartColumn + OffsetFromStart + SplitPoint + 2;
+      State.Stack.back().LastSpace = StartColumn;
+      if (!DryRun) {
+        Whitespaces.breakToken(Current, TailOffset + SplitPoint + 1, "\"", "\"",
+                               Line.InPPDirective, StartColumn,
+                               WhitespaceStartColumn, Style);
+      }
+      TailOffset += SplitPoint + 1;
+      TailLength -= SplitPoint + 1;
+      OffsetFromStart = 1;
+      Penalty += 100;
+    }
+    State.Column = StartColumn + TailLength;
+    return Penalty;
+  }
+
+  StringRef::size_type
+  getSplitPoint(StringRef Text, StringRef::size_type Offset) {
+    // FIXME: Implement more sophisticated splitting mechanism, and a fallback.
+    return Text.rfind(' ', Offset);
   }
 
   unsigned getColumnLimit() {
@@ -767,7 +847,7 @@ private:
 
     StateNode *Node = new (Allocator.Allocate())
         StateNode(PreviousNode->State, NewLine, PreviousNode);
-    addTokenToState(NewLine, true, Node->State);
+    Penalty += addTokenToState(NewLine, true, Node->State);
     if (Node->State.Column > getColumnLimit()) {
       unsigned ExcessCharacters = Node->State.Column - getColumnLimit();
       Penalty += Style.PenaltyExcessCharacter * ExcessCharacters;
