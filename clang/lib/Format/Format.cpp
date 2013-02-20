@@ -284,6 +284,7 @@ public:
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;
+    State.StartOfStringLiteral = 0;
     State.StartOfLineLevel = State.ParenLevel;
 
     DEBUG({
@@ -421,6 +422,10 @@ private:
     /// \brief The \c ParenLevel at the start of this line.
     unsigned StartOfLineLevel;
 
+    /// \brief The start column of the string literal, if we're in a string
+    /// literal sequence, 0 otherwise.
+    unsigned StartOfStringLiteral;
+
     /// \brief A stack keeping track of properties applying to parenthesis
     /// levels.
     std::vector<ParenState> Stack;
@@ -440,6 +445,8 @@ private:
         return ParenLevel < Other.ParenLevel;
       if (StartOfLineLevel != Other.StartOfLineLevel)
         return StartOfLineLevel < Other.StartOfLineLevel;
+      if (StartOfStringLiteral != Other.StartOfStringLiteral)
+        return StartOfStringLiteral < Other.StartOfStringLiteral;
       return Stack < Other.Stack;
     }
   };
@@ -472,8 +479,8 @@ private:
       if (Current.is(tok::r_brace)) {
         State.Column = Line.Level * 2;
       } else if (Current.is(tok::string_literal) &&
-                 Previous.is(tok::string_literal)) {
-        State.Column = State.Column - Previous.FormatTok.TokenLength;
+                 State.StartOfStringLiteral != 0) {
+        State.Column = State.StartOfStringLiteral;
         State.Stack.back().BreakBeforeParameter = true;
       } else if (Current.is(tok::lessless) &&
                  State.Stack.back().FirstLessLess != 0) {
@@ -683,6 +690,12 @@ private:
     // Remove scopes created by fake parenthesis.
     for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
       State.Stack.pop_back();
+    }
+
+    if (Current.is(tok::string_literal) && State.StartOfStringLiteral == 0) {
+      State.StartOfStringLiteral = State.Column;
+    } else if (Current.isNot(tok::comment)) {
+      State.StartOfStringLiteral = 0;
     }
 
     State.Column += Current.FormatTok.TokenLength;

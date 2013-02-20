@@ -1439,6 +1439,19 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("someFunction(\"Always break between multi-line\"\n"
                "             \" string literals\",\n"
                "             and, other, parameters);");
+  EXPECT_EQ("fun + \"1243\" /* comment */\n"
+            "      \"5678\";",
+            format("fun + \"1243\" /* comment */\n"
+                   "      \"5678\";",
+                   getLLVMStyleWithColumns(28)));
+  EXPECT_EQ(
+      "aaaaaa = \"aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaa \"\n"
+      "         \"aaaaaaaaaaaaaaaaaaaaa\"\n"
+      "         \"aaaaaaaaaaaaaaaa\";",
+      format("aaaaaa ="
+             "\"aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaa "
+             "aaaaaaaaaaaaaaaaaaaaa\" "
+             "\"aaaaaaaaaaaaaaaa\";"));
 }
 
 TEST_F(FormatTest, AlignsPipes) {
