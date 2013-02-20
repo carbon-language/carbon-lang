@@ -436,9 +436,8 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
         // This is an absolute symbol, use an address of zero.
         DEBUG(dbgs() << "Resolving absolute relocations." << "\n");
         resolveRelocationList(Relocs, 0);
-      }
-      else {
-        // This is an external symbol, try to get it address from
+      } else {
+        // This is an external symbol, try to get its address from
         // MemoryManager.
         uint8_t *Addr = (uint8_t*) MemMgr->getPointerToNamedFunction(Name.data(),
                                                                    true);
