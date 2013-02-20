@@ -91,6 +91,10 @@
 # endif
 #endif
 
+#ifndef ASAN_USE_PREINIT_ARRAY
+# define ASAN_USE_PREINIT_ARRAY (ASAN_LINUX && !ASAN_ANDROID)
+#endif
+
 // All internal functions in asan reside inside the __asan namespace
 // to avoid namespace collisions with the user programs.
 // Seperate namespace also makes it simpler to distinguish the asan run-time
