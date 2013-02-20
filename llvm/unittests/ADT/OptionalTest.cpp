@@ -56,7 +56,7 @@ TEST_F(OptionalTest, ResetTest) {
   EXPECT_EQ(0u, NonDefaultConstructible::CopyAssignments);
   EXPECT_EQ(1u, NonDefaultConstructible::Destructions);
   NonDefaultConstructible::ResetCounts();
-  O.Reset();
+  O.reset();
   EXPECT_EQ(0u, NonDefaultConstructible::CopyConstructions);
   EXPECT_EQ(0u, NonDefaultConstructible::CopyAssignments);
   EXPECT_EQ(1u, NonDefaultConstructible::Destructions);

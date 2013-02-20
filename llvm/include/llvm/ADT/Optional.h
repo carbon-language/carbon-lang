@@ -62,13 +62,13 @@ public:
 
   Optional &operator=(const Optional &O) {
     if (!O)
-      Reset();
+      reset();
     else
       *this = *O;
     return *this;
   }
 
-  void Reset() {
+  void reset() {
     if (hasVal) {
       (*this)->~T();
       hasVal = false;
@@ -76,7 +76,7 @@ public:
   }
 
   ~Optional() {
-    Reset();
+    reset();
   }
   
   const T* getPointer() const { assert(hasVal); return reinterpret_cast<const T*>(storage.buffer); }
