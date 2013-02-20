@@ -78,7 +78,7 @@ public:
   ~Optional() {
     reset();
   }
-  
+
   const T* getPointer() const { assert(hasVal); return reinterpret_cast<const T*>(storage.buffer); }
   T* getPointer() { assert(hasVal); return reinterpret_cast<T*>(storage.buffer); }
   const T& getValue() const LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
@@ -115,7 +115,7 @@ struct simplify_type<Optional<T> >
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
 ///
-/// This routine will never be defined. It returns \c void to help diagnose 
+/// This routine will never be defined. It returns \c void to help diagnose
 /// errors at compile time.
 template<typename T, typename U>
 void operator==(const Optional<T> &X, const Optional<U> &Y);
@@ -124,7 +124,7 @@ void operator==(const Optional<T> &X, const Optional<U> &Y);
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
 ///
-/// This routine will never be defined. It returns \c void to help diagnose 
+/// This routine will never be defined. It returns \c void to help diagnose
 /// errors at compile time.
 template<typename T, typename U>
 void operator!=(const Optional<T> &X, const Optional<U> &Y);
@@ -133,7 +133,7 @@ void operator!=(const Optional<T> &X, const Optional<U> &Y);
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
 ///
-/// This routine will never be defined. It returns \c void to help diagnose 
+/// This routine will never be defined. It returns \c void to help diagnose
 /// errors at compile time.
 template<typename T, typename U>
 void operator<(const Optional<T> &X, const Optional<U> &Y);
@@ -142,7 +142,7 @@ void operator<(const Optional<T> &X, const Optional<U> &Y);
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
 ///
-/// This routine will never be defined. It returns \c void to help diagnose 
+/// This routine will never be defined. It returns \c void to help diagnose
 /// errors at compile time.
 template<typename T, typename U>
 void operator<=(const Optional<T> &X, const Optional<U> &Y);
@@ -151,7 +151,7 @@ void operator<=(const Optional<T> &X, const Optional<U> &Y);
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
 ///
-/// This routine will never be defined. It returns \c void to help diagnose 
+/// This routine will never be defined. It returns \c void to help diagnose
 /// errors at compile time.
 template<typename T, typename U>
 void operator>=(const Optional<T> &X, const Optional<U> &Y);
@@ -160,7 +160,7 @@ void operator>=(const Optional<T> &X, const Optional<U> &Y);
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
 ///
-/// This routine will never be defined. It returns \c void to help diagnose 
+/// This routine will never be defined. It returns \c void to help diagnose
 /// errors at compile time.
 template<typename T, typename U>
 void operator>(const Optional<T> &X, const Optional<U> &Y);
