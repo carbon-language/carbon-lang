@@ -1144,10 +1144,10 @@ bool Parser::DiagnoseProhibitedCXX11Attribute() {
   llvm_unreachable("All cases handled above.");
 }
 
-/// DiagnoseMisplacedCXX11Attribute - We have found the opening square brackets
-/// of a C++11 attribute-specifier in a location where an attribute is not
-/// permitted, but we know where the attributes ought to be written. Parse them
-/// anyway, and provide a fixit moving them to the right place.
+/// \brief We have found the opening square brackets of a C++11
+/// attribute-specifier in a location where an attribute is not permitted, but
+/// we know where the attributes ought to be written. Parse them anyway, and
+/// provide a fixit moving them to the right place.
 void Parser::DiagnoseMisplacedCXX11Attribute(ParsedAttributesWithRange &Attrs,
                                              SourceLocation CorrectLocation) {
   assert((Tok.is(tok::l_square) && NextToken().is(tok::l_square)) ||
