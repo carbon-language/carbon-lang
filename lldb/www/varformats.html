@@ -16,8 +16,7 @@
             <h1 class="postheader">Variable display</h1>
             <div class="postcontent">
             
-              <p>LLDB was recently modified to allow users to define custom
-                formatting options for the variables display.</p>
+              <p>LLDB has a data formatters subsystem that allows users to define custom display options for their variables.</p>
             
             <p>Usually, when you type <code>frame variable</code> or
                 run some <code>expression</code> LLDB will
@@ -1171,7 +1170,7 @@ def function (valobj,internal_dict):<br/>
 	                        <b>(lldb)</b> frame variable ns_string --dynamic-type no-run-target --show-types
 	                    </td>
 	            </table>
-	            <code>(id, dynamic type: __NSCFString) ns_string = 0x00000001001183d0 @&quot;An NSString saying hello world&quot;<br/>
+	            <code>(__NSCFString *) ns_string = 0x00000001001183d0 @&quot;An NSString saying hello world&quot;<br/>
 	            </code>
           <p>
           	Because LLDB uses a detection algorithm that does not need to invoke any functions
