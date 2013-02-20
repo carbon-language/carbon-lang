@@ -553,6 +553,14 @@ void SlotTracker::processFunction() {
             for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
               if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
                 CreateMetadataSlot(N);
+
+        // Add all the call attributes to the table. This is important for
+        // inline ASM, which may have attributes but no declaration.
+        if (CI->isInlineAsm()) {
+          AttributeSet Attrs = CI->getAttributes().getFnAttributes();
+          if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
+            CreateAttributeSetSlot(Attrs);
+        }
       }
 
       // Process metadata attached with this instruction.
