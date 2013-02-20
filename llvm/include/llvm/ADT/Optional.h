@@ -17,6 +17,7 @@
 #define LLVM_ADT_OPTIONAL_H
 
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/AlignOf.h"
 #include <cassert>
 
 #if LLVM_HAS_RVALUE_REFERENCES
@@ -27,14 +28,22 @@ namespace llvm {
 
 template<typename T>
 class Optional {
-  T x;
+  AlignedCharArrayUnion<T> storage;
   bool hasVal;
 public:
-  explicit Optional() : x(), hasVal(false) {}
-  Optional(const T &y) : x(y), hasVal(true) {}
+  explicit Optional() : hasVal(false) {}
+  Optional(const T &y) : hasVal(true) {
+    new (storage.buffer) T(y);
+  }
+  Optional(const Optional &O) : hasVal(O.hasVal) {
+    if (hasVal)
+      new (storage.buffer) T(*O);
+  }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-  Optional(T &&y) : x(std::forward<T>(y)), hasVal(true) {}
+  Optional(T &&y) : hasVal(true) {
+    new (storage.buffer) T(std::forward<T>(y));
+  }
 #endif
 
   static inline Optional create(const T* y) {
@@ -42,22 +51,49 @@ public:
   }
 
   Optional &operator=(const T &y) {
-    x = y;
-    hasVal = true;
+    if (hasVal)
+      **this = y;
+    else {
+      new (storage.buffer) T(y);
+      hasVal = true;
+    }
     return *this;
   }
+
+  Optional &operator=(const Optional &O) {
+    if (!O)
+      Reset();
+    else
+      *this = *O;
+    return *this;
+  }
+
+  void Reset() {
+    if (hasVal) {
+      (*this)->~T();
+      hasVal = false;
+    }
+  }
+
+  ~Optional() {
+    Reset();
+  }
   
-  const T* getPointer() const { assert(hasVal); return &x; }
-  const T& getValue() const LLVM_LVALUE_FUNCTION { assert(hasVal); return x; }
+  const T* getPointer() const { assert(hasVal); return reinterpret_cast<const T*>(storage.buffer); }
+  T* getPointer() { assert(hasVal); return reinterpret_cast<T*>(storage.buffer); }
+  const T& getValue() const LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
+  T& getValue() LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
 
   operator bool() const { return hasVal; }
   bool hasValue() const { return hasVal; }
   const T* operator->() const { return getPointer(); }
-  const T& operator*() const LLVM_LVALUE_FUNCTION { assert(hasVal); return x; }
+  T* operator->() { return getPointer(); }
+  const T& operator*() const LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
+  T& operator*() LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
 
 #if LLVM_HAS_RVALUE_REFERENCE_THIS
-  T&& getValue() && { assert(hasVal); return std::move(x); }
-  T&& operator*() && { assert(hasVal); return std::move(x); } 
+  T&& getValue() && { assert(hasVal); return std::move(*getPointer()); }
+  T&& operator*() && { assert(hasVal); return std::move(*getPointer()); }
 #endif
 };
 
