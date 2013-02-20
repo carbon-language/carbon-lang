@@ -692,7 +692,7 @@ private:
       State.Stack.pop_back();
     }
 
-    if (Current.is(tok::string_literal) && State.StartOfStringLiteral == 0) {
+    if (Current.is(tok::string_literal)) {
       State.StartOfStringLiteral = State.Column;
     } else if (Current.isNot(tok::comment)) {
       State.StartOfStringLiteral = 0;

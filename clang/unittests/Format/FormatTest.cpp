@@ -1452,6 +1452,9 @@ TEST_F(FormatTest, AlignsStringLiterals) {
              "\"aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaa "
              "aaaaaaaaaaaaaaaaaaaaa\" "
              "\"aaaaaaaaaaaaaaaa\";"));
+  verifyFormat("a = a + \"a\"\n"
+               "        \"a\"\n"
+               "        \"a\";");
 }
 
 TEST_F(FormatTest, AlignsPipes) {
