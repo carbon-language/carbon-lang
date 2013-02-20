@@ -1215,6 +1215,11 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
                                             TiedPairList &TiedPairs,
                                             unsigned &Dist) {
   bool IsEarlyClobber = false;
+  for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
+    const MachineOperand &DstMO = MI->getOperand(TiedPairs[tpi].second);
+    IsEarlyClobber |= DstMO.isEarlyClobber();
+  }
+
   bool RemovedKillFlag = false;
   bool AllUsesCopied = true;
   unsigned LastCopiedReg = 0;
@@ -1225,7 +1230,6 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
 
     const MachineOperand &DstMO = MI->getOperand(DstIdx);
     unsigned RegA = DstMO.getReg();
-    IsEarlyClobber |= DstMO.isEarlyClobber();
 
     // Grab RegB from the instruction because it may have changed if the
     // instruction was commuted.
