@@ -1437,6 +1437,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
     }
   }
 
+  if (LIS)
+    MF->verify(this, "After two-address instruction pass");
+
   return MadeChange;
 }
 

@@ -172,9 +172,6 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   ImpDefs.clear();
   VRegPHIUseCount.clear();
 
-  if (LIS)
-    MF.verify(this, "After PHI elimination");
-
   return Changed;
 }
 
