@@ -1185,7 +1185,7 @@ void SCCPSolver::Solve() {
       DEBUG(dbgs() << "\nPopped off OI-WL: " << *I << '\n');
 
       // "I" got into the work list because it either made the transition from
-      // bottom to constant
+      // bottom to constant, or to overdefined.
       //
       // Anything on this worklist that is overdefined need not be visited
       // since all of its users will have already been marked as overdefined
