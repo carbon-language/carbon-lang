@@ -67,7 +67,6 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   const InstrItineraryData *InstrItins;
   MachineRegisterInfo *MRI;
   LiveVariables *LV;
-  SlotIndexes *Indexes;
   LiveIntervals *LIS;
   AliasAnalysis *AA;
   CodeGenOpt::Level OptLevel;
@@ -533,8 +532,8 @@ commuteInstruction(MachineBasicBlock::iterator &mi,
     if (LV)
       // Update live variables
       LV->replaceKillInstruction(RegC, MI, NewMI);
-    if (Indexes)
-      Indexes->replaceMachineInstrInMaps(MI, NewMI);
+    if (LIS)
+      LIS->ReplaceMachineInstrInMaps(MI, NewMI);
 
     MBB->insert(mi, NewMI);           // Insert the new inst
     MBB->erase(mi);                   // Nuke the old inst.
@@ -587,8 +586,8 @@ TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
   DEBUG(dbgs() << "2addr:         TO 3-ADDR: " << *NewMI);
   bool Sunk = false;
 
-  if (Indexes)
-    Indexes->replaceMachineInstrInMaps(mi, NewMI);
+  if (LIS)
+    LIS->ReplaceMachineInstrInMaps(mi, NewMI);
 
   if (NewMI->findRegisterUseOperand(RegB, false, TRI))
     // FIXME: Temporary workaround. If the new instruction doesn't
@@ -1378,7 +1377,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
   InstrItins = TM.getInstrItineraryData();
-  Indexes = getAnalysisIfAvailable<SlotIndexes>();
   LV = getAnalysisIfAvailable<LiveVariables>();
   LIS = getAnalysisIfAvailable<LiveIntervals>();
   AA = &getAnalysis<AliasAnalysis>();
