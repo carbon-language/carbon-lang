@@ -21,7 +21,6 @@ typedef int NSInteger;
 typedef unsigned int NSUInteger;
 typedef long SInt32;
 typedef unsigned long UInt32;
-
 #endif
 
 NSInteger getNSInteger();
@@ -211,25 +210,3 @@ void testCapitals() {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:13-[[@LINE-3]]:14}:"d"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:14}:"%D"
 }
-
-
-// The OS X headers do not always use __INTMAX_TYPE__ and friends.
-typedef long long intmax_t;
-typedef unsigned long long uintmax_t;
-#define INTMAX_C(X) (X ## LL)
-#define UINTMAX_C(X) (X ## ULL)
-
-void testIntMax(intmax_t i, uintmax_t u) {
-  printf("%d", i); // expected-warning{{format specifies type 'int' but the argument has type 'intmax_t' (aka 'long long')}}
-  printf("%d", u); // expected-warning{{format specifies type 'int' but the argument has type 'uintmax_t' (aka 'unsigned long long')}}
-
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:11-[[@LINE-3]]:13}:"%jd"
-  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:11-[[@LINE-3]]:13}:"%ju"
-
-  printf("%jd", i); // no-warning
-  printf("%ju", u); // no-warning
-
-  printf("%jd", INTMAX_C(5)); // no-warning
-  printf("%ju", INTMAX_C(5)); // no-warning
-}
-
