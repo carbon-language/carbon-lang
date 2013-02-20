@@ -650,17 +650,13 @@ void Preprocessor::HandlePragmaPushMacro(Token &PushMacroTok) {
   // Get the MacroInfo associated with IdentInfo.
   MacroInfo *MI = getMacroInfo(IdentInfo);
  
-  MacroInfo *MacroCopyToPush = 0;
   if (MI) {
-    // Make a clone of MI.
-    MacroCopyToPush = CloneMacroInfo(*MI);
-    
     // Allow the original MacroInfo to be redefined later.
     MI->setIsAllowRedefinitionsWithoutWarning(true);
   }
 
   // Push the cloned MacroInfo so we can retrieve it later.
-  PragmaPushMacroInfo[IdentInfo].push_back(MacroCopyToPush);
+  PragmaPushMacroInfo[IdentInfo].push_back(MI);
 }
 
 /// \brief Handle \#pragma pop_macro.
@@ -681,10 +677,10 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
     PragmaPushMacroInfo.find(IdentInfo);
   if (iter != PragmaPushMacroInfo.end()) {
     // Forget the MacroInfo currently associated with IdentInfo.
-    if (MacroInfo *CurrentMI = getMacroInfo(IdentInfo)) {
-      if (CurrentMI->isWarnIfUnused())
-        WarnUnusedMacroLocs.erase(CurrentMI->getDefinitionLoc());
-      UndefineMacro(IdentInfo, CurrentMI, MessageLoc);
+    if (MacroDirective *CurrentMD = getMacroDirective(IdentInfo)) {
+      if (CurrentMD->getInfo()->isWarnIfUnused())
+        WarnUnusedMacroLocs.erase(CurrentMD->getInfo()->getDefinitionLoc());
+      UndefineMacro(IdentInfo, CurrentMD, MessageLoc);
     }
 
     // Get the MacroInfo we want to reinstall.
@@ -692,7 +688,8 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
 
     if (MacroToReInstall) {
       // Reinstall the previously pushed macro.
-      setMacroInfo(IdentInfo, MacroToReInstall);
+      setMacroDirective(IdentInfo, MacroToReInstall, MessageLoc,
+                        /*isImported=*/false);
     } else if (IdentInfo->hasMacroDefinition()) {
       clearMacroInfo(IdentInfo);
     }

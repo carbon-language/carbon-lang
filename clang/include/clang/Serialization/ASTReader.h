@@ -71,6 +71,7 @@ class CXXCtorInitializer;
 class GlobalModuleIndex;
 class GotoStmt;
 class MacroDefinition;
+class MacroDirective;
 class NamedDecl;
 class OpaqueValueExpr;
 class Preprocessor;
@@ -426,7 +427,7 @@ private:
   /// If the pointer at index I is non-NULL, then it refers to the
   /// MacroInfo for the identifier with ID=I+1 that has already
   /// been loaded.
-  std::vector<MacroInfo *> MacrosLoaded;
+  std::vector<MacroDirective *> MacrosLoaded;
 
   typedef ContinuousRangeMap<serialization::MacroID, ModuleFile *, 4>
     GlobalMacroMapType;
@@ -473,7 +474,7 @@ private:
 
     union {
       Decl *D;
-      MacroInfo *MI;
+      MacroDirective *MD;
     };
 
     IdentifierInfo *Id;
@@ -481,11 +482,11 @@ private:
   public:
     HiddenName(Decl *D) : Kind(Declaration), Loc(), D(D), Id() { }
 
-    HiddenName(IdentifierInfo *II, MacroInfo *MI)
-      : Kind(MacroVisibility), Loc(), MI(MI), Id(II) { }
+    HiddenName(IdentifierInfo *II, MacroDirective *MD)
+      : Kind(MacroVisibility), Loc(), MD(MD), Id(II) { }
 
-    HiddenName(IdentifierInfo *II, MacroInfo *MI, SourceLocation Loc)
-      : Kind(MacroUndef), Loc(Loc.getRawEncoding()), MI(MI), Id(II) { }
+    HiddenName(IdentifierInfo *II, MacroDirective *MD, SourceLocation Loc)
+      : Kind(MacroUndef), Loc(Loc.getRawEncoding()), MD(MD), Id(II) { }
 
     NameKind getKind() const { return Kind; }
 
@@ -494,10 +495,10 @@ private:
       return D;
     }
 
-    std::pair<IdentifierInfo *, MacroInfo *> getMacro() const {
+    std::pair<IdentifierInfo *, MacroDirective *> getMacro() const {
       assert((getKind() == MacroUndef || getKind() == MacroVisibility)
              && "Hidden name is not a macro!");
-      return std::make_pair(Id, MI);
+      return std::make_pair(Id, MD);
     }
 
     SourceLocation getMacroUndefLoc() const {
@@ -1604,7 +1605,7 @@ public:
                                                     unsigned LocalID);
 
   /// \brief Retrieve the macro with the given ID.
-  MacroInfo *getMacro(serialization::MacroID ID, MacroInfo *Hint = 0);
+  MacroDirective *getMacro(serialization::MacroID ID, MacroDirective *Hint = 0);
 
   /// \brief Retrieve the global macro ID corresponding to the given local
   /// ID within the given module file.
@@ -1763,7 +1764,7 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  void ReadMacroRecord(ModuleFile &F, uint64_t Offset, MacroInfo *Hint = 0);
+  void ReadMacroRecord(ModuleFile &F, uint64_t Offset, MacroDirective *Hint = 0);
 
   /// \brief Determine the global preprocessed entity ID that corresponds to
   /// the given local ID within the given module.

@@ -49,7 +49,8 @@ PrintingPolicy Sema::getPrintingPolicy(const ASTContext &Context,
   PrintingPolicy Policy = Context.getPrintingPolicy();
   Policy.Bool = Context.getLangOpts().Bool;
   if (!Policy.Bool) {
-    if (MacroInfo *BoolMacro = PP.getMacroInfo(&Context.Idents.get("bool"))) {
+    if (const MacroInfo *
+          BoolMacro = PP.getMacroInfo(&Context.Idents.get("bool"))) {
       Policy.Bool = BoolMacro->isObjectLike() &&
         BoolMacro->getNumTokens() == 1 &&
         BoolMacro->getReplacementToken(0).is(tok::kw__Bool);

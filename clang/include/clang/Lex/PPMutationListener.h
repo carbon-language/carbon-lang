@@ -17,7 +17,7 @@
 
 namespace clang {
 
-class MacroInfo;
+class MacroDirective;
 
 /// \brief A record that describes an update to a macro that was
 /// originally loaded to an AST file and has been modified within the
@@ -35,7 +35,7 @@ public:
   virtual ~PPMutationListener();
 
   /// \brief A macro has been #undef'd.
-  virtual void UndefinedMacro(MacroInfo *MI) { }
+  virtual void UndefinedMacro(MacroDirective *MD) { }
 };
 
 } // end namespace clang

@@ -53,7 +53,7 @@ class MacroDefinition;
 class OpaqueValueExpr;
 class OpenCLOptions;
 class ASTReader;
-class MacroInfo;
+class MacroDirective;
 class Module;
 class PreprocessedEntity;
 class PreprocessingRecord;
@@ -230,7 +230,7 @@ private:
   serialization::MacroID NextMacroID;
 
   /// \brief Map that provides the ID numbers of each macro.
-  llvm::DenseMap<MacroInfo *, serialization::MacroID> MacroIDs;
+  llvm::DenseMap<MacroDirective *, serialization::MacroID> MacroIDs;
 
   /// @name FlushStmt Caches
   /// @{
@@ -267,7 +267,7 @@ private:
   /// table, indexed by the Selector ID (-1).
   std::vector<uint32_t> SelectorOffsets;
 
-  typedef llvm::MapVector<MacroInfo *, MacroUpdate> MacroUpdatesMap;
+  typedef llvm::MapVector<MacroDirective *, MacroUpdate> MacroUpdatesMap;
 
   /// \brief Updates to macro definitions that were loaded from an AST file.
   MacroUpdatesMap MacroUpdates;
@@ -510,7 +510,7 @@ public:
   void AddIdentifierRef(const IdentifierInfo *II, RecordDataImpl &Record);
 
   /// \brief Emit a reference to a macro.
-  void addMacroRef(MacroInfo *MI, RecordDataImpl &Record);
+  void addMacroRef(MacroDirective *MI, RecordDataImpl &Record);
 
   /// \brief Emit a Selector (which is a smart pointer reference).
   void AddSelectorRef(Selector, RecordDataImpl &Record);
@@ -530,7 +530,7 @@ public:
   serialization::IdentID getIdentifierRef(const IdentifierInfo *II);
 
   /// \brief Get the unique number used to refer to the given macro.
-  serialization::MacroID getMacroRef(MacroInfo *MI);
+  serialization::MacroID getMacroRef(MacroDirective *MI);
 
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordDataImpl &Record);
@@ -693,7 +693,7 @@ public:
   // ASTDeserializationListener implementation
   void ReaderInitialized(ASTReader *Reader);
   void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
-  void MacroRead(serialization::MacroID ID, MacroInfo *MI);
+  void MacroRead(serialization::MacroID ID, MacroDirective *MI);
   void TypeRead(serialization::TypeIdx Idx, QualType T);
   void SelectorRead(serialization::SelectorID ID, Selector Sel);
   void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
@@ -701,7 +701,7 @@ public:
   void ModuleRead(serialization::SubmoduleID ID, Module *Mod);
 
   // PPMutationListener implementation.
-  virtual void UndefinedMacro(MacroInfo *MI);
+  virtual void UndefinedMacro(MacroDirective *MD);
 
   // ASTMutationListener implementation.
   virtual void CompletedTagDefinition(const TagDecl *D);

@@ -57,10 +57,12 @@ MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
   return MI;
 }
 
-MacroInfo *Preprocessor::CloneMacroInfo(const MacroInfo &MacroToClone) {
-  MacroInfo *MI = AllocateMacroInfo();
-  new (MI) MacroInfo(MacroToClone, BP);
-  return MI;
+MacroDirective *Preprocessor::AllocateMacroDirective(MacroInfo *MI,
+                                                     SourceLocation Loc,
+                                                     bool isImported) {
+  MacroDirective *MD = BP.Allocate<MacroDirective>();
+  new (MD) MacroDirective(MI, Loc, isImported);
+  return MD;
 }
 
 /// \brief Release the specified MacroInfo to be reused for allocating
@@ -1110,22 +1112,22 @@ void Preprocessor::HandleMacroPublicDirective(Token &Tok) {
   CheckEndOfDirective("__public_macro");
 
   // Okay, we finally have a valid identifier to undef.
-  MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
+  MacroDirective *MD = getMacroDirective(MacroNameTok.getIdentifierInfo());
   
   // If the macro is not defined, this is an error.
-  if (MI == 0) {
+  if (MD == 0) {
     Diag(MacroNameTok, diag::err_pp_visibility_non_macro)
       << MacroNameTok.getIdentifierInfo();
     return;
   }
   
   // Note that this macro has now been exported.
-  MI->setVisibility(/*IsPublic=*/true, MacroNameTok.getLocation());
-  
+  MD->setVisibility(/*IsPublic=*/true, MacroNameTok.getLocation());
+
   // If this macro definition came from a PCH file, mark it
   // as having changed since serialization.
-  if (MI->isFromAST())
-    MI->setChangedAfterLoad();
+  if (MD->isImported())
+    MD->setChangedAfterLoad();
 }
 
 /// \brief Handle a #private directive.
@@ -1141,22 +1143,22 @@ void Preprocessor::HandleMacroPrivateDirective(Token &Tok) {
   CheckEndOfDirective("__private_macro");
   
   // Okay, we finally have a valid identifier to undef.
-  MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
+  MacroDirective *MD = getMacroDirective(MacroNameTok.getIdentifierInfo());
   
   // If the macro is not defined, this is an error.
-  if (MI == 0) {
+  if (MD == 0) {
     Diag(MacroNameTok, diag::err_pp_visibility_non_macro)
       << MacroNameTok.getIdentifierInfo();
     return;
   }
   
   // Note that this macro has now been marked private.
-  MI->setVisibility(/*IsPublic=*/false, MacroNameTok.getLocation());
-  
+  MD->setVisibility(/*IsPublic=*/false, MacroNameTok.getLocation());
+
   // If this macro definition came from a PCH file, mark it
   // as having changed since serialization.
-  if (MI->isFromAST())
-    MI->setChangedAfterLoad();
+  if (MD->isImported())
+    MD->setChangedAfterLoad();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1918,7 +1920,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical, and issue diagnostics if they are not.
-  if (MacroInfo *OtherMI = getMacroInfo(MacroNameTok.getIdentifierInfo())) {
+  if (const MacroInfo *OtherMI=getMacroInfo(MacroNameTok.getIdentifierInfo())) {
     // It is very common for system headers to have tons of macro redefinitions
     // and for warnings to be disabled in system headers.  If this is the case,
     // then don't bother calling MacroInfo::isIdenticalTo.
@@ -1940,7 +1942,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       WarnUnusedMacroLocs.erase(OtherMI->getDefinitionLoc());
   }
 
-  setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
+  setMacroDirective(MacroNameTok.getIdentifierInfo(), MI);
 
   assert(!MI->isUsed());
   // If we need warning for not using the macro, add its location in the
@@ -1973,7 +1975,8 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   CheckEndOfDirective("undef");
 
   // Okay, we finally have a valid identifier to undef.
-  MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
+  MacroDirective *MD = getMacroDirective(MacroNameTok.getIdentifierInfo());
+  const MacroInfo *MI = MD ? MD->getInfo() : 0;
 
   // If the callbacks want to know, tell them about the macro #undef.
   // Note: no matter if the macro was defined or not.
@@ -1989,17 +1992,17 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   if (MI->isWarnIfUnused())
     WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
 
-  UndefineMacro(MacroNameTok.getIdentifierInfo(), MI,
+  UndefineMacro(MacroNameTok.getIdentifierInfo(), MD,
                 MacroNameTok.getLocation());
 }
 
-void Preprocessor::UndefineMacro(IdentifierInfo *II, MacroInfo *MI,
+void Preprocessor::UndefineMacro(IdentifierInfo *II, MacroDirective *MD,
                                  SourceLocation UndefLoc) {
-  MI->setUndefLoc(UndefLoc);
-  if (MI->isFromAST()) {
-    MI->setChangedAfterLoad();
+  MD->setUndefLoc(UndefLoc);
+  if (MD->isImported()) {
+    MD->setChangedAfterLoad();
     if (Listener)
-      Listener->UndefinedMacro(MI);
+      Listener->UndefinedMacro(MD);
   }
 
   clearMacroInfo(II);

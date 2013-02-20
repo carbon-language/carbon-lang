@@ -592,7 +592,7 @@ static void DoPrintMacros(Preprocessor &PP, raw_ostream *OS) {
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     if (I->first->hasMacroDefinition())
-      MacrosByID.push_back(id_macro_pair(I->first, I->second));
+      MacrosByID.push_back(id_macro_pair(I->first, I->second->getInfo()));
   }
   llvm::array_pod_sort(MacrosByID.begin(), MacrosByID.end(), MacroIDCompare);
 

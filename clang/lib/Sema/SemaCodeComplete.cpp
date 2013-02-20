@@ -2552,8 +2552,9 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
   }
   
   if (Kind == RK_Macro) {
-    MacroInfo *MI = PP.getMacroInfoHistory(Macro);
-    assert(MI && "Not a macro?");
+    const MacroDirective *MD = PP.getMacroDirectiveHistory(Macro);
+    assert(MD && "Not a macro?");
+    const MacroInfo *MI = MD->getInfo();
 
     Result.AddTypedTextChunk(
                             Result.getAllocator().CopyString(Macro->getName()));

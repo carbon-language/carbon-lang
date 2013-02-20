@@ -313,7 +313,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// Macros - For each IdentifierInfo that was associated with a macro, we
   /// keep a mapping to the history of all macro definitions and #undefs in
   /// the reverse order (the latest one is in the head of the list).
-  llvm::DenseMap<const IdentifierInfo*, MacroInfo*> Macros;
+  llvm::DenseMap<const IdentifierInfo*, MacroDirective*> Macros;
   friend class ASTReader;
   
   /// \brief Macros that we want to warn because they are not used at the end
@@ -534,29 +534,43 @@ public:
 
   /// \brief Given an identifier, return the MacroInfo it is \#defined to
   /// or null if it isn't \#define'd.
-  MacroInfo *getMacroInfo(IdentifierInfo *II) const {
+  MacroDirective *getMacroDirective(IdentifierInfo *II) const {
     if (!II->hasMacroDefinition())
       return 0;
 
-    MacroInfo *MI = getMacroInfoHistory(II);
-    assert(MI->getUndefLoc().isInvalid() && "Macro is undefined!");
-    return MI;
+    MacroDirective *MD = getMacroDirectiveHistory(II);
+    assert(MD->getUndefLoc().isInvalid() && "Macro is undefined!");
+    return MD;
+  }
+
+  const MacroInfo *getMacroInfo(IdentifierInfo *II) const {
+    return const_cast<Preprocessor*>(this)->getMacroInfo(II);
+  }
+
+  MacroInfo *getMacroInfo(IdentifierInfo *II) {
+    if (MacroDirective *MD = getMacroDirective(II))
+      return MD->getInfo();
+    return 0;
   }
 
   /// \brief Given an identifier, return the (probably #undef'd) MacroInfo
   /// representing the most recent macro definition. One can iterate over all
   /// previous macro definitions from it. This method should only be called for
   /// identifiers that hadMacroDefinition().
-  MacroInfo *getMacroInfoHistory(const IdentifierInfo *II) const;
+  MacroDirective *getMacroDirectiveHistory(const IdentifierInfo *II) const;
 
   /// \brief Specify a macro for this identifier.
-  void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
+  void setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
+                         SourceLocation Loc, bool isImported);
+  void setMacroDirective(IdentifierInfo *II, MacroInfo *MI) {
+    setMacroDirective(II, MI, MI->getDefinitionLoc(), false);
+  }
   /// \brief Add a MacroInfo that was loaded from an AST file.
-  void addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
-                          MacroInfo *Hint = 0);
+  void addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,
+                          MacroDirective *Hint = 0);
   /// \brief Make the given MacroInfo, that was loaded from an AST file and
   /// previously hidden, visible.
-  void makeLoadedMacroInfoVisible(IdentifierInfo *II, MacroInfo *MI);
+  void makeLoadedMacroInfoVisible(IdentifierInfo *II, MacroDirective *MD);
   /// \brief Undefine a macro for this identifier.
   void clearMacroInfo(IdentifierInfo *II);
 
@@ -565,7 +579,7 @@ public:
   /// IdentifierInfo::hasMacroDefinition() set and an empty
   /// MacroInfo::getUndefLoc() at the head of the list.
   typedef llvm::DenseMap<const IdentifierInfo *,
-                         MacroInfo*>::const_iterator macro_iterator;
+                         MacroDirective*>::const_iterator macro_iterator;
   macro_iterator macro_begin(bool IncludeExternalMacros = true) const;
   macro_iterator macro_end(bool IncludeExternalMacros = true) const;
 
@@ -1194,9 +1208,6 @@ public:
   /// \brief Allocate a new MacroInfo object with the provided SourceLocation.
   MacroInfo *AllocateMacroInfo(SourceLocation L);
 
-  /// \brief Allocate a new MacroInfo object which is clone of \p MI.
-  MacroInfo *CloneMacroInfo(const MacroInfo &MI);
-
   /// \brief Turn the specified lexer token into a fully checked and spelled
   /// filename, e.g. as an operand of \#include. 
   ///
@@ -1271,6 +1282,9 @@ private:
 
   /// \brief Allocate a new MacroInfo object.
   MacroInfo *AllocateMacroInfo();
+
+  MacroDirective *AllocateMacroDirective(MacroInfo *MI, SourceLocation Loc,
+                                         bool isImported);
 
   /// \brief Release the specified MacroInfo for re-use.
   ///
@@ -1424,7 +1438,7 @@ private:
   // Macro handling.
   void HandleDefineDirective(Token &Tok);
   void HandleUndefDirective(Token &Tok);
-  void UndefineMacro(IdentifierInfo *II, MacroInfo *MI,
+  void UndefineMacro(IdentifierInfo *II, MacroDirective *MD,
                      SourceLocation UndefLoc);
 
   // Conditional Inclusion.
