@@ -118,8 +118,8 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
                                            svalBuilder.makeZeroVal(T),
                                            getContext().IntTy);
 
-      DefinedOrUnknownSVal *Constraint =
-        dyn_cast<DefinedOrUnknownSVal>(&Constraint_untested);
+      llvm::Optional<DefinedOrUnknownSVal> Constraint =
+        Constraint_untested.getAs<DefinedOrUnknownSVal>();
 
       if (!Constraint)
         break;
@@ -138,7 +138,7 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
     const MemRegion *R = state->getRegion(SelfD, InitLoc);
     SVal V = state->getSVal(loc::MemRegionVal(R));
 
-    if (const Loc *LV = dyn_cast<Loc>(&V)) {
+    if (llvm::Optional<Loc> LV = V.getAs<Loc>()) {
       // Assume that the pointer value in 'self' is non-null.
       state = state->assume(*LV, true);
       assert(state && "'self' cannot be null");
@@ -154,7 +154,7 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
       if (SFC->getParent() == 0) {
         loc::MemRegionVal L = svalBuilder.getCXXThis(MD, SFC);
         SVal V = state->getSVal(L);
-        if (const Loc *LV = dyn_cast<Loc>(&V)) {
+        if (llvm::Optional<Loc> LV = V.getAs<Loc>()) {
           state = state->assume(*LV, true);
           assert(state && "'this' cannot be null");
         }
@@ -172,7 +172,7 @@ static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
                                                      const Expr *E) {
   SVal V = State->getSVal(E, LC);
 
-  if (isa<NonLoc>(V)) {
+  if (V.getAs<NonLoc>()) {
     MemRegionManager &MRMgr = State->getStateManager().getRegionManager();
     const MemRegion *R  = MRMgr.getCXXTempObjectRegion(E, LC);
     State = State->bindLoc(loc::MemRegionVal(R), V);
@@ -472,8 +472,8 @@ void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor Dtor,
 
   Loc dest = state->getLValue(varDecl, Pred->getLocationContext());
 
-  VisitCXXDestructor(varType, cast<loc::MemRegionVal>(dest).getRegion(),
-                     Dtor.getTriggerStmt(), /*IsBase=*/false, Pred, Dst);
+  VisitCXXDestructor(varType, dest.castAs<loc::MemRegionVal>().getRegion(),
+                     Dtor.getTriggerStmt(), /*IsBase=*/ false, Pred, Dst);
 }
 
 void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
@@ -490,8 +490,8 @@ void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
   QualType BaseTy = D.getBaseSpecifier()->getType();
   SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy);
 
-  VisitCXXDestructor(BaseTy, cast<loc::MemRegionVal>(BaseVal).getRegion(),
-                     CurDtor->getBody(), /*IsBase=*/true, Pred, Dst);
+  VisitCXXDestructor(BaseTy, BaseVal.castAs<loc::MemRegionVal>().getRegion(),
+                     CurDtor->getBody(), /*IsBase=*/ true, Pred, Dst);
 }
 
 void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
@@ -503,10 +503,11 @@ void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
   const CXXDestructorDecl *CurDtor = cast<CXXDestructorDecl>(LCtx->getDecl());
   Loc ThisVal = getSValBuilder().getCXXThis(CurDtor,
                                             LCtx->getCurrentStackFrame());
-  SVal FieldVal = State->getLValue(Member, cast<Loc>(State->getSVal(ThisVal)));
+  SVal FieldVal =
+      State->getLValue(Member, State->getSVal(ThisVal).castAs<Loc>());
 
   VisitCXXDestructor(Member->getType(),
-                     cast<loc::MemRegionVal>(FieldVal).getRegion(),
+                     FieldVal.castAs<loc::MemRegionVal>().getRegion(),
                      CurDtor->getBody(), /*IsBase=*/false, Pred, Dst);
 }
 
@@ -1287,7 +1288,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
       continue;
     }
 
-    DefinedSVal V = cast<DefinedSVal>(X);
+    DefinedSVal V = X.castAs<DefinedSVal>();
 
     ProgramStateRef StTrue, StFalse;
     tie(StTrue, StFalse) = PrevState->assume(V);
@@ -1327,8 +1328,8 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
 
   typedef IndirectGotoNodeBuilder::iterator iterator;
 
-  if (isa<loc::GotoLabel>(V)) {
-    const LabelDecl *L = cast<loc::GotoLabel>(V).getLabel();
+  if (llvm::Optional<loc::GotoLabel> LV = V.getAs<loc::GotoLabel>()) {
+    const LabelDecl *L = LV->getLabel();
 
     for (iterator I = builder.begin(), E = builder.end(); I != E; ++I) {
       if (I.getLabel() == L) {
@@ -1340,7 +1341,7 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
     llvm_unreachable("No block with label.");
   }
 
-  if (isa<loc::ConcreteInt>(V) || isa<UndefinedVal>(V)) {
+  if (V.getAs<loc::ConcreteInt>() || V.getAs<UndefinedVal>()) {
     // Dispatch to the first target and mark it as a sink.
     //ExplodedNode* N = builder.generateNode(builder.begin(), state, true);
     // FIXME: add checker visit.
@@ -1394,7 +1395,7 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
 
     return;
   }
-  DefinedOrUnknownSVal CondV = cast<DefinedOrUnknownSVal>(CondV_untested);
+  DefinedOrUnknownSVal CondV = CondV_untested.castAs<DefinedOrUnknownSVal>();
 
   ProgramStateRef DefaultSt = state;
   
@@ -1435,7 +1436,7 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
         // If CondV evaluates to a constant, then we know that this
         // is the *only* case that we can take, so stop evaluating the
         // others.
-        if (isa<nonloc::ConcreteInt>(CondV))
+        if (CondV.getAs<nonloc::ConcreteInt>())
           return;
       }
 
@@ -1529,7 +1530,7 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
     // results in boolean contexts.
     SVal V = svalBuilder.conjureSymbolVal(Ex, LCtx, getContext().VoidPtrTy,
                                           currBldrCtx->blockCount());
-    state = state->assume(cast<DefinedOrUnknownSVal>(V), true);
+    state = state->assume(V.castAs<DefinedOrUnknownSVal>(), true);
     Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V), 0,
 		      ProgramPoint::PostLValueKind);
     return;
@@ -1646,7 +1647,8 @@ ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
   bool escapes = true;
 
   // TODO: Move to StoreManager.
-  if (loc::MemRegionVal *regionLoc = dyn_cast<loc::MemRegionVal>(&Loc)) {
+  if (llvm::Optional<loc::MemRegionVal> regionLoc =
+          Loc.getAs<loc::MemRegionVal>()) {
     escapes = !regionLoc->getRegion()->hasStackStorage();
 
     if (!escapes) {
@@ -1754,7 +1756,7 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
 
   // If the location is not a 'Loc', it will already be handled by
   // the checkers.  There is nothing left to do.
-  if (!isa<Loc>(location)) {
+  if (!location.getAs<Loc>()) {
     const ProgramPoint L = PostStore(StoreE, LC, /*Loc*/0, /*tag*/0);
     ProgramStateRef state = Pred->getState();
     state = processPointerEscapedOnBind(state, location, Val);
@@ -1773,11 +1775,12 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
     // When binding the value, pass on the hint that this is a initialization.
     // For initializations, we do not need to inform clients of region
     // changes.
-    state = state->bindLoc(cast<Loc>(location),
+    state = state->bindLoc(location.castAs<Loc>(),
                            Val, /* notifyChanges = */ !atDeclInit);
 
     const MemRegion *LocReg = 0;
-    if (loc::MemRegionVal *LocRegVal = dyn_cast<loc::MemRegionVal>(&location)) {
+    if (llvm::Optional<loc::MemRegionVal> LocRegVal =
+            location.getAs<loc::MemRegionVal>()) {
       LocReg = LocRegVal->getRegion();
     }
     
@@ -1826,7 +1829,7 @@ void ExprEngine::evalLoad(ExplodedNodeSet &Dst,
                           const ProgramPointTag *tag,
                           QualType LoadTy)
 {
-  assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
+  assert(!location.getAs<NonLoc>() && "location cannot be a NonLoc.");
 
   // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
@@ -1885,7 +1888,7 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst,
     if (location.isValid()) {
       if (LoadTy.isNull())
         LoadTy = BoundEx->getType();
-      V = state->getSVal(cast<Loc>(location), LoadTy);
+      V = state->getSVal(location.castAs<Loc>(), LoadTy);
     }
 
     Bldr.generateNode(NodeEx, *NI, state->BindExpr(BoundEx, LCtx, V), tag,
@@ -1955,7 +1958,7 @@ void ExprEngine::evalEagerlyAssumeBinOpBifurcation(ExplodedNodeSet &Dst,
 
     ProgramStateRef state = Pred->getState();
     SVal V = state->getSVal(Ex, Pred->getLocationContext());
-    nonloc::SymbolVal *SEV = dyn_cast<nonloc::SymbolVal>(&V);
+    llvm::Optional<nonloc::SymbolVal> SEV = V.getAs<nonloc::SymbolVal>();
     if (SEV && SEV->isExpression()) {
       const std::pair<const ProgramPointTag *, const ProgramPointTag*> &tags =
         geteagerlyAssumeBinOpBifurcationTags();
@@ -1995,10 +1998,10 @@ void ExprEngine::VisitGCCAsmStmt(const GCCAsmStmt *A, ExplodedNode *Pred,
   for (GCCAsmStmt::const_outputs_iterator OI = A->begin_outputs(),
        OE = A->end_outputs(); OI != OE; ++OI) {
     SVal X = state->getSVal(*OI, Pred->getLocationContext());
-    assert (!isa<NonLoc>(X));  // Should be an Lval, or unknown, undef.
+    assert (!X.getAs<NonLoc>());  // Should be an Lval, or unknown, undef.
 
-    if (isa<Loc>(X))
-      state = state->bindLoc(cast<Loc>(X), UnknownVal());
+    if (llvm::Optional<Loc> LV = X.getAs<Loc>())
+      state = state->bindLoc(*LV, UnknownVal());
   }
 
   Bldr.generateNode(A, Pred, state);

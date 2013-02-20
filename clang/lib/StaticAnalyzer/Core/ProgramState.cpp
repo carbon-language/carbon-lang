@@ -132,7 +132,7 @@ ProgramStateRef ProgramState::bindLoc(Loc LV, SVal V, bool notifyChanges) const 
 
 ProgramStateRef ProgramState::bindDefault(SVal loc, SVal V) const {
   ProgramStateManager &Mgr = getStateManager();
-  const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
+  const MemRegion *R = loc.castAs<loc::MemRegionVal>().getRegion();
   const StoreRef &newStore = Mgr.StoreMgr->BindDefault(getStore(), R, V);
   ProgramStateRef new_state = makeWithStore(newStore);
   return Mgr.getOwningEngine() ? 
@@ -189,7 +189,7 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
 }
 
 ProgramStateRef ProgramState::killBinding(Loc LV) const {
-  assert(!isa<loc::MemRegionVal>(LV) && "Use invalidateRegion instead.");
+  assert(!LV.getAs<loc::MemRegionVal>() && "Use invalidateRegion instead.");
 
   Store OldStore = getStore();
   const StoreRef &newStore =
@@ -253,7 +253,7 @@ SVal ProgramState::getSVal(Loc location, QualType T) const {
         //  not unsigned.
         const llvm::APSInt &NewV = getBasicVals().Convert(T, *Int);
         
-        if (isa<Loc>(V))
+        if (V.getAs<Loc>())
           return loc::ConcreteInt(NewV);
         else
           return nonloc::ConcreteInt(NewV);
@@ -301,28 +301,27 @@ ProgramStateRef ProgramState::assumeInBound(DefinedOrUnknownSVal Idx,
 
   // Adjust the index.
   SVal newIdx = svalBuilder.evalBinOpNN(this, BO_Add,
-                                        cast<NonLoc>(Idx), Min, indexTy);
+                                        Idx.castAs<NonLoc>(), Min, indexTy);
   if (newIdx.isUnknownOrUndef())
     return this;
 
   // Adjust the upper bound.
   SVal newBound =
-    svalBuilder.evalBinOpNN(this, BO_Add, cast<NonLoc>(UpperBound),
+    svalBuilder.evalBinOpNN(this, BO_Add, UpperBound.castAs<NonLoc>(),
                             Min, indexTy);
 
   if (newBound.isUnknownOrUndef())
     return this;
 
   // Build the actual comparison.
-  SVal inBound = svalBuilder.evalBinOpNN(this, BO_LT,
-                                cast<NonLoc>(newIdx), cast<NonLoc>(newBound),
-                                Ctx.IntTy);
+  SVal inBound = svalBuilder.evalBinOpNN(this, BO_LT, newIdx.castAs<NonLoc>(),
+                                         newBound.castAs<NonLoc>(), Ctx.IntTy);
   if (inBound.isUnknownOrUndef())
     return this;
 
   // Finally, let the constraint manager take care of it.
   ConstraintManager &CM = SM.getConstraintManager();
-  return CM.assume(this, cast<DefinedSVal>(inBound), Assumption);
+  return CM.assume(this, inBound.castAs<DefinedSVal>(), Assumption);
 }
 
 ProgramStateRef ProgramStateManager::getInitialState(const LocationContext *InitLoc) {
@@ -509,10 +508,11 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
 }
 
 bool ScanReachableSymbols::scan(SVal val) {
-  if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
+  if (llvm::Optional<loc::MemRegionVal> X = val.getAs<loc::MemRegionVal>())
     return scan(X->getRegion());
 
-  if (nonloc::LazyCompoundVal *X = dyn_cast<nonloc::LazyCompoundVal>(&val)) {
+  if (llvm::Optional<nonloc::LazyCompoundVal> X =
+          val.getAs<nonloc::LazyCompoundVal>()) {
     StoreManager &StoreMgr = state->getStateManager().getStoreManager();
     // FIXME: We don't really want to use getBaseRegion() here because pointer
     // arithmetic doesn't apply, but scanReachableSymbols only accepts base
@@ -523,7 +523,8 @@ bool ScanReachableSymbols::scan(SVal val) {
       return false;
   }
 
-  if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&val))
+  if (llvm::Optional<nonloc::LocAsInteger> X =
+          val.getAs<nonloc::LocAsInteger>())
     return scan(X->getLoc());
 
   if (SymbolRef Sym = val.getAsSymbol())
@@ -532,7 +533,7 @@ bool ScanReachableSymbols::scan(SVal val) {
   if (const SymExpr *Sym = val.getAsSymbolicExpression())
     return scan(Sym);
 
-  if (nonloc::CompoundVal *X = dyn_cast<nonloc::CompoundVal>(&val))
+  if (llvm::Optional<nonloc::CompoundVal> X = val.getAs<nonloc::CompoundVal>())
     return scan(*X);
 
   return true;

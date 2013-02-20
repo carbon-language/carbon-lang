@@ -65,7 +65,7 @@ static const char *getArgumentValueString(const CallExpr *CE,
 
   ProgramStateRef StTrue, StFalse;
   llvm::tie(StTrue, StFalse) =
-    State->assume(cast<DefinedOrUnknownSVal>(AssertionVal));
+    State->assume(AssertionVal.castAs<DefinedOrUnknownSVal>());
 
   if (StTrue) {
     if (StFalse)

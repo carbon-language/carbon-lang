@@ -217,7 +217,7 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
   ProgramStateRef State = C.getState();
   SVal ArgV = State->getSVal(Expr, C.getLocationContext());
 
-  if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
+  if (llvm::Optional<loc::MemRegionVal> X = ArgV.getAs<loc::MemRegionVal>()) {
     StoreManager& SM = C.getStoreManager();
     SymbolRef sym = SM.getBinding(State->getStore(), *X).getAsLocSymbol();
     if (sym)
@@ -421,7 +421,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
   // If the buffer can be null and the return status can be an error,
   // report a bad call to free.
-  if (State->assume(cast<DefinedSVal>(ArgSVal), false) &&
+  if (State->assume(ArgSVal.castAs<DefinedSVal>(), false) &&
       !definitelyDidnotReturnError(AS->Region, State, C.getSValBuilder())) {
     ExplodedNode *N = C.addTransition(State);
     if (!N)

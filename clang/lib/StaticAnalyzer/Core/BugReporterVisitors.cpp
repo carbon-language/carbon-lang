@@ -228,7 +228,7 @@ public:
 
     // If we can't prove the return value is 0, just mark it interesting, and
     // make sure to track it into any further inner functions.
-    if (State->assume(cast<DefinedSVal>(V), true)) {
+    if (State->assume(V.castAs<DefinedSVal>(), true)) {
       BR.markInteresting(V);
       ReturnVisitor::addVisitorIfNecessary(N, RetE, BR);
       return 0;
@@ -241,7 +241,7 @@ public:
     SmallString<64> Msg;
     llvm::raw_svector_ostream Out(Msg);
 
-    if (isa<Loc>(V)) {
+    if (V.getAs<Loc>()) {
       // If we are pruning null-return paths as unlikely error paths, mark the
       // report invalid. We still want to emit a path note, however, in case
       // the report is resurrected as valid later on.
@@ -298,7 +298,7 @@ public:
       CallEventRef<> Call = CallMgr.getCaller(StackFrame, State);
       for (unsigned I = 0, E = Call->getNumArgs(); I != E; ++I) {
         SVal ArgV = Call->getArgSVal(I);
-        if (!isa<Loc>(ArgV))
+        if (!ArgV.getAs<Loc>())
           continue;
 
         const Expr *ArgE = Call->getArgExpr(I);
@@ -306,7 +306,7 @@ public:
           continue;
 
         // Is it possible for this argument to be non-null?
-        if (State->assume(cast<Loc>(ArgV), true))
+        if (State->assume(ArgV.castAs<Loc>(), true))
           continue;
 
         if (bugreporter::trackNullOrUndefValue(N, ArgE, BR, /*IsArg=*/true))
@@ -415,7 +415,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   // If we have an expression that provided the value, try to track where it
   // came from.
   if (InitE) {
-    if (V.isUndef() || isa<loc::ConcreteInt>(V)) {
+    if (V.isUndef() || V.getAs<loc::ConcreteInt>()) {
       if (!IsParam)
         InitE = InitE->IgnoreParenCasts();
       bugreporter::trackNullOrUndefValue(StoreSite, InitE, BR, IsParam);
@@ -462,7 +462,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
       os << "Variable '" << *VR->getDecl() << "' ";
 
-      if (isa<loc::ConcreteInt>(V)) {
+      if (V.getAs<loc::ConcreteInt>()) {
         bool b = false;
         if (R->isBoundable()) {
           if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R)) {
@@ -475,9 +475,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
         if (!b)
           os << action << "a null pointer value";
-      }
-      else if (isa<nonloc::ConcreteInt>(V)) {
-        os << action << cast<nonloc::ConcreteInt>(V).getValue();
+      } else if (llvm::Optional<nonloc::ConcreteInt> CVal =
+                     V.getAs<nonloc::ConcreteInt>()) {
+        os << action << CVal->getValue();
       }
       else if (DS) {
         if (V.isUndef()) {
@@ -499,15 +499,16 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
     os << "Passing ";
 
-    if (isa<loc::ConcreteInt>(V)) {
+    if (V.getAs<loc::ConcreteInt>()) {
       if (Param->getType()->isObjCObjectPointerType())
         os << "nil object reference";
       else
         os << "null pointer value";
     } else if (V.isUndef()) {
       os << "uninitialized value";
-    } else if (isa<nonloc::ConcreteInt>(V)) {
-      os << "the value " << cast<nonloc::ConcreteInt>(V).getValue();
+    } else if (llvm::Optional<nonloc::ConcreteInt> CI =
+                   V.getAs<nonloc::ConcreteInt>()) {
+      os << "the value " << CI->getValue();
     } else {
       os << "value";
     }
@@ -521,7 +522,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   }
 
   if (os.str().empty()) {
-    if (isa<loc::ConcreteInt>(V)) {
+    if (V.getAs<loc::ConcreteInt>()) {
       bool b = false;
       if (R->isBoundable()) {
         if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R)) {
@@ -537,10 +538,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
     else if (V.isUndef()) {
       os << "Uninitialized value stored to ";
-    }
-    else if (isa<nonloc::ConcreteInt>(V)) {
-      os << "The value " << cast<nonloc::ConcreteInt>(V).getValue()
-               << " is assigned to ";
+    } else if (llvm::Optional<nonloc::ConcreteInt> CV =
+                   V.getAs<nonloc::ConcreteInt>()) {
+      os << "The value " << CV->getValue() << " is assigned to ";
     }
     else
       os << "Value assigned to ";
@@ -601,7 +601,7 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
 
-    if (isa<Loc>(Constraint)) {
+    if (Constraint.getAs<Loc>()) {
       os << "Assuming pointer value is ";
       os << (Assumption ? "non-null" : "null");
     }
@@ -693,8 +693,8 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
 
         // If the contents are symbolic, find out when they became null.
         if (V.getAsLocSymbol()) {
-          BugReporterVisitor *ConstraintTracker
-            = new TrackConstraintBRVisitor(cast<DefinedSVal>(V), false);
+          BugReporterVisitor *ConstraintTracker =
+              new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
           report.addVisitor(ConstraintTracker);
         }
 
@@ -713,7 +713,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   // assert(!V.isUnknownOrUndef());
 
   // Is it a symbolic value?
-  if (loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&V)) {
+  if (llvm::Optional<loc::MemRegionVal> L = V.getAs<loc::MemRegionVal>()) {
     // At this point we are dealing with the region's LValue.
     // However, if the rvalue is a symbolic region, we should track it as well.
     SVal RVal = state->getSVal(L->getRegion());
@@ -766,7 +766,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
     return 0;
   ProgramStateRef state = N->getState();
   const SVal &V = state->getSVal(Receiver, N->getLocationContext());
-  const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
+  llvm::Optional<DefinedOrUnknownSVal> DV = V.getAs<DefinedOrUnknownSVal>();
   if (!DV)
     return 0;
   state = state->assume(*DV, true);
@@ -806,7 +806,7 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
         // What did we load?
         SVal V = state->getSVal(S, N->getLocationContext());
 
-        if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)) {
+        if (V.getAs<loc::ConcreteInt>() || V.getAs<nonloc::ConcreteInt>()) {
           // Register a new visitor with the BugReport.
           BR.addVisitor(new FindLastStoreBRVisitor(V, R));
         }

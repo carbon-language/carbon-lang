@@ -103,8 +103,9 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
     // Handle the case where the container has no elements.
     SVal FalseV = svalBuilder.makeTruthVal(0);
     ProgramStateRef noElems = state->BindExpr(S, LCtx, FalseV);
-    
-    if (loc::MemRegionVal *MV = dyn_cast<loc::MemRegionVal>(&elementV))
+
+    if (llvm::Optional<loc::MemRegionVal> MV =
+            elementV.getAs<loc::MemRegionVal>())
       if (const TypedValueRegion *R = 
           dyn_cast<TypedValueRegion>(MV->getRegion())) {
         // FIXME: The proper thing to do is to really iterate over the
@@ -161,8 +162,9 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
       SVal recVal = UpdatedMsg->getReceiverSVal();
       if (!recVal.isUndef()) {
         // Bifurcate the state into nil and non-nil ones.
-        DefinedOrUnknownSVal receiverVal = cast<DefinedOrUnknownSVal>(recVal);
-        
+        DefinedOrUnknownSVal receiverVal =
+            recVal.castAs<DefinedOrUnknownSVal>();
+
         ProgramStateRef notNilState, nilState;
         llvm::tie(notNilState, nilState) = State->assume(receiverVal);
         

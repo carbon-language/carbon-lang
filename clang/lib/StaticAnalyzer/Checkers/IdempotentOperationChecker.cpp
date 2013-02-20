@@ -173,11 +173,11 @@ void IdempotentOperationChecker::checkPreStmt(const BinaryOperator *B,
   case BO_ShrAssign:
   case BO_Assign:
   // Assign statements have one extra level of indirection
-    if (!isa<Loc>(LHSVal)) {
+    if (!LHSVal.getAs<Loc>()) {
       A = Impossible;
       return;
     }
-    LHSVal = state->getSVal(cast<Loc>(LHSVal), LHS->getType());
+    LHSVal = state->getSVal(LHSVal.castAs<Loc>(), LHS->getType());
   }
 
 

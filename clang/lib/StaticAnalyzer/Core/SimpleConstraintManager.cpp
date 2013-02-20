@@ -24,7 +24,7 @@ namespace ento {
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
-  nonloc::SymbolVal *SymVal = dyn_cast<nonloc::SymbolVal>(&X);
+  llvm::Optional<nonloc::SymbolVal> SymVal = X.getAs<nonloc::SymbolVal>();
   if (SymVal && SymVal->isExpression()) {
     const SymExpr *SE = SymVal->getSymbol();
 
@@ -58,10 +58,9 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
 ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                DefinedSVal Cond,
                                                bool Assumption) {
-  if (isa<NonLoc>(Cond))
-    return assume(state, cast<NonLoc>(Cond), Assumption);
-  else
-    return assume(state, cast<Loc>(Cond), Assumption);
+  if (llvm::Optional<NonLoc> NV = Cond.getAs<NonLoc>())
+    return assume(state, *NV, Assumption);
+  return assume(state, Cond.castAs<Loc>(), Assumption);
 }
 
 ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state, Loc cond,
@@ -82,7 +81,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
   case loc::MemRegionKind: {
     // FIXME: Should this go into the storemanager?
 
-    const MemRegion *R = cast<loc::MemRegionVal>(Cond).getRegion();
+    const MemRegion *R = Cond.castAs<loc::MemRegionVal>().getRegion();
     const SubRegion *SubR = dyn_cast<SubRegion>(R);
 
     while (SubR) {
@@ -104,7 +103,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     return Assumption ? state : NULL;
 
   case loc::ConcreteIntKind: {
-    bool b = cast<loc::ConcreteInt>(Cond).getValue() != 0;
+    bool b = Cond.castAs<loc::ConcreteInt>().getValue() != 0;
     bool isFeasible = b ? Assumption : !Assumption;
     return isFeasible ? state : NULL;
   }
@@ -172,7 +171,7 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
     llvm_unreachable("'Assume' not implemented for this NonLoc");
 
   case nonloc::SymbolValKind: {
-    nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
+    nonloc::SymbolVal SV = Cond.castAs<nonloc::SymbolVal>();
     SymbolRef sym = SV.getSymbol();
     assert(sym);
 
@@ -204,13 +203,13 @@ ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
   }
 
   case nonloc::ConcreteIntKind: {
-    bool b = cast<nonloc::ConcreteInt>(Cond).getValue() != 0;
+    bool b = Cond.castAs<nonloc::ConcreteInt>().getValue() != 0;
     bool isFeasible = b ? Assumption : !Assumption;
     return isFeasible ? state : NULL;
   }
 
   case nonloc::LocAsIntegerKind:
-    return assumeAux(state, cast<nonloc::LocAsInteger>(Cond).getLoc(),
+    return assumeAux(state, Cond.castAs<nonloc::LocAsInteger>().getLoc(),
                      Assumption);
   } // end switch
 }

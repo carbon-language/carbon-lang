@@ -64,7 +64,7 @@ void ExprEngine::performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
   SVal V = Call.getArgSVal(0);
 
   // Make sure the value being copied is not unknown.
-  if (const Loc *L = dyn_cast<Loc>(&V))
+  if (llvm::Optional<Loc> L = V.getAs<Loc>())
     V = Pred->getState()->getSVal(*L);
 
   evalBind(Dst, CtorExpr, Pred, ThisVal, V, true);
@@ -287,7 +287,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   if (CNE->isArray()) {
     // FIXME: allocating an array requires simulating the constructors.
     // For now, just return a symbolicated region.
-    const MemRegion *NewReg = cast<loc::MemRegionVal>(symVal).getRegion();
+    const MemRegion *NewReg = symVal.castAs<loc::MemRegionVal>().getRegion();
     QualType ObjTy = CNE->getType()->getAs<PointerType>()->getPointeeType();
     const ElementRegion *EleReg =
       getStoreManager().GetElementZeroRegion(NewReg, ObjTy);
@@ -319,8 +319,8 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
       (void)ObjTy;
       assert(!ObjTy->isRecordType());
       SVal Location = State->getSVal(CNE, LCtx);
-      if (isa<Loc>(Location))
-        State = State->bindLoc(cast<Loc>(Location), State->getSVal(Init, LCtx));
+      if (llvm::Optional<Loc> LV = Location.getAs<Loc>())
+        State = State->bindLoc(*LV, State->getSVal(Init, LCtx));
     }
   }
 

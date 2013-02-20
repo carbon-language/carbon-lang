@@ -121,7 +121,7 @@ static std::pair<const Stmt*,
 static SVal adjustReturnValue(SVal V, QualType ExpectedTy, QualType ActualTy,
                               StoreManager &StoreMgr) {
   // For now, the only adjustments we handle apply only to locations.
-  if (!isa<Loc>(V))
+  if (!V.getAs<Loc>())
     return V;
 
   // If the types already match, don't do any unnecessary work.
@@ -266,7 +266,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
 
       // If the constructed object is a temporary prvalue, get its bindings.
       if (isTemporaryPRValue(CCE, ThisV))
-        ThisV = state->getSVal(cast<Loc>(ThisV));
+        ThisV = state->getSVal(ThisV.castAs<Loc>());
 
       state = state->BindExpr(CCE, callerCtx, ThisV);
     }
@@ -709,7 +709,7 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
 
     // If the constructed object is a temporary prvalue, get its bindings.
     if (isTemporaryPRValue(cast<CXXConstructExpr>(E), ThisV))
-      ThisV = State->getSVal(cast<Loc>(ThisV));
+      ThisV = State->getSVal(ThisV.castAs<Loc>());
 
     return State->BindExpr(E, LCtx, ThisV);
   }

@@ -1044,7 +1044,8 @@ RegionRawOffset ElementRegion::getAsArrayOffset() const {
 
     // FIXME: generalize to symbolic offsets.
     SVal index = ER->getIndex();
-    if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&index)) {
+    if (llvm::Optional<nonloc::ConcreteInt> CI =
+            index.getAs<nonloc::ConcreteInt>()) {
       // Update the offset.
       int64_t i = CI->getValue().getSExtValue();
 
@@ -1171,7 +1172,8 @@ RegionOffset MemRegion::getAsOffset() const {
       }
 
       SVal Index = ER->getIndex();
-      if (const nonloc::ConcreteInt *CI=dyn_cast<nonloc::ConcreteInt>(&Index)) {
+      if (llvm::Optional<nonloc::ConcreteInt> CI =
+              Index.getAs<nonloc::ConcreteInt>()) {
         // Don't bother calculating precise offsets if we already have a
         // symbolic offset somewhere in the chain. 
         if (SymbolicOffsetBase)

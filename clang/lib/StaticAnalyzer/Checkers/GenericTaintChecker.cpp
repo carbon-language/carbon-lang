@@ -431,7 +431,7 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
   if (AddrVal.isUnknownOrUndef())
     return 0;
 
-  Loc *AddrLoc = dyn_cast<Loc>(&AddrVal);
+  llvm::Optional<Loc> AddrLoc = AddrVal.getAs<Loc>();
   if (!AddrLoc)
     return 0;
 

@@ -69,7 +69,7 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   // Get the value of the right-hand side.  We only care about values
   // that are defined (UnknownVals and UndefinedVals are handled by other
   // checkers).
-  const DefinedSVal *DV = dyn_cast<DefinedSVal>(&val);
+  llvm::Optional<DefinedSVal> DV = val.getAs<DefinedSVal>();
   if (!DV)
     return;
     
@@ -85,10 +85,10 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   SVal greaterThanOrEqualToZeroVal =
     svalBuilder.evalBinOp(state, BO_GE, *DV, zeroVal,
                           svalBuilder.getConditionType());
-  
-  DefinedSVal *greaterThanEqualToZero =
-    dyn_cast<DefinedSVal>(&greaterThanOrEqualToZeroVal);
-  
+
+  llvm::Optional<DefinedSVal> greaterThanEqualToZero =
+      greaterThanOrEqualToZeroVal.getAs<DefinedSVal>();
+
   if (!greaterThanEqualToZero) {
     // The SValBuilder cannot construct a valid SVal for this condition.
     // This means we cannot properly reason about it.    
@@ -121,10 +121,10 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   SVal lessThanEqToOneVal =
     svalBuilder.evalBinOp(state, BO_LE, *DV, OneVal,
                           svalBuilder.getConditionType());
-  
-  DefinedSVal *lessThanEqToOne =
-    dyn_cast<DefinedSVal>(&lessThanEqToOneVal);
-  
+
+  llvm::Optional<DefinedSVal> lessThanEqToOne =
+      lessThanEqToOneVal.getAs<DefinedSVal>();
+
   if (!lessThanEqToOne) {
     // The SValBuilder cannot construct a valid SVal for this condition.
     // This means we cannot properly reason about it.    

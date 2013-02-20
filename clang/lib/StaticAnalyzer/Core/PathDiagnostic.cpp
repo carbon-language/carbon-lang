@@ -1029,7 +1029,7 @@ std::string StackHintGeneratorForSymbol::getMessage(const ExplodedNode *N){
     }
 
     // Check if the parameter is a pointer to the symbol.
-    if (const loc::MemRegionVal *Reg = dyn_cast<loc::MemRegionVal>(&SV)) {
+    if (llvm::Optional<loc::MemRegionVal> Reg = SV.getAs<loc::MemRegionVal>()) {
       SVal PSV = State->getSVal(Reg->getRegion());
       SymbolRef AS = PSV.getAsLocSymbol();
       if (AS == Sym) {

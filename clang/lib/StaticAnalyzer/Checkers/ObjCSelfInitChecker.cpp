@@ -255,7 +255,7 @@ void ObjCSelfInitChecker::checkPreCall(const CallEvent &CE,
   for (unsigned i = 0; i < NumArgs; ++i) {
     SVal argV = CE.getArgSVal(i);
     if (isSelfVar(argV, C)) {
-      unsigned selfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
+      unsigned selfFlags = getSelfFlags(state->getSVal(argV.castAs<Loc>()), C);
       C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
       return;
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
@@ -286,7 +286,7 @@ void ObjCSelfInitChecker::checkPostCall(const CallEvent &CE,
       // If the address of 'self' is being passed to the call, assume that the
       // 'self' after the call will have the same flags.
       // EX: log(&self)
-      addSelfFlag(state, state->getSVal(cast<Loc>(argV)), prevFlags, C);
+      addSelfFlag(state, state->getSVal(argV.castAs<Loc>()), prevFlags, C);
       return;
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
       // If 'self' is passed to the call by value, assume that the function
@@ -312,7 +312,8 @@ void ObjCSelfInitChecker::checkLocation(SVal location, bool isLoad,
   // value is the object that 'self' points to.
   ProgramStateRef state = C.getState();
   if (isSelfVar(location, C))
-    addSelfFlag(state, state->getSVal(cast<Loc>(location)), SelfFlag_Self, C);
+    addSelfFlag(state, state->getSVal(location.castAs<Loc>()), SelfFlag_Self,
+                C);
 }
 
 
@@ -417,10 +418,10 @@ static bool isSelfVar(SVal location, CheckerContext &C) {
   AnalysisDeclContext *analCtx = C.getCurrentAnalysisDeclContext(); 
   if (!analCtx->getSelfDecl())
     return false;
-  if (!isa<loc::MemRegionVal>(location))
+  if (!location.getAs<loc::MemRegionVal>())
     return false;
 
-  loc::MemRegionVal MRV = cast<loc::MemRegionVal>(location);
+  loc::MemRegionVal MRV = location.castAs<loc::MemRegionVal>();
   if (const DeclRegion *DR = dyn_cast<DeclRegion>(MRV.stripCasts()))
     return (DR->getDecl() == analCtx->getSelfDecl());
 

@@ -98,7 +98,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   if (X.isUnknownOrUndef())
     return;
   
-  DefinedSVal retVal = cast<DefinedSVal>(X);
+  DefinedSVal retVal = X.castAs<DefinedSVal>();
 
   if (state->contains<LockSet>(lockR)) {
     if (!BT_doublelock)

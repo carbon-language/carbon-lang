@@ -156,9 +156,10 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
 
     // If we are passing a location wrapped as an integer, unwrap it and
     // invalidate the values referred by the location.
-    if (nonloc::LocAsInteger *Wrapped = dyn_cast<nonloc::LocAsInteger>(&V))
+    if (llvm::Optional<nonloc::LocAsInteger> Wrapped =
+            V.getAs<nonloc::LocAsInteger>())
       V = Wrapped->getLoc();
-    else if (!isa<Loc>(V))
+    else if (!V.getAs<Loc>())
       continue;
 
     if (const MemRegion *R = V.getAsRegion()) {
@@ -419,7 +420,7 @@ SVal CXXInstanceCall::getCXXThisVal() const {
     return UnknownVal();
 
   SVal ThisVal = getSVal(Base);
-  assert(ThisVal.isUnknownOrUndef() || isa<Loc>(ThisVal));
+  assert(ThisVal.isUnknownOrUndef() || ThisVal.getAs<Loc>());
   return ThisVal;
 }
 

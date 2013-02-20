@@ -110,7 +110,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   }
 
   // Check if the size is zero.
-  DefinedSVal sizeD = cast<DefinedSVal>(sizeV);
+  DefinedSVal sizeD = sizeV.castAs<DefinedSVal>();
 
   ProgramStateRef stateNotZero, stateZero;
   llvm::tie(stateNotZero, stateZero) = state->assume(sizeD);
@@ -130,22 +130,22 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   // Convert the array length to size_t.
   SValBuilder &svalBuilder = C.getSValBuilder();
   QualType SizeTy = Ctx.getSizeType();
-  NonLoc ArrayLength = cast<NonLoc>(svalBuilder.evalCast(sizeD, SizeTy, 
-                                                         SE->getType()));
+  NonLoc ArrayLength =
+      svalBuilder.evalCast(sizeD, SizeTy, SE->getType()).castAs<NonLoc>();
 
   // Get the element size.
   CharUnits EleSize = Ctx.getTypeSizeInChars(VLA->getElementType());
   SVal EleSizeVal = svalBuilder.makeIntVal(EleSize.getQuantity(), SizeTy);
 
   // Multiply the array length by the element size.
-  SVal ArraySizeVal = svalBuilder.evalBinOpNN(state, BO_Mul, ArrayLength,
-                                              cast<NonLoc>(EleSizeVal), SizeTy);
+  SVal ArraySizeVal = svalBuilder.evalBinOpNN(
+      state, BO_Mul, ArrayLength, EleSizeVal.castAs<NonLoc>(), SizeTy);
 
   // Finally, assume that the array's extent matches the given size.
   const LocationContext *LC = C.getLocationContext();
   DefinedOrUnknownSVal Extent =
     state->getRegion(VD, LC)->getExtent(svalBuilder);
-  DefinedOrUnknownSVal ArraySize = cast<DefinedOrUnknownSVal>(ArraySizeVal);
+  DefinedOrUnknownSVal ArraySize = ArraySizeVal.castAs<DefinedOrUnknownSVal>();
   DefinedOrUnknownSVal sizeIsKnown =
     svalBuilder.evalEQ(state, Extent, ArraySize);
   state = state->assume(sizeIsKnown, true);

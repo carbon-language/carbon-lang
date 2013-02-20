@@ -72,7 +72,8 @@ void ObjCContainersChecker::addSizeInfo(const Expr *Array, const Expr *Size,
   if (!ArraySym)
     return;
 
-  C.addTransition(State->set<ArraySizeMap>(ArraySym, cast<DefinedSVal>(SizeV)));
+  C.addTransition(
+      State->set<ArraySizeMap>(ArraySym, SizeV.castAs<DefinedSVal>()));
   return;
 }
 
@@ -125,7 +126,7 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
     SVal IdxVal = State->getSVal(IdxExpr, C.getLocationContext());
     if (IdxVal.isUnknownOrUndef())
       return;
-    DefinedSVal Idx = cast<DefinedSVal>(IdxVal);
+    DefinedSVal Idx = IdxVal.castAs<DefinedSVal>();
     
     // Now, check if 'Idx in [0, Size-1]'.
     const QualType T = IdxExpr->getType();

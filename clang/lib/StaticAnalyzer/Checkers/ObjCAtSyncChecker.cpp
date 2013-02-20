@@ -42,7 +42,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
   SVal V = state->getSVal(Ex, C.getLocationContext());
 
   // Uninitialized value used for the mutex?
-  if (isa<UndefinedVal>(V)) {
+  if (V.getAs<UndefinedVal>()) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_undef)
         BT_undef.reset(new BuiltinBug("Uninitialized value used as mutex "
@@ -60,7 +60,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
 
   // Check for null mutexes.
   ProgramStateRef notNullState, nullState;
-  llvm::tie(notNullState, nullState) = state->assume(cast<DefinedSVal>(V));
+  llvm::tie(notNullState, nullState) = state->assume(V.castAs<DefinedSVal>());
 
   if (nullState) {
     if (!notNullState) {

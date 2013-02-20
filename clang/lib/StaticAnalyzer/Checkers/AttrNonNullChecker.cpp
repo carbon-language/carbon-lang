@@ -51,13 +51,13 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
       continue;
 
     SVal V = Call.getArgSVal(idx);
-    DefinedSVal *DV = dyn_cast<DefinedSVal>(&V);
+    llvm::Optional<DefinedSVal> DV = V.getAs<DefinedSVal>();
 
     // If the value is unknown or undefined, we can't perform this check.
     if (!DV)
       continue;
 
-    if (!isa<Loc>(*DV)) {
+    if (!DV->getAs<Loc>()) {
       // If the argument is a union type, we want to handle a potential
       // transparent_union GCC extension.
       const Expr *ArgE = Call.getArgExpr(idx);
@@ -69,11 +69,12 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
       if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>())
         continue;
 
-      if (nonloc::CompoundVal *CSV = dyn_cast<nonloc::CompoundVal>(DV)) {
+      if (llvm::Optional<nonloc::CompoundVal> CSV =
+              DV->getAs<nonloc::CompoundVal>()) {
         nonloc::CompoundVal::iterator CSV_I = CSV->begin();
         assert(CSV_I != CSV->end());
         V = *CSV_I;
-        DV = dyn_cast<DefinedSVal>(&V);
+        DV = V.getAs<DefinedSVal>();
         assert(++CSV_I == CSV->end());
         if (!DV)
           continue;        

@@ -84,7 +84,7 @@ static FoundationClass findKnownClass(const ObjCInterfaceDecl *ID) {
 }
 
 static inline bool isNil(SVal X) {
-  return isa<loc::ConcreteInt>(X);
+  return X.getAs<loc::ConcreteInt>();
 }
 
 //===----------------------------------------------------------------------===//
@@ -290,7 +290,8 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 
   // FIXME: We really should allow ranges of valid theType values, and
   //   bifurcate the state appropriately.
-  nonloc::ConcreteInt* V = dyn_cast<nonloc::ConcreteInt>(&TheTypeVal);
+  llvm::Optional<nonloc::ConcreteInt> V =
+      TheTypeVal.getAs<nonloc::ConcreteInt>();
   if (!V)
     return;
 
@@ -308,7 +309,8 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
-  loc::MemRegionVal* LV = dyn_cast<loc::MemRegionVal>(&TheValueExpr);
+  llvm::Optional<loc::MemRegionVal> LV =
+      TheValueExpr.getAs<loc::MemRegionVal>();
   if (!LV)
     return;
 
@@ -409,13 +411,14 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   // Get the argument's value.
   const Expr *Arg = CE->getArg(0);
   SVal ArgVal = state->getSVal(Arg, C.getLocationContext());
-  DefinedSVal *DefArgVal = dyn_cast<DefinedSVal>(&ArgVal);
+  llvm::Optional<DefinedSVal> DefArgVal = ArgVal.getAs<DefinedSVal>();
   if (!DefArgVal)
     return;
 
   // Get a NULL value.
   SValBuilder &svalBuilder = C.getSValBuilder();
-  DefinedSVal zero = cast<DefinedSVal>(svalBuilder.makeZeroVal(Arg->getType()));
+  DefinedSVal zero =
+      svalBuilder.makeZeroVal(Arg->getType()).castAs<DefinedSVal>();
 
   // Make an expression asserting that they're equal.
   DefinedOrUnknownSVal ArgIsNull = svalBuilder.evalEQ(state, zero, *DefArgVal);
@@ -619,7 +622,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
       continue;
 
     // Ignore pointer constants.
-    if (isa<loc::ConcreteInt>(msg.getArgSVal(I)))
+    if (msg.getArgSVal(I).getAs<loc::ConcreteInt>())
       continue;
     
     // Ignore pointer types annotated with 'NSObject' attribute.
@@ -716,12 +719,12 @@ void ObjCLoopChecker::checkPostStmt(const ObjCForCollectionStmt *FCS,
     ElementVar = State->getSVal(Element, C.getLocationContext());
   }
 
-  if (!isa<Loc>(ElementVar))
+  if (!ElementVar.getAs<Loc>())
     return;
 
   // Go ahead and assume the value is non-nil.
-  SVal Val = State->getSVal(cast<Loc>(ElementVar));
-  State = State->assume(cast<DefinedOrUnknownSVal>(Val), true);
+  SVal Val = State->getSVal(ElementVar.castAs<Loc>());
+  State = State->assume(Val.castAs<DefinedOrUnknownSVal>(), true);
   C.addTransition(State);
 }
 
@@ -745,7 +748,8 @@ static ProgramStateRef assumeExprIsNonNull(const Expr *NonNullExpr,
                                            ProgramStateRef State,
                                            CheckerContext &C) {
   SVal Val = State->getSVal(NonNullExpr, C.getLocationContext());
-  if (DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&Val))
+  if (llvm::Optional<DefinedOrUnknownSVal> DV =
+          Val.getAs<DefinedOrUnknownSVal>())
     return State->assume(*DV, true);
   return State;
 }

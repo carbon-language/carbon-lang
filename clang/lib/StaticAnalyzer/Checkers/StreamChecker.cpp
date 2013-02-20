@@ -210,9 +210,8 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
-  DefinedSVal RetVal =
-    cast<DefinedSVal>(svalBuilder.conjureSymbolVal(0, CE, LCtx,
-                                                   C.blockCount()));
+  DefinedSVal RetVal = svalBuilder.conjureSymbolVal(0, CE, LCtx, C.blockCount())
+      .castAs<DefinedSVal>();
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
   
   ConstraintManager &CM = C.getConstraintManager();
@@ -260,7 +259,7 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
     return;
   // Check the legality of the 'whence' argument of 'fseek'.
   SVal Whence = state->getSVal(CE->getArg(2), C.getLocationContext());
-  const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Whence);
+  llvm::Optional<nonloc::ConcreteInt> CI = Whence.getAs<nonloc::ConcreteInt>();
 
   if (!CI)
     return;
@@ -338,7 +337,7 @@ void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) const {
 
 ProgramStateRef StreamChecker::CheckNullStream(SVal SV, ProgramStateRef state,
                                     CheckerContext &C) const {
-  const DefinedSVal *DV = dyn_cast<DefinedSVal>(&SV);
+  llvm::Optional<DefinedSVal> DV = SV.getAs<DefinedSVal>();
   if (!DV)
     return 0;
 

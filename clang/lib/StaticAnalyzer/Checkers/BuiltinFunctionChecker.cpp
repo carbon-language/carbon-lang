@@ -61,7 +61,7 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     // SVal of the argument directly. If we save the extent in bits, we
     // cannot represent values like symbol*8.
     DefinedOrUnknownSVal Size =
-      cast<DefinedOrUnknownSVal>(state->getSVal(*(CE->arg_begin()), LCtx));
+        state->getSVal(*(CE->arg_begin()), LCtx).castAs<DefinedOrUnknownSVal>();
 
     SValBuilder& svalBuilder = C.getSValBuilder();
     DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);

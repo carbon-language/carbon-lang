@@ -67,12 +67,12 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         // TODO: This can be removed after we enable history tracking with
         // SymSymExpr.
         unsigned Count = currBldrCtx->blockCount();
-        if (isa<Loc>(LeftV) &&
+        if (LeftV.getAs<Loc>() &&
             RHS->getType()->isIntegerType() && RightV.isUnknown()) {
           RightV = svalBuilder.conjureSymbolVal(RHS, LCtx, RHS->getType(),
                                                 Count);
         }
-        if (isa<Loc>(RightV) &&
+        if (RightV.getAs<Loc>() &&
             LHS->getType()->isIntegerType() && LeftV.isUnknown()) {
           LeftV = svalBuilder.conjureSymbolVal(LHS, LCtx, LHS->getType(),
                                                Count);
@@ -480,10 +480,13 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       } else {
         // We bound the temp obj region to the CXXConstructExpr. Now recover
         // the lazy compound value when the variable is not a reference.
-        if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() && 
-            !VD->getType()->isReferenceType() && isa<loc::MemRegionVal>(InitVal)){
-          InitVal = state->getSVal(cast<loc::MemRegionVal>(InitVal).getRegion());
-          assert(isa<nonloc::LazyCompoundVal>(InitVal));
+        if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() &&
+            !VD->getType()->isReferenceType()) {
+          if (llvm::Optional<loc::MemRegionVal> M =
+                  InitVal.getAs<loc::MemRegionVal>()) {
+            InitVal = state->getSVal(M->getRegion());
+            assert(InitVal.getAs<nonloc::LazyCompoundVal>());
+          }
         }
         
         // Recover some path-sensitivity if a scalar value evaluated to
@@ -558,7 +561,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     if (RHSVal.isUndef()) {
       X = RHSVal;
     } else {
-      DefinedOrUnknownSVal DefinedRHS = cast<DefinedOrUnknownSVal>(RHSVal);
+      DefinedOrUnknownSVal DefinedRHS = RHSVal.castAs<DefinedOrUnknownSVal>();
       ProgramStateRef StTrue, StFalse;
       llvm::tie(StTrue, StFalse) = N->getState()->assume(DefinedRHS);
       if (StTrue) {
@@ -810,11 +813,11 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           llvm_unreachable("Invalid Opcode.");
         case UO_Not:
           // FIXME: Do we need to handle promotions?
-          state = state->BindExpr(U, LCtx, evalComplement(cast<NonLoc>(V)));
+          state = state->BindExpr(U, LCtx, evalComplement(V.castAs<NonLoc>()));
           break;
         case UO_Minus:
           // FIXME: Do we need to handle promotions?
-          state = state->BindExpr(U, LCtx, evalMinus(cast<NonLoc>(V)));
+          state = state->BindExpr(U, LCtx, evalMinus(V.castAs<NonLoc>()));
           break;
         case UO_LNot:
           // C99 6.5.3.3: "The expression !E is equivalent to (0==E)."
@@ -822,17 +825,16 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           //  Note: technically we do "E == 0", but this is the same in the
           //    transfer functions as "0 == E".
           SVal Result;          
-          if (isa<Loc>(V)) {
+          if (llvm::Optional<Loc> LV = V.getAs<Loc>()) {
             Loc X = svalBuilder.makeNull();
-            Result = evalBinOp(state, BO_EQ, cast<Loc>(V), X,
-                               U->getType());
+            Result = evalBinOp(state, BO_EQ, *LV, X, U->getType());
           }
           else if (Ex->getType()->isFloatingType()) {
             // FIXME: handle floating point types.
             Result = UnknownVal();
           } else {
             nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
-            Result = evalBinOp(state, BO_EQ, cast<NonLoc>(V), X,
+            Result = evalBinOp(state, BO_EQ, V.castAs<NonLoc>(), X,
                                U->getType());
           }
           
@@ -874,7 +876,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
       Bldr.generateNode(U, *I, state->BindExpr(U, LCtx, V2_untested));
       continue;
     }
-    DefinedSVal V2 = cast<DefinedSVal>(V2_untested);
+    DefinedSVal V2 = V2_untested.castAs<DefinedSVal>();
     
     // Handle all other values.
     BinaryOperator::Opcode Op = U->isIncrementOp() ? BO_Add : BO_Sub;

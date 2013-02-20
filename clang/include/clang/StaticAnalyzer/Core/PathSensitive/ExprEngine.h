@@ -429,11 +429,11 @@ public:
     geteagerlyAssumeBinOpBifurcationTags();
 
   SVal evalMinus(SVal X) {
-    return X.isValid() ? svalBuilder.evalMinus(cast<NonLoc>(X)) : X;
+    return X.isValid() ? svalBuilder.evalMinus(X.castAs<NonLoc>()) : X;
   }
 
   SVal evalComplement(SVal X) {
-    return X.isValid() ? svalBuilder.evalComplement(cast<NonLoc>(X)) : X;
+    return X.isValid() ? svalBuilder.evalComplement(X.castAs<NonLoc>()) : X;
   }
 
 public:
@@ -445,7 +445,8 @@ public:
 
   SVal evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
                  NonLoc L, SVal R, QualType T) {
-    return R.isValid() ? svalBuilder.evalBinOpNN(state,op,L, cast<NonLoc>(R), T) : R;
+    return R.isValid() ? svalBuilder.evalBinOpNN(state, op, L,
+                                                 R.castAs<NonLoc>(), T) : R;
   }
 
   SVal evalBinOp(ProgramStateRef ST, BinaryOperator::Opcode Op,

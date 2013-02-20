@@ -53,7 +53,7 @@ public:
   RegionRawOffsetV2(const SubRegion* base, SVal offset)
     : baseRegion(base), byteOffset(offset) {}
 
-  NonLoc getByteOffset() const { return cast<NonLoc>(byteOffset); }
+  NonLoc getByteOffset() const { return byteOffset.castAs<NonLoc>(); }
   const SubRegion *getRegion() const { return baseRegion; }
   
   static RegionRawOffsetV2 computeOffset(ProgramStateRef state,
@@ -110,13 +110,12 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
 
   SVal extentBegin = computeExtentBegin(svalBuilder, rawOffset.getRegion());
   
-  if (isa<NonLoc>(extentBegin)) {
-    SVal lowerBound
-      = svalBuilder.evalBinOpNN(state, BO_LT, rawOffset.getByteOffset(),
-                                cast<NonLoc>(extentBegin),
+  if (llvm::Optional<NonLoc> NV = extentBegin.getAs<NonLoc>()) {
+    SVal lowerBound =
+        svalBuilder.evalBinOpNN(state, BO_LT, rawOffset.getByteOffset(), *NV,
                                 svalBuilder.getConditionType());
 
-    NonLoc *lowerBoundToCheck = dyn_cast<NonLoc>(&lowerBound);
+    llvm::Optional<NonLoc> lowerBoundToCheck = lowerBound.getAs<NonLoc>();
     if (!lowerBoundToCheck)
       return;
     
@@ -140,15 +139,15 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
     // we are doing a load/store after the last valid offset.
     DefinedOrUnknownSVal extentVal =
       rawOffset.getRegion()->getExtent(svalBuilder);
-    if (!isa<NonLoc>(extentVal))
+    if (!extentVal.getAs<NonLoc>())
       break;
 
     SVal upperbound
       = svalBuilder.evalBinOpNN(state, BO_GE, rawOffset.getByteOffset(),
-                                cast<NonLoc>(extentVal),
+                                extentVal.castAs<NonLoc>(),
                                 svalBuilder.getConditionType());
   
-    NonLoc *upperboundToCheck = dyn_cast<NonLoc>(&upperbound);
+    llvm::Optional<NonLoc> upperboundToCheck = upperbound.getAs<NonLoc>();
     if (!upperboundToCheck)
       break;
   
@@ -235,7 +234,7 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
 // is unknown or undefined, we lazily substitute '0'.  Otherwise,
 // return 'val'.
 static inline SVal getValue(SVal val, SValBuilder &svalBuilder) {
-  return isa<UndefinedVal>(val) ? svalBuilder.makeArrayIndex(0) : val;
+  return val.getAs<UndefinedVal>() ? svalBuilder.makeArrayIndex(0) : val;
 }
 
 // Scale a base value by a scaling factor, and return the scaled
@@ -256,9 +255,9 @@ static SVal addValue(ProgramStateRef state, SVal x, SVal y,
   // only care about computing offsets.
   if (x.isUnknownOrUndef() || y.isUnknownOrUndef())
     return UnknownVal();
-  
-  return svalBuilder.evalBinOpNN(state, BO_Add,                                 
-                                 cast<NonLoc>(x), cast<NonLoc>(y),
+
+  return svalBuilder.evalBinOpNN(state, BO_Add, x.castAs<NonLoc>(),
+                                 y.castAs<NonLoc>(),
                                  svalBuilder.getArrayIndexType());
 }
 
@@ -284,7 +283,7 @@ RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(ProgramStateRef state,
       case MemRegion::ElementRegionKind: {
         const ElementRegion *elemReg = cast<ElementRegion>(region);
         SVal index = elemReg->getIndex();
-        if (!isa<NonLoc>(index))
+        if (!index.getAs<NonLoc>())
           return RegionRawOffsetV2();
         QualType elemType = elemReg->getElementType();
         // If the element is an incomplete type, go no further.
@@ -296,7 +295,7 @@ RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(ProgramStateRef state,
         offset = addValue(state,
                           getValue(offset, svalBuilder),
                           scaleValue(state,
-                          cast<NonLoc>(index),
+                          index.castAs<NonLoc>(),
                           astContext.getTypeSizeInChars(elemType),
                           svalBuilder),
                           svalBuilder);

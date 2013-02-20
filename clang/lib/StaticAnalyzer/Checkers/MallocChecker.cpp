@@ -555,12 +555,12 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
   unsigned Count = C.blockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
   const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
-  DefinedSVal RetVal =
-    cast<DefinedSVal>(svalBuilder.getConjuredHeapSymbolVal(CE, LCtx, Count));
+  DefinedSVal RetVal = svalBuilder.getConjuredHeapSymbolVal(CE, LCtx, Count)
+      .castAs<DefinedSVal>();
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
 
   // We expect the malloc functions to return a pointer.
-  if (!isa<Loc>(RetVal))
+  if (!RetVal.getAs<Loc>())
     return 0;
 
   // Fill the region with the initialization value.
@@ -571,12 +571,12 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
       dyn_cast_or_null<SymbolicRegion>(RetVal.getAsRegion());
   if (!R)
     return 0;
-  if (isa<DefinedOrUnknownSVal>(Size)) {
+  if (llvm::Optional<DefinedOrUnknownSVal> DefinedSize =
+          Size.getAs<DefinedOrUnknownSVal>()) {
     SValBuilder &svalBuilder = C.getSValBuilder();
     DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);
-    DefinedOrUnknownSVal DefinedSize = cast<DefinedOrUnknownSVal>(Size);
     DefinedOrUnknownSVal extentMatchesSize =
-        svalBuilder.evalEQ(state, Extent, DefinedSize);
+        svalBuilder.evalEQ(state, Extent, *DefinedSize);
 
     state = state->assume(extentMatchesSize, true);
     assert(state);
@@ -592,7 +592,7 @@ ProgramStateRef MallocChecker::MallocUpdateRefState(CheckerContext &C,
   SVal retVal = state->getSVal(CE, C.getLocationContext());
 
   // We expect the malloc functions to return a pointer.
-  if (!isa<Loc>(retVal))
+  if (!retVal.getAs<Loc>())
     return 0;
 
   SymbolRef Sym = retVal.getAsLocSymbol();
@@ -661,12 +661,12 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                                           bool ReturnsNullOnFailure) const {
 
   SVal ArgVal = State->getSVal(ArgExpr, C.getLocationContext());
-  if (!isa<DefinedOrUnknownSVal>(ArgVal))
+  if (!ArgVal.getAs<DefinedOrUnknownSVal>())
     return 0;
-  DefinedOrUnknownSVal location = cast<DefinedOrUnknownSVal>(ArgVal);
+  DefinedOrUnknownSVal location = ArgVal.castAs<DefinedOrUnknownSVal>();
 
   // Check for null dereferences.
-  if (!isa<Loc>(location))
+  if (!location.getAs<Loc>())
     return 0;
 
   // The explicit NULL case, no operation is performed.
@@ -782,11 +782,13 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 }
 
 bool MallocChecker::SummarizeValue(raw_ostream &os, SVal V) {
-  if (nonloc::ConcreteInt *IntVal = dyn_cast<nonloc::ConcreteInt>(&V))
+  if (llvm::Optional<nonloc::ConcreteInt> IntVal =
+          V.getAs<nonloc::ConcreteInt>())
     os << "an integer (" << IntVal->getValue() << ")";
-  else if (loc::ConcreteInt *ConstAddr = dyn_cast<loc::ConcreteInt>(&V))
+  else if (llvm::Optional<loc::ConcreteInt> ConstAddr =
+               V.getAs<loc::ConcreteInt>())
     os << "a constant address (" << ConstAddr->getValue() << ")";
-  else if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&V))
+  else if (llvm::Optional<loc::GotoLabel> Label = V.getAs<loc::GotoLabel>())
     os << "the address of the label '" << Label->getLabel()->getName() << "'";
   else
     return false;
@@ -952,9 +954,9 @@ ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
   const Expr *arg0Expr = CE->getArg(0);
   const LocationContext *LCtx = C.getLocationContext();
   SVal Arg0Val = state->getSVal(arg0Expr, LCtx);
-  if (!isa<DefinedOrUnknownSVal>(Arg0Val))
+  if (!Arg0Val.getAs<DefinedOrUnknownSVal>())
     return 0;
-  DefinedOrUnknownSVal arg0Val = cast<DefinedOrUnknownSVal>(Arg0Val);
+  DefinedOrUnknownSVal arg0Val = Arg0Val.castAs<DefinedOrUnknownSVal>();
 
   SValBuilder &svalBuilder = C.getSValBuilder();
 
@@ -968,9 +970,9 @@ ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
 
   // Get the value of the size argument.
   SVal Arg1ValG = state->getSVal(Arg1, LCtx);
-  if (!isa<DefinedOrUnknownSVal>(Arg1ValG))
+  if (!Arg1ValG.getAs<DefinedOrUnknownSVal>())
     return 0;
-  DefinedOrUnknownSVal Arg1Val = cast<DefinedOrUnknownSVal>(Arg1ValG);
+  DefinedOrUnknownSVal Arg1Val = Arg1ValG.castAs<DefinedOrUnknownSVal>();
 
   // Compare the size argument to 0.
   DefinedOrUnknownSVal SizeZero =
