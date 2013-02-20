@@ -83,6 +83,7 @@ void BumpPtrAllocator::Reset() {
   CurSlab->NextPtr = 0;
   CurPtr = (char*)(CurSlab + 1);
   End = ((char*)CurSlab) + CurSlab->Size;
+  BytesAllocated = 0;
 }
 
 /// Allocate - Allocate space at the specified alignment.
