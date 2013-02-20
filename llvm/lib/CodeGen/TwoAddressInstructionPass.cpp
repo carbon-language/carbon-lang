@@ -1150,15 +1150,8 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
             LV->addVirtualRegisterKilled(Reg, NewMIs[1]);
           }
 
-          MachineBasicBlock::iterator Begin;
-          MachineBasicBlock::iterator End;
           SmallVector<unsigned, 4> OrigRegs;
           if (LIS) {
-            Begin = MachineBasicBlock::iterator(NewMIs[0]);
-            if (Begin != MBB->begin())
-              --Begin;
-            End = llvm::next(MachineBasicBlock::iterator(MI));
-
             for (MachineInstr::const_mop_iterator MOI = MI.operands_begin(),
                  MOE = MI.operands_end(); MOI != MOE; ++MOI) {
               if (MOI->isReg())
@@ -1169,8 +1162,11 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
           MI.eraseFromParent();
 
           // Update LiveIntervals.
-          if (LIS)
+          if (LIS) {
+            MachineBasicBlock::iterator Begin(NewMIs[0]);
+            MachineBasicBlock::iterator End(NewMIs[1]);
             LIS->repairIntervalsInRange(MBB, Begin, End, OrigRegs);
+          }
 
           mi = NewMIs[1];
           if (TransformSuccess)
@@ -1576,9 +1572,6 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
   }
 
   // Udpate LiveIntervals.
-  if (LIS) {
-    if (MBBI != MBB->begin())
-      --MBBI;
+  if (LIS)
     LIS->repairIntervalsInRange(MBB, MBBI, EndMBBI, OrigRegs);
-  }
 }

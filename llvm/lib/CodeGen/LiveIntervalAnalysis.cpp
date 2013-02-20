@@ -1038,6 +1038,13 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator Begin,
                                       MachineBasicBlock::iterator End,
                                       ArrayRef<unsigned> OrigRegs) {
+  // Find anchor points, which are at the beginning/end of blocks or at
+  // instructions that already have indexes.
+  while (Begin != MBB->begin() && !Indexes->hasIndex(Begin))
+    --Begin;
+  while (End != MBB->end() && !Indexes->hasIndex(End))
+    ++End;
+
   SlotIndex endIdx;
   if (End == MBB->end())
     endIdx = getMBBEndIdx(MBB).getPrevSlot();
