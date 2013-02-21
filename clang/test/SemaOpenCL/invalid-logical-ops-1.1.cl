@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -cl-std=CL1.1
+// RUN: %clang_cc1 %s -verify -cl-std=CL1.1 -triple x86_64-unknown-linux-gnu
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 typedef __attribute__((ext_vector_type(4))) float float4;

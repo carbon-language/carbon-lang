@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - -cl-std=CL1.2 -O1 | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -cl-std=CL1.2 -O1 -triple x86_64-unknown-linux-gnu | FileCheck %s
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
