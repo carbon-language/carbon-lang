@@ -46,12 +46,41 @@ public:
   Optional(T &&y) : hasVal(true) {
     new (storage.buffer) T(std::forward<T>(y));
   }
+  Optional(Optional<T> &&O) : hasVal(O) {
+    if (O) {
+      new (storage.buffer) T(std::move(*O));
+      O.reset();
+    }
+  }
+  Optional &operator=(T &&y) {
+    if (hasVal)
+      **this = std::move(y);
+    else {
+      new (storage.buffer) T(std::move(y));
+      hasVal = true;
+    }
+    return *this;
+  }
+  Optional &operator=(Optional &&O) {
+    if (!O)
+      reset();
+    else {
+      *this = std::move(*O);
+      O.reset();
+    }
+    return *this;
+  }
 #endif
 
   static inline Optional create(const T* y) {
     return y ? Optional(*y) : Optional();
   }
 
+  // FIXME: these assignments (& the equivalent const T&/const Optional& ctors)
+  // could be made more efficient by passing by value, possibly unifying them
+  // with the rvalue versions above - but this could place a different set of
+  // requirements (notably: the existence of a default ctor) when implemented
+  // in that way. Careful SFINAE to avoid such pitfalls would be required.
   Optional &operator=(const T &y) {
     if (hasVal)
       **this = y;

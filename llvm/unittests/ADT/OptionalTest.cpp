@@ -40,6 +40,36 @@ unsigned NonDefaultConstructible::CopyConstructions = 0;
 unsigned NonDefaultConstructible::Destructions = 0;
 unsigned NonDefaultConstructible::CopyAssignments = 0;
 
+struct MoveOnly {
+  static unsigned MoveConstructions;
+  static unsigned Destructions;
+  static unsigned MoveAssignments;
+  int val;
+  explicit MoveOnly(int val) : val(val) {
+  }
+  MoveOnly(MoveOnly&& other) {
+    val = other.val;
+    ++MoveConstructions;
+  }
+  MoveOnly &operator=(MoveOnly&& other) {
+    val = other.val;
+    ++MoveAssignments;
+    return *this;
+  }
+  ~MoveOnly() {
+    ++Destructions;
+  }
+  static void ResetCounts() {
+    MoveConstructions = 0;
+    Destructions = 0;
+    MoveAssignments = 0;
+  }
+};
+
+unsigned MoveOnly::MoveConstructions = 0;
+unsigned MoveOnly::Destructions = 0;
+unsigned MoveOnly::MoveAssignments = 0;
+
 // Test fixture
 class OptionalTest : public testing::Test {
 };
@@ -167,6 +197,85 @@ TEST_F(OptionalTest, NullCopyConstructionTest) {
   EXPECT_EQ(0u, NonDefaultConstructible::CopyConstructions);
   EXPECT_EQ(0u, NonDefaultConstructible::CopyAssignments);
   EXPECT_EQ(0u, NonDefaultConstructible::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyNull) {
+  MoveOnly::ResetCounts();
+  Optional<MoveOnly> O;
+  EXPECT_EQ(0u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(0u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyConstruction) {
+  MoveOnly::ResetCounts();
+  Optional<MoveOnly> O(MoveOnly(3));
+  EXPECT_TRUE((bool)O);
+  EXPECT_EQ(3, O->val);
+  EXPECT_EQ(1u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(1u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyMoveConstruction) {
+  Optional<MoveOnly> A(MoveOnly(3));
+  MoveOnly::ResetCounts();
+  Optional<MoveOnly> B(std::move(A));
+  EXPECT_FALSE((bool)A);
+  EXPECT_TRUE((bool)B);
+  EXPECT_EQ(3, B->val);
+  EXPECT_EQ(1u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(1u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyAssignment) {
+  MoveOnly::ResetCounts();
+  Optional<MoveOnly> O;
+  O = MoveOnly(3);
+  EXPECT_TRUE((bool)O);
+  EXPECT_EQ(3, O->val);
+  EXPECT_EQ(1u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(1u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyInitializingAssignment) {
+  Optional<MoveOnly> A(MoveOnly(3));
+  Optional<MoveOnly> B;
+  MoveOnly::ResetCounts();
+  B = std::move(A);
+  EXPECT_FALSE((bool)A);
+  EXPECT_TRUE((bool)B);
+  EXPECT_EQ(3, B->val);
+  EXPECT_EQ(1u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(1u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyNullingAssignment) {
+  Optional<MoveOnly> A;
+  Optional<MoveOnly> B(MoveOnly(3));
+  MoveOnly::ResetCounts();
+  B = std::move(A);
+  EXPECT_FALSE((bool)A);
+  EXPECT_FALSE((bool)B);
+  EXPECT_EQ(0u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(1u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyAssigningAssignment) {
+  Optional<MoveOnly> A(MoveOnly(3));
+  Optional<MoveOnly> B(MoveOnly(4));
+  MoveOnly::ResetCounts();
+  B = std::move(A);
+  EXPECT_FALSE((bool)A);
+  EXPECT_TRUE((bool)B);
+  EXPECT_EQ(3, B->val);
+  EXPECT_EQ(0u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(1u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(1u, MoveOnly::Destructions);
 }
 
 } // end anonymous namespace
