@@ -77,7 +77,7 @@ void DeclToIndex::computeMap(const DeclContext &dc) {
 Optional<unsigned> DeclToIndex::getValueIndex(const VarDecl *d) const {
   llvm::DenseMap<const VarDecl *, unsigned>::const_iterator I = map.find(d);
   if (I == map.end())
-    return Optional<unsigned>();
+    return None;
   return I->second;
 }
 

@@ -227,7 +227,7 @@ typedef const RegionBindingsRef& RegionBindingsConstRef;
 Optional<SVal> RegionBindingsRef::getDirectBinding(const MemRegion *R) const {
   if (const SVal *V = lookup(R, BindingKey::Direct))
     return *V;
-  return Optional<SVal>();
+  return None;
 }
 
 Optional<SVal> RegionBindingsRef::getDefaultBinding(const MemRegion *R) const {
@@ -237,7 +237,7 @@ Optional<SVal> RegionBindingsRef::getDefaultBinding(const MemRegion *R) const {
         return UnknownVal();
   if (const SVal *V = lookup(R, BindingKey::Default))
     return *V;
-  return Optional<SVal>();
+  return None;
 }
 
 RegionBindingsRef RegionBindingsRef::addBinding(BindingKey K, SVal V) const {
@@ -1448,12 +1448,12 @@ RegionStoreManager::getBindingForDerivedDefaultValue(RegionBindingsConstRef B,
 
     // Lazy bindings are handled later.
     if (val.getAs<nonloc::LazyCompoundVal>())
-      return Optional<SVal>();
+      return None;
 
     llvm_unreachable("Unknown default value");
   }
 
-  return Optional<SVal>();
+  return None;
 }
 
 SVal RegionStoreManager::getLazyBinding(const SubRegion *LazyBindingRegion,
@@ -1574,11 +1574,11 @@ SVal RegionStoreManager::getBindingForObjCIvar(RegionBindingsConstRef B,
 static Optional<SVal> getConstValue(SValBuilder &SVB, const VarDecl *VD) {
   ASTContext &Ctx = SVB.getContext();
   if (!VD->getType().isConstQualified())
-    return Optional<SVal>();
+    return None;
 
   const Expr *Init = VD->getInit();
   if (!Init)
-    return Optional<SVal>();
+    return None;
 
   llvm::APSInt Result;
   if (Init->EvaluateAsInt(Result, Ctx))
@@ -1588,7 +1588,7 @@ static Optional<SVal> getConstValue(SValBuilder &SVB, const VarDecl *VD) {
     return SVB.makeNull();
 
   // FIXME: Handle other possible constant expressions.
-  return Optional<SVal>();
+  return None;
 }
 
 SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,

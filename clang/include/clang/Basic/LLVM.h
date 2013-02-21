@@ -16,9 +16,13 @@
 #ifndef CLANG_BASIC_LLVM_H
 #define CLANG_BASIC_LLVM_H
 
-// This should be the only #include, force #includes of all the others on
-// clients.
+// Do not proliferate #includes here, require clients to #include their
+// dependencies.
+// Casting.h has complex templates that cannot be easily forward declared.
 #include "llvm/Support/Casting.h"
+// None.h includes an enumerant that is desired & cannot be forward declared
+// without a definition of NoneType.
+#include "llvm/ADT/None.h"
 
 namespace llvm {
   // ADT's.
@@ -54,6 +58,7 @@ namespace clang {
   using llvm::cast_or_null;
   
   // ADT's.
+  using llvm::None;
   using llvm::Optional;
   using llvm::StringRef;
   using llvm::Twine;

@@ -57,14 +57,14 @@ public:
   /// \brief Retrieve the minor version number, if provided.
   Optional<unsigned> getMinor() const {
     if (!HasMinor)
-      return Optional<unsigned>();
+      return None;
     return Minor;
   }
 
   /// \brief Retrieve the subminor version number, if provided.
   Optional<unsigned> getSubminor() const {
     if (!HasSubminor)
-      return Optional<unsigned>();
+      return None;
     return Subminor;
   }
 

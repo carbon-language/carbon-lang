@@ -908,7 +908,7 @@ static Optional<unsigned> findAnonymousStructOrUnionIndex(RecordDecl *Anon) {
 
   RecordDecl *Owner = dyn_cast<RecordDecl>(Anon->getDeclContext());
   if (!Owner)
-    return Optional<unsigned>();
+    return None;
 
   unsigned Index = 0;
   for (DeclContext::decl_iterator D = Owner->noload_decls_begin(),

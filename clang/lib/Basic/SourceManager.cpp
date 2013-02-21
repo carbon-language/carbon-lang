@@ -1462,11 +1462,11 @@ unsigned SourceManager::getFileIDSize(FileID FID) const {
 /// in non-performance-critical code.
 static Optional<ino_t> getActualFileInode(const FileEntry *File) {
   if (!File)
-    return Optional<ino_t>();
+    return None;
   
   struct stat StatBuf;
   if (::stat(File->getName(), &StatBuf))
-    return Optional<ino_t>();
+    return None;
     
   return StatBuf.st_ino;
 }

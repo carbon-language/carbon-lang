@@ -443,8 +443,7 @@ TypeResult Sema::ActOnPackExpansion(ParsedType Type,
   if (!TSInfo)
     return true;
 
-  TypeSourceInfo *TSResult =
-      CheckPackExpansion(TSInfo, EllipsisLoc, Optional<unsigned>());
+  TypeSourceInfo *TSResult = CheckPackExpansion(TSInfo, EllipsisLoc, None);
   if (!TSResult)
     return true;
   
@@ -490,7 +489,7 @@ QualType Sema::CheckPackExpansion(QualType Pattern, SourceRange PatternRange,
 }
 
 ExprResult Sema::ActOnPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
-  return CheckPackExpansion(Pattern, EllipsisLoc, Optional<unsigned>());
+  return CheckPackExpansion(Pattern, EllipsisLoc, None);
 }
 
 ExprResult Sema::CheckPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc,
@@ -662,7 +661,7 @@ Optional<unsigned> Sema::getNumArgumentsInExpansion(QualType T,
         if (Instantiation->is<Decl*>())
           // The pattern refers to an unexpanded pack. We're not ready to expand
           // this pack yet.
-          return Optional<unsigned>();
+          return None;
 
         unsigned Size = Instantiation->get<DeclArgumentPack *>()->size();
         assert((!Result || *Result == Size) && "inconsistent pack sizes");
@@ -676,7 +675,7 @@ Optional<unsigned> Sema::getNumArgumentsInExpansion(QualType T,
         !TemplateArgs.hasTemplateArgument(Depth, Index))
       // The pattern refers to an unknown template argument. We're not ready to
       // expand this pack yet.
-      return Optional<unsigned>();
+      return None;
     
     // Determine the size of the argument pack.
     unsigned Size = TemplateArgs(Depth, Index).pack_size();

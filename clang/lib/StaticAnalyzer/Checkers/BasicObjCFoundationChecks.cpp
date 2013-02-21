@@ -217,7 +217,7 @@ static Optional<uint64_t> GetCFNumberSize(ASTContext &Ctx, uint64_t i) {
     case kCFNumberCGFloatType:
       // FIXME: We need a way to map from names to Type*.
     default:
-      return Optional<uint64_t>();
+      return None;
   }
 
   return Ctx.getTypeSize(T);

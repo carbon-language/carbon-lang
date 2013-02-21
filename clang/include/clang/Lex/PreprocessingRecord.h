@@ -279,7 +279,7 @@ namespace clang {
     /// entity with index \p Index came from file \p FID.
     virtual Optional<bool> isPreprocessedEntityInFileID(unsigned Index,
                                                         FileID FID) {
-      return Optional<bool>();
+      return None;
     }
   };
   

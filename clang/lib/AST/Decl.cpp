@@ -180,7 +180,7 @@ static Optional<Visibility> getVisibilityOf(const NamedDecl *D,
         return DefaultVisibility;
   }
 
-  return Optional<Visibility>();
+  return None;
 }
 
 static LinkageInfo getLVForType(QualType T) {
@@ -893,7 +893,7 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
         return getVisibilityOf(InstantiatedFrom, kind);
     }
 
-    return Optional<Visibility>();
+    return None;
   }
   // Use the most recent declaration of a function, and also handle
   // function template specializations.
@@ -914,7 +914,7 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
     if (InstantiatedFrom)
       return getVisibilityOf(InstantiatedFrom, kind);
 
-    return Optional<Visibility>();
+    return None;
   }
 
   // Otherwise, just check the declaration itself first.
@@ -941,7 +941,7 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
       return getVisibilityOf(InstantiatedFrom, kind);
   }
 
-  return Optional<Visibility>();
+  return None;
 }
 
 static LinkageInfo getLVForLocalDecl(const NamedDecl *D,

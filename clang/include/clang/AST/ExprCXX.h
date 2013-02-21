@@ -3373,7 +3373,7 @@ public:
     if (NumExpansions)
       return NumExpansions - 1;
 
-    return Optional<unsigned>();
+    return None;
   }
 
   SourceLocation getLocStart() const LLVM_READONLY {

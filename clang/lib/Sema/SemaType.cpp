@@ -2889,7 +2889,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           << T <<  D.getSourceRange();
         D.setEllipsisLoc(SourceLocation());
       } else {
-        T = Context.getPackExpansionType(T, Optional<unsigned>());
+        T = Context.getPackExpansionType(T, None);
       }
       break;
 
@@ -2903,7 +2903,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // parameter packs in the type of the non-type template parameter, then
       // it expands those parameter packs.
       if (T->containsUnexpandedParameterPack())
-        T = Context.getPackExpansionType(T, Optional<unsigned>());
+        T = Context.getPackExpansionType(T, None);
       else
         S.Diag(D.getEllipsisLoc(),
                LangOpts.CPlusPlus11

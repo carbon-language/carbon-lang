@@ -300,8 +300,7 @@ public:
   ObjCDictionaryElement getKeyValueElement(unsigned Index) const {
     assert((Index < NumElements) && "Arg access out of range!");
     const KeyValuePair &KV = getKeyValues()[Index];
-    ObjCDictionaryElement Result = { KV.Key, KV.Value, SourceLocation(),
-                                     Optional<unsigned>() };
+    ObjCDictionaryElement Result = { KV.Key, KV.Value, SourceLocation(), None };
     if (HasPackExpansions) {
       const ExpansionData &Expansion = getExpansionData()[Index];
       Result.EllipsisLoc = Expansion.EllipsisLoc;

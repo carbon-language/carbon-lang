@@ -628,7 +628,7 @@ Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
     case ActiveTemplateInstantiation::DefaultFunctionArgumentInstantiation:
     case ActiveTemplateInstantiation::ExceptionSpecInstantiation:
       // This is a template instantiation, so there is no SFINAE.
-      return Optional<TemplateDeductionInfo *>();
+      return None;
 
     case ActiveTemplateInstantiation::DefaultTemplateArgumentInstantiation:
     case ActiveTemplateInstantiation::PriorTemplateArgumentSubstitution:
@@ -647,7 +647,7 @@ Optional<TemplateDeductionInfo *> Sema::isSFINAEContext() const {
     }
   }
 
-  return Optional<TemplateDeductionInfo *>();
+  return None;
 }
 
 /// \brief Retrieve the depth and index of a parameter pack.

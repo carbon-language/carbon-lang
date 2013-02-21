@@ -3036,7 +3036,7 @@ static Optional<unsigned> getExpandedPackSize(NamedDecl *Param) {
       return TTP->getNumExpansionTemplateParameters();
   }
 
-  return Optional<unsigned>();
+  return None;
 }
 
 /// \brief Check that the given template argument list is well-formed

@@ -561,12 +561,12 @@ Optional<bool> CursorVisitor::shouldVisitCursor(CXCursor Cursor) {
   if (RegionOfInterest.isValid()) {
     SourceRange Range = getFullCursorExtent(Cursor, AU->getSourceManager());
     if (Range.isInvalid())
-      return Optional<bool>();
+      return None;
     
     switch (CompareRegionOfInterest(Range)) {
     case RangeBefore:
       // This declaration comes before the region of interest; skip it.
-      return Optional<bool>();
+      return None;
 
     case RangeAfter:
       // This declaration comes after the region of interest; we're done.

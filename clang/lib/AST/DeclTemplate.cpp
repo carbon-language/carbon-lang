@@ -184,7 +184,7 @@ static void GenerateInjectedTemplateArgs(ASTContext &Context,
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
       QualType ArgType = Context.getTypeDeclType(TTP);
       if (TTP->isParameterPack())
-        ArgType = Context.getPackExpansionType(ArgType, Optional<unsigned>());
+        ArgType = Context.getPackExpansionType(ArgType, None);
 
       Arg = TemplateArgument(ArgType);
     } else if (NonTypeTemplateParmDecl *NTTP =
@@ -195,8 +195,8 @@ static void GenerateInjectedTemplateArgs(ASTContext &Context,
                                           NTTP->getLocation());
       
       if (NTTP->isParameterPack())
-        E = new (Context) PackExpansionExpr(
-            Context.DependentTy, E, NTTP->getLocation(), Optional<unsigned>());
+        E = new (Context) PackExpansionExpr(Context.DependentTy, E,
+                                            NTTP->getLocation(), None);
       Arg = TemplateArgument(E);
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);

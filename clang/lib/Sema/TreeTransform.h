@@ -4098,8 +4098,7 @@ bool TreeTransform<Derived>::
                                                   /*ExpectParameterPack=*/true);
       } else {
         NewParm = getDerived().TransformFunctionTypeParam(
-            OldParm, indexAdjustment, Optional<unsigned>(),
-            /*ExpectParameterPack=*/ false);
+            OldParm, indexAdjustment, None, /*ExpectParameterPack=*/ false);
       }
 
       if (!NewParm)
@@ -8565,7 +8564,7 @@ TreeTransform<Derived>::TransformObjCDictionaryLiteral(
       ArgChanged = true;
 
     ObjCDictionaryElement Element = {
-      Key.get(), Value.get(), SourceLocation(), Optional<unsigned>()
+      Key.get(), Value.get(), SourceLocation(), None
     };
     Elements.push_back(Element);
   }

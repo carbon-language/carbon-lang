@@ -225,7 +225,7 @@ compareControlFlow(const PathDiagnosticControlFlowPiece &X,
   FullSourceLoc YEL = Y.getEndLocation().asLocation();
   if (XEL != YEL)
     return XEL.isBeforeInTranslationUnitThan(YEL);
-  return Optional<bool>();
+  return None;
 }
 
 static Optional<bool> compareMacro(const PathDiagnosticMacroPiece &X,
@@ -283,7 +283,7 @@ static Optional<bool> comparePiece(const PathDiagnosticPiece &X,
       return compareControlFlow(cast<PathDiagnosticControlFlowPiece>(X),
                                 cast<PathDiagnosticControlFlowPiece>(Y));
     case clang::ento::PathDiagnosticPiece::Event:
-      return Optional<bool>();
+      return None;
     case clang::ento::PathDiagnosticPiece::Macro:
       return compareMacro(cast<PathDiagnosticMacroPiece>(X),
                           cast<PathDiagnosticMacroPiece>(Y));
@@ -302,7 +302,7 @@ static Optional<bool> comparePath(const PathPieces &X, const PathPieces &Y) {
     if (b.hasValue())
       return b.getValue();
   }
-  return Optional<bool>();
+  return None;
 }
 
 static bool compare(const PathDiagnostic &X, const PathDiagnostic &Y) {

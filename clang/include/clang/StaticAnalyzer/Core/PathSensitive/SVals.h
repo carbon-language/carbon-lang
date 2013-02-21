@@ -85,7 +85,7 @@ public:
   template<typename T>
   Optional<T> getAs() const {
     if (!T::isKind(*this))
-      return Optional<T>();
+      return None;
     T t;
     SVal& sv = t;
     sv = *this;

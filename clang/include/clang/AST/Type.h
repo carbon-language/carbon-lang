@@ -4155,7 +4155,7 @@ public:
     if (NumExpansions)
       return NumExpansions - 1;
 
-    return Optional<unsigned>();
+    return None;
   }
 
   bool isSugared() const { return false; }

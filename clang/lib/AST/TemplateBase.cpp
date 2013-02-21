@@ -229,7 +229,7 @@ Optional<unsigned> TemplateArgument::getNumTemplateExpansions() const {
   if (TemplateArg.NumExpansions)
     return TemplateArg.NumExpansions - 1;
   
-  return Optional<unsigned>();
+  return None; 
 }
 
 void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,

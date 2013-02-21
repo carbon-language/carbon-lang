@@ -75,7 +75,7 @@ NSAPI::getNSStringMethodKind(Selector Sel) const {
       return MK;
   }
 
-  return Optional<NSStringMethodKind>();
+  return None;
 }
 
 Selector NSAPI::getNSArraySelector(NSArrayMethodKind MK) const {
@@ -133,7 +133,7 @@ Optional<NSAPI::NSArrayMethodKind> NSAPI::getNSArrayMethodKind(Selector Sel) {
       return MK;
   }
 
-  return Optional<NSArrayMethodKind>();
+  return None;
 }
 
 Selector NSAPI::getNSDictionarySelector(
@@ -219,7 +219,7 @@ NSAPI::getNSDictionaryMethodKind(Selector Sel) {
       return MK;
   }
 
-  return Optional<NSDictionaryMethodKind>();
+  return None;
 }
 
 Selector NSAPI::getNSNumberLiteralSelector(NSNumberLiteralMethodKind MK,
@@ -282,14 +282,14 @@ NSAPI::getNSNumberLiteralMethodKind(Selector Sel) const {
       return MK;
   }
 
-  return Optional<NSNumberLiteralMethodKind>();
+  return None;
 }
 
 Optional<NSAPI::NSNumberLiteralMethodKind>
 NSAPI::getNSNumberFactoryMethodKind(QualType T) const {
   const BuiltinType *BT = T->getAs<BuiltinType>();
   if (!BT)
-    return Optional<NSAPI::NSNumberLiteralMethodKind>();
+    return None;
 
   const TypedefType *TDT = T->getAs<TypedefType>();
   if (TDT) {
@@ -363,7 +363,7 @@ NSAPI::getNSNumberFactoryMethodKind(QualType T) const {
     break;
   }
   
-  return Optional<NSAPI::NSNumberLiteralMethodKind>();
+  return None;
 }
 
 /// \brief Returns true if \param T is a typedef of "BOOL" in objective-c.
