@@ -609,10 +609,18 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     llvm::Triple triple(module_ap->getTargetTriple());
     llvm::Function *function = module_ap->getFunction (function_name.c_str());
     llvm::Reloc::Model relocModel;
+    llvm::CodeModel::Model codeModel;
     if (triple.isOSBinFormatELF())
+    {
         relocModel = llvm::Reloc::Static;
+        // This will be small for 32-bit and large for 64-bit.
+        codeModel = llvm::CodeModel::JITDefault;
+    }
     else
+    {
         relocModel = llvm::Reloc::PIC_;
+        codeModel = llvm::CodeModel::Small;
+    }
     EngineBuilder builder(module_ap.release());
     builder.setEngineKind(EngineKind::JIT)
         .setErrorStr(&error_string)
@@ -620,7 +628,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         .setJITMemoryManager(jit_memory_manager)
         .setOptLevel(CodeGenOpt::Less)
         .setAllocateGVsWithCode(true)
-        .setCodeModel(CodeModel::Small)
+        .setCodeModel(codeModel)
         .setUseMCJIT(true);
     
     StringRef mArch;
