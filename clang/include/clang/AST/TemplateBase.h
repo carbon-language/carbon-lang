@@ -100,7 +100,7 @@ private:
     } TemplateArg;
   };
 
-  TemplateArgument(TemplateName, bool); // DO NOT USE
+  TemplateArgument(TemplateName, bool) LLVM_DELETED_FUNCTION;
   
 public:
   /// \brief Construct an empty, invalid template argument.
