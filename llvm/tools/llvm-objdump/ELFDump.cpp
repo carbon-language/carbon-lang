@@ -45,6 +45,9 @@ void printProgramHeaders(
     case ELF::PT_DYNAMIC:
       outs() << " DYNAMIC ";
       break;
+    case ELF::PT_PHDR:
+      outs() << "    PHDR ";
+      break;
     default:
       outs() << " UNKNOWN ";
     }
