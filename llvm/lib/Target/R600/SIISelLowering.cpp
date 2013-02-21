@@ -75,7 +75,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
            .addOperand(MI->getOperand(0))
            .addOperand(MI->getOperand(1))
            .addImm(0x80) // SRC1
-           .addImm(0x80) // SRC2
            .addImm(0) // ABS
            .addImm(1) // CLAMP
            .addImm(0) // OMOD
@@ -88,7 +87,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
                  .addOperand(MI->getOperand(0))
                  .addOperand(MI->getOperand(1))
                  .addImm(0x80) // SRC1
-                 .addImm(0x80) // SRC2
                  .addImm(1) // ABS
                  .addImm(0) // CLAMP
                  .addImm(0) // OMOD
@@ -101,7 +99,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
                  .addOperand(MI->getOperand(0))
                  .addOperand(MI->getOperand(1))
                  .addImm(0x80) // SRC1
-                 .addImm(0x80) // SRC2
                  .addImm(0) // ABS
                  .addImm(0) // CLAMP
                  .addImm(0) // OMOD

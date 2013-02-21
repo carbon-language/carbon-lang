@@ -168,29 +168,30 @@ multiclass VOP1_32 <bits<8> op, string opName, list<dag> pattern>
 multiclass VOP1_64 <bits<8> op, string opName, list<dag> pattern>
   : VOP1_Helper <op, VReg_64, VSrc_64, opName, pattern>;
 
-class VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
-                   string opName, list<dag> pattern> :
-  VOP2 <
-    op, (outs vrc:$dst), (ins arc:$src0, vrc:$src1), opName, pattern
+multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
+                        string opName, list<dag> pattern> {
+  def _e32 : VOP2 <
+    op, (outs vrc:$dst), (ins arc:$src0, vrc:$src1),
+    opName#"_e32 $dst, $src0, $src1", pattern
   >;
 
-multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern> {
-
-  def _e32 : VOP2_Helper <op, VReg_32, VSrc_32, opName, pattern>;
-
-  def _e64 : VOP3_32 <{1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-                      opName, []
-  >;
-}
-
-multiclass VOP2_64 <bits<6> op, string opName, list<dag> pattern> {
-  def _e32: VOP2_Helper <op, VReg_64, VSrc_64, opName, pattern>;
-
-  def _e64 : VOP3_64 <
+  def _e64 : VOP3 <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-    opName, []
-  >;
+    (outs vrc:$dst),
+    (ins arc:$src0, vrc:$src1,
+         i32imm:$abs, i32imm:$clamp,
+         i32imm:$omod, i32imm:$neg),
+    opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
+  > {
+    let SRC2 = SIOperand.ZERO;
+  }
 }
+
+multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern>
+  : VOP2_Helper <op, VReg_32, VSrc_32, opName, pattern>;
+
+multiclass VOP2_64 <bits<6> op, string opName, list<dag> pattern>
+  : VOP2_Helper <op, VReg_64, VSrc_64, opName, pattern>;
 
 multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
                         string opName, list<dag> pattern> {
