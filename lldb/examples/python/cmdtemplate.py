@@ -38,6 +38,7 @@ def ls(debugger, command, result, dict):
     try:
         (options, args) = parser.parse_args(command_args)
     except:
+        result.SetStatus (lldb.eReturnStatusFailed)
         return
     
     for arg in args:
