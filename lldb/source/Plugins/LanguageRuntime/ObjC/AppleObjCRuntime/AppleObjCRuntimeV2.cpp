@@ -549,10 +549,10 @@ public:
     void
     Dump ()
     {
-        printf ("RemoteNXMapTable.m_load_addr = 0x%llx\n", m_load_addr);
+        printf ("RemoteNXMapTable.m_load_addr = 0x%" PRIx64 "\n", m_load_addr);
         printf ("RemoteNXMapTable.m_count = %u\n", m_count);
         printf ("RemoteNXMapTable.m_num_buckets_minus_one = %u\n", m_num_buckets_minus_one);
-        printf ("RemoteNXMapTable.m_buckets_ptr = 0x%llx\n", m_buckets_ptr);
+        printf ("RemoteNXMapTable.m_buckets_ptr = 0x%" PRIX64 "\n", m_buckets_ptr);
     }
     
     bool

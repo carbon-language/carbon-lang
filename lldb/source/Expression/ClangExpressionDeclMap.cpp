@@ -2021,7 +2021,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                 {
                     if (value_byte_size != value_data_extractor.GetByteSize())
                     {
-                        err.SetErrorStringWithFormat ("Size mismatch for %s: %llu versus %llu",
+                        err.SetErrorStringWithFormat ("Size mismatch for %s: %" PRIu64 " versus %" PRIu64,
                                                       name.GetCString(),
                                                       (uint64_t)value_data_extractor.GetByteSize(),
                                                       (uint64_t)value_byte_size);

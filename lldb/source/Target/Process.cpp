@@ -4720,7 +4720,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 if (timeout_ptr)
                 {
-                    log->Printf ("Process::RunThreadPlan(): about to wait - now is %llu - endpoint is %llu",
+                    log->Printf ("Process::RunThreadPlan(): about to wait - now is %" PRIu64 " - endpoint is %" PRIu64,
                                  TimeValue::Now().GetAsMicroSecondsSinceJan1_1970(),
                                  timeout_ptr->GetAsMicroSecondsSinceJan1_1970());
                 }

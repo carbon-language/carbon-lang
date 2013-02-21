@@ -414,7 +414,7 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
                 {
                     const LineTable::FileAddressRanges::Entry &range = file_ranges.GetEntryRef(idx);
                     debug_aranges->AppendRange(GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
-                    printf ("0x%8.8x: [0x%16.16llx - 0x%16.16llx)\n", GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
+                    printf ("0x%8.8x: [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
                 }
             }
         }
