@@ -990,13 +990,6 @@ def LOAD_CONST : AMDGPUShaderInst <
 
 let usesCustomInserter = 1 in {
 
-def SI_V_CNDLT : InstSI <
-  (outs VReg_32:$dst),
-  (ins VReg_32:$src0, VReg_32:$src1, VReg_32:$src2),
-  "SI_V_CNDLT $dst, $src0, $src1, $src2",
-  [(set VReg_32:$dst, (int_AMDGPU_cndlt VReg_32:$src0, VReg_32:$src1, VReg_32:$src2))]
->;
-
 def SI_INTERP : InstSI <
   (outs VReg_32:$dst),
   (ins VReg_32:$i, VReg_32:$j, i32imm:$attr_chan, i32imm:$attr, SReg_32:$params),
@@ -1085,6 +1078,11 @@ def SI_KILL : InstSI <
   // Uses = [EXEC], Defs = [EXEC]
 
 } // end IsCodeGenOnly, isPseudo
+
+def : Pat<
+  (int_AMDGPU_cndlt VReg_32:$src0, VReg_32:$src1, VReg_32:$src2),
+  (V_CNDMASK_B32_e64 VReg_32:$src2, VReg_32:$src1, (V_CMP_GT_F32_e64 0, VReg_32:$src0))
+>;
 
 def : Pat <
   (int_AMDGPU_kilp),

@@ -29,8 +29,6 @@ class SITargetLowering : public AMDGPUTargetLowering {
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
   void LowerSI_WQM(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
-  void LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
-              MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
 
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
