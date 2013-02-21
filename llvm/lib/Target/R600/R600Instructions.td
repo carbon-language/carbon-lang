@@ -1587,6 +1587,7 @@ def PRED_X : InstR600 <
   (ins R600_Reg32:$src0, i32imm:$src1, i32imm:$flags),
   "", [], NullALU> {
   let FlagOperandIdx = 3;
+  let isTerminator = 1;
 }
 
 let isTerminator = 1, isBranch = 1, isBarrier = 1 in {
