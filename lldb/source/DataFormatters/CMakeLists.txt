@@ -6,6 +6,11 @@ add_lldb_library(lldbDataFormatters
   FormatCache.cpp
   FormatClasses.cpp
   FormatManager.cpp
+  LibCxx.cpp
+  LibStdcpp.cpp
+  NSArray.cpp
+  NSDictionary.cpp
+  NSSet.cpp
   TypeCategory.cpp
   TypeCategoryMap.cpp
   TypeFormat.cpp
