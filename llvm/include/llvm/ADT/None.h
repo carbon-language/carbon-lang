@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file provides None, an enumerant for use in implicit constructors
+//  This file provides None, an enumerator for use in implicit constructors
 //  of various (usually templated) types to make such construction more
 //  terse.
 //
