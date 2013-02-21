@@ -9262,11 +9262,6 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
 
 /// SimplifyVBinOp - Visit a binary vector operation, like ADD.
 SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
-  // After legalize, the target may be depending on adds and other
-  // binary ops to provide legal ways to construct constants or other
-  // things. Simplifying them may result in a loss of legality.
-  if (LegalOperations) return SDValue();
-
   assert(N->getValueType(0).isVector() &&
          "SimplifyVBinOp only works on vectors!");
 
@@ -9336,11 +9331,6 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
 
 /// SimplifyVUnaryOp - Visit a binary vector operation, like FABS/FNEG.
 SDValue DAGCombiner::SimplifyVUnaryOp(SDNode *N) {
-  // After legalize, the target may be depending on adds and other
-  // binary ops to provide legal ways to construct constants or other
-  // things. Simplifying them may result in a loss of legality.
-  if (LegalOperations) return SDValue();
-
   assert(N->getValueType(0).isVector() &&
          "SimplifyVUnaryOp only works on vectors!");
 
