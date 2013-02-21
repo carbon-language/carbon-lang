@@ -81,10 +81,10 @@ using __sanitizer::uptr;
 
 // Windows threads.
 # if defined(_WIN32)
+extern "C" {
 __declspec(dllimport)
 void* __stdcall CreateThread(void *sec, uptr st, void* start,
                              void *arg, DWORD fl, DWORD *id);
-extern "C" {
 
 int memcmp(const void *a1, const void *a2, uptr size);
 void memmove(void *to, const void *from, uptr size);
