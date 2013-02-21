@@ -110,8 +110,8 @@ public:
                         getLocationContext(), tag);
   }
 
-  /// \brief Convert to the specified TypeLoc type, asserting that this TypeLoc
-  /// is of the desired type.
+  /// \brief Convert to the specified ProgramPoint type, asserting that this
+  /// ProgramPoint is of the desired type.
   template<typename T>
   T castAs() const {
     assert(T::isKind(*this));
@@ -121,8 +121,8 @@ public:
     return t;
   }
 
-  /// \brief Convert to the specified TypeLoc type, returning a null TypeLoc if
-  /// this TypeLoc is not of the desired type.
+  /// \brief Convert to the specified ProgramPoint type, returning None if this
+  /// ProgramPoint is not of the desired type.
   template<typename T>
   Optional<T> getAs() const {
     if (!T::isKind(*this))
