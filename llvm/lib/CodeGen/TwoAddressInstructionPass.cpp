@@ -499,7 +499,7 @@ isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
   // insert => %reg1030<def> = MOV8rr %reg1029
   // %reg1030<def> = ADD8rr %reg1029<kill>, %reg1028<kill>, %EFLAGS<imp-def,dead>
 
-  if (!MI->killsRegister(regC))
+  if (!isPlainlyKilled(MI, regC, LIS))
     return false;
 
   // Ok, we have something like:
