@@ -8,4 +8,4 @@ __attribute((regparm(5,3))) int x4(void); // expected-error{{attribute takes one
 
 void __attribute__((regparm(3))) x5(int);
 void x5(int); // expected-note{{previous declaration is here}}
-void __attribute__((regparm(2))) x5(int); // expected-error{{function declared with with regparm(2) attribute was previously declared with the regparm(3) attribute}}
+void __attribute__((regparm(2))) x5(int); // expected-error{{function declared with regparm(2) attribute was previously declared with the regparm(3) attribute}}
