@@ -1187,10 +1187,6 @@ defm : SamplePatterns<VReg_128, v4i32>;
 defm : SamplePatterns<VReg_256, v8i32>;
 defm : SamplePatterns<VReg_512, v16i32>;
 
-def CLAMP_SI : CLAMP<VReg_32>;
-def FABS_SI : FABS<VReg_32>;
-def FNEG_SI : FNEG<VReg_32>;
-
 def : Extract_Element <f32, v4f32, VReg_128, 0, sub0>;
 def : Extract_Element <f32, v4f32, VReg_128, 1, sub1>;
 def : Extract_Element <f32, v4f32, VReg_128, 2, sub2>;
@@ -1213,6 +1209,28 @@ def : BitConvert <i32, f32, VReg_32>;
 
 def : BitConvert <f32, i32, SReg_32>;
 def : BitConvert <f32, i32, VReg_32>;
+
+/********** =================== **********/
+/********** Src & Dst modifiers **********/
+/********** =================== **********/
+
+def : Pat <
+  (int_AMDIL_clamp VReg_32:$src, (f32 FP_ZERO), (f32 FP_ONE)),
+  (V_ADD_F32_e64 VReg_32:$src, (i32 0x80 /* SRC1 */),
+   0 /* ABS */, 1 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
+>;
+
+def : Pat <
+  (fabs VReg_32:$src),
+  (V_ADD_F32_e64 VReg_32:$src, (i32 0x80 /* SRC1 */),
+   1 /* ABS */, 0 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
+>;
+
+def : Pat <
+  (fneg VReg_32:$src),
+  (V_ADD_F32_e64 VReg_32:$src, (i32 0x80 /* SRC1 */),
+   0 /* ABS */, 0 /* CLAMP */, 0 /* OMOD */, 1 /* NEG */)
+>;
 
 /********** ================== **********/
 /********** Immediate Patterns **********/

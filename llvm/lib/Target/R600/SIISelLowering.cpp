@@ -62,7 +62,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
-  const TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
   MachineRegisterInfo & MRI = BB->getParent()->getRegInfo();
   MachineBasicBlock::iterator I = MI;
 
@@ -70,41 +69,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
-  case AMDGPU::CLAMP_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_ADD_F32_e64))
-           .addOperand(MI->getOperand(0))
-           .addOperand(MI->getOperand(1))
-           .addImm(0x80) // SRC1
-           .addImm(0) // ABS
-           .addImm(1) // CLAMP
-           .addImm(0) // OMOD
-           .addImm(0); // NEG
-    MI->eraseFromParent();
-    break;
-
-  case AMDGPU::FABS_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_ADD_F32_e64))
-                 .addOperand(MI->getOperand(0))
-                 .addOperand(MI->getOperand(1))
-                 .addImm(0x80) // SRC1
-                 .addImm(1) // ABS
-                 .addImm(0) // CLAMP
-                 .addImm(0) // OMOD
-                 .addImm(0); // NEG
-    MI->eraseFromParent();
-    break;
-
-  case AMDGPU::FNEG_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_ADD_F32_e64))
-                 .addOperand(MI->getOperand(0))
-                 .addOperand(MI->getOperand(1))
-                 .addImm(0x80) // SRC1
-                 .addImm(0) // ABS
-                 .addImm(0) // CLAMP
-                 .addImm(0) // OMOD
-                 .addImm(1); // NEG
-    MI->eraseFromParent();
-    break;
   case AMDGPU::SHADER_TYPE:
     BB->getParent()->getInfo<SIMachineFunctionInfo>()->ShaderType =
                                         MI->getOperand(0).getImm();
