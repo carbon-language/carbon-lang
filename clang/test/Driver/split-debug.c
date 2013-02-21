@@ -8,3 +8,7 @@
 // CHECK-ACTIONS: objcopy{{.*}}--strip-dwo{{.*}}"split-debug.o"
 
 
+// RUN: %clang -target x86_64-macosx -gsplit-dwarf -c -### %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-NO-ACTIONS < %t %s
+//
+// CHECK-NO-ACTIONS-NOT: -split-dwarf

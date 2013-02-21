@@ -2311,7 +2311,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -gsplit-dwarf should turn on -g and enable the backend dwarf
   // splitting and extraction.
-  if (Args.hasArg(options::OPT_gsplit_dwarf)) {
+  // FIXME: Currently only works on Linux.
+  if (getToolChain().getTriple().getOS() == llvm::Triple::Linux &&
+      Args.hasArg(options::OPT_gsplit_dwarf)) {
     CmdArgs.push_back("-g");
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-split-dwarf=Enable");
