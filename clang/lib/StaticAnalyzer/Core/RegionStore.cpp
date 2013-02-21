@@ -225,9 +225,7 @@ public:
 typedef const RegionBindingsRef& RegionBindingsConstRef;
 
 Optional<SVal> RegionBindingsRef::getDirectBinding(const MemRegion *R) const {
-  if (const SVal *V = lookup(R, BindingKey::Direct))
-    return *V;
-  return None;
+  return Optional<SVal>::create(lookup(R, BindingKey::Direct));
 }
 
 Optional<SVal> RegionBindingsRef::getDefaultBinding(const MemRegion *R) const {
@@ -235,9 +233,8 @@ Optional<SVal> RegionBindingsRef::getDefaultBinding(const MemRegion *R) const {
     if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R))
       if (TR->getValueType()->isUnionType())
         return UnknownVal();
-  if (const SVal *V = lookup(R, BindingKey::Default))
-    return *V;
-  return None;
+
+  return Optional<SVal>::create(lookup(R, BindingKey::Default));
 }
 
 RegionBindingsRef RegionBindingsRef::addBinding(BindingKey K, SVal V) const {
@@ -1267,11 +1264,11 @@ getExistingLazyBinding(SValBuilder &SVB, RegionBindingsConstRef B,
                        const SubRegion *R, bool AllowSubregionBindings) {
   Optional<SVal> V = B.getDefaultBinding(R);
   if (!V)
-    return Optional<nonloc::LazyCompoundVal>();
+    return None;
 
   Optional<nonloc::LazyCompoundVal> LCV = V->getAs<nonloc::LazyCompoundVal>();
   if (!LCV)
-    return Optional<nonloc::LazyCompoundVal>();
+    return None;
 
   // If the LCV is for a subregion, the types won't match, and we shouldn't
   // reuse the binding. Unfortuately we can only check this if the destination
@@ -1280,7 +1277,7 @@ getExistingLazyBinding(SValBuilder &SVB, RegionBindingsConstRef B,
     QualType RegionTy = TVR->getValueType();
     QualType SourceRegionTy = LCV->getRegion()->getValueType();
     if (!SVB.getContext().hasSameUnqualifiedType(RegionTy, SourceRegionTy))
-      return Optional<nonloc::LazyCompoundVal>();
+      return None;
   }
 
   if (!AllowSubregionBindings) {
@@ -1290,7 +1287,7 @@ getExistingLazyBinding(SValBuilder &SVB, RegionBindingsConstRef B,
     collectSubRegionKeys(Keys, SVB, *B.lookup(R->getBaseRegion()), R,
                          /*IncludeAllDefaultBindings=*/true);
     if (Keys.size() > 1)
-      return Optional<nonloc::LazyCompoundVal>();
+      return None;
   }
 
   return *LCV;
