@@ -19,6 +19,7 @@ SubDirs += interception
 SubDirs += profile
 SubDirs += sanitizer_common
 SubDirs += tsan
+SubDirs += msan
 SubDirs += ubsan
 
 # FIXME: We don't currently support building an atomic library, and as it must

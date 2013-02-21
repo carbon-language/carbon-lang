@@ -60,11 +60,13 @@ endif
 
 # Build runtime libraries for x86_64.
 ifeq ($(call contains,$(SupportedArches),x86_64),true)
-Configs += full-x86_64 profile-x86_64 asan-x86_64 tsan-x86_64 ubsan-x86_64
+Configs += full-x86_64 profile-x86_64 asan-x86_64 tsan-x86_64 msan-x86_64 \
+           ubsan-x86_64
 Arch.full-x86_64 := x86_64
 Arch.profile-x86_64 := x86_64
 Arch.asan-x86_64 := x86_64
 Arch.tsan-x86_64 := x86_64
+Arch.msan-x86_64 := x86_64
 Arch.ubsan-x86_64 := x86_64
 endif
 
@@ -89,6 +91,7 @@ CFLAGS.asan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin \
 CFLAGS.asan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin \
                     -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
 CFLAGS.tsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
+CFLAGS.msan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 CFLAGS.ubsan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin
 CFLAGS.ubsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 
@@ -120,6 +123,8 @@ FUNCTIONS.asan-x86_64 := $(AsanFunctions) $(InterceptionFunctions) \
 FUNCTIONS.asan-arm-android := $(AsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions)
 FUNCTIONS.tsan-x86_64 := $(TsanFunctions) $(InterceptionFunctions) \
+                                          $(SanitizerCommonFunctions)
+FUNCTIONS.msan-x86_64 := $(MsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions)
 FUNCTIONS.ubsan-i386 := $(UbsanFunctions) $(SanitizerCommonFunctions)
 FUNCTIONS.ubsan-x86_64 := $(UbsanFunctions) $(SanitizerCommonFunctions)
