@@ -44,6 +44,8 @@ protected:
   void *Data;
 
 public:
+  /// \brief Convert to the specified TypeLoc type, asserting that this TypeLoc
+  /// is of the desired type.
   template<typename T>
   T castAs() const {
     assert(T::isType(this));
@@ -52,6 +54,9 @@ public:
     tl = *this;
     return t;
   }
+
+  /// \brief Convert to the specified TypeLoc type, returning a null TypeLoc if
+  /// this TypeLoc is not of the desired type.
   template<typename T>
   T getAs() const {
     if (!T::isType(this))

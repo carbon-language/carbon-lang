@@ -69,6 +69,8 @@ protected:
 public:
   explicit SVal() : Data(0), Kind(0) {}
 
+  /// \brief Convert to the specified SVal type, asserting that this SVal is of
+  /// the desired type.
   template<typename T>
   T castAs() const {
     assert(T::isKind(*this));
@@ -78,6 +80,8 @@ public:
     return t;
   }
 
+  /// \brief Convert to the specified SVal type, returning None if this SVal is
+  /// not of the desired type.
   template<typename T>
   Optional<T> getAs() const {
     if (!T::isKind(*this))
