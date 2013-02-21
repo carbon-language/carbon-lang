@@ -746,17 +746,13 @@ def : Pat <
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
 defm V_WRITELANE_B32 : VOP2_32 <0x00000002, "V_WRITELANE_B32", []>;
 
-defm V_ADD_F32 : VOP2_32 <0x00000003, "V_ADD_F32", []>;
-def : Pat <
-  (f32 (fadd VSrc_32:$src0, VReg_32:$src1)),
-  (V_ADD_F32_e32  VSrc_32:$src0, VReg_32:$src1)
+defm V_ADD_F32 : VOP2_32 <0x00000003, "V_ADD_F32",
+  [(set VReg_32:$dst, (fadd VSrc_32:$src0, VReg_32:$src1))]
+>;
+defm V_SUB_F32 : VOP2_32 <0x00000004, "V_SUB_F32",
+  [(set VReg_32:$dst, (fsub VSrc_32:$src0, VReg_32:$src1))]
 >;
 
-defm V_SUB_F32 : VOP2_32 <0x00000004, "V_SUB_F32", []>;
-def : Pat <
-  (f32 (fsub VSrc_32:$src0, VReg_32:$src1)),
-  (V_SUB_F32_e32  VSrc_32:$src0, VReg_32:$src1)
->;
 defm V_SUBREV_F32 : VOP2_32 <0x00000005, "V_SUBREV_F32", []>;
 defm V_MAC_LEGACY_F32 : VOP2_32 <0x00000006, "V_MAC_LEGACY_F32", []>;
 defm V_MUL_LEGACY_F32 : VOP2_32 <
