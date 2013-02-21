@@ -2272,7 +2272,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
     }
   }
   else if (RV->getKind() == RefVal::ErrorGCLeakReturned) {
-    ObjCMethodDecl &MD = cast<ObjCMethodDecl>(EndN->getCodeDecl());
+    const ObjCMethodDecl &MD = cast<ObjCMethodDecl>(EndN->getCodeDecl());
     os << " and returned from method '" << MD.getSelector().getAsString()
        << "' is potentially leaked when using garbage collection.  Callers "
           "of this method do not expect a returned object with a +1 retain "
