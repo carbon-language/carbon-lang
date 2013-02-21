@@ -127,20 +127,6 @@ multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
 // Vector ALU classes
 //===----------------------------------------------------------------------===//
 
-class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
-  op, (outs VReg_32:$dst),
-  (ins VSrc_32:$src0, VReg_32:$src1, VReg_32:$src2, i32imm:$src3,
-   i32imm:$src4, i32imm:$src5, i32imm:$src6),
-  opName, pattern
->;
-
-class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
-  op, (outs VReg_64:$dst),
-  (ins VSrc_64:$src0, VReg_64:$src1, VReg_64:$src2,
-   i32imm:$src3, i32imm:$src4, i32imm:$src5, i32imm:$src6),
-  opName, pattern
->;
-
 multiclass VOP1_Helper <bits<8> op, RegisterClass drc, RegisterClass src,
                         string opName, list<dag> pattern> {
 
@@ -223,6 +209,20 @@ multiclass VOPC_32 <bits<8> op, string opName,
 multiclass VOPC_64 <bits<8> op, string opName,
   ValueType vt = untyped, PatLeaf cond = COND_NULL>
   : VOPC_Helper <op, VReg_64, VSrc_64, opName, vt, cond>;
+
+class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
+  op, (outs VReg_32:$dst),
+  (ins VSrc_32:$src0, VReg_32:$src1, VReg_32:$src2,
+   i32imm:$abs, i32imm:$clamp, i32imm:$omod, i32imm:$neg),
+  opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
+>;
+
+class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
+  op, (outs VReg_64:$dst),
+  (ins VSrc_64:$src0, VReg_64:$src1, VReg_64:$src2,
+   i32imm:$abs, i32imm:$clamp, i32imm:$omod, i32imm:$neg),
+  opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
+>;
 
 //===----------------------------------------------------------------------===//
 // Vector I/O classes
