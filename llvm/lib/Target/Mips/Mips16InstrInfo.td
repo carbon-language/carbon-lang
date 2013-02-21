@@ -76,6 +76,10 @@ class F2RI16_ins<bits<5> _op, string asmstr,
   let Constraints = "$rx_ = $rx";
 }
 
+class FRI16_B_ins<bits<5> _op, string asmstr,
+                  InstrItinClass itin>:
+  FRI16<_op, (outs), (ins  CPU16Regs:$rx, brtarget:$imm),
+        !strconcat(asmstr, "\t$rx, $imm  # 16 bit inst"), [], itin>;
 //
 // Compare a register and immediate and place result in CC
 // Implicit use of T8
@@ -362,6 +366,7 @@ class Sel<string op>:
                !strconcat(op, "\t$rt, .+4\n\t\n\tmove $rd, $rs"), []> {
   //let isCodeGenOnly=1;
   let Constraints = "$rd = $rd_";
+  let usesCustomInserter = 1;
 }
 
 //
@@ -520,6 +525,14 @@ def AndRxRxRy16: FRxRxRy16_ins<0b01100, "and", IIAlu>, ArithLogic16Defs<1>;
 
 //
 // Format: BEQZ rx, offset MIPS16e
+// Purpose: Branch on Equal to Zero
+// To test a GPR then do a PC-relative conditional branch.
+//
+def BeqzRxImm16: FRI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
+
+
+//
+// Format: BEQZ rx, offset MIPS16e
 // Purpose: Branch on Equal to Zero (Extended)
 // To test a GPR then do a PC-relative conditional branch.
 //
@@ -530,6 +543,13 @@ def BeqzRxImmX16: FEXT_RI16_B_ins<0b00100, "beqz", IIAlu>, cbranch16;
 // To do an unconditional PC-relative branch.
 //
 def BimmX16: FEXT_I16_ins<0b00010, "b", IIAlu>, branch16;
+
+//
+// Format: BNEZ rx, offset MIPS16e
+// Purpose: Branch on Not Equal to Zero
+// To test a GPR then do a PC-relative conditional branch.
+//
+def BnezRxImm16: FRI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
 
 //
 // Format: BNEZ rx, offset MIPS16e

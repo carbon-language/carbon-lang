@@ -404,6 +404,9 @@ namespace llvm {
                                   MachineBasicBlock *BB, unsigned Size) const;
     MachineBasicBlock *EmitAtomicCmpSwapPartword(MachineInstr *MI,
                                   MachineBasicBlock *BB, unsigned Size) const;
+    MachineBasicBlock *EmitSel16(unsigned Opc, MachineInstr *MI,
+                                 MachineBasicBlock *BB) const;
+
   };
 }
 

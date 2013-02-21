@@ -67,7 +67,7 @@ entry:
   %2 = load i32* @f, align 4
   %cond = select i1 %cmp, i32 %1, i32 %2
   store i32 %cond, i32* @z1, align 4
-; 16:	beqz	${{[0-9]+}}, .+4
+; 16:	beqz	${{[0-9]+}}, $BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %3 = load i32* @b, align 4
   %cmp1 = icmp eq i32 %3, 0
@@ -238,7 +238,7 @@ entry:
   %2 = load i32* @t, align 4
   %cond = select i1 %cmp, i32 %1, i32 %2
   store i32 %cond, i32* @z1, align 4
-; 16:	bnez	${{[0-9]+}}, .+4
+; 16:	bnez	${{[0-9]+}}, $BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %3 = load i32* @b, align 4
   %cmp1 = icmp ne i32 %3, 0
@@ -260,7 +260,7 @@ entry:
   %2 = load i32* @t, align 4
   %cond = select i1 %tobool, i32 %1, i32 %2
   store i32 %cond, i32* @z1, align 4
-; 16:	bnez	${{[0-9]+}}, .+4
+; 16:	bnez	${{[0-9]+}}, $BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %3 = load i32* @b, align 4
   %tobool1 = icmp ne i32 %3, 0
