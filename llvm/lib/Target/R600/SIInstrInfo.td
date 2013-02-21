@@ -250,7 +250,8 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
   (ins regClass:$vdata, i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc,
    i1imm:$addr64, i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr,
    GPR4Align<SReg_128>:$srsrc, i1imm:$slc, i1imm:$tfe, SSrc_32:$soffset),
-  asm,
+  asm#" $vdata, $offset, $offen, $idxen, $glc, $addr64, $dfmt,"
+     #" $nfmt, $vaddr, $srsrc, $slc, $tfe, $soffset",
   []> {
   let mayStore = 1;
   let mayLoad = 0;
@@ -262,7 +263,8 @@ class MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> : MUBUF
   (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
        i1imm:$lds, VReg_32:$vaddr, GPR4Align<SReg_128>:$srsrc, i1imm:$slc,
        i1imm:$tfe, SSrc_32:$soffset),
-  asm,
+  asm#" $dst, $offset, $offen, $idxen, $glc, $addr64, "
+     #"$lds, $vaddr, $srsrc, $slc, $tfe, $soffset",
   []> {
   let mayLoad = 1;
   let mayStore = 0;
@@ -274,7 +276,8 @@ class MTBUF_Load_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF
   (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
        i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr, GPR4Align<SReg_128>:$srsrc,
        i1imm:$slc, i1imm:$tfe, SSrc_32:$soffset),
-  asm,
+  asm#" $dst, $offset, $offen, $idxen, $glc, $addr64, $dfmt,"
+     #" $nfmt, $vaddr, $srsrc, $slc, $tfe, $soffset",
   []> {
   let mayLoad = 1;
   let mayStore = 0;
@@ -286,7 +289,8 @@ class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
        i1imm:$tfe, i1imm:$lwe, i1imm:$slc, VReg_32:$vaddr,
        GPR4Align<SReg_256>:$srsrc, GPR4Align<SReg_128>:$ssamp),
-  asm,
+  asm#" $vdata, $dmask, $unorm, $glc, $da, $r128,"
+     #" $tfe, $lwe, $slc, $vaddr, $srsrc, $ssamp",
   []> {
   let mayLoad = 1;
   let mayStore = 0;
