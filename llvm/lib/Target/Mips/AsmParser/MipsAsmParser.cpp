@@ -888,7 +888,12 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
     if (Str == "lo") {
       Val = Val & 0xffff;
     } else if (Str == "hi") {
+      int LoSign = Val & 0x8000;
       Val = (Val & 0xffff0000) >> 16;
+      //lower part is treated as signed int, so if it is negative
+      //we must add 1 to hi part to compensate
+      if (LoSign)
+        Val++;
     }
     Res = MCConstantExpr::Create(Val, getContext());
     return false;

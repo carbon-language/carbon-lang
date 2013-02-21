@@ -1,5 +1,5 @@
-# RUN: llvm-mc -triple mips-unknown-unknown %s | FileCheck %s
-#this test produces no output so there isS no FileCheck call
+# RUN: llvm-mc -show-encoding -triple mips-unknown-unknown %s | FileCheck %s
+#
 $BB0_2:
   .ent directives_test
     .frame    $sp,0,$ra
@@ -17,4 +17,3 @@ $JTI0_0:
     .set macro
     .set reorder
     .set  at=$a0
-    .end directives_test
