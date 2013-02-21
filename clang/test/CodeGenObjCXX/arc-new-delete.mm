@@ -5,8 +5,9 @@ typedef __weak id weak_id;
 
 // CHECK: define void @_Z8test_newP11objc_object
 void test_new(id invalue) {
-  // CHECK: alloca i8*
-  // CHECK-NEXT: call i8* @objc_retain
+  // CHECK: [[INVALUEADDR:%.*]] = alloca i8*
+  // CHECK-NEXT: store i8* null, i8** [[INVALUEADDR]]
+  // CHECK-NEXT: call void @objc_storeStrong(i8** [[INVALUEADDR]], i8* [[INVALUE:%.*]])
 
   // CHECK: call noalias i8* @_Znwm
   // CHECK-NEXT: {{bitcast i8\*.*to i8\*\*}}

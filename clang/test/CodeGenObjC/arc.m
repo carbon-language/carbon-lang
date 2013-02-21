@@ -6,8 +6,8 @@
 // RUN: %clang_cc1 -fobjc-runtime=macosx-10.6.0 -triple x86_64-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -o - %s | FileCheck -check-prefix=ARC-ALIEN %s
 // RUN: %clang_cc1 -fobjc-runtime=macosx-10.7.0 -triple x86_64-apple-darwin11 -emit-llvm -fblocks -fobjc-arc -fobjc-runtime-has-weak -o - %s | FileCheck -check-prefix=ARC-NATIVE %s
 
-// ARC-ALIEN: declare extern_weak i8* @objc_retain(i8*)
 // ARC-ALIEN: declare extern_weak void @objc_storeStrong(i8**, i8*)
+// ARC-ALIEN: declare extern_weak i8* @objc_retain(i8*)
 // ARC-ALIEN: declare extern_weak i8* @objc_autoreleaseReturnValue(i8*)
 // ARC-ALIEN: declare i8* @objc_msgSend(i8*, i8*, ...) #1
 // ARC-ALIEN: declare extern_weak void @objc_release(i8*)
@@ -19,8 +19,8 @@
 // ARC-ALIEN: declare extern_weak i8* @objc_autorelease(i8*)
 // ARC-ALIEN: declare extern_weak i8* @objc_retainAutorelease(i8*)
 
-// ARC-NATIVE: declare i8* @objc_retain(i8*) #1
 // ARC-NATIVE: declare void @objc_storeStrong(i8**, i8*)
+// ARC-NATIVE: declare i8* @objc_retain(i8*) #1
 // ARC-NATIVE: declare i8* @objc_autoreleaseReturnValue(i8*)
 // ARC-NATIVE: declare i8* @objc_msgSend(i8*, i8*, ...) #1
 // ARC-NATIVE: declare void @objc_release(i8*) #1

@@ -8,8 +8,8 @@ void test0(Test0 *t0, id value) {
   t0.value = value;
 }
 // CHECK: define void @test0(
-// CHECK: call i8* @objc_retain(
-// CHECK: call i8* @objc_retain(
+// CHECK: call void @objc_storeStrong
+// CHECK: call void @objc_storeStrong
 // CHECK: @objc_msgSend
 // CHECK: call void @objc_storeStrong(
 // CHECK: call void @objc_storeStrong(

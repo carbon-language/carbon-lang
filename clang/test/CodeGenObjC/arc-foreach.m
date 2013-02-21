@@ -30,10 +30,10 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
 
 // Initialize 'array'.
-// CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[ARRAY_T:%.*]]* {{%.*}} to i8*
-// CHECK-LP64-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
-// CHECK-LP64-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[ARRAY_T]]*
-// CHECK-LP64-NEXT: store [[ARRAY_T]]* [[T2]], [[ARRAY_T]]** [[ARRAY]], align 8
+// CHECK-LP64-NEXT: store [[ARRAY_T]]* null, [[ARRAY_T]]** [[ARRAY]]
+// CHECK-LP64-NEXT: [[ZERO:%.*]] = bitcast [[ARRAY_T]]** [[ARRAY]] to i8**
+// CHECK-LP64-NEXT: [[ONE:%.*]] = bitcast [[ARRAY_T]]* {{%.*}} to i8*
+// CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[ZERO]], i8* [[ONE]]) nounwind
 
 // Initialize the fast enumaration state.
 // CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[STATE_T]]* [[STATE]] to i8*

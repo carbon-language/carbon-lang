@@ -614,8 +614,8 @@ void test18(id x) {
 // CHECK-UNOPT:    define void @test18(
 // CHECK-UNOPT:      [[X:%.*]] = alloca i8*,
 // CHECK-UNOPT-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
-// CHECK-UNOPT-NEXT: [[PARM:%.*]] = call i8* @objc_retain(i8* {{%.*}})
-// CHECK-UNOPT-NEXT: store i8* [[PARM]], i8** [[X]]
+// CHECK-UNOPT-NEXT: store i8* null, i8** [[X]]
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[X]], 
 // CHECK-UNOPT-NEXT: [[SLOTREL:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-UNOPT:      [[SLOT:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-UNOPT-NEXT: [[T0:%.*]] = load i8** [[X]],
