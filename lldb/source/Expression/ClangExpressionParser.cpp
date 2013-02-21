@@ -240,6 +240,13 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         m_compiler->getTargetOpts().Triple = llvm::sys::getDefaultTargetTriple();
     }
     
+    if (target_sp->GetArchitecture().GetMachine() == llvm::Triple::x86 ||
+        target_sp->GetArchitecture().GetMachine() == llvm::Triple::x86_64)
+    {
+        m_compiler->getTargetOpts().Features.push_back("+sse");
+        m_compiler->getTargetOpts().Features.push_back("+sse2");
+    }
+    
     if (m_compiler->getTargetOpts().Triple.find("ios") != std::string::npos)
         m_compiler->getTargetOpts().ABI = "apcs-gnu";
     
@@ -619,6 +626,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     StringRef mArch;
     StringRef mCPU;
     SmallVector<std::string, 0> mAttrs;
+    
+    for (std::string &feature : m_compiler->getTargetOpts().Features)
+        mAttrs.push_back(feature);
     
     TargetMachine *target_machine = builder.selectTarget(triple,
                                                          mArch,
