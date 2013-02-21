@@ -53,7 +53,8 @@ add_custom_target(cpp11-migrate-autogen
 set(TEST_SOURCE_ROOT ${CMAKE_CURRENT_BINARY_DIR}/generated_tests)
 set(TEST_EXEC_ROOT ${CMAKE_CURRENT_BINARY_DIR})
 set(TESTSUITE_NAME "cpp11-migrate Auto-Generated Tests")
+get_filename_component(INPUT_LIT_CFG ${CMAKE_CURRENT_SOURCE_DIR}/../lit.site.cfg.in REALPATH)
 configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/../lit.site.cfg.in
+  ${INPUT_LIT_CFG}
   ${CMAKE_CURRENT_BINARY_DIR}/generated_tests/lit.site.cfg
   )
