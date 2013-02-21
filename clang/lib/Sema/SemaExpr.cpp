@@ -1672,14 +1672,13 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             << SS.getRange()
             << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                             CorrectedStr);
-        if (ND) {
-          unsigned diag = isa<ImplicitParamDecl>(ND)
-            ? diag::note_implicit_param_decl
-            : diag::note_previous_decl;
 
-          Diag(ND->getLocation(), diag)
-            << CorrectedQuotedStr;
-        }
+        unsigned diag = isa<ImplicitParamDecl>(ND)
+          ? diag::note_implicit_param_decl
+          : diag::note_previous_decl;
+
+        Diag(ND->getLocation(), diag)
+          << CorrectedQuotedStr;
 
         // Tell the callee to try to recover.
         return false;
