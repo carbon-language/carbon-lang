@@ -31,7 +31,7 @@ LockFileManager::readLockFile(StringRef LockFileName) {
   // to read, so we just return.
   bool Exists = false;
   if (sys::fs::exists(LockFileName, Exists) || !Exists)
-    return Optional<std::pair<std::string, int> >();
+    return None;
 
   // Read the owning host and PID out of the lock file. If it appears that the
   // owning process is dead, the lock file is invalid.
@@ -45,7 +45,7 @@ LockFileManager::readLockFile(StringRef LockFileName) {
   // Delete the lock file. It's invalid anyway.
   bool Existed;
   sys::fs::remove(LockFileName, Existed);
-  return Optional<std::pair<std::string, int> >();
+  return None;
 }
 
 bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {

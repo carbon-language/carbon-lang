@@ -16,6 +16,7 @@
 #ifndef LLVM_ADT_OPTIONAL_H
 #define LLVM_ADT_OPTIONAL_H
 
+#include "llvm/ADT/None.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/AlignOf.h"
 #include <cassert>
@@ -31,6 +32,7 @@ class Optional {
   AlignedCharArrayUnion<T> storage;
   bool hasVal;
 public:
+  Optional(NoneType) : hasVal(false) {}
   explicit Optional() : hasVal(false) {}
   Optional(const T &y) : hasVal(true) {
     new (storage.buffer) T(y);
