@@ -85,41 +85,57 @@ include "SIInstrFormats.td"
 // Scalar classes
 //===----------------------------------------------------------------------===//
 
-class SOP1_32 <bits<8> op, string opName, list<dag> pattern>
-  : SOP1 <op, (outs SReg_32:$dst), (ins SSrc_32:$src0), opName, pattern>;
+class SOP1_32 <bits<8> op, string opName, list<dag> pattern> : SOP1 <
+  op, (outs SReg_32:$dst), (ins SSrc_32:$src0),
+  opName#" $dst, $src0", pattern
+>;
 
-class SOP1_64 <bits<8> op, string opName, list<dag> pattern>
-  : SOP1 <op, (outs SReg_64:$dst), (ins SSrc_64:$src0), opName, pattern>;
+class SOP1_64 <bits<8> op, string opName, list<dag> pattern> : SOP1 <
+  op, (outs SReg_64:$dst), (ins SSrc_64:$src0),
+  opName#" $dst, $src0", pattern
+>;
 
-class SOP2_32 <bits<7> op, string opName, list<dag> pattern>
-  : SOP2 <op, (outs SReg_32:$dst), (ins SSrc_32:$src0, SSrc_32:$src1), opName, pattern>;
+class SOP2_32 <bits<7> op, string opName, list<dag> pattern> : SOP2 <
+  op, (outs SReg_32:$dst), (ins SSrc_32:$src0, SSrc_32:$src1),
+  opName#" $dst, $src0, $src1", pattern
+>;
 
-class SOP2_64 <bits<7> op, string opName, list<dag> pattern>
-  : SOP2 <op, (outs SReg_64:$dst), (ins SSrc_64:$src0, SSrc_64:$src1), opName, pattern>;
+class SOP2_64 <bits<7> op, string opName, list<dag> pattern> : SOP2 <
+  op, (outs SReg_64:$dst), (ins SSrc_64:$src0, SSrc_64:$src1),
+  opName#" $dst, $src0, $src1", pattern
+>;
 
-class SOPC_32 <bits<7> op, string opName, list<dag> pattern>
-  : SOPC <op, (outs SCCReg:$dst), (ins SSrc_32:$src0, SSrc_32:$src1), opName, pattern>;
+class SOPC_32 <bits<7> op, string opName, list<dag> pattern> : SOPC <
+  op, (outs SCCReg:$dst), (ins SSrc_32:$src0, SSrc_32:$src1),
+  opName#" $dst, $src0, $src1", pattern
+>;
 
-class SOPC_64 <bits<7> op, string opName, list<dag> pattern>
-  : SOPC <op, (outs SCCReg:$dst), (ins SSrc_64:$src0, SSrc_64:$src1), opName, pattern>;
+class SOPC_64 <bits<7> op, string opName, list<dag> pattern> : SOPC <
+  op, (outs SCCReg:$dst), (ins SSrc_64:$src0, SSrc_64:$src1),
+  opName#" $dst, $src0, $src1", pattern
+>;
 
-class SOPK_32 <bits<5> op, string opName, list<dag> pattern>
-  : SOPK <op, (outs SReg_32:$dst), (ins i16imm:$src0), opName, pattern>;
+class SOPK_32 <bits<5> op, string opName, list<dag> pattern> : SOPK <
+  op, (outs SReg_32:$dst), (ins i16imm:$src0),
+  opName#" $dst, $src0", pattern
+>;
 
-class SOPK_64 <bits<5> op, string opName, list<dag> pattern>
-  : SOPK <op, (outs SReg_64:$dst), (ins i16imm:$src0), opName, pattern>;
+class SOPK_64 <bits<5> op, string opName, list<dag> pattern> : SOPK <
+  op, (outs SReg_64:$dst), (ins i16imm:$src0),
+  opName#" $dst, $src0", pattern
+>;
 
 multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
   def _IMM : SMRD <
     op, 1, (outs dstClass:$dst),
     (ins GPR2Align<SReg_64>:$sbase, i32imm:$offset),
-    asm, []
+    asm#" $dst, $sbase, $offset", []
   >;
 
   def _SGPR : SMRD <
     op, 0, (outs dstClass:$dst),
     (ins GPR2Align<SReg_64>:$sbase, SReg_32:$soff),
-    asm, []
+    asm#" $dst, $sbase, $soff", []
   >;
 }
 
