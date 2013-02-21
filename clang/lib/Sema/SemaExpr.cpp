@@ -7446,7 +7446,10 @@ QualType Sema::CheckVectorLogicalOperands(ExprResult &LHS, ExprResult &RHS,
   // Ensure that either both operands are of the same vector type, or
   // one operand is of a vector type and the other is of its element type.
   QualType vType = CheckVectorOperands(LHS, RHS, Loc, false);
-  if (vType.isNull() || vType->isFloatingType())
+  if (vType.isNull())
+    return InvalidOperands(Loc, LHS, RHS);
+  if (getLangOpts().OpenCL && getLangOpts().OpenCLVersion < 120 &&
+      vType->hasFloatingRepresentation())
     return InvalidOperands(Loc, LHS, RHS);
   
   return GetSignedVectorType(LHS.get()->getType());
@@ -7522,8 +7525,17 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
                       RHS.get()->getLocEnd()));
       }
   }
-  
+
   if (!Context.getLangOpts().CPlusPlus) {
+    // OpenCL v1.1 s6.3.g: The logical operators and (&&), or (||) do
+    // not operate on the built-in scalar and vector float types.
+    if (Context.getLangOpts().OpenCL &&
+        Context.getLangOpts().OpenCLVersion < 120) {
+      if (LHS.get()->getType()->isFloatingType() ||
+          RHS.get()->getType()->isFloatingType())
+        return InvalidOperands(Loc, LHS, RHS);
+    }
+
     LHS = UsualUnaryConversions(LHS.take());
     if (LHS.isInvalid())
       return QualType();
@@ -8849,7 +8861,8 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
 
   case UO_Not: // bitwise complement
     Input = UsualUnaryConversions(Input.take());
-    if (Input.isInvalid()) return ExprError();
+    if (Input.isInvalid())
+      return ExprError();
     resultType = Input.get()->getType();
     if (resultType->isDependentType())
       break;
@@ -8857,12 +8870,22 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     if (resultType->isComplexType() || resultType->isComplexIntegerType())
       // C99 does not support '~' for complex conjugation.
       Diag(OpLoc, diag::ext_integer_complement_complex)
-        << resultType << Input.get()->getSourceRange();
+          << resultType << Input.get()->getSourceRange();
     else if (resultType->hasIntegerRepresentation())
       break;
-    else {
+    else if (resultType->isExtVectorType()) {
+      if (Context.getLangOpts().OpenCL) {
+        // OpenCL v1.1 s6.3.f: The bitwise operator not (~) does not operate
+        // on vector float types.
+        QualType T = resultType->getAs<ExtVectorType>()->getElementType();
+        if (!T->isIntegerType())
+          return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
+                           << resultType << Input.get()->getSourceRange());
+      }
+      break;
+    } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
-        << resultType << Input.get()->getSourceRange());
+                       << resultType << Input.get()->getSourceRange());
     }
     break;
 
@@ -8887,8 +8910,24 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
         // operand contextually converted to bool.
         Input = ImpCastExprToType(Input.take(), Context.BoolTy,
                                   ScalarTypeToBooleanCastKind(resultType));
+      } else if (Context.getLangOpts().OpenCL &&
+                 Context.getLangOpts().OpenCLVersion < 120) {
+        // OpenCL v1.1 6.3.h: The logical operator not (!) does not
+        // operate on scalar float types.
+        if (!resultType->isIntegerType())
+          return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
+                           << resultType << Input.get()->getSourceRange());
       }
     } else if (resultType->isExtVectorType()) {
+      if (Context.getLangOpts().OpenCL &&
+          Context.getLangOpts().OpenCLVersion < 120) {
+        // OpenCL v1.1 6.3.h: The logical operator not (!) does not
+        // operate on vector float types.
+        QualType T = resultType->getAs<ExtVectorType>()->getElementType();
+        if (!T->isIntegerType())
+          return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
+                           << resultType << Input.get()->getSourceRange());
+      }
       // Vector logical not returns the signed variant of the operand type.
       resultType = GetSignedVectorType(resultType);
       break;
