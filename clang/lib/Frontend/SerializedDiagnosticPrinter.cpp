@@ -543,8 +543,18 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
     // Special-case diagnostics with no location. We may not have entered a
     // source file in this case, so we can't use the normal DiagnosticsRenderer
     // machinery.
+
+    // Make sure we bracket all notes as "sub-diagnostics".  This matches
+    // the behavior in SDiagsRenderer::emitDiagnostic().
+    if (DiagLevel == DiagnosticsEngine::Note)
+      EnterDiagBlock();
+
     EmitDiagnosticMessage(SourceLocation(), PresumedLoc(), DiagLevel,
                           State->diagBuf, 0, &Info);
+
+    if (DiagLevel == DiagnosticsEngine::Note)
+      ExitDiagBlock();
+
     return;
   }
 
