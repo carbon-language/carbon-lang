@@ -1624,16 +1624,38 @@ struct __mu_return
     : public ____mu_return<_Ti,
                            __is_reference_wrapper<_Ti>::value,
                            is_bind_expression<_Ti>::value,
-                           0 < is_placeholder<_Ti>::value,
+                           0 < is_placeholder<_Ti>::value &&
+                           is_placeholder<_Ti>::value <= tuple_size<_TupleUj>::value,
                            _TupleUj>
 {
 };
 
 template <class _Fp, class _BoundArgs, class _TupleUj>
+struct _is_valid_bind_return
+{
+    static const bool value = false;
+};
+
+template <class _Fp, class ..._BoundArgs, class _TupleUj>
+struct _is_valid_bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj>
+{
+    static const bool value = __invokable<_Fp,
+                    typename __mu_return<_BoundArgs, _TupleUj>::type...>::value;
+};
+
+template <class _Fp, class ..._BoundArgs, class _TupleUj>
+struct _is_valid_bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj>
+{
+    static const bool value = __invokable<_Fp,
+                    typename __mu_return<const _BoundArgs, _TupleUj>::type...>::value;
+};
+
+template <class _Fp, class _BoundArgs, class _TupleUj,
+          bool = _is_valid_bind_return<_Fp, _BoundArgs, _TupleUj>::value>
 struct __bind_return;
 
 template <class _Fp, class ..._BoundArgs, class _TupleUj>
-struct __bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj>
+struct __bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj, true>
 {
     typedef typename __invoke_of
     <
@@ -1647,7 +1669,7 @@ struct __bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj>
 };
 
 template <class _Fp, class ..._BoundArgs, class _TupleUj>
-struct __bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj>
+struct __bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj, true>
 {
     typedef typename __invoke_of
     <
@@ -1673,8 +1695,10 @@ template<class _Fp, class ..._BoundArgs>
 class __bind
     : public __weak_result_type<typename decay<_Fp>::type>
 {
+protected:
     typedef typename decay<_Fp>::type _Fd;
     typedef tuple<typename decay<_BoundArgs>::type...> _Td;
+private:
     _Fd __f_;
     _Td __bound_args_;
 
@@ -1731,7 +1755,7 @@ public:
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
-        typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type
+        typename __bind_return<const _Fd, const _Td, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args) const
         {
             return __apply_functor(__f_, __bound_args_, __indices(),
@@ -1747,6 +1771,8 @@ class __bind_r
     : public __bind<_Fp, _BoundArgs...>
 {
     typedef __bind<_Fp, _BoundArgs...> base;
+    typedef typename base::_Fd _Fd;
+    typedef typename base::_Td _Td;
 public:
     typedef _Rp result_type;
 
@@ -1784,7 +1810,12 @@ public:
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
-        result_type
+        typename enable_if
+        <
+            is_convertible<typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type,
+                           result_type>::value,
+            result_type
+        >::type
         operator()(_Args&& ...__args)
         {
             return base::operator()(_VSTD::forward<_Args>(__args)...);
@@ -1792,7 +1823,12 @@ public:
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
-        result_type
+        typename enable_if
+        <
+            is_convertible<typename __bind_return<const _Fd, const _Td, tuple<_Args&&...> >::type,
+                           result_type>::value,
+            result_type
+        >::type
         operator()(_Args&& ...__args) const
         {
             return base::operator()(_VSTD::forward<_Args>(__args)...);
