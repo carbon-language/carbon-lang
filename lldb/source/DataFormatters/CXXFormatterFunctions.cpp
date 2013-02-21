@@ -738,6 +738,41 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
     }
 }
 
+static bool
+ReadAsciiBufferAndDumpToStream (lldb::addr_t location,
+                                lldb::ProcessSP& process_sp,
+                                Stream& dest,
+                                size_t size = 0,
+                                Error* error = NULL,
+                                size_t *data_read = NULL,
+                                char prefix_token = '@',
+                                char quote = '"')
+{
+    Error my_error;
+    size_t my_data_read;
+    if (!process_sp || location == 0)
+        return false;
+    
+    if (size == 0)
+        size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
+    
+    my_data_read = process_sp->ReadCStringFromMemory(location, (char*)buffer_sp->GetBytes(), size, my_error);
+
+    if (error)
+        *error = my_error;
+    if (data_read)
+        *data_read = my_data_read;
+    
+    if (my_error.Fail())
+        return false;
+    if (my_data_read)
+        dest.Printf("%c%c%s%c",prefix_token,quote,(char*)buffer_sp->GetBytes(),quote);
+    
+    return true;
+}
+
 bool
 lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
@@ -771,7 +806,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     if (process_sp->GetByteOrder() != lldb::eByteOrderLittle)
         info_bits_location += 3;
         
-        Error error;
+    Error error;
     
     uint8_t info_bits = process_sp->ReadUnsignedIntegerFromMemory(info_bits_location, 1, 0, error);
     if (error.Fail())
@@ -792,8 +827,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         strcmp(class_name,"NSCFString") &&
         strcmp(class_name,"NSPathStore2"))
     {
-        // probably not one of us - bail out
-        return false;
+        // not one of us - but tell me class name
+        stream.Printf("class name = %s",class_name);
+        return true;
     }
     
     if (is_mutable)
@@ -805,31 +841,16 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         if (has_explicit_length and is_unicode)
             return ReadUTFBufferAndDumpToStream<UTF16> (ConvertUTF16toUTF8,location, process_sp, stream, '@');
         else
-        {
-            location++;
-            lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024,0));
-            size_t data_read = process_sp->ReadCStringFromMemory(location, (char*)buffer_sp->GetBytes(), 1024, error);
-            if (error.Fail())
-                return false;
-            if (data_read)
-                stream.Printf("@\"%s\"",(char*)buffer_sp->GetBytes());
-                return true;
-        }
+            return ReadAsciiBufferAndDumpToStream(location+1,process_sp,stream);
     }
     else if (is_inline && has_explicit_length && !is_unicode && !is_special && !is_mutable)
     {
         uint64_t location = 3 * ptr_size + valobj_addr;
-        lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024,0));
-        size_t data_read = process_sp->ReadCStringFromMemory(location, (char*)buffer_sp->GetBytes(), 1024, error);
-        if (error.Fail())
-            return false;
-        if (data_read)
-            stream.Printf("@\"%s\"",(char*)buffer_sp->GetBytes());
-            return true;
+        return ReadAsciiBufferAndDumpToStream(location,process_sp,stream);
     }
     else if (is_unicode)
     {
-        uint64_t location = valobj_addr + ptr_size + 4 + (ptr_size == 8 ? 4 : 0);
+        uint64_t location = valobj_addr + 2*ptr_size;
         if (is_inline)
         {
             if (!has_explicit_length)
@@ -855,30 +876,18 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     }
     else if (is_inline)
     {
-        uint64_t location = valobj_addr + ptr_size + 4 + (ptr_size == 8 ? 4 : 0);
+        uint64_t location = valobj_addr + 2*ptr_size;
         if (!has_explicit_length)
             location++;
-        lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024,0));
-        size_t data_read = process_sp->ReadCStringFromMemory(location, (char*)buffer_sp->GetBytes(), 1024, error);
-        if (error.Fail())
-            return false;
-        if (data_read)
-            stream.Printf("@\"%s\"",(char*)buffer_sp->GetBytes());
-            return true;
+        return ReadAsciiBufferAndDumpToStream(location,process_sp,stream);
     }
     else
     {
-        uint64_t location = valobj_addr + ptr_size + 4 + (ptr_size == 8 ? 4 : 0);
+        uint64_t location = valobj_addr + 2*ptr_size;
         location = process_sp->ReadPointerFromMemory(location, error);
         if (error.Fail())
             return false;
-        lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024,0));
-        size_t data_read = process_sp->ReadCStringFromMemory(location, (char*)buffer_sp->GetBytes(), 1024, error);
-        if (error.Fail())
-            return false;
-        if (data_read)
-            stream.Printf("@\"%s\"",(char*)buffer_sp->GetBytes());
-            return true;
+        return ReadAsciiBufferAndDumpToStream(location,process_sp,stream);
     }
     
     stream.Printf("class name = %s",class_name);
