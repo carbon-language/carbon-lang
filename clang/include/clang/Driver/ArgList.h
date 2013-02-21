@@ -290,6 +290,8 @@ namespace driver {
                                          StringRef RHS) const;
 
     /// @}
+
+    void dump();
   };
 
   class InputArgList : public ArgList  {
