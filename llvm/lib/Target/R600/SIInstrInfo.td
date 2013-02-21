@@ -194,26 +194,35 @@ multiclass VOP2_64 <bits<6> op, string opName, list<dag> pattern>
   : VOP2_Helper <op, VReg_64, VSrc_64, opName, pattern>;
 
 multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
-                        string opName, list<dag> pattern> {
+                        string opName, ValueType vt, PatLeaf cond> {
 
-  def _e32 : VOPC <op, (ins arc:$src0, vrc:$src1), opName, pattern>;
+  def _e32 : VOPC <
+    op, (ins arc:$src0, vrc:$src1),
+    opName#"_e32 $dst, $src0, $src1", []
+  >;
+
   def _e64 : VOP3 <
     {0, op{7}, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs SReg_64:$dst),
     (ins arc:$src0, vrc:$src1,
          InstFlag:$abs, InstFlag:$clamp,
          InstFlag:$omod, InstFlag:$neg),
-    opName, pattern
+    opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg",
+    !if(!eq(!cast<string>(cond), "COND_NULL"), []<dag>,
+      [(set SReg_64:$dst, (i1 (setcc (vt arc:$src0), vrc:$src1, cond)))]
+    )
   > {
     let SRC2 = SIOperand.ZERO;
   }
 }
 
-multiclass VOPC_32 <bits<8> op, string opName, list<dag> pattern>
-  : VOPC_Helper <op, VReg_32, VSrc_32, opName, pattern>;
+multiclass VOPC_32 <bits<8> op, string opName,
+  ValueType vt = untyped, PatLeaf cond = COND_NULL>
+  : VOPC_Helper <op, VReg_32, VSrc_32, opName, vt, cond>;
 
-multiclass VOPC_64 <bits<8> op, string opName, list<dag> pattern>
-  : VOPC_Helper <op, VReg_64, VSrc_64, opName, pattern>;
+multiclass VOPC_64 <bits<8> op, string opName,
+  ValueType vt = untyped, PatLeaf cond = COND_NULL>
+  : VOPC_Helper <op, VReg_64, VSrc_64, opName, vt, cond>;
 
 //===----------------------------------------------------------------------===//
 // Vector I/O classes

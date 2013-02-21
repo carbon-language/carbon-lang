@@ -77,6 +77,11 @@ def COND_LE : PatLeaf <
                      case ISD::SETLE: return true;}}}]
 >;
 
+def COND_NULL : PatLeaf <
+  (cond),
+  [{return false;}]
+>;
+
 //===----------------------------------------------------------------------===//
 // Load/Store Pattern Fragments
 //===----------------------------------------------------------------------===//
