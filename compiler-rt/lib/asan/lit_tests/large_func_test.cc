@@ -56,7 +56,8 @@ int main(int argc, char **argv) {
   // CHECK: {{    #1 0x.* in _?main .*large_func_test.cc:}}[[@LINE-1]]
   // CHECK: {{0x.* is located 12 bytes to the right of 400-byte region}}
   // CHECK: {{allocated by thread T0 here:}}
-  // CHECK: {{    #0 0x.* in operator new.*}}
-  // CHECK: {{    #1 0x.* in _?main .*large_func_test.cc:}}[[@LINE-6]]
+  // CHECK-Linux: {{    #0 0x.* in operator new.*}}
+  // CHECK-Darwin: {{    #0 0x.* in .*_Zna.*}}
+  // CHECK: {{    #1 0x.* in _?main .*large_func_test.cc:}}[[@LINE-7]]
   delete x;
 }
