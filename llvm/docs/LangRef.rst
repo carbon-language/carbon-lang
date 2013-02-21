@@ -2535,6 +2535,7 @@ The loop identifier metadata is implemented using a metadata that refers to
 itself as follows:
 
 .. code-block:: llvm
+
     !0 = metadata !{ metadata !0 }
 
 '``llvm.loop.parallel``' Metadata
