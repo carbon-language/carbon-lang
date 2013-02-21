@@ -225,16 +225,16 @@ void ExprEngine::processCFGElement(const CFGElement E, ExplodedNode *Pred,
     case CFGElement::Invalid:
       llvm_unreachable("Unexpected CFGElement kind.");
     case CFGElement::Statement:
-      ProcessStmt(const_cast<Stmt*>(E.getAs<CFGStmt>()->getStmt()), Pred);
+      ProcessStmt(const_cast<Stmt*>(E.castAs<CFGStmt>().getStmt()), Pred);
       return;
     case CFGElement::Initializer:
-      ProcessInitializer(E.getAs<CFGInitializer>()->getInitializer(), Pred);
+      ProcessInitializer(E.castAs<CFGInitializer>().getInitializer(), Pred);
       return;
     case CFGElement::AutomaticObjectDtor:
     case CFGElement::BaseDtor:
     case CFGElement::MemberDtor:
     case CFGElement::TemporaryDtor:
-      ProcessImplicitDtor(*E.getAs<CFGImplicitDtor>(), Pred);
+      ProcessImplicitDtor(E.castAs<CFGImplicitDtor>(), Pred);
       return;
   }
   currBldrCtx = 0;
@@ -440,16 +440,16 @@ void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
   ExplodedNodeSet Dst;
   switch (D.getKind()) {
   case CFGElement::AutomaticObjectDtor:
-    ProcessAutomaticObjDtor(cast<CFGAutomaticObjDtor>(D), Pred, Dst);
+    ProcessAutomaticObjDtor(D.castAs<CFGAutomaticObjDtor>(), Pred, Dst);
     break;
   case CFGElement::BaseDtor:
-    ProcessBaseDtor(cast<CFGBaseDtor>(D), Pred, Dst);
+    ProcessBaseDtor(D.castAs<CFGBaseDtor>(), Pred, Dst);
     break;
   case CFGElement::MemberDtor:
-    ProcessMemberDtor(cast<CFGMemberDtor>(D), Pred, Dst);
+    ProcessMemberDtor(D.castAs<CFGMemberDtor>(), Pred, Dst);
     break;
   case CFGElement::TemporaryDtor:
-    ProcessTemporaryDtor(cast<CFGTemporaryDtor>(D), Pred, Dst);
+    ProcessTemporaryDtor(D.castAs<CFGTemporaryDtor>(), Pred, Dst);
     break;
   default:
     llvm_unreachable("Unexpected dtor kind.");
@@ -1200,10 +1200,10 @@ static const Stmt *ResolveCondition(const Stmt *Condition,
   CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
   for (; I != E; ++I) {
     CFGElement Elem = *I;
-    CFGStmt *CS = dyn_cast<CFGStmt>(&Elem);
+    CFGStmt CS = Elem.getAs<CFGStmt>();
     if (!CS)
       continue;
-    if (CS->getStmt() != Condition)
+    if (CS.getStmt() != Condition)
       break;
     return Condition;
   }

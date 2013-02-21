@@ -515,7 +515,7 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   }
 
   // At this point, we know we're processing a normal statement.
-  CFGStmt CS = cast<CFGStmt>((*Block)[Idx]);
+  CFGStmt CS = (*Block)[Idx].castAs<CFGStmt>();
   PostStmt Loc(CS.getStmt(), N->getLocationContext());
 
   if (Loc == N->getLocation()) {

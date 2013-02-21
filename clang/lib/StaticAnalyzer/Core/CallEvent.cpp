@@ -961,8 +961,9 @@ CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
   // destructors, though this could change in the future.
   const CFGBlock *B = CalleeCtx->getCallSiteBlock();
   CFGElement E = (*B)[CalleeCtx->getIndex()];
-  assert(isa<CFGImplicitDtor>(E) && "All other CFG elements should have exprs");
-  assert(!isa<CFGTemporaryDtor>(E) && "We don't handle temporaries yet");
+  assert(E.getAs<CFGImplicitDtor>() &&
+         "All other CFG elements should have exprs");
+  assert(!E.getAs<CFGTemporaryDtor>() && "We don't handle temporaries yet");
 
   SValBuilder &SVB = State->getStateManager().getSValBuilder();
   const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CalleeCtx->getDecl());
@@ -970,11 +971,11 @@ CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
   SVal ThisVal = State->getSVal(ThisPtr);
 
   const Stmt *Trigger;
-  if (const CFGAutomaticObjDtor *AutoDtor = dyn_cast<CFGAutomaticObjDtor>(&E))
-    Trigger = AutoDtor->getTriggerStmt();
+  if (CFGAutomaticObjDtor AutoDtor = E.getAs<CFGAutomaticObjDtor>())
+    Trigger = AutoDtor.getTriggerStmt();
   else
     Trigger = Dtor->getBody();
 
   return getCXXDestructorCall(Dtor, Trigger, ThisVal.getAsRegion(),
-                              isa<CFGBaseDtor>(E), State, CallerCtx);
+                              E.getAs<CFGBaseDtor>(), State, CallerCtx);
 }

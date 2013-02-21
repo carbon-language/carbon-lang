@@ -158,7 +158,7 @@ static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
     CFGBlock::const_reverse_iterator ri = B.rbegin(), re = B.rend();
 
     for ( ; ri != re ; ++ri)
-      if (isa<CFGStmt>(*ri))
+      if (ri->getAs<CFGStmt>())
         break;
 
     // No more CFGElements in the block?
@@ -172,7 +172,7 @@ static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
       continue;
     }
 
-    CFGStmt CS = cast<CFGStmt>(*ri);
+    CFGStmt CS = ri->castAs<CFGStmt>();
     const Stmt *S = CS.getStmt();
     if (isa<ReturnStmt>(S)) {
       HasLiveReturn = true;
@@ -762,8 +762,8 @@ namespace {
           for (CFGBlock::const_reverse_iterator ElemIt = P->rbegin(),
                                                 ElemEnd = P->rend();
                ElemIt != ElemEnd; ++ElemIt) {
-            if (const CFGStmt *CS = ElemIt->getAs<CFGStmt>()) {
-              if (const AttributedStmt *AS = asFallThroughAttr(CS->getStmt())) {
+            if (CFGStmt CS = ElemIt->getAs<CFGStmt>()) {
+              if (const AttributedStmt *AS = asFallThroughAttr(CS.getStmt())) {
                 S.Diag(AS->getLocStart(),
                        diag::warn_fallthrough_attr_unreachable);
                 markFallthroughVisited(AS);
@@ -833,8 +833,8 @@ namespace {
       for (CFGBlock::const_reverse_iterator ElemIt = B.rbegin(),
                                             ElemEnd = B.rend();
                                             ElemIt != ElemEnd; ++ElemIt) {
-        if (const CFGStmt *CS = ElemIt->getAs<CFGStmt>())
-          return CS->getStmt();
+        if (CFGStmt CS = ElemIt->getAs<CFGStmt>())
+          return CS.getStmt();
       }
       // Workaround to detect a statement thrown out by CFGBuilder:
       //   case X: {} case Y:

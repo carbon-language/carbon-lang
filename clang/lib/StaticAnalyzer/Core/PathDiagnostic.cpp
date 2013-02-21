@@ -479,15 +479,15 @@ getLocationForCaller(const StackFrameContext *SFC,
   case CFGElement::Invalid:
     llvm_unreachable("Invalid CFGElement");
   case CFGElement::Statement:
-    return PathDiagnosticLocation(cast<CFGStmt>(Source).getStmt(),
+    return PathDiagnosticLocation(Source.castAs<CFGStmt>().getStmt(),
                                   SM, CallerCtx);
   case CFGElement::Initializer: {
-    const CFGInitializer &Init = cast<CFGInitializer>(Source);
+    const CFGInitializer &Init = Source.castAs<CFGInitializer>();
     return PathDiagnosticLocation(Init.getInitializer()->getInit(),
                                   SM, CallerCtx);
   }
   case CFGElement::AutomaticObjectDtor: {
-    const CFGAutomaticObjDtor &Dtor = cast<CFGAutomaticObjDtor>(Source);
+    const CFGAutomaticObjDtor &Dtor = Source.castAs<CFGAutomaticObjDtor>();
     return PathDiagnosticLocation::createEnd(Dtor.getTriggerStmt(),
                                              SM, CallerCtx);
   }

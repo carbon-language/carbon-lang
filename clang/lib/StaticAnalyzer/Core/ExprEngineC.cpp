@@ -554,7 +554,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     // in SrcBlock is the value of the enclosing expression.
     // However, we still need to constrain that value to be 0 or 1.
     assert(!SrcBlock->empty());
-    CFGStmt Elem = cast<CFGStmt>(*SrcBlock->rbegin());
+    CFGStmt Elem = SrcBlock->rbegin()->castAs<CFGStmt>();
     const Expr *RHS = cast<Expr>(Elem.getStmt());
     SVal RHSVal = N->getState()->getSVal(RHS, Pred->getLocationContext());
 
@@ -659,8 +659,8 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
   for (CFGBlock::const_reverse_iterator I = SrcBlock->rbegin(),
                                         E = SrcBlock->rend(); I != E; ++I) {
     CFGElement CE = *I;
-    if (CFGStmt *CS = dyn_cast<CFGStmt>(&CE)) {
-      const Expr *ValEx = cast<Expr>(CS->getStmt());
+    if (CFGStmt CS = CE.getAs<CFGStmt>()) {
+      const Expr *ValEx = cast<Expr>(CS.getStmt());
       hasValue = true;
       V = state->getSVal(ValEx, LCtx);
       break;
