@@ -308,7 +308,8 @@ public:
                              eFlagRequiresFrame |
                              eFlagTryTargetAPILock |
                              eFlagProcessMustBeLaunched |
-                             eFlagProcessMustBePaused),
+                             eFlagProcessMustBePaused |
+                             eFlagRequiresProcess),
         m_option_group (interpreter),
         m_option_variable(true), // Include the frame specific options by passing "true"
         m_option_format (eFormatDefault),
