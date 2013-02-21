@@ -346,7 +346,7 @@ def crbitm: Operand<i8> {
 // Address operands
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
-  let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
+  let MIOperandInfo = (ops symbolLo:$imm, ptr_rc:$reg);
   let EncoderMethod = "getMemRIEncoding";
 }
 def memrr : Operand<iPTR> {
@@ -355,7 +355,7 @@ def memrr : Operand<iPTR> {
 }
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
-  let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
+  let MIOperandInfo = (ops symbolLo:$imm, ptr_rc:$reg);
   let EncoderMethod = "getMemRIXEncoding";
 }
 

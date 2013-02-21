@@ -57,26 +57,32 @@ namespace llvm {
     
     /// MO_PIC_FLAG - If this bit is set, the symbol reference is relative to
     /// the function's picbase, e.g. lo16(symbol-picbase).
-    MO_PIC_FLAG = 4,
+    MO_PIC_FLAG = 2,
 
     /// MO_NLP_FLAG - If this bit is set, the symbol reference is actually to
     /// the non_lazy_ptr for the global, e.g. lo16(symbol$non_lazy_ptr-picbase).
-    MO_NLP_FLAG = 8,
+    MO_NLP_FLAG = 4,
     
     /// MO_NLP_HIDDEN_FLAG - If this bit is set, the symbol reference is to a
     /// symbol with hidden visibility.  This causes a different kind of
     /// non-lazy-pointer to be generated.
-    MO_NLP_HIDDEN_FLAG = 16,
+    MO_NLP_HIDDEN_FLAG = 8,
 
     /// The next are not flags but distinct values.
-    MO_ACCESS_MASK = 0xe0,
+    MO_ACCESS_MASK = 0xf0,
 
     /// MO_LO16, MO_HA16 - lo16(symbol) and ha16(symbol)
-    MO_LO16 = 1 << 5,
-    MO_HA16 = 2 << 5,
+    MO_LO16 = 1 << 4,
+    MO_HA16 = 2 << 4,
 
-    MO_TPREL16_HA = 3 << 5,
-    MO_TPREL16_LO = 4 << 5
+    MO_TPREL16_HA = 3 << 4,
+    MO_TPREL16_LO = 4 << 4,
+
+    /// These values identify relocations on immediates folded
+    /// into memory operations.
+    MO_DTPREL16_LO = 5 << 4,
+    MO_TLSLD16_LO  = 6 << 4,
+    MO_TOC16_LO    = 7 << 4
   };
   } // end namespace PPCII
   
