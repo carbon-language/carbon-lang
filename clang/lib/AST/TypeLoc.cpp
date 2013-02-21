@@ -199,9 +199,9 @@ namespace {
 /// because it's a convenient base class.  Ideally we would not accept
 /// those here, but ideally we would have better implementations for
 /// them.
-bool TypeSpecTypeLoc::isType(const TypeLoc *TL) {
-  if (TL->getType().hasLocalQualifiers()) return false;
-  return TSTChecker().Visit(*TL);
+bool TypeSpecTypeLoc::isKind(const TypeLoc &TL) {
+  if (TL.getType().hasLocalQualifiers()) return false;
+  return TSTChecker().Visit(TL);
 }
 
 // Reimplemented to account for GNU/C++ extension

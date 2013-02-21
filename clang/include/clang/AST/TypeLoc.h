@@ -48,7 +48,7 @@ public:
   /// is of the desired type.
   template<typename T>
   T castAs() const {
-    assert(T::isType(this));
+    assert(T::isKind(*this));
     T t;
     TypeLoc& tl = t;
     tl = *this;
@@ -59,16 +59,12 @@ public:
   /// this TypeLoc is not of the desired type.
   template<typename T>
   T getAs() const {
-    if (!T::isType(this))
+    if (!T::isKind(*this))
       return T();
     T t;
     TypeLoc& tl = t;
     tl = *this;
     return t;
-  }
-
-  static bool isType(const TypeLoc*) {
-    return true;
   }
 
   /// The kinds of TypeLocs.  Equivalent to the Type::TypeClass enum,
@@ -183,6 +179,10 @@ public:
   }
 
 private:
+  static bool isKind(const TypeLoc&) {
+    return true;
+  }
+
   static void initializeImpl(ASTContext &Context, TypeLoc TL,
                              SourceLocation Loc);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
@@ -212,8 +212,8 @@ public:
 
 private:
   friend class TypeLoc;
-  static bool isType(const TypeLoc *TL) {
-    return !TL->getType().hasLocalQualifiers();
+  static bool isKind(const TypeLoc &TL) {
+    return !TL.getType().hasLocalQualifiers();
   }
 };
 
@@ -258,8 +258,8 @@ public:
 
 private:
   friend class TypeLoc;
-  static bool isType(const TypeLoc *TL) {
-    return TL->getType().hasLocalQualifiers();
+  static bool isKind(const TypeLoc &TL) {
+    return TL.getType().hasLocalQualifiers();
   }
 };
 
@@ -308,8 +308,8 @@ class ConcreteTypeLoc : public Base {
   }
 
   friend class TypeLoc;
-  static bool isType(const TypeLoc *TL) {
-    return Derived::classofType(TL->getTypePtr());
+  static bool isKind(const TypeLoc &TL) {
+    return Derived::classofType(TL.getTypePtr());
   }
 
   static bool classofType(const Type *Ty) {
@@ -392,11 +392,11 @@ class InheritingConcreteTypeLoc : public Base {
     return TypeClass::classof(Ty);
   }
 
-  static bool isType(const TypeLoc *TL) {
-    return Derived::classofType(TL->getTypePtr());
+  static bool isKind(const TypeLoc &TL) {
+    return Derived::classofType(TL.getTypePtr());
   }
-  static bool isType(const UnqualTypeLoc *TL) {
-    return Derived::classofType(TL->getTypePtr());
+  static bool isKind(const UnqualTypeLoc &TL) {
+    return Derived::classofType(TL.getTypePtr());
   }
 
 public:
@@ -434,7 +434,7 @@ public:
 
 private:
   friend class TypeLoc;
-  static bool isType(const TypeLoc *TL);
+  static bool isKind(const TypeLoc &TL);
 };
 
 
@@ -928,7 +928,7 @@ public:
 };
 
 inline TypeLoc TypeLoc::IgnoreParens() const {
-  if (ParenTypeLoc::isType(this))
+  if (ParenTypeLoc::isKind(*this))
     return IgnoreParensImpl(*this);
   return *this;
 }
