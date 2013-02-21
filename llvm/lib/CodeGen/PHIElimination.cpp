@@ -319,7 +319,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
                                     IncomingVNI));
     }
 
-    LiveInterval &DestLI = LIS->getOrCreateInterval(DestReg);
+    LiveInterval &DestLI = LIS->getInterval(DestReg);
     if (NewInstr->getOperand(0).isDead()) {
       // A dead PHI's live range begins and ends at the start of the MBB, but
       // the lowered copy, which will still be dead, needs to begin and end at
