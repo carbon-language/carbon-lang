@@ -464,12 +464,15 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // associated TOC entry.  Otherwise reference the symbol directly.
     TmpInst.setOpcode(PPC::LDrs);
     const MachineOperand &MO = MI->getOperand(1);
-    assert((MO.isGlobal() || MO.isJTI()) && "Invalid operand for LDtocL!");
+    assert((MO.isGlobal() || MO.isJTI() || MO.isCPI()) &&
+           "Invalid operand for LDtocL!");
     MCSymbol *MOSymbol = 0;
 
     if (MO.isJTI())
       MOSymbol = lookUpOrCreateTOCEntry(GetJTISymbol(MO.getIndex()));
-    else {
+    else if (MO.isCPI())
+      MOSymbol = GetCPISymbol(MO.getIndex());
+    else if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
       const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
       const GlobalValue *RealGValue = GAlias ?

@@ -1281,16 +1281,17 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   case PPCISD::TOC_ENTRY: {
     assert (PPCSubTarget.isPPC64() && "Only supported for 64-bit ABI");
 
-    // For medium code model, we generate two instructions as described
-    // below.  Otherwise we allow SelectCodeCommon to handle this, selecting
-    // one of LDtoc, LDtocJTI, and LDtocCPT.
-    if (TM.getCodeModel() != CodeModel::Medium)
+    // For medium and large code model, we generate two instructions as
+    // described below.  Otherwise we allow SelectCodeCommon to handle this,
+    // selecting one of LDtoc, LDtocJTI, and LDtocCPT.
+    CodeModel::Model CModel = TM.getCodeModel();
+    if (CModel != CodeModel::Medium && CModel != CodeModel::Large)
       break;
 
     // The first source operand is a TargetGlobalAddress or a
     // TargetJumpTable.  If it is an externally defined symbol, a symbol
     // with common linkage, a function address, or a jump table address,
-    // we generate:
+    // or if we are generating code for large code model, we generate:
     //   LDtocL(<ga:@sym>, ADDIStocHA(%X2, <ga:@sym>))
     // Otherwise we generate:
     //   ADDItocL(ADDIStocHA(%X2, <ga:@sym>), <ga:@sym>)
@@ -1299,7 +1300,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     SDNode *Tmp = CurDAG->getMachineNode(PPC::ADDIStocHA, dl, MVT::i64,
                                         TOCbase, GA);
 
-    if (isa<JumpTableSDNode>(GA))
+    if (isa<JumpTableSDNode>(GA) || CModel == CodeModel::Large)
       return CurDAG->getMachineNode(PPC::LDtocL, dl, MVT::i64, GA,
                                     SDValue(Tmp, 0));
 

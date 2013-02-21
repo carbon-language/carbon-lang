@@ -701,7 +701,7 @@ def : Pat<(PPCload ixaddr:$src),
 def : Pat<(PPCload xaddr:$src),
           (LDX xaddr:$src)>;
 
-// Support for medium code model.
+// Support for medium and large code model.
 def ADDIStocHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
                        "#ADDIStocHA",
                        [(set G8RC:$rD,

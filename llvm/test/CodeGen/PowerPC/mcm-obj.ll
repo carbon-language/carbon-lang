@@ -1,5 +1,7 @@
 ; RUN: llc -O0 -mcpu=pwr7 -code-model=medium -filetype=obj %s -o - | \
-; RUN: elf-dump --dump-section-data | FileCheck %s
+; RUN: elf-dump --dump-section-data | FileCheck -check-prefix=MEDIUM %s
+; RUN: llc -O0 -mcpu=pwr7 -code-model=large -filetype=obj %s -o - | \
+; RUN: elf-dump --dump-section-data | FileCheck -check-prefix=LARGE %s
 
 ; FIXME: When asm-parse is available, could make this an assembly test.
 
@@ -19,15 +21,25 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
 ; accessing external variable ei.
 ;
-; CHECK:       '.rela.text'
-; CHECK:       Relocation 0
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 1
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
-; CHECK-NEXT:  'r_type', 0x00000040
+; MEDIUM:       '.rela.text'
+; MEDIUM:       Relocation 0
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM1:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 1
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM1]]
+; MEDIUM-NEXT:  'r_type', 0x00000040
+;
+; LARGE:       '.rela.text'
+; LARGE:       Relocation 0
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM1:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 1
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM1]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
 @test_fn_static.si = internal global i32 0, align 4
 
@@ -42,14 +54,26 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO for
 ; accessing function-scoped variable si.
 ;
-; CHECK:       Relocation 2
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM2:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 3
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM2]]
-; CHECK-NEXT:  'r_type', 0x00000030
+; MEDIUM:       Relocation 2
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM2:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 3
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM2]]
+; MEDIUM-NEXT:  'r_type', 0x00000030
+;
+; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
+; accessing function-scoped variable si.
+;
+; LARGE:       Relocation 2
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM2:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 3
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM2]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
 @gi = global i32 5, align 4
 
@@ -64,14 +88,26 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO for
 ; accessing file-scope variable gi.
 ;
-; CHECK:       Relocation 4
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM3:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 5
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM3]]
-; CHECK-NEXT:  'r_type', 0x00000030
+; MEDIUM:       Relocation 4
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM3:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 5
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM3]]
+; MEDIUM-NEXT:  'r_type', 0x00000030
+;
+; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
+; accessing file-scope variable gi.
+;
+; LARGE:       Relocation 4
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM3:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 5
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM3]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
 define double @test_double_const() nounwind {
 entry:
@@ -81,14 +117,26 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO for
 ; accessing a constant.
 ;
-; CHECK:       Relocation 6
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM4:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 7
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM4]]
-; CHECK-NEXT:  'r_type', 0x00000030
+; MEDIUM:       Relocation 6
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM4:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 7
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM4]]
+; MEDIUM-NEXT:  'r_type', 0x00000030
+;
+; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
+; accessing a constant.
+;
+; LARGE:       Relocation 6
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM4:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 7
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM4]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
 define signext i32 @test_jump_table(i32 signext %i) nounwind {
 entry:
@@ -137,14 +185,23 @@ sw.epilog:                                        ; preds = %sw.bb3, %sw.default
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
 ; accessing a jump table address.
 ;
-; CHECK:       Relocation 8
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM5:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 9
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM5]]
-; CHECK-NEXT:  'r_type', 0x00000040
+; MEDIUM:       Relocation 8
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM5:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 9
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM5]]
+; MEDIUM-NEXT:  'r_type', 0x00000040
+;
+; LARGE:       Relocation 8
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM5:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 9
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM5]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
 @ti = common global i32 0, align 4
 
@@ -159,14 +216,23 @@ entry:
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
 ; accessing tentatively declared variable ti.
 ;
-; CHECK:       Relocation 10
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM6:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 11
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM6]]
-; CHECK-NEXT:  'r_type', 0x00000040
+; MEDIUM:       Relocation 10
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM6:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 11
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM6]]
+; MEDIUM-NEXT:  'r_type', 0x00000040
+;
+; LARGE:       Relocation 10
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM6:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 11
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM6]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
 define i8* @test_fnaddr() nounwind {
 entry:
@@ -182,12 +248,21 @@ declare signext i32 @foo(i32 signext)
 ; Verify generation of R_PPC64_TOC16_HA and R_PPC64_TOC16_LO_DS for
 ; accessing function address foo.
 ;
-; CHECK:       Relocation 12
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM7:[0-9]+]]
-; CHECK-NEXT:  'r_type', 0x00000032
-; CHECK:       Relocation 13
-; CHECK-NEXT:  'r_offset'
-; CHECK-NEXT:  'r_sym', 0x[[SYM7]]
-; CHECK-NEXT:  'r_type', 0x00000040
+; MEDIUM:       Relocation 12
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM7:[0-9]+]]
+; MEDIUM-NEXT:  'r_type', 0x00000032
+; MEDIUM:       Relocation 13
+; MEDIUM-NEXT:  'r_offset'
+; MEDIUM-NEXT:  'r_sym', 0x[[SYM7]]
+; MEDIUM-NEXT:  'r_type', 0x00000040
+;
+; LARGE:       Relocation 12
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM7:[0-9]+]]
+; LARGE-NEXT:  'r_type', 0x00000032
+; LARGE:       Relocation 13
+; LARGE-NEXT:  'r_offset'
+; LARGE-NEXT:  'r_sym', 0x[[SYM7]]
+; LARGE-NEXT:  'r_type', 0x00000040
 
