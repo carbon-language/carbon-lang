@@ -372,12 +372,19 @@ static bool isPlainlyKilled(MachineInstr *MI, unsigned Reg,
 /// normal heuristics commute the (two-address) add, which lets
 /// coalescing eliminate the extra copy.
 ///
+/// If allowFalsePositives is true then likely kills are treated as kills even
+/// if it can't be proven that they are kills.
 static bool isKilled(MachineInstr &MI, unsigned Reg,
                      const MachineRegisterInfo *MRI,
                      const TargetInstrInfo *TII,
-                     LiveIntervals *LIS) {
+                     LiveIntervals *LIS,
+                     bool allowFalsePositives) {
   MachineInstr *DefMI = &MI;
   for (;;) {
+    // All uses of physical registers are likely to be kills.
+    if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
+        (allowFalsePositives || MRI->hasOneUse(Reg)))
+      return true;
     if (!isPlainlyKilled(DefMI, Reg, LIS))
       return false;
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
@@ -1028,7 +1035,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   assert(TargetRegisterInfo::isVirtualRegister(regB) &&
          "cannot make instruction into two-address form");
-  bool regBKilled = isKilled(MI, regB, MRI, TII, LIS);
+  bool regBKilled = isKilled(MI, regB, MRI, TII, LIS, true);
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
     scanUses(regA);
@@ -1048,7 +1055,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
     if (regCIdx != ~0U) {
       regC = MI.getOperand(regCIdx).getReg();
-      if (!regBKilled && isKilled(MI, regC, MRI, TII, LIS))
+      if (!regBKilled && isKilled(MI, regC, MRI, TII, LIS, false))
         // If C dies but B does not, swap the B and C operands.
         // This makes the live ranges of A and C joinable.
         TryCommute = true;
