@@ -57,14 +57,14 @@ typedef __sanitizer::u64  OFF64_T;
 //      3b) add DECLARE_REAL_AND_INTERCEPTOR(int, foo, const char*, double)
 //          to a header file.
 
-// Notes: 1. Things may not work properly if macro INTERCEPT(...) {...} or
+// Notes: 1. Things may not work properly if macro INTERCEPTOR(...) {...} or
 //           DECLARE_REAL(...) are located inside namespaces.
-//        2. On Mac you can also use: "OVERRIDE_FUNCTION(foo, zoo);" to
+//        2. On Mac you can also use: "OVERRIDE_FUNCTION(foo, zoo)" to
 //           effectively redirect calls from "foo" to "zoo". In this case
 //           you aren't required to implement
 //           INTERCEPTOR(int, foo, const char *bar, double baz) {...}
 //           but instead you'll have to add
-//           DEFINE_REAL(int, foo, const char *bar, double baz) in your
+//           DECLARE_REAL(int, foo, const char *bar, double baz) in your
 //           source file (to define a pointer to overriden function).
 
 // How it works:
@@ -75,6 +75,7 @@ typedef __sanitizer::u64  OFF64_T;
 // we intercept. To resolve this we declare our interceptors with __interceptor_
 // prefix, and then make actual interceptors weak aliases to __interceptor_
 // functions.
+//
 // This is not so on Mac OS, where the two-level namespace makes
 // our replacement functions invisible to other libraries. This may be overcomed
 // using the DYLD_FORCE_FLAT_NAMESPACE, but some errors loading the shared
@@ -84,12 +85,42 @@ typedef __sanitizer::u64  OFF64_T;
 // preloaded before an executable using DYLD_INSERT_LIBRARIES, it routes all
 // the calls to interposed functions done through stubs to the wrapper
 // functions.
+// As it's decided at compile time which functions are to be intercepted on Mac,
+// INTERCEPT_FUNCTION() is effectively a no-op on this system.
 
 #if defined(__APPLE__)
+
+// Just a pair of pointers.
+struct interpose_substitution {
+  const uptr replacement;
+  const uptr original;
+};
+
+// For a function foo() create a global pair of pointers { wrap_foo, foo } in
+// the __DATA,__interpose section.
+// As a result all the calls to foo() will be routed to wrap_foo() at runtime.
+#define INTERPOSER(func_name) __attribute__((used)) \
+const interpose_substitution substitution_##func_name[] \
+    __attribute__((section("__DATA, __interpose"))) = { \
+    { reinterpret_cast<const uptr>(WRAP(func_name)), \
+      reinterpret_cast<const uptr>(func_name) } \
+}
+
+// For a function foo() and a wrapper function bar() create a global pair
+// of pointers { bar, foo } in the __DATA,__interpose section.
+// As a result all the calls to foo() will be routed to bar() at runtime.
+#define INTERPOSER_2(func_name, wrapper_name) __attribute__((used)) \
+const interpose_substitution substitution_##func_name[] \
+    __attribute__((section("__DATA, __interpose"))) = { \
+    { reinterpret_cast<const uptr>(wrapper_name), \
+      reinterpret_cast<const uptr>(func_name) } \
+}
+
 # define WRAP(x) wrap_##x
 # define WRAPPER_NAME(x) "wrap_"#x
 # define INTERCEPTOR_ATTRIBUTE
 # define DECLARE_WRAPPER(ret_type, func, ...)
+
 #elif defined(_WIN32)
 # if defined(_DLL)  // DLL CRT
 #  define WRAP(x) x
@@ -144,12 +175,24 @@ typedef __sanitizer::u64  OFF64_T;
 # define DEFINE_REAL(ret_type, func, ...)
 #endif
 
+#if !defined(__APPLE__)
 #define INTERCEPTOR(ret_type, func, ...) \
   DEFINE_REAL(ret_type, func, __VA_ARGS__) \
   DECLARE_WRAPPER(ret_type, func, __VA_ARGS__) \
   extern "C" \
   INTERCEPTOR_ATTRIBUTE \
   ret_type WRAP(func)(__VA_ARGS__)
+#else  // __APPLE__
+#define INTERCEPTOR(ret_type, func, ...) \
+  extern "C" ret_type func(__VA_ARGS__); \
+  extern "C" ret_type WRAP(func)(__VA_ARGS__); \
+  INTERPOSER(func); \
+  extern "C" INTERCEPTOR_ATTRIBUTE ret_type WRAP(func)(__VA_ARGS__)
+
+// Override |overridee| with |overrider|.
+#define OVERRIDE_FUNCTION(overridee, overrider) \
+  INTERPOSER_2(overridee, WRAP(overrider))
+#endif
 
 #if defined(_WIN32)
 # define INTERCEPTOR_WINAPI(ret_type, func, ...) \
@@ -183,8 +226,6 @@ typedef unsigned long uptr;  // NOLINT
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_LINUX(func)
 #elif defined(__APPLE__)
 # include "interception_mac.h"
-# define OVERRIDE_FUNCTION(old_func, new_func) \
-    OVERRIDE_FUNCTION_MAC(old_func, new_func)
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_MAC(func)
 #else  // defined(_WIN32)
 # include "interception_win.h"

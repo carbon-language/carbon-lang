@@ -288,24 +288,6 @@ typedef struct {
   u32 parent_tid;
 } asan_block_context_t;
 
-// We use extern declarations of libdispatch functions here instead
-// of including <dispatch/dispatch.h>. This header is not present on
-// Mac OS X Leopard and eariler, and although we don't expect ASan to
-// work on legacy systems, it's bad to break the build of
-// LLVM compiler-rt there.
-extern "C" {
-void dispatch_async_f(dispatch_queue_t dq, void *ctxt,
-                      dispatch_function_t func);
-void dispatch_sync_f(dispatch_queue_t dq, void *ctxt,
-                     dispatch_function_t func);
-void dispatch_after_f(dispatch_time_t when, dispatch_queue_t dq, void *ctxt,
-                      dispatch_function_t func);
-void dispatch_barrier_async_f(dispatch_queue_t dq, void *ctxt,
-                              dispatch_function_t func);
-void dispatch_group_async_f(dispatch_group_t group, dispatch_queue_t dq,
-                            void *ctxt, dispatch_function_t func);
-}  // extern "C"
-
 static ALWAYS_INLINE
 void asan_register_worker_thread(int parent_tid, StackTrace *stack) {
   AsanThread *t = asanThreadRegistry().GetCurrent();
