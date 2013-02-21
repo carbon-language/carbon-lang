@@ -341,7 +341,7 @@ INTERCEPTOR(char*, strchr, const char *str, int c) {
 #if ASAN_INTERCEPT_INDEX
 # if ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX
 INTERCEPTOR(char*, index, const char *string, int c)
-  WEAK_ALIAS(WRAPPER_NAME(strchr));
+  ALIAS(WRAPPER_NAME(strchr));
 # else
 #  if defined(__APPLE__)
 DECLARE_REAL(char*, index, const char *string, int c)
