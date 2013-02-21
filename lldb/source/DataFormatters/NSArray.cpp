@@ -7,11 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
-
-#include "llvm/Support/ConvertUTF.h"
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
@@ -144,8 +140,6 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::Update()
     m_data_32 = NULL;
     delete m_data_64;
     m_data_64 = NULL;
-    if (valobj_sp->IsDynamic())
-        valobj_sp = valobj_sp->GetStaticValue();
     if (!valobj_sp)
         return false;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
@@ -245,8 +239,6 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::Update()
     m_data_ptr = 0;
     m_children.clear();
     ValueObjectSP valobj_sp = m_backend.GetSP();
-    if (valobj_sp->IsDynamic())
-        valobj_sp = valobj_sp->GetStaticValue();
     if (!valobj_sp)
         return false;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();

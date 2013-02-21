@@ -557,9 +557,101 @@ namespace lldb_private {
         };
         
         SyntheticChildrenFrontEnd* LibstdcppVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
-
         
-    }
-}
+        class LibstdcppMapIteratorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibstdcppMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibstdcppMapIteratorSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            lldb::addr_t m_pair_address;
+            ClangASTType m_pair_type;
+            EvaluateExpressionOptions m_options;
+            lldb::ValueObjectSP m_pair_sp;
+        };
+        
+        SyntheticChildrenFrontEnd* LibstdcppMapIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        class LibCxxMapIteratorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            LibCxxMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~LibCxxMapIteratorSyntheticFrontEnd ();
+        private:
+            ValueObject *m_pair_ptr;
+        };
+        
+        SyntheticChildrenFrontEnd* LibCxxMapIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
 
-#endif
+        class VectorIteratorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            VectorIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp,
+                                             ConstString item_name);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~VectorIteratorSyntheticFrontEnd ();
+        private:
+            ExecutionContextRef m_exe_ctx_ref;
+            ConstString m_item_name;
+            lldb::ValueObjectSP m_item_sp;
+        };
+        
+        SyntheticChildrenFrontEnd* LibCxxVectorIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+        SyntheticChildrenFrontEnd* LibStdcppVectorIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
+    } // namespace formatters
+} // namespace lldb_private
+
+#endif // liblldb_CXXFormatterFunctions_h_

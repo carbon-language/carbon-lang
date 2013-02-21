@@ -96,7 +96,6 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
-    m_is_expression_path_child(false),
     m_is_child_at_offset(false),
     m_is_getting_summary(false),
     m_did_calculate_complete_objc_class_type(false)
@@ -141,7 +140,6 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
-    m_is_expression_path_child(false),
     m_is_child_at_offset(false),
     m_is_getting_summary(false),
     m_did_calculate_complete_objc_class_type(false)
@@ -1040,7 +1038,7 @@ strlen_or_inf (const char* str,
     return len;
 }
 
-void
+size_t
 ValueObject::ReadPointedString (Stream& s,
                                 Error& error,
                                 uint32_t max_length,
@@ -1052,6 +1050,9 @@ ValueObject::ReadPointedString (Stream& s,
 
     if (target && max_length == 0)
         max_length = target->GetMaximumSizeOfStringSummary();
+    
+    size_t bytes_read = 0;
+    size_t total_bytes_read = 0;
     
     clang_type_t clang_type = GetClangType();
     clang_type_t elem_or_pointee_clang_type;
@@ -1090,7 +1091,6 @@ ValueObject::ReadPointedString (Stream& s,
             {
                 Address cstr_so_addr (cstr_address);
                 DataExtractor data;
-                size_t bytes_read = 0;
                 if (cstr_len > 0 && honor_array)
                 {
                     // I am using GetPointeeData() here to abstract the fact that some ValueObjects are actually frozen pointers in the host
@@ -1099,6 +1099,7 @@ ValueObject::ReadPointedString (Stream& s,
 
                     if ((bytes_read = data.GetByteSize()) > 0)
                     {
+                        total_bytes_read = bytes_read;
                         s << '"';
                         data.Dump (&s,
                                    0,                 // Start offset in "data"
@@ -1127,6 +1128,7 @@ ValueObject::ReadPointedString (Stream& s,
                     // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
                     while ((bytes_read = GetPointeeData(data, offset, k_max_buf_size)) > 0)
                     {
+                        total_bytes_read += bytes_read;
                         const char *cstr = data.PeekCStr(0);
                         size_t len = strlen_or_inf (cstr, k_max_buf_size, k_max_buf_size+1);
                         if (len > k_max_buf_size)
@@ -1183,6 +1185,7 @@ ValueObject::ReadPointedString (Stream& s,
         error.SetErrorString("impossible to read a string from this object");
         s << "<not a string object>";
     }
+    return total_bytes_read;
 }
 
 const char *
@@ -2107,9 +2110,9 @@ ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_cr
         // Cache the value if we got one back...
         if (synthetic_child_sp.get())
         {
+            // FIXME: this causes a "real" child to end up with its name changed to the contents of expression
             AddSyntheticChild(name_const_string, synthetic_child_sp.get());
             synthetic_child_sp->SetName(ConstString(SkipLeadingExpressionPathSeparators(expression)));
-            synthetic_child_sp->m_is_expression_path_child = true;
         }
     }
     return synthetic_child_sp;
@@ -2336,8 +2339,8 @@ ValueObject::GetValueForExpressionPath(const char* expression,
 {
     
     const char* dummy_first_unparsed;
-    ExpressionPathScanEndReason dummy_reason_to_stop;
-    ExpressionPathEndResultType dummy_final_value_type;
+    ExpressionPathScanEndReason dummy_reason_to_stop = ValueObject::eExpressionPathScanEndReasonUnknown;
+    ExpressionPathEndResultType dummy_final_value_type = ValueObject::eExpressionPathEndResultTypeInvalid;
     ExpressionPathAftermath dummy_final_task_on_target = ValueObject::eExpressionPathAftermathNothing;
     
     ValueObjectSP ret_val = GetValueForExpressionPath_Impl(expression,

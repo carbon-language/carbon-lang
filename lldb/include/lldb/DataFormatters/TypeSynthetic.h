@@ -273,6 +273,15 @@ namespace lldb_private {
         m_expression_paths()
         {
         }
+
+        TypeFilterImpl(const SyntheticChildren::Flags& flags,
+                       const std::initializer_list<const char*> items) :
+        SyntheticChildren(flags),
+        m_expression_paths()
+        {
+            for (auto path : items)
+                AddExpressionPath (path);
+        }
         
         void
         AddExpressionPath (const char* path)
@@ -305,7 +314,7 @@ namespace lldb_private {
         }
         
         void
-        AddExpressionPath (std::string path)
+        AddExpressionPath (const std::string& path)
         {
             bool need_add_dot = true;
             if (path[0] == '.' ||
@@ -320,7 +329,7 @@ namespace lldb_private {
         }
         
         bool
-        SetExpressionPathAtIndex (int i, std::string path)
+        SetExpressionPathAtIndex (int i, const std::string& path)
         {
             if (i >= GetCount())
                 return false;

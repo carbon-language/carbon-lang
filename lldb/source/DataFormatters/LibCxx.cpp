@@ -1,0 +1,285 @@
+//===-- LibCxx.cpp ------------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include "lldb/DataFormatters/CXXFormatterFunctions.h"
+
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Error.h"
+#include "lldb/Core/Stream.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Host/Endian.h"
+#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Target.h"
+
+using namespace lldb;
+using namespace lldb_private;
+using namespace lldb_private::formatters;
+
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::LibcxxVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_exe_ctx_ref(),
+m_count(0),
+m_base_data_address(0),
+m_options()
+{
+    if (valobj_sp)
+        Update();
+    m_options.SetCoerceToId(false)
+    .SetUnwindOnError(true)
+    .SetKeepInMemory(true)
+    .SetUseDynamic(lldb::eDynamicCanRunTarget);
+}
+
+size_t
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::CalculateNumChildren ()
+{
+    return m_count;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (size_t idx)
+{
+    if (idx >= m_count)
+        return ValueObjectSP();
+    if (m_base_data_address == 0 || m_count == 0)
+        return ValueObjectSP();
+    size_t byte_idx = (idx >> 3); // divide by 8 to get byte index
+    size_t bit_index = (idx & 7); // efficient idx % 8 for bit index
+    lldb::addr_t byte_location = m_base_data_address + byte_idx;
+    ProcessSP process_sp(m_exe_ctx_ref.GetProcessSP());
+    if (!process_sp)
+        return ValueObjectSP();
+    uint8_t byte = 0;
+    uint8_t mask = 0;
+    Error err;
+    size_t bytes_read = process_sp->ReadMemory(byte_location, &byte, 1, err);
+    if (err.Fail() || bytes_read == 0)
+        return ValueObjectSP();
+    switch (bit_index)
+    {
+        case 0:
+            mask = 1; break;
+        case 1:
+            mask = 2; break;
+        case 2:
+            mask = 4; break;
+        case 3:
+            mask = 8; break;
+        case 4:
+            mask = 16; break;
+        case 5:
+            mask = 32; break;
+        case 6:
+            mask = 64; break;
+        case 7:
+            mask = 128; break;
+        default:
+            return ValueObjectSP();
+    }
+    bool bit_set = ((byte & mask) != 0);
+    Target& target(process_sp->GetTarget());
+    ValueObjectSP retval_sp;
+    if (bit_set)
+        target.EvaluateExpression("(bool)true", NULL, retval_sp);
+    else
+        target.EvaluateExpression("(bool)false", NULL, retval_sp);
+    StreamString name; name.Printf("[%zu]",idx);
+    if (retval_sp)
+        retval_sp->SetName(ConstString(name.GetData()));
+    return retval_sp;
+}
+
+/*(std::__1::vector<std::__1::allocator<bool> >) vBool = {
+ __begin_ = 0x00000001001000e0
+ __size_ = 56
+ __cap_alloc_ = {
+ std::__1::__libcpp_compressed_pair_imp<unsigned long, std::__1::allocator<unsigned long> > = {
+ __first_ = 1
+ }
+ }
+ }*/
+
+bool
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::Update()
+{
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    if (!valobj_sp)
+        return false;
+    if (!valobj_sp)
+        return false;
+    m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
+    ValueObjectSP size_sp(valobj_sp->GetChildMemberWithName(ConstString("__size_"), true));
+    if (!size_sp)
+        return false;
+    m_count = size_sp->GetValueAsUnsigned(0);
+    if (!m_count)
+        return true;
+    ValueObjectSP begin_sp(valobj_sp->GetChildMemberWithName(ConstString("__begin_"), true));
+    if (!begin_sp)
+    {
+        m_count = 0;
+        return false;
+    }
+    m_base_data_address = begin_sp->GetValueAsUnsigned(0);
+    if (!m_base_data_address)
+    {
+        m_count = 0;
+        return false;
+    }
+    return true;
+}
+
+bool
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::MightHaveChildren ()
+{
+    return true;
+}
+
+size_t
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    if (!m_count || !m_base_data_address)
+        return UINT32_MAX;
+    const char* item_name = name.GetCString();
+    uint32_t idx = ExtractIndexFromString(item_name);
+    if (idx < UINT32_MAX && idx >= CalculateNumChildren())
+        return UINT32_MAX;
+    return idx;
+}
+
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::~LibcxxVectorBoolSyntheticFrontEnd ()
+{}
+
+SyntheticChildrenFrontEnd*
+lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    if (!valobj_sp)
+        return NULL;
+    return (new LibcxxVectorBoolSyntheticFrontEnd(valobj_sp));
+}
+
+/*
+ (lldb) fr var ibeg --raw --ptr-depth 1
+ (std::__1::__map_iterator<std::__1::__tree_iterator<std::__1::pair<int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, std::__1::__tree_node<std::__1::pair<int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, void *> *, long> >) ibeg = {
+ __i_ = {
+ __ptr_ = 0x0000000100103870 {
+ std::__1::__tree_node_base<void *> = {
+ std::__1::__tree_end_node<std::__1::__tree_node_base<void *> *> = {
+ __left_ = 0x0000000000000000
+ }
+ __right_ = 0x0000000000000000
+ __parent_ = 0x00000001001038b0
+ __is_black_ = true
+ }
+ __value_ = {
+ first = 0
+ second = { std::string }
+ */
+
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::LibCxxMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd(*valobj_sp.get()),
+m_pair_ptr()
+{
+    if (valobj_sp)
+        Update();
+}
+
+bool
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::Update()
+{
+    ValueObjectSP valobj_sp = m_backend.GetSP();
+    if (!valobj_sp)
+        return false;
+    
+    TargetSP target_sp(valobj_sp->GetTargetSP());
+    
+    if (!target_sp)
+        return false;
+
+    if (!valobj_sp)
+        return false;
+
+    // this must be a ValueObject* because it is a child of the ValueObject we are producing children for
+    // it if were a ValueObjectSP, we would end up with a loop (iterator -> synthetic -> child -> parent == iterator)
+    // and that would in turn leak memory by never allowing the ValueObjects to die and free their memory
+    m_pair_ptr = valobj_sp->GetValueForExpressionPath(".__i_.__ptr_->__value_",
+                                                     NULL,
+                                                     NULL,
+                                                     NULL,
+                                                     ValueObject::GetValueForExpressionPathOptions().DontCheckDotVsArrowSyntax().DontAllowSyntheticChildren(),
+                                                     NULL).get();
+    
+    return (m_pair_ptr != NULL);
+}
+
+size_t
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::CalculateNumChildren ()
+{
+    return 2;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::GetChildAtIndex (size_t idx)
+{
+    if (!m_pair_ptr)
+        return lldb::ValueObjectSP();
+    return m_pair_ptr->GetChildAtIndex(idx, true);
+}
+
+bool
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::MightHaveChildren ()
+{
+    return true;
+}
+
+size_t
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    if (name == ConstString("first"))
+        return 0;
+    if (name == ConstString("second"))
+        return 1;
+    return UINT32_MAX;
+}
+
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::~LibCxxMapIteratorSyntheticFrontEnd ()
+{
+    // this will be deleted when its parent dies (since it's a child object)
+    //delete m_pair_ptr;
+}
+
+SyntheticChildrenFrontEnd*
+lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    if (!valobj_sp)
+        return NULL;
+    return (new LibCxxMapIteratorSyntheticFrontEnd(valobj_sp));
+}
+
+/*
+ (lldb) fr var ibeg --raw --ptr-depth 1 -T
+ (std::__1::__wrap_iter<int *>) ibeg = {
+ (std::__1::__wrap_iter<int *>::iterator_type) __i = 0x00000001001037a0 {
+ (int) *__i = 1
+ }
+ }
+*/
+
+SyntheticChildrenFrontEnd*
+lldb_private::formatters::LibCxxVectorIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    static ConstString g_item_name;
+    if (!g_item_name)
+        g_item_name.SetCString("__i");
+    if (!valobj_sp)
+        return NULL;
+    return (new VectorIteratorSyntheticFrontEnd(valobj_sp,g_item_name));
+}
