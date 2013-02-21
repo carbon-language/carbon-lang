@@ -10,8 +10,12 @@
 #include "DWARFDebugFrame.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
+#include <string>
+#include <vector>
 
 using namespace llvm;
 using namespace dwarf;
@@ -29,8 +33,20 @@ public:
   }
 
   FrameKind getKind() const { return Kind; }
+  virtual uint64_t getOffset() const { return Offset; }
 
+  /// \brief Parse and store a sequence of CFI instructions from our data
+  /// stream, starting at Offset and ending at EndOffset. If everything
+  /// goes well, Offset should be equal to EndOffset when this method
+  /// returns. Otherwise, an error occurred.
+  /// TODO: Improve error reporting...
+  virtual void parseInstructions(uint32_t &Offset, uint32_t EndOffset);
+
+  /// \brief Dump the entry header to the given output stream.
   virtual void dumpHeader(raw_ostream &OS) const = 0;
+
+  /// \brief Dump the entry's instructions to the given output stream.
+  virtual void dumpInstructions(raw_ostream &OS) const;
 
 protected:
   const FrameKind Kind;
@@ -44,7 +60,142 @@ protected:
 
   /// \brief Entry length as specified in DWARF.
   uint64_t Length;
+
+  /// An entry may contain CFI instructions. An instruction consists of an
+  /// opcode and an optional sequence of operands.
+  typedef std::vector<uint64_t> Operands;
+  struct Instruction {
+    Instruction(uint8_t Opcode)
+      : Opcode(Opcode)
+    {}
+
+    uint8_t Opcode;
+    Operands Ops;
+  };
+
+  std::vector<Instruction> Instructions;
+
+  /// Convenience methods to add a new instruction with the given opcode and
+  /// operands to the Instructions vector.
+  void addInstruction(uint8_t Opcode) {
+    Instructions.push_back(Instruction(Opcode));
+  }
+
+  void addInstruction(uint8_t Opcode, uint64_t Operand1) {
+    Instructions.push_back(Instruction(Opcode));
+    Instructions.back().Ops.push_back(Operand1);
+  }
+
+  void addInstruction(uint8_t Opcode, uint64_t Operand1, uint64_t Operand2) {
+    Instructions.push_back(Instruction(Opcode));
+    Instructions.back().Ops.push_back(Operand1);
+    Instructions.back().Ops.push_back(Operand2);
+  }
 };
+
+
+// See DWARF standard v3, section 7.23
+const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
+const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
+
+
+void FrameEntry::parseInstructions(uint32_t &Offset, uint32_t EndOffset) {
+  while (Offset < EndOffset) {
+    uint8_t Opcode = Data.getU8(&Offset);
+    // Some instructions have a primary opcode encoded in the top bits.
+    uint8_t Primary = Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK;
+
+    if (Primary) {
+      // If it's a primary opcode, the first operand is encoded in the bottom
+      // bits of the opcode itself.
+      uint64_t Op1 = Opcode & DWARF_CFI_PRIMARY_OPERAND_MASK;
+      switch (Primary) {
+        default: llvm_unreachable("Impossible primary CFI opcode");
+        case DW_CFA_advance_loc:
+        case DW_CFA_restore:
+          addInstruction(Primary, Op1);
+          break;
+        case DW_CFA_offset:
+          addInstruction(Primary, Op1, Data.getULEB128(&Offset));
+          break;
+      }
+    } else {
+      // Extended opcode - its value is Opcode itself.
+      switch (Opcode) {
+        default: llvm_unreachable("Invalid extended CFI opcode");
+        case DW_CFA_nop:
+        case DW_CFA_remember_state:
+        case DW_CFA_restore_state:
+          // No operands
+          addInstruction(Opcode);
+          break;
+        case DW_CFA_set_loc:
+          // Operands: Address
+          addInstruction(Opcode, Data.getAddress(&Offset));
+          break;
+        case DW_CFA_advance_loc1:
+          // Operands: 1-byte delta
+          addInstruction(Opcode, Data.getU8(&Offset));
+          break;
+        case DW_CFA_advance_loc2:
+          // Operands: 2-byte delta
+          addInstruction(Opcode, Data.getU16(&Offset));
+          break;
+        case DW_CFA_advance_loc4:
+          // Operands: 4-byte delta
+          addInstruction(Opcode, Data.getU32(&Offset));
+          break;
+        case DW_CFA_restore_extended:
+        case DW_CFA_undefined:
+        case DW_CFA_same_value:
+        case DW_CFA_def_cfa_register:
+        case DW_CFA_def_cfa_offset:
+          // Operands: ULEB128
+          addInstruction(Opcode, Data.getULEB128(&Offset));
+          break;
+        case DW_CFA_def_cfa_offset_sf:
+          // Operands: SLEB128
+          addInstruction(Opcode, Data.getSLEB128(&Offset));
+          break;
+        case DW_CFA_offset_extended:
+        case DW_CFA_register:
+        case DW_CFA_def_cfa:
+        case DW_CFA_val_offset:
+          // Operands: ULEB128, ULEB128
+          addInstruction(Opcode, Data.getULEB128(&Offset),
+                                 Data.getULEB128(&Offset));
+          break;
+        case DW_CFA_offset_extended_sf:
+        case DW_CFA_def_cfa_sf:
+        case DW_CFA_val_offset_sf:
+          // Operands: ULEB128, SLEB128
+          addInstruction(Opcode, Data.getULEB128(&Offset),
+                                 Data.getSLEB128(&Offset));
+          break;
+        case DW_CFA_def_cfa_expression:
+        case DW_CFA_expression:
+        case DW_CFA_val_expression:
+          // TODO: implement this
+          report_fatal_error("Values with expressions not implemented yet!");
+      }
+    }
+  }
+}
+
+
+void FrameEntry::dumpInstructions(raw_ostream &OS) const {
+  // TODO: at the moment only instruction names are dumped. Expand this to
+  // dump operands as well.
+  for (std::vector<Instruction>::const_iterator I = Instructions.begin(),
+                                                E = Instructions.end();
+       I != E; ++I) {
+    uint8_t Opcode = I->Opcode;
+    if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
+      Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
+    OS << "  " << CallFrameString(Opcode) << ":\n";
+  }
+}
+
 
 namespace {
 /// \brief DWARF Common Information Entry (CIE)
@@ -69,9 +220,12 @@ public:
        << "\n";
     OS << format("  Version:               %d\n", Version);
     OS << "  Augmentation:          \"" << Augmentation << "\"\n";
-    OS << format("  Code alignment factor: %u\n", (uint32_t)CodeAlignmentFactor);
-    OS << format("  Data alignment factor: %d\n", (int32_t)DataAlignmentFactor);
-    OS << format("  Return address column: %d\n", (int32_t)ReturnAddressRegister);
+    OS << format("  Code alignment factor: %u\n",
+                 (uint32_t)CodeAlignmentFactor);
+    OS << format("  Data alignment factor: %d\n",
+                 (int32_t)DataAlignmentFactor);
+    OS << format("  Return address column: %d\n",
+                 (int32_t)ReturnAddressRegister);
     OS << "\n";
   }
 
@@ -111,7 +265,6 @@ public:
                  (int32_t)LinkedCIEOffset,
                  (uint32_t)InitialLocation,
                  (uint32_t)InitialLocation + (uint32_t)AddressRange);
-    OS << "\n";
     if (LinkedCIE) {
       OS << format("%p\n", LinkedCIE);
     }
@@ -208,7 +361,15 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
       Entries.push_back(NewFDE);
     }
 
-    Offset = EndStructureOffset;
+    Entries.back()->parseInstructions(Offset, EndStructureOffset);
+
+    if (Offset != EndStructureOffset) {
+      std::string Str;
+      raw_string_ostream OS(Str);
+      OS << format("Parsing entry instructions at %lx failed",
+                   Entries.back()->getOffset());
+      report_fatal_error(Str);
+    }
   }
 }
 
@@ -217,7 +378,10 @@ void DWARFDebugFrame::dump(raw_ostream &OS) const {
   OS << "\n";
   for (EntryVector::const_iterator I = Entries.begin(), E = Entries.end();
        I != E; ++I) {
-    (*I)->dumpHeader(OS);
+    FrameEntry *Entry = *I;
+    Entry->dumpHeader(OS);
+    Entry->dumpInstructions(OS);
+    OS << "\n";
   }
 }
 

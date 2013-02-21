@@ -688,6 +688,7 @@ const char *llvm::dwarf::MacinfoString(unsigned Encoding) {
 /// encodings.
 const char *llvm::dwarf::CallFrameString(unsigned Encoding) {
   switch (Encoding) {
+  case DW_CFA_nop:                       return "DW_CFA_nop";
   case DW_CFA_advance_loc:               return "DW_CFA_advance_loc";
   case DW_CFA_offset:                    return "DW_CFA_offset";
   case DW_CFA_restore:                   return "DW_CFA_restore";
