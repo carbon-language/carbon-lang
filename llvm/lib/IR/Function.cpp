@@ -125,7 +125,7 @@ bool Argument::hasStructRetAttr() const {
 
 /// addAttr - Add attributes to an argument.
 void Argument::addAttr(AttributeSet AS) {
-  assert(AS.getNumSlots() == 1 &&
+  assert(AS.getNumSlots() <= 1 &&
          "Trying to add more than one attribute set to an argument!");
   AttrBuilder B(AS, AS.getSlotIndex(0));
   getParent()->addAttributes(getArgNo() + 1,
@@ -135,7 +135,7 @@ void Argument::addAttr(AttributeSet AS) {
 
 /// removeAttr - Remove attributes from an argument.
 void Argument::removeAttr(AttributeSet AS) {
-  assert(AS.getNumSlots() == 1 &&
+  assert(AS.getNumSlots() <= 1 &&
          "Trying to remove more than one attribute set from an argument!");
   AttrBuilder B(AS, AS.getSlotIndex(0));
   getParent()->removeAttributes(getArgNo() + 1,
