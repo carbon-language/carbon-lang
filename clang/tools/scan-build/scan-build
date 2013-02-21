@@ -1553,7 +1553,8 @@ if ($displayHelp) {
 $ClangCXX = $Clang;
 $ClangCXX =~ s/\-\d+\.\d+$//;
 $ClangCXX .= "++";
-$ClangVersion = HtmlEscape(`$Clang --version`);
+# Make sure to use "" to handle paths with spaces.
+$ClangVersion = HtmlEscape(`"$Clang" --version`);
 
 # Determine where results go.
 $CmdArgs = HtmlEscape(join(' ', map(ShellEscape($_), @ARGV)));
