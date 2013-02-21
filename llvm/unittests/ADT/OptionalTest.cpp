@@ -40,36 +40,6 @@ unsigned NonDefaultConstructible::CopyConstructions = 0;
 unsigned NonDefaultConstructible::Destructions = 0;
 unsigned NonDefaultConstructible::CopyAssignments = 0;
 
-struct MoveOnly {
-  static unsigned MoveConstructions;
-  static unsigned Destructions;
-  static unsigned MoveAssignments;
-  int val;
-  explicit MoveOnly(int val) : val(val) {
-  }
-  MoveOnly(MoveOnly&& other) {
-    val = other.val;
-    ++MoveConstructions;
-  }
-  MoveOnly &operator=(MoveOnly&& other) {
-    val = other.val;
-    ++MoveAssignments;
-    return *this;
-  }
-  ~MoveOnly() {
-    ++Destructions;
-  }
-  static void ResetCounts() {
-    MoveConstructions = 0;
-    Destructions = 0;
-    MoveAssignments = 0;
-  }
-};
-
-unsigned MoveOnly::MoveConstructions = 0;
-unsigned MoveOnly::Destructions = 0;
-unsigned MoveOnly::MoveAssignments = 0;
-
 // Test fixture
 class OptionalTest : public testing::Test {
 };
@@ -199,6 +169,37 @@ TEST_F(OptionalTest, NullCopyConstructionTest) {
   EXPECT_EQ(0u, NonDefaultConstructible::Destructions);
 }
 
+#if LLVM_HAS_RVALUE_REFERENCES
+struct MoveOnly {
+  static unsigned MoveConstructions;
+  static unsigned Destructions;
+  static unsigned MoveAssignments;
+  int val;
+  explicit MoveOnly(int val) : val(val) {
+  }
+  MoveOnly(MoveOnly&& other) {
+    val = other.val;
+    ++MoveConstructions;
+  }
+  MoveOnly &operator=(MoveOnly&& other) {
+    val = other.val;
+    ++MoveAssignments;
+    return *this;
+  }
+  ~MoveOnly() {
+    ++Destructions;
+  }
+  static void ResetCounts() {
+    MoveConstructions = 0;
+    Destructions = 0;
+    MoveAssignments = 0;
+  }
+};
+
+unsigned MoveOnly::MoveConstructions = 0;
+unsigned MoveOnly::Destructions = 0;
+unsigned MoveOnly::MoveAssignments = 0;
+
 TEST_F(OptionalTest, MoveOnlyNull) {
   MoveOnly::ResetCounts();
   Optional<MoveOnly> O;
@@ -277,6 +278,7 @@ TEST_F(OptionalTest, MoveOnlyAssigningAssignment) {
   EXPECT_EQ(1u, MoveOnly::MoveAssignments);
   EXPECT_EQ(1u, MoveOnly::Destructions);
 }
+#endif
 
 } // end anonymous namespace
 
