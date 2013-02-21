@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -cl-kernel-arg-info -emit-llvm -o - | FileCheck %s
 
-kernel void foo(int *X, int Y, int anotherArg) {
+kernel void foo(global int *X, int Y, int anotherArg) {
   *X = Y + anotherArg;
 }
 
