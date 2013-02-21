@@ -764,10 +764,19 @@ TEST(AddressSanitizerInterface, PoisonedRegion) {
 //     10.50%   [.] __sanitizer::mem_is_zero
 // I.e. mem_is_zero should consume ~ SHADOW_GRANULARITY less CPU cycles
 // than memset itself.
-TEST(AddressSanitizerInterface, DISABLED_Stress_memset) {
+TEST(AddressSanitizerInterface, DISABLED_StressLargeMemset) {
   size_t size = 1 << 20;
   char *x = new char[size];
   for (int i = 0; i < 100000; i++)
+    Ident(memset)(x, 0, size);
+  delete [] x;
+}
+
+// Same here, but we run memset with small sizes.
+TEST(AddressSanitizerInterface, DISABLED_StressSmallMemset) {
+  size_t size = 32;
+  char *x = new char[size];
+  for (int i = 0; i < 100000000; i++)
     Ident(memset)(x, 0, size);
   delete [] x;
 }

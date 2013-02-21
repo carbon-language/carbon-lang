@@ -206,7 +206,7 @@ static inline bool AddrIsAlignedByGranularity(uptr a) {
 static inline bool AddressIsPoisoned(uptr a) {
   PROFILE_ASAN_MAPPING();
   const uptr kAccessSize = 1;
-  u8 *shadow_address = (u8*)MemToShadow(a);
+  u8 *shadow_address = (u8*)MEM_TO_SHADOW(a);
   s8 shadow_value = *shadow_address;
   if (shadow_value) {
     u8 last_accessed_byte = (a & (SHADOW_GRANULARITY - 1))

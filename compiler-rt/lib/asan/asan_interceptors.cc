@@ -26,6 +26,16 @@
 
 namespace __asan {
 
+// Return true if we can quickly decide that the region is unpoisoned.
+static inline bool QuickCheckForUnpoisonedRegion(uptr beg, uptr size) {
+  if (size == 0) return true;
+  if (size <= 32)
+    return !AddressIsPoisoned(beg) &&
+           !AddressIsPoisoned(beg + size - 1) &&
+           !AddressIsPoisoned(beg + size / 2);
+  return false;
+}
+
 // We implement ACCESS_MEMORY_RANGE, ASAN_READ_RANGE,
 // and ASAN_WRITE_RANGE as macro instead of function so
 // that no extra frames are created, and stack trace contains
@@ -34,7 +44,8 @@ namespace __asan {
 #define ACCESS_MEMORY_RANGE(offset, size, isWrite) do {                 \
     uptr __offset = (uptr)(offset);                                     \
     uptr __size = (uptr)(size);                                         \
-    if (__asan_region_is_poisoned(__offset, __size)) {                  \
+    if (!QuickCheckForUnpoisonedRegion(__offset, __size) &&             \
+        __asan_region_is_poisoned(__offset, __size)) {                  \
       GET_CURRENT_PC_BP_SP;                                             \
       __asan_report_error(pc, bp, sp, __offset, isWrite, __size);       \
     }                                                                   \
