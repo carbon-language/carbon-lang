@@ -84,7 +84,7 @@ static FoundationClass findKnownClass(const ObjCInterfaceDecl *ID) {
 }
 
 static inline bool isNil(SVal X) {
-  return X.getAs<loc::ConcreteInt>();
+  return X.getAs<loc::ConcreteInt>().hasValue();
 }
 
 //===----------------------------------------------------------------------===//
