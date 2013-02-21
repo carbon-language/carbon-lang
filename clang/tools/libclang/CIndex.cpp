@@ -5741,12 +5741,14 @@ static CXVersion convertVersion(VersionTuple In) {
 
   Out.Major = In.getMajor();
   
-  if (Optional<unsigned> Minor = In.getMinor())
+  Optional<unsigned> Minor = In.getMinor();
+  if (Minor.hasValue())
     Out.Minor = *Minor;
   else
     return Out;
 
-  if (Optional<unsigned> Subminor = In.getSubminor())
+  Optional<unsigned> Subminor = In.getSubminor();
+  if (Subminor.hasValue())
     Out.Subminor = *Subminor;
   
   return Out;
