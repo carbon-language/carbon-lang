@@ -69,18 +69,14 @@ class SBDirCheckerCase(TestBase):
 
         self.line_to_break = line_number(self.source, '// Set breakpoint here.')
 
-        if sys.platform.startswith("darwin"):
-            env_var = 'DYLD_FRAMEWORK_PATH'
-            env_val = self.lib_dir
-        if sys.platform.startswith("linux"):
-            env_var = 'LD_LIBRARY_PATH'
-            env_val = self.lib_dir
+        existing_library_path = os.environ[self.dylibPath] if self.dylibPath in os.environ else None
 
-        env_cmd = "settings set target.env-vars %s=%s" %(env_var, env_val)
+        env_val = self.lib_dir if not existing_library_path else "%s:%s" % (existing_library_path, self.lib_dir)
+        env_cmd = "settings set target.env-vars %s=%s" %(self.dylibPath, env_val)
         if self.TraceOn():
             print "Set environment to: ", env_cmd
         self.runCmd(env_cmd)
-        self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars %s" % env_var))
+        self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars %s" % self.dylibPath))
 
         lldbutil.run_break_set_by_file_and_line (self, self.source, self.line_to_break, num_expected_locations = -1)
 
