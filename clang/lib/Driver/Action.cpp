@@ -33,7 +33,6 @@ const char *Action::getClassName(ActionClass AC) {
   case LipoJobClass: return "lipo";
   case DsymutilJobClass: return "dsymutil";
   case VerifyJobClass: return "verify";
-  case SplitDebugJobClass: return "split-debug";
   }
 
   llvm_unreachable("invalid class");
@@ -119,10 +118,4 @@ void VerifyJobAction::anchor() {}
 
 VerifyJobAction::VerifyJobAction(ActionList &Inputs, types::ID Type)
   : JobAction(VerifyJobClass, Inputs, Type) {
-}
-
-void SplitDebugJobAction::anchor() {}
-
-SplitDebugJobAction::SplitDebugJobAction(ActionList &Inputs, types::ID Type)
-  : JobAction(SplitDebugJobClass, Inputs, Type) {
 }

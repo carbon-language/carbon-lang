@@ -46,10 +46,9 @@ public:
     LipoJobClass,
     DsymutilJobClass,
     VerifyJobClass,
-    SplitDebugJobClass,
 
     JobClassFirst=PreprocessJobClass,
-    JobClassLast=SplitDebugJobClass
+    JobClassLast=VerifyJobClass
   };
 
   static const char *getClassName(ActionClass AC);
@@ -231,15 +230,6 @@ public:
   VerifyJobAction(ActionList &Inputs, types::ID Type);
   static bool classof(const Action *A) {
     return A->getKind() == VerifyJobClass;
-  }
-};
-
-class SplitDebugJobAction : public JobAction {
-  virtual void anchor();
-public:
-  SplitDebugJobAction(ActionList &Inputs, types::ID Type);
-  static bool classof(const Action *A) {
-    return A->getKind() == SplitDebugJobClass;
   }
 };
 

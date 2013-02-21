@@ -55,8 +55,6 @@ Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
     case Action::LipoJobClass:
     case Action::DsymutilJobClass:
     case Action::VerifyJobClass:
-    case Action::SplitDebugJobClass:
-      llvm_unreachable("Invalid tool kind.");
     case Action::PreprocessJobClass:
     case Action::PrecompileJobClass:
     case Action::AnalyzeJobClass:

@@ -54,6 +54,10 @@ namespace tools {
     void AddSparcTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddHexagonTargetArgs (const ArgList &Args, ArgStringList &CmdArgs) const;
+    void SplitDebugInfo(Compilation &C, const JobAction &JA,
+                        const ArgList &Args, const InputInfoList &Inputs,
+                        const InputInfo &Output,
+                        const char *LinkingOutput) const;
 
     enum RewriteKind { RK_None, RK_Fragile, RK_NonFragile };
 
@@ -447,20 +451,6 @@ namespace linuxtools {
 
     virtual bool hasIntegratedCPP() const { return false; }
     virtual bool isLinkJob() const { return true; }
-
-    virtual void ConstructJob(Compilation &C, const JobAction &JA,
-                              const InputInfo &Output,
-                              const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
-                              const char *LinkingOutput) const;
-  };
-
-  class LLVM_LIBRARY_VISIBILITY SplitDebug : public Tool  {
-  public:
-    SplitDebug(const ToolChain &TC) : Tool("linuxtools::SplitDebug",
-                                           "objcopy", TC) {}
-
-    virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,

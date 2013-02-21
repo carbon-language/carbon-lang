@@ -1107,27 +1107,11 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
       Current.reset(ConstructPhaseAction(Args, Phase, Current.take()));
       if (Current->getType() == types::TY_Nothing)
         break;
-      else if (Current->getType() == types::TY_Object &&
-               Args.hasArg(options::OPT_gsplit_dwarf)) {
-        ActionList Input;
-        Input.push_back(Current.take());
-        Current.reset(new SplitDebugJobAction(Input, types::TY_Object));
-      }
     }
 
     // If we ended with something, add to the output list.
     if (Current)
       Actions.push_back(Current.take());
-  }
-
-  if (!SplitInputs.empty()) {
-    for (ActionList::iterator i = SplitInputs.begin(), e = SplitInputs.end();
-         i != e; ++i) {
-      Action *Act = *i;
-      ActionList Inputs;
-      Inputs.push_back(Act);
-      Actions.push_back(new SplitDebugJobAction(Inputs, types::TY_Object));
-    }
   }
 
   // Add a link action if necessary.
@@ -1410,8 +1394,6 @@ void Driver::BuildJobsForAction(Compilation &C,
   // Determine the place to write output to, if any.
   if (JA->getType() == types::TY_Nothing)
     Result = InputInfo(A->getType(), BaseInput);
-  else if (isa<SplitDebugJobAction>(A))
-    Result = InputInfos[0];
   else
     Result = InputInfo(GetNamedOutputPath(C, *JA, BaseInput, AtTopLevel),
                        A->getType(), BaseInput);
