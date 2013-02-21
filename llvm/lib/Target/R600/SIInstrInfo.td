@@ -49,9 +49,8 @@ class InlineImm <ValueType vt> : ImmLeaf <vt, [{
 // SI assembler operands
 //===----------------------------------------------------------------------===//
 
-class SIOperand <ValueType vt, dag opInfo>: Operand <vt> {
-  let EncoderMethod = "encodeOperand";
-  let MIOperandInfo = opInfo;
+def SIOperand {
+  int ZERO = 0x80;
 }
 
 class GPR4Align <RegisterClass rc> : Operand <vAny> {
@@ -201,7 +200,7 @@ multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
          InstFlag:$omod, InstFlag:$neg),
     opName, pattern
   > {
-    let SRC2 = 0x80;
+    let SRC2 = SIOperand.ZERO;
   }
 }
 
