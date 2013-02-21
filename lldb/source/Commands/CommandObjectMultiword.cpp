@@ -34,7 +34,8 @@ CommandObjectMultiword::CommandObjectMultiword
     const char *syntax,
     uint32_t flags
 ) :
-    CommandObject (interpreter, name, help, syntax, flags)
+    CommandObject (interpreter, name, help, syntax, flags),
+    m_can_be_removed(false)
 {
 }
 
