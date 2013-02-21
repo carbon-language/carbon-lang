@@ -29,6 +29,7 @@
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/type_traits.h"
 #include <algorithm>
 
 using namespace clang;
@@ -83,29 +84,37 @@ using namespace clang;
 // and 'matcher' is a type only matters when looking for attributes
 // and settings from the immediate context.
 
+const unsigned IgnoreExplicitVisibilityBit = 2;
+
 /// Kinds of LV computation.  The linkage side of the computation is
 /// always the same, but different things can change how visibility is
 /// computed.
 enum LVComputationKind {
-  /// Do a normal LV computation for, ultimately, a type.
+  /// Do an LV computation for, ultimately, a type.
+  /// Visibility may be restricted by type visibility settings and
+  /// the visibility of template arguments.
   LVForType = NamedDecl::VisibilityForType,
 
-  /// Do a normal LV computation for, ultimately, a non-type declaration.
+  /// Do an LV computation for, ultimately, a non-type declaration.
+  /// Visibility may be restricted by value visibility settings and
+  /// the visibility of template arguments.
   LVForValue = NamedDecl::VisibilityForValue,
 
-  /// Do a normal LV computation for, ultimately, a type that already
-  /// has some sort of explicit visibility.
-  LVForExplicitType,
+  /// Do an LV computation for, ultimately, a type that already has
+  /// some sort of explicit visibility.  Visibility may only be
+  /// restricted by the visibility of template arguments.
+  LVForExplicitType = (LVForType | IgnoreExplicitVisibilityBit),
 
-  /// Do a normal LV computation for, ultimately, a non-type declaration
-  /// that already has some sort of explicit visibility.
-  LVForExplicitValue
+  /// Do an LV computation for, ultimately, a non-type declaration
+  /// that already has some sort of explicit visibility.  Visibility
+  /// may only be restricted by the visibility of template arguments.
+  LVForExplicitValue = (LVForValue | IgnoreExplicitVisibilityBit)
 };
 
 /// Does this computation kind permit us to consider additional
 /// visibility settings from attributes and the like?
 static bool hasExplicitVisibilityAlready(LVComputationKind computation) {
-  return ((unsigned(computation) & 2) != 0);
+  return ((unsigned(computation) & IgnoreExplicitVisibilityBit) != 0);
 }
 
 /// Given an LVComputationKind, return one of the same type/value sort
@@ -113,7 +122,8 @@ static bool hasExplicitVisibilityAlready(LVComputationKind computation) {
 static LVComputationKind
 withExplicitVisibilityAlready(LVComputationKind oldKind) {
   LVComputationKind newKind =
-    static_cast<LVComputationKind>(unsigned(oldKind) | 2);
+    static_cast<LVComputationKind>(unsigned(oldKind) |
+                                   IgnoreExplicitVisibilityBit);
   assert(oldKind != LVForType          || newKind == LVForExplicitType);
   assert(oldKind != LVForValue         || newKind == LVForExplicitValue);
   assert(oldKind != LVForExplicitType  || newKind == LVForExplicitType);
@@ -136,6 +146,26 @@ static bool usesTypeVisibility(const NamedDecl *D) {
   return isa<TypeDecl>(D) ||
          isa<ClassTemplateDecl>(D) ||
          isa<ObjCInterfaceDecl>(D);
+}
+
+/// Does the given declaration have member specialization information,
+/// and if so, is it an explicit specialization?
+template <class T> static typename
+llvm::enable_if_c<!llvm::is_base_of<RedeclarableTemplateDecl, T>::value,
+                  bool>::type
+isExplicitMemberSpecialization(const T *D) {
+  if (const MemberSpecializationInfo *member =
+        D->getMemberSpecializationInfo()) {
+    return member->isExplicitSpecialization();
+  }
+  return false;
+}
+
+/// For templates, this question is easier: a member template can't be
+/// explicitly instantiated, so there's a single bit indicating whether
+/// or not this is an explicit member specialization.
+static bool isExplicitMemberSpecialization(const RedeclarableTemplateDecl *D) {
+  return D->isMemberSpecialization();
 }
 
 /// Given a visibility attribute, return the explicit visibility
@@ -304,23 +334,33 @@ getLVForTemplateArgumentList(const TemplateArgumentList &TArgs) {
   return getLVForTemplateArgumentList(TArgs.asArray());
 }
 
+static bool shouldConsiderTemplateVisibility(const FunctionDecl *fn,
+                        const FunctionTemplateSpecializationInfo *specInfo) {
+  // Include visibility from the template parameters and arguments
+  // only if this is not an explicit instantiation or specialization
+  // with direct explicit visibility.  (Implicit instantiations won't
+  // have a direct attribute.)
+  if (!specInfo->isExplicitInstantiationOrSpecialization())
+    return true;
+
+  return !fn->hasAttr<VisibilityAttr>();
+}
+
 /// Merge in template-related linkage and visibility for the given
 /// function template specialization.
 ///
 /// We don't need a computation kind here because we can assume
 /// LVForValue.
-static void mergeTemplateLV(LinkageInfo &LV, const FunctionDecl *fn,
-                      const FunctionTemplateSpecializationInfo *specInfo) {
-  bool hasExplicitVisibility = fn->hasAttr<VisibilityAttr>();
-  FunctionTemplateDecl *temp = specInfo->getTemplate();
-
-  // Include visibility from the template parameters and arguments
-  // only if this is not an explicit instantiation or specialization
-  // with direct explicit visibility.  (Implicit instantiations won't
-  // have a direct attribute.)
-  bool considerVisibility = !hasExplicitVisibility;
+///
+/// \return the computation to use for the parent
+static void
+mergeTemplateLV(LinkageInfo &LV, const FunctionDecl *fn,
+                const FunctionTemplateSpecializationInfo *specInfo) {
+  bool considerVisibility =
+    shouldConsiderTemplateVisibility(fn, specInfo);
 
   // Merge information from the template parameters.
+  FunctionTemplateDecl *temp = specInfo->getTemplate();
   LinkageInfo tempLV =
     getLVForTemplateParameterList(temp->getTemplateParameters());
   LV.mergeMaybeWithVisibility(tempLV, considerVisibility);
@@ -329,6 +369,25 @@ static void mergeTemplateLV(LinkageInfo &LV, const FunctionDecl *fn,
   const TemplateArgumentList &templateArgs = *specInfo->TemplateArguments;
   LinkageInfo argsLV = getLVForTemplateArgumentList(templateArgs);
   LV.mergeMaybeWithVisibility(argsLV, considerVisibility);
+}
+
+/// Does the given declaration have a direct visibility attribute
+/// that would match the given rules?
+static bool hasDirectVisibilityAttribute(const NamedDecl *D,
+                                         LVComputationKind computation) {
+  switch (computation) {
+  case LVForType:
+  case LVForExplicitType:
+    if (D->hasAttr<TypeVisibilityAttr>())
+      return true;
+    // fallthrough
+  case LVForValue:
+  case LVForExplicitValue:
+    if (D->hasAttr<VisibilityAttr>())
+      return true;
+    return false;
+  }
+  llvm_unreachable("bad visibility computation kind");
 }
 
 /// Should we consider visibility associated with the template
@@ -364,20 +423,7 @@ static bool shouldConsiderTemplateVisibility(
       hasExplicitVisibilityAlready(computation))
     return false;
 
-  // Otherwise, look to see if we have an attribute.
-  switch (computation) {
-  case LVForType:
-  case LVForExplicitType:
-    if (spec->hasAttr<TypeVisibilityAttr>())
-      return false;
-    // fallthrough
-  case LVForValue:
-  case LVForExplicitValue:
-    if (spec->hasAttr<VisibilityAttr>())
-      return false;
-    return true;
-  }
-  llvm_unreachable("bad visibility computation kind");
+  return !hasDirectVisibilityAttribute(spec, computation);
 }
 
 /// Merge in template-related linkage and visibility for the given
@@ -620,8 +666,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
         Function->getType()->getLinkage() == UniqueExternalLinkage)
       return LinkageInfo::uniqueExternal();
 
-    // Consider LV from the template and the template arguments unless
-    // this is an explicit specialization with a visibility attribute.
+    // Consider LV from the template and the template arguments.
+    // We're at file scope, so we do not need to worry about nested
+    // specializations.
     if (FunctionTemplateSpecializationInfo *specInfo
                                = Function->getTemplateSpecializationInfo()) {
       mergeTemplateLV(LV, Function, specInfo);
@@ -639,7 +686,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       return LinkageInfo::none();
 
     // If this is a class template specialization, consider the
-    // linkage of the template and template arguments.
+    // linkage of the template and template arguments.  We're at file
+    // scope, so we do not need to worry about nested specializations.
     if (const ClassTemplateSpecializationDecl *spec
           = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
       mergeTemplateLV(LV, spec, computation);
@@ -718,19 +766,20 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   if (LV.visibilityExplicit())
     classComputation = withExplicitVisibilityAlready(computation);
 
-  // If this member has an visibility attribute, ClassF will exclude
-  // attributes on the class or command line options, keeping only information
-  // about the template instantiation. If the member has no visibility
-  // attributes, mergeWithMin behaves like merge, so in both cases mergeWithMin
-  // produces the desired result.
-  LV.merge(getLVForDecl(cast<RecordDecl>(D->getDeclContext()),
-                        classComputation));
-  if (!isExternalLinkage(LV.linkage()))
+  LinkageInfo classLV =
+    getLVForDecl(cast<RecordDecl>(D->getDeclContext()), classComputation);
+  if (!isExternalLinkage(classLV.linkage()))
     return LinkageInfo::none();
 
   // If the class already has unique-external linkage, we can't improve.
-  if (LV.linkage() == UniqueExternalLinkage)
+  if (classLV.linkage() == UniqueExternalLinkage)
     return LinkageInfo::uniqueExternal();
+
+  // Otherwise, don't merge in classLV yet, because in certain cases
+  // we need to completely ignore the visibility from it.
+
+  // Specifically, if this decl exists and has an explicit attribute.
+  const NamedDecl *explicitSpecSuppressor = 0;
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     // If the type of the function uses a type with unique-external
@@ -743,15 +792,29 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
     if (FunctionTemplateSpecializationInfo *spec
            = MD->getTemplateSpecializationInfo()) {
       mergeTemplateLV(LV, MD, spec);
+      if (spec->isExplicitSpecialization()) {
+        explicitSpecSuppressor = MD;
+      } else if (isExplicitMemberSpecialization(spec->getTemplate())) {
+        explicitSpecSuppressor = spec->getTemplate()->getTemplatedDecl();
+      }
+    } else if (isExplicitMemberSpecialization(MD)) {
+      explicitSpecSuppressor = MD;
     }
-
-    // Note that in contrast to basically every other situation, we
-    // *do* apply -fvisibility to method declarations.
 
   } else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     if (const ClassTemplateSpecializationDecl *spec
         = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
       mergeTemplateLV(LV, spec, computation);
+      if (spec->isExplicitSpecialization()) {
+        explicitSpecSuppressor = spec;
+      } else {
+        const ClassTemplateDecl *temp = spec->getSpecializedTemplate();
+        if (isExplicitMemberSpecialization(temp)) {
+          explicitSpecSuppressor = temp->getTemplatedDecl();
+        }
+      }
+    } else if (isExplicitMemberSpecialization(RD)) {
+      explicitSpecSuppressor = RD;
     }
 
   // Static data members.
@@ -759,21 +822,46 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
     // Modify the variable's linkage by its type, but ignore the
     // type's visibility unless it's a definition.
     LinkageInfo typeLV = getLVForType(VD->getType());
-    if (typeLV.linkage() != ExternalLinkage)
-      LV.mergeLinkage(UniqueExternalLinkage);
-    if (!LV.visibilityExplicit())
-      LV.mergeVisibility(typeLV);
+    LV.mergeMaybeWithVisibility(typeLV,
+                  !LV.visibilityExplicit() && !classLV.visibilityExplicit());
+
+    if (isExplicitMemberSpecialization(VD)) {
+      explicitSpecSuppressor = VD;
+    }
 
   // Template members.
   } else if (const TemplateDecl *temp = dyn_cast<TemplateDecl>(D)) {
     bool considerVisibility =
       (!LV.visibilityExplicit() &&
+       !classLV.visibilityExplicit() &&
        !hasExplicitVisibilityAlready(computation));
     LinkageInfo tempLV =
       getLVForTemplateParameterList(temp->getTemplateParameters());
     LV.mergeMaybeWithVisibility(tempLV, considerVisibility);
+
+    if (const RedeclarableTemplateDecl *redeclTemp =
+          dyn_cast<RedeclarableTemplateDecl>(temp)) {
+      if (isExplicitMemberSpecialization(redeclTemp)) {
+        explicitSpecSuppressor = temp->getTemplatedDecl();
+      }
+    }
   }
 
+  // We should never be looking for an attribute directly on a template.
+  assert(!explicitSpecSuppressor || !isa<TemplateDecl>(explicitSpecSuppressor));
+
+  // If this member is an explicit member specialization, and it has
+  // an explicit attribute, ignore visibility from the parent.
+  bool considerClassVisibility = true;
+  if (explicitSpecSuppressor &&
+      LV.visibilityExplicit() && // optimization: hasDVA() is true only if this
+      classLV.visibility() != DefaultVisibility &&
+      hasDirectVisibilityAttribute(explicitSpecSuppressor, computation)) {
+    considerClassVisibility = false;
+  }
+
+  // Finally, merge in information from the class.
+  LV.mergeMaybeWithVisibility(classLV, considerClassVisibility);
   return LV;
 }
 
@@ -2342,10 +2430,6 @@ FunctionDecl *FunctionDecl::getInstantiatedFromMemberFunction() const {
     return cast<FunctionDecl>(Info->getInstantiatedFrom());
   
   return 0;
-}
-
-MemberSpecializationInfo *FunctionDecl::getMemberSpecializationInfo() const {
-  return TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>();
 }
 
 void 

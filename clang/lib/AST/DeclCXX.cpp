@@ -1120,10 +1120,6 @@ CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() const {
   return 0;
 }
 
-MemberSpecializationInfo *CXXRecordDecl::getMemberSpecializationInfo() const {
-  return TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>();
-}
-
 void 
 CXXRecordDecl::setInstantiationOfMemberClass(CXXRecordDecl *RD,
                                              TemplateSpecializationKind TSK) {

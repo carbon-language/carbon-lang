@@ -1919,7 +1919,9 @@ public:
   /// \brief If this function is an instantiation of a member function of a
   /// class template specialization, retrieves the member specialization
   /// information.
-  MemberSpecializationInfo *getMemberSpecializationInfo() const;
+  MemberSpecializationInfo *getMemberSpecializationInfo() const {
+    return TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>();
+  }
 
   /// \brief Specify that this record is an instantiation of the
   /// member function FD.
