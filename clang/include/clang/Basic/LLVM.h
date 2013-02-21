@@ -20,7 +20,7 @@
 // dependencies.
 // Casting.h has complex templates that cannot be easily forward declared.
 #include "llvm/Support/Casting.h"
-// None.h includes an enumerant that is desired & cannot be forward declared
+// None.h includes an enumerator that is desired & cannot be forward declared
 // without a definition of NoneType.
 #include "llvm/ADT/None.h"
 
