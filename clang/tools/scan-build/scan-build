@@ -906,9 +906,12 @@ sub RunXcodebuild {
 
   while(<DETECT_XCODE>) {
     if (/^Xcode (.+)$/) {
-      if ($1 >= 4.6) {
-        $oldBehavior = 0;
-        last;
+      my $ver = $1;
+      if ($ver =~ /^([0-9]+[.][0-9]+)[^0-9]?/) {
+        if ($1 >= 4.6) {
+          $oldBehavior = 0;
+          last;
+        }
       }
     }
   }
