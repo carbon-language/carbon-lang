@@ -258,6 +258,12 @@ private:
   tooling::Replacements Replaces;
 };
 
+static bool isVarDeclName(const AnnotatedToken &Tok) {
+  return Tok.Parent != NULL && Tok.is(tok::identifier) &&
+         (Tok.Parent->Type == TT_PointerOrReference ||
+          Tok.Parent->is(tok::identifier));
+}
+
 class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
@@ -512,7 +518,7 @@ private:
           State.Stack.back().ColonPos =
               State.Column + Current.FormatTok.TokenLength;
         }
-      } else if (Previous.Type == TT_ObjCMethodExpr) {
+      } else if (Previous.Type == TT_ObjCMethodExpr || isVarDeclName(Current)) {
         State.Column = State.Stack.back().Indent + 4;
       } else {
         State.Column = State.Stack.back().Indent;
@@ -610,7 +616,9 @@ private:
           (!Style.AllowAllParametersOfDeclarationOnNextLine &&
            Line.MustBeDeclaration))
         State.Stack.back().BreakBeforeParameter = true;
+    }
 
+    if (Newline) {
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
@@ -634,13 +642,10 @@ private:
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
-    if (Current.Type == TT_CtorInitializerColon &&
-        Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
-      State.Stack.back().AvoidBinPacking = true;
-    if (Current.is(tok::l_brace) && Current.MatchingParen != NULL &&
-        !Current.MatchingParen->MustBreakBefore) {
-      if (getLengthToMatchingParen(Current) + State.Column > getColumnLimit())
-        State.Stack.back().BreakBeforeParameter = true;
+    if (Current.Type == TT_CtorInitializerColon) {
+      if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
+        State.Stack.back().AvoidBinPacking = true;
+      State.Stack.back().BreakBeforeParameter = false;
     }
 
     // Insert scopes created by fake parenthesis.
@@ -908,7 +913,8 @@ private:
     if (State.NextToken->Parent->is(tok::comma) &&
         State.Stack.back().BreakBeforeParameter &&
         !isTrailingComment(*State.NextToken) &&
-        State.NextToken->isNot(tok::r_paren))
+        State.NextToken->isNot(tok::r_paren) &&
+        State.NextToken->isNot(tok::r_brace))
       return true;
     // FIXME: Comparing LongestObjCSelectorName to 0 is a hacky way of finding
     // out whether it is the first parameter. Clean this up.

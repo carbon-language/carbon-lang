@@ -278,9 +278,13 @@ TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat(
       "for (MachineFun::iterator IIII = PrevIt, EEEE = F.end(); IIII != EEEE;\n"
       "     ++IIIII) {\n}");
-  verifyFormat("for (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaa =\n"
-               "         aaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa;\n"
+  verifyFormat("for (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "         aaaaaaaaaaa = aaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaa;\n"
                "     aaaaaaaaaaa != aaaaaaaaaaaaaaaaaaa; ++aaaaaaaaaaa) {\n}");
+  verifyFormat("for (llvm::ArrayRef<NamedDecl *>::iterator\n"
+               "         I = FD->getDeclsInPrototypeScope().begin(),\n"
+               "         E = FD->getDeclsInPrototypeScope().end();\n"
+               "     I != E; ++I) {\n}");
 
   // FIXME: Not sure whether we want extra identation in line 3 here:
   verifyFormat(
@@ -1012,7 +1016,8 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "#define A B\n"
                "                           withMoreParamters,\n"
                "                           whichStronglyInfluenceTheLayout),\n"
-               "        andMoreParameters), trailing);",
+               "        andMoreParameters),\n"
+               "    trailing);",
                getLLVMStyleWithColumns(69));
 }
 
@@ -1398,8 +1403,8 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "unsigned Indent =\n"
       "    format(TheLine.First, IndentForLevel[TheLine.Level] >= 0\n"
       "                              ? IndentForLevel[TheLine.Level]\n"
-      "                              : TheLine * 2, TheLine.InPPDirective,\n"
-      "           PreviousEndOfLineColumn);",
+      "                              : TheLine * 2,\n"
+      "           TheLine.InPPDirective, PreviousEndOfLineColumn);",
       getLLVMStyleWithColumns(70));
 
 }
@@ -1414,11 +1419,10 @@ TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa),\n"
                "     bbbbbbbbbbbbbbbbbbbbbbbbb =\n"
                "     bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(bbbbbbbbbbbbbbbb);");
-
-  // FIXME: This is bad as we hide "d".
   verifyFormat(
-      "bool aaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb &&\n"
-      "                             cccccccccccccccccccccccccccc, d = e && f;");
+      "bool aaaaaaaaaaaaaaaaaaaaa =\n"
+      "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && cccccccccccccccccccccccccccc,\n"
+      "     d = e && f;");
 
 }
 
@@ -2066,11 +2070,13 @@ TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
 }
 
 TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
+  // FIXME: This is bad, find a better and more generic solution.
   verifyFormat(
       "Aaa({\n"
       "  int i;\n"
-      "}, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
-      "                                    ccccccccccccccccc));");
+      "},\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
+      "                                     ccccccccccccccccc));");
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
