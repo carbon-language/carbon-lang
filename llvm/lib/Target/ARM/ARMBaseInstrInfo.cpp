@@ -2719,7 +2719,6 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
   case ARM::t2STMDB_UPD: {
     unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands() + 1;
     if (Subtarget.isSwift()) {
-      // rdar://8402126
       int UOps = 1 + NumRegs;  // One for address computation, one for each ld / st.
       switch (Opc) {
       default: break;
@@ -4047,7 +4046,6 @@ getPartialRegUpdateClearance(const MachineInstr *MI,
   case ARM::VLDRS:
   case ARM::FCONSTS:
   case ARM::VMOVSR:
-    // rdar://problem/8791586
   case ARM::VMOVv8i8:
   case ARM::VMOVv4i16:
   case ARM::VMOVv2i32:
