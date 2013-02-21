@@ -281,7 +281,7 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
   DefinedOrUnknownSVal Size = Extent.castAs<DefinedOrUnknownSVal>();
 
   // Get the index of the accessed element.
-  DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+  DefinedOrUnknownSVal Idx = ER->getIndex().castAs<DefinedOrUnknownSVal>();
 
   ProgramStateRef StInBound = state->assumeInBound(Idx, Size, true);
   ProgramStateRef StOutBound = state->assumeInBound(Idx, Size, false);

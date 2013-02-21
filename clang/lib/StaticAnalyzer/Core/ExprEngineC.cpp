@@ -523,16 +523,16 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
   ProgramStateRef state = Pred->getState();
 
   ExplodedNode *N = Pred;
-  while (!isa<BlockEntrance>(N->getLocation())) {
+  while (!N->getLocation().getAs<BlockEntrance>()) {
     ProgramPoint P = N->getLocation();
-    assert(isa<PreStmt>(P)|| isa<PreStmtPurgeDeadSymbols>(P));
+    assert(P.getAs<PreStmt>()|| P.getAs<PreStmtPurgeDeadSymbols>());
     (void) P;
     assert(N->pred_size() == 1);
     N = *N->pred_begin();
   }
   assert(N->pred_size() == 1);
   N = *N->pred_begin();
-  BlockEdge BE = cast<BlockEdge>(N->getLocation());
+  BlockEdge BE = N->getLocation().castAs<BlockEdge>();
   SVal X;
 
   // Determine the value of the expression by introspecting how we
@@ -643,11 +643,11 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
 
   for (const ExplodedNode *N = Pred ; N ; N = *N->pred_begin()) {
     ProgramPoint PP = N->getLocation();
-    if (isa<PreStmtPurgeDeadSymbols>(PP) || isa<BlockEntrance>(PP)) {
+    if (PP.getAs<PreStmtPurgeDeadSymbols>() || PP.getAs<BlockEntrance>()) {
       assert(N->pred_size() == 1);
       continue;
     }
-    SrcBlock = cast<BlockEdge>(&PP)->getSrc();
+    SrcBlock = PP.castAs<BlockEdge>().getSrc();
     break;
   }
 

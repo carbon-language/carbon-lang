@@ -250,7 +250,7 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
     return false;
 
   // Is this the beginning of a basic block?
-  if (isa<BlockEntrance>(Pred->getLocation()))
+  if (Pred->getLocation().getAs<BlockEntrance>())
     return true;
 
   // Is this on a non-expression?
@@ -1056,11 +1056,11 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
     // processing the call.
     if (L.isPurgeKind())
       continue;
-    if (isa<PreImplicitCall>(&L))
+    if (L.getAs<PreImplicitCall>())
       continue;
-    if (isa<CallEnter>(&L))
+    if (L.getAs<CallEnter>())
       continue;
-    if (const StmtPoint *SP = dyn_cast<StmtPoint>(&L))
+    if (Optional<StmtPoint> SP = L.getAs<StmtPoint>())
       if (SP->getStmt() == CE)
         continue;
     break;
@@ -1953,7 +1953,7 @@ void ExprEngine::evalEagerlyAssumeBinOpBifurcation(ExplodedNodeSet &Dst,
     // when the expression fails to evaluate to anything meaningful and
     // (as an optimization) we don't generate a node.
     ProgramPoint P = Pred->getLocation();
-    if (!isa<PostStmt>(P) || cast<PostStmt>(P).getStmt() != Ex) {
+    if (!P.getAs<PostStmt>() || P.castAs<PostStmt>().getStmt() != Ex) {
       continue;
     }
 
@@ -2073,7 +2073,7 @@ struct DOTGraphTraits<ExplodedNode*> :
     switch (Loc.getKind()) {
       case ProgramPoint::BlockEntranceKind: {
         Out << "Block Entrance: B"
-            << cast<BlockEntrance>(Loc).getBlock()->getBlockID();
+            << Loc.castAs<BlockEntrance>().getBlock()->getBlockID();
         if (const NamedDecl *ND =
                     dyn_cast<NamedDecl>(Loc.getLocationContext()->getDecl())) {
           Out << " (";
@@ -2112,27 +2112,27 @@ struct DOTGraphTraits<ExplodedNode*> :
         break;
 
       case ProgramPoint::PreImplicitCallKind: {
-        ImplicitCallPoint *PC = cast<ImplicitCallPoint>(&Loc);
+        ImplicitCallPoint PC = Loc.castAs<ImplicitCallPoint>();
         Out << "PreCall: ";
 
         // FIXME: Get proper printing options.
-        PC->getDecl()->print(Out, LangOptions());
-        printLocation(Out, PC->getLocation());
+        PC.getDecl()->print(Out, LangOptions());
+        printLocation(Out, PC.getLocation());
         break;
       }
 
       case ProgramPoint::PostImplicitCallKind: {
-        ImplicitCallPoint *PC = cast<ImplicitCallPoint>(&Loc);
+        ImplicitCallPoint PC = Loc.castAs<ImplicitCallPoint>();
         Out << "PostCall: ";
 
         // FIXME: Get proper printing options.
-        PC->getDecl()->print(Out, LangOptions());
-        printLocation(Out, PC->getLocation());
+        PC.getDecl()->print(Out, LangOptions());
+        printLocation(Out, PC.getLocation());
         break;
       }
 
       default: {
-        if (StmtPoint *L = dyn_cast<StmtPoint>(&Loc)) {
+        if (Optional<StmtPoint> L = Loc.getAs<StmtPoint>()) {
           const Stmt *S = L->getStmt();
 
           Out << S->getStmtClassName() << ' ' << (const void*) S << ' ';
@@ -2140,13 +2140,13 @@ struct DOTGraphTraits<ExplodedNode*> :
           S->printPretty(Out, 0, PrintingPolicy(LO));
           printLocation(Out, S->getLocStart());
 
-          if (isa<PreStmt>(Loc))
+          if (Loc.getAs<PreStmt>())
             Out << "\\lPreStmt\\l;";
-          else if (isa<PostLoad>(Loc))
+          else if (Loc.getAs<PostLoad>())
             Out << "\\lPostLoad\\l;";
-          else if (isa<PostStore>(Loc))
+          else if (Loc.getAs<PostStore>())
             Out << "\\lPostStore\\l";
-          else if (isa<PostLValue>(Loc))
+          else if (Loc.getAs<PostLValue>())
             Out << "\\lPostLValue\\l";
 
 #if 0
@@ -2173,7 +2173,7 @@ struct DOTGraphTraits<ExplodedNode*> :
           break;
         }
 
-        const BlockEdge &E = cast<BlockEdge>(Loc);
+        const BlockEdge &E = Loc.castAs<BlockEdge>();
         Out << "Edge: (B" << E.getSrc()->getBlockID() << ", B"
             << E.getDst()->getBlockID()  << ')';
 

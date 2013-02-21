@@ -526,9 +526,9 @@ BugReport *MacOSKeychainAPIChecker::
   const ExplodedNode *AllocNode = getAllocationNode(N, AP.first, C);
   const Stmt *AllocStmt = 0;
   ProgramPoint P = AllocNode->getLocation();
-  if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&P))
+  if (Optional<CallExitEnd> Exit = P.getAs<CallExitEnd>())
     AllocStmt = Exit->getCalleeContext()->getCallSite();
-  else if (clang::PostStmt *PS = dyn_cast<clang::PostStmt>(&P))
+  else if (Optional<clang::PostStmt> PS = P.getAs<clang::PostStmt>())
     AllocStmt = PS->getStmt();
 
   if (AllocStmt)
@@ -602,8 +602,8 @@ PathDiagnosticPiece *MacOSKeychainAPIChecker::SecKeychainBugVisitor::VisitNode(
 
   // (!ASPrev && AS) ~ We started tracking symbol in node N, it must be the
   // allocation site.
-  const CallExpr *CE = cast<CallExpr>(cast<StmtPoint>(N->getLocation())
-                                                            .getStmt());
+  const CallExpr *CE =
+      cast<CallExpr>(N->getLocation().castAs<StmtPoint>().getStmt());
   const FunctionDecl *funDecl = CE->getDirectCallee();
   assert(funDecl && "We do not support indirect function calls as of now.");
   StringRef funName = funDecl->getName();

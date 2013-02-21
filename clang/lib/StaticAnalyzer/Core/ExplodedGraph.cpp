@@ -85,11 +85,11 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
 
   // Condition 3.
   ProgramPoint progPoint = node->getLocation();
-  if (!isa<PostStmt>(progPoint) || isa<PostStore>(progPoint))
+  if (!progPoint.getAs<PostStmt>() || progPoint.getAs<PostStore>())
     return false;
 
   // Condition 4.
-  PostStmt ps = cast<PostStmt>(progPoint);
+  PostStmt ps = progPoint.castAs<PostStmt>();
   if (ps.getTag())
     return false;
 
@@ -114,7 +114,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   
   // Condition 9.
   const ProgramPoint SuccLoc = succ->getLocation();
-  if (const StmtPoint *SP = dyn_cast<StmtPoint>(&SuccLoc))
+  if (Optional<StmtPoint> SP = SuccLoc.getAs<StmtPoint>())
     if (CallEvent::isCallStmt(SP->getStmt()))
       return false;
 

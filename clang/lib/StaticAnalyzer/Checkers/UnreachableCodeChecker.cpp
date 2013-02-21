@@ -76,7 +76,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     if (!PM)
       PM = &LC->getParentMap();
 
-    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
+    if (Optional<BlockEntrance> BE = P.getAs<BlockEntrance>()) {
       const CFGBlock *CB = BE->getBlock();
       reachable.insert(CB->getBlockID());
     }

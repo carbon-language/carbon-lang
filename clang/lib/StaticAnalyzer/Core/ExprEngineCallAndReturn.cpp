@@ -77,10 +77,10 @@ static std::pair<const Stmt*,
     const ProgramPoint &PP = Node->getLocation();
 
     if (PP.getLocationContext()->getCurrentStackFrame() == SF) {
-      if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
+      if (Optional<StmtPoint> SP = PP.getAs<StmtPoint>()) {
         S = SP->getStmt();
         break;
-      } else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&PP)) {
+      } else if (Optional<CallExitEnd> CEE = PP.getAs<CallExitEnd>()) {
         S = CEE->getCalleeContext()->getCallSite();
         if (S)
           break;
@@ -88,17 +88,17 @@ static std::pair<const Stmt*,
         // If there is no statement, this is an implicitly-generated call.
         // We'll walk backwards over it and then continue the loop to find
         // an actual statement.
-        const CallEnter *CE;
+        Optional<CallEnter> CE;
         do {
           Node = Node->getFirstPred();
           CE = Node->getLocationAs<CallEnter>();
         } while (!CE || CE->getCalleeContext() != CEE->getCalleeContext());
 
         // Continue searching the graph.
-      } else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&PP)) {
+      } else if (Optional<BlockEdge> BE = PP.getAs<BlockEdge>()) {
         Blk = BE->getSrc();
       }
-    } else if (const CallEnter *CE = dyn_cast<CallEnter>(&PP)) {
+    } else if (Optional<CallEnter> CE = PP.getAs<CallEnter>()) {
       // If we reached the CallEnter for this function, it has no statements.
       if (CE->getCalleeContext() == SF)
         break;

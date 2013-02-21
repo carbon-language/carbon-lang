@@ -332,9 +332,9 @@ void IdempotentOperationChecker::checkPostStmt(const BinaryOperator *B,
   // Add the ExplodedNode we just visited
   BinaryOperatorData &Data = hash[B];
 
-  const Stmt *predStmt 
-    = cast<StmtPoint>(C.getPredecessor()->getLocation()).getStmt();
-  
+  const Stmt *predStmt =
+      C.getPredecessor()->getLocation().castAs<StmtPoint>().getStmt();
+
   // Ignore implicit calls to setters.
   if (!isa<BinaryOperator>(predStmt))
     return;
@@ -582,16 +582,13 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisDeclContext *AC,
     virtual bool visit(const WorkListUnit &U) {
       ProgramPoint P = U.getNode()->getLocation();
       const CFGBlock *B = 0;
-      if (StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {
+      if (Optional<StmtPoint> SP = P.getAs<StmtPoint>()) {
         B = CBM->getBlock(SP->getStmt());
-      }
-      else if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      } else if (Optional<BlockEdge> BE = P.getAs<BlockEdge>()) {
         B = BE->getDst();
-      }
-      else if (BlockEntrance *BEnt = dyn_cast<BlockEntrance>(&P)) {
+      } else if (Optional<BlockEntrance> BEnt = P.getAs<BlockEntrance>()) {
         B = BEnt->getBlock();
-      }
-      else if (BlockExit *BExit = dyn_cast<BlockExit>(&P)) {
+      } else if (Optional<BlockExit> BExit = P.getAs<BlockExit>()) {
         B = BExit->getBlock();
       }
       if (!B)

@@ -60,7 +60,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
     if (D != P.getLocationContext()->getDecl())
       continue;
 
-    if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&P)) {
+    if (Optional<BlockEntrance> BE = P.getAs<BlockEntrance>()) {
       const CFGBlock *CB = BE->getBlock();
       reachable.insert(CB);
     }

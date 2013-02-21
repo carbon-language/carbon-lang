@@ -114,7 +114,7 @@ namespace {
     }
 
     virtual void enqueue(const WorkListUnit& U) {
-      if (isa<BlockEntrance>(U.getNode()->getLocation()))
+      if (U.getNode()->getLocation().getAs<BlockEntrance>())
         Queue.push_front(U);
       else
         Stack.push_back(U);
@@ -230,11 +230,11 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
   // Dispatch on the location type.
   switch (Loc.getKind()) {
     case ProgramPoint::BlockEdgeKind:
-      HandleBlockEdge(cast<BlockEdge>(Loc), Pred);
+      HandleBlockEdge(Loc.castAs<BlockEdge>(), Pred);
       break;
 
     case ProgramPoint::BlockEntranceKind:
-      HandleBlockEntrance(cast<BlockEntrance>(Loc), Pred);
+      HandleBlockEntrance(Loc.castAs<BlockEntrance>(), Pred);
       break;
 
     case ProgramPoint::BlockExitKind:
@@ -242,7 +242,7 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
       break;
 
     case ProgramPoint::CallEnterKind: {
-      CallEnter CEnter = cast<CallEnter>(Loc);
+      CallEnter CEnter = Loc.castAs<CallEnter>();
       SubEng.processCallEnter(CEnter, Pred);
       break;
     }
@@ -259,10 +259,10 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
       break;
     }
     default:
-      assert(isa<PostStmt>(Loc) ||
-             isa<PostInitializer>(Loc) ||
-             isa<PostImplicitCall>(Loc) ||
-             isa<CallExitEnd>(Loc));
+      assert(Loc.getAs<PostStmt>() ||
+             Loc.getAs<PostInitializer>() ||
+             Loc.getAs<PostImplicitCall>() ||
+             Loc.getAs<CallExitEnd>());
       HandlePostStmt(WU.getBlock(), WU.getIndex(), Pred);
       break;
   }
@@ -495,7 +495,7 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   assert (!N->isSink());
 
   // Check if this node entered a callee.
-  if (isa<CallEnter>(N->getLocation())) {
+  if (N->getLocation().getAs<CallEnter>()) {
     // Still use the index of the CallExpr. It's needed to create the callee
     // StackFrameContext.
     WList->enqueue(N, Block, Idx);
@@ -503,13 +503,13 @@ void CoreEngine::enqueueStmtNode(ExplodedNode *N,
   }
 
   // Do not create extra nodes. Move to the next CFG element.
-  if (isa<PostInitializer>(N->getLocation()) ||
-      isa<PostImplicitCall>(N->getLocation())) {
+  if (N->getLocation().getAs<PostInitializer>() ||
+      N->getLocation().getAs<PostImplicitCall>()) {
     WList->enqueue(N, Block, Idx+1);
     return;
   }
 
-  if (isa<EpsilonPoint>(N->getLocation())) {
+  if (N->getLocation().getAs<EpsilonPoint>()) {
     WList->enqueue(N, Block, Idx);
     return;
   }

@@ -44,7 +44,7 @@ void ArrayBoundChecker::checkLocation(SVal l, bool isLoad, const Stmt* LoadS,
     return;
 
   // Get the index of the accessed element.
-  DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+  DefinedOrUnknownSVal Idx = ER->getIndex().castAs<DefinedOrUnknownSVal>();
 
   // Zero index is always in bound, this also passes ElementRegions created for
   // pointer casts.

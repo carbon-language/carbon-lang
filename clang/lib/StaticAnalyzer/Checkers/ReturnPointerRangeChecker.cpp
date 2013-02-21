@@ -46,7 +46,7 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
   if (!ER)
     return;
 
-  DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+  DefinedOrUnknownSVal Idx = ER->getIndex().castAs<DefinedOrUnknownSVal>();
   // Zero index is always in bound, this also passes ElementRegions created for
   // pointer casts.
   if (Idx.isZeroConstant())

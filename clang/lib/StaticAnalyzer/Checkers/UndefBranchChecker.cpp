@@ -90,7 +90,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       ProgramPoint P = PrevN->getLocation();
       ProgramStateRef St = N->getState();
 
-      if (PostStmt *PS = dyn_cast<PostStmt>(&P))
+      if (Optional<PostStmt> PS = P.getAs<PostStmt>())
         if (PS->getStmt() == Ex)
           St = PrevN->getState();
 
