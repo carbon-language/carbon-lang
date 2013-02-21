@@ -291,7 +291,7 @@ typedef llvm::PointerUnion<RecordVec*, RecordSet*> VecOrSet;
 namespace {
 class InferPedantic {
   typedef llvm::DenseMap<const Record*,
-                         std::pair<unsigned, llvm::Optional<unsigned> > > GMap;
+                         std::pair<unsigned, Optional<unsigned> > > GMap;
 
   DiagGroupParentMap &DiagGroupParents;
   const std::vector<Record*> &Diags;
