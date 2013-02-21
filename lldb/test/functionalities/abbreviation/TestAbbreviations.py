@@ -168,7 +168,6 @@ class AbbreviationsTestCase(TestBase):
             self.expect("i li",
                         substrs = [ 'a.out',
                                     '/usr/lib/dyld',
-                                    '/usr/lib/libstdc++',
                                     '/usr/lib/libSystem.B.dylib'])
 
 
