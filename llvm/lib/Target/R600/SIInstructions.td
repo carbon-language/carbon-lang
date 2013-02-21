@@ -895,7 +895,7 @@ def V_MUL_HI_U32 : VOP3_32 <0x0000016a, "V_MUL_HI_U32", []>;
 def V_MUL_LO_I32 : VOP3_32 <0x0000016b, "V_MUL_LO_I32", []>;
 def : Pat <
   (mul VSrc_32:$src0, VReg_32:$src1),
-  (V_MUL_LO_I32 VSrc_32:$src0, VReg_32:$src1, (IMPLICIT_DEF), 0, 0, 0, 0)
+  (V_MUL_LO_I32 VSrc_32:$src0, VReg_32:$src1, (i32 SIOperand.ZERO), 0, 0, 0, 0)
 >;
 def V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
 def V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
