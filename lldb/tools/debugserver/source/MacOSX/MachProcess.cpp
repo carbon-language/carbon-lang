@@ -313,9 +313,14 @@ MachProcess::SetEnableAsyncProfiling(bool enable, uint64_t interval_usec)
     m_profile_enabled = enable;
     m_profile_interval_usec = interval_usec;
     
-    if (m_profile_enabled && (m_profile_thread == 0))
+    if (m_profile_enabled && (m_profile_thread == NULL))
     {
         StartProfileThread();
+    }
+    else if (!m_profile_enabled && m_profile_thread)
+    {
+        pthread_join(m_profile_thread, NULL);
+        m_profile_thread = NULL;
     }
 }
 
