@@ -49,6 +49,8 @@ private:
   bool LowerSubregToReg(MachineInstr *MI);
   bool LowerCopy(MachineInstr *MI);
 
+  void TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
+                        const TargetRegisterInfo *TRI);
   void TransferImplicitDefs(MachineInstr *MI);
 };
 } // end anonymous namespace
@@ -58,6 +60,21 @@ char &llvm::ExpandPostRAPseudosID = ExpandPostRA::ID;
 
 INITIALIZE_PASS(ExpandPostRA, "postrapseudos",
                 "Post-RA pseudo instruction expansion pass", false, false)
+
+/// TransferDeadFlag - MI is a pseudo-instruction with DstReg dead,
+/// and the lowered replacement instructions immediately precede it.
+/// Mark the replacement instructions with the dead flag.
+void
+ExpandPostRA::TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
+                               const TargetRegisterInfo *TRI) {
+  for (MachineBasicBlock::iterator MII =
+        prior(MachineBasicBlock::iterator(MI)); ; --MII) {
+    if (MII->addRegisterDead(DstReg, TRI))
+      break;
+    assert(MII != MI->getParent()->begin() &&
+           "copyPhysReg output doesn't reference destination register!");
+  }
+}
 
 /// TransferImplicitDefs - MI is a pseudo-instruction, and the lowered
 /// replacement instructions immediately precede it.  Copy any implicit-def
@@ -111,17 +128,17 @@ bool ExpandPostRA::LowerSubregToReg(MachineInstr *MI) {
     }
     DEBUG(dbgs() << "subreg: eliminated!");
   } else {
-    if (MI->getOperand(0).isDead()) {
-      MI->setDesc(TII->get(TargetOpcode::KILL));
-      DEBUG(dbgs() << "subreg: replaced by: " << *MI);
-      return true;
-    }
     TII->copyPhysReg(*MBB, MI, MI->getDebugLoc(), DstSubReg, InsReg,
                      MI->getOperand(2).isKill());
+
     // Implicitly define DstReg for subsequent uses.
     MachineBasicBlock::iterator CopyMI = MI;
     --CopyMI;
     CopyMI->addRegisterDefined(DstReg);
+
+    // Transfer the kill/dead flags, if needed.
+    if (MI->getOperand(0).isDead())
+      TransferDeadFlag(MI, DstSubReg, TRI);
     DEBUG(dbgs() << "subreg: " << *CopyMI);
   }
 
@@ -134,18 +151,11 @@ bool ExpandPostRA::LowerCopy(MachineInstr *MI) {
   MachineOperand &DstMO = MI->getOperand(0);
   MachineOperand &SrcMO = MI->getOperand(1);
 
-  if (DstMO.isDead()) {
-    DEBUG(dbgs() << "dead copy: " << *MI);
-    MI->setDesc(TII->get(TargetOpcode::KILL));
-    DEBUG(dbgs() << "replaced by: " << *MI);
-    return true;
-  }
-
   if (SrcMO.getReg() == DstMO.getReg()) {
     DEBUG(dbgs() << "identity copy: " << *MI);
     // No need to insert an identity copy instruction, but replace with a KILL
     // if liveness is changed.
-    if (SrcMO.isUndef() || MI->getNumOperands() > 2) {
+    if (DstMO.isDead() || SrcMO.isUndef() || MI->getNumOperands() > 2) {
       // We must make sure the super-register gets killed. Replace the
       // instruction with KILL.
       MI->setDesc(TII->get(TargetOpcode::KILL));
@@ -161,6 +171,8 @@ bool ExpandPostRA::LowerCopy(MachineInstr *MI) {
   TII->copyPhysReg(*MI->getParent(), MI, MI->getDebugLoc(),
                    DstMO.getReg(), SrcMO.getReg(), SrcMO.isKill());
 
+  if (DstMO.isDead())
+    TransferDeadFlag(MI, DstMO.getReg(), TRI);
   if (MI->getNumOperands() > 2)
     TransferImplicitDefs(MI);
   DEBUG({
