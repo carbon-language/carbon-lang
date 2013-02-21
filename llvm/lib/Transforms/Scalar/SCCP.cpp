@@ -271,13 +271,6 @@ public:
     return I->second;
   }
 
-  /*LatticeVal getStructLatticeValueFor(Value *V, unsigned i) const {
-    DenseMap<std::pair<Value*, unsigned>, LatticeVal>::const_iterator I =
-      StructValueState.find(std::make_pair(V, i));
-    assert(I != StructValueState.end() && "V is not in valuemap!");
-    return I->second;
-  }*/
-
   /// getTrackedRetVals - Get the inferred return value map.
   ///
   const DenseMap<Function*, LatticeVal> &getTrackedRetVals() {
@@ -709,9 +702,6 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
   if (OperandVal)
     markConstant(&PN, OperandVal);      // Acquire operand value
 }
-
-
-
 
 void SCCPSolver::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands() == 0) return;  // ret void
