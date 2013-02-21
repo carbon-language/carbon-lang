@@ -947,7 +947,10 @@ void ASTDumper::VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
     case TSK_ImplicitInstantiation:
     case TSK_ExplicitInstantiationDeclaration:
     case TSK_ExplicitInstantiationDefinition:
-      dumpDecl(*I);
+      if (D == D->getCanonicalDecl())
+        dumpDecl(*I);
+      else
+        dumpDeclRef(*I);
       break;
     case TSK_ExplicitSpecialization:
       dumpDeclRef(*I);
@@ -973,7 +976,10 @@ void ASTDumper::VisitClassTemplateDecl(const ClassTemplateDecl *D) {
     switch (I->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
     case TSK_ImplicitInstantiation:
-      dumpDecl(*I);
+      if (D == D->getCanonicalDecl())
+        dumpDecl(*I);
+      else
+        dumpDeclRef(*I);
       break;
     case TSK_ExplicitSpecialization:
     case TSK_ExplicitInstantiationDeclaration:
