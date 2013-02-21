@@ -338,8 +338,8 @@ public:
       StringMapEntryBase *&Bucket = TheTable[I];
       if (Bucket && Bucket != getTombstoneVal()) {
         static_cast<MapEntryTy*>(Bucket)->Destroy(Allocator);
-        Bucket = 0;
       }
+      Bucket = 0;
     }
 
     NumItems = 0;
