@@ -67,6 +67,8 @@ namespace {
       return true;
     }
 
+    virtual void PostprocessISelDAG();
+
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
     inline SDValue getI32Imm(unsigned Imm) {
@@ -1398,6 +1400,159 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   return SelectCode(N);
 }
 
+/// PostProcessISelDAG - Perform some late peephole optimizations
+/// on the DAG representation.
+void PPCDAGToDAGISel::PostprocessISelDAG() {
+
+  // Skip peepholes at -O0.
+  if (TM.getOptLevel() == CodeGenOpt::None)
+    return;
+
+  // These optimizations are currently supported only for 64-bit SVR4.
+  if (PPCSubTarget.isDarwin() || !PPCSubTarget.isPPC64())
+    return;
+
+  SelectionDAG::allnodes_iterator Position(CurDAG->getRoot().getNode());
+  ++Position;
+
+  while (Position != CurDAG->allnodes_begin()) {
+    SDNode *N = --Position;
+    // Skip dead nodes and any non-machine opcodes.
+    if (N->use_empty() || !N->isMachineOpcode())
+      continue;
+
+    unsigned FirstOp;
+    unsigned StorageOpcode = N->getMachineOpcode();
+
+    switch (StorageOpcode) {
+    default: continue;
+
+    case PPC::LBZ:
+    case PPC::LBZ8:
+    case PPC::LD:
+    case PPC::LFD:
+    case PPC::LFS:
+    case PPC::LHA:
+    case PPC::LHA8:
+    case PPC::LHZ:
+    case PPC::LHZ8:
+    case PPC::LWA:
+    case PPC::LWZ:
+    case PPC::LWZ8:
+      FirstOp = 0;
+      break;
+
+    case PPC::STB:
+    case PPC::STB8:
+    case PPC::STD:
+    case PPC::STFD:
+    case PPC::STFS:
+    case PPC::STH:
+    case PPC::STH8:
+    case PPC::STW:
+    case PPC::STW8:
+      FirstOp = 1;
+      break;
+    }
+
+    // If this is a load or store with a zero offset, we may be able to
+    // fold an add-immediate into the memory operation.
+    if (!isa<ConstantSDNode>(N->getOperand(FirstOp)) ||
+        N->getConstantOperandVal(FirstOp) != 0)
+      continue;
+
+    SDValue Base = N->getOperand(FirstOp + 1);
+    if (!Base.isMachineOpcode())
+      continue;
+
+    unsigned Flags = 0;
+    bool ReplaceFlags = true;
+
+    // When the feeding operation is an add-immediate of some sort,
+    // determine whether we need to add relocation information to the
+    // target flags on the immediate operand when we fold it into the
+    // load instruction.
+    //
+    // For something like ADDItocL, the relocation information is
+    // inferred from the opcode; when we process it in the AsmPrinter,
+    // we add the necessary relocation there.  A load, though, can receive
+    // relocation from various flavors of ADDIxxx, so we need to carry
+    // the relocation information in the target flags.
+    switch (Base.getMachineOpcode()) {
+    default: continue;
+
+    case PPC::ADDI8:
+    case PPC::ADDI8L:
+    case PPC::ADDIL:
+      // In some cases (such as TLS) the relocation information
+      // is already in place on the operand, so copying the operand
+      // is sufficient.
+      ReplaceFlags = false;
+      // For these cases, the immediate may not be divisible by 4, in
+      // which case the fold is illegal for DS-form instructions.  (The
+      // other cases provide aligned addresses and are always safe.)
+      if ((StorageOpcode == PPC::LWA ||
+           StorageOpcode == PPC::LD  ||
+           StorageOpcode == PPC::STD) &&
+          (!isa<ConstantSDNode>(Base.getOperand(1)) ||
+           Base.getConstantOperandVal(1) % 4 != 0))
+        continue;
+      break;
+    case PPC::ADDIdtprelL:
+      Flags = PPCII::MO_DTPREL16_LO;
+      break;
+    case PPC::ADDItlsldL:
+      Flags = PPCII::MO_TLSLD16_LO;
+      break;
+    case PPC::ADDItocL:
+      Flags = PPCII::MO_TOC16_LO;
+      break;
+    }
+
+    // We found an opportunity.  Reverse the operands from the add
+    // immediate and substitute them into the load or store.  If
+    // needed, update the target flags for the immediate operand to
+    // reflect the necessary relocation information.
+    DEBUG(dbgs() << "Folding add-immediate into mem-op:\nBase:    ");
+    DEBUG(Base->dump(CurDAG));
+    DEBUG(dbgs() << "\nN: ");
+    DEBUG(N->dump(CurDAG));
+    DEBUG(dbgs() << "\n");
+
+    SDValue ImmOpnd = Base.getOperand(1);
+
+    // If the relocation information isn't already present on the
+    // immediate operand, add it now.
+    if (ReplaceFlags) {
+      GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(ImmOpnd);
+
+      if (GA) {
+        DebugLoc dl = GA->getDebugLoc();
+        const GlobalValue *GV = GA->getGlobal();
+        ImmOpnd = CurDAG->getTargetGlobalAddress(GV, dl, MVT::i64, 0, Flags);
+      } else {
+        ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(ImmOpnd);
+        if (CP) {
+          const Constant *C = CP->getConstVal();
+          ImmOpnd = CurDAG->getTargetConstantPool(C, MVT::i64,
+                                                  CP->getAlignment(),
+                                                  0, Flags);
+        }
+      }
+    }
+
+    if (FirstOp == 1) // Store
+      (void)CurDAG->UpdateNodeOperands(N, N->getOperand(0), ImmOpnd,
+                                       Base.getOperand(0), N->getOperand(3));
+    else // Load
+      (void)CurDAG->UpdateNodeOperands(N, ImmOpnd, Base.getOperand(0),
+                                       N->getOperand(2));
+
+    // The add-immediate may now be dead, in which case remove it.
+    if (Base.getNode()->use_empty())
+      CurDAG->RemoveDeadNode(Base.getNode());
+  }
+}
 
 
 /// createPPCISelDag - This pass converts a legalized DAG into a
