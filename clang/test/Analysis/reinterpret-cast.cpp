@@ -46,3 +46,21 @@ namespace PR14872 {
     f2(p);
   }
 }
+
+namespace rdar13249297 {
+  struct IntWrapperSubclass : public IntWrapper {};
+
+  struct IntWrapperWrapper {
+    IntWrapper w;
+  };
+
+  void test(IntWrapperWrapper *ww) {
+    reinterpret_cast<IntWrapperSubclass *>(ww)->x = 42;
+    clang_analyzer_eval(reinterpret_cast<IntWrapperSubclass *>(ww)->x == 42); // expected-warning{{TRUE}}
+
+    clang_analyzer_eval(ww->w.x == 42); // expected-warning{{TRUE}}
+    ww->w.x = 0;
+
+    clang_analyzer_eval(reinterpret_cast<IntWrapperSubclass *>(ww)->x == 42); // expected-warning{{FALSE}}
+  }
+}
