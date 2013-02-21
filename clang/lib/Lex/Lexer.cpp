@@ -122,8 +122,15 @@ Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *InputFile, Preprocessor &PP)
   InitLexer(InputFile->getBufferStart(), InputFile->getBufferStart(),
             InputFile->getBufferEnd());
 
-  // Default to keeping comments if the preprocessor wants them.
-  SetCommentRetentionState(PP.getCommentRetentionState());
+  resetExtendedTokenMode();
+}
+
+void Lexer::resetExtendedTokenMode() {
+  assert(PP && "Cannot reset token mode without a preprocessor");
+  if (LangOpts.TraditionalCPP)
+    SetKeepWhitespaceMode(true);
+  else
+    SetCommentRetentionState(PP->getCommentRetentionState());
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
@@ -1844,6 +1851,8 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
 ///
 bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   // Whitespace - Skip it, then return the token after the whitespace.
+  bool SawNewline = isVerticalWhitespace(CurPtr[-1]);
+
   unsigned char Char = *CurPtr;  // Skip consequtive spaces efficiently.
   while (1) {
     // Skip horizontal whitespace very aggressively.
@@ -1851,7 +1860,7 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
       Char = *++CurPtr;
 
     // Otherwise if we have something other than whitespace, we're done.
-    if (Char != '\n' && Char != '\r')
+    if (!isVerticalWhitespace(Char))
       break;
 
     if (ParsingPreprocessorDirective) {
@@ -1861,23 +1870,26 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
     }
 
     // ok, but handle newline.
-    // The returned token is at the start of the line.
-    Result.setFlag(Token::StartOfLine);
-    // No leading whitespace seen so far.
-    Result.clearFlag(Token::LeadingSpace);
+    SawNewline = true;
     Char = *++CurPtr;
   }
-
-  // If this isn't immediately after a newline, there is leading space.
-  char PrevChar = CurPtr[-1];
-  if (PrevChar != '\n' && PrevChar != '\r')
-    Result.setFlag(Token::LeadingSpace);
 
   // If the client wants us to return whitespace, return it now.
   if (isKeepWhitespaceMode()) {
     FormTokenWithChars(Result, CurPtr, tok::unknown);
+    if (SawNewline)
+      IsAtStartOfLine = true;
+    // FIXME: The next token will not have LeadingSpace set.
     return true;
   }
+
+  // If this isn't immediately after a newline, there is leading space.
+  char PrevChar = CurPtr[-1];
+  bool HasLeadingSpace = !isVerticalWhitespace(PrevChar);
+
+  Result.setFlagValue(Token::LeadingSpace, HasLeadingSpace);
+  if (SawNewline)
+    Result.setFlag(Token::StartOfLine);
 
   BufferPtr = CurPtr;
   return false;
@@ -2269,7 +2281,6 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   // efficiently now.  This is safe even in KeepWhitespaceMode because we would
   // have already returned above with the comment as a token.
   if (isHorizontalWhitespace(*CurPtr)) {
-    Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
     return false;
   }
@@ -2351,7 +2362,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     FormTokenWithChars(Result, CurPtr, tok::eod);
 
     // Restore comment saving mode, in case it was disabled for directive.
-    SetCommentRetentionState(PP->getCommentRetentionState());
+    resetExtendedTokenMode();
     return true;  // Have a token.
   }
  
@@ -2718,6 +2729,7 @@ LexNextToken:
     // whitespace.
     if (isKeepWhitespaceMode()) {
       FormTokenWithChars(Result, CurPtr, tok::unknown);
+      // FIXME: The next token will not have LeadingSpace set.
       return;
     }
 
@@ -2785,7 +2797,7 @@ LexNextToken:
 
       // Restore comment saving mode, in case it was disabled for directive.
       if (PP)
-        SetCommentRetentionState(PP->getCommentRetentionState());
+        resetExtendedTokenMode();
 
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;
@@ -2793,8 +2805,7 @@ LexNextToken:
       Kind = tok::eod;
       break;
     }
-    // The returned token is at the start of the line.
-    Result.setFlag(Token::StartOfLine);
+
     // No leading whitespace seen so far.
     Result.clearFlag(Token::LeadingSpace);
 

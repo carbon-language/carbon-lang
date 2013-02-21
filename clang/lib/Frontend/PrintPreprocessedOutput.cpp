@@ -548,7 +548,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
 
       // Tokens that can contain embedded newlines need to adjust our current
       // line number.
-      if (Tok.getKind() == tok::comment)
+      if (Tok.getKind() == tok::comment || Tok.getKind() == tok::unknown)
         Callbacks->HandleNewlinesInToken(TokPtr, Len);
     } else {
       std::string S = PP.getSpelling(Tok);
@@ -556,7 +556,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
 
       // Tokens that can contain embedded newlines need to adjust our current
       // line number.
-      if (Tok.getKind() == tok::comment)
+      if (Tok.getKind() == tok::comment || Tok.getKind() == tok::unknown)
         Callbacks->HandleNewlinesInToken(&S[0], S.size());
     }
     Callbacks->setEmittedTokensOnThisLine();

@@ -269,7 +269,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     if (Tok.isNot(tok::raw_identifier)) {
       CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
-      if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
+      if (CurLexer) CurLexer->resetExtendedTokenMode();
       continue;
     }
 
@@ -285,7 +285,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         FirstChar != 'i' && FirstChar != 'e') {
       CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
-      if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
+      if (CurLexer) CurLexer->resetExtendedTokenMode();
       continue;
     }
 
@@ -302,7 +302,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       if (IdLen >= 20) {
         CurPPLexer->ParsingPreprocessorDirective = false;
         // Restore comment saving mode.
-        if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
+        if (CurLexer) CurLexer->resetExtendedTokenMode();
         continue;
       }
       memcpy(DirectiveBuf, &DirectiveStr[0], IdLen);
@@ -408,7 +408,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
 
     CurPPLexer->ParsingPreprocessorDirective = false;
     // Restore comment saving mode.
-    if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
+    if (CurLexer) CurLexer->resetExtendedTokenMode();
   }
 
   // Finally, if we are out of the conditional (saw an #endif or ran off the end
@@ -594,6 +594,7 @@ void Preprocessor::HandleDirective(Token &Result) {
   // mode.  Tell the lexer this so any newlines we see will be converted into an
   // EOD token (which terminates the directive).
   CurPPLexer->ParsingPreprocessorDirective = true;
+  if (CurLexer) CurLexer->SetKeepWhitespaceMode(false);
 
   ++NumDirectives;
 
@@ -638,14 +639,9 @@ void Preprocessor::HandleDirective(Token &Result) {
   // and reset to previous state when returning from this function.
   ResetMacroExpansionHelper helper(this);
 
-TryAgain:
   switch (Result.getKind()) {
   case tok::eod:
     return;   // null directive.
-  case tok::comment:
-    // Handle stuff like "# /*foo*/ define X" in -E -C mode.
-    LexUnexpandedToken(Result);
-    goto TryAgain;
   case tok::code_completion:
     if (CodeComplete)
       CodeComplete->CodeCompleteDirective(
