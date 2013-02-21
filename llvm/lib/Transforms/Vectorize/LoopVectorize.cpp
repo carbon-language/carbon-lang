@@ -319,8 +319,9 @@ private:
 class LoopVectorizationLegality {
 public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DataLayout *DL,
-                            DominatorTree *DT)
-      : TheLoop(L), SE(SE), DL(DL), DT(DT), Induction(0) {}
+                            DominatorTree *DT, TargetTransformInfo* TTI,
+                            AliasAnalysis* AA)
+      : TheLoop(L), SE(SE), DL(DL), DT(DT), TTI(TTI), AA(AA), Induction(0) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -404,6 +405,11 @@ public:
   /// induction descriptor.
   typedef MapVector<PHINode*, InductionInfo> InductionList;
 
+  /// Alias(Multi)Map stores the values (GEPs or underlying objects and their
+  /// respective Store/Load instruction(s) to calculate aliasing.
+  typedef DenseMap<Value*, Instruction* > AliasMap;
+  typedef DenseMap<Value*, std::vector<Instruction*> > AliasMultiMap;
+
   /// Returns true if it is legal to vectorize this loop.
   /// This does not mean that it is profitable to vectorize this
   /// loop, only that it is legal to do so.
@@ -477,6 +483,14 @@ private:
   InductionKind isInductionVariable(PHINode *Phi);
   /// Return true if can compute the address bounds of Ptr within the loop.
   bool hasComputableBounds(Value *Ptr);
+  /// Return true if there is the chance of write reorder.
+  bool hasPossibleGlobalWriteReorder(Value *Object,
+                                     Instruction *Inst,
+                                     AliasMultiMap &WriteObjects,
+                                     unsigned MaxByteWidth);
+  /// Return the AA location for a load or a store.
+  AliasAnalysis::Location getLoadStoreLocation(Instruction *Inst);
+
 
   /// The loop that we evaluate.
   Loop *TheLoop;
@@ -484,8 +498,12 @@ private:
   ScalarEvolution *SE;
   /// DataLayout analysis.
   DataLayout *DL;
-  // Dominators.
+  /// Dominators.
   DominatorTree *DT;
+  /// Target Info.
+  TargetTransformInfo *TTI;
+  /// Alias Analysis.
+  AliasAnalysis *AA;
 
   //  ---  vectorization state --- //
 
@@ -612,6 +630,7 @@ struct LoopVectorize : public LoopPass {
   LoopInfo *LI;
   TargetTransformInfo *TTI;
   DominatorTree *DT;
+  AliasAnalysis *AA;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -623,12 +642,13 @@ struct LoopVectorize : public LoopPass {
     LI = &getAnalysis<LoopInfo>();
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTree>();
+    AA = getAnalysisIfAvailable<AliasAnalysis>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TTI, AA);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing.\n");
       return false;
@@ -2275,6 +2295,42 @@ void LoopVectorizationLegality::collectLoopUniforms() {
   }
 }
 
+AliasAnalysis::Location
+LoopVectorizationLegality::getLoadStoreLocation(Instruction *Inst) {
+  if (StoreInst *Store = dyn_cast<StoreInst>(Inst))
+    return AA->getLocation(Store);
+  else if (LoadInst *Load = dyn_cast<LoadInst>(Inst))
+    return AA->getLocation(Load);
+
+  llvm_unreachable("Should be either load or store instruction");
+}
+
+bool
+LoopVectorizationLegality::hasPossibleGlobalWriteReorder(
+                                                Value *Object,
+                                                Instruction *Inst,
+                                                AliasMultiMap& WriteObjects,
+                                                unsigned MaxByteWidth) {
+
+  AliasAnalysis::Location ThisLoc = getLoadStoreLocation(Inst);
+
+  std::vector<Instruction*>::iterator
+              it = WriteObjects[Object].begin(),
+              end = WriteObjects[Object].end();
+
+  for (; it != end; ++it) {
+    Instruction* I = *it;
+    if (I == Inst)
+      continue;
+
+    AliasAnalysis::Location ThatLoc = getLoadStoreLocation(I);
+    if (AA->alias(ThisLoc.getWithNewSize(MaxByteWidth),
+                  ThatLoc.getWithNewSize(MaxByteWidth)))
+      return true;
+  }
+  return false;
+}
+
 bool LoopVectorizationLegality::canVectorizeMemory() {
 
   if (TheLoop->isAnnotatedParallel()) {
@@ -2337,9 +2393,10 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return true;
   }
 
-  // Holds the read and read-write *pointers* that we find.
-  ValueVector Reads;
-  ValueVector ReadWrites;
+  // Holds the read and read-write *pointers* that we find. These maps hold
+  // unique values for pointers (so no need for multi-map).
+  AliasMap Reads;
+  AliasMap ReadWrites;
 
   // Holds the analyzed pointers. We don't want to call GetUnderlyingObjects
   // multiple times on the same object. If the ptr is accessed twice, once
@@ -2361,7 +2418,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // If we did *not* see this pointer before, insert it to
     // the read-write list. At this phase it is only a 'write' list.
     if (Seen.insert(Ptr))
-      ReadWrites.push_back(Ptr);
+      ReadWrites.insert(std::make_pair(Ptr, ST));
   }
 
   for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
@@ -2376,7 +2433,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // read a few words, modify, and write a few words, and some of the
     // words may be written to the same address.
     if (Seen.insert(Ptr) || 0 == isConsecutivePtr(Ptr))
-      Reads.push_back(Ptr);
+      Reads.insert(std::make_pair(Ptr, LD));
   }
 
   // If we write (or read-write) to a single destination and there are no
@@ -2389,22 +2446,27 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
   bool CanDoRT = true;
-  for (I = ReadWrites.begin(), IE = ReadWrites.end(); I != IE; ++I)
-    if (hasComputableBounds(*I)) {
-      PtrRtCheck.insert(SE, TheLoop, *I);
-      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << **I <<"\n");
+  AliasMap::iterator MI, ME;
+  for (MI = ReadWrites.begin(), ME = ReadWrites.end(); MI != ME; ++MI) {
+    Value *V = (*MI).first;
+    if (hasComputableBounds(V)) {
+      PtrRtCheck.insert(SE, TheLoop, V);
+      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
     } else {
       CanDoRT = false;
       break;
     }
-  for (I = Reads.begin(), IE = Reads.end(); I != IE; ++I)
-    if (hasComputableBounds(*I)) {
-      PtrRtCheck.insert(SE, TheLoop, *I);
-      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << **I <<"\n");
+  }
+  for (MI = Reads.begin(), ME = Reads.end(); MI != ME; ++MI) {
+    Value *V = (*MI).first;
+    if (hasComputableBounds(V)) {
+      PtrRtCheck.insert(SE, TheLoop, V);
+      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
     } else {
       CanDoRT = false;
       break;
     }
+  }
 
   // Check that we did not collect too many pointers or found a
   // unsizeable pointer.
@@ -2419,47 +2481,104 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 
   bool NeedRTCheck = false;
 
+  // Biggest vectorized access possible, vector width * unroll factor.
+  // TODO: We're being very pessimistic here, find a way to know the
+  // real access width before getting here.
+  unsigned MaxByteWidth = (TTI->getRegisterBitWidth(true) / 8) *
+                           TTI->getMaximumUnrollFactor();
   // Now that the pointers are in two lists (Reads and ReadWrites), we
   // can check that there are no conflicts between each of the writes and
   // between the writes to the reads.
-  ValueSet WriteObjects;
+  // Note that WriteObjects duplicates the stores (indexed now by underlying
+  // objects) to avoid pointing to elements inside ReadWrites.
+  // TODO: Maybe create a new type where they can interact without duplication.
+  AliasMultiMap WriteObjects;
   ValueVector TempObjects;
 
   // Check that the read-writes do not conflict with other read-write
   // pointers.
   bool AllWritesIdentified = true;
-  for (I = ReadWrites.begin(), IE = ReadWrites.end(); I != IE; ++I) {
-    GetUnderlyingObjects(*I, TempObjects, DL);
-    for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
-         it != e; ++it) {
-      if (!isIdentifiedObject(*it)) {
-        DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **it <<"\n");
+  for (MI = ReadWrites.begin(), ME = ReadWrites.end(); MI != ME; ++MI) {
+    Value *Val = (*MI).first;
+    Instruction *Inst = (*MI).second;
+
+    GetUnderlyingObjects(Val, TempObjects, DL);
+    for (ValueVector::iterator UI=TempObjects.begin(), UE=TempObjects.end();
+         UI != UE; ++UI) {
+      if (!isIdentifiedObject(*UI)) {
+        DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **UI <<"\n");
         NeedRTCheck = true;
         AllWritesIdentified = false;
       }
-      if (!WriteObjects.insert(*it)) {
+
+      // Never seen it before, can't alias.
+      if (WriteObjects[*UI].empty()) {
+        DEBUG(dbgs() << "LV: Adding Underlying value:" << **UI <<"\n");
+        WriteObjects[*UI].push_back(Inst);
+        continue;
+      }
+      // Direct alias found.
+      if (!AA || dyn_cast<GlobalValue>(*UI) == NULL) {
         DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
-              << **it <<"\n");
+              << **UI <<"\n");
         return false;
       }
+      DEBUG(dbgs() << "LV: Found a conflicting global value:"
+            << **UI <<"\n");
+      DEBUG(dbgs() << "LV: While examining store:" << *Inst <<"\n");
+      DEBUG(dbgs() << "LV: On value:" << *Val <<"\n");
+
+      // If global alias, make sure they do alias.
+      if (hasPossibleGlobalWriteReorder(*UI,
+                                        Inst,
+                                        WriteObjects,
+                                        MaxByteWidth)) {
+        DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
+              << *UI <<"\n");
+        return false;
+      }
+
+      // Didn't alias, insert into map for further reference.
+      WriteObjects[*UI].push_back(Inst);
     }
     TempObjects.clear();
   }
 
   /// Check that the reads don't conflict with the read-writes.
-  for (I = Reads.begin(), IE = Reads.end(); I != IE; ++I) {
-    GetUnderlyingObjects(*I, TempObjects, DL);
-    for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
-         it != e; ++it) {
+  for (MI = Reads.begin(), ME = Reads.end(); MI != ME; ++MI) {
+    Value *Val = (*MI).first;
+    GetUnderlyingObjects(Val, TempObjects, DL);
+    for (ValueVector::iterator UI=TempObjects.begin(), UE=TempObjects.end();
+         UI != UE; ++UI) {
       // If all of the writes are identified then we don't care if the read
       // pointer is identified or not.
-      if (!AllWritesIdentified && !isIdentifiedObject(*it)) {
-        DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **it <<"\n");
+      if (!AllWritesIdentified && !isIdentifiedObject(*UI)) {
+        DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **UI <<"\n");
         NeedRTCheck = true;
       }
-      if (WriteObjects.count(*it)) {
-        DEBUG(dbgs() << "LV: Found a possible read/write reorder:"
-              << **it <<"\n");
+
+      // Never seen it before, can't alias.
+      if (WriteObjects[*UI].empty())
+        continue;
+      // Direct alias found.
+      if (!AA || dyn_cast<GlobalValue>(*UI) == NULL) {
+        DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
+              << **UI <<"\n");
+        return false;
+      }
+      DEBUG(dbgs() << "LV: Found a global value:  "
+            << **UI <<"\n");
+      Instruction *Inst = (*MI).second;
+      DEBUG(dbgs() << "LV: While examining load:" << *Inst <<"\n");
+      DEBUG(dbgs() << "LV: On value:" << *Val <<"\n");
+
+      // If global alias, make sure they do alias.
+      if (hasPossibleGlobalWriteReorder(*UI,
+                                        Inst,
+                                        WriteObjects,
+                                        MaxByteWidth)) {
+        DEBUG(dbgs() << "LV: Found a possible read-write reorder:"
+              << *UI <<"\n");
         return false;
       }
     }
