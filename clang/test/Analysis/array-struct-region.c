@@ -285,6 +285,13 @@ void testArrayStructCopy() {
   clang_analyzer_eval(s3.data[0] == 'a'); // expected-warning{{TRUE}}
   clang_analyzer_eval(s3.data[1] == 'b'); // expected-warning{{TRUE}}
   clang_analyzer_eval(s3.data[2] == 'c'); // expected-warning{{TRUE}}
+
+  s3.data[0] = 'z';
+  ShortString s4 = s3;
+
+  clang_analyzer_eval(s4.data[0] == 'z'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(s4.data[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(s4.data[2] == 'c'); // expected-warning{{TRUE}}
 }
 
 void testArrayStructCopyNested() {

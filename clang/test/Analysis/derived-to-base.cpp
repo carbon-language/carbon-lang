@@ -303,4 +303,33 @@ namespace LazyBindings {
     }
 #endif
   }
+
+#if CONSTRUCTORS
+  namespace Nested {
+    struct NonTrivialCopy {
+      int padding;
+      NonTrivialCopy() {}
+      NonTrivialCopy(const NonTrivialCopy &) {}
+    };
+
+    struct FullyDerived : private NonTrivialCopy, public Derived {
+      int z;
+    };
+
+    struct Wrapper {
+      FullyDerived d;
+      int zz;
+
+      Wrapper(const FullyDerived &d) : d(d), zz(0) {}
+    };
+
+    void test5() {
+      Wrapper w((FullyDerived()));
+      w.d.x = 1;
+
+      Wrapper w2(w);
+      clang_analyzer_eval(getX(w2.d) == 1); // expected-warning{{TRUE}}
+    }
+  }
+#endif
 }
