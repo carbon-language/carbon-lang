@@ -335,10 +335,6 @@ public:
     Initialize ();
 
     void
-    CrossRegisterCommand (const char *dest_cmd, 
-                          const char *object_type);
-
-    void
     SetScriptLanguage (lldb::ScriptLanguage lang);
 
 

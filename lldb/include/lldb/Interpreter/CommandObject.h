@@ -124,12 +124,6 @@ public:
 
     void
     SetSyntax (const char *str);
-
-    virtual void
-    AddObject (const char *obj_name) {}
-
-    virtual bool
-    IsCrossRefObject () { return false; }
     
     // override this to return true if you want to enable the user to delete
     // the Command object from the Command dictionary (aliases have their own

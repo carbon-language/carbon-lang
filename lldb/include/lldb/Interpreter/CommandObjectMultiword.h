@@ -115,12 +115,6 @@ public:
     virtual const char *
     GetHelpLong ();
     
-    virtual void
-    AddObject (const char *obj_name);
-
-    virtual bool
-    IsCrossRefObject ();
-
     virtual bool
     IsRemovable() const;
 

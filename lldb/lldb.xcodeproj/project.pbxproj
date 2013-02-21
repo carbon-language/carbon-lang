@@ -275,7 +275,6 @@
 		2689007F13353E2200698AC0 /* CommandCompletions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C09CB74116BD98B00C7A725 /* CommandCompletions.cpp */; };
 		2689008013353E2200698AC0 /* CommandInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0810F1B8DD00F91463 /* CommandInterpreter.cpp */; };
 		2689008113353E2200698AC0 /* CommandObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0910F1B8DD00F91463 /* CommandObject.cpp */; };
-		2689008213353E2200698AC0 /* CommandObjectCrossref.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DFBC57113B48F300DD817F /* CommandObjectCrossref.cpp */; };
 		2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DFBC58113B48F300DD817F /* CommandObjectMultiword.cpp */; };
 		2689008413353E2200698AC0 /* CommandObjectRegexCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */; };
 		2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */; };
@@ -1375,10 +1374,8 @@
 		26DE20601161902600A093E2 /* SBBlock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBBlock.cpp; path = source/API/SBBlock.cpp; sourceTree = "<group>"; };
 		26DE20621161904200A093E2 /* SBLineEntry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBLineEntry.cpp; path = source/API/SBLineEntry.cpp; sourceTree = "<group>"; };
 		26DE20641161904E00A093E2 /* SBSymbol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbol.cpp; path = source/API/SBSymbol.cpp; sourceTree = "<group>"; };
-		26DFBC50113B48D600DD817F /* CommandObjectCrossref.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectCrossref.h; path = include/lldb/Interpreter/CommandObjectCrossref.h; sourceTree = "<group>"; };
 		26DFBC51113B48D600DD817F /* CommandObjectMultiword.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectMultiword.h; path = include/lldb/Interpreter/CommandObjectMultiword.h; sourceTree = "<group>"; };
 		26DFBC52113B48D600DD817F /* CommandObjectRegexCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectRegexCommand.h; path = include/lldb/Interpreter/CommandObjectRegexCommand.h; sourceTree = "<group>"; };
-		26DFBC57113B48F300DD817F /* CommandObjectCrossref.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectCrossref.cpp; path = source/Commands/CommandObjectCrossref.cpp; sourceTree = "<group>"; };
 		26DFBC58113B48F300DD817F /* CommandObjectMultiword.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectMultiword.cpp; path = source/Commands/CommandObjectMultiword.cpp; sourceTree = "<group>"; };
 		26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectRegexCommand.cpp; path = source/Interpreter/CommandObjectRegexCommand.cpp; sourceTree = "<group>"; };
 		26E152231419CACA007967D0 /* ObjectFilePECOFF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFilePECOFF.cpp; sourceTree = "<group>"; };
@@ -2920,8 +2917,6 @@
 				26BC7F0810F1B8DD00F91463 /* CommandInterpreter.cpp */,
 				26BC7DE310F1B7F900F91463 /* CommandObject.h */,
 				26BC7F0910F1B8DD00F91463 /* CommandObject.cpp */,
-				26DFBC50113B48D600DD817F /* CommandObjectCrossref.h */,
-				26DFBC57113B48F300DD817F /* CommandObjectCrossref.cpp */,
 				26DFBC51113B48D600DD817F /* CommandObjectMultiword.h */,
 				26DFBC58113B48F300DD817F /* CommandObjectMultiword.cpp */,
 				26DFBC52113B48D600DD817F /* CommandObjectRegexCommand.h */,
@@ -4005,7 +4000,6 @@
 				2689007F13353E2200698AC0 /* CommandCompletions.cpp in Sources */,
 				2689008013353E2200698AC0 /* CommandInterpreter.cpp in Sources */,
 				2689008113353E2200698AC0 /* CommandObject.cpp in Sources */,
-				2689008213353E2200698AC0 /* CommandObjectCrossref.cpp in Sources */,
 				2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */,
 				2689008413353E2200698AC0 /* CommandObjectRegexCommand.cpp in Sources */,
 				2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */,

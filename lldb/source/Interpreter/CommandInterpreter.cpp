@@ -355,34 +355,15 @@ CommandInterpreter::LoadCommandDictionary ()
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    // **** IMPORTANT **** IMPORTANT *** IMPORTANT *** **** IMPORTANT **** IMPORTANT *** IMPORTANT ***
-    //
-    // Command objects that are used as cross reference objects (i.e. they inherit from CommandObjectCrossref)
-    // *MUST* be created and put into the command dictionary *BEFORE* any multi-word commands (which may use
-    // the cross-referencing stuff) are created!!!
-    //
-    // **** IMPORTANT **** IMPORTANT *** IMPORTANT *** **** IMPORTANT **** IMPORTANT *** IMPORTANT ***
-
-
-    // Command objects that inherit from CommandObjectCrossref must be created before other command objects
-    // are created.  This is so that when another command is created that needs to go into a crossref object,
-    // the crossref object exists and is ready to take the cross reference. Put the cross referencing command
-    // objects into the CommandDictionary now, so they are ready for use when the other commands get created.
-
-    // Non-CommandObjectCrossref commands can now be created.
-
     lldb::ScriptLanguage script_language = m_debugger.GetScriptLanguage();
     
     m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos (*this));
     m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
-    //m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall (*this));
     m_command_dict["command"]   = CommandObjectSP (new CommandObjectMultiwordCommands (*this));
     m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble (*this));
     m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression (*this));
-//    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile (*this));
     m_command_dict["frame"]     = CommandObjectSP (new CommandObjectMultiwordFrame (*this));
     m_command_dict["help"]      = CommandObjectSP (new CommandObjectHelp (*this));
-    ///    m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));
     m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (*this));
     m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (*this));
     m_command_dict["platform"]  = CommandObjectSP (new CommandObjectPlatform (*this));
@@ -2139,20 +2120,6 @@ CommandInterpreter::Confirm (const char *message, bool default_answer)
     return response;        
 }
     
-
-void
-CommandInterpreter::CrossRegisterCommand (const char * dest_cmd, const char * object_type)
-{
-    CommandObjectSP cmd_obj_sp = GetCommandSPExact (dest_cmd, true);
-
-    if (cmd_obj_sp)
-    {
-        CommandObject *cmd_obj = cmd_obj_sp.get();
-        if (cmd_obj->IsCrossRefObject ())
-            cmd_obj->AddObject (object_type);
-    }
-}
-
 OptionArgVectorSP
 CommandInterpreter::GetAliasOptions (const char *alias_name)
 {
