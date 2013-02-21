@@ -993,11 +993,10 @@ StackHintGenerator::~StackHintGenerator() {}
 
 std::string StackHintGeneratorForSymbol::getMessage(const ExplodedNode *N){
   ProgramPoint P = N->getLocation();
-  Optional<CallExitEnd> CExit = P.getAs<CallExitEnd>();
-  assert(CExit && "Stack Hints should be constructed at CallExitEnd points.");
+  CallExitEnd CExit = P.castAs<CallExitEnd>();
 
   // FIXME: Use CallEvent to abstract this over all calls.
-  const Stmt *CallSite = CExit->getCalleeContext()->getCallSite();
+  const Stmt *CallSite = CExit.getCalleeContext()->getCallSite();
   const CallExpr *CE = dyn_cast_or_null<CallExpr>(CallSite);
   if (!CE)
     return "";
