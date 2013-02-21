@@ -1529,8 +1529,8 @@ void PPCDAGToDAGISel::PostprocessISelDAG() {
         DebugLoc dl = GA->getDebugLoc();
         const GlobalValue *GV = GA->getGlobal();
         ImmOpnd = CurDAG->getTargetGlobalAddress(GV, dl, MVT::i64, 0, Flags);
-      }
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(ImmOpnd)) {
+      } else if (ConstantPoolSDNode *CP =
+                 dyn_cast<ConstantPoolSDNode>(ImmOpnd)) {
         const Constant *C = CP->getConstVal();
         ImmOpnd = CurDAG->getTargetConstantPool(C, MVT::i64,
                                                 CP->getAlignment(),
