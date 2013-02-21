@@ -10,4 +10,4 @@
 // RM-WERROR: ### QA_OVERRIDE_GCC3_OPTIONS: x-Werror +-mfoo
 // RM-WERROR-NEXT: ### Deleting argument -Werror
 // RM-WERROR-NEXT: ### Adding argument -mfoo at end
-// RM-WERROR-NEXT: clang: warning: argument unused during compilation: '-mfoo'
+// RM-WERROR-NEXT: warning: argument unused during compilation: '-mfoo'
