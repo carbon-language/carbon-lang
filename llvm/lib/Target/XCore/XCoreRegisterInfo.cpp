@@ -101,58 +101,6 @@ XCoreRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF) const {
   return false;
 }
 
-// This function eliminates ADJCALLSTACKDOWN,
-// ADJCALLSTACKUP pseudo instructions
-void XCoreRegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
-  if (!TFI->hasReservedCallFrame(MF)) {
-    // Turn the adjcallstackdown instruction into 'extsp <amt>' and the
-    // adjcallstackup instruction into 'ldaw sp, sp[<amt>]'
-    MachineInstr *Old = I;
-    uint64_t Amount = Old->getOperand(0).getImm();
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      unsigned Align = TFI->getStackAlignment();
-      Amount = (Amount+Align-1)/Align*Align;
-
-      assert(Amount%4 == 0);
-      Amount /= 4;
-
-      bool isU6 = isImmU6(Amount);
-      if (!isU6 && !isImmU16(Amount)) {
-        // FIX could emit multiple instructions in this case.
-#ifndef NDEBUG
-        errs() << "eliminateCallFramePseudoInstr size too big: "
-               << Amount << "\n";
-#endif
-        llvm_unreachable(0);
-      }
-
-      MachineInstr *New;
-      if (Old->getOpcode() == XCore::ADJCALLSTACKDOWN) {
-        int Opcode = isU6 ? XCore::EXTSP_u6 : XCore::EXTSP_lu6;
-        New=BuildMI(MF, Old->getDebugLoc(), TII.get(Opcode))
-          .addImm(Amount);
-      } else {
-        assert(Old->getOpcode() == XCore::ADJCALLSTACKUP);
-        int Opcode = isU6 ? XCore::LDAWSP_ru6_RRegs : XCore::LDAWSP_lru6_RRegs;
-        New=BuildMI(MF, Old->getDebugLoc(), TII.get(Opcode), XCore::SP)
-          .addImm(Amount);
-      }
-
-      // Replace the pseudo instruction with a new instruction...
-      MBB.insert(I, New);
-    }
-  }
-  
-  MBB.erase(I);
-}
-
 void
 XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                        int SPAdj, unsigned FIOperandNum,

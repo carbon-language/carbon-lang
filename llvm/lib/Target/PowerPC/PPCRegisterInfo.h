@@ -56,10 +56,6 @@ public:
 
   bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
   void lowerDynamicAlloc(MachineBasicBlock::iterator II,
                          int SPAdj, RegScavenger *RS) const;
   void lowerCRSpilling(MachineBasicBlock::iterator II, unsigned FrameIndex,

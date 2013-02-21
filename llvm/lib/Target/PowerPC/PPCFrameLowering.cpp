@@ -1124,6 +1124,47 @@ restoreCRs(bool isPPC64, bool CR2Spilled, bool CR3Spilled, bool CR4Spilled,
 	       .addReg(MoveReg));
 }
 
+void PPCFrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  const PPCInstrInfo &TII =
+    *static_cast<const PPCInstrInfo*>(MF.getTarget().getInstrInfo());
+  if (MF.getTarget().Options.GuaranteedTailCallOpt &&
+      I->getOpcode() == PPC::ADJCALLSTACKUP) {
+    // Add (actually subtract) back the amount the callee popped on return.
+    if (int CalleeAmt =  I->getOperand(1).getImm()) {
+      bool is64Bit = Subtarget.isPPC64();
+      CalleeAmt *= -1;
+      unsigned StackReg = is64Bit ? PPC::X1 : PPC::R1;
+      unsigned TmpReg = is64Bit ? PPC::X0 : PPC::R0;
+      unsigned ADDIInstr = is64Bit ? PPC::ADDI8 : PPC::ADDI;
+      unsigned ADDInstr = is64Bit ? PPC::ADD8 : PPC::ADD4;
+      unsigned LISInstr = is64Bit ? PPC::LIS8 : PPC::LIS;
+      unsigned ORIInstr = is64Bit ? PPC::ORI8 : PPC::ORI;
+      MachineInstr *MI = I;
+      DebugLoc dl = MI->getDebugLoc();
+
+      if (isInt<16>(CalleeAmt)) {
+        BuildMI(MBB, I, dl, TII.get(ADDIInstr), StackReg)
+          .addReg(StackReg, RegState::Kill)
+          .addImm(CalleeAmt);
+      } else {
+        MachineBasicBlock::iterator MBBI = I;
+        BuildMI(MBB, MBBI, dl, TII.get(LISInstr), TmpReg)
+          .addImm(CalleeAmt >> 16);
+        BuildMI(MBB, MBBI, dl, TII.get(ORIInstr), TmpReg)
+          .addReg(TmpReg, RegState::Kill)
+          .addImm(CalleeAmt & 0xFFFF);
+        BuildMI(MBB, MBBI, dl, TII.get(ADDInstr), StackReg)
+          .addReg(StackReg, RegState::Kill)
+          .addReg(TmpReg);
+      }
+    }
+  }
+  // Simply discard ADJCALLSTACKDOWN, ADJCALLSTACKUP instructions.
+  MBB.erase(I);
+}
+
 bool 
 PPCFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 					MachineBasicBlock::iterator MI,

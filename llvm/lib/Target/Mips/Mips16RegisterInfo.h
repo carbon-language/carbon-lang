@@ -25,10 +25,6 @@ public:
   Mips16RegisterInfo(const MipsSubtarget &Subtarget,
                      const Mips16InstrInfo &TII);
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
   bool requiresFrameIndexScavenging(const MachineFunction &MF) const;

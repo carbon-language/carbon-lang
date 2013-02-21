@@ -119,13 +119,14 @@ static void
 emitSPUpdate(bool isARM,
              MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
              DebugLoc dl, const ARMBaseInstrInfo &TII,
-             int NumBytes, unsigned MIFlags = MachineInstr::NoFlags) {
+             int NumBytes, unsigned MIFlags = MachineInstr::NoFlags,
+             ARMCC::CondCodes Pred = ARMCC::AL, unsigned PredReg = 0) {
   if (isARM)
     emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
-                            ARMCC::AL, 0, TII, MIFlags);
+                            Pred, PredReg, TII, MIFlags);
   else
     emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
-                           ARMCC::AL, 0, TII, MIFlags);
+                           Pred, PredReg, TII, MIFlags);
 }
 
 void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
@@ -1430,3 +1431,51 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     AFI->setLRIsSpilledForFarJump(true);
   }
 }
+
+
+void ARMFrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  const ARMBaseInstrInfo &TII =
+    *static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
+  if (!hasReservedCallFrame(MF)) {
+    // If we have alloca, convert as follows:
+    // ADJCALLSTACKDOWN -> sub, sp, sp, amount
+    // ADJCALLSTACKUP   -> add, sp, sp, amount
+    MachineInstr *Old = I;
+    DebugLoc dl = Old->getDebugLoc();
+    unsigned Amount = Old->getOperand(0).getImm();
+    if (Amount != 0) {
+      // We need to keep the stack aligned properly.  To do this, we round the
+      // amount of space needed for the outgoing arguments up to the next
+      // alignment boundary.
+      unsigned Align = getStackAlignment();
+      Amount = (Amount+Align-1)/Align*Align;
+
+      ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+      assert(!AFI->isThumb1OnlyFunction() &&
+             "This eliminateCallFramePseudoInstr does not support Thumb1!");
+      bool isARM = !AFI->isThumbFunction();
+
+      // Replace the pseudo instruction with a new instruction...
+      unsigned Opc = Old->getOpcode();
+      int PIdx = Old->findFirstPredOperandIdx();
+      ARMCC::CondCodes Pred = (PIdx == -1)
+        ? ARMCC::AL : (ARMCC::CondCodes)Old->getOperand(PIdx).getImm();
+      if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
+        // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
+        unsigned PredReg = Old->getOperand(2).getReg();
+        emitSPUpdate(isARM, MBB, I, dl, TII, -Amount, MachineInstr::NoFlags,
+                     Pred, PredReg);
+      } else {
+        // Note: PredReg is operand 3 for ADJCALLSTACKUP.
+        unsigned PredReg = Old->getOperand(3).getReg();
+        assert(Opc == ARM::ADJCALLSTACKUP || Opc == ARM::tADJCALLSTACKUP);
+        emitSPUpdate(isARM, MBB, I, dl, TII, Amount, MachineInstr::NoFlags,
+                     Pred, PredReg);
+      }
+    }
+  }
+  MBB.erase(I);
+}
+

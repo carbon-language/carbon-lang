@@ -327,6 +327,21 @@ bool HexagonFrameLowering::restoreCalleeSavedRegisters(
   return true;
 }
 
+void HexagonFrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  MachineInstr &MI = *I;
+
+  if (MI.getOpcode() == Hexagon::ADJCALLSTACKDOWN) {
+    // Hexagon_TODO: add code
+  } else if (MI.getOpcode() == Hexagon::ADJCALLSTACKUP) {
+    // Hexagon_TODO: add code
+  } else {
+    llvm_unreachable("Cannot handle this call frame pseudo instruction");
+  }
+  MBB.erase(I);
+}
+
 int HexagonFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
                                               int FI) const {
   return MF.getFrameInfo()->getObjectOffset(FI);

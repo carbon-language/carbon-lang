@@ -733,21 +733,6 @@ public:
     llvm_unreachable("isFrameOffsetLegal does not exist on this target");
   }
 
-  /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog
-  /// code insertion to eliminate call frame setup and destroy pseudo
-  /// instructions (but only if the Target is using them).  It is responsible
-  /// for eliminating these instructions, replacing them with concrete
-  /// instructions.  This method need only be implemented if using call frame
-  /// setup/destroy pseudo instructions.
-  ///
-  virtual void
-  eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator MI) const {
-    llvm_unreachable("Call Frame Pseudo Instructions do not exist on this "
-                     "target!");
-  }
-
 
   /// saveScavengerRegister - Spill the register so it can be used by the
   /// register scavenger. Return true if the register was spilled, false

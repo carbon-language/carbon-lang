@@ -31,10 +31,6 @@ public:
 
   bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
 private:
   virtual void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
                            int FrameIndex, uint64_t StackSize,

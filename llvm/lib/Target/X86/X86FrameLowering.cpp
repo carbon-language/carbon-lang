@@ -55,8 +55,8 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
           MMI.callsUnwindInit() || MMI.callsEHReturn());
 }
 
-static unsigned getSUBriOpcode(unsigned isLP64, int64_t Imm) {
-  if (isLP64) {
+static unsigned getSUBriOpcode(unsigned IsLP64, int64_t Imm) {
+  if (IsLP64) {
     if (isInt<8>(Imm))
       return X86::SUB64ri8;
     return X86::SUB64ri32;
@@ -1756,3 +1756,84 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   MF.verify();
 #endif
 }
+
+void X86FrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  const X86InstrInfo &TII = *TM.getInstrInfo();
+  const X86RegisterInfo &RegInfo = *TM.getRegisterInfo();
+  unsigned StackPtr = RegInfo.getStackRegister();
+  bool reseveCallFrame = hasReservedCallFrame(MF);
+  int Opcode = I->getOpcode();
+  bool isDestroy = Opcode == TII.getCallFrameDestroyOpcode();
+  bool IsLP64 = STI.isTarget64BitLP64();
+  DebugLoc DL = I->getDebugLoc();
+  uint64_t Amount = !reseveCallFrame ? I->getOperand(0).getImm() : 0;
+  uint64_t CalleeAmt = isDestroy ? I->getOperand(1).getImm() : 0;
+  I = MBB.erase(I);
+
+  if (!reseveCallFrame) {
+    // If the stack pointer can be changed after prologue, turn the
+    // adjcallstackup instruction into a 'sub ESP, <amt>' and the
+    // adjcallstackdown instruction into 'add ESP, <amt>'
+    // TODO: consider using push / pop instead of sub + store / add
+    if (Amount == 0)
+      return;
+
+    // We need to keep the stack aligned properly.  To do this, we round the
+    // amount of space needed for the outgoing arguments up to the next
+    // alignment boundary.
+    unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
+    Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
+
+    MachineInstr *New = 0;
+    if (Opcode == TII.getCallFrameSetupOpcode()) {
+      New = BuildMI(MF, DL, TII.get(getSUBriOpcode(IsLP64, Amount)),
+                    StackPtr)
+        .addReg(StackPtr)
+        .addImm(Amount);
+    } else {
+      assert(Opcode == TII.getCallFrameDestroyOpcode());
+
+      // Factor out the amount the callee already popped.
+      Amount -= CalleeAmt;
+
+      if (Amount) {
+        unsigned Opc = getADDriOpcode(IsLP64, Amount);
+        New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
+          .addReg(StackPtr).addImm(Amount);
+      }
+    }
+
+    if (New) {
+      // The EFLAGS implicit def is dead.
+      New->getOperand(3).setIsDead();
+
+      // Replace the pseudo instruction with a new instruction.
+      MBB.insert(I, New);
+    }
+
+    return;
+  }
+
+  if (Opcode == TII.getCallFrameDestroyOpcode() && CalleeAmt) {
+    // If we are performing frame pointer elimination and if the callee pops
+    // something off the stack pointer, add it back.  We do this until we have
+    // more advanced stack pointer tracking ability.
+    unsigned Opc = getSUBriOpcode(IsLP64, CalleeAmt);
+    MachineInstr *New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
+      .addReg(StackPtr).addImm(CalleeAmt);
+
+    // The EFLAGS implicit def is dead.
+    New->getOperand(3).setIsDead();
+
+    // We are not tracking the stack pointer adjustment by the callee, so make
+    // sure we restore the stack pointer immediately after the call, there may
+    // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
+    MachineBasicBlock::iterator B = MBB.begin();
+    while (I != B && !llvm::prior(I)->isCall())
+      --I;
+    MBB.insert(I, New);
+  }
+}
+

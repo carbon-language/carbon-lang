@@ -45,6 +45,10 @@ public:
                                    const TargetRegisterInfo *TRI) const;
 
   bool hasReservedCallFrame(const MachineFunction &MF) const;
+
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI) const;
 };
 
 } // End llvm namespace

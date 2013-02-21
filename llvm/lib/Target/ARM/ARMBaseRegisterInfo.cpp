@@ -401,64 +401,6 @@ requiresVirtualBaseRegisters(const MachineFunction &MF) const {
   return true;
 }
 
-static void
-emitSPUpdate(bool isARM,
-             MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-             DebugLoc dl, const ARMBaseInstrInfo &TII,
-             int NumBytes,
-             ARMCC::CondCodes Pred = ARMCC::AL, unsigned PredReg = 0) {
-  if (isARM)
-    emitARMRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
-                            Pred, PredReg, TII);
-  else
-    emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes,
-                           Pred, PredReg, TII);
-}
-
-
-void ARMBaseRegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-  if (!TFI->hasReservedCallFrame(MF)) {
-    // If we have alloca, convert as follows:
-    // ADJCALLSTACKDOWN -> sub, sp, sp, amount
-    // ADJCALLSTACKUP   -> add, sp, sp, amount
-    MachineInstr *Old = I;
-    DebugLoc dl = Old->getDebugLoc();
-    unsigned Amount = Old->getOperand(0).getImm();
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      unsigned Align = TFI->getStackAlignment();
-      Amount = (Amount+Align-1)/Align*Align;
-
-      ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-      assert(!AFI->isThumb1OnlyFunction() &&
-             "This eliminateCallFramePseudoInstr does not support Thumb1!");
-      bool isARM = !AFI->isThumbFunction();
-
-      // Replace the pseudo instruction with a new instruction...
-      unsigned Opc = Old->getOpcode();
-      int PIdx = Old->findFirstPredOperandIdx();
-      ARMCC::CondCodes Pred = (PIdx == -1)
-        ? ARMCC::AL : (ARMCC::CondCodes)Old->getOperand(PIdx).getImm();
-      if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
-        // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
-        unsigned PredReg = Old->getOperand(2).getReg();
-        emitSPUpdate(isARM, MBB, I, dl, TII, -Amount, Pred, PredReg);
-      } else {
-        // Note: PredReg is operand 3 for ADJCALLSTACKUP.
-        unsigned PredReg = Old->getOperand(3).getReg();
-        assert(Opc == ARM::ADJCALLSTACKUP || Opc == ARM::tADJCALLSTACKUP);
-        emitSPUpdate(isARM, MBB, I, dl, TII, Amount, Pred, PredReg);
-      }
-    }
-  }
-  MBB.erase(I);
-}
-
 int64_t ARMBaseRegisterInfo::
 getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
   const MCInstrDesc &Desc = MI->getDesc();

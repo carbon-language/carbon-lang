@@ -83,44 +83,6 @@ getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-// This function eliminate ADJCALLSTACKDOWN/ADJCALLSTACKUP pseudo instructions
-void MBlazeRegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
-  if (!TFI->hasReservedCallFrame(MF)) {
-    // If we have a frame pointer, turn the adjcallstackup instruction into a
-    // 'addi r1, r1, -<amt>' and the adjcallstackdown instruction into
-    // 'addi r1, r1, <amt>'
-    MachineInstr *Old = I;
-    int Amount = Old->getOperand(0).getImm() + 4;
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      unsigned Align = TFI->getStackAlignment();
-      Amount = (Amount+Align-1)/Align*Align;
-
-      MachineInstr *New;
-      if (Old->getOpcode() == MBlaze::ADJCALLSTACKDOWN) {
-        New = BuildMI(MF,Old->getDebugLoc(),TII.get(MBlaze::ADDIK),MBlaze::R1)
-                .addReg(MBlaze::R1).addImm(-Amount);
-      } else {
-        assert(Old->getOpcode() == MBlaze::ADJCALLSTACKUP);
-        New = BuildMI(MF,Old->getDebugLoc(),TII.get(MBlaze::ADDIK),MBlaze::R1)
-                .addReg(MBlaze::R1).addImm(Amount);
-      }
-
-      // Replace the pseudo instruction with a new instruction...
-      MBB.insert(I, New);
-    }
-  }
-
-  // Simply discard ADJCALLSTACKDOWN, ADJCALLSTACKUP instructions.
-  MBB.erase(I);
-}
-
 // FrameIndex represent objects inside a abstract stack.
 // We must replace FrameIndex with an stack/frame pointer
 // direct reference.

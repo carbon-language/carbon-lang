@@ -35,6 +35,11 @@ public:
                             MachineBasicBlock::iterator MI,
                             const std::vector<CalleeSavedInfo> &CSI,
                             const TargetRegisterInfo *TRI) const;
+
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
+
   virtual bool
   restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI,

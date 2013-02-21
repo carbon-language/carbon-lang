@@ -70,6 +70,11 @@ public:
                    unsigned LdrOpc, bool isVarArg, bool NoGap,
                    bool(*Func)(unsigned, bool),
                    unsigned NumAlignedDPRCS2Regs) const;
+
+  virtual void eliminateCallFramePseudoInstr(
+                                    MachineFunction &MF,
+                                    MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI) const;
 };
 
 } // End llvm namespace

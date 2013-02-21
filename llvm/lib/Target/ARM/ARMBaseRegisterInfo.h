@@ -168,10 +168,6 @@ public:
 
   virtual bool requiresVirtualBaseRegisters(const MachineFunction &MF) const;
 
-  virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                           MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator I) const;
-
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator II,
                                    int SPAdj, unsigned FIOperandNum,
                                    RegScavenger *RS = NULL) const;

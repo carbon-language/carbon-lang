@@ -56,19 +56,6 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-void SparcRegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  MachineInstr &MI = *I;
-  DebugLoc dl = MI.getDebugLoc();
-  int Size = MI.getOperand(0).getImm();
-  if (MI.getOpcode() == SP::ADJCALLSTACKDOWN)
-    Size = -Size;
-  if (Size)
-    BuildMI(MBB, I, dl, TII.get(SP::ADDri), SP::O6).addReg(SP::O6).addImm(Size);
-  MBB.erase(I);
-}
-
 void
 SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                        int SPAdj, unsigned FIOperandNum,

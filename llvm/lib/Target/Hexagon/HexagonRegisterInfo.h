@@ -56,10 +56,6 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = NULL) const;

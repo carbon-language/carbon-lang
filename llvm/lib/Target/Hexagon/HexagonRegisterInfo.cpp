@@ -117,21 +117,6 @@ HexagonRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
                    "architecture version");
 }
 
-void HexagonRegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  MachineInstr &MI = *I;
-
-  if (MI.getOpcode() == Hexagon::ADJCALLSTACKDOWN) {
-    // Hexagon_TODO: add code
-  } else if (MI.getOpcode() == Hexagon::ADJCALLSTACKUP) {
-    // Hexagon_TODO: add code
-  } else {
-    llvm_unreachable("Cannot handle this call frame pseudo instruction");
-  }
-  MBB.erase(I);
-}
-
 void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                               int SPAdj, unsigned FIOperandNum,
                                               RegScavenger *RS) const {

@@ -39,6 +39,10 @@ namespace llvm {
                                      const std::vector<CalleeSavedInfo> &CSI,
                                      const TargetRegisterInfo *TRI) const;
 
+    void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                       MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator I) const;
+
     bool hasFP(const MachineFunction &MF) const;
 
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,

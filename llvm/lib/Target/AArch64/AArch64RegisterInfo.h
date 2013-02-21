@@ -44,10 +44,6 @@ public:
                            unsigned FIOperandNum,
                            RegScavenger *Rs = NULL) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator MI) const;
-
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns original class if it is
   /// possible to copy between a two registers of the specified class.

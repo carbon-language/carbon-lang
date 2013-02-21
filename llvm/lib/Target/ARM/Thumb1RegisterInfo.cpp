@@ -296,47 +296,6 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   }
 }
 
-static void emitSPUpdate(MachineBasicBlock &MBB,
-                         MachineBasicBlock::iterator &MBBI,
-                         const TargetInstrInfo &TII, DebugLoc dl,
-                         const Thumb1RegisterInfo &MRI,
-                         int NumBytes) {
-  emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes, TII,
-                            MRI);
-}
-
-void Thumb1RegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
-  if (!TFI->hasReservedCallFrame(MF)) {
-    // If we have alloca, convert as follows:
-    // ADJCALLSTACKDOWN -> sub, sp, sp, amount
-    // ADJCALLSTACKUP   -> add, sp, sp, amount
-    MachineInstr *Old = I;
-    DebugLoc dl = Old->getDebugLoc();
-    unsigned Amount = Old->getOperand(0).getImm();
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      unsigned Align = TFI->getStackAlignment();
-      Amount = (Amount+Align-1)/Align*Align;
-
-      // Replace the pseudo instruction with a new instruction...
-      unsigned Opc = Old->getOpcode();
-      if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
-        emitSPUpdate(MBB, I, TII, dl, *this, -Amount);
-      } else {
-        assert(Opc == ARM::ADJCALLSTACKUP || Opc == ARM::tADJCALLSTACKUP);
-        emitSPUpdate(MBB, I, TII, dl, *this, Amount);
-      }
-    }
-  }
-  MBB.erase(I);
-}
-
 /// emitThumbConstant - Emit a series of instructions to materialize a
 /// constant.
 static void emitThumbConstant(MachineBasicBlock &MBB,

@@ -72,27 +72,6 @@ bool Mips16RegisterInfo::saveScavengerRegister
   return true;
 }
 
-// This function eliminate ADJCALLSTACKDOWN,
-// ADJCALLSTACKUP pseudo instructions
-void Mips16RegisterInfo::
-eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
-  if (!TFI->hasReservedCallFrame(MF)) {
-    int64_t Amount = I->getOperand(0).getImm();
-
-    if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
-      Amount = -Amount;
-
-    const Mips16InstrInfo *II = static_cast<const Mips16InstrInfo*>(&TII);
-
-    II->adjustStackPtr(Mips::SP, Amount, MBB, I);
-  }
-
-  MBB.erase(I);
-}
-
 void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,
                                      uint64_t StackSize,

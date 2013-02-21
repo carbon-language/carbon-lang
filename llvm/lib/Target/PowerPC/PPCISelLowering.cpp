@@ -3332,7 +3332,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
 
   // When performing tail call optimization the callee pops its arguments off
   // the stack. Account for this here so these bytes can be pushed back on in
-  // PPCRegisterInfo::eliminateCallFramePseudoInstr.
+  // PPCFrameLowering::eliminateCallFramePseudoInstr.
   int BytesCalleePops =
     (CallConv == CallingConv::Fast &&
      getTargetMachine().Options.GuaranteedTailCallOpt) ? NumBytes : 0;

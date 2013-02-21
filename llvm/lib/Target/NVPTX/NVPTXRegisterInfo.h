@@ -58,10 +58,6 @@ public:
                                    int SPAdj, unsigned FIOperandNum,
                                    RegScavenger *RS=NULL) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;
   virtual unsigned getFrameRegister(const MachineFunction &MF) const;
   virtual unsigned getRARegister() const;

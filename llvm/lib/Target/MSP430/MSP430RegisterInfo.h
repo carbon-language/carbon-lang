@@ -42,10 +42,6 @@ public:
   const TargetRegisterClass*
   getPointerRegClass(const MachineFunction &MF, unsigned Kind = 0) const;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = NULL) const;

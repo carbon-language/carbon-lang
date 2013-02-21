@@ -33,6 +33,10 @@ public:
   virtual void emitPrologue(MachineFunction &MF) const;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const;
+
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
 };
 
 } // End llvm namespace

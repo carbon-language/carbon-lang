@@ -65,6 +65,10 @@ public:
   int getFrameIndexReference(const MachineFunction &MF, int FI,
                              unsigned &FrameReg) const;
   uint32_t getCompactUnwindEncoding(MachineFunction &MF) const;
+
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI) const;
 };
 
 } // End llvm namespace

@@ -139,6 +139,25 @@ bool Mips16FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+// Eliminate ADJCALLSTACKDOWN, ADJCALLSTACKUP pseudo instructions
+void Mips16FrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  if (!hasReservedCallFrame(MF)) {
+    int64_t Amount = I->getOperand(0).getImm();
+
+    if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
+      Amount = -Amount;
+
+    const Mips16InstrInfo &TII =
+      *static_cast<const Mips16InstrInfo*>(MF.getTarget().getInstrInfo());
+
+    TII.adjustStackPtr(Mips::SP, Amount, MBB, I);
+  }
+
+  MBB.erase(I);
+}
+
 bool
 Mips16FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();

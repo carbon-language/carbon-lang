@@ -644,3 +644,43 @@ AArch64FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   // variable-sized objects that prevent reservation of a call frame.
   return !(hasFP(MF) && MFI->hasVarSizedObjects());
 }
+
+void
+AArch64FrameLowering::eliminateCallFramePseudoInstr(
+                                MachineFunction &MF,
+                                MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI) const {
+  const AArch64InstrInfo &TII =
+    *static_cast<const AArch64InstrInfo *>(MF.getTarget().getInstrInfo());
+  DebugLoc dl = MI->getDebugLoc();
+  int Opcode = MI->getOpcode();
+  bool IsDestroy = Opcode == TII.getCallFrameDestroyOpcode();
+  uint64_t CalleePopAmount = IsDestroy ? MI->getOperand(1).getImm() : 0;
+
+  if (!hasReservedCallFrame(MF)) {
+    unsigned Align = getStackAlignment();
+
+    int64_t Amount = MI->getOperand(0).getImm();
+    Amount = RoundUpToAlignment(Amount, Align);
+    if (!IsDestroy) Amount = -Amount;
+
+    // N.b. if CalleePopAmount is valid but zero (i.e. callee would pop, but it
+    // doesn't have to pop anything), then the first operand will be zero too so
+    // this adjustment is a no-op.
+    if (CalleePopAmount == 0) {
+      // FIXME: in-function stack adjustment for calls is limited to 12-bits
+      // because there's no guaranteed temporary register available. Mostly call
+      // frames will be allocated at the start of a function so this is OK, but
+      // it is a limitation that needs dealing with.
+      assert(Amount > -0xfff && Amount < 0xfff && "call frame too large");
+      emitSPUpdate(MBB, MI, dl, TII, AArch64::NoRegister, Amount);
+    }
+  } else if (CalleePopAmount != 0) {
+    // If the calling convention demands that the callee pops arguments from the
+    // stack, we want to add it back if we have a reserved call frame.
+    assert(CalleePopAmount < 0xfff && "call frame too large");
+    emitSPUpdate(MBB, MI, dl, TII, AArch64::NoRegister, -CalleePopAmount);
+  }
+
+  MBB.erase(MI);
+}

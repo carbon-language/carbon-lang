@@ -67,6 +67,22 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 }
 
+void SparcFrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  MachineInstr &MI = *I;
+  DebugLoc dl = MI.getDebugLoc();
+  int Size = MI.getOperand(0).getImm();
+  if (MI.getOpcode() == SP::ADJCALLSTACKDOWN)
+    Size = -Size;
+  const SparcInstrInfo &TII =
+    *static_cast<const SparcInstrInfo*>(MF.getTarget().getInstrInfo());
+  if (Size)
+    BuildMI(MBB, I, dl, TII.get(SP::ADDri), SP::O6).addReg(SP::O6).addImm(Size);
+  MBB.erase(I);
+}
+
+
 void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
