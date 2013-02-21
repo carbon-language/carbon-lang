@@ -377,6 +377,12 @@ public:
     return false;
   }
 
+  /// Mark the specified register unit as used in this function.
+  /// This should only be called during and after register allocation.
+  void setRegUnitUsed(unsigned RegUnit) {
+    UsedRegUnits.set(RegUnit);
+  }
+
   /// setPhysRegUsed - Mark the specified register used in this function.
   /// This should only be called during and after register allocation.
   void setPhysRegUsed(unsigned Reg) {

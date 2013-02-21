@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -verify-machineinstrs
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -verify-machineinstrs -O0
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 target triple = "thumbv7-apple-darwin10"
 
@@ -74,5 +75,13 @@ entry:
   tail call void asm sideeffect "", "~{r1},~{r3},~{r5},~{r11},~{r13}"() nounwind
   store %class* %this, %class** %p1, align 4
   store i32 %num, i32* %p2, align 4
+  ret void
+}
+
+; Check RAFast handling of inline assembly with many dense clobbers.
+; The large tuple aliases of the vector registers can cause problems.
+define void @rdar13249625(double* nocapture %p) nounwind {
+  %1 = tail call double asm sideeffect "@ $0", "=w,~{d0},~{q1},~{q2},~{q3},~{q4},~{q5},~{q6},~{q7},~{q8},~{q9},~{q10},~{q11},~{q12},~{q13},~{q14},~{q15}"() nounwind
+  store double %1, double* %p, align 4
   ret void
 }
