@@ -47,12 +47,15 @@ int force_instance = TemplateAddressSafetyOk<42>()
 // Check that __cxx_global_var_init* get the address_safety attribute.
 int global1 = 0;
 int global2 = *(int*)((char*)&global1+1);
-// WITHOUT: @__cxx_global_var_init{{.*}}#1
-// BL: @__cxx_global_var_init{{.*}}#1
-// ASAN: @__cxx_global_var_init{{.*}}#2
+// WITHOUT: @__cxx_global_var_init{{.*}}#[[GVI:[0-9]+]]
+// BL: @__cxx_global_var_init{{.*}}#[[GVI:[0-9]+]]
+// ASAN: @__cxx_global_var_init{{.*}}#[[GVI:[0-9]+]]
 
-// WITHOUT: attributes #[[NOATTR]] = { nounwind "target-features"={{.*}} }
-// BL: attributes #[[NOATTR]] = { nounwind "target-features"={{.*}} }
+// WITHOUT: attributes #[[NOATTR]] = { nounwind{{.*}} }
+// WITHOUT: attributes #[[GVI]] = { nounwind{{.*}} }
+// BL: attributes #[[NOATTR]] = { nounwind{{.*}} }
+// BL: attributes #[[GVI]] = { nounwind{{.*}} }
 
-// ASAN: attributes #[[NOATTR]] = { nounwind "target-features"={{.*}} }
-// ASAN: attributes #[[WITH]] = { address_safety nounwind "target-features"={{.*}} }
+// ASAN: attributes #[[NOATTR]] = { nounwind{{.*}} }
+// ASAN: attributes #[[WITH]] = { address_safety nounwind{{.*}} }
+// ASAN: attributes #[[GVI]] = { address_safety nounwind{{.*}} }
