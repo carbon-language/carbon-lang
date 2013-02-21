@@ -330,6 +330,33 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
   return true;
 }
 
+/// isPLainlyKilled - Test if the given register value, which is used by the
+// given instruction, is killed by the given instruction.
+static bool isPlainlyKilled(MachineInstr *MI, unsigned Reg,
+                            LiveIntervals *LIS) {
+  if (LIS && TargetRegisterInfo::isVirtualRegister(Reg) &&
+      !LIS->isNotInMIMap(MI)) {
+    // FIXME: Sometimes tryInstructionTransform() will add instructions and
+    // test whether they can be folded before keeping them. In this case it
+    // sets a kill before recursively calling tryInstructionTransform() again.
+    // If there is no interval available, we assume that this instruction is
+    // one of those. A kill flag is manually inserted on the operand so the
+    // check below will handle it.
+    LiveInterval &LI = LIS->getInterval(Reg);
+    // This is to match the kill flag version where undefs don't have kill
+    // flags.
+    if (!LI.hasAtLeastOneValue())
+      return false;
+
+    SlotIndex useIdx = LIS->getInstructionIndex(MI);
+    LiveInterval::const_iterator I = LI.find(useIdx);
+    assert(I != LI.end() && "Reg must be live-in to use.");
+    return SlotIndex::isSameInstr(I->end, useIdx);
+  }
+
+  return MI->killsRegister(Reg);
+}
+
 /// isKilled - Test if the given register value, which is used by the given
 /// instruction, is killed by the given instruction. This looks through
 /// coalescable copies to see if the original value is potentially not killed.
@@ -351,29 +378,8 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
                      LiveIntervals *LIS) {
   MachineInstr *DefMI = &MI;
   for (;;) {
-    if (LIS && TargetRegisterInfo::isVirtualRegister(Reg) &&
-        !LIS->isNotInMIMap(DefMI)) {
-      // FIXME: Sometimes tryInstructionTransform() will add instructions and
-      // test whether they can be folded before keeping them. In this case it
-      // sets a kill before recursively calling tryInstructionTransform() again.
-      // If there is no interval available, we assume that this instruction is
-      // one of those. A kill flag is manually inserted on the operand so the
-      // check below will handle it.
-      LiveInterval &LI = LIS->getInterval(Reg);
-      // This is to match the kill flag version where undefs don't have kill
-      // flags.
-      if (!LI.hasAtLeastOneValue())
-        return false;
-
-      SlotIndex useIdx = LIS->getInstructionIndex(DefMI);
-      LiveInterval::const_iterator I = LI.find(useIdx);
-      assert(I != LI.end() && "Reg must be live-in to use.");
-      if (!SlotIndex::isSameInstr(I->end, useIdx))
-        return false;
-    } else if (!DefMI->killsRegister(Reg)) {
+    if (!isPlainlyKilled(DefMI, Reg, LIS))
       return false;
-    }
-
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       return true;
     MachineRegisterInfo::def_iterator Begin = MRI->def_begin(Reg);
