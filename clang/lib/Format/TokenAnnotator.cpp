@@ -517,8 +517,7 @@ private:
         : BindingStrength(BindingStrength), LongestObjCSelectorName(0),
           ColonIsForRangeExpr(false), ColonIsObjCMethodExpr(false),
           FirstObjCSelectorName(NULL), IsExpression(IsExpression),
-          LookForFunctionName(false) {
-    }
+          LookForFunctionName(false) {}
 
     unsigned BindingStrength;
     unsigned LongestObjCSelectorName;
@@ -1104,6 +1103,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
          Right.is(tok::arrow) || Right.is(tok::period) ||
          Right.is(tok::colon) || Left.is(tok::coloncolon) ||
          Left.is(tok::semi) || Left.is(tok::l_brace) ||
+         Right.is(tok::r_brace) ||
          (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
           Right.is(tok::identifier)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
