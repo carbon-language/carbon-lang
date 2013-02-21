@@ -855,7 +855,7 @@ class TemplateDiff {
                           FromIter->getKind() == TemplateArgument::Integral;
         bool HasToInt = !ToIter.isEnd() &&
                         ToIter->getKind() == TemplateArgument::Integral;
-        //bool IsValidFromInt = false, IsValidToInt = false;
+
         if (HasFromInt)
           FromInt = FromIter->getAsIntegral();
         else
