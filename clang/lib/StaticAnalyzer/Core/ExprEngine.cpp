@@ -487,8 +487,10 @@ void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
   SVal ThisVal = Pred->getState()->getSVal(ThisPtr);
 
   // Create the base object region.
-  QualType BaseTy = D.getBaseSpecifier()->getType();
-  SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy);
+  const CXXBaseSpecifier *Base = D.getBaseSpecifier();
+  QualType BaseTy = Base->getType();
+  SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy,
+                                                     Base->isVirtual());
 
   VisitCXXDestructor(BaseTy, BaseVal.castAs<loc::MemRegionVal>().getRegion(),
                      CurDtor->getBody(), /*IsBase=*/ true, Pred, Dst);

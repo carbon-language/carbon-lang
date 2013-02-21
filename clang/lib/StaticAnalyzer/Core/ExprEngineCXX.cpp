@@ -161,8 +161,10 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       Target = ThisVal.getAsRegion();
     } else {
       // Cast to the base type.
-      QualType BaseTy = CE->getType();
-      SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, BaseTy);
+      bool IsVirtual =
+        (CE->getConstructionKind() == CXXConstructExpr::CK_VirtualBase);
+      SVal BaseVal = getStoreManager().evalDerivedToBase(ThisVal, CE->getType(),
+                                                         IsVirtual);
       Target = BaseVal.getAsRegion();
     }
     break;

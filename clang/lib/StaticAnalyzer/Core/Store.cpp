@@ -254,7 +254,7 @@ SVal StoreManager::evalDerivedToBase(SVal Derived, const CastExpr *Cast) {
   for (CastExpr::path_const_iterator I = Cast->path_begin(),
                                      E = Cast->path_end();
        I != E; ++I) {
-    Result = evalDerivedToBase(Result, (*I)->getType());
+    Result = evalDerivedToBase(Result, (*I)->getType(), (*I)->isVirtual());
   }
   return Result;
 }
@@ -264,12 +264,14 @@ SVal StoreManager::evalDerivedToBase(SVal Derived, const CXXBasePath &Path) {
   SVal Result = Derived;
   for (CXXBasePath::const_iterator I = Path.begin(), E = Path.end();
        I != E; ++I) {
-    Result = evalDerivedToBase(Result, I->Base->getType());
+    Result = evalDerivedToBase(Result, I->Base->getType(),
+                               I->Base->isVirtual());
   }
   return Result;
 }
 
-SVal StoreManager::evalDerivedToBase(SVal Derived, QualType BaseType) {
+SVal StoreManager::evalDerivedToBase(SVal Derived, QualType BaseType,
+                                     bool IsVirtual) {
   Optional<loc::MemRegionVal> DerivedRegVal =
       Derived.getAs<loc::MemRegionVal>();
   if (!DerivedRegVal)
@@ -281,7 +283,8 @@ SVal StoreManager::evalDerivedToBase(SVal Derived, QualType BaseType) {
   assert(BaseDecl && "not a C++ object?");
 
   const MemRegion *BaseReg =
-    MRMgr.getCXXBaseObjectRegion(BaseDecl, DerivedRegVal->getRegion());
+    MRMgr.getCXXBaseObjectRegion(BaseDecl, DerivedRegVal->getRegion(),
+                                 IsVirtual);
 
   return loc::MemRegionVal(BaseReg);
 }

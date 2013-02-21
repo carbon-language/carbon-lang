@@ -1055,16 +1055,18 @@ public:
 class CXXBaseObjectRegion : public TypedValueRegion {
   friend class MemRegionManager;
 
-  const CXXRecordDecl *decl;
+  llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> Data;
 
-  CXXBaseObjectRegion(const CXXRecordDecl *d, const MemRegion *sReg)
-    : TypedValueRegion(sReg, CXXBaseObjectRegionKind), decl(d) {}
+  CXXBaseObjectRegion(const CXXRecordDecl *RD, bool IsVirtual,
+                      const MemRegion *SReg)
+    : TypedValueRegion(SReg, CXXBaseObjectRegionKind), Data(RD, IsVirtual) {}
 
-  static void ProfileRegion(llvm::FoldingSetNodeID &ID,
-                            const CXXRecordDecl *decl, const MemRegion *sReg);
+  static void ProfileRegion(llvm::FoldingSetNodeID &ID, const CXXRecordDecl *RD,
+                            bool IsVirtual, const MemRegion *SReg);
 
 public:
-  const CXXRecordDecl *getDecl() const { return decl; }
+  const CXXRecordDecl *getDecl() const { return Data.getPointer(); }
+  bool isVirtual() const { return Data.getInt(); }
 
   QualType getValueType() const;
 
@@ -1214,15 +1216,21 @@ public:
   const CXXTempObjectRegion *getCXXTempObjectRegion(Expr const *Ex,
                                                     LocationContext const *LC);
 
-  const CXXBaseObjectRegion *getCXXBaseObjectRegion(const CXXRecordDecl *decl,
-                                                  const MemRegion *superRegion);
+  /// Create a CXXBaseObjectRegion with the given base class for region
+  /// \p Super.
+  ///
+  /// The type of \p Super is assumed be a class deriving from \p BaseClass.
+  const CXXBaseObjectRegion *
+  getCXXBaseObjectRegion(const CXXRecordDecl *BaseClass, const MemRegion *Super,
+                         bool IsVirtual);
 
   /// Create a CXXBaseObjectRegion with the same CXXRecordDecl but a different
   /// super region.
   const CXXBaseObjectRegion *
   getCXXBaseObjectRegionWithSuper(const CXXBaseObjectRegion *baseReg, 
                                   const MemRegion *superRegion) {
-    return getCXXBaseObjectRegion(baseReg->getDecl(), superRegion);
+    return getCXXBaseObjectRegion(baseReg->getDecl(), superRegion,
+                                  baseReg->isVirtual());
   }
 
   const FunctionTextRegion *getFunctionTextRegion(const NamedDecl *FD);
