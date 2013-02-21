@@ -620,7 +620,7 @@ def V_INTERP_P1_F32 : VINTRP <
   0x00000000,
   (outs VReg_32:$dst),
   (ins VReg_32:$i, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "V_INTERP_P1_F32",
+  "V_INTERP_P1_F32 $dst, $i, $attr_chan, $attr, [$m0]",
   []> {
   let DisableEncoding = "$m0";
 }
@@ -629,7 +629,7 @@ def V_INTERP_P2_F32 : VINTRP <
   0x00000001,
   (outs VReg_32:$dst),
   (ins VReg_32:$src0, VReg_32:$j, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "V_INTERP_P2_F32",
+  "V_INTERP_P2_F32 $dst, [$src0], $j, $attr_chan, $attr, [$m0]",
   []> {
 
   let Constraints = "$src0 = $dst";
@@ -641,7 +641,7 @@ def V_INTERP_MOV_F32 : VINTRP <
   0x00000002,
   (outs VReg_32:$dst),
   (ins InterpSlot:$src0, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "V_INTERP_MOV_F32 $dst, $src0, $attr_chan, $attr",
+  "V_INTERP_MOV_F32 $dst, $src0, $attr_chan, $attr, [$m0]",
   []> {
   let DisableEncoding = "$m0";
 }
@@ -659,7 +659,7 @@ def S_ENDPGM : SOPP <0x00000001, (ins), "S_ENDPGM",
 
 let isBranch = 1 in {
 def S_BRANCH : SOPP <
-  0x00000002, (ins brtarget:$target), "S_BRANCH",
+  0x00000002, (ins brtarget:$target), "S_BRANCH $target",
   [(br bb:$target)]> {
   let isBarrier = 1;
 }
@@ -667,35 +667,35 @@ def S_BRANCH : SOPP <
 let DisableEncoding = "$scc" in {
 def S_CBRANCH_SCC0 : SOPP <
   0x00000004, (ins brtarget:$target, SCCReg:$scc),
-  "S_CBRANCH_SCC0", []
+  "S_CBRANCH_SCC0 $target", []
 >;
 def S_CBRANCH_SCC1 : SOPP <
   0x00000005, (ins brtarget:$target, SCCReg:$scc),
-  "S_CBRANCH_SCC1",
+  "S_CBRANCH_SCC1 $target",
   []
 >;
 } // End DisableEncoding = "$scc"
 
 def S_CBRANCH_VCCZ : SOPP <
   0x00000006, (ins brtarget:$target, VCCReg:$vcc),
-  "S_CBRANCH_VCCZ",
+  "S_CBRANCH_VCCZ $target",
   []
 >;
 def S_CBRANCH_VCCNZ : SOPP <
   0x00000007, (ins brtarget:$target, VCCReg:$vcc),
-  "S_CBRANCH_VCCNZ",
+  "S_CBRANCH_VCCNZ $target",
   []
 >;
 
 let DisableEncoding = "$exec" in {
 def S_CBRANCH_EXECZ : SOPP <
   0x00000008, (ins brtarget:$target, EXECReg:$exec),
-  "S_CBRANCH_EXECZ",
+  "S_CBRANCH_EXECZ $target",
   []
 >;
 def S_CBRANCH_EXECNZ : SOPP <
   0x00000009, (ins brtarget:$target, EXECReg:$exec),
-  "S_CBRANCH_EXECNZ",
+  "S_CBRANCH_EXECNZ $target",
   []
 >;
 } // End DisableEncoding = "$exec"
@@ -722,16 +722,19 @@ def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16",
 //def S_TTRACEDATA : SOPP_ <0x00000016, "S_TTRACEDATA", []>;
 
 def V_CNDMASK_B32_e32 : VOP2 <0x00000000, (outs VReg_32:$dst),
-  (ins VSrc_32:$src0, VReg_32:$src1, VCCReg:$vcc), "V_CNDMASK_B32_e32",
+  (ins VSrc_32:$src0, VReg_32:$src1, VCCReg:$vcc),
+  "V_CNDMASK_B32_e32 $dst, $src0, $src1, [$vcc]",
   []
 >{
   let DisableEncoding = "$vcc";
 }
 
 def V_CNDMASK_B32_e64 : VOP3 <0x00000100, (outs VReg_32:$dst),
-  (ins VReg_32:$src0, VReg_32:$src1, SReg_64:$src2, InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
-  "V_CNDMASK_B32_e64",
-  [(set (i32 VReg_32:$dst), (select (i1 SReg_64:$src2), VReg_32:$src1, VReg_32:$src0))]
+  (ins VReg_32:$src0, VReg_32:$src1, SReg_64:$src2,
+   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
+  "V_CNDMASK_B32_e64 $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg",
+  [(set (i32 VReg_32:$dst), (select (i1 SReg_64:$src2),
+   VReg_32:$src1, VReg_32:$src0))]
 >;
 
 //f32 pattern for V_CNDMASK_B32_e64
@@ -974,7 +977,7 @@ let isCodeGenOnly = 1, isPseudo = 1 in {
 def SET_M0 : InstSI <
   (outs SReg_32:$dst),
   (ins i32imm:$src0),
-  "SET_M0",
+  "SET_M0 $dst, $src0",
   [(set SReg_32:$dst, (int_SI_set_M0 imm:$src0))]
 >;
 
@@ -1021,14 +1024,14 @@ let isBranch = 1, isTerminator = 1 in {
 def SI_IF : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$vcc, brtarget:$target),
-  "SI_IF",
+  "SI_IF $dst, $vcc, $target",
   [(set SReg_64:$dst, (int_SI_if SReg_64:$vcc, bb:$target))]
 >;
 
 def SI_ELSE : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src, brtarget:$target),
-  "SI_ELSE",
+  "SI_ELSE $dst, $src, $target",
   [(set SReg_64:$dst, (int_SI_else SReg_64:$src, bb:$target))]> {
 
   let Constraints = "$src = $dst";
@@ -1037,7 +1040,7 @@ def SI_ELSE : InstSI <
 def SI_LOOP : InstSI <
   (outs),
   (ins SReg_64:$saved, brtarget:$target),
-  "SI_LOOP",
+  "SI_LOOP $saved, $target",
   [(int_SI_loop SReg_64:$saved, bb:$target)]
 >;
 
@@ -1046,28 +1049,28 @@ def SI_LOOP : InstSI <
 def SI_BREAK : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src),
-  "SI_ELSE",
+  "SI_ELSE $dst, $src",
   [(set SReg_64:$dst, (int_SI_break SReg_64:$src))]
 >;
 
 def SI_IF_BREAK : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$vcc, SReg_64:$src),
-  "SI_IF_BREAK",
+  "SI_IF_BREAK $dst, $vcc, $src",
   [(set SReg_64:$dst, (int_SI_if_break SReg_64:$vcc, SReg_64:$src))]
 >;
 
 def SI_ELSE_BREAK : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src0, SReg_64:$src1),
-  "SI_ELSE_BREAK",
+  "SI_ELSE_BREAK $dst, $src0, $src1",
   [(set SReg_64:$dst, (int_SI_else_break SReg_64:$src0, SReg_64:$src1))]
 >;
 
 def SI_END_CF : InstSI <
   (outs),
   (ins SReg_64:$saved),
-  "SI_END_CF",
+  "SI_END_CF $saved",
   [(int_SI_end_cf SReg_64:$saved)]
 >;
 
