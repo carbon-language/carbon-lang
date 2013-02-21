@@ -347,11 +347,33 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
 ///
 static bool isKilled(MachineInstr &MI, unsigned Reg,
                      const MachineRegisterInfo *MRI,
-                     const TargetInstrInfo *TII) {
+                     const TargetInstrInfo *TII,
+                     LiveIntervals *LIS) {
   MachineInstr *DefMI = &MI;
   for (;;) {
-    if (!DefMI->killsRegister(Reg))
+    if (LIS && TargetRegisterInfo::isVirtualRegister(Reg) &&
+        !LIS->isNotInMIMap(DefMI)) {
+      // FIXME: Sometimes tryInstructionTransform() will add instructions and
+      // test whether they can be folded before keeping them. In this case it
+      // sets a kill before recursively calling tryInstructionTransform() again.
+      // If there is no interval available, we assume that this instruction is
+      // one of those. A kill flag is manually inserted on the operand so the
+      // check below will handle it.
+      LiveInterval &LI = LIS->getInterval(Reg);
+      // This is to match the kill flag version where undefs don't have kill
+      // flags.
+      if (!LI.hasAtLeastOneValue())
+        return false;
+
+      SlotIndex useIdx = LIS->getInstructionIndex(DefMI);
+      LiveInterval::const_iterator I = LI.find(useIdx);
+      assert(I != LI.end() && "Reg must be live-in to use.");
+      if (!SlotIndex::isSameInstr(I->end, useIdx))
+        return false;
+    } else if (!DefMI->killsRegister(Reg)) {
       return false;
+    }
+
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       return true;
     MachineRegisterInfo::def_iterator Begin = MRI->def_begin(Reg);
@@ -1000,7 +1022,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   assert(TargetRegisterInfo::isVirtualRegister(regB) &&
          "cannot make instruction into two-address form");
-  bool regBKilled = isKilled(MI, regB, MRI, TII);
+  bool regBKilled = isKilled(MI, regB, MRI, TII, LIS);
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
     scanUses(regA);
@@ -1020,7 +1042,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
     if (regCIdx != ~0U) {
       regC = MI.getOperand(regCIdx).getReg();
-      if (!regBKilled && isKilled(MI, regC, MRI, TII))
+      if (!regBKilled && isKilled(MI, regC, MRI, TII, LIS))
         // If C dies but B does not, swap the B and C operands.
         // This makes the live ranges of A and C joinable.
         TryCommute = true;
