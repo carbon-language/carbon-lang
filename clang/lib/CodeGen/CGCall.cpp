@@ -969,7 +969,8 @@ llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
 void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                            const Decl *TargetDecl,
                                            AttributeListType &PAL,
-                                           unsigned &CallingConv) {
+                                           unsigned &CallingConv,
+                                           bool AttrOnCallSite) {
   llvm::AttrBuilder FuncAttrs;
   llvm::AttrBuilder RetAttrs;
 
@@ -1027,6 +1028,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       Features.AddFeature(*it);
     FuncAttrs.addAttribute("target-features", Features.getString());
   }
+
+  if (AttrOnCallSite && !CodeGenOpts.SimplifyLibCalls)
+    FuncAttrs.addAttribute(llvm::Attribute::NoBuiltin);
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
@@ -2238,9 +2242,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   unsigned CallingConv;
   CodeGen::AttributeListType AttributeList;
-  CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList, CallingConv);
+  CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList,
+                             CallingConv, true);
   llvm::AttributeSet Attrs = llvm::AttributeSet::get(getLLVMContext(),
-                                                   AttributeList);
+                                                     AttributeList);
 
   llvm::BasicBlock *InvokeDest = 0;
   if (!Attrs.hasAttribute(llvm::AttributeSet::FunctionIndex,
