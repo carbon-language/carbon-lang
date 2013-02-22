@@ -2101,7 +2101,7 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
 /// [C++11] 'alignas' '(' type-id ...[opt] ')'
 /// [C++11] 'alignas' '(' assignment-expression ...[opt] ')'
 void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
-                                     SourceLocation *endLoc) {
+                                     SourceLocation *EndLoc) {
   assert((Tok.is(tok::kw_alignas) || Tok.is(tok::kw__Alignas)) &&
          "Not an alignment-specifier!");
 
@@ -2120,19 +2120,13 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
   }
 
   T.consumeClose();
-  if (endLoc)
-    *endLoc = T.getCloseLocation();
-
-  // FIXME: Handle pack-expansions here.
-  if (EllipsisLoc.isValid()) {
-    Diag(EllipsisLoc, diag::err_alignas_pack_exp_unsupported);
-    return;
-  }
+  if (EndLoc)
+    *EndLoc = T.getCloseLocation();
 
   ExprVector ArgExprs;
   ArgExprs.push_back(ArgExpr.release());
   Attrs.addNew(KWName, KWLoc, 0, KWLoc, 0, T.getOpenLocation(),
-               ArgExprs.data(), 1, AttributeList::AS_Keyword);
+               ArgExprs.data(), 1, AttributeList::AS_Keyword, EllipsisLoc);
 }
 
 /// ParseDeclarationSpecifiers

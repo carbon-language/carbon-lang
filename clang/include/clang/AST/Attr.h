@@ -50,6 +50,8 @@ protected:
 
   bool Inherited : 1;
 
+  bool IsPackExpansion : 1;
+
   virtual ~Attr();
 
   void* operator new(size_t bytes) throw() {
@@ -73,7 +75,7 @@ public:
 protected:
   Attr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
     : Range(R), AttrKind(AK), SpellingListIndex(SpellingListIndex),
-  Inherited(false) {}
+      Inherited(false), IsPackExpansion(false) {}
 
 public:
 
@@ -89,8 +91,11 @@ public:
 
   bool isInherited() const { return Inherited; }
 
+  void setPackExpansion(bool PE) { IsPackExpansion = PE; }
+  bool isPackExpansion() const { return IsPackExpansion; }
+
   // Clone this attribute.
-  virtual Attr* clone(ASTContext &C) const = 0;
+  virtual Attr *clone(ASTContext &C) const = 0;
 
   virtual bool isLateParsed() const { return false; }
 

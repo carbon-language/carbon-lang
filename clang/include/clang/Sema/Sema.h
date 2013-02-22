@@ -6545,9 +6545,9 @@ public:
 
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
-                      unsigned SpellingListIndex);
+                      unsigned SpellingListIndex, bool IsPackExpansion);
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T,
-                      unsigned SpellingListIndex);
+                      unsigned SpellingListIndex, bool IsPackExpansion);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

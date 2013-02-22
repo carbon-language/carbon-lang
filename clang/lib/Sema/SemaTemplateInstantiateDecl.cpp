@@ -60,6 +60,64 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
 // Include attribute instantiation code.
 #include "clang/Sema/AttrTemplateInstantiate.inc"
 
+static void instantiateDependentAlignedAttr(
+    Sema &S, const MultiLevelTemplateArgumentList &TemplateArgs,
+    const AlignedAttr *Aligned, Decl *New, bool IsPackExpansion) {
+  if (Aligned->isAlignmentExpr()) {
+    // The alignment expression is a constant expression.
+    EnterExpressionEvaluationContext Unevaluated(S, Sema::ConstantEvaluated);
+    ExprResult Result = S.SubstExpr(Aligned->getAlignmentExpr(), TemplateArgs);
+    if (!Result.isInvalid())
+      S.AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>(),
+                       Aligned->getSpellingListIndex(), IsPackExpansion);
+  } else {
+    TypeSourceInfo *Result = S.SubstType(Aligned->getAlignmentType(),
+                                         TemplateArgs, Aligned->getLocation(),
+                                         DeclarationName());
+    if (Result)
+      S.AddAlignedAttr(Aligned->getLocation(), New, Result,
+                       Aligned->getSpellingListIndex(), IsPackExpansion);
+  }
+}
+
+static void instantiateDependentAlignedAttr(
+    Sema &S, const MultiLevelTemplateArgumentList &TemplateArgs,
+    const AlignedAttr *Aligned, Decl *New) {
+  if (!Aligned->isPackExpansion()) {
+    instantiateDependentAlignedAttr(S, TemplateArgs, Aligned, New, false);
+    return;
+  }
+
+  SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  if (Aligned->isAlignmentExpr())
+    S.collectUnexpandedParameterPacks(Aligned->getAlignmentExpr(),
+                                      Unexpanded);
+  else
+    S.collectUnexpandedParameterPacks(Aligned->getAlignmentType()->getTypeLoc(),
+                                      Unexpanded);
+  assert(!Unexpanded.empty() && "Pack expansion without parameter packs?");
+
+  // Determine whether we can expand this attribute pack yet.
+  bool Expand = true, RetainExpansion = false;
+  Optional<unsigned> NumExpansions;
+  // FIXME: Use the actual location of the ellipsis.
+  SourceLocation EllipsisLoc = Aligned->getLocation();
+  if (S.CheckParameterPacksForExpansion(EllipsisLoc, Aligned->getRange(),
+                                        Unexpanded, TemplateArgs, Expand,
+                                        RetainExpansion, NumExpansions))
+    return;
+
+  if (!Expand) {
+    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(S, -1);
+    instantiateDependentAlignedAttr(S, TemplateArgs, Aligned, New, true);
+  } else {
+    for (unsigned I = 0; I != *NumExpansions; ++I) {
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(S, I);
+      instantiateDependentAlignedAttr(S, TemplateArgs, Aligned, New, false);
+    }
+  }
+}
+
 void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                             const Decl *Tmpl, Decl *New,
                             LateInstantiatedAttrVec *LateAttrs,
@@ -69,31 +127,13 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
     const Attr *TmplAttr = *i;
 
     // FIXME: This should be generalized to more than just the AlignedAttr.
-    if (const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr)) {
-      if (Aligned->isAlignmentDependent()) {
-        if (Aligned->isAlignmentExpr()) {
-          // The alignment expression is a constant expression.
-          EnterExpressionEvaluationContext Unevaluated(*this,
-                                                       Sema::ConstantEvaluated);
-
-          ExprResult Result = SubstExpr(Aligned->getAlignmentExpr(),
-                                        TemplateArgs);
-          if (!Result.isInvalid())
-            AddAlignedAttr(Aligned->getLocation(), New, Result.takeAs<Expr>(),
-                           Aligned->getSpellingListIndex());
-        } else {
-          TypeSourceInfo *Result = SubstType(Aligned->getAlignmentType(),
-                                             TemplateArgs,
-                                             Aligned->getLocation(),
-                                             DeclarationName());
-          if (Result)
-            AddAlignedAttr(Aligned->getLocation(), New, Result,
-                           Aligned->getSpellingListIndex());
-        }
-        continue;
-      }
+    const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr);
+    if (Aligned && Aligned->isAlignmentDependent()) {
+      instantiateDependentAlignedAttr(*this, TemplateArgs, Aligned, New);
+      continue;
     }
 
+    assert(!TmplAttr->isPackExpansion());
     if (TmplAttr->isLateParsed() && LateAttrs) {
       // Late parsed attributes must be instantiated and attached after the
       // enclosing class has been instantiated.  See Sema::InstantiateClass.

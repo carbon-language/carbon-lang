@@ -44,8 +44,9 @@ struct AvailabilityChange {
   bool isValid() const { return !Version.empty(); }
 };
 
-/// AttributeList - Represents GCC's __attribute__ declaration. There are
-/// 4 forms of this construct...they are:
+/// AttributeList - Represents a syntactic attribute.
+///
+/// For a GNU attribute, there are four forms of this construct:
 ///
 /// 1: __attribute__(( const )). ParmName/Args/NumArgs will all be unused.
 /// 2: __attribute__(( mode(byte) )). ParmName used, Args/NumArgs unused.
@@ -72,6 +73,7 @@ private:
   SourceRange AttrRange;
   SourceLocation ScopeLoc;
   SourceLocation ParmLoc;
+  SourceLocation EllipsisLoc;
 
   /// The number of expression arguments this attribute has.
   /// The expressions themselves are stored after the object.
@@ -154,11 +156,11 @@ private:
                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
                 IdentifierInfo *parmName, SourceLocation parmLoc,
                 Expr **args, unsigned numArgs,
-                Syntax syntaxUsed)
+                Syntax syntaxUsed, SourceLocation ellipsisLoc)
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
-      NumArgs(numArgs), SyntaxUsed(syntaxUsed), Invalid(false),
-      UsedAsTypeAttr(false), IsAvailability(false),
+      EllipsisLoc(ellipsisLoc), NumArgs(numArgs), SyntaxUsed(syntaxUsed),
+      Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
       IsTypeTagForDatatype(false), NextInPosition(0), NextInPool(0) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(Expr*));
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
@@ -175,7 +177,7 @@ private:
                 const Expr *messageExpr,
                 Syntax syntaxUsed)
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
-      AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
+      AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc), EllipsisLoc(),
       NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
       IsTypeTagForDatatype(false),
@@ -196,7 +198,7 @@ private:
                 bool mustBeNull, Syntax syntaxUsed)
     : AttrName(attrName), ScopeName(scopeName), ParmName(argumentKindName),
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(argumentKindLoc),
-      NumArgs(0), SyntaxUsed(syntaxUsed),
+      EllipsisLoc(), NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
       IsTypeTagForDatatype(true), NextInPosition(NULL), NextInPool(NULL) {
     TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
@@ -245,6 +247,9 @@ public:
 
   bool isUsedAsTypeAttr() const { return UsedAsTypeAttr; }
   void setUsedAsTypeAttr() { UsedAsTypeAttr = true; }
+
+  bool isPackExpansion() const { return EllipsisLoc.isValid(); }
+  SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
 
   Kind getKind() const { return Kind(AttrKind); }
   static Kind getKind(const IdentifierInfo *Name, const IdentifierInfo *Scope,
@@ -459,13 +464,15 @@ public:
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
                         Expr **args, unsigned numArgs,
-                        AttributeList::Syntax syntax) {
+                        AttributeList::Syntax syntax,
+                        SourceLocation ellipsisLoc = SourceLocation()) {
     void *memory = allocate(sizeof(AttributeList)
                             + numArgs * sizeof(Expr*));
     return add(new (memory) AttributeList(attrName, attrRange,
                                           scopeName, scopeLoc,
                                           parmName, parmLoc,
-                                          args, numArgs, syntax));
+                                          args, numArgs, syntax,
+                                          ellipsisLoc));
   }
 
   AttributeList *create(IdentifierInfo *attrName, SourceRange attrRange,
@@ -599,10 +606,11 @@ public:
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
                         Expr **args, unsigned numArgs,
-                        AttributeList::Syntax syntax) {
+                        AttributeList::Syntax syntax,
+                        SourceLocation ellipsisLoc = SourceLocation()) {
     AttributeList *attr =
       pool.create(attrName, attrRange, scopeName, scopeLoc, parmName, parmLoc,
-                  args, numArgs, syntax);
+                  args, numArgs, syntax, ellipsisLoc);
     add(attr);
     return attr;
   }

@@ -516,8 +516,6 @@ def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
 def err_l_square_l_square_not_attribute : Error<
   "C++11 only allows consecutive left square brackets when "
   "introducing an attribute">;
-def err_alignas_pack_exp_unsupported : Error<
-  "pack expansions in alignment specifiers are not supported yet">;
 def err_ms_declspec_type : Error<
   "__declspec attributes must be an identifier or string literal">;
 def warn_ms_declspec_unknown : Warning<

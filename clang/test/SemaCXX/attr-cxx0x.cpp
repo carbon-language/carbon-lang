@@ -21,9 +21,14 @@ void f(alignas(1) char c) { // expected-error {{'alignas' attribute cannot be ap
 
 template <unsigned A> struct alignas(A) align_class_template {};
 
-// FIXME: these should not error
-template <typename... T> alignas(T...) struct align_class_temp_pack_type {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}
-template <unsigned... A> alignas(A...) struct align_class_temp_pack_expr {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}
+template <typename... T> struct alignas(T...) align_class_temp_pack_type {};
+template <unsigned... A> struct alignas(A...) align_class_temp_pack_expr {};
+struct alignas(int...) alignas_expansion_no_packs {}; // expected-error {{pack expansion does not contain any unexpanded parameter packs}}
+template <typename... A> struct outer {
+  template <typename... B> struct alignas(alignof(A) * alignof(B)...) inner {};
+  // expected-error@-1 {{pack expansion contains parameter packs 'A' and 'B' that have different lengths (1 vs. 2)}}
+};
+outer<int>::inner<short, double> mismatched_packs; // expected-note {{in instantiation of}}
 
 typedef char align_typedef alignas(8); // expected-error {{'alignas' attribute only applies to variables, data members and tag types}}
 template<typename T> using align_alias_template = align_typedef alignas(8); // expected-error {{'alignas' attribute cannot be applied to types}}
@@ -35,6 +40,6 @@ static_assert(alignof(align_member) == 8, "quuux's alignment is wrong");
 static_assert(sizeof(align_member) == 8, "quuux's size is wrong");
 static_assert(alignof(align_class_template<8>) == 8, "template's alignment is wrong");
 static_assert(alignof(align_class_template<16>) == 16, "template's alignment is wrong");
-// FIXME: enable these tests
-// static_assert(alignof(align_class_temp_pack_type<short, int, long>) == alignof(long), "template's alignment is wrong");
-// static_assert(alignof(align_class_temp_pack_expr<8, 16, 32>) == 32, "template's alignment is wrong");
+static_assert(alignof(align_class_temp_pack_type<short, int, long>) == alignof(long), "template's alignment is wrong");
+static_assert(alignof(align_class_temp_pack_expr<8, 16, 32>) == 32, "template's alignment is wrong");
+static_assert(alignof(outer<int,char>::inner<double,short>) == alignof(int) * alignof(double), "template's alignment is wrong");
