@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck -check-prefix=WITHOUT %s
-// RUN: %clang_cc1 -emit-llvm -o - %s -fsanitize=address | FileCheck -check-prefix=ASAN %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s | FileCheck -check-prefix=WITHOUT %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s -fsanitize=address | FileCheck -check-prefix=ASAN %s
 // RUN: echo "src:%s" > %t
-// RUN: %clang_cc1 -emit-llvm -o - %s -fsanitize=address -fsanitize-blacklist=%t | FileCheck -check-prefix=BL %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s -fsanitize=address -fsanitize-blacklist=%t | FileCheck -check-prefix=BL %s
 
 // FIXME: %t is like "src:x:\path\to\clang\test\CodeGen\address-safety-attr.cpp"
 // REQUIRES: shell
