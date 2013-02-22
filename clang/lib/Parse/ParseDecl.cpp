@@ -1268,11 +1268,10 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
 Parser::DeclGroupPtrTy
 Parser::ParseSimpleDeclaration(StmtVector &Stmts, unsigned Context,
                                SourceLocation &DeclEnd,
-                               ParsedAttributesWithRange &attrs,
+                               ParsedAttributesWithRange &Attrs,
                                bool RequireSemi, ForRangeInit *FRI) {
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this);
-  DS.takeAttributesFrom(attrs);
 
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS_none,
                              getDeclSpecContextFromDeclaratorContext(Context));
@@ -1280,6 +1279,7 @@ Parser::ParseSimpleDeclaration(StmtVector &Stmts, unsigned Context,
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
+    ProhibitAttributes(Attrs);
     DeclEnd = Tok.getLocation();
     if (RequireSemi) ConsumeToken();
     Decl *TheDecl = Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS_none,
@@ -1288,6 +1288,7 @@ Parser::ParseSimpleDeclaration(StmtVector &Stmts, unsigned Context,
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
+  DS.takeAttributesFrom(Attrs);
   return ParseDeclGroup(DS, Context, /*FunctionDefs=*/ false, &DeclEnd, FRI);
 }
 

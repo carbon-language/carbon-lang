@@ -208,21 +208,22 @@ Parser::ParseSingleDeclarationAfterTemplate(
   // the template parameters.
   ParsingDeclSpec DS(*this, &DiagsFromTParams);
 
-  // Move the attributes from the prefix into the DS.
-  if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
-    ProhibitAttributes(prefixAttrs);
-  else
-    DS.takeAttributesFrom(prefixAttrs);
-
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS,
                              getDeclSpecContextFromDeclaratorContext(Context));
 
   if (Tok.is(tok::semi)) {
+    ProhibitAttributes(prefixAttrs);
     DeclEnd = ConsumeToken();
     Decl *Decl = Actions.ParsedFreeStandingDeclSpec(getCurScope(), AS, DS);
     DS.complete(Decl);
     return Decl;
   }
+
+  // Move the attributes from the prefix into the DS.
+  if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
+    ProhibitAttributes(prefixAttrs);
+  else
+    DS.takeAttributesFrom(prefixAttrs);
 
   // Parse the declarator.
   ParsingDeclarator DeclaratorInfo(*this, DS, (Declarator::TheContext)Context);

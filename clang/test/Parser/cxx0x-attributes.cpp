@@ -88,6 +88,11 @@ class [[]] [[]] final_class_another
 
 [[]] struct with_init_declarators {} init_declarator;
 [[]] struct no_init_declarators; // expected-error {{an attribute list cannot appear here}}
+template<typename> [[]] struct no_init_declarators_template; // expected-error {{an attribute list cannot appear here}}
+void fn_with_structs() {
+  [[]] struct with_init_declarators {} init_declarator;
+  [[]] struct no_init_declarators; // expected-error {{an attribute list cannot appear here}}
+}
 [[]];
 struct ctordtor {
   [[]] ctordtor();
