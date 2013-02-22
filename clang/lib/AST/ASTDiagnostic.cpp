@@ -231,7 +231,7 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
 static bool FormatTemplateTypeDiff(ASTContext &Context, QualType FromType,
                                    QualType ToType, bool PrintTree,
                                    bool PrintFromType, bool ElideType,
-                                   bool ShowColors, std::string &S);
+                                   bool ShowColors, raw_ostream &OS);
 
 void clang::FormatASTNodeDiagnosticArgument(
     DiagnosticsEngine::ArgumentKind Kind,
@@ -260,15 +260,13 @@ void clang::FormatASTNodeDiagnosticArgument(
       QualType ToType =
           QualType::getFromOpaquePtr(reinterpret_cast<void*>(TDT.ToType));
 
-      std::string S;
       if (FormatTemplateTypeDiff(Context, FromType, ToType, TDT.PrintTree,
                                  TDT.PrintFromType, TDT.ElideType,
-                                 TDT.ShowColors, S)) {
+                                 TDT.ShowColors, OS)) {
         NeedQuotes = !TDT.PrintTree;
         TDT.TemplateDiffUsed = true;
         break;
       }
-      OS << S;
 
       // Don't fall-back during tree printing.  The caller will handle
       // this case.
@@ -397,11 +395,8 @@ class TemplateDiff {
   /// will this type be outputed.
   QualType ToType;
 
-  /// Str - Storage for the output stream.
-  SmallString<128> Str;
-
   /// OS - The stream used to construct the output strings.
-  llvm::raw_svector_ostream OS;
+  raw_ostream &OS;
 
   /// IsBold - Keeps track of the bold formatting for the output string.
   bool IsBold;
@@ -1415,9 +1410,9 @@ class TemplateDiff {
 
 public:
 
-  TemplateDiff(ASTContext &Context, QualType FromType, QualType ToType,
-               bool PrintTree, bool PrintFromType, bool ElideType,
-               bool ShowColor)
+  TemplateDiff(raw_ostream &OS, ASTContext &Context, QualType FromType,
+               QualType ToType, bool PrintTree, bool PrintFromType,
+               bool ElideType, bool ShowColor)
     : Context(Context),
       Policy(Context.getLangOpts()),
       ElideType(ElideType),
@@ -1426,7 +1421,7 @@ public:
       // When printing a single type, the FromType is the one printed.
       FromType(PrintFromType ? FromType : ToType),
       ToType(PrintFromType ? ToType : FromType),
-      OS(Str),
+      OS(OS),
       IsBold(false) {
   }
 
@@ -1464,14 +1459,13 @@ public:
   /// MakeString - When the two types given are templated types with the same
   /// base template, a string representation of the type difference will be
   /// loaded into S and return true.  Otherwise, return false.
-  bool MakeString(std::string &S) {
+  bool Emit() {
     Tree.StartTraverse();
     if (Tree.Empty())
       return false;
 
     TreeToString();
     assert(!IsBold && "Bold is applied to end of string.");
-    S = OS.str();
     return true;
   }
 }; // end class TemplateDiff
@@ -1483,11 +1477,11 @@ public:
 static bool FormatTemplateTypeDiff(ASTContext &Context, QualType FromType,
                                    QualType ToType, bool PrintTree,
                                    bool PrintFromType, bool ElideType, 
-                                   bool ShowColors, std::string &S) {
+                                   bool ShowColors, raw_ostream &OS) {
   if (PrintTree)
     PrintFromType = true;
-  TemplateDiff TD(Context, FromType, ToType, PrintTree, PrintFromType,
+  TemplateDiff TD(OS, Context, FromType, ToType, PrintTree, PrintFromType,
                   ElideType, ShowColors);
   TD.DiffTemplate();
-  return TD.MakeString(S);
+  return TD.Emit();
 }
