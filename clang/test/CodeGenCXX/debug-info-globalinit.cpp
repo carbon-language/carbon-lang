@@ -17,7 +17,7 @@ int main(void) {}
 
 // CHECK: define internal void @__cxx_global_var_init()
 // CHECK-NOT: __cxx_global_var_init
-// CHECK: %[[C0:.+]] = call i32 @_Z4testv() [[TF:#[0-9]+]], !dbg ![[LINE:.*]]
+// CHECK: %[[C0:.+]] = call i32 @_Z4testv(), !dbg ![[LINE:.*]]
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: store i32 %[[C0]], i32* @_ZL1i, align 4, !dbg
 // 
@@ -26,7 +26,5 @@ int main(void) {}
 // CHECK: %[[C1:.+]] = call i32 @_Z4testv()
 // CHECK-NOT: dbg
 // CHECK: store i32 %[[C1]], i32* @_ZL1j, align 4
-// 
-// CHECK: attributes [[TF]] = { "target-features"={{.*}} }
 // 
 // CHECK: ![[LINE]] = metadata !{i32 13, i32

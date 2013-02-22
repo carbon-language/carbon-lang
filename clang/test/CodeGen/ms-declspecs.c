@@ -25,4 +25,4 @@ void f20(void) { f20_t(); }
 // CHECK: attributes #0 = { naked noinline nounwind "target-features"={{.*}} }
 // CHECK: attributes #1 = { nounwind "target-features"={{.*}} }
 // CHECK: attributes #2 = { noinline nounwind "target-features"={{.*}} }
-// CHECK: attributes [[NR]] = { noreturn "target-features"={{.*}} }
+// CHECK: attributes [[NR]] = { noreturn }

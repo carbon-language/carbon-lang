@@ -10,10 +10,12 @@ int f(void) {
   return c() + p() + t();
 }
 
-// CHECK: declare i32 @_Z1cv() [[NUW_RN]]
-// CHECK: declare i32 @_Z1pv() [[NUW_RO]]
+// CHECK: declare i32 @_Z1cv() #1
+// CHECK: declare i32 @_Z1pv() #2
 // CHECK: declare i32 @_Z1tv() #0
 
 // CHECK: attributes #0 = { "target-features"={{.*}} }
-// CHECK: attributes [[NUW_RN]] = { nounwind readnone "target-features"={{.*}} }
-// CHECK: attributes [[NUW_RO]] = { nounwind readonly "target-features"={{.*}} }
+// CHECK: attributes #1 = { nounwind readnone "target-features"={{.*}} }
+// CHECK: attributes #2 = { nounwind readonly "target-features"={{.*}} }
+// CHECK: attributes [[NUW_RN]] = { nounwind readnone }
+// CHECK: attributes [[NUW_RO]] = { nounwind readonly }

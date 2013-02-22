@@ -30,20 +30,20 @@ void f7(unsigned short x) { }
 void __attribute__((always_inline)) f8(void) { }
 
 // CHECK: call void @f9_t()
-// CHECK: #2
+// CHECK: [[F9:#[0-9]+]]
 // CHECK: }
 void __attribute__((noreturn)) f9_t(void);
 void f9(void) { f9_t(); }
 
 // CHECK: call void @f9a()
-// CHECK: #2
+// CHECK: [[F9]]
 // CHECK: }
 _Noreturn void f9a(void);
 void f9b(void) { f9a(); }
 
 // FIXME: We should be setting nounwind on calls.
 // CHECK: call i32 @f10_t()
-// CHECK: #0
+// CHECK: [[F10_T:#[0-9]+]]
 // CHECK: {
 int __attribute__((const)) f10_t(void);
 int f10(void) { return f10_t(); }
@@ -99,7 +99,7 @@ void __attribute__((force_align_arg_pointer)) f16(void) {
 // CHECK: #7
 // CHECK: {
 // CHECK: call void @f17()
-// CHECK: #7
+// CHECK: [[F17:#[0-9]+]]
 // CHECK: ret void
 __attribute__ ((returns_twice)) void f17(void);
 __attribute__ ((returns_twice)) void f18(void) {
@@ -109,7 +109,7 @@ __attribute__ ((returns_twice)) void f18(void) {
 // CHECK: define void @f19()
 // CHECK: {
 // CHECK: call i32 @setjmp(i32* null)
-// CHECK: #7
+// CHECK: [[F17]]
 // CHECK: ret void
 typedef int jmp_buf[((9 * 2) + 3 + 16)];
 int setjmp(jmp_buf);
@@ -126,3 +126,6 @@ void f19(void) {
 // CHECK: attributes #6 = { nounwind optsize readnone alignstack=16 "target-features"={{.*}} }
 // CHECK: attributes #7 = { nounwind optsize returns_twice "target-features"={{.*}} }
 // CHECK: attributes #8 = { optsize returns_twice "target-features"={{.*}}
+// CHECK: attributes [[F9]] = { noreturn nounwind optsize }
+// CHECK: attributes [[F10_T]] = { nounwind optsize readnone }
+// CHECK: attributes [[F17]] = { nounwind optsize returns_twice }
