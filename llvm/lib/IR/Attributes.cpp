@@ -356,8 +356,6 @@ bool AttributeImpl::operator<(const AttributeImpl &AI) const {
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   // FIXME: Remove this.
   switch (Val) {
-  default:
-    llvm_unreachable("Unsupported attribute type");
   case Attribute::EndAttrKinds:
     llvm_unreachable("Synthetic enumerators which should never get here");
 
@@ -395,7 +393,8 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::ThreadSafety:    return 1ULL << 36;
   case Attribute::UninitializedChecks: return 1ULL << 37;
   case Attribute::NoBuiltin:       return 1ULL << 38;
- }
+  }
+  llvm_unreachable("Unsupported attribute type");
 }
 
 //===----------------------------------------------------------------------===//
