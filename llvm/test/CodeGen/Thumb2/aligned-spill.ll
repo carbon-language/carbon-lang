@@ -26,8 +26,8 @@ entry:
 ; NEON: bic r4, r4, #15
 ; Stack pointer must be updated before the spills.
 ; NEON: mov sp, r4
-; NEON: vst1.64 {d8, d9, d10, d11}, [r4, :128]!
-; NEON: vst1.64 {d12, d13, d14, d15}, [r4, :128]
+; NEON: vst1.64 {d8, d9, d10, d11}, [r4:128]!
+; NEON: vst1.64 {d12, d13, d14, d15}, [r4:128]
 ; Stack pointer adjustment for the stack frame contents.
 ; This could legally happen before the spills.
 ; Since the spill slot is only 8 bytes, technically it would be fine to only
@@ -36,8 +36,8 @@ entry:
 ; NEON: sub sp, #16
 ; The epilog is free to use another scratch register than r4.
 ; NEON: add r[[R4:[0-9]+]], sp, #16
-; NEON: vld1.64 {d8, d9, d10, d11}, [r[[R4]], :128]!
-; NEON: vld1.64 {d12, d13, d14, d15}, [r[[R4]], :128]
+; NEON: vld1.64 {d8, d9, d10, d11}, [r[[R4]]:128]!
+; NEON: vld1.64 {d12, d13, d14, d15}, [r[[R4]]:128]
 ; The stack pointer restore must happen after the reloads.
 ; NEON: mov sp,
 ; NEON: pop
@@ -57,8 +57,8 @@ entry:
 ; NEON: bic r4, r4, #15
 ; Stack pointer must be updated before the spills.
 ; NEON: mov sp, r4
-; NEON: vst1.64 {d8, d9, d10, d11}, [r4, :128]!
-; NEON: vst1.64 {d12, d13}, [r4, :128]
+; NEON: vst1.64 {d8, d9, d10, d11}, [r4:128]!
+; NEON: vst1.64 {d12, d13}, [r4:128]
 ; NEON: vstr d14, [r4, #16]
 ; Epilog
 ; NEON: vld1.64 {d8, d9, d10, d11},
@@ -84,7 +84,7 @@ entry:
 ; NEON: bic r4, r4, #15
 ; Stack pointer must be updated before the spills.
 ; NEON: mov sp, r4
-; NEON: vst1.64 {d8, d9}, [r4, :128]
+; NEON: vst1.64 {d8, d9}, [r4:128]
 ; NEON: vstr d10, [r4, #16]
 ; Epilog
 ; NEON: vld1.64 {d8, d9},

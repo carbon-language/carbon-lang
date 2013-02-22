@@ -21,10 +21,10 @@
 # CHECK:	vld4.8	{d4, d6, d8, d10}, [r2]
 0x0f 0x41 0x22 0xf4
 
-# CHECK:	vld1.32	{d3[], d4[]}, [r0, :32]!
+# CHECK:	vld1.32	{d3[], d4[]}, [r0:32]!
 0xbd 0x3c 0xa0 0xf4
 
-# CHECK:	vld4.16	{d3[], d5[], d7[], d9[]}, [r0, :64]!
+# CHECK:	vld4.16	{d3[], d5[], d7[], d9[]}, [r0:64]!
 0x7d 0x3f 0xa0 0xf4
 
 # CHECK:	vorr	d0, d15, d15
@@ -75,7 +75,7 @@
 # CHECK:	vbic.i32	q2, #0xa900
 0x79 0x43 0x82 0xf3
 
-# CHECK:	vst2.32	{d16, d18}, [r2, :64], r2
+# CHECK:	vst2.32	{d16, d18}, [r2:64], r2
 0x92 0x9 0x42 0xf4
 
 # CHECK:	vmov.s8	r0, d8[1]

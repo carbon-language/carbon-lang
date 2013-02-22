@@ -242,8 +242,8 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 ; CHECK:        vldr
 ; CHECK-NOT:    vmov d{{.*}}, d16
 ; CHECK:        vmov.i32 d17
-; CHECK-NEXT:   vst1.64 {d16, d17}, [r0, :128]
-; CHECK-NEXT:   vst1.64 {d16, d17}, [r0, :128]
+; CHECK-NEXT:   vst1.64 {d16, d17}, [r0:128]
+; CHECK-NEXT:   vst1.64 {d16, d17}, [r0:128]
   %3 = bitcast double 0.000000e+00 to <2 x float> ; <<2 x float>> [#uses=2]
   %4 = shufflevector <2 x float> %3, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
   store <4 x float> %4, <4 x float>* undef, align 16

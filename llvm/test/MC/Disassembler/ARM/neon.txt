@@ -1638,7 +1638,7 @@
 
 
 0x1f 0x07 0x60 0xf4
-# CHECK: vld1.8	{d16}, [r0, :64]
+# CHECK: vld1.8	{d16}, [r0:64]
 0x4f 0x07 0x60 0xf4
 # CHECK: vld1.16	{d16}, [r0]
 0x8f 0x07 0x60 0xf4
@@ -1646,37 +1646,37 @@
 0xcf 0x07 0x60 0xf4
 # CHECK: vld1.64	{d16}, [r0]
 0x1f 0x0a 0x60 0xf4
-# CHECK: vld1.8	{d16, d17}, [r0, :64]
+# CHECK: vld1.8	{d16, d17}, [r0:64]
 0x6f 0x0a 0x60 0xf4
-# CHECK: vld1.16	{d16, d17}, [r0, :128]
+# CHECK: vld1.16	{d16, d17}, [r0:128]
 0x8f 0x0a 0x60 0xf4
 # CHECK: vld1.32	{d16, d17}, [r0]
 0xcf 0x0a 0x60 0xf4
 # CHECK: vld1.64	{d16, d17}, [r0]
 
 0x1f 0x08 0x60 0xf4
-# CHECK: vld2.8	{d16, d17}, [r0, :64]
+# CHECK: vld2.8	{d16, d17}, [r0:64]
 0x6f 0x08 0x60 0xf4
-# CHECK: vld2.16	{d16, d17}, [r0, :128]
+# CHECK: vld2.16	{d16, d17}, [r0:128]
 0x8f 0x08 0x60 0xf4
 # CHECK: vld2.32	{d16, d17}, [r0]
 0x1f 0x03 0x60 0xf4
-# CHECK: vld2.8	{d16, d17, d18, d19}, [r0, :64]
+# CHECK: vld2.8	{d16, d17, d18, d19}, [r0:64]
 0x6f 0x03 0x60 0xf4
-# CHECK: vld2.16	{d16, d17, d18, d19}, [r0, :128]
+# CHECK: vld2.16	{d16, d17, d18, d19}, [r0:128]
 0xbf 0x03 0x60 0xf4
-# CHECK: vld2.32	{d16, d17, d18, d19}, [r0, :256]
+# CHECK: vld2.32	{d16, d17, d18, d19}, [r0:256]
 
 0x1f 0x04 0x60 0xf4
-# CHECK: vld3.8	{d16, d17, d18}, [r0, :64]
+# CHECK: vld3.8	{d16, d17, d18}, [r0:64]
 0x4f 0x04 0x60 0xf4
 # CHECK: vld3.16	{d16, d17, d18}, [r0]
 0x8f 0x04 0x60 0xf4
 # CHECK: vld3.32	{d16, d17, d18}, [r0]
 0x1d 0x05 0x60 0xf4
-# CHECK: vld3.8	{d16, d18, d20}, [r0, :64]!
+# CHECK: vld3.8	{d16, d18, d20}, [r0:64]!
 0x1d 0x15 0x60 0xf4
-# CHECK: vld3.8	{d17, d19, d21}, [r0, :64]!
+# CHECK: vld3.8	{d17, d19, d21}, [r0:64]!
 0x4d 0x05 0x60 0xf4
 # CHECK: vld3.16	{d16, d18, d20}, [r0]!
 0x4d 0x15 0x60 0xf4
@@ -1687,15 +1687,15 @@
 # CHECK: vld3.32	{d17, d19, d21}, [r0]!
 
 0x1f 0x00 0x60 0xf4
-# CHECK: vld4.8	{d16, d17, d18, d19}, [r0, :64]
+# CHECK: vld4.8	{d16, d17, d18, d19}, [r0:64]
 0x6f 0x00 0x60 0xf4
-# CHECK: vld4.16	{d16, d17, d18, d19}, [r0, :128]
+# CHECK: vld4.16	{d16, d17, d18, d19}, [r0:128]
 0xbf 0x00 0x60 0xf4
-# CHECK: vld4.32	{d16, d17, d18, d19}, [r0, :256]
+# CHECK: vld4.32	{d16, d17, d18, d19}, [r0:256]
 0x3d 0x01 0x60 0xf4
-# CHECK: vld4.8	{d16, d18, d20, d22}, [r0, :256]!
+# CHECK: vld4.8	{d16, d18, d20, d22}, [r0:256]!
 0x3d 0x11 0x60 0xf4
-# CHECK: vld4.8	{d17, d19, d21, d23}, [r0, :256]!
+# CHECK: vld4.8	{d17, d19, d21, d23}, [r0:256]!
 0x4d 0x01 0x60 0xf4
 # CHECK: vld4.16	{d16, d18, d20, d22}, [r0]!
 0x4d 0x11 0x60 0xf4
@@ -1708,20 +1708,20 @@
 0x6f 0x00 0xe0 0xf4
 # CHECK: vld1.8	{d16[3]}, [r0]
 0x9f 0x04 0xe0 0xf4
-# CHECK: vld1.16	{d16[2]}, [r0, :16]
+# CHECK: vld1.16	{d16[2]}, [r0:16]
 0xbf 0x08 0xe0 0xf4
-# CHECK: vld1.32	{d16[1]}, [r0, :32]
+# CHECK: vld1.32	{d16[1]}, [r0:32]
 
 0x3f 0x01 0xe0 0xf4
-# CHECK: vld2.8	{d16[1], d17[1]}, [r0, :16]
+# CHECK: vld2.8	{d16[1], d17[1]}, [r0:16]
 0x5f 0x05 0xe0 0xf4
-# CHECK: vld2.16	{d16[1], d17[1]}, [r0, :32]
+# CHECK: vld2.16	{d16[1], d17[1]}, [r0:32]
 0x8f 0x09 0xe0 0xf4
 # CHECK: vld2.32	{d16[1], d17[1]}, [r0]
 0x6f 0x15 0xe0 0xf4
 # CHECK: vld2.16	{d17[1], d19[1]}, [r0]
 0x5f 0x19 0xe0 0xf4
-# CHECK: vld2.32	{d17[0], d19[0]}, [r0, :64]
+# CHECK: vld2.32	{d17[0], d19[0]}, [r0:64]
 
 0x2f 0x02 0xe0 0xf4
 # CHECK: vld3.8	{d16[1], d17[1], d18[1]}, [r0]
@@ -1754,44 +1754,44 @@
 0xa5 0x0e 0xa4 0xf4
 
 0x3f 0x03 0xe0 0xf4
-# CHECK: vld4.8	{d16[1], d17[1], d18[1], d19[1]}, [r0, :32]
+# CHECK: vld4.8	{d16[1], d17[1], d18[1], d19[1]}, [r0:32]
 0x4f 0x07 0xe0 0xf4
 # CHECK: vld4.16	{d16[1], d17[1], d18[1], d19[1]}, [r0]
 0xaf 0x0b 0xe0 0xf4
-# CHECK: vld4.32	{d16[1], d17[1], d18[1], d19[1]}, [r0, :128]
+# CHECK: vld4.32	{d16[1], d17[1], d18[1], d19[1]}, [r0:128]
 0x7f 0x07 0xe0 0xf4
-# CHECK: vld4.16	{d16[1], d18[1], d20[1], d22[1]}, [r0, :64]
+# CHECK: vld4.16	{d16[1], d18[1], d20[1], d22[1]}, [r0:64]
 0x4f 0x1b 0xe0 0xf4
 # CHECK: vld4.32	{d17[0], d19[0], d21[0], d23[0]}, [r0]
 
 0x0f 0x0f 0xa4 0xf4
 # CHECK: vld4.8	{d0[], d1[], d2[], d3[]}, [r4]
 0x3f 0x0f 0xa4 0xf4
-# CHECK: vld4.8	{d0[], d2[], d4[], d6[]}, [r4, :32]
+# CHECK: vld4.8	{d0[], d2[], d4[], d6[]}, [r4:32]
 0x1d 0x0f 0xa4 0xf4
-# CHECK: vld4.8	{d0[], d1[], d2[], d3[]}, [r4, :32]!
+# CHECK: vld4.8	{d0[], d1[], d2[], d3[]}, [r4:32]!
 0x35 0x0f 0xa4 0xf4
-# CHECK: vld4.8	{d0[], d2[], d4[], d6[]}, [r4, :32], r5
+# CHECK: vld4.8	{d0[], d2[], d4[], d6[]}, [r4:32], r5
 0x4f 0x0f 0xa4 0xf4
 # CHECK: vld4.16	{d0[], d1[], d2[], d3[]}, [r4]
 0x7f 0x0f 0xa4 0xf4
-# CHECK: vld4.16	{d0[], d2[], d4[], d6[]}, [r4, :64]
+# CHECK: vld4.16	{d0[], d2[], d4[], d6[]}, [r4:64]
 0x5d 0x0f 0xa4 0xf4
-# CHECK: vld4.16	{d0[], d1[], d2[], d3[]}, [r4, :64]!
+# CHECK: vld4.16	{d0[], d1[], d2[], d3[]}, [r4:64]!
 0x75 0x0f 0xa4 0xf4
-# CHECK: vld4.16	{d0[], d2[], d4[], d6[]}, [r4, :64], r5
+# CHECK: vld4.16	{d0[], d2[], d4[], d6[]}, [r4:64], r5
 0x8f 0x0f 0xa4 0xf4
 # CHECK: vld4.32	{d0[], d1[], d2[], d3[]}, [r4]
 0xbf 0x0f 0xa4 0xf4
-# CHECK: vld4.32	{d0[], d2[], d4[], d6[]}, [r4, :64]
+# CHECK: vld4.32	{d0[], d2[], d4[], d6[]}, [r4:64]
 0xdd 0x0f 0xa4 0xf4
-# CHECK: vld4.32	{d0[], d1[], d2[], d3[]}, [r4, :128]!
+# CHECK: vld4.32	{d0[], d1[], d2[], d3[]}, [r4:128]!
 0xf5 0x0f 0xa4 0xf4
-# CHECK: vld4.32	{d0[], d2[], d4[], d6[]}, [r4, :128], r5
+# CHECK: vld4.32	{d0[], d2[], d4[], d6[]}, [r4:128], r5
 
 
 0x1f 0x07 0x40 0xf4
-# CHECK: vst1.8	{d16}, [r0, :64]
+# CHECK: vst1.8	{d16}, [r0:64]
 0x4f 0x07 0x40 0xf4
 # CHECK: vst1.16	{d16}, [r0]
 0x8f 0x07 0x40 0xf4
@@ -1799,37 +1799,37 @@
 0xcf 0x07 0x40 0xf4
 # CHECK: vst1.64	{d16}, [r0]
 0x1f 0x0a 0x40 0xf4
-# CHECK: vst1.8	{d16, d17}, [r0, :64]
+# CHECK: vst1.8	{d16, d17}, [r0:64]
 0x6f 0x0a 0x40 0xf4
-# CHECK: vst1.16	{d16, d17}, [r0, :128]
+# CHECK: vst1.16	{d16, d17}, [r0:128]
 0x8f 0x0a 0x40 0xf4
 # CHECK: vst1.32	{d16, d17}, [r0]
 0xcf 0x0a 0x40 0xf4
 # CHECK: vst1.64	{d16, d17}, [r0]
 
 0x1f 0x08 0x40 0xf4
-# CHECK: vst2.8	{d16, d17}, [r0, :64]
+# CHECK: vst2.8	{d16, d17}, [r0:64]
 0x6f 0x08 0x40 0xf4
-# CHECK: vst2.16	{d16, d17}, [r0, :128]
+# CHECK: vst2.16	{d16, d17}, [r0:128]
 0x8f 0x08 0x40 0xf4
 # CHECK: vst2.32	{d16, d17}, [r0]
 0x1f 0x03 0x40 0xf4
-# CHECK: vst2.8	{d16, d17, d18, d19}, [r0, :64]
+# CHECK: vst2.8	{d16, d17, d18, d19}, [r0:64]
 0x6f 0x03 0x40 0xf4
-# CHECK: vst2.16	{d16, d17, d18, d19}, [r0, :128]
+# CHECK: vst2.16	{d16, d17, d18, d19}, [r0:128]
 0xbf 0x03 0x40 0xf4
-# CHECK: vst2.32	{d16, d17, d18, d19}, [r0, :256]
+# CHECK: vst2.32	{d16, d17, d18, d19}, [r0:256]
 
 0x1f 0x04 0x40 0xf4
-# CHECK: vst3.8	{d16, d17, d18}, [r0, :64]
+# CHECK: vst3.8	{d16, d17, d18}, [r0:64]
 0x4f 0x04 0x40 0xf4
 # CHECK: vst3.16	{d16, d17, d18}, [r0]
 0x8f 0x04 0x40 0xf4
 # CHECK: vst3.32	{d16, d17, d18}, [r0]
 0x1d 0x05 0x40 0xf4
-# CHECK: vst3.8	{d16, d18, d20}, [r0, :64]!
+# CHECK: vst3.8	{d16, d18, d20}, [r0:64]!
 0x1d 0x15 0x40 0xf4
-# CHECK: vst3.8	{d17, d19, d21}, [r0, :64]!
+# CHECK: vst3.8	{d17, d19, d21}, [r0:64]!
 0x4d 0x05 0x40 0xf4
 # CHECK: vst3.16	{d16, d18, d20}, [r0]!
 0x4d 0x15 0x40 0xf4
@@ -1840,13 +1840,13 @@
 # CHECK: vst3.32	{d17, d19, d21}, [r0]!
 
 0x1f 0x00 0x40 0xf4
-# CHECK: vst4.8	{d16, d17, d18, d19}, [r0, :64]
+# CHECK: vst4.8	{d16, d17, d18, d19}, [r0:64]
 0x6f 0x00 0x40 0xf4
-# CHECK: vst4.16	{d16, d17, d18, d19}, [r0, :128]
+# CHECK: vst4.16	{d16, d17, d18, d19}, [r0:128]
 0x3d 0x01 0x40 0xf4
-# CHECK: vst4.8	{d16, d18, d20, d22}, [r0, :256]!
+# CHECK: vst4.8	{d16, d18, d20, d22}, [r0:256]!
 0x3d 0x11 0x40 0xf4
-# CHECK: vst4.8	{d17, d19, d21, d23}, [r0, :256]!
+# CHECK: vst4.8	{d17, d19, d21, d23}, [r0:256]!
 0x4d 0x01 0x40 0xf4
 # CHECK: vst4.16	{d16, d18, d20, d22}, [r0]!
 0x4d 0x11 0x40 0xf4
@@ -1857,15 +1857,15 @@
 # CHECK: vst4.32	{d17, d19, d21, d23}, [r0]!
 
 0x3f 0x01 0xc0 0xf4
-# CHECK: vst2.8	{d16[1], d17[1]}, [r0, :16]
+# CHECK: vst2.8	{d16[1], d17[1]}, [r0:16]
 0x5f 0x05 0xc0 0xf4
-# CHECK: vst2.16	{d16[1], d17[1]}, [r0, :32]
+# CHECK: vst2.16	{d16[1], d17[1]}, [r0:32]
 0x8f 0x09 0xc0 0xf4
 # CHECK: vst2.32	{d16[1], d17[1]}, [r0]
 0x6f 0x15 0xc0 0xf4
 # CHECK: vst2.16	{d17[1], d19[1]}, [r0]
 0x5f 0x19 0xc0 0xf4
-# CHECK: vst2.32	{d17[0], d19[0]}, [r0, :64]
+# CHECK: vst2.32	{d17[0], d19[0]}, [r0:64]
 
 0x2f 0x02 0xc0 0xf4
 # CHECK: vst3.8	{d16[1], d17[1], d18[1]}, [r0]
@@ -1879,13 +1879,13 @@
 # CHECK: vst3.32	{d16[0], d18[0], d20[0]}, [r0]
 
 0x3f 0x03 0xc0 0xf4
-# CHECK: vst4.8	{d16[1], d17[1], d18[1], d19[1]}, [r0, :32]
+# CHECK: vst4.8	{d16[1], d17[1], d18[1], d19[1]}, [r0:32]
 0x4f 0x07 0xc0 0xf4
 # CHECK: vst4.16	{d16[1], d17[1], d18[1], d19[1]}, [r0]
 0xaf 0x0b 0xc0 0xf4
-# CHECK: vst4.32	{d16[1], d17[1], d18[1], d19[1]}, [r0, :128]
+# CHECK: vst4.32	{d16[1], d17[1], d18[1], d19[1]}, [r0:128]
 0xff 0x17 0xc0 0xf4
-# CHECK: vst4.16	{d17[3], d19[3], d21[3], d23[3]}, [r0, :64]
+# CHECK: vst4.16	{d17[3], d19[3], d21[3], d23[3]}, [r0:64]
 0x4f 0x1b 0xc0 0xf4
 # CHECK: vst4.32	{d17[0], d19[0], d21[0], d23[0]}, [r0]
 
@@ -1920,11 +1920,11 @@
 # CHECK: vcvttmi.f32.f16	s2, s19
 
 0x1d 0x76 0x66 0xf4
-# CHECK: vld1.8	{d23, d24, d25}, [r6, :64]!
+# CHECK: vld1.8	{d23, d24, d25}, [r6:64]!
 0x9d 0x62 0x6f 0xf4
-# CHECK: vld1.32	{d22, d23, d24, d25}, [pc, :64]!
+# CHECK: vld1.32	{d22, d23, d24, d25}, [pc:64]!
 0x9d 0xaa 0x41 0xf4
-# CHECK: vst1.32	{d26, d27}, [r1, :64]!
+# CHECK: vst1.32	{d26, d27}, [r1:64]!
 
 0x10 0x0f 0x83 0xf2
 0x50 0x0f 0x83 0xf2

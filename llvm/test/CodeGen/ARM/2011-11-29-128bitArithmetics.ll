@@ -8,7 +8,7 @@ define void @test_sqrt(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw    r1, :lower16:{{.*}}
 ; CHECK:      movt    r1, :upper16:{{.*}}
-; CHECK:      vld1.64 {{.*}}, [r1, :128]
+; CHECK:      vld1.64 {{.*}}, [r1:128]
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
@@ -252,7 +252,7 @@ define void @test_powi(<4 x float>* %X) nounwind {
 
 ; CHECK:       movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:       movt  [[reg0]], :upper16:{{.*}}
-; CHECK:       vld1.64 {{.*}}, :128
+; CHECK:       vld1.64 {{.*}}:128
 ; CHECK:       vmul.f32 {{.*}}
 
 ; CHECK:      vst1.64

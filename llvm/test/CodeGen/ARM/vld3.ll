@@ -15,7 +15,7 @@
 define <8 x i8> @vld3i8(i8* %A) nounwind {
 ;CHECK: vld3i8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
-;CHECK: vld3.8 {d16, d17, d18}, [r0, :64]
+;CHECK: vld3.8 {d16, d17, d18}, [r0:64]
 	%tmp1 = call %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3.v8i8(i8* %A, i32 32)
         %tmp2 = extractvalue %struct.__neon_int8x8x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int8x8x3_t %tmp1, 2
@@ -74,7 +74,7 @@ define <2 x float> @vld3f(float* %A) nounwind {
 define <1 x i64> @vld3i64(i64* %A) nounwind {
 ;CHECK: vld3i64:
 ;Check the alignment value.  Max for this instruction is 64 bits:
-;CHECK: vld1.64 {d16, d17, d18}, [r0, :64]
+;CHECK: vld1.64 {d16, d17, d18}, [r0:64]
 	%tmp0 = bitcast i64* %A to i8*
 	%tmp1 = call %struct.__neon_int64x1x3_t @llvm.arm.neon.vld3.v1i64(i8* %tmp0, i32 16)
         %tmp2 = extractvalue %struct.__neon_int64x1x3_t %tmp1, 0
@@ -86,8 +86,8 @@ define <1 x i64> @vld3i64(i64* %A) nounwind {
 define <16 x i8> @vld3Qi8(i8* %A) nounwind {
 ;CHECK: vld3Qi8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
-;CHECK: vld3.8 {d16, d18, d20}, [r0, :64]!
-;CHECK: vld3.8 {d17, d19, d21}, [r0, :64]
+;CHECK: vld3.8 {d16, d18, d20}, [r0:64]!
+;CHECK: vld3.8 {d17, d19, d21}, [r0:64]
 	%tmp1 = call %struct.__neon_int8x16x3_t @llvm.arm.neon.vld3.v16i8(i8* %A, i32 32)
         %tmp2 = extractvalue %struct.__neon_int8x16x3_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int8x16x3_t %tmp1, 2

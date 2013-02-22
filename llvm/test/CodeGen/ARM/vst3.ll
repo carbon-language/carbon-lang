@@ -4,7 +4,7 @@ define void @vst3i8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vst3i8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;This test runs at -O0 so do not check for specific register numbers.
-;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}, :64]
+;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]
 	%tmp1 = load <8 x i8>* %B
 	call void @llvm.arm.neon.vst3.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 32)
 	ret void
@@ -54,7 +54,7 @@ define void @vst3i64(i64* %A, <1 x i64>* %B) nounwind {
 ;CHECK: vst3i64:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;This test runs at -O0 so do not check for specific register numbers.
-;CHECK: vst1.64 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}, :64]
+;CHECK: vst1.64 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]
 	%tmp0 = bitcast i64* %A to i8*
 	%tmp1 = load <1 x i64>* %B
 	call void @llvm.arm.neon.vst3.v1i64(i8* %tmp0, <1 x i64> %tmp1, <1 x i64> %tmp1, <1 x i64> %tmp1, i32 16)
@@ -65,8 +65,8 @@ define void @vst3Qi8(i8* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vst3Qi8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;This test runs at -O0 so do not check for specific register numbers.
-;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}, :64]!
-;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}, :64]
+;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]!
+;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]
 	%tmp1 = load <16 x i8>* %B
 	call void @llvm.arm.neon.vst3.v16i8(i8* %A, <16 x i8> %tmp1, <16 x i8> %tmp1, <16 x i8> %tmp1, i32 32)
 	ret void

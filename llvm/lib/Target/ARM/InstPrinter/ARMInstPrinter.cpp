@@ -627,8 +627,7 @@ void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
   O << markup("<mem:") << "[";
   printRegName(O, MO1.getReg());
   if (MO2.getImm()) {
-    // FIXME: Both darwin as and GNU as violate ARM docs here.
-    O << ", :" << (MO2.getImm() << 3);
+    O << ":" << (MO2.getImm() << 3);
   }
   O << "]" << markup(">");
 }
