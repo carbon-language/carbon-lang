@@ -258,7 +258,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // directive mode.  Tell the lexer this so any newlines we see will be
     // converted into an EOD token (this terminates the macro).
     CurPPLexer->ParsingPreprocessorDirective = true;
-    if (CurLexer) CurLexer->SetCommentRetentionState(false);
+    if (CurLexer) CurLexer->SetKeepWhitespaceMode(false);
 
 
     // Read the next token, the directive flavor.

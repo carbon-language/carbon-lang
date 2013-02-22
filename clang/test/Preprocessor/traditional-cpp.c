@@ -62,3 +62,19 @@ bracket2(spaces)
 /* If this were working, this check would be on.
  * CHECK-NOT: {{^}}>>>  spaces  <<<{{$}}
  */
+
+
+/* Check that #if 0 blocks work as expected */
+#if 0
+#error "this is not an error"
+
+#if 1
+a b c in skipped block
+#endif
+
+/* Comments are whitespace too */
+
+#endif
+/* CHECK-NOT: {{^}}a b c in skipped block{{$}}
+ * CHECK-NOT: {{^}}/* Comments are whitespace too
+ */
