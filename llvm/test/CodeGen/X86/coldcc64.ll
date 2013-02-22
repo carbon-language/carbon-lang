@@ -17,8 +17,8 @@ define coldcc void @foo() {
 ; CHECK: pushq %rdx
 ; CHECK: pushq %rcx
 ; CHECK: pushq %rbx
-; CHECK: vmovaps %xmm15
-; CHECK: vmovaps %xmm0
+; CHECK: movaps %xmm15
+; CHECK: movaps %xmm0
   call void asm sideeffect "", "~{xmm15},~{xmm0},~{rbp},~{r15},~{r14},~{r13},~{r12},~{r11},~{r10},~{r9},~{r8},~{rdi},~{rsi},~{rdx},~{rcx},~{rbx}"()
   ret void
 }
