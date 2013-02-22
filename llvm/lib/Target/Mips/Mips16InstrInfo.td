@@ -392,6 +392,7 @@ class SeliT<string op1, string op2>:
                !strconcat(op1, "\t.+4\n\tmove $rd, $rs"))), []> {
   let isCodeGenOnly=1;
   let Constraints = "$rd = $rd_";
+  let usesCustomInserter = 1;
 }
 
 //

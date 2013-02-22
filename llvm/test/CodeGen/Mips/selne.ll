@@ -94,3 +94,4 @@ attributes #1 = { "target-cpu"="mips16" "target-features"="+mips16,+o32" }
 
 ; 16:	cmp	${{[0-9]+}}, ${{[0-9]+}}
 ; 16:	bteqz	$BB{{[0-9]+}}_{{[0-9]}}
+

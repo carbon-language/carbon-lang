@@ -90,3 +90,4 @@ attributes #1 = { "target-cpu"="mips16" "target-features"="+mips16,+o32" }
 
 ; 16:	slti	${{[0-9]+}}, 3 	# 16 bit inst
 ; 16:	btnez	$BB{{[0-9]+}}_{{[0-9]}}
+

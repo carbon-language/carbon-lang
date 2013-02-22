@@ -41,7 +41,7 @@ entry:
   %cond = select i1 %cmp, i32 %1, i32 %2
   store i32 %cond, i32* @z1, align 4
 ; 16:	cmpi	${{[0-9]+}}, 1
-; 16:	bteqz	.+4
+; 16:	bteqz	$BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %cmp1 = icmp eq i32 %0, 10
   %cond5 = select i1 %cmp1, i32 %2, i32 %1
@@ -51,7 +51,7 @@ entry:
   %cond10 = select i1 %cmp6, i32 %2, i32 %1
   store i32 %cond10, i32* @z3, align 4
 ; 16:	cmpi	${{[0-9]+}}, 10
-; 16:	bteqz	.+4
+; 16:	bteqz	$BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %cmp11 = icmp eq i32 %3, 10
   %cond15 = select i1 %cmp11, i32 %1, i32 %2
@@ -212,7 +212,7 @@ entry:
   %cond = select i1 %cmp, i32 %1, i32 %2
   store i32 %cond, i32* @z1, align 4
 ; 16:	cmpi	${{[0-9]+}}, 1
-; 16:	btnez	.+4
+; 16:	btnez	$BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %cmp1 = icmp ne i32 %0, 10
   %cond5 = select i1 %cmp1, i32 %2, i32 %1
@@ -222,7 +222,7 @@ entry:
   %cond10 = select i1 %cmp6, i32 %2, i32 %1
   store i32 %cond10, i32* @z3, align 4
 ; 16:	cmpi	${{[0-9]+}}, 10
-; 16:	btnez	.+4
+; 16:	btnez	$BB{{[0-9]+}}_{{[0-9]}}
 ; 16: 	move    ${{[0-9]+}}, ${{[0-9]+}}
   %cmp11 = icmp ne i32 %3, 10
   %cond15 = select i1 %cmp11, i32 %1, i32 %2
