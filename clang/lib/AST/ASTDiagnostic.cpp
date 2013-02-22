@@ -1079,8 +1079,7 @@ class TemplateDiff {
   void TreeToString(int Indent = 1) {
     if (PrintTree) {
       OS << '\n';
-      for (int i = 0; i < Indent; ++i)
-        OS << "  ";
+      OS.indent(2 * Indent);
       ++Indent;
     }
 
@@ -1456,9 +1455,9 @@ public:
     DiffTemplate(FromOrigTST, ToOrigTST);
   }
 
-  /// MakeString - When the two types given are templated types with the same
+  /// Emit - When the two types given are templated types with the same
   /// base template, a string representation of the type difference will be
-  /// loaded into S and return true.  Otherwise, return false.
+  /// emitted to the stream and return true.  Otherwise, return false.
   bool Emit() {
     Tree.StartTraverse();
     if (Tree.Empty())
