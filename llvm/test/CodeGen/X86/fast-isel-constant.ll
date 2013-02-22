@@ -19,14 +19,6 @@ normal:
 
 overflow:
   ret i1 false
-  
-; X32: test4:
-; X32: addl
-; X32-NEXT: jo
-
-; X64:        test4:
-; X64:          addl	%e[[A1:si|dx]], %e[[A0:di|cx]]
-; X64-NEXT:	jo
 }
 
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
