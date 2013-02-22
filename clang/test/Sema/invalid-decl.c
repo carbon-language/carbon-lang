@@ -42,3 +42,7 @@ void foo() {
 void test2();
 void test2(undef); // expected-error {{a parameter list without types is only allowed in a function definition}}
 void test2() { }
+
+void test3();
+void test3; // expected-error {{incomplete type}}
+void test3() { }
