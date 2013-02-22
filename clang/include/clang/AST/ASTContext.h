@@ -75,7 +75,7 @@ namespace clang {
 class ASTContext : public RefCountedBase<ASTContext> {
   ASTContext &this_() { return *this; }
 
-  mutable std::vector<Type*> Types;
+  mutable SmallVector<Type *, 0> Types;
   mutable llvm::FoldingSet<ExtQuals> ExtQualNodes;
   mutable llvm::FoldingSet<ComplexType> ComplexTypes;
   mutable llvm::FoldingSet<PointerType> PointerTypes;
@@ -748,7 +748,7 @@ public:
   ASTMutationListener *getASTMutationListener() const { return Listener; }
 
   void PrintStats() const;
-  const std::vector<Type*>& getTypes() const { return Types; }
+  const SmallVectorImpl<Type *>& getTypes() const { return Types; }
 
   /// \brief Retrieve the declaration for the 128-bit signed integer type.
   TypedefDecl *getInt128Decl() const;
@@ -1908,8 +1908,8 @@ public:
   //                    Type Iterators.
   //===--------------------------------------------------------------------===//
 
-  typedef std::vector<Type*>::iterator       type_iterator;
-  typedef std::vector<Type*>::const_iterator const_type_iterator;
+  typedef SmallVectorImpl<Type *>::iterator       type_iterator;
+  typedef SmallVectorImpl<Type *>::const_iterator const_type_iterator;
 
   type_iterator types_begin() { return Types.begin(); }
   type_iterator types_end() { return Types.end(); }
