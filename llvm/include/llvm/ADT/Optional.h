@@ -142,6 +142,12 @@ template <typename T>
 struct simplify_type<Optional<T> >
   : public simplify_type<const Optional<T> > {};
 
+template <typename T> struct isPodLike;
+template <typename T> struct isPodLike<Optional<T> > {
+  // An Optional<T> is pod-like if T is.
+  static const bool value = isPodLike<T>::value;
+};
+
 /// \brief Poison comparison between two \c Optional objects. Clients needs to
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
