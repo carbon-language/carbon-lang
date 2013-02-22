@@ -3854,11 +3854,19 @@ def err_arc_cast_requires_bridge : Error<
   "requires a bridged cast">;
 def note_arc_bridge : Note<
   "use __bridge to convert directly (no change in ownership)">;
+def note_arc_cstyle_bridge : Note<
+  "use __bridge with C-style cast to convert directly (no change in ownership)">;
 def note_arc_bridge_transfer : Note<
   "use %select{__bridge_transfer|CFBridgingRelease call}1 to transfer "
   "ownership of a +1 %0 into ARC">;
+def note_arc_cstyle_bridge_transfer : Note<
+  "use __bridge_transfer with C-style cast to transfer "
+  "ownership of a +1 %0 into ARC">;
 def note_arc_bridge_retained : Note<
   "use %select{__bridge_retained|CFBridgingRetain call}1 to make an "
+  "ARC object available as a +1 %0">;
+def note_arc_cstyle_bridge_retained : Note<
+  "use __bridge_retained with C-style cast to make an "
   "ARC object available as a +1 %0">;
 
 } // ARC Casting category

@@ -2925,15 +2925,22 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     assert(CreateRule != ACC_bottom && "This cast should already be accepted.");
     if (CreateRule != ACC_plusOne)
     {
-      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
+      DiagnosticBuilder DiagB = 
+        (CCK != Sema::CCK_OtherCast) ? S.Diag(noteLoc, diag::note_arc_bridge)
+                              : S.Diag(noteLoc, diag::note_arc_cstyle_bridge);
+      
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge ", 0);
     }
     if (CreateRule != ACC_plusZero)
     {
-      DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
-                                       diag::note_arc_bridge_transfer)
-        << castExprType << br;
+      DiagnosticBuilder DiagB =
+        (CCK == Sema::CCK_OtherCast && !br) ?
+          S.Diag(noteLoc, diag::note_arc_cstyle_bridge_transfer) << castExprType :
+          S.Diag(br ? castExpr->getExprLoc() : noteLoc,
+                 diag::note_arc_bridge_transfer)
+            << castExprType << br;
+      
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge_transfer ",
                                    br ? "CFBridgingRelease" : 0);
@@ -2958,15 +2965,21 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     assert(CreateRule != ACC_bottom && "This cast should already be accepted.");
     if (CreateRule != ACC_plusOne)
     {
-      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
+      DiagnosticBuilder DiagB =
+      (CCK != Sema::CCK_OtherCast) ? S.Diag(noteLoc, diag::note_arc_bridge)
+                               : S.Diag(noteLoc, diag::note_arc_cstyle_bridge);
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge ", 0);
     }
     if (CreateRule != ACC_plusZero)
     {
-      DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
-                                       diag::note_arc_bridge_retained)
-        << castType << br;
+      DiagnosticBuilder DiagB =
+        (CCK == Sema::CCK_OtherCast && !br) ?
+          S.Diag(noteLoc, diag::note_arc_cstyle_bridge_retained) << castType :
+          S.Diag(br ? castExpr->getExprLoc() : noteLoc,
+                 diag::note_arc_bridge_retained)
+            << castType << br;
+      
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge_retained ",
                                    br ? "CFBridgingRetain" : 0);

@@ -108,3 +108,12 @@ void testTakerFunctions(id string) {
   takeCFVariadicAudited(1, (CFStringRef) string);
   takeCFConsumedAudited((CFStringRef) string); // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'CFStringRef'}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRetain call to}}
 }
+
+// rdar://12788838
+id obj;
+
+void rdar12788838() {
+  void *foo = reinterpret_cast<void *>(obj); // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} \
+		// expected-note {{use __bridge with C-style cast to convert directly}} \
+		// expected-note {{use CFBridgingRetain call to make an ARC object available as a +1 'void *'}}
+}
