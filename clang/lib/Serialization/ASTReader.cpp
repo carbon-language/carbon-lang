@@ -1249,8 +1249,12 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
         PreprocessedEntityID
             GlobalID = getGlobalPreprocessedEntityID(F, Record[NextIndex]);
         PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
-        PPRec.RegisterMacroDefinition(Macro,
-                            PPRec.getPPEntityID(GlobalID-1, /*isLoaded=*/true));
+        PreprocessingRecord::PPEntityID
+          PPID = PPRec.getPPEntityID(GlobalID-1, /*isLoaded=*/true);
+        MacroDefinition *PPDef =
+          cast_or_null<MacroDefinition>(PPRec.getPreprocessedEntity(PPID));
+        if (PPDef)
+          PPRec.RegisterMacroDefinition(Macro, PPDef);
       }
 
       ++NumMacrosRead;

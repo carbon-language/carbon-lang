@@ -320,8 +320,8 @@ unsigned PreprocessingRecord::allocateLoadedEntities(unsigned NumEntities) {
 }
 
 void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro,
-                                                  PPEntityID PPID) {
-  MacroDefinitions[Macro] = PPID;
+                                                  MacroDefinition *Def) {
+  MacroDefinitions[Macro] = Def;
 }
 
 /// \brief Retrieve the preprocessed entity at the given ID.
@@ -358,15 +358,12 @@ PreprocessingRecord::getLoadedPreprocessedEntity(unsigned Index) {
 }
 
 MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
-  llvm::DenseMap<const MacroInfo *, PPEntityID>::iterator Pos
+  llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
     = MacroDefinitions.find(MI);
   if (Pos == MacroDefinitions.end())
     return 0;
-  
-  PreprocessedEntity *Entity = getPreprocessedEntity(Pos->second);
-  if (Entity->isInvalid())
-    return 0;
-  return cast<MacroDefinition>(Entity);
+
+  return Pos->second;
 }
 
 void PreprocessingRecord::addMacroExpansion(const Token &Id,
@@ -415,7 +412,8 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
   SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
   MacroDefinition *Def
       = new (*this) MacroDefinition(Id.getIdentifierInfo(), R);
-  MacroDefinitions[MI] = addPreprocessedEntity(Def);
+  addPreprocessedEntity(Def);
+  MacroDefinitions[MI] = Def;
 }
 
 void PreprocessingRecord::MacroUndefined(const Token &Id,

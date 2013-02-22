@@ -325,7 +325,7 @@ namespace clang {
     }
 
     /// \brief Mapping from MacroInfo structures to their definitions.
-    llvm::DenseMap<const MacroInfo *, PPEntityID> MacroDefinitions;
+    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
 
     /// \brief External source of preprocessed entities.
     ExternalPreprocessingRecordSource *ExternalSource;
@@ -356,7 +356,7 @@ namespace clang {
     unsigned allocateLoadedEntities(unsigned NumEntities);
 
     /// \brief Register a new macro definition.
-    void RegisterMacroDefinition(MacroInfo *Macro, PPEntityID PPID);
+    void RegisterMacroDefinition(MacroInfo *Macro, MacroDefinition *Def);
     
   public:
     /// \brief Construct a new preprocessing record.
