@@ -12,3 +12,9 @@
 // RUN: FileCheck -check-prefix=CHECK-NO-ACTIONS < %t %s
 //
 // CHECK-NO-ACTIONS-NOT: -split-dwarf
+
+
+// RUN: %clang -target x86_64-unknown-linux-gnu -gsplit-dwarf -o Bad.x -### %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-BAD < %t %s
+//
+// CHECK-BAD-NOT: "Bad.dwo"

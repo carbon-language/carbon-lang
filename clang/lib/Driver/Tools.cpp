@@ -1723,7 +1723,7 @@ void Clang::SplitDebugInfo(Compilation &C, const JobAction &JA,
   // Add an output for the extract.
   Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o);
   const char *OutFile;
-  if (FinalOutput) {
+  if (FinalOutput && C.getArgs().hasArg(options::OPT_c)) {
     SmallString<128> T(FinalOutput->getValue());
     llvm::sys::path::replace_extension(T, "dwo");
     OutFile = Args.MakeArgString(T);
