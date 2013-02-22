@@ -169,13 +169,13 @@ public:
   /// specializations are printed with their template arguments.
   ///
   /// TODO: use an API that doesn't require so many temporary strings
-  virtual void getNameForDiagnostic(std::string &S,
+  virtual void getNameForDiagnostic(raw_ostream &OS,
                                     const PrintingPolicy &Policy,
                                     bool Qualified) const {
     if (Qualified)
-      S += getQualifiedNameAsString(Policy);
+      OS << getQualifiedNameAsString(Policy);
     else
-      S += getNameAsString();
+      printName(OS);
   }
 
   /// declarationReplaces - Determine whether this declaration, if
@@ -1606,7 +1606,7 @@ public:
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
 
-  virtual void getNameForDiagnostic(std::string &S,
+  virtual void getNameForDiagnostic(raw_ostream &OS,
                                     const PrintingPolicy &Policy,
                                     bool Qualified) const;
 

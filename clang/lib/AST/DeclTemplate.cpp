@@ -743,17 +743,13 @@ ClassTemplateSpecializationDecl::CreateDeserialized(ASTContext &C,
   return Result;
 }
 
-void
-ClassTemplateSpecializationDecl::getNameForDiagnostic(std::string &S,
-                                                  const PrintingPolicy &Policy,
-                                                      bool Qualified) const {
-  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
+void ClassTemplateSpecializationDecl::getNameForDiagnostic(
+    raw_ostream &OS, const PrintingPolicy &Policy, bool Qualified) const {
+  NamedDecl::getNameForDiagnostic(OS, Policy, Qualified);
 
   const TemplateArgumentList &TemplateArgs = getTemplateArgs();
-  S += TemplateSpecializationType::PrintTemplateArgumentList(
-                                                          TemplateArgs.data(),
-                                                          TemplateArgs.size(),
-                                                             Policy);
+  TemplateSpecializationType::PrintTemplateArgumentList(
+      OS, TemplateArgs.data(), TemplateArgs.size(), Policy);
 }
 
 ClassTemplateDecl *

@@ -3012,9 +3012,6 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  // FIXME: Remove the string version.
-  void printExceptionSpecification(std::string &S, 
-                                   const PrintingPolicy &Policy) const;
   void printExceptionSpecification(raw_ostream &OS, 
                                    const PrintingPolicy &Policy) const;
 
@@ -3653,21 +3650,6 @@ public:
 
   static bool anyDependentTemplateArguments(const TemplateArgumentListInfo &,
                                             bool &InstantiationDependent);
-
-  /// \brief Print a template argument list, including the '<' and '>'
-  /// enclosing the template arguments.
-  // FIXME: remove the string ones.
-  static std::string PrintTemplateArgumentList(const TemplateArgument *Args,
-                                               unsigned NumArgs,
-                                               const PrintingPolicy &Policy,
-                                               bool SkipBrackets = false);
-
-  static std::string PrintTemplateArgumentList(const TemplateArgumentLoc *Args,
-                                               unsigned NumArgs,
-                                               const PrintingPolicy &Policy);
-
-  static std::string PrintTemplateArgumentList(const TemplateArgumentListInfo &,
-                                               const PrintingPolicy &Policy);
 
   /// \brief Print a template argument list, including the '<' and '>'
   /// enclosing the template arguments.

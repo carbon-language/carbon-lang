@@ -249,7 +249,6 @@ NestedNameSpecifier::print(raw_ostream &OS,
     // Fall through to print the type.
 
   case TypeSpec: {
-    std::string TypeStr;
     const Type *T = getAsType();
 
     PrintingPolicy InnerPolicy(Policy);
@@ -271,15 +270,12 @@ NestedNameSpecifier::print(raw_ostream &OS,
       SpecType->getTemplateName().print(OS, InnerPolicy, true);
 
       // Print the template argument list.
-      TypeStr = TemplateSpecializationType::PrintTemplateArgumentList(
-                                                          SpecType->getArgs(),
-                                                       SpecType->getNumArgs(),
-                                                                 InnerPolicy);
+      TemplateSpecializationType::PrintTemplateArgumentList(
+          OS, SpecType->getArgs(), SpecType->getNumArgs(), InnerPolicy);
     } else {
       // Print the type normally
-      TypeStr = QualType(T, 0).getAsString(InnerPolicy);
+      QualType(T, 0).print(OS, InnerPolicy);
     }
-    OS << TypeStr;
     break;
   }
   }

@@ -313,7 +313,8 @@ void clang::FormatASTNodeDiagnosticArgument(
         Qualified = false;
       }
       const NamedDecl *ND = reinterpret_cast<const NamedDecl*>(Val);
-      ND->getNameForDiagnostic(S, Context.getPrintingPolicy(), Qualified);
+      llvm::raw_string_ostream OS(S);
+      ND->getNameForDiagnostic(OS, Context.getPrintingPolicy(), Qualified);
       break;
     }
     case DiagnosticsEngine::ak_nestednamespec: {
@@ -348,7 +349,10 @@ void clang::FormatASTNodeDiagnosticArgument(
           S += "function ";
         
         S += "'";
-        ND->getNameForDiagnostic(S, Context.getPrintingPolicy(), true);
+        {
+          llvm::raw_string_ostream OS(S);
+          ND->getNameForDiagnostic(OS, Context.getPrintingPolicy(), true);
+        }
         S += "'";
       }
       NeedQuotes = false;

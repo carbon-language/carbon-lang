@@ -1194,13 +1194,12 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
        I != E; ++I) {
     if (const ClassTemplateSpecializationDecl *Spec
           = dyn_cast<ClassTemplateSpecializationDecl>(*I)) {
+      OS << Spec->getName();
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-      std::string TemplateArgsStr
-        = TemplateSpecializationType::PrintTemplateArgumentList(
-                                           TemplateArgs.data(),
-                                           TemplateArgs.size(),
-                                           P);
-      OS << Spec->getName() << TemplateArgsStr;
+      TemplateSpecializationType::PrintTemplateArgumentList(OS,
+                                                            TemplateArgs.data(),
+                                                            TemplateArgs.size(),
+                                                            P);
     } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(*I)) {
       if (ND->isAnonymousNamespace())
         OS << "<anonymous namespace>";
@@ -1953,17 +1952,13 @@ unsigned ParmVarDecl::getParameterIndexLarge() const {
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
 
-void FunctionDecl::getNameForDiagnostic(std::string &S,
-                                        const PrintingPolicy &Policy,
-                                        bool Qualified) const {
-  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
+void FunctionDecl::getNameForDiagnostic(
+    raw_ostream &OS, const PrintingPolicy &Policy, bool Qualified) const {
+  NamedDecl::getNameForDiagnostic(OS, Policy, Qualified);
   const TemplateArgumentList *TemplateArgs = getTemplateSpecializationArgs();
   if (TemplateArgs)
-    S += TemplateSpecializationType::PrintTemplateArgumentList(
-                                                         TemplateArgs->data(),
-                                                         TemplateArgs->size(),
-                                                               Policy);
-    
+    TemplateSpecializationType::PrintTemplateArgumentList(
+        OS, TemplateArgs->data(), TemplateArgs->size(), Policy);
 }
 
 bool FunctionDecl::isVariadic() const {

@@ -50,10 +50,11 @@ class NamedDeclVisitor
 public:
   bool VisitNamedDecl(NamedDecl *Decl) {
     std::string NameWithTemplateArgs;
-    Decl->getNameForDiagnostic(NameWithTemplateArgs,
+    llvm::raw_string_ostream OS(NameWithTemplateArgs);
+    Decl->getNameForDiagnostic(OS,
                                Decl->getASTContext().getPrintingPolicy(),
                                true);
-    Match(NameWithTemplateArgs, Decl->getLocation());
+    Match(OS.str(), Decl->getLocation());
     return true;
   }
 };
