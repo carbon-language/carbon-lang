@@ -44,6 +44,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
     return permR__;
 
   case typeData:
+  case typeDataFast:
   case typeZeroFill:
   case typeObjC1Class:
   case typeLazyPointer:

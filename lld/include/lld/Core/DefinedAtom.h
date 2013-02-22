@@ -123,6 +123,7 @@ public:
     typeLiteral8,           // an eight-btye read-only constant
     typeLiteral16,          // a sixteen-btye read-only constant
     typeData,               // read-write data
+    typeDataFast,           // allow data to be quickly accessed
     typeZeroFill,           // zero-fill data
     typeConstData,          // read-only data after dynamic linker is done
     typeObjC1Class,         // ObjC1 class [Darwin]

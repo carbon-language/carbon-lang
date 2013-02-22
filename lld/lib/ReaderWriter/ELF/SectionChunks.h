@@ -113,6 +113,7 @@ public:
     this->setOrder(order);
     switch (contentType) {
     case DefinedAtom::typeCode:
+    case DefinedAtom::typeDataFast:
     case DefinedAtom::typeData:
     case DefinedAtom::typeConstant:
     case DefinedAtom::typeGOT:
@@ -153,7 +154,7 @@ public:
   // \brief Append an atom to a Section. The atom gets pushed into a vector
   // contains the atom, the atom file offset, the atom virtual address
   // the atom file offset is aligned appropriately as set by the Reader
-  const AtomLayout &appendAtom(const Atom *atom);
+  virtual const AtomLayout &appendAtom(const Atom *atom);
 
   /// \brief Set the virtual address of each Atom in the Section. This
   /// routine gets called after the linker fixes up the virtual address
@@ -261,6 +262,7 @@ const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
     case DefinedAtom::typeTLVInitialData:
+    case DefinedAtom::typeDataFast:
       _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
@@ -600,6 +602,7 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
       symbol->st_value = addr;
       type = llvm::ELF::STT_GNU_IFUNC;
       break;
+    case DefinedAtom::typeDataFast:
     case DefinedAtom::typeData:
     case DefinedAtom::typeConstant:
     case DefinedAtom::typeGOT:

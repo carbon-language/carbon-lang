@@ -235,6 +235,7 @@ template<class ELFT>
 error_code
 ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   buildChunks(file);
+
   // Create the default sections like the symbol table, string table, and the
   // section string table
   createDefaultSections();

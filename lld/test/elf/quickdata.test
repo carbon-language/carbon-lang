@@ -1,0 +1,14 @@
+RUN: lld-core -arch hexagon -reader ELF %p/Inputs/quickdata-test.elf-hexagon | FileCheck %s -check-prefix hexagon
+
+hexagon:  - name:            init
+hexagon:    scope:           global
+hexagon:    type:            quick-data
+hexagon:  - name:            bss1
+hexagon:    scope:           global
+hexagon:    type:            quick-data
+hexagon:  - name:            ac1
+hexagon:    scope:           global
+hexagon:    type:            zero-fill
+hexagon:    size:            1
+hexagon:    merge:           as-tentative
+hexagon:    permissions:     ---

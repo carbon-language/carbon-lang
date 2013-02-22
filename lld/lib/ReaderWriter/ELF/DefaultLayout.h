@@ -293,12 +293,13 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
   
   case DefinedAtom::typeConstant:
     return ORDER_RODATA;
-  
+
   case DefinedAtom::typeData:
+  case DefinedAtom::typeDataFast:
     return llvm::StringSwitch<Reference::Kind>(name)
-      .StartsWith(".init_array", ORDER_INIT_ARRAY)
-      .Default(ORDER_DATA);
-  
+        .StartsWith(".init_array", ORDER_INIT_ARRAY)
+        .Default(ORDER_DATA);
+
   case DefinedAtom::typeZeroFill:
     return ORDER_BSS;
 

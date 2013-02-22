@@ -44,14 +44,16 @@ template <class ELFT> class TargetLayout;
 /// type of atom and its permissions 
 template <class ELFT> class TargetAtomHandler {
 public:
+  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  virtual DefinedAtom::ContentType contentType(
-      const ELFDefinedAtom<ELFT> *atom) const {
+  virtual DefinedAtom::ContentType
+  contentType(const ELFDefinedAtom<ELFT> *atom) const {
     return atom->contentType();
   }
 
-  virtual DefinedAtom::ContentType contentType(const Elf_Sym *sym) const {
+  virtual DefinedAtom::ContentType
+  contentType(const Elf_Shdr *shdr, const Elf_Sym *sym) const {
     return DefinedAtom::typeZeroFill;
   }
 
@@ -60,6 +62,9 @@ public:
     return atom->permissions();
   }
 
+  virtual int64_t getType(const Elf_Sym *sym) const {
+    return llvm::ELF::STT_NOTYPE;
+  }
 };
 
 template <class ELFT> class TargetRelocationHandler {

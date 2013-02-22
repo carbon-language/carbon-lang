@@ -395,14 +395,11 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                           lld::DefinedAtom::typeCode);
     io.enumCase(value, "stub",                
                           lld::DefinedAtom::typeStub);
-    io.enumCase(value, "constant",            
-                          lld::DefinedAtom::typeConstant);
-    io.enumCase(value, "data",                
-                          lld::DefinedAtom::typeData);
-    io.enumCase(value, "zero-fill",           
-                          lld::DefinedAtom::typeZeroFill);
-    io.enumCase(value, "const-data",                 
-                          lld::DefinedAtom::typeConstData);
+    io.enumCase(value, "constant", lld::DefinedAtom::typeConstant);
+    io.enumCase(value, "data", lld::DefinedAtom::typeData);
+    io.enumCase(value, "quick-data", lld::DefinedAtom::typeDataFast);
+    io.enumCase(value, "zero-fill", lld::DefinedAtom::typeZeroFill);
+    io.enumCase(value, "const-data", lld::DefinedAtom::typeConstData);
     io.enumCase(value, "got",                 
                           lld::DefinedAtom::typeGOT);
     io.enumCase(value, "resolver",            

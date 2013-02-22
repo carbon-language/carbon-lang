@@ -358,18 +358,16 @@ public:
         bool isCommon = (*si)->getType() == llvm::ELF::STT_COMMON ||
                         (*si)->st_shndx == llvm::ELF::SHN_COMMON;
 
-        DefinedAtom::ContentType c;
-
-        if (((*si)->st_shndx >= llvm::ELF::SHN_LOPROC) &&
-            ((*si)->st_shndx <= llvm::ELF::SHN_HIPROC)) {
+        if ((section && section->sh_flags & llvm::ELF::SHF_MASKPROC) ||
+            (((*si)->st_shndx >= llvm::ELF::SHN_LOPROC) &&
+             ((*si)->st_shndx <= llvm::ELF::SHN_HIPROC))) {
           TargetHandler<ELFT> &TargetHandler =
-              _elfTargetInfo.getTargetHandler<ELFT>();
+              _elfTargetInfo.template getTargetHandler<ELFT>();
           TargetAtomHandler<ELFT> &elfAtomHandler =
               TargetHandler.targetAtomHandler();
-          c = elfAtomHandler.contentType(*si);
+          int64_t targetSymType = elfAtomHandler.getType(*si);
 
-          if (c == DefinedAtom::typeZeroFill ||
-              c == DefinedAtom::typeTLVInitialZeroFill)
+          if (targetSymType == llvm::ELF::STT_COMMON)
             isCommon = true;
         }
 

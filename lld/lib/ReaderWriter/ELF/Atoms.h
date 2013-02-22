@@ -183,7 +183,8 @@ public:
     , _contentData(contentData)
     , _referenceStartIndex(referenceStart)
     , _referenceEndIndex(referenceEnd)
-    , _referenceList(referenceList) {
+    , _referenceList(referenceList)
+    , _targetAtomHandler(nullptr) {
     static uint64_t orderNumber = 0;
     _ordinal = ++orderNumber;
   }
@@ -200,12 +201,28 @@ public:
     return _ordinal;
   }
 
+  const Elf_Sym *symbol() const { return _symbol; }
+
+  const Elf_Shdr *section() const { return _section; }
+
   virtual uint64_t size() const {
     // Common symbols are not allocated in object files,
     // so use st_size to tell how many bytes are required.
-    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
-        || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
-      return (uint64_t)_symbol->st_size;
+   
+    // Treat target defined common symbols 
+    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
+         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
+      if (!_targetAtomHandler) {
+        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
+        _targetAtomHandler = &TargetHandler.targetAtomHandler();
+      }
+      if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
+        return (uint64_t) _symbol->st_size;
+    }
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
+        _symbol->st_shndx == llvm::ELF::SHN_COMMON)
+      return (uint64_t) _symbol->st_size;
 
     return _contentData.size();
   }
@@ -229,8 +246,22 @@ public:
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
 
-    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
-        || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
+    // If the symbol is a target defined and if the target
+    // defines the symbol as a common symbol treat it as 
+    // mergeTentative
+    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
+         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
+      if (!_targetAtomHandler) {
+        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
+        _targetAtomHandler = &TargetHandler.targetAtomHandler();
+      }
+      if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
+        return mergeAsTentative;
+    }
+
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
+        _symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return mergeAsTentative;
 
     return mergeNo;
@@ -240,15 +271,16 @@ public:
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
 
-    if (_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
-        _symbol->st_shndx < llvm::ELF::SHN_HIPROC) {
-      const ELFTargetInfo &eti =
-          (_owningFile.getTargetInfo());
-      TargetHandler<ELFT> &TargetHandler =
-          eti.getTargetHandler<ELFT>();
-      TargetAtomHandler<ELFT> &elfAtomHandler =
-          TargetHandler.targetAtomHandler();
-      return elfAtomHandler.contentType(this);
+    // Treat target defined symbols 
+    if ((_section->sh_flags & llvm::ELF::SHF_MASKPROC) ||
+        ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
+          _symbol->st_shndx < llvm::ELF::SHN_HIPROC))) {
+      if (!_targetAtomHandler) {
+        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
+        _targetAtomHandler = &TargetHandler.targetAtomHandler();
+      }
+      return _targetAtomHandler->contentType(this);
     }
 
     if (_section->sh_flags ==
@@ -303,8 +335,21 @@ public:
   virtual Alignment alignment() const {
     // Unallocated common symbols specify their alignment constraints in
     // st_value.
-    if ((_symbol->getType() == llvm::ELF::STT_COMMON)
-        || _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
+   
+    // Treat target defined common symbols 
+    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
+         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
+      if (!_targetAtomHandler) {
+        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
+        _targetAtomHandler = &TargetHandler.targetAtomHandler();
+      }
+      if (_targetAtomHandler->getType(_symbol) == llvm::ELF::STT_COMMON)
+        return Alignment(llvm::Log2_64(_symbol->st_value));
+    }
+
+    if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
+        _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(_symbol->st_value));
     }
     return Alignment(llvm::Log2_64(_section->sh_addralign),
@@ -439,6 +484,8 @@ private:
   unsigned int _referenceStartIndex;
   unsigned int _referenceEndIndex;
   std::vector<ELFReference<ELFT> *> &_referenceList;
+  // Cached size of the TLS segment.
+  mutable TargetAtomHandler<ELFT> *_targetAtomHandler;
 };
 
 /// \brief This atom stores mergeable Strings

@@ -1,4 +1,4 @@
-RUN: lld-core -reader ELF %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon | FileCheck %s -check-prefix hexagon-yaml
+RUN: lld-core -arch hexagon -reader ELF %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon | FileCheck %s -check-prefix hexagon-yaml
 RUN: lld-core -arch hexagon -reader ELF -writer ELF -o %t1 %p/Inputs/branch-test.hexagon %p/Inputs/target-test.hexagon
 RUN: elf-dump %t1 |  FileCheck -check-prefix=hexagon-elfdump %s 
 
