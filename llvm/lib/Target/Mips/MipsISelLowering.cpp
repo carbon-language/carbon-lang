@@ -1298,7 +1298,7 @@ MachineBasicBlock *MipsTargetLowering::EmitSel16(unsigned Opc, MachineInstr *MI,
   return BB;
 }
 
-MachineBasicBlock *MipsTargetLowering::EmitSelT16
+MachineBasicBlock *MipsTargetLowering::EmitSeliT16
   (unsigned Opc1, unsigned Opc2,
    MachineInstr *MI, MachineBasicBlock *BB) const {
   if (DontExpandCondPseudos16)
@@ -1479,17 +1479,17 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::SelBneZ:
     return EmitSel16(Mips::BnezRxImm16, MI, BB);
   case Mips::SelTBteqZCmpi:
-    return EmitSelT16(Mips::BteqzX16, Mips::CmpiRxImmX16, MI, BB);
+    return EmitSeliT16(Mips::BteqzX16, Mips::CmpiRxImmX16, MI, BB);
   case Mips::SelTBteqZSlti:
-    return EmitSelT16(Mips::BteqzX16, Mips::SltiRxImmX16, MI, BB);
+    return EmitSeliT16(Mips::BteqzX16, Mips::SltiRxImmX16, MI, BB);
   case Mips::SelTBteqZSltiu:
-    return EmitSelT16(Mips::BteqzX16, Mips::SltiuRxImmX16, MI, BB);
+    return EmitSeliT16(Mips::BteqzX16, Mips::SltiuRxImmX16, MI, BB);
   case Mips::SelTBtneZCmpi:
-    return EmitSelT16(Mips::BtnezX16, Mips::CmpiRxImmX16, MI, BB);
+    return EmitSeliT16(Mips::BtnezX16, Mips::CmpiRxImmX16, MI, BB);
   case Mips::SelTBtneZSlti:
-    return EmitSelT16(Mips::BtnezX16, Mips::SltiRxImmX16, MI, BB);
+    return EmitSeliT16(Mips::BtnezX16, Mips::SltiRxImmX16, MI, BB);
   case Mips::SelTBtneZSltiu:
-    return EmitSelT16(Mips::BtnezX16, Mips::SltiuRxImmX16, MI, BB);
+    return EmitSeliT16(Mips::BtnezX16, Mips::SltiuRxImmX16, MI, BB);
   }
 }
 
