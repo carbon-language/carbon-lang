@@ -567,7 +567,9 @@ defm V_FRACT_F32 : VOP1_32 <0x00000020, "V_FRACT_F32",
   [(set VReg_32:$dst, (AMDGPUfract VSrc_32:$src0))]
 >;
 defm V_TRUNC_F32 : VOP1_32 <0x00000021, "V_TRUNC_F32", []>;
-defm V_CEIL_F32 : VOP1_32 <0x00000022, "V_CEIL_F32", []>;
+defm V_CEIL_F32 : VOP1_32 <0x00000022, "V_CEIL_F32",
+  [(set VReg_32:$dst, (fceil VSrc_32:$src0))]
+>;
 defm V_RNDNE_F32 : VOP1_32 <0x00000023, "V_RNDNE_F32",
   [(set VReg_32:$dst, (frint VSrc_32:$src0))]
 >;
