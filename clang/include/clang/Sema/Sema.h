@@ -1705,8 +1705,6 @@ public:
                               unsigned AttrSpellingListIndex);
   SectionAttr *mergeSectionAttr(Decl *D, SourceRange Range, StringRef Name,
                                 unsigned AttrSpellingListIndex);
-  bool mergeDeclAttribute(NamedDecl *New, InheritableAttr *Attr,
-                          bool Override);
 
   /// \brief Describes the kind of merge to perform for availability
   /// attributes (including "deprecated", "unavailable", and "availability").

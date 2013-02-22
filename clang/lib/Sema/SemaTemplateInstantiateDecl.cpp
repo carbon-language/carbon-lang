@@ -322,6 +322,11 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     Var->setReferenced(D->isReferenced());
   }
 
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Var, LateAttrs, StartingScope);
+
+  if (Var->hasAttrs())
+    SemaRef.CheckAlignasUnderalignment(Var);
+
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
   // FIXME: having to fake up a LookupResult is dumb.
@@ -345,10 +350,6 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     if (Owner->isFunctionOrMethod())
       SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Var);
   }
-  SemaRef.InstantiateAttrs(TemplateArgs, D, Var, LateAttrs, StartingScope);
-
-  if (Var->hasAttrs())
-    SemaRef.CheckAlignasUnderalignment(Var);
 
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
