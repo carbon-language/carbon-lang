@@ -542,9 +542,13 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       }
       if (!Proto.empty())
         Out << Proto;
-    }
-    else
+    } else {
+      if (FT && FT->hasTrailingReturn()) {
+        Out << "auto " << Proto << " -> ";
+        Proto.clear();
+      }
       AFT->getResultType().print(Out, Policy, Proto);
+    }
   } else {
     Ty.print(Out, Policy, Proto);
   }
