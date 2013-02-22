@@ -100,6 +100,7 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
 #define FUNCTION_TYPE_ATTRS_CASELIST \
     case AttributeList::AT_NoReturn: \
     case AttributeList::AT_CDecl: \
+    case AttributeList::AT_ColdCC: \
     case AttributeList::AT_FastCall: \
     case AttributeList::AT_StdCall: \
     case AttributeList::AT_ThisCall: \
@@ -3103,6 +3104,8 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_NoReturn;
   case AttributedType::attr_cdecl:
     return AttributeList::AT_CDecl;
+  case AttributedType::attr_coldcc:
+    return AttributeList::AT_ColdCC;
   case AttributedType::attr_fastcall:
     return AttributeList::AT_FastCall;
   case AttributedType::attr_stdcall:

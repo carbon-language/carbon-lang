@@ -2674,6 +2674,7 @@ enum CXCallingConv {
   CXCallingConv_AAPCS_VFP = 7,
   CXCallingConv_PnaclCall = 8,
   CXCallingConv_IntelOclBicc = 9,
+  CXCallingConv_Cold = 10,
 
   CXCallingConv_Invalid = 100,
   CXCallingConv_Unexposed = 200

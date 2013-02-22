@@ -188,6 +188,7 @@ namespace clang {
   enum CallingConv {
     CC_Default,
     CC_C,           // __attribute__((cdecl))
+    CC_Cold,        // __attribute__((coldcc))
     CC_X86StdCall,  // __attribute__((stdcall))
     CC_X86FastCall, // __attribute__((fastcall))
     CC_X86ThisCall, // __attribute__((thiscall))
@@ -197,6 +198,10 @@ namespace clang {
     CC_PnaclCall,   // __attribute__((pnaclcall))
     CC_IntelOclBicc // __attribute__((intel_ocl_bicc))
   };
+
+  inline bool isTargetSpecific(CallingConv CC) {
+    return CC >= CC_X86StdCall;
+  }
 
 } // end namespace clang
 

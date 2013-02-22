@@ -3323,6 +3323,7 @@ public:
     // No operand.
     attr_noreturn,
     attr_cdecl,
+    attr_coldcc,
     attr_fastcall,
     attr_stdcall,
     attr_thiscall,

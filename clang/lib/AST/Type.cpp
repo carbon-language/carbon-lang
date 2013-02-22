@@ -1547,6 +1547,7 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
     llvm_unreachable("no name for default cc");
 
   case CC_C: return "cdecl";
+  case CC_Cold: return "coldcc";
   case CC_X86StdCall: return "stdcall";
   case CC_X86FastCall: return "fastcall";
   case CC_X86ThisCall: return "thiscall";
