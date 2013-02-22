@@ -1611,6 +1611,15 @@ Driver::ReadyForCommand ()
     }
 }
 
+void
+Driver::ResizeWindow (unsigned short col)
+{
+    GetDebugger().SetTerminalWidth (col);
+    if (m_io_channel_ap.get() != NULL)
+    {
+        m_io_channel_ap->ElResize();
+    }
+}
 
 void
 sigwinch_handler (int signo)
@@ -1621,7 +1630,7 @@ sigwinch_handler (int signo)
     {
         if ((window_size.ws_col > 0) && g_driver != NULL)
         {
-            g_driver->GetDebugger().SetTerminalWidth (window_size.ws_col);
+            g_driver->ResizeWindow (window_size.ws_col);
         }
     }
 }

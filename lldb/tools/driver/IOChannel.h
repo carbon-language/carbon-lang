@@ -104,6 +104,9 @@ public:
 
     static unsigned char 
     ElCompletionFn (EditLine *e, int ch);
+    
+    void
+    ElResize();
 
 protected:
 

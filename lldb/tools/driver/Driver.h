@@ -151,6 +151,9 @@ public:
     {
         m_done = true;
     }
+    
+    void
+    ResizeWindow (unsigned short col);
 
 private:
     lldb::SBDebugger m_debugger;

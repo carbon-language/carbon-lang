@@ -90,6 +90,12 @@ IOChannel::ElCompletionFn (EditLine *e, int ch)
     }
 }
 
+void
+IOChannel::ElResize()
+{
+    el_resize(m_edit_line);
+}
+
 unsigned char
 IOChannel::HandleCompletion (EditLine *e, int ch)
 {
