@@ -291,6 +291,14 @@ std::string
 MachTask::GetProfileData ()
 {
     std::string result;
+ 
+    mach_port_t localHost = mach_host_self();
+    struct host_cpu_load_info host_info;
+	mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+	kern_return_t kr = host_statistics(localHost, HOST_CPU_LOAD_INFO, (host_info_t)&host_info, &count);
+    if (kr != KERN_SUCCESS)
+        return result;
+    
     task_t task = TaskPort();
     if (task == TASK_NULL)
         return result;
@@ -334,6 +342,10 @@ MachTask::GetProfileData ()
     if (m_vm_memory.GetMemoryProfile(task, task_info, m_process->GetCPUType(), m_process->ProcessID(), vm_stats, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size))
     {
         std::ostringstream profile_data_stream;
+        
+        profile_data_stream << "host_user_ticks:" << host_info.cpu_ticks[CPU_STATE_USER] << ';';
+        profile_data_stream << "host_sys_ticks:" << host_info.cpu_ticks[CPU_STATE_SYSTEM] << ';';
+        profile_data_stream << "host_idle_ticks:" << host_info.cpu_ticks[CPU_STATE_IDLE] << ';';
         
         profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
         profile_data_stream << "task_used_usec:" << task_used_usec << ';';
