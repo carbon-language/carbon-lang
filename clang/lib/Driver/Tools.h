@@ -77,6 +77,7 @@ namespace tools {
   /// \brief Clang integrated assembler tool.
   class LLVM_LIBRARY_VISIBILITY ClangAs : public Tool {
     void AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
   public:
     ClangAs(const ToolChain &TC) : Tool("clang::as",
                                         "clang integrated assembler", TC) {}
