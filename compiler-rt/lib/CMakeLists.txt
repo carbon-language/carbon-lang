@@ -14,6 +14,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID)
   # ThreadSanitizer and MemorySanitizer are supported on Linux only.
   add_subdirectory(tsan)
   add_subdirectory(msan)
+  add_subdirectory(msandr)
 endif()
 
 # FIXME: Add support for the profile library.
