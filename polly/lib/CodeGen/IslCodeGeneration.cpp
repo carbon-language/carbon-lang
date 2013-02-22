@@ -138,9 +138,9 @@ void RuntimeDebugBuilder::createIntPrinter(Value *V) {
 /// @brief Calculate the Value of a certain isl_ast_expr
 class IslExprBuilder {
 public:
-  IslExprBuilder(IRBuilder<> &Builder,
-                 std::map<isl_id *, Value*> &IDToValue, Pass *P)
-                : Builder(Builder), IDToValue(IDToValue) { }
+  IslExprBuilder(IRBuilder<> &Builder, std::map<isl_id *, Value *> &IDToValue,
+                 Pass *P)
+      : Builder(Builder), IDToValue(IDToValue) {}
 
   Value *create(__isl_take isl_ast_expr *Expr);
   Type *getWidestType(Type *T1, Type *T2);
@@ -539,8 +539,8 @@ Value *IslExprBuilder::create(__isl_take isl_ast_expr *Expr) {
 
 class IslNodeBuilder {
 public:
-  IslNodeBuilder(IRBuilder<> &Builder, Pass *P):
-    Builder(Builder), ExprBuilder(Builder, IDToValue, P), P(P) {}
+  IslNodeBuilder(IRBuilder<> &Builder, Pass *P)
+      : Builder(Builder), ExprBuilder(Builder, IDToValue, P), P(P) {}
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
@@ -885,10 +885,9 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   isl_ast_node_free(If);
 }
 
-void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
-                                         __isl_take isl_ast_build *Context,
-                                         ScopStmt *Stmt, ValueMapT &VMap,
-                                         LoopToScevMapT &LTS) {
+void IslNodeBuilder::createSubstitutions(
+    __isl_take isl_pw_multi_aff *PMA, __isl_take isl_ast_build *Context,
+    ScopStmt *Stmt, ValueMapT &VMap, LoopToScevMapT &LTS) {
   for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out); ++i) {
     isl_pw_aff *Aff;
     isl_ast_expr *Expr;
@@ -1065,17 +1064,16 @@ public:
 
 char IslCodeGeneration::ID = 1;
 
-INITIALIZE_PASS_BEGIN(IslCodeGeneration, "polly-codegen-isl",
-                      "Polly - Create LLVM-IR from SCoPs", false, false)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
-INITIALIZE_PASS_DEPENDENCY(RegionInfo)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(ScopDetection)
-INITIALIZE_PASS_END(IslCodeGeneration, "polly-codegen-isl",
-                      "Polly - Create LLVM-IR from SCoPs", false, false)
+Pass *polly::createIslCodeGenerationPass() { return new IslCodeGeneration(); }
 
-Pass *polly::createIslCodeGenerationPass() {
-  return new IslCodeGeneration();
-}
+INITIALIZE_PASS_BEGIN(IslCodeGeneration, "polly-codegen-isl",
+                      "Polly - Create LLVM-IR from SCoPs", false, false);
+INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(DominatorTree);
+INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+INITIALIZE_PASS_DEPENDENCY(RegionInfo);
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
+INITIALIZE_PASS_DEPENDENCY(ScopDetection);
+INITIALIZE_PASS_END(IslCodeGeneration, "polly-codegen-isl",
+                    "Polly - Create LLVM-IR from SCoPs", false, false)
+

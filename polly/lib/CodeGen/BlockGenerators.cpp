@@ -43,8 +43,8 @@ SCEVCodegen("polly-codegen-scev", cl::desc("Use SCEV based code generation."),
 namespace {
 class IslGenerator {
 public:
-  IslGenerator(IRBuilder<> &Builder, std::vector<Value *> &IVS) :
-    Builder(Builder), IVS(IVS) {}
+  IslGenerator(IRBuilder<> &Builder, std::vector<Value *> &IVS)
+      : Builder(Builder), IVS(IVS) {}
   Value *generateIslInt(__isl_take isl_int Int);
   Value *generateIslAff(__isl_take isl_aff *Aff);
   Value *generateIslPwAff(__isl_take isl_pw_aff *PwAff);
@@ -87,8 +87,9 @@ Value *IslGenerator::generateIslAff(__isl_take isl_aff *Aff) {
 
   unsigned int NbInputDims = isl_aff_dim(Aff, isl_dim_in);
 
-  assert((IVS.size() == NbInputDims) && "The Dimension of Induction Variables"
-         "must match the dimension of the affine space.");
+  assert((IVS.size() == NbInputDims) &&
+         "The Dimension of Induction Variables must match the dimension of the "
+         "affine space.");
 
   isl_int CoefficientIsl;
   isl_int_init(CoefficientIsl);
@@ -118,10 +119,10 @@ int IslGenerator::mergeIslAffValues(__isl_take isl_set *Set,
                                     __isl_take isl_aff *Aff, void *User) {
   IslGenInfo *GenInfo = (IslGenInfo *)User;
 
-  assert((GenInfo->Result == NULL) && "Result is already set."
-         "Currently only single isl_aff is supported");
-  assert(isl_set_plain_is_universe(Set)
-         && "Code generation failed because the set is not universe");
+  assert((GenInfo->Result == NULL) &&
+         "Result is already set. Currently only single isl_aff is supported");
+  assert(isl_set_plain_is_universe(Set) &&
+         "Code generation failed because the set is not universe");
 
   GenInfo->Result = GenInfo->Generator->generateIslAff(Aff);
 
@@ -140,9 +141,9 @@ Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
   return User.Result;
 }
 
-
-BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P):
-  Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {}
+BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P)
+    : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {
+}
 
 bool BlockGenerator::isSCEVIgnore(const Instruction *Inst) {
   if (SCEVCodegen && SE.isSCEVable(Inst->getType()))
@@ -269,9 +270,8 @@ std::vector<Value *> BlockGenerator::getMemoryAccessIndex(
 Value *BlockGenerator::getNewAccessOperand(
     __isl_keep isl_map *NewAccessRelation, Value *BaseAddress, ValueMapT &BBMap,
     ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
-  std::vector<Value *> IndexArray =
-      getMemoryAccessIndex(NewAccessRelation, BaseAddress, BBMap, GlobalMap,
-                           LTS);
+  std::vector<Value *> IndexArray = getMemoryAccessIndex(
+      NewAccessRelation, BaseAddress, BBMap, GlobalMap, LTS);
   Value *NewOperand =
       Builder.CreateGEP(BaseAddress, IndexArray, "p_newarrayidx_");
   return NewOperand;
@@ -293,9 +293,8 @@ Value *BlockGenerator::generateLocationAccessed(
     NewPointer = getNewValue(Pointer, BBMap, GlobalMap, LTS);
   } else {
     Value *BaseAddress = const_cast<Value *>(Access.getBaseAddr());
-    NewPointer =
-        getNewAccessOperand(NewAccessRelation, BaseAddress, BBMap, GlobalMap,
-                            LTS);
+    NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, BBMap,
+                                     GlobalMap, LTS);
   }
 
   isl_map_free(CurrentAccessRelation);
@@ -303,26 +302,26 @@ Value *BlockGenerator::generateLocationAccessed(
   return NewPointer;
 }
 
-Value *BlockGenerator::generateScalarLoad(
-    const LoadInst *Load, ValueMapT &BBMap, ValueMapT &GlobalMap,
-    LoopToScevMapT &LTS) {
+Value *
+BlockGenerator::generateScalarLoad(const LoadInst *Load, ValueMapT &BBMap,
+                                   ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
   const Value *Pointer = Load->getPointerOperand();
   const Instruction *Inst = dyn_cast<Instruction>(Load);
-  Value *NewPointer = generateLocationAccessed(Inst, Pointer, BBMap, GlobalMap,
-                                               LTS);
+  Value *NewPointer =
+      generateLocationAccessed(Inst, Pointer, BBMap, GlobalMap, LTS);
   Value *ScalarLoad =
       Builder.CreateLoad(NewPointer, Load->getName() + "_p_scalar_");
   return ScalarLoad;
 }
 
-Value *BlockGenerator::generateScalarStore(
-    const StoreInst *Store, ValueMapT &BBMap, ValueMapT &GlobalMap,
-    LoopToScevMapT &LTS) {
+Value *
+BlockGenerator::generateScalarStore(const StoreInst *Store, ValueMapT &BBMap,
+                                    ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
   const Value *Pointer = Store->getPointerOperand();
   Value *NewPointer =
       generateLocationAccessed(Store, Pointer, BBMap, GlobalMap, LTS);
-  Value *ValueOperand = getNewValue(Store->getValueOperand(), BBMap, GlobalMap,
-                                    LTS);
+  Value *ValueOperand =
+      getNewValue(Store->getValueOperand(), BBMap, GlobalMap, LTS);
 
   return Builder.CreateStore(ValueOperand, NewPointer);
 }
@@ -366,8 +365,9 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
 }
 
 VectorBlockGenerator::VectorBlockGenerator(
-    IRBuilder<> &B, VectorValueMapT &GlobalMaps, std::vector<LoopToScevMapT> &VLTS,
-    ScopStmt &Stmt, __isl_keep isl_map *Schedule, Pass *P)
+    IRBuilder<> &B, VectorValueMapT &GlobalMaps,
+    std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
+    __isl_keep isl_map *Schedule, Pass *P)
     : BlockGenerator(B, Stmt, P), GlobalMaps(GlobalMaps), VLTS(VLTS),
       Schedule(Schedule) {
   assert(GlobalMaps.size() > 1 && "Only one vector lane found");
@@ -385,8 +385,9 @@ Value *VectorBlockGenerator::getVectorValue(
 
   for (int Lane = 0; Lane < Width; Lane++)
     Vector = Builder.CreateInsertElement(
-        Vector, getNewValue(Old, ScalarMaps[Lane], GlobalMaps[Lane],
-                            VLTS[Lane]), Builder.getInt32(Lane));
+        Vector,
+        getNewValue(Old, ScalarMaps[Lane], GlobalMaps[Lane], VLTS[Lane]),
+        Builder.getInt32(Lane));
 
   VectorMap[Old] = Vector;
 
@@ -449,8 +450,8 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(
   Value *Vector = UndefValue::get(VectorType);
 
   for (int i = 0; i < VectorWidth; i++) {
-    Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i],
-                                    VLTS[i]);
+    Value *NewPointer =
+        getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i], VLTS[i]);
     Value *ScalarLoad =
         Builder.CreateLoad(NewPointer, Load->getName() + "_p_scalar_");
     Vector = Builder.CreateInsertElement(
@@ -524,8 +525,8 @@ void VectorBlockGenerator::copyStore(
 
   if (Access.isStrideOne(isl_map_copy(Schedule))) {
     Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
-    Value *NewPointer = getNewValue(Pointer, ScalarMaps[0], GlobalMaps[0],
-                                    VLTS[0]);
+    Value *NewPointer =
+        getNewValue(Pointer, ScalarMaps[0], GlobalMaps[0], VLTS[0]);
 
     Value *VectorPtr =
         Builder.CreateBitCast(NewPointer, VectorPtrType, "vector_ptr");
@@ -536,8 +537,8 @@ void VectorBlockGenerator::copyStore(
   } else {
     for (unsigned i = 0; i < ScalarMaps.size(); i++) {
       Value *Scalar = Builder.CreateExtractElement(Vector, Builder.getInt32(i));
-      Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i],
-                                      VLTS[i]);
+      Value *NewPointer =
+          getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i], VLTS[i]);
       Builder.CreateStore(Scalar, NewPointer);
     }
   }

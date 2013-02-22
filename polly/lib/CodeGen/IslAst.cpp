@@ -328,10 +328,10 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   Function *F = Scop->getRegion().getEntry()->getParent();
 
   DEBUG(dbgs() << ":: isl ast :: " << F->getName()
-               << " :: " << Scop->getRegion().getNameStr() << "\n");;
+               << " :: " << Scop->getRegion().getNameStr() << "\n");
+
   DEBUG(dbgs() << S->getContextStr() << "\n";
-    isl_union_map_dump(Schedule);
-  );
+        isl_union_map_dump(Schedule));
 
   if (DetectParallel || PollyVectorizerChoice != VECTORIZER_NONE) {
     BuildInfo.Deps = &D;
@@ -426,15 +426,15 @@ void IslAstInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<ScopInfo>();
   AU.addRequired<Dependences>();
 }
+
 char IslAstInfo::ID = 0;
 
+Pass *polly::createIslAstInfoPass() { return new IslAstInfo(); }
+
 INITIALIZE_PASS_BEGIN(IslAstInfo, "polly-ast",
-                      "Generate an AST of the SCoP (isl)", false, false)
-INITIALIZE_PASS_DEPENDENCY(ScopInfo)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
+                      "Generate an AST of the SCoP (isl)", false, false);
+INITIALIZE_PASS_DEPENDENCY(ScopInfo);
+INITIALIZE_PASS_DEPENDENCY(Dependences);
 INITIALIZE_PASS_END(IslAstInfo, "polly-ast",
                     "Generate an AST from the SCoP (isl)", false, false)
 
-Pass *polly::createIslAstInfoPass() {
-  return new IslAstInfo();
-}
