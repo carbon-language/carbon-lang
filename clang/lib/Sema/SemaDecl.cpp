@@ -4908,11 +4908,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       !NewVD->isInvalidDecl())
     RegisterLocallyScopedExternCDecl(NewVD, Previous, S);
 
-  // If there's a #pragma GCC visibility in scope, and this isn't a class
-  // member, set the visibility of this variable.
-  if (NewVD->getLinkage() == ExternalLinkage && !DC->isRecord())
-    AddPushedVisibilityAttribute(NewVD);
-
   return NewVD;
 }
 
@@ -7880,9 +7875,15 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   // Note that we are no longer parsing the initializer for this declaration.
   ParsingInitForAutoVars.erase(ThisDecl);
 
-  const VarDecl *VD = dyn_cast_or_null<VarDecl>(ThisDecl);
+  VarDecl *VD = dyn_cast_or_null<VarDecl>(ThisDecl);
   if (!VD)
     return;
+
+  const DeclContext *DC = VD->getDeclContext();
+  // If there's a #pragma GCC visibility in scope, and this isn't a class
+  // member, set the visibility of this variable.
+  if (VD->getLinkage() == ExternalLinkage && !DC->isRecord())
+    AddPushedVisibilityAttribute(VD);
 
   if (VD->isFileVarDecl())
     MarkUnusedFileScopedDecl(VD);
