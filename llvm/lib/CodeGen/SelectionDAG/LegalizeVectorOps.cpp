@@ -85,6 +85,25 @@ class VectorLegalizer {
 };
 
 bool VectorLegalizer::Run() {
+  // Before we start legalizing vector nodes, check if there are any vectors.
+  bool HasVectors = false;
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = prior(DAG.allnodes_end()); I != llvm::next(E); ++I) {
+    // Check if the values of the nodes contain vectors. We don't need to check
+    // the operands because we are going to check their values at some point.
+    for (SDNode::value_iterator J = I->value_begin(), E = I->value_end();
+         J != E; ++J)
+      HasVectors |= J->isVector();
+
+    // If we found a vector node we can start the legalization.
+    if (HasVectors)
+      break;
+  }
+
+  // If this basic block has no vectors then no need to legalize vectors.
+  if (!HasVectors)
+    return false;
+
   // The legalize process is inherently a bottom-up recursive process (users
   // legalize their uses before themselves).  Given infinite stack space, we
   // could just start legalizing on the root and traverse the whole graph.  In
