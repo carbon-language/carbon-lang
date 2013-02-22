@@ -63,9 +63,8 @@ class LogTestCase(TestBase):
             "HandleCommand, command succeeded\n",
             ]
 
-        # com.apple.main-thread identifier appears on darwin only
         if sys.platform.startswith("darwin"):
-            expected_log_lines = ['com.apple.main-thread ' + x for x in expected_log_lines]
+            expected_log_lines = [x for x in expected_log_lines]
 
         self.assertTrue (os.path.isfile (log_file))
 
