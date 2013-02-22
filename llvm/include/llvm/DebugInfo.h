@@ -203,6 +203,8 @@ namespace llvm {
     DIArray getSubprograms() const;
     DIArray getGlobalVariables() const;
 
+    StringRef getSplitDebugFilename() const { return getStringField(14); }
+
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
   };

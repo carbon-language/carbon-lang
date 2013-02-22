@@ -91,9 +91,12 @@ namespace llvm {
     ///                 by a tool analyzing generated debugging information.
     /// @param RV       This indicates runtime version for languages like 
     ///                 Objective-C.
+    /// @param SplitName The name of the file that we'll split debug info out
+    ///                  into.
     void createCompileUnit(unsigned Lang, StringRef File, StringRef Dir, 
-                           StringRef Producer,
-                           bool isOptimized, StringRef Flags, unsigned RV);
+                           StringRef Producer, bool isOptimized,
+                           StringRef Flags, unsigned RV,
+                           StringRef SplitName = StringRef());
 
     /// createFile - Create a file descriptor to hold debugging information
     /// for a file.
