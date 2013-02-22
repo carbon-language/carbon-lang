@@ -7022,17 +7022,13 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
       Type == E->getTypeInfoAsWritten() &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E);
-
-  // FIXME: Poor source location information here.
-  SourceLocation FakeLAngleLoc
-    = SemaRef.PP.getLocForEndOfToken(E->getOperatorLoc());
-  SourceLocation FakeRAngleLoc = E->getSubExpr()->getSourceRange().getBegin();
   return getDerived().RebuildCXXNamedCastExpr(E->getOperatorLoc(),
                                               E->getStmtClass(),
-                                              FakeLAngleLoc,
+                                              E->getAngleBrackets().getBegin(),
                                               Type,
-                                              FakeRAngleLoc,
-                                              FakeRAngleLoc,
+                                              E->getAngleBrackets().getEnd(),
+                                              // FIXME. this should be '(' location
+                                              E->getAngleBrackets().getEnd(),
                                               SubExpr.get(),
                                               E->getRParenLoc());
 }

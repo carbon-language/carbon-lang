@@ -1147,6 +1147,8 @@ void ASTStmtReader::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
   SourceRange R = ReadSourceRange(Record, Idx);
   E->Loc = R.getBegin();
   E->RParenLoc = R.getEnd();
+  R = ReadSourceRange(Record, Idx);
+  E->AngleBrackets = R;
 }
 
 void ASTStmtReader::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {

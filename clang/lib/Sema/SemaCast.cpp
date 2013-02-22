@@ -258,7 +258,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     }
     return Op.complete(CXXConstCastExpr::Create(Context, Op.ResultType,
                                   Op.ValueKind, Op.SrcExpr.take(), DestTInfo,
-                                                OpLoc, Parens.getEnd()));
+                                                OpLoc, Parens.getEnd(),
+                                                AngleBrackets));
 
   case tok::kw_dynamic_cast: {
     if (!TypeDependent) {
@@ -269,7 +270,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Op.complete(CXXDynamicCastExpr::Create(Context, Op.ResultType,
                                     Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
                                                   &Op.BasePath, DestTInfo,
-                                                  OpLoc, Parens.getEnd()));
+                                                  OpLoc, Parens.getEnd(),
+                                                  AngleBrackets));
   }
   case tok::kw_reinterpret_cast: {
     if (!TypeDependent) {
@@ -280,7 +282,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Op.complete(CXXReinterpretCastExpr::Create(Context, Op.ResultType,
                                     Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
                                                       0, DestTInfo, OpLoc,
-                                                      Parens.getEnd()));
+                                                      Parens.getEnd(),
+                                                      AngleBrackets));
   }
   case tok::kw_static_cast: {
     if (!TypeDependent) {
@@ -292,7 +295,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Op.complete(CXXStaticCastExpr::Create(Context, Op.ResultType,
                                    Op.ValueKind, Op.Kind, Op.SrcExpr.take(),
                                                  &Op.BasePath, DestTInfo,
-                                                 OpLoc, Parens.getEnd()));
+                                                 OpLoc, Parens.getEnd(),
+                                                 AngleBrackets));
   }
   }
 }

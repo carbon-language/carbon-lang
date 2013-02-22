@@ -179,14 +179,16 @@ class CXXNamedCastExpr : public ExplicitCastExpr {
 private:
   SourceLocation Loc; // the location of the casting op
   SourceLocation RParenLoc; // the location of the right parenthesis
+  SourceRange AngleBrackets; // range for '<' '>'
 
 protected:
   CXXNamedCastExpr(StmtClass SC, QualType ty, ExprValueKind VK,
                    CastKind kind, Expr *op, unsigned PathSize,
                    TypeSourceInfo *writtenTy, SourceLocation l,
-                   SourceLocation RParenLoc)
+                   SourceLocation RParenLoc,
+                   SourceRange AngleBrackets)
     : ExplicitCastExpr(SC, ty, VK, kind, op, PathSize, writtenTy), Loc(l),
-      RParenLoc(RParenLoc) {}
+      RParenLoc(RParenLoc), AngleBrackets(AngleBrackets) {}
 
   explicit CXXNamedCastExpr(StmtClass SC, EmptyShell Shell, unsigned PathSize)
     : ExplicitCastExpr(SC, Shell, PathSize) { }
@@ -205,6 +207,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceRange getAngleBrackets() const LLVM_READONLY { return AngleBrackets; }
 
   static bool classof(const Stmt *T) {
     switch (T->getStmtClass()) {
@@ -227,9 +230,10 @@ public:
 class CXXStaticCastExpr : public CXXNamedCastExpr {
   CXXStaticCastExpr(QualType ty, ExprValueKind vk, CastKind kind, Expr *op,
                     unsigned pathSize, TypeSourceInfo *writtenTy,
-                    SourceLocation l, SourceLocation RParenLoc)
+                    SourceLocation l, SourceLocation RParenLoc,
+                    SourceRange AngleBrackets)
     : CXXNamedCastExpr(CXXStaticCastExprClass, ty, vk, kind, op, pathSize,
-                       writtenTy, l, RParenLoc) {}
+                       writtenTy, l, RParenLoc, AngleBrackets) {}
 
   explicit CXXStaticCastExpr(EmptyShell Empty, unsigned PathSize)
     : CXXNamedCastExpr(CXXStaticCastExprClass, Empty, PathSize) { }
@@ -239,7 +243,8 @@ public:
                                    ExprValueKind VK, CastKind K, Expr *Op,
                                    const CXXCastPath *Path,
                                    TypeSourceInfo *Written, SourceLocation L,
-                                   SourceLocation RParenLoc);
+                                   SourceLocation RParenLoc,
+                                   SourceRange AngleBrackets);
   static CXXStaticCastExpr *CreateEmpty(ASTContext &Context,
                                         unsigned PathSize);
 
@@ -257,9 +262,10 @@ public:
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
   CXXDynamicCastExpr(QualType ty, ExprValueKind VK, CastKind kind,
                      Expr *op, unsigned pathSize, TypeSourceInfo *writtenTy,
-                     SourceLocation l, SourceLocation RParenLoc)
+                     SourceLocation l, SourceLocation RParenLoc,
+                     SourceRange AngleBrackets)
     : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, VK, kind, op, pathSize,
-                       writtenTy, l, RParenLoc) {}
+                       writtenTy, l, RParenLoc, AngleBrackets) {}
 
   explicit CXXDynamicCastExpr(EmptyShell Empty, unsigned pathSize)
     : CXXNamedCastExpr(CXXDynamicCastExprClass, Empty, pathSize) { }
@@ -269,7 +275,8 @@ public:
                                     ExprValueKind VK, CastKind Kind, Expr *Op,
                                     const CXXCastPath *Path,
                                     TypeSourceInfo *Written, SourceLocation L,
-                                    SourceLocation RParenLoc);
+                                    SourceLocation RParenLoc,
+                                    SourceRange AngleBrackets);
 
   static CXXDynamicCastExpr *CreateEmpty(ASTContext &Context,
                                          unsigned pathSize);
@@ -291,9 +298,10 @@ class CXXReinterpretCastExpr : public CXXNamedCastExpr {
   CXXReinterpretCastExpr(QualType ty, ExprValueKind vk, CastKind kind,
                          Expr *op, unsigned pathSize,
                          TypeSourceInfo *writtenTy, SourceLocation l,
-                         SourceLocation RParenLoc)
+                         SourceLocation RParenLoc,
+                         SourceRange AngleBrackets)
     : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, vk, kind, op,
-                       pathSize, writtenTy, l, RParenLoc) {}
+                       pathSize, writtenTy, l, RParenLoc, AngleBrackets) {}
 
   CXXReinterpretCastExpr(EmptyShell Empty, unsigned pathSize)
     : CXXNamedCastExpr(CXXReinterpretCastExprClass, Empty, pathSize) { }
@@ -303,7 +311,8 @@ public:
                                         ExprValueKind VK, CastKind Kind,
                                         Expr *Op, const CXXCastPath *Path,
                                  TypeSourceInfo *WrittenTy, SourceLocation L,
-                                        SourceLocation RParenLoc);
+                                        SourceLocation RParenLoc,
+                                        SourceRange AngleBrackets);
   static CXXReinterpretCastExpr *CreateEmpty(ASTContext &Context,
                                              unsigned pathSize);
 
@@ -320,9 +329,9 @@ public:
 class CXXConstCastExpr : public CXXNamedCastExpr {
   CXXConstCastExpr(QualType ty, ExprValueKind VK, Expr *op,
                    TypeSourceInfo *writtenTy, SourceLocation l,
-                   SourceLocation RParenLoc)
+                   SourceLocation RParenLoc, SourceRange AngleBrackets)
     : CXXNamedCastExpr(CXXConstCastExprClass, ty, VK, CK_NoOp, op,
-                       0, writtenTy, l, RParenLoc) {}
+                       0, writtenTy, l, RParenLoc, AngleBrackets) {}
 
   explicit CXXConstCastExpr(EmptyShell Empty)
     : CXXNamedCastExpr(CXXConstCastExprClass, Empty, 0) { }
@@ -331,7 +340,8 @@ public:
   static CXXConstCastExpr *Create(ASTContext &Context, QualType T,
                                   ExprValueKind VK, Expr *Op,
                                   TypeSourceInfo *WrittenTy, SourceLocation L,
-                                  SourceLocation RParenLoc);
+                                  SourceLocation RParenLoc,
+                                  SourceRange AngleBrackets);
   static CXXConstCastExpr *CreateEmpty(ASTContext &Context);
 
   static bool classof(const Stmt *T) {
