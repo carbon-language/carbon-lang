@@ -892,6 +892,8 @@ MemRegionManager::getCXXTempObjectRegion(Expr const *E,
 static bool isValidBaseClass(const CXXRecordDecl *BaseClass,
                              const TypedValueRegion *Super,
                              bool IsVirtual) {
+  BaseClass = BaseClass->getCanonicalDecl();
+
   const CXXRecordDecl *Class = Super->getValueType()->getAsCXXRecordDecl();
   if (!Class)
     return true;
@@ -913,8 +915,6 @@ const CXXBaseObjectRegion *
 MemRegionManager::getCXXBaseObjectRegion(const CXXRecordDecl *RD,
                                          const MemRegion *Super,
                                          bool IsVirtual) {
-  RD = RD->getCanonicalDecl();
-
   if (isa<TypedValueRegion>(Super)) {
     assert(isValidBaseClass(RD, dyn_cast<TypedValueRegion>(Super), IsVirtual));
     (void)isValidBaseClass;

@@ -333,3 +333,33 @@ namespace LazyBindings {
   }
 #endif
 }
+
+namespace Redeclaration {
+  class Base;
+
+  class Base {
+  public:
+    virtual int foo();
+    int get() { return value; }
+
+    int value;
+  };
+
+  class Derived : public Base {
+  public:
+    virtual int bar();
+  };
+
+  void test(Derived d) {
+    d.foo(); // don't crash
+    d.bar(); // sanity check
+
+    Base &b = d;
+    b.foo(); // don't crash
+
+    d.value = 42; // don't crash
+    clang_analyzer_eval(d.get() == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(b.get() == 42); // expected-warning{{TRUE}}
+  }
+};
+
