@@ -540,11 +540,11 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     // may change if we are interrupted and we continue after an async packet...
     std::string continue_packet(payload, packet_length);
     
-    bool got_stdout = false;
+    bool got_async_packet = false;
     
     while (state == eStateRunning)
     {
-        if (!got_stdout)
+        if (!got_async_packet)
         {
             if (log)
                 log->Printf ("GDBRemoteCommunicationClient::%s () sending continue packet: %s", __FUNCTION__, continue_packet.c_str());
@@ -554,7 +554,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
             m_private_is_running.SetValue (true, eBroadcastAlways);
         }
         
-        got_stdout = false;
+        got_async_packet = false;
 
         if (log)
             log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%s)", __FUNCTION__, continue_packet.c_str());
@@ -737,7 +737,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                 case 'O':
                     // STDOUT
                     {
-                        got_stdout = true;
+                        got_async_packet = true;
                         std::string inferior_stdout;
                         inferior_stdout.reserve(response.GetBytesLeft () / 2);
                         char ch;
@@ -750,6 +750,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                 case 'A':
                     // Async miscellaneous reply. Right now, only profile data is coming through this channel.
                     {
+                        got_async_packet = true;
                         std::string input = response.GetStringRef().substr(1); // '1' to move beyond 'A'
                         if (m_partial_profile_data.length() > 0)
                         {
