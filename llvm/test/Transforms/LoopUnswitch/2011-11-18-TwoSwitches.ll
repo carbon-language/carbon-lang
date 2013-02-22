@@ -30,7 +30,7 @@
 ; CHECK-NEXT:     i32 1, label %inc.us.us
 
 ; CHECK:      inc.us.us:                                        ; preds = %second_switch.us.us, %loop_begin.us.us
-; CHECK-NEXT:   call void @incf() noreturn nounwind
+; CHECK-NEXT:   call void @incf() [[NOR_NUW:#[0-9]+]]
 ; CHECK-NEXT:   br label %loop_begin.backedge.us.us
 
 ; CHECK:      .split.us.split:                                  ; preds = %.split.us..split.us.split_crit_edge
@@ -50,7 +50,7 @@
 ; CHECK-NEXT:   br i1 true, label %us-unreachable8, label %inc.us
 
 ; CHECK:      inc.us:                                           ; preds = %second_switch.us.inc.us_crit_edge, %loop_begin.us
-; CHECK-NEXT:   call void @incf() noreturn nounwind
+; CHECK-NEXT:   call void @incf() [[NOR_NUW]]
 ; CHECK-NEXT:   br label %loop_begin.backedge.us
 
 ; CHECK:      .split:                                           ; preds = %..split_crit_edge
@@ -75,7 +75,7 @@
 ; CHECK-NEXT:   ]
 
 ; CHECK:      inc.us4:                                          ; preds = %loop_begin.inc_crit_edge.us, %second_switch.us3
-; CHECK-NEXT:   call void @incf() noreturn nounwind
+; CHECK-NEXT:   call void @incf() [[NOR_NUW]]
 ; CHECK-NEXT:   br label %loop_begin.backedge.us6
 
 ; CHECK:      loop_begin.inc_crit_edge.us:                      ; preds = %loop_begin.us1
@@ -136,3 +136,6 @@ loop_exit:
 
 declare void @incf() noreturn
 declare void @decf() noreturn
+
+; CHECK: attributes #0 = { noreturn }
+; CHECK: attributes [[NOR_NUW]] = { noreturn nounwind }

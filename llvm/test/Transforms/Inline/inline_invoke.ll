@@ -330,7 +330,7 @@ terminate:
 ; CHECK-NEXT: br label %[[JOIN]]
 ; CHECK:    [[JOIN]]:
 ; CHECK-NEXT: phi { i8*, i32 }
-; CHECK-NEXT: call void @opaque() nounwind
+; CHECK-NEXT: call void @opaque() [[NUW:#[0-9]+]]
 ; CHECK-NEXT: br label %[[FIX:[^\s]+]]
 ; CHECK:    lpad:
 ; CHECK-NEXT: landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
@@ -340,3 +340,8 @@ terminate:
 ; CHECK-NEXT: [[T1:%.*]] = phi i32 [ 0, %[[JOIN]] ], [ 1, %lpad ]
 ; CHECK-NEXT: call void @use(i32 [[T1]])
 ; CHECK-NEXT: call void @_ZSt9terminatev()
+
+; CHECK: attributes [[NUW]] = { nounwind }
+; CHECK: attributes #1 = { nounwind readnone }
+; CHECK: attributes #2 = { ssp uwtable }
+; CHECK: attributes #3 = { noreturn nounwind }

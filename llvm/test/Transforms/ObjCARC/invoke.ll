@@ -12,10 +12,10 @@ declare i8* @returner()
 
 ; CHECK: define void @test0(
 ; CHECK: invoke.cont:
-; CHECK:   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
+; CHECK:   call void @objc_release(i8* %zipFile) [[NUW:#[0-9]+]], !clang.imprecise_release !0
 ; CHECK:   ret void
 ; CHECK: lpad:
-; CHECK:   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
+; CHECK:   call void @objc_release(i8* %zipFile) [[NUW]], !clang.imprecise_release !0
 ; CHECK:   ret void
 define void @test0(i8* %zipFile) {
 entry:
@@ -39,11 +39,11 @@ lpad:                                             ; preds = %entry
 
 ; CHECK: define void @test1(
 ; CHECK: invoke.cont:
-; CHECK:   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
+; CHECK:   call void @objc_release(i8* %zipFile) [[NUW]], !clang.imprecise_release !0
 ; CHECK:   call void @callee()
 ; CHECK:   br label %done
 ; CHECK: lpad:
-; CHECK:   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
+; CHECK:   call void @objc_release(i8* %zipFile) [[NUW]], !clang.imprecise_release !0
 ; CHECK:   call void @callee()
 ; CHECK:   br label %done
 ; CHECK: done:
@@ -108,7 +108,7 @@ finally.rethrow:                                  ; preds = %invoke.cont, %entry
 
 ; CHECK: define void @test3(
 ; CHECK: if.end:
-; CHECK-NEXT: call void @objc_release(i8* %p) nounwind
+; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
 define void @test3(i8* %p, i1 %b) {
 entry:
@@ -140,10 +140,10 @@ if.end:
 ; CHECK: lpad:
 ; CHECK-NEXT: %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
 ; CHECK-NEXT: cleanup
-; CHECK-NEXT: call void @objc_release(i8* %p) nounwind
+; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
 ; CHECK: if.end:
-; CHECK-NEXT: call void @objc_release(i8* %p) nounwind
+; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
 define void @test4(i8* %p, i1 %b) {
 entry:
@@ -214,5 +214,7 @@ if.end:
 
 declare i32 @__gxx_personality_v0(...)
 declare i32 @__objc_personality_v0(...)
+
+; CHECK: attributes [[NUW]] = { nounwind }
 
 !0 = metadata !{}

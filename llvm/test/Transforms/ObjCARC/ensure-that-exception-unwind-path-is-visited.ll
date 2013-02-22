@@ -42,7 +42,7 @@ entry:
 ; CHECK: call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1)
   %call = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1), !dbg !37, !clang.arc.no_objc_arc_exceptions !38
   call void @llvm.dbg.value(metadata !{i8* %call}, i64 0, metadata !12), !dbg !37
-; CHECK: call i8* @objc_retain(i8* %call) nounwind
+; CHECK: call i8* @objc_retain(i8* %call) [[NUW:#[0-9]+]]
   %tmp3 = call i8* @objc_retain(i8* %call) nounwind, !dbg !39
   call void @llvm.dbg.value(metadata !{i8* %call}, i64 0, metadata !25), !dbg !39
   invoke fastcc void @ThrowFunc(i8* %call)
@@ -103,6 +103,12 @@ declare void @objc_release(i8*) nonlazybind
 declare void @NSLog(i8*, ...)
 
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+
+; CHECK: attributes #0 = { ssp uwtable }
+; CHECK: attributes #1 = { nounwind readnone }
+; CHECK: attributes #2 = { nonlazybind }
+; CHECK: attributes #3 = { noinline ssp uwtable }
+; CHECK: attributes [[NUW]] = { nounwind }
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!33, !34, !35, !36}

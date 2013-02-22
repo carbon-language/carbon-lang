@@ -6,7 +6,7 @@
 
 ; CHECK: define i32 @main() #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT: %call2 = tail call i32 @wwrite(i64 0) nounwind
+; CHECK-NEXT: %call2 = tail call i32 @wwrite(i64 0) [[NUW:#[0-9]+]]
 ; CHECK-NEXT: ret i32 123
 
 define i32 @main() noreturn nounwind {
@@ -31,3 +31,4 @@ return:
 
 ; CHECK: attributes #0 = { noreturn nounwind }
 ; CHECK: attributes #1 = { nounwind readnone }
+; CHECK: attributes [[NUW]] = { nounwind }

@@ -88,7 +88,7 @@ for.end:                                          ; preds = %for.body
 
 ;      CHECK: define void @test3(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) [[NUW:#[0-9]+]]
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
 ;      CHECK: exit:
@@ -114,7 +114,7 @@ exit:
 
 ;      CHECK: define void @test4(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) [[NUW]]
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
 ;      CHECK: exit:
@@ -144,7 +144,7 @@ exit:
 
 ;      CHECK: define void @test5(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) [[NUW]]
 ; CHECK-NEXT:   call void @callee()
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
@@ -178,7 +178,7 @@ exit:
 
 ;      CHECK: define void @test6(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) [[NUW]]
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
 ;      CHECK: exit:
@@ -211,7 +211,7 @@ exit:
 
 ;      CHECK: define void @test7(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) [[NUW]]
 ; CHECK-NEXT:   call void @callee()
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
@@ -244,7 +244,7 @@ exit:
 
 ;      CHECK: define void @test8(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %a) [[NUW]]
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
 ;      CHECK: exit:
@@ -364,13 +364,13 @@ exit:
 
 ;      CHECK: define void @test12(i8* %a) #0 {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %outer = tail call i8* @objc_retain(i8* %a) nounwind
-; CHECK-NEXT:   %inner = tail call i8* @objc_retain(i8* %a) nounwind
+; CHECK-NEXT:   %outer = tail call i8* @objc_retain(i8* %a) [[NUW]]
+; CHECK-NEXT:   %inner = tail call i8* @objc_retain(i8* %a) [[NUW]]
 ; CHECK-NEXT:   br label %loop
 ;  CHECK-NOT:   @objc_
 ;      CHECK: exit:
-; CHECK-NEXT: call void @objc_release(i8* %a) nounwind
-; CHECK-NEXT: call void @objc_release(i8* %a) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT: call void @objc_release(i8* %a) [[NUW]]
+; CHECK-NEXT: call void @objc_release(i8* %a) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test12(i8* %a) nounwind {
@@ -394,6 +394,6 @@ exit:
   ret void
 }
 
-; CHECK: attributes #0 = { nounwind }
+; CHECK: attributes [[NUW]] = { nounwind }
 
 !0 = metadata !{}

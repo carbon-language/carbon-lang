@@ -4,7 +4,7 @@
 ; and various scary looking things and fold it into an objc_retainAutorelease.
 
 ; CHECK: bb57:
-; CHECK: tail call i8* @objc_retainAutorelease(i8* %tmp71x) nounwind
+; CHECK: tail call i8* @objc_retainAutorelease(i8* %tmp71x) [[NUW:#[0-9]+]]
 ; CHECK: bb99:
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
@@ -219,3 +219,5 @@ bb104:                                            ; preds = %bb99, %bb57
   tail call void @objc_release(i8* %tmp107) nounwind
   ret %14* %tmp106
 }
+
+; CHECK: attributes [[NUW]] = { nounwind }

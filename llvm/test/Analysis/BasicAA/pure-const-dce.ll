@@ -4,11 +4,11 @@
 
 ; CHECK:      @test
 ; CHECK:      entry
-; CHECK:      %tmp0 = call i32 @TestConst(i32 5) readnone
-; CHECK-NEXT: %tmp1 = call i32 @TestPure(i32 6) readonly
+; CHECK:      %tmp0 = call i32 @TestConst(i32 5) [[READNONE:#[0-9]+]]
+; CHECK-NEXT: %tmp1 = call i32 @TestPure(i32 6) [[READONLY:#[0-9]+]]
 ; CHECK-NEXT: %tmp2 = call i32 @TestNone(i32 7)
 ; CHECK-NEXT: store i32 1, i32* @g
-; CHECK-NEXT: %tmp5 = call i32 @TestPure(i32 6) readonly
+; CHECK-NEXT: %tmp5 = call i32 @TestPure(i32 6) [[READONLY]]
 ; CHECK-NEXT: %tmp7 = call i32 @TestNone(i32 7)
 ; CHECK-NEXT: %tmp8 = call i32 @TestNone(i32 7)
 ; CHECK-NEXT: %sum0 = add i32 %tmp0, %tmp1
@@ -50,5 +50,5 @@ declare i32 @TestPure(i32) readonly
 
 declare i32 @TestNone(i32)
 
-; CHECK: attributes #0 = { readnone }
-; CHECK: attributes #1 = { readonly }
+; CHECK: attributes [[READNONE]] = { readnone }
+; CHECK: attributes [[READONLY]] = { readonly }

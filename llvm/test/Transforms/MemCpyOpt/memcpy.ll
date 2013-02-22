@@ -123,7 +123,7 @@ entry:
   %call = call i32 @g(%struct.p* align 8 byval %agg.tmp) nounwind
   ret i32 %call
 ; CHECK: @test7
-; CHECK: call i32 @g(%struct.p* byval align 8 %q) nounwind
+; CHECK: call i32 @g(%struct.p* byval align 8 %q) [[NUW:#[0-9]+]]
 }
 
 declare i32 @g(%struct.p* align 8 byval)
@@ -170,3 +170,7 @@ entry:
 
 declare void @f1(%struct.big* sret)
 declare void @f2(%struct.big*)
+
+; CHECK: attributes [[NUW]] = { nounwind }
+; CHECK: attributes #1 = { nounwind ssp }
+; CHECK: attributes #2 = { nounwind ssp uwtable }

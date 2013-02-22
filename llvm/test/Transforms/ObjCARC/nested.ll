@@ -770,9 +770,9 @@ forcoll.empty:
 @__block_d_tmp5 = external hidden constant { i64, i64, i8*, i8*, i8*, i8* }
 
 ; CHECK: define void @test11(
-; CHECK: tail call i8* @objc_retain(i8* %call) nounwind
-; CHECK: tail call i8* @objc_retain(i8* %call) nounwind
-; CHECK: call void @objc_release(i8* %call) nounwind, !clang.imprecise_release !0
+; CHECK: tail call i8* @objc_retain(i8* %call) [[NUW:#[0-9]+]]
+; CHECK: tail call i8* @objc_retain(i8* %call) [[NUW]]
+; CHECK: call void @objc_release(i8* %call) [[NUW]], !clang.imprecise_release !0
 ; CHECK: }
 define void @test11() {
 entry:
@@ -820,3 +820,6 @@ entry:
   call void @objc_release(i8* %call) nounwind, !clang.imprecise_release !0
   ret void
 }
+
+; CHECK: attributes [[NUW]] = { nounwind }
+; CHECK: attributes #1 = { nonlazybind }

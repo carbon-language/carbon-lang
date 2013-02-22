@@ -554,13 +554,15 @@ void SlotTracker::processFunction() {
               if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
                 CreateMetadataSlot(N);
 
-        // Add all the call attributes to the table. This is important for
-        // inline ASM, which may have attributes but no declaration.
-        if (CI->isInlineAsm()) {
-          AttributeSet Attrs = CI->getAttributes().getFnAttributes();
-          if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
-            CreateAttributeSetSlot(Attrs);
-        }
+        // Add all the call attributes to the table.
+        AttributeSet Attrs = CI->getAttributes().getFnAttributes();
+        if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
+          CreateAttributeSetSlot(Attrs);
+      } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+        // Add all the call attributes to the table.
+        AttributeSet Attrs = II->getAttributes().getFnAttributes();
+        if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
+          CreateAttributeSetSlot(Attrs);
       }
 
       // Process metadata attached with this instruction.
@@ -1935,7 +1937,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
     Out << ')';
     if (PAL.hasAttributes(AttributeSet::FunctionIndex))
-      Out << ' ' << PAL.getAsString(AttributeSet::FunctionIndex);
+      Out << " #" << Machine.getAttributeGroupSlot(PAL.getFnAttributes());
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     Operand = II->getCalledValue();
     PointerType *PTy = cast<PointerType>(Operand->getType());
@@ -1975,7 +1977,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
     Out << ')';
     if (PAL.hasAttributes(AttributeSet::FunctionIndex))
-      Out << ' ' << PAL.getAsString(AttributeSet::FunctionIndex);
+      Out << " #" << Machine.getAttributeGroupSlot(PAL.getFnAttributes());
 
     Out << "\n          to ";
     writeOperand(II->getNormalDest(), true);

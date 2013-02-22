@@ -38,8 +38,8 @@ entry:
 }
 
 ; CHECK: define internal void @_GLOBAL__I_y()
-; CHECK: %0 = call i8* @objc_autoreleasePoolPush() nounwind
-; CHECK: call void @objc_autoreleasePoolPop(i8* %0) nounwind
+; CHECK: %0 = call i8* @objc_autoreleasePoolPush() [[NUW:#[0-9]+]]
+; CHECK: call void @objc_autoreleasePoolPop(i8* %0) [[NUW]]
 ; CHECK: }
 define internal void @_GLOBAL__I_y() {
 entry:
@@ -51,3 +51,5 @@ entry:
 
 declare i8* @objc_autoreleasePoolPush()
 declare void @objc_autoreleasePoolPop(i8*)
+
+; CHECK: attributes #0 = { nounwind }

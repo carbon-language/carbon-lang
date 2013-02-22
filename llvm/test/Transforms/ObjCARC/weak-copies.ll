@@ -19,7 +19,7 @@ target triple = "x86_64-apple-darwin11.0.0"
 ; CHECK:      define void @foo() {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %call = call i8* @bar()
-; CHECK-NEXT:   call void @use(i8* %call) nounwind
+; CHECK-NEXT:   call void @use(i8* %call) [[NUW:#[0-9]+]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @foo() {
@@ -84,6 +84,6 @@ declare i8* @objc_loadWeak(i8**)
 declare void @use(i8*) nounwind
 declare void @objc_destroyWeak(i8**)
 
-; CHECK: attributes #0 = { nounwind }
+; CHECK: attributes [[NUW]] = { nounwind }
 
 !0 = metadata !{}

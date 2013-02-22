@@ -57,7 +57,7 @@ define void @test2(i8** %p) {
 
 ; CHECK:      define void @test3(i8** %p) {
 ; CHECK-NEXT:   %x = call i8* @objc_loadWeak(i8** %p)
-; CHECK-NEXT:   call void @use_pointer(i8* %x) readonly
+; CHECK-NEXT:   call void @use_pointer(i8* %x) [[RO:#[0-9]+]]
 ; CHECK-NEXT:   %1 = tail call i8* @objc_retain(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   ret void
@@ -74,7 +74,7 @@ define void @test3(i8** %p) {
 
 ; CHECK:      define void @test4(i8** %p) {
 ; CHECK-NEXT:   %x = call i8* @objc_loadWeak(i8** %p)
-; CHECK-NEXT:   call void @use_pointer(i8* %x) readonly
+; CHECK-NEXT:   call void @use_pointer(i8* %x) [[RO]]
 ; CHECK-NEXT:   call void @callee()
 ; CHECK-NEXT:   %y = call i8* @objc_loadWeak(i8** %p)
 ; CHECK-NEXT:   call void @use_pointer(i8* %y)
@@ -133,3 +133,6 @@ define void @test7(i8** %p, i8* %n, i8** %q, i8* %m) {
   call void @use_pointer(i8* %y)
   ret void
 }
+
+; CHECK: attributes #0 = { nounwind }
+; CHECK: attributes [[RO]] = { readonly }

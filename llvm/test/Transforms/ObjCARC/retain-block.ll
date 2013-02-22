@@ -28,8 +28,8 @@ entry:
 ; optimization possible.
 
 ; CHECK: define void @test0_no_metadata(i8* %tmp) {
-; CHECK: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) nounwind
-; CHECK: tail call void @objc_release(i8* %tmp2) nounwind, !clang.imprecise_release !0
+; CHECK: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) [[NUW:#[0-9]+]]
+; CHECK: tail call void @objc_release(i8* %tmp2) [[NUW]], !clang.imprecise_release !0
 ; CHECK: }
 define void @test0_no_metadata(i8* %tmp) {
 entry:
@@ -43,8 +43,8 @@ entry:
 ; optimization possible.
 
 ; CHECK: define void @test0_escape(i8* %tmp, i8** %z) {
-; CHECK: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) nounwind, !clang.arc.copy_on_escape !0
-; CHECK: tail call void @objc_release(i8* %tmp2) nounwind, !clang.imprecise_release !0
+; CHECK: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) [[NUW]], !clang.arc.copy_on_escape !0
+; CHECK: tail call void @objc_release(i8* %tmp2) [[NUW]], !clang.imprecise_release !0
 ; CHECK: }
 define void @test0_escape(i8* %tmp, i8** %z) {
 entry:
@@ -58,8 +58,8 @@ entry:
 ; Same as test0_escape, but there's no intervening call.
 
 ; CHECK: define void @test0_just_escape(i8* %tmp, i8** %z) {
-; CHECK: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) nounwind, !clang.arc.copy_on_escape !0
-; CHECK: tail call void @objc_release(i8* %tmp2) nounwind, !clang.imprecise_release !0
+; CHECK: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) [[NUW]], !clang.arc.copy_on_escape !0
+; CHECK: tail call void @objc_release(i8* %tmp2) [[NUW]], !clang.imprecise_release !0
 ; CHECK: }
 define void @test0_just_escape(i8* %tmp, i8** %z) {
 entry:
@@ -73,9 +73,9 @@ entry:
 
 ; CHECK: define void @test1(i8* %tmp) {
 ; CHECK-NOT: @objc
-; CHECK: tail call i8* @objc_retain(i8* %tmp) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %tmp) [[NUW]]
 ; CHECK-NOT: @objc
-; CHECK: tail call void @objc_release(i8* %tmp) nounwind, !clang.imprecise_release !0
+; CHECK: tail call void @objc_release(i8* %tmp) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test1(i8* %tmp) {
@@ -95,10 +95,10 @@ entry:
 
 ; CHECK: define void @test1_no_metadata(i8* %tmp) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT: tail call i8* @objc_retainBlock(i8* %tmp) nounwind
+; CHECK-NEXT: tail call i8* @objc_retainBlock(i8* %tmp) [[NUW]]
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
-; CHECK-NEXT: tail call void @objc_release(i8* %tmp) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT: tail call void @objc_release(i8* %tmp) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test1_no_metadata(i8* %tmp) {
@@ -118,11 +118,11 @@ entry:
 
 ; CHECK: define void @test1_escape(i8* %tmp, i8** %z) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) nounwind, !clang.arc.copy_on_escape !0
+; CHECK-NEXT: %tmp2 = tail call i8* @objc_retainBlock(i8* %tmp) [[NUW]], !clang.arc.copy_on_escape !0
 ; CHECK-NEXT: store i8* %tmp2, i8** %z
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
 ; CHECK-NEXT: @use_pointer(i8* %tmp2)
-; CHECK-NEXT: tail call void @objc_release(i8* %tmp) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT: tail call void @objc_release(i8* %tmp) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test1_escape(i8* %tmp, i8** %z) {
@@ -136,3 +136,5 @@ entry:
   tail call void @objc_release(i8* %tmp) nounwind, !clang.imprecise_release !0
   ret void
 }
+
+; CHECK: attributes [[NUW]] = { nounwind }

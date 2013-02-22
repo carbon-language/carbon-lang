@@ -9,7 +9,7 @@
 @"\01L_OBJC_SELECTOR_REFERENCES_" = external hidden global i8*, section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
 
 ; CHECK: define void @test(
-; CHECK: %3 = call i8* @objc_retainBlock(i8* %2) nounwind
+; CHECK: %3 = call i8* @objc_retainBlock(i8* %2) [[NUW:#[0-9]+]]
 ; CHECK: @objc_msgSend
 ; CHECK-NEXT: @objc_release(i8* %3)
 define void @test(%0* %array) uwtable {
@@ -86,5 +86,9 @@ declare i8* @objc_retainBlock(i8*)
 declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
 
 declare void @objc_release(i8*)
+
+; CHECK: attributes #0 = { uwtable }
+; CHECK: attributes #1 = { nonlazybind }
+; CHECK: attributes [[NUW]] = { nounwind }
 
 !0 = metadata !{}

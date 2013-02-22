@@ -424,7 +424,7 @@ define i32 @test35() nounwind {
              i8* getelementptr (%t1* bitcast (%t0* @s to %t1*), i32 0, i32 1, i32 0)) nounwind
   ret i32 0
 ; CHECK: @test35
-; CHECK: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @"\01LC8", i64 0, i64 0), i8* getelementptr inbounds (%t0* @s, i64 0, i32 1, i64 0)) nounwind
+; CHECK: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @"\01LC8", i64 0, i64 0), i8* getelementptr inbounds (%t0* @s, i64 0, i32 1, i64 0)) [[NUW:#[0-9]+]]
 }
 
 ; Instcombine should constant-fold the GEP so that indices that have
@@ -508,3 +508,5 @@ define void @test39(%struct.ham* %arg, i8 %arg1) nounwind {
 ; CHECK: getelementptr inbounds %struct.ham* %arg, i64 0, i32 2
 ; CHECK: getelementptr inbounds i8* %tmp3, i64 -8
 }
+
+; CHECK: attributes [[NUW]] = { nounwind }

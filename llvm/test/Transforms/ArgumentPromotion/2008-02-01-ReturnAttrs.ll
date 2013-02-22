@@ -11,9 +11,9 @@ define i32 @f(i32 %x) {
 entry:
   %x_addr = alloca i32
   store i32 %x, i32* %x_addr, align 4
-; CHECK: %tmp1 = call i32 @deref(i32 %x_addr.val) nounwind
+; CHECK: %tmp1 = call i32 @deref(i32 %x_addr.val) [[NUW:#[0-9]+]]
   %tmp1 = call i32 @deref( i32* %x_addr ) nounwind
   ret i32 %tmp1
 }
 
-; CHECK: attributes #0 = { nounwind }
+; CHECK: attributes [[NUW]] = { nounwind }

@@ -30,7 +30,7 @@ define double @test_simplify2(double %x) {
 define float @test_simplify3(float %x) {
 ; CHECK: @test_simplify3
   %retval = call float @powf(float 2.0, float %x)
-; CHECK-NEXT: [[EXP2F:%[a-z0-9]+]] = call float @exp2f(float %x) nounwind readonly
+; CHECK-NEXT: [[EXP2F:%[a-z0-9]+]] = call float @exp2f(float %x) [[NUW_RO:#[0-9]+]]
   ret float %retval
 ; CHECK-NEXT: ret float [[EXP2F]]
 }
@@ -38,7 +38,7 @@ define float @test_simplify3(float %x) {
 define double @test_simplify4(double %x) {
 ; CHECK: @test_simplify4
   %retval = call double @pow(double 2.0, double %x)
-; CHECK-NEXT: [[EXP2:%[a-z0-9]+]] = call double @exp2(double %x) nounwind readonly
+; CHECK-NEXT: [[EXP2:%[a-z0-9]+]] = call double @exp2(double %x) [[NUW_RO]]
   ret double %retval
 ; CHECK-NEXT: ret double [[EXP2]]
 }
@@ -64,8 +64,8 @@ define double @test_simplify6(double %x) {
 define float @test_simplify7(float %x) {
 ; CHECK: @test_simplify7
   %retval = call float @powf(float %x, float 0.5)
-; CHECK-NEXT: [[SQRTF:%[a-z0-9]+]] = call float @sqrtf(float %x) nounwind readonly
-; CHECK-NEXT: [[FABSF:%[a-z0-9]+]] = call float @fabsf(float [[SQRTF]]) nounwind readonly
+; CHECK-NEXT: [[SQRTF:%[a-z0-9]+]] = call float @sqrtf(float %x) [[NUW_RO]]
+; CHECK-NEXT: [[FABSF:%[a-z0-9]+]] = call float @fabsf(float [[SQRTF]]) [[NUW_RO]]
 ; CHECK-NEXT: [[FCMP:%[a-z0-9]+]] = fcmp oeq float %x, 0xFFF0000000000000
 ; CHECK-NEXT: [[SELECT:%[a-z0-9]+]] = select i1 [[FCMP]], float 0x7FF0000000000000, float [[FABSF]]
   ret float %retval
@@ -75,8 +75,8 @@ define float @test_simplify7(float %x) {
 define double @test_simplify8(double %x) {
 ; CHECK: @test_simplify8
   %retval = call double @pow(double %x, double 0.5)
-; CHECK-NEXT: [[SQRT:%[a-z0-9]+]] = call double @sqrt(double %x) nounwind readonly
-; CHECK-NEXT: [[FABS:%[a-z0-9]+]] = call double @fabs(double [[SQRT]]) nounwind readonly
+; CHECK-NEXT: [[SQRT:%[a-z0-9]+]] = call double @sqrt(double %x) [[NUW_RO]]
+; CHECK-NEXT: [[FABS:%[a-z0-9]+]] = call double @fabs(double [[SQRT]]) [[NUW_RO]]
 ; CHECK-NEXT: [[FCMP:%[a-z0-9]+]] = fcmp oeq double %x, 0xFFF0000000000000
 ; CHECK-NEXT: [[SELECT:%[a-z0-9]+]] = select i1 [[FCMP]], double 0x7FF0000000000000, double [[FABS]]
   ret double %retval
@@ -150,3 +150,5 @@ define double @test_simplify16(double %x) {
   ret double %retval
 ; CHECK-NEXT: ret double [[RECIPROCAL]]
 }
+
+; CHECK: attributes [[NUW_RO]] = { nounwind readonly }

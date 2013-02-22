@@ -10,7 +10,7 @@ declare void @use_pointer(i8*)
 
 ; CHECK: define void @test0(
 ; CHECK: entry:
-; CHECK-NEXT: tail call void @objc_storeStrong(i8** @x, i8* %p) nounwind
+; CHECK-NEXT: tail call void @objc_storeStrong(i8** @x, i8* %p) [[NUW:#[0-9]+]]
 ; CHECK-NEXT: ret void
 define void @test0(i8* %p) {
 entry:
@@ -25,10 +25,10 @@ entry:
 
 ;      CHECK: define void @test1(i8* %p) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) nounwind
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK-NEXT:   %tmp = load volatile i8** @x, align 8
 ; CHECK-NEXT:   store i8* %0, i8** @x, align 8
-; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) nounwind
+; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) [[NUW]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test1(i8* %p) {
@@ -44,10 +44,10 @@ entry:
 
 ;      CHECK: define void @test2(i8* %p) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) nounwind
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
 ; CHECK-NEXT:   store volatile i8* %0, i8** @x, align 8
-; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) nounwind
+; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) [[NUW]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test2(i8* %p) {
@@ -64,11 +64,11 @@ entry:
 
 ; CHECK:      define void @test3(i8* %newValue) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
+; CHECK-NEXT:   %x0 = tail call i8* @objc_retain(i8* %newValue) [[NUW]]
 ; CHECK-NEXT:   %x1 = load i8** @x, align 8
 ; CHECK-NEXT:   store i8* %x0, i8** @x, align 8
 ; CHECK-NEXT:   tail call void @use_pointer(i8* %x1), !clang.arc.no_objc_arc_exceptions !0
-; CHECK-NEXT:   tail call void @objc_release(i8* %x1) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT:   tail call void @objc_release(i8* %x1) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test3(i8* %newValue) {
@@ -85,11 +85,11 @@ entry:
 
 ; CHECK:      define i1 @test4(i8* %newValue, i8* %foo) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
+; CHECK-NEXT:   %x0 = tail call i8* @objc_retain(i8* %newValue) [[NUW]]
 ; CHECK-NEXT:   %x1 = load i8** @x, align 8
 ; CHECK-NEXT:   store i8* %x0, i8** @x, align 8
 ; CHECK-NEXT:   %t = icmp eq i8* %x1, %foo
-; CHECK-NEXT:   tail call void @objc_release(i8* %x1) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT:   tail call void @objc_release(i8* %x1) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT:   ret i1 %t
 ; CHECK-NEXT: }
 define i1 @test4(i8* %newValue, i8* %foo) {
@@ -106,7 +106,7 @@ entry:
 
 ; CHECK: define i1 @test5(i8* %newValue, i8* %foo) {
 ; CHECK: %t = icmp eq i8* %x1, %foo
-; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) nounwind
+; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) [[NUW]]
 define i1 @test5(i8* %newValue, i8* %foo) {
 entry:
   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
@@ -121,7 +121,7 @@ entry:
 
 ; CHECK: define i1 @test6(i8* %newValue, i8* %foo) {
 ; CHECK: %t = icmp eq i8* %x1, %foo
-; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) nounwind
+; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) [[NUW]]
 define i1 @test6(i8* %newValue, i8* %foo) {
 entry:
   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
@@ -136,9 +136,9 @@ entry:
 
 ;      CHECK: define void @test7(
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) nounwind
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
-; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) nounwind
+; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) [[NUW]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test7(i8* %p) {
@@ -155,7 +155,7 @@ entry:
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
 ; CHECK-NEXT:   store i8* %p, i8** @x, align 8
-; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) nounwind
+; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) [[NUW]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test8(i8* %p) {
@@ -167,3 +167,5 @@ entry:
 }
 
 !0 = metadata !{}
+
+; CHECK: attributes [[NUW]] = { nounwind }

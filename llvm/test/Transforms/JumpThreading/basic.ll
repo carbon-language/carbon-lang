@@ -497,8 +497,8 @@ l2:
   br label %l3
 
 l3:
-; CHECK: call void @g() noduplicate
-; CHECK-NOT: call void @g() noduplicate
+; CHECK: call void @g() [[NOD:#[0-9]+]]
+; CHECK-NOT: call void @g() [[NOD]]
   call void @g() noduplicate
   %y = icmp ult i32 %p, 5
   br i1 %y, label %l4, label %l5
@@ -512,3 +512,5 @@ l5:
   ret void
 ; CHECK: }
 }
+
+; CHECK: attributes [[NOD]] = { noduplicate }

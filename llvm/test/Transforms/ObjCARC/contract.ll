@@ -34,7 +34,7 @@ entry:
 ; Merge objc_retain and objc_autorelease into objc_retainAutorelease.
 
 ; CHECK: define void @test2(
-; CHECK: tail call i8* @objc_retainAutorelease(i8* %x) nounwind
+; CHECK: tail call i8* @objc_retainAutorelease(i8* %x) [[NUW:#[0-9]+]]
 ; CHECK: }
 define void @test2(i8* %x) nounwind {
 entry:
@@ -47,7 +47,7 @@ entry:
 ; Same as test2 but the value is returned. Do an RV optimization.
 
 ; CHECK: define i8* @test2b(
-; CHECK: tail call i8* @objc_retainAutoreleaseReturnValue(i8* %x) nounwind
+; CHECK: tail call i8* @objc_retainAutoreleaseReturnValue(i8* %x) [[NUW]]
 ; CHECK: }
 define i8* @test2b(i8* %x) nounwind {
 entry:
@@ -59,7 +59,7 @@ entry:
 ; Merge a retain,autorelease pair around a call.
 
 ; CHECK: define void @test3(
-; CHECK: tail call i8* @objc_retainAutorelease(i8* %x) nounwind
+; CHECK: tail call i8* @objc_retainAutorelease(i8* %x) [[NUW]]
 ; CHECK: @use_pointer(i8* %0)
 ; CHECK: }
 define void @test3(i8* %x, i64 %n) {
@@ -75,7 +75,7 @@ entry:
 
 ; CHECK: define void @test4(
 ; CHECK-NEXT: entry:
-; CHECK-NEXT: @objc_retainAutorelease(i8* %x) nounwind
+; CHECK-NEXT: @objc_retainAutorelease(i8* %x) [[NUW]]
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @objc_release
 ; CHECK-NEXT: ret void
@@ -92,9 +92,9 @@ entry:
 ; Don't merge retain and autorelease if they're not control-equivalent.
 
 ; CHECK: define void @test5(
-; CHECK: tail call i8* @objc_retain(i8* %p) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK: true:
-; CHECK: call i8* @objc_autorelease(i8* %0) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %0) [[NUW]]
 ; CHECK: }
 define void @test5(i8* %p, i1 %a) {
 entry:
@@ -119,8 +119,8 @@ false:
 ; Those entrypoints don't exist yet though.
 
 ; CHECK: define i8* @test6(
-; CHECK: call i8* @objc_retainAutoreleasedReturnValue(i8* %p) nounwind
-; CHECK: %t = tail call i8* @objc_autoreleaseReturnValue(i8* %1) nounwind
+; CHECK: call i8* @objc_retainAutoreleasedReturnValue(i8* %p) [[NUW]]
+; CHECK: %t = tail call i8* @objc_autoreleaseReturnValue(i8* %1) [[NUW]]
 ; CHECK: }
 define i8* @test6() {
   %p = call i8* @returner()
@@ -161,3 +161,5 @@ return:                                           ; preds = %if.then, %entry
   %retval = phi i8* [ %c, %if.then ], [ null, %entry ]
   ret i8* %retval
 }
+
+; CHECK: attributes [[NUW]] = { nounwind }

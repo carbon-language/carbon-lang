@@ -50,7 +50,7 @@ entry:
   %b = add <4 x i32> zeroinitializer, %a
   ret <4 x i32> %b
 ; CHECK: entry:
-; CHECK-NEXT: %a = tail call <4 x i32> @llvm.arm.neon.vmulls.v4i32(<4 x i16> <i16 2, i16 2, i16 2, i16 2>, <4 x i16> %x) nounwind
+; CHECK-NEXT: %a = tail call <4 x i32> @llvm.arm.neon.vmulls.v4i32(<4 x i16> <i16 2, i16 2, i16 2, i16 2>, <4 x i16> %x) [[NUW:#[0-9]+]]
 ; CHECK-NEXT: ret <4 x i32> %a
 }
 
@@ -66,3 +66,7 @@ entry:
 
 declare <4 x i32> @llvm.arm.neon.vmulls.v4i32(<4 x i16>, <4 x i16>) nounwind readnone
 declare <4 x i32> @llvm.arm.neon.vmullu.v4i32(<4 x i16>, <4 x i16>) nounwind readnone
+
+; CHECK: attributes #0 = { nounwind readnone ssp }
+; CHECK: attributes #1 = { nounwind readnone }
+; CHECK: attributes [[NUW]] = { nounwind }

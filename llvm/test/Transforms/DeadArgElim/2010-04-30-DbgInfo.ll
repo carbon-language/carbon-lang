@@ -8,7 +8,7 @@ entry:
   call void @llvm.dbg.value(metadata !{i32 %len}, i64 0, metadata !10)
   call void @llvm.dbg.value(metadata !{i32 %hash}, i64 0, metadata !11)
   call void @llvm.dbg.value(metadata !{i32 %flags}, i64 0, metadata !12)
-; CHECK:  call fastcc i8* @add_name_internal(i8* %name, i32 %hash) nounwind, !dbg !13
+; CHECK:  call fastcc i8* @add_name_internal(i8* %name, i32 %hash) [[NUW:#[0-9]+]], !dbg !13
   %0 = call fastcc i8* @add_name_internal(i8* %name, i32 %len, i32 %hash, i8 zeroext 0, i32 %flags) nounwind, !dbg !13 ; <i8*> [#uses=1]
   ret i8* %0, !dbg !13
 }
@@ -41,6 +41,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; CHECK: attributes #0 = { nounwind ssp }
 ; CHECK: attributes #1 = { nounwind readnone }
 ; CHECK: attributes #2 = { noinline nounwind ssp }
+; CHECK: attributes [[NUW]] = { nounwind }
 
 !0 = metadata !{i32 524545, metadata !1, metadata !"name", metadata !2, i32 8, metadata !6} ; [ DW_TAG_arg_variable ]
 !1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"vfs_addname", metadata !"vfs_addname", metadata !"vfs_addname", metadata !2, i32 12, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false} ; [ DW_TAG_subprogram ]

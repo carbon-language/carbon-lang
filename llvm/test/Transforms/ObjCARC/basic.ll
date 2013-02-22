@@ -92,10 +92,10 @@ alt_return:
 
 ; CHECK: define void @test1b(
 ; CHECK: entry:
-; CHECK:   tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK:   tail call i8* @objc_retain(i8* %x) [[NUW:#[0-9]+]]
 ; CHECK-NOT: @objc_
 ; CHECK: if.end5:
-; CHECK:   tail call void @objc_release(i8* %x) nounwind, !clang.imprecise_release !0
+; CHECK:   tail call void @objc_release(i8* %x) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test1b(i8* %x, i1 %p, i1 %q) {
@@ -404,8 +404,8 @@ entry:
 ; a stack argument.
 
 ; CHECK: define void @test11(
-; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
-; CHECK: call i8* @objc_autorelease(i8* %0) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
+; CHECK: call i8* @objc_autorelease(i8* %0) [[NUW]]
 ; CHECK: }
 define void @test11(i8* %x) nounwind {
 entry:
@@ -431,8 +431,8 @@ entry:
 ; Same as test11 but the value is returned. Do an RV optimization.
 
 ; CHECK: define i8* @test11b(
-; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
-; CHECK: tail call i8* @objc_autoreleaseReturnValue(i8* %0) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
+; CHECK: tail call i8* @objc_autoreleaseReturnValue(i8* %0) [[NUW]]
 ; CHECK: }
 define i8* @test11b(i8* %x) nounwind {
 entry:
@@ -462,10 +462,10 @@ entry:
 ; Trivial retain,autorelease pair. Don't delete!
 
 ; CHECK: define void @test13(
-; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
-; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
+; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK: @use_pointer(i8* %x)
-; CHECK: call i8* @objc_autorelease(i8* %x) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %x) [[NUW]]
 ; CHECK: }
 define void @test13(i8* %x, i64 %n) {
 entry:
@@ -716,7 +716,7 @@ entry:
 ; Bitcast insertion
 
 ; CHECK: define void @test20(
-; CHECK: %tmp1 = tail call i8* @objc_retain(i8* %tmp) nounwind
+; CHECK: %tmp1 = tail call i8* @objc_retain(i8* %tmp) [[NUW]]
 ; CHECK-NEXT: invoke
 define void @test20(double* %self) {
 if.then12:
@@ -980,7 +980,7 @@ done:
 ; CHECK: call i8* @objc_retain(
 ; CHECK: call void @callee()
 ; CHECK: store
-; CHECK: call void @objc_release(i8* %p) nounwind, !clang.imprecise_release
+; CHECK: call void @objc_release(i8* %p) [[NUW]], !clang.imprecise_release
 ; CHECK: done:
 ; CHECK-NOT: @objc_
 ; CHECK: }
@@ -1450,9 +1450,9 @@ define void @test45(i8** %pp, i8** %qq) {
 ; Don't delete retain and autorelease here.
 
 ; CHECK: define void @test46(
-; CHECK: tail call i8* @objc_retain(i8* %p) nounwind
+; CHECK: tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK: true:
-; CHECK: call i8* @objc_autorelease(i8* %p) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %p) [[NUW]]
 define void @test46(i8* %p, i1 %a) {
 entry:
   call i8* @objc_retain(i8* %p)
@@ -1565,7 +1565,7 @@ define void @test53(void ()** %zz, i8** %pp) {
 
 ; CHECK: define void @test54(
 ; CHECK: call i8* @returner()
-; CHECK-NEXT: call void @objc_release(i8* %t) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT: call void @objc_release(i8* %t) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT: ret void
 define void @test54() {
   %t = call i8* @returner()
@@ -1595,10 +1595,10 @@ entry:
 ; CHECK: define void @test56(
 ; CHECK-NOT: @objc
 ; CHECK: if.then:
-; CHECK-NEXT: %0 = tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK-NEXT: %0 = tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NEXT: tail call void @use_pointer(i8* %x)
 ; CHECK-NEXT: tail call void @use_pointer(i8* %x)
-; CHECK-NEXT: tail call void @objc_release(i8* %x) nounwind, !clang.imprecise_release !0
+; CHECK-NEXT: tail call void @objc_release(i8* %x) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT: br label %if.end
 ; CHECK-NOT: @objc
 ; CHECK: }
@@ -1630,10 +1630,10 @@ if.end:                                           ; preds = %entry, %if.then
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
-; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
-; CHECK-NEXT:   call void @objc_release(i8* %x) nounwind
+; CHECK-NEXT:   call void @objc_release(i8* %x) [[NUW]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test57(i8* %x) nounwind {
@@ -1673,10 +1673,10 @@ entry:
 
 ; CHECK:      define void @test59(
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
-; CHECK-NEXT:   call void @objc_release(i8* %x) nounwind
+; CHECK-NEXT:   call void @objc_release(i8* %x) [[NUW]]
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test59(i8* %x) nounwind {
@@ -1875,8 +1875,8 @@ return:                                           ; preds = %if.then, %entry
 ; rdar://11931823
 
 ; CHECK: define void @test66(
-; CHECK:   %tmp7 = tail call i8* @objc_retain(i8* %cond) nounwind
-; CHECK:   tail call void @objc_release(i8* %cond) nounwind
+; CHECK:   %tmp7 = tail call i8* @objc_retain(i8* %cond) [[NUW]]
+; CHECK:   tail call void @objc_release(i8* %cond) [[NUW]]
 ; CHECK: }
 define void @test66(i8* %tmp5, i8* %bar, i1 %tobool, i1 %tobool1, i8* %call) {
 entry:
@@ -2224,3 +2224,6 @@ end:                                              ; preds = %if.end125, %if.end1
 !0 = metadata !{}
 
 declare i32 @__gxx_personality_v0(...)
+
+; CHECK: attributes #0 = { nounwind readnone }
+; CHECK: attributes [[NUW]] = { nounwind }
