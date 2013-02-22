@@ -1603,11 +1603,7 @@ void QualType::print(const Type *ty, Qualifiers qs,
                      raw_ostream &OS, const PrintingPolicy &policy,
                      const Twine &PlaceHolder) {
   SmallString<128> PHBuf;
-  StringRef PH;
-  if (PlaceHolder.isSingleStringRef())
-    PH = PlaceHolder.getSingleStringRef();
-  else
-    PH = PlaceHolder.toStringRef(PHBuf);
+  StringRef PH = PlaceHolder.toStringRef(PHBuf);
 
   TypePrinter(policy).print(ty, qs, OS, PH);
 }
