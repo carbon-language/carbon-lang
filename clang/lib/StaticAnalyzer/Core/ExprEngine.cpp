@@ -169,8 +169,8 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
 /// temporary region, and replace the value of the expression with that.
 static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
                                                      const LocationContext *LC,
-                                                     const Expr *E) {
-  SVal V = State->getSVal(E, LC);
+                                                     const Expr *Ex) {
+  SVal V = State->getSVal(Ex, LC);
 
   if (V.getAs<NonLoc>()) {
     ProgramStateManager &StateMgr = State->getStateManager();
@@ -180,7 +180,7 @@ static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
     // We need to be careful about treating a derived type's value as
     // bindings for a base type. Start by stripping and recording base casts.
     SmallVector<const CastExpr *, 4> Casts;
-    const Expr *Inner = E->IgnoreParens();
+    const Expr *Inner = Ex->IgnoreParens();
     while (const CastExpr *CE = dyn_cast<CastExpr>(Inner)) {
       if (CE->getCastKind() == CK_DerivedToBase ||
           CE->getCastKind() == CK_UncheckedDerivedToBase)
@@ -203,7 +203,7 @@ static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
       Reg = StoreMgr.evalDerivedToBase(Reg, *I);
     }
 
-    State = State->BindExpr(E, LC, Reg);
+    State = State->BindExpr(Ex, LC, Reg);
   }
 
   return State;
