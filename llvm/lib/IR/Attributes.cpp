@@ -394,7 +394,8 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::StackProtectStrong: return 1ULL << 35;
   case Attribute::ThreadSafety:    return 1ULL << 36;
   case Attribute::UninitializedChecks: return 1ULL << 37;
-  }
+  case Attribute::NoBuiltin:       return 1ULL << 38;
+ }
 }
 
 //===----------------------------------------------------------------------===//
