@@ -21,33 +21,34 @@
 
 using namespace llvm;
 
-void polly::MPZ_from_APInt (mpz_t v, const APInt apint, bool is_signed) {
+void polly::MPZ_from_APInt(mpz_t v, const APInt apint, bool is_signed) {
   // There is no sign taken from the data, rop will simply be a positive
   // integer. An application can handle any sign itself, and apply it for
   // instance with mpz_neg.
   APInt abs;
   if (is_signed)
-   abs  = apint.abs();
+    abs = apint.abs();
   else
-   abs = apint;
+    abs = apint;
 
   const uint64_t *rawdata = abs.getRawData();
   unsigned numWords = abs.getNumWords();
 
   // TODO: Check if this is true for all platforms.
-  mpz_import(v, numWords, 1, sizeof (uint64_t), 0, 0, rawdata);
+  mpz_import(v, numWords, 1, sizeof(uint64_t), 0, 0, rawdata);
 
-  if (is_signed && apint.isNegative()) mpz_neg(v, v);
+  if (is_signed && apint.isNegative())
+    mpz_neg(v, v);
 }
 
-APInt polly::APInt_from_MPZ (const mpz_t mpz) {
+APInt polly::APInt_from_MPZ(const mpz_t mpz) {
   uint64_t *p = NULL;
   size_t sz;
 
-  p = (uint64_t*) mpz_export(p, &sz, 1, sizeof(uint64_t), 0, 0, mpz);
+  p = (uint64_t *)mpz_export(p, &sz, 1, sizeof(uint64_t), 0, 0, mpz);
 
   if (p) {
-    APInt A((unsigned)mpz_sizeinbase(mpz, 2), (unsigned)sz , p);
+    APInt A((unsigned) mpz_sizeinbase(mpz, 2), (unsigned) sz, p);
     A = A.zext(A.getBitWidth() + 1);
     free(p);
 
@@ -61,9 +62,10 @@ APInt polly::APInt_from_MPZ (const mpz_t mpz) {
   }
 }
 
-template<typename ISLTy, typename ISL_CTX_GETTER, typename ISL_PRINTER>
-static inline std::string stringFromIslObjInternal(/*__isl_keep*/
-  ISLTy *isl_obj, ISL_CTX_GETTER ctx_getter_fn, ISL_PRINTER printer_fn) {
+template <typename ISLTy, typename ISL_CTX_GETTER, typename ISL_PRINTER>
+static inline std::string
+stringFromIslObjInternal(__isl_keep ISLTy *isl_obj,
+                         ISL_CTX_GETTER ctx_getter_fn, ISL_PRINTER printer_fn) {
   isl_ctx *ctx = ctx_getter_fn(isl_obj);
   isl_printer *p = isl_printer_to_str(ctx);
   printer_fn(p, isl_obj);
@@ -74,50 +76,48 @@ static inline std::string stringFromIslObjInternal(/*__isl_keep*/
   return string;
 }
 
-static inline isl_ctx *schedule_get_ctx(/*__isl_keep*/ isl_schedule *schedule) {
+static inline isl_ctx *schedule_get_ctx(__isl_keep isl_schedule *schedule) {
   return isl_union_map_get_ctx(isl_schedule_get_map(schedule));
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_map *map) {
-  return stringFromIslObjInternal(map, isl_map_get_ctx,
-                                  isl_printer_print_map);
+std::string polly::stringFromIslObj(__isl_keep isl_map *map) {
+  return stringFromIslObjInternal(map, isl_map_get_ctx, isl_printer_print_map);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_set *set) {
-  return stringFromIslObjInternal(set, isl_set_get_ctx,
-                                  isl_printer_print_set);
+std::string polly::stringFromIslObj(__isl_keep isl_set *set) {
+  return stringFromIslObjInternal(set, isl_set_get_ctx, isl_printer_print_set);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_map *umap) {
+std::string polly::stringFromIslObj(__isl_keep isl_union_map *umap) {
   return stringFromIslObjInternal(umap, isl_union_map_get_ctx,
                                   isl_printer_print_union_map);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_set *uset) {
+std::string polly::stringFromIslObj(__isl_keep isl_union_set *uset) {
   return stringFromIslObjInternal(uset, isl_union_set_get_ctx,
                                   isl_printer_print_union_set);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule) {
+std::string polly::stringFromIslObj(__isl_keep isl_schedule *schedule) {
   return stringFromIslObjInternal(schedule, schedule_get_ctx,
                                   isl_printer_print_schedule);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_multi_aff *maff) {
+std::string polly::stringFromIslObj(__isl_keep isl_multi_aff *maff) {
   return stringFromIslObjInternal(maff, isl_multi_aff_get_ctx,
                                   isl_printer_print_multi_aff);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_pw_multi_aff *pma) {
+std::string polly::stringFromIslObj(__isl_keep isl_pw_multi_aff *pma) {
   return stringFromIslObjInternal(pma, isl_pw_multi_aff_get_ctx,
                                   isl_printer_print_pw_multi_aff);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_aff *aff) {
+std::string polly::stringFromIslObj(__isl_keep isl_aff *aff) {
   return stringFromIslObjInternal(aff, isl_aff_get_ctx, isl_printer_print_aff);
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_pw_aff *pwaff) {
+std::string polly::stringFromIslObj(__isl_keep isl_pw_aff *pwaff) {
   return stringFromIslObjInternal(pwaff, isl_pw_aff_get_ctx,
                                   isl_printer_print_pw_aff);
 }

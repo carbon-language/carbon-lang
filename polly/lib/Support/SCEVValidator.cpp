@@ -12,26 +12,26 @@
 using namespace llvm;
 
 namespace SCEVType {
-  /// @brief The type of a SCEV
-  ///
-  /// To check for the validity of a SCEV we assign to each SCEV a type. The
-  /// possible types are INT, PARAM, IV and INVALID. The order of the types is
-  /// important. The subexpressions of SCEV with a type X can only have a type
-  /// that is smaller or equal than X.
-  enum TYPE {
-             // An integer value.
-             INT,
+/// @brief The type of a SCEV
+///
+/// To check for the validity of a SCEV we assign to each SCEV a type. The
+/// possible types are INT, PARAM, IV and INVALID. The order of the types is
+/// important. The subexpressions of SCEV with a type X can only have a type
+/// that is smaller or equal than X.
+enum TYPE {
+  // An integer value.
+  INT,
 
-             // An expression that is constant during the execution of the Scop,
-             // but that may depend on parameters unknown at compile time.
-             PARAM,
+  // An expression that is constant during the execution of the Scop,
+  // but that may depend on parameters unknown at compile time.
+  PARAM,
 
-             // An expression that may change during the execution of the SCoP.
-             IV,
+  // An expression that may change during the execution of the SCoP.
+  IV,
 
-             // An invalid expression.
-             INVALID
-  };
+  // An invalid expression.
+  INVALID
+};
 }
 
 /// @brief The result the validator returns for a SCEV expression.
@@ -40,64 +40,49 @@ class ValidatorResult {
   SCEVType::TYPE Type;
 
   /// @brief The set of Parameters in the expression.
-  std::vector<const SCEV*> Parameters;
+  std::vector<const SCEV *> Parameters;
 
 public:
   /// @brief The copy constructor
   ValidatorResult(const ValidatorResult &Source) {
     Type = Source.Type;
     Parameters = Source.Parameters;
-  };
+  }
 
   /// @brief Construct a result with a certain type and no parameters.
   ValidatorResult(SCEVType::TYPE Type) : Type(Type) {
     assert(Type != SCEVType::PARAM && "Did you forget to pass the parameter");
-  };
+  }
 
   /// @brief Construct a result with a certain type and a single parameter.
   ValidatorResult(SCEVType::TYPE Type, const SCEV *Expr) : Type(Type) {
     Parameters.push_back(Expr);
-  };
+  }
 
   /// @brief Get the type of the ValidatorResult.
-  SCEVType::TYPE getType() {
-    return Type;
-  }
+  SCEVType::TYPE getType() { return Type; }
 
   /// @brief Is the analyzed SCEV constant during the execution of the SCoP.
-  bool isConstant() {
-    return Type == SCEVType::INT || Type == SCEVType::PARAM;
-  }
+  bool isConstant() { return Type == SCEVType::INT || Type == SCEVType::PARAM; }
 
   /// @brief Is the analyzed SCEV valid.
-  bool isValid() {
-    return Type != SCEVType::INVALID;
-  }
+  bool isValid() { return Type != SCEVType::INVALID; }
 
   /// @brief Is the analyzed SCEV of Type IV.
-  bool isIV() {
-    return Type == SCEVType::IV;
-  }
+  bool isIV() { return Type == SCEVType::IV; }
 
   /// @brief Is the analyzed SCEV of Type INT.
-  bool isINT() {
-    return Type == SCEVType::INT;
-  }
+  bool isINT() { return Type == SCEVType::INT; }
 
   /// @brief Is the analyzed SCEV of Type PARAM.
-  bool isPARAM() {
-    return Type == SCEVType::PARAM;
-  }
+  bool isPARAM() { return Type == SCEVType::PARAM; }
 
   /// @brief Get the parameters of this validator result.
-  std::vector<const SCEV*> getParameters() {
-    return Parameters;
-  }
+  std::vector<const SCEV *> getParameters() { return Parameters; }
 
   /// @brief Add the parameters of Source to this result.
   void addParamsFrom(class ValidatorResult &Source) {
-    Parameters.insert(Parameters.end(),
-                      Source.Parameters.begin(),
+    Parameters.insert(Parameters.end(), Source.Parameters.begin(),
                       Source.Parameters.end());
   }
 
@@ -112,17 +97,17 @@ public:
 
   void print(raw_ostream &OS) {
     switch (Type) {
-      case SCEVType::INT:
-        OS << "SCEVType::INT";
+    case SCEVType::INT:
+      OS << "SCEVType::INT";
       break;
-      case SCEVType::PARAM:
-        OS << "SCEVType::PARAM";
+    case SCEVType::PARAM:
+      OS << "SCEVType::PARAM";
       break;
-      case SCEVType::IV:
-        OS << "SCEVType::IV";
+    case SCEVType::IV:
+      OS << "SCEVType::IV";
       break;
-      case SCEVType::INVALID:
-        OS << "SCEVType::INVALID";
+    case SCEVType::INVALID:
+      OS << "SCEVType::INVALID";
       break;
     }
   }
@@ -134,17 +119,16 @@ raw_ostream &operator<<(raw_ostream &OS, class ValidatorResult &VR) {
 }
 
 /// Check if a SCEV is valid in a SCoP.
-struct SCEVValidator
-  : public SCEVVisitor<SCEVValidator, class ValidatorResult> {
+struct SCEVValidator :
+    public SCEVVisitor<SCEVValidator, class ValidatorResult> {
 private:
   const Region *R;
   ScalarEvolution &SE;
   const Value *BaseAddress;
 
 public:
-  SCEVValidator(const Region *R, ScalarEvolution &SE,
-                const Value *BaseAddress) : R(R), SE(SE),
-    BaseAddress(BaseAddress) {};
+  SCEVValidator(const Region *R, ScalarEvolution &SE, const Value *BaseAddress)
+      : R(R), SE(SE), BaseAddress(BaseAddress) {}
 
   class ValidatorResult visitConstant(const SCEVConstant *Constant) {
     return ValidatorResult(SCEVType::INT);
@@ -154,17 +138,17 @@ public:
     ValidatorResult Op = visit(Expr->getOperand());
 
     switch (Op.getType()) {
-      case SCEVType::INT:
-      case SCEVType::PARAM:
-       // We currently do not represent a truncate expression as an affine
-       // expression. If it is constant during Scop execution, we treat it as a
-       // parameter.
-        return ValidatorResult(SCEVType::PARAM, Expr);
-      case SCEVType::IV:
-        DEBUG(dbgs() << "INVALID: Truncation of SCEVType::IV expression");
-        return ValidatorResult(SCEVType::INVALID);
-      case SCEVType::INVALID:
-        return Op;
+    case SCEVType::INT:
+    case SCEVType::PARAM:
+      // We currently do not represent a truncate expression as an affine
+      // expression. If it is constant during Scop execution, we treat it as a
+      // parameter.
+      return ValidatorResult(SCEVType::PARAM, Expr);
+    case SCEVType::IV:
+      DEBUG(dbgs() << "INVALID: Truncation of SCEVType::IV expression");
+      return ValidatorResult(SCEVType::INVALID);
+    case SCEVType::INVALID:
+      return Op;
     }
 
     llvm_unreachable("Unknown SCEVType");
@@ -174,17 +158,17 @@ public:
     ValidatorResult Op = visit(Expr->getOperand());
 
     switch (Op.getType()) {
-      case SCEVType::INT:
-      case SCEVType::PARAM:
-       // We currently do not represent a truncate expression as an affine
-       // expression. If it is constant during Scop execution, we treat it as a
-       // parameter.
-        return ValidatorResult(SCEVType::PARAM, Expr);
-      case SCEVType::IV:
-        DEBUG(dbgs() << "INVALID: ZeroExtend of SCEVType::IV expression");
-        return ValidatorResult(SCEVType::INVALID);
-      case SCEVType::INVALID:
-        return Op;
+    case SCEVType::INT:
+    case SCEVType::PARAM:
+      // We currently do not represent a truncate expression as an affine
+      // expression. If it is constant during Scop execution, we treat it as a
+      // parameter.
+      return ValidatorResult(SCEVType::PARAM, Expr);
+    case SCEVType::IV:
+      DEBUG(dbgs() << "INVALID: ZeroExtend of SCEVType::IV expression");
+      return ValidatorResult(SCEVType::INVALID);
+    case SCEVType::INVALID:
+      return Op;
     }
 
     llvm_unreachable("Unknown SCEVType");
@@ -223,12 +207,12 @@ public:
       if (Op.isINT())
         continue;
 
-      if ((Op.isIV() || Op.isPARAM()) && !Return.isINT() ) {
+      if ((Op.isIV() || Op.isPARAM()) && !Return.isINT()) {
         DEBUG(dbgs() << "INVALID: More than one non-int operand in MulExpr\n"
                      << "\tExpr: " << *Expr << "\n"
                      << "\tPrevious expression type: " << Return << "\n"
-                     << "\tNext operand (" << Op << "): "
-                     << *Expr->getOperand(i) << "\n");
+                     << "\tNext operand (" << Op
+                     << "): " << *Expr->getOperand(i) << "\n");
 
         return ValidatorResult(SCEVType::INVALID);
       }
@@ -281,8 +265,8 @@ public:
       return ValidatorResult(SCEVType::INVALID);
     }
 
-    assert (Start.isConstant() && Recurrence.isConstant()
-            && "Expected 'Start' and 'Recurrence' to be constant");
+    assert(Start.isConstant() && Recurrence.isConstant() &&
+           "Expected 'Start' and 'Recurrence' to be constant");
     return ValidatorResult(SCEVType::PARAM, Expr);
   }
 
@@ -353,41 +337,41 @@ public:
 };
 
 namespace polly {
-  bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
-                    const Value *BaseAddress) {
-    if (isa<SCEVCouldNotCompute>(Expr))
-      return false;
+bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
+                  const Value *BaseAddress) {
+  if (isa<SCEVCouldNotCompute>(Expr))
+    return false;
 
-    SCEVValidator Validator(R, SE, BaseAddress);
-    DEBUG(
-      dbgs() << "\n";
-      dbgs() << "Expr: " << *Expr << "\n";
-      dbgs() << "Region: " << R->getNameStr() << "\n";
-      dbgs() << " -> ");
+  SCEVValidator Validator(R, SE, BaseAddress);
+  DEBUG(
+    dbgs() << "\n";
+    dbgs() << "Expr: " << *Expr << "\n";
+    dbgs() << "Region: " << R->getNameStr() << "\n";
+    dbgs() << " -> "
+  );
 
-    ValidatorResult Result = Validator.visit(Expr);
+  ValidatorResult Result = Validator.visit(Expr);
 
-    DEBUG(
-      if (Result.isValid())
-        dbgs() << "VALID\n";
-      dbgs() << "\n";
-    );
+  DEBUG(
+    if (Result.isValid())
+      dbgs() << "VALID\n";
+    dbgs() << "\n";
+  );
 
-    return Result.isValid();
-  }
+  return Result.isValid();
+}
 
-  std::vector<const SCEV*> getParamsInAffineExpr(const Region *R,
-                                                 const SCEV *Expr,
-                                                 ScalarEvolution &SE,
-                                                 const Value *BaseAddress) {
-    if (isa<SCEVCouldNotCompute>(Expr))
-      return std::vector<const SCEV*>();
+std::vector<const SCEV *>
+getParamsInAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
+                      const Value *BaseAddress) {
+  if (isa<SCEVCouldNotCompute>(Expr))
+    return std::vector<const SCEV *>();
 
-    SCEVValidator Validator(R, SE, BaseAddress);
-    ValidatorResult Result = Validator.visit(Expr);
+  SCEVValidator Validator(R, SE, BaseAddress);
+  ValidatorResult Result = Validator.visit(Expr);
 
-    return Result.getParameters();
-  }
+  return Result.getParameters();
+}
 }
 
 
