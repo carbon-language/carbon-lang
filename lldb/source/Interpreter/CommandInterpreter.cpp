@@ -2796,7 +2796,7 @@ CommandInterpreter::DumpHistory (Stream &stream, uint32_t count) const
 void
 CommandInterpreter::DumpHistory (Stream &stream, uint32_t start, uint32_t end) const
 {
-    const size_t last_idx = std::min<size_t>(m_command_history.size(), end + 1);
+    const size_t last_idx = std::min<size_t>(m_command_history.size(), end==UINT32_MAX ? UINT32_MAX : end + 1);
     for (size_t i = start; i < last_idx; i++)
     {
         if (!m_command_history[i].empty())
