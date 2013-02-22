@@ -2537,11 +2537,17 @@ guaranteed to be separate for each loop. The loop-level metadata is prefixed
 with ``llvm.loop``.
 
 The loop identifier metadata is implemented using a metadata that refers to
-itself as follows:
+itself to avoid merging it with any other identifier metadata, e.g., 
+during module linkage or function inlining. That is, each loop should refer 
+to their own identification metadata even if they reside in separate functions. 
+The following example contains loop identifier metadata for two separate loop 
+constructs:
 
 .. code-block:: llvm
 
     !0 = metadata !{ metadata !0 }
+    !1 = metadata !{ metadata !1 }
+
 
 '``llvm.loop.parallel``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
