@@ -2543,10 +2543,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
                                        DIUnit.getLanguage(), Die, Asm,
                                        this, &SkeletonHolder);
 
-  SmallString<16> T(DIUnit.getFilename());
-  sys::path::replace_extension(T, ".dwo");
-  StringRef FN = sys::path::filename(T);
-  NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
+  NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
+                        DIUnit.getSplitDebugFilename());
 
   // This should be a unique identifier when we want to build .dwp files.
   NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
