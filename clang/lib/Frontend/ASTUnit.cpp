@@ -573,6 +573,11 @@ private:
 
     // Initialize the ASTContext
     Context.InitBuiltinTypes(*Target);
+
+    // We didn't have access to the comment options when the ASTContext was
+    // constructed, so register them now.
+    Context.getCommentCommandTraits().registerCommentOptions(
+        LangOpt.CommentOpts);
   }
 };
 

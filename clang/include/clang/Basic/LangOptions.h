@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_LANGOPTIONS_H
 #define LLVM_CLANG_LANGOPTIONS_H
 
+#include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Visibility.h"
@@ -78,6 +79,9 @@ public:
 
   /// \brief The name of the current module.
   std::string CurrentModule;
+
+  /// \brief Options for parsing comments.
+  CommentOptions CommentOpts;
   
   LangOptions();
 

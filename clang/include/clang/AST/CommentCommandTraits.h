@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_AST_COMMENT_COMMAND_TRAITS_H
 #define LLVM_CLANG_AST_COMMENT_COMMAND_TRAITS_H
 
+#include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -116,7 +117,10 @@ public:
     KCI_Last
   };
 
-  CommandTraits(llvm::BumpPtrAllocator &Allocator);
+  CommandTraits(llvm::BumpPtrAllocator &Allocator,
+                const CommentOptions &CommentOptions);
+
+  void registerCommentOptions(const CommentOptions &CommentOptions);
 
   /// \returns a CommandInfo object for a given command name or
   /// NULL if no CommandInfo object exists for this command.
@@ -132,6 +136,8 @@ public:
 
   const CommandInfo *registerUnknownCommand(StringRef CommandName);
 
+  const CommandInfo *registerBlockCommand(StringRef CommandName);
+
   /// \returns a CommandInfo object for a given command name or
   /// NULL if \c Name is not a builtin command.
   static const CommandInfo *getBuiltinCommandInfo(StringRef Name);
@@ -146,6 +152,8 @@ private:
 
   const CommandInfo *getRegisteredCommandInfo(StringRef Name) const;
   const CommandInfo *getRegisteredCommandInfo(unsigned CommandID) const;
+
+  CommandInfo *createCommandInfoWithName(StringRef CommandName);
 
   unsigned NextID;
 

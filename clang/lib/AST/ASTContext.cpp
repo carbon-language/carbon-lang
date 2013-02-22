@@ -654,7 +654,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     DeclarationNames(*this),
     ExternalSource(0), Listener(0),
     Comments(SM), CommentsLoaded(false),
-    CommentCommandTraits(BumpAlloc),
+    CommentCommandTraits(BumpAlloc, LOpts.CommentOpts),
     LastSDM(0, 0),
     UniqueBlockByRefTypeID(0)
 {

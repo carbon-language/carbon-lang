@@ -9,6 +9,7 @@
 
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
@@ -31,7 +32,7 @@ protected:
       DiagID(new DiagnosticIDs()),
       Diags(DiagID, new DiagnosticOptions, new IgnoringDiagConsumer()),
       SourceMgr(Diags, FileMgr),
-      Traits(Allocator) {
+      Traits(Allocator, CommentOptions()) {
   }
 
   FileSystemOptions FileMgrOpts;
@@ -449,6 +450,76 @@ TEST_F(CommentLexerTest, DoxygenCommand9) {
   ASSERT_EQ(StringRef("c"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::newline,   Toks[2].getKind());
+}
+
+TEST_F(CommentLexerTest, RegisterCustomBlockCommand) {
+  const char *Source = "/// \\NewBlockCommand Aaa.\n";
+
+  Traits.registerBlockCommand(StringRef("NewBlockCommand"));
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(4U, Toks.size());
+
+  ASSERT_EQ(tok::text,      Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "), Toks[0].getText());
+
+  ASSERT_EQ(tok::command,                 Toks[1].getKind());
+  ASSERT_EQ(StringRef("NewBlockCommand"), getCommandName(Toks[1]));
+
+  ASSERT_EQ(tok::text,          Toks[2].getKind());
+  ASSERT_EQ(StringRef(" Aaa."), Toks[2].getText());
+
+  ASSERT_EQ(tok::newline,        Toks[3].getKind());
+}
+
+TEST_F(CommentLexerTest, RegisterMultipleBlockCommands) {
+  const char *Source =
+    "/// \\Foo\n"
+    "/// \\Bar Baz\n"
+    "/// \\Blech quux=corge\n";
+
+  Traits.registerBlockCommand(StringRef("Foo"));
+  Traits.registerBlockCommand(StringRef("Bar"));
+  Traits.registerBlockCommand(StringRef("Blech"));
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(11U, Toks.size());
+
+  ASSERT_EQ(tok::text,      Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "), Toks[0].getText());
+
+  ASSERT_EQ(tok::command,     Toks[1].getKind());
+  ASSERT_EQ(StringRef("Foo"), getCommandName(Toks[1]));
+
+  ASSERT_EQ(tok::newline,     Toks[2].getKind());
+
+  ASSERT_EQ(tok::text,      Toks[3].getKind());
+  ASSERT_EQ(StringRef(" "), Toks[3].getText());
+
+  ASSERT_EQ(tok::command,     Toks[4].getKind());
+  ASSERT_EQ(StringRef("Bar"), getCommandName(Toks[4]));
+
+  ASSERT_EQ(tok::text,         Toks[5].getKind());
+  ASSERT_EQ(StringRef(" Baz"), Toks[5].getText());
+
+  ASSERT_EQ(tok::newline,     Toks[6].getKind());
+
+  ASSERT_EQ(tok::text,      Toks[7].getKind());
+  ASSERT_EQ(StringRef(" "), Toks[7].getText());
+
+  ASSERT_EQ(tok::command,       Toks[8].getKind());
+  ASSERT_EQ(StringRef("Blech"), getCommandName(Toks[8]));
+
+  ASSERT_EQ(tok::text,                Toks[9].getKind());
+  ASSERT_EQ(StringRef(" quux=corge"), Toks[9].getText());
+
+  ASSERT_EQ(tok::newline,     Toks[10].getKind());
 }
 
 // Empty verbatim block.

@@ -108,6 +108,14 @@ static bool checkLanguageOptions(const LangOptions &LangOpts,
     return true;
   }
 
+  if (ExistingLangOpts.CommentOpts.BlockCommandNames !=
+      LangOpts.CommentOpts.BlockCommandNames) {
+    if (Diags)
+      Diags->Report(diag::err_pch_langopt_value_mismatch)
+        << "block command names";
+    return true;
+  }
+
   return false;
 }
 
@@ -3671,6 +3679,15 @@ bool ASTReader::ParseLanguageOptions(const RecordData &Record,
   unsigned Length = Record[Idx++];
   LangOpts.CurrentModule.assign(Record.begin() + Idx, 
                                 Record.begin() + Idx + Length);
+
+  Idx += Length;
+
+  // Comment options.
+  for (unsigned N = Record[Idx++]; N; --N) {
+    LangOpts.CommentOpts.BlockCommandNames.push_back(
+      ReadString(Record, Idx));
+  }
+
   return Listener.ReadLanguageOptions(LangOpts, Complain);
 }
 

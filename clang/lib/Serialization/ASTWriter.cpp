@@ -1057,6 +1057,16 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   
   Record.push_back(LangOpts.CurrentModule.size());
   Record.append(LangOpts.CurrentModule.begin(), LangOpts.CurrentModule.end());
+
+  // Comment options.
+  Record.push_back(LangOpts.CommentOpts.BlockCommandNames.size());
+  for (CommentOptions::BlockCommandNamesTy::const_iterator
+           I = LangOpts.CommentOpts.BlockCommandNames.begin(),
+           IEnd = LangOpts.CommentOpts.BlockCommandNames.end();
+       I != IEnd; ++I) {
+    AddString(*I, Record);
+  }
+
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 
   // Target options.
