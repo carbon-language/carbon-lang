@@ -2068,7 +2068,7 @@ adequately aligned for a pointer.  ``value`` is null or a pointer to a valid
 object.
 
 Performs the complete sequence for assigning to a ``__strong`` object of
-non-block type.  Equivalent to the following code:
+non-block type [*]_.  Equivalent to the following code:
 
 .. code-block:: objc
 
@@ -2081,6 +2081,11 @@ non-block type.  Equivalent to the following code:
   }
 
 Always returns ``value``.
+
+.. [*] This does not imply that a ``__strong`` object of block type is an
+   invalid argument to this function. Rather it implies that an ``objc_retain``
+   and not an ``objc_retainBlock`` operation will be emitted if the argument is
+   a block.
 
 .. _arc.runtime.objc_storeWeak:
 
