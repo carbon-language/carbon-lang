@@ -675,7 +675,7 @@ FormatManager::LoadSystemFormatters()
 {
     
     TypeSummaryImpl::Flags string_flags;
-    string_flags.SetCascades(false)
+    string_flags.SetCascades(true)
     .SetSkipPointers(true)
     .SetSkipReferences(false)
     .SetDontShowChildren(true)
