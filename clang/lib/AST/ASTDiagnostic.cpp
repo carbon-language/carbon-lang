@@ -247,7 +247,8 @@ void clang::FormatASTNodeDiagnosticArgument(
     ArrayRef<intptr_t> QualTypeVals) {
   ASTContext &Context = *static_cast<ASTContext*>(Cookie);
   
-  std::string S;
+  size_t OldEnd = Output.size();
+  llvm::raw_svector_ostream OS(Output);
   bool NeedQuotes = true;
   
   switch (Kind) {
@@ -259,6 +260,7 @@ void clang::FormatASTNodeDiagnosticArgument(
       QualType ToType =
           QualType::getFromOpaquePtr(reinterpret_cast<void*>(TDT.ToType));
 
+      std::string S;
       if (FormatTemplateTypeDiff(Context, FromType, ToType, TDT.PrintTree,
                                  TDT.PrintFromType, TDT.ElideType,
                                  TDT.ShowColors, S)) {
@@ -266,13 +268,14 @@ void clang::FormatASTNodeDiagnosticArgument(
         TDT.TemplateDiffUsed = true;
         break;
       }
+      OS << S;
 
       // Don't fall-back during tree printing.  The caller will handle
       // this case.
       if (TDT.PrintTree)
         return;
 
-      // Attempting to do a templete diff on non-templates.  Set the variables
+      // Attempting to do a template diff on non-templates.  Set the variables
       // and continue with regular type printing of the appropriate type.
       Val = TDT.PrintFromType ? TDT.FromType : TDT.ToType;
       ModLen = 0;
@@ -284,23 +287,23 @@ void clang::FormatASTNodeDiagnosticArgument(
              "Invalid modifier for QualType argument");
       
       QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
-      S = ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, NumPrevArgs,
-                                        QualTypeVals);
+      OS << ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, NumPrevArgs,
+                                          QualTypeVals);
       NeedQuotes = false;
       break;
     }
     case DiagnosticsEngine::ak_declarationname: {
-      DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
-      S = N.getAsString();
-      
       if (ModLen == 9 && !memcmp(Modifier, "objcclass", 9) && ArgLen == 0)
-        S = '+' + S;
+        OS << '+';
       else if (ModLen == 12 && !memcmp(Modifier, "objcinstance", 12)
                 && ArgLen==0)
-        S = '-' + S;
+        OS << '-';
       else
         assert(ModLen == 0 && ArgLen == 0 &&
                "Invalid modifier for DeclarationName argument");
+
+      DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
+      N.printName(OS);
       break;
     }
     case DiagnosticsEngine::ak_nameddecl: {
@@ -313,14 +316,12 @@ void clang::FormatASTNodeDiagnosticArgument(
         Qualified = false;
       }
       const NamedDecl *ND = reinterpret_cast<const NamedDecl*>(Val);
-      llvm::raw_string_ostream OS(S);
       ND->getNameForDiagnostic(OS, Context.getPrintingPolicy(), Qualified);
       break;
     }
     case DiagnosticsEngine::ak_nestednamespec: {
-      llvm::raw_string_ostream OS(S);
-      reinterpret_cast<NestedNameSpecifier*>(Val)->print(OS,
-                                                        Context.getPrintingPolicy());
+      NestedNameSpecifier *NNS = reinterpret_cast<NestedNameSpecifier*>(Val);
+      NNS->print(OS, Context.getPrintingPolicy());
       NeedQuotes = false;
       break;
     }
@@ -331,42 +332,39 @@ void clang::FormatASTNodeDiagnosticArgument(
       if (DC->isTranslationUnit()) {
         // FIXME: Get these strings from some localized place
         if (Context.getLangOpts().CPlusPlus)
-          S = "the global namespace";
+          OS << "the global namespace";
         else
-          S = "the global scope";
+          OS << "the global scope";
       } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
-        S = ConvertTypeToDiagnosticString(Context, 
-                                          Context.getTypeDeclType(Type),
-                                          PrevArgs, NumPrevArgs, QualTypeVals);
+        OS << ConvertTypeToDiagnosticString(Context,
+                                            Context.getTypeDeclType(Type),
+                                            PrevArgs, NumPrevArgs,
+                                            QualTypeVals);
       } else {
         // FIXME: Get these strings from some localized place
         NamedDecl *ND = cast<NamedDecl>(DC);
         if (isa<NamespaceDecl>(ND))
-          S += "namespace ";
+          OS << "namespace ";
         else if (isa<ObjCMethodDecl>(ND))
-          S += "method ";
+          OS << "method ";
         else if (isa<FunctionDecl>(ND))
-          S += "function ";
-        
-        S += "'";
-        {
-          llvm::raw_string_ostream OS(S);
-          ND->getNameForDiagnostic(OS, Context.getPrintingPolicy(), true);
-        }
-        S += "'";
+          OS << "function ";
+
+        OS << '\'';
+        ND->getNameForDiagnostic(OS, Context.getPrintingPolicy(), true);
+        OS << '\'';
       }
       NeedQuotes = false;
       break;
     }
   }
-  
-  if (NeedQuotes)
+
+  OS.flush();
+
+  if (NeedQuotes) {
+    Output.insert(Output.begin()+OldEnd, '\'');
     Output.push_back('\'');
-  
-  Output.append(S.begin(), S.end());
-  
-  if (NeedQuotes)
-    Output.push_back('\'');
+  }
 }
 
 /// TemplateDiff - A class that constructs a pretty string for a pair of
