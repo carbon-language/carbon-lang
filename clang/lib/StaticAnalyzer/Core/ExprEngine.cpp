@@ -165,47 +165,46 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
   return state;
 }
 
-/// If the value of the given expression is a NonLoc, copy it into a new
-/// temporary region, and replace the value of the expression with that.
-static ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
-                                                     const LocationContext *LC,
-                                                     const Expr *Ex) {
+ProgramStateRef
+ExprEngine::createTemporaryRegionIfNeeded(ProgramStateRef State,
+                                          const LocationContext *LC,
+                                          const Expr *Ex,
+                                          const Expr *Result) {
   SVal V = State->getSVal(Ex, LC);
+  if (!Result && !V.getAs<NonLoc>())
+    return State;
 
-  if (V.getAs<NonLoc>()) {
-    ProgramStateManager &StateMgr = State->getStateManager();
-    MemRegionManager &MRMgr = StateMgr.getRegionManager();
-    StoreManager &StoreMgr = StateMgr.getStoreManager();
+  ProgramStateManager &StateMgr = State->getStateManager();
+  MemRegionManager &MRMgr = StateMgr.getRegionManager();
+  StoreManager &StoreMgr = StateMgr.getStoreManager();
 
-    // We need to be careful about treating a derived type's value as
-    // bindings for a base type. Start by stripping and recording base casts.
-    SmallVector<const CastExpr *, 4> Casts;
-    const Expr *Inner = Ex->IgnoreParens();
-    while (const CastExpr *CE = dyn_cast<CastExpr>(Inner)) {
-      if (CE->getCastKind() == CK_DerivedToBase ||
-          CE->getCastKind() == CK_UncheckedDerivedToBase)
-        Casts.push_back(CE);
-      else if (CE->getCastKind() != CK_NoOp)
-        break;
+  // We need to be careful about treating a derived type's value as
+  // bindings for a base type. Start by stripping and recording base casts.
+  SmallVector<const CastExpr *, 4> Casts;
+  const Expr *Inner = Ex->IgnoreParens();
+  while (const CastExpr *CE = dyn_cast<CastExpr>(Inner)) {
+    if (CE->getCastKind() == CK_DerivedToBase ||
+        CE->getCastKind() == CK_UncheckedDerivedToBase)
+      Casts.push_back(CE);
+    else if (CE->getCastKind() != CK_NoOp)
+      break;
 
-      Inner = CE->getSubExpr()->IgnoreParens();
-    }
-
-    // Create a temporary object region for the inner expression (which may have
-    // a more derived type) and bind the NonLoc value into it.
-    SVal Reg = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(Inner, LC));
-    State = State->bindLoc(Reg, V);
-
-    // Re-apply the casts (from innermost to outermost) for type sanity.
-    for (SmallVectorImpl<const CastExpr *>::reverse_iterator I = Casts.rbegin(),
-                                                             E = Casts.rend();
-         I != E; ++I) {
-      Reg = StoreMgr.evalDerivedToBase(Reg, *I);
-    }
-
-    State = State->BindExpr(Ex, LC, Reg);
+    Inner = CE->getSubExpr()->IgnoreParens();
   }
 
+  // Create a temporary object region for the inner expression (which may have
+  // a more derived type) and bind the NonLoc value into it.
+  SVal Reg = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(Inner, LC));
+  State = State->bindLoc(Reg, V);
+
+  // Re-apply the casts (from innermost to outermost) for type sanity.
+  for (SmallVectorImpl<const CastExpr *>::reverse_iterator I = Casts.rbegin(),
+                                                           E = Casts.rend();
+       I != E; ++I) {
+    Reg = StoreMgr.evalDerivedToBase(Reg, *I);
+  }
+
+  State = State->BindExpr(Result ? Result : Ex, LC, Reg);
   return State;
 }
 

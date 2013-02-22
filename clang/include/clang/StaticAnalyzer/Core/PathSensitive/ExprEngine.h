@@ -552,6 +552,17 @@ private:
   /// Models a trivial copy or move constructor call with a simple bind.
   void performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
                           const CXXConstructorCall &Call);
+
+  /// If the value of the given expression is a NonLoc, copy it into a new
+  /// temporary object region, and replace the value of the expression with
+  /// that.
+  ///
+  /// If \p ResultE is provided, the new region will be bound to this expression
+  /// instead of \p E.
+  ProgramStateRef createTemporaryRegionIfNeeded(ProgramStateRef State,
+                                                const LocationContext *LC,
+                                                const Expr *E,
+                                                const Expr *ResultE = 0);
 };
 
 /// Traits for storing the call processing policy inside GDM.

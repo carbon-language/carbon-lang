@@ -30,23 +30,17 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
 
-  // Bind the temporary object to the value of the expression. Then bind
-  // the expression to the location of the object.
   SVal V = state->getSVal(tempExpr, LCtx);
 
   // If the value is already a CXXTempObjectRegion, it is fine as it is.
   // Otherwise, create a new CXXTempObjectRegion, and copy the value into it.
   const MemRegion *MR = V.getAsRegion();
-  if (!MR || !isa<CXXTempObjectRegion>(MR)) {
-    const MemRegion *R =
-      svalBuilder.getRegionManager().getCXXTempObjectRegion(ME, LCtx);
+  if (MR && isa<CXXTempObjectRegion>(MR))
+    state = state->BindExpr(ME, LCtx, V);
+  else
+    state = createTemporaryRegionIfNeeded(state, LCtx, tempExpr, ME);
 
-    SVal L = loc::MemRegionVal(R);
-    state = state->bindLoc(L, V);
-    V = L;
-  }
-
-  Bldr.generateNode(ME, Pred, state->BindExpr(ME, LCtx, V));
+  Bldr.generateNode(ME, Pred, state);
 }
 
 void ExprEngine::performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,

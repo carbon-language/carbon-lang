@@ -22,17 +22,17 @@ const int& g3() {
 
 int get_value();
 
-const int &get_reference1() { return get_value(); } // expected-warning{{Address of stack memory associated with temporary object of type 'const int' returned}} expected-warning {{returning reference to local temporary}}
+const int &get_reference1() { return get_value(); } // expected-warning{{Address of stack memory associated with temporary object of type 'int' returned}} expected-warning {{returning reference to local temporary}}
 
 const int &get_reference2() {
   const int &x = get_value(); // expected-note {{binding reference variable 'x' here}}
-  return x; // expected-warning{{Address of stack memory associated with temporary object of type 'const int' returned}} expected-warning {{returning reference to local temporary}}
+  return x; // expected-warning{{Address of stack memory associated with temporary object of type 'int' returned}} expected-warning {{returning reference to local temporary}}
 }
 
 const int &get_reference3() {
   const int &x1 = get_value(); // expected-note {{binding reference variable 'x1' here}}
   const int &x2 = x1; // expected-note {{binding reference variable 'x2' here}}
-  return x2; // expected-warning{{Address of stack memory associated with temporary object of type 'const int' returned}} expected-warning {{returning reference to local temporary}}
+  return x2; // expected-warning{{Address of stack memory associated with temporary object of type 'int' returned}} expected-warning {{returning reference to local temporary}}
 }
 
 int global_var;
@@ -56,7 +56,7 @@ int *f3() {
 const int *f4() {
   const int &x1 = get_value(); // expected-note {{binding reference variable 'x1' here}}
   const int &x2 = x1; // expected-note {{binding reference variable 'x2' here}}
-  return &x2; // expected-warning{{Address of stack memory associated with temporary object of type 'const int' returned}} expected-warning {{returning address of local temporary}}
+  return &x2; // expected-warning{{Address of stack memory associated with temporary object of type 'int' returned}} expected-warning {{returning address of local temporary}}
 }
 
 struct S {
