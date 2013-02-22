@@ -90,3 +90,9 @@ int* f5() {
   int& i = i; // expected-warning {{Assigned value is garbage or undefined}} expected-note {{binding reference variable 'i' here}} expected-warning{{reference 'i' is not yet bound to a value when used within its own initialization}}
   return &i; // expected-warning {{address of stack memory associated with local variable 'i' returned}}
 }
+
+void *radar13226577() {
+    void *p = &p;
+    return p; // expected-warning {{stack memory associated with local variable 'p' returned to caller}}
+}
+

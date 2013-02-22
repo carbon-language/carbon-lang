@@ -471,9 +471,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
 
       SVal InitVal = state->getSVal(InitEx, LC);
 
-      if (InitVal == state->getLValue(VD, LC) ||
-          (VD->getType()->isArrayType() &&
-           isa<CXXConstructExpr>(InitEx->IgnoreImplicit()))) {
+      if (isa<CXXConstructExpr>(InitEx->IgnoreImplicit())) {
         // We constructed the object directly in the variable.
         // No need to bind anything.
         B.generateNode(DS, UpdatedN, state);
