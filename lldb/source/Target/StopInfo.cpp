@@ -569,7 +569,7 @@ public:
 
 protected:
     virtual bool
-    ShouldStop (Event *event_ptr)
+    ShouldStopSynchronous (Event *event_ptr)
     {
         // ShouldStop() method is idempotent and should not affect hit count.
         // See Process::RunPrivateStateThread()->Process()->HandlePrivateEvent()
@@ -601,6 +601,15 @@ protected:
             m_should_stop = true;
         }
         m_should_stop_is_valid = true;
+        return m_should_stop;
+    }
+    
+    bool
+    ShouldStop (Event *event_ptr)
+    {
+        // This just reports the work done by PerformAction or the synchronous stop.  It should
+        // only ever get called after they have had a chance to run.
+        assert (m_should_stop_is_valid);
         return m_should_stop;
     }
     
@@ -758,6 +767,8 @@ protected:
         }
         if (log)
             log->Printf ("Process::%s returning from action with m_should_stop: %d.", __FUNCTION__, m_should_stop);
+        
+        m_should_stop_is_valid = true;
         
     }
         

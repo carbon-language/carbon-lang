@@ -101,7 +101,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
 
         case eStopReasonBreakpoint:
         case eStopReasonWatchpoint:
-            if (stop_info_sp->ShouldStop(event_ptr))
+            if (stop_info_sp->ShouldStopSynchronous(event_ptr))
             {
                 // If we are going to stop for a breakpoint, then unship the other plans
                 // at this point.  Don't force the discard, however, so Master plans can stay
