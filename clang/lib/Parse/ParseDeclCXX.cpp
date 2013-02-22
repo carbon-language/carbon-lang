@@ -1293,9 +1293,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Okay, this is a class definition.
       TUK = Sema::TUK_Definition;
     }
-  } else if (isCXX11FinalKeyword() && (NextToken().is(tok::l_square) || 
-                                       NextToken().is(tok::kw_alignas) ||
-                                       NextToken().is(tok::kw__Alignas))) {
+  } else if (isCXX11FinalKeyword() && (NextToken().is(tok::l_square) ||
+                                       NextToken().is(tok::kw_alignas))) {
     // We can't tell if this is a definition or reference
     // until we skipped the 'final' and C++11 attribute specifiers.
     TentativeParsingAction PA(*this);
@@ -1309,8 +1308,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         ConsumeBracket();
         if (!SkipUntil(tok::r_square))
           break;
-      } else if ((Tok.is(tok::kw_alignas) || Tok.is(tok::kw__Alignas)) &&
-                 NextToken().is(tok::l_paren)) {
+      } else if (Tok.is(tok::kw_alignas) && NextToken().is(tok::l_paren)) {
         ConsumeToken();
         ConsumeParen();
         if (!SkipUntil(tok::r_paren))
@@ -1503,11 +1501,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                  TemplateParams? TemplateParams->size() : 0));
   } else {
-    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
-        TUK == Sema::TUK_Definition) {
-      // FIXME: Diagnose this particular error.
-    }
-
     if (TUK != Sema::TUK_Declaration && TUK != Sema::TUK_Definition)
       ProhibitAttributes(attrs);
 

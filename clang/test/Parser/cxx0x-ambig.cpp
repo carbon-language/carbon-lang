@@ -25,6 +25,9 @@ namespace final {
     struct T final : S {}; // expected-error {{base 'S' is marked 'final'}}
     struct T bar : S {}; // expected-error {{expected ';' after top level declarator}} expected-error {{expected unqualified-id}}
   }
+  // _Alignas isn't allowed in the places where alignas is. We used to
+  // assert on this.
+  struct U final _Alignas(4) {}; // expected-error 3{{}} expected-note {{}}
 }
 
 // enum versus bitfield mess.
