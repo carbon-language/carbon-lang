@@ -532,7 +532,10 @@ private:
   void examineStackFrames(const Decl *D, const LocationContext *LCtx,
                           bool &IsRecursive, unsigned &StackDepth);
 
-  bool shouldInlineDecl(const Decl *D, ExplodedNode *Pred);
+  /// Checks our policies and decides weither the given call should be inlined.
+  bool shouldInlineCall(const CallEvent &Call, const Decl *D,
+                        const ExplodedNode *Pred);
+
   bool inlineCall(const CallEvent &Call, const Decl *D, NodeBuilder &Bldr,
                   ExplodedNode *Pred, ProgramStateRef State);
 
