@@ -942,6 +942,10 @@ def : Pat <
 
 def S_OR_B32 : SOP2_32 <0x00000010, "S_OR_B32", []>;
 def S_OR_B64 : SOP2_64 <0x00000011, "S_OR_B64", []>;
+def : Pat <
+  (i1 (or SSrc_64:$src0, SSrc_64:$src1)),
+  (S_OR_B64 SSrc_64:$src0, SSrc_64:$src1)
+>;
 def S_XOR_B32 : SOP2_32 <0x00000012, "S_XOR_B32", []>;
 def S_XOR_B64 : SOP2_64 <0x00000013, "S_XOR_B64", []>;
 def S_ANDN2_B32 : SOP2_32 <0x00000014, "S_ANDN2_B32", []>;
