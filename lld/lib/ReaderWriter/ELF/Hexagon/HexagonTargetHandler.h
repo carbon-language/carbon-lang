@@ -13,6 +13,7 @@
 #include "DefaultTargetHandler.h"
 #include "ExecutableAtoms.h"
 #include "HexagonRelocationHandler.h"
+#include "HexagonSectionChunks.h"
 #include "TargetLayout.h"
 
 namespace lld {
@@ -75,6 +76,64 @@ public:
   }
 };
 
+/// \brief TargetLayout for Hexagon
+template <class HexagonELFType>
+class HexagonTargetLayout LLVM_FINAL : public TargetLayout<HexagonELFType> {
+
+public:
+  enum HexagonSectionOrder {
+    ORDER_SDATA = 205
+  };
+
+  HexagonTargetLayout(const HexagonTargetInfo &hti)
+      : TargetLayout<HexagonELFType>(hti), _sdataSection(nullptr) {
+    _sdataSection = new (_alloc) SDataSection<HexagonELFType>(hti);
+  }
+
+  /// \brief Return the section order for a input section
+  virtual Layout::SectionOrder getSectionOrder(
+      StringRef name, int32_t contentType, int32_t contentPermissions) {
+    if (contentType == DefinedAtom::typeDataFast)
+      return ORDER_SDATA;
+
+    return DefaultLayout<HexagonELFType>::getSectionOrder(name, contentType,
+                                                          contentPermissions);
+  }
+
+  /// \brief This maps the input sections to the output section names
+  virtual StringRef getSectionName(StringRef name, const int32_t contentType,
+                                   const int32_t contentPermissions) {
+    if (contentType == DefinedAtom::typeDataFast)
+      return ".sdata";
+    return DefaultLayout<HexagonELFType>::getSectionName(name, contentType,
+                                                         contentPermissions);
+  }
+
+  /// \brief Gets or creates a section.
+  virtual AtomSection<HexagonELFType> *
+  createSection(StringRef name, int32_t contentType,
+                DefinedAtom::ContentPermissions contentPermissions,
+                Layout::SectionOrder sectionOrder) {
+    if (contentType == DefinedAtom::typeDataFast)
+      return _sdataSection;
+    return DefaultLayout<HexagonELFType>::createSection(
+        name, contentType, contentPermissions, sectionOrder);
+  }
+
+  /// \brief get the segment type for the section thats defined by the target
+  virtual Layout::SegmentType
+  getSegmentType(Section<HexagonELFType> *section) const {
+    if (section->order() == ORDER_SDATA)
+      return PT_LOAD;
+
+    return DefaultLayout<HexagonELFType>::getSegmentType(section);
+  }
+
+private:
+  llvm::BumpPtrAllocator _alloc;
+  SDataSection<HexagonELFType> *_sdataSection;
+};
+
 /// \brief TargetHandler for Hexagon 
 class HexagonTargetHandler LLVM_FINAL :
     public DefaultTargetHandler<HexagonELFType> {
@@ -95,7 +154,7 @@ public:
 
 private:
   HexagonTargetRelocationHandler _relocationHandler;
-  TargetLayout<HexagonELFType> _targetLayout;
+  HexagonTargetLayout<HexagonELFType> _targetLayout;
   HexagonTargetAtomHandler<HexagonELFType> _targetAtomHandler;
 };
 } // end namespace elf

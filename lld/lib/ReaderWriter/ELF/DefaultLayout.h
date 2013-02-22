@@ -208,6 +208,11 @@ public:
       si->finalize();
   }
 
+  inline void doPreFlight() {
+    for (auto &si : _sections)
+      si->doPreFlight();
+  }
+
   inline bool findAtomAddrByName(StringRef name, uint64_t &addr) {
     for (auto sec : _sections)
       if (auto section = dyn_cast<Section<ELFT> >(sec))

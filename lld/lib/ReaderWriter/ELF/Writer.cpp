@@ -231,10 +231,13 @@ void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   (*endAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
 }
 
-template<class ELFT>
-error_code
-ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
+template <class ELFT>
+error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   buildChunks(file);
+
+  // Call the preFlight callbacks to modify the sections and the atoms 
+  // contained in them, in anyway the targets may want
+  _layout->doPreFlight();
 
   // Create the default sections like the symbol table, string table, and the
   // section string table

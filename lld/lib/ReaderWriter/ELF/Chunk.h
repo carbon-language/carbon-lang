@@ -69,9 +69,11 @@ public:
   uint64_t            virtualAddr() const { return _start; }
   // Does the chunk occupy memory during execution ?
   uint64_t            memSize() const { return _msize; }
-  void               setMemSize(uint64_t msize) { _msize = msize; }
+  void setMemSize(uint64_t msize) { _msize = msize; }
   // Writer the chunk
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) = 0;
+  // Finalize the chunk before assigning offsets/virtual addresses
+  virtual void doPreFlight() = 0;
   // Finalize the chunk before writing
   virtual void finalize() = 0;
 

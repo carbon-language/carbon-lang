@@ -159,8 +159,11 @@ public:
     _sections.insert(_sections.begin(), c);
   }
 
+  // Finalize the segment before assigning File Offsets / Virtual addresses
+  inline void doPreFlight() {}
+
   // Finalize the segment, before we want to write to the output file
-  inline void finalize() { }
+  inline void finalize() {}
 
   // For LLVM RTTI
   static inline bool classof(const Chunk<ELFT> *c) {

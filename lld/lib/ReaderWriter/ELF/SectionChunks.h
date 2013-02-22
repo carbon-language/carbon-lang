@@ -39,13 +39,12 @@ public:
   /// \param type the ELF SHT_* type of the section.
   Section(const ELFTargetInfo &ti, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::K_ELFSection)
-      : Chunk<ELFT>(name, k, ti),
-        _flags(0),
-        _entSize(0),
-        _type(0),
-        _link(0),
-        _info(0),
-        _segmentType(SHT_NULL) {}
+      : Chunk<ELFT>(name, k, ti), _flags(0), _entSize(0), _type(0), _link(0),
+        _info(0), _segmentType(SHT_NULL) {}
+
+  /// \brief Modify the section contents before assigning virtual addresses
+  //  or assigning file offsets
+  virtual void doPreFlight() {}
 
   /// \brief Finalize the section contents before writing
   virtual void finalize() {}

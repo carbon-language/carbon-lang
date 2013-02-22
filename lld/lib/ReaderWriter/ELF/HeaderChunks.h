@@ -52,7 +52,9 @@ public:
 
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
-  void finalize() { }
+  virtual void doPreFlight() {}
+
+  void finalize() {}
 
 private:
   Elf_Ehdr _eh;
@@ -145,11 +147,11 @@ public:
     return _ph.end();
   }
 
-  void finalize() { }
+  virtual void doPreFlight() {}
 
-  int64_t entsize() {
-    return sizeof(Elf_Phdr);
-  }
+  void finalize() {}
+
+  int64_t entsize() { return sizeof(Elf_Phdr); }
 
   int64_t numHeaders() {
     return _ph.size();
@@ -249,12 +251,12 @@ public:
   }
 
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
-  
-  void finalize() { }
-  
-  inline uint16_t fileSize() {
-    return sizeof(Elf_Shdr) * _sectionInfo.size();
-  }
+
+  virtual void doPreFlight() {}
+
+  void finalize() {}
+
+  inline uint16_t fileSize() { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
 
   inline int64_t entsize() {
     return sizeof(Elf_Shdr);
