@@ -370,11 +370,11 @@ namespace test9 {
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11DD1Ev(
-  // CHECK: call void @_ZdlPv({{.*}}) nounwind
+  // CHECK: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
   // CHECK: ret void
   // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK-NEXT: cleanup
-  // CHECK: call void @_ZdlPv({{.*}}) nounwind
+  // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: resume { i8*, i32 }
 
   // Checked at top of file:
@@ -401,11 +401,11 @@ namespace test9 {
 
   // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD1Ev(
-  // CHECK: call void @_ZdlPv({{.*}}) nounwind
+  // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: ret void
   // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK-NEXT: cleanup
-  // CHECK: call void @_ZdlPv({{.*}}) nounwind
+  // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: resume { i8*, i32 }
 
   // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
@@ -417,3 +417,5 @@ namespace test9 {
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK: ret void
+
+  // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

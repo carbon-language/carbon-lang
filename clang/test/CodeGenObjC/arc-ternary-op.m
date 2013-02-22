@@ -20,15 +20,15 @@ void test0(_Bool cond) {
   // CHECK-NEXT: store i1 true, i1* [[RELCOND]]
   // CHECK-NEXT: br label
   // CHECK:      [[T0:%.*]] = phi i8* [ null, {{%.*}} ], [ [[CALL]], {{%.*}} ]
-  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]]) nounwind
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]]) [[NUW:#[0-9]+]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[X]],
   // CHECK-NEXT: [[REL:%.*]] = load i1* [[RELCOND]]
   // CHECK-NEXT: br i1 [[REL]],
   // CHECK:      [[T0:%.*]] = load i8** [[RELVAL]]
-  // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
   // CHECK-NEXT: br label
   // CHECK:      [[T0:%.*]] = load i8** [[X]]
-  // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
   // CHECK-NEXT: ret void
   id x = (cond ? 0 : test0_helper());
 }
@@ -132,3 +132,5 @@ void test2(int cond) {
   //   And way down at the end of the loop:
   // CHECK:      call void @objc_release(i8* [[RESULT]])
 }
+
+// CHECK: attributes [[NUW]] = { nounwind }

@@ -29,6 +29,8 @@ namespace test1 {
     } @catch (id i) {
     }
   }
-// CHECK: invoke void @objc_exception_throw(i8* [[CALL:%.*]]) noreturn
+// CHECK: invoke void @objc_exception_throw(i8* [[CALL:%.*]]) [[NR:#[0-9]+]]
 // CHECK:          to label [[INVOKECONT1:%.*]] unwind label [[LPAD:%.*]]
 }
+
+// CHECK: attributes [[NR]] = { noreturn }

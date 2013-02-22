@@ -33,7 +33,7 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: store [[ARRAY_T]]* null, [[ARRAY_T]]** [[ARRAY]]
 // CHECK-LP64-NEXT: [[ZERO:%.*]] = bitcast [[ARRAY_T]]** [[ARRAY]] to i8**
 // CHECK-LP64-NEXT: [[ONE:%.*]] = bitcast [[ARRAY_T]]* {{%.*}} to i8*
-// CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[ZERO]], i8* [[ONE]]) nounwind
+// CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[ZERO]], i8* [[ONE]]) [[NUW:#[0-9]+]]
 
 // Initialize the fast enumaration state.
 // CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[STATE_T]]* [[STATE]] to i8*
@@ -170,3 +170,5 @@ void test3(NSArray *array) {
   // CHECK-LP64-NEXT: call void @use(i8* [[T0]])
   // CHECK-LP64-NEXT: br label [[L]]
 }
+
+// CHECK: attributes [[NUW]] = { nounwind }

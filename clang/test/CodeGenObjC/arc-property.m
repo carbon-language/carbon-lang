@@ -62,7 +62,7 @@ static Class theGlobalClass;
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST2]]* [[T1]] to i8*
 // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8* [[T2]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i8**
-// CHECK-NEXT: call void @objc_storeStrong(i8** [[T4]], i8* [[T0]]) nounwind
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[T4]], i8* [[T0]]) [[NUW:#[0-9]+]]
 // CHECK-NEXT: ret void
 
 // CHECK:    define internal i8* @"\01-[Test2 theClass]"(
@@ -83,5 +83,7 @@ static Class theGlobalClass;
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST2]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8* [[T1]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to i8**
-// CHECK-NEXT: call void @objc_storeStrong(i8** [[T3]], i8* null) nounwind
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[T3]], i8* null) [[NUW]]
 // CHECK-NEXT: ret void
+
+// CHECK: attributes [[NUW]] = { nounwind }

@@ -13,7 +13,7 @@ C *f(B* b) {
 // CHECK: @_Z1fR1B
 C &f(B& b) {
   // CHECK-NOT: call i8* @__dynamic_cast
-  // CHECK: call void @__cxa_bad_cast() noreturn
+  // CHECK: call void @__cxa_bad_cast() [[NR:#[0-9]+]]
   // CHECK: ret %struct.C* undef
   return dynamic_cast<C&>(b);
 }
@@ -22,3 +22,5 @@ void dont_crash() {
   (void) dynamic_cast<void*>((A*)0);
   (void) dynamic_cast<void*>((B*)0);
 }
+
+// CHECK: attributes [[NR]] = { noreturn }

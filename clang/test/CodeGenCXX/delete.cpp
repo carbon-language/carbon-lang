@@ -129,7 +129,7 @@ namespace test4 {
     // CHECK-NEXT: [[DTOR:%.*]] = load void ([[X]]*)** [[T0]]
     // CHECK-NEXT: call void [[DTOR]]([[X]]* [[OBJ:%.*]])
     //   Call the global operator delete.
-    // CHECK-NEXT: call void @_ZdlPv(i8* [[ALLOCATED]]) nounwind
+    // CHECK-NEXT: call void @_ZdlPv(i8* [[ALLOCATED]]) [[NUW:#[0-9]+]]
     ::delete xp;
   }
 }
@@ -144,3 +144,5 @@ namespace test5 {
     delete [] p2;
   }
 }
+
+// CHECK: attributes [[NUW]] = { nounwind{{.*}} }

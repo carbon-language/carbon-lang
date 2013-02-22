@@ -12,7 +12,7 @@ void f1() {
   exit(1);
 }
 
-// CHECK: call i8* @strstr{{.*}} nounwind
+// CHECK: call i8* @strstr{{.*}} [[NUW:#[0-9]+]]
 char* f2(char* a, char* b) {
   return __builtin_strstr(a, b);
 }
@@ -57,3 +57,6 @@ int f3(double x) {
   __builtin_remquol(x, x, &e);
   return e;
 }
+
+// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK: attributes #1 = { noreturn }

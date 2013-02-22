@@ -103,7 +103,7 @@ X test2(bool B) {
   // CHECK-EH:      [[T0:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK-EH-NEXT:   catch i8* null
   // CHECK-EH-NEXT: [[T1:%.*]] = extractvalue { i8*, i32 } [[T0]], 0
-  // CHECK-EH-NEXT: call void @__clang_call_terminate(i8* [[T1]]) noreturn nounwind
+  // CHECK-EH-NEXT: call void @__clang_call_terminate(i8* [[T1]]) [[NR_NUW:#[0-9]+]]
   // CHECK-EH-NEXT: unreachable
 
 }
@@ -160,3 +160,5 @@ X test6() {
   // CHECK-NEXT: call {{.*}} @_ZN1XD1Ev([[X]]* [[A]])
   // CHECK-NEXT: ret void
 }
+
+// CHECK-EH: attributes [[NR_NUW]] = { noreturn nounwind }

@@ -8,7 +8,7 @@ const B& f(A *a) {
   try {
     // CHECK: call i8* @__dynamic_cast
     // CHECK: br i1
-    // CHECK: invoke void @__cxa_bad_cast() noreturn
+    // CHECK: invoke void @__cxa_bad_cast() [[NR:#[0-9]+]]
     dynamic_cast<const B&>(*a);
   } catch (...) {
     // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
@@ -19,6 +19,4 @@ const B& f(A *a) {
 
 // CHECK: declare i8* @__dynamic_cast(i8*, i8*, i8*, i64) #2
 
-// CHECK: attributes #0 = { inlinehint nounwind "target-features"={{.*}} }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
-// CHECK: attributes #2 = { nounwind readonly }
+// CHECK: attributes [[NR]] = { noreturn }

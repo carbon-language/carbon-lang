@@ -30,20 +30,20 @@ void f7(unsigned short x) { }
 void __attribute__((always_inline)) f8(void) { }
 
 // CHECK: call void @f9_t()
-// CHECK: noreturn
+// CHECK: #2
 // CHECK: }
 void __attribute__((noreturn)) f9_t(void);
 void f9(void) { f9_t(); }
 
 // CHECK: call void @f9a()
-// CHECK: noreturn
+// CHECK: #2
 // CHECK: }
 _Noreturn void f9a(void);
 void f9b(void) { f9a(); }
 
 // FIXME: We should be setting nounwind on calls.
 // CHECK: call i32 @f10_t()
-// CHECK: readnone
+// CHECK: #0
 // CHECK: {
 int __attribute__((const)) f10_t(void);
 int f10(void) { return f10_t(); }
@@ -99,7 +99,7 @@ void __attribute__((force_align_arg_pointer)) f16(void) {
 // CHECK: #7
 // CHECK: {
 // CHECK: call void @f17()
-// CHECK: returns_twice
+// CHECK: #7
 // CHECK: ret void
 __attribute__ ((returns_twice)) void f17(void);
 __attribute__ ((returns_twice)) void f18(void) {
@@ -109,7 +109,7 @@ __attribute__ ((returns_twice)) void f18(void) {
 // CHECK: define void @f19()
 // CHECK: {
 // CHECK: call i32 @setjmp(i32* null)
-// CHECK: returns_twice
+// CHECK: #7
 // CHECK: ret void
 typedef int jmp_buf[((9 * 2) + 3 + 16)];
 int setjmp(jmp_buf);

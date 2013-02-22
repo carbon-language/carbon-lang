@@ -13,10 +13,10 @@ int (^test1(int x))(void) {
   // CHECK-NEXT: store i32 {{%.*}}, i32* [[X]]
   // CHECK:      [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to i32 ()*
   // CHECK-NEXT: [[T1:%.*]] = bitcast i32 ()* [[T0]] to i8*
-  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainBlock(i8* [[T1]]) nounwind
+  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainBlock(i8* [[T1]]) [[NUW:#[0-9]+]]
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to i32 ()*
   // CHECK-NEXT: [[T4:%.*]] = bitcast i32 ()* [[T3]] to i8*
-  // CHECK-NEXT: [[T5:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T4]]) nounwind
+  // CHECK-NEXT: [[T5:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T4]]) [[NUW]]
   // CHECK-NEXT: [[T6:%.*]] = bitcast i8* [[T5]] to i32 ()*
   // CHECK-NEXT: ret i32 ()* [[T6]]
   return ^{ return x; };
@@ -36,9 +36,9 @@ void test2(id x) {
 // CHECK-NEXT: bitcast
 // CHECK-NEXT: call void @test2_helper(
 // CHECK-NEXT: [[T0:%.*]] = load i8** [[SLOTREL]]
-// CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
+// CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]], !clang.imprecise_release
 // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]]
-// CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
+// CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]], !clang.imprecise_release
 // CHECK-NEXT: ret void
   extern void test2_helper(id (^)(void));
   test2_helper(^{ return x; });
@@ -50,7 +50,7 @@ void test2(id x) {
 // CHECK-NEXT: [[DST:%.*]] = bitcast i8* [[T0]] to [[BLOCK_T]]*
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[SRC]], i32 0, i32 5
 // CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]
-// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]]) nounwind
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]]) [[NUW]]
 // CHECK-NEXT: ret void
 
 // CHECK:    define internal void @__destroy_helper_block_
@@ -623,8 +623,8 @@ void test18(id x) {
 // CHECK-UNOPT-NEXT: store i8* [[T1]], i8** [[SLOT]],
 // CHECK-UNOPT-NEXT: bitcast
 // CHECK-UNOPT-NEXT: call void @test18_helper(
-// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[SLOTREL]], i8* null) nounwind
-// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[X]], i8* null) nounwind
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[SLOTREL]], i8* null) [[NUW:#[0-9]+]]
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[X]], i8* null) [[NUW]]
 // CHECK-UNOPT-NEXT: ret void
   extern void test18_helper(id (^)(void));
   test18_helper(^{ return x; });
@@ -638,7 +638,7 @@ void test18(id x) {
 // CHECK-UNOPT-NEXT: [[T1:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[DST]], i32 0, i32 5
 // CHECK-UNOPT-NEXT: [[T2:%.*]] = load i8** [[T0]]
 // CHECK-UNOPT-NEXT: store i8* null, i8** [[T1]]
-// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[T1]], i8* [[T2]]) nounwind
+// CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[T1]], i8* [[T2]]) [[NUW]]
 // CHECK-UNOPT-NEXT: ret void
 
 // CHECK-UNOPT:    define internal void @__destroy_helper_block_
@@ -648,3 +648,6 @@ void test18(id x) {
 // CHECK-UNOPT-NEXT: call void @objc_storeStrong(i8** [[T2]], i8* null)
 // CHECK-UNOPT-NEXT: ret void
 }
+
+// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK-UNOPT: attributes [[NUW]] = { nounwind }

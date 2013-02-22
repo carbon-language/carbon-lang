@@ -5,12 +5,14 @@ void t1() {
   int var = 10;
   __asm mov rax, offset var ; rax = address of myvar
 // CHECK: t1
-// CHECK: call void asm sideeffect inteldialect "mov rax, $0", "r,~{rax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
+// CHECK: call void asm sideeffect inteldialect "mov rax, $0", "r,~{rax},~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW:#[0-9]+]]
 }
 
 void t2() {
   int var = 10;
   __asm mov [eax], offset var
 // CHECK: t2
-// CHECK: call void asm sideeffect inteldialect "mov [eax], $0", "r,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) nounwind
+// CHECK: call void asm sideeffect inteldialect "mov [eax], $0", "r,~{dirflag},~{fpsr},~{flags}"(i32* %{{.*}}) [[NUW]]
 }
+
+// CHECK: attributes [[NUW]] = { nounwind }

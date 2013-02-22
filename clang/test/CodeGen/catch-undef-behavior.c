@@ -58,7 +58,7 @@ void foo() {
   // CHECK:      %[[ARG:.*]] = ptrtoint {{.*}} %[[PTR]] to i64
   // CHECK-NEXT: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_100]] to i8*), i64 %[[ARG]])
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW:#[0-9]+]]
   // CHECK-TRAP-NEXT: unreachable
 
   // With -fsanitize=null, only perform the null check.
@@ -89,7 +89,7 @@ int bar(int *a) {
   // CHECK:      %[[ARG:.*]] = ptrtoint
   // CHECK-NEXT: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_200]] to i8*), i64 %[[ARG]])
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 
 #line 200
@@ -116,7 +116,7 @@ int lsh_overflow(int a, int b) {
   // CHECK-NEXT: %[[ARG2:.*]] = zext
   // CHECK-NEXT: call void @__ubsan_handle_shift_out_of_bounds(i8* bitcast ({{.*}} @[[LINE_300_A]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 
   // CHECK:      %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
@@ -133,7 +133,7 @@ int lsh_overflow(int a, int b) {
   // CHECK-NEXT: %[[ARG2:.*]] = zext
   // CHECK-NEXT: call void @__ubsan_handle_shift_out_of_bounds(i8* bitcast ({{.*}} @[[LINE_300_B]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 
   // CHECK:      %[[RET:.*]] = shl i32 %[[LHS]], %[[RHS]]
@@ -158,7 +158,7 @@ int rsh_inbounds(int a, int b) {
   // CHECK-NEXT: %[[ARG2:.*]] = zext
   // CHECK-NEXT: call void @__ubsan_handle_shift_out_of_bounds(i8* bitcast ({{.*}} @[[LINE_400]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 
   // CHECK:      %[[RET:.*]] = ashr i32 %[[LHS]], %[[RHS]]
@@ -175,7 +175,7 @@ int rsh_inbounds(int a, int b) {
 int load(int *p) {
   // CHECK: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_500]] to i8*), i64 %{{.*}})
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 #line 500
   return *p;
@@ -186,7 +186,7 @@ int load(int *p) {
 void store(int *p, int q) {
   // CHECK: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_600]] to i8*), i64 %{{.*}})
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 #line 600
   *p = q;
@@ -199,7 +199,7 @@ struct S { int k; };
 int *member_access(struct S *p) {
   // CHECK: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_700]] to i8*), i64 %{{.*}})
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 #line 700
   return &p->k;
@@ -212,7 +212,7 @@ int signed_overflow(int a, int b) {
   // CHECK-NEXT: %[[ARG2:.*]] = zext
   // CHECK-NEXT: call void @__ubsan_handle_add_overflow(i8* bitcast ({{.*}} @[[LINE_800]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
 #line 800
   return a + b;
@@ -259,7 +259,7 @@ float int_float_overflow(unsigned __int128 n) {
   // CHECK-TRAP: %[[INBOUNDS:.*]] = icmp ule i128 %{{.*}}, -20282409603651670423947251286016
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
   return n;
 }
@@ -277,7 +277,7 @@ void int_fp16_overflow(int n, __fp16 *p) {
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
   *p = n;
 }
@@ -295,7 +295,7 @@ int float_int_overflow(float f) {
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
   return f;
 }
@@ -313,7 +313,7 @@ unsigned float_uint_overflow(float f) {
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
   return f;
 }
@@ -331,7 +331,7 @@ signed char fp16_char_overflow(__fp16 *p) {
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
   return *p;
 }
@@ -349,7 +349,7 @@ float float_float_overflow(double f) {
   // CHECK-TRAP: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-TRAP:      call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
   return f;
 }
@@ -381,7 +381,7 @@ int int_divide_overflow(int a, int b) {
   // CHECK-TRAP:          %[[OK:.*]] = and i1 %[[ZERO]], %[[OVER]]
   // CHECK-TRAP:          br i1 %[[OK]]
 
-  // CHECK-TRAP: call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP: call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP: unreachable
   return a / b;
 
@@ -399,9 +399,11 @@ _Bool sour_bool(_Bool *p) {
   // CHECK-TRAP: %[[OK:.*]] = icmp ule i8 {{.*}}, 1
   // CHECK-TRAP: br i1 %[[OK]]
 
-  // CHECK-TRAP: call void @llvm.trap() noreturn nounwind
+  // CHECK-TRAP: call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP: unreachable
   return *p;
 }
 
 // CHECK: ![[WEIGHT_MD]] = metadata !{metadata !"branch_weights", i32 1048575, i32 1}
+
+// CHECK-TRAP: attributes [[NR_NUW]] = { noreturn nounwind }

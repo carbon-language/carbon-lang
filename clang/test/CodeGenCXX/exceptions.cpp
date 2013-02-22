@@ -72,8 +72,8 @@ namespace test1 {
   //   rdar://11904428
   //   Terminate landing pads should call __cxa_begin_catch first.
   // CHECK:      define linkonce_odr hidden void @__clang_call_terminate(i8*) #2
-  // CHECK-NEXT:   [[T0:%.*]] = call i8* @__cxa_begin_catch(i8* %0) nounwind
-  // CHECK-NEXT:   call void @_ZSt9terminatev() noreturn nounwind
+  // CHECK-NEXT:   [[T0:%.*]] = call i8* @__cxa_begin_catch(i8* %0) [[NUW:#[0-9]+]]
+  // CHECK-NEXT:   call void @_ZSt9terminatev() [[NR_NUW:#[0-9]+]]
   // CHECK-NEXT:   unreachable
 
   A *d() {
@@ -164,7 +164,7 @@ namespace test2 {
     // CHECK-NEXT: invoke void @_ZN5test21AC1Ei([[A]]* [[CAST]], i32 5)
     // CHECK:      ret [[A]]* [[CAST]]
     // CHECK:      invoke void @_ZN5test21AdlEPvm(i8* [[NEW]], i64 8)
-    // CHECK:      call void @__clang_call_terminate(i8* {{%.*}}) noreturn nounwind
+    // CHECK:      call void @__clang_call_terminate(i8* {{%.*}}) [[NR_NUW]]
     return new A(5);
   }
 }
@@ -190,7 +190,7 @@ namespace test3 {
     // CHECK-NEXT: invoke void @_ZN5test31AC1Ei([[A]]* [[CAST]], i32 5)
     // CHECK:      ret [[A]]* [[CAST]]
     // CHECK:      invoke void @_ZN5test31AdlEPvS1_d(i8* [[NEW]], i8* [[FOO]], double [[BAR]])
-    // CHECK:      call void @__clang_call_terminate(i8* {{%.*}}) noreturn nounwind
+    // CHECK:      call void @__clang_call_terminate(i8* {{%.*}}) [[NR_NUW]]
     return new(foo(),bar()) A(5);
   }
 
@@ -281,7 +281,7 @@ namespace test5 {
   // CHECK-NEXT: invoke void @_ZN5test51TC1Ev([[T_T]]* [[T]])
   // CHECK:      invoke void @_ZN5test51AC1ERKS0_RKNS_1TE([[A_T]]* [[A]], [[A_T]]* [[SRC]], [[T_T]]* [[T]])
   // CHECK:      invoke void @_ZN5test51TD1Ev([[T_T]]* [[T]])
-  // CHECK:      call i8* @__cxa_begin_catch(i8* [[EXN]]) nounwind
+  // CHECK:      call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
   // CHECK-NEXT: invoke void @_ZN5test51AD1Ev([[A_T]]* [[A]])
   // CHECK:      call void @__cxa_end_catch()
   void test() {
@@ -530,3 +530,6 @@ namespace test11 {
 // CHECK: attributes #1 = { nounwind "target-features"={{.*}} }
 // CHECK: attributes #2 = { noinline noreturn nounwind }
 // CHECK: attributes #3 = { nounwind readnone }
+
+// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

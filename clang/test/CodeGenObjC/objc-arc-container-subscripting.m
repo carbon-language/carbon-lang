@@ -12,9 +12,10 @@ id func() {
 }
 
 // CHECK: [[call:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
-// CHECK: [[SIX:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[call]]) nounwind
+// CHECK: [[SIX:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[call]]) [[NUW:#[0-9]+]]
 // CHECK: [[ARRAY_CASTED:%.*]] = bitcast %0** {{%.*}} to i8**
 // CHECK: call void @objc_storeStrong(i8** [[ARRAY_CASTED]], i8* null)
-// CHECK: [[EIGHT:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[SIX]]) nounwind
+// CHECK: [[EIGHT:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[SIX]]) [[NUW]]
 // CHECK: ret i8* [[EIGHT]]
 
+// CHECK: attributes [[NUW]] = { nounwind }

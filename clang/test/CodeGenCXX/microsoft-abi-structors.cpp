@@ -44,7 +44,7 @@ struct B {
 //
 // DTORS:      [[CALL_DELETE_LABEL]]
 // DTORS-NEXT:   %[[THIS_AS_VOID:[0-9a-z]+]] = bitcast %struct.B* %[[THIS]] to i8*
-// DTORS-NEXT:   call void @"\01??3@YAXPAX@Z"(i8* %[[THIS_AS_VOID]]) nounwind
+// DTORS-NEXT:   call void @"\01??3@YAXPAX@Z"(i8* %[[THIS_AS_VOID]]) [[NUW:#[0-9]+]]
 // DTORS-NEXT:   br label %[[CONTINUE_LABEL]]
 //
 // DTORS:      [[CONTINUE_LABEL]]
@@ -104,3 +104,5 @@ struct C {
 };
 
 void use_C() { C c; }
+
+// DTORS: attributes [[NUW]] = { nounwind{{.*}} }

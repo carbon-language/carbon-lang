@@ -139,7 +139,7 @@ int lsh_overflow(int a, int b) {
 
 // CHECK: @_Z9no_return
 int no_return() {
-  // CHECK:      call void @__ubsan_handle_missing_return(i8* bitcast ({{.*}}* @{{.*}} to i8*)) noreturn nounwind
+  // CHECK:      call void @__ubsan_handle_missing_return(i8* bitcast ({{.*}}* @{{.*}} to i8*)) [[NR_NUW:#[0-9]+]]
   // CHECK-NEXT: unreachable
 }
 
@@ -219,3 +219,5 @@ void bad_downcast_reference(S &p) {
   // CHECK: br label
   (void) static_cast<T&>(p);
 }
+
+// CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

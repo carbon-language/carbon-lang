@@ -14,7 +14,7 @@ void test1() {
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSTAR:%[^*]*\*]]
 // CHECK-NEXT:  [[EXN2:%.*]] = bitcast [[DSTAR]] [[EXN]] to i8*
 // CHECK-NEXT:  call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[EXN2]], i8* bitcast ([[DSTAR]] @d1 to i8*), i64 8, i32 8, i1 false)
-// CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({ i8*, i8* }* @_ZTI7test1_D to i8*), i8* null) noreturn
+// CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({ i8*, i8* }* @_ZTI7test1_D to i8*), i8* null) [[NR:#[0-9]+]]
 // CHECK-NEXT:  unreachable
 
 
@@ -37,7 +37,7 @@ void test2() {
 // CHECK-NEXT:  invoke void @_ZN7test2_DC1ERKS_([[DSTAR]] [[EXN]], [[DSTAR]] @d2)
 // CHECK-NEXT:     to label %[[CONT:.*]] unwind label %{{.*}}
 //      :     [[CONT]]:   (can't check this in Release-Asserts builds)
-// CHECK:       call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({{.*}}* @_ZTI7test2_D to i8*), i8* null) noreturn
+// CHECK:       call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({{.*}}* @_ZTI7test2_D to i8*), i8* null) [[NR]]
 // CHECK-NEXT:  unreachable
 
 
@@ -55,7 +55,7 @@ void test3() {
 // CHECK:       [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 8)
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[D:%[^*]+]]**
 // CHECK-NEXT:  store [[D]]* null, [[D]]** [[EXN]]
-// CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({ i8*, i8*, i32, i8* }* @_ZTIPV7test3_D to i8*), i8* null) noreturn
+// CHECK-NEXT:  call void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({ i8*, i8*, i32, i8* }* @_ZTIPV7test3_D to i8*), i8* null) [[NR]]
 // CHECK-NEXT:  unreachable
 
 
@@ -64,7 +64,7 @@ void test4() {
 }
 
 // CHECK:     define void @_Z5test4v()
-// CHECK:        call void @__cxa_rethrow() noreturn
+// CHECK:        call void @__cxa_rethrow() [[NR]]
 // CHECK-NEXT:   unreachable
 
 
@@ -83,7 +83,7 @@ namespace test5 {
 // CHECK:      [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 1)
 // CHECK:      [[EXNCAST:%.*]] = bitcast i8* [[EXNOBJ]] to [[A:%[^*]*]]*
 // CHECK-NEXT: invoke void @_ZN5test51AC1Ev([[A]]* [[EXNCAST]])
-// CHECK:      invoke void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({{.*}}* @_ZTIN5test51AE to i8*), i8* bitcast (void ([[A]]*)* @_ZN5test51AD1Ev to i8*)) noreturn
+// CHECK:      invoke void @__cxa_throw(i8* [[EXNOBJ]], i8* bitcast ({{.*}}* @_ZTIN5test51AE to i8*), i8* bitcast (void ([[A]]*)* @_ZN5test51AD1Ev to i8*)) [[NR]]
 // CHECK-NEXT:   to label {{%.*}} unwind label %[[HANDLER:[^ ]*]]
 //      :    [[HANDLER]]:  (can't check this in Release-Asserts builds)
 // CHECK:      {{%.*}} = call i32 @llvm.eh.typeid.for(i8* bitcast ({{.*}}* @_ZTIN5test51AE to i8*))
@@ -222,7 +222,7 @@ namespace test10 {
     // CHECK-NEXT: bitcast
     // CHECK-NEXT: load i32*
     // CHECK-NEXT: store i32
-    // CHECK-NEXT: call void @__cxa_end_catch() nounwind
+    // CHECK-NEXT: call void @__cxa_end_catch() [[NUW:#[0-9]+]]
     } catch (B a) {
     // CHECK:      call i8* @__cxa_begin_catch
     // CHECK-NEXT: bitcast
@@ -251,11 +251,11 @@ namespace test11 {
       opaque();
     } catch (int**&p) {
       // CHECK:      [[EXN:%.*]] = load i8**
-      // CHECK-NEXT: call i8* @__cxa_begin_catch(i8* [[EXN]]) nounwind
+      // CHECK-NEXT: call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
       // CHECK-NEXT: [[ADJ1:%.*]] = getelementptr i8* [[EXN]], i32 32
       // CHECK-NEXT: [[ADJ2:%.*]] = bitcast i8* [[ADJ1]] to i32***
       // CHECK-NEXT: store i32*** [[ADJ2]], i32**** [[P:%.*]]
-      // CHECK-NEXT: call void @__cxa_end_catch() nounwind
+      // CHECK-NEXT: call void @__cxa_end_catch() [[NUW]]
     }
   }
 
@@ -272,11 +272,11 @@ namespace test11 {
       opaque();
     } catch (A*&p) {
       // CHECK:      [[EXN:%.*]] = load i8** [[EXNSLOT]]
-      // CHECK-NEXT: [[ADJ1:%.*]] = call i8* @__cxa_begin_catch(i8* [[EXN]]) nounwind
+      // CHECK-NEXT: [[ADJ1:%.*]] = call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
       // CHECK-NEXT: [[ADJ2:%.*]] = bitcast i8* [[ADJ1]] to [[A]]*
       // CHECK-NEXT: store [[A]]* [[ADJ2]], [[A]]** [[TMP]]
       // CHECK-NEXT: store [[A]]** [[TMP]], [[A]]*** [[P]]
-      // CHECK-NEXT: call void @__cxa_end_catch() nounwind
+      // CHECK-NEXT: call void @__cxa_end_catch() [[NUW]]
     }
   }
 }
@@ -444,3 +444,6 @@ namespace test16 {
     // CHECK-NEXT: br label
   }
 }
+
+// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK: attributes [[NR]] = { noreturn }
