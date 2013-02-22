@@ -2328,9 +2328,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
     RequiresAdjustment = true;
 
   // Don't complain about mismatches when the default CC is
-  // effectively the same as the explict one.
+  // effectively the same as the explict one. Only Old decl contains correct
+  // information about storage class of CXXMethod.
   } else if (OldTypeInfo.getCC() == CC_Default &&
-             isABIDefaultCC(*this, NewTypeInfo.getCC(), New)) {
+             isABIDefaultCC(*this, NewTypeInfo.getCC(), Old)) {
     NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
     RequiresAdjustment = true;
 
