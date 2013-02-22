@@ -184,6 +184,9 @@ namespace PR15017 {
   template<typename T = struct X { int i; }> struct S {}; // expected-error {{'PR15017::X' can not be defined in a type specifier}}
 }
 
+// Ensure we produce at least some diagnostic for attributes in C++98.
+[[]] struct S; // expected-error 2{{}}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \
