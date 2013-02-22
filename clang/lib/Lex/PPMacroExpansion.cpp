@@ -620,8 +620,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     EOFTok.setLength(0);
     ArgTokens.push_back(EOFTok);
     ++NumActuals;
-    assert(NumFixedArgsLeft != 0 && "Too many arguments parsed");
-    --NumFixedArgsLeft;
+    if (!ContainsCodeCompletionTok || NumFixedArgsLeft != 0) {
+      assert(NumFixedArgsLeft != 0 && "Too many arguments parsed");
+      --NumFixedArgsLeft;
+    }
   }
 
   // Okay, we either found the r_paren.  Check to see if we parsed too few
