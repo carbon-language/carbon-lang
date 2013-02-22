@@ -705,7 +705,7 @@ bool FastISel::SelectCall(const User *I) {
   // all the values which have already been materialized,
   // appear after the call. It also makes sense to skip intrinsics
   // since they tend to be inlined.
-  if (!isa<IntrinsicInst>(F))
+  if (!isa<IntrinsicInst>(Call))
     flushLocalValueMap();
 
   // An arbitrary call. Bail.
