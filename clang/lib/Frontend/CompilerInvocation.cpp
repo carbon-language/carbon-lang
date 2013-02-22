@@ -315,6 +315,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       Opts.setDebugInfo(CodeGenOptions::FullDebugInfo);
   }
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
+  Opts.SplitDwarfFile = Args.getLastArgValue(OPT_split_dwarf_file);
 
   Opts.ModulesAutolink = Args.hasArg(OPT_fmodules_autolink);
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);

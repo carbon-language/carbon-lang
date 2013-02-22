@@ -3269,7 +3269,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // can propagate it to the backend.
   bool SplitDwarf = Args.hasArg(options::OPT_gsplit_dwarf) &&
     (getToolChain().getTriple().getOS() == llvm::Triple::Linux) &&
-    isa<AssembleJobAction>(JA);
+    (isa<AssembleJobAction>(JA) || isa<CompileJobAction>(JA));
   const char *SplitDwarfOut;
   if (SplitDwarf) {
     CmdArgs.push_back("-split-dwarf-file");
@@ -3280,9 +3280,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Finally add the compile command to the compilation.
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
-  // Handle the debug info splitting at object creation time.
+  // Handle the debug info splitting at object creation time if we're
+  // creating an object.
   // TODO: Currently only works on linux with newer objcopy.
-  if (SplitDwarf)
+  if (SplitDwarf && !isa<CompileJobAction>(JA))
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output, SplitDwarfOut);
 
   if (Arg *A = Args.getLastArg(options::OPT_pg))

@@ -312,6 +312,12 @@ void CGDebugInfo::CreateCompileUnit() {
   char *FilenamePtr = DebugInfoNames.Allocate<char>(MainFileName.length());
   memcpy(FilenamePtr, MainFileName.c_str(), MainFileName.length());
   StringRef Filename(FilenamePtr, MainFileName.length());
+
+  // Save split dwarf file string.
+  std::string SplitDwarfFile = CGM.getCodeGenOpts().SplitDwarfFile;
+  char *SplitDwarfPtr = DebugInfoNames.Allocate<char>(SplitDwarfFile.length());
+  memcpy(SplitDwarfPtr, SplitDwarfFile.c_str(), SplitDwarfFile.length());
+  StringRef SplitDwarfFilename(SplitDwarfPtr, SplitDwarfFile.length());
   
   unsigned LangTag;
   const LangOptions &LO = CGM.getLangOpts();
@@ -338,7 +344,8 @@ void CGDebugInfo::CreateCompileUnit() {
   // Create new compile unit.
   DBuilder.createCompileUnit(LangTag, Filename, getCurrentDirname(),
                              Producer, LO.Optimize,
-                             CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
+                             CGM.getCodeGenOpts().DwarfDebugFlags,
+                             RuntimeVers, SplitDwarfFilename);
   // FIXME - Eliminate TheCU.
   TheCU = llvm::DICompileUnit(DBuilder.getCU());
 }

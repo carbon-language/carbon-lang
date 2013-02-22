@@ -102,6 +102,10 @@ public:
   /// file, for example with -save-temps.
   std::string MainFileName;
 
+  /// The name for the split debug info file that we'll break out. This is used
+  /// in the backend for setting the name in the skeleton cu.
+  std::string SplitDwarfFile;
+
   /// The name of the relocation model to use.
   std::string RelocationModel;
 
