@@ -422,6 +422,8 @@ def ftemplate_depth : Separate<["-"], "ftemplate-depth">,
   HelpText<"Maximum depth of recursive template instantiation">;
 def fconstexpr_depth : Separate<["-"], "fconstexpr-depth">,
   HelpText<"Maximum depth of recursive constexpr function calls">;
+def fbracket_depth : Separate<["-"], "fbracket-depth">,
+  HelpText<"Maximum nesting level for parentheses, brackets, and braces">;
 def fconst_strings : Flag<["-"], "fconst-strings">,
   HelpText<"Use a const qualified type for string literals in C and ObjC">;
 def fno_const_strings : Flag<["-"], "fno-const-strings">,

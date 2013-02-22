@@ -1878,7 +1878,9 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
 }
 
 bool BalancedDelimiterTracker::diagnoseOverflow() {
-  P.Diag(P.Tok, diag::err_parser_impl_limit_overflow);
+  P.Diag(P.Tok, diag::err_bracket_depth_exceeded)
+    << P.getLangOpts().BracketDepth;
+  P.Diag(P.Tok, diag::note_bracket_depth);
   P.SkipUntil(tok::eof);
   return true;  
 }

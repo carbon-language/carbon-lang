@@ -407,7 +407,7 @@ namespace clang {
       if (!P.Tok.is(Kind))
         return true;
       
-      if (getDepth() < MaxDepth) {
+      if (getDepth() < P.getLangOpts().BracketDepth) {
         LOpen = (P.*Consumer)();
         return false;
       }

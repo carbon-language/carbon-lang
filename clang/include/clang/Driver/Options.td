@@ -389,6 +389,7 @@ def fno_fast_math : Flag<["-"], "fno-fast-math">, Group<f_Group>;
 def fmath_errno : Flag<["-"], "fmath-errno">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Require math functions to indicate errors by setting errno">;
 def fno_math_errno : Flag<["-"], "fno-math-errno">, Group<f_Group>;
+def fbracket_depth_EQ : Joined<["-"], "fbracket-depth=">, Group<f_Group>;
 def fsignaling_math : Flag<["-"], "fsignaling-math">, Group<f_Group>;
 def fno_signaling_math : Flag<["-"], "fno-signaling-math">, Group<f_Group>;
 def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,

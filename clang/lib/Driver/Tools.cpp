@@ -2520,6 +2520,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue());
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_fbracket_depth_EQ)) {
+    CmdArgs.push_back("-fbracket-depth");
+    CmdArgs.push_back(A->getValue());
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_Wlarge_by_value_copy_EQ,
                                options::OPT_Wlarge_by_value_copy_def)) {
     if (A->getNumValues()) {

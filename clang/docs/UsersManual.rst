@@ -1178,6 +1178,11 @@ features <http://clang.llvm.org/cxx_status.html>`_ are also implemented.
 Controlling implementation limits
 ---------------------------------
 
+.. option:: -fbracket-depth=N
+
+  Sets the limit for nested parentheses, brackets, and braces to N.  The
+  default is 256.
+
 .. option:: -fconstexpr-depth=N
 
   Sets the limit for recursive constexpr function invocations to N.  The
