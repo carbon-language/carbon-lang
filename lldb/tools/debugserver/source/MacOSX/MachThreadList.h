@@ -35,9 +35,9 @@ public:
     uint32_t        ProcessDidStop (MachProcess *process);
     bool            NotifyException (MachException::Data& exc);
     bool            ShouldStop (bool &step_more);
-    const char *    GetName (thread_t tid);
-    nub_state_t     GetState (thread_t tid);
-    nub_thread_t    SetCurrentThread (thread_t tid);
+    const char *    GetName (nub_thread_t tid);
+    nub_state_t     GetState (nub_thread_t tid);
+    nub_thread_t    SetCurrentThread (nub_thread_t tid);
     bool            GetThreadStoppedReason (nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const;
     void            DumpThreadStoppedReason (nub_thread_t tid) const;
     bool            GetIdentifierInfo (nub_thread_t tid, thread_identifier_info_data_t *ident_info);
@@ -55,6 +55,9 @@ public:
     uint32_t        GetThreadIndexForThreadStoppedWithSignal (const int signo) const;
 
     MachThreadSP    GetThreadByID (nub_thread_t tid) const;
+
+    MachThreadSP    GetThreadByMachPortNumber (thread_t mach_port_number) const;
+    nub_thread_t    GetThreadIDByMachPortNumber (thread_t mach_port_number) const;
 
 protected:
     typedef std::vector<MachThreadSP>   collection;

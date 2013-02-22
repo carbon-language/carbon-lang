@@ -334,7 +334,7 @@ DNBArchImplI386::GetGPRState(bool force)
         m_state.SetError(e_regSetGPR, Read, 0);
 #else
         mach_msg_type_number_t count = e_regSetWordSizeGPR;
-        m_state.SetError(e_regSetGPR, Read, ::thread_get_state(m_thread->ThreadID(), __i386_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count));
+        m_state.SetError(e_regSetGPR, Read, ::thread_get_state(m_thread->MachPortNumber(), __i386_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count));
 #endif
     }
     return m_state.GetError(e_regSetGPR, Read);
@@ -483,17 +483,17 @@ DNBArchImplI386::GetFPUState(bool force)
             if (CPUHasAVX() || FORCE_AVX_REGS)
             {
                 mach_msg_type_number_t count = e_regSetWordSizeAVX;
-                m_state.SetError (e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, &count));
+                m_state.SetError (e_regSetFPU, Read, ::thread_get_state(m_thread->MachPortNumber(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, &count));
                 DNBLogThreadedIf (LOG_THREAD, "::thread_get_state (0x%4.4x, %u, &avx, %u (%u passed in)) => 0x%8.8x",
-                                  m_thread->ThreadID(), __i386_AVX_STATE, count, e_regSetWordSizeAVX,
+                                  m_thread->MachPortNumber(), __i386_AVX_STATE, count, e_regSetWordSizeAVX,
                                   m_state.GetError(e_regSetFPU, Read));
             }
             else
             {    
                 mach_msg_type_number_t count = e_regSetWordSizeFPU;
-                m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, &count));
+                m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->MachPortNumber(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, &count));
                 DNBLogThreadedIf (LOG_THREAD, "::thread_get_state (0x%4.4x, %u, &fpu, %u (%u passed in) => 0x%8.8x",
-                                  m_thread->ThreadID(), __i386_FLOAT_STATE, count, e_regSetWordSizeFPU,
+                                  m_thread->MachPortNumber(), __i386_FLOAT_STATE, count, e_regSetWordSizeFPU,
                                   m_state.GetError(e_regSetFPU, Read));
             }
         }
@@ -507,7 +507,7 @@ DNBArchImplI386::GetEXCState(bool force)
     if (force || m_state.GetError(e_regSetEXC, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeEXC;
-        m_state.SetError(e_regSetEXC, Read, ::thread_get_state(m_thread->ThreadID(), __i386_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, &count));
+        m_state.SetError(e_regSetEXC, Read, ::thread_get_state(m_thread->MachPortNumber(), __i386_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, &count));
     }
     return m_state.GetError(e_regSetEXC, Read);
 }
@@ -515,7 +515,7 @@ DNBArchImplI386::GetEXCState(bool force)
 kern_return_t
 DNBArchImplI386::SetGPRState()
 {
-    m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->ThreadID(), __i386_THREAD_STATE, (thread_state_t)&m_state.context.gpr, e_regSetWordSizeGPR));
+    m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->MachPortNumber(), __i386_THREAD_STATE, (thread_state_t)&m_state.context.gpr, e_regSetWordSizeGPR));
     return m_state.GetError(e_regSetGPR, Write);
 }
 
@@ -530,9 +530,9 @@ DNBArchImplI386::SetFPUState()
     else
     {
         if (CPUHasAVX() || FORCE_AVX_REGS)
-            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, e_regSetWordSizeAVX));
+            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->MachPortNumber(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, e_regSetWordSizeAVX));
         else
-            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, e_regSetWordSizeFPU));
+            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->MachPortNumber(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, e_regSetWordSizeFPU));
         return m_state.GetError(e_regSetFPU, Write);
     }
 }
@@ -540,7 +540,7 @@ DNBArchImplI386::SetFPUState()
 kern_return_t
 DNBArchImplI386::SetEXCState()
 {
-    m_state.SetError(e_regSetEXC, Write, ::thread_set_state(m_thread->ThreadID(), __i386_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, e_regSetWordSizeEXC));
+    m_state.SetError(e_regSetEXC, Write, ::thread_set_state(m_thread->MachPortNumber(), __i386_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, e_regSetWordSizeEXC));
     return m_state.GetError(e_regSetEXC, Write);
 }
 
@@ -550,7 +550,7 @@ DNBArchImplI386::GetDBGState(bool force)
     if (force || m_state.GetError(e_regSetDBG, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeDBG;
-        m_state.SetError(e_regSetDBG, Read, ::thread_get_state(m_thread->ThreadID(), __i386_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, &count));
+        m_state.SetError(e_regSetDBG, Read, ::thread_get_state(m_thread->MachPortNumber(), __i386_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, &count));
     }
     return m_state.GetError(e_regSetDBG, Read);
 }
@@ -558,7 +558,7 @@ DNBArchImplI386::GetDBGState(bool force)
 kern_return_t
 DNBArchImplI386::SetDBGState()
 {
-    m_state.SetError(e_regSetDBG, Write, ::thread_set_state(m_thread->ThreadID(), __i386_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, e_regSetWordSizeDBG));
+    m_state.SetError(e_regSetDBG, Write, ::thread_set_state(m_thread->MachPortNumber(), __i386_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, e_regSetWordSizeDBG));
     return m_state.GetError(e_regSetDBG, Write);
 }
 

@@ -182,6 +182,8 @@ public:
     void                    DumpThreadStoppedReason(nub_thread_t tid) const;
     const char *            GetThreadInfo (nub_thread_t tid) const;
 
+    nub_thread_t            GetThreadIDForMachPortNumber (thread_t mach_port_number) const;
+
     uint32_t                GetCPUType ();
     nub_state_t             GetState ();
     void                    SetState (nub_state_t state);

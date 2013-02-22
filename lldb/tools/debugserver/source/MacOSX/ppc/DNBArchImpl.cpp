@@ -78,7 +78,7 @@ DNBArchMachPPC::GetGPRState(bool force)
     if (force || m_state.GetError(e_regSetGPR, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeGPR;
-        m_state.SetError(e_regSetGPR, Read, ::thread_get_state(m_thread->ThreadID(), e_regSetGPR, (thread_state_t)&m_state.gpr, &count));
+        m_state.SetError(e_regSetGPR, Read, ::thread_get_state(m_thread->MachPortNumber(), e_regSetGPR, (thread_state_t)&m_state.gpr, &count));
     }
     return m_state.GetError(e_regSetGPR, Read);
 }
@@ -89,7 +89,7 @@ DNBArchMachPPC::GetFPRState(bool force)
     if (force || m_state.GetError(e_regSetFPR, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeFPR;
-        m_state.SetError(e_regSetFPR, Read, ::thread_get_state(m_thread->ThreadID(), e_regSetFPR, (thread_state_t)&m_state.fpr, &count));
+        m_state.SetError(e_regSetFPR, Read, ::thread_get_state(m_thread->MachPortNumber(), e_regSetFPR, (thread_state_t)&m_state.fpr, &count));
     }
     return m_state.GetError(e_regSetFPR, Read);
 }
@@ -100,7 +100,7 @@ DNBArchMachPPC::GetEXCState(bool force)
     if (force || m_state.GetError(e_regSetEXC, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeEXC;
-        m_state.SetError(e_regSetEXC, Read, ::thread_get_state(m_thread->ThreadID(), e_regSetEXC, (thread_state_t)&m_state.exc, &count));
+        m_state.SetError(e_regSetEXC, Read, ::thread_get_state(m_thread->MachPortNumber(), e_regSetEXC, (thread_state_t)&m_state.exc, &count));
     }
     return m_state.GetError(e_regSetEXC, Read);
 }
@@ -111,7 +111,7 @@ DNBArchMachPPC::GetVECState(bool force)
     if (force || m_state.GetError(e_regSetVEC, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeVEC;
-        m_state.SetError(e_regSetVEC, Read, ::thread_get_state(m_thread->ThreadID(), e_regSetVEC, (thread_state_t)&m_state.vec, &count));
+        m_state.SetError(e_regSetVEC, Read, ::thread_get_state(m_thread->MachPortNumber(), e_regSetVEC, (thread_state_t)&m_state.vec, &count));
     }
     return m_state.GetError(e_regSetVEC, Read);
 }
@@ -119,28 +119,28 @@ DNBArchMachPPC::GetVECState(bool force)
 kern_return_t
 DNBArchMachPPC::SetGPRState()
 {
-    m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->ThreadID(), e_regSetGPR, (thread_state_t)&m_state.gpr, e_regSetWordSizeGPR));
+    m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->MachPortNumber(), e_regSetGPR, (thread_state_t)&m_state.gpr, e_regSetWordSizeGPR));
     return m_state.GetError(e_regSetGPR, Write);
 }
 
 kern_return_t
 DNBArchMachPPC::SetFPRState()
 {
-    m_state.SetError(e_regSetFPR, Write, ::thread_set_state(m_thread->ThreadID(), e_regSetFPR, (thread_state_t)&m_state.fpr, e_regSetWordSizeFPR));
+    m_state.SetError(e_regSetFPR, Write, ::thread_set_state(m_thread->MachPortNumber(), e_regSetFPR, (thread_state_t)&m_state.fpr, e_regSetWordSizeFPR));
     return m_state.GetError(e_regSetFPR, Write);
 }
 
 kern_return_t
 DNBArchMachPPC::SetEXCState()
 {
-    m_state.SetError(e_regSetEXC, Write, ::thread_set_state(m_thread->ThreadID(), e_regSetEXC, (thread_state_t)&m_state.exc, e_regSetWordSizeEXC));
+    m_state.SetError(e_regSetEXC, Write, ::thread_set_state(m_thread->MachPortNumber(), e_regSetEXC, (thread_state_t)&m_state.exc, e_regSetWordSizeEXC));
     return m_state.GetError(e_regSetEXC, Write);
 }
 
 kern_return_t
 DNBArchMachPPC::SetVECState()
 {
-    m_state.SetError(e_regSetVEC, Write, ::thread_set_state(m_thread->ThreadID(), e_regSetVEC, (thread_state_t)&m_state.vec, e_regSetWordSizeVEC));
+    m_state.SetError(e_regSetVEC, Write, ::thread_set_state(m_thread->MachPortNumber(), e_regSetVEC, (thread_state_t)&m_state.vec, e_regSetWordSizeVEC));
     return m_state.GetError(e_regSetVEC, Write);
 }
 

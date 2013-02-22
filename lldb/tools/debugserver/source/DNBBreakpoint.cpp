@@ -13,6 +13,7 @@
 
 #include "DNBBreakpoint.h"
 #include <algorithm>
+#include <inttypes.h>
 #include "DNBLog.h"
 
 
@@ -77,7 +78,7 @@ DNBBreakpoint::Dump() const
 {
     if (IsBreakpoint())
     {
-        DNBLog ("DNBBreakpoint %u: tid = %4.4x  addr = 0x%llx  state = %s  type = %s breakpoint  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
+        DNBLog ("DNBBreakpoint %u: tid = %8.8" PRIx64 "  addr = 0x%llx  state = %s  type = %s breakpoint  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
                 m_breakID,
                 m_tid,
                 (uint64_t)m_addr,
@@ -91,7 +92,7 @@ DNBBreakpoint::Dump() const
     }
     else
     {
-        DNBLog ("DNBBreakpoint %u: tid = %4.4x  addr = 0x%llx  size = %llu  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
+        DNBLog ("DNBBreakpoint %u: tid = %8.8" PRIx64 "  addr = 0x%llx  size = %llu  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %p baton = %p",
                 m_breakID,
                 m_tid,
                 (uint64_t)m_addr,

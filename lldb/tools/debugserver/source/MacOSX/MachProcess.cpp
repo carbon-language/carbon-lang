@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DNB.h"
+#include <inttypes.h>
 #include <mach/mach.h>
 #include <signal.h>
 #include <spawn.h>
@@ -156,14 +157,20 @@ MachProcess::GetThreadAtIndex (nub_size_t thread_idx) const
     return m_thread_list.ThreadIDAtIndex(thread_idx);
 }
 
+nub_thread_t
+MachProcess::GetThreadIDForMachPortNumber (thread_t mach_port_number) const
+{
+    return m_thread_list.GetThreadIDByMachPortNumber (mach_port_number);
+}
+
 nub_bool_t
 MachProcess::SyncThreadState (nub_thread_t tid)
 {
     MachThreadSP thread_sp(m_thread_list.GetThreadByID(tid));
     if (!thread_sp)
         return false;
-    kern_return_t kret = ::thread_abort_safely(thread_sp->ThreadID());
-    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", thread_sp->ThreadID(), kret, thread_sp->Process()->StopCount());
+    kern_return_t kret = ::thread_abort_safely(thread_sp->MachPortNumber());
+    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%8.8" PRIx32 " calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", thread_sp->MachPortNumber(), kret, thread_sp->Process()->StopCount());
 
     if (kret == KERN_SUCCESS)
         return true;
@@ -650,13 +657,18 @@ MachProcess::ReplyToAllExceptions ()
             DNBLogThreadedIf(LOG_EXCEPTIONS, "Replying to exception %u...", (uint32_t)std::distance(begin, pos));
             int thread_reply_signal = 0;
 
-            const DNBThreadResumeAction *action = m_thread_actions.GetActionForThread (pos->state.thread_port, false);
+            nub_thread_t tid = m_thread_list.GetThreadIDByMachPortNumber (pos->state.thread_port);
+            const DNBThreadResumeAction *action = NULL;
+            if (tid != INVALID_NUB_THREAD)
+            {
+                action = m_thread_actions.GetActionForThread (tid, false);
+            }
 
             if (action)
             {
                 thread_reply_signal = action->signal;
                 if (thread_reply_signal)
-                    m_thread_actions.SetSignalHandledForThread (pos->state.thread_port);
+                    m_thread_actions.SetSignalHandledForThread (tid);
             }
 
             DNBError err (pos->Reply(this, thread_reply_signal));

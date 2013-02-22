@@ -188,10 +188,10 @@ DNBArchMachARM::GetGPRState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_THREAD_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count);
+    kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count);
     uint32_t *r = &m_state.context.gpr.__r[0];
     DNBLogThreadedIf(LOG_THREAD, "thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x (count = %u) regs r0=%8.8x r1=%8.8x r2=%8.8x r3=%8.8x r4=%8.8x r5=%8.8x r6=%8.8x r7=%8.8x r8=%8.8x r9=%8.8x r10=%8.8x r11=%8.8x s12=%8.8x sp=%8.8x lr=%8.8x pc=%8.8x cpsr=%8.8x", 
-                     m_thread->ThreadID(), 
+                     m_thread->MachPortNumber(), 
                      ARM_THREAD_STATE, 
                      ARM_THREAD_STATE_COUNT, 
                      kret,
@@ -227,12 +227,12 @@ DNBArchMachARM::GetVFPState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_VFP_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, &count);
+    kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, &count);
     if (DNBLogEnabledForAny (LOG_THREAD))
     {
         uint32_t *r = &m_state.context.vfp.__r[0];
         DNBLogThreaded ("thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x (count => %u)",
-                        m_thread->ThreadID(), 
+                        m_thread->MachPortNumber(), 
                         ARM_THREAD_STATE, 
                         ARM_THREAD_STATE_COUNT, 
                         kret,
@@ -260,7 +260,7 @@ DNBArchMachARM::GetEXCState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_EXCEPTION_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, &count);
+    kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, &count);
     m_state.SetError(set, Read, kret);
     return kret;
 }
@@ -287,7 +287,7 @@ DNBArchMachARM::GetDBGState(bool force)
 
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_DEBUG_STATE_COUNT;
-    kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, &count);
+    kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, &count);
     m_state.SetError(set, Read, kret);
     return kret;
 }
@@ -296,7 +296,7 @@ kern_return_t
 DNBArchMachARM::SetGPRState()
 {
     int set = e_regSetGPR;
-    kern_return_t kret = ::thread_set_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, ARM_THREAD_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state(m_thread->MachPortNumber(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, ARM_THREAD_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -306,7 +306,7 @@ kern_return_t
 DNBArchMachARM::SetVFPState()
 {
     int set = e_regSetVFP;
-    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, ARM_VFP_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state (m_thread->MachPortNumber(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, ARM_VFP_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -316,7 +316,7 @@ kern_return_t
 DNBArchMachARM::SetEXCState()
 {
     int set = e_regSetEXC;
-    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, ARM_EXCEPTION_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state (m_thread->MachPortNumber(), ARM_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, ARM_EXCEPTION_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -326,7 +326,7 @@ kern_return_t
 DNBArchMachARM::SetDBGState()
 {
     int set = e_regSetDBG;
-    kern_return_t kret = ::thread_set_state (m_thread->ThreadID(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE_COUNT);
+    kern_return_t kret = ::thread_set_state (m_thread->MachPortNumber(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE_COUNT);
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code

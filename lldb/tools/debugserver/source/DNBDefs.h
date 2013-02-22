@@ -73,7 +73,7 @@ typedef uint32_t        nub_break_t;
 typedef uint32_t        nub_watch_t;
 typedef uint32_t        nub_index_t;
 typedef pid_t           nub_process_t;
-typedef unsigned int    nub_thread_t;
+typedef uint64_t        nub_thread_t;
 typedef uint32_t        nub_event_t;
 typedef uint32_t        nub_bool_t;
 

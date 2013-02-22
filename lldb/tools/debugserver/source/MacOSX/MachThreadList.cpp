@@ -13,6 +13,7 @@
 
 #include "MachThreadList.h"
 
+#include <inttypes.h>
 #include <sys/sysctl.h>
 
 #include "DNBLog.h"
@@ -30,7 +31,7 @@ MachThreadList::~MachThreadList()
 }
 
 nub_state_t
-MachThreadList::GetState(thread_t tid)
+MachThreadList::GetState(nub_thread_t tid)
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
@@ -39,7 +40,7 @@ MachThreadList::GetState(thread_t tid)
 }
 
 const char *
-MachThreadList::GetName (thread_t tid)
+MachThreadList::GetName (nub_thread_t tid)
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
@@ -48,7 +49,7 @@ MachThreadList::GetName (thread_t tid)
 }
 
 nub_thread_t
-MachThreadList::SetCurrentThread(thread_t tid)
+MachThreadList::SetCurrentThread(nub_thread_t tid)
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
@@ -110,8 +111,41 @@ MachThreadList::GetThreadByID (nub_thread_t tid) const
     return thread_sp;
 }
 
+MachThreadSP
+MachThreadList::GetThreadByMachPortNumber (thread_t mach_port_number) const
+{
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+    MachThreadSP thread_sp;
+    const size_t num_threads = m_threads.size();
+    for (size_t idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->MachPortNumber() == mach_port_number)
+        {
+            thread_sp = m_threads[idx];
+            break;
+        }
+    }
+    return thread_sp;
+}
+
+nub_thread_t
+MachThreadList::GetThreadIDByMachPortNumber (thread_t mach_port_number) const
+{
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+    MachThreadSP thread_sp;
+    const size_t num_threads = m_threads.size();
+    for (size_t idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->MachPortNumber() == mach_port_number)
+        {
+            return m_threads[idx]->ThreadID();
+        }
+    }
+    return INVALID_NUB_THREAD;
+}
+
 bool
-MachThreadList::GetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value ) const
+MachThreadList::GetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value ) const
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
@@ -121,7 +155,7 @@ MachThreadList::GetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint3
 }
 
 bool
-MachThreadList::SetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value ) const
+MachThreadList::SetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value ) const
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
@@ -177,7 +211,7 @@ MachThreadList::CurrentThreadID ( )
 bool
 MachThreadList::NotifyException(MachException::Data& exc)
 {
-    MachThreadSP thread_sp (GetThreadByID (exc.thread_port));
+    MachThreadSP thread_sp (GetThreadByMachPortNumber (exc.thread_port));
     if (thread_sp)
     {
         thread_sp->NotifyException(exc);
@@ -238,9 +272,10 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
             // (add them), and which ones are not around anymore (remove them).
             for (idx = 0; idx < thread_list_count; ++idx)
             {
-                const thread_t tid = thread_list[idx];
+                const thread_t mach_port_num = thread_list[idx];
                 
-                MachThreadSP thread_sp (GetThreadByID (tid));
+                uint64_t unique_thread_id = MachThread::GetGloballyUniqueThreadIDForMachPortID (mach_port_num);
+                MachThreadSP thread_sp (GetThreadByID (unique_thread_id));
                 if (thread_sp)
                 {
                     // Keep the existing thread class
@@ -249,7 +284,7 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
                 else
                 {
                     // We don't have this thread, lets add it.
-                    thread_sp.reset(new MachThread(process, tid));
+                    thread_sp.reset(new MachThread(process, unique_thread_id, mach_port_num));
 
                     // Add the new thread regardless of its is user ready state...
                     // Make sure the thread is ready to be displayed and shown to users
@@ -382,7 +417,7 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
     {
         for (uint32_t idx = 0; idx < num_new_threads; ++idx)
         {
-            DNBLogThreadedIf (LOG_THREAD, "MachThreadList::ProcessWillResume (pid = %4.4x) stop-id=%u, resuming newly discovered thread: 0x%4.4x, thread-is-user-ready=%i)", 
+            DNBLogThreadedIf (LOG_THREAD, "MachThreadList::ProcessWillResume (pid = %4.4x) stop-id=%u, resuming newly discovered thread: 0x%8.8" PRIx64 ", thread-is-user-ready=%i)",
                               process->ProcessID(), 
                               process->StopCount(), 
                               new_threads[idx]->ThreadID(),

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <inttypes.h>
 #include "MachThread.h"
 #include "MachProcess.h"
 #include "DNBLog.h"
@@ -23,9 +24,10 @@ GetSequenceID()
     return ++g_nextID;
 }
 
-MachThread::MachThread (MachProcess *process, thread_t tid) :
+MachThread::MachThread (MachProcess *process, uint64_t unique_thread_id, thread_t mach_port_num) :
     m_process (process),
-    m_tid (tid),
+    m_unique_id (unique_thread_id),
+    m_mach_port_number (mach_port_num),
     m_seq_id (GetSequenceID()),
     m_state (eStateUnloaded),
     m_state_mutex (PTHREAD_MUTEX_RECURSIVE),
@@ -34,12 +36,10 @@ MachThread::MachThread (MachProcess *process, thread_t tid) :
     m_stop_exception (),
     m_arch_ap (DNBArchProtocol::Create (this)),
     m_reg_sets (NULL),
-    m_num_reg_sets (0)
-#ifdef THREAD_IDENTIFIER_INFO_COUNT
-    , m_ident_info(),
+    m_num_reg_sets (0), 
+    m_ident_info(),
     m_proc_threadinfo(),
     m_dispatch_queue_name()
-#endif
 {
     nub_size_t num_reg_sets = 0;
     m_reg_sets = m_arch_ap->GetRegisterSetInfo (&num_reg_sets);
@@ -49,12 +49,12 @@ MachThread::MachThread (MachProcess *process, thread_t tid) :
     // muck with it and also so we get the suspend count correct in case it was
     // already suspended
     GetBasicInfo();
-    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::MachThread ( process = %p, tid = 0x%4.4x, seq_id = %u )", &m_process, m_tid, m_seq_id);
+    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::MachThread ( process = %p, tid = 0x%8.8" PRIx64 ", seq_id = %u )", &m_process, m_unique_id, m_seq_id);
 }
 
 MachThread::~MachThread()
 {
-    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::~MachThread() for tid = 0x%4.4x (%u)", m_tid, m_seq_id);
+    DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::~MachThread() for tid = 0x%8.8" PRIx64 " (%u)", m_unique_id, m_seq_id);
 }
 
 
@@ -63,13 +63,13 @@ void
 MachThread::Suspend()
 {
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
-    if (ThreadIDIsValid(m_tid))
+    if (MachPortNumberIsValid(m_mach_port_number))
     {
-        DNBError err(::thread_suspend (m_tid), DNBError::MachKernel);
+        DNBError err(::thread_suspend (m_mach_port_number), DNBError::MachKernel);
         if (err.Success())
             m_suspend_count++;
         if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-            err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
+            err.LogThreaded("::thread_suspend (%4.4" PRIx32 ")", m_mach_port_number);
     }
 }
 
@@ -77,7 +77,7 @@ void
 MachThread::Resume(bool others_stopped)
 {
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
-    if (ThreadIDIsValid(m_tid))
+    if (MachPortNumberIsValid(m_mach_port_number))
     {
         SetSuspendCountBeforeResume(others_stopped);
     }
@@ -88,7 +88,7 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
 {
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
     DNBError err;
-    if (ThreadIDIsValid(m_tid) == false)
+    if (MachPortNumberIsValid(m_mach_port_number) == false)
         return false;
         
     size_t times_to_resume;
@@ -113,9 +113,9 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
     {
         while (times_to_resume > 0)
         {
-            err = ::thread_resume (m_tid);
+            err = ::thread_resume (m_mach_port_number);
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-                err.LogThreaded("::thread_resume (%4.4x)", m_tid);
+                err.LogThreaded("::thread_resume (%4.4" PRIx32 ")", m_mach_port_number);
             if (err.Success())
                 --times_to_resume;
             else
@@ -135,16 +135,16 @@ MachThread::RestoreSuspendCountAfterStop ()
 {
     DNBLogThreadedIf(LOG_THREAD | LOG_VERBOSE, "MachThread::%s ( )", __FUNCTION__);
     DNBError err;
-    if (ThreadIDIsValid(m_tid) == false)
+    if (MachPortNumberIsValid(m_mach_port_number) == false)
         return false;
         
     if (m_suspend_count > 0)
     {
         while (m_suspend_count > 0)
         {
-            err = ::thread_resume (m_tid);
+            err = ::thread_resume (m_mach_port_number);
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
-                err.LogThreaded("::thread_resume (%4.4x)", m_tid);
+                err.LogThreaded("::thread_resume (%4.4" PRIx32 ")", m_mach_port_number);
             if (err.Success())
                 --m_suspend_count;
             else
@@ -161,12 +161,12 @@ MachThread::RestoreSuspendCountAfterStop ()
     {
         while (m_suspend_count < 0)
         {
-            err = ::thread_suspend (m_tid);
+            err = ::thread_suspend (m_mach_port_number);
             if (err.Success())
                 ++m_suspend_count;
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
             {
-                err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
+                err.LogThreaded("::thread_suspend (%4.4" PRIx32 ")", m_mach_port_number);
                 return false;
             }
         }
@@ -181,7 +181,7 @@ MachThread::GetBasicInfoAsString () const
     static char g_basic_info_string[1024];
     struct thread_basic_info basicInfo;
 
-    if (GetBasicInfo(m_tid, &basicInfo))
+    if (GetBasicInfo(m_mach_port_number, &basicInfo))
     {
 
 //        char run_state_str[32];
@@ -197,8 +197,8 @@ MachThread::GetBasicInfoAsString () const
 //        }
         float user = (float)basicInfo.user_time.seconds + (float)basicInfo.user_time.microseconds / 1000000.0f;
         float system = (float)basicInfo.user_time.seconds + (float)basicInfo.user_time.microseconds / 1000000.0f;
-        snprintf(g_basic_info_string, sizeof(g_basic_info_string), "Thread 0x%4.4x: user=%f system=%f cpu=%d sleep_time=%d",
-            InferiorThreadID(),
+        snprintf(g_basic_info_string, sizeof(g_basic_info_string), "Thread 0x%8.8" PRIx64 ": user=%f system=%f cpu=%d sleep_time=%d",
+            m_unique_id,
             user,
             system,
             basicInfo.cpu_usage,
@@ -209,6 +209,7 @@ MachThread::GetBasicInfoAsString () const
     return NULL;
 }
 
+// Finds the Mach port number for a given thread in the inferior process' port namespace.
 thread_t
 MachThread::InferiorThreadID() const
 {
@@ -233,7 +234,7 @@ MachThread::InferiorThreadID() const
             if (kret == KERN_SUCCESS)
             {
                 ::mach_port_deallocate (my_task, my_name);
-                if (my_name == m_tid)
+                if (my_name == m_mach_port_number)
                 {
                     inferior_tid = names[i];
                     break;
@@ -271,7 +272,7 @@ MachThread::IsUserReady()
 struct thread_basic_info *
 MachThread::GetBasicInfo ()
 {
-    if (MachThread::GetBasicInfo(m_tid, &m_basic_info))
+    if (MachThread::GetBasicInfo(m_mach_port_number, &m_basic_info))
         return &m_basic_info;
     return NULL;
 }
@@ -280,7 +281,7 @@ MachThread::GetBasicInfo ()
 bool
 MachThread::GetBasicInfo(thread_t thread, struct thread_basic_info *basicInfoPtr)
 {
-    if (ThreadIDIsValid(thread))
+    if (MachPortNumberIsValid(thread))
     {
         unsigned int info_count = THREAD_BASIC_INFO_COUNT;
         kern_return_t err = ::thread_info (thread, THREAD_BASIC_INFO, (thread_info_t) basicInfoPtr, &info_count);
@@ -293,7 +294,13 @@ MachThread::GetBasicInfo(thread_t thread, struct thread_basic_info *basicInfoPtr
 
 
 bool
-MachThread::ThreadIDIsValid(thread_t thread)
+MachThread::ThreadIDIsValid(uint64_t thread)
+{
+    return thread != 0;
+}
+
+bool
+MachThread::MachPortNumberIsValid(thread_t thread)
 {
     return thread != THREAD_NULL;
 }
@@ -354,10 +361,10 @@ MachThread::Dump(uint32_t index)
     default:                        thread_run_state = "???"; break;
     }
 
-    DNBLogThreaded("[%3u] #%3u tid: 0x%4.4x, pc: 0x%16.16llx, sp: 0x%16.16llx, breakID: %3d, user: %d.%6.6d, system: %d.%6.6d, cpu: %2d, policy: %2d, run_state: %2d (%s), flags: %2d, suspend_count: %2d (current %2d), sleep_time: %d",
+    DNBLogThreaded("[%3u] #%3u tid: 0x%8.8" PRIx64 ", pc: 0x%16.16" PRIx64 ", sp: 0x%16.16" PRIx64 ", breakID: %3d, user: %d.%6.6d, system: %d.%6.6d, cpu: %2d, policy: %2d, run_state: %2d (%s), flags: %2d, suspend_count: %2d (current %2d), sleep_time: %d",
         index,
         m_seq_id,
-        m_tid,
+        m_unique_id,
         GetPC(INVALID_NUB_ADDRESS),
         GetSP(INVALID_NUB_ADDRESS),
         m_break_id,
@@ -498,7 +505,7 @@ MachThread::ThreadDidStop()
     RestoreSuspendCountAfterStop();
 
     // Update the basic information for a thread
-    MachThread::GetBasicInfo(m_tid, &m_basic_info);
+    MachThread::GetBasicInfo(m_mach_port_number, &m_basic_info);
 
 #if ENABLE_AUTO_STEPPING_OVER_BP
     // See if we were at a breakpoint when we last resumed that we disabled,
@@ -588,7 +595,7 @@ MachThread::SetState(nub_state_t state)
 {
     PTHREAD_MUTEX_LOCKER (locker, m_state_mutex);
     m_state = state;
-    DNBLogThreadedIf(LOG_THREAD, "MachThread::SetState ( %s ) for tid = 0x%4.4x", DNBStateAsString(state), m_tid);
+    DNBLogThreadedIf(LOG_THREAD, "MachThread::SetState ( %s ) for tid = 0x%8.8" PRIx64 "", DNBStateAsString(state), m_unique_id);
 }
 
 uint32_t
@@ -736,13 +743,11 @@ MachThread::NumSupportedHardwareWatchpoints () const
 bool
 MachThread::GetIdentifierInfo ()
 {
-#ifdef THREAD_IDENTIFIER_INFO_COUNT
         // Don't try to get the thread info once and cache it for the life of the thread.  It changes over time, for instance
         // if the thread name changes, then the thread_handle also changes...  So you have to refetch it every time.
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
-        kern_return_t kret = ::thread_info (ThreadID(), THREAD_IDENTIFIER_INFO, (thread_info_t) &m_ident_info, &count);
+        kern_return_t kret = ::thread_info (m_mach_port_number, THREAD_IDENTIFIER_INFO, (thread_info_t) &m_ident_info, &count);
         return kret == KERN_SUCCESS;
-#endif
 
     return false;
 }
@@ -761,3 +766,18 @@ MachThread::GetName ()
     return NULL;
 }
 
+
+uint64_t 
+MachThread::GetGloballyUniqueThreadIDForMachPortID (thread_t mach_port_id)
+{
+    kern_return_t kr;
+    thread_identifier_info_data_t tident;
+    mach_msg_type_number_t tident_count = THREAD_IDENTIFIER_INFO_COUNT;
+    kr = thread_info (mach_port_id, THREAD_IDENTIFIER_INFO,
+                      (thread_info_t) &tident, &tident_count);
+    if (kr != KERN_SUCCESS)
+    {
+        return mach_port_id;
+    }
+    return tident.thread_id;
+}
