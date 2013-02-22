@@ -24,3 +24,4 @@ void* fn9(unsigned) __attribute__((alloc_size(12345678901234567890123))); // exp
 void* fn10(size_t, size_t) __attribute__((alloc_size(1,2))); // expected-error{{redefinition of parameter}} \
                                                              // expected-error{{a parameter list without types is only allowed in a function definition}} \
                                                              // expected-warning{{alloc_size attribute only applies to functions and methods}}
+void* fn11() __attribute__((alloc_size(1))); // expected-error{{attribute parameter 1 is out of bounds}}

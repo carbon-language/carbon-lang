@@ -1097,7 +1097,11 @@ static void handleAllocSizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // In C++ the implicit 'this' function parameter also counts, and they are
   // counted from one.
   bool HasImplicitThisParam = isInstanceMethod(D);
-  unsigned NumArgs = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
+  unsigned NumArgs;
+  if (hasFunctionProto(D))
+    NumArgs = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
+  else
+    NumArgs = 0;
 
   SmallVector<unsigned, 8> SizeArgs;
 
