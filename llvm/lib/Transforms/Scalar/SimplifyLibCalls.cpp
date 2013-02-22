@@ -165,7 +165,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
       // Ignore non-calls.
       CallInst *CI = dyn_cast<CallInst>(I++);
-      if (!CI) continue;
+      if (!CI || CI->hasFnAttr(Attribute::NoBuiltin)) continue;
 
       // Ignore indirect calls and calls to non-external functions.
       Function *Callee = CI->getCalledFunction();

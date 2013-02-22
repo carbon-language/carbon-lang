@@ -242,7 +242,7 @@ namespace llvm {
     bool ParseUnnamedAttrGrp();
     bool ParseFnAttributeValuePairs(AttrBuilder &B,
                                     std::vector<unsigned> &FwdRefAttrGrps,
-                                    bool inAttrGrp);
+                                    bool inAttrGrp, LocTy &NoBuiltinLoc);
 
     // Type Parsing.
     bool ParseType(Type *&Result, bool AllowVoid = false);

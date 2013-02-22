@@ -75,6 +75,7 @@ public:
     Naked,                 ///< Naked function
     Nest,                  ///< Nested function static chain
     NoAlias,               ///< Considered to not alias after call
+    NoBuiltin,             ///< Callee isn't recognized as a builtin
     NoCapture,             ///< Function creates no aliases of pointer
     NoDuplicate,           ///< Call cannot be duplicated
     NoImplicitFloat,       ///< Disable implicit floating point insts
@@ -473,31 +474,7 @@ public:
   bool td_empty() const              { return TargetDepAttrs.empty(); }
 
   /// \brief Remove attributes that are used on functions only.
-  void removeFunctionOnlyAttrs() {
-    removeAttribute(Attribute::NoReturn)
-      .removeAttribute(Attribute::NoUnwind)
-      .removeAttribute(Attribute::ReadNone)
-      .removeAttribute(Attribute::ReadOnly)
-      .removeAttribute(Attribute::NoInline)
-      .removeAttribute(Attribute::AlwaysInline)
-      .removeAttribute(Attribute::OptimizeForSize)
-      .removeAttribute(Attribute::StackProtect)
-      .removeAttribute(Attribute::StackProtectReq)
-      .removeAttribute(Attribute::StackProtectStrong)
-      .removeAttribute(Attribute::NoRedZone)
-      .removeAttribute(Attribute::NoImplicitFloat)
-      .removeAttribute(Attribute::Naked)
-      .removeAttribute(Attribute::InlineHint)
-      .removeAttribute(Attribute::StackAlignment)
-      .removeAttribute(Attribute::UWTable)
-      .removeAttribute(Attribute::NonLazyBind)
-      .removeAttribute(Attribute::ReturnsTwice)
-      .removeAttribute(Attribute::AddressSafety)
-      .removeAttribute(Attribute::ThreadSafety)
-      .removeAttribute(Attribute::UninitializedChecks)
-      .removeAttribute(Attribute::MinSize)
-      .removeAttribute(Attribute::NoDuplicate);
-  }
+  void removeFunctionOnlyAttrs();
 
   bool operator==(const AttrBuilder &B);
   bool operator!=(const AttrBuilder &B) {

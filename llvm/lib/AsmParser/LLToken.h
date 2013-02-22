@@ -102,6 +102,7 @@ namespace lltok {
     kw_naked,
     kw_nest,
     kw_noalias,
+    kw_nobuiltin,
     kw_nocapture,
     kw_noduplicate,
     kw_noimplicitfloat,
