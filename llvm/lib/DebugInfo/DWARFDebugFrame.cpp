@@ -36,11 +36,10 @@ public:
   virtual uint64_t getOffset() const { return Offset; }
 
   /// \brief Parse and store a sequence of CFI instructions from our data
-  /// stream, starting at Offset and ending at EndOffset. If everything
-  /// goes well, Offset should be equal to EndOffset when this method
+  /// stream, starting at *Offset and ending at EndOffset. If everything
+  /// goes well, *Offset should be equal to EndOffset when this method
   /// returns. Otherwise, an error occurred.
-  /// TODO: Improve error reporting...
-  virtual void parseInstructions(uint32_t &Offset, uint32_t EndOffset);
+  virtual void parseInstructions(uint32_t *Offset, uint32_t EndOffset);
 
   /// \brief Dump the entry header to the given output stream.
   virtual void dumpHeader(raw_ostream &OS) const = 0;
@@ -99,9 +98,9 @@ const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
 
 
-void FrameEntry::parseInstructions(uint32_t &Offset, uint32_t EndOffset) {
-  while (Offset < EndOffset) {
-    uint8_t Opcode = Data.getU8(&Offset);
+void FrameEntry::parseInstructions(uint32_t *Offset, uint32_t EndOffset) {
+  while (*Offset < EndOffset) {
+    uint8_t Opcode = Data.getU8(Offset);
     // Some instructions have a primary opcode encoded in the top bits.
     uint8_t Primary = Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK;
 
@@ -116,7 +115,7 @@ void FrameEntry::parseInstructions(uint32_t &Offset, uint32_t EndOffset) {
           addInstruction(Primary, Op1);
           break;
         case DW_CFA_offset:
-          addInstruction(Primary, Op1, Data.getULEB128(&Offset));
+          addInstruction(Primary, Op1, Data.getULEB128(Offset));
           break;
       }
     } else {
@@ -131,19 +130,19 @@ void FrameEntry::parseInstructions(uint32_t &Offset, uint32_t EndOffset) {
           break;
         case DW_CFA_set_loc:
           // Operands: Address
-          addInstruction(Opcode, Data.getAddress(&Offset));
+          addInstruction(Opcode, Data.getAddress(Offset));
           break;
         case DW_CFA_advance_loc1:
           // Operands: 1-byte delta
-          addInstruction(Opcode, Data.getU8(&Offset));
+          addInstruction(Opcode, Data.getU8(Offset));
           break;
         case DW_CFA_advance_loc2:
           // Operands: 2-byte delta
-          addInstruction(Opcode, Data.getU16(&Offset));
+          addInstruction(Opcode, Data.getU16(Offset));
           break;
         case DW_CFA_advance_loc4:
           // Operands: 4-byte delta
-          addInstruction(Opcode, Data.getU32(&Offset));
+          addInstruction(Opcode, Data.getU32(Offset));
           break;
         case DW_CFA_restore_extended:
         case DW_CFA_undefined:
@@ -151,26 +150,26 @@ void FrameEntry::parseInstructions(uint32_t &Offset, uint32_t EndOffset) {
         case DW_CFA_def_cfa_register:
         case DW_CFA_def_cfa_offset:
           // Operands: ULEB128
-          addInstruction(Opcode, Data.getULEB128(&Offset));
+          addInstruction(Opcode, Data.getULEB128(Offset));
           break;
         case DW_CFA_def_cfa_offset_sf:
           // Operands: SLEB128
-          addInstruction(Opcode, Data.getSLEB128(&Offset));
+          addInstruction(Opcode, Data.getSLEB128(Offset));
           break;
         case DW_CFA_offset_extended:
         case DW_CFA_register:
         case DW_CFA_def_cfa:
         case DW_CFA_val_offset:
           // Operands: ULEB128, ULEB128
-          addInstruction(Opcode, Data.getULEB128(&Offset),
-                                 Data.getULEB128(&Offset));
+          addInstruction(Opcode, Data.getULEB128(Offset),
+                                 Data.getULEB128(Offset));
           break;
         case DW_CFA_offset_extended_sf:
         case DW_CFA_def_cfa_sf:
         case DW_CFA_val_offset_sf:
           // Operands: ULEB128, SLEB128
-          addInstruction(Opcode, Data.getULEB128(&Offset),
-                                 Data.getSLEB128(&Offset));
+          addInstruction(Opcode, Data.getULEB128(Offset),
+                                 Data.getSLEB128(Offset));
           break;
         case DW_CFA_def_cfa_expression:
         case DW_CFA_expression:
@@ -337,37 +336,42 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
     Id = Data.getUnsigned(&Offset, IsDWARF64 ? 8 : 4);
     bool IsCIE = ((IsDWARF64 && Id == DW64_CIE_ID) || Id == DW_CIE_ID);
 
+    FrameEntry *Entry = 0;
     if (IsCIE) {
       // Note: this is specifically DWARFv3 CIE header structure. It was
-      // changed in DWARFv4.
+      // changed in DWARFv4. We currently don't support reading DWARFv4
+      // here because LLVM itself does not emit it (and LLDB doesn't
+      // support it either).
       uint8_t Version = Data.getU8(&Offset);
       const char *Augmentation = Data.getCStr(&Offset);
       uint64_t CodeAlignmentFactor = Data.getULEB128(&Offset);
       int64_t DataAlignmentFactor = Data.getSLEB128(&Offset);
       uint64_t ReturnAddressRegister = Data.getULEB128(&Offset);
 
-      CIE *NewCIE = new CIE(Data, StartOffset, Length, Version,
-                            StringRef(Augmentation), CodeAlignmentFactor,
-                            DataAlignmentFactor, ReturnAddressRegister);
-      Entries.push_back(NewCIE);
+      Entry = new CIE(Data, StartOffset, Length, Version,
+                      StringRef(Augmentation), CodeAlignmentFactor,
+                      DataAlignmentFactor, ReturnAddressRegister);
     } else {
       // FDE
       uint64_t CIEPointer = Id;
       uint64_t InitialLocation = Data.getAddress(&Offset);
       uint64_t AddressRange = Data.getAddress(&Offset);
 
-      FDE *NewFDE = new FDE(Data, StartOffset, Length, CIEPointer,
-                            InitialLocation, AddressRange);
-      Entries.push_back(NewFDE);
+      Entry = new FDE(Data, StartOffset, Length, CIEPointer,
+                      InitialLocation, AddressRange);
     }
 
-    Entries.back()->parseInstructions(Offset, EndStructureOffset);
+    assert(Entry && "Expected Entry to be populated with CIE or FDE");
+    Entry->parseInstructions(&Offset, EndStructureOffset);
 
-    if (Offset != EndStructureOffset) {
+    if (Offset == EndStructureOffset) {
+      // Entry instrucitons parsed successfully.
+      Entries.push_back(Entry);
+    } else {
       std::string Str;
       raw_string_ostream OS(Str);
       OS << format("Parsing entry instructions at %lx failed",
-                   Entries.back()->getOffset());
+                   Entry->getOffset());
       report_fatal_error(Str);
     }
   }
