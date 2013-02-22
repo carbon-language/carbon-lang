@@ -3298,9 +3298,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     else if (LargeGOT)
       Callee = getAddrGlobalLargeGOT(Callee, DAG, MipsII::MO_CALL_HI16,
                                      MipsII::MO_CALL_LO16);
-    else if (HasMips64)
-      Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_DISP);
-    else // O32 & PIC
+    else // N64 || PIC
       Callee = getAddrGlobal(Callee, DAG, MipsII::MO_GOT_CALL);
 
     GlobalOrExternal = true;
