@@ -258,8 +258,6 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, std::vector
 
             threads_id.push_back(tid);
             
-            // process->GetName (tid) should get the same thing - but this looks like it will save one
-            // duplicated thread_info call so leave it be.
             if (identifier_info.thread_handle != 0) {
                 struct proc_threadinfo proc_threadinfo;
                 int len = ::proc_pidinfo(pid, PROC_PIDTHREADINFO, identifier_info.thread_handle, &proc_threadinfo, PROC_PIDTHREADINFO_SIZE);
