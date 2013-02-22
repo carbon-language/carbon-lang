@@ -4457,6 +4457,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
 
   // Declaration kinds that don't make any sense here, but are
   // nonetheless harmless.
+  case Decl::Empty:
   case Decl::TranslationUnit:
     break;
 
