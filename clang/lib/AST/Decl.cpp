@@ -352,7 +352,7 @@ static bool shouldConsiderTemplateVisibility(const FunctionDecl *fn,
 /// We don't need a computation kind here because we can assume
 /// LVForValue.
 ///
-/// \return the computation to use for the parent
+/// \param[out] LV the computation to use for the parent
 static void
 mergeTemplateLV(LinkageInfo &LV, const FunctionDecl *fn,
                 const FunctionTemplateSpecializationInfo *specInfo) {
