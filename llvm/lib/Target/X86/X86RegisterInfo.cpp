@@ -235,38 +235,40 @@ X86RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 
 const uint16_t *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  bool callsEHReturn = false;
-  bool ghcCall = false;
-  bool oclBiCall = false;
-  bool hipeCall = false;
-  bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
-
-  if (MF) {
-    callsEHReturn = MF->getMMI().callsEHReturn();
-    const Function *F = MF->getFunction();
-    ghcCall = (F ? F->getCallingConv() == CallingConv::GHC : false);
-    oclBiCall = (F ? F->getCallingConv() == CallingConv::Intel_OCL_BI : false);
-    hipeCall = (F ? F->getCallingConv() == CallingConv::HiPE : false);
-  }
-
-  if (ghcCall || hipeCall)
+  switch (MF->getFunction()->getCallingConv()) {
+  case CallingConv::GHC:
+  case CallingConv::HiPE:
     return CSR_NoRegs_SaveList;
-  if (oclBiCall) {
+
+  case CallingConv::Intel_OCL_BI: {
+    bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
     if (HasAVX && IsWin64)
-        return CSR_Win64_Intel_OCL_BI_AVX_SaveList;
+      return CSR_Win64_Intel_OCL_BI_AVX_SaveList;
     if (HasAVX && Is64Bit)
-        return CSR_64_Intel_OCL_BI_AVX_SaveList;
+      return CSR_64_Intel_OCL_BI_AVX_SaveList;
     if (!HasAVX && !IsWin64 && Is64Bit)
-        return CSR_64_Intel_OCL_BI_SaveList;
+      return CSR_64_Intel_OCL_BI_SaveList;
+    break;
   }
+
+  case CallingConv::Cold:
+    if (Is64Bit)
+      return CSR_MostRegs_64_SaveList;
+    break;
+
+  default:
+    break;
+  }
+
+  bool CallsEHReturn = MF->getMMI().callsEHReturn();
   if (Is64Bit) {
     if (IsWin64)
       return CSR_Win64_SaveList;
-    if (callsEHReturn)
+    if (CallsEHReturn)
       return CSR_64EHRet_SaveList;
     return CSR_64_SaveList;
   }
-  if (callsEHReturn)
+  if (CallsEHReturn)
     return CSR_32EHRet_SaveList;
   return CSR_32_SaveList;
 }
@@ -287,6 +289,8 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
     return CSR_NoRegs_RegMask;
   if (!Is64Bit)
     return CSR_32_RegMask;
+  if (CC == CallingConv::Cold)
+    return CSR_MostRegs_64_RegMask;
   if (IsWin64)
     return CSR_Win64_RegMask;
   return CSR_64_RegMask;
