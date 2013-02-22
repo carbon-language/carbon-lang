@@ -192,7 +192,7 @@ namespace llvm {
     /// code generator accepts maximum one main compile unit per module. If a
     /// module does not contain any main compile unit then the code generator
     /// will emit multiple compile units in the output object file.
-
+    // TODO: This can be removed when we remove the legacy debug information.
     bool isMain() const                { return getUnsignedField(6) != 0; }
     bool isOptimized() const           { return getUnsignedField(7) != 0; }
     StringRef getFlags() const       { return getStringField(8);   }

@@ -98,7 +98,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     MDString::get(VMContext, Filename),
     MDString::get(VMContext, Directory),
     MDString::get(VMContext, Producer),
-    // Deprecate isMain field.
+    // isMain field can be removed when we remove the legacy debug info.
     ConstantInt::get(Type::getInt1Ty(VMContext), true), // isMain
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     MDString::get(VMContext, Flags),
