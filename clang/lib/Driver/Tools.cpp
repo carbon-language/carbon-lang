@@ -2335,13 +2335,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       C.getArgs().hasArg(options::OPT_S)) {
     if (Output.isFilename()) {
       CmdArgs.push_back("-coverage-file");
-      if (C.getArgs().hasArg(options::OPT_no_canonical_prefixes)) {
-        CmdArgs.push_back(Args.MakeArgString(Output.getFilename()));
-      } else {
-        SmallString<128> absFilename(Output.getFilename());
-        llvm::sys::fs::make_absolute(absFilename);
-        CmdArgs.push_back(Args.MakeArgString(absFilename));
-      }
+      SmallString<128> CoverageFilename(Output.getFilename());
+      if (!C.getArgs().hasArg(options::OPT_no_canonical_prefixes))
+        llvm::sys::fs::make_absolute(CoverageFilename);
+      CmdArgs.push_back(Args.MakeArgString(CoverageFilename));
     }
   }
 
