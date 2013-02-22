@@ -51,6 +51,7 @@ namespace {
     void VisitEnumDecl(EnumDecl *D);
     void VisitRecordDecl(RecordDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
+    void VisitEmptyDecl(EmptyDecl *D);
     void VisitFunctionDecl(FunctionDecl *D);
     void VisitFriendDecl(FriendDecl *D);
     void VisitFieldDecl(FieldDecl *D);
@@ -721,6 +722,11 @@ void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   if (D->getQualifier())
     D->getQualifier()->print(Out, Policy);
   Out << *D->getAliasedNamespace();
+}
+
+void DeclPrinter::VisitEmptyDecl(EmptyDecl *D) {
+  prettyPrintAttributes(D);
+  Out << ";\n";
 }
 
 void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {

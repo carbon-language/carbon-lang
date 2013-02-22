@@ -102,6 +102,7 @@ namespace clang {
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *D);
+    void VisitEmptyDecl(EmptyDecl *D);
 
     void VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
                           uint64_t VisibleOffset);
@@ -778,6 +779,11 @@ void ASTDeclWriter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   Writer.AddStmt(D->getAsmString());
   Writer.AddSourceLocation(D->getRParenLoc(), Record);
   Code = serialization::DECL_FILE_SCOPE_ASM;
+}
+
+void ASTDeclWriter::VisitEmptyDecl(EmptyDecl *D) {
+  VisitDecl(D);
+  Code = serialization::DECL_EMPTY;
 }
 
 void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {

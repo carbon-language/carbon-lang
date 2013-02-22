@@ -626,15 +626,11 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     return DeclGroupPtrTy();
   case tok::semi:
     // Either a C++11 empty-declaration or attribute-declaration.
-    if (attrs.Range.isValid()) {
-      // FIXME: Add an AST representation for this.
-      Actions.ActOnAttributeDeclaration(attrs.getList());
-      return DeclGroupPtrTy();
-    }
-
+    SingleDecl = Actions.ActOnEmptyDeclaration(getCurScope(),
+                                               attrs.getList(),
+                                               Tok.getLocation());
     ConsumeExtraSemi(OutsideFunction);
-    // TODO: Invoke action for top-level semicolon.
-    return DeclGroupPtrTy();
+    break;
   case tok::r_brace:
     Diag(Tok, diag::err_extraneous_closing_brace);
     ConsumeBrace();

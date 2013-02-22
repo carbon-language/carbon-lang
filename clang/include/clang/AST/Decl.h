@@ -3297,7 +3297,21 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Import; }
 };
-  
+
+/// \brief Represents an empty-declaration.
+class EmptyDecl : public Decl {
+  virtual void anchor();
+  EmptyDecl(DeclContext *DC, SourceLocation L)
+    : Decl(Empty, DC, L) { }
+
+public:
+  static EmptyDecl *Create(ASTContext &C, DeclContext *DC,
+                           SourceLocation L);
+  static EmptyDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == Empty; }
+};
 
 /// Insertion operator for diagnostics.  This allows sending NamedDecl's
 /// into a diagnostic with <<.

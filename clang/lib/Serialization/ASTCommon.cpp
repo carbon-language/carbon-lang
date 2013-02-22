@@ -168,6 +168,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::TypeAliasTemplate:
   case Decl::ObjCProtocol:
   case Decl::ObjCInterface:
+  case Decl::Empty:
     return true;
 
   // Never redeclarable.

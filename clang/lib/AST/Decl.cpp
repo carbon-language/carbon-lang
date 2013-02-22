@@ -3343,6 +3343,17 @@ FileScopeAsmDecl *FileScopeAsmDecl::CreateDeserialized(ASTContext &C,
   return new (Mem) FileScopeAsmDecl(0, 0, SourceLocation(), SourceLocation());
 }
 
+void EmptyDecl::anchor() {}
+
+EmptyDecl *EmptyDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
+  return new (C) EmptyDecl(DC, L);
+}
+
+EmptyDecl *EmptyDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(EmptyDecl));
+  return new (Mem) EmptyDecl(0, SourceLocation());
+}
+
 //===----------------------------------------------------------------------===//
 // ImportDecl Implementation
 //===----------------------------------------------------------------------===//

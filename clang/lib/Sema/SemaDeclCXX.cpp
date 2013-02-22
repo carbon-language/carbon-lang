@@ -10085,23 +10085,17 @@ Decl *Sema::ActOnFinishLinkageSpecification(Scope *S,
   return LinkageSpec;
 }
 
-/// \brief Perform semantic checks on a C++11 attribute-declaration.
-void Sema::ActOnAttributeDeclaration(AttributeList *AttrList) {
-  // FIXME: Build an AST node for an attribute declaration and return it.
-  
-  // Since we do not support any attributes which can be used in an attribute
-  // declaration, just diagnose standard and unknown attributes appropriately.
-  for (/**/; AttrList; AttrList = AttrList->getNext()) {
-    if (AttrList->getKind() == AttributeList::IgnoredAttribute ||
-        AttrList->isInvalid())
-      continue;
+Decl *Sema::ActOnEmptyDeclaration(Scope *S,
+                                  AttributeList *AttrList,
+                                  SourceLocation SemiLoc) {
+  Decl *ED = EmptyDecl::Create(Context, CurContext, SemiLoc);
+  // Attribute declarations appertain to empty declaration so we handle
+  // them here.
+  if (AttrList)
+    ProcessDeclAttributeList(S, ED, AttrList);
 
-    Diag(AttrList->getLoc(),
-         AttrList->getKind() == AttributeList::UnknownAttribute
-           ? diag::warn_unknown_attribute_ignored
-           : diag::err_attribute_declaration)
-      << AttrList->getName();
-  }
+  CurContext->addDecl(ED);
+  return ED;
 }
 
 /// \brief Perform semantic analysis for the variable declaration that

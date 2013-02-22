@@ -265,6 +265,7 @@ namespace clang {
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitBlockDecl(BlockDecl *BD);
+    void VisitEmptyDecl(EmptyDecl *D);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
     
@@ -1526,6 +1527,10 @@ void ASTDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
   D->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
+void ASTDeclReader::VisitEmptyDecl(EmptyDecl *D) {
+  VisitDecl(D);
+}
+
 std::pair<uint64_t, uint64_t>
 ASTDeclReader::VisitDeclContext(DeclContext *DC) {
   uint64_t LexicalOffset = Record[Idx++];
@@ -2128,6 +2133,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     // Note: last entry of the ImportDecl record is the number of stored source 
     // locations.
     D = ImportDecl::CreateDeserialized(Context, ID, Record.back());
+    break;
+  case DECL_EMPTY:
+    D = EmptyDecl::CreateDeserialized(Context, ID);
     break;
   }
 
