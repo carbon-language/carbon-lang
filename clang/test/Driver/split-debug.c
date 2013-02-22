@@ -18,3 +18,8 @@
 // RUN: FileCheck -check-prefix=CHECK-BAD < %t %s
 //
 // CHECK-BAD-NOT: "Bad.dwo"
+
+// RUN: %clang -target x86_64-unknown-linux-gnu -gsplit-dwarf -c -### %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-OPTION < %t %s
+//
+// CHECK-OPTION: "-split-dwarf-file" "split-debug.dwo"
