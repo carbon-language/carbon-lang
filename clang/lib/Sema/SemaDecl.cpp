@@ -8449,9 +8449,9 @@ bool Sema::canSkipFunctionBody(Decl *D) {
 }
 
 Decl *Sema::ActOnSkippedFunctionBody(Decl *Decl) {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
+  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(Decl))
     FD->setHasSkippedBody();
-  else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(Decl))
+  else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(Decl))
     MD->setHasSkippedBody();
   return ActOnFinishFunctionBody(Decl, 0);
 }

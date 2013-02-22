@@ -1974,7 +1974,7 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
 
-  if (SkipFunctionBodies && Actions.canSkipFunctionBody(Decl) &&
+  if (SkipFunctionBodies && (!Decl || Actions.canSkipFunctionBody(Decl)) &&
       trySkippingFunctionBody()) {
     BodyScope.Exit();
     return Actions.ActOnSkippedFunctionBody(Decl);
