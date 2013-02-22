@@ -777,15 +777,17 @@ class Base(unittest2.TestCase):
         if self.child and self.child.isalive():
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "tearing down the child process...."
-            if self.child_in_script_interpreter:
-                self.child.sendline('quit()')
-                self.child.expect_exact(self.child_prompt)
-            self.child.sendline('settings set interpreter.prompt-on-quit false')
-            self.child.sendline('quit')
             try:
+                if self.child_in_script_interpreter:
+                    self.child.sendline('quit()')
+                    self.child.expect_exact(self.child_prompt)
+                self.child.sendline('settings set interpreter.prompt-on-quit false')
+                self.child.sendline('quit')
                 self.child.expect(pexpect.EOF)
-            except:
+            except ValueError, ExceptionPexpect:
+                # child is already terminated
                 pass
+
             # Give it one final blow to make sure the child is terminated.
             self.child.close()
 
