@@ -51,7 +51,7 @@ namespace driver {
     /// ArgList.
     unsigned Index;
 
-    /// \brief Was this argument used to effect compilation?
+    /// \brief Was this argument used to affect compilation?
     ///
     /// This is used for generating "argument unused" diagnostics.
     mutable unsigned Claimed : 1;
