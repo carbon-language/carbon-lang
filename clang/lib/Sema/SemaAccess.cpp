@@ -1317,7 +1317,13 @@ static AccessResult IsAccessible(Sema &S,
     FinalAccess = Target->getAccess();
     switch (HasAccess(S, EC, DeclaringClass, FinalAccess, Entity)) {
     case AR_accessible:
+      // Target is accessible at EC when named in its declaring class.
+      // We can now hill-climb and simply check whether the declaring
+      // class is accessible as a base of the naming class.  This is
+      // equivalent to checking the access of a notional public
+      // member with no instance context.
       FinalAccess = AS_public;
+      Entity.suppressInstanceContext();
       break;
     case AR_inaccessible: break;
     case AR_dependent: return AR_dependent; // see above
@@ -1325,8 +1331,6 @@ static AccessResult IsAccessible(Sema &S,
 
     if (DeclaringClass == NamingClass)
       return (FinalAccess == AS_public ? AR_accessible : AR_inaccessible);
-
-    Entity.suppressInstanceContext();
   } else {
     FinalAccess = AS_public;
   }
