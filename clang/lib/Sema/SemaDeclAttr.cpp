@@ -3441,7 +3441,7 @@ void Sema::CheckAlignasUnderalignment(Decl *D) {
     Ty = VD->getType();
   else
     Ty = Context.getTagDeclType(cast<TagDecl>(D));
-  if (Ty->isDependentType())
+  if (Ty->isDependentType() || Ty->isIncompleteType())
     return;
 
   // C++11 [dcl.align]p5, C11 6.7.5/4:

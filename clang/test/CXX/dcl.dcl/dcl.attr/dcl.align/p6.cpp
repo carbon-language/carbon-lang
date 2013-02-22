@@ -81,3 +81,6 @@ enum alignas(O) alignas(P) Y<M,N,O,P>::E : char { e };
 int y1848 = Y<1,8,4,8>::e;
 // FIXME: We should reject this.
 int y1248 = Y<1,2,4,8>::e;
+
+// Don't crash here.
+alignas(4) struct Incomplete incomplete; // expected-error {{incomplete type}} expected-note {{forward declaration}}
