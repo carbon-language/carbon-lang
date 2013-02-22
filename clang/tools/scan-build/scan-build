@@ -480,7 +480,6 @@ sub FileWanted {
        my $relative_file = $file;
        $relative_file =~ s/$baseDirRegEx//g;
        push @filesFound, $relative_file;
-       print $relative_file;
     }
 }
 
