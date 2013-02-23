@@ -2115,17 +2115,17 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort ()
 }
 
 bool
-GDBRemoteCommunicationClient::SetCurrentThread (int tid)
+GDBRemoteCommunicationClient::SetCurrentThread (uint64_t tid)
 {
     if (m_curr_tid == tid)
         return true;
-    
+
     char packet[32];
     int packet_len;
-    if (tid <= 0)
-        packet_len = ::snprintf (packet, sizeof(packet), "Hg%i", tid);
+    if (tid == UINT64_MAX)
+        packet_len = ::snprintf (packet, sizeof(packet), "Hg-1");
     else
-        packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
+        packet_len = ::snprintf (packet, sizeof(packet), "Hg%" PRIx64, tid);
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
     if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
@@ -2140,18 +2140,18 @@ GDBRemoteCommunicationClient::SetCurrentThread (int tid)
 }
 
 bool
-GDBRemoteCommunicationClient::SetCurrentThreadForRun (int tid)
+GDBRemoteCommunicationClient::SetCurrentThreadForRun (uint64_t tid)
 {
     if (m_curr_tid_run == tid)
         return true;
-    
+
     char packet[32];
     int packet_len;
-    if (tid <= 0)
-        packet_len = ::snprintf (packet, sizeof(packet), "Hc%i", tid);
+    if (tid == UINT64_MAX)
+        packet_len = ::snprintf (packet, sizeof(packet), "Hc-1");
     else
-        packet_len = ::snprintf (packet, sizeof(packet), "Hc%x", tid);
-    
+        packet_len = ::snprintf (packet, sizeof(packet), "Hc%" PRIx64, tid);
+
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
     if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
@@ -2267,7 +2267,7 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
             {
                 do
                 {
-                    tid_t tid = response.GetHexMaxU32(false, LLDB_INVALID_THREAD_ID);
+                    tid_t tid = response.GetHexMaxU64(false, LLDB_INVALID_THREAD_ID);
                     
                     if (tid != LLDB_INVALID_THREAD_ID)
                     {

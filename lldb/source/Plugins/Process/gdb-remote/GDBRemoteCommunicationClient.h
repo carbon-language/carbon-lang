@@ -332,10 +332,10 @@ public:
                          uint32_t recv_size);
     
     bool
-    SetCurrentThread (int tid);
+    SetCurrentThread (uint64_t tid);
     
     bool
-    SetCurrentThreadForRun (int tid);
+    SetCurrentThreadForRun (uint64_t tid);
 
     lldb_private::LazyBool
     SupportsAllocDeallocMemory () // const
