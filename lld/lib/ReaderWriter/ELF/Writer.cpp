@@ -38,10 +38,10 @@ private:
   void buildChunks(const File &file);
   virtual error_code writeFile(const File &File, StringRef path);
   void buildAtomToAddressMap();
-  void buildSymbolTable ();
+  void buildStaticSymbolTable(const File &file);
+  void buildDynamicSymbolTable(const File &file);
   void buildSectionHeaderTable();
   void assignSectionsWithNoSegments();
-  void addAbsoluteUndefinedSymbols(const File &File);
   void addDefaultAtoms();
   void addFiles(InputFiles&);
   void finalizeDefaultAtomValues();
@@ -69,6 +69,8 @@ private:
   /// \name Dynamic sections.
   /// @{
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) _dynamicTable;
+  LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) _dynamicSymbolTable;
+  LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _dynamicStringTable;
   LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   /// @}
   CRuntimeFile<ELFT> _runtimeFile;
@@ -86,36 +88,32 @@ ExecutableWriter<ELFT>::ExecutableWriter(const ELFTargetInfo &ti)
 
 template <class ELFT>
 void ExecutableWriter<ELFT>::buildChunks(const File &file) {
-  for (const DefinedAtom *definedAtom : file.defined() ) {
+  for (const DefinedAtom *definedAtom : file.defined())
     _layout->addAtom(definedAtom);
-  }
-  /// Add all the absolute atoms to the layout
-  for (const AbsoluteAtom *absoluteAtom : file.absolute()) {
+  for (const AbsoluteAtom *absoluteAtom : file.absolute())
     _layout->addAtom(absoluteAtom);
-  }
 }
 
-template<class ELFT>
-void ExecutableWriter<ELFT>::buildSymbolTable () {
+template <class ELFT>
+void ExecutableWriter<ELFT>::buildStaticSymbolTable(const File &file) {
   for (auto sec : _layout->sections())
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms())
         _symtab->addSymbol(atom->_atom, section->ordinal(), atom->_virtualAddr);
-}
-
-template<class ELFT>
-void
-ExecutableWriter<ELFT>::addAbsoluteUndefinedSymbols(const File &file) {
-  // add all the absolute symbols that the layout contains to the output symbol
-  // table
   for (auto &atom : _layout->absoluteAtoms())
     _symtab->addSymbol(atom->_atom, ELF::SHN_ABS, atom->_virtualAddr);
   for (const UndefinedAtom *a : file.undefined())
     _symtab->addSymbol(a, ELF::SHN_UNDEF);
 }
 
-template<class ELFT>
-void ExecutableWriter<ELFT>::buildAtomToAddressMap () {
+template <class ELFT>
+void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
+  for (const auto sla : file.sharedLibrary()) {
+    _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
+  }
+}
+
+template <class ELFT> void ExecutableWriter<ELFT>::buildAtomToAddressMap() {
   for (auto sec : _layout->sections())
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms())
@@ -243,6 +241,9 @@ error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   // section string table
   createDefaultSections();
 
+  if (_targetInfo.isDynamic())
+    buildDynamicSymbolTable(file);
+
   // Set the Layout
   _layout->assignSectionsToSegments();
   _layout->assignFileOffsets();
@@ -255,10 +256,7 @@ error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   buildAtomToAddressMap();
 
   // Create symbol table and section string table
-  buildSymbolTable();
-
-  // add other symbols
-  addAbsoluteUndefinedSymbols(file);
+  buildStaticSymbolTable(file);
 
   // Finalize the layout by calling the finalize() functions
   _layout->finalize();
@@ -342,11 +340,19 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
   if (_targetInfo.isDynamic()) {
     _dynamicTable.reset(new (_alloc) DynamicTable<ELFT>(
         _targetInfo, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
+    _dynamicStringTable.reset(new (_alloc) StringTable<ELFT>(
+        _targetInfo, ".dynstr", DefaultLayout<ELFT>::ORDER_DYNAMIC_STRINGS,
+        true));
+    _dynamicSymbolTable.reset(new (_alloc) DynamicSymbolTable<ELFT>(
+        _targetInfo, ".dynsym", DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
     _interpSection.reset(new (_alloc) InterpSection<ELFT>(
         _targetInfo, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
         _targetInfo.getInterpreter()));
     _layout->addSection(_dynamicTable.get());
+    _layout->addSection(_dynamicStringTable.get());
+    _layout->addSection(_dynamicSymbolTable.get());
     _layout->addSection(_interpSection.get());
+    _dynamicSymbolTable->setStringSection(_dynamicStringTable.get());
   }
 
   // give a chance for the target to add sections

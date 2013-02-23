@@ -31,5 +31,5 @@ ED: 'sh_link', 0x00000000
 ED: 'sh_addralign', 0x00000001
 ED: Section 7
 ED: 'sh_link', 0x00000008
-ED: 'sh_addralign', 0x00000008
+ED: 'sh_addralign', 0x00000004
 ED: 'sh_entsize', 0x00000010

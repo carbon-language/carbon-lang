@@ -31,6 +31,7 @@
 
 namespace lld {
 namespace elf {
+template <class> class MergedSections;
 using namespace llvm::ELF;
 
 /// \brief An ELF section.
@@ -39,8 +40,8 @@ public:
   /// \param type the ELF SHT_* type of the section.
   Section(const ELFTargetInfo &ti, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::K_ELFSection)
-      : Chunk<ELFT>(name, k, ti), _flags(0), _entSize(0), _type(0), _link(0),
-        _info(0), _segmentType(SHT_NULL) {}
+      : Chunk<ELFT>(name, k, ti), _parent(nullptr), _flags(0), _entSize(0),
+        _type(0), _link(0), _info(0), _segmentType(SHT_NULL) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
@@ -82,12 +83,18 @@ public:
     this->_segmentType = segmentType;
   }
 
+  void setMergedSection(MergedSections<ELFT> *ms) {
+    _parent = ms;
+  }
+
   static bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Chunk<ELFT>::K_ELFSection ||
            c->kind() == Chunk<ELFT>::K_AtomSection;
   }
 
 protected:
+  /// \brief MergedSections this Section is a member of, or nullptr.
+  MergedSections<ELFT> *_parent;
   /// \brief ELF SHF_* flags.
   uint64_t _flags;
   /// \brief The size of each entity.
@@ -386,6 +393,10 @@ public:
     _virtualAddr = addr;
   }
 
+  void setLink(uint64_t link) { _link = link; }
+
+  void setInfo(uint64_t info) { _shInfo = info; }
+
   inline range<ChunkIter> sections() { return _sections; }
 
   // The below functions returns the properties of the MergeSection
@@ -460,12 +471,14 @@ MergedSections<ELFT>::appendSection(Chunk<ELFT> *c) {
   if (c->align2() > _align2)
     _align2 = c->align2();
   if (const auto section = dyn_cast<Section<ELFT>>(c)) {
+    assert(!_link && "Section already has a link!");
     _link = section->getLink();
     _shInfo = section->getInfo();
     _entSize = section->getEntSize();
     _type = section->getType();
     if (_flags < section->getFlags())
       _flags = section->getFlags();
+    section->setMergedSection(this);
   }
   _kind = c->kind();
   _sections.push_back(c);
@@ -475,7 +488,8 @@ MergedSections<ELFT>::appendSection(Chunk<ELFT> *c) {
 template<class ELFT>
 class StringTable : public Section<ELFT> {
 public:
-  StringTable(const ELFTargetInfo &, const char *str, int32_t order);
+  StringTable(const ELFTargetInfo &, const char *str, int32_t order,
+              bool dynamic = false);
 
   uint64_t addString(StringRef symname);
 
@@ -502,7 +516,7 @@ private:
 
 template <class ELFT>
 StringTable<ELFT>::StringTable(const ELFTargetInfo &ti, const char *str,
-                               int32_t order)
+                               int32_t order, bool dynamic)
     : Section<ELFT>(ti, str) {
   // the string table has a NULL entry for which
   // add an empty string
@@ -511,6 +525,10 @@ StringTable<ELFT>::StringTable(const ELFTargetInfo &ti, const char *str,
   this->_align2 = 1;
   this->setOrder(order);
   this->_type = SHT_STRTAB;
+  if (dynamic) {
+    this->_flags = SHF_ALLOC;
+    this->_msize = this->_fsize;
+  }
 }
 
 template <class ELFT> uint64_t StringTable<ELFT>::addString(StringRef symname) {
@@ -522,6 +540,8 @@ template <class ELFT> uint64_t StringTable<ELFT>::addString(StringRef symname) {
     _strings.push_back(symname);
     uint64_t offset = this->_fsize;
     this->_fsize += symname.size() + 1;
+    if (this->_flags & SHF_ALLOC)
+      this->_msize = this->_fsize;
     _stringMap[symname] = offset;
     return offset;
   }
@@ -544,9 +564,20 @@ void StringTable<ELFT>::write(ELFWriter *writer,
 /// \brief The SymbolTable class represents the symbol table in a ELF file
 template<class ELFT>
 class SymbolTable : public Section<ELFT> {
-public:
+  typedef typename llvm::object::ELFDataTypeTypedefHelper<ELFT>::Elf_Addr
+      Elf_Addr;
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
+  struct SymbolEntry {
+    SymbolEntry(const Atom *a, const Elf_Sym &sym) : _atom(a), _symbol(sym) {}
+
+    SymbolEntry() : _atom(nullptr) {}
+
+    const Atom *_atom;
+    Elf_Sym _symbol;
+  };
+
+public:
   SymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0);
@@ -560,7 +591,7 @@ public:
 private:
   llvm::BumpPtrAllocator _symbolAllocate;
   StringTable<ELFT> *_stringSection;
-  std::vector<Elf_Sym*> _symbolTable;
+  std::vector<SymbolEntry> _symbolTable;
 };
 
 /// ELF Symbol Table 
@@ -569,53 +600,53 @@ SymbolTable<ELFT>::SymbolTable(const ELFTargetInfo &ti, const char *str,
                                int32_t order)
     : Section<ELFT>(ti, str) {
   this->setOrder(order);
-  Elf_Sym *symbol = new (_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
-  memset((void *)symbol, 0, sizeof(Elf_Sym));
-  _symbolTable.push_back(symbol);
+  Elf_Sym symbol;
+  std::memset(&symbol, 0, sizeof(Elf_Sym));
+  _symbolTable.push_back(SymbolEntry(nullptr, symbol));
   this->_entSize = sizeof(Elf_Sym);
   this->_fsize = sizeof(Elf_Sym);
-  this->_align2 = sizeof(void *);
+  this->_align2 = sizeof(Elf_Addr);
   this->_type = SHT_SYMTAB;
 }
 
 template <class ELFT>
 void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
                                   uint64_t addr) {
-  Elf_Sym *symbol = new(_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
+  Elf_Sym symbol;
   unsigned char binding = 0, type = 0;
-  symbol->st_name = _stringSection->addString(atom->name());
-  symbol->st_size = 0;
-  symbol->st_shndx = sectionIndex;
-  symbol->st_value = 0;
-  symbol->st_other = llvm::ELF::STV_DEFAULT;
+  symbol.st_name = _stringSection->addString(atom->name());
+  symbol.st_size = 0;
+  symbol.st_shndx = sectionIndex;
+  symbol.st_value = 0;
+  symbol.st_other = llvm::ELF::STV_DEFAULT;
   if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom)){
-    symbol->st_size = da->size();
+    symbol.st_size = da->size();
     DefinedAtom::ContentType ct;
     switch (ct = da->contentType()){
     case DefinedAtom::typeCode:
     case DefinedAtom::typeStub:
-      symbol->st_value = addr;
+      symbol.st_value = addr;
       type = llvm::ELF::STT_FUNC;
       break;
     case DefinedAtom::typeResolver:
-      symbol->st_value = addr;
+      symbol.st_value = addr;
       type = llvm::ELF::STT_GNU_IFUNC;
       break;
     case DefinedAtom::typeDataFast:
     case DefinedAtom::typeData:
     case DefinedAtom::typeConstant:
     case DefinedAtom::typeGOT:
-      symbol->st_value = addr;
+      symbol.st_value = addr;
       type = llvm::ELF::STT_OBJECT;
       break;
     case DefinedAtom::typeZeroFill:
       type = llvm::ELF::STT_OBJECT;
-      symbol->st_value = addr;
+      symbol.st_value = addr;
       break;
     case DefinedAtom::typeTLVInitialData:
     case DefinedAtom::typeTLVInitialZeroFill:
       type = llvm::ELF::STT_TLS;
-      symbol->st_value = addr;
+      symbol.st_value = addr;
       break;
     default:
       type = llvm::ELF::STT_NOTYPE;
@@ -626,10 +657,10 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
       binding = llvm::ELF::STB_GLOBAL;
   } else if (const AbsoluteAtom *aa = dyn_cast<const AbsoluteAtom>(atom)){
     type = llvm::ELF::STT_OBJECT;
-    symbol->st_shndx = llvm::ELF::SHN_ABS;
+    symbol.st_shndx = llvm::ELF::SHN_ABS;
     switch (aa->scope()) {
     case AbsoluteAtom::scopeLinkageUnit:
-      symbol->st_other = llvm::ELF::STV_HIDDEN;
+      symbol.st_other = llvm::ELF::STV_HIDDEN;
       binding = llvm::ELF::STB_LOCAL;
       break;
     case AbsoluteAtom::scopeTranslationUnit:
@@ -639,32 +670,42 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
       binding = llvm::ELF::STB_GLOBAL;
       break;
     }
-    symbol->st_value = addr;
+    symbol.st_value = addr;
+  } else if (isa<const SharedLibraryAtom>(atom)) {
+    type = llvm::ELF::STT_FUNC;
+    symbol.st_shndx = llvm::ELF::SHN_UNDEF;
+    binding = llvm::ELF::STB_GLOBAL;
   } else {
-   symbol->st_value = 0;
-   type = llvm::ELF::STT_NOTYPE;
-   binding = llvm::ELF::STB_WEAK;
+    symbol.st_value = 0;
+    type = llvm::ELF::STT_NOTYPE;
+    binding = llvm::ELF::STB_WEAK;
   }
-  symbol->setBindingAndType(binding, type);
-  _symbolTable.push_back(symbol);
+  symbol.setBindingAndType(binding, type);
+  _symbolTable.push_back(SymbolEntry(atom, symbol));
   this->_fsize += sizeof(Elf_Sym);
+  if (this->_flags & SHF_ALLOC)
+    this->_msize = this->_fsize;
 }
 
 template <class ELFT> void SymbolTable<ELFT>::finalize() {
   // sh_info should be one greater than last symbol with STB_LOCAL binding
   // we sort the symbol table to keep all local symbols at the beginning
   std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
-  [](const Elf_Sym *A, const Elf_Sym *B) {
-     return A->getBinding() < B->getBinding();
+                   [](const SymbolEntry & A, const SymbolEntry & B) {
+    return A._symbol.getBinding() < B._symbol.getBinding();
   });
   uint16_t shInfo = 0;
-  for (auto i : _symbolTable) {
-    if (i->getBinding() != llvm::ELF::STB_LOCAL)
+  for (const auto &i : _symbolTable) {
+    if (i._symbol.getBinding() != llvm::ELF::STB_LOCAL)
       break;
     shInfo++;
   }
   this->_info = shInfo;
   this->_link = _stringSection->ordinal();
+  if (this->_parent) {
+    this->_parent->setInfo(this->_info);
+    this->_parent->setLink(this->_link);
+  }
 }
 
 template <class ELFT>
@@ -672,11 +713,21 @@ void SymbolTable<ELFT>::write(ELFWriter *writer,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   uint8_t *dest = chunkBuffer + this->fileOffset();
-  for (auto sti : _symbolTable) {
-    memcpy(dest, sti, sizeof(Elf_Sym));
+  for (const auto &sti : _symbolTable) {
+    memcpy(dest, &sti._symbol, sizeof(Elf_Sym));
     dest += sizeof(Elf_Sym);
   }
 }
+
+template <class ELFT> class DynamicSymbolTable : public SymbolTable<ELFT> {
+public:
+  DynamicSymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order)
+      : SymbolTable<ELFT>(ti, str, order) {
+    this->_type = SHT_DYNSYM;
+    this->_flags = SHF_ALLOC;
+    this->_msize = this->_fsize;
+  }
+};
 
 template <class ELFT> class RelocationTable : public Section<ELFT> {
 public:
