@@ -108,7 +108,9 @@ instead of pointers or references - "T castAs" and "Optional<T> getAs" (in the
 case of the TypeLoc hierarchy the latter is "T getAs" and you can use the
 boolean testability of a TypeLoc (or its 'validity') to verify that the cast
 succeeded). Essentially all previous 'cast' usage should be replaced with
-'castAs' and 'dyn_cast' should be replaced with 'getAs'.
+'castAs' and 'dyn_cast' should be replaced with 'getAs'. See r175462 for the
+first example of such a change along with many examples of how code was
+migrated to the new API.
  
 API change 1
 ^^^^^^^^^^^^
