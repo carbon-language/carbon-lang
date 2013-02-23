@@ -581,19 +581,9 @@ commuteInstruction(MachineBasicBlock::iterator &mi,
   }
 
   DEBUG(dbgs() << "2addr: COMMUTED TO: " << *NewMI);
-  // If the instruction changed to commute it, update livevar.
-  if (NewMI != MI) {
-    if (LV)
-      // Update live variables
-      LV->replaceKillInstruction(RegC, MI, NewMI);
-    if (LIS)
-      LIS->ReplaceMachineInstrInMaps(MI, NewMI);
-
-    MBB->insert(mi, NewMI);           // Insert the new inst
-    MBB->erase(mi);                   // Nuke the old inst.
-    mi = NewMI;
-    DistanceMap.insert(std::make_pair(NewMI, Dist));
-  }
+  assert(NewMI == MI &&
+         "TargetInstrInfo::commuteInstruction() should not return a new "
+         "instruction unless it was requested.");
 
   // Update source register map.
   unsigned FromRegC = getMappedReg(RegC, SrcRegMap);
