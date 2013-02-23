@@ -626,9 +626,6 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
   case CC_C:
     OS << " __attribute__((cdecl))";
     break;
-  case CC_Cold:
-    OS << " __attribute__((coldcc))";
-    break;
   case CC_X86StdCall:
     OS << " __attribute__((stdcall))";
     break;
@@ -1159,7 +1156,6 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
 
   case AttributedType::attr_noreturn: OS << "noreturn"; break;
   case AttributedType::attr_cdecl: OS << "cdecl"; break;
-  case AttributedType::attr_coldcc: OS << "coldcc"; break;
   case AttributedType::attr_fastcall: OS << "fastcall"; break;
   case AttributedType::attr_stdcall: OS << "stdcall"; break;
   case AttributedType::attr_thiscall: OS << "thiscall"; break;

@@ -3859,11 +3859,6 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   switch (Attr.getKind()) {
-  case AttributeList::AT_ColdCC:
-    D->addAttr(::new (S.Context)
-               ColdCCAttr(Attr.getRange(), S.Context,
-                          Attr.getAttributeSpellingListIndex()));
-    return;
   case AttributeList::AT_FastCall:
     D->addAttr(::new (S.Context)
                FastCallAttr(Attr.getRange(), S.Context,
@@ -3944,7 +3939,6 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
   // move to TargetAttributesSema one day.
   switch (attr.getKind()) {
   case AttributeList::AT_CDecl: CC = CC_C; break;
-  case AttributeList::AT_ColdCC: CC = CC_Cold; break;
   case AttributeList::AT_FastCall: CC = CC_X86FastCall; break;
   case AttributeList::AT_StdCall: CC = CC_X86StdCall; break;
   case AttributeList::AT_ThisCall: CC = CC_X86ThisCall; break;
@@ -3976,9 +3970,6 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
   case AttributeList::AT_IntelOclBicc: CC = CC_IntelOclBicc; break;
   default: llvm_unreachable("unexpected attribute kind");
   }
-
-  if (!isTargetSpecific(CC))
-    return false;
 
   const TargetInfo &TI = Context.getTargetInfo();
   TargetInfo::CallingConvCheckResult A = TI.checkCallingConvention(CC);
@@ -4783,7 +4774,6 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_StdCall:
   case AttributeList::AT_CDecl:
-  case AttributeList::AT_ColdCC:
   case AttributeList::AT_FastCall:
   case AttributeList::AT_ThisCall:
   case AttributeList::AT_Pascal:

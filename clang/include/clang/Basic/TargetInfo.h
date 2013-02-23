@@ -754,7 +754,13 @@ public:
   /// and be substituted with the default calling convention, or (someday)
   /// produce an error (such as using thiscall on a non-instance function).
   virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
-    return CCCR_Warning;
+    switch (CC) {
+      default:
+        return CCCR_Warning;
+      case CC_C:
+      case CC_Default:
+        return CCCR_OK;
+    }
   }
 
 protected:

@@ -1970,12 +1970,3 @@ Clang implements two kinds of checks with this attribute.
    In this case Clang does not warn because the format string ``s`` and
    the corresponding arguments are annotated.  If the arguments are
    incorrect, the caller of ``foo`` will receive a warning.
-
-LLVM-Specific Calling Conventions
-=================================
-
-Clang supports `LLVM's coldcc calling convention
-<http://llvm.org/docs/LangRef.html#calling-conventions>`_ via the ``coldcc``
-GNU-style attribute, or the ``clang::coldcc`` C++11 attribute.  However,
-this calling convention is not guaranteed to be ABI compatible between
-different versions of the compiler.

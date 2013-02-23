@@ -277,10 +277,6 @@ def Cold : InheritableAttr {
   let Spellings = [GNU<"cold">, CXX11<"gnu", "cold">];
 }
 
-def ColdCC : InheritableAttr {
-  let Spellings = [GNU<"coldcc">, CXX11<"clang", "coldcc">];
-}
-
 def Common : InheritableAttr {
   let Spellings = [GNU<"common">, CXX11<"gnu", "common">];
 }
