@@ -532,3 +532,10 @@ void foo() {
   v4i8_r = __builtin_mips_subuh_r_qb(v4i8_a, v4i8_b);
 // CHECK: call <4 x i8> @llvm.mips.subuh.r.qb
 }
+
+void test_eh_return_data_regno()
+{
+  volatile int res;
+  res = __builtin_eh_return_data_regno(0);  // CHECK: store volatile i32 4
+  res = __builtin_eh_return_data_regno(1);  // CHECK: store volatile i32 5
+}
