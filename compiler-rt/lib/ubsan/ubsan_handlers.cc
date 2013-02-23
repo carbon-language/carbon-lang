@@ -183,6 +183,22 @@ void __ubsan::__ubsan_handle_shift_out_of_bounds_abort(
   Die();
 }
 
+void __ubsan::__ubsan_handle_out_of_bounds(OutOfBoundsData *Data,
+                                           ValueHandle Index) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
+  Value IndexVal(Data->IndexType, Index);
+  Diag(Loc, DL_Error, "index %0 out of bounds for type %1")
+    << IndexVal << Data->ArrayType;
+}
+void __ubsan::__ubsan_handle_out_of_bounds_abort(OutOfBoundsData *Data,
+                                                 ValueHandle Index) {
+  __ubsan_handle_out_of_bounds(Data, Index);
+  Die();
+}
+
 void __ubsan::__ubsan_handle_builtin_unreachable(UnreachableData *Data) {
   Diag(Data->Loc, DL_Error, "execution reached a __builtin_unreachable() call");
   Die();

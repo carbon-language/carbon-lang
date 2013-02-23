@@ -67,6 +67,15 @@ struct ShiftOutOfBoundsData {
 RECOVERABLE(shift_out_of_bounds, ShiftOutOfBoundsData *Data,
             ValueHandle LHS, ValueHandle RHS)
 
+struct OutOfBoundsData {
+  SourceLocation Loc;
+  const TypeDescriptor &ArrayType;
+  const TypeDescriptor &IndexType;
+};
+
+/// \brief Handle an array index out of bounds error.
+RECOVERABLE(out_of_bounds, OutOfBoundsData *Data, ValueHandle Index)
+
 struct UnreachableData {
   SourceLocation Loc;
 };
