@@ -368,25 +368,25 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
-def expectedFailureCompiler(func,compiler,bugnumber=None):
+def expectedFailureGcc(bugnumber=None):
      if callable(bugnumber):
         @wraps(bugnumber)
-        def expectedFailureCompiler_easy_wrapper(*args, **kwargs):
+        def expectedFailureGcc_easy_wrapper(*args, **kwargs):
             from unittest2 import case
             self = args[0]
             test_compiler = self.getCompiler()
             try:
                 bugnumber(*args, **kwargs)
             except Exception:
-                if compiler in test_compiler:
+                if "gcc" in test_compiler:
                     raise case._ExpectedFailure(sys.exc_info(),None)
                 else:
                     raise
-            if compiler in test_compiler:
+            if "gcc" in test_compiler:
                 raise case._UnexpectedSuccess(sys.exc_info(),None)
-        return expectedFailureCompiler_easy_wrapper
+        return expectedFailureGcc_easy_wrapper
      else:
-        def expectedFailureCompiler_impl(func):
+        def expectedFailureGcc_impl(func):
               @wraps(func)
               def wrapper(*args, **kwargs):
                 from unittest2 import case
@@ -395,26 +395,51 @@ def expectedFailureCompiler(func,compiler,bugnumber=None):
                 try:
                     func(*args, **kwargs)
                 except Exception:
-                    if compiler in test_compiler:
+                    if "gcc" in test_compiler:
                         raise case._ExpectedFailure(sys.exc_info(),bugnumber)
                     else:
                         raise
-                if compiler in test_compiler:
+                if "gcc" in test_compiler:
                     raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
               return wrapper
-        return expectedFailureCompiler_impl
+        return expectedFailureGcc_impl
 
-def expectedFailureGcc(func):
-    """Decorate the item as a GCC only expectedFailure."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@expectedFailureClang can only be used to decorate a test method")
-    return expectedFailureCompiler(func, "gcc")
+def expectedFailureClang(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailureClang_easy_wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            test_compiler = self.getCompiler()
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "clang" in test_compiler:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "clang" in test_compiler:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailureClang_easy_wrapper
+     else:
+        def expectedFailureClang_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+                from unittest2 import case
+                self = args[0]
+                test_compiler = self.getCompiler()
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "clang" in test_compiler:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "clang" in test_compiler:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
+              return wrapper
+        return expectedFailureClang_impl
 
-def expectedFailureClang(func):
-    """Decorate the item as a Clang only expectedFailure."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@expectedFailureClang can only be used to decorate a test method")
-    return expectedFailureCompiler(func, "clang")
 
 def expectedFailurei386(bugnumber=None):
      if callable(bugnumber):
