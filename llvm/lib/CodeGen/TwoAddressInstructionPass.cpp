@@ -734,9 +734,9 @@ bool TwoAddressInstructionPass::
 rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
                       MachineBasicBlock::iterator &nmi,
                       unsigned Reg) {
-  // Bail immediately if we don't have LV available. We use it to find kills
-  // efficiently.
-  if (!LV)
+  // Bail immediately if we don't have LV or LIS available. We use them to find
+  // kills efficiently.
+  if (!LV && !LIS)
     return false;
 
   MachineInstr *MI = &*mi;
@@ -745,7 +745,22 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
 
-  MachineInstr *KillMI = LV->getVarInfo(Reg).findKill(MBB);
+  MachineInstr *KillMI = 0;
+  if (LIS) {
+    LiveInterval &LI = LIS->getInterval(Reg);
+    assert(LI.end() != LI.begin() &&
+           "Reg should not have empty live interval.");
+
+    SlotIndex MBBEndIdx = LIS->getMBBEndIdx(MBB).getPrevSlot();
+    LiveInterval::const_iterator I = LI.find(MBBEndIdx);
+    if (I != LI.end() && I->start < MBBEndIdx)
+      return false;
+
+    --I;
+    KillMI = LIS->getInstructionFromIndex(I->end);
+  } else {
+    KillMI = LV->getVarInfo(Reg).findKill(MBB);
+  }
   if (!KillMI || MI == KillMI || KillMI->isCopy() || KillMI->isCopyLike())
     // Don't mess with copies, they may be coalesced later.
     return false;
@@ -781,24 +796,27 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
       Defs.insert(MOReg);
     else {
       Uses.insert(MOReg);
-      if (MO.isKill() && MOReg != Reg)
+      if (MOReg != Reg && (MO.isKill() ||
+                           (LIS && isPlainlyKilled(MI, MOReg, LIS))))
         Kills.insert(MOReg);
     }
   }
 
   // Move the copies connected to MI down as well.
-  MachineBasicBlock::iterator From = MI;
-  MachineBasicBlock::iterator To = llvm::next(From);
-  while (To->isCopy() && Defs.count(To->getOperand(1).getReg())) {
-    Defs.insert(To->getOperand(0).getReg());
-    ++To;
+  MachineBasicBlock::iterator Begin = MI;
+  MachineBasicBlock::iterator AfterMI = llvm::next(Begin);
+
+  MachineBasicBlock::iterator End = AfterMI;
+  while (End->isCopy() && Defs.count(End->getOperand(1).getReg())) {
+    Defs.insert(End->getOperand(0).getReg());
+    ++End;
   }
 
   // Check if the reschedule will not break depedencies.
   unsigned NumVisited = 0;
   MachineBasicBlock::iterator KillPos = KillMI;
   ++KillPos;
-  for (MachineBasicBlock::iterator I = To; I != KillPos; ++I) {
+  for (MachineBasicBlock::iterator I = End; I != KillPos; ++I) {
     MachineInstr *OtherMI = I;
     // DBG_VALUE cannot be counted against the limit.
     if (OtherMI->isDebugValue())
@@ -829,11 +847,13 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
       } else {
         if (Defs.count(MOReg))
           return false;
+        bool isKill = MO.isKill() ||
+                      (LIS && isPlainlyKilled(OtherMI, MOReg, LIS));
         if (MOReg != Reg &&
-            ((MO.isKill() && Uses.count(MOReg)) || Kills.count(MOReg)))
+            ((isKill && Uses.count(MOReg)) || Kills.count(MOReg)))
           // Don't want to extend other live ranges and update kills.
           return false;
-        if (MOReg == Reg && !MO.isKill())
+        if (MOReg == Reg && !isKill)
           // We can't schedule across a use of the register in question.
           return false;
         // Ensure that if this is register in question, its the kill we expect.
@@ -844,19 +864,35 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
   }
 
   // Move debug info as well.
-  while (From != MBB->begin() && llvm::prior(From)->isDebugValue())
-    --From;
+  while (Begin != MBB->begin() && llvm::prior(Begin)->isDebugValue())
+    --Begin;
+
+  nmi = End;
+  MachineBasicBlock::iterator InsertPos = KillPos;
+  if (LIS) {
+    // We have to move the copies first so that the MBB is still well-formed
+    // when calling handleMove().
+    for (MachineBasicBlock::iterator MBBI = AfterMI; MBBI != End;) {
+      MachineInstr *CopyMI = MBBI;
+      ++MBBI;
+      MBB->splice(InsertPos, MBB, CopyMI);
+      LIS->handleMove(CopyMI);
+      InsertPos = CopyMI;
+    }
+    End = llvm::next(MachineBasicBlock::iterator(MI));
+  }
 
   // Copies following MI may have been moved as well.
-  nmi = To;
-  MBB->splice(KillPos, MBB, From, To);
+  MBB->splice(InsertPos, MBB, Begin, End);
   DistanceMap.erase(DI);
 
   // Update live variables
-  LV->removeVirtualRegisterKilled(Reg, KillMI);
-  LV->addVirtualRegisterKilled(Reg, MI);
-  if (LIS)
+  if (LIS) {
     LIS->handleMove(MI);
+  } else {
+    LV->removeVirtualRegisterKilled(Reg, KillMI);
+    LV->addVirtualRegisterKilled(Reg, MI);
+  }
 
   DEBUG(dbgs() << "\trescheduled below kill: " << *KillMI);
   return true;
@@ -892,9 +928,9 @@ bool TwoAddressInstructionPass::
 rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
                       MachineBasicBlock::iterator &nmi,
                       unsigned Reg) {
-  // Bail immediately if we don't have LV available. We use it to find kills
-  // efficiently.
-  if (!LV)
+  // Bail immediately if we don't have LV or LIS available. We use them to find
+  // kills efficiently.
+  if (!LV && !LIS)
     return false;
 
   MachineInstr *MI = &*mi;
@@ -903,7 +939,22 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
 
-  MachineInstr *KillMI = LV->getVarInfo(Reg).findKill(MBB);
+  MachineInstr *KillMI = 0;
+  if (LIS) {
+    LiveInterval &LI = LIS->getInterval(Reg);
+    assert(LI.end() != LI.begin() &&
+           "Reg should not have empty live interval.");
+
+    SlotIndex MBBEndIdx = LIS->getMBBEndIdx(MBB).getPrevSlot();
+    LiveInterval::const_iterator I = LI.find(MBBEndIdx);
+    if (I != LI.end() && I->start < MBBEndIdx)
+      return false;
+
+    --I;
+    KillMI = LIS->getInstructionFromIndex(I->end);
+  } else {
+    KillMI = LV->getVarInfo(Reg).findKill(MBB);
+  }
   if (!KillMI || MI == KillMI || KillMI->isCopy() || KillMI->isCopyLike())
     // Don't mess with copies, they may be coalesced later.
     return false;
@@ -930,10 +981,11 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
         continue;
       if (isDefTooClose(MOReg, DI->second, MI))
         return false;
-      if (MOReg == Reg && !MO.isKill())
+      bool isKill = MO.isKill() || (LIS && isPlainlyKilled(KillMI, MOReg, LIS));
+      if (MOReg == Reg && !isKill)
         return false;
       Uses.insert(MOReg);
-      if (MO.isKill() && MOReg != Reg)
+      if (isKill && MOReg != Reg)
         Kills.insert(MOReg);
     } else if (TargetRegisterInfo::isPhysicalRegister(MOReg)) {
       Defs.insert(MOReg);
@@ -973,7 +1025,8 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
         if (Kills.count(MOReg))
           // Don't want to extend other live ranges and update kills.
           return false;
-        if (OtherMI != MI && MOReg == Reg && !MO.isKill())
+        if (OtherMI != MI && MOReg == Reg &&
+            !(MO.isKill() || (LIS && isPlainlyKilled(OtherMI, MOReg, LIS))))
           // We can't schedule across a use of the register in question.
           return false;
       } else {
@@ -1007,10 +1060,12 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
   DistanceMap.erase(DI);
 
   // Update live variables
-  LV->removeVirtualRegisterKilled(Reg, KillMI);
-  LV->addVirtualRegisterKilled(Reg, MI);
-  if (LIS)
+  if (LIS) {
     LIS->handleMove(KillMI);
+  } else {
+    LV->removeVirtualRegisterKilled(Reg, KillMI);
+    LV->addVirtualRegisterKilled(Reg, MI);
+  }
 
   DEBUG(dbgs() << "\trescheduled kill: " << *KillMI);
   return true;
