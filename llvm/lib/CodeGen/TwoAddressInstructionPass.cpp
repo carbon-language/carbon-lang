@@ -163,6 +163,8 @@ INITIALIZE_PASS_END(TwoAddressInstructionPass, "twoaddressinstruction",
 
 char &llvm::TwoAddressInstructionPassID = TwoAddressInstructionPass::ID;
 
+static bool isPlainlyKilled(MachineInstr *MI, unsigned Reg, LiveIntervals *LIS);
+
 /// sink3AddrInstruction - A two-address instruction has been converted to a
 /// three-address instruction to avoid clobbering a register. Try to sink it
 /// past the instruction that would kill the above mentioned register to reduce
@@ -204,14 +206,29 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
 
   // Find the instruction that kills SavedReg.
   MachineInstr *KillMI = NULL;
-  for (MachineRegisterInfo::use_nodbg_iterator
-         UI = MRI->use_nodbg_begin(SavedReg),
-         UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-    MachineOperand &UseMO = UI.getOperand();
-    if (!UseMO.isKill())
-      continue;
-    KillMI = UseMO.getParent();
-    break;
+  if (LIS) {
+    LiveInterval &LI = LIS->getInterval(SavedReg);
+    assert(LI.end() != LI.begin() &&
+           "Reg should not have empty live interval.");
+
+    SlotIndex MBBEndIdx = LIS->getMBBEndIdx(MBB).getPrevSlot();
+    LiveInterval::const_iterator I = LI.find(MBBEndIdx);
+    if (I != LI.end() && I->start < MBBEndIdx)
+      return false;
+
+    --I;
+    KillMI = LIS->getInstructionFromIndex(I->end);
+  }
+  if (!KillMI) {
+    for (MachineRegisterInfo::use_nodbg_iterator
+           UI = MRI->use_nodbg_begin(SavedReg),
+           UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
+      MachineOperand &UseMO = UI.getOperand();
+      if (!UseMO.isKill())
+        continue;
+      KillMI = UseMO.getParent();
+      break;
+    }
   }
 
   // If we find the instruction that kills SavedReg, and it is in an
@@ -250,7 +267,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
       if (DefReg == MOReg)
         return false;
 
-      if (MO.isKill()) {
+      if (MO.isKill() || (LIS && isPlainlyKilled(OtherMI, MOReg, LIS))) {
         if (OtherMI == KillMI && MOReg == SavedReg)
           // Save the operand that kills the register. We want to unset the kill
           // marker if we can sink MI past it.
@@ -263,13 +280,15 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
   }
   assert(KillMO && "Didn't find kill");
 
-  // Update kill and LV information.
-  KillMO->setIsKill(false);
-  KillMO = MI->findRegisterUseOperand(SavedReg, false, TRI);
-  KillMO->setIsKill(true);
+  if (!LIS) {
+    // Update kill and LV information.
+    KillMO->setIsKill(false);
+    KillMO = MI->findRegisterUseOperand(SavedReg, false, TRI);
+    KillMO->setIsKill(true);
 
-  if (LV)
-    LV->replaceKillInstruction(SavedReg, KillMI, MI);
+    if (LV)
+      LV->replaceKillInstruction(SavedReg, KillMI, MI);
+  }
 
   // Move instruction to its destination.
   MBB->remove(MI);
