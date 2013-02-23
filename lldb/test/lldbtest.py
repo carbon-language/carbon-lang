@@ -368,39 +368,39 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
-def expectedFailureCompiler(bugnumber=None):
+def expectedFailureCompiler(func,compiler,bugnumber=None):
      if callable(bugnumber):
         @wraps(bugnumber)
         def expectedFailureCompiler_easy_wrapper(*args, **kwargs):
-	        from unittest2 import case
-	        self = args[0]
-	        test_compiler = self.getCompiler()
-	        try:
-	            bugnumber(*args, **kwargs)
-	        except Exception:
-	            if compiler in test_compiler:
-	                raise _ExpectedFailure(sys.exc_info(),None)
-	            else:
-	                raise
-	        if compiler in test_compiler:
-	            raise case._UnexpectedSuccess(sys.exc_info(),None)
+            from unittest2 import case
+            self = args[0]
+            test_compiler = self.getCompiler()
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if compiler in test_compiler:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if compiler in test_compiler:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
         return expectedFailureCompiler_easy_wrapper
      else:
         def expectedFailureCompiler_impl(func):
               @wraps(func)
               def wrapper(*args, **kwargs):
-		        from unittest2 import case
-		        self = args[0]
-		        test_compiler = self.getCompiler()
-		        try:
-		            func(*args, **kwargs)
-		        except Exception:
-		            if compiler in test_compiler:
-		                raise _ExpectedFailure(sys.exc_info(),None)
-		            else:
-		                raise
-		        if compiler in test_compiler:
-		            raise case._UnexpectedSuccess(sys.exc_info(),None)
+                from unittest2 import case
+                self = args[0]
+                test_compiler = self.getCompiler()
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if compiler in test_compiler:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if compiler in test_compiler:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
               return wrapper
         return expectedFailureCompiler_impl
 
@@ -420,35 +420,35 @@ def expectedFailurei386(bugnumber=None):
      if callable(bugnumber):
         @wraps(bugnumber)
         def expectedFailurei386_easy_wrapper(*args, **kwargs):
-	        from unittest2 import case
-	        self = args[0]
-	        arch = self.getArchitecture()
-	        try:
-	            bugnumber(*args, **kwargs)
-	        except Exception:
-	            if "i386" in arch:
-	                raise _ExpectedFailure(sys.exc_info(),None)
-	            else:
-	                raise
-	        if "i386" in arch:
-	            raise case._UnexpectedSuccess(sys.exc_info(),None)
+            from unittest2 import case
+            self = args[0]
+            arch = self.getArchitecture()
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "i386" in arch:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "i386" in arch:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
         return expectedFailurei386_easy_wrapper
      else:
         def expectedFailurei386_impl(func):
               @wraps(func)
               def wrapper(*args, **kwargs):
-		        from unittest2 import case
-		        self = args[0]
-		        arch = self.getArchitecture()
-		        try:
-		            func(*args, **kwargs)
-		        except Exception:
-		            if "i386" in arch:
-		                raise _ExpectedFailure(sys.exc_info(),None)
-		            else:
-		                raise
-		        if "i386" in arch:
-		            raise case._UnexpectedSuccess(sys.exc_info(),None)
+                from unittest2 import case
+                self = args[0]
+                arch = self.getArchitecture()
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "i386" in arch:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "i386" in arch:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
               return wrapper
         return expectedFailurei386_impl
 
@@ -456,35 +456,35 @@ def expectedFailureLinux(bugnumber=None):
      if callable(bugnumber):
         @wraps(bugnumber)
         def expectedFailureLinux_easy_wrapper(*args, **kwargs):
-	        from unittest2 import case
-	        self = args[0]
-	        platform = sys.platform
-	        try:
-	            bugnumber(*args, **kwargs)
-	        except Exception:
-	            if "linux" in platform:
-	                raise _ExpectedFailure(sys.exc_info(),None)
-	            else:
-	                raise
-	        if "linux" in platform:
-	            raise case._UnexpectedSuccess(sys.exc_info(),None)
+            from unittest2 import case
+            self = args[0]
+            platform = sys.platform
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "linux" in platform:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "linux" in platform:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
         return expectedFailureLinux_easy_wrapper
      else:
         def expectedFailureLinux_impl(func):
               @wraps(func)
               def wrapper(*args, **kwargs):
-		        from unittest2 import case
-		        self = args[0]
-		        platform = sys.platform
-		        try:
-		            func(*args, **kwargs)
-		        except Exception:
-		            if "linux" in platform:
-		                raise _ExpectedFailure(sys.exc_info(),None)
-		            else:
-		                raise
-		        if "linux" in platform:
-		            raise case._UnexpectedSuccess(sys.exc_info(),None)
+                from unittest2 import case
+                self = args[0]
+                platform = sys.platform
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "linux" in platform:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "linux" in platform:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
               return wrapper
         return expectedFailureLinux_impl
 
