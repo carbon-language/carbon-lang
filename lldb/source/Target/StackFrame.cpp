@@ -250,7 +250,7 @@ void
 StackFrame::ChangePC (addr_t pc)
 {
     m_frame_code_addr.SetRawAddress(pc);
-    m_sc.Clear();
+    m_sc.Clear(false);
     m_flags.Reset(0);
     ThreadSP thread_sp (GetThread());
     if (thread_sp)

@@ -2564,7 +2564,7 @@ SymbolFileDWARF::GetCompUnitForDWARFCompUnit (DWARFCompileUnit* dwarf_cu, uint32
 bool
 SymbolFileDWARF::GetFunction (DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry* func_die, SymbolContext& sc)
 {
-    sc.Clear();
+    sc.Clear(false);
     // Check if the symbol vendor already knows about this compile unit?
     sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
 

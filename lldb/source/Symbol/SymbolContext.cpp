@@ -108,9 +108,10 @@ SymbolContext::operator= (const SymbolContext& rhs)
 }
 
 void
-SymbolContext::Clear()
+SymbolContext::Clear(bool clear_target)
 {
-    target_sp.reset();
+    if (clear_target)
+        target_sp.reset();
     module_sp.reset();
     comp_unit   = NULL;
     function    = NULL;
@@ -453,7 +454,7 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                                         SymbolContext &next_frame_sc, 
                                         Address &next_frame_pc) const
 {
-    next_frame_sc.Clear();
+    next_frame_sc.Clear(false);
     next_frame_pc.Clear();
 
     if (block)

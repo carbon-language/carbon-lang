@@ -442,8 +442,8 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
     Mutex::Locker locker (m_mutex);
     uint32_t resolved_flags = 0;
 
-    // Clear the result symbol context in case we don't find anything
-    sc.Clear();
+    // Clear the result symbol context in case we don't find anything, but don't clear the target
+    sc.Clear(false);
 
     // Get the section from the section/offset address.
     SectionSP section_sp (so_addr.GetSection());

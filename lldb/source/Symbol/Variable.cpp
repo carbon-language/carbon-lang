@@ -203,7 +203,7 @@ Variable::CalculateSymbolContext (SymbolContext *sc)
     if (m_owner_scope)
         m_owner_scope->CalculateSymbolContext(sc);
     else
-        sc->Clear();
+        sc->Clear(false);
 }
 
 bool

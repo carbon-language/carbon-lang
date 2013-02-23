@@ -445,7 +445,7 @@ Disassembler::PrintInstructions
                 }
                 else
                 {
-                    sc.Clear();
+                    sc.Clear(true);
                 }
             }
 

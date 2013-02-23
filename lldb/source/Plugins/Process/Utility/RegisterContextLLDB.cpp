@@ -60,7 +60,7 @@ RegisterContextLLDB::RegisterContextLLDB
     m_registers(),
     m_parent_unwind (unwind_lldb)
 {
-    m_sym_ctx.Clear();
+    m_sym_ctx.Clear(false);
     m_sym_ctx_valid = false;
 
     if (IsFrameZero ())
@@ -409,7 +409,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     {
         Address temporary_pc(m_current_pc);
         temporary_pc.SetOffset(m_current_pc.GetOffset() - 1);
-        m_sym_ctx.Clear();
+        m_sym_ctx.Clear(false);
         m_sym_ctx_valid = false;
         if ((pc_module_sp->ResolveSymbolContextForAddress (temporary_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
         {

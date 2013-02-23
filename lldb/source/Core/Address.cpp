@@ -762,7 +762,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 uint32_t
 Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope) const
 {
-    sc->Clear();
+    sc->Clear(false);
     // Absolute addresses don't have enough information to reconstruct even their target.
 
     SectionSP section_sp (GetSection());

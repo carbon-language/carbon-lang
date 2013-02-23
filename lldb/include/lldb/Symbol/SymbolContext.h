@@ -131,7 +131,7 @@ public:
     /// to their default state.
     //------------------------------------------------------------------
     void
-    Clear ();
+    Clear (bool clear_target);
 
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.

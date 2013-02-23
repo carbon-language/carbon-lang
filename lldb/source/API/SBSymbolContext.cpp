@@ -72,7 +72,7 @@ SBSymbolContext::SetSymbolContext (const SymbolContext *sc_ptr)
     else
     {
         if (m_opaque_ap.get())
-            m_opaque_ap->Clear();
+            m_opaque_ap->Clear(true);
     }
 }
 

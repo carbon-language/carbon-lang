@@ -86,12 +86,12 @@ ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
         m_parser_vars->m_sym_ctx = exe_ctx.GetThreadPtr()->GetStackFrameAtIndex(0)->GetSymbolContext(lldb::eSymbolContextEverything);
     else if (exe_ctx.GetProcessPtr())
     {
-        m_parser_vars->m_sym_ctx.Clear();
+        m_parser_vars->m_sym_ctx.Clear(true);
         m_parser_vars->m_sym_ctx.target_sp = exe_ctx.GetTargetSP();
     }
     else if (target)
     {
-        m_parser_vars->m_sym_ctx.Clear();
+        m_parser_vars->m_sym_ctx.Clear(true);
         m_parser_vars->m_sym_ctx.target_sp = exe_ctx.GetTargetSP();
     }
     

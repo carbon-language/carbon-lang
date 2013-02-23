@@ -482,7 +482,7 @@ protected:
                     ModuleSP module_sp (module_list.GetModuleAtIndex(i));
                     if (module_sp && module_sp->ResolveFileAddress(m_options.address, so_addr))
                     {
-                        sc.Clear();
+                        sc.Clear(true);
                         if (module_sp->ResolveSymbolContextForAddress (so_addr, eSymbolContextEverything, sc) & eSymbolContextLineEntry)
                             sc_list.Append(sc);
                     }
@@ -505,7 +505,7 @@ protected:
                     ModuleSP module_sp (so_addr.GetModule());
                     if (module_sp)
                     {
-                        sc.Clear();
+                        sc.Clear(true);
                         if (module_sp->ResolveSymbolContextForAddress (so_addr, eSymbolContextEverything, sc) & eSymbolContextLineEntry)
                         {
                             sc_list.Append(sc);
