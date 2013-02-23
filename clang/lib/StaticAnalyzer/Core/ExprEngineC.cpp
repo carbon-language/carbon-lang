@@ -657,8 +657,8 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
   for (CFGBlock::const_reverse_iterator I = SrcBlock->rbegin(),
                                         E = SrcBlock->rend(); I != E; ++I) {
     CFGElement CE = *I;
-    if (CFGStmt CS = CE.getAs<CFGStmt>()) {
-      const Expr *ValEx = cast<Expr>(CS.getStmt());
+    if (Optional<CFGStmt> CS = CE.getAs<CFGStmt>()) {
+      const Expr *ValEx = cast<Expr>(CS->getStmt());
       hasValue = true;
       V = state->getSVal(ValEx, LCtx);
       break;

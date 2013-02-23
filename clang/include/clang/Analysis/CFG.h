@@ -49,7 +49,6 @@ class CFGElement {
 public:
   enum Kind {
     // main kind
-    Invalid,
     Statement,
     Initializer,
     // dtor kind
@@ -70,8 +69,8 @@ protected:
     : Data1(const_cast<void*>(Ptr1), ((unsigned) kind) & 0x3),
       Data2(const_cast<void*>(Ptr2), (((unsigned) kind) >> 2) & 0x3) {}
 
-public:
   CFGElement() {}
+public:
 
   /// \brief Convert to the specified CFGElement type, asserting that this
   /// CFGElement is of the desired type.
@@ -84,12 +83,12 @@ public:
     return t;
   }
 
-  /// \brief Convert to the specified CFGElement type, returning an invalid
-  /// CFGElement if this CFGElement is not of the desired type.
+  /// \brief Convert to the specified CFGElement type, returning None if this
+  /// CFGElement is not of the desired type.
   template<typename T>
-  T getAs() const {
+  Optional<T> getAs() const {
     if (!T::isKind(*this))
-      return T();
+      return None;
     T t;
     CFGElement& e = t;
     e = *this;
@@ -102,10 +101,6 @@ public:
     x |= Data1.getInt();
     return (Kind) x;
   }
-
-  bool isValid() const { return getKind() != Invalid; }
-
-  operator bool() const { return isValid(); }
 };
 
 class CFGStmt : public CFGElement {
@@ -574,7 +569,7 @@ public:
   // the elements beginning at the last position in prepared space.
   iterator beginAutomaticObjDtorsInsert(iterator I, size_t Cnt,
       BumpVectorContext &C) {
-    return iterator(Elements.insert(I.base(), Cnt, CFGElement(), C));
+    return iterator(Elements.insert(I.base(), Cnt, CFGAutomaticObjDtor(0, 0), C));
   }
   iterator insertAutomaticObjDtor(iterator I, VarDecl *VD, Stmt *S) {
     *I = CFGAutomaticObjDtor(VD, S);
@@ -757,8 +752,8 @@ public:
     for (const_iterator I=begin(), E=end(); I != E; ++I)
       for (CFGBlock::const_iterator BI=(*I)->begin(), BE=(*I)->end();
            BI != BE; ++BI) {
-        if (CFGStmt stmt = BI->getAs<CFGStmt>())
-          O(const_cast<Stmt*>(stmt.getStmt()));
+        if (Optional<CFGStmt> stmt = BI->getAs<CFGStmt>())
+          O(const_cast<Stmt*>(stmt->getStmt()));
       }
   }
 

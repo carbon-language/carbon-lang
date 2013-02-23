@@ -123,14 +123,14 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
     const BlockEdge &BE =  I->first;
     const CFGBlock *Exit = BE.getDst();
     const CFGElement &CE = Exit->front();
-    if (CFGStmt CS = CE.getAs<CFGStmt>()) {
+    if (Optional<CFGStmt> CS = CE.getAs<CFGStmt>()) {
       SmallString<128> bufI;
       llvm::raw_svector_ostream outputI(bufI);
       outputI << "(" << NameOfRootFunction << ")" <<
                  ": The analyzer generated a sink at this point";
-      B.EmitBasicReport(D, "Sink Point", "Internal Statistics", outputI.str(),
-                        PathDiagnosticLocation::createBegin(CS.getStmt(),
-                                                            SM, LC));
+      B.EmitBasicReport(
+          D, "Sink Point", "Internal Statistics", outputI.str(),
+          PathDiagnosticLocation::createBegin(CS->getStmt(), SM, LC));
     }
   }
 }

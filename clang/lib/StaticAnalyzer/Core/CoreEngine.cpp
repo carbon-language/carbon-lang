@@ -331,9 +331,9 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance &L,
   WList->setBlockCounter(Counter);
 
   // Process the entrance of the block.
-  if (CFGElement E = L.getFirstElement()) {
+  if (Optional<CFGElement> E = L.getFirstElement()) {
     NodeBuilderContext Ctx(*this, L.getBlock(), Pred);
-    SubEng.processCFGElement(E, Pred, 0, &Ctx);
+    SubEng.processCFGElement(*E, Pred, 0, &Ctx);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);

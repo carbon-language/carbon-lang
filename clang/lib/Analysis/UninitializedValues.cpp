@@ -746,9 +746,8 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   TransferFunctions tf(vals, cfg, block, ac, classification, handler);
   for (CFGBlock::const_iterator I = block->begin(), E = block->end(); 
        I != E; ++I) {
-    if (CFGStmt cs = I->getAs<CFGStmt>()) {
-      tf.Visit(const_cast<Stmt*>(cs.getStmt()));
-    }
+    if (Optional<CFGStmt> cs = I->getAs<CFGStmt>())
+      tf.Visit(const_cast<Stmt*>(cs->getStmt()));
   }
   return vals.updateValueVectorWithScratch(block);
 }

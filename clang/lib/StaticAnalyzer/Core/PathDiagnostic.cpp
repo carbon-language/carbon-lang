@@ -476,8 +476,6 @@ getLocationForCaller(const StackFrameContext *SFC,
   CFGElement Source = Block[SFC->getIndex()];
 
   switch (Source.getKind()) {
-  case CFGElement::Invalid:
-    llvm_unreachable("Invalid CFGElement");
   case CFGElement::Statement:
     return PathDiagnosticLocation(Source.castAs<CFGStmt>().getStmt(),
                                   SM, CallerCtx);

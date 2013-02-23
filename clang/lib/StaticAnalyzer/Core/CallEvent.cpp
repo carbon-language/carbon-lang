@@ -971,11 +971,12 @@ CallEventManager::getCaller(const StackFrameContext *CalleeCtx,
   SVal ThisVal = State->getSVal(ThisPtr);
 
   const Stmt *Trigger;
-  if (CFGAutomaticObjDtor AutoDtor = E.getAs<CFGAutomaticObjDtor>())
-    Trigger = AutoDtor.getTriggerStmt();
+  if (Optional<CFGAutomaticObjDtor> AutoDtor = E.getAs<CFGAutomaticObjDtor>())
+    Trigger = AutoDtor->getTriggerStmt();
   else
     Trigger = Dtor->getBody();
 
   return getCXXDestructorCall(Dtor, Trigger, ThisVal.getAsRegion(),
-                              E.getAs<CFGBaseDtor>(), State, CallerCtx);
+                              E.getAs<CFGBaseDtor>().hasValue(), State,
+                              CallerCtx);
 }

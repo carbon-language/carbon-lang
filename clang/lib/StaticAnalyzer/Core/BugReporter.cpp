@@ -1523,9 +1523,9 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       }
 
       if (Optional<BlockEntrance> BE = P.getAs<BlockEntrance>()) {
-        CFGElement First = BE->getFirstElement();
-        if (CFGStmt S = First.getAs<CFGStmt>()) {
-          const Stmt *stmt = S.getStmt();
+        Optional<CFGElement> First = BE->getFirstElement();
+        if (Optional<CFGStmt> S = First ? First->getAs<CFGStmt>() : None) {
+          const Stmt *stmt = S->getStmt();
           if (IsControlFlowExpr(stmt)) {
             // Add the proper context for '&&', '||', and '?'.
             EB.addContext(stmt);

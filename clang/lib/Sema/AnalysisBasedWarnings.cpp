@@ -762,8 +762,8 @@ namespace {
           for (CFGBlock::const_reverse_iterator ElemIt = P->rbegin(),
                                                 ElemEnd = P->rend();
                ElemIt != ElemEnd; ++ElemIt) {
-            if (CFGStmt CS = ElemIt->getAs<CFGStmt>()) {
-              if (const AttributedStmt *AS = asFallThroughAttr(CS.getStmt())) {
+            if (Optional<CFGStmt> CS = ElemIt->getAs<CFGStmt>()) {
+              if (const AttributedStmt *AS = asFallThroughAttr(CS->getStmt())) {
                 S.Diag(AS->getLocStart(),
                        diag::warn_fallthrough_attr_unreachable);
                 markFallthroughVisited(AS);
@@ -833,8 +833,8 @@ namespace {
       for (CFGBlock::const_reverse_iterator ElemIt = B.rbegin(),
                                             ElemEnd = B.rend();
                                             ElemIt != ElemEnd; ++ElemIt) {
-        if (CFGStmt CS = ElemIt->getAs<CFGStmt>())
-          return CS.getStmt();
+        if (Optional<CFGStmt> CS = ElemIt->getAs<CFGStmt>())
+          return CS->getStmt();
       }
       // Workaround to detect a statement thrown out by CFGBuilder:
       //   case X: {} case Y:

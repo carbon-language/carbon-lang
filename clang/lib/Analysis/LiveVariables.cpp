@@ -474,8 +474,9 @@ LiveVariablesImpl::runOnBlock(const CFGBlock *block,
        ei = block->rend(); it != ei; ++it) {
     const CFGElement &elem = *it;
 
-    if (CFGAutomaticObjDtor Dtor = elem.getAs<CFGAutomaticObjDtor>()){
-      val.liveDecls = DSetFact.add(val.liveDecls, Dtor.getVarDecl());
+    if (Optional<CFGAutomaticObjDtor> Dtor =
+            elem.getAs<CFGAutomaticObjDtor>()) {
+      val.liveDecls = DSetFact.add(val.liveDecls, Dtor->getVarDecl());
       continue;
     }
 
@@ -534,8 +535,9 @@ LiveVariables::computeLiveness(AnalysisDeclContext &AC,
     if (killAtAssign)
       for (CFGBlock::const_iterator bi = block->begin(), be = block->end();
            bi != be; ++bi) {
-        if (CFGStmt cs = bi->getAs<CFGStmt>()) {
-          if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(cs.getStmt())) {
+        if (Optional<CFGStmt> cs = bi->getAs<CFGStmt>()) {
+          if (const BinaryOperator *BO =
+                  dyn_cast<BinaryOperator>(cs->getStmt())) {
             if (BO->getOpcode() == BO_Assign) {
               if (const DeclRefExpr *DR =
                     dyn_cast<DeclRefExpr>(BO->getLHS()->IgnoreParens())) {

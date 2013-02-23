@@ -202,9 +202,9 @@ public:
     return reinterpret_cast<const CFGBlock*>(getData1());
   }
 
-  const CFGElement getFirstElement() const {
+  Optional<CFGElement> getFirstElement() const {
     const CFGBlock *B = getBlock();
-    return B->empty() ? CFGElement() : B->front();
+    return B->empty() ? Optional<CFGElement>() : B->front();
   }
   
 private:

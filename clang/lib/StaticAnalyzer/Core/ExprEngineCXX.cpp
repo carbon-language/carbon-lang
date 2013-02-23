@@ -90,8 +90,8 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       CFGElement Next = (*B)[currStmtIdx+1];
 
       // Is this a constructor for a local variable?
-      if (CFGStmt StmtElem = Next.getAs<CFGStmt>()) {
-        if (const DeclStmt *DS = dyn_cast<DeclStmt>(StmtElem.getStmt())) {
+      if (Optional<CFGStmt> StmtElem = Next.getAs<CFGStmt>()) {
+        if (const DeclStmt *DS = dyn_cast<DeclStmt>(StmtElem->getStmt())) {
           if (const VarDecl *Var = dyn_cast<VarDecl>(DS->getSingleDecl())) {
             if (Var->getInit()->IgnoreImplicit() == CE) {
               QualType Ty = Var->getType();
@@ -113,8 +113,8 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       }
       
       // Is this a constructor for a member?
-      if (CFGInitializer InitElem = Next.getAs<CFGInitializer>()) {
-        const CXXCtorInitializer *Init = InitElem.getInitializer();
+      if (Optional<CFGInitializer> InitElem = Next.getAs<CFGInitializer>()) {
+        const CXXCtorInitializer *Init = InitElem->getInitializer();
         assert(Init->isAnyMemberInitializer());
 
         const CXXMethodDecl *CurCtor = cast<CXXMethodDecl>(LCtx->getDecl());
