@@ -98,6 +98,18 @@ These are major API changes that have happened since the 3.2 release of
 Clang. If upgrading an external codebase that uses Clang as a library,
 this section should help get you past the largest hurdles of upgrading.
 
+Value Casting
+^^^^^^^^^^^^^
+
+Certain type hierarchies (TypeLoc, CFGElement, ProgramPoint, and SVal) were
+misusing the llvm::cast machinery to perform undefined operations. Their APIs
+have been changed to use two member function templates that return values
+instead of pointers or references - "T castAs" and "Optional<T> getAs" (in the
+case of the TypeLoc hierarchy the latter is "T getAs" and you can use the
+boolean testability of a TypeLoc (or its 'validity') to verify that the cast
+succeeded). Essentially all previous 'cast' usage should be replaced with
+'castAs' and 'dyn_cast' should be replaced with 'getAs'.
+ 
 API change 1
 ^^^^^^^^^^^^
 
