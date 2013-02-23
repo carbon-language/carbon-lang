@@ -330,8 +330,7 @@ private:
         : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
           BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0),
-          BreakBeforeThirdOperand(false) {}
+          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -374,9 +373,6 @@ private:
     /// \brief The position of the colon in an ObjC method declaration/call.
     unsigned ColonPos;
 
-    /// \brief Break before third operand in ternary expression.
-    bool BreakBeforeThirdOperand;
-
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
         return Indent < Other.Indent;
@@ -396,8 +392,6 @@ private:
         return HasMultiParameterLine;
       if (ColonPos != Other.ColonPos)
         return ColonPos < Other.ColonPos;
-      if (BreakBeforeThirdOperand != Other.BreakBeforeThirdOperand)
-        return BreakBeforeThirdOperand;
       return false;
     }
   };
@@ -523,12 +517,10 @@ private:
       }
 
       if (Current.is(tok::question))
-        State.Stack.back().BreakBeforeThirdOperand = true;
-      if (Previous.is(tok::comma) && !State.Stack.back().AvoidBinPacking)
+        State.Stack.back().BreakBeforeParameter = true;
+      if ((Previous.is(tok::comma) || Previous.is(tok::semi)) &&
+          !State.Stack.back().AvoidBinPacking)
         State.Stack.back().BreakBeforeParameter = false;
-
-      if (RootToken.is(tok::kw_for))
-        State.LineContainsContinuedForLoopSection = Previous.isNot(tok::semi);
 
       if (!DryRun) {
         unsigned NewLines =
@@ -546,9 +538,27 @@ private:
       State.StartOfLineLevel = State.ParenLevel;
       if (Current.is(tok::colon) && Current.Type != TT_ConditionalExpr)
         State.Stack.back().Indent += 2;
+
+      // Any break on this level means that the parent level has been broken
+      // and we need to avoid bin packing there.
+      for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+        State.Stack[i].BreakBeforeParameter = true;
+      }
+      // If we break after {, we should also break before the corresponding }.
+      if (Previous.is(tok::l_brace))
+        State.Stack.back().BreakBeforeClosingBrace = true;
+
+      if (State.Stack.back().AvoidBinPacking) {
+        // If we are breaking after '(', '{', '<', this is not bin packing
+        // unless AllowAllParametersOfDeclarationOnNextLine is false.
+        if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
+             Previous.Type != TT_TemplateOpener) ||
+            (!Style.AllowAllParametersOfDeclarationOnNextLine &&
+             Line.MustBeDeclaration))
+          State.Stack.back().BreakBeforeParameter = true;
+      }
     } else {
-      if (Current.is(tok::equal) &&
-          (RootToken.is(tok::kw_for) || State.ParenLevel == 0))
+      if (Current.is(tok::equal))
         State.VariablePos = State.Column - Previous.FormatTok.TokenLength;
 
       unsigned Spaces = State.NextToken->SpacesRequiredBefore;
@@ -601,30 +611,6 @@ private:
         State.Stack.back().LastSpace = State.Column;
     }
 
-    // If we break after an {, we should also break before the corresponding }.
-    if (Newline && Previous.is(tok::l_brace))
-      State.Stack.back().BreakBeforeClosingBrace = true;
-
-    if (State.Stack.back().AvoidBinPacking && Newline &&
-        (Line.First.isNot(tok::kw_for) || State.ParenLevel != 1)) {
-      // If we are breaking after '(', '{', '<', this is not bin packing unless
-      // AllowAllParametersOfDeclarationOnNextLine is false.
-      if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
-           Previous.Type != TT_TemplateOpener) ||
-          (!Style.AllowAllParametersOfDeclarationOnNextLine &&
-           Line.MustBeDeclaration))
-        State.Stack.back().BreakBeforeParameter = true;
-    }
-
-    if (Newline) {
-      // Any break on this level means that the parent level has been broken
-      // and we need to avoid bin packing there.
-      for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
-        if (Line.First.isNot(tok::kw_for) || i != 1)
-          State.Stack[i].BreakBeforeParameter = true;
-      }
-    }
-
     return moveStateToNextToken(State, DryRun);
   }
 
@@ -650,6 +636,7 @@ private:
     for (unsigned i = 0, e = Current.FakeLParens; i != e; ++i) {
       ParenState NewParenState = State.Stack.back();
       NewParenState.Indent = std::max(State.Column, State.Stack.back().Indent);
+      NewParenState.BreakBeforeParameter = false;
       State.Stack.push_back(NewParenState);
     }
 
@@ -907,7 +894,10 @@ private:
     if (State.NextToken->Parent->is(tok::semi) &&
         State.LineContainsContinuedForLoopSection)
       return true;
-    if (State.NextToken->Parent->is(tok::comma) &&
+    if ((State.NextToken->Parent->is(tok::comma) ||
+         State.NextToken->Parent->is(tok::semi) ||
+         State.NextToken->is(tok::question) ||
+         State.NextToken->Type == TT_ConditionalExpr) &&
         State.Stack.back().BreakBeforeParameter &&
         !isTrailingComment(*State.NextToken) &&
         State.NextToken->isNot(tok::r_paren) &&
@@ -922,9 +912,6 @@ private:
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&
           State.ParenLevel == 0)))
-      return true;
-    if (State.NextToken->is(tok::colon) &&
-        State.Stack.back().BreakBeforeThirdOperand)
       return true;
     return false;
   }

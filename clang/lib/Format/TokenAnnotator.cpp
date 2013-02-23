@@ -724,7 +724,7 @@ public:
   ExpressionParser(AnnotatedLine &Line) : Current(&Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
-  void parse(prec::Level Precedence = prec::Unknown) {
+  void parse(int Precedence = 0) {
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
@@ -740,18 +740,27 @@ public:
     AnnotatedToken *Start = Current;
     bool OperatorFound = false;
 
-    while (Current != NULL) {
+    while (Current) {
       // Consume operators with higher precedence.
       parse(prec::Level(Precedence + 1));
 
+      int CurrentPrecedence = 0;
+      if (Current) {
+        if (Current->Type == TT_ConditionalExpr)
+          CurrentPrecedence = 1 + (int) prec::Conditional;
+        else if (Current->is(tok::semi))
+          CurrentPrecedence = 1;
+        else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
+          CurrentPrecedence = 1 + (int) getPrecedence(*Current);
+      }
+
       // At the end of the line or when an operator with higher precedence is
       // found, insert fake parenthesis and return.
-      if (Current == NULL || Current->is(tok::semi) || closesScope(*Current) ||
-          ((Current->Type == TT_BinaryOperator || Current->is(tok::comma)) &&
-           getPrecedence(*Current) < Precedence)) {
+      if (Current == NULL || closesScope(*Current) ||
+          (CurrentPrecedence != 0 && CurrentPrecedence < Precedence)) {
         if (OperatorFound) {
           ++Start->FakeLParens;
-          if (Current != NULL)
+          if (Current)
             ++Current->Parent->FakeRParens;
         }
         return;
@@ -759,14 +768,21 @@ public:
 
       // Consume scopes: (), [], <> and {}
       if (opensScope(*Current)) {
-        while (Current != NULL && !closesScope(*Current)) {
+        AnnotatedToken *Left = Current;
+        while (Current && !closesScope(*Current)) {
           next();
           parse();
+        }
+        // Remove fake parens that just duplicate the real parens.
+        if (Current && Left->Children[0].FakeLParens > 0 &&
+            Current->Parent->FakeRParens > 0) {
+          --Left->Children[0].FakeLParens;
+          --Current->Parent->FakeRParens;
         }
         next();
       } else {
         // Operator found.
-        if (getPrecedence(*Current) == Precedence)
+        if (CurrentPrecedence == Precedence)
           OperatorFound = true;
 
         next();

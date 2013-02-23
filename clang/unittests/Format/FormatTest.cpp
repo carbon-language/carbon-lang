@@ -306,6 +306,11 @@ TEST_F(FormatTest, FormatsForLoop) {
       "                                           aaaaaaaaaaaaaaaa);\n"
       "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
       "}");
+  verifyGoogleFormat(
+      "for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),\n"
+      "                                          E = UnwrappedLines.end();\n"
+      "     I != E;\n"
+      "     ++I) {\n}");
 }
 
 TEST_F(FormatTest, RangeBasedForLoops) {
@@ -1397,9 +1402,14 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "    ? aaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "    : aaaaaaaaaaaaaaaaaaaaaaaaaaa;");
-
-  // FIXME: The trailing third parameter here is kind of hidden. Prefer putting
-  // it on the next line.
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    ? aaaaaaaaaaaaaaa\n"
+      "    : aaaaaaaaaaaaaaa;");
+  verifyFormat("f(aaaaaaaaaaaaaaaa == // force break\n"
+               "  aaaaaaaaa\n"
+               "      ? b\n"
+               "      : c);");
   verifyFormat(
       "unsigned Indent =\n"
       "    format(TheLine.First, IndentForLevel[TheLine.Level] >= 0\n"
@@ -1408,6 +1418,14 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "           TheLine.InPPDirective, PreviousEndOfLineColumn);",
       getLLVMStyleWithColumns(70));
 
+  verifyGoogleFormat(
+      "void f() {\n"
+      "  g(aaa,\n"
+      "    aaaaaaaaaa == aaaaaaaaaa ? aaaa : aaaaa,\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "        ? aaaaaaaaaaaaaaa\n"
+      "        : aaaaaaaaaaaaaaa);\n"
+      "}");
 }
 
 TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
