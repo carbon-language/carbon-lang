@@ -602,7 +602,8 @@ private:
             !Current.Children.empty() && (Current.Children[0].is(tok::equal) ||
                                           Current.Children[0].is(tok::semi) ||
                                           Current.Children[0].is(tok::l_brace));
-        if (ParensNotExpr && !ParensCouldEndDecl)
+        if (ParensNotExpr && !ParensCouldEndDecl &&
+            Contexts.back().IsExpression)
           // FIXME: We need to get smarter and understand more cases of casts.
           Current.Type = TT_CastRParen;
       } else if (Current.is(tok::at) && Current.Children.size()) {

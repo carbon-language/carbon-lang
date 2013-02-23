@@ -1728,10 +1728,12 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
 }
 
 TEST_F(FormatTest, UnderstandsNewAndDelete) {
-  verifyFormat("A *a = new A;");
-  verifyFormat("A *a = new (placement) A;");
-  verifyFormat("delete a;");
-  verifyFormat("delete (A *)a;");
+  verifyFormat("void f() {\n"
+               "  A *a = new A;\n"
+               "  A *a = new (placement) A;\n"
+               "  delete a;\n"
+               "  delete (A *)a;\n"
+               "}");
 }
 
 TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
@@ -1895,6 +1897,11 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(int i = (kA * kB) & kMask) {}");
   verifyFormat("int a = sizeof(int) * b;");
   verifyFormat("int a = alignof(int) * b;");
+  
+  // These are not casts, but at some point were confused with casts.
+  verifyFormat("virtual void foo(int *) override;");
+  verifyFormat("virtual void foo(char &) const;");
+  verifyFormat("virtual void foo(int *a, char *) const;");
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
