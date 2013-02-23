@@ -3481,6 +3481,13 @@ def t2SRSIA_UPD : T2SRS<0b11, 1, (outs), (ins imm0_31:$mode), NoItinerary,
 def t2SRSIA  : T2SRS<0b11, 0, (outs), (ins imm0_31:$mode), NoItinerary,
                      "srsia","\tsp, $mode", []>;
 
+
+def : t2InstAlias<"srsdb${p} $mode", (t2SRSDB imm0_31:$mode, pred:$p)>;
+def : t2InstAlias<"srsdb${p} $mode!", (t2SRSDB_UPD imm0_31:$mode, pred:$p)>;
+
+def : t2InstAlias<"srsia${p} $mode", (t2SRSIA imm0_31:$mode, pred:$p)>;
+def : t2InstAlias<"srsia${p} $mode!", (t2SRSIA_UPD imm0_31:$mode, pred:$p)>;
+
 // Return From Exception is a system instruction.
 class T2RFE<bits<12> op31_20, dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>

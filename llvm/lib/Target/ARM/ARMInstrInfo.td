@@ -2103,6 +2103,18 @@ def SRSIB_UPD : SRSI<1, "srsib\tsp!, $mode"> {
   let Inst{24-23} = 0b11;
 }
 
+def : ARMInstAlias<"srsda $mode", (SRSDA imm0_31:$mode)>;
+def : ARMInstAlias<"srsda $mode!", (SRSDA_UPD imm0_31:$mode)>;
+
+def : ARMInstAlias<"srsdb $mode", (SRSDB imm0_31:$mode)>;
+def : ARMInstAlias<"srsdb $mode!", (SRSDB_UPD imm0_31:$mode)>;
+
+def : ARMInstAlias<"srsia $mode", (SRSIA imm0_31:$mode)>;
+def : ARMInstAlias<"srsia $mode!", (SRSIA_UPD imm0_31:$mode)>;
+
+def : ARMInstAlias<"srsib $mode", (SRSIB imm0_31:$mode)>;
+def : ARMInstAlias<"srsib $mode!", (SRSIB_UPD imm0_31:$mode)>;
+
 // Return From Exception
 class RFEI<bit wb, string asm>
   : XI<(outs), (ins GPR:$Rn), AddrModeNone, 4, IndexModeNone, BrFrm,

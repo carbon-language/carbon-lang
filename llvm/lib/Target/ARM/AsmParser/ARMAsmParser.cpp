@@ -4625,6 +4625,15 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       }
       E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
       Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
+
+      // There can be a trailing '!' on operands that we want as a separate
+      // '!' Token operand. Handle that here. For example, the compatibilty
+      // alias for 'srsdb sp!, #imm' is 'srsdb #imm!'.
+      if (Parser.getTok().is(AsmToken::Exclaim)) {
+        Operands.push_back(ARMOperand::CreateToken(Parser.getTok().getString(),
+                                                   Parser.getTok().getLoc()));
+        Parser.Lex(); // Eat exclaim token
+      }
       return false;
     }
     // w/ a ':' after the '#', it's just like a plain ':'.
