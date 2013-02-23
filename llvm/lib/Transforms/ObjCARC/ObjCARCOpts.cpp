@@ -218,7 +218,7 @@ static bool DoesRetainableObjPtrEscape(const User *Ptr) {
         if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
             isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
 
-          if (!VisitedSet.insert(UUser)) {
+          if (VisitedSet.insert(UUser)) {
             DEBUG(dbgs() << "DoesRetainableObjPtrEscape: User copies value. "
                   "Ptr escapes if result escapes. Adding to list.\n");
             Worklist.push_back(UUser);
