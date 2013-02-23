@@ -12,12 +12,12 @@ namespace test1 {
   }
 }
 
-// FIXME: This should be OK. Both test2_f don't have language linkage since they
-// have internal linkage.
+// This is OK. Both test2_f don't have language linkage since they have
+// internal linkage.
 extern "C" {
-  static void test2_f() { // expected-note {{previous definition is here}}
+  static void test2_f() {
   }
-  static void test2_f(int x) { // expected-error {{conflicting types for 'test2_f'}}
+  static void test2_f(int x) {
   }
 }
 

@@ -15,11 +15,13 @@ extern "C" {
 extern "C" {
   static void test2_f() {
   }
-  // This is not required by the standard, but users assume they know
-  // the mangling of static functions in extern "C" contexts.
-  // CHECK: define internal void @test2_f(
+  // CHECK: define internal void @_Z7test2_fv
+  static void test2_f(int x) {
+  }
+  // CHECK: define internal void @_Z7test2_fi
   void test2_use() {
     test2_f();
+    test2_f(42);
   }
 }
 

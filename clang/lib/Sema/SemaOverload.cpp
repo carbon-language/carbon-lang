@@ -974,14 +974,6 @@ static bool canBeOverloaded(const FunctionDecl &D) {
   if (D.isMain())
     return false;
 
-  // FIXME: Users assume they know the mangling of static functions
-  // declared in extern "C" contexts. For now just disallow overloading these
-  // functions so that we can avoid mangling them.
-  const DeclContext *DC = D.getDeclContext();
-  if (!DC->isRecord() &&
-      D.getFirstDeclaration()->getDeclContext()->isExternCContext())
-    return false;
-
   return true;
 }
 
