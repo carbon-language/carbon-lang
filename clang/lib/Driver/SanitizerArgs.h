@@ -37,7 +37,7 @@ class SanitizerArgs {
     NeedsAsanRt = Address,
     NeedsTsanRt = Thread,
     NeedsMsanRt = Memory,
-    NeedsUbsanRt = (Undefined & ~Bounds) | Integer,
+    NeedsUbsanRt = Undefined | Integer,
     NotAllowedWithTrap = Vptr
   };
   unsigned Kind;

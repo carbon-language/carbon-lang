@@ -986,7 +986,12 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   // integer value.
   Value *Base = Visit(E->getBase());
   Value *Idx  = Visit(E->getIdx());
-  bool IdxSigned = E->getIdx()->getType()->isSignedIntegerOrEnumerationType();
+  QualType IdxTy = E->getIdx()->getType();
+
+  if (CGF.SanOpts->Bounds)
+    CGF.EmitBoundsCheck(E, E->getBase(), Idx, IdxTy, /*Accessed*/true);
+
+  bool IdxSigned = IdxTy->isSignedIntegerOrEnumerationType();
   Idx = Builder.CreateIntCast(Idx, CGF.Int32Ty, IdxSigned, "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
@@ -2133,6 +2138,10 @@ static Value *emitPointerArithmetic(CodeGenFunction &CGF,
   // If this is subtraction, negate the index.
   if (isSubtraction)
     index = CGF.Builder.CreateNeg(index, "idx.neg");
+
+  if (CGF.SanOpts->Bounds)
+    CGF.EmitBoundsCheck(op.E, pointerOperand, index, indexOperand->getType(),
+                        /*Accessed*/ false);
 
   const PointerType *pointerType
     = pointerOperand->getType()->getAs<PointerType>();

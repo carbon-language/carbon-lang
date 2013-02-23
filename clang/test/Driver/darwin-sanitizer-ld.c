@@ -28,7 +28,8 @@
 // CHECK-UBSAN: stdc++
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
-// RUN:   -fsanitize=bounds %s -o %t.o 2>&1 \
+// RUN:   -fsanitize=bounds -fsanitize-undefined-trap-on-error \
+// RUN:   %s -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-BOUNDS %s
 
 // CHECK-BOUNDS: "{{.*}}ld{{(.exe)?}}"
@@ -43,7 +44,8 @@
 // CHECK-DYN-UBSAN: libclang_rt.ubsan_osx.a
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
-// RUN:   -fPIC -shared -fsanitize=bounds %s -o %t.so 2>&1 \
+// RUN:   -fsanitize=bounds -fsanitize-undefined-trap-on-error \
+// RUN:   %s -o %t.so -fPIC -shared 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-DYN-BOUNDS %s
 
 // CHECK-DYN-BOUNDS: "{{.*}}ld{{(.exe)?}}"

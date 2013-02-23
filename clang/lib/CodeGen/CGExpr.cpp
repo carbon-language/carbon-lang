@@ -630,6 +630,83 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   }
 }
 
+/// Determine whether this expression refers to a flexible array member in a
+/// struct. We disable array bounds checks for such members.
+static bool isFlexibleArrayMemberExpr(const Expr *E) {
+  // For compatibility with existing code, we treat arrays of length 0 or
+  // 1 as flexible array members.
+  const ArrayType *AT = E->getType()->castAsArrayTypeUnsafe();
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+    if (CAT->getSize().ugt(1))
+      return false;
+  } else if (!isa<IncompleteArrayType>(AT))
+    return false;
+
+  E = E->IgnoreParens();
+
+  // A flexible array member must be the last member in the class.
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+    // FIXME: If the base type of the member expr is not FD->getParent(),
+    // this should not be treated as a flexible array member access.
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+      RecordDecl::field_iterator FI(
+          DeclContext::decl_iterator(const_cast<FieldDecl *>(FD)));
+      return ++FI == FD->getParent()->field_end();
+    }
+  }
+
+  return false;
+}
+
+/// If Base is known to point to the start of an array, return the length of
+/// that array. Return 0 if the length cannot be determined.
+llvm::Value *getArrayIndexingBound(CodeGenFunction &CGF, const Expr *Base,
+                                   QualType &IndexedType) {
+  // For the vector indexing extension, the bound is the number of elements.
+  if (const VectorType *VT = Base->getType()->getAs<VectorType>()) {
+    IndexedType = Base->getType();
+    return CGF.Builder.getInt32(VT->getNumElements());
+  }
+
+  Base = Base->IgnoreParens();
+
+  if (const CastExpr *CE = dyn_cast<CastExpr>(Base)) {
+    if (CE->getCastKind() == CK_ArrayToPointerDecay &&
+        !isFlexibleArrayMemberExpr(CE->getSubExpr())) {
+      IndexedType = CE->getSubExpr()->getType();
+      const ArrayType *AT = IndexedType->castAsArrayTypeUnsafe();
+      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
+        return CGF.Builder.getInt(CAT->getSize());
+      else if (const VariableArrayType *VAT = cast<VariableArrayType>(AT))
+        return CGF.getVLASize(VAT).first;
+    }
+  }
+
+  return 0;
+}
+
+void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
+                                      llvm::Value *Index, QualType IndexType,
+                                      bool Accessed) {
+  QualType IndexedType;
+  llvm::Value *Bound = getArrayIndexingBound(*this, Base, IndexedType);
+  if (!Bound)
+    return;
+
+  bool IndexSigned = IndexType->isSignedIntegerOrEnumerationType();
+  llvm::Value *IndexVal = Builder.CreateIntCast(Index, SizeTy, IndexSigned);
+  llvm::Value *BoundVal = Builder.CreateIntCast(Bound, SizeTy, false);
+
+  llvm::Constant *StaticData[] = {
+    EmitCheckSourceLocation(E->getExprLoc()),
+    EmitCheckTypeDescriptor(IndexedType),
+    EmitCheckTypeDescriptor(IndexType)
+  };
+  llvm::Value *Check = Accessed ? Builder.CreateICmpULT(IndexVal, BoundVal)
+                                : Builder.CreateICmpULE(IndexVal, BoundVal);
+  EmitCheck(Check, "out_of_bounds", StaticData, Index, CRK_Recoverable);
+}
+
 
 CodeGenFunction::ComplexPairTy CodeGenFunction::
 EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
@@ -705,7 +782,11 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
 }
 
 LValue CodeGenFunction::EmitCheckedLValue(const Expr *E, TypeCheckKind TCK) {
-  LValue LV = EmitLValue(E);
+  LValue LV;
+  if (SanOpts->Bounds && isa<ArraySubscriptExpr>(E))
+    LV = EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E), /*Accessed*/true);
+  else
+    LV = EmitLValue(E);
   if (!isa<DeclRefExpr>(E) && !LV.isBitField() && LV.isSimple())
     EmitTypeCheck(TCK, E->getExprLoc(), LV.getAddress(),
                   E->getType(), LV.getAlignment());
@@ -2121,11 +2202,15 @@ static const Expr *isSimpleArrayDecayOperand(const Expr *E) {
   return SubExpr;
 }
 
-LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
+LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
+                                               bool Accessed) {
   // The index must always be an integer, which is not an aggregate.  Emit it.
   llvm::Value *Idx = EmitScalarExpr(E->getIdx());
   QualType IdxTy  = E->getIdx()->getType();
   bool IdxSigned = IdxTy->isSignedIntegerOrEnumerationType();
+
+  if (SanOpts->Bounds)
+    EmitBoundsCheck(E, E->getBase(), Idx, IdxTy, Accessed);
 
   // If the base is a vector type, then we are forming a vector element lvalue
   // with this subscript.
@@ -2187,7 +2272,13 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     // "gep x, i" here.  Emit one "gep A, 0, i".
     assert(Array->getType()->isArrayType() &&
            "Array to pointer decay must have array source type!");
-    LValue ArrayLV = EmitLValue(Array);
+    LValue ArrayLV;
+    // For simple multidimensional array indexing, set the 'accessed' flag for
+    // better bounds-checking of the base expression.
+    if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(Array))
+      ArrayLV = EmitArraySubscriptExpr(ASE, /*Accessed*/ true);
+    else
+      ArrayLV = EmitLValue(Array);
     llvm::Value *ArrayPtr = ArrayLV.getAddress();
     llvm::Value *Zero = llvm::ConstantInt::get(Int32Ty, 0);
     llvm::Value *Args[] = { Zero, Idx };

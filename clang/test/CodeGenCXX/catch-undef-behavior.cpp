@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,bounds -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
 
 struct S {
   double d;
@@ -218,6 +218,95 @@ void bad_downcast_reference(S &p) {
   // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss
   // CHECK: br label
   (void) static_cast<T&>(p);
+}
+
+// CHECK: @_Z11array_index
+int array_index(const int (&a)[4], int n) {
+  // CHECK: %[[K1_OK:.*]] = icmp ult i64 %{{.*}}, 4
+  // CHECK: br i1 %[[K1_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  int k1 = a[n];
+
+  // CHECK: %[[R1_OK:.*]] = icmp ule i64 %{{.*}}, 4
+  // CHECK: br i1 %[[R1_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  const int *r1 = &a[n];
+
+  // CHECK: %[[K2_OK:.*]] = icmp ult i64 %{{.*}}, 8
+  // CHECK: br i1 %[[K2_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  int k2 = ((const int(&)[8])a)[n];
+
+  // CHECK: %[[K3_OK:.*]] = icmp ult i64 %{{.*}}, 4
+  // CHECK: br i1 %[[K3_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  int k3 = n[a];
+
+  return k1 + *r1 + k2;
+}
+
+// CHECK: @_Z17multi_array_index
+int multi_array_index(int n, int m) {
+  int arr[4][6];
+
+  // CHECK: %[[IDX2_OK:.*]] = icmp ult i64 %{{.*}}, 6
+  // CHECK: br i1 %[[IDX2_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+
+  // CHECK: %[[IDX1_OK:.*]] = icmp ult i64 %{{.*}}, 4
+  // CHECK: br i1 %[[IDX1_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  return arr[n][m];
+}
+
+// CHECK: @_Z11array_arith
+int array_arith(const int (&a)[4], int n) {
+  // CHECK: %[[K1_OK:.*]] = icmp ule i64 %{{.*}}, 4
+  // CHECK: br i1 %[[K1_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  const int *k1 = a + n;
+
+  // CHECK: %[[K2_OK:.*]] = icmp ule i64 %{{.*}}, 8
+  // CHECK: br i1 %[[K2_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  const int *k2 = (const int(&)[8])a + n;
+
+  return *k1 + *k2;
+}
+
+struct ArrayMembers {
+  int a1[5];
+  int a2[1];
+};
+// CHECK: @_Z18struct_array_index
+int struct_array_index(ArrayMembers *p, int n) {
+  // CHECK: %[[IDX_OK:.*]] = icmp ult i64 %{{.*}}, 5
+  // CHECK: br i1 %[[IDX_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  return p->a1[n];
+}
+
+// CHECK: @_Z16flex_array_index
+int flex_array_index(ArrayMembers *p, int n) {
+  // CHECK-NOT: call void @__ubsan_handle_out_of_bounds(
+  return p->a2[n];
+}
+
+typedef __attribute__((ext_vector_type(4))) int V4I;
+// CHECK: @_Z12vector_index
+int vector_index(V4I v, int n) {
+  // CHECK: %[[IDX_OK:.*]] = icmp ult i64 %{{.*}}, 4
+  // CHECK: br i1 %[[IDX_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  return v[n];
+}
+
+// CHECK: @_Z12string_index
+char string_index(int n) {
+  // CHECK: %[[IDX_OK:.*]] = icmp ult i64 %{{.*}}, 6
+  // CHECK: br i1 %[[IDX_OK]]
+  // CHECK: call void @__ubsan_handle_out_of_bounds(
+  return "Hello"[n];
 }
 
 // CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

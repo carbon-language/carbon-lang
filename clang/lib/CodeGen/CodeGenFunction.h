@@ -1910,6 +1910,12 @@ public:
   void EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc, llvm::Value *V,
                      QualType Type, CharUnits Alignment = CharUnits::Zero());
 
+  /// \brief Emit a check that \p Base points into an array object, which
+  /// we can access at index \p Index. \p Accessed should be \c false if we
+  /// this expression is used as an lvalue, for instance in "&Arr[Idx]".
+  void EmitBoundsCheck(const Expr *E, const Expr *Base, llvm::Value *Index,
+                       QualType IndexType, bool Accessed);
+
   llvm::Value *EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
                                        bool isInc, bool isPre);
   ComplexPairTy EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
@@ -2187,7 +2193,8 @@ public:
   LValue EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E);
   LValue EmitPredefinedLValue(const PredefinedExpr *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
-  LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
+  LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
+                                bool Accessed = false);
   LValue EmitExtVectorElementExpr(const ExtVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
   LValue EmitObjCIsaExpr(const ObjCIsaExpr *E);
