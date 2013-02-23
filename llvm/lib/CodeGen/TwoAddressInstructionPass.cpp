@@ -370,7 +370,7 @@ static bool isPlainlyKilled(MachineInstr *MI, unsigned Reg,
     SlotIndex useIdx = LIS->getInstructionIndex(MI);
     LiveInterval::const_iterator I = LI.find(useIdx);
     assert(I != LI.end() && "Reg must be live-in to use.");
-    return SlotIndex::isSameInstr(I->end, useIdx);
+    return !I->end.isBlock() && SlotIndex::isSameInstr(I->end, useIdx);
   }
 
   return MI->killsRegister(Reg);
