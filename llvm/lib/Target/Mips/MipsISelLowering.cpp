@@ -1298,6 +1298,72 @@ MachineBasicBlock *MipsTargetLowering::EmitSel16(unsigned Opc, MachineInstr *MI,
   return BB;
 }
 
+MachineBasicBlock *MipsTargetLowering::EmitSelT16
+  (unsigned Opc1, unsigned Opc2,
+   MachineInstr *MI, MachineBasicBlock *BB) const {
+  if (DontExpandCondPseudos16)
+    return BB;
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  // To "insert" a SELECT_CC instruction, we actually have to insert the
+  // diamond control-flow pattern.  The incoming instruction knows the
+  // destination vreg to set, the condition code register to branch on, the
+  // true/false values to select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator It = BB;
+  ++It;
+
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   setcc r1, r2, r3
+  //   bNE   r1, r0, copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB  = BB;
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, copy0MBB);
+  F->insert(It, sinkMBB);
+
+  // Transfer the remainder of BB and its successor edges to sinkMBB.
+  sinkMBB->splice(sinkMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  // Next, add the true and fallthrough blocks as its successors.
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(sinkMBB);
+
+  BuildMI(BB, dl, TII->get(Opc2)).addReg(MI->getOperand(3).getReg())
+    .addReg(MI->getOperand(4).getReg());
+  BuildMI(BB, dl, TII->get(Opc1)).addMBB(sinkMBB);
+
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to sinkMBB
+  BB = copy0MBB;
+
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+
+  //  sinkMBB:
+  //   %Result = phi [ %TrueValue, thisMBB ], [ %FalseValue, copy0MBB ]
+  //  ...
+  BB = sinkMBB;
+
+  BuildMI(*BB, BB->begin(), dl,
+          TII->get(Mips::PHI), MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB)
+    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB);
+
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+
+}
+
+
 MachineBasicBlock *MipsTargetLowering::EmitSeliT16
   (unsigned Opc1, unsigned Opc2,
    MachineInstr *MI, MachineBasicBlock *BB) const {
@@ -1490,6 +1556,18 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitSeliT16(Mips::BtnezX16, Mips::SltiRxImmX16, MI, BB);
   case Mips::SelTBtneZSltiu:
     return EmitSeliT16(Mips::BtnezX16, Mips::SltiuRxImmX16, MI, BB);
+  case Mips::SelTBteqZCmp:
+    return EmitSelT16(Mips::BteqzX16, Mips::CmpRxRy16, MI, BB);
+  case Mips::SelTBteqZSlt:
+    return EmitSelT16(Mips::BteqzX16, Mips::SltRxRy16, MI, BB);
+  case Mips::SelTBteqZSltu:
+    return EmitSelT16(Mips::BteqzX16, Mips::SltuRxRy16, MI, BB);
+  case Mips::SelTBtneZCmp:
+    return EmitSelT16(Mips::BtnezX16, Mips::CmpRxRy16, MI, BB);
+  case Mips::SelTBtneZSlt:
+    return EmitSelT16(Mips::BtnezX16, Mips::SltRxRy16, MI, BB);
+  case Mips::SelTBtneZSltu:
+    return EmitSelT16(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
   }
 }
 

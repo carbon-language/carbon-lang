@@ -15,3 +15,4 @@ bosco:                                            ; preds = %bosco, %entry
 ; CHECK-STATIC: j	$BB0_1
 ; CHECK-PIC16: b	$BB0_1
 ; CHECK-STATIC16: b	$BB0_1
+
