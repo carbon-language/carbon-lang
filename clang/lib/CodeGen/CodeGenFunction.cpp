@@ -144,9 +144,10 @@ void CodeGenFunction::EmitReturnBlock() {
       dyn_cast<llvm::BranchInst>(*ReturnBlock.getBlock()->use_begin());
     if (BI && BI->isUnconditional() &&
         BI->getSuccessor(0) == ReturnBlock.getBlock()) {
-      // Reset insertion point, including debug location, and delete the branch.
-      // This is really subtle & only works because the next change in location
-      // will hit the caching in CGDebugInfo::EmitLocation & not override this.
+      // Reset insertion point, including debug location, and delete the
+      // branch.  This is really subtle and only works because the next change
+      // in location will hit the caching in CGDebugInfo::EmitLocation and not
+      // override this.
       Builder.SetCurrentDebugLocation(BI->getDebugLoc());
       Builder.SetInsertPoint(BI->getParent());
       BI->eraseFromParent();
