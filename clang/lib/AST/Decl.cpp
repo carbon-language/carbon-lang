@@ -1173,10 +1173,24 @@ std::string NamedDecl::getQualifiedNameAsString() const {
 }
 
 std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
+  std::string QualName;
+  llvm::raw_string_ostream OS(QualName);
+  printQualifiedName(OS, P);
+  return OS.str();
+}
+
+void NamedDecl::printQualifiedName(raw_ostream &OS) const {
+  printQualifiedName(OS, getASTContext().getPrintingPolicy());
+}
+
+void NamedDecl::printQualifiedName(raw_ostream &OS,
+                                   const PrintingPolicy &P) const {
   const DeclContext *Ctx = getDeclContext();
 
-  if (Ctx->isFunctionOrMethod())
-    return getNameAsString();
+  if (Ctx->isFunctionOrMethod()) {
+    printName(OS);
+    return;
+  }
 
   typedef SmallVector<const DeclContext *, 8> ContextsTy;
   ContextsTy Contexts;
@@ -1185,10 +1199,7 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
   while (Ctx && isa<NamedDecl>(Ctx)) {
     Contexts.push_back(Ctx);
     Ctx = Ctx->getParent();
-  };
-
-  std::string QualName;
-  llvm::raw_string_ostream OS(QualName);
+  }
 
   for (ContextsTy::reverse_iterator I = Contexts.rbegin(), E = Contexts.rend();
        I != E; ++I) {
@@ -1241,8 +1252,15 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
     OS << *this;
   else
     OS << "<anonymous>";
+}
 
-  return OS.str();
+void NamedDecl::getNameForDiagnostic(raw_ostream &OS,
+                                     const PrintingPolicy &Policy,
+                                     bool Qualified) const {
+  if (Qualified)
+    printQualifiedName(OS, Policy);
+  else
+    printName(OS);
 }
 
 bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {

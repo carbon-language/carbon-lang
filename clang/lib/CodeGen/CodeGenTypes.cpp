@@ -61,14 +61,14 @@ void CodeGenTypes::addRecordTypeName(const RecordDecl *RD,
     // FIXME: We should not have to check for a null decl context here.
     // Right now we do it because the implicit Obj-C decls don't have one.
     if (RD->getDeclContext())
-      OS << RD->getQualifiedNameAsString();
+      RD->printQualifiedName(OS);
     else
       RD->printName(OS);
   } else if (const TypedefNameDecl *TDD = RD->getTypedefNameForAnonDecl()) {
     // FIXME: We should not have to check for a null decl context here.
     // Right now we do it because the implicit Obj-C decls don't have one.
     if (TDD->getDeclContext())
-      OS << TDD->getQualifiedNameAsString();
+      TDD->printQualifiedName(OS);
     else
       TDD->printName(OS);
   } else

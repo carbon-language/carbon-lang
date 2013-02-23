@@ -477,8 +477,9 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     }
 
     PrintingPolicy Policy(Context.getLangOpts());
-    std::string Proto = FD->getQualifiedNameAsString(Policy);
+    std::string Proto;
     llvm::raw_string_ostream POut(Proto);
+    FD->printQualifiedName(POut, Policy);
 
     const FunctionDecl *Decl = FD;
     if (const FunctionDecl* Pattern = FD->getTemplateInstantiationPattern())

@@ -24,7 +24,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 struct ASTTemplateArgumentListInfo;
@@ -152,32 +151,29 @@ public:
   /// \brief Set the name of this declaration.
   void setDeclName(DeclarationName N) { Name = N; }
 
-  /// getQualifiedNameAsString - Returns human-readable qualified name for
+  /// printQualifiedName - Returns human-readable qualified name for
   /// declaration, like A::B::i, for i being member of namespace A::B.
   /// If declaration is not member of context which can be named (record,
-  /// namespace), it will return same result as getNameAsString().
+  /// namespace), it will return same result as printName().
   /// Creating this name is expensive, so it should be called only when
   /// performance doesn't matter.
+  void printQualifiedName(raw_ostream &OS) const;
+  void printQualifiedName(raw_ostream &OS, const PrintingPolicy &Policy) const;
+
+  // FIXME: Remove string versions.
   std::string getQualifiedNameAsString() const;
   std::string getQualifiedNameAsString(const PrintingPolicy &Policy) const;
 
   /// getNameForDiagnostic - Appends a human-readable name for this
-  /// declaration into the given string.
+  /// declaration into the given stream.
   ///
   /// This is the method invoked by Sema when displaying a NamedDecl
   /// in a diagnostic.  It does not necessarily produce the same
-  /// result as getNameAsString(); for example, class template
+  /// result as printName(); for example, class template
   /// specializations are printed with their template arguments.
-  ///
-  /// TODO: use an API that doesn't require so many temporary strings
   virtual void getNameForDiagnostic(raw_ostream &OS,
                                     const PrintingPolicy &Policy,
-                                    bool Qualified) const {
-    if (Qualified)
-      OS << getQualifiedNameAsString(Policy);
-    else
-      printName(OS);
-  }
+                                    bool Qualified) const;
 
   /// declarationReplaces - Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the
