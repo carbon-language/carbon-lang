@@ -256,7 +256,7 @@ public:
   /// element type here is ExprWithCleanups::Object.
   SmallVector<BlockDecl*, 8> ExprCleanupObjects;
 
-  llvm::SmallPtrSet<Expr*, 8> MaybeODRUseExprs;
+  llvm::SmallPtrSet<Expr*, 2> MaybeODRUseExprs;
 
   /// \brief Stack containing information about each of the nested
   /// function, block, and method scopes that are currently active.
@@ -629,7 +629,7 @@ public:
     /// this expression evaluation context.
     unsigned NumCleanupObjects;
 
-    llvm::SmallPtrSet<Expr*, 8> SavedMaybeODRUseExprs;
+    llvm::SmallPtrSet<Expr*, 2> SavedMaybeODRUseExprs;
 
     /// \brief The lambdas that are present within this context, if it
     /// is indeed an unevaluated context.
