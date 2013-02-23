@@ -1460,6 +1460,11 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("a = a + \"a\"\n"
                "        \"a\"\n"
                "        \"a\";");
+
+  verifyFormat(
+      "#define LL_FORMAT \"ll\"\n"
+      "printf(\"aaaaa: %d, bbbbbb: %\" LL_FORMAT \"d, cccccccc: %\" LL_FORMAT\n"
+      "       \"d, ddddddddd: %\" LL_FORMAT \"d\");");
 }
 
 TEST_F(FormatTest, AlignsPipes) {
@@ -1933,7 +1938,9 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
                "#include \"string.h\"\n"
                "#include \"string.h\"\n"
                "#include <a-a>\n"
-               "#include < path with space >\n");
+               "#include < path with space >\n"
+               "#include \"some very long include paaaaaaaaaaaaaaaaaaaaaaath\"",
+               getLLVMStyleWithColumns(35));
 
   verifyFormat("#import <string>");
   verifyFormat("#import <a/b/c.h>");

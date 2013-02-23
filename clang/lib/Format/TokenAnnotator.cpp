@@ -415,6 +415,10 @@ private:
       }
     } else {
       while (CurrentToken != NULL) {
+        if (CurrentToken->is(tok::string_literal))
+          // Mark these string literals as "implicit" literals, too, so that
+          // they are not split or line-wrapped.
+          CurrentToken->Type = TT_ImplicitStringLiteral;
         next();
       }
     }
@@ -1098,6 +1102,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
 
   if (Right.is(tok::r_paren) || Right.is(tok::greater))
     return false;
+  if (Left.is(tok::identifier) && Right.is(tok::string_literal))
+    return true;
   return (isBinaryOperator(Left) && Left.isNot(tok::lessless)) ||
          Left.is(tok::comma) || Right.is(tok::lessless) ||
          Right.is(tok::arrow) || Right.is(tok::period) ||
