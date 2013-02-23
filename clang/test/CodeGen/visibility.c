@@ -67,3 +67,10 @@ __private_extern__ void test3(void) {}
 // Top of file.
 extern int test4;
 __private_extern__ int test4 = 10;
+
+// rdar://12399248
+// CHECK-DEFAULT: define hidden void @test5()
+// CHECK-PROTECTED: define hidden void @test5()
+// CHECK-HIDDEN: define hidden void @test5()
+__attribute__((availability(macosx,introduced=10.5,deprecated=10.6)))
+__private_extern__ void test5(void) {}
