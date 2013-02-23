@@ -208,7 +208,7 @@ void SlotIndexes::repairIndexesInRange(MachineBasicBlock *MBB,
   for (MachineBasicBlock::iterator I = End; I != Begin;) {
     --I;
     MachineInstr *MI = I;
-    if (mi2iMap.find(MI) == mi2iMap.end())
+    if (!MI->isDebugValue() && mi2iMap.find(MI) == mi2iMap.end())
       insertMachineInstrInMaps(MI);
   }
 }

@@ -1056,6 +1056,8 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
   for (MachineBasicBlock::iterator I = End; I != Begin;) {
     --I;
     MachineInstr *MI = I;
+    if (MI->isDebugValue())
+      continue;
     for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
          MOE = MI->operands_end(); MOI != MOE; ++MOI) {
       if (MOI->isReg() &&
@@ -1087,8 +1089,10 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
     for (MachineBasicBlock::iterator I = End; I != Begin;) {
       --I;
       MachineInstr *MI = I;
-      SlotIndex instrIdx = getInstructionIndex(MI);
+      if (MI->isDebugValue())
+        continue;
 
+      SlotIndex instrIdx = getInstructionIndex(MI);
       bool isStartValid = getInstructionFromIndex(LII->start);
       bool isEndValid = getInstructionFromIndex(LII->end);
 
