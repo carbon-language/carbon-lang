@@ -1081,12 +1081,14 @@ def : Pat<(X86cmp GR64:$src1, 0),
 // inverted.
 multiclass CMOVmr<PatLeaf InvertedCond, Instruction Inst16, Instruction Inst32,
                   Instruction Inst64> {
-  def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, InvertedCond, EFLAGS),
-            (Inst16 GR16:$src2, addr:$src1)>;
-  def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, InvertedCond, EFLAGS),
-            (Inst32 GR32:$src2, addr:$src1)>;
-  def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, InvertedCond, EFLAGS),
-            (Inst64 GR64:$src2, addr:$src1)>;
+  let Predicates = [HasCMov] in {
+    def : Pat<(X86cmov (loadi16 addr:$src1), GR16:$src2, InvertedCond, EFLAGS),
+              (Inst16 GR16:$src2, addr:$src1)>;
+    def : Pat<(X86cmov (loadi32 addr:$src1), GR32:$src2, InvertedCond, EFLAGS),
+              (Inst32 GR32:$src2, addr:$src1)>;
+    def : Pat<(X86cmov (loadi64 addr:$src1), GR64:$src2, InvertedCond, EFLAGS),
+              (Inst64 GR64:$src2, addr:$src1)>;
+  }
 }
 
 defm : CMOVmr<X86_COND_B , CMOVAE16rm, CMOVAE32rm, CMOVAE64rm>;
