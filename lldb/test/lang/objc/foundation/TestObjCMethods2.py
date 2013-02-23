@@ -133,8 +133,7 @@ class FoundationTestCase2(TestBase):
 
         self.runCmd("process continue")
 
-    @unittest2.expectedFailure
-    # <rdar://problem/8741897> Expressions should support properties
+    @unittest2.expectedFailure(8741897)
     def NSArray_expr(self):
         """Test expression commands for NSArray."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -160,8 +159,7 @@ class FoundationTestCase2(TestBase):
             patterns = ["\(int\) \$.* = 3"])
         self.runCmd("process continue")
 
-    @unittest2.expectedFailure
-    # <rdar://problem/8741897> Expressions should support properties
+    @unittest2.expectedFailure(8741897)
     def NSString_expr(self):
         """Test expression commands for NSString."""
         exe = os.path.join(os.getcwd(), "a.out")

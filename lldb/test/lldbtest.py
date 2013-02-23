@@ -368,27 +368,41 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
-def expectedFailureCompiler(func, compiler):
-    """Decorate the item as an expectedFailure if the test compiler matches parameter compiler."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@expectedFailureClang can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        test_compiler = self.getCompiler()
-        try:
-            func(*args, **kwargs)
-        except Exception:
-            if compiler in test_compiler:
-                raise case._ExpectedFailure(sys.exc_info())
-            else:
-                raise
-
-        if compiler in test_compiler:
-            raise case._UnexpectedSuccess
-    return wrapper
-
+def expectedFailureCompiler(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailureCompiler_easy_wrapper(*args, **kwargs):
+	        from unittest2 import case
+	        self = args[0]
+	        test_compiler = self.getCompiler()
+	        try:
+	            bugnumber(*args, **kwargs)
+	        except Exception:
+	            if compiler in test_compiler:
+	                raise _ExpectedFailure(sys.exc_info(),None)
+	            else:
+	                raise
+	        if compiler in test_compiler:
+	            raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailureCompiler_easy_wrapper
+     else:
+        def expectedFailureCompiler_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+		        from unittest2 import case
+		        self = args[0]
+		        test_compiler = self.getCompiler()
+		        try:
+		            func(*args, **kwargs)
+		        except Exception:
+		            if compiler in test_compiler:
+		                raise _ExpectedFailure(sys.exc_info(),None)
+		            else:
+		                raise
+		        if compiler in test_compiler:
+		            raise case._UnexpectedSuccess(sys.exc_info(),None)
+              return wrapper
+        return expectedFailureCompiler_impl
 
 def expectedFailureGcc(func):
     """Decorate the item as a GCC only expectedFailure."""
@@ -402,47 +416,77 @@ def expectedFailureClang(func):
         raise Exception("@expectedFailureClang can only be used to decorate a test method")
     return expectedFailureCompiler(func, "clang")
 
-def expectedFailurei386(func):
-    """Decorate the item as an i386 only expectedFailure."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@expectedFailurei386 can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        arch = self.getArchitecture()
-        try:
-            func(*args, **kwargs)
-        except Exception:
-            if "i386" in arch:
-                raise case._ExpectedFailure(sys.exc_info())
-            else:
-                raise
+def expectedFailurei386(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailurei386_easy_wrapper(*args, **kwargs):
+	        from unittest2 import case
+	        self = args[0]
+	        arch = self.getArchitecture()
+	        try:
+	            bugnumber(*args, **kwargs)
+	        except Exception:
+	            if "i386" in arch:
+	                raise _ExpectedFailure(sys.exc_info(),None)
+	            else:
+	                raise
+	        if "i386" in arch:
+	            raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailurei386_easy_wrapper
+     else:
+        def expectedFailurei386_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+		        from unittest2 import case
+		        self = args[0]
+		        arch = self.getArchitecture()
+		        try:
+		            func(*args, **kwargs)
+		        except Exception:
+		            if "i386" in arch:
+		                raise _ExpectedFailure(sys.exc_info(),None)
+		            else:
+		                raise
+		        if "i386" in arch:
+		            raise case._UnexpectedSuccess(sys.exc_info(),None)
+              return wrapper
+        return expectedFailurei386_impl
 
-        if "i386" in arch:
-            raise case._UnexpectedSuccess
-    return wrapper
-
-def expectedFailureLinux(func):
-    """Decorate the item as a Linux only expectedFailure."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@expectedFailureLinux can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        platform = sys.platform
-        try:
-            func(*args, **kwargs)
-        except Exception:
-            if "linux" in platform:
-                raise case._ExpectedFailure(sys.exc_info())
-            else:
-                raise
-
-        if "linux" in platform:
-            raise case._UnexpectedSuccess
-    return wrapper
+def expectedFailureLinux(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailureLinux_easy_wrapper(*args, **kwargs):
+	        from unittest2 import case
+	        self = args[0]
+	        platform = sys.platform
+	        try:
+	            bugnumber(*args, **kwargs)
+	        except Exception:
+	            if "linux" in platform:
+	                raise _ExpectedFailure(sys.exc_info(),None)
+	            else:
+	                raise
+	        if "linux" in platform:
+	            raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailureLinux_easy_wrapper
+     else:
+        def expectedFailureLinux_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+		        from unittest2 import case
+		        self = args[0]
+		        platform = sys.platform
+		        try:
+		            func(*args, **kwargs)
+		        except Exception:
+		            if "linux" in platform:
+		                raise _ExpectedFailure(sys.exc_info(),None)
+		            else:
+		                raise
+		        if "linux" in platform:
+		            raise case._UnexpectedSuccess(sys.exc_info(),None)
+              return wrapper
+        return expectedFailureLinux_impl
 
 def skipOnLinux(func):
     """Decorate the item to skip tests that should be skipped on Linux."""
@@ -832,14 +876,17 @@ class Base(unittest2.TestCase):
             # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "FAIL"
 
-    def markExpectedFailure(self):
+    def markExpectedFailure(self,err,bugnumber):
         """Callback invoked when an expected failure/error occurred."""
         self.__expected__ = True
         with recording(self, False) as sbuf:
             # False because there's no need to write "expected failure" to the
             # stderr twice.
             # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "expected failure"
+            if bugnumber == None:
+                print >> sbuf, "expected failure"
+            else:
+                print >> sbuf, "expected failure (problem id:" + str(bugnumber) + ")"	
 
     def markSkippedTest(self):
         """Callback invoked when a test is skipped."""
@@ -850,14 +897,17 @@ class Base(unittest2.TestCase):
             # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "skipped test"
 
-    def markUnexpectedSuccess(self):
+    def markUnexpectedSuccess(self, bugnumber):
         """Callback invoked when an unexpected success occurred."""
         self.__unexpected__ = True
         with recording(self, False) as sbuf:
             # False because there's no need to write "unexpected success" to the
             # stderr twice.
             # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "unexpected success"
+            if bugnumber == None:
+                print >> sbuf, "unexpected success"
+            else:
+                print >> sbuf, "unexpected success (problem id:" + str(bugnumber) + ")"	
 
     def dumpSessionInfo(self):
         """

@@ -123,13 +123,13 @@ class TestResult(unittest.TestResult):
         """Called when a test is skipped."""
         self.skipped.append((test, reason))
 
-    def addExpectedFailure(self, test, err):
+    def addExpectedFailure(self, test, err, bugnumber):
         """Called when an expected failure/error occured."""
         self.expectedFailures.append(
             (test, self._exc_info_to_string(err, test)))
 
     @failfast
-    def addUnexpectedSuccess(self, test):
+    def addUnexpectedSuccess(self, test, bugnumber):
         """Called when a test was expected to fail, but succeed."""
         self.unexpectedSuccesses.append(test)
 

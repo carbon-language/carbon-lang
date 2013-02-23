@@ -92,12 +92,12 @@ class TextTestResult(result.TestResult):
         super(TextTestResult, self).addSkip(test, reason)
         self.newTestResult(test,"s","skipped %r" % (reason,))
 
-    def addExpectedFailure(self, test, err):
-        super(TextTestResult, self).addExpectedFailure(test, err)
+    def addExpectedFailure(self, test, err, bugnumber):
+        super(TextTestResult, self).addExpectedFailure(test, err, bugnumber)
         self.newTestResult(test,"x","expected failure")
 
-    def addUnexpectedSuccess(self, test):
-        super(TextTestResult, self).addUnexpectedSuccess(test)
+    def addUnexpectedSuccess(self, test, bugnumber):
+        super(TextTestResult, self).addUnexpectedSuccess(test, bugnumber)
         self.newTestResult(test,"u","unexpected success")
 
     def printErrors(self):

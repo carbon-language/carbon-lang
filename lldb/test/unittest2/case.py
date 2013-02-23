@@ -36,15 +36,22 @@ class _ExpectedFailure(Exception):
     This is an implementation detail.
     """
 
-    def __init__(self, exc_info):
+    def __init__(self, exc_info, bugnumber=None):
         # can't use super because Python 2.4 exceptions are old style
         Exception.__init__(self)
         self.exc_info = exc_info
+        self.bugnumber = bugnumber
 
 class _UnexpectedSuccess(Exception):
     """
     The test was supposed to fail, but it didn't!
     """
+
+    def __init__(self, exc_info, bugnumber=None):
+        # can't use super because Python 2.4 exceptions are old style
+        Exception.__init__(self)
+        self.exc_info = exc_info
+        self.bugnumber = bugnumber
 
 def _id(obj):
     return obj
@@ -81,17 +88,27 @@ def skipUnless(condition, reason):
         return skip(reason)
     return _id
 
-
-def expectedFailure(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except Exception:
-            raise _ExpectedFailure(sys.exc_info())
-        raise _UnexpectedSuccess
-    return wrapper
-
+def expectedFailure(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailure_easy_wrapper(*args, **kwargs):
+             try:
+                bugnumber(*args, **kwargs)
+             except Exception:
+                raise _ExpectedFailure(sys.exc_info(),None)
+             raise _UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailure_easy_wrapper
+     else:
+        def expectedFailure_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+                   try:
+                      func(*args, **kwargs)
+                   except Exception:
+                      raise _ExpectedFailure(sys.exc_info(),bugnumber)
+                   raise _UnexpectedSuccess(sys.exc_info(),bugnumber)
+              return wrapper
+        return expectedFailure_impl
 
 class _AssertRaisesContext(object):
     """A context manager used to implement TestCase.assertRaises* methods."""
@@ -343,15 +360,15 @@ class TestCase(unittest.TestCase):
                 except _ExpectedFailure, e:
                     addExpectedFailure = getattr(result, 'addExpectedFailure', None)
                     if addExpectedFailure is not None:
-                        addExpectedFailure(self, e.exc_info)
+                        addExpectedFailure(self, e.exc_info, e.bugnumber)
                     else: 
                         warnings.warn("Use of a TestResult without an addExpectedFailure method is deprecated", 
                                       DeprecationWarning)
                         result.addSuccess(self)
-                except _UnexpectedSuccess:
+                except _UnexpectedSuccess, x:
                     addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
                     if addUnexpectedSuccess is not None:
-                        addUnexpectedSuccess(self)
+                        addUnexpectedSuccess(self, x.bugnumber)
                     else:
                         warnings.warn("Use of a TestResult without an addUnexpectedSuccess method is deprecated", 
                                       DeprecationWarning)

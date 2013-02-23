@@ -1459,14 +1459,14 @@ for ia in range(len(archs) if iterArchs else 1):
                         else:
                             failuresPerCategory[category] = 1
 
-            def addExpectedFailure(self, test, err):
+            def addExpectedFailure(self, test, err, bugnumber):
                 global sdir_has_content
                 global parsable
                 sdir_has_content = True
-                super(LLDBTestResult, self).addExpectedFailure(test, err)
+                super(LLDBTestResult, self).addExpectedFailure(test, err, bugnumber)
                 method = getattr(test, "markExpectedFailure", None)
                 if method:
-                    method()
+                    method(err, bugnumber)
                 if parsable:
                     self.stream.write("XFAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
@@ -1481,14 +1481,14 @@ for ia in range(len(archs) if iterArchs else 1):
                 if parsable:
                     self.stream.write("UNSUPPORTED: LLDB (%s) :: %s (%s) \n" % (self._config_string(test), str(test), reason))
 
-            def addUnexpectedSuccess(self, test):
+            def addUnexpectedSuccess(self, test, bugnumber):
                 global sdir_has_content
                 global parsable
                 sdir_has_content = True
-                super(LLDBTestResult, self).addUnexpectedSuccess(test)
+                super(LLDBTestResult, self).addUnexpectedSuccess(test, bugnumber)
                 method = getattr(test, "markUnexpectedSuccess", None)
                 if method:
-                    method()
+                    method(bugnumber)
                 if parsable:
                     self.stream.write("XPASS: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
