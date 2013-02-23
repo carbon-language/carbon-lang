@@ -72,6 +72,7 @@ private:
   LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) _dynamicSymbolTable;
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _dynamicStringTable;
   LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
+  LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
   /// @}
   CRuntimeFile<ELFT> _runtimeFile;
 };
@@ -348,10 +349,13 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
     _interpSection.reset(new (_alloc) InterpSection<ELFT>(
         _targetInfo, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
         _targetInfo.getInterpreter()));
+    _hashTable.reset(new (_alloc) HashSection<ELFT>(
+        _targetInfo, ".hash", DefaultLayout<ELFT>::ORDER_HASH));
     _layout->addSection(_dynamicTable.get());
     _layout->addSection(_dynamicStringTable.get());
     _layout->addSection(_dynamicSymbolTable.get());
     _layout->addSection(_interpSection.get());
+    _layout->addSection(_hashTable.get());
     _dynamicSymbolTable->setStringSection(_dynamicStringTable.get());
   }
 

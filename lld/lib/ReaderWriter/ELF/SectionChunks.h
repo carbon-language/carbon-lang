@@ -836,6 +836,43 @@ public:
 private:
   StringRef _interp;
 };
+
+template <class ELFT> class HashSection : public Section<ELFT> {
+  struct SymbolTableEntry {
+    StringRef _name;
+    uint32_t _index;
+  };
+
+public:
+  HashSection(const ELFTargetInfo &ti, StringRef name, int32_t order)
+      : Section<ELFT>(ti, name) {
+    this->setOrder(order);
+    this->_align2 = 4; // Alignment of Elf32_Word.
+    this->_type = SHT_HASH;
+    this->_flags = SHF_ALLOC;
+    // The size of nbucket and nchain.
+    this->_fsize = 8;
+    this->_msize = this->_fsize;
+  }
+
+  void addSymbol(StringRef name, uint32_t index) {
+    SymbolTableEntry ste;
+    ste._name = name;
+    ste._index = index;
+    _entries.push_back(ste);
+  }
+
+  virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
+    uint8_t *chunkBuffer = buffer.getBufferStart();
+    uint8_t *dest = chunkBuffer + this->fileOffset();
+    // TODO: Calculate hashes and build the hash table in finalize. We currently
+    // just emit an empty hash table so the dynamic loader doesn't crash.
+    std::memset(dest, 0, this->_fsize);
+  }
+
+private:
+  std::vector<SymbolTableEntry> _entries;
+};
 } // end namespace elf
 } // end namespace lld
 
