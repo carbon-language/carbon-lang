@@ -119,6 +119,27 @@ public:
 
   bool addSegment(Segment<ELFT> *segment);
 
+  bool addPHDR() {
+    bool allocatedNew = false;
+    auto phdr = allocateProgramHeader();
+    if (phdr.second)
+      allocatedNew = true;
+
+    this->_fsize = fileSize();
+    this->_msize = this->_fsize;
+
+    phdr.first->p_type = llvm::ELF::PT_PHDR;
+    phdr.first->p_offset = this->fileOffset();
+    phdr.first->p_vaddr = this->virtualAddr();
+    phdr.first->p_paddr = this->virtualAddr();
+    phdr.first->p_filesz = this->fileSize();
+    phdr.first->p_memsz = this->memSize();
+    phdr.first->p_flags = llvm::ELF::PF_R;
+    phdr.first->p_align = 8;
+
+    return allocatedNew;
+  }
+
   void resetProgramHeaders() {
     _phi = _ph.begin();
   }

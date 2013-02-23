@@ -593,6 +593,8 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
     for (auto si : _segments) {
       newSegmentHeaderAdded = _programHeader->addSegment(si);
     }
+    if (_targetInfo.isDynamic() && _programHeader->addPHDR())
+      newSegmentHeaderAdded = true;
     if (!newSegmentHeaderAdded)
       break;
     uint64_t fileoffset = 0;
