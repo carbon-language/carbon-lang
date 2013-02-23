@@ -63,9 +63,6 @@ class LogTestCase(TestBase):
             "HandleCommand, command succeeded\n",
             ]
 
-        if sys.platform.startswith("darwin"):
-            expected_log_lines = [x for x in expected_log_lines]
-
         self.assertTrue (os.path.isfile (log_file))
 
         idx = 0
