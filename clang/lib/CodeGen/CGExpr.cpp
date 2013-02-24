@@ -677,7 +677,7 @@ llvm::Value *getArrayIndexingBound(CodeGenFunction &CGF, const Expr *Base,
       const ArrayType *AT = IndexedType->castAsArrayTypeUnsafe();
       if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
         return CGF.Builder.getInt(CAT->getSize());
-      else if (const VariableArrayType *VAT = cast<VariableArrayType>(AT))
+      else if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(AT))
         return CGF.getVLASize(VAT).first;
     }
   }
@@ -688,6 +688,8 @@ llvm::Value *getArrayIndexingBound(CodeGenFunction &CGF, const Expr *Base,
 void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
                                       llvm::Value *Index, QualType IndexType,
                                       bool Accessed) {
+  assert(SanOpts->Bounds && "should not be called unless adding bounds checks");
+
   QualType IndexedType;
   llvm::Value *Bound = getArrayIndexingBound(*this, Base, IndexedType);
   if (!Bound)

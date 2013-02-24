@@ -292,6 +292,13 @@ int flex_array_index(ArrayMembers *p, int n) {
   return p->a2[n];
 }
 
+extern int incomplete[];
+// CHECK: @_Z22incomplete_array_index
+int incomplete_array_index(int n) {
+  // CHECK-NOT: call void @__ubsan_handle_out_of_bounds(
+  return incomplete[n];
+}
+
 typedef __attribute__((ext_vector_type(4))) int V4I;
 // CHECK: @_Z12vector_index
 int vector_index(V4I v, int n) {
