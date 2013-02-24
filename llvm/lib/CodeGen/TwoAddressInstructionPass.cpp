@@ -1218,10 +1218,11 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
         unsigned NewDstIdx = NewMIs[1]->findRegisterDefOperandIdx(regA);
         unsigned NewSrcIdx = NewMIs[1]->findRegisterUseOperandIdx(regB);
         MachineBasicBlock::iterator NewMI = NewMIs[1];
-        bool TransformSuccess =
+        bool TransformResult =
           tryInstructionTransform(NewMI, mi, NewSrcIdx, NewDstIdx, Dist, true);
-        if (TransformSuccess ||
-            NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
+        assert(!TransformResult &&
+               "tryInstructionTransform() should return false.");
+        if (NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
           // Success, or at least we made an improvement. Keep the unfolded
           // instructions and discard the original.
           if (LV) {
@@ -1272,8 +1273,6 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
           }
 
           mi = NewMIs[1];
-          if (TransformSuccess)
-            return true;
         } else {
           // Transforming didn't eliminate the tie and didn't lead to an
           // improvement. Clean up the unfolded instructions and keep the
