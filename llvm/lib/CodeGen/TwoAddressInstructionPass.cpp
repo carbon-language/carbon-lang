@@ -1220,6 +1220,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
         MachineBasicBlock::iterator NewMI = NewMIs[1];
         bool TransformResult =
           tryInstructionTransform(NewMI, mi, NewSrcIdx, NewDstIdx, Dist, true);
+        (void)TransformResult;
         assert(!TransformResult &&
                "tryInstructionTransform() should return false.");
         if (NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
