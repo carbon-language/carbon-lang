@@ -21,7 +21,7 @@ class A64Inst<dag outs, dag ins, string asmstr, list<dag> patterns,
               InstrItinClass itin>
     : Instruction {
   // All A64 instructions are 32-bit. This field will be filled in
-  // graually going down the hierarchy.
+  // gradually going down the hierarchy.
   field bits<32> Inst;
 
   field bits<32> Unpredictable = 0;
