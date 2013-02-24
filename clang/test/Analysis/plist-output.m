@@ -155,6 +155,16 @@ void test_loop_diagnostics_3() {
   *p = 1;
 }
 
+@interface RDar12114812 { char *p; }
+@end
+
+@implementation RDar12114812 
+- (void)test {
+  p = 0;        
+  *p = 1;
+}
+@end
+
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>
@@ -1016,6 +1026,69 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:           <dict>
 // CHECK-NEXT:            <key>line</key><integer>36</integer>
 // CHECK-NEXT:            <key>col</key><integer>10</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>37</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>37</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>37</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>37</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>37</integer>
+// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;x.p&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;x.p&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>37</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>37</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -4412,6 +4485,115 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>155</integer>
+// CHECK-NEXT:    <key>col</key><integer>3</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>163</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>163</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>163</integer>
+// CHECK-NEXT:          <key>col</key><integer>7</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;p&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>163</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>163</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>164</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>164</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>164</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>164</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>164</integer>
+// CHECK-NEXT:          <key>col</key><integer>4</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from ivar &apos;p&apos;)</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Dereference of null pointer (loaded from ivar &apos;p&apos;)</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from ivar &apos;p&apos;)</string>
+// CHECK-NEXT:    <key>category</key><string>Logic error</string>
+// CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
+// CHECK-NEXT:   <key>issue_context</key><string>test</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>164</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>

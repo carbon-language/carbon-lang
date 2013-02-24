@@ -66,9 +66,10 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (5) The 'store' is the same as the predecessor.
   // (6) The 'GDM' is the same as the predecessor.
   // (7) The LocationContext is the same as the predecessor.
-  // (8) The PostStmt isn't for a non-consumed Stmt or Expr.
-  // (9) The successor is not a CallExpr StmtPoint (so that we would be able to
-  //     find it when retrying a call with no inlining).
+  // (8) Expressions that are *not* lvalue expressions.
+  // (9) The PostStmt isn't for a non-consumed Stmt or Expr.
+  // (10) The successor is not a CallExpr StmtPoint (so that we would
+  //      be able to find it when retrying a call with no inlining).
   // FIXME: It may be safe to reclaim PreCall and PostCall nodes as well.
 
   // Conditions 1 and 2.
@@ -99,20 +100,23 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
       progPoint.getLocationContext() != pred->getLocationContext())
     return false;
-  
+
   // Condition 8.
+  // Do not collect nodes for lvalue expressions since they are
+  // used extensively for generating path diagnostics.
+  const Expr *Ex = dyn_cast<Expr>(ps.getStmt());
+  if (!Ex || Ex->isLValue())
+    return false;
+
+  // Condition 9.
   // Do not collect nodes for non-consumed Stmt or Expr to ensure precise
   // diagnostic generation; specifically, so that we could anchor arrows
   // pointing to the beginning of statements (as written in code).
-  const Expr *Ex = dyn_cast<Expr>(ps.getStmt());
-  if (!Ex)
-    return false;
-
   ParentMap &PM = progPoint.getLocationContext()->getParentMap();
   if (!PM.isConsumedExpr(Ex))
     return false;
-  
-  // Condition 9.
+
+  // Condition 10.
   const ProgramPoint SuccLoc = succ->getLocation();
   if (Optional<StmtPoint> SP = SuccLoc.getAs<StmtPoint>())
     if (CallEvent::isCallStmt(SP->getStmt()))

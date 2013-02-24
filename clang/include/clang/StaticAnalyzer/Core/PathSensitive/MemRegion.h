@@ -950,6 +950,9 @@ public:
   const ObjCIvarDecl *getDecl() const;
   QualType getValueType() const;
 
+  bool canPrintPretty() const;
+  void printPretty(raw_ostream &os) const;
+
   void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion* R) {

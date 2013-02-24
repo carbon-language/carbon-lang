@@ -566,6 +566,14 @@ void VarRegion::printPretty(raw_ostream &os) const {
   os << getDecl()->getName();
 }
 
+bool ObjCIvarRegion::canPrintPretty() const {
+  return true;
+}
+
+void ObjCIvarRegion::printPretty(raw_ostream &os) const {
+  os << getDecl()->getName();
+}
+
 bool FieldRegion::canPrintPretty() const {
   return superRegion->canPrintPretty();
 }

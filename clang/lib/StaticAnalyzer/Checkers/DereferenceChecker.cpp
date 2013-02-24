@@ -76,6 +76,14 @@ DereferenceChecker::AddDerefSource(raw_ostream &os,
       Ranges.push_back(SourceRange(L, L));
       break;
     }
+    case Stmt::ObjCIvarRefExprClass: {
+      const ObjCIvarRefExpr *IV = cast<ObjCIvarRefExpr>(Ex);
+      os << " (" << (loadedFrom ? "loaded from" : "via")
+         << " ivar '" << IV->getDecl()->getName() << "')";
+      SourceLocation L = IV->getLocation();
+      Ranges.push_back(SourceRange(L, L));
+      break;
+    }    
   }
 }
 
