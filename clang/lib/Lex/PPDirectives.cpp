@@ -1938,7 +1938,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       WarnUnusedMacroLocs.erase(OtherMI->getDefinitionLoc());
   }
 
-  setMacroDirective(MacroNameTok.getIdentifierInfo(), MI);
+  MacroDirective *MD = setMacroDirective(MacroNameTok.getIdentifierInfo(), MI);
 
   assert(!MI->isUsed());
   // If we need warning for not using the macro, add its location in the
@@ -1952,7 +1952,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
   // If the callbacks want to know, tell them about the macro definition.
   if (Callbacks)
-    Callbacks->MacroDefined(MacroNameTok, MI);
+    Callbacks->MacroDefined(MacroNameTok, MD);
 }
 
 /// HandleUndefDirective - Implements \#undef.
@@ -1977,7 +1977,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   // If the callbacks want to know, tell them about the macro #undef.
   // Note: no matter if the macro was defined or not.
   if (Callbacks)
-    Callbacks->MacroUndefined(MacroNameTok, MI);
+    Callbacks->MacroUndefined(MacroNameTok, MD);
 
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
@@ -2035,7 +2035,8 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   CheckEndOfDirective(isIfndef ? "ifndef" : "ifdef");
 
   IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
-  MacroInfo *MI = getMacroInfo(MII);
+  MacroDirective *MD = getMacroDirective(MII);
+  MacroInfo *MI = MD ? MD->getInfo() : 0;
 
   if (CurPPLexer->getConditionalStackDepth() == 0) {
     // If the start of a top-level #ifdef and if the macro is not defined,
@@ -2055,9 +2056,9 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
 
   if (Callbacks) {
     if (isIfndef)
-      Callbacks->Ifndef(DirectiveTok.getLocation(), MacroNameTok, MI);
+      Callbacks->Ifndef(DirectiveTok.getLocation(), MacroNameTok, MD);
     else
-      Callbacks->Ifdef(DirectiveTok.getLocation(), MacroNameTok, MI);
+      Callbacks->Ifdef(DirectiveTok.getLocation(), MacroNameTok, MD);
   }
 
   // Should we include the stuff contained by this directive?

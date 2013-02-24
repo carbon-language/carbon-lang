@@ -160,10 +160,10 @@ public:
   void HandleNewlinesInToken(const char *TokStr, unsigned Len);
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
-  void MacroDefined(const Token &MacroNameTok, const MacroInfo *MI);
+  void MacroDefined(const Token &MacroNameTok, const MacroDirective *MD);
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
-  void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI);
+  void MacroUndefined(const Token &MacroNameTok, const MacroDirective *MD);
 };
 }  // end anonymous namespace
 
@@ -317,7 +317,8 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 
 /// MacroDefined - This hook is called whenever a macro definition is seen.
 void PrintPPOutputPPCallbacks::MacroDefined(const Token &MacroNameTok,
-                                            const MacroInfo *MI) {
+                                            const MacroDirective *MD) {
+  const MacroInfo *MI = MD->getInfo();
   // Only print out macro definitions in -dD mode.
   if (!DumpDefines ||
       // Ignore __FILE__ etc.
@@ -329,7 +330,7 @@ void PrintPPOutputPPCallbacks::MacroDefined(const Token &MacroNameTok,
 }
 
 void PrintPPOutputPPCallbacks::MacroUndefined(const Token &MacroNameTok,
-                                              const MacroInfo *MI) {
+                                              const MacroDirective *MD) {
   // Only print out macro definitions in -dD mode.
   if (!DumpDefines) return;
 

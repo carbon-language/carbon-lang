@@ -303,10 +303,10 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   struct MacroExpandsInfo {
     Token Tok;
-    MacroInfo *MI;
+    MacroDirective *MD;
     SourceRange Range;
-    MacroExpandsInfo(Token Tok, MacroInfo *MI, SourceRange Range)
-      : Tok(Tok), MI(MI), Range(Range) { }
+    MacroExpandsInfo(Token Tok, MacroDirective *MD, SourceRange Range)
+      : Tok(Tok), MD(MD), Range(Range) { }
   };
   SmallVector<MacroExpandsInfo, 2> DelayedMacroExpandsCallbacks;
 
@@ -560,10 +560,10 @@ public:
   MacroDirective *getMacroDirectiveHistory(const IdentifierInfo *II) const;
 
   /// \brief Specify a macro for this identifier.
-  void setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
-                         SourceLocation Loc, bool isImported);
-  void setMacroDirective(IdentifierInfo *II, MacroInfo *MI) {
-    setMacroDirective(II, MI, MI->getDefinitionLoc(), false);
+  MacroDirective *setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
+                                    SourceLocation Loc, bool isImported);
+  MacroDirective *setMacroDirective(IdentifierInfo *II, MacroInfo *MI) {
+    return setMacroDirective(II, MI, MI->getDefinitionLoc(), false);
   }
   /// \brief Add a MacroInfo that was loaded from an AST file.
   void addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,
@@ -1333,7 +1333,7 @@ private:
   /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
   /// be expanded as a macro, handle it and return the next token as 'Tok'.  If
   /// the macro should not be expanded return true, otherwise return false.
-  bool HandleMacroExpandedIdentifier(Token &Tok, MacroInfo *MI);
+  bool HandleMacroExpandedIdentifier(Token &Tok, MacroDirective *MD);
 
   /// \brief Cache macro expanded tokens for TokenLexers.
   //

@@ -281,16 +281,17 @@ public:
   }
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
-  virtual void MacroDefined(const Token &Id, const MacroInfo *MI) {
+  virtual void MacroDefined(const Token &Id, const MacroDirective *MD) {
   }
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
   /// MI is released immediately following this callback.
-  virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
+  virtual void MacroUndefined(const Token &MacroNameTok,
+                              const MacroDirective *MD) {
   }
 
   /// MacroExpands - This is called by when a macro invocation is found.
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI,
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
                             SourceRange Range) {
   }
 

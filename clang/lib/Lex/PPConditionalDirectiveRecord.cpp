@@ -83,14 +83,14 @@ void PPConditionalDirectiveRecord::If(SourceLocation Loc,
 
 void PPConditionalDirectiveRecord::Ifdef(SourceLocation Loc,
                                          const Token &MacroNameTok,
-                                         const MacroInfo *MI) {
+                                         const MacroDirective *MD) {
   addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
   CondDirectiveStack.push_back(Loc);
 }
 
 void PPConditionalDirectiveRecord::Ifndef(SourceLocation Loc,
                                           const Token &MacroNameTok,
-                                          const MacroInfo *MI) {
+                                          const MacroDirective *MD) {
   addCondDirectiveLoc(CondDirectiveLoc(Loc, CondDirectiveStack.back()));
   CondDirectiveStack.push_back(Loc);
 }

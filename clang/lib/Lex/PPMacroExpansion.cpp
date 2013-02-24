@@ -41,10 +41,10 @@ Preprocessor::getMacroDirectiveHistory(const IdentifierInfo *II) const {
   return Pos->second;
 }
 
-/// setMacroInfo - Specify a macro for this identifier.
-///
-void Preprocessor::setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
-                                     SourceLocation Loc, bool isImported) {
+/// \brief Specify a macro for this identifier.
+MacroDirective *
+Preprocessor::setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
+                                SourceLocation Loc, bool isImported) {
   assert(MI && "MacroInfo should be non-zero!");
 
   MacroDirective *MD = AllocateMacroDirective(MI, Loc, isImported);
@@ -54,6 +54,8 @@ void Preprocessor::setMacroDirective(IdentifierInfo *II, MacroInfo *MI,
   II->setHasMacroDefinition(true);
   if (II->isFromAST())
     II->setChangedSinceDeserialization();
+
+  return MD;
 }
 
 void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroDirective *MD,
@@ -304,7 +306,9 @@ bool Preprocessor::isNextPPTokenLParen() {
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
 bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
-                                                 MacroInfo *MI) {
+                                                 MacroDirective *MD) {
+  MacroInfo *MI = MD->getInfo();
+
   // If this is a macro expansion in the "#if !defined(x)" line for the file,
   // then the macro could expand to different things in other contexts, we need
   // to disable the optimization in this case.
@@ -312,7 +316,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro()) {
-    if (Callbacks) Callbacks->MacroExpands(Identifier, MI,
+    if (Callbacks) Callbacks->MacroExpands(Identifier, MD,
                                            Identifier.getLocation());
     ExpandBuiltinMacro(Identifier);
     return false;
@@ -365,13 +369,13 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       // MacroExpands callbacks still happen in source order, queue this
       // callback to have it happen after the function macro callback.
       DelayedMacroExpandsCallbacks.push_back(
-                              MacroExpandsInfo(Identifier, MI, ExpansionRange));
+                              MacroExpandsInfo(Identifier, MD, ExpansionRange));
     } else {
-      Callbacks->MacroExpands(Identifier, MI, ExpansionRange);
+      Callbacks->MacroExpands(Identifier, MD, ExpansionRange);
       if (!DelayedMacroExpandsCallbacks.empty()) {
         for (unsigned i=0, e = DelayedMacroExpandsCallbacks.size(); i!=e; ++i) {
           MacroExpandsInfo &Info = DelayedMacroExpandsCallbacks[i];
-          Callbacks->MacroExpands(Info.Tok, Info.MI, Info.Range);
+          Callbacks->MacroExpands(Info.Tok, Info.MD, Info.Range);
         }
         DelayedMacroExpandsCallbacks.clear();
       }

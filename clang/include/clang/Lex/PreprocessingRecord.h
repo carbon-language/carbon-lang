@@ -26,6 +26,7 @@
 
 namespace clang {
   class IdentifierInfo;
+  class MacroInfo;
   class PreprocessingRecord;
 }
 
@@ -557,10 +558,10 @@ namespace clang {
     MacroDefinition *findMacroDefinition(const MacroInfo *MI);
         
   private:
-    virtual void MacroExpands(const Token &Id, const MacroInfo* MI,
+    virtual void MacroExpands(const Token &Id, const MacroDirective *MD,
                               SourceRange Range);
-    virtual void MacroDefined(const Token &Id, const MacroInfo *MI);
-    virtual void MacroUndefined(const Token &Id, const MacroInfo *MI);
+    virtual void MacroDefined(const Token &Id, const MacroDirective *MD);
+    virtual void MacroUndefined(const Token &Id, const MacroDirective *MD);
     virtual void InclusionDirective(SourceLocation HashLoc,
                                     const Token &IncludeTok,
                                     StringRef FileName,
@@ -571,11 +572,11 @@ namespace clang {
                                     StringRef RelativePath,
                                     const Module *Imported);
     virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
-                       const MacroInfo *MI);
+                       const MacroDirective *MD);
     virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                        const MacroInfo *MI);
+                        const MacroDirective *MD);
     /// \brief Hook called whenever the 'defined' operator is seen.
-    virtual void Defined(const Token &MacroNameTok, const MacroInfo *MI);
+    virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD);
 
     void addMacroExpansion(const Token &Id, const MacroInfo *MI,
                            SourceRange Range);

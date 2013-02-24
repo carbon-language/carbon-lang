@@ -90,9 +90,9 @@ private:
   virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
                     SourceLocation IfLoc);
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
-                     const MacroInfo *MI);
+                     const MacroDirective *MD);
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                      const MacroInfo *MI);
+                      const MacroDirective *MD);
   virtual void Else(SourceLocation Loc, SourceLocation IfLoc);
   virtual void Endif(SourceLocation Loc, SourceLocation IfLoc);
 };

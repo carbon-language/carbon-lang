@@ -642,10 +642,11 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   }
 
   // If this is a macro to be expanded, do it.
-  if (MacroInfo *MI = getMacroInfo(&II)) {
+  if (MacroDirective *MD = getMacroDirective(&II)) {
+    MacroInfo *MI = MD->getInfo();
     if (!DisableMacroExpansion) {
       if (!Identifier.isExpandDisabled() && MI->isEnabled()) {
-        if (!HandleMacroExpandedIdentifier(Identifier, MI))
+        if (!HandleMacroExpandedIdentifier(Identifier, MD))
           return;
       } else {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
