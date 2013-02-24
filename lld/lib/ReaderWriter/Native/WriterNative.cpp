@@ -370,7 +370,8 @@ private:
 
   // append atom cotent to content pool and return offset
   uint32_t getContentOffset(const class DefinedAtom& atom) {
-    if ( atom.contentType() == DefinedAtom::typeZeroFill )
+    if ((atom.contentType() == DefinedAtom::typeZeroFill ) ||
+        (atom.contentType() == DefinedAtom::typeZeroFillFast))
       return 0;
     uint32_t result = _contentPool.size();
     ArrayRef<uint8_t> cont = atom.rawContent();

@@ -383,6 +383,16 @@ public:
 
   virtual ContentPermissions permissions() const {
     uint64_t flags = _section->sh_flags;
+    // Treat target defined symbols
+    if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
+         _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
+      if (!_targetAtomHandler) {
+        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
+        _targetAtomHandler = &TargetHandler.targetAtomHandler();
+      }
+      return (_targetAtomHandler->contentPermissions(this));
+    }
     switch (_section->sh_type) {
     // permRW_L is for sections modified by the runtime
     // loader.

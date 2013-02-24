@@ -46,6 +46,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeData:
   case typeDataFast:
   case typeZeroFill:
+  case typeZeroFillFast:
   case typeObjC1Class:
   case typeLazyPointer:
   case typeLazyDylibPointer:

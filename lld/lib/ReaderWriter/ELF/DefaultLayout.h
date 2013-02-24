@@ -306,6 +306,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
         .Default(ORDER_DATA);
 
   case DefinedAtom::typeZeroFill:
+  case DefinedAtom::typeZeroFillFast:
     return ORDER_BSS;
 
   case DefinedAtom::typeGOT:
@@ -331,7 +332,8 @@ template <class ELFT>
 StringRef DefaultLayout<ELFT>::getSectionName(
     StringRef name, const int32_t contentType,
     const int32_t contentPermissions) {
-  if (contentType == DefinedAtom::typeZeroFill)
+  if ((contentType == DefinedAtom::typeZeroFill) || 
+      (contentType == DefinedAtom::typeZeroFillFast)) 
     return ".bss";
   if (name.startswith(".text"))
     return ".text";

@@ -128,8 +128,10 @@ public:
     case DefinedAtom::typeTLVInitialData:
       this->_type = SHT_PROGBITS;
       break;
-    case DefinedAtom::typeZeroFill:
+    
     case DefinedAtom::typeTLVInitialZeroFill:
+    case DefinedAtom::typeZeroFillFast:
+    case DefinedAtom::typeZeroFill:
       this->_type = SHT_NOBITS;
       break;
     }
@@ -194,7 +196,8 @@ public:
 
   /// \brief Does the Atom occupy any disk space
   bool occupiesNoDiskSpace() const {
-    return _contentType == DefinedAtom::typeZeroFill;
+    return ((_contentType == DefinedAtom::typeZeroFill) ||
+            (_contentType == DefinedAtom::typeZeroFillFast));
   }
 
   /// \brief The permission of the section is the most permissive permission
@@ -262,13 +265,13 @@ const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   case Atom::definitionRegular:
     switch(definedAtom->contentType()) {
     case DefinedAtom::typeCode:
-    case DefinedAtom::typeData:
     case DefinedAtom::typeConstant:
+    case DefinedAtom::typeData:
+    case DefinedAtom::typeDataFast:
     case DefinedAtom::typeGOT:
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
     case DefinedAtom::typeTLVInitialData:
-    case DefinedAtom::typeDataFast:
       _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
@@ -277,8 +280,9 @@ const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
                                    << "Adding atom: " << atom->name() << "@"
                                    << fOffset << "\n");
       break;
-    case DefinedAtom::typeZeroFill:
     case DefinedAtom::typeTLVInitialZeroFill:
+    case DefinedAtom::typeZeroFill:
+    case DefinedAtom::typeZeroFillFast:
       _atoms.push_back(new (_alloc) AtomLayout(atom, mOffset, 0));
       this->_msize = mOffset + definedAtom->size();
       break;
@@ -303,18 +307,18 @@ const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
 ///        and printing purposes
 template <class ELFT> StringRef Section<ELFT>::segmentKindToStr() const {
   switch(_segmentType) {
+  case llvm::ELF::PT_DYNAMIC:
+    return "DYNAMIC";
   case llvm::ELF::PT_INTERP:
     return "INTERP";
   case llvm::ELF::PT_LOAD:
     return "LOAD";
   case llvm::ELF::PT_GNU_EH_FRAME:
     return "EH_FRAME";
-  case llvm::ELF::PT_NOTE:
-    return "NOTE";
-  case llvm::ELF::PT_DYNAMIC:
-    return "DYNAMIC";
   case llvm::ELF::PT_GNU_RELRO:
     return "RELRO";
+  case llvm::ELF::PT_NOTE:
+    return "NOTE";
   case llvm::ELF::PT_NULL:
     return "NULL";
   default:
@@ -332,7 +336,8 @@ void AtomSection<ELFT>::write(ELFWriter *writer,
                     llvm::dbgs() << "Writing atom: " << ai->_atom->name()
                                  << " | " << ai->_fileOffset << "\n");
     const DefinedAtom *definedAtom = cast<DefinedAtom>(ai->_atom);
-    if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
+    if ((definedAtom->contentType() == DefinedAtom::typeZeroFill) ||
+        (definedAtom->contentType() == DefinedAtom::typeZeroFillFast))
       continue;
     // Copy raw content of atom to file buffer.
     llvm::ArrayRef<uint8_t> content = definedAtom->rawContent();
@@ -640,6 +645,7 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
       type = llvm::ELF::STT_OBJECT;
       break;
     case DefinedAtom::typeZeroFill:
+    case DefinedAtom::typeZeroFillFast:
       type = llvm::ELF::STT_OBJECT;
       symbol.st_value = addr;
       break;

@@ -89,8 +89,9 @@ ExecutableWriter<ELFT>::ExecutableWriter(const ELFTargetInfo &ti)
 
 template <class ELFT>
 void ExecutableWriter<ELFT>::buildChunks(const File &file) {
-  for (const DefinedAtom *definedAtom : file.defined())
+  for (const DefinedAtom *definedAtom : file.defined()) {
     _layout->addAtom(definedAtom);
+  }
   for (const AbsoluteAtom *absoluteAtom : file.absolute())
     _layout->addAtom(absoluteAtom);
 }

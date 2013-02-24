@@ -44,7 +44,7 @@ public:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_2:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_4:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_8:
-      return DefinedAtom::typeZeroFill;
+      return DefinedAtom::typeZeroFillFast;
 
     default:
       if (section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
@@ -93,7 +93,8 @@ public:
   /// \brief Return the section order for a input section
   virtual Layout::SectionOrder getSectionOrder(
       StringRef name, int32_t contentType, int32_t contentPermissions) {
-    if (contentType == DefinedAtom::typeDataFast)
+    if ((contentType == DefinedAtom::typeDataFast) ||
+       (contentType == DefinedAtom::typeZeroFillFast))
       return ORDER_SDATA;
 
     return DefaultLayout<HexagonELFType>::getSectionOrder(name, contentType,
@@ -103,7 +104,8 @@ public:
   /// \brief This maps the input sections to the output section names
   virtual StringRef getSectionName(StringRef name, const int32_t contentType,
                                    const int32_t contentPermissions) {
-    if (contentType == DefinedAtom::typeDataFast)
+    if ((contentType == DefinedAtom::typeDataFast) ||
+       (contentType == DefinedAtom::typeZeroFillFast))
       return ".sdata";
     return DefaultLayout<HexagonELFType>::getSectionName(name, contentType,
                                                          contentPermissions);
@@ -114,7 +116,8 @@ public:
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
                 Layout::SectionOrder sectionOrder) {
-    if (contentType == DefinedAtom::typeDataFast)
+    if ((contentType == DefinedAtom::typeDataFast) ||
+       (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
     return DefaultLayout<HexagonELFType>::createSection(
         name, contentType, contentPermissions, sectionOrder);

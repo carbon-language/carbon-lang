@@ -125,6 +125,7 @@ public:
     typeData,               // read-write data
     typeDataFast,           // allow data to be quickly accessed
     typeZeroFill,           // zero-fill data
+    typeZeroFillFast,       // allow zero-fill data to be quicky accessed
     typeConstData,          // read-only data after dynamic linker is done
     typeObjC1Class,         // ObjC1 class [Darwin]
     typeLazyPointer,        // pointer through which a stub jumps

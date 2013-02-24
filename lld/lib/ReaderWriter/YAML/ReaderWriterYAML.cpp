@@ -399,6 +399,7 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
     io.enumCase(value, "data", lld::DefinedAtom::typeData);
     io.enumCase(value, "quick-data", lld::DefinedAtom::typeDataFast);
     io.enumCase(value, "zero-fill", lld::DefinedAtom::typeZeroFill);
+    io.enumCase(value, "zero-fill-quick", lld::DefinedAtom::typeZeroFillFast);
     io.enumCase(value, "const-data", lld::DefinedAtom::typeConstData);
     io.enumCase(value, "got",                 
                           lld::DefinedAtom::typeGOT);
