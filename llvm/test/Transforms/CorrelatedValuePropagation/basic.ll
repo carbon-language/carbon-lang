@@ -81,6 +81,26 @@ LessThanOrEqualToTwo:
   ret i32 0
 }
 
+declare i32* @f(i32*)
+define void @test5(i32* %x, i32* %y) {
+; CHECK: @test5
+entry:
+  %pre = icmp eq i32* %x, null
+  br i1 %pre, label %return, label %loop
+
+loop:
+  %phi = phi i32* [ %sel, %loop ], [ %x, %entry ]
+; CHECK: %phi = phi i32* [ %f, %loop ], [ %x, %entry ]
+  %f = tail call i32* @f(i32* %phi)
+  %cmp1 = icmp ne i32* %f, %y
+  %sel = select i1 %cmp1, i32* %f, i32* null
+  %cmp2 = icmp eq i32* %sel, null
+  br i1 %cmp2, label %return, label %loop
+
+return:
+  ret void
+}
+
 define i32 @switch1(i32 %s) {
 ; CHECK: @switch1
 entry:
