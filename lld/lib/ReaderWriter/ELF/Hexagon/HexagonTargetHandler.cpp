@@ -17,5 +17,5 @@ using namespace llvm::ELF;
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonTargetInfo &targetInfo)
     : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
-      _targetLayout(targetInfo) {
+      _targetLayout(targetInfo), _hexagonRuntimeFile(targetInfo) {
 }

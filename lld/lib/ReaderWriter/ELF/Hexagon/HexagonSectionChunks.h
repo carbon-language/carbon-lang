@@ -25,6 +25,7 @@ public:
             HexagonTargetLayout<HexagonELFType>::ORDER_SDATA) {
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC | SHF_WRITE;
+    this->_align2 = 4096;
   }
 
   /// \brief Finalize the section contents before writing

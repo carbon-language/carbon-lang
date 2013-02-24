@@ -11,7 +11,7 @@
 #define LLD_READER_WRITER_ELF_HEXAGON_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
-#include "ExecutableAtoms.h"
+#include "HexagonExecutableAtoms.h"
 #include "HexagonRelocationHandler.h"
 #include "HexagonSectionChunks.h"
 #include "TargetLayout.h"
@@ -132,6 +132,10 @@ public:
     return DefaultLayout<HexagonELFType>::getSegmentType(section);
   }
 
+  Section<HexagonELFType> *getSDataSection() const {
+    return _sdataSection;
+  }
+
 private:
   llvm::BumpPtrAllocator _alloc;
   SDataSection<HexagonELFType> *_sdataSection;
@@ -155,10 +159,26 @@ public:
     return _relocationHandler;
   }
 
+  void addDefaultAtoms() {
+    _hexagonRuntimeFile.addAbsoluteAtom("_SDA_BASE_");
+  }
+
+  virtual void addFiles(InputFiles &inputFiles) {
+    addDefaultAtoms();
+    inputFiles.prependFile(_hexagonRuntimeFile);
+  }
+
+  void finalizeSymbolValues() {
+    auto sdabaseAtomIter = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
+    (*sdabaseAtomIter)->_virtualAddr = 
+      _targetLayout.getSDataSection()->virtualAddr();
+  }
+
 private:
   HexagonTargetRelocationHandler _relocationHandler;
   HexagonTargetLayout<HexagonELFType> _targetLayout;
   HexagonTargetAtomHandler<HexagonELFType> _targetAtomHandler;
+  HexagonRuntimeFile<HexagonELFType> _hexagonRuntimeFile; 
 };
 } // end namespace elf
 } // end namespace lld

@@ -229,6 +229,9 @@ void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   (*bssEndAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
   (*underScoreEndAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
   (*endAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_memsz;
+
+  // Give a chance for the target to finalize its atom values
+  _targetHandler.finalizeSymbolValues();
 }
 
 template <class ELFT>
