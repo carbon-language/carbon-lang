@@ -33,7 +33,7 @@ public:
       : ELFFile<ELFT>(ti, name) {}
 
   /// \brief add a global absolute atom
-  void addAbsoluteAtom(StringRef symbolName) {
+  virtual void addAbsoluteAtom(StringRef symbolName) {
     Elf_Sym *symbol = new (_allocator.Allocate<Elf_Sym>()) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;
@@ -48,7 +48,7 @@ public:
   }
 
   /// \brief add an undefined atom 
-  void addUndefinedAtom(StringRef symbolName) {
+  virtual void addUndefinedAtom(StringRef symbolName) {
     Elf_Sym *symbol = new (_allocator) Elf_Sym;
     symbol->st_name = 0;
     symbol->st_value = 0;
@@ -60,19 +60,19 @@ public:
     _undefinedAtoms._atoms.push_back(newAtom);
   }
 
-  const File::atom_collection<DefinedAtom> &defined() const {
+  virtual const File::atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
   }
 
-  const File::atom_collection<UndefinedAtom> &undefined() const {
+  virtual const File::atom_collection<UndefinedAtom> &undefined() const {
     return _undefinedAtoms;
   }
 
-  const File::atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  virtual const File::atom_collection<SharedLibraryAtom> &sharedLibrary() const {
     return _sharedLibraryAtoms;
   }
 
-  const File::atom_collection<AbsoluteAtom> &absolute() const {
+  virtual const File::atom_collection<AbsoluteAtom> &absolute() const {
     return _absoluteAtoms;
   }
 
@@ -81,7 +81,7 @@ public:
     llvm_unreachable("cannot add atoms to Runtime files");
   }
 
-private:
+protected:
   llvm::BumpPtrAllocator _allocator;
   File::atom_collection_vector<DefinedAtom> _definedAtoms;
   File::atom_collection_vector<UndefinedAtom> _undefinedAtoms;
