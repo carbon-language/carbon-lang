@@ -1429,6 +1429,20 @@ MachineBasicBlock *MipsTargetLowering::EmitSeliT16
 
 }
 
+
+MachineBasicBlock
+  *MipsTargetLowering::EmitFEXT_T8I816_ins(unsigned BtOpc, unsigned CmpOpc,
+                           MachineInstr *MI,
+                           MachineBasicBlock *BB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  unsigned regX = MI->getOperand(0).getReg();
+  unsigned regY = MI->getOperand(1).getReg();
+  MachineBasicBlock *target = MI->getOperand(2).getMBB();
+  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(CmpOpc)).addReg(regX).addReg(regY);
+  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(BtOpc)).addMBB(target);
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
@@ -1568,6 +1582,22 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitSelT16(Mips::BtnezX16, Mips::SltRxRy16, MI, BB);
   case Mips::SelTBtneZSltu:
     return EmitSelT16(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
+  case Mips::BteqzT8CmpX16:
+    return EmitFEXT_T8I816_ins(Mips::BteqzX16, Mips::CmpRxRy16, MI, BB);
+  case Mips::BteqzT8SltX16:
+    return EmitFEXT_T8I816_ins(Mips::BteqzX16, Mips::SltRxRy16, MI, BB);
+  case Mips::BteqzT8SltuX16:
+    // TBD: figure out a way to get this or remove the instruction
+    // altogether.
+    return EmitFEXT_T8I816_ins(Mips::BteqzX16, Mips::SltuRxRy16, MI, BB);
+  case Mips::BtnezT8CmpX16:
+    return EmitFEXT_T8I816_ins(Mips::BtnezX16, Mips::CmpRxRy16, MI, BB);
+  case Mips::BtnezT8SltX16:
+    return EmitFEXT_T8I816_ins(Mips::BtnezX16, Mips::SltRxRy16, MI, BB);
+  case Mips::BtnezT8SltuX16:
+    // TBD: figure out a way to get this or remove the instruction
+    // altogether.
+    return EmitFEXT_T8I816_ins(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
   }
 }
 

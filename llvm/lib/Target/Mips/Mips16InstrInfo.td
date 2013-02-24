@@ -225,6 +225,7 @@ class FEXT_T8I816_ins<string asmstr, string asmstr2>:
                !strconcat(asmstr2, !strconcat("\t$rx, $ry\n\t",
                !strconcat(asmstr, "\t$imm"))),[]> {
   let isCodeGenOnly=1;
+  let usesCustomInserter = 1;
 }
 
 //
