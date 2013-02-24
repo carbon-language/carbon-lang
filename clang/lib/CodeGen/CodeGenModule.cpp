@@ -1977,6 +1977,8 @@ void CodeGenModule::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
   // instantiation is explicit, make sure we emit it at the end.
   if (VD->getDefinition() && TSK == TSK_ExplicitInstantiationDefinition)
     GetAddrOfGlobalVar(VD);
+
+  EmitTopLevelDecl(VD);
 }
 
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {

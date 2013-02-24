@@ -2974,7 +2974,18 @@ void Sema::InstantiateStaticDataMemberDefinition(
   if (TSK == TSK_ExplicitInstantiationDeclaration)
     return;
 
-  Consumer.HandleCXXStaticMemberVarInstantiation(Var);
+  // Make sure to pass the instantiated variable to the consumer at the end.
+  struct PassToConsumerRAII {
+    ASTConsumer &Consumer;
+    VarDecl *Var;
+
+    PassToConsumerRAII(ASTConsumer &Consumer, VarDecl *Var)
+      : Consumer(Consumer), Var(Var) { }
+
+    ~PassToConsumerRAII() {
+      Consumer.HandleCXXStaticMemberVarInstantiation(Var);
+    }
+  } PassToConsumerRAII(Consumer, Var);
 
   // If we already have a definition, we're done.
   if (VarDecl *Def = Var->getDefinition()) {
@@ -3011,12 +3022,11 @@ void Sema::InstantiateStaticDataMemberDefinition(
   previousContext.pop();
 
   if (Var) {
+    PassToConsumerRAII.Var = Var;
     MemberSpecializationInfo *MSInfo = OldVar->getMemberSpecializationInfo();
     assert(MSInfo && "Missing member specialization information?");
     Var->setTemplateSpecializationKind(MSInfo->getTemplateSpecializationKind(),
                                        MSInfo->getPointOfInstantiation());
-    DeclGroupRef DG(Var);
-    Consumer.HandleTopLevelDecl(DG);
   }
   Local.Exit();
   
