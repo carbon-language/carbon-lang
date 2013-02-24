@@ -170,3 +170,8 @@ namespace PR14577 {
   template<typename T>
   Outer<T>::Inner2<T>::~Inner2() = default; // expected-error {{nested name specifier 'Outer<T>::Inner2<T>::' for declaration does not refer into a class, class template or class template partial specialization}}  expected-error {{only special member functions may be defaulted}}
 }
+
+extern "C" {
+ template<typename _Tp> // expected-error {{templates must have C++ linkage}}
+ void PR13573(const _Tp&) = delete; // expected-error {{only functions can have deleted definitions}}
+}
