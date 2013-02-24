@@ -30,7 +30,6 @@ class PPCRegisterInfo : public PPCGenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
   const PPCSubtarget &Subtarget;
   const TargetInstrInfo &TII;
-  mutable int CRSpillFrameIdx;
 public:
   PPCRegisterInfo(const PPCSubtarget &SubTarget, const TargetInstrInfo &tii);
   

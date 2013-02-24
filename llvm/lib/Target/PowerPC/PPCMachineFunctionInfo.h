@@ -71,6 +71,9 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// register for parameter passing.
   unsigned VarArgsNumFPR;
 
+  /// CRSpillFrameIndex - FrameIndex for CR spill slot for 32-bit SVR4.
+  int CRSpillFrameIndex;
+
 public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
@@ -83,7 +86,8 @@ public:
       VarArgsFrameIndex(0),
       VarArgsStackOffset(0),
       VarArgsNumGPR(0),
-      VarArgsNumFPR(0) {}
+      VarArgsNumFPR(0),
+      CRSpillFrameIndex(0) {}
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
@@ -125,6 +129,9 @@ public:
 
   unsigned getVarArgsNumFPR() const { return VarArgsNumFPR; }
   void setVarArgsNumFPR(unsigned Num) { VarArgsNumFPR = Num; }
+
+  int getCRSpillFrameIndex() const { return CRSpillFrameIndex; }
+  void setCRSpillFrameIndex(int idx) { CRSpillFrameIndex = idx; }
 };
 
 } // end of namespace llvm

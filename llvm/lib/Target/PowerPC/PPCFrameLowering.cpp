@@ -786,7 +786,8 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   unsigned LR = RegInfo->getRARegister();
   FI->setMustSaveLR(MustSaveLR(MF, LR));
-  MF.getRegInfo().setPhysRegUnused(LR);
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  MRI.setPhysRegUnused(LR);
 
   //  Save R31 if necessary
   int FPSI = FI->getFramePointerSaveIndex();
@@ -809,6 +810,16 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (MF.getTarget().Options.GuaranteedTailCallOpt &&
       (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
     MFI->CreateFixedObject(-1 * TCSPDelta, TCSPDelta, true);
+  }
+
+  // For 32-bit SVR4, allocate the nonvolatile CR spill slot iff the 
+  // function uses CR 2, 3, or 4.
+  if (!isPPC64 && !isDarwinABI && 
+      (MRI.isPhysRegUsed(PPC::CR2) ||
+       MRI.isPhysRegUsed(PPC::CR3) ||
+       MRI.isPhysRegUsed(PPC::CR4))) {
+    int FrameIdx = MFI->CreateFixedObject((uint64_t)4, (int64_t)-4, true);
+    FI->setCRSpillFrameIndex(FrameIdx);
   }
 
   // Reserve a slot closest to SP or frame pointer if we have a dynalloc or

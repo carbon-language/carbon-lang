@@ -71,7 +71,7 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
   : PPCGenRegisterInfo(ST.isPPC64() ? PPC::LR8 : PPC::LR,
                        ST.isPPC64() ? 0 : 1,
                        ST.isPPC64() ? 0 : 1),
-    Subtarget(ST), TII(tii), CRSpillFrameIdx(0) {
+    Subtarget(ST), TII(tii) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
@@ -110,11 +110,6 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   if (Subtarget.isDarwinABI())
     return Subtarget.isPPC64() ? CSR_Darwin64_SaveList :
                                  CSR_Darwin32_SaveList;
-
-  // For 32-bit SVR4, also initialize the frame index associated with
-  // the CR spill slot.
-  if (!Subtarget.isPPC64())
-    CRSpillFrameIdx = 0;
 
   return Subtarget.isPPC64() ? CSR_SVR464_SaveList : CSR_SVR432_SaveList;
 }
@@ -450,19 +445,14 @@ PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
   // For the nonvolatile condition registers (CR2, CR3, CR4) in an SVR4
   // ABI, return true to prevent allocating an additional frame slot.
   // For 64-bit, the CR save area is at SP+8; the value of FrameIdx = 0
-  // is arbitrary and will be subsequently ignored.  For 32-bit, we must
-  // create exactly one stack slot and return its FrameIdx for all
-  // nonvolatiles.
+  // is arbitrary and will be subsequently ignored.  For 32-bit, we have
+  // previously created the stack slot if needed, so return its FrameIdx.
   if (Subtarget.isSVR4ABI() && PPC::CR2 <= Reg && Reg <= PPC::CR4) {
-    if (Subtarget.isPPC64()) {
+    if (Subtarget.isPPC64())
       FrameIdx = 0;
-    } else if (CRSpillFrameIdx) {
-      FrameIdx = CRSpillFrameIdx;
-    } else {
-      MachineFrameInfo *MFI = 
-        (const_cast<MachineFunction &>(MF)).getFrameInfo();
-      FrameIdx = MFI->CreateFixedObject((uint64_t)4, (int64_t)-4, true);
-      CRSpillFrameIdx = FrameIdx;
+    else {
+      const PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+      FrameIdx = FI->getCRSpillFrameIndex();
     }
     return true;
   }
