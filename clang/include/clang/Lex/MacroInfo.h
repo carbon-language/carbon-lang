@@ -22,8 +22,8 @@
 namespace clang {
   class Preprocessor;
 
-/// MacroInfo - Each identifier that is \#define'd has an instance of this class
-/// associated with it, used to implement macro expansion.
+/// \brief Encapsulates the data about a macro definition (e.g. its tokens).
+/// There's an instance of this class for every #define.
 class MacroInfo {
   //===--------------------------------------------------------------------===//
   // State set when the macro is defined.
@@ -262,6 +262,20 @@ private:
   unsigned getDefinitionLengthSlow(SourceManager &SM) const;
 };
 
+/// \brief Encapsulates changes to the "macros namespace" (the location where
+/// the macro name became active, the location where it was undefined, etc.).
+///
+/// MacroDirectives, associated with an identifier, are used to model the macro
+/// history. Usually a macro definition (MacroInfo) is where a macro name
+/// becomes active (MacroDirective) but modules can have their own macro
+/// history, separate from the local (current translation unit) macro history.
+///
+/// For example, if "@import A;" imports macro FOO, there will be a new local
+/// MacroDirective created to indicate that "FOO" became active at the import
+/// location. Module "A" itself will contain another MacroDirective in its macro
+/// history (at the point of the definition of FOO) and both MacroDirectives
+/// will point to the same MacroInfo object.
+///
 class MacroDirective {
   MacroInfo *Info;
 
@@ -323,6 +337,7 @@ public:
     UndefLocation = UndefLoc;
   }
 
+  /// \brief The data for the macro definition.
   const MacroInfo *getInfo() const { return Info; }
   MacroInfo *getInfo() { return Info; }
 
