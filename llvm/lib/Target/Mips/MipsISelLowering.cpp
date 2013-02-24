@@ -1443,6 +1443,28 @@ MachineBasicBlock
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;
 }
+
+
+MachineBasicBlock *MipsTargetLowering::EmitFEXT_T8I8I16_ins(
+  unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
+  MachineInstr *MI,  MachineBasicBlock *BB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  unsigned regX = MI->getOperand(0).getReg();
+  int64_t imm = MI->getOperand(1).getImm();
+  MachineBasicBlock *target = MI->getOperand(2).getMBB();
+  unsigned CmpOpc;
+  if (isUInt<8>(imm))
+    CmpOpc = CmpiOpc;
+  else if (isUInt<16>(imm))
+    CmpOpc = CmpiXOpc;
+  else
+    llvm_unreachable("immediate field not usable");
+  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(CmpOpc)).addReg(regX).addImm(imm);
+  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(BtOpc)).addMBB(target);
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
+
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
@@ -1598,6 +1620,19 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // TBD: figure out a way to get this or remove the instruction
     // altogether.
     return EmitFEXT_T8I816_ins(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
+  case Mips::BteqzT8CmpiX16: return EmitFEXT_T8I8I16_ins(
+    Mips::BteqzX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, MI, BB);
+  case Mips::BteqzT8SltiX16: return EmitFEXT_T8I8I16_ins(
+    Mips::BteqzX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
+  case Mips::BteqzT8SltiuX16: return EmitFEXT_T8I8I16_ins(
+    Mips::BteqzX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
+  case Mips::BtnezT8CmpiX16: return EmitFEXT_T8I8I16_ins(
+    Mips::BtnezX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, MI, BB);
+  case Mips::BtnezT8SltiX16: return EmitFEXT_T8I8I16_ins(
+    Mips::BtnezX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
+  case Mips::BtnezT8SltiuX16: return EmitFEXT_T8I8I16_ins(
+    Mips::BtnezX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
+    break;
   }
 }
 

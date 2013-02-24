@@ -135,30 +135,6 @@ bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   switch(MI->getDesc().getOpcode()) {
   default:
     return false;
-  case Mips::BteqzT8CmpiX16:
-    ExpandFEXT_T8I8I16_ins(MBB, MI, Mips::BteqzX16,
-                           Mips::CmpiRxImm16, Mips::CmpiRxImmX16);
-    break;
-  case Mips::BteqzT8SltiX16:
-    ExpandFEXT_T8I8I16_ins(MBB, MI, Mips::BteqzX16,
-                           Mips::SltiRxImm16, Mips::SltiRxImmX16);
-    break;
-  case Mips::BteqzT8SltiuX16:
-    ExpandFEXT_T8I8I16_ins(MBB, MI, Mips::BteqzX16,
-                           Mips::SltiuRxImm16, Mips::SltiuRxImmX16);
-    break;
-  case Mips::BtnezT8CmpiX16:
-    ExpandFEXT_T8I8I16_ins(MBB, MI, Mips::BtnezX16,
-                           Mips::CmpiRxImm16, Mips::CmpiRxImmX16);
-    break;
-  case Mips::BtnezT8SltiX16:
-    ExpandFEXT_T8I8I16_ins(MBB, MI, Mips::BtnezX16,
-                           Mips::SltiRxImm16, Mips::SltiRxImmX16);
-    break;
-  case Mips::BtnezT8SltiuX16:
-    ExpandFEXT_T8I8I16_ins(MBB, MI, Mips::BtnezX16,
-                           Mips::SltiuRxImm16, Mips::SltiuRxImmX16);
-    break;
   case Mips::RetRA16:
     ExpandRetRA16(MBB, MI, Mips::JrcRa16);
     break;
@@ -433,35 +409,6 @@ void Mips16InstrInfo::ExpandRetRA16(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned Opc) const {
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc));
-}
-
-
-void Mips16InstrInfo::ExpandFEXT_T8I816_ins(
-  MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-  unsigned BtOpc, unsigned CmpOpc) const {
-  unsigned regX = I->getOperand(0).getReg();
-  unsigned regY = I->getOperand(1).getReg();
-  MachineBasicBlock *target = I->getOperand(2).getMBB();
-  BuildMI(MBB, I, I->getDebugLoc(), get(CmpOpc)).addReg(regX).addReg(regY);
-  BuildMI(MBB, I, I->getDebugLoc(), get(BtOpc)).addMBB(target);
-
-}
-
-void Mips16InstrInfo::ExpandFEXT_T8I8I16_ins(
-  MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-  unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc) const {
-  unsigned regX = I->getOperand(0).getReg();
-  int64_t imm = I->getOperand(1).getImm();
-  MachineBasicBlock *target = I->getOperand(2).getMBB();
-  unsigned CmpOpc;
-  if (isUInt<8>(imm))
-    CmpOpc = CmpiOpc;
-  else if (isUInt<16>(imm))
-    CmpOpc = CmpiXOpc;
-  else
-    llvm_unreachable("immediate field not usable");
-  BuildMI(MBB, I, I->getDebugLoc(), get(CmpOpc)).addReg(regX).addImm(imm);
-  BuildMI(MBB, I, I->getDebugLoc(), get(BtOpc)).addMBB(target);
 }
 
 void Mips16InstrInfo::ExpandFEXT_CCRX16_ins(

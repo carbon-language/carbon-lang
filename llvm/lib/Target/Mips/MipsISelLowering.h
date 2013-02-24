@@ -416,6 +416,9 @@ namespace llvm {
     MachineBasicBlock *EmitFEXT_T8I816_ins(unsigned BtOpc, unsigned CmpOpc,
                                MachineInstr *MI,
                                MachineBasicBlock *BB) const;
+    MachineBasicBlock *EmitFEXT_T8I8I16_ins(
+      unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
+      MachineInstr *MI,  MachineBasicBlock *BB) const;
   };
 }
 
