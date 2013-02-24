@@ -120,7 +120,7 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   bool tryInstructionTransform(MachineBasicBlock::iterator &mi,
                                MachineBasicBlock::iterator &nmi,
                                unsigned SrcIdx, unsigned DstIdx,
-                               unsigned Dist);
+                               unsigned Dist, bool shouldOnlyCommute);
 
   void scanUses(unsigned DstReg);
 
@@ -1085,11 +1085,13 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
 /// either eliminate the tied operands or improve the opportunities for
 /// coalescing away the register copy.  Returns true if no copy needs to be
 /// inserted to untie mi's operands (either because they were untied, or
-/// because mi was rescheduled, and will be visited again later).
+/// because mi was rescheduled, and will be visited again later). If the
+/// shouldOnlyCommute flag is true, only instruction commutation is attempted.
 bool TwoAddressInstructionPass::
 tryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineBasicBlock::iterator &nmi,
-                        unsigned SrcIdx, unsigned DstIdx, unsigned Dist) {
+                        unsigned SrcIdx, unsigned DstIdx,
+                        unsigned Dist, bool shouldOnlyCommute) {
   if (OptLevel == CodeGenOpt::None)
     return false;
 
@@ -1137,6 +1139,9 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
       ++NumAggrCommuted;
     return false;
   }
+
+  if (shouldOnlyCommute)
+    return false;
 
   // If there is one more use of regB later in the same MBB, consider
   // re-schedule this MI below it.
@@ -1214,7 +1219,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
         unsigned NewSrcIdx = NewMIs[1]->findRegisterUseOperandIdx(regB);
         MachineBasicBlock::iterator NewMI = NewMIs[1];
         bool TransformSuccess =
-          tryInstructionTransform(NewMI, mi, NewSrcIdx, NewDstIdx, Dist);
+          tryInstructionTransform(NewMI, mi, NewSrcIdx, NewDstIdx, Dist, true);
         if (TransformSuccess ||
             NewMIs[1]->getOperand(NewSrcIdx).isKill()) {
           // Success, or at least we made an improvement. Keep the unfolded
@@ -1539,7 +1544,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
           unsigned SrcReg = mi->getOperand(SrcIdx).getReg();
           unsigned DstReg = mi->getOperand(DstIdx).getReg();
           if (SrcReg != DstReg &&
-              tryInstructionTransform(mi, nmi, SrcIdx, DstIdx, Dist)) {
+              tryInstructionTransform(mi, nmi, SrcIdx, DstIdx, Dist, false)) {
             // The tied operands have been eliminated or shifted further down the
             // block to ease elimination. Continue processing with 'nmi'.
             TiedOperands.clear();
