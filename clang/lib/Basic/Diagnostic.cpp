@@ -955,11 +955,10 @@ StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level,
 StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID,
                                    StringRef Message, FullSourceLoc Loc,
                                    ArrayRef<CharSourceRange> Ranges,
-                                   ArrayRef<FixItHint> Fixits)
-  : ID(ID), Level(Level), Loc(Loc), Message(Message) 
+                                   ArrayRef<FixItHint> FixIts)
+  : ID(ID), Level(Level), Loc(Loc), Message(Message), 
+    Ranges(Ranges.begin(), Ranges.end()), FixIts(FixIts.begin(), FixIts.end())
 {
-  this->Ranges.assign(Ranges.begin(), Ranges.end());
-  this->FixIts.assign(Fixits.begin(), Fixits.end());
 }
 
 StoredDiagnostic::~StoredDiagnostic() { }
