@@ -1931,13 +1931,24 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("int(*func)(void *);");
 }
 
-TEST_F(FormatTest, BreaksFunctionDeclarations) {
+TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyFormat("int *someFunction(int LoooooooooooooooooooongParam1,\n"
                "                  int LoooooooooooooooooooongParam2) {}");
   verifyFormat(
       "TypeSpecDecl *\n"
       "TypeSpecDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,\n"
       "                     IdentifierIn *II, Type *T) {}");
+  verifyFormat("ReallyLongReturnType<TemplateParam1, TemplateParam2>\n"
+               "ReallyReallyLongFunctionName(\n"
+               "    const std::string &SomeParameter,\n"
+               "    const SomeType<string, SomeOtherTemplateParameter> &\n"
+               "        ReallyReallyLongParameterName,\n"
+               "    const SomeType<string, SomeOtherTemplateParameter> &\n"
+               "        AnotherLongParameterName) {}");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaa<aaaaaaaaaaaaa, aaaaaaaaaaaa>\n"
+      "aaaaaaaaaaaaaaaaaaaaaaa;");
+
   verifyGoogleFormat(
       "TypeSpecDecl* TypeSpecDecl::Create(\n"
       "    ASTContext& C, DeclContext* DC, SourceLocation L) {}");

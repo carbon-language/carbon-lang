@@ -140,7 +140,8 @@ public:
   AnnotatedLine(const UnwrappedLine &Line)
       : First(Line.Tokens.front()), Level(Line.Level),
         InPPDirective(Line.InPPDirective),
-        MustBeDeclaration(Line.MustBeDeclaration) {
+        MustBeDeclaration(Line.MustBeDeclaration),
+        MightBeFunctionDecl(false) {
     assert(!Line.Tokens.empty());
     AnnotatedToken *Current = &First;
     for (std::list<FormatToken>::const_iterator I = ++Line.Tokens.begin(),
@@ -155,7 +156,8 @@ public:
   AnnotatedLine(const AnnotatedLine &Other)
       : First(Other.First), Type(Other.Type), Level(Other.Level),
         InPPDirective(Other.InPPDirective),
-        MustBeDeclaration(Other.MustBeDeclaration) {
+        MustBeDeclaration(Other.MustBeDeclaration),
+        MightBeFunctionDecl(Other.MightBeFunctionDecl) {
     Last = &First;
     while (!Last->Children.empty()) {
       Last->Children[0].Parent = Last;
@@ -170,6 +172,7 @@ public:
   unsigned Level;
   bool InPPDirective;
   bool MustBeDeclaration;
+  bool MightBeFunctionDecl;
 };
 
 inline prec::Level getPrecedence(const AnnotatedToken &Tok) {

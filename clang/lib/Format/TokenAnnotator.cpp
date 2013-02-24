@@ -83,7 +83,6 @@ public:
       : SourceMgr(SourceMgr), Lex(Lex), Line(Line), CurrentToken(&Line.First),
         KeywordVirtualFound(false), Ident_in(Ident_in) {
     Contexts.push_back(Context(1, /*IsExpression=*/ false));
-    Contexts.back().LookForFunctionName = Line.MustBeDeclaration;
   }
 
 private:
@@ -348,6 +347,8 @@ private:
     case tok::l_paren:
       if (!parseParens())
         return false;
+      if (Line.MustBeDeclaration)
+        Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
       if (!parseSquare())
@@ -520,8 +521,7 @@ private:
     Context(unsigned BindingStrength, bool IsExpression)
         : BindingStrength(BindingStrength), LongestObjCSelectorName(0),
           ColonIsForRangeExpr(false), ColonIsObjCMethodExpr(false),
-          FirstObjCSelectorName(NULL), IsExpression(IsExpression),
-          LookForFunctionName(false) {}
+          FirstObjCSelectorName(NULL), IsExpression(IsExpression) {}
 
     unsigned BindingStrength;
     unsigned LongestObjCSelectorName;
@@ -529,7 +529,6 @@ private:
     bool ColonIsObjCMethodExpr;
     AnnotatedToken *FirstObjCSelectorName;
     bool IsExpression;
-    bool LookForFunctionName;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
@@ -572,9 +571,13 @@ private:
     }
 
     if (Current.Type == TT_Unknown) {
-      if (Contexts.back().LookForFunctionName && Current.is(tok::l_paren)) {
-        findFunctionName(&Current);
-        Contexts.back().LookForFunctionName = false;
+      if (Current.Parent && Current.is(tok::identifier) &&
+          ((Current.Parent->is(tok::identifier) &&
+            Current.Parent->FormatTok.Tok.getIdentifierInfo()
+                ->getPPKeywordID() == tok::pp_not_keyword) ||
+           Current.Parent->Type == TT_PointerOrReference ||
+           Current.Parent->Type == TT_TemplateCloser)) {
+        Current.Type = TT_StartOfName;
       } else if (Current.is(tok::star) || Current.is(tok::amp)) {
         Current.Type =
             determineStarAmpUsage(Current, Contexts.back().IsExpression);
@@ -620,22 +623,6 @@ private:
           break;
         }
       }
-    }
-  }
-
-  /// \brief Starting from \p Current, this searches backwards for an
-  /// identifier which could be the start of a function name and marks it.
-  void findFunctionName(AnnotatedToken *Current) {
-    AnnotatedToken *Parent = Current->Parent;
-    while (Parent != NULL && Parent->Parent != NULL) {
-      if (Parent->is(tok::identifier) &&
-          (Parent->Parent->is(tok::identifier) ||
-           Parent->Parent->Type == TT_PointerOrReference ||
-           Parent->Parent->Type == TT_TemplateCloser)) {
-        Parent->Type = TT_StartOfName;
-        break;
-      }
-      Parent = Parent->Parent;
     }
   }
 
@@ -883,8 +870,15 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   const AnnotatedToken &Left = *Tok.Parent;
   const AnnotatedToken &Right = Tok;
 
-  if (Right.Type == TT_StartOfName)
-    return Style.PenaltyReturnTypeOnItsOwnLine;
+  if (Right.Type == TT_StartOfName) {
+    if (Line.First.is(tok::kw_for))
+      return 3;
+    else if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
+      // FIXME: Clean up hack of using BindingStrength to find top-level names.
+      return Style.PenaltyReturnTypeOnItsOwnLine;
+    else
+      return 100;
+  }
   if (Left.is(tok::l_brace) && Right.isNot(tok::l_brace))
     return 50;
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
@@ -941,7 +935,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Level != prec::Unknown)
     return Level;
-
+  
   return 3;
 }
 
@@ -1098,12 +1092,6 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     // We rely on MustBreakBefore being set correctly here as we should not
     // change the "binding" behavior of a comment.
     return false;
-
-  // FIXME: We can probably remove this special case once we have implemented
-  // breaking after types in general.
-  if (Line.First.is(tok::kw_for) && !Right.Children.empty() &&
-      Right.Children[0].is(tok::equal))
-    return true;
 
   // Allow breaking after a trailing 'const', e.g. after a method declaration,
   // unless it is follow by ';', '{' or '='.

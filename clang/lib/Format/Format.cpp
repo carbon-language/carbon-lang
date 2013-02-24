@@ -258,12 +258,6 @@ private:
   tooling::Replacements Replaces;
 };
 
-static bool isVarDeclName(const AnnotatedToken &Tok) {
-  return Tok.Parent != NULL && Tok.is(tok::identifier) &&
-         (Tok.Parent->Type == TT_PointerOrReference ||
-          Tok.Parent->is(tok::identifier));
-}
-
 class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
@@ -498,8 +492,8 @@ private:
                  ((RootToken.is(tok::kw_for) && State.ParenLevel == 1) ||
                   State.ParenLevel == 0)) {
         State.Column = State.VariablePos;
-      } else if (State.NextToken->Parent->ClosesTemplateDeclaration ||
-                 Current.Type == TT_StartOfName) {
+      } else if (Previous.ClosesTemplateDeclaration ||
+                 (Current.Type == TT_StartOfName && State.ParenLevel == 0)) {
         State.Column = State.Stack.back().Indent - 4;
       } else if (Current.Type == TT_ObjCSelectorName) {
         if (State.Stack.back().ColonPos > Current.FormatTok.TokenLength) {
@@ -510,7 +504,8 @@ private:
           State.Stack.back().ColonPos =
               State.Column + Current.FormatTok.TokenLength;
         }
-      } else if (Previous.Type == TT_ObjCMethodExpr || isVarDeclName(Current)) {
+      } else if (Previous.Type == TT_ObjCMethodExpr ||
+                 Current.Type == TT_StartOfName) {
         State.Column = State.Stack.back().Indent + 4;
       } else {
         State.Column = State.Stack.back().Indent;
@@ -551,8 +546,7 @@ private:
       if (State.Stack.back().AvoidBinPacking) {
         // If we are breaking after '(', '{', '<', this is not bin packing
         // unless AllowAllParametersOfDeclarationOnNextLine is false.
-        if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
-             Previous.Type != TT_TemplateOpener) ||
+        if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace)) ||
             (!Style.AllowAllParametersOfDeclarationOnNextLine &&
              Line.MustBeDeclaration))
           State.Stack.back().BreakBeforeParameter = true;
