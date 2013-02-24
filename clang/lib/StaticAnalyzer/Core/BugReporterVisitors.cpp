@@ -354,7 +354,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
                                                        BugReporterContext &BRC,
                                                        BugReport &BR) {
 
-  if (satisfied)
+  if (Satisfied)
     return NULL;
 
   const ExplodedNode *StoreSite = 0;
@@ -410,7 +410,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
 
   if (!StoreSite)
     return NULL;
-  satisfied = true;
+  Satisfied = true;
 
   // If we have an expression that provided the value, try to track where it
   // came from.
@@ -449,8 +449,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
         if (const BlockDataRegion *BDR =
               dyn_cast_or_null<BlockDataRegion>(V.getAsRegion())) {
           if (const VarRegion *OriginalR = BDR->getOriginalRegion(VR)) {
-            V = State->getSVal(OriginalR);
-            BR.addVisitor(new FindLastStoreBRVisitor(V, OriginalR));
+            if (Optional<KnownSVal> KV =
+                State->getSVal(OriginalR).getAs<KnownSVal>())
+              BR.addVisitor(new FindLastStoreBRVisitor(*KV, OriginalR));
           }
         }
       }
@@ -698,7 +699,8 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
           report.addVisitor(ConstraintTracker);
         }
 
-        report.addVisitor(new FindLastStoreBRVisitor(V, R));
+        if (Optional<KnownSVal> KV = V.getAs<KnownSVal>())
+          report.addVisitor(new FindLastStoreBRVisitor(*KV, R));
         return true;
       }
     }
@@ -711,7 +713,6 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   // Uncomment this to find cases where we aren't properly getting the
   // base value that was dereferenced.
   // assert(!V.isUnknownOrUndef());
-
   // Is it a symbolic value?
   if (Optional<loc::MemRegionVal> L = V.getAs<loc::MemRegionVal>()) {
     // At this point we are dealing with the region's LValue.
@@ -743,13 +744,10 @@ FindLastStoreBRVisitor::createVisitorObject(const ExplodedNode *N,
   assert(R && "The memory region is null.");
 
   ProgramStateRef state = N->getState();
-  SVal V = state->getSVal(R);
-  if (V.isUnknown())
-    return 0;
-
-  return new FindLastStoreBRVisitor(V, R);
+  if (Optional<KnownSVal> KV = state->getSVal(R).getAs<KnownSVal>())
+    return new FindLastStoreBRVisitor(*KV, R);
+  return 0;
 }
-
 
 PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
                                                      const ExplodedNode *PrevN,
@@ -808,7 +806,7 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
 
         if (V.getAs<loc::ConcreteInt>() || V.getAs<nonloc::ConcreteInt>()) {
           // Register a new visitor with the BugReport.
-          BR.addVisitor(new FindLastStoreBRVisitor(V, R));
+          BR.addVisitor(new FindLastStoreBRVisitor(V.castAs<KnownSVal>(), R));
         }
       }
     }

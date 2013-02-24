@@ -99,7 +99,7 @@ class FindLastStoreBRVisitor
 {
   const MemRegion *R;
   SVal V;
-  bool satisfied;
+  bool Satisfied;
 
 public:
   /// \brief Convenience method to create a visitor given only the MemRegion.
@@ -112,13 +112,10 @@ public:
   /// the BugReport.
   static void registerStatementVarDecls(BugReport &BR, const Stmt *S);
 
-  FindLastStoreBRVisitor(SVal v, const MemRegion *r)
-  : R(r), V(v), satisfied(false) {
-    assert (!V.isUnknown() && "Cannot track unknown value.");
-
-    // TODO: Does it make sense to allow undef values here?
-    // (If not, also see UndefCapturedBlockVarChecker)?
-  }
+  FindLastStoreBRVisitor(KnownSVal V, const MemRegion *R)
+  : R(R),
+    V(V),
+    Satisfied(false) {}
 
   void Profile(llvm::FoldingSetNodeID &ID) const;
 

@@ -75,9 +75,8 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
       continue;
 
     // Get the VarRegion associated with VD in the local stack frame.
-    SVal VRVal = state->getSVal(I.getOriginalRegion());
-
-    if (VRVal.isUndef())
+    if (Optional<UndefinedVal> V =
+          state->getSVal(I.getOriginalRegion()).getAs<UndefinedVal>()) {
       if (ExplodedNode *N = C.generateSink()) {
         if (!BT)
           BT.reset(new BuiltinBug("uninitialized variable captured by block"));
@@ -92,11 +91,12 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
         BugReport *R = new BugReport(*BT, os.str(), N);
         if (const Expr *Ex = FindBlockDeclRefExpr(BE->getBody(), VD))
           R->addRange(Ex->getSourceRange());
-        R->addVisitor(new FindLastStoreBRVisitor(VRVal, VR));
+        R->addVisitor(new FindLastStoreBRVisitor(*V, VR));
         R->disablePathPruning();
         // need location of block
         C.emitReport(R);
       }
+    }
   }
 }
 

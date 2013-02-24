@@ -219,7 +219,7 @@ public:
   
 private:
   friend class SVal;
-  static bool isKind(const SVal& V) {
+  static bool isKind(const SVal &V) {
     return V.getBaseKind() == UnknownKind;
   }
 };
@@ -240,6 +240,19 @@ private:
   static bool isKind(const SVal& V) {
     return !V.isUnknownOrUndef();
   }
+};
+
+
+/// \brief Represents an SVal that is guaranteed to not be UnknownVal.
+class KnownSVal : public SVal {
+  KnownSVal() {}
+  friend class SVal;
+  static bool isKind(const SVal &V) {
+    return !V.isUnknown();
+  }
+public:
+  KnownSVal(const DefinedSVal &V) : SVal(V) {}
+  KnownSVal(const UndefinedVal &V) : SVal(V) {}
 };
 
 class NonLoc : public DefinedSVal {
