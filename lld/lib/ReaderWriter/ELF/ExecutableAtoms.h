@@ -29,7 +29,8 @@ namespace elf {
 template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFile(const ELFTargetInfo &ti) : ELFFile<ELFT>(ti, "C runtime") {}
+  CRuntimeFile(const ELFTargetInfo &ti, StringRef name = "C runtime")
+      : ELFFile<ELFT>(ti, name) {}
 
   /// \brief add a global absolute atom
   void addAbsoluteAtom(StringRef symbolName) {
@@ -76,8 +77,8 @@ public:
   }
 
   // cannot add atoms to C Runtime file
-  virtual void addAtom(const Atom&) {
-    llvm_unreachable("cannot add atoms to C Runtime files");
+  virtual void addAtom(const Atom &) {
+    llvm_unreachable("cannot add atoms to Runtime files");
   }
 
 private:
