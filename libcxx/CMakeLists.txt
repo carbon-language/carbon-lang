@@ -228,6 +228,10 @@ else()
     list(APPEND LIBCXX_CXX_FEATURE_FLAGS -DNDEBUG)
   endif()
 endif()
+# Static library
+if (NOT LIBCXX_ENABLE_SHARED)
+  list(APPEND LIBCXX_CXX_FEATURE_FLAGS -D_LIBCPP_BUILD_STATIC)
+endif()
 
 # This is the _ONLY_ place where add_definitions is called.
 add_definitions(
