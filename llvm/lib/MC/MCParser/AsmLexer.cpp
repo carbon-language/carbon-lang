@@ -282,7 +282,7 @@ AsmToken AsmLexer::LexDigit() {
                     (int64_t)Result);
   }
 
-  // Either octal or hexidecimal.
+  // Either octal or hexadecimal.
   long long Value;
   unsigned Radix = doLookAhead(CurPtr, 8);
   bool isHex = Radix == 16;

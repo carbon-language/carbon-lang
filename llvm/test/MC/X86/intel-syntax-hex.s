@@ -1,7 +1,7 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -x86-asm-syntax=intel %s | FileCheck %s
 // rdar://12470373
 
-// Checks to make sure we parse the hexidecimal suffix properly.
+// Checks to make sure we parse the hexadecimal suffix properly.
 // CHECK: movl $10, %eax
   mov eax, 10
 // CHECK: movl $16, %eax
