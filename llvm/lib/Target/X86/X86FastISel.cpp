@@ -75,6 +75,8 @@ public:
   virtual bool TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
                              const LoadInst *LI);
 
+  virtual bool FastLowerArguments();
+
 #include "X86GenFastISel.inc"
 
 private:
@@ -1518,6 +1520,77 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     return true;
   }
   }
+}
+
+bool X86FastISel::FastLowerArguments() {
+  if (!FuncInfo.CanLowerReturn)
+    return false;
+
+  const Function *F = FuncInfo.Fn;
+  if (F->isVarArg())
+    return false;
+
+  CallingConv::ID CC = F->getCallingConv();
+  if (CC != CallingConv::C)
+    return false;
+  
+  if (!Subtarget->is64Bit())
+    return false;
+  
+  // Only handle simple cases. i.e. Up to 6 i32/i64 scalar arguments.
+  unsigned Idx = 1;
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++Idx) {
+    if (Idx > 6)
+      return false;
+
+    if (F->getAttributes().hasAttribute(Idx, Attribute::ByVal) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::InReg) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::StructRet) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::Nest))
+      return false;
+
+    Type *ArgTy = I->getType();
+    if (ArgTy->isStructTy() || ArgTy->isArrayTy() || ArgTy->isVectorTy())
+      return false;
+
+    EVT ArgVT = TLI.getValueType(ArgTy);
+    switch (ArgVT.getSimpleVT().SimpleTy) {
+    case MVT::i32:
+    case MVT::i64:
+      break;
+    default:
+      return false;
+    }
+  }
+
+  static const uint16_t GPR32ArgRegs[] = {
+    X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
+  };
+  static const uint16_t GPR64ArgRegs[] = {
+    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8 , X86::R9
+  };
+
+  Idx = 0;
+  const TargetRegisterClass *RC32 = TLI.getRegClassFor(MVT::i32);
+  const TargetRegisterClass *RC64 = TLI.getRegClassFor(MVT::i64);
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++Idx) {
+    if (I->use_empty())
+      continue;
+    bool is32Bit = TLI.getValueType(I->getType()) == MVT::i32;
+    const TargetRegisterClass *RC = is32Bit ? RC32 : RC64;
+    unsigned SrcReg = is32Bit ? GPR32ArgRegs[Idx] : GPR64ArgRegs[Idx];
+    unsigned DstReg = FuncInfo.MF->addLiveIn(SrcReg, RC);
+    // FIXME: Unfortunately it's necessary to emit a copy from the livein copy.
+    // Without this, EmitLiveInCopies may eliminate the livein if its only
+    // use is a bitcast (which isn't turned into an instruction).
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(DstReg, getKillRegState(true));
+    UpdateValueMap(I, ResultReg);
+  }
+  return true;
 }
 
 bool X86FastISel::X86SelectCall(const Instruction *I) {

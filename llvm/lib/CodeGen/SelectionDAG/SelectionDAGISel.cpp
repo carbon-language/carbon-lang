@@ -145,6 +145,10 @@ EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
 static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
           cl::desc("Enable abort calls when \"fast\" instruction fails"));
+static cl::opt<bool>
+EnableFastISelAbortArgs("fast-isel-abort-args", cl::Hidden,
+          cl::desc("Enable abort calls when \"fast\" instruction fails to "
+                   "lower formal arguments"));
 
 static cl::opt<bool>
 UseMBPI("use-mbpi",
@@ -1048,6 +1052,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       if (LLVMBB == &Fn.getEntryBlock()) {
         // Lower any arguments needed in this block if this is the entry block.
         if (!FastIS->LowerArguments()) {
+
+          if (EnableFastISelAbortArgs)
+            // The "fast" selector couldn't lower these arguments.  For the
+            // purpose of debugging, just abort.
+            llvm_unreachable("FastISel didn't lower all arguments");
+
           // Call target indepedent SDISel argument lowering code if the target
           // specific routine is not successful.
           LowerArguments(LLVMBB);
