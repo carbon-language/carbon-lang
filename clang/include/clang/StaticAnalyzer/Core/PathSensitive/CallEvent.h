@@ -228,6 +228,11 @@ public:
     return false;
   }
 
+  /// \brief Returns true if this is a call to a variadic function or method.
+  virtual bool isVariadic() const {
+    return false;
+  }
+
   /// \brief Returns a source range for the entire call, suitable for
   /// outputting in diagnostics.
   virtual SourceRange getSourceRange() const {
@@ -416,6 +421,10 @@ public:
     return RuntimeDefinition();
   }
 
+  virtual bool isVariadic() const {
+    return getDecl()->isVariadic();
+  }
+
   virtual bool argumentsMayEscape() const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
@@ -514,6 +523,10 @@ public:
 
   virtual RuntimeDefinition getRuntimeDefinition() const {
     return RuntimeDefinition(getBlockDecl());
+  }
+
+  virtual bool isVariadic() const {
+    return getBlockDecl()->isVariadic();
   }
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
@@ -833,6 +846,9 @@ public:
   }
   virtual const Expr *getArgExpr(unsigned Index) const {
     return getOriginExpr()->getArg(Index);
+  }
+  virtual bool isVariadic() const {
+    return getDecl()->isVariadic();
   }
 
   bool isInstanceMessage() const {

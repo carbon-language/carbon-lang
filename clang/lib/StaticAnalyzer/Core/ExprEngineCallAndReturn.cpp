@@ -569,7 +569,8 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
 // Conservatively evaluate call by invalidating regions and binding
 // a conjured return value.
 void ExprEngine::conservativeEvalCall(const CallEvent &Call, NodeBuilder &Bldr,
-                                      ExplodedNode *Pred, ProgramStateRef State) {
+                                      ExplodedNode *Pred,
+                                      ProgramStateRef State) {
   State = Call.invalidateRegions(currBldrCtx->blockCount(), State);
   State = bindReturnValue(Call, Pred->getLocationContext(), State);
 
@@ -578,8 +579,8 @@ void ExprEngine::conservativeEvalCall(const CallEvent &Call, NodeBuilder &Bldr,
 }
 
 static bool shouldInlineCallKind(const CallEvent &Call,
-                                      const ExplodedNode *Pred,
-                                      AnalyzerOptions &Opts) {
+                                 const ExplodedNode *Pred,
+                                 AnalyzerOptions &Opts) {
   const LocationContext *CurLC = Pred->getLocationContext();
   const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
   switch (Call.getKind()) {
@@ -668,16 +669,16 @@ static bool shouldInlineCallKind(const CallEvent &Call,
 
 bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
                                   const ExplodedNode *Pred) {
-  if (!D )
+  if (!D)
     return false;
 
-  AnalyzerOptions &Opts = getAnalysisManager().options;
-  AnalysisDeclContext *CalleeADC =
-    Call.getLocationContext()->getAnalysisDeclContext()->
-    getManager()->getContext(D);
+  AnalysisManager &AMgr = getAnalysisManager();
+  AnalyzerOptions &Opts = AMgr.options;
+  AnalysisDeclContextManager &ADCMgr = AMgr.getAnalysisDeclContextManager();
+  AnalysisDeclContext *CalleeADC = ADCMgr.getContext(D);
 
   // The auto-synthesized bodies are essential to inline as they are
-  // usually small and commonly used. note, we should do this check early on to
+  // usually small and commonly used. Note: we should do this check early on to
   // ensure we always inline these calls.
   if (CalleeADC->isBodyAutosynthesized())
     return true;
@@ -685,7 +686,7 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   if (HowToInline == Inline_None)
     return false;
 
-  // Check if we should inline a call based on it's kind.
+  // Check if we should inline a call based on its kind.
   if (!shouldInlineCallKind(Call, Pred, Opts))
     return false;
 
@@ -713,14 +714,8 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
     return false;
 
   // Do not inline variadic calls (for now).
-  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
-    if (BD->isVariadic())
-      return false;
-  }
-  else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (FD->isVariadic())
-      return false;
-  }
+  if (Call.isVariadic())
+    return false;
 
   // Check our template policy.
   if (getContext().getLangOpts().CPlusPlus) {
@@ -744,8 +739,8 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
     return false;
 
   // Do not inline large functions too many times.
-  if (Engine.FunctionSummaries->getNumTimesInlined(D) >
-      Opts.getMaxTimesInlineLarge() &&
+  if ((Engine.FunctionSummaries->getNumTimesInlined(D) >
+       Opts.getMaxTimesInlineLarge()) &&
       CalleeCFG->getNumBlockIDs() > 13) {
     NumReachedInlineCountMax++;
     return false;
