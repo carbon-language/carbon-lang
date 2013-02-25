@@ -419,9 +419,19 @@ class Symbolicator:
         if not self.target:
             self.create_target()
         if self.target:
-            image = self.find_image_containing_load_addr (load_addr)
-            if image:
-                image.add_module (self.target)
+            live_process = False
+            process = self.target.process
+            if process:
+                state = process.state
+                if state > lldb.eStateUnloaded and state < eStateDetached:
+                    live_process = True
+            # If we don't have a live process, we can attempt to find the image
+            # that a load address belongs to and lazily load its module in the
+            # target, but we shouldn't do any of this if we have a live process
+            if not live_process:
+                image = self.find_image_containing_load_addr (load_addr)
+                if image:
+                    image.add_module (self.target)
             symbolicated_address = Address(self.target, load_addr)
             if symbolicated_address.symbolicate (verbose):
                 if symbolicated_address.so_addr:
