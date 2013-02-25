@@ -82,3 +82,20 @@ int testDynamicClass(BOOL coin) {
    return [x getZero];
  return 1;
 }
+
+@interface UserClass : NSObject
+- (PublicSubClass2 *) _newPublicSubClass2;
+- (int) getZero;
+- (void) callNew;
+@end
+
+@implementation UserClass
+- (PublicSubClass2 *) _newPublicSubClass2 {
+  return [[PublicSubClass2 alloc] init];
+}
+- (int) getZero { return 5; }
+- (void) callNew {
+  PublicSubClass2 *x = [self _newPublicSubClass2];
+  clang_analyzer_eval([x getZero] == 0); //expected-warning{{TRUE}}
+}
+@end

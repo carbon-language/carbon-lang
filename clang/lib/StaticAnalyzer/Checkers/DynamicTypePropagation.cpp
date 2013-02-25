@@ -110,38 +110,40 @@ void DynamicTypePropagation::checkPostCall(const CallEvent &Call,
       return;
 
     ProgramStateRef State = C.getState();
+    const ObjCMethodDecl *D = Msg->getDecl();
+    
+    if (D && D->hasRelatedResultType()) {
+      switch (Msg->getMethodFamily()) {
+      default:
+        break;
 
-    switch (Msg->getMethodFamily()) {
-    default:
-      break;
-
-    // We assume that the type of the object returned by alloc and new are the
-    // pointer to the object of the class specified in the receiver of the
-    // message.
-    case OMF_alloc:
-    case OMF_new: {
-      // Get the type of object that will get created.
-      const ObjCMessageExpr *MsgE = Msg->getOriginExpr();
-      const ObjCObjectType *ObjTy = getObjectTypeForAllocAndNew(MsgE, C);
-      if (!ObjTy)
-        return;
-      QualType DynResTy =
+      // We assume that the type of the object returned by alloc and new are the
+      // pointer to the object of the class specified in the receiver of the
+      // message.
+      case OMF_alloc:
+      case OMF_new: {
+        // Get the type of object that will get created.
+        const ObjCMessageExpr *MsgE = Msg->getOriginExpr();
+        const ObjCObjectType *ObjTy = getObjectTypeForAllocAndNew(MsgE, C);
+        if (!ObjTy)
+          return;
+        QualType DynResTy =
                  C.getASTContext().getObjCObjectPointerType(QualType(ObjTy, 0));
-      C.addTransition(State->setDynamicTypeInfo(RetReg, DynResTy, false));
-      break;
+        C.addTransition(State->setDynamicTypeInfo(RetReg, DynResTy, false));
+        break;
+      }
+      case OMF_init: {
+        // Assume, the result of the init method has the same dynamic type as
+        // the receiver and propagate the dynamic type info.
+        const MemRegion *RecReg = Msg->getReceiverSVal().getAsRegion();
+        if (!RecReg)
+          return;
+        DynamicTypeInfo RecDynType = State->getDynamicTypeInfo(RecReg);
+        C.addTransition(State->setDynamicTypeInfo(RetReg, RecDynType));
+        break;
+      }
+      }
     }
-    case OMF_init: {
-      // Assume, the result of the init method has the same dynamic type as
-      // the receiver and propagate the dynamic type info.
-      const MemRegion *RecReg = Msg->getReceiverSVal().getAsRegion();
-      if (!RecReg)
-        return;
-      DynamicTypeInfo RecDynType = State->getDynamicTypeInfo(RecReg);
-      C.addTransition(State->setDynamicTypeInfo(RetReg, RecDynType));
-      break;
-    }
-    }
-
     return;
   }
 
