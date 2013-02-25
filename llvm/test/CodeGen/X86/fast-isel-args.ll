@@ -15,7 +15,7 @@ entry:
   ret i64 %add1
 }
 
-define i64 @t3(i32 %a, i64 %b, i32 %c) #2 {
+define i64 @t3(i32 %a, i64 %b, i32 %c) {
 entry:
   %conv = sext i32 %a to i64
   %add = add nsw i64 %conv, %b
