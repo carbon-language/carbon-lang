@@ -423,7 +423,7 @@ class Symbolicator:
             process = self.target.process
             if process:
                 state = process.state
-                if state > lldb.eStateUnloaded and state < eStateDetached:
+                if state > lldb.eStateUnloaded and state < lldb.eStateDetached:
                     live_process = True
             # If we don't have a live process, we can attempt to find the image
             # that a load address belongs to and lazily load its module in the
