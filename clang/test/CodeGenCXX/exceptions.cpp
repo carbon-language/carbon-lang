@@ -71,7 +71,7 @@ namespace test1 {
 
   //   rdar://11904428
   //   Terminate landing pads should call __cxa_begin_catch first.
-  // CHECK:      define linkonce_odr hidden void @__clang_call_terminate(i8*) #2
+  // CHECK:      define linkonce_odr hidden void @__clang_call_terminate(i8*) [[NI_NR_NUW:#[0-9]+]]
   // CHECK-NEXT:   [[T0:%.*]] = call i8* @__cxa_begin_catch(i8* %0) [[NUW:#[0-9]+]]
   // CHECK-NEXT:   call void @_ZSt9terminatev() [[NR_NUW:#[0-9]+]]
   // CHECK-NEXT:   unreachable
@@ -526,10 +526,7 @@ namespace test11 {
   //   (After this is a terminate landingpad.)
 }
 
-// CHECK: attributes #0 = { "target-features"={{.*}} }
-// CHECK: attributes #1 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #2 = { noinline noreturn nounwind }
-// CHECK: attributes #3 = { nounwind readnone }
+// CHECK: attributes [[NI_NR_NUW]] = { noinline noreturn nounwind }
 
 // CHECK: attributes [[NUW]] = { nounwind }
 // CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

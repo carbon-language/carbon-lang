@@ -2,7 +2,7 @@
 
 void g();
 
-// CHECK: define void @_Z1fv() #0
+// CHECK: define void @_Z1fv() [[NUW:#[0-9]+]]
 void f() throw (int) { 
 
   // CHECK-NOT: invoke void @_Z1gv
@@ -11,5 +11,4 @@ void f() throw (int) {
   // CHECK: ret void
 }
 
-// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes [[NUW]] = { nounwind{{.*}} }

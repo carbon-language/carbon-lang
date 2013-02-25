@@ -9,7 +9,7 @@
 // ARC-ALIEN: declare extern_weak void @objc_storeStrong(i8**, i8*)
 // ARC-ALIEN: declare extern_weak i8* @objc_retain(i8*)
 // ARC-ALIEN: declare extern_weak i8* @objc_autoreleaseReturnValue(i8*)
-// ARC-ALIEN: declare i8* @objc_msgSend(i8*, i8*, ...) #1
+// ARC-ALIEN: declare i8* @objc_msgSend(i8*, i8*, ...) [[NLB:#[0-9]+]]
 // ARC-ALIEN: declare extern_weak void @objc_release(i8*)
 // ARC-ALIEN: declare extern_weak i8* @objc_retainAutoreleasedReturnValue(i8*)
 // ARC-ALIEN: declare extern_weak i8* @objc_initWeak(i8**, i8*)
@@ -20,10 +20,10 @@
 // ARC-ALIEN: declare extern_weak i8* @objc_retainAutorelease(i8*)
 
 // ARC-NATIVE: declare void @objc_storeStrong(i8**, i8*)
-// ARC-NATIVE: declare i8* @objc_retain(i8*) #1
+// ARC-NATIVE: declare i8* @objc_retain(i8*) [[NLB:#[0-9]+]]
 // ARC-NATIVE: declare i8* @objc_autoreleaseReturnValue(i8*)
-// ARC-NATIVE: declare i8* @objc_msgSend(i8*, i8*, ...) #1
-// ARC-NATIVE: declare void @objc_release(i8*) #1
+// ARC-NATIVE: declare i8* @objc_msgSend(i8*, i8*, ...) [[NLB]]
+// ARC-NATIVE: declare void @objc_release(i8*) [[NLB]]
 // ARC-NATIVE: declare i8* @objc_retainAutoreleasedReturnValue(i8*)
 // ARC-NATIVE: declare i8* @objc_initWeak(i8**, i8*)
 // ARC-NATIVE: declare i8* @objc_storeWeak(i8**, i8*)
@@ -1484,7 +1484,6 @@ void test70(id i) {
   };
 }
 
-// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #1 = { nonlazybind }
-// CHECK: attributes #2 = { "target-features"={{.*}} }
+// ARC-ALIEN: attributes [[NLB]] = { nonlazybind }
+// ARC-NATIVE: attributes [[NLB]] = { nonlazybind }
 // CHECK: attributes [[NUW]] = { nounwind }

@@ -23,6 +23,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
@@ -1023,9 +1024,66 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       FuncAttrs.addAttribute(llvm::Attribute::NoBuiltin);
   } else {
     // Attributes that should go on the function, but not the call site.
+    if (!CodeGenOpts.CodeModel.empty())
+      FuncAttrs.addAttribute("code-model", CodeGenOpts.CodeModel);
+    if (!CodeGenOpts.RelocationModel.empty())
+      FuncAttrs.addAttribute("relocation-model", CodeGenOpts.RelocationModel);
+
+    if (CodeGenOpts.FloatABI == "soft" || CodeGenOpts.FloatABI == "softfp")
+      FuncAttrs.addAttribute("float-abi", "soft");
+    else if (CodeGenOpts.FloatABI == "hard")
+      FuncAttrs.addAttribute("float-abi", "hard");
+
+    if (!CodeGenOpts.DisableFPElim) {
+      /* ignore */ ;
+    } else if (CodeGenOpts.OmitLeafFramePointer) {
+      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf");
+    } else {
+      FuncAttrs.addAttribute("no-frame-pointer-elim");
+      FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf");
+    }
+
+    switch (CodeGenOpts.getFPContractMode()) {
+    case CodeGenOptions::FPC_Off:
+      FuncAttrs.addAttribute("fp-contract-model", "strict");
+      break;
+    case CodeGenOptions::FPC_On:
+      FuncAttrs.addAttribute("fp-contract-model", "standard");
+      break;
+    case CodeGenOptions::FPC_Fast:
+      FuncAttrs.addAttribute("fp-contract-model", "fast");
+      break;
+    }
+
+    if (CodeGenOpts.LessPreciseFPMAD)
+      FuncAttrs.addAttribute("less-precise-fpmad");
+    if (CodeGenOpts.NoInfsFPMath)
+      FuncAttrs.addAttribute("no-infs-fp-math");
+    if (CodeGenOpts.NoNaNsFPMath)
+      FuncAttrs.addAttribute("no-nans-fp-math");
+    if (CodeGenOpts.NoZeroInitializedInBSS)
+      FuncAttrs.addAttribute("no-zero-init-in-bss");
+    if (CodeGenOpts.UnsafeFPMath)
+      FuncAttrs.addAttribute("unsafe-fp-math");
+    if (CodeGenOpts.SoftFloat)
+      FuncAttrs.addAttribute("use-soft-float");
+    if (CodeGenOpts.StackAlignment)
+      FuncAttrs.addAttribute("stack-align-override",
+                             llvm::utostr(CodeGenOpts.StackAlignment));
+    if (CodeGenOpts.StackRealignment)
+      FuncAttrs.addAttribute("realign-stack");
+    if (CodeGenOpts.DisableTailCalls)
+      FuncAttrs.addAttribute("disable-tail-calls");
+    if (!CodeGenOpts.TrapFuncName.empty())
+      FuncAttrs.addAttribute("trap-func-name", CodeGenOpts.TrapFuncName);
+    if (LangOpts.PIELevel != 0)
+      FuncAttrs.addAttribute("pie");
+    if (CodeGenOpts.SSPBufferSize)
+      FuncAttrs.addAttribute("ssp-buffers-size",
+                             llvm::utostr(CodeGenOpts.SSPBufferSize));
+
     if (!TargetOpts.CPU.empty())
       FuncAttrs.addAttribute("target-cpu", TargetOpts.CPU);
-
     if (TargetOpts.Features.size()) {
       llvm::SubtargetFeatures Features;
       for (std::vector<std::string>::const_iterator

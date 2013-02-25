@@ -15,7 +15,7 @@ void f() {
   b.f();
 }
 
-// CHECK: define %struct.B* @_Z1fP1A(%struct.A* %a) #0
+// CHECK: define %struct.B* @_Z1fP1A(%struct.A* %a) [[NUW:#[0-9]+]]
 B *f(A *a) {
   // CHECK-NOT: br label
   // CHECK: ret %struct.B*
@@ -25,7 +25,7 @@ B *f(A *a) {
 // PR5965
 namespace PR5965 {
 
-// CHECK: define %struct.A* @_ZN6PR59651fEP1B(%struct.B* %b) #0
+// CHECK: define %struct.A* @_ZN6PR59651fEP1B(%struct.B* %b) [[NUW]]
 A *f(B* b) {
   // CHECK-NOT: br label
   // CHECK: ret %struct.A*
@@ -46,5 +46,4 @@ namespace test3 {
   }
 }
 
-// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
