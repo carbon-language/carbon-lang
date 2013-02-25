@@ -552,7 +552,9 @@ private:
           State.Stack.back().BreakBeforeParameter = true;
       }
     } else {
-      if (Current.is(tok::equal))
+      // FIXME: Put VariablePos into ParenState and remove second part of if().
+      if (Current.is(tok::equal) &&
+          (RootToken.is(tok::kw_for) || State.ParenLevel == 0))
         State.VariablePos = State.Column - Previous.FormatTok.TokenLength;
 
       unsigned Spaces = State.NextToken->SpacesRequiredBefore;

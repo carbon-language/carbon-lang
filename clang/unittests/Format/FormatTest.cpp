@@ -1132,6 +1132,10 @@ TEST_F(FormatTest, ConstructorInitializers) {
                "    : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                "          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
 
+  verifyFormat("Constructor(int Parameter = 0)\n"
+               "    : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaa(aaaaaaaaaaaaaaaaa) {}");
+
   // Here a line could be saved by splitting the second initializer onto two
   // lines, but that is not desireable.
   verifyFormat(
