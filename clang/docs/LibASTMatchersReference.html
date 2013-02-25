@@ -77,6 +77,19 @@ match callback.</p>
 <tr style="text-align:left"><th>Return type</th><th>Name</th><th>Parameters</th></tr>
 <!-- START_DECL_MATCHERS -->
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('accessSpecDecl0')"><a name="accessSpecDecl0Anchor">accessSpecDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1AccessSpecDecl.html">AccessSpecDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="accessSpecDecl0"><pre>Matches C++ access specifier declarations.
+
+Given
+  class C {
+  public:
+    int a;
+  };
+accessSpecDecl()
+  matches 'public:'
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('classTemplateDecl0')"><a name="classTemplateDecl0Anchor">classTemplateDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ClassTemplateDecl.html">ClassTemplateDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="classTemplateDecl0"><pre>Matches C++ class template declarations.
 
@@ -1402,6 +1415,48 @@ declCountIs(2)
 <tr><td colspan="4" class="doc" id="equalsNode0"><pre>Matches if a node equals another node.
 
 Decl has pointer identity in the AST.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('isPrivate0')"><a name="isPrivate0Anchor">isPrivate</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isPrivate0"><pre>Matches private C++ declarations.
+
+Given
+  class C {
+  public:    int a;
+  protected: int b;
+  private:   int c;
+  };
+fieldDecl(isPrivate())
+  matches 'int c;' 
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('isProtected0')"><a name="isProtected0Anchor">isProtected</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isProtected0"><pre>Matches protected C++ declarations.
+
+Given
+  class C {
+  public:    int a;
+  protected: int b;
+  private:   int c;
+  };
+fieldDecl(isProtected())
+  matches 'int b;' 
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('isPublic0')"><a name="isPublic0Anchor">isPublic</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isPublic0"><pre>Matches public C++ declarations.
+
+Given
+  class C {
+  public:    int a;
+  protected: int b;
+  private:   int c;
+  };
+fieldDecl(isPublic())
+  matches 'int a;' 
 </pre></td></tr>
 
 
