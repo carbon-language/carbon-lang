@@ -79,7 +79,8 @@ validCategories = {
 'dataformatters':'Tests related to the type command and the data formatters subsystem',
 'expression':'Tests related to the expression parser',
 'objc':'Tests related to the Objective-C programming language support',
-'pyapi':'Tests related to the Python API'
+'pyapi':'Tests related to the Python API',
+'basic_process': 'Basic process execution sniff tests.'
 }
 
 # The test suite.

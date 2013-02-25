@@ -10,6 +10,9 @@ class TestObjCStepping(TestBase):
 
     mydir = os.path.join("lang", "c", "stepping")
 
+    def getCategories(self):
+        return ['basic_process']
+
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dsym_test
