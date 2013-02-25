@@ -726,7 +726,6 @@ void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
 
 void DeclPrinter::VisitEmptyDecl(EmptyDecl *D) {
   prettyPrintAttributes(D);
-  Out << ";\n";
 }
 
 void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {

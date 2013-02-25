@@ -40,3 +40,4 @@ const char *p9 = 0x42e3F_fritz;
 const char *p10 = 3.300e+15_fritz;
 // CHECK: ;
 ;
+// CHECK-NOT: ;
