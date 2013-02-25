@@ -105,3 +105,16 @@ entry:
   ret void
 }
 
+define void @PR15348(i8* %a, i8* %b) {
+; Ensure that alignment of '0' in an @llvm.memcpy intrinsic results in
+; unaligned loads and stores.
+; LINUX: PR15348
+; LINUX: movb
+; LINUX: movb
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+; LINUX: movq
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 17, i32 0, i1 false)
+  ret void
+}
