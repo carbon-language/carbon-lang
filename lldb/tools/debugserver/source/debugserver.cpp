@@ -93,7 +93,7 @@ RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
 
             if (set_events & RNBContext::event_read_thread_exiting)
             {
-                RNBLogSTDERR ("error: packet read thread exited.");
+                RNBLogSTDERR ("error: packet read thread exited.\n");
                 return eRNBRunLoopModeExit;
             }
 
@@ -108,10 +108,13 @@ RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
                 if (type == RNBRemote::vattach || type == RNBRemote::vattachwait || type == RNBRemote::vattachorwait)
                 {
                     if (err == rnb_success)
+                    {
+                        RNBLogSTDOUT ("Attach succeeded, ready to debug.\n");
                         return eRNBRunLoopModeInferiorExecuting;
+                    }
                     else
                     {
-                        RNBLogSTDERR ("error: attach failed.");
+                        RNBLogSTDERR ("error: attach failed.\n");
                         return eRNBRunLoopModeExit;
                     }
                 }
@@ -127,7 +130,7 @@ RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
                 }
                 else if (err == rnb_not_connected)
                 {
-                    RNBLogSTDERR ("error: connection lost.");
+                    RNBLogSTDERR ("error: connection lost.\n");
                     return eRNBRunLoopModeExit;
                 }
                 else
@@ -1328,6 +1331,7 @@ main (int argc, char *argv[])
 
                     ctx.SetLaunchFlavor(launch_flavor);
                     bool ignore_existing = false;
+                    RNBLogSTDOUT ("Waiting to attach to process %s...\n", waitfor_pid_name.c_str());
                     nub_process_t pid = DNBProcessAttachWait (waitfor_pid_name.c_str(), launch_flavor, ignore_existing, timeout_ptr, waitfor_interval, err_str, sizeof(err_str));
                     g_pid = pid;
 
@@ -1336,7 +1340,7 @@ main (int argc, char *argv[])
                         ctx.LaunchStatus().SetError(-1, DNBError::Generic);
                         if (err_str[0])
                             ctx.LaunchStatus().SetErrorString(err_str);
-                        RNBLogSTDERR ("error: failed to attach to process named: \"%s\" %s", waitfor_pid_name.c_str(), err_str);
+                        RNBLogSTDERR ("error: failed to attach to process named: \"%s\" %s\n", waitfor_pid_name.c_str(), err_str);
                         mode = eRNBRunLoopModeExit;
                     }
                     else
@@ -1367,6 +1371,7 @@ main (int argc, char *argv[])
                         timeout_ptr = &attach_timeout_abstime;
                     }
 
+                    RNBLogSTDOUT ("Attaching to process %s...\n", attach_pid_name.c_str());
                     nub_process_t pid = DNBProcessAttachByName (attach_pid_name.c_str(), timeout_ptr, err_str, sizeof(err_str));
                     g_pid = pid;
                     if (pid == INVALID_NUB_PROCESS)
@@ -1374,7 +1379,7 @@ main (int argc, char *argv[])
                         ctx.LaunchStatus().SetError(-1, DNBError::Generic);
                         if (err_str[0])
                             ctx.LaunchStatus().SetErrorString(err_str);
-                        RNBLogSTDERR ("error: failed to attach to process named: \"%s\" %s", waitfor_pid_name.c_str(), err_str);
+                        RNBLogSTDERR ("error: failed to attach to process named: \"%s\" %s\n", waitfor_pid_name.c_str(), err_str);
                         mode = eRNBRunLoopModeExit;
                     }
                     else
@@ -1386,7 +1391,7 @@ main (int argc, char *argv[])
                 }
                 else
                 {
-                    RNBLogSTDERR ("error: asked to attach with empty name and invalid PID.");
+                    RNBLogSTDERR ("error: asked to attach with empty name and invalid PID.\n");
                     mode = eRNBRunLoopModeExit;
                 }
 
@@ -1403,7 +1408,7 @@ main (int argc, char *argv[])
                             mode = eRNBRunLoopModeExit;
                     }
                     if (mode != eRNBRunLoopModeExit)
-                        RNBLogSTDOUT ("Got a connection, waiting for debugger instructions for process %d.\n", attach_pid);
+                        RNBLogSTDOUT ("Waiting for debugger instructions for process %d.\n", attach_pid);
                 }
                 break;
 
@@ -1429,7 +1434,7 @@ main (int argc, char *argv[])
                         }
 
                         if (mode != eRNBRunLoopModeExit)
-                            RNBLogSTDOUT ("Got a connection, waiting for debugger instructions.\n");
+                            RNBLogSTDOUT ("Got a connection, launched process %s.\n", argv_sub_zero);
                     }
                     else
                     {
@@ -1468,6 +1473,7 @@ main (int argc, char *argv[])
 
     remote->StopReadRemoteDataThread ();
     remote->Context().SetProcessID(INVALID_NUB_PROCESS);
+    RNBLogSTDOUT ("Exiting.\n");
 
     return 0;
 }
