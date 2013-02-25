@@ -56,6 +56,14 @@ ExplodedGraph::~ExplodedGraph() {}
 // Node reclamation.
 //===----------------------------------------------------------------------===//
 
+bool ExplodedGraph::isInterestingLValueExpr(const Expr *Ex) {
+  if (!Ex->isLValue())
+    return false;
+  return isa<DeclRefExpr>(Ex) ||
+         isa<MemberExpr>(Ex) ||
+         isa<ObjCIvarRefExpr>(Ex);
+}
+
 bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // Reclaim all nodes that match *all* the following criteria:
   //
@@ -101,11 +109,15 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
       progPoint.getLocationContext() != pred->getLocationContext())
     return false;
 
-  // Condition 8.
-  // Do not collect nodes for lvalue expressions since they are
-  // used extensively for generating path diagnostics.
+  // All further checks require expressions.
   const Expr *Ex = dyn_cast<Expr>(ps.getStmt());
-  if (!Ex || Ex->isLValue())
+  if (!Ex)
+    return false;
+
+  // Condition 8.
+  // Do not collect nodes for "interesting" lvalue expressions since they are
+  // used extensively for generating path diagnostics.
+  if (isInterestingLValueExpr(Ex))
     return false;
 
   // Condition 9.

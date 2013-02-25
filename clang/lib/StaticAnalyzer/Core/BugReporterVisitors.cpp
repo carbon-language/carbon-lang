@@ -663,7 +663,7 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
     // or function call inside.
     Ex = Ex->IgnoreParenCasts();
 
-    if (Ex->isLValue()) {
+    if (ExplodedGraph::isInterestingLValueExpr(Ex)) {
       const MemRegion *R = 0;
 
       // First check if this is a DeclRefExpr for a C++ reference type.

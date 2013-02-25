@@ -387,6 +387,10 @@ public:
   /// was called.
   void reclaimRecentlyAllocatedNodes();
 
+  /// \brief Returns true if nodes for the given expression kind are always
+  ///        kept around.
+  static bool isInterestingLValueExpr(const Expr *Ex);
+
 private:
   bool shouldCollect(const ExplodedNode *node);
   void collectNode(ExplodedNode *node);
