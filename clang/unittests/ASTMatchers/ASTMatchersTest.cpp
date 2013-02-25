@@ -323,6 +323,23 @@ TEST(DeclarationMatcher, ClassDerivedFromDependentTemplateSpecialization) {
      recordDecl(hasName("B"), isDerivedFrom(recordDecl()))));
 }
 
+TEST(DeclarationMatcher, hasDeclContext) {
+  EXPECT_TRUE(matches(
+      "namespace N {"
+      "  namespace M {"
+      "    class D {};"
+      "  }"
+      "}",
+      recordDecl(hasDeclContext(namedDecl(hasName("M"))))));
+  EXPECT_TRUE(notMatches(
+      "namespace N {"
+      "  namespace M {"
+      "    class D {};"
+      "  }"
+      "}",
+      recordDecl(hasDeclContext(namedDecl(hasName("N"))))));
+}
+
 TEST(ClassTemplate, DoesNotMatchClass) {
   DeclarationMatcher ClassX = classTemplateDecl(hasName("X"));
   EXPECT_TRUE(notMatches("class X;", ClassX));
@@ -3413,8 +3430,61 @@ TEST(TypeMatching, MatchesTypedefTypes) {
 }
 
 TEST(TypeMatching, MatchesTemplateSpecializationType) {
-  EXPECT_TRUE(matches("template <typename T> class A{}; A<int>a;",
+  EXPECT_TRUE(matches("template <typename T> class A{}; A<int> a;",
                       templateSpecializationType()));
+}
+
+TEST(TypeMatching, MatchesRecordType) {
+  EXPECT_TRUE(matches("class C{}; C c;", recordType()));
+  EXPECT_TRUE(matches("struct S{}; S s;", recordType()));
+  EXPECT_TRUE(notMatches("int i;", recordType()));
+}
+
+TEST(TypeMatching, MatchesElaboratedType) {
+  EXPECT_TRUE(matches(
+    "namespace N {"
+    "  namespace M {"
+    "    class D {};"
+    "  }"
+    "}"
+    "N::M::D d;", elaboratedType()));
+  EXPECT_TRUE(matches("class C {} c;", elaboratedType()));
+  EXPECT_TRUE(notMatches("class C {}; C c;", elaboratedType()));
+}
+
+TEST(ElaboratedTypeNarrowing, hasQualifier) {
+  EXPECT_TRUE(matches(
+    "namespace N {"
+    "  namespace M {"
+    "    class D {};"
+    "  }"
+    "}"
+    "N::M::D d;",
+    elaboratedType(hasQualifier(hasPrefix(specifiesNamespace(hasName("N")))))));
+  EXPECT_TRUE(notMatches(
+    "namespace M {"
+    "  class D {};"
+    "}"
+    "M::D d;",
+    elaboratedType(hasQualifier(hasPrefix(specifiesNamespace(hasName("N")))))));
+}
+
+TEST(ElaboratedTypeNarrowing, namesType) {
+  EXPECT_TRUE(matches(
+    "namespace N {"
+    "  namespace M {"
+    "    class D {};"
+    "  }"
+    "}"
+    "N::M::D d;",
+    elaboratedType(elaboratedType(namesType(recordType(
+        hasDeclaration(namedDecl(hasName("D")))))))));
+  EXPECT_TRUE(notMatches(
+    "namespace M {"
+    "  class D {};"
+    "}"
+    "M::D d;",
+    elaboratedType(elaboratedType(namesType(typedefType())))));
 }
 
 TEST(NNS, MatchesNestedNameSpecifiers) {

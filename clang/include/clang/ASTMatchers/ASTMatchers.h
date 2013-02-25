@@ -2929,6 +2929,100 @@ AST_TYPE_MATCHER(TypedefType, typedefType);
 /// instantiation in \c A and the type of the variable declaration in \c B.
 AST_TYPE_MATCHER(TemplateSpecializationType, templateSpecializationType);
 
+/// \brief Matches record types (e.g. structs, classes).
+///
+/// Given
+/// \code
+///   class C {};
+///   struct S {};
+///
+///   C c;
+///   S s;
+/// \code
+///
+/// \c recordType() matches the type of the variable declarations of both \c c
+/// and \c s.
+AST_TYPE_MATCHER(RecordType, recordType);
+
+/// \brief Matches types specified with an elaborated type keyword or with a
+/// qualified name.
+///
+/// Given
+/// \code
+///   namespace N {
+///     namespace M {
+///       class D {};
+///     }
+///   }
+///   class C {};
+///
+///   class C c;
+///   N::M::D d;
+/// \code
+///
+/// \c elaboratedType() matches the type of the variable declarations of both
+/// \c c and \c d.
+AST_TYPE_MATCHER(ElaboratedType, elaboratedType);
+
+/// \brief Matches ElaboratedTypes whose qualifier, a NestedNameSpecifier,
+/// matches \c InnerMatcher.
+///
+/// Given
+/// \code
+///   namespace N {
+///     namespace M {
+///       class D {};
+///     }
+///   }
+///   N::M::D d;
+/// \code
+///
+/// \c elaboratedType(hasQualifier(hasPrefix(specifiesNamespace(hasName("N"))))
+/// matches the type of the variable declaration of \c d.
+AST_MATCHER_P(ElaboratedType, hasQualifier,
+              internal::Matcher<NestedNameSpecifier>, InnerMatcher) {
+  return InnerMatcher.matches(*Node.getQualifier(), Finder, Builder);
+}
+
+/// \brief Matches ElaboratedTypes whose named type matches \c InnerMatcher.
+///
+/// Given
+/// \code
+///   namespace N {
+///     namespace M {
+///       class D {};
+///     }
+///   }
+///   N::M::D d;
+/// \code
+///
+/// \c elaboratedType(namesType(recordType(
+/// hasDeclaration(namedDecl(hasName("D")))))) matches the type of the variable
+/// declaration of \c d.
+AST_MATCHER_P(ElaboratedType, namesType, internal::Matcher<QualType>,
+              InnerMatcher) {
+  return InnerMatcher.matches(Node.getNamedType(), Finder, Builder);
+}
+
+/// \brief Matches declarations whose declaration context, interpreted as a
+/// Decl, matches \c InnerMatcher.
+///
+/// Given
+/// \code
+///   namespace N {
+///     namespace M {
+///       class D {};
+///     }
+///   }
+/// \code
+///
+/// \c recordDecl(hasDeclContext(namedDecl(hasName("M")))) matches the
+/// declaration of \c class \c D.
+AST_MATCHER_P(Decl, hasDeclContext, internal::Matcher<Decl>, InnerMatcher) {
+  return InnerMatcher.matches(*Decl::castFromDeclContext(Node.getDeclContext()),
+                              Finder, Builder);
+}
+
 /// \brief Matches nested name specifiers.
 ///
 /// Given

@@ -930,6 +930,26 @@ dependentSizedArrayType
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('elaboratedTypeLoc0')"><a name="elaboratedTypeLoc0Anchor">elaboratedTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ElaboratedTypeLoc.html">ElaboratedTypeLoc</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="elaboratedTypeLoc0"><pre>Matches types specified with an elaborated type keyword or with a
+qualified name.
+
+Given
+  namespace N {
+    namespace M {
+      class D {};
+    }
+  }
+  class C {};
+
+  class C c;
+  N::M::D d;
+
+elaboratedType() matches the type of the variable declarations of both
+c and d.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('functionTypeLoc0')"><a name="functionTypeLoc0Anchor">functionTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionTypeLoc.html">FunctionTypeLoc</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="functionTypeLoc0"><pre>Matches FunctionType nodes.
 
@@ -972,6 +992,21 @@ Given
   int c = 5;
 pointerType()
   matches "int *a"
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('recordTypeLoc0')"><a name="recordTypeLoc0Anchor">recordTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1RecordTypeLoc.html">RecordTypeLoc</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="recordTypeLoc0"><pre>Matches record types (e.g. structs, classes).
+
+Given
+  class C {};
+  struct S {};
+
+  C c;
+  S s;
+
+recordType() matches the type of the variable declarations of both c
+and s.
 </pre></td></tr>
 
 
@@ -1124,6 +1159,26 @@ dependentSizedArrayType
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('elaboratedType0')"><a name="elaboratedType0Anchor">elaboratedType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ElaboratedType.html">ElaboratedType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="elaboratedType0"><pre>Matches types specified with an elaborated type keyword or with a
+qualified name.
+
+Given
+  namespace N {
+    namespace M {
+      class D {};
+    }
+  }
+  class C {};
+
+  class C c;
+  N::M::D d;
+
+elaboratedType() matches the type of the variable declarations of both
+c and d.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('functionType0')"><a name="functionType0Anchor">functionType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionType.html">FunctionType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="functionType0"><pre>Matches FunctionType nodes.
 
@@ -1166,6 +1221,21 @@ Given
   int c = 5;
 pointerType()
   matches "int *a"
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('recordType0')"><a name="recordType0Anchor">recordType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1RecordType.html">RecordType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="recordType0"><pre>Matches record types (e.g. structs, classes).
+
+Given
+  class C {};
+  struct S {};
+
+  C c;
+  S s;
+
+recordType() matches the type of the variable declarations of both c
+and s.
 </pre></td></tr>
 
 
@@ -2399,6 +2469,22 @@ declStmt(hasSingleDecl(anything()))
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasDeclContext0')"><a name="hasDeclContext0Anchor">hasDeclContext</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasDeclContext0"><pre>Matches declarations whose declaration context, interpreted as a
+Decl, matches InnerMatcher.
+
+Given
+  namespace N {
+    namespace M {
+      class D {};
+    }
+  }
+
+recordDecl(hasDeclContext(namedDecl(hasName("M")))) matches the
+declaration of class D.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1DoStmt.html">DoStmt</a>&gt;</td><td class="name" onclick="toggle('hasBody0')"><a name="hasBody0Anchor">hasBody</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="hasBody0"><pre>Matches a 'for', 'while', or 'do while' statement that has
 a given body.
@@ -2418,6 +2504,40 @@ or conditional operator.
 
 Example matches true (matcher = hasCondition(boolLiteral(equals(true))))
   if (true) {}
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ElaboratedType.html">ElaboratedType</a>&gt;</td><td class="name" onclick="toggle('hasQualifier0')"><a name="hasQualifier0Anchor">hasQualifier</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifier.html">NestedNameSpecifier</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasQualifier0"><pre>Matches ElaboratedTypes whose qualifier, a NestedNameSpecifier,
+matches InnerMatcher.
+
+Given
+  namespace N {
+    namespace M {
+      class D {};
+    }
+  }
+  N::M::D d;
+
+elaboratedType(hasQualifier(hasPrefix(specifiesNamespace(hasName("N"))))
+matches the type of the variable declaration of d.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ElaboratedType.html">ElaboratedType</a>&gt;</td><td class="name" onclick="toggle('namesType0')"><a name="namesType0Anchor">namesType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="namesType0"><pre>Matches ElaboratedTypes whose named type matches InnerMatcher.
+
+Given
+  namespace N {
+    namespace M {
+      class D {};
+    }
+  }
+  N::M::D d;
+
+elaboratedType(namesType(recordType(
+hasDeclaration(namedDecl(hasName("D")))))) matches the type of the variable
+declaration of d.
 </pre></td></tr>
 
 
