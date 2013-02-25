@@ -57,4 +57,17 @@ _t21:                                   ## @t21
 // CHECK: movl 4(%esi,%eax,2), %eax
 // CHECK: # encoding: [0x8b,0x44,0x46,0x04]
 
+    pusha
+// CHECK: pushal
+// CHECK: # encoding: [0x60]
+    popa
+// CHECK: popal
+// CHECK: # encoding: [0x61]
+    pushad
+// CHECK: pushal
+// CHECK: # encoding: [0x60]
+    popad
+// CHECK: popal
+// CHECK: # encoding: [0x61]
+
 	ret

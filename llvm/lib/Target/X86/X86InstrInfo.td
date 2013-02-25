@@ -870,16 +870,14 @@ let Defs = [RSP], Uses = [RSP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in
 def PUSHF64    : I<0x9C, RawFrm, (outs), (ins), "pushfq", [], IIC_PUSH_F>,
                  Requires<[In64BitMode]>;
 
-
-
 let Defs = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP], Uses = [ESP],
     mayLoad=1, neverHasSideEffects=1 in {
-def POPA32   : I<0x61, RawFrm, (outs), (ins), "popa{l}", [], IIC_POP_A>,
+def POPA32   : I<0x61, RawFrm, (outs), (ins), "popa{l|d}", [], IIC_POP_A>,
                Requires<[In32BitMode]>;
 }
 let Defs = [ESP], Uses = [EDI, ESI, EBP, EBX, EDX, ECX, EAX, ESP],
     mayStore=1, neverHasSideEffects=1 in {
-def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l}", [], IIC_PUSH_A>,
+def PUSHA32  : I<0x60, RawFrm, (outs), (ins), "pusha{l|d}", [], IIC_PUSH_A>,
                Requires<[In32BitMode]>;
 }
 
