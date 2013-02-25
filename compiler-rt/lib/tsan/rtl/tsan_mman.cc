@@ -127,6 +127,14 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
   return p2;
 }
 
+uptr user_alloc_usable_size(ThreadState *thr, uptr pc, void *p) {
+  CHECK_GT(thr->in_rtl, 0);
+  if (p == 0)
+    return 0;
+  MBlock *b = (MBlock*)allocator()->GetMetaData(p);
+  return (b) ? b->size : 0;
+}
+
 MBlock *user_mblock(ThreadState *thr, void *p) {
   CHECK_NE(p, (void*)0);
   Allocator *a = allocator();

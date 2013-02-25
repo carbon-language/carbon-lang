@@ -403,6 +403,11 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
   user_free(thr, pc, p);
 }
 
+TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
+  SCOPED_INTERCEPTOR_RAW(malloc_usable_size, p);
+  return user_alloc_usable_size(thr, pc, p);
+}
+
 #define OPERATOR_NEW_BODY(mangled_name) \
   if (cur_thread()->in_symbolizer) \
     return __libc_malloc(size); \

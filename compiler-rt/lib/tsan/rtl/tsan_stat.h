@@ -102,6 +102,7 @@ enum StatType {
   StatInt_realloc,
   StatInt_free,
   StatInt_cfree,
+  StatInt_malloc_usable_size,
   StatInt_mmap,
   StatInt_mmap64,
   StatInt_munmap,

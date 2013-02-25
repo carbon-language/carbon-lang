@@ -31,6 +31,7 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz,
 void user_free(ThreadState *thr, uptr pc, void *p);
 void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz);
 void *user_alloc_aligned(ThreadState *thr, uptr pc, uptr sz, uptr align);
+uptr user_alloc_usable_size(ThreadState *thr, uptr pc, void *p);
 // Given the pointer p into a valid allocated block,
 // returns the descriptor of the block.
 MBlock *user_mblock(ThreadState *thr, void *p);

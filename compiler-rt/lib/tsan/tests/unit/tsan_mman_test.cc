@@ -117,6 +117,19 @@ TEST(Mman, UserRealloc) {
   }
 }
 
+TEST(Mman, UsableSize) {
+  ScopedInRtl in_rtl;
+  ThreadState *thr = cur_thread();
+  uptr pc = 0;
+  char *p = (char*)user_alloc(thr, pc, 10);
+  char *p2 = (char*)user_alloc(thr, pc, 20);
+  EXPECT_EQ(0U, user_alloc_usable_size(thr, pc, NULL));
+  EXPECT_EQ(10U, user_alloc_usable_size(thr, pc, p));
+  EXPECT_EQ(20U, user_alloc_usable_size(thr, pc, p2));
+  user_free(thr, pc, p);
+  user_free(thr, pc, p2);
+}
+
 TEST(Mman, Stats) {
   ScopedInRtl in_rtl;
   ThreadState *thr = cur_thread();
