@@ -56,7 +56,7 @@ TEST_F(FastUnwindTest, Basic) {
   // Should get all on-stack retaddrs and start_pc.
   EXPECT_EQ(6U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
-  for (int i = 1; i <= 5; i++) {
+  for (uptr i = 1; i <= 5; i++) {
     EXPECT_EQ(i*2 - 1, trace.trace[i]);
   }
 }
@@ -70,7 +70,7 @@ TEST_F(FastUnwindTest, FramePointerLoop) {
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
   EXPECT_EQ(4U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
-  for (int i = 1; i <= 3; i++) {
+  for (uptr i = 1; i <= 3; i++) {
     EXPECT_EQ(i*2 - 1, trace.trace[i]);
   }
 }
