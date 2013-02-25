@@ -15,6 +15,8 @@
 
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 
+#include "llvm/ADT/StringSet.h"
+
 using namespace llvm;
 using namespace llvm::object;
 namespace lld {
@@ -30,6 +32,7 @@ class ExecutableWriter : public ELFWriter {
 public:
   typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef Elf_Sym_Impl<ELFT> Elf_Sym;
+  typedef Elf_Dyn_Impl<ELFT> Elf_Dyn;
 
   ExecutableWriter(const ELFTargetInfo &ti);
 
@@ -52,6 +55,31 @@ private:
 
   void createDefaultSections();
 
+  void createDefaultDynamicEntries() {
+    Elf_Dyn dyn;
+    dyn.d_un.d_val = 0;
+
+    dyn.d_tag = DT_HASH;
+    _dt_hash = _dynamicTable->addEntry(dyn);
+    dyn.d_tag = DT_STRTAB;
+    _dt_strtab = _dynamicTable->addEntry(dyn);
+    dyn.d_tag = DT_SYMTAB;
+    _dt_symtab = _dynamicTable->addEntry(dyn);
+    dyn.d_tag = DT_STRSZ;
+    _dt_strsz = _dynamicTable->addEntry(dyn);
+    dyn.d_tag = DT_SYMENT;
+    _dt_syment = _dynamicTable->addEntry(dyn);
+  }
+
+  void updateDynamicTable() {
+    auto tbl = _dynamicTable->entries();
+    tbl[_dt_hash].d_un.d_val = _hashTable->virtualAddr();
+    tbl[_dt_strtab].d_un.d_val = _dynamicStringTable->virtualAddr();
+    tbl[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
+    tbl[_dt_strsz].d_un.d_val = _dynamicStringTable->memSize();
+    tbl[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
+  }
+
   llvm::BumpPtrAllocator _alloc;
 
   const ELFTargetInfo &_targetInfo;
@@ -73,6 +101,19 @@ private:
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _dynamicStringTable;
   LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
+  llvm::StringSet<> _soNeeded;
+  std::size_t _dt_hash;
+  std::size_t _dt_strtab;
+  std::size_t _dt_symtab;
+  std::size_t _dt_rela;
+  std::size_t _dt_relasz;
+  std::size_t _dt_relaent;
+  std::size_t _dt_strsz;
+  std::size_t _dt_syment;
+  std::size_t _dt_pltrelsz;
+  std::size_t _dt_pltgot;
+  std::size_t _dt_pltrel;
+  std::size_t _dt_jmprel;
   /// @}
   CRuntimeFile<ELFT> _runtimeFile;
 };
@@ -112,6 +153,13 @@ template <class ELFT>
 void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   for (const auto sla : file.sharedLibrary()) {
     _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
+    _soNeeded.insert(sla->loadName());
+  }
+  for (const auto &loadName : _soNeeded) {
+    Elf_Dyn dyn;
+    dyn.d_tag = DT_NEEDED;
+    dyn.d_un.d_val = _dynamicStringTable->addString(loadName.getKey());
+    _dynamicTable->addEntry(dyn);
   }
 }
 
@@ -246,8 +294,10 @@ error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   // section string table
   createDefaultSections();
 
-  if (_targetInfo.isDynamic())
+  if (_targetInfo.isDynamic()) {
+    createDefaultDynamicEntries();
     buildDynamicSymbolTable(file);
+  }
 
   // Set the Layout
   _layout->assignSectionsToSegments();
@@ -272,6 +322,9 @@ error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   // assign Offsets and virtual addresses
   // for sections with no segments
   assignSectionsWithNoSegments();
+
+  if (_targetInfo.isDynamic())
+    updateDynamicTable();
 
   uint64_t totalSize = _shdrtab->fileOffset() + _shdrtab->fileSize();
 
