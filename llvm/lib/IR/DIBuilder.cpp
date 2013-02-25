@@ -508,11 +508,15 @@ DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
 }
 
 /// createStructType - Create debugging information entry for a struct.
-DIType DIBuilder::createStructType(DIDescriptor Context, StringRef Name,
-                                   DIFile File, unsigned LineNumber,
-                                   uint64_t SizeInBits, uint64_t AlignInBits,
-                                   unsigned Flags, DIArray Elements,
-                                   unsigned RunTimeLang) {
+DICompositeType DIBuilder::createStructType(DIDescriptor Context,
+                                            StringRef Name, DIFile File,
+                                            unsigned LineNumber,
+                                            uint64_t SizeInBits,
+                                            uint64_t AlignInBits,
+                                            unsigned Flags, DIType DerivedFrom,
+                                            DIArray Elements,
+                                            unsigned RunTimeLang,
+                                            MDNode *VTableHolder) {
  // TAG_structure_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_structure_type),
@@ -524,13 +528,13 @@ DIType DIBuilder::createStructType(DIDescriptor Context, StringRef Name,
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    NULL,
+    DerivedFrom,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
-    NULL,
+    VTableHolder,
     NULL,
   };
-  return DIType(MDNode::get(VMContext, Elts));
+  return DICompositeType(MDNode::get(VMContext, Elts));
 }
 
 /// createUnionType - Create debugging information entry for an union.

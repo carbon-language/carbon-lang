@@ -282,10 +282,12 @@ namespace llvm {
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Elements     Struct elements.
     /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
-    DIType createStructType(DIDescriptor Scope, StringRef Name, DIFile File,
-                            unsigned LineNumber, uint64_t SizeInBits,
-                            uint64_t AlignInBits, unsigned Flags,
-                            DIArray Elements, unsigned RunTimeLang = 0);
+    DICompositeType createStructType(DIDescriptor Scope, StringRef Name,
+                                     DIFile File, unsigned LineNumber,
+                                     uint64_t SizeInBits, uint64_t AlignInBits,
+                                     unsigned Flags, DIType DerivedFrom,
+                                     DIArray Elements, unsigned RunTimeLang = 0,
+                                     MDNode *VTableHolder = 0);
 
     /// createUnionType - Create debugging information entry for an union.
     /// @param Scope        Scope in which this union is defined.
