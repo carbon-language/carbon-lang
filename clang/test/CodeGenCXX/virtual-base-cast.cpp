@@ -11,25 +11,25 @@ struct D : virtual C, virtual CC { int e; };
 D* x;
 
 A* a() { return x; }
-// CHECK: @_Z1av() [[NUW:#[0-9]+]]
+// CHECK: @_Z1av() #0
 // CHECK: [[VBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = getelementptr i8* {{.*}}, i64 -16
 // CHECK: [[CASTVBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = bitcast i8* [[VBASEOFFSETPTRA]] to i32*
 // CHECK: load i32* [[CASTVBASEOFFSETPTRA]]
 // CHECK: }
 
 B* b() { return x; }
-// CHECK: @_Z1bv() [[NUW]]
+// CHECK: @_Z1bv() #0
 // CHECK: [[VBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = getelementptr i8* {{.*}}, i64 -20
 // CHECK: [[CASTVBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = bitcast i8* [[VBASEOFFSETPTRA]] to i32*
 // CHECK: load i32* [[CASTVBASEOFFSETPTRA]]
 // CHECK: }
 
 BB* c() { return x; }
-// CHECK: @_Z1cv() [[NUW]]
+// CHECK: @_Z1cv() #0
 // CHECK: [[VBASEOFFSETPTRC:%[a-zA-Z0-9\.]+]] = getelementptr i8* {{.*}}, i64 -24
 // CHECK: [[CASTVBASEOFFSETPTRC:%[a-zA-Z0-9\.]+]] = bitcast i8* [[VBASEOFFSETPTRC]] to i32*
 // CHECK: [[VBASEOFFSETC:%[a-zA-Z0-9\.]+]] = load i32* [[CASTVBASEOFFSETPTRC]]
 // CHECK: add i32 [[VBASEOFFSETC]], 8
 // CHECK: }
 
-// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }

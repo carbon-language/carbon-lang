@@ -5,12 +5,12 @@ struct S {
   ~S() {}
 } s;
 
-// CHECK: define internal void [[INIT_s:@.*global_var.*]] [[NUW:#[0-9]+]]
+// CHECK: define internal void [[INIT_s:@.*global_var.*]] #0
 // CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"__dtor_\01?s@@3US@@A")
 // CHECK: ret void
 
-// CHECK: define internal void @"__dtor_\01?s@@3US@@A"() [[NUW]] {
+// CHECK: define internal void @"__dtor_\01?s@@3US@@A"() #0 {
 // CHECK: call x86_thiscallcc void @"\01??1S@@QAE@XZ"
 // CHECK: ret void
 
@@ -33,7 +33,7 @@ void force_usage() {
   (void)B<int>::foo;  // (void) - force usage
 }
 
-// CHECK: define internal void [[INIT_foo:@.*global_var.*]] [[NUW]]
+// CHECK: define internal void [[INIT_foo:@.*global_var.*]] #0
 // CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* [[FOO_DTOR:@"__dtor_.*foo@.*]])
 // CHECK: ret void
@@ -46,9 +46,10 @@ void force_usage() {
 // CHECK: call x86_thiscallcc void @"\01??1A@@QAE@XZ"{{.*}}foo
 // CHECK: ret void
 
-// CHECK: define internal void @_GLOBAL__I_a() [[NUW]] {
+// CHECK: define internal void @_GLOBAL__I_a() #0 {
 // CHECK: call void [[INIT_s]]
 // CHECK: call void [[INIT_foo]]
 // CHECK: ret void
 
-// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK: attributes #0 = { nounwind }
+// CHECK: attributes #1 = { nounwind "target-features"={{.*}} }

@@ -21,7 +21,7 @@ int f() {
 }
 
 // Test that we don't try to fold the default value of j when initializing i.
-// CHECK: define i32 @_Z9test_foldv() [[NUW_RN:#[0-9]+]]
+// CHECK: define i32 @_Z9test_foldv() #0
 int test_fold() {
   struct A {
     A(const int j = 1) : i(j) { } 
@@ -32,4 +32,4 @@ int test_fold() {
   return A(2).i;
 }
 
-// CHECK: attributes [[NUW_RN]] = { nounwind readnone{{.*}} }
+// CHECK: attributes #0 = { nounwind readnone "target-features"={{.*}} }

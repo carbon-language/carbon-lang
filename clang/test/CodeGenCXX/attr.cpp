@@ -2,7 +2,7 @@
 
 // CHECK: @test2 = alias i32 ()* @_Z5test1v
 
-// CHECK: define i32 @_Z3foov() [[NUW:#[0-9]+]] align 1024
+// CHECK: define i32 @_Z3foov() #0 align 1024
 int foo() __attribute__((aligned(1024)));
 int foo() { }
 
@@ -13,16 +13,16 @@ class C {
   void bar4() __attribute__((aligned(1024)));
 } c;
 
-// CHECK: define void @_ZN1C4bar1Ev(%class.C* %this) unnamed_addr [[NUW]] align 2
+// CHECK: define void @_ZN1C4bar1Ev(%class.C* %this) unnamed_addr #0 align 2
 void C::bar1() { }
 
-// CHECK: define void @_ZN1C4bar2Ev(%class.C* %this) unnamed_addr [[NUW]] align 2
+// CHECK: define void @_ZN1C4bar2Ev(%class.C* %this) unnamed_addr #0 align 2
 void C::bar2() { }
 
-// CHECK: define void @_ZN1C4bar3Ev(%class.C* %this) unnamed_addr [[NUW]] align 1024
+// CHECK: define void @_ZN1C4bar3Ev(%class.C* %this) unnamed_addr #0 align 1024
 void C::bar3() { }
 
-// CHECK: define void @_ZN1C4bar4Ev(%class.C* %this) [[NUW]] align 1024
+// CHECK: define void @_ZN1C4bar4Ev(%class.C* %this) #0 align 1024
 void C::bar4() { }
 
 // PR6635
@@ -31,4 +31,7 @@ int test1() { return 10; }
 // CHECK at top of file
 extern "C" int test2() __attribute__((alias("_Z5test1v")));
 
-// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { noreturn nounwind }
+// CHECK: attributes #2 = { nounwind }
+// CHECK: attributes #3 = { inlinehint nounwind "target-features"={{.*}} }

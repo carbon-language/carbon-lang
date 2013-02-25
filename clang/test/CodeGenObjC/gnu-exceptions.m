@@ -6,7 +6,7 @@ void log(int i);
 
 @class C;
 
-// CHECK: define void @test0() [[TF:#[0-9]+]] {
+// CHECK: define void @test0() #0 {
 void test0() {
   @try {
     // CHECK: invoke void @opaque()
@@ -31,4 +31,5 @@ void test0() {
   log(1);
 }
 
-// CHECK: attributes [[TF]] = { "{{.*}} }
+// CHECK: attributes #0 = { "target-features"={{.*}} }
+// CHECK: attributes #1 = { nounwind readnone }

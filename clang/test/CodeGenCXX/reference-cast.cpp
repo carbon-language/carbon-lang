@@ -3,7 +3,7 @@
 // PR6024
 extern int i;
 
-// CHECK: define i32* @_Z16lvalue_noop_castv() [[NUW:#[0-9]+]]
+// CHECK: define i32* @_Z16lvalue_noop_castv() #0
 const int &lvalue_noop_cast() {
   if (i == 0)
     // CHECK: store i32 17, i32*
@@ -193,4 +193,5 @@ namespace PR10650 {
   // CHECK: store i64
 }
 
-// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes #1 = { "target-features"={{.*}} }

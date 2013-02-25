@@ -58,4 +58,5 @@ int f3(double x) {
   return e;
 }
 
-// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK: attributes #1 = { noreturn }
