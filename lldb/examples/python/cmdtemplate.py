@@ -38,6 +38,8 @@ def ls(debugger, command, result, dict):
     try:
         (options, args) = parser.parse_args(command_args)
     except:
+        # if you don't handle exceptions, passing an incorrect argument to the OptionParser will cause LLDB to exit
+        # (courtesy of OptParse dealing with argument errors by throwing SystemExit)
         result.SetStatus (lldb.eReturnStatusFailed)
         return
     
