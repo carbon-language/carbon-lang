@@ -31,7 +31,7 @@ class FastUnwindTest : public ::testing::Test {
 void FastUnwindTest::SetUp() {
   // Fill an array of pointers with fake fp+retaddr pairs.  Frame pointers have
   // even indices.
-  for (int i = 0; i+1 < ARRAY_SIZE(fake_stack); i += 2) {
+  for (uptr i = 0; i+1 < ARRAY_SIZE(fake_stack); i += 2) {
     fake_stack[i] = (uptr)&fake_stack[i+2];  // fp
     fake_stack[i+1] = i+1; // retaddr
   }
@@ -54,7 +54,7 @@ TEST_F(FastUnwindTest, Basic) {
   trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
                         fake_top, fake_bottom);
   // Should get all on-stack retaddrs and start_pc.
-  EXPECT_EQ(6, trace.size);
+  EXPECT_EQ(6U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
   for (int i = 1; i <= 5; i++) {
     EXPECT_EQ(i*2 - 1, trace.trace[i]);
@@ -68,7 +68,7 @@ TEST_F(FastUnwindTest, FramePointerLoop) {
   trace.FastUnwindStack(start_pc, (uptr)&fake_stack[0],
                         fake_top, fake_bottom);
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
-  EXPECT_EQ(4, trace.size);
+  EXPECT_EQ(4U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
   for (int i = 1; i <= 3; i++) {
     EXPECT_EQ(i*2 - 1, trace.trace[i]);

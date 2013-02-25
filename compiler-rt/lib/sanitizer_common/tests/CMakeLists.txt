@@ -54,7 +54,7 @@ macro(add_sanitizer_tests_for_arch arch)
                             -I${COMPILER_RT_SOURCE_DIR}/include
                             -I${COMPILER_RT_SOURCE_DIR}/lib
                             -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
-                            -O2 -g ${TARGET_FLAGS})
+                            -O2 -g -Wall -Werror ${TARGET_FLAGS})
   set(SANITIZER_TEST_LINK_FLAGS -lstdc++ -lpthread ${TARGET_FLAGS})
   set(SANITIZER_TEST_OBJECTS)
   foreach(source ${SANITIZER_TEST_SOURCES})
