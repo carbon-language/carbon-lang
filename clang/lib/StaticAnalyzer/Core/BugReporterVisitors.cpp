@@ -395,16 +395,17 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     // 'this' should never be NULL, but this visitor isn't just for NULL and
     // UndefinedVal.)
     if (Optional<CallEnter> CE = Succ->getLocationAs<CallEnter>()) {
-      const VarRegion *VR = cast<VarRegion>(R);
-      const ParmVarDecl *Param = cast<ParmVarDecl>(VR->getDecl());
-      
-      ProgramStateManager &StateMgr = BRC.getStateManager();
-      CallEventManager &CallMgr = StateMgr.getCallEventManager();
+      if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
+        const ParmVarDecl *Param = cast<ParmVarDecl>(VR->getDecl());
+        
+        ProgramStateManager &StateMgr = BRC.getStateManager();
+        CallEventManager &CallMgr = StateMgr.getCallEventManager();
 
-      CallEventRef<> Call = CallMgr.getCaller(CE->getCalleeContext(),
-                                              Succ->getState());
-      InitE = Call->getArgExpr(Param->getFunctionScopeIndex());
-      IsParam = true;
+        CallEventRef<> Call = CallMgr.getCaller(CE->getCalleeContext(),
+                                                Succ->getState());
+        InitE = Call->getArgExpr(Param->getFunctionScopeIndex());
+        IsParam = true;
+      }
     }
   }
 
@@ -496,30 +497,32 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
       }
     }
   } else if (StoreSite->getLocation().getAs<CallEnter>()) {
-    const ParmVarDecl *Param = cast<ParmVarDecl>(cast<VarRegion>(R)->getDecl());
+    if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
+      const ParmVarDecl *Param = cast<ParmVarDecl>(VR->getDecl());
 
-    os << "Passing ";
+      os << "Passing ";
 
-    if (V.getAs<loc::ConcreteInt>()) {
-      if (Param->getType()->isObjCObjectPointerType())
-        os << "nil object reference";
-      else
-        os << "null pointer value";
-    } else if (V.isUndef()) {
-      os << "uninitialized value";
-    } else if (Optional<nonloc::ConcreteInt> CI =
-                   V.getAs<nonloc::ConcreteInt>()) {
-      os << "the value " << CI->getValue();
-    } else {
-      os << "value";
+      if (V.getAs<loc::ConcreteInt>()) {
+        if (Param->getType()->isObjCObjectPointerType())
+          os << "nil object reference";
+        else
+          os << "null pointer value";
+      } else if (V.isUndef()) {
+        os << "uninitialized value";
+      } else if (Optional<nonloc::ConcreteInt> CI =
+                     V.getAs<nonloc::ConcreteInt>()) {
+        os << "the value " << CI->getValue();
+      } else {
+        os << "value";
+      }
+
+      // Printed parameter indexes are 1-based, not 0-based.
+      unsigned Idx = Param->getFunctionScopeIndex() + 1;
+      os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter '";
+
+      R->printPretty(os);
+      os << '\'';
     }
-
-    // Printed parameter indexes are 1-based, not 0-based.
-    unsigned Idx = Param->getFunctionScopeIndex() + 1;
-    os << " via " << Idx << llvm::getOrdinalSuffix(Idx) << " parameter '";
-
-    R->printPretty(os);
-    os << '\'';
   }
 
   if (os.str().empty()) {
@@ -554,7 +557,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   // Construct a new PathDiagnosticPiece.
   ProgramPoint P = StoreSite->getLocation();
   PathDiagnosticLocation L;
-  if (P.getAs<CallEnter>())
+  if (P.getAs<CallEnter>() && InitE)
     L = PathDiagnosticLocation(InitE, BRC.getSourceManager(),
                                P.getLocationContext());
   else
