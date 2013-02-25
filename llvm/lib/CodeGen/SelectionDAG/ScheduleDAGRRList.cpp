@@ -143,6 +143,12 @@ private:
   std::vector<SUnit*> LiveRegDefs;
   std::vector<SUnit*> LiveRegGens;
 
+  // Collect interferences between physical register use/defs.
+  // Each interference is an SUnit and set of physical registers.
+  SmallVector<SUnit*, 4> Interferences;
+  typedef DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMapT;
+  LRegsMapT LRegsMap;
+
   /// Topo - A topological ordering for SUnits which permits fast IsReachable
   /// and similar queries.
   ScheduleDAGTopologicalSort Topo;
@@ -225,6 +231,8 @@ private:
                                 const TargetRegisterClass*,
                                 SmallVector<SUnit*, 2>&);
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
+
+  void releaseInterferences(unsigned Reg = 0);
 
   SUnit *PickNodeToScheduleBottomUp();
   void ListScheduleBottomUp();
@@ -322,6 +330,7 @@ void ScheduleDAGRRList::Schedule() {
   LiveRegDefs.resize(TRI->getNumRegs() + 1, NULL);
   LiveRegGens.resize(TRI->getNumRegs() + 1, NULL);
   CallSeqEndForStart.clear();
+  assert(Interferences.empty() && LRegsMap.empty() && "stale Interferences");
 
   // Build the scheduling graph.
   BuildSchedGraph(NULL);
@@ -735,6 +744,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
       --NumLiveRegs;
       LiveRegDefs[I->getReg()] = NULL;
       LiveRegGens[I->getReg()] = NULL;
+      releaseInterferences(I->getReg());
     }
   }
   // Release the special call resource dependence, if this is the beginning
@@ -749,6 +759,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
         --NumLiveRegs;
         LiveRegDefs[CallResource] = NULL;
         LiveRegGens[CallResource] = NULL;
+        releaseInterferences(CallResource);
       }
     }
 
@@ -804,6 +815,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
       --NumLiveRegs;
       LiveRegDefs[I->getReg()] = NULL;
       LiveRegGens[I->getReg()] = NULL;
+      releaseInterferences(I->getReg());
     }
   }
 
@@ -831,6 +843,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
         --NumLiveRegs;
         LiveRegDefs[CallResource] = NULL;
         LiveRegGens[CallResource] = NULL;
+        releaseInterferences(CallResource);
       }
     }
 
@@ -1315,34 +1328,58 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
   return !LRegs.empty();
 }
 
+void ScheduleDAGRRList::releaseInterferences(unsigned Reg) {
+  // Add the nodes that aren't ready back onto the available list.
+  for (unsigned i = Interferences.size(); i > 0; --i) {
+    SUnit *SU = Interferences[i-1];
+    LRegsMapT::iterator LRegsPos = LRegsMap.find(SU);
+    if (Reg) {
+      SmallVector<unsigned, 4> &LRegs = LRegsPos->second;
+      if (std::find(LRegs.begin(), LRegs.end(), Reg) == LRegs.end())
+        continue;
+    }
+    SU->isPending = false;
+    // The interfering node may no longer be available due to backtracking.
+    // Furthermore, it may have been made available again, in which case it is
+    // now already in the AvailableQueue.
+    if (SU->isAvailable && !SU->NodeQueueId) {
+      DEBUG(dbgs() << "    Repushing SU #" << SU->NodeNum << '\n');
+      AvailableQueue->push(SU);
+    }
+    if (i < Interferences.size())
+      Interferences[i-1] = Interferences.back();
+    Interferences.pop_back();
+    LRegsMap.erase(LRegsPos);
+  }
+}
+
 /// Return a node that can be scheduled in this cycle. Requirements:
 /// (1) Ready: latency has been satisfied
 /// (2) No Hazards: resources are available
 /// (3) No Interferences: may unschedule to break register interferences.
 SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
-  SmallVector<SUnit*, 4> Interferences;
-  DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMap;
-
-  SUnit *CurSU = AvailableQueue->pop();
+  SUnit *CurSU = AvailableQueue->empty() ? 0 : AvailableQueue->pop();
   while (CurSU) {
     SmallVector<unsigned, 4> LRegs;
     if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
       break;
-    LRegsMap.insert(std::make_pair(CurSU, LRegs));
-
-    CurSU->isPending = true;  // This SU is not in AvailableQueue right now.
-    Interferences.push_back(CurSU);
+    DEBUG(dbgs() << "    Interfering reg " << TRI->getName(LRegs[0])
+          << " SU #" << CurSU->NodeNum << '\n');
+    std::pair<LRegsMapT::iterator, bool> LRegsPair =
+      LRegsMap.insert(std::make_pair(CurSU, LRegs));
+    if (LRegsPair.second) {
+      CurSU->isPending = true;  // This SU is not in AvailableQueue right now.
+      Interferences.push_back(CurSU);
+    }
+    else {
+      assert(CurSU->isPending && "Intereferences are pending");
+      // Update the interference with current live regs.
+      LRegsPair.first->second = LRegs;
+    }
     CurSU = AvailableQueue->pop();
   }
-  if (CurSU) {
-    // Add the nodes that aren't ready back onto the available list.
-    for (unsigned i = 0, e = Interferences.size(); i != e; ++i) {
-      Interferences[i]->isPending = false;
-      assert(Interferences[i]->isAvailable && "must still be available");
-      AvailableQueue->push(Interferences[i]);
-    }
+  if (CurSU)
     return CurSU;
-  }
 
   // All candidates are delayed due to live physical reg dependencies.
   // Try backtracking, code duplication, or inserting cross class copies
@@ -1363,6 +1400,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
       }
     }
     if (!WillCreateCycle(TrySU, BtSU))  {
+      // BacktrackBottomUp mutates Interferences!
       BacktrackBottomUp(TrySU, BtSU);
 
       // Force the current node to be scheduled before the node that
@@ -1372,19 +1410,19 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
         if (!BtSU->isPending)
           AvailableQueue->remove(BtSU);
       }
+      DEBUG(dbgs() << "ARTIFICIAL edge from SU(" << BtSU->NodeNum << ") to SU("
+            << TrySU->NodeNum << ")\n");
       AddPred(TrySU, SDep(BtSU, SDep::Artificial));
 
       // If one or more successors has been unscheduled, then the current
-      // node is no longer avaialable. Schedule a successor that's now
-      // available instead.
-      if (!TrySU->isAvailable) {
+      // node is no longer available.
+      if (!TrySU->isAvailable)
         CurSU = AvailableQueue->pop();
-      }
       else {
+        AvailableQueue->remove(TrySU);
         CurSU = TrySU;
-        TrySU->isPending = false;
-        Interferences.erase(Interferences.begin()+i);
       }
+      // Interferences has been mutated. We must break.
       break;
     }
   }
@@ -1435,17 +1473,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
     TrySU->isAvailable = false;
     CurSU = NewDef;
   }
-
   assert(CurSU && "Unable to resolve live physical register dependencies!");
-
-  // Add the nodes that aren't ready back onto the available list.
-  for (unsigned i = 0, e = Interferences.size(); i != e; ++i) {
-    Interferences[i]->isPending = false;
-    // May no longer be available due to backtracking.
-    if (Interferences[i]->isAvailable) {
-      AvailableQueue->push(Interferences[i]);
-    }
-  }
   return CurSU;
 }
 
@@ -1466,7 +1494,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   Sequence.reserve(SUnits.size());
-  while (!AvailableQueue->empty()) {
+  while (!AvailableQueue->empty() || !Interferences.empty()) {
     DEBUG(dbgs() << "\nExamining Available:\n";
           AvailableQueue->dump(this));
 
