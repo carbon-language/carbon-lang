@@ -8,7 +8,9 @@
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
+   cpp11-migrate
 
 
 
