@@ -144,11 +144,12 @@ EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
                    "instruction selector"));
 static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
-          cl::desc("Enable abort calls when \"fast\" instruction fails"));
+          cl::desc("Enable abort calls when \"fast\" instruction selection "
+                   "fails to lower an instruction"));
 static cl::opt<bool>
 EnableFastISelAbortArgs("fast-isel-abort-args", cl::Hidden,
-          cl::desc("Enable abort calls when \"fast\" instruction fails to "
-                   "lower formal arguments"));
+          cl::desc("Enable abort calls when \"fast\" instruction selection "
+                   "fails to lower a formal argument"));
 
 static cl::opt<bool>
 UseMBPI("use-mbpi",
