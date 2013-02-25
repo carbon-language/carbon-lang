@@ -1578,7 +1578,7 @@ static Optional<SVal> getConstValue(SValBuilder &SVB, const VarDecl *VD) {
     return None;
 
   llvm::APSInt Result;
-  if (Init->EvaluateAsInt(Result, Ctx))
+  if (!Init->isGLValue() && Init->EvaluateAsInt(Result, Ctx))
     return SVB.makeIntVal(Result);
 
   if (Init->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNotNull))

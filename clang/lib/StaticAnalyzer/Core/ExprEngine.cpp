@@ -685,7 +685,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       StmtNodeBuilder Bldr2(PreVisit, Tmp, *currBldrCtx);
 
       const LocationContext *LCtx = Pred->getLocationContext();
-      const Expr *ArgE = cast<CXXDefaultArgExpr>(S)->getExpr();
+      const CXXDefaultArgExpr *DefaultE = cast<CXXDefaultArgExpr>(S);
+      const Expr *ArgE = DefaultE->getExpr();
 
       // Avoid creating and destroying a lot of APSInts.
       SVal V;
@@ -700,7 +701,9 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
         else
           V = State->getSVal(ArgE, LCtx);
 
-        State = State->BindExpr(S, LCtx, V);
+        State = State->BindExpr(DefaultE, LCtx, V);
+        if (DefaultE->isGLValue())
+          State = createTemporaryRegionIfNeeded(State, LCtx, DefaultE);
         Bldr2.generateNode(S, *I, State);
       }
 

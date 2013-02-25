@@ -10,3 +10,10 @@ id foo(int x) {
     clang_analyzer_eval(p == 0); // expected-warning{{TRUE}}
   return p;
 }
+
+const int &globalInt = 42;
+
+void testGlobal() {
+  // FIXME: Should be TRUE, but should at least not crash.
+  clang_analyzer_eval(globalInt == 42); // expected-warning{{UNKNOWN}}
+}
