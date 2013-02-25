@@ -65,10 +65,24 @@ bool ExplodedGraph::isInterestingLValueExpr(const Expr *Ex) {
 }
 
 bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
-  // Reclaim all nodes that match *all* the following criteria:
+  // First, we only consider nodes for reclamation of the following
+  // conditions apply:
   //
   // (1) 1 predecessor (that has one successor)
   // (2) 1 successor (that has one predecessor)
+  //
+  // If a node has no successor it is on the "frontier", while a node
+  // with no predecessor is a root.
+  //
+  // After these prerequisites, we discard all "filler" nodes that
+  // are used only for intermediate processing, and are not essential
+  // for analyzer history:
+  //
+  // (a) PreStmtPurgeDeadSymbols
+  //
+  // We then discard all other nodes where *all* of the following conditions
+  // apply:
+  //
   // (3) The ProgramPoint is for a PostStmt, but not a PostStore.
   // (4) There is no 'tag' for the ProgramPoint.
   // (5) The 'store' is the same as the predecessor.
@@ -92,8 +106,13 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   if (succ->pred_size() != 1)
     return false;
 
-  // Condition 3.
+  // Now reclaim any nodes that are (by definition) not essential to
+  // analysis history and are not consulted by any client code.
   ProgramPoint progPoint = node->getLocation();
+  if (progPoint.getAs<PreStmtPurgeDeadSymbols>())
+    return true;
+
+  // Condition 3.
   if (!progPoint.getAs<PostStmt>() || progPoint.getAs<PostStore>())
     return false;
 
