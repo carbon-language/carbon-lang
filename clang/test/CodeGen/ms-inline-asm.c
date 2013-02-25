@@ -349,4 +349,12 @@ int *t30()
 // CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, edi", "=*m,~{dirflag},~{fpsr},~{flags}"(i32** %{{.*}}) [[NUW]]
 }
 
+void t31() {
+  __asm pushad
+  __asm popad
+// CHECK: t31
+// CHECK: call void asm sideeffect inteldialect "pushad", "~{dirflag},~{fpsr},~{flags}"() [[NUW]]
+// CHECK: call void asm sideeffect inteldialect "popad", "~{dirflag},~{fpsr},~{flags}"() [[NUW]]
+}
+
 // CHECK: attributes [[NUW]] = { nounwind }
