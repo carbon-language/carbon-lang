@@ -94,3 +94,4 @@ clean:
 	rm -rf $(GTEST_BUILD_DIR)
 	$(MAKE) clean -C rtl -f Makefile.old
 	rm -f go/*.s
+	rm -rf build
