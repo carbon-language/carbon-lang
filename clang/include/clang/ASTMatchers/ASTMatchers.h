@@ -1629,7 +1629,8 @@ unless(const M &InnerMatcher) {
 /// subtypes of clang::Type.
 ///
 /// Usable as: Matcher<QualType>, Matcher<CallExpr>, Matcher<CXXConstructExpr>,
-///   Matcher<MemberExpr>, Matcher<TypedefType>
+///   Matcher<MemberExpr>, Matcher<TypedefType>,
+///   Matcher<TemplateSpecializationType>
 inline internal::PolymorphicMatcherWithParam1< internal::HasDeclarationMatcher,
                                      internal::Matcher<Decl> >
     hasDeclaration(const internal::Matcher<Decl> &InnerMatcher) {
@@ -2912,6 +2913,21 @@ AST_TYPELOC_TRAVERSE_MATCHER(pointee, getPointee);
 /// typedefType()
 ///   matches "typedef int X"
 AST_TYPE_MATCHER(TypedefType, typedefType);
+
+/// \brief Matches template specialization types.
+///
+/// Given
+/// \code
+///   template <typename T>
+///   class C { };
+///
+///   template class C<int>;  // A
+///   C<char> var;            // B
+/// \code
+///
+/// \c templateSpecializationType() matches the type of the explicit
+/// instantiation in \c A and the type of the variable declaration in \c B.
+AST_TYPE_MATCHER(TemplateSpecializationType, templateSpecializationType);
 
 /// \brief Matches nested name specifiers.
 ///

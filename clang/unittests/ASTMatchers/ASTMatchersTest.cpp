@@ -832,6 +832,12 @@ TEST(HasDeclaration, HasDeclarationOfTypeWithDecl) {
   // FIXME: Add tests for other types with getDecl() (e.g. RecordType)
 }
 
+TEST(HasDeclaration, HasDeclarationOfTemplateSpecializationType) {
+  EXPECT_TRUE(matches("template <typename T> class A {}; A<int> a;",
+                      varDecl(hasType(templateSpecializationType(
+                          hasDeclaration(namedDecl(hasName("A"))))))));
+}
+
 TEST(HasType, TakesQualTypeMatcherAndMatchesExpr) {
   TypeMatcher ClassX = hasDeclaration(recordDecl(hasName("X")));
   EXPECT_TRUE(
@@ -3404,6 +3410,11 @@ TEST(TypeMatching, MatchesPointersToConstTypes) {
 TEST(TypeMatching, MatchesTypedefTypes) {
   EXPECT_TRUE(matches("typedef int X; X a;", varDecl(hasName("a"),
                                                      hasType(typedefType()))));
+}
+
+TEST(TypeMatching, MatchesTemplateSpecializationType) {
+  EXPECT_TRUE(matches("template <typename T> class A{}; A<int>a;",
+                      templateSpecializationType()));
 }
 
 TEST(NNS, MatchesNestedNameSpecifiers) {

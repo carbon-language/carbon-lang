@@ -411,6 +411,15 @@ private:
     return matchesDecl(Node->getAsCXXRecordDecl(), Finder, Builder);
   }
 
+  /// \brief Gets the TemplateDecl from a TemplateSpecializationType
+  /// and returns whether the inner matches on it.
+  bool matchesSpecialized(const TemplateSpecializationType &Node,
+                          ASTMatchFinder *Finder,
+                          BoundNodesTreeBuilder *Builder) const {
+    return matchesDecl(Node.getTemplateName().getAsTemplateDecl(),
+                       Finder, Builder);
+  }
+
   /// \brief Extracts the Decl of the callee of a CallExpr and returns whether
   /// the inner matcher matches on it.
   bool matchesSpecialized(const CallExpr &Node, ASTMatchFinder *Finder,
