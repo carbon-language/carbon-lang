@@ -1413,6 +1413,18 @@ TEST(Matcher, MatchesSpecificArgument) {
           1, refersToType(asString("int"))))));
 }
 
+TEST(Matcher, MatchesAccessSpecDecls) {
+  EXPECT_TRUE(matches("class C { public: int i; };", accessSpecDecl()));
+  EXPECT_TRUE(
+      matches("class C { public: int i; };", accessSpecDecl(isPublic())));
+  EXPECT_TRUE(
+      notMatches("class C { public: int i; };", accessSpecDecl(isProtected())));
+  EXPECT_TRUE(
+      notMatches("class C { public: int i; };", accessSpecDecl(isPrivate())));
+
+  EXPECT_TRUE(notMatches("class C { int i; };", accessSpecDecl()));
+}
+
 TEST(Matcher, ConstructorCall) {
   StatementMatcher Constructor = constructExpr();
 
@@ -2281,6 +2293,34 @@ TEST(Member, MatchesMember) {
   EXPECT_TRUE(notMatches(
       "struct A { float f; }; void f() { A a; a.f = 2.0f; }",
       memberExpr(hasDeclaration(fieldDecl(hasType(isInteger()))))));
+}
+
+TEST(Member, UnderstandsAccess) {
+  EXPECT_TRUE(matches(
+      "struct A { int i; };", fieldDecl(isPublic(), hasName("i"))));
+  EXPECT_TRUE(notMatches(
+      "struct A { int i; };", fieldDecl(isProtected(), hasName("i"))));
+  EXPECT_TRUE(notMatches(
+      "struct A { int i; };", fieldDecl(isPrivate(), hasName("i"))));
+
+  EXPECT_TRUE(notMatches(
+      "class A { int i; };", fieldDecl(isPublic(), hasName("i"))));
+  EXPECT_TRUE(notMatches(
+      "class A { int i; };", fieldDecl(isProtected(), hasName("i"))));
+  EXPECT_TRUE(matches(
+      "class A { int i; };", fieldDecl(isPrivate(), hasName("i"))));
+
+  EXPECT_TRUE(notMatches(
+      "class A { protected: int i; };", fieldDecl(isPublic(), hasName("i"))));
+  EXPECT_TRUE(matches("class A { protected: int i; };",
+                      fieldDecl(isProtected(), hasName("i"))));
+  EXPECT_TRUE(notMatches(
+      "class A { protected: int i; };", fieldDecl(isPrivate(), hasName("i"))));
+  
+  // Non-member decls have the AccessSpecifier AS_none and thus aren't matched.
+  EXPECT_TRUE(notMatches("int i;", varDecl(isPublic(), hasName("i"))));
+  EXPECT_TRUE(notMatches("int i;", varDecl(isProtected(), hasName("i"))));
+  EXPECT_TRUE(notMatches("int i;", varDecl(isPrivate(), hasName("i"))));
 }
 
 TEST(Member, MatchesMemberAllocationFunction) {

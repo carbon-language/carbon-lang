@@ -192,6 +192,69 @@ const internal::VariadicDynCastAllOfMatcher<
   Decl,
   ClassTemplateSpecializationDecl> classTemplateSpecializationDecl;
 
+/// \brief Matches C++ access specifier declarations.
+///
+/// Given
+/// \code
+///   class C {
+///   public:
+///     int a;
+///   };
+/// \endcode
+/// accessSpecDecl()
+///   matches 'public:'
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  AccessSpecDecl> accessSpecDecl;
+
+/// \brief Matches public C++ declarations.
+///
+/// Given
+/// \code
+///   class C {
+///   public:    int a;
+///   protected: int b;
+///   private:   int c;
+///   };
+/// \endcode
+/// fieldDecl(isPublic())
+///   matches 'int a;' 
+AST_MATCHER(Decl, isPublic) {
+  return Node.getAccess() == AS_public;
+}
+
+/// \brief Matches protected C++ declarations.
+///
+/// Given
+/// \code
+///   class C {
+///   public:    int a;
+///   protected: int b;
+///   private:   int c;
+///   };
+/// \endcode
+/// fieldDecl(isProtected())
+///   matches 'int b;' 
+AST_MATCHER(Decl, isProtected) {
+  return Node.getAccess() == AS_protected;
+}
+
+/// \brief Matches private C++ declarations.
+///
+/// Given
+/// \code
+///   class C {
+///   public:    int a;
+///   protected: int b;
+///   private:   int c;
+///   };
+/// \endcode
+/// fieldDecl(isPrivate())
+///   matches 'int c;' 
+AST_MATCHER(Decl, isPrivate) {
+  return Node.getAccess() == AS_private;
+}
+
 /// \brief Matches classTemplateSpecializations that have at least one
 /// TemplateArgument matching the given InnerMatcher.
 ///
