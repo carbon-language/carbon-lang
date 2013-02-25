@@ -378,11 +378,11 @@ public:
         
         def get_sections_array(self):
             '''An accessor function that returns an array object that contains all sections in this module object.'''
-            if not hasattr(self, 'sections'):
-                self.sections = []
+            if not hasattr(self, 'sections_array'):
+                self.sections_array = []
                 for idx in range(self.num_sections):
-                    self.sections.append(self.GetSectionAtIndex(idx))
-            return self.sections
+                    self.sections_array.append(self.GetSectionAtIndex(idx))
+            return self.sections_array
 
         __swig_getmethods__["symbols"] = get_symbols_array
         if _newclass: symbols = property(get_symbols_array, None, doc='''A read only property that returns a list() of lldb.SBSymbol objects contained in this module.''')

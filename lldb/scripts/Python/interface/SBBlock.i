@@ -106,7 +106,7 @@ public:
     %pythoncode %{
         def get_range_at_index(self, idx):
             if idx < self.GetNumRanges():
-                return [self.sbblock.GetRangeStartAddress(key), self.sbblock.GetRangeEndAddress(key)]
+                return [self.GetRangeStartAddress(idx), self.GetRangeEndAddress(idx)]
             return []
 
         class ranges_access(object):
@@ -137,11 +137,11 @@ public:
         
         def get_ranges_array(self):
             '''An accessor function that returns an array object that contains all ranges in this block object.'''
-            if not hasattr(self, 'ranges'):
-                self.ranges = []
+            if not hasattr(self, 'ranges_array'):
+                self.ranges_array = []
                 for idx in range(self.num_ranges):
-                    self.ranges.append (self.get_range_at_index (idx))
-            return self.ranges
+                    self.ranges_array.append ([self.GetRangeStartAddress(idx), self.GetRangeEndAddress(idx)])
+            return self.ranges_array
         
         def get_call_site(self):
             return declaration(self.GetInlinedCallSiteFile(), self.GetInlinedCallSiteLine(), self.GetInlinedCallSiteColumn())
