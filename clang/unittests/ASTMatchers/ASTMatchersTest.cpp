@@ -818,12 +818,6 @@ TEST(HasDeclaration, HasDeclarationOfEnumType) {
                           qualType(hasDeclaration(enumDecl(hasName("X")))))))));
 }
 
-TEST(HasDeclaration, HasGetDeclTraitTest) {
-  EXPECT_TRUE(internal::has_getDecl<TypedefType>::value);
-  EXPECT_TRUE(internal::has_getDecl<RecordType>::value);
-  EXPECT_FALSE(internal::has_getDecl<TemplateSpecializationType>::value);
-}
-
 TEST(HasDeclaration, HasDeclarationOfTypeWithDecl) {
   EXPECT_TRUE(matches("typedef int X; X a;",
                       varDecl(hasName("a"),
