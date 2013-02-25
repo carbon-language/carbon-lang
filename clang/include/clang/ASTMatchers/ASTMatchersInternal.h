@@ -353,6 +353,23 @@ inline Matcher<T> makeMatcher(MatcherInterface<T> *Implementation) {
   return Matcher<T>(Implementation);
 }
 
+/// \brief Metafunction to determine if type T has a member called getDecl.
+template <typename T> struct has_getDecl {
+  struct Default { int getDecl; };
+  struct Derived : T, Default { };
+
+  template<typename C, C> struct CheckT;
+
+  // If T::getDecl exists, an ambiguity arises and CheckT will
+  // not be instantiable. This makes f(...) the only available
+  // overload.
+  template<typename C>
+  static char (&f(CheckT<int Default::*, &C::getDecl>*))[1];
+  template<typename C> static char (&f(...))[2];
+
+  static bool const value = sizeof(f<Derived>(0)) == 2;
+};
+
 /// \brief Matches declarations for QualType and CallExpr.
 ///
 /// Type argument DeclMatcherT is required by PolymorphicMatcherWithParam1 but
@@ -376,10 +393,12 @@ private:
   /// \brief If getDecl exists as a member of U, returns whether the inner
   /// matcher matches Node.getDecl().
   template <typename U>
-  bool matchesSpecialized(const U &Node, ASTMatchFinder *Finder, 
-                          BoundNodesTreeBuilder *Builder) const {
+  bool matchesSpecialized(
+      const U &Node, ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder,
+      typename llvm::enable_if<has_getDecl<U>, int>::type = 0) const {
     return matchesDecl(Node.getDecl(), Finder, Builder);
   }
+
 
   /// \brief Extracts the CXXRecordDecl or EnumDecl of a QualType and returns
   /// whether the inner matcher matches on it.
@@ -391,6 +410,15 @@ private:
     if (const EnumType *AsEnum = dyn_cast<EnumType>(Node.getTypePtr()))
       return matchesDecl(AsEnum->getDecl(), Finder, Builder);
     return matchesDecl(Node->getAsCXXRecordDecl(), Finder, Builder);
+  }
+
+  /// \brief Gets the TemplateDecl from a TemplateSpecializationType
+  /// and returns whether the inner matches on it.
+  bool matchesSpecialized(const TemplateSpecializationType &Node,
+                          ASTMatchFinder *Finder,
+                          BoundNodesTreeBuilder *Builder) const {
+    return matchesDecl(Node.getTemplateName().getAsTemplateDecl(),
+                       Finder, Buidler);
   }
 
   /// \brief Extracts the Decl of the callee of a CallExpr and returns whether
