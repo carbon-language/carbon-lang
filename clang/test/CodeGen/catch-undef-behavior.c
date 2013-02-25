@@ -8,8 +8,7 @@
 // FIXME: When we only emit each type once, use [[INT]] more below.
 // CHECK: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}} @[[INT]], i64 4, i8 1
 // CHECK: @[[LINE_200:.*]] = {{.*}}, i32 200, i32 10 {{.*}}, i64 4, i8 0
-// CHECK: @[[LINE_300_A:.*]] = {{.*}}, i32 300, i32 12 {{.*}} @{{.*}}, {{.*}} @{{.*}}
-// CHECK: @[[LINE_300_B:.*]] = {{.*}}, i32 300, i32 12 {{.*}} @{{.*}}, {{.*}} @{{.*}}
+// CHECK: @[[LINE_300:.*]] = {{.*}}, i32 300, i32 12 {{.*}} @{{.*}}, {{.*}} @{{.*}}
 // CHECK: @[[LINE_400:.*]] = {{.*}}, i32 400, i32 12 {{.*}} @{{.*}}, {{.*}} @{{.*}}
 // CHECK: @[[LINE_500:.*]] = {{.*}}, i32 500, i32 10 {{.*}} @{{.*}}, i64 4, i8 0 }
 // CHECK: @[[LINE_600:.*]] = {{.*}}, i32 600, i32 3 {{.*}} @{{.*}}, i64 4, i8 1 }
@@ -106,35 +105,36 @@ int addr_space(int __attribute__((address_space(256))) *a) {
 // CHECK-TRAP: @lsh_overflow
 int lsh_overflow(int a, int b) {
   // CHECK:      %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
-  // CHECK-NEXT: br i1 %[[INBOUNDS]]
+  // CHECK-NEXT: br i1 %[[INBOUNDS]], label %[[CHECKBB:.*]], label %[[CONTBB:.*]]
 
   // CHECK-TRAP:      %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
-  // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]]
-
-  // FIXME: Only emit one trap block here.
-  // CHECK:      %[[ARG1:.*]] = zext
-  // CHECK-NEXT: %[[ARG2:.*]] = zext
-  // CHECK-NEXT: call void @__ubsan_handle_shift_out_of_bounds(i8* bitcast ({{.*}} @[[LINE_300_A]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
-
-  // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
-  // CHECK-TRAP-NEXT: unreachable
+  // CHECK-TRAP-NEXT: br i1 %[[INBOUNDS]], label %[[CHECKBB:.*]], label %[[CONTBB:.*]]
 
   // CHECK:      %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
   // CHECK-NEXT: %[[SHIFTED_OUT:.*]] = lshr i32 %[[LHS:.*]], %[[SHIFTED_OUT_WIDTH]]
   // CHECK-NEXT: %[[NO_OVERFLOW:.*]] = icmp eq i32 %[[SHIFTED_OUT]], 0
-  // CHECK-NEXT: br i1 %[[NO_OVERFLOW]], {{.*}} !prof ![[WEIGHT_MD]]
+  // CHECK-NEXT: br label %[[CONTBB]]
 
   // CHECK-TRAP:      %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
   // CHECK-TRAP-NEXT: %[[SHIFTED_OUT:.*]] = lshr i32 %[[LHS:.*]], %[[SHIFTED_OUT_WIDTH]]
   // CHECK-TRAP-NEXT: %[[NO_OVERFLOW:.*]] = icmp eq i32 %[[SHIFTED_OUT]], 0
-  // CHECK-TRAP-NEXT: br i1 %[[NO_OVERFLOW]]
+  // CHECK-TRAP-NEXT: br label %[[CONTBB]]
+
+  // CHECK:      %[[VALID:.*]] = phi i1 [ %[[INBOUNDS]], {{.*}} ], [ %[[NO_OVERFLOW]], %[[CHECKBB]] ]
+  // CHECK-NEXT: br i1 %[[VALID]], {{.*}} !prof ![[WEIGHT_MD]]
+
+  // CHECK-TRAP:      %[[VALID:.*]] = phi i1 [ %[[INBOUNDS]], {{.*}} ], [ %[[NO_OVERFLOW]], %[[CHECKBB]] ]
+  // CHECK-TRAP-NEXT: br i1 %[[VALID]]
+
 
   // CHECK:      %[[ARG1:.*]] = zext
   // CHECK-NEXT: %[[ARG2:.*]] = zext
-  // CHECK-NEXT: call void @__ubsan_handle_shift_out_of_bounds(i8* bitcast ({{.*}} @[[LINE_300_B]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
+  // CHECK-NEXT: call void @__ubsan_handle_shift_out_of_bounds(i8* bitcast ({{.*}} @[[LINE_300]] to i8*), i64 %[[ARG1]], i64 %[[ARG2]])
+  // CHECK-NOT:  call void @__ubsan_handle_shift_out_of_bounds
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
-  // CHECK-TRAP-NEXT: unreachable
+  // CHECK-TRAP:      unreachable
+  // CHECK-TRAP-NOT:  call void @llvm.trap()
 
   // CHECK:      %[[RET:.*]] = shl i32 %[[LHS]], %[[RHS]]
   // CHECK-NEXT: ret i32 %[[RET]]

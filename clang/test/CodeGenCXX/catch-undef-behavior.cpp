@@ -130,7 +130,12 @@ int lsh_overflow(int a, int b) {
   // CHECK-NEXT: %[[SHIFTED_OUT_NOT_SIGN:.*]] = lshr i32 %[[SHIFTED_OUT]], 1
 
   // CHECK-NEXT: %[[NO_OVERFLOW:.*]] = icmp eq i32 %[[SHIFTED_OUT_NOT_SIGN]], 0
-  // CHECK-NEXT: br i1 %[[NO_OVERFLOW]]
+
+  // CHECK: %[[VALID:.*]] = phi i1 [ %[[INBOUNDS]], {{.*}} ], [ %[[NO_OVERFLOW]], {{.*}} ]
+  // CHECK-NEXT: br i1 %[[VALID]]
+
+  // CHECK: call void @__ubsan_handle_shift_out_of_bounds
+  // CHECK-NOT: call void @__ubsan_handle_shift_out_of_bounds
 
   // CHECK: %[[RET:.*]] = shl i32 %[[LHS]], %[[RHS]]
   // CHECK-NEXT: ret i32 %[[RET]]
