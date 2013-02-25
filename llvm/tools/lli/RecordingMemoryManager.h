@@ -31,6 +31,12 @@ private:
   SmallVector<Allocation, 16> AllocatedDataMem;
   SmallVector<Allocation, 16> AllocatedCodeMem;
 
+  // FIXME: This is part of a work around to keep sections near one another
+  // when MCJIT performs relocations after code emission but before
+  // the generated code is moved to the remote target.
+  sys::MemoryBlock Near;
+  sys::MemoryBlock allocateSection(uintptr_t Size);
+
 public:
   RecordingMemoryManager() {}
   virtual ~RecordingMemoryManager();

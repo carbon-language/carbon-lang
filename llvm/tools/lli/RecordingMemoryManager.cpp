@@ -19,23 +19,22 @@ RecordingMemoryManager::~RecordingMemoryManager() {
   for (SmallVectorImpl<Allocation>::iterator
          I = AllocatedCodeMem.begin(), E = AllocatedCodeMem.end();
        I != E; ++I)
-    free(I->first.base());
+    sys::Memory::releaseMappedMemory(I->first);
   for (SmallVectorImpl<Allocation>::iterator
          I = AllocatedDataMem.begin(), E = AllocatedDataMem.end();
        I != E; ++I)
-    free(I->first.base());
+    sys::Memory::releaseMappedMemory(I->first);
 }
 
 uint8_t *RecordingMemoryManager::
 allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID) {
   // The recording memory manager is just a local copy of the remote target.
   // The alignment requirement is just stored here for later use. Regular
-  // heap storage is sufficient here.
-  void *Addr = malloc(Size);
-  assert(Addr && "malloc() failure!");
-  sys::MemoryBlock Block(Addr, Size);
+  // heap storage is sufficient here, but we're using mapped memory to work
+  // around a bug in MCJIT.
+  sys::MemoryBlock Block = allocateSection(Size);
   AllocatedCodeMem.push_back(Allocation(Block, Alignment));
-  return (uint8_t*)Addr;
+  return (uint8_t*)Block.base();
 }
 
 uint8_t *RecordingMemoryManager::
@@ -43,13 +42,30 @@ allocateDataSection(uintptr_t Size, unsigned Alignment,
                     unsigned SectionID, bool IsReadOnly) {
   // The recording memory manager is just a local copy of the remote target.
   // The alignment requirement is just stored here for later use. Regular
-  // heap storage is sufficient here.
-  void *Addr = malloc(Size);
-  assert(Addr && "malloc() failure!");
-  sys::MemoryBlock Block(Addr, Size);
+  // heap storage is sufficient here, but we're using mapped memory to work
+  // around a bug in MCJIT.
+  sys::MemoryBlock Block = allocateSection(Size);
   AllocatedDataMem.push_back(Allocation(Block, Alignment));
-  return (uint8_t*)Addr;
+  return (uint8_t*)Block.base();
 }
+
+sys::MemoryBlock RecordingMemoryManager::allocateSection(uintptr_t Size) {
+  error_code ec;
+  sys::MemoryBlock MB = sys::Memory::allocateMappedMemory(Size,
+                                                          &Near,
+                                                          sys::Memory::MF_READ |
+                                                          sys::Memory::MF_WRITE,
+                                                          ec);
+  assert(!ec && MB.base());
+
+  // FIXME: This is part of a work around to keep sections near one another
+  // when MCJIT performs relocations after code emission but before
+  // the generated code is moved to the remote target.
+  // Save this address as the basis for our next request
+  Near = MB;
+  return MB;
+}
+
 void RecordingMemoryManager::setMemoryWritable() { llvm_unreachable("Unexpected!"); }
 void RecordingMemoryManager::setMemoryExecutable() { llvm_unreachable("Unexpected!"); }
 void RecordingMemoryManager::setPoisonMemory(bool poison) { llvm_unreachable("Unexpected!"); }
