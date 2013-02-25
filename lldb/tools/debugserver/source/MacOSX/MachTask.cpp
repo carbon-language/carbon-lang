@@ -21,6 +21,7 @@
 
 #include <mach-o/dyld_images.h>
 #include <mach/mach_vm.h>
+#import <sys/sysctl.h>
 
 // C++ Includes
 #include <iomanip>
@@ -291,7 +292,13 @@ std::string
 MachTask::GetProfileData ()
 {
     std::string result;
- 
+    
+    static int32_t numCPU = -1;
+    int32_t mib[] = {CTL_HW, HW_AVAILCPU};
+    size_t len = sizeof(numCPU);
+    if (sysctl(mib, sizeof(mib) / sizeof(int32_t), &numCPU, &len, NULL, 0) != 0)
+        return result;
+    
     mach_port_t localHost = mach_host_self();
     struct host_cpu_load_info host_info;
 	mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
@@ -343,6 +350,7 @@ MachTask::GetProfileData ()
     {
         std::ostringstream profile_data_stream;
         
+        profile_data_stream << "num_cpu:" << numCPU << ';';
         profile_data_stream << "host_user_ticks:" << host_info.cpu_ticks[CPU_STATE_USER] << ';';
         profile_data_stream << "host_sys_ticks:" << host_info.cpu_ticks[CPU_STATE_SYSTEM] << ';';
         profile_data_stream << "host_idle_ticks:" << host_info.cpu_ticks[CPU_STATE_IDLE] << ';';
