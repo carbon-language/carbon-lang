@@ -157,12 +157,10 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIn
 {
     StreamString idx_name;
     idx_name.Printf("[%zu]",idx);
-    StreamString valobj_expr_path;
-    m_backend.GetExpressionPath(valobj_expr_path, false);
     StreamString key_fetcher_expr;
-    key_fetcher_expr.Printf("(id)[(NSArray*)[%s allKeys] objectAtIndex:%zu]",valobj_expr_path.GetData(),idx);
+    key_fetcher_expr.Printf("(id)[(NSArray*)[(id)0x%" PRIx64 " allKeys] objectAtIndex:%zu]",m_backend.GetPointerValue(),idx);
     StreamString value_fetcher_expr;
-    value_fetcher_expr.Printf("(id)[%s objectForKey:%s]",valobj_expr_path.GetData(),key_fetcher_expr.GetData());
+    value_fetcher_expr.Printf("(id)[(id)0x%" PRIx64 " objectForKey:(%s)]",m_backend.GetPointerValue(),key_fetcher_expr.GetData());
     StreamString object_fetcher_expr;
     object_fetcher_expr.Printf("struct __lldb_autogen_nspair { id key; id value; } _lldb_valgen_item; _lldb_valgen_item.key = %s; _lldb_valgen_item.value = %s; _lldb_valgen_item;",key_fetcher_expr.GetData(),value_fetcher_expr.GetData());
     lldb::ValueObjectSP child_sp;
