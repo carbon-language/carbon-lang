@@ -1434,6 +1434,8 @@ MachineBasicBlock
   *MipsTargetLowering::EmitFEXT_T8I816_ins(unsigned BtOpc, unsigned CmpOpc,
                            MachineInstr *MI,
                            MachineBasicBlock *BB) const {
+  if (DontExpandCondPseudos16)
+    return BB;
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   unsigned regX = MI->getOperand(0).getReg();
   unsigned regY = MI->getOperand(1).getReg();
@@ -1448,6 +1450,8 @@ MachineBasicBlock
 MachineBasicBlock *MipsTargetLowering::EmitFEXT_T8I8I16_ins(
   unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
   MachineInstr *MI,  MachineBasicBlock *BB) const {
+  if (DontExpandCondPseudos16)
+    return BB;
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   unsigned regX = MI->getOperand(0).getReg();
   int64_t imm = MI->getOperand(1).getImm();
@@ -1465,6 +1469,51 @@ MachineBasicBlock *MipsTargetLowering::EmitFEXT_T8I8I16_ins(
   return BB;
 }
 
+
+static unsigned Mips16WhichOp8uOr16simm
+  (unsigned shortOp, unsigned longOp, int64_t Imm) {
+  if (isUInt<8>(Imm))
+    return shortOp;
+  else if (isInt<16>(Imm))
+    return longOp;
+  else
+    llvm_unreachable("immediate field not usable");
+}
+
+MachineBasicBlock *MipsTargetLowering::EmitFEXT_CCRX16_ins(
+  unsigned SltOpc,
+  MachineInstr *MI,  MachineBasicBlock *BB) const {
+  if (DontExpandCondPseudos16)
+    return BB;
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  unsigned CC = MI->getOperand(0).getReg();
+  unsigned regX = MI->getOperand(1).getReg();
+  unsigned regY = MI->getOperand(2).getReg();
+  BuildMI(*BB, MI, MI->getDebugLoc(),
+		  TII->get(SltOpc)).addReg(regX).addReg(regY);
+  BuildMI(*BB, MI, MI->getDebugLoc(),
+          TII->get(Mips::MoveR3216), CC).addReg(Mips::T8);
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
+MachineBasicBlock *MipsTargetLowering::EmitFEXT_CCRXI16_ins(
+  unsigned SltiOpc, unsigned SltiXOpc,
+  MachineInstr *MI,  MachineBasicBlock *BB )const {
+  if (DontExpandCondPseudos16)
+    return BB;
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  unsigned CC = MI->getOperand(0).getReg();
+  unsigned regX = MI->getOperand(1).getReg();
+  int64_t Imm = MI->getOperand(2).getImm();
+  unsigned SltOpc = Mips16WhichOp8uOr16simm(SltiOpc, SltiXOpc, Imm);
+  BuildMI(*BB, MI, MI->getDebugLoc(),
+          TII->get(SltOpc)).addReg(regX).addImm(Imm);
+  BuildMI(*BB, MI, MI->getDebugLoc(),
+          TII->get(Mips::MoveR3216), CC).addReg(Mips::T8);
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+
+}
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
@@ -1633,6 +1682,18 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::BtnezT8SltiuX16: return EmitFEXT_T8I8I16_ins(
     Mips::BtnezX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
     break;
+  case Mips::SltCCRxRy16:
+    return EmitFEXT_CCRX16_ins(Mips::SltRxRy16, MI, BB);
+    break;
+  case Mips::SltiCCRxImmX16:
+    return EmitFEXT_CCRXI16_ins
+      (Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
+  case Mips::SltiuCCRxImmX16:
+    return EmitFEXT_CCRXI16_ins
+      (Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
+  case Mips::SltuCCRxRy16:
+    return EmitFEXT_CCRX16_ins
+      (Mips::SltuRxRy16, MI, BB);
   }
 }
 

@@ -90,6 +90,7 @@ class FEXT_CCRXI16_ins<string asmstr>:
   MipsPseudo16<(outs CPU16Regs:$cc), (ins CPU16Regs:$rx, simm16:$imm),
                !strconcat(asmstr, "\t$rx, $imm\n\tmove\t$cc, $$t8"), []> {
   let isCodeGenOnly=1;
+  let usesCustomInserter = 1;
 }
 
 // JAL and JALX instruction format
@@ -138,6 +139,7 @@ class FCCRR16_ins<string asmstr> :
   MipsPseudo16<(outs CPU16Regs:$cc), (ins CPU16Regs:$rx, CPU16Regs:$ry),
                !strconcat(asmstr, "\t$rx, $ry\n\tmove\t$cc, $$t8"), []> {
   let isCodeGenOnly=1;
+  let usesCustomInserter = 1;
 }
 
 //
