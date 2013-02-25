@@ -392,10 +392,9 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     
     llvm::DIType ISATy = DBuilder.createPointerType(ClassTy, Size);
 
-    llvm::DIType FwdTy =  DBuilder.createStructType(TheCU, "objc_object", 
-                                                    getOrCreateMainFile(),
-                                                    0, 0, 0, 0,
-                                                    llvm::DIArray());
+    llvm::DIType FwdTy =
+        DBuilder.createStructType(TheCU, "objc_object", getOrCreateMainFile(),
+                                  0, 0, 0, 0, llvm::DIType(), llvm::DIArray());
 
     llvm::TrackingVH<llvm::MDNode> ObjNode(FwdTy);
     SmallVector<llvm::Value *, 1> EltTys;
@@ -697,7 +696,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
 
   EltTy = DBuilder.createStructType(Unit, "__block_descriptor",
                                     Unit, LineNo, FieldOffset, 0,
-                                    Flags, Elements);
+                                    Flags, llvm::DIType(), Elements);
 
   // Bit size, align and offset of the type.
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
@@ -727,7 +726,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
 
   EltTy = DBuilder.createStructType(Unit, "__block_literal_generic",
                                     Unit, LineNo, FieldOffset, 0,
-                                    Flags, Elements);
+                                    Flags, llvm::DIType(), Elements);
 
   BlockLiteralGenericSet = true;
   BlockLiteralGeneric = DBuilder.createPointerType(EltTy, Size);
@@ -1433,7 +1432,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   llvm::DIType RealDecl =
     DBuilder.createStructType(Unit, ID->getName(), DefUnit,
                               Line, Size, Align, Flags,
-                              llvm::DIArray(), RuntimeLang);
+                              llvm::DIType(), llvm::DIArray(), RuntimeLang);
 
   // Otherwise, insert it into the CompletedTypeCache so that recursive uses
   // will find it and we're emitting the complete type.
@@ -1980,7 +1979,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
                                         llvm::DIArray());
   } else
     RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
-                                         Size, Align, 0, llvm::DIArray());
+					 Size, Align, 0, llvm::DIType(), llvm::DIArray());
 
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = llvm::DIType(RealDecl);
@@ -2367,7 +2366,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
   unsigned Flags = llvm::DIDescriptor::FlagBlockByrefStruct;
   
   return DBuilder.createStructType(Unit, "", Unit, 0, FieldOffset, 0, Flags,
-                                   Elements);
+                                   llvm::DIType(), Elements);
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
@@ -2724,7 +2723,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     DBuilder.createStructType(tunit, typeName.str(), tunit, line,
                               CGM.getContext().toBits(block.BlockSize),
                               CGM.getContext().toBits(block.BlockAlign),
-                              0, fieldsArray);
+                              0, llvm::DIType(), fieldsArray);
   type = DBuilder.createPointerType(type, CGM.PointerWidthInBits);
 
   // Get overall information about the block.
