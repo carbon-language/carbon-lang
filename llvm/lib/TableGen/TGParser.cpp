@@ -382,7 +382,8 @@ static bool isObjectStart(tgtok::TokKind K) {
 
 static std::string GetNewAnonymousName() {
   static unsigned AnonCounter = 0;
-  return "anonymous."+utostr(AnonCounter++);
+  unsigned Tmp = AnonCounter++; // MSVC2012 ICEs without this.
+  return "anonymous." + utostr(Tmp);
 }
 
 /// ParseObjectName - If an object name is specified, return it.  Otherwise,
