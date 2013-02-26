@@ -20,8 +20,7 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  // FIXME: enable this line back once gvn vs tsan is fixed.
-//   S.c2 = 1;
+  S.c2 = 1;
   return NULL;
 }
 
