@@ -48,8 +48,8 @@ ${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${SANITIZER_INCLUDES}/*.h
 
 # Sanitizer_common
 COMMON_RTL=${COMPILER_RT}/lib/sanitizer_common
-${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${COMMON_RTL}/*.{cc,h}
-${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${COMMON_RTL}/tests/*.cc
+${CPPLINT} --filter=${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/*.{cc,h}
+${CPPLINT} --filter=${COMMON_RTL_INC_LINT_FILTER} ${COMMON_RTL}/tests/*.cc
 
 # Interception
 INTERCEPTION=${COMPILER_RT}/lib/interception

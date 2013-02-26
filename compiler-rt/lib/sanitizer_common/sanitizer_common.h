@@ -177,7 +177,7 @@ unsigned char _BitScanReverse64(unsigned long *index, unsigned __int64 mask);  /
 #endif
 
 INLINE uptr MostSignificantSetBitIndex(uptr x) {
-  CHECK(x != 0);
+  CHECK_NE(x, 0U);
   unsigned long up;  // NOLINT
 #if !defined(_WIN32) || defined(__clang__)
   up = SANITIZER_WORDSIZE - 1 - __builtin_clzl(x);

@@ -158,6 +158,7 @@ class SizeClassMap {
     for (uptr c = 1; c < kNumClasses; c++) {
       // Printf("Validate: c%zd\n", c);
       uptr s = Size(c);
+      CHECK_NE(s, 0U);
       CHECK_EQ(ClassID(s), c);
       if (c != kNumClasses - 1)
         CHECK_EQ(ClassID(s + 1), c + 1);

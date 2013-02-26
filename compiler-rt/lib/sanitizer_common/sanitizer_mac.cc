@@ -304,8 +304,8 @@ BlockingMutex::BlockingMutex(LinkerInitialized) {
 
 void BlockingMutex::Lock() {
   CHECK(sizeof(OSSpinLock) <= sizeof(opaque_storage_));
-  CHECK(OS_SPINLOCK_INIT == 0);
-  CHECK(owner_ != (uptr)pthread_self());
+  CHECK_EQ(OS_SPINLOCK_INIT, 0);
+  CHECK_NE(owner_, (uptr)pthread_self());
   OSSpinLockLock((OSSpinLock*)&opaque_storage_);
   CHECK(!owner_);
   owner_ = (uptr)pthread_self();

@@ -485,7 +485,7 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   uptr memcpy_size = Min(new_size, old_size);
   void *new_ptr = Allocate(new_size, 8, stack, FROM_MALLOC);
   if (new_ptr) {
-    CHECK(REAL(memcpy) != 0);
+    CHECK_NE(REAL(memcpy), (void*)0);
     REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
     Deallocate(old_ptr, stack, FROM_MALLOC);
   }
