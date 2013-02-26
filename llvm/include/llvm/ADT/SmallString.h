@@ -77,7 +77,7 @@ public:
   void append(in_iter S, in_iter E) {
     SmallVectorImpl<char>::append(S, E);
   }
-  
+
   void append(size_t NumInputs, char Elt) {
     SmallVectorImpl<char>::append(NumInputs, Elt);
   }
