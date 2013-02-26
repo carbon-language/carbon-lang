@@ -6,7 +6,7 @@
 
 void bar(_AS2 int a); // expected-error {{parameter may not be qualified with an address space}}
 
-void foo(_AS3 float *a, 
+void foo(_AS3 float *a,
          _AS1 float b) // expected-error {{parameter may not be qualified with an address space}}
 {
   _AS2 *x;// expected-warning {{type specifier missing, defaults to 'int'}}
@@ -48,3 +48,20 @@ void test3(void) {
 typedef void ft(void);
 _AS1 ft qf; // expected-error {{function type may not be qualified with an address space}}
 typedef _AS1 ft qft; // expected-error {{function type may not be qualified with an address space}}
+
+
+typedef _AS2 int AS2Int;
+
+struct HasASFields
+{
+  _AS2 int as_field; // expected-error {{field may not be qualified with an address space}}
+   AS2Int typedef_as_field; // expected-error {{field may not be qualified with an address space}}
+};
+
+// Assertion failure was when the field was accessed
+void access_as_field()
+{
+    struct HasASFields x;
+    (void) bar.as_field;
+}
+
