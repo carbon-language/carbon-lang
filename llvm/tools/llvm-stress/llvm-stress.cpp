@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
@@ -26,7 +27,6 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include <algorithm>
-#include <memory>
 #include <set>
 #include <sstream>
 #include <vector>
@@ -622,15 +622,15 @@ void FillFunction(Function *F, Random &R) {
 
   // List of modifiers which add new random instructions.
   std::vector<Modifier*> Modifiers;
-  std::auto_ptr<Modifier> LM(new LoadModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> SM(new StoreModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> EE(new ExtractElementModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> SHM(new ShuffModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> IE(new InsertElementModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> BM(new BinModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> CM(new CastModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> SLM(new SelectModifier(BB, &PT, &R));
-  std::auto_ptr<Modifier> PM(new CmpModifier(BB, &PT, &R));
+  OwningPtr<Modifier> LM(new LoadModifier(BB, &PT, &R));
+  OwningPtr<Modifier> SM(new StoreModifier(BB, &PT, &R));
+  OwningPtr<Modifier> EE(new ExtractElementModifier(BB, &PT, &R));
+  OwningPtr<Modifier> SHM(new ShuffModifier(BB, &PT, &R));
+  OwningPtr<Modifier> IE(new InsertElementModifier(BB, &PT, &R));
+  OwningPtr<Modifier> BM(new BinModifier(BB, &PT, &R));
+  OwningPtr<Modifier> CM(new CastModifier(BB, &PT, &R));
+  OwningPtr<Modifier> SLM(new SelectModifier(BB, &PT, &R));
+  OwningPtr<Modifier> PM(new CmpModifier(BB, &PT, &R));
   Modifiers.push_back(LM.get());
   Modifiers.push_back(SM.get());
   Modifiers.push_back(EE.get());
@@ -684,7 +684,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm codegen stress-tester\n");
   llvm_shutdown_obj Y;
 
-  std::auto_ptr<Module> M(new Module("/tmp/autogen.bc", getGlobalContext()));
+  OwningPtr<Module> M(new Module("/tmp/autogen.bc", getGlobalContext()));
   Function *F = GenEmptyFunction(M.get());
 
   // Pick an initial seed value

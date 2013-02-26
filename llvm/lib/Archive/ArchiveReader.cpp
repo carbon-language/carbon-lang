@@ -13,13 +13,13 @@
 
 #include "llvm/Bitcode/Archive.h"
 #include "ArchiveInternals.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstdio>
 #include <cstdlib>
-#include <memory>
 using namespace llvm;
 
 /// Read a variable-bit-rate encoded unsigned integer
@@ -326,14 +326,14 @@ Archive::loadArchive(std::string* error) {
 
 // Open and completely load the archive file.
 Archive*
-Archive::OpenAndLoad(const sys::Path& file, LLVMContext& C, 
+Archive::OpenAndLoad(const sys::Path& File, LLVMContext& C,
                      std::string* ErrorMessage) {
-  std::auto_ptr<Archive> result ( new Archive(file, C));
+  OwningPtr<Archive> result ( new Archive(File, C));
   if (result->mapToMemory(ErrorMessage))
-    return 0;
+    return NULL;
   if (!result->loadArchive(ErrorMessage))
-    return 0;
-  return result.release();
+    return NULL;
+  return result.take();
 }
 
 // Get all the bitcode modules from the archive
@@ -440,15 +440,15 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
 }
 
 // Open the archive and load just the symbol tables
-Archive* Archive::OpenAndLoadSymbols(const sys::Path& file,
+Archive* Archive::OpenAndLoadSymbols(const sys::Path& File,
                                      LLVMContext& C,
                                      std::string* ErrorMessage) {
-  std::auto_ptr<Archive> result ( new Archive(file, C) );
+  OwningPtr<Archive> result ( new Archive(File, C) );
   if (result->mapToMemory(ErrorMessage))
-    return 0;
+    return NULL;
   if (!result->loadSymbolTable(ErrorMessage))
-    return 0;
-  return result.release();
+    return NULL;
+  return result.take();
 }
 
 // Look up one symbol in the symbol table and return the module that defines
