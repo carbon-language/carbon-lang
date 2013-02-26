@@ -73,6 +73,12 @@ public:
   virtual const TargetRegisterClass *getSuperIndirectRegClass() const;
   };
 
+namespace AMDGPU {
+
+  int getVOPe64(uint16_t Opcode);
+
+} // End namespace AMDGPU
+
 } // End namespace llvm
 
 namespace SIInstrFlags {
