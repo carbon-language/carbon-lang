@@ -63,3 +63,9 @@ TEST7:
 # CHECK-NEXT:   .byte   2
 # CHECK-NEXT:   .byte   3
 # CHECK-NEXT:   .byte   4
+
+TEST8:
+        .long 0x200000UL+1
+        .long 0x200000L+1
+# CHECK: .long 2097153
+# CHECK: .long 2097153

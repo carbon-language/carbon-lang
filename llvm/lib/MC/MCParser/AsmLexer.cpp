@@ -156,10 +156,13 @@ AsmToken AsmLexer::LexLineComment() {
 }
 
 static void SkipIgnoredIntegerSuffix(const char *&CurPtr) {
-  if (CurPtr[0] == 'L' && CurPtr[1] == 'L')
-    CurPtr += 2;
-  if (CurPtr[0] == 'U' && CurPtr[1] == 'L' && CurPtr[2] == 'L')
-    CurPtr += 3;
+  // Skip ULL, UL, U, L and LL suffices.
+  if (CurPtr[0] == 'U')
+    ++CurPtr;
+  if (CurPtr[0] == 'L')
+    ++CurPtr;
+  if (CurPtr[0] == 'L')
+    ++CurPtr;
 }
 
 // Look ahead to search for first non-hex digit, if it's [hH], then we treat the
@@ -220,8 +223,8 @@ AsmToken AsmLexer::LexDigit() {
     if (Radix == 2 || Radix == 16)
       ++CurPtr;
 
-    // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
-    // suffixes on integer literals.
+    // The darwin/x86 (and x86-64) assembler accepts and ignores type
+    // suffices on integer literals.
     SkipIgnoredIntegerSuffix(CurPtr);
 
     return AsmToken(AsmToken::Integer, Result, Value);
