@@ -182,14 +182,16 @@ ExprEngine::createTemporaryRegionIfNeeded(ProgramStateRef State,
   // bindings for a base type. Start by stripping and recording base casts.
   SmallVector<const CastExpr *, 4> Casts;
   const Expr *Inner = Ex->IgnoreParens();
-  while (const CastExpr *CE = dyn_cast<CastExpr>(Inner)) {
-    if (CE->getCastKind() == CK_DerivedToBase ||
-        CE->getCastKind() == CK_UncheckedDerivedToBase)
-      Casts.push_back(CE);
-    else if (CE->getCastKind() != CK_NoOp)
-      break;
+  if (V.getAs<NonLoc>()) {
+    while (const CastExpr *CE = dyn_cast<CastExpr>(Inner)) {
+      if (CE->getCastKind() == CK_DerivedToBase ||
+          CE->getCastKind() == CK_UncheckedDerivedToBase)
+        Casts.push_back(CE);
+      else if (CE->getCastKind() != CK_NoOp)
+        break;
 
-    Inner = CE->getSubExpr()->IgnoreParens();
+      Inner = CE->getSubExpr()->IgnoreParens();
+    }
   }
 
   // Create a temporary object region for the inner expression (which may have
@@ -703,7 +705,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
         State = State->BindExpr(DefaultE, LCtx, V);
         if (DefaultE->isGLValue())
-          State = createTemporaryRegionIfNeeded(State, LCtx, DefaultE);
+          State = createTemporaryRegionIfNeeded(State, LCtx, DefaultE,
+                                                DefaultE);
         Bldr2.generateNode(S, *I, State);
       }
 

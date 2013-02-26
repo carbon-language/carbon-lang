@@ -62,3 +62,17 @@ namespace rdar13265460 {
   }
 }
 
+namespace rdar13281951 {
+  struct Derived : public Trivial {
+    Derived(int value) : Trivial(value), value2(-value) {}
+    int value2;
+  };
+
+  void test() {
+    Derived obj(1);
+    obj.value = 42;
+    const Trivial * const &pointerRef = &obj;
+    clang_analyzer_eval(pointerRef->value == 42); // expected-warning{{TRUE}}
+  }
+}
+
