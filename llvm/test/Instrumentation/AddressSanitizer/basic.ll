@@ -5,7 +5,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
 
-define i32 @test_load(i32* %a) address_safety {
+define i32 @test_load(i32* %a) sanitize_address {
 ; CHECK: @test_load
 ; CHECK-NOT: load
 ; CHECK:   %[[LOAD_ADDR:[^ ]*]] = ptrtoint i32* %a to i64
@@ -38,7 +38,7 @@ entry:
   ret i32 %tmp1
 }
 
-define void @test_store(i32* %a) address_safety {
+define void @test_store(i32* %a) sanitize_address {
 ; CHECK: @test_store
 ; CHECK-NOT: store
 ; CHECK:   %[[STORE_ADDR:[^ ]*]] = ptrtoint i32* %a to i64
@@ -73,7 +73,7 @@ entry:
 ; Check that asan leaves just one alloca.
 
 declare void @alloca_test_use([10 x i8]*)
-define void @alloca_test() address_safety {
+define void @alloca_test() sanitize_address {
 entry:
   %x = alloca [10 x i8], align 1
   %y = alloca [10 x i8], align 1
@@ -89,7 +89,7 @@ entry:
 ; CHECK-NOT: = alloca
 ; CHECK: ret void
 
-define void @LongDoubleTest(x86_fp80* nocapture %a) nounwind uwtable address_safety {
+define void @LongDoubleTest(x86_fp80* nocapture %a) nounwind uwtable sanitize_address {
 entry:
     store x86_fp80 0xK3FFF8000000000000000, x86_fp80* %a, align 16
     ret void
@@ -101,7 +101,7 @@ entry:
 ; CHECK: ret void
 
 
-define void @i40test(i40* %a, i40* %b) nounwind uwtable address_safety {
+define void @i40test(i40* %a, i40* %b) nounwind uwtable sanitize_address {
   entry:
   %t = load i40* %a
   store i40 %t, i40* %b, align 8
@@ -115,7 +115,7 @@ define void @i40test(i40* %a, i40* %b) nounwind uwtable address_safety {
 ; CHECK: __asan_report_store_n{{.*}}, i64 5)
 ; CHECK: ret void
 
-define void @i80test(i80* %a, i80* %b) nounwind uwtable address_safety {
+define void @i80test(i80* %a, i80* %b) nounwind uwtable sanitize_address {
   entry:
   %t = load i80* %a
   store i80 %t, i80* %b, align 8

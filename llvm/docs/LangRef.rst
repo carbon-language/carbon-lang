@@ -793,9 +793,6 @@ example:
     define void @f() alwaysinline optsize { ... }
     define void @f() optsize { ... }
 
-``address_safety``
-    This attribute indicates that the address safety analysis is enabled
-    for this function.
 ``alignstack(<n>)``
     This attribute indicates that, when emitting the prologue and
     epilogue, the backend should forcibly align the stack pointer.
@@ -873,6 +870,15 @@ example:
     ``setjmp`` is an example of such a function. The compiler disables
     some optimizations (like tail calls) in the caller of these
     functions.
+``sanitize_address``
+    This attribute indicates that AddressSanitizer checks
+    (dynamic address safety analysis) are enabled for this function.
+``sanitize_memory``
+    This attribute indicates that MemorySanitizer checks (dynamic detection
+    of accesses to uninitialized memory) are enabled for this function.
+``sanitize_thread``
+    This attribute indicates that ThreadSanitizer checks
+    (dynamic thread safety analysis) are enabled for this function.
 ``ssp``
     This attribute indicates that the function should emit a stack
     smashing protector. It is in the form of a "canary" --- a random value
@@ -914,12 +920,6 @@ example:
     If a function that has an ``sspstrong`` attribute is inlined into a
     function that doesn't have an ``sspstrong`` attribute, then the
     resulting function will have an ``sspstrong`` attribute.
-``thread_safety``
-    This attribute indicates that the thread safety analysis is enabled
-    for this function.
-``uninitialized_checks``
-    This attribute indicates that the checks for uses of uninitialized
-    memory are enabled.
 ``uwtable``
     This attribute indicates that the ABI being targeted requires that
     an unwind table entry be produce for this function even if we can

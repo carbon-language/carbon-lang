@@ -9,7 +9,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: @__asan_mapping_offset = linkonce_odr constant i64 0
 ; CHECK: @__asan_mapping_scale = linkonce_odr constant i64 2
 
-define i32 @test_load(i32* %a) address_safety {
+define i32 @test_load(i32* %a) sanitize_address {
 ; CHECK: @test_load
 ; CHECK-NOT: load
 ; CHECK:   %[[LOAD_ADDR:[^ ]*]] = ptrtoint i32* %a to i64

@@ -7,7 +7,7 @@ target triple = "x86_64-unknown-linux-gnu"
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
 declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 
-define void @lifetime_no_size() address_safety {
+define void @lifetime_no_size() sanitize_address {
 entry:
   %i = alloca i32, align 4
   %i.ptr = bitcast i32* %i to i8*
@@ -23,7 +23,7 @@ entry:
 }
 
 ; Generic case of lifetime analysis.
-define void @lifetime() address_safety {
+define void @lifetime() sanitize_address {
   ; CHECK: @lifetime
 
   ; Regular variable lifetime intrinsics.
@@ -61,7 +61,7 @@ define void @lifetime() address_safety {
 }
 
 ; Check that arguments of lifetime may come from phi nodes.
-define void @phi_args(i1 %x) address_safety {
+define void @phi_args(i1 %x) sanitize_address {
   ; CHECK: @phi_args
 
 entry:

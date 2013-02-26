@@ -1098,11 +1098,11 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   DEBUG(dbgs() << "ASAN instrumenting:\n" << F << "\n");
   initializeCallbacks(*F.getParent());
 
-  // If needed, insert __asan_init before checking for AddressSafety attr.
+  // If needed, insert __asan_init before checking for SanitizeAddress attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
   if (!F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::AddressSafety))
+                                      Attribute::SanitizeAddress))
     return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())

@@ -157,17 +157,17 @@ define void @f26() nonlazybind
         ret void;
 }
 
-define void @f27() address_safety
+define void @f27() sanitize_address
 ; CHECK: define void @f27() #17
 {
         ret void;
 }
-define void @f28() thread_safety
+define void @f28() sanitize_thread
 ; CHECK: define void @f28() #18
 {
         ret void;
 }
-define void @f29() uninitialized_checks
+define void @f29() sanitize_memory
 ; CHECK: define void @f29() #19
 {
         ret void;
@@ -196,7 +196,7 @@ define void @f30() "cpu"="cortex-a8"
 ; CHECK: attributes #14 = { returns_twice }
 ; CHECK: attributes #15 = { uwtable }
 ; CHECK: attributes #16 = { nonlazybind }
-; CHECK: attributes #17 = { address_safety }
-; CHECK: attributes #18 = { thread_safety }
-; CHECK: attributes #19 = { uninitialized_checks }
+; CHECK: attributes #17 = { sanitize_address }
+; CHECK: attributes #18 = { sanitize_thread }
+; CHECK: attributes #19 = { sanitize_memory }
 ; CHECK: attributes #20 = { "cpu"="cortex-a8" }

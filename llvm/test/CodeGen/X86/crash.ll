@@ -431,7 +431,7 @@ return:                                           ; preds = %entry
 ; uitofp expands to an FCMOV instruction which splits the basic block.
 ; Make sure the live range of %AL isn't split.
 @.str = private unnamed_addr constant { [1 x i8], [63 x i8] } zeroinitializer, align 32
-define void @pr13188(i64* nocapture %this) uwtable ssp address_safety align 2 {
+define void @pr13188(i64* nocapture %this) uwtable ssp sanitize_address align 2 {
 entry:
   %x7 = load i64* %this, align 8
   %sub = add i64 %x7, -1

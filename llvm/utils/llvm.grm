@@ -174,9 +174,9 @@ FuncAttr      ::= noreturn
  | sspreq
  | returns_twice
  | nonlazybind
- | address_safety
- | thread_safety
- | uninitialized_checks
+ | sanitize_address
+ | sanitize_thread
+ | sanitize_memory
  ;
 
 OptFuncAttrs  ::= + _ | OptFuncAttrs FuncAttr ;

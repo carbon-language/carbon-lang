@@ -287,7 +287,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   // Load widening is hostile to ThreadSanitizer: it may cause false positives
   // or make the reports more cryptic (access sizes are wrong).
   if (LI->getParent()->getParent()->getAttributes().
-      hasAttribute(AttributeSet::FunctionIndex, Attribute::ThreadSafety))
+      hasAttribute(AttributeSet::FunctionIndex, Attribute::SanitizeThread))
     return 0;
   
   // Get the base of this load.
@@ -334,7 +334,7 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
 
     if (LIOffs+NewLoadByteSize > MemLocEnd &&
         LI->getParent()->getParent()->getAttributes().
-          hasAttribute(AttributeSet::FunctionIndex, Attribute::AddressSafety))
+          hasAttribute(AttributeSet::FunctionIndex, Attribute::SanitizeAddress))
       // We will be reading past the location accessed by the original program.
       // While this is safe in a regular build, Address Safety analysis tools
       // may start reporting false warnings. So, don't do widening.

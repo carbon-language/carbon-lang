@@ -63,7 +63,6 @@ public:
   enum AttrKind {
     // IR-Level Attributes
     None,                  ///< No attributes have been set
-    AddressSafety,         ///< Address safety checking is on.
     Alignment,             ///< Alignment of parameter (5 bits)
                            ///< stored as log2 of alignment with +1 bias
                            ///< 0 means unaligned (different from align(1))
@@ -98,8 +97,9 @@ public:
     StackProtectReq,       ///< Stack protection required.
     StackProtectStrong,    ///< Strong Stack protection.
     StructRet,             ///< Hidden pointer to structure to return
-    ThreadSafety,          ///< Thread safety checking is on.
-    UninitializedChecks,   ///< Checking for uses of uninitialized memory is on.
+    SanitizeAddress,       ///< AddressSanitizer is on.
+    SanitizeThread,        ///< ThreadSanitizer is on.
+    SanitizeMemory,        ///< MemorySanitizer is on.
     UWTable,               ///< Function must be in a unwind table
     ZExt,                  ///< Zero extended before/after call
 

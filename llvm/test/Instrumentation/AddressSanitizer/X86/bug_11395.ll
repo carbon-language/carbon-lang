@@ -36,14 +36,14 @@ target triple = "i386-unknown-linux-gnu"
 @ff_mlp_firorder_7 = external global i8
 @ff_mlp_firorder_8 = external global i8
 
-define void @ff_mlp_init_x86(%struct.DSPContext* nocapture %c, %struct.AVCodecContext* nocapture %avctx) nounwind address_safety {
+define void @ff_mlp_init_x86(%struct.DSPContext* nocapture %c, %struct.AVCodecContext* nocapture %avctx) nounwind sanitize_address {
 entry:
   %mlp_filter_channel = getelementptr inbounds %struct.DSPContext* %c, i32 0, i32 131
   store void (i32*, i32*, i32, i32, i32, i32, i32, i32*)* @mlp_filter_channel_x86, void (i32*, i32*, i32, i32, i32, i32, i32, i32*)** %mlp_filter_channel, align 4, !tbaa !0
   ret void
 }
 
-define internal void @mlp_filter_channel_x86(i32* %state, i32* %coeff, i32 %firorder, i32 %iirorder, i32 %filter_shift, i32 %mask, i32 %blocksize, i32* %sample_buffer) nounwind address_safety {
+define internal void @mlp_filter_channel_x86(i32* %state, i32* %coeff, i32 %firorder, i32 %iirorder, i32 %filter_shift, i32 %mask, i32 %blocksize, i32* %sample_buffer) nounwind sanitize_address {
 entry:
   %filter_shift.addr = alloca i32, align 4
   %mask.addr = alloca i32, align 4

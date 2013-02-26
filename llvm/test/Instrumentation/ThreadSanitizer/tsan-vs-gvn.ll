@@ -8,9 +8,9 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 
 @f = global %struct_of_8_bytes_4_aligned zeroinitializer, align 4
 
-; Accessing bytes 4 and 6, not ok to widen to i32 if thread_safety is set.
+; Accessing bytes 4 and 6, not ok to widen to i32 if sanitize_thread is set.
 
-define i32 @test_widening_bad(i8* %P) nounwind ssp noredzone thread_safety {
+define i32 @test_widening_bad(i8* %P) nounwind ssp noredzone sanitize_thread {
 entry:
   %tmp = load i8* getelementptr inbounds (%struct_of_8_bytes_4_aligned* @f, i64 0, i32 1), align 4
   %conv = zext i8 %tmp to i32

@@ -907,29 +907,29 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
       B.addStackAlignmentAttr(Alignment);
       continue;
     }
-    case lltok::kw_address_safety:  B.addAttribute(Attribute::AddressSafety); break;
-    case lltok::kw_alwaysinline:    B.addAttribute(Attribute::AlwaysInline); break;
-    case lltok::kw_inlinehint:      B.addAttribute(Attribute::InlineHint); break;
-    case lltok::kw_minsize:         B.addAttribute(Attribute::MinSize); break;
-    case lltok::kw_naked:           B.addAttribute(Attribute::Naked); break;
-    case lltok::kw_nobuiltin:       B.addAttribute(Attribute::NoBuiltin); break;
-    case lltok::kw_noduplicate:     B.addAttribute(Attribute::NoDuplicate); break;
-    case lltok::kw_noimplicitfloat: B.addAttribute(Attribute::NoImplicitFloat); break;
-    case lltok::kw_noinline:        B.addAttribute(Attribute::NoInline); break;
-    case lltok::kw_nonlazybind:     B.addAttribute(Attribute::NonLazyBind); break;
-    case lltok::kw_noredzone:       B.addAttribute(Attribute::NoRedZone); break;
-    case lltok::kw_noreturn:        B.addAttribute(Attribute::NoReturn); break;
-    case lltok::kw_nounwind:        B.addAttribute(Attribute::NoUnwind); break;
-    case lltok::kw_optsize:         B.addAttribute(Attribute::OptimizeForSize); break;
-    case lltok::kw_readnone:        B.addAttribute(Attribute::ReadNone); break;
-    case lltok::kw_readonly:        B.addAttribute(Attribute::ReadOnly); break;
-    case lltok::kw_returns_twice:   B.addAttribute(Attribute::ReturnsTwice); break;
-    case lltok::kw_ssp:             B.addAttribute(Attribute::StackProtect); break;
-    case lltok::kw_sspreq:          B.addAttribute(Attribute::StackProtectReq); break;
-    case lltok::kw_sspstrong:       B.addAttribute(Attribute::StackProtectStrong); break;
-    case lltok::kw_thread_safety:   B.addAttribute(Attribute::ThreadSafety); break;
-    case lltok::kw_uninitialized_checks: B.addAttribute(Attribute::UninitializedChecks); break;
-    case lltok::kw_uwtable:         B.addAttribute(Attribute::UWTable); break;
+    case lltok::kw_alwaysinline:      B.addAttribute(Attribute::AlwaysInline); break;
+    case lltok::kw_inlinehint:        B.addAttribute(Attribute::InlineHint); break;
+    case lltok::kw_minsize:           B.addAttribute(Attribute::MinSize); break;
+    case lltok::kw_naked:             B.addAttribute(Attribute::Naked); break;
+    case lltok::kw_nobuiltin:         B.addAttribute(Attribute::NoBuiltin); break;
+    case lltok::kw_noduplicate:       B.addAttribute(Attribute::NoDuplicate); break;
+    case lltok::kw_noimplicitfloat:   B.addAttribute(Attribute::NoImplicitFloat); break;
+    case lltok::kw_noinline:          B.addAttribute(Attribute::NoInline); break;
+    case lltok::kw_nonlazybind:       B.addAttribute(Attribute::NonLazyBind); break;
+    case lltok::kw_noredzone:         B.addAttribute(Attribute::NoRedZone); break;
+    case lltok::kw_noreturn:          B.addAttribute(Attribute::NoReturn); break;
+    case lltok::kw_nounwind:          B.addAttribute(Attribute::NoUnwind); break;
+    case lltok::kw_optsize:           B.addAttribute(Attribute::OptimizeForSize); break;
+    case lltok::kw_readnone:          B.addAttribute(Attribute::ReadNone); break;
+    case lltok::kw_readonly:          B.addAttribute(Attribute::ReadOnly); break;
+    case lltok::kw_returns_twice:     B.addAttribute(Attribute::ReturnsTwice); break;
+    case lltok::kw_ssp:               B.addAttribute(Attribute::StackProtect); break;
+    case lltok::kw_sspreq:            B.addAttribute(Attribute::StackProtectReq); break;
+    case lltok::kw_sspstrong:         B.addAttribute(Attribute::StackProtectStrong); break;
+    case lltok::kw_sanitize_address:  B.addAttribute(Attribute::SanitizeAddress); break;
+    case lltok::kw_sanitize_thread:   B.addAttribute(Attribute::SanitizeThread); break;
+    case lltok::kw_sanitize_memory:   B.addAttribute(Attribute::SanitizeMemory); break;
+    case lltok::kw_uwtable:           B.addAttribute(Attribute::UWTable); break;
 
     // Error handling.
     case lltok::kw_inreg:
@@ -1159,17 +1159,17 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_sret:            B.addAttribute(Attribute::StructRet); break;
     case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
 
-    case lltok::kw_noreturn:       case lltok::kw_nounwind:
-    case lltok::kw_uwtable:        case lltok::kw_returns_twice:
-    case lltok::kw_noinline:       case lltok::kw_readnone:
-    case lltok::kw_readonly:       case lltok::kw_inlinehint:
-    case lltok::kw_alwaysinline:   case lltok::kw_optsize:
-    case lltok::kw_ssp:            case lltok::kw_sspreq:
-    case lltok::kw_noredzone:      case lltok::kw_noimplicitfloat:
-    case lltok::kw_naked:          case lltok::kw_nonlazybind:
-    case lltok::kw_address_safety: case lltok::kw_minsize:
-    case lltok::kw_alignstack:     case lltok::kw_thread_safety:
-    case lltok::kw_nobuiltin:      case lltok::kw_uninitialized_checks:
+    case lltok::kw_alignstack:      case lltok::kw_nounwind:
+    case lltok::kw_alwaysinline:    case lltok::kw_optsize:
+    case lltok::kw_inlinehint:      case lltok::kw_readnone:
+    case lltok::kw_minsize:         case lltok::kw_readonly:
+    case lltok::kw_naked:           case lltok::kw_returns_twice:
+    case lltok::kw_nobuiltin:       case lltok::kw_sanitize_address:
+    case lltok::kw_noimplicitfloat: case lltok::kw_sanitize_memory:
+    case lltok::kw_noinline:        case lltok::kw_sanitize_thread:
+    case lltok::kw_nonlazybind:     case lltok::kw_ssp:
+    case lltok::kw_noredzone:       case lltok::kw_sspreq:
+    case lltok::kw_noreturn:        case lltok::kw_uwtable:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }
@@ -1200,19 +1200,19 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
       HaveError |= Error(Lex.getLoc(), "invalid use of parameter-only attribute");
       break;
 
-    case lltok::kw_noreturn:       case lltok::kw_nounwind:
-    case lltok::kw_uwtable:        case lltok::kw_returns_twice:
-    case lltok::kw_noinline:       case lltok::kw_readnone:
-    case lltok::kw_readonly:       case lltok::kw_inlinehint:
-    case lltok::kw_alwaysinline:   case lltok::kw_optsize:
-    case lltok::kw_ssp:            case lltok::kw_sspreq:
-    case lltok::kw_sspstrong:      case lltok::kw_noimplicitfloat:
-    case lltok::kw_noredzone:      case lltok::kw_naked:
-    case lltok::kw_nonlazybind:    case lltok::kw_address_safety:
-    case lltok::kw_minsize:        case lltok::kw_alignstack:
-    case lltok::kw_align:          case lltok::kw_noduplicate:
-    case lltok::kw_thread_safety:  case lltok::kw_uninitialized_checks:
-    case lltok::kw_nobuiltin:
+    case lltok::kw_align:                 case lltok::kw_noreturn:
+    case lltok::kw_alignstack:            case lltok::kw_nounwind:
+    case lltok::kw_alwaysinline:          case lltok::kw_optsize:
+    case lltok::kw_inlinehint:            case lltok::kw_readnone:
+    case lltok::kw_minsize:               case lltok::kw_readonly:
+    case lltok::kw_naked:                 case lltok::kw_returns_twice:
+    case lltok::kw_nobuiltin:             case lltok::kw_sanitize_address:
+    case lltok::kw_noduplicate:           case lltok::kw_sanitize_memory:
+    case lltok::kw_noimplicitfloat:       case lltok::kw_sanitize_thread:
+    case lltok::kw_noinline:              case lltok::kw_ssp:
+    case lltok::kw_nonlazybind:           case lltok::kw_sspreq:
+    case lltok::kw_noredzone:             case lltok::kw_sspstrong:
+                                          case lltok::kw_uwtable:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }

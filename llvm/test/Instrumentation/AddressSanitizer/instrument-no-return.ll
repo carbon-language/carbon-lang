@@ -7,7 +7,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 declare void @MyNoReturnFunc(i32) noreturn
 
-define i32 @Call1(i8* nocapture %arg) uwtable address_safety {
+define i32 @Call1(i8* nocapture %arg) uwtable sanitize_address {
 entry:
   call void @MyNoReturnFunc(i32 1) noreturn  ; The call insn has noreturn attr.
 ; CHECK:        @Call1
@@ -17,7 +17,7 @@ entry:
   unreachable
 }
 
-define i32 @Call2(i8* nocapture %arg) uwtable address_safety {
+define i32 @Call2(i8* nocapture %arg) uwtable sanitize_address {
 entry:
   call void @MyNoReturnFunc(i32 1)  ; No noreturn attribure on the call.
 ; CHECK:        @Call2
@@ -29,7 +29,7 @@ entry:
 
 declare i32 @__gxx_personality_v0(...)
 
-define i64 @Invoke1(i8** %esc) nounwind uwtable ssp address_safety {
+define i64 @Invoke1(i8** %esc) nounwind uwtable ssp sanitize_address {
 entry:
   invoke void @MyNoReturnFunc(i32 1)
           to label %invoke.cont unwind label %lpad

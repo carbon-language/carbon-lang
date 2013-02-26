@@ -562,7 +562,6 @@ lltok::Kind LLLexer::LexIdentifier() {
 
   KEYWORD(attributes);
 
-  KEYWORD(address_safety);
   KEYWORD(alwaysinline);
   KEYWORD(byval);
   KEYWORD(inlinehint);
@@ -589,8 +588,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(ssp);
   KEYWORD(sspreq);
   KEYWORD(sspstrong);
-  KEYWORD(thread_safety);
-  KEYWORD(uninitialized_checks);
+  KEYWORD(sanitize_address);
+  KEYWORD(sanitize_thread);
+  KEYWORD(sanitize_memory);
   KEYWORD(uwtable);
   KEYWORD(zeroext);
 
