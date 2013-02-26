@@ -418,3 +418,107 @@ bool llvm::expandDivision(BinaryOperator *Div) {
 
   return true;
 }
+
+/// Generate code to compute the remainder of two integers of bitwidth up to 
+/// 32 bits. Uses the above routines and extends the inputs/truncates the
+/// outputs to operate in 32 bits; that is, these routines are good for targets
+/// that have no or very little suppport for smaller than 32 bit integer 
+/// arithmetic.
+///
+/// @brief Replace Rem with emulation code.
+bool llvm::expandRemainderUpTo32Bits(BinaryOperator *Rem) {
+  assert((Rem->getOpcode() == Instruction::SRem ||
+          Rem->getOpcode() == Instruction::URem) &&
+          "Trying to expand remainder from a non-remainder function");
+
+  Type *RemTy = Rem->getType();
+  if (RemTy->isVectorTy())
+    llvm_unreachable("Div over vectors not supported");
+
+  unsigned RemTyBitWidth = RemTy->getIntegerBitWidth();
+
+  if (RemTyBitWidth > 32) 
+    llvm_unreachable("Div of bitwidth greater than 32 not supported");
+
+  if (RemTyBitWidth == 32) 
+    return expandRemainder(Rem);
+
+  // If bitwidth smaller than 32 extend inputs, truncate output and proceed
+  // with 32 bit division.
+  IRBuilder<> Builder(Rem);
+
+  Value *ExtDividend;
+  Value *ExtDivisor;
+  Value *ExtRem;
+  Value *Trunc;
+  Type *Int32Ty = Builder.getInt32Ty();
+
+  if (Rem->getOpcode() == Instruction::SRem) {
+    ExtDividend = Builder.CreateSExt(Rem->getOperand(0), Int32Ty);
+    ExtDivisor = Builder.CreateSExt(Rem->getOperand(1), Int32Ty);
+    ExtRem = Builder.CreateSRem(ExtDividend, ExtDivisor);
+  } else {
+    ExtDividend = Builder.CreateZExt(Rem->getOperand(0), Int32Ty);
+    ExtDivisor = Builder.CreateZExt(Rem->getOperand(1), Int32Ty);
+    ExtRem = Builder.CreateURem(ExtDividend, ExtDivisor);
+  }
+  Trunc = Builder.CreateTrunc(ExtRem, RemTy);
+
+  Rem->replaceAllUsesWith(Trunc);
+  Rem->dropAllReferences();
+  Rem->eraseFromParent();
+
+  return expandRemainder(cast<BinaryOperator>(ExtRem));
+}
+
+
+/// Generate code to divide two integers of bitwidth up to 32 bits. Uses the
+/// above routines and extends the inputs/truncates the outputs to operate
+/// in 32 bits; that is, these routines are good for targets that have no
+/// or very little support for smaller than 32 bit integer arithmetic.
+///
+/// @brief Replace Div with emulation code.
+bool llvm::expandDivisionUpTo32Bits(BinaryOperator *Div) {
+  assert((Div->getOpcode() == Instruction::SDiv ||
+          Div->getOpcode() == Instruction::UDiv) &&
+          "Trying to expand division from a non-division function");
+
+  Type *DivTy = Div->getType();
+  if (DivTy->isVectorTy())
+    llvm_unreachable("Div over vectors not supported");
+
+  unsigned DivTyBitWidth = DivTy->getIntegerBitWidth();
+
+  if (DivTyBitWidth > 32)
+    llvm_unreachable("Div of bitwidth greater than 32 not supported");
+
+  if (DivTyBitWidth == 32)
+    return expandDivision(Div);
+
+  // If bitwidth smaller than 32 extend inputs, truncate output and proceed
+  // with 32 bit division.
+  IRBuilder<> Builder(Div);
+
+  Value *ExtDividend;
+  Value *ExtDivisor;
+  Value *ExtDiv;
+  Value *Trunc;
+  Type *Int32Ty = Builder.getInt32Ty();
+
+  if (Div->getOpcode() == Instruction::SDiv) {
+    ExtDividend = Builder.CreateSExt(Div->getOperand(0), Int32Ty);
+    ExtDivisor = Builder.CreateSExt(Div->getOperand(1), Int32Ty);
+    ExtDiv = Builder.CreateSDiv(ExtDividend, ExtDivisor);
+  } else {
+    ExtDividend = Builder.CreateZExt(Div->getOperand(0), Int32Ty);
+    ExtDivisor = Builder.CreateZExt(Div->getOperand(1), Int32Ty);
+    ExtDiv = Builder.CreateUDiv(ExtDividend, ExtDivisor);  
+  }
+  Trunc = Builder.CreateTrunc(ExtDiv, DivTy);
+
+  Div->replaceAllUsesWith(Trunc);
+  Div->dropAllReferences();
+  Div->eraseFromParent();
+
+  return expandDivision(cast<BinaryOperator>(ExtDiv));
+}

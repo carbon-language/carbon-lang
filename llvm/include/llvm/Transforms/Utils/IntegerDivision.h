@@ -43,6 +43,20 @@ namespace llvm {
   /// @brief Replace Div with generated code.
   bool expandDivision(BinaryOperator* Div);
 
+  /// Generate code to calculate the remainder of two integers, replacing Rem
+  /// with the generated code. Uses the above 32bit routine, therefore adequate
+  /// for targets with little or no support for less than 32 bit arithmetic.
+  ///
+  /// @brief Replace Rem with generated code.
+  bool expandRemainderUpTo32Bits(BinaryOperator *Rem);
+
+  /// Generate code to divide two integers, replacing Div with the generated 
+  /// code. Uses the above 32bit routine, therefore adequate for targets with 
+  /// little or no support for less than 32 bit arithmetic.
+  /// 
+  /// @brief Replace Rem with generated code.
+  bool expandDivisionUpTo32Bits(BinaryOperator *Div);
+
 } // End llvm namespace
 
 #endif
