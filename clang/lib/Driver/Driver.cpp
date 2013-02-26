@@ -249,7 +249,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // FIXME: What are we going to do with -V and -b?
 
   // FIXME: This stuff needs to go into the Compilation, not the driver.
-  bool CCCPrintOptions = false, CCCPrintActions = false;
+  bool CCCPrintOptions, CCCPrintActions;
 
   InputArgList *Args = ParseArgStrings(ArgList.slice(1));
 
