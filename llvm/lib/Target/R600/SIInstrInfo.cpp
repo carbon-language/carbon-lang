@@ -66,6 +66,16 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 }
 
+MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
+                                              bool NewMI) const {
+
+  if (MI->getNumOperands() < 3 || !MI->getOperand(1).isReg() ||
+      !MI->getOperand(2).isReg())
+    return 0;
+
+  return TargetInstrInfo::commuteInstruction(MI, NewMI);
+}
+
 MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                            int64_t Imm) const {
   MachineInstr * MI = MF->CreateMachineInstr(get(AMDGPU::V_MOV_B32_e32), DebugLoc());
