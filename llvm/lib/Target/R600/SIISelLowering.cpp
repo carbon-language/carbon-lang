@@ -545,8 +545,22 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
 
     // Is this a VSrc or SSrc operand ?
     unsigned RegClass = Desc->OpInfo[Op].RegClass;
-    if (!isVSrc(RegClass) && !isSSrc(RegClass))
+    if (!isVSrc(RegClass) && !isSSrc(RegClass)) {
+
+      if (i == 1 && Desc->isCommutable() &&
+          fitsRegClass(DAG, Ops[0], RegClass) &&
+          foldImm(Ops[1], Immediate, ScalarSlotUsed)) {
+
+        assert(isVSrc(Desc->OpInfo[NumDefs].RegClass) ||
+               isSSrc(Desc->OpInfo[NumDefs].RegClass));
+
+        // Swap commutable operands
+        SDValue Tmp = Ops[1];
+        Ops[1] = Ops[0];
+        Ops[0] = Tmp;
+      }
       continue;
+    }
 
     // Try to fold the immediates
     if (!foldImm(Ops[i], Immediate, ScalarSlotUsed)) {
