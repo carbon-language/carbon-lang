@@ -132,6 +132,8 @@ int fn5() __attribute__ ((__const));
 #define M3(a) (t3(a), fn2())
 #define M4(a, b) (foo((a), (b)) ? 0 : t3(a), 1)
 #define M5(a, b) (foo((a), (b)), 1)
+#define M6() fn1()
+#define M7() fn2()
 void t11(int i, int j) {
   M1(i, j);  // no warning
   NOP((long)foo(i, j)); // expected-warning {{expression result unused}}
@@ -143,6 +145,8 @@ void t11(int i, int j) {
   NOP((foo(i, j) ? 0 : t3(i), 1)); // expected-warning {{expression result unused}}
   M5(i, j); // no warning
   NOP((foo(i, j), 1)); // expected-warning {{expression result unused}}
+  M6(); // expected-warning {{ignoring return value}}
+  M7(); // no warning
 }
 #undef NOP
 #undef M1
@@ -150,3 +154,5 @@ void t11(int i, int j) {
 #undef M3
 #undef M4
 #undef M5
+#undef M6
+#undef M7

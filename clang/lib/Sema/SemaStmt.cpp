@@ -158,9 +158,14 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (!E)
     return;
   SourceLocation ExprLoc = E->IgnoreParens()->getExprLoc();
-  if (SourceMgr.isInSystemMacro(ExprLoc) ||
-      SourceMgr.isMacroBodyExpansion(ExprLoc))
-    return;
+  // In most cases, we don't want to warn if the expression is written in a
+  // macro body, or if the macro comes from a system header. If the offending
+  // expression is a call to a function with the warn_unused_result attribute,
+  // we warn no matter the location. Because of the order in which the various
+  // checks need to happen, we factor out the macro-related test here.
+  bool ShouldSuppress = 
+      SourceMgr.isMacroBodyExpansion(ExprLoc) ||
+      SourceMgr.isInSystemMacro(ExprLoc);
 
   const Expr *WarnExpr;
   SourceLocation Loc;
@@ -193,12 +198,16 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       return;
 
     // If the callee has attribute pure, const, or warn_unused_result, warn with
-    // a more specific message to make it clear what is happening.
+    // a more specific message to make it clear what is happening. If the call
+    // is written in a macro body, only warn if it has the warn_unused_result
+    // attribute.
     if (const Decl *FD = CE->getCalleeDecl()) {
       if (FD->getAttr<WarnUnusedResultAttr>()) {
         Diag(Loc, diag::warn_unused_result) << R1 << R2;
         return;
       }
+      if (ShouldSuppress)
+        return;
       if (FD->getAttr<PureAttr>()) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "pure";
         return;
@@ -208,7 +217,10 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
         return;
       }
     }
-  } else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
+  } else if (ShouldSuppress)
+    return;
+
+  if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
     if (getLangOpts().ObjCAutoRefCount && ME->isDelegateInitCall()) {
       Diag(Loc, diag::err_arc_unused_init_message) << R1;
       return;
