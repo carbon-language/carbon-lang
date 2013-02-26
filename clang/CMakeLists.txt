@@ -276,12 +276,12 @@ add_subdirectory(runtime)
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs by default." OFF)
 add_subdirectory(examples)
 
-# TODO: docs.
-add_subdirectory(test)
-
 option(CLANG_INCLUDE_TESTS
        "Generate build targets for the Clang unit tests."
        ${LLVM_INCLUDE_TESTS})
+
+# TODO: docs.
+add_subdirectory(test)
 
 if( CLANG_INCLUDE_TESTS )
   add_subdirectory(unittests)
