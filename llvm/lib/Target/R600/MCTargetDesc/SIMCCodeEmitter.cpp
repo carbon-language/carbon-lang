@@ -131,7 +131,7 @@ uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {
   if (Imm.F == 4.0f)
     return 246;
 
-  if (Imm.F == 4.0f)
+  if (Imm.F == -4.0f)
     return 247;
 
   return 255;
