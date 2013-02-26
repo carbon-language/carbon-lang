@@ -177,7 +177,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
           }
           if (p >= endp) {
             if (error)
-              *error = "missing name termiantor in string table";
+              *error = "missing name terminator in string table";
             return 0;
           }
         } else {
