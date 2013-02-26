@@ -502,6 +502,7 @@
         <optional>
           <attribute name="kind">
             <choice>
+              <value>attention</value>
               <value>author</value>
               <value>authors</value>
               <value>bug</value>

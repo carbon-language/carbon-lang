@@ -102,6 +102,7 @@ def Headerfile : BlockCommand<"headerfile"> { let IsHeaderfileCommand = 1; }
 // We don't do any additional semantic analysis for the following
 // BlockCommands.  It might be a good idea to do something extra for them, but
 // for now we model them as plain BlockCommands.
+def Attention  : BlockCommand<"attention">;
 def Author     : BlockCommand<"author">;
 def Authors    : BlockCommand<"authors">;
 def Bug        : BlockCommand<"bug">;

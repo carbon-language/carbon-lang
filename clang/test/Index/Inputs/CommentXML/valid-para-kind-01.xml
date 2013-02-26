@@ -4,6 +4,7 @@
 <Abstract><Para>Aaa.</Para></Abstract>
 <Discussion>
   <Para>Bbb</Para>
+  <Para kind="attention">Bbb</Para>
   <Para kind="author">Bbb</Para>
   <Para kind="authors">Bbb</Para>
   <Para kind="bug">Bbb</Para>

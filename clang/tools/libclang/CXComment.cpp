@@ -1034,6 +1034,7 @@ void CommentASTToXMLConverter::visitBlockCommandComment(const BlockCommandCommen
   StringRef ParagraphKind;
 
   switch (C->getCommandID()) {
+  case CommandTraits::KCI_attention:
   case CommandTraits::KCI_author:
   case CommandTraits::KCI_authors:
   case CommandTraits::KCI_bug:
