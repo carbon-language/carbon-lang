@@ -453,10 +453,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
             // ResolveSymbolContextForAddress with our symbol context member m_sc.
             if (m_sc.target_sp)
             {
-                // FIXME This call erases m_sc.target_sp and will never restore it.  Back it up.
-                TargetSP target_sp = m_sc.target_sp;
                 resolved |= m_sc.target_sp->GetImages().ResolveSymbolContextForAddress (lookup_addr, resolve_scope, m_sc);
-                m_sc.target_sp = target_sp;
             }
         }
 
