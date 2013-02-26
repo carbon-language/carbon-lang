@@ -97,6 +97,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      DW_AT_external
 ; PRESENT:      DW_AT_declaration
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x03)
+; PRESENT:      DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1aE"
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_a"
 ; PRESENT:      DW_AT_external
@@ -106,6 +107,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      0x[[DECL_B:[0-9a-f]+]]: DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "b"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
+; PRESENT:      DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1bE"
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_b"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
@@ -113,6 +115,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "c"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; PRESENT:      DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1cE"
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_c"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
@@ -128,15 +131,12 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_A]]}
 ; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1aE"
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_B]]}
 ; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1bE"
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_C]]}
 ; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1cE"
 
 ; ABSENT verifies that static member declarations do not have either
 ; DW_AT_location or DW_AT_data_member_location; also, variables do not
