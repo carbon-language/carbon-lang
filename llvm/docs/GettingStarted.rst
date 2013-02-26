@@ -124,6 +124,8 @@ LLVM is known to work on the following platforms:
 +-----------------+----------------------+-------------------------+
 |Linux            | amd64                | GCC                     |
 +-----------------+----------------------+-------------------------+
+|Linux            | ARM\ :sup:`13`       | GCC                     |
++-----------------+----------------------+-------------------------+
 |Solaris          | V9 (Ultrasparc)      | GCC                     |
 +-----------------+----------------------+-------------------------+
 |FreeBSD          | x86\ :sup:`1`        | GCC                     |
@@ -159,8 +161,6 @@ LLVM has partial support for the following platforms:
 
 .. note::
 
-  Code generation supported for Pentium processors and up
-
   #. Code generation supported for Pentium processors and up
   #. Code generation supported for 32-bit ABI only
   #. No native code generation
@@ -180,9 +180,9 @@ LLVM has partial support for the following platforms:
      Windows-specifics that will cause the build to fail.
   #. To use LLVM modules on Win32-based system, you may configure LLVM
      with ``--enable-shared``.
-
   #. To compile SPU backend, you need to add ``LDFLAGS=-Wl,--stack,16777216`` to
      configure.
+  #. MCJIT not working well pre-v7, old JIT engine not supported any more.
 
 Note that you will need about 1-3 GB of space for a full LLVM build in Debug
 mode, depending on the system (it is so large because of all the debugging
