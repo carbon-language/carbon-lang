@@ -726,12 +726,6 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
         return false;
     }
 
-    // If this is a kext and the user asked us to ignore kexts, don't try to load it.
-    if (!IsKernel() && GetGlobalProperties()->GetLoadKexts() == false)
-    {
-        return false;
-    }
-
     bool uuid_is_valid = m_uuid.IsValid();
 
     if (IsKernel() && uuid_is_valid && m_memory_module_sp.get())
@@ -1136,6 +1130,10 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
     if (!ReadKextSummaries (kext_summary_addr, count, kext_summaries))
         return false;
 
+    // read the plugin.dynamic-loader.darwin-kernel.load-kexts setting -- if the user requested no 
+    // kext loading, don't print any messages about kexts & don't try to read them.
+    const bool load_kexts = GetGlobalProperties()->GetLoadKexts();
+
     // By default, all kexts we've loaded in the past are marked as "remove" and all of the kexts
     // we just found out about from ReadKextSummaries are marked as "add".
     std::vector<bool> to_be_removed(m_known_kexts.size(), true);
@@ -1198,7 +1196,7 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
         return true;
 
     Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
-    if (s)
+    if (s && load_kexts)
     {
         if (number_of_new_kexts_being_added > 0 && number_of_old_kexts_being_removed > 0)
         {
@@ -1215,7 +1213,17 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
     }
 
     if (log)
-        log->Printf ("DynamicLoaderDarwinKernel::ParseKextSummaries: %d kexts added, %d kexts removed", number_of_new_kexts_being_added, number_of_old_kexts_being_removed);
+    {
+        if (load_kexts)
+        {
+            log->Printf ("DynamicLoaderDarwinKernel::ParseKextSummaries: %d kexts added, %d kexts removed", number_of_new_kexts_being_added, number_of_old_kexts_being_removed);
+        }
+        else
+        {
+            log->Printf ("DynamicLoaderDarwinKernel::ParseKextSummaries kext loading is disabled, else would have %d kexts added, %d kexts removed", number_of_new_kexts_being_added, number_of_old_kexts_being_removed);
+        }
+    }
+
 
     if (number_of_new_kexts_being_added > 0)
     {
@@ -1227,15 +1235,20 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
             if (to_be_added[new_kext] == true)
             {
                 KextImageInfo &image_info = kext_summaries[new_kext];
-                if (!image_info.LoadImageUsingMemoryModule (m_process))
-                    image_info.LoadImageAtFileAddress (m_process);
+                if (load_kexts)
+                {
+                    if (!image_info.LoadImageUsingMemoryModule (m_process))
+                    {
+                        image_info.LoadImageAtFileAddress (m_process);
+                    }
+                }
 
                 m_known_kexts.push_back(image_info);
 
                 if (image_info.GetModule() && m_process->GetStopID() == image_info.GetProcessStopId())
                     loaded_module_list.AppendIfNeeded (image_info.GetModule());
 
-                if (s)
+                if (s && load_kexts)
                     s->Printf (".");
 
                 if (log)
@@ -1273,7 +1286,7 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
         }
     }
 
-    if (s)
+    if (s && load_kexts)
     {
         s->Printf (" done.\n");
         s->Flush ();
