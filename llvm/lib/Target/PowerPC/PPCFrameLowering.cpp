@@ -207,13 +207,14 @@ void PPCFrameLowering::determineFrameLayout(MachineFunction &MF) const {
   // to adjust the stack pointer (we fit in the Red Zone).  For 64-bit
   // SVR4, we also require a stack frame if we need to spill the CR,
   // since this spill area is addressed relative to the stack pointer.
+  // The 32-bit SVR4 ABI has no Red Zone. However, it can still generate
+  // stackless code if all local vars are reg-allocated.
   bool DisableRedZone = MF.getFunction()->getAttributes().
     hasAttribute(AttributeSet::FunctionIndex, Attribute::NoRedZone);
-  // FIXME SVR4 The 32-bit SVR4 ABI has no red zone.  However, it can
-  // still generate stackless code if all local vars are reg-allocated.
-  // Try: (FrameSize <= 224
-  //       || (FrameSize == 0 && Subtarget.isPPC32 && Subtarget.isSVR4ABI()))
   if (!DisableRedZone &&
+      (Subtarget.isPPC64() ||                      // 32-bit SVR4, no stack-
+       !Subtarget.isSVR4ABI() ||                   //   allocated locals.
+	FrameSize == 0) &&
       FrameSize <= 224 &&                          // Fits in red zone.
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
       !MFI->adjustsStack() &&                      // No calls.
