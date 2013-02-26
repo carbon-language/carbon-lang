@@ -874,9 +874,9 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
     return;
 
   const AnalysisUsage::VectorType &PreservedSet = AnUsage->getPreservedSet();
-  for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
+  for (DenseMap<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
-    std::map<AnalysisID, Pass*>::iterator Info = I++;
+    DenseMap<AnalysisID, Pass*>::iterator Info = I++;
     if (Info->second->getAsImmutablePass() == 0 &&
         std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) ==
         PreservedSet.end()) {
@@ -897,10 +897,10 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
     if (!InheritedAnalysis[Index])
       continue;
 
-    for (std::map<AnalysisID, Pass*>::iterator
+    for (DenseMap<AnalysisID, Pass*>::iterator
            I = InheritedAnalysis[Index]->begin(),
            E = InheritedAnalysis[Index]->end(); I != E; ) {
-      std::map<AnalysisID, Pass *>::iterator Info = I++;
+      DenseMap<AnalysisID, Pass *>::iterator Info = I++;
       if (Info->second->getAsImmutablePass() == 0 &&
           std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) ==
              PreservedSet.end()) {
@@ -960,7 +960,7 @@ void PMDataManager::freePass(Pass *P, StringRef Msg,
     // listed as the available implementation.
     const std::vector<const PassInfo*> &II = PInf->getInterfacesImplemented();
     for (unsigned i = 0, e = II.size(); i != e; ++i) {
-      std::map<AnalysisID, Pass*>::iterator Pos =
+      DenseMap<AnalysisID, Pass*>::iterator Pos =
         AvailableAnalysis.find(II[i]->getTypeInfo());
       if (Pos != AvailableAnalysis.end() && Pos->second == P)
         AvailableAnalysis.erase(Pos);
@@ -1100,7 +1100,7 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
 Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
 
   // Check if AvailableAnalysis map has one entry.
-  std::map<AnalysisID, Pass*>::const_iterator I =  AvailableAnalysis.find(AID);
+  DenseMap<AnalysisID, Pass*>::const_iterator I =  AvailableAnalysis.find(AID);
 
   if (I != AvailableAnalysis.end())
     return I->second;

@@ -352,7 +352,7 @@ public:
     return PMT_Unknown;
   }
 
-  std::map<AnalysisID, Pass*> *getAvailableAnalysis() {
+  DenseMap<AnalysisID, Pass*> *getAvailableAnalysis() {
     return &AvailableAnalysis;
   }
 
@@ -375,8 +375,7 @@ protected:
   // Collection of Analysis provided by Parent pass manager and
   // used by current pass manager. At at time there can not be more
   // then PMT_Last active pass mangers.
-  std::map<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
-
+  DenseMap<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
 
   /// isPassDebuggingExecutionsOrMore - Return true if -debug-pass=Executions
   /// or higher is specified.
@@ -390,7 +389,7 @@ private:
   // pass. If a pass requires an analysis which is not available then
   // the required analysis pass is scheduled to run before the pass itself is
   // scheduled to run.
-  std::map<AnalysisID, Pass*> AvailableAnalysis;
+  DenseMap<AnalysisID, Pass*> AvailableAnalysis;
 
   // Collection of higher level analysis used by the pass managed by
   // this manager.
