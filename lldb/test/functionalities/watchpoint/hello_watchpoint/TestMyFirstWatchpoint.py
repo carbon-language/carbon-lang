@@ -10,6 +10,9 @@ import lldbutil
 
 class HelloWatchpointTestCase(TestBase):
 
+    def getCategories (self):
+        return ['basic_process']
+
     mydir = os.path.join("functionalities", "watchpoint", "hello_watchpoint")
 
     @dsym_test

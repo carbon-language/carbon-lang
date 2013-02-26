@@ -8,6 +8,9 @@ from lldbtest import *
 
 class TestObjCStepping(TestBase):
 
+    def getCategories (self):
+        return ['basic_process']
+
     mydir = os.path.join("lang", "objc", "objc-stepping")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

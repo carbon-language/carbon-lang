@@ -11,6 +11,9 @@ import lldbutil
 
 class LoadUnloadTestCase(TestBase):
 
+    def getCategories (self):
+        return ['basic_process']
+
     mydir = os.path.join("functionalities", "load_unload")
 
     def setUp(self):

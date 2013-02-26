@@ -10,6 +10,9 @@ from lldbtest import *
 
 class ExprDoesntDeadlockTestCase(TestBase):
 
+    def getCategories(self):
+        return ['basic_process']
+
     mydir = os.path.join("functionalities", "expr-doesnt-deadlock")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
