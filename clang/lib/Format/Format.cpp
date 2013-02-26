@@ -727,7 +727,7 @@ private:
       TailOffset += SplitPoint + 1;
       TailLength -= SplitPoint + 1;
       OffsetFromStart = 1;
-      Penalty += 100;
+      Penalty += Style.PenaltyExcessCharacter;
     }
     State.Column = StartColumn + TailLength;
     return Penalty;

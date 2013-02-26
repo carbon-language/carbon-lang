@@ -2984,6 +2984,12 @@ TEST_F(FormatTest, BreakStringLiterals) {
             "  \"text\",\n"
             "  other);",
             format("f(\"some text\", other);", getLLVMStyleWithColumns(10)));
+
+  // Only break as a last resort.
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaaaa,\n"
+      "    aaaaaa(\"aaa aaaaa aaa aaa aaaaa aaa aaaaa aaa aaa aaaaaa\"));");
 }
 
 } // end namespace tooling
