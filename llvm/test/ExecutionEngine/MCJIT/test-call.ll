@@ -1,4 +1,5 @@
 ; RUN: %lli_mcjit %s > /dev/null
+; XFAIL: armv5
 
 declare void @exit(i32)
 
