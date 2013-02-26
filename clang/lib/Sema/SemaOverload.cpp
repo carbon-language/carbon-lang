@@ -1667,11 +1667,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     CanonTo = S.Context.getCanonicalType(ToType);
     if (CanonFrom.getLocalUnqualifiedType()
                                        == CanonTo.getLocalUnqualifiedType() &&
-        (CanonFrom.getLocalCVRQualifiers() != CanonTo.getLocalCVRQualifiers()
-         || CanonFrom.getObjCGCAttr() != CanonTo.getObjCGCAttr()
-         || CanonFrom.getObjCLifetime() != CanonTo.getObjCLifetime()
-         || (CanonFrom->isSamplerT() && 
-           CanonFrom.getAddressSpace() != CanonTo.getAddressSpace()))) {
+        CanonFrom.getLocalQualifiers() != CanonTo.getLocalQualifiers()) {
       FromType = ToType;
       CanonFrom = CanonTo;
     }
