@@ -26,7 +26,8 @@ using namespace llvm;
 
 SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM),
-    TII(static_cast<const SIInstrInfo*>(TM.getInstrInfo())) {
+    TII(static_cast<const SIInstrInfo*>(TM.getInstrInfo())),
+    TRI(TM.getRegisterInfo()) {
   addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
   addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
   addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
@@ -358,8 +359,206 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   return SDValue();
 }
 
+/// \brief Test if RegClass is one of the VSrc classes 
+static bool isVSrc(unsigned RegClass) {
+  return AMDGPU::VSrc_32RegClassID == RegClass ||
+         AMDGPU::VSrc_64RegClassID == RegClass;
+}
+
+/// \brief Test if RegClass is one of the SSrc classes 
+static bool isSSrc(unsigned RegClass) {
+  return AMDGPU::SSrc_32RegClassID == RegClass ||
+         AMDGPU::SSrc_64RegClassID == RegClass;
+}
+
+/// \brief Analyze the possible immediate value Op
+///
+/// Returns -1 if it isn't an immediate, 0 if it's and inline immediate
+/// and the immediate value if it's a literal immediate
+int32_t SITargetLowering::analyzeImmediate(const SDNode *N) const {
+
+  union {
+    int32_t I;
+    float F;
+  } Imm;
+
+  if (const ConstantSDNode *Node = dyn_cast<ConstantSDNode>(N))
+    Imm.I = Node->getSExtValue();
+  else if (const ConstantFPSDNode *Node = dyn_cast<ConstantFPSDNode>(N))
+    Imm.F = Node->getValueAPF().convertToFloat();
+  else
+    return -1; // It isn't an immediate
+
+  if ((Imm.I >= -16 && Imm.I <= 64) ||
+      Imm.F == 0.5f || Imm.F == -0.5f ||
+      Imm.F == 1.0f || Imm.F == -1.0f ||
+      Imm.F == 2.0f || Imm.F == -2.0f ||
+      Imm.F == 4.0f || Imm.F == -4.0f)
+    return 0; // It's an inline immediate
+
+  return Imm.I; // It's a literal immediate
+}
+
+/// \brief Try to fold an immediate directly into an instruction
+bool SITargetLowering::foldImm(SDValue &Operand, int32_t &Immediate,
+                               bool &ScalarSlotUsed) const {
+
+  MachineSDNode *Mov = dyn_cast<MachineSDNode>(Operand);
+  if (Mov == 0 || !TII->isMov(Mov->getMachineOpcode()))
+    return false;
+
+  const SDValue &Op = Mov->getOperand(0);
+  int32_t Value = analyzeImmediate(Op.getNode());
+  if (Value == -1) {
+    // Not an immediate at all
+    return false;
+
+  } else if (Value == 0) {
+    // Inline immediates can always be fold
+    Operand = Op;
+    return true;
+
+  } else if (Value == Immediate) {
+    // Already fold literal immediate
+    Operand = Op;
+    return true;
+
+  } else if (!ScalarSlotUsed && !Immediate) {
+    // Fold this literal immediate
+    ScalarSlotUsed = true;
+    Immediate = Value;
+    Operand = Op;
+    return true;
+
+  }
+
+  return false;
+}
+
+/// \brief Does "Op" fit into register class "RegClass" ?
+bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, SDValue &Op,
+                                    unsigned RegClass) const {
+
+  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo(); 
+  SDNode *Node = Op.getNode();
+
+  int OpClass;
+  if (MachineSDNode *MN = dyn_cast<MachineSDNode>(Node)) {
+    const MCInstrDesc &Desc = TII->get(MN->getMachineOpcode());
+    OpClass = Desc.OpInfo[Op.getResNo()].RegClass;
+
+  } else if (Node->getOpcode() == ISD::CopyFromReg) {
+    RegisterSDNode *Reg = cast<RegisterSDNode>(Node->getOperand(1).getNode());
+    OpClass = MRI.getRegClass(Reg->getReg())->getID();
+
+  } else
+    return false;
+
+  if (OpClass == -1)
+    return false;
+
+  return TRI->getRegClass(RegClass)->hasSubClassEq(TRI->getRegClass(OpClass));
+}
+
+/// \brief Make sure that we don't exeed the number of allowed scalars
+void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
+                                       unsigned RegClass,
+                                       bool &ScalarSlotUsed) const {
+
+  // First map the operands register class to a destination class
+  if (RegClass == AMDGPU::VSrc_32RegClassID)
+    RegClass = AMDGPU::VReg_32RegClassID;
+  else if (RegClass == AMDGPU::VSrc_64RegClassID)
+    RegClass = AMDGPU::VReg_64RegClassID;
+  else
+    return;
+
+  // Nothing todo if they fit naturaly
+  if (fitsRegClass(DAG, Operand, RegClass))
+    return;
+
+  // If the scalar slot isn't used yet use it now
+  if (!ScalarSlotUsed) {
+    ScalarSlotUsed = true;
+    return;
+  }
+
+  // This is a conservative aproach, it is possible that we can't determine
+  // the correct register class and copy too often, but better save than sorry.
+  SDValue RC = DAG.getTargetConstant(RegClass, MVT::i32);
+  SDNode *Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, DebugLoc(),
+                                    Operand.getValueType(), Operand, RC);
+  Operand = SDValue(Node, 0);
+}
+
 SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
                                           SelectionDAG &DAG) const {
-  // TODO: Implement immediate folding
-  return Node;
+
+  // Original encoding (either e32 or e64)
+  int Opcode = Node->getMachineOpcode();
+  const MCInstrDesc *Desc = &TII->get(Opcode);
+
+  unsigned NumDefs = Desc->getNumDefs();
+  unsigned NumOps = Desc->getNumOperands();
+
+  int32_t Immediate = Desc->getSize() == 4 ? 0 : -1;
+  bool HaveVSrc = false, HaveSSrc = false;
+
+  // First figure out what we alread have in this instruction
+  for (unsigned i = 0, e = Node->getNumOperands(), Op = NumDefs;
+       i != e && Op < NumOps; ++i, ++Op) {
+
+    unsigned RegClass = Desc->OpInfo[Op].RegClass;
+    if (isVSrc(RegClass))
+      HaveVSrc = true;
+    else if (isSSrc(RegClass))
+      HaveSSrc = true;
+    else
+      continue;
+
+    int32_t Imm = analyzeImmediate(Node->getOperand(i).getNode());
+    if (Imm != -1 && Imm != 0) {
+      // Literal immediate
+      Immediate = Imm;
+    }
+  }
+
+  // If we neither have VSrc nor SSrc it makes no sense to continue
+  if (!HaveVSrc && !HaveSSrc)
+    return Node;
+
+  // No scalar allowed when we have both VSrc and SSrc
+  bool ScalarSlotUsed = HaveVSrc && HaveSSrc;
+
+  // Second go over the operands and try to fold them
+  std::vector<SDValue> Ops;
+  for (unsigned i = 0, e = Node->getNumOperands(), Op = NumDefs;
+       i != e && Op < NumOps; ++i, ++Op) {
+
+    const SDValue &Operand = Node->getOperand(i);
+    Ops.push_back(Operand);
+
+    // Already folded immediate ?
+    if (isa<ConstantSDNode>(Operand.getNode()) ||
+        isa<ConstantFPSDNode>(Operand.getNode()))
+      continue;
+
+    // Is this a VSrc or SSrc operand ?
+    unsigned RegClass = Desc->OpInfo[Op].RegClass;
+    if (!isVSrc(RegClass) && !isSSrc(RegClass))
+      continue;
+
+    // Try to fold the immediates
+    if (!foldImm(Ops[i], Immediate, ScalarSlotUsed)) {
+      // Folding didn't worked, make sure we don't hit the SReg limit
+      ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
+    }
+  }
+
+  // Add optional chain and glue
+  for (unsigned i = NumOps - NumDefs, e = Node->getNumOperands(); i < e; ++i)
+    Ops.push_back(Node->getOperand(i));
+
+  // Update the instruction parameters
+  return DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
 }

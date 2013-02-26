@@ -732,17 +732,17 @@ def V_CNDMASK_B32_e32 : VOP2 <0x00000000, (outs VReg_32:$dst),
 }
 
 def V_CNDMASK_B32_e64 : VOP3 <0x00000100, (outs VReg_32:$dst),
-  (ins VReg_32:$src0, VReg_32:$src1, SReg_64:$src2,
+  (ins VSrc_32:$src0, VSrc_32:$src1, SSrc_64:$src2,
    InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
   "V_CNDMASK_B32_e64 $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg",
-  [(set (i32 VReg_32:$dst), (select (i1 SReg_64:$src2),
-   VReg_32:$src1, VReg_32:$src0))]
+  [(set (i32 VReg_32:$dst), (select (i1 SSrc_64:$src2),
+   VSrc_32:$src1, VSrc_32:$src0))]
 >;
 
 //f32 pattern for V_CNDMASK_B32_e64
 def : Pat <
-  (f32 (select (i1 SReg_64:$src2), VReg_32:$src1, VReg_32:$src0)),
-  (V_CNDMASK_B32_e64 VReg_32:$src0, VReg_32:$src1, SReg_64:$src2)
+  (f32 (select (i1 SSrc_64:$src2), VSrc_32:$src1, VSrc_32:$src0)),
+  (V_CNDMASK_B32_e64 VSrc_32:$src0, VSrc_32:$src1, SSrc_64:$src2)
 >;
 
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
@@ -895,7 +895,7 @@ def V_MUL_HI_U32 : VOP3_32 <0x0000016a, "V_MUL_HI_U32", []>;
 def V_MUL_LO_I32 : VOP3_32 <0x0000016b, "V_MUL_LO_I32", []>;
 def : Pat <
   (mul VSrc_32:$src0, VReg_32:$src1),
-  (V_MUL_LO_I32 VSrc_32:$src0, VReg_32:$src1, (i32 SIOperand.ZERO), 0, 0, 0, 0)
+  (V_MUL_LO_I32 VSrc_32:$src0, VReg_32:$src1, (i32 0), 0, 0, 0, 0)
 >;
 def V_MUL_HI_I32 : VOP3_32 <0x0000016c, "V_MUL_HI_I32", []>;
 def V_DIV_SCALE_F32 : VOP3_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
@@ -1219,19 +1219,19 @@ def : BitConvert <f32, i32, VReg_32>;
 
 def : Pat <
   (int_AMDIL_clamp VReg_32:$src, (f32 FP_ZERO), (f32 FP_ONE)),
-  (V_ADD_F32_e64 VReg_32:$src, (i32 0x80 /* SRC1 */),
+  (V_ADD_F32_e64 VReg_32:$src, (i32 0 /* SRC1 */),
    0 /* ABS */, 1 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
 >;
 
 def : Pat <
   (fabs VReg_32:$src),
-  (V_ADD_F32_e64 VReg_32:$src, (i32 0x80 /* SRC1 */),
+  (V_ADD_F32_e64 VReg_32:$src, (i32 0 /* SRC1 */),
    1 /* ABS */, 0 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
 >;
 
 def : Pat <
   (fneg VReg_32:$src),
-  (V_ADD_F32_e64 VReg_32:$src, (i32 0x80 /* SRC1 */),
+  (V_ADD_F32_e64 VReg_32:$src, (i32 0 /* SRC1 */),
    0 /* ABS */, 0 /* CLAMP */, 0 /* OMOD */, 1 /* NEG */)
 >;
 
@@ -1394,8 +1394,8 @@ def : Pat <
 /**********   VOP3 Patterns    **********/
 /********** ================== **********/
 
-def : Pat <(f32 (fadd (fmul VSrc_32:$src0, VReg_32:$src1), VReg_32:$src2)),
-           (V_MAD_F32 VSrc_32:$src0, VReg_32:$src1, VReg_32:$src2,
+def : Pat <(f32 (fadd (fmul VSrc_32:$src0, VSrc_32:$src1), VSrc_32:$src2)),
+           (V_MAD_F32 VSrc_32:$src0, VSrc_32:$src1, VSrc_32:$src2,
             0, 0, 0, 0)>;
 
 /********** ================== **********/

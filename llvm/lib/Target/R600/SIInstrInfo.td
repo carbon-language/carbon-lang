@@ -40,10 +40,9 @@ def IMM12bit : ImmLeaf <
   [{return isUInt<12>(Imm);}]
 >;
 
-class InlineImm <ValueType vt> : ImmLeaf <vt, [{
-  return -16 <= Imm && Imm <= 64;
+class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
+  return ((const SITargetLowering &)TLI).analyzeImmediate(N) == 0;
 }]>;
-
 
 //===----------------------------------------------------------------------===//
 // SI assembler operands
@@ -181,7 +180,7 @@ multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
   def _e64 : VOP3 <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs vrc:$dst),
-    (ins arc:$src0, vrc:$src1,
+    (ins arc:$src0, arc:$src1,
          i32imm:$abs, i32imm:$clamp,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
@@ -206,7 +205,7 @@ multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern> {
   def _e64 : VOP3b <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs VReg_32:$dst),
-    (ins VSrc_32:$src0, VReg_32:$src1,
+    (ins VSrc_32:$src0, VSrc_32:$src1,
          i32imm:$abs, i32imm:$clamp,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
@@ -230,12 +229,12 @@ multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
   def _e64 : VOP3 <
     {0, op{7}, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs SReg_64:$dst),
-    (ins arc:$src0, vrc:$src1,
+    (ins arc:$src0, arc:$src1,
          InstFlag:$abs, InstFlag:$clamp,
          InstFlag:$omod, InstFlag:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg",
     !if(!eq(!cast<string>(cond), "COND_NULL"), []<dag>,
-      [(set SReg_64:$dst, (i1 (setcc (vt arc:$src0), vrc:$src1, cond)))]
+      [(set SReg_64:$dst, (i1 (setcc (vt arc:$src0), arc:$src1, cond)))]
     )
   > {
     let SRC2 = SIOperand.ZERO;
@@ -252,14 +251,14 @@ multiclass VOPC_64 <bits<8> op, string opName,
 
 class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_32:$dst),
-  (ins VSrc_32:$src0, VReg_32:$src1, VReg_32:$src2,
+  (ins VSrc_32:$src0, VSrc_32:$src1, VSrc_32:$src2,
    i32imm:$abs, i32imm:$clamp, i32imm:$omod, i32imm:$neg),
   opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
 >;
 
 class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_64:$dst),
-  (ins VSrc_64:$src0, VReg_64:$src1, VReg_64:$src2,
+  (ins VSrc_64:$src0, VSrc_64:$src1, VSrc_64:$src2,
    i32imm:$abs, i32imm:$clamp, i32imm:$omod, i32imm:$neg),
   opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
 >;

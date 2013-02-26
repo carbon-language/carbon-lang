@@ -16,6 +16,7 @@
 #include "AMDGPURegisterInfo.h"
 #include "AMDILDevices.h"
 #include "R600InstrInfo.h"
+#include "SIISelLowering.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
