@@ -6,11 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines three classes: Timer, TimeRegion, and TimerGroup,
-// documented below.
-//
-//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_TIMER_H
 #define LLVM_SUPPORT_TIMER_H
@@ -78,7 +73,7 @@ public:
 /// invocations of its startTimer()/stopTimer() methods.  Given appropriate OS
 /// support it can also keep track of the RSS of the program at various points.
 /// By default, the Timer will print the amount of time it has captured to
-/// standard error when the laster timer is destroyed, otherwise it is printed
+/// standard error when the last timer is destroyed, otherwise it is printed
 /// when its TimerGroup is destroyed.  Timers do not print their information
 /// if they are never started.
 ///
@@ -126,7 +121,7 @@ private:
 
 /// The TimeRegion class is used as a helper class to call the startTimer() and
 /// stopTimer() methods of the Timer class.  When the object is constructed, it
-/// starts the timer specified as it's argument.  When it is destroyed, it stops
+/// starts the timer specified as its argument.  When it is destroyed, it stops
 /// the relevant timer.  This makes it easy to time a region of code.
 ///
 class TimeRegion {
