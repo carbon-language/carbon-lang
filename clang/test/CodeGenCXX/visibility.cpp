@@ -1227,3 +1227,36 @@ namespace test65 {
 
   template class C<B<A>::InnerT>;
 }
+
+namespace test66 {
+  template <typename T>
+  struct __attribute__((visibility("default"))) barT {
+    static void zed() {}
+  };
+  class foo;
+  class __attribute__((visibility("default"))) foo;
+  template struct barT<foo>;
+  // CHECK: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
+
+  template <int* I>
+  struct __attribute__((visibility("default"))) barI {
+    static void zed() {}
+  };
+  extern int I;
+  extern int I __attribute__((visibility("default")));
+  template struct barI<&I>;
+  // CHECK: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
+
+  typedef void (*fType)(void);
+  template<fType F>
+  struct __attribute__((visibility("default"))) barF {
+    static void zed() {}
+  };
+  void F();
+  void F() __attribute__((visibility("default")));;
+  template struct barF<F>;
+  // CHECK: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
+}

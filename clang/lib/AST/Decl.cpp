@@ -970,11 +970,32 @@ void NamedDecl::verifyLinkage() const {
 
 Optional<Visibility>
 NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
-  // Use the most recent declaration of a variable.
-  if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
-    if (Optional<Visibility> V = getVisibilityOf(Var, kind))
-      return V;
+  // Check the declaration itself first.
+  if (Optional<Visibility> V = getVisibilityOf(this, kind))
+    return V;
 
+  // If this is a member class of a specialization of a class template
+  // and the corresponding decl has explicit visibility, use that.
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(this)) {
+    CXXRecordDecl *InstantiatedFrom = RD->getInstantiatedFromMemberClass();
+    if (InstantiatedFrom)
+      return getVisibilityOf(InstantiatedFrom, kind);
+  }
+
+  // If there wasn't explicit visibility there, and this is a
+  // specialization of a class template, check for visibility
+  // on the pattern.
+  if (const ClassTemplateSpecializationDecl *spec
+        = dyn_cast<ClassTemplateSpecializationDecl>(this))
+    return getVisibilityOf(spec->getSpecializedTemplate()->getTemplatedDecl(),
+                           kind);
+
+  // Use the most recent declaration.
+  const NamedDecl *MostRecent = cast<NamedDecl>(this->getMostRecentDecl());
+  if (MostRecent != this)
+    return MostRecent->getExplicitVisibility(kind);
+
+  if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
     if (Var->isStaticDataMember()) {
       VarDecl *InstantiatedFrom = Var->getInstantiatedFromStaticDataMember();
       if (InstantiatedFrom)
@@ -983,12 +1004,8 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
 
     return None;
   }
-  // Use the most recent declaration of a function, and also handle
-  // function template specializations.
+  // Also handle function template specializations.
   if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(this)) {
-    if (Optional<Visibility> V = getVisibilityOf(fn, kind))
-      return V;
-
     // If the function is a specialization of a template with an
     // explicit visibility attribute, use that.
     if (FunctionTemplateSpecializationInfo *templateInfo
@@ -1005,29 +1022,9 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
     return None;
   }
 
-  // Otherwise, just check the declaration itself first.
-  if (Optional<Visibility> V = getVisibilityOf(this, kind))
-    return V;
-
   // The visibility of a template is stored in the templated decl.
   if (const TemplateDecl *TD = dyn_cast<TemplateDecl>(this))
     return getVisibilityOf(TD->getTemplatedDecl(), kind);
-
-  // If there wasn't explicit visibility there, and this is a
-  // specialization of a class template, check for visibility
-  // on the pattern.
-  if (const ClassTemplateSpecializationDecl *spec
-        = dyn_cast<ClassTemplateSpecializationDecl>(this))
-    return getVisibilityOf(spec->getSpecializedTemplate()->getTemplatedDecl(),
-                           kind);
-
-  // If this is a member class of a specialization of a class template
-  // and the corresponding decl has explicit visibility, use that.
-  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(this)) {
-    CXXRecordDecl *InstantiatedFrom = RD->getInstantiatedFromMemberClass();
-    if (InstantiatedFrom)
-      return getVisibilityOf(InstantiatedFrom, kind);
-  }
 
   return None;
 }
