@@ -44,6 +44,23 @@ static cl::opt<bool> SkipDelaySlotFiller(
   cl::Hidden);
 
 namespace {
+  class RegDefsUses {
+  public:
+    RegDefsUses(TargetMachine &TM);
+    void init(const MachineInstr &MI);
+    bool update(const MachineInstr &MI, unsigned Begin, unsigned End);
+
+  private:
+    bool checkRegDefsUses(BitVector &NewDefs, BitVector &NewUses, unsigned Reg,
+                          bool IsDef) const;
+
+    /// Returns true if Reg or its alias is in RegSet.
+    bool isRegInSet(const BitVector &RegSet, unsigned Reg) const;
+
+    const TargetRegisterInfo &TRI;
+    BitVector Defs, Uses;
+  };
+
   class Filler : public MachineFunctionPass {
   public:
     Filler(TargetMachine &tm)
@@ -70,26 +87,11 @@ namespace {
 
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
 
-    /// Initialize RegDefs and RegUses.
-    void initRegDefsUses(const MachineInstr &MI, BitVector &RegDefs,
-                         BitVector &RegUses) const;
-
-    bool isRegInSet(const BitVector &RegSet, unsigned Reg) const;
-
-    bool checkRegDefsUses(const BitVector &RegDefs, const BitVector &RegUses,
-                          BitVector &NewDefs, BitVector &NewUses,
-                          unsigned Reg, bool IsDef) const;
-
-    bool checkRegDefsUses(BitVector &RegDefs, BitVector &RegUses,
-                          const MachineInstr &MI, unsigned Begin,
-                          unsigned End) const;
-
     /// This function checks if it is valid to move Candidate to the delay slot
     /// and returns true if it isn't. It also updates load and store flags and
     /// register defs and uses.
     bool delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
-                        bool &SawStore, BitVector &RegDefs,
-                        BitVector &RegUses) const;
+                        bool &SawStore, RegDefsUses &RegDU) const;
 
     bool findDelayInstr(MachineBasicBlock &MBB, Iter slot, Iter &Filler) const;
 
@@ -102,6 +104,65 @@ namespace {
   };
   char Filler::ID = 0;
 } // end of anonymous namespace
+
+RegDefsUses::RegDefsUses(TargetMachine &TM)
+  : TRI(*TM.getRegisterInfo()), Defs(TRI.getNumRegs(), false),
+    Uses(TRI.getNumRegs(), false) {}
+
+void RegDefsUses::init(const MachineInstr &MI) {
+  // Add all register operands which are explicit and non-variadic.
+  update(MI, 0, MI.getDesc().getNumOperands());
+
+  // If MI is a call, add RA to Defs to prevent users of RA from going into
+  // delay slot.
+  if (MI.isCall())
+    Defs.set(Mips::RA);
+
+  // Add all implicit register operands of branch instructions except
+  // register AT.
+  if (MI.isBranch()) {
+    update(MI, MI.getDesc().getNumOperands(), MI.getNumOperands());
+    Defs.reset(Mips::AT);
+  }
+}
+
+bool RegDefsUses::update(const MachineInstr &MI, unsigned Begin, unsigned End) {
+  BitVector NewDefs(TRI.getNumRegs()), NewUses(TRI.getNumRegs());
+  bool HasHazard = false;
+
+  for (unsigned I = Begin; I != End; ++I) {
+    const MachineOperand &MO = MI.getOperand(I);
+
+    if (MO.isReg() && MO.getReg())
+      HasHazard |= checkRegDefsUses(NewDefs, NewUses, MO.getReg(), MO.isDef());
+  }
+
+  Defs |= NewDefs;
+  Uses |= NewUses;
+
+  return HasHazard;
+}
+
+bool RegDefsUses::checkRegDefsUses(BitVector &NewDefs, BitVector &NewUses,
+                                   unsigned Reg, bool IsDef) const {
+  if (IsDef) {
+    NewDefs.set(Reg);
+    // check whether Reg has already been defined or used.
+    return (isRegInSet(Defs, Reg) || isRegInSet(Uses, Reg));
+  }
+
+  NewUses.set(Reg);
+  // check whether Reg has already been defined.
+  return isRegInSet(Defs, Reg);
+}
+
+bool RegDefsUses::isRegInSet(const BitVector &RegSet, unsigned Reg) const {
+  // Check Reg and all aliased Registers.
+  for (MCRegAliasIterator AI(Reg, &TRI, true); AI.isValid(); ++AI)
+    if (RegSet.test(*AI))
+      return true;
+  return false;
+}
 
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
 /// We assume there is only one delay slot per delayed instruction.
@@ -139,10 +200,9 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 
 bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
                             Iter &Filler) const {
-  unsigned NumRegs = TM.getRegisterInfo()->getNumRegs();
-  BitVector RegDefs(NumRegs), RegUses(NumRegs);
+  RegDefsUses RegDU(TM);
 
-  initRegDefsUses(*Slot, RegDefs, RegUses);
+  RegDU.init(*Slot);
 
   bool SawLoad = false;
   bool SawStore = false;
@@ -155,7 +215,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
     if (terminateSearch(*I))
       break;
 
-    if (delayHasHazard(*I, SawLoad, SawStore, RegDefs, RegUses))
+    if (delayHasHazard(*I, SawLoad, SawStore, RegDU))
       continue;
 
     Filler = llvm::next(I).base();
@@ -165,45 +225,8 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
   return false;
 }
 
-bool Filler::checkRegDefsUses(const BitVector &RegDefs,
-                              const BitVector &RegUses,
-                              BitVector &NewDefs, BitVector &NewUses,
-                              unsigned Reg, bool IsDef) const {
-  if (IsDef) {
-    NewDefs.set(Reg);
-    // check whether Reg has already been defined or used.
-    return (isRegInSet(RegDefs, Reg) || isRegInSet(RegUses, Reg));
-  }
-
-  NewUses.set(Reg);
-  // check whether Reg has already been defined.
-  return isRegInSet(RegDefs, Reg);
-}
-
-bool Filler::checkRegDefsUses(BitVector &RegDefs, BitVector &RegUses,
-                              const MachineInstr &MI, unsigned Begin,
-                              unsigned End) const {
-  unsigned NumRegs = TM.getRegisterInfo()->getNumRegs();
-  BitVector NewDefs(NumRegs), NewUses(NumRegs);
-  bool HasHazard = false;
-
-  for (unsigned I = Begin; I != End; ++I) {
-    const MachineOperand &MO = MI.getOperand(I);
-
-    if (MO.isReg() && MO.getReg())
-      HasHazard |= checkRegDefsUses(RegDefs, RegUses, NewDefs, NewUses,
-                                    MO.getReg(), MO.isDef());
-  }
-
-  RegDefs |= NewDefs;
-  RegUses |= NewUses;
-
-  return HasHazard;
-}
-
 bool Filler::delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
-                            bool &SawStore, BitVector &RegDefs,
-                            BitVector &RegUses) const {
+                            bool &SawStore, RegDefsUses &RegDU) const {
   bool HasHazard = (Candidate.isImplicitDef() || Candidate.isKill());
 
   // Loads or stores cannot be moved past a store to the delay slot
@@ -219,39 +242,9 @@ bool Filler::delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
   assert((!Candidate.isCall() && !Candidate.isReturn()) &&
          "Cannot put calls or returns in delay slot.");
 
-  HasHazard |= checkRegDefsUses(RegDefs, RegUses, Candidate, 0,
-                                Candidate.getNumOperands());
+  HasHazard |= RegDU.update(Candidate, 0, Candidate.getNumOperands());
 
   return HasHazard;
-}
-
-void Filler::initRegDefsUses(const MachineInstr &MI, BitVector &RegDefs,
-                             BitVector &RegUses) const {
-  // Add all register operands which are explicit and non-variadic.
-  checkRegDefsUses(RegDefs, RegUses, MI, 0, MI.getDesc().getNumOperands());
-
-  // If MI is a call, add RA to RegDefs to prevent users of RA from going into
-  // delay slot.
-  if (MI.isCall())
-    RegDefs.set(Mips::RA);
-
-  // Add all implicit register operands of branch instructions except
-  // register AT.
-  if (MI.isBranch()) {
-    checkRegDefsUses(RegDefs, RegUses, MI, MI.getDesc().getNumOperands(),
-                     MI.getNumOperands());
-    RegDefs.reset(Mips::AT);
-  }
-}
-
-//returns true if the Reg or its alias is in the RegSet.
-bool Filler::isRegInSet(const BitVector &RegSet, unsigned Reg) const {
-  // Check Reg and all aliased Registers.
-  for (MCRegAliasIterator AI(Reg, TM.getRegisterInfo(), true);
-       AI.isValid(); ++AI)
-    if (RegSet.test(*AI))
-      return true;
-  return false;
 }
 
 bool Filler::terminateSearch(const MachineInstr &Candidate) const {
