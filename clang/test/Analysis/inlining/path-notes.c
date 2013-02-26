@@ -38,7 +38,7 @@ int *getPointer();
 
 void testInitCheck() {
   int *a = getPointer();
-  // expected-note@-1 {{Variable 'a' initialized here}}
+  // expected-note@-1 {{'a' initialized here}}
   check(a);
   // expected-note@-1 {{Calling 'check'}}
   // expected-note@-2 {{Returning from 'check'}}
@@ -59,7 +59,7 @@ void testStoreCheck(int *a) {
 
 int *getZero() {
   int *p = 0;
-  // expected-note@-1 + {{Variable 'p' initialized to a null pointer value}}
+  // expected-note@-1 + {{'p' initialized to a null pointer value}}
   // ^ This note checks that we add a second visitor for the return value.
   return p;
   // expected-note@-1 + {{Returning null pointer (loaded from 'p')}}
@@ -83,7 +83,7 @@ void testInitZero() {
   int *a = getZero();
   // expected-note@-1 {{Calling 'getZero'}}
   // expected-note@-2 {{Returning from 'getZero'}}
-  // expected-note@-3 {{Variable 'a' initialized to a null pointer value}}
+  // expected-note@-3 {{'a' initialized to a null pointer value}}
   *a = 1; // expected-warning{{Dereference of null pointer}}
   // expected-note@-1 {{Dereference of null pointer (loaded from variable 'a')}}
 }
@@ -639,9 +639,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;a&apos; initialized here</string>
+// CHECK-NEXT:      <string>&apos;a&apos; initialized here</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;a&apos; initialized here</string>
+// CHECK-NEXT:      <string>&apos;a&apos; initialized here</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1442,9 +1442,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1788,9 +1788,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2134,9 +2134,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2323,9 +2323,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;a&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;a&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;a&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;a&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2543,9 +2543,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2952,9 +2952,9 @@ void testUseOfNullPointer() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

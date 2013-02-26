@@ -30,7 +30,7 @@ SCDynamicStoreRef anotherCreateRef(unsigned *err, unsigned x);
 
 @implementation Cell
 - (void) test {
-    SCDynamicStoreRef storeRef = 0; //expected-note{{Variable 'storeRef' initialized to nil}}
+    SCDynamicStoreRef storeRef = 0; //expected-note{{'storeRef' initialized to nil}}
     CreateRef(&storeRef, 4); 
                              //expected-note@-1{{Calling 'CreateRef'}}
                              //expected-note@-2{{Returning from 'CreateRef'}}
@@ -85,9 +85,9 @@ static void CreateRef(SCDynamicStoreRef *storeRef, unsigned x) {
 //CHECK:       </array>
 //CHECK:       <key>depth</key><integer>0</integer>
 //CHECK:       <key>extended_message</key>
-//CHECK:       <string>Variable &apos;storeRef&apos; initialized to nil</string>
+//CHECK:       <string>&apos;storeRef&apos; initialized to nil</string>
 //CHECK:       <key>message</key>
-//CHECK:  <string>Variable &apos;storeRef&apos; initialized to nil</string>
+//CHECK:  <string>&apos;storeRef&apos; initialized to nil</string>
 //CHECK:      </dict>
 //CHECK:      <dict>
 //CHECK:       <key>kind</key><string>control</string>

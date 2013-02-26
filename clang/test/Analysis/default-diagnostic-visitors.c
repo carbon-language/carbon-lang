@@ -5,7 +5,7 @@
 int getPasswordAndItem()
 {
   int err = 0;
-  int *password; // expected-note {{Variable 'password' declared without an initial value}}
+  int *password; // expected-note {{'password' declared without an initial value}}
   if (password == 0) { // expected-warning {{The left operand of '==' is a garbage value}} // expected-note {{The left operand of '==' is a garbage value}}
     err = *password;
   }

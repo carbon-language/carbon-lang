@@ -17,7 +17,7 @@ void foo(int c, int *x) {
 }
 
 int use(int c) {
-    int xx; //expected-note{{Variable 'xx' declared without an initial value}}
+    int xx; //expected-note {{'xx' declared without an initial value}}
     int *y = &xx;
     foo (c, y);
                 //expected-note@-1{{Calling 'foo'}}
@@ -93,9 +93,9 @@ double testPassingParentRegionStruct(int x) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;xx&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>&apos;xx&apos; declared without an initial value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;xx&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>&apos;xx&apos; declared without an initial value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

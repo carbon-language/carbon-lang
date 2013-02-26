@@ -462,7 +462,9 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
       if (!R)
         return 0;
 
-      os << "Variable '" << *VR->getDecl() << "' ";
+      os << '\'';
+      R->printPretty(os);
+      os << "' ";
 
       if (V.getAs<loc::ConcreteInt>()) {
         bool b = false;

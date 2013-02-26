@@ -7,7 +7,7 @@ struct S {
 
 S &getSomeReference();
 void test(S *p) {
-  S &r = *p;   //expected-note {{Variable 'r' initialized here}}
+  S &r = *p;   //expected-note {{'r' initialized here}}
   if (p) return;
                //expected-note@-1{{Taking false branch}}
                //expected-note@-2{{Assuming 'p' is null}}

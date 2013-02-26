@@ -56,9 +56,9 @@ int testDispatchSyncInliningNoPruning(int coin) {
   dispatch_sync(globalQueue, ^{
     // expected-note@7 {{Calling anonymous block}}
     int x;
-    // expected-note@-1 {{Variable 'x' declared without an initial value}}
+    // expected-note@-1 {{'x' declared without an initial value}}
     ^{ y = x; }(); // expected-warning{{Variable 'x' is uninitialized when captured by block}}
-    // expected-note@-1 {{Variable 'x' is uninitialized when captured by block}}
+    // expected-note@-1 {{'x' is uninitialized when captured by block}}
   });
 
   return y;
@@ -1002,9 +1002,9 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>2</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; declared without an initial value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; declared without an initial value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

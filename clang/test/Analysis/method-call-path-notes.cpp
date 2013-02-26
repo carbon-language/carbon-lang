@@ -10,12 +10,12 @@ public:
 };
 
 void test_ic() {
-  TestInstanceCall *p; // expected-note {{Variable 'p' declared without an initial value}}
+  TestInstanceCall *p; // expected-note {{'p' declared without an initial value}}
   p->foo(); // expected-warning {{Called C++ object pointer is uninitialized}} expected-note {{Called C++ object pointer is uninitialized}}
 }
 
 void test_ic_null() {
-  TestInstanceCall *p = 0; // expected-note {{Variable 'p' initialized to a null pointer value}}
+  TestInstanceCall *p = 0; // expected-note {{'p' initialized to a null pointer value}}
   p->foo(); // expected-warning {{Called C++ object pointer is null}} expected-note {{Called C++ object pointer is null}}
 }
 
@@ -31,7 +31,7 @@ void test_ic_null(TestInstanceCall *p) {
 }
 
 void test_ic_member_ptr() {
-  TestInstanceCall *p = 0; // expected-note {{Variable 'p' initialized to a null pointer value}}
+  TestInstanceCall *p = 0; // expected-note {{'p' initialized to a null pointer value}}
   typedef void (TestInstanceCall::*IC_Ptr)();
   IC_Ptr bar = &TestInstanceCall::foo;
   (p->*bar)(); // expected-warning {{Called C++ object pointer is null}} expected-note{{Called C++ object pointer is null}}
@@ -72,9 +72,9 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; declared without an initial value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; declared without an initial value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; declared without an initial value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -181,9 +181,9 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -576,9 +576,9 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

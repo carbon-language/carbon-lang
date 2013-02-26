@@ -15,7 +15,7 @@ int testNull(Root *obj) {
   // expected-note@-1 {{Assuming 'obj' is nil}}
   // expected-note@-2 {{Taking false branch}}
 
-  int *x = &obj->uniqueID; // expected-note{{Variable 'x' initialized to a null pointer value}}
+  int *x = &obj->uniqueID; // expected-note{{'x' initialized to a null pointer value}}
   return *x; // expected-warning{{Dereference of null pointer (loaded from variable 'x')}} expected-note{{Dereference of null pointer (loaded from variable 'x')}}
 }
 
@@ -164,9 +164,9 @@ int testNull(Root *obj) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

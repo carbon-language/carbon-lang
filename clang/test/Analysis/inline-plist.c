@@ -55,7 +55,7 @@ void bar(int *p) {
 // ========================================================================== //
 
 void test_block__capture_null() {
-  int *p = 0; // expected-note{{Variable 'p' initialized to a null pointer value}}
+  int *p = 0; // expected-note{{'p' initialized to a null pointer value}}
   ^(){ // expected-note {{Calling anonymous block}}
     *p = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
   }();
@@ -63,8 +63,8 @@ void test_block__capture_null() {
 }
 
 void test_block_ret() {
-  int *p = ^(){ // expected-note {{Calling anonymous block}} expected-note{{Returning to caller}} expected-note {{Variable 'p' initialized to a null pointer value}}
-    int *q = 0; // expected-note {{Variable 'q' initialized to a null pointer value}}
+  int *p = ^(){ // expected-note {{Calling anonymous block}} expected-note{{Returning to caller}} expected-note {{'p' initialized to a null pointer value}}
+    int *q = 0; // expected-note {{'q' initialized to a null pointer value}}
     return q; // expected-note {{Returning null pointer (loaded from 'q')}}
   }();
   *p = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}} expected-note{{Dereference of null pointer (loaded from variable 'p')}}
@@ -830,9 +830,9 @@ void test_block_arg() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1124,9 +1124,9 @@ void test_block_arg() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;q&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;q&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;q&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;q&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1313,9 +1313,9 @@ void test_block_arg() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

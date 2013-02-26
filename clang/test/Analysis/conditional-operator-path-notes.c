@@ -6,7 +6,7 @@ void testCondOp(int *p) {
   int *x = p ? p : p;
   // expected-note@-1 {{Assuming 'p' is null}}
   // expected-note@-2 {{'?' condition is false}}
-  // expected-note@-3 {{Variable 'x' initialized to a null pointer value}}
+  // expected-note@-3 {{'x' initialized to a null pointer value}}
   *x = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'x')}}
   // expected-note@-1 {{Dereference of null pointer (loaded from variable 'x')}}
 }
@@ -40,7 +40,7 @@ void testRHSProblem(int *p) {
 void testBinaryCondOp(int *p) {
   int *x = p ?: p;
   // expected-note@-1 {{'?' condition is false}}
-  // expected-note@-2 {{Variable 'x' initialized to a null pointer value}}
+  // expected-note@-2 {{'x' initialized to a null pointer value}}
   *x = 1; // expected-warning{{Dereference of null pointer (loaded from variable 'x')}}
   // expected-note@-1 {{Dereference of null pointer (loaded from variable 'x')}}
 }
@@ -216,9 +216,9 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -856,9 +856,9 @@ void testBinaryLHSProblem(int *p) {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;x&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;x&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>

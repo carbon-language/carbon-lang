@@ -165,6 +165,17 @@ void test_loop_diagnostics_3() {
 }
 @end
 
+// Test diagnostics for initialization of structs.
+void RDar13295437_f(void *i) __attribute__((__nonnull__));
+
+struct  RDar13295437_S { int *i; };
+
+int  RDar13295437() {
+  struct RDar13295437_S s = {0};
+  struct RDar13295437_S *sp = &s;
+  RDar13295437_f(sp->i);
+}
+
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>
@@ -195,9 +206,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -544,9 +555,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;q&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;q&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;q&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;q&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -893,9 +904,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1373,9 +1384,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -1785,9 +1796,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2313,9 +2324,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2422,9 +2433,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2691,9 +2702,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -2960,9 +2971,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -3302,9 +3313,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -3707,9 +3718,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -4112,9 +4123,9 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:      </array>
 // CHECK-NEXT:      <key>depth</key><integer>0</integer>
 // CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Variable &apos;p&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <string>&apos;p&apos; initialized to a null pointer value</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>control</string>
@@ -4594,6 +4605,115 @@ void test_loop_diagnostics_3() {
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>164</integer>
+// CHECK-NEXT:    <key>col</key><integer>3</integer>
+// CHECK-NEXT:    <key>file</key><integer>0</integer>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   </dict>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>path</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>174</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>174</integer>
+// CHECK-NEXT:          <key>col</key><integer>3</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>174</integer>
+// CHECK-NEXT:          <key>col</key><integer>25</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>&apos;s.i&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>&apos;s.i&apos; initialized to a null pointer value</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>174</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>174</integer>
+// CHECK-NEXT:            <key>col</key><integer>8</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>176</integer>
+// CHECK-NEXT:            <key>col</key><integer>3</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>176</integer>
+// CHECK-NEXT:            <key>col</key><integer>16</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>176</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>176</integer>
+// CHECK-NEXT:          <key>col</key><integer>18</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>176</integer>
+// CHECK-NEXT:          <key>col</key><integer>22</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Null pointer passed as an argument to a &apos;nonnull&apos; parameter</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Null pointer passed as an argument to a &apos;nonnull&apos; parameter</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
+// CHECK-NEXT:    <key>description</key><string>Null pointer passed as an argument to a &apos;nonnull&apos; parameter</string>
+// CHECK-NEXT:    <key>category</key><string>API</string>
+// CHECK-NEXT:    <key>type</key><string>Argument with &apos;nonnull&apos; attribute passed null</string>
+// CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
+// CHECK-NEXT:   <key>issue_context</key><string>RDar13295437</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>location</key>
+// CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>line</key><integer>176</integer>
 // CHECK-NEXT:    <key>col</key><integer>3</integer>
 // CHECK-NEXT:    <key>file</key><integer>0</integer>
 // CHECK-NEXT:   </dict>
