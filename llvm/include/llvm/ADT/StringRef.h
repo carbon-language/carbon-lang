@@ -57,14 +57,14 @@ namespace llvm {
     // integer works around this bug.
     static size_t min(size_t a, size_t b) { return a < b ? a : b; }
     static size_t max(size_t a, size_t b) { return a > b ? a : b; }
-    
+
     // Workaround memcmp issue with null pointers (undefined behavior)
     // by providing a specialized version
     static int compareMemory(const char *Lhs, const char *Rhs, size_t Length) {
       if (Length == 0) { return 0; }
       return ::memcmp(Lhs,Rhs,Length);
     }
-    
+
   public:
     /// @name Constructors
     /// @{
@@ -387,7 +387,7 @@ namespace llvm {
       Start = min(Start, Length);
       return StringRef(Data + Start, min(N, Length - Start));
     }
-    
+
     /// Return a StringRef equal to 'this' but with the first \p N elements
     /// dropped.
     StringRef drop_front(unsigned N = 1) const {
