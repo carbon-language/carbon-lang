@@ -296,8 +296,11 @@ MachTask::GetProfileData ()
     static int32_t numCPU = -1;
     int32_t mib[] = {CTL_HW, HW_AVAILCPU};
     size_t len = sizeof(numCPU);
-    if (sysctl(mib, sizeof(mib) / sizeof(int32_t), &numCPU, &len, NULL, 0) != 0)
-        return result;
+    if (numCPU == -1)
+    {
+        if (sysctl(mib, sizeof(mib) / sizeof(int32_t), &numCPU, &len, NULL, 0) != 0)
+            return result;
+    }
     
     mach_port_t localHost = mach_host_self();
     struct host_cpu_load_info host_info;
