@@ -324,8 +324,8 @@ class Symbolizer {
  private:
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     // First, try to use internal symbolizer.
-    if (internal_symbolizer_ == 0) {
-      internal_symbolizer_ = InternalSymbolizer::get();
+    if (!IsSymbolizerAvailable()) {
+      return 0;
     }
     if (internal_symbolizer_) {
       return internal_symbolizer_->SendCommand(is_data, module_name,
@@ -360,7 +360,8 @@ class Symbolizer {
           kMaxNumberOfModuleContexts * sizeof(LoadedModule)));
       CHECK(modules_);
       n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts);
-      CHECK_GT(n_modules_, 0);
+      // FIXME: Return this check when GetListOfModules is implemented on Mac.
+      // CHECK_GT(n_modules_, 0);
       CHECK_LT(n_modules_, kMaxNumberOfModuleContexts);
     }
     for (uptr i = 0; i < n_modules_; i++) {

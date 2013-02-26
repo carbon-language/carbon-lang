@@ -23,7 +23,8 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
 }
 
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
-  UNIMPLEMENTED();
+  // FIXME: Actually implement this on Mac.
+  return 0;
 }
 
 }  // namespace __sanitizer
