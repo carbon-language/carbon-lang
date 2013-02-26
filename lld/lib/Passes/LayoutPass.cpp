@@ -8,7 +8,11 @@
 //===----------------------------------------------------------------------===//
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "LayoutPass"
+
 #include "lld/Passes/LayoutPass.h"
+
+#include "llvm/Support/Debug.h"
 
 using namespace lld;
 
@@ -21,14 +25,19 @@ using namespace lld;
 /// f) Sorts atoms on how they appear within the File
 bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
                                           const DefinedAtom *right) {
+  DEBUG(llvm::dbgs() << "Sorting " << left->name() << " " << right->name() << "\n");
   if (left == right)
     return false;
+
+  DEBUG(llvm::dbgs() << "Sorting by perms\n");
 
   // Sort same permissions together.
   DefinedAtom::ContentPermissions leftPerms = left->permissions();
   DefinedAtom::ContentPermissions rightPerms = right->permissions();
   if (leftPerms != rightPerms)
     return leftPerms < rightPerms;
+
+  DEBUG(llvm::dbgs() << "Sorting by contentType\n");
 
   // Sort same content types together.
   DefinedAtom::ContentType leftType = left->contentType();
@@ -37,6 +46,8 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
     return leftType < rightType;
 
   // TO DO: Sort atoms in customs sections together.
+
+  DEBUG(llvm::dbgs() << "Sorting by sectionPos\n");
 
   // Sort by section position preference.
   DefinedAtom::SectionPosition leftPos = left->sectionPosition();
@@ -48,13 +59,16 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
       return leftPos < rightPos;
   }
 
+  DEBUG(llvm::dbgs() << "Sorting by override\n");
+
   AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
   AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
   AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
   if (lPos != end) {
     if (rPos != end) {
       // both left and right are overridden, so compare overridden ordinals
-      return lPos->second < rPos->second;
+      if (lPos->second != rPos->second)
+        return lPos->second < rPos->second;
     } else {
       // left is overridden and right is not, so left < right
       return true;
@@ -69,17 +83,23 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
     }
   }
 
+  DEBUG(llvm::dbgs() << "Sorting by .o order\n");
+
   // Sort by .o order.
   const File *leftFile = &left->file();
   const File *rightFile = &right->file();
   if (leftFile != rightFile)
     return leftFile->ordinal() < rightFile->ordinal();
 
+  DEBUG(llvm::dbgs() << "Sorting by ordinal\n");
+
   // Sort by atom order with .o file.
   uint64_t leftOrdinal = left->ordinal();
   uint64_t rightOrdinal = right->ordinal();
   if (leftOrdinal != rightOrdinal)
     return leftOrdinal < rightOrdinal;
+
+  DEBUG(llvm::dbgs() << "Unordered\n");
 
   return false;
 }
@@ -366,7 +386,6 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
 
 /// Perform the actual pass 
 void LayoutPass::perform(MutableFile &mergedFile) {
-
   MutableFile::DefinedAtomRange atomRange = mergedFile.definedAtoms();
 
   // Build follow on tables
