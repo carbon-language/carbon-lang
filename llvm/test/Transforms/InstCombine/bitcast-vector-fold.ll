@@ -31,3 +31,8 @@ define <4 x i32> @test6() {
 	%tmp3 = bitcast <2 x double> <double 0.5, double 1.0> to <4 x i32>
 	ret <4 x i32> %tmp3
 }
+
+define i32 @test7() {
+       %tmp3 = bitcast <2 x half> <half 0xH1100, half 0xH0011> to i32
+       ret i32 %tmp3
+}

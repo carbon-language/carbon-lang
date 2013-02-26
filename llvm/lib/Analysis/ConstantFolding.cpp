@@ -54,13 +54,12 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
 
   // Handle a vector->integer cast.
   if (IntegerType *IT = dyn_cast<IntegerType>(DestTy)) {
-    ConstantDataVector *CDV = dyn_cast<ConstantDataVector>(C);
-    if (CDV == 0)
+    VectorType *VTy = dyn_cast<VectorType>(C->getType());
+    if (VTy == 0)
       return ConstantExpr::getBitCast(C, DestTy);
 
-    unsigned NumSrcElts = CDV->getType()->getNumElements();
-
-    Type *SrcEltTy = CDV->getType()->getElementType();
+    unsigned NumSrcElts = VTy->getNumElements();
+    Type *SrcEltTy = VTy->getElementType();
 
     // If the vector is a vector of floating point, convert it to vector of int
     // to simplify things.
@@ -70,8 +69,11 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
         VectorType::get(IntegerType::get(C->getContext(), FPWidth), NumSrcElts);
       // Ask IR to do the conversion now that #elts line up.
       C = ConstantExpr::getBitCast(C, SrcIVTy);
-      CDV = cast<ConstantDataVector>(C);
     }
+
+    ConstantDataVector *CDV = dyn_cast<ConstantDataVector>(C);
+    if (CDV == 0)
+      return ConstantExpr::getBitCast(C, DestTy);
 
     // Now that we know that the input value is a vector of integers, just shift
     // and insert them into our result.
