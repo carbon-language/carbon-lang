@@ -890,10 +890,10 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Right.is(tok::arrow) || Right.is(tok::period)) {
     if (Line.Type == LT_BuilderTypeCall)
-      return 5; // Should be smaller than breaking at a nested comma.
+      return 5;
     if ((Left.is(tok::r_paren) || Left.is(tok::r_square)) &&
         Left.MatchingParen && Left.MatchingParen->ParameterCount > 0)
-      return 10;
+      return 20; // Should be smaller than breaking at a nested comma.
     return 150;
   }
 
@@ -928,7 +928,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return prec::Shift;
   }
   if (Left.Type == TT_ConditionalExpr)
-    return prec::Assignment;
+    return prec::Conditional;
   prec::Level Level = getPrecedence(Left);
 
   if (Level != prec::Unknown)

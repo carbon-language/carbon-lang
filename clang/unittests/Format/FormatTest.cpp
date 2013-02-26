@@ -1185,6 +1185,8 @@ TEST_F(FormatTest, BreaksAsHighAsPossible) {
       "if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa && aaaaaaaaaaaaaaaaaaaaaaaaaa) ||\n"
       "    (bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && bbbbbbbbbbbbbbbbbbbbbbbbbb))\n"
       "  f();");
+  verifyFormat("if (Intervals[i].getRange().getFirst() <\n"
+               "    Intervals[i - 1].getRange().getLast()) {\n}");
 }
 
 TEST_F(FormatTest, BreaksDesireably) {
