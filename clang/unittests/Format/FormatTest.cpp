@@ -318,6 +318,8 @@ TEST_F(FormatTest, RangeBasedForLoops) {
                "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
   verifyFormat("for (auto aaaaaaaaaaaaaaaaaaaaa :\n"
                "     aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa, aaaaaaaaaaaaa)) {\n}");
+  verifyFormat("for (const aaaaaaaaaaaaaaaaaaaaa &aaaaaaaaa :\n"
+               "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
 }
 
 TEST_F(FormatTest, FormatsWhileLoop) {
@@ -601,10 +603,10 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
                    "      b\n"
                    "}"));
   EXPECT_EQ("S s = { a, b };", format("S s = {\n"
-            "  a,\n"
-            "\n"
-            "  b\n"
-            "};"));
+                                      "  a,\n"
+                                      "\n"
+                                      "  b\n"
+                                      "};"));
 }
 
 //===----------------------------------------------------------------------===//

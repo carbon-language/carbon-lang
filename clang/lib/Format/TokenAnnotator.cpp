@@ -886,7 +886,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Left.Type == TT_RangeBasedForLoopColon ||
       Left.Type == TT_InheritanceColon)
-    return 5;
+    return 2;
 
   if (Right.is(tok::arrow) || Right.is(tok::period)) {
     if (Line.Type == LT_BuilderTypeCall)
