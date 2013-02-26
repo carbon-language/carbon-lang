@@ -767,9 +767,20 @@ def X86ForceAlignArgPointer : InheritableAttr {
   let Spellings = [];
 }
 
-// AddressSafety attribute (e.g. for AddressSanitizer)
-def NoAddressSafetyAnalysis : InheritableAttr {
-  let Spellings = [GNU<"no_address_safety_analysis">];
+// Attribute to disable AddressSanitizer (or equivalent) checks.
+def NoSanitizeAddress : InheritableAttr {
+  let Spellings = [GNU<"no_address_safety_analysis">,
+                   GNU<"no_sanitize_address">];
+}
+
+// Attribute to disable ThreadSanitizer checks.
+def NoSanitizeThread : InheritableAttr {
+  let Spellings = [GNU<"no_sanitize_thread">];
+}
+
+// Attribute to disable MemorySanitizer checks.
+def NoSanitizeMemory : InheritableAttr {
+  let Spellings = [GNU<"no_sanitize_memory">];
 }
 
 // C/C++ Thread safety attributes (e.g. for deadlock, data race checking)

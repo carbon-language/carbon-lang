@@ -105,12 +105,13 @@ this purpose.
     #  endif
     #endif
 
-``__attribute__((no_address_safety_analysis))``
+``__attribute__((no_sanitize_address))``
 -----------------------------------------------
 
 Some code should not be instrumented by AddressSanitizer. One may use the
 function attribute
-:ref:`no_address_safety_analysis <langext-address_sanitizer>`
+:ref:`no_sanitize_address <langext-address_sanitizer>`
+(or a deprecated synonym `no_address_safety_analysis`)
 to disable instrumentation of a particular function. This attribute may not be
 supported by other compilers, so we suggest to use it together with
 ``__has_feature(address_sanitizer)``. Note: currently, this attribute will be

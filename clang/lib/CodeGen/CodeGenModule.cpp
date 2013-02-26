@@ -617,12 +617,16 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
     F->addFnAttr(llvm::Attribute::StackProtectReq);
 
-  if (SanOpts.Address) {
-    // When AddressSanitizer is enabled, set AddressSafety attribute
-    // unless __attribute__((no_address_safety_analysis)) is used.
-    if (!D->hasAttr<NoAddressSafetyAnalysisAttr>())
-      F->addFnAttr(llvm::Attribute::AddressSafety);
-  }
+  // When AddressSanitizer is enabled, set SanitizeAddress attribute
+  // unless __attribute__((no_sanitize_address)) is used.
+  if (SanOpts.Address && !D->hasAttr<NoSanitizeAddressAttr>())
+    F->addFnAttr(llvm::Attribute::SanitizeAddress);
+  // Same for ThreadSanitizer and __attribute__((no_sanitize_thread))
+  if (SanOpts.Thread && !D->hasAttr<NoSanitizeThreadAttr>())
+    F->addFnAttr(llvm::Attribute::SanitizeThread);
+  // Same for MemorySanitizer and __attribute__((no_sanitize_memory))
+  if (SanOpts.Memory && !D->hasAttr<NoSanitizeMemoryAttr>())
+    F->addFnAttr(llvm::Attribute::SanitizeMemory);
 
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();
   if (alignment)

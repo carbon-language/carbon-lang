@@ -78,9 +78,24 @@ this purpose.
 
 .. code-block:: c
 
-    #if defined(__has_feature) && __has_feature(thread_sanitizer)
+    #if defined(__has_feature)
+    #  if __has_feature(thread_sanitizer)
     // code that builds only under ThreadSanitizer
+    #  endif
     #endif
+
+``__attribute__((no_sanitize_thread))``
+-----------------------------------------------
+
+Some code should not be instrumented by ThreadSanitizer.
+One may use the function attribute
+:ref:`no_sanitize_thread <langext-thread_sanitizer>`
+to disable instrumentation of plain (non-atomic) loads/stores in a particular function.
+ThreadSanitizer may still instrument such functions to avoid false positives.
+This attribute may not be
+supported by other compilers, so we suggest to use it together with
+``__has_feature(thread_sanitizer)``. Note: currently, this attribute will be
+lost if the function is inlined.
 
 Limitations
 -----------

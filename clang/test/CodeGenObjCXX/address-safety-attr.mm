@@ -17,5 +17,5 @@
 
 @end
 
-// WITHOUT: attributes #0 = { nounwind{{.*}} }
-// ASAN: attributes #0 = { address_safety nounwind{{.*}} }
+// ASAN: attributes #0 = {{.*}}sanitize_address
+// WITHOUT-NOT: attributes #0 = {{.*}}sanitize_address
