@@ -62,7 +62,7 @@ Non-comprehensive list of changes in this release
 * The Attributes classes have been completely rewritten and expanded. They now
   support not only enumerated attributes and alignments, but "string"
   attributes, which are useful for passing information to code generation. See
-  `How To Use Attributes <HowToUseAttributes.html>`_ for more details.
+  :doc:`HowToUseAttributes` for more details.
 
 * ... next change ...
 
