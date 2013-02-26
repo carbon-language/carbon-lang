@@ -2922,6 +2922,7 @@ bool ARMFastISel::FastLowerArguments() {
       return false;
 
     EVT ArgVT = TLI.getValueType(ArgTy);
+    if (!ArgVT.isSimple()) return false;
     switch (ArgVT.getSimpleVT().SimpleTy) {
     case MVT::i8:
     case MVT::i16:

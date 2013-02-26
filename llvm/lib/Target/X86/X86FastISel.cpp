@@ -1555,6 +1555,7 @@ bool X86FastISel::FastLowerArguments() {
       return false;
 
     EVT ArgVT = TLI.getValueType(ArgTy);
+    if (!ArgVT.isSimple()) return false;
     switch (ArgVT.getSimpleVT().SimpleTy) {
     case MVT::i32:
     case MVT::i64:
