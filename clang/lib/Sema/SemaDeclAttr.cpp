@@ -19,6 +19,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/Mangle.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -5096,11 +5097,18 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
   if (Inheritable) {
     LoadExternalWeakUndeclaredIdentifiers();
     if (!WeakUndeclaredIdentifiers.empty()) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+      NamedDecl *ND = NULL;
+      if (VarDecl *VD = dyn_cast<VarDecl>(D))
+        if (VD->isExternC())
+          ND = VD;
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+        if (FD->isExternC())
+          ND = FD;
+      if (ND) {
         if (IdentifierInfo *Id = ND->getIdentifier()) {
           llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
             = WeakUndeclaredIdentifiers.find(Id);
-          if (I != WeakUndeclaredIdentifiers.end() && ND->hasLinkage()) {
+          if (I != WeakUndeclaredIdentifiers.end()) {
             WeakInfo W = I->second;
             DeclApplyPragmaWeak(S, ND, W);
             WeakUndeclaredIdentifiers[Id] = W;
