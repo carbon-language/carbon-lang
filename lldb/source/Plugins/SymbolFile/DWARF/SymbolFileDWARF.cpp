@@ -5184,11 +5184,13 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
 }
 
 bool
-SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
+SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *class_symfile,
+                                             Type *class_type,
                                              DWARFCompileUnit* src_cu,
                                              const DWARFDebugInfoEntry *src_class_die,
                                              DWARFCompileUnit* dst_cu,
-                                             const DWARFDebugInfoEntry *dst_class_die)
+                                             const DWARFDebugInfoEntry *dst_class_die,
+                                             llvm::SmallVectorImpl <const DWARFDebugInfoEntry *> &failures)
 {
     if (!class_type || !src_cu || !src_class_die || !dst_cu || !dst_class_die)
         return false;
@@ -5214,13 +5216,13 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
             // for DW_AT_declaration set to 1. Sometimes concrete function instances
             // are placed inside the class definitions and shouldn't be included in
             // the list of things are are tracking here.
-            if (src_die->GetAttributeValueAsUnsigned(this, src_cu, DW_AT_declaration, 0) == 1)
+            if (src_die->GetAttributeValueAsUnsigned(class_symfile, src_cu, DW_AT_declaration, 0) == 1)
             {
-                const char *src_name = src_die->GetMangledName (this, src_cu);
+                const char *src_name = src_die->GetMangledName (class_symfile, src_cu);
                 if (src_name)
                 {
                     ConstString src_const_name(src_name);
-                    if (src_die->GetAttributeValueAsUnsigned(this, src_cu, DW_AT_artificial, 0))
+                    if (src_die->GetAttributeValueAsUnsigned(class_symfile, src_cu, DW_AT_artificial, 0))
                         src_name_to_die_artificial.Append(src_const_name.GetCString(), src_die);
                     else
                         src_name_to_die.Append(src_const_name.GetCString(), src_die);
@@ -5253,10 +5255,29 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
     const uint32_t src_size = src_name_to_die.GetSize ();
     const uint32_t dst_size = dst_name_to_die.GetSize ();
     LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_TYPE_COMPLETION));
-    
-    if (src_size == dst_size)
+
+    // Is everything kosher so we can go through the members at top speed?
+    bool fast_path = true;
+                            
+    if (src_size != dst_size)
     {
-        uint32_t idx;
+        if (src_size != 0 && dst_size != 0)
+        {
+            if (log)
+                log->Printf("warning: trying to unique class DIE 0x%8.8x to 0x%8.8x, but they didn't have the same size (src=%d, dst=%d)",
+                            src_class_die->GetOffset(),
+                            dst_class_die->GetOffset(),
+                            src_size,
+                            dst_size);
+        }
+        
+        fast_path = false;
+    }
+
+    uint32_t idx;
+    
+    if (fast_path)
+    {
         for (idx = 0; idx < src_size; ++idx)
         {
             src_die = src_name_to_die.GetValueAtIndexUnchecked (idx);
@@ -5272,10 +5293,10 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
                                 DW_TAG_value_to_name(src_die->Tag()),
                                 dst_die->GetOffset(),
                                 DW_TAG_value_to_name(src_die->Tag()));
-                return false;
+                fast_path = false;
             }
             
-            const char *src_name = src_die->GetMangledName (this, src_cu);
+            const char *src_name = src_die->GetMangledName (class_symfile, src_cu);
             const char *dst_name = dst_die->GetMangledName (this, dst_cu);
             
             // Make sure the names match
@@ -5291,15 +5312,21 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
                             dst_die->GetOffset(),
                             dst_name);
             
-            return false;
+            fast_path = false;
         }
+    }
 
+    // Now do the work of linking the DeclContexts and Types.
+    if (fast_path)
+    {
+        // We can do this quickly.  Just run across the tables index-for-index since
+        // we know each node has matching names and tags.
         for (idx = 0; idx < src_size; ++idx)
         {
             src_die = src_name_to_die.GetValueAtIndexUnchecked (idx);
             dst_die = dst_name_to_die.GetValueAtIndexUnchecked (idx);
             
-            clang::DeclContext *src_decl_ctx = m_die_to_decl_ctx[src_die];
+            clang::DeclContext *src_decl_ctx = class_symfile->m_die_to_decl_ctx[src_die];
             if (src_decl_ctx)
             {
                 if (log)
@@ -5325,11 +5352,71 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
                     log->Printf ("warning: tried to unique lldb_private::Type from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
             }
         }
+    }
+    else
+    {
+        // We must do this slowly.  For each member of the destination, look
+        // up a member in the source with the same name, check its tag, and
+        // unique them if everything matches up.  Report failures.
         
-        const uint32_t src_size_artificial = src_name_to_die_artificial.GetSize ();
+        if (!src_name_to_die.IsEmpty() && !dst_name_to_die.IsEmpty())
+        {
+            src_name_to_die.Sort();
         
-        UniqueCStringMap<const DWARFDebugInfoEntry *> name_to_die_artificial_not_in_src;
+            for (idx = 0; idx < dst_size; ++idx)
+            {
+                const char *dst_name = dst_name_to_die.GetCStringAtIndex(idx);
+                dst_die = dst_name_to_die.GetValueAtIndexUnchecked(idx);
+                src_die = src_name_to_die.Find(dst_name, NULL);
+                
+                if (src_die && (src_die->Tag() == dst_die->Tag()))
+                {
+                    clang::DeclContext *src_decl_ctx = class_symfile->m_die_to_decl_ctx[src_die];
+                    if (src_decl_ctx)
+                    {
+                        if (log)
+                            log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x", src_decl_ctx, src_die->GetOffset(), dst_die->GetOffset());
+                        LinkDeclContextToDIE (src_decl_ctx, dst_die);
+                    }
+                    else
+                    {
+                        if (log)
+                            log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
+                    }
+                    
+                    Type *src_child_type = m_die_to_type[src_die];
+                    if (src_child_type)
+                    {
+                        if (log)
+                            log->Printf ("uniquing type %p (uid=0x%" PRIx64 ") from 0x%8.8x for 0x%8.8x", src_child_type, src_child_type->GetID(), src_die->GetOffset(), dst_die->GetOffset());
+                        m_die_to_type[dst_die] = src_child_type;
+                    }
+                    else
+                    {
+                        if (log)
+                            log->Printf ("warning: tried to unique lldb_private::Type from 0x%8.8x for 0x%8.8x, but none was found", src_die->GetOffset(), dst_die->GetOffset());
+                    }
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("warning: couldn't find a match for 0x%8.8x", dst_die->GetOffset());
 
+                    failures.push_back(dst_die);
+                }
+            }
+        }
+    }
+    
+    const uint32_t src_size_artificial = src_name_to_die_artificial.GetSize ();
+    const uint32_t dst_size_artificial = dst_name_to_die_artificial.GetSize ();
+    
+    UniqueCStringMap<const DWARFDebugInfoEntry *> name_to_die_artificial_not_in_src;
+
+    if (src_size_artificial && dst_size_artificial)
+    {
+        dst_name_to_die_artificial.Sort();
+        
         for (idx = 0; idx < src_size_artificial; ++idx)
         {
             const char *src_name_artificial = src_name_to_die_artificial.GetCStringAtIndex(idx);
@@ -5366,30 +5453,22 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
                 }
             }
         }
-        const uint32_t dst_size_artificial = dst_name_to_die_artificial.GetSize ();
+    }
 
-        if (dst_size_artificial)
-        {
-            for (idx = 0; idx < dst_size_artificial; ++idx)
-            {
-                const char *dst_name_artificial = dst_name_to_die_artificial.GetCStringAtIndex(idx);
-                dst_die = dst_name_to_die_artificial.GetValueAtIndexUnchecked (idx);
-                if (log)
-                    log->Printf ("warning: need to create artificial method for 0x%8.8x for method '%s'", dst_die->GetOffset(), dst_name_artificial);
-            }
-        }
-        return true;
-    }
-    else if (src_size != 0 && dst_size != 0)
+    if (dst_size_artificial)
     {
-        if (log)
-            log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but they didn't have the same size (src=%d, dst=%d)",
-                        src_class_die->GetOffset(),
-                        dst_class_die->GetOffset(),
-                        src_size,
-                        dst_size);        
+        for (idx = 0; idx < dst_size_artificial; ++idx)
+        {
+            const char *dst_name_artificial = dst_name_to_die_artificial.GetCStringAtIndex(idx);
+            dst_die = dst_name_to_die_artificial.GetValueAtIndexUnchecked (idx);
+            if (log)
+                log->Printf ("warning: need to create artificial method for 0x%8.8x for method '%s'", dst_die->GetOffset(), dst_name_artificial);
+            
+            failures.push_back(dst_die);
+        }
     }
-    return false;
+
+    return (failures.size() != 0);
 }
 
 TypeSP
@@ -6358,22 +6437,43 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         // We uniqued the parent class of this function to another class
                                         // so we now need to associate all dies under "decl_ctx_die" to
                                         // DIEs in the DIE for "class_type"...
+                                        SymbolFileDWARF *class_symfile;
                                         DWARFCompileUnitSP class_type_cu_sp;
-                                        const DWARFDebugInfoEntry *class_type_die = DebugInfo()->GetDIEPtr(class_type->GetID(), &class_type_cu_sp);
+                                        const DWARFDebugInfoEntry *class_type_die;
+                                        
+                                        SymbolFileDWARFDebugMap *debug_map_symfile = GetDebugMapSymfile();
+                                        if (debug_map_symfile)
+                                        {
+                                            class_symfile = debug_map_symfile->GetSymbolFileByOSOIndex(SymbolFileDWARFDebugMap::GetOSOIndexFromUserID(class_type->GetID()));
+                                            class_type_die = class_symfile->DebugInfo()->GetDIEPtr(class_type->GetID(), &class_type_cu_sp);
+                                        }
+                                        else
+                                        {
+                                            class_symfile = this;
+                                            class_type_die = DebugInfo()->GetDIEPtr(class_type->GetID(), &class_type_cu_sp);
+                                        }
                                         if (class_type_die)
                                         {
-                                            if (CopyUniqueClassMethodTypes (class_type,
-                                                                            class_type_cu_sp.get(),
-                                                                            class_type_die,
-                                                                            dwarf_cu,
-                                                                            decl_ctx_die))
+                                            llvm::SmallVector<const DWARFDebugInfoEntry *, 0> failures;
+                                            
+                                            CopyUniqueClassMethodTypes (class_symfile,
+                                                                        class_type,
+                                                                        class_type_cu_sp.get(),
+                                                                        class_type_die,
+                                                                        dwarf_cu,
+                                                                        decl_ctx_die,
+                                                                        failures);
+                                            
+                                            // FIXME do something with these failures that's smarter than
+                                            // just dropping them on the ground.  Unfortunately classes don't
+                                            // like having stuff added to them after their definitions are
+                                            // complete...
+                                            
+                                            type_ptr = m_die_to_type[die];
+                                            if (type_ptr && type_ptr != DIE_IS_BEING_PARSED)
                                             {
-                                                type_ptr = m_die_to_type[die];
-                                                if (type_ptr && type_ptr != DIE_IS_BEING_PARSED)
-                                                {
-                                                    type_sp = type_ptr->shared_from_this();
-                                                    break;
-                                                }
+                                                type_sp = type_ptr->shared_from_this();
+                                                break;
                                             }
                                         }
                                     }
