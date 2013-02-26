@@ -40,7 +40,7 @@
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
 //
-// CHECK-ANDROID: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ANDROID: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ANDROID-NOT: "-lc"
 // CHECK-ANDROID: libclang_rt.asan-arm-android.so"
 // CHECK-ANDROID-NOT: "-lpthread"
@@ -51,7 +51,7 @@
 // RUN:     -shared \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-SHARED %s
 //
-// CHECK-ANDROID-SHARED: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ANDROID-SHARED: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ANDROID-SHARED-NOT: "-lc"
 // CHECK-ANDROID-SHARED: libclang_rt.asan-arm-android.so"
 // CHECK-ANDROID-SHARED-NOT: "-lpthread"
