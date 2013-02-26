@@ -7,7 +7,7 @@ inline void pretend_to_do_something(void *x) {
   __asm__ __volatile__("" : : "r" (x) : "memory");
 }
 
-__attribute__((noinline, no_address_safety_analysis))
+__attribute__((noinline, no_sanitize_address))
 void ReallyThrow() {
   fprintf(stderr, "ReallyThrow\n");
   if (zero == 0)
