@@ -44,10 +44,11 @@ static inline bool QuickCheckForUnpoisonedRegion(uptr beg, uptr size) {
 #define ACCESS_MEMORY_RANGE(offset, size, isWrite) do {                 \
     uptr __offset = (uptr)(offset);                                     \
     uptr __size = (uptr)(size);                                         \
+    uptr __bad = 0;                                                     \
     if (!QuickCheckForUnpoisonedRegion(__offset, __size) &&             \
-        __asan_region_is_poisoned(__offset, __size)) {                  \
+        (__bad = __asan_region_is_poisoned(__offset, __size))) {        \
       GET_CURRENT_PC_BP_SP;                                             \
-      __asan_report_error(pc, bp, sp, __offset, isWrite, __size);       \
+      __asan_report_error(pc, bp, sp, __bad, isWrite, __size);          \
     }                                                                   \
   } while (0)
 
@@ -258,18 +259,13 @@ static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   if (!asan_inited) return internal_memcmp(a1, a2, size);
   ENSURE_ASAN_INITED();
-  unsigned char c1 = 0, c2 = 0;
-  const unsigned char *s1 = (const unsigned char*)a1;
-  const unsigned char *s2 = (const unsigned char*)a2;
-  uptr i;
-  for (i = 0; i < size; i++) {
-    c1 = s1[i];
-    c2 = s2[i];
-    if (c1 != c2) break;
+  if (flags()->replace_intrin) {
+    // We check the entire regions even if the first bytes of the buffers
+    // are different.
+    ASAN_READ_RANGE(a1, size);
+    ASAN_READ_RANGE(a2, size);
   }
-  ASAN_READ_RANGE(s1, Min(i + 1, size));
-  ASAN_READ_RANGE(s2, Min(i + 1, size));
-  return CharCmp(c1, c2);
+  return REAL(memcmp(a1, a2, size));
 }
 
 INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {

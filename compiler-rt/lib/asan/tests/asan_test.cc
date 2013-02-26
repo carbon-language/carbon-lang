@@ -716,7 +716,8 @@ TEST(AddressSanitizer, Store128Test) {
 string RightOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance >= 0);
   char expected_str[100];
-  sprintf(expected_str, ASAN_PCRE_DOTALL "%s.*located %d bytes to the right",
+  sprintf(expected_str, ASAN_PCRE_DOTALL
+          "buffer-overflow.*%s.*located %d bytes to the right",
           is_write ? "WRITE" : "READ", oob_distance);
   return string(expected_str);
 }

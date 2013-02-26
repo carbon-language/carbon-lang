@@ -225,6 +225,13 @@ TEST(AddressSanitizer, MemCmpOOBTest) {
   s1[size - 1] = '\0';
   s2[size - 1] = '\0';
   EXPECT_DEATH(Ident(memcmp)(s1, s2, size + 1), RightOOBReadMessage(0));
+
+  // Even if the buffers differ in the first byte, we still assume that
+  // memcmp may access the whole buffer and thus reporting the overflow here:
+  s1[0] = 1;
+  s2[0] = 123;
+  EXPECT_DEATH(Ident(memcmp)(s1, s2, size + 1), RightOOBReadMessage(0));
+
   free(s1);
   free(s2);
 }
