@@ -430,7 +430,6 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
             filter_sp = target.GetSearchFilterForModuleList(&filter_modules);
         
         m_cxx_exception_bp_sp = target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal);
-        printf("exception breakpoint with %zu locations\n", m_cxx_exception_bp_sp->GetNumLocations());/// REMOVE THIS PRIOR TO CHECKIN
         if (m_cxx_exception_bp_sp)
             m_cxx_exception_bp_sp->SetBreakpointKind("c++ exception");
     }
