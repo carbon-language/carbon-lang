@@ -41,6 +41,7 @@ public:
   virtual EVT getSetCCResultType(EVT VT) const;
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const;
 };
 
 } // End namespace llvm

@@ -357,3 +357,9 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   }
   return SDValue();
 }
+
+SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
+                                          SelectionDAG &DAG) const {
+  // TODO: Implement immediate folding
+  return Node;
+}

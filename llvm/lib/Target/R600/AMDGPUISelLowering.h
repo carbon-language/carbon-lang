@@ -65,6 +65,10 @@ public:
   SDValue LowerMinMax(SDValue Op, SelectionDAG &DAG) const;
   virtual const char* getTargetNodeName(unsigned Opcode) const;
 
+  virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const {
+    return N;
+  }
+
 // Functions defined in AMDILISelLowering.cpp
 public:
 
