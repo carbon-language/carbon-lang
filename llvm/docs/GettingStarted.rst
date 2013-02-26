@@ -362,6 +362,9 @@ optimizations are turned on. The symptom is an infinite loop in
 ``-O0``. A test failure in ``test/Assembler/alignstack.ll`` is one symptom of
 the problem.
 
+**GCC 4.6.3 on ARM**: Miscompiles ``llvm-readobj`` at ``-O3``. A test failure
+in ``test/Object/readobj-shared-object.test`` is one symptom of the problem.
+
 **GNU ld 2.16.X**. Some 2.16.X versions of the ld linker will produce very long
 warning messages complaining that some "``.gnu.linkonce.t.*``" symbol was
 defined in a discarded section. You can safely ignore these messages as they are
