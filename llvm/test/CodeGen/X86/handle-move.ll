@@ -16,7 +16,7 @@
 ;       DL:     [0B,16r:0)[128r,144r:2)[144r,144d:1)  0@0B-phi 1@144r 2@128r
 ;         -->   [0B,16r:0)[128r,180r:2)[180r,180d:1)  0@0B-phi 1@180r 2@128r
 ;
-define i32 @f1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind uwtable readnone ssp {
+define i32 @f1(i32 %a, i32 %b, i32 %c) nounwind uwtable readnone ssp {
 entry:
   %y = add i32 %c, 1
   %x = udiv i32 %b, %a
@@ -50,7 +50,7 @@ entry:
 ;       %vreg5:         [16r,112r:0)  0@16r
 ;            -->        [16r,120r:0)  0@16r
 ;
-define i32 @f3(i32 %a, i32 %b, i32 %c, i32 %d) nounwind uwtable readnone ssp {
+define i32 @f3(i32 %a, i32 %b) nounwind uwtable readnone ssp {
 entry:
   %y = sub i32 %a, %b
   %x = add i32 %a, %b
