@@ -413,11 +413,24 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
     if (!m_cxx_exception_bp_sp)
     {
         Target &target = m_process->GetTarget();
-        
+        FileSpecList filter_modules;
+        // Limit the number of modules that are searched for these breakpoints for
+        // Apple binaries.
+        if (target.GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
+        {
+            filter_modules.Append(FileSpec("libc++abi.dylib", false));
+            filter_modules.Append(FileSpec("libSystem.B.dylib", false));
+        }
         BreakpointResolverSP exception_resolver_sp = CreateExceptionResolver (NULL, catch_bp, throw_bp, for_expressions);
-        SearchFilterSP filter_sp = target.GetSearchFilterForModule(NULL);
+        SearchFilterSP filter_sp;
+        
+        if (filter_modules.IsEmpty())
+            filter_sp = target.GetSearchFilterForModule(NULL);
+        else
+            filter_sp = target.GetSearchFilterForModuleList(&filter_modules);
         
         m_cxx_exception_bp_sp = target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal);
+        printf("exception breakpoint with %zu locations\n", m_cxx_exception_bp_sp->GetNumLocations());/// REMOVE THIS PRIOR TO CHECKIN
         if (m_cxx_exception_bp_sp)
             m_cxx_exception_bp_sp->SetBreakpointKind("c++ exception");
     }

@@ -176,6 +176,12 @@ public:
     size_t
     MemorySize () const;
 
+    bool
+    IsEmpty() const
+    {
+        return m_files.empty();
+    }
+
     //------------------------------------------------------------------
     /// Get the number of files in the file list.
     ///
