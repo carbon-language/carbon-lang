@@ -427,7 +427,7 @@ int main(int argc, char **argv) {
   OwningPtr<MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
 
-  MCInstPrinter *IP;
+  MCInstPrinter *IP = NULL;
   if (FileType == OFT_AssemblyFile) {
     IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MCII, *MRI, *STI);
@@ -465,10 +465,12 @@ int main(int argc, char **argv) {
     Res = AssembleInput(ProgName, TheTarget, SrcMgr, Ctx, *Str, *MAI, *STI);
     break;
   case AC_MDisassemble:
+    assert(IP && "Expected assembly output");
     IP->setUseMarkup(1);
     disassemble = true;
     break;
   case AC_HDisassemble:
+    assert(IP && "Expected assembly output");
     IP->setPrintImmHex(1);
     disassemble = true;
     break;
