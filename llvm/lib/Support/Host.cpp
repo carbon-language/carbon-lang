@@ -331,7 +331,10 @@ std::string sys::getHostCPUName() {
       case 20:
         return "btver1";
       case 21:
-        return "bdver1";
+        if (Model <= 15)
+          return "bdver1";
+        else if (Model <= 31)
+          return "bdver2";
     default:
       return "generic";
     }
