@@ -47,7 +47,7 @@ namespace test29 {
   struct RECT {
     int top;
   };
-  __attribute__ ((visibility ("default"))) extern RECT data_rect;
+  DEFAULT extern RECT data_rect;
   RECT data_rect = { -1};
 #pragma GCC visibility pop
   // CHECK: @_ZN6test299data_rectE = global
@@ -70,7 +70,7 @@ namespace test41 {
   // Unlike gcc we propagate the information that foo not only is hidden, but
   // has been explicitly marked as so. This lets us produce a hidden undefined
   // reference to bar.
-  struct __attribute__((visibility("hidden"))) foo {};
+  struct HIDDEN foo {};
   extern foo bar;
   foo *zed() {
     return &bar;
@@ -119,7 +119,7 @@ namespace test48 {
 namespace test27 {
   template<typename T>
   class C {
-    class __attribute__((visibility("default"))) D {
+    class DEFAULT D {
       void f();
     };
   };
@@ -526,7 +526,7 @@ namespace Test20 {
 namespace test21 {
   enum En { en };
   template<En> struct A {
-    __attribute__((visibility("default"))) void foo() {}
+    DEFAULT void foo() {}
   };
 
   // CHECK: define weak_odr void @_ZN6test211AILNS_2EnE0EE3fooEv(
@@ -666,7 +666,7 @@ namespace test24 {
 namespace test26 {
   template<typename T>
   class C {
-    __attribute__((visibility("default")))  void f();
+    DEFAULT  void f();
   };
 
   template<>
@@ -889,7 +889,7 @@ namespace test47 {
   namespace {
     struct zed;
   }
-  template __attribute__((visibility("default"))) void foo::bar<zed>();
+  template DEFAULT void foo::bar<zed>();
   void baz() {
     foo::bar<zed>();
   }
@@ -1017,7 +1017,7 @@ namespace test54 {
 
 namespace test55 {
   template <class T>
-  struct __attribute__((visibility("hidden"))) foo {
+  struct HIDDEN foo {
     static void bar();
   };
   template <class T> struct foo;
@@ -1031,7 +1031,7 @@ namespace test55 {
 namespace test56 {
   template <class T> struct foo;
   template <class T>
-  struct __attribute__((visibility("hidden"))) foo {
+  struct HIDDEN foo {
     static void bar();
   };
   void foobar() {
@@ -1062,7 +1062,7 @@ namespace test58 {
 #pragma GCC visibility push(hidden)
   struct foo;
   template<typename T>
-  struct __attribute__((visibility("default"))) bar {
+  struct DEFAULT bar {
     static void zed() {
     }
   };
@@ -1093,9 +1093,9 @@ namespace test59 {
 
 namespace test60 {
   template<int i>
-  class __attribute__((visibility("hidden"))) a {};
+  class HIDDEN a {};
   template<int i>
-  class __attribute__((visibility("default"))) b {};
+  class DEFAULT b {};
   template<template<int> class x, template<int> class y>
   void test() {}
   void use() {
@@ -1128,7 +1128,7 @@ namespace test61 {
   // Just test that we don't crash. Currently we apply this attribute. Current
   // gcc issues a warning about it being unused since "the type is already
   // defined". We should probably do the same.
-  template class __attribute__ ((visibility("hidden"))) Class1<int>;
+  template class HIDDEN Class1<int>;
 }
 
 namespace test62 {
@@ -1147,7 +1147,7 @@ namespace test62 {
   }
 }
 namespace test62 {
-  template class __attribute__ ((visibility("hidden"))) Class1<int>;
+  template class HIDDEN Class1<int>;
   // Just test that we don't crash. Currently we apply this attribute. Current
   // gcc issues a warning about it being unused since "the type is already
   // defined". We should probably do the same.
@@ -1230,32 +1230,32 @@ namespace test65 {
 
 namespace test66 {
   template <typename T>
-  struct __attribute__((visibility("default"))) barT {
+  struct DEFAULT barT {
     static void zed() {}
   };
   class foo;
-  class __attribute__((visibility("default"))) foo;
+  class DEFAULT foo;
   template struct barT<foo>;
   // CHECK: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
 
   template <int* I>
-  struct __attribute__((visibility("default"))) barI {
+  struct DEFAULT barI {
     static void zed() {}
   };
   extern int I;
-  extern int I __attribute__((visibility("default")));
+  extern int I DEFAULT;
   template struct barI<&I>;
   // CHECK: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
 
   typedef void (*fType)(void);
   template<fType F>
-  struct __attribute__((visibility("default"))) barF {
+  struct DEFAULT barF {
     static void zed() {}
   };
   void F();
-  void F() __attribute__((visibility("default")));;
+  void F() DEFAULT;
   template struct barF<F>;
   // CHECK: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
