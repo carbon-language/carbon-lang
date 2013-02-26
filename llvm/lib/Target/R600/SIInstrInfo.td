@@ -51,6 +51,7 @@ class InlineImm <ValueType vt> : ImmLeaf <vt, [{
 
 def SIOperand {
   int ZERO = 0x80;
+  int VCC = 0x6A;
 }
 
 class GPR4Align <RegisterClass rc> : Operand <vAny> {
@@ -194,6 +195,29 @@ multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern>
 
 multiclass VOP2_64 <bits<6> op, string opName, list<dag> pattern>
   : VOP2_Helper <op, VReg_64, VSrc_64, opName, pattern>;
+
+multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern> {
+
+  def _e32 : VOP2 <
+    op, (outs VReg_32:$dst), (ins VSrc_32:$src0, VReg_32:$src1),
+    opName#"_e32 $dst, $src0, $src1", pattern
+  >;
+
+  def _e64 : VOP3b <
+    {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
+    (outs VReg_32:$dst),
+    (ins VSrc_32:$src0, VReg_32:$src1,
+         i32imm:$abs, i32imm:$clamp,
+         i32imm:$omod, i32imm:$neg),
+    opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
+  > {
+    let SRC2 = SIOperand.ZERO;
+    /* the VOP2 variant puts the carry out into VCC, the VOP3 variant
+       can write it into any SGPR. We currently don't use the carry out,
+       so for now hardcode it to VCC as well */
+    let SDST = SIOperand.VCC;
+  }
+}
 
 multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
                         string opName, ValueType vt, PatLeaf cond> {

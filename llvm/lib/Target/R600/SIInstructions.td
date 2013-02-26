@@ -805,17 +805,19 @@ defm V_MADAK_F32 : VOP2_32 <0x00000021, "V_MADAK_F32", []>;
 //defm V_MBCNT_LO_U32_B32 : VOP2_32 <0x00000023, "V_MBCNT_LO_U32_B32", []>;
 //defm V_MBCNT_HI_U32_B32 : VOP2_32 <0x00000024, "V_MBCNT_HI_U32_B32", []>;
 let Defs = [VCC] in { // Carry-out goes to VCC
-defm V_ADD_I32 : VOP2_32 <0x00000025, "V_ADD_I32",
+defm V_ADD_I32 : VOP2b_32 <0x00000025, "V_ADD_I32",
   [(set VReg_32:$dst, (add (i32 VSrc_32:$src0), (i32 VReg_32:$src1)))]
 >;
-defm V_SUB_I32 : VOP2_32 <0x00000026, "V_SUB_I32",
+defm V_SUB_I32 : VOP2b_32 <0x00000026, "V_SUB_I32",
   [(set VReg_32:$dst, (sub (i32 VSrc_32:$src0), (i32 VReg_32:$src1)))]
 >;
+defm V_SUBREV_I32 : VOP2b_32 <0x00000027, "V_SUBREV_I32", []>;
+let Uses = [VCC] in { // Carry-out comes from VCC
+defm V_ADDC_U32 : VOP2b_32 <0x00000028, "V_ADDC_U32", []>;
+defm V_SUBB_U32 : VOP2b_32 <0x00000029, "V_SUBB_U32", []>;
+defm V_SUBBREV_U32 : VOP2b_32 <0x0000002a, "V_SUBBREV_U32", []>;
+} // End Uses = [VCC]
 } // End Defs = [VCC]
-defm V_SUBREV_I32 : VOP2_32 <0x00000027, "V_SUBREV_I32", []>;
-defm V_ADDC_U32 : VOP2_32 <0x00000028, "V_ADDC_U32", []>;
-defm V_SUBB_U32 : VOP2_32 <0x00000029, "V_SUBB_U32", []>;
-defm V_SUBBREV_U32 : VOP2_32 <0x0000002a, "V_SUBBREV_U32", []>;
 defm V_LDEXP_F32 : VOP2_32 <0x0000002b, "V_LDEXP_F32", []>;
 ////def V_CVT_PKACCUM_U8_F32 : VOP2_U8 <0x0000002c, "V_CVT_PKACCUM_U8_F32", []>;
 ////def V_CVT_PKNORM_I16_F32 : VOP2_I16 <0x0000002d, "V_CVT_PKNORM_I16_F32", []>;
