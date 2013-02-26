@@ -1093,38 +1093,51 @@ namespace {
 /// all_declared_ivar_begin - return first ivar declared in this class,
 /// its extensions and its implementation. Lazily build the list on first
 /// access.
+///
+/// Caveat: The list returned by this method reflects the current
+/// state of the parser. The cache will be updated for every ivar
+/// added by an extension or the implementation when they are
+/// encountered.
+/// See also ObjCIvarDecl::Create().
 ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;
   
-  if (data().IvarList)
-    return data().IvarList;
-  
   ObjCIvarDecl *curIvar = 0;
-  if (!ivar_empty()) {
-    ObjCInterfaceDecl::ivar_iterator I = ivar_begin(), E = ivar_end();
-    data().IvarList = *I; ++I;
-    for (curIvar = data().IvarList; I != E; curIvar = *I, ++I)
-      curIvar->setNextIvar(*I);
-  }
-
-  for (ObjCInterfaceDecl::known_extensions_iterator
-         Ext = known_extensions_begin(),
-         ExtEnd = known_extensions_end();
-       Ext != ExtEnd; ++Ext) {
-    if (!Ext->ivar_empty()) {
-      ObjCCategoryDecl::ivar_iterator I = Ext->ivar_begin(),E = Ext->ivar_end();
-      if (!data().IvarList) {
-        data().IvarList = *I; ++I;
-        curIvar = data().IvarList;
-      }
-      for ( ;I != E; curIvar = *I, ++I)
+  if (!data().IvarList) {
+    if (!ivar_empty()) {
+      ObjCInterfaceDecl::ivar_iterator I = ivar_begin(), E = ivar_end();
+      data().IvarList = *I; ++I;
+      for (curIvar = data().IvarList; I != E; curIvar = *I, ++I)
         curIvar->setNextIvar(*I);
     }
+
+    for (ObjCInterfaceDecl::known_extensions_iterator
+           Ext = known_extensions_begin(),
+           ExtEnd = known_extensions_end();
+         Ext != ExtEnd; ++Ext) {
+      if (!Ext->ivar_empty()) {
+        ObjCCategoryDecl::ivar_iterator
+          I = Ext->ivar_begin(),
+          E = Ext->ivar_end();
+        if (!data().IvarList) {
+          data().IvarList = *I; ++I;
+          curIvar = data().IvarList;
+        }
+        for ( ;I != E; curIvar = *I, ++I)
+          curIvar->setNextIvar(*I);
+      }
+    }
+    data().IvarListMissingImplementation = true;
   }
+
+  // cached and complete!
+  if (!data().IvarListMissingImplementation)
+      return data().IvarList;
   
   if (ObjCImplementationDecl *ImplDecl = getImplementation()) {
+    data().IvarListMissingImplementation = false;
     if (!ImplDecl->ivar_empty()) {
       SmallVector<SynthesizeIvarChunk, 16> layout;
       for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),

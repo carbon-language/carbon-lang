@@ -1343,7 +1343,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   LexicalBlockStack.push_back(FwdDeclNode);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
 
-  // Add this to the completed types cache since we're completing it.
+  // Add this to the completed-type cache while we're completing it recursively.
   CompletedTypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
 
   // Convert all the elements.
@@ -1436,7 +1436,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   // Otherwise, insert it into the CompletedTypeCache so that recursive uses
   // will find it and we're emitting the complete type.
-  CompletedTypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
+  QualType QualTy = QualType(Ty, 0);
+  CompletedTypeCache[QualTy.getAsOpaquePtr()] = RealDecl;
   // Push the struct on region stack.
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode(RealDecl);
 
@@ -1561,6 +1562,12 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
   FwdDeclNode->replaceOperandWith(10, Elements);
+
+  // If the implementation is not yet set, we do not want to mark it
+  // as complete. An implementation may declare additional
+  // private ivars that we would miss otherwise.
+  if (ID->getImplementation() == 0)
+    CompletedTypeCache.erase(QualTy.getAsOpaquePtr());
   
   LexicalBlockStack.pop_back();
   return llvm::DIType(FwdDeclNode);
@@ -1824,6 +1831,10 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
     ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(),
                                         static_cast<llvm::Value*>(TC)));
   
+  // Do not cache the type if it may be incomplete.
+  if (maybeIncompleteInterface(Ty))
+    return Res;
+
   // And update the type cache.
   TypeCache[Ty.getAsOpaquePtr()] = Res;
 
@@ -1831,6 +1842,21 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
     CompletedTypeCache[Ty.getAsOpaquePtr()] = Res;
 
   return Res;
+}
+
+/// clang::ParseAST handles each TopLevelDecl immediately after it was parsed.
+/// A subsequent implementation may add more ivars to an interface, which is
+/// why we cannot cache it yet.
+bool CGDebugInfo::maybeIncompleteInterface(QualType Ty) {
+  switch (Ty->getTypeClass()) {
+  case Type::ObjCObjectPointer:
+    return maybeIncompleteInterface(cast<ObjCObjectPointerType>(Ty)->getPointeeType());
+  case Type::ObjCInterface:
+    if (ObjCInterfaceDecl *Decl = cast<ObjCInterfaceType>(Ty)->getDecl())
+      return (Decl->getImplementation() == 0);
+  default:
+    return false;
+  }
 }
 
 /// CreateTypeNode - Create a new debug type node.

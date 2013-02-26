@@ -299,6 +299,10 @@ private:
   /// CreateTypeNode - Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F);
 
+  /// maybeIncompleteInterface - Determine if Ty may contain an
+  /// interface without an implementation
+  bool maybeIncompleteInterface(QualType Ty);
+
   /// CreateLimitedTypeNode - Create type metadata for a source language
   /// type, but only partial types for records.
   llvm::DIType CreateLimitedTypeNode(QualType Ty, llvm::DIFile F);
