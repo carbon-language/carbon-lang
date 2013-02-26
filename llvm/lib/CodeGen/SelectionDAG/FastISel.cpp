@@ -822,7 +822,7 @@ FastISel::SelectInstruction(const Instruction *I) {
   }
 
   // First, try doing target-independent selection.
-  if (SelectOperator(I, I->getOpcode())) {
+  if (!SkipTargetIndependentFastISel() && SelectOperator(I, I->getOpcode())) {
     ++NumFastIselSuccessIndependent;
     DL = DebugLoc();
     return true;
