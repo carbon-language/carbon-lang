@@ -16,13 +16,12 @@ void __attribute__((pure)) f5(T1 a);
 
 void *ps[] = { f0, f1, f2, f3, f4, f5 };
 
-// CHECK: declare i32 @f0() #0
-// CHECK: declare i32 @f1() #1
+// CHECK: declare i32 @f0() [[RN:#[0-9]+]]
+// CHECK: declare i32 @f1() [[RO:#[0-9]+]]
 // CHECK: declare void @f2({{.*}} sret)
 // CHECK: declare void @f3({{.*}} sret)
 // CHECK: declare void @f4({{.*}} byval align 4)
 // CHECK: declare void @f5({{.*}} byval align 4)
 
-// CHECK: attributes #0 = { nounwind readnone "target-features"={{.*}} }
-// CHECK: attributes #1 = { nounwind readonly "target-features"={{.*}} }
-// CHECK: attributes #2 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes [[RN]] = { nounwind readnone{{.*}} }
+// CHECK: attributes [[RO]] = { nounwind readonly{{.*}} }

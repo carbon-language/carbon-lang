@@ -9,5 +9,4 @@ void g(void) {
 
 // CHECK-NOT: declare void @f() #0
 
-// CHECK: attributes #0 = { nounwind {{.*}} }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes #0 = { nounwind{{.*}} }
