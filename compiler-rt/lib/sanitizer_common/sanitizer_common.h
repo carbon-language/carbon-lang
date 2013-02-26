@@ -17,6 +17,7 @@
 #define SANITIZER_COMMON_H
 
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_libc.h"
 
 namespace __sanitizer {
 struct StackTrace;
@@ -259,6 +260,57 @@ INLINE int ToLower(int c) {
 # define FIRST_32_SECOND_64(a, b) (a)
 #endif
 
+// A low-level vector based on mmap. May incur a significant memory overhead for
+// small vectors.
+// WARNING: The current implementation supports only POD types.
+template<typename T>
+class InternalVector {
+ public:
+  explicit InternalVector(uptr initial_capacity) {
+    CHECK_GT(initial_capacity, 0);
+    capacity_ = initial_capacity;
+    size_ = 0;
+    data_ = (T *)MmapOrDie(capacity_ * sizeof(T), "InternalVector");
+  }
+  ~InternalVector() {
+    UnmapOrDie(data_, capacity_ * sizeof(T));
+  }
+  T &operator[](uptr i) {
+    CHECK_LT(i, size_);
+    return data_[i];
+  }
+  void push_back(const T &element) {
+    CHECK_LE(size_, capacity_);
+    if (size_ == capacity_) {
+      uptr new_capacity = RoundUpToPowerOfTwo(size_ + 1);
+      Resize(new_capacity);
+    }
+    data_[size_++] = element;
+  }
+  uptr size() {
+    return size_;
+  }
+
+ private:
+  void Resize(uptr new_capacity) {
+    CHECK_GT(new_capacity, 0);
+    CHECK_LE(size_, new_capacity);
+    T *new_data = (T *)MmapOrDie(new_capacity * sizeof(T),
+                                 "InternalVector");
+    internal_memcpy(new_data, data_, size_ * sizeof(T));
+    T *old_data = data_;
+    data_ = new_data;
+    UnmapOrDie(old_data, capacity_ * sizeof(T));
+    capacity_ = new_capacity;
+  }
+  // Disallow evil constructors.
+  InternalVector(const InternalVector&);
+  void operator=(const InternalVector&);
+
+  T *data_;
+  uptr capacity_;
+  uptr size_;
+};
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H
