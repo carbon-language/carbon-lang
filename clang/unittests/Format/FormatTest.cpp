@@ -588,17 +588,23 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
 
   EXPECT_EQ("S s = {\n"
             "  // Some comment\n"
-            "  a\n"
+            "  a,\n"
             "\n"
             "  // Comment after empty line\n"
             "  b\n"
-            "}", format("S s =    {\n"
-                        "      // Some comment\n"
-                        "  a\n"
-                        "  \n"
-                        "     // Comment after empty line\n"
-                        "      b\n"
-                        "}"));
+            "}",
+            format("S s =    {\n"
+                   "      // Some comment\n"
+                   "  a,\n"
+                   "  \n"
+                   "     // Comment after empty line\n"
+                   "      b\n"
+                   "}"));
+  EXPECT_EQ("S s = { a, b };", format("S s = {\n"
+            "  a,\n"
+            "\n"
+            "  b\n"
+            "};"));
 }
 
 //===----------------------------------------------------------------------===//

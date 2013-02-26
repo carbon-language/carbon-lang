@@ -518,9 +518,11 @@ private:
         State.Stack.back().BreakBeforeParameter = false;
 
       if (!DryRun) {
-        unsigned NewLines =
-            std::max(1u, std::min(Current.FormatTok.NewlinesBefore,
-                                  Style.MaxEmptyLinesToKeep + 1));
+        unsigned NewLines = 1;
+        if (Current.Type == TT_LineComment)
+          NewLines =
+              std::max(NewLines, std::min(Current.FormatTok.NewlinesBefore,
+                                          Style.MaxEmptyLinesToKeep + 1));
         if (!Line.InPPDirective)
           Whitespaces.replaceWhitespace(Current, NewLines, State.Column,
                                         WhitespaceStartColumn, Style);

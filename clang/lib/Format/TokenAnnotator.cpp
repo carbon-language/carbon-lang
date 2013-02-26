@@ -842,8 +842,6 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                Current->Parent->is(tok::string_literal) &&
                Current->Children[0].is(tok::string_literal)) {
       Current->MustBreakBefore = true;
-    } else if (Current->FormatTok.NewlinesBefore > 1) {
-      Current->MustBreakBefore = true;
     } else {
       Current->MustBreakBefore = false;
     }
