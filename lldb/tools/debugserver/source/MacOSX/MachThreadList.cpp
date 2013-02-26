@@ -73,8 +73,10 @@ MachThreadList::GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInf
 bool
 MachThreadList::GetIdentifierInfo (nub_thread_t tid, thread_identifier_info_data_t *ident_info)
 {
+    thread_t mach_port_number = GetMachPortNumberByThreadID (tid);
+
     mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
-    return ::thread_info (tid, THREAD_IDENTIFIER_INFO, (thread_info_t)ident_info, &count) == KERN_SUCCESS;
+    return ::thread_info (mach_port_number, THREAD_IDENTIFIER_INFO, (thread_info_t)ident_info, &count) == KERN_SUCCESS;
 }
 
 void
@@ -142,6 +144,22 @@ MachThreadList::GetThreadIDByMachPortNumber (thread_t mach_port_number) const
         }
     }
     return INVALID_NUB_THREAD;
+}
+
+thread_t
+MachThreadList::GetMachPortNumberByThreadID (nub_thread_t globally_unique_id) const
+{
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+    MachThreadSP thread_sp;
+    const size_t num_threads = m_threads.size();
+    for (size_t idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->ThreadID() == globally_unique_id)
+        {
+            return m_threads[idx]->MachPortNumber();
+        }
+    }
+    return 0;
 }
 
 bool

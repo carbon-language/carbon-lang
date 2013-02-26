@@ -58,6 +58,7 @@ public:
 
     MachThreadSP    GetThreadByMachPortNumber (thread_t mach_port_number) const;
     nub_thread_t    GetThreadIDByMachPortNumber (thread_t mach_port_number) const;
+    thread_t        GetMachPortNumberByThreadID (nub_thread_t globally_unique_id) const;
 
 protected:
     typedef std::vector<MachThreadSP>   collection;

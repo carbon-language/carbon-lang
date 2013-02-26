@@ -133,11 +133,9 @@ protected:
     std::auto_ptr<DNBArchProtocol>  m_arch_ap;      // Arch specific information for register state and more
     const DNBRegisterSetInfo *      m_reg_sets;      // Register set information for this thread
     nub_size_t                      m_num_reg_sets;
-#ifdef THREAD_IDENTIFIER_INFO_COUNT
     thread_identifier_info_data_t   m_ident_info;
     struct proc_threadinfo          m_proc_threadinfo;
     std::string                     m_dispatch_queue_name;
-#endif
 
 private:
     friend class MachThreadList;
