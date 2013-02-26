@@ -1634,7 +1634,7 @@ SymbolFileDWARF::ParseChildMembers
                     const char *prop_name = NULL;
                     const char *prop_getter_name = NULL;
                     const char *prop_setter_name = NULL;
-                    uint32_t        prop_attributes = 0;
+                    uint32_t prop_attributes = 0;
                     
                     
                     bool is_artificial = false;
@@ -1644,6 +1644,7 @@ SymbolFileDWARF::ParseChildMembers
                     size_t byte_size = 0;
                     size_t bit_offset = 0;
                     size_t bit_size = 0;
+                    bool is_external = false; // On DW_TAG_members, this means the member is static
                     uint32_t i;
                     for (i=0; i<num_attributes && !is_artificial; ++i)
                     {
@@ -1688,11 +1689,12 @@ SymbolFileDWARF::ParseChildMembers
                                 break;
 
                             case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
-                            case DW_AT_artificial: is_artificial = form_value.Unsigned() != 0; break;                            
+                            case DW_AT_artificial: is_artificial = form_value.Unsigned() != 0; break;
                             case DW_AT_APPLE_property_name:      prop_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_getter:    prop_getter_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_setter:    prop_setter_name = form_value.AsCString(&get_debug_str_data()); break;
                             case DW_AT_APPLE_property_attribute: prop_attributes = form_value.Unsigned(); break;
+                            case DW_AT_external:                 is_external = form_value.Unsigned() != 0; break;
 
                             default:
                             case DW_AT_declaration:
@@ -1780,6 +1782,10 @@ SymbolFileDWARF::ParseChildMembers
                         // class layouts.
                         is_artificial = true;
                     }
+
+                    // Skip static members
+                    if (is_external && member_byte_offset == UINT32_MAX)
+                        break;
 
                     if (is_artificial == false)
                     {
