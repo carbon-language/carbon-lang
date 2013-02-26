@@ -5184,7 +5184,7 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
 }
 
 bool
-SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *class_symfile,
+SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *src_symfile,
                                              Type *class_type,
                                              DWARFCompileUnit* src_cu,
                                              const DWARFDebugInfoEntry *src_class_die,
@@ -5216,13 +5216,13 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *class_symfile,
             // for DW_AT_declaration set to 1. Sometimes concrete function instances
             // are placed inside the class definitions and shouldn't be included in
             // the list of things are are tracking here.
-            if (src_die->GetAttributeValueAsUnsigned(class_symfile, src_cu, DW_AT_declaration, 0) == 1)
+            if (src_die->GetAttributeValueAsUnsigned(src_symfile, src_cu, DW_AT_declaration, 0) == 1)
             {
-                const char *src_name = src_die->GetMangledName (class_symfile, src_cu);
+                const char *src_name = src_die->GetMangledName (src_symfile, src_cu);
                 if (src_name)
                 {
                     ConstString src_const_name(src_name);
-                    if (src_die->GetAttributeValueAsUnsigned(class_symfile, src_cu, DW_AT_artificial, 0))
+                    if (src_die->GetAttributeValueAsUnsigned(src_symfile, src_cu, DW_AT_artificial, 0))
                         src_name_to_die_artificial.Append(src_const_name.GetCString(), src_die);
                     else
                         src_name_to_die.Append(src_const_name.GetCString(), src_die);
@@ -5296,7 +5296,7 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *class_symfile,
                 fast_path = false;
             }
             
-            const char *src_name = src_die->GetMangledName (class_symfile, src_cu);
+            const char *src_name = src_die->GetMangledName (src_symfile, src_cu);
             const char *dst_name = dst_die->GetMangledName (this, dst_cu);
             
             // Make sure the names match
@@ -5326,7 +5326,7 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *class_symfile,
             src_die = src_name_to_die.GetValueAtIndexUnchecked (idx);
             dst_die = dst_name_to_die.GetValueAtIndexUnchecked (idx);
             
-            clang::DeclContext *src_decl_ctx = class_symfile->m_die_to_decl_ctx[src_die];
+            clang::DeclContext *src_decl_ctx = src_symfile->m_die_to_decl_ctx[src_die];
             if (src_decl_ctx)
             {
                 if (log)
@@ -5371,7 +5371,7 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (SymbolFileDWARF *class_symfile,
                 
                 if (src_die && (src_die->Tag() == dst_die->Tag()))
                 {
-                    clang::DeclContext *src_decl_ctx = class_symfile->m_die_to_decl_ctx[src_die];
+                    clang::DeclContext *src_decl_ctx = src_symfile->m_die_to_decl_ctx[src_die];
                     if (src_decl_ctx)
                     {
                         if (log)
@@ -6437,9 +6437,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         // We uniqued the parent class of this function to another class
                                         // so we now need to associate all dies under "decl_ctx_die" to
                                         // DIEs in the DIE for "class_type"...
-                                        SymbolFileDWARF *class_symfile;
+                                        SymbolFileDWARF *class_symfile = NULL;
                                         DWARFCompileUnitSP class_type_cu_sp;
-                                        const DWARFDebugInfoEntry *class_type_die;
+                                        const DWARFDebugInfoEntry *class_type_die = NULL;
                                         
                                         SymbolFileDWARFDebugMap *debug_map_symfile = GetDebugMapSymfile();
                                         if (debug_map_symfile)
