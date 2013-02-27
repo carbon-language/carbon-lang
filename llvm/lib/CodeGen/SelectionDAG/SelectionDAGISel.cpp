@@ -58,13 +58,14 @@
 #include <algorithm>
 using namespace llvm;
 
-STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
-STATISTIC(NumFastIselSuccess, "Number of instructions fast isel selected");
 STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
 STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
-STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
 
 #ifndef NDEBUG
+STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
+STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
+STATISTIC(NumFastIselSuccess, "Number of instructions fast isel selected");
+
 static cl::opt<bool>
 EnableFastISelVerbose2("fast-isel-verbose2", cl::Hidden,
           cl::desc("Enable extra verbose messages in the \"fast\" "
@@ -1076,8 +1077,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           FastIS->setLastLocalValue(0);
       }
 
-      unsigned NumFastIselRemaining = 0;
-      NumFastIselRemaining = std::distance(Begin, End);
+      unsigned NumFastIselRemaining = std::distance(Begin, End);
+      (void) NumFastIselRemaining;
       // Do FastISel on as many instructions as possible.
       for (; BI != Begin; --BI) {
         const Instruction *Inst = llvm::prior(BI);
@@ -1150,6 +1151,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           // Recompute NumFastIselRemaining as Selection DAG instruction
           // selection may have handled the call, input args, etc.
           unsigned RemainingNow = std::distance(Begin, BI);
+          (void) RemainingNow;
           DEBUG(NumFastIselFailures += NumFastIselRemaining - RemainingNow);
           DEBUG(NumFastIselRemaining = RemainingNow);
           continue;
