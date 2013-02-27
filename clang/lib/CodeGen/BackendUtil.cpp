@@ -307,7 +307,8 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
                                     CodeGenOpts.EmitGcovArcs,
                                     TargetTriple.isMacOSX(),
                                     false,
-                                    CodeGenOpts.DisableRedZone));
+                                    CodeGenOpts.DisableRedZone,
+                                    false));
 
     if (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
       MPM->add(createStripSymbolsPass(true));
