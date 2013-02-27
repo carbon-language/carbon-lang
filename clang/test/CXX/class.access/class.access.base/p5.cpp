@@ -72,4 +72,27 @@ namespace test3 {
   };
 }
 
+// Don't crash. <rdar://12926092>
+// Note that 'field' is indeed a private member of X but that access
+// is indeed ultimately constrained by the protected inheritance from Y.
+// If someone wants to put the effort into improving this diagnostic,
+// they can feel free; even explaining it in person would be a pain.
+namespace test4 {
+  class Z;
+  class X {
+  public:
+    void f(Z *p);
+
+  private:
+    int field; // expected-note {{member is declared here}}
+  };
+
+  class Y : public X { };
+  class Z : protected Y { }; // expected-note 2 {{constrained by protected inheritance here}}
+
+  void X::f(Z *p) {
+    p->field = 0; // expected-error {{cannot cast 'test4::Z' to its protected base class 'test4::X'}} expected-error {{'field' is a private member of 'test4::X'}}
+  }
+}
+
 // TODO: flesh out these cases
