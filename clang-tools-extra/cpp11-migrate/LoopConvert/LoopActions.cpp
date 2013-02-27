@@ -395,7 +395,7 @@ static bool isDereferenceOfUop(const UnaryOperator *Uop,
 ///     T t = *i;
 ///     // use t, do not use i
 ///   }
-/// \code
+/// \endcode
 static bool isAliasDecl(const Decl *TheDecl, const VarDecl *IndexVar) {
   const VarDecl *VDecl = dyn_cast<VarDecl>(TheDecl);
   if (!VDecl)
