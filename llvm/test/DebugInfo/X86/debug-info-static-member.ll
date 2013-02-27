@@ -131,12 +131,15 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_A]]}
 ; PRESENT-NEXT: DW_AT_location
+; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1aE"
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_B]]}
 ; PRESENT-NEXT: DW_AT_location
+; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1bE"
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_C]]}
 ; PRESENT-NEXT: DW_AT_location
+; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1cE"
 
 ; ABSENT verifies that static member declarations do not have either
 ; DW_AT_location or DW_AT_data_member_location; also, variables do not

@@ -1348,9 +1348,15 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     }
     // Add linkage name.
     StringRef LinkageName = GV.getLinkageName();
-    if (!LinkageName.empty() && isGlobalVariable)
+    if (!LinkageName.empty() && isGlobalVariable) {
       addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
                 getRealLinkageName(LinkageName));
+      // To make old GDB happy, for static member variables, we add
+      // AT_MIPS_linkage_name to the definition DIE as well.
+      if (IsStaticMember && VariableSpecDIE)
+        addString(VariableSpecDIE, dwarf::DW_AT_MIPS_linkage_name,
+                  getRealLinkageName(LinkageName));
+    }
   } else if (const ConstantInt *CI =
              dyn_cast_or_null<ConstantInt>(GV.getConstant())) {
     // AT_const_value was added when the static memeber was created. To avoid
