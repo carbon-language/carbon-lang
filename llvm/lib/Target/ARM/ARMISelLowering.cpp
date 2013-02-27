@@ -554,6 +554,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::CTPOP,      MVT::v4i16, Custom);
     setOperationAction(ISD::CTPOP,      MVT::v8i16, Custom);
 
+    // NEON only has FMA instructions as of VFP4.
+    if (!Subtarget->hasVFP4()) {
+      setOperationAction(ISD::FMA, MVT::v2f32, Expand);
+      setOperationAction(ISD::FMA, MVT::v4f32, Expand);
+    }
+
     setTargetDAGCombine(ISD::INTRINSIC_VOID);
     setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
     setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
