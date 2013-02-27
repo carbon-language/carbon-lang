@@ -1,6 +1,8 @@
 // RUN: c-index-test -write-pch %t.pch -fshort-wchar %s
-// RUN: c-index-test -index-tu %t.pch | FileCheck %s
-
-const wchar_t *wideStr = L"123";
+// RUN: env LIBCLANG_NOTHREADS=1 c-index-test -index-tu %t.pch | FileCheck %s
 
 // CHECK: [indexDeclaration]: kind: variable | name: wideStr
+const wchar_t *wideStr = L"123";
+
+// CHECK: [indexDeclaration]: kind: struct | name: __is_void
+struct __is_void {};
