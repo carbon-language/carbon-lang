@@ -16,6 +16,7 @@
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_linux.h"
 #include "sanitizer_mutex.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
@@ -25,7 +26,9 @@
 #include <pthread.h>
 #include <sched.h>
 #include <sys/mman.h>
+#include <sys/ptrace.h>
 #include <sys/resource.h>
+#include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
@@ -537,6 +540,114 @@ void BlockingMutex::Unlock() {
   CHECK_NE(v, MtxUnlocked);
   if (v == MtxSleeping)
     syscall(__NR_futex, m, FUTEX_WAKE, 1, 0, 0, 0);
+}
+
+// ----------------- sanitizer_linux.h
+// The actual size of this structure is specified by d_reclen.
+// Note that getdents64 uses a different structure format. We only provide the
+// 32-bit syscall here.
+struct linux_dirent {
+  unsigned long      d_ino;
+  unsigned long      d_off;
+  unsigned short     d_reclen;
+  char               d_name[256];
+};
+
+// Syscall wrappers.
+long internal_ptrace(int request, int pid, void *addr, void *data) {
+  return syscall(__NR_ptrace, request, pid, addr, data);
+}
+
+int internal_waitpid(int pid, int *status, int options) {
+  return syscall(__NR_wait4, pid, status, options, NULL /* rusage */);
+}
+
+int internal_getppid() {
+  return syscall(__NR_getppid);
+}
+
+int internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count) {
+  return syscall(__NR_getdents, fd, dirp, count);
+}
+
+OFF_T internal_lseek(fd_t fd, OFF_T offset, int whence) {
+  return syscall(__NR_lseek, fd, offset, whence);
+}
+
+int internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5) {
+  return syscall(__NR_prctl, option, arg2, arg3, arg4, arg5);
+}
+
+int internal_sigaltstack(const struct sigaltstack *ss,
+                         struct sigaltstack *oss) {
+  return syscall(__NR_sigaltstack, ss, oss);
+}
+
+
+// ThreadLister implementation.
+ThreadLister::ThreadLister(int pid)
+  : pid_(pid),
+    descriptor_(-1),
+    error_(true),
+    entry_((linux_dirent *)buffer_),
+    bytes_read_(0) {
+  char task_directory_path[80];
+  internal_snprintf(task_directory_path, sizeof(task_directory_path),
+                    "/proc/%d/task/", pid);
+  descriptor_ = internal_open(task_directory_path, O_RDONLY | O_DIRECTORY);
+  if (descriptor_ < 0) {
+    error_ = true;
+    Report("Can't open /proc/%d/task for reading.\n", pid);
+  } else {
+    error_ = false;
+  }
+}
+
+int ThreadLister::GetNextTID() {
+  int tid = -1;
+  do {
+    if (error_)
+      return -1;
+    if ((char *)entry_ >= &buffer_[bytes_read_] && !GetDirectoryEntries())
+      return -1;
+    if (entry_->d_ino != 0 && entry_->d_name[0] >= '0' &&
+        entry_->d_name[0] <= '9') {
+      // Found a valid tid.
+      tid = (int)internal_atoll(entry_->d_name);
+    }
+    entry_ = (struct linux_dirent *)(((char *)entry_) + entry_->d_reclen);
+  } while (tid < 0);
+  return tid;
+}
+
+void ThreadLister::Reset() {
+  if (error_ || descriptor_ < 0)
+    return;
+  internal_lseek(descriptor_, 0, SEEK_SET);
+}
+
+ThreadLister::~ThreadLister() {
+  if (descriptor_ >= 0)
+    internal_close(descriptor_);
+}
+
+bool ThreadLister::error() { return error_; }
+
+bool ThreadLister::GetDirectoryEntries() {
+  CHECK_GE(descriptor_, 0);
+  CHECK_NE(error_, true);
+  bytes_read_ = internal_getdents(descriptor_,
+                                  (struct linux_dirent *)buffer_,
+                                  sizeof(buffer_));
+  if (bytes_read_ < 0) {
+    Report("Can't read directory entries from /proc/%d/task.\n", pid_);
+    error_ = true;
+    return false;
+  } else if (bytes_read_ == 0) {
+    return false;
+  }
+  entry_ = (struct linux_dirent *)buffer_;
+  return true;
 }
 
 }  // namespace __sanitizer

@@ -23,20 +23,12 @@
 
 // These typedefs should be used only in the interceptor definitions to replace
 // the standard system types (e.g. SSIZE_T instead of ssize_t)
-typedef __sanitizer::uptr SIZE_T;
-typedef __sanitizer::sptr SSIZE_T;
-typedef __sanitizer::sptr PTRDIFF_T;
-typedef __sanitizer::s64  INTMAX_T;
-// WARNING: OFF_T may be different from OS type off_t, depending on the value of
-// _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
-// like pread and mmap, as opposed to pread64 and mmap64.
-// Mac and Linux/x86-64 are special.
-#if defined(__APPLE__) || (defined(__linux__) && defined(__x86_64__))
-typedef __sanitizer::u64 OFF_T;
-#else
-typedef __sanitizer::uptr OFF_T;
-#endif
-typedef __sanitizer::u64  OFF64_T;
+typedef __sanitizer::uptr    SIZE_T;
+typedef __sanitizer::sptr    SSIZE_T;
+typedef __sanitizer::sptr    PTRDIFF_T;
+typedef __sanitizer::s64     INTMAX_T;
+typedef __sanitizer::OFF_T   OFF_T;
+typedef __sanitizer::OFF64_T OFF64_T;
 
 // How to add an interceptor:
 // Suppose you need to wrap/replace system function (generally, from libc):

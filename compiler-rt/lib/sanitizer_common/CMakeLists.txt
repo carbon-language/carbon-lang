@@ -36,6 +36,7 @@ set(SANITIZER_HEADERS
   sanitizer_internal_defs.h
   sanitizer_lfstack.h
   sanitizer_libc.h
+  sanitizer_linux.h
   sanitizer_list.h
   sanitizer_mutex.h
   sanitizer_placement_new.h

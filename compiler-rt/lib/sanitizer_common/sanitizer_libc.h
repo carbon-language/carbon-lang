@@ -80,6 +80,11 @@ int internal_fstat(fd_t fd, void *buf);
 int internal_dup2(int oldfd, int newfd);
 uptr internal_readlink(const char *path, char *buf, uptr bufsize);
 void NORETURN internal__exit(int exitcode);
+OFF_T internal_lseek(fd_t fd, OFF_T offset, int whence);
+
+long internal_ptrace(int request, int pid, void *addr, void *data);
+int internal_waitpid(int pid, int *status, int options);
+int internal_getppid();
 
 // Threading
 int internal_sched_yield();
