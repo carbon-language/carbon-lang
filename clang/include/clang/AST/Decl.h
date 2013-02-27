@@ -216,7 +216,7 @@ public:
 
   /// \brief Determines the visibility of this entity.
   Visibility getVisibility() const {
-    return getLinkageAndVisibility().visibility();
+    return getLinkageAndVisibility().getVisibility();
   }
 
   /// \brief Determines the linkage and visibility of this entity.

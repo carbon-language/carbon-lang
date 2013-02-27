@@ -2008,9 +2008,9 @@ class CachedProperties {
 public:
   CachedProperties(LinkageInfo LV, bool local) : LV(LV), local(local) {}
 
-  Linkage getLinkage() const { return LV.linkage(); }
-  Visibility getVisibility() const { return LV.visibility(); }
-  bool isVisibilityExplicit() const { return LV.visibilityExplicit(); }
+  Linkage getLinkage() const { return LV.getLinkage(); }
+  Visibility getVisibility() const { return LV.getVisibility(); }
+  bool isVisibilityExplicit() const { return LV.isVisibilityExplicit(); }
   bool hasLocalOrUnnamedType() const { return local; }
 
   friend CachedProperties merge(CachedProperties L, CachedProperties R) {

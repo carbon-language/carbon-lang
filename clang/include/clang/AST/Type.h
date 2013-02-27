@@ -1776,12 +1776,12 @@ public:
 
   /// \brief Determine the visibility of this type.
   Visibility getVisibility() const {
-    return getLinkageAndVisibility().visibility();
+    return getLinkageAndVisibility().getVisibility();
   }
 
   /// \brief Return true if the visibility was explicitly set is the code.
   bool isVisibilityExplicit() const {
-    return getLinkageAndVisibility().visibilityExplicit();
+    return getLinkageAndVisibility().isVisibilityExplicit();
   }
 
   /// \brief Determine the linkage and visibility of this type.

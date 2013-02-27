@@ -574,7 +574,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     }
 
     // Add in global settings if the above didn't give us direct visibility.
-    if (!LV.visibilityExplicit()) {
+    if (!LV.isVisibilityExplicit()) {
       // Use global type/value visibility as appropriate.
       Visibility globalVisibility;
       if (computation == LVForValue) {
@@ -623,9 +623,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     if (Context.getLangOpts().CPlusPlus &&
         !Var->getDeclContext()->isExternCContext()) {
       LinkageInfo TypeLV = Var->getType()->getLinkageAndVisibility();
-      if (TypeLV.linkage() != ExternalLinkage)
+      if (TypeLV.getLinkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
-      if (!LV.visibilityExplicit())
+      if (!LV.isVisibilityExplicit())
         LV.mergeVisibility(TypeLV);
     }
 
@@ -690,7 +690,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   } else if (isa<EnumConstantDecl>(D)) {
     LinkageInfo EnumLV = getLVForDecl(cast<NamedDecl>(D->getDeclContext()),
                                       computation);
-    if (!isExternalLinkage(EnumLV.linkage()))
+    if (!isExternalLinkage(EnumLV.getLinkage()))
       return LinkageInfo::none();
     LV.merge(EnumLV);
 
@@ -719,8 +719,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
 
   // If we ended up with non-external linkage, visibility should
   // always be default.
-  if (LV.linkage() != ExternalLinkage)
-    return LinkageInfo(LV.linkage(), DefaultVisibility, false);
+  if (LV.getLinkage() != ExternalLinkage)
+    return LinkageInfo(LV.getLinkage(), DefaultVisibility, false);
 
   return LV;
 }
@@ -748,7 +748,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
     //
     // Note that we do this before merging information about
     // the class visibility.
-    if (!LV.visibilityExplicit() && useInlineVisibilityHidden(D))
+    if (!LV.isVisibilityExplicit() && useInlineVisibilityHidden(D))
       LV.mergeVisibility(HiddenVisibility, true);
   }
 
@@ -756,16 +756,16 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   // thing that can change its visibility is the template arguments, so
   // only look for them when processing the class.
   LVComputationKind classComputation = computation;
-  if (LV.visibilityExplicit())
+  if (LV.isVisibilityExplicit())
     classComputation = withExplicitVisibilityAlready(computation);
 
   LinkageInfo classLV =
     getLVForDecl(cast<RecordDecl>(D->getDeclContext()), classComputation);
-  if (!isExternalLinkage(classLV.linkage()))
+  if (!isExternalLinkage(classLV.getLinkage()))
     return LinkageInfo::none();
 
   // If the class already has unique-external linkage, we can't improve.
-  if (classLV.linkage() == UniqueExternalLinkage)
+  if (classLV.getLinkage() == UniqueExternalLinkage)
     return LinkageInfo::uniqueExternal();
 
   // Otherwise, don't merge in classLV yet, because in certain cases
@@ -816,7 +816,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
     // type's visibility unless it's a definition.
     LinkageInfo typeLV = VD->getType()->getLinkageAndVisibility();
     LV.mergeMaybeWithVisibility(typeLV,
-                  !LV.visibilityExplicit() && !classLV.visibilityExplicit());
+                 !LV.isVisibilityExplicit() && !classLV.isVisibilityExplicit());
 
     if (isExplicitMemberSpecialization(VD)) {
       explicitSpecSuppressor = VD;
@@ -825,8 +825,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   // Template members.
   } else if (const TemplateDecl *temp = dyn_cast<TemplateDecl>(D)) {
     bool considerVisibility =
-      (!LV.visibilityExplicit() &&
-       !classLV.visibilityExplicit() &&
+      (!LV.isVisibilityExplicit() &&
+       !classLV.isVisibilityExplicit() &&
        !hasExplicitVisibilityAlready(computation));
     LinkageInfo tempLV =
       getLVForTemplateParameterList(temp->getTemplateParameters());
@@ -847,8 +847,9 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   // an explicit attribute, ignore visibility from the parent.
   bool considerClassVisibility = true;
   if (explicitSpecSuppressor &&
-      LV.visibilityExplicit() && // optimization: hasDVA() is true only if this
-      classLV.visibility() != DefaultVisibility &&
+      // optimization: hasDVA() is true only with explicit visibility.
+      LV.isVisibilityExplicit() &&
+      classLV.getVisibility() != DefaultVisibility &&
       hasDirectVisibilityAttribute(explicitSpecSuppressor, computation)) {
     considerClassVisibility = false;
   }
@@ -909,7 +910,7 @@ Linkage NamedDecl::getLinkage() const {
 
   // We don't care about visibility here, so ask for the cheapest
   // possible visibility analysis.
-  CachedLinkage = getLVForDecl(this, LVForExplicitValue).linkage();
+  CachedLinkage = getLVForDecl(this, LVForExplicitValue).getLinkage();
   HasCachedLinkage = 1;
 
 #ifndef NDEBUG
@@ -924,11 +925,11 @@ LinkageInfo NamedDecl::getLinkageAndVisibility() const {
     (usesTypeVisibility(this) ? LVForType : LVForValue);
   LinkageInfo LI = getLVForDecl(this, computation);
   if (HasCachedLinkage) {
-    assert(Linkage(CachedLinkage) == LI.linkage());
+    assert(Linkage(CachedLinkage) == LI.getLinkage());
     return LI;
   }
   HasCachedLinkage = 1;
-  CachedLinkage = LI.linkage();
+  CachedLinkage = LI.getLinkage();
 
 #ifndef NDEBUG
   verifyLinkage();

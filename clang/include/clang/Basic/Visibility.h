@@ -59,8 +59,8 @@ public:
                   explicit_(false) {}
   LinkageInfo(Linkage L, Visibility V, bool E)
     : linkage_(L), visibility_(V), explicit_(E) {
-    assert(linkage() == L && visibility() == V && visibilityExplicit() == E &&
-           "Enum truncated!");
+    assert(getLinkage() == L && getVisibility() == V &&
+           isVisibilityExplicit() == E && "Enum truncated!");
   }
 
   static LinkageInfo external() {
@@ -76,22 +76,22 @@ public:
     return LinkageInfo(NoLinkage, DefaultVisibility, false);
   }
 
-  Linkage linkage() const { return (Linkage)linkage_; }
-  Visibility visibility() const { return (Visibility)visibility_; }
-  bool visibilityExplicit() const { return explicit_; }
+  Linkage getLinkage() const { return (Linkage)linkage_; }
+  Visibility getVisibility() const { return (Visibility)visibility_; }
+  bool isVisibilityExplicit() const { return explicit_; }
 
   void setLinkage(Linkage L) { linkage_ = L; }
 
   void mergeLinkage(Linkage L) {
-    setLinkage(minLinkage(linkage(), L));
+    setLinkage(minLinkage(getLinkage(), L));
   }
   void mergeLinkage(LinkageInfo other) {
-    mergeLinkage(other.linkage());
+    mergeLinkage(other.getLinkage());
   }
 
   /// Merge in the visibility 'newVis'.
   void mergeVisibility(Visibility newVis, bool newExplicit) {
-    Visibility oldVis = visibility();
+    Visibility oldVis = getVisibility();
 
     // Never increase visibility.
     if (oldVis < newVis)
@@ -107,7 +107,7 @@ public:
     setVisibility(newVis, newExplicit);
   }
   void mergeVisibility(LinkageInfo other) {
-    mergeVisibility(other.visibility(), other.visibilityExplicit());
+    mergeVisibility(other.getVisibility(), other.isVisibilityExplicit());
   }
 
   /// Merge both linkage and visibility.
