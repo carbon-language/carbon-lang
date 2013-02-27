@@ -61,7 +61,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
-  GoogleStyle.BinPackParameters = false;
+  GoogleStyle.BinPackParameters = true;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
@@ -74,6 +74,7 @@ FormatStyle getGoogleStyle() {
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
+  ChromiumStyle.BinPackParameters = false;
   ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
   ChromiumStyle.DerivePointerBinding = false;
   return ChromiumStyle;
@@ -541,6 +542,9 @@ private:
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
         State.Stack[i].BreakBeforeParameter = true;
       }
+      if (Current.is(tok::period) || Current.is(tok::arrow))
+        State.Stack.back().BreakBeforeParameter = true;
+
       // If we break after {, we should also break before the corresponding }.
       if (Previous.is(tok::l_brace))
         State.Stack.back().BreakBeforeClosingBrace = true;
@@ -730,6 +734,8 @@ private:
       TailLength -= SplitPoint + 1;
       OffsetFromStart = 1;
       Penalty += Style.PenaltyExcessCharacter;
+      for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
+        State.Stack[i].BreakBeforeParameter = true;
     }
     State.Column = StartColumn + TailLength;
     return Penalty;

@@ -293,24 +293,26 @@ TEST_F(FormatTest, FormatsForLoop) {
       "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
       "     ++aaaaaaaaaaa) {\n}");
+  verifyFormat("for (int aaaaaaaaaaa = 1; aaaaaaaaaaa <= bbbbbbbbbbbbbbb;\n"
+               "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
+               "}");
 
-  verifyGoogleFormat(
-      "for (int aaaaaaaaaaa = 1; aaaaaaaaaaa <= bbbbbbbbbbbbbbb;\n"
-      "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
-      "}");
-  verifyGoogleFormat(
-      "for (int aaaaaaaaaaa = 1;\n"
-      "     aaaaaaaaaaa <= aaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa,\n"
-      "                                           aaaaaaaaaaaaaaaa,\n"
-      "                                           aaaaaaaaaaaaaaaa,\n"
-      "                                           aaaaaaaaaaaaaaaa);\n"
-      "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
-      "}");
-  verifyGoogleFormat(
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
+  verifyFormat("for (int aaaaaaaaaaa = 1;\n"
+               "     aaaaaaaaaaa <= aaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaa,\n"
+               "                                           aaaaaaaaaaaaaaaa,\n"
+               "                                           aaaaaaaaaaaaaaaa,\n"
+               "                                           aaaaaaaaaaaaaaaa);\n"
+               "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
+               "}",
+               NoBinPacking);
+  verifyFormat(
       "for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),\n"
       "                                          E = UnwrappedLines.end();\n"
       "     I != E;\n"
-      "     ++I) {\n}");
+      "     ++I) {\n}",
+      NoBinPacking);
 }
 
 TEST_F(FormatTest, RangeBasedForLoops) {
@@ -548,10 +550,13 @@ TEST_F(FormatTest, UnderstandsMultiLineComments) {
       format("f(aaaaaaaaaaaaaaaaaaaaaaaaa    ,   \n"
              "/* Leading comment for bb... */   bbbbbbbbbbbbbbbbbbbbbbbbb);"));
 
-  verifyGoogleFormat("aaaaaaaa(/* parameter 1 */ aaaaaa,\n"
-                     "         /* parameter 2 */ aaaaaa,\n"
-                     "         /* parameter 3 */ aaaaaa,\n"
-                     "         /* parameter 4 */ aaaaaa);");
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
+  verifyFormat("aaaaaaaa(/* parameter 1 */ aaaaaa,\n"
+               "         /* parameter 2 */ aaaaaa,\n"
+               "         /* parameter 3 */ aaaaaa,\n"
+               "         /* parameter 4 */ aaaaaa);",
+               NoBinPacking);
 }
 
 TEST_F(FormatTest, CommentsInStaticInitializers) {
@@ -1146,11 +1151,10 @@ TEST_F(FormatTest, ConstructorInitializers) {
 
   // Here a line could be saved by splitting the second initializer onto two
   // lines, but that is not desireable.
-  verifyFormat(
-      "Constructor()\n"
-      "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaa(aaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
+  verifyFormat("Constructor()\n"
+               "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaa(aaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
 
   FormatStyle OnePerLine = getLLVMStyle();
   OnePerLine.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
@@ -1171,13 +1175,14 @@ TEST_F(FormatTest, ConstructorInitializers) {
                OnePerLine);
 
   // This test takes VERY long when memoization is broken.
+  OnePerLine.BinPackParameters = false;
   std::string input = "Constructor()\n"
                       "    : aaaa(a,\n";
   for (unsigned i = 0, e = 80; i != e; ++i) {
     input += "           a,\n";
   }
   input += "           a) {}";
-  verifyGoogleFormat(input);
+  verifyFormat(input, OnePerLine);
 }
 
 TEST_F(FormatTest, BreaksAsHighAsPossible) {
@@ -1240,54 +1245,60 @@ TEST_F(FormatTest, BreaksDesireably) {
 }
 
 TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
-  verifyGoogleFormat("f(aaaaaaaaaaaaaaaaaaaa,\n"
-                     "  aaaaaaaaaaaaaaaaaaaa,\n"
-                     "  aaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaa);");
-  verifyGoogleFormat(
-      "aaaaaaa(aaaaaaaaaaaaa,\n"
-      "        aaaaaaaaaaaaa,\n"
-      "        aaaaaaaaaaaaa(aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaa));");
-  verifyGoogleFormat(
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
+  verifyFormat("f(aaaaaaaaaaaaaaaaaaaa,\n"
+               "  aaaaaaaaaaaaaaaaaaaa,\n"
+               "  aaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaa);",
+               NoBinPacking);
+  verifyFormat("aaaaaaa(aaaaaaaaaaaaa,\n"
+               "        aaaaaaaaaaaaa,\n"
+               "        aaaaaaaaaaaaa(aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaa));",
+               NoBinPacking);
+  verifyFormat(
       "aaaaaaaa(aaaaaaaaaaaaa,\n"
       "         aaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)),\n"
       "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-      "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
-  verifyGoogleFormat(
-      "aaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa)\n"
-      "    .aaaaaaaaaaaaaaaaaa();");
-  verifyGoogleFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-                     "    aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaaa);");
+      "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));",
+      NoBinPacking);
+  verifyFormat("aaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa)\n"
+               "    .aaaaaaaaaaaaaaaaaa();",
+               NoBinPacking);
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaaa);",
+               NoBinPacking);
 
-  verifyGoogleFormat(
+  verifyFormat(
       "aaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "             aaaaaaaaaaaa,\n"
-      "             aaaaaaaaaaaa);");
-  verifyGoogleFormat(
+      "             aaaaaaaaaaaa);",
+      NoBinPacking);
+  verifyFormat(
       "somefunction(someotherFunction(ddddddddddddddddddddddddddddddddddd,\n"
       "                               ddddddddddddddddddddddddddddd),\n"
-      "             test);");
+      "             test);",
+      NoBinPacking);
 
-  verifyGoogleFormat(
-      "std::vector<aaaaaaaaaaaaaaaaaaaaaaa,\n"
-      "            aaaaaaaaaaaaaaaaaaaaaaa,\n"
-      "            aaaaaaaaaaaaaaaaaaaaaaa> aaaaaaaaaaaaaaaaaa;");
-  verifyGoogleFormat("a(\"a\"\n"
-                     "  \"a\",\n"
-                     "  a);");
+  verifyFormat("std::vector<aaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "            aaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "            aaaaaaaaaaaaaaaaaaaaaaa> aaaaaaaaaaaaaaaaaa;",
+               NoBinPacking);
+  verifyFormat("a(\"a\"\n"
+               "  \"a\",\n"
+               "  a);");
 
-  FormatStyle Style = getGoogleStyle();
-  Style.AllowAllParametersOfDeclarationOnNextLine = false;
+  NoBinPacking.AllowAllParametersOfDeclarationOnNextLine = false;
   verifyFormat("void aaaaaaaaaa(aaaaaaaaa,\n"
                "                aaaaaaaaa,\n"
                "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
-               Style);
+               NoBinPacking);
   verifyFormat(
       "void f() {\n"
       "  aaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa)\n"
       "      .aaaaaaa();\n"
       "}",
-      Style);
+      NoBinPacking);
 }
 
 TEST_F(FormatTest, FormatsBuilderPattern) {
@@ -1432,14 +1443,17 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "           TheLine.InPPDirective, PreviousEndOfLineColumn);",
       getLLVMStyleWithColumns(70));
 
-  verifyGoogleFormat(
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
+  verifyFormat(
       "void f() {\n"
       "  g(aaa,\n"
       "    aaaaaaaaaa == aaaaaaaaaa ? aaaa : aaaaa,\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa == aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "        ? aaaaaaaaaaaaaaa\n"
       "        : aaaaaaaaaaaaaaa);\n"
-      "}");
+      "}",
+      NoBinPacking);
 }
 
 TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
@@ -1580,13 +1594,6 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat("SomeMap[std::pair(aaaaaaaaaaaa, bbbbbbbbbbbbbbb)]\n"
                "    .insert(ccccccccccccccccccccccc);");
 
-  verifyGoogleFormat(
-      "aaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaa)\n"
-      "    .aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaa)\n"
-      "    .aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaa,\n"
-      "                         aaaaaaaaaaaaaaaaaaa,\n"
-      "                         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
-
   // Here, it is not necessary to wrap at "." or "->".
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaa) ||\n"
                "    aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
@@ -1598,6 +1605,15 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa().aaaaaaaaaaaaaaaaa());");
+
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaa)\n"
+               "    .aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaa)\n"
+               "    .aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaa,\n"
+               "                         aaaaaaaaaaaaaaaaaaa,\n"
+               "                         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
+               NoBinPacking);
 }
 
 TEST_F(FormatTest, WrapsTemplateDeclarations) {
@@ -1929,7 +1945,7 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(int i = (kA * kB) & kMask) {}");
   verifyFormat("int a = sizeof(int) * b;");
   verifyFormat("int a = alignof(int) * b;");
-  
+
   // These are not casts, but at some point were confused with casts.
   verifyFormat("virtual void foo(int *) override;");
   verifyFormat("virtual void foo(char &) const;");
@@ -1964,8 +1980,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
       "aaaaaaaaaaaaaaaaaaaaaaa;");
 
   verifyGoogleFormat(
-      "TypeSpecDecl* TypeSpecDecl::Create(\n"
-      "    ASTContext& C, DeclContext* DC, SourceLocation L) {}");
+      "TypeSpecDecl* TypeSpecDecl::Create(ASTContext& C, DeclContext* DC,\n"
+      "                                   SourceLocation L) {}");
   verifyGoogleFormat(
       "some_namespace::LongReturnType\n"
       "long_namespace::SomeVeryLongClass::SomeVeryLongFunction(\n"
@@ -2004,13 +2020,16 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, IncompleteParameterLists) {
-  verifyGoogleFormat("void aaaaaaaaaaaaaaaaaa(int level,\n"
-                     "                        double *min_x,\n"
-                     "                        double *max_x,\n"
-                     "                        double *min_y,\n"
-                     "                        double *max_y,\n"
-                     "                        double *min_z,\n"
-                     "                        double *max_z, ) {}");
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
+  verifyFormat("void aaaaaaaaaaaaaaaaaa(int level,\n"
+               "                        double *min_x,\n"
+               "                        double *max_x,\n"
+               "                        double *min_y,\n"
+               "                        double *max_y,\n"
+               "                        double *min_z,\n"
+               "                        double *max_z, ) {}",
+               NoBinPacking);
 }
 
 TEST_F(FormatTest, IncorrectCodeTrailingStuff) {
@@ -2284,6 +2303,8 @@ TEST_F(FormatTest, BlockComments) {
                    "/* */someCall(parameter);",
                    getLLVMStyleWithColumns(15)));
 
+  FormatStyle NoBinPacking = getLLVMStyle();
+  NoBinPacking.BinPackParameters = false;
   EXPECT_EQ("someFunction(1, /* comment 1 */\n"
             "             2, /* comment 2 */\n"
             "             3, /* comment 3 */\n"
@@ -2293,7 +2314,7 @@ TEST_F(FormatTest, BlockComments) {
                    "                2, /* comment 2 */  \n"
                    "               3,   /* comment 3 */\n"
                    "aaaa, bbbb );",
-                   getGoogleStyle()));
+                   NoBinPacking));
   verifyFormat(
       "bool aaaaaaaaaaaaa = /* comment: */ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "                     aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
@@ -2974,7 +2995,8 @@ TEST_F(FormatTest, BreakStringLiterals) {
 
   EXPECT_EQ("variable = f(\n"
             "    \"long string \"\n"
-            "    \"literal\", short,\n"
+            "    \"literal\",\n"
+            "    short,\n"
             "    loooooooooooooooooooong);",
             format("variable = f(\"long string literal\", short, "
                    "loooooooooooooooooooong);",
