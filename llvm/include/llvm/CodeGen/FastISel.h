@@ -372,11 +372,6 @@ protected:
     return 0;
   }
 
-  /// Whether we should skip target-independent fast-isel
-  virtual bool SkipTargetIndependentFastISel() {
-    return false;
-  }
-
 private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 
