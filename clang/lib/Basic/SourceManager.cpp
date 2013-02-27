@@ -1855,7 +1855,32 @@ static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
   Loc = SM.getDecomposedLoc(UpperLoc);
   return false;
 }
-  
+
+/// Return the cache entry for comparing the given file IDs
+/// for isBeforeInTranslationUnit.
+InBeforeInTUCacheEntry &SourceManager::getInBeforeInTUCache(FileID LFID,
+                                                            FileID RFID) const {
+  // This is a magic number for limiting the cache size.  It was experimentally
+  // derived from a small Objective-C project (where the cache filled
+  // out to ~250 items).  We can make it larger if necessary.
+  enum { MagicCacheSize = 300 };
+  IsBeforeInTUCacheKey Key(LFID, RFID);
+
+  // If the cache size isn't too large, do a lookup and if necessary default
+  // construct an entry.  We can then return it to the caller for direct
+  // use.  When they update the value, the cache will get automatically
+  // updated as well.
+  if (IBTUCache.size() < MagicCacheSize)
+    return IBTUCache[Key];
+
+  // Otherwise, do a lookup that will not construct a new value.
+  InBeforeInTUCache::iterator I = IBTUCache.find(Key);
+  if (I != IBTUCache.end())
+    return I->second;
+
+  // Fall back to the overflow value.
+  return IBTUCacheOverflow;
+}
 
 /// \brief Determines the order of 2 source locations in the translation unit.
 ///
@@ -1872,6 +1897,11 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // If the source locations are in the same file, just compare offsets.
   if (LOffs.first == ROffs.first)
     return LOffs.second < ROffs.second;
+
+  // If we are comparing a source location with multiple locations in the same
+  // file, we get a big win by caching the result.
+  InBeforeInTUCacheEntry &IsBeforeInTUCache =
+    getInBeforeInTUCache(LOffs.first, ROffs.first);
 
   // If we are comparing a source location with multiple locations in the same
   // file, we get a big win by caching the result.
