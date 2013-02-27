@@ -13,6 +13,8 @@
 
 #include <stdarg.h>
 
+#include <string>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/StringList.h"
 
@@ -276,11 +278,9 @@ public:
     ///     The thread ID for which we are trying retrieve the name of.
     ///
     /// @return
-    ///     A NULL terminate C string name that is owned by a static
-    ///     global string pool, or NULL if there is no matching thread
-    ///     name. This string does not need to be freed.
+    ///     A std::string containing the thread name.
     //------------------------------------------------------------------
-    static const char *
+    static std::string
     GetThreadName (lldb::pid_t pid, lldb::tid_t tid);
 
     //------------------------------------------------------------------

@@ -112,10 +112,9 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
         // Add the process and thread if requested
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_THREAD_NAME))
         {
-            const char *thread_name_str = Host::GetThreadName (getpid(), Host::GetCurrentThreadID());
-            if (thread_name_str)
-                header.Printf ("%s ", thread_name_str);
-
+            std::string thread_name (Host::GetThreadName (getpid(), Host::GetCurrentThreadID()));
+            if (!thread_name.empty())
+                header.Printf ("%s ", thread_name.c_str());
         }
 
         header.PrintfVarArg (format, args);

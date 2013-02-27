@@ -615,92 +615,44 @@ Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Err
     return err == 0;
 }
 
-// rdar://problem/8153284
-// Fixed a crasher where during shutdown, loggings attempted to access the
-// thread name but the static map instance had already been destructed.
-// So we are using a ThreadSafeSTLMap POINTER, initializing it with a
-// pthread_once action.  That map will get leaked.
-//
-// Another approach is to introduce a static guard object which monitors its
-// own destruction and raises a flag, but this incurs more overhead.
 
-static pthread_once_t g_thread_map_once = PTHREAD_ONCE_INIT;
-static ThreadSafeSTLMap<uint64_t, std::string> *g_thread_names_map_ptr;
-
-static void
-InitThreadNamesMap()
-{
-    g_thread_names_map_ptr = new ThreadSafeSTLMap<uint64_t, std::string>();
-}
-
-//------------------------------------------------------------------
-// Control access to a static file thread name map using a single
-// static function to avoid a static constructor.
-//------------------------------------------------------------------
-static const char *
-ThreadNameAccessor (bool get, lldb::pid_t pid, lldb::tid_t tid, const char *name)
-{
-    int success = ::pthread_once (&g_thread_map_once, InitThreadNamesMap);
-    if (success != 0)
-        return NULL;
-    
-    uint64_t pid_tid = ((uint64_t)pid << 32) | (uint64_t)tid;
-
-    if (get)
-    {
-        // See if the thread name exists in our thread name pool
-        std::string value;
-        bool found_it = g_thread_names_map_ptr->GetValueForKey (pid_tid, value);
-        if (found_it)
-            return value.c_str();
-        else
-            return NULL;
-    }
-    else if (name)
-    {
-        // Set the thread name
-        g_thread_names_map_ptr->SetValueForKey (pid_tid, std::string(name));
-    }
-    return NULL;
-}
-
-const char *
+std::string
 Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
 {
-    const char *name = ThreadNameAccessor (true, pid, tid, NULL);
-    if (name == NULL)
-    {
+    std::string thread_name;
 #if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
-        // We currently can only get the name of a thread in the current process.
-        if (pid == Host::GetCurrentProcessID())
+    // We currently can only get the name of a thread in the current process.
+    if (pid == Host::GetCurrentProcessID())
+    {
+        char pthread_name[1024];
+        if (::pthread_getname_np (::pthread_from_mach_thread_np (tid), pthread_name, sizeof(pthread_name)) == 0)
         {
-            char pthread_name[1024];
-            if (::pthread_getname_np (::pthread_from_mach_thread_np (tid), pthread_name, sizeof(pthread_name)) == 0)
+            if (pthread_name[0])
             {
-                if (pthread_name[0])
-                {
-                    // Set the thread in our string pool
-                    ThreadNameAccessor (false, pid, tid, pthread_name);
-                    // Get our copy of the thread name string
-                    name = ThreadNameAccessor (true, pid, tid, NULL);
-                }
-            }
-            
-            if (name == NULL)
-            {
-                dispatch_queue_t current_queue = ::dispatch_get_current_queue ();
-                if (current_queue != NULL)
-                    name = dispatch_queue_get_label (current_queue);
+                thread_name = pthread_name;
             }
         }
-#endif
+        else
+        {
+            dispatch_queue_t current_queue = ::dispatch_get_current_queue ();
+            if (current_queue != NULL)
+            {
+                const char *queue_name = dispatch_queue_get_label (current_queue);
+                if (queue_name && queue_name[0])
+                {
+                    thread_name = queue_name;
+                }
+            }
+        }
     }
-    return name;
+#endif
+    return thread_name;
 }
 
 void
 Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
 {
+#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
     lldb::pid_t curr_pid = Host::GetCurrentProcessID();
     lldb::tid_t curr_tid = Host::GetCurrentThreadID();
     if (pid == LLDB_INVALID_PROCESS_ID)
@@ -709,14 +661,12 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
     if (tid == LLDB_INVALID_THREAD_ID)
         tid = curr_tid;
 
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
     // Set the pthread name if possible
     if (pid == curr_pid && tid == curr_tid)
     {
         ::pthread_setname_np (name);
     }
 #endif
-    ThreadNameAccessor (false, pid, tid, name);
 }
 
 FileSpec
