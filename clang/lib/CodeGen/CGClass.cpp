@@ -788,19 +788,22 @@ namespace {
         return;
       }
 
-      unsigned FirstFieldAlign = ~0U; // Set to invalid.
+      CharUnits Alignment;
 
       if (FirstField->isBitField()) {
         const CGRecordLayout &RL =
           CGF.getTypes().getCGRecordLayout(FirstField->getParent());
         const CGBitFieldInfo &BFInfo = RL.getBitFieldInfo(FirstField);
-        FirstFieldAlign = BFInfo.StorageAlignment;
-      } else
-        FirstFieldAlign = CGF.getContext().getTypeAlign(FirstField->getType());
+        Alignment = CharUnits::fromQuantity(BFInfo.StorageAlignment);
+      } else {
+        unsigned AlignBits =
+          CGF.getContext().getTypeAlign(FirstField->getType());
+        Alignment = CGF.getContext().toCharUnitsFromBits(AlignBits);
+      }
 
-      assert(FirstFieldOffset % FirstFieldAlign == 0 && "Bad field alignment.");
-      CharUnits Alignment =
-        CGF.getContext().toCharUnitsFromBits(FirstFieldAlign);
+      assert((CGF.getContext().toCharUnitsFromBits(FirstFieldOffset) %
+              Alignment) == 0 && "Bad field alignment.");
+
       CharUnits MemcpySize = getMemcpySize();
       QualType RecordTy = CGF.getContext().getTypeDeclType(ClassDecl);
       llvm::Value *ThisPtr = CGF.LoadCXXThis();
