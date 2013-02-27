@@ -6,11 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_FUNCTIONS_H
-#define LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_FUNCTIONS_H
+#ifndef LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_HANDLER_H
+#define LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_HANDLER_H
 
 #include "HexagonTargetHandler.h"
-#include "HexagonRelocationFunctions.h"
 #include "lld/ReaderWriter/RelocationHelperFunctions.h"
 
 namespace lld {

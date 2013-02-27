@@ -23,6 +23,9 @@ typedef struct {
 
 #include "HexagonV4Encodings.h"
 
+#define FINDV4BITMASK(INSN) findBitMask(*((uint32_t *)INSN), \
+                            insn_encodings_v4, \
+                            sizeof(insn_encodings_v4)/sizeof(Instruction))
 
 /// \brief finds the scatter Bits that need to be used to apply relocations
 uint32_t findBitMask(uint32_t insn, Instruction *encodings, int32_t numInsns) {

@@ -10,6 +10,7 @@
 #include "HexagonTargetHandler.h"
 #include "HexagonTargetInfo.h"
 #include "HexagonRelocationHandler.h"
+#include "HexagonRelocationFunctions.h"
 
 
 using namespace lld;
