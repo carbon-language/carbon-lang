@@ -1078,7 +1078,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       }
 
       unsigned NumFastIselRemaining = std::distance(Begin, End);
-      (void) NumFastIselRemaining;
       // Do FastISel on as many instructions as possible.
       for (; BI != Begin; --BI) {
         const Instruction *Inst = llvm::prior(BI);
