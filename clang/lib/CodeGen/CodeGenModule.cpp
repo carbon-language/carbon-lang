@@ -276,7 +276,7 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
   }
 
   // Set visibility for definitions.
-  NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
+  LinkageInfo LV = D->getLinkageAndVisibility();
   if (LV.visibilityExplicit() || !GV->hasAvailableExternallyLinkage())
     GV->setVisibility(GetLLVMVisibility(LV.visibility()));
 }
@@ -693,7 +693,7 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   } else {
     F->setLinkage(llvm::Function::ExternalLinkage);
 
-    NamedDecl::LinkageInfo LV = FD->getLinkageAndVisibility();
+    LinkageInfo LV = FD->getLinkageAndVisibility();
     if (LV.linkage() == ExternalLinkage && LV.visibilityExplicit()) {
       F->setVisibility(GetLLVMVisibility(LV.visibility()));
     }
@@ -1433,7 +1433,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     GV->setConstant(isTypeConstant(D->getType(), false));
 
     // Set linkage and visibility in case we never see a definition.
-    NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
+    LinkageInfo LV = D->getLinkageAndVisibility();
     if (LV.linkage() != ExternalLinkage) {
       // Don't set internal linkage on declarations.
     } else {

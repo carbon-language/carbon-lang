@@ -15,6 +15,8 @@
 #ifndef LLVM_CLANG_BASIC_VISIBILITY_H
 #define LLVM_CLANG_BASIC_VISIBILITY_H
 
+#include "clang/Basic/Linkage.h"
+
 namespace clang {
 
 /// \brief Describes the different kinds of visibility that a declaration
@@ -46,6 +48,80 @@ inline Visibility minVisibility(Visibility L, Visibility R) {
   return L < R ? L : R;
 }
 
+class LinkageInfo {
+  uint8_t linkage_    : 2;
+  uint8_t visibility_ : 2;
+  uint8_t explicit_   : 1;
+
+  void setVisibility(Visibility V, bool E) { visibility_ = V; explicit_ = E; }
+public:
+  LinkageInfo() : linkage_(ExternalLinkage), visibility_(DefaultVisibility),
+                  explicit_(false) {}
+  LinkageInfo(Linkage L, Visibility V, bool E)
+    : linkage_(L), visibility_(V), explicit_(E) {
+    assert(linkage() == L && visibility() == V && visibilityExplicit() == E &&
+           "Enum truncated!");
+  }
+
+  static LinkageInfo external() {
+    return LinkageInfo();
+  }
+  static LinkageInfo internal() {
+    return LinkageInfo(InternalLinkage, DefaultVisibility, false);
+  }
+  static LinkageInfo uniqueExternal() {
+    return LinkageInfo(UniqueExternalLinkage, DefaultVisibility, false);
+  }
+  static LinkageInfo none() {
+    return LinkageInfo(NoLinkage, DefaultVisibility, false);
+  }
+
+  Linkage linkage() const { return (Linkage)linkage_; }
+  Visibility visibility() const { return (Visibility)visibility_; }
+  bool visibilityExplicit() const { return explicit_; }
+
+  void setLinkage(Linkage L) { linkage_ = L; }
+
+  void mergeLinkage(Linkage L) {
+    setLinkage(minLinkage(linkage(), L));
+  }
+  void mergeLinkage(LinkageInfo other) {
+    mergeLinkage(other.linkage());
+  }
+
+  /// Merge in the visibility 'newVis'.
+  void mergeVisibility(Visibility newVis, bool newExplicit) {
+    Visibility oldVis = visibility();
+
+    // Never increase visibility.
+    if (oldVis < newVis)
+      return;
+
+    // If the new visibility is the same as the old and the new
+    // visibility isn't explicit, we have nothing to add.
+    if (oldVis == newVis && !newExplicit)
+      return;
+
+    // Otherwise, we're either decreasing visibility or making our
+    // existing visibility explicit.
+    setVisibility(newVis, newExplicit);
+  }
+  void mergeVisibility(LinkageInfo other) {
+    mergeVisibility(other.visibility(), other.visibilityExplicit());
+  }
+
+  /// Merge both linkage and visibility.
+  void merge(LinkageInfo other) {
+    mergeLinkage(other);
+    mergeVisibility(other);
+  }
+
+  /// Merge linkage and conditionally merge visibility.
+  void mergeMaybeWithVisibility(LinkageInfo other, bool withVis) {
+    mergeLinkage(other);
+    if (withVis) mergeVisibility(other);
+  }
+};
 }
 
 #endif // LLVM_CLANG_BASIC_VISIBILITY_H

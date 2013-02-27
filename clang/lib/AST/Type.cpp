@@ -2002,20 +2002,19 @@ namespace {
 
 /// \brief The cached properties of a type.
 class CachedProperties {
-  NamedDecl::LinkageInfo LV;
+  LinkageInfo LV;
   bool local;
-  
+
 public:
-  CachedProperties(NamedDecl::LinkageInfo LV, bool local)
-    : LV(LV), local(local) {}
-  
+  CachedProperties(LinkageInfo LV, bool local) : LV(LV), local(local) {}
+
   Linkage getLinkage() const { return LV.linkage(); }
   Visibility getVisibility() const { return LV.visibility(); }
   bool isVisibilityExplicit() const { return LV.visibilityExplicit(); }
   bool hasLocalOrUnnamedType() const { return local; }
-  
+
   friend CachedProperties merge(CachedProperties L, CachedProperties R) {
-    NamedDecl::LinkageInfo MergedLV = L.LV;
+    LinkageInfo MergedLV = L.LV;
     MergedLV.merge(R.LV);
     return CachedProperties(MergedLV,
                          L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
@@ -2037,9 +2036,9 @@ public:
 
   static CachedProperties get(const Type *T) {
     ensure(T);
-    NamedDecl::LinkageInfo LV(T->TypeBits.getLinkage(),
-                              T->TypeBits.getVisibility(),
-                              T->TypeBits.isVisibilityExplicit());
+    LinkageInfo LV(T->TypeBits.getLinkage(),
+                   T->TypeBits.getVisibility(),
+                   T->TypeBits.isVisibilityExplicit());
     return CachedProperties(LV, T->TypeBits.hasLocalOrUnnamedType());
   }
 
@@ -2092,13 +2091,13 @@ static CachedProperties computeCachedProperties(const Type *T) {
 #include "clang/AST/TypeNodes.def"
     // Treat instantiation-dependent types as external.
     assert(T->isInstantiationDependentType());
-    return CachedProperties(NamedDecl::LinkageInfo(), false);
+    return CachedProperties(LinkageInfo(), false);
 
   case Type::Builtin:
     // C++ [basic.link]p8:
     //   A type is said to have linkage if and only if:
     //     - it is a fundamental type (3.9.1); or
-    return CachedProperties(NamedDecl::LinkageInfo(), false);
+    return CachedProperties(LinkageInfo(), false);
 
   case Type::Record:
   case Type::Enum: {
@@ -2108,7 +2107,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
     //     - it is a class or enumeration type that is named (or has a name
     //       for linkage purposes (7.1.3)) and the name has linkage; or
     //     -  it is a specialization of a class template (14); or
-    NamedDecl::LinkageInfo LV = Tag->getLinkageAndVisibility();
+    LinkageInfo LV = Tag->getLinkageAndVisibility();
     bool IsLocalOrUnnamed =
       Tag->getDeclContext()->isFunctionOrMethod() ||
       (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl());
@@ -2150,7 +2149,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
     return result;
   }
   case Type::ObjCInterface: {
-    NamedDecl::LinkageInfo LV =
+    LinkageInfo LV =
       cast<ObjCInterfaceType>(T)->getDecl()->getLinkageAndVisibility();
     return CachedProperties(LV, false);
   }

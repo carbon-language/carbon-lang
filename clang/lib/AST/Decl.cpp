@@ -138,8 +138,6 @@ static Optional<Visibility> getExplicitVisibility(const NamedDecl *D,
   return D->getExplicitVisibility((NamedDecl::ExplicitVisibilityKind) kind);
 }
 
-typedef NamedDecl::LinkageInfo LinkageInfo;
-
 /// Is the given declaration a "type" or a "value" for the purposes of
 /// visibility computation?
 static bool usesTypeVisibility(const NamedDecl *D) {
