@@ -20,6 +20,7 @@ add_llvm_target(MipsCodeGen
   MipsAnalyzeImmediate.cpp
   MipsAsmPrinter.cpp
   MipsCodeEmitter.cpp
+  MipsConstantIslandPass.cpp
   MipsDelaySlotFiller.cpp
   MipsJITInfo.cpp
   MipsInstrInfo.cpp

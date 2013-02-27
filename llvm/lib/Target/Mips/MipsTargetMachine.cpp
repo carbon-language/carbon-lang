@@ -116,6 +116,8 @@ bool MipsPassConfig::addPreEmitPass() {
   // NOTE: long branch has not been implemented for mips16.
   if (TM.getSubtarget<MipsSubtarget>().hasStandardEncoding())
     addPass(createMipsLongBranchPass(TM));
+  if (TM.getSubtarget<MipsSubtarget>().inMips16Mode())
+    addPass(createMipsConstantIslandPass(TM));
 
   return true;
 }
