@@ -35,4 +35,4 @@ int f() {
   return count;
 }
 
-// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
+// CHECK: attributes #0 = { nounwind{{.*}} }

@@ -47,15 +47,12 @@ int force_instance = TemplateAddressSafetyOk<42>()
 // Check that __cxx_global_var_init* get the sanitize_address attribute.
 int global1 = 0;
 int global2 = *(int*)((char*)&global1+1);
-// WITHOUT: @__cxx_global_var_init{{.*}}#[[GVI:[0-9]+]]
-// BL: @__cxx_global_var_init{{.*}}#[[GVI:[0-9]+]]
-// ASAN: @__cxx_global_var_init{{.*}}#[[GVI:[0-9]+]]
+// WITHOUT: @__cxx_global_var_init{{.*}}#[[NOATTR]]
+// BL: @__cxx_global_var_init{{.*}}#[[NOATTR]]
+// ASAN: @__cxx_global_var_init{{.*}}#[[WITH]]
 
 // WITHOUT: attributes #[[NOATTR]] = { nounwind{{.*}} }
-// WITHOUT: attributes #[[GVI]] = { nounwind{{.*}} }
 // BL: attributes #[[NOATTR]] = { nounwind{{.*}} }
-// BL: attributes #[[GVI]] = { nounwind{{.*}} }
 
 // ASAN: attributes #[[NOATTR]] = { nounwind{{.*}} }
 // ASAN: attributes #[[WITH]] = {{.*}}sanitize_address
-// ASAN: attributes #[[GVI]] = {{.*}}sanitize_address

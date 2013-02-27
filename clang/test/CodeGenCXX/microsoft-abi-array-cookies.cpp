@@ -58,5 +58,4 @@ void check_array_cookies_aligned() {
 // CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -8
 }
 
-// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes #0 = { nounwind{{.*}} }

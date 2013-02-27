@@ -26,5 +26,5 @@ void f1() {
   [I1 alloc];
 }
 
-// CHECK: attributes #0 = { ssp "target-cpu"="cortex-a8" "target-features"="+neon" }
+// CHECK: attributes #0 = { ssp{{.*}} }
 // CHECK: attributes #1 = { nonlazybind }

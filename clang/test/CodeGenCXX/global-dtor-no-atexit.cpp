@@ -44,5 +44,3 @@ void func() {
 }
 
 // CHECK: attributes #0 = { nounwind }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
-// CHECK: attributes #2 = { nounwind "target-features"={{.*}} }

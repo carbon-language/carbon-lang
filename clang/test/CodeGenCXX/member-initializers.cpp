@@ -32,4 +32,4 @@ int test_fold() {
   return A(2).i;
 }
 
-// CHECK: attributes #0 = { nounwind readnone "target-features"={{.*}} }
+// CHECK: attributes #0 = { nounwind readnone{{.*}} }

@@ -17,6 +17,7 @@ const B& f(A *a) {
   return fail;
 }
 
-// CHECK: declare i8* @__dynamic_cast(i8*, i8*, i8*, i64) #2
+// CHECK: declare i8* @__dynamic_cast(i8*, i8*, i8*, i64) [[NUW_RO:#[0-9]+]]
 
+// CHECK: attributes [[NUW_RO]] = { nounwind readonly }
 // CHECK: attributes [[NR]] = { noreturn }

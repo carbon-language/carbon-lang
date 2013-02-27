@@ -46,5 +46,4 @@ namespace test3 {
   }
 }
 
-// CHECK: attributes #0 = { nounwind "target-features"={{.*}} }
-// CHECK: attributes #1 = { "target-features"={{.*}} }
+// CHECK: attributes #0 = { nounwind{{.*}} }

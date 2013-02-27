@@ -3,7 +3,7 @@
 
 int opaque();
 
-// CHECK:       define [[INT:i.*]] @test0() [[NONE:#[0-9]+]] {
+// CHECK:       define [[INT:i.*]] @test0() {
 // CHECK-NOEXC: define [[INT:i.*]] @test0() [[NUW:#[0-9]+]] {
 int test0(void) {
   return opaque();
@@ -17,13 +17,12 @@ int test1(void) {
 }
 
 // <rdar://problem/8283071>: not for weak functions
-// CHECK:       define weak [[INT:i.*]] @test2() [[NONE]] {
+// CHECK:       define weak [[INT:i.*]] @test2() {
 // CHECK-NOEXC: define weak [[INT:i.*]] @test2() [[NUW]] {
 __attribute__((weak)) int test2(void) {
   return 0;
 }
 
-// CHECK: attributes [[NONE]] = { {{.*}} }
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }
 
 // CHECK-NOEXC: attributes [[NUW]] = { nounwind{{.*}} }

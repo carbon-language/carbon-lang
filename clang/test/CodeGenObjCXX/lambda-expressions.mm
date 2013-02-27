@@ -25,24 +25,19 @@ typedef int (^fp)();
 fp global;
 void f2() { global = []{ return 3; }; }
 
-// MRC: define void @_Z2f2v() #1 {
+// MRC: define void @_Z2f2v() [[NUW:#[0-9]+]] {
 // MRC: store i8* bitcast (i32 (i8*)* @___Z2f2v_block_invoke to i8*),
 // MRC-NOT: call
 // MRC: ret void
 // ("global" contains a dangling pointer after this function runs.)
 
-// ARC: define void @_Z2f2v() #1 {
+// ARC: define void @_Z2f2v() [[NUW:#[0-9]+]] {
 // ARC: store i8* bitcast (i32 (i8*)* @___Z2f2v_block_invoke to i8*),
 // ARC: call i8* @objc_retainBlock
 // ARC: call void @objc_release
 // ARC: define internal i32 @___Z2f2v_block_invoke
 // ARC: call i32 @"_ZZ2f2vENK3$_1clEv
 
-// ARC: attributes #0 = { "target-features"={{.*}} }
-// ARC: attributes #1 = { nounwind "target-features"={{.*}} }
-// ARC: attributes #2 = { inlinehint nounwind "target-features"={{.*}} }
+// ARC: attributes [[NUW]] = { nounwind{{.*}} }
 
-// MRC: attributes #0 = { "target-features"={{.*}} }
-// MRC: attributes #1 = { nounwind "target-features"={{.*}} }
-// MRC: attributes #2 = { inlinehint nounwind "target-features"={{.*}} }
-// MRC: attributes #3 = { nonlazybind }
+// MRC: attributes [[NUW]] = { nounwind{{.*}} }
