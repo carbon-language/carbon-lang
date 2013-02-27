@@ -1349,17 +1349,14 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // Add linkage name.
     StringRef LinkageName = GV.getLinkageName();
     if (!LinkageName.empty() && isGlobalVariable) {
-      // From dwarf-4: DIE to which DW_AT_linkage_name may apply include:
-      // TAG_commono_block, TAG_constant, TAG_entry_point, TAG_subporgram and
-      // TAG_variable. For static member variables, gcc 4.7 puts
-      // MIPS_linkage_name on the definition DIE only, but Darwin gdb needs
-      // MIPS_linkage_name at both places.
-      // Per discussion with Eric, for static member variables, we put
-      // MIPS_linkage_name on the definition DIE (TAG_variable) and conditionaly
-      // put MIPS_linkage_name on TAG_member when DarwinGDBCompat is on.
+      // From DWARF4: DIEs to which DW_AT_linkage_name may apply include:
+      // TAG_common_block, TAG_constant, TAG_entry_point, TAG_subprogram and
+      // TAG_variable.
       addString(IsStaticMember && VariableSpecDIE ?
                 VariableSpecDIE : VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
                 getRealLinkageName(LinkageName));
+      // In compatibility mode with older gdbs we put the linkage name on both
+      // the TAG_variable DIE and on the TAG_member DIE.
       if (IsStaticMember && VariableSpecDIE && DD->useDarwinGDBCompat())
         addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
                   getRealLinkageName(LinkageName));
