@@ -170,3 +170,9 @@ __has_include
 // expected-error@+1 {{expected "FILENAME" or <FILENAME>}} // expected-error@+1 {{expected value in expression}}
 #if __has_include(<stdint.h)
 #endif
+
+#define HAS_INCLUDE(header) __has_include(header)
+#if HAS_INCLUDE(<stdint.h>)
+#else
+  #error "__has_include failed (9)."
+#endif
