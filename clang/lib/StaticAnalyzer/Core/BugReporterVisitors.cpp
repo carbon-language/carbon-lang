@@ -222,6 +222,11 @@ public:
     // Don't print any more notes after this one.
     Mode = Satisfied;
 
+    // Ignore aggregate rvalues.
+    if (V.getAs<nonloc::LazyCompoundVal>() ||
+        V.getAs<nonloc::CompoundVal>())
+      return 0;
+
     const Expr *RetE = Ret->getRetValue();
     assert(RetE && "Tracking a return value for a void function");
     RetE = RetE->IgnoreParenCasts();

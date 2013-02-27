@@ -487,7 +487,10 @@ public: // Part of public interface to class.
   NonLoc createLazyBinding(RegionBindingsConstRef B, const TypedValueRegion *R);
 
   /// Used to lazily generate derived symbols for bindings that are defined
-  ///  implicitly by default bindings in a super region.
+  /// implicitly by default bindings in a super region.
+  ///
+  /// Note that callers may need to specially handle LazyCompoundVals, which
+  /// are returned as is in case the caller needs to treat them differently.
   Optional<SVal> getBindingForDerivedDefaultValue(RegionBindingsConstRef B,
                                                   const MemRegion *superR,
                                                   const TypedValueRegion *R,
@@ -1443,9 +1446,10 @@ RegionStoreManager::getBindingForDerivedDefaultValue(RegionBindingsConstRef B,
     if (val.isUnknownOrUndef())
       return val;
 
-    // Lazy bindings are handled later.
+    // Lazy bindings are usually handled through getExistingLazyBinding().
+    // We should unify these two code paths at some point.
     if (val.getAs<nonloc::LazyCompoundVal>())
-      return None;
+      return val;
 
     llvm_unreachable("Unknown default value");
   }
@@ -1462,7 +1466,7 @@ SVal RegionStoreManager::getLazyBinding(const SubRegion *LazyBindingRegion,
     Result = getBindingForField(LazyBinding,
                                 cast<FieldRegion>(LazyBindingRegion));
 
-  // This is a hack to deal with RegionStore's inability to distinguish a
+  // FIXME: This is a hack to deal with RegionStore's inability to distinguish a
   // default value for /part/ of an aggregate from a default value for the
   // /entire/ aggregate. The most common case of this is when struct Outer
   // has as its first member a struct Inner, which is copied in from a stack
@@ -1503,12 +1507,34 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
   // be out of scope of our lookup.
   bool hasSymbolicIndex = false;
 
-  while (superR) {
-    if (const Optional<SVal> &D =
-        getBindingForDerivedDefaultValue(B, superR, R, Ty))
-      return *D;
+  // FIXME: This is a hack to deal with RegionStore's inability to distinguish a
+  // default value for /part/ of an aggregate from a default value for the
+  // /entire/ aggregate. The most common case of this is when struct Outer
+  // has as its first member a struct Inner, which is copied in from a stack
+  // variable. In this case, even if the Outer's default value is symbolic, 0,
+  // or unknown, it gets overridden by the Inner's default value of undefined.
+  //
+  // This is a general problem -- if the Inner is zero-initialized, the Outer
+  // will now look zero-initialized. The proper way to solve this is with a
+  // new version of RegionStore that tracks the extent of a binding as well
+  // as the offset.
+  //
+  // This hack only takes care of the undefined case because that can very
+  // quickly result in a warning.
+  bool hasPartialLazyBinding = false;
 
-    if (const ElementRegion *ER = dyn_cast<ElementRegion>(superR)) {
+  const SubRegion *Base = dyn_cast<SubRegion>(superR);
+  while (Base) {
+    if (Optional<SVal> D = getBindingForDerivedDefaultValue(B, Base, R, Ty)) {
+      if (D->getAs<nonloc::LazyCompoundVal>()) {
+        hasPartialLazyBinding = true;
+        break;
+      }
+
+      return *D;
+    }
+
+    if (const ElementRegion *ER = dyn_cast<ElementRegion>(Base)) {
       NonLoc index = ER->getIndex();
       if (!index.isConstant())
         hasSymbolicIndex = true;
@@ -1516,11 +1542,7 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
     
     // If our super region is a field or element itself, walk up the region
     // hierarchy to see if there is a default value installed in an ancestor.
-    if (const SubRegion *SR = dyn_cast<SubRegion>(superR)) {
-      superR = SR->getSuperRegion();
-      continue;
-    }
-    break;
+    Base = dyn_cast<SubRegion>(Base->getSuperRegion());
   }
 
   if (R->hasStackNonParametersStorage()) {
@@ -1540,8 +1562,9 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
     // a symbolic offset.
     if (hasSymbolicIndex)
       return UnknownVal();
-    
-    return UndefinedVal();
+
+    if (!hasPartialLazyBinding)
+      return UndefinedVal();
   }
 
   // All other values are symbolic.
@@ -1620,8 +1643,10 @@ SVal RegionStoreManager::getBindingForVar(RegionBindingsConstRef B,
     if (isa<StaticGlobalSpaceRegion>(MS))
       return svalBuilder.makeZeroVal(T);
 
-    if (Optional<SVal> V = getBindingForDerivedDefaultValue(B, MS, R, T))
+    if (Optional<SVal> V = getBindingForDerivedDefaultValue(B, MS, R, T)) {
+      assert(!V->getAs<nonloc::LazyCompoundVal>());
       return V.getValue();
+    }
 
     return svalBuilder.getRegionValueSymbolVal(R);
   }

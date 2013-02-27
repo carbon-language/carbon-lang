@@ -89,3 +89,14 @@ void PR14765_incorrectBehavior(Circle *testObj) {
   free(testObj);
 }
 
+void rdar13292559(Circle input) {
+  extern void useCircle(Circle);
+
+  Circle obj = input;
+  useCircle(obj); // no-warning
+
+  // This generated an "uninitialized 'size' field" warning for a (short) while.
+  obj.origin = makePoint(0.0, 0.0);
+  useCircle(obj); // no-warning
+}
+
