@@ -1775,13 +1775,17 @@ public:
   Linkage getLinkage() const;
 
   /// \brief Determine the visibility of this type.
-  Visibility getVisibility() const;
+  Visibility getVisibility() const {
+    return getLinkageAndVisibility().visibility();
+  }
 
   /// \brief Return true if the visibility was explicitly set is the code.
-  bool isVisibilityExplicit() const;
+  bool isVisibilityExplicit() const {
+    return getLinkageAndVisibility().visibilityExplicit();
+  }
 
   /// \brief Determine the linkage and visibility of this type.
-  std::pair<Linkage,Visibility> getLinkageAndVisibility() const;
+  LinkageInfo getLinkageAndVisibility() const;
 
   /// \brief Note that the linkage is no longer known.
   void ClearLinkageCache();

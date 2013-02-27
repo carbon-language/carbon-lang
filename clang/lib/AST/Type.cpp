@@ -2170,25 +2170,16 @@ Linkage Type::getLinkage() const {
   return TypeBits.getLinkage();
 }
 
-/// \brief Determine the linkage of this type.
-Visibility Type::getVisibility() const {
-  Cache::ensure(this);
-  return TypeBits.getVisibility();
-}
-
-bool Type::isVisibilityExplicit() const {
-  Cache::ensure(this);
-  return TypeBits.isVisibilityExplicit();
-}
-
 bool Type::hasUnnamedOrLocalType() const {
   Cache::ensure(this);
   return TypeBits.hasLocalOrUnnamedType();
 }
 
-std::pair<Linkage,Visibility> Type::getLinkageAndVisibility() const {
+LinkageInfo Type::getLinkageAndVisibility() const {
   Cache::ensure(this);
-  return std::make_pair(TypeBits.getLinkage(), TypeBits.getVisibility());
+  LinkageInfo LV(TypeBits.getLinkage(), TypeBits.getVisibility(),
+                 TypeBits.isVisibilityExplicit());
+  return LV;
 }
 
 void Type::ClearLinkageCache() {

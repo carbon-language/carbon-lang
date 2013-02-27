@@ -211,11 +211,6 @@ static Optional<Visibility> getVisibilityOf(const NamedDecl *D,
   return None;
 }
 
-static LinkageInfo getLVForType(QualType T) {
-  std::pair<Linkage,Visibility> P = T->getLinkageAndVisibility();
-  return LinkageInfo(P.first, P.second, T->isVisibilityExplicit());
-}
-
 /// \brief Get the most restrictive linkage for the types in the given
 /// template parameter list.  For visibility purposes, template
 /// parameters are part of the signature of a template.
@@ -239,7 +234,7 @@ getLVForTemplateParameterList(const TemplateParameterList *params) {
       // Handle the non-pack case first.
       if (!NTTP->isExpandedParameterPack()) {
         if (!NTTP->getType()->isDependentType()) {
-          LV.merge(getLVForType(NTTP->getType()));
+          LV.merge(NTTP->getType()->getLinkageAndVisibility());
         }
         continue;
       }
@@ -248,7 +243,7 @@ getLVForTemplateParameterList(const TemplateParameterList *params) {
       for (unsigned i = 0, n = NTTP->getNumExpansionTypes(); i != n; ++i) {
         QualType type = NTTP->getExpansionType(i);
         if (!type->isDependentType())
-          LV.merge(getLVForType(type));
+          LV.merge(type->getLinkageAndVisibility());
       }
       continue;
     }
@@ -296,7 +291,7 @@ getLVForTemplateArgumentList(ArrayRef<TemplateArgument> args) {
       continue;
 
     case TemplateArgument::Type:
-      LV.merge(getLVForType(arg.getAsType()));
+      LV.merge(arg.getAsType()->getLinkageAndVisibility());
       continue;
 
     case TemplateArgument::Declaration:
@@ -307,7 +302,7 @@ getLVForTemplateArgumentList(ArrayRef<TemplateArgument> args) {
       continue;
 
     case TemplateArgument::NullPtr:
-      LV.merge(getLVForType(arg.getNullPtrType()));
+      LV.merge(arg.getNullPtrType()->getLinkageAndVisibility());
       continue;
 
     case TemplateArgument::Template:
@@ -627,7 +622,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // because of this, but unique-external linkage suits us.
     if (Context.getLangOpts().CPlusPlus &&
         !Var->getDeclContext()->isExternCContext()) {
-      LinkageInfo TypeLV = getLVForType(Var->getType());
+      LinkageInfo TypeLV = Var->getType()->getLinkageAndVisibility();
       if (TypeLV.linkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
       if (!LV.visibilityExplicit())
@@ -819,7 +814,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
   } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     // Modify the variable's linkage by its type, but ignore the
     // type's visibility unless it's a definition.
-    LinkageInfo typeLV = getLVForType(VD->getType());
+    LinkageInfo typeLV = VD->getType()->getLinkageAndVisibility();
     LV.mergeMaybeWithVisibility(typeLV,
                   !LV.visibilityExplicit() && !classLV.visibilityExplicit());
 
