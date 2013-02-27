@@ -1191,13 +1191,9 @@ private:
     /// (for C++0x variadic templates).
     unsigned ContainsUnexpandedParameterPack : 1;
 
-    /// \brief Nonzero if the cache (i.e. the bitfields here starting
-    /// with 'Cache') is valid.  If so, then this is a
-    /// LangOptions::VisibilityMode+1.
-    mutable unsigned CacheValidAndVisibility : 2;
-
-    /// \brief True if the visibility was set explicitly in the source code.
-    mutable unsigned CachedExplicitVisibility : 1;
+    /// \brief True if the cache (i.e. the bitfields here starting with
+    /// 'Cache') is valid.
+    mutable unsigned CacheValid : 1;
 
     /// \brief Linkage of this type.
     mutable unsigned CachedLinkage : 2;
@@ -1209,15 +1205,7 @@ private:
     mutable unsigned FromAST : 1;
 
     bool isCacheValid() const {
-      return (CacheValidAndVisibility != 0);
-    }
-    Visibility getVisibility() const {
-      assert(isCacheValid() && "getting linkage from invalid cache");
-      return static_cast<Visibility>(CacheValidAndVisibility-1);
-    }
-    bool isVisibilityExplicit() const {
-      assert(isCacheValid() && "getting linkage from invalid cache");
-      return CachedExplicitVisibility;
+      return CacheValid;
     }
     Linkage getLinkage() const {
       assert(isCacheValid() && "getting linkage from invalid cache");
@@ -1373,8 +1361,7 @@ protected:
     TypeBits.InstantiationDependent = Dependent || InstantiationDependent;
     TypeBits.VariablyModified = VariablyModified;
     TypeBits.ContainsUnexpandedParameterPack = ContainsUnexpandedParameterPack;
-    TypeBits.CacheValidAndVisibility = 0;
-    TypeBits.CachedExplicitVisibility = false;
+    TypeBits.CacheValid = false;
     TypeBits.CachedLocalOrUnnamed = false;
     TypeBits.CachedLinkage = NoLinkage;
     TypeBits.FromAST = false;

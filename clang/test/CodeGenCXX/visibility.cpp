@@ -1260,3 +1260,20 @@ namespace test66 {
   // CHECK: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
 }
+
+namespace test67 {
+  template <typename T>
+  struct DEFAULT bar {
+    static void zed() {}
+  };
+
+  class foo;
+  class compute {
+    void f(foo *rootfoo);
+  };
+  class DEFAULT foo;
+
+  template struct bar<foo>;
+  // CHECK: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
+}

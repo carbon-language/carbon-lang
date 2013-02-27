@@ -2002,21 +2002,18 @@ namespace {
 
 /// \brief The cached properties of a type.
 class CachedProperties {
-  LinkageInfo LV;
+  Linkage L;
   bool local;
 
 public:
-  CachedProperties(LinkageInfo LV, bool local) : LV(LV), local(local) {}
+  CachedProperties(Linkage L, bool local) : L(L), local(local) {}
 
-  Linkage getLinkage() const { return LV.getLinkage(); }
-  Visibility getVisibility() const { return LV.getVisibility(); }
-  bool isVisibilityExplicit() const { return LV.isVisibilityExplicit(); }
+  Linkage getLinkage() const { return L; }
   bool hasLocalOrUnnamedType() const { return local; }
 
   friend CachedProperties merge(CachedProperties L, CachedProperties R) {
-    LinkageInfo MergedLV = L.LV;
-    MergedLV.merge(R.LV);
-    return CachedProperties(MergedLV,
+    Linkage MergedLinkage = minLinkage(L.L, R.L);
+    return CachedProperties(MergedLinkage,
                          L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
   }
 };
@@ -2036,10 +2033,8 @@ public:
 
   static CachedProperties get(const Type *T) {
     ensure(T);
-    LinkageInfo LV(T->TypeBits.getLinkage(),
-                   T->TypeBits.getVisibility(),
-                   T->TypeBits.isVisibilityExplicit());
-    return CachedProperties(LV, T->TypeBits.hasLocalOrUnnamedType());
+    return CachedProperties(T->TypeBits.getLinkage(),
+                            T->TypeBits.hasLocalOrUnnamedType());
   }
 
   static void ensure(const Type *T) {
@@ -2051,10 +2046,7 @@ public:
     if (!T->isCanonicalUnqualified()) {
       const Type *CT = T->getCanonicalTypeInternal().getTypePtr();
       ensure(CT);
-      T->TypeBits.CacheValidAndVisibility =
-        CT->TypeBits.CacheValidAndVisibility;
-      T->TypeBits.CachedExplicitVisibility =
-        CT->TypeBits.CachedExplicitVisibility;
+      T->TypeBits.CacheValid = true;
       T->TypeBits.CachedLinkage = CT->TypeBits.CachedLinkage;
       T->TypeBits.CachedLocalOrUnnamed = CT->TypeBits.CachedLocalOrUnnamed;
       return;
@@ -2062,10 +2054,7 @@ public:
 
     // Compute the cached properties and then set the cache.
     CachedProperties Result = computeCachedProperties(T);
-    T->TypeBits.CacheValidAndVisibility = Result.getVisibility() + 1U;
-    T->TypeBits.CachedExplicitVisibility = Result.isVisibilityExplicit();
-    assert(T->TypeBits.isCacheValid() &&
-           T->TypeBits.getVisibility() == Result.getVisibility());
+    T->TypeBits.CacheValid = true;
     T->TypeBits.CachedLinkage = Result.getLinkage();
     T->TypeBits.CachedLocalOrUnnamed = Result.hasLocalOrUnnamedType();
   }
@@ -2091,13 +2080,13 @@ static CachedProperties computeCachedProperties(const Type *T) {
 #include "clang/AST/TypeNodes.def"
     // Treat instantiation-dependent types as external.
     assert(T->isInstantiationDependentType());
-    return CachedProperties(LinkageInfo(), false);
+    return CachedProperties(ExternalLinkage, false);
 
   case Type::Builtin:
     // C++ [basic.link]p8:
     //   A type is said to have linkage if and only if:
     //     - it is a fundamental type (3.9.1); or
-    return CachedProperties(LinkageInfo(), false);
+    return CachedProperties(ExternalLinkage, false);
 
   case Type::Record:
   case Type::Enum: {
@@ -2107,11 +2096,11 @@ static CachedProperties computeCachedProperties(const Type *T) {
     //     - it is a class or enumeration type that is named (or has a name
     //       for linkage purposes (7.1.3)) and the name has linkage; or
     //     -  it is a specialization of a class template (14); or
-    LinkageInfo LV = Tag->getLinkageAndVisibility();
+    Linkage L = Tag->getLinkage();
     bool IsLocalOrUnnamed =
       Tag->getDeclContext()->isFunctionOrMethod() ||
       (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl());
-    return CachedProperties(LV, IsLocalOrUnnamed);
+    return CachedProperties(L, IsLocalOrUnnamed);
   }
 
     // C++ [basic.link]p8:
@@ -2149,9 +2138,8 @@ static CachedProperties computeCachedProperties(const Type *T) {
     return result;
   }
   case Type::ObjCInterface: {
-    LinkageInfo LV =
-      cast<ObjCInterfaceType>(T)->getDecl()->getLinkageAndVisibility();
-    return CachedProperties(LV, false);
+    Linkage L = cast<ObjCInterfaceType>(T)->getDecl()->getLinkage();
+    return CachedProperties(L, false);
   }
   case Type::ObjCObject:
     return Cache::get(cast<ObjCObjectType>(T)->getBaseType());
@@ -2175,17 +2163,92 @@ bool Type::hasUnnamedOrLocalType() const {
   return TypeBits.hasLocalOrUnnamedType();
 }
 
+static LinkageInfo computeLinkageInfo(QualType T);
+
+static LinkageInfo computeLinkageInfo(const Type *T) {
+  switch (T->getTypeClass()) {
+#define TYPE(Class,Base)
+#define NON_CANONICAL_TYPE(Class,Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    llvm_unreachable("didn't expect a non-canonical type here");
+
+#define TYPE(Class,Base)
+#define DEPENDENT_TYPE(Class,Base) case Type::Class:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class,Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    // Treat instantiation-dependent types as external.
+    assert(T->isInstantiationDependentType());
+    return LinkageInfo::external();
+
+  case Type::Builtin:
+    return LinkageInfo::external();
+
+  case Type::Record:
+  case Type::Enum:
+    return cast<TagType>(T)->getDecl()->getLinkageAndVisibility();
+
+  case Type::Complex:
+    return computeLinkageInfo(cast<ComplexType>(T)->getElementType());
+  case Type::Pointer:
+    return computeLinkageInfo(cast<PointerType>(T)->getPointeeType());
+  case Type::BlockPointer:
+    return computeLinkageInfo(cast<BlockPointerType>(T)->getPointeeType());
+  case Type::LValueReference:
+  case Type::RValueReference:
+    return computeLinkageInfo(cast<ReferenceType>(T)->getPointeeType());
+  case Type::MemberPointer: {
+    const MemberPointerType *MPT = cast<MemberPointerType>(T);
+    LinkageInfo LV = computeLinkageInfo(MPT->getClass());
+    LV.merge(computeLinkageInfo(MPT->getPointeeType()));
+    return LV;
+  }
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+  case Type::VariableArray:
+    return computeLinkageInfo(cast<ArrayType>(T)->getElementType());
+  case Type::Vector:
+  case Type::ExtVector:
+    return computeLinkageInfo(cast<VectorType>(T)->getElementType());
+  case Type::FunctionNoProto:
+    return computeLinkageInfo(cast<FunctionType>(T)->getResultType());
+  case Type::FunctionProto: {
+    const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
+    LinkageInfo LV = computeLinkageInfo(FPT->getResultType());
+    for (FunctionProtoType::arg_type_iterator ai = FPT->arg_type_begin(),
+           ae = FPT->arg_type_end(); ai != ae; ++ai)
+      LV.merge(computeLinkageInfo(*ai));
+    return LV;
+  }
+  case Type::ObjCInterface:
+    return cast<ObjCInterfaceType>(T)->getDecl()->getLinkageAndVisibility();
+  case Type::ObjCObject:
+    return computeLinkageInfo(cast<ObjCObjectType>(T)->getBaseType());
+  case Type::ObjCObjectPointer:
+    return computeLinkageInfo(cast<ObjCObjectPointerType>(T)->getPointeeType());
+  case Type::Atomic:
+    return computeLinkageInfo(cast<AtomicType>(T)->getValueType());
+  }
+
+  llvm_unreachable("unhandled type class");
+}
+
+static LinkageInfo computeLinkageInfo(QualType T) {
+  return computeLinkageInfo(T.getTypePtr());
+}
+
 LinkageInfo Type::getLinkageAndVisibility() const {
-  Cache::ensure(this);
-  LinkageInfo LV(TypeBits.getLinkage(), TypeBits.getVisibility(),
-                 TypeBits.isVisibilityExplicit());
+  if (!isCanonicalUnqualified())
+    return computeLinkageInfo(getCanonicalTypeInternal());
+
+  LinkageInfo LV = computeLinkageInfo(this);
+  assert(LV.getLinkage() == getLinkage());
   return LV;
 }
 
 void Type::ClearLinkageCache() {
-  TypeBits.CacheValidAndVisibility = 0;
+  TypeBits.CacheValid = false;
   if (QualType(this, 0) != CanonicalType)
-    CanonicalType->TypeBits.CacheValidAndVisibility = 0;
+    CanonicalType->TypeBits.CacheValid = false;
 }
 
 Qualifiers::ObjCLifetime Type::getObjCARCImplicitLifetime() const {
