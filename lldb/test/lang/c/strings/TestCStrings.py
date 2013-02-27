@@ -16,7 +16,6 @@ class CStringsTestCase(TestBase):
         self.buildDsym()
         self.static_method_commands()
 
-    @expectedFailureLinux # bugzilla 14437
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Tests that C strings work as expected in expressions"""
@@ -43,6 +42,7 @@ class CStringsTestCase(TestBase):
         self.expect("expression -- z[2]",
                     startstr = "(const char) $1 = 'x'")
 
+        # On Linux, the expression below will test GNU indirect function calls.
         self.expect("expression -- (int)strlen(\"hello\")",
                     startstr = "(int) $2 = 5")
 

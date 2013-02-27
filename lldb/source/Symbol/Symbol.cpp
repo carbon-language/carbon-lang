@@ -184,6 +184,12 @@ Symbol::IsTrampoline () const
     return m_type == eSymbolTypeTrampoline;
 }
 
+bool
+Symbol::IsIndirect () const
+{
+    return m_type == eSymbolTypeResolver;
+}
+
 void
 Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const
 {
@@ -273,7 +279,7 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
 uint32_t
 Symbol::GetPrologueByteSize ()
 {
-    if (m_type == eSymbolTypeCode)
+    if (m_type == eSymbolTypeCode || m_type == eSymbolTypeResolver)
     {
         if (!m_type_data_resolved)
         {

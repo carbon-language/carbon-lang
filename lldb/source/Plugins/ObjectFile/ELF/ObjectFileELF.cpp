@@ -784,6 +784,12 @@ ParseSymbols(Symtab *symtab,
                 // STB_LOCAL symbols for the file, if it is present.
                 symbol_type = eSymbolTypeObjectFile;
                 break;
+
+            case STT_GNU_IFUNC:
+                // The symbol is associated with an indirect function. The actual
+                // function will be resolved if it is referenced.
+                symbol_type = eSymbolTypeResolver;
+                break;
             }
         }
 

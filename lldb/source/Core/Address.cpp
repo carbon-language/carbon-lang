@@ -311,8 +311,15 @@ Address::GetLoadAddress (Target *target) const
 }
 
 addr_t
-Address::GetCallableLoadAddress (Target *target) const
+Address::GetCallableLoadAddress (Target *target, bool is_indirect) const
 {
+    if (is_indirect && target) {
+        ProcessSP processSP = target->GetProcessSP();
+        Error error;
+        if (processSP.get())
+            return processSP->ResolveIndirectFunction(this, error);
+    }
+
     addr_t code_addr = GetLoadAddress (target);
 
     if (target)

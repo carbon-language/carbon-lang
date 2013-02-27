@@ -455,6 +455,7 @@ namespace lldb {
         eSymbolTypeInvalid = 0,
         eSymbolTypeAbsolute,
         eSymbolTypeCode,
+        eSymbolTypeResolver,
         eSymbolTypeData,
         eSymbolTypeTrampoline,
         eSymbolTypeRuntime,

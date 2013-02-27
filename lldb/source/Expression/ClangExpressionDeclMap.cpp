@@ -696,11 +696,32 @@ FindCodeSymbolInContext
     SymbolContextList &sc_list
 )
 {
+    SymbolContextList temp_sc_list;
     if (sym_ctx.module_sp)
-       sym_ctx.module_sp->FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
+        sym_ctx.module_sp->FindSymbolsWithNameAndType(name, eSymbolTypeAny, temp_sc_list);
     
-    if (!sc_list.GetSize())
-        sym_ctx.target_sp->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
+    if (!sc_list.GetSize() && sym_ctx.target_sp)
+        sym_ctx.target_sp->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, temp_sc_list);
+
+    unsigned temp_sc_list_size = temp_sc_list.GetSize();
+    for (unsigned i = 0; i < temp_sc_list_size; i++)
+    {
+        SymbolContext sym_ctx;
+        temp_sc_list.GetContextAtIndex(i, sym_ctx);
+        if (sym_ctx.symbol)
+        {
+            switch (sym_ctx.symbol->GetType())
+            {
+                case eSymbolTypeCode:
+                case eSymbolTypeResolver:
+                    sc_list.Append(sym_ctx);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
 }
 
 bool
@@ -724,7 +745,7 @@ ClangExpressionDeclMap::GetFunctionAddress
     SymbolContextList sc_list;
     
     FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
-        
+
     if (!sc_list.GetSize())
     {
         // We occasionally get debug information in which a const function is reported 
@@ -746,23 +767,25 @@ ClangExpressionDeclMap::GetFunctionAddress
     
     if (!sc_list.GetSize())
         return false;
-    
+
     SymbolContext sym_ctx;
     sc_list.GetContextAtIndex(0, sym_ctx);
-    
+
     const Address *func_so_addr = NULL;
-    
+    bool is_indirect_function = false;
+
     if (sym_ctx.function)
         func_so_addr = &sym_ctx.function->GetAddressRange().GetBaseAddress();
-    else if (sym_ctx.symbol)
+    else if (sym_ctx.symbol) {
         func_so_addr = &sym_ctx.symbol->GetAddress();
-    else
+        is_indirect_function = sym_ctx.symbol->IsIndirect();
+    } else
         return false;
-    
+
     if (!func_so_addr || !func_so_addr->IsValid())
         return false;
-    
-    func_addr = func_so_addr->GetCallableLoadAddress (target);
+
+    func_addr = func_so_addr->GetCallableLoadAddress (target, is_indirect_function);
 
     return true;
 }
@@ -795,7 +818,11 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, Process *process, cons
                 case eSymbolTypeTrampoline:
                     symbol_load_addr = sym_address->GetCallableLoadAddress (&target);
                     break;
-                    
+
+                case eSymbolTypeResolver:
+                    symbol_load_addr = sym_address->GetCallableLoadAddress (&target, true);
+                    break;
+
                 case eSymbolTypeData:
                 case eSymbolTypeRuntime:
                 case eSymbolTypeVariable:
@@ -2467,6 +2494,7 @@ ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
                     case eSymbolTypeCompiler:
                     case eSymbolTypeInstrumentation:
                     case eSymbolTypeUndefined:
+                    case eSymbolTypeResolver:
                         break;
                 }
             }
@@ -3540,7 +3568,9 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     // only valid for Functions, not for Symbols
     void *fun_opaque_type = NULL;
     ASTContext *fun_ast_context = NULL;
-    
+
+    bool is_indirect_function = false;
+
     if (fun)
     {
         Type *fun_type = fun->GetType();
@@ -3586,6 +3616,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     {
         fun_address = &symbol->GetAddress();
         fun_decl = context.AddGenericFunDecl();
+        is_indirect_function = symbol->IsIndirect();
     }
     else
     {
@@ -3596,7 +3627,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     
     Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
 
-    lldb::addr_t load_addr = fun_address->GetCallableLoadAddress(target);
+    lldb::addr_t load_addr = fun_address->GetCallableLoadAddress(target, is_indirect_function);
     fun_location->SetValueType(Value::eValueTypeLoadAddress);
     fun_location->GetScalar() = load_addr;
     

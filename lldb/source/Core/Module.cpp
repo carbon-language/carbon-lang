@@ -606,7 +606,7 @@ Module::FindFunctions (const ConstString &name,
             if (symtab)
             {
                 std::vector<uint32_t> symbol_indexes;
-                symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeCode, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
+                symtab->FindAllSymbolsWithNameAndType (name, eSymbolTypeAny, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
                 const size_t num_matches = symbol_indexes.size();
                 if (num_matches)
                 {
@@ -615,7 +615,10 @@ Module::FindFunctions (const ConstString &name,
                     for (size_t i=0; i<num_matches; i++)
                     {
                         sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                        sc_list.AppendIfUnique (sc, merge_symbol_into_function);
+                        SymbolType sym_type = sc.symbol->GetType();
+                        if (sc.symbol && (sym_type == eSymbolTypeCode ||
+                                          sym_type == eSymbolTypeResolver))
+                            sc_list.AppendIfUnique (sc, merge_symbol_into_function);
                     }
                 }
             }
@@ -649,7 +652,7 @@ Module::FindFunctions (const RegularExpression& regex,
             if (symtab)
             {
                 std::vector<uint32_t> symbol_indexes;
-                symtab->AppendSymbolIndexesMatchingRegExAndType (regex, eSymbolTypeCode, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
+                symtab->AppendSymbolIndexesMatchingRegExAndType (regex, eSymbolTypeAny, Symtab::eDebugAny, Symtab::eVisibilityAny, symbol_indexes);
                 const size_t num_matches = symbol_indexes.size();
                 if (num_matches)
                 {
@@ -658,7 +661,10 @@ Module::FindFunctions (const RegularExpression& regex,
                     for (size_t i=0; i<num_matches; i++)
                     {
                         sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                        sc_list.AppendIfUnique (sc, merge_symbol_into_function);
+                        SymbolType sym_type = sc.symbol->GetType();
+                        if (sc.symbol && (sym_type == eSymbolTypeCode ||
+                                          sym_type == eSymbolTypeResolver))
+                            sc_list.AppendIfUnique (sc, merge_symbol_into_function);
                     }
                 }
             }

@@ -119,7 +119,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
 }
 
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
-                                                Address &function,
+                                                const Address &function,
                                                 const ClangASTType &return_type,
                                                 addr_t arg,
                                                 bool stop_other_threads,
@@ -182,7 +182,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
 
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
-                                                Address &function,
+                                                const Address &function,
                                                 const ClangASTType &return_type,
                                                 bool stop_other_threads,
                                                 bool unwind_on_error,

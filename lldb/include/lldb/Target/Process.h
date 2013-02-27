@@ -2894,6 +2894,28 @@ public:
     lldb::addr_t
     AllocateMemory (size_t size, uint32_t permissions, Error &error);
 
+
+    //------------------------------------------------------------------
+    /// Resolve dynamically loaded indirect functions.
+    ///
+    /// @param[in] address
+    ///     The load address of the indirect function to resolve.
+    ///
+    /// @param[out] error
+    ///     An error value in case the resolve fails.
+    ///
+    /// @return
+    ///     The address of the resolved function.
+    ///     LLDB_INVALID_ADDRESS if the resolution failed.
+    //------------------------------------------------------------------
+
+    virtual lldb::addr_t
+    ResolveIndirectFunction(const Address *address, Error &error)
+    {
+        error.SetErrorStringWithFormat("error: %s does not support indirect functions in the debug process", GetShortPluginName());
+        return LLDB_INVALID_ADDRESS;
+    }
+
     virtual Error
     GetMemoryRegionInfo (lldb::addr_t load_addr, 
                         MemoryRegionInfo &range_info)

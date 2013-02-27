@@ -205,6 +205,9 @@ public:
     bool
     IsTrampoline () const;
 
+    bool
+    IsIndirect () const;
+
     lldb::addr_t
     GetByteSize () const;
     

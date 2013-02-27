@@ -302,7 +302,7 @@ public:
     ///     the address is currently not loaded.
     //------------------------------------------------------------------
     lldb::addr_t
-    GetCallableLoadAddress (Target *target) const;
+    GetCallableLoadAddress (Target *target, bool is_indirect = false) const;
 
     //------------------------------------------------------------------
     /// Get the load address as an opcode load address.

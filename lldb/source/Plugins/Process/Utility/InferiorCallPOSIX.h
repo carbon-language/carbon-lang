@@ -36,6 +36,8 @@ bool InferiorCallMmap(Process *proc, lldb::addr_t &allocated_addr,
 
 bool InferiorCallMunmap(Process *proc, lldb::addr_t addr, lldb::addr_t length);
 
+bool InferiorCall(Process *proc, const Address *address, lldb::addr_t &returned_func);
+
 }   // namespace lldb_private
 
 #endif  // lldb_InferiorCallPOSIX_h_
