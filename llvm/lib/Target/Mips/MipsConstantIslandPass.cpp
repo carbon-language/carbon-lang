@@ -1,4 +1,4 @@
-//===-- MipsLongBranch.cpp - Emit long branches ---------------------------===//
+//===-- MipsConstantIslandPass.cpp - Emit Pc Relative loads----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
