@@ -1971,21 +1971,30 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
       }
     }
 
-    // Implement folding of:
-    //    i32* getelementptr ([2 x i32]* bitcast ([3 x i32]* %X to [2 x i32]*),
-    //                        i64 0, i64 0)
-    // To: i32* getelementptr ([3 x i32]* %X, i64 0, i64 0)
+    // Attempt to fold casts to the same type away.  For example, folding:
     //
+    //   i32* getelementptr ([2 x i32]* bitcast ([3 x i32]* %X to [2 x i32]*),
+    //                       i64 0, i64 0)
+    // into:
+    //
+    //   i32* getelementptr ([3 x i32]* %X, i64 0, i64 0)
+    //
+    // Don't fold if the cast is changing address spaces.
     if (CE->isCast() && Idxs.size() > 1 && Idx0->isNullValue()) {
-      if (PointerType *SPT =
-          dyn_cast<PointerType>(CE->getOperand(0)->getType()))
-        if (ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
-          if (ArrayType *CAT =
-        dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
-            if (CAT->getElementType() == SAT->getElementType())
-              return
-                ConstantExpr::getGetElementPtr((Constant*)CE->getOperand(0),
-                                               Idxs, inBounds);
+      PointerType *SrcPtrTy =
+        dyn_cast<PointerType>(CE->getOperand(0)->getType());
+      PointerType *DstPtrTy = dyn_cast<PointerType>(CE->getType());
+      if (SrcPtrTy && DstPtrTy) {
+        ArrayType *SrcArrayTy =
+          dyn_cast<ArrayType>(SrcPtrTy->getElementType());
+        ArrayType *DstArrayTy =
+          dyn_cast<ArrayType>(DstPtrTy->getElementType());
+        if (SrcArrayTy && DstArrayTy
+            && SrcArrayTy->getElementType() == DstArrayTy->getElementType()
+            && SrcPtrTy->getAddressSpace() == DstPtrTy->getAddressSpace())
+          return ConstantExpr::getGetElementPtr((Constant*)CE->getOperand(0),
+                                                Idxs, inBounds);
+      }
     }
   }
 

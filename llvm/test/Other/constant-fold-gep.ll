@@ -447,4 +447,24 @@ define i32* @fZ() nounwind {
   ret i32* %t
 }
 
+; PR15262 - Check GEP folding with casts between address spaces.
+
+@p0 = global [4 x i8] zeroinitializer, align 1
+@p12 = addrspace(12) global [4 x i8] zeroinitializer, align 1
+
+define i8* @different_addrspace() nounwind noinline {
+; OPT: different_addrspace
+  %p = getelementptr inbounds i8* bitcast ([4 x i8] addrspace(12)* @p12 to i8*),
+                                  i32 2
+  ret i8* %p
+; OPT: ret i8* getelementptr (i8* bitcast ([4 x i8] addrspace(12)* @p12 to i8*), i32 2)
+}
+
+define i8* @same_addrspace() nounwind noinline {
+; OPT: same_addrspace
+  %p = getelementptr inbounds i8* bitcast ([4 x i8] * @p0 to i8*), i32 2
+  ret i8* %p
+; OPT: ret i8* getelementptr inbounds ([4 x i8]* @p0, i32 0, i32 2)
+}
+
 ; CHECK: attributes #0 = { nounwind }
