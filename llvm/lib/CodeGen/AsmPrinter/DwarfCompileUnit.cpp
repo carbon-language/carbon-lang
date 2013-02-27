@@ -1348,7 +1348,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     }
     // Add linkage name.
     StringRef LinkageName = GV.getLinkageName();
-    if (!LinkageName.empty() && isGlobalVariable) {
+    if (!LinkageName.empty()) {
       // From DWARF4: DIEs to which DW_AT_linkage_name may apply include:
       // TAG_common_block, TAG_constant, TAG_entry_point, TAG_subprogram and
       // TAG_variable.
