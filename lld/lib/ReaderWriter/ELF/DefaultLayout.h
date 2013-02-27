@@ -110,15 +110,15 @@ public:
   };
 
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
-  // The key used for Segments
+  // The additional segments are used to figure out 
+  // if there is a segment by that type already created
+  // For example : PT_TLS, we have two sections .tdata/.tbss 
+  // that are part of PT_TLS, we need to create this additional 
+  // segment only once
+  typedef int64_t AdditionalSegmentKey;
   // The segments are created using
   // SegmentName, Segment flags
   typedef std::pair<StringRef, int64_t> SegmentKey;
-  // Merged Sections contain the map of Sectionnames to a vector of sections,
-  // that have been merged to form a single section
-  typedef std::map<StringRef, MergedSections<ELFT> *> MergedSectionMapT;
-  typedef typename std::vector<
-      MergedSections<ELFT> *>::iterator MergedSectionIter;
 
   // HashKey for the Segment
   class SegmentHashKey {
@@ -130,10 +130,17 @@ public:
     }
   };
 
+  // Merged Sections contain the map of Sectionnames to a vector of sections,
+  // that have been merged to form a single section
+  typedef std::map<StringRef, MergedSections<ELFT> *> MergedSectionMapT;
+  typedef typename std::vector<MergedSections<ELFT> *>::iterator
+  MergedSectionIter;
+
   typedef std::unordered_map<SectionKey, AtomSection<ELFT> *, SectionKeyHash,
                              SectionKeyEq> SectionMapT;
-  typedef std::unordered_map<SegmentKey, Segment<ELFT> *,
-                             SegmentHashKey> SegmentMapT;
+  typedef std::map<AdditionalSegmentKey, Segment<ELFT> *> AdditionalSegmentMapT;
+  typedef std::unordered_map<SegmentKey, Segment<ELFT> *, SegmentHashKey>
+  SegmentMapT;
 
   /// \brief find a absolute atom pair given a absolute atom name
   struct FindByName {
@@ -284,6 +291,7 @@ private:
   llvm::BumpPtrAllocator _allocator;
   SectionMapT _sectionMap;
   MergedSectionMapT _mergedSectionMap;
+  AdditionalSegmentMapT _additionalSegmentMap;
   SegmentMapT _segmentMap;
   std::vector<Chunk<ELFT> *> _sections;
   std::vector<Segment<ELFT> *> _segments;
@@ -547,30 +555,63 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   }
   for (auto msi : _mergedSections) {
     for (auto ai : msi->sections()) {
-      if (auto section = dyn_cast<Section<ELFT>>(ai)) {
+      if (auto section = dyn_cast<Section<ELFT> >(ai)) {
         if (!hasOutputSegment(section))
           continue;
+
+        // Get the segment type for the section
+        int64_t segmentType = getSegmentType(section);
+
         msi->setHasSegment();
-        section->setSegment(getSegmentType(section));
+        section->setSegmentType(segmentType);
         StringRef segmentName = section->segmentKindToStr();
+
+        int64_t sectionFlag = msi->flags();
+
+        Segment<ELFT> *segment;
+        // We need a seperate segment for sections that dont have 
+        // the segment type to be PT_LOAD
+        if (segmentType != llvm::ELF::PT_LOAD) {
+          const std::pair<AdditionalSegmentKey, Segment<ELFT> *>
+          additionalSegment(segmentType, nullptr);
+          std::pair<typename AdditionalSegmentMapT::iterator, bool>
+          additionalSegmentInsert(
+              _additionalSegmentMap.insert(additionalSegment));
+          if (!additionalSegmentInsert.second) {
+            segment = additionalSegmentInsert.first->second;
+          } else {
+            segment = new (_allocator)
+                Segment<ELFT>(_targetInfo, segmentName, segmentType);
+            additionalSegmentInsert.first->second = segment;
+            _segments.push_back(segment);
+          }
+          segment->append(section);
+        }
+
         // Use the flags of the merged Section for the segment
-        const SegmentKey key(segmentName, msi->flags());
+        const SegmentKey key("PT_LOAD", sectionFlag);
         const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key,
                                                                     nullptr);
-        std::pair<typename SegmentMapT::iterator, bool>
-                            segmentInsert(_segmentMap.insert(currentSegment));
-        Segment<ELFT> *segment;
+        std::pair<typename SegmentMapT::iterator, bool> segmentInsert(
+            _segmentMap.insert(currentSegment));
         if (!segmentInsert.second) {
           segment = segmentInsert.first->second;
         } else {
           segment = new (_allocator)
-              Segment<ELFT>(_targetInfo, segmentName, getSegmentType(section));
+              Segment<ELFT>(_targetInfo, "PT_LOAD", llvm::ELF::PT_LOAD);
           segmentInsert.first->second = segment;
           _segments.push_back(segment);
         }
         segment->append(section);
       }
     }
+  }
+  if (_targetInfo.isDynamic()) {
+    Segment<ELFT> *segment =
+        new (_allocator) ProgramHeaderSegment<ELFT>(_targetInfo);
+    _segments.push_back(segment);
+    segment->append(_header);
+    segment->append(_programHeader);
   }
 }
 
@@ -584,11 +625,13 @@ template <class ELFT> void DefaultLayout<ELFT>::assignFileOffsets() {
   uint64_t offset = 0;
   for (auto si : _segments) {
     si->setOrdinal(++ordinal);
+    // Dont assign offsets for segments that are not loadable
+    if (si->segmentType() != llvm::ELF::PT_LOAD)
+      continue;
     si->assignOffsets(offset);
     offset += si->fileSize();
   }
 }
-
 
 template<class ELFT>
 void
@@ -597,36 +640,48 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
     return;
   
   uint64_t virtualAddress = _targetInfo.getBaseAddress();
-  
+
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
   // so that AT_PHDR is set correctly by the loader and so they are accessible
-  // at runtime. To do this we simply prepend them to the first Segment and
-  // let the layout logic take care of it.
-  _segments[0]->prepend(_programHeader);
-  _segments[0]->prepend(_header);
-  
+  // at runtime. To do this we simply prepend them to the first loadable Segment 
+  // and let the layout logic take care of it.
+  Segment<ELFT> *firstLoadSegment = nullptr;
+  for (auto si : _segments) {
+    if (si->segmentType() == llvm::ELF::PT_LOAD) {
+      firstLoadSegment = si;
+      break;
+    }
+  }
+  firstLoadSegment->prepend(_programHeader);
+  firstLoadSegment->prepend(_header);
+
   bool newSegmentHeaderAdded = true;
   while (true) {
     for (auto si : _segments) {
+      si->finalize();
       newSegmentHeaderAdded = _programHeader->addSegment(si);
     }
-    if (_targetInfo.isDynamic() && _programHeader->addPHDR())
-      newSegmentHeaderAdded = true;
     if (!newSegmentHeaderAdded)
       break;
     uint64_t fileoffset = 0;
     uint64_t address = virtualAddress;
     // Fix the offsets after adding the program header
     for (auto &si : _segments) {
+      // Dont assign offsets for non loadable segments
+      if (si->segmentType() != llvm::ELF::PT_LOAD)
+        continue;
       // Align the segment to a page boundary
-      fileoffset = llvm::RoundUpToAlignment(fileoffset,
-                                            _targetInfo.getPageSize());
+      fileoffset =
+          llvm::RoundUpToAlignment(fileoffset, _targetInfo.getPageSize());
       si->assignOffsets(fileoffset);
       fileoffset = si->fileOffset() + si->fileSize();
     }
     // start assigning virtual addresses
     for (auto si = _segments.begin(); si != _segments.end(); ++si) {
+      // Dont assign addresses for non loadable segments
+      if ((*si)->segmentType() != llvm::ELF::PT_LOAD)
+        continue;
       (*si)->setVAddr(virtualAddress);
       // The first segment has the virtualAddress set to the base address as
       // we have added the file header and the program header dont align the
@@ -689,6 +744,9 @@ DefaultLayout<ELFT>::assignOffsetsForMiscSections() {
   uint64_t fileoffset = 0;
   uint64_t size = 0;
   for (auto si : _segments) {
+    // Dont calculate offsets from non loadable segments
+    if (si->segmentType() != llvm::ELF::PT_LOAD)
+      continue;
     fileoffset = si->fileOffset();
     size = si->fileSize();
   }

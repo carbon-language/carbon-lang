@@ -41,6 +41,7 @@ namespace lld {
 namespace elf {
 template <class> class MergedSections;
 using namespace llvm::ELF;
+template <class ELFT> class Segment;
 
 /// \brief An ELF section.
 template <class ELFT> class Section : public Chunk<ELFT> {
@@ -87,7 +88,7 @@ public:
   }
 
   /// \brief Records the segmentType, that this section belongs to
-  void setSegment(const Layout::SegmentType segmentType) {
+  void setSegmentType(const Layout::SegmentType segmentType) {
     this->_segmentType = segmentType;
   }
 
@@ -329,6 +330,8 @@ template <class ELFT> StringRef Section<ELFT>::segmentKindToStr() const {
     return "NOTE";
   case llvm::ELF::PT_NULL:
     return "NULL";
+  case llvm::ELF::PT_TLS:
+    return "TLS";
   default:
     return "UNKNOWN";
   }
@@ -807,7 +810,7 @@ public:
       Elf_Rela *r = reinterpret_cast<Elf_Rela *>(dest);
       uint32_t index =
           _symbolTable ? _symbolTable->getSymbolTableIndex(rel.second->target())
-                       : STN_UNDEF;
+                       : (uint32_t) STN_UNDEF;
       r->setSymbolAndType(index, rel.second->kind());
       r->r_offset =
           writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();

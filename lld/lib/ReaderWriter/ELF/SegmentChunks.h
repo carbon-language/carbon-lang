@@ -122,7 +122,11 @@ public:
   };
 
   /// append a section to a segment
-  void append(Section<ELFT> *section);
+  virtual void append(Section<ELFT> *chunk);
+
+  /// append a chunk to a segment, this function
+  /// is used by the ProgramHeader segment
+  virtual void append(Chunk<ELFT> *chunk) {}
 
   /// Sort segments depending on the property
   /// If we have a Program Header segment, it should appear first
@@ -159,11 +163,28 @@ public:
     _sections.insert(_sections.begin(), c);
   }
 
-  // Finalize the segment before assigning File Offsets / Virtual addresses
+  /// Finalize the segment before assigning File Offsets / Virtual addresses
   inline void doPreFlight() {}
 
-  // Finalize the segment, before we want to write to the output file
-  inline void finalize() {}
+  /// Finalize the segment, before we want to write the segment header
+  /// information
+  inline void finalize() {
+    // We want to finalize the segment values for now only for non loadable
+    // segments, since those values are not set in the Layout
+    if (_segmentType == llvm::ELF::PT_LOAD)
+      return;
+    // The size is the difference of the 
+    // last section to the first section, especially for TLS because 
+    // the TLS segment contains both .tdata/.tbss
+    this->setFileOffset(_sections.front()->fileOffset());
+    this->setVAddr(_sections.front()->virtualAddr());
+    size_t startFileOffset = _sections.front()->fileOffset();
+    size_t startAddr = _sections.front()->virtualAddr();
+    for (auto ai : _sections) {
+      this->_fsize = ai->fileOffset() + ai->fileSize() - startFileOffset;
+      this->_msize = ai->virtualAddr() + ai->memSize() - startAddr;
+    }
+  }
 
   // For LLVM RTTI
   static inline bool classof(const Chunk<ELFT> *c) {
@@ -232,6 +253,37 @@ protected:
   llvm::BumpPtrAllocator _segmentAllocate;
 };
 
+/// \brief A Program Header segment contains a set of chunks instead of sections
+/// The segment doesnot contain any slice
+template <class ELFT> class ProgramHeaderSegment : public Segment<ELFT> {
+public:
+  ProgramHeaderSegment(const ELFTargetInfo &ti)
+      : Segment<ELFT>(ti, "PHDR", llvm::ELF::PT_PHDR) {
+    this->_align2 = 8;
+    this->_flags = (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR);
+  }
+
+  /// append a section to a segment
+  void append(Chunk<ELFT> *chunk) { _sections.push_back(chunk); }
+
+  /// Finalize the segment, before we want to write the segment header
+  /// information
+  inline void finalize() {
+    // If the segment is of type Program Header, then the values fileOffset 
+    // and the fileSize need to be picked up from the last section, the first
+    // section points to the ELF header and the second chunk points to the 
+    // actual program headers
+    this->setFileOffset(_sections.back()->fileOffset());
+    this->setVAddr(_sections.back()->virtualAddr());
+    this->_fsize = _sections.back()->fileSize();
+    this->_msize = _sections.back()->memSize();
+  }
+
+protected:
+  /// \brief Section or some other chunk type.
+  std::vector<Chunk<ELFT> *> _sections;
+};
+
 template <class ELFT>
 Segment<ELFT>::Segment(const ELFTargetInfo &ti, StringRef name,
                        const Layout::SegmentType type)
@@ -270,7 +322,48 @@ template <class ELFT> void Segment<ELFT>::append(Section<ELFT> *section) {
 
 template <class ELFT>
 bool Segment<ELFT>::compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
-  return sega->atomflags() < segb->atomflags();
+  int64_t type1 = sega->segmentType();
+  int64_t type2 = segb->segmentType();
+
+  // The single PT_PHDR segment is required to precede any loadable
+  // segment.  We simply make it always first.
+  if (type1 == llvm::ELF::PT_PHDR)
+    return true;
+  if (type2 == llvm::ELF::PT_PHDR)
+    return false;
+
+  // The single PT_INTERP segment is required to precede any loadable
+  // segment.  We simply make it always second.
+  if (type1 == llvm::ELF::PT_INTERP)
+    return true;
+  if (type2 == llvm::ELF::PT_INTERP)
+    return false;
+
+  // We then put PT_LOAD segments before any other segments.
+  if (type1 == llvm::ELF::PT_LOAD && type2 != llvm::ELF::PT_LOAD)
+    return true;
+  if (type2 == llvm::ELF::PT_LOAD && type1 != llvm::ELF::PT_LOAD)
+    return false;
+
+  // We put the PT_TLS segment last except for the PT_GNU_RELRO
+  // segment, because that is where the dynamic linker expects to find
+  if (type1 == llvm::ELF::PT_TLS && type2 != llvm::ELF::PT_TLS &&
+      type2 != llvm::ELF::PT_GNU_RELRO)
+    return false;
+  if (type2 == llvm::ELF::PT_TLS && type1 != llvm::ELF::PT_TLS &&
+      type1 != llvm::ELF::PT_GNU_RELRO)
+    return true;
+
+  // We put the PT_GNU_RELRO segment last, because that is where the
+  // dynamic linker expects to find it
+  if (type1 == llvm::ELF::PT_GNU_RELRO && type2 != llvm::ELF::PT_GNU_RELRO)
+    return false;
+  if (type2 == llvm::ELF::PT_GNU_RELRO && type1 != llvm::ELF::PT_GNU_RELRO)
+    return true;
+
+  if (type1 == type2)
+    return sega->atomflags() < segb->atomflags();
+  return false;
 }
 
 template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
@@ -367,10 +460,7 @@ template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
 
 /// \brief Assign virtual addresses to the slices
 template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
-  // Check if the segment is of type TLS 
-  // The sections that belong to the TLS segment have their 
-  // virtual addresses that are relative To TP
-  bool isTLSSegment = (segmentType() == llvm::ELF::PT_TLS);
+  bool isTLSSegment = false;
   uint64_t tlsStartAddr = 0;
 
   for (auto slice : slices()) {
@@ -383,8 +473,16 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
     for (auto section : slice->sections()) {
       // Align the section address
       addr = llvm::RoundUpToAlignment(addr, section->align2());
-      tlsStartAddr = (isTLSSegment) ?
-                    llvm::RoundUpToAlignment(tlsStartAddr, section->align2()):0;
+      // Check if the segment is of type TLS 
+      // The sections that belong to the TLS segment have their 
+      // virtual addresses that are relative To TP
+      Section<ELFT> *currentSection = llvm::dyn_cast<Section<ELFT> >(section);
+      if (currentSection)
+        isTLSSegment = (currentSection->getSegmentType() == llvm::ELF::PT_TLS);
+
+      tlsStartAddr = (isTLSSegment)
+                     ? llvm::RoundUpToAlignment(tlsStartAddr, section->align2())
+                     : 0;
       if (!virtualAddressSet) {
         slice->setVAddr(addr);
         virtualAddressSet = true;

@@ -1,0 +1,19 @@
+RUN: lld -core -target x86_64-linux %p/Inputs/tls.x86-64 \
+RUN:   %p/Inputs/shared.so-x86-64 -output=%t -entry=main \
+RUN:   -output-type=dynamic
+RUN: llvm-objdump -p %t | FileCheck %s
+
+CHECK: PHDR
+CHECK: flags r-x
+CHECK: INTERP
+CHECK: flags r--
+CHECK: LOAD
+CHECK: flags r-x
+CHECK: LOAD
+CHECK: flags r--
+CHECK: LOAD
+CHECK: flags rw-
+CHECK: DYNAMIC
+CHECK: flags r--
+CHECK: TLS
+CHECK: flags rw-
