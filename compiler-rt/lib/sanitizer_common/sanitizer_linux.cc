@@ -22,13 +22,13 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <sched.h>
 #include <sys/mman.h>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
-#include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
@@ -36,7 +36,10 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 #include <unwind.h>
-#include <errno.h>
+
+#if !defined(__ANDROID__) && !defined(ANDROID)
+#include <sys/signal.h>
+#endif
 
 // <linux/futex.h> is broken on some linux distributions.
 const int FUTEX_WAIT = 0;
