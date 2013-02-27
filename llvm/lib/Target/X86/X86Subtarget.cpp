@@ -332,9 +332,9 @@ void X86Subtarget::resetSubtargetFeatures(const MachineFunction *MF) {
                                            "target-cpu");
   Attribute FSAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
                                           "target-features");
-  std::string CPU =
-    !CPUAttr.hasAttribute(Attribute::None) ?CPUAttr.getValueAsString() : "";
-  std::string FS =
+  StringRef CPU =
+    !CPUAttr.hasAttribute(Attribute::None) ? CPUAttr.getValueAsString() : "";
+  StringRef FS =
     !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
   if (!FS.empty()) {
     initializeEnvironment();
@@ -343,7 +343,7 @@ void X86Subtarget::resetSubtargetFeatures(const MachineFunction *MF) {
 }
 
 void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
-  std::string CPUName = CPU;
+  StringRef CPUName = CPU;
   if (!FS.empty() || !CPU.empty()) {
     if (CPUName.empty()) {
 #if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)\
