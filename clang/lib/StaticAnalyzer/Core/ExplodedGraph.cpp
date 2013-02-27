@@ -110,7 +110,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // analysis history and are not consulted by any client code.
   ProgramPoint progPoint = node->getLocation();
   if (progPoint.getAs<PreStmtPurgeDeadSymbols>())
-    return true;
+    return !progPoint.getTag();
 
   // Condition 3.
   if (!progPoint.getAs<PostStmt>() || progPoint.getAs<PostStore>())
