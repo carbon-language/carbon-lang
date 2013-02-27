@@ -34,7 +34,7 @@ define autogenerate-file
 OUTFILE := $(addprefix generated_tests/$(dir $1), $(patsubst gen_%.py,%,$(notdir $1)))
 GENERATED_FILES := $$(GENERATED_FILES) $$(OUTFILE)
 $$(OUTFILE): $1
-	@echo "Autogenerating $$<"
+	@echo "Autogenerating $$@"
 	@$(MKDIR) $(addprefix generated_tests/, $(dir $1))
 	@$(PYTHON) $$< > $$@
 endef
@@ -42,9 +42,13 @@ $(foreach script, $(GENERATOR_SCRIPTS), $(eval $(call autogenerate-file,$(script
 
 FORCE:
 
+GENERATED_TESTS_ROOT := $(PROJ_OBJ_DIR)/generated_tests
+
+# Recipe to create lit.site.cfg for the auto-generated tests suite. Sources
+# for these tests are auto-generated into the build directory.
 generated_tests/lit.site.cfg: FORCE
-	@$(MKDIR) $(PROJ_OBJ_DIR)/generated_tests
-	@echo "Making cpp11-migrate Auto-Generated Tests' 'lit.site.cfg' file..."
+	@$(MKDIR) $(GENERATED_TESTS_ROOT)
+	@echo "Making lit.site.cfg for cpp11-migrate Auto-Generated Tests..."
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
@@ -52,13 +56,31 @@ generated_tests/lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@CLANG_TOOLS_SOURCE_DIR@=$(PROJ_SRC_DIR)/../..=g >> lit.tmp
 	@$(ECHOPATH) s=@CLANG_TOOLS_BINARY_DIR@=$(PROJ_OBJ_DIR)/../..=g >> lit.tmp
 	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
-	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(PROJ_OBJ_DIR)/generated_tests=g >> lit.tmp
+	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(GENERATED_TESTS_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@TEST_EXEC_ROOT@=$(PROJ_OBJ_DIR)=g >> lit.tmp
 	@$(ECHOPATH) s=@TESTSUITE_NAME@=cpp11-migrate Auto-Generated Tests=g >> lit.tmp
-	@sed -f lit.tmp $(PROJ_SRC_DIR)/../lit.site.cfg.in > $@
+	@$(ECHOPATH) s=@GENERATED_TESTS_ROOT@=$(GENERATED_TESTS_ROOT)=g >> lit.tmp
+	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 
-all:: $(GENERATED_FILES) generated_tests/lit.site.cfg
+# Recipe to create the lit.site.cfg for the regular cpp11-migrate test suite.
+lit.site.cfg: FORCE
+	@echo "Making lit.site.cfg for cpp11-migrate Tests..."
+	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
+	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
+	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
+	@$(ECHOPATH) s=@LLVM_LIBS_DIR@=$(LibDir)=g >> lit.tmp
+	@$(ECHOPATH) s=@CLANG_TOOLS_SOURCE_DIR@=$(PROJ_SRC_DIR)/../..=g >> lit.tmp
+	@$(ECHOPATH) s=@CLANG_TOOLS_BINARY_DIR@=$(PROJ_OBJ_DIR)/../..=g >> lit.tmp
+	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
+	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(PROJ_SRC_DIR)=g >> lit.tmp
+	@$(ECHOPATH) s=@TEST_EXEC_ROOT@=$(PROJ_OBJ_DIR)=g >> lit.tmp
+	@$(ECHOPATH) s=@TESTSUITE_NAME@=cpp11-migrate Tests=g >> lit.tmp
+	@$(ECHOPATH) s=@GENERATED_TESTS_ROOT@=$(GENERATED_TESTS_ROOT)=g >> lit.tmp
+	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
+	@-rm -f lit.tmp
+
+all:: $(GENERATED_FILES) lit.site.cfg generated_tests/lit.site.cfg
 
 clean::
 	@-rm -r generated_tests

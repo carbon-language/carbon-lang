@@ -44,17 +44,28 @@ foreach(script ${generator_scripts})
   list(APPEND depends ${output})
 endforeach()
 
-# This custom target will be used by parent CMakeLists.txt to ensure all
-# auto-generated files are created before lit is run.
+# Target to perform all generation.
 add_custom_target(cpp11-migrate-autogen
   DEPENDS ${depends}
   )
 
-set(TEST_SOURCE_ROOT ${CMAKE_CURRENT_BINARY_DIR}/generated_tests)
+# Create lit.site.cfg for regular regression tests. Provide access to location
+# of generated tests so regular tests can use headers.
+set(TEST_SOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(TEST_EXEC_ROOT ${CMAKE_CURRENT_BINARY_DIR})
+set(TESTSUITE_NAME "cpp11-migrate Tests")
+set(GENERATED_TESTS_ROOT ${CMAKE_CURRENT_BINARY_DIR}/generated_tests)
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+  )
+
+# Create lit.site.cfg for auto-generated tests. Sources for these tests live
+# in the build directory.
+set(TEST_SOURCE_ROOT ${GENERATED_TESTS_ROOT})
 set(TEST_EXEC_ROOT ${CMAKE_CURRENT_BINARY_DIR})
 set(TESTSUITE_NAME "cpp11-migrate Auto-Generated Tests")
-get_filename_component(INPUT_LIT_CFG ${CMAKE_CURRENT_SOURCE_DIR}/../lit.site.cfg.in REALPATH)
 configure_lit_site_cfg(
-  ${INPUT_LIT_CFG}
-  ${CMAKE_CURRENT_BINARY_DIR}/generated_tests/lit.site.cfg
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${GENERATED_TESTS_ROOT}/lit.site.cfg
   )

@@ -27,7 +27,9 @@ TESTDIRS := $(TESTDIRS:$(PROJ_SRC_DIR)%=$(PROJ_OBJ_DIR)%)
 # Allow EXTRA_TESTDIRS to provide additional test directories.
 TESTDIRS += $(EXTRA_TESTDIRS)
 
-# List of roots for auto-generated tests.
+# We'd like cpp11-migrate's auto-generated tests to be included in the LIT run
+# below. Since the auto-generated test sources live in PROJ_OBJ_DIR they won't
+# get discovered without specifying them explicitly.
 TESTDIRS += $(PROJ_OBJ_DIR)/cpp11-migrate/generated_tests
 
 ifndef TESTARGS
@@ -37,9 +39,6 @@ else
 TESTARGS = -s -v
 endif
 endif
-
-# Make sure any extra test suites can find the main site config.
-LIT_ARGS := --param clang_site_config=$(PROJ_OBJ_DIR)/lit.site.cfg
 
 ifdef VG
   LIT_ARGS += "--vg"

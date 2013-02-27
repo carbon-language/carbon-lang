@@ -26,17 +26,18 @@ set(CLANG_TOOLS_TEST_DEPS
   # Base line deps.
   clang clang-headers FileCheck count not
 
-  # cpp11-migrate auto-generated tests. See cpp11-migrate/CMakeLists.txt.
-  cpp11-migrate-autogen
+  remove-cstr-calls clang-format
 
-  # Individual tools we test.
-  remove-cstr-calls cpp11-migrate clang-format
+  cpp11-migrate cpp11-migrate-autogen
   )
 
-add_lit_testsuite(check-clang-tools "Running the Clang extra tools' regression tests"
+add_lit_testsuite(check-clang-tools "Running regression tests for Clang extra tools"
   ${CMAKE_CURRENT_BINARY_DIR}
+  # cpp11-migrate's auto-generated tests need to be mentioned explicitly since
+  # the sources live in ${CMAKE_CURRENT_BINARY_DIR} and won't get discovered
+  # otherwise.
   ${CMAKE_CURRENT_BINARY_DIR}/cpp11-migrate/generated_tests
   DEPENDS ${CLANG_TOOLS_TEST_DEPS}
   ARGS ${CLANG_TOOLS_TEST_EXTRA_ARGS}
   )
-set_target_properties(check-clang-tools PROPERTIES FOLDER "Clang extra tools' tests")
+set_target_properties(check-clang-tools PROPERTIES FOLDER "Clang extra tools tests")
