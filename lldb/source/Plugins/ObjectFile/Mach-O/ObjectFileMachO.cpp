@@ -711,6 +711,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     
             case eSymbolTypeCode:
             case eSymbolTypeTrampoline:
+            case eSymbolTypeResolver:
                 if (m_header.cputype == llvm::MachO::CPUTypeARM)
                 {
                     // For ARM we have a bit in the n_desc field of the symbol

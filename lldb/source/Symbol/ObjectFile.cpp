@@ -341,6 +341,7 @@ ObjectFile::GetAddressClass (addr_t file_addr)
             case eSymbolTypeAbsolute:       return eAddressClassUnknown;
             case eSymbolTypeCode:           return eAddressClassCode;
             case eSymbolTypeTrampoline:     return eAddressClassCode;
+            case eSymbolTypeResolver:       return eAddressClassCode;
             case eSymbolTypeData:           return eAddressClassData;
             case eSymbolTypeRuntime:        return eAddressClassRuntime;
             case eSymbolTypeException:      return eAddressClassRuntime;
