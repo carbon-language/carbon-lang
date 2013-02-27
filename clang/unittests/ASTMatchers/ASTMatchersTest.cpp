@@ -3436,8 +3436,10 @@ TEST(TypeMatching, MatchesTemplateSpecializationType) {
 
 TEST(TypeMatching, MatchesRecordType) {
   EXPECT_TRUE(matches("class C{}; C c;", recordType()));
-  EXPECT_TRUE(matches("struct S{}; S s;", recordType()));
-  EXPECT_TRUE(notMatches("int i;", recordType()));
+  EXPECT_TRUE(matches("struct S{}; S s;",
+                      recordType(hasDeclaration(recordDecl(hasName("S"))))));
+  EXPECT_TRUE(notMatches("int i;",
+                         recordType(hasDeclaration(recordDecl(hasName("S"))))));
 }
 
 TEST(TypeMatching, MatchesElaboratedType) {
