@@ -172,6 +172,7 @@ public:
   DataLayout(const DataLayout &TD) :
     ImmutablePass(ID),
     LittleEndian(TD.isLittleEndian()),
+    StackNaturalAlign(TD.StackNaturalAlign),
     LegalIntWidths(TD.LegalIntWidths),
     Alignments(TD.Alignments),
     Pointers(TD.Pointers),
