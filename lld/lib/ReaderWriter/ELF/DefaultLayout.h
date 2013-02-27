@@ -144,9 +144,7 @@ public:
 
   typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
-  DefaultLayout(const ELFTargetInfo &ti)
-      : _relocationTable(nullptr), _targetInfo(ti) {
-  }
+  DefaultLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
 
   /// \brief Return the section order for a input section
   virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
@@ -243,14 +241,29 @@ public:
     return _programHeader;
   }
 
-  RelocationTable<ELFT> *getRelocationTable() {
-    // Only create the relocation table if it is needed.
-    if (!_relocationTable) {
-      _relocationTable.reset(new (_allocator)
-          RelocationTable<ELFT>(_targetInfo, ".rela.plt", ORDER_REL));
-      addSection(_relocationTable.get());
+  bool hasDynamicRelocationTable() const { return !!_dynamicRelocationTable; }
+
+  bool hasPLTRelocationTable() const { return !!_pltRelocationTable; }
+
+  /// \brief Get or create the dynamic relocation table. All relocations in this
+  /// table are processed at startup.
+  RelocationTable<ELFT> *getDynamicRelocationTable() {
+    if (!_dynamicRelocationTable) {
+      _dynamicRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
+          _targetInfo, ".rela.dyn", ORDER_REL));
+      addSection(_dynamicRelocationTable.get());
     }
-    return _relocationTable.get();
+    return _dynamicRelocationTable.get();
+  }
+
+  /// \brief Get or create the PLT relocation table. Referenced by DT_JMPREL.
+  RelocationTable<ELFT> *getPLTRelocationTable() {
+    if (!_pltRelocationTable) {
+      _pltRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
+          _targetInfo, ".rela.plt", ORDER_REL));
+      addSection(_pltRelocationTable.get());
+    }
+    return _pltRelocationTable.get();
   }
 
   uint64_t getTLSSize() const {
@@ -277,7 +290,8 @@ private:
   std::vector<MergedSections<ELFT> *> _mergedSections;
   Header<ELFT> *_header;
   ProgramHeader<ELFT> *_programHeader;
-  LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _relocationTable;
+  LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _dynamicRelocationTable;
+  LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
   std::vector<AtomLayout *> _absoluteAtoms;
   const ELFTargetInfo &_targetInfo;
 };
@@ -472,8 +486,10 @@ ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
         getSection(sectionName, contentType, permissions);
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom)
-      if (_targetInfo.isRuntimeRelocation(*definedAtom, *reloc))
-        getRelocationTable()->addRelocation(*definedAtom, *reloc);
+      if (_targetInfo.isDynamicRelocation(*definedAtom, *reloc))
+        getDynamicRelocationTable()->addRelocation(*definedAtom, *reloc);
+      else if (_targetInfo.isPLTRelocation(*definedAtom, *reloc))
+        getPLTRelocationTable()->addRelocation(*definedAtom, *reloc);
     return section->appendAtom(atom);
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
     // Absolute atoms are not part of any section, they are global for the whole

@@ -44,8 +44,25 @@ public:
   virtual StringRef getEntry() const;
   virtual uint64_t getBaseAddress() const { return _options._baseAddress; }
 
-  virtual bool isRuntimeRelocation(const DefinedAtom &,
+  /// \brief Does this relocation belong in the dynamic relocation table?
+  ///
+  /// This table is evaluated at loadtime by the dynamic loader and is
+  /// referenced by the DT_RELA{,ENT,SZ} entries in the dynamic table.
+  /// Relocations that return true will be added to the dynamic relocation
+  /// table.
+  virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &) const {
+    return false;
+  }
+
+  /// \brief Does this relocation belong in the dynamic plt relocation table?
+  ///
+  /// This table holds all of the relocations used for delayed symbol binding.
+  /// It will be evaluated at load time if LD_BIND_NOW is set. It is referenced
+  /// by the DT_{JMPREL,PLTRELSZ} entries in the dynamic table.
+  /// Relocations that return true will be added to the dynamic plt relocation
+  /// table.
+  virtual bool isPLTRelocation(const DefinedAtom &, const Reference &) const {
     return false;
   }
 

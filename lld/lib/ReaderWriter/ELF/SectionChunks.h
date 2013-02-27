@@ -29,6 +29,14 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
+namespace {
+LLVM_ATTRIBUTE_UNUSED std::string kindOrUnknown(llvm::ErrorOr<std::string> k) {
+  if (k)
+    return *k;
+  return "<unknown>";
+}
+}
+
 namespace lld {
 namespace elf {
 template <class> class MergedSections;
@@ -587,6 +595,18 @@ public:
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0);
 
+  /// \brief Get the symbol table index for an Atom. If it's not in the symbol
+  /// table, return STN_UNDEF.
+  uint32_t getSymbolTableIndex(const Atom *a) const {
+    auto se = std::find_if(_symbolTable.begin(), _symbolTable.end(),
+                           [=](const SymbolEntry &se) {
+      return se._atom == a;
+    });
+    if (se == _symbolTable.end())
+      return STN_UNDEF;
+    return std::distance(_symbolTable.begin(), se);
+  }
+
   virtual void finalize();
 
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
@@ -740,7 +760,7 @@ public:
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
   RelocationTable(const ELFTargetInfo &ti, StringRef str, int32_t order)
-      : Section<ELFT>(ti, str) {
+      : Section<ELFT>(ti, str), _symbolTable(nullptr) {
     this->setOrder(order);
     this->_entSize = sizeof(Elf_Rela);
     this->_align2 = llvm::alignOf<Elf_Rela>();
@@ -748,10 +768,36 @@ public:
     this->_flags = SHF_ALLOC;
   }
 
-  void addRelocation(const DefinedAtom &da, const Reference &r) {
+  /// \returns the index of the relocation added.
+  uint32_t addRelocation(const DefinedAtom &da, const Reference &r) {
     _relocs.emplace_back(&da, &r);
     this->_fsize = _relocs.size() * sizeof(Elf_Rela);
     this->_msize = this->_fsize;
+    return _relocs.size() - 1;
+  }
+
+  bool getRelocationIndex(const Reference &r, uint32_t &res) {
+    auto rel = std::find_if(
+        _relocs.begin(), _relocs.end(),
+        [&](const std::pair<const DefinedAtom *, const Reference *> &p) {
+      if (p.second == &r)
+        return true;
+      return false;
+    });
+    if (rel == _relocs.end())
+      return false;
+    res = std::distance(_relocs.begin(), rel);
+    return true;
+  }
+
+  void setSymbolTable(const SymbolTable<ELFT> *symbolTable) {
+    _symbolTable = symbolTable;
+  }
+
+  virtual void finalize() {
+    this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
+    if (this->_parent)
+      this->_parent->setLink(this->_link);
   }
 
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
@@ -759,21 +805,28 @@ public:
     uint8_t *dest = chunkBuffer + this->fileOffset();
     for (const auto &rel : _relocs) {
       Elf_Rela *r = reinterpret_cast<Elf_Rela *>(dest);
-      r->setSymbolAndType(0, rel.second->kind());
+      uint32_t index =
+          _symbolTable ? _symbolTable->getSymbolTableIndex(rel.second->target())
+                       : STN_UNDEF;
+      r->setSymbolAndType(index, rel.second->kind());
       r->r_offset =
           writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();
       r->r_addend =
           writer->addressOfAtom(rel.second->target()) + rel.second->addend();
       dest += sizeof(Elf_Rela);
-      DEBUG_WITH_TYPE("ELFRelocationTable", llvm::dbgs()
-                      << "IRELATIVE relocation at " << rel.first->name() << "@"
-                      << r->r_offset << " to " << rel.second->target()->name()
-                      << "@" << r->r_addend << "\n");
+      DEBUG_WITH_TYPE("ELFRelocationTable",
+                      llvm::dbgs()
+                      << kindOrUnknown(this->_targetInfo.stringFromRelocKind(
+                             rel.second->kind())) << " relocation at "
+                      << rel.first->name() << "@" << r->r_offset << " to "
+                      << rel.second->target()->name() << "@" << r->r_addend
+                      << "\n");
     }
   }
 
 private:
   std::vector<std::pair<const DefinedAtom *, const Reference *>> _relocs;
+  const SymbolTable<ELFT> *_symbolTable;
 };
 
 template <class ELFT> class DynamicTable : public Section<ELFT> {

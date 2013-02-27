@@ -69,6 +69,26 @@ private:
     _dt_strsz = _dynamicTable->addEntry(dyn);
     dyn.d_tag = DT_SYMENT;
     _dt_syment = _dynamicTable->addEntry(dyn);
+    if (_layout->hasDynamicRelocationTable()) {
+      dyn.d_tag = DT_RELA;
+      _dt_rela = _dynamicTable->addEntry(dyn);
+      dyn.d_tag = DT_RELASZ;
+      _dt_relasz = _dynamicTable->addEntry(dyn);
+      dyn.d_tag = DT_RELAENT;
+      _dt_relaent = _dynamicTable->addEntry(dyn);
+    }
+    if (_layout->hasPLTRelocationTable()) {
+      dyn.d_tag = DT_PLTRELSZ;
+      _dt_pltrelsz = _dynamicTable->addEntry(dyn);
+      dyn.d_tag = DT_PLTGOT;
+      _dt_pltgot = _dynamicTable->addEntry(dyn);
+      dyn.d_tag = DT_PLTREL;
+      dyn.d_un.d_val = DT_RELA;
+      _dt_pltrel = _dynamicTable->addEntry(dyn);
+      dyn.d_un.d_val = 0;
+      dyn.d_tag = DT_JMPREL;
+      _dt_jmprel = _dynamicTable->addEntry(dyn);
+    }
   }
 
   void updateDynamicTable() {
@@ -78,6 +98,19 @@ private:
     tbl[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
     tbl[_dt_strsz].d_un.d_val = _dynamicStringTable->memSize();
     tbl[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
+    if (_layout->hasDynamicRelocationTable()) {
+      auto relaTbl = _layout->getDynamicRelocationTable();
+      tbl[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
+      tbl[_dt_relasz].d_un.d_val = relaTbl->memSize();
+      tbl[_dt_relaent].d_un.d_val = relaTbl->getEntSize();
+    }
+    if (_layout->hasPLTRelocationTable()) {
+      auto relaTbl = _layout->getPLTRelocationTable();
+      tbl[_dt_jmprel].d_un.d_val = relaTbl->virtualAddr();
+      tbl[_dt_pltrelsz].d_un.d_val = relaTbl->memSize();
+      auto gotplt = _layout->findOutputSection(".got.plt");
+      tbl[_dt_pltgot].d_un.d_val = gotplt->virtualAddr();
+    }
   }
 
   llvm::BumpPtrAllocator _alloc;
@@ -414,6 +447,12 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
     _layout->addSection(_interpSection.get());
     _layout->addSection(_hashTable.get());
     _dynamicSymbolTable->setStringSection(_dynamicStringTable.get());
+    if (_layout->hasDynamicRelocationTable())
+      _layout->getDynamicRelocationTable()->setSymbolTable(
+          _dynamicSymbolTable.get());
+    if (_layout->hasPLTRelocationTable())
+      _layout->getPLTRelocationTable()->setSymbolTable(
+          _dynamicSymbolTable.get());
   }
 
   // give a chance for the target to add sections
