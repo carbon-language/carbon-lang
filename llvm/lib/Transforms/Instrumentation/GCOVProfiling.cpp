@@ -735,7 +735,9 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Arg->setName("counters");
   Value *GEP = Builder.CreateGEP(Arg, ZExtPred);
   Value *Counter = Builder.CreateLoad(GEP, "counter");
-  Cond = Builder.CreateICmpEQ(Counter, Builder.getInt64(0));
+  Cond = Builder.CreateICmpEQ(Counter,
+                              Constant::getNullValue(
+                                  Builder.getInt64Ty()->getPointerTo()));
   Builder.CreateCondBr(Cond, Exit, CounterEnd);
 
   // ++*counter;
