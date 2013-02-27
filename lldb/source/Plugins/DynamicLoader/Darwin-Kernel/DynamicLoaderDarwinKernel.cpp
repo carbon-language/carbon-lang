@@ -668,9 +668,9 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
         }
     }
 
-    // If the kernel specified what UUID we should find at this load address,
-    // require that the memory module have a matching UUID or something has gone
-    // wrong and we should discard it.
+    // If this is a kext, and the kernel specified what UUID we should find at this 
+    // load address, require that the memory module have a matching UUID or something 
+    // has gone wrong and we should discard it.
     if (m_uuid.IsValid())
     {
         if (m_uuid != memory_module_sp->GetUUID())
@@ -689,9 +689,29 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
     m_kernel_image = is_kernel;
     if (is_kernel)
     {
-       if (memory_module_sp->GetArchitecture().IsValid())
+        if (memory_module_sp->GetArchitecture().IsValid())
         {
             process->GetTarget().SetArchitecture(memory_module_sp->GetArchitecture());
+        }
+        if (m_uuid.IsValid())
+        {
+            Module* exe_module = process->GetTarget().GetExecutableModulePointer();
+            if (exe_module && exe_module->GetUUID().IsValid())
+            {
+                if (m_uuid != exe_module->GetUUID())
+                {
+                    Stream *s = &process->GetTarget().GetDebugger().GetOutputStream();
+                    if (s)
+                    {
+                        char memory_module_uuidbuf[64];
+                        char exe_module_uuidbuf[64];
+                        s->Printf ("warning: Host-side kernel file has Mach-O UUID of %s but remote kernel has a UUID of %s -- a mismatched kernel file will result in a poor debugger experience.\n", 
+                                   exe_module->GetUUID().GetAsCString(exe_module_uuidbuf, sizeof (exe_module_uuidbuf)),
+                                   m_uuid.GetAsCString(memory_module_uuidbuf, sizeof (memory_module_uuidbuf)));
+                        s->Flush ();
+                    }
+                }
+            }
         }
     }
 
