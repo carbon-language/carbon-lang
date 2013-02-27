@@ -143,11 +143,15 @@ Lforward:
 
         adr r1, #-0x0
         adr r1, #-0x12000000
+        adr r1, #-0x80000001
         adr r1, #0x12000000
+        adr r1, #0x80000001
 
 @ CHECK: adr	r1, #-0                 @ encoding: [0x00,0x10,0x4f,0xe2]
 @ CHECK: adr	r1, #-301989888         @ encoding: [0x12,0x14,0x4f,0xe2]
+@ CHECK: adr	r1, #2147483647         @ encoding: [0x06,0x11,0x4f,0xe2]
 @ CHECK: adr	r1, #301989888          @ encoding: [0x12,0x14,0x8f,0xe2]
+@ CHECK: adr	r1, #-2147483647        @ encoding: [0x06,0x11,0x8f,0xe2]
 
 
 @------------------------------------------------------------------------------
