@@ -161,15 +161,15 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 }
 
 void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
+  uint32_t len = 3;
 #ifdef DEBUG_GCDAPROFILING
   printf("llvmgcda: function id=%x name=%s\n", ident,
          function_name ? function_name : "NULL");
 #endif
   if (!output_file) return;
 
-  /* function tag */  
+  /* function tag */
   fwrite("\0\0\0\1", 4, 1, output_file);
-  uint32_t len = 3;
   if (function_name)
     len += 1 + length_of_string(function_name);
   write_int32(len);
