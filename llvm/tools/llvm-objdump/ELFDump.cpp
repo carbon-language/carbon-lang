@@ -48,6 +48,9 @@ void printProgramHeaders(
     case ELF::PT_PHDR:
       outs() << "    PHDR ";
       break;
+    case ELF::PT_TLS:
+      outs() << "    TLS ";
+      break;
     default:
       outs() << " UNKNOWN ";
     }
