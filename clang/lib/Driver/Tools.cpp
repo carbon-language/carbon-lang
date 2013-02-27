@@ -870,8 +870,8 @@ static void getMipsCPUAndABI(const ArgList &Args,
   if (!ABIName.empty()) {
     // Deduce CPU name from ABI name.
     CPUName = llvm::StringSwitch<const char *>(ABIName)
-      .Cases("o32", "eabi", DefMips32CPU)
-      .Cases("n32", "n64", DefMips64CPU)
+      .Cases("32", "o32", "eabi", DefMips32CPU)
+      .Cases("n32", "n64", "64", DefMips64CPU)
       .Default("");
   }
   else if (!CPUName.empty()) {
@@ -883,6 +883,14 @@ static void getMipsCPUAndABI(const ArgList &Args,
   }
 
   // FIXME: Warn on inconsistent cpu and abi usage.
+}
+
+// Convert ABI name to the GNU tools acceptable variant.
+static StringRef getGnuCompatibleMipsABIName(StringRef ABI) {
+  return llvm::StringSwitch<llvm::StringRef>(ABI)
+    .Case("o32", "32")
+    .Case("n64", "64")
+    .Default(ABI);
 }
 
 // Select the MIPS float ABI as determined by -msoft-float, -mhard-float,
@@ -5160,14 +5168,8 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-march");
     CmdArgs.push_back(CPUName.data());
 
-    // Convert ABI name to the GNU tools acceptable variant.
-    if (ABIName == "o32")
-      ABIName = "32";
-    else if (ABIName == "n64")
-      ABIName = "64";
-
     CmdArgs.push_back("-mabi");
-    CmdArgs.push_back(ABIName.data());
+    CmdArgs.push_back(getGnuCompatibleMipsABIName(ABIName).data());
 
     if (getToolChain().getArch() == llvm::Triple::mips ||
         getToolChain().getArch() == llvm::Triple::mips64)
@@ -5585,14 +5587,8 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-march");
     CmdArgs.push_back(CPUName.data());
 
-    // Convert ABI name to the GNU tools acceptable variant.
-    if (ABIName == "o32")
-      ABIName = "32";
-    else if (ABIName == "n64")
-      ABIName = "64";
-
     CmdArgs.push_back("-mabi");
-    CmdArgs.push_back(ABIName.data());
+    CmdArgs.push_back(getGnuCompatibleMipsABIName(ABIName).data());
 
     if (getToolChain().getArch() == llvm::Triple::mips ||
         getToolChain().getArch() == llvm::Triple::mips64)

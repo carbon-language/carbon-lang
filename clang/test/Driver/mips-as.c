@@ -16,8 +16,8 @@
 //
 // RUN: %clang -target mipsel-linux-gnu -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=MIPS32-EL-AS %s
-// MIPS32-EL-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EL"
+// RUN:   | FileCheck -check-prefix=MIPS32-DEF-EL-AS %s
+// MIPS32-DEF-EL-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EL"
 //
 // RUN: %clang -target mips64-linux-gnu -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -26,8 +26,8 @@
 //
 // RUN: %clang -target mips64el-linux-gnu -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=MIPS64-EL-AS %s
-// MIPS64-EL-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EL"
+// RUN:   | FileCheck -check-prefix=MIPS64-DEF-EL-AS %s
+// MIPS64-DEF-EL-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EL"
 //
 // RUN: %clang -target mips-linux-gnu -mabi=eabi -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -38,6 +38,16 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-N32 %s
 // MIPS-N32: as{{(.exe)?}}" "-march" "mips64" "-mabi" "n32" "-EB"
+//
+// RUN: %clang -target mipsel-linux-gnu -mabi=32 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS32-EL-AS %s
+// MIPS32-EL-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EL"
+//
+// RUN: %clang -target mips64el-linux-gnu -mabi=64 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS64-EL-AS %s
+// MIPS64-EL-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EL"
 //
 // RUN: %clang -target mips-linux-gnu -march=mips32r2 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \

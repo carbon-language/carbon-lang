@@ -32,8 +32,8 @@
 //
 // RUN: %clang -target mipsel-unknown-freebsd -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=MIPS32-EL-AS %s
-// MIPS32-EL-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EL"
+// RUN:   | FileCheck -check-prefix=MIPS32-DEF-EL-AS %s
+// MIPS32-DEF-EL-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EL"
 //
 // RUN: %clang -target mips64-unknown-freebsd -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -42,8 +42,8 @@
 //
 // RUN: %clang -target mips64el-unknown-freebsd -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=MIPS64-EL-AS %s
-// MIPS64-EL-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EL"
+// RUN:   | FileCheck -check-prefix=MIPS64-DEF-EL-AS %s
+// MIPS64-DEF-EL-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EL"
 //
 // RUN: %clang -target mips-unknown-freebsd -mabi=eabi -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -54,6 +54,16 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-N32 %s
 // MIPS-N32: as{{(.exe)?}}" "-march" "mips64" "-mabi" "n32" "-EB"
+//
+// RUN: %clang -target mipsel-unknown-freebsd -mabi=32 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS32-EL-AS %s
+// MIPS32-EL-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EL"
+//
+// RUN: %clang -target mips64el-unknown-freebsd -mabi=64 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS64-EL-AS %s
+// MIPS64-EL-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EL"
 //
 // RUN: %clang -target mips-linux-freebsd -march=mips32r2 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
