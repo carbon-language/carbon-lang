@@ -1568,6 +1568,35 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
                    /* Default */false);
 }
 
+static void addSanitizerRTLinkFlagsLinux(
+    const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs,
+    const StringRef Sanitizer, bool BeforeLibStdCXX) {
+  // Sanitizer runtime is located in the Linux library directory and
+  // has name "libclang_rt.<Sanitizer>-<ArchName>.a".
+  SmallString<128> LibSanitizer(TC.getDriver().ResourceDir);
+  llvm::sys::path::append(
+      LibSanitizer, "lib", "linux",
+      (Twine("libclang_rt.") + Sanitizer + "-" + TC.getArchName() + ".a"));
+  // Sanitizer runtime may need to come before -lstdc++ (or -lc++, libstdc++.a,
+  // etc.) so that the linker picks custom versions of the global 'operator
+  // new' and 'operator delete' symbols. We take the extreme (but simple)
+  // strategy of inserting it at the front of the link command. It also
+  // needs to be forced to end up in the executable, so wrap it in
+  // whole-archive.
+  if (BeforeLibStdCXX) {
+    SmallVector<const char *, 3> PrefixArgs;
+    PrefixArgs.push_back("-whole-archive");
+    PrefixArgs.push_back(Args.MakeArgString(LibSanitizer));
+    PrefixArgs.push_back("-no-whole-archive");
+    CmdArgs.insert(CmdArgs.begin(), PrefixArgs.begin(), PrefixArgs.end());
+  } else {
+    CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
+  }
+  CmdArgs.push_back("-lpthread");
+  CmdArgs.push_back("-ldl");
+  CmdArgs.push_back("-export-dynamic");
+}
+
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
@@ -1592,26 +1621,7 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
         TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
             "-fsanitize-address-zero-base-shadow" << "-pie";
       }
-      // LibAsan is "libclang_rt.asan-<ArchName>.a" in the Linux library
-      // resource directory.
-      SmallString<128> LibAsan(TC.getDriver().ResourceDir);
-      llvm::sys::path::append(LibAsan, "lib", "linux",
-                              (Twine("libclang_rt.asan-") +
-                               TC.getArchName() + ".a"));
-      // The ASan runtime needs to come before -lstdc++ (or -lc++, libstdc++.a,
-      // etc.) so that the linker picks ASan's versions of the global 'operator
-      // new' and 'operator delete' symbols. We take the extreme (but simple)
-      // strategy of inserting it at the front of the link command. It also
-      // needs to be forced to end up in the executable, so wrap it in
-      // whole-archive.
-      SmallVector<const char*, 3> PrefixArgs;
-      PrefixArgs.push_back("-whole-archive");
-      PrefixArgs.push_back(Args.MakeArgString(LibAsan));
-      PrefixArgs.push_back("-no-whole-archive");
-      CmdArgs.insert(CmdArgs.begin(), PrefixArgs.begin(), PrefixArgs.end());
-      CmdArgs.push_back("-lpthread");
-      CmdArgs.push_back("-ldl");
-      CmdArgs.push_back("-export-dynamic");
+      addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "asan", true);
     }
   }
 }
@@ -1624,16 +1634,7 @@ static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
     if (!Args.hasArg(options::OPT_pie))
       TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
         "-fsanitize=thread" << "-pie";
-    // LibTsan is "libclang_rt.tsan-<ArchName>.a" in the Linux library
-    // resource directory.
-    SmallString<128> LibTsan(TC.getDriver().ResourceDir);
-    llvm::sys::path::append(LibTsan, "lib", "linux",
-                            (Twine("libclang_rt.tsan-") +
-                             TC.getArchName() + ".a"));
-    CmdArgs.push_back(Args.MakeArgString(LibTsan));
-    CmdArgs.push_back("-lpthread");
-    CmdArgs.push_back("-ldl");
-    CmdArgs.push_back("-export-dynamic");
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "tsan", true);
   }
 }
 
@@ -1645,16 +1646,7 @@ static void addMsanRTLinux(const ToolChain &TC, const ArgList &Args,
     if (!Args.hasArg(options::OPT_pie))
       TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
         "-fsanitize=memory" << "-pie";
-    // LibMsan is "libclang_rt.msan-<ArchName>.a" in the Linux library
-    // resource directory.
-    SmallString<128> LibMsan(TC.getDriver().ResourceDir);
-    llvm::sys::path::append(LibMsan, "lib", "linux",
-                            (Twine("libclang_rt.msan-") +
-                             TC.getArchName() + ".a"));
-    CmdArgs.push_back(Args.MakeArgString(LibMsan));
-    CmdArgs.push_back("-lpthread");
-    CmdArgs.push_back("-ldl");
-    CmdArgs.push_back("-export-dynamic");
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "msan", true);
   }
 }
 
@@ -1662,15 +1654,7 @@ static void addMsanRTLinux(const ToolChain &TC, const ArgList &Args,
 /// (Linux).
 static void addUbsanRTLinux(const ToolChain &TC, const ArgList &Args,
                             ArgStringList &CmdArgs) {
-  // LibUbsan is "libclang_rt.ubsan-<ArchName>.a" in the Linux library
-  // resource directory.
-  SmallString<128> LibUbsan(TC.getDriver().ResourceDir);
-  llvm::sys::path::append(LibUbsan, "lib", "linux",
-                          (Twine("libclang_rt.ubsan-") +
-                           TC.getArchName() + ".a"));
-  CmdArgs.push_back(Args.MakeArgString(LibUbsan));
-  CmdArgs.push_back("-lpthread");
-  CmdArgs.push_back("-export-dynamic");
+  addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "ubsan", false);
 }
 
 static bool shouldUseFramePointer(const ArgList &Args,
