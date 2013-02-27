@@ -73,6 +73,15 @@ void testBranchReversed(void *p) {
   *casted = 1; // expected-warning {{Dereference of null pointer}}
 }
 
+void testMultipleStore(void *p) {
+  int *casted = 0;
+  casted = dynCastToInt(p);
+  *casted = 1;
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+
 
 // --------------------------
 // "Suppression suppression"

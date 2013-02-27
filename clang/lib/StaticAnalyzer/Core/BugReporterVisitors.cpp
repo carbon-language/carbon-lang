@@ -378,13 +378,20 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
     }
   }
 
-  // Otherwise, check that Succ has this binding and Pred does not, i.e. this is
-  // where the binding first occurred.
+  // Otherwise, see if this is the store site:
+  // (1) Succ has this binding and Pred does not, i.e. this is
+  //     where the binding first occurred.
+  // (2) Succ has this binding and is a PostStore node for this region, i.e.
+  //     the same binding was re-assigned here.
   if (!StoreSite) {
     if (Succ->getState()->getSVal(R) != V)
       return NULL;
-    if (Pred->getState()->getSVal(R) == V)
-      return NULL;
+
+    if (Pred->getState()->getSVal(R) == V) {
+      Optional<PostStore> PS = Succ->getLocationAs<PostStore>();
+      if (!PS || PS->getLocationValue() != R)
+        return NULL;
+    }
 
     StoreSite = Succ;
 
