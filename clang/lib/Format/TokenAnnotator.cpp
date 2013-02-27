@@ -190,6 +190,7 @@ private:
     // expression, or it could the the start of an Objective-C array literal.
     AnnotatedToken *Left = CurrentToken->Parent;
     AnnotatedToken *Parent = getPreviousToken(*Left);
+    Contexts.back().IsExpression = true;
     bool StartsObjCMethodExpr =
         !Parent || Parent->is(tok::colon) || Parent->is(tok::l_square) ||
         Parent->is(tok::l_paren) || Parent->is(tok::kw_return) ||
@@ -550,6 +551,8 @@ private:
       for (AnnotatedToken *Previous = Current.Parent;
            Previous && Previous->isNot(tok::comma);
            Previous = Previous->Parent) {
+        if (Previous->is(tok::r_square))
+          Previous = Previous->MatchingParen;
         if (Previous->Type == TT_BinaryOperator &&
             (Previous->is(tok::star) || Previous->is(tok::amp))) {
           Previous->Type = TT_PointerOrReference;

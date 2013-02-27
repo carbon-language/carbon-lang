@@ -1813,6 +1813,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("a * ++b;");
   verifyIndependentOfContext("a * --b;");
   verifyIndependentOfContext("a[4] * b;");
+  verifyIndependentOfContext("a[a * a] = 1;");
   verifyIndependentOfContext("f() * b;");
   verifyIndependentOfContext("a * [self dostuff];");
   verifyIndependentOfContext("a * (a + b);");
