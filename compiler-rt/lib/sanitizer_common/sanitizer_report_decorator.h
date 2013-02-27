@@ -14,24 +14,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SANITIZER_ALLOCATOR_H
-#define SANITIZER_ALLOCATOR_H
+#ifndef SANITIZER_REPORT_DECORATOR_H
+#define SANITIZER_REPORT_DECORATOR_H
 
 namespace __sanitizer {
 class AnsiColorDecorator {
  public:
   explicit AnsiColorDecorator(bool use_ansi_colors) : ansi_(use_ansi_colors) { }
-  const char *Black()        { return ansi_ ? "\033[1m\033[30m" : ""; }
-  const char *Red()          { return ansi_ ? "\033[1m\033[31m" : ""; }
-  const char *Green()        { return ansi_ ? "\033[1m\033[32m" : ""; }
-  const char *Yellow()       { return ansi_ ? "\033[1m\033[33m" : ""; }
-  const char *Blue()         { return ansi_ ? "\033[1m\033[34m" : ""; }
-  const char *Magenta()      { return ansi_ ? "\033[1m\033[35m" : ""; }
-  const char *Cyan()         { return ansi_ ? "\033[1m\033[36m" : ""; }
-  const char *White()        { return ansi_ ? "\033[1m\033[37m" : ""; }
-  const char *Default()      { return ansi_ ? "\033[1m\033[0m"  : ""; }
+  const char *Bold()    const { return ansi_ ? "\033[1m" : ""; }
+  const char *Black()   const { return ansi_ ? "\033[1m\033[30m" : ""; }
+  const char *Red()     const { return ansi_ ? "\033[1m\033[31m" : ""; }
+  const char *Green()   const { return ansi_ ? "\033[1m\033[32m" : ""; }
+  const char *Yellow()  const { return ansi_ ? "\033[1m\033[33m" : ""; }
+  const char *Blue()    const { return ansi_ ? "\033[1m\033[34m" : ""; }
+  const char *Magenta() const { return ansi_ ? "\033[1m\033[35m" : ""; }
+  const char *Cyan()    const { return ansi_ ? "\033[1m\033[36m" : ""; }
+  const char *White()   const { return ansi_ ? "\033[1m\033[37m" : ""; }
+  const char *Default() const { return ansi_ ? "\033[1m\033[0m"  : ""; }
  private:
   bool ansi_;
 };
 }  // namespace __sanitizer
-#endif  // SANITIZER_ALLOCATOR_H
+
+#endif  // SANITIZER_REPORT_DECORATOR_H

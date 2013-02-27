@@ -14,6 +14,7 @@
 #include "ubsan_diag.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 #include <stdio.h>
@@ -70,7 +71,7 @@ static void renderLocation(Location Loc) {
   case Location::LK_Source: {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (SLoc.isInvalid())
-      RawWrite("<unknown>:");
+      Printf("<unknown>:");
     else {
       Printf("%s:%d:", SLoc.getFilename(), SLoc.getLine());
       if (SLoc.getColumn())
@@ -86,7 +87,7 @@ static void renderLocation(Location Loc) {
     Printf("%p:", Loc.getMemoryLocation());
     break;
   case Location::LK_Null:
-    RawWrite("<unknown>:");
+    Printf("<unknown>:");
     break;
   }
 }
@@ -99,7 +100,7 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
       for (I = 0; Msg[I] && Msg[I] != '%' && I != 63; ++I)
         Buffer[I] = Msg[I];
       Buffer[I] = '\0';
-      RawWrite(Buffer);
+      Printf(Buffer);
       Msg += I - 1;
     } else {
       const Diag::Arg &A = Args[*++Msg - '0'];
@@ -108,9 +109,7 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
         Printf("%s", A.String);
         break;
       case Diag::AK_Mangled: {
-        RawWrite("'");
-        RawWrite(Demangle(A.String));
-        RawWrite("'");
+        Printf("'%s'", Demangle(A.String));
         break;
       }
       case Diag::AK_SInt:
@@ -156,7 +155,8 @@ static Range *upperBound(MemoryLocation Loc, Range *Ranges,
 }
 
 /// Render a snippet of the address space near a location.
-static void renderMemorySnippet(bool UseAnsiColor, MemoryLocation Loc,
+static void renderMemorySnippet(const __sanitizer::AnsiColorDecorator &Decor,
+                                MemoryLocation Loc,
                                 Range *Ranges, unsigned NumRanges,
                                 const Diag::Arg *Args) {
   const unsigned BytesToShow = 32;
@@ -180,11 +180,10 @@ static void renderMemorySnippet(bool UseAnsiColor, MemoryLocation Loc,
     unsigned char C = *reinterpret_cast<const unsigned char*>(P);
     Printf("%s%02x", (P % 8 == 0) ? "  " : " ", C);
   }
-  RawWrite("\n");
+  Printf("\n");
 
   // Emit highlights.
-  if (UseAnsiColor)
-    RawWrite("\033[1;32m");
+  Printf(Decor.Green());
   Range *InRange = upperBound(Min, Ranges, NumRanges);
   for (uptr P = Min; P != Max; ++P) {
     char Pad = ' ', Byte = ' ';
@@ -197,11 +196,9 @@ static void renderMemorySnippet(bool UseAnsiColor, MemoryLocation Loc,
     if (InRange && InRange->getStart().getMemoryLocation() <= P)
       Byte = '~';
     char Buffer[] = { Pad, Pad, P == Loc ? '^' : Byte, Byte, 0 };
-    RawWrite((P % 8 == 0) ? Buffer : &Buffer[1]);
+    Printf((P % 8 == 0) ? Buffer : &Buffer[1]);
   }
-  if (UseAnsiColor)
-    RawWrite("\033[0m");
-  RawWrite("\n");
+  Printf("%s\n", Decor.Default());
 
   // Go over the line again, and print names for the ranges.
   InRange = 0;
@@ -216,9 +213,9 @@ static void renderMemorySnippet(bool UseAnsiColor, MemoryLocation Loc,
 
     if (InRange && InRange->getStart().getMemoryLocation() == P) {
       while (Spaces--)
-        RawWrite(" ");
+        Printf(" ");
       renderText(InRange->getText(), Args);
-      RawWrite("\n");
+      Printf("\n");
       // FIXME: We only support naming one range for now!
       break;
     }
@@ -239,38 +236,27 @@ static void renderMemorySnippet(bool UseAnsiColor, MemoryLocation Loc,
 }
 
 Diag::~Diag() {
-  bool UseAnsiColor = PrintsToTty();
-  if (UseAnsiColor)
-    RawWrite("\033[1m");
+  __sanitizer::AnsiColorDecorator Decor(PrintsToTty());
+  Printf(Decor.Bold());
 
   renderLocation(Loc);
 
   switch (Level) {
   case DL_Error:
-    if (UseAnsiColor)
-      RawWrite("\033[31m");
-    RawWrite(" runtime error: ");
-    if (UseAnsiColor)
-      RawWrite("\033[0;1m");
+    Printf("%s runtime error: %s%s",
+           Decor.Red(), Decor.Default(), Decor.Bold());
     break;
 
   case DL_Note:
-    if (UseAnsiColor)
-      RawWrite("\033[30m");
-    RawWrite(" note: ");
-    if (UseAnsiColor)
-      RawWrite("\033[0m");
+    Printf("%s note: %s", Decor.Black(), Decor.Default());
     break;
   }
 
   renderText(Message, Args);
 
-  if (UseAnsiColor)
-    RawWrite("\033[0m");
-
-  RawWrite("\n");
+  Printf("%s\n", Decor.Default());
 
   if (Loc.isMemoryLocation())
-    renderMemorySnippet(UseAnsiColor, Loc.getMemoryLocation(), Ranges,
+    renderMemorySnippet(Decor, Loc.getMemoryLocation(), Ranges,
                         NumRanges, Args);
 }
