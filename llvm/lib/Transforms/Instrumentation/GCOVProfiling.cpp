@@ -469,21 +469,18 @@ bool GCOVProfiler::emitProfileArcs() {
             Value *Counter = Builder.CreateConstInBoundsGEP2_64(Counters, 0,
                                                                 Edge);
             Value *Count = Builder.CreateLoad(Counter);
-            Count = Builder.CreateAdd(Count,
-                                      ConstantInt::get(Type::getInt64Ty(*Ctx),1));
+            Count = Builder.CreateAdd(Count, Builder.getInt64(1));
             Builder.CreateStore(Count, Counter);
           } else if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-            Value *Sel = Builder.CreateSelect(
-              BI->getCondition(),
-              ConstantInt::get(Type::getInt64Ty(*Ctx), Edge),
-              ConstantInt::get(Type::getInt64Ty(*Ctx), Edge + 1));
+            Value *Sel = Builder.CreateSelect(BI->getCondition(),
+                                              Builder.getInt64(Edge),
+                                              Builder.getInt64(Edge + 1));
             SmallVector<Value *, 2> Idx;
-            Idx.push_back(Constant::getNullValue(Type::getInt64Ty(*Ctx)));
+            Idx.push_back(Builder.getInt64(0));
             Idx.push_back(Sel);
             Value *Counter = Builder.CreateInBoundsGEP(Counters, Idx);
             Value *Count = Builder.CreateLoad(Counter);
-            Count = Builder.CreateAdd(Count,
-                                      ConstantInt::get(Type::getInt64Ty(*Ctx),1));
+            Count = Builder.CreateAdd(Count, Builder.getInt64(1));
             Builder.CreateStore(Count, Counter);
           } else {
             ComplexEdgePreds.insert(BB);
@@ -500,10 +497,9 @@ bool GCOVProfiler::emitProfileArcs() {
                                ComplexEdgePreds, ComplexEdgeSuccs);
         GlobalVariable *EdgeState = getEdgeStateValue();
         
-        Type *Int32Ty = Type::getInt32Ty(*Ctx);
         for (int i = 0, e = ComplexEdgePreds.size(); i != e; ++i) {
           IRBuilder<> Builder(ComplexEdgePreds[i+1]->getTerminator());
-          Builder.CreateStore(ConstantInt::get(Int32Ty, i), EdgeState);
+          Builder.CreateStore(Builder.getInt32(i), EdgeState);
         }
         for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
           // call runtime to perform increment
@@ -560,8 +556,8 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
     if (Successors > 1 && !isa<BranchInst>(TI) && !isa<ReturnInst>(TI)) {
       for (int i = 0; i != Successors; ++i) {
         BasicBlock *Succ = TI->getSuccessor(i);
-        IRBuilder<> builder(Succ);
-        Value *Counter = builder.CreateConstInBoundsGEP2_64(Counters, 0,
+        IRBuilder<> Builder(Succ);
+        Value *Counter = Builder.CreateConstInBoundsGEP2_64(Counters, 0,
                                                             Edge + i);
         EdgeTable[((Succs.idFor(Succ)-1) * Preds.size()) +
                   (Preds.idFor(BB)-1)] = cast<Constant>(Counter);
@@ -667,14 +663,14 @@ void GCOVProfiler::insertCounterWriteout(
         DISubprogram SP(I->second);
         intptr_t ident = reinterpret_cast<intptr_t>(I->second);
         Builder.CreateCall2(EmitFunction,
-                            ConstantInt::get(Type::getInt32Ty(*Ctx), ident),
+                            Builder.getInt32(ident),
                             Builder.CreateGlobalStringPtr(SP.getName()));
         
         GlobalVariable *GV = I->first;
         unsigned Arcs =
           cast<ArrayType>(GV->getType()->getElementType())->getNumElements();
         Builder.CreateCall2(EmitArcs,
-                            ConstantInt::get(Type::getInt32Ty(*Ctx), Arcs),
+                            Builder.getInt32(Arcs),
                             Builder.CreateConstGEP2_64(GV, 0, 0));
       }
       Builder.CreateCall(EndFile);
@@ -696,7 +692,7 @@ void GCOVProfiler::insertCounterWriteout(
   BB = BasicBlock::Create(*Ctx, "entry", F);
   Builder.SetInsertPoint(BB);
 
-  FTy = FunctionType::get(Type::getInt32Ty(*Ctx),
+  FTy = FunctionType::get(Builder.getInt32Ty(),
                           PointerType::get(FTy, 0), false);
   Constant *AtExitFn = M->getOrInsertFunction("atexit", FTy);
   Builder.CreateCall(AtExitFn, WriteoutF);
@@ -714,10 +710,6 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   if (NoRedZone)
     Fn->addFnAttr(Attribute::NoRedZone);
 
-  Type *Int32Ty = Type::getInt32Ty(*Ctx);
-  Type *Int64Ty = Type::getInt64Ty(*Ctx);
-  Constant *NegOne = ConstantInt::get(Int32Ty, 0xffffffff);
-
   // Create basic blocks for function.
   BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", Fn);
   IRBuilder<> Builder(BB);
@@ -731,26 +723,25 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Argument *Arg = Fn->arg_begin();
   Arg->setName("predecessor");
   Value *Pred = Builder.CreateLoad(Arg, "pred");
-  Value *Cond = Builder.CreateICmpEQ(Pred, NegOne);
+  Value *Cond = Builder.CreateICmpEQ(Pred, Builder.getInt32(0xffffffff));
   BranchInst::Create(Exit, PredNotNegOne, Cond, BB);
 
   Builder.SetInsertPoint(PredNotNegOne);
 
   // uint64_t *counter = counters[pred];
   // if (!counter) return;
-  Value *ZExtPred = Builder.CreateZExt(Pred, Int64Ty);
+  Value *ZExtPred = Builder.CreateZExt(Pred, Builder.getInt64Ty());
   Arg = llvm::next(Fn->arg_begin());
   Arg->setName("counters");
   Value *GEP = Builder.CreateGEP(Arg, ZExtPred);
   Value *Counter = Builder.CreateLoad(GEP, "counter");
-  Cond = Builder.CreateICmpEQ(Counter,
-                              Constant::getNullValue(Int64Ty->getPointerTo()));
+  Cond = Builder.CreateICmpEQ(Counter, Builder.getInt64(0));
   Builder.CreateCondBr(Cond, Exit, CounterEnd);
 
   // ++*counter;
   Builder.SetInsertPoint(CounterEnd);
   Value *Add = Builder.CreateAdd(Builder.CreateLoad(Counter),
-                                 ConstantInt::get(Int64Ty, 1));
+                                 Builder.getInt64(1));
   Builder.CreateStore(Add, Counter);
   Builder.CreateBr(Exit);
 
