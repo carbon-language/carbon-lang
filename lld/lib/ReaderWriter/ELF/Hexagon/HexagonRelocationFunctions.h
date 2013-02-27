@@ -39,8 +39,7 @@ uint32_t findBitMask(uint32_t insn, Instruction *encodings, int32_t numInsns) {
     if (((encodings[i].insnMask) & insn) == encodings[i].insnCmpMask) 
       return encodings[i].insnBitMask;
   }
-  assert(0 && "found unknown instruction");
-  return 0;
+  llvm_unreachable("found unknown instruction");
 }
 
 } // elf 
