@@ -604,7 +604,9 @@ void *asan_malloc(uptr size, StackTrace *stack) {
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
   if (CallocShouldReturnNullDueToOverflow(size, nmemb)) return 0;
   void *ptr = Allocate(nmemb * size, 8, stack, FROM_MALLOC);
-  if (ptr)
+  // If the memory comes from the secondary allocator no need to clear it
+  // as it comes directly from mmap.
+  if (ptr && allocator.FromPrimary(ptr))
     REAL(memset)(ptr, 0, nmemb * size);
   return ptr;
 }
