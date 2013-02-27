@@ -201,6 +201,7 @@ public:
   void resolveParamCommandIndexes(const FullComment *FC);
 
   bool isFunctionDecl();
+  bool isObjCPropertyDecl();
   bool isTemplateOrSpecialization();
 
   ArrayRef<const ParmVarDecl *> getParamVars();

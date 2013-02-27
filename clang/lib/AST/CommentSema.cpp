@@ -465,6 +465,9 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
     }
     return;
   }
+  else if (isObjCPropertyDecl())
+    return;
+  
   Diag(Command->getLocation(),
        diag::warn_doc_returns_not_attached_to_a_function_decl)
     << Command->getCommandName(Traits)
@@ -651,6 +654,14 @@ bool Sema::isFunctionDecl() {
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
   return ThisDeclInfo->getKind() == DeclInfo::FunctionKind;
+}
+  
+bool Sema::isObjCPropertyDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return ThisDeclInfo->CurrentDecl->getKind() == Decl::ObjCProperty;
 }
 
 bool Sema::isTemplateOrSpecialization() {
