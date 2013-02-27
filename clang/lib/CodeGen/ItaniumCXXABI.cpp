@@ -112,6 +112,14 @@ public:
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
+  void EmitConstructorCall(CodeGenFunction &CGF,
+                           const CXXConstructorDecl *D,
+                           CXXCtorType Type, bool ForVirtualBase,
+                           bool Delegating,
+                           llvm::Value *This,
+                           CallExpr::const_arg_iterator ArgBeg,
+                           CallExpr::const_arg_iterator ArgEnd);
+
   RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                    const CXXDestructorDecl *Dtor,
                                    CXXDtorType DtorType,
@@ -824,6 +832,23 @@ void ARMCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   /// function.
   if (HasThisReturn(CGF.CurGD))
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
+}
+
+void ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
+                                        const CXXConstructorDecl *D,
+                                        CXXCtorType Type, bool ForVirtualBase,
+                                        bool Delegating,
+                                        llvm::Value *This,
+                                        CallExpr::const_arg_iterator ArgBeg,
+                                        CallExpr::const_arg_iterator ArgEnd) {
+  llvm::Value *VTT = CGF.GetVTTParameter(GlobalDecl(D, Type), ForVirtualBase,
+                                         Delegating);
+  QualType VTTTy = getContext().getPointerType(getContext().VoidPtrTy);
+  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
+
+  // FIXME: Provide a source location here.
+  CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
+                        VTT, VTTTy, ArgBeg, ArgEnd);
 }
 
 RValue ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,

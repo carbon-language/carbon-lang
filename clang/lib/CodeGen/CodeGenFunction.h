@@ -1818,6 +1818,13 @@ public:
                                          const CXXRecordDecl *ClassDecl,
                                          const CXXRecordDecl *BaseClassDecl);
 
+  /// GetVTTParameter - Return the VTT parameter that should be passed to a
+  /// base constructor/destructor with virtual bases.
+  /// FIXME: VTTs are Itanium ABI-specific, so the definition should move
+  /// to ItaniumCXXABI.cpp together with all the references to VTT.
+  llvm::Value *GetVTTParameter(GlobalDecl GD, bool ForVirtualBase,
+                               bool Delegating);
+
   void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                       CXXCtorType CtorType,
                                       const FunctionArgList &Args);

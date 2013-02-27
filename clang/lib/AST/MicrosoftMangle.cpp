@@ -503,6 +503,10 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       llvm_unreachable("Can't mangle Objective-C selector names here!");
       
     case DeclarationName::CXXConstructorName:
+      if (ND == Structor) {
+        assert(StructorType == Ctor_Complete &&
+               "Should never be asked to mangle a ctor other than complete");
+      }
       Out << "?0";
       break;
       

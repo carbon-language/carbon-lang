@@ -42,6 +42,8 @@ public:
                                  CanQualType &ResTy,
                                  SmallVectorImpl<CanQualType> &ArgTys);
 
+  llvm::BasicBlock *EmitCtorCompleteObjectHandler(CodeGenFunction &CGF);
+
   void BuildDestructorSignature(const CXXDestructorDecl *Ctor,
                                 CXXDtorType Type,
                                 CanQualType &ResTy,
@@ -52,6 +54,14 @@ public:
                                    FunctionArgList &Params);
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
+
+  void EmitConstructorCall(CodeGenFunction &CGF,
+                           const CXXConstructorDecl *D,
+                           CXXCtorType Type, bool ForVirtualBase,
+                           bool Delegating,
+                           llvm::Value *This,
+                           CallExpr::const_arg_iterator ArgBeg,
+                           CallExpr::const_arg_iterator ArgEnd);
 
   RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                    const CXXDestructorDecl *Dtor,
@@ -120,9 +130,36 @@ void MicrosoftCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CanQualType &ResTy,
                                  SmallVectorImpl<CanQualType> &ArgTys) {
   // 'this' is already in place
-  // TODO: 'for base' flag
+
   // Ctor returns this ptr
   ResTy = ArgTys[0];
+
+  const CXXRecordDecl *Class = Ctor->getParent();
+  if (Class->getNumVBases()) {
+    // Constructors of classes with virtual bases take an implicit parameter.
+    ArgTys.push_back(CGM.getContext().IntTy);
+  }
+}
+
+llvm::BasicBlock *MicrosoftCXXABI::EmitCtorCompleteObjectHandler(
+                                                         CodeGenFunction &CGF) {
+  llvm::Value *IsMostDerivedClass = getStructorImplicitParamValue(CGF);
+  assert(IsMostDerivedClass &&
+         "ctor for a class with virtual bases must have an implicit parameter");
+  llvm::Value *IsCompleteObject
+    = CGF.Builder.CreateIsNotNull(IsMostDerivedClass, "is_complete_object");
+
+  llvm::BasicBlock *CallVbaseCtorsBB = CGF.createBasicBlock("ctor.init_vbases");
+  llvm::BasicBlock *SkipVbaseCtorsBB = CGF.createBasicBlock("ctor.skip_vbases");
+  CGF.Builder.CreateCondBr(IsCompleteObject,
+                           CallVbaseCtorsBB, SkipVbaseCtorsBB);
+
+  CGF.EmitBlock(CallVbaseCtorsBB);
+  // FIXME: emit vbtables somewhere around here.
+
+  // CGF will put the base ctor calls in this basic block for us later.
+
+  return SkipVbaseCtorsBB;
 }
 
 void MicrosoftCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
@@ -153,9 +190,18 @@ void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
   if (needThisReturn(CGF.CurGD)) {
     ResTy = Params[0]->getType();
   }
-  if (IsDeletingDtor(CGF.CurGD)) {
-    ASTContext &Context = getContext();
 
+  ASTContext &Context = getContext();
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
+  if (isa<CXXConstructorDecl>(MD) && MD->getParent()->getNumVBases()) {
+    ImplicitParamDecl *IsMostDerived
+      = ImplicitParamDecl::Create(Context, 0,
+                                  CGF.CurGD.getDecl()->getLocation(),
+                                  &Context.Idents.get("is_most_derived"),
+                                  Context.IntTy);
+    Params.push_back(IsMostDerived);
+    getStructorImplicitParamDecl(CGF) = IsMostDerived;
+  } else if (IsDeletingDtor(CGF.CurGD)) {
     ImplicitParamDecl *ShouldDelete
       = ImplicitParamDecl::Create(Context, 0,
                                   CGF.CurGD.getDecl()->getLocation(),
@@ -171,6 +217,17 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   if (needThisReturn(CGF.CurGD)) {
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
   }
+
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
+  if (isa<CXXConstructorDecl>(MD) && MD->getParent()->getNumVBases()) {
+    assert(getStructorImplicitParamDecl(CGF) &&
+           "no implicit parameter for a constructor with virtual bases?");
+    getStructorImplicitParamValue(CGF)
+      = CGF.Builder.CreateLoad(
+          CGF.GetAddrOfLocalVar(getStructorImplicitParamDecl(CGF)),
+          "is_most_derived");
+  }
+
   if (IsDeletingDtor(CGF.CurGD)) {
     assert(getStructorImplicitParamDecl(CGF) &&
            "no implicit parameter for a deleting destructor?");
@@ -179,6 +236,29 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
           CGF.GetAddrOfLocalVar(getStructorImplicitParamDecl(CGF)),
           "should_call_delete");
   }
+}
+
+void MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
+                                          const CXXConstructorDecl *D,
+                                          CXXCtorType Type, bool ForVirtualBase,
+                                          bool Delegating,
+                                          llvm::Value *This,
+                                          CallExpr::const_arg_iterator ArgBeg,
+                                          CallExpr::const_arg_iterator ArgEnd) {
+  assert(Type == Ctor_Complete || Type == Ctor_Base);
+  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Ctor_Complete);
+
+  llvm::Value *ImplicitParam = 0;
+  QualType ImplicitParamTy;
+  if (D->getParent()->getNumVBases()) {
+    ImplicitParam = llvm::ConstantInt::get(CGM.Int32Ty, Type == Ctor_Complete);
+    ImplicitParamTy = getContext().IntTy;
+  }
+
+  // FIXME: Provide a source location here.
+  CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
+                        ImplicitParam, ImplicitParamTy,
+                        ArgBeg, ArgEnd);
 }
 
 RValue MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,

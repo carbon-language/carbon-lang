@@ -15,6 +15,7 @@
 #include "CGDebugInfo.h"
 #include "CGRecordLayout.h"
 #include "CodeGenFunction.h"
+#include "CGCXXABI.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/RecordLayout.h"
@@ -280,18 +281,16 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
   
   return Value;
 }
-                             
-/// GetVTTParameter - Return the VTT parameter that should be passed to a
-/// base constructor/destructor with virtual bases.
-static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
-                                    bool ForVirtualBase,
-                                    bool Delegating) {
+
+llvm::Value *CodeGenFunction::GetVTTParameter(GlobalDecl GD,
+                                              bool ForVirtualBase,
+                                              bool Delegating) {
   if (!CodeGenVTables::needsVTTParameter(GD)) {
     // This constructor/destructor does not need a VTT parameter.
     return 0;
   }
   
-  const CXXRecordDecl *RD = cast<CXXMethodDecl>(CGF.CurFuncDecl)->getParent();
+  const CXXRecordDecl *RD = cast<CXXMethodDecl>(CurFuncDecl)->getParent();
   const CXXRecordDecl *Base = cast<CXXMethodDecl>(GD.getDecl())->getParent();
 
   llvm::Value *VTT;
@@ -300,34 +299,33 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
 
   if (Delegating) {
     // If this is a delegating constructor call, just load the VTT.
-    return CGF.LoadCXXVTT();
+    return LoadCXXVTT();
   } else if (RD == Base) {
     // If the record matches the base, this is the complete ctor/dtor
     // variant calling the base variant in a class with virtual bases.
-    assert(!CodeGenVTables::needsVTTParameter(CGF.CurGD) &&
+    assert(!CodeGenVTables::needsVTTParameter(CurGD) &&
            "doing no-op VTT offset in base dtor/ctor?");
     assert(!ForVirtualBase && "Can't have same class as virtual base!");
     SubVTTIndex = 0;
   } else {
-    const ASTRecordLayout &Layout = 
-      CGF.getContext().getASTRecordLayout(RD);
+    const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
     CharUnits BaseOffset = ForVirtualBase ? 
       Layout.getVBaseClassOffset(Base) : 
       Layout.getBaseClassOffset(Base);
 
     SubVTTIndex = 
-      CGF.CGM.getVTables().getSubVTTIndex(RD, BaseSubobject(Base, BaseOffset));
+      CGM.getVTables().getSubVTTIndex(RD, BaseSubobject(Base, BaseOffset));
     assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
   }
   
-  if (CodeGenVTables::needsVTTParameter(CGF.CurGD)) {
+  if (CodeGenVTables::needsVTTParameter(CurGD)) {
     // A VTT parameter was passed to the constructor, use it.
-    VTT = CGF.LoadCXXVTT();
-    VTT = CGF.Builder.CreateConstInBoundsGEP1_64(VTT, SubVTTIndex);
+    VTT = LoadCXXVTT();
+    VTT = Builder.CreateConstInBoundsGEP1_64(VTT, SubVTTIndex);
   } else {
     // We're the complete constructor, so get the VTT by name.
-    VTT = CGF.CGM.getVTables().GetAddrOfVTT(RD);
-    VTT = CGF.Builder.CreateConstInBoundsGEP2_64(VTT, 0, SubVTTIndex);
+    VTT = CGM.getVTables().GetAddrOfVTT(RD);
+    VTT = Builder.CreateConstInBoundsGEP2_64(VTT, 0, SubVTTIndex);
   }
 
   return VTT;
@@ -1103,27 +1101,46 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
 
   const CXXRecordDecl *ClassDecl = CD->getParent();
 
-  SmallVector<CXXCtorInitializer *, 8> MemberInitializers;
-  
-  for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
-       E = CD->init_end();
-       B != E; ++B) {
-    CXXCtorInitializer *Member = (*B);
-    
-    if (Member->isBaseInitializer()) {
-      EmitBaseInitializer(*this, ClassDecl, Member, CtorType);
-    } else {
-      assert(Member->isAnyMemberInitializer() &&
-            "Delegating initializer on non-delegating constructor");
-      MemberInitializers.push_back(Member);
-    }
+  CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
+                                          E = CD->init_end();
+
+  llvm::BasicBlock *BaseCtorContinueBB = 0;
+  if (ClassDecl->getNumVBases() &&
+      !CGM.getTarget().getCXXABI().hasConstructorVariants()) {
+    // The ABIs that don't have constructor variants need to put a branch
+    // before the virtual base initialization code.
+    BaseCtorContinueBB = CGM.getCXXABI().EmitCtorCompleteObjectHandler(*this);
+    assert(BaseCtorContinueBB);
+  }
+
+  // Virtual base initializers first.
+  for (; B != E && (*B)->isBaseInitializer() && (*B)->isBaseVirtual(); B++) {
+    EmitBaseInitializer(*this, ClassDecl, *B, CtorType);
+  }
+
+  if (BaseCtorContinueBB) {
+    // Complete object handler should continue to the remaining initializers.
+    Builder.CreateBr(BaseCtorContinueBB);
+    EmitBlock(BaseCtorContinueBB);
+  }
+
+  // Then, non-virtual base initializers.
+  for (; B != E && (*B)->isBaseInitializer(); B++) {
+    assert(!(*B)->isBaseVirtual());
+    EmitBaseInitializer(*this, ClassDecl, *B, CtorType);
   }
 
   InitializeVTablePointers(ClassDecl);
 
+  // And finally, initialize class members.
   ConstructorMemcpyizer CM(*this, CD, Args);
-  for (unsigned I = 0, E = MemberInitializers.size(); I != E; ++I)
-    CM.addMemberInitializer(MemberInitializers[I]);
+  for (; B != E; B++) {
+    CXXCtorInitializer *Member = (*B);
+    assert(!Member->isBaseInitializer());
+    assert(Member->isAnyMemberInitializer() &&
+           "Delegating initializer on non-delegating constructor");
+    CM.addMemberInitializer(Member);
+  }
   CM.finish();
 }
 
@@ -1622,6 +1639,7 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                               Parent->getLocation());
   }
 
+  // If this is a trivial constructor, just emit what's needed.
   if (D->isTrivial()) {
     if (ArgBeg == ArgEnd) {
       // Trivial default constructor, no codegen required.
@@ -1641,14 +1659,9 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     return;
   }
 
-  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(D, Type), ForVirtualBase,
-                                     Delegating);
-  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
-
-  // FIXME: Provide a source location here.
-  EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
-                    VTT, getContext().getPointerType(getContext().VoidPtrTy),
-                    ArgBeg, ArgEnd);
+  // Non-trivial constructors are handled in an ABI-specific manner.
+  CGM.getCXXABI().EmitConstructorCall(*this, D, Type, ForVirtualBase,
+                                      Delegating, This, ArgBeg, ArgEnd);
 }
 
 void
@@ -1718,7 +1731,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
   ++I;
 
   // vtt
-  if (llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(Ctor, CtorType),
+  if (llvm::Value *VTT = GetVTTParameter(GlobalDecl(Ctor, CtorType),
                                          /*ForVirtualBase=*/false,
                                          /*Delegating=*/true)) {
     QualType VoidPP = getContext().getPointerType(getContext().VoidPtrTy);
@@ -1792,7 +1805,7 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             bool ForVirtualBase,
                                             bool Delegating,
                                             llvm::Value *This) {
-  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(DD, Type), 
+  llvm::Value *VTT = GetVTTParameter(GlobalDecl(DD, Type),
                                      ForVirtualBase, Delegating);
   llvm::Value *Callee = 0;
   if (getLangOpts().AppleKext)

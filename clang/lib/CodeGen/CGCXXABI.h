@@ -185,6 +185,8 @@ public:
                                          CanQualType &ResTy,
                                SmallVectorImpl<CanQualType> &ArgTys) = 0;
 
+  virtual llvm::BasicBlock *EmitCtorCompleteObjectHandler(CodeGenFunction &CGF);
+
   /// Build the signature of the given destructor variant by adding
   /// any required parameters.  For convenience, ResTy has been
   /// initialized to 'void' and ArgTys has been initialized with the
@@ -206,6 +208,14 @@ public:
 
   /// Emit the ABI-specific prolog for the function.
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
+
+  virtual void EmitConstructorCall(CodeGenFunction &CGF,
+                                   const CXXConstructorDecl *D,
+                                   CXXCtorType Type, bool ForVirtualBase,
+                                   bool Delegating,
+                                   llvm::Value *This,
+                                   CallExpr::const_arg_iterator ArgBeg,
+                                   CallExpr::const_arg_iterator ArgEnd) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
   virtual RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
