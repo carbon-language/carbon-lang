@@ -607,10 +607,7 @@ Debugger::Clear()
         {
             ProcessSP process_sp (target_sp->GetProcessSP());
             if (process_sp)
-            {
-                if (process_sp->GetShouldDetach())
-                    process_sp->Detach();
-            }
+                process_sp->Finalize();
             target_sp->Destroy();
         }
     }
