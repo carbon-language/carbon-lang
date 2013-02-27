@@ -22,7 +22,8 @@ reStructuredText syntax is useful when writing the document, so the last
 ~half of this document (starting with `Example Section`_) gives examples
 which should cover 99% of use cases.
 
-Let me say that again: focus on *content*.
+Let me say that again: focus on *content*. But if you really need to verify
+Sphinx's output, see ``docs/README.txt`` for information.
 
 Once you have finished with the content, please send the ``.rst`` file to
 llvm-commits for review.
