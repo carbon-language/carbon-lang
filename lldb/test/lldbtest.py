@@ -531,7 +531,7 @@ def skipOnLinux(func):
 def skipIfGcc(func):
     """Decorate the item to skip tests that should be skipped if building with gcc ."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipOnLinux can only be used to decorate a test method")
+        raise Exception("@skipIfGcc can only be used to decorate a test method")
     @wraps(func)
     def wrapper(*args, **kwargs):
         from unittest2 import case
@@ -542,7 +542,6 @@ def skipIfGcc(func):
         else:
             func(*args, **kwargs)
     return wrapper
-
 
 class Base(unittest2.TestCase):
     """
@@ -1014,6 +1013,25 @@ class Base(unittest2.TestCase):
         """Returns the compiler in effect the test suite is running with."""
         module = builder_module()
         return module.getCompiler()
+
+    def getCompilerVersion(self):
+        """ Returns a string that represents the compiler version.
+            Supports: llvm, clang.
+        """
+        from lldbutil import which
+        version = 'unknown'
+
+        compiler = self.getCompiler()
+        version_output = system([which(compiler), "-v"])[1]
+        for line in version_output.split(os.linesep):
+            compiler_shortname = 'invalid'
+            for c in ["clang", "gcc"]:
+              if c in compiler:
+                  compiler_shortname = c
+            m = re.search('%s version ([0-9\.]+)' % compiler_shortname, line)
+            if m:
+                version = m.group(1)
+        return version
 
     def getRunOptions(self):
         """Command line option for -A and -C to run this test again, called from

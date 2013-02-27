@@ -33,10 +33,16 @@ class UniqueTypesTestCase(TestBase):
 
     def unique_types(self):
         """Test for unique types of std::vector<long> and std::vector<short>."""
+
+        if "clang" in self.getCompiler() and int(self.getCompilerVersion().split('.')[0]) < 3:
+            self.skipTest("rdar://problem/9173060 lldb hangs while running unique-types for clang version < 3")
+
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
+        # GCC 4.6.3 (but not 4.4, 4.6.5 or 4.7) encodes two locations for the 'return 0' statement in main.cpp
+        locs = 2 if "gcc" in self.getCompiler() and "4.6.3" in self.getCompilerVersion() else 1
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=locs, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -44,19 +50,6 @@ class UniqueTypesTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped',
                        'stop reason = breakpoint'])
-
-        if self.getCompiler().endswith('clang'):
-            import re
-            clang_version_output = system([lldbutil.which(self.getCompiler()), "-v"])[1]
-            #print "my output:", clang_version_output
-            for line in clang_version_output.split(os.linesep):
-                m = re.search('clang version ([0-9]+)\.', line)
-                #print "line:", line
-                if m:
-                    clang_version = int(m.group(1))
-                    #print "clang version:", clang_version
-                    if clang_version < 3:
-                        self.skipTest("rdar://problem/9173060 lldb hangs while running unique-types for clang version < 3")
 
         # Do a "frame variable --show-types longs" and verify "long" is in each line of output.
         self.runCmd("frame variable --show-types longs")
