@@ -82,13 +82,7 @@ improve the quality of clang by self-testing. Some examples:
   C++'98 is feature complete, but there is still a lot of C++'11 features to
   implement.  Please see the <a href="cxx_status.html">C++ status report
   page</a> to find out what is missing.</li>
-</ul>
 
-<p>If you hit a bug with clang, it is very useful for us if you reduce the code
-that demonstrates the problem down to something small.  There are many ways to
-do this; ask on cfe-dev for advice.</p>
-
-<ul>
 <li><b>StringRef'ize APIs</b>: A thankless but incredibly useful project is
 StringRef'izing (converting to use <tt>llvm::StringRef</tt> instead of <tt>const
 char *</tt> or <tt>std::string</tt>) various clang interfaces. This generally
@@ -107,7 +101,33 @@ Driver</a> web page for more information.</li>
     <li><i>Documented</i>, with appropriate Schema against which the output of Clang's XML formatter can be verified.</li>
     <li><i>Stable</i> across Clang versions.</li>
   </ul></li>
+
+<li><b>Configuration Manager</b>: Clang/LLVM works on a large number of
+architectures and operating systems and can cross-compile to a similarly large
+number of configurations, but the pitfalls of chosing the command-line
+options, making sure the right sub-architecture is chosen and that the correct
+optional elements of your particular system can be a pain.
+
+<p>A tool that would investigate hosts and targets, and store the configuration
+in files that can later be used by Clang itself to avoid command-line options,
+especially the ones regarding which target options to use, would greatle alleviate
+this problem. A simple tool, with little or no dependency on LLVM itself, that
+will investigate a target architecture by probing hardware, software, libraries
+and compiling and executing code to identify all properties that would be relevant
+to command-line options (VFP, SSE, NEON, ARM vs. Thumb etc), triple settings etc.</p>
+
+<p>The first stage is to build a CFLAGS for Clang that would produce code on the
+current Host to the identified Target.</p>
+
+<p>The second stage would be to produce a configuration file (that can be used
+independently of the Host) so that Clang can read it and not need a gazillion
+of command-line options. Such file should be simple JSON / INI or anything that
+Vim could change.</p>
 </ul>
+
+<p>If you hit a bug with clang, it is very useful for us if you reduce the code
+that demonstrates the problem down to something small.  There are many ways to
+do this; ask on cfe-dev for advice.</p>
 
 </div>
 </body>
