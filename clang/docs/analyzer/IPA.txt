@@ -46,9 +46,10 @@ Each of these modes implies that all the previous member function kinds will be
 inlined as well; it doesn't make sense to inline destructors without inlining
 constructors, for example.
 
-The default c++-inlining mode is 'methods', meaning only regular member
-functions and overloaded operators will be inlined. Note that no C++ member
-functions will be inlined under -analyzer-config ipa=none or
+The default c++-inlining mode is 'constructors', meaning that member functions,
+overloaded operators, and some constructors will be inlined. If a type has a
+non-trivial destructor, however, its constructor will not be inlined. Note that
+no C++ member functions will be inlined under -analyzer-config ipa=none or
 -analyzer-config ipa=basic-inlining.
 
 ### c++-template-inlining ###

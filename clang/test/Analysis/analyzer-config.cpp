@@ -11,7 +11,7 @@ public:
 };
 
 // CHECK: [config]
-// CHECK-NEXT: c++-inlining = methods
+// CHECK-NEXT: c++-inlining = constructors
 // CHECK-NEXT: c++-stdlib-inlining = true
 // CHECK-NEXT: c++-template-inlining = true
 // CHECK-NEXT: cfg-temporary-dtors = false
