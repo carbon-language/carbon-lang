@@ -1392,7 +1392,14 @@ for ia in range(len(archs) if iterArchs else 1):
                     return str(test)
 
             def getCategoriesForTest(self,test):
-                if hasattr(test,"getCategories"):
+                if hasattr(test,"_testMethodName"):
+                    test_method = getattr(test,"_testMethodName")
+                    test_method = getattr(test,test_method)
+                else:
+                    test_method = None
+                if test_method != None and hasattr(test_method,"getCategories"):
+                    test_categories = test_method.getCategories(test)
+                elif hasattr(test,"getCategories"):
                     test_categories = test.getCategories()
                 elif inspect.ismethod(test) and test.__self__ != None and hasattr(test.__self__,"getCategories"):
                     test_categories = test.__self__.getCategories()
