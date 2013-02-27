@@ -79,6 +79,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -138,10 +139,11 @@ class LoopVectorizationCostModel;
 class InnerLoopVectorizer {
 public:
   InnerLoopVectorizer(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
-                      DominatorTree *DT, DataLayout *DL, unsigned VecWidth,
+                      DominatorTree *DT, DataLayout *DL,
+                      const TargetLibraryInfo *TLI, unsigned VecWidth,
                       unsigned UnrollFactor)
-      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), VF(VecWidth),
-        UF(UnrollFactor), Builder(SE->getContext()), Induction(0),
+      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), TLI(TLI),
+        VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()), Induction(0),
         OldInduction(0), WidenMap(UnrollFactor) {}
 
   // Perform the actual loop widening (vectorization).
@@ -268,6 +270,9 @@ private:
   DominatorTree *DT;
   /// Data Layout.
   DataLayout *DL;
+  /// Target Library Info.
+  const TargetLibraryInfo *TLI;
+
   /// The vectorization SIMD factor to use. Each vector will have this many
   /// vector elements.
   unsigned VF;
@@ -320,8 +325,9 @@ class LoopVectorizationLegality {
 public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DataLayout *DL,
                             DominatorTree *DT, TargetTransformInfo* TTI,
-                            AliasAnalysis* AA)
-      : TheLoop(L), SE(SE), DL(DL), DT(DT), TTI(TTI), AA(AA), Induction(0) {}
+                            AliasAnalysis *AA, TargetLibraryInfo *TLI)
+      : TheLoop(L), SE(SE), DL(DL), DT(DT), TTI(TTI), AA(AA), TLI(TLI),
+        Induction(0) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -504,6 +510,8 @@ private:
   TargetTransformInfo *TTI;
   /// Alias Analysis.
   AliasAnalysis *AA;
+  /// Target Library Info.
+  TargetLibraryInfo *TLI;
 
   //  ---  vectorization state --- //
 
@@ -540,8 +548,8 @@ public:
   LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
                              LoopVectorizationLegality *Legal,
                              const TargetTransformInfo &TTI,
-                             DataLayout *DL)
-      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL) {}
+                             DataLayout *DL, const TargetLibraryInfo *TLI)
+      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL), TLI(TLI) {}
 
   /// Information about vectorization costs
   struct VectorizationFactor {
@@ -614,6 +622,8 @@ private:
   const TargetTransformInfo &TTI;
   /// Target data layout information.
   DataLayout *DL;
+  /// Target Library Info.
+  const TargetLibraryInfo *TLI;
 };
 
 /// The LoopVectorize Pass.
@@ -631,6 +641,7 @@ struct LoopVectorize : public LoopPass {
   TargetTransformInfo *TTI;
   DominatorTree *DT;
   AliasAnalysis *AA;
+  TargetLibraryInfo *TLI;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -643,19 +654,20 @@ struct LoopVectorize : public LoopPass {
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTree>();
     AA = getAnalysisIfAvailable<AliasAnalysis>();
+    TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TTI, AA);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TTI, AA, TLI);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing.\n");
       return false;
     }
 
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL, TLI);
 
     // Check the function attributes to find out if this function should be
     // optimized for size.
@@ -689,7 +701,7 @@ struct LoopVectorize : public LoopPass {
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << "\n");
 
     // If we decided that it is *legal* to vectorize the loop then do it.
-    InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF.Width, UF);
+    InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -1438,34 +1450,108 @@ getReductionIdentity(LoopVectorizationLegality::ReductionKind K, Type *Tp) {
   }
 }
 
-static bool
-isTriviallyVectorizableIntrinsic(Instruction *Inst) {
-  IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst);
-  if (!II)
-    return false;
-  switch (II->getIntrinsicID()) {
-  case Intrinsic::sqrt:
-  case Intrinsic::sin:
-  case Intrinsic::cos:
-  case Intrinsic::exp:
-  case Intrinsic::exp2:
-  case Intrinsic::log:
-  case Intrinsic::log10:
-  case Intrinsic::log2:
-  case Intrinsic::fabs:
-  case Intrinsic::floor:
-  case Intrinsic::ceil:
-  case Intrinsic::trunc:
-  case Intrinsic::rint:
-  case Intrinsic::nearbyint:
-  case Intrinsic::pow:
-  case Intrinsic::fma:
-  case Intrinsic::fmuladd:
-    return true;
-  default:
-    return false;
+static Intrinsic::ID
+getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
+  // If we have an intrinsic call, check if it is trivially vectorizable.
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
+    switch (II->getIntrinsicID()) {
+    case Intrinsic::sqrt:
+    case Intrinsic::sin:
+    case Intrinsic::cos:
+    case Intrinsic::exp:
+    case Intrinsic::exp2:
+    case Intrinsic::log:
+    case Intrinsic::log10:
+    case Intrinsic::log2:
+    case Intrinsic::fabs:
+    case Intrinsic::floor:
+    case Intrinsic::ceil:
+    case Intrinsic::trunc:
+    case Intrinsic::rint:
+    case Intrinsic::nearbyint:
+    case Intrinsic::pow:
+    case Intrinsic::fma:
+    case Intrinsic::fmuladd:
+      return II->getIntrinsicID();
+    default:
+      return Intrinsic::not_intrinsic;
+    }
   }
-  return false;
+
+  if (!TLI)
+    return Intrinsic::not_intrinsic;
+
+  LibFunc::Func Func;
+  Function *F = CI->getCalledFunction();
+  // We're going to make assumptions on the semantics of the functions, check
+  // that the target knows that it's available in this environment.
+  if (!F || !TLI->getLibFunc(F->getName(), Func))
+    return Intrinsic::not_intrinsic;
+
+  // Otherwise check if we have a call to a function that can be turned into a
+  // vector intrinsic.
+  switch (Func) {
+  default:
+    break;
+  case LibFunc::sin:
+  case LibFunc::sinf:
+  case LibFunc::sinl:
+    return Intrinsic::sin;
+  case LibFunc::cos:
+  case LibFunc::cosf:
+  case LibFunc::cosl:
+    return Intrinsic::cos;
+  case LibFunc::exp:
+  case LibFunc::expf:
+  case LibFunc::expl:
+    return Intrinsic::exp;
+  case LibFunc::exp2:
+  case LibFunc::exp2f:
+  case LibFunc::exp2l:
+    return Intrinsic::exp2;
+  case LibFunc::log:
+  case LibFunc::logf:
+  case LibFunc::logl:
+    return Intrinsic::log;
+  case LibFunc::log10:
+  case LibFunc::log10f:
+  case LibFunc::log10l:
+    return Intrinsic::log10;
+  case LibFunc::log2:
+  case LibFunc::log2f:
+  case LibFunc::log2l:
+    return Intrinsic::log2;
+  case LibFunc::fabs:
+  case LibFunc::fabsf:
+  case LibFunc::fabsl:
+    return Intrinsic::fabs;
+  case LibFunc::floor:
+  case LibFunc::floorf:
+  case LibFunc::floorl:
+    return Intrinsic::floor;
+  case LibFunc::ceil:
+  case LibFunc::ceilf:
+  case LibFunc::ceill:
+    return Intrinsic::ceil;
+  case LibFunc::trunc:
+  case LibFunc::truncf:
+  case LibFunc::truncl:
+    return Intrinsic::trunc;
+  case LibFunc::rint:
+  case LibFunc::rintf:
+  case LibFunc::rintl:
+    return Intrinsic::rint;
+  case LibFunc::nearbyint:
+  case LibFunc::nearbyintf:
+  case LibFunc::nearbyintl:
+    return Intrinsic::nearbyint;
+  case LibFunc::pow:
+  case LibFunc::powf:
+  case LibFunc::powl:
+    return Intrinsic::pow;
+  }
+
+  return Intrinsic::not_intrinsic;
 }
 
 /// This function translates the reduction kind to an LLVM binary operator.
@@ -1991,17 +2077,17 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
     }
 
     case Instruction::Call: {
-      assert(isTriviallyVectorizableIntrinsic(it));
       Module *M = BB->getParent()->getParent();
-      IntrinsicInst *II = cast<IntrinsicInst>(it);
-      Intrinsic::ID ID = II->getIntrinsicID();
+      CallInst *CI = cast<CallInst>(it);
+      Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
+      assert(ID && "Not an intrinsic call!");
       for (unsigned Part = 0; Part < UF; ++Part) {
         SmallVector<Value*, 4> Args;
-        for (unsigned i = 0, ie = II->getNumArgOperands(); i != ie; ++i) {
-          VectorParts &Arg = getVectorValue(II->getArgOperand(i));
+        for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
+          VectorParts &Arg = getVectorValue(CI->getArgOperand(i));
           Args.push_back(Arg[Part]);
         }
-        Type *Tys[] = { VectorType::get(II->getType()->getScalarType(), VF) };
+        Type *Tys[] = { VectorType::get(CI->getType()->getScalarType(), VF) };
         Function *F = Intrinsic::getDeclaration(M, ID, Tys);
         Entry[Part] = Builder.CreateCall(F, Args);
       }
@@ -2222,7 +2308,7 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
       // We still don't handle functions.
       CallInst *CI = dyn_cast<CallInst>(it);
-      if (CI && !isTriviallyVectorizableIntrinsic(it)) {
+      if (CI && !getIntrinsicIDForCall(CI, TLI)) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
         return false;
       }
@@ -3305,13 +3391,14 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     return TTI.getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
   }
   case Instruction::Call: {
-    assert(isTriviallyVectorizableIntrinsic(I));
-    IntrinsicInst *II = cast<IntrinsicInst>(I);
-    Type *RetTy = ToVectorTy(II->getType(), VF);
+    CallInst *CI = cast<CallInst>(I);
+    Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
+    assert(ID && "Not an intrinsic call!");
+    Type *RetTy = ToVectorTy(CI->getType(), VF);
     SmallVector<Type*, 4> Tys;
-    for (unsigned i = 0, ie = II->getNumArgOperands(); i != ie; ++i)
-      Tys.push_back(ToVectorTy(II->getArgOperand(i)->getType(), VF));
-    return TTI.getIntrinsicInstrCost(II->getIntrinsicID(), RetTy, Tys);
+    for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i)
+      Tys.push_back(ToVectorTy(CI->getArgOperand(i)->getType(), VF));
+    return TTI.getIntrinsicInstrCost(ID, RetTy, Tys);
   }
   default: {
     // We are scalarizing the instruction. Return the cost of the scalar

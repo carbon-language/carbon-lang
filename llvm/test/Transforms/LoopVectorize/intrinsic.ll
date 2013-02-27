@@ -902,6 +902,30 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 }
 
+; CHECK: fabs_libm
+; CHECK:  call <4 x float> @llvm.fabs.v4f32
+; CHECK: ret void
+define void @fabs_libm(float* nocapture %x) nounwind {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds float* %x, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %call = tail call float @fabsf(float %0) nounwind readnone
+  store float %call, float* %arrayidx, align 4
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, 1024
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+declare float @fabsf(float) nounwind readnone
+
 declare double @llvm.pow.f64(double, double) nounwind readnone
 
 !0 = metadata !{metadata !"float", metadata !1}
