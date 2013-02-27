@@ -162,17 +162,22 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 
 void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
 #ifdef DEBUG_GCDAPROFILING
-  printf("llvmgcda: function id=%x\n", ident);
+  printf("llvmgcda: function id=%x name=%s\n", ident,
+         function_name ? function_name : "NULL");
 #endif
   if (!output_file) return;
 
   /* function tag */  
   fwrite("\0\0\0\1", 4, 1, output_file);
-  write_int32(3 + 1 + length_of_string(function_name));
+  uint32_t len = 3;
+  if (function_name)
+    len += 1 + length_of_string(function_name);
+  write_int32(len);
   write_int32(ident);
   write_int32(0);
   write_int32(0);
-  write_string(function_name);
+  if (function_name)
+    write_string(function_name);
 }
 
 void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {

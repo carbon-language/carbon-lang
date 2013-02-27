@@ -34,7 +34,8 @@ ModulePass *createPathProfilerPass();
 ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
                                    bool Use402Format = false,
                                    bool UseExtraChecksum = false,
-                                   bool NoRedZone = false);
+                                   bool NoRedZone = false,
+                                   bool NoFunctionNamesInData = false);
 
 // Insert AddressSanitizer (address sanity checking) instrumentation
 FunctionPass *createAddressSanitizerFunctionPass(

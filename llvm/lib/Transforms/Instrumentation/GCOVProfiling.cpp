@@ -45,14 +45,16 @@ namespace {
     static char ID;
     GCOVProfiler()
         : ModulePass(ID), EmitNotes(true), EmitData(true), Use402Format(false),
-          UseExtraChecksum(false), NoRedZone(false) {
+          UseExtraChecksum(false), NoRedZone(false),
+          NoFunctionNamesInData(false) {
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
-    GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format,
-                 bool useExtraChecksum, bool NoRedZone_)
+    GCOVProfiler(bool EmitNotes, bool EmitData, bool Use402Format,
+                 bool UseExtraChecksum, bool NoRedZone,
+                 bool NoFunctionNamesInData)
         : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData),
-          Use402Format(use402Format), UseExtraChecksum(useExtraChecksum),
-          NoRedZone(NoRedZone_) {
+          Use402Format(Use402Format), UseExtraChecksum(UseExtraChecksum),
+          NoRedZone(NoRedZone), NoFunctionNamesInData(NoFunctionNamesInData) {
       assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
@@ -100,6 +102,7 @@ namespace {
     bool Use402Format;
     bool UseExtraChecksum;
     bool NoRedZone;
+    bool NoFunctionNamesInData;
 
     Module *M;
     LLVMContext *Ctx;
@@ -113,9 +116,10 @@ INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
 ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData,
                                          bool Use402Format,
                                          bool UseExtraChecksum,
-                                         bool NoRedZone) {
+                                         bool NoRedZone,
+                                         bool NoFunctionNamesInData) {
   return new GCOVProfiler(EmitNotes, EmitData, Use402Format, UseExtraChecksum,
-                          NoRedZone);
+                          NoRedZone, NoFunctionNamesInData);
 }
 
 namespace {
@@ -664,7 +668,9 @@ void GCOVProfiler::insertCounterWriteout(
         intptr_t ident = reinterpret_cast<intptr_t>(I->second);
         Builder.CreateCall2(EmitFunction,
                             Builder.getInt32(ident),
-                            Builder.CreateGlobalStringPtr(SP.getName()));
+                            NoFunctionNamesInData ?
+                              Constant::getNullValue(Builder.getInt8PtrTy()) :
+                              Builder.CreateGlobalStringPtr(SP.getName()));
         
         GlobalVariable *GV = I->first;
         unsigned Arcs =
