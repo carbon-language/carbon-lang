@@ -880,8 +880,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     else
       return 100;
   }
-  if (Left.is(tok::l_brace) && Right.isNot(tok::l_brace))
-    return 50;
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
     return 150;
   if (Left.is(tok::coloncolon))
@@ -917,7 +915,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 20;
 
   if (Left.is(tok::l_paren) || Left.is(tok::l_square) ||
-      Left.Type == TT_TemplateOpener)
+      Left.is(tok::l_brace) || Left.Type == TT_TemplateOpener)
     return 20;
 
   if (Right.is(tok::lessless)) {

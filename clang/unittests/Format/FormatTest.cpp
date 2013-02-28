@@ -612,6 +612,11 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
                                       "\n"
                                       "  b\n"
                                       "};"));
+  verifyFormat("const uint8_t aaaaaaaaaaaaaaaaaaaaaa[0] = {\n"
+               "  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // comment\n"
+               "  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // comment\n"
+               "  0x00, 0x00, 0x00, 0x00              // comment\n"
+               "};");
 }
 
 //===----------------------------------------------------------------------===//
