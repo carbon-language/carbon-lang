@@ -146,7 +146,7 @@ public:
   }
   static void Profile(FoldingSetNodeID &ID, StringRef Kind, StringRef Values) {
     ID.AddString(Kind);
-    ID.AddString(Values);
+    if (!Values.empty()) ID.AddString(Values);
   }
 
   // FIXME: Remove this!
