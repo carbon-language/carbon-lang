@@ -566,7 +566,10 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         section->setSegmentType(segmentType);
         StringRef segmentName = section->segmentKindToStr();
 
-        int64_t sectionFlag = msi->flags();
+        int64_t lookupSectionFlag = msi->flags();
+        if (!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) 
+          lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
+        lookupSectionFlag &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
 
         Segment<ELFT> *segment;
         // We need a seperate segment for sections that dont have 
@@ -589,7 +592,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         }
 
         // Use the flags of the merged Section for the segment
-        const SegmentKey key("PT_LOAD", sectionFlag);
+        const SegmentKey key("PT_LOAD", lookupSectionFlag);
         const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key,
                                                                     nullptr);
         std::pair<typename SegmentMapT::iterator, bool> segmentInsert(

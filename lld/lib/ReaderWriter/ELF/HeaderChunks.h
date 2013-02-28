@@ -72,7 +72,7 @@ Header<ELFT>::Header(const ELFTargetInfo &ti)
   e_ident(llvm::ELF::EI_MAG2, 'L');
   e_ident(llvm::ELF::EI_MAG3, 'F');
   e_ehsize(sizeof(Elf_Ehdr));
-  e_flags(2);
+  e_flags(0);
 }
 
 template <class ELFT>
