@@ -526,6 +526,4 @@ namespace test11 {
   //   (After this is a terminate landingpad.)
 }
 
-// CHECK: attributes [[NUW]] = { nounwind }
 // CHECK: attributes [[NI_NR_NUW]] = { noinline noreturn nounwind }
-// CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

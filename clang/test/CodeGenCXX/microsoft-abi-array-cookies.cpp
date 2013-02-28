@@ -5,7 +5,7 @@ struct ClassWithoutDtor {
 };
 
 void check_array_no_cookies() {
-// CHECK: define void @"\01?check_array_no_cookies@@YAXXZ"() #0
+// CHECK: define void @"\01?check_array_no_cookies@@YAXXZ"() [[NUW:#[0-9]+]]
 
 // CHECK: call noalias i8* @"\01??_U@YAPAXI@Z"(i32 42)
   ClassWithoutDtor *array = new ClassWithoutDtor[42];
@@ -58,4 +58,4 @@ void check_array_cookies_aligned() {
 // CHECK: getelementptr inbounds i8* [[ARRAY_AS_CHAR]], i64 -8
 }
 
-// CHECK: attributes #0 = { nounwind{{.*}} }
+// CHECK: attributes [[NUW]] = { nounwind{{.*}} }

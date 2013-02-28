@@ -1486,3 +1486,4 @@ void test70(id i) {
 
 // ARC-ALIEN: attributes [[NLB]] = { nonlazybind }
 // ARC-NATIVE: attributes [[NLB]] = { nonlazybind }
+// CHECK: attributes [[NUW]] = { nounwind }

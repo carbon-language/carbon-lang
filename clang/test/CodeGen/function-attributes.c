@@ -43,7 +43,7 @@ void f9b(void) { f9a(); }
 
 // FIXME: We should be setting nounwind on calls.
 // CHECK: call i32 @f10_t()
-// CHECK: [[NUW]]
+// CHECK: [[NUW_RN:#[0-9]+]]
 // CHECK: {
 int __attribute__((const)) f10_t(void);
 int f10(void) { return f10_t(); }
@@ -119,6 +119,8 @@ void f19(void) {
 
 // CHECK: attributes [[NUW]] = { nounwind optsize readnone{{.*}} }
 // CHECK: attributes [[AI]] = { alwaysinline nounwind optsize readnone{{.*}} }
-// CHECK: attributes [[NR]] = { noreturn nounwind optsize }
 // CHECK: attributes [[ALIGN]] = { nounwind optsize readnone alignstack=16{{.*}} }
-// CHECK: attributes [[RT]] = { nounwind optsize returns_twice }
+// CHECK: attributes [[RT]] = { nounwind optsize returns_twice{{.*}} }
+// CHECK: attributes [[NR]] = { noreturn nounwind optsize }
+// CHECK: attributes [[NUW_RN]] = { nounwind optsize readnone }
+// CHECK: attributes [[RT_CALL]] = { nounwind optsize returns_twice }

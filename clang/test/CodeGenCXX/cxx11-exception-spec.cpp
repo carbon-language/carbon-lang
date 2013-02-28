@@ -10,7 +10,7 @@ template<typename T> struct S {
   static void g() noexcept(sizeof(T) == 4);
 };
 
-// CHECK: define {{.*}} @_Z1fIsEvv() {
+// CHECK: define {{.*}} @_Z1fIsEvv() [[NONE:#[0-9]+]] {
 template<> void f<short>() { h(); }
 // CHECK: define {{.*}} @_Z1fIA2_sEvv() [[NUW:#[0-9]+]] {
 template<> void f<short[2]>() noexcept { h(); }
@@ -21,7 +21,7 @@ template<> void S<short>::f() { h(); }
 // CHECK: define {{.*}} @_ZN1SIA2_sE1fEv() [[NUW]]
 template<> void S<short[2]>::f() noexcept { h(); }
 
-// CHECK: define {{.*}} @_Z1fIDsEvv() {
+// CHECK: define {{.*}} @_Z1fIDsEvv() [[NONE]] {
 template void f<char16_t>();
 // CHECK: define {{.*}} @_Z1fIA2_DsEvv() [[NUW]]  {
 template void f<char16_t[2]>();
@@ -35,7 +35,7 @@ template void S<char16_t[2]>::f();
 void h() {
   // CHECK: define {{.*}} @_Z1fIiEvv() [[NUW]] {
   f<int>();
-  // CHECK: define {{.*}} @_Z1fIA2_iEvv() {
+  // CHECK: define {{.*}} @_Z1fIA2_iEvv() [[NONE]] {
   f<int[2]>();
 
   // CHECK: define {{.*}} @_ZN1SIiE1fEv() [[NUW]]
@@ -46,7 +46,7 @@ void h() {
 
   // CHECK: define {{.*}} @_Z1fIfEvv() [[NUW]] {
   void (*f1)() = &f<float>;
-  // CHECK: define {{.*}} @_Z1fIdEvv() {
+  // CHECK: define {{.*}} @_Z1fIdEvv() [[NONE]] {
   void (*f2)() = &f<double>;
 
   // CHECK: define {{.*}} @_ZN1SIfE1fEv() [[NUW]]
@@ -57,7 +57,7 @@ void h() {
 
   // CHECK: define {{.*}} @_Z1fIA4_cEvv() [[NUW]] {
   (void)&f<char[4]>;
-  // CHECK: define {{.*}} @_Z1fIcEvv() {
+  // CHECK: define {{.*}} @_Z1fIcEvv() [[NONE]] {
   (void)&f<char>;
 
   // CHECK: define {{.*}} @_ZN1SIA4_cE1fEv() [[NUW]]
@@ -119,4 +119,5 @@ void j() {
   Nested<long>().f<false, long>();
 }
 
-// CHECK: attributes [[NUW]] = { nounwind }
+// CHECK: attributes [[NONE]] = { {{.*}} }
+// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
