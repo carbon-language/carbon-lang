@@ -1027,6 +1027,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
 
   if (Tok.Parent->is(tok::comma))
     return true;
+  if (Tok.is(tok::comma))
+    return false;
   if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
     return true;
   if (Tok.Parent->FormatTok.Tok.is(tok::kw_operator))
@@ -1048,8 +1050,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
            Tok.Parent->Type == TT_TemplateCloser &&
            Style.Standard != FormatStyle::LS_Cpp11;
   }
-  if (Tok.Type == TT_BinaryOperator ||
-      (Tok.Parent->Type == TT_BinaryOperator && Tok.isNot(tok::comma)))
+  if (Tok.is(tok::arrowstar) || Tok.Parent->is(tok::arrowstar))
+    return false;
+  if (Tok.Type == TT_BinaryOperator || Tok.Parent->Type == TT_BinaryOperator)
     return true;
   if (Tok.Parent->Type == TT_TemplateCloser && Tok.is(tok::l_paren))
     return false;

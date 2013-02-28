@@ -1713,6 +1713,7 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
 
 TEST_F(FormatTest, UnderstandsBinaryOperators) {
   verifyFormat("COMPARE(a, ==, b);");
+  verifyFormat("(a->*f)()");
 }
 
 TEST_F(FormatTest, UnderstandsUnaryOperators) {
