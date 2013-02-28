@@ -44,7 +44,7 @@ public:
 protected:
   virtual void run(const MatchFinder::MatchResult &Result);
   virtual void verify(const MatchFinder::MatchResult &Result,
-                      const NodeType &Node) = 0;
+                      const NodeType &Node) {}
 
   void setFailure(const Twine &Result) {
     Verified = false;

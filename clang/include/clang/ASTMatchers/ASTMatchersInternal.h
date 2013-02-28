@@ -35,13 +35,13 @@
 #ifndef LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_INTERNAL_H
 #define LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_INTERNAL_H
 
-#include "clang/AST/Decl.h"
+#include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
-#include "clang/ASTMatchers/ASTTypeTraits.h"
 #include "llvm/ADT/VariadicFunction.h"
 #include "llvm/Support/type_traits.h"
 #include <map>

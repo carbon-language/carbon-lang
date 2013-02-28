@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/Decl.h"
@@ -22,6 +23,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/RawCommentList.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/AddressSpaces.h"
@@ -381,6 +383,58 @@ public:
   mutable DeclarationNameTable DeclarationNames;
   OwningPtr<ExternalASTSource> ExternalSource;
   ASTMutationListener *Listener;
+
+  /// \brief Contains parents of a node.
+  typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 1> ParentVector;
+
+  /// \brief Maps from a node to its parents.
+  typedef llvm::DenseMap<const void *, ParentVector> ParentMap;
+
+  /// \brief Returns the parents of the given node.
+  ///
+  /// Note that this will lazily compute the parents of all nodes
+  /// and store them for later retrieval. Thus, the first call is O(n)
+  /// in the number of AST nodes.
+  ///
+  /// Caveats and FIXMEs:
+  /// Calculating the parent map over all AST nodes will need to load the
+  /// full AST. This can be undesirable in the case where the full AST is
+  /// expensive to create (for example, when using precompiled header
+  /// preambles). Thus, there are good opportunities for optimization here.
+  /// One idea is to walk the given node downwards, looking for references
+  /// to declaration contexts - once a declaration context is found, compute
+  /// the parent map for the declaration context; if that can satisfy the
+  /// request, loading the whole AST can be avoided. Note that this is made
+  /// more complex by statements in templates having multiple parents - those
+  /// problems can be solved by building closure over the templated parts of
+  /// the AST, which also avoids touching large parts of the AST.
+  /// Additionally, we will want to add an interface to already give a hint
+  /// where to search for the parents, for example when looking at a statement
+  /// inside a certain function.
+  ///
+  /// 'NodeT' can be one of Decl, Stmt, Type, TypeLoc,
+  /// NestedNameSpecifier or NestedNameSpecifierLoc.
+  template <typename NodeT>
+  ParentVector getParents(const NodeT &Node) {
+    return getParents(ast_type_traits::DynTypedNode::create(Node));
+  }
+
+  ParentVector getParents(const ast_type_traits::DynTypedNode &Node) {
+    assert(Node.getMemoizationData() &&
+           "Invariant broken: only nodes that support memoization may be "
+           "used in the parent map.");
+    if (!AllParents) {
+      // We always need to run over the whole translation unit, as
+      // hasAncestor can escape any subtree.
+      AllParents.reset(
+          ParentMapASTVisitor::buildMap(*getTranslationUnitDecl()));
+    }
+    ParentMap::const_iterator I = AllParents->find(Node.getMemoizationData());
+    if (I == AllParents->end()) {
+      return ParentVector();
+    }
+    return I->second;
+  }
 
   const clang::PrintingPolicy &getPrintingPolicy() const {
     return PrintingPolicy;
@@ -2136,8 +2190,81 @@ private:
   friend class DeclContext;
   friend class DeclarationNameTable;
   void ReleaseDeclContextMaps();
+
+  /// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
+  /// parents as defined by the \c RecursiveASTVisitor.
+  ///
+  /// Note that the relationship described here is purely in terms of AST
+  /// traversal - there are other relationships (for example declaration context)
+  /// in the AST that are better modeled by special matchers.
+  ///
+  /// FIXME: Currently only builds up the map using \c Stmt and \c Decl nodes.
+  class ParentMapASTVisitor : public RecursiveASTVisitor<ParentMapASTVisitor> {
+  public:
+    /// \brief Builds and returns the translation unit's parent map.
+    ///
+    ///  The caller takes ownership of the returned \c ParentMap.
+    static ParentMap *buildMap(TranslationUnitDecl &TU) {
+      ParentMapASTVisitor Visitor(new ParentMap);
+      Visitor.TraverseDecl(&TU);
+      return Visitor.Parents;
+    }
+
+  private:
+    typedef RecursiveASTVisitor<ParentMapASTVisitor> VisitorBase;
+
+    ParentMapASTVisitor(ParentMap *Parents) : Parents(Parents) {
+    }
+
+    bool shouldVisitTemplateInstantiations() const {
+      return true;
+    }
+    bool shouldVisitImplicitCode() const {
+      return true;
+    }
+    // Disables data recursion. We intercept Traverse* methods in the RAV, which
+    // are not triggered during data recursion.
+    bool shouldUseDataRecursionFor(clang::Stmt *S) const {
+      return false;
+    }
+
+    template <typename T>
+    bool TraverseNode(T *Node, bool(VisitorBase:: *traverse) (T *)) {
+      if (Node == NULL)
+        return true;
+      if (ParentStack.size() > 0)
+        // FIXME: Currently we add the same parent multiple times, for example
+        // when we visit all subexpressions of template instantiations; this is
+        // suboptimal, bug benign: the only way to visit those is with
+        // hasAncestor / hasParent, and those do not create new matches.
+        // The plan is to enable DynTypedNode to be storable in a map or hash
+        // map. The main problem there is to implement hash functions /
+        // comparison operators for all types that DynTypedNode supports that
+        // do not have pointer identity.
+        (*Parents)[Node].push_back(ParentStack.back());
+      ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));
+      bool Result = (this ->* traverse) (Node);
+      ParentStack.pop_back();
+      return Result;
+    }
+
+    bool TraverseDecl(Decl *DeclNode) {
+      return TraverseNode(DeclNode, &VisitorBase::TraverseDecl);
+    }
+
+    bool TraverseStmt(Stmt *StmtNode) {
+      return TraverseNode(StmtNode, &VisitorBase::TraverseStmt);
+    }
+
+    ParentMap *Parents;
+    llvm::SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
+
+    friend class RecursiveASTVisitor<ParentMapASTVisitor>;
+  };
+
+  llvm::OwningPtr<ParentMap> AllParents;
 };
-  
+
 /// \brief Utility function for constructing a nullary selector.
 static inline Selector GetNullarySelector(StringRef name, ASTContext& Ctx) {
   IdentifierInfo* II = &Ctx.Idents.get(name);

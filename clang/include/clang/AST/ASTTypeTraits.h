@@ -1,4 +1,4 @@
-//===--- ASTMatchersTypeTraits.h --------------------------------*- C++ -*-===//
+//===--- ASTTypeTraits.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_AST_TYPE_TRAITS_H
-#define LLVM_CLANG_AST_MATCHERS_AST_TYPE_TRAITS_H
+#ifndef LLVM_CLANG_AST_AST_TYPE_TRAITS_H
+#define LLVM_CLANG_AST_AST_TYPE_TRAITS_H
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
@@ -88,8 +88,9 @@ private:
   /// guaranteed to be unique pointers pointing to dedicated storage in the
   /// AST. \c QualTypes on the other hand do not have storage or unique
   /// pointers and thus need to be stored by value.
-  llvm::AlignedCharArrayUnion<Decl*, QualType, TypeLoc, NestedNameSpecifierLoc>
-    Storage;
+  llvm::AlignedCharArrayUnion<Decl *, Stmt *, NestedNameSpecifier,
+                              NestedNameSpecifierLoc, QualType, Type,
+                              TypeLoc> Storage;
 };
 
 // FIXME: Pull out abstraction for the following.
@@ -207,4 +208,4 @@ inline const void *DynTypedNode::getMemoizationData() const {
 } // end namespace ast_type_traits
 } // end namespace clang
 
-#endif // LLVM_CLANG_AST_MATCHERS_AST_TYPE_TRAITS_H
+#endif // LLVM_CLANG_AST_AST_TYPE_TRAITS_H
