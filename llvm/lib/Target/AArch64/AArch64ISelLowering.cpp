@@ -1852,11 +1852,10 @@ AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
   const GlobalValue *GV = GN->getGlobal();
   unsigned Alignment = GV->getAlignment();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
-
-  if (GV->isWeakForLinker() && RelocM == Reloc::Static) {
-    // Weak symbols can't use ADRP/ADD pair since they should evaluate to
-    // zero when undefined. In PIC mode the GOT can take care of this, but in
-    // absolute mode we use a constant pool load.
+  if (GV->isWeakForLinker() && GV->isDeclaration() && RelocM == Reloc::Static) {
+    // Weak undefined symbols can't use ADRP/ADD pair since they should evaluate
+    // to zero when they remain undefined. In PIC mode the GOT can take care of
+    // this, but in absolute mode we use a constant pool load.
     SDValue PoolAddr;
     PoolAddr = DAG.getNode(AArch64ISD::WrapperSmall, dl, PtrVT,
                            DAG.getTargetConstantPool(GV, PtrVT, 0, 0,

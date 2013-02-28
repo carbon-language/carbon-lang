@@ -25,3 +25,11 @@ define i32* @bar() {
 ; CHECK: add x0, [[BASE]], #20
   ret i32* %addr
 }
+
+@defined_weak_var = internal unnamed_addr global i32 0
+
+define i32* @wibble() {
+  ret i32* @defined_weak_var
+; CHECK: adrp [[BASE:x[0-9]+]], defined_weak_var
+; CHECK: add x0, [[BASE]], #:lo12:defined_weak_var
+}
