@@ -21,25 +21,14 @@
 #include <pthread.h>
 #include <sched.h>
 
+#include <algorithm>
 #include <set>
 
 namespace __sanitizer {
-// In a single-threaded process, ThreadLister should produce the TID (which
-// coincides with the PID) of the current task.
-TEST(SanitizerLinux, ThreadListerSingleThread) {
-  pid_t pid = getpid();
-  ThreadLister thread_lister(pid);
-  EXPECT_FALSE(thread_lister.error());
-  EXPECT_EQ(thread_lister.GetNextTID(), pid);
-  EXPECT_FALSE(thread_lister.error());
-  EXPECT_LT(thread_lister.GetNextTID(), 0);
-  EXPECT_FALSE(thread_lister.error());
-}
-
-static pthread_cond_t thread_exit_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t thread_exit_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t tid_reported_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t tid_reported_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t thread_exit_cond;
+static pthread_mutex_t thread_exit_mutex;
+static pthread_cond_t tid_reported_cond;
+static pthread_mutex_t tid_reported_mutex;
 static bool thread_exit;
 
 void *TIDReporterThread(void *tid_storage) {
@@ -55,10 +44,15 @@ void *TIDReporterThread(void *tid_storage) {
   return NULL;
 }
 
-// In a process with multiple threads, ThreadLister should produce their TIDs
-// in some order.
+// The set of TIDs produced by ThreadLister should include the TID of every
+// thread we spawn here. The two sets may differ if there are other threads
+// running in the current process that we are not aware of.
 // Calling ThreadLister::Reset() should not change this.
 TEST(SanitizerLinux, ThreadListerMultiThreaded) {
+  pthread_mutex_init(&thread_exit_mutex, NULL);
+  pthread_mutex_init(&tid_reported_mutex, NULL);
+  pthread_cond_init(&thread_exit_cond, NULL);
+  pthread_cond_init(&tid_reported_cond, NULL);
   const uptr kThreadCount = 20; // does not include the main thread
   pthread_t thread_ids[kThreadCount];
   pid_t  thread_tids[kThreadCount];
@@ -96,13 +90,24 @@ TEST(SanitizerLinux, ThreadListerMultiThreaded) {
     EXPECT_LT(tid, 0);
     EXPECT_FALSE(thread_lister.error());
 
-    EXPECT_EQ(listed_tids, reported_tids);
+    std::set<pid_t> intersection;
+    std::set_intersection(reported_tids.begin(), reported_tids.end(),
+                          listed_tids.begin(), listed_tids.end(),
+                          std::inserter(intersection, intersection.begin()));
+    EXPECT_EQ(intersection, reported_tids);
     thread_lister.Reset();
   }
+
   pthread_mutex_lock(&thread_exit_mutex);
   thread_exit = true;
   pthread_cond_broadcast(&thread_exit_cond);
   pthread_mutex_unlock(&thread_exit_mutex);
+  for (uptr i = 0; i < kThreadCount; i++)
+    pthread_join(thread_ids[i], NULL);
+  pthread_mutex_destroy(&thread_exit_mutex);
+  pthread_mutex_destroy(&tid_reported_mutex);
+  pthread_cond_destroy(&thread_exit_cond);
+  pthread_cond_destroy(&tid_reported_cond);
 }
 }  // namespace __sanitizer
 
