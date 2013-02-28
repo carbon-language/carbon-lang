@@ -159,7 +159,7 @@ let Defs = [XSP], Uses = [XSP] in {
 // Atomic operation pseudo-instructions
 //===----------------------------------------------------------------------===//
 
-let usesCustomInserter = 1, Defs = [NZCV] in {
+let usesCustomInserter = 1 in {
 multiclass AtomicSizes<string opname> {
   def _I8 : PseudoInst<(outs GPR32:$dst), (ins GPR64:$ptr, GPR32:$incr),
     [(set GPR32:$dst, (!cast<SDNode>(opname # "_8") GPR64:$ptr, GPR32:$incr))]>;
@@ -178,11 +178,14 @@ defm ATOMIC_LOAD_AND  : AtomicSizes<"atomic_load_and">;
 defm ATOMIC_LOAD_OR   : AtomicSizes<"atomic_load_or">;
 defm ATOMIC_LOAD_XOR  : AtomicSizes<"atomic_load_xor">;
 defm ATOMIC_LOAD_NAND : AtomicSizes<"atomic_load_nand">;
-defm ATOMIC_LOAD_MIN  : AtomicSizes<"atomic_load_min">;
-defm ATOMIC_LOAD_MAX  : AtomicSizes<"atomic_load_max">;
-defm ATOMIC_LOAD_UMIN : AtomicSizes<"atomic_load_umin">;
-defm ATOMIC_LOAD_UMAX : AtomicSizes<"atomic_load_umax">;
 defm ATOMIC_SWAP      : AtomicSizes<"atomic_swap">;
+let Defs = [NZCV] in {
+  // These operations need a CMP to calculate the correct value
+  defm ATOMIC_LOAD_MIN  : AtomicSizes<"atomic_load_min">;
+  defm ATOMIC_LOAD_MAX  : AtomicSizes<"atomic_load_max">;
+  defm ATOMIC_LOAD_UMIN : AtomicSizes<"atomic_load_umin">;
+  defm ATOMIC_LOAD_UMAX : AtomicSizes<"atomic_load_umax">;
+}
 
 let usesCustomInserter = 1, Defs = [NZCV] in {
 def ATOMIC_CMP_SWAP_I8

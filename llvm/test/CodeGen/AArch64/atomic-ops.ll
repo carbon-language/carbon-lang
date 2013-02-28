@@ -18,8 +18,7 @@ define i8 @test_atomic_load_add_i8(i8 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: add [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -39,8 +38,7 @@ define i16 @test_atomic_load_add_i16(i16 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: add [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -60,8 +58,7 @@ define i32 @test_atomic_load_add_i32(i32 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: add [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -81,8 +78,7 @@ define i64 @test_atomic_load_add_i64(i64 %offset) nounwind {
   ; function there.
 ; CHECK-NEXT: add [[NEW:x[0-9]+]], x[[OLD]], x0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -102,8 +98,7 @@ define i8 @test_atomic_load_sub_i8(i8 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: sub [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -123,8 +118,7 @@ define i16 @test_atomic_load_sub_i16(i16 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: sub [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -144,8 +138,7 @@ define i32 @test_atomic_load_sub_i32(i32 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: sub [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -165,8 +158,7 @@ define i64 @test_atomic_load_sub_i64(i64 %offset) nounwind {
   ; function there.
 ; CHECK-NEXT: sub [[NEW:x[0-9]+]], x[[OLD]], x0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -186,8 +178,7 @@ define i8 @test_atomic_load_and_i8(i8 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: and [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -207,8 +198,7 @@ define i16 @test_atomic_load_and_i16(i16 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: and [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -228,8 +218,7 @@ define i32 @test_atomic_load_and_i32(i32 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: and [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -249,8 +238,7 @@ define i64 @test_atomic_load_and_i64(i64 %offset) nounwind {
   ; function there.
 ; CHECK-NEXT: and [[NEW:x[0-9]+]], x[[OLD]], x0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -270,8 +258,7 @@ define i8 @test_atomic_load_or_i8(i8 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: orr [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -291,8 +278,7 @@ define i16 @test_atomic_load_or_i16(i16 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: orr [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -312,8 +298,7 @@ define i32 @test_atomic_load_or_i32(i32 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: orr [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -333,8 +318,7 @@ define i64 @test_atomic_load_or_i64(i64 %offset) nounwind {
   ; function there.
 ; CHECK-NEXT: orr [[NEW:x[0-9]+]], x[[OLD]], x0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -354,8 +338,7 @@ define i8 @test_atomic_load_xor_i8(i8 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: eor [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -375,8 +358,7 @@ define i16 @test_atomic_load_xor_i16(i16 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: eor [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -396,8 +378,7 @@ define i32 @test_atomic_load_xor_i32(i32 %offset) nounwind {
   ;  function there.
 ; CHECK-NEXT: eor [[NEW:w[0-9]+]], w[[OLD]], w0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -417,8 +398,7 @@ define i64 @test_atomic_load_xor_i64(i64 %offset) nounwind {
   ; function there.
 ; CHECK-NEXT: eor [[NEW:x[0-9]+]], x[[OLD]], x0
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -437,8 +417,7 @@ define i8 @test_atomic_load_xchg_i8(i8 %offset) nounwind {
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], w0, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -457,8 +436,7 @@ define i16 @test_atomic_load_xchg_i16(i16 %offset) nounwind {
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], w0, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -477,8 +455,7 @@ define i32 @test_atomic_load_xchg_i32(i32 %offset) nounwind {
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], w0, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -497,8 +474,7 @@ define i64 @test_atomic_load_xchg_i64(i64 %offset) nounwind {
   ; x0 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], x0, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -520,8 +496,7 @@ define i8 @test_atomic_load_min_i8(i8 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], sxtb
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, gt
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -542,8 +517,7 @@ define i16 @test_atomic_load_min_i16(i16 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], sxth
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, gt
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -564,8 +538,7 @@ define i32 @test_atomic_load_min_i32(i32 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]]
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, gt
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -586,8 +559,7 @@ define i64 @test_atomic_load_min_i64(i64 %offset) nounwind {
 ; CHECK-NEXT: cmp x0, x[[OLD]]
 ; CHECK-NEXT: csel [[NEW:x[0-9]+]], x[[OLD]], x0, gt
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -608,8 +580,7 @@ define i8 @test_atomic_load_max_i8(i8 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], sxtb
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, lt
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -630,8 +601,7 @@ define i16 @test_atomic_load_max_i16(i16 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], sxth
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, lt
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -652,8 +622,7 @@ define i32 @test_atomic_load_max_i32(i32 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]]
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, lt
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -674,8 +643,7 @@ define i64 @test_atomic_load_max_i64(i64 %offset) nounwind {
 ; CHECK-NEXT: cmp x0, x[[OLD]]
 ; CHECK-NEXT: csel [[NEW:x[0-9]+]], x[[OLD]], x0, lt
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -696,8 +664,7 @@ define i8 @test_atomic_load_umin_i8(i8 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], uxtb
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, hi
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -718,8 +685,7 @@ define i16 @test_atomic_load_umin_i16(i16 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], uxth
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, hi
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -740,8 +706,7 @@ define i32 @test_atomic_load_umin_i32(i32 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]]
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, hi
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -762,8 +727,7 @@ define i64 @test_atomic_load_umin_i64(i64 %offset) nounwind {
 ; CHECK-NEXT: cmp x0, x[[OLD]]
 ; CHECK-NEXT: csel [[NEW:x[0-9]+]], x[[OLD]], x0, hi
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -784,8 +748,7 @@ define i8 @test_atomic_load_umax_i8(i8 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], uxtb
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, lo
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -806,8 +769,7 @@ define i16 @test_atomic_load_umax_i16(i16 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]], uxth
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, lo
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -828,8 +790,7 @@ define i32 @test_atomic_load_umax_i32(i32 %offset) nounwind {
 ; CHECK-NEXT: cmp w0, w[[OLD]]
 ; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, lo
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -850,8 +811,7 @@ define i64 @test_atomic_load_umax_i64(i64 %offset) nounwind {
 ; CHECK-NEXT: cmp x0, x[[OLD]]
 ; CHECK-NEXT: csel [[NEW:x[0-9]+]], x[[OLD]], x0, lo
 ; CHECK-NEXT: stxr [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne .LBB{{[0-9]+}}_1
+; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -873,8 +833,7 @@ define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
   ; As above, w1 is a reasonable guess.
 ; CHECK: stxrb [[STATUS:w[0-9]+]], w1, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne [[STARTAGAIN]]
+; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -896,8 +855,7 @@ define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
   ; As above, w1 is a reasonable guess.
 ; CHECK: stxrh [[STATUS:w[0-9]+]], w1, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne [[STARTAGAIN]]
+; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -919,8 +877,7 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
   ; As above, w1 is a reasonable guess.
 ; CHECK: stxr [[STATUS:w[0-9]+]], w1, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne [[STARTAGAIN]]
+; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
@@ -942,8 +899,7 @@ define i64 @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
   ; As above, w1 is a reasonable guess.
 ; CHECK: stxr [[STATUS:w[0-9]+]], x1, [x[[ADDR]]]
-; CHECK-NEXT: cmp [[STATUS]], #0
-; CHECK-NEXT: b.ne [[STARTAGAIN]]
+; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK: dmb ish
 
 ; CHECK: mov x0, x[[OLD]]
