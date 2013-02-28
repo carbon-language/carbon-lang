@@ -260,10 +260,26 @@ INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   if (!asan_inited) return internal_memcmp(a1, a2, size);
   ENSURE_ASAN_INITED();
   if (flags()->replace_intrin) {
-    // We check the entire regions even if the first bytes of the buffers
-    // are different.
-    ASAN_READ_RANGE(a1, size);
-    ASAN_READ_RANGE(a2, size);
+    if (flags()->strict_memcmp) {
+      // Check the entire regions even if the first bytes of the buffers are
+      // different.
+      ASAN_READ_RANGE(a1, size);
+      ASAN_READ_RANGE(a2, size);
+      // Fallthrough to REAL(memcmp) below.
+    } else {
+      unsigned char c1 = 0, c2 = 0;
+      const unsigned char *s1 = (const unsigned char*)a1;
+      const unsigned char *s2 = (const unsigned char*)a2;
+      uptr i;
+      for (i = 0; i < size; i++) {
+        c1 = s1[i];
+        c2 = s2[i];
+        if (c1 != c2) break;
+      }
+      ASAN_READ_RANGE(s1, Min(i + 1, size));
+      ASAN_READ_RANGE(s2, Min(i + 1, size));
+      return CharCmp(c1, c2);
+    }
   }
   return REAL(memcmp(a1, a2, size));
 }
