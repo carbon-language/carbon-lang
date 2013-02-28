@@ -26,6 +26,8 @@ SOURCES += $(addprefix LoopConvert/,$(notdir $(wildcard $(PROJ_SRC_DIR)/LoopConv
 BUILT_SOURCES = $(ObjDir)/LoopConvert/.objdir
 SOURCES += $(addprefix UseNullptr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/UseNullptr/*.cpp)))
 BUILT_SOURCES += $(ObjDir)/UseNullptr/.objdir
+SOURCES += $(addprefix UseAuto/,$(notdir $(wildcard $(PROJ_SRC_DIR)/UseAuto/*.cpp)))
+BUILT_SOURCES += $(ObjDir)/UseAuto/.objdir
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
 USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \

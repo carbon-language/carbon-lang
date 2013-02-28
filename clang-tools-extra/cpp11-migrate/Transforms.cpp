@@ -15,6 +15,7 @@
 #include "Transforms.h"
 #include "LoopConvert/LoopConvert.h"
 #include "UseNullptr/UseNullptr.h"
+#include "UseAuto/UseAuto.h"
 
 namespace cl = llvm::cl;
 
@@ -46,6 +47,12 @@ void Transforms::createTransformOpts() {
       new cl::opt<bool>("use-nullptr",
         cl::desc("Make use of nullptr keyword where possible")),
       &ConstructTransform<UseNullptrTransform>));
+
+  Options.push_back(
+    OptionVec::value_type(
+      new cl::opt<bool>("use-auto",
+        cl::desc("Use of 'auto' type specifier")),
+      &ConstructTransform<UseAutoTransform>));
 
   // Add more transform options here.
 }
