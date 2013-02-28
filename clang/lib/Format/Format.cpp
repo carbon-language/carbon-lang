@@ -999,6 +999,7 @@ public:
 
     if (FormatTok.Tok.is(tok::greatergreater)) {
       FormatTok.Tok.setKind(tok::greater);
+      FormatTok.TokenLength = 1;
       GreaterStashed = true;
     }
 

@@ -2002,6 +2002,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyGoogleFormat("template <typename T>\n"
                      "aaaaaaaa::aaaaa::aaaaaa<T, aaaaaaaaaaaaaaaaaaaaaaaaa>\n"
                      "aaaaaaaaaaaaaaaaaaaaaaaa<T>::aaaaaaa() {}");
+  verifyGoogleFormat("A<A<A>> aaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+                     "                   int aaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
