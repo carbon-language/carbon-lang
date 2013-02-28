@@ -9,9 +9,10 @@ RUN: lld -core -target x86_64-linux -output=%t %p/Inputs/ifunc.x86-64 \
 RUN:   -entry=main -output-type=static %p/Inputs/ifunc.cpp.x86-64 \
 RUN: && llvm-objdump -d -s %t| FileCheck %s --check-prefix=BIN
 
-CHECK: name: hey
-CHECK: scope: global
-CHECK: type: resolver
+// Make sure there's a got entry with a IRELATIVE relocation.
+PLT: type: got
+PLT: kind: R_X86_64_IRELATIVE
+PLT: target: hey
 
 PLT: name: plt
 PLT: scope: global
@@ -24,9 +25,9 @@ PLT: references
 PLT: kind: R_X86_64_PC32
 PLT: target: [[PLTNAME]]
 
-// Make sure there's a got entry with a IRELATIVE relocation.
-PLT: type: got
-PLT: kind: R_X86_64_IRELATIVE
+CHECK: name: hey
+CHECK: scope: global
+CHECK: type: resolver
 
 // Make sure the target of main's relocation is a stub with a PC32 relocation.
 // This relocation is to the got atom, but you can't really write that check in
@@ -36,8 +37,6 @@ PLT: type: stub
 PLT: references
 PLT: kind: R_X86_64_PC32
 
-// This is a horribly brittle test. We need a way to do arithmetic on captured
-// variables.
-BIN: 4000ec: ff 25 0e 0f 00 00 jmpq *3854(%rip)
+BIN: {{[0-9a-f]+}}: ff 25 {{[0-9a-f]+}} {{[0-9a-f]+}} 00 00 jmpq *{{[0-9]+}}(%rip)
 BIN: .got.plt:
-BIN-NEXT: 401000 00000000 00000000
+BIN-NEXT: {{[0-9a-f]+}} 00000000 00000000

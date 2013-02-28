@@ -2,16 +2,16 @@ RUN: lld -core -target x86_64-linux -output=- -entry=main -output-type=static \
 RUN:   %p/Inputs/gotpcrel.x86-64 -emit-yaml -noinhibit-exec \
 RUN: | FileCheck %s -check-prefix=YAML
 
-YAML: name: main
-YAML: kind: R_X86_64_PC32
-YAML: target: [[NULLGOT:[a-zA-Z0-9_]+]]
-YAML: kind: R_X86_64_PC32
-YAML: target: [[MAINGOT:[a-zA-Z0-9_]+]]
-
-YAML: name: [[NULLGOT]]
+YAML: name: [[NULLGOT:[a-zA-Z0-9_]+]]
 YAML: content: [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 YAML-NOT: references:
 
-YAML: name: [[MAINGOT]]
+YAML: name: [[MAINGOT:[a-zA-Z0-9_]+]]
 YAML: kind: R_X86_64_64
 YAML: target: main
+
+YAML: name: main
+YAML: kind: R_X86_64_PC32
+YAML: target: [[NULLGOT]]
+YAML: kind: R_X86_64_PC32
+YAML: target: [[MAINGOT]]

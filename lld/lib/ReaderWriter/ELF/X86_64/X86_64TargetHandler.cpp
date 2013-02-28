@@ -98,7 +98,8 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
       *reinterpret_cast<llvm::support::little64_t *>(location) = result;
     }
     break;
-  case R_X86_64_TLSLD:
+  }
+  case R_X86_64_TLSLD: {
     // Rewrite to move %fs:0 into %rax. Technically we should verify that the
     // next relocation is a PC32 to __tls_get_addr...
     static uint8_t instr[] = { 0x66, 0x66, 0x66, 0x64, 0x48, 0x8b, 0x04, 0x25,
@@ -106,9 +107,25 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
     std::memcpy(location - 3, instr, sizeof(instr));
     break;
   }
+  case LLD_R_X86_64_GOTRELINDEX: {
+    const DefinedAtom *target = cast<const DefinedAtom>(ref.target());
+    for (const Reference *r : *target) {
+      if (r->kind() == R_X86_64_JUMP_SLOT) {
+        uint32_t index;
+        if (!_targetInfo.getTargetHandler<X86_64ELFType>().targetLayout()
+                .getPLTRelocationTable()->getRelocationIndex(*r, index))
+          llvm_unreachable("Relocation doesn't exist");
+        reloc32(location, 0, index, 0);
+        break;
+      }
+    }
+    break;
+  }
   // Runtime only relocations. Ignore here.
   case R_X86_64_RELATIVE:
   case R_X86_64_IRELATIVE:
+  case R_X86_64_JUMP_SLOT:
+  case R_X86_64_GLOB_DAT:
     break;
 
   case lld::Reference::kindLayoutAfter:
@@ -142,7 +159,7 @@ public:
 
   virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return ".got"; }
+  virtual StringRef customSectionName() const { return ".got.plt"; }
 
   virtual ContentType contentType() const { return typeGOT; }
 

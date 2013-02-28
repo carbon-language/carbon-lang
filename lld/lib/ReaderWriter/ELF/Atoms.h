@@ -184,10 +184,7 @@ public:
     , _referenceStartIndex(referenceStart)
     , _referenceEndIndex(referenceEnd)
     , _referenceList(referenceList)
-    , _targetAtomHandler(nullptr) {
-    static uint64_t orderNumber = 0;
-    _ordinal = ++orderNumber;
-  }
+    , _targetAtomHandler(nullptr) {}
 
   virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
@@ -480,8 +477,9 @@ public:
     _referenceEndIndex = _referenceList.size();
   }
 
-private:
+  void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
+private:
   const ELFFile<ELFT> &_owningFile;
   StringRef _symbolName;
   StringRef _sectionName;

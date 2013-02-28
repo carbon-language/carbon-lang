@@ -164,9 +164,11 @@ public:
     _references.push_back(SimpleReference(kind, offset, target, addend));
   }
 
+  void setOrdinal(uint64_t ord) { _ordinal = ord; }
+
 private:
   const File &_file;
-  uint32_t _ordinal;
+  uint64_t _ordinal;
   std::vector<SimpleReference> _references;
 };
 

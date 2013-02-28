@@ -8,6 +8,10 @@ RUN: | FileCheck %s
 
 // Verify that the TLS accesses have the correct offsets.
 
+YAML: type: got
+YAML: kind: R_X86_64_TPOFF64
+YAML: target: tls2
+
 YAML: name: main
 YAML: kind: R_X86_64_TPOFF32
 YAML: offset: 9
@@ -22,11 +26,6 @@ YAML: target: tls2
 YAML: name: GOTTPOFF
 YAML: kind: R_X86_64_PC32
 YAML: target: [[GOTNAME:[a-zA-Z0-9_]+]]
-
-YAML: name: [[GOTNAME]]
-YAML: type: got
-YAML: kind: R_X86_64_TPOFF64
-YAML: target: tls2
 
 // main
 CHECK: addl %fs:-4

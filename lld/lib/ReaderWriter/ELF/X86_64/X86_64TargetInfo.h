@@ -20,6 +20,12 @@
 
 namespace lld {
 namespace elf {
+/// \brief x86-64 internal references.
+enum {
+  /// \brief The 32 bit index of the relocation in the got this reference refers
+  /// to.
+  LLD_R_X86_64_GOTRELINDEX = 1024,
+};
 
 class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
@@ -38,9 +44,26 @@ public:
     return _options._baseAddress;
   }
 
-  virtual bool isRuntimeRelocation(const DefinedAtom &,
+  virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &r) const {
-    return r.kind() == llvm::ELF::R_X86_64_IRELATIVE;
+    switch (r.kind()){
+    case llvm::ELF::R_X86_64_RELATIVE:
+    case llvm::ELF::R_X86_64_GLOB_DAT:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  virtual bool isPLTRelocation(const DefinedAtom &,
+                               const Reference &r) const {
+    switch (r.kind()){
+    case llvm::ELF::R_X86_64_JUMP_SLOT:
+    case llvm::ELF::R_X86_64_IRELATIVE:
+      return true;
+    default:
+      return false;
+    }
   }
 
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const;

@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace lld;
+using namespace lld::elf;
 
 namespace {
 using namespace llvm::ELF;
@@ -90,8 +91,7 @@ public:
   }
 
   virtual Alignment alignment() const {
-    // The alignment should be 4 byte aligned
-    return Alignment(2);
+    return Alignment(4); // 16
   }
 
 #ifndef NDEBUG
@@ -105,8 +105,29 @@ public:
 
 const uint8_t PLTAtom::_defaultContent[16] = {
   0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *gotatom(%rip)
-  0x68, 0x00, 0x00, 0x00, 0x00,       // pushq pltentry
+  0x68, 0x00, 0x00, 0x00, 0x00,       // pushq reloc-index
   0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[-1]
+};
+
+class PLT0Atom : public PLTAtom {
+  static const uint8_t _plt0Content[16];
+
+public:
+  PLT0Atom(const File &f) : PLTAtom(f, ".plt") {
+#ifndef NDEBUG
+    _name = ".PLT0";
+#endif
+  }
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>(_plt0Content, 16);
+  }
+};
+
+const uint8_t PLT0Atom::_plt0Content[16] = {
+  0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
+  0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
+  0x90, 0x90, 0x90, 0x90        // nopnopnop
 };
 
 class ELFPassFile : public SimpleFile {
@@ -121,16 +142,15 @@ public:
 template <class Derived> class GOTPLTPass : public Pass {
   /// \brief Handle a specific reference.
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
-    const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target());
     switch (ref.kind()) {
     case R_X86_64_PLT32:
       static_cast<Derived *>(this)->handlePLT32(ref);
       break;
     case R_X86_64_PC32:
-      static_cast<Derived *>(this)->handleIFUNC(ref, da);
+      static_cast<Derived *>(this)->handlePC32(ref);
       break;
     case R_X86_64_GOTTPOFF: // GOT Thread Pointer Offset
-      static_cast<Derived *>(this)->handleGOTTPOFF(ref, da);
+      static_cast<Derived *>(this)->handleGOTTPOFF(ref);
       break;
     case R_X86_64_GOTPCREL:
       static_cast<Derived *>(this)->handleGOTPCREL(ref);
@@ -165,7 +185,8 @@ protected:
   ///
   /// This create a PLT and GOT entry for the IFUNC if one does not exist. The
   /// GOT entry and a IRELATIVE relocation to the original target resolver.
-  ErrorOr<void> handleIFUNC(const Reference &ref, const DefinedAtom *target) {
+  ErrorOr<void> handleIFUNC(const Reference &ref) {
+    auto target = dyn_cast_or_null<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver)
       const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
     return error_code::success();
@@ -189,7 +210,8 @@ protected:
 
   /// \brief Create a TPOFF64 GOT entry and change the relocation to a PC32 to
   /// the GOT.
-  void handleGOTTPOFF(const Reference &ref, const DefinedAtom *target) {
+  void handleGOTTPOFF(const Reference &ref) {
+    auto target = dyn_cast_or_null<const DefinedAtom>(ref.target());
     const_cast<Reference &>(ref).setTarget(getGOTTPOFF(target));
     const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
   }
@@ -197,7 +219,7 @@ protected:
   /// \brief Create a GOT entry containing 0.
   const GOTAtom *getNullGOT() {
     if (!_null) {
-      _null = new (_file._alloc) GOTAtom(_file, ".got");
+      _null = new (_file._alloc) GOTAtom(_file, ".got.plt");
 #ifndef NDEBUG
       _null->_name = "__got_null";
 #endif
@@ -231,7 +253,9 @@ protected:
   }
 
 public:
-  GOTPLTPass(const ELFTargetInfo &ti) : _file(ti), _null(nullptr) {}
+  GOTPLTPass(const ELFTargetInfo &ti)
+      : _file(ti), _null(nullptr), _PLT0(nullptr), _got0(nullptr),
+        _got1(nullptr) {}
 
   /// \brief Do the pass.
   ///
@@ -248,23 +272,51 @@ public:
         handleReference(*atom, *ref);
 
     // Add all created atoms to the link.
-    if (_null)
-      mf.addAtom(*_null);
-    for (const auto &got : _gotMap)
-      mf.addAtom(*got.second);
-    for (const auto &plt : _pltMap)
+    uint64_t ordinal = 0;
+    if (_PLT0) {
+      _PLT0->setOrdinal(ordinal++);
+      mf.addAtom(*_PLT0);
+    }
+    for (const auto &plt : _pltMap) {
+      plt.second->setOrdinal(ordinal++);
       mf.addAtom(*plt.second);
+    }
+    if (_null) {
+      _null->setOrdinal(ordinal++);
+      mf.addAtom(*_null);
+    }
+    if (_PLT0) {
+      _got0->setOrdinal(ordinal++);
+      _got1->setOrdinal(ordinal++);
+      mf.addAtom(*_got0);
+      mf.addAtom(*_got1);
+    }
+    for (const auto &got : _gotMap) {
+      got.second->setOrdinal(ordinal++);
+      mf.addAtom(*got.second);
+    }
   }
 
 protected:
   /// \brief Owner of all the Atoms created by this pass.
   ELFPassFile _file;
+  
   /// \brief Map Atoms to their GOT entries.
-  llvm::DenseMap<const Atom *, const GOTAtom *> _gotMap;
+  llvm::DenseMap<const Atom *, GOTAtom *> _gotMap;
+
   /// \brief Map Atoms to their PLT entries.
-  llvm::DenseMap<const Atom *, const PLTAtom *> _pltMap;
+  llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
+
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null;
+
+  /// \brief The got and plt entries for .PLT0. This is used to call into the
+  /// dynamic linker for symbol resolution.
+  /// @{
+  PLT0Atom *_PLT0;
+  GOTAtom *_got0;
+  GOTAtom *_got1;
+  /// @}
 };
 
 /// This implements the static relocation model. Meaning GOT and PLT entries are
@@ -288,23 +340,47 @@ public:
     // Handle IFUNC.
     if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
-        return handleIFUNC(ref, da);
+        return handleIFUNC(ref);
     return error_code::success();
   }
+
+  ErrorOr<void> handlePC32(const Reference &ref) { return handleIFUNC(ref); }
 };
 
 class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
   DynamicGOTPLTPass(const elf::X86_64TargetInfo &ti) : GOTPLTPass(ti) {}
 
+  const PLT0Atom *getPLT0() {
+    if (_PLT0)
+      return _PLT0;
+    // Fill in the null entry.
+    getNullGOT();
+    _PLT0 = new (_file._alloc) PLT0Atom(_file);
+    _got0 = new (_file._alloc) GOTAtom(_file, ".got.plt");
+    _got1 = new (_file._alloc) GOTAtom(_file, ".got.plt");
+    _PLT0->addReference(R_X86_64_PC32, 2, _got0, -4);
+    _PLT0->addReference(R_X86_64_PC32, 8, _got1, -4);
+#ifndef NDEBUG
+    _got0->_name = "__got0";
+    _got1->_name = "__got1";
+#endif
+    return _PLT0;
+  }
+
   const PLTAtom *getPLTEntry(const Atom *a) {
     auto plt = _pltMap.find(a);
     if (plt != _pltMap.end())
       return plt->second;
     auto ga = new (_file._alloc) GOTAtom(_file, ".got.plt");
-    ga->addReference(R_X86_64_RELATIVE, 0, a, 0);
+    ga->addReference(R_X86_64_JUMP_SLOT, 0, a, 0);
     auto pa = new (_file._alloc) PLTAtom(_file, ".plt");
     pa->addReference(R_X86_64_PC32, 2, ga, -4);
+    pa->addReference(LLD_R_X86_64_GOTRELINDEX, 7, ga, 0);
+    pa->addReference(R_X86_64_PC32, 12, getPLT0(), -4);
+    // Set the starting address of the got entry to the second instruction in
+    // the plt entry.
+    ga->addReference(R_X86_64_64, 0, pa, 6);
 #ifndef NDEBUG
     ga->_name = "__got_";
     ga->_name += a->name();
@@ -322,9 +398,15 @@ public:
     // Handle IFUNC.
     if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
-        return handleIFUNC(ref, da);
+        return handleIFUNC(ref);
     const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
     return error_code::success();
+  }
+
+  ErrorOr<void> handlePC32(const Reference &ref) {
+    if (ref.target() && isa<SharedLibraryAtom>(ref.target()))
+      return handlePLT32(ref);
+    return handleIFUNC(ref);
   }
 };
 } // end anon namespace
@@ -335,6 +417,7 @@ void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
   else if (_options._outputKind == OutputKind::DynamicExecutable ||
            _options._outputKind == OutputKind::Shared)
     pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
+  ELFTargetInfo::addPasses(pm);
 }
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
@@ -380,6 +463,7 @@ ErrorOr<int32_t> elf::X86_64TargetInfo::relocKindFromString(
     LLD_CASE(R_X86_64_TLSDESC_CALL)
     LLD_CASE(R_X86_64_TLSDESC)
     LLD_CASE(R_X86_64_IRELATIVE)
+    .Case("LLD_R_X86_64_GOTRELINDEX", LLD_R_X86_64_GOTRELINDEX)
     .Default(-1);
 
   if (ret == -1)
@@ -432,6 +516,8 @@ ErrorOr<std::string> elf::X86_64TargetInfo::stringFromRelocKind(
   LLD_CASE(R_X86_64_TLSDESC_CALL)
   LLD_CASE(R_X86_64_TLSDESC)
   LLD_CASE(R_X86_64_IRELATIVE)
+  case LLD_R_X86_64_GOTRELINDEX:
+    return std::string("LLD_R_X86_64_GOTRELINDEX");
   }
 
   return make_error_code(yaml_reader_error::illegal_value);
