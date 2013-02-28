@@ -47,6 +47,10 @@
 using namespace llvm;
 
 static cl::opt<bool>
+DisableOpt("disable-opt", cl::init(false),
+  cl::desc("Do not run any optimization passes"));
+
+static cl::opt<bool>
 DisableInline("disable-inlining", cl::init(false),
   cl::desc("Do not run the inliner pass"));
 
@@ -376,10 +380,12 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead
   // we create the pass ourselves with the symbol list provided by the linker.
-  PassManagerBuilder().populateLTOPassManager(passes,
+  if (!DisableOpt) {
+    PassManagerBuilder().populateLTOPassManager(passes,
                                               /*Internalize=*/false,
                                               !DisableInline,
                                               DisableGVNLoadPRE);
+  }
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());
