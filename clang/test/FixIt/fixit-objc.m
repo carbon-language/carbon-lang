@@ -11,7 +11,7 @@
 @protocol X;
 
 void foo() {
-  <X> *P;    // expected-warning{{property has no object type specified; defaults to qualified 'id'}}
+  <X> *P;    // expected-warning{{protocol has no object type specified; defaults to qualified 'id'}}
 }
 
 @class A;

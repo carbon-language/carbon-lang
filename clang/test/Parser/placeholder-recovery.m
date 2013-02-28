@@ -5,7 +5,7 @@
 // bogus 'archaic' warnings with bad location info.
 @protocol <#protocol name#> <NSObject> // expected-error 2{{expected identifier}} \
 // expected-error{{cannot find protocol declaration for 'NSObject'}} \
-// expected-warning{{property has no object type specified; defaults to qualified 'id'}}
+// expected-warning{{protocol has no object type specified; defaults to qualified 'id'}}
 
 <#methods#>  // expected-error{{expected identifier}}
 

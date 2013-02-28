@@ -8,9 +8,9 @@
 void bar();
 void foo(id x) {
   bar((short<SomeProtocol>)x); // expected-error {{expected ')'}} expected-note {{to match this '('}}
-  bar((<SomeProtocol>)x);      // expected-warning {{property has no object type specified; defaults to qualified 'id'}}
+  bar((<SomeProtocol>)x);      // expected-warning {{protocol has no object type specified; defaults to qualified 'id'}}
 
-  [(<SomeProtocol>)x bar];      // expected-warning {{property has no object type specified; defaults to qualified 'id'}}
+  [(<SomeProtocol>)x bar];      // expected-warning {{protocol has no object type specified; defaults to qualified 'id'}}
 }
 
 @protocol MyProtocol
@@ -37,6 +37,6 @@ Class <SomeProtocol> UnfortunateGCCExtension;
 @protocol Broken @end
 @interface Crash @end
 @implementation Crash
-- (void)crashWith:(<Broken>)a { // expected-warning {{property has no object type specified; defaults to qualified 'id'}}
+- (void)crashWith:(<Broken>)a { // expected-warning {{protocol has no object type specified; defaults to qualified 'id'}}
 }
 @end
