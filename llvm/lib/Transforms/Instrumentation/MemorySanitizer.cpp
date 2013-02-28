@@ -420,11 +420,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   bool InsertChecks;
   OwningPtr<VarArgHelper> VAHelper;
 
-  // An unfortunate workaround for asymmetric lowering of va_arg stuff.
-  // See a comment in visitCallSite for more details.
-  static const unsigned AMD64GpEndOffset = 48;  // AMD64 ABI Draft 0.99.6 p3.5.7
-  static const unsigned AMD64FpEndOffset = 176;
-
   struct ShadowOriginAndInsertPoint {
     Instruction *Shadow;
     Instruction *Origin;
