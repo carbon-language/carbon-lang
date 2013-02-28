@@ -1,5 +1,5 @@
 ; RUN: %lli %s > /dev/null
-; XFAIL: armv7
+; XFAIL: arm
 
 @.LC0 = internal global [10 x i8] c"argc: %d\0A\00"		; <[10 x i8]*> [#uses=1]
 
