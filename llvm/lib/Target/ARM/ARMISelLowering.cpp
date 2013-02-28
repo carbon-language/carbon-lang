@@ -1587,7 +1587,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       // On ELF targets for PIC code, direct calls should go through the PLT
       unsigned OpFlags = 0;
       if (Subtarget->isTargetELF() &&
-                  getTargetMachine().getRelocationModel() == Reloc::PIC_)
+          getTargetMachine().getRelocationModel() == Reloc::PIC_)
         OpFlags = ARMII::MO_PLT;
       Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy(), 0, OpFlags);
     }
@@ -2253,8 +2253,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
   EVT PtrVT = getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
-  if (RelocM == Reloc::PIC_) {
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     bool UseGOTOFF = GV->hasLocalLinkage() || GV->hasHiddenVisibility();
     ARMConstantPoolValue *CPV =
       ARMConstantPoolConstant::Create(GV,
@@ -2298,8 +2297,6 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   DebugLoc dl = Op.getDebugLoc();
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
-  MachineFunction &MF = DAG.getMachineFunction();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   // FIXME: Enable this for static codegen when tool issues are fixed.  Also
   // update ARMFastISel::ARMMaterializeGV.
@@ -2327,6 +2324,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   if (RelocM == Reloc::Static) {
     CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
   } else {
+    ARMFunctionInfo *AFI = DAG.getMachineFunction().getInfo<ARMFunctionInfo>();
     ARMPCLabelIndex = AFI->createPICLabelUId();
     unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb()?4:8);
     ARMConstantPoolValue *CPV =
