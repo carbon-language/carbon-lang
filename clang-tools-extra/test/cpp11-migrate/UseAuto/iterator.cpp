@@ -1,7 +1,4 @@
-// RUN: exit 0
-//
-// Until a recursive make issue can be fixed, can't use %gen_root.
-// NORUN grep -Ev "// *[A-Z-]+:" %s > %t.cpp
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // NORUN cpp11-migrate -use-auto %t.cpp -- --std=c++11 -I %gen_root/UseAuto/Inputs
 // NORUN FileCheck -input-file=%t.cpp %s
 #include "my_std.h"
