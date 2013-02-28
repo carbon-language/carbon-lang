@@ -1173,6 +1173,13 @@ TEST_F(FormatTest, ConstructorInitializers) {
                "      some_other_var_(var + 1) { // lined up\n"
                "}",
                OnePerLine);
+  verifyFormat("Constructor()\n"
+               "    : aaaaa(aaaaaa),\n"
+               "      aaaaa(aaaaaa),\n"
+               "      aaaaa(aaaaaa),\n"
+               "      aaaaa(aaaaaa),\n"
+               "      aaaaa(aaaaaa) {}",
+               OnePerLine);
 
   // This test takes VERY long when memoization is broken.
   OnePerLine.BinPackParameters = false;

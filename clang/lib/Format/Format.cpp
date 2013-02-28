@@ -654,7 +654,8 @@ private:
         AvoidBinPacking = false;
       } else {
         NewIndent = 4 + State.Stack.back().LastSpace;
-        AvoidBinPacking = !Style.BinPackParameters;
+        AvoidBinPacking =
+            !Style.BinPackParameters || State.Stack.back().AvoidBinPacking;
       }
       State.Stack.push_back(
           ParenState(NewIndent, State.Stack.back().LastSpace, AvoidBinPacking,
