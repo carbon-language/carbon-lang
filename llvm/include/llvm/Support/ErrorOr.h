@@ -180,6 +180,16 @@ private:
 public:
   ErrorOr() : IsValid(false) {}
 
+  template <class E>
+  ErrorOr(E ErrorCode, typename enable_if_c<is_error_code_enum<E>::value ||
+                                            is_error_condition_enum<E>::value,
+                                            void *>::type = 0)
+      : HasError(true), IsValid(true) {
+    Error = new ErrorHolderBase;
+    Error->Error = make_error_code(ErrorCode);
+    Error->HasUserData = false;
+  }
+
   ErrorOr(llvm::error_code EC) : HasError(true), IsValid(true) {
     Error = new ErrorHolderBase;
     Error->Error = EC;
@@ -386,6 +396,22 @@ template <>
 class ErrorOr<void> {
 public:
   ErrorOr() : Error(0, 0) {}
+
+  template <class E>
+  ErrorOr(E ErrorCode, typename enable_if_c<is_error_code_enum<E>::value ||
+                                            is_error_condition_enum<E>::value,
+                                            void *> ::type = 0)
+      : Error(0, 0) {
+    error_code EC = make_error_code(ErrorCode);
+    if (EC == errc::success) {
+      Error.setInt(1);
+      return;
+    }
+    ErrorHolderBase *EHB = new ErrorHolderBase;
+    EHB->Error = EC;
+    EHB->HasUserData = false;
+    Error.setPointer(EHB);
+  }
 
   ErrorOr(llvm::error_code EC) : Error(0, 0) {
     if (EC == errc::success) {

@@ -18,7 +18,7 @@ using namespace llvm;
 namespace {
 
 ErrorOr<int> t1() {return 1;}
-ErrorOr<int> t2() {return make_error_code(errc::invalid_argument);}
+ErrorOr<int> t2() { return errc::invalid_argument; }
 
 TEST(ErrorOr, SimpleValue) {
   ErrorOr<int> a = t1();
@@ -45,8 +45,8 @@ TEST(ErrorOr, Types) {
   *a = 42;
   EXPECT_EQ(42, x);
 
-  EXPECT_FALSE(ErrorOr<void>(make_error_code(errc::broken_pipe)));
-  EXPECT_TRUE(ErrorOr<void>(make_error_code(errc::success)));
+  EXPECT_FALSE(ErrorOr<void>(errc::broken_pipe));
+  EXPECT_TRUE(ErrorOr<void>(errc::success));
 
 #if LLVM_HAS_CXX11_STDLIB
   // Move only types.
