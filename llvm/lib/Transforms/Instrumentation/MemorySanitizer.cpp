@@ -418,6 +418,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   SmallVector<PHINode *, 16> ShadowPHINodes, OriginPHINodes;
   ValueMap<Value*, Value*> ShadowMap, OriginMap;
   bool InsertChecks;
+  bool LoadShadow;
   OwningPtr<VarArgHelper> VAHelper;
 
   struct ShadowOriginAndInsertPoint {
@@ -432,11 +433,15 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   SmallVector<Instruction*, 16> StoreList;
 
   MemorySanitizerVisitor(Function &F, MemorySanitizer &MS)
-    : F(F), MS(MS), VAHelper(CreateVarArgHelper(F, MS, *this)) {
-    InsertChecks = !MS.BL->isIn(F);
+      : F(F), MS(MS), VAHelper(CreateVarArgHelper(F, MS, *this)) {
+    LoadShadow = InsertChecks =
+        !MS.BL->isIn(F) &&
+        F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                       Attribute::SanitizeMemory);
+
     DEBUG(if (!InsertChecks)
-            dbgs() << "MemorySanitizer is not inserting checks into '"
-                   << F.getName() << "'\n");
+          dbgs() << "MemorySanitizer is not inserting checks into '"
+                 << F.getName() << "'\n");
   }
 
   void materializeStores() {
@@ -831,15 +836,25 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     IRBuilder<> IRB(&I);
     Type *ShadowTy = getShadowTy(&I);
     Value *Addr = I.getPointerOperand();
-    Value *ShadowPtr = getShadowPtr(Addr, ShadowTy, IRB);
-    setShadow(&I, IRB.CreateAlignedLoad(ShadowPtr, I.getAlignment(), "_msld"));
+    if (LoadShadow) {
+      Value *ShadowPtr = getShadowPtr(Addr, ShadowTy, IRB);
+      setShadow(&I,
+                IRB.CreateAlignedLoad(ShadowPtr, I.getAlignment(), "_msld"));
+    } else {
+      setShadow(&I, getCleanShadow(&I));
+    }
 
     if (ClCheckAccessAddress)
       insertCheck(I.getPointerOperand(), &I);
 
     if (MS.TrackOrigins) {
-      unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
-      setOrigin(&I, IRB.CreateAlignedLoad(getOriginPtr(Addr, IRB), Alignment));
+      if (LoadShadow) {
+        unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
+        setOrigin(&I,
+                  IRB.CreateAlignedLoad(getOriginPtr(Addr, IRB), Alignment));
+      } else {
+        setOrigin(&I, getCleanOrigin());
+      }
     }
   }
 
@@ -1405,16 +1420,25 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Value *Addr = I.getArgOperand(0);
 
     Type *ShadowTy = getShadowTy(&I);
-    Value *ShadowPtr = getShadowPtr(Addr, ShadowTy, IRB);
-    // We don't know the pointer alignment (could be unaligned SSE load!).
-    // Have to assume to worst case.
-    setShadow(&I, IRB.CreateAlignedLoad(ShadowPtr, 1, "_msld"));
+    if (LoadShadow) {
+      Value *ShadowPtr = getShadowPtr(Addr, ShadowTy, IRB);
+      // We don't know the pointer alignment (could be unaligned SSE load!).
+      // Have to assume to worst case.
+      setShadow(&I, IRB.CreateAlignedLoad(ShadowPtr, 1, "_msld"));
+    } else {
+      setShadow(&I, getCleanShadow(&I));
+    }
+
 
     if (ClCheckAccessAddress)
       insertCheck(Addr, &I);
 
-    if (MS.TrackOrigins)
-      setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
+    if (MS.TrackOrigins) {
+      if (LoadShadow)
+        setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
+      else
+        setOrigin(&I, getCleanOrigin());
+    }
     return true;
   }
 
