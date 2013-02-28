@@ -1048,7 +1048,14 @@ ValueObject::ReadPointedString (Stream& s,
     ExecutionContext exe_ctx (GetExecutionContextRef());
     Target* target = exe_ctx.GetTargetPtr();
 
-    if (target && max_length == 0)
+    if (!target)
+    {
+        s << "<no target to read from>";
+        error.SetErrorString("no target to read from");
+        return 0;
+    }
+    
+    if (max_length == 0)
         max_length = target->GetMaximumSizeOfStringSummary();
     
     size_t bytes_read = 0;
@@ -1060,129 +1067,127 @@ ValueObject::ReadPointedString (Stream& s,
     if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
         ClangASTContext::IsCharType (elem_or_pointee_clang_type))
     {
-        if (target == NULL)
+        addr_t cstr_address = LLDB_INVALID_ADDRESS;
+        AddressType cstr_address_type = eAddressTypeInvalid;
+        
+        size_t cstr_len = 0;
+        bool capped_data = false;
+        if (type_flags.Test (ClangASTContext::eTypeIsArray))
         {
-            s << "<no target to read from>";
+            // We have an array
+            cstr_len = ClangASTContext::GetArraySize (clang_type);
+            if (cstr_len > max_length)
+            {
+                capped_data = true;
+                cstr_len = max_length;
+            }
+            cstr_address = GetAddressOf (true, &cstr_address_type);
         }
         else
         {
-            addr_t cstr_address = LLDB_INVALID_ADDRESS;
-            AddressType cstr_address_type = eAddressTypeInvalid;
+            // We have a pointer
+            cstr_address = GetPointerValue (&cstr_address_type);
+        }
+        
+        if (cstr_address == 0 || cstr_address == LLDB_INVALID_ADDRESS)
+        {
+            s << "<invalid address>";
+            error.SetErrorString("invalid address");
+            return 0;
+        }
+
+        Address cstr_so_addr (cstr_address);
+        DataExtractor data;
+        if (cstr_len > 0 && honor_array)
+        {
+            // I am using GetPointeeData() here to abstract the fact that some ValueObjects are actually frozen pointers in the host
+            // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
+            GetPointeeData(data, 0, cstr_len);
+
+            if ((bytes_read = data.GetByteSize()) > 0)
+            {
+                total_bytes_read = bytes_read;
+                s << '"';
+                data.Dump (&s,
+                           0,                 // Start offset in "data"
+                           item_format,
+                           1,                 // Size of item (1 byte for a char!)
+                           bytes_read,        // How many bytes to print?
+                           UINT32_MAX,        // num per line
+                           LLDB_INVALID_ADDRESS,// base address
+                           0,                 // bitfield bit size
+                           0);                // bitfield bit offset
+                if (capped_data)
+                    s << "...";
+                s << '"';
+            }
+        }
+        else
+        {
+            cstr_len = max_length;
+            const size_t k_max_buf_size = 64;
+                                        
+            size_t offset = 0;
             
-            size_t cstr_len = 0;
-            bool capped_data = false;
-            if (type_flags.Test (ClangASTContext::eTypeIsArray))
+            int cstr_len_displayed = -1;
+            bool capped_cstr = false;
+            // I am using GetPointeeData() here to abstract the fact that some ValueObjects are actually frozen pointers in the host
+            // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
+            while ((bytes_read = GetPointeeData(data, offset, k_max_buf_size)) > 0)
             {
-                // We have an array
-                cstr_len = ClangASTContext::GetArraySize (clang_type);
-                if (cstr_len > max_length)
+                total_bytes_read += bytes_read;
+                const char *cstr = data.PeekCStr(0);
+                size_t len = strlen_or_inf (cstr, k_max_buf_size, k_max_buf_size+1);
+                if (len > k_max_buf_size)
+                    len = k_max_buf_size;
+                if (cstr && cstr_len_displayed < 0)
+                    s << '"';
+
+                if (cstr_len_displayed < 0)
+                    cstr_len_displayed = len;
+
+                if (len == 0)
+                    break;
+                cstr_len_displayed += len;
+                if (len > bytes_read)
+                    len = bytes_read;
+                if (len > cstr_len)
+                    len = cstr_len;
+                
+                data.Dump (&s,
+                           0,                 // Start offset in "data"
+                           item_format,
+                           1,                 // Size of item (1 byte for a char!)
+                           len,               // How many bytes to print?
+                           UINT32_MAX,        // num per line
+                           LLDB_INVALID_ADDRESS,// base address
+                           0,                 // bitfield bit size
+                           0);                // bitfield bit offset
+                
+                if (len < k_max_buf_size)
+                    break;
+                
+                if (len >= cstr_len)
                 {
-                    capped_data = true;
-                    cstr_len = max_length;
+                    capped_cstr = true;
+                    break;
                 }
-                cstr_address = GetAddressOf (true, &cstr_address_type);
+
+                cstr_len -= len;
+                offset += len;
             }
-            else
+            
+            if (cstr_len_displayed >= 0)
             {
-                // We have a pointer
-                cstr_address = GetPointerValue (&cstr_address_type);
-            }
-            if (cstr_address != 0 && cstr_address != LLDB_INVALID_ADDRESS)
-            {
-                Address cstr_so_addr (cstr_address);
-                DataExtractor data;
-                if (cstr_len > 0 && honor_array)
-                {
-                    // I am using GetPointeeData() here to abstract the fact that some ValueObjects are actually frozen pointers in the host
-                    // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
-                    GetPointeeData(data, 0, cstr_len);
-
-                    if ((bytes_read = data.GetByteSize()) > 0)
-                    {
-                        total_bytes_read = bytes_read;
-                        s << '"';
-                        data.Dump (&s,
-                                   0,                 // Start offset in "data"
-                                   item_format,
-                                   1,                 // Size of item (1 byte for a char!)
-                                   bytes_read,        // How many bytes to print?
-                                   UINT32_MAX,        // num per line
-                                   LLDB_INVALID_ADDRESS,// base address
-                                   0,                 // bitfield bit size
-                                   0);                // bitfield bit offset
-                        if (capped_data)
-                            s << "...";
-                        s << '"';
-                    }
-                }
-                else
-                {
-                    cstr_len = max_length;
-                    const size_t k_max_buf_size = 64;
-                                                
-                    size_t offset = 0;
-                    
-                    int cstr_len_displayed = -1;
-                    bool capped_cstr = false;
-                    // I am using GetPointeeData() here to abstract the fact that some ValueObjects are actually frozen pointers in the host
-                    // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
-                    while ((bytes_read = GetPointeeData(data, offset, k_max_buf_size)) > 0)
-                    {
-                        total_bytes_read += bytes_read;
-                        const char *cstr = data.PeekCStr(0);
-                        size_t len = strlen_or_inf (cstr, k_max_buf_size, k_max_buf_size+1);
-                        if (len > k_max_buf_size)
-                            len = k_max_buf_size;
-                        if (cstr && cstr_len_displayed < 0)
-                            s << '"';
-
-                        if (cstr_len_displayed < 0)
-                            cstr_len_displayed = len;
-
-                        if (len == 0)
-                            break;
-                        cstr_len_displayed += len;
-                        if (len > bytes_read)
-                            len = bytes_read;
-                        if (len > cstr_len)
-                            len = cstr_len;
-                        
-                        data.Dump (&s,
-                                   0,                 // Start offset in "data"
-                                   item_format,
-                                   1,                 // Size of item (1 byte for a char!)
-                                   len,               // How many bytes to print?
-                                   UINT32_MAX,        // num per line
-                                   LLDB_INVALID_ADDRESS,// base address
-                                   0,                 // bitfield bit size
-                                   0);                // bitfield bit offset
-                        
-                        if (len < k_max_buf_size)
-                            break;
-                        
-                        if (len >= cstr_len)
-                        {
-                            capped_cstr = true;
-                            break;
-                        }
-
-                        cstr_len -= len;
-                        offset += len;
-                    }
-                    
-                    if (cstr_len_displayed >= 0)
-                    {
-                        s << '"';
-                        if (capped_cstr)
-                            s << "...";
-                    }
-                }
+                s << '"';
+                if (capped_cstr)
+                    s << "...";
             }
         }
     }
     else
     {
-        error.SetErrorString("impossible to read a string from this object");
+        error.SetErrorString("not a string object");
         s << "<not a string object>";
     }
     return total_bytes_read;
