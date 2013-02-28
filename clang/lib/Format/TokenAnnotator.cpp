@@ -1048,7 +1048,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
            Tok.Parent->Type == TT_TemplateCloser &&
            Style.Standard != FormatStyle::LS_Cpp11;
   }
-  if (Tok.Type == TT_BinaryOperator || Tok.Parent->Type == TT_BinaryOperator)
+  if (Tok.Type == TT_BinaryOperator ||
+      (Tok.Parent->Type == TT_BinaryOperator && Tok.isNot(tok::comma)))
     return true;
   if (Tok.Parent->Type == TT_TemplateCloser && Tok.is(tok::l_paren))
     return false;

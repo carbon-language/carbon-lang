@@ -1709,6 +1709,10 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
   verifyFormat("template <typename T> void f() {}");
 }
 
+TEST_F(FormatTest, UnderstandsBinaryOperators) {
+  verifyFormat("COMPARE(a, ==, b);");
+}
+
 TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("int a = -2;");
   verifyFormat("f(-1, -2, -3);");
