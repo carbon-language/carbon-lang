@@ -1864,10 +1864,16 @@ AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
                            DAG.getTargetConstantPool(GV, PtrVT, 0, 0,
                                                      AArch64II::MO_LO12),
                            DAG.getConstant(8, MVT::i32));
-    return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), PoolAddr,
-                       MachinePointerInfo::getConstantPool(),
-                       /*isVolatile=*/ false,  /*isNonTemporal=*/ true,
-                       /*isInvariant=*/ true, 8);
+    SDValue GlobalAddr = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), PoolAddr,
+                                     MachinePointerInfo::getConstantPool(),
+                                     /*isVolatile=*/ false,
+                                     /*isNonTemporal=*/ true,
+                                     /*isInvariant=*/ true, 8);
+    if (GN->getOffset() != 0)
+      return DAG.getNode(ISD::ADD, dl, PtrVT, GlobalAddr,
+                         DAG.getConstant(GN->getOffset(), PtrVT));
+
+    return GlobalAddr;
   }
 
   if (Alignment == 0) {
