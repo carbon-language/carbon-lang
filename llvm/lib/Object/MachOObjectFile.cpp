@@ -1304,14 +1304,17 @@ StringRef MachOObjectFile::getFileFormatName() const {
     }
   }
 
+  // Make sure the cpu type has the correct mask.
+  assert((MachOObj->getHeader().CPUType & llvm::MachO::CPUArchABI64)
+	 == llvm::MachO::CPUArchABI64 &&
+	 "32-bit object file when we're 64-bit?");
+
   switch (MachOObj->getHeader().CPUType) {
   case llvm::MachO::CPUTypeX86_64:
     return "Mach-O 64-bit x86-64";
   case llvm::MachO::CPUTypePowerPC64:
     return "Mach-O 64-bit ppc64";
   default:
-    assert((MachOObj->getHeader().CPUType & llvm::MachO::CPUArchABI64) == 1 &&
-           "32-bit object file when we're 64-bit?");
     return "Mach-O 64-bit unknown";
   }
 }
