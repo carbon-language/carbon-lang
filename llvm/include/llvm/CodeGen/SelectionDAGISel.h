@@ -249,16 +249,26 @@ private:
                     const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo);
 
   void PrepareEHLandingPad();
+
+  /// \brief Perform instruction selection on all basic blocks in the function.
   void SelectAllBasicBlocks(const Function &Fn);
+
+  /// \brief Perform instruction selection on a single basic block, for
+  /// instructions between \p Begin and \p End.  \p HadTailCall will be set
+  /// to true if a call in the block was translated as a tail call.
+  void SelectBasicBlock(BasicBlock::const_iterator Begin,
+                        BasicBlock::const_iterator End,
+                        bool &HadTailCall);
+
   bool TryToFoldFastISelLoad(const LoadInst *LI, const Instruction *FoldInst,
                              FastISel *FastIS);
   void FinishBasicBlock();
 
-  void SelectBasicBlock(BasicBlock::const_iterator Begin,
-                        BasicBlock::const_iterator End,
-                        bool &HadTailCall);
   void CodeGenAndEmitDAG();
-  void LowerArguments(const BasicBlock *BB);
+
+  /// \brief Generate instructions for lowering the incoming arguments of the
+  /// given function.
+  void LowerArguments(const Function &F);
 
   void ComputeLiveOutVRegInfo();
 

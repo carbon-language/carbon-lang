@@ -1054,15 +1054,12 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       if (LLVMBB == &Fn.getEntryBlock()) {
         // Lower any arguments needed in this block if this is the entry block.
         if (!FastIS->LowerArguments()) {
-
+          // Fast isel failed to lower these arguments
           if (EnableFastISelAbortArgs)
-            // The "fast" selector couldn't lower these arguments.  For the
-            // purpose of debugging, just abort.
             llvm_unreachable("FastISel didn't lower all arguments");
 
-          // Call target indepedent SDISel argument lowering code if the target
-          // specific routine is not successful.
-          LowerArguments(LLVMBB);
+          // Use SelectionDAG argument lowering
+          LowerArguments(Fn);
           CurDAG->setRoot(SDB->getControlRoot());
           SDB->clear();
           CodeGenAndEmitDAG();
@@ -1181,7 +1178,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     } else {
       // Lower any arguments needed in this block if this is the entry block.
       if (LLVMBB == &Fn.getEntryBlock())
-        LowerArguments(LLVMBB);
+        LowerArguments(Fn);
     }
 
     if (Begin != BI)

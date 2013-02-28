@@ -6596,9 +6596,7 @@ static bool isOnlyUsedInEntryBlock(const Argument *A, bool FastISel) {
   return true;
 }
 
-void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
-  // If this is the entry block, emit arguments.
-  const Function &F = *LLVMBB->getParent();
+void SelectionDAGISel::LowerArguments(const Function &F) {
   SelectionDAG &DAG = SDB->DAG;
   DebugLoc dl = SDB->getCurDebugLoc();
   const DataLayout *TD = TLI.getDataLayout();
