@@ -1,10 +1,11 @@
 include_directories(.)
 
-# FIXME: these includes should be enabled only for Linux builds
+if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
 include_directories(
   Plugins/Process/Linux
   Plugins/Process/POSIX
   )
+endif ()
 
 add_subdirectory(API)
 add_subdirectory(Breakpoint)
@@ -27,7 +28,6 @@ set( LLDB_USED_LIBS
   lldbHostCommon
   lldbCore
   lldbExpression
-  #lldbInitAndLog
   lldbInterpreter
   lldbSymbol
   lldbTarget  
@@ -63,21 +63,28 @@ set( LLDB_USED_LIBS
   lldbPluginABIMacOSX_i386
   lldbPluginABISysV_x86_64
   lldbPluginInstructionARM
-  lldbPluginOSPython
-
-  
-  # Windows (FIXME: detect host OS and enable below if Windows)
-  #lldbHostWindows
-  #lldbPluginPlatformWindows
   lldbPluginObjectFilePECOFF
-  #Ws2_32
-  
-  # Linux (FIXME: detect host OS and enable below if Linux)
-  lldbHostLinux
-  lldbPluginProcessLinux
-  lldbPluginProcessPOSIX
+  lldbPluginOSPython
   )
-  
+
+# Windows-only libraries
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  list(APPEND LLDB_USED_LIBS
+    #lldbHostWindows
+    #lldbPluginPlatformWindows
+    #Ws2_32
+    )
+endif ()
+
+# Linux-only libraries
+if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
+  list(APPEND LLDB_USED_LIBS
+    lldbHostLinux
+    lldbPluginProcessLinux
+    lldbPluginProcessPOSIX
+    )
+endif ()
+
 set( CLANG_USED_LIBS
   clangAnalysis
   clangAST
@@ -127,6 +134,26 @@ add_lldb_library(liblldb
   ${CMAKE_CURRENT_BINARY_DIR}/../scripts/LLDBWrapPython.cpp
   )
 set_target_properties(liblldb PROPERTIES OUTPUT_NAME lldb)
+
+# Determine LLDB revision and repository. GetSourceVersion and GetRepositoryPath are shell-scripts, and as
+# such will not work on Windows.
+if ( NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  execute_process(COMMAND ${CMAKE_SOURCE_DIR}/utils/GetSourceVersion ${LLDB_SOURCE_DIR}
+                  OUTPUT_VARIABLE LLDB_REVISION)
+  string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REVISION ${LLDB_REVISION})
+
+  execute_process(COMMAND ${CMAKE_SOURCE_DIR}/utils/GetRepositoryPath ${LLDB_SOURCE_DIR}
+                  OUTPUT_VARIABLE LLDB_REPOSITORY)
+  string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
+  string(REPLACE " " "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
+
+  set_property(
+    SOURCE lldb.cpp
+    PROPERTY COMPILE_DEFINITIONS "LLDB_REVISION=\"${LLDB_REVISION}\"" "LLDB_REPOSITORY=\"${LLDB_REPOSITORY}\"")
+endif ()
+# FIXME: implement svn/git revision and repository parsing solution on Windows. There is an SVN-only
+#        revision parsing solution in tools/clang/lib/Basic/CMakelists.txt.
+
 target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
 add_dependencies(liblldb swig_wrapper)
 
