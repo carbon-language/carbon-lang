@@ -1334,6 +1334,10 @@ TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
                "    GUARDED_BY(aaaaaaaaaaaaa);");
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
                "    GUARDED_BY(aaaaaaaaaaaaa) {}");
+  verifyFormat(
+      "void aaaaaaaaaaaaaaaaaa()\n"
+      "    __attribute__((aaaaaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "                   aaaaaaaaaaaaaaaaaaaaaaaaa));");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {

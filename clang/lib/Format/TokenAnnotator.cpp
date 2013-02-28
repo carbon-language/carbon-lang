@@ -1092,6 +1092,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
     return false;
+  if (Left.is(tok::l_paren) && Right.is(tok::l_paren) && Left.Parent &&
+      Left.Parent->is(tok::kw___attribute))
+    return false;
 
   if (Right.Type == TT_LineComment)
     // We rely on MustBreakBefore being set correctly here as we should not
@@ -1120,7 +1123,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
          Right.is(tok::colon) || Left.is(tok::coloncolon) ||
          Left.is(tok::semi) || Left.is(tok::l_brace) ||
          (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
-          Right.is(tok::identifier)) ||
+          (Right.is(tok::identifier) || Right.is(tok::kw___attribute))) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
          (Left.is(tok::l_square) && !Right.is(tok::r_square));
 }
