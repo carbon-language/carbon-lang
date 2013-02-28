@@ -23,6 +23,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -189,6 +190,16 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
                                  0);
     return -1;
   }
+  case Instruction::Call:
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+      SmallVector<Type*, 4> Tys;
+      for (unsigned J = 0, JE = II->getNumArgOperands(); J != JE; ++J)
+        Tys.push_back(II->getArgOperand(J)->getType());
+
+      return TTI->getIntrinsicInstrCost(II->getIntrinsicID(), II->getType(),
+                                        Tys);
+    }
+    return -1;
   default:
     // We don't have any information on this instruction.
     return -1;

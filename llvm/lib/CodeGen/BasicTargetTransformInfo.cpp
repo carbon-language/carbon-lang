@@ -379,22 +379,77 @@ unsigned BasicTTI::getMemoryOpCost(unsigned Opcode, Type *Src,
   return LT.first;
 }
 
-unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID, Type *RetTy,
+unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
                                          ArrayRef<Type *> Tys) const {
-  // assume that we need to scalarize this intrinsic.
-  unsigned ScalarizationCost = 0;
-  unsigned ScalarCalls = 1;
-  if (RetTy->isVectorTy()) {
-    ScalarizationCost = getScalarizationOverhead(RetTy, true, false);
-    ScalarCalls = std::max(ScalarCalls, RetTy->getVectorNumElements());
-  }
-  for (unsigned i = 0, ie = Tys.size(); i != ie; ++i) {
-    if (Tys[i]->isVectorTy()) {
-      ScalarizationCost += getScalarizationOverhead(Tys[i], false, true);
+  unsigned ISD = 0;
+  switch (IID) {
+  default: {
+    // Assume that we need to scalarize this intrinsic.
+    unsigned ScalarizationCost = 0;
+    unsigned ScalarCalls = 1;
+    if (RetTy->isVectorTy()) {
+      ScalarizationCost = getScalarizationOverhead(RetTy, true, false);
       ScalarCalls = std::max(ScalarCalls, RetTy->getVectorNumElements());
     }
+    for (unsigned i = 0, ie = Tys.size(); i != ie; ++i) {
+      if (Tys[i]->isVectorTy()) {
+        ScalarizationCost += getScalarizationOverhead(Tys[i], false, true);
+        ScalarCalls = std::max(ScalarCalls, RetTy->getVectorNumElements());
+      }
+    }
+
+    return ScalarCalls + ScalarizationCost;
   }
-  return ScalarCalls + ScalarizationCost;
+  // Look for intrinsics that can be lowered directly or turned into a scalar
+  // intrinsic call.
+  case Intrinsic::sqrt:    ISD = ISD::FSQRT;  break;
+  case Intrinsic::sin:     ISD = ISD::FSIN;   break;
+  case Intrinsic::cos:     ISD = ISD::FCOS;   break;
+  case Intrinsic::exp:     ISD = ISD::FEXP;   break;
+  case Intrinsic::exp2:    ISD = ISD::FEXP2;  break;
+  case Intrinsic::log:     ISD = ISD::FLOG;   break;
+  case Intrinsic::log10:   ISD = ISD::FLOG10; break;
+  case Intrinsic::log2:    ISD = ISD::FLOG2;  break;
+  case Intrinsic::fabs:    ISD = ISD::FABS;   break;
+  case Intrinsic::floor:   ISD = ISD::FFLOOR; break;
+  case Intrinsic::ceil:    ISD = ISD::FCEIL;  break;
+  case Intrinsic::trunc:   ISD = ISD::FTRUNC; break;
+  case Intrinsic::rint:    ISD = ISD::FRINT;  break;
+  case Intrinsic::pow:     ISD = ISD::FPOW;   break;
+  case Intrinsic::fma:     ISD = ISD::FMA;    break;
+  case Intrinsic::fmuladd: ISD = ISD::FMA;    break; // FIXME: mul + add?
+  }
+
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(RetTy);
+
+  if (TLI->isOperationLegalOrPromote(ISD, LT.second)) {
+    // The operation is legal. Assume it costs 1.
+    // If the type is split to multiple registers, assume that thre is some
+    // overhead to this.
+    // TODO: Once we have extract/insert subvector cost we need to use them.
+    if (LT.first > 1)
+      return LT.first * 2;
+    return LT.first * 1;
+  }
+
+  if (!TLI->isOperationExpand(ISD, LT.second)) {
+    // If the operation is custom lowered then assume
+    // thare the code is twice as expensive.
+    return LT.first * 2;
+  }
+
+  // Else, assume that we need to scalarize this intrinsic. For math builtins
+  // this will emit a costly libcall, adding call overhead and spills. Make it
+  // very expensive.
+  if (RetTy->isVectorTy()) {
+    unsigned Num = RetTy->getVectorNumElements();
+    unsigned Cost = TopTTI->getIntrinsicInstrCost(IID, RetTy->getScalarType(),
+                                                  Tys);
+    return 10 * Cost * Num;
+  }
+
+  // This is going to be turned into a library call, make it expensive.
+  return 10;
 }
 
 unsigned BasicTTI::getNumberOfParts(Type *Tp) const {
