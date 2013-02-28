@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/Version.h"
+
 #include "lldb/lldb-python.h"
 
 #include "lldb/lldb-private.h"
@@ -23,6 +25,7 @@
 #include "lldb/Target/Thread.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
@@ -76,6 +79,26 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+namespace {
+
+std::string getLLDBRevision() {
+#ifdef LLDB_REVISION
+  return LLDB_REVISION;
+#else
+  return "";
+#endif
+}
+
+std::string getLLDBRepository() {
+#ifdef LLDB_REPOSITORY
+  return LLDB_REPOSITORY;
+#else
+  return "";
+#endif
+}
+
+}
 
 void
 lldb_private::Initialize ()
@@ -224,15 +247,47 @@ lldb_private::Terminate ()
     Log::Terminate();
 }
 
+
+#if defined (__APPLE__)
 extern "C" const double liblldb_coreVersionNumber;
+#endif
+
 const char *
 lldb_private::GetVersion ()
 {
+#if defined (__APPLE__)
     static char g_version_string[32];
     if (g_version_string[0] == '\0')
         ::snprintf (g_version_string, sizeof(g_version_string), "LLDB-%g", liblldb_coreVersionNumber);
 
     return g_version_string;
+#else
+    // On Linux/FreeBSD/Windows, report a version number in the same style as the clang tool.
+    static std::string buf;
+    llvm::raw_string_ostream OS(buf);
+    OS << "lldb version " CLANG_VERSION_STRING " ";
+
+    std::string lldb_repo = getLLDBRepository();
+    if (lldb_repo.length() > 0)
+        OS << "(" << lldb_repo;
+
+    std::string lldb_rev = getLLDBRevision();
+    if (lldb_rev.length() > 0)
+        OS << " revision " << lldb_rev;
+
+    std::string clang_rev = clang::getClangRevision();
+    if (clang_rev.length() > 0)
+        OS << " clang revision " << clang_rev;
+
+    std::string llvm_rev = clang::getLLVMRevision();
+    if (llvm_rev.length() > 0)
+        OS << " llvm revision " << llvm_rev;
+
+    if (lldb_repo.length() > 0)
+        OS << ")";
+
+    return OS.str().c_str();
+#endif
 }
 
 const char *

@@ -77,8 +77,13 @@ class HelpCommandTestCase(TestBase):
         version_str = self.version_number_string()
         import re
         match = re.match('[0-9]+', version_str)
+        if sys.platform.startswith("darwin"):
+            search_regexp = ['LLDB-' + (version_str if match else '[0-9]+')]
+        else:
+            search_regexp = ['lldb version (\d|\.)+.*$']
+
         self.expect("version",
-            patterns = ['LLDB-' + (version_str if match else '[0-9]+')])
+            patterns = search_regexp)
 
     def test_help_should_not_crash_lldb(self):
         """Command 'help disasm' should not crash lldb."""
