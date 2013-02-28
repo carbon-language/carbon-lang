@@ -273,7 +273,7 @@ public:
   ///
   /// \returns The column after the last token in the last line of the
   /// \c UnwrappedLine.
-  unsigned format() {
+  unsigned format(const AnnotatedLine *NextLine) {
     // Initialize state dependent on indent.
     LineState State;
     State.Column = FirstIndent;
@@ -295,7 +295,11 @@ public:
     moveStateToNextToken(State, /*DryRun=*/ false);
 
     // If everything fits on a single line, just put it there.
-    if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
+    unsigned ColumnLimit = Style.ColumnLimit;
+    if (NextLine && NextLine->InPPDirective &&
+        !NextLine->First.FormatTok.HasUnescapedNewline)
+      ColumnLimit = getColumnLimit();
+    if (Line.Last->TotalLength <= ColumnLimit - FirstIndent) {
       while (State.NextToken != NULL) {
         addTokenToState(false, false, State);
       }
@@ -749,7 +753,7 @@ private:
   }
 
   unsigned getColumnLimit() {
-    return Style.ColumnLimit - (Line.InPPDirective ? 1 : 0);
+    return Style.ColumnLimit - (Line.InPPDirective ? 2 : 0);
   }
 
   /// \brief An edge in the solution space from \c Previous->State to \c State,
@@ -1112,7 +1116,8 @@ public:
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
                                          TheLine.First, Whitespaces,
                                          StructuralError);
-        PreviousEndOfLineColumn = Formatter.format();
+        PreviousEndOfLineColumn =
+            Formatter.format(I + 1 != E ? &*(I + 1) : NULL);
         IndentForLevel[TheLine.Level] = LevelIndent;
         PreviousLineWasTouched = true;
       } else {
@@ -1192,7 +1197,7 @@ private:
     if (I->Last->Type == TT_LineComment)
       return;
 
-    unsigned Limit = Style.ColumnLimit - (I->InPPDirective ? 1 : 0) - Indent;
+    unsigned Limit = Style.ColumnLimit - Indent;
     // If we already exceed the column limit, we set 'Limit' to 0. The different
     // tryMerge..() functions can then decide whether to still do merging.
     Limit = I->Last->TotalLength > Limit ? 0 : Limit - I->Last->TotalLength;
