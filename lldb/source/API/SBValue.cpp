@@ -1365,7 +1365,7 @@ SBValue::MightHaveChildren ()
         has_children = value_sp->MightHaveChildren();
 
     if (log)
-        log->Printf ("SBValue(%p)::HasChildren() => %i", value_sp.get(), has_children);
+        log->Printf ("SBValue(%p)::MightHaveChildren() => %i", value_sp.get(), has_children);
     return has_children;
 }
 
