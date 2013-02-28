@@ -417,6 +417,10 @@ retry_random_path:
       RandomPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
   }
 
+  // Make sure we don't fall into an infinite loop by constantly trying
+  // to create the parent path.
+  bool TriedToCreateParent = false;
+
   // Try to open + create the file.
 rety_open_create:
   int RandomFD = ::open(RandomPath.c_str(), O_RDWR | O_CREAT | O_EXCL, mode);
@@ -427,7 +431,9 @@ rety_open_create:
       goto retry_random_path;
     // If path prefix doesn't exist, try to create it.
     if (SavedErrno == errc::no_such_file_or_directory &&
-        !exists(path::parent_path(RandomPath))) {
+        !exists(path::parent_path(RandomPath)) &&
+        !TriedToCreateParent) {
+      TriedToCreateParent = true;
       StringRef p(RandomPath);
       SmallString<64> dir_to_create;
       for (path::const_iterator i = path::begin(p),
