@@ -459,7 +459,7 @@ void __asan_init() {
 #if ASAN_LINUX && defined(__x86_64__) && !ASAN_FIXED_MAPPING
   if (!full_shadow_is_available) {
     kMidMemBeg = kLowMemEnd < 0x3000000000ULL ? 0x3000000000ULL : 0;
-    kMidMemEnd = kLowMemEnd < 0x3000000000ULL ? 0x3fffffffffULL : 0;
+    kMidMemEnd = kLowMemEnd < 0x3000000000ULL ? 0x4fffffffffULL : 0;
   }
 #endif
 

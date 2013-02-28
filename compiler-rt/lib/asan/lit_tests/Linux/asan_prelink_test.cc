@@ -22,5 +22,5 @@ int main(int argc, char **argv) {
   *getG() = 0;
 }
 #endif
-// CHECK: 0x003000000000, 0x003fffffffff{{.*}} MidMem
+// CHECK: 0x003000000000, 0x004fffffffff{{.*}} MidMem
 // CHECK: SO mapped at 3600000000
