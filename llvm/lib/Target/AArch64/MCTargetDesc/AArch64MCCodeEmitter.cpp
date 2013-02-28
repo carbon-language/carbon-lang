@@ -106,8 +106,6 @@ public:
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const;
 
-  unsigned fixFCMPImm(const MCInst &MI, unsigned EncodedValue) const;
-
   template<int hasRs, int hasRt2> unsigned
   fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue) const;
 
@@ -421,15 +419,6 @@ AArch64MCCodeEmitter::getMoveWideImmOpValue(const MCInst &MI, unsigned OpIdx,
   }
 
   return Result | getAddressWithFixup(UImm16MO, requestedFixup, Fixups);
-}
-
-unsigned AArch64MCCodeEmitter::fixFCMPImm(const MCInst &MI,
-                                          unsigned EncodedValue) const {
-    // For FCMP[E] Rn, #0.0, the Rm field has a canonical representation
-    // with 0s, but is architecturally ignored
-    EncodedValue &= ~0x1f0000u;
-
-    return EncodedValue;
 }
 
 template<int hasRs, int hasRt2> unsigned
