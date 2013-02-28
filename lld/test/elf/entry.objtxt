@@ -11,9 +11,9 @@
 # RUN: lld-core -reader YAML %s -writer ELF --entry=_entrypoint -o %t1
 # RUN: llvm-nm -n %t1 | FileCheck %s
 # 
-# CHECK:  000000a0 T main
-# CHECK:  00002000 A _end
-# CHECK:  00002000 A end
+# CHECK:  00000080 T main
+# CHECK:  00001000 A _end
+# CHECK:  00001000 A end
 # CHECK:           w _entrypoint
 
 defined-atoms:   

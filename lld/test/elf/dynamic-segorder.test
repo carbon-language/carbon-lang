@@ -10,7 +10,7 @@ CHECK: flags r--
 CHECK: LOAD
 CHECK: flags r-x
 CHECK: LOAD
-CHECK: flags r--
+CHECK: flags rw-
 CHECK: LOAD
 CHECK: flags rw-
 CHECK: DYNAMIC
