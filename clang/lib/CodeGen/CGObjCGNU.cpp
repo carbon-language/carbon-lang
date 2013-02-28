@@ -225,7 +225,7 @@ protected:
   /// Returns a property name and encoding string.
   llvm::Constant *MakePropertyEncodingString(const ObjCPropertyDecl *PD,
                                              const Decl *Container) {
-    ObjCRuntime R = CGM.getLangOpts().ObjCRuntime;
+    const ObjCRuntime &R = CGM.getLangOpts().ObjCRuntime;
     if ((R.getKind() == ObjCRuntime::GNUstep) &&
         (R.getVersion() >= VersionTuple(1, 6))) {
       std::string NameAndAttributes;
@@ -236,10 +236,39 @@ protected:
       NameAndAttributes += TypeStr;
       NameAndAttributes += '\0';
       NameAndAttributes += PD->getNameAsString();
+      NameAndAttributes += '\0';
       return llvm::ConstantExpr::getGetElementPtr(
           CGM.GetAddrOfConstantString(NameAndAttributes), Zeros);
     }
     return MakeConstantString(PD->getNameAsString());
+  }
+  /// Push the property attributes into two structure fields. 
+  void PushPropertyAttributes(std::vector<llvm::Constant*> &Fields,
+      ObjCPropertyDecl *property, bool isSynthesized=true, bool
+      isDynamic=true) {
+    int attrs = property->getPropertyAttributes();
+    // For read-only properties, clear the copy and retain flags
+    if (attrs & ObjCPropertyDecl::OBJC_PR_readonly) {
+      attrs &= ~ObjCPropertyDecl::OBJC_PR_copy;
+      attrs &= ~ObjCPropertyDecl::OBJC_PR_retain;
+      attrs &= ~ObjCPropertyDecl::OBJC_PR_weak;
+      attrs &= ~ObjCPropertyDecl::OBJC_PR_strong;
+    }
+    // The first flags field has the same attribute values as clang uses internally
+    Fields.push_back(llvm::ConstantInt::get(Int8Ty, attrs & 0xff));
+    attrs >>= 8;
+    attrs <<= 2;
+    // For protocol properties, synthesized and dynamic have no meaning, so we
+    // reuse these flags to indicate that this is a protocol property (both set
+    // has no meaning, as a property can't be both synthesized and dynamic)
+    attrs |= isSynthesized ? (1<<0) : 0;
+    attrs |= isDynamic ? (1<<1) : 0;
+    // The second field is the next four fields left shifted by two, with the
+    // low bit set to indicate whether the field is synthesized or dynamic.
+    Fields.push_back(llvm::ConstantInt::get(Int8Ty, attrs & 0xff));
+    // Two padding fields
+    Fields.push_back(llvm::ConstantInt::get(Int8Ty, 0));
+    Fields.push_back(llvm::ConstantInt::get(Int8Ty, 0));
   }
   /// Ensures that the value has the required type, by inserting a bitcast if
   /// required.  This function lets us avoid inserting bitcasts that are
@@ -675,7 +704,7 @@ class CGObjCGNUstep : public CGObjCGNU {
     }
   public:
     CGObjCGNUstep(CodeGenModule &Mod) : CGObjCGNU(Mod, 9, 3) {
-      ObjCRuntime R = CGM.getLangOpts().ObjCRuntime;
+      const ObjCRuntime &R = CGM.getLangOpts().ObjCRuntime;
 
       llvm::StructType *SlotStructTy = llvm::StructType::get(PtrTy,
           PtrTy, PtrTy, IntTy, IMPTy, NULL);
@@ -1786,8 +1815,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   // simplify the runtime library by allowing it to use the same data
   // structures for protocol metadata everywhere.
   llvm::StructType *PropertyMetadataTy = llvm::StructType::get(
-          PtrToInt8Ty, Int8Ty, Int8Ty, PtrToInt8Ty, PtrToInt8Ty, PtrToInt8Ty,
-          PtrToInt8Ty, NULL);
+          PtrToInt8Ty, Int8Ty, Int8Ty, Int8Ty, Int8Ty, PtrToInt8Ty,
+          PtrToInt8Ty, PtrToInt8Ty, PtrToInt8Ty, NULL);
   std::vector<llvm::Constant*> Properties;
   std::vector<llvm::Constant*> OptionalProperties;
 
@@ -1799,12 +1828,9 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     std::vector<llvm::Constant*> Fields;
     ObjCPropertyDecl *property = *iter;
 
+    Fields.push_back(MakePropertyEncodingString(property, 0));
+    PushPropertyAttributes(Fields, property);
 
-    Fields.push_back(MakePropertyEncodingString(property, PD));
-
-    Fields.push_back(llvm::ConstantInt::get(Int8Ty,
-                property->getPropertyAttributes()));
-    Fields.push_back(llvm::ConstantInt::get(Int8Ty, 0));
     if (ObjCMethodDecl *getter = property->getGetterMethodDecl()) {
       std::string TypeStr;
       Context.getObjCEncodingForMethodDecl(getter,TypeStr);
@@ -2034,14 +2060,12 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
         SmallVectorImpl<Selector> &InstanceMethodSels,
         SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes) {
   ASTContext &Context = CGM.getContext();
-  //
-  // Property metadata: name, attributes, isSynthesized, setter name, setter
-  // types, getter name, getter types.
+  // Property metadata: name, attributes, attributes2, padding1, padding2,
+  // setter name, setter types, getter name, getter types.
   llvm::StructType *PropertyMetadataTy = llvm::StructType::get(
-          PtrToInt8Ty, Int8Ty, Int8Ty, PtrToInt8Ty, PtrToInt8Ty, PtrToInt8Ty,
-          PtrToInt8Ty, NULL);
+          PtrToInt8Ty, Int8Ty, Int8Ty, Int8Ty, Int8Ty, PtrToInt8Ty,
+          PtrToInt8Ty, PtrToInt8Ty, PtrToInt8Ty, NULL);
   std::vector<llvm::Constant*> Properties;
-
 
   // Add all of the property methods need adding to the method list and to the
   // property metadata list.
@@ -2053,11 +2077,11 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
     ObjCPropertyImplDecl *propertyImpl = *iter;
     bool isSynthesized = (propertyImpl->getPropertyImplementation() == 
         ObjCPropertyImplDecl::Synthesize);
+    bool isDynamic = (propertyImpl->getPropertyImplementation() == 
+        ObjCPropertyImplDecl::Dynamic);
 
     Fields.push_back(MakePropertyEncodingString(property, OID));
-    Fields.push_back(llvm::ConstantInt::get(Int8Ty,
-                property->getPropertyAttributes()));
-    Fields.push_back(llvm::ConstantInt::get(Int8Ty, isSynthesized));
+    PushPropertyAttributes(Fields, property, isSynthesized, isDynamic);
     if (ObjCMethodDecl *getter = property->getGetterMethodDecl()) {
       std::string TypeStr;
       Context.getObjCEncodingForMethodDecl(getter,TypeStr);
