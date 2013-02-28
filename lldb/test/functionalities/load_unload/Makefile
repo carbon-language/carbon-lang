@@ -4,7 +4,7 @@ CC ?= clang
 ifeq "$(ARCH)" ""
 	ARCH = x86_64
 endif
-CFLAGS ?=-arch $(ARCH) -gdwarf-2 -O0
+CFLAGS ?=-arch $(ARCH) -g -O0
 CWD := $(shell pwd)
 
 all: a.out hidden/libd.dylib

@@ -81,7 +81,7 @@ else
 	endif
 endif
 
-CFLAGS ?= -gdwarf-2 -O0
+CFLAGS ?= -g -O0
 CFLAGS += $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
 
 CXXFLAGS +=$(CFLAGS)

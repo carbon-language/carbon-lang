@@ -1,7 +1,7 @@
 LEVEL = ../../../make
 
 CXX_SOURCES := main.cpp
-CFLAGS := -gdwarf-2 -O0
+CFLAGS := -g -O0
 
 clean: OBJECTS+=$(wildcard main.d.*)
 
