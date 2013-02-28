@@ -534,6 +534,13 @@ protected:
         if (result.Succeeded())
         {
             const size_t count = valid_bp_ids.GetSize();
+            if (count > 1)
+            {
+                result.AppendError ("can only add commands to one breakpoint at a time.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            
             for (size_t i = 0; i < count; ++i)
             {
                 BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
