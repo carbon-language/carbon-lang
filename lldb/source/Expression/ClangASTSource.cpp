@@ -410,7 +410,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     
     if (log)
     {       
-        log->Printf("  FELD[%u] Original decl (Decl*)%p:", current_id, original_decl);
+        log->Printf("  FELD[%u] Original decl (ASTContext*)%p (Decl*)%p:", current_id, original_ctx, original_decl);
         ASTDumper(original_decl).ToLog(log, "    ");
     }
     
@@ -1442,9 +1442,10 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
     
     if (log)
     {
-        log->Printf("LayoutRecordType[%u] on (RecordDecl*)%p [name = '%s']",
+        log->Printf("LayoutRecordType[%u] on (ASTContext*)%p for (RecordDecl*)%p [name = '%s']",
                     current_id,
                     m_ast_context,
+                    record,
                     record->getNameAsString().c_str());
     }
     

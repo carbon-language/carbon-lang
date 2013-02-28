@@ -126,11 +126,20 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
                               clang::ASTContext *src_ctx,
                               clang::Decl *decl)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+        log->Printf("    [ClangASTImporter] DeportDecl called on (%sDecl*)%p from (ASTContext*)%p to (ASTContex*)%p",
+                    decl->getDeclKindName(),
+                    decl,
+                    src_ctx,
+                    dst_ctx);
+    
     clang::Decl *result = CopyDecl(dst_ctx, src_ctx, decl);
     
     if (!result)
         return NULL;
-    
+        
     ClangASTContext::GetCompleteDecl (src_ctx, decl);
 
     MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
@@ -140,11 +149,24 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
     
     ASTContextMetadataSP to_context_md = GetContextMetadata(dst_ctx);
 
-    OriginMap::iterator oi = to_context_md->m_origins.find(decl);
+    OriginMap::iterator oi = to_context_md->m_origins.find(result);
     
     if (oi != to_context_md->m_origins.end() &&
         oi->second.ctx == src_ctx)
         to_context_md->m_origins.erase(oi);
+    
+    if (TagDecl *result_tag_decl = dyn_cast<TagDecl>(result))
+    {
+        result_tag_decl->setHasExternalLexicalStorage(false);
+        result_tag_decl->setHasExternalVisibleStorage(false);
+    }
+    
+    if (log)
+        log->Printf("    [ClangASTImporter] DeportDecl deported (%sDecl*)%p to (%sDecl*)%p",
+                    decl->getDeclKindName(),
+                    decl,
+                    result->getDeclKindName(),
+                    result);
     
     return result;
 }
