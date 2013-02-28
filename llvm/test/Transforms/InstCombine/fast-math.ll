@@ -172,6 +172,17 @@ define double @fmul_distribute3(double %f1) {
 ; CHECK: fmul fast double %t2, 0x10000000000000
 }
 
+; ((X*C1) + C2) * C3 => (X * (C1*C3)) + (C2*C3) (i.e. distribution)
+define float @fmul_distribute4(float %f1) {
+  %t1 = fmul float %f1, 6.0e+3
+  %t2 = fsub float 2.0e+3, %t1
+  %t3 = fmul fast float %t2, 5.0e+3
+  ret float %t3
+; CHECK: @fmul_distribute4
+; CHECK: %1 = fmul fast float %f1, 3.000000e+07
+; CHECK: %t3 = fsub fast float 1.000000e+07, %1
+}
+
 ; C1/X * C2 => (C1*C2) / X
 define float @fmul2(float %f1) {
   %t1 = fdiv float 2.0e+3, %f1

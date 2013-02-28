@@ -402,7 +402,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
           return ReplaceInstUsesWith(I, V);
       }
 
-      // (MDC +/- C1) * C2 => (MDC * C2) +/- (C1 * C2)
+      // (MDC +/- C1) * C => (MDC * C) +/- (C1 * C)
       Instruction *FAddSub = dyn_cast<Instruction>(Op0);
       if (FAddSub &&
           (FAddSub->getOpcode() == Instruction::FAdd ||
@@ -420,8 +420,8 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
 
         if (C1 && C1->getValueAPF().isNormal() &&
             isFMulOrFDivWithConstant(Opnd0)) {
-          Value *M0 = ConstantExpr::getFMul(C1, C);
-          Value *M1 = isNormalFp(cast<ConstantFP>(M0)) ? 
+          Value *M1 = ConstantExpr::getFMul(C1, C);
+          Value *M0 = isNormalFp(cast<ConstantFP>(M1)) ? 
                       foldFMulConst(cast<Instruction>(Opnd0), C, &I) :
                       0;
           if (M0 && M1) {
