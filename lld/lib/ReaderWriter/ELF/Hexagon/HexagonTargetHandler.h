@@ -147,6 +147,15 @@ class HexagonTargetHandler LLVM_FINAL :
 public:
   HexagonTargetHandler(HexagonTargetInfo &targetInfo);
 
+  bool doesOverrideHeader() { return true; }
+
+  void setHeaderInfo(Header<HexagonELFType> *header) {
+    header->e_ident(llvm::ELF::EI_VERSION, 1);
+    header->e_ident(llvm::ELF::EI_OSABI, 0);
+    header->e_version(1);
+    header->e_flags(0x3);
+  }
+
   virtual TargetLayout<HexagonELFType> &targetLayout() {
     return _targetLayout;
   }
