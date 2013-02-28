@@ -168,12 +168,10 @@ types::ID types::lookupTypeForExtension(const char *Ext) {
 }
 
 types::ID types::lookupTypeForTypeSpecifier(const char *Name) {
-  unsigned N = strlen(Name);
-
   for (unsigned i=0; i<numTypes; ++i) {
     types::ID Id = (types::ID) (i + 1);
     if (canTypeBeUserSpecified(Id) &&
-        memcmp(Name, getInfo(Id).Name, N + 1) == 0)
+        strcmp(Name, getInfo(Id).Name) == 0)
       return Id;
   }
 
