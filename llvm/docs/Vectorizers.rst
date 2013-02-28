@@ -245,6 +245,17 @@ See the table below for a list of these functions.
 |     |     | fmuladd |
 +-----+-----+---------+
 
+The loop vectorizer knows about special instructions on the target and will
+vectorize a loop containing a function call that maps to the instructions. For
+example, the loop below will be vectorized on Intel x86 if the SSE4.1 roundps
+instruction is available.
+
+.. code-block:: c++
+
+  void foo(float *f) {
+    for (int i = 0; i != 1024; ++i)
+      f[i] = floorf(f[i]);
+  }
 
 Partial unrolling during vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
