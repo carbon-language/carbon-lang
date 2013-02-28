@@ -2155,12 +2155,11 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                               llvm::AttributeSet::get(getLLVMContext(),
                                               llvm::AttributeSet::FunctionIndex,
                                                       B));
-  llvm::CallInst *HandlerCall = Builder.CreateCall(Fn, Args);
+  llvm::CallInst *HandlerCall = EmitNounwindRuntimeCall(Fn, Args);
   if (Recover) {
     Builder.CreateBr(Cont);
   } else {
     HandlerCall->setDoesNotReturn();
-    HandlerCall->setDoesNotThrow();
     Builder.CreateUnreachable();
   }
 
@@ -3021,7 +3020,7 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
 
 LValue CodeGenFunction::EmitObjCSelectorLValue(const ObjCSelectorExpr *E) {
   llvm::Value *V = 
-    CGM.getObjCRuntime().GetSelector(Builder, E->getSelector(), true);
+    CGM.getObjCRuntime().GetSelector(*this, E->getSelector(), true);
   return MakeAddrLValue(V, E->getType());
 }
 

@@ -12,6 +12,7 @@
 
 #include "clang/AST/Type.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/CallingConv.h"
 
 namespace llvm {
   class Value;
@@ -184,13 +185,23 @@ namespace clang {
   class ABIInfo {
   public:
     CodeGen::CodeGenTypes &CGT;
+  protected:
+    llvm::CallingConv::ID RuntimeCC;
+  public:
+    ABIInfo(CodeGen::CodeGenTypes &cgt)
+      : CGT(cgt), RuntimeCC(llvm::CallingConv::C) {}
 
-    ABIInfo(CodeGen::CodeGenTypes &cgt) : CGT(cgt) {}
     virtual ~ABIInfo();
 
     ASTContext &getContext() const;
     llvm::LLVMContext &getVMContext() const;
     const llvm::DataLayout &getDataLayout() const;
+
+    /// Return the calling convention to use for system runtime
+    /// functions.
+    llvm::CallingConv::ID getRuntimeCC() const {
+      return RuntimeCC;
+    }
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI) const = 0;
 

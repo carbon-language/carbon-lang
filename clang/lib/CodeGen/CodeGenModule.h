@@ -28,6 +28,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Transforms/Utils/BlackList.h"
@@ -145,6 +146,11 @@ namespace CodeGen {
       unsigned char PointerSizeInBytes;
       unsigned char SizeSizeInBytes;     // sizeof(size_t)
     };
+
+    llvm::CallingConv::ID RuntimeCC;
+    llvm::CallingConv::ID getRuntimeCC() const {
+      return RuntimeCC;
+    }
   };
 
 struct RREntrypoints {

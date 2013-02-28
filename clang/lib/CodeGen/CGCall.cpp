@@ -1894,6 +1894,85 @@ CodeGenFunction::AddObjCARCExceptionMetadata(llvm::Instruction *Inst) {
                       CGM.getNoObjCARCExceptionsMetadata());
 }
 
+/// Emits a call to the given no-arguments nounwind runtime function.
+llvm::CallInst *
+CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
+                                         const llvm::Twine &name) {
+  return EmitNounwindRuntimeCall(callee, ArrayRef<llvm::Value*>(), name);
+}
+
+/// Emits a call to the given nounwind runtime function.
+llvm::CallInst *
+CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
+                                         ArrayRef<llvm::Value*> args,
+                                         const llvm::Twine &name) {
+  llvm::CallInst *call = EmitRuntimeCall(callee, args, name);
+  call->setDoesNotThrow();
+  return call;
+}
+
+/// Emits a simple call (never an invoke) to the given no-arguments
+/// runtime function.
+llvm::CallInst *
+CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
+                                 const llvm::Twine &name) {
+  return EmitRuntimeCall(callee, ArrayRef<llvm::Value*>(), name);
+}
+
+/// Emits a simple call (never an invoke) to the given runtime
+/// function.
+llvm::CallInst *
+CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
+                                 ArrayRef<llvm::Value*> args,
+                                 const llvm::Twine &name) {
+  llvm::CallInst *call = Builder.CreateCall(callee, args, name);
+  call->setCallingConv(getRuntimeCC());
+  return call;
+}
+
+/// Emits a call or invoke to the given noreturn runtime function.
+void CodeGenFunction::EmitNoreturnRuntimeCallOrInvoke(llvm::Value *callee,
+                                               ArrayRef<llvm::Value*> args) {
+  if (getInvokeDest()) {
+    llvm::InvokeInst *invoke = 
+      Builder.CreateInvoke(callee,
+                           getUnreachableBlock(),
+                           getInvokeDest(),
+                           args);
+    invoke->setDoesNotReturn();
+    invoke->setCallingConv(getRuntimeCC());
+  } else {
+    llvm::CallInst *call = Builder.CreateCall(callee, args);
+    call->setDoesNotReturn();
+    call->setCallingConv(getRuntimeCC());
+    Builder.CreateUnreachable();
+  }
+}
+
+/// Emits a call or invoke instruction to the given nullary runtime
+/// function.
+llvm::CallSite
+CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::Value *callee,
+                                         const Twine &name) {
+  return EmitRuntimeCallOrInvoke(callee, ArrayRef<llvm::Value*>(), name);
+}
+
+/// Emits a call or invoke instruction to the given runtime function.
+llvm::CallSite
+CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::Value *callee,
+                                         ArrayRef<llvm::Value*> args,
+                                         const Twine &name) {
+  llvm::CallSite callSite = EmitCallOrInvoke(callee, args, name);
+  callSite.setCallingConv(getRuntimeCC());
+  return callSite;
+}
+
+llvm::CallSite
+CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
+                                  const Twine &Name) {
+  return EmitCallOrInvoke(Callee, ArrayRef<llvm::Value *>(), Name);
+}
+
 /// Emits a call or invoke instruction to the given function, depending
 /// on the current state of the EH stack.
 llvm::CallSite
@@ -1917,12 +1996,6 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
     AddObjCARCExceptionMetadata(Inst);
 
   return Inst;
-}
-
-llvm::CallSite
-CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
-                                  const Twine &Name) {
-  return EmitCallOrInvoke(Callee, ArrayRef<llvm::Value *>(), Name);
 }
 
 static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,

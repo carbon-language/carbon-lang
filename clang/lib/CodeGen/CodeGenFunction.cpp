@@ -258,9 +258,12 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
     llvm::ConstantInt::get(Int32Ty, 0),
     "callsite");
 
-  Builder.CreateCall2(F,
-                      llvm::ConstantExpr::getBitCast(CurFn, PointerTy),
-                      CallSite);
+  llvm::Value *args[] = {
+    llvm::ConstantExpr::getBitCast(CurFn, PointerTy),
+    CallSite
+  };
+
+  EmitNounwindRuntimeCall(F, args);
 }
 
 void CodeGenFunction::EmitMCountInstrumentation() {
@@ -268,7 +271,7 @@ void CodeGenFunction::EmitMCountInstrumentation() {
 
   llvm::Constant *MCountFn = CGM.CreateRuntimeFunction(FTy,
                                                        Target.getMCountName());
-  Builder.CreateCall(MCountFn);
+  EmitNounwindRuntimeCall(MCountFn);
 }
 
 // OpenCL v1.2 s5.6.4.6 allows the compiler to store kernel argument

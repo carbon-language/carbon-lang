@@ -70,7 +70,7 @@ CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   // messaged (avoids pulling it out of the result type).
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   const ObjCInterfaceDecl *ClassDecl = BoxingMethod->getClassInterface();
-  llvm::Value *Receiver = Runtime.GetClass(Builder, ClassDecl);
+  llvm::Value *Receiver = Runtime.GetClass(*this, ClassDecl);
   
   const ParmVarDecl *argDecl = *BoxingMethod->param_begin();
   QualType ArgQT = argDecl->getType().getUnqualifiedType();
@@ -163,7 +163,7 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
   ObjCInterfaceDecl *Class 
     = InterfacePointerType->getObjectType()->getInterface();
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
-  llvm::Value *Receiver = Runtime.GetClass(Builder, Class);
+  llvm::Value *Receiver = Runtime.GetClass(*this, Class);
 
   // Generate the message send.
   RValue result
@@ -191,12 +191,12 @@ llvm::Value *CodeGenFunction::EmitObjCSelectorExpr(const ObjCSelectorExpr *E) {
   // Note that this implementation allows for non-constant strings to be passed
   // as arguments to @selector().  Currently, the only thing preventing this
   // behaviour is the type checking in the front end.
-  return CGM.getObjCRuntime().GetSelector(Builder, E->getSelector());
+  return CGM.getObjCRuntime().GetSelector(*this, E->getSelector());
 }
 
 llvm::Value *CodeGenFunction::EmitObjCProtocolExpr(const ObjCProtocolExpr *E) {
   // FIXME: This should pass the Decl not the name.
-  return CGM.getObjCRuntime().GenerateProtocolRef(Builder, E->getProtocol());
+  return CGM.getObjCRuntime().GenerateProtocolRef(*this, E->getProtocol());
 }
 
 /// \brief Adjust the type of the result of an Objective-C message send 
@@ -310,7 +310,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
     assert(ObjTy && "Invalid Objective-C class message send");
     OID = ObjTy->getInterface();
     assert(OID && "Invalid Objective-C class message send");
-    Receiver = Runtime.GetClass(Builder, OID);
+    Receiver = Runtime.GetClass(*this, OID);
     isClassMessage = true;
     break;
   }
@@ -1743,8 +1743,7 @@ static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
   value = CGF.Builder.CreateBitCast(value, CGF.Int8PtrTy);
 
   // Call the function.
-  llvm::CallInst *call = CGF.Builder.CreateCall(fn, value);
-  call->setDoesNotThrow();
+  llvm::CallInst *call = CGF.EmitNounwindRuntimeCall(fn, value);
   if (isTailCall)
     call->setTailCall();
 
@@ -1770,11 +1769,9 @@ static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
   addr = CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy);
 
   // Call the function.
-  llvm::CallInst *call = CGF.Builder.CreateCall(fn, addr);
-  call->setDoesNotThrow();
+  llvm::Value *result = CGF.EmitNounwindRuntimeCall(fn, addr);
 
   // Cast the result back to a dereference of the original type.
-  llvm::Value *result = call;
   if (origType != CGF.Int8PtrPtrTy)
     result = CGF.Builder.CreateBitCast(result,
                         cast<llvm::PointerType>(origType)->getElementType());
@@ -1803,11 +1800,11 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
 
   llvm::Type *origType = value->getType();
 
-  addr = CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy);
-  value = CGF.Builder.CreateBitCast(value, CGF.Int8PtrTy);
-    
-  llvm::CallInst *result = CGF.Builder.CreateCall2(fn, addr, value);
-  result->setDoesNotThrow();
+  llvm::Value *args[] = {
+    CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy),
+    CGF.Builder.CreateBitCast(value, CGF.Int8PtrTy)
+  };
+  llvm::CallInst *result = CGF.EmitNounwindRuntimeCall(fn, args);
 
   if (ignored) return 0;
 
@@ -1830,11 +1827,11 @@ static void emitARCCopyOperation(CodeGenFunction &CGF,
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
   }
 
-  dst = CGF.Builder.CreateBitCast(dst, CGF.Int8PtrPtrTy);
-  src = CGF.Builder.CreateBitCast(src, CGF.Int8PtrPtrTy);
-    
-  llvm::CallInst *result = CGF.Builder.CreateCall2(fn, dst, src);
-  result->setDoesNotThrow();
+  llvm::Value *args[] = {
+    CGF.Builder.CreateBitCast(dst, CGF.Int8PtrPtrTy),
+    CGF.Builder.CreateBitCast(src, CGF.Int8PtrPtrTy)
+  };
+  CGF.EmitNounwindRuntimeCall(fn, args);
 }
 
 /// Produce the code to do a retain.  Based on the type, calls one of:
@@ -1952,8 +1949,7 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value, bool precise) {
   value = Builder.CreateBitCast(value, Int8PtrTy);
 
   // Call objc_release.
-  llvm::CallInst *call = Builder.CreateCall(fn, value);
-  call->setDoesNotThrow();
+  llvm::CallInst *call = EmitNounwindRuntimeCall(fn, value);
 
   if (!precise) {
     SmallVector<llvm::Value*,1> args;
@@ -2000,10 +1996,11 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
     fn = createARCRuntimeFunction(CGM, fnType, "objc_storeStrong");
   }
 
-  addr = Builder.CreateBitCast(addr, Int8PtrPtrTy);
-  llvm::Value *castValue = Builder.CreateBitCast(value, Int8PtrTy);
-  
-  Builder.CreateCall2(fn, addr, castValue)->setDoesNotThrow();
+  llvm::Value *args[] = {
+    Builder.CreateBitCast(addr, Int8PtrPtrTy),
+    Builder.CreateBitCast(value, Int8PtrTy)
+  };
+  EmitNounwindRuntimeCall(fn, args);
 
   if (ignored) return 0;
   return value;
@@ -2160,8 +2157,7 @@ void CodeGenFunction::EmitARCDestroyWeak(llvm::Value *addr) {
   // Cast the argument to 'id*'.
   addr = Builder.CreateBitCast(addr, Int8PtrPtrTy);
 
-  llvm::CallInst *call = Builder.CreateCall(fn, addr);
-  call->setDoesNotThrow();
+  EmitNounwindRuntimeCall(fn, addr);
 }
 
 /// void \@objc_moveWeak(i8** %dest, i8** %src)
@@ -2192,10 +2188,7 @@ llvm::Value *CodeGenFunction::EmitObjCAutoreleasePoolPush() {
     fn = createARCRuntimeFunction(CGM, fnType, "objc_autoreleasePoolPush");
   }
 
-  llvm::CallInst *call = Builder.CreateCall(fn);
-  call->setDoesNotThrow();
-
-  return call;
+  return EmitNounwindRuntimeCall(fn);
 }
 
 /// Produce the code to do a primitive release.
@@ -2214,8 +2207,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolPop(llvm::Value *value) {
     fn = createARCRuntimeFunction(CGM, fnType, "objc_autoreleasePoolPop");
   }
 
-  llvm::CallInst *call = Builder.CreateCall(fn, value);
-  call->setDoesNotThrow();
+  EmitNounwindRuntimeCall(fn, value);
 }
 
 /// Produce the code to do an MRR version objc_autoreleasepool_push.
@@ -2225,7 +2217,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolPop(llvm::Value *value) {
 ///
 llvm::Value *CodeGenFunction::EmitObjCMRRAutoreleasePoolPush() {
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
-  llvm::Value *Receiver = Runtime.EmitNSAutoreleasePoolClassRef(Builder);
+  llvm::Value *Receiver = Runtime.EmitNSAutoreleasePoolClassRef(*this);
   // [NSAutoreleasePool alloc]
   IdentifierInfo *II = &CGM.getContext().Idents.get("alloc");
   Selector AllocSel = getContext().Selectors.getSelector(0, &II);
@@ -2800,7 +2792,7 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
                            /* side effects */ true);
 
   object = Builder.CreateBitCast(object, VoidPtrTy);
-  Builder.CreateCall(extender, object)->setDoesNotThrow();
+  EmitNounwindRuntimeCall(extender, object);
 }
 
 /// GenerateObjCAtomicSetterCopyHelperFunction - Given a c++ object type with

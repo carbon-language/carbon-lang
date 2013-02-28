@@ -198,7 +198,7 @@ void CodeGenFunction::registerGlobalDtorWithAtExit(llvm::Constant *dtor,
   if (llvm::Function *atexitFn = dyn_cast<llvm::Function>(atexit))
     atexitFn->setDoesNotThrow();
 
-  Builder.CreateCall(atexit, dtorStub)->setDoesNotThrow();
+  EmitNounwindRuntimeCall(atexit, dtorStub);
 }
 
 void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
@@ -228,6 +228,8 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
           CGM.getContext().getTargetInfo().getStaticInitSectionSpecifier())
       Fn->setSection(Section);
   }
+
+  Fn->setCallingConv(CGM.getRuntimeCC());
 
   if (!CGM.getLangOpts().Exceptions)
     Fn->setDoesNotThrow();
@@ -392,7 +394,7 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
   
   for (unsigned i = 0; i != NumDecls; ++i)
     if (Decls[i])
-      Builder.CreateCall(Decls[i]);    
+      EmitRuntimeCall(Decls[i]);
 
   Scope.ForceCleanup();
   

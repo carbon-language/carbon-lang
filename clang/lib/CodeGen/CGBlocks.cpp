@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/CallSite.h"
 #include <algorithm>
 #include <cstdio>
 
@@ -1398,8 +1399,24 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
       } else {
         srcValue = Builder.CreateBitCast(srcValue, VoidPtrTy);
         llvm::Value *dstAddr = Builder.CreateBitCast(dstField, VoidPtrTy);
-        Builder.CreateCall3(CGM.getBlockObjectAssign(), dstAddr, srcValue,
-                            llvm::ConstantInt::get(Int32Ty, flags.getBitMask()));
+        llvm::Value *args[] = {
+          dstAddr, srcValue, llvm::ConstantInt::get(Int32Ty, flags.getBitMask())
+        };
+
+        bool copyCanThrow = false;
+        if (ci->isByRef() && variable->getType()->getAsCXXRecordDecl()) {
+          const Expr *copyExpr =
+            CGM.getContext().getBlockVarCopyInits(variable);
+          if (copyExpr) {
+            copyCanThrow = true; // FIXME: reuse the noexcept logic
+          }
+        }
+
+        if (copyCanThrow) {
+          EmitRuntimeCallOrInvoke(CGM.getBlockObjectAssign(), args);
+        } else {
+          EmitNounwindRuntimeCall(CGM.getBlockObjectAssign(), args);
+        }
       }
     }
   }
@@ -1562,7 +1579,9 @@ public:
 
     llvm::Value *flagsVal = llvm::ConstantInt::get(CGF.Int32Ty, flags);
     llvm::Value *fn = CGF.CGM.getBlockObjectAssign();
-    CGF.Builder.CreateCall3(fn, destField, srcValue, flagsVal);
+
+    llvm::Value *args[] = { destField, srcValue, flagsVal };
+    CGF.EmitNounwindRuntimeCall(fn, args);
   }
 
   void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
@@ -2174,10 +2193,11 @@ void CodeGenFunction::emitByrefStructureInit(const AutoVarEmission &emission) {
 
 void CodeGenFunction::BuildBlockRelease(llvm::Value *V, BlockFieldFlags flags) {
   llvm::Value *F = CGM.getBlockObjectDispose();
-  llvm::Value *N;
-  V = Builder.CreateBitCast(V, Int8PtrTy);
-  N = llvm::ConstantInt::get(Int32Ty, flags.getBitMask());
-  Builder.CreateCall2(F, V, N);
+  llvm::Value *args[] = {
+    Builder.CreateBitCast(V, Int8PtrTy),
+    llvm::ConstantInt::get(Int32Ty, flags.getBitMask())
+  };
+  EmitNounwindRuntimeCall(F, args); // FIXME: throwing destructors?
 }
 
 namespace {

@@ -2091,9 +2091,14 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
   // Call the handler with the two arguments, the operation, and the size of
   // the result.
-  llvm::Value *handlerResult = Builder.CreateCall4(handler, lhs, rhs,
-      Builder.getInt8(OpID),
-      Builder.getInt8(cast<llvm::IntegerType>(opTy)->getBitWidth()));
+  llvm::Value *handlerArgs[] = {
+    lhs,
+    rhs,
+    Builder.getInt8(OpID),
+    Builder.getInt8(cast<llvm::IntegerType>(opTy)->getBitWidth())
+  };
+  llvm::Value *handlerResult =
+    CGF.EmitNounwindRuntimeCall(handler, handlerArgs);
 
   // Truncate the result back to the desired size.
   handlerResult = Builder.CreateTrunc(handlerResult, opTy);

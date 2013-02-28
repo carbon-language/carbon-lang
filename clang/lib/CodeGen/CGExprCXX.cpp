@@ -1617,7 +1617,7 @@ static llvm::Constant *getBadTypeidFn(CodeGenFunction &CGF) {
 
 static void EmitBadTypeidCall(CodeGenFunction &CGF) {
   llvm::Value *Fn = getBadTypeidFn(CGF);
-  CGF.EmitCallOrInvoke(Fn).setDoesNotReturn();
+  CGF.EmitRuntimeCallOrInvoke(Fn).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
 }
 
@@ -1710,7 +1710,7 @@ static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
 
 static void EmitBadCastCall(CodeGenFunction &CGF) {
   llvm::Value *Fn = getBadCastFn(CGF);
-  CGF.EmitCallOrInvoke(Fn).setDoesNotReturn();
+  CGF.EmitRuntimeCallOrInvoke(Fn).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
 }
 
@@ -1825,8 +1825,9 @@ EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
 
   // Emit the call to __dynamic_cast.
   Value = CGF.EmitCastToVoidPtr(Value);
-  Value = CGF.Builder.CreateCall4(getDynamicCastFn(CGF), Value,
-                                  SrcRTTI, DestRTTI, OffsetHint);
+
+  llvm::Value *args[] = { Value, SrcRTTI, DestRTTI, OffsetHint };
+  Value = CGF.EmitNounwindRuntimeCall(getDynamicCastFn(CGF), args);
   Value = CGF.Builder.CreateBitCast(Value, DestLTy);
 
   /// C++ [expr.dynamic.cast]p9:

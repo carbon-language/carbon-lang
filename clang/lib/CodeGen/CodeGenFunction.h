@@ -2301,11 +2301,29 @@ public:
   RValue EmitCallExpr(const CallExpr *E,
                       ReturnValueSlot ReturnValue = ReturnValueSlot());
 
+  llvm::CallInst *EmitRuntimeCall(llvm::Value *callee,
+                                  const Twine &name = "");
+  llvm::CallInst *EmitRuntimeCall(llvm::Value *callee,
+                                  ArrayRef<llvm::Value*> args,
+                                  const Twine &name = "");
+  llvm::CallInst *EmitNounwindRuntimeCall(llvm::Value *callee,
+                                          const Twine &name = "");
+  llvm::CallInst *EmitNounwindRuntimeCall(llvm::Value *callee,
+                                          ArrayRef<llvm::Value*> args,
+                                          const Twine &name = "");
+
   llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
                                   ArrayRef<llvm::Value *> Args,
                                   const Twine &Name = "");
   llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
                                   const Twine &Name = "");
+  llvm::CallSite EmitRuntimeCallOrInvoke(llvm::Value *callee,
+                                         ArrayRef<llvm::Value*> args,
+                                         const Twine &name = "");
+  llvm::CallSite EmitRuntimeCallOrInvoke(llvm::Value *callee,
+                                         const Twine &name = "");
+  void EmitNoreturnRuntimeCallOrInvoke(llvm::Value *callee,
+                                       ArrayRef<llvm::Value*> args);
 
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                 llvm::Type *Ty);

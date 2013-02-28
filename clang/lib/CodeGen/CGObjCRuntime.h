@@ -119,11 +119,11 @@ public:
   /// Get a selector for the specified name and type values. The
   /// return value should have the LLVM type for pointer-to
   /// ASTContext::getObjCSelType().
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
+  virtual llvm::Value *GetSelector(CodeGenFunction &CGF,
                                    Selector Sel, bool lval=false) = 0;
 
   /// Get a typed selector.
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
+  virtual llvm::Value *GetSelector(CodeGenFunction &CGF,
                                    const ObjCMethodDecl *Method) = 0;
 
   /// Get the type constant to catch for the given ObjC pointer type.
@@ -179,7 +179,7 @@ public:
 
   /// Emit the code to return the named protocol as an object, as in a
   /// \@protocol expression.
-  virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
+  virtual llvm::Value *GenerateProtocolRef(CodeGenFunction &CGF,
                                            const ObjCProtocolDecl *OPD) = 0;
 
   /// Generate the named protocol.  Protocols contain method metadata but no
@@ -218,11 +218,11 @@ public:
   
   /// GetClass - Return a reference to the class for the given
   /// interface decl.
-  virtual llvm::Value *GetClass(CGBuilderTy &Builder,
+  virtual llvm::Value *GetClass(CodeGenFunction &CGF,
                                 const ObjCInterfaceDecl *OID) = 0;
   
   
-  virtual llvm::Value *EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder) {
+  virtual llvm::Value *EmitNSAutoreleasePoolClassRef(CodeGenFunction &CGF) {
     llvm_unreachable("autoreleasepool unsupported in this ABI");
   }
   

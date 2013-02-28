@@ -104,7 +104,7 @@ void CGNVCUDARuntime::EmitDeviceStubBody(CodeGenFunction &CGF,
     Args[2] = CGF.Builder.CreateIntCast(
         llvm::ConstantExpr::getOffsetOf(ArgStackTy, I),
         SizeTy, false);
-    llvm::CallSite CS = CGF.EmitCallOrInvoke(cudaSetupArgFn, Args);
+    llvm::CallSite CS = CGF.EmitRuntimeCallOrInvoke(cudaSetupArgFn, Args);
     llvm::Constant *Zero = llvm::ConstantInt::get(IntTy, 0);
     llvm::Value *CSZero = CGF.Builder.CreateICmpEQ(CS.getInstruction(), Zero);
     CGF.Builder.CreateCondBr(CSZero, NextBlock, EndBlock);
@@ -114,7 +114,7 @@ void CGNVCUDARuntime::EmitDeviceStubBody(CodeGenFunction &CGF,
   // Emit the call to cudaLaunch
   llvm::Constant *cudaLaunchFn = getLaunchFn();
   llvm::Value *Arg = CGF.Builder.CreatePointerCast(CGF.CurFn, CharPtrTy);
-  CGF.EmitCallOrInvoke(cudaLaunchFn, Arg);
+  CGF.EmitRuntimeCallOrInvoke(cudaLaunchFn, Arg);
   CGF.EmitBranch(EndBlock);
 
   CGF.EmitBlock(EndBlock);

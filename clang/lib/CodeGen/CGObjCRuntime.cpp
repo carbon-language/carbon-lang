@@ -163,7 +163,7 @@ namespace {
         return;
       }
 
-      CGF.EmitCallOrInvoke(Fn);
+      CGF.EmitRuntimeCallOrInvoke(Fn);
     }
   };
 }

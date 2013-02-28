@@ -2961,7 +2961,9 @@ private:
   ABIKind Kind;
 
 public:
-  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {}
+  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {
+    setRuntimeCC();
+  }
 
   bool isEABI() const {
     StringRef Env =
@@ -2983,6 +2985,10 @@ private:
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
+
+  llvm::CallingConv::ID getLLVMDefaultCC() const;
+  llvm::CallingConv::ID getABIDefaultCC() const;
+  void setRuntimeCC();
 };
 
 class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -3052,32 +3058,41 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   if (FI.getCallingConvention() != llvm::CallingConv::C)
     return;
 
-  // Calling convention as default by an ABI.
-  llvm::CallingConv::ID DefaultCC;
-  if (getContext().getTargetInfo().getTriple().getEnvironmentName()=="gnueabihf")
-    DefaultCC = llvm::CallingConv::ARM_AAPCS_VFP;
-  else if (isEABI())
-    DefaultCC = llvm::CallingConv::ARM_AAPCS;
-  else
-    DefaultCC = llvm::CallingConv::ARM_APCS;
+  llvm::CallingConv::ID cc = getRuntimeCC();
+  if (cc != llvm::CallingConv::C)
+    FI.setEffectiveCallingConvention(cc);    
+}
 
-  // If user did not ask for specific calling convention explicitly (e.g. via
-  // pcs attribute), set effective calling convention if it's different than ABI
-  // default.
+/// Return the default calling convention that LLVM will use.
+llvm::CallingConv::ID ARMABIInfo::getLLVMDefaultCC() const {
+  // The default calling convention that LLVM will infer.
+  if (getContext().getTargetInfo().getTriple().getEnvironmentName()=="gnueabihf")
+    return llvm::CallingConv::ARM_AAPCS_VFP;
+  else if (isEABI())
+    return llvm::CallingConv::ARM_AAPCS;
+  else
+    return llvm::CallingConv::ARM_APCS;
+}
+
+/// Return the calling convention that our ABI would like us to use
+/// as the C calling convention.
+llvm::CallingConv::ID ARMABIInfo::getABIDefaultCC() const {
   switch (getABIKind()) {
-  case APCS:
-    if (DefaultCC != llvm::CallingConv::ARM_APCS)
-      FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_APCS);
-    break;
-  case AAPCS:
-    if (DefaultCC != llvm::CallingConv::ARM_AAPCS)
-      FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS);
-    break;
-  case AAPCS_VFP:
-    if (DefaultCC != llvm::CallingConv::ARM_AAPCS_VFP)
-      FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS_VFP);
-    break;
+  case APCS: return llvm::CallingConv::ARM_APCS;
+  case AAPCS: return llvm::CallingConv::ARM_AAPCS;
+  case AAPCS_VFP: return llvm::CallingConv::ARM_AAPCS_VFP;
   }
+  llvm_unreachable("bad ABI kind");
+}
+
+void ARMABIInfo::setRuntimeCC() {
+  assert(getRuntimeCC() == llvm::CallingConv::C);
+
+  // Don't muddy up the IR with a ton of explicit annotations if
+  // they'd just match what LLVM will infer from the triple.
+  llvm::CallingConv::ID abiCC = getABIDefaultCC();
+  if (abiCC != getLLVMDefaultCC())
+    RuntimeCC = abiCC;
 }
 
 /// isHomogeneousAggregate - Return true if a type is an AAPCS-VFP homogeneous
@@ -4013,7 +4028,7 @@ namespace {
 
 class NVPTXABIInfo : public ABIInfo {
 public:
-  NVPTXABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  NVPTXABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) { setRuntimeCC(); }
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType Ty) const;
@@ -4021,6 +4036,8 @@ public:
   virtual void computeInfo(CGFunctionInfo &FI) const;
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CFG) const;
+private:
+  void setRuntimeCC();
 };
 
 class NVPTXTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -4057,25 +4074,26 @@ void NVPTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
   if (FI.getCallingConvention() != llvm::CallingConv::C)
     return;
 
+  FI.setEffectiveCallingConvention(getRuntimeCC());
+}
+
+void NVPTXABIInfo::setRuntimeCC() {
   // Calling convention as default by an ABI.
   // We're still using the PTX_Kernel/PTX_Device calling conventions here,
   // but we should switch to NVVM metadata later on.
-  llvm::CallingConv::ID DefaultCC;
   const LangOptions &LangOpts = getContext().getLangOpts();
   if (LangOpts.OpenCL || LangOpts.CUDA) {
     // If we are in OpenCL or CUDA mode, then default to device functions
-    DefaultCC = llvm::CallingConv::PTX_Device;
+    RuntimeCC = llvm::CallingConv::PTX_Device;
   } else {
     // If we are in standard C/C++ mode, use the triple to decide on the default
     StringRef Env = 
       getContext().getTargetInfo().getTriple().getEnvironmentName();
     if (Env == "device")
-      DefaultCC = llvm::CallingConv::PTX_Device;
+      RuntimeCC = llvm::CallingConv::PTX_Device;
     else
-      DefaultCC = llvm::CallingConv::PTX_Kernel;
+      RuntimeCC = llvm::CallingConv::PTX_Kernel;
   }
-  FI.setEffectiveCallingConvention(DefaultCC);
-   
 }
 
 llvm::Value *NVPTXABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
