@@ -555,6 +555,11 @@ static inline raw_ostream &operator<<(raw_ostream &os,
   return os;
 }
 
+template <typename T> struct isPodLike;
+template <> struct isPodLike<clang::ento::SVal> {
+  static const bool value = true;
+};
+
 } // end llvm namespace
 
 #endif
