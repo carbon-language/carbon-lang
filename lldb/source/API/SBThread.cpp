@@ -994,9 +994,7 @@ SBThread::IsSuspended()
 SBProcess
 SBThread::GetProcess ()
 {
-
     SBProcess sb_process;
-    ProcessSP process_sp;
     ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
@@ -1010,7 +1008,7 @@ SBThread::GetProcess ()
         SBStream frame_desc_strm;
         sb_process.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s", exe_ctx.GetThreadPtr(),
-                     process_sp.get(), frame_desc_strm.GetData());
+                     sb_process.GetSP().get(), frame_desc_strm.GetData());
     }
 
     return sb_process;
