@@ -1386,7 +1386,6 @@ HasNestArgument(const MachineFunction *MF) {
   return false;
 }
 
-
 /// GetScratchRegister - Get a temp register for performing work in the
 /// segmented stack and the Erlang/HiPE stack prologue. Depending on platform
 /// and the properties of the function either one or two registers will be
@@ -1612,22 +1611,21 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 #endif
 }
 
-// Erlang programs may need a special prologue to handle the stack size they
-// might need at runtime. That is because Erlang/OTP does not implement a C
-// stack but uses a custom implementation of hybrid stack/heap
-// architecture. (for more information see Eric Stenman's Ph.D. thesis:
-// http://publications.uu.se/uu/fulltext/nbn_se_uu_diva-2688.pdf)
-//
-//
-// CheckStack:
-//	temp0 = sp - MaxStack
-//	if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
-// OldStart:
-//	...
-// IncStack:
-//	call inc_stack   # doubles the stack space
-//	temp0 = sp - MaxStack
-//	if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
+/// Erlang programs may need a special prologue to handle the stack size they
+/// might need at runtime. That is because Erlang/OTP does not implement a C
+/// stack but uses a custom implementation of hybrid stack/heap architecture.
+/// (for more information see Eric Stenman's Ph.D. thesis:
+/// http://publications.uu.se/uu/fulltext/nbn_se_uu_diva-2688.pdf)
+///
+/// CheckStack:
+///	  temp0 = sp - MaxStack
+///	  if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
+/// OldStart:
+///	  ...
+/// IncStack:
+///	  call inc_stack   # doubles the stack space
+///	  temp0 = sp - MaxStack
+///	  if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
 void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   const X86InstrInfo &TII = *TM.getInstrInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
