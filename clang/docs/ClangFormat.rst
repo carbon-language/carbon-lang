@@ -44,10 +44,10 @@ Vim Integration
 
 There is an integration for :program:`vim` which lets you run the
 :program:`clang-format` standalone tool on your current buffer, optionally
-selecting regions to reformat. The integration has to form of a `python`-file
+selecting regions to reformat. The integration has the form of a `python`-file
 which can be found under `clang/tools/extra/clang-format/clang-format.py`.
 
-This can be integrated by mapping the following to your `.vimrc`:
+This can be integrated by adding the following to your `.vimrc`:
 
 .. code-block:: console
 
