@@ -20,6 +20,7 @@
 
 namespace lld {
 namespace elf {
+
 class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   HexagonTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {

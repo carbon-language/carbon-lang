@@ -107,6 +107,20 @@ int relocHex_N_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   return 0;
 }
 
+// GP REL relocations
+int relocHexGPRELN(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
+                   uint64_t GP, int nShiftBits) {
+  int32_t result = (int64_t)((S + A - GP) >> nShiftBits);
+  int32_t range = 1L << 16;
+  if (result <= range) {
+    result = lld::scatterBits<uint32_t>(result, FINDV4BITMASK(location));
+    *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
+        result |
+        (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+    return 0;
+  }
+  return 1;
+}
 } // end anon namespace
 
 ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
@@ -156,6 +170,22 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
     break;
   case R_HEX_B7_PCREL_X:
     relocHexBNPCRELX(location, relocVAddress, targetVAddress, ref.addend(), 6);
+    break;
+  case R_HEX_GPREL16_0:
+    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+                   _targetLayout.getSDataSection()->virtualAddr(), 0);
+    break;
+  case R_HEX_GPREL16_1:
+    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+                   _targetLayout.getSDataSection()->virtualAddr(), 1);
+    break;
+  case R_HEX_GPREL16_2:
+    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+                   _targetLayout.getSDataSection()->virtualAddr(), 2);
+    break;
+  case R_HEX_GPREL16_3:
+    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+                   _targetLayout.getSDataSection()->virtualAddr(), 3);
     break;
   case R_HEX_16_X:
   case R_HEX_12_X:

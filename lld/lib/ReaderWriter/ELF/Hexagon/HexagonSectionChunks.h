@@ -6,6 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#ifndef LLD_READER_WRITER_ELF_HEXAGON_SECTION_CHUNKS_H
+#define LLD_READER_WRITER_ELF_HEXAGON_SECTION_CHUNKS_H
 
 #include "HexagonTargetHandler.h"
 
@@ -75,3 +77,4 @@ void SDataSection<HexagonELFType>::doPreFlight() {
 } // elf
 } // lld
 
+#endif // LLD_READER_WRITER_ELF_HEXAGON_SECTION_CHUNKS_H

@@ -156,11 +156,11 @@ public:
     header->e_flags(0x3);
   }
 
-  virtual TargetLayout<HexagonELFType> &targetLayout() {
+  virtual HexagonTargetLayout<HexagonELFType> &targetLayout() {
     return _targetLayout;
   }
 
-  virtual TargetAtomHandler<HexagonELFType> &targetAtomHandler() {
+  virtual HexagonTargetAtomHandler<HexagonELFType> &targetAtomHandler() {
     return _targetAtomHandler;
   }
 
@@ -184,10 +184,10 @@ public:
   }
 
 private:
-  HexagonTargetRelocationHandler _relocationHandler;
   HexagonTargetLayout<HexagonELFType> _targetLayout;
+  HexagonTargetRelocationHandler _relocationHandler;
   HexagonTargetAtomHandler<HexagonELFType> _targetAtomHandler;
-  HexagonRuntimeFile<HexagonELFType> _hexagonRuntimeFile; 
+  HexagonRuntimeFile<HexagonELFType> _hexagonRuntimeFile;
 };
 } // end namespace elf
 } // end namespace lld
