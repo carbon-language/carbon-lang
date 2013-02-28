@@ -85,6 +85,13 @@ augroup filetype
   au! BufRead,BufNewFile *.td     set filetype=tablegen
 augroup END
 
+" Enable syntax highlighting for reStructuredText files. To use, copy
+" rest.vim (http://www.vim.org/scripts/script.php?script_id=973)
+" to ~/.vim/syntax .
+augroup filetype
+ au! BufRead,BufNewFile *.rst     set filetype=rest
+augroup END
+
 " Additional vim features to optionally uncomment.
 "set showcmd
 "set showmatch
