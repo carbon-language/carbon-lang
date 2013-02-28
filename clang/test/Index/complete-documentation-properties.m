@@ -1,0 +1,66 @@
+// Note: the run lines follow their respective tests, since line/column numbers
+// matter in this test.
+// rdar://12791315
+
+@interface AppDelegate
+/**
+  \brief This is ReadonlyProperty
+*/
+@property (readonly, getter = ReadonlyGetter) id MyProperty;
+
+/**
+  \brief This is GeneralProperty
+*/
+@property int GeneralProperty;
+
+/**
+  \brief This is PropertyInPrimaryClass
+*/
+@property (copy, nonatomic) id PropertyInPrimaryClass;
+
+- (void) setThisRecord : (id)arg;
+- (id) Record;
+@end
+
+
+@interface AppDelegate()
+- (id) GetterInClassExtension;
+/**
+  \brief This is Record
+*/
+@property (copy, setter = setThisRecord:) id Record;
+@end
+
+@interface AppDelegate()
+/**
+  \brief This is PropertyInClassExtension
+*/
+@property (copy, getter = GetterInClassExtension) id PropertyInClassExtension;
+
+- (id) PropertyInPrimaryClass;
+@end
+  
+@implementation AppDelegate
+- (id) PropertyInPrimaryClass { 
+  id p = [self ReadonlyGetter];
+  p = [self GetterInClassExtension];
+  p = [self PropertyInPrimaryClass];
+  p = [self Record];
+  [self setThisRecord : (id)0 ];
+  return 0; 
+}
+@end
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:45:16 %s | FileCheck -check-prefix=CC1 %s
+// CHECK-CC1: {TypedText ReadonlyGetter}{{.*}}(brief comment: This is ReadonlyProperty)
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:46:13 %s | FileCheck -check-prefix=CC2 %s
+// CHECK-CC2: {TypedText GetterInClassExtension}{{.*}}(brief comment: This is PropertyInClassExtension) 
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:47:13 %s | FileCheck -check-prefix=CC3 %s
+// CHECK-CC3: {TypedText PropertyInPrimaryClass}{{.*}}(brief comment: This is PropertyInPrimaryClass)
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:48:13 %s | FileCheck -check-prefix=CC4 %s
+// CHECK-CC4: {TypedText Record}{{.*}}(brief comment: This is Record)
+
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:49:9 %s | FileCheck -check-prefix=CC5 %s
+// CHECK-CC5: {TypedText setThisRecord:}{Placeholder (id)}{{.*}}(brief comment: This is Record)

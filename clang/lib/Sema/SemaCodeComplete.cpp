@@ -2605,7 +2605,12 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
     // Add documentation comment, if it exists.
     if (const RawComment *RC = Ctx.getRawCommentForAnyRedecl(ND)) {
       Result.addBriefComment(RC->getBriefText(Ctx));
-    }
+    } 
+    else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
+      if (OMD->isPropertyAccessor())
+        if (const ObjCPropertyDecl *PDecl = OMD->findPropertyDecl())
+          if (const RawComment *RC = Ctx.getRawCommentForAnyRedecl(PDecl))
+            Result.addBriefComment(RC->getBriefText(Ctx));
   }
 
   if (StartsNestedNameSpecifier) {
