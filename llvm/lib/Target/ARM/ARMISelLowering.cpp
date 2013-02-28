@@ -6343,14 +6343,11 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   MachineBasicBlock *TrapBB = MF->CreateMachineBasicBlock();
   unsigned trap_opcode;
-  if (Subtarget->isThumb()) {
+  if (Subtarget->isThumb())
     trap_opcode = ARM::tTRAP;
-  } else {
-    if (Subtarget->useNaClTrap())
-      trap_opcode = ARM::TRAPNaCl;
-    else
-      trap_opcode = ARM::TRAP;
-  }
+  else
+    trap_opcode = Subtarget->useNaClTrap() ? ARM::TRAPNaCl : ARM::TRAP;
+
   BuildMI(TrapBB, dl, TII->get(trap_opcode));
   DispatchBB->addSuccessor(TrapBB);
 
