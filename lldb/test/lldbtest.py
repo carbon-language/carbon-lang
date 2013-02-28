@@ -1025,7 +1025,7 @@ class Base(unittest2.TestCase):
         version_output = system([which(compiler), "-v"])[1]
         for line in version_output.split(os.linesep):
             compiler_shortname = 'invalid'
-            for c in ["clang", "gcc"]:
+            for c in ["clang", "LLVM", "gcc"]:
               if c in compiler:
                   compiler_shortname = c
             m = re.search('%s version ([0-9\.]+)' % compiler_shortname, line)
