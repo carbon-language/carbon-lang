@@ -2080,7 +2080,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // Check for the various suffix matches.
   Tmp[Base.size()] = Suffixes[0];
   unsigned ErrorInfoIgnore;
-  unsigned ErrorInfoMissingFeature;
+  unsigned ErrorInfoMissingFeature = 0; // Init suppresses compiler warnings.
   unsigned Match1, Match2, Match3, Match4;
 
   Match1 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
