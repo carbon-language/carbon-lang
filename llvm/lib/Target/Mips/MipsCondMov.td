@@ -58,21 +58,16 @@ multiclass MovzPats0<RegisterClass CRC, RegisterClass DRC,
                      Instruction SLTiuOp> {
   def : MipsPat<(select (i32 (setge CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
                 (MOVZInst DRC:$T, (SLTOp CRC:$lhs, CRC:$rhs), DRC:$F)>;
-  def : MipsPat<
-          (select (i32 (setuge CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
-          (MOVZInst DRC:$T, (SLTuOp CRC:$lhs, CRC:$rhs), DRC:$F)>;
-  def : MipsPat<
-          (select (i32 (setge CRC:$lhs, immSExt16:$rhs)), DRC:$T, DRC:$F),
-          (MOVZInst DRC:$T, (SLTiOp CRC:$lhs, immSExt16:$rhs), DRC:$F)>;
-  def : MipsPat<
-          (select (i32 (setuge CRC:$lh, immSExt16:$rh)), DRC:$T, DRC:$F),
-          (MOVZInst DRC:$T, (SLTiuOp CRC:$lh, immSExt16:$rh), DRC:$F)>;
-  def : MipsPat<
-          (select (i32 (setle CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
-          (MOVZInst DRC:$T, (SLTOp CRC:$rhs, CRC:$lhs), DRC:$F)>;
-  def : MipsPat<
-          (select (i32 (setule CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
-          (MOVZInst DRC:$T, (SLTuOp CRC:$rhs, CRC:$lhs), DRC:$F)>;
+  def : MipsPat<(select (i32 (setuge CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+                (MOVZInst DRC:$T, (SLTuOp CRC:$lhs, CRC:$rhs), DRC:$F)>;
+  def : MipsPat<(select (i32 (setge CRC:$lhs, immSExt16:$rhs)), DRC:$T, DRC:$F),
+                (MOVZInst DRC:$T, (SLTiOp CRC:$lhs, immSExt16:$rhs), DRC:$F)>;
+  def : MipsPat<(select (i32 (setuge CRC:$lh, immSExt16:$rh)), DRC:$T, DRC:$F),
+                (MOVZInst DRC:$T, (SLTiuOp CRC:$lh, immSExt16:$rh), DRC:$F)>;
+  def : MipsPat<(select (i32 (setle CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+                (MOVZInst DRC:$T, (SLTOp CRC:$rhs, CRC:$lhs), DRC:$F)>;
+  def : MipsPat<(select (i32 (setule CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
+                (MOVZInst DRC:$T, (SLTuOp CRC:$rhs, CRC:$lhs), DRC:$F)>;
 }
 
 multiclass MovzPats1<RegisterClass CRC, RegisterClass DRC,
