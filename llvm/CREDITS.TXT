@@ -100,7 +100,7 @@ E: adasgupt@codeaurora.org
 D: Deterministic finite automaton based infrastructure for VLIW packetization
 
 N: Stefanus Du Toit
-E: stefanus.dutoit@rapidmind.com
+E: stefanus.du.toit@intel.com
 D: Bug fixes and minor improvements
 
 N: Rafael Avila de Espindola
