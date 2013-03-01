@@ -298,6 +298,7 @@ void Lexer::lexCommentText(Token &T) {
     switch(*TokenPtr) {
       case '\\':
       case '@': {
+        T.HDCommand = (*TokenPtr == '@');
         TokenPtr++;
         if (TokenPtr == CommentEnd) {
           formTextToken(T, TokenPtr);

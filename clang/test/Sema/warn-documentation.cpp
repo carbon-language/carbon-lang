@@ -862,28 +862,28 @@ int test_nocrash9;
 
 // We used to crash on this.  PR15068
 
-// expected-warning@+2 {{empty paragraph passed to '\param' command}}
-// expected-warning@+2 {{empty paragraph passed to '\param' command}}
+// expected-warning@+2 {{empty paragraph passed to '@param' command}}
+// expected-warning@+2 {{empty paragraph passed to '@param' command}}
 ///@param x
 ///@param y
 int test_nocrash10(int x, int y);
 
-// expected-warning@+2 {{empty paragraph passed to '\param' command}} expected-warning@+2 {{parameter 'x' not found in the function declaration}}
-// expected-warning@+2 {{empty paragraph passed to '\param' command}} expected-warning@+2 {{parameter 'y' not found in the function declaration}}
+// expected-warning@+2 {{empty paragraph passed to '@param' command}} expected-warning@+2 {{parameter 'x' not found in the function declaration}}
+// expected-warning@+2 {{empty paragraph passed to '@param' command}} expected-warning@+2 {{parameter 'y' not found in the function declaration}}
 ///@param x
 ///@param y
 int test_nocrash11();
 
-// expected-warning@+3 {{empty paragraph passed to '\param' command}} expected-warning@+3 {{parameter 'x' not found in the function declaration}}
-// expected-warning@+3 {{empty paragraph passed to '\param' command}} expected-warning@+3 {{parameter 'y' not found in the function declaration}}
+// expected-warning@+3 {{empty paragraph passed to '@param' command}} expected-warning@+3 {{parameter 'x' not found in the function declaration}}
+// expected-warning@+3 {{empty paragraph passed to '@param' command}} expected-warning@+3 {{parameter 'y' not found in the function declaration}}
 /**
 @param x
 @param y
 **/
 int test_nocrash12();
 
-// expected-warning@+2 {{empty paragraph passed to '\param' command}}
-// expected-warning@+1 {{empty paragraph passed to '\param' command}}
+// expected-warning@+2 {{empty paragraph passed to '@param' command}}
+// expected-warning@+1 {{empty paragraph passed to '@param' command}}
 ///@param x@param y
 int test_nocrash13(int x, int y);
 
@@ -894,4 +894,16 @@ int test_nocrash13(int x, int y);
 /// \headerfile "" 
 /// \headerfile foo.h 
 int test_duplicate_headerfile1(int);
+
+
+// rdar://13066276
+// expected-warning@+1 {{'@return' command used in a comment that is not attached to a function or method declaration}}
+/** @return s */
+struct s* f(void);
+struct s;
+
+// expected-warning@+1 {{'\return' command used in a comment that is not attached to a function or method declaration}}
+/** \return s */
+struct q* g(void);
+struct q;
 

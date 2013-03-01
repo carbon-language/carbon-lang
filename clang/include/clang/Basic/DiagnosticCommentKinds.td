@@ -44,18 +44,18 @@ def note_doc_html_end_tag : Note<
 // Commands
 
 def warn_doc_block_command_empty_paragraph : Warning<
-  "empty paragraph passed to '\\%0' command">,
+  "empty paragraph passed to '%select{\\|@}0%1' command">,
   InGroup<Documentation>, DefaultIgnore;
 
 def warn_doc_block_command_duplicate : Warning<
-  "duplicated command '\\%0'">,
+  "duplicated command '%select{\\|@}0%1'">,
   InGroup<Documentation>, DefaultIgnore;
 
 def note_doc_block_command_previous : Note<
-  "previous command '\\%0' here">;
+  "previous command '%select{\\|@}0%1' here">;
 
 def note_doc_block_command_previous_alias : Note<
-  "previous command '\\%0' (an alias of '\\%1') here">;
+  "previous command '%select{\\|@}0%1' (an alias of '\\%2') here">;
 
 // \param command
 
@@ -111,14 +111,14 @@ def note_doc_tparam_name_suggestion : Note<
 // \returns command
 
 def warn_doc_returns_not_attached_to_a_function_decl : Warning<
-  "'\\%0' command used in a comment that is not attached to "
+  "'%select{\\|@}0%1' command used in a comment that is not attached to "
   "a function or method declaration">,
   InGroup<Documentation>, DefaultIgnore;
 
 def warn_doc_returns_attached_to_a_void_function : Warning<
-  "'\\%0' command used in a comment that is attached to a "
+  "'%select{\\|@}0%1' command used in a comment that is attached to a "
   "%select{function returning void|constructor|destructor|"
-  "method returning void}1">,
+  "method returning void}2">,
   InGroup<Documentation>, DefaultIgnore;
 
 // \deprecated command
@@ -134,7 +134,7 @@ def note_add_deprecation_attr : Note<
 // verbatim block commands
 
 def warn_verbatim_block_end_without_start : Warning<
-  "'\\%0' command does not terminate a verbatim text block">,
+  "'%select{\\|@}0%1' command does not terminate a verbatim text block">,
   InGroup<Documentation>, DefaultIgnore;
 
 } // end of documentation issue category

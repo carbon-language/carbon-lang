@@ -570,13 +570,16 @@ protected:
 
   /// Paragraph argument.
   ParagraphComment *Paragraph;
-
+  
+  /// Header Doc command, if true
+  bool HDCommand;
+  
   BlockCommandComment(CommentKind K,
                       SourceLocation LocBegin,
                       SourceLocation LocEnd,
                       unsigned CommandID) :
       BlockContentComment(K, LocBegin, LocEnd),
-      Paragraph(NULL) {
+      Paragraph(NULL), HDCommand(false) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
   }
@@ -586,7 +589,7 @@ public:
                       SourceLocation LocEnd,
                       unsigned CommandID) :
       BlockContentComment(BlockCommandCommentKind, LocBegin, LocEnd),
-      Paragraph(NULL) {
+      Paragraph(NULL), HDCommand(false) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
   }
@@ -656,6 +659,14 @@ public:
     SourceLocation NewLocEnd = PC->getLocEnd();
     if (NewLocEnd.isValid())
       setSourceRange(SourceRange(getLocStart(), NewLocEnd));
+  }
+  
+  bool getHDCommand() const LLVM_READONLY {
+    return HDCommand;
+  }
+  
+  void setHDCommand(bool HDC) {
+    HDCommand = HDC;
   }
 };
 

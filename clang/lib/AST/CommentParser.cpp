@@ -313,15 +313,18 @@ BlockCommandComment *Parser::parseBlockCommand() {
     PC = S.actOnParamCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandID());
+    PC->setHDCommand(Tok.getHDCommand());
   } else if (Info->IsTParamCommand) {
     IsTParam = true;
     TPC = S.actOnTParamCommandStart(Tok.getLocation(),
                                     Tok.getEndLocation(),
                                     Tok.getCommandID());
+    TPC->setHDCommand(Tok.getHDCommand());
   } else {
     BC = S.actOnBlockCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandID());
+    BC->setHDCommand(Tok.getHDCommand());
   }
   consumeToken();
 
@@ -569,6 +572,7 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
       if (Info->IsVerbatimBlockEndCommand) {
         Diag(Tok.getLocation(),
              diag::warn_verbatim_block_end_without_start)
+          << Tok.getHDCommand()
           << Info->Name
           << SourceRange(Tok.getLocation(), Tok.getEndLocation());
         consumeToken();

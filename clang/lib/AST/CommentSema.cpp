@@ -432,6 +432,7 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
     if (!DiagLoc.isValid())
       DiagLoc = Command->getCommandNameRange(Traits).getEnd();
     Diag(DiagLoc, diag::warn_doc_block_command_empty_paragraph)
+      << Command->getHDCommand()
       << Command->getCommandName(Traits)
       << Command->getSourceRange();
   }
@@ -459,6 +460,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
       }
       Diag(Command->getLocation(),
            diag::warn_doc_returns_attached_to_a_void_function)
+        << Command->getHDCommand()
         << Command->getCommandName(Traits)
         << DiagKind
         << Command->getSourceRange();
@@ -470,6 +472,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
   
   Diag(Command->getLocation(),
        diag::warn_doc_returns_not_attached_to_a_function_decl)
+    << Command->getHDCommand()
     << Command->getCommandName(Traits)
     << Command->getSourceRange();
 }
@@ -502,15 +505,18 @@ void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
   StringRef CommandName = Command->getCommandName(Traits);
   StringRef PrevCommandName = PrevCommand->getCommandName(Traits);
   Diag(Command->getLocation(), diag::warn_doc_block_command_duplicate)
+      << Command->getHDCommand()
       << CommandName
       << Command->getSourceRange();
   if (CommandName == PrevCommandName)
     Diag(PrevCommand->getLocation(), diag::note_doc_block_command_previous)
+        << PrevCommand->getHDCommand()
         << PrevCommandName
         << PrevCommand->getSourceRange();
   else
     Diag(PrevCommand->getLocation(),
          diag::note_doc_block_command_previous_alias)
+        << PrevCommand->getHDCommand()
         << PrevCommandName
         << CommandName;
 }

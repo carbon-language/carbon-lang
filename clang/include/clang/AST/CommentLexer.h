@@ -75,6 +75,9 @@ class Token {
   /// unused (command spelling can be found with CommandTraits).  Otherwise,
   /// contains the length of the string that starts at TextPtr.
   unsigned IntVal;
+  
+  /// This command is a Header Doc command (command starts with '@').
+  bool     HDCommand;
 
 public:
   SourceLocation getLocation() const LLVM_READONLY { return Loc; }
@@ -122,6 +125,10 @@ public:
     return IntVal;
   }
 
+  bool getHDCommand() const LLVM_READONLY {
+    return HDCommand;
+  }
+  
   void setCommandID(unsigned ID) {
     assert(is(tok::command));
     IntVal = ID;
