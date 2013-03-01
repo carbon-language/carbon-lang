@@ -150,6 +150,10 @@ namespace {
       return declarator;
     }
 
+    bool isProcessingDeclSpec() const {
+      return chunkIndex == declarator.getNumTypeObjects();
+    }
+
     unsigned getCurrentChunkIndex() const {
       return chunkIndex;
     }
@@ -160,8 +164,7 @@ namespace {
     }
 
     AttributeList *&getCurrentAttrListRef() const {
-      assert(chunkIndex <= declarator.getNumTypeObjects());
-      if (chunkIndex == declarator.getNumTypeObjects())
+      if (isProcessingDeclSpec())
         return getMutableDeclSpec().getAttributes().getListRef();
       return declarator.getTypeObject(chunkIndex).getAttrListRef();
     }
@@ -302,6 +305,66 @@ static bool handleObjCPointerTypeAttr(TypeProcessingState &state,
   return handleObjCOwnershipTypeAttr(state, attr, type);
 }
 
+/// Given the index of a declarator chunk, check whether that chunk
+/// directly specifies the return type of a function and, if so, find
+/// an appropriate place for it.
+///
+/// \param i - a notional index which the search will start
+///   immediately inside
+static DeclaratorChunk *maybeMovePastReturnType(Declarator &declarator,
+                                                unsigned i) {
+  assert(i <= declarator.getNumTypeObjects());
+
+  DeclaratorChunk *result = 0;
+
+  // First, look inwards past parens for a function declarator.
+  for (; i != 0; --i) {
+    DeclaratorChunk &fnChunk = declarator.getTypeObject(i-1);
+    switch (fnChunk.Kind) {
+    case DeclaratorChunk::Paren:
+      continue;
+
+    // If we find anything except a function, bail out.
+    case DeclaratorChunk::Pointer:
+    case DeclaratorChunk::BlockPointer:
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::MemberPointer:
+      return result;
+
+    // If we do find a function declarator, scan inwards from that,
+    // looking for a block-pointer declarator.
+    case DeclaratorChunk::Function:
+      for (--i; i != 0; --i) {
+        DeclaratorChunk &blockChunk = declarator.getTypeObject(i-1);
+        switch (blockChunk.Kind) {
+        case DeclaratorChunk::Paren:
+        case DeclaratorChunk::Pointer:
+        case DeclaratorChunk::Array:
+        case DeclaratorChunk::Function:
+        case DeclaratorChunk::Reference:
+        case DeclaratorChunk::MemberPointer:
+          continue;
+        case DeclaratorChunk::BlockPointer:
+          result = &blockChunk;
+          goto continue_outer;
+        }
+        llvm_unreachable("bad declarator chunk kind");
+      }
+
+      // If we run out of declarators doing that, we're done.
+      return result;
+    }
+    llvm_unreachable("bad declarator chunk kind");
+
+    // Okay, reconsider from our new point.
+  continue_outer: ;
+  }
+
+  // Ran out of chunks, bail out.
+  return result;
+}
+
 /// Given that an objc_gc attribute was written somewhere on a
 /// declaration *other* than on the declarator itself (for which, use
 /// distributeObjCPointerTypeAttrFromDeclarator), and given that it
@@ -311,22 +374,44 @@ static void distributeObjCPointerTypeAttr(TypeProcessingState &state,
                                           AttributeList &attr,
                                           QualType type) {
   Declarator &declarator = state.getDeclarator();
+
+  // Move it to the outermost normal or block pointer declarator.
   for (unsigned i = state.getCurrentChunkIndex(); i != 0; --i) {
     DeclaratorChunk &chunk = declarator.getTypeObject(i-1);
     switch (chunk.Kind) {
     case DeclaratorChunk::Pointer:
-    case DeclaratorChunk::BlockPointer:
+    case DeclaratorChunk::BlockPointer: {
+      // But don't move an ARC ownership attribute to the return type
+      // of a block.
+      DeclaratorChunk *destChunk = 0;
+      if (state.isProcessingDeclSpec() &&
+          attr.getKind() == AttributeList::AT_ObjCOwnership)
+        destChunk = maybeMovePastReturnType(declarator, i - 1);
+      if (!destChunk) destChunk = &chunk;
+
       moveAttrFromListToList(attr, state.getCurrentAttrListRef(),
-                             chunk.getAttrListRef());
+                             destChunk->getAttrListRef());
       return;
+    }
 
     case DeclaratorChunk::Paren:
     case DeclaratorChunk::Array:
       continue;
 
+    // We may be starting at the return type of a block.
+    case DeclaratorChunk::Function:
+      if (state.isProcessingDeclSpec() &&
+          attr.getKind() == AttributeList::AT_ObjCOwnership) {
+        if (DeclaratorChunk *dest = maybeMovePastReturnType(declarator, i)) {
+          moveAttrFromListToList(attr, state.getCurrentAttrListRef(),
+                                 dest->getAttrListRef());
+          return;
+        }
+      }
+      goto error;
+
     // Don't walk through these.
     case DeclaratorChunk::Reference:
-    case DeclaratorChunk::Function:
     case DeclaratorChunk::MemberPointer:
       goto error;
     }
@@ -3638,6 +3723,14 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     } else if (!type->isObjCRetainableType()) {
       return false;
     }
+
+    // Don't accept an ownership attribute in the declspec if it would
+    // just be the return type of a block pointer.
+    if (state.isProcessingDeclSpec()) {
+      Declarator &D = state.getDeclarator();
+      if (maybeMovePastReturnType(D, D.getNumTypeObjects()))
+        return false;
+    }
   }
 
   Sema &S = state.getSema();
@@ -3744,10 +3837,8 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
   // Forbid __weak for class objects marked as
   // objc_arc_weak_reference_unavailable
   if (lifetime == Qualifiers::OCL_Weak) {
-    QualType T = type;
-    while (const PointerType *ptr = T->getAs<PointerType>())
-      T = ptr->getPointeeType();
-    if (const ObjCObjectPointerType *ObjT = T->getAs<ObjCObjectPointerType>()) {
+    if (const ObjCObjectPointerType *ObjT =
+          type->getAs<ObjCObjectPointerType>()) {
       if (ObjCInterfaceDecl *Class = ObjT->getInterfaceDecl()) {
         if (Class->isArcWeakrefUnavailable()) {
             S.Diag(AttrLoc, diag::err_arc_unsupported_weak_class);

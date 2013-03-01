@@ -679,6 +679,9 @@ There is a single exception to this rule: an ownership qualifier may be applied
 to a substituted template type parameter, which overrides the ownership
 qualifier provided by the template argument.
 
+When forming a function type, the result type is adjusted so that any
+top-level ownership qualifier is deleted.
+
 Except as described under the :ref:`inference rules <arc.ownership.inference>`,
 a program is ill-formed if it attempts to form a pointer or reference type to a
 retainable object owner type which lacks an ownership qualifier.
@@ -689,7 +692,9 @@ retainable object owner type which lacks an ownership qualifier.
   lvalues of retainable object pointer type have an ownership qualifier.  The
   ability to override an ownership qualifier during template substitution is
   required to counteract the :ref:`inference of __strong for template type
-  arguments <arc.ownership.inference.template.arguments>`.
+  arguments <arc.ownership.inference.template.arguments>`.  Ownership qualifiers
+  on return types are dropped because they serve no purpose there except to
+  cause spurious problems with overloading and templates.
 
 There are four ownership qualifiers:
 
@@ -717,16 +722,36 @@ If an ownership qualifier appears in the *declaration-specifiers*, the
 following rules apply:
 
 * if the type specifier is a retainable object owner type, the qualifier
-  applies to that type;
-* if the outermost non-array part of the declarator is a pointer or block
-  pointer, the qualifier applies to that type;
+  initially applies to that type;
+
+* otherwise, if the outermost non-array declarator is a pointer
+  or block pointer declarator, the qualifier initially applies to
+  that type;
+
 * otherwise the program is ill-formed.
 
+* If the qualifier is so applied at a position in the declaration
+  where the next-innermost declarator is a function declarator, and
+  there is an block declarator within that function declarator, then
+  the qualifier applies instead to that block declarator and this rule
+  is considered afresh beginning from the new position.
+
 If an ownership qualifier appears on the declarator name, or on the declared
-object, it is applied to outermost pointer or block-pointer type.
+object, it is applied to the innermost pointer or block-pointer type.
 
 If an ownership qualifier appears anywhere else in a declarator, it applies to
 the type there.
+
+.. admonition:: Rationale
+
+  Ownership qualifiers are like ``const`` and ``volatile`` in the sense
+  that they may sensibly apply at multiple distinct positions within a
+  declarator.  However, unlike those qualifiers, there are many
+  situations where they are not meaningful, and so we make an effort
+  to "move" the qualifier to a place where it will be meaningful.  The
+  general goal is to allow the programmer to write, say, ``__strong``
+  before the entire declaration and have it apply in the leftmost
+  sensible place.
 
 .. _arc.ownership.spelling.property:
 

@@ -1435,6 +1435,9 @@ struct DeclaratorChunk {
     return I;
   }
 
+  bool isParen() const {
+    return Kind == Paren;
+  }
 };
 
 /// \brief Described the kind of function definition (if any) provided for
@@ -1803,26 +1806,35 @@ public:
     DeclTypeInfo.erase(DeclTypeInfo.begin());
   }
 
+  /// Return the innermost (closest to the declarator) chunk of this
+  /// declarator that is not a parens chunk, or null if there are no
+  /// non-parens chunks.
+  const DeclaratorChunk *getInnermostNonParenChunk() const {
+    for (unsigned i = 0, i_end = DeclTypeInfo.size(); i < i_end; ++i) {
+      if (!DeclTypeInfo[i].isParen())
+        return &DeclTypeInfo[i];
+    }
+    return 0;
+  }
+
+  /// Return the outermost (furthest from the declarator) chunk of
+  /// this declarator that is not a parens chunk, or null if there are
+  /// no non-parens chunks.
+  const DeclaratorChunk *getOutermostNonParenChunk() const {
+    for (unsigned i = DeclTypeInfo.size(), i_end = 0; i != i_end; --i) {
+      if (!DeclTypeInfo[i-1].isParen())
+        return &DeclTypeInfo[i-1];
+    }
+    return 0;
+  }
+
   /// isArrayOfUnknownBound - This method returns true if the declarator
   /// is a declarator for an array of unknown bound (looking through
   /// parentheses).
   bool isArrayOfUnknownBound() const {
-    for (unsigned i = 0, i_end = DeclTypeInfo.size(); i < i_end; ++i) {
-      switch (DeclTypeInfo[i].Kind) {
-      case DeclaratorChunk::Paren:
-        continue;
-      case DeclaratorChunk::Function:
-      case DeclaratorChunk::Pointer:
-      case DeclaratorChunk::Reference:
-      case DeclaratorChunk::BlockPointer:
-      case DeclaratorChunk::MemberPointer:
-        return false;
-      case DeclaratorChunk::Array:
-        return !DeclTypeInfo[i].Arr.NumElts;
-      }
-      llvm_unreachable("Invalid type chunk");
-    }
-    return false;
+    const DeclaratorChunk *chunk = getInnermostNonParenChunk();
+    return (chunk && chunk->Kind == DeclaratorChunk::Array &&
+            !chunk->Arr.NumElts);
   }
 
   /// isFunctionDeclarator - This method returns true if the declarator
