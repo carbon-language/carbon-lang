@@ -28,6 +28,7 @@ Basic Commands
    llvm-diff
    llvm-cov
    llvm-stress
+   llvm-symbolizer
 
 Debugging Tools
 ~~~~~~~~~~~~~~~
