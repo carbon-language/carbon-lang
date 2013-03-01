@@ -33,15 +33,6 @@ public:
                                      SmallVectorImpl<MCFixup> &Fixups) const {
     return 0;
   }
-
-  virtual unsigned GPR4AlignEncode(const MCInst  &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixups) const {
-    return 0;
-  }
-  virtual unsigned GPR2AlignEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixups) const {
-    return 0;
-  }
 };
 
 } // End namespace llvm

@@ -129,12 +129,12 @@ class SMRD <bits<5> op, bits<1> imm, dag outs, dag ins, string asm,
             list<dag> pattern> : Enc32<outs, ins, asm, pattern> {
 
   bits<7> SDST;
-  bits<6> SBASE;
+  bits<7> SBASE;
   bits<8> OFFSET;
   
   let Inst{7-0} = OFFSET;
   let Inst{8} = imm;
-  let Inst{14-9} = SBASE;
+  let Inst{14-9} = SBASE{6-1};
   let Inst{21-15} = SDST;
   let Inst{26-22} = op;
   let Inst{31-27} = 0x18; //encoding
@@ -292,7 +292,7 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   bits<1> ADDR64;
   bits<1> LDS;
   bits<8> VADDR;
-  bits<5> SRSRC;
+  bits<7> SRSRC;
   bits<1> SLC;
   bits<1> TFE;
   bits<8> SOFFSET;
@@ -307,7 +307,7 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{31-26} = 0x38; //encoding
   let Inst{39-32} = VADDR;
   let Inst{47-40} = VDATA;
-  let Inst{52-48} = SRSRC;
+  let Inst{52-48} = SRSRC{6-2};
   let Inst{54} = SLC;
   let Inst{55} = TFE;
   let Inst{63-56} = SOFFSET;
@@ -330,7 +330,7 @@ class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
   bits<4> DFMT;
   bits<3> NFMT;
   bits<8> VADDR;
-  bits<5> SRSRC;
+  bits<7> SRSRC;
   bits<1> SLC;
   bits<1> TFE;
   bits<8> SOFFSET;
@@ -346,7 +346,7 @@ class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{31-26} = 0x3a; //encoding
   let Inst{39-32} = VADDR;
   let Inst{47-40} = VDATA;
-  let Inst{52-48} = SRSRC;
+  let Inst{52-48} = SRSRC{6-2};
   let Inst{54} = SLC;
   let Inst{55} = TFE;
   let Inst{63-56} = SOFFSET;
@@ -370,8 +370,8 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   bits<1> LWE;
   bits<1> SLC;
   bits<8> VADDR;
-  bits<5> SRSRC;
-  bits<5> SSAMP; 
+  bits<7> SRSRC;
+  bits<7> SSAMP; 
 
   let Inst{11-8} = DMASK;
   let Inst{12} = UNORM;
@@ -385,8 +385,8 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{31-26} = 0x3c;
   let Inst{39-32} = VADDR;
   let Inst{47-40} = VDATA;
-  let Inst{52-48} = SRSRC;
-  let Inst{57-53} = SSAMP;
+  let Inst{52-48} = SRSRC{6-2};
+  let Inst{57-53} = SSAMP{6-2};
 
   let VM_CNT = 1;
   let EXP_CNT = 1;

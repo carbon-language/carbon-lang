@@ -53,16 +53,6 @@ def SIOperand {
   int VCC = 0x6A;
 }
 
-class GPR4Align <RegisterClass rc> : Operand <vAny> {
-  let EncoderMethod = "GPR4AlignEncode";
-  let MIOperandInfo = (ops rc:$reg); 
-}
-
-class GPR2Align <RegisterClass rc> : Operand <iPTR> {
-  let EncoderMethod = "GPR2AlignEncode";
-  let MIOperandInfo = (ops rc:$reg);
-}
-
 include "SIInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
@@ -128,13 +118,13 @@ class SOPK_64 <bits<5> op, string opName, list<dag> pattern> : SOPK <
 multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
   def _IMM : SMRD <
     op, 1, (outs dstClass:$dst),
-    (ins GPR2Align<SReg_64>:$sbase, i32imm:$offset),
+    (ins SReg_64:$sbase, i32imm:$offset),
     asm#" $dst, $sbase, $offset", []
   >;
 
   def _SGPR : SMRD <
     op, 0, (outs dstClass:$dst),
-    (ins GPR2Align<SReg_64>:$sbase, SReg_32:$soff),
+    (ins SReg_64:$sbase, SReg_32:$soff),
     asm#" $dst, $sbase, $soff", []
   >;
 }
@@ -276,7 +266,7 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
   (outs),
   (ins regClass:$vdata, i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc,
    i1imm:$addr64, i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr,
-   GPR4Align<SReg_128>:$srsrc, i1imm:$slc, i1imm:$tfe, SSrc_32:$soffset),
+   SReg_128:$srsrc, i1imm:$slc, i1imm:$tfe, SSrc_32:$soffset),
   asm#" $vdata, $offset, $offen, $idxen, $glc, $addr64, $dfmt,"
      #" $nfmt, $vaddr, $srsrc, $slc, $tfe, $soffset",
   []> {
@@ -288,7 +278,7 @@ class MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> : MUBUF
   op,
   (outs regClass:$dst),
   (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
-       i1imm:$lds, VReg_32:$vaddr, GPR4Align<SReg_128>:$srsrc, i1imm:$slc,
+       i1imm:$lds, VReg_32:$vaddr, SReg_128:$srsrc, i1imm:$slc,
        i1imm:$tfe, SSrc_32:$soffset),
   asm#" $dst, $offset, $offen, $idxen, $glc, $addr64, "
      #"$lds, $vaddr, $srsrc, $slc, $tfe, $soffset",
@@ -301,7 +291,7 @@ class MTBUF_Load_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF
   op,
   (outs regClass:$dst),
   (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
-       i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr, GPR4Align<SReg_128>:$srsrc,
+       i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr, SReg_128:$srsrc,
        i1imm:$slc, i1imm:$tfe, SSrc_32:$soffset),
   asm#" $dst, $offset, $offen, $idxen, $glc, $addr64, $dfmt,"
      #" $nfmt, $vaddr, $srsrc, $slc, $tfe, $soffset",
@@ -315,7 +305,7 @@ class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
   (outs VReg_128:$vdata),
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
        i1imm:$tfe, i1imm:$lwe, i1imm:$slc, VReg_32:$vaddr,
-       GPR4Align<SReg_256>:$srsrc, GPR4Align<SReg_128>:$ssamp),
+       SReg_256:$srsrc, SReg_128:$ssamp),
   asm#" $vdata, $dmask, $unorm, $glc, $da, $r128,"
      #" $tfe, $lwe, $slc, $vaddr, $srsrc, $ssamp",
   []> {

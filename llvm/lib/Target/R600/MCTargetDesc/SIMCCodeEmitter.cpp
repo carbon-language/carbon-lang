@@ -42,9 +42,6 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
   const MCSubtargetInfo &STI;
   MCContext &Ctx;
 
-  /// \brief Encode a sequence of registers with the correct alignment.
-  unsigned GPRAlign(const MCInst &MI, unsigned OpNo, unsigned shift) const;
-
   /// \brief Can this operand also contain immediate values?
   bool isSrcOperand(const MCInstrDesc &Desc, unsigned OpNo) const;
 
@@ -65,14 +62,6 @@ public:
   /// \returns the encoding for an MCOperand.
   virtual uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
-
-  /// \brief Encoding for when 2 consecutive registers are used
-  virtual unsigned GPR2AlignEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixup) const;
-
-  /// \brief Encoding for when 4 consectuive registers are used
-  virtual unsigned GPR4AlignEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixup) const;
 };
 
 } // End anonymous namespace
@@ -212,24 +201,3 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   return 0;
 }
 
-//===----------------------------------------------------------------------===//
-// Custom Operand Encodings
-//===----------------------------------------------------------------------===//
-
-unsigned SIMCCodeEmitter::GPRAlign(const MCInst &MI, unsigned OpNo,
-                                   unsigned shift) const {
-  unsigned regCode = MRI.getEncodingValue(MI.getOperand(OpNo).getReg());
-  return (regCode & 0xff) >> shift;
-}
-
-unsigned SIMCCodeEmitter::GPR2AlignEncode(const MCInst &MI,
-                                          unsigned OpNo ,
-                                        SmallVectorImpl<MCFixup> &Fixup) const {
-  return GPRAlign(MI, OpNo, 1);
-}
-
-unsigned SIMCCodeEmitter::GPR4AlignEncode(const MCInst &MI,
-                                          unsigned OpNo,
-                                        SmallVectorImpl<MCFixup> &Fixup) const {
-  return GPRAlign(MI, OpNo, 2);
-}
