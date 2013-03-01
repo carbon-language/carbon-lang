@@ -2724,6 +2724,9 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     // Is this a bin op ?
     FoundBinOp |= !isa<PHINode>(Iter);
 
+    // Remember the current instruction.
+    Instruction *OldIter = Iter;
+
     // For each of the *users* of iter.
     for (Value::use_iterator it = Iter->use_begin(), e = Iter->use_end();
          it != e; ++it) {
@@ -2749,7 +2752,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       if (isa<PHINode>(Iter) && isa<PHINode>(U) &&
           U->getParent() != TheLoop->getHeader() &&
           TheLoop->contains(U) &&
-          Iter->getNumUses() > 1)
+          Iter->hasNUsesOrMore(2))
         continue;
 
       // We can't have multiple inside users.
@@ -2768,6 +2771,10 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
 
       Iter = U;
     }
+
+    // If all uses were skipped this can't be a reduction variable.
+    if (Iter == OldIter)
+      return false;
 
     // We found a reduction var if we have reached the original
     // phi node and we only have a single instruction with out-of-loop
