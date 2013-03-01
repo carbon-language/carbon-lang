@@ -62,7 +62,14 @@ public:
         KDP_WRITEMEM64,
         KDP_BREAKPOINT_SET64,
         KDP_BREAKPOINT_REMOVE64,
-        KDP_KERNELVERSION
+        KDP_KERNELVERSION,
+        KDP_READPHYSMEM64,
+        KDP_WRITEPHYSMEM64,
+        KDP_READIOPORT,
+        KDP_WRITEIOPORT,
+        KDP_READMSR64,
+        KDP_WRITEMSR64,
+        KDP_DUMPINFO
     } CommandType;
 
     enum 
