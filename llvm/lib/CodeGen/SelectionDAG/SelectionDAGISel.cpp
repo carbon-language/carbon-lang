@@ -1032,13 +1032,11 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       FuncInfo->VisitedBBs.insert(LLVMBB);
     }
 
-    FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
-    FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
-
     BasicBlock::const_iterator const Begin = LLVMBB->getFirstNonPHI();
     BasicBlock::const_iterator const End = LLVMBB->end();
     BasicBlock::const_iterator BI = End;
 
+    FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
     FuncInfo->InsertPt = FuncInfo->MBB->getFirstNonPHI();
 
     // Setup an EH landing-pad block.
