@@ -114,7 +114,6 @@ ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     m_comm("lldb.process.kdp-remote.communication"),
     m_async_broadcaster (NULL, "lldb.process.kdp-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
-    m_destroy_in_process (false),
     m_dyld_plugin_name (),
     m_kernel_load_addr (LLDB_INVALID_ADDRESS),
     m_command_sp()
@@ -528,14 +527,6 @@ ProcessKDP::DoDetach()
     ResumePrivateStateThread();
     
     //KillDebugserverProcess ();
-    return error;
-}
-
-Error
-ProcessKDP::WillDestroy ()
-{
-    Error error;
-    m_destroy_in_process = true;
     return error;
 }
 

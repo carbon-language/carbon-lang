@@ -1023,7 +1023,8 @@ Process::Process(Target &target, Listener &listener) :
     m_currently_handling_event(false),
     m_finalize_called(false),
     m_last_broadcast_state (eStateInvalid),
-    m_can_jit(eCanJITDontKnow)
+    m_can_jit(eCanJITDontKnow),
+    m_destroy_in_process (false)
 {
     CheckInWithManager ();
 
@@ -1512,11 +1513,17 @@ Process::UpdateThreadListIfNeeded ()
             // thread list, but only update if "true" is returned
             if (UpdateThreadList (m_thread_list, new_thread_list))
             {
-                OperatingSystem *os = GetOperatingSystem ();
-                if (os)
-                    os->UpdateThreadList (m_thread_list, new_thread_list);
-                m_thread_list.Update (new_thread_list);
-                m_thread_list.SetStopID (stop_id);
+                // Don't call into the OperatingSystem to update the thread list if we are shutting down, since
+                // that may call back into the SBAPI's, requiring the API lock which is already held by whoever is
+                // shutting us down, causing a deadlock.
+                if (!m_destroy_in_process)
+                {
+                    OperatingSystem *os = GetOperatingSystem ();
+                    if (os)
+                        os->UpdateThreadList (m_thread_list, new_thread_list);
+                    m_thread_list.Update (new_thread_list);
+                    m_thread_list.SetStopID (stop_id);
+                }
             }
         }
     }
@@ -3311,6 +3318,13 @@ Process::Detach ()
 Error
 Process::Destroy ()
 {
+    
+    // Tell ourselves we are in the process of destroying the process, so that we don't do any unnecessary work
+    // that might hinder the destruction.  Remember to set this back to false when we are done.  That way if the attempt
+    // failed and the process stays around for some reason it won't be in a confused state.
+    
+    m_destroy_in_process = true;
+
     Error error (WillDestroy());
     if (error.Success())
     {
@@ -3341,6 +3355,7 @@ Process::Destroy ()
                     {
                         // If we exited when we were waiting for a process to stop, then
                         // forward the event here so we don't lose the event
+                        m_destroy_in_process = false;
                         return error;
                     }
                 }
@@ -3349,6 +3364,7 @@ Process::Destroy ()
             {
                 if (log)
                     log->Printf("Process::Destroy() Halt got error: %s", error.AsCString());
+                m_destroy_in_process = false;
                 return error;
             }
         }
@@ -3390,6 +3406,9 @@ Process::Destroy ()
         // it here so when we do to tear down the process we don't get an error destroying the lock.
         m_run_lock.WriteUnlock();
     }
+    
+    m_destroy_in_process = false;
+    
     return error;
 }
 

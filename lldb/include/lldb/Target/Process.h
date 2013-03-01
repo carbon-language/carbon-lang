@@ -3597,6 +3597,7 @@ protected:
     Predicate<bool>             m_currently_handling_event;
     bool                        m_finalize_called;
     lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.
+    bool m_destroy_in_process;
     
     enum {
         eCanJITDontKnow= 0,
