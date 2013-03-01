@@ -537,6 +537,13 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
       "    aaaaaaaaaaaaaaaaaaaaaa);  // 81 cols with this comment");
 }
 
+TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {
+  EXPECT_EQ("// comment", format("// comment  "));
+  EXPECT_EQ("int aaaaaaa, bbbbbbb; // comment",
+            format("int aaaaaaa, bbbbbbb; // comment                   ",
+                   getLLVMStyleWithColumns(33)));
+}
+
 TEST_F(FormatTest, UnderstandsMultiLineComments) {
   verifyFormat("f(/*test=*/ true);");
   EXPECT_EQ(

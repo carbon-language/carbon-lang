@@ -116,20 +116,30 @@ public:
 
     // Align line comments if they are trailing or if they continue other
     // trailing comments.
-    if (isTrailingComment(Tok) && (Tok.Parent != NULL || !Comments.empty())) {
-      if (Style.ColumnLimit >=
-          Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength) {
-        Comments.push_back(StoredComment());
-        Comments.back().Tok = Tok.FormatTok;
-        Comments.back().Spaces = Spaces;
-        Comments.back().NewLines = NewLines;
-        if (NewLines == 0)
-          Comments.back().MinColumn = WhitespaceStartColumn + Spaces;
-        else
-          Comments.back().MinColumn = Spaces;
-        Comments.back().MaxColumn =
-            Style.ColumnLimit - Tok.FormatTok.TokenLength;
-        return;
+    if (isTrailingComment(Tok)) {
+      // Remove the comment's trailing whitespace.
+      if (Tok.FormatTok.Tok.getLength() != Tok.FormatTok.TokenLength)
+        Replaces.insert(tooling::Replacement(
+            SourceMgr, Tok.FormatTok.Tok.getLocation().getLocWithOffset(
+                           Tok.FormatTok.TokenLength),
+            Tok.FormatTok.Tok.getLength() - Tok.FormatTok.TokenLength, ""));
+
+      // Align comment with other comments.
+      if (Tok.Parent != NULL || !Comments.empty()) {
+        if (Style.ColumnLimit >=
+            Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength) {
+          Comments.push_back(StoredComment());
+          Comments.back().Tok = Tok.FormatTok;
+          Comments.back().Spaces = Spaces;
+          Comments.back().NewLines = NewLines;
+          if (NewLines == 0)
+            Comments.back().MinColumn = WhitespaceStartColumn + Spaces;
+          else
+            Comments.back().MinColumn = Spaces;
+          Comments.back().MaxColumn =
+              Style.ColumnLimit - Tok.FormatTok.TokenLength;
+          return;
+        }
       }
     }
 
@@ -1016,6 +1026,11 @@ public:
       FormatTok.TokenLength = 1;
       GreaterStashed = true;
     }
+
+    // If we reformat comments, we remove trailing whitespace. Update the length
+    // accordingly.
+    if (FormatTok.Tok.is(tok::comment))
+      FormatTok.TokenLength = Text.rtrim().size();
 
     return FormatTok;
   }
