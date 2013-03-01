@@ -645,6 +645,9 @@ private:
     if (NextToken == NULL)
       return TT_Unknown;
 
+    if (PrevToken->is(tok::l_paren) && !IsExpression)
+      return TT_PointerOrReference;
+
     if (PrevToken->is(tok::l_paren) || PrevToken->is(tok::l_square) ||
         PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
         PrevToken->is(tok::kw_return) || PrevToken->is(tok::colon) ||
@@ -1041,6 +1044,11 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.is(tok::colon))
     return Line.First.isNot(tok::kw_case) && !Tok.Children.empty() &&
            Tok.Type != TT_ObjCMethodExpr;
+  if (Tok.is(tok::l_paren) && !Tok.Children.empty() &&
+      Tok.Children[0].Type == TT_PointerOrReference &&
+      !Tok.Children[0].Children.empty() &&
+      Tok.Children[0].Children[0].isNot(tok::r_paren))
+    return true;
   if (Tok.Parent->Type == TT_UnaryOperator || Tok.Parent->Type == TT_CastRParen)
     return false;
   if (Tok.Type == TT_UnaryOperator)

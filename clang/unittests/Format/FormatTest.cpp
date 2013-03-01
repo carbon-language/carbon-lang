@@ -1812,7 +1812,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("int main(int argc, char **argv) {}");
   verifyFormat("Test::Test(int b) : a(b * b) {}");
   verifyIndependentOfContext("f(a, *a);");
-  verifyIndependentOfContext("f(*a);");
+  verifyFormat("void g() { f(*a); }");
   verifyIndependentOfContext("int a = b * 10;");
   verifyIndependentOfContext("int a = 10 * b;");
   verifyIndependentOfContext("int a = b * c;");
@@ -1845,6 +1845,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("return sizeof(int **);");
   verifyIndependentOfContext("return sizeof(int ******);");
   verifyIndependentOfContext("return (int **&)a;");
+  verifyFormat("void f(Type (*parameter)[10]) {}");
   verifyGoogleFormat("return sizeof(int**);");
   verifyIndependentOfContext("Type **A = static_cast<Type **>(P);");
   verifyGoogleFormat("Type** A = static_cast<Type**>(P);");
@@ -1884,7 +1885,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("a = &(x + y);");
   verifyIndependentOfContext("*(x + y).call();");
   verifyIndependentOfContext("&(x + y)->call();");
-  verifyIndependentOfContext("&(*I).first");
+  verifyFormat("void f() { &(*I).first; }");
 
   verifyIndependentOfContext("f(b * /* confusing comment */ ++c);");
   verifyFormat(
@@ -1909,7 +1910,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 
   verifyIndependentOfContext("A = new SomeType *[Length]();");
   verifyGoogleFormat("A = new SomeType* [Length]();");
+}
 
+TEST_F(FormatTest, AdaptivelyFormatsPointersAndReferences) {
   EXPECT_EQ("int *a;\n"
             "int *a;\n"
             "int *a;",
@@ -1977,12 +1980,13 @@ TEST_F(FormatTest, FormatsCasts) {
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
-  // FIXME: Determine the cases that need a space after the return type and fix.
   verifyFormat("A<bool()> a;");
   verifyFormat("A<SomeType()> a;");
   verifyFormat("A<void(*)(int, std::string)> a;");
 
-  verifyFormat("int(*func)(void *);");
+  // FIXME: Inconsistent.
+  verifyFormat("int (*func)(void *);");
+  verifyFormat("void f() { int(*func)(void *); }");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
