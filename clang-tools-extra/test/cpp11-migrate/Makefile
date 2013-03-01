@@ -45,22 +45,23 @@ GENERATED_TESTS_ROOT := $(PROJ_OBJ_DIR)/generated_tests
 
 # Recipe to create lit.site.cfg for the auto-generated tests suite. Sources
 # for these tests are auto-generated into the build directory.
+GEN_LIT_TMP := generated_tests/lit.tmp
 generated_tests/lit.site.cfg: FORCE
 	@$(MKDIR) $(GENERATED_TESTS_ROOT)
 	@echo "Making lit.site.cfg for cpp11-migrate Auto-Generated Tests..."
-	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
-	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
-	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
-	@$(ECHOPATH) s=@LLVM_LIBS_DIR@=$(LibDir)=g >> lit.tmp
-	@$(ECHOPATH) s=@CLANG_TOOLS_SOURCE_DIR@=$(PROJ_SRC_DIR)/../..=g >> lit.tmp
-	@$(ECHOPATH) s=@CLANG_TOOLS_BINARY_DIR@=$(PROJ_OBJ_DIR)/../..=g >> lit.tmp
-	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
-	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(GENERATED_TESTS_ROOT)=g >> lit.tmp
-	@$(ECHOPATH) s=@TEST_EXEC_ROOT@=$(PROJ_OBJ_DIR)=g >> lit.tmp
-	@$(ECHOPATH) s=@TESTSUITE_NAME@=cpp11-migrate Auto-Generated Tests=g >> lit.tmp
-	@$(ECHOPATH) s=@GENERATED_TESTS_ROOT@=$(GENERATED_TESTS_ROOT)=g >> lit.tmp
-	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
-	@-rm -f lit.tmp
+	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@LLVM_LIBS_DIR@=$(LibDir)=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@CLANG_TOOLS_SOURCE_DIR@=$(PROJ_SRC_DIR)/../..=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@CLANG_TOOLS_BINARY_DIR@=$(PROJ_OBJ_DIR)/../..=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(GENERATED_TESTS_ROOT)=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@TEST_EXEC_ROOT@=$(PROJ_OBJ_DIR)=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@TESTSUITE_NAME@=cpp11-migrate Auto-Generated Tests=g >> $(GEN_LIT_TMP)
+	@$(ECHOPATH) s=@GENERATED_TESTS_ROOT@=$(GENERATED_TESTS_ROOT)=g >> $(GEN_LIT_TMP)
+	@sed -f $(GEN_LIT_TMP) $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
+	@-rm -f $(GEN_LIT_TMP)
 
 # Recipe to create the lit.site.cfg for the regular cpp11-migrate test suite.
 lit.site.cfg: FORCE
