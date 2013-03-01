@@ -129,6 +129,12 @@ namespace {
     bool delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
                         MemDefsUses &MemDU) const;
 
+    /// This function searches range [Begin, End) for an instruction that can be
+    /// moved to the delay slot. Returns true on success.
+    template<typename IterTy>
+    bool searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
+                     RegDefsUses &RegDU, MemDefsUses &MemDU, IterTy &Filler) const;
+
     bool searchBackward(MachineBasicBlock &MBB, Iter Slot, Iter &Filler) const;
 
     bool terminateSearch(const MachineInstr &Candidate) const;
@@ -312,14 +318,11 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
   return new Filler(tm);
 }
 
-bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot,
-                            Iter &Filler) const {
-  RegDefsUses RegDU(TM);
-  MemDefsUses MemDU(MBB.getParent()->getFrameInfo());
-
-  RegDU.init(*Slot);
-
-  for (ReverseIter I(Slot); I != MBB.rend(); ++I) {
+template<typename IterTy>
+bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
+                         RegDefsUses &RegDU, MemDefsUses &MemDU,
+                         IterTy &Filler) const {
+  for (IterTy I = Begin; I != End; ++I) {
     // skip debug value
     if (I->isDebugValue())
       continue;
@@ -333,7 +336,24 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot,
     if (delayHasHazard(*I, RegDU, MemDU))
       continue;
 
-    Filler = llvm::next(I).base();
+    Filler = I;
+    return true;
+  }
+
+  return false;
+}
+
+bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot,
+                            Iter &Filler) const {
+  RegDefsUses RegDU(TM);
+  MemDefsUses MemDU(MBB.getParent()->getFrameInfo());
+  ReverseIter FillerReverse;
+
+  RegDU.init(*Slot);
+
+  if (searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU,
+                  FillerReverse)) {
+    Filler = llvm::next(FillerReverse).base();
     return true;
   }
 
