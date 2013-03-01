@@ -863,8 +863,8 @@ public:
     /// \brief Force the emission of cleanups now, instead of waiting
     /// until this object is destroyed.
     void ForceCleanup() {
-      endLexicalScope();
       RunCleanupsScope::ForceCleanup();
+      endLexicalScope();
     }
 
   private:
