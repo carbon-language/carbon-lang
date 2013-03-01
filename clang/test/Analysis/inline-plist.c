@@ -63,7 +63,7 @@ void test_block__capture_null() {
 }
 
 void test_block_ret() {
-  int *p = ^(){ // expected-note {{Calling anonymous block}} expected-note{{Returning to caller}} expected-note {{'p' initialized to a null pointer value}}
+  int *p = ^int*(){ // expected-note {{Calling anonymous block}} expected-note{{Returning to caller}} expected-note {{'p' initialized to a null pointer value}}
     int *q = 0; // expected-note {{'q' initialized to a null pointer value}}
     return q; // expected-note {{Returning null pointer (loaded from 'q')}}
   }();

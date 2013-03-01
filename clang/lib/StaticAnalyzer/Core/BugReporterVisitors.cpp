@@ -222,13 +222,24 @@ public:
     // Don't print any more notes after this one.
     Mode = Satisfied;
 
+    const Expr *RetE = Ret->getRetValue();
+    assert(RetE && "Tracking a return value for a void function");
+
+    // Handle cases where a reference is returned and then immediately used.
+    Optional<Loc> LValue;
+    if (RetE->isGLValue()) {
+      if ((LValue = V.getAs<Loc>())) {
+        SVal RValue = State->getRawSVal(*LValue, RetE->getType());
+        if (RValue.getAs<DefinedSVal>())
+          V = RValue;
+      }
+    }
+
     // Ignore aggregate rvalues.
     if (V.getAs<nonloc::LazyCompoundVal>() ||
         V.getAs<nonloc::CompoundVal>())
       return 0;
 
-    const Expr *RetE = Ret->getRetValue();
-    assert(RetE && "Tracking a return value for a void function");
     RetE = RetE->IgnoreParenCasts();
 
     // If we can't prove the return value is 0, just mark it interesting, and
@@ -267,10 +278,20 @@ public:
       Out << "Returning zero";
     }
 
-    // FIXME: We should have a more generalized location printing mechanism.
-    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetE))
-      if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(DR->getDecl()))
-        Out << " (loaded from '" << *DD << "')";
+    if (LValue) {
+      if (const MemRegion *MR = LValue->getAsRegion()) {
+        if (MR->canPrintPretty()) {
+          Out << " (reference to '";
+          MR->printPretty(Out);
+          Out << "')";
+        }
+      }
+    } else {
+      // FIXME: We should have a more generalized location printing mechanism.
+      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(RetE))
+        if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(DR->getDecl()))
+          Out << " (loaded from '" << *DD << "')";
+    }
 
     PathDiagnosticLocation L(Ret, BRC.getSourceManager(), StackFrame);
     return new PathDiagnosticEventPiece(L, Out.str());
@@ -766,6 +787,12 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   // track the constraints on its contents.
   SVal V = state->getSValAsScalarOrLoc(S, N->getLocationContext());
 
+  // If the value came from an inlined function call, we should at least make
+  // sure that function isn't pruned in our output.
+  if (const Expr *E = dyn_cast<Expr>(S))
+    S = E->IgnoreParenCasts();
+  ReturnVisitor::addVisitorIfNecessary(N, S, report);
+
   // Uncomment this to find cases where we aren't properly getting the
   // base value that was dereferenced.
   // assert(!V.isUnknownOrUndef());
@@ -777,18 +804,11 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
     const MemRegion *RegionRVal = RVal.getAsRegion();
     report.addVisitor(new UndefOrNullArgVisitor(L->getRegion()));
 
-
     if (RegionRVal && isa<SymbolicRegion>(RegionRVal)) {
       report.markInteresting(RegionRVal);
       report.addVisitor(new TrackConstraintBRVisitor(
         loc::MemRegionVal(RegionRVal), false));
     }
-  } else {
-    // Otherwise, if the value came from an inlined function call,
-    // we should at least make sure that function isn't pruned in our output.
-    if (const Expr *E = dyn_cast<Expr>(S))
-      S = E->IgnoreParenCasts();
-    ReturnVisitor::addVisitorIfNecessary(N, S, report);
   }
 
   return true;
