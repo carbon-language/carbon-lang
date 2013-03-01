@@ -129,7 +129,7 @@ namespace {
     bool delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
                         MemDefsUses &MemDU) const;
 
-    bool findDelayInstr(MachineBasicBlock &MBB, Iter slot, Iter &Filler) const;
+    bool searchBackward(MachineBasicBlock &MBB, Iter Slot, Iter &Filler) const;
 
     bool terminateSearch(const MachineInstr &Candidate) const;
 
@@ -293,7 +293,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
     // Delay slot filling is disabled at -O0.
     if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None) &&
-        findDelayInstr(MBB, I, D)) {
+        searchBackward(MBB, I, D)) {
       MBB.splice(llvm::next(I), &MBB, D);
       ++UsefulSlots;
     } else
@@ -312,7 +312,7 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
   return new Filler(tm);
 }
 
-bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
+bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot,
                             Iter &Filler) const {
   RegDefsUses RegDU(TM);
   MemDefsUses MemDU(MBB.getParent()->getFrameInfo());
