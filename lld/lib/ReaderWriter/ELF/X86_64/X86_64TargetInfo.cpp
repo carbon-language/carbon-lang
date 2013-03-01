@@ -409,6 +409,31 @@ public:
       return handlePLT32(ref);
     return handleIFUNC(ref);
   }
+
+  const GOTAtom *getSharedGOT(const SharedLibraryAtom *sla) {
+    auto got = _gotMap.find(sla);
+    if (got == _gotMap.end()) {
+      auto g = new (_file._alloc) GOTAtom(_file, ".got.dyn");
+      g->addReference(R_X86_64_GLOB_DAT, 0, sla, 0);
+#ifndef NDEBUG
+      g->_name = "__got_";
+      g->_name += sla->name();
+#endif
+      _gotMap[sla] = g;
+      return g;
+    }
+    return got->second;
+  }
+
+  void handleGOTPCREL(const Reference &ref) {
+    const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
+    if (isa<UndefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getNullGOT());
+    else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getGOT(da));
+    else if (const auto sla = dyn_cast<const SharedLibraryAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getSharedGOT(sla));
+  }
 };
 } // end anon namespace
 

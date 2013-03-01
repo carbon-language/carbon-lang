@@ -25,6 +25,16 @@ CHECK:    alignment:       2^3
 CHECK:    section-choice:  custom-required
 CHECK:    section-name:    .got.plt
 CHECK:    permissions:     rw-
+        - name:            __got_i
+CHECK:    type:            got
+CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+CHECK:    section-choice:  custom-required
+CHECK:    section-name:    .got.dyn
+CHECK:    permissions:     rw-
+CHECK:    references:
+CHECK:      - kind:            R_X86_64_GLOB_DAT
+CHECK:        offset:          0
+CHECK:        target:          i
         - name:            __got_foo
 CHECK:    type:            got
 CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
@@ -45,8 +55,12 @@ CHECK:  - name:            main
 CHECK:    scope:           global
 CHECK:    references:
 CHECK:      - kind:            R_X86_64_PC32
-CHECK:        offset:          7
+CHECK:        offset:          18
               target:          __plt_foo
+CHECK:        addend:          -4
+CHECK:     - kind:            R_X86_64_PC32
+CHECK:        offset:          25
+              target:          __got_i
 CHECK:        addend:          -4
 
         - name:            .PLT0
