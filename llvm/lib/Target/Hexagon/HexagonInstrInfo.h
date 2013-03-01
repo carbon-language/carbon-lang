@@ -180,6 +180,17 @@ public:
   unsigned getImmExtForm(const MachineInstr* MI) const;
   unsigned getNormalBranchForm(const MachineInstr* MI) const;
 
+
+  void immediateExtend(MachineInstr *MI) const;
+  bool isConstExtended(MachineInstr *MI) const;
+  unsigned getAddrMode(const MachineInstr* MI) const;
+  bool isOperandExtended(const MachineInstr *MI,
+                         unsigned short OperandNum) const;
+  unsigned short getCExtOpNum(const MachineInstr *MI) const;
+  int getMinValue(const MachineInstr *MI) const;
+  int getMaxValue(const MachineInstr *MI) const;
+  bool NonExtEquivalentExists (const MachineInstr *MI) const;
+  short getNonExtOpcode(const MachineInstr *MI) const;
 private:
   int getMatchingCondBranchOpcode(int Opc, bool sense) const;
 

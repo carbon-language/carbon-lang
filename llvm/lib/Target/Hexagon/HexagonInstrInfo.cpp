@@ -2800,7 +2800,26 @@ isConditionalStore (const MachineInstr* MI) const {
   }
 }
 
+unsigned HexagonInstrInfo::getAddrMode(const MachineInstr* MI) const {
+  const uint64_t F = MI->getDesc().TSFlags;
 
+  return((F >> HexagonII::AddrModePos) & HexagonII::AddrModeMask);
+}
+
+/// immediateExtend - Changes the instruction in place to one using an immediate
+/// extender.
+void HexagonInstrInfo::immediateExtend(MachineInstr *MI) const {
+  assert((isExtendable(MI)||isConstExtended(MI)) &&
+                               "Instruction must be extendable");
+  // Find which operand is extendable.
+  short ExtOpNum = getCExtOpNum(MI);
+  MachineOperand &MO = MI->getOperand(ExtOpNum);
+  // This needs to be something we understand.
+  assert((MO.isMBB() || MO.isImm()) &&
+         "Branch with unknown extendable field type");
+  // Mark given operand as extended.
+  MO.addTargetFlag(HexagonII::HMOTF_ConstExtended);
+}
 
 DFAPacketizer *HexagonInstrInfo::
 CreateTargetScheduleState(const TargetMachine *TM,
@@ -2826,4 +2845,156 @@ bool HexagonInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
     return true;
 
   return false;
+}
+
+bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
+
+  // Constant extenders are allowed only for V4 and above.
+  if (!Subtarget.hasV4TOps())
+    return false;
+
+  const uint64_t F = MI->getDesc().TSFlags;
+  unsigned isExtended = (F >> HexagonII::ExtendedPos) & HexagonII::ExtendedMask;
+  if (isExtended) // Instruction must be extended.
+    return true;
+
+  unsigned isExtendable = (F >> HexagonII::ExtendablePos)
+                          & HexagonII::ExtendableMask;
+  if (!isExtendable)
+    return false;
+
+  short ExtOpNum = getCExtOpNum(MI);
+  const MachineOperand &MO = MI->getOperand(ExtOpNum);
+  // Use MO operand flags to determine if MO
+  // has the HMOTF_ConstExtended flag set.
+  if (MO.getTargetFlags() && HexagonII::HMOTF_ConstExtended)
+    return true;
+  // If this is a Machine BB address we are talking about, and it is
+  // not marked as extended, say so.
+  if (MO.isMBB())
+    return false;
+
+  // We could be using an instruction with an extendable immediate and shoehorn
+  // a global address into it. If it is a global address it will be constant
+  // extended. We do this for COMBINE.
+  // We currently only handle isGlobal() because it is the only kind of
+  // object we are going to end up with here for now.
+  // In the future we probably should add isSymbol(), etc.
+  if (MO.isGlobal() || MO.isSymbol())
+    return true;
+
+  // If the extendable operand is not 'Immediate' type, the instruction should
+  // have 'isExtended' flag set.
+  assert(MO.isImm() && "Extendable operand must be Immediate type");
+
+  int MinValue = getMinValue(MI);
+  int MaxValue = getMaxValue(MI);
+  int ImmValue = MO.getImm();
+
+  return (ImmValue < MinValue || ImmValue > MaxValue);
+}
+
+// Returns true if a particular operand is extendable for an instruction.
+bool HexagonInstrInfo::isOperandExtended(const MachineInstr *MI,
+                                         unsigned short OperandNum) const {
+  // Constant extenders are allowed only for V4 and above.
+  if (!Subtarget.hasV4TOps())
+    return false;
+
+  const uint64_t F = MI->getDesc().TSFlags;
+
+  return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask)
+          == OperandNum;
+}
+
+// Returns Operand Index for the constant extended instruction.
+unsigned short HexagonInstrInfo::getCExtOpNum(const MachineInstr *MI) const {
+  const uint64_t F = MI->getDesc().TSFlags;
+  return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask);
+}
+
+// Returns the min value that doesn't need to be extended.
+int HexagonInstrInfo::getMinValue(const MachineInstr *MI) const {
+  const uint64_t F = MI->getDesc().TSFlags;
+  unsigned isSigned = (F >> HexagonII::ExtentSignedPos)
+                    & HexagonII::ExtentSignedMask;
+  unsigned bits =  (F >> HexagonII::ExtentBitsPos)
+                    & HexagonII::ExtentBitsMask;
+
+  if (isSigned) // if value is signed
+    return -1 << (bits - 1);
+  else
+    return 0;
+}
+
+// Returns the max value that doesn't need to be extended.
+int HexagonInstrInfo::getMaxValue(const MachineInstr *MI) const {
+  const uint64_t F = MI->getDesc().TSFlags;
+  unsigned isSigned = (F >> HexagonII::ExtentSignedPos)
+                    & HexagonII::ExtentSignedMask;
+  unsigned bits =  (F >> HexagonII::ExtentBitsPos)
+                    & HexagonII::ExtentBitsMask;
+
+  if (isSigned) // if value is signed
+    return ~(-1 << (bits - 1));
+  else
+    return ~(-1 << bits);
+}
+
+// Returns true if an instruction can be converted into a non-extended
+// equivalent instruction.
+bool HexagonInstrInfo::NonExtEquivalentExists (const MachineInstr *MI) const {
+
+  short NonExtOpcode;
+  // Check if the instruction has a register form that uses register in place
+  // of the extended operand, if so return that as the non-extended form.
+  if (Hexagon::getRegForm(MI->getOpcode()) >= 0)
+    return true;
+
+  if (MI->getDesc().mayLoad() || MI->getDesc().mayStore()) {
+    // Check addressing mode and retreive non-ext equivalent instruction.
+
+    switch (getAddrMode(MI)) {
+    case HexagonII::Absolute :
+      // Load/store with absolute addressing mode can be converted into
+      // base+offset mode.
+      NonExtOpcode = Hexagon::getBasedWithImmOffset(MI->getOpcode());
+      break;
+    case HexagonII::BaseImmOffset :
+      // Load/store with base+offset addressing mode can be converted into
+      // base+register offset addressing mode. However left shift operand should
+      // be set to 0.
+      NonExtOpcode = Hexagon::getBaseWithRegOffset(MI->getOpcode());
+      break;
+    default:
+      return false;
+    }
+    if (NonExtOpcode < 0)
+      return false;
+    return true;
+  }
+  return false;
+}
+
+// Returns opcode of the non-extended equivalent instruction.
+short HexagonInstrInfo::getNonExtOpcode (const MachineInstr *MI) const {
+
+  // Check if the instruction has a register form that uses register in place
+  // of the extended operand, if so return that as the non-extended form.
+  short NonExtOpcode = Hexagon::getRegForm(MI->getOpcode());
+    if (NonExtOpcode >= 0)
+      return NonExtOpcode;
+
+  if (MI->getDesc().mayLoad() || MI->getDesc().mayStore()) {
+    // Check addressing mode and retreive non-ext equivalent instruction.
+    switch (getAddrMode(MI)) {
+    case HexagonII::Absolute :
+      return Hexagon::getBasedWithImmOffset(MI->getOpcode());
+    case HexagonII::BaseImmOffset :
+      return Hexagon::getBaseWithRegOffset(MI->getOpcode());
+    default:
+      return -1;
+    }
+  }
+  return -1;
 }

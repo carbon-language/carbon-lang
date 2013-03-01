@@ -154,6 +154,28 @@ namespace HexagonII {
 
   // *** The code above must match HexagonInstrFormat*.td *** //
 
+  // Hexagon specific MO operand flag mask.
+  enum HexagonMOTargetFlagVal {
+    //===------------------------------------------------------------------===//
+    // Hexagon Specific MachineOperand flags.
+    MO_NO_FLAG,
+
+    HMOTF_ConstExtended = 1,
+
+    /// MO_PCREL - On a symbol operand, indicates a PC-relative relocation
+    /// Used for computing a global address for PIC compilations
+    MO_PCREL,
+
+    /// MO_GOT - Indicates a GOT-relative relocation
+    MO_GOT,
+
+    // Low or high part of a symbol.
+    MO_LO16, MO_HI16,
+
+    // Offset from the base of the SDA.
+    MO_GPREL
+  };
+
 } // End namespace HexagonII.
 
 } // End namespace llvm.
