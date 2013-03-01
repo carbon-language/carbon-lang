@@ -284,7 +284,7 @@ public:
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
   /// specified type.  For example, returns 36 for i36 and 80 for x86_fp80.
   /// The type passed must have a size (Type::isSized() must return true).
-  uint64_t getTypeSizeInBits(Type* Ty) const;
+  uint64_t getTypeSizeInBits(Type *Ty) const;
 
   /// getTypeStoreSize - Return the maximum number of bytes that may be
   /// overwritten by storing the specified type.  For example, returns 5
@@ -304,7 +304,7 @@ public:
   /// of the specified type, including alignment padding.  This is the amount
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSize(Type* Ty) const {
+  uint64_t getTypeAllocSize(Type *Ty) const {
     // Round up to the next alignment boundary.
     return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
@@ -313,7 +313,7 @@ public:
   /// objects of the specified type, including alignment padding; always a
   /// multiple of 8.  This is the amount that alloca reserves for this type.
   /// For example, returns 96 or 128 for x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSizeInBits(Type* Ty) const {
+  uint64_t getTypeAllocSizeInBits(Type *Ty) const {
     return 8*getTypeAllocSize(Ty);
   }
 
