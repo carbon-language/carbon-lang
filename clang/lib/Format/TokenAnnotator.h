@@ -75,7 +75,7 @@ public:
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(0), BindingStrength(0), SplitPenalty(0),
         LongestObjCSelectorName(0), Parent(NULL), FakeLParens(0),
-        FakeRParens(0) {
+        FakeRParens(0), LastInChainOfCalls(false) {
   }
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
@@ -126,6 +126,9 @@ public:
   unsigned FakeLParens;
   /// \brief Insert this many fake ) after this token for correct indentation.
   unsigned FakeRParens;
+
+  /// \brief Is this the last "." or "->" in a builder-type call?
+  bool LastInChainOfCalls;
 
   const AnnotatedToken *getPreviousNoneComment() const {
     AnnotatedToken *Tok = Parent;

@@ -464,6 +464,7 @@ private:
 public:
   LineType parseLine() {
     int PeriodsAndArrows = 0;
+    AnnotatedToken *LastPeriodOrArrow = NULL;
     bool CanBeBuilderTypeStmt = true;
     if (CurrentToken->is(tok::hash)) {
       parsePreprocessorDirective();
@@ -472,8 +473,10 @@ public:
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::kw_virtual))
         KeywordVirtualFound = true;
-      if (CurrentToken->is(tok::period) || CurrentToken->is(tok::arrow))
+      if (CurrentToken->is(tok::period) || CurrentToken->is(tok::arrow)) {
         ++PeriodsAndArrows;
+        LastPeriodOrArrow = CurrentToken;
+      }
       AnnotatedToken *TheToken = CurrentToken;
       if (!consumeToken())
         return LT_Invalid;
@@ -485,8 +488,10 @@ public:
       return LT_VirtualFunctionDecl;
 
     // Assume a builder-type call if there are 2 or more "." and "->".
-    if (PeriodsAndArrows >= 2 && CanBeBuilderTypeStmt)
+    if (PeriodsAndArrows >= 2 && CanBeBuilderTypeStmt) {
+      LastPeriodOrArrow->LastInChainOfCalls = true;
       return LT_BuilderTypeCall;
+    }
 
     if (Line.First.Type == TT_ObjCMethodSpecifier) {
       if (Contexts.back().FirstObjCSelectorName != NULL)
@@ -934,7 +939,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Level != prec::Unknown)
     return Level;
-  
+
   return 3;
 }
 

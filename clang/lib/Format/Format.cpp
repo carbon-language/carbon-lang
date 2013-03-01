@@ -339,7 +339,8 @@ private:
         : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
           BreakBeforeClosingBrace(false), QuestionColumn(0),
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0) {}
+          HasMultiParameterLine(HasMultiParameterLine), ColonPos(0),
+          StartOfFunctionCall(0) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -382,6 +383,9 @@ private:
     /// \brief The position of the colon in an ObjC method declaration/call.
     unsigned ColonPos;
 
+    /// \brief The start of the most recent function in a builder-type call.
+    unsigned StartOfFunctionCall;
+
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
         return Indent < Other.Indent;
@@ -401,6 +405,8 @@ private:
         return HasMultiParameterLine;
       if (ColonPos != Other.ColonPos)
         return ColonPos < Other.ColonPos;
+      if (StartOfFunctionCall != Other.StartOfFunctionCall)
+        return StartOfFunctionCall < Other.StartOfFunctionCall;
       return false;
     }
   };
@@ -622,9 +628,6 @@ private:
         // If this function has multiple parameters, indent nested calls from
         // the start of the first parameter.
         State.Stack.back().LastSpace = State.Column;
-      else if ((Current.is(tok::period) || Current.is(tok::arrow)) &&
-               Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
-        State.Stack.back().LastSpace = State.Column;
     }
 
     return moveStateToNextToken(State, DryRun);
@@ -642,6 +645,10 @@ private:
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
+    if ((Current.is(tok::period) || Current.is(tok::arrow)) &&
+        Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
+      State.Stack.back().StartOfFunctionCall =
+          Current.LastInChainOfCalls ? 0 : State.Column;
     if (Current.Type == TT_CtorInitializerColon) {
       if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
         State.Stack.back().AvoidBinPacking = true;
@@ -667,7 +674,8 @@ private:
         NewIndent = 2 + State.Stack.back().LastSpace;
         AvoidBinPacking = false;
       } else {
-        NewIndent = 4 + State.Stack.back().LastSpace;
+        NewIndent = 4 + std::max(State.Stack.back().LastSpace,
+                                 State.Stack.back().StartOfFunctionCall);
         AvoidBinPacking =
             !Style.BinPackParameters || State.Stack.back().AvoidBinPacking;
       }
