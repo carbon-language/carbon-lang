@@ -1132,7 +1132,15 @@ public:
       IndentForLevel.resize(TheLine.Level + 1);
       bool WasMoved =
           PreviousLineWasTouched && TheLine.First.FormatTok.NewlinesBefore == 0;
-      if (TheLine.Type != LT_Invalid && (WasMoved || touchesRanges(TheLine))) {
+      if (TheLine.First.is(tok::eof)) {
+        if (PreviousLineWasTouched) {
+          unsigned NewLines =
+              std::min(TheLine.First.FormatTok.NewlinesBefore, 1u);
+          Whitespaces.replaceWhitespace(TheLine.First, NewLines, /*Indent*/ 0,
+                                        /*WhitespaceStartColumn*/ 0, Style);
+        }
+      } else if (TheLine.Type != LT_Invalid &&
+                 (WasMoved || touchesRanges(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
         unsigned Indent = LevelIndent;
         if (static_cast<int>(Indent) + Offset >= 0)

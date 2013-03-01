@@ -138,6 +138,11 @@ bool UnwrappedLineParser::parse() {
        I != E; ++I) {
     Callback.consumeUnwrappedLine(*I);
   }
+
+  // Create line with eof token.
+  pushToken(FormatTok);
+  Callback.consumeUnwrappedLine(*Line);
+
   return Error;
 }
 
@@ -776,14 +781,14 @@ void UnwrappedLineParser::addUnwrappedLine() {
   CurrentLines->push_back(*Line);
   Line->Tokens.clear();
   if (CurrentLines == &Lines && !PreprocessorDirectives.empty()) {
-    for (std::vector<UnwrappedLine>::iterator I = PreprocessorDirectives
-             .begin(), E = PreprocessorDirectives.end();
+    for (std::vector<UnwrappedLine>::iterator
+             I = PreprocessorDirectives.begin(),
+             E = PreprocessorDirectives.end();
          I != E; ++I) {
       CurrentLines->push_back(*I);
     }
     PreprocessorDirectives.clear();
   }
-
 }
 
 bool UnwrappedLineParser::eof() const {
