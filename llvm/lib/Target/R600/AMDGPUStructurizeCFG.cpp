@@ -243,6 +243,7 @@ public:
     initializeRegionInfoPass(*PassRegistry::getPassRegistry());
   }
 
+  using Pass::doInitialization;
   virtual bool doInitialization(Region *R, RGPassManager &RGM);
 
   virtual bool runOnRegion(Region *R, RGPassManager &RGM);
