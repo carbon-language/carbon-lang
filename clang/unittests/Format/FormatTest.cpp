@@ -3045,9 +3045,15 @@ TEST_F(FormatTest, BreakStringLiterals) {
 
   EXPECT_EQ(
       "\"splitmea\"\n"
-      "\"trandompo\"\n"
-      "\"int\"",
+      "\"trandomp\"\n"
+      "\"oint\"",
       format("\"splitmeatrandompoint\"", getLLVMStyleWithColumns(10)));
+
+  EXPECT_EQ(
+      "\"split/\"\n"
+      "\"pathat/\"\n"
+      "\"slashes\"",
+      format("\"split/pathat/slashes\"", getLLVMStyleWithColumns(10)));
 }
 
 } // end namespace tooling
