@@ -918,6 +918,15 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
         Stream *s = &target.GetDebugger().GetOutputStream();
         if (s)
         {
+            ObjectFile *kernel_object_file = m_module_sp->GetObjectFile();
+            if (kernel_object_file)
+            {
+                addr_t file_address = kernel_object_file->GetHeaderAddress().GetFileAddress();
+                if (m_load_address != LLDB_INVALID_ADDRESS && file_address != LLDB_INVALID_ADDRESS)
+                {
+                    s->Printf ("Kernel slid 0x%llx in memory.\n", m_load_address - file_address);
+                }
+            }
             if (m_module_sp->GetFileSpec().GetDirectory().IsEmpty())
             {
                 s->Printf ("Loaded kernel file %s\n", m_module_sp->GetFileSpec().GetFilename().AsCString());
