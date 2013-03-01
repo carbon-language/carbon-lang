@@ -195,6 +195,9 @@ void Value::setName(const Twine &NewName) {
   if (getSymTab(this, ST))
     return;  // Cannot set a name on this value (e.g. constant).
 
+  if (Function *F = dyn_cast<Function>(this))
+    getContext().pImpl->IntrinsicIDCache.erase(F);
+
   if (!ST) { // No symbol table to update?  Just do the change.
     if (NameRef.empty()) {
       // Free the name for this value.
@@ -307,7 +310,7 @@ void Value::replaceAllUsesWith(Value *New) {
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsRAUWd(this, New);
-  
+
   while (!use_empty()) {
     Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
@@ -318,10 +321,10 @@ void Value::replaceAllUsesWith(Value *New) {
         continue;
       }
     }
-    
+
     U.set(New);
   }
-  
+
   if (BasicBlock *BB = dyn_cast<BasicBlock>(this))
     BB->replaceSuccessorsPhiUsesWith(cast<BasicBlock>(New));
 }
