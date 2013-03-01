@@ -1305,11 +1305,6 @@ def : Pat <
 /********** ================== **********/
 
 def : Pat <
-  (i1 imm:$imm),
-  (S_MOV_B64 imm:$imm)
->;
-
-def : Pat <
   (i32 imm:$imm),
   (V_MOV_B32_e32 imm:$imm)
 >;
@@ -1320,13 +1315,8 @@ def : Pat <
 >;
 
 def : Pat <
-  (i32 imm:$imm),
-  (S_MOV_B32 imm:$imm)
->;
-
-def : Pat <
-  (f32 fpimm:$imm),
-  (S_MOV_B32 fpimm:$imm)
+  (i1 imm:$imm),
+  (S_MOV_B64 imm:$imm)
 >;
 
 def : Pat <
