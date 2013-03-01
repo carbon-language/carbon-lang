@@ -20,10 +20,26 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 
-
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace clang;
+
+namespace {
+
+/// \brief Replaces the provided range with the text "nullptr", but only if 
+/// the start and end location are both in main file.
+/// Returns true if and only if a replacement was made.
+bool ReplaceWithNullptr(tooling::Replacements &Replace, SourceManager &SM,
+                        SourceLocation StartLoc, SourceLocation EndLoc) {
+  if (SM.isFromSameFile(StartLoc, EndLoc) && SM.isFromMainFile(StartLoc)) {
+    CharSourceRange Range(SourceRange(StartLoc, EndLoc), true);
+    Replace.insert(tooling::Replacement(SM, Range, "nullptr"));
+    return true;
+  } else
+    return false;
+}
+
+}
 
 /// \brief Looks for a sequences of 0 or more explicit casts with an implicit
 /// null-to-pointer cast within.
@@ -37,8 +53,8 @@ using namespace clang;
 class CastSequenceVisitor : public RecursiveASTVisitor<CastSequenceVisitor> {
 public:
   CastSequenceVisitor(tooling::Replacements &R, SourceManager &SM,
-                      unsigned &AcceptedChanges) :
-    Replace(R), SM(SM), AcceptedChanges(AcceptedChanges), FirstCast(0) {}
+                      unsigned &AcceptedChanges)
+      : Replace(R), SM(SM), AcceptedChanges(AcceptedChanges), FirstCast(0) {}
 
   // Only VisitStmt is overridden as we shouldn't find other base AST types
   // within a cast expression.
@@ -61,12 +77,9 @@ public:
       StartLoc = SM.getFileLoc(StartLoc);
       EndLoc = SM.getFileLoc(EndLoc);
 
-      if (SM.getFileID(StartLoc) == SM.getFileID(EndLoc) &&
-          SM.isFromMainFile(StartLoc) && SM.isFromMainFile(EndLoc)) {
-        CharSourceRange Range(SourceRange(StartLoc, EndLoc), true);
-        Replace.insert(tooling::Replacement(SM, Range, "nullptr"));
-        ++AcceptedChanges;
-      }
+      AcceptedChanges +=
+          ReplaceWithNullptr(Replace, SM, StartLoc, EndLoc) ? 1 : 0;
+
       ResetFirstCast();
     }
 
@@ -83,7 +96,6 @@ private:
   CastExpr *FirstCast;
 };
 
-
 void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   SourceManager &SM = *Result.SourceManager;
 
@@ -93,7 +105,7 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
     // use CastSequenceVisitor to identify sequences of explicit casts that can
     // be converted into 'nullptr'.
     CastSequenceVisitor Visitor(Replace, SM, AcceptedChanges);
-    Visitor.TraverseStmt(const_cast<CastExpr*>(NullCast));
+    Visitor.TraverseStmt(const_cast<CastExpr *>(NullCast));
   }
 
   const CastExpr *Cast = Result.Nodes.getNodeAs<CastExpr>(ImplicitCastNode);
@@ -101,18 +113,11 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
     SourceLocation StartLoc = Cast->getLocStart();
     SourceLocation EndLoc = Cast->getLocEnd();
 
-    if (SM.getFileID(StartLoc) != SM.getFileID(EndLoc))
-      return;
-
     // If the start/end location is a macro, get the expansion location.
     StartLoc = SM.getFileLoc(StartLoc);
     EndLoc = SM.getFileLoc(EndLoc);
 
-    if (!SM.isFromMainFile(StartLoc) || !SM.isFromMainFile(EndLoc))
-      return;
-
-    CharSourceRange Range(SourceRange(StartLoc, EndLoc), true);
-    Replace.insert(tooling::Replacement(SM, Range, "nullptr"));
-    ++AcceptedChanges;
+    AcceptedChanges +=
+        ReplaceWithNullptr(Replace, SM, StartLoc, EndLoc) ? 1 : 0;
   }
 }
