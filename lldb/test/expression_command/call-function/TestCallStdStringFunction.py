@@ -25,8 +25,8 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.buildDsym()
         self.call_function()
 
-    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
     @dwarf_test
+    @expectedFailureGcc # bugzilla 14437, fails with GCC 4.6.3 and 4.7.2
     def test_with_dwarf(self):
         """Test calling std::String member function."""
         self.buildDwarf()
@@ -36,7 +36,8 @@ class ExprCommandCallFunctionTestCase(TestBase):
         """Test calling std::String member function."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, loc_exact=True)
+        # Some versions of GCC encode two locations for the 'return' statement in main.cpp
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
