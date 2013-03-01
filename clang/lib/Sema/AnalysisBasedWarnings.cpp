@@ -505,7 +505,7 @@ static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
     StringRef Str;
     SourceRange Range;
 
-    // FixIts to suppress the diagnosic by removing the dead condition.
+    // FixIts to suppress the diagnostic by removing the dead condition.
     // For all binary terminators, branch 0 is taken if the condition is true,
     // and branch 1 is taken if the condition is false.
     int RemoveDiagKind = -1;

@@ -281,14 +281,14 @@ namespace clang {
       /// diagnostic.
       StringRef getDescription(unsigned DiagID) const {
         assert(this && DiagID-DIAG_UPPER_LIMIT < DiagInfo.size() &&
-               "Invalid diagnosic ID");
+               "Invalid diagnostic ID");
         return DiagInfo[DiagID-DIAG_UPPER_LIMIT].second;
       }
 
       /// getLevel - Return the level of the specified custom diagnostic.
       DiagnosticIDs::Level getLevel(unsigned DiagID) const {
         assert(this && DiagID-DIAG_UPPER_LIMIT < DiagInfo.size() &&
-               "Invalid diagnosic ID");
+               "Invalid diagnostic ID");
         return DiagInfo[DiagID-DIAG_UPPER_LIMIT].first;
       }
 
@@ -325,7 +325,7 @@ DiagnosticIDs::~DiagnosticIDs() {
 }
 
 /// getCustomDiagID - Return an ID for a diagnostic with the specified message
-/// and level.  If this is the first request for this diagnosic, it is
+/// and level.  If this is the first request for this diagnostic, it is
 /// registered and created, otherwise the existing ID is returned.
 unsigned DiagnosticIDs::getCustomDiagID(Level L, StringRef Message) {
   if (CustomDiagInfo == 0)

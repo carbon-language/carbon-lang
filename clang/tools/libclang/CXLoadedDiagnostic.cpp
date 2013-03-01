@@ -423,7 +423,7 @@ LoadResult DiagLoader::readMetaBlock(llvm::BitstreamCursor &Stream) {
         return Failure;
       }
       if (Record[0] > MaxSupportedVersion) {
-        reportInvalidFile("diagnosics file is a newer version than the one "
+        reportInvalidFile("diagnostics file is a newer version than the one "
                           "supported");
         return Failure;
       }
