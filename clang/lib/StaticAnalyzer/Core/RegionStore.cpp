@@ -757,9 +757,7 @@ collectSubRegionBindings(SmallVectorImpl<BindingPair> &Bindings,
     TopKey = BindingKey::Make(Top, BindingKey::Default);
   }
 
-  // This assumes the region being invalidated is char-aligned. This isn't
-  // true for bitfields, but since bitfields have no subregions they shouldn't
-  // be using this function anyway.
+  // Find the length (in bits) of the region being invalidated.
   uint64_t Length = UINT64_MAX;
   SVal Extent = Top->getExtent(SVB);
   if (Optional<nonloc::ConcreteInt> ExtentCI =
@@ -768,6 +766,9 @@ collectSubRegionBindings(SmallVectorImpl<BindingPair> &Bindings,
     assert(ExtentInt.isNonNegative() || ExtentInt.isUnsigned());
     // Extents are in bytes but region offsets are in bits. Be careful!
     Length = ExtentInt.getLimitedValue() * SVB.getContext().getCharWidth();
+  } else if (const FieldRegion *FR = dyn_cast<FieldRegion>(Top)) {
+    if (FR->getDecl()->isBitField())
+      Length = FR->getDecl()->getBitWidthValue(SVB.getContext());
   }
 
   for (ClusterBindings::iterator I = Cluster.begin(), E = Cluster.end();

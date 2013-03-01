@@ -195,6 +195,10 @@ DefinedOrUnknownSVal TypedValueRegion::getExtent(SValBuilder &svalBuilder) const
 }
 
 DefinedOrUnknownSVal FieldRegion::getExtent(SValBuilder &svalBuilder) const {
+  // Force callers to deal with bitfields explicitly.
+  if (getDecl()->isBitField())
+    return UnknownVal();
+
   DefinedOrUnknownSVal Extent = DeclRegion::getExtent(svalBuilder);
 
   // A zero-length array at the end of a struct often stands for dynamically-
