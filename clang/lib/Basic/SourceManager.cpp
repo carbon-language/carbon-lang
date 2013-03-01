@@ -840,10 +840,17 @@ FileID SourceManager::getFileIDLoaded(unsigned SLocOffset) const {
     ++NumProbes;
     unsigned MiddleIndex = (LessIndex - GreaterIndex) / 2 + GreaterIndex;
     const SrcMgr::SLocEntry &E = getLoadedSLocEntry(MiddleIndex);
+    if (E.getOffset() == 0)
+      return FileID(); // invalid entry.
 
     ++NumProbes;
 
     if (E.getOffset() > SLocOffset) {
+      // Sanity checking, otherwise a bug may lead to hanging in release build.
+      if (GreaterIndex == MiddleIndex) {
+        assert(0 && "binary search missed the entry");
+        return FileID();
+      }
       GreaterIndex = MiddleIndex;
       continue;
     }
