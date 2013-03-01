@@ -26,13 +26,11 @@ static void func() {
   // GCC allows this, with the following warning: 
   //   instance variable 'isa' is @protected; this will be a hard error in the future
   //
-  // FIXME: see if we can avoid the 2 warnings that follow the error.
+  // FIXME: see if we can avoid the warning that follows the error.
   [(*y).isa self]; // expected-error {{instance variable 'isa' is protected}} \
-                      expected-warning{{receiver type 'struct objc_class *' is not 'id' or interface pointer, consider casting it to 'id'}} \
-                      expected-warning{{method '-self' not found (return type defaults to 'id')}}
+                      expected-warning{{receiver type 'struct objc_class *' is not 'id' or interface pointer, consider casting it to 'id'}}
   [y->isa self]; // expected-error {{instance variable 'isa' is protected}} \
-                    expected-warning{{receiver type 'struct objc_class *' is not 'id' or interface pointer, consider casting it to 'id'}} \
-                    expected-warning{{method '-self' not found (return type defaults to 'id')}}
+                    expected-warning{{receiver type 'struct objc_class *' is not 'id' or interface pointer, consider casting it to 'id'}}
 }
 
 // rdar://11702488

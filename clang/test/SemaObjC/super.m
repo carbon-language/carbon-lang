@@ -51,8 +51,7 @@ void f(id super) {
   [super m];
 }
 void f0(int super) {
-  [super m]; // expected-warning{{receiver type 'int' is not 'id'}} \
-                expected-warning {{method '-m' not found (return type defaults to 'id')}}
+  [super m]; // expected-warning{{receiver type 'int' is not 'id'}}
 }
 void f1(id puper) {  // expected-note {{'puper' declared here}}
   [super m]; // expected-error{{use of undeclared identifier 'super'}}

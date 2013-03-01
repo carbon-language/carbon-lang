@@ -95,7 +95,7 @@ int test5(int X) {
 void foo4() {
   struct objc_object X[10];
   
-  [X rect]; // expected-warning {{receiver type 'struct objc_object *' is not 'id' or interface pointer, consider casting it to 'id'}} expected-warning {{method '-rect' not found (return type defaults to 'id')}}
+  [X rect]; // expected-warning {{receiver type 'struct objc_object *' is not 'id' or interface pointer, consider casting it to 'id'}}
 }
 
 // rdar://13207886
