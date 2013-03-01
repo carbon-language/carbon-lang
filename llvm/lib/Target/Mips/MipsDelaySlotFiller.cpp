@@ -53,6 +53,18 @@ static cl::opt<bool> DisableForwardSearch(
   cl::desc("Disallow MIPS delay filler to search forward."),
   cl::Hidden);
 
+static cl::opt<bool> DisableSuccBBSearch(
+  "disable-mips-df-succbb-search",
+  cl::init(true),
+  cl::desc("Disallow MIPS delay filler to search successor basic blocks."),
+  cl::Hidden);
+
+static cl::opt<bool> DisableBackwardSearch(
+  "disable-mips-df-backward-search",
+  cl::init(false),
+  cl::desc("Disallow MIPS delay filler to search backward."),
+  cl::Hidden);
+
 namespace {
   class RegDefsUses {
   public:
