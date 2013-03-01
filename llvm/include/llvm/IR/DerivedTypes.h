@@ -84,7 +84,7 @@ public:
   /// @brief Is this a power-of-2 byte-width IntegerType ?
   bool isPowerOf2ByteWidth() const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == IntegerTyID;
   }
@@ -124,7 +124,7 @@ public:
   param_iterator param_begin() const { return ContainedTys + 1; }
   param_iterator param_end() const { return &ContainedTys[NumContainedTys]; }
 
-  // Parameter type accessors.
+  /// Parameter type accessors.
   Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
 
   /// getNumParams - Return the number of fixed parameters this function type
@@ -132,7 +132,7 @@ public:
   ///
   unsigned getNumParams() const { return NumContainedTys - 1; }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == FunctionTyID;
   }
@@ -154,7 +154,7 @@ public:
   bool indexValid(const Value *V) const;
   bool indexValid(unsigned Idx) const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == StructTyID ||
@@ -190,7 +190,7 @@ class StructType : public CompositeType {
   StructType(LLVMContext &C)
     : CompositeType(C, StructTyID), SymbolTableEntry(0) {}
   enum {
-    // This is the contents of the SubClassData field.
+    /// This is the contents of the SubClassData field.
     SCDB_HasBody = 1,
     SCDB_Packed = 2,
     SCDB_IsLiteral = 4,
@@ -282,14 +282,14 @@ public:
   /// specified struct.
   bool isLayoutIdentical(StructType *Other) const;  
   
-  // Random access to the elements
+  /// Random access to the elements
   unsigned getNumElements() const { return NumContainedTys; }
   Type *getElementType(unsigned N) const {
     assert(N < NumContainedTys && "Element number out of range!");
     return ContainedTys[N];
   }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == StructTyID;
   }
@@ -318,7 +318,7 @@ protected:
 public:
   Type *getElementType() const { return ContainedTys[0]; }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == PointerTyID ||
@@ -347,7 +347,7 @@ public:
 
   uint64_t getNumElements() const { return NumElements; }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID;
   }
@@ -413,7 +413,7 @@ public:
     return NumElements * getElementType()->getPrimitiveSizeInBits();
   }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
+  /// Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == VectorTyID;
   }
@@ -444,7 +444,7 @@ public:
   /// @brief Return the address space of the Pointer type.
   inline unsigned getAddressSpace() const { return getSubclassData(); }
 
-  // Implement support type inquiry through isa, cast, and dyn_cast.
+  /// Implement support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Type *T) {
     return T->getTypeID() == PointerTyID;
   }
