@@ -16,9 +16,13 @@
 #include "Mips.h"
 #include "MipsTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -61,6 +65,38 @@ namespace {
     BitVector Defs, Uses;
   };
 
+  /// This class maintains memory dependence information.
+  class MemDefsUses {
+  public:
+    MemDefsUses(const MachineFrameInfo *MFI);
+
+    /// Return true if MI cannot be moved to delay slot.
+    bool hasHazard(const MachineInstr &MI);
+
+  private:
+    /// Update Defs and Uses. Return true if there exist dependences that
+    /// disqualify the delay slot candidate between V and values in Uses and Defs.
+    bool updateDefsUses(const Value *V, bool MayStore);
+
+    /// Get the list of underlying objects of MI's memory operand.
+    bool getUnderlyingObjects(const MachineInstr &MI,
+                              SmallVectorImpl<const Value *> &Objects) const;
+
+    const MachineFrameInfo *MFI;
+    SmallPtrSet<const Value*, 4> Uses, Defs;
+
+    /// Flags indicating whether loads or stores have been seen.
+    bool SeenLoad, SeenStore;
+
+    /// Flags indicating whether loads or stores with no underlying objects have
+    /// been seen.
+    bool SeenNoObjLoad, SeenNoObjStore;
+
+    /// Memory instructions are not allowed to move to delay slot if this flag
+    /// is true.
+    bool ForbidMemInstr;
+  };
+
   class Filler : public MachineFunctionPass {
   public:
     Filler(TargetMachine &tm)
@@ -88,10 +124,10 @@ namespace {
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
 
     /// This function checks if it is valid to move Candidate to the delay slot
-    /// and returns true if it isn't. It also updates load and store flags and
-    /// register defs and uses.
-    bool delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
-                        bool &SawStore, RegDefsUses &RegDU) const;
+    /// and returns true if it isn't. It also updates memory and register
+    /// dependence information.
+    bool delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
+                        MemDefsUses &MemDU) const;
 
     bool findDelayInstr(MachineBasicBlock &MBB, Iter slot, Iter &Filler) const;
 
@@ -164,6 +200,84 @@ bool RegDefsUses::isRegInSet(const BitVector &RegSet, unsigned Reg) const {
   return false;
 }
 
+MemDefsUses::MemDefsUses(const MachineFrameInfo *MFI_)
+  : MFI(MFI_), SeenLoad(false), SeenStore(false), SeenNoObjLoad(false),
+    SeenNoObjStore(false),  ForbidMemInstr(false) {}
+
+bool MemDefsUses::hasHazard(const MachineInstr &MI) {
+  if (!MI.mayStore() && !MI.mayLoad())
+    return false;
+
+  if (ForbidMemInstr)
+    return true;
+
+  bool OrigSeenLoad = SeenLoad, OrigSeenStore = SeenStore;
+
+  SeenLoad |= MI.mayLoad();
+  SeenStore |= MI.mayStore();
+
+  // If MI is an ordered or volatile memory reference, disallow moving
+  // subsequent loads and stores to delay slot.
+  if (MI.hasOrderedMemoryRef() && (OrigSeenLoad || OrigSeenStore)) {
+    ForbidMemInstr = true;
+    return true;
+  }
+
+  bool HasHazard = false;
+  SmallVector<const Value *, 4> Objs;
+
+  // Check underlying object list.
+  if (getUnderlyingObjects(MI, Objs)) {
+    for (SmallVector<const Value *, 4>::const_iterator I = Objs.begin();
+         I != Objs.end(); ++I)
+      HasHazard |= updateDefsUses(*I, MI.mayStore());
+
+    return HasHazard;
+  }
+
+  // No underlying objects found.
+  HasHazard = MI.mayStore() && (OrigSeenLoad || OrigSeenStore);
+  HasHazard |= MI.mayLoad() || OrigSeenStore;
+
+  SeenNoObjLoad |= MI.mayLoad();
+  SeenNoObjStore |= MI.mayStore();
+
+  return HasHazard;
+}
+
+bool MemDefsUses::updateDefsUses(const Value *V, bool MayStore) {
+  if (MayStore)
+    return !Defs.insert(V) || Uses.count(V) || SeenNoObjStore || SeenNoObjLoad;
+
+  Uses.insert(V);
+  return Defs.count(V) || SeenNoObjStore;
+}
+
+bool MemDefsUses::
+getUnderlyingObjects(const MachineInstr &MI,
+                     SmallVectorImpl<const Value *> &Objects) const {
+  if (!MI.hasOneMemOperand() || !(*MI.memoperands_begin())->getValue())
+    return false;
+
+  const Value *V = (*MI.memoperands_begin())->getValue();
+
+  SmallVector<Value *, 4> Objs;
+  GetUnderlyingObjects(const_cast<Value *>(V), Objs);
+
+  for (SmallVector<Value*, 4>::iterator I = Objs.begin(), E = Objs.end();
+       I != E; ++I) {
+    if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(*I)) {
+      if (PSV->isAliased(MFI))
+        return false;
+    } else if (!isIdentifiedObject(V))
+      return false;
+
+    Objects.push_back(*I);
+  }
+
+  return true;
+}
+
 /// runOnMachineBasicBlock - Fill in delay slots for the given basic block.
 /// We assume there is only one delay slot per delayed instruction.
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
@@ -201,11 +315,9 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
                             Iter &Filler) const {
   RegDefsUses RegDU(TM);
+  MemDefsUses MemDU(MBB.getParent()->getFrameInfo());
 
   RegDU.init(*Slot);
-
-  bool SawLoad = false;
-  bool SawStore = false;
 
   for (ReverseIter I(Slot); I != MBB.rend(); ++I) {
     // skip debug value
@@ -215,7 +327,10 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
     if (terminateSearch(*I))
       break;
 
-    if (delayHasHazard(*I, SawLoad, SawStore, RegDU))
+    assert((!I->isCall() && !I->isReturn() && !I->isBranch()) &&
+           "Cannot put calls, returns or branches in delay slot.");
+
+    if (delayHasHazard(*I, RegDU, MemDU))
       continue;
 
     Filler = llvm::next(I).base();
@@ -225,23 +340,11 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB, Iter Slot,
   return false;
 }
 
-bool Filler::delayHasHazard(const MachineInstr &Candidate, bool &SawLoad,
-                            bool &SawStore, RegDefsUses &RegDU) const {
+bool Filler::delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
+                            MemDefsUses &MemDU) const {
   bool HasHazard = (Candidate.isImplicitDef() || Candidate.isKill());
 
-  // Loads or stores cannot be moved past a store to the delay slot
-  // and stores cannot be moved past a load.
-  if (Candidate.mayStore() || Candidate.hasOrderedMemoryRef()) {
-    HasHazard |= SawStore | SawLoad;
-    SawStore = true;
-  } else if (Candidate.mayLoad()) {
-    HasHazard |= SawStore;
-    SawLoad = true;
-  }
-
-  assert((!Candidate.isCall() && !Candidate.isReturn()) &&
-         "Cannot put calls or returns in delay slot.");
-
+  HasHazard |= MemDU.hasHazard(Candidate);
   HasHazard |= RegDU.update(Candidate, 0, Candidate.getNumOperands());
 
   return HasHazard;
