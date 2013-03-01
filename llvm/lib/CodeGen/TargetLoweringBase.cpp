@@ -912,6 +912,15 @@ void TargetLoweringBase::computeRegisterProperties() {
     ValueTypeActions.setTypeAction(MVT::ppcf128, TypeExpandFloat);
   }
 
+  // Decide how to handle f128. If the target does not have native f128 support,
+  // expand it to i128 and we will be generating soft float library calls.
+  if (!isTypeLegal(MVT::f128)) {
+    NumRegistersForVT[MVT::f128] = NumRegistersForVT[MVT::i128];
+    RegisterTypeForVT[MVT::f128] = RegisterTypeForVT[MVT::i128];
+    TransformToType[MVT::f128] = MVT::i128;
+    ValueTypeActions.setTypeAction(MVT::f128, TypeSoftenFloat);
+  }
+
   // Decide how to handle f64. If the target does not have native f64 support,
   // expand it to i64 and we will be generating soft float library calls.
   if (!isTypeLegal(MVT::f64)) {
