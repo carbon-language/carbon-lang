@@ -143,7 +143,7 @@ class SizeClassMap {
         Printf("\n");
       uptr d = s - prev_s;
       uptr p = prev_s ? (d * 100 / prev_s) : 0;
-      uptr l = MostSignificantSetBitIndex(s);
+      uptr l = s ? MostSignificantSetBitIndex(s) : 0;
       uptr cached = MaxCached(i) * s;
       Printf("c%02zd => s: %zd diff: +%zd %02zd%% l %zd "
              "cached: %zd %zd; id %zd\n",
