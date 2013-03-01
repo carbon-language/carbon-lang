@@ -9,8 +9,6 @@
 
 CLANG_LEVEL := ../../..
 include $(CLANG_LEVEL)/../../Makefile.config
-
-# Recurse into any subdirectories that have their own Makefiles.
 DIRS := cpp11-migrate
 include $(CLANG_LEVEL)/Makefile
 
@@ -45,6 +43,11 @@ ifdef VG
 endif
 
 all:: lit.site.cfg
+
+# Run just the Clang extra tools tests. This target assumes 'make (all)' has
+# been run previously as that target is responsible for generating lit config
+# files and auto-generated tests.
+test::
 	@ echo '--- Running the Clang extra tools tests for $(TARGET_TRIPLE) ---'
 	@ $(PYTHON) $(LLVM_SRC_ROOT)/utils/lit/lit.py \
 	  $(LIT_ARGS) $(TESTARGS) $(TESTDIRS)
@@ -52,7 +55,7 @@ all:: lit.site.cfg
 FORCE:
 
 lit.site.cfg: FORCE
-	@echo "Making Clang extra tools' 'lit.site.cfg' file..."
+	@echo "Making lit.site.cfg for Clang extra tools..."
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
@@ -69,4 +72,4 @@ lit.site.cfg: FORCE
 clean::
 	@ find . -name Output | xargs rm -fr
 
-.PHONY: all report clean
+.PHONY: all test clean

@@ -22,7 +22,6 @@ GENERATOR_SCRIPTS := \
   UseAuto/gen_basic_std_iterator_tests.cpp.py \
   UseAuto/Inputs/gen_my_std.h.py
 
-
 # macro to be used with $(call) that generates a rule and recipe that causes a
 # file to be auto-generated from a generator script. Generator scripts must
 # follow scheme above. The resulting file is placed in:
