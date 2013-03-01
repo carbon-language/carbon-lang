@@ -88,6 +88,9 @@ private:
                   MachineBasicBlock::iterator I,
                   const Counters &Counts);
 
+  /// \brief Do we need def2def checks?
+  bool unorderedDefines(MachineInstr &MI);
+
   /// \brief Resolve all operand dependencies to counter requirements
   Counters handleOperands(MachineInstr &MI);
 
@@ -125,7 +128,7 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
 
   // Only consider stores or EXP for EXP_CNT
   Result.Named.EXP = !!(TSFlags & SIInstrFlags::EXP_CNT &&
-      (MI.getOpcode() == AMDGPU::EXP || !MI.getDesc().mayStore()));
+      (MI.getOpcode() == AMDGPU::EXP || MI.getDesc().mayStore()));
 
   // LGKM may uses larger values
   if (TSFlags & SIInstrFlags::LGKM_CNT) {
@@ -299,8 +302,21 @@ static void increaseCounters(Counters &Dst, const Counters &Src) {
     Dst.Array[i] = std::max(Dst.Array[i], Src.Array[i]);
 }
 
+bool SIInsertWaits::unorderedDefines(MachineInstr &MI) {
+
+  uint64_t TSFlags = TII->get(MI.getOpcode()).TSFlags;
+  if (TSFlags & SIInstrFlags::LGKM_CNT)
+    return true;
+
+  if (TSFlags & SIInstrFlags::EXP_CNT)
+    return ExpInstrTypesSeen == 3;
+
+  return false;
+}
+
 Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 
+  bool UnorderedDefines = unorderedDefines(MI);
   Counters Result = ZeroCounts;
 
   // For each register affected by this
@@ -311,8 +327,11 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
     RegInterval Interval = getRegInterval(Op);
     for (unsigned j = Interval.first; j < Interval.second; ++j) {
 
-      if (Op.isDef())
+      if (Op.isDef()) {
         increaseCounters(Result, UsedRegs[j]);
+        if (UnorderedDefines)
+          increaseCounters(Result, DefinedRegs[j]);
+      }
 
       if (Op.isUse())
         increaseCounters(Result, DefinedRegs[j]);
