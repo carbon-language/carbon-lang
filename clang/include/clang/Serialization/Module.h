@@ -55,6 +55,35 @@ struct DeclContextInfo {
   unsigned NumLexicalDecls;
 };
 
+/// \brief The input file that has been loaded from this AST file, along with
+/// bools indicating whether this was an overridden buffer or if it was
+/// out-of-date.
+class InputFile {
+  enum {
+    Overridden = 1,
+    OutOfDate = 2
+  };
+  llvm::PointerIntPair<const FileEntry *, 2, unsigned> Val;
+
+public:
+  InputFile() {}
+  InputFile(const FileEntry *File,
+            bool isOverridden = false, bool isOutOfDate = false) {
+    assert(!(isOverridden && isOutOfDate) &&
+           "an overridden cannot be out-of-date");
+    unsigned intVal = 0;
+    if (isOverridden)
+      intVal = Overridden;
+    else if (isOutOfDate)
+      intVal = OutOfDate;
+    Val.setPointerAndInt(File, intVal);
+  }
+
+  const FileEntry *getFile() const { return Val.getPointer(); }
+  bool isOverridden() const { return Val.getInt() == Overridden; }
+  bool isOutOfDate() const { return Val.getInt() == OutOfDate; }
+};
+
 /// \brief Information about a module that has been loaded by the ASTReader.
 ///
 /// Each instance of the Module class corresponds to a single AST file, which
@@ -145,10 +174,8 @@ public:
   /// \brief Offsets for all of the input file entries in the AST file.
   const uint32_t *InputFileOffsets;
 
-  /// \brief The input files that have been loaded from this AST file, along
-  /// with a bool indicating whether this was an overridden buffer.
-  std::vector<llvm::PointerIntPair<const FileEntry *, 1, bool> > 
-    InputFilesLoaded;
+  /// \brief The input files that have been loaded from this AST file.
+  std::vector<InputFile> InputFilesLoaded;
 
   // === Source Locations ===
 

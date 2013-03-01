@@ -917,10 +917,13 @@ bool ASTReader::ReadSLocEntry(int ID) {
     // we will also try to fail gracefully by setting up the SLocEntry.
     unsigned InputID = Record[4];
     InputFile IF = getInputFile(*F, InputID);
-    const FileEntry *File = IF.getPointer();
-    bool OverriddenBuffer = IF.getInt();
+    const FileEntry *File = IF.getFile();
+    bool OverriddenBuffer = IF.isOverridden();
 
-    if (!IF.getPointer())
+    // Note that we only check if a File was returned. If it was out-of-date
+    // we have complained but we will continue creating a FileID to recover
+    // gracefully.
+    if (!File)
       return true;
 
     SourceLocation IncludeLoc = ReadSourceLocation(*F, Record[1]);
@@ -1495,14 +1498,13 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
     IdentifierGeneration[II] = CurrentGeneration;
 }
 
-llvm::PointerIntPair<const FileEntry *, 1, bool> 
-ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
+InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   // If this ID is bogus, just return an empty input file.
   if (ID == 0 || ID > F.InputFilesLoaded.size())
     return InputFile();
 
   // If we've already loaded this input file, return it.
-  if (F.InputFilesLoaded[ID-1].getPointer())
+  if (F.InputFilesLoaded[ID-1].getFile())
     return F.InputFilesLoaded[ID-1];
 
   // Go find this input file.
@@ -1556,17 +1558,15 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
       }
       return InputFile();
     }
-    
-    // Note that we've loaded this input file.
-    F.InputFilesLoaded[ID-1] = InputFile(File, Overridden);
-    
+
     // Check if there was a request to override the contents of the file
     // that was part of the precompiled header. Overridding such a file
     // can lead to problems when lexing using the source locations from the
     // PCH.
     SourceManager &SM = getSourceManager();
     if (!Overridden && SM.isFileOverridden(File)) {
-      Error(diag::err_fe_pch_file_overridden, Filename);
+      if (Complain)
+        Error(diag::err_fe_pch_file_overridden, Filename);
       // After emitting the diagnostic, recover by disabling the override so
       // that the original file will be used.
       SM.disableFileContentsOverride(File);
@@ -1577,11 +1577,10 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
                               StoredSize, StoredTime);
     }
 
-    // For an overridden file, there is nothing to validate.
-    if (Overridden)
-      return InputFile(File, Overridden);
+    bool IsOutOfDate = false;
 
-    if ((StoredSize != File->getSize()
+    // For an overridden file, there is nothing to validate.
+    if (!Overridden && (StoredSize != File->getSize()
 #if !defined(LLVM_ON_WIN32)
          // In our regression testing, the Windows file system seems to
          // have inconsistent modification times that sometimes
@@ -1591,11 +1590,14 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
          )) {
       if (Complain)
         Error(diag::err_fe_pch_file_modified, Filename);
-      
-      return InputFile();
+      IsOutOfDate = true;
     }
 
-    return InputFile(File, Overridden);
+    InputFile IF = InputFile(File, Overridden, IsOutOfDate);
+
+    // Note that we've loaded this input file.
+    F.InputFilesLoaded[ID-1] = IF;
+    return IF;
   }
   }
 
@@ -1668,9 +1670,11 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       // Validate all of the input files.
       if (!DisableValidation) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
-        for (unsigned I = 0, N = Record[0]; I < N; ++I)
-          if (!getInputFile(F, I+1, Complain).getPointer())
+        for (unsigned I = 0, N = Record[0]; I < N; ++I) {
+          InputFile IF = getInputFile(F, I+1, Complain);
+          if (!IF.getFile() || IF.isOutOfDate())
             return OutOfDate;
+        }
       }
       return Success;
       

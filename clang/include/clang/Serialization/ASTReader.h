@@ -924,11 +924,10 @@ private:
   /// \brief Reads a statement from the specified cursor.
   Stmt *ReadStmtFromStream(ModuleFile &F);
 
-  typedef llvm::PointerIntPair<const FileEntry *, 1, bool> InputFile;
-
   /// \brief Retrieve the file entry and 'overridden' bit for an input
   /// file in the given module file.
-  InputFile getInputFile(ModuleFile &F, unsigned ID, bool Complain = true);
+  serialization::InputFile getInputFile(ModuleFile &F, unsigned ID,
+                                        bool Complain = true);
 
   /// \brief Get a FileEntry out of stored-in-PCH filename, making sure we take
   /// into account all the necessary relocations.
