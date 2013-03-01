@@ -68,13 +68,15 @@ int foo(int *b) {
 
 <img src="images/example_use_assert.png" alt="example use assert">
 
-<p>You can teach the analyzer facts about your code as well as document it by
-using assertions. In the contrived example above, the analyzer reports an error
-on the path which assumes that the loop is never entered. However, the owner of
-the code might know that the loop is always entered because the input parameter
-<tt>length</tt> is always greater than <tt>0</tt>. The false positive can be
-suppressed by asserting this knowledge, adding <tt>assert(length > 0)</tt> in
-the beginning of the function.</p>
+<p> In the contrived example above, the analyzer has detected that the body of 
+the loop is never entered for the case where <tt>length <= 0</tt>. In this 
+particular example, you may know that the loop will always be entered because 
+the input parameter <tt>length</tt> will be greater than zero in all calls to this 
+function. You can teach the analyzer facts about your code as well as document 
+it by using assertions. By adding <tt>assert(length > 0)</tt> in the beginning 
+of the function, you tell the analyzer that your code is never expecting a zero 
+or a negative value, so it won't need to test the correctness of those paths.
+</p>
 
 <pre class="code_example">
 int foo(int length) {
