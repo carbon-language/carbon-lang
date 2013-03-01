@@ -226,8 +226,6 @@ AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
       return BT_None;
   }
 
-  BranchInstrs.insert(BranchInstrs.begin(), SecondLastInst);
-
   // If there is only one terminator instruction, process it.
   if (!SecondLastOpc) {
     // Unconditional branch
@@ -245,6 +243,8 @@ AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   // If there are three terminators, we don't know what sort of block this is.
   if (++I != REnd && isUnpredicatedTerminator(&*I))
     return BT_None;
+
+  BranchInstrs.insert(BranchInstrs.begin(), SecondLastInst);
 
   // If second to last instruction is an unconditional branch,
   // analyze it and remove the last instruction.
