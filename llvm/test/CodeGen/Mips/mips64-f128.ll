@@ -632,9 +632,9 @@ entry:
 ; CHECK: or   $[[R3:[0-9]+]], $8, $zero
 ; CHECK: ld   $25, %call16(__gttf2)($gp)
 ; CHECK: jalr $25
-; CHECK: slt  $1, $zero, $2
-; CHECK: movn $[[R1]], $[[R3]], $1
-; CHECK: movn $[[R0]], $[[R2]], $1
+; CHECK: slti $1, $2, 1
+; CHECK: movz $[[R1]], $[[R3]], $1
+; CHECK: movz $[[R0]], $[[R2]], $1
 ; CHECK: or   $2, $[[R1]], $zero
 ; CHECK: or   $3, $[[R0]], $zero
 

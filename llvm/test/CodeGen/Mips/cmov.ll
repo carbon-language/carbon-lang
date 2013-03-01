@@ -59,3 +59,140 @@ entry:
   ret i64 %cond
 }
 
+; slti and conditional move.
+;
+; Check that, pattern
+;  (select (setgt a, N), t, f)
+; turns into
+;  (movz t, (setlt a, N + 1), f)
+; if N + 1 fits in 16-bit.
+
+; O32: slti0:
+; O32: slti $[[R0:[0-9]+]], ${{[0-9]+}}, 32767
+; O32: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+
+define i32 @slti0(i32 %a) {
+entry:
+  %cmp = icmp sgt i32 %a, 32766
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; O32: slti1:
+; O32: slt ${{[0-9]+}}
+
+define i32 @slti1(i32 %a) {
+entry:
+  %cmp = icmp sgt i32 %a, 32767
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; O32: slti2:
+; O32: slti $[[R0:[0-9]+]], ${{[0-9]+}}, -32768
+; O32: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+
+define i32 @slti2(i32 %a) {
+entry:
+  %cmp = icmp sgt i32 %a, -32769
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; O32: slti3:
+; O32: slt ${{[0-9]+}}
+
+define i32 @slti3(i32 %a) {
+entry:
+  %cmp = icmp sgt i32 %a, -32770
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; 64-bit patterns.
+
+; N64: slti64_0:
+; N64: slti $[[R0:[0-9]+]], ${{[0-9]+}}, 32767
+; N64: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+
+define i64 @slti64_0(i64 %a) {
+entry:
+  %cmp = icmp sgt i64 %a, 32766
+  %conv = select i1 %cmp, i64 3, i64 4
+  ret i64 %conv
+}
+
+; N64: slti64_1:
+; N64: slt ${{[0-9]+}}
+
+define i64 @slti64_1(i64 %a) {
+entry:
+  %cmp = icmp sgt i64 %a, 32767
+  %conv = select i1 %cmp, i64 3, i64 4
+  ret i64 %conv
+}
+
+; N64: slti64_2:
+; N64: slti $[[R0:[0-9]+]], ${{[0-9]+}}, -32768
+; N64: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+
+define i64 @slti64_2(i64 %a) {
+entry:
+  %cmp = icmp sgt i64 %a, -32769
+  %conv = select i1 %cmp, i64 3, i64 4
+  ret i64 %conv
+}
+
+; N64: slti64_3:
+; N64: slt ${{[0-9]+}}
+
+define i64 @slti64_3(i64 %a) {
+entry:
+  %cmp = icmp sgt i64 %a, -32770
+  %conv = select i1 %cmp, i64 3, i64 4
+  ret i64 %conv
+}
+
+; sltiu instructions.
+
+; O32: sltiu0:
+; O32: sltiu $[[R0:[0-9]+]], ${{[0-9]+}}, 32767
+; O32: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+
+define i32 @sltiu0(i32 %a) {
+entry:
+  %cmp = icmp ugt i32 %a, 32766
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; O32: sltiu1:
+; O32: sltu ${{[0-9]+}}
+
+define i32 @sltiu1(i32 %a) {
+entry:
+  %cmp = icmp ugt i32 %a, 32767
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; O32: sltiu2:
+; O32: sltiu $[[R0:[0-9]+]], ${{[0-9]+}}, -32768
+; O32: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+
+define i32 @sltiu2(i32 %a) {
+entry:
+  %cmp = icmp ugt i32 %a, -32769
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}
+
+; O32: sltiu3:
+; O32: sltu ${{[0-9]+}}
+
+define i32 @sltiu3(i32 %a) {
+entry:
+  %cmp = icmp ugt i32 %a, -32770
+  %cond = select i1 %cmp, i32 3, i32 4
+  ret i32 %cond
+}

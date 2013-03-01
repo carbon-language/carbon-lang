@@ -109,7 +109,7 @@ private:
        SDValue &Alias);
 
   // getImm - Return a target constant with the specified value.
-  inline SDValue getImm(const SDNode *Node, unsigned Imm) {
+  inline SDValue getImm(const SDNode *Node, uint64_t Imm) {
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
 
