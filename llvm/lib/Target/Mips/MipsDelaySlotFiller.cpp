@@ -42,13 +42,6 @@ static cl::opt<bool> DisableDelaySlotFiller(
   cl::desc("Fill all delay slots with NOPs."),
   cl::Hidden);
 
-// This option can be used to silence complaints by machine verifier passes.
-static cl::opt<bool> SkipDelaySlotFiller(
-  "skip-mips-delay-filler",
-  cl::init(false),
-  cl::desc("Skip MIPS' delay slot filling pass."),
-  cl::Hidden);
-
 static cl::opt<bool> DisableForwardSearch(
   "disable-mips-df-forward-search",
   cl::init(true),
@@ -165,7 +158,8 @@ namespace {
     virtual bool hasHazard_(const MachineInstr &MI);
 
     /// Update Defs and Uses. Return true if there exist dependences that
-    /// disqualify the delay slot candidate between V and values in Uses and Defs.
+    /// disqualify the delay slot candidate between V and values in Uses and
+    /// Defs.
     bool updateDefsUses(const Value *V, bool MayStore);
 
     /// Get the list of underlying objects of MI's memory operand.
@@ -190,9 +184,6 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &F) {
-      if (SkipDelaySlotFiller)
-        return false;
-
       bool Changed = false;
       for (MachineFunction::iterator FI = F.begin(), FE = F.end();
            FI != FE; ++FI)
@@ -218,7 +209,8 @@ namespace {
     /// moved to the delay slot. Returns true on success.
     template<typename IterTy>
     bool searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
-                     RegDefsUses &RegDU, InspectMemInstr &IM, IterTy &Filler) const;
+                     RegDefsUses &RegDU, InspectMemInstr &IM,
+                     IterTy &Filler) const;
 
     /// This function searches in the backward direction for an instruction that
     /// can be moved to the delay slot. Returns true on success.
@@ -229,12 +221,12 @@ namespace {
     bool searchForward(MachineBasicBlock &MBB, Iter Slot) const;
 
     /// This function searches MBB's successor blocks for an instruction that
-    /// can be moved to the delay slot and inserts clones of the instruction into
-    /// the successor blocks.
+    /// can be moved to the delay slot and inserts clones of the instruction
+    /// into the successor blocks.
     bool searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const;
 
-    /// Pick a successor block of MBB. Return NULL if MBB doesn't have a successor
-    /// block that is not a landing pad.
+    /// Pick a successor block of MBB. Return NULL if MBB doesn't have a
+    /// successor block that is not a landing pad.
     MachineBasicBlock *selectSuccBB(MachineBasicBlock &B) const;
 
     /// This function analyzes MBB and returns an instruction with an unoccupied

@@ -176,4 +176,3 @@ if.end:                                           ; preds = %entry, %if.then
 }
 
 declare void @foo100()
-
