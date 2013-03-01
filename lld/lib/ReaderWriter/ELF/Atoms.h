@@ -13,6 +13,7 @@
 #include "TargetHandler.h"
 
 #include "lld/Core/LLVM.h"
+#include "lld/ReaderWriter/Simple.h"
 
 #include "llvm/ADT/ArrayRef.h"
 
@@ -621,6 +622,141 @@ private:
   StringRef _loadName;
   const Elf_Sym *_symbol;
 };
+
+class GOTAtom : public SimpleDefinedAtom {
+  StringRef _section;
+
+public:
+  GOTAtom(const File &f, StringRef secName)
+      : SimpleDefinedAtom(f), _section(secName) {
+  }
+
+  virtual Scope scope() const { return scopeTranslationUnit; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return _section; }
+
+  virtual ContentType contentType() const { return typeGOT; }
+
+  virtual uint64_t size() const { return rawContent().size(); }
+
+  virtual ContentPermissions permissions() const { return permRW_; }
+
+  virtual ArrayRef<uint8_t> rawContent() const = 0;
+
+  virtual Alignment alignment() const {
+    // The alignment should be 8 byte aligned
+    return Alignment(3);
+  }
+
+#ifndef NDEBUG
+  virtual StringRef name() const { return _name; }
+
+  std::string _name;
+#else
+  virtual StringRef name() const { return ""; }
+#endif
+};
+
+class PLTAtom : public SimpleDefinedAtom {
+  StringRef _section;
+
+public:
+  PLTAtom(const File &f, StringRef secName)
+      : SimpleDefinedAtom(f), _section(secName) {
+  }
+
+  virtual Scope scope() const { return scopeTranslationUnit; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return _section; }
+
+  virtual ContentType contentType() const { return typeStub; }
+
+  virtual uint64_t size() const { return rawContent().size(); }
+
+  virtual ContentPermissions permissions() const { return permR_X; }
+
+  virtual ArrayRef<uint8_t> rawContent() const = 0;
+
+  virtual Alignment alignment() const {
+    return Alignment(4); // 16
+  }
+
+#ifndef NDEBUG
+  virtual StringRef name() const { return _name; }
+
+  std::string _name;
+#else
+  virtual StringRef name() const { return ""; }
+#endif
+};
+
+class PLT0Atom : public PLTAtom {
+
+public:
+  PLT0Atom(const File &f) : PLTAtom(f, ".plt") {
+#ifndef NDEBUG
+    _name = ".PLT0";
+#endif
+  }
+};
+
+class GLOBAL_OFFSET_TABLEAtom : public SimpleDefinedAtom {
+public:
+  GLOBAL_OFFSET_TABLEAtom(const File &f) : SimpleDefinedAtom(f) {}
+
+  virtual StringRef name() const { return "_GLOBAL_OFFSET_TABLE_"; }
+
+  virtual Scope scope() const { return scopeGlobal; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return ".got.plt"; }
+
+  virtual ContentType contentType() const { return typeGOT; }
+
+  virtual uint64_t size() const { return 0; }
+
+  virtual ContentPermissions permissions() const { return permRW_; }
+
+  virtual Alignment alignment() const {
+    // Needs 8 byte alignment
+    return Alignment(3);
+  }
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>();
+  }
+};
+
+class TLSGETADDRAtom : public SimpleDefinedAtom {
+public:
+  TLSGETADDRAtom(const File &f) : SimpleDefinedAtom(f) {}
+
+  virtual StringRef name() const { return "__tls_get_addr"; }
+
+  virtual Scope scope() const { return scopeGlobal; }
+
+  virtual Merge merge() const { return mergeAsWeak; }
+
+  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+
+  virtual StringRef customSectionName() const { return ".text"; }
+
+  virtual ContentType contentType() const { return typeCode; }
+
+  virtual uint64_t size() const { return 0; }
+
+  virtual ContentPermissions permissions() const { return permR_X; }
+
+  virtual Alignment alignment() const { return Alignment(0); }
+
+  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+};
+
 } // end namespace elf
 } // end namespace lld
 

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Atoms.h"
 #include "X86_64TargetHandler.h"
-
 #include "X86_64TargetInfo.h"
 
 using namespace lld;
@@ -147,61 +147,6 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
 
   return error_code::success();
 }
-
-namespace {
-class GLOBAL_OFFSET_TABLEAtom : public SimpleDefinedAtom {
-public:
-  GLOBAL_OFFSET_TABLEAtom(const File &f) : SimpleDefinedAtom(f) {}
-
-  virtual StringRef name() const { return "_GLOBAL_OFFSET_TABLE_"; }
-
-  virtual Scope scope() const { return scopeGlobal; }
-
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-
-  virtual StringRef customSectionName() const { return ".got.plt"; }
-
-  virtual ContentType contentType() const { return typeGOT; }
-
-  virtual uint64_t size() const { return 0; }
-
-  virtual ContentPermissions permissions() const { return permRW_; }
-
-  virtual Alignment alignment() const {
-    // Needs 8 byte alignment
-    return Alignment(3);
-  }
-
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
-};
-
-class TLSGETADDRAtom : public SimpleDefinedAtom {
-public:
-  TLSGETADDRAtom(const File &f) : SimpleDefinedAtom(f) {}
-
-  virtual StringRef name() const { return "__tls_get_addr"; }
-
-  virtual Scope scope() const { return scopeGlobal; }
-
-  virtual Merge merge() const { return mergeAsWeak; }
-
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-
-  virtual StringRef customSectionName() const { return ".text"; }
-
-  virtual ContentType contentType() const { return typeCode; }
-
-  virtual uint64_t size() const { return 0; }
-
-  virtual ContentPermissions permissions() const { return permR_X; }
-
-  virtual Alignment alignment() const { return Alignment(0); }
-
-  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
-};
-} // end anon namespace
 
 void X86_64TargetHandler::addFiles(InputFiles &f) {
   _gotFile.addAtom(*new (_gotFile._alloc) GLOBAL_OFFSET_TABLEAtom(_gotFile));

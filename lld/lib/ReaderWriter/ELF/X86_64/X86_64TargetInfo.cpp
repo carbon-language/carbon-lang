@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Atoms.h"
 #include "X86_64TargetInfo.h"
 
 #include "lld/Core/File.h"
@@ -24,96 +25,45 @@ using namespace lld::elf;
 namespace {
 using namespace llvm::ELF;
 
-class GOTAtom : public SimpleDefinedAtom {
+class X86_64GOTAtom : public GOTAtom {
   static const uint8_t _defaultContent[8];
-  StringRef _section;
 
 public:
-  GOTAtom(const File &f, StringRef secName)
-      : SimpleDefinedAtom(f), _section(secName) {
+  X86_64GOTAtom(const File &f, StringRef secName)
+      : GOTAtom(f, secName) {
   }
-
-  virtual Scope scope() const { return scopeTranslationUnit; }
-
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-
-  virtual StringRef customSectionName() const { return _section; }
-
-  virtual ContentType contentType() const { return typeGOT; }
-
-  virtual uint64_t size() const { return rawContent().size(); }
-
-  virtual ContentPermissions permissions() const { return permRW_; }
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>(_defaultContent, 8);
   }
-
-  virtual Alignment alignment() const {
-    // The alignment should be 8 byte aligned
-    return Alignment(3);
-  }
-
-#ifndef NDEBUG
-  virtual StringRef name() const { return _name; }
-
-  std::string _name;
-#else
-  virtual StringRef name() const { return ""; }
-#endif
 };
 
-const uint8_t GOTAtom::_defaultContent[8] = { 0 };
+const uint8_t X86_64GOTAtom::_defaultContent[8] = { 0 };
 
-class PLTAtom : public SimpleDefinedAtom {
+class X86_64PLTAtom : public PLTAtom {
   static const uint8_t _defaultContent[16];
-  StringRef _section;
 
 public:
-  PLTAtom(const File &f, StringRef secName)
-      : SimpleDefinedAtom(f), _section(secName) {
+  X86_64PLTAtom(const File &f, StringRef secName)
+      : PLTAtom(f, secName) {
   }
-
-  virtual Scope scope() const { return scopeTranslationUnit; }
-
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-
-  virtual StringRef customSectionName() const { return _section; }
-
-  virtual ContentType contentType() const { return typeStub; }
-
-  virtual uint64_t size() const { return rawContent().size(); }
-
-  virtual ContentPermissions permissions() const { return permR_X; }
 
   virtual ArrayRef<uint8_t> rawContent() const {
     return ArrayRef<uint8_t>(_defaultContent, 16);
   }
-
-  virtual Alignment alignment() const {
-    return Alignment(4); // 16
-  }
-
-#ifndef NDEBUG
-  virtual StringRef name() const { return _name; }
-
-  std::string _name;
-#else
-  virtual StringRef name() const { return ""; }
-#endif
 };
 
-const uint8_t PLTAtom::_defaultContent[16] = {
+const uint8_t X86_64PLTAtom::_defaultContent[16] = {
   0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *gotatom(%rip)
   0x68, 0x00, 0x00, 0x00, 0x00,       // pushq reloc-index
   0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[-1]
 };
 
-class PLT0Atom : public PLTAtom {
+class X86_64PLT0Atom : public PLT0Atom {
   static const uint8_t _plt0Content[16];
 
 public:
-  PLT0Atom(const File &f) : PLTAtom(f, ".plt") {
+  X86_64PLT0Atom(const File &f) : PLT0Atom(f) {
 #ifndef NDEBUG
     _name = ".PLT0";
 #endif
@@ -124,7 +74,7 @@ public:
   }
 };
 
-const uint8_t PLT0Atom::_plt0Content[16] = {
+const uint8_t X86_64PLT0Atom::_plt0Content[16] = {
   0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
   0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
   0x90, 0x90, 0x90, 0x90        // nopnopnop
@@ -166,9 +116,9 @@ protected:
     auto plt = _pltMap.find(da);
     if (plt != _pltMap.end())
       return plt->second;
-    auto ga = new (_file._alloc) GOTAtom(_file, ".got.plt");
+    auto ga = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
     ga->addReference(R_X86_64_IRELATIVE, 0, da, 0);
-    auto pa = new (_file._alloc) PLTAtom(_file, ".plt");
+    auto pa = new (_file._alloc) X86_64PLTAtom(_file, ".plt");
     pa->addReference(R_X86_64_PC32, 2, ga, -4);
 #ifndef NDEBUG
     ga->_name = "__got_ifunc_";
@@ -196,7 +146,7 @@ protected:
   const GOTAtom *getGOTTPOFF(const DefinedAtom *atom) {
     auto got = _gotMap.find(atom);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) GOTAtom(_file, ".got");
+      auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got");
       g->addReference(R_X86_64_TPOFF64, 0, atom, 0);
 #ifndef NDEBUG
       g->_name = "__got_tls_";
@@ -219,7 +169,7 @@ protected:
   /// \brief Create a GOT entry containing 0.
   const GOTAtom *getNullGOT() {
     if (!_null) {
-      _null = new (_file._alloc) GOTAtom(_file, ".got.plt");
+      _null = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
 #ifndef NDEBUG
       _null->_name = "__got_null";
 #endif
@@ -230,7 +180,7 @@ protected:
   const GOTAtom *getGOT(const DefinedAtom *da) {
     auto got = _gotMap.find(da);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) GOTAtom(_file, ".got");
+      auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got");
       g->addReference(R_X86_64_64, 0, da, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
@@ -356,9 +306,9 @@ public:
       return _PLT0;
     // Fill in the null entry.
     getNullGOT();
-    _PLT0 = new (_file._alloc) PLT0Atom(_file);
-    _got0 = new (_file._alloc) GOTAtom(_file, ".got.plt");
-    _got1 = new (_file._alloc) GOTAtom(_file, ".got.plt");
+    _PLT0 = new (_file._alloc) X86_64PLT0Atom(_file);
+    _got0 = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
+    _got1 = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
     _PLT0->addReference(R_X86_64_PC32, 2, _got0, -4);
     _PLT0->addReference(R_X86_64_PC32, 8, _got1, -4);
 #ifndef NDEBUG
@@ -372,9 +322,9 @@ public:
     auto plt = _pltMap.find(a);
     if (plt != _pltMap.end())
       return plt->second;
-    auto ga = new (_file._alloc) GOTAtom(_file, ".got.plt");
+    auto ga = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
     ga->addReference(R_X86_64_JUMP_SLOT, 0, a, 0);
-    auto pa = new (_file._alloc) PLTAtom(_file, ".plt");
+    auto pa = new (_file._alloc) X86_64PLTAtom(_file, ".plt");
     pa->addReference(R_X86_64_PC32, 2, ga, -4);
     pa->addReference(LLD_R_X86_64_GOTRELINDEX, 7, ga, 0);
     pa->addReference(R_X86_64_PC32, 12, getPLT0(), -4);
@@ -413,7 +363,7 @@ public:
   const GOTAtom *getSharedGOT(const SharedLibraryAtom *sla) {
     auto got = _gotMap.find(sla);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) GOTAtom(_file, ".got.dyn");
+      auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got.dyn");
       g->addReference(R_X86_64_GLOB_DAT, 0, sla, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
