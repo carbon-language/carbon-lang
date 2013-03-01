@@ -4,6 +4,9 @@
 ; RUN: FileCheck %s -check-prefix=STATICO1
 ; RUN: llc -march=mipsel -disable-mips-df-forward-search=false \
 ; RUN: -relocation-model=static < %s | FileCheck %s -check-prefix=FORWARD
+; RUN: llc -march=mipsel -disable-mips-df-backward-search \
+; RUN: -disable-mips-df-succbb-search=false < %s | \
+; RUN: FileCheck %s -check-prefix=SUCCBB
 
 define void @foo1() nounwind {
 entry:
@@ -75,6 +78,7 @@ if.end:
 ;
 ; Default:     foo6:
 ; Default-NOT: nop
+; Default:     .end foo6
 
 define void @foo6(float %a0, double %a1) nounwind {
 entry:
@@ -109,6 +113,7 @@ entry:
 ; FORWARD:     jal foo11
 ; FORWARD:     jal foo11
 ; FORWARD-NOT: nop
+; FORWARD:     end foo10
 
 define void @foo10() nounwind {
 entry:
@@ -121,3 +126,54 @@ entry:
 }
 
 declare void @foo11()
+
+; Check that delay slots of branches in both the entry block and loop body are
+; filled.
+;
+; SUCCBB:      succbbs_loop1:
+; SUCCBB:      bne ${{[0-9]+}}, $zero, $BB
+; SUCCBB-NEXT: addiu
+; SUCCBB:      bne ${{[0-9]+}}, $zero, $BB
+; SUCCBB-NEXT: addiu
+
+define i32 @succbbs_loop1(i32* nocapture %a, i32 %n) {
+entry:
+  %cmp4 = icmp sgt i32 %n, 0
+  br i1 %cmp4, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.body
+  %s.06 = phi i32 [ %add, %for.body ], [ 0, %entry ]
+  %i.05 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32* %a, i32 %i.05
+  %0 = load i32* %arrayidx, align 4
+  %add = add nsw i32 %0, %s.06
+  %inc = add nsw i32 %i.05, 1
+  %exitcond = icmp eq i32 %inc, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  %s.0.lcssa = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  ret i32 %s.0.lcssa
+}
+
+; Check that the first branch has its slot filled.
+;
+; SUCCBB:      succbbs_br1:
+; SUCCBB:      beq ${{[0-9]+}}, $zero, $BB
+; SUCCBB-NEXT: lw $25, %call16(foo100)
+
+define void @succbbs_br1(i32 %a) {
+entry:
+  %tobool = icmp eq i32 %a, 0
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  tail call void @foo100() #1
+  br label %if.end
+
+if.end:                                           ; preds = %entry, %if.then
+  ret void
+}
+
+declare void @foo100()
+
