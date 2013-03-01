@@ -459,10 +459,6 @@ namespace llvm {
   /// branch folding).
   extern char &GCMachineCodeAnalysisID;
 
-  /// Deleter Pass - Releases GC metadata.
-  ///
-  FunctionPass *createGCInfoDeleter();
-
   /// Creates a pass to print GC metadata.
   ///
   FunctionPass *createGCInfoPrinter(raw_ostream &OS);

@@ -180,7 +180,8 @@ namespace llvm {
     GCModuleInfo();
     ~GCModuleInfo();
 
-    /// clear - Resets the pass. The metadata deleter pass calls this.
+    /// clear - Resets the pass. Any pass, which uses GCModuleInfo, should
+    /// call it in doFinalization().
     ///
     void clear();
 
