@@ -15,6 +15,22 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_272">checker-272</h4>
+<p><b>built:</b> March 1, 2013</br>
+	<b>download:</b> <a href="https://attache.apple.com/AttacheWeb/dl?id=ATCbb91eedf8edf4c7388549be8f91e810d">checker-272.tar.bz2</a></p>
+	<p><b>highlights:</b></p>
+	<ul>
+        <li>Better modeling of C++ constructors:
+            <ul>
+                <li>Interprocedural analysis support for constructors of types with trivial destructors</li>
+                <li>Efficient model of trivial copy and move constructors</li>
+            </ul>
+        </li>
+        <li>Better diagnostics for loops that execute 0 times</li>
+        <li>Fixes a linking issue that prevented the checker from running on OS X v10.6 and earlier</li>
+        <li>Fixes for misc. crashes and false positives</li>
+	</ul>
+
 <h4 id="checker_271">checker-271</h4>
 <p><b>built:</b> February 8, 2013</br>
 	<b>download:</b> <a href="http://bit.ly/1299Xt3">checker-271.tar.bz2</a></p>
