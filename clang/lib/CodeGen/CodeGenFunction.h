@@ -796,7 +796,9 @@ public:
   class RunCleanupsScope {
     EHScopeStack::stable_iterator CleanupStackDepth;
     bool OldDidCallStackSave;
+  protected:
     bool PerformCleanup;
+  private:
 
     RunCleanupsScope(const RunCleanupsScope &) LLVM_DELETED_FUNCTION;
     void operator=(const RunCleanupsScope &) LLVM_DELETED_FUNCTION;
@@ -840,7 +842,6 @@ public:
 
   class LexicalScope: protected RunCleanupsScope {
     SourceRange Range;
-    bool PopDebugStack;
 
     LexicalScope(const LexicalScope &) LLVM_DELETED_FUNCTION;
     void operator=(const LexicalScope &) LLVM_DELETED_FUNCTION;
@@ -848,7 +849,7 @@ public:
   public:
     /// \brief Enter a new cleanup scope.
     explicit LexicalScope(CodeGenFunction &CGF, SourceRange Range)
-      : RunCleanupsScope(CGF), Range(Range), PopDebugStack(true) {
+      : RunCleanupsScope(CGF), Range(Range) {
       if (CGDebugInfo *DI = CGF.getDebugInfo())
         DI->EmitLexicalBlockStart(CGF.Builder, Range.getBegin());
     }
@@ -856,20 +857,20 @@ public:
     /// \brief Exit this cleanup scope, emitting any accumulated
     /// cleanups.
     ~LexicalScope() {
-      if (PopDebugStack) {
-        CGDebugInfo *DI = CGF.getDebugInfo();
-        if (DI) DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
-      }
+      if (PerformCleanup) endLexicalScope();
     }
 
     /// \brief Force the emission of cleanups now, instead of waiting
     /// until this object is destroyed.
     void ForceCleanup() {
+      endLexicalScope();
       RunCleanupsScope::ForceCleanup();
-      if (CGDebugInfo *DI = CGF.getDebugInfo()) {
+    }
+
+  private:
+    void endLexicalScope() {
+      if (CGDebugInfo *DI = CGF.getDebugInfo())
         DI->EmitLexicalBlockEnd(CGF.Builder, Range.getEnd());
-        PopDebugStack = false;
-      }
     }
   };
 
