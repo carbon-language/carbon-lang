@@ -2,6 +2,8 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=Default
 ; RUN: llc -march=mipsel -O1 -relocation-model=static < %s | \
 ; RUN: FileCheck %s -check-prefix=STATICO1
+; RUN: llc -march=mipsel -disable-mips-df-forward-search=false \
+; RUN: -relocation-model=static < %s | FileCheck %s -check-prefix=FORWARD
 
 define void @foo1() nounwind {
 entry:
@@ -99,3 +101,23 @@ entry:
   %add = add nsw i32 %1, %a
   ret i32 %add
 }
+
+; Test searchForward. Check that the second jal's slot is filled with another
+; instruction in the same block.
+;
+; FORWARD:     foo10:
+; FORWARD:     jal foo11
+; FORWARD:     jal foo11
+; FORWARD-NOT: nop
+
+define void @foo10() nounwind {
+entry:
+  tail call void @foo11() nounwind
+  tail call void @foo11() nounwind
+  store i32 0, i32* @g1, align 4
+  tail call void @foo11() nounwind
+  store i32 0, i32* @g1, align 4
+  ret void
+}
+
+declare void @foo11()

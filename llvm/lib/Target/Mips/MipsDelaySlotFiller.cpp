@@ -47,11 +47,21 @@ static cl::opt<bool> SkipDelaySlotFiller(
   cl::desc("Skip MIPS' delay slot filling pass."),
   cl::Hidden);
 
+static cl::opt<bool> DisableForwardSearch(
+  "disable-mips-df-forward-search",
+  cl::init(true),
+  cl::desc("Disallow MIPS delay filler to search forward."),
+  cl::Hidden);
+
 namespace {
   class RegDefsUses {
   public:
     RegDefsUses(TargetMachine &TM);
     void init(const MachineInstr &MI);
+
+    /// This function sets all caller-saved registers in Defs.
+    void setCallerSaved(const MachineInstr &MI);
+
     bool update(const MachineInstr &MI, unsigned Begin, unsigned End);
 
   private:
@@ -65,13 +75,27 @@ namespace {
     BitVector Defs, Uses;
   };
 
-  /// This class maintains memory dependence information.
-  class MemDefsUses {
+  /// Base class for inspecting loads and stores.
+  class InspectMemInstr {
+  public:
+    virtual bool hasHazard(const MachineInstr &MI) = 0;
+    virtual ~InspectMemInstr() {}
+  };
+
+  /// This subclass rejects any memory instructions.
+  class NoMemInstr : public InspectMemInstr {
+  public:
+    virtual bool hasHazard(const MachineInstr &MI);
+  };
+
+  /// This subclass uses memory dependence information to determine whether a
+  /// memory instruction can be moved to a delay slot.
+  class MemDefsUses : public InspectMemInstr {
   public:
     MemDefsUses(const MachineFrameInfo *MFI);
 
     /// Return true if MI cannot be moved to delay slot.
-    bool hasHazard(const MachineInstr &MI);
+    virtual bool hasHazard(const MachineInstr &MI);
 
   private:
     /// Update Defs and Uses. Return true if there exist dependences that
@@ -127,15 +151,21 @@ namespace {
     /// and returns true if it isn't. It also updates memory and register
     /// dependence information.
     bool delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
-                        MemDefsUses &MemDU) const;
+                        InspectMemInstr &IM) const;
 
     /// This function searches range [Begin, End) for an instruction that can be
     /// moved to the delay slot. Returns true on success.
     template<typename IterTy>
     bool searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
-                     RegDefsUses &RegDU, MemDefsUses &MemDU, IterTy &Filler) const;
+                     RegDefsUses &RegDU, InspectMemInstr &IM, IterTy &Filler) const;
 
-    bool searchBackward(MachineBasicBlock &MBB, Iter Slot, Iter &Filler) const;
+    /// This function searches in the backward direction for an instruction that
+    /// can be moved to the delay slot. Returns true on success.
+    bool searchBackward(MachineBasicBlock &MBB, Iter Slot) const;
+
+    /// This function searches MBB in the forward direction for an instruction
+    /// that can be moved to the delay slot. Returns true on success.
+    bool searchForward(MachineBasicBlock &MBB, Iter Slot) const;
 
     bool terminateSearch(const MachineInstr &Candidate) const;
 
@@ -166,6 +196,22 @@ void RegDefsUses::init(const MachineInstr &MI) {
     update(MI, MI.getDesc().getNumOperands(), MI.getNumOperands());
     Defs.reset(Mips::AT);
   }
+}
+
+void RegDefsUses::setCallerSaved(const MachineInstr &MI) {
+  assert(MI.isCall());
+
+  // If MI is a call, add all caller-saved registers to Defs.
+  BitVector CallerSavedRegs(TRI.getNumRegs(), true);
+
+  CallerSavedRegs.reset(Mips::ZERO);
+  CallerSavedRegs.reset(Mips::ZERO_64);
+
+  for (const MCPhysReg *R = TRI.getCalleeSavedRegs(); *R; ++R)
+    for (MCRegAliasIterator AI(*R, &TRI, true); AI.isValid(); ++AI)
+      CallerSavedRegs.reset(*AI);
+
+  Defs |= CallerSavedRegs;
 }
 
 bool RegDefsUses::update(const MachineInstr &MI, unsigned Begin, unsigned End) {
@@ -204,6 +250,11 @@ bool RegDefsUses::isRegInSet(const BitVector &RegSet, unsigned Reg) const {
     if (RegSet.test(*AI))
       return true;
   return false;
+}
+
+bool NoMemInstr::hasHazard(const MachineInstr &MI) {
+  // Return true if MI accesses memory.
+  return (MI.mayStore() || MI.mayLoad());
 }
 
 MemDefsUses::MemDefsUses(const MachineFrameInfo *MFI_)
@@ -295,17 +346,14 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
     ++FilledSlots;
     Changed = true;
-    Iter D;
 
     // Delay slot filling is disabled at -O0.
     if (!DisableDelaySlotFiller && (TM.getOptLevel() != CodeGenOpt::None) &&
-        searchBackward(MBB, I, D)) {
-      MBB.splice(llvm::next(I), &MBB, D);
-      ++UsefulSlots;
-    } else
-      BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
+        (searchBackward(MBB, I) || searchForward(MBB, I)))
+      continue;
 
-    // Bundle the delay slot filler to the instruction with the delay slot.
+    // Bundle the NOP to the instruction with the delay slot.
+    BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
     MIBundleBuilder(MBB, I, llvm::next(llvm::next(I)));
   }
 
@@ -320,7 +368,7 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 
 template<typename IterTy>
 bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
-                         RegDefsUses &RegDU, MemDefsUses &MemDU,
+                         RegDefsUses &RegDU, InspectMemInstr& IM,
                          IterTy &Filler) const {
   for (IterTy I = Begin; I != End; ++I) {
     // skip debug value
@@ -333,7 +381,7 @@ bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
     assert((!I->isCall() && !I->isReturn() && !I->isBranch()) &&
            "Cannot put calls, returns or branches in delay slot.");
 
-    if (delayHasHazard(*I, RegDU, MemDU))
+    if (delayHasHazard(*I, RegDU, IM))
       continue;
 
     Filler = I;
@@ -343,17 +391,38 @@ bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
   return false;
 }
 
-bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot,
-                            Iter &Filler) const {
+bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
   RegDefsUses RegDU(TM);
   MemDefsUses MemDU(MBB.getParent()->getFrameInfo());
-  ReverseIter FillerReverse;
+  ReverseIter Filler;
 
   RegDU.init(*Slot);
 
-  if (searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU,
-                  FillerReverse)) {
-    Filler = llvm::next(FillerReverse).base();
+  if (searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler)) {
+    MBB.splice(llvm::next(Slot), &MBB, llvm::next(Filler).base());
+    MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
+    ++UsefulSlots;
+    return true;
+  }
+
+  return false;
+}
+
+bool Filler::searchForward(MachineBasicBlock &MBB, Iter Slot) const {
+  // Can handle only calls.
+  if (!Slot->isCall())
+    return false;
+
+  RegDefsUses RegDU(TM);
+  NoMemInstr NM;
+  Iter Filler;
+
+  RegDU.setCallerSaved(*Slot);
+
+  if (searchRange(MBB, llvm::next(Slot), MBB.end(), RegDU, NM, Filler)) {
+    MBB.splice(llvm::next(Slot), &MBB, Filler);
+    MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
+    ++UsefulSlots;
     return true;
   }
 
@@ -361,10 +430,10 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot,
 }
 
 bool Filler::delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
-                            MemDefsUses &MemDU) const {
+                            InspectMemInstr &IM) const {
   bool HasHazard = (Candidate.isImplicitDef() || Candidate.isKill());
 
-  HasHazard |= MemDU.hasHazard(Candidate);
+  HasHazard |= IM.hasHazard(Candidate);
   HasHazard |= RegDU.update(Candidate, 0, Candidate.getNumOperands());
 
   return HasHazard;
