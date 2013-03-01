@@ -136,7 +136,7 @@ public:
   NVPTXTargetMachine *nvTM;
 
   // PTX always uses 32-bit shift amounts
-  virtual MVT getShiftAmountTy(EVT LHSTy) const {
+  virtual MVT getScalarShiftAmountTy(EVT LHSTy) const {
     return MVT::i32;
   }
 

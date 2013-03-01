@@ -84,7 +84,7 @@ namespace llvm {
     explicit XCoreTargetLowering(XCoreTargetMachine &TM);
 
     virtual unsigned getJumpTableEncoding() const;
-    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
+    virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;

@@ -744,8 +744,15 @@ TargetLoweringBase::~TargetLoweringBase() {
   delete &TLOF;
 }
 
-MVT TargetLoweringBase::getShiftAmountTy(EVT LHSTy) const {
+MVT TargetLoweringBase::getScalarShiftAmountTy(EVT LHSTy) const {
   return MVT::getIntegerVT(8*TD->getPointerSize(0));
+}
+
+EVT TargetLoweringBase::getShiftAmountTy(EVT LHSTy) const {
+  assert(LHSTy.isInteger() && "Shift amount is not an integer type!");
+  if (LHSTy.isVector())
+    return LHSTy;
+  return getScalarShiftAmountTy(LHSTy);
 }
 
 /// canOpTrap - Returns true if the operation can trap for the value type.

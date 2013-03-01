@@ -471,7 +471,7 @@ namespace llvm {
 
     virtual unsigned getJumpTableEncoding() const;
 
-    virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i8; }
+    virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i8; }
 
     virtual const MCExpr *
     LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,

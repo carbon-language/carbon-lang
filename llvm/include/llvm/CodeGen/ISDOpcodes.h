@@ -311,8 +311,10 @@ namespace ISD {
     /// the shift amount can be any type, but care must be taken to ensure it is
     /// large enough.  TLI.getShiftAmountTy() is i8 on some targets, but before
     /// legalization, types like i1024 can occur and i8 doesn't have enough bits
-    /// to represent the shift amount.  By convention, DAGCombine and
-    /// SelectionDAGBuilder forces these shift amounts to i32 for simplicity.
+    /// to represent the shift amount.
+    /// When the 1st operand is a vector, the shift amount must be in the same
+    /// type. (TLI.getShiftAmountTy() will return the same type when the input
+    /// type is a vector.)
     SHL, SRA, SRL, ROTL, ROTR,
 
     /// Byte Swap and Counting operators.

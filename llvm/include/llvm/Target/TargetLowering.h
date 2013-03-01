@@ -145,7 +145,9 @@ public:
   // the pointer type from the data layout.
   // FIXME: The default needs to be removed once all the code is updated.
   virtual MVT getPointerTy(uint32_t AS = 0) const { return PointerTy; }
-  virtual MVT getShiftAmountTy(EVT LHSTy) const;
+  virtual MVT getScalarShiftAmountTy(EVT LHSTy) const;
+
+  EVT getShiftAmountTy(EVT LHSTy) const;
 
   /// isSelectExpensive - Return true if the select operation is expensive for
   /// this target.

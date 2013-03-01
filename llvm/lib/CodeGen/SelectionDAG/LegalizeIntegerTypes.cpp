@@ -531,9 +531,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SHL(SDNode *N) {
-  return DAG.getNode(ISD::SHL, N->getDebugLoc(),
-                TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0)),
-                     GetPromotedInteger(N->getOperand(0)), N->getOperand(1));
+  SDValue Res = GetPromotedInteger(N->getOperand(0));
+  SDValue Amt = N->getOperand(1);
+  Amt = Amt.getValueType().isVector() ? ZExtPromotedInteger(Amt) : Amt;
+  return DAG.getNode(ISD::SHL, N->getDebugLoc(), Res.getValueType(), Res, Amt);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SIGN_EXTEND_INREG(SDNode *N) {
@@ -555,16 +556,17 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SimpleIntBinOp(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_SRA(SDNode *N) {
   // The input value must be properly sign extended.
   SDValue Res = SExtPromotedInteger(N->getOperand(0));
-  return DAG.getNode(ISD::SRA, N->getDebugLoc(),
-                     Res.getValueType(), Res, N->getOperand(1));
+  SDValue Amt = N->getOperand(1);
+  Amt = Amt.getValueType().isVector() ? ZExtPromotedInteger(Amt) : Amt;
+  return DAG.getNode(ISD::SRA, N->getDebugLoc(), Res.getValueType(), Res, Amt);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SRL(SDNode *N) {
   // The input value must be properly zero extended.
-  EVT VT = N->getValueType(0);
-  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
   SDValue Res = ZExtPromotedInteger(N->getOperand(0));
-  return DAG.getNode(ISD::SRL, N->getDebugLoc(), NVT, Res, N->getOperand(1));
+  SDValue Amt = N->getOperand(1);
+  Amt = Amt.getValueType().isVector() ? ZExtPromotedInteger(Amt) : Amt;
+  return DAG.getNode(ISD::SRL, N->getDebugLoc(), Res.getValueType(), Res, Amt);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
@@ -2101,8 +2103,9 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     // have an illegal type.  Fix that first by casting the operand, otherwise
     // the new SHL_PARTS operation would need further legalization.
     SDValue ShiftOp = N->getOperand(1);
-    MVT ShiftTy = TLI.getShiftAmountTy(VT);
-    assert(ShiftTy.getSizeInBits() >= Log2_32_Ceil(VT.getSizeInBits()) &&
+    EVT ShiftTy = TLI.getShiftAmountTy(VT);
+    assert(ShiftTy.getScalarType().getSizeInBits() >=
+           Log2_32_Ceil(VT.getScalarType().getSizeInBits()) &&
            "ShiftAmountTy is too small to cover the range of this type!");
     if (ShiftOp.getValueType() != ShiftTy)
       ShiftOp = DAG.getZExtOrTrunc(ShiftOp, dl, ShiftTy);
