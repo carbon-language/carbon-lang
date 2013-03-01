@@ -49,6 +49,11 @@ static cl::opt<RiskLevel> MaxRiskLevel(
                clEnumValEnd),
     cl::init(RL_Reasonable));
 
+static cl::opt<bool> FinalSyntaxCheck(
+    "final-syntax-check",
+    cl::desc("Check for correct syntax after applying transformations"),
+    cl::init(false));
+
 class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
   CommandLineArguments Adjust(const CommandLineArguments &Args) {
     CommandLineArguments AdjustedArgs = Args;
@@ -74,16 +79,6 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  // Initial syntax check.
-  ClangTool SyntaxTool(OptionsParser.getCompilations(),
-                       OptionsParser.getSourcePathList());
-
-  // First, let's check to make sure there were no errors.
-  if (SyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>()) !=
-      0) {
-    return 1;
-  }
-
   FileContentsByPath FileStates1, FileStates2,
       *InputFileStates = &FileStates1, *OutputFileStates = &FileStates2;
 
@@ -104,25 +99,26 @@ int main(int argc, const char **argv) {
 
   // Final state of files is pointed at by InputFileStates.
 
-  // Final Syntax check.
-  ClangTool EndSyntaxTool(OptionsParser.getCompilations(),
-                          OptionsParser.getSourcePathList());
+  if (FinalSyntaxCheck) {
+    ClangTool EndSyntaxTool(OptionsParser.getCompilations(),
+                            OptionsParser.getSourcePathList());
 
-  // Add c++11 support to clang.
-  EndSyntaxTool.setArgumentsAdjuster(new EndSyntaxArgumentsAdjuster);
+    // Add c++11 support to clang.
+    EndSyntaxTool.setArgumentsAdjuster(new EndSyntaxArgumentsAdjuster);
 
-  for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
-                                          E = InputFileStates->end();
-       I != E; ++I) {
-    EndSyntaxTool.mapVirtualFile(I->first, I->second);
+    for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
+                                            E = InputFileStates->end();
+         I != E; ++I) {
+      EndSyntaxTool.mapVirtualFile(I->first, I->second);
+    }
+
+    if (EndSyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>())
+        != 0) {
+      return 1;
+    }
   }
 
-  if (EndSyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>()) !=
-      0) {
-    return 1;
-  }
-
-  // Syntax check passed, write results to file.
+  // Write results to file.
   for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
                                           E = InputFileStates->end();
        I != E; ++I) {
