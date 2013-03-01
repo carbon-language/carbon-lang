@@ -1,10 +1,11 @@
-/*
- *  libdebugserver.cpp
- *  debugserver
- *
- *  Copyright 2008-2012 Apple Inc. All rights reserved.
- *
- */
+//===-- libdebugserver.cpp --------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
 
 #include <sys/socket.h>
 #include <sys/types.h>
