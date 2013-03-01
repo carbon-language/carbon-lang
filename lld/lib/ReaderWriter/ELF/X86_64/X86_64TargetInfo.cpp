@@ -399,7 +399,8 @@ public:
     if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
         return handleIFUNC(ref);
-    const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
+    if (isa<const SharedLibraryAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
     return error_code::success();
   }
 
