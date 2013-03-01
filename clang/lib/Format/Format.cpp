@@ -720,6 +720,8 @@ private:
     while (StartColumn + TailLength > getColumnLimit()) {
       StringRef Text = StringRef(Current.FormatTok.Tok.getLiteralData() +
                                  TailOffset, TailLength);
+      if (StartColumn + 1 > getColumnLimit())
+        break;
       StringRef::size_type SplitPoint =
           getSplitPoint(Text, getColumnLimit() - StartColumn - 1);
       if (SplitPoint == StringRef::npos)
@@ -748,8 +750,11 @@ private:
 
   StringRef::size_type
   getSplitPoint(StringRef Text, StringRef::size_type Offset) {
-    // FIXME: Implement more sophisticated splitting mechanism, and a fallback.
-    return Text.rfind(' ', Offset);
+    StringRef::size_type SpaceOffset = Text.rfind(' ', Offset);
+    if (SpaceOffset == StringRef::npos && Offset > 0) {
+      return Offset - 1;
+    }
+    return SpaceOffset;
   }
 
   unsigned getColumnLimit() {

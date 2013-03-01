@@ -3003,7 +3003,8 @@ TEST_F(FormatTest, BreakStringLiterals) {
   EXPECT_EQ("\"some \"\n"
             "\"text\"",
             format("\"some text\"", getLLVMStyleWithColumns(7)));
-  EXPECT_EQ("\"some text\"",
+  EXPECT_EQ("\"some\"\n"
+            "\" text\"",
             format("\"some text\"", getLLVMStyleWithColumns(6)));
 
   EXPECT_EQ("variable =\n"
@@ -3041,6 +3042,12 @@ TEST_F(FormatTest, BreakStringLiterals) {
       "aaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaa,\n"
       "    aaaaaa(\"aaa aaaaa aaa aaa aaaaa aaa aaaaa aaa aaa aaaaaa\"));");
+
+  EXPECT_EQ(
+      "\"splitmea\"\n"
+      "\"trandompo\"\n"
+      "\"int\"",
+      format("\"splitmeatrandompoint\"", getLLVMStyleWithColumns(10)));
 }
 
 } // end namespace tooling
