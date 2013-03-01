@@ -93,81 +93,11 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                   MachineBasicBlock *&TBB,
                                   MachineBasicBlock *&FBB,
                                   SmallVectorImpl<MachineOperand> &Cond,
-                                  bool AllowModify) const
-{
+                                  bool AllowModify) const {
+  SmallVector<MachineInstr*, 2> BranchInstrs;
+  BranchType BT = AnalyzeBranch(MBB, TBB, FBB, Cond, AllowModify, BranchInstrs);
 
-  MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
-
-  // Skip all the debug instructions.
-  while (I != REnd && I->isDebugValue())
-    ++I;
-
-  if (I == REnd || !isUnpredicatedTerminator(&*I)) {
-    // If this block ends with no branches (it just falls through to its succ)
-    // just return false, leaving TBB/FBB null.
-    TBB = FBB = NULL;
-    return false;
-  }
-
-  MachineInstr *LastInst = &*I;
-  unsigned LastOpc = LastInst->getOpcode();
-
-  // Not an analyzable branch (must be an indirect jump).
-  if (!GetAnalyzableBrOpc(LastOpc))
-    return true;
-
-  // Get the second to last instruction in the block.
-  unsigned SecondLastOpc = 0;
-  MachineInstr *SecondLastInst = NULL;
-
-  if (++I != REnd) {
-    SecondLastInst = &*I;
-    SecondLastOpc = GetAnalyzableBrOpc(SecondLastInst->getOpcode());
-
-    // Not an analyzable branch (must be an indirect jump).
-    if (isUnpredicatedTerminator(SecondLastInst) && !SecondLastOpc)
-      return true;
-  }
-
-  // If there is only one terminator instruction, process it.
-  if (!SecondLastOpc) {
-    // Unconditional branch
-    if (LastOpc == UncondBrOpc) {
-      TBB = LastInst->getOperand(0).getMBB();
-      return false;
-    }
-
-    // Conditional branch
-    AnalyzeCondBr(LastInst, LastOpc, TBB, Cond);
-    return false;
-  }
-
-  // If we reached here, there are two branches.
-  // If there are three terminators, we don't know what sort of block this is.
-  if (++I != REnd && isUnpredicatedTerminator(&*I))
-    return true;
-
-  // If second to last instruction is an unconditional branch,
-  // analyze it and remove the last instruction.
-  if (SecondLastOpc == UncondBrOpc) {
-    // Return if the last instruction cannot be removed.
-    if (!AllowModify)
-      return true;
-
-    TBB = SecondLastInst->getOperand(0).getMBB();
-    LastInst->eraseFromParent();
-    return false;
-  }
-
-  // Conditional branch followed by an unconditional branch.
-  // The last one must be unconditional.
-  if (LastOpc != UncondBrOpc)
-    return true;
-
-  AnalyzeCondBr(SecondLastInst, SecondLastOpc, TBB, Cond);
-  FBB = LastInst->getOperand(0).getMBB();
-
-  return false;
+  return (BT == BT_None) || (BT == BT_Indirect);
 }
 
 void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
@@ -254,6 +184,90 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
           "Invalid Mips branch condition!");
   Cond[0].setImm(GetOppositeBranchOpc(Cond[0].getImm()));
   return false;
+}
+
+MipsInstrInfo::BranchType MipsInstrInfo::
+AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+              MachineBasicBlock *&FBB, SmallVectorImpl<MachineOperand> &Cond,
+              bool AllowModify,
+              SmallVectorImpl<MachineInstr*> &BranchInstrs) const {
+
+  MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
+
+  // Skip all the debug instructions.
+  while (I != REnd && I->isDebugValue())
+    ++I;
+
+  if (I == REnd || !isUnpredicatedTerminator(&*I)) {
+    // This block ends with no branches (it just falls through to its succ).
+    // Leave TBB/FBB null.
+    TBB = FBB = NULL;
+    return BT_NoBranch;
+  }
+
+  MachineInstr *LastInst = &*I;
+  unsigned LastOpc = LastInst->getOpcode();
+  BranchInstrs.push_back(LastInst);
+
+  // Not an analyzable branch (e.g., indirect jump).
+  if (!GetAnalyzableBrOpc(LastOpc))
+    return LastInst->isIndirectBranch() ? BT_Indirect : BT_None;
+
+  // Get the second to last instruction in the block.
+  unsigned SecondLastOpc = 0;
+  MachineInstr *SecondLastInst = NULL;
+
+  if (++I != REnd) {
+    SecondLastInst = &*I;
+    SecondLastOpc = GetAnalyzableBrOpc(SecondLastInst->getOpcode());
+
+    // Not an analyzable branch (must be an indirect jump).
+    if (isUnpredicatedTerminator(SecondLastInst) && !SecondLastOpc)
+      return BT_None;
+  }
+
+  BranchInstrs.insert(BranchInstrs.begin(), SecondLastInst);
+
+  // If there is only one terminator instruction, process it.
+  if (!SecondLastOpc) {
+    // Unconditional branch
+    if (LastOpc == UncondBrOpc) {
+      TBB = LastInst->getOperand(0).getMBB();
+      return BT_Uncond;
+    }
+
+    // Conditional branch
+    AnalyzeCondBr(LastInst, LastOpc, TBB, Cond);
+    return BT_Cond;
+  }
+
+  // If we reached here, there are two branches.
+  // If there are three terminators, we don't know what sort of block this is.
+  if (++I != REnd && isUnpredicatedTerminator(&*I))
+    return BT_None;
+
+  // If second to last instruction is an unconditional branch,
+  // analyze it and remove the last instruction.
+  if (SecondLastOpc == UncondBrOpc) {
+    // Return if the last instruction cannot be removed.
+    if (!AllowModify)
+      return BT_None;
+
+    TBB = SecondLastInst->getOperand(0).getMBB();
+    LastInst->eraseFromParent();
+    BranchInstrs.pop_back();
+    return BT_Uncond;
+  }
+
+  // Conditional branch followed by an unconditional branch.
+  // The last one must be unconditional.
+  if (LastOpc != UncondBrOpc)
+    return BT_None;
+
+  AnalyzeCondBr(SecondLastInst, SecondLastOpc, TBB, Cond);
+  FBB = LastInst->getOperand(0).getMBB();
+
+  return BT_CondUncond;
 }
 
 /// Return the number of bytes of code the specified instruction may be.

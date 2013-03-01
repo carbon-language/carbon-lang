@@ -31,6 +31,15 @@ protected:
   unsigned UncondBrOpc;
 
 public:
+  enum BranchType {
+    BT_None,       // Couldn't analyze branch.
+    BT_NoBranch,   // No branches found.
+    BT_Uncond,     // One unconditional branch.
+    BT_Cond,       // One conditional branch.
+    BT_CondUncond, // A conditional branch followed by an unconditional branch.
+    BT_Indirect    // One indirct branch.
+  };
+
   explicit MipsInstrInfo(MipsTargetMachine &TM, unsigned UncondBrOpc);
 
   static const MipsInstrInfo *create(MipsTargetMachine &TM);
@@ -50,6 +59,12 @@ public:
 
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+
+  BranchType AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                           MachineBasicBlock *&FBB,
+                           SmallVectorImpl<MachineOperand> &Cond,
+                           bool AllowModify,
+                           SmallVectorImpl<MachineInstr*> &BranchInstrs) const;
 
   virtual MachineInstr* emitFrameIndexDebugValue(MachineFunction &MF,
                                                  int FrameIx, uint64_t Offset,
