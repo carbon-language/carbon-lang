@@ -52,11 +52,21 @@ namespace llvm {
       Order        ///< Any other ordering dependency.
     };
 
+    // Strong dependencies must be respected by the scheduler. Artificial
+    // dependencies may be removed only if they are redundant with another
+    // strong depedence.
+    //
+    // Weak dependencies may be violated by the scheduling strategy, but only if
+    // the strategy can prove it is correct to do so.
+    //
+    // Strong OrderKinds must occur before "Weak".
+    // Weak OrderKinds must occur after "Weak".
     enum OrderKind {
       Barrier,      ///< An unknown scheduling barrier.
       MayAliasMem,  ///< Nonvolatile load/Store instructions that may alias.
       MustAliasMem, ///< Nonvolatile load/Store instructions that must alias.
-      Artificial,   ///< Arbitrary weak DAG edge (no actual dependence).
+      Artificial,   ///< Arbitrary strong DAG edge (no real dependence).
+      Weak,         ///< Arbitrary weak DAG edge.
       Cluster       ///< Weak DAG edge linking a chain of clustered instrs.
     };
 
@@ -205,7 +215,7 @@ namespace llvm {
     /// not force ordering. Breaking a weak edge may require the scheduler to
     /// compensate, for example by inserting a copy.
     bool isWeak() const {
-      return getKind() == Order && Contents.OrdKind == Cluster;
+      return getKind() == Order && Contents.OrdKind >= Weak;
     }
 
     /// isArtificial - Test if this is an Order dependence that is marked
