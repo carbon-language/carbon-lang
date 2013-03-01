@@ -141,6 +141,7 @@ install(DIRECTORY include/
 
 add_subdirectory(lib)
 add_subdirectory(tools)
+add_subdirectory(utils)
 
 add_subdirectory(test)
 

@@ -6,9 +6,11 @@ add_subdirectory(Native)
 add_subdirectory(PECOFF)
 add_subdirectory(YAML)
 add_lld_library(lldReaderWriter
+  LinkerScript.cpp
   Reader.cpp
-  Writer.cpp
   ReaderArchive.cpp
+  ReaderLinkerScript.cpp
+  Writer.cpp
   )
 
 target_link_libraries(lldReaderWriter

@@ -44,6 +44,7 @@ public:
     kindObject,            ///< object file (.o)
     kindSharedLibrary,     ///< shared library (.so)
     kindArchiveLibrary,    ///< archive (.a)
+    kindLinkerScript,      ///< linker script
   };
 
   /// \brief Returns file kind.  Need for dyn_cast<> on File objects.

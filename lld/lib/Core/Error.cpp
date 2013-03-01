@@ -51,10 +51,6 @@ const llvm::error_category &lld::native_reader_category() {
   return o;
 }
 
-inline llvm::error_code make_error_code(native_reader_error e) {
-  return llvm::error_code(static_cast<int>(e), native_reader_category());
-}
-
 class _yaml_reader_error_category : public llvm::_do_message {
 public:
   virtual const char* name() const {
@@ -87,6 +83,32 @@ const llvm::error_category &lld::yaml_reader_category() {
   return o;
 }
 
-inline llvm::error_code make_error_code(yaml_reader_error e) {
-  return llvm::error_code(static_cast<int>(e), yaml_reader_category());
+class _linker_script_reader_error_category : public llvm::_do_message {
+public:
+  virtual const char *name() const { return "lld.linker-script.reader"; }
+
+  virtual std::string message(int ev) const {
+    switch (ev) {
+    case static_cast<int>(linker_script_reader_error::success):
+      return "Success";
+    case static_cast<int>(linker_script_reader_error::parse_error):
+      return "Error parsing linker script";
+    default:
+      llvm_unreachable(
+          "An enumerator of linker_script_reader_error does not have a "
+          "message defined.");
+    }
+  }
+
+  virtual llvm::error_condition default_error_condition(int ev) const {
+    if (ev == static_cast<int>(linker_script_reader_error::success))
+      return llvm::errc::success;
+    return llvm::errc::invalid_argument;
+  }
+};
+
+const llvm::error_category &lld::linker_script_reader_category() {
+  static _linker_script_reader_error_category o;
+  return o;
 }
+

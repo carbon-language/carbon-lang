@@ -14,9 +14,11 @@
 
 #include "lld/Core/LinkerOptions.h"
 #include "lld/Passes/LayoutPass.h"
+#include "lld/ReaderWriter/ReaderLinkerScript.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/FileSystem.h"
 
 namespace lld {
 ELFTargetInfo::ELFTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
@@ -63,10 +65,24 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
 }
 
 ErrorOr<Reader &> ELFTargetInfo::getReader(const LinkerInput &input) const {
-  if (!_reader)
-    _reader = createReaderELF(*this, std::bind(&ELFTargetInfo::getReader, this,
-                                               std::placeholders::_1));
-  return *_reader;
+  auto buffer = input.getBuffer();
+  if (!buffer)
+    return error_code(buffer);
+  auto magic = llvm::sys::fs::identify_magic(buffer->getBuffer());
+  // Assume unknown file types are linker scripts.
+  if (magic == llvm::sys::fs::file_magic::unknown) {
+    if (!_linkerScriptReader)
+      _linkerScriptReader.reset(new ReaderLinkerScript(
+          *this,
+          std::bind(&ELFTargetInfo::getReader, this, std::placeholders::_1)));
+    return *_linkerScriptReader;
+  }
+
+  // Assume anything else is an ELF file.
+  if (!_elfReader)
+    _elfReader = createReaderELF(*this, std::bind(&ELFTargetInfo::getReader,
+                                                  this, std::placeholders::_1));
+  return *_elfReader;
 }
 
 ErrorOr<Writer &> ELFTargetInfo::getWriter() const {

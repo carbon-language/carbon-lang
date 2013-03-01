@@ -59,6 +59,16 @@ inline llvm::error_code make_error_code(yaml_reader_error e) {
   return llvm::error_code(static_cast<int>(e), yaml_reader_category());
 }
 
+const llvm::error_category &linker_script_reader_category();
+
+enum class linker_script_reader_error {
+  success = 0,
+  parse_error
+};
+
+inline llvm::error_code make_error_code(linker_script_reader_error e) {
+  return llvm::error_code(static_cast<int>(e), linker_script_reader_category());
+}
 } // end namespace lld
 
 namespace llvm {
@@ -71,6 +81,8 @@ template <> struct is_error_code_enum<lld::yaml_reader_error> : true_type { };
 template <>
 struct is_error_code_enum<lld::yaml_reader_error::_> : true_type { };
 
+template <>
+struct is_error_code_enum<lld::linker_script_reader_error> : true_type { };
 } // end namespace llvm
 
 #endif

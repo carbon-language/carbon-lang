@@ -92,7 +92,8 @@ public:
 
 protected:
   std::unique_ptr<TargetHandlerBase> _targetHandler;
-  mutable std::unique_ptr<Reader> _reader;
+  mutable std::unique_ptr<Reader> _elfReader;
+  mutable std::unique_ptr<Reader> _linkerScriptReader;
   mutable std::unique_ptr<Writer> _writer;
 };
 } // end namespace lld
