@@ -405,16 +405,23 @@ ObjectSizeOffsetVisitor::ObjectSizeOffsetVisitor(const DataLayout *TD,
 
 SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
   V = V->stripPointerCasts();
-  if (Instruction *I = dyn_cast<Instruction>(V)) {
-    // If we have already seen this instruction, bail out. Cycles can happen in
-    // unreachable code after constant propagation.
-    if (!SeenInsts.insert(I))
-      return unknown();
 
+  if (isa<Instruction>(V) || isa<GEPOperator>(V)) {
+    // Return cached value or insert unknown in cache if size of V was not
+    // computed yet in order to avoid recursions in PHis.
+    std::pair<CacheMapTy::iterator, bool> CacheVal =
+      CacheMap.insert(std::make_pair(V, unknown()));
+    if (!CacheVal.second)
+      return CacheVal.first->second;
+
+    SizeOffsetType Result;
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-      return visitGEPOperator(*GEP);
-    return visit(*I);
+      Result = visitGEPOperator(*GEP);
+    else
+      Result = visit(cast<Instruction>(*V));
+    return CacheMap[V] = Result;
   }
+
   if (Argument *A = dyn_cast<Argument>(V))
     return visitArgument(*A);
   if (ConstantPointerNull *P = dyn_cast<ConstantPointerNull>(V))
@@ -428,8 +435,6 @@ SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::IntToPtr)
       return unknown(); // clueless
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      return visitGEPOperator(cast<GEPOperator>(*CE));
   }
 
   DEBUG(dbgs() << "ObjectSizeOffsetVisitor::compute() unhandled value: " << *V
@@ -563,9 +568,21 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitLoadInst(LoadInst&) {
   return unknown();
 }
 
-SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode&) {
-  // too complex to analyze statically.
-  return unknown();
+SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode &PHI) {
+  if (PHI.getNumIncomingValues() == 0)
+    return unknown();
+
+  SizeOffsetType Ret = compute(PHI.getIncomingValue(0));
+  if (!bothKnown(Ret))
+    return unknown();
+
+  // Verify that all PHI incoming pointers have the same size and offset.
+  for (unsigned i = 1, e = PHI.getNumIncomingValues(); i != e; ++i) {
+    SizeOffsetType EdgeData = compute(PHI.getIncomingValue(i));
+    if (!bothKnown(EdgeData) || EdgeData != Ret)
+      return unknown();
+  }
+  return Ret;
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitSelectInst(SelectInst &I) {
