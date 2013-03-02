@@ -77,8 +77,8 @@ def outputClassDef(Definition, ClassName, Import):
 
   if Import:
     print """
-}} // namespace _1
-using _1::{0};""".format(ClassName)
+} // namespace _1
+using _1::%s;""" % ClassName
 
 
 # Output preamble and common functionality
@@ -142,46 +142,46 @@ namespace std {""".lstrip() # Take off leading newline
 for c in typedef_containers:
   Definition = """
 template <typename T>
-class {0} {{
+class %(0)s {
 public:
   typedef T value_type;
-  typedef typename internal::iterator_wrapper<{0}<T>, 0> iterator;
-  typedef typename internal::iterator_wrapper<{0}<T>, 1> const_iterator;
-  typedef typename internal::iterator_wrapper<{0}<T>, 3> reverse_iterator;
-  typedef typename internal::iterator_wrapper<{0}<T>, 2> const_reverse_iterator;
+  typedef typename internal::iterator_wrapper<%(0)s<T>, 0> iterator;
+  typedef typename internal::iterator_wrapper<%(0)s<T>, 1> const_iterator;
+  typedef typename internal::iterator_wrapper<%(0)s<T>, 3> reverse_iterator;
+  typedef typename internal::iterator_wrapper<%(0)s<T>, 2> const_reverse_iterator;
 
-  {0}() {{}}
-  {1}}};""".format(c['name'], iterator_generators)
+  %(0)s() {}
+  %(1)s};""" % {'0': c['name'], '1': iterator_generators}
 
   outputClassDef(Definition, c['name'], c['using'])
 
 for c in subclass_containers:
   Definition = """
 template <typename T>
-class {0} {{
+class %(0)s {
 public:
-  class iterator {{}};
-  class const_iterator {{}};
-  class reverse_iterator {{}};
-  class const_reverse_iterator {{}};
+  class iterator {};
+  class const_iterator {};
+  class reverse_iterator {};
+  class const_reverse_iterator {};
 
-  {0}() {{}}
-  {1}}};""".format(c['name'], iterator_generators)
+  %(0)s() {}
+  %(1)s};""" % {'0': c['name'], '1': iterator_generators}
 
   outputClassDef(Definition, c['name'], c['using'])
 
 for c in using_containers:
   Definition = """
 template <typename T>
-class {0} : internal::iterator_provider<{0}<T> > {{
+class %(0)s : internal::iterator_provider<%(0)s<T> > {
 public:
-  using typename internal::iterator_provider<{0}<T> >::iterator;
-  using typename internal::iterator_provider<{0}<T> >::const_iterator;
-  using typename internal::iterator_provider<{0}<T> >::reverse_iterator;
-  using typename internal::iterator_provider<{0}<T> >::const_reverse_iterator;
+  using typename internal::iterator_provider<%(0)s<T> >::iterator;
+  using typename internal::iterator_provider<%(0)s<T> >::const_iterator;
+  using typename internal::iterator_provider<%(0)s<T> >::reverse_iterator;
+  using typename internal::iterator_provider<%(0)s<T> >::const_reverse_iterator;
 
-  {0}() {{}}
-  {1}}};""".format(c['name'], iterator_generators)
+  %(0)s() {}
+  %(1)s};""" % {'0': c['name'], '1': iterator_generators}
 
   outputClassDef(Definition, c['name'], c['using'])
 
