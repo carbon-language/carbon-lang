@@ -27,7 +27,7 @@ define i32 @read_mod_write_single_ptr(float* nocapture %a, i32 %n) nounwind uwta
 
 
 ;CHECK: @read_mod_i64
-;CHECK: load <4 x i64>
+;CHECK: load <2 x i64>
 ;CHECK: ret i32
 define i32 @read_mod_i64(i64* nocapture %a, i32 %n) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 0
@@ -37,7 +37,7 @@ define i32 @read_mod_i64(i64* nocapture %a, i32 %n) nounwind uwtable ssp {
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
   %2 = getelementptr inbounds i64* %a, i64 %indvars.iv
   %3 = load i64* %2, align 4
-  %4 = mul i64 %3, 3
+  %4 = add i64 %3, 3
   store i64 %4, i64* %2, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
