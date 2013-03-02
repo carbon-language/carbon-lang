@@ -504,6 +504,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FRINT, MVT::v2f64, Expand);
     setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Expand);
     setOperationAction(ISD::FFLOOR, MVT::v2f64, Expand);
+    setOperationAction(ISD::FMA, MVT::v2f64, Expand);
 
     setOperationAction(ISD::FSQRT, MVT::v4f32, Expand);
     setOperationAction(ISD::FSIN, MVT::v4f32, Expand);
@@ -520,6 +521,23 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FRINT, MVT::v4f32, Expand);
     setOperationAction(ISD::FNEARBYINT, MVT::v4f32, Expand);
     setOperationAction(ISD::FFLOOR, MVT::v4f32, Expand);
+
+    // Mark v2f32 intrinsics.
+    setOperationAction(ISD::FSQRT, MVT::v2f32, Expand);
+    setOperationAction(ISD::FSIN, MVT::v2f32, Expand);
+    setOperationAction(ISD::FCOS, MVT::v2f32, Expand);
+    setOperationAction(ISD::FPOWI, MVT::v2f32, Expand);
+    setOperationAction(ISD::FPOW, MVT::v2f32, Expand);
+    setOperationAction(ISD::FLOG, MVT::v2f32, Expand);
+    setOperationAction(ISD::FLOG2, MVT::v2f32, Expand);
+    setOperationAction(ISD::FLOG10, MVT::v2f32, Expand);
+    setOperationAction(ISD::FEXP, MVT::v2f32, Expand);
+    setOperationAction(ISD::FEXP2, MVT::v2f32, Expand);
+    setOperationAction(ISD::FCEIL, MVT::v2f32, Expand);
+    setOperationAction(ISD::FTRUNC, MVT::v2f32, Expand);
+    setOperationAction(ISD::FRINT, MVT::v2f32, Expand);
+    setOperationAction(ISD::FNEARBYINT, MVT::v2f32, Expand);
+    setOperationAction(ISD::FFLOOR, MVT::v2f32, Expand);
 
     // Neon does not support some operations on v1i64 and v2i64 types.
     setOperationAction(ISD::MUL, MVT::v1i64, Expand);
