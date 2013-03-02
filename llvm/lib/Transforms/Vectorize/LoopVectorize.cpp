@@ -116,6 +116,12 @@ static const unsigned TinyTripCountUnrollThreshold = 128;
 /// number of pointers. Notice that the check is quadratic!
 static const unsigned RuntimeMemoryCheckThreshold = 4;
 
+/// We use a metadata with this name  to indicate that a scalar loop was
+/// vectorized and that we don't need to re-vectorize it if we run into it
+/// again.
+static const char*
+AlreadyVectorizedMDName = "llvm.vectorizer.already_vectorized";
+
 namespace {
 
 // Forward declarations.
@@ -1158,6 +1164,11 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   BasicBlock *BypassBlock = OrigLoop->getLoopPreheader();
   BasicBlock *ExitBlock = OrigLoop->getExitBlock();
   assert(ExitBlock && "Must have an exit block");
+
+  // Mark the old scalar loop with metadata that tells us not to vectorize this
+  // loop again if we run into it.
+  MDNode *MD = MDNode::get(OldBasicBlock->getContext(), ArrayRef<Value*>());
+  OldBasicBlock->getTerminator()->setMetadata(AlreadyVectorizedMDName, MD);
 
   // Some loops have a single integer induction variable, while other loops
   // don't. One example is c++ iterators that often have multiple pointer
@@ -2223,6 +2234,13 @@ bool LoopVectorizationLegality::canVectorize() {
 bool LoopVectorizationLegality::canVectorizeInstrs() {
   BasicBlock *PreHeader = TheLoop->getLoopPreheader();
   BasicBlock *Header = TheLoop->getHeader();
+
+  // If we marked the scalar loop as "already vectorized" then no need
+  // to vectorize it again.
+  if (Header->getTerminator()->getMetadata(AlreadyVectorizedMDName)) {
+    DEBUG(dbgs() << "LV: This loop was vectorized before\n");
+    return false;
+  }
 
   // For each block in the loop.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
