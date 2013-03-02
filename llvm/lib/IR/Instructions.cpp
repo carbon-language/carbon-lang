@@ -331,12 +331,9 @@ CallInst::CallInst(const CallInst &CI)
   SubclassOptionalData = CI.SubclassOptionalData;
 }
 
-void CallInst::addAttribute(unsigned i, Attribute attr) {
+void CallInst::addAttribute(unsigned i, Attribute::AttrKind attr) {
   AttributeSet PAL = getAttributes();
-  AttrBuilder B(attr);
-  LLVMContext &Context = getContext();
-  PAL = PAL.addAttributes(Context, i,
-                          AttributeSet::get(Context, i, B));
+  PAL = PAL.addAttribute(getContext(), i, attr);
   setAttributes(PAL);
 }
 
@@ -593,11 +590,9 @@ bool InvokeInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
   return false;
 }
 
-void InvokeInst::addAttribute(unsigned i, Attribute attr) {
+void InvokeInst::addAttribute(unsigned i, Attribute::AttrKind attr) {
   AttributeSet PAL = getAttributes();
-  AttrBuilder B(attr);
-  PAL = PAL.addAttributes(getContext(), i,
-                          AttributeSet::get(getContext(), i, B));
+  PAL = PAL.addAttribute(getContext(), i, attr);
   setAttributes(PAL);
 }
 
