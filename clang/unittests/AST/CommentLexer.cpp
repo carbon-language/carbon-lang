@@ -362,7 +362,7 @@ TEST_F(CommentLexerTest, DoxygenCommand6) {
   ASSERT_EQ(tok::text,          Toks[0].getKind());
   ASSERT_EQ(StringRef(" "),     Toks[0].getText());
 
-  ASSERT_EQ(tok::command,       Toks[1].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[1].getKind());
   ASSERT_EQ(StringRef("brief"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::text,          Toks[2].getKind());
@@ -382,22 +382,22 @@ TEST_F(CommentLexerTest, DoxygenCommand7) {
   ASSERT_EQ(tok::text,       Toks[0].getKind());
   ASSERT_EQ(StringRef(" "),  Toks[0].getText());
 
-  ASSERT_EQ(tok::command,    Toks[1].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[1].getKind());
   ASSERT_EQ(StringRef("em"), getCommandName(Toks[1]));
 
-  ASSERT_EQ(tok::command,    Toks[2].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[2].getKind());
   ASSERT_EQ(StringRef("em"), getCommandName(Toks[2]));
 
   ASSERT_EQ(tok::text,       Toks[3].getKind());
   ASSERT_EQ(StringRef(" "),  Toks[3].getText());
 
-  ASSERT_EQ(tok::command,    Toks[4].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[4].getKind());
   ASSERT_EQ(StringRef("em"), getCommandName(Toks[4]));
 
   ASSERT_EQ(tok::text,       Toks[5].getKind());
   ASSERT_EQ(StringRef("\t"), Toks[5].getText());
 
-  ASSERT_EQ(tok::command,    Toks[6].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[6].getKind());
   ASSERT_EQ(StringRef("em"), getCommandName(Toks[6]));
 
   ASSERT_EQ(tok::newline,    Toks[7].getKind());
@@ -446,7 +446,7 @@ TEST_F(CommentLexerTest, DoxygenCommand9) {
   ASSERT_EQ(tok::text,      Toks[0].getKind());
   ASSERT_EQ(StringRef(" "), Toks[0].getText());
 
-  ASSERT_EQ(tok::command,   Toks[1].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[1].getKind());
   ASSERT_EQ(StringRef("c"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::newline,   Toks[2].getKind());
@@ -466,7 +466,7 @@ TEST_F(CommentLexerTest, RegisterCustomBlockCommand) {
   ASSERT_EQ(tok::text,      Toks[0].getKind());
   ASSERT_EQ(StringRef(" "), Toks[0].getText());
 
-  ASSERT_EQ(tok::command,                 Toks[1].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[1].getKind());
   ASSERT_EQ(StringRef("NewBlockCommand"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::text,          Toks[2].getKind());
@@ -494,7 +494,7 @@ TEST_F(CommentLexerTest, RegisterMultipleBlockCommands) {
   ASSERT_EQ(tok::text,      Toks[0].getKind());
   ASSERT_EQ(StringRef(" "), Toks[0].getText());
 
-  ASSERT_EQ(tok::command,     Toks[1].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[1].getKind());
   ASSERT_EQ(StringRef("Foo"), getCommandName(Toks[1]));
 
   ASSERT_EQ(tok::newline,     Toks[2].getKind());
@@ -502,7 +502,7 @@ TEST_F(CommentLexerTest, RegisterMultipleBlockCommands) {
   ASSERT_EQ(tok::text,      Toks[3].getKind());
   ASSERT_EQ(StringRef(" "), Toks[3].getText());
 
-  ASSERT_EQ(tok::command,     Toks[4].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[4].getKind());
   ASSERT_EQ(StringRef("Bar"), getCommandName(Toks[4]));
 
   ASSERT_EQ(tok::text,         Toks[5].getKind());
@@ -513,7 +513,7 @@ TEST_F(CommentLexerTest, RegisterMultipleBlockCommands) {
   ASSERT_EQ(tok::text,      Toks[7].getKind());
   ASSERT_EQ(StringRef(" "), Toks[7].getText());
 
-  ASSERT_EQ(tok::command,       Toks[8].getKind());
+  ASSERT_EQ(tok::backslash_command, Toks[8].getKind());
   ASSERT_EQ(StringRef("Blech"), getCommandName(Toks[8]));
 
   ASSERT_EQ(tok::text,                Toks[9].getKind());

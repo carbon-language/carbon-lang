@@ -96,7 +96,8 @@ public:
 
   BlockCommandComment *actOnBlockCommandStart(SourceLocation LocBegin,
                                               SourceLocation LocEnd,
-                                              unsigned CommandID);
+                                              unsigned CommandID,
+                                              bool AtCommand);
 
   void actOnBlockCommandArgs(BlockCommandComment *Command,
                              ArrayRef<BlockCommandComment::Argument> Args);
@@ -106,7 +107,8 @@ public:
 
   ParamCommandComment *actOnParamCommandStart(SourceLocation LocBegin,
                                               SourceLocation LocEnd,
-                                              unsigned CommandID);
+                                              unsigned CommandID,
+                                              bool AtCommand);
 
   void actOnParamCommandDirectionArg(ParamCommandComment *Command,
                                      SourceLocation ArgLocBegin,
@@ -123,7 +125,8 @@ public:
 
   TParamCommandComment *actOnTParamCommandStart(SourceLocation LocBegin,
                                                 SourceLocation LocEnd,
-                                                unsigned CommandID);
+                                                unsigned CommandID,
+                                                bool AtCommand);
 
   void actOnTParamCommandParamNameArg(TParamCommandComment *Command,
                                       SourceLocation ArgLocBegin,

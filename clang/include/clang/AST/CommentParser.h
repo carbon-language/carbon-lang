@@ -87,7 +87,7 @@ class Parser {
   }
 
   bool isTokBlockCommand() {
-    return Tok.is(tok::command) &&
+    return (Tok.is(tok::backslash_command) || Tok.is(tok::at_command)) &&
            Traits.getCommandInfo(Tok.getCommandID())->IsBlockCommand;
   }
 

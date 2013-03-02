@@ -572,14 +572,15 @@ protected:
   ParagraphComment *Paragraph;
   
   /// Header Doc command, if true
-  bool HDCommand;
+  bool AtCommand;
   
   BlockCommandComment(CommentKind K,
                       SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      unsigned CommandID) :
+                      unsigned CommandID,
+                      bool AtCommand) :
       BlockContentComment(K, LocBegin, LocEnd),
-      Paragraph(NULL), HDCommand(false) {
+      Paragraph(NULL), AtCommand(AtCommand) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
   }
@@ -587,9 +588,10 @@ protected:
 public:
   BlockCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      unsigned CommandID) :
+                      unsigned CommandID,
+                      bool AtCommand) :
       BlockContentComment(BlockCommandCommentKind, LocBegin, LocEnd),
-      Paragraph(NULL), HDCommand(false) {
+      Paragraph(NULL), AtCommand(AtCommand) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
   }
@@ -661,12 +663,8 @@ public:
       setSourceRange(SourceRange(getLocStart(), NewLocEnd));
   }
   
-  bool getHDCommand() const LLVM_READONLY {
-    return HDCommand;
-  }
-  
-  void setHDCommand(bool HDC) {
-    HDCommand = HDC;
+  bool getAtCommand() const LLVM_READONLY {
+    return AtCommand;
   }
 };
 
@@ -681,9 +679,10 @@ public:
 
   ParamCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
-                      unsigned CommandID) :
+                      unsigned CommandID,
+                      bool AtCommand) :
       BlockCommandComment(ParamCommandCommentKind, LocBegin, LocEnd,
-                          CommandID),
+                          CommandID, AtCommand),
       ParamIndex(InvalidParamIndex) {
     ParamCommandCommentBits.Direction = In;
     ParamCommandCommentBits.IsDirectionExplicit = false;
@@ -763,8 +762,10 @@ private:
 public:
   TParamCommandComment(SourceLocation LocBegin,
                        SourceLocation LocEnd,
-                       unsigned CommandID) :
-      BlockCommandComment(TParamCommandCommentKind, LocBegin, LocEnd, CommandID)
+                       unsigned CommandID,
+                       bool AtCommand) :
+      BlockCommandComment(TParamCommandCommentKind, LocBegin, LocEnd, CommandID,
+                          AtCommand)
   { }
 
   static bool classof(const Comment *C) {
@@ -845,7 +846,7 @@ public:
                        SourceLocation LocEnd,
                        unsigned CommandID) :
       BlockCommandComment(VerbatimBlockCommentKind,
-                          LocBegin, LocEnd, CommandID)
+                          LocBegin, LocEnd, CommandID, false)
   { }
 
   static bool classof(const Comment *C) {
@@ -898,7 +899,7 @@ public:
                       StringRef Text) :
       BlockCommandComment(VerbatimLineCommentKind,
                           LocBegin, LocEnd,
-                          CommandID),
+                          CommandID, false),
       Text(Text),
       TextBegin(TextBegin)
   { }

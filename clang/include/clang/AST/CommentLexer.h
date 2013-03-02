@@ -35,7 +35,8 @@ enum TokenKind {
   newline,
   text,
   unknown_command, // Command that does not have an ID.
-  command,         // Command with an ID.
+  backslash_command,   // \Command with an ID.
+  at_command,          // @command with an ID.
   verbatim_block_begin,
   verbatim_block_line,
   verbatim_block_end,
@@ -76,9 +77,6 @@ class Token {
   /// contains the length of the string that starts at TextPtr.
   unsigned IntVal;
   
-  /// This command is a Header Doc command (command starts with '@').
-  bool     HDCommand;
-
 public:
   SourceLocation getLocation() const LLVM_READONLY { return Loc; }
   void setLocation(SourceLocation SL) { Loc = SL; }
@@ -121,16 +119,12 @@ public:
   }
 
   unsigned getCommandID() const LLVM_READONLY {
-    assert(is(tok::command));
+    assert(is(tok::backslash_command) || is(tok::at_command));
     return IntVal;
   }
 
-  bool getHDCommand() const LLVM_READONLY {
-    return HDCommand;
-  }
-  
   void setCommandID(unsigned ID) {
-    assert(is(tok::command));
+    assert(is(tok::backslash_command) || is(tok::at_command));
     IntVal = ID;
   }
 

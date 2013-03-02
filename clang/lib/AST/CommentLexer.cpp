@@ -298,7 +298,7 @@ void Lexer::lexCommentText(Token &T) {
     switch(*TokenPtr) {
       case '\\':
       case '@': {
-        T.HDCommand = (*TokenPtr == '@');
+        bool AtCommand = (*TokenPtr == '@');
         TokenPtr++;
         if (TokenPtr == CommentEnd) {
           formTextToken(T, TokenPtr);
@@ -359,7 +359,9 @@ void Lexer::lexCommentText(Token &T) {
           setupAndLexVerbatimLine(T, TokenPtr, Info);
           return;
         }
-        formTokenWithChars(T, TokenPtr, tok::command);
+        formTokenWithChars(T, TokenPtr, 
+                           (AtCommand ? tok::at_command 
+                                      : tok::backslash_command));
         T.setCommandID(Info->getID());
         return;
       }

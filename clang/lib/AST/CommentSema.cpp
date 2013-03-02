@@ -49,8 +49,9 @@ ParagraphComment *Sema::actOnParagraphComment(
 
 BlockCommandComment *Sema::actOnBlockCommandStart(SourceLocation LocBegin,
                                                   SourceLocation LocEnd,
-                                                  unsigned CommandID) {
-  return new (Allocator) BlockCommandComment(LocBegin, LocEnd, CommandID);
+                                                  unsigned CommandID,
+                                                  bool AtCommand) {
+  return new (Allocator) BlockCommandComment(LocBegin, LocEnd, CommandID, AtCommand);
 }
 
 void Sema::actOnBlockCommandArgs(BlockCommandComment *Command,
@@ -69,9 +70,10 @@ void Sema::actOnBlockCommandFinish(BlockCommandComment *Command,
 
 ParamCommandComment *Sema::actOnParamCommandStart(SourceLocation LocBegin,
                                                   SourceLocation LocEnd,
-                                                  unsigned CommandID) {
+                                                  unsigned CommandID,
+                                                  bool AtCommand) {
   ParamCommandComment *Command =
-      new (Allocator) ParamCommandComment(LocBegin, LocEnd, CommandID);
+      new (Allocator) ParamCommandComment(LocBegin, LocEnd, CommandID, AtCommand);
 
   if (!isFunctionDecl())
     Diag(Command->getLocation(),
@@ -162,9 +164,10 @@ void Sema::actOnParamCommandFinish(ParamCommandComment *Command,
 
 TParamCommandComment *Sema::actOnTParamCommandStart(SourceLocation LocBegin,
                                                     SourceLocation LocEnd,
-                                                    unsigned CommandID) {
+                                                    unsigned CommandID,
+                                                    bool AtCommand) {
   TParamCommandComment *Command =
-      new (Allocator) TParamCommandComment(LocBegin, LocEnd, CommandID);
+      new (Allocator) TParamCommandComment(LocBegin, LocEnd, CommandID, AtCommand);
 
   if (!isTemplateOrSpecialization())
     Diag(Command->getLocation(),
@@ -432,7 +435,7 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
     if (!DiagLoc.isValid())
       DiagLoc = Command->getCommandNameRange(Traits).getEnd();
     Diag(DiagLoc, diag::warn_doc_block_command_empty_paragraph)
-      << Command->getHDCommand()
+      << Command->getAtCommand()
       << Command->getCommandName(Traits)
       << Command->getSourceRange();
   }
@@ -460,7 +463,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
       }
       Diag(Command->getLocation(),
            diag::warn_doc_returns_attached_to_a_void_function)
-        << Command->getHDCommand()
+        << Command->getAtCommand()
         << Command->getCommandName(Traits)
         << DiagKind
         << Command->getSourceRange();
@@ -472,7 +475,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
   
   Diag(Command->getLocation(),
        diag::warn_doc_returns_not_attached_to_a_function_decl)
-    << Command->getHDCommand()
+    << Command->getAtCommand()
     << Command->getCommandName(Traits)
     << Command->getSourceRange();
 }
@@ -505,18 +508,18 @@ void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
   StringRef CommandName = Command->getCommandName(Traits);
   StringRef PrevCommandName = PrevCommand->getCommandName(Traits);
   Diag(Command->getLocation(), diag::warn_doc_block_command_duplicate)
-      << Command->getHDCommand()
+      << Command->getAtCommand()
       << CommandName
       << Command->getSourceRange();
   if (CommandName == PrevCommandName)
     Diag(PrevCommand->getLocation(), diag::note_doc_block_command_previous)
-        << PrevCommand->getHDCommand()
+        << PrevCommand->getAtCommand()
         << PrevCommandName
         << PrevCommand->getSourceRange();
   else
     Diag(PrevCommand->getLocation(),
          diag::note_doc_block_command_previous_alias)
-        << PrevCommand->getHDCommand()
+        << PrevCommand->getAtCommand()
         << PrevCommandName
         << CommandName;
 }

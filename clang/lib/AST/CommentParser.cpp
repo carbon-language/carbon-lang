@@ -300,7 +300,7 @@ void Parser::parseBlockCommandArgs(BlockCommandComment *BC,
 }
 
 BlockCommandComment *Parser::parseBlockCommand() {
-  assert(Tok.is(tok::command));
+  assert(Tok.is(tok::backslash_command) || Tok.is(tok::at_command));
 
   ParamCommandComment *PC;
   TParamCommandComment *TPC;
@@ -312,19 +312,19 @@ BlockCommandComment *Parser::parseBlockCommand() {
     IsParam = true;
     PC = S.actOnParamCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
-                                  Tok.getCommandID());
-    PC->setHDCommand(Tok.getHDCommand());
+                                  Tok.getCommandID(),
+                                  Tok.is(tok::at_command));
   } else if (Info->IsTParamCommand) {
     IsTParam = true;
     TPC = S.actOnTParamCommandStart(Tok.getLocation(),
                                     Tok.getEndLocation(),
-                                    Tok.getCommandID());
-    TPC->setHDCommand(Tok.getHDCommand());
+                                    Tok.getCommandID(),
+                                    Tok.is(tok::at_command));
   } else {
     BC = S.actOnBlockCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
-                                  Tok.getCommandID());
-    BC->setHDCommand(Tok.getHDCommand());
+                                  Tok.getCommandID(),
+                                  Tok.is(tok::at_command));
   }
   consumeToken();
 
@@ -395,7 +395,7 @@ BlockCommandComment *Parser::parseBlockCommand() {
 }
 
 InlineCommandComment *Parser::parseInlineCommand() {
-  assert(Tok.is(tok::command));
+  assert(Tok.is(tok::backslash_command) || Tok.is(tok::at_command));
 
   const Token CommandTok = Tok;
   consumeToken();
@@ -562,7 +562,8 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
       consumeToken();
       continue;
 
-    case tok::command: {
+    case tok::backslash_command:
+    case tok::at_command: {
       const CommandInfo *Info = Traits.getCommandInfo(Tok.getCommandID());
       if (Info->IsBlockCommand) {
         if (Content.size() == 0)
@@ -572,7 +573,7 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
       if (Info->IsVerbatimBlockEndCommand) {
         Diag(Tok.getLocation(),
              diag::warn_verbatim_block_end_without_start)
-          << Tok.getHDCommand()
+          << Tok.is(tok::at_command)
           << Info->Name
           << SourceRange(Tok.getLocation(), Tok.getEndLocation());
         consumeToken();
@@ -710,7 +711,8 @@ BlockContentComment *Parser::parseBlockContent() {
   switch (Tok.getKind()) {
   case tok::text:
   case tok::unknown_command:
-  case tok::command:
+  case tok::backslash_command:
+  case tok::at_command:
   case tok::html_start_tag:
   case tok::html_end_tag:
     return parseParagraphOrBlockCommand();

@@ -78,7 +78,7 @@ std::string BriefParser::Parse() {
       continue;
     }
 
-    if (Tok.is(tok::command)) {
+    if (Tok.is(tok::backslash_command) || Tok.is(tok::at_command)) {
       const CommandInfo *Info = Traits.getCommandInfo(Tok.getCommandID());
       if (Info->IsBriefCommand) {
         FirstParagraphOrBrief.clear();
