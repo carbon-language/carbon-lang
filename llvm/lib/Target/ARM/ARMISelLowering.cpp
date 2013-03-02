@@ -4468,12 +4468,10 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                  DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, DAG.getUNDEF(VT),
                         Value, DAG.getConstant(index, MVT::i32)),
                            DAG.getConstant(index, MVT::i32));
-        } else {
+        } else
           N = DAG.getNode(ARMISD::VDUPLANE, dl, VT,
                         Value->getOperand(0), Value->getOperand(1));
-        }
-      }
-      else
+      } else
         N = DAG.getNode(ARMISD::VDUP, dl, VT, Value);
 
       if (!usesOnlyOneValue) {
