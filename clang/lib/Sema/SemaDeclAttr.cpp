@@ -5087,37 +5087,37 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
   }
 }
 
+void Sema::ProcessPragmaWeak(Scope *S, Decl *D) {
+  // It's valid to "forward-declare" #pragma weak, in which case we
+  // have to do this.
+  LoadExternalWeakUndeclaredIdentifiers();
+  if (!WeakUndeclaredIdentifiers.empty()) {
+    NamedDecl *ND = NULL;
+    if (VarDecl *VD = dyn_cast<VarDecl>(D))
+      if (VD->isExternC())
+        ND = VD;
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+      if (FD->isExternC())
+        ND = FD;
+    if (ND) {
+      if (IdentifierInfo *Id = ND->getIdentifier()) {
+        llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
+          = WeakUndeclaredIdentifiers.find(Id);
+        if (I != WeakUndeclaredIdentifiers.end()) {
+          WeakInfo W = I->second;
+          DeclApplyPragmaWeak(S, ND, W);
+          WeakUndeclaredIdentifiers[Id] = W;
+        }
+      }
+    }
+  }
+}
+
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
 void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
                                  bool NonInheritable, bool Inheritable) {
-  // It's valid to "forward-declare" #pragma weak, in which case we
-  // have to do this.
-  if (Inheritable) {
-    LoadExternalWeakUndeclaredIdentifiers();
-    if (!WeakUndeclaredIdentifiers.empty()) {
-      NamedDecl *ND = NULL;
-      if (VarDecl *VD = dyn_cast<VarDecl>(D))
-        if (VD->isExternC())
-          ND = VD;
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-        if (FD->isExternC())
-          ND = FD;
-      if (ND) {
-        if (IdentifierInfo *Id = ND->getIdentifier()) {
-          llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
-            = WeakUndeclaredIdentifiers.find(Id);
-          if (I != WeakUndeclaredIdentifiers.end()) {
-            WeakInfo W = I->second;
-            DeclApplyPragmaWeak(S, ND, W);
-            WeakUndeclaredIdentifiers[Id] = W;
-          }
-        }
-      }
-    }
-  }
-
   // Apply decl attributes from the DeclSpec if present.
   if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes().getList())
     ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
