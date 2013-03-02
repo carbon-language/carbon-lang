@@ -144,6 +144,14 @@ static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
 bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
                    const TargetLibraryInfo *TLI, bool RoundToAlign = false);
 
+/// \brief Compute the size of the underlying object pointed by Ptr. Returns
+/// true and the object size in Size if successful, and false otherwise.
+/// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
+/// byval arguments, and global variables.
+bool getUnderlyingObjectSize(const Value *Ptr, uint64_t &Size,
+                             const DataLayout *TD, const TargetLibraryInfo *TLI,
+                             bool RoundToAlign = false);
+
 
 
 typedef std::pair<APInt, APInt> SizeOffsetType;

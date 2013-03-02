@@ -360,6 +360,26 @@ bool llvm::getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
   return true;
 }
 
+/// \brief Compute the size of the underlying object pointed by Ptr. Returns
+/// true and the object size in Size if successful, and false otherwise.
+/// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
+/// byval arguments, and global variables.
+bool llvm::getUnderlyingObjectSize(const Value *Ptr, uint64_t &Size,
+                                   const DataLayout *TD,
+                                   const TargetLibraryInfo *TLI,
+                                   bool RoundToAlign) {
+  if (!TD)
+    return false;
+
+  ObjectSizeOffsetVisitor Visitor(TD, TLI, Ptr->getContext(), RoundToAlign);
+  SizeOffsetType Data = Visitor.compute(const_cast<Value*>(Ptr));
+  if (!Visitor.knownSize(Data))
+    return false;
+
+  Size = Data.first.getZExtValue();
+  return true;
+}
+
 
 STATISTIC(ObjectVisitorArgument,
           "Number of arguments with unsolved size and offset");
