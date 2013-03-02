@@ -4,6 +4,7 @@
 
 include(AddLLVMDefinitions)
 include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 
 if( CMAKE_COMPILER_IS_GNUCXX )
   set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
@@ -66,7 +67,6 @@ if( LLVM_ENABLE_PIC )
   elseif( WIN32 OR CYGWIN)
     # On Windows all code is PIC. MinGW warns if -fPIC is used.
   else()
-    include(CheckCXXCompilerFlag)
     check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
     if( SUPPORTS_FPIC_FLAG )
       message(STATUS "Building with -fPIC")
