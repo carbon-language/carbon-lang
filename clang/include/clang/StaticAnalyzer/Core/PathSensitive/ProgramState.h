@@ -173,8 +173,8 @@ public:
   ProgramStateRef assume(DefinedOrUnknownSVal cond, bool assumption) const;
 
   /// This method assumes both "true" and "false" for 'cond', and
-  ///  returns both corresponding states.  It's shorthand for doing
-  ///  'assume' twice.
+  /// returns both corresponding states.  It's shorthand for doing
+  /// 'assume' twice.
   std::pair<ProgramStateRef , ProgramStateRef >
   assume(DefinedOrUnknownSVal cond) const;
 
@@ -182,7 +182,11 @@ public:
                                DefinedOrUnknownSVal upperBound,
                                bool assumption,
                                QualType IndexType = QualType()) const;
-
+  
+  /// \brief Check if the given SVal is constrained to zero or is a zero
+  ///        constant.
+  ConditionTruthVal isNull(SVal V) const;
+  
   /// Utility method for getting regions.
   const VarRegion* getRegion(const VarDecl *D, const LocationContext *LC) const;
 

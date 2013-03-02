@@ -27,6 +27,8 @@
 using namespace clang;
 using namespace ento;
 
+using llvm::FoldingSetNodeID;
+
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
@@ -663,6 +665,49 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
   return NULL;
 }
 
+SuppressInlineDefensiveChecksVisitor::
+SuppressInlineDefensiveChecksVisitor(DefinedSVal Value, const ExplodedNode *N)
+  : V(Value), IsSatisfied(false) {
+
+  assert(N->getState()->isNull(V).isConstrainedTrue() &&
+         "The visitor only tracks the cases where V is constrained to 0");
+}
+
+void SuppressInlineDefensiveChecksVisitor::Profile(FoldingSetNodeID &ID) const {
+  static int id = 0;
+  ID.AddPointer(&id);
+  ID.Add(V);
+}
+
+const char *SuppressInlineDefensiveChecksVisitor::getTag() {
+  return "IDCVisitor";
+}
+
+PathDiagnosticPiece *
+SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *N,
+                                                const ExplodedNode *PrevN,
+                                                BugReporterContext &BRC,
+                                                BugReport &BR) {
+  if (IsSatisfied)
+    return 0;
+  
+  // Check if in the previous state it was feasible for this value
+  // to *not* be null.
+  if (PrevN->getState()->assume(V, true)) {
+    IsSatisfied = true;
+
+    // TODO: Investigate if missing the transition point, where V
+    //       is non-null in N could lead to false negatives.
+
+    // Check if this is inline defensive checks.
+    const LocationContext *CurLC = PrevN->getLocationContext();
+    const LocationContext *ReportLC = BR.getErrorNode()->getLocationContext();
+    if (CurLC != ReportLC && !CurLC->isParentOf(ReportLC))
+      BR.markInvalid("Suppress IDC", CurLC);
+  }
+  return 0;
+}
+
 bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
                                         BugReport &report, bool IsArg) {
   if (!S || !N)
@@ -772,8 +817,16 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
         // If the contents are symbolic, find out when they became null.
         if (V.getAsLocSymbol()) {
           BugReporterVisitor *ConstraintTracker =
-              new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
+            new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
           report.addVisitor(ConstraintTracker);
+
+          // Add visitor, which will suppress inline defensive checks.
+          if (N->getState()->isNull(V).isConstrainedTrue()) {
+            BugReporterVisitor *IDCSuppressor =
+              new SuppressInlineDefensiveChecksVisitor(V.castAs<DefinedSVal>(),
+                                                       N);
+            report.addVisitor(IDCSuppressor);
+          }
         }
 
         if (Optional<KnownSVal> KV = V.getAs<KnownSVal>())

@@ -324,6 +324,16 @@ ProgramStateRef ProgramState::assumeInBound(DefinedOrUnknownSVal Idx,
   return CM.assume(this, inBound.castAs<DefinedSVal>(), Assumption);
 }
 
+ConditionTruthVal ProgramState::isNull(SVal V) const {
+  if (V.isZeroConstant())
+    return true;
+
+  SymbolRef Sym = V.getAsSymbol();
+  if (!Sym)
+    return false;
+  return getStateManager().ConstraintMgr->isNull(this, Sym);
+}
+
 ProgramStateRef ProgramStateManager::getInitialState(const LocationContext *InitLoc) {
   ProgramState State(this,
                 EnvMgr.getInitialEnvironment(),
