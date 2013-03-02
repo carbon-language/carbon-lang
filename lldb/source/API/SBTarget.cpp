@@ -2250,6 +2250,12 @@ SBTarget::GetSourceManager()
 lldb::SBInstructionList
 SBTarget::ReadInstructions (lldb::SBAddress base_addr, uint32_t count)
 {
+    return ReadInstructions (base_addr, count, NULL);
+}
+
+lldb::SBInstructionList
+SBTarget::ReadInstructions (lldb::SBAddress base_addr, uint32_t count, const char *flavor_string)
+{
     SBInstructionList sb_instructions;
     
     TargetSP target_sp(GetSP());
@@ -2265,6 +2271,7 @@ SBTarget::ReadInstructions (lldb::SBAddress base_addr, uint32_t count)
             const size_t bytes_read = target_sp->ReadMemory(*addr_ptr, prefer_file_cache, data.GetBytes(), data.GetByteSize(), error);
             sb_instructions.SetDisassembler (Disassembler::DisassembleBytes (target_sp->GetArchitecture(),
                                                                              NULL,
+                                                                             flavor_string,
                                                                              *addr_ptr,
                                                                              data.GetBytes(),
                                                                              bytes_read,
@@ -2279,6 +2286,12 @@ SBTarget::ReadInstructions (lldb::SBAddress base_addr, uint32_t count)
 lldb::SBInstructionList
 SBTarget::GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size)
 {
+    return GetInstructionsWithFlavor (base_addr, NULL, buf, size);
+}
+
+lldb::SBInstructionList
+SBTarget::GetInstructionsWithFlavor (lldb::SBAddress base_addr, const char *flavor_string, const void *buf, size_t size)
+{
     SBInstructionList sb_instructions;
     
     TargetSP target_sp(GetSP());
@@ -2291,6 +2304,7 @@ SBTarget::GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t si
         
         sb_instructions.SetDisassembler (Disassembler::DisassembleBytes (target_sp->GetArchitecture(),
                                                                          NULL,
+                                                                         flavor_string,
                                                                          addr,
                                                                          buf,
                                                                          size));
@@ -2302,7 +2316,13 @@ SBTarget::GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t si
 lldb::SBInstructionList
 SBTarget::GetInstructions (lldb::addr_t base_addr, const void *buf, size_t size)
 {
-    return GetInstructions (ResolveLoadAddress(base_addr), buf, size);
+    return GetInstructionsWithFlavor (ResolveLoadAddress(base_addr), NULL, buf, size);
+}
+
+lldb::SBInstructionList
+SBTarget::GetInstructionsWithFlavor (lldb::addr_t base_addr, const char *flavor_string, const void *buf, size_t size)
+{
+    return GetInstructionsWithFlavor (ResolveLoadAddress(base_addr), flavor_string, buf, size);
 }
 
 SBError

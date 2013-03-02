@@ -798,7 +798,9 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     ArchSpec arch(target->GetArchitecture());
     
-    lldb::DisassemblerSP disassembler = Disassembler::FindPlugin(arch, NULL);
+    const char *plugin_name = NULL;
+    const char *flavor_string = NULL;
+    lldb::DisassemblerSP disassembler = Disassembler::FindPlugin(arch, flavor_string, plugin_name);
     
     if (!disassembler)
     {

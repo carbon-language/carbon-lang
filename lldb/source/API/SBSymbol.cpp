@@ -113,10 +113,14 @@ SBSymbol::GetDescription (SBStream &description)
     return true;
 }
 
-
-
 SBInstructionList
 SBSymbol::GetInstructions (SBTarget target)
+{
+    return GetInstructions (target, NULL);
+}
+
+SBInstructionList
+SBSymbol::GetInstructions (SBTarget target, const char *flavor_string)
 {
     SBInstructionList sb_instructions;
     if (m_opaque_ptr)
@@ -137,6 +141,7 @@ SBSymbol::GetInstructions (SBTarget target)
                 AddressRange symbol_range (m_opaque_ptr->GetAddress(), m_opaque_ptr->GetByteSize());
                 sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture (),
                                                                                  NULL,
+                                                                                 flavor_string,
                                                                                  exe_ctx,
                                                                                  symbol_range));
             }

@@ -266,9 +266,12 @@ StackFrame::Disassemble ()
         Target *target = exe_ctx.GetTargetPtr();
         if (target)
         {
+            const char *plugin_name = NULL;
+            const char *flavor = NULL;
             Disassembler::Disassemble (target->GetDebugger(),
                                        target->GetArchitecture(),
-                                       NULL,
+                                       plugin_name,
+                                       flavor,
                                        exe_ctx,
                                        0,
                                        0,
@@ -1426,9 +1429,12 @@ StackFrame::GetStatus (Stream& strm,
                         AddressRange pc_range;
                         pc_range.GetBaseAddress() = GetFrameCodeAddress();
                         pc_range.SetByteSize(disasm_lines * target_arch.GetMaximumOpcodeByteSize());
+                        const char *plugin_name = NULL;
+                        const char *flavor = NULL;
                         Disassembler::Disassemble (target->GetDebugger(),
                                                    target_arch,
-                                                   NULL,
+                                                   plugin_name,
+                                                   flavor,
                                                    exe_ctx,
                                                    pc_range,
                                                    disasm_lines,

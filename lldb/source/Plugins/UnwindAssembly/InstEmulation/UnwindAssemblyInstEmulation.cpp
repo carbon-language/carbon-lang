@@ -55,6 +55,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
         thread.CalculateExecutionContext(exe_ctx);
         DisassemblerSP disasm_sp (Disassembler::DisassembleRange (m_arch,
                                                                   NULL,
+                                                                  NULL,
                                                                   exe_ctx,
                                                                   range));
         

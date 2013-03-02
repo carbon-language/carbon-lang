@@ -120,7 +120,7 @@ Disassembler *
 ThreadPlanAssemblyTracer::GetDisassembler ()
 {
     if (m_disassembler_sp.get() == NULL)
-        m_disassembler_sp = Disassembler::FindPlugin(m_thread.GetProcess()->GetTarget().GetArchitecture(), NULL);
+        m_disassembler_sp = Disassembler::FindPlugin(m_thread.GetProcess()->GetTarget().GetArchitecture(), NULL, NULL);
     return m_disassembler_sp.get();
 }
 

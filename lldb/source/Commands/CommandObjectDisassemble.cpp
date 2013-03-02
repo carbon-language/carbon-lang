@@ -46,6 +46,7 @@ CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &in
     at_pc (false),
     frame_line (false),
     plugin_name (),
+    flavor_string(),
     arch(),
     some_location_specified (false) 
 {
@@ -125,6 +126,18 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         plugin_name.assign (option_arg);
         break;
 
+    case 'F':
+        {
+            Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
+            if (target->GetArchitecture().GetTriple().getArch() == llvm::Triple::x86
+                || target->GetArchitecture().GetTriple().getArch() == llvm::Triple::x86_64)
+            {
+                flavor_string.assign (option_arg);
+            }
+            else
+                error.SetErrorStringWithFormat("Disassembler flavors are currently only supported for x86 and x86_64 targets.");
+            break;
+        }
     case 'r':
         raw = true;
         break;
@@ -162,6 +175,26 @@ CommandObjectDisassemble::CommandOptions::OptionParsingStarting ()
     end_addr = LLDB_INVALID_ADDRESS;
     raw = false;
     plugin_name.clear();
+    
+    Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
+    
+    // This is a hack till we get the ability to specify features based on architecture.  For now GetDisassemblyFlavor
+    // is really only valid for x86 (and for the llvm assembler plugin, but I'm papering over that since that is the
+    // only disassembler plugin we have...
+    if (target)
+    {
+        if (target->GetArchitecture().GetTriple().getArch() == llvm::Triple::x86
+            || target->GetArchitecture().GetTriple().getArch() == llvm::Triple::x86_64)
+        {
+            flavor_string.assign(target->GetDisassemblyFlavor());
+        }
+        else
+            flavor_string.assign ("default");
+        
+    }
+    else
+        flavor_string.assign("default");
+    
     arch.Clear();
     some_location_specified = false;
 }
@@ -189,6 +222,9 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "mixed"        , 'm', no_argument        , NULL, 0, eArgTypeNone,        "Enable mixed source and assembly display."},
 { LLDB_OPT_SET_ALL, false, "raw"          , 'r', no_argument        , NULL, 0, eArgTypeNone,        "Print raw disassembly with no symbol information."},
 { LLDB_OPT_SET_ALL, false, "plugin"       , 'P', required_argument  , NULL, 0, eArgTypePlugin,      "Name of the disassembler plugin you want to use."},
+{ LLDB_OPT_SET_ALL, false, "flavor"       , 'F', required_argument  , NULL, 0, eArgTypeDisassemblyFlavor,        "Name of the disassembly flavor you want to use.  "
+                                                                                                    "Currently the only valid options are default, and for Intel"
+                                                                                                    " architectures, att and intel."},
 { LLDB_OPT_SET_ALL, false, "arch"         , 'a', required_argument  , NULL, 0, eArgTypeArchitecture,"Specify the architecture to use from cross disassembly."},
 { LLDB_OPT_SET_1  |
   LLDB_OPT_SET_2  , true , "start-address", 's', required_argument  , NULL, 0, eArgTypeAddressOrExpression,"Address at which to start disassembling."},
@@ -245,20 +281,26 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
     }
 
     const char *plugin_name = m_options.GetPluginName ();
-    DisassemblerSP disassembler = Disassembler::FindPlugin(m_options.arch, plugin_name);
+    const char *flavor_string = m_options.GetFlavorString();
+
+    DisassemblerSP disassembler = Disassembler::FindPlugin(m_options.arch, flavor_string, plugin_name);
 
     if (!disassembler)
     {
         if (plugin_name)
-            result.AppendErrorWithFormat ("Unable to find Disassembler plug-in named '%s' that supports the '%s' architecture.\n", 
+        {
+            result.AppendErrorWithFormat ("Unable to find Disassembler plug-in named '%s' that supports the '%s' architecture.\n",
                                           plugin_name,
                                           m_options.arch.GetArchitectureName());
+        }
         else
             result.AppendErrorWithFormat ("Unable to find Disassembler plug-in for the '%s' architecture.\n", 
                                           m_options.arch.GetArchitectureName());
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
+    else if (flavor_string != NULL && !disassembler->FlavorValidForArchSpec(m_options.arch, flavor_string))
+        result.AppendWarningWithFormat("invalid disassembler flavor \"%s\", using default.\n", flavor_string);
 
     result.SetStatus (eReturnStatusSuccessFinishResult);
 
@@ -293,6 +335,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
         if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                        m_options.arch,
                                        plugin_name,
+                                       flavor_string,
                                        m_exe_ctx,
                                        name,
                                        NULL,    // Module *
@@ -413,6 +456,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
             if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                            m_options.arch,
                                            plugin_name,
+                                           flavor_string,
                                            m_exe_ctx,
                                            range.GetBaseAddress(),
                                            m_options.num_instructions,
@@ -459,6 +503,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
             if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                            m_options.arch,
                                            plugin_name,
+                                           flavor_string,
                                            m_exe_ctx,
                                            range,
                                            m_options.num_instructions,

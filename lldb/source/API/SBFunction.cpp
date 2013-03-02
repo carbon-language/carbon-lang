@@ -122,6 +122,12 @@ SBFunction::GetDescription (SBStream &s)
 SBInstructionList
 SBFunction::GetInstructions (SBTarget target)
 {
+    return GetInstructions (target, NULL);
+}
+
+SBInstructionList
+SBFunction::GetInstructions (SBTarget target, const char *flavor)
+{
     SBInstructionList sb_instructions;
     if (m_opaque_ptr)
     {
@@ -139,6 +145,7 @@ SBFunction::GetInstructions (SBTarget target)
         {
             sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture(),
                                                                              NULL,
+                                                                             flavor,
                                                                              exe_ctx,
                                                                              m_opaque_ptr->GetAddressRange()));
         }

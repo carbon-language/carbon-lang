@@ -1029,6 +1029,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeCommandName, "cmd-name", CommandCompletions::eNoCompletion, { NULL, false }, "A debugger command (may be multiple words), without any options or arguments." },
     { eArgTypeCount, "count", CommandCompletions::eNoCompletion, { NULL, false }, "An unsigned integer." },
     { eArgTypeDirectoryName, "directory", CommandCompletions::eDiskDirectoryCompletion, { NULL, false }, "A directory name." },
+    { eArgTypeDisassemblyFlavor, "disassembly-flavor", CommandCompletions::eNoCompletion, { NULL, false }, "A disassembly flavor recognized by your disassembly plugin.  Currently the only valid options are \"att\" and \"intel\" for Intel targets" },
     { eArgTypeEndAddress, "end-address", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeExpression, "expr", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeExpressionPath, "expr-path", CommandCompletions::eNoCompletion, { ExprPathHelpTextCallback, true }, NULL },

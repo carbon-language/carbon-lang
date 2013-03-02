@@ -2210,6 +2210,22 @@ g_inline_breakpoint_enums[] =
     { 0, NULL, NULL }
 };
 
+typedef enum x86DisassemblyFlavor
+{
+    eX86DisFlavorDefault,
+    eX86DisFlavorIntel,
+    eX86DisFlavorATT
+} x86DisassemblyFlavor;
+
+static OptionEnumValueElement
+g_x86_dis_flavor_value_types[] =
+{
+    { eX86DisFlavorDefault, "default", "Disassembler default (currently att)."},
+    { eX86DisFlavorIntel,   "intel",   "Intel disassembler flavor."},
+    { eX86DisFlavorATT,     "att",     "AT&T disassembler flavor."},
+    { 0, NULL, NULL }
+};
+
 static PropertyDefinition
 g_properties[] =
 {
@@ -2243,6 +2259,8 @@ g_properties[] =
         "Always checking for inlined breakpoint locations can be expensive (memory and time), so we try to minimize the "
         "times we look for inlined locations. This setting allows you to control exactly which strategy is used when settings "
         "file and line breakpoints." },
+    // FIXME: This is the wrong way to do per-architecture settings, but we don't have a general per architecture settings system in place yet.
+    { "x86-disassembly-flavor"             , OptionValue::eTypeEnum      , false, eX86DisFlavorDefault,       NULL, g_x86_dis_flavor_value_types, "The default disassembly flavor to use for x86 or x86-64 targets." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2266,7 +2284,8 @@ enum
     ePropertyErrorPath,
     ePropertyDisableASLR,
     ePropertyDisableSTDIO,
-    ePropertyInlineStrategy
+    ePropertyInlineStrategy,
+    ePropertyDisassemblyFlavor
 };
 
 
@@ -2440,6 +2459,17 @@ TargetProperties::SetDisableSTDIO (bool b)
 {
     const uint32_t idx = ePropertyDisableSTDIO;
     m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+const char *
+TargetProperties::GetDisassemblyFlavor () const
+{
+    const uint32_t idx = ePropertyDisassemblyFlavor;
+    const char *return_value;
+    
+    x86DisassemblyFlavor flavor_value = (x86DisassemblyFlavor) m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
+    return_value = g_x86_dis_flavor_value_types[flavor_value].string_value;
+    return return_value;
 }
 
 InlineStrategy

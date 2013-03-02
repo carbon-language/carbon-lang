@@ -744,10 +744,22 @@ public:
     ReadInstructions (lldb::SBAddress base_addr, uint32_t count);
 
     lldb::SBInstructionList
+    ReadInstructions (lldb::SBAddress base_addr, uint32_t count, const char *flavor_string);
+
+    lldb::SBInstructionList
     GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size);
+    
+    // The "WithFlavor" is necessary to keep SWIG from getting confused about overloaded arguments when
+    // using the buf + size -> Python Object magic.
+    
+    lldb::SBInstructionList
+    GetInstructionsWithFlavor (lldb::SBAddress base_addr,  const char *flavor_string, const void *buf, size_t size);
     
     lldb::SBInstructionList
     GetInstructions (lldb::addr_t base_addr, const void *buf, size_t size);
+
+    lldb::SBInstructionList
+    GetInstructionsWithFlavor (lldb::addr_t base_addr, const char *flavor_string, const void *buf, size_t size);
 
     lldb::SBSymbolContextList
     FindSymbols (const char *name,

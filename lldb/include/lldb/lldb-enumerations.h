@@ -381,6 +381,7 @@ namespace lldb {
         eArgTypeCommandName,
         eArgTypeCount,
         eArgTypeDirectoryName,
+        eArgTypeDisassemblyFlavor,
         eArgTypeEndAddress,
         eArgTypeExpression,
         eArgTypeExpressionPath,

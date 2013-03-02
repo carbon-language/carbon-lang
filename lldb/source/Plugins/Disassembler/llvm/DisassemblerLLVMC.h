@@ -10,8 +10,22 @@
 #ifndef liblldb_DisassemblerLLVMC_h_
 #define liblldb_DisassemblerLLVMC_h_
 
+#include <string>
 
 #include "llvm-c/Disassembler.h"
+
+// Opaque references to C++ Objects in LLVM's MC.
+namespace llvm
+{
+    class MCContext;
+    class MCInst;
+    class MCInstrInfo;
+    class MCRegisterInfo;
+    class MCDisassembler;
+    class MCInstPrinter;
+    class MCAsmInfo;
+    class MCSubtargetInfo;
+}
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Disassembler.h"
@@ -22,6 +36,34 @@ class InstructionLLVMC;
 
 class DisassemblerLLVMC : public lldb_private::Disassembler
 {
+    // Since we need to make two actual MC Disassemblers for ARM (ARM & THUMB), and there's a bit of goo to set up and own
+    // in the MC disassembler world, I added this class to manage the actual disassemblers.
+    class LLVMCDisassembler
+    {
+    public:
+        LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner);
+        
+        ~LLVMCDisassembler() {};
+        
+        uint64_t GetMCInst (uint8_t *opcode_data, size_t opcode_data_len, lldb::addr_t pc, llvm::MCInst &mc_inst);
+        uint64_t PrintMCInst (llvm::MCInst &mc_inst, char *output_buffer, size_t out_buffer_len);
+        bool     CanBranch (llvm::MCInst &mc_inst);
+        bool     IsValid()
+        {
+            return m_is_valid;
+        }
+        
+    private:
+        bool                                 m_is_valid;
+        std::auto_ptr<llvm::MCContext>       m_context_ap;
+        std::auto_ptr<llvm::MCAsmInfo>       m_asm_info_ap;
+        std::auto_ptr<llvm::MCSubtargetInfo> m_subtarget_info_ap;
+        std::auto_ptr<llvm::MCInstrInfo>     m_instr_info_ap;
+        std::auto_ptr<llvm::MCRegisterInfo>  m_reg_info_ap;
+        std::auto_ptr<llvm::MCInstPrinter>   m_instr_printer_ap;
+        std::auto_ptr<llvm::MCDisassembler>  m_disasm_ap;
+    };
+
 public:
     //------------------------------------------------------------------
     // Static Functions
@@ -39,10 +81,9 @@ public:
     GetPluginDescriptionStatic();
     
     static lldb_private::Disassembler *
-    CreateInstance(const lldb_private::ArchSpec &arch);
-    
-    
-    DisassemblerLLVMC(const lldb_private::ArchSpec &arch);
+    CreateInstance(const lldb_private::ArchSpec &arch, const char *flavor);
+        
+    DisassemblerLLVMC(const lldb_private::ArchSpec &arch, const char *flavor /* = NULL */);
     
     virtual
     ~DisassemblerLLVMC();
@@ -69,10 +110,13 @@ public:
 protected:
     friend class InstructionLLVMC;
     
+    virtual bool
+    FlavorValidForArchSpec (const lldb_private::ArchSpec &arch, const char *flavor);
+    
     bool
     IsValid()
     {
-        return (m_disasm_context != NULL);
+        return (m_disasm_ap.get() != NULL && m_disasm_ap->IsValid());
     }
     
     int OpInfo(uint64_t PC,
@@ -117,8 +161,9 @@ protected:
     const lldb_private::ExecutionContext *m_exe_ctx;
     InstructionLLVMC *m_inst;
     lldb_private::Mutex m_mutex;
-    ::LLVMDisasmContextRef m_disasm_context;
-    ::LLVMDisasmContextRef m_alternate_disasm_context;
+    
+    std::auto_ptr<LLVMCDisassembler> m_disasm_ap;
+    std::auto_ptr<LLVMCDisassembler> m_alternate_disasm_ap;
 };
 
 #endif  // liblldb_DisassemblerLLVM_h_

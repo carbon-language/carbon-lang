@@ -79,6 +79,12 @@ public:
     void
     SetDisableSTDIO (bool b);
     
+    const char *
+    GetDisassemblyFlavor() const;
+
+//    void
+//    SetDisassemblyFlavor(const char *flavor);
+    
     InlineStrategy
     GetInlineStrategy () const;
 

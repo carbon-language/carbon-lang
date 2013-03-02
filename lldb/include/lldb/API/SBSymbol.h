@@ -43,6 +43,9 @@ public:
     lldb::SBInstructionList
     GetInstructions (lldb::SBTarget target);
 
+    lldb::SBInstructionList
+    GetInstructions (lldb::SBTarget target, const char *flavor_string);
+
     SBAddress
     GetStartAddress ();
     

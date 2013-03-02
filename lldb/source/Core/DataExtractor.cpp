@@ -1332,7 +1332,7 @@ DataExtractor::Dump (Stream *s,
             target_sp = exe_scope->CalculateTarget();
         if (target_sp)
         {
-            DisassemblerSP disassembler_sp (Disassembler::FindPlugin(target_sp->GetArchitecture(), NULL));
+            DisassemblerSP disassembler_sp (Disassembler::FindPlugin(target_sp->GetArchitecture(), NULL,  NULL));
             if (disassembler_sp)
             {
                 lldb::addr_t addr = base_addr + start_offset;

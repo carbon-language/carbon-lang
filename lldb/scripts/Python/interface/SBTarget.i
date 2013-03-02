@@ -704,7 +704,13 @@ public:
     ReadInstructions (lldb::SBAddress base_addr, uint32_t count);    
 
     lldb::SBInstructionList
+    ReadInstructions (lldb::SBAddress base_addr, uint32_t count, const char *flavor_string);
+
+    lldb::SBInstructionList
     GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size);
+    
+    lldb::SBInstructionList
+    GetInstructionsWithFlavor (lldb::SBAddress base_addr, const char *flavor_string, const void *buf, size_t size);
     
     lldb::SBSymbolContextList
     FindSymbols (const char *name, lldb::SymbolType type = eSymbolTypeAny);

@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <vector>
+#include <string>
 
 // Other libraries and framework includes
 // Project includes
@@ -51,7 +52,7 @@ public:
     GetOperands (const ExecutionContext* exe_ctx)
     {
         CalculateMnemonicOperandsAndCommentIfNeeded (exe_ctx);
-        return m_mnemocics.c_str();
+        return m_mnemonics.c_str();
     }
     
     const char *
@@ -137,7 +138,7 @@ private:
 protected:
     Opcode m_opcode; // The opcode for this instruction
     std::string m_opcode_name;
-    std::string m_mnemocics;
+    std::string m_mnemonics;
     std::string m_comment;
     bool m_calculated_strings;
 
@@ -247,18 +248,28 @@ public:
         eOptionMarkPCAddress    = (1u << 3)  // Mark the disassembly line the contains the PC
     };
 
+    // FindPlugin should be lax about the flavor string (it is too annoying to have various internal uses of the
+    // disassembler fail because the global flavor string gets set wrong.  Instead, if you get a flavor string you
+    // don't understand, use the default.  Folks who care to check can use the FlavorValidForArchSpec method on the
+    // disassembler they got back.
     static lldb::DisassemblerSP
-    FindPlugin (const ArchSpec &arch, const char *plugin_name);
+    FindPlugin (const ArchSpec &arch, const char *flavor, const char *plugin_name);
+    
+    // This version will use the value in the Target settings if flavor is NULL;
+    static lldb::DisassemblerSP
+    FindPluginForTarget(const lldb::TargetSP target_sp, const ArchSpec &arch, const char *flavor, const char *plugin_name);
 
     static lldb::DisassemblerSP
     DisassembleRange (const ArchSpec &arch,
                       const char *plugin_name,
+                      const char *flavor,
                       const ExecutionContext &exe_ctx,
                       const AddressRange &disasm_range);
     
     static lldb::DisassemblerSP 
     DisassembleBytes (const ArchSpec &arch,
                       const char *plugin_name,
+                      const char *flavor,
                       const Address &start,
                       const void *bytes,
                       size_t length,
@@ -268,6 +279,7 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const char *plugin_name,
+                 const char *flavor,
                  const ExecutionContext &exe_ctx,
                  const AddressRange &range,
                  uint32_t num_instructions,
@@ -279,6 +291,7 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const char *plugin_name,
+                 const char *flavor,
                  const ExecutionContext &exe_ctx,
                  const Address &start,
                  uint32_t num_instructions,
@@ -290,6 +303,7 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const char *plugin_name,
+                 const char *flavor,
                  const ExecutionContext &exe_ctx,
                  SymbolContextList &sc_list,
                  uint32_t num_instructions,
@@ -301,6 +315,7 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const char *plugin_name,
+                 const char *flavor,
                  const ExecutionContext &exe_ctx,
                  const ConstString &name,
                  Module *module,
@@ -313,16 +328,17 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const char *plugin_name,
+                 const char *flavor,
                  const ExecutionContext &exe_ctx,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
                  uint32_t options,
                  Stream &strm);
-
+    
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    Disassembler(const ArchSpec &arch);
+    Disassembler(const ArchSpec &arch, const char *flavor);
     virtual ~Disassembler();
 
     typedef const char * (*SummaryCallback)(const Instruction& inst, ExecutionContext *exe_context, void *user_data);
@@ -365,6 +381,15 @@ public:
     {
         return m_arch;
     }
+    
+    const char *
+    GetFlavor () const
+    {
+        return m_flavor.c_str();
+    }
+    
+    virtual bool
+    FlavorValidForArchSpec (const lldb_private::ArchSpec &arch, const char *flavor) = 0;    
 
 protected:
     //------------------------------------------------------------------
@@ -373,6 +398,7 @@ protected:
     const ArchSpec m_arch;
     InstructionList m_instruction_list;
     lldb::addr_t m_base_addr;
+    std::string m_flavor;
 
 private:
     //------------------------------------------------------------------

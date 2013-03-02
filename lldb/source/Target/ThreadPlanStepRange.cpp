@@ -265,8 +265,11 @@ ThreadPlanStepRange::GetInstructionsForAddress(lldb::addr_t addr, size_t &range_
             {
                 //Disassemble the address range given:
                 ExecutionContext exe_ctx (m_thread.GetProcess());
+                const char *plugin_name = NULL;
+                const char *flavor = NULL;
                 m_instruction_ranges[i] = Disassembler::DisassembleRange(GetTarget().GetArchitecture(),
-                                                                         NULL,
+                                                                         plugin_name,
+                                                                         flavor,
                                                                          exe_ctx,
                                                                          m_address_ranges[i]);
                 

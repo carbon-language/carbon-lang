@@ -10,7 +10,20 @@
 #include "DisassemblerLLVMC.h"
 
 #include "llvm-c/Disassembler.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/ADT/SmallString.h"
+
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/DataExtractor.h"
@@ -113,19 +126,20 @@ public:
         }
         if (!got_op)
         {
-            ::LLVMDisasmContextRef disasm_context = m_disasm.m_disasm_context;
+            DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = m_disasm.m_disasm_ap.get();
             
             bool is_altnernate_isa = false;
-            if (m_disasm.m_alternate_disasm_context)
+            if (m_disasm.m_alternate_disasm_ap.get() != NULL)
             {
                 const AddressClass address_class = GetAddressClass ();
             
                 if (address_class == eAddressClassCodeAlternateISA)
                 {
-                    disasm_context = m_disasm.m_alternate_disasm_context;
+                    mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
                     is_altnernate_isa = true;
                 }
             }
+            
             const llvm::Triple::ArchType machine = arch.GetMachine();
             if (machine == llvm::Triple::arm || machine == llvm::Triple::thumb)
             {
@@ -155,19 +169,16 @@ public:
             {
                 // The opcode isn't evenly sized, so we need to actually use the llvm
                 // disassembler to parse it and get the size.
-                char out_string[512];
                 m_disasm.Lock(this, NULL);
                 uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (data_offset, 1));
                 const size_t opcode_data_len = data.GetByteSize() - data_offset;
                 const addr_t pc = m_address.GetFileAddress();
-                const size_t inst_size = ::LLVMDisasmInstruction (disasm_context,
-                                                                  opcode_data,
-                                                                  opcode_data_len,
-                                                                  pc, // PC value
-                                                                  out_string,
-                                                                  sizeof(out_string));
-                // The address lookup function could have caused us to fill in our comment
-                m_comment.clear();
+                llvm::MCInst inst;
+                
+                const size_t inst_size = mc_disasm_ptr->GetMCInst(opcode_data,
+                                                                    opcode_data_len,
+                                                                    pc,
+                                                                    inst);
                 m_disasm.Unlock();
                 if (inst_size == 0)
                     m_opcode.Clear();
@@ -203,12 +214,12 @@ public:
         {
             char out_string[512];
             
-            ::LLVMDisasmContextRef disasm_context;
+            DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr;
             
             if (address_class == eAddressClassCodeAlternateISA)
-                disasm_context = m_disasm.m_alternate_disasm_context;
+                mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
             else
-                disasm_context = m_disasm.m_disasm_context;
+                mc_disasm_ptr = m_disasm.m_disasm_ap.get();
             
             lldb::addr_t pc = LLDB_INVALID_ADDRESS;
             
@@ -223,14 +234,17 @@ public:
                 pc = m_address.GetFileAddress();
             
             m_disasm.Lock(this, exe_ctx);
+            
             uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (0, 1));
             const size_t opcode_data_len = data.GetByteSize();
-            size_t inst_size = ::LLVMDisasmInstruction (disasm_context,
-                                                        opcode_data,
+            llvm::MCInst inst;
+            size_t inst_size = mc_disasm_ptr->GetMCInst(opcode_data,
                                                         opcode_data_len,
                                                         pc,
-                                                        out_string,
-                                                        sizeof(out_string));
+                                                        inst);
+                
+            if (inst_size > 0)
+                mc_disasm_ptr->PrintMCInst(inst, out_string, sizeof(out_string));
             
             m_disasm.Unlock();
             
@@ -290,17 +304,19 @@ public:
                         }
                         break;
                 }
-                m_mnemocics.swap(mnemonic_strm.GetString());
+                m_mnemonics.swap(mnemonic_strm.GetString());
                 return;
             }
             else
             {
                 if (m_does_branch == eLazyBoolCalculate)
                 {
-                    if (StringRepresentsBranch (out_string, strlen(out_string)))
+                    bool can_branch = mc_disasm_ptr->CanBranch(inst);
+                    if (can_branch)
                         m_does_branch = eLazyBoolYes;
                     else
                         m_does_branch = eLazyBoolNo;
+
                 }
             }
             
@@ -317,7 +333,7 @@ public:
                 if (matches[1].rm_so != -1)
                     m_opcode_name.assign(out_string + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
                 if (matches[2].rm_so != -1)
-                    m_mnemocics.assign(out_string + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+                    m_mnemonics.assign(out_string + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
             }
         }
     }
@@ -335,88 +351,6 @@ public:
     }
 protected:
     
-    bool StringRepresentsBranch (const char *data, size_t size)
-    {
-        const char *cursor = data;
-
-        bool inWhitespace = true;
-
-        while (inWhitespace && cursor < data + size)
-        {
-            switch (*cursor)
-            {
-            default:
-                inWhitespace = false;
-                break;
-            case ' ':
-                break;
-            case '\t':
-                break;
-            }
-            
-            if (inWhitespace)
-                ++cursor;
-        }
-        
-        if (cursor >= data + size)
-            return false;
-        
-        llvm::Triple::ArchType arch = m_disasm.GetArchitecture().GetMachine();
-        
-        switch (arch)
-        {
-        default:
-            return false;
-        case llvm::Triple::x86:
-        case llvm::Triple::x86_64:
-            switch (cursor[0])
-            {
-            default:
-                return false;
-            case 'j':
-                return true;
-            case 'c':
-                if (cursor[1] == 'a' &&
-                    cursor[2] == 'l' &&
-                    cursor[3] == 'l')
-                    return true;
-                else
-                    return false;
-            }
-        case llvm::Triple::arm:
-        case llvm::Triple::thumb:
-            switch (cursor[0])
-            {
-            default:
-                return false;
-            case 'b':
-                {
-                    switch (cursor[1])
-                    {
-                    default:
-                        return true;
-                    case 'f':
-                    case 'i':
-                    case 'k':
-                        return false;
-                    }
-                }
-            case 'c':
-                {
-                    switch (cursor[1])
-                    {
-                    default:
-                        return false;
-                    case 'b':
-                        return true;
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
     bool                    m_is_valid;
     DisassemblerLLVMC      &m_disasm;
     DisassemblerSP          m_disasm_sp; // for ownership
@@ -429,12 +363,159 @@ protected:
 bool InstructionLLVMC::s_regex_compiled = false;
 ::regex_t InstructionLLVMC::s_regex;
 
+DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner):
+    m_is_valid(true)
+{
+    std::string Error;
+    const llvm::Target *curr_target = llvm::TargetRegistry::lookupTarget(triple, Error);
+    if (!curr_target)
+    {
+        m_is_valid = false;
+        return;
+    }
+    
+    m_instr_info_ap.reset(curr_target->createMCInstrInfo());
+    m_reg_info_ap.reset (curr_target->createMCRegInfo(triple));
+    
+    std::string features_str;
+
+    m_subtarget_info_ap.reset(curr_target->createMCSubtargetInfo(triple, "",
+                                                                features_str));
+    
+    m_asm_info_ap.reset(curr_target->createMCAsmInfo(triple));
+    
+    if (m_instr_info_ap.get() == NULL || m_reg_info_ap.get() == NULL || m_subtarget_info_ap.get() == NULL || m_asm_info_ap.get() == NULL)
+    {
+        m_is_valid = NULL;
+        return;
+    }
+    
+    m_context_ap.reset(new llvm::MCContext(*m_asm_info_ap.get(), *(m_reg_info_ap.get()), 0));
+    
+    m_disasm_ap.reset(curr_target->createMCDisassembler(*m_subtarget_info_ap.get()));
+    if (m_disasm_ap.get())
+    {
+        m_disasm_ap->setupForSymbolicDisassembly(NULL,
+                                                  DisassemblerLLVMC::SymbolLookupCallback,
+                                                  (void *) &owner,
+                                                  m_context_ap.get());
+        
+        unsigned asm_printer_variant;
+        if (flavor == ~0U)
+            asm_printer_variant = m_asm_info_ap->getAssemblerDialect();
+        else
+        {
+            asm_printer_variant = flavor;
+        }
+        
+        m_instr_printer_ap.reset(curr_target->createMCInstPrinter(asm_printer_variant,
+                                                                  *m_asm_info_ap.get(),
+                                                                  *m_instr_info_ap.get(),
+                                                                  *m_reg_info_ap.get(),
+                                                                  *m_subtarget_info_ap.get()));
+        if (m_instr_printer_ap.get() == NULL)
+        {
+            m_disasm_ap.reset();
+            m_is_valid = false;
+        }
+    }
+    else
+        m_is_valid = false;
+}
+
+namespace {
+    // This is the memory object we use in GetInstruction.
+    class LLDBDisasmMemoryObject : public llvm::MemoryObject {
+      uint8_t *m_bytes;
+      uint64_t m_size;
+      uint64_t m_base_PC;
+    public:
+      LLDBDisasmMemoryObject(uint8_t *bytes, uint64_t size, uint64_t basePC) :
+                         m_bytes(bytes), m_size(size), m_base_PC(basePC) {}
+     
+      uint64_t getBase() const { return m_base_PC; }
+      uint64_t getExtent() const { return m_size; }
+
+      int readByte(uint64_t addr, uint8_t *byte) const {
+        if (addr - m_base_PC >= m_size)
+          return -1;
+        *byte = m_bytes[addr - m_base_PC];
+        return 0;
+      }
+    };
+} // End Anonymous Namespace
+
+uint64_t
+DisassemblerLLVMC::LLVMCDisassembler::GetMCInst (
+    uint8_t *opcode_data,
+    size_t opcode_data_len,
+    lldb::addr_t pc,
+    llvm::MCInst &mc_inst)
+{
+    LLDBDisasmMemoryObject memory_object (opcode_data, opcode_data_len, pc);
+    llvm::MCInst inst;
+    llvm::MCDisassembler::DecodeStatus status;
+
+    uint64_t new_inst_size;
+    status = m_disasm_ap->getInstruction(mc_inst,
+                                         new_inst_size,
+                                         memory_object,
+                                         pc,
+                                         llvm::nulls(),
+                                         llvm::nulls());
+    if (status == llvm::MCDisassembler::Success)
+        return new_inst_size;
+    else
+        return 0;
+}
+
+uint64_t
+DisassemblerLLVMC::LLVMCDisassembler::PrintMCInst (llvm::MCInst &mc_inst, char *output_buffer, size_t out_buffer_len)
+{
+    llvm::StringRef unused_annotations;
+    llvm::SmallString<64> inst_string;
+    llvm::raw_svector_ostream inst_stream(inst_string);
+    m_instr_printer_ap->printInst (&mc_inst, inst_stream, unused_annotations);
+    inst_stream.flush();
+    
+    size_t output_size = std::min(out_buffer_len -1, inst_string.size());
+    std::memcpy(output_buffer, inst_string.data(), output_size);
+    output_buffer[output_size] = '\0';
+    
+    return output_size;
+}
+
+bool
+DisassemblerLLVMC::LLVMCDisassembler::CanBranch (llvm::MCInst &mc_inst)
+{
+    return m_instr_info_ap->get(mc_inst.getOpcode()).mayAffectControlFlow(mc_inst, *m_reg_info_ap.get());
+}
+
+bool
+DisassemblerLLVMC::FlavorValidForArchSpec (const lldb_private::ArchSpec &arch, const char *flavor)
+{
+    llvm::Triple triple = arch.GetTriple();
+    if (flavor == NULL || strcmp (flavor, "default") == 0)
+        return true;
+    
+    if (triple.getArch() == llvm::Triple::x86 || triple.getArch() == llvm::Triple::x86_64)
+    {
+        if (strcmp (flavor, "intel") == 0 || strcmp (flavor, "att") == 0)
+            return true;
+        else
+            return false;
+    }
+    else
+        return false;
+}
+    
+
 Disassembler *
-DisassemblerLLVMC::CreateInstance (const ArchSpec &arch)
+DisassemblerLLVMC::CreateInstance (const ArchSpec &arch, const char *flavor)
 {
     if (arch.GetTriple().getArch() != llvm::Triple::UnknownArch)
     {
-        std::auto_ptr<DisassemblerLLVMC> disasm_ap (new DisassemblerLLVMC(arch));
+        std::auto_ptr<DisassemblerLLVMC> disasm_ap (new DisassemblerLLVMC(arch, flavor));
     
         if (disasm_ap.get() && disasm_ap->IsValid())
             return disasm_ap.release();
@@ -442,18 +523,41 @@ DisassemblerLLVMC::CreateInstance (const ArchSpec &arch)
     return NULL;
 }
 
-DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
-    Disassembler(arch),
+DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_string) :
+    Disassembler(arch, flavor_string),
     m_exe_ctx (NULL),
-    m_inst (NULL),
-    m_disasm_context (NULL),
-    m_alternate_disasm_context (NULL)
+    m_inst (NULL)
 {
-    m_disasm_context = ::LLVMCreateDisasm(arch.GetTriple().getTriple().c_str(), 
-                                          (void*)this, 
-                                          /*TagType=*/1,
-                                          NULL,
-                                          DisassemblerLLVMC::SymbolLookupCallback);
+    if (!FlavorValidForArchSpec (arch, m_flavor.c_str()))
+    {
+        m_flavor.assign("default");
+    }
+    
+    const char *triple = arch.GetTriple().getTriple().c_str();
+    unsigned flavor = ~0U;
+    
+    // So far the only supported flavor is "intel" on x86.  The base class will set this
+    // correctly coming in.
+    if (arch.GetTriple().getArch() == llvm::Triple::x86
+        || arch.GetTriple().getArch() == llvm::Triple::x86_64)
+    {
+        if (m_flavor == "intel")
+        {
+            flavor = 1;
+        }
+        else if (m_flavor == "att")
+        {
+            flavor = 0;
+        }
+    }
+    
+    m_disasm_ap.reset (new LLVMCDisassembler(triple, flavor, *this));
+    if (!m_disasm_ap->IsValid())
+    {
+        // We use m_disasm_ap.get() to tell whether we are valid or not, so if this isn't good for some reason,
+        // we reset it, and then we won't be valid and FindPlugin will fail and we won't get used.
+        m_disasm_ap.reset();
+    }
     
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
@@ -461,26 +565,17 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
         thumb_arch.GetTriple().setArchName(llvm::StringRef("thumbv7"));
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
 
-        m_alternate_disasm_context = ::LLVMCreateDisasm(thumb_triple.c_str(),
-                                                        (void*)this, 
-                                                        /*TagType=*/1,
-                                                        NULL,
-                                                        DisassemblerLLVMC::SymbolLookupCallback);
+        m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), flavor, *this));
+        if (!m_alternate_disasm_ap->IsValid())
+        {
+            m_disasm_ap.reset();
+            m_alternate_disasm_ap.reset();
+        }
     }
 }
 
 DisassemblerLLVMC::~DisassemblerLLVMC()
 {
-    if (m_disasm_context)
-    {
-        ::LLVMDisasmDispose(m_disasm_context);
-        m_disasm_context = NULL;
-    }
-    if (m_alternate_disasm_context)
-    {
-        ::LLVMDisasmDispose(m_alternate_disasm_context);
-        m_alternate_disasm_context = NULL;
-    }
 }
 
 size_t
@@ -506,7 +601,7 @@ DisassemblerLLVMC::DecodeInstructions (const Address &base_addr,
         
         AddressClass address_class = eAddressClassCode;
         
-        if (m_alternate_disasm_context)
+        if (m_alternate_disasm_ap.get() != NULL)
             address_class = inst_addr.GetAddressClass ();
         
         InstructionSP inst_sp(new InstructionLLVMC(*this,
