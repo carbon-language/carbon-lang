@@ -299,6 +299,14 @@ ProcessMachCore::DoLoadCore ()
     if (arch.IsValid())
         m_target.SetArchitecture(arch);            
 
+    if (m_dyld_addr == LLDB_INVALID_ADDRESS)
+    {
+        addr_t kernel_load_address = DynamicLoaderDarwinKernel::SearchForDarwinKernel (this);
+        if (kernel_load_address != LLDB_INVALID_ADDRESS)
+        {
+            GetDynamicLoaderAddress (kernel_load_address);
+        }
+    }
     return error;
 }
 

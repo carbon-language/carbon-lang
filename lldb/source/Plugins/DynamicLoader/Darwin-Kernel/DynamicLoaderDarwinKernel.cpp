@@ -177,6 +177,18 @@ DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
     // At this point if there is an ExecutableModule, it is a kernel and the Target is some variant of an Apple system.  
     // If the Process hasn't provided the kernel load address, we need to look around in memory to find it.
 
+    addr_t kernel_load_address = SearchForDarwinKernel (process);
+    if (kernel_load_address != LLDB_INVALID_ADDRESS)
+    {
+        process->SetCanJIT(false);
+        return new DynamicLoaderDarwinKernel (process, kernel_load_address);
+    }
+    return NULL;
+}
+
+lldb::addr_t
+DynamicLoaderDarwinKernel::SearchForDarwinKernel (Process *process)
+{
     addr_t kernel_load_address = process->GetImageInfoAddress();
     if (kernel_load_address == LLDB_INVALID_ADDRESS)
     {
@@ -194,13 +206,7 @@ DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
             }
         }
     }
-
-    if (kernel_load_address != LLDB_INVALID_ADDRESS)
-    {
-        process->SetCanJIT(false);
-        return new DynamicLoaderDarwinKernel (process, kernel_load_address);
-    }
-    return NULL;
+    return kernel_load_address;
 }
 
 //----------------------------------------------------------------------

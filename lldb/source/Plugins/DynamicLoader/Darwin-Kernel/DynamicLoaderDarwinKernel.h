@@ -52,6 +52,9 @@ public:
 
     DynamicLoaderDarwinKernel (lldb_private::Process *process, lldb::addr_t kernel_addr);
 
+    static lldb::addr_t
+    SearchForDarwinKernel (lldb_private::Process *process);
+
     virtual
     ~DynamicLoaderDarwinKernel ();
 
