@@ -159,6 +159,9 @@ void VLIWMachineScheduler::schedule() {
   SchedImpl->initialize(this);
 
   // To view Height/Depth correctly, they should be accessed at least once.
+  //
+  // FIXME: SUnit::dumpAll always recompute depth and height now. The max
+  // depth/height could be computed directly from the roots and leaves.
   DEBUG(unsigned maxH = 0;
         for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           if (SUnits[su].getHeight() > maxH)
