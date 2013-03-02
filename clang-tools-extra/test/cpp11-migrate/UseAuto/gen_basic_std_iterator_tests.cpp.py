@@ -42,26 +42,26 @@ int main(int argc, char **argv) {""".lstrip() # Strip leading newline
 
 for c in containers:
   print """
-  {{
-    std::{0}<int> C;
-    std::{0}<int>::iterator I = C.begin();
+  {
+    std::%(0)s<int> C;
+    std::%(0)s<int>::iterator I = C.begin();
     // CHECK: auto I = C.begin();
-  }}
-  {{
-    std::{0}<int> C;
-    std::{0}<int>::reverse_iterator I = C.rbegin();
+  }
+  {
+    std::%(0)s<int> C;
+    std::%(0)s<int>::reverse_iterator I = C.rbegin();
     // CHECK: auto I = C.rbegin();
-  }}
-  {{
-    const std::{0}<int> C;
-    std::{0}<int>::const_iterator I = C.begin();
+  }
+  {
+    const std::%(0)s<int> C;
+    std::%(0)s<int>::const_iterator I = C.begin();
     // CHECK: auto I = C.begin();
-  }}
-  {{
-    const std::{0}<int> C;
-    std::{0}<int>::const_reverse_iterator I = C.rbegin();
+  }
+  {
+    const std::%(0)s<int> C;
+    std::%(0)s<int>::const_reverse_iterator I = C.rbegin();
     // CHECK: auto I = C.rbegin();
-  }}""".format(c)
+  }""" % {"0": c}
 
 print """
   return 0;
