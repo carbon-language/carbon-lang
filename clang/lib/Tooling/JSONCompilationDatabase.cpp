@@ -49,7 +49,9 @@ class CommandLineArgumentParser {
   bool parseStringInto(std::string &String) {
     do {
       if (*Position == '"') {
-        if (!parseQuotedStringInto(String)) return false;
+        if (!parseDoubleQuotedStringInto(String)) return false;
+      } else if (*Position == '\'') {
+        if (!parseSingleQuotedStringInto(String)) return false;
       } else {
         if (!parseFreeStringInto(String)) return false;
       }
@@ -57,10 +59,19 @@ class CommandLineArgumentParser {
     return true;
   }
 
-  bool parseQuotedStringInto(std::string &String) {
+  bool parseDoubleQuotedStringInto(std::string &String) {
     if (!next()) return false;
     while (*Position != '"') {
       if (!skipEscapeCharacter()) return false;
+      String.push_back(*Position);
+      if (!next()) return false;
+    }
+    return next();
+  }
+
+  bool parseSingleQuotedStringInto(std::string &String) {
+    if (!next()) return false;
+    while (*Position != '\'') {
       String.push_back(*Position);
       if (!next()) return false;
     }
@@ -72,7 +83,7 @@ class CommandLineArgumentParser {
       if (!skipEscapeCharacter()) return false;
       String.push_back(*Position);
       if (!next()) return false;
-    } while (*Position != ' ' && *Position != '"');
+    } while (*Position != ' ' && *Position != '"' && *Position != '\'');
     return true;
   }
 

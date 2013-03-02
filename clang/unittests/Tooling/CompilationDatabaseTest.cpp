@@ -391,6 +391,12 @@ TEST(unescapeJsonCommandLine, ParsesQuotedStringWithoutClosingQuote) {
   EXPECT_EQ("", Empty[0]);
 }
 
+TEST(unescapeJsonCommandLine, ParsesSingleQuotedString) {
+  std::vector<std::string> Args = unescapeJsonCommandLine("a'\\\\b \\\"c\\\"'");
+  ASSERT_EQ(1ul, Args.size());
+  EXPECT_EQ("a\\b \"c\"", Args[0]);
+}
+
 TEST(FixedCompilationDatabase, ReturnsFixedCommandLine) {
   std::vector<std::string> CommandLine;
   CommandLine.push_back("one");
