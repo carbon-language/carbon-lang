@@ -2682,7 +2682,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   CCInfo.AnalyzeFormalArguments(Ins,
                                 CCAssignFnForNode(CallConv, /* Return*/ false,
                                                   isVarArg));
-  
+
   SmallVector<SDValue, 16> ArgValues;
   int lastInsIndex = -1;
   SDValue ArgValue;
@@ -2797,7 +2797,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
             } else {
               int FI = MFI->CreateFixedObject(Flags.getByValSize(),
                                               VA.getLocMemOffset(), false);
-              InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));              
+              InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));
             }
           } else {
             int FI = MFI->CreateFixedObject(VA.getLocVT().getSizeInBits()/8,
@@ -3594,7 +3594,7 @@ static SDValue LowerCTTZ(SDNode *N, SelectionDAG &DAG,
 /// input    = [v0    v1    v2    v3   ] (vi 16-bit element)
 /// cast: N0 = [w0 w1 w2 w3 w4 w5 w6 w7] (v0 = [w0 w1], wi 8-bit element)
 /// vcnt: N1 = [b0 b1 b2 b3 b4 b5 b6 b7] (bi = bit-count of 8-bit element wi)
-/// vrev: N2 = [b1 b0 b3 b2 b5 b4 b7 b6] 
+/// vrev: N2 = [b1 b0 b3 b2 b5 b4 b7 b6]
 ///            [b0 b1 b2 b3 b4 b5 b6 b7]
 ///           +[b1 b0 b3 b2 b5 b4 b7 b6]
 /// N3=N1+N2 = [k0 k0 k1 k1 k2 k2 k3 k3] (k0 = b0+b1 = bit-count of 16-bit v0,
@@ -3615,7 +3615,7 @@ static SDValue getCTPOP16BitCounts(SDNode *N, SelectionDAG &DAG) {
 /// bit-count for each 16-bit element from the operand.  We need slightly
 /// different sequencing for v4i16 and v8i16 to stay within NEON's available
 /// 64/128-bit registers.
-/// 
+///
 /// Trace for v4i16:
 /// input           = [v0    v1    v2    v3    ] (vi 16-bit element)
 /// v8i8: BitCounts = [k0 k1 k2 k3 k0 k1 k2 k3 ] (ki is the bit-count of vi)
@@ -3646,7 +3646,7 @@ static SDValue lowerCTPOP16BitElements(SDNode *N, SelectionDAG &DAG) {
 /// input    = [v0    v1    ] (vi: 32-bit elements)
 /// Bitcast  = [w0 w1 w2 w3 ] (wi: 16-bit elements, v0 = [w0 w1])
 /// Counts16 = [k0 k1 k2 k3 ] (ki: 16-bit elements, bit-count of wi)
-/// vrev: N0 = [k1 k0 k3 k2 ] 
+/// vrev: N0 = [k1 k0 k3 k2 ]
 ///            [k0 k1 k2 k3 ]
 ///       N1 =+[k1 k0 k3 k2 ]
 ///            [k0 k2 k1 k3 ]
@@ -4424,7 +4424,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 
     ValueCounts.insert(std::make_pair(V, 0));
     unsigned &Count = ValueCounts[V];
-    
+
     // Is this value dominant? (takes up more than half of the lanes)
     if (++Count > (NumElts / 2)) {
       hasDominantValue = true;
@@ -4505,7 +4505,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
     if (usesOnlyOneValue) {
       SDValue Val = IsSingleInstrConstant(Value, DAG, ST, dl);
       if (isConstant && Val.getNode())
-        return DAG.getNode(ARMISD::VDUP, dl, VT, Val); 
+        return DAG.getNode(ARMISD::VDUP, dl, VT, Val);
     }
   }
 
