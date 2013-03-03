@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/WriterELF.cpp ---------------------------------===//
+//===- lib/ReaderWriter/ELF/ExecutableWriter.h ----------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,6 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#ifndef LLD_READER_WRITER_ELF_EXECUTABLE_WRITER_H
+#define LLD_READER_WRITER_ELF_EXECUTABLE_WRITER_H
 
 #include "lld/ReaderWriter/Writer.h"
 
@@ -17,10 +19,11 @@
 
 #include "llvm/ADT/StringSet.h"
 
-using namespace llvm;
-using namespace llvm::object;
 namespace lld {
 namespace elf {
+using namespace llvm;
+using namespace llvm::object;
+
 template<class ELFT>
 class ExecutableWriter;
 
@@ -459,26 +462,6 @@ void ExecutableWriter<ELFT>::createDefaultSections() {
   _targetHandler.createDefaultSections();
 }
 } // namespace elf
-
-std::unique_ptr<Writer> createWriterELF(const ELFTargetInfo &TI) {
-  using llvm::object::ELFType;
-  // Set the default layout to be the static executable layout
-  // We would set the layout to a dynamic executable layout
-  // if we came across any shared libraries in the process
-
-  if (!TI.is64Bits() && TI.isLittleEndian())
-    return std::unique_ptr<Writer>(new
-        elf::ExecutableWriter<ELFType<support::little, 4, false>>(TI));
-  else if (TI.is64Bits() && TI.isLittleEndian())
-    return std::unique_ptr<Writer>(new
-        elf::ExecutableWriter<ELFType<support::little, 8, true>>(TI));
-  else if (!TI.is64Bits() && !TI.isLittleEndian())
-    return std::unique_ptr<Writer>(new
-        elf::ExecutableWriter<ELFType<support::big, 4, false>>(TI));
-  else if (TI.is64Bits() && !TI.isLittleEndian())
-    return std::unique_ptr<Writer>(new
-        elf::ExecutableWriter<ELFType<support::big, 8, true>>(TI));
-
-  llvm_unreachable("Invalid Options!");
-}
 } // namespace lld
+
+#endif // LLD_READER_WRITER_ELF_EXECUTABLE_WRITER_H

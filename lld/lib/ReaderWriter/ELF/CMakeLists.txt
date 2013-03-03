@@ -1,7 +1,7 @@
 add_lld_library(lldELF
   ELFTargetInfo.cpp
   Reader.cpp
-  ExecutableWriter.cpp
+  Writer.cpp
   )
 
 target_link_libraries(lldELF
