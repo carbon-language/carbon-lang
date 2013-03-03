@@ -22,8 +22,6 @@ _Atomic(char*) p;
 _Atomic(float) f;
 _Atomic(vector) v;
 
-// CHECK-NOT: cmpxchg
-
 // CHECK: testinc
 void testinc(void)
 {
