@@ -97,6 +97,16 @@ int relocHexBNPCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
   return 1;
 }
 
+// R_HEX_6_PCREL_X
+int relocHex6PCRELX(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  int32_t result = (S + A - P);
+  result = lld::scatterBits<int32_t>(result, FINDV4BITMASK(location));
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
+      result |
+      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  return 0;
+}
+
 // R_HEX_N_X : Word32_U6 : (S + A) : Unsigned Truncate
 int relocHex_N_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (S + A);
@@ -196,6 +206,11 @@ ErrorOr<void> HexagonTargetRelocationHandler::applyRelocation(
   case R_HEX_7_X:
   case R_HEX_6_X:
     relocHex_N_X(location, relocVAddress, targetVAddress, ref.addend());
+    break;
+  case R_HEX_6_PCREL_X:
+    relocHex6PCRELX(location, relocVAddress, targetVAddress, ref.addend());
+    break;
+  case R_HEX_JMP_SLOT:
     break;
   case lld::Reference::kindLayoutAfter:
   case lld::Reference::kindLayoutBefore:

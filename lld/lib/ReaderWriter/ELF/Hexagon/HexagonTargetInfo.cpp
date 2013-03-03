@@ -215,3 +215,4 @@ ErrorOr<std::string> elf::HexagonTargetInfo::stringFromRelocKind(
 
   return make_error_code(yaml_reader_error::illegal_value);
 }
+
