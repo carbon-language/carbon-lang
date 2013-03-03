@@ -1444,21 +1444,60 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
                                            bool isInc, bool isPre) {
   
   QualType type = E->getSubExpr()->getType();
-  llvm::Value *value = EmitLoadOfLValue(LV);
-  llvm::Value *input = value;
   llvm::PHINode *atomicPHI = 0;
+  llvm::Value *value;
+  llvm::Value *input;
 
   int amount = (isInc ? 1 : -1);
 
   if (const AtomicType *atomicTy = type->getAs<AtomicType>()) {
+    type = atomicTy->getValueType();
+    if (isInc && type->isBooleanType()) {
+      llvm::Value *True = CGF.EmitToMemory(Builder.getTrue(), type);
+      if (isPre) {
+        Builder.Insert(new llvm::StoreInst(True,
+              LV.getAddress(), LV.isVolatileQualified(),
+              LV.getAlignment().getQuantity(),
+              llvm::SequentiallyConsistent));
+        return Builder.getTrue();
+      }
+      // For atomic bool increment, we just store true and return it for
+      // preincrement, do an atomic swap with true for postincrement
+        return Builder.CreateAtomicRMW(llvm::AtomicRMWInst::Xchg,
+            LV.getAddress(), True, llvm::SequentiallyConsistent);
+    }
+    // Special case for atomic increment / decrement on integers, emit
+    // atomicrmw instructions.  We skip this if we want to be doing overflow
+    // checking, and fall into the slow path with the atomic cmpxchg loop.  
+    if (!type->isBooleanType() && type->isIntegerType() &&
+        !(type->isUnsignedIntegerType() &&
+         CGF.SanOpts->UnsignedIntegerOverflow) &&
+        CGF.getLangOpts().getSignedOverflowBehavior() !=
+         LangOptions::SOB_Trapping) {
+      llvm::AtomicRMWInst::BinOp aop = isInc ? llvm::AtomicRMWInst::Add :
+        llvm::AtomicRMWInst::Sub;
+      llvm::Instruction::BinaryOps op = isInc ? llvm::Instruction::Add :
+        llvm::Instruction::Sub;
+      llvm::Value *amt = CGF.EmitToMemory(
+          llvm::ConstantInt::get(ConvertType(type), 1, true), type);
+      llvm::Value *old = Builder.CreateAtomicRMW(aop,
+          LV.getAddress(), amt, llvm::SequentiallyConsistent);
+      return isPre ? Builder.CreateBinOp(op, old, amt) : old;
+    }
+    value = EmitLoadOfLValue(LV);
+    input = value;
+    // For every other atomic operation, we need to emit a load-op-cmpxchg loop
     llvm::BasicBlock *startBB = Builder.GetInsertBlock();
     llvm::BasicBlock *opBB = CGF.createBasicBlock("atomic_op", CGF.CurFn);
+    value = CGF.EmitToMemory(value, type);
     Builder.CreateBr(opBB);
     Builder.SetInsertPoint(opBB);
     atomicPHI = Builder.CreatePHI(value->getType(), 2);
     atomicPHI->addIncoming(value, startBB);
-    type = atomicTy->getValueType();
     value = atomicPHI;
+  } else {
+    value = EmitLoadOfLValue(LV);
+    input = value;
   }
 
   // Special case of integer increment that we have to check first: bool++.
@@ -1596,7 +1635,7 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     llvm::BasicBlock *opBB = Builder.GetInsertBlock();
     llvm::BasicBlock *contBB = CGF.createBasicBlock("atomic_cont", CGF.CurFn);
     llvm::Value *old = Builder.CreateAtomicCmpXchg(LV.getAddress(), atomicPHI,
-        value, llvm::SequentiallyConsistent);
+        CGF.EmitToMemory(value, type), llvm::SequentiallyConsistent);
     atomicPHI->addIncoming(old, opBB);
     llvm::Value *success = Builder.CreateICmpEQ(old, atomicPHI);
     Builder.CreateCondBr(success, contBB, opBB);
@@ -1872,20 +1911,63 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   OpInfo.E = E;
   // Load/convert the LHS.
   LValue LHSLV = EmitCheckedLValue(E->getLHS(), CodeGenFunction::TCK_Store);
-  OpInfo.LHS = EmitLoadOfLValue(LHSLV);
 
   llvm::PHINode *atomicPHI = 0;
-  if (LHSTy->isAtomicType()) {
+  if (const AtomicType *atomicTy = LHSTy->getAs<AtomicType>()) {
+    QualType type = atomicTy->getValueType();
+    if (!type->isBooleanType() && type->isIntegerType() &&
+         !(type->isUnsignedIntegerType() &&
+          CGF.SanOpts->UnsignedIntegerOverflow) &&
+         CGF.getLangOpts().getSignedOverflowBehavior() !=
+          LangOptions::SOB_Trapping) {
+      llvm::AtomicRMWInst::BinOp aop = llvm::AtomicRMWInst::BAD_BINOP;
+      switch (OpInfo.Opcode) {
+        // We don't have atomicrmw operands for *, %, /, <<, >>
+        case BO_MulAssign: case BO_DivAssign:
+        case BO_RemAssign:
+        case BO_ShlAssign:
+        case BO_ShrAssign:
+          break;
+        case BO_AddAssign:
+          aop = llvm::AtomicRMWInst::Add;
+          break;
+        case BO_SubAssign:
+          aop = llvm::AtomicRMWInst::Sub;
+          break;
+        case BO_AndAssign:
+          aop = llvm::AtomicRMWInst::And;
+          break;
+        case BO_XorAssign:
+          aop = llvm::AtomicRMWInst::Xor;
+          break;
+        case BO_OrAssign:
+          aop = llvm::AtomicRMWInst::Or;
+          break;
+        default:
+          llvm_unreachable("Invalid compound assignment type");
+      }
+      if (aop != llvm::AtomicRMWInst::BAD_BINOP) {
+        llvm::Value *amt = CGF.EmitToMemory(EmitScalarConversion(OpInfo.RHS,
+              E->getRHS()->getType(), LHSTy), LHSTy);
+        Builder.CreateAtomicRMW(aop, LHSLV.getAddress(), amt,
+            llvm::SequentiallyConsistent);
+        return LHSLV;
+      }
+    }
     // FIXME: For floating point types, we should be saving and restoring the
     // floating point environment in the loop.
     llvm::BasicBlock *startBB = Builder.GetInsertBlock();
     llvm::BasicBlock *opBB = CGF.createBasicBlock("atomic_op", CGF.CurFn);
+    OpInfo.LHS = EmitLoadOfLValue(LHSLV);
+    OpInfo.LHS = CGF.EmitToMemory(OpInfo.LHS, type);
     Builder.CreateBr(opBB);
     Builder.SetInsertPoint(opBB);
     atomicPHI = Builder.CreatePHI(OpInfo.LHS->getType(), 2);
     atomicPHI->addIncoming(OpInfo.LHS, startBB);
     OpInfo.LHS = atomicPHI;
   }
+  else
+    OpInfo.LHS = EmitLoadOfLValue(LHSLV);
 
   OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy,
                                     E->getComputationLHSType());
@@ -1900,7 +1982,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
     llvm::BasicBlock *opBB = Builder.GetInsertBlock();
     llvm::BasicBlock *contBB = CGF.createBasicBlock("atomic_cont", CGF.CurFn);
     llvm::Value *old = Builder.CreateAtomicCmpXchg(LHSLV.getAddress(), atomicPHI,
-        Result, llvm::SequentiallyConsistent);
+        CGF.EmitToMemory(Result, LHSTy), llvm::SequentiallyConsistent);
     atomicPHI->addIncoming(old, opBB);
     llvm::Value *success = Builder.CreateICmpEQ(old, atomicPHI);
     Builder.CreateCondBr(success, contBB, opBB);

@@ -15,9 +15,4 @@ void foo(int x)
   // CHECK: sdiv i32
   // CHECK: cmpxchg i16*
 
-  // These should be emitting atomicrmw instructions, but they aren't yet
-  i += 2; // CHECK: cmpxchg
-  i -= 2; // CHECK: cmpxchg
-  i++; // CHECK: cmpxchg
-  i--; // CHECK: cmpxchg
 }
