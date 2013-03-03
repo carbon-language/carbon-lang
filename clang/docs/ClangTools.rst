@@ -67,7 +67,7 @@ Core Clang Tools
 ================
 
 The core set of Clang tools that are within the main repository are
-tools that very specifically compliment, and allow use and testing of
+tools that very specifically complement, and allow use and testing of
 *Clang* specific functionality.
 
 ``clang-check``
