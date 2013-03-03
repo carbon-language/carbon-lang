@@ -49,7 +49,7 @@ which can be found under `clang/tools/extra/clang-format/clang-format.py`.
 
 This can be integrated by adding the following to your `.vimrc`:
 
-.. code-block:: console
+.. code-block:: vim
 
   map <C-I> :pyf <path-to-this-file>/clang-format.py<CR>
   imap <C-I> <ESC>:pyf <path-to-this-file>/clang-format.py<CR>i
