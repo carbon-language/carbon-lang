@@ -120,6 +120,31 @@ Ideas for new Tools
   ``foo.begin()`` into ``begin(foo)`` and similarly for ``end()``, where
   ``foo`` is a standard container.  We could also detect similar patterns for
   arrays.
+* ``tr1`` removal tool.  Will migrate source code from using TR1 library
+  features to C++11 library.  For example:
+
+  .. code-block:: c++
+
+    #include <tr1/unordered_map>
+    int main()
+    {
+        std::tr1::unordered_map <int, int> ma;
+        std::cout << ma.size () << std::endl;
+        return 0;
+    }
+
+  should be rewritten to:
+
+  .. code-block:: c++
+
+    #include <unordered_map>
+    int main()
+    {
+        std::unordered_map <int, int> ma;
+        std::cout << ma.size () << std::endl;
+        return 0;
+    }
+
 * A tool to remove ``auto``.  Will convert ``auto`` to an explicit type or add
   comments with deduced types.  The motivation is that there are developers
   that don't want to use ``auto`` because they are afraid that they might lose
