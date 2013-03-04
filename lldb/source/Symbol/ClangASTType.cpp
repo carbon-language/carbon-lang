@@ -1734,6 +1734,8 @@ ClangASTType::ReadFromMemory
     {
         if (address_type == eAddressTypeHost)
         {
+            if (addr == 0)
+                return false;
             // The address is an address in this process, so just copy it
             memcpy (dst, (uint8_t*)NULL + addr, byte_size);
             return true;

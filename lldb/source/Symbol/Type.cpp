@@ -439,6 +439,8 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType 
         if (address_type == eAddressTypeHost)
         {
             // The address is an address in this process, so just copy it
+            if (addr == 0)
+                return false;
             memcpy (dst, (uint8_t*)NULL + addr, byte_size);
             return true;
         }
