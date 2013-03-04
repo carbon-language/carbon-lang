@@ -769,10 +769,10 @@ private:
   StringRef::size_type
   getSplitPoint(StringRef Text, StringRef::size_type Offset) {
     StringRef::size_type SpaceOffset = Text.rfind(' ', Offset);
-    if (SpaceOffset != StringRef::npos)
+    if (SpaceOffset != StringRef::npos && SpaceOffset != 0)
       return SpaceOffset;
     StringRef::size_type SlashOffset = Text.rfind('/', Offset);
-    if (SlashOffset != StringRef::npos)
+    if (SlashOffset != StringRef::npos && SlashOffset != 0)
       return SlashOffset;
     if (Offset > 1)
       // Do not split at 0.
