@@ -261,6 +261,11 @@ from a ``ClangTool``. More code!
 Add the following to ``LoopConvert.cpp``:
 
 ::
+      #include "clang/ASTMatchers/ASTMatchers.h"
+      #include "clang/ASTMatchers/ASTMatchFinder.h"
+
+      using namespace clang;
+      using namespace clang::ast_matchers;
 
       StatementMatcher LoopMatcher =
         forStmt(hasLoopInit(declStmt(hasSingleDecl(varDecl(
