@@ -214,7 +214,7 @@ class ScopDetection : public FunctionPass {
                         std::string &FileName);
 
   /// @brief Print the locations of all detected scops.
-  void printLocations();
+  void printLocations(llvm::Function &F);
 
 public:
   static char ID;
