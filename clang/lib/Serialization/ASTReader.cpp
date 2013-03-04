@@ -1309,11 +1309,10 @@ bool HeaderFileInfoTrait::EqualKey(internal_key_type a, internal_key_type b) {
     return false;
 
   // Determine whether the actual files are equivalent.
-  bool Result = false;
-  if (llvm::sys::fs::equivalent(a, b, Result))
-    return false;
-  
-  return Result;
+  FileManager &FileMgr = Reader.getFileManager();
+  const FileEntry *FEA = FileMgr.getFile(a);
+  const FileEntry *FEB = FileMgr.getFile(b);
+  return (FEA && FEA == FEB);
 }
     
 std::pair<unsigned, unsigned>

@@ -1135,6 +1135,7 @@ public:
   ~ASTReader();
 
   SourceManager &getSourceManager() const { return SourceMgr; }
+  FileManager &getFileManager() const { return FileMgr; }
 
   /// \brief Flags that indicate what kind of AST loading failures the client
   /// of the AST reader can directly handle.
