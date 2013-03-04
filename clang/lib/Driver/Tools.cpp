@@ -456,7 +456,8 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Cases("arm1136j-s",  "arm1136jf-s",  "arm1176jz-s", "v6")
     .Cases("arm1176jzf-s",  "mpcorenovfp",  "mpcore", "v6")
     .Cases("arm1156t2-s",  "arm1156t2f-s", "v6t2")
-    .Cases("cortex-a5", "cortex-a8", "cortex-a9", "cortex-a15", "v7")
+    .Cases("cortex-a5", "cortex-a7", "cortex-a8", "v7")
+    .Cases("cortex-a9", "cortex-a15", "v7")
     .Case("cortex-r5", "v7r")
     .Case("cortex-m3", "v7m")
     .Case("cortex-m4", "v7m")
@@ -596,8 +597,9 @@ static void addFPMathArgs(const Driver &D, const Arg *A, const ArgList &Args,
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("+neonfp");
     
-    if (CPU != "cortex-a8" && CPU != "cortex-a9" && CPU != "cortex-a9-mp" &&
-        CPU != "cortex-a15" && CPU != "cortex-a5")
+    if (CPU != "cortex-a5" && CPU != "cortex-a7" &&
+        CPU != "cortex-a8" && CPU != "cortex-a9" &&
+        CPU != "cortex-a9-mp" && CPU != "cortex-a15")
       D.Diag(diag::err_drv_invalid_feature) << "-mfpmath=neon" << CPU;
     
   } else if (FPMath == "vfp" || FPMath == "vfp2" || FPMath == "vfp3" ||

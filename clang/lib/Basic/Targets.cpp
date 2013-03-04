@@ -3555,7 +3555,7 @@ public:
     else if (CPU == "cortex-a8" || CPU == "cortex-a15" ||
              CPU == "cortex-a9" || CPU == "cortex-a9-mp")
       Features["neon"] = true;
-    else if (CPU == "swift") {
+    else if (CPU == "swift" || CPU == "cortex-a7") {
       Features["vfp4"] = true;
       Features["neon"] = true;
     }
@@ -3628,7 +3628,8 @@ public:
       .Cases("arm1176jz-s", "arm1176jzf-s", "6ZK")
       .Cases("arm1136jf-s", "mpcorenovfp", "mpcore", "6K")
       .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
-      .Cases("cortex-a5", "cortex-a8", "cortex-a9", "cortex-a15", "7A")
+      .Cases("cortex-a5", "cortex-a7", "cortex-a8", "7A")
+      .Cases("cortex-a9", "cortex-a15", "7A")
       .Case("cortex-r5", "7R")
       .Case("cortex-a9-mp", "7F")
       .Case("swift", "7S")
