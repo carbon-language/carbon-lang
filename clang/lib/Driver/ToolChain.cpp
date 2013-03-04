@@ -109,16 +109,17 @@ static const char *getARMTargetCPU(const ArgList &Args,
     .Case("armv6j", "arm1136j-s")
     .Cases("armv6z", "armv6zk", "arm1176jzf-s")
     .Case("armv6t2", "arm1156t2-s")
+    .Cases("armv6m", "armv6-m", "cortex-m0")
     .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
     .Cases("armv7l", "armv7-l", "cortex-a8")
     .Cases("armv7f", "armv7-f", "cortex-a9-mp")
     .Cases("armv7s", "armv7-s", "swift")
     .Cases("armv7r", "armv7-r", "cortex-r4")
     .Cases("armv7m", "armv7-m", "cortex-m3")
+    .Cases("armv7em", "armv7e-m", "cortex-m4")
     .Case("ep9312", "ep9312")
     .Case("iwmmxt", "iwmmxt")
     .Case("xscale", "xscale")
-    .Cases("armv6m", "armv6-m", "cortex-m0")
     // If all else failed, return the most base CPU LLVM supports.
     .Default("arm7tdmi");
 }
@@ -144,9 +145,9 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Cases("cortex-a5", "cortex-a7", "cortex-a8", "v7")
     .Cases("cortex-a9", "cortex-a15", "v7")
     .Case("cortex-r5", "v7r")
-    .Case("cortex-m3", "v7m")
-    .Case("cortex-m4", "v7m")
     .Case("cortex-m0", "v6m")
+    .Case("cortex-m3", "v7m")
+    .Case("cortex-m4", "v7em")
     .Case("cortex-a9-mp", "v7f")
     .Case("swift", "v7s")
     .Default("");
@@ -168,7 +169,8 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
     StringRef Suffix =
       getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
-    bool ThumbDefault = (Suffix.startswith("v7") && getTriple().isOSDarwin());
+    bool ThumbDefault = Suffix.startswith("v6m") ||
+      (Suffix.startswith("v7") && getTriple().isOSDarwin());
     std::string ArchName = "arm";
 
     // Assembly files should start in ARM mode.

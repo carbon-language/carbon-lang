@@ -99,15 +99,17 @@ bool Darwin::hasBlocksRuntime() const {
 static const char *GetArmArchForMArch(StringRef Value) {
   return llvm::StringSwitch<const char*>(Value)
     .Case("armv6k", "armv6")
+    .Case("armv6m", "armv6m")
     .Case("armv5tej", "armv5")
     .Case("xscale", "xscale")
     .Case("armv4t", "armv4t")
     .Case("armv7", "armv7")
     .Cases("armv7a", "armv7-a", "armv7")
     .Cases("armv7r", "armv7-r", "armv7")
-    .Cases("armv7m", "armv7-m", "armv7")
+    .Cases("armv7em", "armv7e-m", "armv7em")
     .Cases("armv7f", "armv7-f", "armv7f")
     .Cases("armv7k", "armv7-k", "armv7k")
+    .Cases("armv7m", "armv7-m", "armv7m")
     .Cases("armv7s", "armv7-s", "armv7s")
     .Default(0);
 }
@@ -118,11 +120,12 @@ static const char *GetArmArchForMCpu(StringRef Value) {
     .Cases("arm10e", "arm10tdmi", "armv5")
     .Cases("arm1020t", "arm1020e", "arm1022e", "arm1026ej-s", "armv5")
     .Case("xscale", "xscale")
-    .Cases("arm1136j-s", "arm1136jf-s", "arm1176jz-s",
-           "arm1176jzf-s", "cortex-m0", "armv6")
-    .Cases("cortex-a8", "cortex-r4", "cortex-m3", "cortex-a9", "cortex-a15",
-           "armv7")
+    .Cases("arm1136j-s", "arm1136jf-s", "arm1176jz-s", "arm1176jzf-s", "armv6")
+    .Case("cortex-m0", "armv6m")
+    .Cases("cortex-a8", "cortex-r4", "cortex-a9", "cortex-a15", "armv7")
     .Case("cortex-a9-mp", "armv7f")
+    .Case("cortex-m3", "armv7m")
+    .Case("cortex-m4", "armv7em")
     .Case("swift", "armv7s")
     .Default(0);
 }
@@ -813,12 +816,18 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       DAL->AddJoinedArg(0, MArch, "xscale");
     else if (Name == "armv6")
       DAL->AddJoinedArg(0, MArch, "armv6k");
+    else if (Name == "armv6m")
+      DAL->AddJoinedArg(0, MArch, "armv6m");
     else if (Name == "armv7")
       DAL->AddJoinedArg(0, MArch, "armv7a");
+    else if (Name == "armv7em")
+      DAL->AddJoinedArg(0, MArch, "armv7em");
     else if (Name == "armv7f")
       DAL->AddJoinedArg(0, MArch, "armv7f");
     else if (Name == "armv7k")
       DAL->AddJoinedArg(0, MArch, "armv7k");
+    else if (Name == "armv7m")
+      DAL->AddJoinedArg(0, MArch, "armv7m");
     else if (Name == "armv7s")
       DAL->AddJoinedArg(0, MArch, "armv7s");
 
