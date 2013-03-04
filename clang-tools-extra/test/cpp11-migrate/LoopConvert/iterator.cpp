@@ -1,6 +1,8 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -loop-convert %t.cpp -- -I %S/Inputs
 // RUN: FileCheck -input-file=%t.cpp %s
+// RUN: cpp11-migrate -loop-convert %t.cpp -risk=risky -- -I %S/Inputs
+// RUN: FileCheck -check-prefix=RISKY -input-file=%t.cpp %s
 
 #include "structures.h"
 
@@ -99,5 +101,73 @@ void f() {
   }
   // CHECK: for ({{[a-zA-Z_ ]*&? ?}}[[VAR:[a-z_]+]] : intmap)
   // CHECK-NEXT: printf("intmap[%d] = %d", [[VAR]].first, [[VAR]].second);
-
 }
+
+// Tests to ensure that an implicit 'this' is picked up as the container.
+// If member calls are made to 'this' within the loop, the transform becomes
+// risky as these calls may affect state that affects the loop.
+class C {
+public:
+  typedef MutableVal *iterator;
+  typedef const MutableVal *const_iterator;
+
+  iterator begin();
+  iterator end();
+  const_iterator begin() const;
+  const_iterator end() const;
+
+  void doSomething();
+  void doSomething() const;
+
+  void doLoop() {
+    for (iterator I = begin(), E = end(); I != E; ++I) {
+      // CHECK: for (auto & elem : *this) {
+    }
+    for (iterator I = C::begin(), E = C::end(); I != E; ++I) {
+      // CHECK: for (auto & elem : *this) {
+    }
+    for (iterator I = begin(), E = end(); I != E; ++I) {
+      // CHECK: for (iterator I = begin(), E = end(); I != E; ++I) {
+      // RISKY: for (auto & elem : *this) {
+      doSomething();
+    }
+    for (iterator I = begin(); I != end(); ++I) {
+      // CHECK: for (auto & elem : *this) {
+    }
+    for (iterator I = begin(); I != end(); ++I) {
+      // CHECK: for (iterator I = begin(); I != end(); ++I) {
+      // RISKY: for (auto & elem : *this) {
+      doSomething();
+    }
+  }
+
+  void doLoop() const {
+    for (const_iterator I = begin(), E = end(); I != E; ++I) {
+      // CHECK: for (auto & elem : *this) {
+    }
+    for (const_iterator I = C::begin(), E = C::end(); I != E; ++I) {
+      // CHECK: for (auto & elem : *this) {
+    }
+    for (const_iterator I = begin(), E = end(); I != E; ++I) {
+      // CHECK: for (const_iterator I = begin(), E = end(); I != E; ++I) {
+      // RISKY: for (auto & elem : *this) {
+      doSomething();
+    }
+  }
+};
+
+class C2 {
+public:
+  typedef MutableVal *iterator;
+
+  iterator begin() const;
+  iterator end() const;
+
+  void doLoop() {
+    // The implicit 'this' will have an Implicit cast to const C2* wrapped
+    // around it. Make sure the replacement still happens.
+    for (iterator I = begin(), E = end(); I != E; ++I) {
+      // CHECK: for (auto & elem : *this) {
+    }
+  }
+};

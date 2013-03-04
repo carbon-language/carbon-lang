@@ -871,9 +871,15 @@ StringRef LoopFixer::checkDeferralsAndRejections(ASTContext *Context,
     return "";
   }
 
-  StringRef ContainerString =
-      getStringFromRange(Context->getSourceManager(), Context->getLangOpts(),
-                         ContainerExpr->getSourceRange());
+  StringRef ContainerString;
+  if (isa<CXXThisExpr>(ContainerExpr->IgnoreParenImpCasts())) {
+    ContainerString = "this";
+  } else {
+    ContainerString = getStringFromRange(Context->getSourceManager(),
+                                         Context->getLangOpts(),
+                                         ContainerExpr->getSourceRange());
+  }
+
   // In case someone is using an evil macro, reject this change.
   if (ContainerString.empty())
     ++*RejectedChanges;
