@@ -1133,12 +1133,7 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
     if (S)
       break;
 
-    if (RetTy->isPointerType()) {
-      if (FD->getAttr<CFAuditedTransferAttr>()) {
-        S = getCFCreateGetRuleSummary(FD);
-        break;
-      }
-      
+    if (RetTy->isPointerType()) {      
       // For CoreFoundation ('CF') types.
       if (cocoa::isRefType(RetTy, "CF", FName)) {
         if (isRetain(FD, FName))
@@ -1165,6 +1160,11 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
       if (cocoa::isRefType(RetTy, "DADisk") ||
           cocoa::isRefType(RetTy, "DADissenter") ||
           cocoa::isRefType(RetTy, "DASessionRef")) {
+        S = getCFCreateGetRuleSummary(FD);
+        break;
+      }
+
+      if (FD->getAttr<CFAuditedTransferAttr>()) {
         S = getCFCreateGetRuleSummary(FD);
         break;
       }
