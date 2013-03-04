@@ -907,3 +907,11 @@ struct s;
 struct q* g(void);
 struct q;
 
+// expected-warning@+3 {{'@param' command used in a comment that is not attached to a function declaration}}
+// expected-warning@+3 {{'@result' command used in a comment that is not attached to a function or method declaration}}
+/*!	@function Base64EncodeEx
+	@param	inFlags  This is error flag
+	@result	Error
+*/
+typedef unsigned int Base64Flags;
+unsigned Base64EncodeEx(Base64Flags	inFlags);

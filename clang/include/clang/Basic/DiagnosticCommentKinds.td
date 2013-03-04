@@ -69,7 +69,7 @@ def warn_doc_param_spaces_in_direction : Warning<
   InGroup<DocumentationPedantic>, DefaultIgnore;
 
 def warn_doc_param_not_attached_to_a_function_decl : Warning<
-  "'\\param' command used in a comment that is not attached to "
+  "'%select{\\|@}0param' command used in a comment that is not attached to "
   "a function declaration">,
   InGroup<Documentation>, DefaultIgnore;
 
