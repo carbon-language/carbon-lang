@@ -204,7 +204,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::MTHLIP:            return "MipsISD::MTHLIP";
   case MipsISD::MULT:              return "MipsISD::MULT";
   case MipsISD::MULTU:             return "MipsISD::MULTU";
-  case MipsISD::MADD_DSP:          return "MipsISD::MADD_DSPDSP";
+  case MipsISD::MADD_DSP:          return "MipsISD::MADD_DSP";
   case MipsISD::MADDU_DSP:         return "MipsISD::MADDU_DSP";
   case MipsISD::MSUB_DSP:          return "MipsISD::MSUB_DSP";
   case MipsISD::MSUBU_DSP:         return "MipsISD::MSUBU_DSP";
