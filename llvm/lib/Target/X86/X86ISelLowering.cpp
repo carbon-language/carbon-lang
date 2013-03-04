@@ -181,9 +181,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setSchedulingPreference(Sched::RegPressure);
   setStackPointerRegisterToSaveRestore(RegInfo->getStackRegister());
 
-  // Bypass i32 with i8 on Atom when compiling with O2
-  if (Subtarget->hasSlowDivide() && TM.getOptLevel() >= CodeGenOpt::Default)
+  // Bypass expensive divides on Atom when compiling with O2
+  if (Subtarget->hasSlowDivide() && TM.getOptLevel() >= CodeGenOpt::Default) {
     addBypassSlowDiv(32, 8);
+    if (Subtarget->is64Bit())
+      addBypassSlowDiv(64, 16);
+  }
 
   if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing()) {
     // Setup Windows compiler runtime calls.

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=atom -mtriple=i686-linux  | FileCheck %s
+; RUN: llc < %s -mcpu=atom -mtriple=i686-linux | FileCheck %s
 
 define i32 @Test_get_quotient(i32 %a, i32 %b) nounwind {
 ; CHECK: Test_get_quotient:

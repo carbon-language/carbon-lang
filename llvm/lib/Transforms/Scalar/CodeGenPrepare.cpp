@@ -154,7 +154,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 
   /// This optimization identifies DIV instructions that can be
   /// profitably bypassed and carried out with a shorter, faster divide.
-  if (TLI && TLI->isSlowDivBypassed()) {
+  if (!OptSize && TLI && TLI->isSlowDivBypassed()) {
     const DenseMap<unsigned int, unsigned int> &BypassWidths =
        TLI->getBypassSlowDivWidths();
     for (Function::iterator I = F.begin(); I != F.end(); I++)
