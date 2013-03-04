@@ -1009,24 +1009,25 @@ GetOpcodeDataSize (const DataExtractor &data, const lldb::offset_t data_offset, 
     return LLDB_INVALID_OFFSET;
 }
 
-bool
-DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr, bool &error) const
+lldb::addr_t
+DWARFExpression::GetLocation_DW_OP_addr (uint32_t op_addr_idx, bool &error) const
 {
     error = false;
     if (IsLocationList())
-        return false;
+        return LLDB_INVALID_ADDRESS;
     lldb::offset_t offset = 0;
+    uint32_t curr_op_addr_idx = 0;
     while (m_data.ValidOffset(offset))
     {
         const uint8_t op = m_data.GetU8(&offset);
         
         if (op == DW_OP_addr)
         {
-            if (file_addr == LLDB_INVALID_ADDRESS)
-                return true;
-            addr_t op_file_addr = m_data.GetAddress(&offset);
-            if (op_file_addr == file_addr)
-                return true;
+            const lldb::addr_t op_file_addr = m_data.GetAddress(&offset);
+            if (curr_op_addr_idx == op_addr_idx)
+                return op_file_addr;
+            else
+                ++curr_op_addr_idx;
         }
         else
         {
@@ -1039,7 +1040,7 @@ DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr, bool &erro
             offset += op_arg_size;
         }
     }
-    return false;
+    return LLDB_INVALID_ADDRESS;
 }
 
 bool

@@ -392,13 +392,7 @@ Function::CalculateSymbolContextModule ()
 {
     SectionSP section_sp (m_range.GetBaseAddress().GetSection());
     if (section_sp)
-    {
-        SectionSP linked_section_sp (section_sp->GetLinkedSection());
-        if (linked_section_sp)
-            return linked_section_sp->GetModule();
-        else
-            return section_sp->GetModule();
-    }
+        return section_sp->GetModule();
     
     return this->GetCompileUnit()->GetModule();
 }

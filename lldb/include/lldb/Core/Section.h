@@ -61,9 +61,6 @@ public:
     lldb::SectionSP
     FindSectionContainingFileAddress (lldb::addr_t addr, uint32_t depth = UINT32_MAX) const;
 
-    lldb::SectionSP
-    FindSectionContainingLinkedFileAddress (lldb::addr_t vm_addr, uint32_t depth) const;
-
     bool
     GetSectionData (const DataExtractor& module_data, DataExtractor& section_data) const;
 
@@ -93,16 +90,6 @@ public:
 
 protected:
     collection  m_sections;
-
-    typedef RangeDataArray<uint64_t, uint64_t, collection::size_type, 1> SectionRangeCache;
-    mutable SectionRangeCache   m_range_cache;
-#ifdef LLDB_CONFIGURATION_DEBUG
-    mutable bool                m_finalized;
-#endif
-    
-    void BuildRangeCache() const;
-    
-    void InvalidateRangeCache() const;
 };
 
 
@@ -120,8 +107,8 @@ public:
              lldb::SectionType sect_type,
              lldb::addr_t file_vm_addr,
              lldb::addr_t vm_size,
-             uint64_t file_offset,
-             uint64_t file_size,
+             lldb::offset_t file_offset,
+             lldb::offset_t file_size,
              uint32_t flags);
 
     // Create a section that is a child of parent_section_sp
@@ -132,8 +119,8 @@ public:
              lldb::SectionType sect_type,
              lldb::addr_t file_vm_addr,
              lldb::addr_t vm_size,
-             uint64_t file_offset,
-             uint64_t file_size,
+             lldb::offset_t file_offset,
+             lldb::offset_t file_size,
              uint32_t flags);
 
     ~Section ();
@@ -168,26 +155,26 @@ public:
     bool
     ResolveContainedAddress (lldb::addr_t offset, Address &so_addr) const;
 
-    uint64_t
+    lldb::offset_t
     GetFileOffset () const
     {
         return m_file_offset;
     }
 
     void
-    SetFileOffset (uint64_t file_offset) 
+    SetFileOffset (lldb::offset_t file_offset) 
     {
         m_file_offset = file_offset;
     }
 
-    uint64_t
+    lldb::offset_t
     GetFileSize () const
     {
         return m_file_size;
     }
 
     void
-    SetFileSize (uint64_t file_size)
+    SetFileSize (lldb::offset_t file_size)
     {
         m_file_size = file_size;
     }
@@ -239,31 +226,14 @@ public:
     IsDescendant (const Section *section);
 
     const ConstString&
-    GetName () const;
+    GetName () const
+    {
+        return m_name;
+    }
 
     bool
     Slide (lldb::addr_t slide_amount, bool slide_children);
 
-    void
-    SetLinkedLocation (const lldb::SectionSP &linked_section_sp, uint64_t linked_offset);
-
-    bool
-    ContainsLinkedFileAddress (lldb::addr_t vm_addr) const;
-
-    lldb::SectionSP
-    GetLinkedSection () const
-    {
-        return m_linked_section_wp.lock();
-    }
-
-    uint64_t
-    GetLinkedOffset () const
-    {
-        return m_linked_offset;
-    }
-
-    lldb::addr_t
-    GetLinkedFileAddress () const;
 
     lldb::SectionType
     GetType () const
@@ -304,8 +274,8 @@ protected:
     lldb::addr_t    m_file_addr;        // The absolute file virtual address range of this section if m_parent == NULL,
                                         // offset from parent file virtual address if m_parent != NULL
     lldb::addr_t    m_byte_size;        // Size in bytes that this section will occupy in memory at runtime
-    uint64_t        m_file_offset;      // Object file offset (if any)
-    uint64_t        m_file_size;        // Object file size (can be smaller than m_byte_size for zero filled sections...)
+    lldb::offset_t  m_file_offset;      // Object file offset (if any)
+    lldb::offset_t  m_file_size;        // Object file size (can be smaller than m_byte_size for zero filled sections...)
     SectionList     m_children;         // Child sections
     bool            m_fake:1,           // If true, then this section only can contain the address if one of its
                                         // children contains an address. This allows for gaps between the children
@@ -313,8 +283,6 @@ protected:
                                         // hits unless the children contain the address.
                     m_encrypted:1,      // Set to true if the contents are encrypted
                     m_thread_specific:1;// This section is thread specific
-    lldb::SectionWP m_linked_section_wp;
-    uint64_t        m_linked_offset;
 private:
     DISALLOW_COPY_AND_ASSIGN (Section);
 };

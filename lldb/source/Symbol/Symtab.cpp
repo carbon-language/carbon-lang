@@ -11,6 +11,7 @@
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -882,13 +883,13 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
         if (!m_addr_indexes_computed)
             InitAddressIndexes();
         const size_t num_addr_indexes = m_addr_indexes.size();
+        const lldb::addr_t symbol_file_addr = symbol->GetAddress().GetFileAddress();
         SymbolSearchInfo info = FindIndexPtrForSymbolContainingAddress (this,
-                                                                        symbol->GetAddress().GetFileAddress(),
+                                                                        symbol_file_addr,
                                                                         &m_addr_indexes.front(),
                                                                         num_addr_indexes);
         if (info.match_index_ptr != NULL)
         {
-            const lldb::addr_t curr_file_addr = symbol->GetAddress().GetFileAddress();
             // We can figure out the address range of all symbols except the
             // last one by taking the delta between the current symbol and
             // the next symbol
@@ -899,15 +900,32 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
             {
                 Symbol *next_symbol = SymbolAtIndex(m_addr_indexes[addr_index]);
                 if (next_symbol == NULL)
-                    break;
-
-                const lldb::addr_t next_file_addr = next_symbol->GetAddress().GetFileAddress();
-                if (next_file_addr > curr_file_addr)
                 {
-                    byte_size = next_file_addr - curr_file_addr;
-                    symbol->SetByteSize(byte_size);
-                    symbol->SetSizeIsSynthesized(true);
-                    break;
+                    // No next symbol take the size to be the remaining bytes in the section
+                    // in which the symbol resides
+                    SectionSP section_sp (m_objfile->GetSectionList()->FindSectionContainingFileAddress (symbol_file_addr));
+                    if (section_sp)
+                    {
+                        const lldb::addr_t end_section_file_addr = section_sp->GetFileAddress() + section_sp->GetByteSize();
+                        if (end_section_file_addr > symbol_file_addr)
+                        {
+                            byte_size = end_section_file_addr - symbol_file_addr;
+                            symbol->SetByteSize(byte_size);
+                            symbol->SetSizeIsSynthesized(true);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    const lldb::addr_t next_file_addr = next_symbol->GetAddress().GetFileAddress();
+                    if (next_file_addr > symbol_file_addr)
+                    {
+                        byte_size = next_file_addr - symbol_file_addr;
+                        symbol->SetByteSize(byte_size);
+                        symbol->SetSizeIsSynthesized(true);
+                        break;
+                    }
                 }
             }
         }

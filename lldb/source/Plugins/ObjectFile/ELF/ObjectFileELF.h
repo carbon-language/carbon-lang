@@ -153,12 +153,6 @@ private:
     /// Collection of symbols from the dynamic table.
     DynamicSymbolColl m_dynamic_symbols;
 
-    /// List of sections present in this ELF object file.
-    mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
-
-    /// Table of all non-dynamic symbols present in this object file.
-    mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
-
     /// List of file specifications corresponding to the modules (shared
     /// libraries) on which this object file depends.
     mutable std::auto_ptr<lldb_private::FileSpecList> m_filespec_ap;

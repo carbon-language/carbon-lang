@@ -541,6 +541,9 @@ protected:
                                 const DWARFDebugInfoEntry *dst_class_die,
                                 llvm::SmallVectorImpl <const DWARFDebugInfoEntry *> &failures);
 
+    bool
+    FixupAddress (lldb_private::Address &addr);
+
     lldb::ModuleWP                  m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;

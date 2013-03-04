@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SymbolFileDWARF_DWARFDebugLine_h_
-#define SymbolFileDWARF_DWARFDebugLine_h_
+#ifndef SymbolFileDWARF_DWARFDebugMacinfo_h_
+#define SymbolFileDWARF_DWARFDebugMacinfo_h_
 
 #include "SymbolFileDWARF.h"
 
@@ -26,4 +26,4 @@ public:
 };
 
 
-#endif  // SymbolFileDWARF_DWARFDebugLine_h_
+#endif  // SymbolFileDWARF_DWARFDebugMacinfo_h_

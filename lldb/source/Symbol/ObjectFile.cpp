@@ -200,8 +200,10 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     m_data (),
     m_unwind_table (*this),
     m_process_wp(),
-    m_memory_addr (LLDB_INVALID_ADDRESS)
-{    
+    m_memory_addr (LLDB_INVALID_ADDRESS),
+    m_sections_ap (),
+    m_symtab_ap ()
+{
     if (file_spec_ptr)
         m_file = *file_spec_ptr;
     if (data_sp)
@@ -209,12 +211,16 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
+        const ConstString object_name (module_sp->GetObjectName());
         if (m_file)
         {
-            log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, file = %s/%s, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64 "\n",
+            log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s%s%s%s), file = %s/%s, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64,
                          this,
-                         module_sp->GetFileSpec().GetDirectory().AsCString(),
+                         module_sp.get(),
                          module_sp->GetFileSpec().GetFilename().AsCString(),
+                         object_name ? "(" : "",
+                         object_name ? object_name.GetCString() : "",
+                         object_name ? ")" : "",
                          m_file.GetDirectory().AsCString(),
                          m_file.GetFilename().AsCString(),
                          m_file_offset,
@@ -222,10 +228,13 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
         }
         else
         {
-            log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, file = <NULL>, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64 "\n",
+            log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s%s%s%s), file = <NULL>, file_offset = 0x%8.8" PRIx64 ", size = %" PRIu64,
                          this,
-                         module_sp->GetFileSpec().GetDirectory().AsCString(),
+                         module_sp.get(),
                          module_sp->GetFileSpec().GetFilename().AsCString(),
+                         object_name ? "(" : "",
+                         object_name ? object_name.GetCString() : "",
+                         object_name ? ")" : "",
                          m_file_offset,
                          m_length);
         }
@@ -246,17 +255,23 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     m_data (),
     m_unwind_table (*this),
     m_process_wp (process_sp),
-    m_memory_addr (header_addr)
-{    
+    m_memory_addr (header_addr),
+    m_sections_ap (),
+    m_symtab_ap ()
+{
     if (header_data_sp)
         m_data.SetData (header_data_sp, 0, header_data_sp->GetByteSize());
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
-        log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, process = %p, header_addr = 0x%" PRIx64 "\n",
+        const ConstString object_name (module_sp->GetObjectName());
+        log->Printf ("%p ObjectFile::ObjectFile() module = %p (%s%s%s%s), process = %p, header_addr = 0x%" PRIx64,
                      this,
-                     module_sp->GetFileSpec().GetDirectory().AsCString(),
+                     module_sp.get(),
                      module_sp->GetFileSpec().GetFilename().AsCString(),
+                     object_name ? "(" : "",
+                     object_name ? object_name.GetCString() : "",
+                     object_name ? ")" : "",
                      process_sp.get(),
                      m_memory_addr);
     }
@@ -519,3 +534,20 @@ ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &
     return false;
 }
 
+void
+ObjectFile::ClearSymtab ()
+{
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
+    {
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+        if (log)
+        {
+            log->Printf ("%p ObjectFile::ClearSymtab () symtab = %p",
+                         this,
+                         m_symtab_ap.get());
+        }
+        m_symtab_ap.reset();
+    }
+}

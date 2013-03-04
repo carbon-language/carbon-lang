@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -22,7 +23,6 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 LineTable::LineTable(CompileUnit* comp_unit) :
     m_comp_unit(comp_unit),
-    m_section_list(),
     m_entries()
 {
 }
@@ -37,8 +37,7 @@ LineTable::~LineTable()
 void
 LineTable::InsertLineEntry
 (
-    const SectionSP& section_sp,
-    lldb::addr_t section_offset,
+    lldb::addr_t file_addr,
     uint32_t line,
     uint16_t column,
     uint16_t file_idx,
@@ -49,21 +48,7 @@ LineTable::InsertLineEntry
     bool is_terminal_entry
 )
 {
-    SectionSP line_section_sp;
-    SectionSP linked_section_sp (section_sp->GetLinkedSection());
-    if (linked_section_sp)
-    {
-        section_offset += section_sp->GetLinkedOffset();
-        line_section_sp = linked_section_sp;
-    }
-    else
-    {
-        line_section_sp = section_sp;
-    }
-    assert(line_section_sp.get());
-
-    uint32_t sect_idx = m_section_list.AddUniqueSection (line_section_sp);
-    Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
+    Entry entry(file_addr, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
 
     entry_collection::iterator begin_pos = m_entries.begin();
     entry_collection::iterator end_pos = m_entries.end();
@@ -85,7 +70,7 @@ LineSequence::LineSequence()
 void
 LineTable::LineSequenceImpl::Clear()
 { 
-    m_seq_entries.clear();
+    m_entries.clear();
 }
 
 LineSequence* LineTable::CreateLineSequenceContainer ()
@@ -97,8 +82,7 @@ void
 LineTable::AppendLineEntryToSequence
 (
     LineSequence* sequence,
-    const SectionSP& section_sp,
-    lldb::addr_t section_offset,
+    lldb::addr_t file_addr,
     uint32_t line,
     uint16_t column,
     uint16_t file_idx,
@@ -111,9 +95,8 @@ LineTable::AppendLineEntryToSequence
 {
     assert(sequence != NULL);
     LineSequenceImpl* seq = reinterpret_cast<LineSequenceImpl*>(sequence);
-    uint32_t sect_idx = m_section_list.AddUniqueSection (section_sp);
-    Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
-    seq->m_seq_entries.push_back (entry);
+    Entry entry(file_addr, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
+    seq->m_entries.push_back (entry);
 }
 
 void
@@ -121,17 +104,17 @@ LineTable::InsertSequence (LineSequence* sequence)
 {
     assert(sequence != NULL);
     LineSequenceImpl* seq = reinterpret_cast<LineSequenceImpl*>(sequence);
-    if (seq->m_seq_entries.empty())
+    if (seq->m_entries.empty())
         return;
-    Entry& entry = seq->m_seq_entries.front();
-
+    Entry& entry = seq->m_entries.front();
+    
     // If the first entry address in this sequence is greater than or equal to
     // the address of the last item in our entry collection, just append.
     if (m_entries.empty() || !Entry::EntryAddressLessThan(entry, m_entries.back()))
     {
         m_entries.insert(m_entries.end(),
-                         seq->m_seq_entries.begin(),
-                         seq->m_seq_entries.end());
+                         seq->m_entries.begin(),
+                         seq->m_entries.end());
         return;
     }
 
@@ -149,7 +132,7 @@ LineTable::InsertSequence (LineSequence* sequence)
         assert(prev_pos->is_terminal_entry);
     }
 #endif
-    m_entries.insert(pos, seq->m_seq_entries.begin(), seq->m_seq_entries.end());
+    m_entries.insert(pos, seq->m_entries.begin(), seq->m_entries.end());
 }
 
 //----------------------------------------------------------------------
@@ -161,37 +144,23 @@ LineTable::Entry::LessThanBinaryPredicate::LessThanBinaryPredicate(LineTable *li
 bool
 LineTable::Entry::LessThanBinaryPredicate::operator() (const LineTable::Entry& a, const LineTable::Entry& b) const
 {
-    if (a.sect_idx == b.sect_idx)
-    {
-        #define LT_COMPARE(a,b) if (a != b) return a < b
-        LT_COMPARE (a.sect_offset, b.sect_offset);
-        // b and a reversed on purpose below.
-        LT_COMPARE (b.is_terminal_entry, a.is_terminal_entry);
-        LT_COMPARE (a.line, b.line);
-        LT_COMPARE (a.column, b.column);
-        LT_COMPARE (a.is_start_of_statement, b.is_start_of_statement);
-        LT_COMPARE (a.is_start_of_basic_block, b.is_start_of_basic_block);
-        // b and a reversed on purpose below.
-        LT_COMPARE (b.is_prologue_end, a.is_prologue_end);
-        LT_COMPARE (a.is_epilogue_begin, b.is_epilogue_begin);
-        LT_COMPARE (a.file_idx, b.file_idx);
-        return false;
-        #undef LT_COMPARE
-    }
-
-    const Section *a_section = m_line_table->GetSectionForEntryIndex (a.sect_idx);
-    const Section *b_section = m_line_table->GetSectionForEntryIndex (b.sect_idx);
-    return Section::Compare(*a_section, *b_section) < 0;
+    #define LT_COMPARE(a,b) if (a != b) return a < b
+    LT_COMPARE (a.file_addr, b.file_addr);
+    // b and a reversed on purpose below.
+    LT_COMPARE (b.is_terminal_entry, a.is_terminal_entry);
+    LT_COMPARE (a.line, b.line);
+    LT_COMPARE (a.column, b.column);
+    LT_COMPARE (a.is_start_of_statement, b.is_start_of_statement);
+    LT_COMPARE (a.is_start_of_basic_block, b.is_start_of_basic_block);
+    // b and a reversed on purpose below.
+    LT_COMPARE (b.is_prologue_end, a.is_prologue_end);
+    LT_COMPARE (a.is_epilogue_begin, b.is_epilogue_begin);
+    LT_COMPARE (a.file_idx, b.file_idx);
+    return false;
+    #undef LT_COMPARE
 }
 
 
-Section *
-LineTable::GetSectionForEntryIndex (uint32_t idx)
-{
-    if (idx < m_section_list.GetSize())
-        return m_section_list.GetSectionAtIndex(idx).get();
-    return NULL;
-}
 
 uint32_t
 LineTable::GetSize() const
@@ -218,69 +187,69 @@ LineTable::FindLineEntryByAddress (const Address &so_addr, LineEntry& line_entry
         *index_ptr = UINT32_MAX;
 
     bool success = false;
-    uint32_t sect_idx = m_section_list.FindSectionIndex (so_addr.GetSection().get());
-    if (sect_idx != UINT32_MAX)
+
+    if (so_addr.GetModule().get() == m_comp_unit->GetModule().get())
     {
         Entry search_entry;
-        search_entry.sect_idx = sect_idx;
-        search_entry.sect_offset = so_addr.GetOffset();
-
-        entry_collection::const_iterator begin_pos = m_entries.begin();
-        entry_collection::const_iterator end_pos = m_entries.end();
-        entry_collection::const_iterator pos = lower_bound(begin_pos, end_pos, search_entry, Entry::EntryAddressLessThan);
-        if (pos != end_pos)
+        search_entry.file_addr = so_addr.GetFileAddress();
+        if (search_entry.file_addr != LLDB_INVALID_ADDRESS)
         {
-            if (pos != begin_pos)
+            entry_collection::const_iterator begin_pos = m_entries.begin();
+            entry_collection::const_iterator end_pos = m_entries.end();
+            entry_collection::const_iterator pos = lower_bound(begin_pos, end_pos, search_entry, Entry::EntryAddressLessThan);
+            if (pos != end_pos)
             {
-                if (pos->sect_offset != search_entry.sect_offset)
-                    --pos;
-                else if (pos->sect_offset == search_entry.sect_offset)
+                if (pos != begin_pos)
                 {
-                    // If this is a termination entry, it should't match since
-                    // entries with the "is_terminal_entry" member set to true 
-                    // are termination entries that define the range for the 
-                    // previous entry.
-                    if (pos->is_terminal_entry)
+                    if (pos->file_addr != search_entry.file_addr)
+                        --pos;
+                    else if (pos->file_addr == search_entry.file_addr)
                     {
-                        // The matching entry is a terminal entry, so we skip
-                        // ahead to the next entry to see if there is another
-                        // entry following this one whose section/offset matches.
-                        ++pos;
+                        // If this is a termination entry, it should't match since
+                        // entries with the "is_terminal_entry" member set to true 
+                        // are termination entries that define the range for the 
+                        // previous entry.
+                        if (pos->is_terminal_entry)
+                        {
+                            // The matching entry is a terminal entry, so we skip
+                            // ahead to the next entry to see if there is another
+                            // entry following this one whose section/offset matches.
+                            ++pos;
+                            if (pos != end_pos)
+                            {
+                                if (pos->file_addr != search_entry.file_addr)
+                                    pos = end_pos;
+                            }
+                        }
+                        
                         if (pos != end_pos)
                         {
-                            if (pos->sect_offset != search_entry.sect_offset)
-                                pos = end_pos;
+                            // While in the same section/offset backup to find the first
+                            // line entry that matches the address in case there are 
+                            // multiple
+                            while (pos != begin_pos)
+                            {
+                                entry_collection::const_iterator prev_pos = pos - 1;
+                                if (prev_pos->file_addr == search_entry.file_addr &&
+                                    prev_pos->is_terminal_entry == false)
+                                    --pos;
+                                else
+                                    break;
+                            }
                         }
                     }
-                    
-                    if (pos != end_pos)
-                    {
-                        // While in the same section/offset backup to find the first
-                        // line entry that matches the address in case there are 
-                        // multiple
-                        while (pos != begin_pos)
-                        {
-                            entry_collection::const_iterator prev_pos = pos - 1;
-                            if (prev_pos->sect_idx    == search_entry.sect_idx &&
-                                prev_pos->sect_offset == search_entry.sect_offset &&
-                                prev_pos->is_terminal_entry == false)
-                                --pos;
-                            else
-                                break;
-                        }
-                    }
-                }
 
-            }
-            
-            // Make sure we have a valid match and that the match isn't a terminating
-            // entry for a previous line...
-            if (pos != end_pos && pos->is_terminal_entry == false)
-            {
-                uint32_t match_idx = std::distance (begin_pos, pos);
-                success = ConvertEntryAtIndexToLineEntry(match_idx, line_entry);
-                if (index_ptr != NULL && success)
-                    *index_ptr = match_idx;
+                }
+                
+                // Make sure we have a valid match and that the match isn't a terminating
+                // entry for a previous line...
+                if (pos != end_pos && pos->is_terminal_entry == false)
+                {
+                    uint32_t match_idx = std::distance (begin_pos, pos);
+                    success = ConvertEntryAtIndexToLineEntry(match_idx, line_entry);
+                    if (index_ptr != NULL && success)
+                        *index_ptr = match_idx;
+                }
             }
         }
     }
@@ -294,32 +263,24 @@ LineTable::ConvertEntryAtIndexToLineEntry (uint32_t idx, LineEntry &line_entry)
     if (idx < m_entries.size())
     {
         const Entry& entry = m_entries[idx];
-        line_entry.range.GetBaseAddress().SetSection(m_section_list.GetSectionAtIndex (entry.sect_idx));
-        line_entry.range.GetBaseAddress().SetOffset(entry.sect_offset);
-        if (!entry.is_terminal_entry && idx + 1 < m_entries.size())
+        ModuleSP module_sp (m_comp_unit->GetModule());
+        if (module_sp && module_sp->ResolveFileAddress(entry.file_addr, line_entry.range.GetBaseAddress()))
         {
-            const Entry& next_entry = m_entries[idx+1];
-            if (next_entry.sect_idx == entry.sect_idx)
-            {
-                line_entry.range.SetByteSize(next_entry.sect_offset - entry.sect_offset);
-            }
+            if (!entry.is_terminal_entry && idx + 1 < m_entries.size())
+                line_entry.range.SetByteSize(m_entries[idx+1].file_addr - entry.file_addr);
             else
-            {
-                Address next_line_addr(m_section_list.GetSectionAtIndex (next_entry.sect_idx), next_entry.sect_offset);
-                line_entry.range.SetByteSize(next_line_addr.GetFileAddress() - line_entry.range.GetBaseAddress().GetFileAddress());
-            }
+                line_entry.range.SetByteSize(0);
+
+            line_entry.file = m_comp_unit->GetSupportFiles().GetFileSpecAtIndex (entry.file_idx);
+            line_entry.line = entry.line;
+            line_entry.column = entry.column;
+            line_entry.is_start_of_statement = entry.is_start_of_statement;
+            line_entry.is_start_of_basic_block = entry.is_start_of_basic_block;
+            line_entry.is_prologue_end = entry.is_prologue_end;
+            line_entry.is_epilogue_begin = entry.is_epilogue_begin;
+            line_entry.is_terminal_entry = entry.is_terminal_entry;
+            return true;
         }
-        else
-            line_entry.range.SetByteSize(0);
-        line_entry.file = m_comp_unit->GetSupportFiles().GetFileSpecAtIndex (entry.file_idx);
-        line_entry.line = entry.line;
-        line_entry.column = entry.column;
-        line_entry.is_start_of_statement = entry.is_start_of_statement;
-        line_entry.is_start_of_basic_block = entry.is_start_of_basic_block;
-        line_entry.is_prologue_end = entry.is_prologue_end;
-        line_entry.is_epilogue_begin = entry.is_epilogue_begin;
-        line_entry.is_terminal_entry = entry.is_terminal_entry;
-        return true;
     }
     return false;
 }
@@ -503,7 +464,6 @@ LineTable::GetContiguousFileAddressRanges (FileAddressRanges &file_ranges, bool 
     
     const size_t count = m_entries.size();
     LineEntry line_entry;
-    std::vector<addr_t> section_base_file_addrs (m_section_list.GetSize(), LLDB_INVALID_ADDRESS);
     FileAddressRanges::Entry range (LLDB_INVALID_ADDRESS, 0);
     for (size_t idx = 0; idx < count; ++idx)
     {
@@ -513,21 +473,87 @@ LineTable::GetContiguousFileAddressRanges (FileAddressRanges &file_ranges, bool 
         {
             if (range.GetRangeBase() != LLDB_INVALID_ADDRESS)
             {
-                if (section_base_file_addrs[entry.sect_idx] == LLDB_INVALID_ADDRESS)
-                    section_base_file_addrs[entry.sect_idx] = m_section_list.GetSectionAtIndex (entry.sect_idx)->GetFileAddress();
-                range.SetRangeEnd(section_base_file_addrs[entry.sect_idx] + entry.sect_offset);
+                range.SetRangeEnd(entry.file_addr);
                 file_ranges.Append(range);
                 range.Clear(LLDB_INVALID_ADDRESS);
             }
         }
         else if (range.GetRangeBase() == LLDB_INVALID_ADDRESS)
         {
-            if (section_base_file_addrs[entry.sect_idx] == LLDB_INVALID_ADDRESS)
-                section_base_file_addrs[entry.sect_idx] = m_section_list.GetSectionAtIndex (entry.sect_idx)->GetFileAddress();
-            range.SetRangeBase(section_base_file_addrs[entry.sect_idx] + entry.sect_offset);
+            range.SetRangeBase(entry.file_addr);
         }
     }
     return file_ranges.GetSize() - initial_count;
+}
+
+LineTable *
+LineTable::LinkLineTable (const FileRangeMap &file_range_map)
+{
+    std::auto_ptr<LineTable> line_table_ap (new LineTable (m_comp_unit));
+    LineSequenceImpl sequence;
+    const size_t count = m_entries.size();
+    LineEntry line_entry;
+    const FileRangeMap::Entry *file_range_entry = NULL;
+    const FileRangeMap::Entry *prev_file_range_entry = NULL;
+    lldb::addr_t prev_file_addr = LLDB_INVALID_ADDRESS;
+    bool prev_entry_was_linked = false;
+    for (size_t idx = 0; idx < count; ++idx)
+    {
+        const Entry& entry = m_entries[idx];
+        
+        const bool end_sequence = entry.is_terminal_entry;
+        const lldb::addr_t lookup_file_addr = entry.file_addr - (end_sequence ? 1 : 0);
+        if (file_range_entry == NULL || !file_range_entry->Contains(lookup_file_addr))
+        {
+            prev_file_range_entry = file_range_entry;
+            file_range_entry = file_range_map.FindEntryThatContains(lookup_file_addr);
+        }
+        
+        if (file_range_entry)
+        {
+            // This entry has an address remapping and it needs to have its address relinked
+            sequence.m_entries.push_back(entry);
+            // Fix tha addresss
+            const lldb::addr_t linked_file_addr = entry.file_addr - file_range_entry->GetRangeBase() + file_range_entry->data;
+//            if (linked_file_addr == 0x000000000128b7d5)
+//                puts("remove this");
+            sequence.m_entries.back().file_addr = linked_file_addr;
+        }
+        else if (prev_entry_was_linked)
+        {
+            // This entry doesn't have a remapping and it needs to be removed.
+            // Watch out in case we need to terminate a previous entry needs to
+            // be terminated now that one line entry in a sequence is not longer valid.
+            if (!entry.is_terminal_entry &&
+                !sequence.m_entries.empty() &&
+                !sequence.m_entries.back().is_terminal_entry)
+            {
+                assert (prev_file_addr != LLDB_INVALID_ADDRESS);
+                sequence.m_entries.push_back(sequence.m_entries.back());
+                const lldb::addr_t linked_file_addr = std::min<lldb::addr_t>(entry.file_addr,prev_file_range_entry->GetRangeEnd()) - prev_file_range_entry->GetRangeBase() + prev_file_range_entry->data;
+                sequence.m_entries.back().file_addr = linked_file_addr;
+                sequence.m_entries.back().is_terminal_entry = true;
+            }
+        }
+        
+        // If we have items in the sequence and the last entry is a terminal entry,
+        // insert this sequence into our new line table.
+        if (!sequence.m_entries.empty() && sequence.m_entries.back().is_terminal_entry)
+        {
+            line_table_ap->InsertSequence (&sequence);
+            sequence.Clear();
+            prev_entry_was_linked = false;
+            prev_file_addr = LLDB_INVALID_ADDRESS;
+        }
+        else
+        {
+            prev_entry_was_linked = file_range_entry != NULL;
+            prev_file_addr = entry.file_addr;
+        }
+    }
+    if (line_table_ap->m_entries.empty())
+        return NULL;
+    return line_table_ap.release();
 }
 
 

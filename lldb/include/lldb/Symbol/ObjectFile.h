@@ -351,6 +351,17 @@ public:
     GetSymtab () = 0;
 
     //------------------------------------------------------------------
+    /// Frees the symbol table.
+    ///
+    /// This function should only be used when an object file is
+    ///
+    /// @return
+    ///     The symbol table for this object file.
+    //------------------------------------------------------------------
+    virtual void
+    ClearSymtab ();
+    
+    //------------------------------------------------------------------
     /// Gets the UUID for this object file.
     ///
     /// If the object file format contains a UUID, the value should be
@@ -610,6 +621,8 @@ protected:
     lldb_private::UnwindTable m_unwind_table; /// < Table of FuncUnwinders objects created for this ObjectFile's functions
     lldb::ProcessWP m_process_wp;
     const lldb::addr_t m_memory_addr;
+    std::auto_ptr<lldb_private::SectionList> m_sections_ap;
+    std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
     
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture

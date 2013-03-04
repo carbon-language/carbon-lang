@@ -254,8 +254,6 @@ ObjectFileELF::ObjectFileELF (const lldb::ModuleSP &module_sp,
     m_header(),
     m_program_headers(),
     m_section_headers(),
-    m_sections_ap(),
-    m_symtab_ap(),
     m_filespec_ap(),
     m_shstr_data()
 {

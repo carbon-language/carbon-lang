@@ -891,28 +891,40 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
 
             assert(func_type == NULL || func_type != DIE_IS_BEING_PARSED);
 
-            func_range.GetBaseAddress().ResolveLinkedAddress();
-
-            const user_id_t func_user_id = MakeUserID(die->GetOffset());
-            func_sp.reset(new Function (sc.comp_unit,
-                                        func_user_id,       // UserID is the DIE offset
-                                        func_user_id,
-                                        func_name,
-                                        func_type,
-                                        func_range));           // first address range
-
-            if (func_sp.get() != NULL)
+            if (FixupAddress (func_range.GetBaseAddress()))
             {
-                if (frame_base.IsValid())
-                    func_sp->GetFrameBaseExpression() = frame_base;
-                sc.comp_unit->AddFunction(func_sp);
-                return func_sp.get();
+                const user_id_t func_user_id = MakeUserID(die->GetOffset());
+                func_sp.reset(new Function (sc.comp_unit,
+                                            MakeUserID(func_user_id),       // UserID is the DIE offset
+                                            MakeUserID(func_user_id),
+                                            func_name,
+                                            func_type,
+                                            func_range));           // first address range
+
+                if (func_sp.get() != NULL)
+                {
+                    if (frame_base.IsValid())
+                        func_sp->GetFrameBaseExpression() = frame_base;
+                    sc.comp_unit->AddFunction(func_sp);
+                    return func_sp.get();
+                }
             }
         }
     }
     return NULL;
 }
 
+bool
+SymbolFileDWARF::FixupAddress (Address &addr)
+{
+    SymbolFileDWARFDebugMap * debug_map_symfile = GetDebugMapSymfile ();
+    if (debug_map_symfile)
+    {
+        return debug_map_symfile->LinkOSOAddress(addr);
+    }
+    // This is a normal DWARF file, no address fixups need to happen
+    return true;
+}
 lldb::LanguageType
 SymbolFileDWARF::ParseCompileUnitLanguage (const SymbolContext& sc)
 {
@@ -983,15 +995,7 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
 struct ParseDWARFLineTableCallbackInfo
 {
     LineTable* line_table;
-    const SectionList *section_list;
-    lldb::addr_t prev_sect_file_base_addr;
-    lldb::addr_t curr_sect_file_base_addr;
-    bool is_oso_for_debug_map;
-    bool prev_in_final_executable;
-    DWARFDebugLine::Row prev_row;
-    SectionSP prev_section_sp;
-    SectionSP curr_section_sp;
-    llvm::OwningPtr<LineSequence> curr_sequence_ap;
+    std::auto_ptr<LineSequence> sequence_ap;
 };
 
 //----------------------------------------------------------------------
@@ -1000,7 +1004,6 @@ struct ParseDWARFLineTableCallbackInfo
 static void
 ParseDWARFLineTableCallback(dw_offset_t offset, const DWARFDebugLine::State& state, void* userData)
 {
-    LineTable* line_table = ((ParseDWARFLineTableCallbackInfo*)userData)->line_table;
     if (state.row == DWARFDebugLine::State::StartParsingLineTable)
     {
         // Just started parsing the line table
@@ -1012,166 +1015,32 @@ ParseDWARFLineTableCallback(dw_offset_t offset, const DWARFDebugLine::State& sta
     else
     {
         ParseDWARFLineTableCallbackInfo* info = (ParseDWARFLineTableCallbackInfo*)userData;
-        // We have a new row, lets append it
+        LineTable* line_table = info->line_table;
 
-        if (info->curr_section_sp.get() == NULL || info->curr_section_sp->ContainsFileAddress(state.address) == false)
+        // If this is our first time here, we need to create a
+        // sequence container.
+        if (!info->sequence_ap.get())
         {
-            info->prev_section_sp = info->curr_section_sp;
-            info->prev_sect_file_base_addr = info->curr_sect_file_base_addr;
-            // If this is an end sequence entry, then we subtract one from the
-            // address to make sure we get an address that is not the end of
-            // a section.
-            if (state.end_sequence && state.address != 0)
-                info->curr_section_sp = info->section_list->FindSectionContainingFileAddress (state.address - 1);
-            else
-                info->curr_section_sp = info->section_list->FindSectionContainingFileAddress (state.address);
-
-            if (info->curr_section_sp.get())
-                info->curr_sect_file_base_addr = info->curr_section_sp->GetFileAddress ();
-            else
-                info->curr_sect_file_base_addr = 0;
+            info->sequence_ap.reset(line_table->CreateLineSequenceContainer());
+            assert(info->sequence_ap.get());
         }
-        if (info->curr_section_sp.get())
+        line_table->AppendLineEntryToSequence (info->sequence_ap.get(),
+                                               state.address,
+                                               state.line,
+                                               state.column,
+                                               state.file,
+                                               state.is_stmt,
+                                               state.basic_block,
+                                               state.prologue_end,
+                                               state.epilogue_begin,
+                                               state.end_sequence);
+        if (state.end_sequence)
         {
-            lldb::addr_t curr_line_section_offset = state.address - info->curr_sect_file_base_addr;
-            // Check for the fancy section magic to determine if we
-
-            if (info->is_oso_for_debug_map)
-            {
-                // When this is a debug map object file that contains DWARF
-                // (referenced from an N_OSO debug map nlist entry) we will have
-                // a file address in the file range for our section from the
-                // original .o file, and a load address in the executable that
-                // contains the debug map.
-                //
-                // If the sections for the file range and load range are
-                // different, we have a remapped section for the function and
-                // this address is resolved. If they are the same, then the
-                // function for this address didn't make it into the final
-                // executable.
-                bool curr_in_final_executable = (bool) info->curr_section_sp->GetLinkedSection ();
-
-                // If we are doing DWARF with debug map, then we need to carefully
-                // add each line table entry as there may be gaps as functions
-                // get moved around or removed.
-                if (!info->prev_row.end_sequence && info->prev_section_sp.get())
-                {
-                    if (info->prev_in_final_executable)
-                    {
-                        bool terminate_previous_entry = false;
-                        if (!curr_in_final_executable)
-                        {
-                            // Check for the case where the previous line entry
-                            // in a function made it into the final executable,
-                            // yet the current line entry falls in a function
-                            // that didn't. The line table used to be contiguous
-                            // through this address range but now it isn't. We
-                            // need to terminate the previous line entry so
-                            // that we can reconstruct the line range correctly
-                            // for it and to keep the line table correct.
-                            terminate_previous_entry = true;
-                        }
-                        else if (info->curr_section_sp.get() != info->prev_section_sp.get())
-                        {
-                            // Check for cases where the line entries used to be
-                            // contiguous address ranges, but now they aren't.
-                            // This can happen when order files specify the
-                            // ordering of the functions.
-                            lldb::addr_t prev_line_section_offset = info->prev_row.address - info->prev_sect_file_base_addr;
-                            Section *curr_sect = info->curr_section_sp.get();
-                            Section *prev_sect = info->prev_section_sp.get();
-                            assert (curr_sect->GetLinkedSection());
-                            assert (prev_sect->GetLinkedSection());
-                            lldb::addr_t object_file_addr_delta = state.address - info->prev_row.address;
-                            lldb::addr_t curr_linked_file_addr = curr_sect->GetLinkedFileAddress() + curr_line_section_offset;
-                            lldb::addr_t prev_linked_file_addr = prev_sect->GetLinkedFileAddress() + prev_line_section_offset;
-                            lldb::addr_t linked_file_addr_delta = curr_linked_file_addr - prev_linked_file_addr;
-                            if (object_file_addr_delta != linked_file_addr_delta)
-                                terminate_previous_entry = true;
-                        }
-
-                        if (terminate_previous_entry)
-                        {
-                            line_table->InsertLineEntry (info->prev_section_sp,
-                                                         state.address - info->prev_sect_file_base_addr,
-                                                         info->prev_row.line,
-                                                         info->prev_row.column,
-                                                         info->prev_row.file,
-                                                         false,                 // is_stmt
-                                                         false,                 // basic_block
-                                                         false,                 // state.prologue_end
-                                                         false,                 // state.epilogue_begin
-                                                         true);                 // end_sequence);
-                        }
-                    }
-                }
-
-                if (curr_in_final_executable)
-                {
-                    line_table->InsertLineEntry (info->curr_section_sp,
-                                                 curr_line_section_offset,
-                                                 state.line,
-                                                 state.column,
-                                                 state.file,
-                                                 state.is_stmt,
-                                                 state.basic_block,
-                                                 state.prologue_end,
-                                                 state.epilogue_begin,
-                                                 state.end_sequence);
-                    info->prev_section_sp = info->curr_section_sp;
-                }
-                else
-                {
-                    // If the current address didn't make it into the final
-                    // executable, the current section will be the __text
-                    // segment in the .o file, so we need to clear this so
-                    // we can catch the next function that did make it into
-                    // the final executable.
-                    info->prev_section_sp.reset();
-                    info->curr_section_sp.reset();
-                }
-
-                info->prev_in_final_executable = curr_in_final_executable;
-            }
-            else
-            {
-                // We are not in an object file that contains DWARF for an
-                // N_OSO, this is just a normal DWARF file. The DWARF spec
-                // guarantees that the addresses will be in increasing order
-                // for a sequence, but the line table for a single compile unit
-                // may contain multiple sequences so we append entries to the
-                // current sequence until we find its end, then we merge the
-                // sequence into the main line table collection.
-
-                // If this is our first time here, we need to create a 
-                // sequence container.
-                if (!info->curr_sequence_ap)
-                {
-                    info->curr_sequence_ap.reset(line_table->CreateLineSequenceContainer());
-                    assert(info->curr_sequence_ap);
-                }
-                line_table->AppendLineEntryToSequence(info->curr_sequence_ap.get(),
-                                                      info->curr_section_sp,
-                                                      curr_line_section_offset,
-                                                      state.line,
-                                                      state.column,
-                                                      state.file,
-                                                      state.is_stmt,
-                                                      state.basic_block,
-                                                      state.prologue_end,
-                                                      state.epilogue_begin,
-                                                      state.end_sequence);
-                if (state.end_sequence)
-                {
-                    // First, put the current sequence into the line table.
-                    line_table->InsertSequence(info->curr_sequence_ap.get());
-                    // Then, empty it to prepare for the next sequence.
-                    info->curr_sequence_ap->Clear();
-                }
-            }
+            // First, put the current sequence into the line table.
+            line_table->InsertSequence(info->sequence_ap.get());
+            // Then, empty it to prepare for the next sequence.
+            info->sequence_ap->Clear();
         }
-
-        info->prev_row = state;
     }
 }
 
@@ -1194,22 +1063,23 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
                 std::auto_ptr<LineTable> line_table_ap(new LineTable(sc.comp_unit));
                 if (line_table_ap.get())
                 {
-                    ParseDWARFLineTableCallbackInfo info = { 
-                        line_table_ap.get(), 
-                        m_obj_file->GetSectionList(), 
-                        0, 
-                        0, 
-                        GetDebugMapSymfile () != NULL,
-                        false, 
-                        DWARFDebugLine::Row(), 
-                        SectionSP(), 
-                        SectionSP(),
-                        llvm::OwningPtr<LineSequence>()
-                    };
+                    ParseDWARFLineTableCallbackInfo info;
+                    info.line_table = line_table_ap.get();
                     lldb::offset_t offset = cu_line_offset;
                     DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);
-                    sc.comp_unit->SetLineTable(line_table_ap.release());
-                    return true;
+                    if (m_debug_map_symfile)
+                    {
+                        // We have an object file that has a line table with addresses
+                        // that are not linked. We need to link the line table and convert
+                        // the addresses that are relative to the .o file into addresses
+                        // for the main executable.
+                        sc.comp_unit->SetLineTable (m_debug_map_symfile->LinkOSOLineTable (this, line_table_ap.get()));
+                    }
+                    else
+                    {
+                        sc.comp_unit->SetLineTable(line_table_ap.release());
+                        return true;
+                    }
                 }
             }
         }
@@ -2672,18 +2542,18 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                             LineTable *line_table = sc.comp_unit->GetLineTable();
                             if (line_table != NULL)
                             {
-                                if (so_addr.IsLinkedAddress())
+                                // And address that makes it into this function should be in terms
+                                // of this debug file if there is no debug map, or it will be an
+                                // address in the .o file which needs to be fixed up to be in terms
+                                // of the debug map executable. Either way, calling FixupAddress()
+                                // will work for us.
+                                Address exe_so_addr (so_addr);
+                                if (FixupAddress(exe_so_addr))
                                 {
-                                    Address linked_addr (so_addr);
-                                    linked_addr.ResolveLinkedAddress();
-                                    if (line_table->FindLineEntryByAddress (linked_addr, sc.line_entry))
+                                    if (line_table->FindLineEntryByAddress (exe_so_addr, sc.line_entry))
                                     {
                                         resolved |= eSymbolContextLineEntry;
                                     }
-                                }
-                                else if (line_table->FindLineEntryByAddress (so_addr, sc.line_entry))
-                                {
-                                    resolved |= eSymbolContextLineEntry;
                                 }
                             }
                         }
@@ -6976,14 +6846,13 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
         if (info == NULL)
             return 0;
         
-        uint32_t cu_idx = UINT32_MAX;
-        DWARFCompileUnit* dwarf_cu = info->GetCompileUnit(sc.comp_unit->GetID(), &cu_idx).get();
-
-        if (dwarf_cu == NULL)
-            return 0;
-
         if (sc.function)
         {
+            DWARFCompileUnit* dwarf_cu = info->GetCompileUnitContainingDIE(sc.function->GetID()).get();
+            
+            if (dwarf_cu == NULL)
+                return 0;
+            
             const DWARFDebugInfoEntry *function_die = dwarf_cu->GetDIEPtr(sc.function->GetID());
             
             dw_addr_t func_lo_pc = function_die->GetAttributeValueAsUnsigned (this, dwarf_cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
@@ -6998,6 +6867,11 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
         }
         else if (sc.comp_unit)
         {
+            DWARFCompileUnit* dwarf_cu = info->GetCompileUnit(sc.comp_unit->GetID()).get();
+
+            if (dwarf_cu == NULL)
+                return 0;
+
             uint32_t vars_added = 0;
             VariableListSP variables (sc.comp_unit->GetVariableList(false));
             
@@ -7232,10 +7106,10 @@ SymbolFileDWARF::ParseVariableDIE
                 {
                     bool op_error = false;
                     // Check if the location has a DW_OP_addr with any address value...
-                    addr_t location_has_op_addr = false;
+                    lldb::addr_t location_DW_OP_addr = LLDB_INVALID_ADDRESS;
                     if (!location_is_const_value_data)
                     {
-                        location_has_op_addr = location.LocationContains_DW_OP_addr (LLDB_INVALID_ADDRESS, op_error);
+                        location_DW_OP_addr = location.GetLocation_DW_OP_addr (0, op_error);
                         if (op_error)
                         {
                             StreamString strm;
@@ -7244,67 +7118,63 @@ SymbolFileDWARF::ParseVariableDIE
                         }
                     }
 
-                    if (location_has_op_addr)
+                    if (location_DW_OP_addr != LLDB_INVALID_ADDRESS)
                     {
                         if (is_external)
-                        {
                             scope = eValueTypeVariableGlobal;
-
-                            if (GetDebugMapSymfile ())
+                        else
+                            scope = eValueTypeVariableStatic;
+                        
+                        
+                        SymbolFileDWARFDebugMap *debug_map_symfile = GetDebugMapSymfile ();
+                        
+                        if (debug_map_symfile)
+                        {
+                            // When leaving the DWARF in the .o files on darwin,
+                            // when we have a global variable that wasn't initialized,
+                            // the .o file might not have allocated a virtual
+                            // address for the global variable. In this case it will
+                            // have created a symbol for the global variable
+                            // that is undefined/data and external and the value will
+                            // be the byte size of the variable. When we do the
+                            // address map in SymbolFileDWARFDebugMap we rely on
+                            // having an address, we need to do some magic here
+                            // so we can get the correct address for our global
+                            // variable. The address for all of these entries
+                            // will be zero, and there will be an undefined symbol
+                            // in this object file, and the executable will have
+                            // a matching symbol with a good address. So here we
+                            // dig up the correct address and replace it in the
+                            // location for the variable, and set the variable's
+                            // symbol context scope to be that of the main executable
+                            // so the file address will resolve correctly.
+                            bool linked_oso_file_addr = false;
+                            if (is_external && location_DW_OP_addr == 0)
                             {
-                                // When leaving the DWARF in the .o files on darwin,
-                                // when we have a global variable that wasn't initialized,
-                                // the .o file might not have allocated a virtual
-                                // address for the global variable. In this case it will
-                                // have created a symbol for the global variable
-                                // that is undefined/data and external and the value will
-                                // be the byte size of the variable. When we do the
-                                // address map in SymbolFileDWARFDebugMap we rely on
-                                // having an address, we need to do some magic here
-                                // so we can get the correct address for our global 
-                                // variable. The address for all of these entries
-                                // will be zero, and there will be an undefined symbol
-                                // in this object file, and the executable will have
-                                // a matching symbol with a good address. So here we
-                                // dig up the correct address and replace it in the
-                                // location for the variable, and set the variable's
-                                // symbol context scope to be that of the main executable
-                                // so the file address will resolve correctly.
-                                if (location.LocationContains_DW_OP_addr (0, op_error))
+                                
+                                // we have a possible uninitialized extern global
+                                ConstString const_name(mangled ? mangled : name);
+                                ObjectFile *debug_map_objfile = debug_map_symfile->GetObjectFile();
+                                if (debug_map_objfile)
                                 {
-                                    
-                                    // we have a possible uninitialized extern global
-                                    Symtab *symtab = m_obj_file->GetSymtab();
-                                    if (symtab)
+                                    Symtab *debug_map_symtab = debug_map_objfile->GetSymtab();
+                                    if (debug_map_symtab)
                                     {
-                                        ConstString const_name(mangled ? mangled : name);
-                                        Symbol *o_symbol = symtab->FindFirstSymbolWithNameAndType (const_name,
-                                                                                                   eSymbolTypeAny,
-                                                                                                   Symtab::eDebugNo,
-                                                                                                   Symtab::eVisibilityExtern);
-                                        
-                                        if (o_symbol)
+                                        Symbol *exe_symbol = debug_map_symtab->FindFirstSymbolWithNameAndType (const_name,
+                                                                                                               eSymbolTypeData,
+                                                                                                               Symtab::eDebugYes,
+                                                                                                               Symtab::eVisibilityExtern);
+                                        if (exe_symbol)
                                         {
-                                            ObjectFile *debug_map_objfile = m_debug_map_symfile->GetObjectFile();
-                                            if (debug_map_objfile)
+                                            if (exe_symbol->ValueIsAddress())
                                             {
-                                                Symtab *debug_map_symtab = debug_map_objfile->GetSymtab();
-                                                Symbol *defined_symbol = debug_map_symtab->FindFirstSymbolWithNameAndType (const_name,
-                                                                                                                           eSymbolTypeData, 
-                                                                                                                           Symtab::eDebugYes, 
-                                                                                                                           Symtab::eVisibilityExtern);
-                                                if (defined_symbol)
+                                                const addr_t exe_file_addr = exe_symbol->GetAddress().GetFileAddress();
+                                                if (exe_file_addr != LLDB_INVALID_ADDRESS)
                                                 {
-                                                    if (defined_symbol->ValueIsAddress())
+                                                    if (location.Update_DW_OP_addr (exe_file_addr))
                                                     {
-                                                        const addr_t defined_addr = defined_symbol->GetAddress().GetFileAddress();
-                                                        if (defined_addr != LLDB_INVALID_ADDRESS)
-                                                        {
-                                                            if (location.Update_DW_OP_addr (defined_addr))
-                                                            {
-                                                                symbol_context_scope = defined_symbol;
-                                                            }
-                                                        }
+                                                        linked_oso_file_addr = true;
+                                                        symbol_context_scope = exe_symbol;
                                                     }
                                                 }
                                             }
@@ -7312,10 +7182,23 @@ SymbolFileDWARF::ParseVariableDIE
                                     }
                                 }
                             }
-                        }
-                        else  
-                        {
-                            scope = eValueTypeVariableStatic;
+
+                            if (!linked_oso_file_addr)
+                            {
+                                // The DW_OP_addr is not zero, but it contains a .o file address which
+                                // needs to be linked up correctly.
+                                const lldb::addr_t exe_file_addr = debug_map_symfile->LinkOSOFileAddress(this, location_DW_OP_addr);
+                                if (exe_file_addr != LLDB_INVALID_ADDRESS)
+                                {
+                                    // Update the file address for this variable
+                                    location.Update_DW_OP_addr (exe_file_addr);
+                                }
+                                else
+                                {
+                                    // Variable didn't make it into the final executable
+                                    return var_sp;
+                                }
+                            }
                         }
                     }
                     else

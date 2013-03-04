@@ -1015,29 +1015,6 @@ lldb_private::operator!= (const Address& a, const Address& rhs)
             a.GetOffset()  != rhs.GetOffset();
 }
 
-bool
-Address::IsLinkedAddress () const
-{
-    SectionSP section_sp (GetSection());
-    return section_sp && section_sp->GetLinkedSection();
-}
-
-
-void
-Address::ResolveLinkedAddress ()
-{
-    SectionSP section_sp (GetSection());
-    if (section_sp)
-    {
-        SectionSP linked_section_sp (section_sp->GetLinkedSection());
-        if (linked_section_sp)
-        {
-            m_offset += section_sp->GetLinkedOffset();
-            m_section_wp = linked_section_sp;
-        }
-    }
-}
-
 AddressClass
 Address::GetAddressClass () const
 {

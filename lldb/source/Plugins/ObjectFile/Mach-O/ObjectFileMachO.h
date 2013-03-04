@@ -146,8 +146,6 @@ public:
 
 protected:
     llvm::MachO::mach_header m_header;
-    mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
-    mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
     static const lldb_private::ConstString &GetSegmentNameTEXT();
     static const lldb_private::ConstString &GetSegmentNameDATA();
     static const lldb_private::ConstString &GetSegmentNameOBJC();
@@ -157,7 +155,7 @@ protected:
     llvm::MachO::dysymtab_command m_dysymtab;
     std::vector<llvm::MachO::segment_command_64> m_mach_segments;
     std::vector<llvm::MachO::section_64> m_mach_sections;
-    typedef lldb_private::RangeArray<uint32_t, uint32_t, 1> FileRangeArray;
+    typedef lldb_private::RangeVector<uint32_t, uint32_t> FileRangeArray;
     lldb_private::Address  m_entry_point_address;
     FileRangeArray m_thread_context_offsets;
     bool m_thread_context_offsets_valid;

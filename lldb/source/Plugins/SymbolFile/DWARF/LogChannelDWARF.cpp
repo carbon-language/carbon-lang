@@ -182,9 +182,9 @@ LogChannelDWARF::ListCategories (Stream *strm)
                   "  line - log the parsing if .debug_line\n"
                   "  pubnames - log the parsing if .debug_pubnames\n"
                   "  pubtypes - log the parsing if .debug_pubtypes\n"
-                  "  lookups - log any lookups that happen by name, regex, or address\n\n"
-                  "  completion - log struct/unions/class type completions\n\n"
-                  "  map - log insertions of object files into DWARF debug maps\n\n",
+                  "  lookups - log any lookups that happen by name, regex, or address\n"
+                  "  completion - log struct/unions/class type completions\n"
+                  "  map - log insertions of object files into DWARF debug maps\n",
                   SymbolFileDWARF::GetPluginNameStatic());
 }
 

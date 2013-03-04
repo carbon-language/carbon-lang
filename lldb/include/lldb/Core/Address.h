@@ -393,12 +393,6 @@ public:
     bool
     ResolveAddressUsingFileSections (lldb::addr_t addr, const SectionList *sections);
 
-    bool
-    IsLinkedAddress () const;
-
-    void
-    ResolveLinkedAddress ();
-
     //------------------------------------------------------------------
     /// Set the address to represent \a load_addr.
     ///

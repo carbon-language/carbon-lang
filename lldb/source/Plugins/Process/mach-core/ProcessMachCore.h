@@ -130,7 +130,7 @@ private:
     // For ProcessMachCore only
     //------------------------------------------------------------------
     typedef lldb_private::Range<uint32_t, uint32_t> FileRange;
-    typedef lldb_private::RangeDataArray<lldb::addr_t, lldb::addr_t, FileRange, 1> VMRangeToFileOffset;
+    typedef lldb_private::RangeDataVector<lldb::addr_t, lldb::addr_t, FileRange> VMRangeToFileOffset;
 
     VMRangeToFileOffset m_core_aranges;
     lldb::ModuleSP m_core_module_sp;

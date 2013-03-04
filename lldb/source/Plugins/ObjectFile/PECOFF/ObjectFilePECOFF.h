@@ -229,8 +229,6 @@ protected:
 	typedef SectionHeaderColl::iterator			SectionHeaderCollIter;
 	typedef SectionHeaderColl::const_iterator	SectionHeaderCollConstIter;
 private:
-    mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
-    mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
 	dos_header_t		m_dos_header;
 	coff_header_t		m_coff_header;
 	coff_opt_header_t	m_coff_header_opt;
