@@ -19,8 +19,9 @@ class StdMapDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
-    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
-    @skipIfGcc # bugzilla 15036: When built with GCC, this test causes lldb to crash with
+    @expectedFailureClang # llvm.org/pr15301: LLDB prints incorrect size of
+                          # libstdc++ containers
+    @skipIfGcc # llvm.org/pr15036: When built with GCC, this test causes lldb to crash with
                # assert DeclCXX.h:554 queried property of class with no definition
     @dwarf_test
     def test_with_dwarf_and_run_command(self):

@@ -20,8 +20,7 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.watchlocation_using_watchpoint_set()
 
-    #@expectedFailureLinux # bugzilla 14416
-    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
+    @expectedFailureLinux # llvm.org/pr14416
     @dwarf_test
     def test_watchlocation_with_dwarf_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -x size' option."""
