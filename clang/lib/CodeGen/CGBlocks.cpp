@@ -777,8 +777,16 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       // special; we'll simply emit it directly.
       src = 0;
     } else {
-      // This is a [[type]]*.
-      src = LocalDeclMap[variable];
+      // Just look it up in the locals map, which will give us back a
+      // [[type]]*.  If that doesn't work, do the more elaborate DRE
+      // emission.
+      src = LocalDeclMap.lookup(variable);
+      if (!src) {
+        DeclRefExpr declRef(const_cast<VarDecl*>(variable),
+                            /*refersToEnclosing*/ ci->isNested(), type,
+                            VK_LValue, SourceLocation());
+        src = EmitDeclRefLValue(&declRef).getAddress();
+      }
     }
 
     // For byrefs, we just write the pointer to the byref struct into

@@ -82,3 +82,33 @@ namespace test_complex_int_ref_mutable {
   }
 }
 
+// rdar://13295759
+namespace test_block_in_lambda {
+  void takeBlock(void (^block)());
+
+  // The captured variable has to be non-POD so that we have a copy expression.
+  struct A {
+    void *p;
+    A(const A &);
+    ~A();
+    void use() const;
+  };
+
+  void test(A a) {
+    auto lambda = [a]() {
+      takeBlock(^{ a.use(); });
+    };
+    lambda(); // make sure we emit the invocation function
+  }
+  // CHECK:    define internal void @"_ZZN20test_block_in_lambda4testENS_1AEENK3$_0clEv"(
+  // CHECK:      [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]], align 8
+  // CHECK:      [[THIS:%.*]] = load [[LAMBDA_T:%.*]]**
+  // CHECK:      [[TO_DESTROY:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+  // CHECK:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[LAMBDA_T]]* [[THIS]], i32 0, i32 0
+  // CHECK-NEXT: call void @_ZN20test_block_in_lambda1AC1ERKS0_({{.*}}* [[T0]], {{.*}}* [[T1]])
+  // CHECK-NEXT: [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
+  // CHECK-NEXT: call void @_ZN20test_block_in_lambda9takeBlockEU13block_pointerFvvE(void ()* [[T0]])
+  // CHECK-NEXT: call void @_ZN20test_block_in_lambda1AD1Ev({{.*}}* [[TO_DESTROY]])
+  // CHECK-NEXT: ret void
+}
