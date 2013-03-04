@@ -58,63 +58,7 @@ private:
 
   void createDefaultSections();
 
-  void createDefaultDynamicEntries() {
-    Elf_Dyn dyn;
-    dyn.d_un.d_val = 0;
-
-    dyn.d_tag = DT_HASH;
-    _dt_hash = _dynamicTable->addEntry(dyn);
-    dyn.d_tag = DT_STRTAB;
-    _dt_strtab = _dynamicTable->addEntry(dyn);
-    dyn.d_tag = DT_SYMTAB;
-    _dt_symtab = _dynamicTable->addEntry(dyn);
-    dyn.d_tag = DT_STRSZ;
-    _dt_strsz = _dynamicTable->addEntry(dyn);
-    dyn.d_tag = DT_SYMENT;
-    _dt_syment = _dynamicTable->addEntry(dyn);
-    if (_layout->hasDynamicRelocationTable()) {
-      dyn.d_tag = DT_RELA;
-      _dt_rela = _dynamicTable->addEntry(dyn);
-      dyn.d_tag = DT_RELASZ;
-      _dt_relasz = _dynamicTable->addEntry(dyn);
-      dyn.d_tag = DT_RELAENT;
-      _dt_relaent = _dynamicTable->addEntry(dyn);
-    }
-    if (_layout->hasPLTRelocationTable()) {
-      dyn.d_tag = DT_PLTRELSZ;
-      _dt_pltrelsz = _dynamicTable->addEntry(dyn);
-      dyn.d_tag = DT_PLTGOT;
-      _dt_pltgot = _dynamicTable->addEntry(dyn);
-      dyn.d_tag = DT_PLTREL;
-      dyn.d_un.d_val = DT_RELA;
-      _dt_pltrel = _dynamicTable->addEntry(dyn);
-      dyn.d_un.d_val = 0;
-      dyn.d_tag = DT_JMPREL;
-      _dt_jmprel = _dynamicTable->addEntry(dyn);
-    }
-  }
-
-  void updateDynamicTable() {
-    auto tbl = _dynamicTable->entries();
-    tbl[_dt_hash].d_un.d_val = _hashTable->virtualAddr();
-    tbl[_dt_strtab].d_un.d_val = _dynamicStringTable->virtualAddr();
-    tbl[_dt_symtab].d_un.d_val = _dynamicSymbolTable->virtualAddr();
-    tbl[_dt_strsz].d_un.d_val = _dynamicStringTable->memSize();
-    tbl[_dt_syment].d_un.d_val = _dynamicSymbolTable->getEntSize();
-    if (_layout->hasDynamicRelocationTable()) {
-      auto relaTbl = _layout->getDynamicRelocationTable();
-      tbl[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
-      tbl[_dt_relasz].d_un.d_val = relaTbl->memSize();
-      tbl[_dt_relaent].d_un.d_val = relaTbl->getEntSize();
-    }
-    if (_layout->hasPLTRelocationTable()) {
-      auto relaTbl = _layout->getPLTRelocationTable();
-      tbl[_dt_jmprel].d_un.d_val = relaTbl->virtualAddr();
-      tbl[_dt_pltrelsz].d_un.d_val = relaTbl->memSize();
-      auto gotplt = _layout->findOutputSection(".got.plt");
-      tbl[_dt_pltgot].d_un.d_val = gotplt->virtualAddr();
-    }
-  }
+  void createDefaultDynamicEntries() {}
 
   llvm::BumpPtrAllocator _alloc;
 
@@ -138,18 +82,6 @@ private:
   LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
   llvm::StringSet<> _soNeeded;
-  std::size_t _dt_hash;
-  std::size_t _dt_strtab;
-  std::size_t _dt_symtab;
-  std::size_t _dt_rela;
-  std::size_t _dt_relasz;
-  std::size_t _dt_relaent;
-  std::size_t _dt_strsz;
-  std::size_t _dt_syment;
-  std::size_t _dt_pltrelsz;
-  std::size_t _dt_pltgot;
-  std::size_t _dt_pltrel;
-  std::size_t _dt_jmprel;
   /// @}
   CRuntimeFile<ELFT> _runtimeFile;
 };
@@ -331,7 +263,7 @@ error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   createDefaultSections();
 
   if (_targetInfo.isDynamic()) {
-    createDefaultDynamicEntries();
+    _dynamicTable->createDefaultEntries();
     buildDynamicSymbolTable(file);
   }
 
@@ -360,7 +292,8 @@ error_code ExecutableWriter<ELFT>::writeFile(const File &file, StringRef path) {
   assignSectionsWithNoSegments();
 
   if (_targetInfo.isDynamic())
-    updateDynamicTable();
+    _dynamicTable->updateDynamicTable(_hashTable.get(),
+                                      _dynamicSymbolTable.get());
 
   uint64_t totalSize = _shdrtab->fileOffset() + _shdrtab->fileSize();
 

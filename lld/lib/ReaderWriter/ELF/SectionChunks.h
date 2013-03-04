@@ -616,6 +616,8 @@ public:
 
   void setStringSection(StringTable<ELFT> *s) { _stringSection = s; }
 
+  StringTable<ELFT> *getStringTable() const { return _stringSection; }
+
 private:
   llvm::BumpPtrAllocator _symbolAllocate;
   StringTable<ELFT> *_stringSection;
@@ -832,6 +834,8 @@ private:
   const SymbolTable<ELFT> *_symbolTable;
 };
 
+template <class ELFT> class HashSection;
+
 template <class ELFT> class DynamicTable : public Section<ELFT> {
   typedef llvm::object::Elf_Dyn_Impl<ELFT> Elf_Dyn;
   typedef std::vector<Elf_Dyn> EntriesT;
@@ -847,6 +851,7 @@ public:
     this->_msize = sizeof(Elf_Dyn);
     this->_type = SHT_DYNAMIC;
     this->_flags = SHF_ALLOC;
+    _layout = &ti.getTargetHandler<ELFT>().targetLayout();
   }
 
   range<typename EntriesT::iterator> entries() { return _entries; }
@@ -870,8 +875,81 @@ public:
     std::memcpy(dest, _entries.data(), this->_fsize);
   }
 
+  void createDefaultEntries() {
+    Elf_Dyn dyn;
+    dyn.d_un.d_val = 0;
+
+    dyn.d_tag = DT_HASH;
+    _dt_hash = addEntry(dyn);
+    dyn.d_tag = DT_STRTAB;
+    _dt_strtab = addEntry(dyn);
+    dyn.d_tag = DT_SYMTAB;
+    _dt_symtab = addEntry(dyn);
+    dyn.d_tag = DT_STRSZ;
+    _dt_strsz = addEntry(dyn);
+    dyn.d_tag = DT_SYMENT;
+    _dt_syment = addEntry(dyn);
+    if (_layout->hasDynamicRelocationTable()) {
+      dyn.d_tag = DT_RELA;
+      _dt_rela = addEntry(dyn);
+      dyn.d_tag = DT_RELASZ;
+      _dt_relasz = addEntry(dyn);
+      dyn.d_tag = DT_RELAENT;
+      _dt_relaent = addEntry(dyn);
+    }
+    if (_layout->hasPLTRelocationTable()) {
+      dyn.d_tag = DT_PLTRELSZ;
+      _dt_pltrelsz = addEntry(dyn);
+      dyn.d_tag = DT_PLTGOT;
+      _dt_pltgot = addEntry(dyn);
+      dyn.d_tag = DT_PLTREL;
+      dyn.d_un.d_val = DT_RELA;
+      _dt_pltrel = addEntry(dyn);
+      dyn.d_un.d_val = 0;
+      dyn.d_tag = DT_JMPREL;
+      _dt_jmprel = addEntry(dyn);
+    }
+  }
+
+  void updateDynamicTable(HashSection<ELFT> *hashTable,
+                          DynamicSymbolTable<ELFT> *dynamicSymbolTable) {
+    StringTable<ELFT> *dynamicStringTable =
+        dynamicSymbolTable->getStringTable();
+    _entries[_dt_hash].d_un.d_val = hashTable->virtualAddr();
+    _entries[_dt_strtab].d_un.d_val = dynamicStringTable->virtualAddr();
+    _entries[_dt_symtab].d_un.d_val = dynamicSymbolTable->virtualAddr();
+    _entries[_dt_strsz].d_un.d_val = dynamicStringTable->memSize();
+    _entries[_dt_syment].d_un.d_val = dynamicSymbolTable->getEntSize();
+    if (_layout->hasDynamicRelocationTable()) {
+      auto relaTbl = _layout->getDynamicRelocationTable();
+      _entries[_dt_rela].d_un.d_val = relaTbl->virtualAddr();
+      _entries[_dt_relasz].d_un.d_val = relaTbl->memSize();
+      _entries[_dt_relaent].d_un.d_val = relaTbl->getEntSize();
+    }
+    if (_layout->hasPLTRelocationTable()) {
+      auto relaTbl = _layout->getPLTRelocationTable();
+      _entries[_dt_jmprel].d_un.d_val = relaTbl->virtualAddr();
+      _entries[_dt_pltrelsz].d_un.d_val = relaTbl->memSize();
+      auto gotplt = _layout->findOutputSection(".got.plt");
+      _entries[_dt_pltgot].d_un.d_val = gotplt->virtualAddr();
+    }
+  }
+
 private:
   EntriesT _entries;
+  std::size_t _dt_hash;
+  std::size_t _dt_strtab;
+  std::size_t _dt_symtab;
+  std::size_t _dt_rela;
+  std::size_t _dt_relasz;
+  std::size_t _dt_relaent;
+  std::size_t _dt_strsz;
+  std::size_t _dt_syment;
+  std::size_t _dt_pltrelsz;
+  std::size_t _dt_pltgot;
+  std::size_t _dt_pltrel;
+  std::size_t _dt_jmprel;
+  TargetLayout<ELFT> *_layout;
 };
 
 template <class ELFT> class InterpSection : public Section<ELFT> {
