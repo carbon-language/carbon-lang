@@ -1135,10 +1135,16 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       if (Args[i]->isTypeDependent())
         continue;
 
-      ExprResult Result = DefaultArgumentPromotion(Args[i]);
-      if (Result.isInvalid())
+      ExprResult result;
+      if (getLangOpts().DebuggerSupport) {
+        QualType paramTy; // ignored
+        result = checkUnknownAnyArg(lbrac, Args[i], paramTy);
+      } else {
+        result = DefaultArgumentPromotion(Args[i]);
+      }
+      if (result.isInvalid())
         return true;
-      Args[i] = Result.take();
+      Args[i] = result.take();
     }
 
     unsigned DiagID;
@@ -1199,14 +1205,17 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     // If the parameter is __unknown_anytype, infer its type
     // from the argument.
     if (param->getType() == Context.UnknownAnyTy) {
-      QualType paramType = checkUnknownAnyArg(argExpr);
-      if (paramType.isNull()) {
+      QualType paramType;
+      ExprResult argE = checkUnknownAnyArg(lbrac, argExpr, paramType);
+      if (argE.isInvalid()) {
         IsError = true;
-        continue;
-      }
+      } else {
+        Args[i] = argE.take();
 
-      // Update the parameter type in-place.
-      param->setType(paramType);
+        // Update the parameter type in-place.
+        param->setType(paramType);
+      }
+      continue;
     }
 
     if (RequireCompleteType(argExpr->getSourceRange().getBegin(),

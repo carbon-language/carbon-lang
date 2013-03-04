@@ -3835,11 +3835,8 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
     if (Proto->getResultType() == Context.UnknownAnyTy &&
         FDecl && FDecl->isExternC()) {
       for (unsigned i = ArgIx; i != NumArgs; ++i) {
-        ExprResult arg;
-        if (isa<ExplicitCastExpr>(Args[i]->IgnoreParens()))
-          arg = DefaultFunctionArrayLvalueConversion(Args[i]);
-        else
-          arg = DefaultVariadicArgumentPromotion(Args[i], CallType, FDecl);
+        QualType paramType; // ignored
+        ExprResult arg = checkUnknownAnyArg(CallLoc, Args[i], paramType);
         Invalid |= arg.isInvalid();
         AllArgs.push_back(arg.take());
       }
@@ -12013,20 +12010,27 @@ ExprResult Sema::forceUnknownAnyToType(Expr *E, QualType ToType) {
   return RebuildUnknownAnyExpr(*this, ToType).Visit(E);
 }
 
-QualType Sema::checkUnknownAnyArg(Expr *&arg) {
-  // Filter out placeholders.
-  ExprResult argR = CheckPlaceholderExpr(arg);
-  if (argR.isInvalid()) return QualType();
-  arg = argR.take();
-
-  // If the argument is an explicit cast, use that exact type as the
-  // effective parameter type.
-  if (ExplicitCastExpr *castArg = dyn_cast<ExplicitCastExpr>(arg)) {
-    return castArg->getTypeAsWritten();
+ExprResult Sema::checkUnknownAnyArg(SourceLocation callLoc,
+                                    Expr *arg, QualType &paramType) {
+  // If the syntactic form of the argument is not an explicit cast of
+  // any sort, just do default argument promotion.
+  ExplicitCastExpr *castArg = dyn_cast<ExplicitCastExpr>(arg->IgnoreParens());
+  if (!castArg) {
+    ExprResult result = DefaultArgumentPromotion(arg);
+    if (result.isInvalid()) return ExprError();
+    paramType = result.get()->getType();
+    return result;
   }
 
-  // Otherwise, try to pass by value.
-  return arg->getType().getUnqualifiedType();
+  // Otherwise, use the type that was written in the explicit cast.
+  assert(!arg->hasPlaceholderType());
+  paramType = castArg->getTypeAsWritten();
+
+  // Copy-initialize a parameter of that type.
+  InitializedEntity entity =
+    InitializedEntity::InitializeParameter(Context, paramType,
+                                           /*consumed*/ false);
+  return PerformCopyInitialization(entity, callLoc, Owned(arg));
 }
 
 static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *E) {
