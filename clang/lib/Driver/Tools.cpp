@@ -5629,8 +5629,8 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 static void AddLibgcc(llvm::Triple Triple, const Driver &D,
                       ArgStringList &CmdArgs, const ArgList &Args) {
   bool isAndroid = Triple.getEnvironment() == llvm::Triple::Android;
-  bool StaticLibgcc = Args.hasArg(options::OPT_static) ||
-                      Args.hasArg(options::OPT_static_libgcc);
+  bool StaticLibgcc = Args.hasArg(options::OPT_static_libgcc) ||
+                      Args.hasArg(options::OPT_static);
   if (!D.CCCIsCXX)
     CmdArgs.push_back("-lgcc");
 
