@@ -2965,7 +2965,7 @@ AST_TYPE_MATCHER(RecordType, recordType);
 AST_TYPE_MATCHER(ElaboratedType, elaboratedType);
 
 /// \brief Matches ElaboratedTypes whose qualifier, a NestedNameSpecifier,
-/// matches \c InnerMatcher.
+/// matches \c InnerMatcher if the qualifier exists.
 ///
 /// Given
 /// \code
@@ -2981,7 +2981,10 @@ AST_TYPE_MATCHER(ElaboratedType, elaboratedType);
 /// matches the type of the variable declaration of \c d.
 AST_MATCHER_P(ElaboratedType, hasQualifier,
               internal::Matcher<NestedNameSpecifier>, InnerMatcher) {
-  return InnerMatcher.matches(*Node.getQualifier(), Finder, Builder);
+  if (const NestedNameSpecifier *Qualifier = Node.getQualifier())
+    return InnerMatcher.matches(*Qualifier, Finder, Builder);
+
+  return false;
 }
 
 /// \brief Matches ElaboratedTypes whose named type matches \c InnerMatcher.

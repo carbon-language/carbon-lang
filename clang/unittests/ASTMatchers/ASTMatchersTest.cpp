@@ -3469,6 +3469,10 @@ TEST(ElaboratedTypeNarrowing, hasQualifier) {
     "}"
     "M::D d;",
     elaboratedType(hasQualifier(hasPrefix(specifiesNamespace(hasName("N")))))));
+  EXPECT_TRUE(notMatches(
+    "struct D {"
+    "} d;",
+    elaboratedType(hasQualifier(nestedNameSpecifier()))));
 }
 
 TEST(ElaboratedTypeNarrowing, namesType) {

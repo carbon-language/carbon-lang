@@ -2509,7 +2509,7 @@ Example matches true (matcher = hasCondition(boolLiteral(equals(true))))
 
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ElaboratedType.html">ElaboratedType</a>&gt;</td><td class="name" onclick="toggle('hasQualifier0')"><a name="hasQualifier0Anchor">hasQualifier</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifier.html">NestedNameSpecifier</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="hasQualifier0"><pre>Matches ElaboratedTypes whose qualifier, a NestedNameSpecifier,
-matches InnerMatcher.
+matches InnerMatcher if the qualifier exists.
 
 Given
   namespace N {
