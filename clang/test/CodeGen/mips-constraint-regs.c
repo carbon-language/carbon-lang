@@ -2,9 +2,7 @@
 // RUN: | FileCheck %s
 
 // This checks that the frontend will accept inline asm constraints
-// c', 'l' and 'x'. Semantic checking will happen in the
-// llvm backend. Any bad constraint letters will cause the frontend to
-// error out.
+// c', 'l' and 'x'.
 
 int main()
 {
