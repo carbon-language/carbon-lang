@@ -799,6 +799,10 @@ void test_attach37<int>::test_attach38(int aaa, int bbb) {}
 template<typename T>
 void test_attach37<T>::test_attach39(int aaa, int bbb) {}
 
+// expected-warning@+1 {{'@tparam' command used in a comment that is not attached to a template declaration}}
+/// @tparam T Aaa
+int test_tparam22;
+
 // We used to emit warning that parameter 'a' is not found because we parsed
 // the comment in context of the redeclaration which does not have parameter
 // names.
