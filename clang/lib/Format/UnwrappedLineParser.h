@@ -33,8 +33,8 @@ namespace format {
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0),
-        TokenLength(0), IsFirst(false), MustBreakBefore(false) {
-  }
+        LastNewlineOffset(0), TokenLength(0), IsFirst(false),
+        MustBreakBefore(false) {}
 
   /// \brief The \c Token.
   Token Tok;
@@ -58,6 +58,10 @@ struct FormatToken {
   /// \brief The length in characters of the whitespace immediately preceeding
   /// the \c Token.
   unsigned WhiteSpaceLength;
+
+  /// \brief The offset just past the last '\n' in this token's leading
+  /// whitespace (relative to \c WhiteSpaceStart). 0 if there is no '\n'.
+  unsigned LastNewlineOffset;
 
   /// \brief The length of the non-whitespace parts of the token. This is
   /// necessary because we need to handle escaped newlines that are stored

@@ -995,6 +995,9 @@ public:
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {
       unsigned Newlines = Text.count('\n');
+      if (Newlines > 0)
+        FormatTok.LastNewlineOffset =
+            FormatTok.WhiteSpaceLength + Text.rfind('\n') + 1;
       unsigned EscapedNewlines = Text.count("\\\n");
       FormatTok.NewlinesBefore += Newlines;
       FormatTok.HasUnescapedNewline |= EscapedNewlines != Newlines;
@@ -1371,7 +1374,8 @@ private:
     const FormatToken *First = &TheLine.First.FormatTok;
     const FormatToken *Last = &TheLine.Last->FormatTok;
     CharSourceRange LineRange = CharSourceRange::getTokenRange(
-        First->Tok.getLocation(), Last->Tok.getLocation());
+        First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset),
+        Last->Tok.getLocation());
     for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
       if (!SourceMgr.isBeforeInTranslationUnit(LineRange.getEnd(),
                                                Ranges[i].getBegin()) &&
