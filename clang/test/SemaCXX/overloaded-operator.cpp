@@ -415,3 +415,28 @@ namespace PR11784 {
   void f(int);
   void g() { A x; x = f; }
 }
+
+namespace test10 {
+  struct A {
+    void operator[](float (*fn)(int)); // expected-note 2 {{not viable: no overload of 'bar' matching 'float (*)(int)'}}
+  };
+
+  float foo(int);
+  float foo(float);
+
+  template <class T> T bar(T);
+  template <class T, class U> T bar(U);
+
+  void test(A &a) {
+    a[&foo];
+    a[foo];
+
+    a[&bar<int>]; // expected-error {{no viable overloaded operator[]}}
+    a[bar<int>]; // expected-error {{no viable overloaded operator[]}}
+
+    // If these fail, it's because we're not letting the overload
+    // resolution for operator| resolve the overload of 'bar'.
+    a[&bar<float>];
+    a[bar<float>];
+  }
+}
