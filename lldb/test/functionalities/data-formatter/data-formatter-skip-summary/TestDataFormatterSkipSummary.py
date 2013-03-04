@@ -19,7 +19,6 @@ class SkipSummaryDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
-    @skipOnLinux #PR-15256: assertion failure in RecordLayoutBuilder::updateExternalFieldOffset
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
