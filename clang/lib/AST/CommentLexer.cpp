@@ -298,7 +298,11 @@ void Lexer::lexCommentText(Token &T) {
     switch(*TokenPtr) {
       case '\\':
       case '@': {
-        bool AtCommand = (*TokenPtr == '@');
+        // Commands that start with a backslash and commands that start with
+        // 'at' have equivalent semantics.  But we keep information about the
+        // exact syntax in AST for comments.
+        tok::TokenKind CommandKind =
+            (*TokenPtr == '@') ? tok::at_command : tok::backslash_command;
         TokenPtr++;
         if (TokenPtr == CommentEnd) {
           formTextToken(T, TokenPtr);
@@ -359,9 +363,7 @@ void Lexer::lexCommentText(Token &T) {
           setupAndLexVerbatimLine(T, TokenPtr, Info);
           return;
         }
-        formTokenWithChars(T, TokenPtr, 
-                           (AtCommand ? tok::at_command 
-                                      : tok::backslash_command));
+        formTokenWithChars(T, TokenPtr, CommandKind);
         T.setCommandID(Info->getID());
         return;
       }

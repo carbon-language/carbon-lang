@@ -34,9 +34,9 @@ enum TokenKind {
   eof,
   newline,
   text,
-  unknown_command, // Command that does not have an ID.
-  backslash_command,   // \Command with an ID.
-  at_command,          // @command with an ID.
+  unknown_command,   // Command that does not have an ID.
+  backslash_command, // Command with an ID, that used backslash marker.
+  at_command,        // Command with an ID, that used 'at' marker.
   verbatim_block_begin,
   verbatim_block_line,
   verbatim_block_end,

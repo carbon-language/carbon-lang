@@ -308,23 +308,25 @@ BlockCommandComment *Parser::parseBlockCommand() {
   bool IsParam = false;
   bool IsTParam = false;
   const CommandInfo *Info = Traits.getCommandInfo(Tok.getCommandID());
+  CommandMarkerKind CommandMarker =
+      Tok.is(tok::backslash_command) ? CMK_Backslash : CMK_At;
   if (Info->IsParamCommand) {
     IsParam = true;
     PC = S.actOnParamCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandID(),
-                                  Tok.is(tok::at_command));
+                                  CommandMarker);
   } else if (Info->IsTParamCommand) {
     IsTParam = true;
     TPC = S.actOnTParamCommandStart(Tok.getLocation(),
                                     Tok.getEndLocation(),
                                     Tok.getCommandID(),
-                                    Tok.is(tok::at_command));
+                                    CommandMarker);
   } else {
     BC = S.actOnBlockCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandID(),
-                                  Tok.is(tok::at_command));
+                                  CommandMarker);
   }
   consumeToken();
 

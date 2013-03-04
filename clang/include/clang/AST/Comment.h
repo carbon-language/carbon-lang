@@ -28,6 +28,26 @@ class TemplateParameterList;
 
 namespace comments {
 class FullComment;
+
+/// Describes the syntax that was used in a documentation command.
+///
+/// Exact values of this enumeration are important because they used to select
+/// parts of diagnostic messages.  Audit diagnostics before changing or adding
+/// a new value.
+enum CommandMarkerKind {
+  /// Command started with a backslash character:
+  /// \code
+  ///   \foo
+  /// \endcode
+  CMK_Backslash = 0,
+
+  /// Command started with an 'at' character:
+  /// \code
+  ///   @foo
+  /// \endcode
+  CMK_At = 1
+};
+
 /// Any part of the comment.
 /// Abstract class.
 class Comment {
@@ -110,8 +130,12 @@ protected:
     unsigned : NumCommentBits;
 
     unsigned CommandID : 8;
+
+    /// Describes the syntax that was used in a documentation command.
+    /// Contains values from CommandMarkerKind enum.
+    unsigned CommandMarker : 1;
   };
-  enum { NumBlockCommandCommentBits = NumCommentBits + 8 };
+  enum { NumBlockCommandCommentBits = NumCommentBits + 9 };
 
   class ParamCommandCommentBitfields {
     friend class ParamCommandComment;
@@ -570,30 +594,29 @@ protected:
 
   /// Paragraph argument.
   ParagraphComment *Paragraph;
-  
-  /// Header Doc command, if true
-  bool AtCommand;
-  
+
   BlockCommandComment(CommentKind K,
                       SourceLocation LocBegin,
                       SourceLocation LocEnd,
                       unsigned CommandID,
-                      bool AtCommand) :
+                      CommandMarkerKind CommandMarker) :
       BlockContentComment(K, LocBegin, LocEnd),
-      Paragraph(NULL), AtCommand(AtCommand) {
+      Paragraph(NULL) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
+    BlockCommandCommentBits.CommandMarker = CommandMarker;
   }
 
 public:
   BlockCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
                       unsigned CommandID,
-                      bool AtCommand) :
+                      CommandMarkerKind CommandMarker) :
       BlockContentComment(BlockCommandCommentKind, LocBegin, LocEnd),
-      Paragraph(NULL), AtCommand(AtCommand) {
+      Paragraph(NULL) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
+    BlockCommandCommentBits.CommandMarker = CommandMarker;
   }
 
   static bool classof(const Comment *C) {
@@ -662,9 +685,10 @@ public:
     if (NewLocEnd.isValid())
       setSourceRange(SourceRange(getLocStart(), NewLocEnd));
   }
-  
-  bool getAtCommand() const LLVM_READONLY {
-    return AtCommand;
+
+  CommandMarkerKind getCommandMarker() const LLVM_READONLY {
+    return static_cast<CommandMarkerKind>(
+        BlockCommandCommentBits.CommandMarker);
   }
 };
 
@@ -680,9 +704,9 @@ public:
   ParamCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
                       unsigned CommandID,
-                      bool AtCommand) :
+                      CommandMarkerKind CommandMarker) :
       BlockCommandComment(ParamCommandCommentKind, LocBegin, LocEnd,
-                          CommandID, AtCommand),
+                          CommandID, CommandMarker),
       ParamIndex(InvalidParamIndex) {
     ParamCommandCommentBits.Direction = In;
     ParamCommandCommentBits.IsDirectionExplicit = false;
@@ -763,9 +787,9 @@ public:
   TParamCommandComment(SourceLocation LocBegin,
                        SourceLocation LocEnd,
                        unsigned CommandID,
-                       bool AtCommand) :
+                       CommandMarkerKind CommandMarker) :
       BlockCommandComment(TParamCommandCommentKind, LocBegin, LocEnd, CommandID,
-                          AtCommand)
+                          CommandMarker)
   { }
 
   static bool classof(const Comment *C) {
@@ -846,7 +870,8 @@ public:
                        SourceLocation LocEnd,
                        unsigned CommandID) :
       BlockCommandComment(VerbatimBlockCommentKind,
-                          LocBegin, LocEnd, CommandID, false)
+                          LocBegin, LocEnd, CommandID,
+                          CMK_At) // FIXME: improve source fidelity.
   { }
 
   static bool classof(const Comment *C) {
@@ -899,7 +924,8 @@ public:
                       StringRef Text) :
       BlockCommandComment(VerbatimLineCommentKind,
                           LocBegin, LocEnd,
-                          CommandID, false),
+                          CommandID,
+                          CMK_At), // FIXME: improve source fidelity.
       Text(Text),
       TextBegin(TextBegin)
   { }
