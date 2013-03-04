@@ -3880,6 +3880,8 @@ getConstraintType(const std::string &Constraint) const
       case 'l':
       case 'x':
         return C_RegisterClass;
+      case 'R':
+        return C_Memory;
     }
   }
   return TargetLowering::getConstraintType(Constraint);
@@ -3927,6 +3929,9 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
   case 'P': // immediate in the range of 65535 to 1 (inclusive)
     if (isa<ConstantInt>(CallOperandVal))
       weight = CW_Constant;
+    break;
+  case 'R':
+    weight = CW_Memory;
     break;
   }
   return weight;
