@@ -1220,22 +1220,22 @@ DNBProcessMemoryRegionInfo (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *r
 }
 
 std::string
-DNBProcessGetProfileData (nub_process_t pid)
+DNBProcessGetProfileData (nub_process_t pid, DNBProfileDataScanType scanType)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-        return procSP->Task().GetProfileData();
+        return procSP->Task().GetProfileData(scanType);
     
     return std::string("");
 }
 
 nub_bool_t
-DNBProcessSetEnableAsyncProfiling (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec)
+DNBProcessSetEnableAsyncProfiling (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec, DNBProfileDataScanType scan_type)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
     {
-        procSP->SetEnableAsyncProfiling(enable, interval_usec);
+        procSP->SetEnableAsyncProfiling(enable, interval_usec, scan_type);
         return true;
     }
     

@@ -233,7 +233,7 @@ MachTask::GetMemoryRegionInfo (nub_addr_t addr, DNBRegionInfo *region_info)
 } while (0)
 
 // We should consider moving this into each MacThread.
-static void get_threads_profile_data(task_t task, nub_process_t pid, std::vector<uint64_t> &threads_id, std::vector<std::string> &threads_name, std::vector<uint64_t> &threads_used_usec)
+static void get_threads_profile_data(DNBProfileDataScanType scanType, task_t task, nub_process_t pid, std::vector<uint64_t> &threads_id, std::vector<std::string> &threads_name, std::vector<uint64_t> &threads_used_usec)
 {
     kern_return_t kr;
     thread_act_array_t threads;
@@ -243,7 +243,8 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, std::vector
     if (kr != KERN_SUCCESS)
         return;
     
-    for (int i = 0; i < tcnt; i++) {
+    for (int i = 0; i < tcnt; i++)
+    {
         thread_identifier_info_data_t identifier_info;
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
         kr = ::thread_info(threads[i], THREAD_IDENTIFIER_INFO, (thread_info_t)&identifier_info, &count);
@@ -254,22 +255,26 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, std::vector
         kr = ::thread_info(threads[i], THREAD_BASIC_INFO, (thread_info_t)&basic_info, &count);
         if (kr != KERN_SUCCESS) continue;
 
-        if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
+        if ((basic_info.flags & TH_FLAGS_IDLE) == 0)
+        {
             nub_thread_t tid = MachThread::GetGloballyUniqueThreadIDForMachPortID (threads[i]);
-
             threads_id.push_back(tid);
             
-            if (identifier_info.thread_handle != 0) {
+            if ((scanType & eProfileThreadName) && (identifier_info.thread_handle != 0))
+            {
                 struct proc_threadinfo proc_threadinfo;
                 int len = ::proc_pidinfo(pid, PROC_PIDTHREADINFO, identifier_info.thread_handle, &proc_threadinfo, PROC_PIDTHREADINFO_SIZE);
-                if (len && proc_threadinfo.pth_name[0]) {
+                if (len && proc_threadinfo.pth_name[0])
+                {
                     threads_name.push_back(proc_threadinfo.pth_name);
                 }
-                else {
+                else
+                {
                     threads_name.push_back("");
                 }
             }
-            else {
+            else
+            {
                 threads_name.push_back("");
             }
             struct timeval tv;
@@ -289,25 +294,28 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, std::vector
 #define RAW_HEXBASE     std::setfill('0') << std::hex << std::right
 #define DECIMAL         std::dec << std::setfill(' ')
 std::string
-MachTask::GetProfileData ()
+MachTask::GetProfileData (DNBProfileDataScanType scanType)
 {
     std::string result;
     
     static int32_t numCPU = -1;
-    int32_t mib[] = {CTL_HW, HW_AVAILCPU};
-    size_t len = sizeof(numCPU);
-    if (numCPU == -1)
+    struct host_cpu_load_info host_info;
+    if (scanType & eProfileHostCPU)
     {
-        if (sysctl(mib, sizeof(mib) / sizeof(int32_t), &numCPU, &len, NULL, 0) != 0)
+        int32_t mib[] = {CTL_HW, HW_AVAILCPU};
+        size_t len = sizeof(numCPU);
+        if (numCPU == -1)
+        {
+            if (sysctl(mib, sizeof(mib) / sizeof(int32_t), &numCPU, &len, NULL, 0) != 0)
+                return result;
+        }
+        
+        mach_port_t localHost = mach_host_self();
+        mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+        kern_return_t kr = host_statistics(localHost, HOST_CPU_LOAD_INFO, (host_info_t)&host_info, &count);
+        if (kr != KERN_SUCCESS)
             return result;
     }
-    
-    mach_port_t localHost = mach_host_self();
-    struct host_cpu_load_info host_info;
-	mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-	kern_return_t kr = host_statistics(localHost, HOST_CPU_LOAD_INFO, (host_info_t)&host_info, &count);
-    if (kr != KERN_SUCCESS)
-        return result;
     
     task_t task = TaskPort();
     if (task == TASK_NULL)
@@ -322,24 +330,31 @@ MachTask::GetProfileData ()
     
     uint64_t elapsed_usec = 0;
     uint64_t task_used_usec = 0;
+    if (scanType & eProfileCPU)
+    {
+        // Get current used time.
+        struct timeval current_used_time;
+        struct timeval tv;
+        TIME_VALUE_TO_TIMEVAL(&task_info.user_time, &current_used_time);
+        TIME_VALUE_TO_TIMEVAL(&task_info.system_time, &tv);
+        timeradd(&current_used_time, &tv, &current_used_time);
+        task_used_usec = current_used_time.tv_sec * 1000000ULL + current_used_time.tv_usec;
+        
+        struct timeval current_elapsed_time;
+        int res = gettimeofday(&current_elapsed_time, NULL);
+        if (res == 0)
+        {
+            elapsed_usec = current_elapsed_time.tv_sec * 1000000ULL + current_elapsed_time.tv_usec;
+        }
+    }
+    
     std::vector<uint64_t> threads_id;
     std::vector<std::string> threads_name;
     std::vector<uint64_t> threads_used_usec;
-    
-    // Get current used time.
-    struct timeval current_used_time;
-    struct timeval tv;
-    TIME_VALUE_TO_TIMEVAL(&task_info.user_time, &current_used_time);
-    TIME_VALUE_TO_TIMEVAL(&task_info.system_time, &tv);
-    timeradd(&current_used_time, &tv, &current_used_time);
-    task_used_usec = current_used_time.tv_sec * 1000000ULL + current_used_time.tv_usec;
-    get_threads_profile_data(task, m_process->ProcessID(), threads_id, threads_name, threads_used_usec);
-    
-    struct timeval current_elapsed_time;
-    int res = gettimeofday(&current_elapsed_time, NULL);
-    if (res == 0)
+
+    if (scanType & eProfileThreadsCPU)
     {
-        elapsed_usec = current_elapsed_time.tv_sec * 1000000ULL + current_elapsed_time.tv_usec;
+        get_threads_profile_data(scanType, task, m_process->ProcessID(), threads_id, threads_name, threads_used_usec);
     }
     
     struct vm_statistics vm_stats;
@@ -349,53 +364,75 @@ MachTask::GetProfileData ()
     mach_vm_size_t vprvt = 0;
     mach_vm_size_t vsize = 0;
     mach_vm_size_t dirty_size = 0;
-    if (m_vm_memory.GetMemoryProfile(task, task_info, m_process->GetCPUType(), m_process->ProcessID(), vm_stats, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size))
+    if (m_vm_memory.GetMemoryProfile(scanType, task, task_info, m_process->GetCPUType(), m_process->ProcessID(), vm_stats, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size))
     {
         std::ostringstream profile_data_stream;
         
-        profile_data_stream << "num_cpu:" << numCPU << ';';
-        profile_data_stream << "host_user_ticks:" << host_info.cpu_ticks[CPU_STATE_USER] << ';';
-        profile_data_stream << "host_sys_ticks:" << host_info.cpu_ticks[CPU_STATE_SYSTEM] << ';';
-        profile_data_stream << "host_idle_ticks:" << host_info.cpu_ticks[CPU_STATE_IDLE] << ';';
-        
-        profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
-        profile_data_stream << "task_used_usec:" << task_used_usec << ';';
-        
-        int num_threads = threads_id.size();
-        for (int i=0; i<num_threads; i++) {
-            profile_data_stream << "thread_used_id:" << std::hex << threads_id[i] << std::dec << ';';
-            profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
-            
-            profile_data_stream << "thread_used_name:";
-            int len = threads_name[i].size();
-            if (len) {
-                const char *thread_name = threads_name[i].c_str();
-                // Make sure that thread name doesn't interfere with our delimiter.
-                profile_data_stream << RAW_HEXBASE << std::setw(2);
-                const uint8_t *ubuf8 = (const uint8_t *)(thread_name);
-                for (int j=0; j<len; j++)
-                {
-                    profile_data_stream << (uint32_t)(ubuf8[j]);
-                }
-                // Reset back to DECIMAL.
-                profile_data_stream << DECIMAL;
-            }
-            profile_data_stream << ';';
+        if (scanType & eProfileHostCPU)
+        {
+            profile_data_stream << "num_cpu:" << numCPU << ';';
+            profile_data_stream << "host_user_ticks:" << host_info.cpu_ticks[CPU_STATE_USER] << ';';
+            profile_data_stream << "host_sys_ticks:" << host_info.cpu_ticks[CPU_STATE_SYSTEM] << ';';
+            profile_data_stream << "host_idle_ticks:" << host_info.cpu_ticks[CPU_STATE_IDLE] << ';';
         }
         
-        profile_data_stream << "wired:" << vm_stats.wire_count * vm_page_size << ';';
-        profile_data_stream << "active:" << vm_stats.active_count * vm_page_size << ';';
-        profile_data_stream << "inactive:" << vm_stats.inactive_count * vm_page_size << ';';
-        uint64_t total_used_count = vm_stats.wire_count + vm_stats.inactive_count + vm_stats.active_count;
-        profile_data_stream << "used:" << total_used_count * vm_page_size << ';';
-        profile_data_stream << "free:" << vm_stats.free_count * vm_page_size << ';';
-        profile_data_stream << "total:" << physical_memory << ';';        
+        if (scanType & eProfileCPU)
+        {
+            profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
+            profile_data_stream << "task_used_usec:" << task_used_usec << ';';
+        }
         
-        profile_data_stream << "rprvt:" << rprvt << ';';
-        profile_data_stream << "rsize:" << rsize << ';';
-        profile_data_stream << "vprvt:" << vprvt << ';';
-        profile_data_stream << "vsize:" << vsize << ';';
-        profile_data_stream << "dirty:" << dirty_size << ';';
+        if (scanType & eProfileThreadsCPU)
+        {
+            int num_threads = threads_id.size();
+            for (int i=0; i<num_threads; i++)
+            {
+                profile_data_stream << "thread_used_id:" << std::hex << threads_id[i] << std::dec << ';';
+                profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
+                
+                if (scanType & eProfileThreadName)
+                {
+                    profile_data_stream << "thread_used_name:";
+                    int len = threads_name[i].size();
+                    if (len)
+                    {
+                        const char *thread_name = threads_name[i].c_str();
+                        // Make sure that thread name doesn't interfere with our delimiter.
+                        profile_data_stream << RAW_HEXBASE << std::setw(2);
+                        const uint8_t *ubuf8 = (const uint8_t *)(thread_name);
+                        for (int j=0; j<len; j++)
+                        {
+                            profile_data_stream << (uint32_t)(ubuf8[j]);
+                        }
+                        // Reset back to DECIMAL.
+                        profile_data_stream << DECIMAL;
+                    }
+                    profile_data_stream << ';';
+                }
+            }
+        }
+        
+        if (scanType & eProfileHostMemory)
+            profile_data_stream << "total:" << physical_memory << ';';
+        
+        if (scanType & eProfileMemory)
+        {
+            profile_data_stream << "wired:" << vm_stats.wire_count * vm_page_size << ';';
+            profile_data_stream << "active:" << vm_stats.active_count * vm_page_size << ';';
+            profile_data_stream << "inactive:" << vm_stats.inactive_count * vm_page_size << ';';
+            uint64_t total_used_count = vm_stats.wire_count + vm_stats.inactive_count + vm_stats.active_count;
+            profile_data_stream << "used:" << total_used_count * vm_page_size << ';';
+            profile_data_stream << "free:" << vm_stats.free_count * vm_page_size << ';';
+            
+            profile_data_stream << "rprvt:" << rprvt << ';';
+            profile_data_stream << "rsize:" << rsize << ';';
+            profile_data_stream << "vprvt:" << vprvt << ';';
+            profile_data_stream << "vsize:" << vsize << ';';
+            
+            if (scanType & eProfileMemoryDirtyPage)
+                profile_data_stream << "dirty:" << dirty_size << ';';
+        }
+        
         profile_data_stream << "--end--;";
         
         result = profile_data_stream.str();

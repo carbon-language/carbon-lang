@@ -358,6 +358,23 @@ struct DNBRegionInfo
     uint32_t permissions;
 };
 
+enum DNBProfileDataScanType
+{
+    eProfileHostCPU             = (1 << 0),
+    eProfileCPU                 = (1 << 1),
+    
+    eProfileThreadsCPU          = (1 << 2), // By default excludes eProfileThreadName and eProfileQueueName.
+    eProfileThreadName          = (1 << 3), // Assume eProfileThreadsCPU, get thread name as well.
+    eProfileQueueName           = (1 << 4), // Assume eProfileThreadsCPU, get queue name as well.
+    
+    eProfileHostMemory          = (1 << 5),
+    
+    eProfileMemory              = (1 << 6), // By default, excludes eProfileMemoryDirtyPage.
+    eProfileMemoryDirtyPage     = (1 << 7), // Assume eProfileMemory, get Dirty Page size as well.
+    
+    eProfileAll                 = 0xffffffff
+};
+
 typedef nub_bool_t (*DNBCallbackBreakpointHit)(nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton);
 typedef nub_addr_t (*DNBCallbackNameToAddress)(nub_process_t pid, const char *name, const char *shlib_regex, void *baton);
 typedef nub_size_t (*DNBCallbackCopyExecutableImageInfos)(nub_process_t pid, struct DNBExecutableImageInfo **image_infos, nub_bool_t only_changed, void *baton);

@@ -3645,14 +3645,32 @@ RNBRemote::HandlePacket_MemoryRegionInfo (const char *p)
     return SendPacket (ostrm.str());
 }
 
+// qGetProfileData;scan_type:0xYYYYYYY
 rnb_err_t
 RNBRemote::HandlePacket_GetProfileData (const char *p)
 {
     nub_process_t pid = m_ctx.ProcessID();
     if (pid == INVALID_NUB_PROCESS)
         return SendPacket ("OK");
-
-    std::string data = DNBProcessGetProfileData(pid);
+    
+    StringExtractor packet(p += sizeof ("qGetProfileData"));
+    DNBProfileDataScanType scan_type = eProfileAll;
+    std::string name;
+    std::string value;
+    while (packet.GetNameColonValue(name, value))
+    {
+        if (name.compare ("scan_type") == 0)
+        {
+            std::istringstream iss(value);
+            uint32_t int_value = 0;
+            if (iss >> std::hex >> int_value)
+            {
+                scan_type = (DNBProfileDataScanType)int_value;
+            }
+        }
+    }
+    
+    std::string data = DNBProcessGetProfileData(pid, scan_type);
     if (!data.empty())
     {
         return SendPacket (data.c_str());
@@ -3663,18 +3681,18 @@ RNBRemote::HandlePacket_GetProfileData (const char *p)
     }
 }
 
-
-// QSetEnableAsyncProfiling;enable:[0|1]:interval_usec:XXXXXX;
+// QSetEnableAsyncProfiling;enable:[0|1]:interval_usec:XXXXXX;scan_type:0xYYYYYYY
 rnb_err_t
 RNBRemote::HandlePacket_SetEnableAsyncProfiling (const char *p)
 {
     nub_process_t pid = m_ctx.ProcessID();
     if (pid == INVALID_NUB_PROCESS)
-        return SendPacket ("");
+        return SendPacket ("OK");
 
-    StringExtractor packet(p += sizeof ("QSetEnableAsyncProfiling:") - 1);
+    StringExtractor packet(p += sizeof ("QSetEnableAsyncProfiling"));
     bool enable = false;
     uint64_t interval_usec = 0;
+    DNBProfileDataScanType scan_type = eProfileAll;
     std::string name;
     std::string value;
     while (packet.GetNameColonValue(name, value))
@@ -3687,13 +3705,23 @@ RNBRemote::HandlePacket_SetEnableAsyncProfiling (const char *p)
         {
             interval_usec  = strtoul(value.c_str(), NULL, 10);
         }
+        else if (name.compare ("scan_type") == 0)
+        {
+            std::istringstream iss(value);
+            uint32_t int_value = 0;
+            if (iss >> std::hex >> int_value)
+            {
+                scan_type = (DNBProfileDataScanType)int_value;
+            }
+        }
     }
     
     if (interval_usec == 0)
     {
         enable = 0;
     }
-    DNBProcessSetEnableAsyncProfiling(pid, enable, interval_usec);
+    
+    DNBProcessSetEnableAsyncProfiling(pid, enable, interval_usec, scan_type);
     return SendPacket ("OK");
 }
 

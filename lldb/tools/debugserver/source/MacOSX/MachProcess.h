@@ -148,7 +148,7 @@ public:
     //----------------------------------------------------------------------
     // Profile functions
     //----------------------------------------------------------------------
-    void                    SetEnableAsyncProfiling (bool enable, uint64_t internal_usec);
+    void                    SetEnableAsyncProfiling (bool enable, uint64_t internal_usec, DNBProfileDataScanType scan_type);
     bool                    IsProfilingEnabled () { return m_profile_enabled; }
     uint64_t                ProfileInterval () { return m_profile_interval_usec; }
     bool                    StartProfileThread ();
@@ -250,6 +250,9 @@ public:
                             }
 
     bool                    ProcessUsingSpringBoard() const { return (m_flags & eMachProcessFlagsUsingSBS) != 0; }
+    
+    DNBProfileDataScanType  GetProfileScanType () { return m_profile_scan_type; }
+    
 private:
     enum
     {
@@ -282,6 +285,7 @@ private:
     
     bool                        m_profile_enabled;          // A flag to indicate if profiling is enabled
     uint64_t                    m_profile_interval_usec;    // If enable, the profiling interval in microseconds
+    DNBProfileDataScanType      m_profile_scan_type;        // Indicates what needs to be profiled
     pthread_t                   m_profile_thread;           // Thread ID for the thread that profiles the inferior
     PThreadMutex                m_profile_data_mutex;       // Multithreaded protection for profile info data
     std::vector<std::string>    m_profile_data;             // Profile data, must be protected by m_profile_data_mutex

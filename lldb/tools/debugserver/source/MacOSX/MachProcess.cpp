@@ -315,10 +315,11 @@ MachProcess::StartSTDIOThread()
 }
 
 void
-MachProcess::SetEnableAsyncProfiling(bool enable, uint64_t interval_usec)
+MachProcess::SetEnableAsyncProfiling(bool enable, uint64_t interval_usec, DNBProfileDataScanType scan_type)
 {
     m_profile_enabled = enable;
     m_profile_interval_usec = interval_usec;
+    m_profile_scan_type = scan_type;
     
     if (m_profile_enabled && (m_profile_thread == NULL))
     {
@@ -1411,7 +1412,7 @@ MachProcess::ProfileThread(void *arg)
         nub_state_t state = proc->GetState();
         if (state == eStateRunning)
         {
-            std::string data = proc->Task().GetProfileData();
+            std::string data = proc->Task().GetProfileData(proc->GetProfileScanType());
             if (!data.empty())
             {
                 proc->SignalAsyncProfileData(data.c_str());

@@ -63,8 +63,8 @@ nub_size_t      DNBProcessMemoryWrite   (nub_process_t pid, nub_addr_t addr, nub
 nub_addr_t      DNBProcessMemoryAllocate    (nub_process_t pid, nub_size_t size, uint32_t permissions) DNB_EXPORT;
 nub_bool_t      DNBProcessMemoryDeallocate  (nub_process_t pid, nub_addr_t addr) DNB_EXPORT;
 int             DNBProcessMemoryRegionInfo  (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *region_info) DNB_EXPORT;
-std::string     DNBProcessGetProfileData (nub_process_t pid) DNB_EXPORT;
-nub_bool_t      DNBProcessSetEnableAsyncProfiling   (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec) DNB_EXPORT;
+std::string     DNBProcessGetProfileData (nub_process_t pid, DNBProfileDataScanType scanType) DNB_EXPORT;
+nub_bool_t      DNBProcessSetEnableAsyncProfiling   (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec, DNBProfileDataScanType scan_type) DNB_EXPORT;
 
 //----------------------------------------------------------------------
 // Process status
