@@ -8,5 +8,5 @@ entry:
   ret i8* %0
 
 ; CHECK:   move    $fp, $sp
-; CHECK:   or    $2, $fp, $zero
+; CHECK:   move    $2, $fp
 }

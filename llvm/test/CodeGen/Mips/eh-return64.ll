@@ -25,10 +25,10 @@ entry:
 ; CHECK:        .cfi_offset 7,
 
 ; check that stack adjustment and handler are put in $v1 and $v0.
-; CHECK:        or      $[[R0:[a-z0-9]+]], $5, $zero
-; CHECK:        or      $[[R1:[a-z0-9]+]], $4, $zero
-; CHECK:        or      $3, $[[R1]], $zero
-; CHECK:        or      $2, $[[R0]], $zero
+; CHECK:        move    $[[R0:[a-z0-9]+]], $5
+; CHECK:        move    $[[R1:[a-z0-9]+]], $4
+; CHECK:        move    $3, $[[R1]]
+; CHECK:        move    $2, $[[R0]]
 
 ; check that $a0-$a3 are restored from stack.
 ; CHECK:        ld      $4, [[offset0]]($sp)
@@ -38,7 +38,7 @@ entry:
 
 ; check that stack is adjusted by $v1 and that code returns to address in $v0
 ; CHECK:        daddiu  $sp, $sp, [[spoffset]]
-; CHECK:        or      $ra, $2, $zero
+; CHECK:        move    $ra, $2
 ; CHECK:        jr      $ra
 ; CHECK:        daddu   $sp, $sp, $3
 
@@ -65,8 +65,8 @@ entry:
 ; CHECK:        .cfi_offset 7,
 
 ; check that stack adjustment and handler are put in $v1 and $v0.
-; CHECK:        or      $3, $4, $zero
-; CHECK:        or      $2, $5, $zero
+; CHECK:        move    $3, $4
+; CHECK:        move    $2, $5
 
 ; check that $a0-$a3 are restored from stack.
 ; CHECK:        ld      $4, [[offset0]]($sp)
@@ -76,7 +76,7 @@ entry:
 
 ; check that stack is adjusted by $v1 and that code returns to address in $v0
 ; CHECK:        daddiu  $sp, $sp, [[spoffset]]
-; CHECK:        or      $ra, $2, $zero
+; CHECK:        move    $ra, $2
 ; CHECK:        jr      $ra
 ; CHECK:        daddu   $sp, $sp, $3
 

@@ -3,11 +3,11 @@
 define i32 @twoalloca(i32 %size) nounwind {
 entry:
 ; CHECK: subu  $[[T0:[0-9]+]], $sp, $[[SZ:[0-9]+]]
-; CHECK: or    $sp, $[[T0]], $zero
+; CHECK: move  $sp, $[[T0]]
 ; CHECK: subu  $[[T2:[0-9]+]], $sp, $[[SZ]]
-; CHECK: or    $sp, $[[T2]], $zero
-; CHECK: or    $4, $[[T0]], $zero
-; CHECK: or    $4, $[[T2]], $zero
+; CHECK: move  $sp, $[[T2]]
+; CHECK: move  $4, $[[T0]]
+; CHECK: move  $4, $[[T2]]
   %tmp1 = alloca i8, i32 %size, align 4
   %add.ptr = getelementptr inbounds i8* %tmp1, i32 5
   store i8 97, i8* %add.ptr, align 1
@@ -29,7 +29,7 @@ define i32 @alloca2(i32 %size) nounwind {
 entry:
 ; CHECK: alloca2
 ; CHECK: subu  $[[T0:[0-9]+]], $sp
-; CHECK: or    $sp, $[[T0]], $zero
+; CHECK: move  $sp, $[[T0]]
 
   %tmp1 = alloca i8, i32 %size, align 4
   %0 = bitcast i8* %tmp1 to i32*

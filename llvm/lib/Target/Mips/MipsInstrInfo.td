@@ -985,7 +985,7 @@ def : InstAlias<"move $dst, $src",
                 (ADDu CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 1>,
       Requires<[NotMips64]>;
 def : InstAlias<"move $dst, $src",
-                (OR CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 0>,
+                (OR CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 1>,
       Requires<[NotMips64]>;
 def : InstAlias<"bal $offset", (BGEZAL RA, brtarget:$offset), 1>;
 def : InstAlias<"addu $rs, $rt, $imm",

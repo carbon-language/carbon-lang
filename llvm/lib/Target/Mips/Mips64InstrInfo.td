@@ -313,7 +313,7 @@ def : InstAlias<"move $dst, $src",
                 (DADDu CPU64RegsOpnd:$dst,  CPU64RegsOpnd:$src, ZERO_64), 1>,
       Requires<[HasMips64]>;
 def : InstAlias<"move $dst, $src",
-                (OR64 CPU64RegsOpnd:$dst, CPU64RegsOpnd:$src, ZERO_64), 0>,
+                (OR64 CPU64RegsOpnd:$dst, CPU64RegsOpnd:$src, ZERO_64), 1>,
       Requires<[HasMips64]>;
 def : InstAlias<"and $rs, $rt, $imm",
                 (DANDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),

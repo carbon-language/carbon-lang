@@ -615,8 +615,8 @@ entry:
 ; CHECK: select_LD:
 ; CHECK: movn $8, $6, $4
 ; CHECK: movn $9, $7, $4
-; CHECK: or   $2, $8, $zero
-; CHECK: or   $3, $9, $zero
+; CHECK: move $2, $8
+; CHECK: move $3, $9
 
 define fp128 @select_LD(i32 %a, i64, fp128 %b, fp128 %c) {
 entry:
@@ -626,17 +626,17 @@ entry:
 }
 
 ; CHECK: selectCC_LD:
-; CHECK: or   $[[R0:[0-9]+]], $11, $zero
-; CHECK: or   $[[R1:[0-9]+]], $10, $zero
-; CHECK: or   $[[R2:[0-9]+]], $9, $zero
-; CHECK: or   $[[R3:[0-9]+]], $8, $zero
+; CHECK: move $[[R0:[0-9]+]], $11
+; CHECK: move $[[R1:[0-9]+]], $10
+; CHECK: move $[[R2:[0-9]+]], $9
+; CHECK: move $[[R3:[0-9]+]], $8
 ; CHECK: ld   $25, %call16(__gttf2)($gp)
 ; CHECK: jalr $25
 ; CHECK: slti $1, $2, 1
 ; CHECK: movz $[[R1]], $[[R3]], $1
 ; CHECK: movz $[[R0]], $[[R2]], $1
-; CHECK: or   $2, $[[R1]], $zero
-; CHECK: or   $3, $[[R0]], $zero
+; CHECK: move $2, $[[R1]]
+; CHECK: move $3, $[[R0]]
 
 define fp128 @selectCC_LD(fp128 %a, fp128 %b, fp128 %c, fp128 %d) {
 entry:
