@@ -1,4 +1,4 @@
-class//===--- CommentSema.cpp - Doxygen comment semantic analysis --------------===//
+//===--- CommentSema.cpp - Doxygen comment semantic analysis --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
