@@ -30,7 +30,6 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CommandLine.h"
@@ -3647,13 +3646,14 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
   MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
+  Function::const_arg_iterator FuncArg =
+    DAG.getMachineFunction().getFunction()->arg_begin();
+  bool UseSoftFloat = getTargetMachine().Options.UseSoftFloat;
 
-  MipsCCInfo.analyzeFormalArguments(Ins);
+  MipsCCInfo.analyzeFormalArguments(Ins, UseSoftFloat, FuncArg);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
                            MipsCCInfo.hasByValArg());
 
-  Function::const_arg_iterator FuncArg =
-    DAG.getMachineFunction().getFunction()->arg_begin();
   unsigned CurArgIdx = 0;
   MipsCC::byval_iterator ByValArg = MipsCCInfo.byval_begin();
 
@@ -3713,9 +3713,11 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
         ArgValue = DAG.getNode(ISD::TRUNCATE, dl, ValVT, ArgValue);
       }
 
-      // Handle floating point arguments passed in integer registers.
+      // Handle floating point arguments passed in integer registers and
+      // long double arguments passed in floating point registers.
       if ((RegVT == MVT::i32 && ValVT == MVT::f32) ||
-          (RegVT == MVT::i64 && ValVT == MVT::f64))
+          (RegVT == MVT::i64 && ValVT == MVT::f64) ||
+          (RegVT == MVT::f64 && ValVT == MVT::i64))
         ArgValue = DAG.getNode(ISD::BITCAST, dl, ValVT, ArgValue);
       else if (IsO32 && RegVT == MVT::i32 && ValVT == MVT::f64) {
         unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
@@ -4175,20 +4177,26 @@ analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args,
 }
 
 void MipsTargetLowering::MipsCC::
-analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args) {
+analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args,
+                       bool IsSoftFloat, Function::const_arg_iterator FuncArg) {
   unsigned NumArgs = Args.size();
   llvm::CCAssignFn *FixedFn = fixedArgFn();
+  unsigned CurArgIdx = 0;
 
   for (unsigned I = 0; I != NumArgs; ++I) {
     MVT ArgVT = Args[I].VT;
     ISD::ArgFlagsTy ArgFlags = Args[I].Flags;
+    std::advance(FuncArg, Args[I].OrigArgIndex - CurArgIdx);
+    CurArgIdx = Args[I].OrigArgIndex;
 
     if (ArgFlags.isByVal()) {
       handleByValArg(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags);
       continue;
     }
 
-    if (!FixedFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo))
+    MVT RegVT = getRegVT(ArgVT, FuncArg->getType(), 0, IsSoftFloat);
+
+    if (!FixedFn(I, ArgVT, RegVT, CCValAssign::Full, ArgFlags, CCInfo))
       continue;
 
 #ifndef NDEBUG
@@ -4271,6 +4279,58 @@ void MipsTargetLowering::MipsCC::allocateRegs(ByValArgInfo &ByVal,
   for (unsigned I = ByVal.FirstIdx; ByValSize && (I < NumIntArgRegs);
        ByValSize -= RegSize, ++I, ++ByVal.NumRegs)
     CCInfo.AllocateReg(IntArgRegs[I], ShadowRegs[I]);
+}
+
+/// This function returns true if CallSym is a long double emulation routine.
+static bool isF128SoftLibCall(const char *CallSym) {
+  const char *const LibCalls[] =
+    {"__addtf3", "__divtf3", "__eqtf2", "__extenddftf2", "__extendsftf2",
+     "__fixtfdi", "__fixtfsi", "__fixtfti", "__fixunstfdi", "__fixunstfsi",
+     "__fixunstfti", "__floatditf", "__floatsitf", "__floattitf",
+     "__floatunditf", "__floatunsitf", "__floatuntitf", "__getf2", "__gttf2",
+     "__letf2", "__lttf2", "__multf3", "__netf2", "__powitf2", "__subtf3",
+     "__trunctfdf2", "__trunctfsf2", "__unordtf2",
+     "ceill", "copysignl", "cosl", "exp2l", "expl", "floorl", "fmal", "fmodl",
+     "log10l", "log2l", "logl", "nearbyintl", "powl", "rintl", "sinl", "sqrtl",
+     "truncl"};
+
+  const char * const *End = LibCalls + array_lengthof(LibCalls);
+
+  // Check that LibCalls is sorted alphabetically.
+#ifndef NDEBUG
+  ltstr Comp;
+
+  for (const char * const *I = LibCalls; I < End - 1; ++I)
+    assert(Comp(*I, *(I + 1)));
+#endif
+
+  return std::binary_search(LibCalls, End, CallSym, ltstr());
+}
+
+
+MVT MipsTargetLowering::MipsCC::getRegVT(MVT VT, const Type *OrigTy,
+                                         const SDNode *CallNode,
+                                         bool IsSoftFloat) const {
+  if (IsSoftFloat || IsO32)
+    return VT;
+
+  // Check if the original type was fp128.
+  if (OrigTy->isFP128Ty()) {
+    assert(VT == MVT::i64);
+    return MVT::f64;
+  }
+
+  const ExternalSymbolSDNode *ES =
+    dyn_cast_or_null<const ExternalSymbolSDNode>(CallNode);
+
+  // If the original type was i128 and the function being called is a long
+  // double emulation routine, the argument must be passed in an f64 register.
+  if (ES && OrigTy->isIntegerTy(128) && isF128SoftLibCall(ES->getSymbol())) {
+    assert(VT == MVT::i64);
+    return MVT::f64;
+  }
+
+  return VT;
 }
 
 void MipsTargetLowering::

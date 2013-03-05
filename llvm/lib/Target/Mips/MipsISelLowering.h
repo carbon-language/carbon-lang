@@ -19,6 +19,7 @@
 #include "MipsSubtarget.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Target/TargetLowering.h"
 #include <deque>
 #include <string>
@@ -205,7 +206,9 @@ namespace llvm {
 
       void analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
                                bool IsVarArg);
-      void analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins);
+      void analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins,
+                                  bool IsSoftFloat,
+                                  Function::const_arg_iterator FuncArg);
       const CCState &getCCInfo() const { return CCInfo; }
 
       /// hasByValArg - Returns true if function has byval arguments.
@@ -247,6 +250,13 @@ namespace llvm {
 
       void allocateRegs(ByValArgInfo &ByVal, unsigned ByValSize,
                         unsigned Align);
+
+      /// Return the type of the register which is used to pass an argument or
+      /// return a value. This function returns f64 if the argument is an i64
+      /// value which has been generated as a result of softening an f128 value.
+      /// Otherwise, it just returns VT.
+      MVT getRegVT(MVT VT, const Type *OrigTy, const SDNode *CallNode,
+                   bool IsSoftFloat) const;
 
       CCState &CCInfo;
       CallingConv::ID CallConv;
