@@ -549,13 +549,13 @@ namespace test_returns_wrong_decl_10 { };
 typedef unsigned int test_returns_wrong_decl_11;
 
 // rdar://13094352
-// expected-warning@+1 {{'@function' command used in a comment that is attached to a non-function declaration immediately following it}}
+// expected-warning@+1 {{'@function' command should be used in a comment attached to a function declaration}}
 /*!	@function test_function
 */
 typedef unsigned int Base64Flags;
 unsigned test_function(Base64Flags inFlags);
 
-// expected-warning@+1 {{'@callback' command used in a comment that is attached to a non-callback declaration immediately following it}}
+// expected-warning@+1 {{'@callback' command should be used in a comment attached to a pointer to function declaration}}
 /*! @callback test_callback
 */
 typedef unsigned int BaseFlags;

@@ -90,12 +90,17 @@ ParamCommandComment *Sema::actOnParamCommandStart(
 
 void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
-  if (Info->IsFunctionDeclarationCommand &&
-      !isFunctionDecl() && !isCallbackDecl())
-    Diag(Comment->getLocation(),
-         diag::warn_doc_function_not_attached_to_a_function_decl)
-    << Comment->getCommandMarker()
-    << Info->Name << Info->Name
+  if (!Info->IsFunctionDeclarationCommand)
+    return;
+  StringRef Name = Info->Name;
+  unsigned DiagKind = llvm::StringSwitch<unsigned>(Name)
+  .Case("function", diag::warn_doc_function_not_attached_to_a_function_decl)
+  .Case("method", diag::warn_doc_method_not_attached_to_a_objc_method_decl)
+  .Case("callback", diag::warn_doc_callback_not_attached_to_a_function_ptr_decl)
+  .Default(0);
+  
+  if (DiagKind)
+    Diag(Comment->getLocation(), DiagKind) << Comment->getCommandMarker()
     << Comment->getSourceRange();
 }
 
@@ -685,8 +690,15 @@ bool Sema::isFunctionDecl() {
     inspectThisDecl();
   return ThisDeclInfo->getKind() == DeclInfo::FunctionKind;
 }
+
+bool Sema::isObjCMethodDecl() {
+  return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
+         isa<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl);
+}
   
-bool Sema::isCallbackDecl() {
+/// isFunctionPointerVarDecl - returns 'true' if declaration is a pointer to
+/// function decl.
+bool Sema::isFunctionPointerVarDecl() {
   if (!ThisDeclInfo)
     return false;
   if (!ThisDeclInfo->IsFilled)

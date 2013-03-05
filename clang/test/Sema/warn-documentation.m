@@ -98,7 +98,7 @@ int b;
 typedef int (^test_param1)(int aaa, int ccc);
 
 // rdar://13094352
-// expected-warning@+2 {{'@method' command used in a comment that is attached to a non-method declaration immediately following it}}
+// expected-warning@+2 {{'@method' command should be used in a comment attached to an objective-c method declaration}}
 @interface I
 /*!	@method Base64EncodeEx
 */
