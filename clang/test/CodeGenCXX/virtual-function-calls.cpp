@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -std=c++11 -emit-llvm -o - | FileCheck %s
 
 // PR5021
 namespace PR5021 {
@@ -34,5 +34,18 @@ namespace Test1 {
 
   void f(B *b) {
     b->f();
+  }
+}
+
+namespace VirtualNoreturn {
+  struct A {
+    [[noreturn]] virtual void f();
+  };
+
+  // CHECK: @_ZN15VirtualNoreturn1f
+  void f(A *p) {
+    p->f();
+    // CHECK: call void %{{[^#]*$}}
+    // CHECK-NOT: unreachable
   }
 }

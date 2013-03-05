@@ -993,7 +993,10 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       const FunctionProtoType *FPT = Fn->getType()->getAs<FunctionProtoType>();
       if (FPT && FPT->isNothrow(getContext()))
         FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
-      if (Fn->isNoReturn())
+      // Don't use [[noreturn]] or _Noreturn for a call to a virtual function.
+      // These attributes are not inherited by overloads.
+      const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Fn);
+      if (Fn->isNoReturn() && !(AttrOnCallSite && MD && MD->isVirtual()))
         FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
     }
 
