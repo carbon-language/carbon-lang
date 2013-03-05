@@ -46,7 +46,6 @@ template <class ELFT> class Segment;
 /// \brief An ELF section.
 template <class ELFT> class Section : public Chunk<ELFT> {
 public:
-  /// \param type the ELF SHT_* type of the section.
   Section(const ELFTargetInfo &ti, StringRef name,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::K_ELFSection)
       : Chunk<ELFT>(name, k, ti), _parent(nullptr), _flags(0), _entSize(0),
