@@ -95,9 +95,6 @@ protected:
   // HasDSP, HasDSPR2 -- supports DSP ASE.
   bool HasDSP, HasDSPR2;
 
-  // IsAndroid -- target is android
-  bool IsAndroid;
-
   InstrItineraryData InstrItins;
 
   // The instance to the register info section object
@@ -144,7 +141,6 @@ public:
   bool inMicroMipsMode() const { return InMicroMipsMode; }
   bool hasDSP() const { return HasDSP; }
   bool hasDSPR2() const { return HasDSPR2; }
-  bool isAndroid() const { return IsAndroid; }
   bool isLinux() const { return IsLinux; }
   bool useSmallSection() const { return UseSmallSection; }
 

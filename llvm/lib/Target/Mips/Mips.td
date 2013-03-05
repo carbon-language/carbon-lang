@@ -44,8 +44,6 @@ def FeatureN64         : SubtargetFeature<"n64", "MipsABI", "N64",
                                 "Enable n64 ABI">;
 def FeatureEABI        : SubtargetFeature<"eabi", "MipsABI", "EABI",
                                 "Enable eabi ABI">;
-def FeatureAndroid     : SubtargetFeature<"android", "IsAndroid", "true",
-                                "Target is android">;
 def FeatureVFPU        : SubtargetFeature<"vfpu", "HasVFPU",
                                 "true", "Enable vector FPU instructions.">;
 def FeatureSEInReg     : SubtargetFeature<"seinreg", "HasSEInReg", "true",
