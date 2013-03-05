@@ -99,16 +99,16 @@ TEST(SanitizerCommon, SanitizerSetThreadName) {
 TEST(SanitizerCommon, InternalVector) {
   InternalVector<uptr> vector(1);
   for (uptr i = 0; i < 100; i++) {
-    EXPECT_EQ(vector.size(), i);
+    EXPECT_EQ(i, vector.size());
     vector.push_back(i);
   }
   for (uptr i = 0; i < 100; i++) {
-    EXPECT_EQ(vector[i], i);
+    EXPECT_EQ(i, vector[i]);
   }
   for (int i = 99; i >= 0; i--) {
-    EXPECT_EQ(vector.back(), i);
+    EXPECT_EQ((uptr)i, vector.back());
     vector.pop_back();
-    EXPECT_EQ(vector.size(), i);
+    EXPECT_EQ((uptr)i, vector.size());
   }
 }
 
