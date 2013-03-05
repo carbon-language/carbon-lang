@@ -205,7 +205,9 @@ namespace llvm {
       MipsCC(CallingConv::ID CallConv, bool IsO32, CCState &Info);
 
       void analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
-                               bool IsVarArg);
+                               bool IsVarArg, bool IsSoftFloat,
+                               const SDNode *CallNode,
+                               std::vector<ArgListEntry> &FuncArgs);
       void analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins,
                                   bool IsSoftFloat,
                                   Function::const_arg_iterator FuncArg);

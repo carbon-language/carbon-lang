@@ -3362,7 +3362,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                  getTargetMachine(), ArgLocs, *DAG.getContext());
   MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
 
-  MipsCCInfo.analyzeCallOperands(Outs, isVarArg);
+  MipsCCInfo.analyzeCallOperands(Outs, isVarArg,
+                                 getTargetMachine().Options.UseSoftFloat,
+                                 Callee.getNode(), CLI.Args);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NextStackOffset = CCInfo.getNextStackOffset();
@@ -3421,7 +3423,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     case CCValAssign::Full:
       if (VA.isRegLoc()) {
         if ((ValVT == MVT::f32 && LocVT == MVT::i32) ||
-            (ValVT == MVT::f64 && LocVT == MVT::i64))
+            (ValVT == MVT::f64 && LocVT == MVT::i64) ||
+            (ValVT == MVT::i64 && LocVT == MVT::f64))
           Arg = DAG.getNode(ISD::BITCAST, dl, LocVT, Arg);
         else if (ValVT == MVT::f64 && LocVT == MVT::i32) {
           SDValue Lo = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
@@ -4144,7 +4147,8 @@ MipsTargetLowering::MipsCC::MipsCC(CallingConv::ID CC, bool IsO32_,
 
 void MipsTargetLowering::MipsCC::
 analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args,
-                    bool IsVarArg) {
+                    bool IsVarArg, bool IsSoftFloat, const SDNode *CallNode,
+                    std::vector<ArgListEntry> &FuncArgs) {
   assert((CallConv != CallingConv::Fast || !IsVarArg) &&
          "CallingConv::Fast shouldn't be used for vararg functions.");
 
@@ -4163,8 +4167,11 @@ analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args,
 
     if (IsVarArg && !Args[I].IsFixed)
       R = VarFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
-    else
-      R = FixedFn(I, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
+    else {
+      MVT RegVT = getRegVT(ArgVT, FuncArgs[Args[I].OrigArgIndex].Ty, CallNode,
+                           IsSoftFloat);
+      R = FixedFn(I, ArgVT, RegVT, CCValAssign::Full, ArgFlags, CCInfo);
+    }
 
     if (R) {
 #ifndef NDEBUG
