@@ -584,18 +584,21 @@ class SymbolTable : public Section<ELFT> {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
   struct SymbolEntry {
-    SymbolEntry(const Atom *a, const Elf_Sym &sym) : _atom(a), _symbol(sym) {}
-
+    SymbolEntry(const Atom *a, const Elf_Sym &sym,
+                const AtomLayout *layout) : _atom(a), _symbol(sym), 
+                                            _atomLayout(layout) {}
     SymbolEntry() : _atom(nullptr) {}
 
     const Atom *_atom;
     Elf_Sym _symbol;
+    const AtomLayout *_atomLayout;
   };
 
 public:
   SymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
 
-  void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0);
+  void addSymbol(const Atom *atom, int32_t sectionIndex, 
+                 uint64_t addr = 0, const AtomLayout *layout=nullptr);
 
   /// \brief Get the symbol table index for an Atom. If it's not in the symbol
   /// table, return STN_UNDEF.
@@ -617,7 +620,7 @@ public:
 
   StringTable<ELFT> *getStringTable() const { return _stringSection; }
 
-private:
+protected:
   llvm::BumpPtrAllocator _symbolAllocate;
   StringTable<ELFT> *_stringSection;
   std::vector<SymbolEntry> _symbolTable;
@@ -631,16 +634,21 @@ SymbolTable<ELFT>::SymbolTable(const ELFTargetInfo &ti, const char *str,
   this->setOrder(order);
   Elf_Sym symbol;
   std::memset(&symbol, 0, sizeof(Elf_Sym));
-  _symbolTable.push_back(SymbolEntry(nullptr, symbol));
+  _symbolTable.push_back(SymbolEntry(nullptr, symbol, nullptr));
   this->_entSize = sizeof(Elf_Sym);
   this->_fsize = sizeof(Elf_Sym);
   this->_align2 = sizeof(Elf_Addr);
   this->_type = SHT_SYMTAB;
 }
 
+/// Add a symbol to the symbol Table, definedAtoms which get added to the symbol
+/// section dont have their virtual addresses set at the time of adding the
+/// symbol to the symbol table(Example: dynamic symbols), the addresses needs 
+/// to be updated in the table before writing the dynamic symbol table
+/// information
 template <class ELFT>
 void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
-                                  uint64_t addr) {
+                                  uint64_t addr, const AtomLayout *atomLayout) {
   Elf_Sym symbol;
   unsigned char binding = 0, type = 0;
   symbol.st_name = _stringSection->addString(atom->name());
@@ -711,7 +719,7 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
     binding = llvm::ELF::STB_WEAK;
   }
   symbol.setBindingAndType(binding, type);
-  _symbolTable.push_back(SymbolEntry(atom, symbol));
+  _symbolTable.push_back(SymbolEntry(atom, symbol, atomLayout));
   this->_fsize += sizeof(Elf_Sym);
   if (this->_flags & SHF_ALLOC)
     this->_msize = this->_fsize;
@@ -757,6 +765,20 @@ public:
     this->_flags = SHF_ALLOC;
     this->_msize = this->_fsize;
   }
+
+  virtual void finalize() {
+    // Defined symbols which have been added into the dynamic symbol table
+    // dont have their addresses known until addresses have been assigned
+    // so lets update the symbol values after they have got assigned
+    for (auto &ste: this->_symbolTable) {
+      const AtomLayout *atomLayout = ste._atomLayout;
+      if (!atomLayout)
+        continue;
+      ste._symbol.st_value = atomLayout->_virtualAddr;
+    }
+    SymbolTable<ELFT>::finalize();
+  }
+
 };
 
 template <class ELFT> class RelocationTable : public Section<ELFT> {
