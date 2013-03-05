@@ -24,6 +24,8 @@ void TargetLibraryInfo::anchor() { }
 
 const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
   {
+    "_IO_getc",
+    "_IO_putc",
     "_ZdaPv",
     "_ZdlPv",
     "_Znaj",
@@ -38,8 +40,14 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__cxa_guard_abort",
     "__cxa_guard_acquire",
     "__cxa_guard_release",
+    "__isoc99_scanf",
+    "__isoc99_sscanf",
     "__memcpy_chk",
+    "__strdup",
+    "__strndup",
+    "__strtok_r",
     "abs",
+    "access",
     "acos",
     "acosf",
     "acosh",
@@ -61,6 +69,13 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "atanhf",
     "atanhl",
     "atanl",
+    "atof",
+    "atoi",
+    "atol",
+    "atoll",
+    "bcmp",
+    "bcopy",
+    "bzero",
     "calloc",
     "cbrt",
     "cbrtf",
@@ -68,6 +83,10 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "ceil",
     "ceilf",
     "ceill",
+    "chmod",
+    "chown",
+    "clearerr",
+    "closedir",
     "copysign",
     "copysignf",
     "copysignl",
@@ -77,6 +96,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "coshf",
     "coshl",
     "cosl",
+    "ctermid",
     "exp",
     "exp10",
     "exp10f",
@@ -92,25 +112,66 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "fabs",
     "fabsf",
     "fabsl",
+    "fclose",
+    "fdopen",
+    "feof",
+    "ferror",
+    "fflush",
     "ffs",
     "ffsl",
     "ffsll",
+    "fgetc",
+    "fgetpos",
+    "fgets",
+    "fileno",
     "fiprintf",
+    "flockfile",
     "floor",
     "floorf",
     "floorl",
     "fmod",
     "fmodf",
     "fmodl",
+    "fopen",
+    "fopen64",
     "fprintf",
     "fputc",
     "fputs",
+    "fread",
     "free",
+    "frexp",
+    "frexpf",
+    "frexpl",
+    "fscanf",
+    "fseek",
+    "fseeko",
+    "fseeko64",
+    "fsetpos",
+    "fstat",
+    "fstat64",
+    "fstatvfs",
+    "fstatvfs64",
+    "ftell",
+    "ftello",
+    "ftello64",
+    "ftrylockfile",
+    "funlockfile",
     "fwrite",
+    "getc",
+    "getc_unlocked",
+    "getchar",
+    "getenv",
+    "getitimer",
+    "getlogin_r",
+    "getpwnam",
+    "gets",
+    "htonl",
+    "htons",
     "iprintf",
     "isascii",
     "isdigit",
     "labs",
+    "lchown",
     "llabs",
     "log",
     "log10",
@@ -127,31 +188,64 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "logbl",
     "logf",
     "logl",
+    "lstat",
+    "lstat64",
     "malloc",
+    "memalign",
+    "memccpy",
     "memchr",
     "memcmp",
     "memcpy",
     "memmove",
+    "memrchr",
     "memset",
     "memset_pattern16",
+    "mkdir",
+    "mktime",
+    "modf",
+    "modff",
+    "modfl",
     "nearbyint",
     "nearbyintf",
     "nearbyintl",
+    "ntohl",
+    "ntohs",
+    "open",
+    "open64",
+    "opendir",
+    "pclose",
+    "perror",
+    "popen",
     "posix_memalign",
     "pow",
     "powf",
     "powl",
+    "pread",
     "printf",
+    "putc",
     "putchar",
     "puts",
+    "pwrite",
+    "qsort",
+    "read",
+    "readlink",
     "realloc",
     "reallocf",
+    "realpath",
+    "remove",
+    "rename",
+    "rewind",
     "rint",
     "rintf",
     "rintl",
+    "rmdir",
     "round",
     "roundf",
     "roundl",
+    "scanf",
+    "setbuf",
+    "setitimer",
+    "setvbuf",
     "sin",
     "sinf",
     "sinh",
@@ -159,18 +253,28 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "sinhl",
     "sinl",
     "siprintf",
+    "snprintf",
     "sprintf",
     "sqrt",
     "sqrtf",
     "sqrtl",
+    "sscanf",
+    "stat",
+    "stat64",
+    "statvfs",
+    "statvfs64",
     "stpcpy",
+    "stpncpy",
+    "strcasecmp",
     "strcat",
     "strchr",
     "strcmp",
+    "strcoll",
     "strcpy",
     "strcspn",
     "strdup",
     "strlen",
+    "strncasecmp",
     "strncat",
     "strncmp",
     "strncpy",
@@ -182,22 +286,43 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "strstr",
     "strtod",
     "strtof",
+    "strtok",
+    "strtok_r",
     "strtol",
     "strtold",
     "strtoll",
     "strtoul",
     "strtoull",
+    "strxfrm",
+    "system",
     "tan",
     "tanf",
     "tanh",
     "tanhf",
     "tanhl",
     "tanl",
+    "times",
+    "tmpfile",
+    "tmpfile64",
     "toascii",
     "trunc",
     "truncf",
     "truncl",
-    "valloc"
+    "uname",
+    "ungetc",
+    "unlink",
+    "unsetenv",
+    "utime",
+    "utimes",
+    "valloc",
+    "vfprintf",
+    "vfscanf",
+    "vprintf",
+    "vscanf",
+    "vsnprintf",
+    "vsprintf",
+    "vsscanf",
+    "write"
   };
 
 /// initialize - Initialize the set of available library functions based on the
@@ -259,7 +384,9 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::fabsl);
     TLI.setUnavailable(LibFunc::floorl);
     TLI.setUnavailable(LibFunc::fmodl);
+    TLI.setUnavailable(LibFunc::frexpl);
     TLI.setUnavailable(LibFunc::logl);
+    TLI.setUnavailable(LibFunc::modfl);
     TLI.setUnavailable(LibFunc::powl);
     TLI.setUnavailable(LibFunc::sinl);
     TLI.setUnavailable(LibFunc::sinhl);
@@ -336,16 +463,67 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
       TLI.setUnavailable(LibFunc::tanhf);
     }
 
-    // Win32 does *not* provide stpcpy.  It is provided on POSIX systems:
-    // http://pubs.opengroup.org/onlinepubs/9699919799/functions/stpcpy.html
-    TLI.setUnavailable(LibFunc::stpcpy);
-
-    // Win32 does *not* provide ffs.  It is provided on POSIX systems:
-    // http://pubs.opengroup.org/onlinepubs/009695399/functions/ffs.html
+    // Win32 does *not* provide provide these functions, but they are
+    // generally available on POSIX-compliant systems:
+    TLI.setUnavailable(LibFunc::access);
+    TLI.setUnavailable(LibFunc::bcmp);
+    TLI.setUnavailable(LibFunc::bcopy);
+    TLI.setUnavailable(LibFunc::bzero);
+    TLI.setUnavailable(LibFunc::chmod);
+    TLI.setUnavailable(LibFunc::chown);
+    TLI.setUnavailable(LibFunc::closedir);
+    TLI.setUnavailable(LibFunc::ctermid);
+    TLI.setUnavailable(LibFunc::fdopen);
     TLI.setUnavailable(LibFunc::ffs);
+    TLI.setUnavailable(LibFunc::fileno);
+    TLI.setUnavailable(LibFunc::flockfile);
+    TLI.setUnavailable(LibFunc::fseeko);
+    TLI.setUnavailable(LibFunc::fstat);
+    TLI.setUnavailable(LibFunc::fstatvfs);
+    TLI.setUnavailable(LibFunc::ftello);
+    TLI.setUnavailable(LibFunc::ftrylockfile);
+    TLI.setUnavailable(LibFunc::funlockfile);
+    TLI.setUnavailable(LibFunc::getc_unlocked);
+    TLI.setUnavailable(LibFunc::getitimer);
+    TLI.setUnavailable(LibFunc::getlogin_r);
+    TLI.setUnavailable(LibFunc::getpwnam);
+    TLI.setUnavailable(LibFunc::htonl);
+    TLI.setUnavailable(LibFunc::htons);
+    TLI.setUnavailable(LibFunc::lchown);
+    TLI.setUnavailable(LibFunc::lstat);
+    TLI.setUnavailable(LibFunc::memccpy);
+    TLI.setUnavailable(LibFunc::mkdir);
+    TLI.setUnavailable(LibFunc::ntohl);
+    TLI.setUnavailable(LibFunc::ntohs);
+    TLI.setUnavailable(LibFunc::open);
+    TLI.setUnavailable(LibFunc::opendir);
+    TLI.setUnavailable(LibFunc::pclose);
+    TLI.setUnavailable(LibFunc::popen);
+    TLI.setUnavailable(LibFunc::pread);
+    TLI.setUnavailable(LibFunc::pwrite);
+    TLI.setUnavailable(LibFunc::read);
+    TLI.setUnavailable(LibFunc::readlink);
+    TLI.setUnavailable(LibFunc::realpath);
+    TLI.setUnavailable(LibFunc::rmdir);
+    TLI.setUnavailable(LibFunc::setitimer);
+    TLI.setUnavailable(LibFunc::stat);
+    TLI.setUnavailable(LibFunc::statvfs);
+    TLI.setUnavailable(LibFunc::stpcpy);
+    TLI.setUnavailable(LibFunc::stpncpy);
+    TLI.setUnavailable(LibFunc::strcasecmp);
+    TLI.setUnavailable(LibFunc::strncasecmp);
+    TLI.setUnavailable(LibFunc::times);
+    TLI.setUnavailable(LibFunc::uname);
+    TLI.setUnavailable(LibFunc::unlink);
+    TLI.setUnavailable(LibFunc::unsetenv);
+    TLI.setUnavailable(LibFunc::utime);
+    TLI.setUnavailable(LibFunc::utimes);
+    TLI.setUnavailable(LibFunc::write);
 
-    // Win32 does *not* provide llabs.  It is defined in ISO/IEC 9899:1999,
-    // but Visual C++ does not support it.
+    // Win32 does *not* provide provide these functions, but they are
+    // specified by C99:
+    TLI.setUnavailable(LibFunc::atoll);
+    TLI.setUnavailable(LibFunc::frexpf);
     TLI.setUnavailable(LibFunc::llabs);
   }
 
@@ -375,6 +553,27 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
   default:
     TLI.setUnavailable(LibFunc::ffsll);
   }
+
+  // The following functions are available on at least Linux:
+  if (T.getOS() != Triple::Linux) {
+    TLI.setUnavailable(LibFunc::dunder_strdup);
+    TLI.setUnavailable(LibFunc::dunder_strtok_r);
+    TLI.setUnavailable(LibFunc::dunder_isoc99_scanf);
+    TLI.setUnavailable(LibFunc::dunder_isoc99_sscanf);
+    TLI.setUnavailable(LibFunc::under_IO_getc);
+    TLI.setUnavailable(LibFunc::under_IO_putc);
+    TLI.setUnavailable(LibFunc::memalign);
+    TLI.setUnavailable(LibFunc::fopen64);
+    TLI.setUnavailable(LibFunc::fseeko64);
+    TLI.setUnavailable(LibFunc::fstat64);
+    TLI.setUnavailable(LibFunc::fstatvfs64);
+    TLI.setUnavailable(LibFunc::ftello64);
+    TLI.setUnavailable(LibFunc::lstat64);
+    TLI.setUnavailable(LibFunc::open64);
+    TLI.setUnavailable(LibFunc::stat64);
+    TLI.setUnavailable(LibFunc::statvfs64);
+    TLI.setUnavailable(LibFunc::tmpfile64);
+  }
 }
 
 
@@ -402,6 +601,10 @@ bool TargetLibraryInfo::getLibFunc(StringRef funcName,
                                    LibFunc::Func &F) const {
   const char **Start = &StandardNames[0];
   const char **End = &StandardNames[LibFunc::NumLibFuncs];
+  // Check for \01 prefix that is used to mangle __asm declarations and
+  // strip it if present.
+  if (!funcName.empty() && funcName.front() == '\01')
+    funcName = funcName.substr(1);
   const char **I = std::lower_bound(Start, End, funcName);
   if (I != End && *I == funcName) {
     F = (LibFunc::Func)(I - Start);
