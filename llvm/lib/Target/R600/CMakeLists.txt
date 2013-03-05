@@ -37,7 +37,6 @@ add_llvm_target(R600CodeGen
   R600ExpandSpecialInstrs.cpp
   R600InstrInfo.cpp
   R600ISelLowering.cpp
-  R600LowerConstCopy.cpp
   R600MachineFunctionInfo.cpp
   R600RegisterInfo.cpp
   SIAnnotateControlFlow.cpp

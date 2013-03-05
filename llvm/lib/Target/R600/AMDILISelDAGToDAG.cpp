@@ -162,6 +162,35 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
   switch (Opc) {
   default: break;
+  case ISD::BUILD_VECTOR: {
+    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+    if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+      break;
+    }
+    // BUILD_VECTOR is usually lowered into an IMPLICIT_DEF + 4 INSERT_SUBREG
+    // that adds a 128 bits reg copy when going through TwoAddressInstructions
+    // pass. We want to avoid 128 bits copies as much as possible because they
+    // can't be bundled by our scheduler.
+    SDValue RegSeqArgs[9] = {
+      CurDAG->getTargetConstant(AMDGPU::R600_Reg128RegClassID, MVT::i32),
+      SDValue(), CurDAG->getTargetConstant(AMDGPU::sub0, MVT::i32),
+      SDValue(), CurDAG->getTargetConstant(AMDGPU::sub1, MVT::i32),
+      SDValue(), CurDAG->getTargetConstant(AMDGPU::sub2, MVT::i32),
+      SDValue(), CurDAG->getTargetConstant(AMDGPU::sub3, MVT::i32)
+    };
+    bool IsRegSeq = true;
+    for (unsigned i = 0; i < N->getNumOperands(); i++) {
+      if (dyn_cast<RegisterSDNode>(N->getOperand(i))) {
+        IsRegSeq = false;
+        break;
+      }
+      RegSeqArgs[2 * i + 1] = N->getOperand(i);
+    }
+    if (!IsRegSeq)
+      break;
+    return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, N->getVTList(),
+        RegSeqArgs, 2 * N->getNumOperands() + 1);
+  }
   case ISD::ConstantFP:
   case ISD::Constant: {
     const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
