@@ -96,6 +96,12 @@ def RetCC_MipsN : CallingConv<[
   CCIfType<[f64], CCAssignToReg<[D0_64, D2_64]>>
 ]>;
 
+// In soft-mode, register A0_64, instead of V1_64, is used to return a long
+// double value.
+def RetCC_F128Soft : CallingConv<[
+  CCIfType<[i64], CCAssignToReg<[V0_64, A0_64]>>
+]>;
+
 //===----------------------------------------------------------------------===//
 // Mips EABI Calling Convention
 //===----------------------------------------------------------------------===//
