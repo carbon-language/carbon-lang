@@ -287,6 +287,14 @@ class InternalVector {
     }
     data_[size_++] = element;
   }
+  T &back() {
+    CHECK_GT(size_, 0);
+    return data_[size_ - 1];
+  }
+  void pop_back() {
+    CHECK_GT(size_, 0);
+    size_--;
+  }
   uptr size() {
     return size_;
   }

@@ -105,6 +105,11 @@ TEST(SanitizerCommon, InternalVector) {
   for (uptr i = 0; i < 100; i++) {
     EXPECT_EQ(vector[i], i);
   }
+  for (int i = 99; i >= 0; i--) {
+    EXPECT_EQ(vector.back(), i);
+    vector.pop_back();
+    EXPECT_EQ(vector.size(), i);
+  }
 }
 
 }  // namespace __sanitizer
