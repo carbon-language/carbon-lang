@@ -794,9 +794,7 @@ namespace {
         const CGBitFieldInfo &BFInfo = RL.getBitFieldInfo(FirstField);
         Alignment = CharUnits::fromQuantity(BFInfo.StorageAlignment);
       } else {
-        unsigned AlignBits =
-          CGF.getContext().getTypeAlign(FirstField->getType());
-        Alignment = CGF.getContext().toCharUnitsFromBits(AlignBits);
+        Alignment = CGF.getContext().getDeclAlign(FirstField);
       }
 
       assert((CGF.getContext().toCharUnitsFromBits(FirstFieldOffset) %

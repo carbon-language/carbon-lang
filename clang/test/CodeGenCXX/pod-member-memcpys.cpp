@@ -86,6 +86,12 @@ struct ReferenceMember {
   int &d;
 };
 
+struct __attribute__((packed)) PackedMembers {
+  char c;
+  NonPOD np;
+  int w, x, y, z;
+};
+
 // COPY-ASSIGNMENT OPERATORS:
 
 // Assignment operators are output in the order they're encountered.
@@ -99,6 +105,7 @@ CALL_AO(ArrayMember)
 CALL_AO(VolatileMember)
 CALL_AO(BitfieldMember)
 CALL_AO(InnerClassMember)
+CALL_AO(PackedMembers)
 
 // Basic copy-assignment:
 // CHECK: define linkonce_odr %struct.Basic* @_ZN5BasicaSERKS_(%struct.Basic* %this, %struct.Basic*)
@@ -151,6 +158,12 @@ CALL_AO(InnerClassMember)
 // CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
 // CHECK: ret %struct.InnerClassMember* %this
 
+// PackedMembers copy-assignment:
+// CHECK: define linkonce_odr %struct.PackedMembers* @_ZN13PackedMembersaSERKS_(%struct.PackedMembers* %this, %struct.PackedMembers*)
+// CHECK: tail call %struct.NonPOD* @_ZN6NonPODaSERKS_
+// CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 1{{.*}})
+// CHECK: ret %struct.PackedMembers* %this
+
 // COPY-CONSTRUCTORS:
 
 // Clang outputs copy-constructors in the reverse of the order that
@@ -159,6 +172,7 @@ CALL_AO(InnerClassMember)
 
 #define CALL_CC(T) T callCC##T(const T& b) { return b; }
 
+CALL_CC(PackedMembers)
 CALL_CC(BitfieldMember2)
 CALL_CC(ReferenceMember)
 CALL_CC(InnerClassMember)
@@ -234,3 +248,9 @@ CALL_CC(Basic)
 // CHECK-2: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4, i1 false)
 // CHECK-2: call void @_ZN6NonPODC1ERKS_
 // CHECK-2: ret void
+
+// PackedMembers copy-assignment:
+// CHECK: define linkonce_odr void @_ZN13PackedMembersC2ERKS_(%struct.PackedMembers* %this, %struct.PackedMembers*)
+// CHECK: tail call void @_ZN6NonPODC1ERKS_
+// CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 1{{.*}})
+// CHECK: ret void
