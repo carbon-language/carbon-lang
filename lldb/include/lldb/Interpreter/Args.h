@@ -342,6 +342,12 @@ public:
     void
     Clear ();
 
+    static const char *
+    StripSpaces (std::string &s,
+                 bool leading = true,
+                 bool trailing = true,
+                 bool return_null_if_empty = true);
+
     static int32_t
     StringToSInt32 (const char *s, int32_t fail_value = 0, int base = 0, bool *success_ptr = NULL);
 

@@ -905,6 +905,33 @@ Args::StringToAddress (const ExecutionContext *exe_ctx, const char *s, lldb::add
     return fail_value;
 }
 
+const char *
+Args::StripSpaces (std::string &s, bool leading, bool trailing, bool return_null_if_empty)
+{
+    static const char *k_white_space = " \t\v";
+    if (!s.empty())
+    {
+        if (leading)
+        {
+            size_t pos = s.find_first_not_of (k_white_space);
+            if (pos == std::string::npos)
+                s.clear();
+            else if (pos > 0)
+                s.erase(0, pos);
+        }
+        
+        if (trailing)
+        {
+            size_t rpos = s.find_last_not_of(k_white_space);
+            if (rpos != std::string::npos && rpos + 1 < s.size())
+                s.erase(rpos + 1);
+        }
+    }
+    if (return_null_if_empty && s.empty())
+        return NULL;
+    return s.c_str();
+}
+
 bool
 Args::StringToBoolean (const char *s, bool fail_value, bool *success_ptr)
 {
