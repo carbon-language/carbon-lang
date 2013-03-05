@@ -1711,6 +1711,15 @@ StringRef ASTUnit::getMainFileName() const {
   return StringRef();
 }
 
+StringRef ASTUnit::getASTFileName() const {
+  if (!isMainFileAST())
+    return StringRef();
+
+  serialization::ModuleFile &
+    Mod = Reader->getModuleManager().getPrimaryModule();
+  return Mod.FileName;
+}
+
 ASTUnit *ASTUnit::create(CompilerInvocation *CI,
                          IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                          bool CaptureDiagnostics,

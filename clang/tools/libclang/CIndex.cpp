@@ -6387,6 +6387,8 @@ Logger &cxindex::Logger::operator<<(CXTranslationUnit TU) {
   if (TU) {
     if (ASTUnit *Unit = cxtu::getASTUnit(TU)) {
       LogOS << '<' << Unit->getMainFileName() << '>';
+      if (Unit->isMainFileAST())
+        LogOS << " (" << Unit->getASTFileName() << ')';
       return *this;
     }
   }
