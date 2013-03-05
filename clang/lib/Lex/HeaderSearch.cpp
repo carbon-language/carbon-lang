@@ -266,10 +266,6 @@ const FileEntry *DirectoryLookup::LookupFile(
   return Result;
 }
 
-/// FIXME: HACK HACK HACK!
-static llvm::DenseMap<const DirectoryEntry *, const DirectoryEntry *>
-  TopFrameworkDirs;
-
 /// \brief Given a framework directory, find the top-most framework directory.
 ///
 /// \param FileMgr The file manager to use for directory lookups.
