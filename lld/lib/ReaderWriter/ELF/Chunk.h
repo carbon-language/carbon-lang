@@ -34,12 +34,12 @@ public:
 
   /// \brief Describes the type of Chunk
   enum Kind {
-    K_Header, // ELF Header
-    K_ProgramHeader, // Program Header
-    K_ELFSegment, // Segment
-    K_ELFSection, // Section
-    K_AtomSection, //< A section containing atoms.
-    K_SectionHeader // Section header
+    K_Header, ///< ELF Header
+    K_ProgramHeader, ///< Program Header
+    K_ELFSegment, ///< Segment
+    K_ELFSection, ///< Section
+    K_AtomSection, ///< A section containing atoms.
+    K_SectionHeader ///< Section header
   };
   Chunk(StringRef name, Kind kind, const ELFTargetInfo &ti)
       : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
