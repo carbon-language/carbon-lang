@@ -94,9 +94,12 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
     return;
   StringRef Name = Info->Name;
   unsigned DiagKind = llvm::StringSwitch<unsigned>(Name)
-  .Case("function", diag::warn_doc_function_not_attached_to_a_function_decl)
-  .Case("method", diag::warn_doc_method_not_attached_to_a_objc_method_decl)
-  .Case("callback", diag::warn_doc_callback_not_attached_to_a_function_ptr_decl)
+  .Case("function", !isAnyFunctionDecl() ?
+                    diag::warn_doc_function_not_attached_to_a_function_decl : 0)
+  .Case("method", !isObjCMethodDecl() ?
+                  diag::warn_doc_method_not_attached_to_a_objc_method_decl : 0)
+  .Case("callback", !isFunctionPointerVarDecl() ?
+        diag::warn_doc_callback_not_attached_to_a_function_ptr_decl : 0)
   .Default(0);
   
   if (DiagKind)
@@ -691,6 +694,11 @@ bool Sema::isFunctionDecl() {
   return ThisDeclInfo->getKind() == DeclInfo::FunctionKind;
 }
 
+bool Sema::isAnyFunctionDecl() {
+  return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
+         isa<FunctionDecl>(ThisDeclInfo->CurrentDecl);
+}
+  
 bool Sema::isObjCMethodDecl() {
   return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
          isa<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl);
