@@ -31,7 +31,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 STATISTIC(NumFunProtected, "Number of functions protected");
