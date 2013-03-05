@@ -163,7 +163,9 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
   LangOptions LO;
   LO.CPlusPlus = true;
   LO.Bool = true;
+  OS << '\'';
   N.print(OS, PrintingPolicy(LO));
+  OS << '\'';
   OS.flush();
   return DB << NameStr;
 }

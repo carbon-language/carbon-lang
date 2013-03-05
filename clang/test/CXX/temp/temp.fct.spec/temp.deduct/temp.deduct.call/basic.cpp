@@ -27,3 +27,21 @@ void test_f2(int *ip, float *fp) {
   f2(ip, ip); // okay
   f2(ip, fp); // expected-error{{no matching function}}
 }
+
+namespace test3 {
+  template<typename T>
+  struct bar { };
+
+  template<typename T>
+  struct foo {
+    operator bar<T>();
+  };
+
+  template<typename T>
+  void func(bar<T>) { // expected-note {{candidate template ignored: could not match 'bar' against 'foo'}}
+  }
+
+  void test() {
+    func(foo<int>()); // expected-error {{no matching function}}
+  }
+}

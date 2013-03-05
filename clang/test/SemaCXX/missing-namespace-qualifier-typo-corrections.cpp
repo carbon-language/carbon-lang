@@ -70,7 +70,7 @@ namespace llvm {
 struct S {};
 void bar() {
  GraphWriter<S> x; //expected-error{{no template named 'GraphWriter'; did you mean 'llvm::GraphWriter'?}}
- (void)new llvm::GraphWriter; // expected-error {{use of class template llvm::GraphWriter requires template arguments}}
+ (void)new llvm::GraphWriter; // expected-error {{use of class template 'llvm::GraphWriter' requires template arguments}}
  (void)new llvm::Graphwriter<S>; // expected-error {{no template named 'Graphwriter' in namespace 'llvm'; did you mean 'GraphWriter'?}}
 }
 

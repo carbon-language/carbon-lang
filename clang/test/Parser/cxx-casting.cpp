@@ -58,9 +58,9 @@ void test2(char x, struct B * b) {
               expected-error {{expected ']'}}
 #define LC <:
 #define C :
-  test1::A LC:B> c; // expected-error {{class template test1::A requires template arguments}} expected-error 2{{}}
+  test1::A LC:B> c; // expected-error {{class template 'test1::A' requires template arguments}} expected-error 2{{}}
   (void)static_cast LC:c>(&x); // expected-error {{expected '<' after 'static_cast'}} expected-error 2{{}} expected-note{{}}
-  test1::A<:C B> d; // expected-error {{class template test1::A requires template arguments}} expected-error 2{{}}
+  test1::A<:C B> d; // expected-error {{class template 'test1::A' requires template arguments}} expected-error 2{{}}
   (void)static_cast<:C c>(&x); // expected-error {{expected '<' after 'static_cast'}} expected-error 2{{}} expected-note{{}}
 
 #define LCC <::
@@ -85,7 +85,7 @@ void test3() {
   E< ::F>();
 
   // Make sure that parser doesn't expand '[:' to '< ::'
-  ::D[:F> A5; // expected-error {{class template ::D requires template arguments}} \
+  ::D[:F> A5; // expected-error {{class template '::D' requires template arguments}} \
               // expected-error {{expected expression}} \
               // expected-error {{expected unqualified-id}}
 }
