@@ -1090,12 +1090,12 @@ class COS_Common <bits<11> inst> : R600_1OP <
 multiclass DIV_Common <InstR600 recip_ieee> {
 def : Pat<
   (int_AMDGPU_div R600_Reg32:$src0, R600_Reg32:$src1),
-  (MUL R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
+  (MUL_IEEE R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
 >;
 
 def : Pat<
   (fdiv R600_Reg32:$src0, R600_Reg32:$src1),
-  (MUL R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
+  (MUL_IEEE R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
 >;
 }
 
@@ -1169,12 +1169,12 @@ let Predicates = [isR600] in {
 // cards.
 class COS_PAT <InstR600 trig> : Pat<
   (fcos R600_Reg32:$src),
-  (trig (MUL (MOV_IMM_I32 CONST.TWO_PI_INV), R600_Reg32:$src))
+  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), R600_Reg32:$src))
 >;
 
 class SIN_PAT <InstR600 trig> : Pat<
   (fsin R600_Reg32:$src),
-  (trig (MUL (MOV_IMM_I32 CONST.TWO_PI_INV), R600_Reg32:$src))
+  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), R600_Reg32:$src))
 >;
 
 //===----------------------------------------------------------------------===//
