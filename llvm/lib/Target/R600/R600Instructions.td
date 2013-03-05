@@ -513,7 +513,7 @@ def INTERP_PAIR_ZW :  AMDGPUShaderInst <
 
 def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
   SDTypeProfile<1, -1, [SDTCisInt<0>, SDTCisPtrTy<1>]>,
-  [SDNPMayLoad, SDNPVariadic]
+  [SDNPVariadic]
 >;
 
 //===----------------------------------------------------------------------===//
