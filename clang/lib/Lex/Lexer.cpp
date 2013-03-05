@@ -3121,10 +3121,13 @@ LexNextToken:
       // this as "foo / bar" and langauges with Line comments would lex it as
       // "foo".  Check to see if the character after the second slash is a '*'.
       // If so, we will lex that as a "/" instead of the start of a comment.
-      // However, we never do this in -traditional-cpp mode.
-      if ((LangOpts.LineComment ||
-           getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*') &&
-          !LangOpts.TraditionalCPP) {
+      // However, we never do this if we are just preprocessing.
+      bool TreatAsComment = LangOpts.LineComment && !LangOpts.TraditionalCPP;
+      if (!TreatAsComment)
+        if (!(PP && PP->isPreprocessedOutput()))
+          TreatAsComment = getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*';
+
+      if (TreatAsComment) {
         if (SkipLineComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
           return; // There is a token to return.
 

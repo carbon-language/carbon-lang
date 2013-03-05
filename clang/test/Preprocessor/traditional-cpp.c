@@ -78,3 +78,7 @@ a b c in skipped block
 /* CHECK-NOT: {{^}}a b c in skipped block{{$}}
  * CHECK-NOT: {{^}}/* Comments are whitespace too
  */
+
+Preserve URLs: http://clang.llvm.org
+/* CHECK: {{^}}Preserve URLs: http://clang.llvm.org{{$}}
+ */
