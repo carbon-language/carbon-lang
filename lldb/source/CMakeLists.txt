@@ -125,15 +125,17 @@ set( LLVM_LINK_COMPONENTS
   executionengine
   )
 
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
+set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
 set(SHARED_LIBRARY 1)
 
 add_lldb_library(liblldb
   lldb.cpp
   lldb-log.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/../scripts/LLDBWrapPython.cpp
+  ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp
   )
 set_target_properties(liblldb PROPERTIES OUTPUT_NAME lldb)
+add_dependencies(liblldb ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp)
+target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
 
 # Determine LLDB revision and repository. GetSourceVersion and GetRepositoryPath are shell-scripts, and as
 # such will not work on Windows.
@@ -154,8 +156,6 @@ endif ()
 # FIXME: implement svn/git revision and repository parsing solution on Windows. There is an SVN-only
 #        revision parsing solution in tools/clang/lib/Basic/CMakelists.txt.
 
-target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
-add_dependencies(liblldb swig_wrapper)
 
 install(TARGETS liblldb
   LIBRARY DESTINATION lib)

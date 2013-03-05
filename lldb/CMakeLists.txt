@@ -143,9 +143,7 @@ macro(add_lldb_library name)
   # but it is simple enough to make all of LLDB depend on some of those
   # headers without negatively impacting much of anything.
   set (LLDB_DEPENDENCIES
-    ClangDiagnosticCommon
-    #ClangDiagnosticFrontend
-    #libclang.so
+    libclang
     )
   add_dependencies(${name} ${LLDB_DEPENDENCIES})
 

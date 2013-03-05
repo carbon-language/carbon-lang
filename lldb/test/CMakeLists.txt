@@ -47,5 +47,5 @@ set(LLDB_DOSEP_ARGS
 add_python_test_target(check-lldb
   ${LLDB_SOURCE_DIR}/test/dosep.ty
   "${LLDB_DOSEP_ARGS}"
-  "Testing LLDB (with a separate subprocess per test) with args: ${LLDB_COMMON_TEST_ARGS};${LLDB_TEST_ARGS}"
+  "Testing LLDB (with a separate subprocess per test)"
   )
