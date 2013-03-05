@@ -2076,10 +2076,6 @@ def CONST32_Int_Real : LDInst2<(outs IntRegs:$dst), (ins i32imm:$global),
                        "$dst = CONST32(#$global)",
                        [(set (i32 IntRegs:$dst), imm:$global) ]>;
 
-// Map BlockAddress lowering to CONST32_Int_Real
-def : Pat<(HexagonCONST32_GP tblockaddress:$addr),
-          (CONST32_Int_Real tblockaddress:$addr)>;
-
 let isReMaterializable = 1, isMoveImm = 1 in
 def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),
                     "$dst = CONST32($label)",
@@ -3049,11 +3045,6 @@ let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
 def BR_JT : JRInst<(outs), (ins IntRegs:$src),
                    "jumpr $src",
                    [(HexagonBR_JT (i32 IntRegs:$src))]>;
-
-let isBranch=1, isIndirectBranch=1, isTerminator=1 in
-def BRIND : JRInst<(outs), (ins IntRegs:$src),
-                   "jumpr $src",
-                   [(brind (i32 IntRegs:$src))]>;
 
 def HexagonWrapperJT: SDNode<"HexagonISD::WrapperJT", SDTIntUnaryOp>;
 

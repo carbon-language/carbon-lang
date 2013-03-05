@@ -1024,14 +1024,6 @@ SDValue HexagonTargetLowering::LowerGLOBALADDRESS(SDValue Op,
   return DAG.getNode(HexagonISD::CONST32, dl, getPointerTy(), Result);
 }
 
-SDValue
-HexagonTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
-  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  SDValue BA_SD =  DAG.getTargetBlockAddress(BA, MVT::i32);
-  DebugLoc dl = Op.getDebugLoc();
-  return DAG.getNode(HexagonISD::CONST32_GP, dl, getPointerTy(), BA_SD);
-}
-
 //===----------------------------------------------------------------------===//
 // TargetLowering Implementation
 //===----------------------------------------------------------------------===//
@@ -1305,7 +1297,6 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     // Custom legalize GlobalAddress nodes into CONST32.
     setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
     setOperationAction(ISD::GlobalAddress, MVT::i8, Custom);
-    setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
     // Truncate action?
     setOperationAction(ISD::TRUNCATE, MVT::i64, Expand);
 
@@ -1468,8 +1459,6 @@ HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
     default: return 0;
     case HexagonISD::CONST32:     return "HexagonISD::CONST32";
-    case HexagonISD::CONST32_GP: return "HexagonISD::CONST32_GP";
-    case HexagonISD::CONST32_Int_Real: return "HexagonISD::CONST32_Int_Real";
     case HexagonISD::ADJDYNALLOC: return "HexagonISD::ADJDYNALLOC";
     case HexagonISD::CMPICC:      return "HexagonISD::CMPICC";
     case HexagonISD::CMPFCC:      return "HexagonISD::CMPFCC";
@@ -1518,7 +1507,6 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op, DAG);
     case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op, DAG);
     case ISD::GlobalAddress:      return LowerGLOBALADDRESS(Op, DAG);
-    case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
     case ISD::VASTART:            return LowerVASTART(Op, DAG);
     case ISD::BR_JT:              return LowerBR_JT(Op, DAG);
 
