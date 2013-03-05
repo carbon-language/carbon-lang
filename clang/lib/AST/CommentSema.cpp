@@ -1,4 +1,4 @@
-//===--- CommentSema.cpp - Doxygen comment semantic analysis --------------===//
+class//===--- CommentSema.cpp - Doxygen comment semantic analysis --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -91,9 +91,11 @@ ParamCommandComment *Sema::actOnParamCommandStart(
 void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
   if (Info->IsFunctionDeclarationCommand &&
-      !isFunctionDecl())
+      !isFunctionDecl() && !isCallbackDecl())
     Diag(Comment->getLocation(),
          diag::warn_doc_function_not_attached_to_a_function_decl)
+    << Comment->getCommandMarker()
+    << Info->Name << Info->Name
     << Comment->getSourceRange();
 }
 
@@ -346,12 +348,14 @@ VerbatimLineComment *Sema::actOnVerbatimLine(SourceLocation LocBegin,
                                              unsigned CommandID,
                                              SourceLocation TextBegin,
                                              StringRef Text) {
-  return new (Allocator) VerbatimLineComment(
+  VerbatimLineComment *VL = new (Allocator) VerbatimLineComment(
                               LocBegin,
                               TextBegin.getLocWithOffset(Text.size()),
                               CommandID,
                               TextBegin,
                               Text);
+  checkFunctionDeclVerbatimLine(VL);
+  return VL;
 }
 
 HTMLStartTagComment *Sema::actOnHTMLStartTagStart(SourceLocation LocBegin,
@@ -680,6 +684,20 @@ bool Sema::isFunctionDecl() {
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
   return ThisDeclInfo->getKind() == DeclInfo::FunctionKind;
+}
+  
+bool Sema::isCallbackDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  if (ThisDeclInfo->getKind() == DeclInfo::VariableKind) {
+    if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(ThisDeclInfo->CurrentDecl)) {
+      QualType QT = VD->getType();
+      return QT->isFunctionPointerType();
+    }
+  }
+  return false;
 }
   
 bool Sema::isObjCPropertyDecl() {

@@ -97,3 +97,11 @@ int b;
 /// \returns aaa.
 typedef int (^test_param1)(int aaa, int ccc);
 
+// rdar://13094352
+// expected-warning@+2 {{'@method' command used in a comment that is attached to a non-method declaration immediately following it}}
+@interface I
+/*!	@method Base64EncodeEx
+*/
+typedef id ID;
+- (unsigned) Base64EncodeEx : (ID)Arg;
+@end

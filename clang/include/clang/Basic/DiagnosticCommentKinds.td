@@ -74,8 +74,8 @@ def warn_doc_param_not_attached_to_a_function_decl : Warning<
   InGroup<Documentation>, DefaultIgnore;
 
 def warn_doc_function_not_attached_to_a_function_decl : Warning<
-  "'@function' command used in a comment that is attached to "
-  "a non-function declaration immediately following it">,
+  "'%select{\\|@}0%1' command used in a comment that is attached to a non-%2 "
+  "declaration immediately following it">,
   InGroup<Documentation>, DefaultIgnore;
   
 def warn_doc_param_duplicate : Warning<

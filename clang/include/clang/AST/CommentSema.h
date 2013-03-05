@@ -206,6 +206,7 @@ public:
   void resolveParamCommandIndexes(const FullComment *FC);
 
   bool isFunctionDecl();
+  bool isCallbackDecl();
   bool isObjCPropertyDecl();
   bool isTemplateOrSpecialization();
 
