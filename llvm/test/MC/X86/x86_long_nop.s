@@ -1,9 +1,12 @@
-# RUN: llvm-mc -filetype=obj -arch=x86 -mcpu=i686 %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s
+# RUN: llvm-mc -filetype=obj -arch=x86 -triple=x86_64-pc-linux-gnu %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s
+# RUN: llvm-mc -filetype=obj -arch=x86 -triple=i686-pc-linux-gnu %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s
+# RUN: llvm-mc -filetype=obj -arch=x86 -triple=x86_64-apple-darwin10.0 %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s
+# RUN: llvm-mc -filetype=obj -arch=x86 -triple=i686-apple-darwin8 %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s
 
 # Ensure alignment directives also emit sequences of 15-byte NOPs on processors
 # capable of using long NOPs.
 inc %eax
-.align 32
+.p2align 5
 inc %eax
 # CHECK: 0:  inc
 # CHECK-NEXT: 1:  nop
