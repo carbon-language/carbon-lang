@@ -505,6 +505,7 @@ sub Postprocess {
       Diag("Removing directory '$Dir' because it contains no reports.\n");
       system ("rm", "-fR", $Dir);
     }
+    Diag("No bugs found.\n");
     return 0;
   }
   
