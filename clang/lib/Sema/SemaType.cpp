@@ -3385,6 +3385,7 @@ namespace {
 
       TypeSourceInfo *TInfo = 0;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
+      assert(TInfo);
       TL.getValueLoc().initializeFullCopy(TInfo->getTypeLoc());
     }
 

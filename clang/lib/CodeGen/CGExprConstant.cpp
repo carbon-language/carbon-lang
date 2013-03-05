@@ -1214,6 +1214,8 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
       if (I < NumInitElts)
         C = EmitConstantValueForMemory(Value.getArrayInitializedElt(I),
                                        CAT->getElementType(), CGF);
+      else
+        assert(Filler && "Missing filler for implicit elements of initializer");
       if (I == 0)
         CommonElementType = C->getType();
       else if (C->getType() != CommonElementType)

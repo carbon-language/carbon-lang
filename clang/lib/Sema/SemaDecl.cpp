@@ -8859,7 +8859,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   DeclContext *PrevDC = CurContext;
   CurContext = Context.getTranslationUnitDecl();
 
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(ActOnDeclarator(TUScope, D));
+  FunctionDecl *FD = cast<FunctionDecl>(ActOnDeclarator(TUScope, D));
   FD->setImplicit();
 
   CurContext = PrevDC;

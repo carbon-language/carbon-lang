@@ -649,6 +649,8 @@ void ExprEngine::VisitGuardedExpr(const Expr *Ex,
     break;
   }
 
+  assert(SrcBlock && "missing function entry");
+
   // Find the last expression in the predecessor block.  That is the
   // expression that is used for the value of the ternary expression.
   bool hasValue = false;

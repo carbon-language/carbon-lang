@@ -98,6 +98,7 @@ public:
 
   friend bool operator==(specific_attr_iterator Left,
                          specific_attr_iterator Right) {
+    assert((Left.Current == 0) == (Right.Current == 0));
     if (Left.Current < Right.Current)
       Left.AdvanceToNext(Right.Current); 
     else

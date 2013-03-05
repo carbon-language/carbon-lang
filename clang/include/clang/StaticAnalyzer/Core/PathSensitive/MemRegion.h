@@ -651,9 +651,11 @@ public:
     }
 
     bool operator==(const referenced_vars_iterator &I) const {
+      assert((R == 0) == (I.R == 0));
       return I.R == R;
     }
     bool operator!=(const referenced_vars_iterator &I) const {
+      assert((R == 0) == (I.R == 0));
       return I.R != R;
     }
     referenced_vars_iterator &operator++() {
