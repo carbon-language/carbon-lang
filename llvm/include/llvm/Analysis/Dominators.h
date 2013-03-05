@@ -663,8 +663,7 @@ public:
       // Initialize the roots list
       for (typename TraitsTy::nodes_iterator I = TraitsTy::nodes_begin(&F),
                                         E = TraitsTy::nodes_end(&F); I != E; ++I) {
-        if (std::distance(TraitsTy::child_begin(I),
-                          TraitsTy::child_end(I)) == 0)
+        if (TraitsTy::child_begin(I) == TraitsTy::child_end(I))
           addRoot(I);
 
         // Prepopulate maps so that we don't get iterator invalidation issues later.
