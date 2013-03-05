@@ -1,11 +1,10 @@
 RUN: lld -core -target hexagon %p/Inputs/use-shared.hexagon \
 RUN: -output=%t1 -output-type=shared
-RUN: llvm-readobj %t2 > %t3
-RUN: FileCheck -check-prefix=DYNSYMS %s < %t3
+RUN: llvm-readobj %t1 > %t2
+RUN: FileCheck -check-prefix=DYNSYMS %s < %t2
 
 DYNSYMS: Dynamic Symbols:
-DYNSYMS:   Name                              Type  Address           Size              FileOffset        Flags                     
-DYNSYMS:   fn2                               FUNC               148                 c               21c  global
-DYNSYMS:   fn1                               FUNC               154                 c               228  global
-DYNSYMS:   fn3                               FUNC               160                14               234  global
+CHECK:     fn2 {FUNC} {{[0-9a-f]+}}
+CHECK:     fn1 {FUNC} {{[0-9a-f]+}}
+CHECK:     fn3 {FUNC} {{[0-9a-f]+}}
 DYNSYMS:   Total: 3
