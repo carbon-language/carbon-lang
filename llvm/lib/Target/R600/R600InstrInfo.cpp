@@ -356,6 +356,8 @@ R600InstrInfo::isPredicable(MachineInstr *MI) const {
 
   if (MI->getOpcode() == AMDGPU::KILLGT) {
     return false;
+  } else if (isVector(*MI)) {
+    return false;
   } else {
     return AMDGPUInstrInfo::isPredicable(MI);
   }
