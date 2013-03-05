@@ -512,8 +512,8 @@ def INTERP_PAIR_ZW :  AMDGPUShaderInst <
   []>;
 
 def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
-  SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>,
-  [SDNPMayLoad]
+  SDTypeProfile<1, -1, [SDTCisInt<0>, SDTCisPtrTy<1>]>,
+  [SDNPMayLoad, SDNPVariadic]
 >;
 
 //===----------------------------------------------------------------------===//
@@ -1663,14 +1663,13 @@ def CONST_COPY : Instruction {
 } // end isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"
 
 def TEX_VTX_CONSTBUF :
-  InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr), "VTX_READ_eg $dst, $ptr",
-      [(set R600_Reg128:$dst, (CONST_ADDRESS ADDRGA_VAR_OFFSET:$ptr))]>,
+  InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr, i32imm:$BUFFER_ID), "VTX_READ_eg $dst, $ptr",
+      [(set R600_Reg128:$dst, (CONST_ADDRESS ADDRGA_VAR_OFFSET:$ptr, (i32 imm:$BUFFER_ID)))]>,
   VTX_WORD1_GPR, VTX_WORD0 {
 
   let VC_INST = 0;
   let FETCH_TYPE = 2;
   let FETCH_WHOLE_QUAD = 0;
-  let BUFFER_ID = 0;
   let SRC_REL = 0;
   let SRC_SEL_X = 0;
   let DST_REL = 0;
