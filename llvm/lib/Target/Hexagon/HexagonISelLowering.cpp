@@ -1365,6 +1365,29 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::FREM , MVT::f32, Expand);
     setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
     setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
+
+    // In V4, we have double word add/sub with carry. The problem with
+    // modelling this instruction is that it produces 2 results - Rdd and Px.
+    // To model update of Px, we will have to use Defs[p0..p3] which will
+    // cause any predicate live range to spill. So, we pretend we dont't
+    // have these instructions.
+    setOperationAction(ISD::ADDE, MVT::i8, Expand);
+    setOperationAction(ISD::ADDE, MVT::i16, Expand);
+    setOperationAction(ISD::ADDE, MVT::i32, Expand);
+    setOperationAction(ISD::ADDE, MVT::i64, Expand);
+    setOperationAction(ISD::SUBE, MVT::i8, Expand);
+    setOperationAction(ISD::SUBE, MVT::i16, Expand);
+    setOperationAction(ISD::SUBE, MVT::i32, Expand);
+    setOperationAction(ISD::SUBE, MVT::i64, Expand);
+    setOperationAction(ISD::ADDC, MVT::i8, Expand);
+    setOperationAction(ISD::ADDC, MVT::i16, Expand);
+    setOperationAction(ISD::ADDC, MVT::i32, Expand);
+    setOperationAction(ISD::ADDC, MVT::i64, Expand);
+    setOperationAction(ISD::SUBC, MVT::i8, Expand);
+    setOperationAction(ISD::SUBC, MVT::i16, Expand);
+    setOperationAction(ISD::SUBC, MVT::i32, Expand);
+    setOperationAction(ISD::SUBC, MVT::i64, Expand);
+
     setOperationAction(ISD::CTPOP, MVT::i32, Expand);
     setOperationAction(ISD::CTPOP, MVT::i64, Expand);
     setOperationAction(ISD::CTTZ , MVT::i32, Expand);
