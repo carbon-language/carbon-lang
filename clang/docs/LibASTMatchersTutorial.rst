@@ -395,8 +395,8 @@ variable, and that the right-hand side has integer type.
 
       hasCondition(binaryOperator(
         hasOperatorName("<"),
-        hasRHS(expr(hasType(isInteger()))),
-        hasLHS(declRefExpr(to(varDecl(hasType(isInteger())))))))
+        hasLHS(declRefExpr(to(varDecl(hasType(isInteger()))))),
+        hasRHS(expr(hasType(isInteger())))))
 
 Why? Because it doesn't work. Of the three loops provided in
 ``test-files/simple.cpp``, zero of them have a matching condition. A
@@ -432,9 +432,9 @@ Adjusting the condition operator will restore the desired match.
 
       hasCondition(binaryOperator(
         hasOperatorName("<"),
-        hasLHS(expr(hasType(isInteger()))),
-        hasRHS(ignoringParenImpCasts(declRefExpr(
-          to(varDecl(hasType(isInteger()))))))))
+        hasLHS(ignoringParenImpCasts(declRefExpr(
+          to(varDecl(hasType(isInteger())))))),
+        hasRHS(expr(hasType(isInteger())))))
 
 After adding binds to the expressions we wished to capture and
 extracting the identifier strings into variables, we have array-step-2
