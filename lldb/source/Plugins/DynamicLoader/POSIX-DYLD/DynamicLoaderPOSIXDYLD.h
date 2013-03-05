@@ -158,6 +158,11 @@ protected:
     lldb::addr_t
     GetEntryPoint();
 
+    /// Checks to see if the target module has changed, updates the target
+    /// accordingly and returns the target executable module.
+    lldb::ModuleSP
+    GetTargetExecutable();
+
 private:
     DISALLOW_COPY_AND_ASSIGN(DynamicLoaderPOSIXDYLD);
 };
