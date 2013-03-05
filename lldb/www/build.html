@@ -143,24 +143,24 @@
                   <br>&gt; make check-lldb
                 </code>
                 <h2>To build with autoconf</h2>
-                <p>If you are using clang:</p>
+                <p>If you do not have CMake, it is still possible to build LLDB using the autoconf build system. If you are using
+                   Clang or GCC 4.7+, run:</p>
                 <code>
                   <br>&gt; $llvm/configure --enable-cxx11
                   <br>&gt; make </code>
-                <p>If you are using GCC 4.6+:</p>
+                <p>Or, if you are using a version of GCC that does not support the <tt>-std=c++11</tt> option:</p>
                 <code>
                   <br>&gt; $llvm/configure
                   <br>&gt; make CXXFLAGS=-std=c++0x</code>
+                <p> To run the LLDB test suite, run:</p>
+                <code>
+                  <br>&gt; make -C tools/lldb/test</code>
                 <p>Note that once both LLVM and Clang have been configured and built it is not
                 necessary to perform a top-level <tt>make</tt> to rebuild changes made only to LLDB.
                 You can run <tt>make</tt> from the <tt>build/tools/lldb</tt> subdirectory as well.</p>
-                <p> If you wish to build with libc++ instead of libstdc++ (the default), you should run configure with the
+                <p> If you wish to build with libc++ instead of libstdc++ (the default), run configure with the
                 <tt>--enable-libcpp</tt> flag.</p>
                 <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
-                <p> To run the LLDB test suite after building with autoconf, run:</p>
-                <code>
-                  <br>&gt; make -C tools/lldb/test
-                </code>
 
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies its own Python module named <tt>lldb</tt>.
