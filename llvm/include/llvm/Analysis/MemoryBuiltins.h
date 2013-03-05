@@ -138,9 +138,9 @@ static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
 //
 
 /// \brief Compute the size of the object pointed by Ptr. Returns true and the
-// object size in Size if successful, and false otherwise. In this context, by
-// object we mean the region of memory starting at Ptr to the end of the
-// underlying object pointed to by Ptr.
+/// object size in Size if successful, and false otherwise. In this context, by
+/// object we mean the region of memory starting at Ptr to the end of the
+/// underlying object pointed to by Ptr.
 /// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
 /// byval arguments, and global variables.
 bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
