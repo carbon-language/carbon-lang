@@ -73,6 +73,11 @@ def warn_doc_param_not_attached_to_a_function_decl : Warning<
   "a function declaration">,
   InGroup<Documentation>, DefaultIgnore;
 
+def warn_doc_function_not_attached_to_a_function_decl : Warning<
+  "'@function' command used in a comment that is attached to "
+  "a non-function declaration immediately following it">,
+  InGroup<Documentation>, DefaultIgnore;
+  
 def warn_doc_param_duplicate : Warning<
   "parameter '%0' is already documented">,
   InGroup<Documentation>, DefaultIgnore;

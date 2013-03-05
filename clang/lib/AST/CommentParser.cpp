@@ -706,6 +706,8 @@ VerbatimLineComment *Parser::parseVerbatimLine() {
                                                 TextBegin,
                                                 Text);
   consumeToken();
+  S.checkFunctionDeclVerbatimLine(VL);
+  
   return VL;
 }
 

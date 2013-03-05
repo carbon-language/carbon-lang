@@ -198,6 +198,8 @@ public:
   void checkBlockCommandDuplicate(const BlockCommandComment *Command);
 
   void checkDeprecatedCommand(const BlockCommandComment *Comment);
+  
+  void checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment);
 
   /// Resolve parameter names to parameter indexes in function declaration.
   /// Emit diagnostics about unknown parametrs.

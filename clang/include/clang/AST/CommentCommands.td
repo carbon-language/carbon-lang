@@ -24,6 +24,7 @@ class Command<string name> {
   bit IsVerbatimBlockEndCommand = 0;
   bit IsVerbatimLineCommand = 0;
   bit IsDeclarationCommand = 0;
+  bit IsFunctionDeclarationCommand = 0;
 }
 
 class InlineCommand<string name> : Command<name> {
@@ -57,6 +58,12 @@ class VerbatimLineCommand<string name> : Command<name> {
 class DeclarationVerbatimLineCommand<string name> :
       VerbatimLineCommand<name> {
   let IsDeclarationCommand = 1;
+}
+
+class FunctionDeclarationVerbatimLineCommand<string name> :
+      VerbatimLineCommand<name> {
+  let IsDeclarationCommand = 1;
+  let IsFunctionDeclarationCommand = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -179,7 +186,7 @@ def Interface : DeclarationVerbatimLineCommand<"interface">;
 def Protocol  : DeclarationVerbatimLineCommand<"protocol">;
 def Category  : DeclarationVerbatimLineCommand<"category">;
 def Template  : DeclarationVerbatimLineCommand<"template">;
-def Function  : DeclarationVerbatimLineCommand<"function">;
+def Function  : FunctionDeclarationVerbatimLineCommand<"function">;
 def Method    : DeclarationVerbatimLineCommand<"method">;
 def Callback  : DeclarationVerbatimLineCommand<"callback">;
 def Const     : DeclarationVerbatimLineCommand<"const">;

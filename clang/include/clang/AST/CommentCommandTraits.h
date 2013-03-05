@@ -100,7 +100,10 @@ struct CommandInfo {
   ///   \fn void f(int a);
   /// \endcode
   unsigned IsDeclarationCommand : 1;
-
+  
+  /// \brief True if verbatim-like line command is a function declaraton.
+  unsigned IsFunctionDeclarationCommand : 1;
+  
   /// \brief True if this command is unknown.  This \c CommandInfo object was
   /// created during parsing.
   unsigned IsUnknownCommand : 1;

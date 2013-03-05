@@ -911,3 +911,12 @@ int test_nocrash12();
 ///@param x@param y
 int test_nocrash13(int x, int y);
 
+// expected-warning@+3 {{'@function' command used in a comment that is attached to a non-function declaration immediately following it}}
+// expected-warning@+3 {{'@param' command used in a comment that is not attached to a function declaration}}
+// expected-warning@+3 {{'@result' command used in a comment that is not attached to a function or method declaration}}
+/*!	@function Base64EncodeEx
+	@param	inFlags  This is error flag
+	@result	Error
+*/
+typedef unsigned int Base64Flags;
+unsigned Base64EncodeEx(Base64Flags	inFlags);

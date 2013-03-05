@@ -88,6 +88,15 @@ ParamCommandComment *Sema::actOnParamCommandStart(
   return Command;
 }
 
+void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
+  const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
+  if (Info->IsFunctionDeclarationCommand &&
+      !isFunctionDecl())
+    Diag(Comment->getLocation(),
+         diag::warn_doc_function_not_attached_to_a_function_decl)
+    << Comment->getSourceRange();
+}
+
 void Sema::actOnParamCommandDirectionArg(ParamCommandComment *Command,
                                          SourceLocation ArgLocBegin,
                                          SourceLocation ArgLocEnd,
