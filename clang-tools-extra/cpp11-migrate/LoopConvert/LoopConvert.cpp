@@ -76,13 +76,9 @@ int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
 
   collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
-  if (AcceptedChanges > 0) {
-    setChangesMade();
-  }
-
-  if (RejectedChanges > 0 || DeferredChanges > 0) {
-    setChangesNotMade();
-  }
+  setAcceptedChanges(AcceptedChanges);
+  setRejectedChanges(RejectedChanges);
+  setDeferredChanges(DeferredChanges);
 
   return 0;
 }

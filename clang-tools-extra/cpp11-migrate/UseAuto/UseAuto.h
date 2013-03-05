@@ -29,6 +29,8 @@
 /// p2 are not handled by this transform.
 class UseAutoTransform : public Transform {
 public:
+  UseAutoTransform() : Transform("UseAuto") {}
+
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
                     RiskLevel MaxRiskLEvel,

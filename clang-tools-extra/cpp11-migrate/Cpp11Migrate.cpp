@@ -54,6 +54,10 @@ static cl::opt<bool> FinalSyntaxCheck(
     cl::desc("Check for correct syntax after applying transformations"),
     cl::init(false));
 
+static cl::opt<bool>
+SummaryMode("summary", cl::desc("Print transform summary"),
+            cl::init(false));
+
 class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
   CommandLineArguments Adjust(const CommandLineArguments &Args) {
     CommandLineArguments AdjustedArgs = Args;
@@ -92,6 +96,18 @@ int main(int argc, const char **argv) {
         0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
+    }
+    if (SummaryMode) {
+      llvm::outs() << "Transform: " << (*I)->getName()
+                   << " - Accepted: "
+                   << (*I)->getAcceptedChanges();
+      if ((*I)->getChangesNotMade()) {
+         llvm::outs() << " - Rejected: "
+                      << (*I)->getRejectedChanges()
+                      << " - Deferred: "
+                      << (*I)->getDeferredChanges();
+      }
+      llvm::outs() << "\n";
     }
     std::swap(InputFileStates, OutputFileStates);
     OutputFileStates->clear();

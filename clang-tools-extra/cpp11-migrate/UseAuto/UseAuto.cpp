@@ -51,8 +51,7 @@ int UseAutoTransform::apply(const FileContentsByPath &InputStates,
 
   collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
-  if (AcceptedChanges > 0)
-    setChangesMade();
+  setAcceptedChanges(AcceptedChanges);
 
   return 0;
 }

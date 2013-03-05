@@ -23,6 +23,8 @@
 /// C++11's nullptr keyword where possible.
 class UseNullptrTransform : public Transform {
 public:
+  UseNullptrTransform() : Transform("UseNullptr") {}
+
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
                     RiskLevel MaxRiskLEvel,
