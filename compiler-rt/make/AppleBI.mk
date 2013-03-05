@@ -57,7 +57,13 @@ $(OBJROOT)/libcompiler_rt-%.dylib : $(OBJROOT)/darwin_bni/Release/%/libcompiler_
 	   $(OBJROOT)/version.c -arch $* -dynamiclib \
 	   -install_name /usr/lib/system/libcompiler_rt.dylib \
 	   -compatibility_version 1 -current_version $(RC_ProjectSourceVersion) \
-	   -nodefaultlibs -lSystem -umbrella System -dead_strip \
+	   -nodefaultlibs -umbrella System -dead_strip \
+	   -Wl,-upward-lunwind \
+	   -Wl,-upward-lsystem_m \
+	   -Wl,-upward-lsystem_c \
+	   -Wl,-ldyld \
+	   -Wl,-lsystem_kernel \
+	   -L$(SDKROOT)/usr/lib/system \
 	   $(DYLIB_FLAGS) -Wl,-force_load,$^ -o $@ 
 
 # Rule to make fat dylib
