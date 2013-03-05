@@ -13,7 +13,10 @@ endforeach(entry)
 
 # Also add in the compiler-rt tree if present and we have a sufficiently
 # recent version of CMake.
-if(${CMAKE_VERSION} VERSION_GREATER 2.8.7 AND
-   ${LLVM_BUILD_RUNTIME})
-  add_llvm_external_project(compiler-rt)
+if(${LLVM_BUILD_RUNTIME})
+  if(${CMAKE_VERSION} VERSION_GREATER 2.8.7)
+    add_llvm_external_project(compiler-rt)
+  else()
+    message(WARNING "Can't build compiler-rt, CMake 2.8.8 required!")
+  endif()
 endif()
