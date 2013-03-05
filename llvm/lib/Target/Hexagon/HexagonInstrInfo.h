@@ -169,6 +169,7 @@ public:
   bool isConditionalALU32 (const MachineInstr* MI) const;
   bool isConditionalLoad (const MachineInstr* MI) const;
   bool isConditionalStore(const MachineInstr* MI) const;
+  bool isNewValueInst(const MachineInstr* MI) const;
   bool isDeallocRet(const MachineInstr *MI) const;
   unsigned getInvertedPredicatedOpcode(const int Opc) const;
   bool isExtendable(const MachineInstr* MI) const;
@@ -177,8 +178,6 @@ public:
   bool isNewValueStore(const MachineInstr* MI) const;
   bool isNewValueJump(const MachineInstr* MI) const;
   bool isNewValueJumpCandidate(const MachineInstr *MI) const;
-  unsigned getImmExtForm(const MachineInstr* MI) const;
-  unsigned getNormalBranchForm(const MachineInstr* MI) const;
 
 
   void immediateExtend(MachineInstr *MI) const;

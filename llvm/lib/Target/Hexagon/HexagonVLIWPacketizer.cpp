@@ -351,17 +351,6 @@ static bool IsControlFlow(MachineInstr* MI) {
   return (MI->getDesc().isTerminator() || MI->getDesc().isCall());
 }
 
-bool HexagonPacketizerList::isNewValueInst(MachineInstr* MI) {
-  const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  if (QII->isNewValueJump(MI))
-    return true;
-
-  if (QII->isNewValueStore(MI))
-    return true;
-
-  return false;
-}
-
 // Function returns true if an instruction can be promoted to the new-value
 // store. It will always return false for v2 and v3.
 // It lists all the conditional and unconditional stores that can be promoted
@@ -2166,7 +2155,8 @@ static bool GetPredicateSense(MachineInstr* MI,
 }
 
 bool HexagonPacketizerList::isDotNewInst(MachineInstr* MI) {
-  if (isNewValueInst(MI))
+  const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
+  if (QII->isNewValueInst(MI))
     return true;
 
   switch (MI->getOpcode()) {
@@ -2894,13 +2884,13 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
   // dealloc_return and memop always take SLOT0.
   // Arch spec 3.4.4.2
   if (QRI->Subtarget.hasV4TOps()) {
-
-    if (MCIDI.mayStore() && MCIDJ.mayStore() && isNewValueInst(J)) {
+    if (MCIDI.mayStore() && MCIDJ.mayStore() &&
+       (QII->isNewValueInst(J) || QII->isMemOp(J) || QII->isMemOp(I))) {
       Dependence = true;
       return false;
     }
 
-    if (   (QII->isMemOp(J) && MCIDI.mayStore())
+    if ((QII->isMemOp(J) && MCIDI.mayStore())
         || (MCIDJ.mayStore() && QII->isMemOp(I))
         || (QII->isMemOp(J) && QII->isMemOp(I))) {
       Dependence = true;
