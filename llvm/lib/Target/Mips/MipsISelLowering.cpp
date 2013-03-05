@@ -3593,7 +3593,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Handle result values, copying them out of physregs into vregs that we
   // return.
   return LowerCallResult(Chain, InFlag, CallConv, isVarArg,
-                         Ins, dl, DAG, InVals);
+                         Ins, dl, DAG, InVals, CLI.Callee.getNode(), CLI.RetTy);
 }
 
 /// LowerCallResult - Lower the result values of a call into the
@@ -3603,20 +3603,29 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                     CallingConv::ID CallConv, bool isVarArg,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
-                                    SmallVectorImpl<SDValue> &InVals) const {
+                                    SmallVectorImpl<SDValue> &InVals,
+                                    const SDNode *CallNode,
+                                    const Type *RetTy) const {
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), RVLocs, *DAG.getContext());
+  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
 
-  CCInfo.AnalyzeCallResult(Ins, RetCC_Mips);
+  MipsCCInfo.analyzeCallResult(Ins, getTargetMachine().Options.UseSoftFloat,
+                               CallNode, RetTy);
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
-                               RVLocs[i].getValVT(), InFlag).getValue(1);
-    InFlag = Chain.getValue(2);
-    InVals.push_back(Chain.getValue(0));
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
+                                     RVLocs[i].getLocVT(), InFlag);
+    Chain = Val.getValue(1);
+    InFlag = Val.getValue(2);
+
+    if (RVLocs[i].getValVT() != RVLocs[i].getLocVT())
+      Val = DAG.getNode(ISD::BITCAST, dl, RVLocs[i].getValVT(), Val);
+
+    InVals.push_back(Val);
   }
 
   return Chain;
@@ -3799,27 +3808,33 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                                 const SmallVectorImpl<SDValue> &OutVals,
                                 DebugLoc dl, SelectionDAG &DAG) const {
-
   // CCValAssign - represent the assignment of
   // the return value to a location
   SmallVector<CCValAssign, 16> RVLocs;
+  MachineFunction &MF = DAG.getMachineFunction();
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(), RVLocs,
+                 *DAG.getContext());
+  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
 
   // Analize return values.
-  CCInfo.AnalyzeReturn(Outs, RetCC_Mips);
+  MipsCCInfo.analyzeReturn(Outs, getTargetMachine().Options.UseSoftFloat,
+                           MF.getFunction()->getReturnType());
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
 
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    SDValue Val = OutVals[i];
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
 
-    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), OutVals[i], Flag);
+    if (RVLocs[i].getValVT() != RVLocs[i].getLocVT())
+      Val = DAG.getNode(ISD::BITCAST, dl, RVLocs[i].getLocVT(), Val);
+
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), Val, Flag);
 
     // Guarantee that all emitted copies are stuck together with flags.
     Flag = Chain.getValue(1);
@@ -3830,8 +3845,7 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   // the sret argument into $v0 for the return. We saved the argument into
   // a virtual register in the entry block, so now we copy the value out
   // and into $v0.
-  if (DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
-    MachineFunction &MF      = DAG.getMachineFunction();
+  if (MF.getFunction()->hasStructRetAttr()) {
     MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
     unsigned Reg = MipsFI->getSRetReturnReg();
 
@@ -4212,6 +4226,38 @@ analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args,
 #endif
     llvm_unreachable(0);
   }
+}
+
+template<typename Ty>
+void MipsTargetLowering::MipsCC::
+analyzeReturn(const SmallVectorImpl<Ty> &RetVals, bool IsSoftFloat,
+              const SDNode *CallNode, const Type *RetTy) const {
+  for (unsigned I = 0, E = RetVals.size(); I < E; ++I) {
+    MVT VT = RetVals[I].VT;
+    ISD::ArgFlagsTy Flags = RetVals[I].Flags;
+    MVT RegVT = this->getRegVT(VT, RetTy, CallNode, IsSoftFloat);
+
+    if (RetCC_Mips(I, VT, RegVT, CCValAssign::Full, Flags,
+                   this->CCInfo)) {
+#ifndef NDEBUG
+      dbgs() << "Call result #" << I << " has unhandled type "
+             << EVT(VT).getEVTString() << '\n';
+#endif
+      llvm_unreachable(0);
+    }
+  }
+}
+
+void MipsTargetLowering::MipsCC::
+analyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins, bool IsSoftFloat,
+                  const SDNode *CallNode, const Type *RetTy) const {
+  analyzeReturn(Ins, IsSoftFloat, CallNode, RetTy);
+}
+
+void MipsTargetLowering::MipsCC::
+analyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs, bool IsSoftFloat,
+              const Type *RetTy) const {
+  analyzeReturn(Outs, IsSoftFloat, 0, RetTy);
 }
 
 void
