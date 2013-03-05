@@ -118,6 +118,31 @@
                   <br>&gt; mkdir build
                   <br>&gt; cd build
                 </code>
+                <h2>To build with CMake</h2>
+                <p>Using CMake is documented on the <a href="http://llvm.org/docs/CMake.html">Building LLVM with CMake</a>
+                   page. Building LLDB is possible using one of the following generators:
+                </p>
+                <ul>
+                  <li> Ninja </li>
+                  <li> Unix Makefiles </li>
+                </ul>
+                <h3>Using CMake + Ninja</h3>
+                <p>Ninja is the fastest way to build LLDB! In order to use ninja, you need to have recent versions of CMake and
+                   ninja on your system. To build using ninja:
+                </p>
+                <code>
+                  <br>&gt; cmake -C .. -G Ninja
+                  <br>&gt; ninja lldb
+                  <br>&gt; ninja check-lldb
+                </code>
+                <h3>Using CMake + Unix Makefiles</h3>
+                <p>If you do not have Ninja, you can still use CMake to generate GNU Makefiles that build LLDB:</p>
+                <code>
+                  <br>&gt; cmake -C ..
+                  <br>&gt; make lldb
+                  <br>&gt; make check-lldb
+                </code>
+                <h2>To build with configure and GNU Make</h2>
                 <p>If you are using clang:</p>
                 <code>
                   <br>&gt; $llvm/configure --enable-cxx11
@@ -132,7 +157,11 @@
                 <p> If you wish to build with libc++ instead of libstdc++ (the default), you should run configure with the
                 <tt>--enable-libcpp</tt> flag.</p>
                 <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
-                
+                <p> To run the LLDB test suite after building with configure and make, run:</p>
+                <code>
+                  <br>&gt; make -C tools/lldb/test
+                </code>
+
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies its own Python module named <tt>lldb</tt>.
                 If a script is run inside the command line <tt>lldb</tt> application, the Python module
