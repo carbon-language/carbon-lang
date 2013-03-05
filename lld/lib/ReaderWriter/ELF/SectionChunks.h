@@ -672,9 +672,12 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
     case DefinedAtom::typeDataFast:
     case DefinedAtom::typeData:
     case DefinedAtom::typeConstant:
-    case DefinedAtom::typeGOT:
       symbol.st_value = addr;
       type = llvm::ELF::STT_OBJECT;
+      break;
+    case DefinedAtom::typeGOT:
+      symbol.st_value = addr;
+      type = llvm::ELF::STT_NOTYPE;
       break;
     case DefinedAtom::typeZeroFill:
     case DefinedAtom::typeZeroFillFast:
@@ -689,6 +692,9 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
     default:
       type = llvm::ELF::STT_NOTYPE;
     }
+    if (da->customSectionName() == da->name()) 
+      type = llvm::ELF::STT_SECTION;
+
     if (da->scope() == DefinedAtom::scopeTranslationUnit)
       binding = llvm::ELF::STB_LOCAL;
     else
