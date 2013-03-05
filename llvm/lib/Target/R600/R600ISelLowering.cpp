@@ -150,7 +150,13 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     TII->buildMovImm(*BB, I, MI->getOperand(0).getReg(),
                      MI->getOperand(1).getImm());
     break;
-
+  case AMDGPU::CONST_COPY: {
+    MachineInstr *NewMI = TII->buildDefaultInstruction(*BB, MI, AMDGPU::MOV,
+        MI->getOperand(0).getReg(), AMDGPU::ALU_CONST);
+    TII->setImmOperand(NewMI, R600Operands::SRC0_SEL,
+        MI->getOperand(1).getImm());
+    break;
+  }
 
   case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
   case AMDGPU::RAT_WRITE_CACHELESS_128_eg: {

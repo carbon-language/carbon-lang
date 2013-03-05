@@ -1650,17 +1650,18 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1,
 // Constant Buffer Addressing Support
 //===----------------------------------------------------------------------===//
 
-let isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"  in {
+let usesCustomInserter = 1, isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"  in {
 def CONST_COPY : Instruction {
   let OutOperandList = (outs R600_Reg32:$dst);
   let InOperandList = (ins i32imm:$src);
-  let Pattern = [(set R600_Reg32:$dst, (CONST_ADDRESS ADDRGA_CONST_OFFSET:$src))];
+  let Pattern =
+      [(set R600_Reg32:$dst, (CONST_ADDRESS ADDRGA_CONST_OFFSET:$src))];
   let AsmString = "CONST_COPY";
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;
   let Itinerary = NullALU;
 }
-} // end isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"
+} // end usesCustomInserter = 1, isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"
 
 def TEX_VTX_CONSTBUF :
   InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr, i32imm:$BUFFER_ID), "VTX_READ_eg $dst, $ptr",
