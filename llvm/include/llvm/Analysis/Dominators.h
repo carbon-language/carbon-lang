@@ -101,18 +101,18 @@ public:
     Children.clear();
   }
 
-  bool compare(DomTreeNodeBase<NodeT> *Other) {
+  bool compare(const DomTreeNodeBase<NodeT> *Other) const {
     if (getNumChildren() != Other->getNumChildren())
       return true;
 
-    SmallPtrSet<NodeT *, 4> OtherChildren;
-    for (iterator I = Other->begin(), E = Other->end(); I != E; ++I) {
-      NodeT *Nd = (*I)->getBlock();
+    SmallPtrSet<const NodeT *, 4> OtherChildren;
+    for (const_iterator I = Other->begin(), E = Other->end(); I != E; ++I) {
+      const NodeT *Nd = (*I)->getBlock();
       OtherChildren.insert(Nd);
     }
 
-    for (iterator I = begin(), E = end(); I != E; ++I) {
-      NodeT *N = (*I)->getBlock();
+    for (const_iterator I = begin(), E = end(); I != E; ++I) {
+      const NodeT *N = (*I)->getBlock();
       if (OtherChildren.count(N) == 0)
         return true;
     }
