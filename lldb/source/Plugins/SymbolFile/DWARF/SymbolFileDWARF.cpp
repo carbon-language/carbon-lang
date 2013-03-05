@@ -2385,7 +2385,9 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
         if (die->HasChildren())
         {
             SymbolContext sc(GetCompUnitForDWARFCompUnit(dwarf_cu));
-            ParseChildEnumerators(sc, clang_type, type->GetByteSize(), dwarf_cu, die);
+            bool is_signed = false;
+            ast.IsIntegerType(clang_type, is_signed);
+            ParseChildEnumerators(sc, clang_type, is_signed, type->GetByteSize(), dwarf_cu, die);
         }
         ast.CompleteTagDeclarationDefinition (clang_type);
         return clang_type;
@@ -4051,7 +4053,8 @@ size_t
 SymbolFileDWARF::ParseChildEnumerators
 (
     const SymbolContext& sc,
-    clang_type_t  enumerator_clang_type,
+    clang_type_t enumerator_clang_type,
+    bool is_signed,
     uint32_t enumerator_byte_size,
     DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *parent_die
@@ -4089,7 +4092,10 @@ SymbolFileDWARF::ParseChildEnumerators
                         {
                         case DW_AT_const_value:
                             got_value = true;
-                            enum_value = form_value.Unsigned();
+                            if (is_signed)
+                                enum_value = form_value.Signed();
+                            else
+                                enum_value = form_value.Unsigned();
                             break;
 
                         case DW_AT_name:
@@ -6074,7 +6080,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (die->HasChildren())
                         {
                             SymbolContext cu_sc(GetCompUnitForDWARFCompUnit(dwarf_cu));
-                            ParseChildEnumerators(cu_sc, clang_type, type_sp->GetByteSize(), dwarf_cu, die);
+                            bool is_signed = false;
+                            ast.IsIntegerType(clang_type, is_signed);
+                            ParseChildEnumerators(cu_sc, clang_type, is_signed, type_sp->GetByteSize(), dwarf_cu, die);
                         }
                         ast.CompleteTagDeclarationDefinition (clang_type);
                     }

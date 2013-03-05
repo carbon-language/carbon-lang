@@ -5502,6 +5502,8 @@ ClangASTContext::AddEnumerationValueToEnumerationType
         assert (identifier_table != NULL);
         QualType enum_qual_type (QualType::getFromOpaquePtr(enum_clang_type));
 
+        bool is_signed = false;
+        IsIntegerType (enumerator_clang_type, is_signed);
         const clang::Type *clang_type = enum_qual_type.getTypePtr();
         if (clang_type)
         {
@@ -5509,7 +5511,7 @@ ClangASTContext::AddEnumerationValueToEnumerationType
 
             if (enum_type)
             {
-                llvm::APSInt enum_llvm_apsint(enum_value_bit_size, false);
+                llvm::APSInt enum_llvm_apsint(enum_value_bit_size, is_signed);
                 enum_llvm_apsint = enum_value;
                 EnumConstantDecl *enumerator_decl =
                     EnumConstantDecl::Create (*ast,

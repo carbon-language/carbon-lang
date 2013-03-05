@@ -368,6 +368,7 @@ protected:
     size_t                  ParseChildEnumerators(
                                 const lldb_private::SymbolContext& sc,
                                 lldb::clang_type_t enumerator_qual_type,
+                                bool is_signed,
                                 uint32_t enumerator_byte_size,
                                 DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *enum_die);
