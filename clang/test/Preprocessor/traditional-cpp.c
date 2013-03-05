@@ -5,7 +5,13 @@
 /*
  RUN: %clang_cc1 -traditional-cpp %s -E -o %t
  RUN: FileCheck -strict-whitespace < %t %s
+ RUN: %clang_cc1 -traditional-cpp %s -E -C | FileCheck -check-prefix=CHECK-COMMENTS %s
 */
+
+/* -traditional-cpp should eliminate all C89 comments. */
+/* CHECK-NOT: /*
+ * CHECK-COMMENTS: {{^}}/* -traditional-cpp should eliminate all C89 comments. *{{/$}}
+ */
 
 /* CHECK: {{^}}foo // bar{{$}}
  */

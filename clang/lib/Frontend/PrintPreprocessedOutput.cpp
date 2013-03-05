@@ -515,6 +515,9 @@ struct UnknownPragmaHandler : public PragmaHandler {
 static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
                                     PrintPPOutputPPCallbacks *Callbacks,
                                     raw_ostream &OS) {
+  bool DropComments = PP.getLangOpts().TraditionalCPP &&
+                      !PP.getCommentRetentionState();
+
   char Buffer[256];
   Token PrevPrevTok, PrevTok;
   PrevPrevTok.startToken();
@@ -537,7 +540,13 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
       OS << ' ';
     }
 
-    if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+    if (DropComments && Tok.is(tok::comment)) {
+      // Skip comments. Normally the preprocessor does not generate
+      // tok::comment nodes at all when not keeping comments, but under
+      // -traditional-cpp the lexer keeps /all/ whitespace, including comments.
+      SourceLocation StartLoc = Tok.getLocation();
+      Callbacks->MoveToLine(StartLoc.getLocWithOffset(Tok.getLength()));
+    } else if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
       OS << II->getName();
     } else if (Tok.isLiteral() && !Tok.needsCleaning() &&
                Tok.getLiteralData()) {
