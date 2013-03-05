@@ -107,6 +107,8 @@ def err_target_unknown_cpu : Error<"unknown target CPU '%0'">;
 def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
 def err_target_unknown_cxxabi : Error<"unknown C++ ABI '%0'">;
 def err_target_invalid_feature : Error<"invalid target feature '%0'">;
+def warn_target_override_abi: Warning<"unused environment '%0'">,
+  InGroup<Unused>;
 
 // Source manager
 def err_cannot_open_file : Error<"cannot open file '%0': %1">, DefaultFatal;

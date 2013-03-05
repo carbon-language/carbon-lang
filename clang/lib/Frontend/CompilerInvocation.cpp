@@ -1471,7 +1471,8 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
   Opts.RewriteIncludes = Args.hasArg(OPT_frewrite_includes);
 }
 
-static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
+static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
+                            DiagnosticsEngine &Diags) {
   using namespace options;
   Opts.ABI = Args.getLastArgValue(OPT_target_abi);
   Opts.CXXABI = Args.getLastArgValue(OPT_cxx_abi);
@@ -1483,6 +1484,21 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   // Use the default target triple if unspecified.
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getDefaultTargetTriple();
+
+  // Check if Opts.ABI conflicts with the environment of triple on ARM.
+  llvm::Triple T(Opts.Triple);
+  if (T.getArch() == llvm::Triple::arm && !Opts.ABI.empty() &&
+      !T.getEnvironmentName().empty()) {
+    llvm::Triple::EnvironmentType env = T.getEnvironment();
+    // Env and ABI (Triple::EnvironmentType and ARMABIInfo::ABIKind) are not
+    // 1-to-1 mapping. Later on, Env will be overrided by ABI option when
+    // computing ARMABIInfo.
+    bool isOpsEABI = StringRef(Opts.ABI).startswith("aapcs");
+    bool isEnvEABI = (env == llvm::Triple::GNUEABI || env == llvm::Triple::EABI
+        || env == llvm::Triple::Android);
+    if (isEnvEABI != isOpsEABI)
+      Diags.Report(diag::warn_target_override_abi) << T.getEnvironmentName();
+  }
 }
 
 //
@@ -1547,7 +1563,7 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args,
                               Res.getFrontendOpts().ProgramAction);
-  ParseTargetArgs(Res.getTargetOpts(), *Args);
+  ParseTargetArgs(Res.getTargetOpts(), *Args, Diags);
 
   return Success;
 }
