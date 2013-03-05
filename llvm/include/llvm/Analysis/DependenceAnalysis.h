@@ -175,7 +175,7 @@ namespace llvm {
 
   /// FullDependence - This class represents a dependence between two memory
   /// references in a function. It contains detailed information about the
-  /// dependence (direction vectors, etc) and is used when the compiler is
+  /// dependence (direction vectors, etc.) and is used when the compiler is
   /// able to accurately analyze the interaction of the references; that is,
   /// it is not a confused dependence (see Dependence). In most cases
   /// (for output, flow, and anti dependences), the dependence implies an
@@ -257,7 +257,7 @@ namespace llvm {
                         Instruction *Dst,
                         bool PossiblyLoopIndependent);
 
-    /// getSplitIteration - Give a dependence that's splitable at some
+    /// getSplitIteration - Give a dependence that's splittable at some
     /// particular level, return the iteration that should be used to split
     /// the loop.
     ///
