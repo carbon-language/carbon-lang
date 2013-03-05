@@ -315,18 +315,18 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     return true;
   }
 
-  // Write an optimal sequence for the first 15 bytes.
-  const uint64_t OptimalCount = (Count < 16) ? Count : 15;
-  const uint64_t Prefixes = OptimalCount <= 10 ? 0 : OptimalCount - 10;
-  for (uint64_t i = 0, e = Prefixes; i != e; i++)
-    OW->Write8(0x66);
-  const uint64_t Rest = OptimalCount - Prefixes;
-  for (uint64_t i = 0, e = Rest; i != e; i++)
-    OW->Write8(Nops[Rest - 1][i]);
-
-  // Finish with single byte nops.
-  for (uint64_t i = OptimalCount, e = Count; i != e; ++i)
-   OW->Write8(0x90);
+  // 15 is the longest single nop instruction.  Emit as many 15-byte nops as
+  // needed, then emit a nop of the remaining length.
+  do {
+    const uint8_t ThisNopLength = (uint8_t) std::min(Count, (uint64_t) 15);
+    const uint8_t Prefixes = ThisNopLength <= 10 ? 0 : ThisNopLength - 10;
+    for (uint8_t i = 0; i < Prefixes; i++)
+      OW->Write8(0x66);
+    const uint8_t Rest = ThisNopLength - Prefixes;
+    for (uint8_t i = 0; i < Rest; i++)
+      OW->Write8(Nops[Rest - 1][i]);
+    Count -= ThisNopLength;
+  } while (Count != 0);
 
   return true;
 }
