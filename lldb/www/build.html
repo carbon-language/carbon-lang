@@ -136,13 +136,13 @@
                   <br>&gt; ninja check-lldb
                 </code>
                 <h3>Using CMake + Unix Makefiles</h3>
-                <p>If you do not have Ninja, you can still use CMake to generate GNU Makefiles that build LLDB:</p>
+                <p>If you do not have Ninja, you can still use CMake to generate Unix Makefiles that build LLDB:</p>
                 <code>
                   <br>&gt; cmake -C ..
                   <br>&gt; make lldb
                   <br>&gt; make check-lldb
                 </code>
-                <h2>To build with configure and GNU Make</h2>
+                <h2>To build with autoconf</h2>
                 <p>If you are using clang:</p>
                 <code>
                   <br>&gt; $llvm/configure --enable-cxx11
@@ -157,7 +157,7 @@
                 <p> If you wish to build with libc++ instead of libstdc++ (the default), you should run configure with the
                 <tt>--enable-libcpp</tt> flag.</p>
                 <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
-                <p> To run the LLDB test suite after building with configure and make, run:</p>
+                <p> To run the LLDB test suite after building with autoconf, run:</p>
                 <code>
                   <br>&gt; make -C tools/lldb/test
                 </code>
