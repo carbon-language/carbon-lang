@@ -1023,8 +1023,8 @@ Process::Process(Target &target, Listener &listener) :
     m_currently_handling_event(false),
     m_finalize_called(false),
     m_last_broadcast_state (eStateInvalid),
-    m_can_jit(eCanJITDontKnow),
-    m_destroy_in_process (false)
+    m_destroy_in_process (false),
+    m_can_jit(eCanJITDontKnow)
 {
     CheckInWithManager ();
 
