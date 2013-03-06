@@ -57,10 +57,11 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
     if (!DV)
       continue;
 
+    const Expr *ArgE = Call.getArgExpr(idx);
+    
     if (!DV->getAs<Loc>()) {
       // If the argument is a union type, we want to handle a potential
       // transparent_union GCC extension.
-      const Expr *ArgE = Call.getArgExpr(idx);
       if (!ArgE)
         continue;
 
@@ -77,7 +78,13 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
         DV = V.getAs<DefinedSVal>();
         assert(++CSV_I == CSV->end());
         if (!DV)
-          continue;        
+          continue;
+        // Retrieve the corresponding expression.
+        if (const CompoundLiteralExpr *CE = dyn_cast<CompoundLiteralExpr>(ArgE))
+          if (const InitListExpr *IE =
+                dyn_cast<InitListExpr>(CE->getInitializer()))
+             ArgE = dyn_cast<Expr>(*(IE->begin()));
+
       } else {
         // FIXME: Handle LazyCompoundVals?
         continue;
@@ -106,7 +113,7 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
 
         // Highlight the range of the argument that was null.
         R->addRange(Call.getArgSourceRange(idx));
-        if (const Expr *ArgE = Call.getArgExpr(idx))
+        if (ArgE)
           bugreporter::trackNullOrUndefValue(errorNode, ArgE, *R);
         // Emit the bug report.
         C.emitReport(R);
