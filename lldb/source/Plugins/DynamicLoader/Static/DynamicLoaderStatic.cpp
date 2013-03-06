@@ -99,6 +99,9 @@ DynamicLoaderStatic::LoadAllImagesAtFileAddresses ()
     
     ModuleList loaded_module_list;
 
+    // Disable JIT for static dynamic loader targets
+    m_process->SetCanJIT(false);
+
     Mutex::Locker mutex_locker(module_list.GetMutex());
     
     const size_t num_modules = module_list.GetSize();
