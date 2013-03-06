@@ -204,3 +204,34 @@ void test_function_like_macro2() {
   // CHECK: my_macro(p != nullptr);
 #undef my_macro
 }
+
+// Test parentheses expressions resulting in a nullptr.
+int *test_parentheses_expression1() {
+  return(0);
+  // CHECK: return(nullptr);
+}
+
+int *test_parentheses_expression2() {
+  return(int(0.f));
+  // CHECK: return(nullptr);
+}
+
+int *test_nested_parentheses_expression() {
+  return((((0))));
+  // CHECK: return((((nullptr))));
+}
+
+void *test_parentheses_explicit_cast() {
+  return(static_cast<void*>(0));
+  // CHECK: return(nullptr);
+}
+
+void *test_parentheses_explicit_cast_sequence1() {
+  return(static_cast<void*>(static_cast<int*>((void*)NULL)));
+  // CHECK: return(nullptr);
+}
+
+void *test_parentheses_explicit_cast_sequence2() {
+  return(static_cast<void*>(reinterpret_cast<int*>((float*)int(0.f))));
+  // CHECK: return(nullptr);
+}

@@ -110,8 +110,10 @@ void NullptrFixer::run(const ast_matchers::MatchFinder::MatchResult &Result) {
 
   const CastExpr *Cast = Result.Nodes.getNodeAs<CastExpr>(ImplicitCastNode);
   if (Cast) {
-    SourceLocation StartLoc = Cast->getLocStart();
-    SourceLocation EndLoc = Cast->getLocEnd();
+    const Expr *E = Cast->IgnoreParenImpCasts();
+
+    SourceLocation StartLoc = E->getLocStart();
+    SourceLocation EndLoc = E->getLocEnd();
 
     // If the start/end location is a macro, get the expansion location.
     StartLoc = SM.getFileLoc(StartLoc);
