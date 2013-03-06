@@ -1,6 +1,11 @@
-; RUN: llc < %s -march=mips -relocation-model=static | FileCheck %s -check-prefix=STATIC-O32 
-; RUN: llc < %s -march=mips -relocation-model=pic | FileCheck %s -check-prefix=PIC-O32 
-; RUN: llc < %s -march=mips64 -relocation-model=pic -mcpu=mips64 -mattr=n64 | FileCheck %s -check-prefix=PIC-N64
+; RUN: llc < %s -march=mips -relocation-model=static | \
+; RUN: FileCheck %s -check-prefix=STATIC-O32 
+; RUN: llc < %s -march=mips -relocation-model=pic | \
+; RUN: FileCheck %s -check-prefix=PIC-O32 
+; RUN: llc < %s -march=mips64 -relocation-model=pic -mcpu=mips64 | \
+; RUN: FileCheck %s -check-prefix=N64
+; RUN: llc < %s -march=mips64 -relocation-model=static -mcpu=mips64 | \
+; RUN: FileCheck %s -check-prefix=N64
 
 define i32 @main() nounwind readnone {
 entry:
@@ -17,12 +22,12 @@ entry:
 ; PIC-O32: lw $[[R4:[0-9]+]], %lo($JTI0_0)($[[R2]])
 ; PIC-O32: addu $[[R5:[0-9]+]], $[[R4:[0-9]+]]
 ; PIC-O32: jr  $[[R5]]
-; PIC-N64: dsll $[[R0:[0-9]+]], ${{[0-9]+}}, 3
-; PIC-N64: ld $[[R1:[0-9]+]], %got_page($JTI0_0)
-; PIC-N64: daddu $[[R2:[0-9]+]], $[[R0:[0-9]+]], $[[R1]]
-; PIC-N64: ld $[[R4:[0-9]+]], %got_ofst($JTI0_0)($[[R2]])
-; PIC-N64: daddu $[[R5:[0-9]+]], $[[R4:[0-9]+]]
-; PIC-N64: jr  $[[R5]]
+; N64: dsll $[[R0:[0-9]+]], ${{[0-9]+}}, 3
+; N64: ld $[[R1:[0-9]+]], %got_page($JTI0_0)
+; N64: daddu $[[R2:[0-9]+]], $[[R0:[0-9]+]], $[[R1]]
+; N64: ld $[[R4:[0-9]+]], %got_ofst($JTI0_0)($[[R2]])
+; N64: daddu $[[R5:[0-9]+]], $[[R4:[0-9]+]]
+; N64: jr  $[[R5]]
   switch i32 %0, label %bb4 [
     i32 0, label %bb5
     i32 1, label %bb1
@@ -58,10 +63,10 @@ bb5:                                              ; preds = %entry
 ; PIC-O32: .gpword
 ; PIC-O32: .gpword 
 ; PIC-O32: .gpword 
-; PIC-N64: .align  3
-; PIC-N64: $JTI0_0:
-; PIC-N64: .gpdword
-; PIC-N64: .gpdword
-; PIC-N64: .gpdword 
-; PIC-N64: .gpdword 
+; N64: .align  3
+; N64: $JTI0_0:
+; N64: .gpdword
+; N64: .gpdword
+; N64: .gpdword 
+; N64: .gpdword 
 
