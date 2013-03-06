@@ -1037,20 +1037,38 @@ ClangASTType::DumpTypeValue (clang::ASTContext *ast_context,
                 const clang::EnumDecl *enum_decl = enum_type->getDecl();
                 assert(enum_decl);
                 clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
+                const bool is_signed = qual_type->isSignedIntegerOrEnumerationType();
                 lldb::offset_t offset = byte_offset;
-                const int64_t enum_value = data.GetMaxU64Bitfield (&offset, byte_size, bitfield_bit_size, bitfield_bit_offset);
-                for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
+                if (is_signed)
                 {
-                    if (enum_pos->getInitVal() == enum_value)
+                    const int64_t enum_svalue = data.GetMaxS64Bitfield (&offset, byte_size, bitfield_bit_size, bitfield_bit_offset);
+                    for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
                     {
-                        s->PutCString (enum_pos->getNameAsString().c_str());
-                        return true;
+                        if (enum_pos->getInitVal().getSExtValue() == enum_svalue)
+                        {
+                            s->PutCString (enum_pos->getNameAsString().c_str());
+                            return true;
+                        }
                     }
+                    // If we have gotten here we didn't get find the enumerator in the
+                    // enum decl, so just print the integer.                    
+                    s->Printf("%" PRIi64, enum_svalue);
                 }
-                // If we have gotten here we didn't get find the enumerator in the
-                // enum decl, so just print the integer.
-                
-                s->Printf("%" PRIi64, enum_value);
+                else
+                {
+                    const uint64_t enum_uvalue = data.GetMaxU64Bitfield (&offset, byte_size, bitfield_bit_size, bitfield_bit_offset);
+                    for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
+                    {
+                        if (enum_pos->getInitVal().getZExtValue() == enum_uvalue)
+                        {
+                            s->PutCString (enum_pos->getNameAsString().c_str());
+                            return true;
+                        }
+                    }
+                    // If we have gotten here we didn't get find the enumerator in the
+                    // enum decl, so just print the integer.
+                    s->Printf("%" PRIu64, enum_uvalue);
+                }
                 return true;
             }
             // format was not enum, just fall through and dump the value as requested....

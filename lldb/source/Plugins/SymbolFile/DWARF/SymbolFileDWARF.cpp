@@ -6049,9 +6049,18 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         clang_type = m_forward_decl_die_to_clang_type.lookup (die);
                         if (clang_type == NULL)
                         {
-                            enumerator_clang_type = ast.GetBuiltinTypeForDWARFEncodingAndBitSize (NULL, 
-                                                                                                  DW_ATE_signed, 
-                                                                                                  byte_size * 8);
+                            if (encoding_uid != DW_INVALID_OFFSET)
+                            {
+                                Type *enumerator_type = ResolveTypeUID(encoding_uid);
+                                if (enumerator_type)
+                                    enumerator_clang_type = enumerator_type->GetClangFullType();
+                            }
+                            
+                            if (enumerator_clang_type == NULL)
+                                enumerator_clang_type = ast.GetBuiltinTypeForDWARFEncodingAndBitSize (NULL,
+                                                                                                      DW_ATE_signed,
+                                                                                                      byte_size * 8);
+                            
                             clang_type = ast.CreateEnumerationType (type_name_cstr, 
                                                                     GetClangDeclContextContainingDIE (dwarf_cu, die, NULL), 
                                                                     decl,
@@ -6060,7 +6069,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         else
                         {
                             enumerator_clang_type = ClangASTContext::GetEnumerationIntegerType (clang_type);
-                            assert (enumerator_clang_type != NULL);
                         }
 
                         LinkDeclContextToDIE(ClangASTContext::GetDeclContextForType(clang_type), die);
@@ -6081,7 +6089,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         {
                             SymbolContext cu_sc(GetCompUnitForDWARFCompUnit(dwarf_cu));
                             bool is_signed = false;
-                            ast.IsIntegerType(clang_type, is_signed);
+                            ast.IsIntegerType(enumerator_clang_type, is_signed);
                             ParseChildEnumerators(cu_sc, clang_type, is_signed, type_sp->GetByteSize(), dwarf_cu, die);
                         }
                         ast.CompleteTagDeclarationDefinition (clang_type);

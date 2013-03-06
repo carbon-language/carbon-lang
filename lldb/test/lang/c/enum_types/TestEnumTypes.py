@@ -13,7 +13,7 @@ class EnumTypesTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_with_dsym(self):
-        """Test 'image lookup -t days' and check for correct display."""
+        """Test 'image lookup -t days' and check for correct display and enum value printing."""
         self.buildDsym()
         self.image_lookup_for_enum_type()
 
@@ -21,7 +21,7 @@ class EnumTypesTestCase(TestBase):
     # 'image lookup -t days' returns nothing with dwarf debug format.
     @dwarf_test
     def test_with_dwarf(self):
-        """Test 'image lookup -t days' and check for correct display."""
+        """Test 'image lookup -t days' and check for correct display and enum value printing."""
         self.buildDwarf()
         self.image_lookup_for_enum_type()
 
@@ -37,7 +37,7 @@ class EnumTypesTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break inside the main.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
+        bkpt_id = lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -54,17 +54,32 @@ class EnumTypesTestCase(TestBase):
         # Check for correct display.
         self.expect("image lookup -t days", DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ['enum days {',
-                       'Monday,',
+                       'Monday',
                        'Tuesday',
                        'Wednesday',
                        'Thursday',
                        'Friday',
                        'Saturday',
-                       'Sunday,',
+                       'Sunday',
                        'kNumDays',
                        '}'])
 
+        enum_values = [ '-4', 
+                        'Monday', 
+                        'Tuesday', 
+                        'Wednesday', 
+                        'Thursday',
+                        'Friday',
+                        'Saturday',
+                        'Sunday',
+                        'kNumDays',
+                        '5'];
 
+        bkpt = self.target().FindBreakpointByID(bkpt_id)
+        for enum_value in enum_values:
+            self.expect("frame variable day", 'check for valid enumeration value',
+                substrs = [enum_value])
+            lldbutil.continue_to_breakpoint (self.process(), bkpt)
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
