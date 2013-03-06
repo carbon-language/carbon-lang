@@ -29,7 +29,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-RunLoopVectorization("vectorize-loops",
+RunLoopVectorization("vectorize-loops", cl::init(false),
                      cl::desc("Run the Loop vectorization passes"));
 
 static cl::opt<bool>
