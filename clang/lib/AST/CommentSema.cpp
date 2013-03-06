@@ -93,17 +93,16 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
   if (!Info->IsFunctionDeclarationCommand)
     return;
   StringRef Name = Info->Name;
-  unsigned DiagKind = llvm::StringSwitch<unsigned>(Name)
-  .Case("function", !isAnyFunctionDecl() ?
-                    diag::warn_doc_function_not_attached_to_a_function_decl : 0)
-  .Case("method", !isObjCMethodDecl() ?
-                  diag::warn_doc_method_not_attached_to_a_objc_method_decl : 0)
-  .Case("callback", !isFunctionPointerVarDecl() ?
-        diag::warn_doc_callback_not_attached_to_a_function_ptr_decl : 0)
+  unsigned DiagSelect = llvm::StringSwitch<unsigned>(Name)
+  .Case("function", !isAnyFunctionDecl() ? 1 : 0)
+  .Case("method", !isObjCMethodDecl() ? 2 : 0)
+  .Case("callback", !isFunctionPointerVarDecl() ? 3 : 0)
   .Default(0);
   
-  if (DiagKind)
-    Diag(Comment->getLocation(), DiagKind) << Comment->getCommandMarker()
+  if (DiagSelect)
+    Diag(Comment->getLocation(), diag::warn_doc_function_method_decl_mismatch)
+    << Comment->getCommandMarker()
+    << (DiagSelect-1) << (DiagSelect-1)
     << Comment->getSourceRange();
 }
 
