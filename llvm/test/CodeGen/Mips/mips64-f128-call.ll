@@ -26,6 +26,7 @@ entry:
 
 declare void @foo2(fp128)
 
+; CHECK: foo3
 ; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gld0)
 ; CHECK: sdc1 $f2, 8($[[R0]])
 ; CHECK: sdc1 $f0, 0($[[R0]])
