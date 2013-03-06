@@ -16,6 +16,7 @@
 #include <spawn.h>
 #include <signal.h>
 #include <assert.h>
+#include <sys/errno.h>
 #include "LauncherXPCService.h"
 
 // Declaration. Returns 0 if successful.
@@ -109,6 +110,31 @@ int get_args(xpc_object_t message, const char **path, const char ***argsOut, con
     return 0;
 }
 
+void _wait_for_child_exit(pid_t childPID)
+{
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_source_t source = dispatch_source_create(DISPATCH_SOURCE_TYPE_PROC, childPID, DISPATCH_PROC_EXIT, queue);
+    
+    if (source) {
+        dispatch_source_set_cancel_handler(source, ^{
+            dispatch_release(source);
+        });
+        
+        dispatch_source_set_event_handler(source, ^{
+            
+            // Either finding the process was successful, or the process disappeared before libdispatch got around to hooking up the source.
+            dispatch_source_cancel(source);
+            
+            int status, ret;
+            do {
+                ret = waitpid(childPID, &status, 0);
+            } while (ret < 0 && errno == EINTR);
+            
+        });
+        dispatch_resume(source);
+    }
+}
+
 static void launcherXPC_peer_event_handler(xpc_connection_t peer, xpc_object_t event) 
 {
 	xpc_type_t type = xpc_get_type(event);
@@ -154,6 +180,10 @@ static void launcherXPC_peer_event_handler(xpc_connection_t peer, xpc_object_t e
                     
                     if (argvp) free(argvp);
                     if (envp) free(envp);
+                    
+                    if (errorCode == 0) {
+                        _wait_for_child_exit(childPID);
+                    }
                 }
             }
         }
