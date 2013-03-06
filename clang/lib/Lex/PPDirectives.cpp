@@ -143,15 +143,14 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
       Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
     // Fall through on error.
   } else if (isDefineUndef && II->getPPKeywordID() == tok::pp_defined) {
-    // Error if defining "defined": C99 6.10.8.4.
+    // Error if defining "defined": C99 6.10.8/4, C++ [cpp.predefined]p4.
     Diag(MacroNameTok, diag::err_defined_macro_name);
-  } else if (isDefineUndef && II->hasMacroDefinition() &&
+  } else if (isDefineUndef == 2 && II->hasMacroDefinition() &&
              getMacroInfo(II)->isBuiltinMacro()) {
-    // Error if defining "__LINE__" and other builtins: C99 6.10.8.4.
-    if (isDefineUndef == 1)
-      Diag(MacroNameTok, diag::pp_redef_builtin_macro);
-    else
-      Diag(MacroNameTok, diag::pp_undef_builtin_macro);
+    // Warn if undefining "__LINE__" and other builtins, per C99 6.10.8/4
+    // and C++ [cpp.predefined]p4], but allow it as an extension.
+    Diag(MacroNameTok, diag::ext_pp_undef_builtin_macro);
+    return;
   } else {
     // Okay, we got a good identifier node.  Return it.
     return;
@@ -1925,10 +1924,14 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
       if (!OtherMI->isUsed() && OtherMI->isWarnIfUnused())
         Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
+      // Warn if defining "__LINE__" and other builtins, per C99 6.10.8/4 and 
+      // C++ [cpp.predefined]p4, but allow it as an extension.
+      if (OtherMI->isBuiltinMacro())
+        Diag(MacroNameTok, diag::ext_pp_redef_builtin_macro);
       // Macros must be identical.  This means all tokens and whitespace
       // separation must be the same.  C99 6.10.3.2.
-      if (!OtherMI->isAllowRedefinitionsWithoutWarning() &&
-          !MI->isIdenticalTo(*OtherMI, *this)) {
+      else if (!OtherMI->isAllowRedefinitionsWithoutWarning() &&
+               !MI->isIdenticalTo(*OtherMI, *this)) {
         Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef)
           << MacroNameTok.getIdentifierInfo();
         Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);

@@ -253,9 +253,10 @@ def pp_pragma_sysheader_in_main_file : Warning<
 def pp_poisoning_existing_macro : Warning<"poisoning existing macro">;
 def pp_out_of_date_dependency : Warning<
   "current file is older than dependency %0">;
-def pp_undef_builtin_macro : Warning<"undefining builtin macro">;
-def pp_redef_builtin_macro : Warning<"redefining builtin macro">,
-  InGroup<DiagGroup<"builtin-macro-redefined">>;
+def ext_pp_undef_builtin_macro : ExtWarn<"undefining builtin macro">,
+  InGroup<BuiltinMacroRedefined>;
+def ext_pp_redef_builtin_macro : ExtWarn<"redefining builtin macro">,
+  InGroup<BuiltinMacroRedefined>;
 def pp_disabled_macro_expansion : Warning<
   "disabled expansion of recursive macro">, DefaultIgnore,
   InGroup<DiagGroup<"disabled-macro-expansion">>;
