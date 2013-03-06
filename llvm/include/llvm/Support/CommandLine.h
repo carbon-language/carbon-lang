@@ -1090,7 +1090,7 @@ public:
 
   // Make sure we initialize the value with the default constructor for the
   // type.
-  opt_storage() : Value(DataType()) {}
+  opt_storage() : Value(DataType()), Default(DataType()) {}
 
   template<class T>
   void setValue(const T &V, bool initial = false) {
