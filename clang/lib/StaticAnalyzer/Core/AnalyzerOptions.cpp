@@ -152,6 +152,12 @@ bool AnalyzerOptions::shouldAvoidSuppressingNullArgumentPaths() {
                           /* Default = */ false);
 }
 
+bool AnalyzerOptions::shouldSuppressInlinedDefensiveChecks() {
+  return getBooleanOption(SuppressInlinedDefensiveChecks,
+                          "suppress-inlined-defensive-checks",
+                          /* Default = */ true);
+}
+
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);

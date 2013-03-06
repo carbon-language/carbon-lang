@@ -214,6 +214,9 @@ private:
   /// \sa shouldAvoidSuppressingNullArgumentPaths
   Optional<bool> AvoidSuppressingNullArgumentPaths;
 
+  /// \sa shouldSuppressInlinedDefensiveChecks
+  Optional<bool> SuppressInlinedDefensiveChecks;
+
   /// \sa getGraphTrimInterval
   Optional<unsigned> GraphTrimInterval;
 
@@ -295,6 +298,13 @@ public:
   /// This is controlled by the 'avoid-suppressing-null-argument-paths' config
   /// option, which accepts the values "true" and "false".
   bool shouldAvoidSuppressingNullArgumentPaths();
+
+  /// Returns whether or not diagnostics containing inlined defensive NULL
+  /// checks should be suppressed.
+  ///
+  /// This is controlled by the 'suppress-inlined-defensive-checks' config
+  /// option, which accepts the values "true" and "false".
+  bool shouldSuppressInlinedDefensiveChecks();
 
   /// Returns whether irrelevant parts of a bug report path should be pruned
   /// out of the final output.

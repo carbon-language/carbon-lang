@@ -690,7 +690,12 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *N,
                                                 BugReport &BR) {
   if (IsSatisfied)
     return 0;
-  
+
+  AnalyzerOptions &Options =
+    BRC.getBugReporter().getEngine().getAnalysisManager().options;
+  if (!Options.shouldSuppressInlinedDefensiveChecks())
+    return 0;
+
   // Check if in the previous state it was feasible for this value
   // to *not* be null.
   if (PrevN->getState()->assume(V, true)) {
@@ -700,7 +705,7 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *N,
     //       is non-null in N could lead to false negatives.
 
     // Check if this is inline defensive checks.
-    const LocationContext *CurLC = PrevN->getLocationContext();
+    const LocationContext *CurLC = N->getLocationContext();
     const LocationContext *ReportLC = BR.getErrorNode()->getLocationContext();
     if (CurLC != ReportLC && !CurLC->isParentOf(ReportLC))
       BR.markInvalid("Suppress IDC", CurLC);
