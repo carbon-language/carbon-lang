@@ -81,15 +81,15 @@ class SettingsCommandTestCase(TestBase):
         """Test that 'set prompt' actually changes the prompt."""
 
         # Set prompt to 'lldb2'.
-        self.runCmd("settings set prompt lldb2")
+        self.runCmd("settings set prompt 'lldb2 '")
 
         # Immediately test the setting.
         self.expect("settings show prompt", SETTING_MSG("prompt"),
-            startstr = 'prompt (string) = "lldb2"')
+            startstr = 'prompt (string) = "lldb2 "')
 
         # The overall display should also reflect the new setting.
         self.expect("settings show", SETTING_MSG("prompt"),
-            substrs = ['prompt (string) = "lldb2"'])
+            substrs = ['prompt (string) = "lldb2 "'])
 
         # Use '-r' option to reset to the original default prompt.
         self.runCmd("settings clear prompt")
@@ -307,7 +307,57 @@ class SettingsCommandTestCase(TestBase):
                      substrs = [ 'MY_FILE=this is a file name with spaces.txt' ])
         self.runCmd ("settings clear target.env-vars")
 
-
+    def test_settings_with_trailing_whitespace (self):
+        
+        # boolean
+        self.runCmd ("settings set target.skip-prologue true")      # Set to known value
+        self.runCmd ("settings set target.skip-prologue false ")    # Set to new value with trailing whitespace
+        # Make sure the setting was correctly set to "false"
+        self.expect ("settings show target.skip-prologue", SETTING_MSG("target.skip-prologue"),
+            startstr = "target.skip-prologue (boolean) = false")
+        self.runCmd("settings clear target.skip-prologue", check=False)
+        # integer
+        self.runCmd ("settings set term-width 70")      # Set to known value
+        self.runCmd ("settings set term-width 60 \t")   # Set to new value with trailing whitespaces
+        self.expect ("settings show term-width", SETTING_MSG("term-width"),
+            startstr = "term-width (int) = 60")
+        self.runCmd("settings clear term-width", check=False)
+        # string
+        self.runCmd ("settings set target.arg0 abc")    # Set to known value
+        self.runCmd ("settings set target.arg0 cde\t ") # Set to new value with trailing whitespaces
+        self.expect ("settings show target.arg0", SETTING_MSG("target.arg0"),
+            startstr = 'target.arg0 (string) = "cde"')
+        self.runCmd("settings clear target.arg0", check=False)
+        # file
+        self.runCmd ("settings set target.output-path /bin/ls")   # Set to known value
+        self.runCmd ("settings set target.output-path /bin/cat ") # Set to new value with trailing whitespaces
+        self.expect ("settings show target.output-path", SETTING_MSG("target.output-path"),
+            startstr = 'target.output-path (file) = "/bin/cat"')
+        self.runCmd("settings clear target.output-path", check=False)
+        # enum
+        self.runCmd ("settings set stop-disassembly-display never")   # Set to known value
+        self.runCmd ("settings set stop-disassembly-display always ") # Set to new value with trailing whitespaces
+        self.expect ("settings show stop-disassembly-display", SETTING_MSG("stop-disassembly-display"),
+            startstr = 'stop-disassembly-display (enum) = always')
+        self.runCmd("settings clear stop-disassembly-display", check=False)        
+        # arguments
+        self.runCmd ("settings set target.run-args 1 2 3")  # Set to known value
+        self.runCmd ("settings set target.run-args 3 4 5 ") # Set to new value with trailing whitespaces
+        self.expect ("settings show target.run-args", SETTING_MSG("target.run-args"),
+            substrs = [ 'target.run-args (arguments) =', 
+                        '[0]: "3"', 
+                        '[1]: "4"',
+                        '[2]: "5"' ])
+        self.runCmd("settings clear target.run-args", check=False)        
+        # dictionaries
+        self.runCmd ("settings clear target.env-vars")  # Set to known value
+        self.runCmd ("settings set target.env-vars A=B C=D\t ") # Set to new value with trailing whitespaces
+        self.expect ("settings show target.env-vars", SETTING_MSG("target.env-vars"),
+            substrs = [ 'target.env-vars (dictionary of strings) =', 
+                        'A=B', 
+                        'C=D'])
+        self.runCmd("settings clear target.env-vars", check=False)        
+        
     def test_all_settings_exist (self):
         self.expect ("settings show",
                      substrs = [ "auto-confirm",
