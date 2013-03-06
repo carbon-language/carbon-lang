@@ -547,7 +547,7 @@ ExprResult Sema::UsualUnaryConversions(Expr *E) {
   // First, convert to an r-value.
   ExprResult Res = DefaultFunctionArrayLvalueConversion(E);
   if (Res.isInvalid())
-    return Owned(E);
+    return ExprError();
   E = Res.take();
 
   QualType Ty = E->getType();
@@ -598,7 +598,7 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
 
   ExprResult Res = UsualUnaryConversions(E);
   if (Res.isInvalid())
-    return Owned(E);
+    return ExprError();
   E = Res.take();
 
   // If this is a 'float' or '__fp16' (CVR qualified or typedef) promote to

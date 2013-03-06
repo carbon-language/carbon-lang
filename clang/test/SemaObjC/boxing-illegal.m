@@ -56,3 +56,20 @@ void testEnum(void *p) {
   box = @(ME_foo);
   box = @(*(enum ForwE*)p); // expected-error {{incomplete type 'enum ForwE' used in a boxed expression}}
 }
+
+// rdar://13333205
+@class NSMutableDictionary;
+
+@interface NSMutableArray
++ (NSMutableArray*) array;
+@end
+
+NSMutableDictionary* mBars;
+
+__attribute((objc_root_class)) @interface rdar13333205 @end
+
+@implementation rdar13333205
+- (void) insertBar:(id)preset ofKind:(id) kind atIndex:(int)index {
+  NSMutableArray* presetArray = mBars[kind] ?: [NSMutableArray array]; // expected-error {{expected method to read dictionary element not found on object of type 'NSMutableDictionary *'}}
+}
+@end
