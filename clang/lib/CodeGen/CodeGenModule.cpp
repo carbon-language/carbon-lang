@@ -619,16 +619,20 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
     F->addFnAttr(llvm::Attribute::StackProtectReq);
 
-  // When AddressSanitizer is enabled, set SanitizeAddress attribute
-  // unless __attribute__((no_sanitize_address)) is used.
-  if (SanOpts.Address && !D->hasAttr<NoSanitizeAddressAttr>())
-    F->addFnAttr(llvm::Attribute::SanitizeAddress);
-  // Same for ThreadSanitizer and __attribute__((no_sanitize_thread))
-  if (SanOpts.Thread && !D->hasAttr<NoSanitizeThreadAttr>())
-    F->addFnAttr(llvm::Attribute::SanitizeThread);
-  // Same for MemorySanitizer and __attribute__((no_sanitize_memory))
-  if (SanOpts.Memory && !D->hasAttr<NoSanitizeMemoryAttr>())
-    F->addFnAttr(llvm::Attribute::SanitizeMemory);
+  // Add sanitizer attributes if function is not blacklisted.
+  if (!SanitizerBlacklist.isIn(*F)) {
+    // When AddressSanitizer is enabled, set SanitizeAddress attribute
+    // unless __attribute__((no_sanitize_address)) is used.
+    if (SanOpts.Address && !D->hasAttr<NoSanitizeAddressAttr>())
+      F->addFnAttr(llvm::Attribute::SanitizeAddress);
+    // Same for ThreadSanitizer and __attribute__((no_sanitize_thread))
+    if (SanOpts.Thread && !D->hasAttr<NoSanitizeThreadAttr>()) {
+      F->addFnAttr(llvm::Attribute::SanitizeThread);
+    }
+    // Same for MemorySanitizer and __attribute__((no_sanitize_memory))
+    if (SanOpts.Memory && !D->hasAttr<NoSanitizeMemoryAttr>())
+      F->addFnAttr(llvm::Attribute::SanitizeMemory);
+  }
 
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();
   if (alignment)
