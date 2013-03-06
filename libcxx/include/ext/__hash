@@ -19,10 +19,10 @@
 namespace __gnu_cxx {
 using namespace std;
 
-template <typename T> struct _LIBCPP_VISIBLE hash : public std::hash<T>
+template <typename T> struct _LIBCPP_TYPE_VIS hash : public std::hash<T>
     { };
 
-template <> struct _LIBCPP_VISIBLE hash<const char*>
+template <> struct _LIBCPP_TYPE_VIS hash<const char*>
     : public unary_function<const char*, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -32,7 +32,7 @@ template <> struct _LIBCPP_VISIBLE hash<const char*>
     }
 };
 
-template <> struct _LIBCPP_VISIBLE hash<char *>
+template <> struct _LIBCPP_TYPE_VIS hash<char *>
     : public unary_function<char*, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY

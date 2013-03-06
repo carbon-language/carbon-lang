@@ -224,10 +224,10 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 typedef ptrdiff_t streamsize;
 
-class _LIBCPP_VISIBLE ios_base
+class _LIBCPP_TYPE_VIS ios_base
 {
 public:
-    class _LIBCPP_VISIBLE failure;
+    class _LIBCPP_TYPE_VIS failure;
 
     typedef unsigned int fmtflags;
     static const fmtflags boolalpha   = 0x0001;
@@ -271,7 +271,7 @@ public:
     typedef _VSTD::streamoff streamoff;
     typedef _VSTD::streampos streampos;
 
-    class _LIBCPP_VISIBLE Init;
+    class _LIBCPP_TYPE_VIS Init;
 
     // 27.5.2.2 fmtflags state:
     _LIBCPP_INLINE_VISIBILITY fmtflags flags() const;
@@ -380,14 +380,14 @@ _LIBCPP_DECLARE_STRONG_ENUM(io_errc)
 _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(io_errc)
 
 template <>
-struct _LIBCPP_VISIBLE is_error_code_enum<io_errc> : public true_type { };
+struct _LIBCPP_TYPE_VIS is_error_code_enum<io_errc> : public true_type { };
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
-struct _LIBCPP_VISIBLE is_error_code_enum<io_errc::__lx> : public true_type { };
+struct _LIBCPP_TYPE_VIS is_error_code_enum<io_errc::__lx> : public true_type { };
 #endif
 
-_LIBCPP_VISIBLE
+_LIBCPP_FUNC_VIS
 const error_category& iostream_category();
 
 inline _LIBCPP_INLINE_VISIBILITY
@@ -413,7 +413,7 @@ public:
     virtual ~failure() throw();
 };
 
-class _LIBCPP_VISIBLE ios_base::Init
+class _LIBCPP_TYPE_VIS ios_base::Init
 {
 public:
     Init();
@@ -560,7 +560,7 @@ ios_base::exceptions(iostate __except)
 }
 
 template <class _CharT, class _Traits>
-class _LIBCPP_VISIBLE basic_ios
+class _LIBCPP_TYPE_VIS basic_ios
     : public ios_base
 {
 public:

@@ -203,7 +203,7 @@ class _LIBCPP_EXCEPTION_ABI bad_function_call
 {
 };
 
-template<class _Fp> class _LIBCPP_VISIBLE function; // undefined
+template<class _Fp> class _LIBCPP_TYPE_VIS function; // undefined
 
 namespace __function
 {
@@ -644,7 +644,7 @@ __func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::target_type() const
 }  // __function
 
 template<class _Rp>
-class _LIBCPP_VISIBLE function<_Rp()>
+class _LIBCPP_TYPE_VIS function<_Rp()>
 {
     typedef __function::__base<_Rp()> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
@@ -928,7 +928,7 @@ function<_Rp()>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _Rp, class _A0>
-class _LIBCPP_VISIBLE function<_Rp(_A0)>
+class _LIBCPP_TYPE_VIS function<_Rp(_A0)>
     : public unary_function<_A0, _Rp>
 {
     typedef __function::__base<_Rp(_A0)> __base;
@@ -1230,7 +1230,7 @@ function<_Rp(_A0)>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _Rp, class _A0, class _A1>
-class _LIBCPP_VISIBLE function<_Rp(_A0, _A1)>
+class _LIBCPP_TYPE_VIS function<_Rp(_A0, _A1)>
     : public binary_function<_A0, _A1, _Rp>
 {
     typedef __function::__base<_Rp(_A0, _A1)> __base;
@@ -1532,7 +1532,7 @@ function<_Rp(_A0, _A1)>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _Rp, class _A0, class _A1, class _A2>
-class _LIBCPP_VISIBLE function<_Rp(_A0, _A1, _A2)>
+class _LIBCPP_TYPE_VIS function<_Rp(_A0, _A1, _A2)>
 {
     typedef __function::__base<_Rp(_A0, _A1, _A2)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
@@ -1860,11 +1860,11 @@ swap(function<_Fp>& __x, function<_Fp>& __y)
 {return __x.swap(__y);}
 
 template<class _Tp> struct __is_bind_expression : public false_type {};
-template<class _Tp> struct _LIBCPP_VISIBLE is_bind_expression
+template<class _Tp> struct _LIBCPP_TYPE_VIS is_bind_expression
     : public __is_bind_expression<typename remove_cv<_Tp>::type> {};
 
 template<class _Tp> struct __is_placeholder : public integral_constant<int, 0> {};
-template<class _Tp> struct _LIBCPP_VISIBLE is_placeholder
+template<class _Tp> struct _LIBCPP_TYPE_VIS is_placeholder
     : public __is_placeholder<typename remove_cv<_Tp>::type> {};
 
 namespace placeholders

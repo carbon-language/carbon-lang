@@ -102,14 +102,17 @@
 #ifdef _LIBCPP_DLL // this should be a compiler builtin define ideally...
 # ifdef cxx_EXPORTS
 #  define _LIBCPP_HIDDEN
-#  define _LIBCPP_VISIBLE __declspec(dllexport)
+#  define _LIBCPP_FUNC_VIS __declspec(dllexport)
+#  define _LIBCPP_TYPE_VIS __declspec(dllexport)
 # else
 #  define _LIBCPP_HIDDEN
-#  define _LIBCPP_VISIBLE __declspec(dllimport)
+#  define _LIBCPP_FUNC_VIS __declspec(dllimport)
+#  define _LIBCPP_TYPE_VIS __declspec(dllimport)
 # endif
 #else
 # define _LIBCPP_HIDDEN
-# define _LIBCPP_VISIBLE
+# define _LIBCPP_FUNC_VIS
+# define _LIBCPP_TYPE_VIS
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
@@ -121,7 +124,7 @@
 #endif
 
 #ifndef _LIBCPP_EXCEPTION_ABI
-#define _LIBCPP_EXCEPTION_ABI _LIBCPP_VISIBLE
+#define _LIBCPP_EXCEPTION_ABI _LIBCPP_TYPE_VIS
 #endif
 
 #ifndef _LIBCPP_ALWAYS_INLINE
@@ -136,8 +139,12 @@
 #define _LIBCPP_HIDDEN __attribute__ ((__visibility__("hidden")))
 #endif
 
-#ifndef _LIBCPP_VISIBLE
-#define _LIBCPP_VISIBLE __attribute__ ((__visibility__("default")))
+#ifndef _LIBCPP_FUNC_VIS
+#define _LIBCPP_FUNC_VIS __attribute__ ((__visibility__("default")))
+#endif
+
+#ifndef _LIBCPP_TYPE_VIS
+#define _LIBCPP_TYPE_VIS __attribute__ ((__visibility__("default")))
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
@@ -424,7 +431,7 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
-#define _LIBCPP_DECLARE_STRONG_ENUM(x) struct _LIBCPP_VISIBLE x { enum __lx
+#define _LIBCPP_DECLARE_STRONG_ENUM(x) struct _LIBCPP_TYPE_VIS x { enum __lx
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x) \
     __lx __v_; \
     _LIBCPP_ALWAYS_INLINE x(__lx __v) : __v_(__v) {} \
@@ -432,7 +439,7 @@ template <unsigned> struct __static_assert_check {};
     _LIBCPP_ALWAYS_INLINE operator int() const {return __v_;} \
     };
 #else  // _LIBCPP_HAS_NO_STRONG_ENUMS
-#define _LIBCPP_DECLARE_STRONG_ENUM(x) enum class _LIBCPP_VISIBLE x
+#define _LIBCPP_DECLARE_STRONG_ENUM(x) enum class _LIBCPP_TYPE_VIS x
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x)
 #endif  // _LIBCPP_HAS_NO_STRONG_ENUMS
 

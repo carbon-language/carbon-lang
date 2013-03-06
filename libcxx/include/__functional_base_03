@@ -996,7 +996,7 @@ struct __invoke_return2
 };
 
 template <class _Tp>
-class _LIBCPP_VISIBLE reference_wrapper
+class _LIBCPP_TYPE_VIS reference_wrapper
     : public __weak_result_type<_Tp>
 {
 public:

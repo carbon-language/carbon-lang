@@ -232,13 +232,13 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 // is_error_code_enum
 
 template <class _Tp>
-struct _LIBCPP_VISIBLE is_error_code_enum
+struct _LIBCPP_TYPE_VIS is_error_code_enum
     : public false_type {};
 
 // is_error_condition_enum
 
 template <class _Tp>
-struct _LIBCPP_VISIBLE is_error_condition_enum
+struct _LIBCPP_TYPE_VIS is_error_condition_enum
     : public false_type {};
 
 // Some error codes are not present on all platforms, so we provide equivalents
@@ -345,23 +345,23 @@ _LIBCPP_DECLARE_STRONG_ENUM(errc)
 _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(errc)
 
 template <>
-struct _LIBCPP_VISIBLE is_error_condition_enum<errc>
+struct _LIBCPP_TYPE_VIS is_error_condition_enum<errc>
     : true_type { };
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
-struct _LIBCPP_VISIBLE is_error_condition_enum<errc::__lx>
+struct _LIBCPP_TYPE_VIS is_error_condition_enum<errc::__lx>
     : true_type { };
 #endif
 
-class _LIBCPP_VISIBLE error_condition;
-class _LIBCPP_VISIBLE error_code;
+class _LIBCPP_TYPE_VIS error_condition;
+class _LIBCPP_TYPE_VIS error_code;
 
 // class error_category
 
 class _LIBCPP_HIDDEN __do_message;
 
-class _LIBCPP_VISIBLE error_category
+class _LIBCPP_TYPE_VIS error_category
 {
 public:
     virtual ~error_category() _NOEXCEPT;
@@ -400,7 +400,7 @@ public:
 const error_category& generic_category() _NOEXCEPT;
 const error_category& system_category() _NOEXCEPT;
 
-class _LIBCPP_VISIBLE error_condition
+class _LIBCPP_TYPE_VIS error_condition
 {
     int __val_;
     const error_category* __cat_;
@@ -472,7 +472,7 @@ operator<(const error_condition& __x, const error_condition& __y) _NOEXCEPT
 
 // error_code
 
-class _LIBCPP_VISIBLE error_code
+class _LIBCPP_TYPE_VIS error_code
 {
     int __val_;
     const error_category* __cat_;
@@ -597,7 +597,7 @@ operator!=(const error_condition& __x, const error_condition& __y) _NOEXCEPT
 {return !(__x == __y);}
 
 template <>
-struct _LIBCPP_VISIBLE hash<error_code>
+struct _LIBCPP_TYPE_VIS hash<error_code>
     : public unary_function<error_code, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -609,7 +609,7 @@ struct _LIBCPP_VISIBLE hash<error_code>
 
 // system_error
 
-class _LIBCPP_VISIBLE system_error
+class _LIBCPP_TYPE_VIS system_error
     : public runtime_error
 {
     error_code __ec_;

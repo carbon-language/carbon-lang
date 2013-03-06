@@ -354,9 +354,9 @@ template <class T> unspecified2 end(const valarray<T>& v);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template<class _Tp> class _LIBCPP_VISIBLE valarray;
+template<class _Tp> class _LIBCPP_TYPE_VIS valarray;
 
-class _LIBCPP_VISIBLE slice
+class _LIBCPP_TYPE_VIS slice
 {
     size_t __start_;
     size_t __size_;
@@ -381,11 +381,11 @@ public:
     _LIBCPP_INLINE_VISIBILITY size_t stride() const {return __stride_;}
 };
 
-template <class _Tp> class _LIBCPP_VISIBLE slice_array;
-class _LIBCPP_VISIBLE gslice;
-template <class _Tp> class _LIBCPP_VISIBLE gslice_array;
-template <class _Tp> class _LIBCPP_VISIBLE mask_array;
-template <class _Tp> class _LIBCPP_VISIBLE indirect_array;
+template <class _Tp> class _LIBCPP_TYPE_VIS slice_array;
+class _LIBCPP_TYPE_VIS gslice;
+template <class _Tp> class _LIBCPP_TYPE_VIS gslice_array;
+template <class _Tp> class _LIBCPP_TYPE_VIS mask_array;
+template <class _Tp> class _LIBCPP_TYPE_VIS indirect_array;
 
 template <class _Tp>
 _LIBCPP_INLINE_VISIBILITY
@@ -671,7 +671,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     size_t size() const {return __size_;}
 
-    template <class> friend class _LIBCPP_VISIBLE valarray;
+    template <class> friend class _LIBCPP_TYPE_VIS valarray;
 };
 
 template <class _ValExpr>
@@ -786,7 +786,7 @@ template<class _Tp>
 struct __is_val_expr<valarray<_Tp> > : true_type {};
 
 template<class _Tp>
-class _LIBCPP_VISIBLE valarray
+class _LIBCPP_TYPE_VIS valarray
 {
 public:
     typedef _Tp value_type;
@@ -976,12 +976,12 @@ public:
     void     resize(size_t __n, value_type __x = value_type());
 
 private:
-    template <class> friend class _LIBCPP_VISIBLE valarray;
-    template <class> friend class _LIBCPP_VISIBLE slice_array;
-    template <class> friend class _LIBCPP_VISIBLE gslice_array;
-    template <class> friend class _LIBCPP_VISIBLE mask_array;
+    template <class> friend class _LIBCPP_TYPE_VIS valarray;
+    template <class> friend class _LIBCPP_TYPE_VIS slice_array;
+    template <class> friend class _LIBCPP_TYPE_VIS gslice_array;
+    template <class> friend class _LIBCPP_TYPE_VIS mask_array;
     template <class> friend class __mask_expr;
-    template <class> friend class _LIBCPP_VISIBLE indirect_array;
+    template <class> friend class _LIBCPP_TYPE_VIS indirect_array;
     template <class> friend class __indirect_expr;
     template <class> friend class __val_expr;
 
@@ -1091,7 +1091,7 @@ struct _BinaryOp<_Op, valarray<_Tp>, valarray<_Tp> >
 // slice_array
 
 template <class _Tp>
-class _LIBCPP_VISIBLE slice_array
+class _LIBCPP_TYPE_VIS slice_array
 {
 public:
     typedef _Tp value_type;
@@ -1394,7 +1394,7 @@ slice_array<_Tp>::operator=(const value_type& __x) const
 
 // gslice
 
-class _LIBCPP_VISIBLE gslice
+class _LIBCPP_TYPE_VIS gslice
 {
     valarray<size_t> __size_;
     valarray<size_t> __stride_;
@@ -1461,7 +1461,7 @@ private:
 // gslice_array
 
 template <class _Tp>
-class _LIBCPP_VISIBLE gslice_array
+class _LIBCPP_TYPE_VIS gslice_array
 {
 public:
     typedef _Tp value_type;
@@ -1790,7 +1790,7 @@ gslice_array<_Tp>::operator=(const value_type& __x) const
 // mask_array
 
 template <class _Tp>
-class _LIBCPP_VISIBLE mask_array
+class _LIBCPP_TYPE_VIS mask_array
 {
 public:
     typedef _Tp value_type;
@@ -2134,7 +2134,7 @@ public:
 // indirect_array
 
 template <class _Tp>
-class _LIBCPP_VISIBLE indirect_array
+class _LIBCPP_TYPE_VIS indirect_array
 {
 public:
     typedef _Tp value_type;
@@ -2485,7 +2485,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     size_t size() const {return __1d_.size();}
 
-    template <class> friend class _LIBCPP_VISIBLE valarray;
+    template <class> friend class _LIBCPP_TYPE_VIS valarray;
 };
 
 template<class _ValExpr>

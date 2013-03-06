@@ -26,7 +26,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-_LIBCPP_VISIBLE
+_LIBCPP_FUNC_VIS
 size_t __next_prime(size_t __n);
 
 template <class _NodePtr>
@@ -80,14 +80,14 @@ __next_pow2(size_t __n)
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc> class __hash_table;
-template <class _ConstNodePtr> class _LIBCPP_VISIBLE __hash_const_iterator;
-template <class _HashIterator> class _LIBCPP_VISIBLE __hash_map_iterator;
-template <class _HashIterator> class _LIBCPP_VISIBLE __hash_map_const_iterator;
+template <class _ConstNodePtr> class _LIBCPP_TYPE_VIS __hash_const_iterator;
+template <class _HashIterator> class _LIBCPP_TYPE_VIS __hash_map_iterator;
+template <class _HashIterator> class _LIBCPP_TYPE_VIS __hash_map_const_iterator;
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
-    class _LIBCPP_VISIBLE unordered_map;
+    class _LIBCPP_TYPE_VIS unordered_map;
 
 template <class _NodePtr>
-class _LIBCPP_VISIBLE __hash_iterator
+class _LIBCPP_TYPE_VIS __hash_iterator
 {
     typedef _NodePtr __node_pointer;
 
@@ -142,14 +142,14 @@ private:
         {}
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class _LIBCPP_VISIBLE __hash_const_iterator;
-    template <class> friend class _LIBCPP_VISIBLE __hash_map_iterator;
-    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_map;
-    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_multimap;
+    template <class> friend class _LIBCPP_TYPE_VIS __hash_const_iterator;
+    template <class> friend class _LIBCPP_TYPE_VIS __hash_map_iterator;
+    template <class, class, class, class, class> friend class _LIBCPP_TYPE_VIS unordered_map;
+    template <class, class, class, class, class> friend class _LIBCPP_TYPE_VIS unordered_multimap;
 };
 
 template <class _ConstNodePtr>
-class _LIBCPP_VISIBLE __hash_const_iterator
+class _LIBCPP_TYPE_VIS __hash_const_iterator
 {
     typedef _ConstNodePtr __node_pointer;
 
@@ -220,15 +220,15 @@ private:
         {}
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class _LIBCPP_VISIBLE __hash_map_const_iterator;
-    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_map;
-    template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_multimap;
+    template <class> friend class _LIBCPP_TYPE_VIS __hash_map_const_iterator;
+    template <class, class, class, class, class> friend class _LIBCPP_TYPE_VIS unordered_map;
+    template <class, class, class, class, class> friend class _LIBCPP_TYPE_VIS unordered_multimap;
 };
 
-template <class _ConstNodePtr> class _LIBCPP_VISIBLE __hash_const_local_iterator;
+template <class _ConstNodePtr> class _LIBCPP_TYPE_VIS __hash_const_local_iterator;
 
 template <class _NodePtr>
-class _LIBCPP_VISIBLE __hash_local_iterator
+class _LIBCPP_TYPE_VIS __hash_local_iterator
 {
     typedef _NodePtr __node_pointer;
 
@@ -294,12 +294,12 @@ private:
         }
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class _LIBCPP_VISIBLE __hash_const_local_iterator;
-    template <class> friend class _LIBCPP_VISIBLE __hash_map_iterator;
+    template <class> friend class _LIBCPP_TYPE_VIS __hash_const_local_iterator;
+    template <class> friend class _LIBCPP_TYPE_VIS __hash_map_iterator;
 };
 
 template <class _ConstNodePtr>
-class _LIBCPP_VISIBLE __hash_const_local_iterator
+class _LIBCPP_TYPE_VIS __hash_const_local_iterator
 {
     typedef _ConstNodePtr __node_pointer;
 
@@ -384,7 +384,7 @@ private:
         }
 
     template <class, class, class, class> friend class __hash_table;
-    template <class> friend class _LIBCPP_VISIBLE __hash_map_const_iterator;
+    template <class> friend class _LIBCPP_TYPE_VIS __hash_map_const_iterator;
 };
 
 template <class _Alloc>

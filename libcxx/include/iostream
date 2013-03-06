@@ -46,14 +46,14 @@ extern wostream wclog;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-extern _LIBCPP_VISIBLE istream cin;
-extern _LIBCPP_VISIBLE ostream cout;
-extern _LIBCPP_VISIBLE ostream cerr;
-extern _LIBCPP_VISIBLE ostream clog;
-extern _LIBCPP_VISIBLE wistream wcin;
-extern _LIBCPP_VISIBLE wostream wcout;
-extern _LIBCPP_VISIBLE wostream wcerr;
-extern _LIBCPP_VISIBLE wostream wclog;
+extern _LIBCPP_FUNC_VIS istream cin;
+extern _LIBCPP_FUNC_VIS ostream cout;
+extern _LIBCPP_FUNC_VIS ostream cerr;
+extern _LIBCPP_FUNC_VIS ostream clog;
+extern _LIBCPP_FUNC_VIS wistream wcin;
+extern _LIBCPP_FUNC_VIS wostream wcout;
+extern _LIBCPP_FUNC_VIS wostream wcerr;
+extern _LIBCPP_FUNC_VIS wostream wclog;
 
 _LIBCPP_END_NAMESPACE_STD
 

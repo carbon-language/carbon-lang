@@ -457,7 +457,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 // fpos
 
 template <class _StateT>
-class _LIBCPP_VISIBLE fpos
+class _LIBCPP_TYPE_VIS fpos
 {
 private:
     _StateT __st_;
@@ -494,7 +494,7 @@ bool operator!=(const fpos<_StateT>& __x, const fpos<_StateT>& __y)
 // char_traits
 
 template <class _CharT>
-struct _LIBCPP_VISIBLE char_traits
+struct _LIBCPP_TYPE_VIS char_traits
 {
     typedef _CharT    char_type;
     typedef int       int_type;
@@ -620,7 +620,7 @@ char_traits<_CharT>::assign(char_type* __s, size_t __n, char_type __a)
 // char_traits<char>
 
 template <>
-struct _LIBCPP_VISIBLE char_traits<char>
+struct _LIBCPP_TYPE_VIS char_traits<char>
 {
     typedef char      char_type;
     typedef int       int_type;
@@ -676,7 +676,7 @@ struct _LIBCPP_VISIBLE char_traits<char>
 // char_traits<wchar_t>
 
 template <>
-struct _LIBCPP_VISIBLE char_traits<wchar_t>
+struct _LIBCPP_TYPE_VIS char_traits<wchar_t>
 {
     typedef wchar_t   char_type;
     typedef wint_t    int_type;
@@ -733,7 +733,7 @@ struct _LIBCPP_VISIBLE char_traits<wchar_t>
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
 
 template <>
-struct _LIBCPP_VISIBLE char_traits<char16_t>
+struct _LIBCPP_TYPE_VIS char_traits<char16_t>
 {
     typedef char16_t       char_type;
     typedef uint_least16_t int_type;
@@ -853,7 +853,7 @@ char_traits<char16_t>::assign(char_type* __s, size_t __n, char_type __a)
 }
 
 template <>
-struct _LIBCPP_VISIBLE char_traits<char32_t>
+struct _LIBCPP_TYPE_VIS char_traits<char32_t>
 {
     typedef char32_t       char_type;
     typedef uint_least32_t int_type;
@@ -1037,7 +1037,7 @@ _LIBCPP_EXTERN_TEMPLATE(class __basic_string_common<true>)
 #endif // _MSC_VER
 
 template<class _CharT, class _Traits, class _Allocator>
-class _LIBCPP_VISIBLE basic_string
+class _LIBCPP_TYPE_VIS basic_string
     : private __basic_string_common<true>
 {
 public:
@@ -3923,7 +3923,7 @@ size_t _LIBCPP_INLINE_VISIBILITY __do_string_hash(_Ptr __p, _Ptr __e)
 }
 
 template<class _CharT, class _Traits, class _Allocator>
-struct _LIBCPP_VISIBLE hash<basic_string<_CharT, _Traits, _Allocator> >
+struct _LIBCPP_TYPE_VIS hash<basic_string<_CharT, _Traits, _Allocator> >
     : public unary_function<basic_string<_CharT, _Traits, _Allocator>, size_t>
 {
     size_t

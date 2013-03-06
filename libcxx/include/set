@@ -346,7 +346,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Key, class _Compare = less<_Key>,
           class _Allocator = allocator<_Key> >
-class _LIBCPP_VISIBLE set
+class _LIBCPP_TYPE_VIS set
 {
 public:
     // types:
@@ -685,7 +685,7 @@ swap(set<_Key, _Compare, _Allocator>& __x,
 
 template <class _Key, class _Compare = less<_Key>,
           class _Allocator = allocator<_Key> >
-class _LIBCPP_VISIBLE multiset
+class _LIBCPP_TYPE_VIS multiset
 {
 public:
     // types:

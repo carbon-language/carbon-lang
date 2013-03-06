@@ -17,7 +17,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-_LIBCPP_VISIBLE
+_LIBCPP_FUNC_VIS
 __libcpp_db*
 __get_db()
 {
@@ -25,7 +25,7 @@ __get_db()
     return &db;
 }
 
-_LIBCPP_VISIBLE
+_LIBCPP_FUNC_VIS
 const __libcpp_db*
 __get_const_db()
 {

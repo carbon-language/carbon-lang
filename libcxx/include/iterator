@@ -331,11 +331,11 @@ template <class T, size_t N> T* end(T (&array)[N]);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-struct _LIBCPP_VISIBLE input_iterator_tag {};
-struct _LIBCPP_VISIBLE output_iterator_tag {};
-struct _LIBCPP_VISIBLE forward_iterator_tag       : public input_iterator_tag {};
-struct _LIBCPP_VISIBLE bidirectional_iterator_tag : public forward_iterator_tag {};
-struct _LIBCPP_VISIBLE random_access_iterator_tag : public bidirectional_iterator_tag {};
+struct _LIBCPP_TYPE_VIS input_iterator_tag {};
+struct _LIBCPP_TYPE_VIS output_iterator_tag {};
+struct _LIBCPP_TYPE_VIS forward_iterator_tag       : public input_iterator_tag {};
+struct _LIBCPP_TYPE_VIS bidirectional_iterator_tag : public forward_iterator_tag {};
+struct _LIBCPP_TYPE_VIS random_access_iterator_tag : public bidirectional_iterator_tag {};
 
 template <class _Tp>
 struct __has_iterator_category
@@ -378,11 +378,11 @@ struct __iterator_traits<_Iter, true>
 //    the client expects instead of failing at compile time.
 
 template <class _Iter>
-struct _LIBCPP_VISIBLE iterator_traits
+struct _LIBCPP_TYPE_VIS iterator_traits
     : __iterator_traits<_Iter, __has_iterator_category<_Iter>::value> {};
 
 template<class _Tp>
-struct _LIBCPP_VISIBLE iterator_traits<_Tp*>
+struct _LIBCPP_TYPE_VIS iterator_traits<_Tp*>
 {
     typedef ptrdiff_t difference_type;
     typedef typename remove_const<_Tp>::type value_type;
@@ -413,7 +413,7 @@ struct __is_random_access_iterator : public __has_iterator_category_convertible_
 
 template<class _Category, class _Tp, class _Distance = ptrdiff_t,
          class _Pointer = _Tp*, class _Reference = _Tp&>
-struct _LIBCPP_VISIBLE iterator
+struct _LIBCPP_TYPE_VIS iterator
 {
     typedef _Tp        value_type;
     typedef _Distance  difference_type;
@@ -510,7 +510,7 @@ prev(_BidiretionalIter __x,
 }
 
 template <class _Iter>
-class _LIBCPP_VISIBLE reverse_iterator
+class _LIBCPP_TYPE_VIS reverse_iterator
     : public iterator<typename iterator_traits<_Iter>::iterator_category,
                       typename iterator_traits<_Iter>::value_type,
                       typename iterator_traits<_Iter>::difference_type,
@@ -617,7 +617,7 @@ operator+(typename reverse_iterator<_Iter>::difference_type __n, const reverse_i
 }
 
 template <class _Container>
-class _LIBCPP_VISIBLE back_insert_iterator
+class _LIBCPP_TYPE_VIS back_insert_iterator
     : public iterator<output_iterator_tag,
                       void,
                       void,
@@ -650,7 +650,7 @@ back_inserter(_Container& __x)
 }
 
 template <class _Container>
-class _LIBCPP_VISIBLE front_insert_iterator
+class _LIBCPP_TYPE_VIS front_insert_iterator
     : public iterator<output_iterator_tag,
                       void,
                       void,
@@ -683,7 +683,7 @@ front_inserter(_Container& __x)
 }
 
 template <class _Container>
-class _LIBCPP_VISIBLE insert_iterator
+class _LIBCPP_TYPE_VIS insert_iterator
     : public iterator<output_iterator_tag,
                       void,
                       void,
@@ -719,7 +719,7 @@ inserter(_Container& __x, typename _Container::iterator __i)
 
 template <class _Tp, class _CharT = char,
           class _Traits = char_traits<_CharT>, class _Distance = ptrdiff_t>
-class _LIBCPP_VISIBLE istream_iterator
+class _LIBCPP_TYPE_VIS istream_iterator
     : public iterator<input_iterator_tag, _Tp, _Distance, const _Tp*, const _Tp&>
 {
 public:
@@ -758,7 +758,7 @@ public:
 };
 
 template <class _Tp, class _CharT = char, class _Traits = char_traits<_CharT> >
-class _LIBCPP_VISIBLE ostream_iterator
+class _LIBCPP_TYPE_VIS ostream_iterator
     : public iterator<output_iterator_tag, void, void, void, void>
 {
 public:
@@ -787,7 +787,7 @@ public:
 };
 
 template<class _CharT, class _Traits>
-class _LIBCPP_VISIBLE istreambuf_iterator
+class _LIBCPP_TYPE_VIS istreambuf_iterator
     : public iterator<input_iterator_tag, _CharT,
                       typename _Traits::off_type, _CharT*,
                       _CharT>
@@ -858,7 +858,7 @@ bool operator!=(const istreambuf_iterator<_CharT,_Traits>& __a,
                 {return !__a.equal(__b);}
 
 template <class _CharT, class _Traits>
-class _LIBCPP_VISIBLE ostreambuf_iterator
+class _LIBCPP_TYPE_VIS ostreambuf_iterator
     : public iterator<output_iterator_tag, void, void, void, void>
 {
 public:
@@ -899,7 +899,7 @@ public:
 };
 
 template <class _Iter>
-class _LIBCPP_VISIBLE move_iterator
+class _LIBCPP_TYPE_VIS move_iterator
 {
 private:
     _Iter __i;

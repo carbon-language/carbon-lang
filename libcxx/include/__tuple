@@ -27,46 +27,46 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class _Tp> class _LIBCPP_VISIBLE tuple_size;
+template <class _Tp> class _LIBCPP_TYPE_VIS tuple_size;
 
 template <class _Tp>
-class _LIBCPP_VISIBLE tuple_size<const _Tp>
+class _LIBCPP_TYPE_VIS tuple_size<const _Tp>
     : public tuple_size<_Tp> {};
 
 template <class _Tp>
-class _LIBCPP_VISIBLE tuple_size<volatile _Tp>
+class _LIBCPP_TYPE_VIS tuple_size<volatile _Tp>
     : public tuple_size<_Tp> {};
 
 template <class _Tp>
-class _LIBCPP_VISIBLE tuple_size<const volatile _Tp>
+class _LIBCPP_TYPE_VIS tuple_size<const volatile _Tp>
     : public tuple_size<_Tp> {};
 
-template <size_t _Ip, class _Tp> class _LIBCPP_VISIBLE tuple_element;
+template <size_t _Ip, class _Tp> class _LIBCPP_TYPE_VIS tuple_element;
 
 template <size_t _Ip, class _Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, const _Tp>
+class _LIBCPP_TYPE_VIS tuple_element<_Ip, const _Tp>
 {
 public:
     typedef typename add_const<typename tuple_element<_Ip, _Tp>::type>::type type;
 };
 
 template <size_t _Ip, class _Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, volatile _Tp>
+class _LIBCPP_TYPE_VIS tuple_element<_Ip, volatile _Tp>
 {
 public:
     typedef typename add_volatile<typename tuple_element<_Ip, _Tp>::type>::type type;
 };
 
 template <size_t _Ip, class _Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, const volatile _Tp>
+class _LIBCPP_TYPE_VIS tuple_element<_Ip, const volatile _Tp>
 {
 public:
     typedef typename add_cv<typename tuple_element<_Ip, _Tp>::type>::type type;
 };
 
-template <class ..._Tp> class _LIBCPP_VISIBLE tuple;
-template <class _T1, class _T2> struct _LIBCPP_VISIBLE pair;
-template <class _Tp, size_t _Size> struct _LIBCPP_VISIBLE array;
+template <class ..._Tp> class _LIBCPP_TYPE_VIS tuple;
+template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS pair;
+template <class _Tp, size_t _Size> struct _LIBCPP_TYPE_VIS array;
 
 template <class _Tp> struct __tuple_like : false_type {};
 
@@ -154,7 +154,7 @@ struct __make_tuple_indices
 template <class ..._Tp> struct __tuple_types {};
 
 template <size_t _Ip>
-class _LIBCPP_VISIBLE tuple_element<_Ip, __tuple_types<> >
+class _LIBCPP_TYPE_VIS tuple_element<_Ip, __tuple_types<> >
 {
 public:
     static_assert(_Ip == 0, "tuple_element index out of range");
@@ -162,21 +162,21 @@ public:
 };
 
 template <class _Hp, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<0, __tuple_types<_Hp, _Tp...> >
+class _LIBCPP_TYPE_VIS tuple_element<0, __tuple_types<_Hp, _Tp...> >
 {
 public:
     typedef _Hp type;
 };
 
 template <size_t _Ip, class _Hp, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, __tuple_types<_Hp, _Tp...> >
+class _LIBCPP_TYPE_VIS tuple_element<_Ip, __tuple_types<_Hp, _Tp...> >
 {
 public:
     typedef typename tuple_element<_Ip-1, __tuple_types<_Tp...> >::type type;
 };
 
 template <class ..._Tp>
-class _LIBCPP_VISIBLE tuple_size<__tuple_types<_Tp...> >
+class _LIBCPP_TYPE_VIS tuple_size<__tuple_types<_Tp...> >
     : public integral_constant<size_t, sizeof...(_Tp)>
 {
 };

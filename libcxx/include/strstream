@@ -137,7 +137,7 @@ private:
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class _LIBCPP_VISIBLE strstreambuf
+class _LIBCPP_TYPE_VIS strstreambuf
     : public streambuf
 {
 public:
@@ -228,7 +228,7 @@ strstreambuf::operator=(strstreambuf&& __rhs)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-class _LIBCPP_VISIBLE istrstream
+class _LIBCPP_TYPE_VIS istrstream
     : public istream
 {
 public:
@@ -281,7 +281,7 @@ private:
     strstreambuf __sb_;
 };
 
-class _LIBCPP_VISIBLE ostrstream
+class _LIBCPP_TYPE_VIS ostrstream
     : public ostream
 {
 public:
@@ -334,7 +334,7 @@ private:
     strstreambuf __sb_; // exposition only
 };
 
-class _LIBCPP_VISIBLE strstream
+class _LIBCPP_TYPE_VIS strstream
     : public iostream
 {
 public:

@@ -700,7 +700,7 @@ _LIBCPP_EXTERN_TEMPLATE(struct __num_get<char>)
 _LIBCPP_EXTERN_TEMPLATE(struct __num_get<wchar_t>)
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE num_get
+class _LIBCPP_TYPE_VIS num_get
     : public locale::facet,
       private __num_get<_CharT>
 {
@@ -1472,7 +1472,7 @@ _LIBCPP_EXTERN_TEMPLATE(struct __num_put<char>)
 _LIBCPP_EXTERN_TEMPLATE(struct __num_put<wchar_t>)
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE num_put
+class _LIBCPP_TYPE_VIS num_put
     : public locale::facet,
       private __num_put<_CharT>
 {
@@ -1984,7 +1984,7 @@ __get_up_to_n_digits(_InputIterator& __b, _InputIterator __e,
     return __r;
 }
 
-class _LIBCPP_VISIBLE time_base
+class _LIBCPP_TYPE_VIS time_base
 {
 public:
     enum dateorder {no_order, dmy, mdy, ymd, ydm};
@@ -2006,7 +2006,7 @@ protected:
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE time_get
+class _LIBCPP_TYPE_VIS time_get
     : public locale::facet,
       public time_base,
       private __time_get_c_storage<_CharT>
@@ -2656,7 +2656,7 @@ private:
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE time_get_byname
+class _LIBCPP_TYPE_VIS time_get_byname
     : public time_get<_CharT, _InputIterator>,
       private __time_get_storage<_CharT>
 {
@@ -2716,7 +2716,7 @@ protected:
 };
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE time_put
+class _LIBCPP_TYPE_VIS time_put
     : public locale::facet,
       private __time_put
 {
@@ -2815,7 +2815,7 @@ _LIBCPP_EXTERN_TEMPLATE(class time_put<char>)
 _LIBCPP_EXTERN_TEMPLATE(class time_put<wchar_t>)
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE time_put_byname
+class _LIBCPP_TYPE_VIS time_put_byname
     : public time_put<_CharT, _OutputIterator>
 {
 public:
@@ -2837,7 +2837,7 @@ _LIBCPP_EXTERN_TEMPLATE(class time_put_byname<wchar_t>)
 
 // money_base
 
-class _LIBCPP_VISIBLE money_base
+class _LIBCPP_TYPE_VIS money_base
 {
 public:
     enum part {none, space, symbol, sign, value};
@@ -2849,7 +2849,7 @@ public:
 // moneypunct
 
 template <class _CharT, bool _International = false>
-class _LIBCPP_VISIBLE moneypunct
+class _LIBCPP_TYPE_VIS moneypunct
     : public locale::facet,
       public money_base
 {
@@ -2907,7 +2907,7 @@ _LIBCPP_EXTERN_TEMPLATE(class moneypunct<wchar_t, true>)
 // moneypunct_byname
 
 template <class _CharT, bool _International = false>
-class _LIBCPP_VISIBLE moneypunct_byname
+class _LIBCPP_TYPE_VIS moneypunct_byname
     : public moneypunct<_CharT, _International>
 {
 public:
@@ -3019,7 +3019,7 @@ _LIBCPP_EXTERN_TEMPLATE(class __money_get<char>)
 _LIBCPP_EXTERN_TEMPLATE(class __money_get<wchar_t>)
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE money_get
+class _LIBCPP_TYPE_VIS money_get
     : public locale::facet,
       private __money_get<_CharT>
 {
@@ -3575,7 +3575,7 @@ _LIBCPP_EXTERN_TEMPLATE(class __money_put<char>)
 _LIBCPP_EXTERN_TEMPLATE(class __money_put<wchar_t>)
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_VISIBLE money_put
+class _LIBCPP_TYPE_VIS money_put
     : public locale::facet,
       private __money_put<_CharT>
 {
@@ -3733,7 +3733,7 @@ _LIBCPP_EXTERN_TEMPLATE(class money_put<wchar_t>)
 
 // messages
 
-class _LIBCPP_VISIBLE messages_base
+class _LIBCPP_TYPE_VIS messages_base
 {
 public:
     typedef ptrdiff_t catalog;
@@ -3742,7 +3742,7 @@ public:
 };
 
 template <class _CharT>
-class _LIBCPP_VISIBLE messages
+class _LIBCPP_TYPE_VIS messages
     : public locale::facet,
       public messages_base
 {
@@ -3842,7 +3842,7 @@ _LIBCPP_EXTERN_TEMPLATE(class messages<char>)
 _LIBCPP_EXTERN_TEMPLATE(class messages<wchar_t>)
 
 template <class _CharT>
-class _LIBCPP_VISIBLE messages_byname
+class _LIBCPP_TYPE_VIS messages_byname
     : public messages<_CharT>
 {
 public:
@@ -3868,7 +3868,7 @@ _LIBCPP_EXTERN_TEMPLATE(class messages_byname<wchar_t>)
 template<class _Codecvt, class _Elem = wchar_t,
          class _Wide_alloc = allocator<_Elem>,
          class _Byte_alloc = allocator<char> >
-class _LIBCPP_VISIBLE wstring_convert
+class _LIBCPP_TYPE_VIS wstring_convert
 {
 public:
     typedef basic_string<char, char_traits<char>, _Byte_alloc>   byte_string;
@@ -4121,7 +4121,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 }
 
 template <class _Codecvt, class _Elem = wchar_t, class _Tr = char_traits<_Elem> >
-class _LIBCPP_VISIBLE wbuffer_convert
+class _LIBCPP_TYPE_VIS wbuffer_convert
     : public basic_streambuf<_Elem, _Tr>
 {
 public:

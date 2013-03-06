@@ -128,7 +128,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 // allocator_arg_t
 
-struct _LIBCPP_VISIBLE allocator_arg_t { };
+struct _LIBCPP_TYPE_VIS allocator_arg_t { };
 
 #if defined(_LIBCPP_HAS_NO_CONSTEXPR) || defined(_LIBCPP_BUILDING_MEMORY)
 extern const allocator_arg_t allocator_arg;
@@ -163,7 +163,7 @@ struct __uses_allocator<_Tp, _Alloc, false>
 };
 
 template <class _Tp, class _Alloc>
-struct _LIBCPP_VISIBLE uses_allocator
+struct _LIBCPP_TYPE_VIS uses_allocator
     : public __uses_allocator<_Tp, _Alloc>
 {
 };
@@ -193,7 +193,7 @@ struct __uses_alloc_ctor
 // tuple_size
 
 template <class ..._Tp>
-class _LIBCPP_VISIBLE tuple_size<tuple<_Tp...> >
+class _LIBCPP_TYPE_VIS tuple_size<tuple<_Tp...> >
     : public integral_constant<size_t, sizeof...(_Tp)>
 {
 };
@@ -201,7 +201,7 @@ class _LIBCPP_VISIBLE tuple_size<tuple<_Tp...> >
 // tuple_element
 
 template <size_t _Ip, class ..._Tp>
-class _LIBCPP_VISIBLE tuple_element<_Ip, tuple<_Tp...> >
+class _LIBCPP_TYPE_VIS tuple_element<_Ip, tuple<_Tp...> >
 {
 public:
     typedef typename tuple_element<_Ip, __tuple_types<_Tp...> >::type type;
@@ -533,7 +533,7 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
 };
 
 template <class ..._Tp>
-class _LIBCPP_VISIBLE tuple
+class _LIBCPP_TYPE_VIS tuple
 {
     typedef __tuple_impl<typename __make_tuple_indices<sizeof...(_Tp)>::type, _Tp...> base;
 
@@ -721,7 +721,7 @@ public:
 };
 
 template <>
-class _LIBCPP_VISIBLE tuple<>
+class _LIBCPP_TYPE_VIS tuple<>
 {
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -803,7 +803,7 @@ struct __ignore_t
 
 namespace { const __ignore_t<unsigned char> ignore = __ignore_t<unsigned char>(); }
 
-template <class _Tp> class _LIBCPP_VISIBLE reference_wrapper;
+template <class _Tp> class _LIBCPP_TYPE_VIS reference_wrapper;
 
 template <class _Tp>
 struct ___make_tuple_return
@@ -1071,7 +1071,7 @@ tuple_cat(_Tuple0&& __t0, _Tuples&&... __tpls)
 }
 
 template <class ..._Tp, class _Alloc>
-struct _LIBCPP_VISIBLE uses_allocator<tuple<_Tp...>, _Alloc>
+struct _LIBCPP_TYPE_VIS uses_allocator<tuple<_Tp...>, _Alloc>
     : true_type {};
 
 template <class _T1, class _T2>
