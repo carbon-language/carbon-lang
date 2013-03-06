@@ -4107,8 +4107,7 @@ namespace {
       
       HeaderFileInfoTrait Trait(This->Reader, M, 
                                 &This->Reader.getPreprocessor().getHeaderSearchInfo(),
-                                M.HeaderFileFrameworkStrings,
-                                This->FE->getName());
+                                M.HeaderFileFrameworkStrings);
       
       HeaderFileInfoLookupTable *Table
         = static_cast<HeaderFileInfoLookupTable *>(M.HeaderFileInfoTable);

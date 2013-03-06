@@ -196,8 +196,6 @@ class HeaderFileInfoTrait {
   ModuleFile &M;
   HeaderSearch *HS;
   const char *FrameworkStrings;
-  const char *SearchPath;
-  struct stat SearchPathStatBuf;
 
 public:
   typedef const char *external_key_type;
@@ -206,10 +204,8 @@ public:
   typedef HeaderFileInfo data_type;
   
   HeaderFileInfoTrait(ASTReader &Reader, ModuleFile &M, HeaderSearch *HS,
-                      const char *FrameworkStrings,
-                      const char *SearchPath = 0) 
-  : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings), 
-    SearchPath(SearchPath) { }
+                      const char *FrameworkStrings)
+  : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings) { }
   
   static unsigned ComputeHash(const char *path);
   static internal_key_type GetInternalKey(const char *path);
