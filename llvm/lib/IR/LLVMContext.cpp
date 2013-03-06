@@ -58,6 +58,11 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned TBAAStructID = getMDKindID("tbaa.struct");
   assert(TBAAStructID == MD_tbaa_struct && "tbaa.struct kind id drifted");
   (void)TBAAStructID;
+
+  // Create the 'invariant.load' metadata kind.
+  unsigned InvariantLdId = getMDKindID("invariant.load");
+  assert(InvariantLdId == MD_invariant_load && "invariant.load kind id drifted");
+  (void)InvariantLdId;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

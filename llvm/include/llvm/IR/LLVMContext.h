@@ -46,7 +46,8 @@ public:
     MD_prof = 2,  // "prof"
     MD_fpmath = 3,  // "fpmath"
     MD_range = 4, // "range"
-    MD_tbaa_struct = 5 // "tbaa.struct"
+    MD_tbaa_struct = 5, // "tbaa.struct"
+    MD_invariant_load = 6 // "invariant.load"
   };
   
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

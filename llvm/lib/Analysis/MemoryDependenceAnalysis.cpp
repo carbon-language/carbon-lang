@@ -351,15 +351,23 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
 /// getPointerDependencyFrom - Return the instruction on which a memory
 /// location depends.  If isLoad is true, this routine ignores may-aliases with
 /// read-only operations.  If isLoad is false, this routine ignores may-aliases
-/// with reads from read-only locations.
+/// with reads from read-only locations.  If possible, pass the query
+/// instruction as well; this function may take advantage of the metadata
+/// annotated to the query instruction to refine the result.
 MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad, 
-                         BasicBlock::iterator ScanIt, BasicBlock *BB) {
+                         BasicBlock::iterator ScanIt, BasicBlock *BB,
+                         Instruction *QueryInst) {
 
   const Value *MemLocBase = 0;
   int64_t MemLocOffset = 0;
-
   unsigned Limit = BlockScanLimit;
+  bool isInvariantLoad = false;
+  if (isLoad && QueryInst) {
+    LoadInst *LI = dyn_cast<LoadInst>(QueryInst);
+    if (LI && LI->getMetadata(LLVMContext::MD_invariant_load) != 0)
+      isInvariantLoad = true;
+  }
 
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
@@ -474,6 +482,8 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         continue;
       if (R == AliasAnalysis::MustAlias)
         return MemDepResult::getDef(Inst);
+      if (isInvariantLoad)
+       continue;
       return MemDepResult::getClobber(Inst);
     }
 
@@ -571,7 +581,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
         isLoad |= II->getIntrinsicID() == Intrinsic::lifetime_start;
 
       LocalCache = getPointerDependencyFrom(MemLoc, isLoad, ScanPos,
-                                            QueryParent);
+                                            QueryParent, QueryInst);
     } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
       CallSite QueryCS(QueryInst);
       bool isReadOnly = AA->onlyReadsMemory(QueryCS);
