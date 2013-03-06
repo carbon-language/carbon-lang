@@ -148,20 +148,20 @@ symbol table entries. Here is an example of the "hello world" module:
 
 .. code-block:: llvm
 
-    ; Declare the string constant as a global constant. 
-    @.str = private unnamed_addr constant [13 x i8] c"hello world\0A\00" 
+    ; Declare the string constant as a global constant.
+    @.str = private unnamed_addr constant [13 x i8] c"hello world\0A\00"
 
-    ; External declaration of the puts function 
-    declare i32 @puts(i8* nocapture) nounwind 
+    ; External declaration of the puts function
+    declare i32 @puts(i8* nocapture) nounwind
 
     ; Definition of main function
-    define i32 @main() {   ; i32()*  
-      ; Convert [13 x i8]* to i8  *... 
+    define i32 @main() {   ; i32()*
+      ; Convert [13 x i8]* to i8  *...
       %cast210 = getelementptr [13 x i8]* @.str, i64 0, i64 0
 
-      ; Call puts function to write out the string to stdout. 
+      ; Call puts function to write out the string to stdout.
       call i32 @puts(i8* %cast210)
-      ret i32 0 
+      ret i32 0
     }
 
     ; Named metadata
@@ -2537,10 +2537,10 @@ guaranteed to be separate for each loop. The loop-level metadata is prefixed
 with ``llvm.loop``.
 
 The loop identifier metadata is implemented using a metadata that refers to
-itself to avoid merging it with any other identifier metadata, e.g., 
-during module linkage or function inlining. That is, each loop should refer 
-to their own identification metadata even if they reside in separate functions. 
-The following example contains loop identifier metadata for two separate loop 
+itself to avoid merging it with any other identifier metadata, e.g.,
+during module linkage or function inlining. That is, each loop should refer
+to their own identification metadata even if they reside in separate functions.
+The following example contains loop identifier metadata for two separate loop
 constructs:
 
 .. code-block:: llvm
@@ -2829,7 +2829,7 @@ For example, the following metadata section specifies two separate sets of
 linker options, presumably to link against ``libz`` and the ``Cocoa``
 framework::
 
-    !0 = metadata !{ i32 6, metadata !"Linker Options", 
+    !0 = metadata !{ i32 6, metadata !"Linker Options",
        metadata !{
           metadata !{ metadata !"-lz" },
           metadata !{ metadata !"-framework", metadata !"Cocoa" } } }
@@ -3997,7 +3997,7 @@ Example:
       <result> = lshr i32 4, 1   ; yields {i32}:result = 2
       <result> = lshr i32 4, 2   ; yields {i32}:result = 1
       <result> = lshr i8  4, 3   ; yields {i8}:result = 0
-      <result> = lshr i8 -2, 1   ; yields {i8}:result = 0x7FFFFFFF 
+      <result> = lshr i8 -2, 1   ; yields {i8}:result = 0x7FFFFFFF
       <result> = lshr i32 1, 32  ; undefined
       <result> = lshr <2 x i32> < i32 -2, i32 4>, < i32 1, i32 2>   ; yields: result=<2 x i32> < i32 0x7FFFFFFF, i32 1>
 
