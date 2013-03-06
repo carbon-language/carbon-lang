@@ -104,6 +104,12 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   uint64_t CastElTySize = TD->getTypeAllocSize(CastElTy);
   if (CastElTySize == 0 || AllocElTySize == 0) return 0;
 
+  // If the allocation has multiple uses, only promote it if we're not
+  // shrinking the amount of memory being allocated.
+  uint64_t AllocElTyStoreSize = TD->getTypeStoreSize(AllocElTy);
+  uint64_t CastElTyStoreSize = TD->getTypeStoreSize(CastElTy);
+  if (!AI.hasOneUse() && CastElTyStoreSize < AllocElTyStoreSize) return 0;
+
   // See if we can satisfy the modulus by pulling a scale out of the array
   // size argument.
   unsigned ArraySizeScale;
