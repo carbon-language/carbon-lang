@@ -153,8 +153,11 @@ static void GetCurrentStackBounds(uptr *stack_top, uptr *stack_bottom) {
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    bool fast) {
-  if (!fast)
+  if (!fast) {
+    // Block reports from our interceptors during _Unwind_Backtrace.
+    SymbolizerScope sym_scope;
     return stack->SlowUnwindStack(pc, max_s);
+  }
 
   uptr stack_top, stack_bottom;
   GetCurrentStackBounds(&stack_top, &stack_bottom);

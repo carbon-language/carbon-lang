@@ -44,11 +44,6 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
   const char *End()    { return Default(); }
 };
 
-struct SymbolizerScope {
-  SymbolizerScope() { EnterSymbolizer(); }
-  ~SymbolizerScope() { ExitSymbolizer(); }
-};
-
 static void PrintStack(const uptr *trace, uptr size) {
   SymbolizerScope sym_scope;
   StackTrace::PrintStack(trace, size, true, flags()->strip_path_prefix, 0);

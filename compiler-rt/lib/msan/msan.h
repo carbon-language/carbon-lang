@@ -50,6 +50,11 @@ void EnterSymbolizer();
 void ExitSymbolizer();
 bool IsInSymbolizer();
 
+struct SymbolizerScope {
+  SymbolizerScope() { EnterSymbolizer(); }
+  ~SymbolizerScope() { ExitSymbolizer(); }
+};
+
 void MsanDie();
 void PrintWarning(uptr pc, uptr bp);
 void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin);
