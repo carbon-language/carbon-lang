@@ -1531,11 +1531,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             FileSpec dsc_filespec(dsc_path, false);
 
             // We need definitions of two structures in the on-disk DSC, copy them here manually
-            struct lldb_copy_dyld_cache_header
+           struct lldb_copy_dyld_cache_header_v0
             {
-                char		magic[16];
-                uint32_t	mappingOffset;
-                uint32_t	mappingCount;
+               char        magic[16];            // e.g. "dyld_v0    i386", "dyld_v1   armv7", etc.
+               uint32_t    mappingOffset;        // file offset to first dyld_cache_mapping_info
+               uint32_t    mappingCount;         // number of dyld_cache_mapping_info entries
                 uint32_t	imagesOffset;
                 uint32_t	imagesCount;
                 uint64_t	dyldBaseAddress;
@@ -1543,9 +1543,35 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 uint64_t	codeSignatureSize;
                 uint64_t	slideInfoOffset;
                 uint64_t	slideInfoSize;
+               uint64_t    localSymbolsOffset;   // file offset of where local symbols are stored
+               uint64_t    localSymbolsSize;     // size of local symbols information
+           };
+           struct lldb_copy_dyld_cache_header_v1
+           {
+               char        magic[16];            // e.g. "dyld_v0    i386", "dyld_v1   armv7", etc.
+               uint32_t    mappingOffset;        // file offset to first dyld_cache_mapping_info
+               uint32_t    mappingCount;         // number of dyld_cache_mapping_info entries
+               uint32_t    imagesOffset;
+               uint32_t    imagesCount;
+               uint64_t    dyldBaseAddress;
+               uint64_t    codeSignatureOffset;
+               uint64_t    codeSignatureSize;
+               uint64_t    slideInfoOffset;
+               uint64_t    slideInfoSize;
                 uint64_t	localSymbolsOffset;
                 uint64_t	localSymbolsSize;
+               uint8_t     uuid[16];             // v1 and above, also recorded in dyld_all_image_infos v13 and later
             };
+
+           struct lldb_copy_dyld_cache_mapping_info
+           {
+               uint64_t        address;
+               uint64_t        size;
+               uint64_t        fileOffset;
+               uint32_t        maxProt;
+               uint32_t        initProt;
+           };
+
             struct lldb_copy_dyld_cache_local_symbols_info
             {
                     uint32_t        nlistOffset;
@@ -1578,19 +1604,48 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             //
             // Save some VM space, do not map the entire cache in one shot.
 
-            if (DataBufferSP dsc_data_sp = dsc_filespec.MemoryMapFileContents(0, sizeof(struct lldb_copy_dyld_cache_header))) 
+            DataBufferSP dsc_data_sp;
+            dsc_data_sp = dsc_filespec.MemoryMapFileContents(0, sizeof(struct lldb_copy_dyld_cache_header_v1));
+
+            if (dsc_data_sp)
             {
                 DataExtractor dsc_header_data(dsc_data_sp, byte_order, addr_byte_size);
 
-                lldb::offset_t offset = offsetof (struct lldb_copy_dyld_cache_header, mappingOffset); 
+                char version_str[17];
+                int version = -1;
+                lldb::offset_t offset = 0;
+                memcpy (version_str, dsc_header_data.GetData (&offset, 16), 16);
+                version_str[16] = '\0';
+                if (strncmp (version_str, "dyld_v", 6) == 0 && isdigit (version_str[6]))
+                {
+                    int v;
+                    if (::sscanf (version_str + 6, "%d", &v) == 1)
+                    {
+                        version = v;
+                    }
+                }
+
+                offset = offsetof (struct lldb_copy_dyld_cache_header_v1, mappingOffset); 
+
                 uint32_t mappingOffset = dsc_header_data.GetU32(&offset);
 
                 // If the mappingOffset points to a location inside the header, we've
                 // opened an old dyld shared cache, and should not proceed further.
-                if (mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header)) 
+                if ((version == 0 && mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header_v0))
+                    || (version >= 1 && mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header_v1)))
                 {
 
-                    offset = offsetof (struct lldb_copy_dyld_cache_header, localSymbolsOffset);
+                    DataBufferSP dsc_mapping_info_data_sp = dsc_filespec.MemoryMapFileContents(mappingOffset, sizeof (struct lldb_copy_dyld_cache_mapping_info));
+                    DataExtractor dsc_mapping_info_data(dsc_mapping_info_data_sp, byte_order, addr_byte_size);
+                    offset = 0;
+
+                    // The File addresses (from the in-memory Mach-O load commands) for the shared libraries
+                    // in the shared library cache need to be adjusted by an offset to match up with the
+                    // dylibOffset identifying field in the dyld_cache_local_symbol_entry's.  This offset is
+                    // recorded in mapping_offset_value.
+                    const uint64_t mapping_offset_value = dsc_mapping_info_data.GetU64(&offset);
+
+                    offset = offsetof (struct lldb_copy_dyld_cache_header_v1, localSymbolsOffset);
                     uint64_t localSymbolsOffset = dsc_header_data.GetU64(&offset);
                     uint64_t localSymbolsSize = dsc_header_data.GetU64(&offset);
 
@@ -1607,14 +1662,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             struct lldb_copy_dyld_cache_local_symbols_info local_symbols_info;
                             dsc_local_symbols_data.GetU32(&offset, &local_symbols_info.nlistOffset, 6);
 
-                            // The local_symbols_infos offsets are offsets into local symbols memory, NOT file offsets!
-                            // We first need to identify the local "entry" that matches the current header.
-                            // The "entry" is stored as a file offset in the dyld_shared_cache, so we need to
-                            // adjust the raw m_header value by slide and 0x30000000.
-
                             SectionSP text_section_sp(section_list->FindSectionByName(GetSegmentNameTEXT()));
 
-                            uint32_t header_file_offset = (text_section_sp->GetFileAddress() - 0x30000000);
+                            uint32_t header_file_offset = (text_section_sp->GetFileAddress() - mapping_offset_value);
 
                             offset = local_symbols_info.entriesOffset;
                             for (uint32_t entry_index = 0; entry_index < local_symbols_info.entriesCount; entry_index++)
