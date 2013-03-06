@@ -1,2 +1,1 @@
-settings set prompt [with-three-trailing-spaces]   
-
+settings set prompt "[with-three-trailing-spaces]   "

@@ -55,6 +55,28 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
                                         VarSetOperationType op)
 {
     Error error;
+
+    std::string value_str_no_quotes;
+    if (value_cstr)
+    {
+        switch (value_cstr[0])
+        {
+        case '"':
+        case '\'':
+            {
+                size_t len = strlen(value_cstr);
+                if (len <= 1 || value_cstr[len-1] != value_cstr[0])
+                {
+                    error.SetErrorString("mismatched quotes");
+                    return error;
+                }
+                value_str_no_quotes.assign (value_cstr + 1, len - 2);
+                value_cstr = value_str_no_quotes.c_str();
+            }
+            break;
+        }
+    }
+
     switch (op)
     {
     case eVarSetOperationInvalid:
