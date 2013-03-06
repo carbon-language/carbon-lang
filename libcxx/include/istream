@@ -1216,16 +1216,9 @@ basic_istream<_CharT, _Traits>::read(char_type* __s, streamsize __n)
         sentry __sen(*this, true);
         if (__sen)
         {
-            for (; __gc_ < __n; ++__gc_)
-            {
-                typename traits_type::int_type __i = this->rdbuf()->sbumpc();
-                if (traits_type::eq_int_type(__i, traits_type::eof()))
-                {
-                   this->setstate(ios_base::failbit | ios_base::eofbit);
-                   break;
-                }
-                *__s++ = traits_type::to_char_type(__i);
-            }
+            __gc_ = this->rdbuf()->sgetn(__s, __n);
+            if (__gc_ != __n)
+                this->setstate(ios_base::failbit | ios_base::eofbit);
         }
         else
             this->setstate(ios_base::failbit);
