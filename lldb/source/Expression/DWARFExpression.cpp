@@ -2612,6 +2612,18 @@ DWARFExpression::Evaluate
                 error_ptr->SetErrorString ("Unimplemented opcode DW_OP_call4.");
             return false;
 
+        //----------------------------------------------------------------------
+        // OPCODE: DW_OP_stack_value
+        // OPERANDS: None
+        // DESCRIPTION: Specifies that the object does not exist in memory but
+        // rather is a constant value.  The value from the top of the stack is
+        // the value to be used.  This is the actual object value and not the
+        // location.
+        //----------------------------------------------------------------------
+        case DW_OP_stack_value:
+            stack.back().SetValueType(Value::eValueTypeScalar);
+            break;
+
 #if 0
         //----------------------------------------------------------------------
         // OPCODE: DW_OP_call_ref
