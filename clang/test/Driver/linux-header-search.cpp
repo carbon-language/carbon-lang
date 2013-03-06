@@ -16,6 +16,34 @@
 // CHECK-UBUNTU-11-04: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-UBUNTU-11-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
 //
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target x86_64-unknown-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04 %s
+// CHECK-UBUNTU-13-04: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-UBUNTU-13-04: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-UBUNTU-13-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/c++/4.7"
+// CHECK-UBUNTU-13-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/c++/4.7/backward"
+// CHECK-UBUNTU-13-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/x86_64-linux-gnu/c++/4.7"
+// CHECK-UBUNTU-13-04: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-UBUNTU-13-04: "-internal-isystem" "{{.*}}/lib{{(64|32)?}}/clang/{{[0-9]\.[0-9]}}/include"
+// CHECK-UBUNTU-13-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/x86_64-linux-gnu"
+// CHECK-UBUNTU-13-04: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-UBUNTU-13-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
+// Test Ubuntu/Debian's new version of multiarch, with -m32.
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target x86_64-unknown-linux-gnu -m32 \
+// RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04-M32 %s
+// CHECK-UBUNTU-13-04-M32: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-UBUNTU-13-04-M32: "-triple" "i386-unknown-linux-gnu"
+// CHECK-UBUNTU-13-04-M32: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-UBUNTU-13-04-M32: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/c++/4.7"
+// CHECK-UBUNTU-13-04-M32: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/c++/4.7/x86_64-linux-gnu/32"
+// CHECK-UBUNTU-13-04-M32: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/c++/4.7/backward"
+// CHECK-UBUNTU-13-04-M32: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../include/x86_64-linux-gnu/c++/4.7/32"
+//
 // Thoroughly exercise the Debian multiarch environment.
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target i686-linux-gnu \

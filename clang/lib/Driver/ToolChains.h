@@ -501,6 +501,11 @@ public:
   std::vector<std::string> ExtraOpts;
 
 private:
+  static bool addLibStdCXXIncludePaths(Twine Base, Twine Suffix,
+                                       Twine TargetArchDir,
+                                       Twine MultiLibSuffix,
+                                       const ArgList &DriverArgs,
+                                       ArgStringList &CC1Args);
   static bool addLibStdCXXIncludePaths(Twine Base, Twine TargetArchDir,
                                        const ArgList &DriverArgs,
                                        ArgStringList &CC1Args);

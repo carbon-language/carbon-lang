@@ -2597,7 +2597,7 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   addExternCSystemInclude(DriverArgs, CC1Args, D.SysRoot + "/usr/include");
 }
 
-/// \brief Helper to add the thre variant paths for a libstdc++ installation.
+/// \brief Helper to add the three variant paths for a libstdc++ installation.
 /*static*/ bool Linux::addLibStdCXXIncludePaths(Twine Base, Twine TargetArchDir,
                                                 const ArgList &DriverArgs,
                                                 ArgStringList &CC1Args) {
@@ -2606,6 +2606,22 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   addSystemInclude(DriverArgs, CC1Args, Base);
   addSystemInclude(DriverArgs, CC1Args, Base + "/" + TargetArchDir);
   addSystemInclude(DriverArgs, CC1Args, Base + "/backward");
+  return true;
+}
+
+/// \brief Helper to add an extra variant path for an (Ubuntu) multilib
+/// libstdc++ installation.
+/*static*/ bool Linux::addLibStdCXXIncludePaths(Twine Base, Twine Suffix,
+                                                Twine TargetArchDir,
+                                                Twine MultiLibSuffix,
+                                                const ArgList &DriverArgs,
+                                                ArgStringList &CC1Args) {
+  if (!addLibStdCXXIncludePaths(Base+Suffix, TargetArchDir + MultiLibSuffix,
+                                DriverArgs, CC1Args))
+    return false;
+
+  addSystemInclude(DriverArgs, CC1Args, Base + "/" + TargetArchDir + Suffix
+                   + MultiLibSuffix);
   return true;
 }
 
@@ -2636,8 +2652,14 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   StringRef Version = GCCInstallation.getVersion().Text;
   StringRef TripleStr = GCCInstallation.getTriple().str();
 
+  if (addLibStdCXXIncludePaths(LibDir.str() + "/../include", 
+                               "/c++/" + Version.str(),
+                               TripleStr,
+                               GCCInstallation.getMultiarchSuffix(),
+                               DriverArgs, CC1Args))
+    return;
+
   const std::string IncludePathCandidates[] = {
-    LibDir.str() + "/../include/c++/" + Version.str(),
     // Gentoo is weird and places its headers inside the GCC install, so if the
     // first attempt to find the headers fails, try this pattern.
     InstallDir.str() + "/include/g++-v4",
