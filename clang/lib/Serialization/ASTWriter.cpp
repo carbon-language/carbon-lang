@@ -42,6 +42,7 @@
 #include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/FileSystem.h"
@@ -1372,32 +1373,38 @@ namespace {
     HeaderFileInfoTrait(ASTWriter &Writer)
       : Writer(Writer) { }
     
-    typedef const char *key_type;
-    typedef key_type key_type_ref;
+    struct key_type {
+      const FileEntry *FE;
+      const char *Filename;
+    };
+    typedef const key_type &key_type_ref;
     
     typedef HeaderFileInfo data_type;
     typedef const data_type &data_type_ref;
     
-    static unsigned ComputeHash(const char *path) {
-      // The hash is based only on the filename portion of the key, so that the
-      // reader can match based on filenames when symlinking or excess path
-      // elements ("foo/../", "../") change the form of the name. However,
-      // complete path is still the key.
-      return llvm::HashString(llvm::sys::path::filename(path));
+    static unsigned ComputeHash(key_type_ref key) {
+      // The hash is based only on size/time of the file, so that the reader can
+      // match even when symlinking or excess path elements ("foo/../", "../")
+      // change the form of the name. However, complete path is still the key.
+      return llvm::hash_combine(key.FE->getSize(),
+                                key.FE->getModificationTime());
     }
     
     std::pair<unsigned,unsigned>
-    EmitKeyDataLength(raw_ostream& Out, const char *path,
-                      data_type_ref Data) {
-      unsigned StrLen = strlen(path);
-      clang::io::Emit16(Out, StrLen);
+    EmitKeyDataLength(raw_ostream& Out, key_type_ref key, data_type_ref Data) {
+      unsigned KeyLen = strlen(key.Filename) + 1 + 8 + 8;
+      clang::io::Emit16(Out, KeyLen);
       unsigned DataLen = 1 + 2 + 4 + 4;
       clang::io::Emit8(Out, DataLen);
-      return std::make_pair(StrLen + 1, DataLen);
+      return std::make_pair(KeyLen, DataLen);
     }
     
-    void EmitKey(raw_ostream& Out, const char *path, unsigned KeyLen) {
-      Out.write(path, KeyLen);
+    void EmitKey(raw_ostream& Out, key_type_ref key, unsigned KeyLen) {
+      clang::io::Emit64(Out, key.FE->getSize());
+      KeyLen -= 8;
+      clang::io::Emit64(Out, key.FE->getModificationTime());
+      KeyLen -= 8;
+      Out.write(key.Filename, KeyLen);
     }
     
     void EmitData(raw_ostream &Out, key_type_ref,
@@ -1479,7 +1486,8 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
       SavedStrings.push_back(Filename);
     }
     
-    Generator.insert(Filename, HFI, GeneratorTrait);
+    HeaderFileInfoTrait::key_type key = { File, Filename };
+    Generator.insert(key, HFI, GeneratorTrait);
     ++NumHeaderSearchEntries;
   }
   

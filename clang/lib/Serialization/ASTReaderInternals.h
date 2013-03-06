@@ -25,6 +25,7 @@ namespace clang {
 class ASTReader;
 class HeaderSearch;
 struct HeaderFileInfo;
+class FileEntry;
   
 namespace serialization {
 
@@ -198,8 +199,14 @@ class HeaderFileInfoTrait {
   const char *FrameworkStrings;
 
 public:
-  typedef const char *external_key_type;
-  typedef const char *internal_key_type;
+  typedef const FileEntry *external_key_type;
+
+  struct internal_key_type {
+    off_t Size;
+    time_t ModTime;
+    const char *Filename;
+  };
+  typedef const internal_key_type &internal_key_ref;
   
   typedef HeaderFileInfo data_type;
   
@@ -207,19 +214,16 @@ public:
                       const char *FrameworkStrings)
   : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings) { }
   
-  static unsigned ComputeHash(const char *path);
-  static internal_key_type GetInternalKey(const char *path);
-  bool EqualKey(internal_key_type a, internal_key_type b);
+  static unsigned ComputeHash(internal_key_ref ikey);
+  static internal_key_type GetInternalKey(const FileEntry *FE);
+  bool EqualKey(internal_key_ref a, internal_key_ref b);
   
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d);
   
-  static internal_key_type ReadKey(const unsigned char *d, unsigned) {
-    return (const char *)d;
-  }
+  static internal_key_type ReadKey(const unsigned char *d, unsigned);
   
-  data_type ReadData(const internal_key_type, const unsigned char *d,
-                     unsigned DataLen);
+  data_type ReadData(internal_key_ref,const unsigned char *d, unsigned DataLen);
 };
 
 /// \brief The on-disk hash table used for known header files.
