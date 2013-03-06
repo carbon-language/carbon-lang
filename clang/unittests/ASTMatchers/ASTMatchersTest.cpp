@@ -313,6 +313,13 @@ TEST(DeclarationMatcher, ClassIsDerived) {
       recordDecl(isDerivedFrom(recordDecl(hasName("X")).bind("test")))));
 }
 
+TEST(DeclarationMatcher, hasMethod) {
+  EXPECT_TRUE(matches("class A { void func(); };",
+                      recordDecl(hasMethod(hasName("func")))));
+  EXPECT_TRUE(notMatches("class A { void func(); };",
+                         recordDecl(hasMethod(isPublic()))));
+}
+
 TEST(DeclarationMatcher, ClassDerivedFromDependentTemplateSpecialization) {
   EXPECT_TRUE(matches(
      "template <typename T> struct A {"
@@ -1022,6 +1029,12 @@ TEST(Matcher, HasOperatorNameForOverloadedOperatorCall) {
               "bool operator&&(Y x, Y y) { return true; }; "
               "Y a; Y b; bool c = a && b;",
               OpCallLessLess));
+  DeclarationMatcher ClassWithOpStar =
+    recordDecl(hasMethod(hasOverloadedOperatorName("*")));
+  EXPECT_TRUE(matches("class Y { int operator*(); };",
+                      ClassWithOpStar));
+  EXPECT_TRUE(notMatches("class Y { void myOperator(); };",
+              ClassWithOpStar)) ;
 }
 
 TEST(Matcher, NestedOverloadedOperatorCalls) {
@@ -1327,6 +1340,18 @@ TEST(Matcher, References) {
       notMatches("class X {}; void y(X y) { X x = y; }", ReferenceClassX));
   EXPECT_TRUE(
       notMatches("class X {}; void y(X *y) { X *&x = y; }", ReferenceClassX));
+}
+
+TEST(QualType, hasCanonicalType) {
+  EXPECT_TRUE(notMatches("typedef int &int_ref;"
+                         "int a;"
+                         "int_ref b = a;",
+                         varDecl(hasType(qualType(referenceType())))));
+  EXPECT_TRUE(
+      matches("typedef int &int_ref;"
+              "int a;"
+              "int_ref b = a;",
+              varDecl(hasType(qualType(hasCanonicalType(referenceType()))))));
 }
 
 TEST(HasParameter, CallsInnerMatcher) {

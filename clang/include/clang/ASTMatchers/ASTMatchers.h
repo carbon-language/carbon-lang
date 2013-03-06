@@ -1384,18 +1384,26 @@ AST_MATCHER_P(NamedDecl, matchesName, std::string, RegExp) {
 /// \brief Matches overloaded operator names.
 ///
 /// Matches overloaded operator names specified in strings without the
-/// "operator" prefix, such as "<<", for OverloadedOperatorCall's.
+/// "operator" prefix: e.g. "<<".
 ///
-/// Example matches a << b
-///     (matcher == operatorCallExpr(hasOverloadedOperatorName("<<")))
+/// Given:
 /// \code
-///   a << b;
-///   c && d;  // assuming both operator<<
-///            // and operator&& are overloaded somewhere.
+///   class A { int operator*(); };
+///   const A &operator<<(const A &a, const A &b);
+///   A a;
+///   a << a;   // <-- This matches
 /// \endcode
-AST_MATCHER_P(CXXOperatorCallExpr,
-              hasOverloadedOperatorName, std::string, Name) {
-  return getOperatorSpelling(Node.getOperator()) == Name;
+///
+/// \c operatorCallExpr(hasOverloadedOperatorName("<<"))) matches the specified
+/// line and \c recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
+/// the declaration of \c A.
+///
+/// Usable as: Matcher<CXXOperatorCallExpr>, Matcher<CXXMethodDecl>
+inline internal::PolymorphicMatcherWithParam1<
+    internal::HasOverloadedOperatorNameMatcher, StringRef>
+hasOverloadedOperatorName(const StringRef Name) {
+  return internal::PolymorphicMatcherWithParam1<
+      internal::HasOverloadedOperatorNameMatcher, StringRef>(Name);
 }
 
 /// \brief Matches C++ classes that are directly or indirectly derived from
@@ -1443,6 +1451,27 @@ inline internal::Matcher<CXXRecordDecl> isSameOrDerivedFrom(
     StringRef BaseName) {
   assert(!BaseName.empty());
   return isSameOrDerivedFrom(hasName(BaseName));
+}
+
+/// \brief Matches the first method of a class or struct that satisfies \c
+/// InnerMatcher.
+///
+/// Given:
+/// \code
+///   class A { void func(); };
+///   class B { void member(); };
+/// \code
+///
+/// \c recordDecl(hasMethod(hasName("func"))) matches the declaration of \c A
+/// but not \c B.
+AST_MATCHER_P(CXXRecordDecl, hasMethod, internal::Matcher<CXXMethodDecl>,
+              InnerMatcher) {
+  for (CXXRecordDecl::method_iterator I = Node.method_begin(),
+                                      E = Node.method_end();
+       I != E; ++I)
+    if (InnerMatcher.matches(**I, Finder, Builder))
+      return true;
+  return false;
 }
 
 /// \brief Matches AST nodes that have child AST nodes that match the
@@ -1784,6 +1813,23 @@ AST_MATCHER_P(QualType, references, internal::Matcher<QualType>,
               InnerMatcher) {
   return (!Node.isNull() && Node->isReferenceType() &&
           InnerMatcher.matches(Node->getPointeeType(), Finder, Builder));
+}
+
+/// \brief Matches QualTypes whose canonical type matches InnerMatcher.
+///
+/// Given:
+/// \code
+///   typedef int &int_ref;
+///   int a;
+///   int_ref b = a;
+/// \code
+///
+/// \c varDecl(hasType(qualType(referenceType()))))) will not match the
+/// declaration of b but \c
+/// varDecl(hasType(qualType(hasCanonicalType(referenceType())))))) does.
+AST_MATCHER_P(QualType, hasCanonicalType, internal::Matcher<QualType>,
+              InnerMatcher) {
+  return InnerMatcher.matches(Node.getCanonicalType(), Finder, Builder);
 }
 
 /// \brief Overloaded to match the referenced type's declaration.

@@ -1393,17 +1393,43 @@ constructorDecl(hasAnyConstructorInitializer(isWritten()))
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;</td><td class="name" onclick="toggle('hasOverloadedOperatorName0')"><a name="hasOverloadedOperatorName0Anchor">hasOverloadedOperatorName</a></td><td>std::string Name</td></tr>
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;</td><td class="name" onclick="toggle('hasOverloadedOperatorName0')"><a name="hasOverloadedOperatorName0Anchor">hasOverloadedOperatorName</a></td><td>StringRef Name</td></tr>
 <tr><td colspan="4" class="doc" id="hasOverloadedOperatorName0"><pre>Matches overloaded operator names.
 
 Matches overloaded operator names specified in strings without the
-"operator" prefix, such as "&lt;&lt;", for OverloadedOperatorCall's.
+"operator" prefix: e.g. "&lt;&lt;".
 
-Example matches a &lt;&lt; b
-    (matcher == operatorCallExpr(hasOverloadedOperatorName("&lt;&lt;")))
-  a &lt;&lt; b;
-  c &amp;&amp; d;  assuming both operator&lt;&lt;
-           and operator&amp;&amp; are overloaded somewhere.
+Given:
+  class A { int operator*(); };
+  const A &amp;operator&lt;&lt;(const A &amp;a, const A &amp;b);
+  A a;
+  a &lt;&lt; a;   &lt;-- This matches
+
+operatorCallExpr(hasOverloadedOperatorName("&lt;&lt;"))) matches the specified
+line and recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
+the declaration of A.
+
+Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;</td><td class="name" onclick="toggle('hasOverloadedOperatorName1')"><a name="hasOverloadedOperatorName1Anchor">hasOverloadedOperatorName</a></td><td>StringRef Name</td></tr>
+<tr><td colspan="4" class="doc" id="hasOverloadedOperatorName1"><pre>Matches overloaded operator names.
+
+Matches overloaded operator names specified in strings without the
+"operator" prefix: e.g. "&lt;&lt;".
+
+Given:
+  class A { int operator*(); };
+  const A &amp;operator&lt;&lt;(const A &amp;a, const A &amp;b);
+  A a;
+  a &lt;&lt; a;   &lt;-- This matches
+
+operatorCallExpr(hasOverloadedOperatorName("&lt;&lt;"))) matches the specified
+line and recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
+the declaration of A.
+
+Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;
 </pre></td></tr>
 
 
@@ -2230,6 +2256,18 @@ Example matches A() in the last line
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXRecordDecl.html">CXXRecordDecl</a>&gt;</td><td class="name" onclick="toggle('hasMethod0')"><a name="hasMethod0Anchor">hasMethod</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasMethod0"><pre>Matches the first method of a class or struct that satisfies InnerMatcher.
+
+Given:
+  class A { void func(); };
+  class B { void member(); };
+
+recordDecl(hasMethod(hasName("func"))) matches the declaration of A
+but not B.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXRecordDecl.html">CXXRecordDecl</a>&gt;</td><td class="name" onclick="toggle('isDerivedFrom0')"><a name="isDerivedFrom0Anchor">isDerivedFrom</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NamedDecl.html">NamedDecl</a>&gt; Base</td></tr>
 <tr><td colspan="4" class="doc" id="isDerivedFrom0"><pre>Matches C++ classes that are directly or indirectly derived from
 a class matching Base.
@@ -2906,6 +2944,19 @@ pointerType(pointee(isConstQualified(), isInteger()))
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1BlockPointerType.html">BlockPointerType</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1MemberPointerType.html">MemberPointerType</a>&gt;,
   Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1PointerType.html">PointerType</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ReferenceType.html">ReferenceType</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('hasCanonicalType0')"><a name="hasCanonicalType0Anchor">hasCanonicalType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasCanonicalType0"><pre>Matches QualTypes whose canonical type matches InnerMatcher.
+
+Given:
+  typedef int &amp;int_ref;
+  int a;
+  int_ref b = a;
+
+varDecl(hasType(qualType(referenceType()))))) will not match the
+declaration of b but varDecl(hasType(qualType(hasCanonicalType(referenceType())))))) does.
 </pre></td></tr>
 
 

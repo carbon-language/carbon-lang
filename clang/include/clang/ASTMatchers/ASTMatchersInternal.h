@@ -370,6 +370,44 @@ template <typename T> struct has_getDecl {
   static bool const value = sizeof(f<Derived>(0)) == 2;
 };
 
+/// \brief Matches overloaded operators with a specific name.
+///
+/// The type argument ArgT is not used by this matcher but is used by
+/// PolymorphicMatcherWithParam1 and should be StringRef.
+template <typename T, typename ArgT>
+class HasOverloadedOperatorNameMatcher : public SingleNodeMatcherInterface<T> {
+  TOOLING_COMPILE_ASSERT((llvm::is_same<T, CXXOperatorCallExpr>::value ||
+                          llvm::is_same<T, CXXMethodDecl>::value),
+                         unsupported_class_for_matcher);
+  TOOLING_COMPILE_ASSERT((llvm::is_same<ArgT, StringRef>::value),
+                         argument_type_must_be_StringRef);
+public:
+  explicit HasOverloadedOperatorNameMatcher(const StringRef Name)
+      : SingleNodeMatcherInterface<T>(), Name(Name) {}
+
+  virtual bool matchesNode(const T &Node) const LLVM_OVERRIDE {
+    return matchesSpecialized(Node);
+  }
+
+private:
+
+  /// \brief CXXOperatorCallExpr exist only for calls to overloaded operators
+  /// so this function returns true if the call is to an operator of the given
+  /// name.
+  bool matchesSpecialized(const CXXOperatorCallExpr &Node) const {
+    return getOperatorSpelling(Node.getOperator()) == Name;
+  }
+
+  /// \brief Returns true only if CXXMethodDecl represents an overloaded
+  /// operator and has the given operator name.
+  bool matchesSpecialized(const CXXMethodDecl &Node) const {
+    return Node.isOverloadedOperator() &&
+           getOperatorSpelling(Node.getOverloadedOperator()) == Name;
+  }
+
+  std::string Name;
+};
+
 /// \brief Matches declarations for QualType and CallExpr.
 ///
 /// Type argument DeclMatcherT is required by PolymorphicMatcherWithParam1 but
