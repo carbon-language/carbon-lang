@@ -76,7 +76,7 @@ def warn_doc_param_not_attached_to_a_function_decl : Warning<
 def warn_doc_function_method_decl_mismatch : Warning<
   "'%select{\\|@}0%select{function|method|callback}1' command should be "
   "used in a comment attached to "
-  "%select{a function|an objective-C method|a pointer to function}2 declaration">,
+  "%select{a function|an Objective-C method|a pointer to function}2 declaration">,
   InGroup<Documentation>, DefaultIgnore;
   
 def warn_doc_param_duplicate : Warning<
