@@ -24,7 +24,6 @@ namespace llvm {
 class DominatorTree;
 class Instruction;
 class Value;
-class IVUsers;
 class ScalarEvolution;
 class SCEV;
 class IVUsers;
