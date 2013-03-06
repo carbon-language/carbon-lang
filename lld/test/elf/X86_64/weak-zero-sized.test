@@ -1,0 +1,34 @@
+# Test for zero sized weak atoms, there is only a single weak atom
+RUN: lld-core -reader ELF -writer ELF -arch x86_64 %p/Inputs/weak-zero-sized.o \
+RUN: -o %t
+RUN: llvm-nm %t | FileCheck -check-prefix=WEAKORDER %s
+RUN: lld-core -reader ELF -arch x86_64 %p/Inputs/weak-zero-sized.o \
+RUN: -layout-pass=true -o %t2 
+RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
+
+WEAKORDER: 004000b0 T _start
+
+WEAKATOMSORDER:  - name:            .text
+WEAKATOMSORDER:    alignment:       2^2
+WEAKATOMSORDER:    section-name:    .text
+WEAKATOMSORDER:      - kind:            layout-after
+WEAKATOMSORDER:        offset:          0
+WEAKATOMSORDER:        target:          L001
+WEAKATOMSORDER:  - name:            _start
+WEAKATOMSORDER:    scope:           global
+WEAKATOMSORDER:    merge:           as-weak
+WEAKATOMSORDER:    alignment:       2^2
+WEAKATOMSORDER:    section-name:    .text
+WEAKATOMSORDER:    references:      
+WEAKATOMSORDER:      - kind:            layout-after
+WEAKATOMSORDER:        offset:          0
+WEAKATOMSORDER:        target:          L001
+WEAKATOMSORDER:  - ref-name:        L001
+WEAKATOMSORDER:    scope:           global
+WEAKATOMSORDER:    content:         [ C3 ]
+WEAKATOMSORDER:    alignment:       2^2
+WEAKATOMSORDER:    section-name:    .text
+WEAKATOMSORDER:    references:      
+WEAKATOMSORDER:      - kind:            layout-before
+WEAKATOMSORDER:        offset:          0
+WEAKATOMSORDER:        target:          .text

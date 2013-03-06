@@ -346,6 +346,11 @@ public:
       }
 
       ELFDefinedAtom<ELFT> *previous_atom = nullptr;
+      // Don't allocate content to a weak symbol, as they may be merged away.
+      // Create an anonymous atom to hold the data.
+      ELFDefinedAtom<ELFT> *anonAtom = nullptr;
+      ELFReference<ELFT> *anonPrecededBy = nullptr;
+      ELFReference<ELFT> *anonFollowedBy = nullptr;
 
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
@@ -380,9 +385,29 @@ public:
           contentSize = isCommon ? 0 : (*(si + 1))->st_value - (*si)->st_value;
         }
 
+        // Check to see if we need to add the FollowOn Reference
+        // We dont want to do for symbols that are
+        // a) common symbols
+        ELFReference<ELFT> *followOn = nullptr;
+        if (!isCommon && previous_atom) {
+          // Replace the followon atom with the anonymous
+          // atom that we created, so that the next symbol
+          // that we create is a followon from the anonymous
+          // atom
+          if (!anonFollowedBy) {
+            followOn = new (_readerStorage)
+                ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
+            previous_atom->addReference(followOn);
+          }
+          else 
+            followOn = anonFollowedBy;
+        }
+
         // Don't allocate content to a weak symbol, as they may be merged away.
         // Create an anonymous atom to hold the data.
-        ELFDefinedAtom<ELFT> *anonAtom = nullptr;
+        anonAtom = nullptr;
+        anonPrecededBy = nullptr;
+        anonFollowedBy = nullptr;
         if ((*si)->getBinding() == llvm::ELF::STB_WEAK && contentSize != 0) {
           // Create a new non-weak ELF symbol.
           auto sym = new (_readerStorage) Elf_Sym;
@@ -392,25 +417,25 @@ public:
               "", sectionName, sym, i.first,
               ArrayRef<uint8_t>((uint8_t *)sectionContents.data() +
                                 (*si)->st_value, contentSize));
+
+          // If this is the last atom, lets not create a followon 
+          // reference
+          if ((si + 1) != se) 
+            anonFollowedBy = new (_readerStorage)
+               ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
+          anonPrecededBy = new (_readerStorage)
+              ELFReference<ELFT>(lld::Reference::kindLayoutBefore);
+          // Add the references to the anonymous atom that we created
+          if (anonFollowedBy)
+            anonAtom->addReference(anonFollowedBy);
+          anonAtom->addReference(anonPrecededBy);
+          if (previous_atom) 
+            anonPrecededBy->setTarget(previous_atom);
           contentSize = 0;
         }
 
         ArrayRef<uint8_t> symbolData = ArrayRef<uint8_t>(
             (uint8_t *)sectionContents.data() + (*si)->st_value, contentSize);
-
-        // Check to see if we need to add the FollowOn Reference
-        // We dont want to do for symbols that are
-        // a) common symbols
-        // so, lets add a follow-on reference from the previous atom to the 
-        // current atom as well as lets add a preceded-by reference from the 
-        // current atom to the previous atom, so that the previous atom 
-        // is not removed in any case
-        ELFReference<ELFT> *followOn = nullptr;
-        if (!isCommon && previous_atom) {
-          followOn = new (_readerStorage)
-              ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
-          previous_atom->addReference(followOn);
-        }
 
         // If the linker finds that a section has global atoms that are in a 
         // mergeable section, treat them as defined atoms as they shouldnt be
@@ -434,11 +459,24 @@ public:
         auto newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, sectionName, *si, i.first, symbolData);
 
-        // If we are inserting a followOn reference, lets add a precededBy 
-        // reference too
+        // If the atom was a weak symbol, lets create a followon 
+        // reference to the anonymous atom that we created
+        if ((*si)->getBinding() == llvm::ELF::STB_WEAK && anonAtom) {
+          ELFReference<ELFT> *wFollowedBy = new (_readerStorage)
+              ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
+          wFollowedBy->setTarget(anonAtom);
+          newAtom->addReference(wFollowedBy);
+        }
+
         if (followOn) {
           ELFReference<ELFT> *precededby = nullptr;
-          followOn->setTarget(newAtom);
+          // Set the followon atom to the weak atom 
+          // that we have created, so that they would
+          // alias when the file gets written
+          if (anonAtom) 
+            followOn->setTarget(anonAtom);
+          else
+            followOn->setTarget(newAtom);
           // Add a preceded by reference only if the current atom is not a 
           // weak atom
           if ((*si)->getBinding() != llvm::ELF::STB_WEAK) {
@@ -451,7 +489,9 @@ public:
 
         // The previous atom is always the atom created before unless
         // the atom is a weak atom
-        if ((*si)->getBinding() != llvm::ELF::STB_WEAK)
+        if (anonAtom)
+          previous_atom = anonAtom;
+        else
           previous_atom = newAtom;
 
         _definedAtoms._atoms.push_back(newAtom);
