@@ -342,6 +342,7 @@ class SizeClassAllocator64 {
 
   NOINLINE void DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
+    CHECK_GT(b->count, 0);
     region->free_list.Push(b);
     region->n_freed += b->count;
   }
@@ -535,6 +536,7 @@ class SizeClassAllocator64 {
       beg_idx += count * size;
       if (beg_idx + count * size + size > region->mapped_user)
         break;
+      CHECK_GT(b->count, 0);
       region->free_list.Push(b);
     }
     return b;
@@ -620,6 +622,7 @@ class SizeClassAllocator32 {
     CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
     SpinMutexLock l(&sci->mutex);
+    CHECK_GT(b->count, 0);
     sci->free_list.push_front(b);
   }
 
@@ -741,12 +744,15 @@ class SizeClassAllocator32 {
       }
       b->batch[b->count++] = (void*)i;
       if (b->count == max_count) {
+        CHECK_GT(b->count, 0);
         sci->free_list.push_back(b);
         b = 0;
       }
     }
-    if (b)
+    if (b) {
+      CHECK_GT(b->count, 0);
       sci->free_list.push_back(b);
+    }
   }
 
   struct State {
@@ -791,8 +797,12 @@ struct SizeClassAllocatorLocalCache {
   void Deallocate(SizeClassAllocator *allocator, uptr class_id, void *p) {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
+    // If the first allocator call on a new thread is a deallocation, then
+    // max_count will be zero, leading to check failure.
+    InitCache();
     stats_.Add(AllocatorStatFreed, SizeClassMap::Size(class_id));
     PerClass *c = &per_class_[class_id];
+    CHECK_NE(c->max_count, 0UL);
     if (UNLIKELY(c->count == c->max_count))
       Drain(allocator, class_id);
     c->batch[c->count++] = p;
@@ -818,7 +828,7 @@ struct SizeClassAllocatorLocalCache {
   AllocatorStats stats_;
 
   void InitCache() {
-    if (per_class_[0].max_count)
+    if (per_class_[1].max_count)
       return;
     for (uptr i = 0; i < kNumClasses; i++) {
       PerClass *c = &per_class_[i];
@@ -853,6 +863,7 @@ struct SizeClassAllocatorLocalCache {
     }
     b->count = cnt;
     c->count -= cnt;
+    CHECK_GT(b->count, 0);
     allocator->DeallocateBatch(&stats_, class_id, b);
   }
 };

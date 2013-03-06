@@ -482,6 +482,42 @@ TEST(SanitizerCommon, AllocatorLeakTest) {
 
   a.TestOnlyUnmap();
 }
+
+// Struct which is allocated to pass info to new threads.  The new thread frees
+// it.
+struct NewThreadParams {
+  AllocatorCache *thread_cache;
+  AllocatorCache::Allocator *allocator;
+  uptr class_id;
+};
+
+// Called in a new thread.  Just frees its argument.
+static void *DeallocNewThreadWorker(void *arg) {
+  NewThreadParams *params = reinterpret_cast<NewThreadParams*>(arg);
+  params->thread_cache->Deallocate(params->allocator, params->class_id, params);
+  return NULL;
+}
+
+// The allocator cache is supposed to be POD and zero initialized.  We should be
+// able to call Deallocate on a zeroed cache, and it will self-initialize.
+TEST(Allocator, AllocatorCacheDeallocNewThread) {
+  AllocatorCache::Allocator allocator;
+  allocator.Init();
+  AllocatorCache main_cache;
+  AllocatorCache child_cache;
+  memset(&main_cache, 0, sizeof(main_cache));
+  memset(&child_cache, 0, sizeof(child_cache));
+
+  uptr class_id = DefaultSizeClassMap::ClassID(sizeof(NewThreadParams));
+  NewThreadParams *params = reinterpret_cast<NewThreadParams*>(
+      main_cache.Allocate(&allocator, class_id));
+  params->thread_cache = &child_cache;
+  params->allocator = &allocator;
+  params->class_id = class_id;
+  pthread_t t;
+  EXPECT_EQ(0, pthread_create(&t, 0, DeallocNewThreadWorker, params));
+  EXPECT_EQ(NULL, pthread_join(t, 0));
+}
 #endif
 
 TEST(Allocator, Basic) {
