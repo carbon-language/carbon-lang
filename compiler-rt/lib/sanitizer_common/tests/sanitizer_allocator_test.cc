@@ -516,7 +516,7 @@ TEST(Allocator, AllocatorCacheDeallocNewThread) {
   params->class_id = class_id;
   pthread_t t;
   EXPECT_EQ(0, pthread_create(&t, 0, DeallocNewThreadWorker, params));
-  EXPECT_EQ(NULL, pthread_join(t, 0));
+  EXPECT_EQ(0, pthread_join(t, 0));
 }
 #endif
 
