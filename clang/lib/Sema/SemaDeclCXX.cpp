@@ -352,16 +352,25 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
   //   parameter pack. If it is specified in a
   //   parameter-declaration-clause, it shall not occur within a
   //   declarator or abstract-declarator of a parameter-declaration.
+  bool MightBeFunction = D.isFunctionDeclarationContext();
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     DeclaratorChunk &chunk = D.getTypeObject(i);
     if (chunk.Kind == DeclaratorChunk::Function) {
+      if (MightBeFunction) {
+        // This is a function declaration. It can have default arguments, but
+        // keep looking in case its return type is a function type with default
+        // arguments.
+        MightBeFunction = false;
+        continue;
+      }
       for (unsigned argIdx = 0, e = chunk.Fun.NumArgs; argIdx != e; ++argIdx) {
         ParmVarDecl *Param =
           cast<ParmVarDecl>(chunk.Fun.ArgInfo[argIdx].Param);
         if (Param->hasUnparsedDefaultArg()) {
           CachedTokens *Toks = chunk.Fun.ArgInfo[argIdx].DefaultArgTokens;
           Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
-            << SourceRange((*Toks)[1].getLocation(), Toks->back().getLocation());
+            << SourceRange((*Toks)[1].getLocation(),
+                           Toks->back().getLocation());
           delete Toks;
           chunk.Fun.ArgInfo[argIdx].DefaultArgTokens = 0;
         } else if (Param->getDefaultArg()) {
@@ -370,6 +379,8 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
           Param->setDefaultArg(0);
         }
       }
+    } else if (chunk.Kind != DeclaratorChunk::Paren) {
+      MightBeFunction = false;
     }
   }
 }

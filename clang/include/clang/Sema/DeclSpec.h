@@ -1799,8 +1799,7 @@ public:
     return DeclTypeInfo[i];
   }
 
-  void DropFirstTypeObject()
-  {
+  void DropFirstTypeObject() {
     assert(!DeclTypeInfo.empty() && "No type chunks to drop.");
     DeclTypeInfo.front().destroy();
     DeclTypeInfo.erase(DeclTypeInfo.begin());
@@ -1891,16 +1890,12 @@ public:
   /// isn't a function declarator, if the type specifier refers to a function
   /// type. This routine checks for both cases.
   bool isDeclarationOfFunction() const;
-  
-  /// \brief Return true if a function declarator at this position would be a
-  /// function declaration.
-  bool isFunctionDeclaratorAFunctionDeclaration() const {
+
+  /// \brief Return true if this declaration appears in a context where a
+  /// function declarator would be a function declaration.
+  bool isFunctionDeclarationContext() const {
     if (getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
       return false;
-
-    for (unsigned I = 0, N = getNumTypeObjects(); I != N; ++I)
-      if (getTypeObject(I).Kind != DeclaratorChunk::Paren)
-        return false;
 
     switch (Context) {
     case FileContext:
@@ -1928,6 +1923,19 @@ public:
       return false;
     }
     llvm_unreachable("unknown context kind!");
+  }
+  
+  /// \brief Return true if a function declarator at this position would be a
+  /// function declaration.
+  bool isFunctionDeclaratorAFunctionDeclaration() const {
+    if (!isFunctionDeclarationContext())
+      return false;
+
+    for (unsigned I = 0, N = getNumTypeObjects(); I != N; ++I)
+      if (getTypeObject(I).Kind != DeclaratorChunk::Paren)
+        return false;
+
+    return true;
   }
 
   /// takeAttributes - Takes attributes from the given parsed-attributes

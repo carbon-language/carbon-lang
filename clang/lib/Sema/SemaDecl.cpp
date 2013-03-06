@@ -4117,6 +4117,11 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
       D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
     Previous.clear();
 
+  // Check that there are no default arguments other than in the parameters
+  // of a function declaration (C++ only).
+  if (getLangOpts().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+
   NamedDecl *New;
 
   bool AddToScope = true;
@@ -4356,11 +4361,6 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Previous.clear();
   }
 
-  if (getLangOpts().CPlusPlus) {
-    // Check that there are no default arguments (C++ only).
-    CheckExtraCXXDefaultArguments(D);
-  }
-
   DiagnoseFunctionSpecifiers(D);
 
   if (D.getDeclSpec().isThreadSpecified())
@@ -4590,10 +4590,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               MultiTemplateParamsArg TemplateParamLists) {
   QualType R = TInfo->getType();
   DeclarationName Name = GetNameForDeclarator(D).getName();
-
-  // Check that there are no default arguments (C++ only).
-  if (getLangOpts().CPlusPlus)
-    CheckExtraCXXDefaultArguments(D);
 
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpec();
   assert(SCSpec != DeclSpec::SCS_typedef &&
