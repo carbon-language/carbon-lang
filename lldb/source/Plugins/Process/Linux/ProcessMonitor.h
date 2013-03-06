@@ -120,19 +120,19 @@ public:
 
     /// Reads all general purpose registers into the specified buffer.
     bool
-    ReadGPR(lldb::tid_t tid, void *buf);
+    ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Reads all floating point registers into the specified buffer.
     bool
-    ReadFPR(lldb::tid_t tid, void *buf);
+    ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Writes all general purpose registers into the specified buffer.
     bool
-    WriteGPR(lldb::tid_t tid, void *buf);
+    WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Writes all floating point registers into the specified buffer.
     bool
-    WriteFPR(lldb::tid_t tid, void *buf);
+    WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.
@@ -169,10 +169,10 @@ private:
     ProcessLinux *m_process;
 
     lldb::thread_t m_operation_thread;
+    lldb::thread_t m_monitor_thread;
     lldb::pid_t m_pid;
     int m_terminal_fd;
 
-    lldb::thread_t m_monitor_thread;
 
     lldb_private::Mutex m_server_mutex;
     int m_client_fd;

@@ -58,6 +58,8 @@ Get_PT_IO_OP(int op)
     }
 }
 
+// Wrapper for ptrace to catch errors and log calls.
+// Note that ptrace sets errno on error because -1 is reserved as a valid result.
 extern long
 PtraceWrapper(int req, ::pid_t pid, void *addr, int data,
               const char* reqName, const char* file, int line)
@@ -84,7 +86,7 @@ PtraceWrapper(int req, ::pid_t pid, void *addr, int data,
 
     //PtraceDisplayBytes(req, data);
 
-    if (log && (result == -1 || errno != 0))
+    if (log && errno != 0)
     {
         const char* str;
         switch (errno)
@@ -112,10 +114,21 @@ PtraceWrapper(int req, ::pid_t pid, void *addr, int data,
     return result;
 }
 
+// Wrapper for ptrace when logging is not required.
+// Sets errno to 0 prior to calling ptrace.
+extern long
+PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data)
+{
+    long result = 0;
+    errno = 0;
+    result = ptrace(req, pid, addr, data);
+    return result;
+}
+
 #define PTRACE(req, pid, addr, data) \
     PtraceWrapper((req), (pid), (addr), (data), #req, __FILE__, __LINE__)
 #else
-#define PTRACE ptrace
+    PtraceWrapper((req), (pid), (addr), (data))
 #endif
 
 //------------------------------------------------------------------------------
@@ -1104,7 +1117,8 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
 {
     ProcessMessage message;
 
-    assert(info->si_signo == SIGTRAP && "Unexpected child signal!");
+    assert(monitor);
+    assert(info && info->si_signo == SIGTRAP && "Unexpected child signal!");
 
     switch (info->si_code)
     {
@@ -1443,7 +1457,7 @@ ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
 }
 
 bool
-ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf)
+ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
     ReadGPROperation op(buf, result);
@@ -1452,7 +1466,7 @@ ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf)
 }
 
 bool
-ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf)
+ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
     ReadFPROperation op(buf, result);
@@ -1461,7 +1475,7 @@ ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf)
 }
 
 bool
-ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf)
+ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
     WriteGPROperation op(buf, result);
@@ -1470,7 +1484,7 @@ ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf)
 }
 
 bool
-ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf)
+ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
     WriteFPROperation op(buf, result);

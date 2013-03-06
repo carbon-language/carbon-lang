@@ -952,26 +952,26 @@ bool
 RegisterContext_x86_64::ReadGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(m_thread.GetID(), &user.regs);
+     return monitor.ReadGPR(m_thread.GetID(), &user.regs, sizeof(user.regs));
 }
 
 bool
 RegisterContext_x86_64::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadFPR(m_thread.GetID(), &user.i387);
+    return monitor.ReadFPR(m_thread.GetID(), &user.i387, sizeof(user.i387));
 }
 
 bool
 RegisterContext_x86_64::WriteGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.WriteGPR(m_thread.GetID(), &user.regs);
+     return monitor.WriteGPR(m_thread.GetID(), &user.regs, sizeof(user.regs));
 }
 
 bool
 RegisterContext_x86_64::WriteFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteFPR(m_thread.GetID(), &user.i387);
+    return monitor.WriteFPR(m_thread.GetID(), &user.i387, sizeof(user.i387));
 }

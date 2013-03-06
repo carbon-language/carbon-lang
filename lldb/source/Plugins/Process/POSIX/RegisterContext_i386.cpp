@@ -535,7 +535,7 @@ RegisterContext_i386::ReadGPR()
     bool result;
 
     ProcessMonitor &monitor = GetMonitor();
-    result = monitor.ReadGPR(m_thread.GetID(), &user.regs);
+    result = monitor.ReadGPR(m_thread.GetID(), &user.regs, sizeof(user.regs));
     LogGPR("RegisterContext_i386::ReadGPR()");
     return result;
 }
@@ -544,5 +544,5 @@ bool
 RegisterContext_i386::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadFPR(m_thread.GetID(), &user.i387);
+    return monitor.ReadFPR(m_thread.GetID(), &user.i387, sizeof(user.i387));
 }
