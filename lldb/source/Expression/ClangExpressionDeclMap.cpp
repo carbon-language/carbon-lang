@@ -2141,155 +2141,208 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
         break;
     case Value::eValueTypeScalar:
         {
-            if (location_value->GetContextType() != Value::eContextTypeRegisterInfo)
+            if (location_value->GetContextType() == Value::eContextTypeRegisterInfo)
             {
-                StreamString ss;
-                location_value->Dump(&ss);
+                RegisterInfo *reg_info = location_value->GetRegisterInfo();
                 
-                err.SetErrorStringWithFormat ("%s is a scalar of unhandled type: %s", 
-                                              name.GetCString(), 
-                                              ss.GetString().c_str());
-                return false;
-            }
-            
-            RegisterInfo *reg_info = location_value->GetRegisterInfo();
-            
-            if (!reg_info)
-            {
-                err.SetErrorStringWithFormat ("Couldn't get the register information for %s", 
-                                              name.GetCString());
-                return false;
-            }
-            
-            RegisterValue reg_value;
-
-            RegisterContext *reg_ctx = m_parser_vars->m_exe_ctx.GetRegisterContext();
-            
-            if (!reg_ctx)
-            {
-                err.SetErrorStringWithFormat ("Couldn't read register context to read %s from %s", 
-                                              name.GetCString(), 
-                                              reg_info->name);
-                return false;
-            }
-            
-            uint32_t register_byte_size = reg_info->byte_size;
-            
-            if (dematerialize)
-            {
-                if (is_reference)
-                    return true; // reference types don't need demateralizing
-                
-                // Get the location of the spare memory area out of the variable's live data.
-                
-                if (!expr_var->m_live_sp)
+                if (!reg_info)
                 {
-                    err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", name.GetCString());
+                    err.SetErrorStringWithFormat ("Couldn't get the register information for %s", 
+                                                  name.GetCString());
                     return false;
                 }
-                
-                if (expr_var->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
-                {
-                    err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", name.GetCString());
-                    return false;
-                }
-                
-                Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
-                
-                err = reg_ctx->ReadRegisterValueFromMemory (reg_info, 
-                                                            reg_addr.ULongLong(), 
-                                                            value_byte_size, 
-                                                            reg_value);
-                if (err.Fail())
-                    return false;
-
-                if (!reg_ctx->WriteRegister (reg_info, reg_value))
-                {
-                    err.SetErrorStringWithFormat ("Couldn't write %s to register %s", 
-                                                  name.GetCString(), 
-                                                  reg_info->name);
-                    return false;
-                }
-                
-                if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
-                    return false;
-            }
-            else
-            {
-                Error write_error;
                 
                 RegisterValue reg_value;
+
+                RegisterContext *reg_ctx = m_parser_vars->m_exe_ctx.GetRegisterContext();
                 
-                if (!reg_ctx->ReadRegister (reg_info, reg_value))
+                if (!reg_ctx)
                 {
-                    err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
+                    err.SetErrorStringWithFormat ("Couldn't read register context to read %s from %s", 
                                                   name.GetCString(), 
                                                   reg_info->name);
                     return false;
                 }
-
-                if (is_reference)
+                
+                uint32_t register_byte_size = reg_info->byte_size;
+                
+                if (dematerialize)
                 {
-                    write_error = reg_ctx->WriteRegisterValueToMemory(reg_info, 
-                                                                      addr,
-                                                                      process->GetAddressByteSize(), 
-                                                                      reg_value);
+                    if (is_reference)
+                        return true; // reference types don't need demateralizing
                     
-                    if (!write_error.Success())
+                    // Get the location of the spare memory area out of the variable's live data.
+                    
+                    if (!expr_var->m_live_sp)
                     {
-                        err.SetErrorStringWithFormat ("Couldn't write %s from register %s to the target: %s", 
-                                                      name.GetCString(),
-                                                      reg_info->name,
+                        err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", name.GetCString());
+                        return false;
+                    }
+                    
+                    if (expr_var->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
+                    {
+                        err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", name.GetCString());
+                        return false;
+                    }
+                    
+                    Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
+                    
+                    err = reg_ctx->ReadRegisterValueFromMemory (reg_info, 
+                                                                reg_addr.ULongLong(), 
+                                                                value_byte_size, 
+                                                                reg_value);
+                    if (err.Fail())
+                        return false;
+
+                    if (!reg_ctx->WriteRegister (reg_info, reg_value))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write %s to register %s", 
+                                                      name.GetCString(), 
+                                                      reg_info->name);
+                        return false;
+                    }
+                    
+                    if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
+                        return false;
+                }
+                else
+                {
+                    Error write_error;
+                    
+                    RegisterValue reg_value;
+                    
+                    if (!reg_ctx->ReadRegister (reg_info, reg_value))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
+                                                      name.GetCString(), 
+                                                      reg_info->name);
+                        return false;
+                    }
+
+                    if (is_reference)
+                    {
+                        write_error = reg_ctx->WriteRegisterValueToMemory(reg_info, 
+                                                                          addr,
+                                                                          process->GetAddressByteSize(), 
+                                                                          reg_value);
+                        
+                        if (!write_error.Success())
+                        {
+                            err.SetErrorStringWithFormat ("Couldn't write %s from register %s to the target: %s", 
+                                                          name.GetCString(),
+                                                          reg_info->name,
+                                                          write_error.AsCString());
+                            return false;
+                        }
+                        
+                        return true;
+                    }
+                    
+                    // Allocate a spare memory area to place the register's contents into.  This memory area will be pointed to by the slot in the
+                    // struct.
+                    
+                    if (!CreateLiveMemoryForExpressionVariable (*process, expr_var, err))
+                        return false;
+                    
+                    // Now write the location of the area into the struct.
+                    
+                    Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
+                    
+                    if (!process->WriteScalarToMemory (addr, 
+                                                      reg_addr, 
+                                                      process->GetAddressByteSize(), 
+                                                      write_error))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
+                                                      name.GetCString(), 
                                                       write_error.AsCString());
                         return false;
                     }
                     
-                    return true;
-                }
-                
-                // Allocate a spare memory area to place the register's contents into.  This memory area will be pointed to by the slot in the
-                // struct.
-                
-                if (!CreateLiveMemoryForExpressionVariable (*process, expr_var, err))
-                    return false;
-                
-                // Now write the location of the area into the struct.
-                
-                Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
-                
-                if (!process->WriteScalarToMemory (addr, 
-                                                   reg_addr, 
-                                                   process->GetAddressByteSize(), 
-                                                   write_error))
-                {
-                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", 
-                                                  name.GetCString(), 
-                                                  write_error.AsCString());
-                    return false;
-                }
-                
-                if (value_byte_size > register_byte_size)
-                {
-                    err.SetErrorStringWithFormat ("%s is too big to store in %s", 
-                                                  name.GetCString(), 
-                                                  reg_info->name);
-                    return false;
-                }
+                    if (value_byte_size > register_byte_size)
+                    {
+                        err.SetErrorStringWithFormat ("%s is too big to store in %s", 
+                                                      name.GetCString(), 
+                                                      reg_info->name);
+                        return false;
+                    }
 
-                if (!reg_ctx->ReadRegister (reg_info, reg_value))
-                {
-                    err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
-                                                  name.GetCString(), 
-                                                  reg_info->name);
-                    return false;
+                    if (!reg_ctx->ReadRegister (reg_info, reg_value))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't read %s from %s", 
+                                                      name.GetCString(), 
+                                                      reg_info->name);
+                        return false;
+                    }
+                    
+                    err = reg_ctx->WriteRegisterValueToMemory (reg_info, 
+                                                              reg_addr.ULongLong(), 
+                                                              value_byte_size, 
+                                                              reg_value);
+                    if (err.Fail())
+                        return false;
                 }
-                
-                err = reg_ctx->WriteRegisterValueToMemory (reg_info, 
-                                                           reg_addr.ULongLong(), 
-                                                           value_byte_size, 
-                                                           reg_value);
-                if (err.Fail())
-                    return false;
+            }
+            else
+            {
+                // The location_value is a scalar. We need to make space for it
+                // or delete the space we made previously.
+                if (dematerialize)
+                {
+                    if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
+                        return false;
+                }
+                else
+                {
+                    DataExtractor value_data_extractor;
+
+                    if (location_value->GetData(value_data_extractor))
+                    {
+                        if (value_byte_size != value_data_extractor.GetByteSize())
+                        {
+                            err.SetErrorStringWithFormat ("Size mismatch for %s: %llu versus %llu",
+                                                          name.GetCString(),
+                                                          (uint64_t)value_data_extractor.GetByteSize(),
+                                                          (uint64_t)value_byte_size);
+                            return false;
+                        }
+
+                        if (!CreateLiveMemoryForExpressionVariable(*process, expr_var, err))
+                            return false;
+
+                        Scalar &buf_addr = expr_var->m_live_sp->GetValue().GetScalar();
+
+                        Error write_error;
+
+                        if (!process->WriteMemory(buf_addr.ULongLong(),
+                                                  value_data_extractor.GetDataStart(),
+                                                  value_data_extractor.GetByteSize(),
+                                                  write_error))
+                        {
+                            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s",
+                                                          name.GetCString(),
+                                                          write_error.AsCString());
+                            return false;
+                        }
+
+                        if (!process->WriteScalarToMemory(addr,
+                                                          buf_addr,
+                                                          process->GetAddressByteSize(),
+                                                          write_error))
+                        {
+                            err.SetErrorStringWithFormat ("Couldn't write the address of %s to the target: %s",
+                                                          name.GetCString(),
+                                                          write_error.AsCString());
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        err.SetErrorStringWithFormat ("%s is marked as a scalar value but doesn't contain any data",
+                                                      name.GetCString());
+                        return false;
+                    }
+                }
             }
         }
     }
