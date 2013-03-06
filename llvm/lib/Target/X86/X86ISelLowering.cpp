@@ -12893,13 +12893,16 @@ static unsigned getPseudoCMOVOpc(EVT VT) {
 // to
 //
 //    ...
-//    EAX = LOAD MI.addr
+//    t1 = LOAD MI.addr
 // loop:
-//    t1 = OP MI.val, EAX
-//    LCMPXCHG [MI.addr], t1, [EAX is implicitly used & defined]
+//    t4 = phi(t1, t3 / loop)
+//    t2 = OP MI.val, t4
+//    EAX = t4
+//    LCMPXCHG [MI.addr], t2, [EAX is implicitly used & defined]
+//    t3 = EAX
 //    JNE loop
 // sink:
-//    dst = EAX
+//    dst = t3
 //    ...
 MachineBasicBlock *
 X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
@@ -12936,7 +12939,11 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
 
   const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
   MVT::SimpleValueType VT = *RC->vt_begin();
-  unsigned AccPhyReg = getX86SubSuperRegister(X86::EAX, VT);
+  unsigned t1 = MRI.createVirtualRegister(RC);
+  unsigned t2 = MRI.createVirtualRegister(RC);
+  unsigned t3 = MRI.createVirtualRegister(RC);
+  unsigned t4 = MRI.createVirtualRegister(RC);
+  unsigned PhyReg = getX86SubSuperRegister(X86::EAX, VT);
 
   unsigned LCMPXCHGOpc = getCmpXChgOpcode(VT);
   unsigned LOADOpc = getLoadOpcode(VT);
@@ -12944,12 +12951,16 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   // For the atomic load-arith operator, we generate
   //
   //  thisMBB:
-  //    EAX = LOAD [MI.addr]
+  //    t1 = LOAD [MI.addr]
   //  mainMBB:
+  //    t4 = phi(t1 / thisMBB, t3 / mainMBB)
   //    t1 = OP MI.val, EAX
+  //    EAX = t4
   //    LCMPXCHG [MI.addr], t1, [EAX is implicitly used & defined]
+  //    t3 = EAX
   //    JNE mainMBB
   //  sinkMBB:
+  //    dst = t3
 
   MachineBasicBlock *thisMBB = MBB;
   MachineBasicBlock *mainMBB = MF->CreateMachineBasicBlock(BB);
@@ -12965,23 +12976,34 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:
-  MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), AccPhyReg);
-  for (unsigned i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI->getOperand(MemOpndSlot + i));
-  MIB.setMemRefs(MMOBegin, MMOEnd);
+  MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), t1);
+  for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
+    MachineOperand NewMO = MI->getOperand(MemOpndSlot + i);
+    if (NewMO.isReg())
+      NewMO.setIsKill(false);
+    MIB.addOperand(NewMO);
+  }
+  for (MachineInstr::mmo_iterator MMOI = MMOBegin; MMOI != MMOEnd; ++MMOI) {
+    unsigned flags = (*MMOI)->getFlags();
+    flags = (flags & ~MachineMemOperand::MOStore) | MachineMemOperand::MOLoad;
+    MachineMemOperand *MMO =
+      MF->getMachineMemOperand((*MMOI)->getPointerInfo(), flags,
+                               (*MMOI)->getSize(),
+                               (*MMOI)->getBaseAlignment(),
+                               (*MMOI)->getTBAAInfo(),
+                               (*MMOI)->getRanges());
+    MIB.addMemOperand(MMO);
+  }
 
   thisMBB->addSuccessor(mainMBB);
 
   // mainMBB:
   MachineBasicBlock *origMainMBB = mainMBB;
-  mainMBB->addLiveIn(AccPhyReg);
 
-  // Copy AccPhyReg as it is used more than once.
-  unsigned AccReg = MRI.createVirtualRegister(RC);
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), AccReg)
-    .addReg(AccPhyReg);
+  // Add a PHI.
+  BuildMI(mainMBB, DL, TII->get(X86::PHI), t4)
+    .addReg(t1).addMBB(thisMBB).addReg(t3).addMBB(mainMBB);
 
-  unsigned t1 = MRI.createVirtualRegister(RC);
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
   default:
@@ -12999,20 +13021,20 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   case X86::ATOMXOR32:
   case X86::ATOMXOR64: {
     unsigned ARITHOpc = getNonAtomicOpcode(Opc);
-    BuildMI(mainMBB, DL, TII->get(ARITHOpc), t1).addReg(SrcReg)
-      .addReg(AccReg);
+    BuildMI(mainMBB, DL, TII->get(ARITHOpc), t2).addReg(SrcReg)
+      .addReg(t4);
     break;
   }
   case X86::ATOMNAND8:
   case X86::ATOMNAND16:
   case X86::ATOMNAND32:
   case X86::ATOMNAND64: {
-    unsigned t2 = MRI.createVirtualRegister(RC);
+    unsigned Tmp = MRI.createVirtualRegister(RC);
     unsigned NOTOpc;
     unsigned ANDOpc = getNonAtomicOpcodeWithExtraOpc(Opc, NOTOpc);
-    BuildMI(mainMBB, DL, TII->get(ANDOpc), t2).addReg(SrcReg)
-      .addReg(AccReg);
-    BuildMI(mainMBB, DL, TII->get(NOTOpc), t1).addReg(t2);
+    BuildMI(mainMBB, DL, TII->get(ANDOpc), Tmp).addReg(SrcReg)
+      .addReg(t4);
+    BuildMI(mainMBB, DL, TII->get(NOTOpc), t2).addReg(Tmp);
     break;
   }
   case X86::ATOMMAX8:
@@ -13036,20 +13058,22 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
 
     BuildMI(mainMBB, DL, TII->get(CMPOpc))
       .addReg(SrcReg)
-      .addReg(AccReg);
+      .addReg(t4);
 
     if (Subtarget->hasCMov()) {
       if (VT != MVT::i8) {
         // Native support
-        BuildMI(mainMBB, DL, TII->get(CMOVOpc), t1)
+        BuildMI(mainMBB, DL, TII->get(CMOVOpc), t2)
           .addReg(SrcReg)
-          .addReg(AccReg);
+          .addReg(t4);
       } else {
         // Promote i8 to i32 to use CMOV32
-        const TargetRegisterClass *RC32 = getRegClassFor(MVT::i32);
+        const TargetRegisterInfo* TRI = getTargetMachine().getRegisterInfo();
+        const TargetRegisterClass *RC32 =
+          TRI->getSubClassWithSubReg(getRegClassFor(MVT::i32), X86::sub_8bit);
         unsigned SrcReg32 = MRI.createVirtualRegister(RC32);
         unsigned AccReg32 = MRI.createVirtualRegister(RC32);
-        unsigned t2 = MRI.createVirtualRegister(RC32);
+        unsigned Tmp = MRI.createVirtualRegister(RC32);
 
         unsigned Undef = MRI.createVirtualRegister(RC32);
         BuildMI(mainMBB, DL, TII->get(TargetOpcode::IMPLICIT_DEF), Undef);
@@ -13060,15 +13084,15 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
           .addImm(X86::sub_8bit);
         BuildMI(mainMBB, DL, TII->get(TargetOpcode::INSERT_SUBREG), AccReg32)
           .addReg(Undef)
-          .addReg(AccReg)
+          .addReg(t4)
           .addImm(X86::sub_8bit);
 
-        BuildMI(mainMBB, DL, TII->get(CMOVOpc), t2)
+        BuildMI(mainMBB, DL, TII->get(CMOVOpc), Tmp)
           .addReg(SrcReg32)
           .addReg(AccReg32);
 
-        BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), t1)
-          .addReg(t2, 0, X86::sub_8bit);
+        BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), t2)
+          .addReg(Tmp, 0, X86::sub_8bit);
       }
     } else {
       // Use pseudo select and lower them.
@@ -13077,8 +13101,8 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
       unsigned SelOpc = getPseudoCMOVOpc(VT);
       X86::CondCode CC = X86::getCondFromCMovOpc(CMOVOpc);
       assert(CC != X86::COND_INVALID && "Invalid atomic-load-op transformation!");
-      MIB = BuildMI(mainMBB, DL, TII->get(SelOpc), t1)
-              .addReg(SrcReg).addReg(AccReg)
+      MIB = BuildMI(mainMBB, DL, TII->get(SelOpc), t2)
+              .addReg(SrcReg).addReg(t4)
               .addImm(CC);
       mainMBB = EmitLoweredSelect(MIB, mainMBB);
     }
@@ -13086,15 +13110,23 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   }
   }
 
-  // Copy AccPhyReg back from virtual register.
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), AccPhyReg)
-    .addReg(AccReg);
+  // Copy PhyReg back from virtual register.
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), PhyReg)
+    .addReg(t4);
 
   MIB = BuildMI(mainMBB, DL, TII->get(LCMPXCHGOpc));
-  for (unsigned i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI->getOperand(MemOpndSlot + i));
-  MIB.addReg(t1);
+  for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
+    MachineOperand NewMO = MI->getOperand(MemOpndSlot + i);
+    if (NewMO.isReg())
+      NewMO.setIsKill(false);
+    MIB.addOperand(NewMO);
+  }
+  MIB.addReg(t2);
   MIB.setMemRefs(MMOBegin, MMOEnd);
+
+  // Copy PhyReg back to virtual register.
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), t3)
+    .addReg(PhyReg);
 
   BuildMI(mainMBB, DL, TII->get(X86::JNE_4)).addMBB(origMainMBB);
 
@@ -13102,11 +13134,9 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   mainMBB->addSuccessor(sinkMBB);
 
   // sinkMBB:
-  sinkMBB->addLiveIn(AccPhyReg);
-
   BuildMI(*sinkMBB, sinkMBB->begin(), DL,
           TII->get(TargetOpcode::COPY), DstReg)
-    .addReg(AccPhyReg);
+    .addReg(t3);
 
   MI->eraseFromParent();
   return sinkMBB;
@@ -13123,15 +13153,24 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
 // to
 //
 //    ...
-//    EAX = LOAD [MI.addr + 0]
-//    EDX = LOAD [MI.addr + 4]
+//    t1L = LOAD [MI.addr + 0]
+//    t1H = LOAD [MI.addr + 4]
 // loop:
-//    EBX = OP MI.val.lo, EAX
-//    ECX = OP MI.val.hi, EDX
+//    t4L = phi(t1L, t3L / loop)
+//    t4H = phi(t1H, t3H / loop)
+//    t2L = OP MI.val.lo, t4L
+//    t2H = OP MI.val.hi, t4H
+//    EAX = t4L
+//    EDX = t4H
+//    EBX = t2L
+//    ECX = t2H
 //    LCMPXCHG8B [MI.addr], [ECX:EBX & EDX:EAX are implicitly used and EDX:EAX is implicitly defined]
+//    t3L = EAX
+//    t3H = EDX
 //    JNE loop
 // sink:
-//    dst = EDX:EAX
+//    dstL = t3L
+//    dstH = t3H
 //    ...
 MachineBasicBlock *
 X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
@@ -13172,20 +13211,37 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   const TargetRegisterClass *RC = &X86::GR32RegClass;
   const TargetRegisterClass *RC8 = &X86::GR8RegClass;
 
+  unsigned t1L = MRI.createVirtualRegister(RC);
+  unsigned t1H = MRI.createVirtualRegister(RC);
+  unsigned t2L = MRI.createVirtualRegister(RC);
+  unsigned t2H = MRI.createVirtualRegister(RC);
+  unsigned t3L = MRI.createVirtualRegister(RC);
+  unsigned t3H = MRI.createVirtualRegister(RC);
+  unsigned t4L = MRI.createVirtualRegister(RC);
+  unsigned t4H = MRI.createVirtualRegister(RC);
+
   unsigned LCMPXCHGOpc = X86::LCMPXCHG8B;
   unsigned LOADOpc = X86::MOV32rm;
 
   // For the atomic load-arith operator, we generate
   //
   //  thisMBB:
-  //    EAX = LOAD [MI.addr + 0]
-  //    EDX = LOAD [MI.addr + 4]
+  //    t1L = LOAD [MI.addr + 0]
+  //    t1H = LOAD [MI.addr + 4]
   //  mainMBB:
-  //    EBX = OP MI.vallo, EAX
-  //    ECX = OP MI.valhi, EDX
+  //    t4L = phi(t1L / thisMBB, t3L / mainMBB)
+  //    t4H = phi(t1H / thisMBB, t3H / mainMBB)
+  //    t2L = OP MI.val.lo, t4L
+  //    t2H = OP MI.val.hi, t4H
+  //    EBX = t2L
+  //    ECX = t2H
   //    LCMPXCHG8B [MI.addr], [ECX:EBX & EDX:EAX are implicitly used and EDX:EAX is implicitly defined]
-  //    JNE mainMBB
+  //    t3L = EAX
+  //    t3H = EDX
+  //    JNE loop
   //  sinkMBB:
+  //    dstL = t3L
+  //    dstH = t3H
 
   MachineBasicBlock *thisMBB = MBB;
   MachineBasicBlock *mainMBB = MF->CreateMachineBasicBlock(BB);
@@ -13202,35 +13258,50 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
 
   // thisMBB:
   // Lo
-  MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), X86::EAX);
-  for (unsigned i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI->getOperand(MemOpndSlot + i));
-  MIB.setMemRefs(MMOBegin, MMOEnd);
-  // Hi
-  MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), X86::EDX);
+  MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), t1L);
   for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
-    if (i == X86::AddrDisp)
-      MIB.addDisp(MI->getOperand(MemOpndSlot + i), 4); // 4 == sizeof(i32)
-    else
-      MIB.addOperand(MI->getOperand(MemOpndSlot + i));
+    MachineOperand NewMO = MI->getOperand(MemOpndSlot + i);
+    if (NewMO.isReg())
+      NewMO.setIsKill(false);
+    MIB.addOperand(NewMO);
   }
-  MIB.setMemRefs(MMOBegin, MMOEnd);
+  for (MachineInstr::mmo_iterator MMOI = MMOBegin; MMOI != MMOEnd; ++MMOI) {
+    unsigned flags = (*MMOI)->getFlags();
+    flags = (flags & ~MachineMemOperand::MOStore) | MachineMemOperand::MOLoad;
+    MachineMemOperand *MMO =
+      MF->getMachineMemOperand((*MMOI)->getPointerInfo(), flags,
+                               (*MMOI)->getSize(),
+                               (*MMOI)->getBaseAlignment(),
+                               (*MMOI)->getTBAAInfo(),
+                               (*MMOI)->getRanges());
+    MIB.addMemOperand(MMO);
+  };
+  MachineInstr *LowMI = MIB;
+
+  // Hi
+  MIB = BuildMI(thisMBB, DL, TII->get(LOADOpc), t1H);
+  for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
+    if (i == X86::AddrDisp) {
+      MIB.addDisp(MI->getOperand(MemOpndSlot + i), 4); // 4 == sizeof(i32)
+    } else {
+      MachineOperand NewMO = MI->getOperand(MemOpndSlot + i);
+      if (NewMO.isReg())
+        NewMO.setIsKill(false);
+      MIB.addOperand(NewMO);
+    }
+  }
+  MIB.setMemRefs(LowMI->memoperands_begin(), LowMI->memoperands_end());
 
   thisMBB->addSuccessor(mainMBB);
 
   // mainMBB:
   MachineBasicBlock *origMainMBB = mainMBB;
-  mainMBB->addLiveIn(X86::EAX);
-  mainMBB->addLiveIn(X86::EDX);
 
-  // Copy EDX:EAX as they are used more than once.
-  unsigned LoReg = MRI.createVirtualRegister(RC);
-  unsigned HiReg = MRI.createVirtualRegister(RC);
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), LoReg).addReg(X86::EAX);
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), HiReg).addReg(X86::EDX);
-
-  unsigned t1L = MRI.createVirtualRegister(RC);
-  unsigned t1H = MRI.createVirtualRegister(RC);
+  // Add PHIs.
+  BuildMI(mainMBB, DL, TII->get(X86::PHI), t4L)
+    .addReg(t1L).addMBB(thisMBB).addReg(t3L).addMBB(mainMBB);
+  BuildMI(mainMBB, DL, TII->get(X86::PHI), t4H)
+    .addReg(t1H).addMBB(thisMBB).addReg(t3H).addMBB(mainMBB);
 
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
@@ -13243,19 +13314,23 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   case X86::ATOMSUB6432: {
     unsigned HiOpc;
     unsigned LoOpc = getNonAtomic6432Opcode(Opc, HiOpc);
-    BuildMI(mainMBB, DL, TII->get(LoOpc), t1L).addReg(LoReg).addReg(SrcLoReg);
-    BuildMI(mainMBB, DL, TII->get(HiOpc), t1H).addReg(HiReg).addReg(SrcHiReg);
+    BuildMI(mainMBB, DL, TII->get(LoOpc), t2L).addReg(t4L)
+      .addReg(SrcLoReg);
+    BuildMI(mainMBB, DL, TII->get(HiOpc), t2H).addReg(t4H)
+      .addReg(SrcHiReg);
     break;
   }
   case X86::ATOMNAND6432: {
     unsigned HiOpc, NOTOpc;
     unsigned LoOpc = getNonAtomic6432OpcodeWithExtraOpc(Opc, HiOpc, NOTOpc);
-    unsigned t2L = MRI.createVirtualRegister(RC);
-    unsigned t2H = MRI.createVirtualRegister(RC);
-    BuildMI(mainMBB, DL, TII->get(LoOpc), t2L).addReg(SrcLoReg).addReg(LoReg);
-    BuildMI(mainMBB, DL, TII->get(HiOpc), t2H).addReg(SrcHiReg).addReg(HiReg);
-    BuildMI(mainMBB, DL, TII->get(NOTOpc), t1L).addReg(t2L);
-    BuildMI(mainMBB, DL, TII->get(NOTOpc), t1H).addReg(t2H);
+    unsigned TmpL = MRI.createVirtualRegister(RC);
+    unsigned TmpH = MRI.createVirtualRegister(RC);
+    BuildMI(mainMBB, DL, TII->get(LoOpc), TmpL).addReg(SrcLoReg)
+      .addReg(t4L);
+    BuildMI(mainMBB, DL, TII->get(HiOpc), TmpH).addReg(SrcHiReg)
+      .addReg(t4H);
+    BuildMI(mainMBB, DL, TII->get(NOTOpc), t2L).addReg(TmpL);
+    BuildMI(mainMBB, DL, TII->get(NOTOpc), t2H).addReg(TmpH);
     break;
   }
   case X86::ATOMMAX6432:
@@ -13271,12 +13346,12 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
     unsigned cc = MRI.createVirtualRegister(RC);
     // cl := cmp src_lo, lo
     BuildMI(mainMBB, DL, TII->get(X86::CMP32rr))
-      .addReg(SrcLoReg).addReg(LoReg);
+      .addReg(SrcLoReg).addReg(t4L);
     BuildMI(mainMBB, DL, TII->get(LoOpc), cL);
     BuildMI(mainMBB, DL, TII->get(X86::MOVZX32rr8), cL32).addReg(cL);
     // ch := cmp src_hi, hi
     BuildMI(mainMBB, DL, TII->get(X86::CMP32rr))
-      .addReg(SrcHiReg).addReg(HiReg);
+      .addReg(SrcHiReg).addReg(t4H);
     BuildMI(mainMBB, DL, TII->get(HiOpc), cH);
     BuildMI(mainMBB, DL, TII->get(X86::MOVZX32rr8), cH32).addReg(cH);
     // cc := if (src_hi == hi) ? cl : ch;
@@ -13291,17 +13366,17 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
     }
     BuildMI(mainMBB, DL, TII->get(X86::TEST32rr)).addReg(cc).addReg(cc);
     if (Subtarget->hasCMov()) {
-      BuildMI(mainMBB, DL, TII->get(X86::CMOVNE32rr), t1L)
-        .addReg(SrcLoReg).addReg(LoReg);
-      BuildMI(mainMBB, DL, TII->get(X86::CMOVNE32rr), t1H)
-        .addReg(SrcHiReg).addReg(HiReg);
+      BuildMI(mainMBB, DL, TII->get(X86::CMOVNE32rr), t2L)
+        .addReg(SrcLoReg).addReg(t4L);
+      BuildMI(mainMBB, DL, TII->get(X86::CMOVNE32rr), t2H)
+        .addReg(SrcHiReg).addReg(t4H);
     } else {
-      MIB = BuildMI(mainMBB, DL, TII->get(X86::CMOV_GR32), t1L)
-              .addReg(SrcLoReg).addReg(LoReg)
+      MIB = BuildMI(mainMBB, DL, TII->get(X86::CMOV_GR32), t2L)
+              .addReg(SrcLoReg).addReg(t4L)
               .addImm(X86::COND_NE);
       mainMBB = EmitLoweredSelect(MIB, mainMBB);
-      MIB = BuildMI(mainMBB, DL, TII->get(X86::CMOV_GR32), t1H)
-              .addReg(SrcHiReg).addReg(HiReg)
+      MIB = BuildMI(mainMBB, DL, TII->get(X86::CMOV_GR32), t2H)
+              .addReg(SrcHiReg).addReg(t4H)
               .addImm(X86::COND_NE);
       mainMBB = EmitLoweredSelect(MIB, mainMBB);
     }
@@ -13310,23 +13385,31 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   case X86::ATOMSWAP6432: {
     unsigned HiOpc;
     unsigned LoOpc = getNonAtomic6432Opcode(Opc, HiOpc);
-    BuildMI(mainMBB, DL, TII->get(LoOpc), t1L).addReg(SrcLoReg);
-    BuildMI(mainMBB, DL, TII->get(HiOpc), t1H).addReg(SrcHiReg);
+    BuildMI(mainMBB, DL, TII->get(LoOpc), t2L).addReg(SrcLoReg);
+    BuildMI(mainMBB, DL, TII->get(HiOpc), t2H).addReg(SrcHiReg);
     break;
   }
   }
 
   // Copy EDX:EAX back from HiReg:LoReg
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::EAX).addReg(LoReg);
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::EDX).addReg(HiReg);
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::EAX).addReg(t4L);
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::EDX).addReg(t4H);
   // Copy ECX:EBX from t1H:t1L
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::EBX).addReg(t1L);
-  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::ECX).addReg(t1H);
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::EBX).addReg(t2L);
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), X86::ECX).addReg(t2H);
 
   MIB = BuildMI(mainMBB, DL, TII->get(LCMPXCHGOpc));
-  for (unsigned i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI->getOperand(MemOpndSlot + i));
+  for (unsigned i = 0; i < X86::AddrNumOperands; ++i) {
+    MachineOperand NewMO = MI->getOperand(MemOpndSlot + i);
+    if (NewMO.isReg())
+      NewMO.setIsKill(false);
+    MIB.addOperand(NewMO);
+  }
   MIB.setMemRefs(MMOBegin, MMOEnd);
+
+  // Copy EDX:EAX back to t3H:t3L
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), t3L).addReg(X86::EAX);
+  BuildMI(mainMBB, DL, TII->get(TargetOpcode::COPY), t3H).addReg(X86::EDX);
 
   BuildMI(mainMBB, DL, TII->get(X86::JNE_4)).addMBB(origMainMBB);
 
@@ -13334,15 +13417,12 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   mainMBB->addSuccessor(sinkMBB);
 
   // sinkMBB:
-  sinkMBB->addLiveIn(X86::EAX);
-  sinkMBB->addLiveIn(X86::EDX);
-
   BuildMI(*sinkMBB, sinkMBB->begin(), DL,
           TII->get(TargetOpcode::COPY), DstLoReg)
-    .addReg(X86::EAX);
+    .addReg(t3L);
   BuildMI(*sinkMBB, sinkMBB->begin(), DL,
           TII->get(TargetOpcode::COPY), DstHiReg)
-    .addReg(X86::EDX);
+    .addReg(t3H);
 
   MI->eraseFromParent();
   return sinkMBB;

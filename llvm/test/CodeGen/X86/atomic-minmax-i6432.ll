@@ -1,5 +1,5 @@
-; RUN: llc -march=x86 -mattr=+cmov -mtriple=i386-pc-linux < %s | FileCheck %s -check-prefix=LINUX
-; RUN: llc -march=x86 -mtriple=i386-macosx -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC
+; RUN: llc -march=x86 -mattr=+cmov -mtriple=i386-pc-linux -verify-machineinstrs < %s | FileCheck %s -check-prefix=LINUX
+; RUN: llc -march=x86 -mtriple=i386-macosx -relocation-model=pic -verify-machineinstrs < %s | FileCheck %s -check-prefix=PIC
 
 @sc64 = external global i64
 

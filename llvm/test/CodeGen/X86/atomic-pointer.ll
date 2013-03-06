@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-none-linux | FileCheck %s
+; RUN: llc < %s -mtriple=i686-none-linux -verify-machineinstrs | FileCheck %s
 
 define i32* @test_atomic_ptr_load(i32** %a0) {
 ; CHECK: test_atomic_ptr_load

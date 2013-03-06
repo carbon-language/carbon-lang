@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -verify-machineinstrs | FileCheck %s
 
 ; rdar://7103704
 
