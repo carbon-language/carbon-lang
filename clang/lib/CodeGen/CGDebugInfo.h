@@ -32,6 +32,7 @@ namespace clang {
   class CXXMethodDecl;
   class VarDecl;
   class ObjCInterfaceDecl;
+  class ObjCIvarDecl;
   class ClassTemplateSpecializationDecl;
   class GlobalDecl;
 
@@ -59,6 +60,11 @@ class CGDebugInfo {
   
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
+
+  /// ObjCInterfaceCache - Cache of previously constructed interfaces
+  /// which may change. Storing a pair of DIType and checksum.
+  llvm::DenseMap<void *, std::pair<llvm::WeakVH, unsigned > >
+    ObjCInterfaceCache;
 
   /// CompleteTypeCache - Cache of previously constructed complete RecordTypes.
   llvm::DenseMap<void *, llvm::WeakVH> CompletedTypeCache;
@@ -89,6 +95,7 @@ class CGDebugInfo {
   llvm::DenseMap<const Decl *, llvm::WeakVH> StaticDataMemberCache;
 
   /// Helper functions for getOrCreateType.
+  unsigned Checksum(const ObjCInterfaceDecl *InterfaceDecl);
   llvm::DIType CreateType(const BuiltinType *Ty);
   llvm::DIType CreateType(const ComplexType *Ty);
   llvm::DIType CreateQualifiedType(QualType Ty, llvm::DIFile F);
@@ -298,6 +305,10 @@ private:
 
   /// CreateTypeNode - Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F);
+
+  /// getObjCInterfaceDecl - return the underlying ObjCInterfaceDecl
+  /// if Ty is an ObjCInterface or a pointer to one.
+  ObjCInterfaceDecl* getObjCInterfaceDecl(QualType Ty);
 
   /// CreateLimitedTypeNode - Create type metadata for a source language
   /// type, but only partial types for records.
