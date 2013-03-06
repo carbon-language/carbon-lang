@@ -74,13 +74,6 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
             Symtab *exe_symtab = exe_symfile->GetObjectFile()->GetSymtab();
             ModuleSP oso_module_sp (oso_objfile->GetModule());
             Symtab *oso_symtab = oso_objfile->GetSymtab();
-#if defined(DEBUG_OSO_DMAP)
-            StreamFile s(stdout, false);
-            s << "OSO symtab:\n";
-            oso_symtab->Dump(&s, NULL, eSortOrderNone);
-            s << "OSO sections before:\n";
-            oso_objfile->GetSectionList()->Dump(&s, NULL, true, UINT32_MAX);
-#endif
             
             ///const uint32_t fun_resolve_flags = SymbolContext::Module | eSymbolContextCompUnit | eSymbolContextFunction;
             //SectionList *oso_sections = oso_objfile->Sections();
@@ -171,10 +164,6 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
             }
             
             exe_symfile->FinalizeOSOFileRanges (this);
-#if defined(DEBUG_OSO_DMAP)
-            s << "OSO sections after:\n";
-            oso_objfile->GetSectionList()->Dump(&s, NULL, true, UINT32_MAX);
-#endif
             // We don't need the symbols anymore for the .o files
             oso_objfile->ClearSymtab();
         }
@@ -378,15 +367,7 @@ SymbolFileDWARFDebugMap::InitOSO()
             }
             m_debug_map.Sort();
 
-#if defined(DEBUG_OSO_DMAP)
-            StreamFile s(stdout, false);
-            symtab->Dump(&s, NULL, m_func_indexes);
-            symtab->Dump(&s, NULL, m_glob_indexes);
-#endif
             m_compile_unit_infos.resize(oso_index_count);
-            
-//          s.Printf("%s N_OSO symbols:\n", __PRETTY_FUNCTION__);
-//          symtab->Dump(&s, oso_indexes);
 
             for (uint32_t i=0; i<oso_index_count; ++i)
             {
@@ -1430,7 +1411,10 @@ SymbolFileDWARFDebugMap::FinalizeOSOFileRanges (CompileUnitInfo *cu_info)
 #if defined(DEBUG_OSO_DMAP)
     const FileRangeMap &oso_file_range_map = cu_info->GetFileRangeMap(this);
     const size_t n = oso_file_range_map.GetSize();
-    printf ("SymbolFileDWARFDebugMap::FinalizeOSOFileRanges (cu_info = %p)\n", cu_info);
+    printf ("SymbolFileDWARFDebugMap::FinalizeOSOFileRanges (cu_info = %p) %s/%s\n",
+            cu_info,
+            cu_info->oso_sp->module_sp->GetFileSpec().GetDirectory().GetCString(),
+            cu_info->oso_sp->module_sp->GetFileSpec().GetFilename().GetCString());
     for (size_t i=0; i<n; ++i)
     {
         const FileRangeMap::Entry &entry = oso_file_range_map.GetEntryRef(i);

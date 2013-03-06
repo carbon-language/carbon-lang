@@ -497,6 +497,7 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
     const FileRangeMap::Entry *prev_file_range_entry = NULL;
     lldb::addr_t prev_file_addr = LLDB_INVALID_ADDRESS;
     bool prev_entry_was_linked = false;
+    bool range_changed = false;
     for (size_t idx = 0; idx < count; ++idx)
     {
         const Entry& entry = m_entries[idx];
@@ -507,17 +508,24 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
         {
             prev_file_range_entry = file_range_entry;
             file_range_entry = file_range_map.FindEntryThatContains(lookup_file_addr);
+            range_changed = true;
         }
-        
+
+        lldb::addr_t prev_end_entry_linked_file_addr = LLDB_INVALID_ADDRESS;
+        lldb::addr_t entry_linked_file_addr = LLDB_INVALID_ADDRESS;
+
+        bool terminate_previous_entry = false;
         if (file_range_entry)
         {
-            // This entry has an address remapping and it needs to have its address relinked
-            sequence.m_entries.push_back(entry);
-            // Fix tha addresss
-            const lldb::addr_t linked_file_addr = entry.file_addr - file_range_entry->GetRangeBase() + file_range_entry->data;
-//            if (linked_file_addr == 0x000000000128b7d5)
-//                puts("remove this");
-            sequence.m_entries.back().file_addr = linked_file_addr;
+            entry_linked_file_addr = entry.file_addr - file_range_entry->GetRangeBase() + file_range_entry->data;
+            // Determine if we need to terminate the previous entry when the previous
+            // entry was not contguous with this one after being linked.
+            if (range_changed && prev_file_range_entry)
+            {
+                prev_end_entry_linked_file_addr = std::min<lldb::addr_t>(entry.file_addr, prev_file_range_entry->GetRangeEnd()) - prev_file_range_entry->GetRangeBase() + prev_file_range_entry->data;
+                if (prev_end_entry_linked_file_addr != entry_linked_file_addr)
+                    terminate_previous_entry = true;                
+            }
         }
         else if (prev_entry_was_linked)
         {
@@ -528,14 +536,33 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
                 !sequence.m_entries.empty() &&
                 !sequence.m_entries.back().is_terminal_entry)
             {
-                assert (prev_file_addr != LLDB_INVALID_ADDRESS);
-                sequence.m_entries.push_back(sequence.m_entries.back());
-                const lldb::addr_t linked_file_addr = std::min<lldb::addr_t>(entry.file_addr,prev_file_range_entry->GetRangeEnd()) - prev_file_range_entry->GetRangeBase() + prev_file_range_entry->data;
-                sequence.m_entries.back().file_addr = linked_file_addr;
-                sequence.m_entries.back().is_terminal_entry = true;
+                terminate_previous_entry = true;
             }
         }
         
+        if (terminate_previous_entry)
+        {
+            assert (prev_file_addr != LLDB_INVALID_ADDRESS);
+            sequence.m_entries.push_back(sequence.m_entries.back());
+            if (prev_end_entry_linked_file_addr == LLDB_INVALID_ADDRESS)
+                prev_end_entry_linked_file_addr = std::min<lldb::addr_t>(entry.file_addr,prev_file_range_entry->GetRangeEnd()) - prev_file_range_entry->GetRangeBase() + prev_file_range_entry->data;
+            sequence.m_entries.back().file_addr = prev_end_entry_linked_file_addr;
+            sequence.m_entries.back().is_terminal_entry = true;
+
+            // Append the sequence since we just terminated the previous one
+            line_table_ap->InsertSequence (&sequence);
+            sequence.Clear();
+            prev_entry_was_linked = false;
+        }
+        
+        // Now link the current entry
+        if (file_range_entry)
+        {
+            // This entry has an address remapping and it needs to have its address relinked
+            sequence.m_entries.push_back(entry);
+            sequence.m_entries.back().file_addr = entry_linked_file_addr;
+        }
+
         // If we have items in the sequence and the last entry is a terminal entry,
         // insert this sequence into our new line table.
         if (!sequence.m_entries.empty() && sequence.m_entries.back().is_terminal_entry)
@@ -543,13 +570,13 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
             line_table_ap->InsertSequence (&sequence);
             sequence.Clear();
             prev_entry_was_linked = false;
-            prev_file_addr = LLDB_INVALID_ADDRESS;
         }
         else
         {
             prev_entry_was_linked = file_range_entry != NULL;
-            prev_file_addr = entry.file_addr;
         }
+        prev_file_addr = entry.file_addr;
+        range_changed = false;
     }
     if (line_table_ap->m_entries.empty())
         return NULL;
