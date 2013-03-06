@@ -1396,10 +1396,10 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
       return true;
 
   // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
-  if (I->getOpcode() == Instruction::FAdd &&
-      isa<ConstantFP>(I->getOperand(1)) &&
-      cast<ConstantFP>(I->getOperand(1))->isNullValue())
-    return true;
+  if (I->getOpcode() == Instruction::FAdd)
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(1)))
+      if (CFP->isNullValue())
+        return true;
 
   // sitofp and uitofp turn into +0.0 for zero.
   if (isa<SIToFPInst>(I) || isa<UIToFPInst>(I))
