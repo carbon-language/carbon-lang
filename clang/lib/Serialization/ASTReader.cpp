@@ -1680,10 +1680,12 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       Error("malformed block record in AST file");
       return Failure;
     case llvm::BitstreamEntry::EndBlock:
-      // Validate all of the input files.
+      // Validate all of the non-system input files.
       if (!DisableValidation) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
-        for (unsigned I = 0, N = Record[0]; I < N; ++I) {
+        // All user input files reside at the index range [0, Record[1]).
+        // Record is the one from INPUT_FILE_OFFSETS.
+        for (unsigned I = 0, N = Record[1]; I < N; ++I) {
           InputFile IF = getInputFile(F, I+1, Complain);
           if (!IF.getFile() || IF.isOutOfDate())
             return OutOfDate;

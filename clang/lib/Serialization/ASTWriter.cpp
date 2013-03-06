@@ -1232,8 +1232,9 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
   IFAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   unsigned IFAbbrevCode = Stream.EmitAbbrev(IFAbbrev);
 
-  // Write out all of the input files.
-  std::vector<uint32_t> InputFileOffsets;
+  // Get all ContentCache objects for files, sorted by whether the file is a
+  // system one or not. System files go at the back, users files at the front.
+  std::deque<const SrcMgr::ContentCache *> SortedFiles;
   for (unsigned I = 1, N = SourceMgr.local_sloc_entry_size(); I != N; ++I) {
     // Get this source location entry.
     const SrcMgr::SLocEntry *SLoc = &SourceMgr.getLocalSLocEntry(I);
@@ -1246,6 +1247,19 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
     if (!Cache->OrigEntry)
       continue;
 
+    if (Cache->IsSystemFile)
+      SortedFiles.push_back(Cache);
+    else
+      SortedFiles.push_front(Cache);
+  }
+
+  unsigned UserFilesNum = 0;
+  // Write out all of the input files.
+  std::vector<uint32_t> InputFileOffsets;
+  for (std::deque<const SrcMgr::ContentCache *>::iterator
+         I = SortedFiles.begin(), E = SortedFiles.end(); I != E; ++I) {
+    const SrcMgr::ContentCache *Cache = *I;
+
     uint32_t &InputFileID = InputFileIDs[Cache->OrigEntry];
     if (InputFileID != 0)
       continue; // already recorded this file.
@@ -1254,6 +1268,9 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
     InputFileOffsets.push_back(Stream.GetCurrentBitNo());
 
     InputFileID = InputFileOffsets.size();
+
+    if (!Cache->IsSystemFile)
+      ++UserFilesNum;
 
     Record.clear();
     Record.push_back(INPUT_FILE);
@@ -1290,6 +1307,8 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
   BitCodeAbbrev *OffsetsAbbrev = new BitCodeAbbrev();
   OffsetsAbbrev->Add(BitCodeAbbrevOp(INPUT_FILE_OFFSETS));
   OffsetsAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // # input files
+  OffsetsAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // # non-system
+                                                                //   input files
   OffsetsAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));   // Array
   unsigned OffsetsAbbrevCode = Stream.EmitAbbrev(OffsetsAbbrev);
 
@@ -1297,6 +1316,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
   Record.clear();
   Record.push_back(INPUT_FILE_OFFSETS);
   Record.push_back(InputFileOffsets.size());
+  Record.push_back(UserFilesNum);
   Stream.EmitRecordWithBlob(OffsetsAbbrevCode, Record, data(InputFileOffsets));
 }
 
