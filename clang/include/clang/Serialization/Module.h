@@ -289,10 +289,6 @@ public:
   /// the header files.
   void *HeaderFileInfoTable;
 
-  /// \brief Actual data for the list of framework names used in the header
-  /// search information.
-  const char *HeaderFileFrameworkStrings;
-
   // === Submodule information ===  
   /// \brief The number of submodules in this module.
   unsigned LocalNumSubmodules;

@@ -2476,7 +2476,6 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
     case HEADER_SEARCH_TABLE: {
       F.HeaderFileInfoTableData = Blob.data();
       F.LocalNumHeaderFileInfos = Record[1];
-      F.HeaderFileFrameworkStrings = Blob.data() + Record[2];
       if (Record[0]) {
         F.HeaderFileInfoTable
           = HeaderFileInfoLookupTable::Create(
@@ -4092,22 +4091,17 @@ Optional<bool> ASTReader::isPreprocessedEntityInFileID(unsigned Index,
 namespace {
   /// \brief Visitor used to search for information about a header file.
   class HeaderFileInfoVisitor {
-    ASTReader &Reader;
     const FileEntry *FE;
     
     Optional<HeaderFileInfo> HFI;
     
   public:
-    HeaderFileInfoVisitor(ASTReader &Reader, const FileEntry *FE)
-      : Reader(Reader), FE(FE) { }
+    explicit HeaderFileInfoVisitor(const FileEntry *FE)
+      : FE(FE) { }
     
     static bool visit(ModuleFile &M, void *UserData) {
       HeaderFileInfoVisitor *This
         = static_cast<HeaderFileInfoVisitor *>(UserData);
-      
-      HeaderFileInfoTrait Trait(This->Reader, M, 
-                                &This->Reader.getPreprocessor().getHeaderSearchInfo(),
-                                M.HeaderFileFrameworkStrings);
       
       HeaderFileInfoLookupTable *Table
         = static_cast<HeaderFileInfoLookupTable *>(M.HeaderFileInfoTable);
@@ -4115,8 +4109,7 @@ namespace {
         return false;
 
       // Look in the on-disk hash table for an entry for this file name.
-      HeaderFileInfoLookupTable::iterator Pos = Table->find(This->FE->getName(),
-                                                            &Trait);
+      HeaderFileInfoLookupTable::iterator Pos = Table->find(This->FE->getName());
       if (Pos == Table->end())
         return false;
 
@@ -4129,7 +4122,7 @@ namespace {
 }
 
 HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
-  HeaderFileInfoVisitor Visitor(*this, FE);
+  HeaderFileInfoVisitor Visitor(FE);
   ModuleMgr.visit(&HeaderFileInfoVisitor::visit, &Visitor);
   if (Optional<HeaderFileInfo> HFI = Visitor.getHeaderFileInfo()) {
     if (Listener)
