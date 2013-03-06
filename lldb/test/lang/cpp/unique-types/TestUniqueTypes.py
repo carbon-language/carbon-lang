@@ -34,14 +34,16 @@ class UniqueTypesTestCase(TestBase):
     def unique_types(self):
         """Test for unique types of std::vector<long> and std::vector<short>."""
 
-        if "clang" in self.getCompiler() and int(self.getCompilerVersion().split('.')[0]) < 3:
+        compiler = self.getCompiler()
+        compiler_basename = os.path.basename(compiler)
+        if "clang" in compiler_basename and int(self.getCompilerVersion().split('.')[0]) < 3:
             self.skipTest("rdar://problem/9173060 lldb hangs while running unique-types for clang version < 3")
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # GCC 4.6.3 (but not 4.4, 4.6.5 or 4.7) encodes two locations for the 'return 0' statement in main.cpp
-        locs = 2 if "gcc" in self.getCompiler() and "4.6.3" in self.getCompilerVersion() else 1
+        locs = 2 if "gcc" in compiler_basename and "4.6.3" in self.getCompilerVersion() else 1
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=locs, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
