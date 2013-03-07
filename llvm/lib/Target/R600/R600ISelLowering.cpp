@@ -941,7 +941,8 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       // non constant ptr cant be folded, keeps it as a v4f32 load
       Result = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::v4i32,
           DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr, DAG.getConstant(4, MVT::i32)),
-          DAG.getConstant(LoadNode->getAddressSpace() - 9, MVT::i32)
+          DAG.getConstant(LoadNode->getAddressSpace() -
+	                  AMDGPUAS::CONSTANT_BUFFER_0, MVT::i32)
           );
     }
 

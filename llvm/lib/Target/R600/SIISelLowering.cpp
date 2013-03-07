@@ -62,11 +62,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  // We need to custom lower loads from the USER_SGPR address space, so we can
-  // add the SGPRs as livein registers.
-  setOperationAction(ISD::LOAD, MVT::i32, Custom);
-  setOperationAction(ISD::LOAD, MVT::i64, Custom);
-
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
@@ -245,7 +240,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
-  case ISD::LOAD: return LowerLOAD(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IntrinsicID =
@@ -355,47 +349,6 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
     Intr->getOperand(0));
 
   return Chain;
-}
-
-SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
-  EVT VT = Op.getValueType();
-  LoadSDNode *Ptr = dyn_cast<LoadSDNode>(Op);
-
-  assert(Ptr);
-
-  unsigned AddrSpace = Ptr->getPointerInfo().getAddrSpace();
-
-  // We only need to lower USER_SGPR address space loads
-  if (AddrSpace != AMDGPUAS::USER_SGPR_ADDRESS) {
-    return SDValue();
-  }
-
-  // Loads from the USER_SGPR address space can only have constant value
-  // pointers.
-  ConstantSDNode *BasePtr = dyn_cast<ConstantSDNode>(Ptr->getBasePtr());
-  assert(BasePtr);
-
-  unsigned TypeDwordWidth = VT.getSizeInBits() / 32;
-  const TargetRegisterClass * dstClass;
-  switch (TypeDwordWidth) {
-    default:
-      assert(!"USER_SGPR value size not implemented");
-      return SDValue();
-    case 1:
-      dstClass = &AMDGPU::SReg_32RegClass;
-      break;
-    case 2:
-      dstClass = &AMDGPU::SReg_64RegClass;
-      break;
-  }
-  uint64_t Index = BasePtr->getZExtValue();
-  assert(Index % TypeDwordWidth == 0 && "USER_SGPR not properly aligned");
-  unsigned SGPRIndex = Index / TypeDwordWidth;
-  unsigned Reg = dstClass->getRegister(SGPRIndex);
-
-  DAG.ReplaceAllUsesOfValueWith(Op, CreateLiveInRegister(DAG, dstClass, Reg,
-                                                         VT));
-  return SDValue();
 }
 
 SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {

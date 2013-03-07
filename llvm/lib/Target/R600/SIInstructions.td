@@ -1337,9 +1337,8 @@ def : Pat <
 /********** ===================== **********/
 
 def : Pat <
-  (int_SI_fs_interp_constant imm:$attr_chan, imm:$attr, SReg_32:$params),
-  (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr,
-                    (S_MOV_B32 SReg_32:$params))
+  (int_SI_fs_interp_constant imm:$attr_chan, imm:$attr, M0Reg:$params),
+  (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr, M0Reg:$params)
 >;
 
 def : Pat <
