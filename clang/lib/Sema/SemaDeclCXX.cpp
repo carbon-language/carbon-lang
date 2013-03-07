@@ -11364,7 +11364,7 @@ bool Sema::DefineUsedVTables() {
     Consumer.HandleVTable(Class, VTablesUsed[Canonical]);
 
     // Optionally warn if we're emitting a weak vtable.
-    if (Class->getLinkage() == ExternalLinkage &&
+    if (Class->hasExternalLinkage() &&
         Class->getTemplateSpecializationKind() != TSK_ImplicitInstantiation) {
       const FunctionDecl *KeyFunctionDef = 0;
       if (!KeyFunction || 

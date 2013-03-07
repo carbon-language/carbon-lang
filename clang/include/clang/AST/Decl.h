@@ -214,6 +214,11 @@ public:
   /// \brief Determine what kind of linkage this entity has.
   Linkage getLinkage() const;
 
+  /// \brief True if this decl has external linkage.
+  bool hasExternalLinkage() const {
+    return getLinkage() == ExternalLinkage;
+  }
+
   /// \brief Determines the visibility of this entity.
   Visibility getVisibility() const {
     return getLinkageAndVisibility().getVisibility();

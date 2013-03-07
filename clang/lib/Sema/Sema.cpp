@@ -360,7 +360,7 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
       return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
   }
 
-  if (D->getLinkage() == ExternalLinkage)
+  if (D->hasExternalLinkage())
     return true;
 
   return false;
@@ -402,13 +402,13 @@ void Sema::getUndefinedButUsed(
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
       if (FD->isDefined())
         continue;
-      if (FD->getLinkage() == ExternalLinkage &&
+      if (FD->hasExternalLinkage() &&
           !FD->getMostRecentDecl()->isInlined())
         continue;
     } else {
       if (cast<VarDecl>(ND)->hasDefinition() != VarDecl::DeclarationOnly)
         continue;
-      if (ND->getLinkage() == ExternalLinkage)
+      if (ND->hasExternalLinkage())
         continue;
     }
 
