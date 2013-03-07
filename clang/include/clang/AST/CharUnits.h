@@ -171,6 +171,17 @@ namespace clang {
                                                   Align.Quantity));
       }
 
+      /// Given that this is a non-zero alignment value, what is the
+      /// alignment at the given offset?
+      CharUnits alignmentAtOffset(CharUnits offset) {
+        // alignment: 0010000
+        // offset:    1011100
+        // lowBits:   0001011
+        // result:    0000100
+        QuantityType lowBits = (Quantity-1) & (offset.Quantity-1);
+        return CharUnits((lowBits + 1) & ~lowBits);
+      }
+
 
   }; // class CharUnit
 } // namespace clang
