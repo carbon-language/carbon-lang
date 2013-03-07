@@ -530,6 +530,7 @@ private:
   // Vector Operand Scalarization: <1 x ty> -> ty.
   bool ScalarizeVectorOperand(SDNode *N, unsigned OpNo);
   SDValue ScalarizeVecOp_BITCAST(SDNode *N);
+  SDValue ScalarizeVecOp_EXTEND(SDNode *N);
   SDValue ScalarizeVecOp_CONCAT_VECTORS(SDNode *N);
   SDValue ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDValue ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo);

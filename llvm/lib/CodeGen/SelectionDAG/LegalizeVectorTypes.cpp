@@ -365,6 +365,11 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::BITCAST:
       Res = ScalarizeVecOp_BITCAST(N);
       break;
+    case ISD::ANY_EXTEND:
+    case ISD::ZERO_EXTEND:
+    case ISD::SIGN_EXTEND:
+      Res = ScalarizeVecOp_EXTEND(N);
+      break;
     case ISD::CONCAT_VECTORS:
       Res = ScalarizeVecOp_CONCAT_VECTORS(N);
       break;
@@ -398,6 +403,21 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_BITCAST(SDNode *N) {
   SDValue Elt = GetScalarizedVector(N->getOperand(0));
   return DAG.getNode(ISD::BITCAST, N->getDebugLoc(),
                      N->getValueType(0), Elt);
+}
+
+/// ScalarizeVecOp_EXTEND - If the value to extend is a vector that needs
+/// to be scalarized, it must be <1 x ty>.  Extend the element instead.
+SDValue DAGTypeLegalizer::ScalarizeVecOp_EXTEND(SDNode *N) {
+  assert(N->getValueType(0).getVectorNumElements() == 1 &&
+         "Unexected vector type!");
+  SDValue Elt = GetScalarizedVector(N->getOperand(0));
+  SmallVector<SDValue, 1> Ops(1);
+  Ops[0] = DAG.getNode(N->getOpcode(), N->getDebugLoc(),
+                       N->getValueType(0).getScalarType(), Elt);
+  // Revectorize the result so the types line up with what the uses of this
+  // expression expect.
+  return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), N->getValueType(0),
+                     &Ops[0], 1);
 }
 
 /// ScalarizeVecOp_CONCAT_VECTORS - The vectors to concatenate have length one -
