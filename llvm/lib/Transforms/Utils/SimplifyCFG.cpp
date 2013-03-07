@@ -3944,11 +3944,13 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
 
     // Load from null is undefined.
     if (LoadInst *LI = dyn_cast<LoadInst>(Use))
-      return LI->getPointerAddressSpace() == 0;
+      if (!LI->isVolatile())
+        return LI->getPointerAddressSpace() == 0;
 
     // Store to null is undefined.
     if (StoreInst *SI = dyn_cast<StoreInst>(Use))
-      return SI->getPointerAddressSpace() == 0 && SI->getPointerOperand() == I;
+      if (!SI->isVolatile())
+        return SI->getPointerAddressSpace() == 0 && SI->getPointerOperand() == I;
   }
   return false;
 }
