@@ -101,8 +101,15 @@ struct CommandInfo {
   /// \endcode
   unsigned IsDeclarationCommand : 1;
   
-  /// \brief True if verbatim-like line command is a function declaraton.
+  /// \brief True if verbatim-like line command is a function declaration.
   unsigned IsFunctionDeclarationCommand : 1;
+
+  /// \brief True if block command is further describing a container API; such
+  /// as @coclass, @classdesign, etc.
+  unsigned IsContainerDetailCommand : 1;
+  
+  /// \brief True if block command is a container API; such as @interface.
+  unsigned IsContainerDeclarationCommand : 1;
   
   /// \brief True if this command is unknown.  This \c CommandInfo object was
   /// created during parsing.

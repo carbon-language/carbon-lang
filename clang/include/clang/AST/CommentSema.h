@@ -200,6 +200,10 @@ public:
   void checkDeprecatedCommand(const BlockCommandComment *Comment);
   
   void checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment);
+  
+  void checkContainerDeclVerbatimLine(const BlockCommandComment *Comment);
+  
+  void checkContainerDecl(const BlockCommandComment *Comment);
 
   /// Resolve parameter names to parameter indexes in function declaration.
   /// Emit diagnostics about unknown parametrs.
@@ -211,6 +215,11 @@ public:
   bool isObjCMethodDecl();
   bool isObjCPropertyDecl();
   bool isTemplateOrSpecialization();
+  bool isContainerDecl();
+  bool isClassStructDecl();
+  bool isUnionDecl();
+  bool isObjCInterfaceDecl();
+  bool isObjCProtocolDecl();
 
   ArrayRef<const ParmVarDecl *> getParamVars();
 

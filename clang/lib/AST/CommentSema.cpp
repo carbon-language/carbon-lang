@@ -52,8 +52,11 @@ BlockCommandComment *Sema::actOnBlockCommandStart(
                                       SourceLocation LocEnd,
                                       unsigned CommandID,
                                       CommandMarkerKind CommandMarker) {
-  return new (Allocator) BlockCommandComment(LocBegin, LocEnd, CommandID,
-                                             CommandMarker);
+  BlockCommandComment *BC = new (Allocator) BlockCommandComment(LocBegin, LocEnd,
+                                                                CommandID,
+                                                                CommandMarker);
+  checkContainerDecl(BC);
+  return BC;
 }
 
 void Sema::actOnBlockCommandArgs(BlockCommandComment *Command,
@@ -103,6 +106,52 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
     Diag(Comment->getLocation(), diag::warn_doc_function_method_decl_mismatch)
     << Comment->getCommandMarker()
     << (DiagSelect-1) << (DiagSelect-1)
+    << Comment->getSourceRange();
+}
+  
+void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
+  const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
+  if (!Info->IsContainerDeclarationCommand)
+    return;
+  StringRef Name = Info->Name;
+  unsigned DiagSelect = llvm::StringSwitch<unsigned>(Name)
+  .Case("class", !isClassStructDecl() ? 1 : 0)
+  .Case("interface", !isObjCInterfaceDecl() ? 2 : 0)
+  .Case("protocol", !isObjCProtocolDecl() ? 3 : 0)
+  .Case("struct", !isClassStructDecl() ? 4 : 0)
+  .Case("union", !isUnionDecl() ? 5 : 0)
+  .Default(0);
+  
+  if (DiagSelect)
+    Diag(Comment->getLocation(), diag::warn_doc_api_container_decl_mismatch)
+    << Comment->getCommandMarker()
+    << (DiagSelect-1) << (DiagSelect-1)
+    << Comment->getSourceRange();
+}
+
+void Sema::checkContainerDecl(const BlockCommandComment *Comment) {
+  const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
+  if (!Info->IsContainerDetailCommand || isContainerDecl())
+    return;
+  StringRef Name = Info->Name;
+  unsigned DiagSelect = llvm::StringSwitch<unsigned>(Name)
+  .Case("classdesign", 1)
+  .Case("coclass", 2)
+  .Case("dependency", 3)
+  .Case("helper", 4)
+  .Case("helperclass", 5)
+  .Case("helps", 6)
+  .Case("instancesize", 7)
+  .Case("ownership", 8)
+  .Case("performance", 9)
+  .Case("security", 10)
+  .Case("superclass", 11)
+  .Default(0);
+  
+  if (DiagSelect)
+    Diag(Comment->getLocation(), diag::warn_doc_container_decl_mismatch)
+    << Comment->getCommandMarker()
+    << (DiagSelect-1)
     << Comment->getSourceRange();
 }
 
@@ -362,6 +411,7 @@ VerbatimLineComment *Sema::actOnVerbatimLine(SourceLocation LocBegin,
                               TextBegin,
                               Text);
   checkFunctionDeclVerbatimLine(VL);
+  checkContainerDeclVerbatimLine(VL);
   return VL;
 }
 
@@ -735,6 +785,54 @@ bool Sema::isTemplateOrSpecialization() {
   return ThisDeclInfo->getTemplateKind() != DeclInfo::NotTemplate;
 }
 
+bool Sema::isContainerDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return isUnionDecl() || isClassStructDecl() 
+         || isObjCInterfaceDecl() || isObjCProtocolDecl();
+}
+
+bool Sema::isUnionDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  if (const RecordDecl *RD =
+        dyn_cast_or_null<RecordDecl>(ThisDeclInfo->CurrentDecl))
+    return RD->isUnion();
+  return false;
+}
+  
+bool Sema::isClassStructDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return ThisDeclInfo->CurrentDecl &&
+         isa<RecordDecl>(ThisDeclInfo->CurrentDecl) &&
+         !isUnionDecl();
+}
+
+bool Sema::isObjCInterfaceDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return ThisDeclInfo->CurrentDecl &&
+         isa<ObjCInterfaceDecl>(ThisDeclInfo->CurrentDecl);
+}
+  
+bool Sema::isObjCProtocolDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return ThisDeclInfo->CurrentDecl &&
+         isa<ObjCProtocolDecl>(ThisDeclInfo->CurrentDecl);
+}
+  
 ArrayRef<const ParmVarDecl *> Sema::getParamVars() {
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();

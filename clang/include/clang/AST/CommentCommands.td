@@ -25,6 +25,8 @@ class Command<string name> {
   bit IsVerbatimLineCommand = 0;
   bit IsDeclarationCommand = 0;
   bit IsFunctionDeclarationCommand = 0;
+  bit IsContainerDetailCommand = 0;
+  bit IsContainerDeclarationCommand = 0;
 }
 
 class InlineCommand<string name> : Command<name> {
@@ -64,6 +66,12 @@ class FunctionDeclarationVerbatimLineCommand<string name> :
       VerbatimLineCommand<name> {
   let IsDeclarationCommand = 1;
   let IsFunctionDeclarationCommand = 1;
+}
+
+class ContainerDeclarationVerbatimLineCommand<string name> :
+      VerbatimLineCommand<name> {
+  let IsDeclarationCommand = 1;
+  let IsContainerDeclarationCommand = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -181,9 +189,11 @@ def Typedef   : DeclarationVerbatimLineCommand<"typedef">;
 def Var       : DeclarationVerbatimLineCommand<"var">;
 
 // HeaderDoc commands.
-def Class     : DeclarationVerbatimLineCommand<"class">;
-def Interface : DeclarationVerbatimLineCommand<"interface">;
-def Protocol  : DeclarationVerbatimLineCommand<"protocol">;
+def Class     : ContainerDeclarationVerbatimLineCommand<"class">;
+def Interface : ContainerDeclarationVerbatimLineCommand<"interface">;
+def Protocol  : ContainerDeclarationVerbatimLineCommand<"protocol">;
+def Struct    : ContainerDeclarationVerbatimLineCommand<"struct">;
+def Union     : ContainerDeclarationVerbatimLineCommand<"union">;
 def Category  : DeclarationVerbatimLineCommand<"category">;
 def Template  : DeclarationVerbatimLineCommand<"template">;
 def Function  : FunctionDeclarationVerbatimLineCommand<"function">;
@@ -191,7 +201,38 @@ def Method    : FunctionDeclarationVerbatimLineCommand<"method">;
 def Callback  : FunctionDeclarationVerbatimLineCommand<"callback">;
 def Const     : DeclarationVerbatimLineCommand<"const">;
 def Constant  : DeclarationVerbatimLineCommand<"constant">;
-def Struct    : DeclarationVerbatimLineCommand<"struct">;
-def Union     : DeclarationVerbatimLineCommand<"union">;
 def Enum      : DeclarationVerbatimLineCommand<"enum">;
 
+def ClassDesign   : BlockCommand<"classdesign"> {
+  let IsContainerDetailCommand = 1; 
+}
+def CoClass       : BlockCommand<"coclass"> {
+ let IsContainerDetailCommand = 1; 
+}
+def Dependency    : BlockCommand<"dependency"> {
+ let IsContainerDetailCommand = 1; 
+}
+def Helper        : BlockCommand<"helper"> {
+ let IsContainerDetailCommand = 1; 
+}
+def HelperClass   : BlockCommand<"helperclass"> {
+ let IsContainerDetailCommand = 1; 
+}
+def Helps         : BlockCommand<"helps"> {
+ let IsContainerDetailCommand = 1; 
+}
+def InstanceSize  : BlockCommand<"instancesize"> {
+ let IsContainerDetailCommand = 1; 
+}
+def Ownership     : BlockCommand<"ownership"> {
+ let IsContainerDetailCommand = 1; 
+}
+def Performance   : BlockCommand<"performance"> {
+ let IsContainerDetailCommand = 1; 
+}
+def Security      : BlockCommand<"security"> {
+ let IsContainerDetailCommand = 1; 
+}
+def SuperClass    : BlockCommand<"superclass"> {
+ let IsContainerDetailCommand = 1; 
+}

@@ -48,6 +48,8 @@ void EmitClangCommentCommandInfo(RecordKeeper &Records, raw_ostream &OS) {
        << Tag.getValueAsBit("IsVerbatimLineCommand") << ", "
        << Tag.getValueAsBit("IsDeclarationCommand") << ", "
        << Tag.getValueAsBit("IsFunctionDeclarationCommand") << ", "
+       << Tag.getValueAsBit("IsContainerDetailCommand") << ", "
+       << Tag.getValueAsBit("IsContainerDeclarationCommand") << ", "
        << /* IsUnknownCommand = */ "0"
        << " }";
     if (i + 1 != e)

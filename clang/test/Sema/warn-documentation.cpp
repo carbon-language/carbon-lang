@@ -922,3 +922,31 @@ int test_nocrash12();
 // expected-warning@+1 {{empty paragraph passed to '@param' command}}
 ///@param x@param y
 int test_nocrash13(int x, int y);
+
+// rdar://12379114
+// expected-warning@+2 {{'@union' command should not be used in a comment attached to a non-union declaration}}
+/*!
+   @union U This is new 
+*/
+struct U { int iS; };
+
+/*!
+  @union U1
+*/
+union U1 {int i; };
+
+// expected-warning@+2 {{'@struct' command should not be used in a comment attached to a non-struct declaration}}
+/*!
+ @struct S2
+*/
+union S2 {};
+
+/*!
+  @class C1
+*/
+class C1;
+
+/*!
+  @struct S3;
+*/
+class S3;
