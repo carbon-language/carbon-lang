@@ -531,12 +531,10 @@ void AggExprEmitter::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
 
 void
 AggExprEmitter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
-  if (E->getType().isPODType(CGF.getContext())) {
+  if (Dest.isPotentiallyAliased() &&
+      E->getType().isPODType(CGF.getContext())) {
     // For a POD type, just emit a load of the lvalue + a copy, because our
     // compound literal might alias the destination.
-    // FIXME: This is a band-aid; the real problem appears to be in our handling
-    // of assignments, where we store directly into the LHS without checking
-    // whether anything in the RHS aliases.
     EmitAggLoadOfLValue(E);
     return;
   }

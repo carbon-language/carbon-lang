@@ -32,3 +32,37 @@ void f() {
   s = (S){s.y,s.x};
   // CHECK-NEXT: ret void
 }
+
+// CHECK: define i48 @g(
+struct G { short x, y, z; };
+struct G g(int x, int y, int z) {
+  // CHECK:      [[RESULT:%.*]] = alloca [[G:%.*]], align 2
+  // CHECK-NEXT: [[X:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[Y:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[Z:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[COERCE_TEMP:%.*]] = alloca i48
+  // CHECK-NEXT: store i32
+  // CHECK-NEXT: store i32
+  // CHECK-NEXT: store i32
+
+  // Evaluate the compound literal directly in the result value slot.
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[G]]* [[RESULT]], i32 0, i32 0
+  // CHECK-NEXT: [[T1:%.*]] = load i32* [[X]], align 4
+  // CHECK-NEXT: [[T2:%.*]] = trunc i32 [[T1]] to i16
+  // CHECK-NEXT: store i16 [[T2]], i16* [[T0]], align 2
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[G]]* [[RESULT]], i32 0, i32 1
+  // CHECK-NEXT: [[T1:%.*]] = load i32* [[Y]], align 4
+  // CHECK-NEXT: [[T2:%.*]] = trunc i32 [[T1]] to i16
+  // CHECK-NEXT: store i16 [[T2]], i16* [[T0]], align 2
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[G]]* [[RESULT]], i32 0, i32 2
+  // CHECK-NEXT: [[T1:%.*]] = load i32* [[Z]], align 4
+  // CHECK-NEXT: [[T2:%.*]] = trunc i32 [[T1]] to i16
+  // CHECK-NEXT: store i16 [[T2]], i16* [[T0]], align 2
+  return (struct G) { x, y, z };
+
+  // CHECK-NEXT: [[T0:%.*]] = bitcast i48* [[COERCE_TEMP]] to i8*
+  // CHECK-NEXT: [[T1:%.*]] = bitcast [[G]]* [[RESULT]] to i8*
+  // CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[T0]], i8* [[T1]], i64 6
+  // CHECK-NEXT: [[T0:%.*]] = load i48* [[COERCE_TEMP]]
+  // CHECK-NEXT: ret i48 [[T0]]
+}
