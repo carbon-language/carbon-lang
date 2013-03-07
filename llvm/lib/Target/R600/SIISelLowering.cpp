@@ -28,17 +28,30 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM),
     TII(static_cast<const SIInstrInfo*>(TM.getInstrInfo())),
     TRI(TM.getRegisterInfo()) {
-  addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
-  addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
-  addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
-  addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
+
   addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
+  addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
+
+  addRegisterClass(MVT::v16i8, &AMDGPU::SReg_128RegClass);
+  addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);
+  addRegisterClass(MVT::v64i8, &AMDGPU::SReg_512RegClass);
+
+  addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
+  addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
 
   addRegisterClass(MVT::v1i32, &AMDGPU::VReg_32RegClass);
+
   addRegisterClass(MVT::v2i32, &AMDGPU::VReg_64RegClass);
+  addRegisterClass(MVT::v2f32, &AMDGPU::VReg_64RegClass);
+
   addRegisterClass(MVT::v4i32, &AMDGPU::VReg_128RegClass);
+  addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
+
   addRegisterClass(MVT::v8i32, &AMDGPU::VReg_256RegClass);
+  addRegisterClass(MVT::v8f32, &AMDGPU::VReg_256RegClass);
+
   addRegisterClass(MVT::v16i32, &AMDGPU::VReg_512RegClass);
+  addRegisterClass(MVT::v16f32, &AMDGPU::VReg_512RegClass);
 
   computeRegisterProperties();
 
