@@ -798,15 +798,15 @@ public:
     return getStorageClass() == SC_Static && !isFileVarDecl();
   }
 
-  /// hasExternalStorage - Returns true if a variable has extern or
-  /// __private_extern__ storage.
+  /// \brief Returns true if a variable has extern or __private_extern__
+  /// storage.
   bool hasExternalStorage() const {
     return getStorageClass() == SC_Extern ||
            getStorageClass() == SC_PrivateExtern;
   }
 
-  /// hasExternalStorageAsWritten - Returns true if a variable was written
-  /// with extern or __private_extern__ storage.
+  /// \brief Returns true if a variable was written with extern or
+  /// __private_extern__ storage.
   bool hasExternalStorageAsWritten() const {
     return getStorageClassAsWritten() == SC_Extern ||
            getStorageClassAsWritten() == SC_PrivateExtern;
