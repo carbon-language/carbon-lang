@@ -904,9 +904,6 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, SUnit *BtSU) {
   SUnit *OldSU = Sequence.back();
   while (true) {
     Sequence.pop_back();
-    if (SU->isSucc(OldSU))
-      // Don't try to remove SU from AvailableQueue.
-      SU->isAvailable = false;
     // FIXME: use ready cycle instead of height
     CurCycle = OldSU->getHeight();
     UnscheduleNodeBottomUp(OldSU);
