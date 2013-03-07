@@ -1714,9 +1714,8 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
   if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
     return FC;          // Fold a few common cases.
 
-  std::vector<Constant*> argVec(1, C1);
-  argVec.push_back(C2);
-  ExprMapKeyType Key(Opcode, argVec, 0, Flags);
+  Constant *ArgVec[] = { C1, C2 };
+  ExprMapKeyType Key(Opcode, ArgVec, 0, Flags);
 
   LLVMContextImpl *pImpl = C1->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(C1->getType(), Key);
@@ -1792,10 +1791,8 @@ Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2) {
   if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
     return SC;        // Fold common cases
 
-  std::vector<Constant*> argVec(3, C);
-  argVec[1] = V1;
-  argVec[2] = V2;
-  ExprMapKeyType Key(Instruction::Select, argVec);
+  Constant *ArgVec[] = { C, V1, V2 };
+  ExprMapKeyType Key(Instruction::Select, ArgVec);
 
   LLVMContextImpl *pImpl = C->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(V1->getType(), Key);
@@ -1847,9 +1844,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant *LHS, Constant *RHS) {
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec;
-  ArgVec.push_back(LHS);
-  ArgVec.push_back(RHS);
+  Constant *ArgVec[] = { LHS, RHS };
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
 
@@ -1870,9 +1865,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec;
-  ArgVec.push_back(LHS);
-  ArgVec.push_back(RHS);
+  Constant *ArgVec[] = { LHS, RHS };
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
 
@@ -1894,9 +1887,8 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
     return FC;          // Fold a few common cases.
 
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec(1, Val);
-  ArgVec.push_back(Idx);
-  const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
+  Constant *ArgVec[] = { Val, Idx };
+  const ExprMapKeyType Key(Instruction::ExtractElement, ArgVec);
 
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
   Type *ReqTy = Val->getType()->getVectorElementType();
@@ -1915,10 +1907,8 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
   if (Constant *FC = ConstantFoldInsertElementInstruction(Val, Elt, Idx))
     return FC;          // Fold a few common cases.
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec(1, Val);
-  ArgVec.push_back(Elt);
-  ArgVec.push_back(Idx);
-  const ExprMapKeyType Key(Instruction::InsertElement,ArgVec);
+  Constant *ArgVec[] = { Val, Elt, Idx };
+  const ExprMapKeyType Key(Instruction::InsertElement, ArgVec);
 
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(Val->getType(), Key);
@@ -1937,10 +1927,8 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
   Type *ShufTy = VectorType::get(EltTy, NElts);
 
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec(1, V1);
-  ArgVec.push_back(V2);
-  ArgVec.push_back(Mask);
-  const ExprMapKeyType Key(Instruction::ShuffleVector,ArgVec);
+  Constant *ArgVec[] = { V1, V2, Mask };
+  const ExprMapKeyType Key(Instruction::ShuffleVector, ArgVec);
 
   LLVMContextImpl *pImpl = ShufTy->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ShufTy, Key);
