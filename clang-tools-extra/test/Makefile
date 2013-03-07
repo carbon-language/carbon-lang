@@ -8,8 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../../..
-include $(CLANG_LEVEL)/../../Makefile.config
-DIRS := cpp11-migrate
 include $(CLANG_LEVEL)/Makefile
 
 # Test in all immediate subdirectories if unset.
@@ -25,11 +23,6 @@ TESTDIRS := $(TESTDIRS:$(PROJ_SRC_DIR)%=$(PROJ_OBJ_DIR)%)
 # Allow EXTRA_TESTDIRS to provide additional test directories.
 TESTDIRS += $(EXTRA_TESTDIRS)
 
-# We'd like cpp11-migrate's auto-generated tests to be included in the LIT run
-# below. Since the auto-generated test sources live in PROJ_OBJ_DIR they won't
-# get discovered without specifying them explicitly.
-TESTDIRS += $(PROJ_OBJ_DIR)/cpp11-migrate/generated_tests
-
 ifndef TESTARGS
 ifdef VERBOSE
 TESTARGS = -v
@@ -38,16 +31,14 @@ TESTARGS = -s -v
 endif
 endif
 
+# Make sure any extra test suites can find the main site config.
+LIT_ARGS := --param clang_site_config=$(PROJ_OBJ_DIR)/lit.site.cfg
+
 ifdef VG
   LIT_ARGS += "--vg"
 endif
 
 all:: lit.site.cfg
-
-# Run just the Clang extra tools tests. This target assumes 'make (all)' has
-# been run previously as that target is responsible for generating lit config
-# files and auto-generated tests.
-test::
 	@ echo '--- Running the Clang extra tools tests for $(TARGET_TRIPLE) ---'
 	@ $(PYTHON) $(LLVM_SRC_ROOT)/utils/lit/lit.py \
 	  $(LIT_ARGS) $(TESTARGS) $(TESTDIRS)
@@ -55,7 +46,7 @@ test::
 FORCE:
 
 lit.site.cfg: FORCE
-	@echo "Making lit.site.cfg for Clang extra tools..."
+	@echo "Making Clang extra tools' 'lit.site.cfg' file..."
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
@@ -63,13 +54,10 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@CLANG_TOOLS_SOURCE_DIR@=$(PROJ_SRC_DIR)/..=g >> lit.tmp
 	@$(ECHOPATH) s=@CLANG_TOOLS_BINARY_DIR@=$(PROJ_OBJ_DIR)/..=g >> lit.tmp
 	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
-	@$(ECHOPATH) s=@TEST_SOURCE_ROOT@=$(PROJ_SRC_DIR)=g >> lit.tmp
-	@$(ECHOPATH) s=@TEST_EXEC_ROOT@=$(PROJ_OBJ_DIR)=g >> lit.tmp
-	@$(ECHOPATH) s=@TESTSUITE_NAME@=Clang Tools=g >> lit.tmp
 	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 
 clean::
 	@ find . -name Output | xargs rm -fr
 
-.PHONY: all test clean
+.PHONY: all report clean

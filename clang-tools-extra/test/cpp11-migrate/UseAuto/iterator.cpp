@@ -1,7 +1,20 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: cpp11-migrate -use-auto %t.cpp -- --std=c++11 -I %gen_root/UseAuto/Inputs
+// RUN: cpp11-migrate -use-auto %t.cpp -- --std=c++11 -I %S/Inputs
 // RUN: FileCheck -input-file=%t.cpp %s
-#include "my_std.h"
+
+#define CONTAINER array
+#include "test_std_container.h"
+#undef CONTAINER
+
+#define CONTAINER vector
+#include "test_std_container.h"
+#undef CONTAINER
+
+#define CONTAINER unordered_map
+#define USE_BASE_CLASS_ITERATORS 1
+#include "test_std_container.h"
+#undef USE_BASE_CLASS_ITERATORS
+#undef CONTAINER
 
 typedef std::vector<int>::iterator int_iterator;
 
