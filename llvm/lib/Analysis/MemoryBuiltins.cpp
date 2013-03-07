@@ -194,12 +194,12 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
                                const TargetLibraryInfo *TLI,
                                bool LookThroughSExt = false) {
   if (!CI)
-    return NULL;
+    return 0;
 
   // The size of the malloc's result type must be known to determine array size.
   Type *T = getMallocAllocatedType(CI, TLI);
   if (!T || !T->isSized() || !TD)
-    return NULL;
+    return 0;
 
   unsigned ElementSize = TD->getTypeAllocSize(T);
   if (StructType *ST = dyn_cast<StructType>(T))
@@ -208,12 +208,12 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
   // If malloc call's arg can be determined to be a multiple of ElementSize,
   // return the multiple.  Otherwise, return NULL.
   Value *MallocArg = CI->getArgOperand(0);
-  Value *Multiple = NULL;
+  Value *Multiple = 0;
   if (ComputeMultiple(MallocArg, ElementSize, Multiple,
                       LookThroughSExt))
     return Multiple;
 
-  return NULL;
+  return 0;
 }
 
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction 
@@ -230,7 +230,7 @@ const CallInst *llvm::isArrayMalloc(const Value *I,
     return CI;
 
   // CI is a non-array malloc or we can't figure out that it is an array malloc.
-  return NULL;
+  return 0;
 }
 
 /// getMallocType - Returns the PointerType resulting from the malloc call.
@@ -242,7 +242,7 @@ PointerType *llvm::getMallocType(const CallInst *CI,
                                  const TargetLibraryInfo *TLI) {
   assert(isMallocLikeFn(CI, TLI) && "getMallocType and not malloc call");
   
-  PointerType *MallocType = NULL;
+  PointerType *MallocType = 0;
   unsigned NumOfBitCastUses = 0;
 
   // Determine if CallInst has a bitcast use.
@@ -262,7 +262,7 @@ PointerType *llvm::getMallocType(const CallInst *CI,
     return cast<PointerType>(CI->getType());
 
   // Type could not be determined.
-  return NULL;
+  return 0;
 }
 
 /// getMallocAllocatedType - Returns the Type allocated by malloc call.
@@ -273,7 +273,7 @@ PointerType *llvm::getMallocType(const CallInst *CI,
 Type *llvm::getMallocAllocatedType(const CallInst *CI,
                                    const TargetLibraryInfo *TLI) {
   PointerType *PT = getMallocType(CI, TLI);
-  return PT ? PT->getElementType() : NULL;
+  return PT ? PT->getElementType() : 0;
 }
 
 /// getMallocArraySize - Returns the array size of a malloc call.  If the 
