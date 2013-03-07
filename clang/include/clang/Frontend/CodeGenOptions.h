@@ -78,6 +78,9 @@ public:
   /// replaced.
   std::string CoverageFile;
 
+  /// The version string to put into coverage files.
+  char CoverageVersion[4];
+
   /// Enable additional debugging information.
   std::string DebugPass;
 
@@ -134,6 +137,7 @@ public:
 #include "clang/Frontend/CodeGenOptions.def"
 
     RelocationModel = "pic";
+    memcpy(CoverageVersion, "*204", 4);
   }
 };
 

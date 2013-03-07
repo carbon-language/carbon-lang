@@ -149,6 +149,12 @@ def femit_coverage_data: Flag<["-"], "femit-coverage-data">,
 def coverage_file : Separate<["-"], "coverage-file">,
   HelpText<"Emit coverage data to this filename. The extension will be replaced.">;
 def coverage_file_EQ : Joined<["-"], "coverage-file=">, Alias<coverage_file>;
+def coverage_cfg_checksum : Flag<["-"], "coverage-cfg-checksum">,
+  HelpText<"Emit CFG checksum for functions in .gcno files.">;
+def coverage_function_names_in_data : Flag<["-"], "coverage-function-names-in-data">,
+  HelpText<"Emit function names in .gcda files.">;
+def coverage_version_EQ : Joined<["-"], "coverage-version=">,
+  HelpText<"Four-byte version string for gcov files.">;
 def fuse_register_sized_bitfield_access: Flag<["-"], "fuse-register-sized-bitfield-access">,
   HelpText<"Use register sized accesses to bit-fields, when possible.">;
 def relaxed_aliasing : Flag<["-"], "relaxed-aliasing">,

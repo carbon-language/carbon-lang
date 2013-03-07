@@ -30,6 +30,8 @@ CODEGENOPT(Name, Bits, Default)
 
 CODEGENOPT(AsmVerbose        , 1, 0) ///< -dA, -fverbose-asm.
 CODEGENOPT(ObjCAutoRefCountExceptions , 1, 0) ///< Whether ARC should be EH-safe.
+CODEGENOPT(CoverageExtraChecksum, 1, 0) ///< Whether we need a second checksum for functions in GCNO files.
+CODEGENOPT(CoverageFunctionNamesInData, 1, 0) ///< Whether we should include function names in GCDA files.
 CODEGENOPT(CUDAIsDevice      , 1, 0) ///< Set when compiling for CUDA device.
 CODEGENOPT(CXAAtExit         , 1, 1) ///< Use __cxa_atexit for calling destructors.
 CODEGENOPT(CXXCtorDtorAliases, 1, 0) ///< Emit complete ctors/dtors as linker

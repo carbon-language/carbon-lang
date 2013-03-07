@@ -2332,8 +2332,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (Output.isFilename()) {
       CmdArgs.push_back("-coverage-file");
       SmallString<128> CoverageFilename(Output.getFilename());
-      if (!C.getArgs().hasArg(options::OPT_no_canonical_prefixes))
-        llvm::sys::fs::make_absolute(CoverageFilename);
+      if (llvm::sys::path::is_relative(CoverageFilename.str())) {
+        if (const char *pwd = ::getenv("PWD")) {
+          if (llvm::sys::path::is_absolute(pwd)) {
+            SmallString<128> Pwd(pwd);
+            llvm::sys::path::append(Pwd, CoverageFilename.str());
+            CoverageFilename.swap(Pwd);
+          }
+        }
+      }
       CmdArgs.push_back(Args.MakeArgString(CoverageFilename));
     }
   }

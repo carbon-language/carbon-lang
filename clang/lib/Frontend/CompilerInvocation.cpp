@@ -380,12 +380,31 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
   Opts.SanitizeRecover = !Args.hasArg(OPT_fno_sanitize_recover);
 
-  Opts.InstrumentFunctions = Args.hasArg(OPT_finstrument_functions);
-  Opts.InstrumentForProfiling = Args.hasArg(OPT_pg);
   Opts.EmitGcovArcs = Args.hasArg(OPT_femit_coverage_data);
   Opts.EmitGcovNotes = Args.hasArg(OPT_femit_coverage_notes);
-  Opts.EmitOpenCLArgMetadata = Args.hasArg(OPT_cl_kernel_arg_info);
+  if (Opts.EmitGcovArcs || Opts.EmitGcovNotes) {
   Opts.CoverageFile = Args.getLastArgValue(OPT_coverage_file);
+    Opts.CoverageExtraChecksum = Args.hasArg(OPT_coverage_cfg_checksum);
+    Opts.CoverageFunctionNamesInData =
+        Args.hasArg(OPT_coverage_function_names_in_data);
+    if (Args.hasArg(OPT_coverage_version_EQ)) {
+      StringRef CoverageVersion = Args.getLastArgValue(OPT_coverage_version_EQ);
+      if (CoverageVersion.size() != 4) {
+        Diags.Report(diag::err_drv_invalid_value)
+            << Args.getLastArg(OPT_coverage_version_EQ)->getAsString(Args)
+            << CoverageVersion;
+      } else {
+        Opts.CoverageVersion[0] = CoverageVersion[3];
+        Opts.CoverageVersion[1] = CoverageVersion[2];
+        Opts.CoverageVersion[2] = CoverageVersion[1];
+        Opts.CoverageVersion[3] = CoverageVersion[0];
+      }
+    }
+  }
+
+  Opts.InstrumentFunctions = Args.hasArg(OPT_finstrument_functions);
+  Opts.InstrumentForProfiling = Args.hasArg(OPT_pg);
+  Opts.EmitOpenCLArgMetadata = Args.hasArg(OPT_cl_kernel_arg_info);
   Opts.DebugCompilationDir = Args.getLastArgValue(OPT_fdebug_compilation_dir);
   Opts.LinkBitcodeFile = Args.getLastArgValue(OPT_mlink_bitcode_file);
   Opts.SanitizerBlacklistFile = Args.getLastArgValue(OPT_fsanitize_blacklist);
