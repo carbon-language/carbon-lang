@@ -1571,13 +1571,13 @@ private:
 
   void visitSelectInst(SelectInst &SI) {
     DEBUG(dbgs() << "    original: " << SI << "\n");
-    IRBuilder<> IRB(&SI);
 
     // If the select isn't safe to speculate, just use simple logic to emit it.
     SmallVector<LoadInst *, 4> Loads;
     if (!isSafeSelectToSpeculate(SI, Loads))
       return;
 
+    IRBuilder<> IRB(&SI);
     Use *Ops[2] = { &SI.getOperandUse(1), &SI.getOperandUse(2) };
     AllocaPartitioning::iterator PIs[2];
     AllocaPartitioning::PartitionUse PUs[2];
@@ -2450,7 +2450,6 @@ private:
     DEBUG(dbgs() << "    original: " << LI << "\n");
     Value *OldOp = LI.getOperand(0);
     assert(OldOp == OldPtr);
-    IRBuilder<> IRB(&LI);
 
     uint64_t Size = EndOffset - BeginOffset;
     bool IsSplitIntLoad = Size < TD.getTypeStoreSize(LI.getType());
@@ -2471,6 +2470,7 @@ private:
       return true;
     }
 
+    IRBuilder<> IRB(&LI);
     Type *TargetTy = IsSplitIntLoad ? Type::getIntNTy(LI.getContext(), Size * 8)
                                     : LI.getType();
     bool IsPtrAdjusted = false;
