@@ -11,10 +11,12 @@ function(add_python_test_target name test_script args comment)
     )
 endfunction()
 
+string(REGEX REPLACE ".*ccache\ +" "" LLDB_TEST_COMPILER ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
+
 # Users can override LLDB_TEST_ARGS to modify the way LLDB tests are run. See help below.
 set(LLDB_TEST_ARGS
   -C
-  ${CMAKE_C_COMPILER}
+  ${LLDB_TEST_COMPILER}
   CACHE STRING "Specify compiler(s) and architecture(s) with which run LLDB tests. For example: '-C gcc -C clang -A i386 -A x86_64'"
   )
 string(REPLACE " " ";" LLDB_TEST_ARGS ${LLDB_TEST_ARGS})
