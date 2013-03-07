@@ -6,6 +6,8 @@ extern __unknown_anytype test1();
 void test_unknown_anytype_receiver() {
   (void)(int)[[test0 unknownMethod] otherUnknownMethod];;
   (void)(id)[[test1() unknownMethod] otherUnknownMethod];
+  id x = test0;
+  id y = test1();
 }
 
 // rdar://10988847
