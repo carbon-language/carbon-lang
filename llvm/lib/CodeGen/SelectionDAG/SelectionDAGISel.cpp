@@ -2607,11 +2607,11 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       SDValue Imm = RecordedNodes[RecNo].first;
 
       if (Imm->getOpcode() == ISD::Constant) {
-        int64_t Val = cast<ConstantSDNode>(Imm)->getZExtValue();
-        Imm = CurDAG->getTargetConstant(Val, Imm.getValueType());
+        const ConstantInt *Val=cast<ConstantSDNode>(Imm)->getConstantIntValue();
+        Imm = CurDAG->getConstant(*Val, Imm.getValueType(), true);
       } else if (Imm->getOpcode() == ISD::ConstantFP) {
         const ConstantFP *Val=cast<ConstantFPSDNode>(Imm)->getConstantFPValue();
-        Imm = CurDAG->getTargetConstantFP(*Val, Imm.getValueType());
+        Imm = CurDAG->getConstantFP(*Val, Imm.getValueType(), true);
       }
 
       RecordedNodes.push_back(std::make_pair(Imm, RecordedNodes[RecNo].second));
