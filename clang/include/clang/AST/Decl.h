@@ -800,6 +800,13 @@ public:
            getStorageClass() == SC_PrivateExtern;
   }
 
+  /// hasExternalStorageAsWritten - Returns true if a variable was written
+  /// with extern or __private_extern__ storage.
+  bool hasExternalStorageAsWritten() const {
+    return getStorageClassAsWritten() == SC_Extern ||
+           getStorageClassAsWritten() == SC_PrivateExtern;
+  }
+
   /// hasGlobalStorage - Returns true for all variables that do not
   ///  have local storage.  This includs all global variables as well
   ///  as static variables declared within a function.
