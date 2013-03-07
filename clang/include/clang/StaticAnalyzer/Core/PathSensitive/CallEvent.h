@@ -336,7 +336,9 @@ public:
   /// of some kind.
   static bool isCallStmt(const Stmt *S);
 
-  /// \brief Returns the result type of a function, method declaration.
+  /// \brief Returns the result type of a function or method declaration.
+  ///
+  /// This will return a null QualType if the result type cannot be determined.
   static QualType getDeclaredResultType(const Decl *D);
 
   // Iterator access to formal parameters and their types.

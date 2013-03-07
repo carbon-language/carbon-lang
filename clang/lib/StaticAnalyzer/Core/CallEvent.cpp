@@ -271,7 +271,6 @@ bool CallEvent::isCallStmt(const Stmt *S) {
                           || isa<CXXNewExpr>(S);
 }
 
-/// \brief Returns the result type, adjusted for references.
 QualType CallEvent::getDeclaredResultType(const Decl *D) {
   assert(D);
   if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D))

@@ -170,12 +170,19 @@ public:
   // If no new state is feasible, NULL is returned.
   //
 
+  /// Assumes that the value of \p cond is zero (if \p assumption is "false")
+  /// or non-zero (if \p assumption is "true").
+  ///
+  /// This returns a new state with the added constraint on \p cond.
+  /// If no new state is feasible, NULL is returned.
   ProgramStateRef assume(DefinedOrUnknownSVal cond, bool assumption) const;
 
-  /// This method assumes both "true" and "false" for 'cond', and
-  /// returns both corresponding states.  It's shorthand for doing
-  /// 'assume' twice.
-  std::pair<ProgramStateRef , ProgramStateRef >
+  /// Assumes both "true" and "false" for \p cond, and returns both
+  /// corresponding states (respectively).
+  ///
+  /// This is more efficient than calling assume() twice. Note that one (but not
+  /// both) of the returned states may be NULL.
+  std::pair<ProgramStateRef, ProgramStateRef>
   assume(DefinedOrUnknownSVal cond) const;
 
   ProgramStateRef assumeInBound(DefinedOrUnknownSVal idx,
