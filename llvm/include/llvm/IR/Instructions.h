@@ -281,7 +281,7 @@ public:
             unsigned Align, AtomicOrdering Order,
             SynchronizationScope SynchScope,
             BasicBlock *InsertAtEnd);
-          
+
 
   /// isVolatile - Return true if this is a store to a volatile memory
   /// location.
@@ -516,15 +516,15 @@ public:
 
   Value *getCompareOperand() { return getOperand(1); }
   const Value *getCompareOperand() const { return getOperand(1); }
-  
+
   Value *getNewValOperand() { return getOperand(2); }
   const Value *getNewValOperand() const { return getOperand(2); }
-  
+
   /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
   }
-  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::AtomicCmpXchg;
@@ -1683,7 +1683,7 @@ public:
   Constant *getMask() const {
     return cast<Constant>(getOperand(2));
   }
-  
+
   /// getMaskValue - Return the index from the shuffle mask for the specified
   /// output result.  This is either -1 if the element is undef or a number less
   /// than 2*numelements.
@@ -1692,7 +1692,7 @@ public:
   int getMaskValue(unsigned i) const {
     return getMaskValue(getMask(), i);
   }
-  
+
   /// getShuffleMask - Return the full mask for this instruction, where each
   /// element is the element number and undef's are returned as -1.
   static void getShuffleMask(Constant *Mask, SmallVectorImpl<int> &Result);
@@ -2009,7 +2009,7 @@ public:
                          Instruction *InsertBefore = 0) {
     return new PHINode(Ty, NumReservedValues, NameStr, InsertBefore);
   }
-  static PHINode *Create(Type *Ty, unsigned NumReservedValues, 
+  static PHINode *Create(Type *Ty, unsigned NumReservedValues,
                          const Twine &NameStr, BasicBlock *InsertAtEnd) {
     return new PHINode(Ty, NumReservedValues, NameStr, InsertAtEnd);
   }
@@ -2448,7 +2448,7 @@ class SwitchInst : public TerminatorInst {
   // Operand[1]    = Default basic block destination
   // Operand[2n  ] = Value to match
   // Operand[2n+1] = BasicBlock to go to on match
-  
+
   // Store case values separately from operands list. We needn't User-Use
   // concept here, since it is just a case value, it will always constant,
   // and case value couldn't reused with another instructions/values.
@@ -2465,9 +2465,9 @@ class SwitchInst : public TerminatorInst {
   typedef std::list<IntegersSubset> Subsets;
   typedef Subsets::iterator SubsetsIt;
   typedef Subsets::const_iterator SubsetsConstIt;
-  
+
   Subsets TheSubsets;
-  
+
   SwitchInst(const SwitchInst &SI);
   void init(Value *Value, BasicBlock *Default, unsigned NumReserved);
   void growOperands();
@@ -2491,7 +2491,7 @@ class SwitchInst : public TerminatorInst {
 protected:
   virtual SwitchInst *clone_impl() const;
 public:
-  
+
   // FIXME: Currently there are a lot of unclean template parameters,
   // we need to make refactoring in future.
   // All these parameters are used to implement both iterator and const_iterator
@@ -2501,16 +2501,16 @@ public:
   // SubsetsItTy may be SubsetsConstIt or SubsetsIt
   // BasicBlockTy may be "const BasicBlock" or "BasicBlock"
   template <class SwitchInstTy, class ConstantIntTy,
-            class SubsetsItTy, class BasicBlockTy> 
+            class SubsetsItTy, class BasicBlockTy>
     class CaseIteratorT;
 
   typedef CaseIteratorT<const SwitchInst, const ConstantInt,
                         SubsetsConstIt, const BasicBlock> ConstCaseIt;
   class CaseIt;
-  
+
   // -2
   static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
-  
+
   static SwitchInst *Create(Value *Value, BasicBlock *Default,
                             unsigned NumCases, Instruction *InsertBefore = 0) {
     return new SwitchInst(Value, Default, NumCases, InsertBefore);
@@ -2519,7 +2519,7 @@ public:
                             unsigned NumCases, BasicBlock *InsertAtEnd) {
     return new SwitchInst(Value, Default, NumCases, InsertAtEnd);
   }
-  
+
   ~SwitchInst();
 
   /// Provide fast operand accessors
@@ -2553,7 +2553,7 @@ public:
   ConstCaseIt case_begin() const {
     return ConstCaseIt(this, 0, TheSubsets.begin());
   }
-  
+
   /// Returns a read/write iterator that points one past the last
   /// in the SwitchInst.
   CaseIt case_end() {
@@ -2568,14 +2568,14 @@ public:
   /// Note: this iterator allows to resolve successor only. Attempt
   /// to resolve case value causes an assertion.
   /// Also note, that increment and decrement also causes an assertion and
-  /// makes iterator invalid. 
+  /// makes iterator invalid.
   CaseIt case_default() {
     return CaseIt(this, DefaultPseudoIndex, TheSubsets.end());
   }
   ConstCaseIt case_default() const {
     return ConstCaseIt(this, DefaultPseudoIndex, TheSubsets.end());
   }
-  
+
   /// findCaseValue - Search all of the case values for the specified constant.
   /// If it is explicitly handled, return the case iterator of it, otherwise
   /// return default case iterator to indicate
@@ -2591,8 +2591,8 @@ public:
       if (i.getCaseValueEx().isSatisfies(IntItem::fromConstantInt(C)))
         return i;
     return case_default();
-  }    
-  
+  }
+
   /// findCaseDest - Finds the unique case value for a given successor. Returns
   /// null if the successor is not found, not unique, or is the default case.
   ConstantInt *findCaseDest(BasicBlock *BB) {
@@ -2614,7 +2614,7 @@ public:
   /// This action invalidates case_end(). Old case_end() iterator will
   /// point to the added case.
   void addCase(ConstantInt *OnVal, BasicBlock *Dest);
-  
+
   /// addCase - Add an entry to the switch instruction.
   /// Note:
   /// This action invalidates case_end(). Old case_end() iterator will
@@ -2638,31 +2638,31 @@ public:
     assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
     setOperand(idx*2+1, (Value*)NewSucc);
   }
-  
+
   uint16_t hash() const {
     uint32_t NumberOfCases = (uint32_t)getNumCases();
     uint16_t Hash = (0xFFFF & NumberOfCases) ^ (NumberOfCases >> 16);
     for (ConstCaseIt i = case_begin(), e = case_end();
          i != e; ++i) {
-      uint32_t NumItems = (uint32_t)i.getCaseValueEx().getNumItems(); 
+      uint32_t NumItems = (uint32_t)i.getCaseValueEx().getNumItems();
       Hash = (Hash << 1) ^ (0xFFFF & NumItems) ^ (NumItems >> 16);
     }
     return Hash;
-  }  
-  
+  }
+
   // Case iterators definition.
 
   template <class SwitchInstTy, class ConstantIntTy,
-            class SubsetsItTy, class BasicBlockTy> 
+            class SubsetsItTy, class BasicBlockTy>
   class CaseIteratorT {
   protected:
-    
+
     SwitchInstTy *SI;
     unsigned long Index;
     SubsetsItTy SubsetIt;
-    
+
     /// Initializes case iterator for given SwitchInst and for given
-    /// case number.    
+    /// case number.
     friend class SwitchInst;
     CaseIteratorT(SwitchInstTy *SI, unsigned SuccessorIndex,
                   SubsetsItTy CaseValueIt) {
@@ -2670,36 +2670,36 @@ public:
       Index = SuccessorIndex;
       this->SubsetIt = CaseValueIt;
     }
-    
+
   public:
     typedef typename SubsetsItTy::reference IntegersSubsetRef;
     typedef CaseIteratorT<SwitchInstTy, ConstantIntTy,
                           SubsetsItTy, BasicBlockTy> Self;
-    
+
     CaseIteratorT(SwitchInstTy *SI, unsigned CaseNum) {
           this->SI = SI;
           Index = CaseNum;
           SubsetIt = SI->TheSubsets.begin();
           std::advance(SubsetIt, CaseNum);
         }
-        
-    
+
+
     /// Initializes case iterator for given SwitchInst and for given
     /// TerminatorInst's successor index.
     static Self fromSuccessorIndex(SwitchInstTy *SI, unsigned SuccessorIndex) {
       assert(SuccessorIndex < SI->getNumSuccessors() &&
-             "Successor index # out of range!");    
-      return SuccessorIndex != 0 ? 
+             "Successor index # out of range!");
+      return SuccessorIndex != 0 ?
              Self(SI, SuccessorIndex - 1) :
-             Self(SI, DefaultPseudoIndex);       
+             Self(SI, DefaultPseudoIndex);
     }
-    
+
     /// Resolves case value for current case.
     /// @deprecated
     ConstantIntTy *getCaseValue() {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       IntegersSubsetRef CaseRanges = *SubsetIt;
-      
+
       // FIXME: Currently we work with ConstantInt based cases.
       // So return CaseValue as ConstantInt.
       return CaseRanges.getSingleNumber(0).toConstantInt();
@@ -2710,25 +2710,25 @@ public:
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       return *SubsetIt;
     }
-    
+
     /// Resolves successor for current case.
     BasicBlockTy *getCaseSuccessor() {
       assert((Index < SI->getNumCases() ||
               Index == DefaultPseudoIndex) &&
              "Index out the number of cases.");
-      return SI->getSuccessor(getSuccessorIndex());      
+      return SI->getSuccessor(getSuccessorIndex());
     }
-    
+
     /// Returns number of current case.
     unsigned getCaseIndex() const { return Index; }
-    
+
     /// Returns TerminatorInst's successor index for current case successor.
     unsigned getSuccessorIndex() const {
       assert((Index == DefaultPseudoIndex || Index < SI->getNumCases()) &&
              "Index out the number of cases.");
       return Index != DefaultPseudoIndex ? Index + 1 : 0;
     }
-    
+
     Self operator++() {
       // Check index correctness after increment.
       // Note: Index == getNumCases() means end().
@@ -2745,7 +2745,7 @@ public:
       ++(*this);
       return tmp;
     }
-    Self operator--() { 
+    Self operator--() {
       // Check index correctness after decrement.
       // Note: Index == getNumCases() means end().
       // Also allow "-1" iterator here. That will became valid after ++.
@@ -2757,10 +2757,10 @@ public:
         SubsetIt = SI->TheSubsets.end();
         return *this;
       }
-        
+
       if (Index != -1UL)
         --SubsetIt;
-      
+
       return *this;
     }
     Self operator--(int) {
@@ -2782,23 +2782,23 @@ public:
                                       SubsetsIt, BasicBlock> {
     typedef CaseIteratorT<SwitchInst, ConstantInt, SubsetsIt, BasicBlock>
       ParentTy;
-    
+
   protected:
     friend class SwitchInst;
     CaseIt(SwitchInst *SI, unsigned CaseNum, SubsetsIt SubsetIt) :
       ParentTy(SI, CaseNum, SubsetIt) {}
-    
+
     void updateCaseValueOperand(IntegersSubset& V) {
-      SI->setOperand(2 + Index*2, reinterpret_cast<Value*>((Constant*)V));      
+      SI->setOperand(2 + Index*2, reinterpret_cast<Value*>((Constant*)V));
     }
-  
+
   public:
 
-    CaseIt(SwitchInst *SI, unsigned CaseNum) : ParentTy(SI, CaseNum) {}    
-    
+    CaseIt(SwitchInst *SI, unsigned CaseNum) : ParentTy(SI, CaseNum) {}
+
     CaseIt(const ParentTy& Src) : ParentTy(Src) {}
 
-    /// Sets the new value for current case.    
+    /// Sets the new value for current case.
     /// @deprecated.
     void setValue(ConstantInt *V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
@@ -2809,17 +2809,17 @@ public:
       *SubsetIt = Mapping.getCase();
       updateCaseValueOperand(*SubsetIt);
     }
-    
+
     /// Sets the new value for current case.
     void setValueEx(IntegersSubset& V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       *SubsetIt = V;
-      updateCaseValueOperand(*SubsetIt);   
+      updateCaseValueOperand(*SubsetIt);
     }
-    
+
     /// Sets the new successor for current case.
     void setSuccessor(BasicBlock *S) {
-      SI->setSuccessor(getSuccessorIndex(), S);      
+      SI->setSuccessor(getSuccessorIndex(), S);
     }
   };
 
