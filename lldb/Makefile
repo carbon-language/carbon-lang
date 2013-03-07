@@ -48,6 +48,11 @@ ifdef LLDB_VENDOR
 CPP.Flags += -DLLDB_VENDOR='"$(LLDB_VENDOR) "'
 endif
 
+# If building on a 32-bit system, make sure off_t can store offsets > 2GB
+ifneq "$(HOST_ARCH)" "x86_64"
+CPP.Flags += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+endif
+
 # Disable -fstrict-aliasing. Darwin disables it by default (and LLVM doesn't
 # work with it enabled with GCC), Clang/llvm-gc don't support it yet, and newer
 # GCC's have false positive warnings with it on Linux (which prove a pain to

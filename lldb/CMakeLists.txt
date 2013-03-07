@@ -94,6 +94,14 @@ if( MSVC )
   )
 endif() 
 
+# If building on a 32-bit system, make sure off_t can store offsets > 2GB
+if( CMAKE_SIZEOF_VOID_P EQUAL 4 )
+  add_lldb_definitions(
+    -D_LARGEFILE_SOURCE
+    -D_FILE_OFFSET_BITS=64
+    )
+endif()
+
 set(LLDB_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LLDB_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
