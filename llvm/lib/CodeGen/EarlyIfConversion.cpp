@@ -593,6 +593,7 @@ public:
   EarlyIfConverter() : MachineFunctionPass(ID) {}
   void getAnalysisUsage(AnalysisUsage &AU) const;
   bool runOnMachineFunction(MachineFunction &MF);
+  const char *getPassName() const { return "Early If-Conversion"; }
 
 private:
   bool tryConvertIf(MachineBasicBlock*);
