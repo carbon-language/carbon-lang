@@ -145,7 +145,7 @@ static void recursive_mkdir(char *filename) {
  * profiling enabled will emit to a different file. Only one file may be
  * started at a time.
  */
-void llvm_gcda_start_file(const char *orig_filename) {
+void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
   char *filename = mangle_filename(orig_filename);
 
   /* Try just opening the file. */
@@ -167,13 +167,10 @@ void llvm_gcda_start_file(const char *orig_filename) {
     }
   }
 
-  /* gcda file, version 404*, stamp LLVM. */
-#ifdef __APPLE__
-  fwrite("adcg*204MVLL", 12, 1, output_file);
-#else
-  fwrite("adcg*404MVLL", 12, 1, output_file);
-#endif
-
+  /* gcda file, version, stamp LLVM. */
+  fwrite("adcg", 4, 1, output_file);
+  fwrite(version, 4, 1, output_file);
+  fwrite("MVLL", 4, 1, output_file);
   free(filename);
 
 #ifdef DEBUG_GCDAPROFILING
