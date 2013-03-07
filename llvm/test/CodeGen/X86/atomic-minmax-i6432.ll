@@ -1,4 +1,5 @@
 ; RUN: llc -march=x86 -mattr=+cmov -mtriple=i386-pc-linux -verify-machineinstrs < %s | FileCheck %s -check-prefix=LINUX
+; RUN: llc -march=x86 -mattr=-cmov -mtriple=i386-pc-linux -verify-machineinstrs < %s | FileCheck %s -check-prefix=NOCMOV
 ; RUN: llc -march=x86 -mtriple=i386-macosx -relocation-model=pic -verify-machineinstrs < %s | FileCheck %s -check-prefix=PIC
 
 @sc64 = external global i64
@@ -16,6 +17,16 @@ define void @atomic_maxmin_i6432() {
 ; LINUX: lock
 ; LINUX-NEXT: cmpxchg8b
 ; LINUX: jne [[LABEL]]
+; NOCMOV: [[LABEL:.LBB[0-9]+_[0-9]+]]
+; NOCMOV: cmpl
+; NOCMOV: setl
+; NOCMOV: cmpl
+; NOCMOV: setl
+; NOCMOV: jne
+; NOCMOV: jne
+; NOCMOV: lock
+; NOCMOV-NEXT: cmpxchg8b
+; NOCMOV: jne [[LABEL]]
   %2 = atomicrmw min  i64* @sc64, i64 6 acquire
 ; LINUX: [[LABEL:.LBB[0-9]+_[0-9]+]]
 ; LINUX: cmpl
@@ -27,6 +38,16 @@ define void @atomic_maxmin_i6432() {
 ; LINUX: lock
 ; LINUX-NEXT: cmpxchg8b
 ; LINUX: jne [[LABEL]]
+; NOCMOV: [[LABEL:.LBB[0-9]+_[0-9]+]]
+; NOCMOV: cmpl
+; NOCMOV: setg
+; NOCMOV: cmpl
+; NOCMOV: setg
+; NOCMOV: jne
+; NOCMOV: jne
+; NOCMOV: lock
+; NOCMOV-NEXT: cmpxchg8b
+; NOCMOV: jne [[LABEL]]
   %3 = atomicrmw umax i64* @sc64, i64 7 acquire
 ; LINUX: [[LABEL:.LBB[0-9]+_[0-9]+]]
 ; LINUX: cmpl
@@ -38,6 +59,16 @@ define void @atomic_maxmin_i6432() {
 ; LINUX: lock
 ; LINUX-NEXT: cmpxchg8b
 ; LINUX: jne [[LABEL]]
+; NOCMOV: [[LABEL:.LBB[0-9]+_[0-9]+]]
+; NOCMOV: cmpl
+; NOCMOV: setb
+; NOCMOV: cmpl
+; NOCMOV: setb
+; NOCMOV: jne
+; NOCMOV: jne
+; NOCMOV: lock
+; NOCMOV-NEXT: cmpxchg8b
+; NOCMOV: jne [[LABEL]]
   %4 = atomicrmw umin i64* @sc64, i64 8 acquire
 ; LINUX: [[LABEL:.LBB[0-9]+_[0-9]+]]
 ; LINUX: cmpl
@@ -49,6 +80,16 @@ define void @atomic_maxmin_i6432() {
 ; LINUX: lock
 ; LINUX-NEXT: cmpxchg8b
 ; LINUX: jne [[LABEL]]
+; NOCMOV: [[LABEL:.LBB[0-9]+_[0-9]+]]
+; NOCMOV: cmpl
+; NOCMOV: seta
+; NOCMOV: cmpl
+; NOCMOV: seta
+; NOCMOV: jne
+; NOCMOV: jne
+; NOCMOV: lock
+; NOCMOV-NEXT: cmpxchg8b
+; NOCMOV: jne [[LABEL]]
   ret void
 }
 

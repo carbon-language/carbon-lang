@@ -1,5 +1,6 @@
 ; RUN: llc < %s -O0 -march=x86-64 -mcpu=corei7 -verify-machineinstrs | FileCheck %s --check-prefix X64
 ; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 -verify-machineinstrs | FileCheck %s --check-prefix X32
+; RUN: llc < %s -O0 -march=x86 -mcpu=corei7 -mattr=-cmov -verify-machineinstrs | FileCheck %s --check-prefix NOCMOV
 
 @sc32 = external global i32
 
@@ -164,9 +165,15 @@ define void @atomic_fetch_max32(i32 %x) nounwind {
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgl
+
+; NOCMOV:    cmpl
+; NOCMOV:    jl
+; NOCMOV:    lock
+; NOCMOV:    cmpxchgl
   ret void
 ; X64:       ret
 ; X32:       ret
+; NOCMOV:    ret
 }
 
 define void @atomic_fetch_min32(i32 %x) nounwind {
@@ -180,9 +187,15 @@ define void @atomic_fetch_min32(i32 %x) nounwind {
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgl
+
+; NOCMOV:    cmpl
+; NOCMOV:    jg
+; NOCMOV:    lock
+; NOCMOV:    cmpxchgl
   ret void
 ; X64:       ret
 ; X32:       ret
+; NOCMOV:    ret
 }
 
 define void @atomic_fetch_umax32(i32 %x) nounwind {
@@ -196,9 +209,15 @@ define void @atomic_fetch_umax32(i32 %x) nounwind {
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgl
+
+; NOCMOV:    cmpl
+; NOCMOV:    jb
+; NOCMOV:    lock
+; NOCMOV:    cmpxchgl
   ret void
 ; X64:       ret
 ; X32:       ret
+; NOCMOV:    ret
 }
 
 define void @atomic_fetch_umin32(i32 %x) nounwind {
@@ -207,13 +226,20 @@ define void @atomic_fetch_umin32(i32 %x) nounwind {
 ; X64:       cmov
 ; X64:       lock
 ; X64:       cmpxchgl
+
 ; X32:       cmpl
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgl
+
+; NOCMOV:    cmpl
+; NOCMOV:    ja
+; NOCMOV:    lock
+; NOCMOV:    cmpxchgl
   ret void
 ; X64:       ret
 ; X32:       ret
+; NOCMOV:    ret
 }
 
 define void @atomic_fetch_cmpxchg32() nounwind {

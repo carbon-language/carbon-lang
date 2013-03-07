@@ -13001,8 +13001,8 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   MachineBasicBlock *origMainMBB = mainMBB;
 
   // Add a PHI.
-  BuildMI(mainMBB, DL, TII->get(X86::PHI), t4)
-    .addReg(t1).addMBB(thisMBB).addReg(t3).addMBB(mainMBB);
+  MachineInstr *Phi = BuildMI(mainMBB, DL, TII->get(X86::PHI), t4)
+                        .addReg(t1).addMBB(thisMBB).addReg(t3).addMBB(mainMBB);
 
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
@@ -13105,6 +13105,11 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
               .addReg(SrcReg).addReg(t4)
               .addImm(CC);
       mainMBB = EmitLoweredSelect(MIB, mainMBB);
+      // Replace the original PHI node as mainMBB is changed after CMOV
+      // lowering.
+      BuildMI(*origMainMBB, Phi, DL, TII->get(X86::PHI), t4)
+        .addReg(t1).addMBB(thisMBB).addReg(t3).addMBB(mainMBB);
+      Phi->eraseFromParent();
     }
     break;
   }
@@ -13298,10 +13303,10 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   MachineBasicBlock *origMainMBB = mainMBB;
 
   // Add PHIs.
-  BuildMI(mainMBB, DL, TII->get(X86::PHI), t4L)
-    .addReg(t1L).addMBB(thisMBB).addReg(t3L).addMBB(mainMBB);
-  BuildMI(mainMBB, DL, TII->get(X86::PHI), t4H)
-    .addReg(t1H).addMBB(thisMBB).addReg(t3H).addMBB(mainMBB);
+  MachineInstr *PhiL = BuildMI(mainMBB, DL, TII->get(X86::PHI), t4L)
+                        .addReg(t1L).addMBB(thisMBB).addReg(t3L).addMBB(mainMBB);
+  MachineInstr *PhiH = BuildMI(mainMBB, DL, TII->get(X86::PHI), t4H)
+                        .addReg(t1H).addMBB(thisMBB).addReg(t3H).addMBB(mainMBB);
 
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
@@ -13375,10 +13380,21 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
               .addReg(SrcLoReg).addReg(t4L)
               .addImm(X86::COND_NE);
       mainMBB = EmitLoweredSelect(MIB, mainMBB);
+      // As the lowered CMOV won't clobber EFLAGS, we could reuse it for the
+      // 2nd CMOV lowering.
+      mainMBB->addLiveIn(X86::EFLAGS);
       MIB = BuildMI(mainMBB, DL, TII->get(X86::CMOV_GR32), t2H)
               .addReg(SrcHiReg).addReg(t4H)
               .addImm(X86::COND_NE);
       mainMBB = EmitLoweredSelect(MIB, mainMBB);
+      // Replace the original PHI node as mainMBB is changed after CMOV
+      // lowering.
+      BuildMI(*origMainMBB, PhiL, DL, TII->get(X86::PHI), t4L)
+        .addReg(t1L).addMBB(thisMBB).addReg(t3L).addMBB(mainMBB);
+      BuildMI(*origMainMBB, PhiH, DL, TII->get(X86::PHI), t4H)
+        .addReg(t1H).addMBB(thisMBB).addReg(t3H).addMBB(mainMBB);
+      PhiL->eraseFromParent();
+      PhiH->eraseFromParent();
     }
     break;
   }
