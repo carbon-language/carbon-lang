@@ -525,7 +525,7 @@ namespace llvm {
     /// file number.  This implements the DWARF2 '.file 4 "foo.c"' assembler
     /// directive.
     virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                        StringRef Filename);
+                                        StringRef Filename, unsigned CUID = 0);
 
     /// EmitDwarfLocDirective - This implements the DWARF2
     // '.loc fileno lineno ...' assembler directive.

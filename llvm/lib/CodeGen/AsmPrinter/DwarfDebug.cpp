@@ -528,7 +528,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
 
   DILocation DL(Scope->getInlinedAt());
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0,
-                 getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
+                 getOrCreateSourceID(DL.getFilename(), DL.getDirectory(),
+                                     TheCU->getUniqueID()));
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
@@ -617,19 +618,28 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
 // SourceIds map. This can update DirectoryNames and SourceFileNames maps
 // as well.
 unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
-                                         StringRef DirName) {
+                                         StringRef DirName, unsigned CUID) {
+  // If we use .loc in assembly, we can't separate .file entries according to
+  // compile units. Thus all files will belong to the default compile unit.
+  if (Asm->TM.hasMCUseLoc() &&
+      Asm->OutStreamer.getKind() == MCStreamer::SK_AsmStreamer)
+    CUID = 0;
+
   // If FE did not provide a file name, then assume stdin.
   if (FileName.empty())
-    return getOrCreateSourceID("<stdin>", StringRef());
+    return getOrCreateSourceID("<stdin>", StringRef(), CUID);
 
   // TODO: this might not belong here. See if we can factor this better.
   if (DirName == CompilationDir)
     DirName = "";
 
-  unsigned SrcId = SourceIdMap.size()+1;
+  // FileIDCUMap stores the current ID for the given compile unit.
+  unsigned SrcId = FileIDCUMap[CUID] + 1;
 
-  // We look up the file/dir pair by concatenating them with a zero byte.
+  // We look up the CUID/file/dir by concatenating them with a zero byte.
   SmallString<128> NamePair;
+  NamePair += CUID;
+  NamePair += '\0';
   NamePair += DirName;
   NamePair += '\0'; // Zero bytes are not allowed in paths.
   NamePair += FileName;
@@ -638,8 +648,9 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
   if (Ent.getValue() != SrcId)
     return Ent.getValue();
 
+  FileIDCUMap[CUID] = SrcId;
   // Print out a .file directive to specify files for .loc directives.
-  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, DirName, FileName);
+  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, DirName, FileName, CUID);
 
   return SrcId;
 }
@@ -650,14 +661,17 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
-  // Call this to emit a .file directive if it wasn't emitted for the source
-  // file this CU comes from yet.
-  getOrCreateSourceID(FN, CompilationDir);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++,
                                        DIUnit.getLanguage(), Die, Asm,
                                        this, &InfoHolder);
+
+  FileIDCUMap[NewCU->getUniqueID()] = 0;
+  // Call this to emit a .file directive if it wasn't emitted for the source
+  // file this CU comes from yet.
+  getOrCreateSourceID(FN, CompilationDir, NewCU->getUniqueID());
+
   NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
@@ -1707,7 +1721,8 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
     } else
       llvm_unreachable("Unexpected scope info");
 
-    Src = getOrCreateSourceID(Fn, Dir);
+    Src = getOrCreateSourceID(Fn, Dir,
+            Asm->OutStreamer.getContext().getDwarfCompileUnitID());
   }
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0, 0, Fn);
 }

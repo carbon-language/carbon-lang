@@ -17,6 +17,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
 #include <vector> // FIXME: Shouldn't be needed.
 
 namespace llvm {
@@ -101,8 +102,12 @@ namespace llvm {
     std::string MainFileName;
 
     /// The dwarf file and directory tables from the dwarf .file directive.
-    std::vector<MCDwarfFile *> MCDwarfFiles;
-    std::vector<StringRef> MCDwarfDirs;
+    /// We now emit a line table for each compile unit. To reduce the prologue
+    /// size of each line table, the files and directories used by each compile
+    /// unit are separated.
+    typedef std::map<unsigned, std::vector<MCDwarfFile *> > MCDwarfFilesMap;
+    MCDwarfFilesMap MCDwarfFilesCUMap;
+    std::map<unsigned, std::vector<StringRef> > MCDwarfDirsCUMap;
 
     /// The current dwarf line information from the last dwarf .loc directive.
     MCDwarfLoc CurrentDwarfLoc;
@@ -282,19 +287,25 @@ namespace llvm {
 
     /// GetDwarfFile - creates an entry in the dwarf file and directory tables.
     unsigned GetDwarfFile(StringRef Directory, StringRef FileName,
-                          unsigned FileNumber);
+                          unsigned FileNumber, unsigned CUID);
 
-    bool isValidDwarfFileNumber(unsigned FileNumber);
+    bool isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID = 0);
 
     bool hasDwarfFiles() const {
-      return !MCDwarfFiles.empty();
+      // Traverse MCDwarfFilesCUMap and check whether each entry is empty.
+      MCDwarfFilesMap::const_iterator MapB, MapE;
+      for (MapB = MCDwarfFilesCUMap.begin(), MapE = MCDwarfFilesCUMap.end();
+           MapB != MapE; MapB++)
+        if (!MapB->second.empty())
+           return true;
+      return false;
     }
 
-    const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
-      return MCDwarfFiles;
+    const std::vector<MCDwarfFile *> &getMCDwarfFiles(unsigned CUID = 0) {
+      return MCDwarfFilesCUMap[CUID];
     }
-    const std::vector<StringRef> &getMCDwarfDirs() {
-      return MCDwarfDirs;
+    const std::vector<StringRef> &getMCDwarfDirs(unsigned CUID = 0) {
+      return MCDwarfDirsCUMap[CUID];
     }
 
     const DenseMap<const MCSection *, MCLineSection *>

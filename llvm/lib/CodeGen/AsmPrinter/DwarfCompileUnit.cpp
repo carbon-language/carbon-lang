@@ -241,7 +241,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIVariable V) {
   if (Line == 0)
     return;
   unsigned FileID = DD->getOrCreateSourceID(V.getContext().getFilename(),
-                                            V.getContext().getDirectory());
+                                            V.getContext().getDirectory(),
+                                            getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -257,7 +258,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
   unsigned Line = G.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = DD->getOrCreateSourceID(G.getFilename(), G.getDirectory());
+  unsigned FileID = DD->getOrCreateSourceID(G.getFilename(), G.getDirectory(),
+                                            getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -276,7 +278,7 @@ void CompileUnit::addSourceLine(DIE *Die, DISubprogram SP) {
     return;
 
   unsigned FileID = DD->getOrCreateSourceID(SP.getFilename(),
-                                            SP.getDirectory());
+                                            SP.getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -293,7 +295,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
   if (Line == 0)
     return;
   unsigned FileID = DD->getOrCreateSourceID(Ty.getFilename(),
-                                            Ty.getDirectory());
+                                            Ty.getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -311,7 +313,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
     return;
   DIFile File = Ty.getFile();
   unsigned FileID = DD->getOrCreateSourceID(File.getFilename(),
-                                            File.getDirectory());
+                                            File.getDirectory(), getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -329,7 +331,8 @@ void CompileUnit::addSourceLine(DIE *Die, DINameSpace NS) {
     return;
   StringRef FN = NS.getFilename();
 
-  unsigned FileID = DD->getOrCreateSourceID(FN, NS.getDirectory());
+  unsigned FileID = DD->getOrCreateSourceID(FN, NS.getDirectory(),
+                                            getUniqueID());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);

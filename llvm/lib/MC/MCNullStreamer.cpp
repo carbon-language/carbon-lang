@@ -89,7 +89,7 @@ namespace {
 
     virtual void EmitFileDirective(StringRef Filename) {}
     virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                        StringRef Filename) {
+                                        StringRef Filename, unsigned CUID = 0) {
       return false;
     }
     virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,

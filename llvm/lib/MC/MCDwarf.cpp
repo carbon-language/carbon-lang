@@ -299,7 +299,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
 
   // First the directory table.
   const std::vector<StringRef> &MCDwarfDirs =
-    context.getMCDwarfDirs();
+    context.getMCDwarfDirs(CUID);
   for (unsigned i = 0; i < MCDwarfDirs.size(); i++) {
     MCOS->EmitBytes(MCDwarfDirs[i]); // the DirectoryName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
@@ -308,7 +308,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
 
   // Second the file table.
   const std::vector<MCDwarfFile *> &MCDwarfFiles =
-    MCOS->getContext().getMCDwarfFiles();
+    MCOS->getContext().getMCDwarfFiles(CUID);
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
     MCOS->EmitBytes(MCDwarfFiles[i]->getName()); // FileName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string

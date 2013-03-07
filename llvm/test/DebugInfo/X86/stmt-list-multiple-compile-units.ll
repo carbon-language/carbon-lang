@@ -9,13 +9,16 @@
 
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK: DW_AT_stmt_list [DW_FORM_data4]   (0x00000049)
+; CHECK: DW_AT_stmt_list [DW_FORM_data4]   (0x0000003c)
 
 ; CHECK: .debug_line contents:
 ; CHECK-NEXT: Line table prologue:
-; CHECK-NEXT: total_length: 0x00000045
+; CHECK-NEXT: total_length: 0x00000038
+; CHECK: file_names[  1]    0 0x00000000 0x00000000 simple.c
 ; CHECK: Line table prologue:
-; CHECK: total_length: 0x00000047
+; CHECK-NEXT: total_length: 0x00000039
+; CHECK: file_names[  1]    0 0x00000000 0x00000000 simple2.c
+; CHECK-NOT: file_names
 
 define i32 @test(i32 %a) nounwind uwtable ssp {
 entry:

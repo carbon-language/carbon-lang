@@ -215,7 +215,7 @@ public:
 
   virtual void EmitFileDirective(StringRef Filename);
   virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                      StringRef Filename);
+                                      StringRef Filename, unsigned CUID = 0);
   virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                      unsigned Column, unsigned Flags,
                                      unsigned Isa, unsigned Discriminator,
@@ -828,14 +828,14 @@ void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
 }
 
 bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                           StringRef Filename) {
+                                           StringRef Filename, unsigned CUID) {
   if (!UseDwarfDirectory && !Directory.empty()) {
     if (sys::path::is_absolute(Filename))
-      return EmitDwarfFileDirective(FileNo, "", Filename);
+      return EmitDwarfFileDirective(FileNo, "", Filename, CUID);
 
     SmallString<128> FullPathName = Directory;
     sys::path::append(FullPathName, Filename);
-    return EmitDwarfFileDirective(FileNo, "", FullPathName);
+    return EmitDwarfFileDirective(FileNo, "", FullPathName, CUID);
   }
 
   if (UseLoc) {
@@ -846,8 +846,11 @@ bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
     }
     PrintQuotedString(Filename, OS);
     EmitEOL();
+    // All .file will belong to a single CUID.
+    CUID = 0;
   }
-  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Directory, Filename);
+  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Directory, Filename,
+                                                  CUID);
 }
 
 void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
