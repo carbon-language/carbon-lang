@@ -289,7 +289,6 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
 
           // We only need to use REG_SEQUENCE for explicit defs, since the
           // register coalescer won't do anything with the implicit defs.
-          MachineInstr *DefInstr = MRI.getVRegDef(Reg);
           if (!regHasExplicitDef(MRI, Reg)) {
             continue;
           }
