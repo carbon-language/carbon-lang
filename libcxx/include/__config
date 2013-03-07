@@ -144,7 +144,11 @@
 #endif
 
 #ifndef _LIBCPP_TYPE_VIS
-#define _LIBCPP_TYPE_VIS __attribute__ ((__visibility__("default")))
+#  if __has_attribute(type_visibility)
+#    define _LIBCPP_TYPE_VIS __attribute__ ((__type_visibility__("default")))
+#  else
+#    define _LIBCPP_TYPE_VIS __attribute__ ((__visibility__("default")))
+#  endif
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
@@ -152,7 +156,7 @@
 #endif
 
 #ifndef _LIBCPP_EXCEPTION_ABI
-#define _LIBCPP_EXCEPTION_ABI __attribute__ ((__visibility__("default")))
+#define _LIBCPP_EXCEPTION_ABI _LIBCPP_TYPE_VIS
 #endif
 
 #ifndef _LIBCPP_CANTTHROW
