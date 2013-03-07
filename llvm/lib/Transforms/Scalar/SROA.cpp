@@ -1097,13 +1097,12 @@ Type *AllocaPartitioning::getCommonType(iterator I) const {
       continue;
 
     Type *UserTy = 0;
-    if (LoadInst *LI = dyn_cast<LoadInst>(UI->U->getUser())) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(UI->U->getUser()))
       UserTy = LI->getType();
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(UI->U->getUser())) {
+    else if (StoreInst *SI = dyn_cast<StoreInst>(UI->U->getUser()))
       UserTy = SI->getValueOperand()->getType();
-    } else {
+    else
       return 0; // Bail if we have weird uses.
-    }
 
     if (IntegerType *ITy = dyn_cast<IntegerType>(UserTy)) {
       // If the type is larger than the partition, skip it. We only encounter
