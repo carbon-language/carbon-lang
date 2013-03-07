@@ -31,8 +31,9 @@ ModulePass *createOptimalEdgeProfilerPass();
 ModulePass *createPathProfilerPass();
 
 // Insert GCOV profiling instrumentation
+static const char DefaultGCovVersion[4] = {'*', '2', '0', '4'};
 ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
-                                   bool Use402Format = false,
+                                   const char (&Version)[4] =DefaultGCovVersion,
                                    bool UseExtraChecksum = false,
                                    bool NoRedZone = false,
                                    bool NoFunctionNamesInData = false);
