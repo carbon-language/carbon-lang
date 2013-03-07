@@ -42,7 +42,6 @@ class ComplexExprEmitter
   : public StmtVisitor<ComplexExprEmitter, ComplexPairTy> {
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;
-  // True is we should ignore the value of a
   bool IgnoreReal;
   bool IgnoreImag;
 public:
@@ -286,6 +285,9 @@ public:
 /// load the real and imaginary pieces, returning them as Real/Imag.
 ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(LValue lvalue) {
   assert(lvalue.isSimple() && "non-simple complex l-value?");
+  if (lvalue.getType()->isAtomicType())
+    return CGF.EmitAtomicLoad(lvalue).getComplexVal();
+
   llvm::Value *SrcPtr = lvalue.getAddress();
   bool isVolatile = lvalue.isVolatileQualified();
 
@@ -310,6 +312,9 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(LValue lvalue) {
 void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val,
                                             LValue lvalue,
                                             bool isInit) {
+  if (lvalue.getType()->isAtomicType())
+    return CGF.EmitAtomicStore(RValue::getComplex(Val), lvalue, isInit);
+
   llvm::Value *Ptr = lvalue.getAddress();
   llvm::Value *RealPtr = Builder.CreateStructGEP(Ptr, 0, "real");
   llvm::Value *ImagPtr = Builder.CreateStructGEP(Ptr, 1, "imag");

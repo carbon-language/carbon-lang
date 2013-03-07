@@ -1144,6 +1144,14 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
       return EmitFromMemory(V, Ty);
     }
   }
+
+  // Atomic operations have to be done on integral types.
+  if (Ty->isAtomicType()) {
+    LValue lvalue = LValue::MakeAddr(Addr, Ty,
+                                     CharUnits::fromQuantity(Alignment),
+                                     getContext(), TBAAInfo);
+    return EmitAtomicLoad(lvalue).getScalarVal();
+  }
   
   llvm::LoadInst *Load = Builder.CreateLoad(Addr);
   if (Volatile)
@@ -1152,9 +1160,6 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
     Load->setAlignment(Alignment);
   if (TBAAInfo)
     CGM.DecorateInstruction(Load, TBAAInfo);
-  // If this is an atomic type, all normal reads must be atomic
-  if (Ty->isAtomicType())
-    Load->setAtomic(llvm::SequentiallyConsistent);
 
   if ((SanOpts->Bool && hasBooleanRepresentation(Ty)) ||
       (SanOpts->Enum && Ty->getAs<EnumType>())) {
@@ -1251,13 +1256,20 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
   
   Value = EmitToMemory(Value, Ty);
 
+  if (Ty->isAtomicType()) {
+    EmitAtomicStore(RValue::get(Value),
+                    LValue::MakeAddr(Addr, Ty,
+                                     CharUnits::fromQuantity(Alignment),
+                                     getContext(), TBAAInfo),
+                    isInit);
+    return;
+  }
+
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
   if (TBAAInfo)
     CGM.DecorateInstruction(Store, TBAAInfo);
-  if (!isInit && Ty->isAtomicType())
-    Store->setAtomic(llvm::SequentiallyConsistent);
 }
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue,

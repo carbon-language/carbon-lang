@@ -47,6 +47,7 @@ namespace llvm {
 namespace clang {
   class TargetCodeGenInfo;
   class ASTContext;
+  class AtomicType;
   class FunctionDecl;
   class IdentifierInfo;
   class ObjCMethodDecl;
@@ -493,6 +494,9 @@ public:
   llvm::MDNode *getTBAAStructInfo(QualType QTy);
 
   bool isTypeConstant(QualType QTy, bool ExcludeCtorDtor);
+
+  bool isPaddedAtomicType(QualType type);
+  bool isPaddedAtomicType(const AtomicType *type);
 
   static void DecorateInstruction(llvm::Instruction *Inst,
                                   llvm::MDNode *TBAAInfo);

@@ -1602,18 +1602,21 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
   }
 
   case Type::Atomic: {
+    // Start with the base type information.
     std::pair<uint64_t, unsigned> Info
       = getTypeInfo(cast<AtomicType>(T)->getValueType());
     Width = Info.first;
     Align = Info.second;
-    if (Width != 0 && Width <= Target->getMaxAtomicPromoteWidth() &&
-        llvm::isPowerOf2_64(Width)) {
-      // We can potentially perform lock-free atomic operations for this
-      // type; promote the alignment appropriately.
-      // FIXME: We could potentially promote the width here as well...
-      // is that worthwhile?  (Non-struct atomic types generally have
-      // power-of-two size anyway, but structs might not.  Requires a bit
-      // of implementation work to make sure we zero out the extra bits.)
+
+    // If the size of the type doesn't exceed the platform's max
+    // atomic promotion width, make the size and alignment more
+    // favorable to atomic operations:
+    if (Width != 0 && Width <= Target->getMaxAtomicPromoteWidth()) {
+      // Round the size up to a power of 2.
+      if (!llvm::isPowerOf2_64(Width))
+        Width = llvm::NextPowerOf2(Width);
+
+      // Set the alignment equal to the size.
       Align = static_cast<unsigned>(Width);
     }
   }

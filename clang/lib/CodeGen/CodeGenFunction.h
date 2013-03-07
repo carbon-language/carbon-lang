@@ -2149,6 +2149,13 @@ public:
 
   RValue convertTempToRValue(llvm::Value *addr, QualType type);
 
+  void EmitAtomicInit(Expr *E, LValue lvalue);
+
+  RValue EmitAtomicLoad(LValue lvalue,
+                        AggValueSlot slot = AggValueSlot::ignored());
+
+  void EmitAtomicStore(RValue rvalue, LValue lvalue, bool isInit);
+
   /// EmitToMemory - Change a scalar value from its value
   /// representation to its in-memory representation.
   llvm::Value *EmitToMemory(llvm::Value *Value, QualType Ty);
