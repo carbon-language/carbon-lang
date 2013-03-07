@@ -3195,9 +3195,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
       // Store exclusive double return a i32 value which is the return status
       // of the issued store.
-      std::vector<EVT> ResTys;
-      ResTys.push_back(MVT::i32);
-      ResTys.push_back(MVT::Other);
+      EVT ResTys[] = { MVT::i32, MVT::Other };
 
       bool isThumb = Subtarget->isThumb() && Subtarget->hasThumb2();
       // Place arguments in the right order.

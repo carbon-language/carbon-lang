@@ -4704,7 +4704,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
-                              const std::vector<EVT> &ResultTys,
+                              ArrayRef<EVT> ResultTys,
                               const SDValue *Ops, unsigned NumOps) {
   return getNode(Opcode, DL, getVTList(&ResultTys[0], ResultTys.size()),
                  Ops, NumOps);
@@ -5356,7 +5356,7 @@ SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1,
 
 MachineSDNode *
 SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc dl,
-                             const std::vector<EVT> &ResultTys,
+                             ArrayRef<EVT> ResultTys,
                              const SDValue *Ops, unsigned NumOps) {
   SDVTList VTs = getVTList(&ResultTys[0], ResultTys.size());
   return getMachineNode(Opcode, dl, VTs, Ops, NumOps);

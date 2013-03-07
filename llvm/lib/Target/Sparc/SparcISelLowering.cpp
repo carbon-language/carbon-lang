@@ -955,9 +955,7 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   // Get the condition flag.
   SDValue CompareFlag;
   if (LHS.getValueType() == MVT::i32) {
-    std::vector<EVT> VTs;
-    VTs.push_back(MVT::i32);
-    VTs.push_back(MVT::Glue);
+    EVT VTs[] = { MVT::i32, MVT::Glue };
     SDValue Ops[2] = { LHS, RHS };
     CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
@@ -986,9 +984,8 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 
   SDValue CompareFlag;
   if (LHS.getValueType() == MVT::i32) {
-    std::vector<EVT> VTs;
-    VTs.push_back(LHS.getValueType());   // subcc returns a value
-    VTs.push_back(MVT::Glue);
+    // subcc returns a value
+    EVT VTs[] = { LHS.getValueType(), MVT::Glue };
     SDValue Ops[2] = { LHS, RHS };
     CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     Opc = SPISD::SELECT_ICC;

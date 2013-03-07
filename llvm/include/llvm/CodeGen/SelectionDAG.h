@@ -567,7 +567,7 @@ public:
   SDValue getNode(unsigned Opcode, DebugLoc DL, EVT VT,
                   const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL,
-                  const std::vector<EVT> &ResultTys,
+                  ArrayRef<EVT> ResultTys,
                   const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, DebugLoc DL, const EVT *VTs, unsigned NumVTs,
                   const SDValue *Ops, unsigned NumOps);
@@ -831,7 +831,7 @@ public:
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
                          EVT VT3, EVT VT4, const SDValue *Ops, unsigned NumOps);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl,
-                         const std::vector<EVT> &ResultTys, const SDValue *Ops,
+                         ArrayRef<EVT> ResultTys, const SDValue *Ops,
                          unsigned NumOps);
   MachineSDNode *getMachineNode(unsigned Opcode, DebugLoc dl, SDVTList VTs,
                          const SDValue *Ops, unsigned NumOps);

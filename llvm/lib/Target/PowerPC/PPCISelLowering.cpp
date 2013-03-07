@@ -4786,12 +4786,13 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op,
   MachineFunction &MF = DAG.getMachineFunction();
   EVT VT = Op.getValueType();
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  std::vector<EVT> NodeTys;
   SDValue MFFSreg, InFlag;
 
   // Save FP Control Word to register
-  NodeTys.push_back(MVT::f64);    // return register
-  NodeTys.push_back(MVT::Glue);   // unused in this context
+  EVT NodeTys[] = {
+    MVT::f64,    // return register
+    MVT::Glue    // unused in this context
+  };
   SDValue Chain = DAG.getNode(PPCISD::MFFS, dl, NodeTys, &InFlag, 0);
 
   // Save FP register to stack slot
@@ -5408,9 +5409,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     Op.getOperand(3),  // RHS
     DAG.getConstant(CompareOpc, MVT::i32)
   };
-  std::vector<EVT> VTs;
-  VTs.push_back(Op.getOperand(2).getValueType());
-  VTs.push_back(MVT::Glue);
+  EVT VTs[] = { Op.getOperand(2).getValueType(), MVT::Glue };
   SDValue CompNode = DAG.getNode(PPCISD::VCMPo, dl, VTs, Ops, 3);
 
   // Now that we have the comparison, emit a copy from the CR to a GPR.
@@ -6466,14 +6465,12 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       bool BranchOnWhenPredTrue = (CC == ISD::SETEQ) ^ (Val == 0);
 
       // Create the PPCISD altivec 'dot' comparison node.
-      std::vector<EVT> VTs;
       SDValue Ops[] = {
         LHS.getOperand(2),  // LHS of compare
         LHS.getOperand(3),  // RHS of compare
         DAG.getConstant(CompareOpc, MVT::i32)
       };
-      VTs.push_back(LHS.getOperand(2).getValueType());
-      VTs.push_back(MVT::Glue);
+      EVT VTs[] = { LHS.getOperand(2).getValueType(), MVT::Glue };
       SDValue CompNode = DAG.getNode(PPCISD::VCMPo, dl, VTs, Ops, 3);
 
       // Unpack the result based on how the target uses it.
