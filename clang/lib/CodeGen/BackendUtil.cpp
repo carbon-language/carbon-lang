@@ -305,10 +305,10 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
   if (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes) {
     MPM->add(createGCOVProfilerPass(CodeGenOpts.EmitGcovNotes,
                                     CodeGenOpts.EmitGcovArcs,
-                                    TargetTriple.isMacOSX(),
-                                    false,
+                                    CodeGenOpts.CoverageVersion,
+                                    CodeGenOpts.CoverageExtraChecksum,
                                     CodeGenOpts.DisableRedZone,
-                                    false));
+                                    CodeGenOpts.CoverageFunctionNamesInData));
 
     if (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
       MPM->add(createStripSymbolsPass(true));
