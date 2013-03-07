@@ -1496,9 +1496,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   ErrorUnsupported(E, "builtin function");
 
   // Unknown builtin, for now just dump it out and return undef.
-  if (hasAggregateLLVMType(E->getType()))
-    return RValue::getAggregate(CreateMemTemp(E->getType()));
-  return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
+  return GetUndefRValue(E->getType());
 }
 
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,

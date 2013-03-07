@@ -18,11 +18,11 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
-#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Value.h"
 
 namespace llvm {
   class Constant;
-  class Value;
+  class MDNode;
 }
 
 namespace clang {

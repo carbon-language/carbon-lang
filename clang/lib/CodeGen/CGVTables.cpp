@@ -361,7 +361,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   ReturnValueSlot Slot;
   if (!ResultType->isVoidType() &&
       FnInfo.getReturnInfo().getKind() == ABIArgInfo::Indirect &&
-      hasAggregateLLVMType(CurFnInfo->getReturnType()))
+      !hasScalarEvaluationKind(CurFnInfo->getReturnType()))
     Slot = ReturnValueSlot(ReturnValue, ResultType.isVolatileQualified());
   
   // Now emit our call.

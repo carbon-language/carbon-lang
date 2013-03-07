@@ -895,16 +895,21 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, 0);
 
     QualType ivarType = ivar->getType();
-    if (ivarType->isAnyComplexType()) {
-      ComplexPairTy pair = LoadComplexFromAddr(LV.getAddress(),
-                                               LV.isVolatileQualified());
-      StoreComplexToAddr(pair, ReturnValue, LV.isVolatileQualified());
-    } else if (hasAggregateLLVMType(ivarType)) {
+    switch (getEvaluationKind(ivarType)) {
+    case TEK_Complex: {
+      ComplexPairTy pair = EmitLoadOfComplex(LV);
+      EmitStoreOfComplex(pair,
+                         MakeNaturalAlignAddrLValue(ReturnValue, ivarType),
+                         /*init*/ true);
+      return;
+    }
+    case TEK_Aggregate:
       // The return value slot is guaranteed to not be aliased, but
       // that's not necessarily the same as "on the stack", so
       // we still potentially need objc_memmove_collectable.
       EmitAggregateCopy(ReturnValue, LV.getAddress(), ivarType);
-    } else {
+      return;
+    case TEK_Scalar: {
       llvm::Value *value;
       if (propType->isReferenceType()) {
         value = LV.getAddress();
@@ -926,8 +931,10 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
       }
       
       EmitReturnOfRValue(RValue::get(value), propType);
+      return;
     }
-    return;
+    }
+    llvm_unreachable("bad evaluation kind");
   }
 
   }

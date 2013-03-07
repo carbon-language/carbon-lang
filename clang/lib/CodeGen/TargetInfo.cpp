@@ -37,7 +37,7 @@ static void AssignToArrayRange(CodeGen::CGBuilderTy &Builder,
 }
 
 static bool isAggregateTypeForABI(QualType T) {
-  return CodeGenFunction::hasAggregateLLVMType(T) ||
+  return !CodeGenFunction::hasScalarEvaluationKind(T) ||
          T->isMemberFunctionPointerType();
 }
 

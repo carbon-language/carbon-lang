@@ -34,7 +34,8 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
   LValue lv = CGF.MakeAddrLValue(DeclPtr, type, alignment);
 
   const Expr *Init = D.getInit();
-  if (!CGF.hasAggregateLLVMType(type)) {
+  switch (CGF.getEvaluationKind(type)) {
+  case TEK_Scalar: {
     CodeGenModule &CGM = CGF.CGM;
     if (lv.isObjCStrong())
       CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, CGF.EmitScalarExpr(Init),
@@ -44,13 +45,18 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
                                               DeclPtr);
     else
       CGF.EmitScalarInit(Init, &D, lv, false);
-  } else if (type->isAnyComplexType()) {
-    CGF.EmitComplexExprIntoAddr(Init, DeclPtr, lv.isVolatile());
-  } else {
+    return;
+  }
+  case TEK_Complex:
+    CGF.EmitComplexExprIntoLValue(Init, lv, /*isInit*/ true);
+    return;
+  case TEK_Aggregate:
     CGF.EmitAggExpr(Init, AggValueSlot::forLValue(lv,AggValueSlot::IsDestructed,
                                           AggValueSlot::DoesNotNeedGCBarriers,
                                                   AggValueSlot::IsNotAliased));
+    return;
   }
+  llvm_unreachable("bad evaluation kind");
 }
 
 /// Emit code to cause the destruction of the given variable with

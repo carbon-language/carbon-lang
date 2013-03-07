@@ -52,7 +52,8 @@ DominatingValue<RValue>::saved_type::save(CodeGenFunction &CGF, RValue rv) {
       llvm::StructType::get(V.first->getType(), V.second->getType(),
                             (void*) 0);
     llvm::Value *addr = CGF.CreateTempAlloca(ComplexTy, "saved-complex");
-    CGF.StoreComplexToAddr(V, addr, /*volatile*/ false);
+    CGF.Builder.CreateStore(V.first, CGF.Builder.CreateStructGEP(addr, 0));
+    CGF.Builder.CreateStore(V.second, CGF.Builder.CreateStructGEP(addr, 1));
     return saved_type(addr, ComplexAddress);
   }
 
@@ -79,8 +80,13 @@ RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
     return RValue::getAggregate(Value);
   case AggregateAddress:
     return RValue::getAggregate(CGF.Builder.CreateLoad(Value));
-  case ComplexAddress:
-    return RValue::getComplex(CGF.LoadComplexFromAddr(Value, false));
+  case ComplexAddress: {
+    llvm::Value *real =
+      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(Value, 0));
+    llvm::Value *imag =
+      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(Value, 1));
+    return RValue::getComplex(real, imag);
+  }
   }
 
   llvm_unreachable("bad saved r-value kind");

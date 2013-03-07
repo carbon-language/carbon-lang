@@ -820,14 +820,18 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
                                     QualType AllocType, llvm::Value *NewPtr) {
 
   CharUnits Alignment = CGF.getContext().getTypeAlignInChars(AllocType);
-  if (!CGF.hasAggregateLLVMType(AllocType))
+  switch (CGF.getEvaluationKind(AllocType)) {
+  case TEK_Scalar:
     CGF.EmitScalarInit(Init, 0, CGF.MakeAddrLValue(NewPtr, AllocType,
                                                    Alignment),
                        false);
-  else if (AllocType->isAnyComplexType())
-    CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
-                                AllocType.isVolatileQualified());
-  else {
+    return;
+  case TEK_Complex:
+    CGF.EmitComplexExprIntoLValue(Init, CGF.MakeAddrLValue(NewPtr, AllocType,
+                                                           Alignment),
+                                  /*isInit*/ true);
+    return;
+  case TEK_Aggregate: {
     AggValueSlot Slot
       = AggValueSlot::forAddr(NewPtr, Alignment, AllocType.getQualifiers(),
                               AggValueSlot::IsDestructed,
@@ -836,7 +840,10 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
     CGF.EmitAggExpr(Init, Slot);
 
     CGF.MaybeEmitStdInitializerListCleanup(NewPtr, Init);
+    return;
   }
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 void

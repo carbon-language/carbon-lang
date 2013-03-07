@@ -78,6 +78,17 @@ namespace CodeGen {
   class BlockFlags;
   class BlockFieldFlags;
 
+/// The kind of evaluation to perform on values of a particular
+/// type.  Basically, is the code in CGExprScalar, CGExprComplex, or
+/// CGExprAgg?
+///
+/// TODO: should vectors maybe be split out into their own thing?
+enum TypeEvaluationKind {
+  TEK_Scalar,
+  TEK_Complex,
+  TEK_Aggregate
+};
+
 /// A branch fixup.  These are required when emitting a goto to a
 /// label which hasn't been emitted yet.  The goto is optimistically
 /// emitted as a branch to the basic block for the label, and (if it
@@ -1515,7 +1526,15 @@ public:
 
   /// hasAggregateLLVMType - Return true if the specified AST type will map into
   /// an aggregate LLVM type or is void.
-  static bool hasAggregateLLVMType(QualType T);
+  static TypeEvaluationKind getEvaluationKind(QualType T);
+
+  static bool hasScalarEvaluationKind(QualType T) {
+    return getEvaluationKind(T) == TEK_Scalar;
+  }
+
+  static bool hasAggregateEvaluationKind(QualType T) {
+    return getEvaluationKind(T) == TEK_Aggregate;
+  }
 
   /// createBasicBlock - Create an LLVM basic block.
   llvm::BasicBlock *createBasicBlock(const Twine &name = "",
@@ -2128,6 +2147,8 @@ public:
   /// that the address will be used to access the object.
   LValue EmitCheckedLValue(const Expr *E, TypeCheckKind TCK);
 
+  RValue convertTempToRValue(llvm::Value *addr, QualType type);
+
   /// EmitToMemory - Change a scalar value from its value
   /// representation to its in-memory representation.
   llvm::Value *EmitToMemory(llvm::Value *Value, QualType Ty);
@@ -2504,16 +2525,15 @@ public:
                                 bool IgnoreReal = false,
                                 bool IgnoreImag = false);
 
-  /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
-  /// of complex type, storing into the specified Value*.
-  void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr,
-                               bool DestIsVolatile);
+  /// EmitComplexExprIntoLValue - Emit the given expression of complex
+  /// type and place its result into the specified l-value.
+  void EmitComplexExprIntoLValue(const Expr *E, LValue dest, bool isInit);
 
-  /// StoreComplexToAddr - Store a complex number into the specified address.
-  void StoreComplexToAddr(ComplexPairTy V, llvm::Value *DestAddr,
-                          bool DestIsVolatile);
-  /// LoadComplexFromAddr - Load a complex number from the specified address.
-  ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
+  /// EmitStoreOfComplex - Store a complex number into the specified l-value.
+  void EmitStoreOfComplex(ComplexPairTy V, LValue dest, bool isInit);
+
+  /// EmitLoadOfComplex - Load a complex number from the specified l-value.
+  ComplexPairTy EmitLoadOfComplex(LValue src);
 
   /// CreateStaticVarDecl - Create a zero-initialized LLVM global for
   /// a static local variable.

@@ -1002,10 +1002,9 @@ static void InitCatchParam(CodeGenFunction &CGF,
     return;
   }
 
-  // Non-aggregates (plus complexes).
-  bool IsComplex = false;
-  if (!CGF.hasAggregateLLVMType(CatchType) ||
-      (IsComplex = CatchType->isAnyComplexType())) {
+  // Scalars and complexes.
+  TypeEvaluationKind TEK = CGF.getEvaluationKind(CatchType);
+  if (TEK != TEK_Aggregate) {
     llvm::Value *AdjustedExn = CallBeginCatch(CGF, Exn, false);
     
     // If the catch type is a pointer type, __cxa_begin_catch returns
@@ -1037,17 +1036,23 @@ static void InitCatchParam(CodeGenFunction &CGF,
     llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
     llvm::Value *Cast = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
 
-    if (IsComplex) {
-      CGF.StoreComplexToAddr(CGF.LoadComplexFromAddr(Cast, /*volatile*/ false),
-                             ParamAddr, /*volatile*/ false);
-    } else {
-      unsigned Alignment =
-        CGF.getContext().getDeclAlign(&CatchParam).getQuantity();
-      llvm::Value *ExnLoad = CGF.Builder.CreateLoad(Cast, "exn.scalar");
-      CGF.EmitStoreOfScalar(ExnLoad, ParamAddr, /*volatile*/ false, Alignment,
-                            CatchType);
+    LValue srcLV = CGF.MakeNaturalAlignAddrLValue(Cast, CatchType);
+    LValue destLV = CGF.MakeAddrLValue(ParamAddr, CatchType,
+                                  CGF.getContext().getDeclAlign(&CatchParam));
+    switch (TEK) {
+    case TEK_Complex:
+      CGF.EmitStoreOfComplex(CGF.EmitLoadOfComplex(srcLV), destLV,
+                             /*init*/ true);
+      return;
+    case TEK_Scalar: {
+      llvm::Value *ExnLoad = CGF.EmitLoadOfScalar(srcLV);
+      CGF.EmitStoreOfScalar(ExnLoad, destLV, /*init*/ true);
+      return;
     }
-    return;
+    case TEK_Aggregate:
+      llvm_unreachable("evaluation kind filtered out!");
+    }
+    llvm_unreachable("bad evaluation kind");
   }
 
   assert(isa<RecordType>(CatchType) && "unexpected catch type!");

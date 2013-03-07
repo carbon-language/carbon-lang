@@ -1115,21 +1115,29 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
     EmitStoreThroughLValue(rvalue, lvalue, true);
-  } else if (!hasAggregateLLVMType(type)) {
+    return;
+  }
+  switch (getEvaluationKind(type)) {
+  case TEK_Scalar:
     EmitScalarInit(init, D, lvalue, capturedByInit);
-  } else if (type->isAnyComplexType()) {
+    return;
+  case TEK_Complex: {
     ComplexPairTy complex = EmitComplexExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    StoreComplexToAddr(complex, lvalue.getAddress(), lvalue.isVolatile());
-  } else {
+    EmitStoreOfComplex(complex, lvalue, /*init*/ true);
+    return;
+  }
+  case TEK_Aggregate:
     // TODO: how can we delay here if D is captured by its initializer?
     EmitAggExpr(init, AggValueSlot::forLValue(lvalue,
                                               AggValueSlot::IsDestructed,
                                          AggValueSlot::DoesNotNeedGCBarriers,
                                               AggValueSlot::IsNotAliased));
     MaybeEmitStdInitializerListCleanup(lvalue.getAddress(), init);
+    return;
   }
+  llvm_unreachable("bad evaluation kind");
 }
 
 /// Enter a destroy cleanup for the given local variable.
@@ -1521,7 +1529,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
   llvm::Value *DeclPtr;
   // If this is an aggregate or variable sized value, reuse the input pointer.
   if (!Ty->isConstantSizeType() ||
-      CodeGenFunction::hasAggregateLLVMType(Ty)) {
+      !CodeGenFunction::hasScalarEvaluationKind(Ty)) {
     DeclPtr = Arg;
   } else {
     // Otherwise, create a temporary to hold the value.

@@ -935,24 +935,34 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   // FIXME: Are initializers affected by volatile?
   if (Dest.isZeroed() && isSimpleZero(E, CGF)) {
     // Storing "i32 0" to a zero'd memory location is a noop.
+    return;
   } else if (isa<ImplicitValueInitExpr>(E) || isa<CXXScalarValueInitExpr>(E)) {
-    EmitNullInitializationToLValue(LV);
+    return EmitNullInitializationToLValue(LV);
   } else if (type->isReferenceType()) {
     RValue RV = CGF.EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
-    CGF.EmitStoreThroughLValue(RV, LV);
-  } else if (type->isAnyComplexType()) {
-    CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
-  } else if (CGF.hasAggregateLLVMType(type)) {
+    return CGF.EmitStoreThroughLValue(RV, LV);
+  }
+  
+  switch (CGF.getEvaluationKind(type)) {
+  case TEK_Complex:
+    CGF.EmitComplexExprIntoLValue(E, LV, /*isInit*/ true);
+    return;
+  case TEK_Aggregate:
     CGF.EmitAggExpr(E, AggValueSlot::forLValue(LV,
                                                AggValueSlot::IsDestructed,
                                       AggValueSlot::DoesNotNeedGCBarriers,
                                                AggValueSlot::IsNotAliased,
                                                Dest.isZeroed()));
-  } else if (LV.isSimple()) {
-    CGF.EmitScalarInit(E, /*D=*/0, LV, /*Captured=*/false);
-  } else {
-    CGF.EmitStoreThroughLValue(RValue::get(CGF.EmitScalarExpr(E)), LV);
+    return;
+  case TEK_Scalar:
+    if (LV.isSimple()) {
+      CGF.EmitScalarInit(E, /*D=*/0, LV, /*Captured=*/false);
+    } else {
+      CGF.EmitStoreThroughLValue(RValue::get(CGF.EmitScalarExpr(E)), LV);
+    }
+    return;
   }
+  llvm_unreachable("bad evaluation kind");
 }
 
 void AggExprEmitter::EmitNullInitializationToLValue(LValue lv) {
@@ -963,7 +973,7 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue lv) {
   if (Dest.isZeroed() && CGF.getTypes().isZeroInitializable(type))
     return;
   
-  if (!CGF.hasAggregateLLVMType(type)) {
+  if (CGF.hasScalarEvaluationKind(type)) {
     // For non-aggregates, we can store the appropriate null constant.
     llvm::Value *null = CGF.CGM.EmitNullConstant(type);
     // Note that the following is not equivalent to
@@ -1254,7 +1264,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
 /// the value of the aggregate expression is not needed.  If VolatileDest is
 /// true, DestPtr cannot be 0.
 void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
-  assert(E && hasAggregateLLVMType(E->getType()) &&
+  assert(E && hasAggregateEvaluationKind(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert((Slot.getAddr() != 0 || Slot.isIgnored()) &&
          "slot has bits but no address");
@@ -1266,7 +1276,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
 }
 
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
-  assert(hasAggregateLLVMType(E->getType()) && "Invalid argument!");
+  assert(hasAggregateEvaluationKind(E->getType()) && "Invalid argument!");
   llvm::Value *Temp = CreateMemTemp(E->getType());
   LValue LV = MakeAddrLValue(Temp, E->getType());
   EmitAggExpr(E, AggValueSlot::forLValue(LV, AggValueSlot::IsNotDestructed,

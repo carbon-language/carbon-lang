@@ -77,45 +77,53 @@ llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }
 
-bool CodeGenFunction::hasAggregateLLVMType(QualType type) {
-  switch (type.getCanonicalType()->getTypeClass()) {
+TypeEvaluationKind CodeGenFunction::getEvaluationKind(QualType type) {
+  type = type.getCanonicalType();
+  while (true) {
+    switch (type->getTypeClass()) {
 #define TYPE(name, parent)
 #define ABSTRACT_TYPE(name, parent)
 #define NON_CANONICAL_TYPE(name, parent) case Type::name:
 #define DEPENDENT_TYPE(name, parent) case Type::name:
 #define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(name, parent) case Type::name:
 #include "clang/AST/TypeNodes.def"
-    llvm_unreachable("non-canonical or dependent type in IR-generation");
+      llvm_unreachable("non-canonical or dependent type in IR-generation");
 
-  case Type::Builtin:
-  case Type::Pointer:
-  case Type::BlockPointer:
-  case Type::LValueReference:
-  case Type::RValueReference:
-  case Type::MemberPointer:
-  case Type::Vector:
-  case Type::ExtVector:
-  case Type::FunctionProto:
-  case Type::FunctionNoProto:
-  case Type::Enum:
-  case Type::ObjCObjectPointer:
-    return false;
+    // Various scalar types.
+    case Type::Builtin:
+    case Type::Pointer:
+    case Type::BlockPointer:
+    case Type::LValueReference:
+    case Type::RValueReference:
+    case Type::MemberPointer:
+    case Type::Vector:
+    case Type::ExtVector:
+    case Type::FunctionProto:
+    case Type::FunctionNoProto:
+    case Type::Enum:
+    case Type::ObjCObjectPointer:
+      return TEK_Scalar;
 
-  // Complexes, arrays, records, and Objective-C objects.
-  case Type::Complex:
-  case Type::ConstantArray:
-  case Type::IncompleteArray:
-  case Type::VariableArray:
-  case Type::Record:
-  case Type::ObjCObject:
-  case Type::ObjCInterface:
-    return true;
+    // Complexes.
+    case Type::Complex:
+      return TEK_Complex;
 
-  // In IRGen, atomic types are just the underlying type
-  case Type::Atomic:
-    return hasAggregateLLVMType(type->getAs<AtomicType>()->getValueType());
+    // Arrays, records, and Objective-C objects.
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+    case Type::Record:
+    case Type::ObjCObject:
+    case Type::ObjCInterface:
+      return TEK_Aggregate;
+
+    // We operate on atomic values according to their underlying type.
+    case Type::Atomic:
+      type = cast<AtomicType>(type)->getValueType();
+      continue;
+    }
+    llvm_unreachable("unknown type kind!");
   }
-  llvm_unreachable("unknown type kind!");
 }
 
 void CodeGenFunction::EmitReturnBlock() {
@@ -422,7 +430,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     // Void type; nothing to return.
     ReturnValue = 0;
   } else if (CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
-             hasAggregateLLVMType(CurFnInfo->getReturnType())) {
+             !hasScalarEvaluationKind(CurFnInfo->getReturnType())) {
     // Indirect aggregate return; emit returned value directly into sret slot.
     // This reduces code size, and affects correctness in C++.
     ReturnValue = CurFn->arg_begin();

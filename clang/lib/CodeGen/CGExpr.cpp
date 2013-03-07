@@ -114,15 +114,18 @@ void CodeGenFunction::EmitIgnoredExpr(const Expr *E) {
 RValue CodeGenFunction::EmitAnyExpr(const Expr *E,
                                     AggValueSlot aggSlot,
                                     bool ignoreResult) {
-  if (!hasAggregateLLVMType(E->getType()))
+  switch (getEvaluationKind(E->getType())) {
+  case TEK_Scalar:
     return RValue::get(EmitScalarExpr(E, ignoreResult));
-  else if (E->getType()->isAnyComplexType())
+  case TEK_Complex:
     return RValue::getComplex(EmitComplexExpr(E, ignoreResult, ignoreResult));
-
-  if (!ignoreResult && aggSlot.isIgnored())
-    aggSlot = CreateAggTemp(E->getType(), "agg-temp");
-  EmitAggExpr(E, aggSlot);
-  return aggSlot.asRValue();
+  case TEK_Aggregate:
+    if (!ignoreResult && aggSlot.isIgnored())
+      aggSlot = CreateAggTemp(E->getType(), "agg-temp");
+    EmitAggExpr(E, aggSlot);
+    return aggSlot.asRValue();
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result will
@@ -130,8 +133,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E,
 RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E) {
   AggValueSlot AggSlot = AggValueSlot::ignored();
 
-  if (hasAggregateLLVMType(E->getType()) &&
-      !E->getType()->isAnyComplexType())
+  if (hasAggregateEvaluationKind(E->getType()))
     AggSlot = CreateAggTemp(E->getType(), "agg.tmp");
   return EmitAnyExpr(E, AggSlot);
 }
@@ -143,19 +145,30 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
                                        Qualifiers Quals,
                                        bool IsInit) {
   // FIXME: This function should take an LValue as an argument.
-  if (E->getType()->isAnyComplexType()) {
-    EmitComplexExprIntoAddr(E, Location, Quals.hasVolatile());
-  } else if (hasAggregateLLVMType(E->getType())) {
+  switch (getEvaluationKind(E->getType())) {
+  case TEK_Complex:
+    EmitComplexExprIntoLValue(E,
+                         MakeNaturalAlignAddrLValue(Location, E->getType()),
+                              /*isInit*/ false);
+    return;
+
+  case TEK_Aggregate: {
     CharUnits Alignment = getContext().getTypeAlignInChars(E->getType());
     EmitAggExpr(E, AggValueSlot::forAddr(Location, Alignment, Quals,
                                          AggValueSlot::IsDestructed_t(IsInit),
                                          AggValueSlot::DoesNotNeedGCBarriers,
                                          AggValueSlot::IsAliased_t(!IsInit)));
-  } else {
+    return;
+  }
+
+  case TEK_Scalar: {
     RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
     LValue LV = MakeAddrLValue(Location, E->getType());
     EmitStoreThroughLValue(RV, LV);
+    return;
   }
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 static llvm::Value *
@@ -288,8 +301,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
 
     // Create a reference temporary if necessary.
     AggValueSlot AggSlot = AggValueSlot::ignored();
-    if (CGF.hasAggregateLLVMType(E->getType()) &&
-        !E->getType()->isAnyComplexType()) {
+    if (CGF.hasAggregateEvaluationKind(E->getType())) {
       ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
                                                     InitializedDecl);
       CharUnits Alignment = CGF.getContext().getTypeAlignInChars(E->getType());
@@ -370,14 +382,12 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                                                 InitializedDecl);
 
 
-  unsigned Alignment =
-    CGF.getContext().getTypeAlignInChars(E->getType()).getQuantity();
+  LValue tempLV = CGF.MakeNaturalAlignAddrLValue(ReferenceTemporary,
+                                                 E->getType());
   if (RV.isScalar())
-    CGF.EmitStoreOfScalar(RV.getScalarVal(), ReferenceTemporary,
-                          /*Volatile=*/false, Alignment, E->getType());
+    CGF.EmitStoreOfScalar(RV.getScalarVal(), tempLV, /*init*/ true);
   else
-    CGF.StoreComplexToAddr(RV.getComplexVal(), ReferenceTemporary,
-                           /*Volatile=*/false);
+    CGF.EmitStoreOfComplex(RV.getComplexVal(), tempLV, /*init*/ true);
   return ReferenceTemporary;
 }
 
@@ -713,8 +723,7 @@ void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
 CodeGenFunction::ComplexPairTy CodeGenFunction::
 EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
                          bool isInc, bool isPre) {
-  ComplexPairTy InVal = LoadComplexFromAddr(LV.getAddress(),
-                                            LV.isVolatileQualified());
+  ComplexPairTy InVal = EmitLoadOfComplex(LV);
   
   llvm::Value *NextVal;
   if (isa<llvm::IntegerType>(InVal.first->getType())) {
@@ -737,7 +746,7 @@ EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
   ComplexPairTy IncVal(NextVal, InVal.second);
   
   // Store the updated result through the lvalue.
-  StoreComplexToAddr(IncVal, LV.getAddress(), LV.isVolatileQualified());
+  EmitStoreOfComplex(IncVal, LV, /*init*/ false);
   
   // If this is a postinc, return the value read from memory, otherwise use the
   // updated value.
@@ -752,9 +761,11 @@ EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
 RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
   if (Ty->isVoidType())
     return RValue::get(0);
-  
-  if (const ComplexType *CTy = Ty->getAs<ComplexType>()) {
-    llvm::Type *EltTy = ConvertType(CTy->getElementType());
+
+  switch (getEvaluationKind(Ty)) {
+  case TEK_Complex: {
+    llvm::Type *EltTy =
+      ConvertType(Ty->castAs<ComplexType>()->getElementType());
     llvm::Value *U = llvm::UndefValue::get(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
   }
@@ -762,12 +773,15 @@ RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
   // If this is a use of an undefined aggregate type, the aggregate must have an
   // identifiable address.  Just because the contents of the value are undefined
   // doesn't mean that the address can't be taken and compared.
-  if (hasAggregateLLVMType(Ty)) {
+  case TEK_Aggregate: {
     llvm::Value *DestPtr = CreateMemTemp(Ty, "undef.agg.tmp");
     return RValue::getAggregate(DestPtr);
   }
-  
-  return RValue::get(llvm::UndefValue::get(ConvertType(Ty)));
+
+  case TEK_Scalar:
+    return RValue::get(llvm::UndefValue::get(ConvertType(Ty)));
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
@@ -1093,7 +1107,6 @@ llvm::MDNode *CodeGenFunction::getRangeForLoadFromType(QualType Ty) {
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                               unsigned Alignment, QualType Ty,
                                               llvm::MDNode *TBAAInfo) {
-  
   // For better performance, handle vector loads differently.
   if (Ty->isVectorType()) {
     llvm::Value *V;
@@ -1237,7 +1250,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
   }
   
   Value = EmitToMemory(Value, Ty);
-  
+
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
@@ -1248,7 +1261,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
 }
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue,
-    bool isInit) {
+                                        bool isInit) {
   EmitStoreOfScalar(value, lvalue.getAddress(), lvalue.isVolatile(),
                     lvalue.getAlignment().getQuantity(), lvalue.getType(),
                     lvalue.getTBAAInfo(), isInit);
@@ -2579,8 +2592,7 @@ LValue CodeGenFunction::
 EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   if (!expr->isGLValue()) {
     // ?: here should be an aggregate.
-    assert((hasAggregateLLVMType(expr->getType()) &&
-            !expr->getType()->isAnyComplexType()) &&
+    assert(hasAggregateEvaluationKind(expr->getType()) &&
            "Unexpected conditional operator!");
     return EmitAggExprToLValue(expr);
   }
@@ -2808,14 +2820,15 @@ RValue CodeGenFunction::EmitRValueForField(LValue LV,
                                            const FieldDecl *FD) {
   QualType FT = FD->getType();
   LValue FieldLV = EmitLValueForField(LV, FD);
-  if (FT->isAnyComplexType())
-    return RValue::getComplex(
-        LoadComplexFromAddr(FieldLV.getAddress(),
-                            FieldLV.isVolatileQualified()));
-  else if (CodeGenFunction::hasAggregateLLVMType(FT))
+  switch (getEvaluationKind(FT)) {
+  case TEK_Complex:
+    return RValue::getComplex(EmitLoadOfComplex(FieldLV));
+  case TEK_Aggregate:
     return FieldLV.asAggregateRValue();
-
-  return EmitLoadOfLValue(FieldLV);
+  case TEK_Scalar:
+    return EmitLoadOfLValue(FieldLV);
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 //===--------------------------------------------------------------------===//
@@ -2922,8 +2935,9 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
 
   // Note that in all of these cases, __block variables need the RHS
   // evaluated first just in case the variable gets moved by the RHS.
-  
-  if (!hasAggregateLLVMType(E->getType())) {
+
+  switch (getEvaluationKind(E->getType())) {
+  case TEK_Scalar: {
     switch (E->getLHS()->getType().getObjCLifetime()) {
     case Qualifiers::OCL_Strong:
       return EmitARCStoreStrong(E, /*ignored*/ false).first;
@@ -2944,10 +2958,13 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
     return LV;
   }
 
-  if (E->getType()->isAnyComplexType())
+  case TEK_Complex:
     return EmitComplexAssignmentLValue(E);
 
-  return EmitAggExprToLValue(E);
+  case TEK_Aggregate:
+    return EmitAggExprToLValue(E);
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
@@ -3271,13 +3288,20 @@ EmitValToTemp(CodeGenFunction &CGF, Expr *E) {
   return DeclPtr;
 }
 
-static RValue ConvertTempToRValue(CodeGenFunction &CGF, QualType Ty,
-                                  llvm::Value *Dest) {
-  if (Ty->isAnyComplexType())
-    return RValue::getComplex(CGF.LoadComplexFromAddr(Dest, false));
-  if (CGF.hasAggregateLLVMType(Ty))
-    return RValue::getAggregate(Dest);
-  return RValue::get(CGF.EmitLoadOfScalar(CGF.MakeAddrLValue(Dest, Ty)));
+/// Given the address of a temporary variable, produce an r-value of
+/// its type.
+RValue CodeGenFunction::convertTempToRValue(llvm::Value *addr,
+                                            QualType type) {
+  LValue lvalue = MakeNaturalAlignAddrLValue(addr, type);
+  switch (getEvaluationKind(type)) {
+  case TEK_Complex:
+    return RValue::getComplex(EmitLoadOfComplex(lvalue));
+  case TEK_Aggregate:
+    return lvalue.asAggregateRValue();
+  case TEK_Scalar:
+    return RValue::get(EmitLoadOfScalar(lvalue));
+  }
+  llvm_unreachable("bad evaluation kind");
 }
 
 RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
@@ -3299,23 +3323,24 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
 
   if (E->getOp() == AtomicExpr::AO__c11_atomic_init) {
     assert(!Dest && "Init does not return a value");
-    if (!hasAggregateLLVMType(E->getVal1()->getType())) {
-      QualType PointeeType
-        = E->getPtr()->getType()->getAs<PointerType>()->getPointeeType();
-      EmitScalarInit(EmitScalarExpr(E->getVal1()),
-                     LValue::MakeAddr(Ptr, PointeeType, alignChars,
-                                      getContext()));
-    } else if (E->getType()->isAnyComplexType()) {
-      EmitComplexExprIntoAddr(E->getVal1(), Ptr, E->isVolatile());
-    } else {
-      AggValueSlot Slot = AggValueSlot::forAddr(Ptr, alignChars,
-                                        AtomicTy.getQualifiers(),
+    LValue LV = MakeAddrLValue(Ptr, AtomicTy, alignChars);
+    switch (getEvaluationKind(E->getVal1()->getType())) {
+    case TEK_Scalar:
+      EmitScalarInit(EmitScalarExpr(E->getVal1()), LV);
+      return RValue::get(0);
+    case TEK_Complex:
+      EmitComplexExprIntoLValue(E->getVal1(), LV, /*isInit*/ true);
+      return RValue::get(0);
+    case TEK_Aggregate: {
+      AggValueSlot Slot = AggValueSlot::forLValue(LV,
                                         AggValueSlot::IsNotDestructed,
                                         AggValueSlot::DoesNotNeedGCBarriers,
                                         AggValueSlot::IsNotAliased);
       EmitAggExpr(E->getVal1(), Slot);
+      return RValue::get(0);
     }
-    return RValue::get(0);
+    }
+    llvm_unreachable("bad evaluation kind");
   }
 
   Order = EmitScalarExpr(E->getOrder());
@@ -3485,7 +3510,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       return Res;
     if (E->getType()->isVoidType())
       return RValue::get(0);
-    return ConvertTempToRValue(*this, E->getType(), Dest);
+    return convertTempToRValue(Dest, E->getType());
   }
 
   bool IsStore = E->getOp() == AtomicExpr::AO__c11_atomic_store ||
@@ -3540,7 +3565,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     }
     if (E->getType()->isVoidType())
       return RValue::get(0);
-    return ConvertTempToRValue(*this, E->getType(), OrigDest);
+    return convertTempToRValue(OrigDest, E->getType());
   }
 
   // Long case, when Order isn't obviously constant.
@@ -3602,7 +3627,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   Builder.SetInsertPoint(ContBB);
   if (E->getType()->isVoidType())
     return RValue::get(0);
-  return ConvertTempToRValue(*this, E->getType(), OrigDest);
+  return convertTempToRValue(OrigDest, E->getType());
 }
 
 void CodeGenFunction::SetFPAccuracy(llvm::Value *Val, float Accuracy) {
@@ -3646,8 +3671,7 @@ static LValueOrRValue emitPseudoObjectExpr(CodeGenFunction &CGF,
       typedef CodeGenFunction::OpaqueValueMappingData OVMA;
       OVMA opaqueData;
       if (ov == resultExpr && ov->isRValue() && !forLValue &&
-          CodeGenFunction::hasAggregateLLVMType(ov->getType()) &&
-          !ov->getType()->isAnyComplexType()) {
+          CodeGenFunction::hasAggregateEvaluationKind(ov->getType())) {
         CGF.EmitAggExpr(ov->getSourceExpr(), slot);
 
         LValue LV = CGF.MakeAddrLValue(slot.getAddr(), ov->getType());

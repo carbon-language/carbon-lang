@@ -741,7 +741,9 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
   } else if (RV.isAggregate()) {
     EmitAggregateCopy(ReturnValue, RV.getAggregateAddr(), Ty);
   } else {
-    StoreComplexToAddr(RV.getComplexVal(), ReturnValue, false);
+    EmitStoreOfComplex(RV.getComplexVal(),
+                       MakeNaturalAlignAddrLValue(ReturnValue, Ty),
+                       /*init*/ true);
   }
   EmitBranchThroughCleanup(ReturnBlock);
 }
@@ -788,16 +790,26 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     // rather than the value.
     RValue Result = EmitReferenceBindingToExpr(RV, /*InitializedDecl=*/0);
     Builder.CreateStore(Result.getScalarVal(), ReturnValue);
-  } else if (!hasAggregateLLVMType(RV->getType())) {
-    Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);
-  } else if (RV->getType()->isAnyComplexType()) {
-    EmitComplexExprIntoAddr(RV, ReturnValue, false);
   } else {
-    CharUnits Alignment = getContext().getTypeAlignInChars(RV->getType());
-    EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Alignment, Qualifiers(),
-                                          AggValueSlot::IsDestructed,
-                                          AggValueSlot::DoesNotNeedGCBarriers,
-                                          AggValueSlot::IsNotAliased));
+    switch (getEvaluationKind(RV->getType())) {
+    case TEK_Scalar:
+      Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);
+      break;
+    case TEK_Complex:
+      EmitComplexExprIntoLValue(RV,
+                     MakeNaturalAlignAddrLValue(ReturnValue, RV->getType()),
+                                /*isInit*/ true);
+      break;
+    case TEK_Aggregate: {
+      CharUnits Alignment = getContext().getTypeAlignInChars(RV->getType());
+      EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Alignment,
+                                            Qualifiers(),
+                                            AggValueSlot::IsDestructed,
+                                            AggValueSlot::DoesNotNeedGCBarriers,
+                                            AggValueSlot::IsNotAliased));
+      break;
+    }
+    }
   }
 
   cleanupScope.ForceCleanup();
@@ -1355,7 +1367,7 @@ CodeGenFunction::EmitAsmInputLValue(const TargetInfo::ConstraintInfo &Info,
                                     std::string &ConstraintStr) {
   llvm::Value *Arg;
   if (Info.allowsRegister() || !Info.allowsMemory()) {
-    if (!CodeGenFunction::hasAggregateLLVMType(InputType)) {
+    if (CodeGenFunction::hasScalarEvaluationKind(InputType)) {
       Arg = EmitLoadOfLValue(InputValue).getScalarVal();
     } else {
       llvm::Type *Ty = ConvertType(InputType);
@@ -1384,7 +1396,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(
                                            const Expr *InputExpr,
                                            std::string &ConstraintStr) {
   if (Info.allowsRegister() || !Info.allowsMemory())
-    if (!CodeGenFunction::hasAggregateLLVMType(InputExpr->getType()))
+    if (CodeGenFunction::hasScalarEvaluationKind(InputExpr->getType()))
       return EmitScalarExpr(InputExpr);
 
   InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
@@ -1479,7 +1491,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     // If this is a register output, then make the inline asm return it
     // by-value.  If this is a memory result, return the value by-reference.
-    if (!Info.allowsMemory() && !hasAggregateLLVMType(OutExpr->getType())) {
+    if (!Info.allowsMemory() && hasScalarEvaluationKind(OutExpr->getType())) {
       Constraints += "=" + OutputConstraint;
       ResultRegQualTys.push_back(OutExpr->getType());
       ResultRegDests.push_back(Dest);
