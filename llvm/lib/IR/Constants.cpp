@@ -1417,8 +1417,7 @@ static inline Constant *getFoldedCast(
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
 
   // Look up the constant in the table first to ensure uniqueness.
-  ArrayRef<Constant*> Ops(&C, 1);
-  ExprMapKeyType Key(opc, Ops);
+  ExprMapKeyType Key(opc, C);
 
   return pImpl->ExprConstants.getOrCreate(Ty, Key);
 }
