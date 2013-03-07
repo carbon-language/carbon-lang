@@ -238,3 +238,15 @@ define void @t7() nounwind ssp {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 3, i32 2, i1 false)
   ret void
 }
+
+define i32 @t8(i32 %x) nounwind {
+entry:
+; ARM: t8
+; ARM-NOT: FastISel missed call:   %expval = call i32 @llvm.expect.i32(i32 %x, i32 1)
+; THUMB: t8
+; THUMB-NOT: FastISel missed call:   %expval = call i32 @llvm.expect.i32(i32 %x, i32 1)
+  %expval = call i32 @llvm.expect.i32(i32 %x, i32 1)
+  ret i32 %expval
+}
+
+declare i32 @llvm.expect.i32(i32, i32) nounwind readnone
