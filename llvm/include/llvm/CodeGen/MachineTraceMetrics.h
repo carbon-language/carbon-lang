@@ -165,12 +165,25 @@ public:
     /// Invalidate height resources when a block below this one has changed.
     void invalidateHeight() { InstrHeight = ~0u; HasValidInstrHeights = false; }
 
-    /// Determine if this block belongs to the same trace as TBI and comes
-    /// before it in the trace.
+    /// Assuming that this is a dominator of TBI, determine if it contains
+    /// useful instruction depths. A dominating block can be above the current
+    /// trace head, and any dependencies from such a far away dominator are not
+    /// expected to affect the critical path.
+    ///
     /// Also returns true when TBI == this.
-    bool isEarlierInSameTrace(const TraceBlockInfo &TBI) const {
-      return hasValidDepth() && TBI.hasValidDepth() &&
-        Head == TBI.Head && InstrDepth <= TBI.InstrDepth;
+    bool isUsefulDominator(const TraceBlockInfo &TBI) const {
+      // The trace for TBI may not even be calculated yet.
+      if (!hasValidDepth() || !TBI.hasValidDepth())
+        return false;
+      // Instruction depths are only comparable if the traces share a head.
+      if (Head != TBI.Head)
+        return false;
+      // It is almost always the case that TBI belongs to the same trace as
+      // this block, but rare convoluted cases involving irreducible control
+      // flow, a dominator may share a trace head without actually being on the
+      // same trace as TBI. This is not a big problem as long as it doesn't
+      // increase the instruction depth.
+      return HasValidInstrDepths && InstrDepth <= TBI.InstrDepth;
     }
 
     // Data-dependency-related information. Per-instruction depth and height
