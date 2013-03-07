@@ -973,6 +973,23 @@ incompleteArrayType()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('lvalueReferenceTypeLoc0')"><a name="lvalueReferenceTypeLoc0Anchor">lvalueReferenceTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1LValueReferenceTypeLoc.html">LValueReferenceTypeLoc</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="lvalueReferenceTypeLoc0"><pre>Matches lvalue reference types.
+
+Given:
+  int *a;
+  int &amp;b = *a;
+  int &amp;&amp;c = 1;
+  auto &amp;d = b;
+  auto &amp;&amp;e = c;
+  auto &amp;&amp;f = 2;
+  int g = 5;
+
+lvalueReferenceType() matches the types of b, d, and e. e is
+matched since the type is deduced as int&amp; by reference collapsing rules.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('memberPointerTypeLoc0')"><a name="memberPointerTypeLoc0Anchor">memberPointerTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1MemberPointerTypeLoc.html">MemberPointerTypeLoc</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="memberPointerTypeLoc0"><pre>Matches member pointer types.
 Given
@@ -1011,14 +1028,35 @@ and s.
 
 
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('referenceTypeLoc0')"><a name="referenceTypeLoc0Anchor">referenceTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ReferenceTypeLoc.html">ReferenceTypeLoc</a>&gt;...</td></tr>
-<tr><td colspan="4" class="doc" id="referenceTypeLoc0"><pre>Matches reference types.
+<tr><td colspan="4" class="doc" id="referenceTypeLoc0"><pre>Matches both lvalue and rvalue reference types.
 
 Given
   int *a;
   int &amp;b = *a;
-  int c = 5;
-pointerType()
-  matches "int &amp;b"
+  int &amp;&amp;c = 1;
+  auto &amp;d = b;
+  auto &amp;&amp;e = c;
+  auto &amp;&amp;f = 2;
+  int g = 5;
+
+referenceType() matches the types of b, c, d, e, and f.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('rvalueReferenceTypeLoc0')"><a name="rvalueReferenceTypeLoc0Anchor">rvalueReferenceTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1RValueReferenceTypeLoc.html">RValueReferenceTypeLoc</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="rvalueReferenceTypeLoc0"><pre>Matches rvalue reference types.
+
+Given:
+  int *a;
+  int &amp;b = *a;
+  int &amp;&amp;c = 1;
+  auto &amp;d = b;
+  auto &amp;&amp;e = c;
+  auto &amp;&amp;f = 2;
+  int g = 5;
+
+lvalueReferenceType() matches the types of c and f. e is not
+matched as it is deduced to int&amp; by reference collapsing rules.
 </pre></td></tr>
 
 
@@ -1202,6 +1240,23 @@ incompleteArrayType()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('lvalueReferenceType0')"><a name="lvalueReferenceType0Anchor">lvalueReferenceType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1LValueReferenceType.html">LValueReferenceType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="lvalueReferenceType0"><pre>Matches lvalue reference types.
+
+Given:
+  int *a;
+  int &amp;b = *a;
+  int &amp;&amp;c = 1;
+  auto &amp;d = b;
+  auto &amp;&amp;e = c;
+  auto &amp;&amp;f = 2;
+  int g = 5;
+
+lvalueReferenceType() matches the types of b, d, and e. e is
+matched since the type is deduced as int&amp; by reference collapsing rules.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('memberPointerType0')"><a name="memberPointerType0Anchor">memberPointerType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1MemberPointerType.html">MemberPointerType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="memberPointerType0"><pre>Matches member pointer types.
 Given
@@ -1240,14 +1295,35 @@ and s.
 
 
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('referenceType0')"><a name="referenceType0Anchor">referenceType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ReferenceType.html">ReferenceType</a>&gt;...</td></tr>
-<tr><td colspan="4" class="doc" id="referenceType0"><pre>Matches reference types.
+<tr><td colspan="4" class="doc" id="referenceType0"><pre>Matches both lvalue and rvalue reference types.
 
 Given
   int *a;
   int &amp;b = *a;
-  int c = 5;
-pointerType()
-  matches "int &amp;b"
+  int &amp;&amp;c = 1;
+  auto &amp;d = b;
+  auto &amp;&amp;e = c;
+  auto &amp;&amp;f = 2;
+  int g = 5;
+
+referenceType() matches the types of b, c, d, e, and f.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('rvalueReferenceType0')"><a name="rvalueReferenceType0Anchor">rvalueReferenceType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1RValueReferenceType.html">RValueReferenceType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="rvalueReferenceType0"><pre>Matches rvalue reference types.
+
+Given:
+  int *a;
+  int &amp;b = *a;
+  int &amp;&amp;c = 1;
+  auto &amp;d = b;
+  auto &amp;&amp;e = c;
+  auto &amp;&amp;f = 2;
+  int g = 5;
+
+lvalueReferenceType() matches the types of c and f. e is not
+matched as it is deduced to int&amp; by reference collapsing rules.
 </pre></td></tr>
 
 

@@ -3398,6 +3398,10 @@ TEST(TypeMatching, PointerTypes) {
                                            hasType(pointerType()))));
   EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
                                            hasType(referenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(lValueReferenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
+                                           hasType(rValueReferenceType()))));
 
   Fragment = "int *ptr;";
   EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ptr"),
@@ -3418,6 +3422,54 @@ TEST(TypeMatching, PointerTypes) {
                                            hasType(pointerType()))));
   EXPECT_TRUE(matches(Fragment, varDecl(hasName("ref"),
                                         hasType(referenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("ref"),
+                                        hasType(lValueReferenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(rValueReferenceType()))));
+
+  Fragment = "int &&ref = 2;";
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(blockPointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(memberPointerType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(pointerType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("ref"),
+                                        hasType(referenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("ref"),
+                                           hasType(lValueReferenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("ref"),
+                                        hasType(rValueReferenceType()))));
+}
+
+TEST(TypeMatching, AutoRefTypes) {
+  std::string Fragment = "auto a = 1;"
+                         "auto b = a;"
+                         "auto &c = a;"
+                         "auto &&d = c;"
+                         "auto &&e = 2;";
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("a"),
+                                           hasType(referenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("b"),
+                                           hasType(referenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("c"),
+                                        hasType(referenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("c"),
+                                        hasType(lValueReferenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("c"),
+                                           hasType(rValueReferenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("d"),
+                                        hasType(referenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("d"),
+                                        hasType(lValueReferenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("d"),
+                                           hasType(rValueReferenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("e"),
+                                        hasType(referenceType()))));
+  EXPECT_TRUE(notMatches(Fragment, varDecl(hasName("e"),
+                                           hasType(lValueReferenceType()))));
+  EXPECT_TRUE(matches(Fragment, varDecl(hasName("e"),
+                                        hasType(rValueReferenceType()))));
 }
 
 TEST(TypeMatching, PointeeTypes) {

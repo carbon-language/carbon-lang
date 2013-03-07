@@ -2922,17 +2922,55 @@ AST_TYPE_MATCHER(MemberPointerType, memberPointerType);
 ///   matches "int *a"
 AST_TYPE_MATCHER(PointerType, pointerType);
 
-/// \brief Matches reference types.
+/// \brief Matches both lvalue and rvalue reference types.
 ///
 /// Given
 /// \code
 ///   int *a;
 ///   int &b = *a;
-///   int c = 5;
+///   int &&c = 1;
+///   auto &d = b;
+///   auto &&e = c;
+///   auto &&f = 2;
+///   int g = 5;
 /// \endcode
-/// pointerType()
-///   matches "int &b"
+///
+/// \c referenceType() matches the types of \c b, \c c, \c d, \c e, and \c f.
 AST_TYPE_MATCHER(ReferenceType, referenceType);
+
+/// \brief Matches lvalue reference types.
+///
+/// Given:
+/// \code
+///   int *a;
+///   int &b = *a;
+///   int &&c = 1;
+///   auto &d = b;
+///   auto &&e = c;
+///   auto &&f = 2;
+///   int g = 5;
+/// \endcode
+///
+/// \c lValueReferenceType() matches the types of \c b, \c d, and \c e. \c e is
+/// matched since the type is deduced as int& by reference collapsing rules.
+AST_TYPE_MATCHER(LValueReferenceType, lValueReferenceType);
+
+/// \brief Matches rvalue reference types.
+///
+/// Given:
+/// \code
+///   int *a;
+///   int &b = *a;
+///   int &&c = 1;
+///   auto &d = b;
+///   auto &&e = c;
+///   auto &&f = 2;
+///   int g = 5;
+/// \endcode
+///
+/// \c rValueReferenceType() matches the types of \c c and \c f. \c e is not
+/// matched as it is deduced to int& by reference collapsing rules.
+AST_TYPE_MATCHER(RValueReferenceType, rValueReferenceType);
 
 /// \brief Narrows PointerType (and similar) matchers to those where the
 /// \c pointee matches a given matcher.
