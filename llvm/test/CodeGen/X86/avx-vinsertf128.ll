@@ -129,19 +129,3 @@ entry:
   %2 = tail call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> undef, <4 x float> %1, i8 1)
   ret <8 x float> %2
 }
-
-define void @PR15462(i64* %p) {
- store i64 0, i64* %p
- %q = getelementptr i64* %p, i64 1
- store i64 0, i64* %q
- %r = getelementptr i64* %p, i64 2
- store i64 0, i64* %r
- %s = getelementptr i64* %p, i64 3
- store i64 0, i64* %s
- ret void
-
-; CHECK: PR15462:
-; CHECK: vxorps	%xmm
-; CHECK: vmovups
-; CHECK: vmovups
-}
