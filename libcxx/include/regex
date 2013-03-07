@@ -1009,6 +1009,10 @@ private:
 };
 
 template <class _CharT>
+const typename regex_traits<_CharT>::char_class_type
+regex_traits<_CharT>::__regex_word;
+
+template <class _CharT>
 regex_traits<_CharT>::regex_traits()
 {
     __init();
