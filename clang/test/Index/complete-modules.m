@@ -12,3 +12,6 @@
 // RUN: c-index-test -code-completion-at=%s:4:14 -fmodules-cache-path=%t -fmodules -F %S/Inputs/Frameworks -I %S/Inputs/Headers %s | FileCheck -check-prefix=CHECK-LIBA %s
 // CHECK-LIBA: NotImplemented:{TypedText Extensions} (50)
 
+// RUN: c-index-test -code-completion-at=%s:4:1 -fmodules-cache-path=%t -fmodules -F %S/Inputs/Frameworks -I %S/Inputs/Headers %s | FileCheck -check-prefix=CHECK-TOP %s
+// CHECK-TOP: NotImplemented:{TypedText @import}{HorizontalSpace  }{Placeholder module} (40)
+

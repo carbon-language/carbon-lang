@@ -4477,6 +4477,14 @@ static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("class");
   Results.AddResult(Result(Builder.TakeString()));
+
+  if (Results.getSema().getLangOpts().Modules) {
+    // @import name
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt, "import"));
+    Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Builder.AddPlaceholderChunk("module");
+    Results.AddResult(Result(Builder.TakeString()));
+  }
 }
 
 void Sema::CodeCompleteObjCAtDirective(Scope *S) {
