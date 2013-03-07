@@ -6309,7 +6309,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     }
                                     else
                                     {
-                                        GetObjectFile()->GetModule()->ReportError ("{0x%8.8x}: invaliad Objective-C method 0x%4.4x (%s), please file a bug and attach the file at the start of this error message",
+                                        GetObjectFile()->GetModule()->ReportError ("{0x%8.8x}: invalid Objective-C method 0x%4.4x (%s), please file a bug and attach the file at the start of this error message",
                                                                                    die->GetOffset(),
                                                                                    tag,
                                                                                    DW_TAG_value_to_name(tag));
