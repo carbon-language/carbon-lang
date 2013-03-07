@@ -751,12 +751,15 @@ public:
                             if module.file.fullpath == key:
                                 return module
                     # See if the string is a UUID
-                    the_uuid = uuid.UUID(key)
-                    if the_uuid:
-                        for idx in range(num_modules):
-                            module = self.sbtarget.GetModuleAtIndex(idx)
-                            if module.uuid == the_uuid:
-                                return module
+                    try:
+                        the_uuid = uuid.UUID(key)
+                        if the_uuid:
+                            for idx in range(num_modules):
+                                module = self.sbtarget.GetModuleAtIndex(idx)
+                                if module.uuid == the_uuid:
+                                    return module
+                    except:
+                        return None
                 elif type(key) is uuid.UUID:
                     for idx in range(num_modules):
                         module = self.sbtarget.GetModuleAtIndex(idx)
