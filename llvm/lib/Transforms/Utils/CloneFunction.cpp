@@ -94,9 +94,12 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     //Some arguments were deleted with the VMap. Copy arguments one by one
     for (Function::const_arg_iterator I = OldFunc->arg_begin(), 
            E = OldFunc->arg_end(); I != E; ++I)
-      if (Argument* Anew = dyn_cast<Argument>(VMap[I]))
-        Anew->addAttr(OldFunc->getAttributes()
-                       .getParamAttributes(I->getArgNo() + 1));
+      if (Argument* Anew = dyn_cast<Argument>(VMap[I])) {
+        AttributeSet attrs = OldFunc->getAttributes()
+          .getParamAttributes(I->getArgNo() + 1);
+        if (attrs.getNumSlots() > 0)
+          Anew->addAttr(attrs);
+      }
     NewFunc->setAttributes(NewFunc->getAttributes()
                            .addAttributes(NewFunc->getContext(),
                                           AttributeSet::ReturnIndex,
