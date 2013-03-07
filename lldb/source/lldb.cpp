@@ -224,9 +224,8 @@ lldb_private::Terminate ()
     Log::Terminate();
 }
 
-
 #if defined (__APPLE__)
-extern "C" const double liblldb_coreVersionNumber;
+extern "C" const unsigned char liblldb_coreVersionString[];
 #else
 
 #include "clang/Basic/Version.h"
@@ -259,7 +258,23 @@ lldb_private::GetVersion ()
 #if defined (__APPLE__)
     static char g_version_string[32];
     if (g_version_string[0] == '\0')
-        ::snprintf (g_version_string, sizeof(g_version_string), "LLDB-%g", liblldb_coreVersionNumber);
+    {
+        const char *version_string = ::strstr ((const char *)liblldb_coreVersionString, "PROJECT:");
+        
+        if (version_string)
+            version_string += sizeof("PROJECT:") - 1;
+        else
+            version_string = "unknown";
+        
+        const char *newline_loc = strchr(version_string, '\n');
+        
+        size_t version_len = sizeof(g_version_string);
+        
+        if (newline_loc && (newline_loc - version_string < version_len))
+            version_len = newline_loc - version_string;
+        
+        ::strncpy(g_version_string, version_string, version_len);
+    }
 
     return g_version_string;
 #else

@@ -84,10 +84,10 @@
    <LaunchAction
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      launchStyle = "1"
+      launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       customWorkingDirectory = "/Volumes/work/gclayton/Documents/devb/attach"
-      buildConfiguration = "Debug"
+      buildConfiguration = "DebugClang"
       ignoresPersistentStateOnLaunch = "YES"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">

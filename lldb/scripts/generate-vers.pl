@@ -10,27 +10,37 @@ sub usage()
 
 open $pbxproj, $ARGV[0] or die "Couldn't open ".$ARGV[0];
 
-$current_project_version = None;
-$product_name = None;
+$lldb_version = None;
+$lldb_train = None;
+$lldb_revision = None;
+$lldb_version_string = None;
+
+$product_name = "lldb";
 
 while ($line = <$pbxproj>)
 {
   chomp ($line);
   
-  if ($current_project_version == None &&
-      $line =~ /CURRENT_PROJECT_VERSION = ([0-9]+)/)
+  if ($lldb_version == None &&
+      $line =~ /CURRENT_PROJECT_VERSION = ([0-9]+).([0-9]+).([0-9]+)(.[0-9])?/)
   {
-    $current_project_version = $1;
-  }
-  
-  if ($product_name == None &&
-      $line =~ /productName = ([^;]+)/)
-  {
-    $product_name = $1;
+    $lldb_version = $1;
+    $lldb_train = $2;
+    $lldb_revision = $3;
+    $lldb_patchlevel = $4;
+
+    if ($lldb_patchlevel != None)
+    {
+      $lldb_version_string = $lldb_version.".".$lldb_train.".".$lldb_revision.".".$lldb_patchlevel;
+    }
+    else
+    {
+      $lldb_version_string = $lldb_version.".".$lldb_train.".".$lldb_revision;
+    } 
   }
 }
 
-if (!$product_name || !$current_project_version)
+if (!$product_name || !$lldb_version_string)
 {
   print "Couldn't get needed information from the .pbxproj";
   exit(-1);
@@ -41,6 +51,6 @@ $lowercase_name = lc $product_name;
 
 close $pbxproj;
 
-$file_string = " const unsigned char liblldb_coreVersionString[] __attribute__ ((used)) = \"@(#)PROGRAM:".$uppercase_name."  PROJECT:".$lowercase_name."-".$current_project_version."\" \"\\n\"; const double liblldb_coreVersionNumber __attribute__ ((used)) = (double)".$current_project_version.".;\n";
+$file_string = " const unsigned char liblldb_coreVersionString[] __attribute__ ((used)) = \"@(#)PROGRAM:".$uppercase_name."  PROJECT:".$lowercase_name."-".$lldb_version_string."\" \"\\n\"; const double liblldb_coreVersionNumber __attribute__ ((used)) = (double)".$lldb_version.".".$lldb_train.";\n";
 
 print $file_string;
