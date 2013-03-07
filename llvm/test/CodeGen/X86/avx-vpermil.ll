@@ -45,8 +45,8 @@ entry:
   ret <8 x float> %shuffle
 }
 
-; CHECK: palignr
-; CHECK: palignr
+; CHECK: palignr $8
+; CHECK: psrldq $8
 define <8 x float> @funcF(<8 x float> %a) nounwind uwtable readnone ssp {
 entry:
   %shuffle = shufflevector <8 x float> %a, <8 x float> zeroinitializer, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>

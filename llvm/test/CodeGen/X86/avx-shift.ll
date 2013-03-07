@@ -105,7 +105,6 @@ define <32 x i8> @vshift12(<32 x i8> %a) nounwind readnone {
 ; CHECK: _vshift08
 ; CHECK: vextractf128 $1
 ; CHECK: vpslld $23
-; CHECK: vextractf128 $1
 ; CHECK: vpslld $23
 define <8 x i32> @vshift08(<8 x i32> %a) nounwind {
   %bitop = shl <8 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>, %a
