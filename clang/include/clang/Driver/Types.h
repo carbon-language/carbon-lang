@@ -11,6 +11,7 @@
 #define CLANG_DRIVER_TYPES_H_
 
 #include "clang/Driver/Phases.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 namespace driver {
@@ -73,14 +74,12 @@ namespace types {
   /// specified type name.
   ID lookupTypeForTypeSpecifier(const char *Name);
 
-  /// getNumCompilationPhases - Return the complete number of phases
-  /// to be done for this type.
-  unsigned getNumCompilationPhases(ID Id);
+  /// getCompilationPhases - Get the list of compilation phases ('Phases') to be
+  /// done for type 'Id'.
+  void getCompilationPhases(
+    ID Id,
+    llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases> &Phases);
 
-  /// getCompilationPhase - Return the \p N th compilation phase to
-  /// be done for this type.
-  phases::ID getCompilationPhase(ID Id, unsigned N);
-  
   /// lookupCXXTypeForCType - Lookup CXX input type that corresponds to given
   /// C type (used for clang++ emulation of g++ behaviour)
   ID lookupCXXTypeForCType(ID Id);

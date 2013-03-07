@@ -1038,17 +1038,17 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
   // Construct the actions to perform.
   ActionList LinkerInputs;
   ActionList SplitInputs;
-  unsigned NumSteps = 0;
+  llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases> PL;
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
     types::ID InputType = Inputs[i].first;
     const Arg *InputArg = Inputs[i].second;
 
-    NumSteps = types::getNumCompilationPhases(InputType);
-    assert(NumSteps && "Invalid number of steps!");
+    PL.clear();
+    types::getCompilationPhases(InputType, PL);
 
     // If the first step comes after the final phase we are doing as part of
     // this compilation, warn the user about it.
-    phases::ID InitialPhase = types::getCompilationPhase(InputType, 0);
+    phases::ID InitialPhase = PL[0];
     if (InitialPhase > FinalPhase) {
       // Claim here to avoid the more general unused warning.
       InputArg->claim();
@@ -1083,8 +1083,9 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
 
     // Build the pipeline for this file.
     OwningPtr<Action> Current(new InputAction(*InputArg, InputType));
-    for (unsigned i = 0; i != NumSteps; ++i) {
-      phases::ID Phase = types::getCompilationPhase(InputType, i);
+    for (llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases>::iterator
+           i = PL.begin(), e = PL.end(); i != e; ++i) {
+      phases::ID Phase = *i;
 
       // We are done if this step is past what the user requested.
       if (Phase > FinalPhase)
@@ -1092,7 +1093,7 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
 
       // Queue linker inputs.
       if (Phase == phases::Link) {
-        assert(i + 1 == NumSteps && "linking must be final compilation step.");
+        assert((i + 1) == e && "linking must be final compilation step.");
         LinkerInputs.push_back(Current.take());
         break;
       }
@@ -1120,7 +1121,7 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
 
   // If we are linking, claim any options which are obviously only used for
   // compilation.
-  if (FinalPhase == phases::Link && (NumSteps == 1))
+  if (FinalPhase == phases::Link && PL.size() == 1)
     Args.ClaimAllArgs(options::OPT_CompileOnly_Group);
 }
 

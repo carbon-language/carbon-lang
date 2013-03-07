@@ -23,6 +23,10 @@ namespace phases {
     Link
   };
 
+  enum {
+    MaxNumberOfPhases = Link + 1
+  };
+
   const char *getPhaseName(ID Id);
 
 } // end namespace phases
