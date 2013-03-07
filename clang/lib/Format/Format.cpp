@@ -1143,7 +1143,7 @@ public:
                                         /*WhitespaceStartColumn*/ 0, Style);
         }
       } else if (TheLine.Type != LT_Invalid &&
-                 (WasMoved || touchesRanges(TheLine))) {
+                 (WasMoved || touchesLine(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
         unsigned Indent = LevelIndent;
         if (static_cast<int>(Indent) + Offset >= 0)
@@ -1175,7 +1175,7 @@ public:
           IndentForLevel[TheLine.Level] = LevelIndent;
 
           // Remove trailing whitespace of the previous line if it was touched.
-          if (PreviousLineWasTouched)
+          if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))
             formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
                              PreviousEndOfLineColumn);
         }
@@ -1370,20 +1370,32 @@ private:
     }
   }
 
-  bool touchesRanges(const AnnotatedLine &TheLine) {
+  bool touchesRanges(const CharSourceRange& Range) {
+    for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
+      if (!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),
+                                               Ranges[i].getBegin()) &&
+          !SourceMgr.isBeforeInTranslationUnit(Ranges[i].getEnd(),
+                                               Range.getBegin()))
+        return true;
+    }
+    return false;
+  }
+
+  bool touchesLine(const AnnotatedLine &TheLine) {
     const FormatToken *First = &TheLine.First.FormatTok;
     const FormatToken *Last = &TheLine.Last->FormatTok;
     CharSourceRange LineRange = CharSourceRange::getTokenRange(
         First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset),
         Last->Tok.getLocation());
-    for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
-      if (!SourceMgr.isBeforeInTranslationUnit(LineRange.getEnd(),
-                                               Ranges[i].getBegin()) &&
-          !SourceMgr.isBeforeInTranslationUnit(Ranges[i].getEnd(),
-                                               LineRange.getBegin()))
-        return true;
-    }
-    return false;
+    return touchesRanges(LineRange);
+  }
+
+  bool touchesEmptyLineBefore(const AnnotatedLine &TheLine) {
+    const FormatToken *First = &TheLine.First.FormatTok;
+    CharSourceRange LineRange = CharSourceRange::getCharRange(
+        First->WhiteSpaceStart,
+        First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset));
+    return touchesRanges(LineRange);
   }
 
   virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {

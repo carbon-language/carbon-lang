@@ -194,6 +194,13 @@ TEST_F(FormatTest, FormatsCorrectRegionForLeadingWhitespace) {
                    25, 0, getLLVMStyleWithColumns(12)));
 }
 
+TEST_F(FormatTest, RemovesWhitespaceWhenTriggeredOnEmptyLine) {
+  EXPECT_EQ("int  a;\n\n int b;",
+            format("int  a;\n  \n\n int b;", 7, 0, getLLVMStyle()));
+  EXPECT_EQ("int  a;\n\n int b;",
+            format("int  a;\n  \n\n int b;", 9, 0, getLLVMStyle()));
+}
+
 TEST_F(FormatTest, ReformatsMovedLines) {
   EXPECT_EQ(
       "template <typename T> T *getFETokenInfo() const {\n"
