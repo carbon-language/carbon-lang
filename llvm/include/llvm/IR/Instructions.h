@@ -2658,7 +2658,7 @@ public:
   protected:
 
     SwitchInstTy *SI;
-    unsigned long Index;
+    unsigned Index;
     SubsetsItTy SubsetIt;
 
     /// Initializes case iterator for given SwitchInst and for given
