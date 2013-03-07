@@ -7811,10 +7811,10 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
     if (type->isStructureOrClassType()) {
       SourceLocation poi = var->getLocation();
       Expr *varRef =new (Context) DeclRefExpr(var, false, type, VK_LValue, poi);
-      ExprResult result =
-        PerformCopyInitialization(
-                        InitializedEntity::InitializeBlock(poi, type, false),
-                                  poi, Owned(varRef));
+      ExprResult result
+        = PerformMoveOrCopyInitialization(
+            InitializedEntity::InitializeBlock(poi, type, false),
+            var, var->getType(), varRef, /*AllowNRVO=*/true);
       if (!result.isInvalid()) {
         result = MaybeCreateExprWithCleanups(result);
         Expr *init = result.takeAs<Expr>();

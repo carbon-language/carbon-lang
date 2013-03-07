@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s -fblocks
 // expected-no-diagnostics
 
 void tovoid(void*);
@@ -69,3 +69,16 @@ namespace radar8382559 {
     return hasProperty = 1;
   }
 }
+
+// Move __block variables to the heap when possible.
+class MoveOnly {
+public:
+  MoveOnly();
+  MoveOnly(const MoveOnly&) = delete;
+  MoveOnly(MoveOnly&&);
+};
+
+void move_block() {
+  __block MoveOnly mo;
+}
+
