@@ -3790,6 +3790,11 @@ def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$src1),
            [(set IntRegs:$dst, (HexagonCONST32 tglobaladdr:$src1))]>,
            Requires<[HasV4T]>;
 
+// Transfer a block address into a register
+def : Pat<(HexagonCONST32_GP tblockaddress:$src1),
+          (TFRI_V4 tblockaddress:$src1)>,
+          Requires<[HasV4T]>;
+
 let AddedComplexity=50, neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cPt_V4 : ALU32_ri<(outs IntRegs:$dst),
                            (ins PredRegs:$src1, globaladdress:$src2),
