@@ -43,6 +43,13 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
 public:
   SITargetLowering(TargetMachine &tm);
+
+  SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
+                               bool isVarArg,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
+                               DebugLoc DL, SelectionDAG &DAG,
+                               SmallVectorImpl<SDValue> &InVals) const;
+
   virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
                                               MachineBasicBlock * BB) const;
   virtual EVT getSetCCResultType(EVT VT) const;

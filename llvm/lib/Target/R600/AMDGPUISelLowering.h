@@ -39,14 +39,11 @@ protected:
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
 
+  void AnalyzeFormalArguments(CCState &State,
+                              const SmallVectorImpl<ISD::InputArg> &Ins) const;
+
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
-
-  virtual SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
-                             bool isVarArg,
-                             const SmallVectorImpl<ISD::InputArg> &Ins,
-                             DebugLoc DL, SelectionDAG &DAG,
-                             SmallVectorImpl<SDValue> &InVals) const;
 
   virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                               bool isVarArg,

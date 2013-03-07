@@ -14,13 +14,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUISelLowering.h"
+#include "AMDGPURegisterInfo.h"
 #include "AMDILIntrinsicInfo.h"
+#include "AMDGPUSubtarget.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 using namespace llvm;
+
+#include "AMDGPUGenCallingConv.inc"
 
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   TargetLowering(TM, new TargetLoweringObjectFileELF()) {
@@ -64,17 +69,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 // TargetLowering Callbacks
 //===---------------------------------------------------------------------===//
 
-SDValue AMDGPUTargetLowering::LowerFormalArguments(
-                                      SDValue Chain,
-                                      CallingConv::ID CallConv,
-                                      bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      DebugLoc DL, SelectionDAG &DAG,
-                                      SmallVectorImpl<SDValue> &InVals) const {
-  for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
-    InVals.push_back(SDValue());
-  }
-  return Chain;
+void AMDGPUTargetLowering::AnalyzeFormalArguments(CCState &State,
+                             const SmallVectorImpl<ISD::InputArg> &Ins) const {
+
+  State.AnalyzeFormalArguments(Ins, CC_AMDGPU);
 }
 
 SDValue AMDGPUTargetLowering::LowerReturn(

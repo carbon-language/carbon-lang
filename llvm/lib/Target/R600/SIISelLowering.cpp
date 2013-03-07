@@ -18,6 +18,8 @@
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -72,6 +74,105 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::SELECT_CC);
 
   setTargetDAGCombine(ISD::SETCC);
+}
+
+SDValue SITargetLowering::LowerFormalArguments(
+                                      SDValue Chain,
+                                      CallingConv::ID CallConv,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                      DebugLoc DL, SelectionDAG &DAG,
+                                      SmallVectorImpl<SDValue> &InVals) const {
+
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  FunctionType *FType = MF.getFunction()->getFunctionType();
+
+  assert(CallConv == CallingConv::C);
+
+  SmallVector<ISD::InputArg, 16> Splits;
+  for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+    const ISD::InputArg &Arg = Ins[i];
+   
+    // Split vertices into their elements
+    if (Arg.VT.isVector()) {
+      ISD::InputArg NewArg = Arg;
+      NewArg.Flags.setSplit();
+      NewArg.VT = Arg.VT.getVectorElementType();
+
+      // We REALLY want the ORIGINAL number of vertex elements here, e.g. a
+      // three or five element vertex only needs three or five registers,
+      // NOT four or eigth.
+      Type *ParamType = FType->getParamType(Arg.OrigArgIndex);
+      unsigned NumElements = ParamType->getVectorNumElements();
+
+      for (unsigned j = 0; j != NumElements; ++j) {
+        Splits.push_back(NewArg);
+        NewArg.PartOffset += NewArg.VT.getStoreSize();
+      }
+
+    } else {
+      Splits.push_back(Arg);
+    }
+  }
+
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                 getTargetMachine(), ArgLocs, *DAG.getContext());
+
+  AnalyzeFormalArguments(CCInfo, Splits);
+
+  for (unsigned i = 0, e = Ins.size(), ArgIdx = 0; i != e; ++i) {
+
+    CCValAssign &VA = ArgLocs[ArgIdx++];
+    assert(VA.isRegLoc() && "Parameter must be in a register!");
+
+    unsigned Reg = VA.getLocReg();
+    MVT VT = VA.getLocVT();
+
+    if (VT == MVT::i64) {
+      // For now assume it is a pointer
+      Reg = TRI->getMatchingSuperReg(Reg, AMDGPU::sub0,
+                                     &AMDGPU::SReg_64RegClass);
+      Reg = MF.addLiveIn(Reg, &AMDGPU::SReg_64RegClass);
+      InVals.push_back(DAG.getCopyFromReg(Chain, DL, Reg, VT));
+      continue;
+    }
+
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg, VT);
+
+    Reg = MF.addLiveIn(Reg, RC);
+    SDValue Val = DAG.getCopyFromReg(Chain, DL, Reg, VT);
+
+    const ISD::InputArg &Arg = Ins[i];
+    if (Arg.VT.isVector()) {
+
+      // Build a vector from the registers
+      Type *ParamType = FType->getParamType(Arg.OrigArgIndex);
+      unsigned NumElements = ParamType->getVectorNumElements();
+
+      SmallVector<SDValue, 4> Regs;
+      Regs.push_back(Val);
+      for (unsigned j = 1; j != NumElements; ++j) {
+        Reg = ArgLocs[ArgIdx++].getLocReg();
+        Reg = MF.addLiveIn(Reg, RC);
+        Regs.push_back(DAG.getCopyFromReg(Chain, DL, Reg, VT));
+      }
+
+      // Fill up the missing vector elements
+      NumElements = Arg.VT.getVectorNumElements() - NumElements;
+      for (unsigned j = 0; j != NumElements; ++j)
+        Regs.push_back(DAG.getUNDEF(VT));
+ 
+      InVals.push_back(DAG.getNode(ISD::BUILD_VECTOR, DL, Arg.VT,
+                                   Regs.data(), Regs.size()));
+      continue;
+    }
+
+    InVals.push_back(Val);
+  }
+  return Chain;
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
