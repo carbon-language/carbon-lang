@@ -1,7 +1,6 @@
 set(SOURCES
   BasicBlockTracing.c
   CommonProfiling.c
-  GCDAProfiling.c
   PathProfiling.c
   EdgeProfiling.c
   OptimalEdgeProfiling.c
