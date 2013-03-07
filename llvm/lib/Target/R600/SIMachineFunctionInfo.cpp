@@ -19,8 +19,8 @@ const char *SIMachineFunctionInfo::ShaderTypeAttribute = "ShaderType";
 
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : MachineFunctionInfo(),
-    SPIPSInputAddr(0),
-    ShaderType(0) {
+    ShaderType(0),
+    PSInputAddr(0) {
 
   AttributeSet Set = MF.getFunction()->getAttributes();
   Attribute A = Set.getAttribute(AttributeSet::FunctionIndex,

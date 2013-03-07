@@ -1044,13 +1044,6 @@ def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "S_ABSDIFF_I32", []>;
 
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
-def SET_M0 : InstSI <
-  (outs SReg_32:$dst),
-  (ins i32imm:$src0),
-  "SET_M0 $dst, $src0",
-  [(set SReg_32:$dst, (int_SI_set_M0 imm:$src0))]
->;
-
 def LOAD_CONST : AMDGPUShaderInst <
   (outs GPRF32:$dst),
   (ins i32imm:$src),
@@ -1059,13 +1052,6 @@ def LOAD_CONST : AMDGPUShaderInst <
 >;
 
 let usesCustomInserter = 1 in {
-
-def SI_INTERP : InstSI <
-  (outs VReg_32:$dst),
-  (ins VReg_32:$i, VReg_32:$j, i32imm:$attr_chan, i32imm:$attr, SReg_32:$params),
-  "SI_INTERP $dst, $i, $j, $attr_chan, $attr, $params",
-  []
->;
 
 def SI_WQM : InstSI <
   (outs),
@@ -1337,57 +1323,16 @@ def : Pat <
 /********** ===================== **********/
 
 def : Pat <
-  (int_SI_fs_interp_constant imm:$attr_chan, imm:$attr, M0Reg:$params),
+  (int_SI_fs_constant imm:$attr_chan, imm:$attr, M0Reg:$params),
   (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr, M0Reg:$params)
 >;
 
 def : Pat <
-  (int_SI_fs_interp_linear_center imm:$attr_chan, imm:$attr, SReg_32:$params),
-  (SI_INTERP (f32 LINEAR_CENTER_I), (f32 LINEAR_CENTER_J), imm:$attr_chan,
-             imm:$attr, SReg_32:$params)
->;
-
-def : Pat <
-  (int_SI_fs_interp_linear_centroid imm:$attr_chan, imm:$attr, SReg_32:$params),
-  (SI_INTERP (f32 LINEAR_CENTROID_I), (f32 LINEAR_CENTROID_J), imm:$attr_chan,
-             imm:$attr, SReg_32:$params)
->;
-
-def : Pat <
-  (int_SI_fs_interp_persp_center imm:$attr_chan, imm:$attr, SReg_32:$params),
-  (SI_INTERP (f32 PERSP_CENTER_I), (f32 PERSP_CENTER_J), imm:$attr_chan,
-             imm:$attr, SReg_32:$params)
->;
-
-def : Pat <
-  (int_SI_fs_interp_persp_centroid imm:$attr_chan, imm:$attr, SReg_32:$params),
-  (SI_INTERP (f32 PERSP_CENTROID_I), (f32 PERSP_CENTROID_J), imm:$attr_chan,
-             imm:$attr, SReg_32:$params)
->;
-
-def : Pat <
-  (int_SI_fs_read_face),
-  (f32 FRONT_FACE)
->;
-
-def : Pat <
-  (int_SI_fs_read_pos 0),
-  (f32 POS_X_FLOAT)
->;
-
-def : Pat <
-  (int_SI_fs_read_pos 1),
-  (f32 POS_Y_FLOAT)
->;
-
-def : Pat <
-  (int_SI_fs_read_pos 2),
-  (f32 POS_Z_FLOAT)
->;
-
-def : Pat <
-  (int_SI_fs_read_pos 3),
-  (f32 POS_W_FLOAT)
+  (int_SI_fs_interp imm:$attr_chan, imm:$attr, M0Reg:$params, VReg_64:$ij),
+  (V_INTERP_P2_F32 (V_INTERP_P1_F32 (EXTRACT_SUBREG VReg_64:$ij, sub0),
+                                    imm:$attr_chan, imm:$attr, M0Reg:$params),
+                   (EXTRACT_SUBREG VReg_64:$ij, sub1),
+                   imm:$attr_chan, imm:$attr, M0Reg:$params)
 >;
 
 /********** ================== **********/

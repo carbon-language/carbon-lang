@@ -41,7 +41,6 @@ add_llvm_target(R600CodeGen
   R600MachineScheduler.cpp
   R600RegisterInfo.cpp
   SIAnnotateControlFlow.cpp
-  SIAssignInterpRegs.cpp
   SIInsertWaits.cpp
   SIInstrInfo.cpp
   SIISelLowering.cpp

@@ -34,32 +34,6 @@ foreach Index = 0-255 in {
   }
 }
 
-// virtual Interpolation registers
-def PERSP_SAMPLE_I : SIReg <"PERSP_SAMPLE_I">;
-def PERSP_SAMPLE_J : SIReg <"PERSP_SAMPLE_J">;
-def PERSP_CENTER_I : SIReg <"PERSP_CENTER_I">;
-def PERSP_CENTER_J : SIReg <"PERSP_CENTER_J">;
-def PERSP_CENTROID_I : SIReg <"PERSP_CENTROID_I">;
-def PERSP_CENTROID_J : SIReg <"PERP_CENTROID_J">;
-def PERSP_I_W : SIReg <"PERSP_I_W">;
-def PERSP_J_W : SIReg <"PERSP_J_W">;
-def PERSP_1_W : SIReg <"PERSP_1_W">;
-def LINEAR_SAMPLE_I : SIReg <"LINEAR_SAMPLE_I">;
-def LINEAR_SAMPLE_J : SIReg <"LINEAR_SAMPLE_J">;
-def LINEAR_CENTER_I : SIReg <"LINEAR_CENTER_I">;
-def LINEAR_CENTER_J : SIReg <"LINEAR_CENTER_J">;
-def LINEAR_CENTROID_I : SIReg <"LINEAR_CENTROID_I">;
-def LINEAR_CENTROID_J : SIReg <"LINEAR_CENTROID_J">;
-def LINE_STIPPLE_TEX_COORD : SIReg <"LINE_STIPPLE_TEX_COORD">;
-def POS_X_FLOAT : SIReg <"POS_X_FLOAT">;
-def POS_Y_FLOAT : SIReg <"POS_Y_FLOAT">;
-def POS_Z_FLOAT : SIReg <"POS_Z_FLOAT">;
-def POS_W_FLOAT : SIReg <"POS_W_FLOAT">;
-def FRONT_FACE : SIReg <"FRONT_FACE">;
-def ANCILLARY : SIReg <"ANCILLARY">;
-def SAMPLE_COVERAGE : SIReg <"SAMPLE_COVERAGE">;
-def POS_FIXED_PT : SIReg <"POS_FIXED_PT">;
-
 //===----------------------------------------------------------------------===//
 //  Groupings using register classes and tuples
 //===----------------------------------------------------------------------===//
@@ -202,26 +176,7 @@ def SSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add SReg_32)>;
 
 def SSrc_64 : RegisterClass<"AMDGPU", [i64, i1], 64, (add SReg_64)>;
 
-def VSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32,
-  (add VReg_32, SReg_32,
-    PERSP_SAMPLE_I, PERSP_SAMPLE_J,
-    PERSP_CENTER_I, PERSP_CENTER_J,
-    PERSP_CENTROID_I, PERSP_CENTROID_J,
-    PERSP_I_W, PERSP_J_W, PERSP_1_W,
-    LINEAR_SAMPLE_I, LINEAR_SAMPLE_J,
-    LINEAR_CENTER_I, LINEAR_CENTER_J,
-    LINEAR_CENTROID_I, LINEAR_CENTROID_J,
-    LINE_STIPPLE_TEX_COORD,
-    POS_X_FLOAT,
-    POS_Y_FLOAT,
-    POS_Z_FLOAT,
-    POS_W_FLOAT,
-    FRONT_FACE,
-    ANCILLARY,
-    SAMPLE_COVERAGE,
-    POS_FIXED_PT
-  )
->;
+def VSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add VReg_32, SReg_32)>;
 
 def VSrc_64 : RegisterClass<"AMDGPU", [i64], 64, (add VReg_64, SReg_64)>;
 

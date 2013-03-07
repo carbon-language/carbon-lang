@@ -141,5 +141,5 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
   SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
   OutStreamer.EmitIntValue(MaxSGPR + 1, 4);
   OutStreamer.EmitIntValue(MaxVGPR + 1, 4);
-  OutStreamer.EmitIntValue(MFI->SPIPSInputAddr, 4);
+  OutStreamer.EmitIntValue(MFI->PSInputAddr, 4);
 }

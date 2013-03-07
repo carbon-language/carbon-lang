@@ -14,6 +14,7 @@
 
 #include "SIISelLowering.h"
 #include "AMDIL.h"
+#include "AMDGPU.h"
 #include "AMDILIntrinsicInfo.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
@@ -81,14 +82,32 @@ SDValue SITargetLowering::LowerFormalArguments(
 
   MachineFunction &MF = DAG.getMachineFunction();
   FunctionType *FType = MF.getFunction()->getFunctionType();
+  SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
 
   assert(CallConv == CallingConv::C);
 
   SmallVector<ISD::InputArg, 16> Splits;
-  for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+  uint32_t Skipped = 0;
+
+  for (unsigned i = 0, e = Ins.size(), PSInputNum = 0; i != e; ++i) {
     const ISD::InputArg &Arg = Ins[i];
    
-    // Split vertices into their elements
+    // First check if it's a PS input addr 
+    if (Info->ShaderType == ShaderType::PIXEL && !Arg.Flags.isInReg()) {
+
+      assert((PSInputNum <= 15) && "Too many PS inputs!");
+
+      if (!Arg.Used) {
+        // We can savely skip PS inputs
+        Skipped |= 1 << i;
+        ++PSInputNum;
+        continue;
+      }
+
+      Info->PSInputAddr |= 1 << PSInputNum++;
+    }
+
+    // Second split vertices into their elements
     if (Arg.VT.isVector()) {
       ISD::InputArg NewArg = Arg;
       NewArg.Flags.setSplit();
@@ -114,9 +133,21 @@ SDValue SITargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
+  // At least one interpolation mode must be enabled or else the GPU will hang.
+  if (Info->ShaderType == ShaderType::PIXEL && (Info->PSInputAddr & 0x7F) == 0) {
+    Info->PSInputAddr |= 1;
+    CCInfo.AllocateReg(AMDGPU::VGPR0);
+    CCInfo.AllocateReg(AMDGPU::VGPR1);
+  }
+
   AnalyzeFormalArguments(CCInfo, Splits);
 
   for (unsigned i = 0, e = Ins.size(), ArgIdx = 0; i != e; ++i) {
+
+    if (Skipped & (1 << i)) {
+      InVals.push_back(SDValue());
+      continue;
+    }
 
     CCValAssign &VA = ArgLocs[ArgIdx++];
     assert(VA.isRegLoc() && "Parameter must be in a register!");
@@ -177,9 +208,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
-  case AMDGPU::SI_INTERP:
-    LowerSI_INTERP(MI, *BB, I, MRI);
-    break;
   case AMDGPU::SI_WQM:
     LowerSI_WQM(MI, *BB, I, MRI);
     break;
@@ -191,37 +219,6 @@ void SITargetLowering::LowerSI_WQM(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const {
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_WQM_B64), AMDGPU::EXEC)
           .addReg(AMDGPU::EXEC);
-
-  MI->eraseFromParent();
-}
-
-void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
-    MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const {
-  unsigned tmp = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
-  unsigned M0 = MRI.createVirtualRegister(&AMDGPU::M0RegRegClass);
-  MachineOperand dst = MI->getOperand(0);
-  MachineOperand iReg = MI->getOperand(1);
-  MachineOperand jReg = MI->getOperand(2);
-  MachineOperand attr_chan = MI->getOperand(3);
-  MachineOperand attr = MI->getOperand(4);
-  MachineOperand params = MI->getOperand(5);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32), M0)
-          .addOperand(params);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_P1_F32), tmp)
-          .addOperand(iReg)
-          .addOperand(attr_chan)
-          .addOperand(attr)
-          .addReg(M0);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_P2_F32))
-          .addOperand(dst)
-          .addReg(tmp)
-          .addOperand(jReg)
-          .addOperand(attr_chan)
-          .addOperand(attr)
-          .addReg(M0);
 
   MI->eraseFromParent();
 }

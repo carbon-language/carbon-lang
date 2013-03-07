@@ -26,8 +26,8 @@ public:
   static const char *ShaderTypeAttribute;
 
   SIMachineFunctionInfo(const MachineFunction &MF);
-  unsigned SPIPSInputAddr;
   unsigned ShaderType;
+  unsigned PSInputAddr;
 };
 
 } // End namespace llvm
