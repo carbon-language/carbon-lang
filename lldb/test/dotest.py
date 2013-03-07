@@ -832,11 +832,11 @@ def setupSysPath():
         os.environ["LLDB_EXEC"] = lldbExec
         #print "The 'lldb' from PATH env variable", lldbExec
 
-    if os.path.isdir(os.path.join(base, '.svn')):
-        pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
+    if os.path.isdir(os.path.join(base, '.svn')) and which("svn") is not None:
+        pipe = subprocess.Popen([which("svn"), "info", base], stdout = subprocess.PIPE)
         svn_info = pipe.stdout.read()
-    elif os.path.isdir(os.path.join(base, '.git')):
-        pipe = subprocess.Popen(["git", "svn", "info", base], stdout = subprocess.PIPE)
+    elif os.path.isdir(os.path.join(base, '.git')) and which("git") is not None:
+        pipe = subprocess.Popen([which("git"), "svn", "info", base], stdout = subprocess.PIPE)
         svn_info = pipe.stdout.read()
     if not noHeaders:
         print svn_info
@@ -1446,7 +1446,7 @@ for ia in range(len(archs) if iterArchs else 1):
                 if method:
                     method()
                 if parsable:
-                    self.stream.write("ERROR: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
+                    self.stream.write("FAIL: LLDB (%s) :: %s\n" % (self._config_string(test), str(test)))
 
             def addFailure(self, test, err):
                 global sdir_has_content
