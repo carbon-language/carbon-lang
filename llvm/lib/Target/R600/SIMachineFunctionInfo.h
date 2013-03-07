@@ -23,6 +23,8 @@ namespace llvm {
 /// tells the hardware which interpolation parameters to load.
 class SIMachineFunctionInfo : public MachineFunctionInfo {
 public:
+  static const char *ShaderTypeAttribute;
+
   SIMachineFunctionInfo(const MachineFunction &MF);
   unsigned SPIPSInputAddr;
   unsigned ShaderType;

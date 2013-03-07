@@ -83,12 +83,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
-  case AMDGPU::SHADER_TYPE:
-    BB->getParent()->getInfo<SIMachineFunctionInfo>()->ShaderType =
-                                        MI->getOperand(0).getImm();
-    MI->eraseFromParent();
-    break;
-
   case AMDGPU::SI_INTERP:
     LowerSI_INTERP(MI, *BB, I, MRI);
     break;
