@@ -150,4 +150,27 @@ struct PtrSet {
   iterator end() const;
 };
 
+template <typename T>
+struct TypedefDerefContainer {
+  struct iterator {
+    typedef T &deref_type;
+    bool operator!=(const iterator &other) const;
+    deref_type operator*();
+    iterator &operator++();
+  };
+  iterator begin() const;
+  iterator end() const;
+};
+
+template <typename T>
+struct RValueDerefContainer {
+  struct iterator {
+    typedef T &&deref_type;
+    bool operator!=(const iterator &other) const;
+    deref_type operator*();
+    iterator &operator++();
+  };
+  iterator begin() const;
+  iterator end() const;
+};
 #endif  // STRUCTURES_H

@@ -734,7 +734,8 @@ void LoopFixer::doConversion(ASTContext *Context,
                              StringRef ContainerString,
                              const UsageResult &Usages,
                              const DeclStmt *AliasDecl, const ForStmt *TheLoop,
-                             bool ContainerNeedsDereference) {
+                             bool ContainerNeedsDereference,
+                             bool DerefByValue) {
   std::string VarName;
 
   if (Usages.size() == 1 && AliasDecl) {
@@ -767,8 +768,15 @@ void LoopFixer::doConversion(ASTContext *Context,
   // Now, we need to construct the new range expresion.
   SourceRange ParenRange(TheLoop->getLParenLoc(), TheLoop->getRParenLoc());
 
-  QualType AutoRefType =
-      Context->getLValueReferenceType(Context->getAutoDeductType());
+  QualType AutoRefType = Context->getAutoDeductType();
+
+  // If an iterator's operator*() returns a 'T&' we can bind that to 'auto&'.
+  // If operator*() returns 'T' we can bind that to 'auto&&' which will deduce
+  // to 'T&&'.
+  if (DerefByValue)
+    AutoRefType = Context->getRValueReferenceType(AutoRefType);
+  else
+    AutoRefType = Context->getLValueReferenceType(AutoRefType);
 
   std::string MaybeDereference = ContainerNeedsDereference ? "*" : "";
   std::string TypeString = AutoRefType.getAsString();
@@ -895,6 +903,7 @@ void LoopFixer::findAndVerifyUsages(ASTContext *Context,
                                     const Expr *ContainerExpr,
                                     const Expr *BoundExpr,
                                     bool ContainerNeedsDereference,
+                                    bool DerefByValue,
                                     const ForStmt *TheLoop,
                                     Confidence ConfidenceLevel) {
   ForLoopIndexUseVisitor Finder(Context, LoopVar, EndVar, ContainerExpr,
@@ -928,7 +937,8 @@ void LoopFixer::findAndVerifyUsages(ASTContext *Context,
 
   doConversion(Context, LoopVar, getReferencedVariable(ContainerExpr),
                ContainerString, Finder.getUsages(),
-               Finder.getAliasDecl(), TheLoop, ContainerNeedsDereference);
+               Finder.getAliasDecl(), TheLoop, ContainerNeedsDereference,
+               DerefByValue);
   ++*AcceptedChanges;
 }
 
@@ -986,6 +996,9 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
   if (!ContainerExpr && !BoundExpr)
     return;
 
+  bool DerefByValue = Nodes.getNodeAs<QualType>(DerefByValueResultName) != 0;
+
   findAndVerifyUsages(Context, LoopVar, EndVar, ContainerExpr, BoundExpr,
-                      ContainerNeedsDereference, TheLoop, ConfidenceLevel);
+                      ContainerNeedsDereference, DerefByValue, TheLoop,
+                      ConfidenceLevel);
 }

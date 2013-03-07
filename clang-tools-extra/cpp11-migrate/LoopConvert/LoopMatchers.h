@@ -30,6 +30,7 @@ extern const char InitVarName[];
 extern const char EndExprName[];
 extern const char EndCallName[];
 extern const char EndVarName[];
+extern const char DerefByValueResultName[];
 
 clang::ast_matchers::StatementMatcher makeArrayLoopMatcher();
 clang::ast_matchers::StatementMatcher makeIteratorLoopMatcher();

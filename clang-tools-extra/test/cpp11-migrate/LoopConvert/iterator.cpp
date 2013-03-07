@@ -1,5 +1,5 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: cpp11-migrate -loop-convert %t.cpp -- -I %S/Inputs
+// RUN: cpp11-migrate -loop-convert %t.cpp -- -I %S/Inputs -std=c++11
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: cpp11-migrate -loop-convert %t.cpp -risk=risky -- -I %S/Inputs
 // RUN: FileCheck -check-prefix=RISKY -input-file=%t.cpp %s
@@ -101,6 +101,37 @@ void f() {
   }
   // CHECK: for ({{[a-zA-Z_ ]*&? ?}}[[VAR:[a-z_]+]] : intmap)
   // CHECK-NEXT: printf("intmap[%d] = %d", [[VAR]].first, [[VAR]].second);
+
+  // PtrSet's iterator dereferences by value so auto & can't be used.
+  {
+    PtrSet<int*> int_ptrs;
+    for (PtrSet<int*>::iterator I = int_ptrs.begin(),
+         E = int_ptrs.end(); I != E; ++I) {
+      // CHECK: for (auto && int_ptr : int_ptrs) {
+    }
+  }
+
+  // This container uses an iterator where the derefence type is a typedef of
+  // a reference type. Make sure non-const auto & is still used. A failure here
+  // means canonical types aren't being tested.
+  {
+    TypedefDerefContainer<int> int_ptrs;
+    for (TypedefDerefContainer<int>::iterator I = int_ptrs.begin(),
+         E = int_ptrs.end(); I != E; ++I) {
+      // CHECK: for (auto & int_ptr : int_ptrs) {
+    }
+  }
+
+  {
+    // Iterators returning an rvalue reference should disqualify the loop from
+    // transformation.
+    RValueDerefContainer<int> container;
+    for (RValueDerefContainer<int>::iterator I = container.begin(),
+         E = container.end(); I != E; ++I) {
+      // CHECK: for (RValueDerefContainer<int>::iterator I = container.begin(),
+      // CHECK-NEXT: E = container.end(); I != E; ++I) {
+    }
+  }
 }
 
 // Tests to ensure that an implicit 'this' is picked up as the container.

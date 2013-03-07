@@ -25,6 +25,7 @@ const char InitVarName[] = "initVar";
 const char EndCallName[] = "endCall";
 const char ConditionEndVarName[] = "conditionEndVar";
 const char EndVarName[] = "endVar";
+const char DerefByValueResultName[] = "derefByValueResult";
 
 // shared matchers
 static const TypeMatcher AnyType = anything();
@@ -137,30 +138,75 @@ StatementMatcher makeIteratorLoopMatcher() {
       hasArgument(0, IteratorComparisonMatcher),
       hasArgument(1, IteratorBoundMatcher));
 
-  return forStmt(
+  // This matcher tests that a declaration is a CXXRecordDecl that has an
+  // overloaded operator*(). If the operator*() returns by value instead of by
+  // reference then the return type is tagged with DerefByValueResultName.
+  internal::Matcher<VarDecl> TestDerefReturnsByValue =
+      hasType(
+        recordDecl(
+          hasMethod(
+            allOf(
+              hasOverloadedOperatorName("*"),
+              anyOf(
+                // Tag the return type if it's by value.
+                returns(
+                  qualType(
+                    unless(hasCanonicalType(referenceType()))
+                  ).bind(DerefByValueResultName)
+                ),
+                returns(
+                  // Skip loops where the iterator's operator* returns an
+                  // rvalue reference. This is just weird.
+                  qualType(unless(hasCanonicalType(rValueReferenceType())))
+                )
+              )
+            )
+          )
+        )
+      );
+
+  return
+    forStmt(
       hasLoopInit(anyOf(
-          declStmt(declCountIs(2),
-                   containsDeclaration(0, InitDeclMatcher),
-                   containsDeclaration(1, EndDeclMatcher)),
-          declStmt(hasSingleDecl(InitDeclMatcher)))),
+        declStmt(
+          declCountIs(2),
+          containsDeclaration(0, InitDeclMatcher),
+          containsDeclaration(1, EndDeclMatcher)
+        ),
+        declStmt(hasSingleDecl(InitDeclMatcher))
+      )),
       hasCondition(anyOf(
-          binaryOperator(hasOperatorName("!="),
-                         hasLHS(IteratorComparisonMatcher),
-                         hasRHS(IteratorBoundMatcher)),
-          binaryOperator(hasOperatorName("!="),
-                         hasLHS(IteratorBoundMatcher),
-                         hasRHS(IteratorComparisonMatcher)),
-          OverloadedNEQMatcher)),
+        binaryOperator(
+          hasOperatorName("!="),
+          hasLHS(IteratorComparisonMatcher),
+          hasRHS(IteratorBoundMatcher)
+        ),
+        binaryOperator(
+          hasOperatorName("!="),
+          hasLHS(IteratorBoundMatcher),
+          hasRHS(IteratorComparisonMatcher)
+        ),
+        OverloadedNEQMatcher
+      )),
       hasIncrement(anyOf(
-          unaryOperator(hasOperatorName("++"),
-                        hasUnaryOperand(declRefExpr(to(
-                            varDecl(hasType(pointsTo(AnyType)))
-                            .bind(IncrementVarName))))),
-          operatorCallExpr(
-              hasOverloadedOperatorName("++"),
-              hasArgument(0, declRefExpr(to(
-                  varDecl().bind(IncrementVarName))))))))
-                  .bind(LoopName);
+        unaryOperator(
+          hasOperatorName("++"),
+          hasUnaryOperand(
+            declRefExpr(to(
+              varDecl(hasType(pointsTo(AnyType))).bind(IncrementVarName)
+            ))
+          )
+        ),
+        operatorCallExpr(
+          hasOverloadedOperatorName("++"),
+          hasArgument(0,
+            declRefExpr(to(
+              varDecl(TestDerefReturnsByValue).bind(IncrementVarName)
+            ))
+          )
+        )
+      ))
+    ).bind(LoopName);
 }
 
 /// \brief The matcher used for array-like containers (pseudoarrays).
