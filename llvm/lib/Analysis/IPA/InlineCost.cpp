@@ -474,10 +474,12 @@ bool CallAnalyzer::visitCastInst(CastInst &I) {
 
 bool CallAnalyzer::visitUnaryInstruction(UnaryInstruction &I) {
   Value *Operand = I.getOperand(0);
-  Constant *Ops[1] = { dyn_cast<Constant>(Operand) };
-  if (Ops[0] || (Ops[0] = SimplifiedValues.lookup(Operand)))
+  Constant *COp = dyn_cast<Constant>(Operand);
+  if (!COp)
+    COp = SimplifiedValues.lookup(Operand);
+  if (COp)
     if (Constant *C = ConstantFoldInstOperands(I.getOpcode(), I.getType(),
-                                               Ops, TD)) {
+                                               COp, TD)) {
       SimplifiedValues[&I] = C;
       return true;
     }
