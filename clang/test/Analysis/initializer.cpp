@@ -68,8 +68,7 @@ void testReferenceMember() {
 
 void testReferenceMember2() {
   int *p = 0;
-  // FIXME: We should warn here, since we're creating the reference here.
-  RefWrapper X(*p); // expected-warning@-12 {{Dereference of null pointer}}
+  RefWrapper X(*p); // expected-warning {{Forming reference to null pointer}}
 }
 
 

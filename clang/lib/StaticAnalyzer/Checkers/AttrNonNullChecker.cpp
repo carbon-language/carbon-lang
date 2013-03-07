@@ -26,10 +26,16 @@ using namespace ento;
 namespace {
 class AttrNonNullChecker
   : public Checker< check::PreCall > {
-  mutable OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BTAttrNonNull;
+  mutable OwningPtr<BugType> BTNullRefArg;
 public:
 
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
+
+  BugReport *genReportNullAttrNonNull(const ExplodedNode *ErrorN,
+                                      const Expr *ArgE) const;
+  BugReport *genReportReferenceToNullPointer(const ExplodedNode *ErrorN,
+                                             const Expr *ArgE) const;
 };
 } // end anonymous namespace
 
@@ -40,26 +46,38 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
     return;
 
   const NonNullAttr *Att = FD->getAttr<NonNullAttr>();
-  if (!Att)
-    return;
 
   ProgramStateRef state = C.getState();
 
-  // Iterate through the arguments of CE and check them for null.
-  for (unsigned idx = 0, count = Call.getNumArgs(); idx != count; ++idx) {
-    if (!Att->isNonNull(idx))
+  CallEvent::param_type_iterator TyI = Call.param_type_begin(),
+                                 TyE = Call.param_type_end();
+
+  for (unsigned idx = 0, count = Call.getNumArgs(); idx != count; ++idx){
+
+    // Check if the parameter is a reference. We want to report when reference
+    // to a null pointer is passed as a paramter.
+    bool haveRefTypeParam = false;
+    if (TyI != TyE) {
+      haveRefTypeParam = (*TyI)->isReferenceType();
+      TyI++;
+    }
+
+    bool haveAttrNonNull = Att && Att->isNonNull(idx);
+
+    if (!haveRefTypeParam && !haveAttrNonNull)
       continue;
 
+    // If the value is unknown or undefined, we can't perform this check.
+    const Expr *ArgE = Call.getArgExpr(idx);
     SVal V = Call.getArgSVal(idx);
     Optional<DefinedSVal> DV = V.getAs<DefinedSVal>();
-
-    // If the value is unknown or undefined, we can't perform this check.
     if (!DV)
       continue;
 
-    const Expr *ArgE = Call.getArgExpr(idx);
-    
-    if (!DV->getAs<Loc>()) {
+    // Process the case when the argument is not a location.
+    assert(!haveRefTypeParam || DV->getAs<Loc>());
+
+    if (haveAttrNonNull && !DV->getAs<Loc>()) {
       // If the argument is a union type, we want to handle a potential
       // transparent_union GCC extension.
       if (!ArgE)
@@ -100,21 +118,15 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
       // we cache out.
       if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
 
-        // Lazily allocate the BugType object if it hasn't already been
-        // created. Ownership is transferred to the BugReporter object once
-        // the BugReport is passed to 'EmitWarning'.
-        if (!BT)
-          BT.reset(new BugType("Argument with 'nonnull' attribute passed null",
-                               "API"));
-
-        BugReport *R =
-          new BugReport(*BT, "Null pointer passed as an argument to a "
-                             "'nonnull' parameter", errorNode);
+        BugReport *R = 0;
+        if (haveAttrNonNull)
+          R = genReportNullAttrNonNull(errorNode, ArgE);
+        else if (haveRefTypeParam)
+          R = genReportReferenceToNullPointer(errorNode, ArgE);
 
         // Highlight the range of the argument that was null.
         R->addRange(Call.getArgSourceRange(idx));
-        if (ArgE)
-          bugreporter::trackNullOrUndefValue(errorNode, ArgE, *R);
+
         // Emit the bug report.
         C.emitReport(R);
       }
@@ -132,6 +144,45 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
   // If we reach here all of the arguments passed the nonnull check.
   // If 'state' has been updated generated a new node.
   C.addTransition(state);
+}
+
+BugReport *AttrNonNullChecker::genReportNullAttrNonNull(
+  const ExplodedNode *ErrorNode, const Expr *ArgE) const {
+  // Lazily allocate the BugType object if it hasn't already been
+  // created. Ownership is transferred to the BugReporter object once
+  // the BugReport is passed to 'EmitWarning'.
+  if (!BTAttrNonNull)
+    BTAttrNonNull.reset(new BugType(
+                            "Argument with 'nonnull' attribute passed null",
+                            "API"));
+
+  BugReport *R = new BugReport(*BTAttrNonNull,
+                  "Null pointer passed as an argument to a 'nonnull' parameter",
+                  ErrorNode);
+  if (ArgE)
+    bugreporter::trackNullOrUndefValue(ErrorNode, ArgE, *R);
+
+  return R;
+}
+
+BugReport *AttrNonNullChecker::genReportReferenceToNullPointer(
+  const ExplodedNode *ErrorNode, const Expr *ArgE) const {
+  if (!BTNullRefArg)
+    BTNullRefArg.reset(new BuiltinBug("Dereference of null pointer"));
+
+  BugReport *R = new BugReport(*BTNullRefArg,
+                               "Forming reference to null pointer",
+                               ErrorNode);
+  if (ArgE) {
+    const Expr *ArgEDeref = bugreporter::getDerefExpr(ArgE);
+    if (ArgEDeref == 0)
+      ArgEDeref = ArgE;
+    bugreporter::trackNullOrUndefValue(ErrorNode,
+                                       ArgEDeref,
+                                       *R);
+  }
+  return R;
+
 }
 
 void ento::registerAttrNonNullChecker(CheckerManager &mgr) {
