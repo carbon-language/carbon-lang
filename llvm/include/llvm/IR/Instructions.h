@@ -2758,7 +2758,7 @@ public:
         return *this;
       }
 
-      if (Index != -1UL)
+      if (Index != -1U)
         --SubsetIt;
 
       return *this;
