@@ -225,9 +225,9 @@ const CallInst *llvm::isArrayMalloc(const Value *I,
   const CallInst *CI = extractMallocCall(I, TLI);
   Value *ArraySize = computeArraySize(CI, TD, TLI);
 
-  if (ArraySize &&
-      ArraySize != ConstantInt::get(CI->getArgOperand(0)->getType(), 1))
-    return CI;
+  if (ConstantInt *ConstSize = dyn_cast_or_null<ConstantInt>(ArraySize))
+    if (ConstSize->isOne())
+      return CI;
 
   // CI is a non-array malloc or we can't figure out that it is an array malloc.
   return 0;
