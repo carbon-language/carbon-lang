@@ -135,6 +135,20 @@ void testFunctionPointerReturn(void *opaque) {
   clang_analyzer_eval(x == 42); // expected-warning{{TRUE}}
 }
 
+int &testReturnNullReference() {
+  int *x = 0;
+  return *x; // expected-warning{{Returning null reference}}
+}
+
+char &refFromPointer() {
+  return *ptr();
+}
+
+void testReturnReference() {
+  clang_analyzer_eval(ptr() == 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(&refFromPointer() == 0); // expected-warning{{FALSE}}
+}
+
 
 // ------------------------------------
 // False negatives
@@ -144,11 +158,6 @@ namespace rdar11212286 {
   class B{};
 
   B test() {
-    B *x = 0;
-    return *x; // should warn here!
-  }
-
-  B &testRef() {
     B *x = 0;
     return *x; // should warn here!
   }

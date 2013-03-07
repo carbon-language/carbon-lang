@@ -24,9 +24,13 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class ReturnUndefChecker : 
-    public Checker< check::PreStmt<ReturnStmt> > {
-  mutable OwningPtr<BuiltinBug> BT;
+class ReturnUndefChecker : public Checker< check::PreStmt<ReturnStmt> > {
+  mutable OwningPtr<BuiltinBug> BT_Undef;
+  mutable OwningPtr<BuiltinBug> BT_NullReference;
+
+  void emitUndef(CheckerContext &C, const Expr *RetE) const;
+  void checkReference(CheckerContext &C, const Expr *RetE,
+                      DefinedOrUnknownSVal RetVal) const;
 public:
   void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;
 };
@@ -34,43 +38,75 @@ public:
 
 void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
                                       CheckerContext &C) const {
- 
   const Expr *RetE = RS->getRetValue();
   if (!RetE)
     return;
-  
-  if (!C.getState()->getSVal(RetE, C.getLocationContext()).isUndef())
-    return;
-  
-  // "return;" is modeled to evaluate to an UndefinedValue. Allow UndefinedValue
-  // to be returned in functions returning void to support the following pattern:
-  // void foo() {
-  //  return;
-  // }
-  // void test() {
-  //   return foo();
-  // }
+  SVal RetVal = C.getSVal(RetE);
+
   const StackFrameContext *SFC = C.getStackFrame();
   QualType RT = CallEvent::getDeclaredResultType(SFC->getDecl());
-  if (!RT.isNull() && RT->isSpecificBuiltinType(BuiltinType::Void))
+
+  if (RetVal.isUndef()) {
+    // "return;" is modeled to evaluate to an UndefinedVal. Allow UndefinedVal
+    // to be returned in functions returning void to support this pattern:
+    //   void foo() {
+    //     return;
+    //   }
+    //   void test() {
+    //     return foo();
+    //   }
+    if (RT.isNull() || !RT->isVoidType())
+      emitUndef(C, RetE);
+    return;
+  }
+
+  if (RT.isNull())
     return;
 
-  ExplodedNode *N = C.generateSink();
+  if (RT->isReferenceType()) {
+    checkReference(C, RetE, RetVal.castAs<DefinedOrUnknownSVal>());
+    return;
+  }
+}
 
+static void emitBug(CheckerContext &C, BuiltinBug &BT, const Expr *RetE,
+                    const Expr *TrackingE = 0) {
+  ExplodedNode *N = C.generateSink();
   if (!N)
     return;
-  
-  if (!BT)
-    BT.reset(new BuiltinBug("Garbage return value",
-                            "Undefined or garbage value returned to caller"));
-    
-  BugReport *report = 
-    new BugReport(*BT, BT->getDescription(), N);
 
-  report->addRange(RetE->getSourceRange());
-  bugreporter::trackNullOrUndefValue(N, RetE, *report);
+  BugReport *Report = new BugReport(BT, BT.getDescription(), N);
 
-  C.emitReport(report);
+  Report->addRange(RetE->getSourceRange());
+  bugreporter::trackNullOrUndefValue(N, TrackingE ? TrackingE : RetE, *Report);
+
+  C.emitReport(Report);
+}
+
+void ReturnUndefChecker::emitUndef(CheckerContext &C, const Expr *RetE) const {
+  if (!BT_Undef)
+    BT_Undef.reset(new BuiltinBug("Garbage return value",
+                                  "Undefined or garbage value "
+                                    "returned to caller"));
+  emitBug(C, *BT_Undef, RetE);
+}
+
+void ReturnUndefChecker::checkReference(CheckerContext &C, const Expr *RetE,
+                                        DefinedOrUnknownSVal RetVal) const {
+  ProgramStateRef StNonNull, StNull;
+  llvm::tie(StNonNull, StNull) = C.getState()->assume(RetVal);
+
+  if (StNonNull) {
+    // Going forward, assume the location is non-null.
+    C.addTransition(StNonNull);
+    return;
+  }
+
+  // The return value is known to be null. Emit a bug report.
+  if (!BT_NullReference)
+    BT_NullReference.reset(new BuiltinBug("Returning null reference"));
+
+  emitBug(C, *BT_NullReference, RetE, bugreporter::getDerefExpr(RetE));
 }
 
 void ento::registerReturnUndefChecker(CheckerManager &mgr) {

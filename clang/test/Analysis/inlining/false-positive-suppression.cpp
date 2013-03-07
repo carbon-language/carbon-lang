@@ -112,4 +112,16 @@ namespace References {
     // expected-warning@-2 {{Called C++ object pointer is null}}
 #endif
   }
+
+  SomeClass *getNull() {
+    return 0;
+  }
+
+  SomeClass &returnNullReference() {
+    SomeClass *x = getNull();
+    return *x;
+#ifndef SUPPRESSED
+    // expected-warning@-2 {{Returning null reference}}
+#endif
+  }
 }
