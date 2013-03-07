@@ -60,8 +60,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 
-  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
-
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
@@ -241,18 +239,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
-  case ISD::INTRINSIC_WO_CHAIN: {
-    unsigned IntrinsicID =
-                         cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-    EVT VT = Op.getValueType();
-    switch (IntrinsicID) {
-    case AMDGPUIntrinsic::SI_vs_load_buffer_index:
-      return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
-                                  AMDGPU::VGPR0, VT);
-    default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
-    }
-    break;
-  }
   }
   return SDValue();
 }
