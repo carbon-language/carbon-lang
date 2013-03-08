@@ -303,6 +303,7 @@ void MDNode::deleteTemporary(MDNode *N) {
 
 /// getOperand - Return specified operand.
 Value *MDNode::getOperand(unsigned i) const {
+  assert(i < getNumOperands() && "Invalid operand number");
   return *getOperandPtr(const_cast<MDNode*>(this), i);
 }
 
