@@ -3633,8 +3633,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     // illegal; expand it into a SELECT_CC.
     EVT VT = Node->getValueType(0);
     int TrueValue;
-    switch(TLI.getBooleanContents(VT.isVector())) {
-    default: assert(!"Unhandled BooleanContent value");
+    switch (TLI.getBooleanContents(VT.isVector())) {
     case TargetLowering::ZeroOrOneBooleanContent:
     case TargetLowering::UndefinedBooleanContent:
       TrueValue = 1;
