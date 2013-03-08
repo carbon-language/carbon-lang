@@ -1372,7 +1372,7 @@ public:
         const char             *property_setter_name,
         const char             *property_getter_name,
         uint32_t                property_attributes,
-        const ClangASTMetadata       *metadata
+        const ClangASTMetadata *metadata
     ) :
         m_ast                   (ast),
         m_class_opaque_type     (class_opaque_type),
@@ -1386,7 +1386,7 @@ public:
         if (metadata != NULL)
         {
             m_metadata_ap.reset(new ClangASTMetadata());
-            *(m_metadata_ap.get()) = *metadata;
+            *m_metadata_ap = *metadata;
         }
     }
     
@@ -1409,22 +1409,22 @@ public:
         if (rhs.m_metadata_ap.get())
         {
             m_metadata_ap.reset (new ClangASTMetadata());
-            *(m_metadata_ap.get()) = *(rhs.m_metadata_ap.get());
+            *m_metadata_ap = *rhs.m_metadata_ap;
         }
         return *this;
     }
     
     bool Finalize() const
     {
-        return ClangASTContext::AddObjCClassProperty(m_ast,
-                                                     m_class_opaque_type,
-                                                     m_property_name,
-                                                     m_property_opaque_type,
-                                                     m_ivar_decl,
-                                                     m_property_setter_name,
-                                                     m_property_getter_name,
-                                                     m_property_attributes,
-                                                     m_metadata_ap.get());
+        return ClangASTContext::AddObjCClassProperty (m_ast,
+                                                      m_class_opaque_type,
+                                                      m_property_name,
+                                                      m_property_opaque_type,
+                                                      m_ivar_decl,
+                                                      m_property_setter_name,
+                                                      m_property_getter_name,
+                                                      m_property_attributes,
+                                                      m_metadata_ap.get());
     }
 private:
     clang::ASTContext      *m_ast;
@@ -1435,7 +1435,7 @@ private:
     const char             *m_property_setter_name;
     const char             *m_property_getter_name;
     uint32_t                m_property_attributes;
-    std::auto_ptr<ClangASTMetadata>        m_metadata_ap;
+    std::auto_ptr<ClangASTMetadata> m_metadata_ap;
 };
 
 struct BitfieldInfo
@@ -1455,6 +1455,36 @@ struct BitfieldInfo
                (bit_offset != LLDB_INVALID_ADDRESS);
     }
 };
+
+
+bool
+SymbolFileDWARF::ClassOrStructIsVirtual (DWARFCompileUnit* dwarf_cu,
+                                         const DWARFDebugInfoEntry *parent_die)
+{
+    if (parent_die)
+    {
+        for (const DWARFDebugInfoEntry *die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
+        {
+            dw_tag_t tag = die->Tag();
+            bool check_virtuality = false;
+            switch (tag)
+            {
+                case DW_TAG_inheritance:
+                case DW_TAG_subprogram:
+                    check_virtuality = true;
+                    break;
+                default:
+                    break;
+            }
+            if (check_virtuality)
+            {
+                if (die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_virtuality, 0) != 0)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
 
 size_t
 SymbolFileDWARF::ParseChildMembers
@@ -5868,6 +5898,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 accessibility = default_accessibility;
                         }
 
+                        ClangASTMetadata metadata;
+                        metadata.SetUserID(MakeUserID(die->GetOffset()));
+                        metadata.SetIsDynamicCXXType(ClassOrStructIsVirtual (dwarf_cu, die));
+
                         if (type_name_cstr && strchr (type_name_cstr, '<'))
                         {
                             ClangASTContext::TemplateParameterInfos template_param_infos;
@@ -5886,16 +5920,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 clang_type = ast.CreateClassTemplateSpecializationType (class_specialization_decl);
                                 clang_type_was_created = true;
                                 
-                                GetClangASTContext().SetMetadataAsUserID ((uintptr_t)class_template_decl, MakeUserID(die->GetOffset()));
-                                GetClangASTContext().SetMetadataAsUserID ((uintptr_t)class_specialization_decl, MakeUserID(die->GetOffset()));
+                                GetClangASTContext().SetMetadata ((uintptr_t)class_template_decl, metadata);
+                                GetClangASTContext().SetMetadata ((uintptr_t)class_specialization_decl, metadata);
                             }
                         }
 
                         if (!clang_type_was_created)
                         {
                             clang_type_was_created = true;
-                            ClangASTMetadata metadata;
-                            metadata.SetUserID(MakeUserID(die->GetOffset()));
                             clang_type = ast.CreateRecordType (decl_ctx, 
                                                                accessibility, 
                                                                type_name_cstr, 

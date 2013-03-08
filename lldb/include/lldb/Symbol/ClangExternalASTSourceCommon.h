@@ -50,10 +50,23 @@ public:
         m_union_is_user_id(false),
         m_union_is_isa_ptr(false),
         m_has_object_ptr(false),
-        m_is_self (false)
+        m_is_self (false),
+        m_is_dynamic_cxx (true)
     {
     }
-    
+
+    bool
+    GetIsDynamicCXXType () const
+    {
+        return m_is_dynamic_cxx;
+    }
+
+    void
+    SetIsDynamicCXXType (bool b)
+    {
+        m_is_dynamic_cxx = b;
+    }
+
     void
     SetUserID (lldb::user_id_t user_id)
     {
@@ -136,7 +149,8 @@ private:
     bool m_union_is_user_id : 1,
          m_union_is_isa_ptr : 1,
          m_has_object_ptr : 1,
-         m_is_self : 1;
+         m_is_self : 1,
+         m_is_dynamic_cxx : 1;
     
 };
 

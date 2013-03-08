@@ -338,6 +338,10 @@ protected:
     class DelayedAddObjCClassProperty;
     typedef std::vector <DelayedAddObjCClassProperty> DelayedPropertyList;
     
+    bool                    ClassOrStructIsVirtual (
+                                DWARFCompileUnit* dwarf_cu,
+                                const DWARFDebugInfoEntry *parent_die);
+
     size_t                  ParseChildMembers(
                                 const lldb_private::SymbolContext& sc,
                                 DWARFCompileUnit* dwarf_cu,

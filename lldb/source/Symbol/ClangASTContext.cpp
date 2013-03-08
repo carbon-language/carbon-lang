@@ -1126,7 +1126,12 @@ ClangASTContext::GetTypeForDecl (ObjCInterfaceDecl *decl)
 #pragma mark Structure, Unions, Classes
 
 clang_type_t
-ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type, const char *name, int kind, LanguageType language, ClangASTMetadata *metadata)
+ClangASTContext::CreateRecordType (DeclContext *decl_ctx,
+                                   AccessType access_type,
+                                   const char *name,
+                                   int kind,
+                                   LanguageType language,
+                                   ClangASTMetadata *metadata)
 {
     ASTContext *ast = getASTContext();
     assert (ast != NULL);
@@ -1154,16 +1159,20 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type
                                                  SourceLocation(),
                                                  name && name[0] ? &ast->Idents.get(name) : NULL);
     
-    if (decl && metadata)
-        SetMetadata(ast, (uintptr_t)decl, *metadata);
-    
-    if (decl_ctx)
+    if (decl)
     {
+        if (metadata)
+            SetMetadata(ast, (uintptr_t)decl, *metadata);
+
         if (access_type != eAccessNone)
             decl->setAccess (ConvertAccessTypeToAccessSpecifier (access_type));
-        decl_ctx->addDecl (decl);
+    
+        if (decl_ctx)
+            decl_ctx->addDecl (decl);
+
+        return ast->getTagDeclType(decl).getAsOpaquePtr();
     }
-    return ast->getTagDeclType(decl).getAsOpaquePtr();
+    return NULL;
 }
 
 static TemplateParameterList *
@@ -5732,16 +5741,22 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast,
                         if (cxx_record_decl)
                         {
                             bool is_complete = cxx_record_decl->isCompleteDefinition();
-                            if (!is_complete)
-                                is_complete = ClangASTContext::GetCompleteType (ast, pointee_qual_type.getAsOpaquePtr());
-
+                            
                             if (is_complete)
-                            {
                                 success = cxx_record_decl->isDynamicClass();
-                            }
                             else
                             {
-                                success = false;
+                                ClangASTMetadata *metadata = GetMetadata (ast, (uintptr_t)cxx_record_decl);
+                                if (metadata)
+                                    success = metadata->GetIsDynamicCXXType();
+                                else
+                                {
+                                    is_complete = ClangASTContext::GetCompleteType (ast, pointee_qual_type.getAsOpaquePtr());
+                                    if (is_complete)
+                                        success = cxx_record_decl->isDynamicClass();
+                                    else
+                                        success = false;
+                                }
                             }
 
                             if (success)
