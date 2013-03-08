@@ -367,7 +367,9 @@ clang::ExternalLoadResult
 ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
                                           bool (*predicate)(Decl::Kind),
                                           llvm::SmallVectorImpl<Decl*> &decls)
-{    
+{
+    ClangASTMetrics::RegisterLexicalQuery();
+
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     const Decl *context_decl = dyn_cast<Decl>(decl_context);
@@ -484,6 +486,8 @@ void
 ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
 {
     assert (m_ast_context);
+    
+    ClangASTMetrics::RegisterVisibleQuery();
     
     const ConstString name(context.m_decl_name.getAsString().c_str());
     
@@ -1435,6 +1439,8 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
                                  BaseOffsetMap &base_offsets,
                                  BaseOffsetMap &virtual_base_offsets)
 {
+    ClangASTMetrics::RegisterRecordLayout();
+    
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
     
@@ -1677,7 +1683,9 @@ void *
 ClangASTSource::GuardedCopyType (ASTContext *dest_context, 
                                  ASTContext *source_context,
                                  void *clang_type)
-{    
+{
+    ClangASTMetrics::RegisterLLDBImport();
+    
     SetImportInProgress(true);
     
     QualType ret_qual_type = m_ast_importer->CopyType (m_ast_context, source_context, QualType::getFromOpaquePtr(clang_type));
