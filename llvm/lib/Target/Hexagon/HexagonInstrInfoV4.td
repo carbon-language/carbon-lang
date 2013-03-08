@@ -940,6 +940,18 @@ def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
                                   s11_0ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
+// zext i1->i64
+def:  Pat <(i64 (zextloadi1 ADDRriS11_0:$src1)),
+      (i64 (COMBINE_Ir_V4 0, (LDriub ADDRriS11_0:$src1)))>,
+      Requires<[HasV4T]>;
+
+let AddedComplexity = 20 in
+def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
+                                s11_0ExtPred:$offset))),
+      (i64 (COMBINE_Ir_V4 0, (LDriub_indexed IntRegs:$src1,
+                                  s11_0ExtPred:$offset)))>,
+      Requires<[HasV4T]>;
+
 // zext i16->i64
 def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
       (i64 (COMBINE_Ir_V4 0, (LDriuh ADDRriS11_1:$src1)))>,
