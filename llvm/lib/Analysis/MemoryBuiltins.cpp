@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This family of functions identifies calls to builtin functions that allocate
-// or free memory.  
+// or free memory.
 //
 //===----------------------------------------------------------------------===//
 
@@ -216,7 +216,7 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *TD,
   return 0;
 }
 
-/// isArrayMalloc - Returns the corresponding CallInst if the instruction 
+/// isArrayMalloc - Returns the corresponding CallInst if the instruction
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
 const CallInst *llvm::isArrayMalloc(const Value *I,
@@ -241,7 +241,7 @@ const CallInst *llvm::isArrayMalloc(const Value *I,
 PointerType *llvm::getMallocType(const CallInst *CI,
                                  const TargetLibraryInfo *TLI) {
   assert(isMallocLikeFn(CI, TLI) && "getMallocType and not malloc call");
-  
+
   PointerType *MallocType = 0;
   unsigned NumOfBitCastUses = 0;
 
@@ -276,7 +276,7 @@ Type *llvm::getMallocAllocatedType(const CallInst *CI,
   return PT ? PT->getElementType() : 0;
 }
 
-/// getMallocArraySize - Returns the array size of a malloc call.  If the 
+/// getMallocArraySize - Returns the array size of a malloc call.  If the
 /// argument passed to malloc is a multiple of the size of the malloced type,
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
@@ -317,7 +317,7 @@ const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
     return 0;
 
   // Check free prototype.
-  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
+  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin
   // attribute will exist.
   FunctionType *FTy = Callee->getFunctionType();
   if (!FTy->getReturnType()->isVoidTy())
