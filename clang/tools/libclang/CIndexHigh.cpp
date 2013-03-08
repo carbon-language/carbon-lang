@@ -205,8 +205,9 @@ static enum CXChildVisitResult findFileIdRefVisit(CXCursor cursor,
       return CXChildVisit_Recurse;
     }
 
-    data->visitor.visit(data->visitor.context, cursor,
-                        cxloc::translateSourceRange(Ctx, Loc));
+    if (data->visitor.visit(data->visitor.context, cursor,
+                        cxloc::translateSourceRange(Ctx, Loc)) == CXVisit_Break)
+      return CXChildVisit_Break;
   }
   return CXChildVisit_Recurse;
 }
@@ -300,8 +301,9 @@ static enum CXChildVisitResult findFileMacroRefVisit(CXCursor cursor,
     return CXChildVisit_Continue;
   }
 
-  data->visitor.visit(data->visitor.context, cursor,
-                      cxloc::translateSourceRange(Ctx, Loc));
+  if (data->visitor.visit(data->visitor.context, cursor,
+                        cxloc::translateSourceRange(Ctx, Loc)) == CXVisit_Break)
+    return CXChildVisit_Break;
   return CXChildVisit_Continue;
 }
 
