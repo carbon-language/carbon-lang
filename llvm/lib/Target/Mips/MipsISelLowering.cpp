@@ -397,7 +397,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::UREM, MVT::i64, Expand);
 
   // Operations not directly supported by Mips.
-  setOperationAction(ISD::BR_CC,             MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,             MVT::f32,   Expand);
+  setOperationAction(ISD::BR_CC,             MVT::f64,   Expand);
+  setOperationAction(ISD::BR_CC,             MVT::i32,   Expand);
+  setOperationAction(ISD::BR_CC,             MVT::i64,   Expand);
   setOperationAction(ISD::SELECT_CC,         MVT::Other, Expand);
   setOperationAction(ISD::UINT_TO_FP,        MVT::i32,   Expand);
   setOperationAction(ISD::UINT_TO_FP,        MVT::i64,   Expand);

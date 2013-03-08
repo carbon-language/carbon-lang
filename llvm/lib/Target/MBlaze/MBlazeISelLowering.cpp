@@ -160,7 +160,8 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   // Operations not directly supported by MBlaze.
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Expand);
   setOperationAction(ISD::BR_JT,              MVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,              MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,              MVT::f32,   Expand);
+  setOperationAction(ISD::BR_CC,              MVT::i32,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG,  MVT::i1,    Expand);
   setOperationAction(ISD::ROTL,               MVT::i32,   Expand);
   setOperationAction(ISD::ROTR,               MVT::i32,   Expand);
