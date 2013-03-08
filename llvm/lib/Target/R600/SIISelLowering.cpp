@@ -68,6 +68,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::SELECT_CC);
 
   setTargetDAGCombine(ISD::SETCC);
+
+  setSchedulingPreference(Sched::Source);
 }
 
 SDValue SITargetLowering::LowerFormalArguments(
