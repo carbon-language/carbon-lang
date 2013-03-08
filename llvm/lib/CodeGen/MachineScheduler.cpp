@@ -57,6 +57,9 @@ static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
 static cl::opt<bool> EnableMacroFusion("misched-fusion", cl::Hidden,
   cl::desc("Enable scheduling for macro fusion."), cl::init(true));
 
+static cl::opt<bool> VerifyScheduling("verify-misched", cl::Hidden,
+  cl::desc("Verify machine instrs before and after machine scheduling"));
+
 // DAG subtrees must have at least this many nodes.
 static const unsigned MinSubtreeSize = 8;
 
@@ -197,6 +200,10 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   LIS = &getAnalysis<LiveIntervals>();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
+  if (VerifyScheduling) {
+    DEBUG(LIS->print(dbgs()));
+    MF->verify(this, "Before machine scheduling.");
+  }
   RegClassInfo->runOnMachineFunction(*MF);
 
   // Select the scheduler, or set the default.
@@ -285,6 +292,8 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   }
   Scheduler->finalizeSchedule();
   DEBUG(LIS->print(dbgs()));
+  if (VerifyScheduling)
+    MF->verify(this, "After machine scheduling.");
   return true;
 }
 
