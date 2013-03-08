@@ -134,13 +134,14 @@ class ReturnVisitor : public BugReporterVisitorImpl<ReturnVisitor> {
   const StackFrameContext *StackFrame;
   enum {
     Initial,
-    MaybeSuppress,
+    MaybeUnsuppress,
     Satisfied
   } Mode;
+  bool InitiallySuppressed;
 
 public:
-  ReturnVisitor(const StackFrameContext *Frame)
-    : StackFrame(Frame), Mode(Initial) {}
+  ReturnVisitor(const StackFrameContext *Frame, bool Suppressed)
+    : StackFrame(Frame), Mode(Initial), InitiallySuppressed(Suppressed) {}
 
   static void *getTag() {
     static int Tag = 0;
@@ -150,6 +151,7 @@ public:
   virtual void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(ReturnVisitor::getTag());
     ID.AddPointer(StackFrame);
+    ID.AddBoolean(InitiallySuppressed);
   }
 
   /// Adds a ReturnVisitor if the given statement represents a call that was
@@ -179,17 +181,39 @@ public:
     // Next, step over any post-statement checks.
     while (Node && Node->getLocation().getAs<PostStmt>())
       Node = Node->getFirstPred();
+    if (!Node)
+      return;
 
     // Finally, see if we inlined the call.
-    if (Node) {
-      if (Optional<CallExitEnd> CEE = Node->getLocationAs<CallExitEnd>()) {
-        const StackFrameContext *CalleeContext = CEE->getCalleeContext();
-        if (CalleeContext->getCallSite() == S) {
-          BR.markInteresting(CalleeContext);
-          BR.addVisitor(new ReturnVisitor(CalleeContext));
-        }
-      }
-    }
+    Optional<CallExitEnd> CEE = Node->getLocationAs<CallExitEnd>();
+    if (!CEE)
+      return;
+    
+    const StackFrameContext *CalleeContext = CEE->getCalleeContext();
+    if (CalleeContext->getCallSite() != S)
+      return;
+    
+    // Check the return value.
+    ProgramStateRef State = Node->getState();
+    SVal RetVal = State->getSVal(S, Node->getLocationContext());
+
+    // Handle cases where a reference is returned and then immediately used.
+    if (cast<Expr>(S)->isGLValue())
+      if (Optional<Loc> LValue = RetVal.getAs<Loc>())
+        RetVal = State->getSVal(*LValue);
+
+    // See if the return value is NULL. If so, suppress the report.
+    SubEngine *Eng = State->getStateManager().getOwningEngine();
+    assert(Eng && "Cannot file a bug report without an owning engine");
+    AnalyzerOptions &Options = Eng->getAnalysisManager().options;
+
+    bool InitiallySuppressed = false;
+    if (Options.shouldSuppressNullReturnPaths())
+      if (Optional<Loc> RetLoc = RetVal.getAs<Loc>())
+        InitiallySuppressed = !State->assume(*RetLoc, true);
+
+    BR.markInteresting(CalleeContext);
+    BR.addVisitor(new ReturnVisitor(CalleeContext, InitiallySuppressed));
   }
 
   /// Returns true if any counter-suppression heuristics are enabled for
@@ -260,17 +284,13 @@ public:
     llvm::raw_svector_ostream Out(Msg);
 
     if (V.getAs<Loc>()) {
-      // If we are pruning null-return paths as unlikely error paths, mark the
-      // report invalid. We still want to emit a path note, however, in case
+      // If we have counter-suppression enabled, make sure we keep visiting
+      // future nodes. We want to emit a path note as well, in case
       // the report is resurrected as valid later on.
       ExprEngine &Eng = BRC.getBugReporter().getEngine();
       AnalyzerOptions &Options = Eng.getAnalysisManager().options;
-      if (Options.shouldSuppressNullReturnPaths()) {
-        if (hasCounterSuppression(Options))
-          Mode = MaybeSuppress;
-        else
-          BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
-      }
+      if (InitiallySuppressed && hasCounterSuppression(Options))
+        Mode = MaybeUnsuppress;
 
       if (RetE->getType()->isObjCObjectPointerType())
         Out << "Returning nil";
@@ -299,10 +319,16 @@ public:
     return new PathDiagnosticEventPiece(L, Out.str());
   }
 
-  PathDiagnosticPiece *visitNodeMaybeSuppress(const ExplodedNode *N,
-                                              const ExplodedNode *PrevN,
-                                              BugReporterContext &BRC,
-                                              BugReport &BR) {
+  PathDiagnosticPiece *visitNodeMaybeUnsuppress(const ExplodedNode *N,
+                                                const ExplodedNode *PrevN,
+                                                BugReporterContext &BRC,
+                                                BugReport &BR) {
+#ifndef NDEBUG
+    ExprEngine &Eng = BRC.getBugReporter().getEngine();
+    AnalyzerOptions &Options = Eng.getAnalysisManager().options;
+    assert(hasCounterSuppression(Options));
+#endif
+
     // Are we at the entry node for this call?
     Optional<CallEnter> CE = N->getLocationAs<CallEnter>();
     if (!CE)
@@ -313,41 +339,35 @@ public:
 
     Mode = Satisfied;
 
-    ExprEngine &Eng = BRC.getBugReporter().getEngine();
-    AnalyzerOptions &Options = Eng.getAnalysisManager().options;
-    if (Options.shouldAvoidSuppressingNullArgumentPaths()) {
-      // Don't automatically suppress a report if one of the arguments is
-      // known to be a null pointer. Instead, start tracking /that/ null
-      // value back to its origin.
-      ProgramStateManager &StateMgr = BRC.getStateManager();
-      CallEventManager &CallMgr = StateMgr.getCallEventManager();
+    // Don't automatically suppress a report if one of the arguments is
+    // known to be a null pointer. Instead, start tracking /that/ null
+    // value back to its origin.
+    ProgramStateManager &StateMgr = BRC.getStateManager();
+    CallEventManager &CallMgr = StateMgr.getCallEventManager();
 
-      ProgramStateRef State = N->getState();
-      CallEventRef<> Call = CallMgr.getCaller(StackFrame, State);
-      for (unsigned I = 0, E = Call->getNumArgs(); I != E; ++I) {
-        SVal ArgV = Call->getArgSVal(I);
-        if (!ArgV.getAs<Loc>())
-          continue;
+    ProgramStateRef State = N->getState();
+    CallEventRef<> Call = CallMgr.getCaller(StackFrame, State);
+    for (unsigned I = 0, E = Call->getNumArgs(); I != E; ++I) {
+      Optional<Loc> ArgV = Call->getArgSVal(I).getAs<Loc>();
+      if (!ArgV)
+        continue;
 
-        const Expr *ArgE = Call->getArgExpr(I);
-        if (!ArgE)
-          continue;
+      const Expr *ArgE = Call->getArgExpr(I);
+      if (!ArgE)
+        continue;
 
-        // Is it possible for this argument to be non-null?
-        if (State->assume(ArgV.castAs<Loc>(), true))
-          continue;
+      // Is it possible for this argument to be non-null?
+      if (State->assume(*ArgV, true))
+        continue;
 
-        if (bugreporter::trackNullOrUndefValue(N, ArgE, BR, /*IsArg=*/true))
-          return 0;
+      if (bugreporter::trackNullOrUndefValue(N, ArgE, BR, /*IsArg=*/true))
+        BR.removeInvalidation(ReturnVisitor::getTag(), StackFrame);
 
-        // If we /can't/ track the null pointer, we should err on the side of
-        // false negatives, and continue towards marking this report invalid.
-        // (We will still look at the other arguments, though.)
-      }
+      // If we /can't/ track the null pointer, we should err on the side of
+      // false negatives, and continue towards marking this report invalid.
+      // (We will still look at the other arguments, though.)
     }
 
-    // There is no reason not to suppress this report; go ahead and do it.
-    BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
     return 0;
   }
 
@@ -358,13 +378,21 @@ public:
     switch (Mode) {
     case Initial:
       return visitNodeInitial(N, PrevN, BRC, BR);
-    case MaybeSuppress:
-      return visitNodeMaybeSuppress(N, PrevN, BRC, BR);
+    case MaybeUnsuppress:
+      return visitNodeMaybeUnsuppress(N, PrevN, BRC, BR);
     case Satisfied:
       return 0;
     }
 
     llvm_unreachable("Invalid visit mode!");
+  }
+
+  PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                  const ExplodedNode *N,
+                                  BugReport &BR) {
+    if (InitiallySuppressed)
+      BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
+    return 0;
   }
 };
 } // end anonymous namespace
