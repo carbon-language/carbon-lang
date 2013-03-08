@@ -749,14 +749,23 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
     S = OVE->getSourceExpr();
 
+  const Expr *LValue = 0;
+  if (const Expr *Ex = dyn_cast<Expr>(S)) {
+    Ex = Ex->IgnoreParenCasts();
+    if (ExplodedGraph::isInterestingLValueExpr(Ex))
+      LValue = Ex;
+  }
+
   if (IsArg) {
     assert(N->getLocation().getAs<CallEnter>() && "Tracking arg but not at call");
   } else {
     // Walk through nodes until we get one that matches the statement exactly.
+    // Alternately, if we hit a known lvalue for the statement, we know we've
+    // gone too far (though we can likely track the lvalue better anyway).
     do {
       const ProgramPoint &pp = N->getLocation();
       if (Optional<PostStmt> ps = pp.getAs<PostStmt>()) {
-        if (ps->getStmt() == S)
+        if (ps->getStmt() == S || ps->getStmt() == LValue)
           break;
       } else if (Optional<CallExitEnd> CEE = pp.getAs<CallExitEnd>()) {
         if (CEE->getCalleeContext()->getCallSite() == S)
@@ -773,99 +782,85 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
 
   // See if the expression we're interested refers to a variable. 
   // If so, we can track both its contents and constraints on its value.
-  if (const Expr *Ex = dyn_cast<Expr>(S)) {
-    // Strip off parens and casts. Note that this will never have issues with
-    // C++ user-defined implicit conversions, because those have a constructor
-    // or function call inside.
-    Ex = Ex->IgnoreParenCasts();
+  if (LValue) {
+    const MemRegion *R = 0;
 
-    if (ExplodedGraph::isInterestingLValueExpr(Ex)) {
-      const MemRegion *R = 0;
+    // First check if this is a DeclRefExpr for a C++ reference type.
+    // For those, we want the location of the reference.
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(LValue)) {
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        if (VD->getType()->isReferenceType()) {
+          ProgramStateManager &StateMgr = state->getStateManager();
+          MemRegionManager &MRMgr = StateMgr.getRegionManager();
+          R = MRMgr.getVarRegion(VD, N->getLocationContext());
+        }
+      }
+    }
 
-      // First check if this is a DeclRefExpr for a C++ reference type.
-      // For those, we want the location of the reference.
-      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex)) {
-        if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-          if (VD->getType()->isReferenceType()) {
-            ProgramStateManager &StateMgr = state->getStateManager();
-            MemRegionManager &MRMgr = StateMgr.getRegionManager();
-            R = MRMgr.getVarRegion(VD, N->getLocationContext());
-          }
+    // For all other cases, find the location by scouring the ExplodedGraph.
+    if (!R) {
+      // Find the ExplodedNode where the lvalue (the value of 'Ex')
+      // was computed.  We need this for getting the location value.
+      const ExplodedNode *LVNode = N;
+      while (LVNode) {
+        if (Optional<PostStmt> P = LVNode->getLocation().getAs<PostStmt>()) {
+          if (P->getStmt() == LValue)
+            break;
+        }
+        LVNode = LVNode->getFirstPred();
+      }
+      assert(LVNode && "Unable to find the lvalue node.");
+      ProgramStateRef LVState = LVNode->getState();
+      R = LVState->getSVal(LValue, LVNode->getLocationContext()).getAsRegion();
+    }
+
+    if (R) {
+      // Mark both the variable region and its contents as interesting.
+      SVal V = state->getRawSVal(loc::MemRegionVal(R));
+
+      // If the value matches the default for the variable region, that
+      // might mean that it's been cleared out of the state. Fall back to
+      // the full argument expression (with casts and such intact).
+      if (IsArg) {
+        bool UseArgValue = V.isUnknownOrUndef() || V.isZeroConstant();
+        if (!UseArgValue) {
+          const SymbolRegionValue *SRV =
+            dyn_cast_or_null<SymbolRegionValue>(V.getAsLocSymbol());
+          if (SRV)
+            UseArgValue = (SRV->getRegion() == R);
+        }
+        if (UseArgValue)
+          V = state->getSValAsScalarOrLoc(S, N->getLocationContext());
+      }
+
+      report.markInteresting(R);
+      report.markInteresting(V);
+      report.addVisitor(new UndefOrNullArgVisitor(R));
+
+      if (isa<SymbolicRegion>(R)) {
+        TrackConstraintBRVisitor *VI =
+          new TrackConstraintBRVisitor(loc::MemRegionVal(R), false);
+        report.addVisitor(VI);
+      }
+
+      // If the contents are symbolic, find out when they became null.
+      if (V.getAsLocSymbol()) {
+        BugReporterVisitor *ConstraintTracker =
+          new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
+        report.addVisitor(ConstraintTracker);
+
+        // Add visitor, which will suppress inline defensive checks.
+        if (N->getState()->isNull(V).isConstrainedTrue()) {
+          BugReporterVisitor *IDCSuppressor =
+            new SuppressInlineDefensiveChecksVisitor(V.castAs<DefinedSVal>(),
+                                                     N);
+          report.addVisitor(IDCSuppressor);
         }
       }
 
-      // For all other cases, find the location by scouring the ExplodedGraph.
-      if (!R) {
-        // Find the ExplodedNode where the lvalue (the value of 'Ex')
-        // was computed.  We need this for getting the location value.
-        const ExplodedNode *LVNode = N;
-        const Expr *SearchEx = Ex;
-        if (const OpaqueValueExpr *OPE = dyn_cast<OpaqueValueExpr>(Ex)) {
-          SearchEx = OPE->getSourceExpr();
-        }
-        while (LVNode) {
-          if (Optional<PostStmt> P = LVNode->getLocation().getAs<PostStmt>()) {
-            if (P->getStmt() == SearchEx)
-              break;
-          }
-          LVNode = LVNode->getFirstPred();
-        }
-        assert(LVNode && "Unable to find the lvalue node.");
-        ProgramStateRef LVState = LVNode->getState();
-        if (Optional<Loc> L =
-              LVState->getSVal(Ex, LVNode->getLocationContext()).getAs<Loc>()) {
-          R = L->getAsRegion();
-        }
-      }
-
-      if (R) {
-        // Mark both the variable region and its contents as interesting.
-        SVal V = state->getRawSVal(loc::MemRegionVal(R));
-
-        // If the value matches the default for the variable region, that
-        // might mean that it's been cleared out of the state. Fall back to
-        // the full argument expression (with casts and such intact).
-        if (IsArg) {
-          bool UseArgValue = V.isUnknownOrUndef() || V.isZeroConstant();
-          if (!UseArgValue) {
-            const SymbolRegionValue *SRV =
-              dyn_cast_or_null<SymbolRegionValue>(V.getAsLocSymbol());
-            if (SRV)
-              UseArgValue = (SRV->getRegion() == R);
-          }
-          if (UseArgValue)
-            V = state->getSValAsScalarOrLoc(S, N->getLocationContext());
-        }
-
-        report.markInteresting(R);
-        report.markInteresting(V);
-        report.addVisitor(new UndefOrNullArgVisitor(R));
-
-        if (isa<SymbolicRegion>(R)) {
-          TrackConstraintBRVisitor *VI =
-            new TrackConstraintBRVisitor(loc::MemRegionVal(R), false);
-          report.addVisitor(VI);
-        }
-
-        // If the contents are symbolic, find out when they became null.
-        if (V.getAsLocSymbol()) {
-          BugReporterVisitor *ConstraintTracker =
-            new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
-          report.addVisitor(ConstraintTracker);
-
-          // Add visitor, which will suppress inline defensive checks.
-          if (N->getState()->isNull(V).isConstrainedTrue()) {
-            BugReporterVisitor *IDCSuppressor =
-              new SuppressInlineDefensiveChecksVisitor(V.castAs<DefinedSVal>(),
-                                                       N);
-            report.addVisitor(IDCSuppressor);
-          }
-        }
-
-        if (Optional<KnownSVal> KV = V.getAs<KnownSVal>())
-          report.addVisitor(new FindLastStoreBRVisitor(*KV, R));
-        return true;
-      }
+      if (Optional<KnownSVal> KV = V.getAs<KnownSVal>())
+        report.addVisitor(new FindLastStoreBRVisitor(*KV, R));
+      return true;
     }
   }
 
