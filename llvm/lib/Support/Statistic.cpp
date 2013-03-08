@@ -40,7 +40,9 @@ namespace llvm { extern raw_ostream *CreateInfoOutputFile(); }
 /// what they did.
 ///
 static cl::opt<bool>
-Enabled("stats", cl::desc("Enable statistics output from program"));
+Enabled(
+    "stats",
+    cl::desc("Enable statistics output from program (available with Asserts)"));
 
 
 namespace {
@@ -142,6 +144,7 @@ void llvm::PrintStatistics(raw_ostream &OS) {
 }
 
 void llvm::PrintStatistics() {
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
   StatisticInfo &Stats = *StatInfo;
 
   // Statistics not enabled?
@@ -151,4 +154,17 @@ void llvm::PrintStatistics() {
   raw_ostream &OutStream = *CreateInfoOutputFile();
   PrintStatistics(OutStream);
   delete &OutStream;   // Close the file.
+#else
+  // Check if the -stats option is set instead of checking
+  // !Stats.Stats.empty().  In release builds, Statistics operators
+  // do nothing, so stats are never Registered.
+  if (Enabled) {
+    // Get the stream to write to.
+    raw_ostream &OutStream = *CreateInfoOutputFile();
+    OutStream << "Statistics are disabled.  "
+            << "Build with asserts or with -DLLVM_ENABLE_STATS\n";
+    OutStream.flush();
+    delete &OutStream;   // Close the file.
+  }
+#endif
 }

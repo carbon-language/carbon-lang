@@ -58,14 +58,13 @@
 #include <algorithm>
 using namespace llvm;
 
-STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
-STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
-
-#ifndef NDEBUG
-STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
 STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
 STATISTIC(NumFastIselSuccess, "Number of instructions fast isel selected");
+STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
+STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
+STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
 
+#ifndef NDEBUG
 static cl::opt<bool>
 EnableFastISelVerbose2("fast-isel-verbose2", cl::Hidden,
           cl::desc("Enable extra verbose messages in the \"fast\" "
@@ -1090,7 +1089,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(Inst)) {
           --NumFastIselRemaining;
-          DEBUG(++NumFastIselSuccess);
+          ++NumFastIselSuccess;
           // If fast isel succeeded, skip over all the folded instructions, and
           // then see if there is a load right before the selected instructions.
           // Try to fold the load if so.
@@ -1106,7 +1105,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
             // If we succeeded, don't re-select the load.
             BI = llvm::next(BasicBlock::const_iterator(BeforeInst));
             --NumFastIselRemaining;
-            DEBUG(++NumFastIselSuccess);
+            ++NumFastIselSuccess;
           }
           continue;
         }
@@ -1145,21 +1144,20 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           // Recompute NumFastIselRemaining as Selection DAG instruction
           // selection may have handled the call, input args, etc.
           unsigned RemainingNow = std::distance(Begin, BI);
-          (void) RemainingNow;
-          DEBUG(NumFastIselFailures += NumFastIselRemaining - RemainingNow);
-          DEBUG(NumFastIselRemaining = RemainingNow);
+          NumFastIselFailures += NumFastIselRemaining - RemainingNow;
+          NumFastIselRemaining = RemainingNow;
           continue;
         }
 
         if (isa<TerminatorInst>(Inst) && !isa<BranchInst>(Inst)) {
           // Don't abort, and use a different message for terminator misses.
-          DEBUG(NumFastIselFailures += NumFastIselRemaining);
+          NumFastIselFailures += NumFastIselRemaining;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel missed terminator: ";
             Inst->dump();
           }
         } else {
-          DEBUG(NumFastIselFailures += NumFastIselRemaining);
+          NumFastIselFailures += NumFastIselRemaining;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel miss: ";
             Inst->dump();
@@ -2357,7 +2355,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         DEBUG(errs() << "  Skipped scope entry (due to false predicate) at "
                      << "index " << MatcherIndexOfPredicate
                      << ", continuing at " << FailIndex << "\n");
-        DEBUG(++NumDAGIselRetries);
+        ++NumDAGIselRetries;
 
         // Otherwise, we know that this case of the Scope is guaranteed to fail,
         // move to the next case.
@@ -2938,7 +2936,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     // another child to try in the current 'Scope', otherwise pop it until we
     // find a case to check.
     DEBUG(errs() << "  Match failed at index " << CurrentOpcodeIndex << "\n");
-    DEBUG(++NumDAGIselRetries);
+    ++NumDAGIselRetries;
     while (1) {
       if (MatchScopes.empty()) {
         CannotYetSelect(NodeToMatch);

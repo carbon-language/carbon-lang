@@ -63,13 +63,11 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-#ifndef NDEBUG
 STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by "
           "target-independent selector");
 STATISTIC(NumFastIselSuccessTarget, "Number of insts selected by "
           "target-specific selector");
 STATISTIC(NumFastIselDead, "Number of dead insts removed on failure");
-#endif // NDEBUG
 
 /// startNewBlock - Set the current block to which generated machine
 /// instructions will be appended, and clear the local CSE map.
@@ -334,7 +332,7 @@ void FastISel::removeDeadCode(MachineBasicBlock::iterator I,
     MachineInstr *Dead = &*I;
     ++I;
     Dead->eraseFromParent();
-    DEBUG(++NumFastIselDead);
+    ++NumFastIselDead;
   }
   recomputeInsertPt();
 }
@@ -830,7 +828,7 @@ FastISel::SelectInstruction(const Instruction *I) {
 
   // First, try doing target-independent selection.
   if (SelectOperator(I, I->getOpcode())) {
-    DEBUG(++NumFastIselSuccessIndependent);
+    ++NumFastIselSuccessIndependent;
     DL = DebugLoc();
     return true;
   }
@@ -845,7 +843,7 @@ FastISel::SelectInstruction(const Instruction *I) {
   // Next, try calling the target to attempt to handle the instruction.
   SavedInsertPt = FuncInfo.InsertPt;
   if (TargetSelectInstruction(I)) {
-    DEBUG(++NumFastIselSuccessTarget);
+    ++NumFastIselSuccessTarget;
     DL = DebugLoc();
     return true;
   }

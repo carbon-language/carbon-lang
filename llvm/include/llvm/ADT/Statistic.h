@@ -51,7 +51,9 @@ public:
 
   // Allow use of this class as the value itself.
   operator unsigned() const { return Value; }
-  const Statistic &operator=(unsigned Val) {
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+   const Statistic &operator=(unsigned Val) {
     Value = Val;
     return init();
   }
@@ -105,6 +107,46 @@ public:
     sys::AtomicDiv(&Value, V);
     return init();
   }
+
+#else  // Statistics are disabled in release builds.
+
+  const Statistic &operator=(unsigned Val) {
+    return *this;
+  }
+
+  const Statistic &operator++() {
+    return *this;
+  }
+
+  unsigned operator++(int) {
+    return 0;
+  }
+
+  const Statistic &operator--() {
+    return *this;
+  }
+
+  unsigned operator--(int) {
+    return 0;
+  }
+
+  const Statistic &operator+=(const unsigned &V) {
+    return *this;
+  }
+
+  const Statistic &operator-=(const unsigned &V) {
+    return *this;
+  }
+
+  const Statistic &operator*=(const unsigned &V) {
+    return *this;
+  }
+
+  const Statistic &operator/=(const unsigned &V) {
+    return *this;
+  }
+
+#endif  // !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
 
 protected:
   Statistic &init() {
