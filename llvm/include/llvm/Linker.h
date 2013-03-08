@@ -31,12 +31,12 @@ class StringRef;
 /// In this case the Linker still retains ownership of the Module. If the
 /// releaseModule() method is used, the ownership of the Module is transferred
 /// to the caller and the Linker object is only suitable for destruction.
-/// The Linker can link Modules from memory, bitcode files, or bitcode
-/// archives.  It retains a set of search paths in which to find any libraries
-/// presented to it. By default, the linker will generate error and warning
-/// messages to stderr but this capability can be turned off with the
-/// QuietWarnings and QuietErrors flags. It can also be instructed to verbosely
-/// print out the linking actions it is taking with the Verbose flag.
+/// The Linker can link Modules from memory.  It retains a set of search paths
+/// in which to find any libraries presented to it. By default, the linker
+/// will generate error and warning messages to stderr but this capability can
+/// be turned off with the QuietWarnings and QuietErrors flags. It can also be
+/// instructed to verbosely print out the linking actions it is taking with
+/// the Verbose flag.
 /// @brief The LLVM Linker.
 class Linker {
 
@@ -50,12 +50,12 @@ class Linker {
       QuietWarnings = 2, ///< Don't print warnings to stderr.
       QuietErrors   = 4  ///< Don't print errors to stderr.
     };
-  
+
     enum LinkerMode {
       DestroySource = 0, // Allow source module to be destroyed.
       PreserveSource = 1 // Preserve the source module.
     };
-  
+
   /// @}
   /// @name Constructors
   /// @{
@@ -146,17 +146,15 @@ class Linker {
     void setFlags(unsigned flags) { Flags = flags; }
 
     /// This method links the \p Src module into the Linker's Composite module
-    /// by calling LinkModules.  All the other LinkIn* methods eventually
-    /// result in calling this method to link a Module into the Linker's
-    /// composite.
+    /// by calling LinkModules.
     /// @see LinkModules
     /// @returns True if an error occurs, false otherwise.
     /// @brief Link in a module.
     bool LinkInModule(
       Module* Src,              ///< Module linked into \p Dest
       std::string* ErrorMsg = 0 /// Error/diagnostic string
-    ) { 
-      return LinkModules(Composite, Src, Linker::DestroySource, ErrorMsg ); 
+    ) {
+      return LinkModules(Composite, Src, Linker::DestroySource, ErrorMsg);
     }
 
     /// This is the heart of the linker. This method will take unconditional

@@ -1292,7 +1292,7 @@ bool ModuleLinker::run() {
 //===----------------------------------------------------------------------===//
 
 /// LinkModules - This function links two modules together, with the resulting
-/// left module modified to be the composite of the two input modules.  If an
+/// Dest module modified to be the composite of the two input modules.  If an
 /// error occurs, true is returned and ErrorMsg (if not null) is set to indicate
 /// the problem.  Upon failure, the Dest module could be in a modified state,
 /// and shouldn't be relied on to be consistent.
