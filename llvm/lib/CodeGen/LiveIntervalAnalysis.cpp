@@ -972,9 +972,9 @@ private:
 
   // Return the last use of reg between NewIdx and OldIdx.
   SlotIndex findLastUseBefore(unsigned Reg) {
-    SlotIndex LastUse = NewIdx;
 
     if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+      SlotIndex LastUse = NewIdx;
       for (MachineRegisterInfo::use_nodbg_iterator
              UI = MRI.use_nodbg_begin(Reg),
              UE = MRI.use_nodbg_end();
@@ -984,30 +984,42 @@ private:
         if (InstSlot > LastUse && InstSlot < OldIdx)
           LastUse = InstSlot;
       }
-    } else {
-      MachineInstr* MI = LIS.getSlotIndexes()->getInstructionFromIndex(NewIdx);
-      MachineBasicBlock::iterator MII(MI);
-      ++MII;
-      MachineBasicBlock* MBB = MI->getParent();
-      for (; MII != MBB->end(); ++MII){
-        if (MII->isDebugValue())
-          continue;
-        if (LIS.getInstructionIndex(MII) < OldIdx)
-          break;
-        for (MachineInstr::mop_iterator MOI = MII->operands_begin(),
-                                        MOE = MII->operands_end();
-             MOI != MOE; ++MOI) {
-          const MachineOperand& mop = *MOI;
-          if (!mop.isReg() || mop.getReg() == 0 ||
-              TargetRegisterInfo::isVirtualRegister(mop.getReg()))
-            continue;
-
-          if (TRI.hasRegUnit(mop.getReg(), Reg))
-            LastUse = LIS.getInstructionIndex(MII);
-        }
-      }
+      return LastUse;
     }
-    return LastUse;
+
+    // This is a regunit interval, so scanning the use list could be very
+    // expensive. Scan upwards from OldIdx instead.
+    assert(NewIdx < OldIdx && "Expected upwards move");
+    SlotIndexes *Indexes = LIS.getSlotIndexes();
+    MachineBasicBlock *MBB = Indexes->getMBBFromIndex(NewIdx);
+
+    // OldIdx may not correspond to an instruction any longer, so set MII to
+    // point to the next instruction after OldIdx, or MBB->end().
+    MachineBasicBlock::iterator MII = MBB->end();
+    if (MachineInstr *MI = Indexes->getInstructionFromIndex(
+                           Indexes->getNextNonNullIndex(OldIdx)))
+      if (MI->getParent() == MBB)
+        MII = MI;
+
+    MachineBasicBlock::iterator Begin = MBB->begin();
+    while (MII != Begin) {
+      if ((--MII)->isDebugValue())
+        continue;
+      SlotIndex Idx = Indexes->getInstructionIndex(MII);
+
+      // Stop searching when NewIdx is reached.
+      if (!SlotIndex::isEarlierInstr(NewIdx, Idx))
+        return NewIdx;
+
+      // Check if MII uses Reg.
+      for (MIBundleOperands MO(MII); MO.isValid(); ++MO)
+        if (MO->isReg() &&
+            TargetRegisterInfo::isPhysicalRegister(MO->getReg()) &&
+            TRI.hasRegUnit(MO->getReg(), Reg))
+          return Idx;
+    }
+    // Didn't reach NewIdx. It must be the first instruction in the block.
+    return NewIdx;
   }
 };
 
