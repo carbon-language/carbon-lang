@@ -43,33 +43,34 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 
-!llvm.dbg.sp = !{!0, !9}
+!llvm.dbg.cu = !{!2}
+!28 = metadata !{metadata !0, metadata !9}
 
-!0 = metadata !{i32 589870, i32 0, metadata !1, metadata !"__udivmodti4", metadata !"__udivmodti4", metadata !"", metadata !1, i32 879, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, null} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 589865, metadata !"foobar.c", metadata !"/tmp", metadata !2} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 589841, i32 0, i32 1, metadata !"foobar.c", metadata !"/tmp", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 589845, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"__udivmodti4", metadata !"__udivmodti4", metadata !"", metadata !1, i32 879, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, null, null, i32 879} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786473, metadata !"foobar.c", metadata !"/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786449, i32 0, i32 1, metadata !"foobar.c", metadata !"/tmp", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !28, null} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5, metadata !5, metadata !5, metadata !8}
-!5 = metadata !{i32 589846, metadata !6, metadata !"UTItype", metadata !6, i32 166, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ]
-!6 = metadata !{i32 589865, metadata !"foobar.h", metadata !"/tmp", metadata !2} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 589860, metadata !1, metadata !"", metadata !1, i32 0, i64 128, i64 128, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
-!8 = metadata !{i32 589839, metadata !1, metadata !"", metadata !1, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
-!9 = metadata !{i32 589870, i32 0, metadata !1, metadata !"__divti3", metadata !"__divti3", metadata !"__divti3", metadata !1, i32 1094, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i128 (i128, i128)* @__divti3} ; [ DW_TAG_subprogram ]
-!10 = metadata !{i32 589845, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!5 = metadata !{i32 786454, metadata !6, metadata !"UTItype", metadata !6, i32 166, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ]
+!6 = metadata !{i32 786473, metadata !"foobar.h", metadata !"/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!7 = metadata !{i32 786468, metadata !1, metadata !"", metadata !1, i32 0, i64 128, i64 128, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
+!8 = metadata !{i32 786447, metadata !1, metadata !"", metadata !1, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
+!9 = metadata !{i32 786478, i32 0, metadata !1, metadata !"__divti3", metadata !"__divti3", metadata !"__divti3", metadata !1, i32 1094, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i128 (i128, i128)* @__divti3, null, null, null, i32 1094} ; [ DW_TAG_subprogram ]
+!10 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !11 = metadata !{metadata !12, metadata !12, metadata !12}
-!12 = metadata !{i32 589846, metadata !6, metadata !"TItype", metadata !6, i32 160, i64 0, i64 0, i64 0, i32 0, metadata !13} ; [ DW_TAG_typedef ]
-!13 = metadata !{i32 589860, metadata !1, metadata !"", metadata !1, i32 0, i64 128, i64 128, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!14 = metadata !{i32 590081, metadata !9, metadata !"u", metadata !1, i32 1093, metadata !12, i32 0} ; [ DW_TAG_arg_variable ]
+!12 = metadata !{i32 786454, metadata !6, metadata !"TItype", metadata !6, i32 160, i64 0, i64 0, i64 0, i32 0, metadata !13} ; [ DW_TAG_typedef ]
+!13 = metadata !{i32 786468, metadata !1, metadata !"", metadata !1, i32 0, i64 128, i64 128, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!14 = metadata !{i32 786689, metadata !9, metadata !"u", metadata !1, i32 1093, metadata !12, i32 0, null} ; [ DW_TAG_arg_variable ]
 !15 = metadata !{i32 1093, i32 0, metadata !9, null}
 !16 = metadata !{i64 0}
-!17 = metadata !{i32 590080, metadata !18, metadata !"c", metadata !1, i32 1095, metadata !19, i32 0} ; [ DW_TAG_auto_variable ]
-!18 = metadata !{i32 589835, metadata !9, i32 1094, i32 0, metadata !1, i32 13} ; [ DW_TAG_lexical_block ]
-!19 = metadata !{i32 589846, metadata !6, metadata !"word_type", metadata !6, i32 424, i64 0, i64 0, i64 0, i32 0, metadata !20} ; [ DW_TAG_typedef ]
-!20 = metadata !{i32 589860, metadata !1, metadata !"long int", metadata !1, i32 0, i64 64, i64 64, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!17 = metadata !{i32 786688, metadata !18, metadata !"c", metadata !1, i32 1095, metadata !19, i32 0, null} ; [ DW_TAG_auto_variable ]
+!18 = metadata !{i32 786443, metadata !9, i32 1094, i32 0, metadata !1, i32 13} ; [ DW_TAG_lexical_block ]
+!19 = metadata !{i32 786454, metadata !6, metadata !"word_type", metadata !6, i32 424, i64 0, i64 0, i64 0, i32 0, metadata !20} ; [ DW_TAG_typedef ]
+!20 = metadata !{i32 786468, metadata !1, metadata !"long int", metadata !1, i32 0, i64 64, i64 64, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !21 = metadata !{i32 1095, i32 0, metadata !18, null}
 !22 = metadata !{i32 1103, i32 0, metadata !18, null}
 !23 = metadata !{i32 1104, i32 0, metadata !18, null}
 !24 = metadata !{i32 1003, i32 0, metadata !25, metadata !26}
-!25 = metadata !{i32 589835, metadata !0, i32 879, i32 0, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!25 = metadata !{i32 786443, metadata !0, i32 879, i32 0, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
 !26 = metadata !{i32 1107, i32 0, metadata !18, null}
 !27 = metadata !{i32 1111, i32 0, metadata !18, null}

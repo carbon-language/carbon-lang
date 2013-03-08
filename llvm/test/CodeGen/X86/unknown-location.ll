@@ -18,12 +18,15 @@ entry:
   ret i32 %c, !dbg !8
 }
 
-!0 = metadata !{i32 524545, metadata !1, metadata !"x", metadata !2, i32 1, metadata !6} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 1, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 524329, metadata !"test.c", metadata !"/dir", metadata !3} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 524305, i32 0, i32 12, metadata !"test.c", metadata !".", metadata !"producer", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!4 = metadata !{i32 524309, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!llvm.dbg.cu = !{!3}
+!9 = metadata !{metadata !1}
+
+!0 = metadata !{i32 786689, metadata !1, metadata !"x", metadata !2, i32 1, metadata !6} ; [ DW_TAG_arg_variable ]
+!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 1, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, i32 (i32, i32, i32, i32)* @foo, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 786473, metadata !"test.c", metadata !"/dir", metadata !3} ; [ DW_TAG_file_type ]
+!3 = metadata !{i32 786449, i32 0, i32 12, metadata !"test.c", metadata !".", metadata !"producer", i1 true, i1 false, metadata !"", i32 0, null, null, metadata !9, null} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !5 = metadata !{metadata !6}
-!6 = metadata !{i32 524324, metadata !2, metadata !"int", metadata !2, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!7 = metadata !{i32 524299, metadata !1, i32 1, i32 30} ; [ DW_TAG_lexical_block ]
+!6 = metadata !{i32 786468, metadata !2, metadata !"int", metadata !2, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!7 = metadata !{i32 786443, metadata !1, i32 1, i32 30} ; [ DW_TAG_lexical_block ]
 !8 = metadata !{i32 4, i32 3, metadata !7, null}

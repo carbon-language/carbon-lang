@@ -22,23 +22,26 @@ entry:
   ret i32 %1, !dbg !13
 }
 
-!llvm.dbg.lv = !{!0, !7}
+!llvm.dbg.cu = !{!3}
+!15 = metadata !{metadata !0}
+!16 = metadata !{metadata !7}
+!17 = metadata !{metadata !1, metadata !8}
 
-!0 = metadata !{i32 524545, metadata !1, metadata !"y", metadata !2, i32 2, metadata !6} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 2, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 524329, metadata !"f.c", metadata !"/tmp", metadata !3} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 524305, i32 0, i32 1, metadata !"f.c", metadata !"/tmp", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!4 = metadata !{i32 524309, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!0 = metadata !{i32 786689, metadata !1, metadata !"y", metadata !2, i32 2, metadata !6, null} ; [ DW_TAG_arg_variable ]
+!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 2, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 (i32)* @foo, null, null, metadata !15, i32 2} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 786473, metadata !"f.c", metadata !"/tmp", metadata !3} ; [ DW_TAG_file_type ]
+!3 = metadata !{i32 786449, i32 0, i32 1, metadata !"f.c", metadata !"/tmp", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !17, null} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !5 = metadata !{metadata !6, metadata !6}
-!6 = metadata !{i32 524324, metadata !2, metadata !"int", metadata !2, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!7 = metadata !{i32 524545, metadata !8, metadata !"x", metadata !2, i32 6, metadata !6} ; [ DW_TAG_arg_variable ]
-!8 = metadata !{i32 524334, i32 0, metadata !2, metadata !"bar", metadata !"bar", metadata !"bar", metadata !2, i32 6, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786468, metadata !2, metadata !"int", metadata !2, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!7 = metadata !{i32 786689, metadata !8, metadata !"x", metadata !2, i32 6, metadata !6, null} ; [ DW_TAG_arg_variable ]
+!8 = metadata !{i32 786478, i32 0, metadata !2, metadata !"bar", metadata !"bar", metadata !"bar", metadata !2, i32 6, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 (i32)* @bar, null, null, metadata !16, i32 6} ; [ DW_TAG_subprogram ]
 !9 = metadata !{i32 3, i32 0, metadata !10, null}
-!10 = metadata !{i32 524299, metadata !1, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
+!10 = metadata !{i32 786443, metadata !1, i32 2, i32 0} ; [ DW_TAG_lexical_block ]
 !11 = metadata !{i32 1}
 !12 = metadata !{i32 3, i32 0, metadata !10, metadata !13}
 !13 = metadata !{i32 7, i32 0, metadata !14, null}
-!14 = metadata !{i32 524299, metadata !8, i32 6, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 786443, metadata !8, i32 6, i32 0} ; [ DW_TAG_lexical_block ]
 
 ;CHECK: DEBUG_VALUE: bar:x <- E
 ;CHECK: Ltmp
