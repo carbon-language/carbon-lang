@@ -28,8 +28,8 @@ void test_loopconvert_and_nullptr_iterator() {
     *it = NULL;
   }
 
-  // CHECK: for ({{[a-zA-Z_ ]+&? ?}}[[VAR:[a-z_]+]] : t)
-  // CHECK-NEXT: [[VAR]] = nullptr;
+  // CHECK: for (auto & elem : t)
+  // CHECK-NEXT: elem = nullptr;
 }
 
 void test_loopconvert_and_nullptr_risky() {
@@ -40,6 +40,6 @@ void test_loopconvert_and_nullptr_risky() {
     (*pArr)[i] = NULL;
   }
 
-  // RISKY: for (auto & [[VAR:[a-z_]+]] : *pArr)
-  // RISKY-NEXT: [[VAR:[a-z_]+]] = nullptr;
+  // RISKY: for (auto & elem : *pArr)
+  // RISKY-NEXT: elem = nullptr;
 }

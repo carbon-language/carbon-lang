@@ -750,7 +750,7 @@ void LoopFixer::doConversion(ASTContext *Context,
     // was used exactly once - in the initialization of AliasVar.
   } else {
     VariableNamer Namer(GeneratedDecls, &ParentFinder->getStmtToParentStmtMap(),
-                        TheLoop, IndexVar, MaybeContainer);
+                        TheLoop, IndexVar, MaybeContainer, Context);
     VarName = Namer.createIndexName();
     // First, replace all usages of the array subscript expression with our new
     // variable.

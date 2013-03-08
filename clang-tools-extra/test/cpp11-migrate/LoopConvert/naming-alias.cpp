@@ -5,13 +5,17 @@
 #include "structures.h"
 
 const int N = 10;
-int nums[N];
-int sum = 0;
 
 Val Arr[N];
 Val &func(Val &);
 
 void aliasing() {
+  // If the loop container is only used for a declaration of a temporary
+  // variable to hold each element, we can name the new variable for the
+  // converted range-based loop as the temporary variable's name.
+
+  // In the following case, "t" is used as a temporary variable to hold each
+  // element, and thus we consider the name "t" aliased to the loop.
   // The extra blank braces are left as a placeholder for after the variable
   // declaration is deleted.
   for (int i = 0; i < N; ++i) {
@@ -19,49 +23,37 @@ void aliasing() {
     int y = t.x;
   }
   // CHECK: for (auto & t : Arr)
+  // CHECK-NOT: Val &{{[a-z_]+}} =
   // CHECK-NEXT: { }
   // CHECK-NEXT: int y = t.x;
 
+  // The container was not only used to initialize a temporary loop variable for
+  // the container's elements, so we do not alias the new loop variable.
   for (int i = 0; i < N; ++i) {
     Val &t = Arr[i];
     int y = t.x;
     int z = Arr[i].x + t.x;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : Arr)
-  // CHECK-NEXT: Val &t = [[VAR]];
+  // CHECK: for (auto & elem : Arr)
+  // CHECK-NEXT: Val &t = elem;
   // CHECK-NEXT: int y = t.x;
-  // CHECK-NEXT: int z = [[VAR]].x + t.x;
+  // CHECK-NEXT: int z = elem.x + t.x;
 
   for (int i = 0; i < N; ++i) {
     Val t = Arr[i];
     int y = t.x;
     int z = Arr[i].x + t.x;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : Arr)
-  // CHECK-NEXT: Val t = [[VAR]];
+  // CHECK: for (auto & elem : Arr)
+  // CHECK-NEXT: Val t = elem;
   // CHECK-NEXT: int y = t.x;
-  // CHECK-NEXT: int z = [[VAR]].x + t.x;
+  // CHECK-NEXT: int z = elem.x + t.x;
 
   for (int i = 0; i < N; ++i) {
     Val &t = func(Arr[i]);
     int y = t.x;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : Arr)
-  // CHECK-NEXT: Val &t = func([[VAR]]);
+  // CHECK: for (auto & elem : Arr)
+  // CHECK-NEXT: Val &t = func(elem);
   // CHECK-NEXT: int y = t.x;
-}
-
-void sameNames() {
-  int num = 0;
-  for (int i = 0; i < N; ++i) {
-    printf("Fibonacci number is %d\n", nums[i]);
-    sum += nums[i] + 2 + num;
-    (void) nums[i];
-  }
-  // CHECK: int num = 0;
-  // CHECK-NEXT: for (auto & [[VAR:[a-z_]+]] : nums)
-  // CHECK-NEXT: printf("Fibonacci number is %d\n", [[VAR]]);
-  // CHECK-NEXT: sum += [[VAR]] + 2 + num;
-  // CHECK-NOT: (void) num;
-  // CHECK: }
 }

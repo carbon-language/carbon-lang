@@ -19,15 +19,15 @@ void f() {
   // CHECK: for (int i = 0; i < M; ++i) {
   // CHECK-NEXT: sum += Arr[0][i];
   // CHECK-NEXT: }
-  // RISKY: for (auto & [[VAR:[a-z_]+]] : Arr[0]) {
-  // RISKY-NEXT: sum += [[VAR]];
+  // RISKY: for (auto & elem : Arr[0]) {
+  // RISKY-NEXT: sum += elem;
   // RISKY-NEXT: }
 
   for (int i = 0; i < N; ++i) {
     sum += (*pArr)[i];
   }
-  // RISKY: for (auto & [[VAR:[a-z_]+]] : *pArr) {
-  // RISKY-NEXT: sum += [[VAR]];
+  // RISKY: for (auto & elem : *pArr) {
+  // RISKY-NEXT: sum += elem;
   // RISKY-NEXT: }
   // CHECK: for (int i = 0; i < N; ++i) {
   // CHECK-NEXT: sum += (*pArr)[i];

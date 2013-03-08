@@ -25,8 +25,8 @@ void f() {
     sum += arr[i];
     int k;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr) {
-  // CHECK-NEXT: sum += [[VAR]];
+  // CHECK: for (auto & elem : arr) {
+  // CHECK-NEXT: sum += elem;
   // CHECK-NEXT: int k;
   // CHECK-NEXT: }
 
@@ -34,68 +34,68 @@ void f() {
     printf("Fibonacci number is %d\n", arr[i]);
     sum += arr[i] + 2;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr)
-  // CHECK-NEXT: printf("Fibonacci number is %d\n", [[VAR]]);
-  // CHECK-NEXT: sum += [[VAR]] + 2;
+  // CHECK: for (auto & elem : arr)
+  // CHECK-NEXT: printf("Fibonacci number is %d\n", elem);
+  // CHECK-NEXT: sum += elem + 2;
 
   for (int i = 0; i < N; ++i) {
     int x = arr[i];
     int y = arr[i] + 2;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr)
-  // CHECK-NEXT: int x = [[VAR]];
-  // CHECK-NEXT: int y = [[VAR]] + 2;
+  // CHECK: for (auto & elem : arr)
+  // CHECK-NEXT: int x = elem;
+  // CHECK-NEXT: int y = elem + 2;
 
   for (int i = 0; i < N; ++i) {
     int x = N;
     x = arr[i];
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr)
+  // CHECK: for (auto & elem : arr)
   // CHECK-NEXT: int x = N;
-  // CHECK-NEXT: x = [[VAR]];
+  // CHECK-NEXT: x = elem;
 
   for (int i = 0; i < N; ++i) {
     arr[i] += 1;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr) {
-  // CHECK-NEXT: [[VAR]] += 1;
+  // CHECK: for (auto & elem : arr) {
+  // CHECK-NEXT: elem += 1;
   // CHECK-NEXT: }
 
   for (int i = 0; i < N; ++i) {
     int x = arr[i] + 2;
     arr[i] ++;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr)
-  // CHECK-NEXT: int x = [[VAR]] + 2;
-  // CHECK-NEXT: [[VAR]] ++;
+  // CHECK: for (auto & elem : arr)
+  // CHECK-NEXT: int x = elem + 2;
+  // CHECK-NEXT: elem ++;
 
   for (int i = 0; i < N; ++i) {
     arr[i] = 4 + arr[i];
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr)
-  // CHECK-NEXT: [[VAR]] = 4 + [[VAR]];
+  // CHECK: for (auto & elem : arr)
+  // CHECK-NEXT: elem = 4 + elem;
 
   for (int i = 0; i < NMinusOne + 1; ++i) {
     sum += arr[i];
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr) {
-  // CHECK-NEXT: sum += [[VAR]];
+  // CHECK: for (auto & elem : arr) {
+  // CHECK-NEXT: sum += elem;
   // CHECK-NEXT: }
 
   for (int i = 0; i < N; ++i) {
     printf("Fibonacci number %d has address %p\n", arr[i], &arr[i]);
     sum += arr[i] + 2;
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr)
-  // CHECK-NEXT: printf("Fibonacci number %d has address %p\n", [[VAR]], &[[VAR]]);
-  // CHECK-NEXT: sum += [[VAR]] + 2;
+  // CHECK: for (auto & elem : arr)
+  // CHECK-NEXT: printf("Fibonacci number %d has address %p\n", elem, &elem);
+  // CHECK-NEXT: sum += elem + 2;
 
   Val teas[N];
   for (int i = 0; i < N; ++i) {
     teas[i].g();
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : teas) {
-  // CHECK-NEXT: [[VAR]].g();
+  // CHECK: for (auto & tea : teas) {
+  // CHECK-NEXT: tea.g();
   // CHECK-NEXT: }
 }
 
@@ -106,15 +106,15 @@ struct HasArr {
     for (int i = 0; i < N; ++i) {
       printf("%d", Arr[i]);
     }
-    // CHECK: for (auto & [[VAR:[a-z_]+]] : Arr) {
-    // CHECK-NEXT: printf("%d", [[VAR]]);
+    // CHECK: for (auto & elem : Arr) {
+    // CHECK-NEXT: printf("%d", elem);
     // CHECK-NEXT: }
 
     for (int i = 0; i < N; ++i) {
       printf("%d", ValArr[i].x);
     }
-    // CHECK: for (auto & [[VAR:[a-z_]+]] : ValArr) {
-    // CHECK-NEXT: printf("%d", [[VAR]].x);
+    // CHECK: for (auto & elem : ValArr) {
+    // CHECK-NEXT: printf("%d", elem.x);
     // CHECK-NEXT: }
   }
 
@@ -122,15 +122,15 @@ struct HasArr {
     for (int i = 0; i < N; ++i) {
       printf("%d", this->Arr[i]);
     }
-    // CHECK: for (auto & [[VAR:[a-z_]+]] : this->Arr) {
-    // CHECK-NEXT: printf("%d", [[VAR]]);
+    // CHECK: for (auto & elem : this->Arr) {
+    // CHECK-NEXT: printf("%d", elem);
     // CHECK-NEXT: }
 
     for (int i = 0; i < N; ++i) {
       printf("%d", this->ValArr[i].x);
     }
-    // CHECK: for (auto & [[VAR:[a-z_]+]] : this->ValArr) {
-    // CHECK-NEXT: printf("%d", [[VAR]].x);
+    // CHECK: for (auto & elem : this->ValArr) {
+    // CHECK-NEXT: printf("%d", elem.x);
     // CHECK-NEXT: }
   }
 };
@@ -150,6 +150,6 @@ void memberFunctionPointer() {
   void (Val::*mfpArr[N])(void) = { &Val::g };
   for (int i = 0; i < N; ++i)
     (v.*mfpArr[i])();
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : mfpArr)
-  // CHECK-NEXT: (v.*[[VAR]])();
+  // CHECK: for (auto & elem : mfpArr)
+  // CHECK-NEXT: (v.*elem)();
 }

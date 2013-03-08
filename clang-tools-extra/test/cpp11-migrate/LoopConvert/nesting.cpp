@@ -16,10 +16,10 @@ void f() {
       int l = Arr[i].x + Arr[j].x;
     }
   }
-  // CHECK: for (auto & [[VAR:[a-zA-Z_]+]] : Arr)
-  // CHECK-NEXT: for (auto & [[INNERVAR:[a-zA-Z_]+]] : Arr)
-  // CHECK-NEXT: int k = [[VAR]].x + [[INNERVAR]].x;
-  // CHECK-NOT: int l = [[VAR]].x + [[VAR]].x;
+  // CHECK: for (auto & elem : Arr)
+  // CHECK-NEXT: for (auto & Arr_j : Arr)
+  // CHECK-NEXT: int k = elem.x + Arr_j.x;
+  // CHECK-NOT: int l = elem.x + elem.x;
 
   Val Nest[N][M];
   for (int i = 0; i < N; ++i) {
@@ -29,9 +29,9 @@ void f() {
   }
   // The inner loop is also convertible, but doesn't need to be converted
   // immediately. Update this test when that changes!
-  // CHECK: for (auto & [[VAR:[a-zA-Z_]+]] : Nest)
+  // CHECK: for (auto & elem : Nest)
   // CHECK-NEXT: for (int j = 0; j < M; ++j)
-  // CHECK-NEXT: printf("Got item %d", [[VAR]][j].x);
+  // CHECK-NEXT: printf("Got item %d", elem[j].x);
 
   // Note that the order of M and N are switched for this test.
   for (int j = 0; j < M; ++j) {
@@ -41,8 +41,8 @@ void f() {
   }
   // CHECK-NOT: for (auto & {{[a-zA-Z_]+}} : Nest[i])
   // CHECK: for (int j = 0; j < M; ++j)
-  // CHECK-NEXT: for (auto & [[VAR:[a-zA-Z_]+]] : Nest)
-  // CHECK-NEXT: printf("Got item %d", [[VAR]][j].x);
+  // CHECK-NEXT: for (auto & elem : Nest)
+  // CHECK-NEXT: printf("Got item %d", elem[j].x);
   Nested<T> NestT;
   for (Nested<T>::iterator I = NestT.begin(), E = NestT.end(); I != E; ++I) {
     for (T::iterator TI = (*I).begin(), TE = (*I).end(); TI != TE; ++TI) {
@@ -51,7 +51,7 @@ void f() {
   }
   // The inner loop is also convertible, but doesn't need to be converted
   // immediately. Update this test when that changes!
-  // CHECK: for (auto & [[VAR:[a-zA-Z_]+]] : NestT) {
-  // CHECK-NEXT: for (T::iterator TI = ([[VAR]]).begin(), TE = ([[VAR]]).end(); TI != TE; ++TI) {
+  // CHECK: for (auto & elem : NestT) {
+  // CHECK-NEXT: for (T::iterator TI = (elem).begin(), TE = (elem).end(); TI != TE; ++TI) {
   // CHECK-NEXT: printf("%d", *TI);
 }

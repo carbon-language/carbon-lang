@@ -115,3 +115,25 @@ bool DeclFinderASTVisitor::VisitDeclRefExpr(DeclRefExpr *DeclRef) {
     return VisitNamedDecl(D);
   return true;
 }
+
+/// \brief If the new variable name conflicts with any type used in the loop,
+/// then we mark that variable name as taken.
+bool DeclFinderASTVisitor::VisitTypeLoc(TypeLoc TL) {
+  QualType QType = TL.getType();
+
+  // Check if our name conflicts with a type, to handle for typedefs.
+  if (QType.getAsString() == Name) {
+    Found = true;
+    return false;
+  }
+  // Check for base type conflicts. For example, when a struct is being
+  // referenced in the body of the loop, the above getAsString() will return the
+  // whole type (ex. "struct s"), but will be caught here.
+  if (const IdentifierInfo *Ident = QType.getBaseTypeIdentifier()) {
+    if (Ident->getName() == Name) {
+      Found = true;
+      return false;
+    }
+  }
+  return true;
+}

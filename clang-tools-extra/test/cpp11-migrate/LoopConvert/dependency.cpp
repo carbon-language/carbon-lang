@@ -10,9 +10,9 @@ void f() {
     int a = 0;
     int b = arr[i][a];
   }
-  // CHECK: for (auto & [[VAR:[a-z_]+]] : arr) {
+  // CHECK: for (auto & elem : arr) {
   // CHECK-NEXT: int a = 0;
-  // CHECK-NEXT: int b = [[VAR]][a];
+  // CHECK-NEXT: int b = elem[a];
   // CHECK-NEXT: }
 
   for (int j = 0; j < M; ++j) {

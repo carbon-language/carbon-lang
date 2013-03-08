@@ -27,12 +27,13 @@
 /// index, if they exist.
 class VariableNamer {
  public:
-  VariableNamer(StmtGeneratedVarNameMap *GeneratedDecls,
-                const StmtParentMap *ReverseAST, const clang::Stmt *SourceStmt,
-                const clang::VarDecl *OldIndex,
-                const clang::VarDecl *TheContainer) :
-  GeneratedDecls(GeneratedDecls), ReverseAST(ReverseAST),
-  SourceStmt(SourceStmt), OldIndex(OldIndex), TheContainer(TheContainer) { }
+  VariableNamer(
+      StmtGeneratedVarNameMap *GeneratedDecls, const StmtParentMap *ReverseAST,
+      const clang::Stmt *SourceStmt, const clang::VarDecl *OldIndex,
+      const clang::VarDecl *TheContainer, const clang::ASTContext *Context)
+      : GeneratedDecls(GeneratedDecls), ReverseAST(ReverseAST),
+        SourceStmt(SourceStmt), OldIndex(OldIndex), TheContainer(TheContainer),
+        Context(Context) {}
 
   /// \brief Generate a new index name.
   ///
@@ -47,10 +48,11 @@ class VariableNamer {
   const clang::Stmt *SourceStmt;
   const clang::VarDecl *OldIndex;
   const clang::VarDecl *TheContainer;
+  const clang::ASTContext *Context;
 
   // Determine whether or not a declaration that would conflict with Symbol
   // exists in an outer context or in any statement contained in SourceStmt.
-  bool declarationExists(const llvm::StringRef Symbol);
+  bool declarationExists(llvm::StringRef Symbol);
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_VARIABLE_NAMING_H

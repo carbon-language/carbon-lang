@@ -194,6 +194,7 @@ private:
   bool VisitForStmt(clang::ForStmt *F);
   bool VisitNamedDecl(clang::NamedDecl *D);
   bool VisitDeclRefExpr(clang::DeclRefExpr *D);
+  bool VisitTypeLoc(clang::TypeLoc TL);
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_STMT_ANCESTOR_H
