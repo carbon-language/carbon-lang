@@ -1113,10 +1113,30 @@ public:
                              "Disable the specified breakpoint(s) without removing it/them.  If no breakpoints are specified, disable them all.",
                              NULL)
     {
+        SetHelpLong(
+"Disable the specified breakpoint(s) without removing it/them.  \n\
+If no breakpoints are specified, disable them all.\n\
+\n\
+Note: disabling a breakpoint will cause none of its locations to be hit\n\
+regardless of whether they are enabled or disabled.  So the sequence: \n\
+\n\
+    (lldb) break disable 1\n\
+    (lldb) break enable 1.1\n\
+\n\
+will NOT cause location 1.1 to get hit.  To achieve that, do:\n\
+\n\
+    (lldb) break disable 1.*\n\
+    (lldb) break enable 1.1\n\
+\n\
+The first command disables all the locations of breakpoint 1, \n\
+the second re-enables the first location."
+                    );
+        
         CommandArgumentEntry arg;
         CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);
         // Add the entry for the first argument for this command to the object's arguments vector.
-        m_arguments.push_back (arg);   
+        m_arguments.push_back (arg);
+
     }
 
 
