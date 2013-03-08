@@ -1632,11 +1632,8 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
 
 QualType Sema::BuildFunctionType(QualType T,
                                  llvm::MutableArrayRef<QualType> ParamTypes,
-                                 bool Variadic, bool HasTrailingReturn,
-                                 unsigned Quals,
-                                 RefQualifierKind RefQualifier,
                                  SourceLocation Loc, DeclarationName Entity,
-                                 FunctionType::ExtInfo Info) {
+                                 const FunctionProtoType::ExtProtoInfo &EPI) {
   if (T->isArrayType() || T->isFunctionType()) {
     Diag(Loc, diag::err_func_returning_array_function)
       << T->isFunctionType() << T;
@@ -1669,13 +1666,6 @@ QualType Sema::BuildFunctionType(QualType T,
 
   if (Invalid)
     return QualType();
-
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.Variadic = Variadic;
-  EPI.HasTrailingReturn = HasTrailingReturn;
-  EPI.TypeQuals = Quals;
-  EPI.RefQualifier = RefQualifier;
-  EPI.ExtInfo = Info;
 
   return Context.getFunctionType(T, ParamTypes, EPI);
 }

@@ -1716,7 +1716,9 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
 
   NewParm->setScopeInfo(OldParm->getFunctionScopeDepth(),
                         OldParm->getFunctionScopeIndex() + indexAdjustment);
-  
+
+  InstantiateAttrs(TemplateArgs, OldParm, NewParm);
+
   return NewParm;  
 }
 

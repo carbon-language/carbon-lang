@@ -18,3 +18,35 @@ blk1 b2 = ^void (id, __attribute((ns_consumed)) id){}; // expected-error {{canno
 blk1 c3 = ^void (__attribute((ns_consumed)) id, __attribute((ns_consumed)) id){};
 
 blk1 d4 = ^void (id, id) {}; // expected-error {{cannot initialize a variable of type '__strong blk1'}}
+
+
+typedef void (*releaser_t)(__attribute__((ns_consumed)) id);
+
+void normalFunction(id);
+releaser_t r1 = normalFunction; // expected-error {{cannot initialize a variable of type 'releaser_t'}}
+
+void releaser(__attribute__((ns_consumed)) id);
+releaser_t r2 = releaser; // no-warning
+
+template <typename T>
+void templateFunction(T) {} // expected-note {{candidate function}}
+releaser_t r3 = templateFunction<id>; // expected-error {{address of overloaded function 'templateFunction' does not match required type 'void (id)'}}
+
+template <typename T>
+void templateReleaser(__attribute__((ns_consumed)) T) {}
+releaser_t r4 = templateReleaser<id>; // no-warning
+
+
+@class AntiRelease, ExplicitAntiRelease, ProRelease;
+
+template<>
+void templateFunction(__attribute__((ns_consumed)) AntiRelease *); // expected-error {{no function template matches function template specialization 'templateFunction'}}
+
+template<>
+void templateReleaser(AntiRelease *); // expected-error {{no function template matches function template specialization 'templateReleaser'}}
+
+template<>
+void templateReleaser(ExplicitAntiRelease *) {} // expected-error {{no function template matches function template specialization 'templateReleaser'}}
+
+template<>
+void templateReleaser(__attribute__((ns_consumed)) ProRelease *); // no-warning

@@ -2418,13 +2418,9 @@ Sema::SubstituteExplicitTemplateArguments(
 
   if (FunctionType) {
     *FunctionType = BuildFunctionType(ResultType, ParamTypes,
-                                      Proto->isVariadic(),
-                                      Proto->hasTrailingReturn(),
-                                      Proto->getTypeQuals(),
-                                      Proto->getRefQualifier(),
                                       Function->getLocation(),
                                       Function->getDeclName(),
-                                      Proto->getExtInfo());
+                                      Proto->getExtProtoInfo());
     if (FunctionType->isNull() || Trap.hasErrorOccurred())
       return TDK_SubstitutionFailure;
   }

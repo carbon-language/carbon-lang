@@ -959,12 +959,6 @@ public:
   /// will be modified to account for adjustments to the types of the
   /// function parameters.
   ///
-  /// \param Variadic Whether this is a variadic function type.
-  ///
-  /// \param HasTrailingReturn Whether this function has a trailing return type.
-  ///
-  /// \param Quals The cvr-qualifiers to be applied to the function type.
-  ///
   /// \param Loc The location of the entity whose type involves this
   /// function type or, if there is no such entity, the location of the
   /// type that will have function type.
@@ -972,14 +966,16 @@ public:
   /// \param Entity The name of the entity that involves the function
   /// type, if known.
   ///
-  /// \returns A suitable function type, if there are no errors.
+  /// \param EPI Extra information about the function type. Usually this will
+  /// be taken from an existing function with the same prototype.
+  ///
+  /// \returns A suitable function type, if there are no errors. The
+  /// unqualified type will always be a FunctionProtoType.
   /// Otherwise, returns a NULL type.
   QualType BuildFunctionType(QualType T,
                              llvm::MutableArrayRef<QualType> ParamTypes,
-                             bool Variadic, bool HasTrailingReturn,
-                             unsigned Quals, RefQualifierKind RefQualifier,
                              SourceLocation Loc, DeclarationName Entity,
-                             FunctionType::ExtInfo Info);
+                             const FunctionProtoType::ExtProtoInfo &EPI);
 
   QualType BuildMemberPointerType(QualType T, QualType Class,
                                   SourceLocation Loc,
