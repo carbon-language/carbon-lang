@@ -2,6 +2,11 @@
 cpp11-migrate User's Manual
 ===========================
 
+.. toctree::
+   :hidden:
+
+   UseAutoTransform
+
 :program:`cpp11-migrate` is a standalone tool used to automatically convert
 C++98 and C++03 code to use features of the new C++11 standard where
 appropriate.
@@ -29,6 +34,11 @@ Command Line Options
 
   Makes use of C++11 range-based for loops where possible.
   See :ref:`loop-convert-transformation`.
+
+.. option:: -use-auto
+
+  Replace the type specifier of variable declarations with the ``auto`` type
+  specifier. See :doc:`UseAutoTransform`.
 
 .. option:: -p=<build-path>
 
