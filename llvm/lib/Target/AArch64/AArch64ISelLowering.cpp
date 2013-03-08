@@ -200,6 +200,8 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setOperationAction(ISD::FSIN, MVT::f32, Expand);
   setOperationAction(ISD::FSIN, MVT::f64, Expand);
 
+  setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
+  setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
 
   // Virtually no operation on f128 is legal, but LLVM can't expand them when
   // there's a valid register class, so we need custom operations in most cases.
@@ -217,6 +219,7 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setOperationAction(ISD::FREM,       MVT::f128, Expand);
   setOperationAction(ISD::FRINT,      MVT::f128, Expand);
   setOperationAction(ISD::FSIN,       MVT::f128, Expand);
+  setOperationAction(ISD::FSINCOS,    MVT::f128, Expand);
   setOperationAction(ISD::FSQRT,      MVT::f128, Expand);
   setOperationAction(ISD::FSUB,       MVT::f128, Custom);
   setOperationAction(ISD::FTRUNC,     MVT::f128, Expand);
