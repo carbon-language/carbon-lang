@@ -94,17 +94,8 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationAssign:
         if (value_cstr && value_cstr[0])
         {
-            Args args(value_cstr);
-            if (args.GetArgumentCount() == 1)
-            {
-                const char *path = args.GetArgumentAtIndex(0);
-                m_value_was_set = true;
-                m_current_value.SetFile(path, true);
-            }
-            else
-            {
-                error.SetErrorString("please supply a single path argument for this file or quote the path if it contains spaces");
-            }
+            m_value_was_set = true;
+            m_current_value.SetFile(value_cstr, true);
         }
         else
         {
