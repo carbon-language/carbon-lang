@@ -310,7 +310,6 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
       !isInvalid) {
     SourceLocation AttrLoc = ScopeLoc.isValid() ? ScopeLoc : AttrNameLoc;
     if (isParmType) {
-      QualType ParmType = Sema::GetTypeFromParser(T.get());
       Attrs.addNewTypeAttr(AttrName, SourceRange(AttrLoc, RParen), ScopeName,
                            ScopeLoc, ParmName, ParmLoc, T.get(), Syntax);
     } else {
