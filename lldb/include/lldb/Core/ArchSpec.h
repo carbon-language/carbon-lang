@@ -43,8 +43,10 @@ public:
         eCore_arm_armv6,
         eCore_arm_armv7,
         eCore_arm_armv7f,
-        eCore_arm_armv7k,
         eCore_arm_armv7s,
+        eCore_arm_armv7k,
+        eCore_arm_armv7m,
+        eCore_arm_armv7em,
         eCore_arm_xscale,  
         eCore_thumb,
         eCore_thumbv4t,
@@ -53,8 +55,10 @@ public:
         eCore_thumbv6,
         eCore_thumbv7,
         eCore_thumbv7f,
-        eCore_thumbv7k,
         eCore_thumbv7s,
+        eCore_thumbv7k,
+        eCore_thumbv7m,
+        eCore_thumbv7em,
         
         eCore_ppc_generic,
         eCore_ppc_ppc601,
@@ -98,7 +102,7 @@ public:
         kCore_arm_last      = eCore_arm_xscale,
 
         kCore_thumb_first   = eCore_thumb,
-        kCore_thumb_last    = eCore_thumbv7s,
+        kCore_thumb_last    = eCore_thumbv7em,
 
         kCore_ppc_first     = eCore_ppc_generic,
         kCore_ppc_last      = eCore_ppc_ppc970,
