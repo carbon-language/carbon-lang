@@ -1840,6 +1840,18 @@ let isTerminator=1 in {
 // ISel Patterns
 //===----------------------------------------------------------------------===//
 
+// CND*_INT Pattterns for f32 True / False values
+
+class CND_INT_f32 <InstR600 cnd, CondCode cc> : Pat <
+  (selectcc (i32 R600_Reg32:$src0), 0, (f32 R600_Reg32:$src1),
+                                            R600_Reg32:$src2, cc),
+  (cnd R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2)
+>;
+
+def : CND_INT_f32 <CNDE_INT,  SETEQ>;
+def : CND_INT_f32 <CNDGT_INT, SETGT>;
+def : CND_INT_f32 <CNDGE_INT, SETGE>;
+
 //CNDGE_INT extra pattern
 def : Pat <
   (selectcc (i32 R600_Reg32:$src0), -1, (i32 R600_Reg32:$src1),

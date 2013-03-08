@@ -542,12 +542,37 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
 
   // Check if we can lower this to a native operation.
 
+  // Try to lower to a SET* instruction:
+  //
+  // SET* can match the following patterns:
+  //
+  // select_cc f32, f32, -1,  0, cc_any
+  // select_cc f32, f32, 1.0f, 0.0f, cc_any
+  // select_cc i32, i32, -1,  0, cc_any
+  //
+
+  // Move hardware True/False values to the correct operand.
+  if (isHWTrueValue(False) && isHWFalseValue(True)) {
+    ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
+    std::swap(False, True);
+    CC = DAG.getCondCode(ISD::getSetCCInverse(CCOpcode, CompareVT == MVT::i32));
+  }
+
+  if (isHWTrueValue(True) && isHWFalseValue(False) &&
+      (CompareVT == VT || VT == MVT::i32)) {
+    // This can be matched by a SET* instruction.
+    return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
+  }
+
   // Try to lower to a CND* instruction:
-  // CND* instructions requires RHS to be zero.  Some SELECT_CC nodes that
-  // can be lowered to CND* instructions can also be lowered to SET*
-  // instructions.  CND* instructions are cheaper, because they dont't
-  // require additional instructions to convert their result to the correct
-  // value type, so this check should be first.
+  //
+  // CND* can match the following patterns:
+  //
+  // select_cc f32, 0.0, f32, f32, cc_any
+  // select_cc f32, 0.0, i32, i32, cc_any
+  // select_cc i32, 0,   f32, f32, cc_any
+  // select_cc i32, 0,   i32, i32, cc_any
+  //
   if (isZero(LHS) || isZero(RHS)) {
     SDValue Cond = (isZero(LHS) ? RHS : LHS);
     SDValue Zero = (isZero(LHS) ? LHS : RHS);
@@ -589,38 +614,6 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
     return DAG.getNode(ISD::BITCAST, DL, VT, SelectNode);
   }
 
-  // Try to lower to a SET* instruction:
-  //
-  // CompareVT == MVT::f32 and VT == MVT::i32 is supported by the hardware,
-  // but for the other case where CompareVT != VT, all operands of
-  // SELECT_CC need to have the same value type, so we need to change True and
-  // False to be the same type as LHS and RHS, and then convert the result of
-  // the select_cc back to the correct type.
-
-  // Move hardware True/False values to the correct operand.
-  if (isHWTrueValue(False) && isHWFalseValue(True)) {
-    ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
-    std::swap(False, True);
-    CC = DAG.getCondCode(ISD::getSetCCInverse(CCOpcode, CompareVT == MVT::i32));
-  }
-
-  if (isHWTrueValue(True) && isHWFalseValue(False)) {
-    if (CompareVT !=  VT && VT == MVT::f32 && CompareVT == MVT::i32) {
-      SDValue Boolean = DAG.getNode(ISD::SELECT_CC, DL, CompareVT,
-          LHS, RHS,
-          DAG.getConstant(-1, MVT::i32),
-          DAG.getConstant(0, MVT::i32),
-          CC);
-      // Convert integer values of true (-1) and false (0) to fp values of
-      // true (1.0f) and false (0.0f).
-      SDValue LSB = DAG.getNode(ISD::AND, DL, MVT::i32, Boolean,
-                                                DAG.getConstant(1, MVT::i32));
-      return DAG.getNode(ISD::UINT_TO_FP, DL, VT, LSB);
-    } else {
-      // This SELECT_CC is already legal.
-      return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
-    }
-  }
 
   // Possible Min/Max pattern
   SDValue MinMax = LowerMinMax(Op, DAG);
