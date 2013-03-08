@@ -2769,6 +2769,36 @@ static void handleWorkGroupSize(Sema &S, Decl *D,
                                        Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleVecTypeHint(Sema &S, Decl *D, const AttributeList &Attr) {
+  assert(Attr.getKind() == AttributeList::AT_VecTypeHint);
+
+  // Attribute has 1 argument.
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
+
+  QualType ParmType = S.GetTypeFromParser(Attr.getTypeArg());
+
+  if (!ParmType->isExtVectorType() && !ParmType->isFloatingType() &&
+      (ParmType->isBooleanType() ||
+       !ParmType->isIntegralType(S.getASTContext()))) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_vec_type_hint)
+        << ParmType;
+    return;
+  }
+
+  if (Attr.getKind() == AttributeList::AT_VecTypeHint &&
+      D->hasAttr<VecTypeHintAttr>()) {
+    VecTypeHintAttr *A = D->getAttr<VecTypeHintAttr>();
+    if (A->getTypeHint() != ParmType) {
+      S.Diag(Attr.getLoc(), diag::warn_duplicate_attribute) << Attr.getName();
+      return;
+    }
+  }
+
+  D->addAttr(::new (S.Context) VecTypeHintAttr(Attr.getLoc(), S.Context,
+                                               ParmType, Attr.getLoc()));
+}
+
 SectionAttr *Sema::mergeSectionAttr(Decl *D, SourceRange Range,
                                     StringRef Name,
                                     unsigned AttrSpellingListIndex) {
@@ -4749,6 +4779,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_WorkGroupSizeHint:
   case AttributeList::AT_ReqdWorkGroupSize:
     handleWorkGroupSize(S, D, Attr); break;
+
+  case AttributeList::AT_VecTypeHint:
+    handleVecTypeHint(S, D, Attr); break;
 
   case AttributeList::AT_InitPriority: 
       handleInitPriorityAttr(S, D, Attr); break;

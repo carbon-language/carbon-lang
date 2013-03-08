@@ -720,8 +720,9 @@ def VectorSize : Attr {
   let ASTNode = 0;
 }
 
-def VecTypeHint : IgnoredAttr {
+def VecTypeHint : InheritableAttr {
   let Spellings = [GNU<"vec_type_hint">];
+  let Args = [TypeArgument<"TypeHint">, SourceLocArgument<"TypeLoc">];
 }
 
 def Visibility : InheritableAttr {

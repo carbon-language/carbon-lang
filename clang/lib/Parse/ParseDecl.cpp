@@ -214,6 +214,10 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   SourceLocation ParmLoc;
   bool BuiltinType = false;
 
+  TypeResult T;
+  SourceRange TypeRange;
+  bool TypeParsed = false;
+
   switch (Tok.getKind()) {
   case tok::kw_char:
   case tok::kw_wchar_t:
@@ -232,12 +236,17 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   case tok::kw_void:
   case tok::kw_typeof:
     // __attribute__(( vec_type_hint(char) ))
-    // FIXME: Don't just discard the builtin type token.
-    ConsumeToken();
     BuiltinType = true;
+    T = ParseTypeName(&TypeRange);
+    TypeParsed = true;
     break;
 
   case tok::identifier:
+    if (AttrName->isStr("vec_type_hint")) {
+      T = ParseTypeName(&TypeRange);
+      TypeParsed = true;
+      break;
+    }
     ParmName = Tok.getIdentifierInfo();
     ParmLoc = ConsumeToken();
     break;
@@ -247,8 +256,10 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   }
 
   ExprVector ArgExprs;
+  bool isInvalid = false;
+  bool isParmType = false;
 
-  if (!BuiltinType &&
+  if (!BuiltinType && !AttrName->isStr("vec_type_hint") &&
       (ParmLoc.isValid() ? Tok.is(tok::comma) : Tok.isNot(tok::r_paren))) {
     // Eat the comma.
     if (ParmLoc.isValid())
@@ -283,17 +294,33 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
         Diag(Tok, diag::err_iboutletcollection_with_protocol);
       SkipUntil(tok::r_paren, false, true); // skip until ')'
     }
+  } else if (AttrName->isStr("vec_type_hint")) {
+    if (T.get() && !T.isInvalid())
+      isParmType = true;
+    else {
+      if (Tok.is(tok::identifier))
+        ConsumeToken();
+      if (TypeParsed)
+        isInvalid = true;
+    }
   }
 
   SourceLocation RParen = Tok.getLocation();
-  if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
+  if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen) &&
+      !isInvalid) {
     SourceLocation AttrLoc = ScopeLoc.isValid() ? ScopeLoc : AttrNameLoc;
-    AttributeList *attr =
-      Attrs.addNew(AttrName, SourceRange(AttrLoc, RParen),
-                   ScopeName, ScopeLoc, ParmName, ParmLoc,
-                   ArgExprs.data(), ArgExprs.size(), Syntax);
-    if (BuiltinType && attr->getKind() == AttributeList::AT_IBOutletCollection)
-      Diag(Tok, diag::err_iboutletcollection_builtintype);
+    if (isParmType) {
+      QualType ParmType = Sema::GetTypeFromParser(T.get());
+      Attrs.addNewTypeAttr(AttrName, SourceRange(AttrLoc, RParen), ScopeName,
+                           ScopeLoc, ParmName, ParmLoc, T.get(), Syntax);
+    } else {
+      AttributeList *attr = Attrs.addNew(
+          AttrName, SourceRange(AttrLoc, RParen), ScopeName, ScopeLoc, ParmName,
+          ParmLoc, ArgExprs.data(), ArgExprs.size(), Syntax);
+      if (BuiltinType &&
+          attr->getKind() == AttributeList::AT_IBOutletCollection)
+        Diag(Tok, diag::err_iboutletcollection_builtintype);
+    }
   }
 }
 
