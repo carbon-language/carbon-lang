@@ -7459,7 +7459,9 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
 
   TypeSourceInfo *ScopeTypeInfo = 0;
   if (E->getScopeTypeInfo()) {
-    ScopeTypeInfo = getDerived().TransformType(E->getScopeTypeInfo());
+    CXXScopeSpec EmptySS;
+    ScopeTypeInfo = getDerived().TransformTypeInObjectScope(
+                      E->getScopeTypeInfo(), ObjectType, 0, EmptySS);
     if (!ScopeTypeInfo)
       return ExprError();
   }

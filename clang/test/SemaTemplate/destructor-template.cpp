@@ -57,3 +57,22 @@ namespace PR7904 {
   };
   Foo f;
 }
+
+namespace rdar13140795 {
+  template <class T> class shared_ptr {};
+
+  template <typename T> struct Marshal {
+    static int gc();
+  };
+
+
+  template <typename T> int Marshal<T>::gc() {
+    shared_ptr<T> *x;
+    x->template shared_ptr<T>::~shared_ptr();
+    return 0;
+  }
+
+  void test() {
+    Marshal<int>::gc();
+  }
+}
