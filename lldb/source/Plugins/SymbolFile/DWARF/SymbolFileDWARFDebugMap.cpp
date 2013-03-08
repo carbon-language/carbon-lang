@@ -380,7 +380,7 @@ SymbolFileDWARFDebugMap::InitOSO()
                     so_symbol->GetType() == eSymbolTypeSourceFile &&
                     oso_symbol->GetType() == eSymbolTypeObjectFile)
                 {
-                    m_compile_unit_infos[i].so_file.SetFile(so_symbol->GetName().AsCString(), true);
+                    m_compile_unit_infos[i].so_file.SetFile(so_symbol->GetName().AsCString(), false);
                     m_compile_unit_infos[i].oso_path = oso_symbol->GetName();
                     uint32_t sibling_idx = so_symbol->GetSiblingIndex();
                     // The sibling index can't be less that or equal to the current index "i"
