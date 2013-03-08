@@ -15,10 +15,11 @@ entry:
 }
 
 ; This test checks that a setcc node with f32 operands is lowered to a
-; SET* instruction.
+; SET*_DX10 instruction.  Previously we were lowering this to:
+; SET* + FP_TO_SINT
 
 ; CHECK: @fcmp_br
-; CHECK: SET{{[N]*}}E T{{[0-9]+\.[XYZW], [a-zA-Z0-9, .]+}}(5.0
+; CHECK: SET{{[N]*}}E_DX10 T{{[0-9]+\.[XYZW], [a-zA-Z0-9, .]+}}(5.0
 
 define void @fcmp_br(i32 addrspace(1)* %out, float %in) {
 entry:

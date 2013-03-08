@@ -50,8 +50,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UREM, MVT::v4i32, Expand);
   setOperationAction(ISD::SETCC, MVT::v4i32, Expand);
 
-  setOperationAction(ISD::BR_CC, MVT::i32, Custom);
-  setOperationAction(ISD::BR_CC, MVT::f32, Custom);
+  setOperationAction(ISD::BR_CC, MVT::i32, Expand);
+  setOperationAction(ISD::BR_CC, MVT::f32, Expand);
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
@@ -312,7 +312,6 @@ using namespace llvm::AMDGPUIntrinsic;
 SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
-  case ISD::BR_CC: return LowerBR_CC(Op, DAG);
   case ISD::ROTL: return LowerROTL(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SELECT: return LowerSELECT(Op, DAG);
@@ -473,44 +472,6 @@ SDValue R600TargetLowering::LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const {
       Op, DAG.getConstantFP(0.0f, MVT::f32),
       DAG.getCondCode(ISD::SETNE)
       );
-}
-
-SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Chain = Op.getOperand(0);
-  SDValue CC = Op.getOperand(1);
-  SDValue LHS   = Op.getOperand(2);
-  SDValue RHS   = Op.getOperand(3);
-  SDValue JumpT  = Op.getOperand(4);
-  SDValue CmpValue;
-  SDValue Result;
-
-  if (LHS.getValueType() == MVT::i32) {
-    CmpValue = DAG.getNode(
-        ISD::SELECT_CC,
-        Op.getDebugLoc(),
-        MVT::i32,
-        LHS, RHS,
-        DAG.getConstant(-1, MVT::i32),
-        DAG.getConstant(0, MVT::i32),
-        CC);
-  } else if (LHS.getValueType() == MVT::f32) {
-    CmpValue = DAG.getNode(
-        ISD::SELECT_CC,
-        Op.getDebugLoc(),
-        MVT::f32,
-        LHS, RHS,
-        DAG.getConstantFP(1.0f, MVT::f32),
-        DAG.getConstantFP(0.0f, MVT::f32),
-        CC);
-  } else {
-    assert(0 && "Not valid type for br_cc");
-  }
-  Result = DAG.getNode(
-      AMDGPUISD::BRANCH_COND,
-      CmpValue.getDebugLoc(),
-      MVT::Other, Chain,
-      JumpT, CmpValue);
-  return Result;
 }
 
 SDValue R600TargetLowering::LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
