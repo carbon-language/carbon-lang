@@ -6397,6 +6397,18 @@ Logger &cxindex::Logger::operator<<(CXTranslationUnit TU) {
   return *this;
 }
 
+Logger &cxindex::Logger::operator<<(const FileEntry *FE) {
+  *this << FE->getName();
+  return *this;
+}
+
+Logger &cxindex::Logger::operator<<(CXCursor cursor) {
+  CXString cursorName = clang_getCursorDisplayName(cursor);
+  *this << cursorName << "@" << clang_getCursorLocation(cursor);
+  clang_disposeString(cursorName);
+  return *this;
+}
+
 Logger &cxindex::Logger::operator<<(CXSourceLocation Loc) {
   CXFile File;
   unsigned Line, Column;

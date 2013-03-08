@@ -367,6 +367,9 @@ void clang_findReferencesInFile(CXCursor cursor, CXFile file,
     return;
   }
 
+  if (Log)
+    *Log << cursor << " @" << static_cast<const FileEntry *>(file);
+
   ASTUnit *CXXUnit = cxcursor::getCursorASTUnit(cursor);
   if (!CXXUnit)
     return;

@@ -23,6 +23,7 @@ class format_object_base;
 }
 
 namespace clang {
+  class FileEntry;
 
 namespace cxindex {
 
@@ -64,6 +65,8 @@ public:
   ~Logger();
 
   Logger &operator<<(CXTranslationUnit);
+  Logger &operator<<(const FileEntry *FE);
+  Logger &operator<<(CXCursor cursor);
   Logger &operator<<(CXSourceLocation);
   Logger &operator<<(CXSourceRange);
   Logger &operator<<(CXString);
