@@ -223,9 +223,9 @@ static bool visitPreprocessedEntitiesInRange(SourceRange R,
                                            PPRec, FID);
 }
 
-void CursorVisitor::visitFileRegion() {
+bool CursorVisitor::visitFileRegion() {
   if (RegionOfInterest.isInvalid())
-    return;
+    return false;
 
   ASTUnit *Unit = cxtu::getASTUnit(TU);
   SourceManager &SM = Unit->getSourceManager();
@@ -243,7 +243,7 @@ void CursorVisitor::visitFileRegion() {
 
   assert(Begin.first == End.first);
   if (Begin.second > End.second)
-    return;
+    return false;
   
   FileID File = Begin.first;
   unsigned Offset = Begin.second;
@@ -251,12 +251,15 @@ void CursorVisitor::visitFileRegion() {
 
   if (!VisitDeclsOnly && !VisitPreprocessorLast)
     if (visitPreprocessedEntitiesInRegion())
-      return; // visitation break.
+      return true; // visitation break.
 
-  visitDeclsFromFileRegion(File, Offset, Length);
+  if (visitDeclsFromFileRegion(File, Offset, Length))
+    return true; // visitation break.
 
   if (!VisitDeclsOnly && VisitPreprocessorLast)
-    visitPreprocessedEntitiesInRegion();
+    return visitPreprocessedEntitiesInRegion();
+
+  return false;
 }
 
 static bool isInLexicalContext(Decl *D, DeclContext *DC) {
@@ -271,7 +274,7 @@ static bool isInLexicalContext(Decl *D, DeclContext *DC) {
   return false;
 }
 
-void CursorVisitor::visitDeclsFromFileRegion(FileID File,
+bool CursorVisitor::visitDeclsFromFileRegion(FileID File,
                                              unsigned Offset, unsigned Length) {
   ASTUnit *Unit = cxtu::getASTUnit(TU);
   SourceManager &SM = Unit->getSourceManager();
@@ -286,7 +289,7 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
     bool Invalid = false;
     const SrcMgr::SLocEntry &SLEntry = SM.getSLocEntry(File, &Invalid);
     if (Invalid)
-      return;
+      return false;
 
     SourceLocation Outer;
     if (SLEntry.isFile())
@@ -294,7 +297,7 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
     else
       Outer = SLEntry.getExpansion().getExpansionLocStart();
     if (Outer.isInvalid())
-      return;
+      return false;
 
     llvm::tie(File, Offset) = SM.getDecomposedExpansionLoc(Outer);
     Length = 0;
@@ -337,11 +340,11 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
     }
 
     if (Visit(MakeCXCursor(D, TU, Range), /*CheckedRegionOfInterest=*/true))
-      break;
+      return true; // visitation break.
   }
 
   if (VisitedAtLeastOnce)
-    return;
+    return false;
 
   // No Decls overlapped with the range. Move up the lexical context until there
   // is a context that contains the range or we reach the translation unit
@@ -356,12 +359,14 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
       break;
 
     if (RangeCompare(SM, CurDeclRange, Range) == RangeOverlap) {
-      Visit(MakeCXCursor(D, TU, Range), /*CheckedRegionOfInterest=*/true);
-      break;
+      if (Visit(MakeCXCursor(D, TU, Range), /*CheckedRegionOfInterest=*/true))
+        return true; // visitation break.
     }
 
     DC = D->getLexicalDeclContext();
   }
+
+  return false;
 }
 
 bool CursorVisitor::visitPreprocessedEntitiesInRegion() {

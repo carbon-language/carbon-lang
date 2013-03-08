@@ -116,7 +116,7 @@ private:
   /// \param R a half-open source range retrieved from the abstract syntax tree.
   RangeComparisonResult CompareRegionOfInterest(SourceRange R);
 
-  void visitDeclsFromFileRegion(FileID File, unsigned Offset, unsigned Length);
+  bool visitDeclsFromFileRegion(FileID File, unsigned Offset, unsigned Length);
 
   class SetParentRAII {
     CXCursor &Parent;
@@ -179,7 +179,7 @@ public:
 
   /// \brief Visit declarations and preprocessed entities for the file region
   /// designated by \see RegionOfInterest.
-  void visitFileRegion();
+  bool visitFileRegion();
   
   bool visitPreprocessedEntitiesInRegion();
 
