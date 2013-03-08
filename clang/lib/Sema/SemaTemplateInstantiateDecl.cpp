@@ -229,7 +229,7 @@ Decl *TemplateDeclInstantiator::InstantiateTypedefNameDecl(TypedefNameDecl *D,
   // tag decl, re-establish that relationship for the new typedef.
   if (const TagType *oldTagType = D->getUnderlyingType()->getAs<TagType>()) {
     TagDecl *oldTag = oldTagType->getDecl();
-    if (oldTag->getTypedefNameForAnonDecl() == D) {
+    if (oldTag->getTypedefNameForAnonDecl() == D && !Invalid) {
       TagDecl *newTag = DI->getType()->castAs<TagType>()->getDecl();
       assert(!newTag->getIdentifier() && !newTag->getTypedefNameForAnonDecl());
       newTag->setTypedefNameForAnonDecl(Typedef);
