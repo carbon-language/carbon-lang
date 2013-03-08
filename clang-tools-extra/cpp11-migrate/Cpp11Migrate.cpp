@@ -11,19 +11,7 @@
 /// \brief This file implements the C++11 feature migration tool main function
 /// and transformation framework.
 ///
-/// Usage:
-/// cpp11-migrate [-p <build-path>] <file1> <file2> ... [-- [compiler-options]]
-///
-/// Where <build-path> is a CMake build directory containing a file named
-/// compile_commands.json which provides compiler options for building each
-/// sourc file. If <build-path> is not provided the compile_commands.json file
-/// is searched for through all parent directories.
-///
-/// Alternatively, one can provide compile options to be applied to every source
-/// file after the optional '--'.
-///
-/// <file1>... specify the paths of files in the CMake source tree, with the
-/// same requirements as other tools built on LibTooling.
+/// See user documentation for usage instructions.
 ///
 //===----------------------------------------------------------------------===//
 

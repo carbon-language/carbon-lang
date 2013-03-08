@@ -63,7 +63,7 @@ AST_MATCHER(VarDecl, hasWrittenNonListInitializer) {
 ///   class C {};
 ///   typedef C my_type
 ///   typedef my_type my_other_type;
-/// \code
+/// \endcode
 ///
 /// \c qualType(isSugarFor(recordType(hasDeclaration(namedDecl(hasName("C"))))))
 /// matches \c my_type and \c my_other_type.
@@ -88,7 +88,7 @@ AST_MATCHER_P(QualType, isSugarFor, internal::Matcher<QualType>, SugarMatcher) {
 /// \code
 /// iterator I;
 /// const_iterator CI;
-/// \code
+/// \endcode
 ///
 /// \c namedDecl(hasStdIteratorName()) matches \c I and \c CI.
 AST_MATCHER(NamedDecl, hasStdIteratorName) {
@@ -116,7 +116,7 @@ AST_MATCHER(NamedDecl, hasStdIteratorName) {
 /// class vector {};
 /// class forward_list {};
 /// class my_vec {};
-/// \code
+/// \endcode
 ///
 /// \c recordDecl(hasStdContainerName()) matches \c vector and \c forward_list
 /// but not \c my_vec.
