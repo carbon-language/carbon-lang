@@ -5006,6 +5006,23 @@ typedef struct {
   enum CXVisitorResult (*visit)(void *context, CXCursor, CXSourceRange);
 } CXCursorAndRangeVisitor;
 
+typedef enum {
+  /**
+   * \brief Function returned successfully.
+   */
+  CXResult_Success = 0,
+  /**
+   * \brief One of the parameters was invalid for the function.
+   */
+  CXResult_Invalid = 1,
+  /**
+   * \brief The function was terminated by a callback (e.g. it returned
+   * CXVisit_Break)
+   */
+  CXResult_VisitBreak = 2
+
+} CXResult;
+
 /**
  * \brief Find references of a declaration in a specific file.
  * 
@@ -5018,13 +5035,10 @@ typedef struct {
  * The CXSourceRange will point inside the file; if the reference is inside
  * a macro (and not a macro argument) the CXSourceRange will be invalid.
  *
- * \returns
- * 1  : if a parameter was invalid
- * -1 : if the callback returned CXVisit_Break,
- * otherwise returns 0.
+ * \returns one of the CXResult enumerators.
  */
-CINDEX_LINKAGE int clang_findReferencesInFile(CXCursor cursor, CXFile file,
-                                              CXCursorAndRangeVisitor visitor);
+CINDEX_LINKAGE CXResult clang_findReferencesInFile(CXCursor cursor, CXFile file,
+                                               CXCursorAndRangeVisitor visitor);
 
 /**
  * \brief Find #import/#include directives in a specific file.
@@ -5036,13 +5050,11 @@ CINDEX_LINKAGE int clang_findReferencesInFile(CXCursor cursor, CXFile file,
  * \param visitor callback that will receive pairs of CXCursor/CXSourceRange for
  * each directive found.
  *
- * \returns
- * 1  : if a parameter was invalid
- * -1 : if the callback returned CXVisit_Break,
- * otherwise returns 0.
+ * \returns one of the CXResult enumerators.
  */
-CINDEX_LINKAGE int clang_findIncludesInFile(CXTranslationUnit TU, CXFile file,
-                                            CXCursorAndRangeVisitor visitor);
+CINDEX_LINKAGE CXResult clang_findIncludesInFile(CXTranslationUnit TU,
+                                                 CXFile file,
+                                              CXCursorAndRangeVisitor visitor);
 
 #ifdef __has_feature
 #  if __has_feature(blocks)
@@ -5051,12 +5063,12 @@ typedef enum CXVisitorResult
     (^CXCursorAndRangeVisitorBlock)(CXCursor, CXSourceRange);
 
 CINDEX_LINKAGE
-int clang_findReferencesInFileWithBlock(CXCursor, CXFile,
-                                        CXCursorAndRangeVisitorBlock);
+CXResult clang_findReferencesInFileWithBlock(CXCursor, CXFile,
+                                             CXCursorAndRangeVisitorBlock);
 
 CINDEX_LINKAGE
-int clang_findIncludesInFileWithBlock(CXTranslationUnit, CXFile,
-                                      CXCursorAndRangeVisitorBlock);
+CXResult clang_findIncludesInFileWithBlock(CXTranslationUnit, CXFile,
+                                           CXCursorAndRangeVisitorBlock);
 
 #  endif
 #endif
