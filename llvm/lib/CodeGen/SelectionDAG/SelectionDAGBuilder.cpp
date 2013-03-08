@@ -1872,13 +1872,6 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
     visitInlineAsm(&I);
   else if (Fn && Fn->isIntrinsic()) {
     assert(Fn->getIntrinsicID() == Intrinsic::donothing);
-    // If donothing has a landingpad, we should clear CurrentCallSite.
-    if (LandingPad) {
-      MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-      unsigned CallSiteIndex = MMI.getCurrentCallSite();
-      if (CallSiteIndex)
-        MMI.setCurrentCallSite(0);
-    }
     // Ignore invokes to @llvm.donothing: jump directly to the next BB.
   } else
     LowerCallTo(&I, getValue(Callee), false, LandingPad);
