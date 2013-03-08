@@ -94,6 +94,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
   setTargetDAGCombine(ISD::SELECT_CC);
 
+  setBooleanContents(ZeroOrNegativeOneBooleanContent);
   setSchedulingPreference(Sched::VLIW);
 }
 
