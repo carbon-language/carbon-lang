@@ -3,20 +3,18 @@
 ;CHECK: S_MOV_B32
 ;CHECK-NEXT: V_INTERP_MOV_F32
 
-define void @main() {
+define void @main(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg) "ShaderType"="0" {
 main_body:
-  call void @llvm.AMDGPU.shader.type(i32 0)
-  %0 = load i32 addrspace(8)* inttoptr (i32 6 to i32 addrspace(8)*)
-  %1 = call float @llvm.SI.fs.interp.constant(i32 0, i32 0, i32 %0)
-  %2 = call i32 @llvm.SI.packf16(float %1, float %1)
-  %3 = bitcast i32 %2 to float
-  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %3, float %3, float %3, float %3)
+  %4 = call float @llvm.SI.fs.constant(i32 0, i32 0, i32 %3)
+  %5 = call i32 @llvm.SI.packf16(float %4, float %4)
+  %6 = bitcast i32 %5 to float
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %6, float %6, float %6, float %6)
   ret void
 }
 
 declare void @llvm.AMDGPU.shader.type(i32)
 
-declare float @llvm.SI.fs.interp.constant(i32, i32, i32) readonly
+declare float @llvm.SI.fs.constant(i32, i32, i32) readonly
 
 declare i32 @llvm.SI.packf16(float, float) readnone
 
