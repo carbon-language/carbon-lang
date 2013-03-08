@@ -1042,6 +1042,9 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SELECT_CC: {
     // fold selectcc (selectcc x, y, a, b, cc), b, a, b, seteq ->
     //      selectcc x, y, a, b, inv(cc)
+    //
+    // fold selectcc (selectcc x, y, a, b, cc), b, a, b, setne ->
+    //      selectcc x, y, a, b, cc
     SDValue LHS = N->getOperand(0);
     if (LHS.getOpcode() != ISD::SELECT_CC) {
       return SDValue();
@@ -1050,24 +1053,30 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
     SDValue RHS = N->getOperand(1);
     SDValue True = N->getOperand(2);
     SDValue False = N->getOperand(3);
+    ISD::CondCode NCC = cast<CondCodeSDNode>(N->getOperand(4))->get();
 
     if (LHS.getOperand(2).getNode() != True.getNode() ||
         LHS.getOperand(3).getNode() != False.getNode() ||
-        RHS.getNode() != False.getNode() ||
-        cast<CondCodeSDNode>(N->getOperand(4))->get() != ISD::SETEQ) {
+        RHS.getNode() != False.getNode()) {
       return SDValue();
     }
 
-    ISD::CondCode CCOpcode = cast<CondCodeSDNode>(LHS->getOperand(4))->get();
-    CCOpcode = ISD::getSetCCInverse(
-                        CCOpcode, LHS.getOperand(0).getValueType().isInteger());
-    return DAG.getSelectCC(N->getDebugLoc(),
-                           LHS.getOperand(0),
-                           LHS.getOperand(1),
-                           LHS.getOperand(2),
-                           LHS.getOperand(3),
-                           CCOpcode);
+    switch (NCC) {
+    default: return SDValue();
+    case ISD::SETNE: return LHS;
+    case ISD::SETEQ: {
+      ISD::CondCode LHSCC = cast<CondCodeSDNode>(LHS.getOperand(4))->get();
+      LHSCC = ISD::getSetCCInverse(LHSCC,
+                                  LHS.getOperand(0).getValueType().isInteger());
+      return DAG.getSelectCC(N->getDebugLoc(),
+                             LHS.getOperand(0),
+                             LHS.getOperand(1),
+                             LHS.getOperand(2),
+                             LHS.getOperand(3),
+                             LHSCC);
     }
+    }
+  }
   case AMDGPUISD::EXPORT: {
     SDValue Arg = N->getOperand(1);
     if (Arg.getOpcode() != ISD::BUILD_VECTOR)
