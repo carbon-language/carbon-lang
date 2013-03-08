@@ -31,7 +31,6 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializeCFGPrinterPass(Registry);
   initializeCFGOnlyViewerPass(Registry);
   initializeCFGOnlyPrinterPass(Registry);
-  initializePrintDbgInfoPass(Registry);
   initializeDependenceAnalysisPass(Registry);
   initializeDominanceFrontierPass(Registry);
   initializeDomViewerPass(Registry);

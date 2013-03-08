@@ -152,7 +152,6 @@ namespace {
       (void) llvm::createPrintModulePass(0);
       (void) llvm::createPrintFunctionPass("", 0);
       (void) llvm::createPrintBasicBlockPass(0);
-      (void) llvm::createDbgInfoPrinterPass();
       (void) llvm::createModuleDebugInfoPrinterPass();
       (void) llvm::createPartialInliningPass();
       (void) llvm::createLintPass();

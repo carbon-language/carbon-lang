@@ -13,7 +13,6 @@ add_llvm_library(LLVMAnalysis
   CostModel.cpp
   CodeMetrics.cpp
   ConstantFolding.cpp
-  DbgInfoPrinter.cpp
   DependenceAnalysis.cpp
   DomPrinter.cpp
   DominanceFrontier.cpp

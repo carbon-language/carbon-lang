@@ -198,9 +198,6 @@ namespace llvm {
   // analyze.
   FunctionPass *createInstCountPass();
 
-  // print debug info intrinsics in human readable form
-  FunctionPass *createDbgInfoPrinterPass();
-
   //===--------------------------------------------------------------------===//
   //
   // createRegionInfoPass - This pass finds all single entry single exit regions
