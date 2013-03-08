@@ -323,6 +323,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     // Disable some warnings.
     m_compiler->getDiagnosticOpts().Warnings.push_back("no-unused-value");
+    m_compiler->getDiagnosticOpts().Warnings.push_back("no-odr");
     
     // Inform the target of the language options
     //
