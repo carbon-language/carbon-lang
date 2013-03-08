@@ -420,18 +420,15 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   // Emit subprogram debug descriptor.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    unsigned NumArgs = 0;
-    QualType *ArgsArray = new QualType[Args.size()];
+    SmallVector<QualType, 16> ArgTypes;
     for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
 	 i != e; ++i) {
-      ArgsArray[NumArgs++] = (*i)->getType();
+      ArgTypes.push_back((*i)->getType());
     }
 
     QualType FnType =
-      getContext().getFunctionType(RetTy, ArgsArray, NumArgs,
+      getContext().getFunctionType(RetTy, ArgTypes,
                                    FunctionProtoType::ExtProtoInfo());
-
-    delete[] ArgsArray;
 
     DI->setLocation(StartLoc);
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);

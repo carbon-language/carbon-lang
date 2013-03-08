@@ -385,7 +385,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
     QualType MethodTy = Context.getFunctionType(Context.DependentTy,
-                                                /*Args=*/0, /*NumArgs=*/0, EPI);
+                                                ArrayRef<QualType>(),
+                                                EPI);
     MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
     ExplicitParams = false;
     ExplicitResultType = false;
@@ -628,16 +629,18 @@ static void addFunctionPointerConversion(Sema &S,
   {
     FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
     ExtInfo.TypeQuals = 0;
-    FunctionTy = S.Context.getFunctionType(Proto->getResultType(),
-                                           Proto->arg_type_begin(),
-                                           Proto->getNumArgs(),
-                                           ExtInfo);
+    FunctionTy =
+      S.Context.getFunctionType(Proto->getResultType(),
+                                ArrayRef<QualType>(Proto->arg_type_begin(),
+                                                   Proto->getNumArgs()),
+                                ExtInfo);
     FunctionPtrTy = S.Context.getPointerType(FunctionTy);
   }
   
   FunctionProtoType::ExtProtoInfo ExtInfo;
   ExtInfo.TypeQuals = Qualifiers::Const;
-  QualType ConvTy = S.Context.getFunctionType(FunctionPtrTy, 0, 0, ExtInfo);
+  QualType ConvTy =
+    S.Context.getFunctionType(FunctionPtrTy, ArrayRef<QualType>(), ExtInfo);
   
   SourceLocation Loc = IntroducerRange.getBegin();
   DeclarationName Name
@@ -701,15 +704,16 @@ static void addBlockPointerConversion(Sema &S,
     ExtInfo.TypeQuals = 0;
     QualType FunctionTy
       = S.Context.getFunctionType(Proto->getResultType(),
-                                  Proto->arg_type_begin(),
-                                  Proto->getNumArgs(),
+                                  ArrayRef<QualType>(Proto->arg_type_begin(),
+                                                     Proto->getNumArgs()),
                                   ExtInfo);
     BlockPtrTy = S.Context.getBlockPointerType(FunctionTy);
   }
   
   FunctionProtoType::ExtProtoInfo ExtInfo;
   ExtInfo.TypeQuals = Qualifiers::Const;
-  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, 0, 0, ExtInfo);
+  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, ArrayRef<QualType>(),
+                                              ExtInfo);
   
   SourceLocation Loc = IntroducerRange.getBegin();
   DeclarationName Name
@@ -821,8 +825,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
         = CallOperator->getType()->getAs<FunctionProtoType>();
       QualType FunctionTy
         = Context.getFunctionType(LSI->ReturnType,
-                                  Proto->arg_type_begin(),
-                                  Proto->getNumArgs(),
+                                  ArrayRef<QualType>(Proto->arg_type_begin(),
+                                                     Proto->getNumArgs()),
                                   Proto->getExtProtoInfo());
       CallOperator->setType(FunctionTy);
     }

@@ -1560,8 +1560,8 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   llvm_unreachable("Invalid calling convention.");
 }
 
-FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
-                                     unsigned numArgs, QualType canonical,
+FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> args,
+                                     QualType canonical,
                                      const ExtProtoInfo &epi)
   : FunctionType(FunctionProto, result, epi.TypeQuals,
                  canonical,
@@ -1570,17 +1570,17 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                  result->isVariablyModifiedType(),
                  result->containsUnexpandedParameterPack(),
                  epi.ExtInfo),
-    NumArgs(numArgs), NumExceptions(epi.NumExceptions),
+    NumArgs(args.size()), NumExceptions(epi.NumExceptions),
     ExceptionSpecType(epi.ExceptionSpecType),
     HasAnyConsumedArgs(epi.ConsumedArguments != 0),
     Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn),
     RefQualifier(epi.RefQualifier)
 {
-  assert(NumArgs == numArgs && "function has too many parameters");
+  assert(NumArgs == args.size() && "function has too many parameters");
 
   // Fill in the trailing argument array.
   QualType *argSlot = reinterpret_cast<QualType*>(this+1);
-  for (unsigned i = 0; i != numArgs; ++i) {
+  for (unsigned i = 0; i != NumArgs; ++i) {
     if (args[i]->isDependentType())
       setDependent();
     else if (args[i]->isInstantiationDependentType())
@@ -1594,7 +1594,7 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
 
   if (getExceptionSpecType() == EST_Dynamic) {
     // Fill in the exception array.
-    QualType *exnSlot = argSlot + numArgs;
+    QualType *exnSlot = argSlot + NumArgs;
     for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i) {
       if (epi.Exceptions[i]->isDependentType())
         setDependent();
@@ -1608,7 +1608,7 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
     }
   } else if (getExceptionSpecType() == EST_ComputedNoexcept) {
     // Store the noexcept expression and context.
-    Expr **noexSlot = reinterpret_cast<Expr**>(argSlot + numArgs);
+    Expr **noexSlot = reinterpret_cast<Expr**>(argSlot + NumArgs);
     *noexSlot = epi.NoexceptExpr;
     
     if (epi.NoexceptExpr) {
@@ -1621,7 +1621,7 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
   } else if (getExceptionSpecType() == EST_Uninstantiated) {
     // Store the function decl from which we will resolve our
     // exception specification.
-    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + numArgs);
+    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + NumArgs);
     slot[0] = epi.ExceptionSpecDecl;
     slot[1] = epi.ExceptionSpecTemplate;
     // This exception specification doesn't make the type dependent, because
@@ -1629,13 +1629,13 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
   } else if (getExceptionSpecType() == EST_Unevaluated) {
     // Store the function decl from which we will resolve our
     // exception specification.
-    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + numArgs);
+    FunctionDecl **slot = reinterpret_cast<FunctionDecl**>(argSlot + NumArgs);
     slot[0] = epi.ExceptionSpecDecl;
   }
 
   if (epi.ConsumedArguments) {
     bool *consumedArgs = const_cast<bool*>(getConsumedArgsBuffer());
-    for (unsigned i = 0; i != numArgs; ++i)
+    for (unsigned i = 0; i != NumArgs; ++i)
       consumedArgs[i] = epi.ConsumedArguments[i];
   }
 }

@@ -4395,8 +4395,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     } else if (EST == EST_Unevaluated) {
       EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
     }
-    return Context.getFunctionType(ResultType, ParamTypes.data(), NumParams,
-                                    EPI);
+    return Context.getFunctionType(ResultType, ParamTypes, EPI);
   }
 
   case TYPE_UNRESOLVED_USING: {

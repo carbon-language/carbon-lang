@@ -2797,7 +2797,7 @@ private:
     return false;
   }
 
-  FunctionProtoType(QualType result, const QualType *args, unsigned numArgs,
+  FunctionProtoType(QualType result, ArrayRef<QualType> args,
                     QualType canonical, const ExtProtoInfo &epi);
 
   /// NumArgs - The number of arguments this function has, not counting '...'.

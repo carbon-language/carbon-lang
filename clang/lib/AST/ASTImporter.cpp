@@ -1619,8 +1619,7 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
   ToEPI.ExceptionSpecTemplate = cast_or_null<FunctionDecl>(
                                 Importer.Import(FromEPI.ExceptionSpecTemplate));
 
-  return Importer.getToContext().getFunctionType(ToResultType, ArgTypes.data(),
-                                                 ArgTypes.size(), ToEPI);
+  return Importer.getToContext().getFunctionType(ToResultType, ArgTypes, ToEPI);
 }
 
 QualType ASTNodeImporter::VisitParenType(const ParenType *T) {
@@ -2660,8 +2659,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
       FunctionProtoType::ExtProtoInfo DefaultEPI;
       FromTy = Importer.getFromContext().getFunctionType(
                             FromFPT->getResultType(),
-                            FromFPT->arg_type_begin(),
-                            FromFPT->arg_type_end() - FromFPT->arg_type_begin(),
+                            ArrayRef<QualType>(FromFPT->arg_type_begin(),
+                                               FromFPT->getNumArgs()),
                             DefaultEPI);
       usedDifferentExceptionSpec = true;
     }

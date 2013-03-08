@@ -1595,8 +1595,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
       EPI.Variadic = Proto->isVariadic();
 
       ExpectedFunctionType
-        = Context.getFunctionType(Context.VoidTy, ArgTypes.data(),
-                                  ArgTypes.size(), EPI);
+        = Context.getFunctionType(Context.VoidTy, ArgTypes, EPI);
     }
 
     for (LookupResult::iterator D = FoundDelete.begin(),
@@ -1898,7 +1897,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                 EST_BasicNoexcept : EST_DynamicNone;
   }
 
-  QualType FnType = Context.getFunctionType(Return, &Argument, 1, EPI);
+  QualType FnType = Context.getFunctionType(Return, Argument, EPI);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(),
                          SourceLocation(), Name,

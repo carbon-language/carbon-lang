@@ -5946,8 +5946,9 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
           FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
           EPI.TypeQuals |= Qualifiers::Const;
           FT = Context.getFunctionType(FPT->getResultType(),
-                                       FPT->arg_type_begin(),
-                                       FPT->getNumArgs(), EPI);
+                                       ArrayRef<QualType>(FPT->arg_type_begin(),
+                                                          FPT->getNumArgs()),
+                                       EPI);
         }
       }
 

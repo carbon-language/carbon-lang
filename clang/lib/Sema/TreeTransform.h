@@ -713,8 +713,7 @@ public:
   /// By default, performs semantic analysis when building the function type.
   /// Subclasses may override this routine to provide different behavior.
   QualType RebuildFunctionProtoType(QualType T,
-                                    QualType *ParamTypes,
-                                    unsigned NumParamTypes,
+                                    llvm::MutableArrayRef<QualType> ParamTypes,
                                     bool Variadic, bool HasTrailingReturn,
                                     unsigned Quals,
                                     RefQualifierKind RefQualifier,
@@ -4266,9 +4265,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
       ResultType != T->getResultType() ||
       T->getNumArgs() != ParamTypes.size() ||
       !std::equal(T->arg_type_begin(), T->arg_type_end(), ParamTypes.begin())) {
-    Result = getDerived().RebuildFunctionProtoType(ResultType,
-                                                   ParamTypes.data(),
-                                                   ParamTypes.size(),
+    Result = getDerived().RebuildFunctionProtoType(ResultType, ParamTypes,
                                                    T->isVariadic(),
                                                    T->hasTrailingReturn(),
                                                    T->getTypeQuals(),
@@ -8850,13 +8847,11 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
     return ExprError();
   }
 
-  QualType functionType = getDerived().RebuildFunctionProtoType(
-                                                        exprResultType,
-                                                        paramTypes.data(),
-                                                        paramTypes.size(),
-                                                        oldBlock->isVariadic(),
-                                                        false, 0, RQ_None,
-                                               exprFunctionType->getExtInfo());
+  QualType functionType =
+    getDerived().RebuildFunctionProtoType(exprResultType, paramTypes,
+                                          oldBlock->isVariadic(),
+                                          false, 0, RQ_None,
+                                          exprFunctionType->getExtInfo());
   blockScope->FunctionType = functionType;
 
   // Set the parameters on the block decl.
@@ -9072,15 +9067,15 @@ TreeTransform<Derived>::RebuildDependentSizedExtVectorType(QualType ElementType,
 }
 
 template<typename Derived>
-QualType TreeTransform<Derived>::RebuildFunctionProtoType(QualType T,
-                                                          QualType *ParamTypes,
-                                                        unsigned NumParamTypes,
-                                                          bool Variadic,
-                                                         bool HasTrailingReturn,
-                                                          unsigned Quals,
-                                                  RefQualifierKind RefQualifier,
-                                            const FunctionType::ExtInfo &Info) {
-  return SemaRef.BuildFunctionType(T, ParamTypes, NumParamTypes, Variadic,
+QualType TreeTransform<Derived>::RebuildFunctionProtoType(
+    QualType T,
+    llvm::MutableArrayRef<QualType> ParamTypes,
+    bool Variadic,
+    bool HasTrailingReturn,
+    unsigned Quals,
+    RefQualifierKind RefQualifier,
+    const FunctionType::ExtInfo &Info) {
+  return SemaRef.BuildFunctionType(T, ParamTypes, Variadic,
                                    HasTrailingReturn, Quals, RefQualifier,
                                    getDerived().getBaseLocation(),
                                    getDerived().getBaseEntity(),

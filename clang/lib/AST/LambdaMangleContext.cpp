@@ -23,10 +23,11 @@ unsigned LambdaMangleContext::getManglingNumber(CXXMethodDecl *CallOperator) {
     = CallOperator->getType()->getAs<FunctionProtoType>();
   ASTContext &Context = CallOperator->getASTContext();
   
-  QualType Key = Context.getFunctionType(Context.VoidTy, 
-                                         Proto->arg_type_begin(),
-                                         Proto->getNumArgs(),
-                                         FunctionProtoType::ExtProtoInfo());
+  QualType Key =
+    Context.getFunctionType(Context.VoidTy,
+                            ArrayRef<QualType>(Proto->arg_type_begin(),
+                                               Proto->getNumArgs()),
+                            FunctionProtoType::ExtProtoInfo());
   Key = Context.getCanonicalType(Key);
   return ++ManglingNumbers[Key->castAs<FunctionProtoType>()];
 }

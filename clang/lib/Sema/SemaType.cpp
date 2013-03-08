@@ -1630,40 +1630,8 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
   return Context.getDependentSizedExtVectorType(T, ArraySize, AttrLoc);
 }
 
-/// \brief Build a function type.
-///
-/// This routine checks the function type according to C++ rules and
-/// under the assumption that the result type and parameter types have
-/// just been instantiated from a template. It therefore duplicates
-/// some of the behavior of GetTypeForDeclarator, but in a much
-/// simpler form that is only suitable for this narrow use case.
-///
-/// \param T The return type of the function.
-///
-/// \param ParamTypes The parameter types of the function. This array
-/// will be modified to account for adjustments to the types of the
-/// function parameters.
-///
-/// \param NumParamTypes The number of parameter types in ParamTypes.
-///
-/// \param Variadic Whether this is a variadic function type.
-///
-/// \param HasTrailingReturn Whether this function has a trailing return type.
-///
-/// \param Quals The cvr-qualifiers to be applied to the function type.
-///
-/// \param Loc The location of the entity whose type involves this
-/// function type or, if there is no such entity, the location of the
-/// type that will have function type.
-///
-/// \param Entity The name of the entity that involves the function
-/// type, if known.
-///
-/// \returns A suitable function type, if there are no
-/// errors. Otherwise, returns a NULL type.
 QualType Sema::BuildFunctionType(QualType T,
-                                 QualType *ParamTypes,
-                                 unsigned NumParamTypes,
+                                 llvm::MutableArrayRef<QualType> ParamTypes,
                                  bool Variadic, bool HasTrailingReturn,
                                  unsigned Quals,
                                  RefQualifierKind RefQualifier,
@@ -1683,7 +1651,7 @@ QualType Sema::BuildFunctionType(QualType T,
   }
 
   bool Invalid = false;
-  for (unsigned Idx = 0; Idx < NumParamTypes; ++Idx) {
+  for (unsigned Idx = 0, Cnt = ParamTypes.size(); Idx < Cnt; ++Idx) {
     // FIXME: Loc is too inprecise here, should use proper locations for args.
     QualType ParamType = Context.getAdjustedParameterType(ParamTypes[Idx]);
     if (ParamType->isVoidType()) {
@@ -1709,7 +1677,7 @@ QualType Sema::BuildFunctionType(QualType T,
   EPI.RefQualifier = RefQualifier;
   EPI.ExtInfo = Info;
 
-  return Context.getFunctionType(T, ParamTypes, NumParamTypes, EPI);
+  return Context.getFunctionType(T, ParamTypes, EPI);
 }
 
 /// \brief Build a member pointer type \c T Class::*.
@@ -2786,7 +2754,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                       Exceptions,
                                       EPI);
 
-        T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(), EPI);
+        T = Context.getFunctionType(T, ArgTys, EPI);
       }
 
       break;
@@ -2926,8 +2894,9 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       EPI.RefQualifier = RQ_None;
 
       T = Context.getFunctionType(FnTy->getResultType(),
-                                  FnTy->arg_type_begin(),
-                                  FnTy->getNumArgs(), EPI);
+                                  ArrayRef<QualType>(FnTy->arg_type_begin(),
+                                                     FnTy->getNumArgs()),
+                                  EPI);
       // Rebuild any parens around the identifier in the function type.
       for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
         if (D.getTypeObject(i).Kind != DeclaratorChunk::Paren)

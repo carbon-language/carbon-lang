@@ -4194,8 +4194,10 @@ updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
   FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
   ExceptSpec.getEPI(EPI);
   const FunctionProtoType *NewFPT = cast<FunctionProtoType>(
-    S.Context.getFunctionType(FPT->getResultType(), FPT->arg_type_begin(),
-                              FPT->getNumArgs(), EPI));
+    S.Context.getFunctionType(FPT->getResultType(),
+                              ArrayRef<QualType>(FPT->arg_type_begin(),
+                                                 FPT->getNumArgs()),
+                              EPI));
   FD->setType(QualType(NewFPT, 0));
 }
 
@@ -4357,8 +4359,10 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     FunctionProtoType::ExtProtoInfo EPI = Type->getExtProtoInfo();
     EPI.ExceptionSpecType = EST_Unevaluated;
     EPI.ExceptionSpecDecl = MD;
-    MD->setType(Context.getFunctionType(ReturnType, &ArgType,
-                                        ExpectedParams, EPI));
+    MD->setType(Context.getFunctionType(ReturnType,
+                                        ArrayRef<QualType>(&ArgType,
+                                                           ExpectedParams),
+                                        EPI));
   }
 
   if (ShouldDeleteSpecialMember(MD, CSM)) {
@@ -4387,7 +4391,7 @@ void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
   FunctionProtoType::ExtProtoInfo EPI;
   computeImplicitExceptionSpec(*this, MD->getLocation(), MD).getEPI(EPI);
   const FunctionProtoType *ImplicitType = cast<FunctionProtoType>(
-    Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+    Context.getFunctionType(Context.VoidTy, ArrayRef<QualType>(), EPI));
 
   // Ensure that it matches.
   CheckEquivalentExceptionSpec(
@@ -5640,8 +5644,10 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
   EPI.TypeQuals = 0;
   EPI.RefQualifier = RQ_None;
   
-  return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
-                                 Proto->getNumArgs(), EPI);
+  return Context.getFunctionType(Context.VoidTy,
+                                 ArrayRef<QualType>(Proto->arg_type_begin(),
+                                                    Proto->getNumArgs()),
+                                 EPI);
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -5821,7 +5827,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   EPI.Variadic = false;
   EPI.TypeQuals = 0;
   EPI.RefQualifier = RQ_None;
-  return Context.getFunctionType(Context.VoidTy, 0, 0, EPI);
+  return Context.getFunctionType(Context.VoidTy, ArrayRef<QualType>(), EPI);
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the
@@ -5902,7 +5908,8 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // of the errors above fired) and with the conversion type as the
   // return type.
   if (D.isInvalidType())
-    R = Context.getFunctionType(ConvType, 0, 0, Proto->getExtProtoInfo());
+    R = Context.getFunctionType(ConvType, ArrayRef<QualType>(),
+                                Proto->getExtProtoInfo());
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified())
@@ -7532,7 +7539,9 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = DefaultCon;
-  DefaultCon->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+  DefaultCon->setType(Context.getFunctionType(Context.VoidTy,
+                                              ArrayRef<QualType>(),
+                                              EPI));
 
   // We don't need to use SpecialMemberIsTrivial here; triviality for default
   // constructors is easy to compute.
@@ -7697,7 +7706,7 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
               BaseCtorType->getExtProtoInfo();
           ExtInfo.Variadic = false;
           NewCtorType = Context.getFunctionType(BaseCtorType->getResultType(),
-                                                Args.data(), params, ExtInfo)
+                                                Args, ExtInfo)
                        .getTypePtr();
         }
         const Type *CanonicalNewCtorType =
@@ -7843,7 +7852,9 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = Destructor;
-  Destructor->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+  Destructor->setType(Context.getFunctionType(Context.VoidTy,
+                                              ArrayRef<QualType>(),
+                                              EPI));
 
   AddOverriddenMethods(ClassDecl, Destructor);
 
@@ -7947,7 +7958,9 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
   FunctionProtoType::ExtProtoInfo EPI = DtorType->getExtProtoInfo();
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = Destructor;
-  Destructor->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+  Destructor->setType(Context.getFunctionType(Context.VoidTy,
+                                              ArrayRef<QualType>(),
+                                              EPI));
 
   // FIXME: If the destructor has a body that could throw, and the newly created
   // spec doesn't allow exceptions, we should emit a warning, because this
@@ -8347,7 +8360,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = CopyAssignment;
-  CopyAssignment->setType(Context.getFunctionType(RetType, &ArgType, 1, EPI));
+  CopyAssignment->setType(Context.getFunctionType(RetType, ArgType, EPI));
 
   // Add the parameter to the operator.
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
@@ -8797,7 +8810,7 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = MoveAssignment;
-  MoveAssignment->setType(Context.getFunctionType(RetType, &ArgType, 1, EPI));
+  MoveAssignment->setType(Context.getFunctionType(RetType, ArgType, EPI));
 
   // Add the parameter to the operator.
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, MoveAssignment,
@@ -9151,7 +9164,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = CopyConstructor;
   CopyConstructor->setType(
-      Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
+      Context.getFunctionType(Context.VoidTy, ArgType, EPI));
 
   // Add the parameter to the constructor.
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
@@ -9338,7 +9351,7 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = MoveConstructor;
   MoveConstructor->setType(
-      Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
+      Context.getFunctionType(Context.VoidTy, ArgType, EPI));
 
   // Add the parameter to the constructor.
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, MoveConstructor,

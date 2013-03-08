@@ -2563,7 +2563,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
       SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
                                                  OldProto->arg_type_end());
       NewQType = Context.getFunctionType(NewFuncType->getResultType(),
-                                         ParamTypes.data(), ParamTypes.size(),
+                                         ParamTypes,
                                          OldProto->getExtProtoInfo());
       New->setType(NewQType);
       New->setHasInheritedPrototype();
@@ -2646,8 +2646,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
                diag::note_previous_declaration);
       }
 
-      New->setType(Context.getFunctionType(MergedReturn, &ArgTypes[0],
-                                           ArgTypes.size(),
+      New->setType(Context.getFunctionType(MergedReturn, ArgTypes,
                                            OldProto->getExtProtoInfo()));
       return MergeCompatibleFunctionDecls(New, Old, S);
     }
@@ -5701,8 +5700,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     T = Context.getObjCObjectPointerType(T);
     if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(R)) {
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      R = Context.getFunctionType(T, FPT->arg_type_begin(),
-                                  FPT->getNumArgs(), EPI);
+      R = Context.getFunctionType(T,
+                                  ArrayRef<QualType>(FPT->arg_type_begin(),
+                                                     FPT->getNumArgs()),
+                                  EPI);
     }
     else if (isa<FunctionNoProtoType>(R))
       R = Context.getFunctionNoProtoType(T);
@@ -5997,8 +5998,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
       EPI.ExceptionSpecType = EST_BasicNoexcept;
       NewFD->setType(Context.getFunctionType(FPT->getResultType(),
-                                             FPT->arg_type_begin(),
-                                             FPT->getNumArgs(), EPI));
+                                      ArrayRef<QualType>(FPT->arg_type_begin(),
+                                                         FPT->getNumArgs()),
+                                             EPI));
     }
   }
 
@@ -6382,7 +6384,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     EPI.Variadic = true;
     EPI.ExtInfo = FT->getExtInfo();
 
-    QualType R = Context.getFunctionType(FT->getResultType(), 0, 0, EPI);
+    QualType R = Context.getFunctionType(FT->getResultType(),
+                                         ArrayRef<QualType>(),
+                                         EPI);
     NewFD->setType(R);
   }
 
@@ -6583,8 +6587,9 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
       EPI.TypeQuals |= Qualifiers::Const;
       MD->setType(Context.getFunctionType(FPT->getResultType(),
-                                          FPT->arg_type_begin(),
-                                          FPT->getNumArgs(), EPI));
+                                      ArrayRef<QualType>(FPT->arg_type_begin(),
+                                                         FPT->getNumArgs()),
+                                          EPI));
     }
   }
 
