@@ -18,7 +18,7 @@ def err_fe_pch_malformed : Error<
 def err_fe_pch_malformed_block : Error<
     "malformed block record in PCH file: '%0'">, DefaultFatal;
 def err_fe_pch_file_modified : Error<
-    "file '%0' has been modified since the precompiled header was built">,
+    "file '%0' has been modified since the precompiled header '%1' was built">,
     DefaultFatal;
 def err_fe_pch_file_overridden : Error<
     "file '%0' from the precompiled header has been overridden">;

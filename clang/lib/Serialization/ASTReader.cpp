@@ -1602,7 +1602,7 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
 #endif
          )) {
       if (Complain)
-        Error(diag::err_fe_pch_file_modified, Filename);
+        Error(diag::err_fe_pch_file_modified, Filename, F.FileName);
       IsOutOfDate = true;
     }
 
