@@ -3108,5 +3108,44 @@ TEST_F(FormatTest, BreakStringLiterals) {
       format("\"split/pathat/slashes\"", getLLVMStyleWithColumns(10)));
 }
 
+TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {
+  EXPECT_EQ("\"\\a\"",
+            format("\"\\a\"", getLLVMStyleWithColumns(3)));
+  EXPECT_EQ("\"\\\"",
+            format("\"\\\"", getLLVMStyleWithColumns(2)));
+  EXPECT_EQ("\"test\"\n"
+            "\"\\n\"",
+            format("\"test\\n\"", getLLVMStyleWithColumns(7)));
+  EXPECT_EQ("\"tes\\\\\"\n"
+            "\"n\"",
+            format("\"tes\\\\n\"", getLLVMStyleWithColumns(7)));
+  EXPECT_EQ("\"\\\\\\\\\"\n"
+            "\"\\n\"",
+            format("\"\\\\\\\\\\n\"", getLLVMStyleWithColumns(7)));
+  EXPECT_EQ("\"\\uff01\"",
+            format("\"\\uff01\"", getLLVMStyleWithColumns(7)));
+  EXPECT_EQ("\"\\uff01\"\n"
+            "\"test\"",
+            format("\"\\uff01test\"", getLLVMStyleWithColumns(8)));
+  EXPECT_EQ("\"\\Uff01ff02\"",
+            format("\"\\Uff01ff02\"", getLLVMStyleWithColumns(11)));
+  EXPECT_EQ("\"\\x000000000001\"\n"
+            "\"next\"",
+            format("\"\\x000000000001next\"", getLLVMStyleWithColumns(16)));
+  EXPECT_EQ("\"\\x000000000001next\"",
+            format("\"\\x000000000001next\"", getLLVMStyleWithColumns(15)));
+  EXPECT_EQ("\"\\x000000000001\"",
+            format("\"\\x000000000001\"", getLLVMStyleWithColumns(7)));
+  EXPECT_EQ("\"test\"\n"
+            "\"\\000000\"\n"
+            "\"000001\"",
+            format("\"test\\000000000001\"", getLLVMStyleWithColumns(9)));
+  EXPECT_EQ("\"test\\000\"\n"
+            "\"000000001\"",
+            format("\"test\\000000000001\"", getLLVMStyleWithColumns(10)));
+  EXPECT_EQ("R\"(\\x\\x00)\"\n",
+            format("R\"(\\x\\x00)\"\n", getLLVMStyleWithColumns(7)));
+}
+
 } // end namespace tooling
 } // end namespace clang

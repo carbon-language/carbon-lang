@@ -729,6 +729,9 @@ private:
                                 bool DryRun) {
     if (Current.isNot(tok::string_literal))
       return 0;
+    // Only break up default narrow strings.
+    if (StringRef(Current.FormatTok.Tok.getLiteralData()).find('"') != 0)
+      return 0;
 
     unsigned Penalty = 0;
     unsigned TailOffset = 0;
@@ -774,10 +777,61 @@ private:
     StringRef::size_type SlashOffset = Text.rfind('/', Offset);
     if (SlashOffset != StringRef::npos && SlashOffset != 0)
       return SlashOffset;
-    if (Offset > 1)
+    StringRef::size_type Split = getStartOfCharacter(Text, Offset);
+    if (Split != StringRef::npos && Split > 1)
       // Do not split at 0.
-      return Offset - 1;
+      return Split - 1;
     return StringRef::npos;
+  }
+
+  StringRef::size_type
+  getStartOfCharacter(StringRef Text, StringRef::size_type Offset) {
+    StringRef::size_type NextEscape = Text.find('\\');
+    while (NextEscape != StringRef::npos && NextEscape < Offset) {
+      StringRef::size_type SequenceLength =
+          getEscapeSequenceLength(Text.substr(NextEscape));
+      if (Offset < NextEscape + SequenceLength)
+        return NextEscape;
+      NextEscape = Text.find('\\', NextEscape + SequenceLength);
+    }
+    return Offset;
+  }
+
+  unsigned getEscapeSequenceLength(StringRef Text) {
+    assert(Text[0] == '\\');
+    if (Text.size() < 2)
+      return 1;
+
+    switch (Text[1]) {
+    case 'u':
+      return 6;
+    case 'U':
+      return 10;
+    case 'x':
+      return getHexLength(Text);
+    default:
+      if (Text[1] >= '0' && Text[1] <= '7')
+        return getOctalLength(Text);
+      return 2;
+    }
+  }
+
+  unsigned getHexLength(StringRef Text) {
+    unsigned I = 2; // Point after '\x'.
+    while (I < Text.size() && ((Text[I] >= '0' && Text[I] <= '9') ||
+                               (Text[I] >= 'a' && Text[I] <= 'f') ||
+                               (Text[I] >= 'A' && Text[I] <= 'F'))) {
+      ++I;
+    }
+    return I;
+  }
+
+  unsigned getOctalLength(StringRef Text) {
+    unsigned I = 1;
+    while (I < Text.size() && I < 4 && (Text[I] >= '0' && Text[I] <= '7')) {
+      ++I;
+    }
+    return I;
   }
 
   unsigned getColumnLimit() {
