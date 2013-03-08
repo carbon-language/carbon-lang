@@ -401,8 +401,8 @@ namespace llvm {
     SlotIndex getNextNonNullIndex(SlotIndex Index) {
       IndexList::iterator I = Index.listEntry();
       IndexList::iterator E = indexList.end();
-      while (I != E)
-        if ((++I)->getInstr())
+      while (++I != E)
+        if (I->getInstr())
           return SlotIndex(I, Index.getSlot());
       // We reached the end of the function.
       return getLastIndex();
