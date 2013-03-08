@@ -1,8 +1,9 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: SETE_DX10 T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: @fcmp_sext
+; CHECK: SETE_DX10 T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-define void @test(i32 addrspace(1)* %out, float addrspace(1)* %in) {
+define void @fcmp_sext(i32 addrspace(1)* %out, float addrspace(1)* %in) {
 entry:
   %0 = load float addrspace(1)* %in
   %arrayidx1 = getelementptr inbounds float addrspace(1)* %in, i32 1
@@ -10,5 +11,26 @@ entry:
   %cmp = fcmp oeq float %0, %1
   %sext = sext i1 %cmp to i32
   store i32 %sext, i32 addrspace(1)* %out
+  ret void
+}
+
+; This test checks that a setcc node with f32 operands is lowered to a
+; SET* instruction.
+
+; CHECK: @fcmp_br
+; CHECK: SET{{[N]*}}E T{{[0-9]+\.[XYZW], [a-zA-Z0-9, .]+}}(5.0
+
+define void @fcmp_br(i32 addrspace(1)* %out, float %in) {
+entry:
+  %0 = fcmp oeq float %in, 5.0
+  br i1 %0, label %IF, label %ENDIF
+
+IF:
+  %1 = getelementptr i32 addrspace(1)* %out, i32 1
+  store i32 0, i32 addrspace(1)* %1
+  br label %ENDIF
+
+ENDIF:
+  store i32 0, i32 addrspace(1)* %out
   ret void
 }
