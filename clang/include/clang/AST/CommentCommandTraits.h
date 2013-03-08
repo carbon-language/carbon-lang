@@ -106,10 +106,10 @@ struct CommandInfo {
 
   /// \brief True if block command is further describing a container API; such
   /// as @coclass, @classdesign, etc.
-  unsigned IsContainerDetailCommand : 1;
+  unsigned IsRecordLikeDetailCommand : 1;
   
   /// \brief True if block command is a container API; such as @interface.
-  unsigned IsContainerDeclarationCommand : 1;
+  unsigned IsRecordLikeDeclarationCommand : 1;
   
   /// \brief True if this command is unknown.  This \c CommandInfo object was
   /// created during parsing.

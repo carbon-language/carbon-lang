@@ -215,8 +215,8 @@ public:
   bool isObjCMethodDecl();
   bool isObjCPropertyDecl();
   bool isTemplateOrSpecialization();
-  bool isContainerDecl();
-  bool isClassStructDecl();
+  bool isRecordLikeDecl();
+  bool isClassOrStructDecl();
   bool isUnionDecl();
   bool isObjCInterfaceDecl();
   bool isObjCProtocolDecl();

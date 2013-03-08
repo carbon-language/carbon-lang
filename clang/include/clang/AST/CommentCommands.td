@@ -25,8 +25,8 @@ class Command<string name> {
   bit IsVerbatimLineCommand = 0;
   bit IsDeclarationCommand = 0;
   bit IsFunctionDeclarationCommand = 0;
-  bit IsContainerDetailCommand = 0;
-  bit IsContainerDeclarationCommand = 0;
+  bit IsRecordLikeDetailCommand = 0;
+  bit IsRecordLikeDeclarationCommand = 0;
 }
 
 class InlineCommand<string name> : Command<name> {
@@ -35,6 +35,10 @@ class InlineCommand<string name> : Command<name> {
 
 class BlockCommand<string name> : Command<name> {
   let IsBlockCommand = 1;
+}
+
+class RecordLikeDetailCommand<string name> : BlockCommand<name> {
+  let IsRecordLikeDetailCommand = 1;
 }
 
 class VerbatimBlockCommand<string name> : Command<name> {
@@ -68,10 +72,10 @@ class FunctionDeclarationVerbatimLineCommand<string name> :
   let IsFunctionDeclarationCommand = 1;
 }
 
-class ContainerDeclarationVerbatimLineCommand<string name> :
+class RecordLikeDeclarationVerbatimLineCommand<string name> :
       VerbatimLineCommand<name> {
   let IsDeclarationCommand = 1;
-  let IsContainerDeclarationCommand = 1;
+  let IsRecordLikeDeclarationCommand = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -135,6 +139,18 @@ def Since      : BlockCommand<"since">;
 def Todo       : BlockCommand<"todo">;
 def Version    : BlockCommand<"version">;
 def Warning    : BlockCommand<"warning">;
+// HeaderDoc commands
+def ClassDesign   : RecordLikeDetailCommand<"classdesign">;
+def CoClass       : RecordLikeDetailCommand<"coclass">;
+def Dependency    : RecordLikeDetailCommand<"dependency">;
+def Helper        : RecordLikeDetailCommand<"helper">;
+def HelperClass   : RecordLikeDetailCommand<"helperclass">;
+def Helps         : RecordLikeDetailCommand<"helps">;
+def InstanceSize  : RecordLikeDetailCommand<"instancesize">;
+def Ownership     : RecordLikeDetailCommand<"ownership">;
+def Performance   : RecordLikeDetailCommand<"performance">;
+def Security      : RecordLikeDetailCommand<"security">;
+def SuperClass    : RecordLikeDetailCommand<"superclass">;
 
 //===----------------------------------------------------------------------===//
 // VerbatimBlockCommand
@@ -189,11 +205,11 @@ def Typedef   : DeclarationVerbatimLineCommand<"typedef">;
 def Var       : DeclarationVerbatimLineCommand<"var">;
 
 // HeaderDoc commands.
-def Class     : ContainerDeclarationVerbatimLineCommand<"class">;
-def Interface : ContainerDeclarationVerbatimLineCommand<"interface">;
-def Protocol  : ContainerDeclarationVerbatimLineCommand<"protocol">;
-def Struct    : ContainerDeclarationVerbatimLineCommand<"struct">;
-def Union     : ContainerDeclarationVerbatimLineCommand<"union">;
+def Class     : RecordLikeDeclarationVerbatimLineCommand<"class">;
+def Interface : RecordLikeDeclarationVerbatimLineCommand<"interface">;
+def Protocol  : RecordLikeDeclarationVerbatimLineCommand<"protocol">;
+def Struct    : RecordLikeDeclarationVerbatimLineCommand<"struct">;
+def Union     : RecordLikeDeclarationVerbatimLineCommand<"union">;
 def Category  : DeclarationVerbatimLineCommand<"category">;
 def Template  : DeclarationVerbatimLineCommand<"template">;
 def Function  : FunctionDeclarationVerbatimLineCommand<"function">;
@@ -202,37 +218,3 @@ def Callback  : FunctionDeclarationVerbatimLineCommand<"callback">;
 def Const     : DeclarationVerbatimLineCommand<"const">;
 def Constant  : DeclarationVerbatimLineCommand<"constant">;
 def Enum      : DeclarationVerbatimLineCommand<"enum">;
-
-def ClassDesign   : BlockCommand<"classdesign"> {
-  let IsContainerDetailCommand = 1; 
-}
-def CoClass       : BlockCommand<"coclass"> {
- let IsContainerDetailCommand = 1; 
-}
-def Dependency    : BlockCommand<"dependency"> {
- let IsContainerDetailCommand = 1; 
-}
-def Helper        : BlockCommand<"helper"> {
- let IsContainerDetailCommand = 1; 
-}
-def HelperClass   : BlockCommand<"helperclass"> {
- let IsContainerDetailCommand = 1; 
-}
-def Helps         : BlockCommand<"helps"> {
- let IsContainerDetailCommand = 1; 
-}
-def InstanceSize  : BlockCommand<"instancesize"> {
- let IsContainerDetailCommand = 1; 
-}
-def Ownership     : BlockCommand<"ownership"> {
- let IsContainerDetailCommand = 1; 
-}
-def Performance   : BlockCommand<"performance"> {
- let IsContainerDetailCommand = 1; 
-}
-def Security      : BlockCommand<"security"> {
- let IsContainerDetailCommand = 1; 
-}
-def SuperClass    : BlockCommand<"superclass"> {
- let IsContainerDetailCommand = 1; 
-}

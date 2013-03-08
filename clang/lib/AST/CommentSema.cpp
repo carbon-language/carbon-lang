@@ -95,13 +95,22 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
   if (!Info->IsFunctionDeclarationCommand)
     return;
-  StringRef Name = Info->Name;
-  unsigned DiagSelect = llvm::StringSwitch<unsigned>(Name)
-  .Case("function", !isAnyFunctionDecl() ? 1 : 0)
-  .Case("method", !isObjCMethodDecl() ? 2 : 0)
-  .Case("callback", !isFunctionPointerVarDecl() ? 3 : 0)
-  .Default(0);
-  
+
+  unsigned DiagSelect;
+  switch (Comment->getCommandID()) {
+    case CommandTraits::KCI_function:
+      DiagSelect = !isAnyFunctionDecl() ? 1 : 0;
+      break;
+    case CommandTraits::KCI_method:
+      DiagSelect = !isObjCMethodDecl() ? 2 : 0;
+      break;
+    case CommandTraits::KCI_callback:
+      DiagSelect = !isFunctionPointerVarDecl() ? 3 : 0;
+      break;
+    default:
+      DiagSelect = 0;
+      break;
+  }
   if (DiagSelect)
     Diag(Comment->getLocation(), diag::warn_doc_function_method_decl_mismatch)
     << Comment->getCommandMarker()
@@ -111,17 +120,29 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
   
 void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
-  if (!Info->IsContainerDeclarationCommand)
+  if (!Info->IsRecordLikeDeclarationCommand)
     return;
-  StringRef Name = Info->Name;
-  unsigned DiagSelect = llvm::StringSwitch<unsigned>(Name)
-  .Case("class", !isClassStructDecl() ? 1 : 0)
-  .Case("interface", !isObjCInterfaceDecl() ? 2 : 0)
-  .Case("protocol", !isObjCProtocolDecl() ? 3 : 0)
-  .Case("struct", !isClassStructDecl() ? 4 : 0)
-  .Case("union", !isUnionDecl() ? 5 : 0)
-  .Default(0);
-  
+  unsigned DiagSelect;
+  switch (Comment->getCommandID()) {
+    case CommandTraits::KCI_class:
+      DiagSelect = !isClassOrStructDecl() ? 1 : 0;
+      break;
+    case CommandTraits::KCI_interface:
+      DiagSelect = !isObjCInterfaceDecl() ? 2 : 0;
+      break;
+    case CommandTraits::KCI_protocol:
+      DiagSelect = !isObjCProtocolDecl() ? 3 : 0;
+      break;
+    case CommandTraits::KCI_struct:
+      DiagSelect = !isClassOrStructDecl() ? 4 : 0;
+      break;
+    case CommandTraits::KCI_union:
+      DiagSelect = !isUnionDecl() ? 5 : 0;
+      break;
+    default:
+      DiagSelect = 0;
+      break;
+  }
   if (DiagSelect)
     Diag(Comment->getLocation(), diag::warn_doc_api_container_decl_mismatch)
     << Comment->getCommandMarker()
@@ -131,23 +152,47 @@ void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
 
 void Sema::checkContainerDecl(const BlockCommandComment *Comment) {
   const CommandInfo *Info = Traits.getCommandInfo(Comment->getCommandID());
-  if (!Info->IsContainerDetailCommand || isContainerDecl())
+  if (!Info->IsRecordLikeDetailCommand || isRecordLikeDecl())
     return;
-  StringRef Name = Info->Name;
-  unsigned DiagSelect = llvm::StringSwitch<unsigned>(Name)
-  .Case("classdesign", 1)
-  .Case("coclass", 2)
-  .Case("dependency", 3)
-  .Case("helper", 4)
-  .Case("helperclass", 5)
-  .Case("helps", 6)
-  .Case("instancesize", 7)
-  .Case("ownership", 8)
-  .Case("performance", 9)
-  .Case("security", 10)
-  .Case("superclass", 11)
-  .Default(0);
-  
+  unsigned DiagSelect;
+  switch (Comment->getCommandID()) {
+    case CommandTraits::KCI_classdesign:
+      DiagSelect = 1;
+      break;
+    case CommandTraits::KCI_coclass:
+      DiagSelect = 2;
+      break;
+    case CommandTraits::KCI_dependency:
+      DiagSelect = 3;
+      break;
+    case CommandTraits::KCI_helper:
+      DiagSelect = 4;
+      break;
+    case CommandTraits::KCI_helperclass:
+      DiagSelect = 5;
+      break;
+    case CommandTraits::KCI_helps:
+      DiagSelect = 6;
+      break;
+    case CommandTraits::KCI_instancesize:
+      DiagSelect = 7;
+      break;
+    case CommandTraits::KCI_ownership:
+      DiagSelect = 8;
+      break;
+    case CommandTraits::KCI_performance:
+      DiagSelect = 9;
+      break;
+    case CommandTraits::KCI_security:
+      DiagSelect = 10;
+      break;
+    case CommandTraits::KCI_superclass:
+      DiagSelect = 11;
+      break;
+    default:
+      DiagSelect = 0;
+      break;
+  }
   if (DiagSelect)
     Diag(Comment->getLocation(), diag::warn_doc_container_decl_mismatch)
     << Comment->getCommandMarker()
@@ -785,12 +830,12 @@ bool Sema::isTemplateOrSpecialization() {
   return ThisDeclInfo->getTemplateKind() != DeclInfo::NotTemplate;
 }
 
-bool Sema::isContainerDecl() {
+bool Sema::isRecordLikeDecl() {
   if (!ThisDeclInfo)
     return false;
   if (!ThisDeclInfo->IsFilled)
     inspectThisDecl();
-  return isUnionDecl() || isClassStructDecl() 
+  return isUnionDecl() || isClassOrStructDecl() 
          || isObjCInterfaceDecl() || isObjCProtocolDecl();
 }
 
@@ -805,7 +850,7 @@ bool Sema::isUnionDecl() {
   return false;
 }
   
-bool Sema::isClassStructDecl() {
+bool Sema::isClassOrStructDecl() {
   if (!ThisDeclInfo)
     return false;
   if (!ThisDeclInfo->IsFilled)
