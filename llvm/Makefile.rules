@@ -280,12 +280,6 @@ ifeq ($(ENABLE_OPTIMIZED),1)
   endif
   endif
 
-  # Darwin requires -fstrict-aliasing to be explicitly enabled.
-  # Avoid -fstrict-aliasing on Darwin for now, there are unresolved issues
-  # with -fstrict-aliasing and ipa-type-escape radr://6756684
-  #ifeq ($(HOST_OS),Darwin)
-  #  EXTRA_OPTIONS += -fstrict-aliasing -Wstrict-aliasing
-  #endif
   CXX.Flags += $(OPTIMIZE_OPTION) $(OmitFramePointer)
   C.Flags   += $(OPTIMIZE_OPTION) $(OmitFramePointer)
   LD.Flags  += $(OPTIMIZE_OPTION)
