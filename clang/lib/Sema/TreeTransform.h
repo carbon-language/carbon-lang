@@ -7167,9 +7167,14 @@ TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E) {
   QualType T;
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC))
     T = MD->getThisType(getSema().Context);
-  else
+  else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC)) {
     T = getSema().Context.getPointerType(
-      getSema().Context.getRecordType(cast<CXXRecordDecl>(DC)));
+          getSema().Context.getRecordType(Record));
+  } else {
+    assert(SemaRef.Context.getDiagnostics().hasErrorOccurred() &&
+           "this in the wrong scope?");
+    return ExprError();
+  }
 
   if (!getDerived().AlwaysRebuild() && T == E->getType()) {
     // Make sure that we capture 'this'.
