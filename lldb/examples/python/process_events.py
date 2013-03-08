@@ -184,6 +184,7 @@ def main(argv):
                     event = lldb.SBEvent()
                     if listener.WaitForEvent (options.event_timeout, event):
                         state = lldb.SBProcess.GetStateFromEvent (event)
+                        print "event %s" % (lldb.SBDebugger.StateAsCString(state))
                         if state == lldb.eStateStopped:
                             if stop_idx == 0:
                                 if launch_info:
@@ -203,6 +204,7 @@ def main(argv):
                                 run_commands (command_interpreter, options.stop_commands)
                             stop_idx += 1
                             print_threads (process, options)
+                            print "continuing process %u" % (pid)
                             process.Continue()
                         elif state == lldb.eStateExited:
                             exit_desc = process.GetExitDescription()

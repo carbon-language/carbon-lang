@@ -53,6 +53,8 @@ public:
     bool    SetValueUInt32(CFStringRef key, uint32_t value, bool can_create = false);
     bool    AddValueUInt64(CFStringRef key, uint64_t value, bool can_create = false);
     bool    SetValueUInt64(CFStringRef key, uint64_t value, bool can_create = false);
+    bool    AddValueDouble(CFStringRef key, double value, bool can_create = false);
+    bool    SetValueDouble(CFStringRef key, double value, bool can_create = false);
     bool    AddValueCString(CFStringRef key, const char *cstr, bool can_create = false);
     bool    SetValueCString(CFStringRef key, const char *cstr, bool can_create = false);
     void    RemoveValue(const void *value);

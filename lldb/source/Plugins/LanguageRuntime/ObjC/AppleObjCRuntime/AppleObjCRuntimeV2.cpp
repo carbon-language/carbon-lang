@@ -1849,6 +1849,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         {
             // The result is the number of ClassInfo structures that were filled in
             uint32_t num_class_infos = return_value.GetScalar().ULong();
+            if (log)
+                log->Printf("Discovered %u ObjC classes\n",num_class_infos);
             if (num_class_infos > 0)
             {
                 // Read the ClassInfo structures
@@ -2099,6 +2101,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         {
             // The result is the number of ClassInfo structures that were filled in
             uint32_t num_class_infos = return_value.GetScalar().ULong();
+            if (log)
+                log->Printf("Discovered %u ObjC classes in shared cache\n",num_class_infos);
             if (num_class_infos > 0)
             {
                 // Read the ClassInfo structures

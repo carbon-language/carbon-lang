@@ -517,6 +517,36 @@
 		4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CF52AF7142829390051E832 /* SBFileSpecList.cpp */; };
 		94031A9E13CF486700DCFF3C /* InputReaderEZ.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94031A9D13CF486600DCFF3C /* InputReaderEZ.cpp */; };
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
+		940DB8B816EA614400D3C2F1 /* lldbperf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 940DB89A16EA5F4200D3C2F1 /* lldbperf.a */; };
+		940DB8CC16EA66FB00D3C2F1 /* Gauge.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8CA16EA66FB00D3C2F1 /* Gauge.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8D016EA670C00D3C2F1 /* Measurement.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8CE16EA670C00D3C2F1 /* Measurement.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8D316EA671800D3C2F1 /* MemoryGauge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940DB8D116EA671800D3C2F1 /* MemoryGauge.cpp */; };
+		940DB8D416EA671800D3C2F1 /* MemoryGauge.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8D216EA671800D3C2F1 /* MemoryGauge.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8D716EA672200D3C2F1 /* Metric.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940DB8D516EA672200D3C2F1 /* Metric.cpp */; };
+		940DB8D816EA672200D3C2F1 /* Metric.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8D616EA672200D3C2F1 /* Metric.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8DB16EA672D00D3C2F1 /* TestCase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940DB8D916EA672D00D3C2F1 /* TestCase.cpp */; };
+		940DB8DC16EA672D00D3C2F1 /* TestCase.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8DA16EA672D00D3C2F1 /* TestCase.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8DF16EA673800D3C2F1 /* Timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940DB8DD16EA673800D3C2F1 /* Timer.cpp */; };
+		940DB8E016EA673800D3C2F1 /* Timer.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8DE16EA673800D3C2F1 /* Timer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8E316EA674000D3C2F1 /* Xcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940DB8E116EA674000D3C2F1 /* Xcode.cpp */; };
+		940DB8E416EA674000D3C2F1 /* Xcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 940DB8E216EA674000D3C2F1 /* Xcode.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		940DB8E516EA6E1800D3C2F1 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		940DB8E716EA709400D3C2F1 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940DB8E616EA709400D3C2F1 /* main.cpp */; };
+		940DB8EB16EA752000D3C2F1 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
+		940DB8EC16EA752E00D3C2F1 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		940DB8ED16EA76A400D3C2F1 /* CFCBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EED10F1B8AD00F91463 /* CFCBundle.cpp */; };
+		940DB8EE16EA76A400D3C2F1 /* CFCBundle.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EEE10F1B8AD00F91463 /* CFCBundle.h */; };
+		940DB8EF16EA76A400D3C2F1 /* CFCData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EEF10F1B8AD00F91463 /* CFCData.cpp */; };
+		940DB8F016EA76A400D3C2F1 /* CFCData.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EF010F1B8AD00F91463 /* CFCData.h */; };
+		940DB8F116EA76A400D3C2F1 /* CFCMutableArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF110F1B8AD00F91463 /* CFCMutableArray.cpp */; };
+		940DB8F216EA76A400D3C2F1 /* CFCMutableArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EF210F1B8AD00F91463 /* CFCMutableArray.h */; };
+		940DB8F316EA76A400D3C2F1 /* CFCMutableDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF310F1B8AD00F91463 /* CFCMutableDictionary.cpp */; };
+		940DB8F416EA76A400D3C2F1 /* CFCMutableDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EF410F1B8AD00F91463 /* CFCMutableDictionary.h */; };
+		940DB8F516EA76A400D3C2F1 /* CFCMutableSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF510F1B8AD00F91463 /* CFCMutableSet.cpp */; };
+		940DB8F616EA76A400D3C2F1 /* CFCMutableSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EF610F1B8AD00F91463 /* CFCMutableSet.h */; };
+		940DB8F716EA76A400D3C2F1 /* CFCReleaser.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EF710F1B8AD00F91463 /* CFCReleaser.h */; };
+		940DB8F816EA76A400D3C2F1 /* CFCString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EF810F1B8AD00F91463 /* CFCString.cpp */; };
+		940DB8F916EA76A400D3C2F1 /* CFCString.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7EF910F1B8AD00F91463 /* CFCString.h */; };
 		941BCC7F14E48C4000BB969C /* SBTypeFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568614E355F2003A195C /* SBTypeFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568714E355F2003A195C /* SBTypeFormat.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8114E48C4000BB969C /* SBTypeSummary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568814E355F2003A195C /* SBTypeSummary.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -697,9 +727,32 @@
 			remoteGlobalIDString = 2689FFC913353D7A00698AC0;
 			remoteInfo = "lldb-core";
 		};
+		940DB8BA16EA61D900D3C2F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
+			remoteInfo = LLDB;
+		};
+		940DB8E816EA72BE00D3C2F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 940DB89916EA5F4200D3C2F1;
+			remoteInfo = lldbperf;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		940DB8AB16EA60C900D3C2F1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		AF90106415AB7D2900FF120D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 8;
@@ -1535,6 +1588,21 @@
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
 		94094C68163B6CCC0083A547 /* ValueObjectCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectCast.h; path = include/lldb/Core/ValueObjectCast.h; sourceTree = "<group>"; };
 		94094C69163B6CD90083A547 /* ValueObjectCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectCast.cpp; path = source/Core/ValueObjectCast.cpp; sourceTree = "<group>"; };
+		940DB89A16EA5F4200D3C2F1 /* lldbperf.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = lldbperf.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		940DB8AD16EA60C900D3C2F1 /* lldb-perf-sketch */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-perf-sketch"; sourceTree = BUILT_PRODUCTS_DIR; };
+		940DB8CA16EA66FB00D3C2F1 /* Gauge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Gauge.h; sourceTree = "<group>"; };
+		940DB8CE16EA670C00D3C2F1 /* Measurement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Measurement.h; sourceTree = "<group>"; };
+		940DB8D116EA671800D3C2F1 /* MemoryGauge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryGauge.cpp; sourceTree = "<group>"; };
+		940DB8D216EA671800D3C2F1 /* MemoryGauge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryGauge.h; sourceTree = "<group>"; };
+		940DB8D516EA672200D3C2F1 /* Metric.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Metric.cpp; sourceTree = "<group>"; };
+		940DB8D616EA672200D3C2F1 /* Metric.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Metric.h; sourceTree = "<group>"; };
+		940DB8D916EA672D00D3C2F1 /* TestCase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestCase.cpp; sourceTree = "<group>"; };
+		940DB8DA16EA672D00D3C2F1 /* TestCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestCase.h; sourceTree = "<group>"; };
+		940DB8DD16EA673800D3C2F1 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Timer.cpp; sourceTree = "<group>"; };
+		940DB8DE16EA673800D3C2F1 /* Timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
+		940DB8E116EA674000D3C2F1 /* Xcode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Xcode.cpp; sourceTree = "<group>"; };
+		940DB8E216EA674000D3C2F1 /* Xcode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Xcode.h; sourceTree = "<group>"; };
+		940DB8E616EA709400D3C2F1 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
 		9443B121140C18C10013457C /* SBData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBData.cpp; path = source/API/SBData.cpp; sourceTree = "<group>"; };
 		9452573616262CD000325455 /* SBDeclaration.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBDeclaration.i; sourceTree = "<group>"; };
@@ -1773,6 +1841,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		940DB89716EA5F4200D3C2F1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				940DB8E516EA6E1800D3C2F1 /* LLDB.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		940DB8AA16EA60C900D3C2F1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				940DB8B816EA614400D3C2F1 /* lldbperf.a in Frameworks */,
+				940DB8EB16EA752000D3C2F1 /* CoreFoundation.framework in Frameworks */,
+				940DB8EC16EA752E00D3C2F1 /* LLDB.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EDC6D49614E5C19B001B75F8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -1840,6 +1926,8 @@
 				26DC6A101337FE6900FF7998 /* lldb-platform */,
 				EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */,
 				EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */,
+				940DB89A16EA5F4200D3C2F1 /* lldbperf.a */,
+				940DB8AD16EA60C900D3C2F1 /* lldb-perf-sketch */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -3209,6 +3297,7 @@
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				940DB8C416EA64D400D3C2F1 /* lldb-perf */,
 				26579F55126A255E0007C5CB /* darwin-debug */,
 				265E9BE0115C2B8500D0DCCB /* debugserver */,
 				26F5C22510F3D956009D5894 /* Driver */,
@@ -3353,6 +3442,51 @@
 			);
 			name = common;
 			path = source/Host/common;
+			sourceTree = "<group>";
+		};
+		940DB8C416EA64D400D3C2F1 /* lldb-perf */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8C616EA654E00D3C2F1 /* darwin */,
+				940DB8C516EA654900D3C2F1 /* lib */,
+			);
+			name = "lldb-perf";
+			path = "tools/lldb-perf";
+			sourceTree = "<group>";
+		};
+		940DB8C516EA654900D3C2F1 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8CA16EA66FB00D3C2F1 /* Gauge.h */,
+				940DB8CE16EA670C00D3C2F1 /* Measurement.h */,
+				940DB8D116EA671800D3C2F1 /* MemoryGauge.cpp */,
+				940DB8D216EA671800D3C2F1 /* MemoryGauge.h */,
+				940DB8D516EA672200D3C2F1 /* Metric.cpp */,
+				940DB8D616EA672200D3C2F1 /* Metric.h */,
+				940DB8D916EA672D00D3C2F1 /* TestCase.cpp */,
+				940DB8DA16EA672D00D3C2F1 /* TestCase.h */,
+				940DB8DD16EA673800D3C2F1 /* Timer.cpp */,
+				940DB8DE16EA673800D3C2F1 /* Timer.h */,
+				940DB8E116EA674000D3C2F1 /* Xcode.cpp */,
+				940DB8E216EA674000D3C2F1 /* Xcode.h */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		940DB8C616EA654E00D3C2F1 /* darwin */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8C716EA655400D3C2F1 /* sketch */,
+			);
+			path = darwin;
+			sourceTree = "<group>";
+		};
+		940DB8C716EA655400D3C2F1 /* sketch */ = {
+			isa = PBXGroup;
+			children = (
+				940DB8E616EA709400D3C2F1 /* main.cpp */,
+			);
+			path = sketch;
 			sourceTree = "<group>";
 		};
 		94CB255616B0683B0059775D /* DataFormatters */ = {
@@ -3509,6 +3643,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		940DB89816EA5F4200D3C2F1 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				940DB8E016EA673800D3C2F1 /* Timer.h in Headers */,
+				940DB8CC16EA66FB00D3C2F1 /* Gauge.h in Headers */,
+				940DB8D416EA671800D3C2F1 /* MemoryGauge.h in Headers */,
+				940DB8DC16EA672D00D3C2F1 /* TestCase.h in Headers */,
+				940DB8F716EA76A400D3C2F1 /* CFCReleaser.h in Headers */,
+				940DB8E416EA674000D3C2F1 /* Xcode.h in Headers */,
+				940DB8F916EA76A400D3C2F1 /* CFCString.h in Headers */,
+				940DB8F016EA76A400D3C2F1 /* CFCData.h in Headers */,
+				940DB8F216EA76A400D3C2F1 /* CFCMutableArray.h in Headers */,
+				940DB8F616EA76A400D3C2F1 /* CFCMutableSet.h in Headers */,
+				940DB8D816EA672200D3C2F1 /* Metric.h in Headers */,
+				940DB8F416EA76A400D3C2F1 /* CFCMutableDictionary.h in Headers */,
+				940DB8D016EA670C00D3C2F1 /* Measurement.h in Headers */,
+				940DB8EE16EA76A400D3C2F1 /* CFCBundle.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXLegacyTarget section */
@@ -3621,6 +3776,42 @@
 			productReference = 26F5C26A10F3D9A4009D5894 /* lldb */;
 			productType = "com.apple.product-type.tool";
 		};
+		940DB89916EA5F4200D3C2F1 /* lldbperf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 940DB8A816EA5F4200D3C2F1 /* Build configuration list for PBXNativeTarget "lldbperf" */;
+			buildPhases = (
+				940DB89616EA5F4200D3C2F1 /* Sources */,
+				940DB89716EA5F4200D3C2F1 /* Frameworks */,
+				940DB89816EA5F4200D3C2F1 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				940DB8BB16EA61D900D3C2F1 /* PBXTargetDependency */,
+			);
+			name = lldbperf;
+			productName = lldbperf;
+			productReference = 940DB89A16EA5F4200D3C2F1 /* lldbperf.a */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		940DB8AC16EA60C900D3C2F1 /* lldb-perf-sketch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 940DB8B316EA60CA00D3C2F1 /* Build configuration list for PBXNativeTarget "lldb-perf-sketch" */;
+			buildPhases = (
+				940DB8A916EA60C900D3C2F1 /* Sources */,
+				940DB8AA16EA60C900D3C2F1 /* Frameworks */,
+				940DB8AB16EA60C900D3C2F1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				940DB8E916EA72BE00D3C2F1 /* PBXTargetDependency */,
+			);
+			name = "lldb-perf-sketch";
+			productName = "lldb-perf-sketch";
+			productReference = 940DB8AD16EA60C900D3C2F1 /* lldb-perf-sketch */;
+			productType = "com.apple.product-type.tool";
+		};
 		EDC6D49814E5C19B001B75F8 /* launcherXPCService */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */;
@@ -3691,6 +3882,8 @@
 				EDC6D49814E5C19B001B75F8 /* launcherXPCService */,
 				EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */,
 				2687EAC51508110B00DD8C2E /* install-headers */,
+				940DB89916EA5F4200D3C2F1 /* lldbperf */,
+				940DB8AC16EA60C900D3C2F1 /* lldb-perf-sketch */,
 			);
 		};
 /* End PBXProject section */
@@ -4264,6 +4457,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		940DB89616EA5F4200D3C2F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				940DB8EF16EA76A400D3C2F1 /* CFCData.cpp in Sources */,
+				940DB8F116EA76A400D3C2F1 /* CFCMutableArray.cpp in Sources */,
+				940DB8ED16EA76A400D3C2F1 /* CFCBundle.cpp in Sources */,
+				940DB8D316EA671800D3C2F1 /* MemoryGauge.cpp in Sources */,
+				940DB8DB16EA672D00D3C2F1 /* TestCase.cpp in Sources */,
+				940DB8E316EA674000D3C2F1 /* Xcode.cpp in Sources */,
+				940DB8DF16EA673800D3C2F1 /* Timer.cpp in Sources */,
+				940DB8D716EA672200D3C2F1 /* Metric.cpp in Sources */,
+				940DB8F516EA76A400D3C2F1 /* CFCMutableSet.cpp in Sources */,
+				940DB8F316EA76A400D3C2F1 /* CFCMutableDictionary.cpp in Sources */,
+				940DB8F816EA76A400D3C2F1 /* CFCString.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		940DB8A916EA60C900D3C2F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				940DB8E716EA709400D3C2F1 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EDC6D49514E5C19B001B75F8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -4349,6 +4568,16 @@
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
 			targetProxy = 26DC6A151337FE7300FF7998 /* PBXContainerItemProxy */;
+		};
+		940DB8BB16EA61D900D3C2F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26680206115FD0ED008E1FE4 /* LLDB */;
+			targetProxy = 940DB8BA16EA61D900D3C2F1 /* PBXContainerItemProxy */;
+		};
+		940DB8E916EA72BE00D3C2F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 940DB89916EA5F4200D3C2F1 /* lldbperf */;
+			targetProxy = 940DB8E816EA72BE00D3C2F1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -4713,7 +4942,6 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
-				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -4743,7 +4971,6 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
-				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -4773,7 +5000,6 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
-				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -5485,7 +5711,6 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
-				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -5661,6 +5886,186 @@
 				SDKROOT = macosx;
 			};
 			name = DebugClang;
+		};
+		940DB8A416EA5F4200D3C2F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				EXECUTABLE_EXTENSION = a;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/$(PRODUCT_NAME).a";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools";
+			};
+			name = Debug;
+		};
+		940DB8A516EA5F4200D3C2F1 /* DebugClang */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				EXECUTABLE_EXTENSION = a;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/$(PRODUCT_NAME).a";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools";
+			};
+			name = DebugClang;
+		};
+		940DB8A616EA5F4200D3C2F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				EXECUTABLE_EXTENSION = a;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/$(PRODUCT_NAME).a";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools $(SRCROOT)/source/Host/macosx/";
+			};
+			name = Release;
+		};
+		940DB8A716EA5F4200D3C2F1 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				EXECUTABLE_EXTENSION = a;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/$(PRODUCT_NAME).a";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools $(SRCROOT)/source/Host/macosx/";
+			};
+			name = BuildAndIntegration;
+		};
+		940DB8B416EA60CA00D3C2F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools";
+			};
+			name = Debug;
+		};
+		940DB8B516EA60CA00D3C2F1 /* DebugClang */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools";
+			};
+			name = DebugClang;
+		};
+		940DB8B616EA60CA00D3C2F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools";
+			};
+			name = Release;
+		};
+		940DB8B716EA60CA00D3C2F1 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(SRCROOT)/Tools";
+			};
+			name = BuildAndIntegration;
 		};
 		EDC6D4A714E5C19B001B75F8 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -5963,6 +6368,26 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
+		};
+		940DB8A816EA5F4200D3C2F1 /* Build configuration list for PBXNativeTarget "lldbperf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				940DB8A416EA5F4200D3C2F1 /* Debug */,
+				940DB8A516EA5F4200D3C2F1 /* DebugClang */,
+				940DB8A616EA5F4200D3C2F1 /* Release */,
+				940DB8A716EA5F4200D3C2F1 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		940DB8B316EA60CA00D3C2F1 /* Build configuration list for PBXNativeTarget "lldb-perf-sketch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				940DB8B416EA60CA00D3C2F1 /* Debug */,
+				940DB8B516EA60CA00D3C2F1 /* DebugClang */,
+				940DB8B616EA60CA00D3C2F1 /* Release */,
+				940DB8B716EA60CA00D3C2F1 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */ = {
 			isa = XCConfigurationList;

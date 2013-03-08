@@ -432,6 +432,44 @@ CFCMutableDictionary::SetValueUInt64(CFStringRef key, uint64_t value, bool can_c
 }
 
 bool
+CFCMutableDictionary::AddValueDouble(CFStringRef key, double value, bool can_create)
+{
+    CFMutableDictionaryRef dict = Dictionary(can_create);
+    if (dict != NULL)
+    {
+        // The number may appear negative if the MSBit is set in "value". Due to a limitation of
+        // CFNumber, there isn't a way to have it show up otherwise as of this writing.
+        CFCReleaser<CFNumberRef> cf_number(::CFNumberCreate (kCFAllocatorDefault, kCFNumberDoubleType, &value));
+        if (cf_number.get())
+        {
+            // Let the dictionary own the CFNumber
+            ::CFDictionaryAddValue (dict, key, cf_number.get());
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+CFCMutableDictionary::SetValueDouble(CFStringRef key, double value, bool can_create)
+{
+    CFMutableDictionaryRef dict = Dictionary(can_create);
+    if (dict != NULL)
+    {
+        // The number may appear negative if the MSBit is set in "value". Due to a limitation of
+        // CFNumber, there isn't a way to have it show up otherwise as of this writing.
+        CFCReleaser<CFNumberRef> cf_number(::CFNumberCreate (kCFAllocatorDefault, kCFNumberDoubleType, &value));
+        if (cf_number.get())
+        {
+            // Let the dictionary own the CFNumber
+            ::CFDictionarySetValue (dict, key, cf_number.get());
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
 CFCMutableDictionary::AddValueCString(CFStringRef key, const char *cstr, bool can_create)
 {
     CFMutableDictionaryRef dict = Dictionary(can_create);
