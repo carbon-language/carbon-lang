@@ -6332,7 +6332,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     clang::ObjCMethodDecl *objc_method_decl = ast.AddMethodToObjCObjectType (class_opaque_type, 
                                                                                                              type_name_cstr,
                                                                                                              clang_type,
-                                                                                                             accessibility);
+                                                                                                             accessibility,
+                                                                                                             is_artificial);
                                     type_handled = objc_method_decl != NULL;
                                     if (type_handled)
                                     {

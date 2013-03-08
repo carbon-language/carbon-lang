@@ -546,19 +546,21 @@ public:
                                lldb::clang_type_t class_opaque_type, 
                                const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
                                lldb::clang_type_t method_opaque_type,
-                               lldb::AccessType access);
+                               lldb::AccessType access,
+                               bool is_artificial);
 
     clang::ObjCMethodDecl *
     AddMethodToObjCObjectType (lldb::clang_type_t class_opaque_type, 
                                const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
                                lldb::clang_type_t method_opaque_type,
-                               lldb::AccessType access)
+                               lldb::AccessType access,
+                               bool is_artificial)
     {
         return AddMethodToObjCObjectType (getASTContext(),
                                           class_opaque_type,
                                           name,
                                           method_opaque_type,
-                                          access);
+                                          access, is_artificial);
     }
 
     static bool

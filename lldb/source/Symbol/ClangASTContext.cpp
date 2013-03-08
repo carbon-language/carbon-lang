@@ -2644,14 +2644,12 @@ ClangASTContext::ObjCDeclHasIVars (ObjCInterfaceDecl *class_interface_decl, bool
 }
 
 ObjCMethodDecl *
-ClangASTContext::AddMethodToObjCObjectType
-(
-    ASTContext *ast,
-    clang_type_t class_opaque_type, 
-    const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
-    clang_type_t method_opaque_type,
-    lldb::AccessType access
-)
+ClangASTContext::AddMethodToObjCObjectType (ASTContext *ast,
+                                            clang_type_t class_opaque_type,
+                                            const char *name,  // the full symbol name as seen in the symbol table ("-[NString stringWithCString:]")
+                                            clang_type_t method_opaque_type,
+                                            lldb::AccessType access,
+                                            bool is_artificial)
 {
     if (class_opaque_type == NULL || method_opaque_type == NULL)
         return NULL;
@@ -2682,8 +2680,6 @@ ClangASTContext::AddMethodToObjCObjectType
         return NULL;
     
     selector_start++;
-    if (!(::isalpha (selector_start[0]) || selector_start[0] == '_'))
-        return NULL;
     llvm::SmallVector<IdentifierInfo *, 12> selector_idents;
 
     size_t len = 0;
@@ -2745,7 +2741,7 @@ ClangASTContext::AddMethodToObjCObjectType
                                                                name[0] == '-',
                                                                is_variadic,
                                                                is_synthesized,
-                                                               true, // is_implicitly_declared
+                                                               is_artificial, // is_implicitly_declared
                                                                is_defined,
                                                                imp_control,
                                                                false /*has_related_result_type*/);
