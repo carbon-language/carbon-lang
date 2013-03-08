@@ -1643,7 +1643,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // To do so, we need to generate the 'identity' vector and overide
     // one of the elements with the incoming scalar reduction. We need
     // to do it in the vector-loop preheader.
-    Builder.SetInsertPoint(LoopBypassBlocks.back()->getTerminator());
+    Builder.SetInsertPoint(LoopBypassBlocks.front()->getTerminator());
 
     // This is the vector-clone of the value that leaves the loop.
     VectorParts &VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
