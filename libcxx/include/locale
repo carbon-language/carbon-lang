@@ -646,6 +646,8 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
                     _CharT __decimal_point, _CharT __thousands_sep, const string& __grouping,
                     unsigned* __g, unsigned*& __g_end, unsigned& __dc, _CharT* __atoms)
 {
+    if (__a_end-__a >= __num_get_buf_sz - 1)
+        return -1;
     if (__ct == __decimal_point)
     {
         if (!__in_units)
@@ -673,23 +675,27 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
     char __x = __src[__f];
     if (__x == '-' || __x == '+')
     {
-        if (__a_end == __a || (__a_end[-1] & 0xDF) == __exp)
+        if (__a_end == __a || (__a_end[-1] & 0x5F) == (__exp & 0x7F))
         {
             *__a_end++ = __x;
             return 0;
         }
         return -1;
     }
-    if (__a_end-__a < __num_get_buf_sz - 1)
-        *__a_end++ = __x;
     if (__x == 'x' || __x == 'X')
         __exp = 'P';
-    else if ((__x & 0xDF) == __exp)
+    else if ((__x & 0x5F) == __exp)
     {
-        __in_units = false;
-        if (__grouping.size() != 0 && __g_end-__g < __num_get_buf_sz)
-            *__g_end++ = __dc;
+        __exp |= 0x80;
+        if (__in_units)
+        {
+            __in_units = false;
+            if (__grouping.size() != 0 && __g_end-__g < __num_get_buf_sz)
+                *__g_end++ = __dc;
+        }
     }
+    if (__a_end-__a < __num_get_buf_sz - ((__exp & 0x80) ? 1 : 11))
+        *__a_end++ = __x;
     if (__f >= 22)
         return 0;
     ++__dc;

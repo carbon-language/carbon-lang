@@ -240,4 +240,16 @@ int main()
         assert(iter.base() == str+sizeof(str)-1);
         assert(err == ios.failbit);
     }
+    {
+        v = -1;
+        const char str[] = "3;14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651e+10";
+        std::ios_base::iostate err = ios.goodbit;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+sizeof(str)-1);
+        assert(err == ios.goodbit);
+        assert(std::abs(v - 3.14159265358979e+10)/3.14159265358979e+10 < 1.e-8);
+    }
 }
