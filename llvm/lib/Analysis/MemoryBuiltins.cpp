@@ -88,6 +88,10 @@ static Function *getCalledFunction(const Value *V, bool LookThroughBitCast) {
 static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
                                            const TargetLibraryInfo *TLI,
                                            bool LookThroughBitCast = false) {
+  // Skip intrinsics
+  if (isa<IntrinsicInst>(V))
+    return 0;
+
   Function *Callee = getCalledFunction(V, LookThroughBitCast);
   if (!Callee)
     return 0;
@@ -300,7 +304,7 @@ const CallInst *llvm::extractCallocCall(const Value *I,
 /// isFreeCall - Returns non-null if the value is a call to the builtin free()
 const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
   const CallInst *CI = dyn_cast<CallInst>(I);
-  if (!CI)
+  if (!CI || isa<IntrinsicInst>(CI))
     return 0;
   Function *Callee = CI->getCalledFunction();
   if (Callee == 0 || !Callee->isDeclaration())
