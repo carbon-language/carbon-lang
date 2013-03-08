@@ -337,6 +337,72 @@ static void findMacroRefsInFile(CXTranslationUnit TU, CXCursor Cursor,
   FindMacroRefsVisitor.visitPreprocessedEntitiesInRegion();
 }
 
+namespace {
+
+struct FindFileIncludesVisitor {
+  ASTUnit &Unit;
+  const FileEntry *File;
+  CXCursorAndRangeVisitor visitor;
+
+  FindFileIncludesVisitor(ASTUnit &Unit, const FileEntry *File,
+                          CXCursorAndRangeVisitor visitor)
+    : Unit(Unit), File(File), visitor(visitor) { }
+
+  ASTContext &getASTContext() const {
+    return Unit.getASTContext();
+  }
+
+  enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent) {
+    if (cursor.kind != CXCursor_InclusionDirective)
+      return CXChildVisit_Continue;
+
+    SourceLocation
+      Loc = cxloc::translateSourceLocation(clang_getCursorLocation(cursor));
+
+    ASTContext &Ctx = getASTContext();
+    SourceManager &SM = Ctx.getSourceManager();
+
+    // We are looking for includes in a specific file.
+    std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+    if (SM.getFileEntryForID(LocInfo.first) != File)
+      return CXChildVisit_Continue;
+
+    if (visitor.visit(visitor.context, cursor,
+                      cxloc::translateSourceRange(Ctx, Loc)) == CXVisit_Break)
+      return CXChildVisit_Break;
+    return CXChildVisit_Continue;
+  }
+
+  static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
+                                       CXClientData client_data) {
+    return static_cast<FindFileIncludesVisitor*>(client_data)->
+                                                          visit(cursor, parent);
+  }
+};
+
+} // anonymous namespace
+
+static void findIncludesInFile(CXTranslationUnit TU, const FileEntry *File,
+                               CXCursorAndRangeVisitor Visitor) {
+  assert(TU && File && Visitor.visit);
+
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
+  SourceManager &SM = Unit->getSourceManager();
+
+  FileID FID = SM.translateFile(File);
+
+  FindFileIncludesVisitor IncludesVisitor(*Unit, File, Visitor);
+
+  SourceRange Range(SM.getLocForStartOfFile(FID), SM.getLocForEndOfFile(FID));
+  CursorVisitor InclusionCursorsVisitor(TU,
+                                        FindFileIncludesVisitor::visit,
+                                        &IncludesVisitor,
+                                        /*VisitPreprocessorLast=*/false,
+                                        /*VisitIncludedEntities=*/false,
+                                        Range);
+  InclusionCursorsVisitor.visitPreprocessedEntitiesInRegion();
+}
+
 
 //===----------------------------------------------------------------------===//
 // libclang public APIs.
@@ -410,6 +476,38 @@ void clang_findReferencesInFile(CXCursor cursor, CXFile file,
                    visitor);
 }
 
+void clang_findIncludesInFile(CXTranslationUnit TU, CXFile file,
+                              CXCursorAndRangeVisitor visitor) {
+  LogRef Log = Logger::make(LLVM_FUNCTION_NAME);
+
+  if (!TU) {
+    if (Log)
+      *Log << "Null CXTranslationUnit";
+    return;
+  }
+  if (!file) {
+    if (Log)
+      *Log << "Null file";
+    return;
+  }
+  if (!visitor.visit) {
+    if (Log)
+      *Log << "Null visitor";
+    return;
+  }
+
+  if (Log)
+    *Log << TU << " @" << static_cast<const FileEntry *>(file);
+
+  ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
+  if (!CXXUnit)
+    return;
+
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+
+  findIncludesInFile(TU, static_cast<const FileEntry *>(file), visitor);
+}
+
 static enum CXVisitorResult _visitCursorAndRange(void *context,
                                                  CXCursor cursor,
                                                  CXSourceRange range) {
@@ -423,6 +521,14 @@ void clang_findReferencesInFileWithBlock(CXCursor cursor,
   CXCursorAndRangeVisitor visitor = { block,
                                       block ? _visitCursorAndRange : 0 };
   return clang_findReferencesInFile(cursor, file, visitor);
+}
+
+void clang_findIncludesInFileWithBlock(CXTranslationUnit TU,
+                                       CXFile file,
+                                       CXCursorAndRangeVisitorBlock block) {
+  CXCursorAndRangeVisitor visitor = { block,
+                                      block ? _visitCursorAndRange : 0 };
+  return clang_findIncludesInFile(TU, file, visitor);
 }
 
 } // end: extern "C"

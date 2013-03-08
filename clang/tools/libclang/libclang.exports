@@ -98,6 +98,8 @@ clang_equalLocations
 clang_equalRanges
 clang_equalTypes
 clang_executeOnThread
+clang_findIncludesInFile
+clang_findIncludesInFileWithBlock
 clang_findReferencesInFile
 clang_findReferencesInFileWithBlock
 clang_formatDiagnostic

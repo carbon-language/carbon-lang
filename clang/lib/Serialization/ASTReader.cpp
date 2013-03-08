@@ -4000,7 +4000,7 @@ ASTReader::findBeginPreprocessedEntity(SourceLocation BLoc) const {
 
   GlobalSLocOffsetMapType::const_iterator
     SLocMapI = GlobalSLocOffsetMap.find(SourceManager::MaxLoadedOffset -
-                                        BLoc.getOffset());
+                                        BLoc.getOffset() - 1);
   assert(SLocMapI != GlobalSLocOffsetMap.end() &&
          "Corrupted global sloc offset map");
 
@@ -4048,7 +4048,7 @@ ASTReader::findEndPreprocessedEntity(SourceLocation ELoc) const {
 
   GlobalSLocOffsetMapType::const_iterator
     SLocMapI = GlobalSLocOffsetMap.find(SourceManager::MaxLoadedOffset -
-                                        ELoc.getOffset());
+                                        ELoc.getOffset() - 1);
   assert(SLocMapI != GlobalSLocOffsetMap.end() &&
          "Corrupted global sloc offset map");
 

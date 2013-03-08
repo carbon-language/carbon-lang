@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 12
+#define CINDEX_VERSION_MINOR 13
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -5021,6 +5021,19 @@ typedef struct {
 CINDEX_LINKAGE void clang_findReferencesInFile(CXCursor cursor, CXFile file,
                                                CXCursorAndRangeVisitor visitor);
 
+/**
+ * \brief Find #import/#include directives in a specific file.
+ *
+ * \param TU translation unit containing the file to query.
+ *
+ * \param file to search for #import/#include directives.
+ *
+ * \param visitor callback that will receive pairs of CXCursor/CXSourceRange for
+ * each directive found.
+ */
+CINDEX_LINKAGE void clang_findIncludesInFile(CXTranslationUnit TU, CXFile file,
+                                             CXCursorAndRangeVisitor visitor);
+
 #ifdef __has_feature
 #  if __has_feature(blocks)
 
@@ -5030,6 +5043,10 @@ typedef enum CXVisitorResult
 CINDEX_LINKAGE
 void clang_findReferencesInFileWithBlock(CXCursor, CXFile,
                                          CXCursorAndRangeVisitorBlock);
+
+CINDEX_LINKAGE
+void clang_findIncludesInFileWithBlock(CXTranslationUnit, CXFile,
+                                       CXCursorAndRangeVisitorBlock);
 
 #  endif
 #endif

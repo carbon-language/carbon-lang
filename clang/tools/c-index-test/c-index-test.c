@@ -2135,6 +2135,99 @@ static int find_file_refs_at(int argc, const char **argv) {
   return 0;
 }
 
+static enum CXVisitorResult findFileIncludesVisit(void *context,
+                                         CXCursor cursor, CXSourceRange range) {
+  PrintCursor(cursor, NULL);
+  PrintRange(range, "");
+  printf("\n");
+  return CXVisit_Continue;
+}
+
+static int find_file_includes_in(int argc, const char **argv) {
+  CXIndex CIdx;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  CXTranslationUnit TU;
+  const char **Filenames = 0;
+  unsigned NumFilenames = 0;
+  unsigned Repeats = 1;
+  unsigned I, FI;
+
+  /* Count the number of locations. */
+  while (strstr(argv[NumFilenames+1], "-file-includes-in=") == argv[NumFilenames+1])
+    ++NumFilenames;
+
+  /* Parse the locations. */
+  assert(NumFilenames > 0 && "Unable to count filenames?");
+  Filenames = (const char **)malloc(NumFilenames * sizeof(const char *));
+  for (I = 0; I < NumFilenames; ++I) {
+    const char *input = argv[I + 1] + strlen("-file-includes-in=");
+    /* Copy the file name. */
+    Filenames[I] = input;
+  }
+
+  if (parse_remapped_files(argc, argv, NumFilenames + 1, &unsaved_files,
+                           &num_unsaved_files))
+    return -1;
+
+  if (getenv("CINDEXTEST_EDITING"))
+    Repeats = 2;
+
+  /* Parse the translation unit. When we're testing clang_getCursor() after
+     reparsing, don't remap unsaved files until the second parse. */
+  CIdx = clang_createIndex(1, 1);
+  TU = clang_parseTranslationUnit(CIdx, argv[argc - 1],
+                                  argv + num_unsaved_files + 1 + NumFilenames,
+                                  argc - num_unsaved_files - 2 - NumFilenames,
+                                  unsaved_files,
+                                  Repeats > 1? 0 : num_unsaved_files,
+                                  getDefaultParsingOptions());
+
+  if (!TU) {
+    fprintf(stderr, "unable to parse input\n");
+    return -1;
+  }
+
+  if (checkForErrors(TU) != 0)
+    return -1;
+
+  for (I = 0; I != Repeats; ++I) {
+    if (Repeats > 1 &&
+        clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
+                                     clang_defaultReparseOptions(TU))) {
+      clang_disposeTranslationUnit(TU);
+      return 1;
+    }
+
+    if (checkForErrors(TU) != 0)
+      return -1;
+
+    for (FI = 0; FI < NumFilenames; ++FI) {
+      CXFile file = clang_getFile(TU, Filenames[FI]);
+      if (!file)
+        continue;
+
+      if (checkForErrors(TU) != 0)
+        return -1;
+
+      if (I + 1 == Repeats) {
+        CXCursorAndRangeVisitor visitor = { 0, findFileIncludesVisit };
+        clang_findIncludesInFile(TU, file, visitor);
+
+        if (checkForErrors(TU) != 0)
+          return -1;
+      }
+    }
+  }
+
+  PrintDiagnostics(TU);
+  clang_disposeTranslationUnit(TU);
+  clang_disposeIndex(CIdx);
+  free(Filenames);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  return 0;
+}
+
 #define MAX_IMPORTED_ASTFILES 200
 
 typedef struct {
@@ -3520,7 +3613,8 @@ static void print_usage(void) {
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
     "       c-index-test -code-completion-timing=<site> <compiler arguments>\n"
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
-    "       c-index-test -file-refs-at=<site> <compiler arguments>\n");
+    "       c-index-test -file-refs-at=<site> <compiler arguments>\n"
+    "       c-index-test -file-includes-in=<filename> <compiler arguments>\n");
   fprintf(stderr,
     "       c-index-test -index-file [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
     "       c-index-test -index-file-full [-check-prefix=<FileCheck prefix>] <compiler arguments>\n"
@@ -3582,6 +3676,8 @@ int cindextest_main(int argc, const char **argv) {
     return inspect_cursor_at(argc, argv);
   if (argc > 2 && strstr(argv[1], "-file-refs-at=") == argv[1])
     return find_file_refs_at(argc, argv);
+  if (argc > 2 && strstr(argv[1], "-file-includes-in=") == argv[1])
+    return find_file_includes_in(argc, argv);
   if (argc > 2 && strcmp(argv[1], "-index-file") == 0)
     return index_file(argc - 2, argv + 2, /*full=*/0);
   if (argc > 2 && strcmp(argv[1], "-index-file-full") == 0)
