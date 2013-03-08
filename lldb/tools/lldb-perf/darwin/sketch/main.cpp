@@ -154,18 +154,12 @@ public:
     void
     Results ()
     {
-        auto ff_metric = m_fetch_frames_measurement.metric();
-        auto fl_metric = m_file_line_bp_measurement.metric();
-        auto md_metric = m_fetch_modules_measurement.metric();
-        auto fv_metric = m_fetch_vars_measurement.metric();
-        auto xp_metric = m_run_expr_measurement.metric();
-        
         CFCMutableArray array;
-        ff_metric.Write(array);
-        fl_metric.Write(array);
-        md_metric.Write(array);
-        fv_metric.Write(array);
-        xp_metric.Write(array);
+        m_fetch_frames_measurement.Write(array);
+        m_file_line_bp_measurement.Write(array);
+        m_fetch_modules_measurement.Write(array);
+        m_fetch_vars_measurement.Write(array);
+        m_run_expr_measurement.Write(array);
 
         CFDataRef xmlData = CFPropertyListCreateData(kCFAllocatorDefault, array.get(), kCFPropertyListXMLFormat_v1_0, 0, NULL);
         
