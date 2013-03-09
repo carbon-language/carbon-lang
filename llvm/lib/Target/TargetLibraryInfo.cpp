@@ -597,15 +597,37 @@ TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI)
   CustomNames = TLI.CustomNames;
 }
 
+namespace {
+struct StringComparator {
+  /// Compare two strings and return true if LHS is lexicographically less than
+  /// RHS. Requires that RHS doesn't contain any zero bytes.
+  bool operator()(const char *LHS, StringRef RHS) const {
+    // Compare prefixes with strncmp. If prefixes match we know that LHS is
+    // greater or equal to RHS as RHS can't contain any '\0'.
+    return std::strncmp(LHS, RHS.data(), RHS.size()) < 0;
+  }
+
+  // Provided for compatibility with MSVC's debug mode.
+  bool operator()(StringRef LHS, const char *RHS) const { return LHS < RHS; }
+  bool operator()(StringRef LHS, StringRef RHS) const { return LHS < RHS; }
+};
+}
+
 bool TargetLibraryInfo::getLibFunc(StringRef funcName,
                                    LibFunc::Func &F) const {
   const char **Start = &StandardNames[0];
   const char **End = &StandardNames[LibFunc::NumLibFuncs];
+
+  // Filter out empty names and names containing null bytes, those can't be in
+  // our table.
+  if (funcName.empty() || funcName.find('\0') != StringRef::npos)
+    return false;
+
   // Check for \01 prefix that is used to mangle __asm declarations and
   // strip it if present.
-  if (!funcName.empty() && funcName.front() == '\01')
+  if (funcName.front() == '\01')
     funcName = funcName.substr(1);
-  const char **I = std::lower_bound(Start, End, funcName);
+  const char **I = std::lower_bound(Start, End, funcName, StringComparator());
   if (I != End && *I == funcName) {
     F = (LibFunc::Func)(I - Start);
     return true;
