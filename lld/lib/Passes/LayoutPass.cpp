@@ -134,7 +134,8 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
         // the root of the targetAtom to the root of the current chain
         auto iter = _followOnRoots.find(targetAtom);
         if (iter == _followOnRoots.end()) {
-          _followOnRoots[targetAtom] = _followOnRoots[ai];
+          auto tmp = _followOnRoots[ai];
+          _followOnRoots[targetAtom] = tmp;
         } else {
           // The followon is part of another chain
           if (iter->second == targetAtom) {
