@@ -1,19 +1,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc -analyzer-store=region -verify -fblocks %s
-#include "Inputs/system-header-simulator-objc.h"
-
-typedef __typeof(sizeof(int)) size_t;
-void *malloc(size_t);
-void free(void *);
-
-@interface Wrapper : NSData
-- (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)len;
-@end
-
-@implementation Wrapper
-- (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)len {
-  return [self initWithBytesNoCopy:bytes length:len freeWhenDone:1]; // no-warning
-}
-@end
+#import "Inputs/system-header-simulator-objc.h"
+#import "Inputs/system-header-simulator-for-malloc.h"
 
 // Done with headers. Start testing.
 void testNSDatafFreeWhenDoneNoError(NSUInteger dataLength) {
@@ -79,6 +66,11 @@ void testNSStringFreeWhenDoneNO2(NSUInteger dataLength) {
   NSString *nsstr = [[NSString alloc] initWithCharactersNoCopy:data length:dataLength freeWhenDone:0]; // expected-warning{{leak}}
 }
 
+void testOffsetFree() {
+  int *p = (int *)malloc(sizeof(int));
+  NSData *nsdata = [NSData dataWithBytesNoCopy:++p length:sizeof(int) freeWhenDone:1]; // expected-warning{{Argument to free() is offset by 4 bytes from the start of memory allocated by malloc()}}
+}
+
 void testRelinquished1() {
   void *data = malloc(42);
   NSData *nsdata = [NSData dataWithBytesNoCopy:data length:42 freeWhenDone:1];
@@ -90,6 +82,31 @@ void testRelinquished2() {
   NSData *nsdata;
   free(data);
   [NSData dataWithBytesNoCopy:data length:42]; // expected-warning {{Attempt to free released memory}}
+}
+
+void testNoCopy() {
+  char *p = (char *)calloc(sizeof(int), 1);
+  CustomData *w = [CustomData somethingNoCopy:p]; // no-warning
+}
+
+void testFreeWhenDone() {
+  char *p = (char *)calloc(sizeof(int), 1);
+  CustomData *w = [CustomData something:p freeWhenDone:1]; // no-warning
+}
+
+void testFreeWhenDonePositive() {
+  char *p = (char *)calloc(sizeof(int), 1);
+  CustomData *w = [CustomData something:p freeWhenDone:0]; // expected-warning{{leak}}
+}
+
+void testFreeWhenDoneNoCopy() {
+  int *p = (int *)malloc(sizeof(int));
+  CustomData *w = [CustomData somethingNoCopy:p length:sizeof(int) freeWhenDone:1]; // no-warning
+}
+
+void testFreeWhenDoneNoCopyPositive() {
+  int *p = (int *)malloc(sizeof(int));
+  CustomData *w = [CustomData somethingNoCopy:p length:sizeof(int) freeWhenDone:0]; // expected-warning{{leak}}
 }
 
 // Test CF/NS...NoCopy. PR12100: Pointers can escape when custom deallocators are provided.
