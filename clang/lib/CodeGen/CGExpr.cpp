@@ -670,8 +670,8 @@ static bool isFlexibleArrayMemberExpr(const Expr *E) {
 
 /// If Base is known to point to the start of an array, return the length of
 /// that array. Return 0 if the length cannot be determined.
-llvm::Value *getArrayIndexingBound(CodeGenFunction &CGF, const Expr *Base,
-                                   QualType &IndexedType) {
+static llvm::Value *getArrayIndexingBound(
+    CodeGenFunction &CGF, const Expr *Base, QualType &IndexedType) {
   // For the vector indexing extension, the bound is the number of elements.
   if (const VectorType *VT = Base->getType()->getAs<VectorType>()) {
     IndexedType = Base->getType();
