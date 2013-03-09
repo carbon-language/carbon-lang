@@ -695,7 +695,7 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
 
 SuppressInlineDefensiveChecksVisitor::
 SuppressInlineDefensiveChecksVisitor(DefinedSVal Value, const ExplodedNode *N)
-  : V(Value), IsSatisfied(false) {
+  : V(Value), IsSatisfied(false), StartN(N) {
 
   assert(N->getState()->isNull(V).isConstrainedTrue() &&
          "The visitor only tracks the cases where V is constrained to 0");
@@ -704,6 +704,7 @@ SuppressInlineDefensiveChecksVisitor(DefinedSVal Value, const ExplodedNode *N)
 void SuppressInlineDefensiveChecksVisitor::Profile(FoldingSetNodeID &ID) const {
   static int id = 0;
   ID.AddPointer(&id);
+  ID.AddPointer(StartN);
   ID.Add(V);
 }
 
@@ -712,11 +713,26 @@ const char *SuppressInlineDefensiveChecksVisitor::getTag() {
 }
 
 PathDiagnosticPiece *
-SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *N,
-                                                const ExplodedNode *PrevN,
+SuppressInlineDefensiveChecksVisitor::getEndPath(BugReporterContext &BRC,
+                                                 const ExplodedNode *N,
+                                                 BugReport &BR) {
+  if (StartN == BR.getErrorNode())
+    StartN = 0;
+  return 0;
+}
+
+PathDiagnosticPiece *
+SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *Succ,
+                                                const ExplodedNode *Pred,
                                                 BugReporterContext &BRC,
                                                 BugReport &BR) {
   if (IsSatisfied)
+    return 0;
+
+  // Start tracking after we see node StartN.
+  if (StartN == Succ)
+    StartN = 0;
+  if (StartN)
     return 0;
 
   AnalyzerOptions &Options =
@@ -726,14 +742,13 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *N,
 
   // Check if in the previous state it was feasible for this value
   // to *not* be null.
-  if (PrevN->getState()->assume(V, true)) {
+  if (Pred->getState()->assume(V, true)) {
     IsSatisfied = true;
 
-    // TODO: Investigate if missing the transition point, where V
-    //       is non-null in N could lead to false negatives.
+    assert(!Succ->getState()->assume(V, true));
 
-    // Check if this is inline defensive checks.
-    const LocationContext *CurLC = N->getLocationContext();
+    // Check if this is inlined defensive checks.
+    const LocationContext *CurLC =Succ->getLocationContext();
     const LocationContext *ReportLC = BR.getErrorNode()->getLocationContext();
     if (CurLC != ReportLC && !CurLC->isParentOf(ReportLC))
       BR.markInvalid("Suppress IDC", CurLC);
@@ -741,13 +756,16 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *N,
   return 0;
 }
 
-bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
+bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
+                                        const Stmt *S,
                                         BugReport &report, bool IsArg) {
-  if (!S || !N)
+  if (!S || !ErrorNode)
     return false;
 
   if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
     S = OVE->getSourceExpr();
+
+  const ExplodedNode *N = ErrorNode;
 
   const Expr *LValue = 0;
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
@@ -850,10 +868,10 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N, const Stmt *S,
         report.addVisitor(ConstraintTracker);
 
         // Add visitor, which will suppress inline defensive checks.
-        if (N->getState()->isNull(V).isConstrainedTrue()) {
+        if (ErrorNode->getState()->isNull(V).isConstrainedTrue()) {
           BugReporterVisitor *IDCSuppressor =
             new SuppressInlineDefensiveChecksVisitor(V.castAs<DefinedSVal>(),
-                                                     N);
+                                                     ErrorNode);
           report.addVisitor(IDCSuppressor);
         }
       }
