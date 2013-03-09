@@ -15,7 +15,7 @@ declare void @__cxa_throw(i8*, i8*, i8*)
 declare void @__cxa_call_unexpected(i8*)
 
 define i32 @main() {
-; CHECK main:
+; CHECK: main:
 entry:
   %exception.i = tail call i8* @__cxa_allocate_exception(i32 4) nounwind
   %0 = bitcast i8* %exception.i to i32*

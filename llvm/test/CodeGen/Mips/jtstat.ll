@@ -56,8 +56,8 @@ sw.epilog:                                        ; preds = %entry, %sw.bb7, %sw
   ret void
 }
 
-; CHECK-STATIC16 	li	${{[0-9]+}}, %hi($JTI{{[0-9]+}}_{{[0-9]+}})
-; CHECK-STATIC16 	lw	${{[0-9]+}}, %lo($JTI{{[0-9]+}}_{{[0-9]+}})({{[0-9]+}})
+; CHECK-STATIC16: li	${{[0-9]+}}, %hi($JTI{{[0-9]+}}_{{[0-9]+}})
+; CHECK-STATIC16: lw	${{[0-9]+}}, %lo($JTI{{[0-9]+}}_{{[0-9]+}})(${{[0-9]+}})
 ; CHECK-STATIC16: $JTI{{[0-9]+}}_{{[0-9]+}}:
 ; CHECK-STATIC16: .4byte ($BB0_{{[0-9]+}})
 ; CHECK-STATIC16: .4byte ($BB0_{{[0-9]+}})

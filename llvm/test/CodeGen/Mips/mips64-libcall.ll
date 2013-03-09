@@ -5,7 +5,7 @@
 
 ; Check that %add is not passed in an integer register.
 ;
-; HARD    : callfloor:
+; HARD: callfloor:
 ; HARD-NOT: dmfc1 $4
 
 define double @callfloor(double %d) nounwind readnone {

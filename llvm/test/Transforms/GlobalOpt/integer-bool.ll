@@ -2,9 +2,9 @@
 ;; check that global opt turns integers that only hold 0 or 1 into bools.
 
 @G = internal addrspace(1) global i32 0
-; CHECK @G.b
-; CHECK addrspace(1)
-; CHECK global i1 0
+; CHECK: @G.b
+; CHECK: addrspace(1)
+; CHECK: global i1 0
 
 define void @set1() {
   store i32 0, i32 addrspace(1)* @G
@@ -19,7 +19,7 @@ define void @set2() {
 }
 
 define i1 @get() {
-; CHECK @get
+; CHECK: @get
   %A = load i32 addrspace(1) * @G
   %C = icmp slt i32 %A, 2
   ret i1 %C

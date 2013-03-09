@@ -13,7 +13,7 @@ define fastcc void @foo(i32 %in) {
 
 ; Normal frame setup stuff:
 ; CHECK: sub sp, sp,
-; CHECK stp x29, x30
+; CHECK: stp x29, x30
 
 ; Reserve space for call-frame:
 ; CHECK: sub sp, sp, #16
@@ -38,17 +38,17 @@ define void @foo1(i32 %in) {
 
   %addr = alloca i8, i32 %in
 ; Normal frame setup again
-; CHECK sub sp, sp,
-; CHECK stp x29, x30
+; CHECK: sub sp, sp,
+; CHECK: stp x29, x30
 
 ; Reserve space for call-frame
-; CHECK sub sp, sp, #16
+; CHECK: sub sp, sp, #16
 
   call void @wont_pop([8 x i32] undef, i32 42)
-; CHECK bl wont_pop
+; CHECK: bl wont_pop
 
 ; This time we *do* need to unreserve the call-frame
-; CHECK add sp, sp, #16
+; CHECK: add sp, sp, #16
 
 ; Check for epilogue (primarily to make sure sp spotted above wasn't
 ; part of it).

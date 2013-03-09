@@ -75,7 +75,7 @@ define i64 @test10() {
 
 define void @test11() {
 ; CHECK: test11:
-; CHECK movz {{w[0-9]+}}, #0
+; CHECK: mov {{w[0-9]+}}, wzr
   store i32 0, i32* @var32
   ret void
 }

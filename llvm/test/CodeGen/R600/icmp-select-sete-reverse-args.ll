@@ -4,7 +4,7 @@
 ;to a SETNE_INT.  There should only be one SETNE_INT instruction.
 
 ;CHECK: SETNE_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK_NOT: SETNE_INT
+;CHECK-NOT: SETNE_INT
 
 define void @test(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:

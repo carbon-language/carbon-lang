@@ -103,7 +103,6 @@ define i32 @t8(i32 %x) nounwind ssp {
 entry:
 ; CHECKT2D: t8:
 ; CHECKT2D-NOT: push
-; CHECKT2D-NOT
   %and = and i32 %x, 1
   %tobool = icmp eq i32 %and, 0
   br i1 %tobool, label %if.end, label %if.then

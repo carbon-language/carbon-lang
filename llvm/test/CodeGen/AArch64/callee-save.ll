@@ -5,10 +5,10 @@
 define void @foo() {
 ; CHECK: foo:
 
-; CHECK stp d14, d15, [sp
-; CHECK stp d12, d13, [sp
-; CHECK stp d10, d11, [sp
-; CHECK stp d8, d9, [sp
+; CHECK: stp d14, d15, [sp
+; CHECK: stp d12, d13, [sp
+; CHECK: stp d10, d11, [sp
+; CHECK: stp d8, d9, [sp
 
   ; Create lots of live variables to exhaust the supply of
   ; caller-saved registers

@@ -38,7 +38,7 @@ define float @test3(float %a) {
 ; CHECK: test4
 define float @test4(float %a) {
 ; CHECK-NOT: fma
-; CHECK-NOT mul
+; CHECK-NOT: mul
 ; CHECK-NOT: add
 ; CHECK: ret
   %t1 = fmul float %a, 0.0

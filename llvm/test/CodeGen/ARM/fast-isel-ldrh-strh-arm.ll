@@ -103,7 +103,7 @@ entry:
 ; ARM: t11
   %add.ptr = getelementptr inbounds i16* %a, i64 8
   store i16 0, i16* %add.ptr, align 2
-; ARM strh r{{[1-9]}}, [r0, #16]
+; ARM: strh r{{[1-9]}}, [r0, #16]
   ret void
 }
 

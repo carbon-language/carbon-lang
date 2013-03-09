@@ -54,7 +54,7 @@ entry:
 }
 ; CHECK:     v16si8_cmp_ne:
 ; CHECK:     vcmpequb [[RET:[0-9]+]], 2, 3
-; CHECK-NOR: vnor     2, [[RET]], [[RET]]
+; CHECK-NEXT: vnor     2, [[RET]], [[RET]]
 
 define <16 x i8> @v16si8_cmp_le(<16 x i8> %x, <16 x i8> %y) nounwind readnone {
 entry:

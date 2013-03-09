@@ -24,7 +24,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; }
 ; CHECK: define i32 @noAlias01
 ; CHECK: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias01(i32 %a) nounwind {
 entry:
@@ -72,7 +72,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias02
 ; CHECK: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias02(i32 %a) {
 entry:
@@ -121,7 +121,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias03
 ; CHECK: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias03(i32 %a) {
 entry:
@@ -170,7 +170,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias04
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 ;
 ; TODO: This test vectorizes (with run-time check) on real targets with -O3)
 ; Check why it's not being vectorized even when forcing vectorization
@@ -224,7 +224,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias05
 ; CHECK: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias05(i32 %a) #0 {
 entry:
@@ -280,7 +280,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias06
 ; CHECK: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias06(i32 %a) #0 {
 entry:
@@ -337,7 +337,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias07
 ; CHECK: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias07(i32 %a) #0 {
 entry:
@@ -389,7 +389,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias08
 ; CHECK: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias08(i32 %a) #0 {
 entry:
@@ -441,7 +441,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias09
 ; CHECK: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias09(i32 %a) #0 {
 entry:
@@ -493,7 +493,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias10
 ; CHECK-NOT: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 ;
 ; TODO: This test vectorizes (with run-time check) on real targets with -O3)
 ; Check why it's not being vectorized even when forcing vectorization
@@ -553,7 +553,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias11
 ; CHECK: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias11(i32 %a) #0 {
 entry:
@@ -613,7 +613,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias12
 ; CHECK: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias12(i32 %a) #0 {
 entry:
@@ -674,7 +674,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias13
 ; CHECK: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias13(i32 %a) #0 {
 entry:
@@ -723,7 +723,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @noAlias14
 ; CHECK: sub nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @noAlias14(i32 %a) #0 {
 entry:
@@ -779,7 +779,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @mayAlias01
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @mayAlias01(i32 %a) nounwind {
 entry:
@@ -829,7 +829,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @mayAlias02
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @mayAlias02(i32 %a) nounwind {
 entry:
@@ -879,7 +879,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @mayAlias03
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @mayAlias03(i32 %a) nounwind {
 entry:
@@ -936,7 +936,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @mustAlias01
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @mustAlias01(i32 %a) nounwind {
 entry:
@@ -986,7 +986,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @mustAlias02
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @mustAlias02(i32 %a) nounwind {
 entry:
@@ -1035,7 +1035,7 @@ for.end:                                          ; preds = %for.cond
 ; }
 ; CHECK: define i32 @mustAlias03
 ; CHECK-NOT: add nsw <4 x i32>
-; CHECK ret
+; CHECK: ret
 
 define i32 @mustAlias03(i32 %a) nounwind {
 entry:

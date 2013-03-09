@@ -61,7 +61,7 @@ define void @simple_rets() {
 
   call void @return_large_struct(%myStruct* sret @varstruct)
 ; CHECK: add x8, {{x[0-9]+}}, #:lo12:varstruct
-; CHECK bl return_large_struct
+; CHECK: bl return_large_struct
 
   ret void
 }
@@ -93,7 +93,7 @@ define void @check_stack_args() {
 ; CHECK: ldr s[[STACKEDREG:[0-9]+]], [{{x[0-9]+}}, #:lo12:.LCPI
 ; CHECK: mov x0, sp
 ; CHECK: str d[[STACKEDREG]], [x0]
-; CHECK bl stacked_fpu
+; CHECK: bl stacked_fpu
   ret void
 }
 

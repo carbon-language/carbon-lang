@@ -16,7 +16,7 @@ entry:
 define <4 x i32> @sdiv_zero(<4 x i32> %var) {
 entry:
 ; CHECK: sdiv_zero
-; CHECK-NOT sra
+; CHECK-NOT: sra
 ; CHECK: ret
   %0 = sdiv <4 x i32> %var, <i32 0, i32 0, i32 0, i32 0>
   ret <4 x i32> %0
