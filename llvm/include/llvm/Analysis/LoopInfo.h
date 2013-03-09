@@ -36,7 +36,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
 namespace llvm {
@@ -52,6 +51,7 @@ class DominatorTree;
 class LoopInfo;
 class Loop;
 class PHINode;
+class raw_ostream;
 template<class N, class M> class LoopInfoBase;
 template<class N, class M> class LoopBase;
 
