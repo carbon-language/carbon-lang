@@ -665,10 +665,8 @@ void GCOVProfiler::insertCounterWriteout(
       Builder.CreateCall2(StartFile,
                           Builder.CreateGlobalStringPtr(FilenameGcda),
                           Builder.CreateGlobalStringPtr(Version));
-      for (ArrayRef<std::pair<GlobalVariable *, MDNode *> >::iterator
-             I = CountersBySP.begin(), E = CountersBySP.end();
-           I != E; ++I) {
-        DISubprogram SP(I->second);
+      for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
+        DISubprogram SP(CountersBySP[j].second);
         Builder.CreateCall3(EmitFunction,
                             Builder.getInt32(i),
                             NoFunctionNamesInData ?
@@ -676,7 +674,7 @@ void GCOVProfiler::insertCounterWriteout(
                               Builder.CreateGlobalStringPtr(SP.getName()),
                             Builder.getInt8(UseExtraChecksum));
 
-        GlobalVariable *GV = I->first;
+        GlobalVariable *GV = CountersBySP[j].first;
         unsigned Arcs =
           cast<ArrayType>(GV->getType()->getElementType())->getNumElements();
         Builder.CreateCall2(EmitArcs,
