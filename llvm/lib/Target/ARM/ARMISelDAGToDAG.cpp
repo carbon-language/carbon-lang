@@ -3155,7 +3155,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       cast<MachineSDNode>(Ld)->setMemRefs(MemOp, MemOp + 1);
 
       // Remap uses.
-      SDValue Glue = isThumb ? SDValue(Ld, 2) : SDValue(Ld, 1);
+      SDValue OutChain = isThumb ? SDValue(Ld, 2) : SDValue(Ld, 1);
       if (!SDValue(N, 0).use_empty()) {
         SDValue Result;
         if (isThumb)
@@ -3163,9 +3163,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
         else {
           SDValue SubRegIdx = CurDAG->getTargetConstant(ARM::gsub_0, MVT::i32);
           SDNode *ResNode = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
-              dl, MVT::i32, MVT::Glue, SDValue(Ld, 0), SubRegIdx, Glue);
+              dl, MVT::i32, SDValue(Ld, 0), SubRegIdx);
           Result = SDValue(ResNode,0);
-          Glue = Result.getValue(1);
         }
         ReplaceUses(SDValue(N, 0), Result);
       }
@@ -3176,13 +3175,12 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
         else {
           SDValue SubRegIdx = CurDAG->getTargetConstant(ARM::gsub_1, MVT::i32);
           SDNode *ResNode = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
-              dl, MVT::i32, MVT::Glue, SDValue(Ld, 0), SubRegIdx, Glue);
+              dl, MVT::i32, SDValue(Ld, 0), SubRegIdx);
           Result = SDValue(ResNode,0);
-          Glue = Result.getValue(1);
         }
         ReplaceUses(SDValue(N, 1), Result);
       }
-      ReplaceUses(SDValue(N, 2), Glue);
+      ReplaceUses(SDValue(N, 2), OutChain);
       return NULL;
     }
 
