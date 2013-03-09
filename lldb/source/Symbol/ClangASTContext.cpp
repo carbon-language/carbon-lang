@@ -2741,7 +2741,7 @@ ClangASTContext::AddMethodToObjCObjectType (ASTContext *ast,
                                                                name[0] == '-',
                                                                is_variadic,
                                                                is_synthesized,
-                                                               is_artificial, // is_implicitly_declared
+                                                               true, // is_implicitly_declared; we force this to true because we don't have source locations
                                                                is_defined,
                                                                imp_control,
                                                                false /*has_related_result_type*/);
@@ -5275,9 +5275,8 @@ ClangASTContext::CreateFunctionType (ASTContext *ast,
     proto_info.Exceptions = NULL;
     
     return ast->getFunctionType (QualType::getFromOpaquePtr(result_type),
-                                 qual_type_args.empty() ? NULL : &qual_type_args.front(),
-                                 qual_type_args.size(),
-                                 proto_info).getAsOpaquePtr();    // NoReturn);
+                                 qual_type_args,
+                                 proto_info).getAsOpaquePtr();
 }
 
 ParmVarDecl *
