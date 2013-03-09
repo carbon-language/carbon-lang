@@ -203,8 +203,11 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 #endif
 }
 
-void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
-  uint32_t len = 3;
+void llvm_gcda_emit_function(uint32_t ident, const char *function_name,
+                             uint8_t use_extra_checksum) {
+  uint32_t len = 2;
+  if (use_extra_checksum)
+    len++;
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: function id=0x%08x name=%s\n", ident,
           function_name ? function_name : "NULL");
@@ -218,7 +221,8 @@ void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
   write_int32(len);
   write_int32(ident);
   write_int32(0);
-  write_int32(0);
+  if (use_extra_checksum)
+    write_int32(0);
   if (function_name)
     write_string(function_name);
 }
