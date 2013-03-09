@@ -986,7 +986,7 @@ RegisterValue::SetBytes (const void *bytes, size_t length, lldb::ByteOrder byte_
     {
         m_type = eTypeBytes;
         m_data.buffer.length = length;
-        assert (length < sizeof (m_data.buffer.bytes));
+        assert (length <= sizeof (m_data.buffer.bytes));
         memcpy (m_data.buffer.bytes, bytes, length);
         m_data.buffer.byte_order = byte_order;
     }
