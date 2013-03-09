@@ -1,4 +1,4 @@
-//===- lib/MC/MCELFStreamer.cpp - ELF Object Output ------------===//
+//===- lib/MC/MCELFStreamer.cpp - ELF Object Output -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
