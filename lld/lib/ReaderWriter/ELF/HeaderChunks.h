@@ -259,13 +259,13 @@ public:
 
   void finalize() {}
 
-  inline uint16_t fileSize() { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
+  inline uint64_t fileSize() { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
 
-  inline int64_t entsize() {
+  inline uint64_t entsize() {
     return sizeof(Elf_Shdr);
   }
   
-  inline int64_t numHeaders() {
+  inline uint64_t numHeaders() {
     return _sectionInfo.size();
   }
 
