@@ -75,10 +75,11 @@ void foo10() {
 
 
 // In C, enum constants have the type of the underlying integer type, not the
-// enumeration they are part of. We pretend the constants have enum type when
-// they are mixed with other expressions of enum type.
+// enumeration they are part of. We pretend the constants have enum type if
+// all the returns seem to be playing along.
 enum CStyleEnum {
-  CSE_Value = 1
+  CSE_Value = 1,
+  CSE_Value2 = 2
 };
 enum CStyleEnum getCSE();
 typedef enum CStyleEnum (^cse_block_t)();
@@ -92,7 +93,9 @@ void testCStyleEnumInference(bool arg) {
   a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
     return 1;
   };
-  a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
+
+  // No warning here.
+  a = ^{
     return CSE_Value;
   };
 
@@ -113,6 +116,15 @@ void testCStyleEnumInference(bool arg) {
       return CSE_Value;
     else
       return 1;
+  };
+
+  // rdar://13200889
+  extern void check_enum(void);
+  a = ^{
+    return (arg ? (CSE_Value) : (check_enum(), (!arg ? CSE_Value2 : getCSE())));
+  };
+  a = ^{
+    return (arg ? (CSE_Value) : ({check_enum(); CSE_Value2; }));
   };
 }
 
