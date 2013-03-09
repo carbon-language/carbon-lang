@@ -601,9 +601,10 @@ Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
 }
 
 Constant *GCOVProfiler::getEmitFunctionFunc() {
-  Type *Args[2] = {
+  Type *Args[3] = {
     Type::getInt32Ty(*Ctx),    // uint32_t ident
     Type::getInt8PtrTy(*Ctx),  // const char *function_name
+    Type::getInt8Ty(*Ctx),     // uint8_t use_extra_checksum
   };
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), Args, false);
   return M->getOrInsertFunction("llvm_gcda_emit_function", FTy);
@@ -668,12 +669,13 @@ void GCOVProfiler::insertCounterWriteout(
              I = CountersBySP.begin(), E = CountersBySP.end();
            I != E; ++I) {
         DISubprogram SP(I->second);
-        Builder.CreateCall2(EmitFunction,
+        Builder.CreateCall3(EmitFunction,
                             Builder.getInt32(i),
                             NoFunctionNamesInData ?
                               Constant::getNullValue(Builder.getInt8PtrTy()) :
-                              Builder.CreateGlobalStringPtr(SP.getName()));
-        
+                              Builder.CreateGlobalStringPtr(SP.getName()),
+                            Builder.getInt8(UseExtraChecksum));
+
         GlobalVariable *GV = I->first;
         unsigned Arcs =
           cast<ArrayType>(GV->getType()->getElementType())->getNumElements();
