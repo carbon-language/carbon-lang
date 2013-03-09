@@ -5026,10 +5026,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   
   if (const EnumType *SourceEnum = Source->getAs<EnumType>())
     if (const EnumType *TargetEnum = Target->getAs<EnumType>())
-      if ((SourceEnum->getDecl()->getIdentifier() || 
-           SourceEnum->getDecl()->getTypedefNameForAnonDecl()) &&
-          (TargetEnum->getDecl()->getIdentifier() ||
-           TargetEnum->getDecl()->getTypedefNameForAnonDecl()) &&
+      if (SourceEnum->getDecl()->hasNameForLinkage() &&
+          TargetEnum->getDecl()->hasNameForLinkage() &&
           SourceEnum != TargetEnum) {
         if (S.SourceMgr.isInSystemMacro(CC))
           return;

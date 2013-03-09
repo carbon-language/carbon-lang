@@ -675,7 +675,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   //       has the typedef name for linkage purposes (7.1.3); or
   } else if (const TagDecl *Tag = dyn_cast<TagDecl>(D)) {
     // Unnamed tags have no linkage.
-    if (!Tag->getDeclName() && !Tag->getTypedefNameForAnonDecl())
+    if (!Tag->hasNameForLinkage())
       return LinkageInfo::none();
 
     // If this is a class template specialization, consider the

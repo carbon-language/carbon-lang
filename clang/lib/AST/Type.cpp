@@ -2099,7 +2099,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
     Linkage L = Tag->getLinkage();
     bool IsLocalOrUnnamed =
       Tag->getDeclContext()->isFunctionOrMethod() ||
-      (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl());
+      !Tag->hasNameForLinkage();
     return CachedProperties(L, IsLocalOrUnnamed);
   }
 
