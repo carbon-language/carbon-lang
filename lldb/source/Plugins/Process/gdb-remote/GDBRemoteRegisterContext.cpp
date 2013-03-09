@@ -922,7 +922,6 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
                 {
                     if (strcmp(m_regs[i].name, g_register_infos[i].name))
                     {
-                        printf ("[%zu] name %s != %s\n", i, m_regs[i].name, g_register_infos[i].name);
                         match = false;
                         break;
                     }
@@ -931,7 +930,6 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
                 // Make sure all register byte sizes match
                 if (m_regs[i].byte_size != g_register_infos[i].byte_size)
                 {
-                    printf ("[%zu] size %u != %u\n", i, m_regs[i].byte_size, g_register_infos[i].byte_size);
                     match = false;
                     break;
                 }
@@ -940,15 +938,8 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
         else
         {
             // Wrong number of registers.
-            printf ("reg count %zu != %u\n", num_dynamic_regs, num_registers);
             match = false;
         }
-        
-        if (match)
-            puts("ARM registers match, adding hard coded junk");
-        else
-            puts("ARM registers don't match, not adding junk");
-
         // If "match" is true, then we can add extra registers.
         if (match)
         {
