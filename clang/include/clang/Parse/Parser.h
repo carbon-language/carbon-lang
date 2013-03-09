@@ -279,11 +279,7 @@ private:
   /// isTokenStringLiteral - True if this token is a string-literal.
   ///
   bool isTokenStringLiteral() const {
-    return Tok.getKind() == tok::string_literal ||
-           Tok.getKind() == tok::wide_string_literal ||
-           Tok.getKind() == tok::utf8_string_literal ||
-           Tok.getKind() == tok::utf16_string_literal ||
-           Tok.getKind() == tok::utf32_string_literal;
+    return tok::isStringLiteral(Tok.getKind());
   }
 
   /// \brief Returns true if the current token is '=' or is a type of '='.

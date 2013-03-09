@@ -184,7 +184,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
 
   // Read the '"..."'.
   Lex(Tok);
-  if (Tok.isNot(tok::string_literal) && Tok.isNot(tok::wide_string_literal)) {
+  if (!tok::isStringLiteral(Tok.getKind())) {
     Diag(PragmaLoc, diag::err__Pragma_malformed);
     // Skip this token, and the ')', if present.
     if (Tok.isNot(tok::r_paren))
@@ -219,15 +219,50 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   SourceLocation RParenLoc = Tok.getLocation();
   std::string StrVal = getSpelling(StrTok);
 
-  // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1:
-  // "The string literal is destringized by deleting the L prefix, if present,
+  // The _Pragma is lexically sound.  Destringize according to C11 6.10.9.1:
+  // "The string literal is destringized by deleting any encoding prefix,
   // deleting the leading and trailing double-quotes, replacing each escape
   // sequence \" by a double-quote, and replacing each escape sequence \\ by a
   // single backslash."
-  if (StrVal[0] == 'L')  // Remove L prefix.
+  if (StrVal[0] == 'L' || StrVal[0] == 'U' ||
+      (StrVal[0] == 'u' && StrVal[1] != '8'))
     StrVal.erase(StrVal.begin());
-  assert(StrVal[0] == '"' && StrVal[StrVal.size()-1] == '"' &&
-         "Invalid string token!");
+  else if (StrVal[0] == 'u')
+    StrVal.erase(StrVal.begin(), StrVal.begin() + 2);
+
+  if (StrVal[0] == 'R') {
+    // FIXME: C++11 does not specify how to handle raw-string-literals here.
+    // We strip off the 'R', the quotes, the d-char-sequences, and the parens.
+    assert(StrVal[1] == '"' && StrVal[StrVal.size() - 1] == '"' &&
+           "Invalid raw string token!");
+
+    // Measure the length of the d-char-sequence.
+    unsigned NumDChars = 0;
+    while (StrVal[2 + NumDChars] != '(') {
+      assert(NumDChars < (StrVal.size() - 5) / 2 &&
+             "Invalid raw string token!");
+      ++NumDChars;
+    }
+    assert(StrVal[StrVal.size() - 2 - NumDChars] == ')');
+
+    // Remove 'R " d-char-sequence' and 'd-char-sequence "'. We'll replace the
+    // parens below.
+    StrVal.erase(0, 2 + NumDChars);
+    StrVal.erase(StrVal.size() - 1 - NumDChars);
+  } else {
+    assert(StrVal[0] == '"' && StrVal[StrVal.size()-1] == '"' &&
+           "Invalid string token!");
+
+    // Remove escaped quotes and escapes.
+    for (unsigned i = 1, e = StrVal.size(); i < e-2; ++i) {
+      if (StrVal[i] == '\\' &&
+          (StrVal[i+1] == '\\' || StrVal[i+1] == '"')) {
+        // \\ -> '\' and \" -> '"'.
+        StrVal.erase(StrVal.begin()+i);
+        --e;
+      }
+    }
+  }
 
   // Remove the front quote, replacing it with a space, so that the pragma
   // contents appear to have a space before them.
@@ -236,16 +271,6 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   // Replace the terminating quote with a \n.
   StrVal[StrVal.size()-1] = '\n';
 
-  // Remove escaped quotes and escapes.
-  for (unsigned i = 0, e = StrVal.size(); i != e-1; ++i) {
-    if (StrVal[i] == '\\' &&
-        (StrVal[i+1] == '\\' || StrVal[i+1] == '"')) {
-      // \\ -> '\' and \" -> '"'.
-      StrVal.erase(StrVal.begin()+i);
-      --e;
-    }
-  }
-  
   // Plop the string (including the newline and trailing null) into a buffer
   // where we can lex it.
   Token TmpTok;

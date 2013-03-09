@@ -215,15 +215,11 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
 
     // If this is a string or character constant, escape the token as specified
     // by 6.10.3.2p2.
-    if (Tok.is(tok::string_literal) ||       // "foo"
-        Tok.is(tok::wide_string_literal) ||  // L"foo"
-        Tok.is(tok::utf8_string_literal) ||  // u8"foo"
-        Tok.is(tok::utf16_string_literal) || // u"foo"
-        Tok.is(tok::utf32_string_literal) || // U"foo"
-        Tok.is(tok::char_constant) ||        // 'x'
-        Tok.is(tok::wide_char_constant) ||   // L'x'.
-        Tok.is(tok::utf16_char_constant) ||  // u'x'.
-        Tok.is(tok::utf32_char_constant)) {  // U'x'.
+    if (tok::isStringLiteral(Tok.getKind()) || // "foo", u8R"x(foo)x"_bar, etc.
+        Tok.is(tok::char_constant) ||          // 'x'
+        Tok.is(tok::wide_char_constant) ||     // L'x'.
+        Tok.is(tok::utf16_char_constant) ||    // u'x'.
+        Tok.is(tok::utf32_char_constant)) {    // U'x'.
       bool Invalid = false;
       std::string TokStr = PP.getSpelling(Tok, &Invalid);
       if (!Invalid) {
