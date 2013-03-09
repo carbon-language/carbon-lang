@@ -2088,6 +2088,10 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
     }
 
     case Instruction::Call: {
+      // Ignore dbg.value instructions.
+      if (isa<DbgValueInst>(it))
+        break;
+
       Module *M = BB->getParent()->getParent();
       CallInst *CI = cast<CallInst>(it);
       Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
@@ -2324,9 +2328,10 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         return false;
       }// end of PHI handling
 
-      // We still don't handle functions.
+      // We still don't handle functions. However, we can ignore dbg.value
+      // calls and we do handle certain intrinsic and libm functions.
       CallInst *CI = dyn_cast<CallInst>(it);
-      if (CI && !getIntrinsicIDForCall(CI, TLI)) {
+      if (CI && !getIntrinsicIDForCall(CI, TLI) && !isa<DbgValueInst>(CI)) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
         return false;
       }
@@ -3263,6 +3268,10 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
 
     // For each instruction in the old loop.
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+      // Skip dbg.value instructions.
+      if (isa<DbgValueInst>(it))
+        continue;
+
       unsigned C = getInstructionCost(it, VF);
       Cost += C;
       DEBUG(dbgs() << "LV: Found an estimated cost of "<< C <<" for VF " <<
