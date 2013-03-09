@@ -906,27 +906,72 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     {
         // Add composite registers to our primordial registers, then.
         const size_t num_composites = llvm::array_lengthof(g_composites);
-        const size_t num_primordials = GetNumRegisters();
-        RegisterInfo *g_comp_register_infos = g_register_infos + (num_registers - num_composites);
-        for (i=0; i<num_composites; ++i)
+        const size_t num_dynamic_regs = GetNumRegisters();
+        const size_t num_common_regs = num_registers - num_composites;
+        RegisterInfo *g_comp_register_infos = g_register_infos + num_common_regs;
+
+        // First we need to validate that all registers that we already have match the non composite regs.
+        // If so, then we can add the registers, else we need to bail
+        bool match = true;
+        if (num_dynamic_regs == num_common_regs)
         {
-            ConstString name;
-            ConstString alt_name;
-            const uint32_t first_primordial_reg = g_comp_register_infos[i].value_regs[0];
-            const char *reg_name = g_register_infos[first_primordial_reg].name;
-            if (reg_name && reg_name[0])
+            for (i=0; match && i<num_dynamic_regs; ++i)
             {
-                for (uint32_t j = 0; j < num_primordials; ++j)
+                // Make sure all register names match
+                if (m_regs[i].name && g_register_infos[i].name)
                 {
-                    const RegisterInfo *reg_info = GetRegisterInfoAtIndex(j);
-                    // Find a matching primordial register info entry.
-                    if (reg_info && reg_info->name && ::strcasecmp(reg_info->name, reg_name) == 0)
+                    if (strcmp(m_regs[i].name, g_register_infos[i].name))
                     {
-                        // The name matches the existing primordial entry.
-                        // Find and assign the offset, and then add this composite register entry.
-                        g_comp_register_infos[i].byte_offset = reg_info->byte_offset;
-                        name.SetCString(g_comp_register_infos[i].name);
-                        AddRegister(g_comp_register_infos[i], name, alt_name, vfp_reg_set);
+                        printf ("[%zu] name %s != %s\n", i, m_regs[i].name, g_register_infos[i].name);
+                        match = false;
+                        break;
+                    }
+                }
+                
+                // Make sure all register byte sizes match
+                if (m_regs[i].byte_size != g_register_infos[i].byte_size)
+                {
+                    printf ("[%zu] size %u != %u\n", i, m_regs[i].byte_size, g_register_infos[i].byte_size);
+                    match = false;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // Wrong number of registers.
+            printf ("reg count %zu != %u\n", num_dynamic_regs, num_registers);
+            match = false;
+        }
+        
+        if (match)
+            puts("ARM registers match, adding hard coded junk");
+        else
+            puts("ARM registers don't match, not adding junk");
+
+        // If "match" is true, then we can add extra registers.
+        if (match)
+        {
+            for (i=0; i<num_composites; ++i)
+            {
+                ConstString name;
+                ConstString alt_name;
+                const uint32_t first_primordial_reg = g_comp_register_infos[i].value_regs[0];
+                const char *reg_name = g_register_infos[first_primordial_reg].name;
+                if (reg_name && reg_name[0])
+                {
+                    for (uint32_t j = 0; j < num_dynamic_regs; ++j)
+                    {
+                        const RegisterInfo *reg_info = GetRegisterInfoAtIndex(j);
+                        // Find a matching primordial register info entry.
+                        if (reg_info && reg_info->name && ::strcasecmp(reg_info->name, reg_name) == 0)
+                        {
+                            // The name matches the existing primordial entry.
+                            // Find and assign the offset, and then add this composite register entry.
+                            g_comp_register_infos[i].byte_offset = reg_info->byte_offset;
+                            name.SetCString(g_comp_register_infos[i].name);
+                            AddRegister(g_comp_register_infos[i], name, alt_name, vfp_reg_set);
+                        }
                     }
                 }
             }
