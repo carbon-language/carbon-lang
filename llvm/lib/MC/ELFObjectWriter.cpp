@@ -1,4 +1,4 @@
-//===- lib/MC/ELFObjectWriter.cpp - ELF File Writer -------------------===//
+//===- lib/MC/ELFObjectWriter.cpp - ELF File Writer -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -155,7 +155,7 @@ class ELFObjectWriter : public MCObjectWriter {
                     raw_ostream &_OS, bool IsLittleEndian)
       : MCObjectWriter(_OS, IsLittleEndian),
         TargetObjectWriter(MOTW),
-        NeedsGOT(false), NeedsSymtabShndx(false){
+        NeedsGOT(false), NeedsSymtabShndx(false) {
     }
 
     virtual ~ELFObjectWriter();
@@ -978,7 +978,7 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
     UndefinedSymbolData[i].SymbolData->setIndex(Index++);
 
-  if (NumRegularSections > ELF::SHN_LORESERVE)
+  if (Index >= ELF::SHN_LORESERVE)
     NeedsSymtabShndx = true;
 }
 
