@@ -1193,7 +1193,7 @@ static void RDar8424269_B(RDar8424269_A *p, unsigned char *RDar8424269_D,
   tmp2 = tmp2t[2];
 }
 
-// <rdar://problem/8642434> - Handle transparent unions with the AttrNonNullChecker.
+// <rdar://problem/8642434> - Handle transparent unions with the NonNullParamChecker.
 typedef union {
   struct rdar_8642434_typeA *_dq;
 }

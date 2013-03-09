@@ -384,7 +384,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     return;
 
   // FIXME: The rest of this just checks that the argument is non-null.
-  // It should probably be refactored and combined with AttrNonNullChecker.
+  // It should probably be refactored and combined with NonNullParamChecker.
 
   // Get the argument's value.
   const Expr *Arg = CE->getArg(0);

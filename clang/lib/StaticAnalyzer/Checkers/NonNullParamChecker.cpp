@@ -1,4 +1,4 @@
-//===--- AttrNonNullChecker.h - Undefined arguments checker ----*- C++ -*--===//
+//===--- NonNullParamChecker.cpp - Undefined arguments checker -*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines AttrNonNullChecker, a builtin check in ExprEngine that 
-// performs checks for arguments declared to have nonnull attribute.
+// This defines NonNullParamChecker, which checks for arguments expected not to
+// be null due to:
+//   - the corresponding parameters being declared to have nonnull attribute
+//   - the corresponding parameters being references; since the call would form
+//     a reference to a null pointer
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,7 +27,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class AttrNonNullChecker
+class NonNullParamChecker
   : public Checker< check::PreCall > {
   mutable OwningPtr<BugType> BTAttrNonNull;
   mutable OwningPtr<BugType> BTNullRefArg;
@@ -39,7 +42,7 @@ public:
 };
 } // end anonymous namespace
 
-void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
+void NonNullParamChecker::checkPreCall(const CallEvent &Call,
                                       CheckerContext &C) const {
   const Decl *FD = Call.getDecl();
   if (!FD)
@@ -146,7 +149,7 @@ void AttrNonNullChecker::checkPreCall(const CallEvent &Call,
   C.addTransition(state);
 }
 
-BugReport *AttrNonNullChecker::genReportNullAttrNonNull(
+BugReport *NonNullParamChecker::genReportNullAttrNonNull(
   const ExplodedNode *ErrorNode, const Expr *ArgE) const {
   // Lazily allocate the BugType object if it hasn't already been
   // created. Ownership is transferred to the BugReporter object once
@@ -165,7 +168,7 @@ BugReport *AttrNonNullChecker::genReportNullAttrNonNull(
   return R;
 }
 
-BugReport *AttrNonNullChecker::genReportReferenceToNullPointer(
+BugReport *NonNullParamChecker::genReportReferenceToNullPointer(
   const ExplodedNode *ErrorNode, const Expr *ArgE) const {
   if (!BTNullRefArg)
     BTNullRefArg.reset(new BuiltinBug("Dereference of null pointer"));
@@ -185,6 +188,6 @@ BugReport *AttrNonNullChecker::genReportReferenceToNullPointer(
 
 }
 
-void ento::registerAttrNonNullChecker(CheckerManager &mgr) {
-  mgr.registerChecker<AttrNonNullChecker>();
+void ento::registerNonNullParamChecker(CheckerManager &mgr) {
+  mgr.registerChecker<NonNullParamChecker>();
 }
