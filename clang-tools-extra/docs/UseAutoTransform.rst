@@ -1,4 +1,4 @@
-.. index:: Loop Convert Transform
+.. index:: Use-Auto Transform
 
 ==================
 Use-Auto Transform
