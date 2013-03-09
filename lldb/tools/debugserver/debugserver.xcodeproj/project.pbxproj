@@ -499,7 +499,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
-				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -528,7 +527,6 @@
 				SDKROOT = "";
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
-				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -559,7 +557,6 @@
 				SDKROOT = "";
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
-				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -592,7 +589,6 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
-					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
@@ -647,7 +643,6 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
-					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
@@ -702,7 +697,6 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
-					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
@@ -754,7 +748,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
-				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
 			};
@@ -788,7 +781,6 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
-					"-DUSE_ARM_DISASSEMBLER_FRAMEWORK",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[arch=*][sdk=iphoneos*]" = "$(OTHER_CFLAGS)";
