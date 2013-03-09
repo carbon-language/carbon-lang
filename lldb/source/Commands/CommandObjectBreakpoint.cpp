@@ -189,7 +189,7 @@ public:
                     if (!success)
                         error.SetErrorStringWithFormat ("Invalid boolean value for on-catch option: '%s'", option_arg);
                 }
-
+                break;
                 case 'i':
                 {
                     m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);

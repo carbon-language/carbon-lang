@@ -338,8 +338,17 @@ ItaniumABILanguageRuntime::GetPluginVersion()
     return 1;
 }
 
+// This is an array of symbol names to use in setting exception breakpoints.  The names are laid out:
+//
+//  catch_names, general_throw_names, throw_names_for_use_in_expressions
+//
+// Then you can use the following constants to pick out the part of the array you want to pass to the breakpoint
+// resolver.
+
 static const char *exception_names[] = { "__cxa_begin_catch", "__cxa_throw", "__cxa_rethrow", "__cxa_allocate_exception"};
-static const int num_throw_names = 3;
+static const int num_exception_names = sizeof (exception_names)/sizeof (char *);
+static const int num_catch_names = 1;
+static const int num_throw_names = num_exception_names - num_catch_names;
 static const int num_expression_throw_names = 1;
 
 BreakpointResolverSP
@@ -352,7 +361,6 @@ BreakpointResolverSP
 ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp, bool for_expressions)
 {
     BreakpointResolverSP resolver_sp;
-    static const int total_expressions = sizeof (exception_names)/sizeof (char *);
     
     // One complication here is that most users DON'T want to stop at __cxa_allocate_expression, but until we can do
     // anything better with predicting unwinding the expression parser does.  So we have two forms of the exception
@@ -363,9 +371,9 @@ ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch
     if (catch_bp && throw_bp)
     {
         if (for_expressions)
-            num_expressions = total_expressions;
+            num_expressions = num_exception_names;
         else
-            num_expressions = total_expressions - num_expression_throw_names;
+            num_expressions = num_exception_names - num_expression_throw_names;
             
         resolver_sp.reset (new BreakpointResolverName (bkpt,
                                                        exception_names,
@@ -376,12 +384,12 @@ ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch
     else if (throw_bp)
     {
         if (for_expressions)
-            num_expressions = num_throw_names - num_expression_throw_names;
-        else
             num_expressions = num_throw_names;
-            
+        else
+            num_expressions = num_throw_names - num_expression_throw_names;
+        
         resolver_sp.reset (new BreakpointResolverName (bkpt,
-                                                       exception_names + 1,
+                                                       exception_names + num_catch_names,
                                                        num_expressions,
                                                        eFunctionNameTypeBase,
                                                        eLazyBoolNo));
@@ -389,7 +397,7 @@ ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch
     else if (catch_bp)
         resolver_sp.reset (new BreakpointResolverName (bkpt,
                                                        exception_names,
-                                                       total_expressions - num_throw_names,
+                                                       num_catch_names,
                                                        eFunctionNameTypeBase,
                                                        eLazyBoolNo));
 
