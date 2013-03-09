@@ -668,7 +668,7 @@ void GCOVProfiler::insertCounterWriteout(
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
         Builder.CreateCall3(EmitFunction,
-                            Builder.getInt32(i),
+                            Builder.getInt32(j),
                             NoFunctionNamesInData ?
                               Constant::getNullValue(Builder.getInt8PtrTy()) :
                               Builder.CreateGlobalStringPtr(SP.getName()),
