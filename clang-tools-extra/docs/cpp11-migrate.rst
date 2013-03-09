@@ -26,10 +26,6 @@ with the same requirements as other tools built on LibTooling.
 Command Line Options
 --------------------
 
-.. option:: -fatal-assembler-warnings
-
-  Treat all compiler warnings as errors.
-
 .. option:: -help
 
   Displays tool usage instructions and command line options.
@@ -78,6 +74,17 @@ Command Line Options
 
   The meaning of risk is handled differently for each transform. See
   :ref:`transform documentation <transforms>` for details.
+
+.. option:: -final-syntax-check
+ 
+  After applying the final transform to a file, parse the file to ensure the
+  last transform did not introduce syntax errors. Syntax errors introduced by
+  earlier transforms are already caught when subsequent transforms parse the
+  file.
+
+.. option:: -fatal-assembler-warnings
+
+  Treat all compiler warnings as errors.
 
 
 .. option:: -version
