@@ -17,9 +17,6 @@
 #if defined (__arm__)
 
 #include "DNBArch.h"
-#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
-#include <ARMDisassembler/ARMDisassembler.h>
-#endif
 
 class MachThread;
 
