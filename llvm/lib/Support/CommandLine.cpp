@@ -1222,14 +1222,10 @@ sortOpts(StringMap<Option*> &OptMap,
 namespace {
 
 class HelpPrinter {
-  size_t MaxArgLen;
-  const Option *EmptyArg;
   const bool ShowHidden;
 
 public:
-  explicit HelpPrinter(bool showHidden) : ShowHidden(showHidden) {
-    EmptyArg = 0;
-  }
+  explicit HelpPrinter(bool showHidden) : ShowHidden(showHidden) {}
 
   void operator=(bool Value) {
     if (Value == false) return;
@@ -1266,7 +1262,7 @@ public:
     outs() << "\n\n";
 
     // Compute the maximum argument length...
-    MaxArgLen = 0;
+    size_t MaxArgLen = 0;
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
       MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
 
