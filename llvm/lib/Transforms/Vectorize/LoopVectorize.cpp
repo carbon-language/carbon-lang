@@ -419,7 +419,7 @@ public:
 
   /// Alias(Multi)Map stores the values (GEPs or underlying objects and their
   /// respective Store/Load instruction(s) to calculate aliasing.
-  typedef DenseMap<Value*, Instruction* > AliasMap;
+  typedef MapVector<Value*, Instruction* > AliasMap;
   typedef DenseMap<Value*, std::vector<Instruction*> > AliasMultiMap;
 
   /// Returns true if it is legal to vectorize this loop.
