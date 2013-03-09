@@ -1,4 +1,11 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++11 -Wfour-char-constants -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c11 -x c -Wfour-char-constants -fsyntax-only -verify %s
+
+#ifndef __cplusplus
+typedef __WCHAR_TYPE__ wchar_t;
+typedef __CHAR16_TYPE__ char16_t;
+typedef __CHAR32_TYPE__ char32_t;
+#endif
 
 int a = 'ab'; // expected-warning {{multi-character character constant}}
 int b = '\xFF\xFF'; // expected-warning {{multi-character character constant}}
@@ -7,7 +14,9 @@ int c = 'APPS'; // expected-warning {{multi-character character constant}}
 char d = '⌘'; // expected-error {{character too large for enclosing character literal type}}
 char e = '\u2318'; // expected-error {{character too large for enclosing character literal type}}
 
+#ifdef __cplusplus
 auto f = '\xE2\x8C\x98'; // expected-warning {{multi-character character constant}}
+#endif
 
 char16_t g = u'ab'; // expected-error {{Unicode character literals may not contain multiple characters}}
 char16_t h = u'\U0010FFFD'; // expected-error {{character too large for enclosing character literal type}}
@@ -24,4 +33,11 @@ char32_t n = U'ab'; // expected-error {{Unicode character literals may not conta
 char16_t o = '👽'; // expected-error {{character too large for enclosing character literal type}}
 
 char16_t p[2] = u"\U0000FFFF";
-char16_t q[2] = u"\U00010000"; // expected-error {{too long}}
+char16_t q[2] = u"\U00010000";
+#ifdef __cplusplus
+// expected-error@-2 {{too long}}
+#else
+// FIXME: The above should be accepted in C11 mode.
+// expected-error@-6 {{must be an initializer list}}
+// expected-error@-6 {{must be an initializer list}}
+#endif
