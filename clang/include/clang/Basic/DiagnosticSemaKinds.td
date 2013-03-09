@@ -1644,8 +1644,6 @@ def err_attribute_too_few_arguments : Error<
   "attribute takes at least %0 argument%s0">;
 def err_attribute_missing_parameter_name : Error<
   "attribute requires unquoted parameter">;
-def err_attribute_requires_type_parameter : Error<
-  "%0 attribute requires type parameter">;
 def err_attribute_invalid_vector_type : Error<"invalid vector element type %0">;
 def err_attribute_bad_neon_vector_size : Error<
   "Neon vector size must be 64 or 128 bits">;
