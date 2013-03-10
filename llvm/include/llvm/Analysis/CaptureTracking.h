@@ -14,12 +14,11 @@
 #ifndef LLVM_ANALYSIS_CAPTURETRACKING_H
 #define LLVM_ANALYSIS_CAPTURETRACKING_H
 
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/Support/CallSite.h"
-
 namespace llvm {
+
+  class Value;
+  class Use;
+
   /// PointerMayBeCaptured - Return true if this pointer value may be captured
   /// by the enclosing function (which is required to exist).  This routine can
   /// be expensive, so consider caching the results.  The boolean ReturnCaptures

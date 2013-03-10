@@ -18,7 +18,12 @@
 
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/Support/CallSite.h"
+
 using namespace llvm;
 
 CaptureTracker::~CaptureTracker() {}
