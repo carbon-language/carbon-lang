@@ -15,7 +15,6 @@
 #ifndef LLVM_CODEGEN_MACHINEPOSTDOMINATORS_H
 #define LLVM_CODEGEN_MACHINEPOSTDOMINATORS_H
 
-#include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
