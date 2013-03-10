@@ -1923,43 +1923,43 @@ vec_lvx(int __a, const float *__b)
 /* vec_lde */
 
 static vector signed char __ATTRS_o_ai
-vec_lde(int __a, const vector signed char *__b)
+vec_lde(int __a, const signed char *__b)
 {
   return (vector signed char)__builtin_altivec_lvebx(__a, __b);
 }
 
 static vector unsigned char __ATTRS_o_ai
-vec_lde(int __a, const vector unsigned char *__b)
+vec_lde(int __a, const unsigned char *__b)
 {
   return (vector unsigned char)__builtin_altivec_lvebx(__a, __b);
 }
 
 static vector short __ATTRS_o_ai
-vec_lde(int __a, const vector short *__b)
+vec_lde(int __a, const short *__b)
 {
   return (vector short)__builtin_altivec_lvehx(__a, __b);
 }
 
 static vector unsigned short __ATTRS_o_ai
-vec_lde(int __a, const vector unsigned short *__b)
+vec_lde(int __a, const unsigned short *__b)
 {
   return (vector unsigned short)__builtin_altivec_lvehx(__a, __b);
 }
 
 static vector int __ATTRS_o_ai
-vec_lde(int __a, const vector int *__b)
+vec_lde(int __a, const int *__b)
 {
   return (vector int)__builtin_altivec_lvewx(__a, __b);
 }
 
 static vector unsigned int __ATTRS_o_ai
-vec_lde(int __a, const vector unsigned int *__b)
+vec_lde(int __a, const unsigned int *__b)
 {
   return (vector unsigned int)__builtin_altivec_lvewx(__a, __b);
 }
 
 static vector float __ATTRS_o_ai
-vec_lde(int __a, const vector float *__b)
+vec_lde(int __a, const float *__b)
 {
   return (vector float)__builtin_altivec_lvewx(__a, __b);
 }
@@ -1967,13 +1967,13 @@ vec_lde(int __a, const vector float *__b)
 /* vec_lvebx */
 
 static vector signed char __ATTRS_o_ai
-vec_lvebx(int __a, const vector signed char *__b)
+vec_lvebx(int __a, const signed char *__b)
 {
   return (vector signed char)__builtin_altivec_lvebx(__a, __b);
 }
 
 static vector unsigned char __ATTRS_o_ai
-vec_lvebx(int __a, const vector unsigned char *__b)
+vec_lvebx(int __a, const unsigned char *__b)
 {
   return (vector unsigned char)__builtin_altivec_lvebx(__a, __b);
 }
@@ -1981,13 +1981,13 @@ vec_lvebx(int __a, const vector unsigned char *__b)
 /* vec_lvehx */
 
 static vector short __ATTRS_o_ai
-vec_lvehx(int __a, const vector short *__b)
+vec_lvehx(int __a, const short *__b)
 {
   return (vector short)__builtin_altivec_lvehx(__a, __b);
 }
 
 static vector unsigned short __ATTRS_o_ai
-vec_lvehx(int __a, const vector unsigned short *__b)
+vec_lvehx(int __a, const unsigned short *__b)
 {
   return (vector unsigned short)__builtin_altivec_lvehx(__a, __b);
 }
@@ -1995,19 +1995,19 @@ vec_lvehx(int __a, const vector unsigned short *__b)
 /* vec_lvewx */
 
 static vector int __ATTRS_o_ai
-vec_lvewx(int __a, const vector int *__b)
+vec_lvewx(int __a, const int *__b)
 {
   return (vector int)__builtin_altivec_lvewx(__a, __b);
 }
 
 static vector unsigned int __ATTRS_o_ai
-vec_lvewx(int __a, const vector unsigned int *__b)
+vec_lvewx(int __a, const unsigned int *__b)
 {
   return (vector unsigned int)__builtin_altivec_lvewx(__a, __b);
 }
 
 static vector float __ATTRS_o_ai
-vec_lvewx(int __a, const vector float *__b)
+vec_lvewx(int __a, const float *__b)
 {
   return (vector float)__builtin_altivec_lvewx(__a, __b);
 }

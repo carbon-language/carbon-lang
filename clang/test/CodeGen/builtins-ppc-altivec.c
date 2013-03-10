@@ -484,20 +484,20 @@ void test6() {
   res_vf  = vec_lvx(0, &param_f);               // CHECK: @llvm.ppc.altivec.lvx
 
   /* vec_lde */
-  res_vsc = vec_lde(0, &vsc);                   // CHECK: @llvm.ppc.altivec.lvebx
-  res_vuc = vec_lde(0, &vuc);                   // CHECK: @llvm.ppc.altivec.lvebx
-  res_vs  = vec_lde(0, &vs);                    // CHECK: @llvm.ppc.altivec.lvehx
-  res_vus = vec_lde(0, &vus);                   // CHECK: @llvm.ppc.altivec.lvehx
-  res_vi  = vec_lde(0, &vi);                    // CHECK: @llvm.ppc.altivec.lvewx
-  res_vui = vec_lde(0, &vui);                   // CHECK: @llvm.ppc.altivec.lvewx
-  res_vf  = vec_lde(0, &vf);                    // CHECK: @llvm.ppc.altivec.lvewx
-  res_vsc = vec_lvebx(0, &vsc);                 // CHECK: @llvm.ppc.altivec.lvebx
-  res_vuc = vec_lvebx(0, &vuc);                 // CHECK: @llvm.ppc.altivec.lvebx
-  res_vs  = vec_lvehx(0, &vs);                  // CHECK: @llvm.ppc.altivec.lvehx
-  res_vus = vec_lvehx(0, &vus);                 // CHECK: @llvm.ppc.altivec.lvehx
-  res_vi  = vec_lvewx(0, &vi);                  // CHECK: @llvm.ppc.altivec.lvewx
-  res_vui = vec_lvewx(0, &vui);                 // CHECK: @llvm.ppc.altivec.lvewx
-  res_vf  = vec_lvewx(0, &vf);                  // CHECK: @llvm.ppc.altivec.lvewx
+  res_vsc = vec_lde(0, &param_sc);              // CHECK: @llvm.ppc.altivec.lvebx
+  res_vuc = vec_lde(0, &param_uc);              // CHECK: @llvm.ppc.altivec.lvebx
+  res_vs  = vec_lde(0, &param_s);               // CHECK: @llvm.ppc.altivec.lvehx
+  res_vus = vec_lde(0, &param_us);              // CHECK: @llvm.ppc.altivec.lvehx
+  res_vi  = vec_lde(0, &param_i);               // CHECK: @llvm.ppc.altivec.lvewx
+  res_vui = vec_lde(0, &param_ui);              // CHECK: @llvm.ppc.altivec.lvewx
+  res_vf  = vec_lde(0, &param_f);               // CHECK: @llvm.ppc.altivec.lvewx
+  res_vsc = vec_lvebx(0, &param_sc);            // CHECK: @llvm.ppc.altivec.lvebx
+  res_vuc = vec_lvebx(0, &param_uc);            // CHECK: @llvm.ppc.altivec.lvebx
+  res_vs  = vec_lvehx(0, &param_s);             // CHECK: @llvm.ppc.altivec.lvehx
+  res_vus = vec_lvehx(0, &param_us);            // CHECK: @llvm.ppc.altivec.lvehx
+  res_vi  = vec_lvewx(0, &param_i);             // CHECK: @llvm.ppc.altivec.lvewx
+  res_vui = vec_lvewx(0, &param_ui);            // CHECK: @llvm.ppc.altivec.lvewx
+  res_vf  = vec_lvewx(0, &param_f);             // CHECK: @llvm.ppc.altivec.lvewx
 
   /* vec_ldl */
   res_vsc = vec_ldl(0, &vsc);                   // CHECK: @llvm.ppc.altivec.lvxl
