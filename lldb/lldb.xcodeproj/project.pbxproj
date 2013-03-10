@@ -6374,6 +6374,7 @@
 				940DB8A716EA5F4200D3C2F1 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
 		};
 		940DB8B316EA60CA00D3C2F1 /* Build configuration list for PBXNativeTarget "lldb-perf-sketch" */ = {
 			isa = XCConfigurationList;
@@ -6384,6 +6385,7 @@
 				940DB8B716EA60CA00D3C2F1 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
 		};
 		EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */ = {
 			isa = XCConfigurationList;
