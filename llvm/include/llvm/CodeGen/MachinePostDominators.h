@@ -55,26 +55,27 @@ public:
     return DT->getNode(BB);
   }
 
-  bool dominates(MachineDomTreeNode *A, MachineDomTreeNode *B) const {
+  bool dominates(const MachineDomTreeNode *A,
+                 const MachineDomTreeNode *B) const {
     return DT->dominates(A, B);
   }
 
-  bool dominates(MachineBasicBlock *A, MachineBasicBlock *B) const {
+  bool dominates(const MachineBasicBlock *A, const MachineBasicBlock *B) const {
     return DT->dominates(A, B);
   }
 
-  bool
-  properlyDominates(const MachineDomTreeNode *A, MachineDomTreeNode *B) const {
+  bool properlyDominates(const MachineDomTreeNode *A,
+                         const MachineDomTreeNode *B) const {
     return DT->properlyDominates(A, B);
   }
 
-  bool
-  properlyDominates(MachineBasicBlock *A, MachineBasicBlock *B) const {
+  bool properlyDominates(const MachineBasicBlock *A,
+                         const MachineBasicBlock *B) const {
     return DT->properlyDominates(A, B);
   }
 
   MachineBasicBlock *findNearestCommonDominator(MachineBasicBlock *A,
-                                                       MachineBasicBlock *B) {
+                                                MachineBasicBlock *B) {
     return DT->findNearestCommonDominator(A, B);
   }
 
