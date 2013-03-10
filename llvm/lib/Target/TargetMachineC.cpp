@@ -184,7 +184,7 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
   }
 
   if (TM->addPassesToEmitFile(pass, destf, ft)) {
-    error = "No DataLayout in TargetMachine";
+    error = "TargetMachine can't emit a file of this type";
     *ErrorMessage = strdup(error.c_str());
     return true;
   }
