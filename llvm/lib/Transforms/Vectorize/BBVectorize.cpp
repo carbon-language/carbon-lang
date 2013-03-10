@@ -1771,7 +1771,7 @@ namespace {
       size_t MaxDepth = DAG.lookup(IJ);
 
       DEBUG(if (DebugPairSelection) dbgs() << "BBV: found DAG for pair {"
-                   << IJ.first << " <-> " << IJ.second << "} of depth " <<
+                   << *IJ.first << " <-> " << *IJ.second << "} of depth " <<
                    MaxDepth << " and size " << DAG.size() << "\n");
 
       // At this point the DAG has been constructed, but, may contain
@@ -2086,7 +2086,7 @@ namespace {
 
       DEBUG(if (DebugPairSelection)
              dbgs() << "BBV: found pruned DAG for pair {"
-             << IJ.first << " <-> " << IJ.second << "} of depth " <<
+             << *IJ.first << " <-> " << *IJ.second << "} of depth " <<
              MaxDepth << " and size " << PrunedDAG.size() <<
             " (effective size: " << EffSize << ")\n");
       if (((TTI && !UseChainDepthWithTI) ||
