@@ -38,9 +38,11 @@
 
   <p>Clang provides support for a number of features included in the new <a href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=50372">ISO C++ Standard, ISO/IEC 14882:2011</a>. The following table describes which C++11 features have been implemented in Clang and in which Clang versions they became available.</p>
 
-<p>You can use Clang in C++11 mode either
-with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++.
-Patches are needed to make <a href="libstdc++4.4-clang0x.patch">libstdc++-4.4</a>
+<p>By default, Clang builds C++ code according to the C++98 standard, with many
+C++11 features accepted as extensions. You can use Clang in C++11 mode with the
+<code>-std=c++11</code> option. Clang's C++11 mode can be used
+with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++, but
+patches are needed to make <a href="libstdc++4.4-clang0x.patch">libstdc++-4.4</a>
 work with Clang in C++11 mode. Patches are also needed to make
 <a href="libstdc++4.6-clang11.patch">libstdc++-4.6</a>,
 and <a href="libstdc++4.7-clang11.patch">libstdc++-4.7</a> work with Clang
