@@ -15,18 +15,15 @@
 #ifndef LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 #define LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SparseSet.h"
 #include "llvm/ADT/SparseMultiSet.h"
-#include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include <map>
 
 namespace llvm {
+  class MachineFrameInfo;
   class MachineLoopInfo;
   class MachineDominatorTree;
   class LiveIntervals;

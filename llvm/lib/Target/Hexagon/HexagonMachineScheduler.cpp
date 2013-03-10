@@ -15,7 +15,8 @@
 #define DEBUG_TYPE "misched"
 
 #include "HexagonMachineScheduler.h"
-#include <queue>
+#include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/IR/Function.h"
 
 using namespace llvm;
 
