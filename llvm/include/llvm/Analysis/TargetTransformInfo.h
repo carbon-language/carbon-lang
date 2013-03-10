@@ -22,14 +22,16 @@
 #ifndef LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 #define LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 
-#include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+
+class GlobalValue;
+class Type;
+class User;
+class Value;
 
 /// TargetTransformInfo - This pass provides access to the codegen
 /// interfaces that are needed for IR-level transformations.
