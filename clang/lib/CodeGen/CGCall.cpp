@@ -2199,17 +2199,23 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         checkArgMatches(AI, IRArgNo, IRFuncTy);
       } else {
         // We want to avoid creating an unnecessary temporary+copy here;
-        // however, we need one in two cases:
+        // however, we need one in three cases:
         // 1. If the argument is not byval, and we are required to copy the
         //    source.  (This case doesn't occur on any common architecture.)
         // 2. If the argument is byval, RV is not sufficiently aligned, and
         //    we cannot force it to be sufficiently aligned.
+        // 3. If the argument is byval, but RV is located in an address space
+        //    different than that of the argument (0).
         llvm::Value *Addr = RV.getAggregateAddr();
         unsigned Align = ArgInfo.getIndirectAlign();
         const llvm::DataLayout *TD = &CGM.getDataLayout();
+        const unsigned RVAddrSpace = Addr->getType()->getPointerAddressSpace();
+        const unsigned ArgAddrSpace = (IRArgNo < IRFuncTy->getNumParams() ?
+          IRFuncTy->getParamType(IRArgNo)->getPointerAddressSpace() : 0);
         if ((!ArgInfo.getIndirectByVal() && I->NeedsCopy) ||
             (ArgInfo.getIndirectByVal() && TypeAlign.getQuantity() < Align &&
-             llvm::getOrEnforceKnownAlignment(Addr, Align, TD) < Align)) {
+             llvm::getOrEnforceKnownAlignment(Addr, Align, TD) < Align) ||
+             (ArgInfo.getIndirectByVal() && (RVAddrSpace != ArgAddrSpace))) {
           // Create an aligned temporary, and copy to it.
           llvm::AllocaInst *AI = CreateMemTemp(I->Ty);
           if (Align > AI->getAlignment())
