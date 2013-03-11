@@ -5,9 +5,6 @@ Kaleidoscope: Implementing a Parser and AST
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and `Erick
-Tryzelaar <mailto:idadesub@users.sourceforge.net>`_
-
 Chapter 2 Introduction
 ======================
 

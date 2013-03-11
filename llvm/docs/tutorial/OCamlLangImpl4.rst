@@ -5,9 +5,6 @@ Kaleidoscope: Adding JIT and Optimizer Support
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and `Erick
-Tryzelaar <mailto:idadesub@users.sourceforge.net>`_
-
 Chapter 4 Introduction
 ======================
 

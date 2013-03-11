@@ -5,9 +5,6 @@ Kaleidoscope: Extending the Language: Control Flow
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and `Erick
-Tryzelaar <mailto:idadesub@users.sourceforge.net>`_
-
 Chapter 5 Introduction
 ======================
 

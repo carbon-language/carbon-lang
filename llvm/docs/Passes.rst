@@ -34,9 +34,6 @@ LLVM's Analysis and Transform Passes
 .. contents::
     :local:
 
-Written by `Reid Spencer <mailto:rspencer@x10sys.com>`_
-    and Gordon Henriksen
-
 Introduction
 ============
 

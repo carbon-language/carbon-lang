@@ -5,9 +5,6 @@ Kaleidoscope: Extending the Language: User-defined Operators
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and `Erick
-Tryzelaar <mailto:idadesub@users.sourceforge.net>`_
-
 Chapter 6 Introduction
 ======================
 

@@ -5,8 +5,6 @@ Kaleidoscope: Conclusion and other useful LLVM tidbits
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_
-
 Tutorial Conclusion
 ===================
 

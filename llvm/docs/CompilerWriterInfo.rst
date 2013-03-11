@@ -10,8 +10,6 @@ Architecture & Platform Information for Compiler Writers
   This document is a work-in-progress.  Additions and clarifications are
   welcome.
 
-  Compiled by `Misha Brukman <http://misha.brukman.net>`_.
-
 Hardware
 ========
 

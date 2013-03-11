@@ -5,8 +5,6 @@ Kaleidoscope: Tutorial Introduction and the Lexer
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_
-
 Tutorial Introduction
 =====================
 

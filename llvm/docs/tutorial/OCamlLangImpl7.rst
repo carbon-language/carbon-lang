@@ -5,9 +5,6 @@ Kaleidoscope: Extending the Language: Mutable Variables
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and `Erick
-Tryzelaar <mailto:idadesub@users.sourceforge.net>`_
-
 Chapter 7 Introduction
 ======================
 

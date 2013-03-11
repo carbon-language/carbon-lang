@@ -5,8 +5,6 @@ Kaleidoscope: Code generation to LLVM IR
 .. contents::
    :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_
-
 Chapter 3 Introduction
 ======================
 
