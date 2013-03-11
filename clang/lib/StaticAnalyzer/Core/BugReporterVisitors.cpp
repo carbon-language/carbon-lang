@@ -767,11 +767,11 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
 
   const ExplodedNode *N = ErrorNode;
 
-  const Expr *LValue = 0;
+  const Expr *Inner = 0;
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
     Ex = Ex->IgnoreParenCasts();
-    if (ExplodedGraph::isInterestingLValueExpr(Ex))
-      LValue = Ex;
+    if (ExplodedGraph::isInterestingLValueExpr(Ex) || CallEvent::isCallStmt(Ex))
+      Inner = Ex;
   }
 
   if (IsArg) {
@@ -783,10 +783,11 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
     do {
       const ProgramPoint &pp = N->getLocation();
       if (Optional<PostStmt> ps = pp.getAs<PostStmt>()) {
-        if (ps->getStmt() == S || ps->getStmt() == LValue)
+        if (ps->getStmt() == S || ps->getStmt() == Inner)
           break;
       } else if (Optional<CallExitEnd> CEE = pp.getAs<CallExitEnd>()) {
-        if (CEE->getCalleeContext()->getCallSite() == S)
+        if (CEE->getCalleeContext()->getCallSite() == S ||
+            CEE->getCalleeContext()->getCallSite() == Inner)
           break;
       }
       N = N->getFirstPred();
@@ -800,12 +801,12 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
 
   // See if the expression we're interested refers to a variable. 
   // If so, we can track both its contents and constraints on its value.
-  if (LValue) {
+  if (Inner && ExplodedGraph::isInterestingLValueExpr(Inner)) {
     const MemRegion *R = 0;
 
     // First check if this is a DeclRefExpr for a C++ reference type.
     // For those, we want the location of the reference.
-    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(LValue)) {
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Inner)) {
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
         if (VD->getType()->isReferenceType()) {
           ProgramStateManager &StateMgr = state->getStateManager();
@@ -822,14 +823,14 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
       const ExplodedNode *LVNode = N;
       while (LVNode) {
         if (Optional<PostStmt> P = LVNode->getLocation().getAs<PostStmt>()) {
-          if (P->getStmt() == LValue)
+          if (P->getStmt() == Inner)
             break;
         }
         LVNode = LVNode->getFirstPred();
       }
       assert(LVNode && "Unable to find the lvalue node.");
       ProgramStateRef LVState = LVNode->getState();
-      R = LVState->getSVal(LValue, LVNode->getLocationContext()).getAsRegion();
+      R = LVState->getSVal(Inner, LVNode->getLocationContext()).getAsRegion();
     }
 
     if (R) {
