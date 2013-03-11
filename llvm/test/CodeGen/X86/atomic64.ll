@@ -1,5 +1,7 @@
 ; RUN: llc < %s -O0 -march=x86-64 -mcpu=corei7 -verify-machineinstrs | FileCheck %s --check-prefix X64
 
+; XFAIL: cygwin,mingw32,win32
+
 @sc64 = external global i64
 
 define void @atomic_fetch_add64() nounwind {
