@@ -1561,8 +1561,15 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
 
       if (ObjCMethodDecl *CurMethod = tryCaptureObjCSelf(receiverNameLoc)) {
         if (CurMethod->isInstanceMethod()) {
-          QualType T = 
-            Context.getObjCInterfaceType(CurMethod->getClassInterface());
+          ObjCInterfaceDecl *Super =
+            CurMethod->getClassInterface()->getSuperClass();
+          if (!Super) {
+            // The current class does not have a superclass.
+            Diag(receiverNameLoc, diag::error_root_class_cannot_use_super)
+            << CurMethod->getClassInterface()->getIdentifier();
+            return ExprError();
+          }
+          QualType T = Context.getObjCInterfaceType(Super);
           T = Context.getObjCObjectPointerType(T);
         
           return HandleExprPropertyRefExpr(T->getAsObjCInterfacePointerType(),

@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
-// expected-no-diagnostics
+// RUN: %clang_cc1 -fsyntax-only -fobjc-default-synthesize-properties -verify %s
 
 @interface B
 +(int) classGetter;
@@ -29,3 +28,25 @@ void f0() {
   int l2 = [A classGetter2];
 }
 
+// rdar://13349296
+__attribute__((objc_root_class)) @interface ClassBase 
+@property (nonatomic, retain) ClassBase * foo;
+@end
+
+@implementation ClassBase 
+- (void) Meth:(ClassBase*)foo {
+  super.foo = foo; // expected-error {{'ClassBase' cannot use 'super' because it is a root class}}
+  [super setFoo:foo]; // expected-error {{'ClassBase' cannot use 'super' because it is a root class}}
+}
+@end
+
+@interface ClassDerived : ClassBase 
+@property (nonatomic, retain) ClassDerived * foo;
+@end
+
+@implementation ClassDerived
+- (void) Meth:(ClassBase*)foo {
+  super.foo = foo; // issues compile warning
+  [super setFoo:foo]; // works with no warning
+}
+@end
