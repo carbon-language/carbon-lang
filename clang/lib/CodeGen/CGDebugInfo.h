@@ -66,6 +66,9 @@ class CGDebugInfo {
   llvm::DenseMap<void *, std::pair<llvm::WeakVH, unsigned > >
     ObjCInterfaceCache;
 
+  /// RetainedTypes - list of interfaces we want to keep even if orphaned.
+  std::vector<void *> RetainedTypes;
+
   /// CompleteTypeCache - Cache of previously constructed complete RecordTypes.
   llvm::DenseMap<void *, llvm::WeakVH> CompletedTypeCache;
 
@@ -131,6 +134,7 @@ class CGDebugInfo {
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DIFile F);
 
+  llvm::Value *getCachedInterfaceTypeOrNull(const QualType Ty);
   llvm::DIType getOrCreateStructPtrType(StringRef Name, llvm::DIType &Cache);
 
   llvm::DISubprogram CreateCXXMemberFunction(const CXXMethodDecl *Method,
