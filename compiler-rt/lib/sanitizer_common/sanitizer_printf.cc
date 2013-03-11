@@ -201,8 +201,11 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
 // Like Printf, but prints the current PID before the output string.
 void Report(const char *format, ...) {
   const int kLen = 16 * 1024;
-  // |local_buffer| is small enough not to overflow the stack.
-  char local_buffer[512];
+  // |local_buffer| is small enough not to overflow the stack and/or violate
+  // the stack limit enforced by TSan (-Wframe-larger-than=512). On the other
+  // hand, the bigger the buffer is, the more the chance the error report will
+  // fit into it.
+  char local_buffer[400];
   int needed_length;
   int pid = GetPid();
   char *buffer = local_buffer;
