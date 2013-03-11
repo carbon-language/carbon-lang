@@ -2223,7 +2223,7 @@ static int find_file_includes_in(int argc, const char **argv) {
   PrintDiagnostics(TU);
   clang_disposeTranslationUnit(TU);
   clang_disposeIndex(CIdx);
-  free(Filenames);
+  free((void *)Filenames);
   free_remapped_files(unsaved_files, num_unsaved_files);
   return 0;
 }
