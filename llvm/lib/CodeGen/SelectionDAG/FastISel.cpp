@@ -698,6 +698,8 @@ bool FastISel::SelectCall(const User *I) {
   }
   case Intrinsic::expect: {
     unsigned ResultReg = getRegForValue(Call->getArgOperand(0));
+    if (ResultReg == 0)
+      return false;
     UpdateValueMap(Call, ResultReg);
     return true;
   }
