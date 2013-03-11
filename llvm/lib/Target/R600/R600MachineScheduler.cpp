@@ -20,8 +20,9 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/raw_ostream.h"
 #include <set>
-#include <iostream>
+
 using namespace llvm;
 
 void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
