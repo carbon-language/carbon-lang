@@ -828,7 +828,7 @@ Controlling Code Generation
 Clang provides a number of ways to control code generation. The options
 are listed below.
 
-**-fsanitize=check1,check2**
+**-fsanitize=check1,check2,...**
    Turn on runtime checks for various forms of undefined or suspicious
    behavior.
 
