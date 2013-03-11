@@ -201,19 +201,48 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...) {
 // Like Printf, but prints the current PID before the output string.
 void Report(const char *format, ...) {
   const int kLen = 16 * 1024;
-  InternalScopedBuffer<char> buffer(kLen);
-  int needed_length = internal_snprintf(buffer.data(),
-                                        kLen, "==%d== ", GetPid());
-  RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
-  va_list args;
-  va_start(args, format);
-  needed_length += VSNPrintf(buffer.data() + needed_length,
-                             kLen - needed_length, format, args);
-  va_end(args);
-  RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
-  RawWrite(buffer.data());
-  if (PrintfAndReportCallback)
-    PrintfAndReportCallback(buffer.data());
+  // |local_buffer| is small enough not to overflow the stack.
+  char local_buffer[512];
+  int needed_length;
+  int pid = GetPid();
+  char *buffer = local_buffer;
+  int cur_size = sizeof(local_buffer) / sizeof(char);
+  for (int use_mmap = 0; use_mmap < 2; use_mmap++) {
+    needed_length = internal_snprintf(buffer, cur_size,
+                                      "==%d==", pid);
+    if (needed_length >= cur_size) {
+      if (use_mmap) {
+        RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
+      } else {
+        // The pid doesn't fit into the local buffer.
+        continue;
+      }
+    }
+    va_list args;
+    va_start(args, format);
+    needed_length += VSNPrintf(buffer + needed_length,
+                               cur_size - needed_length, format, args);
+    va_end(args);
+    if (needed_length >= cur_size) {
+      if (use_mmap) {
+        RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
+      } else {
+        // The error message doesn't fit into the local buffer - allocate a bigger one.
+        buffer = (char*)MmapOrDie(kLen, "Report");
+        cur_size = kLen;
+        continue;
+      }
+    } else {
+      RawWrite(buffer);
+      if (PrintfAndReportCallback)
+        PrintfAndReportCallback(buffer);
+      // Don't do anything for the second time if the first iteration
+      // succeeded.
+      break;
+    }
+  }
+  // If we had mapped any memory, clean up.
+  if (buffer != local_buffer) UnmapOrDie((void*)buffer, cur_size);
 }
 
 }  // namespace __sanitizer
