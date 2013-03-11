@@ -115,6 +115,12 @@ void TestSizeClassAllocator() {
     CHECK_EQ(last_total_allocated, total_allocated);
   }
 
+  // Check that GetBlockBegin never crashes.
+  for (uptr x = 0, step = kAddressSpaceSize / 100000;
+       x < kAddressSpaceSize - step; x += step)
+    if (a->PointerIsMine(reinterpret_cast<void *>(x)))
+      Ident(a->GetBlockBegin(reinterpret_cast<void *>(x)));
+
   a->TestOnlyUnmap();
   delete a;
 }
