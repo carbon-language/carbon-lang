@@ -119,7 +119,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !20 = metadata !{i32 786473, metadata !"header4.h", metadata !"/Volumes/Sandbox/llvm", metadata !0} ; [ DW_TAG_file_type ]
 !21 = metadata !{metadata !22}
 !22 = metadata !{i32 786472, metadata !"Eleven", i64 0} ; [ DW_TAG_enumerator ]
-!23 = metadata !{i32 786478, i32 0, metadata !24, metadata !"foobar_func_block_invoke_0", metadata !"foobar_func_block_invoke_0", metadata !"", metadata !24, i32 609, metadata !25, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (i8*, %0*, [4 x i32], [4 x i32])* @foobar_func_block_invoke_0, null, null} ; [ DW_TAG_subprogram ]
+!23 = metadata !{i32 786478, i32 0, metadata !24, metadata !"foobar_func_block_invoke_0", metadata !"foobar_func_block_invoke_0", metadata !"", metadata !24, i32 609, metadata !25, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void (i8*, %0*, [4 x i32], [4 x i32])* @foobar_func_block_invoke_0, null, null, null, i32 609} ; [ DW_TAG_subprogram ]
 !24 = metadata !{i32 786473, metadata !"MyLibrary.m", metadata !"/Volumes/Sandbox/llvm", metadata !0} ; [ DW_TAG_file_type ]
 !25 = metadata !{i32 786453, metadata !24, metadata !"", metadata !24, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !26, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !26 = metadata !{null}

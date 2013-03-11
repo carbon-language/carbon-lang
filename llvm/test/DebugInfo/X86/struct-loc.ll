@@ -16,7 +16,7 @@
 !0 = metadata !{i32 786449, i32 0, i32 12, metadata !"struct_bug.c", metadata !"/Users/echristo/tmp", metadata !"clang version 3.1 (trunk 152837) (llvm/trunk 152845)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786484, i32 0, null, metadata !"f", metadata !"f", metadata !"", metadata !6, i32 5, metadata !7, i32 0, i32 1, %struct.foo* @f} ; [ DW_TAG_variable ]
+!5 = metadata !{i32 786484, i32 0, null, metadata !"f", metadata !"f", metadata !"", metadata !6, i32 5, metadata !7, i32 0, i32 1, %struct.foo* @f, null} ; [ DW_TAG_variable ]
 !6 = metadata !{i32 786473, metadata !"struct_bug.c", metadata !"/Users/echristo/tmp", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786451, null, metadata !"foo", metadata !6, i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !8 = metadata !{metadata !9}

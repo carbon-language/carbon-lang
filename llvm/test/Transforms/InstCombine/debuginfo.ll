@@ -28,22 +28,23 @@ entry:
   ret i8* %call, !dbg !21
 }
 
-!llvm.dbg.lv.foobar = !{!0, !7, !9}
-!llvm.dbg.sp = !{!1}
+!25 = metadata !{metadata !0, metadata !7, metadata !9}
+!llvm.dbg.cu = !{!3}
+!24 = metadata !{metadata !1}
 
-!0 = metadata !{i32 590081, metadata !1, metadata !"__dest", metadata !2, i32 16777294, metadata !6, i32 0} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 589870, i32 0, metadata !2, metadata !"foobar", metadata !"foobar", metadata !"", metadata !2, i32 79, metadata !4, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i8* (i8*, i32, i64)* @foobar} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 589865, metadata !"string.h", metadata !"Game", metadata !3} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 589841, i32 0, i32 12, metadata !"bits.c", metadata !"Game", metadata !"clang version 3.0 (trunk 127710)", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!4 = metadata !{i32 589845, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !5, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!0 = metadata !{i32 786689, metadata !1, metadata !"__dest", metadata !2, i32 16777294, metadata !6, i32 0, null} ; [ DW_TAG_arg_variable ]
+!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foobar", metadata !"foobar", metadata !"", metadata !2, i32 79, metadata !4, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i8* (i8*, i32, i64)* @foobar, null, null, metadata !25, i32 79} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 786473, metadata !"string.h", metadata !"Game", metadata !3} ; [ DW_TAG_file_type ]
+!3 = metadata !{i32 786449, i32 0, i32 12, metadata !"bits.c", metadata !"Game", metadata !"clang version 3.0 (trunk 127710)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !24, null, null} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !5, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !5 = metadata !{metadata !6}
-!6 = metadata !{i32 589839, metadata !3, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ]
-!7 = metadata !{i32 590081, metadata !1, metadata !"__val", metadata !2, i32 33554510, metadata !8, i32 0} ; [ DW_TAG_arg_variable ]
-!8 = metadata !{i32 589860, metadata !3, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!9 = metadata !{i32 590081, metadata !1, metadata !"__len", metadata !2, i32 50331726, metadata !10, i32 0} ; [ DW_TAG_arg_variable ]
+!6 = metadata !{i32 786447, metadata !3, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ]
+!7 = metadata !{i32 786689, metadata !1, metadata !"__val", metadata !2, i32 33554510, metadata !8, i32 0, null} ; [ DW_TAG_arg_variable ]
+!8 = metadata !{i32 786468, metadata !3, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!9 = metadata !{i32 786689, metadata !1, metadata !"__len", metadata !2, i32 50331726, metadata !10, i32 0, null} ; [ DW_TAG_arg_variable ]
 !10 = metadata !{i32 589846, metadata !3, metadata !"size_t", metadata !2, i32 80, i64 0, i64 0, i64 0, i32 0, metadata !11} ; [ DW_TAG_typedef ]
 !11 = metadata !{i32 589846, metadata !3, metadata !"__darwin_size_t", metadata !2, i32 90, i64 0, i64 0, i64 0, i32 0, metadata !12} ; [ DW_TAG_typedef ]
-!12 = metadata !{i32 589860, metadata !3, metadata !"long unsigned int", null, i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
+!12 = metadata !{i32 786468, metadata !3, metadata !"long unsigned int", null, i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !13 = metadata !{metadata !"any pointer", metadata !14}
 !14 = metadata !{metadata !"omnipotent char", metadata !15}
 !15 = metadata !{metadata !"Simple C/C++ TBAA", null}
@@ -53,5 +54,5 @@ entry:
 !19 = metadata !{metadata !"long", metadata !14}
 !20 = metadata !{i32 78, i32 54, metadata !1, null}
 !21 = metadata !{i32 80, i32 3, metadata !22, null}
-!22 = metadata !{i32 589835, metadata !23, i32 80, i32 3, metadata !2, i32 7} ; [ DW_TAG_lexical_block ]
-!23 = metadata !{i32 589835, metadata !1, i32 79, i32 1, metadata !2, i32 6} ; [ DW_TAG_lexical_block ]
+!22 = metadata !{i32 786443, metadata !23, i32 80, i32 3, metadata !2, i32 7} ; [ DW_TAG_lexical_block ]
+!23 = metadata !{i32 786443, metadata !1, i32 79, i32 1, metadata !2, i32 6} ; [ DW_TAG_lexical_block ]

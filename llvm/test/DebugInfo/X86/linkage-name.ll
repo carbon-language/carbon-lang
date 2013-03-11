@@ -29,7 +29,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !"foo.cpp", metadata !"/Users/echristo", metadata !"clang version 3.1 (trunk 152691) (llvm/trunk 152692)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !18} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, i32 0, null, metadata !"a", metadata !"a", metadata !"_ZN1A1aEi", metadata !6, i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%class.A*, i32)* @_ZN1A1aEi, null, metadata !13, metadata !16} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 786478, i32 0, null, metadata !"a", metadata !"a", metadata !"_ZN1A1aEi", metadata !6, i32 5, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (%class.A*, i32)* @_ZN1A1aEi, null, metadata !13, metadata !16, i32 5} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !"foo.cpp", metadata !"/Users/echristo", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9, metadata !10, metadata !9}
@@ -43,7 +43,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !16 = metadata !{metadata !17}
 !17 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ]
 !18 = metadata !{metadata !20}
-!20 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 9, metadata !11, i32 0, i32 1, %class.A* @a} ; [ DW_TAG_variable ]
+!20 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 9, metadata !11, i32 0, i32 1, %class.A* @a, null} ; [ DW_TAG_variable ]
 !21 = metadata !{i32 786689, metadata !5, metadata !"this", metadata !6, i32 16777221, metadata !22, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !22 = metadata !{i32 786447, null, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ]
 !23 = metadata !{i32 5, i32 8, metadata !5, null}

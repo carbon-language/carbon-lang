@@ -27,7 +27,7 @@
 !0 = metadata !{i32 786449, i32 0, i32 4, metadata !"t.cpp", metadata !"/Volumes/Sandbox/llvm", metadata !"clang version 3.3 (trunk 169136)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3} ; [ DW_TAG_compile_unit ] [/Volumes/Sandbox/llvm/t.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, %class.A* @a} ; [ DW_TAG_variable ] [a] [line 1] [def]
+!5 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, %class.A* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
 !6 = metadata !{i32 786473, metadata !"t.cpp", metadata !"/Volumes/Sandbox/llvm", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786434, null, metadata !"A", metadata !6, i32 1, i64 0, i64 32, i32 0, i32 0, null, metadata !8, i32 0, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 0, align 32, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !14}

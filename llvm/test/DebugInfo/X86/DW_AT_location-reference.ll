@@ -91,7 +91,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"f", metadata !"f", metadata !"", metadata !1, i32 4, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, void ()* @f, null, null, metadata !22, i32 4} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !"simple.c", metadata !"/home/rengol01/temp/tests/dwarf/relocation", metadata !2} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, i32 0, i32 12, metadata !"simple.c", metadata !"/home/rengol01/temp/tests/dwarf/relocation", metadata !"clang version 3.0 (trunk)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !21, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, i32 0, i32 12, metadata !"simple.c", metadata !"/home/rengol01/temp/tests/dwarf/relocation", metadata !"clang version 3.0 (trunk)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !21, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null}
 !5 = metadata !{i32 786688, metadata !6, metadata !"x", metadata !1, i32 5, metadata !7, i32 0, null} ; [ DW_TAG_auto_variable ]

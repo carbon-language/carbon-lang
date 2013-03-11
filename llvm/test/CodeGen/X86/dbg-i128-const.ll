@@ -17,7 +17,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i128 42 }
 !1 = metadata !{i32 786688, metadata !2, metadata !"MAX", metadata !4, i32 29, metadata !8, i32 0, null} ; [ DW_TAG_auto_variable ]
-!2 = metadata !{i32 786443, metadata !3, i32 26, i32 0} ; [ DW_TAG_lexical_block ]
+!2 = metadata !{i32 786443, metadata !3, i32 26, i32 0, metadata !4, i32 0} ; [ DW_TAG_lexical_block ]
 !3 = metadata !{i32 786478, i32 0, metadata !4, metadata !"__foo", metadata !"__foo", metadata !"__foo", metadata !4, i32 26, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i128 (i128, i128)* @__foo, null, null, null, i32 26} ; [ DW_TAG_subprogram ]
 !4 = metadata !{i32 786473, metadata !"foo.c", metadata !"/tmp", metadata !5} ; [ DW_TAG_file_type ]
 !5 = metadata !{i32 786449, i32 0, i32 1, metadata !"foo.c", metadata !"/tmp", metadata !"clang", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !12, null} ; [ DW_TAG_compile_unit ]
