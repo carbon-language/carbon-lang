@@ -2789,9 +2789,20 @@ bool SimplifyCFGOpt::SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder) {
       return false;
 
   // Turn all invokes that unwind here into calls and delete the basic block.
+  bool InvokeRequiresTableEntry = false;
+  bool Changed = false;
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;) {
     InvokeInst *II = cast<InvokeInst>((*PI++)->getTerminator());
+
+    if (II->hasFnAttr(Attribute::UWTable)) {
+      // Don't remove an `invoke' instruction if the ABI requires an entry into
+      // the table.
+      InvokeRequiresTableEntry = true;
+      continue;
+    }
+
     SmallVector<Value*, 8> Args(II->op_begin(), II->op_end() - 3);
+
     // Insert a call instruction before the invoke.
     CallInst *Call = CallInst::Create(II->getCalledValue(), Args, "", II);
     Call->takeName(II);
@@ -2811,11 +2822,14 @@ bool SimplifyCFGOpt::SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder) {
 
     // Finally, delete the invoke instruction!
     II->eraseFromParent();
+    Changed = true;
   }
 
-  // The landingpad is now unreachable.  Zap it.
-  BB->eraseFromParent();
-  return true;
+  if (!InvokeRequiresTableEntry)
+    // The landingpad is now unreachable.  Zap it.
+    BB->eraseFromParent();
+
+  return Changed;
 }
 
 bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder) {
