@@ -72,13 +72,14 @@ namespace lldb_private {
         
         virtual bool
         ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
-        
-    protected:
+
         virtual lldb::BreakpointResolverSP
         CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
-
+        
         virtual lldb::SearchFilterSP
         CreateExceptionSearchFilter ();
+
+    protected:
 
         lldb::BreakpointResolverSP
         CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp, bool for_expressions);

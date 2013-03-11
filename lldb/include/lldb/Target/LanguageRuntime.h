@@ -23,9 +23,6 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Target/ExecutionContextScope.h"
 
-class ExceptionBreakpointResolver;
-class ExceptionSearchFilter;
-
 namespace lldb_private {
 
 class LanguageRuntime :
@@ -93,20 +90,18 @@ public:
     {
         return m_process;
     }
-        
-protected:
-    //------------------------------------------------------------------
-    // Classes that inherit from LanguageRuntime can see and modify these
-    //------------------------------------------------------------------
-    friend class ExceptionBreakpointResolver;
-    friend class ExceptionSearchFilter;
-    
+
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp) = 0;
     
     virtual lldb::SearchFilterSP
     CreateExceptionSearchFilter ();
 
+protected:
+    //------------------------------------------------------------------
+    // Classes that inherit from LanguageRuntime can see and modify these
+    //------------------------------------------------------------------
+    
     LanguageRuntime(Process *process);
     Process *m_process;
 private:
