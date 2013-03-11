@@ -108,10 +108,10 @@ void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
            endAtomIter == this->_layout->absoluteAtoms().end()) &&
          "Unable to find the absolute atoms that have been added by lld");
 
-  auto phe = this->_programHeader->findProgramHeader(
-      llvm::ELF::PT_LOAD, llvm::ELF::PF_W, llvm::ELF::PF_X);
+  auto phe = this->_programHeader
+      ->findProgramHeader(llvm::ELF::PT_LOAD, llvm::ELF::PF_W, llvm::ELF::PF_X);
 
-  assert(!(phe == this->_programHeader->end()) &&
+  assert(!(phe == this->_programHeader->rend()) &&
          "Can't find a data segment in the program header!");
 
   (*bssStartAtomIter)->_virtualAddr = (*phe)->p_vaddr + (*phe)->p_filesz;

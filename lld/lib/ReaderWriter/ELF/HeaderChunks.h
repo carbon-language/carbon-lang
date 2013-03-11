@@ -89,6 +89,7 @@ class ProgramHeader : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Phdr_Impl<ELFT> Elf_Phdr;
   typedef typename std::vector<Elf_Phdr *>::iterator PhIterT;
+  typedef typename std::reverse_iterator<PhIterT> ReversePhIterT;
 
   /// \brief Find a program header entry, given the type of entry that
   /// we are looking for
@@ -132,8 +133,9 @@ public:
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   /// \brief find a program header entry in the list of program headers
-  PhIterT findProgramHeader(uint64_t type, uint64_t flags, uint64_t flagClear) {
-    return std::find_if(_ph.begin(), _ph.end(), 
+  ReversePhIterT
+  findProgramHeader(uint64_t type, uint64_t flags, uint64_t flagClear) {
+    return std::find_if(_ph.rbegin(), _ph.rend(),
                         FindPhdr(type, flags, flagClear));
   }
 
@@ -144,6 +146,10 @@ public:
   PhIterT end() {
     return _ph.end();
   }
+
+  ReversePhIterT rbegin() { return _ph.rbegin(); }
+
+  ReversePhIterT rend() { return _ph.rend(); }
 
   virtual void doPreFlight() {}
 
