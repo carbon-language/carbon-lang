@@ -517,8 +517,6 @@ bool DILocation::Verify() const {
 bool DINameSpace::Verify() const {
   if (!DbgNode)
     return false;
-  if (getName().empty())
-    return false;
   return true;
 }
 
