@@ -75,7 +75,7 @@ def err_drv_invalid_libcxx_deployment : Error<
   "invalid deployment target for -stdlib=libc++ (requires %0 or later)">;
 def err_drv_invalid_feature : Error<
   "invalid feature '%0' for CPU '%1'">;
-
+  
 def err_drv_I_dash_not_supported : Error<
   "'%0' not supported, please use -iquote instead">;
 def err_drv_unknown_argument : Error<"unknown argument: '%0'">;
@@ -150,4 +150,9 @@ def err_analyzer_config_no_value : Error<
   "analyzer-config option '%0' has a key but no value">;
 def err_analyzer_config_multiple_values : Error<
   "analyzer-config option '%0' should contain only one '='">;
+  
+def err_drv_modules_integrated_as : Error<
+  "modules can only be used with the compiler's integrated assembler">;
+def note_drv_modules_integrated_as : Note<
+  "'-no-integrated-as' cannot be used with '-fmodules'">;
 }
