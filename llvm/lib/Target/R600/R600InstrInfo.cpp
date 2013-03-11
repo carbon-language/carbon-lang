@@ -168,6 +168,11 @@ findFirstPredicateSetterFrom(MachineBasicBlock &MBB,
   return NULL;
 }
 
+static
+bool isJump(unsigned Opcode) {
+  return Opcode == AMDGPU::JUMP || Opcode == AMDGPU::JUMP_COND;
+}
+
 bool
 R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                              MachineBasicBlock *&TBB,
@@ -186,7 +191,7 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return false;
     --I;
   }
-  if (static_cast<MachineInstr *>(I)->getOpcode() != AMDGPU::JUMP) {
+  if (!isJump(static_cast<MachineInstr *>(I)->getOpcode())) {
     return false;
   }
 
@@ -196,22 +201,20 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() ||
-      static_cast<MachineInstr *>(--I)->getOpcode() != AMDGPU::JUMP) {
+          !isJump(static_cast<MachineInstr *>(--I)->getOpcode())) {
     if (LastOpc == AMDGPU::JUMP) {
-      if(!isPredicated(LastInst)) {
-        TBB = LastInst->getOperand(0).getMBB();
-        return false;
-      } else {
-        MachineInstr *predSet = I;
-        while (!isPredicateSetter(predSet->getOpcode())) {
-          predSet = --I;
-        }
-        TBB = LastInst->getOperand(0).getMBB();
-        Cond.push_back(predSet->getOperand(1));
-        Cond.push_back(predSet->getOperand(2));
-        Cond.push_back(MachineOperand::CreateReg(AMDGPU::PRED_SEL_ONE, false));
-        return false;
+      TBB = LastInst->getOperand(0).getMBB();
+      return false;
+    } else if (LastOpc == AMDGPU::JUMP_COND) {
+      MachineInstr *predSet = I;
+      while (!isPredicateSetter(predSet->getOpcode())) {
+        predSet = --I;
       }
+      TBB = LastInst->getOperand(0).getMBB();
+      Cond.push_back(predSet->getOperand(1));
+      Cond.push_back(predSet->getOperand(2));
+      Cond.push_back(MachineOperand::CreateReg(AMDGPU::PRED_SEL_ONE, false));
+      return false;
     }
     return true;  // Can't handle indirect branch.
   }
@@ -221,10 +224,7 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   unsigned SecondLastOpc = SecondLastInst->getOpcode();
 
   // If the block ends with a B and a Bcc, handle it.
-  if (SecondLastOpc == AMDGPU::JUMP &&
-      isPredicated(SecondLastInst) &&
-      LastOpc == AMDGPU::JUMP &&
-      !isPredicated(LastInst)) {
+  if (SecondLastOpc == AMDGPU::JUMP_COND && LastOpc == AMDGPU::JUMP) {
     MachineInstr *predSet = --I;
     while (!isPredicateSetter(predSet->getOpcode())) {
       predSet = --I;
@@ -261,7 +261,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
 
   if (FBB == 0) {
     if (Cond.empty()) {
-      BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(TBB).addReg(0);
+      BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(TBB);
       return 1;
     } else {
       MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
@@ -269,7 +269,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
       addFlag(PredSet, 0, MO_FLAG_PUSH);
       PredSet->getOperand(2).setImm(Cond[1].getImm());
 
-      BuildMI(&MBB, DL, get(AMDGPU::JUMP))
+      BuildMI(&MBB, DL, get(AMDGPU::JUMP_COND))
              .addMBB(TBB)
              .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
       return 1;
@@ -279,10 +279,10 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
     assert(PredSet && "No previous predicate !");
     addFlag(PredSet, 0, MO_FLAG_PUSH);
     PredSet->getOperand(2).setImm(Cond[1].getImm());
-    BuildMI(&MBB, DL, get(AMDGPU::JUMP))
+    BuildMI(&MBB, DL, get(AMDGPU::JUMP_COND))
             .addMBB(TBB)
             .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
-    BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(FBB).addReg(0);
+    BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(FBB);
     return 2;
   }
 }
@@ -302,11 +302,13 @@ R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   switch (I->getOpcode()) {
   default:
     return 0;
+  case AMDGPU::JUMP_COND: {
+    MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
+    clearFlag(predSet, 0, MO_FLAG_PUSH);
+    I->eraseFromParent();
+    break;
+  }
   case AMDGPU::JUMP:
-    if (isPredicated(I)) {
-      MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
-      clearFlag(predSet, 0, MO_FLAG_PUSH);
-    }
     I->eraseFromParent();
     break;
   }
@@ -320,11 +322,13 @@ R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
     // FIXME: only one case??
   default:
     return 1;
+  case AMDGPU::JUMP_COND: {
+    MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
+    clearFlag(predSet, 0, MO_FLAG_PUSH);
+    I->eraseFromParent();
+    break;
+  }
   case AMDGPU::JUMP:
-    if (isPredicated(I)) {
-      MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
-      clearFlag(predSet, 0, MO_FLAG_PUSH);
-    }
     I->eraseFromParent();
     break;
   }

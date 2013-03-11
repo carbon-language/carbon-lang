@@ -2595,6 +2595,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
 
   static int getBranchNzeroOpcode(int oldOpcode) {
     switch(oldOpcode) {
+    case AMDGPU::JUMP_COND:
     case AMDGPU::JUMP: return AMDGPU::IF_PREDICATE_SET;
     case AMDGPU::BRANCH_COND_i32:
     case AMDGPU::BRANCH_COND_f32: return AMDGPU::IF_LOGICALNZ_f32;
@@ -2606,6 +2607,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
 
   static int getBranchZeroOpcode(int oldOpcode) {
     switch(oldOpcode) {
+    case AMDGPU::JUMP_COND:
     case AMDGPU::JUMP: return AMDGPU::IF_PREDICATE_SET;
     case AMDGPU::BRANCH_COND_i32:
     case AMDGPU::BRANCH_COND_f32: return AMDGPU::IF_LOGICALZ_f32;
@@ -2617,6 +2619,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
 
   static int getContinueNzeroOpcode(int oldOpcode) {
     switch(oldOpcode) {
+    case AMDGPU::JUMP_COND:
     case AMDGPU::JUMP: return AMDGPU::CONTINUE_LOGICALNZ_i32;
     default:
       assert(0 && "internal error");
@@ -2626,6 +2629,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
 
   static int getContinueZeroOpcode(int oldOpcode) {
     switch(oldOpcode) {
+    case AMDGPU::JUMP_COND:
     case AMDGPU::JUMP: return AMDGPU::CONTINUE_LOGICALZ_i32;
     default:
       assert(0 && "internal error");
@@ -2654,8 +2658,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
 
   static bool isCondBranch(MachineInstr *instr) {
     switch (instr->getOpcode()) {
-      case AMDGPU::JUMP:
-        return instr->getOperand(instr->findFirstPredOperandIdx()).getReg() != 0;
+      case AMDGPU::JUMP_COND:
       case AMDGPU::BRANCH_COND_i32:
       case AMDGPU::BRANCH_COND_f32:
       break;
@@ -2668,7 +2671,6 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
   static bool isUncondBranch(MachineInstr *instr) {
     switch (instr->getOpcode()) {
     case AMDGPU::JUMP:
-      return instr->getOperand(instr->findFirstPredOperandIdx()).getReg() == 0;
     case AMDGPU::BRANCH:
       return true;
     default:

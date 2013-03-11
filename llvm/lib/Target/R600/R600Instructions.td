@@ -1587,19 +1587,28 @@ def PRED_X : InstR600 <
   (ins R600_Reg32:$src0, i32imm:$src1, i32imm:$flags),
   "", [], NullALU> {
   let FlagOperandIdx = 3;
-  let isTerminator = 1;
 }
 
-let isTerminator = 1, isBranch = 1, isBarrier = 1 in {
-
-def JUMP : InstR600 <0x10,
+let isTerminator = 1, isBranch = 1 in {
+def JUMP_COND : InstR600 <0x10,
           (outs),
-          (ins brtarget:$target, R600_Pred:$p),
+          (ins brtarget:$target, R600_Predicate_Bit:$p),
           "JUMP $target ($p)",
           [], AnyALU
   >;
 
-}  // End isTerminator = 1, isBranch = 1, isBarrier = 1
+def JUMP : InstR600 <0x10,
+          (outs),
+          (ins brtarget:$target),
+          "JUMP $target",
+          [], AnyALU
+  >
+{
+  let isPredicable = 1;
+  let isBarrier = 1;
+}
+
+}  // End isTerminator = 1, isBranch = 1
 
 let usesCustomInserter = 1 in {
 
@@ -1639,7 +1648,7 @@ def FNEG_R600 : FNEG<R600_Reg32>;
 //===---------------------------------------------------------------------===//
 // Return instruction
 //===---------------------------------------------------------------------===//
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1,
+let isTerminator = 1, isReturn = 1, hasCtrlDep = 1,
     usesCustomInserter = 1 in {
   def RETURN          : ILFormat<(outs), (ins variable_ops),
       "RETURN", [(IL_retflag)]>;

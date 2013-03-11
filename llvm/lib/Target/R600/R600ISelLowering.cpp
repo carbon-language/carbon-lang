@@ -221,8 +221,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   case AMDGPU::BRANCH:
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
-              .addOperand(MI->getOperand(0))
-              .addReg(0);
+              .addOperand(MI->getOperand(0));
       break;
 
   case AMDGPU::BRANCH_COND_f32: {
@@ -233,7 +232,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
               .addImm(OPCODE_IS_NOT_ZERO)
               .addImm(0); // Flags
     TII->addFlag(NewMI, 0, MO_FLAG_PUSH);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP_COND))
             .addOperand(MI->getOperand(0))
             .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
     break;
@@ -247,7 +246,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
             .addImm(OPCODE_IS_NOT_ZERO_INT)
             .addImm(0); // Flags
     TII->addFlag(NewMI, 0, MO_FLAG_PUSH);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP_COND))
            .addOperand(MI->getOperand(0))
             .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
     break;
