@@ -106,6 +106,9 @@ protected:
     lldb::BreakpointSP m_objc_exception_bp_sp;
     lldb::ModuleWP m_objc_module_wp;
 
+    virtual lldb::SearchFilterSP
+    CreateExceptionSearchFilter ();
+    
     AppleObjCRuntime(Process *process) :
         lldb_private::ObjCLanguageRuntime(process),
         m_read_objc_library (false),

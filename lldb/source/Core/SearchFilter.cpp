@@ -85,16 +85,6 @@ SearchFilter::ModulePasses (const ModuleSP &module_sp)
 }
 
 bool
-SearchFilter::SymbolContextPasses
-(
-    const SymbolContext &context,
-    lldb::SymbolContextItem scope
-)
-{
-    return true;
-}
-
-bool
 SearchFilter::AddressPasses (Address &address)
 {
     return true;
@@ -376,22 +366,6 @@ SearchFilterByModule::ModulePasses (const FileSpec &spec)
 }
 
 bool
-SearchFilterByModule::SymbolContextPasses (const SymbolContext &sc,
-                                           lldb::SymbolContextItem scope)
-{
-    if (scope & eSymbolContextModule)
-    {
-        if (sc.module_sp)
-        {
-            // Match the full path only if "m_module_spec" has a directory
-            const bool full_match = m_module_spec.GetDirectory();
-            return FileSpec::Equal (sc.module_sp->GetFileSpec(), m_module_spec, full_match);
-        }
-    }
-    return false;
-}
-
-bool
 SearchFilterByModule::AddressPasses (Address &address)
 {
     // FIXME: Not yet implemented
@@ -537,22 +511,6 @@ SearchFilterByModuleList::ModulePasses (const FileSpec &spec)
         return true;
         
     if (m_module_spec_list.FindFileIndex(0, spec, true) != UINT32_MAX)
-        return true;
-    else
-        return false;
-}
-
-bool
-SearchFilterByModuleList::SymbolContextPasses
-(
- const SymbolContext &context,
- lldb::SymbolContextItem scope
- )
-{
-    if (!(scope & eSymbolContextModule))
-        return false;
-
-    if (context.module_sp && m_module_spec_list.FindFileIndex(0, context.module_sp->GetFileSpec(), true) != UINT32_MAX)
         return true;
     else
         return false;
@@ -715,25 +673,8 @@ SearchFilterByModuleListAndCU::~SearchFilterByModuleListAndCU()
 }
 
 bool
-SearchFilterByModuleListAndCU::SymbolContextPasses
-(
- const SymbolContext &context,
- lldb::SymbolContextItem scope
- )
-{
-    if (!SearchFilterByModuleList::SymbolContextPasses(context, scope))
-        return false;
-    if (!(scope & eSymbolContextCompUnit))
-        return false;
-    if (context.comp_unit && m_cu_spec_list.FindFileIndex(0, context.comp_unit, false) == UINT32_MAX)
-        return false;
-    return true;
-}
-
-bool
 SearchFilterByModuleListAndCU::AddressPasses (Address &address)
 {
-    // FIXME: Not yet implemented
     return true;
 }
 

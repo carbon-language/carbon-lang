@@ -135,23 +135,6 @@ public:
     ModulePasses (const lldb::ModuleSP &module_sp);
 
     //------------------------------------------------------------------
-    /// Call this method with a SymbolContext and a SymbolContextScope to see if
-    /// that SymbolContext passes the filter up to the level in \a scope.
-    ///
-    /// @param[in] context
-    ///    The SymbolContext to check against the filter.
-    ///
-    /// @param[in] scope
-    ///    The SymbolContextItem indicating what bits of the SymbolContextScope
-    ///    to check against the filter.
-    ///
-    ///  @return
-    ///    \b true if \a SymbolContext passes, and \b false otherwise.
-    //------------------------------------------------------------------
-    virtual bool
-    SymbolContextPasses (const SymbolContext &context,
-                         lldb::SymbolContextItem scope);
-    //------------------------------------------------------------------
     /// Call this method with a Address to see if \a address passes the filter.
     ///
     /// @param[in] addr
@@ -325,10 +308,6 @@ public:
     ModulePasses (const FileSpec &spec);
 
     virtual bool
-    SymbolContextPasses (const SymbolContext &context,
-                         lldb::SymbolContextItem scope);
-
-    virtual bool
     AddressPasses (Address &address);
 
     virtual bool
@@ -386,10 +365,6 @@ public:
     ModulePasses (const FileSpec &spec);
 
     virtual bool
-    SymbolContextPasses (const SymbolContext &context,
-                         lldb::SymbolContextItem scope);
-
-    virtual bool
     AddressPasses (Address &address);
 
     virtual bool
@@ -440,10 +415,6 @@ public:
 
     const SearchFilterByModuleListAndCU&
     operator=(const SearchFilterByModuleListAndCU& rhs);
-
-    virtual bool
-    SymbolContextPasses (const SymbolContext &context,
-                         lldb::SymbolContextItem scope);
 
     virtual bool
     AddressPasses (Address &address);

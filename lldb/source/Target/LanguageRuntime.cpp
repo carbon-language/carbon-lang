@@ -14,6 +14,217 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+class ExceptionSearchFilter : public SearchFilter
+{
+public:
+    ExceptionSearchFilter (const lldb::TargetSP &target_sp,
+                           lldb::LanguageType language) :
+        SearchFilter (target_sp),
+        m_language (language),
+        m_language_runtime (NULL),
+        m_filter_sp ()
+    {
+        UpdateModuleListIfNeeded ();
+    }
+    
+    virtual bool
+    ModulePasses (const lldb::ModuleSP &module_sp)
+    {
+        UpdateModuleListIfNeeded ();
+        if (m_filter_sp)
+            return m_filter_sp->ModulePasses (module_sp);
+        return false;
+    }
+    
+    virtual bool
+    ModulePasses (const FileSpec &spec)
+    {
+        UpdateModuleListIfNeeded ();
+        if (m_filter_sp)
+            return m_filter_sp->ModulePasses (spec);
+        return false;
+        
+    }
+    
+    virtual void
+    Search (Searcher &searcher)
+    {
+        UpdateModuleListIfNeeded ();
+        if (m_filter_sp)
+            m_filter_sp->Search (searcher);
+    }
+
+    virtual void
+    GetDescription (Stream *s)
+    {
+        UpdateModuleListIfNeeded ();
+        if (m_filter_sp)
+            m_filter_sp->GetDescription (s);
+    }
+    
+protected:
+    LanguageType m_language;
+    LanguageRuntime *m_language_runtime;
+    SearchFilterSP m_filter_sp;
+
+    void
+    UpdateModuleListIfNeeded ()
+    {
+        ProcessSP process_sp (m_target_sp->GetProcessSP());
+        if (process_sp)
+        {
+            bool refreash_filter = !m_filter_sp;
+            if (m_language_runtime == NULL)
+            {
+                m_language_runtime = process_sp->GetLanguageRuntime(m_language);
+                refreash_filter = true;
+            }
+            else
+            {
+                LanguageRuntime *language_runtime = process_sp->GetLanguageRuntime(m_language);
+                if (m_language_runtime != language_runtime)
+                {
+                    m_language_runtime = language_runtime;
+                    refreash_filter = true;
+                }
+            }
+            
+            if (refreash_filter && m_language_runtime)
+            {
+                m_filter_sp = m_language_runtime->CreateExceptionSearchFilter ();
+            }
+        }
+        else
+        {
+            m_filter_sp.reset();
+            m_language_runtime = NULL;
+        }
+    }
+};
+
+// The Target is the one that knows how to create breakpoints, so this function
+// is meant to be used either by the target or internally in Set/ClearExceptionBreakpoints.
+class ExceptionBreakpointResolver : public BreakpointResolver
+{
+public:
+    ExceptionBreakpointResolver (lldb::LanguageType language,
+                                 bool catch_bp,
+                                 bool throw_bp) :
+        BreakpointResolver (NULL, BreakpointResolver::ExceptionResolver),
+        m_language (language),
+        m_language_runtime (NULL),
+        m_catch_bp (catch_bp),
+        m_throw_bp (throw_bp)
+    {
+    }
+
+    virtual
+    ~ExceptionBreakpointResolver()
+    {
+    }
+    
+    virtual Searcher::CallbackReturn
+    SearchCallback (SearchFilter &filter,
+                    SymbolContext &context,
+                    Address *addr,
+                    bool containing)
+    {
+        
+        if (SetActualResolver())
+            return m_actual_resolver_sp->SearchCallback (filter, context, addr, containing);
+        else
+            return eCallbackReturnStop;
+    }
+    
+    virtual Searcher::Depth
+    GetDepth ()
+    {
+        if (SetActualResolver())
+            return m_actual_resolver_sp->GetDepth();
+        else
+            return eDepthTarget;
+    }
+    
+    virtual void
+    GetDescription (Stream *s)
+    {
+        s->Printf ("Exception breakpoint (catch: %s throw: %s)",
+                   m_catch_bp ? "on" : "off",
+                   m_throw_bp ? "on" : "off");
+        
+        SetActualResolver();
+        if (m_actual_resolver_sp)
+        {
+            s->Printf (" using: ");
+            m_actual_resolver_sp->GetDescription (s);
+        }
+        else
+            s->Printf (" the correct runtime exception handler will be determined when you run");
+    }
+
+    virtual void
+    Dump (Stream *s) const
+    {
+    }
+    
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const BreakpointResolverName *) { return true; }
+    static inline bool classof(const BreakpointResolver *V) {
+        return V->getResolverID() == BreakpointResolver::ExceptionResolver;
+    }
+protected:
+    bool
+    SetActualResolver()
+    {
+        ProcessSP process_sp;
+        if (m_breakpoint)
+        {
+            process_sp = m_breakpoint->GetTarget().GetProcessSP();
+            if (process_sp)
+            {
+                bool refreash_resolver = !m_actual_resolver_sp;
+                if (m_language_runtime == NULL)
+                {
+                    m_language_runtime = process_sp->GetLanguageRuntime(m_language);
+                    refreash_resolver = true;
+                }
+                else
+                {
+                    LanguageRuntime *language_runtime = process_sp->GetLanguageRuntime(m_language);
+                    if (m_language_runtime != language_runtime)
+                    {
+                        m_language_runtime = language_runtime;
+                        refreash_resolver = true;
+                    }
+                }
+                
+                if (refreash_resolver && m_language_runtime)
+                {
+                    m_actual_resolver_sp = m_language_runtime->CreateExceptionResolver (m_breakpoint, m_catch_bp, m_throw_bp);
+                }
+            }
+            else
+            {
+                m_actual_resolver_sp.reset();
+                m_language_runtime = NULL;
+            }
+        }
+        else
+        {
+            m_actual_resolver_sp.reset();
+            m_language_runtime = NULL;
+        }
+        return (bool)m_actual_resolver_sp;
+    }
+    lldb::BreakpointResolverSP m_actual_resolver_sp;
+    lldb::LanguageType m_language;
+    LanguageRuntime *m_language_runtime;
+    bool m_catch_bp;
+    bool m_throw_bp;
+};
+
+
 LanguageRuntime*
 LanguageRuntime::FindPlugin (Process *process, lldb::LanguageType language)
 {
@@ -49,147 +260,21 @@ LanguageRuntime::~LanguageRuntime()
 }
 
 BreakpointSP
-LanguageRuntime::CreateExceptionBreakpoint(
-    Target &target, 
-    lldb::LanguageType language, 
-    bool catch_bp, 
-    bool throw_bp, 
-    bool is_internal)
+LanguageRuntime::CreateExceptionBreakpoint (Target &target,
+                                            lldb::LanguageType language,
+                                            bool catch_bp,
+                                            bool throw_bp,
+                                            bool is_internal)
 {
-    BreakpointSP exc_breakpt_sp;
-    BreakpointResolverSP resolver_sp(new ExceptionBreakpointResolver(NULL, language, catch_bp, throw_bp));
-    SearchFilterSP filter_sp(target.GetSearchFilterForModule(NULL));
+    BreakpointResolverSP resolver_sp(new ExceptionBreakpointResolver(language, catch_bp, throw_bp));
+    SearchFilterSP filter_sp(new ExceptionSearchFilter(target.shared_from_this(), language));
     
-    exc_breakpt_sp = target.CreateBreakpoint (filter_sp, resolver_sp, is_internal);
+    BreakpointSP exc_breakpt_sp (target.CreateBreakpoint (filter_sp, resolver_sp, is_internal));
     if (is_internal)
         exc_breakpt_sp->SetBreakpointKind("exception");
     
     return exc_breakpt_sp;
 }
-
-LanguageRuntime::ExceptionBreakpointResolver::ExceptionBreakpointResolver (Breakpoint *bkpt,
-                        LanguageType language,
-                        bool catch_bp,
-                        bool throw_bp) :
-    BreakpointResolver (bkpt, BreakpointResolver::ExceptionResolver),
-    m_language (language),
-    m_catch_bp (catch_bp),
-    m_throw_bp (throw_bp)
-
-{
-}
-                        
-void
-LanguageRuntime::ExceptionBreakpointResolver::GetDescription (Stream *s)
-{
-    s->Printf ("Exception breakpoint (catch: %s throw: %s)", 
-           m_catch_bp ? "on" : "off",
-           m_throw_bp ? "on" : "off");
-       
-    SetActualResolver();
-    if (m_actual_resolver_sp)
-    {
-        s->Printf (" using: ");
-        m_actual_resolver_sp->GetDescription (s);
-    }
-    else
-        s->Printf (" the correct runtime exception handler will be determined when you run");
-}
-
-bool
-LanguageRuntime::ExceptionBreakpointResolver::SetActualResolver()
-{
-    ProcessSP process_sp = m_process_wp.lock();
-    
-    // See if our process weak pointer is still good:
-    if (!process_sp)
-    {
-        // If not, our resolver is no good, so chuck that.  Then see if we can get the 
-        // target's new process.
-        m_actual_resolver_sp.reset();
-        if (m_breakpoint)
-        {
-            Target &target = m_breakpoint->GetTarget();
-            process_sp = target.GetProcessSP();
-            if (process_sp)
-            {
-                m_process_wp = process_sp;
-                process_sp = m_process_wp.lock();
-            }
-        }
-    }
-    
-    if (process_sp)
-    {
-        if (m_actual_resolver_sp)
-            return true;
-        else
-        {
-            // If we have a process but not a resolver, set one now.
-            LanguageRuntime *runtime = process_sp->GetLanguageRuntime(m_language);
-            if (runtime)
-            {
-                m_actual_resolver_sp = runtime->CreateExceptionResolver (m_breakpoint, m_catch_bp, m_throw_bp);
-                return (bool) m_actual_resolver_sp;
-            }
-            else
-                return false;
-        }
-    }
-    else
-        return false;
-}
-
-Searcher::CallbackReturn
-LanguageRuntime::ExceptionBreakpointResolver::SearchCallback (SearchFilter &filter,
-                SymbolContext &context,
-                Address *addr,
-                bool containing)
-{
-    
-    if (!SetActualResolver())
-    {
-        return eCallbackReturnStop;
-    }
-    else
-        return m_actual_resolver_sp->SearchCallback (filter, context, addr, containing);
-}
-
-Searcher::Depth
-LanguageRuntime::ExceptionBreakpointResolver::GetDepth ()
-{
-    if (!SetActualResolver())
-        return eDepthTarget;
-    else
-        return m_actual_resolver_sp->GetDepth();
-}
-
-/*
-typedef enum LanguageType
-{
-    eLanguageTypeUnknown         = 0x0000,   ///< Unknown or invalid language value.
-    eLanguageTypeC89             = 0x0001,   ///< ISO C:1989.
-    eLanguageTypeC               = 0x0002,   ///< Non-standardized C, such as K&R.
-    eLanguageTypeAda83           = 0x0003,   ///< ISO Ada:1983.
-    eLanguageTypeC_plus_plus     = 0x0004,   ///< ISO C++:1998.
-    eLanguageTypeCobol74         = 0x0005,   ///< ISO Cobol:1974.
-    eLanguageTypeCobol85         = 0x0006,   ///< ISO Cobol:1985.
-    eLanguageTypeFortran77       = 0x0007,   ///< ISO Fortran 77.
-    eLanguageTypeFortran90       = 0x0008,   ///< ISO Fortran 90.
-    eLanguageTypePascal83        = 0x0009,   ///< ISO Pascal:1983.
-    eLanguageTypeModula2         = 0x000a,   ///< ISO Modula-2:1996.
-    eLanguageTypeJava            = 0x000b,   ///< Java.
-    eLanguageTypeC99             = 0x000c,   ///< ISO C:1999.
-    eLanguageTypeAda95           = 0x000d,   ///< ISO Ada:1995.
-    eLanguageTypeFortran95       = 0x000e,   ///< ISO Fortran 95.
-    eLanguageTypePLI             = 0x000f,   ///< ANSI PL/I:1976.
-    eLanguageTypeObjC            = 0x0010,   ///< Objective-C.
-    eLanguageTypeObjC_plus_plus  = 0x0011,   ///< Objective-C++.
-    eLanguageTypeUPC             = 0x0012,   ///< Unified Parallel C.
-    eLanguageTypeD               = 0x0013,   ///< D.
-    eLanguageTypePython          = 0x0014    ///< Python.
-} LanguageType;
- */
 
 struct language_name_pair {
     const char *name;
@@ -247,4 +332,12 @@ LanguageRuntime::GetNameForLanguageType (LanguageType language)
     else
         return language_names[eLanguageTypeUnknown].name;
 }
-        
+
+lldb::SearchFilterSP
+LanguageRuntime::CreateExceptionSearchFilter ()
+{
+    return m_process->GetTarget().GetSearchFilterForModule(NULL);
+}
+
+
+

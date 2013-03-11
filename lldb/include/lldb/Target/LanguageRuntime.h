@@ -23,6 +23,9 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Target/ExecutionContextScope.h"
 
+class ExceptionBreakpointResolver;
+class ExceptionSearchFilter;
+
 namespace lldb_private {
 
 class LanguageRuntime :
@@ -95,52 +98,15 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from LanguageRuntime can see and modify these
     //------------------------------------------------------------------
-    
-    // The Target is the one that knows how to create breakpoints, so this function is meant to be used either
-    // by the target or internally in Set/ClearExceptionBreakpoints.
-    class ExceptionBreakpointResolver : public BreakpointResolver
-    {
-    public:
-        ExceptionBreakpointResolver (Breakpoint *bkpt,
-                                lldb::LanguageType language,
-                                bool catch_bp,
-                                bool throw_bp);
-
-        virtual ~ExceptionBreakpointResolver() {}
-
-        virtual Searcher::CallbackReturn
-        SearchCallback (SearchFilter &filter,
-                        SymbolContext &context,
-                        Address *addr,
-                        bool containing);
-
-        virtual Searcher::Depth
-        GetDepth ();
-
-        virtual void
-        GetDescription (Stream *s);
-        
-        virtual void
-        Dump (Stream *s) const {}
-
-        /// Methods for support type inquiry through isa, cast, and dyn_cast:
-        static inline bool classof(const BreakpointResolverName *) { return true; }
-        static inline bool classof(const BreakpointResolver *V) {
-            return V->getResolverID() == BreakpointResolver::ExceptionResolver;
-        }
-    protected:
-        bool SetActualResolver();
-        
-        lldb::BreakpointResolverSP m_actual_resolver_sp;
-        lldb::ProcessWP m_process_wp;
-        lldb::LanguageType m_language;
-        bool m_catch_bp;
-        bool m_throw_bp;
-    };
+    friend class ExceptionBreakpointResolver;
+    friend class ExceptionSearchFilter;
     
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp) = 0;
     
+    virtual lldb::SearchFilterSP
+    CreateExceptionSearchFilter ();
+
     LanguageRuntime(Process *process);
     Process *m_process;
 private:

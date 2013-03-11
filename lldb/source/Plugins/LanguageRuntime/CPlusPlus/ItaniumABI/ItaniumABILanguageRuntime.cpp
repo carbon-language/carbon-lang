@@ -338,19 +338,6 @@ ItaniumABILanguageRuntime::GetPluginVersion()
     return 1;
 }
 
-// This is an array of symbol names to use in setting exception breakpoints.  The names are laid out:
-//
-//  catch_names, general_throw_names, throw_names_for_use_in_expressions
-//
-// Then you can use the following constants to pick out the part of the array you want to pass to the breakpoint
-// resolver.
-
-static const char *exception_names[] = { "__cxa_begin_catch", "__cxa_throw", "__cxa_rethrow", "__cxa_allocate_exception"};
-static const int num_exception_names = sizeof (exception_names)/sizeof (char *);
-static const int num_catch_names = 1;
-static const int num_throw_names = num_exception_names - num_catch_names;
-static const int num_expression_throw_names = 1;
-
 BreakpointResolverSP
 ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp)
 {
@@ -360,48 +347,70 @@ ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch
 BreakpointResolverSP
 ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp, bool for_expressions)
 {
-    BreakpointResolverSP resolver_sp;
-    
     // One complication here is that most users DON'T want to stop at __cxa_allocate_expression, but until we can do
     // anything better with predicting unwinding the expression parser does.  So we have two forms of the exception
     // breakpoints, one for expressions that leaves out __cxa_allocate_exception, and one that includes it.
     // The SetExceptionBreakpoints does the latter, the CreateExceptionBreakpoint in the runtime the former.
+    static const char *g_catch_name = "__cxa_begin_catch";
+    static const char *g_throw_name1 = "__cxa_throw";
+    static const char *g_throw_name2 = "__cxa_rethrow";
+    static const char *g_exception_throw_name = "__cxa_allocate_exception";
+    std::vector<const char *> exception_names;
+    exception_names.reserve(4);
+    if (catch_bp)
+        exception_names.push_back(g_catch_name);
+
+    if (throw_bp)
+    {
+        exception_names.push_back(g_throw_name1);
+        exception_names.push_back(g_throw_name2);
+    }
+
+    if (for_expressions)
+        exception_names.push_back(g_exception_throw_name);
     
-    uint32_t num_expressions;
-    if (catch_bp && throw_bp)
-    {
-        if (for_expressions)
-            num_expressions = num_exception_names;
-        else
-            num_expressions = num_exception_names - num_expression_throw_names;
-            
-        resolver_sp.reset (new BreakpointResolverName (bkpt,
-                                                       exception_names,
-                                                       num_expressions,
-                                                       eFunctionNameTypeBase,
-                                                       eLazyBoolNo));
-    }
-    else if (throw_bp)
-    {
-        if (for_expressions)
-            num_expressions = num_throw_names;
-        else
-            num_expressions = num_throw_names - num_expression_throw_names;
-        
-        resolver_sp.reset (new BreakpointResolverName (bkpt,
-                                                       exception_names + num_catch_names,
-                                                       num_expressions,
-                                                       eFunctionNameTypeBase,
-                                                       eLazyBoolNo));
-    }
-    else if (catch_bp)
-        resolver_sp.reset (new BreakpointResolverName (bkpt,
-                                                       exception_names,
-                                                       num_catch_names,
-                                                       eFunctionNameTypeBase,
-                                                       eLazyBoolNo));
+    BreakpointResolverSP resolver_sp (new BreakpointResolverName (bkpt,
+                                                                  exception_names.data(),
+                                                                  exception_names.size(),
+                                                                  eFunctionNameTypeBase,
+                                                                  eLazyBoolNo));
 
     return resolver_sp;
+}
+
+
+
+lldb::SearchFilterSP
+ItaniumABILanguageRuntime::CreateExceptionSearchFilter ()
+{
+    Target &target = m_process->GetTarget();
+
+    if (target.GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
+    {
+        // Limit the number of modules that are searched for these breakpoints for
+        // Apple binaries.
+        FileSpecList filter_modules;
+        filter_modules.Append(FileSpec("libc++abi.dylib", false));
+        filter_modules.Append(FileSpec("libSystem.B.dylib", false));
+        return target.GetSearchFilterForModuleList(&filter_modules);
+    }
+    else
+    {
+        return LanguageRuntime::CreateExceptionSearchFilter();
+    }
+}
+
+lldb::BreakpointSP
+ItaniumABILanguageRuntime::CreateExceptionBreakpoint (bool catch_bp,
+                                                      bool throw_bp,
+                                                      bool for_expressions,
+                                                      bool is_internal)
+{
+    Target &target = m_process->GetTarget();
+    FileSpecList filter_modules;
+    BreakpointResolverSP exception_resolver_sp = CreateExceptionResolver (NULL, catch_bp, throw_bp, for_expressions);
+    SearchFilterSP filter_sp (CreateExceptionSearchFilter ());
+    return target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal);
 }
 
 void
@@ -418,31 +427,16 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
     // For the exception breakpoints set by the Expression parser, we'll be a little more aggressive and
     // stop at exception allocation as well.
     
-    if (!m_cxx_exception_bp_sp)
+    if (m_cxx_exception_bp_sp)
     {
-        Target &target = m_process->GetTarget();
-        FileSpecList filter_modules;
-        // Limit the number of modules that are searched for these breakpoints for
-        // Apple binaries.
-        if (target.GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
-        {
-            filter_modules.Append(FileSpec("libc++abi.dylib", false));
-            filter_modules.Append(FileSpec("libSystem.B.dylib", false));
-        }
-        BreakpointResolverSP exception_resolver_sp = CreateExceptionResolver (NULL, catch_bp, throw_bp, for_expressions);
-        SearchFilterSP filter_sp;
-        
-        if (filter_modules.IsEmpty())
-            filter_sp = target.GetSearchFilterForModule(NULL);
-        else
-            filter_sp = target.GetSearchFilterForModuleList(&filter_modules);
-        
-        m_cxx_exception_bp_sp = target.CreateBreakpoint (filter_sp, exception_resolver_sp, is_internal);
+        m_cxx_exception_bp_sp->SetEnabled (true);
+    }
+    else
+    {
+        m_cxx_exception_bp_sp = CreateExceptionBreakpoint (catch_bp, throw_bp, for_expressions, is_internal);
         if (m_cxx_exception_bp_sp)
             m_cxx_exception_bp_sp->SetBreakpointKind("c++ exception");
     }
-    else
-        m_cxx_exception_bp_sp->SetEnabled (true);
     
 }
 
@@ -452,7 +446,7 @@ ItaniumABILanguageRuntime::ClearExceptionBreakpoints ()
     if (!m_process)
         return;
     
-    if (m_cxx_exception_bp_sp.get())
+    if (m_cxx_exception_bp_sp)
     {
         m_cxx_exception_bp_sp->SetEnabled (false);
     }    

@@ -393,3 +393,21 @@ AppleObjCRuntime::CalculateHasNewLiteralsAndIndexing()
     else
         return false;
 }
+
+lldb::SearchFilterSP
+AppleObjCRuntime::CreateExceptionSearchFilter ()
+{
+    Target &target = m_process->GetTarget();
+    
+    if (target.GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
+    {
+        FileSpecList filter_modules;
+        filter_modules.Append(FileSpec("libobjc.A.dylib", false));
+        return target.GetSearchFilterForModuleList(&filter_modules);
+    }
+    else
+    {
+        return LanguageRuntime::CreateExceptionSearchFilter();
+    }
+}
+

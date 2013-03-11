@@ -134,7 +134,6 @@ public:
     }
 
 protected:
-    Target *m_target;          // Every resolver has a target.
     Breakpoint *m_breakpoint;  // This is the breakpoint we add locations to.
 
 private:
