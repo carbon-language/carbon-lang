@@ -1629,9 +1629,10 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
   if (!isLexingRawMode() &&
       (Kind == tok::utf8_string_literal ||
        Kind == tok::utf16_string_literal ||
-       Kind == tok::utf32_string_literal) &&
-      getLangOpts().CPlusPlus)
-    Diag(BufferPtr, diag::warn_cxx98_compat_unicode_literal);
+       Kind == tok::utf32_string_literal))
+    Diag(BufferPtr, getLangOpts().CPlusPlus
+           ? diag::warn_cxx98_compat_unicode_literal
+           : diag::warn_c99_compat_unicode_literal);
 
   char C = getAndAdvanceChar(CurPtr, Result);
   while (C != '"') {
@@ -1795,9 +1796,10 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
   const char *NulCharacter = 0; // Does this character contain the \0 character?
 
   if (!isLexingRawMode() &&
-      (Kind == tok::utf16_char_constant || Kind == tok::utf32_char_constant) &&
-      getLangOpts().CPlusPlus)
-    Diag(BufferPtr, diag::warn_cxx98_compat_unicode_literal);
+      (Kind == tok::utf16_char_constant || Kind == tok::utf32_char_constant))
+    Diag(BufferPtr, getLangOpts().CPlusPlus
+           ? diag::warn_cxx98_compat_unicode_literal
+           : diag::warn_c99_compat_unicode_literal);
 
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
