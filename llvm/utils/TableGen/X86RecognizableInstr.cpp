@@ -764,6 +764,17 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     HANDLE_OPERAND(immediate)
     HANDLE_OPERAND(immediate)
     break;
+  case X86Local::MRM_F8:
+    if (Opcode == 0xc6) {
+      assert(numPhysicalOperands == 1 &&
+             "Unexpected number of operands for X86Local::MRM_F8");
+      HANDLE_OPERAND(immediate)
+    } else if (Opcode == 0xc7) {
+      assert(numPhysicalOperands == 1 &&
+             "Unexpected number of operands for X86Local::MRM_F8");
+      HANDLE_OPERAND(relocation)
+    }
+    break;
   case X86Local::MRMInitReg:
     // Ignored.
     break;
