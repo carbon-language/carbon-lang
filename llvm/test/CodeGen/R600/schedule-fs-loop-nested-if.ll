@@ -1,4 +1,5 @@
 ;RUN: llc < %s -march=r600 -mcpu=cayman -stress-sched -verify-misched
+;REQUIRES: asserts
 
 define void @main() {
 main_body:
