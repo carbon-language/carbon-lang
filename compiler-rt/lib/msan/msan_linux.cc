@@ -16,6 +16,9 @@
 
 #include "msan.h"
 
+#include <algorithm>
+#include <elf.h>
+#include <link.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -87,6 +90,42 @@ static void MsanAtExit(void) {
 void InstallAtExitHandler() {
   atexit(MsanAtExit);
 }
+
+void UnpoisonMappedDSO(link_map *map) {
+  typedef ElfW(Phdr) Elf_Phdr;
+  typedef ElfW(Ehdr) Elf_Ehdr;
+  char *base = (char *)map->l_addr;
+  Elf_Ehdr *ehdr = (Elf_Ehdr *)base;
+  char *phdrs = base + ehdr->e_phoff;
+  char *phdrs_end = phdrs + ehdr->e_phnum * ehdr->e_phentsize;
+
+  // Find the segment with the minimum base so we can "relocate" the p_vaddr
+  // fields.  Typically ET_DYN objects (DSOs) have base of zero and ET_EXEC
+  // objects have a non-zero base.
+  uptr preferred_base = ~0ULL;
+  for (char *iter = phdrs; iter != phdrs_end; iter += ehdr->e_phentsize) {
+    Elf_Phdr *phdr = (Elf_Phdr *)iter;
+    if (phdr->p_type == PT_LOAD)
+      preferred_base = std::min(preferred_base, (uptr)phdr->p_vaddr);
+  }
+
+  // Compute the delta from the real base to get a relocation delta.
+  ptrdiff_t delta = (uptr)base - preferred_base;
+  // Now we can figure out what the loader really mapped.
+  for (char *iter = phdrs; iter != phdrs_end; iter += ehdr->e_phentsize) {
+    Elf_Phdr *phdr = (Elf_Phdr *)iter;
+    if (phdr->p_type == PT_LOAD) {
+      uptr seg_start = phdr->p_vaddr + delta;
+      uptr seg_end = seg_start + phdr->p_memsz;
+      // None of these values are aligned.  We consider the ragged edges of the
+      // load command as defined, since they are mapped from the file.
+      seg_start = RoundDownTo(seg_start, GetPageSizeCached());
+      seg_end = RoundUpTo(seg_end, GetPageSizeCached());
+      __msan_unpoison((void *)seg_start, seg_end - seg_start);
+    }
+  }
+}
+
 }  // namespace __msan
 
 #endif  // __linux__

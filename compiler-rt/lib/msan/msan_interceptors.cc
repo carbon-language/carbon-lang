@@ -762,6 +762,25 @@ INTERCEPTOR(int, dladdr, void *addr, dlinfo *info) {
   return res;
 }
 
+// dlopen() ultimately calls mmap() down inside the loader, which generally
+// doesn't participate in dynamic symbol resolution.  Therefore we won't
+// intercept its calls to mmap, and we have to hook it here.  The loader
+// initializes the module before returning, so without the dynamic component, we
+// won't be able to clear the shadow before the initializers.  Fixing this would
+// require putting our own initializer first to clear the shadow.
+INTERCEPTOR(void *, dlopen, const char *filename, int flag) {
+  ENSURE_MSAN_INITED();
+  EnterLoader();
+  link_map *map = (link_map *)REAL(dlopen)(filename, flag);
+  ExitLoader();
+  if (!__msan_has_dynamic_component()) {
+    // If msandr didn't clear the shadow before the initializers ran, we do it
+    // ourselves afterwards.
+    UnpoisonMappedDSO(map);
+  }
+  return (void *)map;
+}
+
 INTERCEPTOR(int, getrusage, int who, void *usage) {
   ENSURE_MSAN_INITED();
   int res = REAL(getrusage)(who, usage);
@@ -973,6 +992,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(recvfrom);
   INTERCEPT_FUNCTION(recvmsg);
   INTERCEPT_FUNCTION(dladdr);
+  INTERCEPT_FUNCTION(dlopen);
   INTERCEPT_FUNCTION(getrusage);
   inited = 1;
 }

@@ -1288,6 +1288,55 @@ TEST(MemorySanitizer, dladdr) {
   EXPECT_NOT_POISONED((unsigned long)info.dli_saddr);
 }
 
+#ifdef __GLIBC__
+extern "C" {
+  extern void *__libc_stack_end;
+}
+
+static char **GetArgv(void) {
+  uintptr_t *stack_end = (uintptr_t *)__libc_stack_end;
+  return (char**)(stack_end + 1);
+}
+
+#else  // __GLIBC__
+# error "TODO: port this"
+#endif
+
+TEST(MemorySanitizer, dlopen) {
+  // Compute the path to our loadable DSO.  We assume it's in the same
+  // directory.  Only use string routines that we intercept so far to do this.
+  char **argv = GetArgv();
+  const char *basename = "libmsan_loadable.x86_64.so";
+  size_t path_max = strlen(argv[0]) + 1 + strlen(basename) + 1;
+  char *path = new char[path_max];
+  char *last_slash = strrchr(argv[0], '/');
+  assert(last_slash);
+  snprintf(path, path_max, "%.*s/%s", int(last_slash - argv[0]),
+           argv[0], basename);
+
+  // We need to clear shadow for globals when doing dlopen.  In order to test
+  // this, we have to poison the shadow for the DSO before we load it.  In
+  // general this is difficult, but the loader tends to reload things in the
+  // same place, so we open, close, and then reopen.  The global should always
+  // start out clean after dlopen.
+  for (int i = 0; i < 2; i++) {
+    void *lib = dlopen(path, RTLD_LAZY);
+    if (lib == NULL) {
+      printf("dlerror: %s\n", dlerror());
+      assert(lib != NULL);
+    }
+    void **(*get_dso_global)() = (void **(*)())dlsym(lib, "get_dso_global");
+    assert(get_dso_global);
+    void **dso_global = get_dso_global();
+    EXPECT_NOT_POISONED(*dso_global);
+    __msan_poison(dso_global, sizeof(*dso_global));
+    EXPECT_POISONED(*dso_global);
+    dlclose(lib);
+  }
+
+  delete[] path;
+}
+
 TEST(MemorySanitizer, scanf) {
   const char *input = "42 hello";
   int* d = new int;

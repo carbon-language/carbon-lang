@@ -104,6 +104,10 @@ int __msan_get_retval_tls_offset();
 SANITIZER_INTERFACE_ATTRIBUTE
 int __msan_get_param_tls_offset();
 
+// For intercepting mmap from ld.so in msandr.
+SANITIZER_INTERFACE_ATTRIBUTE
+bool __msan_is_in_loader();
+
 // For testing.
 SANITIZER_INTERFACE_ATTRIBUTE
 u32 __msan_get_umr_origin();

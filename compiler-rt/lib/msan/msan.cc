@@ -59,6 +59,7 @@ static THREADLOCAL struct {
 } __msan_stack_bounds;
 
 static THREADLOCAL bool is_in_symbolizer;
+static THREADLOCAL bool is_in_loader;
 
 extern "C" const int __msan_track_origins;
 int __msan_get_track_origins() {
@@ -86,6 +87,14 @@ static bool IsRunningUnderDr() {
 void EnterSymbolizer() { is_in_symbolizer = true; }
 void ExitSymbolizer()  { is_in_symbolizer = false; }
 bool IsInSymbolizer() { return is_in_symbolizer; }
+
+void EnterLoader() { is_in_loader = true; }
+void ExitLoader()  { is_in_loader = false; }
+
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
+bool __msan_is_in_loader() { return is_in_loader; }
+}
 
 static Flags msan_flags;
 

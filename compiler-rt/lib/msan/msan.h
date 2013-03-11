@@ -26,6 +26,8 @@
 #define MEM_IS_SHADOW(mem) ((uptr)mem >=         0x200000000000ULL && \
                             (uptr)mem <=         0x400000000000ULL)
 
+struct link_map;  // Opaque type returned by dlopen().
+
 const int kMsanParamTlsSizeInWords = 100;
 const int kMsanRetvalTlsSizeInWords = 100;
 
@@ -55,6 +57,9 @@ struct SymbolizerScope {
   ~SymbolizerScope() { ExitSymbolizer(); }
 };
 
+void EnterLoader();
+void ExitLoader();
+
 void MsanDie();
 void PrintWarning(uptr pc, uptr bp);
 void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin);
@@ -65,6 +70,8 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
 void ReportUMR(StackTrace *stack, u32 origin);
 void ReportExpectedUMRNotFound(StackTrace *stack);
 void ReportAtExitStatistics();
+
+void UnpoisonMappedDSO(struct link_map *map);
 
 #define GET_MALLOC_STACK_TRACE                                     \
   StackTrace stack;                                                \
