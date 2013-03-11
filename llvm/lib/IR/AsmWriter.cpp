@@ -2094,7 +2094,7 @@ static void WriteMDNodeComment(const MDNode *Node,
     return;
 
   DIDescriptor Desc(Node);
-  if (Desc.getVersion() < LLVMDebugVersion11)
+  if (!Desc.Verify())
     return;
 
   unsigned Tag = Desc.getTag();

@@ -756,82 +756,6 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
     TheCU->addGlobalName(SP.getName(), SubprogramDie);
 }
 
-// Collect debug info from named mdnodes such as llvm.dbg.enum and llvm.dbg.ty.
-void DwarfDebug::collectInfoFromNamedMDNodes(const Module *M) {
-  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.sp"))
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      const MDNode *N = NMD->getOperand(i);
-      if (CompileUnit *CU = CUMap.lookup(DISubprogram(N).getCompileUnit()))
-        constructSubprogramDIE(CU, N);
-    }
-
-  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.gv"))
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      const MDNode *N = NMD->getOperand(i);
-      if (CompileUnit *CU = CUMap.lookup(DIGlobalVariable(N).getCompileUnit()))
-        CU->createGlobalVariableDIE(N);
-    }
-
-  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      DIType Ty(NMD->getOperand(i));
-      if (CompileUnit *CU = CUMap.lookup(Ty.getCompileUnit()))
-        CU->getOrCreateTypeDIE(Ty);
-    }
-
-  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.ty"))
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      DIType Ty(NMD->getOperand(i));
-      if (CompileUnit *CU = CUMap.lookup(Ty.getCompileUnit()))
-        CU->getOrCreateTypeDIE(Ty);
-    }
-}
-
-// Collect debug info using DebugInfoFinder.
-// FIXME - Remove this when dragonegg switches to DIBuilder.
-bool DwarfDebug::collectLegacyDebugInfo(const Module *M) {
-  DebugInfoFinder DbgFinder;
-  DbgFinder.processModule(*M);
-
-  bool HasDebugInfo = false;
-  // Scan all the compile-units to see if there are any marked as the main
-  // unit. If not, we do not generate debug info.
-  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
-         E = DbgFinder.compile_unit_end(); I != E; ++I) {
-    if (DICompileUnit(*I).isMain()) {
-      HasDebugInfo = true;
-      break;
-    }
-  }
-  if (!HasDebugInfo) return false;
-
-  // Emit initial sections so we can refer to them later.
-  emitSectionLabels();
-
-  // Create all the compile unit DIEs.
-  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
-         E = DbgFinder.compile_unit_end(); I != E; ++I)
-    constructCompileUnit(*I);
-
-  // Create DIEs for each global variable.
-  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
-         E = DbgFinder.global_variable_end(); I != E; ++I) {
-    const MDNode *N = *I;
-    if (CompileUnit *CU = CUMap.lookup(DIGlobalVariable(N).getCompileUnit()))
-      CU->createGlobalVariableDIE(N);
-  }
-
-  // Create DIEs for each subprogram.
-  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
-         E = DbgFinder.subprogram_end(); I != E; ++I) {
-    const MDNode *N = *I;
-    if (CompileUnit *CU = CUMap.lookup(DISubprogram(N).getCompileUnit()))
-      constructSubprogramDIE(CU, N);
-  }
-
-  return HasDebugInfo;
-}
-
 // Emit all Dwarf sections that should come prior to the content. Create
 // global DIEs and emit initial debug info sections. This is invoked by
 // the target AsmPrinter.
@@ -844,30 +768,28 @@ void DwarfDebug::beginModule() {
   // If module has named metadata anchors then use them, otherwise scan the
   // module using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
-  if (CU_Nodes) {
-    // Emit initial sections so we can reference labels later.
-    emitSectionLabels();
-
-    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      DICompileUnit CUNode(CU_Nodes->getOperand(i));
-      CompileUnit *CU = constructCompileUnit(CUNode);
-      DIArray GVs = CUNode.getGlobalVariables();
-      for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
-        CU->createGlobalVariableDIE(GVs.getElement(i));
-      DIArray SPs = CUNode.getSubprograms();
-      for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
-        constructSubprogramDIE(CU, SPs.getElement(i));
-      DIArray EnumTypes = CUNode.getEnumTypes();
-      for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
-        CU->getOrCreateTypeDIE(EnumTypes.getElement(i));
-      DIArray RetainedTypes = CUNode.getRetainedTypes();
-      for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
-        CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
-    }
-  } else if (!collectLegacyDebugInfo(M))
+  if (!CU_Nodes)
     return;
 
-  collectInfoFromNamedMDNodes(M);
+  // Emit initial sections so we can reference labels later.
+  emitSectionLabels();
+
+  for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
+    DICompileUnit CUNode(CU_Nodes->getOperand(i));
+    CompileUnit *CU = constructCompileUnit(CUNode);
+    DIArray GVs = CUNode.getGlobalVariables();
+    for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
+      CU->createGlobalVariableDIE(GVs.getElement(i));
+    DIArray SPs = CUNode.getSubprograms();
+    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
+      constructSubprogramDIE(CU, SPs.getElement(i));
+    DIArray EnumTypes = CUNode.getEnumTypes();
+    for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
+      CU->getOrCreateTypeDIE(EnumTypes.getElement(i));
+    DIArray RetainedTypes = CUNode.getRetainedTypes();
+    for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
+      CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
+  }
 
   // Tell MMI that we have debug info.
   MMI->setDebugInfoAvailability(true);
@@ -1211,16 +1133,10 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
         DISubprogram(DV.getContext()).describes(MF->getFunction()))
       Scope = LScopes.getCurrentFunctionScope();
-    else {
-      if (DV.getVersion() <= LLVMDebugVersion9)
-        Scope = LScopes.findLexicalScope(MInsn->getDebugLoc());
-      else {
-        if (MDNode *IA = DV.getInlinedAt())
-          Scope = LScopes.findInlinedScope(DebugLoc::getFromDILocation(IA));
-        else
-          Scope = LScopes.findLexicalScope(cast<MDNode>(DV->getOperand(1)));
-      }
-    }
+    else if (MDNode *IA = DV.getInlinedAt())
+      Scope = LScopes.findInlinedScope(DebugLoc::getFromDILocation(IA));
+    else
+      Scope = LScopes.findLexicalScope(cast<MDNode>(DV->getOperand(1)));
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;

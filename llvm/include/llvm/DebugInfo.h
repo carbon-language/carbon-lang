@@ -96,14 +96,10 @@ namespace llvm {
     explicit DIDescriptor(const DIVariable F);
     explicit DIDescriptor(const DIType F);
 
-    bool Verify() const { return DbgNode != 0; }
+    bool Verify() const;
 
     operator MDNode *() const { return const_cast<MDNode*>(DbgNode); }
     MDNode *operator ->() const { return const_cast<MDNode*>(DbgNode); }
-
-    unsigned getVersion() const {
-      return getUnsignedField(0) & LLVMDebugVersionMask;
-    }
 
     unsigned getTag() const {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
@@ -146,6 +142,7 @@ namespace llvm {
 
     int64_t getLo() const { return getInt64Field(1); }
     int64_t  getCount() const { return getInt64Field(2); }
+    bool Verify() const;
   };
 
   /// DIArray - This descriptor holds an array of descriptors.
@@ -220,10 +217,7 @@ namespace llvm {
     }
     StringRef getFilename() const  { return getStringField(1);   }
     StringRef getDirectory() const { return getStringField(2);   }
-    DICompileUnit getCompileUnit() const{
-      assert (getVersion() <= LLVMDebugVersion10  && "Invalid CompileUnit!");
-      return getFieldAs<DICompileUnit>(3);
-    }
+    bool Verify() const;
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -237,6 +231,7 @@ namespace llvm {
 
     StringRef getName() const        { return getStringField(1); }
     uint64_t getEnumValue() const      { return getUInt64Field(2); }
+    bool Verify() const;
   };
 
   /// DIType - This is a wrapper for a type.
@@ -257,13 +252,6 @@ namespace llvm {
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
-    DICompileUnit getCompileUnit() const{
-      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
-     if (getVersion() == llvm::LLVMDebugVersion7)
-       return getFieldAs<DICompileUnit>(3);
-
-     return getFieldAs<DIFile>(3).getCompileUnit();
-    }
     DIFile getFile() const              { return getFieldAs<DIFile>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -310,15 +298,9 @@ namespace llvm {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
     }
     StringRef getDirectory() const  {
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getCompileUnit().getDirectory();
-
       return getFieldAs<DIFile>(3).getDirectory();
     }
     StringRef getFilename() const  {
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getCompileUnit().getFilename();
-
       return getFieldAs<DIFile>(3).getFilename();
     }
 
@@ -375,44 +357,6 @@ namespace llvm {
       return getConstantField(10);
     }
 
-    StringRef getObjCPropertyName() const {
-      if (getVersion() > LLVMDebugVersion11)
-        return StringRef();
-      return getStringField(10);
-    }
-    StringRef getObjCPropertyGetterName() const {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return getStringField(11);
-    }
-    StringRef getObjCPropertySetterName() const {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return getStringField(12);
-    }
-    bool isReadOnlyObjCProperty() {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
-    }
-    bool isReadWriteObjCProperty() {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_readwrite) != 0;
-    }
-    bool isAssignObjCProperty() {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_assign) != 0;
-    }
-    bool isRetainObjCProperty() {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_retain) != 0;
-    }
-    bool isCopyObjCProperty() {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_copy) != 0;
-    }
-    bool isNonAtomicObjCProperty() {
-      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
-      return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
-    }
-
     /// Verify - Verify that a derived type descriptor is well formed.
     bool Verify() const;
   };
@@ -457,6 +401,7 @@ namespace llvm {
     }
     unsigned getLineNumber() const   { return getUnsignedField(5); }
     unsigned getColumnNumber() const { return getUnsignedField(6); }
+    bool Verify() const;
   };
 
   /// DITemplateValueParameter - This is a wrapper for template value parameter.
@@ -476,6 +421,7 @@ namespace llvm {
     }
     unsigned getLineNumber() const   { return getUnsignedField(6); }
     unsigned getColumnNumber() const { return getUnsignedField(7); }
+    bool Verify() const;
   };
 
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
@@ -489,13 +435,6 @@ namespace llvm {
     StringRef getName() const         { return getStringField(3); }
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
-    DICompileUnit getCompileUnit() const{
-      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getFieldAs<DICompileUnit>(6);
-
-      return getFieldAs<DIFile>(6).getCompileUnit();
-    }
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
@@ -529,50 +468,34 @@ namespace llvm {
     }
 
     unsigned isArtificial() const    {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return getUnsignedField(14);
       return (getUnsignedField(14) & FlagArtificial) != 0;
     }
     /// isPrivate - Return true if this subprogram has "private"
     /// access specifier.
     bool isPrivate() const    {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return false;
       return (getUnsignedField(14) & FlagPrivate) != 0;
     }
     /// isProtected - Return true if this subprogram has "protected"
     /// access specifier.
     bool isProtected() const    {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return false;
       return (getUnsignedField(14) & FlagProtected) != 0;
     }
     /// isExplicit - Return true if this subprogram is marked as explicit.
     bool isExplicit() const    {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return false;
       return (getUnsignedField(14) & FlagExplicit) != 0;
     }
     /// isPrototyped - Return true if this subprogram is prototyped.
     bool isPrototyped() const    {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return false;
       return (getUnsignedField(14) & FlagPrototyped) != 0;
     }
 
     unsigned isOptimized() const;
 
     StringRef getFilename() const    {
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getCompileUnit().getFilename();
-
       return getFieldAs<DIFile>(6).getFilename();
     }
 
     StringRef getDirectory() const   {
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getCompileUnit().getFilename();
-
       return getFieldAs<DIFile>(6).getDirectory();
     }
 
@@ -613,22 +536,10 @@ namespace llvm {
     StringRef getName() const         { return getStringField(3); }
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
-    DICompileUnit getCompileUnit() const{
-      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getFieldAs<DICompileUnit>(6);
-
-      DIFile F = getFieldAs<DIFile>(6);
-      return F.getCompileUnit();
-    }
     StringRef getFilename() const {
-      if (getVersion() <= llvm::LLVMDebugVersion10)
-        return getContext().getFilename();
       return getFieldAs<DIFile>(6).getFilename();
     }
     StringRef getDirectory() const {
-      if (getVersion() <= llvm::LLVMDebugVersion10)
-        return getContext().getDirectory();
       return getFieldAs<DIFile>(6).getDirectory();
 
     }
@@ -659,14 +570,6 @@ namespace llvm {
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
-    DICompileUnit getCompileUnit() const {
-      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getFieldAs<DICompileUnit>(3);
-
-      DIFile F = getFieldAs<DIFile>(3);
-      return F.getCompileUnit();
-    }
     DIFile getFile() const              { return getFieldAs<DIFile>(3); }
     unsigned getLineNumber() const      {
       return (getUnsignedField(4) << 8) >> 8;
@@ -679,8 +582,6 @@ namespace llvm {
 
     /// isArtificial - Return true if this variable is marked as "artificial".
     bool isArtificial() const    {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return false;
       return (getUnsignedField(6) & FlagArtificial) != 0;
     }
 
@@ -702,10 +603,6 @@ namespace llvm {
     unsigned getNumAddrElements() const;
 
     uint64_t getAddrElement(unsigned Idx) const {
-      if (getVersion() <= llvm::LLVMDebugVersion8)
-        return getUInt64Field(Idx+6);
-      if (getVersion() == llvm::LLVMDebugVersion9)
-        return getUInt64Field(Idx+7);
       return getUInt64Field(Idx+8);
     }
 
@@ -737,6 +634,7 @@ namespace llvm {
       StringRef filename = getFieldAs<DIFile>(4).getFilename();
       return !filename.empty() ? filename : getContext().getFilename();
     }
+    bool Verify() const;
   };
 
   /// DILexicalBlockFile - This is a wrapper for a lexical block with
@@ -757,6 +655,7 @@ namespace llvm {
       return filename;
     }
     DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(1); }
+    bool Verify() const;
   };
 
   /// DINameSpace - A wrapper for a C++ style name space.
@@ -770,13 +669,6 @@ namespace llvm {
     }
     StringRef getFilename() const  {
       return getFieldAs<DIFile>(3).getFilename();
-    }
-    DICompileUnit getCompileUnit() const{
-      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
-      if (getVersion() == llvm::LLVMDebugVersion7)
-        return getFieldAs<DICompileUnit>(3);
-
-      return getFieldAs<DIFile>(3).getCompileUnit();
     }
     unsigned getLineNumber() const { return getUnsignedField(4);         }
     bool Verify() const;
