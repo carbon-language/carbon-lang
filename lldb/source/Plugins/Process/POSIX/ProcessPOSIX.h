@@ -124,12 +124,6 @@ public:
     virtual size_t
     PutSTDIN(const char *buf, size_t len, lldb_private::Error &error);
 
-    virtual size_t
-    GetSTDOUT(char *buf, size_t len, lldb_private::Error &error);
-
-    virtual size_t
-    GetSTDERR(char *buf, size_t len, lldb_private::Error &error);
-
     //--------------------------------------------------------------------------
     // ProcessPOSIX internal API.
 
