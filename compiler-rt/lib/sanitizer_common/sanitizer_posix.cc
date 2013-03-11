@@ -66,8 +66,8 @@ void *MmapOrDie(uptr size, const char *mem_type) {
       Die();
     }
     recursion_count++;
-    Report("ERROR: %s failed to allocate 0x%zx (%zd) bytes of %s: %s\n",
-           SanitizerToolName, size, size, mem_type, strerror(errno));
+    Report("ERROR: %s failed to allocate 0x%zx (%zd) bytes of %s: %d\n",
+           SanitizerToolName, size, size, mem_type, errno);
     DumpProcessMap();
     CHECK("unable to mmap" && 0);
   }
