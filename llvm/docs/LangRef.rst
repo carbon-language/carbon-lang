@@ -2224,7 +2224,7 @@ The following is the syntax for constant expressions:
     won't fit in the floating point type, the results are undefined.
 ``ptrtoint (CST to TYPE)``
     Convert a pointer typed constant to the corresponding integer
-    constant ``TYPE`` must be an integer type. ``CST`` must be of
+    constant. ``TYPE`` must be an integer type. ``CST`` must be of
     pointer type. The ``CST`` value is zero extended, truncated, or
     unchanged to make it fit in ``TYPE``.
 ``inttoptr (CST to TYPE)``
