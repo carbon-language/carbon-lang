@@ -72,6 +72,7 @@ class BlockingMutex {
   explicit BlockingMutex(LinkerInitialized);
   void Lock();
   void Unlock();
+  void CheckLocked();
  private:
   uptr opaque_storage_[10];
   uptr owner_;  // for debugging

@@ -291,6 +291,10 @@ void BlockingMutex::Unlock() {
   LeaveCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
 }
 
+void BlockingMutex::CheckLocked() {
+  CHECK_EQ(owner_, GetThreadSelf());
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

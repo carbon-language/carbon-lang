@@ -317,6 +317,10 @@ void BlockingMutex::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
+void BlockingMutex::CheckLocked() {
+  CHECK_EQ((uptr)pthread_self(), owner_);
+}
+
 }  // namespace __sanitizer
 
 #endif  // __APPLE__

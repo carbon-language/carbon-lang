@@ -545,6 +545,11 @@ void BlockingMutex::Unlock() {
     syscall(__NR_futex, m, FUTEX_WAKE, 1, 0, 0, 0);
 }
 
+void BlockingMutex::CheckLocked() {
+  atomic_uint32_t *m = reinterpret_cast<atomic_uint32_t *>(&opaque_storage_);
+  CHECK_NE(MtxUnlocked, atomic_load(m, memory_order_relaxed));
+}
+
 // ----------------- sanitizer_linux.h
 // The actual size of this structure is specified by d_reclen.
 // Note that getdents64 uses a different structure format. We only provide the

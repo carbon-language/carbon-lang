@@ -92,6 +92,12 @@ static void *try_thread(void *param) {
   return 0;
 }
 
+template<typename MutexType>
+static void check_locked(MutexType *mtx) {
+  GenericScopedLock<MutexType> l(mtx);
+  mtx->CheckLocked();
+}
+
 TEST(SanitizerCommon, SpinMutex) {
   SpinMutex mtx;
   mtx.Init();
@@ -123,6 +129,7 @@ TEST(SanitizerCommon, BlockingMutex) {
     pthread_create(&threads[i], 0, lock_thread<BlockingMutex>, &data);
   for (int i = 0; i < kThreads; i++)
     pthread_join(threads[i], 0);
+  check_locked(mtx);
 }
 
 }  // namespace __sanitizer
