@@ -1,3 +1,4 @@
+// REQUIRES: asserts
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-stats -fblocks %s 2>&1 | FileCheck %s
 @interface I
 int f() {
