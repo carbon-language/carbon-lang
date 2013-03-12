@@ -152,6 +152,9 @@ namespace llvm {
     const std::vector<DIE *> &getChildren() const { return Children; }
     const SmallVector<DIEValue*, 32> &getValues() const { return Values; }
     DIE *getParent() const { return Parent; }
+    /// Climb up the parent chain to get the compile unit DIE this DIE belongs
+    /// to.
+    DIE *getCompileUnit() const;
     void setTag(unsigned Tag) { Abbrev.setTag(Tag); }
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }

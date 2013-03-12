@@ -274,6 +274,10 @@ public:
 
   /// \brief Returns the address pool.
   AddrPool *getAddrPool() { return &AddressPool; }
+
+  /// \brief for a given compile unit DIE, returns offset from beginning of
+  /// debug info.
+  unsigned getCUOffset(DIE *Die);
 };
 
 /// \brief Collects and handles dwarf debug information.

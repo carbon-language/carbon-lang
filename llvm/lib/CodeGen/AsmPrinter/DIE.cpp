@@ -112,6 +112,17 @@ DIE::~DIE() {
     delete Children[i];
 }
 
+/// Climb up the parent chain to get the compile unit DIE this DIE belongs to.
+DIE *DIE::getCompileUnit() const{
+  DIE *p = getParent();
+  while (p) {
+    if (p->getTag() == dwarf::DW_TAG_compile_unit)
+      return p;
+    p = p->getParent();
+  }
+  return NULL;
+}
+
 #ifndef NDEBUG
 void DIE::print(raw_ostream &O, unsigned IncIndent) {
   IndentCount += IncIndent;

@@ -352,11 +352,16 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
   // If we're updating an abstract DIE, then we will be adding the children and
   // object pointer later on. But what we don't want to do is process the
   // concrete DIE twice.
-  if (DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode)) {
+  DIE *AbsSPDIE = AbstractSPDies.lookup(SPNode);
+  if (AbsSPDIE) {
+    bool InSameCU = (AbsSPDIE->getCompileUnit() == SPCU->getCUDie());
     // Pick up abstract subprogram DIE.
     SPDie = new DIE(dwarf::DW_TAG_subprogram);
+    // If AbsSPDIE belongs to a different CU, use DW_FORM_ref_addr instead of
+    // DW_FORM_ref4.
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin,
-                      dwarf::DW_FORM_ref4, AbsSPDIE);
+                      InSameCU ? dwarf::DW_FORM_ref4 : dwarf::DW_FORM_ref_addr,
+                      AbsSPDIE);
     SPCU->addDie(SPDie);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
@@ -1692,15 +1697,19 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 
 // Compute the size and offset of all the DIEs.
 void DwarfUnits::computeSizeAndOffsets() {
+  // Offset from the beginning of debug info section.
+  unsigned AccuOffset = 0;
   for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
          E = CUs.end(); I != E; ++I) {
+    (*I)->setDebugInfoOffset(AccuOffset);
     unsigned Offset =
       sizeof(int32_t) + // Length of Compilation Unit Info
       sizeof(int16_t) + // DWARF version number
       sizeof(int32_t) + // Offset Into Abbrev. Section
       sizeof(int8_t);   // Pointer Size (in bytes)
 
-    computeSizeAndOffset((*I)->getCUDie(), Offset);
+    unsigned EndOffset = computeSizeAndOffset((*I)->getCUDie(), Offset);
+    AccuOffset += EndOffset;
   }
 }
 
@@ -1774,6 +1783,13 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
       DIEEntry *E = cast<DIEEntry>(Values[i]);
       DIE *Origin = E->getEntry();
       unsigned Addr = Origin->getOffset();
+      if (Form == dwarf::DW_FORM_ref_addr) {
+        // For DW_FORM_ref_addr, output the offset from beginning of debug info
+        // section. Origin->getOffset() returns the offset from start of the
+        // compile unit.
+        DwarfUnits &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
+        Addr += Holder.getCUOffset(Origin->getCompileUnit());
+      }
       Asm->EmitInt32(Addr);
       break;
     }
@@ -1869,6 +1885,17 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(USection->getLabelEndName(),
                                                   TheCU->getUniqueID()));
   }
+}
+
+/// For a given compile unit DIE, returns offset from beginning of debug info.
+unsigned DwarfUnits::getCUOffset(DIE *Die) {
+  for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
+       E = CUs.end(); I != E; ++I) {
+    CompileUnit *TheCU = *I;
+    if (TheCU->getCUDie() == Die)
+      return TheCU->getDebugInfoOffset();
+  }
+  return 0;
 }
 
 // Emit the debug info section.
