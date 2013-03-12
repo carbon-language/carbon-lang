@@ -28,6 +28,11 @@ that can help developers, generally they must have code available.
 List of projects and tools
 ==========================
 
+`<https://github.com/Andersbakken/rtags/>`_
+   "RTags is a client/server application that indexes c/c++ code and keeps
+   a persistent in-memory database of references, symbolnames, completions
+   etc."
+
 `<http://rprichard.github.com/sourceweb/>`_
    "A C/C++ source code indexer and navigator"
 
