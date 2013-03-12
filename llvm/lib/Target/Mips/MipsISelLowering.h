@@ -179,7 +179,7 @@ namespace llvm {
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   private:
 
-    void SetMips16LibcallName(RTLIB::Libcall, const char *Name);
+    void setMips16LibcallName(RTLIB::Libcall, const char *Name);
 
     void setMips16HardFloatLibCalls();
 
@@ -292,36 +292,36 @@ namespace llvm {
                             const SDNode *CallNode, const Type *RetTy) const;
 
     // Lower Operand specifics
-    SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG& DAG) const;
-    SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
-    SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG& DAG) const;
-    SDValue LowerShiftRightParts(SDValue Op, SelectionDAG& DAG,
+    SDValue lowerBR_JT(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerJumpTable(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerSELECT(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerSETCC(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerFABS(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerMEMBARRIER(SDValue Op, SelectionDAG& DAG) const;
+    SDValue lowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
+    SDValue lowerShiftLeftParts(SDValue Op, SelectionDAG& DAG) const;
+    SDValue lowerShiftRightParts(SDValue Op, SelectionDAG& DAG,
                                  bool IsSRA) const;
-    SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerADD(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerLOAD(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerSTORE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerADD(SDValue Op, SelectionDAG &DAG) const;
 
-    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// isEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization.
-    bool IsEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
+    bool isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
                                            unsigned NextStackOffset,
                                            const MipsFunctionInfo& FI) const;
 
@@ -419,36 +419,36 @@ namespace llvm {
 
     virtual unsigned getJumpTableEncoding() const;
 
-    MachineBasicBlock *EmitBPOSGE32(MachineInstr *MI,
+    MachineBasicBlock *emitBPOSGE32(MachineInstr *MI,
                                     MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
+    MachineBasicBlock *emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                     unsigned Size, unsigned BinOpcode, bool Nand = false) const;
-    MachineBasicBlock *EmitAtomicBinaryPartword(MachineInstr *MI,
+    MachineBasicBlock *emitAtomicBinaryPartword(MachineInstr *MI,
                     MachineBasicBlock *BB, unsigned Size, unsigned BinOpcode,
                     bool Nand = false) const;
-    MachineBasicBlock *EmitAtomicCmpSwap(MachineInstr *MI,
+    MachineBasicBlock *emitAtomicCmpSwap(MachineInstr *MI,
                                   MachineBasicBlock *BB, unsigned Size) const;
-    MachineBasicBlock *EmitAtomicCmpSwapPartword(MachineInstr *MI,
+    MachineBasicBlock *emitAtomicCmpSwapPartword(MachineInstr *MI,
                                   MachineBasicBlock *BB, unsigned Size) const;
-    MachineBasicBlock *EmitSel16(unsigned Opc, MachineInstr *MI,
+    MachineBasicBlock *emitSel16(unsigned Opc, MachineInstr *MI,
                                  MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitSeliT16(unsigned Opc1, unsigned Opc2,
+    MachineBasicBlock *emitSeliT16(unsigned Opc1, unsigned Opc2,
                                   MachineInstr *MI,
                                   MachineBasicBlock *BB) const;
 
-    MachineBasicBlock *EmitSelT16(unsigned Opc1, unsigned Opc2,
+    MachineBasicBlock *emitSelT16(unsigned Opc1, unsigned Opc2,
                                   MachineInstr *MI,
                                   MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitFEXT_T8I816_ins(unsigned BtOpc, unsigned CmpOpc,
+    MachineBasicBlock *emitFEXT_T8I816_ins(unsigned BtOpc, unsigned CmpOpc,
                                MachineInstr *MI,
                                MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitFEXT_T8I8I16_ins(
+    MachineBasicBlock *emitFEXT_T8I8I16_ins(
       unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
       MachineInstr *MI,  MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitFEXT_CCRX16_ins(
+    MachineBasicBlock *emitFEXT_CCRX16_ins(
       unsigned SltOpc,
       MachineInstr *MI,  MachineBasicBlock *BB) const;
-    MachineBasicBlock *EmitFEXT_CCRXI16_ins(
+    MachineBasicBlock *emitFEXT_CCRXI16_ins(
       unsigned SltiOpc, unsigned SltiXOpc,
       MachineInstr *MI,  MachineBasicBlock *BB )const;
 

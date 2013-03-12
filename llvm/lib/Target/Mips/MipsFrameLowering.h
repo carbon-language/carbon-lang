@@ -39,7 +39,7 @@ protected:
   uint64_t estimateStackSize(const MachineFunction &MF) const;
 };
 
-/// Create MipsInstrInfo objects.
+/// Create MipsFrameLowering objects.
 const MipsFrameLowering *createMips16FrameLowering(const MipsSubtarget &ST);
 const MipsFrameLowering *createMipsSEFrameLowering(const MipsSubtarget &ST);
 
