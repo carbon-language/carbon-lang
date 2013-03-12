@@ -263,8 +263,8 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     case Instruction::PtrToInt:
       // A ptrtoint cast is free so long as the result is large enough to store
       // the pointer, and a legal integer type.
-      if (DL && DL->isLegalInteger(OpTy->getScalarSizeInBits()) &&
-          OpTy->getScalarSizeInBits() >= DL->getPointerSizeInBits())
+      if (DL && DL->isLegalInteger(Ty->getScalarSizeInBits()) &&
+          Ty->getScalarSizeInBits() >= DL->getPointerSizeInBits())
         return TCC_Free;
 
       // Otherwise it's not a no-op.
