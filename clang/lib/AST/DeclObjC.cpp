@@ -1575,7 +1575,7 @@ void ObjCImplDecl::setClassInterface(ObjCInterfaceDecl *IFace) {
 }
 
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
-/// properties implemented in this category \@implementation block and returns
+/// properties implemented in this \@implementation block and returns
 /// the implemented property that uses it.
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
