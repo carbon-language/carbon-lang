@@ -152,6 +152,20 @@ define i32 @casts() {
   ; CHECK: cost of 10 {{.*}} uitofp
   %r69 = uitofp i64 undef to double
 
+  ; Vector cast cost of instructions lowering the cast to the stack.
+  ; CHECK: cost of 24 {{.*}} sext
+  %r70 = sext <8 x i8> undef to <8 x i32>
+  ; CHECK: cost of 48 {{.*}} sext
+  %r71 = sext <16 x i8> undef to <16 x i32>
+  ; CHECK: cost of 22 {{.*}} zext
+  %r72 = zext <8 x i8> undef to <8 x i32>
+  ; CHECK: cost of 44 {{.*}} zext
+  %r73 = zext <16 x i8> undef to <16 x i32>
+  ; CHECK: cost of 19 {{.*}} trunc
+  %r74 = trunc <8 x i32> undef to <8 x i8>
+  ; CHECK: cost of 38 {{.*}} trunc
+  %r75 = trunc <16 x i32> undef to <16 x i8>
+
   ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
