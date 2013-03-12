@@ -4496,8 +4496,8 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                        NegOne, DAG.getConstant(0, VT),
                        cast<CondCodeSDNode>(N0.getOperand(2))->get(), true);
     if (SCC.getNode()) return SCC;
-    if (!LegalOperations ||
-        TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(VT)))
+    if (!VT.isVector() && (!LegalOperations ||
+        TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(VT))))
       return DAG.getNode(ISD::SELECT, N->getDebugLoc(), VT,
                          DAG.getSetCC(N->getDebugLoc(),
                                       TLI.getSetCCResultType(VT),
