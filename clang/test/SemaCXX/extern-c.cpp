@@ -44,3 +44,15 @@ extern "C" {
 extern "C" {
   static float test5_b; // expected-error {{redefinition of 'test5_b' with a different type: 'float' vs 'int'}}
 }
+
+extern "C" {
+  void f() {
+    extern int test6_b;
+  }
+}
+namespace foo {
+  extern "C" {
+    static float test6_b;
+    extern float test6_b;
+  }
+}
