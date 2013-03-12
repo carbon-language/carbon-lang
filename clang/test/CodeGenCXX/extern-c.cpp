@@ -1,16 +1,28 @@
-// RUN: %clang_cc1 -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 namespace foo {
 
-// RUN: not grep "@a = global i32" %t
+// CHECK-NOT: @a = global i32
 extern "C" int a;
 
-// RUN: not grep "@_ZN3foo1bE = global i32" %t
+// CHECK-NOT: @_ZN3foo1bE = global i32
 extern int b;
 
-// RUN: grep "@_ZN3foo1cE = global i32" %t | count 1
+// CHECK: @_ZN3foo1cE = global i32
 int c = 5;
 
-// RUN: not grep "@_ZN3foo1dE" %t
+// CHECK-NOT: @_ZN3foo1dE
 extern "C" struct d;
 
+}
+
+namespace test1 {
+  namespace {
+    struct X {};
+  }
+  extern "C" {
+    // CHECK: @b = global
+    X b = X();
+  }
+  void *use = &b;
+  // CHECK: @_ZN5test13useE = global
 }
