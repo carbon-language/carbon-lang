@@ -1042,7 +1042,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.Type == TT_OverloadedOperatorLParen)
     return false;
   if (Tok.is(tok::colon))
-    return Line.First.isNot(tok::kw_case) && !Tok.Children.empty() &&
+    return Line.First.isNot(tok::kw_case) &&
+           Line.First.isNot(tok::kw_default) && !Tok.Children.empty() &&
            Tok.Type != TT_ObjCMethodExpr;
   if (Tok.is(tok::l_paren) && !Tok.Children.empty() &&
       Tok.Children[0].Type == TT_PointerOrReference &&
