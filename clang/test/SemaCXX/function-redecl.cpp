@@ -145,3 +145,19 @@ namespace test4 {
     float b; // expected-error {{redefinition of 'b' with a different type: 'float' vs 'int'}}
   }
 }
+
+extern "C" {
+  void test5_f() {
+    extern int test5_b; // expected-note {{previous definition is here}}
+  }
+}
+static float test5_b; // expected-error {{redefinition of 'test5_b' with a different type: 'float' vs 'int'}}
+
+extern "C" {
+  void test6_f() {
+    extern int test6_b; // expected-note {{previous definition is here}}
+  }
+}
+extern "C" {
+  static float test6_b; // expected-error {{redefinition of 'test6_b' with a different type: 'float' vs 'int'}}
+}
