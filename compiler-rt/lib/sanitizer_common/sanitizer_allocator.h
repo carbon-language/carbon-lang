@@ -80,8 +80,7 @@ namespace __sanitizer {
 //
 // c32 => s: 1024 diff: +64 06% l 10 cached: 64 65536; id 32
 
-template <uptr kMaxSizeLog, uptr kMaxNumCachedT, uptr kMaxBytesCachedLog,
-          uptr kMinBatchClassT>
+template <uptr kMaxSizeLog, uptr kMaxNumCachedT, uptr kMaxBytesCachedLog>
 class SizeClassMap {
   static const uptr kMinSizeLog = 4;
   static const uptr kMidSizeLog = kMinSizeLog + 4;
@@ -93,13 +92,15 @@ class SizeClassMap {
 
  public:
   static const uptr kMaxNumCached = kMaxNumCachedT;
+  // We transfer chunks between central and thread-local free lists in batches.
+  // For small size classes we allocate batches separately.
+  // For large size classes we use one of the chunks to store the batch.
   struct TransferBatch {
     TransferBatch *next;
     uptr count;
     void *batch[kMaxNumCached];
   };
 
-  static const uptr kMinBatchClass = kMinBatchClassT;
   static const uptr kMaxSize = 1 << kMaxSizeLog;
   static const uptr kNumClasses =
       kMidClass + ((kMaxSizeLog - kMidSizeLog) << S) + 1;
@@ -154,6 +155,11 @@ class SizeClassMap {
     Printf("Total cached: %zd\n", total_cached);
   }
 
+  static bool SizeClassRequiresSeparateTransferBatch(uptr class_id) {
+    return Size(class_id) < sizeof(TransferBatch) -
+        sizeof(uptr) * (kMaxNumCached - MaxCached(class_id));
+  }
+
   static void Validate() {
     for (uptr c = 1; c < kNumClasses; c++) {
       // Printf("Validate: c%zd\n", c);
@@ -176,23 +182,12 @@ class SizeClassMap {
       if (c > 0)
         CHECK_LT(Size(c-1), s);
     }
-
-    // TransferBatch for kMinBatchClass must fit into the block itself.
-    const uptr batch_size = sizeof(TransferBatch)
-        - sizeof(void*)  // NOLINT
-            * (kMaxNumCached - MaxCached(kMinBatchClass));
-    CHECK_LE(batch_size, Size(kMinBatchClass));
-    // TransferBatch for kMinBatchClass-1 must not fit into the block itself.
-    const uptr batch_size1 = sizeof(TransferBatch)
-        - sizeof(void*)  // NOLINT
-            * (kMaxNumCached - MaxCached(kMinBatchClass - 1));
-    CHECK_GT(batch_size1, Size(kMinBatchClass - 1));
   }
 };
 
-typedef SizeClassMap<17, 256, 16, FIRST_32_SECOND_64(25, 28)>
+typedef SizeClassMap<17, 256, 16>
     DefaultSizeClassMap;
-typedef SizeClassMap<17, 64, 14, FIRST_32_SECOND_64(17, 20)>
+typedef SizeClassMap<17, 64, 14>
     CompactSizeClassMap;
 template<class SizeClassAllocator> struct SizeClassAllocatorLocalCache;
 
@@ -526,7 +521,7 @@ class SizeClassAllocator64 {
       Die();
     }
     for (;;) {
-      if (class_id < SizeClassMap::kMinBatchClass)
+      if (SizeClassMap::SizeClassRequiresSeparateTransferBatch(class_id))
         b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
       else
         b = (Batch*)(region_beg + beg_idx);
@@ -738,7 +733,7 @@ class SizeClassAllocator32 {
     Batch *b = 0;
     for (uptr i = reg; i < reg + n_chunks * size; i += size) {
       if (b == 0) {
-        if (class_id < SizeClassMap::kMinBatchClass)
+        if (SizeClassMap::SizeClassRequiresSeparateTransferBatch(class_id))
           b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
         else
           b = (Batch*)i;
@@ -846,7 +841,7 @@ struct SizeClassAllocatorLocalCache {
     for (uptr i = 0; i < b->count; i++)
       c->batch[i] = b->batch[i];
     c->count = b->count;
-    if (class_id < SizeClassMap::kMinBatchClass)
+    if (SizeClassMap::SizeClassRequiresSeparateTransferBatch(class_id))
       Deallocate(allocator, SizeClassMap::ClassID(sizeof(Batch)), b);
   }
 
@@ -854,7 +849,7 @@ struct SizeClassAllocatorLocalCache {
     InitCache();
     PerClass *c = &per_class_[class_id];
     Batch *b;
-    if (class_id < SizeClassMap::kMinBatchClass)
+    if (SizeClassMap::SizeClassRequiresSeparateTransferBatch(class_id))
       b = (Batch*)Allocate(allocator, SizeClassMap::ClassID(sizeof(Batch)));
     else
       b = (Batch*)c->batch[0];
