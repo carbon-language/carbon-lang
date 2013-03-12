@@ -61,7 +61,7 @@ const uptr kAllocatorSpace =  0xa0000000000ULL;
 #else
 const uptr kAllocatorSpace = 0x600000000000ULL;
 #endif
-const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
+const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
 typedef DefaultSizeClassMap SizeClassMap;
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
     SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
