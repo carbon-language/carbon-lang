@@ -407,7 +407,7 @@ bool DICompileUnit::Verify() const {
   if (N.empty())
     return false;
   // It is possible that directory and produce string is empty.
-  return DbgNode->getNumOperands() == 15;
+  return DbgNode->getNumOperands() == 14;
 }
 
 /// Verify - Verify that an ObjC property is well formed.
@@ -687,7 +687,16 @@ StringRef DIScope::getDirectory() const {
 }
 
 DIArray DICompileUnit::getEnumTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 15)
+  if (!DbgNode || DbgNode->getNumOperands() < 14)
+    return DIArray();
+
+  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(9)))
+    return DIArray(N);
+  return DIArray();
+}
+
+DIArray DICompileUnit::getRetainedTypes() const {
+  if (!DbgNode || DbgNode->getNumOperands() < 14)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(10)))
@@ -695,8 +704,8 @@ DIArray DICompileUnit::getEnumTypes() const {
   return DIArray();
 }
 
-DIArray DICompileUnit::getRetainedTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 15)
+DIArray DICompileUnit::getSubprograms() const {
+  if (!DbgNode || DbgNode->getNumOperands() < 14)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(11)))
@@ -704,21 +713,12 @@ DIArray DICompileUnit::getRetainedTypes() const {
   return DIArray();
 }
 
-DIArray DICompileUnit::getSubprograms() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 15)
+
+DIArray DICompileUnit::getGlobalVariables() const {
+  if (!DbgNode || DbgNode->getNumOperands() < 14)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(12)))
-    return DIArray(N);
-  return DIArray();
-}
-
-
-DIArray DICompileUnit::getGlobalVariables() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 15)
-    return DIArray();
-
-  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(13)))
     return DIArray(N);
   return DIArray();
 }

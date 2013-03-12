@@ -34,7 +34,7 @@ declare void @_Z8moz_freePv(i8*)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"nsAutoRefCnt.cpp", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/netwerk/base/src", metadata !"clang version 3.1 ()", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !47, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"nsAutoRefCnt.cpp", metadata !"/Users/espindola/mozilla-central/obj-x86_64-apple-darwin11.2.0/netwerk/base/src", metadata !"clang version 3.1 ()", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !47, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !23, metadata !27, metadata !31}
 !5 = metadata !{i32 720942, i32 0, null, metadata !"Release", metadata !"Release", metadata !"_ZN17nsAutoRefCnt7ReleaseEv", metadata !6, i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32* null, null, metadata !12, metadata !20, i32 14} ; [ DW_TAG_subprogram ]
