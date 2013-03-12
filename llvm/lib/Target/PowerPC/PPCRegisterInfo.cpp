@@ -46,25 +46,7 @@
 #define GET_REGINFO_TARGET_DESC
 #include "PPCGenRegisterInfo.inc"
 
-namespace llvm {
-cl::opt<bool> DisablePPC32RS("disable-ppc32-regscavenger",
-                                   cl::init(false),
-                                   cl::desc("Disable PPC32 register scavenger"),
-                                   cl::Hidden);
-cl::opt<bool> DisablePPC64RS("disable-ppc64-regscavenger",
-                                   cl::init(false),
-                                   cl::desc("Disable PPC64 register scavenger"),
-                                   cl::Hidden);
-}
-
 using namespace llvm;
-
-// FIXME (64-bit): Should be inlined.
-bool
-PPCRegisterInfo::requiresRegisterScavenging(const MachineFunction &) const {
-  return ((!DisablePPC32RS && !Subtarget.isPPC64()) ||
-          (!DisablePPC64RS && Subtarget.isPPC64()));
-}
 
 PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
                                  const TargetInstrInfo &tii)
@@ -273,26 +255,16 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
   const TargetRegisterClass *RC = LP64 ? G8RC : GPRC;
 
-  // FIXME (64-bit): Use "findScratchRegister"
-  unsigned Reg;
-  if (requiresRegisterScavenging(MF))
-    Reg = findScratchRegister(II, RS, RC, SPAdj);
-  else
-    Reg = PPC::R0;
+  unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
   
   if (MaxAlign < TargetAlign && isInt<16>(FrameSize)) {
     BuildMI(MBB, II, dl, TII.get(PPC::ADDI), Reg)
       .addReg(PPC::R31)
       .addImm(FrameSize);
   } else if (LP64) {
-    if (requiresRegisterScavenging(MF)) // FIXME (64-bit): Use "true" part.
-      BuildMI(MBB, II, dl, TII.get(PPC::LD), Reg)
-        .addImm(0)
-        .addReg(PPC::X1);
-    else
-      BuildMI(MBB, II, dl, TII.get(PPC::LD), PPC::X0)
-        .addImm(0)
-        .addReg(PPC::X1);
+    BuildMI(MBB, II, dl, TII.get(PPC::LD), Reg)
+      .addImm(0)
+      .addReg(PPC::X1);
   } else {
     BuildMI(MBB, II, dl, TII.get(PPC::LWZ), Reg)
       .addImm(0)
@@ -302,17 +274,10 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   // Grow the stack and update the stack pointer link, then determine the
   // address of new allocated space.
   if (LP64) {
-    if (requiresRegisterScavenging(MF)) // FIXME (64-bit): Use "true" part.
-      BuildMI(MBB, II, dl, TII.get(PPC::STDUX), PPC::X1)
-        .addReg(Reg, RegState::Kill)
-        .addReg(PPC::X1)
-        .addReg(MI.getOperand(1).getReg());
-    else
-      BuildMI(MBB, II, dl, TII.get(PPC::STDUX), PPC::X1)
-        .addReg(PPC::X0, RegState::Kill)
-        .addReg(PPC::X1)
-        .addReg(MI.getOperand(1).getReg());
-
+    BuildMI(MBB, II, dl, TII.get(PPC::STDUX), PPC::X1)
+      .addReg(Reg, RegState::Kill)
+      .addReg(PPC::X1)
+      .addReg(MI.getOperand(1).getReg());
     if (!MI.getOperand(1).isKill())
       BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
         .addReg(PPC::X1)
@@ -499,14 +464,12 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Special case for pseudo-ops SPILL_CR and RESTORE_CR.
-  if (requiresRegisterScavenging(MF)) {
-    if (OpC == PPC::SPILL_CR) {
-      lowerCRSpilling(II, FrameIndex, SPAdj, RS);
-      return;
-    } else if (OpC == PPC::RESTORE_CR) {
-      lowerCRRestore(II, FrameIndex, SPAdj, RS);
-      return;
-    }
+  if (OpC == PPC::SPILL_CR) {
+    lowerCRSpilling(II, FrameIndex, SPAdj, RS);
+    return;
+  } else if (OpC == PPC::RESTORE_CR) {
+    lowerCRRestore(II, FrameIndex, SPAdj, RS);
+    return;
   }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
@@ -563,13 +526,9 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // The offset doesn't fit into a single register, scavenge one to build the
   // offset in.
 
-  unsigned SReg;
-  if (requiresRegisterScavenging(MF)) {
-    const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
-    const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-    SReg = findScratchRegister(II, RS, is64Bit ? G8RC : GPRC, SPAdj);
-  } else
-    SReg = is64Bit ? PPC::X0 : PPC::R0;
+  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+  unsigned SReg = findScratchRegister(II, RS, is64Bit ? G8RC : GPRC, SPAdj);
 
   // Insert a set of rA with the full offset value before the ld, st, or add
   BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SReg)
