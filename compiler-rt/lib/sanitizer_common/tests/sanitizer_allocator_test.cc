@@ -203,7 +203,7 @@ TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
   cache.Init(0);
   AllocatorStats stats;
   stats.Init();
-  a->AllocateBatch(&stats, &cache, 64);
+  a->AllocateBatch(&stats, &cache, 32);
   EXPECT_EQ(TestMapUnmapCallback::map_count, 3);  // State + alloc + metadata.
   a->TestOnlyUnmap();
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);  // The whole thing.
@@ -225,7 +225,7 @@ TEST(SanitizerCommon, SizeClassAllocator32MapUnmapCallback) {
   cache.Init(0);
   AllocatorStats stats;
   stats.Init();
-  a->AllocateBatch(&stats, &cache, 64);
+  a->AllocateBatch(&stats, &cache, 32);
   EXPECT_EQ(TestMapUnmapCallback::map_count, 2);  // alloc.
   a->TestOnlyUnmap();
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 2);  // The whole thing + alloc.
@@ -258,7 +258,7 @@ void FailInAssertionOnOOM() {
   AllocatorStats stats;
   stats.Init();
   for (int i = 0; i < 1000000; i++) {
-    a.AllocateBatch(&stats, &cache, 64);
+    a.AllocateBatch(&stats, &cache, 52);
   }
 
   a.TestOnlyUnmap();
