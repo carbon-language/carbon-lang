@@ -46,7 +46,7 @@ __attribute__((objc_root_class)) @interface ClassBase
 
 @implementation ClassDerived
 - (void) Meth:(ClassBase*)foo {
-  super.foo = foo; // issues compile warning
+  super.foo = foo; // must work with no warning
   [super setFoo:foo]; // works with no warning
 }
 @end
