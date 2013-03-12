@@ -11,6 +11,7 @@
 #define LLVM_MC_MCCONTEXT_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/SectionKind.h"
@@ -105,9 +106,9 @@ namespace llvm {
     /// We now emit a line table for each compile unit. To reduce the prologue
     /// size of each line table, the files and directories used by each compile
     /// unit are separated.
-    typedef std::map<unsigned, std::vector<MCDwarfFile *> > MCDwarfFilesMap;
+    typedef std::map<unsigned, SmallVector<MCDwarfFile *, 4> > MCDwarfFilesMap;
     MCDwarfFilesMap MCDwarfFilesCUMap;
-    std::map<unsigned, std::vector<StringRef> > MCDwarfDirsCUMap;
+    std::map<unsigned, SmallVector<StringRef, 4> > MCDwarfDirsCUMap;
 
     /// The current dwarf line information from the last dwarf .loc directive.
     MCDwarfLoc CurrentDwarfLoc;
@@ -301,10 +302,10 @@ namespace llvm {
       return false;
     }
 
-    const std::vector<MCDwarfFile *> &getMCDwarfFiles(unsigned CUID = 0) {
+    const SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles(unsigned CUID = 0) {
       return MCDwarfFilesCUMap[CUID];
     }
-    const std::vector<StringRef> &getMCDwarfDirs(unsigned CUID = 0) {
+    const SmallVectorImpl<StringRef> &getMCDwarfDirs(unsigned CUID = 0) {
       return MCDwarfDirsCUMap[CUID];
     }
 

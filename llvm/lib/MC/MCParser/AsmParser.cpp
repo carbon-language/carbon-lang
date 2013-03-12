@@ -626,7 +626,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     return TokError("unmatched .ifs or .elses");
 
   // Check to see there are no empty DwarfFile slots.
-  const std::vector<MCDwarfFile *> &MCDwarfFiles =
+  const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
     getContext().getMCDwarfFiles();
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
     if (!MCDwarfFiles[i])
@@ -1495,7 +1495,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
     // If we previously parsed a cpp hash file line comment then make sure the
     // current Dwarf File is for the CppHashFilename if not then emit the
     // Dwarf File table for it and adjust the line number for the .loc.
-    const std::vector<MCDwarfFile *> &MCDwarfFiles = 
+    const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles = 
       getContext().getMCDwarfFiles();
     if (CppHashFilename.size() != 0) {
       if (MCDwarfFiles[getContext().getGenDwarfFileNumber()]->getName() !=

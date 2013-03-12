@@ -298,7 +298,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   // Put out the directory and file tables.
 
   // First the directory table.
-  const std::vector<StringRef> &MCDwarfDirs =
+  const SmallVectorImpl<StringRef> &MCDwarfDirs =
     context.getMCDwarfDirs(CUID);
   for (unsigned i = 0; i < MCDwarfDirs.size(); i++) {
     MCOS->EmitBytes(MCDwarfDirs[i]); // the DirectoryName
@@ -307,7 +307,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   MCOS->EmitIntValue(0, 1); // Terminate the directory list
 
   // Second the file table.
-  const std::vector<MCDwarfFile *> &MCDwarfFiles =
+  const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles(CUID);
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
     MCOS->EmitBytes(MCDwarfFiles[i]->getName()); // FileName
@@ -643,13 +643,13 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 
   // AT_name, the name of the source file.  Reconstruct from the first directory
   // and file table entries.
-  const std::vector<StringRef> &MCDwarfDirs =
+  const SmallVectorImpl<StringRef> &MCDwarfDirs =
     context.getMCDwarfDirs();
   if (MCDwarfDirs.size() > 0) {
     MCOS->EmitBytes(MCDwarfDirs[0]);
     MCOS->EmitBytes("/");
   }
-  const std::vector<MCDwarfFile *> &MCDwarfFiles =
+  const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles();
   MCOS->EmitBytes(MCDwarfFiles[1]->getName());
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.

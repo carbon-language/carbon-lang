@@ -304,8 +304,8 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
   // Note: in GenericAsmParser::ParseDirectiveFile() FileNumber was checked
   // to not be less than one.  This needs to be change to be not less than zero.
 
-  std::vector<MCDwarfFile *>& MCDwarfFiles = MCDwarfFilesCUMap[CUID];
-  std::vector<StringRef>& MCDwarfDirs = MCDwarfDirsCUMap[CUID];
+  SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = MCDwarfFilesCUMap[CUID];
+  SmallVectorImpl<StringRef>& MCDwarfDirs = MCDwarfDirsCUMap[CUID];
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   if (FileNumber >= MCDwarfFiles.size()) {
     MCDwarfFiles.resize(FileNumber + 1);
@@ -366,7 +366,7 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
 /// isValidDwarfFileNumber - takes a dwarf file number and returns true if it
 /// currently is assigned and false otherwise.
 bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
-  std::vector<MCDwarfFile *>& MCDwarfFiles = MCDwarfFilesCUMap[CUID];
+  SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = MCDwarfFilesCUMap[CUID];
   if(FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
     return false;
 
