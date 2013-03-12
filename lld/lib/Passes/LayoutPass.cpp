@@ -390,6 +390,8 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
   uint64_t index = 0;
   for (auto ai : range) {
     const DefinedAtom *atom = ai;
+    if (_ordinalOverrideMap.find(atom) != _ordinalOverrideMap.end())
+      continue;
     AtomToAtomT::iterator start = _followOnRoots.find(atom);
     if (start != _followOnRoots.end()) {
       for (const DefinedAtom *nextAtom = start->second; nextAtom != NULL;
