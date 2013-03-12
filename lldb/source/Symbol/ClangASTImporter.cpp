@@ -26,12 +26,12 @@ ClangASTMetrics::Counters ClangASTMetrics::local_counters = { 0, 0, 0, 0, 0, 0 }
 
 void ClangASTMetrics::DumpCounters (lldb::LogSP log, ClangASTMetrics::Counters &counters)
 {
-    log->Printf("  Number of visible Decl queries by name     : %llu", counters.m_visible_query_count);
-    log->Printf("  Number of lexical Decl queries             : %llu", counters.m_lexical_query_count);
-    log->Printf("  Number of imports initiated by LLDB        : %llu", counters.m_lldb_import_count);
-    log->Printf("  Number of imports conducted by Clang       : %llu", counters.m_clang_import_count);
-    log->Printf("  Number of Decls completed                  : %llu", counters.m_decls_completed_count);
-    log->Printf("  Number of records laid out                 : %llu", counters.m_record_layout_count);
+    log->Printf("  Number of visible Decl queries by name     : %" PRIu64, counters.m_visible_query_count);
+    log->Printf("  Number of lexical Decl queries             : %" PRIu64, counters.m_lexical_query_count);
+    log->Printf("  Number of imports initiated by LLDB        : %" PRIu64, counters.m_lldb_import_count);
+    log->Printf("  Number of imports conducted by Clang       : %" PRIu64, counters.m_clang_import_count);
+    log->Printf("  Number of Decls completed                  : %" PRIu64, counters.m_decls_completed_count);
+    log->Printf("  Number of records laid out                 : %" PRIu64, counters.m_record_layout_count);
 }
 
 void ClangASTMetrics::DumpCounters (lldb::LogSP log)
