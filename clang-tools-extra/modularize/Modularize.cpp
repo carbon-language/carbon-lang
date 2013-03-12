@@ -145,9 +145,6 @@ struct HeaderEntry {
 typedef std::vector<HeaderEntry> HeaderContents;
 
 class EntityMap : public llvm::StringMap<llvm::SmallVector<Entry, 2> > {
-  llvm::DenseMap<const FileEntry *, HeaderContents> CurHeaderContents;
-  llvm::DenseMap<const FileEntry *, HeaderContents> AllHeaderContents;
-  
 public:
   llvm::DenseMap<const FileEntry *, HeaderContents> HeaderContentMismatches;
     
@@ -197,14 +194,14 @@ public:
     
     CurHeaderContents.clear();
   }
+private:
+  llvm::DenseMap<const FileEntry *, HeaderContents> CurHeaderContents;
+  llvm::DenseMap<const FileEntry *, HeaderContents> AllHeaderContents;
 };
 
 class CollectEntitiesVisitor
   : public RecursiveASTVisitor<CollectEntitiesVisitor>
 {
-  SourceManager &SM;
-  EntityMap &Entities;
-  
 public:
   CollectEntitiesVisitor(SourceManager &SM, EntityMap &Entities)
     : SM(SM), Entities(Entities) { }
@@ -249,12 +246,12 @@ public:
     Entities.add(Name, isa<TagDecl>(ND)? Entry::Tag : Entry::Value, Loc);
     return true;
   }
+private:
+  SourceManager &SM;
+  EntityMap &Entities;
 };
 
 class CollectEntitiesConsumer : public ASTConsumer {
-  EntityMap &Entities;
-  Preprocessor &PP;
-  
 public:
   CollectEntitiesConsumer(EntityMap &Entities, Preprocessor &PP)
     : Entities(Entities), PP(PP) { }
@@ -280,30 +277,32 @@ public:
     // Merge header contents.
     Entities.mergeCurHeaderContents();
   }
+private:
+  EntityMap &Entities;
+  Preprocessor &PP;
 };
 
 class CollectEntitiesAction : public SyntaxOnlyAction {
-  EntityMap &Entities;
-  
+public:
+  CollectEntitiesAction(EntityMap &Entities) : Entities(Entities) { }
 protected:
   virtual clang::ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) {
     return new CollectEntitiesConsumer(Entities, CI.getPreprocessor());
   }
-  
-public:
-  CollectEntitiesAction(EntityMap &Entities) : Entities(Entities) { }
+private:
+  EntityMap &Entities;  
 };
 
 class ModularizeFrontendActionFactory : public FrontendActionFactory {
-  EntityMap &Entities;
-
 public:
   ModularizeFrontendActionFactory(EntityMap &Entities) : Entities(Entities) { }
 
   virtual CollectEntitiesAction *create() {
     return new CollectEntitiesAction(Entities);
   }
+private:
+  EntityMap &Entities;  
 };
 
 int main(int argc, const char **argv) {
