@@ -666,6 +666,15 @@ def warn_auto_synthesizing_protocol_property :Warning<
   "auto property synthesis will not synthesize property"
   " declared in a protocol">,
   InGroup<DiagGroup<"objc-protocol-property-synthesis">>;
+def warn_no_autosynthesis_shared_ivar_property : Warning <
+  "auto property synthesis will not synthesize property "
+  "'%0' because it cannot share an ivar with another synthesized property">,
+  InGroup<ObjCNoPropertyAuthoSynthesis>;
+def warn_no_autosynthesis_property : Warning<
+  "auto property synthesis will not synthesize property "
+  "'%0' because it is 'readwrite' but it will be synthesized 'readonly' "
+  "via another property">,
+  InGroup<ObjCNoPropertyAuthoSynthesis>;
 def warn_autosynthesis_property_ivar_match :Warning<
   "autosynthesized property %0 will use %select{|synthesized}1 instance variable "
   "%2, not existing instance variable %3">,
