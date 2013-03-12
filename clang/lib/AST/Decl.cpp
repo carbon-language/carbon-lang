@@ -620,8 +620,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     //
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
-    if (Context.getLangOpts().CPlusPlus &&
-        !Var->getDeclContext()->isExternCContext()) {
+    if (Context.getLangOpts().CPlusPlus && !isInExternCContext(Var)) {
       LinkageInfo TypeLV = Var->getType()->getLinkageAndVisibility();
       if (TypeLV.getLinkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();

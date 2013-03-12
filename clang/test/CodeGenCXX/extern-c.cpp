@@ -20,9 +20,19 @@ namespace test1 {
     struct X {};
   }
   extern "C" {
-    // CHECK: @b = global
-    X b = X();
+    // CHECK: @test1_b = global
+    X test1_b = X();
   }
-  void *use = &b;
+  void *use = &test1_b;
   // CHECK: @_ZN5test13useE = global
+}
+
+namespace test2 {
+  namespace {
+    struct X {};
+  }
+
+  // CHECK: @test2_b = global
+  extern "C" X test2_b;
+  X test2_b;
 }
