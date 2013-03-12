@@ -5004,10 +5004,7 @@ void Sema::CheckShadow(Scope *S, VarDecl *D) {
 
 template<typename T>
 static bool mayConflictWithNonVisibleExternC(const T *ND) {
-  VarDecl::StorageClass SC = ND->getStorageClass();
-  if (ND->isExternC() && (SC == SC_Extern || SC == SC_PrivateExtern))
-    return true;
-  return ND->getDeclContext()->isTranslationUnit();
+  return ND->isExternC() || ND->getDeclContext()->isTranslationUnit();
 }
 
 /// \brief Perform semantic checking on a newly-created variable

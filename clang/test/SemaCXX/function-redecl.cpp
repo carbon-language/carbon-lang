@@ -134,3 +134,14 @@ namespace test3 {
   }
 }
 float test3_x; // expected-error {{redefinition of 'test3_x' with a different type: 'float' vs 'int'}}
+
+namespace test4 {
+  extern "C" {
+    void f() {
+      extern int b; // expected-note {{previous definition is here}}
+    }
+  }
+  extern "C" {
+    float b; // expected-error {{redefinition of 'b' with a different type: 'float' vs 'int'}}
+  }
+}
