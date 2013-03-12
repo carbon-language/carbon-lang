@@ -2849,8 +2849,12 @@ RValue CodeGenFunction::EmitRValueForField(LValue LV,
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E, 
                                      ReturnValueSlot ReturnValue) {
-  if (CGDebugInfo *DI = getDebugInfo())
-    DI->EmitLocation(Builder, E->getLocStart());
+  if (CGDebugInfo *DI = getDebugInfo()) {
+    SourceLocation Loc = E->getLocStart();
+    DI->EmitLocation(Builder, Loc,
+      /* Force column info to be generated so we can differentiate
+         multiple call sites on the same line in the debug info. */ true);
+  }
 
   // Builtins never have block type.
   if (E->getCallee()->getType()->isBlockPointerType())

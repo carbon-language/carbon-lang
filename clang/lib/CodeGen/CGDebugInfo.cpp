@@ -262,9 +262,9 @@ unsigned CGDebugInfo::getLineNumber(SourceLocation Loc) {
 }
 
 /// getColumnNumber - Get column number for the location.
-unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc) {
+unsigned CGDebugInfo::getColumnNumber(SourceLocation Loc, bool Force) {
   // We may not want column information at all.
-  if (!CGM.getCodeGenOpts().DebugColumnInfo)
+  if (!Force && !CGM.getCodeGenOpts().DebugColumnInfo)
     return 0;
 
   // If the location is invalid then use the current column.
@@ -1872,9 +1872,9 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
       TC = llvm::DIType(cast<llvm::MDNode>(it->second.first));
     else
       TC = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-				      Decl->getName(), TheCU, Unit,
-				      getLineNumber(Decl->getLocation()),
-				      TheCU.getLanguage());
+                                      Decl->getName(), TheCU, Unit,
+                                      getLineNumber(Decl->getLocation()),
+                                      TheCU.getLanguage());
     // Store the forward declaration in the cache.
     ObjCInterfaceCache[TyPtr] = std::make_pair(TC, Checksum(Decl));
 
@@ -1891,7 +1891,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 
 /// Currently the checksum merely consists of the number of ivars.
 unsigned CGDebugInfo::Checksum(const ObjCInterfaceDecl
-			       *InterfaceDecl) {
+                               *InterfaceDecl) {
   unsigned IvarNo = 0;
   for (const ObjCIvarDecl *Ivar = InterfaceDecl->all_declared_ivar_begin();
        Ivar != 0; Ivar = Ivar->getNextIvar()) ++IvarNo;
@@ -2055,7 +2055,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
                                         llvm::DIArray());
   } else
     RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
-					 Size, Align, 0, llvm::DIType(), llvm::DIArray());
+                                         Size, Align, 0, llvm::DIType(), llvm::DIArray());
 
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = llvm::DIType(RealDecl);
@@ -2291,7 +2291,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
 /// EmitLocation - Emit metadata to indicate a change in line/column
 /// information in the source file.
-void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {
+void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
+                               bool ForceColumnInfo) {
   
   // Update our current location
   setLocation(Loc);
@@ -2312,9 +2313,10 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {
   PrevLoc = CurLoc;
 
   llvm::MDNode *Scope = LexicalBlockStack.back();
-  Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(getLineNumber(CurLoc),
-                                                      getColumnNumber(CurLoc),
-                                                      Scope));
+  Builder.SetCurrentDebugLocation(llvm::DebugLoc::get
+                                  (getLineNumber(CurLoc),
+                                   getColumnNumber(CurLoc, ForceColumnInfo),
+                                   Scope));
 }
 
 /// CreateLexicalBlock - Creates a new lexical block node and pushes it on

@@ -207,7 +207,9 @@ public:
 
   /// EmitLocation - Emit metadata to indicate a change in line/column
   /// information in the source file.
-  void EmitLocation(CGBuilderTy &Builder, SourceLocation Loc);
+  /// \param ForceColumnInfo  Assume DebugColumnInfo option is true.
+  void EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
+                    bool ForceColumnInfo = false);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
@@ -356,7 +358,8 @@ private:
 
   /// getColumnNumber - Get column number for the location. If location is 
   /// invalid then use current location.
-  unsigned getColumnNumber(SourceLocation Loc);
+  /// \param Force  Assume DebugColumnInfo option is true.
+  unsigned getColumnNumber(SourceLocation Loc, bool Force=false);
 };
 } // namespace CodeGen
 } // namespace clang
