@@ -75,8 +75,9 @@ ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
 else # !AuroraUX
 # Newer versions of python try to allocate an insane amount of address space for
 # its thread-local storage, don't set a limit here.
+# When -v is not used, then -s has to be used to limit the stack size.
 # FIXME: Those limits should be enforced by lit instead of globally.
-ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ;
+ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -s 8192 ;
 endif # AuroraUX
 endif # SunOS
 
