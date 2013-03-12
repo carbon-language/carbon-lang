@@ -7153,7 +7153,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     VDecl->setTypeSourceInfo(DeducedType);
     VDecl->setType(DeducedType->getType());
     VDecl->ClearLinkageCache();
-    
+
     // In ARC, infer lifetime.
     if (getLangOpts().ObjCAutoRefCount && inferObjCARCLifetime(VDecl))
       VDecl->setInvalidDecl();

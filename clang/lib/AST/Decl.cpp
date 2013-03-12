@@ -1516,7 +1516,7 @@ void VarDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForVariable(SC));
   if (getStorageClass() != SC)
     ClearLinkageCache();
-  
+
   VarDeclBits.SClass = SC;
 }
 
@@ -2130,7 +2130,7 @@ void FunctionDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForFunction(SC));
   if (getStorageClass() != SC)
     ClearLinkageCache();
-  
+
   SClass = SC;
 }
 
@@ -2864,8 +2864,8 @@ TagDecl* TagDecl::getCanonicalDecl() {
   return getFirstDeclaration();
 }
 
-void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) { 
-  TypedefNameDeclOrQualifier = TDD; 
+void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) {
+  TypedefNameDeclOrQualifier = TDD;
   if (TypeForDecl)
     const_cast<Type*>(TypeForDecl)->ClearLinkageCache();
   ClearLinkageCache();
