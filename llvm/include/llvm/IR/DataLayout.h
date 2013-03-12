@@ -181,6 +181,10 @@ public:
 
   ~DataLayout();  // Not virtual, do not subclass this class
 
+  /// DataLayout is an immutable pass, but holds state.  This allows the pass
+  /// manager to clear its mutable state.
+  bool doFinalization(Module &M);
+
   /// Parse a data layout string (with fallback to default values). Ensure that
   /// the data layout pass is registered.
   void init(StringRef LayoutDescription);

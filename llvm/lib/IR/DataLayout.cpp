@@ -438,6 +438,12 @@ DataLayout::~DataLayout() {
   delete static_cast<StructLayoutMap*>(LayoutMap);
 }
 
+bool DataLayout::doFinalization(Module &M) {
+  delete static_cast<StructLayoutMap*>(LayoutMap);
+  LayoutMap = 0;
+  return false;
+}
+
 const StructLayout *DataLayout::getStructLayout(StructType *Ty) const {
   if (!LayoutMap)
     LayoutMap = new StructLayoutMap();
