@@ -59,15 +59,6 @@ Driver::Driver(StringRef ClangExecutable,
 
   Name = llvm::sys::path::stem(ClangExecutable);
   Dir  = llvm::sys::path::parent_path(ClangExecutable);
-
-  // Compute the path to the resource directory.
-  StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
-  SmallString<128> P(Dir);
-  if (ClangResourceDir != "")
-    llvm::sys::path::append(P, ClangResourceDir);
-  else
-    llvm::sys::path::append(P, "..", "lib", "clang", CLANG_VERSION_STRING);
-  ResourceDir = P.str();
 }
 
 Driver::~Driver() {
@@ -290,6 +281,17 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
     SysRoot = A->getValue();
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
+
+  // Compute the path to the resource directory. We used to do this in
+  // Driver::Driver(), but that's not right, as command line args (such as
+  // ccc-install-dir) can change 'Dir'.
+  StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
+  SmallString<128> P(Dir);
+  if (!ClangResourceDir.empty())
+    llvm::sys::path::append(P, ClangResourceDir);
+  else
+    llvm::sys::path::append(P, "..", "lib", "clang", CLANG_VERSION_STRING);
+  ResourceDir = P.str();
 
   // Perform the default argument translations.
   DerivedArgList *TranslatedArgs = TranslateInputArgs(*Args);
