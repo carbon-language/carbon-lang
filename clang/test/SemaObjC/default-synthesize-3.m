@@ -44,6 +44,7 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 @interface NSObject @end
 @protocol Foo
 @property (readonly) char isFoo; // expected-note {{property declared here}}
+@property (readonly) char isNotFree;
 @end
 
 @interface Bar : NSObject <Foo>
@@ -51,6 +52,9 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 
 @implementation Bar
 - (char)isFoo {
+    return 0;
+}
+- (char)isNotFree {
     return 0;
 }
 @end
@@ -62,10 +66,17 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 @property (readwrite) char isFoo; // expected-warning {{auto property synthesis will not synthesize property 'isFoo' because it is 'readwrite' but it will be synthesized 'readonly' via another property}}
 @property char Property1; // expected-warning {{auto property synthesis will not synthesize property 'Property1' because it cannot share an ivar with another synthesized property}}
 @property char Property2;
+@property (readwrite) char isNotFree;
 @end
 
 @implementation Baz {
     char _isFoo;
+    char _isNotFree;
 }
 @synthesize Property2 = Property1; // expected-note {{property synthesized here}}
+
+- (void) setIsNotFree : (char)Arg {
+  _isNotFree = Arg;
+}
+
 @end

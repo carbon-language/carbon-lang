@@ -1589,7 +1589,8 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
       ObjCPropertyDecl *PropInSuperClass = SuperPropMap[Prop->getIdentifier()];
       if ((Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite) &&
           (PropInSuperClass->getPropertyAttributes() &
-           ObjCPropertyDecl::OBJC_PR_readonly)) {
+           ObjCPropertyDecl::OBJC_PR_readonly) &&
+          !IMPDecl->getInstanceMethod(Prop->getSetterName())) {
             Diag(Prop->getLocation(), diag::warn_no_autosynthesis_property)
               << Prop->getIdentifier()->getName();
             Diag(PropInSuperClass->getLocation(), diag::note_property_declare);
