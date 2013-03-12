@@ -1714,7 +1714,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   return true;
 }
 
-static void patchReplacementInstruction(Value *Repl, Instruction *I) {
+static void patchReplacementInstruction(Instruction *I, Value *Repl) {
   // Patch the replacement so that it is not more restrictive than the value
   // being replaced.
   BinaryOperator *Op = dyn_cast<BinaryOperator>(I);
@@ -1756,8 +1756,8 @@ static void patchReplacementInstruction(Value *Repl, Instruction *I) {
   }
 }
 
-static void patchAndReplaceAllUsesWith(Value *Repl, Instruction *I) {
-  patchReplacementInstruction(Repl, I);
+static void patchAndReplaceAllUsesWith(Instruction *I, Value *Repl) {
+  patchReplacementInstruction(I, Repl);
   I->replaceAllUsesWith(Repl);
 }
 
@@ -1919,7 +1919,7 @@ bool GVN::processLoad(LoadInst *L) {
     }
 
     // Remove it!
-    patchAndReplaceAllUsesWith(AvailableVal, L);
+    patchAndReplaceAllUsesWith(L, AvailableVal);
     if (DepLI->getType()->getScalarType()->isPointerTy())
       MD->invalidateCachedPointerInfo(DepLI);
     markInstructionForDeletion(L);
@@ -2260,7 +2260,7 @@ bool GVN::processInstruction(Instruction *I) {
   }
 
   // Remove it!
-  patchAndReplaceAllUsesWith(repl, I);
+  patchAndReplaceAllUsesWith(I, repl);
   if (MD && repl->getType()->getScalarType()->isPointerTy())
     MD->invalidateCachedPointerInfo(repl);
   markInstructionForDeletion(I);
