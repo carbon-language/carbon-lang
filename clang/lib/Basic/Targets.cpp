@@ -3960,8 +3960,6 @@ public:
 
   static const char *getHexagonCPUSuffix(StringRef Name) {
     return llvm::StringSwitch<const char*>(Name)
-      .Case("hexagonv2", "2")
-      .Case("hexagonv3", "3")
       .Case("hexagonv4", "4")
       .Case("hexagonv5", "5")
       .Default(0);
