@@ -44,41 +44,49 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
 
   // Get the assembler info needed to setup the MCContext.
   const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(Triple);
-  assert(MAI && "Unable to create target asm info!");
+  if (!MAI)
+    return 0;
 
   const MCInstrInfo *MII = TheTarget->createMCInstrInfo();
-  assert(MII && "Unable to create target instruction info!");
+  if (!MII)
+    return 0;
 
   const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(Triple);
-  assert(MRI && "Unable to create target register info!");
+  if (!MRI)
+    return 0;
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
 
   const MCSubtargetInfo *STI = TheTarget->createMCSubtargetInfo(Triple, CPU,
                                                                 FeaturesStr);
-  assert(STI && "Unable to create subtarget info!");
+  if (!STI)
+    return 0;
 
   // Set up the MCContext for creating symbols and MCExpr's.
   MCContext *Ctx = new MCContext(*MAI, *MRI, 0);
-  assert(Ctx && "Unable to create MCContext!");
+  if (!Ctx)
+    return 0;
 
   // Set up disassembler.
   MCDisassembler *DisAsm = TheTarget->createMCDisassembler(*STI);
-  assert(DisAsm && "Unable to create disassembler!");
+  if (!DisAsm)
+    return 0;
   DisAsm->setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo, Ctx);
 
   // Set up the instruction printer.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
   MCInstPrinter *IP = TheTarget->createMCInstPrinter(AsmPrinterVariant,
                                                      *MAI, *MII, *MRI, *STI);
-  assert(IP && "Unable to create instruction printer!");
+  if (!IP)
+    return 0;
 
   LLVMDisasmContext *DC = new LLVMDisasmContext(Triple, DisInfo, TagType,
                                                 GetOpInfo, SymbolLookUp,
                                                 TheTarget, MAI, MRI,
                                                 STI, MII, Ctx, DisAsm, IP);
-  assert(DC && "Allocation failure!");
+  if (!DC)
+    return 0;
 
   return DC;
 }
