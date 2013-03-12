@@ -20,11 +20,11 @@ Contents
 
 Doxygen Documentation
 =====================
-This documentation describes the **internal** software that makes up the
-tools of clang-tools-extra, not the **external** use of these tools. There
-are no instructions here on how to use the tools, only the APIs that make
-up the software. For usage instructions, please see the user's guide or
-reference manual for each tool.
+The Doxygen documentation describes the **internal** software that makes up the
+tools of clang-tools-extra, not the **external** use of these tools. The
+Doxygen documentation contains no instructions about how to use the tools,
+only the APIs that make up the software. For usage instructions, please see
+the user's guide or reference manual for each tool.
 
 * `Doxygen documentation`_
 
