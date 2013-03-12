@@ -593,6 +593,10 @@ retry_random_path:
   random_path_utf16.push_back(0);
   random_path_utf16.pop_back();
 
+  // Make sure we don't fall into an infinite loop by constantly trying
+  // to create the parent path.
+  bool TriedToCreateParent = false;
+
   // Try to create + open the path.
 retry_create_file:
   HANDLE TempFileHandle = ::CreateFileW(random_path_utf16.begin(),
@@ -610,7 +614,9 @@ retry_create_file:
     if (ec == windows_error::file_exists)
       goto retry_random_path;
     // Check for non-existing parent directories.
-    if (ec == windows_error::path_not_found) {
+    if (ec == windows_error::path_not_found && !TriedToCreateParent) {
+      TriedToCreateParent = true;
+
       // Create the directories using result_path as temp storage.
       if (error_code ec = UTF16ToUTF8(random_path_utf16.begin(),
                                       random_path_utf16.size(), result_path))
