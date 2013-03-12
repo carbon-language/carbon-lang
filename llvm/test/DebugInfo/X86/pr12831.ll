@@ -77,7 +77,7 @@ entry:
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"BPLFunctionWriter.cpp", metadata !"/home/peter/crashdelta", metadata !"clang version 3.2 ", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !128} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"BPLFunctionWriter.cpp", metadata !"/home/peter/crashdelta", metadata !"clang version 3.2 ", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !128, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !106, metadata !107, metadata !126, metadata !127}
 !5 = metadata !{i32 786478, i32 0, null, metadata !"writeExpr", metadata !"writeExpr", metadata !"_ZN17BPLFunctionWriter9writeExprEv", metadata !6, i32 19, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.BPLFunctionWriter*)* @_ZN17BPLFunctionWriter9writeExprEv, null, metadata !103, metadata !1, i32 19} ; [ DW_TAG_subprogram ]

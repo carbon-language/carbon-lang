@@ -687,7 +687,7 @@ StringRef DIScope::getDirectory() const {
 }
 
 DIArray DICompileUnit::getEnumTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 14)
+  if (!DbgNode || DbgNode->getNumOperands() < 15)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(10)))
@@ -696,7 +696,7 @@ DIArray DICompileUnit::getEnumTypes() const {
 }
 
 DIArray DICompileUnit::getRetainedTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 14)
+  if (!DbgNode || DbgNode->getNumOperands() < 15)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(11)))
@@ -705,7 +705,7 @@ DIArray DICompileUnit::getRetainedTypes() const {
 }
 
 DIArray DICompileUnit::getSubprograms() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 14)
+  if (!DbgNode || DbgNode->getNumOperands() < 15)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(12)))
@@ -715,7 +715,7 @@ DIArray DICompileUnit::getSubprograms() const {
 
 
 DIArray DICompileUnit::getGlobalVariables() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 14)
+  if (!DbgNode || DbgNode->getNumOperands() < 15)
     return DIArray();
 
   if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(13)))

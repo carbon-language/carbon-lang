@@ -22,7 +22,7 @@ declare i32 @bar() nounwind readnone
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"foobar", metadata !1, i32 12, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @foobar, null, null, metadata !14, i32 0}
 !1 = metadata !{i32 786473, metadata !"mu.c", metadata !"/private/tmp", metadata !2}
-!2 = metadata !{i32 786449, i32 0, i32 12, metadata !"mu.c", metadata !"/private/tmp", metadata !"clang version 2.9 (trunk 114183)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !13, null}
+!2 = metadata !{i32 786449, i32 0, i32 12, metadata !"mu.c", metadata !"/private/tmp", metadata !"clang version 2.9 (trunk 114183)", i1 true, i1 true, metadata !"", i32 0, null, null, metadata !13, null, metadata !""}
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null}
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5}
