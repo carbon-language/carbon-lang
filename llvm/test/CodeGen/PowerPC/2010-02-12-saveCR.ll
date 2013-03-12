@@ -6,17 +6,17 @@ target triple = "powerpc-apple-darwin9.6"
 
 define void @foo() nounwind {
 entry:
-;CHECK:  mfcr r2
-;CHECK:  lis r3, 1
-;CHECK:  rlwinm r2, r2, 8, 0, 31
-;CHECK:  ori r3, r3, 34524
-;CHECK:  stwx r2, r1, r3
+;CHECK:  mfcr r0
+;CHECK:  lis r2, 1
+;CHECK:  rlwinm r0, r0, 8, 0, 31
+;CHECK:  ori r2, r2, 34524
+;CHECK:  stwx r0, r1, r2
 ; Make sure that the register scavenger returns the same temporary register.
-;CHECK:  mfcr r2
-;CHECK:  lis r3, 1
-;CHECK:  rlwinm r2, r2, 12, 0, 31
-;CHECK:  ori r3, r3, 34520
-;CHECK:  stwx r2, r1, r3
+;CHECK:  lis r2, 1
+;CHECK:  mfcr r0
+;CHECK:  ori r2, r2, 34520
+;CHECK:  rlwinm r0, r0, 12, 0, 31
+;CHECK:  stwx r0, r1, r2
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %x1 = bitcast [100000 x i8]* %x to i8*          ; <i8*> [#uses=1]
@@ -25,11 +25,11 @@ entry:
   br label %return
 
 return:                                           ; preds = %entry
-;CHECK:  lis r3, 1
-;CHECK:  ori r3, r3, 34524
-;CHECK:  lwzx r2, r1, r3
-;CHECK:  rlwinm r2, r2, 24, 0, 31
-;CHECK:  mtcrf 32, r2
+;CHECK:  lis r2, 1
+;CHECK:  ori r2, r2, 34524
+;CHECK:  lwzx r0, r1, r2
+;CHECK:  rlwinm r0, r0, 24, 0, 31
+;CHECK:  mtcrf 32, r0
   ret void
 }
 

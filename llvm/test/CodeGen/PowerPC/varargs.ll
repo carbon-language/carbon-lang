@@ -8,15 +8,16 @@ define i8* @test1(i8** %foo) nounwind {
 }
 
 ; P32: test1:
-; P32: 	lwz r4, 0(r3)
-; P32:	addi r5, r4, 4
-; P32:	stw r5, 0(r3)
-; P32:	lwz r3, 0(r4)
-; P32:	blr 
+; P32: lwz r2, 0(r3)
+; P32: addi r4, r2, 4
+; P32: stw r4, 0(r3)
+; P32: lwz r3, 0(r2)
+; P32: blr 
 
 ; P64: test1:
-; P64: ld r4, 0(r3)
-; P64: addi r5, r4, 8
-; P64: std r5, 0(r3)
-; P64: ld r3, 0(r4)
-; P64: blr
+; P64: ld r2, 0(r3)
+; P64: addi r4, r2, 8
+; P64: std r4, 0(r3)
+; P64: ld r3, 0(r2)
+; P64: blr 
+
