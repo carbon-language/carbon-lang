@@ -110,7 +110,7 @@ void UnpoisonMappedDSO(link_map *map) {
   }
 
   // Compute the delta from the real base to get a relocation delta.
-  ptrdiff_t delta = (uptr)base - preferred_base;
+  sptr delta = (uptr)base - preferred_base;
   // Now we can figure out what the loader really mapped.
   for (char *iter = phdrs; iter != phdrs_end; iter += ehdr->e_phentsize) {
     Elf_Phdr *phdr = (Elf_Phdr *)iter;
