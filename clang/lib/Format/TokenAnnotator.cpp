@@ -73,7 +73,7 @@ static const AnnotatedToken *getNextToken(const AnnotatedToken &Tok) {
 
 /// \brief A parser that gathers additional information about tokens.
 ///
-/// The \c TokenAnnotator tries to matches parenthesis and square brakets and
+/// The \c TokenAnnotator tries to match parenthesis and square brakets and
 /// store a parenthesis levels. It also tries to resolve matching "<" and ">"
 /// into template parameter lists.
 class AnnotatingParser {
@@ -149,7 +149,7 @@ private:
         AnnotatedToken &Prev = *CurrentToken->Parent;
         AnnotatedToken &Next = CurrentToken->Children[0];
         if (Prev.Parent->is(tok::identifier) &&
-            (Prev.is(tok::star) || Prev.is(tok::amp)) &&
+            (Prev.is(tok::star) || Prev.is(tok::amp) || Prev.is(tok::ampamp)) &&
             CurrentToken->is(tok::identifier) && Next.isNot(tok::equal)) {
           Prev.Type = TT_BinaryOperator;
           LookForDecls = false;
@@ -221,9 +221,7 @@ private:
           // determineStarAmpUsage() thinks that '*' '[' is allocating an
           // array of pointers, but if '[' starts a selector then '*' is a
           // binary operator.
-          if (Parent != NULL &&
-              (Parent->is(tok::star) || Parent->is(tok::amp)) &&
-              Parent->Type == TT_PointerOrReference)
+          if (Parent != NULL && Parent->Type == TT_PointerOrReference)
             Parent->Type = TT_BinaryOperator;
         } else if (StartsObjCArrayLiteral) {
           CurrentToken->Type = TT_ObjCArrayLiteral;
@@ -586,7 +584,8 @@ private:
            Current.Parent->Type == TT_PointerOrReference ||
            Current.Parent->Type == TT_TemplateCloser)) {
         Current.Type = TT_StartOfName;
-      } else if (Current.is(tok::star) || Current.is(tok::amp)) {
+      } else if (Current.is(tok::star) || Current.is(tok::amp) ||
+                 Current.is(tok::ampamp)) {
         Current.Type =
             determineStarAmpUsage(Current, Contexts.back().IsExpression);
       } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
@@ -976,14 +975,13 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
            Left.isNot(tok::l_paren);
   if (Left.is(tok::less) || Right.is(tok::greater) || Right.is(tok::less))
     return false;
-  if (Right.is(tok::amp) || Right.is(tok::star))
+  if (Right.Type == TT_PointerOrReference)
     return Left.FormatTok.Tok.isLiteral() ||
-           (Left.isNot(tok::star) && Left.isNot(tok::amp) &&
-            Left.isNot(tok::l_paren) && !Style.PointerBindsToType);
-  if (Left.is(tok::amp) || Left.is(tok::star))
+           ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
+            !Style.PointerBindsToType);
+  if (Left.Type == TT_PointerOrReference)
     return Right.FormatTok.Tok.isLiteral() ||
-           (Right.isNot(tok::star) && Right.isNot(tok::amp) &&
-            Style.PointerBindsToType);
+           ((Right.Type != TT_PointerOrReference) && Style.PointerBindsToType);
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
   if (Left.is(tok::l_square))

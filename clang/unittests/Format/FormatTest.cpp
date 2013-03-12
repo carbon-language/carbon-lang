@@ -1238,9 +1238,11 @@ TEST_F(FormatTest, ConstructorInitializers) {
 
 TEST_F(FormatTest, BreaksAsHighAsPossible) {
   verifyFormat(
-      "if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa && aaaaaaaaaaaaaaaaaaaaaaaaaa) ||\n"
-      "    (bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && bbbbbbbbbbbbbbbbbbbbbbbbbb))\n"
-      "  f();");
+      "void f() {\n"
+      "  if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaa && aaaaaaaaaaaaaaaaaaaaaaaaaa) ||\n"
+      "      (bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb && bbbbbbbbbbbbbbbbbbbbbbbbbb))\n"
+      "    f();\n"
+      "}");
   verifyFormat("if (Intervals[i].getRange().getFirst() <\n"
                "    Intervals[i - 1].getRange().getLast()) {\n}");
 }
@@ -1271,8 +1273,10 @@ TEST_F(FormatTest, BreaksDesireably) {
                "    (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
   verifyFormat(
-      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&\n"
-      "                                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+      "void f() {\n"
+      "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&\n"
+      "                                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
+      "}");
   verifyFormat(
       "aaaaaa(new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
@@ -1971,6 +1975,21 @@ TEST_F(FormatTest, AdaptivelyFormatsPointersAndReferences) {
                    "int * a;\n"
                    "int *  a;",
                    getGoogleStyle()));
+}
+
+TEST_F(FormatTest, UnderstandsRvalueReferences) {
+  verifyFormat("int f(int &&a) {}");
+  verifyFormat("int f(int a, char &&b) {}");
+  verifyFormat("void f() { int &&a = b; }");
+  verifyGoogleFormat("int f(int a, char&& b) {}");
+  verifyGoogleFormat("void f() { int&& a = b; }");
+
+  // FIXME: These require somewhat deeper changes in template arguments
+  // formatting.
+  //  verifyIndependentOfContext("A<int &&> a;");
+  //  verifyIndependentOfContext("A<int &&, int &&> a;");
+  //  verifyGoogleFormat("A<int&&> a;");
+  //  verifyGoogleFormat("A<int&&, int&&> a;");
 }
 
 TEST_F(FormatTest, FormatsBinaryOperatorsPrecedingEquals) {
