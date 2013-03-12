@@ -11,6 +11,7 @@
     .svn  { background-color: #FFFF99 }
     .full { background-color: #CCFF99 }
     .na { background-color: #DDDDDD }
+    span:target { background-color: #FFFFBB; outline: #DDDD55 solid thin; }
     th { background-color: #FFDDAA }
   </style>
 </head>
@@ -173,7 +174,7 @@ releases prior to version 3.2 in C++11 mode.</p>
     <tr>
       <td>Generalized attributes</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2761.pdf">N2761</a></td>
-      <td class="svn" align="center">SVN</td>
+      <td class="svn" align="center">SVN <a href="#n2761">(1)</a></td>
     </tr>
     <tr>
       <td>Generalized constant expressions</td>
@@ -312,7 +313,7 @@ releases prior to version 3.2 in C++11 mode.</p>
     <tr>
       <td>Strong Compare and Exchange</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2748.html">N2748</a></td>
-      <td class="full" align="center">Clang 3.1</td>
+      <td class="full" align="center">Clang 3.1 <a href="#n2748">(2)</a></td>
     </tr>
     <tr>
       <td>Bidirectional Fences</td>
@@ -328,7 +329,7 @@ releases prior to version 3.2 in C++11 mode.</p>
     <tr>
       <td>Data-dependency ordering: atomics and memory model</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2664.htm">N2664</a></td>
-      <td class="none" align="center">No</td>
+      <td class="full" align="center">Clang 3.2 <a href="#n2664">(3)</a></td>
     </tr>
     <tr>
       <td>Propagating exceptions</td>
@@ -380,6 +381,16 @@ releases prior to version 3.2 in C++11 mode.</p>
       <td class="none" align="center">No</td>
     </tr>
 </table>
+
+<p>
+<span id="n2761">(1): The <code>[[carries_dependency]]</code> attribute
+has no effect.</span></br>
+<span id="n2748">(2): All compare-exchange operations are emitted as
+strong compare-exchanges.</span><br />
+<span id="n2664">(3): <code>memory_order_consume</code> is lowered to
+<code>memory_order_acquire</code>.</span>
+</p>
+
 </div>
 </body>
 </html>
