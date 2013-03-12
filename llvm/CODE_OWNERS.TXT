@@ -125,7 +125,3 @@ D: R600 Backend
 N: Andrew Trick
 E: atrick@apple.com
 D: IndVar Simplify, Loop Strength Reduction, Instruction Scheduling
-
-N: Bill Wendling
-E: wendling@apple.com
-D: libLTO & IR Linker
