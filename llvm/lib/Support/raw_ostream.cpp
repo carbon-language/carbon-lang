@@ -306,7 +306,12 @@ raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
     if (LLVM_UNLIKELY(OutBufCur == OutBufStart)) {
       size_t BytesToWrite = Size - (Size % NumBytes);
       write_impl(Ptr, BytesToWrite);
-      copy_to_buffer(Ptr + BytesToWrite, Size - BytesToWrite);
+      size_t BytesRemaining = Size - BytesToWrite;
+      if (BytesRemaining > size_t(OutBufEnd - OutBufCur)) {
+        // Too much left over to copy into our buffer.
+        return write(Ptr + BytesToWrite, BytesRemaining);
+      }
+      copy_to_buffer(Ptr + BytesToWrite, BytesRemaining);
       return *this;
     }
 
