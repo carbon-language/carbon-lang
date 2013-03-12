@@ -15,11 +15,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/SimplifyLibCalls.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -1672,67 +1674,16 @@ class LibCallSimplifierImpl {
   const TargetLibraryInfo *TLI;
   const LibCallSimplifier *LCS;
   bool UnsafeFPShrink;
-  StringMap<LibCallOptimization*, BumpPtrAllocator> Optimizations;
-
-  // Fortified library call optimizations.
-  MemCpyChkOpt MemCpyChk;
-  MemMoveChkOpt MemMoveChk;
-  MemSetChkOpt MemSetChk;
-  StrCpyChkOpt StrCpyChk;
-  StpCpyChkOpt StpCpyChk;
-  StrNCpyChkOpt StrNCpyChk;
-
-  // String library call optimizations.
-  StrCatOpt StrCat;
-  StrNCatOpt StrNCat;
-  StrChrOpt StrChr;
-  StrRChrOpt StrRChr;
-  StrCmpOpt StrCmp;
-  StrNCmpOpt StrNCmp;
-  StrCpyOpt StrCpy;
-  StpCpyOpt StpCpy;
-  StrNCpyOpt StrNCpy;
-  StrLenOpt StrLen;
-  StrPBrkOpt StrPBrk;
-  StrToOpt StrTo;
-  StrSpnOpt StrSpn;
-  StrCSpnOpt StrCSpn;
-  StrStrOpt StrStr;
-
-  // Memory library call optimizations.
-  MemCmpOpt MemCmp;
-  MemCpyOpt MemCpy;
-  MemMoveOpt MemMove;
-  MemSetOpt MemSet;
 
   // Math library call optimizations.
-  UnaryDoubleFPOpt UnaryDoubleFP, UnsafeUnaryDoubleFP;
-  CosOpt Cos; PowOpt Pow; Exp2Opt Exp2;
-
-  // Integer library call optimizations.
-  FFSOpt FFS;
-  AbsOpt Abs;
-  IsDigitOpt IsDigit;
-  IsAsciiOpt IsAscii;
-  ToAsciiOpt ToAscii;
-
-  // Formatting and IO library call optimizations.
-  PrintFOpt PrintF;
-  SPrintFOpt SPrintF;
-  FPrintFOpt FPrintF;
-  FWriteOpt FWrite;
-  FPutsOpt FPuts;
-  PutsOpt Puts;
-
-  void initOptimizations();
-  void addOpt(LibFunc::Func F, LibCallOptimization* Opt);
-  void addOpt(LibFunc::Func F1, LibFunc::Func F2, LibCallOptimization* Opt);
+  CosOpt Cos;
+  PowOpt Pow;
+  Exp2Opt Exp2;
 public:
   LibCallSimplifierImpl(const DataLayout *TD, const TargetLibraryInfo *TLI,
                         const LibCallSimplifier *LCS,
                         bool UnsafeFPShrink = false)
-    : UnaryDoubleFP(false), UnsafeUnaryDoubleFP(true),
-      Cos(UnsafeFPShrink), Pow(UnsafeFPShrink), Exp2(UnsafeFPShrink) {
+    : Cos(UnsafeFPShrink), Pow(UnsafeFPShrink), Exp2(UnsafeFPShrink) {
     this->TD = TD;
     this->TLI = TLI;
     this->LCS = LCS;
@@ -1740,142 +1691,239 @@ public:
   }
 
   Value *optimizeCall(CallInst *CI);
+  LibCallOptimization *lookupOptimization(CallInst *CI);
+  bool hasFloatVersion(StringRef FuncName);
 };
 
-void LibCallSimplifierImpl::initOptimizations() {
-  // Fortified library call optimizations.
-  Optimizations["__memcpy_chk"] = &MemCpyChk;
-  Optimizations["__memmove_chk"] = &MemMoveChk;
-  Optimizations["__memset_chk"] = &MemSetChk;
-  Optimizations["__strcpy_chk"] = &StrCpyChk;
-  Optimizations["__stpcpy_chk"] = &StpCpyChk;
-  Optimizations["__strncpy_chk"] = &StrNCpyChk;
-  Optimizations["__stpncpy_chk"] = &StrNCpyChk;
+bool LibCallSimplifierImpl::hasFloatVersion(StringRef FuncName) {
+  LibFunc::Func Func;
+  SmallString<20> FloatFuncName = FuncName;
+  FloatFuncName += 'f';
+  if (TLI->getLibFunc(FloatFuncName, Func))
+    return TLI->has(Func);
+  return false;
+}
 
-  // String library call optimizations.
-  addOpt(LibFunc::strcat, &StrCat);
-  addOpt(LibFunc::strncat, &StrNCat);
-  addOpt(LibFunc::strchr, &StrChr);
-  addOpt(LibFunc::strrchr, &StrRChr);
-  addOpt(LibFunc::strcmp, &StrCmp);
-  addOpt(LibFunc::strncmp, &StrNCmp);
-  addOpt(LibFunc::strcpy, &StrCpy);
-  addOpt(LibFunc::stpcpy, &StpCpy);
-  addOpt(LibFunc::strncpy, &StrNCpy);
-  addOpt(LibFunc::strlen, &StrLen);
-  addOpt(LibFunc::strpbrk, &StrPBrk);
-  addOpt(LibFunc::strtol, &StrTo);
-  addOpt(LibFunc::strtod, &StrTo);
-  addOpt(LibFunc::strtof, &StrTo);
-  addOpt(LibFunc::strtoul, &StrTo);
-  addOpt(LibFunc::strtoll, &StrTo);
-  addOpt(LibFunc::strtold, &StrTo);
-  addOpt(LibFunc::strtoull, &StrTo);
-  addOpt(LibFunc::strspn, &StrSpn);
-  addOpt(LibFunc::strcspn, &StrCSpn);
-  addOpt(LibFunc::strstr, &StrStr);
+// Fortified library call optimizations.
+static MemCpyChkOpt MemCpyChk;
+static MemMoveChkOpt MemMoveChk;
+static MemSetChkOpt MemSetChk;
+static StrCpyChkOpt StrCpyChk;
+static StpCpyChkOpt StpCpyChk;
+static StrNCpyChkOpt StrNCpyChk;
 
-  // Memory library call optimizations.
-  addOpt(LibFunc::memcmp, &MemCmp);
-  addOpt(LibFunc::memcpy, &MemCpy);
-  addOpt(LibFunc::memmove, &MemMove);
-  addOpt(LibFunc::memset, &MemSet);
+// String library call optimizations.
+static StrCatOpt StrCat;
+static StrNCatOpt StrNCat;
+static StrChrOpt StrChr;
+static StrRChrOpt StrRChr;
+static StrCmpOpt StrCmp;
+static StrNCmpOpt StrNCmp;
+static StrCpyOpt StrCpy;
+static StpCpyOpt StpCpy;
+static StrNCpyOpt StrNCpy;
+static StrLenOpt StrLen;
+static StrPBrkOpt StrPBrk;
+static StrToOpt StrTo;
+static StrSpnOpt StrSpn;
+static StrCSpnOpt StrCSpn;
+static StrStrOpt StrStr;
 
-  // Math library call optimizations.
-  addOpt(LibFunc::ceil, LibFunc::ceilf, &UnaryDoubleFP);
-  addOpt(LibFunc::fabs, LibFunc::fabsf, &UnaryDoubleFP);
-  addOpt(LibFunc::floor, LibFunc::floorf, &UnaryDoubleFP);
-  addOpt(LibFunc::rint, LibFunc::rintf, &UnaryDoubleFP);
-  addOpt(LibFunc::round, LibFunc::roundf, &UnaryDoubleFP);
-  addOpt(LibFunc::nearbyint, LibFunc::nearbyintf, &UnaryDoubleFP);
-  addOpt(LibFunc::trunc, LibFunc::truncf, &UnaryDoubleFP);
+// Memory library call optimizations.
+static MemCmpOpt MemCmp;
+static MemCpyOpt MemCpy;
+static MemMoveOpt MemMove;
+static MemSetOpt MemSet;
 
-  if(UnsafeFPShrink) {
-    addOpt(LibFunc::acos, LibFunc::acosf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::acosh, LibFunc::acoshf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::asin, LibFunc::asinf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::asinh, LibFunc::asinhf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::atan, LibFunc::atanf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::atanh, LibFunc::atanhf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::cbrt, LibFunc::cbrtf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::cosh, LibFunc::coshf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::exp, LibFunc::expf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::exp10, LibFunc::exp10f, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::expm1, LibFunc::expm1f, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::log, LibFunc::logf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::log10, LibFunc::log10f, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::log1p, LibFunc::log1pf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::log2, LibFunc::log2f, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::logb, LibFunc::logbf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::sin, LibFunc::sinf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::sinh, LibFunc::sinhf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::sqrt, LibFunc::sqrtf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::tan, LibFunc::tanf, &UnsafeUnaryDoubleFP);
-    addOpt(LibFunc::tanh, LibFunc::tanhf, &UnsafeUnaryDoubleFP);
-  }
-
-  addOpt(LibFunc::cosf, &Cos);
-  addOpt(LibFunc::cos, &Cos);
-  addOpt(LibFunc::cosl, &Cos);
-  addOpt(LibFunc::powf, &Pow);
-  addOpt(LibFunc::pow, &Pow);
-  addOpt(LibFunc::powl, &Pow);
-  Optimizations["llvm.pow.f32"] = &Pow;
-  Optimizations["llvm.pow.f64"] = &Pow;
-  Optimizations["llvm.pow.f80"] = &Pow;
-  Optimizations["llvm.pow.f128"] = &Pow;
-  Optimizations["llvm.pow.ppcf128"] = &Pow;
-  addOpt(LibFunc::exp2l, &Exp2);
-  addOpt(LibFunc::exp2, &Exp2);
-  addOpt(LibFunc::exp2f, &Exp2);
-  Optimizations["llvm.exp2.ppcf128"] = &Exp2;
-  Optimizations["llvm.exp2.f128"] = &Exp2;
-  Optimizations["llvm.exp2.f80"] = &Exp2;
-  Optimizations["llvm.exp2.f64"] = &Exp2;
-  Optimizations["llvm.exp2.f32"] = &Exp2;
+// Math library call optimizations.
+static UnaryDoubleFPOpt UnaryDoubleFP(false);
+static UnaryDoubleFPOpt UnsafeUnaryDoubleFP(true);
 
   // Integer library call optimizations.
-  addOpt(LibFunc::ffs, &FFS);
-  addOpt(LibFunc::ffsl, &FFS);
-  addOpt(LibFunc::ffsll, &FFS);
-  addOpt(LibFunc::abs, &Abs);
-  addOpt(LibFunc::labs, &Abs);
-  addOpt(LibFunc::llabs, &Abs);
-  addOpt(LibFunc::isdigit, &IsDigit);
-  addOpt(LibFunc::isascii, &IsAscii);
-  addOpt(LibFunc::toascii, &ToAscii);
+static FFSOpt FFS;
+static AbsOpt Abs;
+static IsDigitOpt IsDigit;
+static IsAsciiOpt IsAscii;
+static ToAsciiOpt ToAscii;
 
-  // Formatting and IO library call optimizations.
-  addOpt(LibFunc::printf, &PrintF);
-  addOpt(LibFunc::sprintf, &SPrintF);
-  addOpt(LibFunc::fprintf, &FPrintF);
-  addOpt(LibFunc::fwrite, &FWrite);
-  addOpt(LibFunc::fputs, &FPuts);
-  addOpt(LibFunc::puts, &Puts);
+// Formatting and IO library call optimizations.
+static PrintFOpt PrintF;
+static SPrintFOpt SPrintF;
+static FPrintFOpt FPrintF;
+static FWriteOpt FWrite;
+static FPutsOpt FPuts;
+static PutsOpt Puts;
+
+LibCallOptimization *LibCallSimplifierImpl::lookupOptimization(CallInst *CI) {
+  LibFunc::Func Func;
+  Function *Callee = CI->getCalledFunction();
+  StringRef FuncName = Callee->getName();
+
+  // Next check for intrinsics.
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
+    switch (II->getIntrinsicID()) {
+    case Intrinsic::pow:
+       return &Pow;
+    case Intrinsic::exp2:
+       return &Exp2;
+    default:
+       return 0;
+    }
+  }
+
+  // Then check for known library functions.
+  if (TLI->getLibFunc(FuncName, Func) && TLI->has(Func)) {
+    switch (Func) {
+      case LibFunc::strcat:
+        return &StrCat;
+      case LibFunc::strncat:
+        return &StrNCat;
+      case LibFunc::strchr:
+        return &StrChr;
+      case LibFunc::strrchr:
+        return &StrRChr;
+      case LibFunc::strcmp:
+        return &StrCmp;
+      case LibFunc::strncmp:
+        return &StrNCmp;
+      case LibFunc::strcpy:
+        return &StrCpy;
+      case LibFunc::stpcpy:
+        return &StpCpy;
+      case LibFunc::strncpy:
+        return &StrNCpy;
+      case LibFunc::strlen:
+        return &StrLen;
+      case LibFunc::strpbrk:
+        return &StrPBrk;
+      case LibFunc::strtol:
+      case LibFunc::strtod:
+      case LibFunc::strtof:
+      case LibFunc::strtoul:
+      case LibFunc::strtoll:
+      case LibFunc::strtold:
+      case LibFunc::strtoull:
+        return &StrTo;
+      case LibFunc::strspn:
+        return &StrSpn;
+      case LibFunc::strcspn:
+        return &StrCSpn;
+      case LibFunc::strstr:
+        return &StrStr;
+      case LibFunc::memcmp:
+        return &MemCmp;
+      case LibFunc::memcpy:
+        return &MemCpy;
+      case LibFunc::memmove:
+        return &MemMove;
+      case LibFunc::memset:
+        return &MemSet;
+      case LibFunc::cosf:
+      case LibFunc::cos:
+      case LibFunc::cosl:
+        return &Cos;
+      case LibFunc::powf:
+      case LibFunc::pow:
+      case LibFunc::powl:
+        return &Pow;
+      case LibFunc::exp2l:
+      case LibFunc::exp2:
+      case LibFunc::exp2f:
+        return &Exp2;
+      case LibFunc::ffs:
+      case LibFunc::ffsl:
+      case LibFunc::ffsll:
+        return &FFS;
+      case LibFunc::abs:
+      case LibFunc::labs:
+      case LibFunc::llabs:
+        return &Abs;
+      case LibFunc::isdigit:
+        return &IsDigit;
+      case LibFunc::isascii:
+        return &IsAscii;
+      case LibFunc::toascii:
+        return &ToAscii;
+      case LibFunc::printf:
+        return &PrintF;
+      case LibFunc::sprintf:
+        return &SPrintF;
+      case LibFunc::fprintf:
+        return &FPrintF;
+      case LibFunc::fwrite:
+        return &FWrite;
+      case LibFunc::fputs:
+        return &FPuts;
+      case LibFunc::puts:
+        return &Puts;
+      case LibFunc::ceil:
+      case LibFunc::fabs:
+      case LibFunc::floor:
+      case LibFunc::rint:
+      case LibFunc::round:
+      case LibFunc::nearbyint:
+      case LibFunc::trunc:
+        if (hasFloatVersion(FuncName))
+          return &UnaryDoubleFP;
+        return 0;
+      case LibFunc::acos:
+      case LibFunc::acosh:
+      case LibFunc::asin:
+      case LibFunc::asinh:
+      case LibFunc::atan:
+      case LibFunc::atanh:
+      case LibFunc::cbrt:
+      case LibFunc::cosh:
+      case LibFunc::exp:
+      case LibFunc::exp10:
+      case LibFunc::expm1:
+      case LibFunc::log:
+      case LibFunc::log10:
+      case LibFunc::log1p:
+      case LibFunc::log2:
+      case LibFunc::logb:
+      case LibFunc::sin:
+      case LibFunc::sinh:
+      case LibFunc::sqrt:
+      case LibFunc::tan:
+      case LibFunc::tanh:
+        if (UnsafeFPShrink && hasFloatVersion(FuncName))
+         return &UnsafeUnaryDoubleFP;
+        return 0;
+      case LibFunc::memcpy_chk:
+        return &MemCpyChk;
+      default:
+        return 0;
+      }
+  }
+
+  // Finally check for fortified library calls.
+  if (FuncName.endswith("_chk")) {
+    if (FuncName == "__memmove_chk")
+      return &MemMoveChk;
+    else if (FuncName == "__memset_chk")
+      return &MemSetChk;
+    else if (FuncName == "__strcpy_chk")
+      return &StrCpyChk;
+    else if (FuncName == "__stpcpy_chk")
+      return &StpCpyChk;
+    else if (FuncName == "__strncpy_chk")
+      return &StrNCpyChk;
+    else if (FuncName == "__stpncpy_chk")
+      return &StrNCpyChk;
+  }
+
+  return 0;
+
 }
 
 Value *LibCallSimplifierImpl::optimizeCall(CallInst *CI) {
-  if (Optimizations.empty())
-    initOptimizations();
-
-  Function *Callee = CI->getCalledFunction();
-  LibCallOptimization *LCO = Optimizations.lookup(Callee->getName());
+  LibCallOptimization *LCO = lookupOptimization(CI);
   if (LCO) {
     IRBuilder<> Builder(CI);
     return LCO->optimizeCall(CI, TD, TLI, LCS, Builder);
   }
   return 0;
-}
-
-void LibCallSimplifierImpl::addOpt(LibFunc::Func F, LibCallOptimization* Opt) {
-  if (TLI->has(F))
-    Optimizations[TLI->getName(F)] = Opt;
-}
-
-void LibCallSimplifierImpl::addOpt(LibFunc::Func F1, LibFunc::Func F2,
-                                   LibCallOptimization* Opt) {
-  if (TLI->has(F1) && TLI->has(F2))
-    Optimizations[TLI->getName(F1)] = Opt;
 }
 
 LibCallSimplifier::LibCallSimplifier(const DataLayout *TD,
