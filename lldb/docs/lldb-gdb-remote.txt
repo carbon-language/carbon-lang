@@ -340,13 +340,17 @@ set         The register set name as a string that this register belongs to.
 
 gcc         The GCC compiler registers number for this register (used for
             EH frame and other compiler information that is encoded in the
-            executable files). 
+            executable files). The supplied number will be decoded like a
+            string passed to strtoul() with a base of zero, so the number
+            can be decimal, or hex if it is prefixed with "0x".
 
             NOTE: If the compiler doesn't have a register number for this 
             register, this key/value pair should be omitted.
 
 dwarf       The DWARF register number for this register that is used for this
-            register in the debug information. 
+            register in the debug information. The supplied number will be decoded
+            like a string passed to strtoul() with a base of zero, so the number
+            can be decimal, or hex if it is prefixed with "0x".
 
             NOTE: If the compiler doesn't have a register number for this 
             register, this key/value pair should be omitted.
@@ -371,7 +375,7 @@ generic     If the register is a generic register that most CPUs have, classify
                       arguments when the argument fits into a register)
 
 container-regs
-            The value for this key is a comma separated list of raw hex (no 
+            The value for this key is a comma separated list of raw hex (optional 
             leading "0x") register numbers.
 
             This specifies that this register is contained in other concrete
@@ -395,7 +399,7 @@ container-regs
             of this register.
             
 invalidate-regs
-            The value for this key is a comma separated list of raw hex (no 
+            The value for this key is a comma separated list of raw hex (optional 
             leading "0x") register numbers.
             
             This specifies which register values should be invalidated when this
