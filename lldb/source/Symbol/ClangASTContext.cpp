@@ -2244,7 +2244,7 @@ ClangASTContext::CreateBaseClassSpecifier (clang_type_t base_class_type, AccessT
                                      is_virtual, 
                                      base_of_class, 
                                      ConvertAccessTypeToAccessSpecifier (access), 
-                                     getASTContext()->CreateTypeSourceInfo (QualType::getFromOpaquePtr(base_class_type)),
+                                     getASTContext()->getTrivialTypeSourceInfo (QualType::getFromOpaquePtr(base_class_type)),
                                      SourceLocation());
     return NULL;
 }
@@ -2452,9 +2452,9 @@ ClangASTContext::AddObjCClassProperty
             {
                 clang::TypeSourceInfo *prop_type_source;
                 if (ivar_decl)
-                    prop_type_source = ast->CreateTypeSourceInfo (ivar_decl->getType());
+                    prop_type_source = ast->getTrivialTypeSourceInfo (ivar_decl->getType());
                 else
-                    prop_type_source = ast->CreateTypeSourceInfo (QualType::getFromOpaquePtr(property_opaque_type));
+                    prop_type_source = ast->getTrivialTypeSourceInfo (QualType::getFromOpaquePtr(property_opaque_type));
                 
                 ObjCPropertyDecl *property_decl = ObjCPropertyDecl::Create(*ast, 
                                                                            class_interface_decl, 
@@ -6314,7 +6314,7 @@ ClangASTContext::CreateTypedefType (const char *name, clang_type_t clang_type, D
                                                  SourceLocation(),
                                                  SourceLocation(),
                                                  name ? &identifier_table->get(name) : NULL, // Identifier
-                                                 ast->CreateTypeSourceInfo(qual_type));
+                                                 ast->getTrivialTypeSourceInfo(qual_type));
         
         //decl_ctx->addDecl (decl);
 

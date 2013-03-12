@@ -2762,7 +2762,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 if (!class_type.IsValid())
                     return;
                 
-                TypeSourceInfo *type_source_info = m_ast_context->CreateTypeSourceInfo(QualType::getFromOpaquePtr(class_type.GetOpaqueQualType()));
+                TypeSourceInfo *type_source_info = m_ast_context->getTrivialTypeSourceInfo(QualType::getFromOpaquePtr(class_type.GetOpaqueQualType()));
                 
                 if (!type_source_info)
                     return;
