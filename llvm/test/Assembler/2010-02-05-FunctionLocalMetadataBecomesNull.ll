@@ -22,4 +22,11 @@ define i32 @main() nounwind readonly {
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-!0 = metadata !{i32 459008, metadata !0, metadata !0, metadata !0, i32 38, metadata !0} ; [ DW_TAG_auto_variable ]
+!7 = metadata !{metadata !1}
+!6 = metadata !{i32 786449, i32 0, i32 12, metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b", metadata !"clang version 3.0 (trunk 131941)", i1 true, i1 false, metadata !"", i32 0, null, null, metadata !7, null, null} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786688, metadata !1, metadata !"c", metadata !2, i32 2, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
+!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"main", metadata !"main", metadata !"", metadata !2, i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 ()* @main, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 786473, metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b", metadata !0} ; [ DW_TAG_file_type ]
+!3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!4 = metadata !{metadata !5}
+!5 = metadata !{i32 786468, metadata !6, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
