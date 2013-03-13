@@ -52,8 +52,6 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
-#include "lldb/Utility/RefCounter.h"
-
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_utility;
