@@ -56,7 +56,7 @@ Run lldb test suite using a separate process for each test file.
     if len(failed) > 0:
         print "Failing Tests (%d)" % len(failed)
         for f in failed:
-          print "\tLLDB :: %s" % f
+          print "FAIL : LLDB :: %s" % f
         sys.exit(1)
     sys.exit(0)
 
