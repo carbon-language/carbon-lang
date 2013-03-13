@@ -640,13 +640,10 @@ namespace llvm {
     unsigned getLineNumber() const { return getScope().getLineNumber(); }
     unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
     StringRef getDirectory() const {
-      StringRef dir = getFieldAs<DIFile>(2).getDirectory();
-      return !dir.empty() ? dir : getContext().getDirectory();
+      return getFieldAs<DIFile>(2).getDirectory();
     }
     StringRef getFilename() const {
-      StringRef filename = getFieldAs<DIFile>(2).getFilename();
-      assert(!filename.empty() && "Why'd you create this then?");
-      return filename;
+      return getFieldAs<DIFile>(2).getFilename();
     }
     DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(1); }
     bool Verify() const;
