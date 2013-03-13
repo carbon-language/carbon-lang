@@ -363,10 +363,10 @@ MachProcess::Resume (const DNBThreadResumeActions& thread_actions)
     }
     else if (state == eStateRunning)
     {
-        DNBLogThreadedIf(LOG_PROCESS, "Resume() - task 0x%x is running, ignoring...", m_task.TaskPort());
+        DNBLog("Resume() - task 0x%x is already running, ignoring...", m_task.TaskPort());
         return true;
     }
-    DNBLogThreadedIf(LOG_PROCESS, "Resume() - task 0x%x can't continue, ignoring...", m_task.TaskPort());
+    DNBLog("Resume() - task 0x%x has state %s, can't continue...", m_task.TaskPort(), DNBStateAsString(state));
     return false;
 }
 
