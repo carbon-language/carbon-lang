@@ -55,7 +55,7 @@ main(int argc, char const *argv[])
     return 0;
 }
 
-// CHECK: define i32 @_Z3fooii(i32 %i, i32 %j)
+// CHECK: define {{.*}} @_Z3fooii
 // i
 // CHECK: call void @llvm.dbg.declare
 // j
