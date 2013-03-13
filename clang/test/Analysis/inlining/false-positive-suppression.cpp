@@ -125,3 +125,52 @@ namespace References {
 #endif
   }
 }
+
+class X{
+public:
+	void get();
+};
+
+X *getNull() {
+	return 0;
+}
+
+void deref1(X *const &p) {
+	return p->get();
+	#ifndef SUPPRESSED
+	  // expected-warning@-2 {{Called C++ object pointer is null}}
+	#endif
+}
+
+void test1() {
+	return deref1(getNull());
+}
+
+void deref2(X *p3) {
+	p3->get();
+	#ifndef SUPPRESSED
+	  // expected-warning@-2 {{Called C++ object pointer is null}}
+	#endif
+}
+
+void pass2(X *const &p2) {
+	deref2(p2);
+}
+
+void test2() {
+	pass2(getNull());
+}
+
+void deref3(X *const &p2) {
+	X *p3 = p2;
+	p3->get();
+	#ifndef SUPPRESSED
+	  // expected-warning@-2 {{Called C++ object pointer is null}}
+	#endif
+}
+
+void test3() {
+	deref3(getNull());
+}
+
+
