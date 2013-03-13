@@ -575,12 +575,6 @@ private:
     // Add Rela (those with r_addend) references:
     auto rari = _relocationAddendRefences.find(sectionName);
     auto rri = _relocationReferences.find(sectionName);
-    unsigned refs = 0;
-    if (rari != _relocationAddendRefences.end())
-      refs += rari->second.size();
-    if (rri != _relocationReferences.end())
-      refs += rri->second.size();
-    _references.reserve(_references.size() + refs);
     if (rari != _relocationAddendRefences.end())
       for (auto &rai : rari->second) {
         if (!((rai->r_offset >= symbol->st_value) &&
