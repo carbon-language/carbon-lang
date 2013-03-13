@@ -413,12 +413,12 @@ MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, str
     
         rsize = ti.resident_size;
         vsize = ti.virtual_size;
-    }
-    
-    if (scanType & eProfileMemoryDirtyPage)
-    {
-        // This uses vmmap strategy. We don't use the returned rsize for now. We prefer to match top's version since that's what we do for the rest of the metrics.
-        GetRegionSizes(task, rsize, dirty_size);
+        
+        if (scanType & eProfileMemoryDirtyPage)
+        {
+            // This uses vmmap strategy. We don't use the returned rsize for now. We prefer to match top's version since that's what we do for the rest of the metrics.
+            GetRegionSizes(task, rsize, dirty_size);
+        }
     }
     
     return true;
