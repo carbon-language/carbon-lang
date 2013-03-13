@@ -1347,7 +1347,7 @@ object pointer.  The corresponding actual sequence executed is the
 However, under certain circumstances, ARC is permitted to re-order and
 eliminate operations in a manner which may alter the overall
 computation history beyond what is permitted by the general "as if"
-rule of C/C++ and the :ref:`restrictions <_arc.objects.retains>` on
+rule of C/C++ and the :ref:`restrictions <arc.objects.retains>` on
 the implementation of ``retain`` and ``release``.
 
 .. admonition:: Rationale
@@ -1359,6 +1359,7 @@ the implementation of ``retain`` and ``release``.
   example, consider the following code:
 
   .. code-block:: objc
+
     id x = _ivar;
     [x foo];
 
@@ -1450,7 +1451,7 @@ dependency is not carried by values that are stored to objects.
   itself cause dependence, but since generally the optimizer will not
   be able to prove that the function doesn't depend on that parameter,
   it will be forced to conservatively assume it does.
-  
+
   Dependency propagates to values loaded from a pointer because those
   values might be invalidated by deallocating the object.  For
   example, given the code ``__strong id x = p->ivar;``, ARC must not
