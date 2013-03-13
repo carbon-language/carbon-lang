@@ -390,14 +390,14 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Make sure everything is still good.
   passes.add(createVerifierPass());
 
-  FunctionPassManager *codeGenPasses = new FunctionPassManager(mergedModule);
+  PassManager codeGenPasses;
 
-  codeGenPasses->add(new DataLayout(*_target->getDataLayout()));
-  _target->addAnalysisPasses(*codeGenPasses);
+  codeGenPasses.add(new DataLayout(*_target->getDataLayout()));
+  _target->addAnalysisPasses(codeGenPasses);
 
   formatted_raw_ostream Out(out);
 
-  if (_target->addPassesToEmitFile(*codeGenPasses, Out,
+  if (_target->addPassesToEmitFile(codeGenPasses, Out,
                                    TargetMachine::CGFT_ObjectFile)) {
     errMsg = "target file type not supported";
     return true;
@@ -407,15 +407,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.run(*mergedModule);
 
   // Run the code generator, and write assembly file
-  codeGenPasses->doInitialization();
-
-  for (Module::iterator
-         it = mergedModule->begin(), e = mergedModule->end(); it != e; ++it)
-    if (!it->isDeclaration())
-      codeGenPasses->run(*it);
-
-  codeGenPasses->doFinalization();
-  delete codeGenPasses;
+  codeGenPasses.run(*mergedModule);
 
   return false; // success
 }
