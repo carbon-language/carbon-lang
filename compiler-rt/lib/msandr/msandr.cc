@@ -511,6 +511,11 @@ void event_module_unload(void *drcontext, const module_data_t *info) {
 }
 
 void event_exit() {
+  // Clean up so DR doesn't tell us we're leaking memory.
+  drsys_exit();
+  drutil_exit();
+  drmgr_exit();
+
   if (VERBOSITY > 0)
     dr_printf("==DRMSAN== DONE\n");
 }
