@@ -832,14 +832,16 @@ def setupSysPath():
         os.environ["LLDB_EXEC"] = lldbExec
         #print "The 'lldb' from PATH env variable", lldbExec
 
-    if os.path.isdir(os.path.join(base, '.svn')) and which("svn") is not None:
-        pipe = subprocess.Popen([which("svn"), "info", base], stdout = subprocess.PIPE)
-        svn_info = pipe.stdout.read()
-    elif os.path.isdir(os.path.join(base, '.git')) and which("git") is not None:
-        pipe = subprocess.Popen([which("git"), "svn", "info", base], stdout = subprocess.PIPE)
-        svn_info = pipe.stdout.read()
-    if not noHeaders:
-        print svn_info
+    # Skip printing svn/git information when running in parsable (lit-test compatibility) mode
+    if not parsable:
+        if os.path.isdir(os.path.join(base, '.svn')) and which("svn") is not None:
+            pipe = subprocess.Popen([which("svn"), "info", base], stdout = subprocess.PIPE)
+            svn_info = pipe.stdout.read()
+        elif os.path.isdir(os.path.join(base, '.git')) and which("git") is not None:
+            pipe = subprocess.Popen([which("git"), "svn", "info", base], stdout = subprocess.PIPE)
+            svn_info = pipe.stdout.read()
+        if not noHeaders:
+            print svn_info
 
     global ignore
 
