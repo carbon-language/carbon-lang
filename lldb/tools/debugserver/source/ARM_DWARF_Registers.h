@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef utility_ARM_DWARF_Registers_h_
-#define utility_ARM_DWARF_Registers_h_
+#ifndef ARM_DWARF_Registers_h_
+#define ARM_DWARF_Registers_h_
+
 
 enum
 {
@@ -73,7 +74,7 @@ enum
     dwarf_f6,
     dwarf_f7,
 
-    // Intel wireless MMX general purpose registers 0–7
+    // Intel wireless MMX general purpose registers 0 - 7
     dwarf_wCGR0 = 104,
     dwarf_wCGR1,
     dwarf_wCGR2,
@@ -93,7 +94,7 @@ enum
     dwarf_ACC6,
     dwarf_ACC7,
 
-    // Intel wireless MMX data registers 0–15
+    // Intel wireless MMX data registers 0 - 15
     dwarf_wR0 = 112,
     dwarf_wR1,
     dwarf_wR2,
@@ -141,7 +142,7 @@ enum
     dwarf_r13_svc,
     dwarf_r14_svc,
 
-    // Intel wireless MMX control register in co-processor 0–7
+    // Intel wireless MMX control register in co-processor 0 - 7
     dwarf_wC0 = 192,
     dwarf_wC1,
     dwarf_wC2,
@@ -183,8 +184,26 @@ enum
     dwarf_d28,
     dwarf_d29,
     dwarf_d30,
-    dwarf_d31
+    dwarf_d31,
+
+    // Neon quadword registers
+    dwarf_q0 = 288,
+    dwarf_q1,
+    dwarf_q2,
+    dwarf_q3,
+    dwarf_q4,
+    dwarf_q5,
+    dwarf_q6,
+    dwarf_q7,
+    dwarf_q8,
+    dwarf_q9,
+    dwarf_q10,
+    dwarf_q11,
+    dwarf_q12,
+    dwarf_q13,
+    dwarf_q14,
+    dwarf_q15
 };
 
-#endif // utility_ARM_DWARF_Registers_h_
+#endif // ARM_DWARF_Registers_h_
 

@@ -81,8 +81,8 @@ GetARMDWARFRegisterName (unsigned reg_num)
         case dwarf_f6:  return "f6";
         case dwarf_f7:  return "f7";
             
-        // Intel wireless MMX general purpose registers 0–7
-        // XScale accumulator register 0–7 (they do overlap with wCGR0 - wCGR7)
+        // Intel wireless MMX general purpose registers 0 - 7
+        // XScale accumulator register 0 - 7 (they do overlap with wCGR0 - wCGR7)
         case dwarf_wCGR0: return "wCGR0/ACC0";   
         case dwarf_wCGR1: return "wCGR1/ACC1";
         case dwarf_wCGR2: return "wCGR2/ACC2";
@@ -92,7 +92,7 @@ GetARMDWARFRegisterName (unsigned reg_num)
         case dwarf_wCGR6: return "wCGR6/ACC6";
         case dwarf_wCGR7: return "wCGR7/ACC7";
             
-        // Intel wireless MMX data registers 0–15
+        // Intel wireless MMX data registers 0 - 15
         case dwarf_wR0:   return "wR0";
         case dwarf_wR1:   return "wR1";
         case dwarf_wR2:   return "wR2";
@@ -140,7 +140,7 @@ GetARMDWARFRegisterName (unsigned reg_num)
         case dwarf_r13_svc:     return "r13_svc";
         case dwarf_r14_svc:     return "r14_svc";
             
-        // Intel wireless MMX control register in co-processor 0–7
+        // Intel wireless MMX control register in co-processor 0 - 7
         case dwarf_wC0:         return "wC0";
         case dwarf_wC1:         return "wC1";
         case dwarf_wC2:         return "wC2";
@@ -183,6 +183,24 @@ GetARMDWARFRegisterName (unsigned reg_num)
         case dwarf_d29:         return "d29";
         case dwarf_d30:         return "d30";
         case dwarf_d31:         return "d31";
+
+        // NEON 128-bit vector registers (overlays the d registers)
+        case dwarf_q0:          return "q0"; 
+        case dwarf_q1:          return "q1"; 
+        case dwarf_q2:          return "q2"; 
+        case dwarf_q3:          return "q3"; 
+        case dwarf_q4:          return "q4"; 
+        case dwarf_q5:          return "q5"; 
+        case dwarf_q6:          return "q6"; 
+        case dwarf_q7:          return "q7"; 
+        case dwarf_q8:          return "q8"; 
+        case dwarf_q9:          return "q9"; 
+        case dwarf_q10:         return "q10";
+        case dwarf_q11:         return "q11";
+        case dwarf_q12:         return "q12";
+        case dwarf_q13:         return "q13";
+        case dwarf_q14:         return "q14";
+        case dwarf_q15:         return "q15";
     }
     return 0;
 }
@@ -192,6 +210,13 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
 {
     ::memset (&reg_info, 0, sizeof(RegisterInfo));
     ::memset (reg_info.kinds, LLDB_INVALID_REGNUM, sizeof(reg_info.kinds));
+
+    if (reg_num >= dwarf_q0 && reg_num <= dwarf_q15)
+    {
+        reg_info.byte_size = 16;
+        reg_info.format = eFormatVectorOfUInt8;
+        reg_info.encoding = eEncodingVector;
+    }
     
     if (reg_num >= dwarf_d0 && reg_num <= dwarf_d31)
     {
@@ -273,7 +298,7 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
         case dwarf_s30: reg_info.name = "s30"; break;
         case dwarf_s31: reg_info.name = "s31"; break;
             
-            // FPA Registers 0-7
+        // FPA Registers 0-7
         case dwarf_f0:  reg_info.name = "f0"; break;
         case dwarf_f1:  reg_info.name = "f1"; break;
         case dwarf_f2:  reg_info.name = "f2"; break;
@@ -283,8 +308,8 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
         case dwarf_f6:  reg_info.name = "f6"; break;
         case dwarf_f7:  reg_info.name = "f7"; break;
             
-            // Intel wireless MMX general purpose registers 0–7
-            // XScale accumulator register 0–7 (they do overlap with wCGR0 - wCGR7)
+        // Intel wireless MMX general purpose registers 0 - 7
+        // XScale accumulator register 0 - 7 (they do overlap with wCGR0 - wCGR7)
         case dwarf_wCGR0: reg_info.name = "wCGR0/ACC0"; break;   
         case dwarf_wCGR1: reg_info.name = "wCGR1/ACC1"; break;
         case dwarf_wCGR2: reg_info.name = "wCGR2/ACC2"; break;
@@ -294,7 +319,7 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
         case dwarf_wCGR6: reg_info.name = "wCGR6/ACC6"; break;
         case dwarf_wCGR7: reg_info.name = "wCGR7/ACC7"; break;
             
-            // Intel wireless MMX data registers 0–15
+        // Intel wireless MMX data registers 0 - 15
         case dwarf_wR0:   reg_info.name = "wR0"; break;
         case dwarf_wR1:   reg_info.name = "wR1"; break;
         case dwarf_wR2:   reg_info.name = "wR2"; break;
@@ -342,7 +367,7 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
         case dwarf_r13_svc:     reg_info.name = "r13_svc"; break;
         case dwarf_r14_svc:     reg_info.name = "r14_svc"; break;
             
-            // Intel wireless MMX control register in co-processor 0–7
+        // Intel wireless MMX control register in co-processor 0 - 7
         case dwarf_wC0:         reg_info.name = "wC0"; break;
         case dwarf_wC1:         reg_info.name = "wC1"; break;
         case dwarf_wC2:         reg_info.name = "wC2"; break;
@@ -352,7 +377,7 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
         case dwarf_wC6:         reg_info.name = "wC6"; break;
         case dwarf_wC7:         reg_info.name = "wC7"; break;
             
-            // VFP-v3/Neon
+        // VFP-v3/Neon
         case dwarf_d0:          reg_info.name = "d0"; break;
         case dwarf_d1:          reg_info.name = "d1"; break;
         case dwarf_d2:          reg_info.name = "d2"; break;
@@ -385,6 +410,25 @@ GetARMDWARFRegisterInfo (unsigned reg_num, RegisterInfo &reg_info)
         case dwarf_d29:         reg_info.name = "d29"; break;
         case dwarf_d30:         reg_info.name = "d30"; break;
         case dwarf_d31:         reg_info.name = "d31"; break;
+
+        // NEON 128-bit vector registers (overlays the d registers)
+        case dwarf_q0:          reg_info.name = "q0"; break;
+        case dwarf_q1:          reg_info.name = "q1"; break;
+        case dwarf_q2:          reg_info.name = "q2"; break;
+        case dwarf_q3:          reg_info.name = "q3"; break;
+        case dwarf_q4:          reg_info.name = "q4"; break;
+        case dwarf_q5:          reg_info.name = "q5"; break;
+        case dwarf_q6:          reg_info.name = "q6"; break;
+        case dwarf_q7:          reg_info.name = "q7"; break;
+        case dwarf_q8:          reg_info.name = "q8"; break;
+        case dwarf_q9:          reg_info.name = "q9"; break;
+        case dwarf_q10:         reg_info.name = "q10"; break;
+        case dwarf_q11:         reg_info.name = "q11"; break;
+        case dwarf_q12:         reg_info.name = "q12"; break;
+        case dwarf_q13:         reg_info.name = "q13"; break;
+        case dwarf_q14:         reg_info.name = "q14"; break;
+        case dwarf_q15:         reg_info.name = "q15"; break;
+
         default: return false;
     }
     return true;

@@ -1230,7 +1230,7 @@ DNBArchMachARM::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
 }
 
 //----------------------------------------------------------------------
-// Register information defintions for 32 bit ARMV6.
+// Register information defintions for 32 bit ARMV7.
 //----------------------------------------------------------------------
 enum gpr_regnums
 {
@@ -1255,7 +1255,7 @@ enum gpr_regnums
 
 enum 
 {
-    vfp_s0 = 0,
+    vfp_s0 = 17, // match the g_gdb_register_map_arm table in RNBRemote.cpp
     vfp_s1,
     vfp_s2,
     vfp_s3,
@@ -1286,8 +1286,12 @@ enum
     vfp_s28,
     vfp_s29,
     vfp_s30,
-    vfp_s31,
-    vfp_d0,
+    vfp_s31
+};
+
+enum
+{
+    vfp_d0 = 49, // match the g_gdb_register_map_arm table in RNBRemote.cpp
     vfp_d1,
     vfp_d2,
     vfp_d3,
@@ -1318,114 +1322,48 @@ enum
     vfp_d28,
     vfp_d29,
     vfp_d30,
-    vfp_d31,
+    vfp_d31
+};
+
+enum
+{
+    vfp_q0 = 81, // match the g_gdb_register_map_arm table in RNBRemote.cpp
+    vfp_q1,
+    vfp_q2,
+    vfp_q3,
+    vfp_q4,
+    vfp_q5,
+    vfp_q6,
+    vfp_q7,
+    vfp_q8,
+    vfp_q9,
+    vfp_q10,
+    vfp_q11,
+    vfp_q12,
+    vfp_q13,
+    vfp_q14,
+    vfp_q15,
     vfp_fpscr
 };
 
 enum
 {
     exc_exception,
-	exc_fsr,
-	exc_far,
-};
-
-enum
-{
-    gdb_r0 = 0,
-    gdb_r1,
-    gdb_r2,
-    gdb_r3,
-    gdb_r4,
-    gdb_r5,
-    gdb_r6,
-    gdb_r7,
-    gdb_r8,
-    gdb_r9,
-    gdb_r10,
-    gdb_r11,
-    gdb_r12,
-    gdb_sp,
-    gdb_lr,
-    gdb_pc,
-    gdb_f0,
-    gdb_f1,
-    gdb_f2,
-    gdb_f3,
-    gdb_f4,
-    gdb_f5,
-    gdb_f6,
-    gdb_f7,
-    gdb_f8,
-    gdb_cpsr,
-    gdb_s0,
-    gdb_s1,
-    gdb_s2,
-    gdb_s3,
-    gdb_s4,
-    gdb_s5,
-    gdb_s6,
-    gdb_s7,
-    gdb_s8,
-    gdb_s9,
-    gdb_s10,
-    gdb_s11,
-    gdb_s12,
-    gdb_s13,
-    gdb_s14,
-    gdb_s15,
-    gdb_s16,
-    gdb_s17,
-    gdb_s18,
-    gdb_s19,
-    gdb_s20,
-    gdb_s21,
-    gdb_s22,
-    gdb_s23,
-    gdb_s24,
-    gdb_s25,
-    gdb_s26,
-    gdb_s27,
-    gdb_s28,
-    gdb_s29,
-    gdb_s30,
-    gdb_s31,
-    gdb_fpscr,
-    gdb_d0,
-    gdb_d1,
-    gdb_d2,
-    gdb_d3,
-    gdb_d4,
-    gdb_d5,
-    gdb_d6,
-    gdb_d7,
-    gdb_d8,
-    gdb_d9,
-    gdb_d10,
-    gdb_d11,
-    gdb_d12,
-    gdb_d13,
-    gdb_d14,
-    gdb_d15
+    exc_fsr,
+    exc_far,
 };
 
 #define GPR_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::GPR, __r[idx]))
 #define GPR_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::GPR, __##reg))
-#define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[(idx)]) + offsetof (DNBArchMachARM::Context, vfp))
-#define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 2))
-#define VFP_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::FPU, __##reg) + offsetof (DNBArchMachARM::Context, vfp))
+
 #define EXC_OFFSET(reg)      (offsetof (DNBArchMachARM::EXC, __##reg)  + offsetof (DNBArchMachARM::Context, exc))
 
 // These macros will auto define the register name, alt name, register size,
 // register offset, encoding, format and native register. This ensures that
 // the register state structures are defined correctly and have the correct
 // sizes and offsets.
-#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_IDX(idx), gcc_##reg, dwarf_##reg, gen, gdb_##reg, NULL, NULL}
-#define DEFINE_GPR_NAME(reg, alt, gen, inval) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_NAME(reg), gcc_##reg, dwarf_##reg, gen, gdb_##reg, NULL, inval}
-//#define FLOAT_FORMAT Float
-#define FLOAT_FORMAT Hex
-#define DEFINE_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx, NULL, NULL}
-//#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, Float, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, gdb_d##idx }
-#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL }
+#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_IDX(idx), gcc_##reg, dwarf_##reg, gen, INVALID_NUB_REGNUM, NULL, NULL}
+#define DEFINE_GPR_NAME(reg, alt, gen, inval) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_NAME(reg), gcc_##reg, dwarf_##reg, gen, INVALID_NUB_REGNUM, NULL, inval}
 
 // In case we are debugging to a debug target that the ability to
 // change into the protected modes with folded registers (ABT, IRQ,
@@ -1465,75 +1403,140 @@ DNBArchMachARM::g_gpr_registers[] =
     DEFINE_GPR_NAME (cpsr, "flags", GENERIC_REGNUM_FLAGS, g_invalidate_cpsr)
 };
 
+uint32_t g_contained_q0[] {vfp_q0, INVALID_NUB_REGNUM };
+uint32_t g_contained_q1[] {vfp_q1, INVALID_NUB_REGNUM };
+uint32_t g_contained_q2[] {vfp_q2, INVALID_NUB_REGNUM };
+uint32_t g_contained_q3[] {vfp_q3, INVALID_NUB_REGNUM };
+uint32_t g_contained_q4[] {vfp_q4, INVALID_NUB_REGNUM };
+uint32_t g_contained_q5[] {vfp_q5, INVALID_NUB_REGNUM };
+uint32_t g_contained_q6[] {vfp_q6, INVALID_NUB_REGNUM };
+uint32_t g_contained_q7[] {vfp_q7, INVALID_NUB_REGNUM };
+uint32_t g_contained_q8[] {vfp_q8, INVALID_NUB_REGNUM };
+uint32_t g_contained_q9[] {vfp_q9, INVALID_NUB_REGNUM };
+uint32_t g_contained_q10[] {vfp_q10, INVALID_NUB_REGNUM };
+uint32_t g_contained_q11[] {vfp_q11, INVALID_NUB_REGNUM };
+uint32_t g_contained_q12[] {vfp_q12, INVALID_NUB_REGNUM };
+uint32_t g_contained_q13[] {vfp_q13, INVALID_NUB_REGNUM };
+uint32_t g_contained_q14[] {vfp_q14, INVALID_NUB_REGNUM };
+uint32_t g_contained_q15[] {vfp_q15, INVALID_NUB_REGNUM };
+
+uint32_t g_invalidate_q0[]  {vfp_q0,   vfp_d0, vfp_d1,    vfp_s0, vfp_s1, vfp_s2, vfp_s3,        INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q1[]  {vfp_q1,   vfp_d2, vfp_d3,    vfp_s4, vfp_s5, vfp_s6, vfp_s7,        INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q2[]  {vfp_q2,   vfp_d4, vfp_d5,    vfp_s8, vfp_s9, vfp_s10, vfp_s11,      INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q3[]  {vfp_q3,   vfp_d6, vfp_d7,    vfp_s12, vfp_s13, vfp_s14, vfp_s15,    INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q4[]  {vfp_q4,   vfp_d8, vfp_d9,    vfp_s16, vfp_s17, vfp_s18, vfp_s19,    INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q5[]  {vfp_q5,   vfp_d10, vfp_d11,  vfp_s20, vfp_s21, vfp_s22, vfp_s23,    INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q6[]  {vfp_q6,   vfp_d12, vfp_d13,  vfp_s24, vfp_s25, vfp_s26, vfp_s27,    INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q7[]  {vfp_q7,   vfp_d14, vfp_d15,  vfp_s28, vfp_s29, vfp_s30, vfp_s31,    INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q8[]  {vfp_q8,   vfp_d16, vfp_d17,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q9[]  {vfp_q9,   vfp_d18, vfp_d19,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q10[] {vfp_q10,  vfp_d20, vfp_d21,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q11[] {vfp_q11,  vfp_d22, vfp_d23,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q12[] {vfp_q12,  vfp_d24, vfp_d25,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q13[] {vfp_q13,  vfp_d26, vfp_d27,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q14[] {vfp_q14,  vfp_d28, vfp_d29,  INVALID_NUB_REGNUM };
+uint32_t g_invalidate_q15[] {vfp_q15,  vfp_d30, vfp_d31,  INVALID_NUB_REGNUM };
+
+#define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[(idx)]) + offsetof (DNBArchMachARM::Context, vfp))
+#define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 2))
+#define VFP_Q_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 4))
+
+#define VFP_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::FPU, __##reg) + offsetof (DNBArchMachARM::Context, vfp))
+
+#define FLOAT_FORMAT Float
+
+#define DEFINE_VFP_S_IDX(idx)  e_regSetVFP, vfp_s##idx - vfp_s0, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_D_IDX(idx)  e_regSetVFP, vfp_d##idx - vfp_s0, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_Q_IDX(idx)  e_regSetVFP, vfp_q##idx - vfp_s0, "q" #idx, NULL, Vector, VectorOfUInt8, 16, VFP_Q_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_q##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+
 // Floating point registers
 const DNBRegisterInfo
 DNBArchMachARM::g_vfp_registers[] =
 {
-    DEFINE_VFP_S_IDX ( 0),
-    DEFINE_VFP_S_IDX ( 1),
-    DEFINE_VFP_S_IDX ( 2),
-    DEFINE_VFP_S_IDX ( 3),
-    DEFINE_VFP_S_IDX ( 4),
-    DEFINE_VFP_S_IDX ( 5),
-    DEFINE_VFP_S_IDX ( 6),
-    DEFINE_VFP_S_IDX ( 7),
-    DEFINE_VFP_S_IDX ( 8),
-    DEFINE_VFP_S_IDX ( 9),
-    DEFINE_VFP_S_IDX (10),
-    DEFINE_VFP_S_IDX (11),
-    DEFINE_VFP_S_IDX (12),
-    DEFINE_VFP_S_IDX (13),
-    DEFINE_VFP_S_IDX (14),
-    DEFINE_VFP_S_IDX (15),
-    DEFINE_VFP_S_IDX (16),
-    DEFINE_VFP_S_IDX (17),
-    DEFINE_VFP_S_IDX (18),
-    DEFINE_VFP_S_IDX (19),
-    DEFINE_VFP_S_IDX (20),
-    DEFINE_VFP_S_IDX (21),
-    DEFINE_VFP_S_IDX (22),
-    DEFINE_VFP_S_IDX (23),
-    DEFINE_VFP_S_IDX (24),
-    DEFINE_VFP_S_IDX (25),
-    DEFINE_VFP_S_IDX (26),
-    DEFINE_VFP_S_IDX (27),
-    DEFINE_VFP_S_IDX (28),
-    DEFINE_VFP_S_IDX (29),
-    DEFINE_VFP_S_IDX (30),
-    DEFINE_VFP_S_IDX (31),
-    DEFINE_VFP_D_IDX (0),
-    DEFINE_VFP_D_IDX (1),
-    DEFINE_VFP_D_IDX (2),
-    DEFINE_VFP_D_IDX (3),
-    DEFINE_VFP_D_IDX (4),
-    DEFINE_VFP_D_IDX (5),
-    DEFINE_VFP_D_IDX (6),
-    DEFINE_VFP_D_IDX (7),
-    DEFINE_VFP_D_IDX (8),
-    DEFINE_VFP_D_IDX (9),
-    DEFINE_VFP_D_IDX (10),
-    DEFINE_VFP_D_IDX (11),
-    DEFINE_VFP_D_IDX (12),
-    DEFINE_VFP_D_IDX (13),
-    DEFINE_VFP_D_IDX (14),
-    DEFINE_VFP_D_IDX (15),
-    DEFINE_VFP_D_IDX (16),
-    DEFINE_VFP_D_IDX (17),
-    DEFINE_VFP_D_IDX (18),
-    DEFINE_VFP_D_IDX (19),
-    DEFINE_VFP_D_IDX (20),
-    DEFINE_VFP_D_IDX (21),
-    DEFINE_VFP_D_IDX (22),
-    DEFINE_VFP_D_IDX (23),
-    DEFINE_VFP_D_IDX (24),
-    DEFINE_VFP_D_IDX (25),
-    DEFINE_VFP_D_IDX (26),
-    DEFINE_VFP_D_IDX (27),
-    DEFINE_VFP_D_IDX (28),
-    DEFINE_VFP_D_IDX (29),
-    DEFINE_VFP_D_IDX (30),
-    DEFINE_VFP_D_IDX (31),
-    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, Hex, 4, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_fpscr, NULL, NULL }
+    { DEFINE_VFP_S_IDX ( 0), g_contained_q0, g_invalidate_q0 },
+    { DEFINE_VFP_S_IDX ( 1), g_contained_q0, g_invalidate_q0 },
+    { DEFINE_VFP_S_IDX ( 2), g_contained_q0, g_invalidate_q0 },
+    { DEFINE_VFP_S_IDX ( 3), g_contained_q0, g_invalidate_q0 },
+    { DEFINE_VFP_S_IDX ( 4), g_contained_q1, g_invalidate_q1 },
+    { DEFINE_VFP_S_IDX ( 5), g_contained_q1, g_invalidate_q1 },
+    { DEFINE_VFP_S_IDX ( 6), g_contained_q1, g_invalidate_q1 },
+    { DEFINE_VFP_S_IDX ( 7), g_contained_q1, g_invalidate_q1 },
+    { DEFINE_VFP_S_IDX ( 8), g_contained_q2, g_invalidate_q2 },
+    { DEFINE_VFP_S_IDX ( 9), g_contained_q2, g_invalidate_q2 },
+    { DEFINE_VFP_S_IDX (10), g_contained_q2, g_invalidate_q2 },
+    { DEFINE_VFP_S_IDX (11), g_contained_q2, g_invalidate_q2 },
+    { DEFINE_VFP_S_IDX (12), g_contained_q3, g_invalidate_q3 },
+    { DEFINE_VFP_S_IDX (13), g_contained_q3, g_invalidate_q3 },
+    { DEFINE_VFP_S_IDX (14), g_contained_q3, g_invalidate_q3 },
+    { DEFINE_VFP_S_IDX (15), g_contained_q3, g_invalidate_q3 },
+    { DEFINE_VFP_S_IDX (16), g_contained_q4, g_invalidate_q4 },
+    { DEFINE_VFP_S_IDX (17), g_contained_q4, g_invalidate_q4 },
+    { DEFINE_VFP_S_IDX (18), g_contained_q4, g_invalidate_q4 },
+    { DEFINE_VFP_S_IDX (19), g_contained_q4, g_invalidate_q4 },
+    { DEFINE_VFP_S_IDX (20), g_contained_q5, g_invalidate_q5 },
+    { DEFINE_VFP_S_IDX (21), g_contained_q5, g_invalidate_q5 },
+    { DEFINE_VFP_S_IDX (22), g_contained_q5, g_invalidate_q5 },
+    { DEFINE_VFP_S_IDX (23), g_contained_q5, g_invalidate_q5 },
+    { DEFINE_VFP_S_IDX (24), g_contained_q6, g_invalidate_q6 },
+    { DEFINE_VFP_S_IDX (25), g_contained_q6, g_invalidate_q6 },
+    { DEFINE_VFP_S_IDX (26), g_contained_q6, g_invalidate_q6 },
+    { DEFINE_VFP_S_IDX (27), g_contained_q6, g_invalidate_q6 },
+    { DEFINE_VFP_S_IDX (28), g_contained_q7, g_invalidate_q7 },
+    { DEFINE_VFP_S_IDX (29), g_contained_q7, g_invalidate_q7 },
+    { DEFINE_VFP_S_IDX (30), g_contained_q7, g_invalidate_q7 },
+    { DEFINE_VFP_S_IDX (31), g_contained_q7, g_invalidate_q7 },
+
+    { DEFINE_VFP_D_IDX (0),  g_contained_q0, g_invalidate_q0 },
+    { DEFINE_VFP_D_IDX (1),  g_contained_q0, g_invalidate_q0 },
+    { DEFINE_VFP_D_IDX (2),  g_contained_q1, g_invalidate_q1 },
+    { DEFINE_VFP_D_IDX (3),  g_contained_q1, g_invalidate_q1 },
+    { DEFINE_VFP_D_IDX (4),  g_contained_q2, g_invalidate_q2 },
+    { DEFINE_VFP_D_IDX (5),  g_contained_q2, g_invalidate_q2 },
+    { DEFINE_VFP_D_IDX (6),  g_contained_q3, g_invalidate_q3 },
+    { DEFINE_VFP_D_IDX (7),  g_contained_q3, g_invalidate_q3 },
+    { DEFINE_VFP_D_IDX (8),  g_contained_q4, g_invalidate_q4 },
+    { DEFINE_VFP_D_IDX (9),  g_contained_q4, g_invalidate_q4 },
+    { DEFINE_VFP_D_IDX (10), g_contained_q5, g_invalidate_q5 },
+    { DEFINE_VFP_D_IDX (11), g_contained_q5, g_invalidate_q5 },
+    { DEFINE_VFP_D_IDX (12), g_contained_q6, g_invalidate_q6 },
+    { DEFINE_VFP_D_IDX (13), g_contained_q6, g_invalidate_q6 },
+    { DEFINE_VFP_D_IDX (14), g_contained_q7, g_invalidate_q7 },
+    { DEFINE_VFP_D_IDX (15), g_contained_q7, g_invalidate_q7 },
+    { DEFINE_VFP_D_IDX (16), g_contained_q8, g_invalidate_q8 },
+    { DEFINE_VFP_D_IDX (17), g_contained_q8, g_invalidate_q8 },
+    { DEFINE_VFP_D_IDX (18), g_contained_q9, g_invalidate_q9 },
+    { DEFINE_VFP_D_IDX (19), g_contained_q9, g_invalidate_q9 },
+    { DEFINE_VFP_D_IDX (20), g_contained_q10, g_invalidate_q10 },
+    { DEFINE_VFP_D_IDX (21), g_contained_q10, g_invalidate_q10 },
+    { DEFINE_VFP_D_IDX (22), g_contained_q11, g_invalidate_q11 },
+    { DEFINE_VFP_D_IDX (23), g_contained_q11, g_invalidate_q11 },
+    { DEFINE_VFP_D_IDX (24), g_contained_q12, g_invalidate_q12 },
+    { DEFINE_VFP_D_IDX (25), g_contained_q12, g_invalidate_q12 },
+    { DEFINE_VFP_D_IDX (26), g_contained_q13, g_invalidate_q13 },
+    { DEFINE_VFP_D_IDX (27), g_contained_q13, g_invalidate_q13 },
+    { DEFINE_VFP_D_IDX (28), g_contained_q14, g_invalidate_q14 },
+    { DEFINE_VFP_D_IDX (29), g_contained_q14, g_invalidate_q14 },
+    { DEFINE_VFP_D_IDX (30), g_contained_q15, g_invalidate_q15 },
+    { DEFINE_VFP_D_IDX (31), g_contained_q15, g_invalidate_q15 },
+
+    { DEFINE_VFP_Q_IDX (0),  NULL,            g_invalidate_q0 },
+    { DEFINE_VFP_Q_IDX (1),  NULL,            g_invalidate_q1 },
+    { DEFINE_VFP_Q_IDX (2),  NULL,            g_invalidate_q2 },
+    { DEFINE_VFP_Q_IDX (3),  NULL,            g_invalidate_q3 },
+    { DEFINE_VFP_Q_IDX (4),  NULL,            g_invalidate_q4 },
+    { DEFINE_VFP_Q_IDX (5),  NULL,            g_invalidate_q5 },
+    { DEFINE_VFP_Q_IDX (6),  NULL,            g_invalidate_q6 },
+    { DEFINE_VFP_Q_IDX (7),  NULL,            g_invalidate_q7 },
+    { DEFINE_VFP_Q_IDX (8),  NULL,            g_invalidate_q8 },
+    { DEFINE_VFP_Q_IDX (9),  NULL,            g_invalidate_q9 },
+    { DEFINE_VFP_Q_IDX (10),  NULL,           g_invalidate_q10 },
+    { DEFINE_VFP_Q_IDX (11),  NULL,           g_invalidate_q11 },
+    { DEFINE_VFP_Q_IDX (12),  NULL,           g_invalidate_q12 },
+    { DEFINE_VFP_Q_IDX (13),  NULL,           g_invalidate_q13 },
+    { DEFINE_VFP_Q_IDX (14),  NULL,           g_invalidate_q14 },
+    { DEFINE_VFP_Q_IDX (15),  NULL,           g_invalidate_q15 },
+
+    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, Hex, 4, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL }
 };
 
 // Exception registers
@@ -1631,12 +1634,16 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             break;
 
         case e_regSetVFP:
-            if (reg <= vfp_s31)
+            // "reg" is an index into the floating point register set at this point.
+            // We need to translate it up so entry 0 in the fp reg set is the same as vfp_s0 
+            // in the enumerated values for case statement below.
+            reg += vfp_s0;
+            if (reg >= vfp_s0 && reg <= vfp_s31)
             {
-                value->value.uint32 = m_state.context.vfp.__r[reg];
+                value->value.uint32 = m_state.context.vfp.__r[reg - vfp_s0];
                 return true;
             }
-            else if (reg <= vfp_d31)
+            else if (reg >= vfp_d0 && reg <= vfp_d31)
             {
                 uint32_t d_reg_idx = reg - vfp_d0;
                 uint32_t s_reg_idx = d_reg_idx * 2;
@@ -1644,6 +1651,13 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
                 value->value.v_sint32[1] = m_state.context.vfp.__r[s_reg_idx + 1];
                 return true;
             }
+            else if (reg >= vfp_q0 && reg <= vfp_q15)
+            {
+                uint32_t s_reg_idx = (reg - vfp_q0) * 4;
+                memcpy (&value->value.v_uint8, (uint8_t *) &m_state.context.vfp.__r[s_reg_idx], 16);
+                return true;
+            }
+
             else if (reg == vfp_fpscr)
             {
                 value->value.uint32 = m_state.context.vfp.__fpscr;
@@ -1718,18 +1732,29 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
             break;
 
         case e_regSetVFP:
-            if (reg <= vfp_s31)
+            // "reg" is an index into the floating point register set at this point.
+            // We need to translate it up so entry 0 in the fp reg set is the same as vfp_s0 
+            // in the enumerated values for case statement below.
+            reg += vfp_s0;
+
+            if (reg >= vfp_s0 && reg <= vfp_s31)
             {
-                m_state.context.vfp.__r[reg] = value->value.uint32;
+                m_state.context.vfp.__r[reg - vfp_s0] = value->value.uint32;
                 success = true;
             }
-            else if (reg <= vfp_d31)
+            else if (reg >= vfp_d0 && reg <= vfp_d31)
             {
                 uint32_t d_reg_idx = reg - vfp_d0;
                 uint32_t s_reg_idx = d_reg_idx * 2;
                 m_state.context.vfp.__r[s_reg_idx + 0] = value->value.v_sint32[0];
                 m_state.context.vfp.__r[s_reg_idx + 1] = value->value.v_sint32[1];
                 success = true;
+            }
+            else if (reg >= vfp_q0 && reg <= vfp_q15)
+            {
+                uint32_t s_reg_idx = (reg - vfp_q0) * 4;
+                memcpy ((uint8_t *) &m_state.context.vfp.__r[s_reg_idx], &value->value.v_uint8, 16);
+                return true;
             }
             else if (reg == vfp_fpscr)
             {

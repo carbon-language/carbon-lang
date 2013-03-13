@@ -75,7 +75,7 @@ enum
     dwarf_f6,
     dwarf_f7,
 
-    // Intel wireless MMX general purpose registers 0–7
+    // Intel wireless MMX general purpose registers 0 - 7
     dwarf_wCGR0 = 104,
     dwarf_wCGR1,
     dwarf_wCGR2,
@@ -85,7 +85,7 @@ enum
     dwarf_wCGR6,
     dwarf_wCGR7,
 
-    // XScale accumulator register 0–7 (they do overlap with wCGR0 - wCGR7)
+    // XScale accumulator register 0 - 7 (they do overlap with wCGR0 - wCGR7)
     dwarf_ACC0 = 104,
     dwarf_ACC1,
     dwarf_ACC2,
@@ -95,7 +95,7 @@ enum
     dwarf_ACC6,
     dwarf_ACC7,
 
-    // Intel wireless MMX data registers 0–15
+    // Intel wireless MMX data registers 0 - 15
     dwarf_wR0 = 112,
     dwarf_wR1,
     dwarf_wR2,
@@ -143,7 +143,7 @@ enum
     dwarf_r13_svc,
     dwarf_r14_svc,
 
-    // Intel wireless MMX control register in co-processor 0–7
+    // Intel wireless MMX control register in co-processor 0 - 7
     dwarf_wC0 = 192,
     dwarf_wC1,
     dwarf_wC2,
