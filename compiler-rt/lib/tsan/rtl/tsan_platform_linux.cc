@@ -129,7 +129,8 @@ static void CheckPIE() {
   MemoryMappingLayout proc_maps;
   uptr start, end;
   if (proc_maps.Next(&start, &end,
-                     /*offset*/0, /*filename*/0, /*filename_size*/0)) {
+                     /*offset*/0, /*filename*/0, /*filename_size*/0,
+                     /*protection*/0)) {
     if ((u64)start < kLinuxAppMemBeg) {
       Printf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
              "something is mapped at 0x%zx < 0x%zx)\n",
@@ -146,7 +147,8 @@ static void InitDataSeg() {
   uptr start, end, offset;
   char name[128];
   bool prev_is_data = false;
-  while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name))) {
+  while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name),
+                        /*protection*/ 0)) {
     DPrintf("%p-%p %p %s\n", start, end, offset, name);
     bool is_data = offset != 0 && name[0] != 0;
     // BSS may get merged with [heap] in /proc/self/maps. This is not very

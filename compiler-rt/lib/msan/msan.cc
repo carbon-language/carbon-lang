@@ -74,7 +74,7 @@ static bool IsRunningUnderDr() {
   const sptr kBufSize = 4095;
   char *filename = (char*)MmapOrDie(kBufSize, __FUNCTION__);
   while (proc_maps.Next(/* start */0, /* end */0, /* file_offset */0,
-                        filename, kBufSize)) {
+                        filename, kBufSize, /* protection */0)) {
     if (internal_strstr(filename, "libdynamorio") != 0) {
       result = true;
       break;

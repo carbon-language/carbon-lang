@@ -184,7 +184,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     MemoryMappingLayout proc_maps;
     uptr start, end, offset;
     uptr prev_end = 0;
-    while (proc_maps.Next(&start, &end, &offset, 0, 0)) {
+    while (proc_maps.Next(&start, &end, &offset, 0, 0, /* protection */0)) {
       if ((uptr)&rl < end)
         break;
       prev_end = end;
@@ -390,7 +390,8 @@ static bool IsDecimal(char c) {
 }
 
 bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
-                               char filename[], uptr filename_size) {
+                               char filename[], uptr filename_size,
+                               uptr *protection) {
   char *last = proc_self_maps_.data + proc_self_maps_.len;
   if (current_ >= last) return false;
   uptr dummy;
@@ -405,10 +406,22 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   CHECK_EQ(*current_++, '-');
   *end = ParseHex(&current_);
   CHECK_EQ(*current_++, ' ');
-  CHECK(IsOnOf(*current_++, '-', 'r'));
-  CHECK(IsOnOf(*current_++, '-', 'w'));
-  CHECK(IsOnOf(*current_++, '-', 'x'));
-  CHECK(IsOnOf(*current_++, 's', 'p'));
+  uptr local_protection = 0;
+  CHECK(IsOnOf(*current_, '-', 'r'));
+  if (*current_++ == 'r')
+    local_protection |= kProtectionRead;
+  CHECK(IsOnOf(*current_, '-', 'w'));
+  if (*current_++ == 'w')
+    local_protection |= kProtectionWrite;
+  CHECK(IsOnOf(*current_, '-', 'x'));
+  if (*current_++ == 'x')
+    local_protection |= kProtectionExecute;
+  CHECK(IsOnOf(*current_, 's', 'p'));
+  if (*current_++ == 's')
+    local_protection |= kProtectionShared;
+  if (protection) {
+    *protection = local_protection;
+  }
   CHECK_EQ(*current_++, ' ');
   *offset = ParseHex(&current_);
   CHECK_EQ(*current_++, ' ');
@@ -438,8 +451,10 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
 // Gets the object name and the offset by walking MemoryMappingLayout.
 bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                                  char filename[],
-                                                 uptr filename_size) {
-  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
+                                                 uptr filename_size,
+                                                 uptr *protection) {
+  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size,
+                                       protection);
 }
 
 bool SanitizerSetThreadName(const char *name) {

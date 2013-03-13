@@ -216,7 +216,9 @@ void MemoryMappingLayout::LoadFromCache() {
 template<u32 kLCSegment, typename SegmentCommand>
 bool MemoryMappingLayout::NextSegmentLoad(
     uptr *start, uptr *end, uptr *offset,
-    char filename[], uptr filename_size) {
+    char filename[], uptr filename_size, uptr *protection) {
+  if (protection)
+    UNIMPLEMENTED();
   const char* lc = current_load_cmd_addr_;
   current_load_cmd_addr_ += ((const load_command *)lc)->cmdsize;
   if (((const load_command *)lc)->cmd == kLCSegment) {
@@ -294,8 +296,10 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
 
 bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                                  char filename[],
-                                                 uptr filename_size) {
-  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
+                                                 uptr filename_size
+                                                 uptr *protection) {
+  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size,
+                                       protection);
 }
 
 BlockingMutex::BlockingMutex(LinkerInitialized) {

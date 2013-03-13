@@ -113,7 +113,8 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
       PrintStackFramePrefix(frame_num, pc);
       uptr offset;
       if (proc_maps.GetObjectNameAndOffset(pc, &offset,
-                                           buff.data(), buff.size())) {
+                                           buff.data(), buff.size(),
+                                           /* protection */0)) {
         PrintModuleAndOffset(buff.data(), offset, strip_file_prefix);
       }
       Printf("\n");
