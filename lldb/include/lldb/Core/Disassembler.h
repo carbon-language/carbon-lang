@@ -85,7 +85,7 @@ public:
           const ExecutionContext* exe_ctx);
     
     virtual bool
-    DoesBranch () const = 0;
+    DoesBranch () = 0;
 
     virtual size_t
     Decode (const Disassembler &disassembler, 
@@ -206,7 +206,7 @@ public:
      ~PseudoInstruction ();
      
     virtual bool
-    DoesBranch () const;
+    DoesBranch ();
 
     virtual void
     CalculateMnemonicOperandsAndComment (const ExecutionContext* exe_ctx)

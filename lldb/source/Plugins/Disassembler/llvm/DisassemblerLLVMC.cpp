@@ -73,9 +73,59 @@ public:
     }
         
     virtual bool
-    DoesBranch () const
+    DoesBranch ()
     {
+        if (m_does_branch == eLazyBoolCalculate)
+        {
+            m_disasm.Lock(this, NULL);
+            DataExtractor data;
+            if (m_opcode.GetData(data))
+            {
+                bool is_alternate_isa;
+                lldb::addr_t pc = m_address.GetFileAddress();
+
+                DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = GetDisasmToUse (is_alternate_isa);
+                uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (0, 1));
+                const size_t opcode_data_len = data.GetByteSize();
+                llvm::MCInst inst;
+                size_t inst_size = mc_disasm_ptr->GetMCInst(opcode_data,
+                                                            opcode_data_len,
+                                                            pc,
+                                                            inst);
+                // Be conservative, if we didn't understand the instruction, say it might branch...
+                if (inst_size == 0)
+                    m_does_branch = eLazyBoolYes;
+                else
+                {
+                    bool can_branch = mc_disasm_ptr->CanBranch(inst);
+                    if (can_branch)
+                        m_does_branch = eLazyBoolYes;
+                    else
+                        m_does_branch = eLazyBoolNo;
+                }
+            }
+            m_disasm.Unlock();
+        }
         return m_does_branch == eLazyBoolYes;
+    }
+    
+    DisassemblerLLVMC::LLVMCDisassembler *
+    GetDisasmToUse (bool &is_alternate_isa)
+    {
+        DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = m_disasm.m_disasm_ap.get();
+        
+        is_alternate_isa = false;
+        if (m_disasm.m_alternate_disasm_ap.get() != NULL)
+        {
+            const AddressClass address_class = GetAddressClass ();
+        
+            if (address_class == eAddressClassCodeAlternateISA)
+            {
+                mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
+                is_alternate_isa = true;
+            }
+        }
+         return mc_disasm_ptr;
     }
     
     virtual size_t
@@ -126,9 +176,9 @@ public:
         }
         if (!got_op)
         {
-            DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = m_disasm.m_disasm_ap.get();
+            bool is_alternate_isa = false;
+            DisassemblerLLVMC::LLVMCDisassembler *mc_disasm_ptr = GetDisasmToUse (is_alternate_isa);
             
-            bool is_altnernate_isa = false;
             if (m_disasm.m_alternate_disasm_ap.get() != NULL)
             {
                 const AddressClass address_class = GetAddressClass ();
@@ -136,14 +186,14 @@ public:
                 if (address_class == eAddressClassCodeAlternateISA)
                 {
                     mc_disasm_ptr = m_disasm.m_alternate_disasm_ap.get();
-                    is_altnernate_isa = true;
+                    is_alternate_isa = true;
                 }
             }
             
             const llvm::Triple::ArchType machine = arch.GetMachine();
             if (machine == llvm::Triple::arm || machine == llvm::Triple::thumb)
             {
-                if (machine == llvm::Triple::thumb || is_altnernate_isa)
+                if (machine == llvm::Triple::thumb || is_alternate_isa)
                 {
                     uint32_t thumb_opcode = data.GetU16(&data_offset);
                     if ((thumb_opcode & 0xe000) != 0xe000 || ((thumb_opcode & 0x1800u) == 0))

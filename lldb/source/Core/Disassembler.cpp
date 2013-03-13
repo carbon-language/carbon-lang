@@ -1190,7 +1190,7 @@ PseudoInstruction::~PseudoInstruction ()
 }
      
 bool
-PseudoInstruction::DoesBranch () const
+PseudoInstruction::DoesBranch ()
 {
     // This is NOT a valid question for a pseudo instruction.
     return false;
