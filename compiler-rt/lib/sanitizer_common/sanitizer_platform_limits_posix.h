@@ -43,7 +43,7 @@ namespace __sanitizer {
   // limit. Verified with a compiler assert in .cc.
   const int pthread_attr_t_max_sz = 128;
   union __sanitizer_pthread_attr_t {
-    char size[pthread_attr_t_max_sz];
+    char size[pthread_attr_t_max_sz]; // NOLINT
     void *align;
   };
 }  // namespace __sanitizer

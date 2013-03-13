@@ -809,7 +809,8 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
   const uptr minstacksize = GetTlsSize() + 128*1024;
   if (stacksize < minstacksize) {
     if (flags()->verbosity)
-      Printf("MemorySanitizer: increasing stacksize %zu->%zu\n", stacksize, minstacksize);
+      Printf("MemorySanitizer: increasing stacksize %zu->%zu\n", stacksize,
+             minstacksize);
     pthread_attr_setstacksize(attr, minstacksize);
   }
 
