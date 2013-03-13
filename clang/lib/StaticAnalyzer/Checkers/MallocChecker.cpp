@@ -236,7 +236,7 @@ private:
   void ReportUseAfterFree(CheckerContext &C, SourceRange Range,
                           SymbolRef Sym) const;
   void ReportDoubleFree(CheckerContext &C, SourceRange Range, bool Released,
-                        SymbolRef Sym, bool Interesting) const;
+                        SymbolRef Sym, SymbolRef PrevSym) const;
 
   /// Find the location of the allocation for Sym on the path leading to the
   /// exploded node N.
@@ -969,7 +969,7 @@ void MallocChecker::ReportUseAfterFree(CheckerContext &C, SourceRange Range,
 
 void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
                                      bool Released, SymbolRef Sym, 
-                                     bool Interesting) const {
+                                     SymbolRef PrevSym) const {
 
   if (ExplodedNode *N = C.generateSink()) {
     if (!BT_DoubleFree)
@@ -980,8 +980,9 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
                 : "Attempt to free non-owned memory"),
       N);
     R->addRange(Range);
-    if (Interesting)
-      R->markInteresting(Sym);
+    R->markInteresting(Sym);
+    if (PrevSym)
+      R->markInteresting(PrevSym);
     R->addVisitor(new MallocBugVisitor(Sym));
     C.emitReport(R);
   }
