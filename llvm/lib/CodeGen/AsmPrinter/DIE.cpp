@@ -120,7 +120,7 @@ DIE *DIE::getCompileUnit() const{
       return p;
     p = p->getParent();
   }
-  return NULL;
+  llvm_unreachable("We should not have orphaned DIEs.");
 }
 
 #ifndef NDEBUG
