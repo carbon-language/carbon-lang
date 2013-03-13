@@ -44,7 +44,7 @@ endif()
 
 if( NOT CLANG_BUILT_STANDALONE )
   list(APPEND CLANG_TEST_DEPS
-    llc opt FileCheck count not
+    llc opt FileCheck count not llvm-symbolizer
     )
 
   add_lit_testsuite(check-clang "Running the Clang regression tests"
