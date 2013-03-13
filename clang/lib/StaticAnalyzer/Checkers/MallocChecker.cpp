@@ -229,8 +229,14 @@ private:
 
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
-  void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange range) const;
+  void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange Range) const;
+  void ReportBadDealloc(CheckerContext &C, SourceRange Range,
+                        const Expr *DeallocExpr, const RefState *RS) const;
   void ReportOffsetFree(CheckerContext &C, SVal ArgVal, SourceRange Range)const;
+  void ReportUseAfterFree(CheckerContext &C, SourceRange Range,
+                          SymbolRef Sym) const;
+  void ReportDoubleFree(CheckerContext &C, SourceRange Range, bool Released,
+                        SymbolRef Sym, bool Interesting) const;
 
   /// Find the location of the allocation for Sym on the path leading to the
   /// exploded node N.
@@ -714,7 +720,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   
   const MemSpaceRegion *MS = R->getMemorySpace();
   
-  // Parameters, locals, statics, and globals shouldn't be freed.
+  // Parameters, locals, statics, globals, and memory returned by alloca() 
+  // shouldn't be freed.
   if (!(isa<UnknownSpaceRegion>(MS) || isa<HeapSpaceRegion>(MS))) {
     // FIXME: at the time this code was written, malloc() regions were
     // represented by conjured symbols, which are all in UnknownSpaceRegion.
@@ -742,22 +749,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   if (RsBase &&
       (RsBase->isReleased() || RsBase->isRelinquished()) &&
       !didPreviousFreeFail(State, SymBase, PreviousRetStatusSymbol)) {
-
-    if (ExplodedNode *N = C.generateSink()) {
-      if (!BT_DoubleFree)
-        BT_DoubleFree.reset(
-          new BugType("Double free", "Memory Error"));
-      BugReport *R = new BugReport(*BT_DoubleFree,
-        (RsBase->isReleased() ? "Attempt to free released memory"
-                              : "Attempt to free non-owned memory"),
-        N);
-      R->addRange(ArgExpr->getSourceRange());
-      R->markInteresting(SymBase);
-      if (PreviousRetStatusSymbol)
-        R->markInteresting(PreviousRetStatusSymbol);
-      R->addVisitor(new MallocBugVisitor(SymBase));
-      C.emitReport(R);
-    }
+    ReportDoubleFree(C, ParentExpr->getSourceRange(), RsBase->isReleased(),
+                     SymBase, PreviousRetStatusSymbol);
     return 0;
   }
 
@@ -884,7 +877,7 @@ bool MallocChecker::SummarizeRegion(raw_ostream &os,
 }
 
 void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
-                                  SourceRange range) const {
+                                  SourceRange Range) const {
   if (ExplodedNode *N = C.generateSink()) {
     if (!BT_BadFree)
       BT_BadFree.reset(new BugType("Bad free", "Memory Error"));
@@ -917,7 +910,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
     
     BugReport *R = new BugReport(*BT_BadFree, os.str(), N);
     R->markInteresting(MR);
-    R->addRange(range);
+    R->addRange(Range);
     C.emitReport(R);
   }
 }
@@ -955,6 +948,43 @@ void MallocChecker::ReportOffsetFree(CheckerContext &C, SVal ArgVal,
   R->markInteresting(MR->getBaseRegion());
   R->addRange(Range);
   C.emitReport(R);
+}
+
+void MallocChecker::ReportUseAfterFree(CheckerContext &C, SourceRange Range,
+                                       SymbolRef Sym) const {
+
+  if (ExplodedNode *N = C.generateSink()) {
+    if (!BT_UseFree)
+      BT_UseFree.reset(new BugType("Use-after-free", "Memory Error"));
+
+    BugReport *R = new BugReport(*BT_UseFree,
+                                 "Use of memory after it is freed", N);
+
+    R->markInteresting(Sym);
+    R->addRange(Range);
+    R->addVisitor(new MallocBugVisitor(Sym));
+    C.emitReport(R);
+  }
+}
+
+void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
+                                     bool Released, SymbolRef Sym, 
+                                     bool Interesting) const {
+
+  if (ExplodedNode *N = C.generateSink()) {
+    if (!BT_DoubleFree)
+      BT_DoubleFree.reset(new BugType("Double free", "Memory Error"));
+
+    BugReport *R = new BugReport(*BT_DoubleFree,
+      (Released ? "Attempt to free released memory"
+                : "Attempt to free non-owned memory"),
+      N);
+    R->addRange(Range);
+    if (Interesting)
+      R->markInteresting(Sym);
+    R->addVisitor(new MallocBugVisitor(Sym));
+    C.emitReport(R);
+  }
 }
 
 ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
@@ -1222,7 +1252,7 @@ void MallocChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
                                     E = CE->arg_end(); I != E; ++I) {
     const Expr *A = *I;
     if (A->getType().getTypePtr()->isAnyPointerType()) {
-      SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
+      SymbolRef Sym = C.getSVal(A).getAsSymbol();
       if (!Sym)
         continue;
       if (checkUseAfterFree(Sym, C, A))
@@ -1303,21 +1333,12 @@ bool MallocChecker::isReleased(SymbolRef Sym, CheckerContext &C) const {
 
 bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                                       const Stmt *S) const {
-  if (isReleased(Sym, C)) {
-    if (ExplodedNode *N = C.generateSink()) {
-      if (!BT_UseFree)
-        BT_UseFree.reset(new BugType("Use-after-free", "Memory Error"));
 
-      BugReport *R = new BugReport(*BT_UseFree,
-                                   "Use of memory after it is freed",N);
-      if (S)
-        R->addRange(S->getSourceRange());
-      R->markInteresting(Sym);
-      R->addVisitor(new MallocBugVisitor(Sym));
-      C.emitReport(R);
-      return true;
-    }
+  if (isReleased(Sym, C)) {
+    ReportUseAfterFree(C, S->getSourceRange(), Sym);
+    return true;
   }
+
   return false;
 }
 
