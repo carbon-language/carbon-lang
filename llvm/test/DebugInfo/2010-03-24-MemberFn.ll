@@ -43,13 +43,13 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !1 = metadata !{i32 786443, metadata !2, i32 3, i32 0} ; [ DW_TAG_lexical_block ]
 !2 = metadata !{i32 786443, metadata !3, i32 3, i32 0} ; [ DW_TAG_lexical_block ]
 !3 = metadata !{i32 786478, i32 0, metadata !4, metadata !"bar", metadata !"bar", metadata !"_Z3barv", metadata !4, i32 3, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 ()* @_Z3barv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
-!4 = metadata !{i32 786473, metadata !"one.cc", metadata !"/tmp/", metadata !5} ; [ DW_TAG_file_type ]
+!4 = metadata !{i32 786473, metadata !"one.cc", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
 !5 = metadata !{i32 786449, i32 0, i32 4, metadata !4, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !24, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !6 = metadata !{i32 786453, metadata !4, metadata !"", metadata !4, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !7 = metadata !{metadata !8}
 !8 = metadata !{i32 786468, metadata !4, metadata !"int", metadata !4, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !9 = metadata !{i32 786451, metadata !4, metadata !"S", metadata !10, i32 2, i64 8, i64 8, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_structure_type ]
-!10 = metadata !{i32 786473, metadata !"one.h", metadata !"/tmp/", metadata !5} ; [ DW_TAG_file_type ]
+!10 = metadata !{i32 786473, metadata !"one.h", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
 !11 = metadata !{metadata !12}
 !12 = metadata !{i32 786478, i32 0, metadata !9, metadata !"foo", metadata !"foo", metadata !"_ZN1S3fooEv", metadata !10, i32 3, metadata !13, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 (%struct.S*)* @_ZN1S3fooEv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
 !13 = metadata !{i32 786453, metadata !4, metadata !"", metadata !4, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !14, i32 0, null} ; [ DW_TAG_subroutine_type ]

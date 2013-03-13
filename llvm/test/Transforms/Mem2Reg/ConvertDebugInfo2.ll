@@ -32,7 +32,7 @@ return:                                           ; preds = %entry
 
 !0 = metadata !{i32 786689, metadata !1, metadata !"a", metadata !2, i32 8, metadata !6, i32 0, null} ; [ DW_TAG_arg_variable ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"baz", metadata !"baz", metadata !"baz", metadata !2, i32 8, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, void (i32)* @baz, null, null, null, i32 8} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"bar.c", metadata !"/tmp/", metadata !3} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786473, metadata !"bar.c", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786449, i32 0, i32 1, metadata !"bar.c", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !4 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !5 = metadata !{null, metadata !6}

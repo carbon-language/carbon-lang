@@ -531,7 +531,7 @@ bool DINameSpace::Verify() const {
 
 /// \brief Verify that the file descriptor is well formed.
 bool DIFile::Verify() const {
-  return isFile() && DbgNode->getNumOperands() == 4;
+  return isFile() && DbgNode->getNumOperands() == 3;
 }
 
 /// \brief Verify that the enumerator descriptor is well formed.

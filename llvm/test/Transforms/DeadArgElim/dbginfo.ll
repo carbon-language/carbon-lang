@@ -40,7 +40,7 @@ entry:
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5, metadata !8, metadata !9}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"run", metadata !"run", metadata !"", metadata !6, i32 8, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z3runv, null, null, metadata !1, i32 8} ; [ DW_TAG_subprogram ] [line 8] [def] [run]
-!6 = metadata !{i32 786473, metadata !"test.cc", metadata !"/home/samsonov/tmp/clang-di", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !"test.cc", metadata !"/home/samsonov/tmp/clang-di"} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !1, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{i32 786478, i32 0, metadata !6, metadata !"dead_vararg", metadata !"dead_vararg", metadata !"", metadata !6, i32 5, metadata !7, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (...)* @_ZN12_GLOBAL__N_111dead_varargEz, null, null, metadata !1, i32 5} ; [ DW_TAG_subprogram ] [line 5] [local] [def] [dead_vararg]
 

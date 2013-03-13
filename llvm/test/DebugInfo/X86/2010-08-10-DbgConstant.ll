@@ -16,7 +16,7 @@ declare void @bar(i32)
 !11 = metadata !{metadata !5}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"foo", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, void ()* @foo, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"/tmp/l.c", metadata !"/Volumes/Lalgate/clean/D", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !"/tmp/l.c", metadata !"/Volumes/Lalgate/clean/D"} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang 2.8", i1 false, metadata !"", i32 0, null, null, metadata !10, metadata !11, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null}

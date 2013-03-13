@@ -38,7 +38,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !3 = metadata !{metadata !4}
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"zzz", metadata !"zzz", metadata !"_Z3zzzi", metadata !6, i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3zzzi, null, null, metadata !1, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [zzz]
-!6 = metadata !{i32 786473, metadata !"a.cc", metadata !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo", null} ; [ DW_TAG_file_type ]
+!6 = metadata !{i32 786473, metadata !"a.cc", metadata !"/usr/local/google/llvm_cmake_clang/tmp/debuginfo"} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !9}
 !9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]

@@ -75,7 +75,7 @@ declare i32 @puts(i8* nocapture) nounwind
 !30 = metadata !{metadata !14, metadata !17}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"gcd", metadata !"gcd", metadata !"", metadata !1, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i64 (i64, i64)* @gcd, null, null, metadata !29, i32 0} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !"rem_small.c", metadata !"/private/tmp", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !"rem_small.c", metadata !"/private/tmp"} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 12, metadata !1, metadata !"clang version 2.9 (trunk 124117)", i1 true, metadata !"", i32 0, null, null, metadata !28, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}

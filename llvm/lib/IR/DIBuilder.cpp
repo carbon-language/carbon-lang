@@ -121,7 +121,6 @@ DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
     GetTagConstant(VMContext, dwarf::DW_TAG_file_type),
     MDString::get(VMContext, Filename),
     MDString::get(VMContext, Directory),
-    NULL // TheCU
   };
   return DIFile(MDNode::get(VMContext, Elts));
 }

@@ -29,7 +29,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !35 = metadata !{metadata !18, metadata !25, metadata !26}
 
 !0 = metadata !{i32 786484, i32 0, metadata !1, metadata !"ret", metadata !"ret", metadata !"", metadata !1, i32 7, metadata !3, i1 false, i1 true, null} ; [ DW_TAG_variable ]
-!1 = metadata !{i32 786473, metadata !"foo.c", metadata !"/tmp/", metadata !2} ; [ DW_TAG_file_type ]
+!1 = metadata !{i32 786473, metadata !"foo.c", metadata !"/tmp/"} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 0, i32 1, metadata !1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, null, null, metadata !32, metadata !31, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786468, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !4 = metadata !{i32 786689, metadata !5, metadata !"x", metadata !1, i32 12, metadata !3, i32 0, null} ; [ DW_TAG_arg_variable ]
