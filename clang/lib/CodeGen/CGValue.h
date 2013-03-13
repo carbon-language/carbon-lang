@@ -99,7 +99,7 @@ public:
 
 /// Does an ARC strong l-value have precise lifetime?
 enum ARCPreciseLifetime_t {
-  ARCImpreciseLifetime, ARCPreciseLifetime,
+  ARCImpreciseLifetime, ARCPreciseLifetime
 };
 
 /// LValue - This represents an lvalue references.  Because C/C++ allow
