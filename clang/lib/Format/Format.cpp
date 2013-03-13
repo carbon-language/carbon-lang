@@ -288,9 +288,9 @@ public:
     LineState State;
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent,
-                                     !Style.BinPackParameters,
-                                     /*HasMultiParameterLine=*/ false));
+    State.Stack.push_back(
+        ParenState(FirstIndent + 4, FirstIndent, !Style.BinPackParameters,
+                   /*HasMultiParameterLine=*/ false));
     State.VariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;
@@ -739,8 +739,8 @@ private:
     unsigned StartColumn = State.Column - Current.FormatTok.TokenLength;
     unsigned OffsetFromStart = 0;
     while (StartColumn + TailLength > getColumnLimit()) {
-      StringRef Text = StringRef(Current.FormatTok.Tok.getLiteralData() +
-                                 TailOffset, TailLength);
+      StringRef Text = StringRef(
+          Current.FormatTok.Tok.getLiteralData() + TailOffset, TailLength);
       if (StartColumn + OffsetFromStart + 1 > getColumnLimit())
         break;
       StringRef::size_type SplitPoint = getSplitPoint(
@@ -1424,7 +1424,7 @@ private:
     }
   }
 
-  bool touchesRanges(const CharSourceRange& Range) {
+  bool touchesRanges(const CharSourceRange &Range) {
     for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
       if (!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),
                                                Ranges[i].getBegin()) &&

@@ -183,21 +183,22 @@ private:
   bool parseSquare() {
     if (!CurrentToken)
       return false;
-    ScopedContextCreator ContextCreator(*this, 10);
 
     // A '[' could be an index subscript (after an indentifier or after
     // ')' or ']'), it could be the start of an Objective-C method
     // expression, or it could the the start of an Objective-C array literal.
     AnnotatedToken *Left = CurrentToken->Parent;
     AnnotatedToken *Parent = getPreviousToken(*Left);
-    Contexts.back().IsExpression = true;
     bool StartsObjCMethodExpr =
-        !Parent || Parent->is(tok::colon) || Parent->is(tok::l_square) ||
-        Parent->is(tok::l_paren) || Parent->is(tok::kw_return) ||
-        Parent->is(tok::kw_throw) || isUnaryOperator(*Parent) ||
-        Parent->Type == TT_ObjCForIn || Parent->Type == TT_CastRParen ||
-        getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
-        prec::Unknown;
+        Contexts.back().CanBeExpression &&
+        (!Parent || Parent->is(tok::colon) || Parent->is(tok::l_square) ||
+         Parent->is(tok::l_paren) || Parent->is(tok::kw_return) ||
+         Parent->is(tok::kw_throw) || isUnaryOperator(*Parent) ||
+         Parent->Type == TT_ObjCForIn || Parent->Type == TT_CastRParen ||
+         getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
+         prec::Unknown);
+    ScopedContextCreator ContextCreator(*this, 10);
+    Contexts.back().IsExpression = true;
     bool StartsObjCArrayLiteral = Parent && Parent->is(tok::at);
 
     if (StartsObjCMethodExpr) {
@@ -525,7 +526,8 @@ private:
     Context(unsigned BindingStrength, bool IsExpression)
         : BindingStrength(BindingStrength), LongestObjCSelectorName(0),
           ColonIsForRangeExpr(false), ColonIsObjCMethodExpr(false),
-          FirstObjCSelectorName(NULL), IsExpression(IsExpression) {}
+          FirstObjCSelectorName(NULL), IsExpression(IsExpression),
+          CanBeExpression(true) {}
 
     unsigned BindingStrength;
     unsigned LongestObjCSelectorName;
@@ -533,6 +535,7 @@ private:
     bool ColonIsObjCMethodExpr;
     AnnotatedToken *FirstObjCSelectorName;
     bool IsExpression;
+    bool CanBeExpression;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
@@ -574,6 +577,8 @@ private:
     } else if (Current.Parent &&
                Current.Parent->Type == TT_CtorInitializerColon) {
       Contexts.back().IsExpression = true;
+    } else if (Current.is(tok::kw_new)) {
+      Contexts.back().CanBeExpression = false;
     }
 
     if (Current.Type == TT_Unknown) {
