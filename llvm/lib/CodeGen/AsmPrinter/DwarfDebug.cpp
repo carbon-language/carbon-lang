@@ -1889,13 +1889,15 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
 
 /// For a given compile unit DIE, returns offset from beginning of debug info.
 unsigned DwarfUnits::getCUOffset(DIE *Die) {
+  assert(Die->getTag() == dwarf::DW_TAG_compile_unit  &&
+         "Input DIE should be compile unit in getCUOffset.");
   for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
        E = CUs.end(); I != E; ++I) {
     CompileUnit *TheCU = *I;
     if (TheCU->getCUDie() == Die)
       return TheCU->getDebugInfoOffset();
   }
-  return 0;
+  llvm_unreachable("The compile unit DIE should belong to CUs in DwarfUnits.");
 }
 
 // Emit the debug info section.
