@@ -220,7 +220,7 @@ class CommandObjectSourceList : public CommandObjectParsed
             symbol_name.clear();
             address = LLDB_INVALID_ADDRESS;
             start_line = 0;
-            num_lines = 10;
+            num_lines = 0;
             show_bp_locs = false;
             reverse = false;
             modules.clear();
@@ -320,6 +320,9 @@ protected:
             bool append = true;
             size_t num_matches = 0;
             
+            if (m_options.num_lines == 0)
+                m_options.num_lines = 10;
+
             const size_t num_modules = m_options.modules.size();
             if (num_modules > 0)
             {
@@ -420,23 +423,26 @@ protected:
                 }
             }
             
-                
             // This is a little hacky, but the first line table entry for a function points to the "{" that 
             // starts the function block.  It would be nice to actually get the function
             // declaration in there too.  So back up a bit, but not further than what you're going to display.
-            uint32_t lines_to_back_up = m_options.num_lines >= 10 ? 5 : m_options.num_lines/2;
+            uint32_t extra_lines;
+            if (m_options.num_lines >= 10)
+                extra_lines = 5;
+            else
+                extra_lines = m_options.num_lines/2;
             uint32_t line_no;
-            if (start_line <= lines_to_back_up)
+            if (start_line <= extra_lines)
                 line_no = 1;
             else
-                line_no = start_line - lines_to_back_up;
+                line_no = start_line - extra_lines;
                 
             // For fun, if the function is shorter than the number of lines we're supposed to display, 
             // only display the function...
             if (end_line != 0)
             {
                 if (m_options.num_lines > end_line - line_no)
-                    m_options.num_lines = end_line - line_no;
+                    m_options.num_lines = end_line - line_no + extra_lines;
             }
             
             char path_buf[PATH_MAX];
@@ -452,7 +458,7 @@ protected:
             else
                 m_breakpoint_locations.Clear();
 
-            result.AppendMessageWithFormat("File: %s.\n", path_buf);
+            result.AppendMessageWithFormat("File: %s\n", path_buf);
             target->GetSourceManager().DisplaySourceLinesWithLineNumbers (start_file,
                                                                           line_no,
                                                                           0,
@@ -553,6 +559,9 @@ protected:
                                        show_module,
                                        show_inlined_frames);
                     result.GetOutputStream().EOL();
+
+                    if (m_options.num_lines == 0)
+                        m_options.num_lines = 10;
                     
                     size_t lines_to_back_up = m_options.num_lines >= 10 ? 5 : m_options.num_lines/2;
 
@@ -576,14 +585,18 @@ protected:
             if (m_options.start_line == 0)
             {
                 if (target->GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream(),
-                                                                           GetBreakpointLocations (),
-                                                                           m_options.reverse))
+                                                                           m_options.num_lines,
+                                                                           m_options.reverse,
+                                                                           GetBreakpointLocations ()))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
             }
             else
             {
+                if (m_options.num_lines == 0)
+                    m_options.num_lines = 10;
+
                 if (m_options.show_bp_locs)
                 {
                     SourceManager::FileSP last_file_sp (target->GetSourceManager().GetLastFile ());
@@ -600,8 +613,8 @@ protected:
 
                 if (target->GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
                             m_options.start_line,   // Line to display
-                            0,                      // Lines before line to display
-                            m_options.num_lines,    // Lines after line to display
+                            m_options.num_lines,    // Lines after line to
+                            UINT32_MAX,             // Don't mark "line"
                             "",                     // Don't mark "line"
                             &result.GetOutputStream(),
                             GetBreakpointLocations ()))
@@ -700,6 +713,9 @@ protected:
                     else
                         m_breakpoint_locations.Clear();
 
+                    if (m_options.num_lines == 0)
+                        m_options.num_lines = 10;
+                    
                     target->GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
                                                                                   m_options.start_line,
                                                                                   0,

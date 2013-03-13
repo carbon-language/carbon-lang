@@ -129,17 +129,18 @@ public:
 
     // This variant uses the last file we visited.
     size_t
-    DisplaySourceLinesWithLineNumbersUsingLastFile (uint32_t line,
-                                                    uint32_t context_before,
-                                                    uint32_t context_after,
+    DisplaySourceLinesWithLineNumbersUsingLastFile (uint32_t start_line,
+                                                    uint32_t count,
+                                                    uint32_t curr_line,
                                                     const char* current_line_cstr,
                                                     Stream *s,
                                                     const SymbolContextList *bp_locs = NULL);
 
     size_t
     DisplayMoreWithLineNumbers (Stream *s,
-                                const SymbolContextList *bp_locs = NULL,
-                                bool reverse = false);
+                                uint32_t count,
+                                bool reverse,
+                                const SymbolContextList *bp_locs = NULL);
 
     bool
     SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line);
@@ -169,11 +170,9 @@ protected:
     // Classes that inherit from SourceManager can see and modify these
     //------------------------------------------------------------------
     FileSP m_last_file_sp;
-    uint32_t m_last_file_line;
-    uint32_t m_last_file_context_before;
-    uint32_t m_last_file_context_after;
+    uint32_t m_last_line;
+    uint32_t m_last_count;
     bool     m_default_set;
-    bool     m_first_reverse;
     Target *m_target;
     Debugger *m_debugger;
     

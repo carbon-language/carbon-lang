@@ -38,11 +38,9 @@ static inline bool is_newline_char(char ch)
 //----------------------------------------------------------------------
 SourceManager::SourceManager(Target &target) :
     m_last_file_sp (),
-    m_last_file_line (0),
-    m_last_file_context_before (0),
-    m_last_file_context_after (10),
+    m_last_line (0),
+    m_last_count (0),
     m_default_set(false),
-    m_first_reverse(true),
     m_target (&target),
     m_debugger(NULL)
 {
@@ -51,11 +49,9 @@ SourceManager::SourceManager(Target &target) :
 
 SourceManager::SourceManager(Debugger &debugger) :
     m_last_file_sp (),
-    m_last_file_line (0),
-    m_last_file_context_before (0),
-    m_last_file_context_after (10),
+    m_last_line (0),
+    m_last_count (0),
     m_default_set(false),
-    m_first_reverse (true),
     m_target (NULL),
     m_debugger (&debugger)
 {
@@ -84,53 +80,49 @@ SourceManager::GetFile (const FileSpec &file_spec)
 }
 
 size_t
-SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
-(
-    uint32_t line,
-    uint32_t context_before,
-    uint32_t context_after,
-    const char* current_line_cstr,
-    Stream *s,
-    const SymbolContextList *bp_locs
-)
+SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile (uint32_t start_line,
+                                                               uint32_t count,
+                                                               uint32_t curr_line,
+                                                               const char* current_line_cstr,
+                                                               Stream *s,
+                                                               const SymbolContextList *bp_locs)
 {
-    m_first_reverse = true;
+    if (count == 0)
+        return 0;
     size_t return_value = 0;
-    if (line == 0)
+    if (start_line == 0)
     {
-        if (m_last_file_line != 0
-            && m_last_file_line != UINT32_MAX)
-            line = m_last_file_line + context_before;
+        if (m_last_line != 0 && m_last_line != UINT32_MAX)
+            start_line = m_last_line + m_last_count;
         else
-            line = 1;
+            start_line = 1;
     }
 
-    m_last_file_line = line + context_after + 1;
-    m_last_file_context_before = context_before;
-    m_last_file_context_after = context_after;
+    if (!m_default_set)
+    {
+        FileSpec tmp_spec;
+        uint32_t tmp_line;
+        GetDefaultFileAndLine(tmp_spec, tmp_line);
+    }
 
-    if (context_before == UINT32_MAX)
-        context_before = 0;
-    if (context_after == UINT32_MAX)
-        context_after = 10;
+    m_last_line = start_line;
+    m_last_count = count;
 
     if (m_last_file_sp.get())
     {
-        const uint32_t start_line = line <= context_before ? 1 : line - context_before;
-        const uint32_t end_line = line + context_after;
-        uint32_t curr_line;
-        for (curr_line = start_line; curr_line <= end_line; ++curr_line)
+        const uint32_t end_line = start_line + count - 1;
+        for (uint32_t line = start_line; line <= end_line; ++line)
         {
-            if (!m_last_file_sp->LineIsValid (curr_line))
+            if (!m_last_file_sp->LineIsValid (line))
             {
-                m_last_file_line = UINT32_MAX;
+                m_last_line = UINT32_MAX;
                 break;
             }
 
             char prefix[32] = "";
             if (bp_locs)
             {
-                uint32_t bp_count = bp_locs->NumLineEntriesWithLine (curr_line);
+                uint32_t bp_count = bp_locs->NumLineEntriesWithLine (line);
                 
                 if (bp_count > 0)
                     ::snprintf (prefix, sizeof (prefix), "[%u] ", bp_count);
@@ -139,13 +131,13 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
             }
 
             return_value += s->Printf("%s%2.2s %-4u\t", 
-                      prefix,
-                      curr_line == line ? current_line_cstr : "", 
-                      curr_line);
-            size_t this_line_size = m_last_file_sp->DisplaySourceLines (curr_line, 0, 0, s); 
+                                      prefix,
+                                      line == curr_line ? current_line_cstr : "",
+                                      line);
+            size_t this_line_size = m_last_file_sp->DisplaySourceLines (line, 0, 0, s);
             if (this_line_size == 0)
             {
-                m_last_file_line = UINT32_MAX;
+                m_last_line = UINT32_MAX;
                 break;
             }
             else
@@ -172,17 +164,27 @@ SourceManager::DisplaySourceLinesWithLineNumbers
     if (!same_as_previous)
         m_last_file_sp = GetFile (file_spec);
 
+    uint32_t start_line;
+    uint32_t count = context_before + context_after + 1;
+    if (line > context_before)
+        start_line = line - context_before;
+    else
+        start_line = 1;
+    
     if (line == 0)
     {
         if (!same_as_previous)
-            m_last_file_line = 0;
+            m_last_line = 0;
     }
 
-    return DisplaySourceLinesWithLineNumbersUsingLastFile (line, context_before, context_after, current_line_cstr, s, bp_locs);
+    return DisplaySourceLinesWithLineNumbersUsingLastFile (start_line, count, line, current_line_cstr, s, bp_locs);
 }
 
 size_t
-SourceManager::DisplayMoreWithLineNumbers (Stream *s, const SymbolContextList *bp_locs, bool reverse)
+SourceManager::DisplayMoreWithLineNumbers (Stream *s,
+                                           uint32_t count,
+                                           bool reverse,
+                                           const SymbolContextList *bp_locs)
 {
     // If we get called before anybody has set a default file and line, then try to figure it out here.
     if (!m_default_set)
@@ -194,55 +196,35 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s, const SymbolContextList *b
     
     if (m_last_file_sp)
     {
-        if (m_last_file_line == UINT32_MAX)
+        if (m_last_line == UINT32_MAX)
             return 0;
         
-        if (reverse && m_last_file_line == 1)
+        if (reverse && m_last_line == 1)
             return 0;
-        
-        uint32_t line;
-        uint32_t new_last_file_line = 0;
-        
-        if (m_last_file_line != 0
-            && m_last_file_line != UINT32_MAX)
+    
+        if (count > 0)
+            m_last_count = count;
+        else if (m_last_count == 0)
+            m_last_count = 10;
+
+        if (m_last_line > 0)
         {
             if (reverse)
             {
                 // If this is the first time we've done a reverse, then back up one more time so we end
                 // up showing the chunk before the last one we've shown:
-                if (m_first_reverse)
-                {
-                    if (m_last_file_line > m_last_file_context_after)
-                        m_last_file_line -= m_last_file_context_after + 1;
-                }
-                
-                if (m_last_file_line > m_last_file_context_after)
-                {
-                    line = m_last_file_line - m_last_file_context_after;
-                    if (line > m_last_file_context_before)
-                        new_last_file_line = line - m_last_file_context_before - 1;
-                    else
-                        new_last_file_line = 1;
-                }
+                if (m_last_line > m_last_count)
+                    m_last_line -= m_last_count;
                 else
-                {
-                    line = 1;
-                    new_last_file_line = 1;
-                }
+                    m_last_line = 1;
             }
             else
-                line = m_last_file_line + m_last_file_context_before;
+                m_last_line += m_last_count;
         }
         else
-            line = 1;
+            m_last_line = 1;
         
-        size_t num_chars_shown = DisplaySourceLinesWithLineNumbersUsingLastFile (line, m_last_file_context_before, m_last_file_context_after, "", s, bp_locs);
-        if (new_last_file_line != 0)
-            m_last_file_line = new_last_file_line;
-        if (reverse)
-            m_first_reverse = false;
-        
-        return num_chars_shown;
+        return DisplaySourceLinesWithLineNumbersUsingLastFile (m_last_line, m_last_count, UINT32_MAX, "", s, bp_locs);
     }
     return 0;
 }
@@ -256,7 +238,7 @@ SourceManager::SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line)
     m_default_set = true;
     if (m_last_file_sp)
     {
-        m_last_file_line = line;
+        m_last_line = line;
         return true;
     }
     else
@@ -272,7 +254,7 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
     if (m_last_file_sp)
     {
         file_spec = m_last_file_sp->GetFileSpec();
-        line = m_last_file_line;
+        line = m_last_line;
         return true;
     }
     else if (!m_default_set)
@@ -307,7 +289,7 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
                         SetDefaultFileAndLine (line_entry.file, 
                                                line_entry.line);
                         file_spec = m_last_file_sp->GetFileSpec();
-                        line = m_last_file_line;
+                        line = m_last_line;
                         return true;
                     }
                 }
