@@ -66,8 +66,8 @@ namespace {
   private:
     bool runOnModule(Module &M);
 
-    // Create the GCNO files for the Module based on DebugInfo.
-    void emitGCNO();
+    // Create the .gcno files for the Module based on DebugInfo.
+    void emitProfileNotes();
 
     // Modify the program to track transitions along edges and call into the
     // profiling runtime to emit .gcda files when run.
@@ -88,8 +88,8 @@ namespace {
     // block number.
     GlobalVariable *buildEdgeLookupTable(Function *F,
                                          GlobalVariable *Counter,
-                                         const UniqueVector<BasicBlock *> &Preds,
-                                         const UniqueVector<BasicBlock *> &Succs);
+                                         const UniqueVector<BasicBlock *>&Preds,
+                                         const UniqueVector<BasicBlock*>&Succs);
 
     // Add the function to write out all our counters to the global destructor
     // list.
@@ -101,7 +101,7 @@ namespace {
 
     bool EmitNotes;
     bool EmitData;
-    char Version[4];
+    char Version[4];  // This is stored in reverse order for direct emission.
     bool UseExtraChecksum;
     bool NoRedZone;
     bool NoFunctionNamesInData;
@@ -363,12 +363,12 @@ bool GCOVProfiler::runOnModule(Module &M) {
   this->M = &M;
   Ctx = &M.getContext();
 
-  if (EmitNotes) emitGCNO();
+  if (EmitNotes) emitProfileNotes();
   if (EmitData) return emitProfileArcs();
   return false;
 }
 
-void GCOVProfiler::emitGCNO() {
+void GCOVProfiler::emitProfileNotes() {
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes) return;
 
