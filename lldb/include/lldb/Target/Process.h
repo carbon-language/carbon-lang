@@ -3187,10 +3187,7 @@ public:
 
 
     // BreakpointLocations use RemoveOwnerFromBreakpointSite to remove
-    // themselves from the owner's list of this breakpoint sites.  This has to
-    // be a static function because you can't be sure that removing the
-    // breakpoint from it's containing map won't delete the breakpoint site,
-    // and doing that in an instance method isn't copasetic.
+    // themselves from the owner's list of this breakpoint sites.
     void
     RemoveOwnerFromBreakpointSite (lldb::user_id_t owner_id,
                                    lldb::user_id_t owner_loc_id,
