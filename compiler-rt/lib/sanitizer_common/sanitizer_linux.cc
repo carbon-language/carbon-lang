@@ -381,7 +381,7 @@ static uptr ParseHex(char **str) {
   return x;
 }
 
-static bool IsOnOf(char c, char c1, char c2) {
+static bool IsOneOf(char c, char c1, char c2) {
   return c == c1 || c == c2;
 }
 
@@ -407,16 +407,16 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   *end = ParseHex(&current_);
   CHECK_EQ(*current_++, ' ');
   uptr local_protection = 0;
-  CHECK(IsOnOf(*current_, '-', 'r'));
+  CHECK(IsOneOf(*current_, '-', 'r'));
   if (*current_++ == 'r')
     local_protection |= kProtectionRead;
-  CHECK(IsOnOf(*current_, '-', 'w'));
+  CHECK(IsOneOf(*current_, '-', 'w'));
   if (*current_++ == 'w')
     local_protection |= kProtectionWrite;
-  CHECK(IsOnOf(*current_, '-', 'x'));
+  CHECK(IsOneOf(*current_, '-', 'x'));
   if (*current_++ == 'x')
     local_protection |= kProtectionExecute;
-  CHECK(IsOnOf(*current_, 's', 'p'));
+  CHECK(IsOneOf(*current_, 's', 'p'));
   if (*current_++ == 's')
     local_protection |= kProtectionShared;
   if (protection) {
