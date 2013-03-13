@@ -479,11 +479,13 @@ Thread::SetupForResume ()
         // telling the current plan it will resume, since we might change what the current
         // plan is.
 
-        StopReason stop_reason = lldb::eStopReasonInvalid;
-        StopInfoSP stop_info_sp = GetStopInfo();
-        if (stop_info_sp.get())
-            stop_reason = stop_info_sp->GetStopReason();
-        if (stop_reason == lldb::eStopReasonBreakpoint)
+//        StopReason stop_reason = lldb::eStopReasonInvalid;
+//        StopInfoSP stop_info_sp = GetStopInfo();
+//        if (stop_info_sp.get())
+//            stop_reason = stop_info_sp->GetStopReason();
+//        if (stop_reason == lldb::eStopReasonBreakpoint)
+        BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(GetRegisterContext()->GetPC());
+        if (bp_site_sp)
         {
             // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
             // special to step over a breakpoint.
