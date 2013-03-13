@@ -1355,7 +1355,6 @@ static bool isInLoopBody(ParentMap &PM, const Stmt *S, const Stmt *Term) {
       const ObjCForCollectionStmt *FC = cast<ObjCForCollectionStmt>(Term);
       LoopBody = FC->getBody();
       break;
-
     }
     case Stmt::WhileStmtClass:
       LoopBody = cast<WhileStmt>(Term)->getBody();
