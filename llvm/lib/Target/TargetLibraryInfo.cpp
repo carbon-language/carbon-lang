@@ -610,6 +610,9 @@ struct StringComparator {
   // Provided for compatibility with MSVC's debug mode.
   bool operator()(StringRef LHS, const char *RHS) const { return LHS < RHS; }
   bool operator()(StringRef LHS, StringRef RHS) const { return LHS < RHS; }
+  bool operator()(const char *LHS, const char *RHS) const {
+    return std::strcmp(LHS, RHS) < 0;
+  }
 };
 }
 
