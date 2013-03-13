@@ -46,11 +46,10 @@ declare hidden fastcc i32 @bar3(i32) nounwind optsize ssp
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
-!24 = metadata !{metadata !0, metadata !6, metadata !7, metadata !8}
 
 !0 = metadata !{i32 786478, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"", metadata !1, i32 19510, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i64, i8*, i32)* @foo, null, null, null, i32 19510} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !"/tmp/f.c", metadata !"/tmp", metadata !2} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, i32 0, i32 12, metadata !"f.i", metadata !"/tmp", metadata !"clang version 2.9 (trunk 124753)", i1 true, metadata !"", i32 0, null, null, metadata !24, null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, i32 0, i32 12, metadata !25, metadata !"clang version 2.9 (trunk 124753)", i1 true, metadata !"", i32 0, null, null, metadata !24, null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -69,3 +68,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !18 = metadata !{i32 786443, metadata !0, i32 19510, i32 1, metadata !1, i32 99} ; [ DW_TAG_lexical_block ]
 !22 = metadata !{i32 18094, i32 2, metadata !15, metadata !17}
 !23 = metadata !{i32 19524, i32 1, metadata !18, null}
+!24 = metadata !{metadata !0, metadata !6, metadata !7, metadata !8}
+!25 = metadata !{i32 786473, metadata !"f.i", metadata !"/tmp", null}

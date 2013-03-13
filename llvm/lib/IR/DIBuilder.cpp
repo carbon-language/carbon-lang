@@ -95,8 +95,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     GetTagConstant(VMContext, dwarf::DW_TAG_compile_unit),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
     ConstantInt::get(Type::getInt32Ty(VMContext), Lang),
-    MDString::get(VMContext, Filename),
-    MDString::get(VMContext, Directory),
+    createFile(Filename, Directory),
     MDString::get(VMContext, Producer),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     MDString::get(VMContext, Flags),
@@ -117,7 +116,6 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 /// createFile - Create a file descriptor to hold debugging information
 /// for a file.
 DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
-  assert(TheCU && "Unable to create DW_TAG_file_type without CompileUnit");
   assert(!Filename.empty() && "Unable to create file without name");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_file_type),

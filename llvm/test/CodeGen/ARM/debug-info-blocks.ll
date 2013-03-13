@@ -96,7 +96,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !147 = metadata !{metadata !1, metadata !1, metadata !5, metadata !5, metadata !9, metadata !14, metadata !19, metadata !19, metadata !14, metadata !14, metadata !14, metadata !19, metadata !19, metadata !19}
 !148 = metadata !{metadata !23}
 
-!0 = metadata !{i32 786449, i32 0, i32 16, metadata !"MyLibrary.i", metadata !"/Volumes/Sandbox/llvm", metadata !"Apple clang version 2.1", i1 false, metadata !"", i32 2, metadata !147, null, metadata !148, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 0, i32 16, metadata !40, metadata !"Apple clang version 2.1", i1 false, metadata !"", i32 2, metadata !147, null, metadata !148, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786433, metadata !0, metadata !"", metadata !2, i32 248, i64 32, i64 32, i32 0, i32 0, i32 0, metadata !3, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
 !2 = metadata !{i32 786473, metadata !"header.h", metadata !"/Volumes/Sandbox/llvm", metadata !0} ; [ DW_TAG_file_type ]
 !3 = metadata !{metadata !4}

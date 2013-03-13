@@ -89,7 +89,7 @@ attributes #1 = { nounwind readnone }
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 12, metadata !"dry.c", metadata !"/Users/manmanren/test-Nov/rdar_13183203/test2", metadata !"clang version 3.3 (trunk 175015)", i1 true, metadata !"", i32 0, metadata !1, metadata !10, metadata !11, metadata !29, metadata !""} ; [ DW_TAG_compile_unit ] [/Users/manmanren/test-Nov/rdar_13183203/test2/dry.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, i32 0, i32 12, metadata !3, metadata !"clang version 3.3 (trunk 175015)", i1 true, metadata !"", i32 0, metadata !1, metadata !10, metadata !11, metadata !29, metadata !""} ; [ DW_TAG_compile_unit ] [/Users/manmanren/test-Nov/rdar_13183203/test2/dry.c] [DW_LANG_C99]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 786436, null, metadata !"", metadata !3, i32 128, i64 32, i64 32, i32 0, i32 0, null, metadata !4, i32 0, i32 0} ; [ DW_TAG_enumeration_type ] [line 128, size 32, align 32, offset 0] [from ]
 !3 = metadata !{i32 786473, metadata !"dry.c", metadata !"/Users/manmanren/test-Nov/rdar_13183203/test2", null} ; [ DW_TAG_file_type ]

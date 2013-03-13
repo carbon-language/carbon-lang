@@ -29,7 +29,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 12, metadata !"20020104-2.c", metadata !"/Volumes/Sandbox/llvm", metadata !"clang version 3.1 (trunk 153698)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 0, i32 12, metadata !6, metadata !"clang version 3.1 (trunk 153698)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"foo", metadata !"foo", metadata !"", metadata !6, i32 6, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32*)* @foo, null, null, metadata !12} ; [ DW_TAG_subprogram ]

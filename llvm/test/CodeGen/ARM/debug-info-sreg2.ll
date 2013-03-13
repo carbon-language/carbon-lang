@@ -43,7 +43,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !16 = metadata !{metadata !1}
 !17 = metadata !{metadata !5, metadata !8}
 
-!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"k.cc", metadata !"/private/tmp", metadata !"clang version 3.0 (trunk 130845)", i1 true, metadata !"", i32 0, null, null, metadata !16, null, null} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, i32 0, i32 4, metadata !2, metadata !"clang version 3.0 (trunk 130845)", i1 true, metadata !"", i32 0, null, null, metadata !16, null, null} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"_Z3foov", metadata !2, i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, void ()* @_Z3foov, null, null, metadata !17, i32 5} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !"k.cc", metadata !"/private/tmp", metadata !0} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]

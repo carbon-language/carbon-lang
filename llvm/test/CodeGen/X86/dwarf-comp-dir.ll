@@ -6,9 +6,10 @@ target triple = "x86_64-unknown-linux-gnu"
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 720913, i32 0, i32 12, metadata !"empty.c", metadata !"/home/nlewycky", metadata !"clang version 3.1 (trunk 143523)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !1} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 720913, i32 0, i32 12, metadata !3, metadata !"clang version 3.1 (trunk 143523)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !1} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
+!3 = metadata !{i32 786473, metadata !"empty.c", metadata !"/home/nlewycky", null} ; [ DW_TAG_file_type ]
 
 ; The important part of the following check is that dir = #0.
 ;                        Dir  Mod Time   File Len   File Name

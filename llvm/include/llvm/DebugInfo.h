@@ -169,33 +169,6 @@ namespace llvm {
     StringRef getDirectory() const;
   };
 
-  /// DICompileUnit - A wrapper for a compile unit.
-  class DICompileUnit : public DIScope {
-    friend class DIDescriptor;
-    void printInternal(raw_ostream &OS) const;
-  public:
-    explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
-
-    unsigned getLanguage() const   { return getUnsignedField(2); }
-    StringRef getFilename() const  { return getStringField(3);   }
-    StringRef getDirectory() const { return getStringField(4);   }
-    StringRef getProducer() const  { return getStringField(5);   }
-
-    bool isOptimized() const           { return getUnsignedField(6) != 0; }
-    StringRef getFlags() const       { return getStringField(7);   }
-    unsigned getRunTimeVersion() const { return getUnsignedField(8); }
-
-    DIArray getEnumTypes() const;
-    DIArray getRetainedTypes() const;
-    DIArray getSubprograms() const;
-    DIArray getGlobalVariables() const;
-
-    StringRef getSplitDebugFilename() const { return getStringField(13); }
-
-    /// Verify - Verify that a compile unit is well formed.
-    bool Verify() const;
-  };
-
   /// DIFile - This is a wrapper for a file.
   class DIFile : public DIScope {
     friend class DIDescriptor;
@@ -207,6 +180,37 @@ namespace llvm {
     }
     StringRef getFilename() const  { return getStringField(1);   }
     StringRef getDirectory() const { return getStringField(2);   }
+    bool Verify() const;
+  };
+
+  /// DICompileUnit - A wrapper for a compile unit.
+  class DICompileUnit : public DIScope {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
+  public:
+    explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
+
+    unsigned getLanguage() const { return getUnsignedField(2); }
+    StringRef getFilename() const {
+      return getFieldAs<DIFile>(3).getFilename();
+    }
+    StringRef getDirectory() const {
+      return getFieldAs<DIFile>(3).getDirectory();
+    }
+    StringRef getProducer() const { return getStringField(4); }
+
+    bool isOptimized() const { return getUnsignedField(5) != 0; }
+    StringRef getFlags() const { return getStringField(6); }
+    unsigned getRunTimeVersion() const { return getUnsignedField(7); }
+
+    DIArray getEnumTypes() const;
+    DIArray getRetainedTypes() const;
+    DIArray getSubprograms() const;
+    DIArray getGlobalVariables() const;
+
+    StringRef getSplitDebugFilename() const { return getStringField(12); }
+
+    /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
   };
 
