@@ -1305,6 +1305,7 @@ static bool isLoopJumpPastBody(const Stmt *Term, const BlockEdge *BE) {
   switch (Term->getStmtClass()) {
     case Stmt::ForStmtClass:
     case Stmt::WhileStmtClass:
+    case Stmt::ObjCForCollectionStmtClass:
       break;
     default:
       // Note that we intentionally do not include do..while here.
@@ -1349,6 +1350,12 @@ static bool isInLoopBody(ParentMap &PM, const Stmt *S, const Stmt *Term) {
         return true;
       LoopBody = FS->getBody();
       break;
+    }
+    case Stmt::ObjCForCollectionStmtClass: {
+      const ObjCForCollectionStmt *FC = cast<ObjCForCollectionStmt>(Term);
+      LoopBody = FC->getBody();
+      break;
+
     }
     case Stmt::WhileStmtClass:
       LoopBody = cast<WhileStmt>(Term)->getBody();
