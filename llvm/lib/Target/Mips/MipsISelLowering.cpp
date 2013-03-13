@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "mips-lower"
-#include <set>
 #include "MipsISelLowering.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
@@ -42,25 +41,8 @@ using namespace llvm;
 STATISTIC(NumTailCalls, "Number of tail calls");
 
 static cl::opt<bool>
-EnableMipsTailCalls("enable-mips-tail-calls", cl::Hidden,
-                    cl::desc("MIPS: Enable tail calls."), cl::init(false));
-
-static cl::opt<bool>
 LargeGOT("mxgot", cl::Hidden,
          cl::desc("MIPS: Enable GOT larger than 64k."), cl::init(false));
-
-static cl::opt<bool>
-Mips16HardFloat("mips16-hard-float", cl::NotHidden,
-                cl::desc("MIPS: mips16 hard float enable."),
-                cl::init(false));
-
-static cl::opt<bool> DontExpandCondPseudos16(
-  "mips16-dont-expand-cond-pseudo",
-  cl::init(false),
-  cl::desc("Dont expand conditional move related "
-           "pseudos for Mips 16"),
-  cl::Hidden);
-
 
 static const uint16_t O32IntRegs[4] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
@@ -88,7 +70,7 @@ static bool isShiftedMask(uint64_t I, uint64_t &Pos, uint64_t &Size) {
   return true;
 }
 
-static SDValue getGlobalReg(SelectionDAG &DAG, EVT Ty) {
+SDValue MipsTargetLowering::getGlobalReg(SelectionDAG &DAG, EVT Ty) const {
   MipsFunctionInfo *FI = DAG.getMachineFunction().getInfo<MipsFunctionInfo>();
   return DAG.getRegister(FI->getGlobalBaseReg(), Ty);
 }
@@ -123,7 +105,8 @@ static SDValue getAddrNonPIC(SDValue Op, SelectionDAG &DAG) {
                      DAG.getNode(MipsISD::Lo, DL, Ty, Lo));
 }
 
-static SDValue getAddrLocal(SDValue Op, SelectionDAG &DAG, bool HasMips64) {
+SDValue MipsTargetLowering::getAddrLocal(SDValue Op, SelectionDAG &DAG,
+                                         bool HasMips64) const {
   DebugLoc DL = Op.getDebugLoc();
   EVT Ty = Op.getValueType();
   unsigned GOTFlag = HasMips64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
@@ -137,7 +120,8 @@ static SDValue getAddrLocal(SDValue Op, SelectionDAG &DAG, bool HasMips64) {
   return DAG.getNode(ISD::ADD, DL, Ty, Load, Lo);
 }
 
-static SDValue getAddrGlobal(SDValue Op, SelectionDAG &DAG, unsigned Flag) {
+SDValue MipsTargetLowering::getAddrGlobal(SDValue Op, SelectionDAG &DAG,
+                                          unsigned Flag) const {
   DebugLoc DL = Op.getDebugLoc();
   EVT Ty = Op.getValueType();
   SDValue Tgt = DAG.getNode(MipsISD::Wrapper, DL, Ty, getGlobalReg(DAG, Ty),
@@ -146,8 +130,9 @@ static SDValue getAddrGlobal(SDValue Op, SelectionDAG &DAG, unsigned Flag) {
                      MachinePointerInfo::getGOT(), false, false, false, 0);
 }
 
-static SDValue getAddrGlobalLargeGOT(SDValue Op, SelectionDAG &DAG,
-                                     unsigned HiFlag, unsigned LoFlag) {
+SDValue MipsTargetLowering::getAddrGlobalLargeGOT(SDValue Op, SelectionDAG &DAG,
+                                                  unsigned HiFlag,
+                                                  unsigned LoFlag) const {
   DebugLoc DL = Op.getDebugLoc();
   EVT Ty = Op.getValueType();
   SDValue Hi = DAG.getNode(MipsISD::Hi, DL, Ty, getTargetNode(Op, DAG, HiFlag));
@@ -211,109 +196,16 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-namespace {
-  struct LTStr {
-    bool operator()(const char *S1, const char *S2) const
-    {
-      return strcmp(S1, S2) < 0;
-    }
-  };
-
-  std::set<const char*, LTStr> NoHelperNeeded;
-}
-
-void MipsTargetLowering::setMips16LibcallName
-  (RTLIB::Libcall L, const char *Name) {
-  setLibcallName(L, Name);
-  NoHelperNeeded.insert(Name);
-}
-
-void MipsTargetLowering::setMips16HardFloatLibCalls() {
-  setMips16LibcallName(RTLIB::ADD_F32, "__mips16_addsf3");
-  setMips16LibcallName(RTLIB::ADD_F64, "__mips16_adddf3");
-  setMips16LibcallName(RTLIB::SUB_F32, "__mips16_subsf3");
-  setMips16LibcallName(RTLIB::SUB_F64, "__mips16_subdf3");
-  setMips16LibcallName(RTLIB::MUL_F32, "__mips16_mulsf3");
-  setMips16LibcallName(RTLIB::MUL_F64, "__mips16_muldf3");
-  setMips16LibcallName(RTLIB::DIV_F32, "__mips16_divsf3");
-  setMips16LibcallName(RTLIB::DIV_F64, "__mips16_divdf3");
-  setMips16LibcallName(RTLIB::FPEXT_F32_F64, "__mips16_extendsfdf2");
-  setMips16LibcallName(RTLIB::FPROUND_F64_F32, "__mips16_truncdfsf2");
-  setMips16LibcallName(RTLIB::FPTOSINT_F32_I32, "__mips16_fix_truncsfsi");
-  setMips16LibcallName(RTLIB::FPTOSINT_F64_I32, "__mips16_fix_truncdfsi");
-  setMips16LibcallName(RTLIB::SINTTOFP_I32_F32, "__mips16_floatsisf");
-  setMips16LibcallName(RTLIB::SINTTOFP_I32_F64, "__mips16_floatsidf");
-  setMips16LibcallName(RTLIB::UINTTOFP_I32_F32, "__mips16_floatunsisf");
-  setMips16LibcallName(RTLIB::UINTTOFP_I32_F64, "__mips16_floatunsidf");
-  setMips16LibcallName(RTLIB::OEQ_F32, "__mips16_eqsf2");
-  setMips16LibcallName(RTLIB::OEQ_F64, "__mips16_eqdf2");
-  setMips16LibcallName(RTLIB::UNE_F32, "__mips16_nesf2");
-  setMips16LibcallName(RTLIB::UNE_F64, "__mips16_nedf2");
-  setMips16LibcallName(RTLIB::OGE_F32, "__mips16_gesf2");
-  setMips16LibcallName(RTLIB::OGE_F64, "__mips16_gedf2");
-  setMips16LibcallName(RTLIB::OLT_F32, "__mips16_ltsf2");
-  setMips16LibcallName(RTLIB::OLT_F64, "__mips16_ltdf2");
-  setMips16LibcallName(RTLIB::OLE_F32, "__mips16_lesf2");
-  setMips16LibcallName(RTLIB::OLE_F64, "__mips16_ledf2");
-  setMips16LibcallName(RTLIB::OGT_F32, "__mips16_gtsf2");
-  setMips16LibcallName(RTLIB::OGT_F64, "__mips16_gtdf2");
-  setMips16LibcallName(RTLIB::UO_F32, "__mips16_unordsf2");
-  setMips16LibcallName(RTLIB::UO_F64, "__mips16_unorddf2");
-  setMips16LibcallName(RTLIB::O_F32, "__mips16_unordsf2");
-  setMips16LibcallName(RTLIB::O_F64, "__mips16_unorddf2");
-}
-
 MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
   : TargetLowering(TM, new MipsTargetObjectFile()),
     Subtarget(&TM.getSubtarget<MipsSubtarget>()),
     HasMips64(Subtarget->hasMips64()), IsN64(Subtarget->isABI_N64()),
     IsO32(Subtarget->isABI_O32()) {
-
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
-
-  // Set up the register classes
-  addRegisterClass(MVT::i32, &Mips::CPURegsRegClass);
-
-  if (HasMips64)
-    addRegisterClass(MVT::i64, &Mips::CPU64RegsRegClass);
-
-  if (Subtarget->inMips16Mode()) {
-    addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
-    if (Mips16HardFloat)
-      setMips16HardFloatLibCalls();
-  }
-
-  if (Subtarget->hasDSP()) {
-    MVT::SimpleValueType VecTys[2] = {MVT::v2i16, MVT::v4i8};
-
-    for (unsigned i = 0; i < array_lengthof(VecTys); ++i) {
-      addRegisterClass(VecTys[i], &Mips::DSPRegsRegClass);
-
-      // Expand all builtin opcodes.
-      for (unsigned Opc = 0; Opc < ISD::BUILTIN_OP_END; ++Opc)
-        setOperationAction(Opc, VecTys[i], Expand);
-
-      setOperationAction(ISD::LOAD, VecTys[i], Legal);
-      setOperationAction(ISD::STORE, VecTys[i], Legal);
-      setOperationAction(ISD::BITCAST, VecTys[i], Legal);
-    }
-  }
-
-  if (!TM.Options.UseSoftFloat) {
-    addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
-
-    // When dealing with single precision only, use libcalls
-    if (!Subtarget->isSingleFloat()) {
-      if (HasMips64)
-        addRegisterClass(MVT::f64, &Mips::FGR64RegClass);
-      else
-        addRegisterClass(MVT::f64, &Mips::AFGR64RegClass);
-    }
-  }
 
   // Load extented operations for i1 types must be promoted
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
@@ -348,18 +240,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f32,   Custom);
   setOperationAction(ISD::FCOPYSIGN,          MVT::f64,   Custom);
-  if (Subtarget->inMips16Mode()) {
-    setOperationAction(ISD::MEMBARRIER,         MVT::Other, Expand);
-    setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Expand);
-  }
-  else {
-    setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
-    setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
-  }
-  if (!Subtarget->inMips16Mode()) {
-    setOperationAction(ISD::LOAD,               MVT::i32, Custom);
-    setOperationAction(ISD::STORE,              MVT::i32, Custom);
-  }
 
   if (!TM.Options.NoNaNsFPMath) {
     setOperationAction(ISD::FABS,             MVT::f32,   Custom);
@@ -472,21 +352,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_STORE,      MVT::i32,    Expand);
   setOperationAction(ISD::ATOMIC_STORE,      MVT::i64,    Expand);
 
-  if (Subtarget->inMips16Mode()) {
-    setOperationAction(ISD::ATOMIC_CMP_SWAP,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_SWAP,           MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_ADD,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_SUB,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_AND,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_OR,        MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_XOR,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_NAND,      MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_MIN,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_MAX,       MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_UMIN,      MVT::i32,    Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_UMAX,      MVT::i32,    Expand);
-  }
-
   setInsertFencesForAtomic(true);
 
   if (!Subtarget->hasSEInReg()) {
@@ -523,7 +388,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setMinFunctionAlignment(HasMips64 ? 3 : 2);
 
   setStackPointerRegisterToSaveRestore(IsN64 ? Mips::SP_64 : Mips::SP);
-  computeRegisterProperties();
 
   setExceptionPointerRegister(IsN64 ? Mips::A0_64 : Mips::A0);
   setExceptionSelectorRegister(IsN64 ? Mips::A1_64 : Mips::A1);
@@ -531,22 +395,11 @@ MipsTargetLowering(MipsTargetMachine &TM)
   MaxStoresPerMemcpy = 16;
 }
 
-bool
-MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
-  MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
+const MipsTargetLowering *MipsTargetLowering::create(MipsTargetMachine &TM) {
+  if (TM.getSubtargetImpl()->inMips16Mode())
+    return llvm::createMips16TargetLowering(TM);
 
-  if (Subtarget->inMips16Mode())
-    return false;
-
-  switch (SVT) {
-  case MVT::i64:
-  case MVT::i32:
-    if (Fast)
-      *Fast = true;
-    return true;
-  default:
-    return false;
-  }
+  return llvm::createMipsSETargetLowering(TM);
 }
 
 EVT MipsTargetLowering::getSetCCResultType(EVT VT) const {
@@ -1099,347 +952,6 @@ static Mips::FPBranchCode getFPBranchCodeFromCond(Mips::CondCode CC) {
 }
 
 MachineBasicBlock *
-MipsTargetLowering::emitBPOSGE32(MachineInstr *MI, MachineBasicBlock *BB) const{
-  // $bb:
-  //  bposge32_pseudo $vr0
-  //  =>
-  // $bb:
-  //  bposge32 $tbb
-  // $fbb:
-  //  li $vr2, 0
-  //  b $sink
-  // $tbb:
-  //  li $vr1, 1
-  // $sink:
-  //  $vr0 = phi($vr2, $fbb, $vr1, $tbb)
-
-  MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  const TargetRegisterClass *RC = &Mips::CPURegsRegClass;
-  DebugLoc DL = MI->getDebugLoc();
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = llvm::next(MachineFunction::iterator(BB));
-  MachineFunction *F = BB->getParent();
-  MachineBasicBlock *FBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *TBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *Sink  = F->CreateMachineBasicBlock(LLVM_BB);
-  F->insert(It, FBB);
-  F->insert(It, TBB);
-  F->insert(It, Sink);
-
-  // Transfer the remainder of BB and its successor edges to Sink.
-  Sink->splice(Sink->begin(), BB, llvm::next(MachineBasicBlock::iterator(MI)),
-               BB->end());
-  Sink->transferSuccessorsAndUpdatePHIs(BB);
-
-  // Add successors.
-  BB->addSuccessor(FBB);
-  BB->addSuccessor(TBB);
-  FBB->addSuccessor(Sink);
-  TBB->addSuccessor(Sink);
-
-  // Insert the real bposge32 instruction to $BB.
-  BuildMI(BB, DL, TII->get(Mips::BPOSGE32)).addMBB(TBB);
-
-  // Fill $FBB.
-  unsigned VR2 = RegInfo.createVirtualRegister(RC);
-  BuildMI(*FBB, FBB->end(), DL, TII->get(Mips::ADDiu), VR2)
-    .addReg(Mips::ZERO).addImm(0);
-  BuildMI(*FBB, FBB->end(), DL, TII->get(Mips::B)).addMBB(Sink);
-
-  // Fill $TBB.
-  unsigned VR1 = RegInfo.createVirtualRegister(RC);
-  BuildMI(*TBB, TBB->end(), DL, TII->get(Mips::ADDiu), VR1)
-    .addReg(Mips::ZERO).addImm(1);
-
-  // Insert phi function to $Sink.
-  BuildMI(*Sink, Sink->begin(), DL, TII->get(Mips::PHI),
-          MI->getOperand(0).getReg())
-    .addReg(VR2).addMBB(FBB).addReg(VR1).addMBB(TBB);
-
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return Sink;
-}
-
-MachineBasicBlock *MipsTargetLowering::emitSel16(unsigned Opc, MachineInstr *MI,
-                             MachineBasicBlock *BB) const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  DebugLoc DL = MI->getDebugLoc();
-  // To "insert" a SELECT_CC instruction, we actually have to insert the
-  // diamond control-flow pattern.  The incoming instruction knows the
-  // destination vreg to set, the condition code register to branch on, the
-  // true/false values to select between, and a branch opcode to use.
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  //  thisMBB:
-  //  ...
-  //   TrueVal = ...
-  //   setcc r1, r2, r3
-  //   bNE   r1, r0, copy1MBB
-  //   fallthrough --> copy0MBB
-  MachineBasicBlock *thisMBB  = BB;
-  MachineFunction *F = BB->getParent();
-  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-  F->insert(It, copy0MBB);
-  F->insert(It, sinkMBB);
-
-  // Transfer the remainder of BB and its successor edges to sinkMBB.
-  sinkMBB->splice(sinkMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  // Next, add the true and fallthrough blocks as its successors.
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-
-  BuildMI(BB, DL, TII->get(Opc)).addReg(MI->getOperand(3).getReg())
-    .addMBB(sinkMBB);
-
-  //  copy0MBB:
-  //   %FalseValue = ...
-  //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-
-  //  sinkMBB:
-  //   %Result = phi [ %TrueValue, thisMBB ], [ %FalseValue, copy0MBB ]
-  //  ...
-  BB = sinkMBB;
-
-  BuildMI(*BB, BB->begin(), DL,
-          TII->get(Mips::PHI), MI->getOperand(0).getReg())
-    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB)
-    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB);
-
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-}
-
-MachineBasicBlock *MipsTargetLowering::emitSelT16
-  (unsigned Opc1, unsigned Opc2,
-   MachineInstr *MI, MachineBasicBlock *BB) const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  DebugLoc DL = MI->getDebugLoc();
-  // To "insert" a SELECT_CC instruction, we actually have to insert the
-  // diamond control-flow pattern.  The incoming instruction knows the
-  // destination vreg to set, the condition code register to branch on, the
-  // true/false values to select between, and a branch opcode to use.
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  //  thisMBB:
-  //  ...
-  //   TrueVal = ...
-  //   setcc r1, r2, r3
-  //   bNE   r1, r0, copy1MBB
-  //   fallthrough --> copy0MBB
-  MachineBasicBlock *thisMBB  = BB;
-  MachineFunction *F = BB->getParent();
-  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-  F->insert(It, copy0MBB);
-  F->insert(It, sinkMBB);
-
-  // Transfer the remainder of BB and its successor edges to sinkMBB.
-  sinkMBB->splice(sinkMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  // Next, add the true and fallthrough blocks as its successors.
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-
-  BuildMI(BB, DL, TII->get(Opc2)).addReg(MI->getOperand(3).getReg())
-    .addReg(MI->getOperand(4).getReg());
-  BuildMI(BB, DL, TII->get(Opc1)).addMBB(sinkMBB);
-
-  //  copy0MBB:
-  //   %FalseValue = ...
-  //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-
-  //  sinkMBB:
-  //   %Result = phi [ %TrueValue, thisMBB ], [ %FalseValue, copy0MBB ]
-  //  ...
-  BB = sinkMBB;
-
-  BuildMI(*BB, BB->begin(), DL,
-          TII->get(Mips::PHI), MI->getOperand(0).getReg())
-    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB)
-    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB);
-
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-
-}
-
-
-MachineBasicBlock *MipsTargetLowering::emitSeliT16
-  (unsigned Opc1, unsigned Opc2,
-   MachineInstr *MI, MachineBasicBlock *BB) const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  DebugLoc DL = MI->getDebugLoc();
-  // To "insert" a SELECT_CC instruction, we actually have to insert the
-  // diamond control-flow pattern.  The incoming instruction knows the
-  // destination vreg to set, the condition code register to branch on, the
-  // true/false values to select between, and a branch opcode to use.
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  //  thisMBB:
-  //  ...
-  //   TrueVal = ...
-  //   setcc r1, r2, r3
-  //   bNE   r1, r0, copy1MBB
-  //   fallthrough --> copy0MBB
-  MachineBasicBlock *thisMBB  = BB;
-  MachineFunction *F = BB->getParent();
-  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-  F->insert(It, copy0MBB);
-  F->insert(It, sinkMBB);
-
-  // Transfer the remainder of BB and its successor edges to sinkMBB.
-  sinkMBB->splice(sinkMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  // Next, add the true and fallthrough blocks as its successors.
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-
-  BuildMI(BB, DL, TII->get(Opc2)).addReg(MI->getOperand(3).getReg())
-    .addImm(MI->getOperand(4).getImm());
-  BuildMI(BB, DL, TII->get(Opc1)).addMBB(sinkMBB);
-
-  //  copy0MBB:
-  //   %FalseValue = ...
-  //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-
-  //  sinkMBB:
-  //   %Result = phi [ %TrueValue, thisMBB ], [ %FalseValue, copy0MBB ]
-  //  ...
-  BB = sinkMBB;
-
-  BuildMI(*BB, BB->begin(), DL,
-          TII->get(Mips::PHI), MI->getOperand(0).getReg())
-    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB)
-    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB);
-
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-
-}
-
-
-MachineBasicBlock
-  *MipsTargetLowering::emitFEXT_T8I816_ins(unsigned BtOpc, unsigned CmpOpc,
-                           MachineInstr *MI,
-                           MachineBasicBlock *BB) const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  unsigned regX = MI->getOperand(0).getReg();
-  unsigned regY = MI->getOperand(1).getReg();
-  MachineBasicBlock *target = MI->getOperand(2).getMBB();
-  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(CmpOpc)).addReg(regX).addReg(regY);
-  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(BtOpc)).addMBB(target);
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-}
-
-
-MachineBasicBlock *MipsTargetLowering::emitFEXT_T8I8I16_ins(
-  unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
-  MachineInstr *MI,  MachineBasicBlock *BB) const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  unsigned regX = MI->getOperand(0).getReg();
-  int64_t imm = MI->getOperand(1).getImm();
-  MachineBasicBlock *target = MI->getOperand(2).getMBB();
-  unsigned CmpOpc;
-  if (isUInt<8>(imm))
-    CmpOpc = CmpiOpc;
-  else if (isUInt<16>(imm))
-    CmpOpc = CmpiXOpc;
-  else
-    llvm_unreachable("immediate field not usable");
-  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(CmpOpc)).addReg(regX).addImm(imm);
-  BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(BtOpc)).addMBB(target);
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-}
-
-
-static unsigned Mips16WhichOp8uOr16simm
-  (unsigned shortOp, unsigned longOp, int64_t Imm) {
-  if (isUInt<8>(Imm))
-    return shortOp;
-  else if (isInt<16>(Imm))
-    return longOp;
-  else
-    llvm_unreachable("immediate field not usable");
-}
-
-MachineBasicBlock *MipsTargetLowering::emitFEXT_CCRX16_ins(
-  unsigned SltOpc,
-  MachineInstr *MI,  MachineBasicBlock *BB) const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  unsigned CC = MI->getOperand(0).getReg();
-  unsigned regX = MI->getOperand(1).getReg();
-  unsigned regY = MI->getOperand(2).getReg();
-  BuildMI(*BB, MI, MI->getDebugLoc(),
-		  TII->get(SltOpc)).addReg(regX).addReg(regY);
-  BuildMI(*BB, MI, MI->getDebugLoc(),
-          TII->get(Mips::MoveR3216), CC).addReg(Mips::T8);
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-}
-MachineBasicBlock *MipsTargetLowering::emitFEXT_CCRXI16_ins(
-  unsigned SltiOpc, unsigned SltiXOpc,
-  MachineInstr *MI,  MachineBasicBlock *BB )const {
-  if (DontExpandCondPseudos16)
-    return BB;
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  unsigned CC = MI->getOperand(0).getReg();
-  unsigned regX = MI->getOperand(1).getReg();
-  int64_t Imm = MI->getOperand(2).getImm();
-  unsigned SltOpc = Mips16WhichOp8uOr16simm(SltiOpc, SltiXOpc, Imm);
-  BuildMI(*BB, MI, MI->getDebugLoc(),
-          TII->get(SltOpc)).addReg(regX).addImm(Imm);
-  BuildMI(*BB, MI, MI->getDebugLoc(),
-          TII->get(Mips::MoveR3216), CC).addReg(Mips::T8);
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
-
-}
-MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
@@ -1548,77 +1060,6 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::ATOMIC_CMP_SWAP_I64:
   case Mips::ATOMIC_CMP_SWAP_I64_P8:
     return emitAtomicCmpSwap(MI, BB, 8);
-  case Mips::BPOSGE32_PSEUDO:
-    return emitBPOSGE32(MI, BB);
-  case Mips::SelBeqZ:
-    return emitSel16(Mips::BeqzRxImm16, MI, BB);
-  case Mips::SelBneZ:
-    return emitSel16(Mips::BnezRxImm16, MI, BB);
-  case Mips::SelTBteqZCmpi:
-    return emitSeliT16(Mips::BteqzX16, Mips::CmpiRxImmX16, MI, BB);
-  case Mips::SelTBteqZSlti:
-    return emitSeliT16(Mips::BteqzX16, Mips::SltiRxImmX16, MI, BB);
-  case Mips::SelTBteqZSltiu:
-    return emitSeliT16(Mips::BteqzX16, Mips::SltiuRxImmX16, MI, BB);
-  case Mips::SelTBtneZCmpi:
-    return emitSeliT16(Mips::BtnezX16, Mips::CmpiRxImmX16, MI, BB);
-  case Mips::SelTBtneZSlti:
-    return emitSeliT16(Mips::BtnezX16, Mips::SltiRxImmX16, MI, BB);
-  case Mips::SelTBtneZSltiu:
-    return emitSeliT16(Mips::BtnezX16, Mips::SltiuRxImmX16, MI, BB);
-  case Mips::SelTBteqZCmp:
-    return emitSelT16(Mips::BteqzX16, Mips::CmpRxRy16, MI, BB);
-  case Mips::SelTBteqZSlt:
-    return emitSelT16(Mips::BteqzX16, Mips::SltRxRy16, MI, BB);
-  case Mips::SelTBteqZSltu:
-    return emitSelT16(Mips::BteqzX16, Mips::SltuRxRy16, MI, BB);
-  case Mips::SelTBtneZCmp:
-    return emitSelT16(Mips::BtnezX16, Mips::CmpRxRy16, MI, BB);
-  case Mips::SelTBtneZSlt:
-    return emitSelT16(Mips::BtnezX16, Mips::SltRxRy16, MI, BB);
-  case Mips::SelTBtneZSltu:
-    return emitSelT16(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
-  case Mips::BteqzT8CmpX16:
-    return emitFEXT_T8I816_ins(Mips::BteqzX16, Mips::CmpRxRy16, MI, BB);
-  case Mips::BteqzT8SltX16:
-    return emitFEXT_T8I816_ins(Mips::BteqzX16, Mips::SltRxRy16, MI, BB);
-  case Mips::BteqzT8SltuX16:
-    // TBD: figure out a way to get this or remove the instruction
-    // altogether.
-    return emitFEXT_T8I816_ins(Mips::BteqzX16, Mips::SltuRxRy16, MI, BB);
-  case Mips::BtnezT8CmpX16:
-    return emitFEXT_T8I816_ins(Mips::BtnezX16, Mips::CmpRxRy16, MI, BB);
-  case Mips::BtnezT8SltX16:
-    return emitFEXT_T8I816_ins(Mips::BtnezX16, Mips::SltRxRy16, MI, BB);
-  case Mips::BtnezT8SltuX16:
-    // TBD: figure out a way to get this or remove the instruction
-    // altogether.
-    return emitFEXT_T8I816_ins(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
-  case Mips::BteqzT8CmpiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BteqzX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, MI, BB);
-  case Mips::BteqzT8SltiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BteqzX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
-  case Mips::BteqzT8SltiuX16: return emitFEXT_T8I8I16_ins(
-    Mips::BteqzX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
-  case Mips::BtnezT8CmpiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BtnezX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, MI, BB);
-  case Mips::BtnezT8SltiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BtnezX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
-  case Mips::BtnezT8SltiuX16: return emitFEXT_T8I8I16_ins(
-    Mips::BtnezX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
-    break;
-  case Mips::SltCCRxRy16:
-    return emitFEXT_CCRX16_ins(Mips::SltRxRy16, MI, BB);
-    break;
-  case Mips::SltiCCRxImmX16:
-    return emitFEXT_CCRXI16_ins
-      (Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
-  case Mips::SltiuCCRxImmX16:
-    return emitFEXT_CCRXI16_ins
-      (Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
-  case Mips::SltuCCRxRy16:
-    return emitFEXT_CCRX16_ins
-      (Mips::SltuRxRy16, MI, BB);
   }
 }
 
@@ -3074,28 +2515,6 @@ static unsigned getNextIntArgReg(unsigned Reg) {
   return (Reg == Mips::A0) ? Mips::A1 : Mips::A3;
 }
 
-/// isEligibleForTailCallOptimization - Check whether the call is eligible
-/// for tail call optimization.
-bool MipsTargetLowering::
-isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
-                                  unsigned NextStackOffset,
-                                  const MipsFunctionInfo& FI) const {
-  if (!EnableMipsTailCalls)
-    return false;
-
-  // No tail call optimization for mips16.
-  if (Subtarget->inMips16Mode())
-    return false;
-
-  // Return false if either the callee or caller has a byval argument.
-  if (MipsCCInfo.hasByValArg() || FI.hasByvalArg())
-    return false;
-
-  // Return true if the callee's argument area is no larger than the
-  // caller's.
-  return NextStackOffset <= FI.getIncomingArgSize();
-}
-
 SDValue
 MipsTargetLowering::passArgOnStack(SDValue StackPtr, unsigned Offset,
                                    SDValue Chain, SDValue Arg, DebugLoc DL,
@@ -3114,161 +2533,48 @@ MipsTargetLowering::passArgOnStack(SDValue StackPtr, unsigned Offset,
                       /*isVolatile=*/ true, false, 0);
 }
 
-//
-// The Mips16 hard float is a crazy quilt inherited from gcc. I have a much
-// cleaner way to do all of this but it will have to wait until the traditional
-// gcc mechanism is completed.
-//
-// For Pic, in order for Mips16 code to call Mips32 code which according the abi
-// have either arguments or returned values placed in floating point registers,
-// we use a set of helper functions. (This includes functions which return type
-//  complex which on Mips are returned in a pair of floating point registers).
-//
-// This is an encoding that we inherited from gcc.
-// In Mips traditional O32, N32 ABI, floating point numbers are passed in
-// floating point argument registers 1,2 only when the first and optionally
-// the second arguments are float (sf) or double (df).
-// For Mips16 we are only concerned with the situations where floating point
-// arguments are being passed in floating point registers by the ABI, because
-// Mips16 mode code cannot execute floating point instructions to load those
-// values and hence helper functions are needed.
-// The possibilities are (), (sf), (sf, sf), (sf, df), (df), (df, sf), (df, df)
-// the helper function suffixs for these are:
-//                        0,  1,    5,        9,         2,   6,        10
-// this suffix can then be calculated as follows:
-// for a given argument Arg:
-//     Arg1x, Arg2x = 1 :  Arg is sf
-//                    2 :  Arg is df
-//                    0:   Arg is neither sf or df
-// So this stub is the string for number Arg1x + Arg2x*4.
-// However not all numbers between 0 and 10 are possible, we check anyway and
-// assert if the impossible exists.
-//
+void MipsTargetLowering::
+getOpndList(SmallVectorImpl<SDValue> &Ops,
+            std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
+            bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
+            CallLoweringInfo &CLI, SDValue Callee, SDValue Chain) const {
+  // Insert node "GP copy globalreg" before call to function.
+  //
+  // R_MIPS_CALL* operators (emitted when non-internal functions are called
+  // in PIC mode) allow symbols to be resolved via lazy binding.
+  // The lazy binding stub requires GP to point to the GOT.
+  if (IsPICCall && !InternalLinkage) {
+    unsigned GPReg = IsN64 ? Mips::GP_64 : Mips::GP;
+    EVT Ty = IsN64 ? MVT::i64 : MVT::i32;
+    RegsToPass.push_back(std::make_pair(GPReg, getGlobalReg(CLI.DAG, Ty)));
+  }
 
-unsigned int MipsTargetLowering::getMips16HelperFunctionStubNumber
-  (ArgListTy &Args) const {
-  unsigned int resultNum = 0;
-  if (Args.size() >= 1) {
-    Type *t = Args[0].Ty;
-    if (t->isFloatTy()) {
-      resultNum = 1;
-    }
-    else if (t->isDoubleTy()) {
-      resultNum = 2;
-    }
-  }
-  if (resultNum) {
-    if (Args.size() >=2) {
-      Type *t = Args[1].Ty;
-      if (t->isFloatTy()) {
-        resultNum += 4;
-      }
-      else if (t->isDoubleTy()) {
-        resultNum += 8;
-      }
-    }
-  }
-  return resultNum;
-}
+  // Build a sequence of copy-to-reg nodes chained together with token
+  // chain and flag operands which copy the outgoing args into registers.
+  // The InFlag in necessary since all emitted instructions must be
+  // stuck together.
+  SDValue InFlag;
 
-//
-// prefixs are attached to stub numbers depending on the return type .
-// return type: float  sf_
-//              double df_
-//              single complex sc_
-//              double complext dc_
-//              others  NO PREFIX
-//
-//
-// The full name of a helper function is__mips16_call_stub +
-//    return type dependent prefix + stub number
-//
-//
-// This is something that probably should be in a different source file and
-// perhaps done differently but my main purpose is to not waste runtime
-// on something that we can enumerate in the source. Another possibility is
-// to have a python script to generate these mapping tables. This will do
-// for now. There are a whole series of helper function mapping arrays, one
-// for each return type class as outlined above. There there are 11 possible
-//  entries. Ones with 0 are ones which should never be selected
-//
-// All the arrays are similar except for ones which return neither
-// sf, df, sc, dc, in which only care about ones which have sf or df as a
-// first parameter.
-//
-#define P_ "__mips16_call_stub_"
-#define MAX_STUB_NUMBER 10
-#define T1 P "1", P "2", 0, 0, P "5", P "6", 0, 0, P "9", P "10"
-#define T P "0" , T1
-#define P P_
-static char const * vMips16Helper[MAX_STUB_NUMBER+1] =
-  {0, T1 };
-#undef P
-#define P P_ "sf_"
-static char const * sfMips16Helper[MAX_STUB_NUMBER+1] =
-  { T };
-#undef P
-#define P P_ "df_"
-static char const * dfMips16Helper[MAX_STUB_NUMBER+1] =
-  { T };
-#undef P
-#define P P_ "sc_"
-static char const * scMips16Helper[MAX_STUB_NUMBER+1] =
-  { T };
-#undef P
-#define P P_ "dc_"
-static char const * dcMips16Helper[MAX_STUB_NUMBER+1] =
-  { T };
-#undef P
-#undef P_
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = CLI.DAG.getCopyToReg(Chain, CLI.DL, RegsToPass[i].first,
+                                 RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
+  }
 
+  // Add argument registers to the end of the list so that they are
+  // known live into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(CLI.DAG.getRegister(RegsToPass[i].first,
+                                      RegsToPass[i].second.getValueType()));
 
-const char* MipsTargetLowering::
-  getMips16HelperFunction
-    (Type* RetTy, ArgListTy &Args, bool &needHelper) const {
-  const unsigned int stubNum = getMips16HelperFunctionStubNumber(Args);
-#ifndef NDEBUG
-  const unsigned int maxStubNum = 10;
-  assert(stubNum <= maxStubNum);
-  const bool validStubNum[maxStubNum+1] =
-    {true, true, true, false, false, true, true, false, false, true, true};
-  assert(validStubNum[stubNum]);
-#endif
-  const char *result;
-  if (RetTy->isFloatTy()) {
-    result = sfMips16Helper[stubNum];
-  }
-  else if (RetTy ->isDoubleTy()) {
-    result = dfMips16Helper[stubNum];
-  }
-  else if (RetTy->isStructTy()) {
-    // check if it's complex
-    if (RetTy->getNumContainedTypes() == 2) {
-      if ((RetTy->getContainedType(0)->isFloatTy()) &&
-          (RetTy->getContainedType(1)->isFloatTy())) {
-        result = scMips16Helper[stubNum];
-      }
-      else if ((RetTy->getContainedType(0)->isDoubleTy()) &&
-               (RetTy->getContainedType(1)->isDoubleTy())) {
-        result = dcMips16Helper[stubNum];
-      }
-      else {
-        llvm_unreachable("Uncovered condition");
-      }
-    }
-    else {
-      llvm_unreachable("Uncovered condition");
-    }
-  }
-  else {
-    if (stubNum == 0) {
-      needHelper = false;
-      return "";
-    }
-    result = vMips16Helper[stubNum];
-  }
-  needHelper = true;
-  return result;
+  // Add a register mask operand representing the call-preserved registers.
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const uint32_t *Mask = TRI->getCallPreservedMask(CLI.CallConv);
+  assert(Mask && "Missing call preserved mask for calling convention");
+  Ops.push_back(CLI.DAG.getRegisterMask(Mask));
+
+  if (InFlag.getNode())
+    Ops.push_back(InFlag);
 }
 
 /// LowerCall - functions arguments are copied from virtual regs to
@@ -3287,26 +2593,6 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   CallingConv::ID CallConv              = CLI.CallConv;
   bool IsVarArg                         = CLI.IsVarArg;
 
-  const char* Mips16HelperFunction = 0;
-  bool NeedMips16Helper = false;
-
-  if (Subtarget->inMips16Mode() && getTargetMachine().Options.UseSoftFloat &&
-      Mips16HardFloat) {
-    //
-    // currently we don't have symbols tagged with the mips16 or mips32
-    // qualifier so we will assume that we don't know what kind it is.
-    // and generate the helper
-    //
-    bool LookupHelper = true;
-    if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-      if (NoHelperNeeded.find(S->getSymbol()) != NoHelperNeeded.end()) {
-        LookupHelper = false;
-      }
-    }
-    if (LookupHelper) Mips16HelperFunction =
-      getMips16HelperFunction(CLI.RetTy, CLI.Args, NeedMips16Helper);
-
-  }
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const TargetFrameLowering *TFL = MF.getTarget().getFrameLowering();
@@ -3466,80 +2752,17 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     GlobalOrExternal = true;
   }
 
-  SDValue JumpTarget = Callee;
-
-  // T9 should contain the address of the callee function if
-  // -reloction-model=pic or it is an indirect call.
-  if (IsPICCall || !GlobalOrExternal) {
-    unsigned T9Reg = IsN64 ? Mips::T9_64 : Mips::T9;
-    unsigned V0Reg = Mips::V0;
-    if (NeedMips16Helper) {
-      RegsToPass.push_front(std::make_pair(V0Reg, Callee));
-      JumpTarget = DAG.getExternalSymbol(
-        Mips16HelperFunction, getPointerTy());
-      JumpTarget = getAddrGlobal(JumpTarget, DAG, MipsII::MO_GOT);
-    }
-    else {
-      RegsToPass.push_front(std::make_pair(T9Reg, Callee));
-
-      if (!Subtarget->inMips16Mode())
-        JumpTarget = SDValue();
-    }
-  }
-
-  // Insert node "GP copy globalreg" before call to function.
-  //
-  // R_MIPS_CALL* operators (emitted when non-internal functions are called
-  // in PIC mode) allow symbols to be resolved via lazy binding.
-  // The lazy binding stub requires GP to point to the GOT.
-  if (IsPICCall && !InternalLinkage) {
-    unsigned GPReg = IsN64 ? Mips::GP_64 : Mips::GP;
-    EVT Ty = IsN64 ? MVT::i64 : MVT::i32;
-    RegsToPass.push_back(std::make_pair(GPReg, getGlobalReg(DAG, Ty)));
-  }
-
-  // Build a sequence of copy-to-reg nodes chained together with token
-  // chain and flag operands which copy the outgoing args into registers.
-  // The InFlag in necessary since all emitted instructions must be
-  // stuck together.
-  SDValue InFlag;
-
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, DL, RegsToPass[i].first,
-                             RegsToPass[i].second, InFlag);
-    InFlag = Chain.getValue(1);
-  }
-
-  // MipsJmpLink = #chain, #target_address, #opt_in_flags...
-  //             = Chain, Callee, Reg#1, Reg#2, ...
-  //
-  // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 8> Ops(1, Chain);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
 
-  if (JumpTarget.getNode())
-    Ops.push_back(JumpTarget);
-
-  // Add argument registers to the end of the list so that they are
-  // known live into the call.
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
-    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
-                                  RegsToPass[i].second.getValueType()));
-
-  // Add a register mask operand representing the call-preserved registers.
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
-  assert(Mask && "Missing call preserved mask for calling convention");
-  Ops.push_back(DAG.getRegisterMask(Mask));
-
-  if (InFlag.getNode())
-    Ops.push_back(InFlag);
+  getOpndList(Ops, RegsToPass, IsPICCall, GlobalOrExternal, InternalLinkage,
+              CLI, Callee, Chain);
 
   if (IsTailCall)
     return DAG.getNode(MipsISD::TailCall, DL, MVT::Other, &Ops[0], Ops.size());
 
   Chain  = DAG.getNode(MipsISD::JmpLink, DL, NodeTys, &Ops[0], Ops.size());
-  InFlag = Chain.getValue(1);
+  SDValue InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
   Chain = DAG.getCALLSEQ_END(Chain, NextStackOffsetVal,
@@ -4124,14 +3347,14 @@ static bool isF128SoftLibCall(const char *CallSym) {
   const char * const *End = LibCalls + array_lengthof(LibCalls);
 
   // Check that LibCalls is sorted alphabetically.
-#ifndef NDEBUG
-  LTStr Comp;
+  MipsTargetLowering::LTStr Comp;
 
+#ifndef NDEBUG
   for (const char * const *I = LibCalls; I < End - 1; ++I)
     assert(Comp(*I, *(I + 1)));
 #endif
 
-  return std::binary_search(LibCalls, End, CallSym, LTStr());
+  return std::binary_search(LibCalls, End, CallSym, Comp);
 }
 
 /// This function returns true if Ty is fp128 or i128 which was originally a

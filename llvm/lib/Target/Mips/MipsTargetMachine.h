@@ -34,7 +34,7 @@ class MipsTargetMachine : public LLVMTargetMachine {
   const DataLayout    DL; // Calculates type size & alignment
   OwningPtr<const MipsInstrInfo> InstrInfo;
   OwningPtr<const MipsFrameLowering> FrameLowering;
-  MipsTargetLowering  TLInfo;
+  OwningPtr<const MipsTargetLowering> TLInfo;
   MipsSelectionDAGInfo TSInfo;
   MipsJITInfo JITInfo;
 
@@ -63,7 +63,7 @@ public:
   }
 
   virtual const MipsTargetLowering *getTargetLowering() const {
-    return &TLInfo;
+    return TLInfo.get();
   }
 
   virtual const MipsSelectionDAGInfo* getSelectionDAGInfo() const {
