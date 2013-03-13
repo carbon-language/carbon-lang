@@ -181,6 +181,14 @@ public:
                                              AttributeSet::FunctionIndex, N));
   }
 
+  /// addFnAttr - Add function attributes to this function.
+  ///
+  void addFnAttr(StringRef Kind) {
+    setAttributes(
+      AttributeSets.addAttribute(getContext(),
+                                 AttributeSet::FunctionIndex, Kind));
+  }
+
   /// \brief Return true if the function has the attribute.
   bool hasFnAttribute(Attribute::AttrKind Kind) const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex, Kind);

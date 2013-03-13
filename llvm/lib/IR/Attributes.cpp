@@ -649,6 +649,13 @@ AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
   return addAttributes(C, Idx, AttributeSet::get(C, Idx, Attr));
 }
 
+AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
+                                        StringRef Kind) const {
+  llvm::AttrBuilder B;
+  B.addAttribute(Kind);
+  return addAttributes(C, Idx, AttributeSet::get(C, Idx, B));
+}
+
 AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
                                          AttributeSet Attrs) const {
   if (!pImpl) return Attrs;
