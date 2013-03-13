@@ -1135,6 +1135,13 @@ public:
     deriveLocalStyle();
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.calculateFormattingInformation(AnnotatedLines[i]);
+
+      // Adapt level to the next line if this is a comment.
+      // FIXME: Can/should this be done in the UnwrappedLineParser?
+      if (i + 1 != e && AnnotatedLines[i].First.is(tok::comment) &&
+          AnnotatedLines[i].First.Children.empty() &&
+          AnnotatedLines[i + 1].First.isNot(tok::r_brace))
+        AnnotatedLines[i].Level = AnnotatedLines[i + 1].Level;
     }
     std::vector<int> IndentForLevel;
     bool PreviousLineWasTouched = false;

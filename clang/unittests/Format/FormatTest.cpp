@@ -427,6 +427,11 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "default: {\n"
                "  // Do nothing.\n"
                "}");
+  verifyFormat("switch (x) {\n"
+               "// if 1, do f()\n"
+               "case 1:\n"
+               "  f();\n"
+               "}");
 
   verifyGoogleFormat("switch (x) {\n"
                      "  case 1:\n"
