@@ -1333,13 +1333,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     }
 
     // Transform (icmp pred iM (shl iM %v, N), CI)
-    // -> (icmp pred i(M-N) (trunc %v iM to i(N-N)), (trunc (CI>>N))
-    // Transform the shl to a trunc if (trunc (CI>>N)) has no loss.
+    // -> (icmp pred i(M-N) (trunc %v iM to i(M-N)), (trunc (CI>>N))
+    // Transform the shl to a trunc if (trunc (CI>>N)) has no loss and M-N.
     // This enables to get rid of the shift in favor of a trunc which can be
     // free on the target. It has the additional benefit of comparing to a
     // smaller constant, which will be target friendly.
     unsigned Amt = ShAmt->getLimitedValue(TypeBits-1);
-    if (Amt != 0 && RHSV.countTrailingZeros() >= Amt) {
+    if (LHSI->hasOneUse() &&
+        Amt != 0 && RHSV.countTrailingZeros() >= Amt) {
       Type *NTy = IntegerType::get(ICI.getContext(), TypeBits - Amt);
       Constant *NCI = ConstantExpr::getTrunc(
                         ConstantExpr::getAShr(RHS,
