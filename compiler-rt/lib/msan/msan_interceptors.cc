@@ -790,6 +790,35 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
   return res;
 }
 
+extern "C" int pthread_attr_init(void *attr);
+extern "C" int pthread_attr_destroy(void *attr);
+extern "C" int pthread_attr_setstacksize(void *attr, uptr stacksize);
+extern "C" int pthread_attr_getstacksize(void *attr, uptr *stacksize);
+
+INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
+            void * param) {
+  ENSURE_MSAN_INITED(); // for GetTlsSize()
+  __sanitizer_pthread_attr_t myattr;
+  if (attr == 0) {
+    pthread_attr_init(&myattr);
+    attr = &myattr;
+  }
+  uptr stacksize = 0;
+  pthread_attr_getstacksize(attr, &stacksize);
+  // We place the huge ThreadState object into TLS, account for that.
+  const uptr minstacksize = GetTlsSize() + 128*1024;
+  if (stacksize < minstacksize) {
+    if (flags()->verbosity)
+      Printf("MemorySanitizer: increasing stacksize %zu->%zu\n", stacksize, minstacksize);
+    pthread_attr_setstacksize(attr, minstacksize);
+  }
+
+  int res = REAL(pthread_create)(th, attr, callback, param);
+  if (attr == &myattr)
+    pthread_attr_destroy(&myattr);
+  return res;
+}
+
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
     __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) do { } while (false)
@@ -994,6 +1023,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(dladdr);
   INTERCEPT_FUNCTION(dlopen);
   INTERCEPT_FUNCTION(getrusage);
+  INTERCEPT_FUNCTION(pthread_create);
   inited = 1;
 }
 }  // namespace __msan

@@ -1372,6 +1372,27 @@ TEST(MemorySanitizer, SimpleThread) {
   delete (int*)p;
 }
 
+static void* SmallStackThread_threadfn(void* data) {
+  return 0;
+}
+
+TEST(MemorySanitizer, SmallStackThread) {
+  pthread_attr_t attr;
+  pthread_t t;
+  void* p;
+  int res;
+  res = pthread_attr_init(&attr);
+  ASSERT_EQ(0, res);
+  res = pthread_attr_setstacksize(&attr, 64 * 1024);
+  ASSERT_EQ(0, res);
+  res = pthread_create(&t, &attr, SimpleThread_threadfn, NULL);
+  ASSERT_EQ(0, res);
+  res = pthread_join(t, &p);
+  ASSERT_EQ(0, res);
+  res = pthread_attr_destroy(&attr);
+  ASSERT_EQ(0, res);
+}
+
 TEST(MemorySanitizer, uname) {
   struct utsname u;
   int res = uname(&u);

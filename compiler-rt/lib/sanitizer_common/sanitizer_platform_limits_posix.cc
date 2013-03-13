@@ -18,6 +18,7 @@
 #include "sanitizer_platform_limits_posix.h"
 
 #include <dirent.h>
+#include <pthread.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -66,5 +67,7 @@ namespace __sanitizer {
     return *(socklen_t*)socklen_ptr;
   }
 }  // namespace __sanitizer
+
+COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
 
 #endif  // __linux__ || __APPLE__

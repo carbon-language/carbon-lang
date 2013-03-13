@@ -235,6 +235,7 @@ void __msan_init() {
 
   InstallAtExitHandler();
   SetDieCallback(MsanDie);
+  InitTlsSize();
   InitializeInterceptors();
 
   ReplaceOperatorsNewAndDelete();
