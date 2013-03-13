@@ -79,21 +79,21 @@ public:
       _PLT0->setOrdinal(ordinal++);
       mf.addAtom(*_PLT0);
     }
-    for (const auto &plt : _pltMap) {
-      plt.second->setOrdinal(ordinal++);
-      mf.addAtom(*plt.second);
+    for (auto &plt : _pltVector) {
+      plt->setOrdinal(ordinal++);
+      mf.addAtom(*plt);
     }
     if (_null) {
       _null->setOrdinal(ordinal++);
       mf.addAtom(*_null);
     }
-    if (_PLT0) {
+    if (_got0) {
       _got0->setOrdinal(ordinal++);
       mf.addAtom(*_got0);
     }
-    for (const auto &got : _gotMap) {
-      got.second->setOrdinal(ordinal++);
-      mf.addAtom(*got.second);
+    for (auto &got : _gotVector) {
+      got->setOrdinal(ordinal++);
+      mf.addAtom(*got);
     }
   }
 
@@ -106,6 +106,10 @@ protected:
 
   /// \brief Map Atoms to their PLT entries.
   llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
+
+  /// \brief the list of GOT/PLT atoms
+  std::vector<GOTAtom *> _gotVector;
+  std::vector<PLTAtom *> _pltVector;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null;
@@ -134,6 +138,8 @@ public:
 #ifndef NDEBUG
     _got0->_name = "__got0";
 #endif
+    DEBUG_WITH_TYPE("PLT", llvm::dbgs() << "[ PLT0/GOT0 ] "
+                                        << "Adding plt0/got0 \n");
     return _PLT0;
   }
 
@@ -154,9 +160,14 @@ public:
     ga->_name += a->name();
     pa->_name = "__plt_";
     pa->_name += a->name();
+    DEBUG_WITH_TYPE("PLT", llvm::dbgs() << "[" << a->name() << "] "
+                                        << "Adding plt/got: " << pa->_name
+                                        << "/" << ga->_name << "\n");
 #endif
     _gotMap[a] = ga;
     _pltMap[a] = pa;
+    _gotVector.push_back(ga);
+    _pltVector.push_back(pa);
     return pa;
   }
 

@@ -128,6 +128,8 @@ protected:
 #endif
     _gotMap[da] = ga;
     _pltMap[da] = pa;
+    _gotVector.push_back(ga);
+    _pltVector.push_back(pa);
     return pa;
   }
 
@@ -153,6 +155,7 @@ protected:
       g->_name += atom->name();
 #endif
       _gotMap[atom] = g;
+      _gotVector.push_back(g);
       return g;
     }
     return got->second;
@@ -187,6 +190,7 @@ protected:
       g->_name += da->name();
 #endif
       _gotMap[da] = g;
+      _gotVector.push_back(g);
       return g;
     }
     return got->second;
@@ -227,9 +231,9 @@ public:
       _PLT0->setOrdinal(ordinal++);
       mf.addAtom(*_PLT0);
     }
-    for (const auto &plt : _pltMap) {
-      plt.second->setOrdinal(ordinal++);
-      mf.addAtom(*plt.second);
+    for (auto &plt : _pltVector) {
+      plt->setOrdinal(ordinal++);
+      mf.addAtom(*plt);
     }
     if (_null) {
       _null->setOrdinal(ordinal++);
@@ -241,9 +245,9 @@ public:
       mf.addAtom(*_got0);
       mf.addAtom(*_got1);
     }
-    for (const auto &got : _gotMap) {
-      got.second->setOrdinal(ordinal++);
-      mf.addAtom(*got.second);
+    for (auto &got : _gotVector) {
+      got->setOrdinal(ordinal++);
+      mf.addAtom(*got);
     }
   }
 
@@ -256,6 +260,10 @@ protected:
 
   /// \brief Map Atoms to their PLT entries.
   llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
+
+  /// \brief the list of GOT/PLT atoms
+  std::vector<GOTAtom *> _gotVector;
+  std::vector<PLTAtom *> _pltVector;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null;
@@ -339,6 +347,8 @@ public:
 #endif
     _gotMap[a] = ga;
     _pltMap[a] = pa;
+    _gotVector.push_back(ga);
+    _pltVector.push_back(pa);
     return pa;
   }
 
@@ -370,6 +380,7 @@ public:
       g->_name += sla->name();
 #endif
       _gotMap[sla] = g;
+      _gotVector.push_back(g);
       return g;
     }
     return got->second;
