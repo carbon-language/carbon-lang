@@ -18,6 +18,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/LiteralSupport.h"
@@ -76,8 +77,10 @@ ModuleMap::resolveExport(Module *Mod,
 }
 
 ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
-                     const LangOptions &LangOpts, const TargetInfo *Target)
-  : LangOpts(LangOpts), Target(Target), BuiltinIncludeDir(0)
+                     const LangOptions &LangOpts, const TargetInfo *Target,
+                     HeaderSearch &HeaderInfo)
+  : LangOpts(LangOpts), Target(Target), HeaderInfo(HeaderInfo),
+    BuiltinIncludeDir(0)
 {
   IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = IntrusiveRefCntPtr<DiagnosticsEngine>(
@@ -553,10 +556,12 @@ void ModuleMap::setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir) {
 
 void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
                           bool Excluded) {
-  if (Excluded)
+  if (Excluded) {
     Mod->ExcludedHeaders.push_back(Header);
-  else
+  } else {
     Mod->Headers.push_back(Header);
+    HeaderInfo.MarkFileModuleHeader(Header);
+  }
   Headers[Header] = KnownHeader(Mod, Excluded);
 }
 
