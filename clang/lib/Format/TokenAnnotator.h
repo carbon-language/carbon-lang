@@ -79,6 +79,27 @@ public:
   }
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
+
+  bool isOneOf(tok::TokenKind K1, tok::TokenKind K2) const {
+    return is(K1) || is(K2);
+  }
+
+  bool isOneOf(tok::TokenKind K1, tok::TokenKind K2, tok::TokenKind K3) const {
+    return is(K1) || is(K2) || is(K3);
+  }
+
+  bool isOneOf(
+      tok::TokenKind K1, tok::TokenKind K2, tok::TokenKind K3,
+      tok::TokenKind K4, tok::TokenKind K5 = tok::NUM_TOKENS,
+      tok::TokenKind K6 = tok::NUM_TOKENS, tok::TokenKind K7 = tok::NUM_TOKENS,
+      tok::TokenKind K8 = tok::NUM_TOKENS, tok::TokenKind K9 = tok::NUM_TOKENS,
+      tok::TokenKind K10 = tok::NUM_TOKENS,
+      tok::TokenKind K11 = tok::NUM_TOKENS,
+      tok::TokenKind K12 = tok::NUM_TOKENS) const {
+    return is(K1) || is(K2) || is(K3) || is(K4) || is(K5) || is(K6) || is(K7) ||
+           is(K8) || is(K9) || is(K10) || is(K11) || is(K12);
+  }
+
   bool isNot(tok::TokenKind Kind) const { return FormatTok.Tok.isNot(Kind); }
 
   bool isObjCAtKeyword(tok::ObjCKeywordKind Kind) const {

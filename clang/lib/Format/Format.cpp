@@ -499,9 +499,8 @@ private:
                  State.Stack.back().FirstLessLess != 0) {
         State.Column = State.Stack.back().FirstLessLess;
       } else if (State.ParenLevel != 0 &&
-                 (Previous.is(tok::equal) || Previous.is(tok::coloncolon) ||
-                  Current.is(tok::period) || Current.is(tok::arrow) ||
-                  Current.is(tok::question))) {
+                 (Previous.isOneOf(tok::equal, tok::coloncolon) ||
+                  Current.isOneOf(tok::period, tok::arrow, tok::question))) {
         // Indent and extra 4 spaces after if we know the current expression is
         // continued.  Don't do that on the top level, as we already indent 4
         // there.
@@ -534,7 +533,7 @@ private:
 
       if (Current.is(tok::question))
         State.Stack.back().BreakBeforeParameter = true;
-      if ((Previous.is(tok::comma) || Previous.is(tok::semi)) &&
+      if (Previous.isOneOf(tok::comma, tok::semi) &&
           !State.Stack.back().AvoidBinPacking)
         State.Stack.back().BreakBeforeParameter = false;
 
@@ -562,7 +561,7 @@ private:
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
         State.Stack[i].BreakBeforeParameter = true;
       }
-      if (Current.is(tok::period) || Current.is(tok::arrow))
+      if (Current.isOneOf(tok::period, tok::arrow))
         State.Stack.back().BreakBeforeParameter = true;
 
       // If we break after {, we should also break before the corresponding }.
@@ -600,7 +599,7 @@ private:
       }
 
       if (Current.Type != TT_LineComment &&
-          (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
+          (Previous.isOneOf(tok::l_paren, tok::l_brace) ||
            State.NextToken->Parent->Type == TT_TemplateOpener))
         State.Stack.back().Indent = State.Column + Spaces;
       if (Previous.is(tok::comma) && !isTrailingComment(Current))
@@ -622,8 +621,7 @@ private:
       else if (Previous.Type == TT_InheritanceColon)
         State.Stack.back().Indent = State.Column;
       else if (Previous.ParameterCount > 1 &&
-               (Previous.is(tok::l_paren) || Previous.is(tok::l_square) ||
-                Previous.is(tok::l_brace) ||
+               (Previous.isOneOf(tok::l_paren, tok::l_square, tok::l_brace) ||
                 Previous.Type == TT_TemplateOpener))
         // If this function has multiple parameters, indent nested calls from
         // the start of the first parameter.
@@ -645,7 +643,7 @@ private:
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
-    if ((Current.is(tok::period) || Current.is(tok::arrow)) &&
+    if (Current.isOneOf(tok::period, tok::arrow) &&
         Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
       State.Stack.back().StartOfFunctionCall =
           Current.LastInChainOfCalls ? 0 : State.Column;
@@ -665,8 +663,7 @@ private:
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
-    if (Current.is(tok::l_paren) || Current.is(tok::l_square) ||
-        Current.is(tok::l_brace) ||
+    if (Current.isOneOf(tok::l_paren, tok::l_square, tok::l_brace) ||
         State.NextToken->Type == TT_TemplateOpener) {
       unsigned NewIndent;
       bool AvoidBinPacking;
@@ -695,7 +692,7 @@ private:
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
     // stacks.
-    if (Current.is(tok::r_paren) || Current.is(tok::r_square) ||
+    if (Current.isOneOf(tok::r_paren, tok::r_square) ||
         (Current.is(tok::r_brace) && State.NextToken != &RootToken) ||
         State.NextToken->Type == TT_TemplateCloser) {
       State.Stack.pop_back();
@@ -985,8 +982,7 @@ private:
     if (State.NextToken->Parent->is(tok::semi) &&
         State.LineContainsContinuedForLoopSection)
       return true;
-    if ((State.NextToken->Parent->is(tok::comma) ||
-         State.NextToken->Parent->is(tok::semi) ||
+    if ((State.NextToken->Parent->isOneOf(tok::comma, tok::semi) ||
          State.NextToken->is(tok::question) ||
          State.NextToken->Type == TT_ConditionalExpr) &&
         State.Stack.back().BreakBeforeParameter &&
@@ -1126,6 +1122,88 @@ public:
 
   virtual ~Formatter() {}
 
+  tooling::Replacements format() {
+    LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
+    UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
+    StructuralError = Parser.parse();
+    unsigned PreviousEndOfLineColumn = 0;
+    TokenAnnotator Annotator(Style, SourceMgr, Lex,
+                             Tokens.getIdentTable().get("in"));
+    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
+      Annotator.annotate(AnnotatedLines[i]);
+    }
+    deriveLocalStyle();
+    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
+      Annotator.calculateFormattingInformation(AnnotatedLines[i]);
+    }
+    std::vector<int> IndentForLevel;
+    bool PreviousLineWasTouched = false;
+    for (std::vector<AnnotatedLine>::iterator I = AnnotatedLines.begin(),
+                                              E = AnnotatedLines.end();
+         I != E; ++I) {
+      const AnnotatedLine &TheLine = *I;
+      const FormatToken &FirstTok = TheLine.First.FormatTok;
+      int Offset = getIndentOffset(TheLine.First);
+      while (IndentForLevel.size() <= TheLine.Level)
+        IndentForLevel.push_back(-1);
+      IndentForLevel.resize(TheLine.Level + 1);
+      bool WasMoved =
+          PreviousLineWasTouched && FirstTok.NewlinesBefore == 0;
+      if (TheLine.First.is(tok::eof)) {
+        if (PreviousLineWasTouched) {
+          unsigned NewLines = std::min(FirstTok.NewlinesBefore, 1u);
+          Whitespaces.replaceWhitespace(TheLine.First, NewLines, /*Indent*/ 0,
+                                        /*WhitespaceStartColumn*/ 0, Style);
+        }
+      } else if (TheLine.Type != LT_Invalid &&
+                 (WasMoved || touchesLine(TheLine))) {
+        unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
+        unsigned Indent = LevelIndent;
+        if (static_cast<int>(Indent) + Offset >= 0)
+          Indent += Offset;
+        if (!FirstTok.WhiteSpaceStart.isValid() || StructuralError) {
+          Indent = LevelIndent = SourceMgr.getSpellingColumnNumber(
+              FirstTok.Tok.getLocation()) - 1;
+        } else {
+          formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
+                           PreviousEndOfLineColumn);
+        }
+        tryFitMultipleLinesInOne(Indent, I, E);
+        UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
+                                         TheLine.First, Whitespaces,
+                                         StructuralError);
+        PreviousEndOfLineColumn =
+            Formatter.format(I + 1 != E ? &*(I + 1) : NULL);
+        IndentForLevel[TheLine.Level] = LevelIndent;
+        PreviousLineWasTouched = true;
+      } else {
+        if (FirstTok.NewlinesBefore > 0 || FirstTok.IsFirst) {
+          unsigned Indent =
+              SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
+          unsigned LevelIndent = Indent;
+          if (static_cast<int>(LevelIndent) - Offset >= 0)
+            LevelIndent -= Offset;
+          IndentForLevel[TheLine.Level] = LevelIndent;
+
+          // Remove trailing whitespace of the previous line if it was touched.
+          if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))
+            formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
+                             PreviousEndOfLineColumn);
+        }
+        // If we did not reformat this unwrapped line, the column at the end of
+        // the last token is unchanged - thus, we can calculate the end of the
+        // last token.
+        SourceLocation LastLoc = TheLine.Last->FormatTok.Tok.getLocation();
+        PreviousEndOfLineColumn =
+            SourceMgr.getSpellingColumnNumber(LastLoc) +
+            Lex.MeasureTokenLength(LastLoc, SourceMgr, Lex.getLangOpts()) - 1;
+        PreviousLineWasTouched = false;
+      }
+    }
+    return Whitespaces.generateReplacements();
+  }
+
+private:
   void deriveLocalStyle() {
     unsigned CountBoundToVariable = 0;
     unsigned CountBoundToType = 0;
@@ -1163,91 +1241,6 @@ public:
     }
   }
 
-  tooling::Replacements format() {
-    LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
-    UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
-    StructuralError = Parser.parse();
-    unsigned PreviousEndOfLineColumn = 0;
-    TokenAnnotator Annotator(Style, SourceMgr, Lex,
-                             Tokens.getIdentTable().get("in"));
-    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
-      Annotator.annotate(AnnotatedLines[i]);
-    }
-    deriveLocalStyle();
-    for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
-      Annotator.calculateFormattingInformation(AnnotatedLines[i]);
-    }
-    std::vector<int> IndentForLevel;
-    bool PreviousLineWasTouched = false;
-    for (std::vector<AnnotatedLine>::iterator I = AnnotatedLines.begin(),
-                                              E = AnnotatedLines.end();
-         I != E; ++I) {
-      const AnnotatedLine &TheLine = *I;
-      int Offset = getIndentOffset(TheLine.First);
-      while (IndentForLevel.size() <= TheLine.Level)
-        IndentForLevel.push_back(-1);
-      IndentForLevel.resize(TheLine.Level + 1);
-      bool WasMoved =
-          PreviousLineWasTouched && TheLine.First.FormatTok.NewlinesBefore == 0;
-      if (TheLine.First.is(tok::eof)) {
-        if (PreviousLineWasTouched) {
-          unsigned NewLines =
-              std::min(TheLine.First.FormatTok.NewlinesBefore, 1u);
-          Whitespaces.replaceWhitespace(TheLine.First, NewLines, /*Indent*/ 0,
-                                        /*WhitespaceStartColumn*/ 0, Style);
-        }
-      } else if (TheLine.Type != LT_Invalid &&
-                 (WasMoved || touchesLine(TheLine))) {
-        unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
-        unsigned Indent = LevelIndent;
-        if (static_cast<int>(Indent) + Offset >= 0)
-          Indent += Offset;
-        if (!TheLine.First.FormatTok.WhiteSpaceStart.isValid() ||
-            StructuralError) {
-          Indent = LevelIndent = SourceMgr.getSpellingColumnNumber(
-              TheLine.First.FormatTok.Tok.getLocation()) - 1;
-        } else {
-          formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
-                           PreviousEndOfLineColumn);
-        }
-        tryFitMultipleLinesInOne(Indent, I, E);
-        UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
-                                         TheLine.First, Whitespaces,
-                                         StructuralError);
-        PreviousEndOfLineColumn =
-            Formatter.format(I + 1 != E ? &*(I + 1) : NULL);
-        IndentForLevel[TheLine.Level] = LevelIndent;
-        PreviousLineWasTouched = true;
-      } else {
-        if (TheLine.First.FormatTok.NewlinesBefore > 0 ||
-            TheLine.First.FormatTok.IsFirst) {
-          unsigned Indent = SourceMgr.getSpellingColumnNumber(
-              TheLine.First.FormatTok.Tok.getLocation()) - 1;
-          unsigned LevelIndent = Indent;
-          if (static_cast<int>(LevelIndent) - Offset >= 0)
-            LevelIndent -= Offset;
-          IndentForLevel[TheLine.Level] = LevelIndent;
-
-          // Remove trailing whitespace of the previous line if it was touched.
-          if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))
-            formatFirstToken(TheLine.First, Indent, TheLine.InPPDirective,
-                             PreviousEndOfLineColumn);
-        }
-        // If we did not reformat this unwrapped line, the column at the end of
-        // the last token is unchanged - thus, we can calculate the end of the
-        // last token.
-        PreviousEndOfLineColumn =
-            SourceMgr.getSpellingColumnNumber(
-                TheLine.Last->FormatTok.Tok.getLocation()) +
-            Lex.MeasureTokenLength(TheLine.Last->FormatTok.Tok.getLocation(),
-                                   SourceMgr, Lex.getLangOpts()) - 1;
-        PreviousLineWasTouched = false;
-      }
-    }
-    return Whitespaces.generateReplacements();
-  }
-
-private:
   /// \brief Get the indent of \p Level from \p IndentForLevel.
   ///
   /// \p IndentForLevel must contain the indent for the level \c l
@@ -1267,8 +1260,7 @@ private:
   /// characters to the left from their level.
   int getIndentOffset(const AnnotatedToken &RootToken) {
     bool IsAccessModifier = false;
-    if (RootToken.is(tok::kw_public) || RootToken.is(tok::kw_protected) ||
-        RootToken.is(tok::kw_private))
+    if (RootToken.isOneOf(tok::kw_public, tok::kw_protected, tok::kw_private))
       IsAccessModifier = true;
     else if (RootToken.is(tok::at) && !RootToken.Children.empty() &&
              (RootToken.Children[0].isObjCAtKeyword(tok::objc_public) ||
@@ -1361,15 +1353,11 @@ private:
     // we're not in a control flow statement and the last token is an opening
     // brace.
     AnnotatedLine &Line = *I;
-    bool AllowedTokens =
-        Line.First.isNot(tok::kw_if) && Line.First.isNot(tok::kw_while) &&
-        Line.First.isNot(tok::kw_do) && Line.First.isNot(tok::r_brace) &&
-        Line.First.isNot(tok::kw_else) && Line.First.isNot(tok::kw_try) &&
-        Line.First.isNot(tok::kw_catch) && Line.First.isNot(tok::kw_for) &&
-        // This gets rid of all ObjC @ keywords and methods.
-        Line.First.isNot(tok::at) && Line.First.isNot(tok::minus) &&
-        Line.First.isNot(tok::plus);
-    if (!AllowedTokens)
+    if (Line.First.isOneOf(tok::kw_if, tok::kw_while, tok::kw_do, tok::r_brace,
+                           tok::kw_else, tok::kw_try, tok::kw_catch,
+                           tok::kw_for,
+                           // This gets rid of all ObjC @ keywords and methods.
+                           tok::at, tok::minus, tok::plus))
       return;
 
     AnnotatedToken *Tok = &(I + 1)->First;
@@ -1391,7 +1379,7 @@ private:
       if ((I + 1)->Last->Type == TT_LineComment || Tok->MustBreakBefore)
         return;
       do {
-        if (Tok->is(tok::l_brace) || Tok->is(tok::r_brace))
+        if (Tok->isOneOf(tok::l_brace, tok::r_brace))
           return;
         Tok = Tok->Children.empty() ? NULL : &Tok->Children.back();
       } while (Tok != NULL);
