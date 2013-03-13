@@ -24,7 +24,8 @@ class MemoryMappingLayout {
  public:
   MemoryMappingLayout() {}
   bool GetObjectNameAndOffset(uptr addr, uptr *offset,
-                              char filename[], uptr filename_size) {
+                              char filename[], uptr filename_size,
+                              uptr *protection) {
     UNIMPLEMENTED();
   }
 };
@@ -105,7 +106,8 @@ class MemoryMappingLayout {
 # elif defined __APPLE__
   template<u32 kLCSegment, typename SegmentCommand>
   bool NextSegmentLoad(uptr *start, uptr *end, uptr *offset,
-                       char filename[], uptr filename_size);
+                       char filename[], uptr filename_size,
+                       uptr *protection);
   int current_image_;
   u32 current_magic_;
   u32 current_filetype_;

@@ -243,7 +243,8 @@ bool MemoryMappingLayout::NextSegmentLoad(
 }
 
 bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
-                               char filename[], uptr filename_size) {
+                               char filename[], uptr filename_size,
+                               uptr *protection) {
   for (; current_image_ >= 0; current_image_--) {
     const mach_header* hdr = _dyld_get_image_header(current_image_);
     if (!hdr) continue;
@@ -275,14 +276,14 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
 #ifdef MH_MAGIC_64
         case MH_MAGIC_64: {
           if (NextSegmentLoad<LC_SEGMENT_64, struct segment_command_64>(
-                  start, end, offset, filename, filename_size))
+                  start, end, offset, filename, filename_size, protection))
             return true;
           break;
         }
 #endif
         case MH_MAGIC: {
           if (NextSegmentLoad<LC_SEGMENT, struct segment_command>(
-                  start, end, offset, filename, filename_size))
+                  start, end, offset, filename, filename_size, protection))
             return true;
           break;
         }
@@ -296,7 +297,7 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
 
 bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                                  char filename[],
-                                                 uptr filename_size
+                                                 uptr filename_size,
                                                  uptr *protection) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size,
                                        protection);
