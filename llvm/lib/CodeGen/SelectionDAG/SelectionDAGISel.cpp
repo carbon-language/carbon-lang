@@ -362,6 +362,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   TargetSubtargetInfo &ST =
     const_cast<TargetSubtargetInfo&>(TM.getSubtarget<TargetSubtargetInfo>());
   ST.resetSubtargetFeatures(MF);
+  TM.resetTargetOptions(MF);
 
   DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");
 
