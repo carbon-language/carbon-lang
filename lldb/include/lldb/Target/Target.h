@@ -144,7 +144,10 @@ public:
     
     const char *
     GetExpressionPrefixContentsAsCString ();
-
+    
+    bool
+    GetUseFastStepping() const;
+    
 };
 
 typedef STD_SHARED_PTR(TargetProperties) TargetPropertiesSP;

@@ -54,6 +54,7 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
     m_first_run_event (true),
     m_use_fast_step(false)
 {
+    m_use_fast_step = GetTarget().GetUseFastStepping();
     AddRange(range);
     m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
 }
