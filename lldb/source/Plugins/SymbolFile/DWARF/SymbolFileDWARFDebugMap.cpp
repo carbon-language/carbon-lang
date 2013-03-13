@@ -50,6 +50,9 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
     file_range_map_valid = true;
 
     Module *oso_module = exe_symfile->GetModuleByCompUnitInfo (this);
+    if (!oso_module)
+        return file_range_map;
+    
     ObjectFile *oso_objfile = oso_module->GetObjectFile();
     
     LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
