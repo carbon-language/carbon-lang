@@ -25,7 +25,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Debug.h"
 
 // For chdir, see the comment in ClangTool::run for more information.
 #ifdef _WIN32
@@ -296,16 +295,14 @@ int ClangTool::run(FrontendActionFactory *ActionFactory) {
       ArgsAdjuster->Adjust(CompileCommands[I].second.CommandLine);
     assert(!CommandLine.empty());
     CommandLine[0] = MainExecutable;
-    DEBUG({
-      llvm::dbgs() << "Processing: " << File << ".\n";
-    });
+    llvm::outs() << "Processing: " << File << ".\n";
     ToolInvocation Invocation(CommandLine, ActionFactory->create(), &Files);
     for (int I = 0, E = MappedFileContents.size(); I != E; ++I) {
       Invocation.mapVirtualFile(MappedFileContents[I].first,
                                 MappedFileContents[I].second);
     }
     if (!Invocation.run()) {
-      llvm::errs() << "Error while processing " << File << ".\n";
+      llvm::outs() << "Error while processing " << File << ".\n";
       ProcessingFailed = true;
     }
   }
