@@ -621,12 +621,10 @@ namespace llvm {
     unsigned getLineNumber() const   { return getUnsignedField(2);         }
     unsigned getColumnNumber() const { return getUnsignedField(3);         }
     StringRef getDirectory() const {
-      StringRef dir = getFieldAs<DIFile>(4).getDirectory();
-      return !dir.empty() ? dir : getContext().getDirectory();
+      return getFieldAs<DIFile>(4).getDirectory();
     }
     StringRef getFilename() const {
-      StringRef filename = getFieldAs<DIFile>(4).getFilename();
-      return !filename.empty() ? filename : getContext().getFilename();
+      return getFieldAs<DIFile>(4).getFilename();
     }
     bool Verify() const;
   };
