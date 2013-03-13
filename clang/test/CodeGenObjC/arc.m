@@ -273,27 +273,7 @@ void test8() {
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: [[T0:%.*]] = call i8* @test8_helper()
   // CHECK-NEXT: store i8* [[T0]], i8** [[X]]
-  // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
-  // CHECK-NOT:  imprecise_release
-  // CHECK-NEXT: ret void
-}
-
-id test9_helper(void) __attribute__((ns_returns_retained));
-void test9() {
-  id x __attribute__((objc_precise_lifetime)) = test9_helper();
-  x = 0;
-  // CHECK:      [[X:%.*]] = alloca i8*
-  // CHECK-NEXT: [[CALL:%.*]] = call i8* @test9_helper()
-  // CHECK-NEXT: store i8* [[CALL]], i8** [[X]]
-
-  // CHECK-NEXT: [[T1:%.*]] = load i8** [[X]]
-  // CHECK-NEXT: store i8* null, i8** [[X]]
-  // CHECK-NEXT: call void @objc_release(i8* [[T1]]) [[NUW]], !clang.imprecise_release
-
-  // CHECK-NEXT: [[T1:%.*]] = load i8** [[X]]
-  // CHECK-NEXT: call void @objc_release(i8* [[T1]]) [[NUW]]
-  // CHECK-NOT:  clang.imprecise_release
-
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]], !clang.imprecise_release
   // CHECK-NEXT: ret void
 }
 
@@ -1238,57 +1218,6 @@ void test56_test(void) {
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i8**
 // CHECK-NEXT: [[T5:%.*]] = load i8** [[T4]]
 // CHECK-NEXT: ret i8* [[T5]]
-
-// rdar://problem/9821110
-@interface Test58
-- (char*) interior __attribute__((objc_returns_inner_pointer));
-// Should we allow this on properties?
-@end
-extern Test58 *test58_helper(void);
-
-// CHECK: define void @test58a()
-void test58a(void) {
-  // CHECK:      [[T0:%.*]] = call [[TEST58:%.*]]* @test58_helper()
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST58]]* [[T0]] to i8*
-  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
-  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST58]]*
-  // CHECK-NEXT: store [[TEST58]]* [[T3]]
-  // CHECK-NEXT: [[T0:%.*]] = load [[TEST58]]**
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST58]]* [[T0]] to i8*
-  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutorelease(i8* [[T1]])
-  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST58]]*
-  // CHECK-NEXT: [[T4:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
-  // CHECK-NEXT: [[T5:%.*]] = bitcast [[TEST58]]* [[T3]] to i8*
-  // CHECK-NEXT: [[T6:%.*]] = call i8* bitcast
-  // CHECK-NEXT: store i8* [[T6]], i8**
-  // CHECK-NEXT: [[T0:%.*]] = load [[TEST58]]**
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST58]]* [[T0]] to i8*
-  // CHECK-NEXT: call void @objc_release(i8* [[T1]]) [[NUW]], !clang.imprecise_release
-  // CHECK-NEXT: ret void
-  Test58 *ptr = test58_helper();
-  char *c = [(ptr) interior];
-}
-
-// CHECK: define void @test58b()
-void test58b(void) {
-  // CHECK:      [[T0:%.*]] = call [[TEST58:%.*]]* @test58_helper()
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST58]]* [[T0]] to i8*
-  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
-  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST58]]*
-  // CHECK-NEXT: store [[TEST58]]* [[T3]]
-  // CHECK-NEXT: [[T0:%.*]] = load [[TEST58]]**
-  // CHECK-NEXT: [[T1:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
-  // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST58]]* [[T0]] to i8*
-  // CHECK-NEXT: [[T3:%.*]] = call i8* bitcast
-  // CHECK-NEXT: store i8* [[T3]], i8**
-  // CHECK-NEXT: [[T0:%.*]] = load [[TEST58]]**
-  // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST58]]* [[T0]] to i8*
-  // CHECK-NEXT: call void @objc_release(i8* [[T1]]) [[NUW]]
-  // CHECK-NOT:  clang.imprecise_release
-  // CHECK-NEXT: ret void
-  __attribute__((objc_precise_lifetime)) Test58 *ptr = test58_helper();
-  char *c = [ptr interior];
-}
 
 // rdar://problem/9842343
 void test59(void) {

@@ -1547,7 +1547,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
 
     // Destroy strong objects with a call if requested.
     } else if (useARCStrongDestroy) {
-      EmitARCDestroyStrong(srcField, /*precise*/ false);
+      EmitARCDestroyStrong(srcField, ARCImpreciseLifetime);
 
     // Otherwise we call _Block_object_dispose.  It wouldn't be too
     // hard to just emit this as a cleanup if we wanted to make sure
@@ -1656,7 +1656,7 @@ public:
   }
 
   void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
-    CGF.EmitARCDestroyStrong(field, /*precise*/ false);
+    CGF.EmitARCDestroyStrong(field, ARCImpreciseLifetime);
   }
 
   void profileImpl(llvm::FoldingSetNodeID &id) const {
@@ -1686,7 +1686,7 @@ public:
   }
 
   void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
-    CGF.EmitARCDestroyStrong(field, /*precise*/ false);
+    CGF.EmitARCDestroyStrong(field, ARCImpreciseLifetime);
   }
 
   void profileImpl(llvm::FoldingSetNodeID &id) const {

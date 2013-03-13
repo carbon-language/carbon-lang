@@ -627,7 +627,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
   if (accessedByInit && lifetime == Qualifiers::OCL_Strong) {
     llvm::Value *oldValue = EmitLoadOfScalar(lvalue);
     EmitStoreOfScalar(value, lvalue, /* isInitialization */ true);
-    EmitARCRelease(oldValue, /*precise*/ false);
+    EmitARCRelease(oldValue, ARCImpreciseLifetime);
     return;
   }
 
@@ -1490,12 +1490,15 @@ namespace {
   /// ns_consumed argument when we can't reasonably do that just by
   /// not doing the initial retain for a __block argument.
   struct ConsumeARCParameter : EHScopeStack::Cleanup {
-    ConsumeARCParameter(llvm::Value *param) : Param(param) {}
+    ConsumeARCParameter(llvm::Value *param,
+                        ARCPreciseLifetime_t precise)
+      : Param(param), Precise(precise) {}
 
     llvm::Value *Param;
+    ARCPreciseLifetime_t Precise;
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
-      CGF.EmitARCRelease(Param, /*precise*/ false);
+      CGF.EmitARCRelease(Param, Precise);
     }
   };
 }
@@ -1585,8 +1588,12 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
         }
       } else {
         // Push the cleanup for a consumed parameter.
-        if (isConsumed)
-          EHStack.pushCleanup<ConsumeARCParameter>(getARCCleanupKind(), Arg);
+        if (isConsumed) {
+          ARCPreciseLifetime_t precise = (D.hasAttr<ObjCPreciseLifetimeAttr>()
+                                ? ARCPreciseLifetime : ARCImpreciseLifetime);
+          EHStack.pushCleanup<ConsumeARCParameter>(getARCCleanupKind(), Arg,
+                                                   precise);
+        }
 
         if (lt == Qualifiers::OCL_Weak) {
           EmitARCInitWeak(DeclPtr, Arg);

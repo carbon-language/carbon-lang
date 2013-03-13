@@ -1451,7 +1451,7 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
       llvm::Value *PtrValue = CGF.Builder.CreateLoad(Ptr, 
                                              ElementType.isVolatileQualified());
         
-      CGF.EmitARCRelease(PtrValue, /*precise*/ true);
+      CGF.EmitARCRelease(PtrValue, ARCPreciseLifetime);
       break;
     }
         

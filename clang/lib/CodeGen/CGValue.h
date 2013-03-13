@@ -97,6 +97,10 @@ public:
   }
 };
 
+/// Does an ARC strong l-value have precise lifetime?
+enum ARCPreciseLifetime_t {
+  ARCImpreciseLifetime, ARCPreciseLifetime,
+};
 
 /// LValue - This represents an lvalue references.  Because C/C++ allow
 /// bitfields, this is not a simple LLVM pointer, it may be a pointer plus a
@@ -147,6 +151,10 @@ class LValue {
   // Lvalue is a thread local reference
   bool ThreadLocalRef : 1;
 
+  // Lvalue has ARC imprecise lifetime.  We store this inverted to try
+  // to make the default bitfield pattern all-zeroes.
+  bool ImpreciseLifetime : 1;
+
   Expr *BaseIvarExp;
 
   /// TBAAInfo - TBAA information to attach to dereferences of this LValue.
@@ -164,6 +172,7 @@ private:
 
     // Initialize Objective-C flags.
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
+    this->ImpreciseLifetime = false;
     this->ThreadLocalRef = false;
     this->BaseIvarExp = 0;
     this->TBAAInfo = TBAAInfo;
@@ -201,6 +210,13 @@ public:
 
   bool isThreadLocalRef() const { return ThreadLocalRef; }
   void setThreadLocalRef(bool Value) { ThreadLocalRef = Value;}
+
+  ARCPreciseLifetime_t isARCPreciseLifetime() const {
+    return ARCPreciseLifetime_t(!ImpreciseLifetime);
+  }
+  void setARCPreciseLifetime(ARCPreciseLifetime_t value) {
+    ImpreciseLifetime = (value == ARCImpreciseLifetime);
+  }
 
   bool isObjCWeak() const {
     return Quals.getObjCGCAttr() == Qualifiers::Weak;

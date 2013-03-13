@@ -2446,14 +2446,14 @@ public:
   llvm::Value *EmitARCRetainAutorelease(QualType type, llvm::Value *value);
   llvm::Value *EmitARCRetainAutoreleaseNonBlock(llvm::Value *value);
   llvm::Value *EmitARCStoreStrong(LValue lvalue, llvm::Value *value,
-                                  bool ignored);
+                                  bool resultIgnored);
   llvm::Value *EmitARCStoreStrongCall(llvm::Value *addr, llvm::Value *value,
-                                      bool ignored);
+                                      bool resultIgnored);
   llvm::Value *EmitARCRetain(QualType type, llvm::Value *value);
   llvm::Value *EmitARCRetainNonBlock(llvm::Value *value);
   llvm::Value *EmitARCRetainBlock(llvm::Value *value, bool mandatory);
-  void EmitARCDestroyStrong(llvm::Value *addr, bool precise);
-  void EmitARCRelease(llvm::Value *value, bool precise);
+  void EmitARCDestroyStrong(llvm::Value *addr, ARCPreciseLifetime_t precise);
+  void EmitARCRelease(llvm::Value *value, ARCPreciseLifetime_t precise);
   llvm::Value *EmitARCAutorelease(llvm::Value *value);
   llvm::Value *EmitARCAutoreleaseReturnValue(llvm::Value *value);
   llvm::Value *EmitARCRetainAutoreleaseReturnValue(llvm::Value *value);

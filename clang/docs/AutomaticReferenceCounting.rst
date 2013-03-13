@@ -1330,27 +1330,179 @@ This is a new rule of the Objective-C language and applies outside of ARC.
 Optimization
 ============
 
-ARC applies aggressive rules for the optimization of local behavior.  These
-rules are based around a core assumption of :arc-term:`local balancing`: that
-other code will perform retains and releases as necessary (and only as
-necessary) for its own safety, and so the optimizer does not need to consider
-global properties of the retain and release sequence.  For example, if a retain
-and release immediately bracket a call, the optimizer can delete the retain and
-release on the assumption that the called function will not do a constant
-number of unmotivated releases followed by a constant number of "balancing"
-retains, such that the local retain/release pair is the only thing preventing
-the called function from ending up with a dangling reference.
+Within this section, the word :arc-term:`function` will be used to
+refer to any structured unit of code, be it a C function, an
+Objective-C method, or a block.
 
-The optimizer assumes that when a new value enters local control, e.g. from a
-load of a non-local object or as the result of a function call, it is
-instaneously valid.  Subsequently, a retain and release of a value are
-necessary on a computation path only if there is a use of that value before the
-release and after any operation which might cause a release of the value
-(including indirectly or non-locally), and only if the value is not
-demonstrably already retained.
+This specification describes ARC as performing specific ``retain`` and
+``release`` operations on retainable object pointers at specific
+points during the execution of a program.  These operations make up a
+non-contiguous subsequence of the computation history of the program.
+The portion of this sequence for a particular retainable object
+pointer for which a specific function execution is directly
+responsible is the :arc-term:`formal local retain history` of the
+object pointer.  The corresponding actual sequence executed is the
+`dynamic local retain history`.
 
-The complete optimization rules are quite complicated, but it would still be
-useful to document them here.
+However, under certain circumstances, ARC is permitted to re-order and
+eliminate operations in a manner which may alter the overall
+computation history beyond what is permitted by the general "as if"
+rule of C/C++ and the :ref:`restrictions <_arc.objects.retains>` on
+the implementation of ``retain`` and ``release``.
+
+.. admonition:: Rationale
+
+  Specifically, ARC is sometimes permitted to optimize ``release``
+  operations in ways which might cause an object to be deallocated
+  before it would otherwise be.  Without this, it would be almost
+  impossible to eliminate any ``retain``/``release`` pairs.  For
+  example, consider the following code:
+
+  .. code-block:: objc
+    id x = _ivar;
+    [x foo];
+
+  If we were not permitted in any event to shorten the lifetime of the
+  object in ``x``, then we would not be able to eliminate this retain
+  and release unless we could prove that the message send could not
+  modify ``_ivar`` (or deallocate ``self``).  Since message sends are
+  opaque to the optimizer, this is not possible, and so ARC's hands
+  would be almost completely tied.
+
+ARC makes no guarantees about the execution of a computation history
+which contains undefined behavior.  In particular, ARC makes no
+guarantees in the presence of race conditions.
+
+ARC may assume that any retainable object pointers it receives or
+generates are instantaneously valid from that point until a point
+which, by the concurrency model of the host language, happens-after
+the generation of the pointer and happens-before a release of that
+object (possibly via an aliasing pointer or indirectly due to
+destruction of a different object).
+
+.. admonition:: Rationale
+
+  There is very little point in trying to guarantee correctness in the
+  presence of race conditions.  ARC does not have a stack-scanning
+  garbage collector, and guaranteeing the atomicity of every load and
+  store operation would be prohibitive and preclude a vast amount of
+  optimization.
+
+ARC may assume that non-ARC code engages in sensible balancing
+behavior and does not rely on exact or minimum retain count values
+except as guaranteed by ``__strong`` object invariants or +1 transfer
+conventions.  For example, if an object is provably double-retained
+and double-released, ARC may eliminate the inner retain and release;
+it does not need to guard against code which performs an unbalanced
+release followed by a "balancing" retain.
+
+.. _arc.optimization.liveness:
+
+Object liveness
+---------------
+
+ARC may not allow a retainable object ``X`` to be deallocated at a
+time ``T`` in a computation history if:
+
+* ``X`` is the value stored in a ``__strong`` object ``S`` with
+  :ref:`precise lifetime semantics <arc.optimization.precise>`, or
+
+* ``X`` is the value stored in a ``__strong`` object ``S`` with
+  imprecise lifetime semantics and, at some point after ``T`` but
+  before the next store to ``S``, the computation history features a
+  load from ``S`` and in some way depends on the value loaded, or
+
+* ``X`` is a value described as being released at the end of the
+  current full-expression and, at some point after ``T`` but before
+  the end of the full-expression, the computation history depends
+  on that value.
+
+.. admonition:: Rationale
+
+  The intent of the second rule is to say that objects held in normal
+  ``__strong`` local variables may be released as soon as the value in
+  the variable is no longer being used: either the variable stops
+  being used completely or a new value is stored in the variable.
+
+  The intent of the third rule is to say that return values may be
+  released after they've been used.
+
+A computation history depends on a pointer value ``P`` if it:
+
+* performs a pointer comparison with ``P``,
+* loads from ``P``,
+* stores to ``P``,
+* depends on a pointer value ``Q`` derived via pointer arithmetic
+  from ``P`` (including an instance-variable or field access), or
+* depends on a pointer value ``Q`` loaded from ``P``.
+
+Dependency applies only to values derived directly or indirectly from
+a particular expression result and does not occur merely because a
+separate pointer value dynamically aliases ``P``.  Furthermore, this
+dependency is not carried by values that are stored to objects.
+
+.. admonition:: Rationale
+
+  The restrictions on dependency are intended to make this analysis
+  feasible by an optimizer with only incomplete information about a
+  program.  Essentially, dependence is carried to "obvious" uses of a
+  pointer.  Merely passing a pointer argument to a function does not
+  itself cause dependence, but since generally the optimizer will not
+  be able to prove that the function doesn't depend on that parameter,
+  it will be forced to conservatively assume it does.
+  
+  Dependency propagates to values loaded from a pointer because those
+  values might be invalidated by deallocating the object.  For
+  example, given the code ``__strong id x = p->ivar;``, ARC must not
+  move the release of ``p`` to between the load of ``p->ivar`` and the
+  retain of that value for storing into ``x``.
+
+  Dependency does not propagate through stores of dependent pointer
+  values because doing so would allow dependency to outlive the
+  full-expression which produced the original value.  For example, the
+  address of an instance variable could be written to some global
+  location and then freely accessed during the lifetime of the local,
+  or a function could return an inner pointer of an object and store
+  it to a local.  These cases would be potentially impossible to
+  reason about and so would basically prevent any optimizations based
+  on imprecise lifetime.  There are also uncommon enough to make it
+  reasonable to require the precise-lifetime annotation if someone
+  really wants to rely on them.
+
+  Dependency does propagate through return values of pointer type.
+  The compelling source of need for this rule is a property accessor
+  which returns an un-autoreleased result; the calling function must
+  have the chance to operate on the value, e.g. to retain it, before
+  ARC releases the original pointer.  Note again, however, that
+  dependence does not survive a store, so ARC does not guarantee the
+  continued validity of the return value past the end of the
+  full-expression.
+
+.. _arc.optimization.object_lifetime:
+
+No object lifetime extension
+----------------------------
+
+If, in the formal computation history of the program, an object ``X``
+has been deallocated by the time of an observable side-effect, then
+ARC must cause ``X`` to be deallocated by no later than the occurrence
+of that side-effect, except as influenced by the re-ordering of the
+destruction of objects.
+
+.. admonition:: Rationale
+
+  This rule is intended to prohibit ARC from observably extending the
+  lifetime of a retainable object, other than as specified in this
+  document.  Together with the rule limiting the transformation of
+  releases, this rule requires ARC to eliminate retains and release
+  only in pairs.
+
+  ARC's power to reorder the destruction of objects is critical to its
+  ability to do any optimization, for essentially the same reason that
+  it must retain the power to decrease the lifetime of an object.
+  Unfortunately, while it's generally poor style for the destruction
+  of objects to have arbitrary side-effects, it's certainly possible.
+  Hence the caveat.
 
 .. _arc.optimization.precise:
 
