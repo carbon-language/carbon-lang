@@ -29,29 +29,35 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   if (left == right)
     return false;
 
-  DEBUG(llvm::dbgs() << "Sorting by perms\n");
-
   // Sort same permissions together.
   DefinedAtom::ContentPermissions leftPerms = left->permissions();
   DefinedAtom::ContentPermissions rightPerms = right->permissions();
+
+  DEBUG(llvm::dbgs() << "Sorting by contentPerms"
+                     << "(" << leftPerms << "," << rightPerms << ")\n");
+
   if (leftPerms != rightPerms)
     return leftPerms < rightPerms;
-
-  DEBUG(llvm::dbgs() << "Sorting by contentType\n");
 
   // Sort same content types together.
   DefinedAtom::ContentType leftType = left->contentType();
   DefinedAtom::ContentType rightType = right->contentType();
+
+  DEBUG(llvm::dbgs() << "Sorting by contentType"
+                     << "(" << leftType << "," << rightType << ")\n");
+
   if (leftType != rightType)
     return leftType < rightType;
 
   // TO DO: Sort atoms in customs sections together.
 
-  DEBUG(llvm::dbgs() << "Sorting by sectionPos\n");
-
   // Sort by section position preference.
   DefinedAtom::SectionPosition leftPos = left->sectionPosition();
   DefinedAtom::SectionPosition rightPos = right->sectionPosition();
+
+  DEBUG(llvm::dbgs() << "Sorting by sectionPos"
+                     << "(" << leftPos << "," << rightPos << ")\n");
+
   bool leftSpecialPos = (leftPos != DefinedAtom::sectionPositionAny);
   bool rightSpecialPos = (rightPos != DefinedAtom::sectionPositionAny);
   if (leftSpecialPos || rightSpecialPos) {
@@ -83,19 +89,25 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
     }
   }
 
-  DEBUG(llvm::dbgs() << "Sorting by .o order\n");
-
   // Sort by .o order.
   const File *leftFile = &left->file();
   const File *rightFile = &right->file();
+
+  DEBUG(llvm::dbgs()
+        << "Sorting by .o order("
+        << "(" << leftFile->ordinal() << "," << rightFile->ordinal() << ")"
+        << "[" << leftFile->path() << "," << rightFile->path() << "]\n");
+
   if (leftFile != rightFile)
     return leftFile->ordinal() < rightFile->ordinal();
-
-  DEBUG(llvm::dbgs() << "Sorting by ordinal\n");
 
   // Sort by atom order with .o file.
   uint64_t leftOrdinal = left->ordinal();
   uint64_t rightOrdinal = right->ordinal();
+
+  DEBUG(llvm::dbgs() << "Sorting by ordinal(" << left->ordinal() << ","
+                     << right->ordinal() << ")\n");
+
   if (leftOrdinal != rightOrdinal)
     return leftOrdinal < rightOrdinal;
 
