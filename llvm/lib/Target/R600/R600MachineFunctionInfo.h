@@ -26,7 +26,6 @@ public:
   R600MachineFunctionInfo(const MachineFunction &MF);
   SmallVector<unsigned, 4> LiveOuts;
   std::vector<unsigned> IndirectRegs;
-  SDNode *Outputs[16];
 };
 
 } // End llvm namespace

@@ -14,5 +14,4 @@ using namespace llvm;
 
 R600MachineFunctionInfo::R600MachineFunctionInfo(const MachineFunction &MF)
   : MachineFunctionInfo() {
-    memset(Outputs, 0, sizeof(Outputs));
   }
