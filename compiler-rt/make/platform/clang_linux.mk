@@ -86,12 +86,12 @@ CFLAGS.full-i386 := $(CFLAGS) -m32
 CFLAGS.full-x86_64 := $(CFLAGS) -m64
 CFLAGS.profile-i386 := $(CFLAGS) -m32
 CFLAGS.profile-x86_64 := $(CFLAGS) -m64
-CFLAGS.asan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin \
+CFLAGS.asan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin -fno-rtti \
                     -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
-CFLAGS.asan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin \
+CFLAGS.asan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin -fno-rtti \
                     -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
-CFLAGS.tsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
-CFLAGS.msan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
+CFLAGS.tsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin -fno-rtti
+CFLAGS.msan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin -fno-rtti
 CFLAGS.ubsan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin
 CFLAGS.ubsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 

@@ -11,6 +11,7 @@ set(MSAN_RTL_SOURCES
   )
 set(MSAN_RTL_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}
+  -fno-rtti
   -fPIE
   # Prevent clang from generating libc calls.
   -ffreestanding)

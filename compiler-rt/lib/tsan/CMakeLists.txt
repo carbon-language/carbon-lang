@@ -2,7 +2,9 @@
 
 include_directories(..)
 
-set(TSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
+set(TSAN_CFLAGS
+  ${SANITIZER_COMMON_CFLAGS}
+  -fno-rtti)
 # FIXME: Add support for compile flags:
 #   -Wframe-larger-than=512,
 #   -Wglobal-constructors,
