@@ -34,6 +34,7 @@ namespace clang {
   
 class DirectoryEntry;
 class FileEntry;
+class FileManager;
 class LangOptions;
 class TargetInfo;
   
@@ -67,16 +68,19 @@ private:
   /// \brief The AST file if this is a top-level module which has a
   /// corresponding serialized AST file, or null otherwise.
   const FileEntry *ASTFile;
-  
+
+  /// \brief The top-level headers associated with this module.
+  llvm::SmallSetVector<const FileEntry *, 2> TopHeaders;
+
+  /// \brief top-level header filenames that aren't resolved to FileEntries yet.
+  std::vector<std::string> TopHeaderNames;
+
 public:
   /// \brief The headers that are part of this module.
   SmallVector<const FileEntry *, 2> Headers;
 
   /// \brief The headers that are explicitly excluded from this module.
   SmallVector<const FileEntry *, 2> ExcludedHeaders;
-
-  /// \brief The top-level headers associated with this module.
-  llvm::SmallSetVector<const FileEntry *, 2> TopHeaders;
 
   /// \brief The set of language features required to use this module.
   ///
@@ -291,6 +295,20 @@ public:
   bool hasUmbrellaDir() const {
     return Umbrella && Umbrella.is<const DirectoryEntry *>();
   }
+
+  /// \brief Add a top-level header associated with this module.
+  void addTopHeader(const FileEntry *File) {
+    assert(File);
+    TopHeaders.insert(File);
+  }
+
+  /// \brief Add a top-level header filename associated with this module.
+  void addTopHeaderFilename(StringRef Filename) {
+    TopHeaderNames.push_back(Filename);
+  }
+
+  /// \brief The top-level headers associated with this module.
+  ArrayRef<const FileEntry *> getTopHeaders(FileManager &FileMgr);
 
   /// \brief Add the given feature requirement to the list of features
   /// required by this module.

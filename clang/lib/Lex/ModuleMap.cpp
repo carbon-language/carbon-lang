@@ -202,7 +202,7 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
                            llvm::sys::path::stem(File->getName()), NameBuf);
         Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
                                     Explicit).first;
-        Result->TopHeaders.insert(File);
+        Result->addTopHeader(File);
         
         // If inferred submodules export everything they import, add a 
         // wildcard to the set of exports.

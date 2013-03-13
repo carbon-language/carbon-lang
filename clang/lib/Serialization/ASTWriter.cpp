@@ -2170,11 +2170,13 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Stream.EmitRecordWithBlob(ExcludedHeaderAbbrev, Record, 
                                 Mod->ExcludedHeaders[I]->getName());
     }
-    for (unsigned I = 0, N = Mod->TopHeaders.size(); I != N; ++I) {
+    ArrayRef<const FileEntry *>
+      TopHeaders = Mod->getTopHeaders(PP->getFileManager());
+    for (unsigned I = 0, N = TopHeaders.size(); I != N; ++I) {
       Record.clear();
       Record.push_back(SUBMODULE_TOPHEADER);
       Stream.EmitRecordWithBlob(TopHeaderAbbrev, Record,
-                                Mod->TopHeaders[I]->getName());
+                                TopHeaders[I]->getName());
     }
 
     // Emit the imports. 

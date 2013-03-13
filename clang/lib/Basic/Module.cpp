@@ -15,6 +15,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -127,6 +128,19 @@ const DirectoryEntry *Module::getUmbrellaDir() const {
     return Header->getDir();
   
   return Umbrella.dyn_cast<const DirectoryEntry *>();
+}
+
+ArrayRef<const FileEntry *> Module::getTopHeaders(FileManager &FileMgr) {
+  if (!TopHeaderNames.empty()) {
+    for (std::vector<std::string>::iterator
+           I = TopHeaderNames.begin(), E = TopHeaderNames.end(); I != E; ++I) {
+      if (const FileEntry *FE = FileMgr.getFile(*I))
+        TopHeaders.insert(FE);
+    }
+    TopHeaderNames.clear();
+  }
+
+  return llvm::makeArrayRef(TopHeaders.begin(), TopHeaders.end());
 }
 
 void Module::addRequirement(StringRef Feature, const LangOptions &LangOpts,

@@ -173,12 +173,12 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
   // Add includes for each of these headers.
   for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I) {
     const FileEntry *Header = Module->Headers[I];
-    Module->TopHeaders.insert(Header);
+    Module->addTopHeader(Header);
     addHeaderInclude(Header, Includes, LangOpts);
   }
 
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader()) {
-    Module->TopHeaders.insert(UmbrellaHeader);
+    Module->addTopHeader(UmbrellaHeader);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
       addHeaderInclude(UmbrellaHeader, Includes, LangOpts);
@@ -203,7 +203,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
       if (const FileEntry *Header = FileMgr.getFile(Dir->path())) {
         if (ModMap.isHeaderInUnavailableModule(Header))
           continue;
-        Module->TopHeaders.insert(Header);
+        Module->addTopHeader(Header);
       }
       
       // Include this header umbrella header for submodules.

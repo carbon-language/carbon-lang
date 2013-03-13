@@ -5984,20 +5984,26 @@ CXString clang_Module_getFullName(CXModule CXMod) {
   return cxstring::createDup(Mod->getFullModuleName());
 }
 
-unsigned clang_Module_getNumTopLevelHeaders(CXModule CXMod) {
-  if (!CXMod)
+unsigned clang_Module_getNumTopLevelHeaders(CXTranslationUnit TU,
+                                            CXModule CXMod) {
+  if (!TU || !CXMod)
     return 0;
   Module *Mod = static_cast<Module*>(CXMod);
-  return Mod->TopHeaders.size();
+  FileManager &FileMgr = cxtu::getASTUnit(TU)->getFileManager();
+  ArrayRef<const FileEntry *> TopHeaders = Mod->getTopHeaders(FileMgr);
+  return TopHeaders.size();
 }
 
-CXFile clang_Module_getTopLevelHeader(CXModule CXMod, unsigned Index) {
-  if (!CXMod)
+CXFile clang_Module_getTopLevelHeader(CXTranslationUnit TU,
+                                      CXModule CXMod, unsigned Index) {
+  if (!TU || !CXMod)
     return 0;
   Module *Mod = static_cast<Module*>(CXMod);
+  FileManager &FileMgr = cxtu::getASTUnit(TU)->getFileManager();
 
-  if (Index < Mod->TopHeaders.size())
-    return const_cast<FileEntry *>(Mod->TopHeaders[Index]);
+  ArrayRef<const FileEntry *> TopHeaders = Mod->getTopHeaders(FileMgr);
+  if (Index < TopHeaders.size())
+    return const_cast<FileEntry *>(TopHeaders[Index]);
 
   return 0;
 }

@@ -1996,12 +1996,12 @@ static int inspect_cursor_at(int argc, const char **argv) {
           unsigned i, numHeaders;
           if (mod) {
             name = clang_Module_getFullName(mod);
-            numHeaders = clang_Module_getNumTopLevelHeaders(mod);
+            numHeaders = clang_Module_getNumTopLevelHeaders(TU, mod);
             printf(" ModuleName=%s Headers(%d):",
                    clang_getCString(name), numHeaders);
             clang_disposeString(name);
             for (i = 0; i < numHeaders; ++i) {
-              CXFile file = clang_Module_getTopLevelHeader(mod, i);
+              CXFile file = clang_Module_getTopLevelHeader(TU, mod, i);
               CXString filename = clang_getFileName(file);
               printf("\n%s", clang_getCString(filename));
               clang_disposeString(filename);

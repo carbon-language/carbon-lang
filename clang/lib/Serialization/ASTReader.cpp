@@ -3546,9 +3546,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       if (!CurrentModule)
         break;
 
-      // FIXME: Be more lazy about this!
-      if (const FileEntry *File = PP.getFileManager().getFile(Blob))
-        CurrentModule->TopHeaders.insert(File);
+      CurrentModule->addTopHeaderFilename(Blob);
       break;
     }
 
