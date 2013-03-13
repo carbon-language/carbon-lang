@@ -230,7 +230,8 @@ void Report(const char *format, ...) {
       if (use_mmap) {
         RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
       } else {
-        // The error message doesn't fit into the local buffer - allocate a bigger one.
+        // The error message doesn't fit into the local buffer - allocate a
+        // bigger one.
         buffer = (char*)MmapOrDie(kLen, "Report");
         cur_size = kLen;
         continue;
