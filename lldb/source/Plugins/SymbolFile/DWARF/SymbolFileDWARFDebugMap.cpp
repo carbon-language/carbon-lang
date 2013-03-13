@@ -765,6 +765,7 @@ SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint3
                 CompileUnitInfo* comp_unit_info = GetCompileUnitInfoForSymbolWithID (sc.symbol->GetID(), &oso_idx);
                 if (comp_unit_info)
                 {
+                    comp_unit_info->GetFileRangeMap(this);
                     Module *oso_module = GetModuleByCompUnitInfo (comp_unit_info);
                     if (oso_module)
                     {
