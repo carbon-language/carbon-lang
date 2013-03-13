@@ -4321,11 +4321,17 @@ public:
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const {
-    //
-    // can fill this in when new attribute work in llvm is done.
-    // attributes mips16 and nomips16 need to be handled here.
-    //
+    const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+    if (!FD) return;
+    llvm::Function *Fn = cast<llvm::Function>(GV);
+    if (FD->hasAttr<Mips16Attr>()) {
+      Fn->addFnAttr("mips16");
+    }
+    else if (FD->hasAttr<NoMips16Attr>()) {
+      Fn->addFnAttr("nomips16");
+    }
   }
+
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const;
 
