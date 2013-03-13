@@ -81,6 +81,7 @@ protected:
                                                  // but can't continue, in which case we are done.
     bool                      m_first_run_event; // We want to broadcast only one running event, our first.
     lldb::BreakpointSP        m_next_branch_bp_sp;
+    bool                      m_use_fast_step;
 
 private:
     std::vector<lldb::DisassemblerSP> m_instruction_ranges;
