@@ -133,6 +133,9 @@ bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
 void PrepareForSandboxing();
 
+void InitTlsSize();
+uptr GetTlsSize();
+
 // Other
 void SleepForSeconds(int seconds);
 void SleepForMillis(int millis);

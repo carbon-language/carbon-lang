@@ -167,27 +167,6 @@ static void InitDataSeg() {
   CHECK_LT((uptr)&g_data_start, g_data_end);
 }
 
-static uptr g_tls_size;
-
-#ifdef __i386__
-# define INTERNAL_FUNCTION __attribute__((regparm(3), stdcall))
-#else
-# define INTERNAL_FUNCTION
-#endif
-
-static int InitTlsSize() {
-  typedef void (*get_tls_func)(size_t*, size_t*) INTERNAL_FUNCTION;
-  get_tls_func get_tls;
-  void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
-  CHECK_EQ(sizeof(get_tls), sizeof(get_tls_static_info_ptr));
-  internal_memcpy(&get_tls, &get_tls_static_info_ptr,
-                  sizeof(get_tls_static_info_ptr));
-  CHECK_NE(get_tls, 0);
-  size_t tls_size = 0;
-  size_t tls_align = 0;
-  get_tls(&tls_size, &tls_align);
-  return tls_size;
-}
 #endif  // #ifndef TSAN_GO
 
 static rlim_t getlim(int res) {
@@ -242,7 +221,7 @@ const char *InitializePlatform() {
 
 #ifndef TSAN_GO
   CheckPIE();
-  g_tls_size = (uptr)InitTlsSize();
+  InitTlsSize();
   InitDataSeg();
 #endif
   return GetEnv(kTsanOptionsEnv);
@@ -252,20 +231,12 @@ void FinalizePlatform() {
   fflush(0);
 }
 
-uptr GetTlsSize() {
-#ifndef TSAN_GO
-  return g_tls_size;
-#else
-  return 0;
-#endif
-}
-
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
 #ifndef TSAN_GO
   arch_prctl(ARCH_GET_FS, tls_addr);
-  *tls_addr -= g_tls_size;
-  *tls_size = g_tls_size;
+  *tls_size = GetTlsSize();
+  *tls_addr -= *tls_size;
 
   uptr stack_top, stack_bottom;
   GetThreadStackTopAndBottom(main, &stack_top, &stack_bottom);

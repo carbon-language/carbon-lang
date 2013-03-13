@@ -326,6 +326,13 @@ void BlockingMutex::CheckLocked() {
   CHECK_EQ((uptr)pthread_self(), owner_);
 }
 
+uptr GetTlsSize() {
+  return 0;
+}
+
+void InitTlsSize() {
+}
+
 }  // namespace __sanitizer
 
 #endif  // __APPLE__

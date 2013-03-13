@@ -295,6 +295,13 @@ void BlockingMutex::CheckLocked() {
   CHECK_EQ(owner_, GetThreadSelf());
 }
 
+uptr GetTlsSize() {
+  return 0;
+}
+
+void InitTlsSize() {
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

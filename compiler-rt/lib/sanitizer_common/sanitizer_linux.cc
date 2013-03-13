@@ -22,6 +22,7 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
+#include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -671,6 +672,34 @@ bool ThreadLister::GetDirectoryEntries() {
   }
   entry_ = (struct linux_dirent *)buffer_;
   return true;
+}
+
+static uptr g_tls_size;
+
+#ifdef __i386__
+# define DL_INTERNAL_FUNCTION __attribute__((regparm(3), stdcall))
+#else
+# define DL_INTERNAL_FUNCTION
+#endif
+
+void InitTlsSize() {
+#ifndef SANITIZER_GO
+  typedef void (*get_tls_func)(size_t*, size_t*) DL_INTERNAL_FUNCTION;
+  get_tls_func get_tls;
+  void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
+  CHECK_EQ(sizeof(get_tls), sizeof(get_tls_static_info_ptr));
+  internal_memcpy(&get_tls, &get_tls_static_info_ptr,
+                  sizeof(get_tls_static_info_ptr));
+  CHECK_NE(get_tls, 0);
+  size_t tls_size = 0;
+  size_t tls_align = 0;
+  get_tls(&tls_size, &tls_align);
+  g_tls_size = tls_size;
+#endif
+}
+
+uptr GetTlsSize() {
+  return g_tls_size;
 }
 
 }  // namespace __sanitizer
