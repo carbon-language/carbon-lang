@@ -621,7 +621,11 @@ private:
         bool ParensCouldEndDecl =
             !Current.Children.empty() &&
             Current.Children[0].isOneOf(tok::equal, tok::semi, tok::l_brace);
-        if (ParensNotExpr && !ParensCouldEndDecl &&
+        bool IsSizeOfOrAlignOf =
+            Current.MatchingParen && Current.MatchingParen->Parent &&
+            Current.MatchingParen->Parent->isOneOf(tok::kw_sizeof,
+                                                   tok::kw_alignof);
+        if (ParensNotExpr && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
             Contexts.back().IsExpression)
           // FIXME: We need to get smarter and understand more cases of casts.
           Current.Type = TT_CastRParen;
@@ -894,7 +898,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Right.isOneOf(tok::arrow, tok::period)) {
     if (Line.Type == LT_BuilderTypeCall)
-      return 14;
+      return prec::PointerToMember;
     if (Left.isOneOf(tok::r_paren, tok::r_square) && Left.MatchingParen &&
         Left.MatchingParen->ParameterCount > 0)
       return 20; // Should be smaller than breaking at a nested comma.

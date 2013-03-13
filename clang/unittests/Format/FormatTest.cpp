@@ -2044,6 +2044,8 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("virtual void foo(int *) override;");
   verifyFormat("virtual void foo(char &) const;");
   verifyFormat("virtual void foo(int *a, char *) const;");
+  verifyFormat("int a = sizeof(int *) + b;");
+  verifyFormat("int a = alignof(int *) + b;");
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
