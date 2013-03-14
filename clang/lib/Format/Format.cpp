@@ -128,16 +128,14 @@ public:
       if (Tok.Parent != NULL || !Comments.empty()) {
         if (Style.ColumnLimit >=
             Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength) {
-          Comments.push_back(StoredComment());
-          Comments.back().Tok = Tok.FormatTok;
-          Comments.back().Spaces = Spaces;
-          Comments.back().NewLines = NewLines;
-          if (NewLines == 0)
-            Comments.back().MinColumn = WhitespaceStartColumn + Spaces;
-          else
-            Comments.back().MinColumn = Spaces;
-          Comments.back().MaxColumn =
-              Style.ColumnLimit - Tok.FormatTok.TokenLength;
+          StoredComment Comment;
+          Comment.Tok = Tok.FormatTok;
+          Comment.Spaces = Spaces;
+          Comment.NewLines = NewLines;
+          Comment.MinColumn =
+              NewLines > 0 ? Spaces : WhitespaceStartColumn + Spaces;
+          Comment.MaxColumn = Style.ColumnLimit - Tok.FormatTok.TokenLength;
+          Comments.push_back(Comment);
           return;
         }
       }
@@ -146,6 +144,10 @@ public:
     // If this line does not have a trailing comment, align the stored comments.
     if (Tok.Children.empty() && !isTrailingComment(Tok))
       alignComments();
+
+    if (Tok.Type == TT_BlockComment)
+      indentBlockComment(Tok.FormatTok, Spaces);
+
     storeReplacement(Tok.FormatTok, getNewLineText(NewLines, Spaces));
   }
 
@@ -191,6 +193,38 @@ public:
   }
 
 private:
+  void indentBlockComment(const FormatToken &Tok, int BaseIndent) {
+    SourceLocation TokenLoc = Tok.Tok.getLocation();
+    const char *Start = SourceMgr.getCharacterData(TokenLoc);
+    const char *Current = Start;
+    const char *TokEnd = Current + Tok.TokenLength;
+    while (Current < TokEnd) {
+      if (*Current == '\n') {
+        ++Current;
+        SourceLocation Loc = TokenLoc.getLocWithOffset(Current - Start);
+        int Indent = BaseIndent;
+        int Spaces = 0;
+        while (Current < TokEnd && *Current == ' ') {
+          ++Spaces;
+          ++Current;
+        }
+        if (Current < TokEnd && *Current == '*')
+          ++Indent;
+        else
+          Indent += 3;
+
+        if (Spaces < Indent)
+          Replaces.insert(tooling::Replacement(
+              SourceMgr, Loc, 0, std::string(Indent - Spaces, ' ')));
+        else if (Spaces > Indent)
+          Replaces.insert(
+              tooling::Replacement(SourceMgr, Loc, Spaces - Indent, ""));
+      } else {
+        ++Current;
+      }
+    }
+  }
+
   std::string getNewLineText(unsigned NewLines, unsigned Spaces) {
     return std::string(NewLines, '\n') + std::string(Spaces, ' ');
   }
@@ -227,8 +261,7 @@ private:
     unsigned MinColumn = 0;
     unsigned MaxColumn = UINT_MAX;
     comment_iterator Start = Comments.begin();
-    for (comment_iterator I = Comments.begin(), E = Comments.end(); I != E;
-         ++I) {
+    for (comment_iterator I = Start, E = Comments.end(); I != E; ++I) {
       if (I->MinColumn > MaxColumn || I->MaxColumn < MinColumn) {
         alignComments(Start, I, MinColumn);
         MinColumn = I->MinColumn;

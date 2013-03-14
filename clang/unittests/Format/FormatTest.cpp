@@ -608,6 +608,41 @@ TEST_F(FormatTest, UnderstandsMultiLineComments) {
                NoBinPacking);
 }
 
+TEST_F(FormatTest, AlignsMultiLineComments) {
+  EXPECT_EQ("/*\n"
+            " * Really multi-line\n"
+            " * comment.\n"
+            " */\n"
+            "void f() {}",
+            format("  /*\n"
+                   "   * Really multi-line\n"
+                   "   * comment.\n"
+                   "   */\n"
+                   "  void f() {}"));
+  EXPECT_EQ("/*\n"
+            "   A comment.\n"
+            " */\n"
+            "void f() {}",
+            format("  /*\n"
+                   "           A comment.\n"
+                   "   */\n"
+                   "   void f() {}"));
+  EXPECT_EQ("class C {\n"
+            "  /*\n"
+            "   * Another multi-line\n"
+            "   * comment.\n"
+            "   */\n"
+            "  void f() {}\n"
+            "};",
+            format("class C {\n"
+                   "/*\n"
+                   " * Another multi-line\n"
+                   " * comment.\n"
+                   " */\n"
+                   "void f() {}\n"
+                   "};"));
+}
+
 TEST_F(FormatTest, CommentsInStaticInitializers) {
   EXPECT_EQ(
       "static SomeType type = { aaaaaaaaaaaaaaaaaaaa, /* comment */\n"
