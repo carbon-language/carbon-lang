@@ -87,6 +87,8 @@ class SubtargetEmitter {
                              const CodeGenProcModel &ProcModel);
   Record *FindReadAdvance(const CodeGenSchedRW &SchedRead,
                           const CodeGenProcModel &ProcModel);
+  void ExpandProcResources(RecVec &PRVec, std::vector<int64_t> &Cycles,
+                           const CodeGenProcModel &ProcModel);
   void GenSchedClassTables(const CodeGenProcModel &ProcModel,
                            SchedClassTables &SchedTables);
   void EmitSchedClassTables(SchedClassTables &SchedTables, raw_ostream &OS);
@@ -631,13 +633,29 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
   for (unsigned i = 0, e = ProcModel.ProcResourceDefs.size(); i < e; ++i) {
     Record *PRDef = ProcModel.ProcResourceDefs[i];
 
-    // Find the SuperIdx
-    unsigned SuperIdx = 0;
     Record *SuperDef = 0;
-    if (PRDef->getValueInit("Super")->isComplete()) {
-      SuperDef =
-        SchedModels.findProcResUnits(PRDef->getValueAsDef("Super"), ProcModel);
-      SuperIdx = ProcModel.getProcResourceIdx(SuperDef);
+    unsigned SuperIdx = 0;
+    unsigned NumUnits = 0;
+    bool IsBuffered = true;
+    if (PRDef->isSubClassOf("ProcResGroup")) {
+      RecVec ResUnits = PRDef->getValueAsListOfDefs("Resources");
+      for (RecIter RUI = ResUnits.begin(), RUE = ResUnits.end();
+           RUI != RUE; ++RUI) {
+        if (!NumUnits)
+          IsBuffered = (*RUI)->getValueAsBit("Buffered");
+        else if(IsBuffered != (*RUI)->getValueAsBit("Buffered"))
+          PrintFatalError(PRDef->getLoc(),
+                          "Mixing buffered and unbuffered resources.");
+        NumUnits += (*RUI)->getValueAsInt("NumUnits");
+      }
+    }
+    else {
+      // Find the SuperIdx
+      if (PRDef->getValueInit("Super")->isComplete()) {
+        SuperDef = SchedModels.findProcResUnits(
+          PRDef->getValueAsDef("Super"), ProcModel);
+        SuperIdx = ProcModel.getProcResourceIdx(SuperDef);
+      }
     }
     // Emit the ProcResourceDesc
     if (i+1 == e)
@@ -645,8 +663,8 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
     OS << "  {DBGFIELD(\"" << PRDef->getName() << "\") ";
     if (PRDef->getName().size() < 15)
       OS.indent(15 - PRDef->getName().size());
-    OS << PRDef->getValueAsInt("NumUnits") << ", " << SuperIdx << ", "
-       << PRDef->getValueAsBit("Buffered") << "}" << Sep << " // #" << i+1;
+    OS << NumUnits << ", " << SuperIdx << ", "
+       << IsBuffered << "}" << Sep << " // #" << i+1;
     if (SuperDef)
       OS << ", Super=" << SuperDef->getName();
     OS << "\n";
@@ -761,6 +779,51 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
                   + SchedRead.TheDef->getName());
   }
   return ResDef;
+}
+
+// Expand an explicit list of processor resources into a full list of implied
+// resource groups that cover them.
+//
+// FIXME: Effectively consider a super-resource a group that include all of its
+// subresources to allow mixing and matching super-resources and groups.
+//
+// FIXME: Warn if two overlapping groups don't have a common supergroup.
+void SubtargetEmitter::ExpandProcResources(RecVec &PRVec,
+                                           std::vector<int64_t> &Cycles,
+                                           const CodeGenProcModel &ProcModel) {
+  // Default to 1 resource cycle.
+  Cycles.resize(PRVec.size(), 1);
+  for (unsigned i = 0, e = PRVec.size(); i != e; ++i) {
+    RecVec SubResources;
+    if (PRVec[i]->isSubClassOf("ProcResGroup")) {
+      SubResources = PRVec[i]->getValueAsListOfDefs("Resources");
+      std::sort(SubResources.begin(), SubResources.end(), LessRecord());
+    }
+    else {
+      SubResources.push_back(PRVec[i]);
+    }
+    for (RecIter PRI = ProcModel.ProcResourceDefs.begin(),
+           PRE = ProcModel.ProcResourceDefs.end();
+         PRI != PRE; ++PRI) {
+      if (*PRI == PRVec[i] || !(*PRI)->isSubClassOf("ProcResGroup"))
+        continue;
+      RecVec SuperResources = (*PRI)->getValueAsListOfDefs("Resources");
+      std::sort(SuperResources.begin(), SuperResources.end(), LessRecord());
+      RecIter SubI = SubResources.begin(), SubE = SubResources.end();
+      RecIter SuperI = SuperResources.begin(), SuperE = SuperResources.end();
+      for ( ; SubI != SubE && SuperI != SuperE; ++SuperI) {
+        if (*SubI < *SuperI)
+          break;
+        else if (*SuperI < *SubI)
+          continue;
+        ++SubI;
+      }
+      if (SubI == SubE) {
+        PRVec.push_back(*PRI);
+        Cycles.push_back(Cycles[i]);
+      }
+    }
+  }
 }
 
 // Generate the SchedClass table for this processor and update global
@@ -884,15 +947,15 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
         RecVec PRVec = WriteRes->getValueAsListOfDefs("ProcResources");
         std::vector<int64_t> Cycles =
           WriteRes->getValueAsListOfInts("ResourceCycles");
+
+        ExpandProcResources(PRVec, Cycles, ProcModel);
+
         for (unsigned PRIdx = 0, PREnd = PRVec.size();
              PRIdx != PREnd; ++PRIdx) {
           MCWriteProcResEntry WPREntry;
           WPREntry.ProcResourceIdx = ProcModel.getProcResourceIdx(PRVec[PRIdx]);
           assert(WPREntry.ProcResourceIdx && "Bad ProcResourceIdx");
-          if (Cycles.size() > PRIdx)
-            WPREntry.Cycles = Cycles[PRIdx];
-          else
-            WPREntry.Cycles = 1;
+          WPREntry.Cycles = Cycles[PRIdx];
           // If this resource is already used in this sequence, add the current
           // entry's cycles so that the same resource appears to be used
           // serially, rather than multiple parallel uses. This is important for

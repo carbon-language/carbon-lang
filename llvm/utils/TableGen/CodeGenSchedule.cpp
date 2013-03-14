@@ -1542,6 +1542,20 @@ Record *CodeGenSchedModels::findProcResUnits(Record *ProcResKind,
       ProcUnitDef = *RI;
     }
   }
+  RecVec ProcResGroups = Records.getAllDerivedDefinitions("ProcResGroup");
+  for (RecIter RI = ProcResGroups.begin(), RE = ProcResGroups.end();
+       RI != RE; ++RI) {
+
+    if (*RI == ProcResKind
+        && (*RI)->getValueAsDef("SchedModel") == PM.ModelDef) {
+      if (ProcUnitDef) {
+        PrintFatalError((*RI)->getLoc(),
+                        "Multiple ProcessorResourceUnits associated with "
+                        + ProcResKind->getName());
+      }
+      ProcUnitDef = *RI;
+    }
+  }
   if (!ProcUnitDef) {
     PrintFatalError(ProcResKind->getLoc(),
                     "No ProcessorResources associated with "
@@ -1563,6 +1577,9 @@ void CodeGenSchedModels::addProcResource(Record *ProcResKind,
       return;
 
     PM.ProcResourceDefs.push_back(ProcResUnits);
+    if (ProcResUnits->isSubClassOf("ProcResGroup"))
+      return;
+
     if (!ProcResUnits->getValueInit("Super")->isComplete())
       return;
 

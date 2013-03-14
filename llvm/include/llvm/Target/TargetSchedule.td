@@ -133,6 +133,11 @@ def EponymousProcResourceKind : ProcResourceKind;
 class ProcResource<int num> : ProcResourceKind,
   ProcResourceUnits<EponymousProcResourceKind, num>;
 
+class ProcResGroup<list<ProcResource> resources> : ProcResourceKind {
+  list<ProcResource> Resources = resources;
+  SchedMachineModel SchedModel = ?;
+}
+
 // A target architecture may define SchedReadWrite types and associate
 // them with instruction operands.
 class SchedReadWrite;
