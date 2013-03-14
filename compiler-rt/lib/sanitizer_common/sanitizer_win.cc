@@ -289,6 +289,12 @@ BlockingMutex::BlockingMutex(LinkerInitialized li) {
   owner_ = LOCK_READY;
 }
 
+BlockingMutex::BlockingMutex() {
+  CHECK(sizeof(CRITICAL_SECTION) <= sizeof(opaque_storage_));
+  InitializeCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
+  owner_ = LOCK_READY;
+}
+
 void BlockingMutex::Lock() {
   if (owner_ == LOCK_UNINITIALIZED) {
     // FIXME: hm, global BlockingMutex objects are not initialized?!?

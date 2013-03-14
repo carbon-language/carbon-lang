@@ -70,6 +70,7 @@ class SpinMutex : public StaticSpinMutex {
 class BlockingMutex {
  public:
   explicit BlockingMutex(LinkerInitialized);
+  BlockingMutex();
   void Lock();
   void Unlock();
   void CheckLocked();

@@ -545,6 +545,10 @@ BlockingMutex::BlockingMutex(LinkerInitialized) {
   CHECK_EQ(owner_, 0);
 }
 
+BlockingMutex::BlockingMutex() {
+  internal_memset(this, 0, sizeof(*this));
+}
+
 void BlockingMutex::Lock() {
   atomic_uint32_t *m = reinterpret_cast<atomic_uint32_t *>(&opaque_storage_);
   if (atomic_exchange(m, MtxLocked, memory_order_acquire) == MtxUnlocked)

@@ -307,6 +307,10 @@ BlockingMutex::BlockingMutex(LinkerInitialized) {
   // We assume that OS_SPINLOCK_INIT is zero
 }
 
+BlockingMutex::BlockingMutex() {
+  internal_memset(this, 0, sizeof(*this));
+}
+
 void BlockingMutex::Lock() {
   CHECK(sizeof(OSSpinLock) <= sizeof(opaque_storage_));
   CHECK_EQ(OS_SPINLOCK_INIT, 0);
