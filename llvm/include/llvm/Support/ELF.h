@@ -588,6 +588,8 @@ enum {
 
 // ARM Specific e_flags
 enum {
+  EF_ARM_SOFT_FLOAT =     0x00000200U,
+  EF_ARM_VFP_FLOAT =      0x00000400U,
   EF_ARM_EABI_UNKNOWN =   0x00000000U,
   EF_ARM_EABI_VER1 =      0x01000000U,
   EF_ARM_EABI_VER2 =      0x02000000U,
