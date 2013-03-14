@@ -3338,7 +3338,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
     bool ScalarCond = (SE->isLoopInvariant(CondSCEV, TheLoop));
     Type *CondTy = SI->getCondition()->getType();
-    if (ScalarCond)
+    if (!ScalarCond)
       CondTy = VectorType::get(CondTy, VF);
 
     return TTI.getCmpSelInstrCost(I->getOpcode(), VectorTy, CondTy);
