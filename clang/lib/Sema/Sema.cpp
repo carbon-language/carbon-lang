@@ -616,6 +616,12 @@ void Sema::ActOnEndOfTranslationUnit() {
       << I->first;
   }
 
+  if (LangOpts.CPlusPlus11 &&
+      Diags.getDiagnosticLevel(diag::warn_delegating_ctor_cycle,
+                               SourceLocation())
+        != DiagnosticsEngine::Ignored)
+    CheckDelegatingCtorCycles();
+
   if (TUKind == TU_Module) {
     // If we are building a module, resolve all of the exported declarations
     // now.
@@ -699,12 +705,6 @@ void Sema::ActOnEndOfTranslationUnit() {
       Consumer.CompleteTentativeDefinition(VD);
 
   }
-
-  if (LangOpts.CPlusPlus11 &&
-      Diags.getDiagnosticLevel(diag::warn_delegating_ctor_cycle,
-                               SourceLocation())
-        != DiagnosticsEngine::Ignored)
-    CheckDelegatingCtorCycles();
 
   // If there were errors, disable 'unused' warnings since they will mostly be
   // noise.
