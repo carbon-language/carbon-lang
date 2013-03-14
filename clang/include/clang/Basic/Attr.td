@@ -632,6 +632,11 @@ def ReqdWorkGroupSize : InheritableAttr {
               UnsignedArgument<"ZDim">];
 }
 
+def Endian : InheritableAttr {
+  let Spellings = [GNU<"endian">];
+  let Args = [IdentifierArgument<"platform">];
+}
+
 def WorkGroupSizeHint :  InheritableAttr {
   let Spellings = [GNU<"work_group_size_hint">];
   let Args = [UnsignedArgument<"XDim">, 

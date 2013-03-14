@@ -2799,6 +2799,15 @@ static void handleVecTypeHint(Sema &S, Decl *D, const AttributeList &Attr) {
                                                ParmType, Attr.getLoc()));
 }
 
+static void handleEndianAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!dyn_cast<VarDecl>(D))
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type) << "endian"
+                                                                << 9;
+  StringRef EndianType = Attr.getParameterName()->getName();
+  if (EndianType != "host" && EndianType != "device")
+    S.Diag(Attr.getLoc(), diag::warn_attribute_unknown_endian) << EndianType;
+}
+
 SectionAttr *Sema::mergeSectionAttr(Decl *D, SourceRange Range,
                                     StringRef Name,
                                     unsigned AttrSpellingListIndex) {
@@ -4782,6 +4791,10 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 
   case AttributeList::AT_VecTypeHint:
     handleVecTypeHint(S, D, Attr); break;
+
+  case AttributeList::AT_Endian:
+    handleEndianAttr(S, D, Attr);
+    break;
 
   case AttributeList::AT_InitPriority: 
       handleInitPriorityAttr(S, D, Attr); break;
