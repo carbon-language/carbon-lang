@@ -641,10 +641,38 @@ TEST(MemorySanitizer, memmove) {
 }
 
 TEST(MemorySanitizer, strdup) {
-  char *x = strdup("zzz");
-  EXPECT_NOT_POISONED(*x);
+  char buf[4] = "abc";
+  __msan_poison(buf + 2, sizeof(*buf));
+  char *x = strdup(buf);
+  EXPECT_NOT_POISONED(x[0]);
+  EXPECT_NOT_POISONED(x[1]);
+  EXPECT_POISONED(x[2]);
+  EXPECT_NOT_POISONED(x[3]);
   free(x);
 }
+
+TEST(MemorySanitizer, strndup) {
+  char buf[4] = "abc";
+  __msan_poison(buf + 2, sizeof(*buf));
+  char *x = strndup(buf, 3);
+  EXPECT_NOT_POISONED(x[0]);
+  EXPECT_NOT_POISONED(x[1]);
+  EXPECT_POISONED(x[2]);
+  EXPECT_NOT_POISONED(x[3]);
+  free(x);
+}
+
+TEST(MemorySanitizer, strndup_short) {
+  char buf[4] = "abc";
+  __msan_poison(buf + 1, sizeof(*buf));
+  __msan_poison(buf + 2, sizeof(*buf));
+  char *x = strndup(buf, 2);
+  EXPECT_NOT_POISONED(x[0]);
+  EXPECT_POISONED(x[1]);
+  EXPECT_NOT_POISONED(x[3]);
+  free(x);
+}
+
 
 template<class T, int size>
 void TestOverlapMemmove() {

@@ -161,6 +161,32 @@ INTERCEPTOR(char *, strdup, char *src) {
   return res;
 }
 
+INTERCEPTOR(char *, __strdup, char *src) {
+  ENSURE_MSAN_INITED();
+  SIZE_T n = REAL(strlen)(src);
+  char *res = REAL(__strdup)(src);
+  __msan_copy_poison(res, src, n + 1);
+  return res;
+}
+
+INTERCEPTOR(char *, strndup, char *src, SIZE_T n) {
+  ENSURE_MSAN_INITED();
+  SIZE_T copy_size = REAL(strnlen)(src, n);
+  char *res = REAL(strndup)(src, n);
+  __msan_copy_poison(res, src, copy_size);
+  __msan_unpoison(res + copy_size, 1); // \0
+  return res;
+}
+
+INTERCEPTOR(char *, __strndup, char *src, SIZE_T n) {
+  ENSURE_MSAN_INITED();
+  SIZE_T copy_size = REAL(strnlen)(src, n);
+  char *res = REAL(__strndup)(src, n);
+  __msan_copy_poison(res, src, copy_size);
+  __msan_unpoison(res + copy_size, 1); // \0
+  return res;
+}
+
 INTERCEPTOR(char *, gcvt, double number, SIZE_T ndigit, char *buf) {
   ENSURE_MSAN_INITED();
   char *res = REAL(gcvt)(number, ndigit, buf);
@@ -965,6 +991,9 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(wmemmove);
   INTERCEPT_FUNCTION(strcpy);  // NOLINT
   INTERCEPT_FUNCTION(strdup);
+  INTERCEPT_FUNCTION(__strdup);
+  INTERCEPT_FUNCTION(strndup);
+  INTERCEPT_FUNCTION(__strndup);
   INTERCEPT_FUNCTION(strncpy);  // NOLINT
   INTERCEPT_FUNCTION(strlen);
   INTERCEPT_FUNCTION(strnlen);
