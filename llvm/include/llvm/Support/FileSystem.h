@@ -602,7 +602,7 @@ private:
   void *FileMappingHandle;
 #endif
 
-  error_code init(int FD, uint64_t Offset);
+  error_code init(int FD, bool CloseFD, uint64_t Offset);
 
 public:
   typedef char char_type;
@@ -633,8 +633,10 @@ public:
                      error_code &ec);
 
   /// \param fd An open file descriptor to map. mapped_file_region takes
-  ///           ownership. It must have been opended in the correct mode.
+  ///   ownership if closefd is true. It must have been opended in the correct
+  ///   mode.
   mapped_file_region(int fd,
+                     bool closefd,
                      mapmode mode,
                      uint64_t length,
                      uint64_t offset,

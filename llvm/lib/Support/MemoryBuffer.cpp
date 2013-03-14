@@ -206,7 +206,7 @@ class MemoryBufferMMapFile : public MemoryBuffer {
 public:
   MemoryBufferMMapFile(bool RequiresNullTerminator, int FD, uint64_t Len,
                        uint64_t Offset, error_code EC)
-      : MFR(FD, sys::fs::mapped_file_region::readonly,
+      : MFR(FD, false, sys::fs::mapped_file_region::readonly,
             getLegalMapSize(Len, Offset), getLegalMapOffset(Offset), EC) {
     if (!EC) {
       const char *Start = getStart(Len, Offset);
@@ -281,6 +281,7 @@ error_code MemoryBuffer::getFile(const char *Filename,
 
   error_code ret = getOpenFile(FD, Filename, result, FileSize, FileSize,
                                0, RequiresNullTerminator);
+  close(FD);
   return ret;
 }
 

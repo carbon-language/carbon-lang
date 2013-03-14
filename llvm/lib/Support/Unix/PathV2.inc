@@ -475,12 +475,14 @@ rety_open_create:
   return error_code::success();
 }
 
-error_code mapped_file_region::init(int fd, uint64_t offset) {
-  AutoFD FD(fd);
+error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
+  AutoFD ScopedFD(FD);
+  if (!CloseFD)
+    ScopedFD.take();
 
   // Figure out how large the file is.
   struct stat FileInfo;
-  if (fstat(fd, &FileInfo) == -1)
+  if (fstat(FD, &FileInfo) == -1)
     return error_code(errno, system_category());
   uint64_t FileSize = FileInfo.st_size;
 
@@ -488,7 +490,7 @@ error_code mapped_file_region::init(int fd, uint64_t offset) {
     Size = FileSize;
   else if (FileSize < Size) {
     // We need to grow the file.
-    if (ftruncate(fd, Size) == -1)
+    if (ftruncate(FD, Size) == -1)
       return error_code(errno, system_category());
   }
 
@@ -497,7 +499,7 @@ error_code mapped_file_region::init(int fd, uint64_t offset) {
 #ifdef MAP_FILE
   flags |= MAP_FILE;
 #endif
-  Mapping = ::mmap(0, Size, prot, flags, fd, offset);
+  Mapping = ::mmap(0, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
     return error_code(errno, system_category());
   return error_code::success();
@@ -526,12 +528,13 @@ mapped_file_region::mapped_file_region(const Twine &path,
     return;
   }
 
-  ec = init(ofd, offset);
+  ec = init(ofd, true, offset);
   if (ec)
     Mapping = 0;
 }
 
 mapped_file_region::mapped_file_region(int fd,
+                                       bool closefd,
                                        mapmode mode,
                                        uint64_t length,
                                        uint64_t offset,
@@ -545,7 +548,7 @@ mapped_file_region::mapped_file_region(int fd,
     return;
   }
 
-  ec = init(fd, offset);
+  ec = init(fd, closefd, offset);
   if (ec)
     Mapping = 0;
 }

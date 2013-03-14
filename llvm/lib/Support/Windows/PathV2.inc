@@ -711,12 +711,13 @@ error_code get_magic(const Twine &path, uint32_t len,
   return error_code::success();
 }
 
-error_code mapped_file_region::init(int FD, uint64_t Offset) {
+error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   FileDescriptor = FD;
   // Make sure that the requested size fits within SIZE_T.
   if (Size > std::numeric_limits<SIZE_T>::max()) {
     if (FileDescriptor)
-      _close(FileDescriptor);
+      if (CloseFD)
+        _close(FileDescriptor);
     else
       ::CloseHandle(FileHandle);
     return make_error_code(errc::invalid_argument);
@@ -739,7 +740,8 @@ error_code mapped_file_region::init(int FD, uint64_t Offset) {
   if (FileMappingHandle == NULL) {
     error_code ec = windows_error(GetLastError());
     if (FileDescriptor)
-      _close(FileDescriptor);
+      if (CloseFD)
+        _close(FileDescriptor);
     else
       ::CloseHandle(FileHandle);
     return ec;
@@ -761,7 +763,8 @@ error_code mapped_file_region::init(int FD, uint64_t Offset) {
     error_code ec = windows_error(GetLastError());
     ::CloseHandle(FileMappingHandle);
     if (FileDescriptor)
-      _close(FileDescriptor);
+      if (CloseFD)
+        _close(FileDescriptor);
     else
       ::CloseHandle(FileHandle);
     return ec;
@@ -775,13 +778,23 @@ error_code mapped_file_region::init(int FD, uint64_t Offset) {
       ::UnmapViewOfFile(Mapping);
       ::CloseHandle(FileMappingHandle);
       if (FileDescriptor)
-        _close(FileDescriptor);
+        if (CloseFD)
+          _close(FileDescriptor);
       else
         ::CloseHandle(FileHandle);
       return ec;
     }
     Size = mbi.RegionSize;
   }
+
+  // Close all the handles except for the view. It will keep the other handles
+  // alive.
+  ::CloseHandle(FileMappingHandle);
+  if (FileDescriptor)
+    if (CloseFD)
+      _close(FileDescriptor); // Also closes FileHandle.
+  else
+    ::CloseHandle(FileHandle);
   return error_code::success();
 }
 
@@ -821,7 +834,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
   }
 
   FileDescriptor = 0;
-  ec = init(FileDescriptor, offset);
+  ec = init(FileDescriptor, true, offset);
   if (ec) {
     Mapping = FileMappingHandle = 0;
     FileHandle = INVALID_HANDLE_VALUE;
@@ -830,6 +843,7 @@ mapped_file_region::mapped_file_region(const Twine &path,
 }
 
 mapped_file_region::mapped_file_region(int fd,
+                                       bool closefd,
                                        mapmode mode,
                                        uint64_t length,
                                        uint64_t offset,
@@ -842,13 +856,14 @@ mapped_file_region::mapped_file_region(int fd,
   , FileMappingHandle() {
   FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
   if (FileHandle == INVALID_HANDLE_VALUE) {
-    _close(FileDescriptor);
+    if (closefd)
+      _close(FileDescriptor);
     FileDescriptor = 0;
     ec = make_error_code(errc::bad_file_descriptor);
     return;
   }
 
-  ec = init(FileDescriptor, offset);
+  ec = init(FileDescriptor, closefd, offset);
   if (ec) {
     Mapping = FileMappingHandle = 0;
     FileHandle = INVALID_HANDLE_VALUE;
@@ -859,12 +874,6 @@ mapped_file_region::mapped_file_region(int fd,
 mapped_file_region::~mapped_file_region() {
   if (Mapping)
     ::UnmapViewOfFile(Mapping);
-  if (FileMappingHandle)
-    ::CloseHandle(FileMappingHandle);
-  if (FileDescriptor)
-    _close(FileDescriptor);
-  else if (FileHandle != INVALID_HANDLE_VALUE)
-    ::CloseHandle(FileHandle);
 }
 
 #if LLVM_HAS_RVALUE_REFERENCES

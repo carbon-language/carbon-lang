@@ -70,8 +70,8 @@ error_code FileOutputBuffer::create(StringRef FilePath,
   if (EC)
     return EC;
 
-  OwningPtr<mapped_file_region> MappedFile(
-    new mapped_file_region(FD, mapped_file_region::readwrite, Size, 0, EC));
+  OwningPtr<mapped_file_region> MappedFile(new mapped_file_region(
+      FD, true, mapped_file_region::readwrite, Size, 0, EC));
   if (EC)
     return EC;
 
