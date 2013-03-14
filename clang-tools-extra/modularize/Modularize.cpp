@@ -34,6 +34,29 @@
 //
 // note: '(symbol)' in (file) at (row):(column) not always provided
 //
+// Future directions:
+//
+// Basically, we want to add new checks for whatever we can check with respect
+// to checking headers for module'ability.
+//
+// Some ideas:
+//
+// 1. Group duplicate definition messages into a single list.
+//
+// 2. Try to figure out the preprocessor conditional directives that
+// contribute to problems.
+//
+// 3. Check for correct and consistent usage of extern "C" {} and other
+// directives. Warn about #include inside extern "C" {}.
+//
+// 4. What else?
+//
+// General clean-up and refactoring:
+//
+// 1. The Location class seems to be something that we might
+// want to design to be applicable to a wider range of tools, and stick it
+// somewhere into Tooling/ in mainline
+//
 //===----------------------------------------------------------------------===//
  
 #include "llvm/Config/config.h"
@@ -58,6 +81,9 @@ using namespace clang::tooling;
 using namespace clang;
 using llvm::StringRef;
 
+// FIXME: The Location class seems to be something that we might
+// want to design to be applicable to a wider range of tools, and stick it
+// somewhere into Tooling/ in mainline
 struct Location {
   const FileEntry *File;
   unsigned Line, Column;
@@ -346,8 +372,9 @@ int main(int argc, const char **argv) {
   EntityMap Entities;
   ClangTool Tool(*Compilations, Headers);
   int HadErrors = Tool.run(new ModularizeFrontendActionFactory(Entities));
-  
+
   // Check for the same entity being defined in multiple places.
+  // FIXME: Could they be grouped into a list?
   for (EntityMap::iterator E = Entities.begin(), EEnd = Entities.end();
        E != EEnd; ++E) {
     Location Tag, Value, Macro;
@@ -375,6 +402,8 @@ int main(int argc, const char **argv) {
   
   // Complain about any headers that have contents that differ based on how
   // they are included.
+  // FIXME: Could we provide information about which preprocessor conditionals
+  // are involved?
   for (llvm::DenseMap<const FileEntry *, HeaderContents>::iterator
             H = Entities.HeaderContentMismatches.begin(),
          HEnd = Entities.HeaderContentMismatches.end();
