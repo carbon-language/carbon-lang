@@ -55,7 +55,7 @@ define void @storev16i16(<16 x i16> %a) nounwind {
 
 ; CHECK: storev16i16_01
 ; CHECK: vextractf128
-; CHECK: vmovaps  %xmm
+; CHECK: vmovups  %xmm
 define void @storev16i16_01(<16 x i16> %a) nounwind {
   store <16 x i16> %a, <16 x i16>* undef, align 4
   unreachable

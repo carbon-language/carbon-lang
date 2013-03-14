@@ -1009,7 +1009,7 @@ let Predicates = [HasAVX] in {
             (VMOVUPSmr addr:$dst, (v4i32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
   def : Pat<(store (v8i16 (extract_subvector
                            (v16i16 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVAPSmr addr:$dst, (v8i16 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
+            (VMOVUPSmr addr:$dst, (v8i16 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
   def : Pat<(store (v16i8 (extract_subvector
                            (v32i8 VR256:$src), (iPTR 0))), addr:$dst),
             (VMOVUPSmr addr:$dst, (v16i8 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
