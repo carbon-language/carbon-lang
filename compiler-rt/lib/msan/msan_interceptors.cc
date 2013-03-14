@@ -91,6 +91,13 @@ INTERCEPTOR(void *, readdir, void *a) {
   return res;
 }
 
+INTERCEPTOR(void *, readdir64, void *a) {
+  ENSURE_MSAN_INITED();
+  void *res = REAL(readdir)(a);
+  __msan_unpoison(res, __sanitizer::struct_dirent64_sz);
+  return res;
+}
+
 INTERCEPTOR(void *, memcpy, void *dest, const void *src, SIZE_T n) {
   return __msan_memcpy(dest, src, n);
 }
@@ -983,6 +990,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(fread_unlocked);
   INTERCEPT_FUNCTION(readlink);
   INTERCEPT_FUNCTION(readdir);
+  INTERCEPT_FUNCTION(readdir64);
   INTERCEPT_FUNCTION(memcpy);
   INTERCEPT_FUNCTION(memset);
   INTERCEPT_FUNCTION(memmove);

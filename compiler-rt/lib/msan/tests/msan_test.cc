@@ -35,6 +35,8 @@
 #include <sys/utsname.h>
 #include <sys/mman.h>
 #include <sys/vfs.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -611,6 +613,14 @@ TEST(MemorySanitizer, getcwd_gnu) {
   assert(res);
   EXPECT_NOT_POISONED(res[0]);
   free(res);
+}
+
+TEST(MemorySanitizer, readdir) {
+  DIR *dir = opendir(".");
+  struct dirent *d = readdir(dir);
+  assert(d);
+  EXPECT_NOT_POISONED(d->d_name[0]);
+  closedir(dir);
 }
 
 TEST(MemorySanitizer, realpath) {
