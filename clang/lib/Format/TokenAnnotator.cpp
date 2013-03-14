@@ -1111,12 +1111,12 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       Left.Parent->is(tok::r_paren))
     return !Right.isOneOf(tok::l_brace, tok::semi, tok::equal);
 
+  if (Right.is(tok::kw___attribute))
+    return true;
+
   // We only break before r_brace if there was a corresponding break before
   // the l_brace, which is tracked by BreakBeforeClosingBrace.
-  if (Right.is(tok::r_brace))
-    return false;
-
-  if (Right.isOneOf(tok::r_paren, tok::greater))
+  if (Right.isOneOf(tok::r_brace, tok::r_paren, tok::greater))
     return false;
   if (Left.is(tok::identifier) && Right.is(tok::string_literal))
     return true;
