@@ -141,7 +141,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->redzone = ASAN_ALLOCATOR_VERSION == 2 ? 16 : (ASAN_LOW_MEMORY) ? 64 : 128;
   f->debug = false;
   f->report_globals = 1;
-  f->check_initialization_order = true;
+  f->check_initialization_order = false;
   f->malloc_context_size = kDeafultMallocContextSize;
   f->replace_str = true;
   f->replace_intrin = true;

@@ -2,22 +2,28 @@
 
 // RUN: %clangxx_asan -m64 -O0 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
-// RUN:   -fsanitize=init-order -o %t && %t 2>&1
+// RUN:   -fsanitize=init-order -o %t
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 // RUN: %clangxx_asan -m64 -O1 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
-// RUN:   -fsanitize=init-order -o %t && %t 2>&1
+// RUN:   -fsanitize=init-order -o %t
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 // RUN: %clangxx_asan -m64 -O2 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
-// RUN:   -fsanitize=init-order -o %t && %t 2>&1
+// RUN:   -fsanitize=init-order -o %t
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 // RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
-// RUN:   -fsanitize=init-order -o %t && %t 2>&1
+// RUN:   -fsanitize=init-order -o %t
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 // RUN: %clangxx_asan -m32 -O1 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
-// RUN:   -fsanitize=init-order -o %t && %t 2>&1
+// RUN:   -fsanitize=init-order -o %t
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 // RUN: %clangxx_asan -m32 -O2 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
-// RUN:   -fsanitize=init-order -o %t && %t 2>&1
+// RUN:   -fsanitize=init-order -o %t
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 
 // Function is defined in another TU.
 int readBadGlobal();
