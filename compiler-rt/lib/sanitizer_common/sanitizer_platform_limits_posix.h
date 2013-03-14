@@ -25,6 +25,7 @@ namespace __sanitizer {
 #if defined(__linux__)
   extern unsigned struct_rlimit_sz;
   extern unsigned struct_dirent_sz;
+  extern unsigned struct_dirent64_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
 #endif // __linux__

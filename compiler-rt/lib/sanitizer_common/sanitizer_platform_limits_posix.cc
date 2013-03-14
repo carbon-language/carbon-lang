@@ -42,6 +42,7 @@ namespace __sanitizer {
 #if defined(__linux__)
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
   unsigned struct_dirent_sz = sizeof(struct dirent);
+  unsigned struct_dirent64_sz = sizeof(struct dirent64);
   unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
 #endif // __linux__
