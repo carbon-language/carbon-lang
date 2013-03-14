@@ -517,7 +517,7 @@ class SizeClassAllocator64 {
     }
     CHECK_LE(region->allocated_meta, region->mapped_meta);
     if (region->allocated_user + region->allocated_meta > kRegionSize) {
-      Printf("Out of memory. Dying.\n");
+      Printf("%s: Out of memory. Dying. ", SanitizerToolName);
       Printf("The process has exhausted %zuMB for size class %zu.\n",
           kRegionSize / 1024 / 1024, size);
       Die();

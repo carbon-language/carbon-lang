@@ -277,41 +277,6 @@ TEST(AddressSanitizer, SignalTest) {
 }  // namespace
 #endif
 
-static void MallocStress(size_t n) {
-  uint32_t seed = my_rand();
-  for (size_t iter = 0; iter < 10; iter++) {
-    vector<void *> vec;
-    for (size_t i = 0; i < n; i++) {
-      if ((i % 3) == 0) {
-        if (vec.empty()) continue;
-        size_t idx = my_rand_r(&seed) % vec.size();
-        void *ptr = vec[idx];
-        vec[idx] = vec.back();
-        vec.pop_back();
-        free_aaa(ptr);
-      } else {
-        size_t size = my_rand_r(&seed) % 1000 + 1;
-#ifndef __APPLE__
-        size_t alignment = 1 << (my_rand_r(&seed) % 7 + 3);
-        char *ptr = (char*)memalign_aaa(alignment, size);
-#else
-        char *ptr = (char*) malloc_aaa(size);
-#endif
-        vec.push_back(ptr);
-        ptr[0] = 0;
-        ptr[size-1] = 0;
-        ptr[size/2] = 0;
-      }
-    }
-    for (size_t i = 0; i < vec.size(); i++)
-      free_aaa(vec[i]);
-  }
-}
-
-TEST(AddressSanitizer, MallocStressTest) {
-  MallocStress((ASAN_LOW_MEMORY) ? 20000 : 200000);
-}
-
 static void TestLargeMalloc(size_t size) {
   char buff[1024];
   sprintf(buff, "is located 1 bytes to the left of %lu-byte", (long)size);
@@ -324,21 +289,11 @@ TEST(AddressSanitizer, LargeMallocTest) {
   }
 }
 
-#if ASAN_LOW_MEMORY != 1
 TEST(AddressSanitizer, HugeMallocTest) {
-#ifdef __APPLE__
-  // It was empirically found out that 1215 megabytes is the maximum amount of
-  // memory available to the process under AddressSanitizer on 32-bit Mac 10.6.
-  // 32-bit Mac 10.7 gives even less (< 1G).
-  // (the libSystem malloc() allows allocating up to 2300 megabytes without
-  // ASan).
-  size_t n_megs = SANITIZER_WORDSIZE == 32 ? 500 : 4100;
-#else
-  size_t n_megs = SANITIZER_WORDSIZE == 32 ? 2600 : 4100;
-#endif
+  if (SANITIZER_WORDSIZE != 64) return;
+  size_t n_megs = 4100;
   TestLargeMalloc(n_megs << 20);
 }
-#endif
 
 #ifndef __APPLE__
 void MemalignRun(size_t align, size_t size, int idx) {
@@ -357,19 +312,6 @@ TEST(AddressSanitizer, memalign) {
   }
 }
 #endif
-
-TEST(AddressSanitizer, ThreadedMallocStressTest) {
-  const int kNumThreads = 4;
-  const int kNumIterations = (ASAN_LOW_MEMORY) ? 10000 : 100000;
-  pthread_t t[kNumThreads];
-  for (int i = 0; i < kNumThreads; i++) {
-    PTHREAD_CREATE(&t[i], 0, (void* (*)(void *x))MallocStress,
-        (void*)kNumIterations);
-  }
-  for (int i = 0; i < kNumThreads; i++) {
-    PTHREAD_JOIN(t[i], 0);
-  }
-}
 
 void *ManyThreadsWorker(void *a) {
   for (int iter = 0; iter < 100; iter++) {
