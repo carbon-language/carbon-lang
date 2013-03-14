@@ -350,6 +350,7 @@ TEST_F(FileSystemTest, FileMapping) {
   StringRef Val("hello there");
   {
     fs::mapped_file_region mfr(FileDescriptor,
+                               true,
                                fs::mapped_file_region::readwrite,
                                4096,
                                0,
