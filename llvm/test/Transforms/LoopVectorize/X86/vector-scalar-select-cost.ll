@@ -10,10 +10,10 @@ target triple = "x86_64-apple-macosx10.8.0"
 @c = common global [2048 x i32] zeroinitializer, align 16
 
 ; CHECK: Checking a loop in "scalarselect"
-define void @scalarselect(i1 %cond) nounwind uwtable ssp {
+define void @scalarselect(i1 %cond) {
   br label %1
 
-; <label>:1                                       ; preds = %1, %0
+; <label>:1
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
   %2 = getelementptr inbounds [2048 x i32]* @b, i64 0, i64 %indvars.iv
   %3 = load i32* %2, align 4
@@ -21,8 +21,10 @@ define void @scalarselect(i1 %cond) nounwind uwtable ssp {
   %5 = load i32* %4, align 4
   %6 = add nsw i32 %5, %3
   %7 = getelementptr inbounds [2048 x i32]* @a, i64 0, i64 %indvars.iv
+
 ; A scalar select has a cost of 1 on core2
 ; CHECK: cost of 1 for VF 2 {{.*}}  select i1 %cond, i32 %6, i32 0
+
   %sel = select i1 %cond, i32 %6, i32 zeroinitializer
   store i32 %sel, i32* %7, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -30,15 +32,15 @@ define void @scalarselect(i1 %cond) nounwind uwtable ssp {
   %exitcond = icmp eq i32 %lftr.wideiv, 256
   br i1 %exitcond, label %8, label %1
 
-; <label>:8                                       ; preds = %1
+; <label>:8
   ret void
 }
 
 ; CHECK: Checking a loop in "vectorselect"
-define void @vectorselect(i1 %cond) nounwind uwtable ssp {
+define void @vectorselect(i1 %cond) {
   br label %1
 
-; <label>:1                                       ; preds = %1, %0
+; <label>:1
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
   %2 = getelementptr inbounds [2048 x i32]* @b, i64 0, i64 %indvars.iv
   %3 = load i32* %2, align 4
@@ -47,8 +49,10 @@ define void @vectorselect(i1 %cond) nounwind uwtable ssp {
   %6 = add nsw i32 %5, %3
   %7 = getelementptr inbounds [2048 x i32]* @a, i64 0, i64 %indvars.iv
   %8 = icmp ult i64 %indvars.iv, 8
+
 ; A vector select has a cost of 4 on core2
 ; CHECK: cost of 4 for VF 2 {{.*}}  select i1 %8, i32 %6, i32 0
+
   %sel = select i1 %8, i32 %6, i32 zeroinitializer
   store i32 %sel, i32* %7, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -56,7 +60,7 @@ define void @vectorselect(i1 %cond) nounwind uwtable ssp {
   %exitcond = icmp eq i32 %lftr.wideiv, 256
   br i1 %exitcond, label %9, label %1
 
-; <label>:9                                       ; preds = %1
+; <label>:9
   ret void
 }
 
