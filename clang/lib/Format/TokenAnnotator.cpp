@@ -661,7 +661,7 @@ private:
       return TT_PointerOrReference;
 
     if (PrevToken->isOneOf(tok::l_paren, tok::l_square, tok::l_brace,
-                           tok::comma, tok::kw_return, tok::colon,
+                           tok::comma, tok::semi, tok::kw_return, tok::colon,
                            tok::equal) ||
         PrevToken->Type == TT_BinaryOperator ||
         PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)

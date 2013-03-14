@@ -1919,6 +1919,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
       "const char *const p = reinterpret_cast<const char *const>(q);");
   verifyIndependentOfContext("A<int **, int **> a;");
   verifyIndependentOfContext("void f(int *a = d * e, int *b = c * d);");
+  verifyFormat("for (char **a = b; *a; ++a) {\n}");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
