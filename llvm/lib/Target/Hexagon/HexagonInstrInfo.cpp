@@ -1949,6 +1949,10 @@ isValidOffset(const int Opcode, const int Offset) const {
   // the given "Opcode". If "Offset" is not in the correct range, "ADD_ri" is
   // inserted to calculate the final address. Due to this reason, the function
   // assumes that the "Offset" has correct alignment.
+  // We used to assert if the offset was not properly aligned, however,
+  // there are cases where a misaligned pointer recast can cause this
+  // problem, and we need to allow for it. The front end warns of such
+  // misaligns with respect to load size.
 
   switch(Opcode) {
 
@@ -1958,7 +1962,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::STriw_indexed:
   case Hexagon::STriw:
   case Hexagon::STriw_f:
-    assert((Offset % 4 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
@@ -1968,14 +1971,12 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::STrid:
   case Hexagon::STrid_indexed:
   case Hexagon::STrid_f:
-    assert((Offset % 8 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMD_OFFSET_MAX);
 
   case Hexagon::LDrih:
   case Hexagon::LDriuh:
   case Hexagon::STrih:
-    assert((Offset % 2 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMH_OFFSET_MAX);
 
@@ -2002,7 +2003,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::MEMw_SUBr_MEM_V4 :
   case Hexagon::MEMw_ANDr_MEM_V4 :
   case Hexagon::MEMw_ORr_MEM_V4 :
-    assert ((Offset % 4) == 0 && "MEMOPw offset is not aligned correctly." );
     return (0 <= Offset && Offset <= 255);
 
   case Hexagon::MEMh_ADDi_indexed_MEM_V4 :
@@ -2017,7 +2017,6 @@ isValidOffset(const int Opcode, const int Offset) const {
   case Hexagon::MEMh_SUBr_MEM_V4 :
   case Hexagon::MEMh_ANDr_MEM_V4 :
   case Hexagon::MEMh_ORr_MEM_V4 :
-    assert ((Offset % 2) == 0 && "MEMOPh offset is not aligned correctly." );
     return (0 <= Offset && Offset <= 127);
 
   case Hexagon::MEMb_ADDi_indexed_MEM_V4 :
