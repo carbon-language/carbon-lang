@@ -302,3 +302,23 @@ namespace PR12585 {
   H<int> h1; // ok
   H<char> h2; // expected-note {{instantiation}}
 }
+
+// Ensure that we can still instantiate a friend function template
+// after the friend declaration is instantiated during the delayed
+// parsing of a member function, but before the friend function has
+// been parsed.
+namespace rdar12350696 {
+  template <class T> struct A {
+    void foo() {
+      A<int> a;
+    }
+    template <class U> friend void foo(const A<U> & a) {
+      int array[sizeof(T) == sizeof(U) ? -1 : 1]; // expected-error {{negative size}}
+    }
+  };
+
+  void test() {
+    A<int> b;
+    foo(b); // expected-note {{in instantiation}}
+  }
+}
