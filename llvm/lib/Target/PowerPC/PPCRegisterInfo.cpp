@@ -71,12 +71,6 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
   ImmToIdxMap[PPC::ADDI8] = PPC::ADD8; ImmToIdxMap[PPC::STD_32] = PPC::STDX_32;
 }
 
-bool
-PPCRegisterInfo::trackLivenessAfterRegAlloc(const MachineFunction &MF) const {
-  return requiresRegisterScavenging(MF);
-}
-
-
 /// getPointerRegClass - Return the register class to use to hold pointers.
 /// This is used for addressing modes.
 const TargetRegisterClass *
@@ -187,20 +181,6 @@ PPCRegisterInfo::avoidWriteAfterWrite(const TargetRegisterClass *RC) const {
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
 
-/// findScratchRegister - Find a 'free' PPC register. Try for a call-clobbered
-/// register first and then a spilled callee-saved register if that fails.
-static
-unsigned findScratchRegister(MachineBasicBlock::iterator II, RegScavenger *RS,
-                             const TargetRegisterClass *RC, int SPAdj) {
-  assert(RS && "Register scavenging must be on");
-  unsigned Reg = RS->FindUnusedReg(RC);
-  // FIXME: move ARM callee-saved reg scan to target independent code, then 
-  // search for already spilled CS register here.
-  if (Reg == 0)
-    Reg = RS->scavengeRegister(RC, II, SPAdj);
-  return Reg;
-}
-
 /// lowerDynamicAlloc - Generate the code for allocating an object in the
 /// current frame.  The sequence of code with be in the general form
 ///
@@ -241,9 +221,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   // Fortunately, a frame greater than 32K is rare.
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-  const TargetRegisterClass *RC = LP64 ? G8RC : GPRC;
-
-  unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
   
   if (MaxAlign < TargetAlign && isInt<16>(FrameSize)) {
     BuildMI(MBB, II, dl, TII.get(PPC::ADDI), Reg)
@@ -514,7 +492,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-  unsigned SReg = findScratchRegister(II, RS, is64Bit ? G8RC : GPRC, SPAdj);
+  unsigned SReg = MF.getRegInfo().createVirtualRegister(is64Bit ? G8RC : GPRC);
 
   // Insert a set of rA with the full offset value before the ld, st, or add
   BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SReg)
