@@ -144,6 +144,9 @@ public:
       return 0;
     }
 
+    // Note that the offsets here overlap, but this is fixed up in
+    // processFunctionBeforeFrameFinalized.
+
     static const SpillSlot Offsets[] = {
       // Floating-point register save area offsets.
       {PPC::F31, -8},
