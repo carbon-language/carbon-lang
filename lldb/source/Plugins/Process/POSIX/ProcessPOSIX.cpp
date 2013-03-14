@@ -206,6 +206,8 @@ ProcessPOSIX::DoLaunch (Module *module,
     if (!error.Success())
         return error;
 
+    SetSTDIOFileDescriptor(m_monitor->GetTerminalFD());
+
     SetID(m_monitor->GetPID());
     return error;
 }
@@ -277,7 +279,6 @@ ProcessPOSIX::DoHalt(bool &caused_stop)
     {
         caused_stop = true;
     }
-
     return error;
 }
 
@@ -582,27 +583,6 @@ ProcessPOSIX::PutSTDIN(const char *buf, size_t len, Error &error)
         return 0;
     }
     return status;
-}
-
-size_t
-ProcessPOSIX::GetSTDOUT(char *buf, size_t len, Error &error)
-{
-    ssize_t bytes_read;
-
-    // The terminal file descriptor is always in non-block mode.
-    if ((bytes_read = read(m_monitor->GetTerminalFD(), buf, len)) < 0) 
-    {
-        if (errno != EAGAIN)
-            error.SetErrorToErrno();
-        return 0;
-    }
-    return bytes_read;
-}
-
-size_t
-ProcessPOSIX::GetSTDERR(char *buf, size_t len, Error &error)
-{
-    return GetSTDOUT(buf, len, error);
 }
 
 UnixSignals &

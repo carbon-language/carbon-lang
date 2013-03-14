@@ -1571,7 +1571,8 @@ ProcessMonitor::ServeOperation(OperationArgs *args)
                 assert(errno == EINTR);
                 goto READ_AGAIN;
             }
-
+            if (status == 0)
+                continue; // Poll again. The connection probably terminated.
             assert(status == sizeof(op));
             op->Execute(monitor);
             write(fdset.fd, &op, sizeof(op));
