@@ -275,14 +275,22 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
             const char *frame_function_name = sc.GetFunctionName().GetCString();
             if (frame_function_name)
             {
-                bool return_value = avoid_regexp_to_use->Execute(frame_function_name);
+                size_t num_matches = 0;
+                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                if (log)
+                    num_matches = 1;
+                bool return_value = avoid_regexp_to_use->Execute(frame_function_name, num_matches);
                 if (return_value)
                 {
-                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                     if (log)
-                        log->Printf ("Stepping out of function %s because it matches the avoid regexp \"%s\".",
+                    {
+                        std::string match;
+                        avoid_regexp_to_use->GetMatchAtIndex(frame_function_name,0, match);
+                        log->Printf ("Stepping out of function \"%s\" because it matches the avoid regexp \"%s\" - match substring: \"%s\".",
                                      frame_function_name,
-                                     avoid_regexp_to_use->GetText());
+                                     avoid_regexp_to_use->GetText(),
+                                     match.c_str());
+                    }
 
                 }
                 return return_value;
