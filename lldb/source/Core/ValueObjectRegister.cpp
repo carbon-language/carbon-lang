@@ -72,7 +72,7 @@ ValueObjectRegisterContext::GetClangASTImpl ()
     return NULL;
 }
 
-size_t
+uint64_t
 ValueObjectRegisterContext::GetByteSize()
 {
     return 0;
@@ -177,7 +177,7 @@ ValueObjectRegisterSet::GetClangASTImpl ()
     return NULL;
 }
 
-size_t
+uint64_t
 ValueObjectRegisterSet::GetByteSize()
 {
     return 0;
@@ -361,7 +361,7 @@ ValueObjectRegister::GetClangASTImpl ()
     return NULL;
 }
 
-size_t
+uint64_t
 ValueObjectRegister::GetByteSize()
 {
     return m_reg_info.byte_size;

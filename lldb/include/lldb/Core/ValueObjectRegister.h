@@ -31,7 +31,7 @@ public:
     virtual
     ~ValueObjectRegisterContext();
 
-    virtual size_t
+    virtual uint64_t
     GetByteSize();
 
     virtual lldb::ValueType
@@ -81,7 +81,7 @@ public:
     virtual
     ~ValueObjectRegisterSet();
 
-    virtual size_t
+    virtual uint64_t
     GetByteSize();
 
     virtual lldb::ValueType
@@ -142,7 +142,7 @@ public:
     virtual
     ~ValueObjectRegister();
 
-    virtual size_t
+    virtual uint64_t
     GetByteSize();
 
     virtual lldb::ValueType

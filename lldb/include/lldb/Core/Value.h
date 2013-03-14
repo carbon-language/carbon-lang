@@ -227,7 +227,7 @@ public:
     lldb::Format
     GetValueDefaultFormat ();
 
-    size_t
+    uint64_t
     GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr);
 
     Error

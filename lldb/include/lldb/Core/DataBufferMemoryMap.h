@@ -70,7 +70,7 @@ public:
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetByteSize() const
     //------------------------------------------------------------------
-    virtual size_t
+    virtual lldb::offset_t
     GetByteSize () const;
 
     //------------------------------------------------------------------
@@ -107,8 +107,8 @@ public:
     //------------------------------------------------------------------
     size_t
     MemoryMapFromFileSpec (const FileSpec* file,
-                           off_t offset = 0,
-                           size_t length = SIZE_MAX,
+                           lldb::offset_t offset = 0,
+                           lldb::offset_t length = SIZE_MAX,
                            bool writeable = false);
 
     //------------------------------------------------------------------
@@ -136,8 +136,8 @@ public:
     //------------------------------------------------------------------
     size_t
     MemoryMapFromFileDescriptor (int fd, 
-                                 off_t offset,
-                                 size_t length,
+                                 lldb::offset_t offset,
+                                 lldb::offset_t length,
                                  bool write,
                                  bool fd_is_file);
 
@@ -148,7 +148,7 @@ protected:
     uint8_t * m_mmap_addr;  ///< The actual pointer that was returned from \c mmap()
     size_t m_mmap_size;     ///< The actual number of bytes that were mapped when \c mmap() was called
     uint8_t *m_data;        ///< The data the user requested somewhere within the memory mapped data.
-    size_t m_size;          ///< The size of the data the user got when data was requested
+    lldb::offset_t m_size;  ///< The size of the data the user got when data was requested
 
 private:
     DISALLOW_COPY_AND_ASSIGN (DataBufferMemoryMap);

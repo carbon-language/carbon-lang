@@ -79,7 +79,7 @@ public:
     Type (lldb::user_id_t uid,
           SymbolFile* symbol_file,
           const ConstString &name,
-          uint32_t byte_size,
+          uint64_t byte_size,
           SymbolContextScope *context,
           lldb::user_id_t encoding_uid,
           EncodingDataType encoding_uid_type,
@@ -123,7 +123,7 @@ public:
     const ConstString&
     GetName();
 
-    uint32_t
+    uint64_t
     GetByteSize();
 
     uint32_t
@@ -146,9 +146,6 @@ public:
     
     lldb::TypeSP
     GetTypedefType();
-
-    void
-    SetByteSize(uint32_t byte_size);
 
     const ConstString &
     GetName () const
@@ -206,7 +203,7 @@ public:
     GetFormat ();
 
     lldb::Encoding
-    GetEncoding (uint32_t &count);
+    GetEncoding (uint64_t &count);
 
     SymbolContextScope *
     GetSymbolContextScope()
@@ -304,7 +301,7 @@ protected:
     Type *m_encoding_type;
     lldb::user_id_t m_encoding_uid;
     EncodingDataType m_encoding_uid_type;
-    uint32_t m_byte_size;
+    uint64_t m_byte_size;
     Declaration m_decl;
     lldb::clang_type_t m_clang_type;
     

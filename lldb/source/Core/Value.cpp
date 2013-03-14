@@ -169,10 +169,10 @@ Value::ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
     return false;
 }
 
-size_t
+uint64_t
 Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 {
-    size_t byte_size = 0;
+    uint64_t byte_size = 0;
 
     switch (m_context_type)
     {
@@ -190,8 +190,7 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
         }
         else
         {
-            uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (ast_context, m_context);
-            byte_size = (bit_width + 7 ) / 8;
+            byte_size = ClangASTType(ast_context, m_context).GetClangTypeByteSize();
         }
         break;
 
@@ -348,9 +347,8 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
         data.SetByteOrder (lldb::endian::InlHostByteOrder());
         if (m_context_type == eContextTypeClangType && ast_context)
         {
-            uint32_t ptr_bit_width = ClangASTType::GetClangTypeBitWidth (ast_context, 
-                                                                     ClangASTContext::GetVoidPtrType(ast_context, false));
-            uint32_t ptr_byte_size = (ptr_bit_width + 7) / 8;
+            ClangASTType ptr_type (ast_context, ClangASTContext::GetVoidPtrType(ast_context, false));
+            uint64_t ptr_byte_size = ptr_type.GetClangTypeByteSize();
             data.SetAddressByteSize (ptr_byte_size);
         }
         else

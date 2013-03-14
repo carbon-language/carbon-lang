@@ -102,16 +102,15 @@ ValueObjectVariable::GetClangASTImpl ()
     return 0;
 }
 
-size_t
+uint64_t
 ValueObjectVariable::GetByteSize()
 {
-    ClangASTType type(GetClangAST(),
-                      GetClangType());
+    ClangASTType type(GetClangAST(), GetClangType());
     
     if (!type.IsValid())
         return 0;
     
-    return (ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType()) + 7) / 8;
+    return type.GetClangTypeByteSize();
 }
 
 lldb::ValueType

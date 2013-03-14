@@ -106,7 +106,7 @@ ValueObjectDynamicValue::GetClangASTImpl ()
         return m_parent->GetClangAST ();
 }
 
-size_t
+uint64_t
 ValueObjectDynamicValue::GetByteSize()
 {
     const bool success = UpdateValueIfNeeded(false);

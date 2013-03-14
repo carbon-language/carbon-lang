@@ -68,7 +68,7 @@ DataBufferMemoryMap::GetBytes() const
 //----------------------------------------------------------------------
 // Return the number of bytes this object currently contains.
 //----------------------------------------------------------------------
-size_t
+uint64_t
 DataBufferMemoryMap::GetByteSize() const
 {
     return m_size;
@@ -104,8 +104,8 @@ DataBufferMemoryMap::Clear()
 //----------------------------------------------------------------------
 size_t
 DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
-                                            off_t offset, 
-                                            size_t length,
+                                            lldb::offset_t offset,
+                                            lldb::offset_t length,
                                             bool writeable)
 {
     if (filespec != NULL)
@@ -113,7 +113,7 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
         if (log)
         {
-            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(file=\"%s/%s\", offset=0x%" PRIx64 ", length=0x%zx, writeable=%i",
+            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(file=\"%s/%s\", offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i",
                         filespec->GetDirectory().GetCString(),
                         filespec->GetFilename().GetCString(),
                         offset,
@@ -156,8 +156,8 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* filespec,
 //----------------------------------------------------------------------
 size_t
 DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, 
-                                                  off_t offset, 
-                                                  size_t length,
+                                                  lldb::offset_t offset, 
+                                                  lldb::offset_t length,
                                                   bool writeable,
                                                   bool fd_is_file)
 {
@@ -167,7 +167,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP|LIBLLDB_LOG_VERBOSE));
         if (log)
         {
-            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%i, offset=0x%" PRIx64 ", length=0x%zx, writeable=%i, fd_is_file=%i)",
+            log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec(fd=%i, offset=0x%" PRIx64 ", length=0x%" PRIx64 ", writeable=%i, fd_is_file=%i)",
                         fd,
                         offset,
                         length,

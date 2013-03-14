@@ -79,7 +79,7 @@ ValueObjectCast::GetClangASTImpl ()
     return m_cast_type.GetASTContext();
 }
 
-size_t
+uint64_t
 ValueObjectCast::GetByteSize()
 {
     return m_value.GetValueByteSize(GetClangAST(), NULL);

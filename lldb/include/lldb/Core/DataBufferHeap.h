@@ -50,7 +50,7 @@ public:
     /// @param[in] ch
     ///     The character to use when filling the buffer initially.
     //------------------------------------------------------------------
-    DataBufferHeap (size_t n, uint8_t ch);
+    DataBufferHeap (lldb::offset_t n, uint8_t ch);
 
     //------------------------------------------------------------------
     /// Construct by making a copy of \a src_len bytes from \a src.
@@ -61,7 +61,7 @@ public:
     /// @param[in] src_len
     ///     The number of bytes in \a src to copy.
     //------------------------------------------------------------------
-    DataBufferHeap (const void *src, size_t src_len);
+    DataBufferHeap (const void *src, lldb::offset_t src_len);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -87,7 +87,7 @@ public:
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetByteSize() const
     //------------------------------------------------------------------
-    virtual size_t
+    virtual lldb::offset_t
     GetByteSize () const;
 
     //------------------------------------------------------------------
@@ -104,8 +104,8 @@ public:
     ///     The size in bytes after that this heap buffer was
     ///     successfully resized to.
     //------------------------------------------------------------------
-    size_t
-    SetByteSize (size_t byte_size);
+    lldb::offset_t
+    SetByteSize (lldb::offset_t byte_size);
 
     //------------------------------------------------------------------
     /// Makes a copy of the \a src_len bytes in \a src.
@@ -119,7 +119,7 @@ public:
     ///     The number of bytes in \a src to copy.
     //------------------------------------------------------------------
     void
-    CopyData (const void *src, size_t src_len);
+    CopyData (const void *src, lldb::offset_t src_len);
 
 private:
     //------------------------------------------------------------------

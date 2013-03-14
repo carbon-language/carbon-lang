@@ -26,7 +26,7 @@ class ValueObjectChild : public ValueObject
 public:
     virtual ~ValueObjectChild();
 
-    virtual size_t
+    virtual uint64_t
     GetByteSize()
     {
         return m_byte_size;
@@ -96,7 +96,7 @@ protected:
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     void *m_clang_type; // The type of the child in question within the parent (m_parent_sp)
     ConstString m_type_name;
-    uint32_t m_byte_size;
+    uint64_t m_byte_size;
     int32_t m_byte_offset;
     uint8_t m_bitfield_bit_size;
     uint8_t m_bitfield_bit_offset;
@@ -114,7 +114,7 @@ protected:
                       clang::ASTContext *clang_ast,
                       void *clang_type,
                       const ConstString &name,
-                      uint32_t byte_size,
+                      uint64_t byte_size,
                       int32_t byte_offset,
                       uint32_t bitfield_bit_size,
                       uint32_t bitfield_bit_offset,

@@ -5598,7 +5598,7 @@ ClangASTContext::CreateMemberPointerType (clang_type_t clang_pointee_type, clang
     return NULL;
 }
 
-uint32_t
+uint64_t
 ClangASTContext::GetPointerBitSize ()
 {
     ASTContext *ast = getASTContext();

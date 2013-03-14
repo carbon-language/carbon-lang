@@ -23,7 +23,7 @@ DataBufferHeap::DataBufferHeap () :
 // Initialize this class with "n" characters and fill the buffer
 // with "ch".
 //----------------------------------------------------------------------
-DataBufferHeap::DataBufferHeap (size_t n, uint8_t ch) :
+DataBufferHeap::DataBufferHeap (lldb::offset_t n, uint8_t ch) :
     m_data(n, ch)
 {
 }
@@ -32,7 +32,7 @@ DataBufferHeap::DataBufferHeap (size_t n, uint8_t ch) :
 // Initialize this class with a copy of the "n" bytes from the "bytes"
 // buffer.
 //----------------------------------------------------------------------
-DataBufferHeap::DataBufferHeap (const void *src, size_t src_len) :
+DataBufferHeap::DataBufferHeap (const void *src, lldb::offset_t src_len) :
     m_data()
 {
     CopyData (src, src_len);
@@ -73,7 +73,7 @@ DataBufferHeap::GetBytes () const
 //----------------------------------------------------------------------
 // Return the number of bytes this object currently contains.
 //----------------------------------------------------------------------
-size_t
+uint64_t
 DataBufferHeap::GetByteSize () const
 {
     return m_data.size();
@@ -84,15 +84,15 @@ DataBufferHeap::GetByteSize () const
 // Sets the number of bytes that this object should be able to
 // contain. This can be used prior to copying data into the buffer.
 //----------------------------------------------------------------------
-size_t
-DataBufferHeap::SetByteSize (size_t new_size)
+uint64_t
+DataBufferHeap::SetByteSize (uint64_t new_size)
 {
     m_data.resize(new_size);
     return m_data.size();
 }
 
 void
-DataBufferHeap::CopyData (const void *src, size_t src_len)
+DataBufferHeap::CopyData (const void *src, uint64_t src_len)
 {
     const uint8_t *src_u8 = (const uint8_t *)src;
     if (src && src_len > 0)

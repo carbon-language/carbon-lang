@@ -153,7 +153,7 @@ public:
     bool
     IsValid();
 
-    size_t
+    uint64_t
     GetByteSize();
 
     bool

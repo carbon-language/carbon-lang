@@ -81,7 +81,7 @@ public:
     bool
     IsValid() const;
     
-    size_t
+    uint64_t
     GetByteSize();
 
     bool

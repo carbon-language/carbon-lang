@@ -2794,7 +2794,7 @@ DWARFExpression::Evaluate
                             addr_t source_addr = (addr_t)tmp.GetScalar().ULongLong();
                             addr_t target_addr = (addr_t)stack.back().GetScalar().ULongLong();
                             
-                            size_t byte_size = (ClangASTType::GetClangTypeBitWidth(ast_context, clang_type) + 7) / 8;
+                            const uint64_t byte_size = ClangASTType::GetTypeByteSize(ast_context, clang_type);
                             
                             switch (source_value_type)
                             {

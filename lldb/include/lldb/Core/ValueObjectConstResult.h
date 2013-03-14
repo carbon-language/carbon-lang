@@ -72,7 +72,7 @@ public:
 
     virtual ~ValueObjectConstResult();
 
-    virtual size_t
+    virtual uint64_t
     GetByteSize();
 
     virtual lldb::ValueType
@@ -147,7 +147,7 @@ protected:
 
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
-    size_t m_byte_size;
+    uint64_t m_byte_size;
     
     ValueObjectConstResultImpl m_impl;
 

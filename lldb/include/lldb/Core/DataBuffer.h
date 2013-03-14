@@ -84,7 +84,7 @@ public:
     /// @return
     ///     The number of bytes this object currently contains.
     //------------------------------------------------------------------
-    virtual size_t
+    virtual lldb::offset_t
     GetByteSize() const = 0;
 };
 

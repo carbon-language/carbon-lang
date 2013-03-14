@@ -165,12 +165,12 @@ ValueObjectMemory::GetClangASTImpl ()
     return m_clang_type.GetASTContext();
 }
 
-size_t
+uint64_t
 ValueObjectMemory::GetByteSize()
 {
     if (m_type_sp)
         return m_type_sp->GetByteSize();
-    return (m_clang_type.GetClangTypeBitWidth () + 7) / 8;
+    return m_clang_type.GetClangTypeByteSize ();
 }
 
 lldb::ValueType

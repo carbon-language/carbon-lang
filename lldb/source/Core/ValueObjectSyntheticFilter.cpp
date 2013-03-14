@@ -135,7 +135,7 @@ ValueObjectSynthetic::GetClangASTImpl ()
     return m_parent->GetClangAST ();
 }
 
-size_t
+uint64_t
 ValueObjectSynthetic::GetByteSize()
 {
     return m_parent->GetByteSize();

@@ -602,7 +602,7 @@ public:
     //------------------------------------------------------------------
     // Sublasses must implement the functions below.
     //------------------------------------------------------------------
-    virtual size_t
+    virtual uint64_t
     GetByteSize() = 0;
 
     virtual lldb::ValueType
@@ -1004,7 +1004,7 @@ public:
                     uint32_t item_idx = 0,
 					uint32_t item_count = 1);
     
-    virtual size_t
+    virtual uint64_t
     GetData (DataExtractor& data);
 
     bool

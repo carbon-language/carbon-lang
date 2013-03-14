@@ -32,7 +32,7 @@ public:
     virtual
     ~ValueObjectCast();
     
-    virtual size_t
+    virtual uint64_t
     GetByteSize();
     
     virtual size_t

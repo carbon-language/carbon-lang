@@ -998,7 +998,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
     return 0;
 }
 
-size_t
+uint64_t
 ValueObject::GetData (DataExtractor& data)
 {
     UpdateValueIfNeeded(false);
@@ -1717,7 +1717,7 @@ ValueObject::SetValueFromCString (const char *value_str, Error& error)
         return false;
     }
 
-    uint32_t count = 0;
+    uint64_t count = 0;
     Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
 
     const size_t byte_size = GetByteSize();

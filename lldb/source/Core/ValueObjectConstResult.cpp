@@ -286,7 +286,7 @@ ValueObjectConstResult::GetValueType() const
     return eValueTypeConstResult;
 }
 
-size_t
+uint64_t
 ValueObjectConstResult::GetByteSize()
 {
     if (m_byte_size == 0)

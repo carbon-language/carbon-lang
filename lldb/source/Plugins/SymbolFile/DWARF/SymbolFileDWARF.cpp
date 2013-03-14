@@ -5442,7 +5442,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             const char *type_name_cstr = NULL;
             ConstString type_name_const_str;
             Type::ResolveState resolve_state = Type::eResolveStateUnresolved;
-            size_t byte_size = 0;
+            uint64_t byte_size = 0;
             Declaration decl;
 
             Type::EncodingDataType encoding_data_type = Type::eEncodingIsUID;

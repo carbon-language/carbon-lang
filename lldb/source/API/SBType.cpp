@@ -136,7 +136,7 @@ SBType::IsValid() const
     return m_opaque_sp->IsValid();
 }
 
-size_t
+uint64_t
 SBType::GetByteSize()
 {
     if (!IsValid())

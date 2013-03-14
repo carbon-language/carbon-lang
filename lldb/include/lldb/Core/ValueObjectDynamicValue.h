@@ -29,7 +29,7 @@ public:
     virtual
     ~ValueObjectDynamicValue();
 
-    virtual size_t
+    virtual uint64_t
     GetByteSize();
 
     virtual ConstString

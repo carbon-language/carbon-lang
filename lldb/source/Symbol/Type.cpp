@@ -51,7 +51,7 @@ Type::Type
     lldb::user_id_t uid,
     SymbolFile* symbol_file,
     const ConstString &name,
-    uint32_t byte_size,
+    uint64_t byte_size,
     SymbolContextScope *context,
     user_id_t encoding_uid,
     EncodingDataType encoding_uid_type,
@@ -138,7 +138,7 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
 
     // Call the get byte size accesor so we resolve our byte size
     if (GetByteSize())
-        s->Printf(", byte-size = %u", m_byte_size);
+        s->Printf(", byte-size = %" PRIu64, m_byte_size);
     bool show_fullpaths = (level == lldb::eDescriptionLevelVerbose);
     m_decl.Dump(s, show_fullpaths);
 
@@ -178,7 +178,7 @@ Type::Dump (Stream *s, bool show_context)
         *s << ", name = \"" << m_name << "\"";
 
     if (m_byte_size != 0)
-        s->Printf(", size = %u", m_byte_size);
+        s->Printf(", size = %" PRIu64, m_byte_size);
 
     if (show_context && m_context != NULL)
     {
@@ -289,7 +289,7 @@ Type::GetEncodingType ()
     
 
 
-uint32_t
+uint64_t
 Type::GetByteSize()
 {
     if (m_byte_size == 0)
@@ -375,7 +375,7 @@ Type::GetFormat ()
 
 
 lldb::Encoding
-Type::GetEncoding (uint32_t &count)
+Type::GetEncoding (uint64_t &count)
 {
     // Make sure we resolve our type if it already hasn't been.
     if (!ResolveClangType(eResolveStateForward))
@@ -426,7 +426,7 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType 
         return false;
     }
 
-    const uint32_t byte_size = GetByteSize();
+    const uint64_t byte_size = GetByteSize();
     if (data.GetByteSize() < byte_size)
     {
         lldb::DataBufferSP data_sp(new DataBufferHeap (byte_size, '\0'));

@@ -707,7 +707,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     m_result_name = m_decl_map->GetPersistentResultName();
     
     if (log)
-        log->Printf("Creating a new result global: \"%s\" with size 0x%x", 
+        log->Printf("Creating a new result global: \"%s\" with size 0x%" PRIx64,
                     m_result_name.GetCString(),
                     m_result_type.GetClangTypeBitWidth() / 8);
         
@@ -1674,11 +1674,11 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
             value_type = global_variable->getType();
         }
                 
-        size_t value_size = (ast_context->getTypeSize(qual_type) + 7) / 8;
-        off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
+        uint64_t value_size = (ast_context->getTypeSize(qual_type) + 7ull) / 8ull;
+        off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7ull) / 8ull;
         
         if (log)
-            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %lu, align %" PRId64 "]",
+            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %" PRIu64 ", align %" PRId64 "]",
                         name.c_str(), 
                         qual_type.getAsString().c_str(), 
                         PrintType(value_type).c_str(), 

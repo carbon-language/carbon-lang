@@ -538,7 +538,7 @@ protected:
                 --pointer_count;
             }
 
-            m_format_options.GetByteSizeValue() = (clang_ast_type.GetClangTypeBitWidth () + 7) / 8;
+            m_format_options.GetByteSizeValue() = clang_ast_type.GetClangTypeByteSize();
             
             if (m_format_options.GetByteSizeValue() == 0)
             {
