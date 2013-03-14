@@ -1,4 +1,4 @@
-//===-- MipsSEISelLowering.h - MipsSE DAG Lowering Interface ----*- C++ -*-===//
+//===-- MipsSEISelLowering.cpp - MipsSE DAG Lowering Interface --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -105,10 +105,6 @@ isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
                                   unsigned NextStackOffset,
                                   const MipsFunctionInfo& FI) const {
   if (!EnableMipsTailCalls)
-    return false;
-
-  // No tail call optimization for mips16.
-  if (Subtarget->inMips16Mode())
     return false;
 
   // Return false if either the callee or caller has a byval argument.
