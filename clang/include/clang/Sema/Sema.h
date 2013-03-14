@@ -200,6 +200,8 @@ class Sema {
   ///\brief Whether Sema has generated a multiplexer and has to delete it.
   bool isMultiplexExternalSource;
 
+  static bool mightHaveNonExternalLinkage(const DeclaratorDecl *FD);
+
 public:
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
   typedef OpaquePtr<TemplateName> TemplateTy;

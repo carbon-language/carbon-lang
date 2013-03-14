@@ -2236,6 +2236,14 @@ static LinkageInfo computeLinkageInfo(QualType T) {
   return computeLinkageInfo(T.getTypePtr());
 }
 
+bool Type::isLinkageValid() const {
+  if (!TypeBits.isCacheValid())
+    return true;
+
+  return computeLinkageInfo(getCanonicalTypeInternal()).getLinkage() ==
+    TypeBits.getLinkage();
+}
+
 LinkageInfo Type::getLinkageAndVisibility() const {
   if (!isCanonicalUnqualified())
     return computeLinkageInfo(getCanonicalTypeInternal());
@@ -2243,12 +2251,6 @@ LinkageInfo Type::getLinkageAndVisibility() const {
   LinkageInfo LV = computeLinkageInfo(this);
   assert(LV.getLinkage() == getLinkage());
   return LV;
-}
-
-void Type::ClearLinkageCache() {
-  TypeBits.CacheValid = false;
-  if (QualType(this, 0) != CanonicalType)
-    CanonicalType->TypeBits.CacheValid = false;
 }
 
 Qualifiers::ObjCLifetime Type::getObjCARCImplicitLifetime() const {

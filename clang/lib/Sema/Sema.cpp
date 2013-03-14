@@ -332,6 +332,9 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
   if (D->getMostRecentDecl()->isUsed())
     return true;
 
+  if (D->hasExternalLinkage())
+    return true;
+
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // UnusedFileScopedDecls stores the first declaration.
     // The declaration may have become definition so check again.
@@ -359,9 +362,6 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
     if (DeclToCheck != VD)
       return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
   }
-
-  if (D->hasExternalLinkage())
-    return true;
 
   return false;
 }

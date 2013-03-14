@@ -10594,7 +10594,7 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
 
   // Keep track of used but undefined functions.
   if (!Func->isDefined()) {
-    if (Func->getLinkage() != ExternalLinkage)
+    if (mightHaveNonExternalLinkage(Func))
       UndefinedButUsed.insert(std::make_pair(Func->getCanonicalDecl(), Loc));
     else if (Func->getMostRecentDecl()->isInlined() &&
              (LangOpts.CPlusPlus || !LangOpts.GNUInline) &&

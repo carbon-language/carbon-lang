@@ -238,9 +238,9 @@ public:
   Optional<Visibility>
   getExplicitVisibility(ExplicitVisibilityKind kind) const;
 
-  /// \brief Clear the linkage cache in response to a change
-  /// to the declaration.
-  void ClearLinkageCache();
+  /// \brief True if the computed linkage is valid. Used for consistency
+  /// checking. Should always return true.
+  bool isLinkageValid() const;
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
@@ -822,9 +822,7 @@ public:
 
   /// \brief Determines whether this variable is a variable with
   /// external, C linkage.
-  bool isExternC() const {
-    return getLanguageLinkage() == CLanguageLinkage;
-  }
+  bool isExternC() const;
 
   /// isLocalVarDecl - Returns true for local variable declarations
   /// other than parameters.  Note that this includes static variables
@@ -1713,9 +1711,7 @@ public:
 
   /// \brief Determines whether this function is a function with
   /// external, C linkage.
-  bool isExternC() const {
-    return getLanguageLinkage() == CLanguageLinkage;
-  }
+  bool isExternC() const;
 
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;
@@ -3304,7 +3300,7 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
   // First one will point to this one as latest.
   First->RedeclLink = LatestDeclLink(static_cast<decl_type*>(this));
   if (NamedDecl *ND = dyn_cast<NamedDecl>(static_cast<decl_type*>(this)))
-    ND->ClearLinkageCache();
+    assert(ND->isLinkageValid());
 }
 
 // Inline function definitions.

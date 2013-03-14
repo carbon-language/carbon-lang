@@ -1174,6 +1174,31 @@ static bool IsDisallowedCopyOrAssign(const CXXMethodDecl *D) {
   return false;
 }
 
+// We need this to handle
+//
+// typedef struct {
+//   void *foo() { return 0; }
+// } A;
+//
+// When we see foo we don't know if after the typedef we will get 'A' or '*A'
+// for example. If 'A', foo will have external linkage. If we have '*A',
+// foo will have no linkage. Since we can't know untill we get to the end
+// of the typedef, this function finds out if D might have non external linkage.
+// Callers should verify at the end of the TU if it D has external linkage or
+// not.
+bool Sema::mightHaveNonExternalLinkage(const DeclaratorDecl *D) {
+  const DeclContext *DC = D->getDeclContext();
+  while (!DC->isTranslationUnit()) {
+    if (const RecordDecl *RD = dyn_cast<RecordDecl>(DC)){
+      if (!RD->hasNameForLinkage())
+        return true;
+    }
+    DC = DC->getParent();
+  }
+
+  return !D->hasExternalLinkage();
+}
+
 bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   assert(D);
 
@@ -1223,10 +1248,7 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   }
 
   // Only warn for unused decls internal to the translation unit.
-  if (D->hasExternalLinkage())
-    return false;
-
-  return true;
+  return mightHaveNonExternalLinkage(D);
 }
 
 void Sema::MarkUnusedFileScopedDecl(const DeclaratorDecl *D) {
@@ -2886,7 +2908,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return New->setInvalidDecl();
   }
   if (Old->hasExternalStorage() &&
-      !New->hasLinkage() && New->isLocalVarDecl()) {
+      New->isLocalVarDecl() && !New->hasLinkage()) {
     Diag(New->getLocation(), diag::err_non_extern_extern) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
@@ -4583,6 +4605,26 @@ static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
   }
 }
 
+static bool shouldConsiderLinkage(const VarDecl *VD) {
+  const DeclContext *DC = VD->getDeclContext()->getRedeclContext();
+  if (DC->isFunctionOrMethod())
+    return VD->hasExternalStorageAsWritten();
+  if (DC->isFileContext())
+    return true;
+  if (DC->isRecord())
+    return false;
+  llvm_unreachable("Unexpected context");
+}
+
+static bool shouldConsiderLinkage(const FunctionDecl *FD) {
+  const DeclContext *DC = FD->getDeclContext()->getRedeclContext();
+  if (DC->isFileContext() || DC->isFunctionOrMethod())
+    return true;
+  if (DC->isRecord())
+    return false;
+  llvm_unreachable("Unexpected context");
+}
+
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,
@@ -4861,7 +4903,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // Don't consider existing declarations that are in a different
   // scope and are out-of-semantic-context declarations (if the new
   // declaration has linkage).
-  FilterLookupForScope(Previous, DC, S, NewVD->hasLinkage(),
+  FilterLookupForScope(Previous, DC, S, shouldConsiderLinkage(NewVD),
                        isExplicitSpecialization);
   
   if (!getLangOpts().CPlusPlus) {
@@ -5004,8 +5046,28 @@ void Sema::CheckShadow(Scope *S, VarDecl *D) {
 
 template<typename T>
 static bool mayConflictWithNonVisibleExternC(const T *ND) {
-  return ND->isExternC() ||
-    ND->getDeclContext()->getRedeclContext()->isTranslationUnit();
+  const DeclContext *DC = ND->getDeclContext();
+  if (DC->getRedeclContext()->isTranslationUnit())
+    return true;
+
+  // We know that is the first decl we see, other than function local
+  // extern C ones. If this is C++ and the decl is not in a extern C context
+  // it cannot have C language linkage. Avoid calling isExternC in that case.
+  // We need to this because of code like
+  //
+  // namespace { struct bar {}; }
+  // auto foo = bar();
+  //
+  // This code runs before the init of foo is set, and therefore before
+  // the type of foo is known. Not knowing the type we cannot know its linkage
+  // unless it is in an extern C block.
+  if (!DC->isExternCContext()) {
+    const ASTContext &Context = ND->getASTContext();
+    if (Context.getLangOpts().CPlusPlus)
+      return false;
+  }
+
+  return ND->isExternC();
 }
 
 /// \brief Perform semantic checking on a newly-created variable
@@ -6003,7 +6065,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   }
 
   // Filter out previous declarations that don't match the scope.
-  FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
+  FilterLookupForScope(Previous, DC, S, shouldConsiderLinkage(NewFD),
                        isExplicitSpecialization ||
                        isFunctionTemplateSpecialization);
   
@@ -6390,7 +6452,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this function.
-  if (NewFD->hasExternalLinkage() && !DC->isRecord())
+  if (!DC->isRecord() && NewFD->hasExternalLinkage())
     AddPushedVisibilityAttribute(NewFD);
 
   // If there's a #pragma clang arc_cf_code_audited in scope, consider
@@ -7152,7 +7214,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     }
     VDecl->setTypeSourceInfo(DeducedType);
     VDecl->setType(DeducedType->getType());
-    VDecl->ClearLinkageCache();
+    assert(VDecl->isLinkageValid());
 
     // In ARC, infer lifetime.
     if (getLangOpts().ObjCAutoRefCount && inferObjCARCLifetime(VDecl))
@@ -7897,7 +7959,7 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   const DeclContext *DC = VD->getDeclContext();
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this variable.
-  if (VD->hasExternalLinkage() && !DC->isRecord())
+  if (!DC->isRecord() && VD->hasExternalLinkage())
     AddPushedVisibilityAttribute(VD);
 
   if (VD->isFileVarDecl())
