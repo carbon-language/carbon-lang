@@ -396,9 +396,10 @@ define i64 @PR14132(i1 %flag) {
 ; Here we form a PHI-node by promoting the pointer alloca first, and then in
 ; order to promote the other two allocas, we speculate the load of the
 ; now-phi-node-pointer. In doing so we end up loading a 64-bit value from an i8
-; alloca, which is completely bogus. However, we were asserting on trying to
-; rewrite it. Now it is replaced with undef. Eventually we may replace it with
-; unrechable and even the CFG will go away here.
+; alloca. While this is a bit dubious, we were asserting on trying to
+; rewrite it. The trick is that the code using the value may carefully take
+; steps to only use the not-undef bits, and so we need to at least loosely
+; support this..
 entry:
   %a = alloca i64
   %b = alloca i8
@@ -414,13 +415,14 @@ entry:
 if.then:
   store i8* %b, i8** %ptr.cast
   br label %if.end
+; CHECK-NOT: store
+; CHECK: %[[ext:.*]] = zext i8 1 to i64
 
 if.end:
   %tmp = load i64** %ptr
   %result = load i64* %tmp
-; CHECK-NOT: store
 ; CHECK-NOT: load
-; CHECK: %[[result:.*]] = phi i64 [ undef, %if.then ], [ 0, %entry ]
+; CHECK: %[[result:.*]] = phi i64 [ %[[ext]], %if.then ], [ 0, %entry ]
 
   ret i64 %result
 ; CHECK-NEXT: ret i64 %[[result]]

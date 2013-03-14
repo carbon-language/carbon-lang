@@ -500,14 +500,27 @@ entry:
 
 define i64 @test9() {
 ; Ensure we can handle loads off the end of an alloca even when wrapped in
-; weird bit casts and types. The result is undef, but this shouldn't crash
-; anything.
+; weird bit casts and types. This is valid IR due to the alignment and masking
+; off the bits past the end of the alloca.
+;
 ; CHECK: @test9
 ; CHECK-NOT: alloca
-; CHECK: ret i64 undef
+; CHECK:      %[[b2:.*]] = zext i8 26 to i64
+; CHECK-NEXT: %[[s2:.*]] = shl i64 %[[b2]], 16
+; CHECK-NEXT: %[[m2:.*]] = and i64 undef, -16711681
+; CHECK-NEXT: %[[i2:.*]] = or i64 %[[m2]], %[[s2]]
+; CHECK-NEXT: %[[b1:.*]] = zext i8 0 to i64
+; CHECK-NEXT: %[[s1:.*]] = shl i64 %[[b1]], 8
+; CHECK-NEXT: %[[m1:.*]] = and i64 %[[i2]], -65281
+; CHECK-NEXT: %[[i1:.*]] = or i64 %[[m1]], %[[s1]]
+; CHECK-NEXT: %[[b0:.*]] = zext i8 0 to i64
+; CHECK-NEXT: %[[m0:.*]] = and i64 %[[i1]], -256
+; CHECK-NEXT: %[[i0:.*]] = or i64 %[[m0]], %[[b0]]
+; CHECK-NEXT: %[[result:.*]] = and i64 %[[i0]], 16777215
+; CHECK-NEXT: ret i64 %[[result]]
 
 entry:
-  %a = alloca { [3 x i8] }
+  %a = alloca { [3 x i8] }, align 8
   %gep1 = getelementptr inbounds { [3 x i8] }* %a, i32 0, i32 0, i32 0
   store i8 0, i8* %gep1, align 1
   %gep2 = getelementptr inbounds { [3 x i8] }* %a, i32 0, i32 0, i32 1
@@ -516,7 +529,8 @@ entry:
   store i8 26, i8* %gep3, align 1
   %cast = bitcast { [3 x i8] }* %a to { i64 }*
   %elt = getelementptr inbounds { i64 }* %cast, i32 0, i32 0
-  %result = load i64* %elt
+  %load = load i64* %elt
+  %result = and i64 %load, 16777215
   ret i64 %result
 }
 
@@ -617,11 +631,12 @@ define i32 @test13() {
 ; Ensure we don't crash and handle undefined loads that straddle the end of the
 ; allocation.
 ; CHECK: @test13
-; CHECK: %[[ret:.*]] = zext i16 undef to i32
-; CHECK: ret i32 %[[ret]]
+; CHECK:      %[[value:.*]] = zext i8 0 to i16
+; CHECK-NEXT: %[[ret:.*]] = zext i16 %[[value]] to i32
+; CHECK-NEXT: ret i32 %[[ret]]
 
 entry:
-  %a = alloca [3 x i8]
+  %a = alloca [3 x i8], align 2
   %b0ptr = getelementptr [3 x i8]* %a, i64 0, i32 0
   store i8 0, i8* %b0ptr
   %b1ptr = getelementptr [3 x i8]* %a, i64 0, i32 1
@@ -1160,20 +1175,25 @@ define void @PR14548(i1 %x) {
 entry:
   %a = alloca <{ i1 }>, align 8
   %b = alloca <{ i1 }>, align 8
-; Nothing of interest is simplified here.
-; CHECK: alloca
-; CHECK: alloca
+; CHECK:      %[[a:.*]] = alloca i8, align 8
 
   %b.i1 = bitcast <{ i1 }>* %b to i1*
   store i1 %x, i1* %b.i1, align 8
   %b.i8 = bitcast <{ i1 }>* %b to i8*
   %foo = load i8* %b.i8, align 1
+; CHECK-NEXT: {{.*}} = zext i1 %x to i8
+; CHECK-NEXT: %[[ext:.*]] = zext i1 %x to i8
+; CHECK-NEXT: store i8 %[[ext]], i8* %[[a]], align 8
+; CHECK-NEXT: {{.*}} = load i8* %[[a]], align 8
 
   %a.i8 = bitcast <{ i1 }>* %a to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.i8, i8* %b.i8, i32 1, i32 1, i1 false) nounwind
   %bar = load i8* %a.i8, align 1
   %a.i1 = getelementptr inbounds <{ i1 }>* %a, i32 0, i32 0
   %baz = load i1* %a.i1, align 1
+; CHECK-NEXT: %[[a_cast:.*]] = bitcast i8* %[[a]] to i1*
+; CHECK-NEXT: {{.*}} = load i1* %[[a_cast]], align 8
+
   ret void
 }
 
