@@ -1093,7 +1093,7 @@ class TemplateDiff {
     Expr::EvalResult FromResult, ToResult;
     if (!FromExpr->EvaluateAsRValue(FromResult, Context) ||
         !ToExpr->EvaluateAsRValue(ToResult, Context))
-      assert(0 && "Template arguments must be known at compile time.");
+      return false;
 
     APValue &FromVal = FromResult.Val;
     APValue &ToVal = ToResult.Val;
