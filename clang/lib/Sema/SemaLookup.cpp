@@ -3734,6 +3734,16 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (!ActiveTemplateInstantiations.empty())
     return TypoCorrection();
 
+  // Don't try to correct 'super'.
+  if (S && S->isInObjcMethodScope() && Typo == getSuperIdentifier())
+    return TypoCorrection();
+
+  // This is for regression testing. It's disabled by default.
+  if (Diags.getDiagnosticLevel(diag::warn_spellcheck_initiated,
+                               TypoName.getLoc()) != DiagnosticsEngine::Ignored)
+    Diag(TypoName.getLoc(), diag::warn_spellcheck_initiated)
+      << TypoName.getName();
+
   NamespaceSpecifierSet Namespaces(Context, CurContext, SS);
 
   TypoCorrectionConsumer Consumer(*this, Typo);

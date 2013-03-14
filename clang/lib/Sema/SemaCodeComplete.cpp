@@ -5315,7 +5315,7 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
   } else {
     // "super" may be the name of a type or variable. Figure out which
     // it is.
-    IdentifierInfo *Super = &Context.Idents.get("super");
+    IdentifierInfo *Super = getSuperIdentifier();
     NamedDecl *ND = LookupSingleName(S, Super, SuperLoc, 
                                      LookupOrdinaryName);
     if ((CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(ND))) {

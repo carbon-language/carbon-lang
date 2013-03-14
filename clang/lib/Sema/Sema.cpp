@@ -90,7 +90,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     AccessCheckingSFINAE(false), InNonInstantiationSFINAEContext(false),
     NonInstantiationEntries(0), ArgumentPackSubstitutionIndex(-1),
     CurrentInstantiationScope(0), TyposCorrected(0),
-    AnalysisWarnings(*this)
+    AnalysisWarnings(*this), Ident_super(0)
 {
   TUScope = 0;
 
@@ -1301,4 +1301,10 @@ bool Sema::tryToRecoverWithCall(ExprResult &E, const PartialDiagnostic &PD,
   notePlausibleOverloads(*this, Loc, Overloads, IsPlausibleResult);
   E = ExprError();
   return true;
+}
+
+IdentifierInfo *Sema::getSuperIdentifier() const {
+  if (!Ident_super)
+    Ident_super = &Context.Idents.get("super");
+  return Ident_super;
 }
