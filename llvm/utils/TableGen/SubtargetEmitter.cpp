@@ -656,6 +656,8 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
           PRDef->getValueAsDef("Super"), ProcModel);
         SuperIdx = ProcModel.getProcResourceIdx(SuperDef);
       }
+      NumUnits = PRDef->getValueAsInt("NumUnits");
+      IsBuffered = PRDef->getValueAsBit("Buffered");
     }
     // Emit the ProcResourceDesc
     if (i+1 == e)
@@ -881,7 +883,7 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
         }
       }
       if (Writes.empty()) {
-        DEBUG(dbgs() << ProcModel.ItinsDef->getName()
+        DEBUG(dbgs() << ProcModel.ModelName
               << " does not have resources for itinerary class "
               << SCI->ItinClassDef->getName() << '\n');
       }
