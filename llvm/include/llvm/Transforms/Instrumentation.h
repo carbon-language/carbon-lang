@@ -31,12 +31,32 @@ ModulePass *createOptimalEdgeProfilerPass();
 ModulePass *createPathProfilerPass();
 
 // Insert GCOV profiling instrumentation
-static const char DefaultGCovVersion[4] = {'*', '2', '0', '4'};
-ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
-                                   const char (&Version)[4] =DefaultGCovVersion,
-                                   bool UseExtraChecksum = false,
-                                   bool NoRedZone = false,
-                                   bool NoFunctionNamesInData = false);
+struct GCOVOptions {
+  static GCOVOptions getDefault();
+
+  // Specify whether to emit .gcno files.
+  bool EmitNotes;
+
+  // Specify whether to modify the program to emit .gcda files when run.
+  bool EmitData;
+
+  // A four-byte version string. The meaning of a version string is described in
+  // gcc's gcov-io.h
+  char Version[4];
+
+  // Emit a "cfg checksum" that follows the "line number checksum" of a
+  // function. This affects both .gcno and .gcda files.
+  bool UseCfgChecksum;
+
+  // Add the 'noredzone' attribute to added runtime library calls.
+  bool NoRedZone;
+
+  // Emit the name of the function in the .gcda files. This is redundant, as
+  // the function identifier can be used to find the name from the .gcno file.
+  bool FunctionNamesInData;
+};
+ModulePass *createGCOVProfilerPass(const GCOVOptions &Options =
+                                   GCOVOptions::getDefault());
 
 // Insert AddressSanitizer (address sanity checking) instrumentation
 FunctionPass *createAddressSanitizerFunctionPass(
@@ -53,7 +73,6 @@ FunctionPass *createMemorySanitizerPass(bool TrackOrigins = false,
 
 // Insert ThreadSanitizer (race detection) instrumentation
 FunctionPass *createThreadSanitizerPass(StringRef BlacklistFile = StringRef());
-
 
 // BoundsChecking - This pass instruments the code to perform run-time bounds
 // checking on loads, stores, and other memory intrinsics.

@@ -29,6 +29,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/InstIterator.h"
@@ -39,30 +40,52 @@
 #include <utility>
 using namespace llvm;
 
+static cl::opt<std::string>
+DefaultGCOVVersion("default-gcov-version", cl::init("402*"), cl::Hidden,
+                   cl::ValueRequired);
+
+GCOVOptions GCOVOptions::getDefault() {
+  GCOVOptions Options;
+  Options.EmitNotes = true;
+  Options.EmitData = true;
+  Options.UseCfgChecksum = false;
+  Options.NoRedZone = false;
+  Options.FunctionNamesInData = true;
+
+  if (DefaultGCOVVersion.size() != 4) {
+    llvm::report_fatal_error(std::string("Invalid -default-gcov-version: ") +
+                             DefaultGCOVVersion);
+  }
+  memcpy(Options.Version, DefaultGCOVVersion.c_str(), 4);
+  return Options;
+}
+
 namespace {
   class GCOVProfiler : public ModulePass {
   public:
     static char ID;
-    GCOVProfiler()
-        : ModulePass(ID), EmitNotes(true), EmitData(true),
-          UseExtraChecksum(false), NoRedZone(false),
-          NoFunctionNamesInData(false) {
-      memcpy(Version, DefaultGCovVersion, 4);
+    GCOVProfiler() : ModulePass(ID), Options(GCOVOptions::getDefault()) {
+      ReversedVersion[0] = Options.Version[3];
+      ReversedVersion[1] = Options.Version[2];
+      ReversedVersion[2] = Options.Version[1];
+      ReversedVersion[3] = Options.Version[0];
+      ReversedVersion[4] = '\0';
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
-    GCOVProfiler(bool EmitNotes, bool EmitData, const char (&Version)[4],
-                 bool UseExtraChecksum, bool NoRedZone,
-                 bool NoFunctionNamesInData)
-        : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData),
-          UseExtraChecksum(UseExtraChecksum), NoRedZone(NoRedZone),
-          NoFunctionNamesInData(NoFunctionNamesInData) {
-      memcpy(this->Version, Version, 4);
-      assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
+    GCOVProfiler(const GCOVOptions &Options) : ModulePass(ID), Options(Options){
+      assert((Options.EmitNotes || Options.EmitData) &&
+             "GCOVProfiler asked to do nothing?");
+      ReversedVersion[0] = Options.Version[3];
+      ReversedVersion[1] = Options.Version[2];
+      ReversedVersion[2] = Options.Version[1];
+      ReversedVersion[3] = Options.Version[0];
+      ReversedVersion[4] = '\0';
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
     virtual const char *getPassName() const {
       return "GCOV Profiler";
     }
+
   private:
     bool runOnModule(Module &M);
 
@@ -99,12 +122,10 @@ namespace {
 
     std::string mangleName(DICompileUnit CU, const char *NewStem);
 
-    bool EmitNotes;
-    bool EmitData;
-    char Version[4];  // This is stored in reverse order for direct emission.
-    bool UseExtraChecksum;
-    bool NoRedZone;
-    bool NoFunctionNamesInData;
+    GCOVOptions Options;
+
+    // Reversed, NUL-terminated copy of Options.Version.
+    char ReversedVersion[5];  
 
     Module *M;
     LLVMContext *Ctx;
@@ -115,13 +136,8 @@ char GCOVProfiler::ID = 0;
 INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
                 "Insert instrumentation for GCOV profiling", false, false)
 
-ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData,
-                                         const char (&Version)[4],
-                                         bool UseExtraChecksum,
-                                         bool NoRedZone,
-                                         bool NoFunctionNamesInData) {
-  return new GCOVProfiler(EmitNotes, EmitData, Version, UseExtraChecksum,
-                          NoRedZone, NoFunctionNamesInData);
+ModulePass *llvm::createGCOVProfilerPass(const GCOVOptions &Options) {
+  return new GCOVProfiler(Options);
 }
 
 namespace {
@@ -260,7 +276,7 @@ namespace {
   class GCOVFunction : public GCOVRecord {
    public:
     GCOVFunction(DISubprogram SP, raw_ostream *os, uint32_t Ident,
-                 bool UseExtraChecksum) {
+                 bool UseCfgChecksum) {
       this->os = os;
 
       Function *F = SP.getFunction();
@@ -274,12 +290,12 @@ namespace {
       writeBytes(FunctionTag, 4);
       uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
           1 + lengthOfGCOVString(SP.getFilename()) + 1;
-      if (UseExtraChecksum)
+      if (UseCfgChecksum)
         ++BlockLen;
       write(BlockLen);
       write(Ident);
       write(0);  // lineno checksum
-      if (UseExtraChecksum)
+      if (UseCfgChecksum)
         write(0);  // cfg checksum
       writeGCOVString(SP.getName());
       writeGCOVString(SP.getFilename());
@@ -363,8 +379,8 @@ bool GCOVProfiler::runOnModule(Module &M) {
   this->M = &M;
   Ctx = &M.getContext();
 
-  if (EmitNotes) emitProfileNotes();
-  if (EmitData) return emitProfileArcs();
+  if (Options.EmitNotes) emitProfileNotes();
+  if (Options.EmitData) return emitProfileArcs();
   return false;
 }
 
@@ -379,10 +395,11 @@ void GCOVProfiler::emitProfileNotes() {
 
     DICompileUnit CU(CU_Nodes->getOperand(i));
     std::string ErrorInfo;
+    outs() << "outputting gcno to: " << mangleName(CU, "gcno") << "\n";
     raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
                        raw_fd_ostream::F_Binary);
     out.write("oncg", 4);
-    out.write(Version, 4);
+    out.write(ReversedVersion, 4);
     out.write("MVLL", 4);
 
     DIArray SPs = CU.getSubprograms();
@@ -392,7 +409,7 @@ void GCOVProfiler::emitProfileNotes() {
 
       Function *F = SP.getFunction();
       if (!F) continue;
-      GCOVFunction Func(SP, &out, i, UseExtraChecksum);
+      GCOVFunction Func(SP, &out, i, Options.UseCfgChecksum);
 
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         GCOVBlock &Block = Func.getBlock(BB);
@@ -646,7 +663,7 @@ void GCOVProfiler::insertCounterWriteout(
                                  "__llvm_gcov_writeout", M);
   WriteoutF->setUnnamedAddr(true);
   WriteoutF->addFnAttr(Attribute::NoInline);
-  if (NoRedZone)
+  if (Options.NoRedZone)
     WriteoutF->addFnAttr(Attribute::NoRedZone);
 
   BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", WriteoutF);
@@ -664,15 +681,15 @@ void GCOVProfiler::insertCounterWriteout(
       std::string FilenameGcda = mangleName(CU, "gcda");
       Builder.CreateCall2(StartFile,
                           Builder.CreateGlobalStringPtr(FilenameGcda),
-                          Builder.CreateGlobalStringPtr(Version));
+                          Builder.CreateGlobalStringPtr(ReversedVersion));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         DISubprogram SP(CountersBySP[j].second);
         Builder.CreateCall3(EmitFunction,
                             Builder.getInt32(j),
-                            NoFunctionNamesInData ?
-                              Constant::getNullValue(Builder.getInt8PtrTy()) :
-                              Builder.CreateGlobalStringPtr(SP.getName()),
-                            Builder.getInt8(UseExtraChecksum));
+                            Options.FunctionNamesInData ?
+                              Builder.CreateGlobalStringPtr(SP.getName()) :
+                              Constant::getNullValue(Builder.getInt8PtrTy()),
+                            Builder.getInt8(Options.UseCfgChecksum));
 
         GlobalVariable *GV = CountersBySP[j].first;
         unsigned Arcs =
@@ -694,7 +711,7 @@ void GCOVProfiler::insertCounterWriteout(
   F->setUnnamedAddr(true);
   F->setLinkage(GlobalValue::InternalLinkage);
   F->addFnAttr(Attribute::NoInline);
-  if (NoRedZone)
+  if (Options.NoRedZone)
     F->addFnAttr(Attribute::NoRedZone);
 
   BB = BasicBlock::Create(*Ctx, "entry", F);
@@ -715,7 +732,7 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Fn->setUnnamedAddr(true);
   Fn->setLinkage(GlobalValue::InternalLinkage);
   Fn->addFnAttr(Attribute::NoInline);
-  if (NoRedZone)
+  if (Options.NoRedZone)
     Fn->addFnAttr(Attribute::NoRedZone);
 
   // Create basic blocks for function.
@@ -771,7 +788,7 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
     FlushF->setLinkage(GlobalValue::InternalLinkage);
   FlushF->setUnnamedAddr(true);
   FlushF->addFnAttr(Attribute::NoInline);
-  if (NoRedZone)
+  if (Options.NoRedZone)
     FlushF->addFnAttr(Attribute::NoRedZone);
 
   BasicBlock *Entry = BasicBlock::Create(*Ctx, "entry", FlushF);
