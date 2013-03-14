@@ -3299,8 +3299,8 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
 
   // First one will point to this one as latest.
   First->RedeclLink = LatestDeclLink(static_cast<decl_type*>(this));
-  if (NamedDecl *ND = dyn_cast<NamedDecl>(static_cast<decl_type*>(this)))
-    assert(ND->isLinkageValid());
+  assert(!isa<NamedDecl>(static_cast<decl_type*>(this)) ||
+         cast<NamedDecl>(static_cast<decl_type*>(this))->isLinkageValid());
 }
 
 // Inline function definitions.
