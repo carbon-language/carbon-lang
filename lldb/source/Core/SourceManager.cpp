@@ -67,8 +67,19 @@ SourceManager::~SourceManager()
 SourceManager::FileSP
 SourceManager::GetFile (const FileSpec &file_spec)
 {
+    bool same_as_previous = m_last_file_sp && m_last_file_sp->FileSpecMatches (file_spec);
+
     FileSP file_sp;
-    file_sp = m_debugger->GetSourceFileCache().FindSourceFile (file_spec);
+    if (same_as_previous)
+        file_sp = m_last_file_sp;
+    else
+        file_sp = m_debugger->GetSourceFileCache().FindSourceFile (file_spec);
+    
+    // It the target source path map has been updated, get this file again so we
+    // can successfully remap the source file
+    if (file_sp && file_sp->GetSourceMapModificationID() != m_target->GetSourcePathMap().GetModificationID())
+        file_sp.reset();
+
     // If file_sp is no good or it points to a non-existent file, reset it.
     if (!file_sp || !file_sp->GetFileSpec().Exists())
     {
@@ -159,10 +170,7 @@ SourceManager::DisplaySourceLinesWithLineNumbers
     const SymbolContextList *bp_locs
 )
 {
-    bool same_as_previous = m_last_file_sp && m_last_file_sp->FileSpecMatches (file_spec);
-
-    if (!same_as_previous)
-        m_last_file_sp = GetFile (file_spec);
+    FileSP file_sp (GetFile (file_spec));
 
     uint32_t start_line;
     uint32_t count = context_before + context_after + 1;
@@ -171,12 +179,12 @@ SourceManager::DisplaySourceLinesWithLineNumbers
     else
         start_line = 1;
     
-    if (line == 0)
+    if (m_last_file_sp.get() != file_sp.get())
     {
-        if (!same_as_previous)
+        if (line == 0)
             m_last_line = 0;
+        m_last_file_sp = file_sp;
     }
-
     return DisplaySourceLinesWithLineNumbersUsingLastFile (start_line, count, line, current_line_cstr, s, bp_locs);
 }
 
@@ -317,6 +325,7 @@ SourceManager::File::File(const FileSpec &file_spec, Target *target) :
     m_file_spec_orig (file_spec),
     m_file_spec(file_spec),
     m_mod_time (file_spec.GetModificationTime()),
+    m_source_map_mod_id (0),
     m_data_sp(),
     m_offsets()
 {
@@ -324,6 +333,8 @@ SourceManager::File::File(const FileSpec &file_spec, Target *target) :
     {
         if (target)
         {
+            m_source_map_mod_id = target->GetSourcePathMap().GetModificationID();
+
             if (!file_spec.GetDirectory() && file_spec.GetFilename())
             {
                 // If this is just a file name, lets see if we can find it in the target:
