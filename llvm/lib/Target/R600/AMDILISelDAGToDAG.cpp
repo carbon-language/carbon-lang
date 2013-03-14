@@ -365,17 +365,34 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
     SDValue Operand = Ops[OperandIdx[i] - 1];
     switch (Operand.getOpcode()) {
     case AMDGPUISD::CONST_ADDRESS: {
-      if (i == 2)
-        break;
       SDValue CstOffset;
-      if (!Operand.getValueType().isVector() &&
-          SelectGlobalValueConstantOffset(Operand.getOperand(0), CstOffset)) {
-        Ops[OperandIdx[i] - 1] = CurDAG->getRegister(AMDGPU::ALU_CONST, MVT::f32);
-        Ops[SelIdx[i] - 1] = CstOffset;
-        return true;
+      if (Operand.getValueType().isVector() ||
+          !SelectGlobalValueConstantOffset(Operand.getOperand(0), CstOffset))
+        break;
+
+      // Gather others constants values
+      std::vector<unsigned> Consts;
+      for (unsigned j = 0; j < 3; j++) {
+        int SrcIdx = OperandIdx[j];
+        if (SrcIdx < 0)
+          break;
+        if (RegisterSDNode *Reg = dyn_cast<RegisterSDNode>(Ops[SrcIdx - 1])) {
+          if (Reg->getReg() == AMDGPU::ALU_CONST) {
+            ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Ops[SelIdx[j] - 1]);
+            Consts.push_back(Cst->getZExtValue());
+          }
+        }
       }
+
+      ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(CstOffset);
+      Consts.push_back(Cst->getZExtValue());
+      if (!TII->fitsConstReadLimitations(Consts))
+        break;
+
+      Ops[OperandIdx[i] - 1] = CurDAG->getRegister(AMDGPU::ALU_CONST, MVT::f32);
+      Ops[SelIdx[i] - 1] = CstOffset;
+      return true;
       }
-      break;
     case ISD::FNEG:
       if (NegIdx[i] < 0)
         break;

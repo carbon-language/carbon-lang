@@ -53,6 +53,9 @@ namespace llvm {
   /// \returns true if this \p Opcode represents an ALU instruction.
   bool isALUInstr(unsigned Opcode) const;
 
+  bool fitsConstReadLimitations(const std::vector<unsigned>&) const;
+  bool canBundle(const std::vector<MachineInstr *> &) const;
+
   /// \breif Vector instructions are instructions that must fill all
   /// instruction slots within an instruction group.
   bool isVector(const MachineInstr &MI) const;

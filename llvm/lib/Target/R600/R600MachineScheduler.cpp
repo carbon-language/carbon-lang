@@ -37,7 +37,6 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   CurInstKind = IDOther;
   CurEmitted = 0;
   OccupedSlotsMask = 15;
-  memset(InstructionsGroupCandidate, 0, sizeof(InstructionsGroupCandidate));
   InstKindLimit[IDAlu] = 120; // 120 minus 8 for security
 
 
@@ -288,79 +287,19 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
   }
 }
 
-class ConstPairs {
-private:
-  unsigned XYPair;
-  unsigned ZWPair;
-public:
-  ConstPairs(unsigned ReadConst[3]) : XYPair(0), ZWPair(0) {
-    for (unsigned i = 0; i < 3; i++) {
-      unsigned ReadConstChan = ReadConst[i] & 3;
-      unsigned ReadConstIndex = ReadConst[i] & (~3);
-      if (ReadConstChan < 2) {
-        if (!XYPair) {
-          XYPair = ReadConstIndex;
-        }
-      } else {
-        if (!ZWPair) {
-          ZWPair = ReadConstIndex;
-        }
-      }
-    }
-  }
-
-  bool isCompatibleWith(const ConstPairs& CP) const {
-    return (!XYPair || !CP.XYPair || CP.XYPair == XYPair) &&
-        (!ZWPair || !CP.ZWPair || CP.ZWPair == ZWPair);
-  }
-};
-
-static
-const ConstPairs getPairs(const R600InstrInfo *TII, const MachineInstr& MI) {
-  unsigned ReadConsts[3] = {0, 0, 0};
-  R600Operands::Ops OpTable[3][2] = {
-    {R600Operands::SRC0, R600Operands::SRC0_SEL},
-    {R600Operands::SRC1, R600Operands::SRC1_SEL},
-    {R600Operands::SRC2, R600Operands::SRC2_SEL},
-  };
-
-  if (!TII->isALUInstr(MI.getOpcode()))
-    return ConstPairs(ReadConsts);
-
-  for (unsigned i = 0; i < 3; i++) {
-    int SrcIdx = TII->getOperandIdx(MI.getOpcode(), OpTable[i][0]);
-    if (SrcIdx < 0)
-      break;
-    if (MI.getOperand(SrcIdx).getReg() == AMDGPU::ALU_CONST)
-      ReadConsts[i] =MI.getOperand(
-          TII->getOperandIdx(MI.getOpcode(), OpTable[i][1])).getImm();
-  }
-  return ConstPairs(ReadConsts);
-}
-
-bool
-R600SchedStrategy::isBundleable(const MachineInstr& MI) {
-  const ConstPairs &MIPair = getPairs(TII, MI);
-  for (unsigned i = 0; i < 4; i++) {
-    if (!InstructionsGroupCandidate[i])
-      continue;
-    const ConstPairs &IGPair = getPairs(TII,
-        *InstructionsGroupCandidate[i]->getInstr());
-    if (!IGPair.isCompatibleWith(MIPair))
-      return false;
-  }
-  return true;
-}
-
 SUnit *R600SchedStrategy::PopInst(std::multiset<SUnit *, CompareSUnit> &Q) {
   if (Q.empty())
     return NULL;
   for (std::set<SUnit *, CompareSUnit>::iterator It = Q.begin(), E = Q.end();
       It != E; ++It) {
     SUnit *SU = *It;
-    if (isBundleable(*SU->getInstr())) {
+    InstructionsGroupCandidate.push_back(SU->getInstr());
+    if (TII->canBundle(InstructionsGroupCandidate)) {
+      InstructionsGroupCandidate.pop_back();
       Q.erase(It);
       return SU;
+    } else {
+      InstructionsGroupCandidate.pop_back();
     }
   }
   return NULL;
@@ -381,7 +320,7 @@ void R600SchedStrategy::PrepareNextSlot() {
   DEBUG(dbgs() << "New Slot\n");
   assert (OccupedSlotsMask && "Slot wasn't filled");
   OccupedSlotsMask = 0;
-  memset(InstructionsGroupCandidate, 0, sizeof(InstructionsGroupCandidate));
+  InstructionsGroupCandidate.clear();
   LoadAlu();
 }
 
@@ -462,7 +401,7 @@ SUnit* R600SchedStrategy::pickAlu() {
         SUnit *SU = AttemptFillSlot(Chan);
         if (SU) {
           OccupedSlotsMask |= (1 << Chan);
-          InstructionsGroupCandidate[Chan] = SU;
+          InstructionsGroupCandidate.push_back(SU->getInstr());
           return SU;
         }
       }

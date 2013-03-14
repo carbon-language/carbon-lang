@@ -98,7 +98,7 @@ public:
   virtual void releaseBottomNode(SUnit *SU);
 
 private:
-  SUnit *InstructionsGroupCandidate[4];
+  std::vector<MachineInstr *> InstructionsGroupCandidate;
 
   int getInstKind(SUnit *SU);
   bool regBelongsToClass(unsigned Reg, const TargetRegisterClass *RC) const;
@@ -112,7 +112,6 @@ private:
   void AssignSlot(MachineInstr *MI, unsigned Slot);
   SUnit* pickAlu();
   SUnit* pickOther(int QID);
-  bool isBundleable(const MachineInstr& MI);
   void MoveUnits(ReadyQueue *QSrc, ReadyQueue *QDst);
 };
 

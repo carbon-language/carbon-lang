@@ -139,6 +139,60 @@ bool R600InstrInfo::isALUInstr(unsigned Opcode) const {
           (TargetFlags & R600_InstFlag::OP3));
 }
 
+bool
+R600InstrInfo::fitsConstReadLimitations(const std::vector<unsigned> &Consts)
+    const {
+  assert (Consts.size() <= 12 && "Too many operands in instructions group");
+  unsigned Pair1 = 0, Pair2 = 0;
+  for (unsigned i = 0, n = Consts.size(); i < n; ++i) {
+    unsigned ReadConstHalf = Consts[i] & 2;
+    unsigned ReadConstIndex = Consts[i] & (~3);
+    unsigned ReadHalfConst = ReadConstIndex | ReadConstHalf;
+    if (!Pair1) {
+      Pair1 = ReadHalfConst;
+      continue;
+    }
+    if (Pair1 == ReadHalfConst)
+      continue;
+    if (!Pair2) {
+      Pair2 = ReadHalfConst;
+      continue;
+    }
+    if (Pair2 != ReadHalfConst)
+      return false;
+  }
+  return true;
+}
+
+bool
+R600InstrInfo::canBundle(const std::vector<MachineInstr *> &MIs) const {
+  std::vector<unsigned> Consts;
+  for (unsigned i = 0, n = MIs.size(); i < n; i++) {
+    const MachineInstr *MI = MIs[i];
+
+    const R600Operands::Ops OpTable[3][2] = {
+      {R600Operands::SRC0, R600Operands::SRC0_SEL},
+      {R600Operands::SRC1, R600Operands::SRC1_SEL},
+      {R600Operands::SRC2, R600Operands::SRC2_SEL},
+    };
+
+    if (!isALUInstr(MI->getOpcode()))
+      continue;
+
+    for (unsigned j = 0; j < 3; j++) {
+      int SrcIdx = getOperandIdx(MI->getOpcode(), OpTable[j][0]);
+      if (SrcIdx < 0)
+        break;
+      if (MI->getOperand(SrcIdx).getReg() == AMDGPU::ALU_CONST) {
+        unsigned Const = MI->getOperand(
+            getOperandIdx(MI->getOpcode(), OpTable[j][1])).getImm();
+        Consts.push_back(Const);
+      }
+    }
+  }
+  return fitsConstReadLimitations(Consts);
+}
+
 DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
     const ScheduleDAG *DAG) const {
   const InstrItineraryData *II = TM->getInstrItineraryData();
