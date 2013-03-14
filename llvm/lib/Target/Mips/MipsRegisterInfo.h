@@ -58,7 +58,8 @@ public:
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = NULL) const;
 
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                       RegScavenger *RS = NULL) const;
 
   /// Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;

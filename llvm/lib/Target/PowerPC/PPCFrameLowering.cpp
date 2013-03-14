@@ -841,8 +841,8 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     }
 }
 
-void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF)
-                                                                        const {
+void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                                         RegScavenger *) const {
   // Early exit if not using the SVR4 ABI.
   if (!Subtarget.isSVR4ABI())
     return;

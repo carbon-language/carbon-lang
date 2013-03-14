@@ -194,7 +194,8 @@ public:
   /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
   /// replaced with direct constants.  This method is optional.
   ///
-  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                               RegScavenger *RS = NULL) const {
   }
 
   /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog

@@ -122,7 +122,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 }
 
 void MBlazeRegisterInfo::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+processFunctionBeforeFrameFinalized(MachineFunction &MF, RegScavenger *) const {
   // Set the stack offset where GP must be saved/loaded from.
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
