@@ -21,26 +21,39 @@ define void @casts() {
     ; Vector values
   ; CHECK: cost of 1 {{.*}} select
   %v7 = select <2 x i1> undef, <2 x i8> undef, <2 x i8> undef
-  ; CHECK: cost of 1 {{.*}} select
+  ; CHECK: cost of 10 {{.*}} select
   %v8 = select <4 x i1>  undef, <4 x i8> undef, <4 x i8> undef
-  ; CHECK: cost of 1 {{.*}} select
+  ; CHECK: cost of 17 {{.*}} select
   %v9 = select <8 x i1>  undef, <8 x i8> undef, <8 x i8> undef
-  ; CHECK: cost of 1 {{.*}} select
+  ; CHECK: cost of 33 {{.*}} select
   %v10 = select <16 x i1>  undef, <16 x i8> undef, <16 x i8> undef
 
   ; CHECK: cost of 1 {{.*}} select
   %v11 = select <2 x i1> undef, <2 x i16> undef, <2 x i16> undef
-  ; CHECK: cost of 1 {{.*}} select
+  ; CHECK: cost of 9 {{.*}} select
   %v12 = select <4 x i1>  undef, <4 x i16> undef, <4 x i16> undef
-  ; CHECK: cost of 1 {{.*}} select
+  ; CHECK: cost of 17 {{.*}} select
   %v13 = select <8 x i1>  undef, <8 x i16> undef, <8 x i16> undef
+  ; CHECK: cost of 40 {{.*}} select
+  %v13b = select <16 x i1>  undef, <16 x i16> undef, <16 x i16> undef
 
   ; CHECK: cost of 1 {{.*}} select
   %v14 = select <2 x i1> undef, <2 x i32> undef, <2 x i32> undef
   ; CHECK: cost of 1 {{.*}} select
   %v15 = select <4 x i1>  undef, <4 x i32> undef, <4 x i32> undef
+  ; CHECK: cost of 41 {{.*}} select
+  %v15b = select <8 x i1>  undef, <8 x i32> undef, <8 x i32> undef
+  ; CHECK: cost of 82 {{.*}} select
+  %v15c = select <16 x i1>  undef, <16 x i32> undef, <16 x i32> undef
+
   ; CHECK: cost of 1 {{.*}} select
   %v16 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+  ; CHECK: cost of 19 {{.*}} select
+  %v16a = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+  ; CHECK: cost of 50 {{.*}} select
+  %v16b = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+  ; CHECK: cost of 100 {{.*}} select
+  %v16c = select <16 x i1> undef, <16 x i64> undef, <16 x i64> undef
 
   ; CHECK: cost of 1 {{.*}} select
   %v17 = select <2 x i1> undef, <2 x float> undef, <2 x float> undef

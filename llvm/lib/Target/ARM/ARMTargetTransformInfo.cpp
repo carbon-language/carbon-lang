@@ -334,6 +334,30 @@ unsigned ARMTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   // On NEON a a vector select gets lowered to vbsl.
   if (ST->hasNEON() && ValTy->isVectorTy() && ISD == ISD::SELECT) {
+    // Lowering of some vector selects is currently far from perfect.
+    static const TypeConversionCostTblEntry<MVT> NEONVectorSelectTbl[] = {
+      { ISD::SELECT, MVT::v4i1, MVT::v4i8, 2*4 + 2*1 },
+      { ISD::SELECT, MVT::v8i1, MVT::v8i8, 2*8 + 1 },
+      { ISD::SELECT, MVT::v16i1, MVT::v16i8, 2*16 + 1 },
+      { ISD::SELECT, MVT::v4i1, MVT::v4i16, 2*4 + 1 },
+      { ISD::SELECT, MVT::v8i1, MVT::v8i16, 2*8 + 1 },
+      { ISD::SELECT, MVT::v16i1, MVT::v16i16, 2*16 + 1 + 3*1 + 4*1 },
+      { ISD::SELECT, MVT::v8i1, MVT::v8i32, 4*8 + 1*3 + 1*4 + 1*2 },
+      { ISD::SELECT, MVT::v16i1, MVT::v16i32, 4*16 + 1*6 + 1*8 + 1*4 },
+      { ISD::SELECT, MVT::v4i1, MVT::v4i64, 4*4 + 1*2 + 1 },
+      { ISD::SELECT, MVT::v8i1, MVT::v8i64, 50 },
+      { ISD::SELECT, MVT::v16i1, MVT::v16i64, 100 }
+    };
+
+    EVT SelCondTy = TLI->getValueType(CondTy);
+    EVT SelValTy = TLI->getValueType(ValTy);
+    int Idx = ConvertCostTableLookup<MVT>(NEONVectorSelectTbl,
+                                          array_lengthof(NEONVectorSelectTbl),
+                                          ISD, SelCondTy.getSimpleVT(),
+                                          SelValTy.getSimpleVT());
+    if (Idx != -1)
+      return NEONVectorSelectTbl[Idx].Cost;
+
     std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(ValTy);
     return LT.first;
   }
