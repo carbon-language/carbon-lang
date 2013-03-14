@@ -6793,7 +6793,8 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // If this function is declared as being extern "C", then check to see if 
     // the function returns a UDT (class, struct, or union type) that is not C
     // compatible, and if it does, warn the user.
-    if (NewFD->isExternC()) {
+    // But, issue any diagnostic on the first declaration only.
+    if (NewFD->isExternC() && Previous.empty()) {
       QualType R = NewFD->getResultType();
       if (R->isIncompleteType() && !R->isVoidType())
         Diag(NewFD->getLocation(), diag::warn_return_value_udt_incomplete)

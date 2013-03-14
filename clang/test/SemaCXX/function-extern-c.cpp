@@ -49,7 +49,7 @@ namespace test2 {
   struct A {
     A(const A&);
   };
-  A f(void);  // expected-warning {{'f' has C-linkage specified, but returns user-defined type 'test2::A' which is incompatible with C}}
+  A f(void);  // no warning. warning is already issued on first declaration.
 }
 
 namespace test3 {
@@ -60,4 +60,39 @@ namespace test3 {
     // Don't warn for static functions.
     static A f(void);
   }
+}
+
+// rdar://13364028
+namespace rdar13364028 {
+class A {
+public:
+    virtual int x();
+};
+
+extern "C" {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+A xyzzy();
+#pragma clang diagnostic pop
+A bbb(); // expected-warning {{'bbb' has C-linkage specified, but returns user-defined type 'rdar13364028::A' which is incompatible with C}}
+A ccc() { // expected-warning {{'ccc' has C-linkage specified, but returns user-defined type 'rdar13364028::A' which is incompatible with C}}
+  return A();
+};
+}
+
+A xyzzy();
+
+A xyzzy()
+{
+  return A();
+}
+
+A bbb()
+{
+  return A();
+}
+
+A bbb();
+
+A ccc();
 }
