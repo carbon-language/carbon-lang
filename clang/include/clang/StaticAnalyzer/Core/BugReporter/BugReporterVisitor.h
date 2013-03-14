@@ -290,12 +290,12 @@ class SuppressInlineDefensiveChecksVisitor
   /// Track if we found the node where the constraint was first added.
   bool IsSatisfied;
 
-  /// \brief The node from which we should start tracking the value.
-  /// Note: Since the visitors can be registered on nodes previous to the last
+  /// Since the visitors can be registered on nodes previous to the last
   /// node in the BugReport, but the path traversal always starts with the last
   /// node, the visitor invariant (that we start with a node in which V is null)
-  /// might not hold when node visitation starts.
-  const ExplodedNode *StartN;
+  /// might not hold when node visitation starts. We are going to start tracking
+  /// from the last node in which the value is null.
+  bool IsTrackingTurnedOn;
 
 public:
   SuppressInlineDefensiveChecksVisitor(DefinedSVal Val, const ExplodedNode *N);
@@ -305,10 +305,6 @@ public:
   /// Return the tag associated with this visitor.  This tag will be used
   /// to make all PathDiagnosticPieces created by this visitor.
   static const char *getTag();
-
-  PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                  const ExplodedNode *N,
-                                  BugReport &BR);
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *Succ,
                                  const ExplodedNode *Pred,

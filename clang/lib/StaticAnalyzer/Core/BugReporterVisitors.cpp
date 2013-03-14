@@ -700,30 +700,19 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
 
 SuppressInlineDefensiveChecksVisitor::
 SuppressInlineDefensiveChecksVisitor(DefinedSVal Value, const ExplodedNode *N)
-  : V(Value), IsSatisfied(false), StartN(N) {
-
-  assert(N->getState()->isNull(V).isConstrainedTrue() &&
-         "The visitor only tracks the cases where V is constrained to 0");
+  : V(Value), IsSatisfied(false), IsTrackingTurnedOn(false) {
+    assert(N->getState()->isNull(V).isConstrainedTrue() &&
+           "The visitor only tracks the cases where V is constrained to 0");
 }
 
 void SuppressInlineDefensiveChecksVisitor::Profile(FoldingSetNodeID &ID) const {
   static int id = 0;
   ID.AddPointer(&id);
-  ID.AddPointer(StartN);
   ID.Add(V);
 }
 
 const char *SuppressInlineDefensiveChecksVisitor::getTag() {
   return "IDCVisitor";
-}
-
-PathDiagnosticPiece *
-SuppressInlineDefensiveChecksVisitor::getEndPath(BugReporterContext &BRC,
-                                                 const ExplodedNode *N,
-                                                 BugReport &BR) {
-  if (StartN == BR.getErrorNode())
-    StartN = 0;
-  return 0;
 }
 
 PathDiagnosticPiece *
@@ -733,17 +722,18 @@ SuppressInlineDefensiveChecksVisitor::VisitNode(const ExplodedNode *Succ,
                                                 BugReport &BR) {
   if (IsSatisfied)
     return 0;
-
-  // Start tracking after we see node StartN.
-  if (StartN == Succ)
-    StartN = 0;
-  if (StartN)
-    return 0;
-
   AnalyzerOptions &Options =
-    BRC.getBugReporter().getEngine().getAnalysisManager().options;
+  BRC.getBugReporter().getEngine().getAnalysisManager().options;
   if (!Options.shouldSuppressInlinedDefensiveChecks())
     return 0;
+
+  // Start tracking after we see the first state in which the value is null.
+  if (!IsTrackingTurnedOn)
+    if (Succ->getState()->isNull(V).isConstrainedTrue())
+      IsTrackingTurnedOn = true;
+  if (!IsTrackingTurnedOn)
+    return 0;
+
 
   // Check if in the previous state it was feasible for this value
   // to *not* be null.
@@ -899,10 +889,10 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *ErrorNode,
         report.addVisitor(ConstraintTracker);
 
         // Add visitor, which will suppress inline defensive checks.
-        if (ErrorNode->getState()->isNull(V).isConstrainedTrue()) {
+        if (N->getState()->isNull(V).isConstrainedTrue()) {
           BugReporterVisitor *IDCSuppressor =
             new SuppressInlineDefensiveChecksVisitor(V.castAs<DefinedSVal>(),
-                                                     ErrorNode);
+                                                     N);
           report.addVisitor(IDCSuppressor);
         }
       }
