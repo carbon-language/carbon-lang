@@ -18,6 +18,10 @@ def sub_lo     : SubRegIndex;
 def sub_hi     : SubRegIndex;
 }
 
+class Unallocatable {
+  bit isAllocatable = 0;
+}
+
 // We have banks of 32 registers each.
 class MipsReg<bits<16> Enc, string n> : Register<n> {
   let HWEncoding = Enc;
@@ -291,9 +295,9 @@ def CPU16Regs : RegisterClass<"Mips", [i32], 32, (add
   // Callee save
   S0, S1)>;
 
-def CPURAReg : RegisterClass<"Mips", [i32], 32, (add RA)>;
+def CPURAReg : RegisterClass<"Mips", [i32], 32, (add RA)>, Unallocatable;
 
-def CPUSPReg : RegisterClass<"Mips", [i32], 32, (add SP)>;
+def CPUSPReg : RegisterClass<"Mips", [i32], 32, (add SP)>, Unallocatable;
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
@@ -319,18 +323,19 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
 def FGR64 : RegisterClass<"Mips", [f64], 64, (sequence "D%u_64", 0, 31)>;
 
 // Condition Register for floating point operations
-def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31,FCC0)>;
+def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31,FCC0)>, Unallocatable;
 
 // Hi/Lo Registers
-def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>;
-def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)>;
+def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>, Unallocatable;
+def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)>, Unallocatable;
 
 // Hardware registers
-def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>;
-def HWRegs64 : RegisterClass<"Mips", [i64], 32, (add HWR29_64)>;
+def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;
+def HWRegs64 : RegisterClass<"Mips", [i64], 64, (add HWR29_64)>, Unallocatable;
 
 // Accumulator Registers
-def ACRegs : RegisterClass<"Mips", [i64], 64, (sequence "AC%u", 0, 3)>;
+def ACRegs : RegisterClass<"Mips", [i64], 64, (sequence "AC%u", 0, 3)>,
+             Unallocatable;
 
 def CPURegsAsmOperand : AsmOperandClass {
   let Name = "CPURegsAsm";
