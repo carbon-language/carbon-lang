@@ -18,6 +18,7 @@ set(SANITIZER_SOURCES
   sanitizer_symbolizer_linux.cc
   sanitizer_symbolizer_mac.cc
   sanitizer_symbolizer_win.cc
+  sanitizer_thread_registry.cc
   sanitizer_win.cc
   )
 
@@ -47,6 +48,7 @@ set(SANITIZER_HEADERS
   sanitizer_stackdepot.h
   sanitizer_stacktrace.h
   sanitizer_symbolizer.h
+  sanitizer_thread_registry.h
   )
 
 set(SANITIZER_CFLAGS

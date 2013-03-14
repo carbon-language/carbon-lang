@@ -13,6 +13,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_stackdepot_test.cc
   sanitizer_stacktrace_test.cc
   sanitizer_test_main.cc
+  sanitizer_thread_registry_test.cc
   )
 
 set(SANITIZER_TEST_HEADERS)
