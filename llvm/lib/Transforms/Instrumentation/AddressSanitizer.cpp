@@ -244,7 +244,7 @@ static size_t RedzoneSizeForScale(int MappingScale) {
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public FunctionPass {
-  AddressSanitizer(bool CheckInitOrder = false,
+  AddressSanitizer(bool CheckInitOrder = true,
                    bool CheckUseAfterReturn = false,
                    bool CheckLifetime = false,
                    StringRef BlacklistFile = StringRef(),
@@ -315,7 +315,7 @@ struct AddressSanitizer : public FunctionPass {
 
 class AddressSanitizerModule : public ModulePass {
  public:
-  AddressSanitizerModule(bool CheckInitOrder = false,
+  AddressSanitizerModule(bool CheckInitOrder = true,
                          StringRef BlacklistFile = StringRef(),
                          bool ZeroBaseShadow = false)
       : ModulePass(ID),
