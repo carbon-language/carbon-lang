@@ -1038,58 +1038,6 @@ static unsigned GetFunctionSizeInBytes(const MachineFunction &MF,
   return FnSize;
 }
 
-/// estimateStackSize - Estimate and return the size of the frame.
-/// FIXME: Make generic?
-static unsigned estimateStackSize(MachineFunction &MF) {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
-  unsigned MaxAlign = MFI->getMaxAlignment();
-  int Offset = 0;
-
-  // This code is very, very similar to PEI::calculateFrameObjectOffsets().
-  // It really should be refactored to share code. Until then, changes
-  // should keep in mind that there's tight coupling between the two.
-
-  for (int i = MFI->getObjectIndexBegin(); i != 0; ++i) {
-    int FixedOff = -MFI->getObjectOffset(i);
-    if (FixedOff > Offset) Offset = FixedOff;
-  }
-  for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
-    if (MFI->isDeadObjectIndex(i))
-      continue;
-    Offset += MFI->getObjectSize(i);
-    unsigned Align = MFI->getObjectAlignment(i);
-    // Adjust to alignment boundary
-    Offset = (Offset+Align-1)/Align*Align;
-
-    MaxAlign = std::max(Align, MaxAlign);
-  }
-
-  if (MFI->adjustsStack() && TFI->hasReservedCallFrame(MF))
-    Offset += MFI->getMaxCallFrameSize();
-
-  // Round up the size to a multiple of the alignment.  If the function has
-  // any calls or alloca's, align to the target's StackAlignment value to
-  // ensure that the callee's frame or the alloca data is suitably aligned;
-  // otherwise, for leaf functions, align to the TransientStackAlignment
-  // value.
-  unsigned StackAlign;
-  if (MFI->adjustsStack() || MFI->hasVarSizedObjects() ||
-      (RegInfo->needsStackRealignment(MF) && MFI->getObjectIndexEnd() != 0))
-    StackAlign = TFI->getStackAlignment();
-  else
-    StackAlign = TFI->getTransientStackAlignment();
-
-  // If the frame pointer is eliminated, all frame offsets will be relative to
-  // SP not FP. Align to MaxAlign so this works.
-  StackAlign = std::max(StackAlign, MaxAlign);
-  unsigned AlignMask = StackAlign - 1;
-  Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
-
-  return (unsigned)Offset;
-}
-
 /// estimateRSStackSizeLimit - Look at each instruction that references stack
 /// frames and return the stack size limit beyond which some of these
 /// instructions will require a scratch register during their expansion later.
@@ -1235,7 +1183,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // we've used all the registers and so R4 is already used, so not marking
     // it here will be OK.
     // FIXME: It will be better just to find spare register here.
-    unsigned StackSize = estimateStackSize(MF);
+    unsigned StackSize = MFI->estimateStackSize(MF);
     if (MFI->hasVarSizedObjects() || StackSize > 508)
       MRI.setPhysRegUsed(ARM::R4);
   }
@@ -1330,7 +1278,8 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //        worth the effort and added fragility?
   bool BigStack =
     (RS &&
-     (estimateStackSize(MF) + ((hasFP(MF) && AFI->hasStackFrame()) ? 4:0) >=
+     (MFI->estimateStackSize(MF) +
+      ((hasFP(MF) && AFI->hasStackFrame()) ? 4:0) >=
       estimateRSStackSizeLimit(MF, this)))
     || MFI->hasVarSizedObjects()
     || (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));

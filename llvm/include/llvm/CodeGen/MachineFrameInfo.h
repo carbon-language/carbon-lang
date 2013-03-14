@@ -419,6 +419,9 @@ public:
   ///
   void setStackSize(uint64_t Size) { StackSize = Size; }
 
+  /// Estimate and return the size of the stack frame.
+  unsigned estimateStackSize(const MachineFunction &MF) const;
+
   /// getOffsetAdjustment - Return the correction for frame offsets.
   ///
   int getOffsetAdjustment() const { return OffsetAdjustment; }

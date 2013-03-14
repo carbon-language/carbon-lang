@@ -349,59 +349,6 @@ AArch64FrameLowering::resolveFrameIndexReference(MachineFunction &MF,
   return TopOfFrameOffset - FrameRegPos;
 }
 
-/// Estimate and return the size of the frame.
-static unsigned estimateStackSize(MachineFunction &MF) {
-  // FIXME: Make generic? Really consider after upstreaming.  This code is now
-  // shared between PEI, ARM *and* here.
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
-  unsigned MaxAlign = MFI->getMaxAlignment();
-  int Offset = 0;
-
-  // This code is very, very similar to PEI::calculateFrameObjectOffsets().
-  // It really should be refactored to share code. Until then, changes
-  // should keep in mind that there's tight coupling between the two.
-
-  for (int i = MFI->getObjectIndexBegin(); i != 0; ++i) {
-    int FixedOff = -MFI->getObjectOffset(i);
-    if (FixedOff > Offset) Offset = FixedOff;
-  }
-  for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
-    if (MFI->isDeadObjectIndex(i))
-      continue;
-    Offset += MFI->getObjectSize(i);
-    unsigned Align = MFI->getObjectAlignment(i);
-    // Adjust to alignment boundary
-    Offset = (Offset+Align-1)/Align*Align;
-
-    MaxAlign = std::max(Align, MaxAlign);
-  }
-
-  if (MFI->adjustsStack() && TFI->hasReservedCallFrame(MF))
-    Offset += MFI->getMaxCallFrameSize();
-
-  // Round up the size to a multiple of the alignment.  If the function has
-  // any calls or alloca's, align to the target's StackAlignment value to
-  // ensure that the callee's frame or the alloca data is suitably aligned;
-  // otherwise, for leaf functions, align to the TransientStackAlignment
-  // value.
-  unsigned StackAlign;
-  if (MFI->adjustsStack() || MFI->hasVarSizedObjects() ||
-      (RegInfo->needsStackRealignment(MF) && MFI->getObjectIndexEnd() != 0))
-    StackAlign = TFI->getStackAlignment();
-  else
-    StackAlign = TFI->getTransientStackAlignment();
-
-  // If the frame pointer is eliminated, all frame offsets will be relative to
-  // SP not FP. Align to MaxAlign so this works.
-  StackAlign = std::max(StackAlign, MaxAlign);
-  unsigned AlignMask = StackAlign - 1;
-  Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
-
-  return (unsigned)Offset;
-}
-
 void
 AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                        RegScavenger *RS) const {
@@ -422,7 +369,7 @@ AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // callee-save register for this purpose or allocate an extra spill slot.
 
   bool BigStack =
-    (RS && estimateStackSize(MF) >= TII.estimateRSStackLimit(MF))
+    (RS && MFI->estimateStackSize(MF) >= TII.estimateRSStackLimit(MF))
     || MFI->hasVarSizedObjects() // Access will be from X29: messes things up
     || (MFI->adjustsStack() && !hasReservedCallFrame(MF));
 

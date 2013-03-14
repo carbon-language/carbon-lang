@@ -574,6 +574,54 @@ MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
   return BV;
 }
 
+unsigned MachineFrameInfo::estimateStackSize(const MachineFunction &MF) const {
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
+  unsigned MaxAlign = getMaxAlignment();
+  int Offset = 0;
+
+  // This code is very, very similar to PEI::calculateFrameObjectOffsets().
+  // It really should be refactored to share code. Until then, changes
+  // should keep in mind that there's tight coupling between the two.
+
+  for (int i = getObjectIndexBegin(); i != 0; ++i) {
+    int FixedOff = -getObjectOffset(i);
+    if (FixedOff > Offset) Offset = FixedOff;
+  }
+  for (unsigned i = 0, e = getObjectIndexEnd(); i != e; ++i) {
+    if (isDeadObjectIndex(i))
+      continue;
+    Offset += getObjectSize(i);
+    unsigned Align = getObjectAlignment(i);
+    // Adjust to alignment boundary
+    Offset = (Offset+Align-1)/Align*Align;
+
+    MaxAlign = std::max(Align, MaxAlign);
+  }
+
+  if (adjustsStack() && TFI->hasReservedCallFrame(MF))
+    Offset += getMaxCallFrameSize();
+
+  // Round up the size to a multiple of the alignment.  If the function has
+  // any calls or alloca's, align to the target's StackAlignment value to
+  // ensure that the callee's frame or the alloca data is suitably aligned;
+  // otherwise, for leaf functions, align to the TransientStackAlignment
+  // value.
+  unsigned StackAlign;
+  if (adjustsStack() || hasVarSizedObjects() ||
+      (RegInfo->needsStackRealignment(MF) && getObjectIndexEnd() != 0))
+    StackAlign = TFI->getStackAlignment();
+  else
+    StackAlign = TFI->getTransientStackAlignment();
+
+  // If the frame pointer is eliminated, all frame offsets will be relative to
+  // SP not FP. Align to MaxAlign so this works.
+  StackAlign = std::max(StackAlign, MaxAlign);
+  unsigned AlignMask = StackAlign - 1;
+  Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
+
+  return (unsigned)Offset;
+}
 
 void MachineFrameInfo::print(const MachineFunction &MF, raw_ostream &OS) const{
   if (Objects.empty()) return;
