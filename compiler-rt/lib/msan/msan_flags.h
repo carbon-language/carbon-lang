@@ -26,6 +26,10 @@ struct Flags {
   bool poison_in_malloc;  // default: true
   bool report_umrs;
   const char *strip_path_prefix;
+  // Use fast (frame-pointer-based) unwinder on fatal errors (if available).
+  bool fast_unwind_on_fatal;
+  // Use fast (frame-pointer-based) unwinder on malloc/free (if available).
+  bool fast_unwind_on_malloc;
 };
 
 Flags *flags();

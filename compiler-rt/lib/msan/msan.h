@@ -79,7 +79,7 @@ void UnpoisonMappedDSO(struct link_map *map);
   if (__msan_get_track_origins() && msan_inited)                   \
     GetStackTrace(&stack, flags()->num_callers,                    \
         StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(),           \
-        /* fast */ true)
+        flags()->fast_unwind_on_malloc)
 
 }  // namespace __msan
 

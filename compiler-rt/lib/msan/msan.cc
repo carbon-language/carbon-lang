@@ -127,6 +127,8 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->verbosity, "verbosity");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
+  ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
+  ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -140,6 +142,8 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->report_umrs = true;
   f->verbosity = 0;
   f->strip_path_prefix = "";
+  f->fast_unwind_on_fatal = false;
+  f->fast_unwind_on_malloc = true;
 
   // Override from user-specified string.
   if (__msan_default_options)
@@ -195,7 +199,7 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
   ++msan_report_count;
 
   StackTrace stack;
-  GetStackTrace(&stack, kStackTraceMax, pc, bp, /*fast*/false);
+  GetStackTrace(&stack, kStackTraceMax, pc, bp, flags()->fast_unwind_on_fatal);
 
   u32 report_origin =
     (__msan_track_origins && OriginIsValid(origin)) ? origin : 0;
@@ -294,7 +298,8 @@ void __msan_set_expect_umr(int expect_umr) {
     GET_CALLER_PC_BP_SP;
     (void)sp;
     StackTrace stack;
-    GetStackTrace(&stack, kStackTraceMax, pc, bp, /*fast*/false);
+    GetStackTrace(&stack, kStackTraceMax, pc, bp,
+                  flags()->fast_unwind_on_fatal);
     ReportExpectedUMRNotFound(&stack);
     Die();
   }
