@@ -15,7 +15,7 @@ define void @test() {
 !llvm.gcov = !{!9}
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{metadata !"%s/version", metadata !1}
+!0 = metadata !{metadata !"./version", metadata !1}
 !1 = metadata !{i32 786449, i32 0, i32 4, metadata !2, metadata !"clang version 3.3 (trunk 176994)", i1 false, metadata !"", i32 0, metadata !3, metadata !3, metadata !4, metadata !3, metadata !""} ; [ DW_TAG_compile_unit ] [./version] [DW_LANG_C_plus_plus]
 !2 = metadata !{i32 786473, metadata !"version", metadata !"/usr/local/google/home/nlewycky"} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 0}
