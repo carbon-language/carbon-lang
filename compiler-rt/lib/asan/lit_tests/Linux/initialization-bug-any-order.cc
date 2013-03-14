@@ -2,12 +2,10 @@
 // Check that on Linux initialization order bugs are caught
 // independently on order in which we list source files.
 
-// RUN: %clangxx_asan -m64 -O0 %s %p/../Helpers/initialization-bug-extra.cc\
-// RUN:   -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m64 -O0 %s %p/../Helpers/initialization-bug-extra.cc -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -m64 -O0 %p/../Helpers/initialization-bug-extra.cc %s\
-// RUN:   -fsanitize=init-order -o %t
+// RUN: %clangxx_asan -m64 -O0 %p/../Helpers/initialization-bug-extra.cc %s -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
 
