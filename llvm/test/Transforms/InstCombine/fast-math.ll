@@ -350,3 +350,108 @@ define float @fdiv9(float %x) {
 ; CHECK: @fdiv9
 ; CHECK: fmul fast float %x, 5.000000e+00
 }
+
+; =========================================================================
+;
+;   Testing-cases about factorization
+;
+; =========================================================================
+; x*z + y*z => (x+y) * z
+define float @fact_mul1(float %x, float %y, float %z) {
+  %t1 = fmul fast float %x, %z
+  %t2 = fmul fast float %y, %z
+  %t3 = fadd fast float %t1, %t2
+  ret float %t3
+; CHECK: @fact_mul1
+; CHECK: fmul fast float %1, %z
+}
+
+; z*x + y*z => (x+y) * z
+define float @fact_mul2(float %x, float %y, float %z) {
+  %t1 = fmul fast float %z, %x
+  %t2 = fmul fast float %y, %z
+  %t3 = fsub fast float %t1, %t2
+  ret float %t3
+; CHECK: @fact_mul2
+; CHECK: fmul fast float %1, %z
+}
+
+; z*x - z*y => (x-y) * z
+define float @fact_mul3(float %x, float %y, float %z) {
+  %t2 = fmul fast float %z, %y
+  %t1 = fmul fast float %z, %x
+  %t3 = fsub fast float %t1, %t2
+  ret float %t3
+; CHECK: @fact_mul3
+; CHECK: fmul fast float %1, %z
+}
+
+; x*z - z*y => (x-y) * z
+define float @fact_mul4(float %x, float %y, float %z) {
+  %t1 = fmul fast float %x, %z
+  %t2 = fmul fast float %z, %y
+  %t3 = fsub fast float %t1, %t2
+  ret float %t3
+; CHECK: @fact_mul4
+; CHECK: fmul fast float %1, %z
+}
+
+; x/y + x/z, no xform
+define float @fact_div1(float %x, float %y, float %z) {
+  %t1 = fdiv fast float %x, %y
+  %t2 = fdiv fast float %x, %z
+  %t3 = fadd fast float %t1, %t2
+  ret float %t3
+; CHECK: fact_div1
+; CHECK: fadd fast float %t1, %t2
+}
+
+; x/y + z/x; no xform
+define float @fact_div2(float %x, float %y, float %z) {
+  %t1 = fdiv fast float %x, %y
+  %t2 = fdiv fast float %z, %x
+  %t3 = fadd fast float %t1, %t2
+  ret float %t3
+; CHECK: fact_div2
+; CHECK: fadd fast float %t1, %t2
+}
+
+; y/x + z/x => (y+z)/x
+define float @fact_div3(float %x, float %y, float %z) {
+  %t1 = fdiv fast float %y, %x
+  %t2 = fdiv fast float %z, %x
+  %t3 = fadd fast float %t1, %t2
+  ret float %t3
+; CHECK: fact_div3
+; CHECK: fdiv fast float %1, %x
+}
+
+; y/x - z/x => (y-z)/x
+define float @fact_div4(float %x, float %y, float %z) {
+  %t1 = fdiv fast float %y, %x
+  %t2 = fdiv fast float %z, %x
+  %t3 = fsub fast float %t1, %t2
+  ret float %t3
+; CHECK: fact_div4
+; CHECK: fdiv fast float %1, %x
+}
+
+; y/x - z/x => (y-z)/x is disabled if y-z is denormal.
+define float @fact_div5(float %x) {
+  %t1 = fdiv fast float 0x3810000000000000, %x
+  %t2 = fdiv fast float 0x3800000000000000, %x
+  %t3 = fadd fast float %t1, %t2
+  ret float %t3
+; CHECK: fact_div5
+; CHECK: fdiv fast float 0x3818000000000000, %x
+}
+
+; y/x - z/x => (y-z)/x is disabled if y-z is denormal.
+define float @fact_div6(float %x) {
+  %t1 = fdiv fast float 0x3810000000000000, %x
+  %t2 = fdiv fast float 0x3800000000000000, %x
+  %t3 = fsub fast float %t1, %t2
+  ret float %t3
+; CHECK: fact_div6
+; CHECK: %t3 = fsub fast float %t1, %t2
+}
