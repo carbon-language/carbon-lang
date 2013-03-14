@@ -553,8 +553,6 @@ private:
 
       State.Stack.back().LastSpace = State.Column;
       State.StartOfLineLevel = State.ParenLevel;
-      if (Current.is(tok::colon) && Current.Type != TT_ConditionalExpr)
-        State.Stack.back().Indent += 2;
 
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
@@ -999,6 +997,8 @@ private:
     if ((State.NextToken->Type == TT_CtorInitializerColon ||
          (State.NextToken->Parent->ClosesTemplateDeclaration &&
           State.ParenLevel == 0)))
+      return true;
+    if (State.NextToken->Type == TT_InlineASMColon)
       return true;
     return false;
   }
