@@ -1034,7 +1034,7 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
       if (HasVEX_4V)
         VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
 
-      if (MemOp4) // Skip second register source (encoded in I8IMM)
+      if (HasMemOp4) // Skip second register source (encoded in I8IMM)
         CurOp++;
 
       if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
