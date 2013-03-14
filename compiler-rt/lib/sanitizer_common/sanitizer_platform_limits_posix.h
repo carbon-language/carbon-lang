@@ -25,12 +25,12 @@ namespace __sanitizer {
 #if defined(__linux__)
   extern unsigned struct_rlimit_sz;
   extern unsigned struct_dirent_sz;
-  extern unsigned struct_dirent64_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
 #endif // __linux__
 
 #if defined(__linux__) && !defined(__ANDROID__)
+  extern unsigned struct_dirent64_sz;
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statfs64_sz;
 #endif // __linux__ && !__ANDROID__
