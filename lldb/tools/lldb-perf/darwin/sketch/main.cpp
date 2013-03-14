@@ -26,13 +26,13 @@ public:
     SketchTest () :
     m_fetch_frames_measurement ([this] (SBProcess process) -> void {
         Xcode::FetchFrames (process,false,false);
-    }, "fetch-frames"),
+    }, "fetch-frames", "time to dump backtrace for every frame in every thread"),
     m_file_line_bp_measurement([] (SBTarget target,const char* file, uint32_t line) -> void {
         Xcode::CreateFileLineBreakpoint(target, file, line);
-    }, "file-line-bkpt"),
+    }, "file-line-bkpt", "time to set a breakpoint given a file and line"),
     m_fetch_modules_measurement ([] (SBTarget target) -> void {
         Xcode::FetchModules(target);
-    }, "fetch-modules"),
+    }, "fetch-modules", "time to get info for all modules in the process"),
     m_fetch_vars_measurement([this] (SBProcess process, int depth) -> void {
         auto threads_count = process.GetNumThreads();
         for (size_t thread_num = 0; thread_num < threads_count; thread_num++)
@@ -42,11 +42,11 @@ public:
             Xcode::FetchVariables(frame,depth,GetVerbose());
             
         }
-    }, "fetch-vars"),
+    }, "fetch-vars", "time to dump variables for the topmost frame in every thread"),
     m_run_expr_measurement([this] (SBFrame frame, const char* expr) -> void {
         SBValue value(frame.EvaluateExpression(expr, lldb::eDynamicCanRunTarget));
         Xcode::FetchVariable(value,0,GetVerbose());
-    }, "run-expr")
+    }, "run-expr", "time to evaluate an expression and display the result")
     {}
     
     virtual
@@ -57,8 +57,8 @@ public:
     virtual void
 	Setup (int argc, const char** argv)
     {
-        m_app_path.assign(argv[1]); // "~/perf/Small_ObjC/Sketch/build/Debug/Sketch.app"
-        m_doc_path.assign(argv[2]); // "/Volumes/work/egranata/perf/Small_ObjC/TesterApp/foobar.sketch2";
+        m_app_path.assign(argv[1]);
+        m_doc_path.assign(argv[2]);
         m_out_path.assign(argv[3]);
         TestCase::Setup(argc,argv);
         m_target = m_debugger.CreateTarget(m_app_path.c_str());

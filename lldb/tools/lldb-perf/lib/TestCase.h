@@ -59,9 +59,15 @@ public:
     Results () = 0;
     
     template <typename G,typename A>
-    Measurement<G,A> CreateMeasurement (A a, const char* name = NULL)
+    Measurement<G,A> CreateMeasurement (A a, const char* name = NULL, const char* description = NULL)
     {
-        return Measurement<G,A> (a,name);
+        return Measurement<G,A> (a,name, description);
+    }
+    
+    template <typename A>
+    TimeMeasurement<A> CreateTimeMeasurement (A a, const char* name = NULL, const char* description = NULL)
+    {
+        return TimeMeasurement<A> (a,name, description);
     }
     
     static void

@@ -32,7 +32,7 @@ Xcode::FetchVariable (SBValue value, uint32_t expand, bool verbose)
 		auto count = value.GetNumChildren();
 		for (int i = 0; i < count; i++)
 		{
-			SBValue child(value.GetChildAtIndex(i));
+			SBValue child(value.GetChildAtIndex(i,value.IsDynamic() ? lldb::eDynamicCanRunTarget : lldb::eNoDynamicValues, true));
 			FetchVariable (child,expand-1,verbose);
 		}
 	}

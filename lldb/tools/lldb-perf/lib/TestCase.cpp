@@ -18,16 +18,16 @@ m_process(),
 m_thread(),
 m_listener(),
 m_verbose(false)
-{}
-
-void
-TestCase::Setup (int argc, const char** argv)
 {
-	SBDebugger::Initialize();
+    SBDebugger::Initialize();
 	SBHostOS::ThreadCreated ("<lldb-tester.app.main>");
 	m_debugger = SBDebugger::Create(false);
 	m_listener = m_debugger.GetListener();
 }
+
+void
+TestCase::Setup (int argc, const char** argv)
+{}
 
 bool
 TestCase::Launch (const char** args, const char* cwd)

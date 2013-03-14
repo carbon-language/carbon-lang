@@ -19,8 +19,9 @@ Metric<T>::Metric () : Metric ("")
 {}
 
 template <class T>
-Metric<T>::Metric (const char* n) :
+Metric<T>::Metric (const char* n, const char* d) :
 m_name(n ? n : ""),
+m_description(d ? d : ""),
 m_dataset ()
 {}
 
@@ -63,10 +64,18 @@ Metric<T>::name ()
 }
 
 template <class T>
+const char*
+Metric<T>::description ()
+{
+    return m_description.c_str();
+}
+
+template <class T>
 void Metric<T>::WriteImpl (CFCMutableArray& parent, identity<double>)
 {
     CFCMutableDictionary dict;
-    dict.AddValueCString(CFCString("name").get(),m_name.c_str(), true);
+    dict.AddValueCString(CFCString("name").get(),name(), true);
+    dict.AddValueCString(CFCString("description").get(),description(), true);
     dict.AddValueDouble(CFCString("value").get(),this->average(), true);
     parent.AppendValue(dict.get(), true);
 }
@@ -75,7 +84,8 @@ template <class T>
 void Metric<T>::WriteImpl (CFCMutableArray& parent, identity<mach_vm_size_t>)
 {
     CFCMutableDictionary dict;
-    dict.AddValueCString(CFCString("name").get(),m_name.c_str(), true);
+    dict.AddValueCString(CFCString("name").get(),name(), true);
+    dict.AddValueCString(CFCString("description").get(),description(), true);
     dict.AddValueUInt64(CFCString("value").get(),this->average(), true);
     parent.AppendValue(dict.get(), true);
 }

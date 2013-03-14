@@ -31,7 +31,7 @@ template <class ValueType>
 class Metric : public WriteToPList {
 public:
     Metric ();
-    Metric (const char*);
+    Metric (const char*, const char* = NULL);
     
     void
     append (ValueType v);
@@ -47,6 +47,9 @@ public:
     
     const char*
     name ();
+    
+    const char*
+    description ();
     
     virtual void
     Write (CFCMutableArray& parent)
@@ -64,6 +67,7 @@ private:
     void WriteImpl (CFCMutableArray& parent, identity<mach_vm_size_t>);
     
     std::string m_name;
+    std::string m_description;
     std::vector<ValueType> m_dataset;
 };
 } }
