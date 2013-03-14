@@ -198,6 +198,26 @@ MipsSEDAGToDAGISel::selectMULT(SDNode *N, unsigned Opc, DebugLoc DL, EVT Ty,
   return std::make_pair(Lo, Hi);
 }
 
+SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,
+                                           SDValue CmpLHS, DebugLoc DL,
+                                           SDNode *Node) const {
+  unsigned Opc = InFlag.getOpcode(); (void)Opc;
+
+  assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) ||
+          (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&
+         "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");
+
+  SDValue Ops[] = { CmpLHS, InFlag.getOperand(1) };
+  SDValue LHS = Node->getOperand(0), RHS = Node->getOperand(1);
+  EVT VT = LHS.getValueType();
+
+  SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, DL, VT, Ops, 2);
+  SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, DL, VT,
+                                            SDValue(Carry, 0), RHS);
+  return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue, LHS,
+                              SDValue(AddCarry, 0));
+}
+
 /// ComplexPattern used on MipsInstrInfo
 /// Used on Mips Load/Store instructions
 bool MipsSEDAGToDAGISel::selectAddrRegImm(SDValue Addr, SDValue &Base,
@@ -294,38 +314,15 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   switch(Opcode) {
   default: break;
 
-  case ISD::SUBE:
+  case ISD::SUBE: {
+    SDValue InFlag = Node->getOperand(2);
+    Result = selectAddESubE(Mips::SUBu, InFlag, InFlag.getOperand(0), DL, Node);
+    return std::make_pair(true, Result);
+  }
+
   case ISD::ADDE: {
-    SDValue InFlag = Node->getOperand(2), CmpLHS;
-    unsigned Opc = InFlag.getOpcode(); (void)Opc;
-    assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) ||
-            (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&
-           "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");
-
-    unsigned MOp;
-    if (Opcode == ISD::ADDE) {
-      CmpLHS = InFlag.getValue(0);
-      MOp = Mips::ADDu;
-    } else {
-      CmpLHS = InFlag.getOperand(0);
-      MOp = Mips::SUBu;
-    }
-
-    SDValue Ops[] = { CmpLHS, InFlag.getOperand(1) };
-
-    SDValue LHS = Node->getOperand(0);
-    SDValue RHS = Node->getOperand(1);
-
-    EVT VT = LHS.getValueType();
-
-    unsigned Sltu_op = Mips::SLTu;
-    SDNode *Carry = CurDAG->getMachineNode(Sltu_op, DL, VT, Ops, 2);
-    unsigned Addu_op = Mips::ADDu;
-    SDNode *AddCarry = CurDAG->getMachineNode(Addu_op, DL, VT,
-                                              SDValue(Carry,0), RHS);
-
-    Result = CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue, LHS,
-                                  SDValue(AddCarry,0));
+    SDValue InFlag = Node->getOperand(2);
+    Result = selectAddESubE(Mips::ADDu, InFlag, InFlag.getValue(0), DL, Node);
     return std::make_pair(true, Result);
   }
 
