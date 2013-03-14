@@ -63,13 +63,13 @@ entry:
   %call = call i32 @callee1(%struct.s1* byval %p1, %struct.s2* byval %p2, %struct.s3* byval %p3, %struct.s4* byval %p4, %struct.s5* byval %p5, %struct.s6* byval %p6, %struct.s7* byval %p7)
   ret i32 %call
 
-; CHECK: ld 9, 128(31)
-; CHECK: ld 8, 136(31)
-; CHECK: ld 7, 144(31)
-; CHECK: lwz 6, 152(31)
-; CHECK: lwz 5, 160(31)
-; CHECK: lhz 4, 168(31)
-; CHECK: lbz 3, 176(31)
+; CHECK: ld 9, 112(31)
+; CHECK: ld 8, 120(31)
+; CHECK: ld 7, 128(31)
+; CHECK: lwz 6, 136(31)
+; CHECK: lwz 5, 144(31)
+; CHECK: lhz 4, 152(31)
+; CHECK: lbz 3, 160(31)
 }
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
@@ -155,10 +155,10 @@ entry:
 ; CHECK: ld 9, 96(1)
 ; CHECK: ld 8, 88(1)
 ; CHECK: ld 7, 80(1)
-; CHECK: lwz 6, 152(31)
+; CHECK: lwz 6, 136(31)
 ; CHECK: ld 5, 64(1)
-; CHECK: lhz 4, 168(31)
-; CHECK: lbz 3, 176(31)
+; CHECK: lhz 4, 152(31)
+; CHECK: lbz 3, 160(31)
 }
 
 define internal i32 @callee2(%struct.t1* byval %v1, %struct.t2* byval %v2, %struct.t3* byval %v3, %struct.t4* byval %v4, %struct.t5* byval %v5, %struct.t6* byval %v6, %struct.t7* byval %v7) nounwind {

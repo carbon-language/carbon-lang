@@ -831,7 +831,7 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //        r0 for now.
 
   if (RegInfo->requiresRegisterScavenging(MF))
-    if (needsFP(MF) || spillsCR(MF)) {
+    if (MFI->hasVarSizedObjects() || spillsCR(MF)) {
       const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
       const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
       const TargetRegisterClass *RC = isPPC64 ? G8RC : GPRC;
