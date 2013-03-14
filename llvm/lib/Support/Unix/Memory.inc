@@ -332,7 +332,16 @@ void Memory::InvalidateInstructionCache(const void *Addr,
   __clear_cache(const_cast<char *>(Start), const_cast<char *>(End));
 #  elif defined(__mips__)
   const char *Start = static_cast<const char *>(Addr);
+#    if defined(ANDROID)
+  // The declaration of "cacheflush" in Android bionic:
+  // extern int cacheflush(long start, long end, long flags);
+  const char *End = Start + Len;
+  long LStart = reinterpret_cast<long>(const_cast<char *>(Start));
+  long LEnd = reinterpret_cast<long>(const_cast<char *>(End));
+  cacheflush(LStart, LEnd, BCACHE);
+#    else
   cacheflush(const_cast<char *>(Start), Len, BCACHE);
+#    endif
 #  endif
 
 #endif  // end apple
