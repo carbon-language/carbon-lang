@@ -12262,7 +12262,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::UINT_TO_FP: {
-    if (N->getOperand(0).getValueType() != MVT::v2i32 &&
+    assert(Subtarget->hasSSE2() && "Requires at least SSE2!");
+    if (N->getOperand(0).getValueType() != MVT::v2i32 ||
         N->getValueType(0) != MVT::v2f32)
       return;
     SDValue ZExtIn = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v2i64,
