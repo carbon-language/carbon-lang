@@ -118,7 +118,7 @@ void ThreadListerTest::SpawnTidReporter(pthread_t *pthread_id,
   *tid = thread_arg.reported_tid;
 }
 
-std::vector<pid_t> ReadTidsToVector(ThreadLister *thread_lister) {
+static std::vector<pid_t> ReadTidsToVector(ThreadLister *thread_lister) {
   std::vector<pid_t> listed_tids;
   pid_t tid;
   while ((tid = thread_lister->GetNextTID()) >= 0)

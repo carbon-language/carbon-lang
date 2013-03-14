@@ -80,6 +80,8 @@ void ThreadContextBase::Reset(void *arg) {
 
 // ThreadRegistry implementation.
 
+const u32 ThreadRegistry::kUnknownTid = -1U;
+
 ThreadRegistry::ThreadRegistry(ThreadContextFactory factory, u32 max_threads,
                                u32 thread_quarantine_size)
     : context_factory_(factory),

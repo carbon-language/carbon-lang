@@ -39,11 +39,11 @@ static void CheckThreadQuantity(ThreadRegistry *registry, uptr exp_total,
   EXPECT_EQ(exp_alive, alive);
 }
 
-static bool is_detached(int tid) {
+static bool is_detached(u32 tid) {
   return (tid % 2 == 0);
 }
 
-static uptr get_uid(int tid) {
+static uptr get_uid(u32 tid) {
   return tid * 2;
 }
 
@@ -64,50 +64,52 @@ static void MarkUidAsPresent(ThreadContextBase *tctx, void *arg) {
 
 static void TestRegistry(ThreadRegistry *registry, bool has_quarantine) {
   // Create and start a main thread.
-  EXPECT_EQ(0, registry->CreateThread(get_uid(0), true, -1, 0));
+  EXPECT_EQ(0U, registry->CreateThread(get_uid(0), true, -1, 0));
   registry->StartThread(0, 0, 0);
   // Create a bunch of threads.
-  for (int i = 1; i <= 10; i++) {
+  for (u32 i = 1; i <= 10; i++) {
     EXPECT_EQ(i, registry->CreateThread(get_uid(i), is_detached(i), 0, 0));
   }
   CheckThreadQuantity(registry, 11, 1, 11);
   // Start some of them.
-  for (int i = 1; i <= 5; i++) {
+  for (u32 i = 1; i <= 5; i++) {
     registry->StartThread(i, 0, 0);
   }
   CheckThreadQuantity(registry, 11, 6, 11);
   // Finish, create and start more threads.
-  for (int i = 1; i <= 5; i++) {
+  for (u32 i = 1; i <= 5; i++) {
     registry->FinishThread(i);
     if (!is_detached(i))
       registry->JoinThread(i, 0);
   }
-  for (int i = 6; i <= 10; i++) {
+  for (u32 i = 6; i <= 10; i++) {
     registry->StartThread(i, 0, 0);
   }
-  std::vector<int> new_tids;
-  for (int i = 11; i <= 15; i++) {
+  std::vector<u32> new_tids;
+  for (u32 i = 11; i <= 15; i++) {
     new_tids.push_back(
         registry->CreateThread(get_uid(i), is_detached(i), 0, 0));
   }
-  ASSERT_LE(kRegistryQuarantine, 5);
-  int exp_total = 16 - (has_quarantine ? 5 - kRegistryQuarantine  : 0);
+  ASSERT_LE(kRegistryQuarantine, 5U);
+  u32 exp_total = 16 - (has_quarantine ? 5 - kRegistryQuarantine  : 0);
   CheckThreadQuantity(registry, exp_total, 6, 11);
   // Test SetThreadName and FindThread.
   registry->SetThreadName(6, "six");
   registry->SetThreadName(7, "seven");
-  EXPECT_EQ(7, registry->FindThread(HasName, (void*)"seven"));
-  EXPECT_EQ(-1, registry->FindThread(HasName, (void*)"none"));
-  EXPECT_EQ(0, registry->FindThread(HasUid, (void*)get_uid(0)));
-  EXPECT_EQ(10, registry->FindThread(HasUid, (void*)get_uid(10)));
-  EXPECT_EQ(-1, registry->FindThread(HasUid, (void*)0x1234));
+  EXPECT_EQ(7U, registry->FindThread(HasName, (void*)"seven"));
+  EXPECT_EQ(ThreadRegistry::kUnknownTid,
+            registry->FindThread(HasName, (void*)"none"));
+  EXPECT_EQ(0U, registry->FindThread(HasUid, (void*)get_uid(0)));
+  EXPECT_EQ(10U, registry->FindThread(HasUid, (void*)get_uid(10)));
+  EXPECT_EQ(ThreadRegistry::kUnknownTid,
+            registry->FindThread(HasUid, (void*)0x1234));
   // Detach and finish and join remaining threads.
-  for (int i = 6; i <= 10; i++) {
+  for (u32 i = 6; i <= 10; i++) {
     registry->DetachThread(i);
     registry->FinishThread(i);
   }
-  for (int i = 0; i < new_tids.size(); i++) {
-    int tid = new_tids[i];
+  for (u32 i = 0; i < new_tids.size(); i++) {
+    u32 tid = new_tids[i];
     registry->StartThread(tid, 0, 0);
     registry->DetachThread(tid);
     registry->FinishThread(tid);
@@ -120,7 +122,7 @@ static void TestRegistry(ThreadRegistry *registry, bool has_quarantine) {
     ThreadRegistryLock l(registry);
     registry->RunCallbackForEachThreadLocked(MarkUidAsPresent, &has_tid[0]);
   }
-  for (int i = 0; i < exp_total; i++) {
+  for (u32 i = 0; i < exp_total; i++) {
     EXPECT_TRUE(has_tid[i]);
   }
   {
@@ -130,7 +132,7 @@ static void TestRegistry(ThreadRegistry *registry, bool has_quarantine) {
     EXPECT_EQ(main_thread, registry->FindThreadContextLocked(
         HasUid, (void*)get_uid(0)));
   }
-  EXPECT_EQ(11, registry->GetMaxAliveThreads());
+  EXPECT_EQ(11U, registry->GetMaxAliveThreads());
 }
 
 TEST(SanitizerCommon, ThreadRegistryTest) {
@@ -195,7 +197,7 @@ void *RunThread(void *arg) {
 
 static void ThreadedTestRegistry(ThreadRegistry *registry) {
   // Create and start a main thread.
-  EXPECT_EQ(0, registry->CreateThread(0, true, -1, 0));
+  EXPECT_EQ(0U, registry->CreateThread(0, true, -1, 0));
   registry->StartThread(0, 0, 0);
   pthread_t threads[kNumShards];
   RunThreadArgs args[kNumShards];

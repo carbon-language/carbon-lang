@@ -77,7 +77,6 @@ class ThreadRegistry {
   const u32 max_threads_;
   const u32 thread_quarantine_size_;
 
-  static const u32 kUnknownTid = -1U;
   BlockingMutex mtx_;
 
   u32 n_contexts_;      // Number of created thread contexts,
@@ -92,6 +91,8 @@ class ThreadRegistry {
   IntrusiveList<ThreadContextBase> dead_threads_;
 
  public:
+  static const u32 kUnknownTid;
+
   ThreadRegistry(ThreadContextFactory factory, u32 max_threads,
                  u32 thread_quarantine_size);
   void GetNumberOfThreads(uptr *total = 0, uptr *running = 0, uptr *alive = 0);
