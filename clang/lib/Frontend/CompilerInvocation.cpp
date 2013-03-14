@@ -394,10 +394,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
             << Args.getLastArg(OPT_coverage_version_EQ)->getAsString(Args)
             << CoverageVersion;
       } else {
-        Opts.CoverageVersion[0] = CoverageVersion[3];
-        Opts.CoverageVersion[1] = CoverageVersion[2];
-        Opts.CoverageVersion[2] = CoverageVersion[1];
-        Opts.CoverageVersion[3] = CoverageVersion[0];
+        memcpy(Opts.CoverageVersion, CoverageVersion.data(), 4);
       }
     }
   }
