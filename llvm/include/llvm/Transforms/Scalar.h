@@ -342,7 +342,7 @@ extern char &InstructionSimplifierID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerExpectIntriniscs - Removes llvm.expect intrinsics and creates
+// LowerExpectIntrinsics - Removes llvm.expect intrinsics and creates
 // "block_weights" metadata.
 FunctionPass *createLowerExpectIntrinsicPass();
 
