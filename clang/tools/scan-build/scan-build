@@ -284,10 +284,11 @@ sub UpdateInFilePath {
 sub AddStatLine {
   my $Line  = shift;
   my $Stats = shift;
+  my $File  = shift;
 
   print $Line . "\n";
 
-  my $Regex = qr/(.*?)\ :\ (.*?)\ ->\ Total\ CFGBlocks:\ (\d+)\ \|\ Unreachable
+  my $Regex = qr/(.*?)\ ->\ Total\ CFGBlocks:\ (\d+)\ \|\ Unreachable
       \ CFGBlocks:\ (\d+)\ \|\ Exhausted\ Block:\ (yes|no)\ \|\ Empty\ WorkList:
       \ (yes|no)/x;
 
@@ -297,12 +298,12 @@ sub AddStatLine {
 
   # Create a hash of the interesting fields
   my $Row = {
-    Filename    => $1,
-    Function    => $2,
-    Total       => $3,
-    Unreachable => $4,
-    Aborted     => $5,
-    Empty       => $6
+    Filename    => $File,
+    Function    => $1,
+    Total       => $2,
+    Unreachable => $3,
+    Aborted     => $4,
+    Empty       => $5
   };
 
   # Add them to the stats array
@@ -383,7 +384,7 @@ sub ScanFile {
 
   # Don't add internal statistics to the bug reports
   if ($BugCategory =~ /statistics/i) {
-    AddStatLine($BugDescription, $Stats);
+    AddStatLine($BugDescription, $Stats, $BugFile);
     return;
   }
   

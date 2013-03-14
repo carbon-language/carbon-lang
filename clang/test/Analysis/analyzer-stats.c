@@ -2,7 +2,7 @@
 
 int foo();
 
-int test() { // expected-warning{{Total CFGBlocks}}
+int test() { // expected-warning-re{{test -> Total CFGBlocks: [0-9]+ \| Unreachable CFGBlocks: 0 \| Exhausted Block: no \| Empty WorkList: yes}}
   int a = 1;
   a = 34 / 12;
 
