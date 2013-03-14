@@ -3531,8 +3531,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   
   // Build a record containing all of the file scoped decls in this file.
   RecordData UnusedFileScopedDecls;
-  AddLazyVectorDecls(*this, SemaRef.UnusedFileScopedDecls, 
-                     UnusedFileScopedDecls);
+  if (!isModule)
+    AddLazyVectorDecls(*this, SemaRef.UnusedFileScopedDecls,
+                       UnusedFileScopedDecls);
 
   // Build a record containing all of the delegating constructors we still need
   // to resolve.
