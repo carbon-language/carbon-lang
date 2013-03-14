@@ -842,6 +842,8 @@ are listed below.
       ``-fsanitize=address``:
       :doc:`AddressSanitizer`, a memory error
       detector.
+   -  ``-fsanitize=init-order``: Make AddressSanitizer check for
+      dynamic initialization order problems. Implied by ``-fsanitize=address``.
    -  ``-fsanitize=address-full``: AddressSanitizer with all the
       experimental features listed below.
    -  ``-fsanitize=integer``: Enables checks for undefined or
@@ -917,8 +919,6 @@ are listed below.
    Experimental features of AddressSanitizer (not ready for widespread
    use, require explicit ``-fsanitize=address``):
 
-   -  ``-fsanitize=init-order``: Check for dynamic initialization order
-      problems.
    -  ``-fsanitize=use-after-return``: Check for use-after-return
       errors (accessing local variable after the function exit).
    -  ``-fsanitize=use-after-scope``: Check for use-after-scope errors

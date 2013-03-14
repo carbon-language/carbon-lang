@@ -117,6 +117,15 @@ supported by other compilers, so we suggest to use it together with
 ``__has_feature(address_sanitizer)``. Note: currently, this attribute will be
 lost if the function is inlined.
 
+``Initialization order checking``
+---------------------------------
+
+AddressSanitizer can optionally detect dynamic initialization order problems,
+when initialization of globals defined in one translation unit uses
+globals defined in another translation unit. To enable this check at runtime,
+you should set environment variable
+``ASAN_OPTIONS=check_initialization_order=1``.
+    
 Supported Platforms
 ===================
 
