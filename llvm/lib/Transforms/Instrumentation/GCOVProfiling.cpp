@@ -395,7 +395,6 @@ void GCOVProfiler::emitProfileNotes() {
 
     DICompileUnit CU(CU_Nodes->getOperand(i));
     std::string ErrorInfo;
-    outs() << "outputting gcno to: " << mangleName(CU, "gcno") << "\n";
     raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
                        raw_fd_ostream::F_Binary);
     out.write("oncg", 4);
