@@ -30,7 +30,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeStub:
   case typeStubHelper:
     return permR_X;
- 
+
   case typeConstant:
   case typeCString:
   case typeUTF16String:
@@ -65,7 +65,7 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeTLVInitialZeroFill:
   case typeTLVInitializerPtr:
     return permRW_L;
-  
+
   case typeUnknown:
   case typeTempLTO:
     return permUnknown;

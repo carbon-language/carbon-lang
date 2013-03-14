@@ -136,7 +136,7 @@ public:
     case DefinedAtom::typeTLVInitialData:
       this->_type = SHT_PROGBITS;
       break;
-    
+
     case DefinedAtom::typeTLVInitialZeroFill:
     case DefinedAtom::typeZeroFillFast:
     case DefinedAtom::typeZeroFill:
@@ -478,7 +478,7 @@ MergedSections<ELFT>::MergedSections(StringRef name)
   ,_align2(0)
   ,_kind(0)
   ,_type(0) { }
-  
+
 
 template<class ELFT>
 void
@@ -585,7 +585,7 @@ class SymbolTable : public Section<ELFT> {
 
   struct SymbolEntry {
     SymbolEntry(const Atom *a, const Elf_Sym &sym,
-                const AtomLayout *layout) : _atom(a), _symbol(sym), 
+                const AtomLayout *layout) : _atom(a), _symbol(sym),
                                             _atomLayout(layout) {}
     SymbolEntry() : _atom(nullptr) {}
 
@@ -597,7 +597,7 @@ class SymbolTable : public Section<ELFT> {
 public:
   SymbolTable(const ELFTargetInfo &ti, const char *str, int32_t order);
 
-  void addSymbol(const Atom *atom, int32_t sectionIndex, 
+  void addSymbol(const Atom *atom, int32_t sectionIndex,
                  uint64_t addr = 0, const AtomLayout *layout=nullptr);
 
   /// \brief Get the symbol table index for an Atom. If it's not in the symbol
@@ -626,7 +626,7 @@ protected:
   std::vector<SymbolEntry> _symbolTable;
 };
 
-/// ELF Symbol Table 
+/// ELF Symbol Table
 template <class ELFT>
 SymbolTable<ELFT>::SymbolTable(const ELFTargetInfo &ti, const char *str,
                                int32_t order)
@@ -643,7 +643,7 @@ SymbolTable<ELFT>::SymbolTable(const ELFTargetInfo &ti, const char *str,
 
 /// Add a symbol to the symbol Table, definedAtoms which get added to the symbol
 /// section dont have their virtual addresses set at the time of adding the
-/// symbol to the symbol table(Example: dynamic symbols), the addresses needs 
+/// symbol to the symbol table(Example: dynamic symbols), the addresses needs
 /// to be updated in the table before writing the dynamic symbol table
 /// information
 template <class ELFT>
@@ -692,7 +692,7 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
     default:
       type = llvm::ELF::STT_NOTYPE;
     }
-    if (da->customSectionName() == da->name()) 
+    if (da->customSectionName() == da->name())
       type = llvm::ELF::STT_SECTION;
 
     if (da->scope() == DefinedAtom::scopeTranslationUnit)
@@ -883,7 +883,7 @@ public:
 
   range<typename EntriesT::iterator> entries() { return _entries; }
 
-  /// \returns the index of the entry. 
+  /// \returns the index of the entry.
   std::size_t addEntry(Elf_Dyn e) {
     _entries.push_back(e);
     this->_fsize = (_entries.size() * sizeof(Elf_Dyn)) + sizeof(Elf_Dyn);

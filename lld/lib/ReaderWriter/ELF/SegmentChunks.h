@@ -173,8 +173,8 @@ public:
     // segments, since those values are not set in the Layout
     if (_segmentType == llvm::ELF::PT_LOAD)
       return;
-    // The size is the difference of the 
-    // last section to the first section, especially for TLS because 
+    // The size is the difference of the
+    // last section to the first section, especially for TLS because
     // the TLS segment contains both .tdata/.tbss
     this->setFileOffset(_sections.front()->fileOffset());
     this->setVAddr(_sections.front()->virtualAddr());
@@ -269,9 +269,9 @@ public:
   /// Finalize the segment, before we want to write the segment header
   /// information
   inline void finalize() {
-    // If the segment is of type Program Header, then the values fileOffset 
+    // If the segment is of type Program Header, then the values fileOffset
     // and the fileSize need to be picked up from the last section, the first
-    // section points to the ELF header and the second chunk points to the 
+    // section points to the ELF header and the second chunk points to the
     // actual program headers
     this->setFileOffset(_sections.back()->fileOffset());
     this->setVAddr(_sections.back()->virtualAddr());
@@ -473,8 +473,8 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
     for (auto section : slice->sections()) {
       // Align the section address
       addr = llvm::RoundUpToAlignment(addr, section->align2());
-      // Check if the segment is of type TLS 
-      // The sections that belong to the TLS segment have their 
+      // Check if the segment is of type TLS
+      // The sections that belong to the TLS segment have their
       // virtual addresses that are relative To TP
       Section<ELFT> *currentSection = llvm::dyn_cast<Section<ELFT> >(section);
       if (currentSection)
@@ -512,7 +512,7 @@ void Segment<ELFT>::write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) {
 }
 
 template<class ELFT>
-int64_t 
+int64_t
 Segment<ELFT>::flags() const {
   int64_t fl = 0;
   if (_flags & llvm::ELF::SHF_ALLOC)

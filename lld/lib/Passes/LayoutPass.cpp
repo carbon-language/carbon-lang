@@ -84,7 +84,7 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
       // right is overridden and left is not, so right < left
       return false;
     } else {
-      // neither are overridden, 
+      // neither are overridden,
       // fall into default sorting below
     }
   }
@@ -123,7 +123,7 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 /// current Atom
 /// The algorithm follows a very simple approach
 /// a) If the atom is first seen, then make that as the root atom
-/// b) The targetAtom which this Atom contains, has the root thats set to the 
+/// b) The targetAtom which this Atom contains, has the root thats set to the
 ///    root of the current atom
 /// c) If the targetAtom is part of a different tree and the root of the
 ///    targetAtom is itself, Chain all the atoms that are contained in the tree
@@ -142,7 +142,7 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
         if (_followOnRoots.count(ai) == 0) {
           _followOnRoots[ai] = ai;
         }
-        // If the targetAtom is not a root of any chain, lets make 
+        // If the targetAtom is not a root of any chain, lets make
         // the root of the targetAtom to the root of the current chain
         auto iter = _followOnRoots.find(targetAtom);
         if (iter == _followOnRoots.end()) {
@@ -169,13 +169,13 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
             const DefinedAtom *a = _followOnRoots[targetAtom];
             const DefinedAtom *targetPrevAtom = nullptr;
 
-            // If the size of the atom is 0, and the target 
+            // If the size of the atom is 0, and the target
             // is already part of a chain, lets bring the current
             // atom into the chain
             size_t currentAtomSize = (*ai).size();
 
-            // Lets add to the chain only if the atoms that 
-            // appear before the targetAtom in the chain 
+            // Lets add to the chain only if the atoms that
+            // appear before the targetAtom in the chain
             // are of size 0
             bool foundNonZeroSizeAtom = false;
             while (true) {
@@ -201,9 +201,9 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
 
             } // while true
             if (foundNonZeroSizeAtom) {
-              // TODO: print warning that an impossible layout 
+              // TODO: print warning that an impossible layout
               // is being desired by the user
-              // Continue to the next atom 
+              // Continue to the next atom
               break;
             }
 
@@ -216,7 +216,7 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
               _followOnNexts[ai] = targetAtom;
             } else {
               _followOnNexts[ai] = _followOnRoots[targetAtom];
-              // Set the root of all atoms in the 
+              // Set the root of all atoms in the
               a = _followOnRoots[targetAtom];
               while (true) {
                 _followOnRoots[a] = _followOnRoots[ai];
@@ -249,19 +249,19 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
 ///    if not add the atom to the chain, so that the current atom is part of the
 ///    the chain where the rootAtom is in
 void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
-  // This table would convert precededby references to follow on 
-  // references so that we have only one table 
+  // This table would convert precededby references to follow on
+  // references so that we have only one table
   for (auto ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindInGroup) {
         const DefinedAtom *rootAtom = llvm::dyn_cast<DefinedAtom>(r->target());
         // If the root atom is not part of any root
-        // create a new root 
+        // create a new root
         if (_followOnRoots.count(rootAtom) == 0) {
           _followOnRoots[rootAtom] = rootAtom;
         }
-        // If the current Atom has not been seen yet and there is no root 
-        // that has been set, set the root of the atom to the targetAtom 
+        // If the current Atom has not been seen yet and there is no root
+        // that has been set, set the root of the atom to the targetAtom
         // as the targetAtom points to the ingroup root
         auto iter = _followOnRoots.find(ai);
         if (iter == _followOnRoots.end()) {
@@ -300,7 +300,7 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
         bool isAtomInChain = false;
         const DefinedAtom *lastAtom = rootAtom;
         while (true) {
-          AtomToAtomT::iterator followOnAtomsIter = 
+          AtomToAtomT::iterator followOnAtomsIter =
                   _followOnNexts.find(lastAtom);
           if (followOnAtomsIter != _followOnNexts.end()) {
             lastAtom = followOnAtomsIter->second;
@@ -309,11 +309,11 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
               break;
             }
           }
-          else 
+          else
             break;
         } // findAtomInChain
 
-        if (!isAtomInChain) 
+        if (!isAtomInChain)
           _followOnNexts[lastAtom] = ai;
       }
     }
@@ -323,20 +323,20 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
 /// This pass builds the followon tables using Preceded By relationships
 /// The algorithm follows a very simple approach
 /// a) If the targetAtom is not part of any root and the current atom is not
-///    part of any root, create a chain with the current atom as root and 
+///    part of any root, create a chain with the current atom as root and
 ///    the targetAtom as following the current atom
-/// b) Chain the targetAtom to the current Atom if the targetAtom is not part 
+/// b) Chain the targetAtom to the current Atom if the targetAtom is not part
 ///    of any chain and the currentAtom has no followOn's
 /// c) If the targetAtom is part of a different tree and the root of the
 ///    targetAtom is itself, and if the current atom is not part of any root
-///    chain all the atoms together 
-/// d) If the current atom has no followon and the root of the targetAtom is 
-///    not equal to the root of the current atom(the targetAtom is not in the 
-///    same chain), chain all the atoms that are lead by the targetAtom into 
+///    chain all the atoms together
+/// d) If the current atom has no followon and the root of the targetAtom is
+///    not equal to the root of the current atom(the targetAtom is not in the
+///    same chain), chain all the atoms that are lead by the targetAtom into
 ///    the current chain
 void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
-  // This table would convert precededby references to follow on 
-  // references so that we have only one table 
+  // This table would convert precededby references to follow on
+  // references so that we have only one table
   for (auto ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindLayoutBefore) {
@@ -371,7 +371,7 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
               changeRoots = true;
             }
           }
-          // Change the roots of the targetAtom and its chain to 
+          // Change the roots of the targetAtom and its chain to
           // the current atoms root
           if (changeRoots) {
             const DefinedAtom *a = _followOnRoots[targetAtom];
@@ -387,16 +387,16 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
                 break;
             }
           } // changeRoots
-        }   // Is targetAtom root 
+        }   // Is targetAtom root
       }     // kindLayoutBefore
     }       //  Reference
   }         // atom iteration
-}           // end function 
+}           // end function
 
 
 /// Build an ordinal override map by traversing the followon chain, and
-/// assigning ordinals to each atom, if the atoms have their ordinals 
-/// already assigned skip the atom and move to the next. This is the 
+/// assigning ordinals to each atom, if the atoms have their ordinals
+/// already assigned skip the atom and move to the next. This is the
 /// main map thats used to sort the atoms while comparing two atoms together
 void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
   uint64_t index = 0;
@@ -419,7 +419,7 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
   }
 }
 
-/// Perform the actual pass 
+/// Perform the actual pass
 void LayoutPass::perform(MutableFile &mergedFile) {
   MutableFile::DefinedAtomRange atomRange = mergedFile.definedAtoms();
 

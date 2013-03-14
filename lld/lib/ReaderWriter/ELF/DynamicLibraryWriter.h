@@ -43,13 +43,13 @@ private:
 template <class ELFT>
 void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   // Add all the defined symbols to the dynamic symbol table
-  // we need hooks into the Atom to find out which atoms need 
-  // to be exported 
+  // we need hooks into the Atom to find out which atoms need
+  // to be exported
   for (auto sec : this->_layout->sections())
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms()) {
         const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom->_atom);
-        if (da && (da->scope() != DefinedAtom::scopeTranslationUnit)) 
+        if (da && (da->scope() != DefinedAtom::scopeTranslationUnit))
           this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
                                                atom->_virtualAddr, atom);
       }

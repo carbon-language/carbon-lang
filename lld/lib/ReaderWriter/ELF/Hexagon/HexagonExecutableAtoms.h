@@ -17,15 +17,15 @@ namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 4, false> HexagonELFType;
 class HexagonTargetInfo;
 
-template <class HexagonELFType> class HexagonRuntimeFile 
+template <class HexagonELFType> class HexagonRuntimeFile
   : public CRuntimeFile<HexagonELFType> {
 public:
   HexagonRuntimeFile(const HexagonTargetInfo &hti)
-    :CRuntimeFile<HexagonELFType>(hti, "Hexagon runtime file") 
+    :CRuntimeFile<HexagonELFType>(hti, "Hexagon runtime file")
   {}
 
 };
-} // elf 
+} // elf
 } // lld
 
 #endif // LLD_READER_WRITER_ELF_HEXAGON_EXECUTABLE_ATOM_H

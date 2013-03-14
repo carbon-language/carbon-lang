@@ -18,7 +18,7 @@ namespace lld {
 
 ///
 /// The SharedLibraryFile subclass of File is used to represent dynamic
-/// shared libraries being linked against.  
+/// shared libraries being linked against.
 ///
 class SharedLibraryFile : public File {
 public:
@@ -32,8 +32,8 @@ public:
   static inline bool classof(const File *f) {
     return f->kind() == kindSharedLibrary;
   }
-  static inline bool classof(const SharedLibraryFile *) { 
-    return true; 
+  static inline bool classof(const SharedLibraryFile *) {
+    return true;
   }
 
 
@@ -43,7 +43,7 @@ public:
   virtual const SharedLibraryAtom *exports(StringRef name,
                                            bool dataSymbolOnly) const = 0;
 protected:
-  /// only subclasses of SharedLibraryFile can be instantiated 
+  /// only subclasses of SharedLibraryFile can be instantiated
   SharedLibraryFile(StringRef path) : File(path) {}
 };
 

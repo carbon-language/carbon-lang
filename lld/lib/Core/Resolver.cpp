@@ -114,19 +114,19 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
 
   // Verify on zero-size atoms are pinned to start or end of section.
   switch ( atom.sectionPosition() ) {
-  case DefinedAtom::sectionPositionStart: 
+  case DefinedAtom::sectionPositionStart:
   case DefinedAtom::sectionPositionEnd:
     assert(atom.size() == 0);
     break;
-  case DefinedAtom::sectionPositionEarly: 
-  case DefinedAtom::sectionPositionAny: 
+  case DefinedAtom::sectionPositionEarly:
+  case DefinedAtom::sectionPositionAny:
     break;
   }
 
   // add to list of known atoms
   _atoms.push_back(&atom);
 
-  // tell symbol table 
+  // tell symbol table
   _symbolTable.add(atom);
 
   if (_targetInfo.getLinkerOptions()._deadStrip) {

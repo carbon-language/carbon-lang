@@ -27,22 +27,22 @@ struct LinkerOptions;
 /// executable files.
 ///
 /// Each file format (e.g. ELF, mach-o, PECOFF, native, etc) have a concrete
-/// subclass of Reader.  
+/// subclass of Reader.
 class Reader {
 public:
   virtual ~Reader();
- 
+
   /// \brief Parse a file given its file system path and create a File object.
   virtual error_code readFile(StringRef path,
                               std::vector<std::unique_ptr<File>> &result);
 
   /// \brief Parse a supplied buffer (already filled with the contents of a
-  /// file) and create a File object. 
+  /// file) and create a File object.
   ///
   /// On success, the resulting File object takes ownership of the MemoryBuffer.
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                                std::vector<std::unique_ptr<File>> &result) = 0;
-  
+
 protected:
   // only concrete subclasses can be instantiated
   Reader(const TargetInfo &ti)

@@ -78,7 +78,7 @@ template <class ELFT> class ELFFile : public File {
     }
     // the offset of this atom
     int32_t _offset;
-    // The content 
+    // The content
     StringRef _string;
     // Section header
     const Elf_Shdr *_shdr;
@@ -86,7 +86,7 @@ template <class ELFT> class ELFFile : public File {
     StringRef _sectionName;
   };
 
-  // This is used to find the MergeAtom given a relocation 
+  // This is used to find the MergeAtom given a relocation
   // offset
   typedef std::vector<ELFMergeAtom<ELFT> *> MergeAtomsT;
   typedef typename MergeAtomsT::iterator MergeAtomsIter;
@@ -173,7 +173,7 @@ public:
         int64_t sectionFlags = section->sh_flags;
         sectionFlags &= ~llvm::ELF::SHF_ALLOC;
 
-        // If the section have mergeable strings, the linker would 
+        // If the section have mergeable strings, the linker would
         // need to split the section into multiple atoms and mark them
         // mergeByContent
         if ((section->sh_entsize < 2) &&
@@ -399,7 +399,7 @@ public:
                 ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
             previous_atom->addReference(followOn);
           }
-          else 
+          else
             followOn = anonFollowedBy;
         }
 
@@ -418,9 +418,9 @@ public:
               ArrayRef<uint8_t>((uint8_t *)sectionContents.data() +
                                 (*si)->st_value, contentSize));
 
-          // If this is the last atom, lets not create a followon 
+          // If this is the last atom, lets not create a followon
           // reference
-          if ((si + 1) != se) 
+          if ((si + 1) != se)
             anonFollowedBy = new (_readerStorage)
                ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
           anonPrecededBy = new (_readerStorage)
@@ -429,7 +429,7 @@ public:
           if (anonFollowedBy)
             anonAtom->addReference(anonFollowedBy);
           anonAtom->addReference(anonPrecededBy);
-          if (previous_atom) 
+          if (previous_atom)
             anonPrecededBy->setTarget(previous_atom);
           contentSize = 0;
         }
@@ -437,7 +437,7 @@ public:
         ArrayRef<uint8_t> symbolData = ArrayRef<uint8_t>(
             (uint8_t *)sectionContents.data() + (*si)->st_value, contentSize);
 
-        // If the linker finds that a section has global atoms that are in a 
+        // If the linker finds that a section has global atoms that are in a
         // mergeable section, treat them as defined atoms as they shouldnt be
         // merged away as well as these symbols have to be part of symbol
         // resolution
@@ -459,7 +459,7 @@ public:
         auto newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, sectionName, *si, i.first, symbolData);
 
-        // If the atom was a weak symbol, lets create a followon 
+        // If the atom was a weak symbol, lets create a followon
         // reference to the anonymous atom that we created
         if ((*si)->getBinding() == llvm::ELF::STB_WEAK && anonAtom) {
           ELFReference<ELFT> *wFollowedBy = new (_readerStorage)
@@ -470,14 +470,14 @@ public:
 
         if (followOn) {
           ELFReference<ELFT> *precededby = nullptr;
-          // Set the followon atom to the weak atom 
+          // Set the followon atom to the weak atom
           // that we have created, so that they would
           // alias when the file gets written
-          if (anonAtom) 
+          if (anonAtom)
             followOn->setTarget(anonAtom);
           else
             followOn->setTarget(newAtom);
-          // Add a preceded by reference only if the current atom is not a 
+          // Add a preceded by reference only if the current atom is not a
           // weak atom
           if ((*si)->getBinding() != llvm::ELF::STB_WEAK) {
             precededby = new (_readerStorage)

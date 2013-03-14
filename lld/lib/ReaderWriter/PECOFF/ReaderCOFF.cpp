@@ -25,7 +25,7 @@
 using llvm::object::coff_symbol;
 using namespace lld;
 
-namespace { // anonymous 
+namespace { // anonymous
 
 class COFFAbsoluteAtom : public AbsoluteAtom {
 public:

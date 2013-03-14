@@ -46,7 +46,7 @@ void SymbolTable::add(const AbsoluteAtom &atom) {
 }
 
 void SymbolTable::add(const DefinedAtom &atom) {
-  if (!atom.name().empty() && 
+  if (!atom.name().empty() &&
       (atom.scope() != DefinedAtom::scopeTranslationUnit)) {
     // Named atoms cannot be merged by content.
     assert(atom.merge() != DefinedAtom::mergeByContent);

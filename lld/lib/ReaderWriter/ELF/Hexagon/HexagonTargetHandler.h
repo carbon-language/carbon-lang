@@ -141,7 +141,7 @@ private:
   SDataSection<HexagonELFType> *_sdataSection;
 };
 
-/// \brief TargetHandler for Hexagon 
+/// \brief TargetHandler for Hexagon
 class HexagonTargetHandler LLVM_FINAL :
     public DefaultTargetHandler<HexagonELFType> {
 public:
@@ -179,7 +179,7 @@ public:
 
   void finalizeSymbolValues() {
     auto sdabaseAtomIter = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
-    (*sdabaseAtomIter)->_virtualAddr = 
+    (*sdabaseAtomIter)->_virtualAddr =
       _targetLayout.getSDataSection()->virtualAddr();
   }
 

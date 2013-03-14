@@ -32,7 +32,7 @@ class OutputELFWriter;
 //===----------------------------------------------------------------------===//
 /// \brief This acts as the base class for all the ELF writers that are output
 /// for emitting an ELF output file. This class also acts as a common class for
-/// creating static and dynamic executables. All the function in this class 
+/// creating static and dynamic executables. All the function in this class
 /// can be overridden and an appropriate writer be created
 template<class ELFT>
 class OutputELFWriter : public ELFWriter {
@@ -56,7 +56,7 @@ protected:
   // Write the file to the path specified
   virtual error_code writeFile(const File &File, StringRef path);
 
-  // Build the atom to address map, this has to be called 
+  // Build the atom to address map, this has to be called
   // before applying relocations
   virtual void buildAtomToAddressMap();
 
@@ -69,14 +69,14 @@ protected:
   // Build the section header table
   virtual void buildSectionHeaderTable();
 
-  // Assign sections that have no segments such as the symbol table, 
+  // Assign sections that have no segments such as the symbol table,
   // section header table, string table etc
   virtual void assignSectionsWithNoSegments();
 
   // Add default atoms that need to be present in the output file
   virtual void addDefaultAtoms() = 0;
 
-  // Add any runtime files and their atoms to the output 
+  // Add any runtime files and their atoms to the output
   virtual void addFiles(InputFiles&) = 0;
 
   // Finalize the default atom values
@@ -253,7 +253,7 @@ template <class ELFT>
 error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   buildChunks(file);
 
-  // Call the preFlight callbacks to modify the sections and the atoms 
+  // Call the preFlight callbacks to modify the sections and the atoms
   // contained in them, in anyway the targets may want
   _layout->doPreFlight();
 

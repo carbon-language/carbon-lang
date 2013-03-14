@@ -183,8 +183,8 @@ public:
 
     uint16_t powerOf2;
     uint16_t modulus;
-    
-    bool operator==(const Alignment &rhs) const {  
+
+    bool operator==(const Alignment &rhs) const {
       return (powerOf2 == rhs.powerOf2) && (modulus == rhs.modulus);
     }
   };
@@ -233,8 +233,8 @@ public:
   virtual StringRef customSectionName() const = 0;
 
   /// \brief constraints on whether the linker may dead strip away this atom.
-  virtual SectionPosition sectionPosition() const = 0; 
-   
+  virtual SectionPosition sectionPosition() const = 0;
+
   /// \brief constraints on whether the linker may dead strip away this atom.
   virtual DeadStripKind deadStrip() const = 0;
 

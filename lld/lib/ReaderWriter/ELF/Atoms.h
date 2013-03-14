@@ -206,8 +206,8 @@ public:
   virtual uint64_t size() const {
     // Common symbols are not allocated in object files,
     // so use st_size to tell how many bytes are required.
-   
-    // Treat target defined common symbols 
+
+    // Treat target defined common symbols
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
       if (!_targetAtomHandler) {
@@ -245,7 +245,7 @@ public:
       return mergeAsWeak;
 
     // If the symbol is a target defined and if the target
-    // defines the symbol as a common symbol treat it as 
+    // defines the symbol as a common symbol treat it as
     // mergeTentative
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
@@ -269,7 +269,7 @@ public:
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
 
-    // Treat target defined symbols 
+    // Treat target defined symbols
     if ((_section->sh_flags & llvm::ELF::SHF_MASKPROC) ||
         ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
           _symbol->st_shndx < llvm::ELF::SHN_HIPROC))) {
@@ -333,8 +333,8 @@ public:
   virtual Alignment alignment() const {
     // Unallocated common symbols specify their alignment constraints in
     // st_value.
-   
-    // Treat target defined common symbols 
+
+    // Treat target defined common symbols
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
       if (!_targetAtomHandler) {

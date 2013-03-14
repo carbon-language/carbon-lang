@@ -25,7 +25,7 @@ class ExecutableWriter;
 template<class ELFT>
 class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
-  ExecutableWriter(const ELFTargetInfo &ti) 
+  ExecutableWriter(const ELFTargetInfo &ti)
     : OutputELFWriter<ELFT>(ti), _runtimeFile(ti)
   {}
 
@@ -60,7 +60,7 @@ void ExecutableWriter<ELFT>::addDefaultAtoms() {
   _runtimeFile.addAbsoluteAtom("__fini_array_end");
 }
 
-/// \brief Hook in lld to add CRuntime file 
+/// \brief Hook in lld to add CRuntime file
 template <class ELFT>
 void ExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   addDefaultAtoms();
@@ -69,7 +69,7 @@ void ExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   this->_targetHandler.addFiles(inputFiles);
 }
 
-/// Finalize the value of all the absolute symbols that we 
+/// Finalize the value of all the absolute symbols that we
 /// created
 template<class ELFT>
 void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {

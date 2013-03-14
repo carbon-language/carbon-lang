@@ -52,7 +52,7 @@ std::unique_ptr<Writer> createWriterELF(const ELFTargetInfo &TI) {
           elf::DynamicLibraryWriter<ELFType<support::big, 8, true>>(TI));
     llvm_unreachable("Invalid Options!");
   }
-  else 
+  else
     llvm_unreachable("unsupported options");
 }
 }

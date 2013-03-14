@@ -49,14 +49,14 @@ public:
   /// \brief Add a section to the current Layout
   void addSection(Section<ELFT> *section) {}
 
-  /// \brief add new symbol file 
+  /// \brief add new symbol file
   void addFiles(InputFiles &) {}
 
   /// \brief Finalize the symbol values
   void finalizeSymbolValues() {}
 
   /// \brief allocate Commons, some architectures may move small common
-  /// symbols over to small data, this would also be used 
+  /// symbols over to small data, this would also be used
   void allocateCommons() {}
 };
 } // end namespace elf

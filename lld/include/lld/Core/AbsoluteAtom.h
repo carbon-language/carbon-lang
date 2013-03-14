@@ -20,7 +20,7 @@ class AbsoluteAtom : public Atom {
 public:
 
   virtual uint64_t value() const = 0;
-  
+
   /// scope - The visibility of this atom to other atoms.  C static functions
   /// have scope scopeTranslationUnit.  Regular C functions have scope
   /// scopeGlobal.  Functions compiled with visibility=hidden have scope

@@ -56,9 +56,9 @@ llvm::cl::list<std::string>
 cmdLineInputFilePaths(llvm::cl::Positional,
               llvm::cl::desc("<input file>"));
 
-llvm::cl::opt<std::string> 
-cmdLineOutputFilePath("o", 
-              llvm::cl::desc("Specify output filename"), 
+llvm::cl::opt<std::string>
+cmdLineOutputFilePath("o",
+              llvm::cl::desc("Specify output filename"),
               llvm::cl::value_desc("filename"));
 
 llvm::cl::opt<bool> cmdLineDoStubsPass(
@@ -72,7 +72,7 @@ cmdLineDoLayoutPass("layout-pass", llvm::cl::desc("Run pass to layout atoms"));
 
 llvm::cl::opt<bool>
 cmdLineDoMergeStrings(
-  "merge-strings", 
+  "merge-strings",
   llvm::cl::desc("make common strings merge possible"));
 
 llvm::cl::opt<bool> cmdLineUndefinesIsError(
@@ -82,16 +82,16 @@ llvm::cl::opt<bool> cmdLineUndefinesIsError(
 llvm::cl::opt<bool> cmdLineForceLoad(
     "force-load", llvm::cl::desc("force load all members of the archive"));
 
-llvm::cl::opt<bool> 
-cmdLineCommonsSearchArchives("commons-search-archives", 
+llvm::cl::opt<bool>
+cmdLineCommonsSearchArchives("commons-search-archives",
           llvm::cl::desc("Tentative definitions trigger archive search"));
 
-llvm::cl::opt<bool> 
-cmdLineDeadStrip("dead-strip", 
+llvm::cl::opt<bool>
+cmdLineDeadStrip("dead-strip",
           llvm::cl::desc("Remove unreachable code and data"));
 
-llvm::cl::opt<bool> 
-cmdLineGlobalsNotDeadStrip("keep-globals", 
+llvm::cl::opt<bool>
+cmdLineGlobalsNotDeadStrip("keep-globals",
           llvm::cl::desc("All global symbols are roots for dead-strip"));
 
 llvm::cl::opt<std::string>
@@ -104,7 +104,7 @@ enum WriteChoice {
   writeYAML, writeMachO, writePECOFF, writeELF
 };
 
-llvm::cl::opt<WriteChoice> 
+llvm::cl::opt<WriteChoice>
 writeSelected("writer",
   llvm::cl::desc("Select writer"),
   llvm::cl::values(
@@ -118,7 +118,7 @@ writeSelected("writer",
 enum ReaderChoice {
   readerYAML, readerMachO, readerPECOFF, readerELF
 };
-llvm::cl::opt<ReaderChoice> 
+llvm::cl::opt<ReaderChoice>
 readerSelected("reader",
   llvm::cl::desc("Select reader"),
   llvm::cl::values(
@@ -128,24 +128,24 @@ readerSelected("reader",
     clEnumValN(readerELF,    "ELF",    "read as linux would"),
     clEnumValEnd),
   llvm::cl::init(readerYAML));
-    
+
 enum ArchChoice {
   i386 = llvm::ELF::EM_386,
   x86_64 = llvm::ELF::EM_X86_64,
   hexagon = llvm::ELF::EM_HEXAGON,
   ppc = llvm::ELF::EM_PPC
 };
-llvm::cl::opt<ArchChoice> 
+llvm::cl::opt<ArchChoice>
 archSelected("arch",
   llvm::cl::desc("Select architecture, only valid with ELF output"),
   llvm::cl::values(
-    clEnumValN(i386, "i386", 
+    clEnumValN(i386, "i386",
                "output i386, EM_386 file"),
-    clEnumValN(x86_64, 
+    clEnumValN(x86_64,
                "x86_64", "output x86_64, EM_X86_64 file"),
-    clEnumValN(hexagon, 
+    clEnumValN(hexagon,
                "hexagon", "output Hexagon, EM_HEXAGON file"),
-    clEnumValN(ppc, 
+    clEnumValN(ppc,
                "ppc", "output PowerPC, EM_PPC file"),
     clEnumValEnd),
   llvm::cl::init(i386));
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
       ti = eti.get();
       break;
   }
-  
+
   // create object to mange input files
   InputFiles inputFiles;
 
@@ -343,22 +343,22 @@ int main(int argc, char *argv[]) {
     error("createTemporaryFileOnDisk() failed");
     return 1;
   }
-  
+
   // write as native file
   std::unique_ptr<Writer> natWriter = createWriterNative(tti);
   if (error(natWriter->writeFile(mergedMasterFile, tmpNativePath.c_str())))
     return 1;
-  
+
   // read as native file
   std::unique_ptr<Reader> natReader = createReaderNative(tti);
   std::vector<std::unique_ptr<File>> readNativeFiles;
   if (error(natReader->readFile(tmpNativePath.c_str(), readNativeFiles)))
     return 1;
-  
+
   // write new atom graph
   const File *parsedNativeFile = readNativeFiles[0].get();
   if (error(writer->writeFile(*parsedNativeFile, cmdLineOutputFilePath)))
     return 1;
-   
+
   return 0;
 }

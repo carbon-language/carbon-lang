@@ -22,8 +22,8 @@
 namespace lld {
 namespace elf {
 /// \brief All atoms are owned by a File. To add linker specific atoms
-/// the atoms need to be inserted to a file called (CRuntimeFile) which 
-/// are basically additional symbols required by libc and other runtime 
+/// the atoms need to be inserted to a file called (CRuntimeFile) which
+/// are basically additional symbols required by libc and other runtime
 /// libraries part of executing a program. This class provides support
 /// for adding absolute symbols and undefined symbols
 template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
@@ -38,7 +38,7 @@ public:
     symbol->st_name = 0;
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_ABS;
-    symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, 
+    symbol->setBindingAndType(llvm::ELF::STB_GLOBAL,
                               llvm::ELF::STT_OBJECT);
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
@@ -47,7 +47,7 @@ public:
     _absoluteAtoms._atoms.push_back(newAtom);
   }
 
-  /// \brief add an undefined atom 
+  /// \brief add an undefined atom
   virtual void addUndefinedAtom(StringRef symbolName) {
     Elf_Sym *symbol = new (_allocator) Elf_Sym;
     symbol->st_name = 0;
@@ -89,6 +89,6 @@ protected:
   File::atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 } // end namespace elf
-} // end namespace lld 
+} // end namespace lld
 
 #endif

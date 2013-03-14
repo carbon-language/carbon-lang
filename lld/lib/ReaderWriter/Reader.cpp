@@ -23,8 +23,8 @@ error_code Reader::readFile(StringRef path,
   OwningPtr<llvm::MemoryBuffer> opmb;
   if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
     return ec;
- 
+
   std::unique_ptr<MemoryBuffer> mb(opmb.take());
   return this->parseFile(std::move(mb), result);
 }
-} // end namespace lld 
+} // end namespace lld

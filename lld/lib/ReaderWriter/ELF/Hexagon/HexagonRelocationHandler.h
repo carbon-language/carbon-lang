@@ -37,5 +37,5 @@ private:
   const HexagonTargetLayout<HexagonELFType> &_targetLayout;
 };
 } // elf
-} // lld 
+} // lld
 #endif

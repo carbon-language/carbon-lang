@@ -45,10 +45,10 @@ public:
 };
 
 const uint8_t HexagonPLTAtom::_defaultContent[16] = {
-  0x00, 0x40, 0x00, 0x00, // { immext (#0)                                     
+  0x00, 0x40, 0x00, 0x00, // { immext (#0)
   0x0e, 0xc0, 0x49, 0x6a, //   r14 = add (pc, ##GOTn@PCREL) } # address of GOTn
   0x1c, 0xc0, 0x8e, 0x91, // r28 = memw (r14)                 # contents of GOTn
-  0x00, 0xc0, 0x9c, 0x52, // jumpr r28                        # call it        
+  0x00, 0xc0, 0x9c, 0x52, // jumpr r28                        # call it
 };
 
 class HexagonPLT0Atom : public PLT0Atom {
@@ -67,16 +67,16 @@ public:
 };
 
 const uint8_t HexagonPLT0Atom::_plt0Content[28] = {
- 0x00, 0x40, 0x00, 0x00,  // { immext (#0)                                      
+ 0x00, 0x40, 0x00, 0x00,  // { immext (#0)
  0x1c, 0xc0, 0x49, 0x6a,  //   r28 = add (pc, ##GOT0@PCREL) } # address of GOT0
  0x0e, 0x42, 0x9c, 0xe2,  // { r14 -= add (r28, #16)  # offset of GOTn from GOTa
- 0x4f, 0x40, 0x9c, 0x91,  //   r15 = memw (r28 + #8)  # object ID at GOT2      
- 0x3c, 0xc0, 0x9c, 0x91,  //   r28 = memw (r28 + #4) }# dynamic link at GOT1  
- 0x0e, 0x42, 0x0e, 0x8c,  // { r14 = asr (r14, #2)    # index of PLTn         
- 0x00, 0xc0, 0x9c, 0x52,  //   jumpr r28 }            # call dynamic linker  
+ 0x4f, 0x40, 0x9c, 0x91,  //   r15 = memw (r28 + #8)  # object ID at GOT2
+ 0x3c, 0xc0, 0x9c, 0x91,  //   r28 = memw (r28 + #4) }# dynamic link at GOT1
+ 0x0e, 0x42, 0x0e, 0x8c,  // { r14 = asr (r14, #2)    # index of PLTn
+ 0x00, 0xc0, 0x9c, 0x52,  //   jumpr r28 }            # call dynamic linker
 };
 
-} // elf 
+} // elf
 } // lld
 
 #endif // LLD_READER_WRITER_ELF_HEXAGON_DYNAMIC_ATOMS_H

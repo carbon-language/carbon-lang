@@ -353,7 +353,7 @@ public:
   KindHandler *kindHandler() { return _referenceKindHandler; }
 
   bool use64BitMachO() const;
-  
+
 private:
   friend class LoadCommandsChunk;
   friend class LazyBindingInfoChunk;
@@ -440,7 +440,7 @@ void Chunk::assignFileOffset(uint64_t &curOffset, uint64_t &curAddress) {
     curAddress = _address + _size;
   }
 
-  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()  
+  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                       << "   fileOffset="
                       << llvm::format("0x%08X", _fileOffset)
                       << " address="
@@ -580,7 +580,7 @@ void SectionChunk::write(uint8_t *chunkBuffer) {
       if ( ref->target() != nullptr )
         targetAddress = _writer.addressOfAtom(ref->target());
       uint64_t fixupAddress = _writer.addressOfAtom(atomInfo.atom) + offset;
-      _writer.kindHandler()->applyFixup(ref->kind(), ref->addend(), 
+      _writer.kindHandler()->applyFixup(ref->kind(), ref->addend(),
                             &atomContent[offset], fixupAddress, targetAddress);
     }
   }
@@ -601,7 +601,7 @@ MachHeaderChunk::MachHeaderChunk(const MachOTargetInfo &ti, const File &file) {
   _mh.sizeofcmds = 0;
   _mh.flags      = 0;
   _mh.reserved   = 0;
-  
+
   _size = _mh.size();
 }
 
@@ -673,7 +673,7 @@ LoadCommandsChunk::LoadCommandsChunk(MachHeaderChunk &mh,
                                      MachOWriter& writer)
  : _mh(mh), _targetInfo(ti), _writer(writer),
    _linkEditSegment(nullptr), _symbolTableLoadCommand(nullptr),
-   _entryPointLoadCommand(nullptr), _threadLoadCommand(nullptr), 
+   _entryPointLoadCommand(nullptr), _threadLoadCommand(nullptr),
    _dyldInfoLoadCommand(nullptr) {
 }
 
@@ -687,7 +687,7 @@ void LoadCommandsChunk::write(uint8_t *chunkBuffer) {
   for ( load_command* lc : _loadCmds ) {
     assert( ((uintptr_t)p & 0x3) == 0);
     lc->copyTo(p);
-    p += lc->cmdsize;    
+    p += lc->cmdsize;
   }
 }
 
@@ -808,11 +808,11 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
     _threadLoadCommand = new thread_command(_targetInfo.getCPUType(), is64);
     this->addLoadCommand(_threadLoadCommand);
   }
-  
+
   // Compute total size.
   _size = _mh.loadCommandsSize();
 }
- 
+
 
 void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
   // Update segment/section information in segment load commands
@@ -886,7 +886,7 @@ void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
     assert(startAtom != nullptr);
     _threadLoadCommand->setPC(_writer.addressOfAtom(startAtom));
   }
-  
+
 }
 
 
@@ -1092,7 +1092,7 @@ const char* LazyBindingInfoChunk::info() {
 }
 
 //
-// Called when lazy-binding-info is being laid out in __LINKEDIT.  We need 
+// Called when lazy-binding-info is being laid out in __LINKEDIT.  We need
 // to find the helper atom which contains the instruction which loads an
 // immediate value that is the offset into the lazy-binding-info, and set
 // that immediate value to be the offset parameter.
@@ -1390,7 +1390,7 @@ void MachOWriter::addLinkEditChunk(LinkEditChunk *chunk) {
 
 
 void MachOWriter::buildAtomToAddressMap() {
-  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
+  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                    << "assign atom addresses:\n");
   const bool lookForEntry = _targetInfo.getLinkerOptions()._outputKind ==
                             OutputKind::StaticExecutable ||
@@ -1405,7 +1405,7 @@ void MachOWriter::buildAtomToAddressMap() {
               &&  info.atom->name() == _targetInfo.getEntry()) {
         _entryAtom = info.atom;
       }
-      DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()  
+      DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
               << "   address="
               << llvm::format("0x%016X", _atomToAddress[info.atom])
               << " atom=" << info.atom
@@ -1422,7 +1422,7 @@ void MachOWriter::buildAtomToAddressMap() {
 //}
 
 void MachOWriter::assignFileOffsets() {
-  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
+  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                     << "assign file offsets:\n");
   uint64_t offset = 0;
   uint64_t address = _targetInfo.getPageZeroSize();
@@ -1437,7 +1437,7 @@ void MachOWriter::assignFileOffsets() {
 }
 
 void MachOWriter::assignLinkEditFileOffsets() {
-  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
+  DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                    << "assign LINKEDIT file offsets:\n");
   uint64_t offset = _linkEditStartOffset;
   uint64_t address = _linkEditStartAddress;
@@ -1498,19 +1498,19 @@ bool MachOWriter::use64BitMachO() const {
 error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
   this->build(file);
 
-// FIXME: re-enable when FileOutputBuffer is in LLVMSupport.a 
+// FIXME: re-enable when FileOutputBuffer is in LLVMSupport.a
   uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
 
   OwningPtr<llvm::FileOutputBuffer> buffer;
-  error_code ec = llvm::FileOutputBuffer::create(path, 
+  error_code ec = llvm::FileOutputBuffer::create(path,
                                           totalSize, buffer,
-                                          llvm::FileOutputBuffer::F_executable); 
+                                          llvm::FileOutputBuffer::F_executable);
   if ( ec )
     return ec;
-   
+
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() << "writeFile:\n");
   for ( Chunk *chunk : _chunks ) {
-    DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()  
+    DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()
                       << "   fileOffset="
                       << llvm::format("0x%08X", chunk->fileOffset())
                       << " chunk="
@@ -1518,7 +1518,7 @@ error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
                       << "\n");
     chunk->write(buffer->getBufferStart()+chunk->fileOffset());
   }
-  
+
   return buffer->commit();
   return error_code::success();
 }

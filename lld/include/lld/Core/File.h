@@ -65,11 +65,11 @@ public:
   virtual StringRef translationUnitSource() const;
 
   /// Returns the command line order of the file.
-  uint64_t ordinal() const { 
+  uint64_t ordinal() const {
     assert(_ordinal != UINT64_MAX);
-    return _ordinal; 
+    return _ordinal;
   }
-  
+
   /// Sets the command line order of the file.  The parameter must
   /// also be incremented to the next available ordinal number.
   virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
@@ -157,7 +157,7 @@ public:
   virtual const TargetInfo &getTargetInfo() const = 0;
 
 protected:
-  /// \brief only subclasses of File can be instantiated 
+  /// \brief only subclasses of File can be instantiated
   File(StringRef p) : _path(p), _ordinal(UINT64_MAX) {}
 
   /// \brief This is a convenience class for File subclasses which manage their
@@ -193,10 +193,10 @@ protected:
   template <typename T>
   class atom_collection_empty : public atom_collection<T> {
   public:
-    virtual atom_iterator<T> begin() const { 
+    virtual atom_iterator<T> begin() const {
       return atom_iterator<T>(*this, nullptr);
     }
-    virtual atom_iterator<T> end() const{ 
+    virtual atom_iterator<T> end() const{
       return atom_iterator<T>(*this, nullptr);
     }
     virtual const T *deref(const void *it) const {
@@ -231,7 +231,7 @@ public:
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
 
 protected:
-  /// \brief only subclasses of MutableFile can be instantiated 
+  /// \brief only subclasses of MutableFile can be instantiated
   MutableFile(const TargetInfo &ti, StringRef p) : File(p), _targetInfo(ti) {}
 
 private:

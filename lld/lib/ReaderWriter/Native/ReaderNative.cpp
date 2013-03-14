@@ -85,7 +85,7 @@ public:
      return (DefinedAtom::SectionPosition)(
         attributes().sectionChoiceAndPosition & 0xF);
   }
-  
+
   virtual DefinedAtom::DeadStripKind deadStrip() const {
      return (DefinedAtom::DeadStripKind)(attributes().deadStrip);
   }
@@ -324,19 +324,19 @@ public:
       }
     }
     // TO DO: validate enough chunks were used
-    
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                   << " ReaderNative DefinedAtoms:\n");
     for (const DefinedAtom *a : file->defined() ) {
-      DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+      DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << llvm::format("    0x%09lX", a)
                     << ", name=" << a->name()
                     << ", size=" << a->size()
                     << "\n");
       for (const Reference *r : *a ) {
         (void)r;
-        DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
-                    << "        offset=" 
+        DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
+                    << "        offset="
                     << llvm::format("0x%03X", r->offsetInAtom())
                     << ", kind=" << r->kind()
                     << ", target=" << r->target()
@@ -411,7 +411,7 @@ private:
     this->_definedAtoms._arrayEnd = atomsEnd;
     this->_definedAtoms._elementSize = atomSize;
     this->_definedAtoms._elementCount = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk DefinedAtomsV1:      "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -426,7 +426,7 @@ private:
                                  const NativeChunk *chunk) {
     this->_attributes = base + chunk->fileOffset;
     this->_attributesMaxOffset = chunk->fileSize;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk AttributesV1:        "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -439,7 +439,7 @@ private:
                                  const NativeChunk *chunk) {
     this->_absAttributes = base + chunk->fileOffset;
     this->_absAbsoluteMaxOffset = chunk->fileSize;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk AbsoluteAttributesV1:        "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -474,7 +474,7 @@ private:
     this->_undefinedAtoms._arrayEnd = atomsEnd;
     this->_undefinedAtoms._elementSize = atomSize;
     this->_undefinedAtoms._elementCount = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk UndefinedAtomsV1:"
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -510,7 +510,7 @@ private:
     this->_sharedLibraryAtoms._arrayEnd = atomsEnd;
     this->_sharedLibraryAtoms._elementSize = atomSize;
     this->_sharedLibraryAtoms._elementCount = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk SharedLibraryAtomsV1:"
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -546,7 +546,7 @@ private:
     this->_absoluteAtoms._arrayEnd = atomsEnd;
     this->_absoluteAtoms._elementSize = atomSize;
     this->_absoluteAtoms._elementCount = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk AbsoluteAtomsV1:     "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -586,7 +586,7 @@ private:
     this->_references.arrayEnd = refsEnd;
     this->_references.elementSize = refSize;
     this->_references.elementCount = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk ReferencesV1:        "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -635,7 +635,7 @@ private:
       }
      return make_error_code(native_reader_error::file_malformed);
     }
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk Targets Table:       "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -650,7 +650,7 @@ private:
     this->_addends = reinterpret_cast<const Reference::Addend*>
                                                   (base + chunk->fileOffset);
     this->_addendsMaxIndex = chunk->elementCount;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk Addends:             "
                     << " count=" << chunk->elementCount
                     << " chunkSize=" << chunk->fileSize
@@ -663,7 +663,7 @@ private:
                             const NativeChunk *chunk) {
     this->_strings = reinterpret_cast<const char*>(base + chunk->fileOffset);
     this->_stringsMaxOffset = chunk->fileSize;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk Strings:             "
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
@@ -675,7 +675,7 @@ private:
                             const NativeChunk *chunk) {
     this->_contentStart = base + chunk->fileOffset;
     this->_contentEnd = base + chunk->fileOffset + chunk->fileSize;
-    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+    DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs()
                     << " chunk content:             "
                     << " chunkSize=" << chunk->fileSize
                     << "\n");
@@ -823,7 +823,7 @@ inline const NativeAtomAttributesV1& NativeDefinedAtomV1::attributes() const {
 
 inline ArrayRef<uint8_t> NativeDefinedAtomV1::rawContent() const {
   if (( this->contentType() == DefinedAtom::typeZeroFill ) ||
-      ( this->contentType() == DefinedAtom::typeZeroFillFast)) 
+      ( this->contentType() == DefinedAtom::typeZeroFillFast))
     return ArrayRef<uint8_t>();
   const uint8_t* p = _file->content(_ivarData->contentOffset,
                                     _ivarData->contentSize);

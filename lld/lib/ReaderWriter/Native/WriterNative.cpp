@@ -29,7 +29,7 @@ namespace native {
 class Writer : public lld::Writer {
 public:
   Writer(const TargetInfo &ti) {}
-  
+
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // reserve first byte for unnamed atoms
     _stringPool.push_back('\0');
@@ -49,7 +49,7 @@ public:
 
     // construct file header based on atom information accumulated
     this->makeHeader();
-    
+
     std::string errorInfo;
     llvm::raw_fd_ostream out(outPath.data(), errorInfo,
                               llvm::raw_fd_ostream::F_Binary);
@@ -57,7 +57,7 @@ public:
       return error_code::success(); // FIXME
 
     this->write(out);
-    
+
     return error_code::success();
   }
 
@@ -437,7 +437,7 @@ private:
     attrs.interposable      = atom.interposable();
     attrs.merge             = atom.merge();
     attrs.contentType       = atom.contentType();
-    attrs.sectionChoiceAndPosition 
+    attrs.sectionChoiceAndPosition
                           = atom.sectionChoice() << 4 | atom.sectionPosition();
     attrs.deadStrip         = atom.deadStrip();
     attrs.permissions       = atom.permissions();

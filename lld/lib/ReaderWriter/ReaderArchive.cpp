@@ -32,7 +32,7 @@ public:
       return nullptr;
 
     llvm::object::Archive::child_iterator ci = member->second;
-    
+
     if (dataSymbolOnly) {
       OwningPtr<MemoryBuffer> buff;
       if (ci->getMemoryBuffer(buff, true))
@@ -40,7 +40,7 @@ public:
       if (isDataSymbol(buff.take(), name))
         return nullptr;
     }
-    
+
     std::vector<std::unique_ptr<File>> result;
 
     OwningPtr<MemoryBuffer> buff;
@@ -53,7 +53,7 @@ public:
     assert(result.size() == 1);
 
     // TO DO: set ordinal of child just loaded
-    
+
     // give up the pointer so that this object no longer manages it
     return result[0].release();
   }
@@ -61,7 +61,7 @@ public:
   virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
     _ordinal = ordinal++;
     // Leave space in ordinal range for all children
-    for (auto mf = _archive->begin_children(), 
+    for (auto mf = _archive->begin_children(),
               me = _archive->end_children(); mf != me; ++mf) {
         ordinal++;
     }
@@ -85,7 +85,7 @@ public:
 
 protected:
   error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
-    std::unique_ptr<llvm::object::ObjectFile> 
+    std::unique_ptr<llvm::object::ObjectFile>
                     obj(llvm::object::ObjectFile::createObjectFile(mb));
     error_code ec;
     llvm::object::SymbolRef::Type symtype;
@@ -96,22 +96,22 @@ protected:
 
     for (llvm::object::symbol_iterator i = ibegin; i != iend; i.increment(ec)) {
       if (ec) return ec;
-      
+
       // Get symbol name
       if ((ec = (i->getName(symbolname)))) return ec;
-      
-      if (symbolname != symbol) 
+
+      if (symbolname != symbol)
           continue;
-      
+
       // Get symbol flags
       if ((ec = (i->getFlags(symflags)))) return ec;
-      
+
       if (symflags <= llvm::object::SymbolRef::SF_Undefined)
           continue;
-      
+
       // Get Symbol Type
       if ((ec = (i->getType(symtype)))) return ec;
-      
+
       if (symtype == llvm::object::SymbolRef::ST_Data) {
         return error_code::success();
       }
@@ -128,7 +128,7 @@ private:
   atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
 
 public:
-  /// only subclasses of ArchiveLibraryFile can be instantiated 
+  /// only subclasses of ArchiveLibraryFile can be instantiated
   FileArchive(const TargetInfo &ti,
               std::function<ErrorOr<Reader &>(const LinkerInput &)> getReader,
               std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
@@ -156,18 +156,18 @@ public:
   std::unordered_map<StringRef, llvm::object::Archive::child_iterator> _symbolMemberMap;
 }; // class FileArchive
 
-// Returns a vector of Files that are contained in the archive file 
+// Returns a vector of Files that are contained in the archive file
 // pointed to by the MemoryBuffer
 error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
                                     std::vector<std::unique_ptr<File>> &result){
   error_code ec;
-  
+
   if (_options._forceLoadArchives) {
     _archive.reset(new llvm::object::Archive(mb.release(), ec));
     if (ec)
       return ec;
-    
-    for (auto mf = _archive->begin_children(), 
+
+    for (auto mf = _archive->begin_children(),
               me = _archive->end_children(); mf != me; ++mf) {
       OwningPtr<MemoryBuffer> buff;
       if ((ec = mf->getMemoryBuffer(buff, true)))

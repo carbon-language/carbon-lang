@@ -41,7 +41,7 @@ template <class ELFT> class TargetLayout;
 
 /// \brief The target registers a set of handlers for overriding target specific
 /// attributes for a DefinedAtom. The Reader uses this class to query for the
-/// type of atom and its permissions 
+/// type of atom and its permissions
 template <class ELFT> class TargetAtomHandler {
 public:
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
@@ -76,7 +76,7 @@ public:
   virtual int64_t relocAddend(const Reference &)const { return 0; }
 };
 
-/// \brief An interface to override functions that are provided by the 
+/// \brief An interface to override functions that are provided by the
 /// the default ELF Layout
 template <class ELFT> class TargetHandler : public TargetHandlerBase {
 
@@ -88,10 +88,10 @@ public:
   /// that target
   virtual bool doesOverrideHeader() = 0;
 
-  /// Set the ELF Header information 
+  /// Set the ELF Header information
   virtual void setHeaderInfo(Header<ELFT> *Header) = 0;
 
-  /// TargetLayout 
+  /// TargetLayout
   virtual TargetLayout<ELFT> &targetLayout() = 0;
 
   /// TargetAtomHandler
@@ -105,14 +105,14 @@ public:
   /// \brief Add a section to the current Layout
   virtual void addSection(Section<ELFT> *section) = 0;
 
-  /// \brief add new symbol file 
+  /// \brief add new symbol file
   virtual void addFiles(InputFiles &) = 0;
 
   /// \brief Finalize the symbol values
   virtual void finalizeSymbolValues() = 0;
 
   /// \brief allocate Commons, some architectures may move small common
-  /// symbols over to small data, this would also be used 
+  /// symbols over to small data, this would also be used
   virtual void allocateCommons() = 0;
 
 protected:

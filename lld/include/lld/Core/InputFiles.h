@@ -40,13 +40,13 @@ public:
 
   /// Used by Writers to insert writer specific files.
   virtual void prependFile(const File&);
-  
+
   /// Used by Writers to insert writer specific files.
   virtual void appendFile(const File&);
- 
+
  /// Transfers ownership of a vector of Files to this InputFile object.
   virtual void appendFiles(std::vector<std::unique_ptr<File>> &files);
-  
+
   /// Assigns an ordinal to each File for use by sort().
   virtual void assignFileOrdinals();
 
@@ -62,7 +62,7 @@ public:
 
 protected:
   void handleFile(const File *file, InputFiles::Handler &handler) const;
-  
+
   std::vector<const File*>        _files;
 };
 

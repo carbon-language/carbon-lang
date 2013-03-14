@@ -80,7 +80,7 @@ StringRef KindHandler_x86_64::kindToString(Reference::Kind kind) {
       return StringRef("invalid");
     case none:
       return StringRef("none");
-    case branch32: 
+    case branch32:
       return StringRef("branch32");
     case ripRel32:
       return StringRef("ripRel32");
@@ -123,23 +123,23 @@ bool KindHandler_x86_64::isCallSite(Kind kind) {
 bool KindHandler_x86_64::isPointer(Kind kind) {
   return (kind == pointer64);
 }
- 
+
 bool KindHandler_x86_64::isLazyImmediate(Kind kind) {
   return (kind == lazyImmediate);
 }
- 
+
 bool KindHandler_x86_64::isLazyTarget(Kind kind) {
   return (kind == lazyTarget);
 }
 
- 
-void KindHandler_x86_64::applyFixup(Kind kind, uint64_t addend,  
-                                    uint8_t *location, uint64_t fixupAddress, 
+
+void KindHandler_x86_64::applyFixup(Kind kind, uint64_t addend,
+                                    uint8_t *location, uint64_t fixupAddress,
                                     uint64_t targetAddress) {
   int32_t *loc32 = reinterpret_cast<int32_t*>(location);
   uint64_t* loc64 = reinterpret_cast<uint64_t*>(location);
   switch ( (Kinds)kind ) {
-    case branch32: 
+    case branch32:
     case ripRel32:
     case gotLoadRipRel32:
     case gotUseRipRel32:
@@ -158,7 +158,7 @@ void KindHandler_x86_64::applyFixup(Kind kind, uint64_t addend,
     case ripRel32_4:
       *loc32 = (targetAddress - (fixupAddress+8)) + addend;
       break;
-    case pointerRel32: 
+    case pointerRel32:
       *loc32 = (targetAddress - fixupAddress) + addend;
       break;
     case gotLoadRipRel32NowLea:
@@ -199,7 +199,7 @@ Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
     .Case("lazyTarget",            lazyTarget)
     .Case("lazyImmediate",         lazyImmediate)
     .Default(invalid);
-  
+
   llvm_unreachable("invalid x86 Reference kind");
 }
 
@@ -209,7 +209,7 @@ StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
       return StringRef("invalid");
     case none:
       return StringRef("none");
-    case branch32: 
+    case branch32:
       return StringRef("branch32");
     case abs32:
       return StringRef("abs32");
@@ -237,22 +237,22 @@ bool KindHandler_x86::isPointer(Kind kind) {
   return (kind == pointer32);
 }
 
- 
+
 bool KindHandler_x86::isLazyImmediate(Kind kind) {
   return (kind == lazyImmediate);
 }
 
- 
+
 bool KindHandler_x86::isLazyTarget(Kind kind) {
   return (kind == lazyTarget);
 }
 
- 
-void KindHandler_x86::applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+
+void KindHandler_x86::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
                   uint64_t fixupAddress, uint64_t targetAddress) {
   int32_t *loc32 = reinterpret_cast<int32_t*>(location);
   switch ( (Kinds)kind ) {
-    case branch32: 
+    case branch32:
       *loc32 = (targetAddress - (fixupAddress+4)) + addend;
       break;
     case pointer32:
@@ -308,9 +308,9 @@ StringRef KindHandler_arm::kindToString(Reference::Kind kind) {
       return StringRef("invalid");
     case none:
       return StringRef("none");
-    case thumbBranch22: 
+    case thumbBranch22:
       return StringRef("thumbBranch22");
-    case armBranch24: 
+    case armBranch24:
       return StringRef("armBranch24");
     case thumbAbsLow16:
       return StringRef("thumbAbsLow16");
@@ -342,43 +342,43 @@ bool KindHandler_arm::isPointer(Kind kind) {
   return (kind == pointer32);
 }
 
- 
+
 bool KindHandler_arm::isLazyImmediate(Kind kind) {
   return (kind == lazyImmediate);
 }
 
- 
+
 bool KindHandler_arm::isLazyTarget(Kind kind) {
   return (kind == lazyTarget);
 }
 
- 
-void KindHandler_arm::applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+
+void KindHandler_arm::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
                   uint64_t fixupAddress, uint64_t targetAddress) {
   //int32_t *loc32 = reinterpret_cast<int32_t*>(location);
   switch ( (Kinds)kind ) {
-    case thumbBranch22: 
+    case thumbBranch22:
       // FIXME
       break;
-    case armBranch24: 
+    case armBranch24:
       // FIXME
       break;
-    case thumbAbsLow16: 
+    case thumbAbsLow16:
       // FIXME
       break;
-    case thumbAbsHigh16: 
+    case thumbAbsHigh16:
       // FIXME
       break;
-    case thumbPcRelLow16: 
+    case thumbPcRelLow16:
       // FIXME
       break;
-    case thumbPcRelHigh16: 
+    case thumbPcRelHigh16:
       // FIXME
       break;
-    case abs32: 
+    case abs32:
       // FIXME
       break;
-    case pointer32: 
+    case pointer32:
       // FIXME
       break;
     case none:
@@ -392,7 +392,7 @@ void KindHandler_arm::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
       break;
   }
 }
- 
+
 
 } // namespace mach_o
 } // namespace lld

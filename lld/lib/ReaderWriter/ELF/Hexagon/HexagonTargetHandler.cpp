@@ -100,7 +100,7 @@ public:
 protected:
   /// \brief Owner of all the Atoms created by this pass.
   ELFPassFile _file;
-  
+
   /// \brief Map Atoms to their GOT entries.
   llvm::DenseMap<const Atom *, GOTAtom *> _gotMap;
 

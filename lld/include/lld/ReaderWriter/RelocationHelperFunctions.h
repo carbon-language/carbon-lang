@@ -13,16 +13,16 @@
 namespace lld {
 
 /// \brief Return the bits that are described by the mask
-template < typename T > 
+template < typename T >
 T gatherBits(T val, T mask)
 {
   T result = 0;
   size_t off = 0;
-  
+
   for (size_t bit = 0; bit != sizeof (T) * 8; ++bit) {
     const bool valBit = (val >> bit) & 1;
     const bool maskBit = (mask >> bit) & 1;
-    if (maskBit) { 
+    if (maskBit) {
       result |= static_cast <T> (valBit) << off;
       ++off;
     }
@@ -31,7 +31,7 @@ T gatherBits(T val, T mask)
 }
 
 /// \brief Set the bits as described by the mask
-template <typename T> 
+template <typename T>
 T scatterBits(T val, T mask)
 {
   T result = 0;
@@ -48,6 +48,6 @@ T scatterBits(T val, T mask)
   return result;
 }
 
-} // namespace lld 
+} // namespace lld
 
 #endif // LLD_READER_WRITER_RELOCATION_HELPER_FUNCTIONS_H

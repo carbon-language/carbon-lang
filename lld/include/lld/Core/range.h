@@ -650,7 +650,7 @@ private:
           advance_upto(last, stop - start, end(), iterator_category());
       } else {
         // Complicated: 'start' walked from the end of the sequence,
-        // but 'stop' needs to walk from the beginning. 
+        // but 'stop' needs to walk from the beginning.
         Iterator dummy = begin();
         // Walk up to 'stop' increments from begin(), stopping when we
         // get to 'first', and capturing the remaining number of

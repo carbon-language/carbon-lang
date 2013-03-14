@@ -170,7 +170,7 @@ public:
           *it, _core.getOption(core::OPT_input_search_path), (*it)->getValue());
       _inputSearchPaths.push_back((*it)->getValue());
     }
-      
+
     // Copy input args.
     for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_INPUT,
                                  ld::OPT_l),

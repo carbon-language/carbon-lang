@@ -21,7 +21,7 @@ namespace elf {
 /// be changed in the final layout
 template <class ELFT> class TargetLayout : public DefaultLayout<ELFT> {
 public:
-  TargetLayout(const ELFTargetInfo &targetInfo) 
+  TargetLayout(const ELFTargetInfo &targetInfo)
     : DefaultLayout<ELFT>(targetInfo) {}
 };
 } // end namespace elf

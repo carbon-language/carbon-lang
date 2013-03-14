@@ -95,13 +95,13 @@ public:
   /// we are looking for
   class FindPhdr {
   public:
-    FindPhdr(uint64_t type, uint64_t flags, uint64_t flagsClear) 
+    FindPhdr(uint64_t type, uint64_t flags, uint64_t flagsClear)
              : _type(type)
              , _flags(flags)
              , _flagsClear(flagsClear)
     {}
 
-    bool operator()(const Elf_Phdr *j) const { 
+    bool operator()(const Elf_Phdr *j) const {
       return ((j->p_type == _type) &&
               ((j->p_flags & _flags) == _flags) &&
               (!(j->p_flags & _flagsClear)));
@@ -248,13 +248,13 @@ public:
   SectionHeader(const ELFTargetInfo &, int32_t order);
 
   void appendSection(MergedSections<ELFT> *section);
-  
+
   void updateSection(Section<ELFT> *section);
-  
+
   static inline bool classof(const Chunk<ELFT> *c) {
     return c->getChunkKind() == Chunk<ELFT>::K_SectionHeader;
   }
-  
+
   void setStringSection(StringTable<ELFT> *s) {
     _stringSection = s;
   }
@@ -270,7 +270,7 @@ public:
   inline uint64_t entsize() {
     return sizeof(Elf_Shdr);
   }
-  
+
   inline uint64_t numHeaders() {
     return _sectionInfo.size();
   }
@@ -295,7 +295,7 @@ SectionHeader<ELFT>::SectionHeader(const ELFTargetInfo &ti, int32_t order)
 }
 
 template<class ELFT>
-void 
+void
 SectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
   Elf_Shdr *shdr = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
   shdr->sh_name   = _stringSection->addString(section->name());
@@ -312,7 +312,7 @@ SectionHeader<ELFT>::appendSection(MergedSections<ELFT> *section) {
 }
 
 template<class ELFT>
-void 
+void
 SectionHeader<ELFT>::updateSection(Section<ELFT> *section) {
   Elf_Shdr *shdr = _sectionInfo[section->ordinal()];
   shdr->sh_type = section->getType();

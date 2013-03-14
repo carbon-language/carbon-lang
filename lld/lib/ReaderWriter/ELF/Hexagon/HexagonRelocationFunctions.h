@@ -37,13 +37,13 @@ uint32_t findBitMask(uint32_t insn, Instruction *encodings, int32_t numInsns) {
     if (((insn & 0xc000) != 0) && (encodings[i].isDuplex))
       continue;
 
-    if (((encodings[i].insnMask) & insn) == encodings[i].insnCmpMask) 
+    if (((encodings[i].insnMask) & insn) == encodings[i].insnCmpMask)
       return encodings[i].insnBitMask;
   }
   llvm_unreachable("found unknown instruction");
 }
 
-} // elf 
+} // elf
 } // lld
 
 #endif // LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_FUNCTIONS_H

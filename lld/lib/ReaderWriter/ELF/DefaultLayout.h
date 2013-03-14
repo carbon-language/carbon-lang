@@ -47,7 +47,7 @@ public:
   // If its determined, that the layout needs to change
   // just changing the order of enumerations would essentially
   // change the layout in the output file
-  // Change the enumerations so that Target can override and stick 
+  // Change the enumerations so that Target can override and stick
   // a section anywhere it wants to
   enum DefaultSectionOrder {
     ORDER_NOT_DEFINED = 0,
@@ -112,10 +112,10 @@ public:
   };
 
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
-  // The additional segments are used to figure out 
+  // The additional segments are used to figure out
   // if there is a segment by that type already created
-  // For example : PT_TLS, we have two sections .tdata/.tbss 
-  // that are part of PT_TLS, we need to create this additional 
+  // For example : PT_TLS, we have two sections .tdata/.tbss
+  // that are part of PT_TLS, we need to create this additional
   // segment only once
   typedef int64_t AdditionalSegmentKey;
   // The segments are created using
@@ -181,7 +181,7 @@ public:
   /// \brief Find an output Section given a section name.
   MergedSections<ELFT> *findOutputSection(StringRef name) {
     auto iter = _mergedSectionMap.find(name);
-    if (iter == _mergedSectionMap.end()) 
+    if (iter == _mergedSectionMap.end())
       return nullptr;
     return iter->second;
   }
@@ -319,7 +319,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
       .StartsWith(".fini", ORDER_FINI)
       .StartsWith(".hash", ORDER_HASH)
       .Default(ORDER_TEXT);
-  
+
   case DefinedAtom::typeConstant:
     return ORDER_RODATA;
 
@@ -346,7 +346,7 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
     // If we get passed in a section push it to OTHER
     if (contentPermissions == DefinedAtom::perm___)
       return ORDER_OTHER;
-  
+
     return ORDER_NOT_DEFINED;
   }
 }
@@ -356,8 +356,8 @@ template <class ELFT>
 StringRef DefaultLayout<ELFT>::getSectionName(
     StringRef name, const int32_t contentType,
     const int32_t contentPermissions) {
-  if ((contentType == DefinedAtom::typeZeroFill) || 
-      (contentType == DefinedAtom::typeZeroFillFast)) 
+  if ((contentType == DefinedAtom::typeZeroFill) ||
+      (contentType == DefinedAtom::typeZeroFillFast))
     return ".bss";
   if (name.startswith(".text"))
     return ".text";
@@ -514,7 +514,7 @@ ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
 
 /// Merge sections with the same name into a MergedSections
 template<class ELFT>
-void 
+void
 DefaultLayout<ELFT>::mergeSimiliarSections() {
   MergedSections<ELFT> *mergedSection;
 
@@ -538,7 +538,7 @@ DefaultLayout<ELFT>::mergeSimiliarSections() {
 
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   // TODO: Do we want to give a chance for the targetHandlers
-  // to sort segments in an arbitrary order ? 
+  // to sort segments in an arbitrary order ?
   // sort the sections by their order as defined by the layout
   std::stable_sort(_sections.begin(), _sections.end(),
                    [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
@@ -569,12 +569,12 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         StringRef segmentName = section->segmentKindToStr();
 
         int64_t lookupSectionFlag = msi->flags();
-        if (!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) 
+        if (!(lookupSectionFlag & llvm::ELF::SHF_WRITE))
           lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
         lookupSectionFlag &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
 
         Segment<ELFT> *segment;
-        // We need a seperate segment for sections that dont have 
+        // We need a seperate segment for sections that dont have
         // the segment type to be PT_LOAD
         if (segmentType != llvm::ELF::PT_LOAD) {
           const std::pair<AdditionalSegmentKey, Segment<ELFT> *>
@@ -622,7 +622,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
 
 template <class ELFT> void DefaultLayout<ELFT>::assignFileOffsets() {
   // TODO: Do we want to give a chance for the targetHandlers
-  // to sort segments in an arbitrary order ? 
+  // to sort segments in an arbitrary order ?
   std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
   int ordinal = 0;
   // Compute the number of segments that might be needed, so that the
@@ -643,13 +643,13 @@ void
 DefaultLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
-  
+
   uint64_t virtualAddress = _targetInfo.getBaseAddress();
 
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
   // so that AT_PHDR is set correctly by the loader and so they are accessible
-  // at runtime. To do this we simply prepend them to the first loadable Segment 
+  // at runtime. To do this we simply prepend them to the first loadable Segment
   // and let the layout logic take care of it.
   Segment<ELFT> *firstLoadSegment = nullptr;
   for (auto si : _segments) {

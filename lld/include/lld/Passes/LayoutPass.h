@@ -25,7 +25,7 @@ namespace lld {
 class DefinedAtom;
 class MutableFile;
 
-/// This linker pass does the layout of the atoms. The pass is done after the 
+/// This linker pass does the layout of the atoms. The pass is done after the
 /// order their .o files were found on the command line, then by order of the
 /// atoms (address) in the .o file.  But some atoms have a prefered location
 /// in their section (such as pinned to the start or end of the section), so
@@ -50,19 +50,19 @@ public:
   virtual ~LayoutPass() {}
 
 private:
-  // Build the followOn atoms chain as specified by the kindLayoutAfter 
-  // reference type 
+  // Build the followOn atoms chain as specified by the kindLayoutAfter
+  // reference type
   void buildFollowOnTable(MutableFile::DefinedAtomRange &range);
 
   // Build the followOn atoms chain as specified by the kindInGroup
-  // reference type 
+  // reference type
   void buildInGroupTable(MutableFile::DefinedAtomRange &range);
 
   // Build the PrecededBy Table as specified by the kindLayoutBefore
-  // reference type 
+  // reference type
   void buildPrecededByTable(MutableFile::DefinedAtomRange &range);
 
-  // Build a map of Atoms to ordinals for sorting the atoms 
+  // Build a map of Atoms to ordinals for sorting the atoms
   void buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range);
 
   typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;

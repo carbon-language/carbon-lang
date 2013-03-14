@@ -28,18 +28,18 @@ namespace mach_o {
 class KindHandler {
 public:
   typedef Reference::Kind Kind;
-  
+
   static KindHandler *makeHandler(llvm::Triple::ArchType arch);
   virtual             ~KindHandler();
   virtual Kind        stringToKind(StringRef str) = 0;
   virtual StringRef   kindToString(Kind) = 0;
   virtual bool        isCallSite(Kind) = 0;
-  virtual bool        isPointer(Kind) = 0; 
-  virtual bool        isLazyImmediate(Kind) = 0; 
-  virtual bool        isLazyTarget(Kind) = 0; 
-  virtual void        applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+  virtual bool        isPointer(Kind) = 0;
+  virtual bool        isLazyImmediate(Kind) = 0;
+  virtual bool        isLazyTarget(Kind) = 0;
+  virtual void        applyFixup(Kind kind, uint64_t addend, uint8_t *location,
                            uint64_t fixupAddress, uint64_t targetAddress) = 0;
-  
+
 protected:
   KindHandler();
 };
@@ -73,10 +73,10 @@ public:
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
-  virtual bool isPointer(Kind); 
-  virtual bool isLazyImmediate(Kind); 
-  virtual bool isLazyTarget(Kind); 
-  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+  virtual bool isPointer(Kind);
+  virtual bool isLazyImmediate(Kind);
+  virtual bool isLazyTarget(Kind);
+  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location,
                   uint64_t fixupAddress, uint64_t targetAddress);
 
 };
@@ -101,10 +101,10 @@ public:
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
-  virtual bool isPointer(Kind); 
-  virtual bool isLazyImmediate(Kind); 
-  virtual bool isLazyTarget(Kind); 
-  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+  virtual bool isPointer(Kind);
+  virtual bool isLazyImmediate(Kind);
+  virtual bool isLazyTarget(Kind);
+  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location,
                   uint64_t fixupAddress, uint64_t targetAddress);
 
 };
@@ -131,10 +131,10 @@ public:
   virtual Kind stringToKind(StringRef str);
   virtual StringRef kindToString(Kind);
   virtual bool isCallSite(Kind);
-  virtual bool isPointer(Kind); 
-  virtual bool isLazyImmediate(Kind); 
-  virtual bool isLazyTarget(Kind); 
-  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+  virtual bool isPointer(Kind);
+  virtual bool isLazyImmediate(Kind);
+  virtual bool isLazyTarget(Kind);
+  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location,
                   uint64_t fixupAddress, uint64_t targetAddress);
 
 };
