@@ -111,8 +111,8 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   UNIMPLEMENTED();
 }
 
-static const kMaxEnvNameLength = 128;
-static const kMaxEnvValueLength = 32767;
+static const int kMaxEnvNameLength = 128;
+static const int kMaxEnvValueLength = 32767;
 
 namespace {
 
