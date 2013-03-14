@@ -65,19 +65,19 @@ private:
   virtual bool selectIntAddr(SDValue Addr, SDValue &Base,
                              SDValue &Offset) const;
 
-  virtual bool SelectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
+  virtual bool selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
                             SDValue &Offset, SDValue &Alias);
 
   virtual SDNode *Select(SDNode *N);
 
-  virtual std::pair<bool, SDNode*> SelectNode(SDNode *Node) = 0;
+  virtual std::pair<bool, SDNode*> selectNode(SDNode *Node) = 0;
 
   // getImm - Return a target constant with the specified value.
   inline SDValue getImm(const SDNode *Node, uint64_t Imm) {
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
 
-  virtual void ProcessFunctionAfterISel(MachineFunction &MF) = 0;
+  virtual void processFunctionAfterISel(MachineFunction &MF) = 0;
 
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                             char ConstraintCode,

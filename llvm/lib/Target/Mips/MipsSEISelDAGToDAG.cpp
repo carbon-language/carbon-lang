@@ -36,7 +36,7 @@
 using namespace llvm;
 
 
-bool MipsSEDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
+bool MipsSEDAGToDAGISel::replaceUsesWithZeroReg(MachineRegisterInfo *MRI,
                                                 const MachineInstr& MI) {
   unsigned DstReg = 0, ZeroReg = 0;
 
@@ -74,7 +74,7 @@ bool MipsSEDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
   return true;
 }
 
-void MipsSEDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
+void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   if (!MipsFI->globalBaseRegSet())
@@ -166,34 +166,34 @@ void MipsSEDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
     .addReg(Mips::V0).addReg(Mips::T9);
 }
 
-void MipsSEDAGToDAGISel::ProcessFunctionAfterISel(MachineFunction &MF) {
-  InitGlobalBaseReg(MF);
+void MipsSEDAGToDAGISel::processFunctionAfterISel(MachineFunction &MF) {
+  initGlobalBaseReg(MF);
 
   MachineRegisterInfo *MRI = &MF.getRegInfo();
 
   for (MachineFunction::iterator MFI = MF.begin(), MFE = MF.end(); MFI != MFE;
        ++MFI)
     for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I)
-      ReplaceUsesWithZeroReg(MRI, *I);
+      replaceUsesWithZeroReg(MRI, *I);
 }
 
 /// Select multiply instructions.
 std::pair<SDNode*, SDNode*>
-MipsSEDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty,
+MipsSEDAGToDAGISel::selectMULT(SDNode *N, unsigned Opc, DebugLoc DL, EVT Ty,
                                bool HasLo, bool HasHi) {
   SDNode *Lo = 0, *Hi = 0;
-  SDNode *Mul = CurDAG->getMachineNode(Opc, dl, MVT::Glue, N->getOperand(0),
+  SDNode *Mul = CurDAG->getMachineNode(Opc, DL, MVT::Glue, N->getOperand(0),
                                        N->getOperand(1));
   SDValue InFlag = SDValue(Mul, 0);
 
   if (HasLo) {
     unsigned Opcode = (Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64);
-    Lo = CurDAG->getMachineNode(Opcode, dl, Ty, MVT::Glue, InFlag);
+    Lo = CurDAG->getMachineNode(Opcode, DL, Ty, MVT::Glue, InFlag);
     InFlag = SDValue(Lo, 1);
   }
   if (HasHi) {
     unsigned Opcode = (Ty == MVT::i32 ? Mips::MFHI : Mips::MFHI64);
-    Hi = CurDAG->getMachineNode(Opcode, dl, Ty, InFlag);
+    Hi = CurDAG->getMachineNode(Opcode, DL, Ty, InFlag);
   }
   return std::make_pair(Lo, Hi);
 }
@@ -279,9 +279,9 @@ bool MipsSEDAGToDAGISel::selectIntAddr(SDValue Addr, SDValue &Base,
     selectAddrDefault(Addr, Base, Offset);
 }
 
-std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
+std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
-  DebugLoc dl = Node->getDebugLoc();
+  DebugLoc DL = Node->getDebugLoc();
 
   ///
   // Instruction Selection not handled by the auto-generated
@@ -319,9 +319,9 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
     EVT VT = LHS.getValueType();
 
     unsigned Sltu_op = Mips::SLTu;
-    SDNode *Carry = CurDAG->getMachineNode(Sltu_op, dl, VT, Ops, 2);
+    SDNode *Carry = CurDAG->getMachineNode(Sltu_op, DL, VT, Ops, 2);
     unsigned Addu_op = Mips::ADDu;
-    SDNode *AddCarry = CurDAG->getMachineNode(Addu_op, dl, VT,
+    SDNode *AddCarry = CurDAG->getMachineNode(Addu_op, DL, VT,
                                               SDValue(Carry,0), RHS);
 
     Result = CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue, LHS,
@@ -337,7 +337,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
     else
       MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::DMULTu : Mips::DMULT);
 
-    std::pair<SDNode*, SDNode*> LoHi = SelectMULT(Node, MultOpc, dl, NodeTy,
+    std::pair<SDNode*, SDNode*> LoHi = selectMULT(Node, MultOpc, DL, NodeTy,
                                                   true, true);
 
     if (!SDValue(Node, 0).use_empty())
@@ -355,7 +355,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
     if (Subtarget.hasMips32() && NodeTy == MVT::i32)
       break;
     MultOpc = NodeTy == MVT::i32 ? Mips::MULT : Mips::DMULT;
-    Result = SelectMULT(Node, MultOpc, dl, NodeTy, true, false).first;
+    Result = selectMULT(Node, MultOpc, DL, NodeTy, true, false).first;
     return std::make_pair(true, Result);
   }
   case ISD::MULHS:
@@ -365,7 +365,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
     else
       MultOpc = (Opcode == ISD::MULHU ? Mips::DMULTu : Mips::DMULT);
 
-    Result = SelectMULT(Node, MultOpc, dl, NodeTy, false, true).second;
+    Result = selectMULT(Node, MultOpc, DL, NodeTy, false, true).second;
     return std::make_pair(true, Result);
   }
 
@@ -373,13 +373,13 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
     ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
     if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
       if (Subtarget.hasMips64()) {
-        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
+        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
                                               Mips::ZERO_64, MVT::i64);
-        Result = CurDAG->getMachineNode(Mips::DMTC1, dl, MVT::f64, Zero);
+        Result = CurDAG->getMachineNode(Mips::DMTC1, DL, MVT::f64, Zero);
       } else {
-        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
+        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
                                               Mips::ZERO, MVT::i32);
-        Result = CurDAG->getMachineNode(Mips::BuildPairF64, dl, MVT::f64, Zero,
+        Result = CurDAG->getMachineNode(Mips::BuildPairF64, DL, MVT::f64, Zero,
                                         Zero);
       }
 
@@ -447,9 +447,9 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::SelectNode(SDNode *Node) {
       CurDAG->getMachineNode(RdhwrOpc, Node->getDebugLoc(),
                              Node->getValueType(0),
                              CurDAG->getRegister(SrcReg, PtrVT));
-    SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, DestReg,
+    SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), DL, DestReg,
                                          SDValue(Rdhwr, 0));
-    SDValue ResNode = CurDAG->getCopyFromReg(Chain, dl, DestReg, PtrVT);
+    SDValue ResNode = CurDAG->getCopyFromReg(Chain, DL, DestReg, PtrVT);
     ReplaceUses(SDValue(Node, 0), ResNode);
     return std::make_pair(true, ResNode.getNode());
   }

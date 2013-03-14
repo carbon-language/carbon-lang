@@ -49,7 +49,7 @@ using namespace llvm;
 bool MipsDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   bool Ret = SelectionDAGISel::runOnMachineFunction(MF);
 
-  ProcessFunctionAfterISel(MF);
+  processFunctionAfterISel(MF);
 
   return Ret;
 }
@@ -81,7 +81,7 @@ bool MipsDAGToDAGISel::selectIntAddr(SDValue Addr, SDValue &Base,
   return false;
 }
 
-bool MipsDAGToDAGISel::SelectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
+bool MipsDAGToDAGISel::selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
                                     SDValue &Offset, SDValue &Alias) {
   llvm_unreachable("Unimplemented function.");
   return false;
@@ -91,7 +91,7 @@ bool MipsDAGToDAGISel::SelectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
 /// expanded, promoted and normal instructions
 SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
-  DebugLoc dl = Node->getDebugLoc();
+  DebugLoc DL = Node->getDebugLoc();
   EVT NodeTy = Node->getValueType(0);
 
   // Dump information about the Node being selected
@@ -104,7 +104,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   }
 
   // See if subclasses can handle this node.
-  std::pair<bool, SDNode*> Ret = SelectNode(Node);
+  std::pair<bool, SDNode*> Ret = selectNode(Node);
 
   if (Ret.first)
     return Ret.second;

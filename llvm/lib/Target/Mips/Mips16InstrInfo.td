@@ -15,7 +15,7 @@
 // Mips Address
 //
 def addr16 :
-  ComplexPattern<iPTR, 3, "SelectAddr16", [frameindex], [SDNPWantParent]>;
+  ComplexPattern<iPTR, 3, "selectAddr16", [frameindex], [SDNPWantParent]>;
 
 //
 // Address operand
