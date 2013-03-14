@@ -2817,17 +2817,18 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
                                  CGM.getLangOpts().Optimize, flags,
                                  cast<llvm::Argument>(Arg)->getArgNo() + 1);
 
-  // Matching the code in EmitParmDecl, depending on optimization level.
-  llvm::Instruction *Call;
-  if (LocalAddr)
+  if (LocalAddr) {
     // Insert an llvm.dbg.value into the current block.
-    Call = DBuilder.insertDbgValueIntrinsic(LocalAddr, 0, debugVar,
-                                            Builder.GetInsertBlock());
-  else
-    // Insert an llvm.dbg.declare into the current block.
-    Call = DBuilder.insertDeclare(Arg, debugVar, Builder.GetInsertBlock());
+    llvm::Instruction *DbgVal =
+      DBuilder.insertDbgValueIntrinsic(LocalAddr, 0, debugVar,
+				       Builder.GetInsertBlock());
+    DbgVal->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
+  }
 
-  Call->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
+  // Insert an llvm.dbg.declare into the current block.
+  llvm::Instruction *DbgDecl =
+    DBuilder.insertDeclare(Arg, debugVar, Builder.GetInsertBlock());
+  DbgDecl->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
 }
 
 /// getStaticDataMemberDeclaration - If D is an out-of-class definition of
