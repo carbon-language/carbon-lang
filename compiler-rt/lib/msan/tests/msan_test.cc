@@ -670,7 +670,7 @@ TEST(MemorySanitizer, strndup_short) {
   char *x = strndup(buf, 2);
   EXPECT_NOT_POISONED(x[0]);
   EXPECT_POISONED(x[1]);
-  EXPECT_NOT_POISONED(x[3]);
+  EXPECT_NOT_POISONED(x[2]);
   free(x);
 }
 
