@@ -524,7 +524,7 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
             {
                 prev_end_entry_linked_file_addr = std::min<lldb::addr_t>(entry.file_addr, prev_file_range_entry->GetRangeEnd()) - prev_file_range_entry->GetRangeBase() + prev_file_range_entry->data;
                 if (prev_end_entry_linked_file_addr != entry_linked_file_addr)
-                    terminate_previous_entry = true;                
+                    terminate_previous_entry = prev_entry_was_linked;                
             }
         }
         else if (prev_entry_was_linked)
@@ -540,7 +540,7 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
             }
         }
         
-        if (terminate_previous_entry)
+        if (terminate_previous_entry && !sequence.m_entries.empty())
         {
             assert (prev_file_addr != LLDB_INVALID_ADDRESS);
             sequence.m_entries.push_back(sequence.m_entries.back());
