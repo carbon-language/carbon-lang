@@ -407,6 +407,48 @@ ReSimplify:
     LowerUnaryToTwoAddr(OutMI, X86::XOR32rr); // MOV32r0 -> XOR32rr
     break;
 
+  // Commute operands to get a smaller encoding by using VEX.R instead of VEX.B
+  // if one of the registers is extended, but other isn't.
+  case X86::VMOVAPDrr:
+  case X86::VMOVAPDYrr:
+  case X86::VMOVAPSrr:
+  case X86::VMOVAPSYrr:
+  case X86::VMOVDQArr:
+  case X86::VMOVDQAYrr:
+  case X86::VMOVDQUrr:
+  case X86::VMOVDQUYrr:
+  case X86::VMOVSDrr:
+  case X86::VMOVSSrr:
+  case X86::VMOVUPDrr:
+  case X86::VMOVUPDYrr:
+  case X86::VMOVUPSrr:
+  case X86::VMOVUPSYrr: {
+    if (X86II::isX86_64ExtendedReg(OutMI.getOperand(0).getReg()) &&
+        !X86II::isX86_64ExtendedReg(OutMI.getOperand(1).getReg()))
+      break;
+
+    unsigned NewOpc;
+    switch (OutMI.getOpcode()) {
+    default: llvm_unreachable("Invalid opcode");
+    case X86::VMOVAPDrr:  NewOpc = X86::VMOVAPDrr_REV;  break;
+    case X86::VMOVAPDYrr: NewOpc = X86::VMOVAPDYrr_REV; break;
+    case X86::VMOVAPSrr:  NewOpc = X86::VMOVAPSrr_REV;  break;
+    case X86::VMOVAPSYrr: NewOpc = X86::VMOVAPSYrr_REV; break;
+    case X86::VMOVDQArr:  NewOpc = X86::VMOVDQArr_REV;  break;
+    case X86::VMOVDQAYrr: NewOpc = X86::VMOVDQAYrr_REV; break;
+    case X86::VMOVDQUrr:  NewOpc = X86::VMOVDQUrr_REV;  break;
+    case X86::VMOVDQUYrr: NewOpc = X86::VMOVDQUYrr_REV; break;
+    case X86::VMOVSDrr:   NewOpc = X86::VMOVSDrr_REV;   break;
+    case X86::VMOVSSrr:   NewOpc = X86::VMOVSSrr_REV;   break;
+    case X86::VMOVUPDrr:  NewOpc = X86::VMOVUPDrr_REV;  break;
+    case X86::VMOVUPDYrr: NewOpc = X86::VMOVUPDYrr_REV; break;
+    case X86::VMOVUPSrr:  NewOpc = X86::VMOVUPSrr_REV;  break;
+    case X86::VMOVUPSYrr: NewOpc = X86::VMOVUPSYrr_REV; break;
+    }
+    OutMI.setOpcode(NewOpc);
+    break;
+  }
+
   // TAILJMPr64, CALL64r, CALL64pcrel32 - These instructions have register
   // inputs modeled as normal uses instead of implicit uses.  As such, truncate
   // off all but the first operand (the callee).  FIXME: Change isel.
