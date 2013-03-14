@@ -25,6 +25,10 @@
 // CHECK: encoding: [0xc4,0xe3,0xf9,0x6b,0xc2,0x10]
           vfmaddsd   %xmm2, %xmm1, %xmm0, %xmm0
 
+// CHECK: vfmaddsd   %xmm10, %xmm1, %xmm0, %xmm0
+// CHECK: encoding: [0xc4,0xc3,0xf9,0x6b,0xc2,0x10]
+          vfmaddsd   %xmm10, %xmm1, %xmm0, %xmm0
+
 // CHECK: vfmaddps  (%rcx), %xmm1, %xmm0, %xmm0
 // CHECK: encoding: [0xc4,0xe3,0xf9,0x68,0x01,0x10]
           vfmaddps  (%rcx), %xmm1, %xmm0, %xmm0

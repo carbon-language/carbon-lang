@@ -446,6 +446,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                            raw_ostream &OS) const {
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
+  bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
 
   // VEX_R: opcode externsion equivalent to REX.R in
   // 1's complement (inverted) form
@@ -650,12 +651,19 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  dst(ModR/M), src1(ModR/M)
     //  dst(ModR/M), src1(ModR/M), imm8
     //
+    //  FMA4:
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
+    //  dst(ModR/M.reg), src1(VEX_4V), src2(VEX_I8IMM), src3(ModR/M),
     if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_R = 0x0;
     CurOp++;
 
     if (HasVEX_4V)
       VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
+
+    if (HasMemOp4) // Skip second register source (encoded in I8IMM)
+      CurOp++;
+
     if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
       VEX_B = 0x0;
     CurOp++;
