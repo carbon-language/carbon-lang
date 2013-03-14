@@ -1821,6 +1821,14 @@ NameSearchContext::AddTypeDecl(void *type)
             
             return (NamedDecl*)interface_decl;
         }
+        else if (const TypedefType *typedef_type = qual_type->getAs<TypedefType>())
+        {
+            TypedefNameDecl *typedef_name_decl = typedef_type->getDecl();
+            
+            m_decls.push_back(typedef_name_decl);
+            
+            return (NamedDecl*)typedef_name_decl;
+        }
     }
     return NULL;
 }
