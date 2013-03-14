@@ -54,9 +54,10 @@ typedef enum {
 // CHECK:        [[MEM1:%.*]] = alloca i8*, align 8
 // CHECK-NEXT:   [[MEM2:%.*]] = alloca i8*, align 8
 // CHECK-NEXT:   [[MEM3:%.*]] = alloca %{{.*}}*, align 8
-// CHECK:        store i8* %[[BLOCK_DESC:.*]], i8** [[MEM1]], align 8
+// CHECK:        store i8* [[BLOCK_DESC:%.*]], i8** [[MEM1]], align 8
 // CHECK:        [[TMP0:%.*]] = load i8** [[MEM1]]
 // CHECK:        call void @llvm.dbg.value(metadata !{i8* [[TMP0]]}, i64 0, metadata [[BDMD:![0-9]+]])
+// CHECK:        call void @llvm.dbg.declare(metadata !{i8* [[BLOCK_DESC]]}, metadata [[BDMD:![0-9]+]])
 // CHECK:        [[TMP1:%.*]] = bitcast
 // CHECK-NEXT:   [[TMP2:%.*]] = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* [[TMP1]]
 // CHECK-NEXT:   [[TMP3:%.*]] = load %0** [[TMP2]]
