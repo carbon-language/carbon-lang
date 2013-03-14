@@ -86,11 +86,6 @@ typedef void (*sighandler_t)(int sig);
 
 #define errno (*__errno_location())
 
-union pthread_attr_t {
-  char size[kPthreadAttrSize];
-  void *align;
-};
-
 struct sigaction_t {
   union {
     sighandler_t sa_handler;
@@ -734,7 +729,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
 TSAN_INTERCEPTOR(int, pthread_create,
     void *th, void *attr, void *(*callback)(void*), void * param) {
   SCOPED_TSAN_INTERCEPTOR(pthread_create, th, attr, callback, param);
-  pthread_attr_t myattr;
+  __sanitizer_pthread_attr_t myattr;
   if (attr == 0) {
     pthread_attr_init(&myattr);
     attr = &myattr;
