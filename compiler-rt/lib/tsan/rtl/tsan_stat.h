@@ -273,6 +273,9 @@ enum StatType {
   StatInt_ctime_r,
   StatInt_asctime,
   StatInt_asctime_r,
+  StatInt_frexp,
+  StatInt_frexpf,
+  StatInt_frexpl,
 
   // Dynamic annotations.
   StatAnnotation,

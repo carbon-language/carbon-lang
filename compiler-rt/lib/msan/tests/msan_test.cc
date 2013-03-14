@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <wchar.h>
+#include <math.h>
 
 #include <dlfcn.h>
 #include <unistd.h>
@@ -886,6 +887,24 @@ TEST(MemorySanitizer, fcvt) {
   char *str = fcvt(12345.6789, 10, &a, &b);
   EXPECT_NOT_POISONED(a);
   EXPECT_NOT_POISONED(b);
+}
+
+TEST(MemorySanitizer, frexp) {
+  int x;
+  x = *GetPoisoned<int>();
+  double r = frexp(1.1, &x);
+  EXPECT_NOT_POISONED(r);
+  EXPECT_NOT_POISONED(x);
+
+  x = *GetPoisoned<int>();
+  float rf = frexpf(1.1, &x);
+  EXPECT_NOT_POISONED(rf);
+  EXPECT_NOT_POISONED(x);
+
+  x = *GetPoisoned<int>();
+  double rl = frexpl(1.1, &x);
+  EXPECT_NOT_POISONED(rl);
+  EXPECT_NOT_POISONED(x);
 }
 
 struct StructWithDtor {

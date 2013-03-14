@@ -28,6 +28,39 @@
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
 
+#if SANITIZER_INTERCEPT_FREXP
+INTERCEPTOR(double, frexp, double x, int *exp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, frexp, x, exp);
+  double res = REAL(frexp)(x, exp);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, exp, sizeof(*exp));
+  return res;
+}
+
+INTERCEPTOR(float, frexpf, float x, int *exp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, frexpf, x, exp);
+  float res = REAL(frexpf)(x, exp);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, exp, sizeof(*exp));
+  return res;
+}
+
+INTERCEPTOR(long double, frexpl, long double x, int *exp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, frexpl, x, exp);
+  long double res = REAL(frexpl)(x, exp);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, exp, sizeof(*exp));
+  return res;
+}
+
+#define INIT_FREXP                               \
+  INTERCEPT_FUNCTION(frexp);                     \
+  INTERCEPT_FUNCTION(frexpf);                    \
+  INTERCEPT_FUNCTION(frexpl)
+#else
+#define INIT_FREXP
+#endif // SANITIZER_INTERCEPT_FREXP
+
 #if SANITIZER_INTERCEPT_READ
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   void *ctx;
@@ -336,4 +369,5 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
   INIT_PWRITE;                                                                 \
   INIT_PWRITE64;                                                               \
   INIT_LOCALTIME_AND_FRIENDS;                                                  \
-  INIT_SCANF;
+  INIT_SCANF;                                                                  \
+  INIT_FREXP;
