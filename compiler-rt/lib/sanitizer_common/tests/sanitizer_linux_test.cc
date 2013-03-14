@@ -22,93 +22,164 @@
 #include <sched.h>
 
 #include <algorithm>
-#include <set>
+#include <vector>
 
 namespace __sanitizer {
-static pthread_cond_t thread_exit_cond;
-static pthread_mutex_t thread_exit_mutex;
-static pthread_cond_t tid_reported_cond;
-static pthread_mutex_t tid_reported_mutex;
-static bool thread_exit;
 
-void *TIDReporterThread(void *tid_storage) {
-  pthread_mutex_lock(&tid_reported_mutex);
-  *(pid_t *)tid_storage = GetTid();
-  pthread_cond_broadcast(&tid_reported_cond);
-  pthread_mutex_unlock(&tid_reported_mutex);
+struct TidReporterArgument {
+  TidReporterArgument() {
+    pthread_mutex_init(&terminate_thread_mutex, NULL);
+    pthread_mutex_init(&tid_reported_mutex, NULL);
+    pthread_cond_init(&terminate_thread_cond, NULL);
+    pthread_cond_init(&tid_reported_cond, NULL);
+    terminate_thread = false;
+  }
 
-  pthread_mutex_lock(&thread_exit_mutex);
-  while (!thread_exit)
-    pthread_cond_wait(&thread_exit_cond, &thread_exit_mutex);
-  pthread_mutex_unlock(&thread_exit_mutex);
+  ~TidReporterArgument() {
+    pthread_mutex_destroy(&terminate_thread_mutex);
+    pthread_mutex_destroy(&tid_reported_mutex);
+    pthread_cond_destroy(&terminate_thread_cond);
+    pthread_cond_destroy(&tid_reported_cond);
+  }
+
+  pid_t reported_tid;
+  // For signaling to spawned threads that they should terminate.
+  pthread_cond_t terminate_thread_cond;
+  pthread_mutex_t terminate_thread_mutex;
+  bool terminate_thread;
+  // For signaling to main thread that a child thread has reported its tid.
+  pthread_cond_t tid_reported_cond;
+  pthread_mutex_t tid_reported_mutex;
+};
+
+class ThreadListerTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    pthread_t pthread_id;
+    pid_t tid;
+    for (uptr i = 0; i < kThreadCount; i++) {
+      SpawnTidReporter(&pthread_id, &tid);
+      pthread_ids_.push_back(pthread_id);
+      tids_.push_back(tid);
+    }
+  }
+
+  virtual void TearDown() {
+    pthread_mutex_lock(&thread_arg.terminate_thread_mutex);
+    thread_arg.terminate_thread = true;
+    pthread_cond_broadcast(&thread_arg.terminate_thread_cond);
+    pthread_mutex_unlock(&thread_arg.terminate_thread_mutex);
+    for (uptr i = 0; i < kThreadCount; i++)
+      pthread_join(pthread_ids_[i], NULL);
+  }
+
+  void SpawnTidReporter(pthread_t *pthread_id, pid_t *tid);
+
+  static const uptr kThreadCount = 20;
+
+  std::vector<pthread_t> pthread_ids_;
+  std::vector<pid_t> tids_;
+
+  TidReporterArgument thread_arg;
+};
+
+// Writes its TID once to arg->reported_tid and waits until signaled to terminate.
+void *TidReporterThread(void *argument) {
+  TidReporterArgument *arg = reinterpret_cast<TidReporterArgument *>(argument);
+  pthread_mutex_lock(&arg->tid_reported_mutex);
+  arg->reported_tid = GetTid();
+  pthread_cond_broadcast(&arg->tid_reported_cond);
+  pthread_mutex_unlock(&arg->tid_reported_mutex);
+
+  pthread_mutex_lock(&arg->terminate_thread_mutex);
+  while (!arg->terminate_thread)
+    pthread_cond_wait(&arg->terminate_thread_cond,
+                      &arg->terminate_thread_mutex);
+  pthread_mutex_unlock(&arg->terminate_thread_mutex);
   return NULL;
 }
 
-// The set of TIDs produced by ThreadLister should include the TID of every
-// thread we spawn here. The two sets may differ if there are other threads
-// running in the current process that we are not aware of.
-// Calling ThreadLister::Reset() should not change this.
-TEST(SanitizerLinux, ThreadListerMultiThreaded) {
-  pthread_mutex_init(&thread_exit_mutex, NULL);
-  pthread_mutex_init(&tid_reported_mutex, NULL);
-  pthread_cond_init(&thread_exit_cond, NULL);
-  pthread_cond_init(&tid_reported_cond, NULL);
-  const uptr kThreadCount = 20; // does not include the main thread
-  pthread_t thread_ids[kThreadCount];
-  pid_t  thread_tids[kThreadCount];
-  pid_t pid = getpid();
-  pid_t self_tid = GetTid();
-  thread_exit = false;
-  pthread_mutex_lock(&tid_reported_mutex);
-  for (uptr i = 0; i < kThreadCount; i++) {
-    int pthread_create_result;
-    thread_tids[i] = -1;
-    pthread_create_result = pthread_create(&thread_ids[i], NULL,
-                                           TIDReporterThread,
-                                           &thread_tids[i]);
-    ASSERT_EQ(pthread_create_result, 0);
-    while (thread_tids[i] == -1)
-      pthread_cond_wait(&tid_reported_cond, &tid_reported_mutex);
-  }
-  pthread_mutex_unlock(&tid_reported_mutex);
-  std::set<pid_t> reported_tids(thread_tids, thread_tids + kThreadCount);
-  reported_tids.insert(self_tid);
-
-  ThreadLister thread_lister(pid);
-  // There's a Reset() call between the first and second iteration.
-  for (uptr i = 0; i < 2; i++) {
-    std::set<pid_t> listed_tids;
-
-    EXPECT_FALSE(thread_lister.error());
-    for (uptr i = 0; i < kThreadCount + 1; i++) {
-      pid_t tid = thread_lister.GetNextTID();
-      EXPECT_GE(tid, 0);
-      EXPECT_FALSE(thread_lister.error());
-      listed_tids.insert(tid);
-    }
-    pid_t tid = thread_lister.GetNextTID();
-    EXPECT_LT(tid, 0);
-    EXPECT_FALSE(thread_lister.error());
-
-    std::set<pid_t> intersection;
-    std::set_intersection(reported_tids.begin(), reported_tids.end(),
-                          listed_tids.begin(), listed_tids.end(),
-                          std::inserter(intersection, intersection.begin()));
-    EXPECT_EQ(intersection, reported_tids);
-    thread_lister.Reset();
-  }
-
-  pthread_mutex_lock(&thread_exit_mutex);
-  thread_exit = true;
-  pthread_cond_broadcast(&thread_exit_cond);
-  pthread_mutex_unlock(&thread_exit_mutex);
-  for (uptr i = 0; i < kThreadCount; i++)
-    pthread_join(thread_ids[i], NULL);
-  pthread_mutex_destroy(&thread_exit_mutex);
-  pthread_mutex_destroy(&tid_reported_mutex);
-  pthread_cond_destroy(&thread_exit_cond);
-  pthread_cond_destroy(&tid_reported_cond);
+void ThreadListerTest::SpawnTidReporter(pthread_t *pthread_id,
+                                        pid_t *tid) {
+  pthread_mutex_lock(&thread_arg.tid_reported_mutex);
+  thread_arg.reported_tid = -1;
+  ASSERT_EQ(0, pthread_create(pthread_id, NULL,
+                              TidReporterThread,
+                              &thread_arg));
+  while (thread_arg.reported_tid == -1)
+    pthread_cond_wait(&thread_arg.tid_reported_cond,
+                      &thread_arg.tid_reported_mutex);
+  pthread_mutex_unlock(&thread_arg.tid_reported_mutex);
+  *tid = thread_arg.reported_tid;
 }
+
+std::vector<pid_t> ReadTidsToVector(ThreadLister &thread_lister) {
+  std::vector<pid_t> listed_tids;
+  pid_t tid;
+  while ((tid = thread_lister.GetNextTID()) >= 0)
+    listed_tids.push_back(tid);
+  EXPECT_FALSE(thread_lister.error());
+  return listed_tids;
+}
+
+static bool Includes(std::vector<pid_t> first, std::vector<pid_t> second) {
+  std::sort(first.begin(), first.end());
+  std::sort(second.begin(), second.end());
+  return std::includes(first.begin(), first.end(),
+                       second.begin(), second.end());
+}
+
+static bool HasElement(std::vector<pid_t> vector, pid_t element) {
+  return std::find(vector.begin(), vector.end(), element) != vector.end();
+}
+
+// ThreadLister's output should include the current thread's TID and the TID of
+// every thread we spawned.
+TEST_F(ThreadListerTest, ThreadListerSeesAllSpawnedThreads) {
+  pid_t self_tid = GetTid();
+  ThreadLister thread_lister(getpid());
+  std::vector<pid_t> listed_tids = ReadTidsToVector(thread_lister);
+  ASSERT_TRUE(HasElement(listed_tids, self_tid));
+  ASSERT_TRUE(Includes(listed_tids, tids_));
+}
+
+// Calling Reset() should not cause ThreadLister to forget any threads it's
+// supposed to know about.
+TEST_F(ThreadListerTest, ResetDoesNotForgetThreads) {
+  ThreadLister thread_lister(getpid());
+
+  // Run the loop body twice, because Reset() might behave differently if called
+  // on a freshly created object.
+  for (uptr i = 0; i < 2; i++) {
+    thread_lister.Reset();
+    std::vector<pid_t> listed_tids = ReadTidsToVector(thread_lister);
+    ASSERT_TRUE(Includes(listed_tids, tids_));
+  }
+}
+
+// If new threads have spawned during ThreadLister object's lifetime, calling
+// Reset() should cause ThreadLister to recognize their existence.
+TEST_F(ThreadListerTest, ResetMakesNewThreadsKnown) {
+  ThreadLister thread_lister(getpid());
+  std::vector<pid_t> threads_before_extra = ReadTidsToVector(thread_lister);
+
+  pthread_t extra_pthread_id;
+  pid_t extra_tid;
+  SpawnTidReporter(&extra_pthread_id, &extra_tid);
+  // Register the new thread so it gets terminated in TearDown().
+  pthread_ids_.push_back(extra_pthread_id);
+
+  // It would be very bizarre if the new TID had been listed before we even
+  // spawned that thread, but it would also cause a false success in this test,
+  // so better check for that.
+  ASSERT_FALSE(HasElement(threads_before_extra, extra_tid));
+
+  thread_lister.Reset();
+
+  std::vector<pid_t> threads_after_extra = ReadTidsToVector(thread_lister);
+  ASSERT_TRUE(HasElement(threads_after_extra, extra_tid));
+}
+
 }  // namespace __sanitizer
 
 #endif  // __linux__
