@@ -1513,25 +1513,35 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
 
   Arg->setName(D.getName());
 
+  QualType Ty = D.getType();
+
   // Use better IR generation for certain implicit parameters.
   if (isa<ImplicitParamDecl>(D)) {
     // The only implicit argument a block has is its literal.
     if (BlockInfo) {
       LocalDeclMap[&D] = Arg;
+      llvm::Value *LocalAddr = 0;
+      if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
+        // Allocate a stack slot to let debug info survive the RA.
+        llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty),
+                                                   D.getName() + ".addr");
+        Alloc->setAlignment(getContext().getDeclAlign(&D).getQuantity());
+        LValue lv = MakeAddrLValue(Alloc, Ty, getContext().getDeclAlign(&D));
+        EmitStoreOfScalar(Arg, lv, /* isInitialization */ true);
+        LocalAddr = Builder.CreateLoad(Alloc);
+      }
 
       if (CGDebugInfo *DI = getDebugInfo()) {
         if (CGM.getCodeGenOpts().getDebugInfo()
               >= CodeGenOptions::LimitedDebugInfo) {
           DI->setLocation(D.getLocation());
-          DI->EmitDeclareOfBlockLiteralArgVariable(*BlockInfo, Arg, Builder);
+          DI->EmitDeclareOfBlockLiteralArgVariable(*BlockInfo, Arg, LocalAddr, Builder);
         }
       }
 
       return;
     }
   }
-
-  QualType Ty = D.getType();
 
   llvm::Value *DeclPtr;
   // If this is an aggregate or variable sized value, reuse the input pointer.

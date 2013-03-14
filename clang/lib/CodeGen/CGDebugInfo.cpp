@@ -2680,7 +2680,8 @@ namespace {
 }
 
 void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
-                                                       llvm::Value *addr,
+                                                       llvm::Value *Arg,
+                                                       llvm::Value *LocalAddr,
                                                        CGBuilderTy &Builder) {
   assert(CGM.getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo);
   ASTContext &C = CGM.getContext();
@@ -2807,21 +2808,26 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   // Get overall information about the block.
   unsigned flags = llvm::DIDescriptor::FlagArtificial;
   llvm::MDNode *scope = LexicalBlockStack.back();
-  StringRef name = ".block_descriptor";
 
   // Create the descriptor for the parameter.
   llvm::DIVariable debugVar =
     DBuilder.createLocalVariable(llvm::dwarf::DW_TAG_arg_variable,
                                  llvm::DIDescriptor(scope), 
-                                 name, tunit, line, type, 
+                                 Arg->getName(), tunit, line, type,
                                  CGM.getLangOpts().Optimize, flags,
-                                 cast<llvm::Argument>(addr)->getArgNo() + 1);
-    
-  // Insert an llvm.dbg.value into the current block.
-  llvm::Instruction *declare =
-    DBuilder.insertDbgValueIntrinsic(addr, 0, debugVar,
-                                     Builder.GetInsertBlock());
-  declare->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
+                                 cast<llvm::Argument>(Arg)->getArgNo() + 1);
+
+  // Matching the code in EmitParmDecl, depending on optimization level.
+  llvm::Instruction *Call;
+  if (LocalAddr)
+    // Insert an llvm.dbg.value into the current block.
+    Call = DBuilder.insertDbgValueIntrinsic(LocalAddr, 0, debugVar,
+                                            Builder.GetInsertBlock());
+  else
+    // Insert an llvm.dbg.declare into the current block.
+    Call = DBuilder.insertDeclare(Arg, debugVar, Builder.GetInsertBlock());
+
+  Call->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
 }
 
 /// getStaticDataMemberDeclaration - If D is an out-of-class definition of
