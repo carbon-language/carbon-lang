@@ -958,6 +958,13 @@ protected:
     RegClassForVT[VT.SimpleTy] = RC;
   }
 
+  /// clearRegisterClasses - remove all register classes
+  void clearRegisterClasses() {
+    for (unsigned i = 0 ; i<array_lengthof(RegClassForVT); i++)
+      RegClassForVT[i] = 0;
+    AvailableRegClasses.clear();
+  }
+
   /// findRepresentativeClass - Return the largest legal super-reg register class
   /// of the register class for the specified type and its associated "cost".
   virtual std::pair<const TargetRegisterClass*, uint8_t>

@@ -39,6 +39,14 @@ namespace {
 
 Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   : MipsTargetLowering(TM) {
+  //
+  // set up as if mips32 and then revert so we can test the mechanism
+  // for switching
+  addRegisterClass(MVT::i32, &Mips::CPURegsRegClass);
+  addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
+  computeRegisterProperties();
+  clearRegisterClasses();
+
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
 
