@@ -7,6 +7,32 @@
 //
 //===----------------------------------------------------------------------===//
 
+// InstrSchedModel annotations for out-of-order CPUs.
+//
+// These annotations are independent of the itinerary classes defined below.
+
+// Instructions with folded loads need to read the memory operand immediately,
+// but other register operands don't have to be read until the load is ready.
+// These are marked with ReadAfterLd.
+def ReadAfterLd : SchedRead;
+
+// Instructions with both a load and a store folded are modeled as a folded
+// load + WriteRMW.
+def WriteRMW : SchedWrite;
+
+// Most instructions can fold loads, so every SchedWrite comes in two variants:
+// With and without a folded load.
+
+// Arithmetic.
+def WriteALU     : SchedWrite; // Simple integer ALU op.
+def WriteALULd   : SchedWrite; // ALU op with folded load.
+def WriteIMul    : SchedWrite; // Integer multiplication.
+def WriteIMulLd  : SchedWrite;
+def WriteIDiv    : SchedWrite; // Integer division.
+def WriteIDivLd  : SchedWrite;
+def WriteLEA     : SchedWrite; // LEA instructions can't fold loads.
+
+
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for X86
 def IIC_DEFAULT     : InstrItinClass;
