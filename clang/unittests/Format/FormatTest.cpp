@@ -1628,6 +1628,8 @@ TEST_F(FormatTest, AlignsPipes) {
       "             << \"ccccccccccccccccc = \" << ccccccccccccccccc\n"
       "             << \"ddddddddddddddddd = \" << ddddddddddddddddd\n"
       "             << \"eeeeeeeeeeeeeeeee = \" << eeeeeeeeeeeeeeeee;");
+  verifyFormat("llvm::outs() << aaaaaaaaaaaaaaaaaaaaaaaa << \"=\"\n"
+               "             << bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;");
 }
 
 TEST_F(FormatTest, UnderstandsEquals) {

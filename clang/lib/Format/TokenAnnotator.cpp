@@ -934,10 +934,11 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Right.is(tok::lessless)) {
     if (Left.is(tok::string_literal)) {
-      char LastChar =
-          StringRef(Left.FormatTok.Tok.getLiteralData(),
-                    Left.FormatTok.TokenLength).drop_back(1).rtrim().back();
-      if (LastChar == ':' || LastChar == '=')
+      StringRef Content = StringRef(Left.FormatTok.Tok.getLiteralData(),
+                                    Left.FormatTok.TokenLength);
+      Content = Content.drop_back(1).drop_front(1).trim();
+      if (Content.size() > 1 &&
+          (Content.back() == ':' || Content.back() == '='))
         return 100;
     }
     return prec::Shift;
